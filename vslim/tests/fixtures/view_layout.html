@@ -1,0 +1,11 @@
+<html>
+<head><title>{{ title }}</title></head>
+<body>
+<nav>{{slot:nav|NAV-DEFAULT}}</nav>
+<aside>{{slot:sidebar}}</aside>
+{{include:view_partial_header.html}}
+{{include:view_partial_header.html|subtitle=title}}
+<main>{{slot:content}}</main>
+<footer>{{slot:footer}}</footer>
+</body>
+</html>

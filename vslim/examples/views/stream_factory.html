@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title | trim }}</title>
+  <script defer src="{{asset:stream_factory_app.js}}"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --line: #d7deea;
+      --ink: #132238;
+      --muted: #5b6b82;
+      --accent: #0f766e;
+      --accent-2: #b45309;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+      background: linear-gradient(180deg, #f8fbff 0%, #eef4fa 100%);
+      color: var(--ink);
+    }
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+    .hero {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .eyebrow {
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(32px, 6vw, 56px);
+      line-height: 1;
+    }
+    .sub {
+      margin: 0;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.6;
+    }
+    .grid {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+      align-items: start;
+    }
+    .panel {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 14px 34px rgba(19, 34, 56, 0.08);
+      backdrop-filter: blur(8px);
+    }
+    .stack { display: grid; gap: 14px; }
+    label, .label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    input, textarea, button {
+      width: 100%;
+      font: inherit;
+    }
+    input, textarea {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: white;
+      color: var(--ink);
+    }
+    textarea {
+      min-height: 260px;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .actions {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 11px 14px;
+      cursor: pointer;
+      background: var(--ink);
+      color: white;
+    }
+    button[data-kind="plain"] { background: var(--accent); }
+    button[data-kind="ollama"] { background: var(--accent-2); }
+    button.secondary {
+      background: white;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      grid-column: 1 / -1;
+    }
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    code {
+      background: rgba(0, 0, 0, 0.05);
+      padding: 0.15em 0.35em;
+      border-radius: 6px;
+    }
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+      .actions { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main data-stream-factory-demo="1">
+    <section class="hero">
+      <p class="eyebrow">VSlim Stream Factory Demo</p>
+      <h1>{{ title | trim }}</h1>
+      <p class="sub">
+        One page, four routes: <code>/stream/text</code>, <code>/stream/sse</code>,
+        <code>/ollama/text</code>, <code>/ollama/sse</code>.
+      </p>
+    </section>
+
+    <section class="grid">
+      <div class="panel stack">
+        <div>
+          <label for="topic">Plain stream topic</label>
+          <input id="topic" name="topic" value="VSlim stream factory">
+        </div>
+
+        <div>
+          <label for="model">Ollama model</label>
+          <input id="model" name="model" value="{{ default_model | default('qwen2.5:latest') }}">
+        </div>
+
+        <div>
+          <label for="prompt">Ollama prompt</label>
+          <textarea id="prompt" name="prompt">{{ default_prompt | default('Compare plain text streaming with SSE in VSlim.') }}</textarea>
+        </div>
+
+        <div class="actions">
+          <button id="run-text" data-kind="plain" type="button">Plain Text</button>
+          <button id="run-sse" data-kind="plain" type="button">Plain SSE</button>
+          <button id="run-ollama-text" data-kind="ollama" type="button">Ollama Text</button>
+          <button id="run-ollama-sse" data-kind="ollama" type="button">Ollama SSE</button>
+          <button id="clear-output" class="secondary" type="button">Clear Output</button>
+        </div>
+
+        <div class="meta">
+          <div>Ollama endpoint: <code>{{ chat_url | default('/api/ollama/chat') }}</code></div>
+          <div>Plain text URL: <code>/stream/text</code></div>
+          <div>Plain SSE URL: <code>/stream/sse</code></div>
+          <div>Ollama text URL: <code>/ollama/text</code></div>
+          <div>Ollama SSE URL: <code>/ollama/sse</code></div>
+        </div>
+      </div>
+
+      <div class="panel stack">
+        <div class="label">Output</div>
+        <textarea id="output" readonly></textarea>
+        <div class="meta" id="status">Idle.</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

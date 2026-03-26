@@ -1,0 +1,4 @@
+*.so
+*_generated.c
+.DS_Store
+vslim/examples/vendor/

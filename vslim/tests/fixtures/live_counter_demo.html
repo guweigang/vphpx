@@ -1,0 +1,21 @@
+<main id="counter-root" {{raw:live_attrs}}>
+  {{raw:live_script}}
+  <p id="counter-value">{{ count }}</p>
+  <button type="button" vphp-click="inc" vphp-target="counter:controls" vphp-value-step="1">+</button>
+  <button type="button" vphp-click="sync_inc" vphp-target="counter:sync" vphp-value-step="1">Sync +1</button>
+  <button type="button" vphp-click="sync_summary" vphp-target="counter:summary-room">Sync Summary</button>
+  <form vphp-submit="rename" vphp-target="counter:label">
+    <div id="counter-profile-state" data-state="{{ profile_tone }}">
+      <span id="counter-profile-pill" data-state="{{ profile_tone }}">{{ profile_status }}</span>
+      <p id="counter-profile-detail">{{ profile_detail }}</p>
+    </div>
+    <input id="counter-label" name="label" value="{{ label }}" vphp-change="preview_label" vphp-target="counter:label" vphp-debounce="300">
+    <p id="counter-label-error">{{ error_label }}</p>
+    <p>Preview uses form('profile')->fill(...)->validate(...).</p>
+    <input id="counter-email" name="notify_email" value="{{ notify_email }}" vphp-change="preview_label" vphp-target="counter:form" vphp-throttle="300">
+    <p id="counter-email-error">{{ error_notify_email }}</p>
+    <button type="button" vphp-click="clear_profile" vphp-target="counter:form">Clear Profile</button>
+    <p id="counter-profile-status">{{ profile_status }}</p>
+    <p id="counter-profile-tone">{{ profile_tone }}</p>
+  </form>
+</main>

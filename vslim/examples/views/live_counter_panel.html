@@ -1,0 +1,72 @@
+<section id="counter-root" class="panel stack" data-count="{{ count }}" {{raw:live_attrs}}>
+  <p id="counter-flash" class="hint" data-vphp-flash="info" data-vphp-flash-state="visible" data-vphp-flash-timeout="2400">{{ flash_info }}</p>
+  <div>
+    <p id="counter-value" class="count">{{ count }}</p>
+    <p id="counter-status" class="caption">{{ status }}</p>
+    <p class="caption">{{ note }}</p>
+  </div>
+
+  <div class="actions">
+    <button type="button" vphp-click="inc" vphp-target="counter:controls" vphp-value-step="1" vphp-disable-with="+1...">+1</button>
+    <button type="button" vphp-click="inc" vphp-target="counter:controls" vphp-value-step="5" vphp-disable-with="+5...">+5</button>
+    <button type="button" vphp-click="sync_inc" vphp-target="counter:sync" vphp-value-step="1" vphp-disable-with="Syncing..." vphp-loading-target="#counter-status, #counter-flash" vphp-loading-class="accent-loading" vphp-loading-attr="aria-busy=true">Sync +1</button>
+    <button type="button" vphp-click="celebrate" vphp-target="counter:flash" vphp-disable-with="Flashing...">Flash</button>
+    <button type="button" class="alt" vphp-click="show_history" vphp-target="counter:navigate">Navigate</button>
+    <button type="button" class="alt" vphp-click="dec" vphp-target="counter:controls" vphp-value-step="1">-1</button>
+    <button type="button" class="alt" vphp-click="reset" vphp-target="counter:controls">Reset</button>
+  </div>
+
+  <form vphp-submit="rename" vphp-target="counter:form">
+    {{raw:profile_state_component}}
+    <label for="counter-label">Counter Label</label>
+    <input id="counter-label" name="label" value="{{ label }}" vphp-change="preview_label" vphp-target="counter:label" vphp-debounce="300" vphp-loading-target="#counter-label-value, #counter-status" vphp-loading-class="accent-loading" vphp-loading-attr="aria-busy=true">
+    <p id="counter-label-error" class="hint error-text">{{ error_label }}</p>
+    <label for="counter-email">Notification Email</label>
+    <input id="counter-email" name="notify_email" value="{{ notify_email }}" vphp-change="preview_label" vphp-target="counter:form" vphp-throttle="300" vphp-loading-target="#counter-email-value, #counter-status" vphp-loading-class="accent-loading" vphp-loading-attr="aria-busy=true">
+    <p id="counter-email-error" class="hint error-text">{{ error_notify_email }}</p>
+    <p class="hint">Preview uses <code>form('profile')->fill(...)->validate(...)</code>. Label is debounced; email is throttled to show both client controls without custom JS.</p>
+    <p class="hint">If you want steady-rate updates instead, use <code>vphp-throttle="300"</code>.</p>
+    <div class="actions">
+      <button type="submit" class="alt" vphp-disable-with="Saving profile...">Save Profile</button>
+      <button type="button" class="alt" vphp-click="clear_profile" vphp-target="counter:form" vphp-disable-with="Clearing...">Clear Profile</button>
+    </div>
+  </form>
+
+  <div class="meta">
+    <span>label: <code id="counter-label-value">{{ label }}</code></span>
+    <span>email: <code id="counter-email-value">{{ notify_email }}</code></span>
+    <span>profile: <code id="counter-profile-status">{{ profile_status }}</code></span>
+    <span>state: <code id="counter-profile-tone">{{ profile_tone }}</code></span>
+    <span>saved at: <code id="counter-profile-saved-at">{{ profile_saved_at }}</code></span>
+    <span>event target: <code id="counter-target-value">{{ last_target }}</code></span>
+    <span>last source: <code id="counter-source-value">{{ last_source }}</code></span>
+    <span>room: <code id="counter-room-value">{{ room }}</code></span>
+    <span>path: <code>{{ path }}</code></span>
+    <span>ws: <code>{{ endpoint }}</code></span>
+  </div>
+
+  <div class="stack">
+    {{raw:summary_component}}
+    <div class="actions">
+      <button type="button" class="alt" vphp-click="summary_ping" vphp-target="component:summary" vphp-disable-with="Pinging...">Component Ping</button>
+      <button type="button" class="alt" vphp-click="sync_summary" vphp-target="counter:summary-room" vphp-disable-with="Syncing summary...">Sync Summary</button>
+      <button type="button" class="alt" vphp-click="add_badge" vphp-target="counter:badges" vphp-disable-with="Adding...">Add Badge</button>
+    </div>
+    <div>
+      <p class="eyebrow">Keyed Components</p>
+      <p class="hint">count: <code id="counter-badge-count">{{ badge_count }}</code></p>
+      <p id="counter-badge-empty" class="hint">{{ badge_empty }}</p>
+      <ul id="counter-badges" class="hint">{{raw:badge_items}}</ul>
+    </div>
+    <div>
+      <p class="eyebrow">Activity</p>
+      <ul id="counter-activity" class="hint">{{raw:activity_items}}</ul>
+    </div>
+    <div>
+      <p class="eyebrow">Milestones</p>
+      <ul id="counter-milestones" class="hint">{{raw:milestones}}</ul>
+    </div>
+  </div>
+
+  <p class="hint">Open two tabs and use <code>Sync +1</code> or <code>Sync Summary</code>. The latter dispatches room info straight into the summary component without patching the whole LiveView.</p>
+</section>

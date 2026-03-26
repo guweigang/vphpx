@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title | trim }}</title>
+  <script defer src="{{asset:app.js}}"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f4ec;
+      --panel: #fffdf8;
+      --line: #d9cfbe;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --accent: #b45309;
+      --accent-2: #0f766e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      background: radial-gradient(circle at top, #fffaf0 0, var(--bg) 52%, #efe7d8 100%);
+      color: var(--ink);
+    }
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+    .hero {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .eyebrow {
+      color: var(--accent-2);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(32px, 6vw, 56px);
+      line-height: 1;
+    }
+    .sub {
+      margin: 0;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.6;
+    }
+    .grid {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      align-items: start;
+    }
+    .panel {
+      background: color-mix(in srgb, var(--panel) 94%, white);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(31, 41, 55, 0.06);
+    }
+    label, .label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    input, textarea, button {
+      width: 100%;
+      font: inherit;
+    }
+    input, textarea {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: white;
+      color: var(--ink);
+    }
+    textarea {
+      min-height: 220px;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    button {
+      width: auto;
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 16px;
+      cursor: pointer;
+      background: var(--ink);
+      color: white;
+    }
+    button.secondary {
+      background: white;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    .meta {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .hint {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--line);
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    code {
+      background: rgba(0, 0, 0, 0.04);
+      padding: 0.15em 0.35em;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <main data-ollama-demo="1">
+    <section class="hero">
+      <p class="eyebrow">VSlim Native StreamResponse Demo</p>
+      <h1>{{ title | trim }}</h1>
+      <p class="sub">
+        This page talks to the correct demo endpoints directly:
+        <code>/ollama/text</code> for text streaming and <code>/ollama/sse</code> for SSE.
+        It does not use <code>/events/stream</code>.
+      </p>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <label for="model">Model</label>
+        <input id="model" name="model" value="{{ default_model | default('qwen2.5:latest') }}">
+
+        <label for="prompt" style="margin-top: 14px;">Prompt</label>
+        <textarea id="prompt" name="prompt">{{ default_prompt | default('Explain how VSlim streams text and SSE responses.') }}</textarea>
+
+        <div class="actions">
+          <button id="run-text" type="button">Run Text Stream</button>
+          <button id="run-sse" type="button">Run SSE Stream</button>
+          <button id="clear-output" class="secondary" type="button">Clear Output</button>
+        </div>
+
+        <div class="meta">
+          <div>Ollama endpoint: <code>{{ chat_url | default('/api/ollama/chat') }}</code></div>
+          <div>Text URL: <code>/ollama/text</code></div>
+          <div>SSE URL: <code>/ollama/sse</code></div>
+        </div>
+
+        <div class="hint">
+          JS requests the demo through <code>vhttpd</code>:
+          <code>/ollama/text?prompt=...</code> or <code>/ollama/sse?prompt=...</code>.
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="label">Output</div>
+        <textarea id="output" readonly></textarea>
+        <div class="meta" id="status">Idle.</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

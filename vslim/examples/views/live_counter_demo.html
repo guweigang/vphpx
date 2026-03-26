@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title | trim }}</title>
+  {{raw:live_script}}
+  <style>
+    :root {
+      --bg: #f4efe6;
+      --panel: rgba(255, 252, 247, 0.94);
+      --ink: #18212f;
+      --muted: #6f7783;
+      --line: #d9ccb7;
+      --accent: #0f766e;
+      --accent-2: #b45309;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Iowan Old Style", "Palatino Linotype", serif;
+      background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(180, 83, 9, 0.12), transparent 28%),
+        linear-gradient(180deg, #fbf8f2 0%, var(--bg) 100%);
+    }
+    main {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 48px 20px 64px;
+    }
+    .hero { margin-bottom: 22px; }
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 12px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(36px, 5vw, 60px);
+      line-height: 0.95;
+    }
+    .lede {
+      max-width: 680px;
+      margin: 14px 0 0;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: 0 18px 50px rgba(24, 33, 47, 0.08);
+    }
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+    .count {
+      font-size: clamp(56px, 10vw, 112px);
+      line-height: 0.9;
+      margin: 0;
+    }
+    .caption {
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.6;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font: inherit;
+      cursor: pointer;
+      color: white;
+      background: var(--ink);
+    }
+    button.alt {
+      background: white;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    button[disabled],
+    .vphp-loading button.vphp-loading,
+    button.vphp-loading {
+      cursor: wait;
+      opacity: 0.72;
+      transform: scale(0.99);
+    }
+    form {
+      display: grid;
+      gap: 12px;
+    }
+    form.vphp-loading {
+      opacity: 0.88;
+    }
+    input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font: inherit;
+      background: white;
+      color: var(--ink);
+    }
+    .vphp-loading input,
+    input.vphp-loading {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 0;
+    }
+    .hint.error-text {
+      color: #b45309;
+      min-height: 1.4em;
+      font-weight: 600;
+    }
+    .profile-state {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(24, 33, 47, 0.03);
+      transition: border-color 160ms ease, background 160ms ease;
+    }
+    .profile-state[data-state="saved"] {
+      border-color: rgba(15, 118, 110, 0.34);
+      background: rgba(15, 118, 110, 0.08);
+    }
+    .profile-state[data-state="preview"] {
+      border-color: rgba(180, 83, 9, 0.28);
+      background: rgba(180, 83, 9, 0.08);
+    }
+    .profile-state[data-state="invalid"] {
+      border-color: rgba(185, 28, 28, 0.22);
+      background: rgba(185, 28, 28, 0.08);
+    }
+    .profile-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 92px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      background: rgba(24, 33, 47, 0.08);
+      color: var(--ink);
+    }
+    .profile-pill[data-state="saved"] {
+      background: rgba(15, 118, 110, 0.14);
+      color: var(--accent);
+    }
+    .profile-pill[data-state="preview"] {
+      background: rgba(180, 83, 9, 0.14);
+      color: var(--accent-2);
+    }
+    .profile-pill[data-state="invalid"] {
+      background: rgba(185, 28, 28, 0.14);
+      color: #b91c1c;
+    }
+    .profile-copy {
+      display: grid;
+      gap: 4px;
+    }
+    .profile-copy strong {
+      font-size: 14px;
+    }
+    [data-vphp-flash] {
+      min-height: 1.4em;
+      transition: opacity 160ms ease, transform 160ms ease;
+      opacity: 0.88;
+    }
+    [data-vphp-flash][data-vphp-flash-state="visible"] {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    [data-vphp-flash][data-vphp-flash-state="idle"] {
+      opacity: 0.55;
+      transform: translateY(-2px);
+    }
+    [data-vphp-flash="info"] {
+      color: var(--accent);
+    }
+    [data-vphp-flash="warn"] {
+      color: var(--accent-2);
+    }
+    [data-vphp-flash="error"] {
+      color: #b91c1c;
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    ul.hint {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 8px;
+    }
+    ul.hint li {
+      line-height: 1.5;
+    }
+    code {
+      border-radius: 8px;
+      padding: 0.16em 0.4em;
+      background: rgba(24, 33, 47, 0.06);
+    }
+    .vphp-loading .hint::after {
+      content: " · syncing";
+      color: var(--accent);
+    }
+    .vphp-connected .eyebrow::after {
+      content: " · connected";
+      color: var(--accent);
+    }
+    .vphp-click-loading .eyebrow::after {
+      content: " · click";
+      color: var(--accent);
+    }
+    .vphp-submit-loading .eyebrow::after {
+      content: " · submit";
+      color: var(--accent);
+    }
+    .vphp-change-loading .eyebrow::after {
+      content: " · change";
+      color: var(--accent);
+    }
+    .vphp-reconnecting .eyebrow::after,
+    .vphp-connecting .eyebrow::after {
+      content: " · reconnecting";
+      color: var(--accent-2);
+    }
+    .vphp-error .eyebrow::after {
+      content: " · error";
+      color: #b91c1c;
+    }
+    .accent-loading {
+      color: var(--accent);
+      transition: color 160ms ease, opacity 160ms ease;
+      opacity: 0.78;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <p class="eyebrow">VSlim LiveView Demo</p>
+      <h1>{{ title | trim }}</h1>
+      <p class="lede">{{ description | default('Live updates with server-rendered fragments.') }}</p>
+    </section>
+    {{include:live_counter_panel.html}}
+  </main>
+</body>
+</html>

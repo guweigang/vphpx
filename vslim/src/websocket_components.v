@@ -1,0 +1,310 @@
+module main
+
+import vphp
+
+@[php_method]
+pub fn (mut app VSlimWebSocketApp) construct() &VSlimWebSocketApp {
+	app.on_open_handler = vphp.PersistentOwnedZVal.new_null()
+	app.on_message_handler = vphp.PersistentOwnedZVal.new_null()
+	app.on_close_handler = vphp.PersistentOwnedZVal.new_null()
+	app.connections = map[string]vphp.PersistentOwnedZVal{}
+	app.rooms = map[string][]string{}
+	return &app
+}
+
+@[php_method]
+pub fn (mut app VSlimWebSocketApp) on_open(handler vphp.ZVal) &VSlimWebSocketApp {
+	if !handler.is_valid() || !handler.is_callable() {
+		vphp.throw_exception_class('InvalidArgumentException', 'on_open handler must be callable',
+			0)
+		return &app
+	}
+	release_ws_handler(mut app.on_open_handler)
+	app.on_open_handler = vphp.PersistentOwnedZVal.from_zval(handler)
+	return &app
+}
+
+@[php_method]
+pub fn (mut app VSlimWebSocketApp) on_message(handler vphp.ZVal) &VSlimWebSocketApp {
+	if !handler.is_valid() || !handler.is_callable() {
+		vphp.throw_exception_class('InvalidArgumentException', 'on_message handler must be callable',
+			0)
+		return &app
+	}
+	release_ws_handler(mut app.on_message_handler)
+	app.on_message_handler = vphp.PersistentOwnedZVal.from_zval(handler)
+	return &app
+}
+
+@[php_method]
+pub fn (mut app VSlimWebSocketApp) on_close(handler vphp.ZVal) &VSlimWebSocketApp {
+	if !handler.is_valid() || !handler.is_callable() {
+		vphp.throw_exception_class('InvalidArgumentException', 'on_close handler must be callable',
+			0)
+		return &app
+	}
+	release_ws_handler(mut app.on_close_handler)
+	app.on_close_handler = vphp.PersistentOwnedZVal.from_zval(handler)
+	return &app
+}
+
+@[php_method]
+pub fn (app &VSlimWebSocketApp) has_on_open() bool {
+	return is_ws_handler_valid(app.on_open_handler)
+}
+
+@[php_method]
+pub fn (app &VSlimWebSocketApp) has_on_message() bool {
+	return is_ws_handler_valid(app.on_message_handler)
+}
+
+@[php_method]
+pub fn (app &VSlimWebSocketApp) has_on_close() bool {
+	return is_ws_handler_valid(app.on_close_handler)
+}
+
+@[php_method]
+pub fn (mut app VSlimWebSocketApp) remember(conn vphp.ZVal) &VSlimWebSocketApp {
+	id := websocket_connection_id(conn)
+	if id == '' {
+		return &app
+	}
+	if id in app.connections {
+		mut existing := app.connections[id] or { vphp.PersistentOwnedZVal.new_null() }
+		release_ws_handler(mut existing)
+	}
+	app.connections[id] = vphp.PersistentOwnedZVal.from_zval(conn)
+	return &app
+}
+
+@[php_method]
+pub fn (mut app VSlimWebSocketApp) forget(conn_or_id vphp.ZVal) &VSlimWebSocketApp {
+	id := websocket_conn_key(conn_or_id)
+	if id == '' {
+		return &app
+	}
+	if id in app.connections {
+		mut existing := app.connections[id] or { vphp.PersistentOwnedZVal.new_null() }
+		release_ws_handler(mut existing)
+		app.connections.delete(id)
+	}
+	app.remove_conn_from_rooms(id)
+	return &app
+}
+
+@[php_method]
+pub fn (app &VSlimWebSocketApp) has_connection(conn_or_id vphp.ZVal) bool {
+	id := websocket_conn_key(conn_or_id)
+	return id != '' && id in app.connections
+}
+
+@[php_method]
+pub fn (mut app VSlimWebSocketApp) join(room string, conn_or_id vphp.ZVal) &VSlimWebSocketApp {
+	id := websocket_conn_key(conn_or_id)
+	key := normalize_ws_room(room)
+	if id == '' || key == '' {
+		return &app
+	}
+	mut members := app.rooms[key] or { []string{} }
+	if id !in members {
+		members << id
+	}
+	app.rooms[key] = members
+	return &app
+}
+
+@[php_method]
+pub fn (mut app VSlimWebSocketApp) leave(room string, conn_or_id vphp.ZVal) &VSlimWebSocketApp {
+	id := websocket_conn_key(conn_or_id)
+	key := normalize_ws_room(room)
+	if id == '' || key == '' || key !in app.rooms {
+		return &app
+	}
+	members := app.rooms[key] or { return &app }
+	filtered := members.filter(it != id)
+	app.rooms[key] = filtered
+	if filtered.len == 0 {
+		app.rooms.delete(key)
+	}
+	return &app
+}
+
+@[php_method]
+pub fn (app &VSlimWebSocketApp) members(room string) []string {
+	key := normalize_ws_room(room)
+	if key == '' {
+		return []string{}
+	}
+	return (app.rooms[key] or { []string{} }).clone()
+}
+
+@[php_method]
+pub fn (app &VSlimWebSocketApp) connection_ids() []string {
+	mut ids := app.connections.keys()
+	ids.sort()
+	return ids
+}
+
+@[php_method]
+pub fn (app &VSlimWebSocketApp) rooms_for(conn_or_id vphp.ZVal) []string {
+	id := websocket_conn_key(conn_or_id)
+	if id == '' {
+		return []string{}
+	}
+	mut names := []string{}
+	for room, members in app.rooms {
+		if id in members {
+			names << room
+		}
+	}
+	names.sort()
+	return names
+}
+
+@[php_method]
+pub fn (app &VSlimWebSocketApp) send_to(conn_or_id vphp.ZVal, data string) bool {
+	id := websocket_conn_key(conn_or_id)
+	if id == '' || id !in app.connections {
+		return false
+	}
+	conn_owned := app.connections[id] or { return false }
+	conn := conn_owned.clone_request_owned().to_zval()
+	if !conn.is_object() || !conn.method_exists('send') {
+		return false
+	}
+	_ = conn.method_owned_request('send', [
+		vphp.RequestOwnedZVal.new_string(data).to_zval(),
+	])
+	return true
+}
+
+@[php_method]
+pub fn (app &VSlimWebSocketApp) broadcast(data string, room string, except_id string) int {
+	target_room := normalize_ws_room(room)
+	except := except_id.trim_space()
+	mut sent := 0
+	if target_room == '' {
+		for id, _ in app.connections {
+			if except != '' && id == except {
+				continue
+			}
+			if app.send_to(vphp.RequestOwnedZVal.new_string(id).to_zval(), data) {
+				sent++
+			}
+		}
+		return sent
+	}
+	for id in app.rooms[target_room] or { []string{} } {
+		if except != '' && id == except {
+			continue
+		}
+		if app.send_to(vphp.RequestOwnedZVal.new_string(id).to_zval(), data) {
+			sent++
+		}
+	}
+	return sent
+}
+
+@[php_method]
+pub fn (mut app VSlimWebSocketApp) handle_websocket(frame vphp.ZVal, conn vphp.ZVal) vphp.ZVal {
+	event := zval_string_key(frame, 'event', '').trim_space().to_lower()
+	match event {
+		'open' {
+			app.remember(conn)
+			return invoke_ws_handler(app.on_open_handler, [
+				conn,
+				frame,
+			])
+		}
+		'message' {
+			return invoke_ws_handler(app.on_message_handler, [
+				conn,
+				vphp.RequestOwnedZVal.new_string(zval_string_key(frame, 'data', '')).to_zval(),
+				frame,
+			])
+		}
+		'close' {
+			result := invoke_ws_handler(app.on_close_handler, [
+				conn,
+				vphp.RequestOwnedZVal.new_int(zval_int_key(frame, 'code', 1000)).to_zval(),
+				vphp.RequestOwnedZVal.new_string(zval_string_key(frame, 'reason', '')).to_zval(),
+				frame,
+			])
+			app.forget(conn)
+			return result
+		}
+		else {
+			return vphp.RequestOwnedZVal.new_null().to_zval()
+		}
+	}
+}
+
+fn is_ws_handler_valid(handler vphp.PersistentOwnedZVal) bool {
+	return handler.is_valid() && !handler.is_null() && !handler.is_undef() && handler.is_callable()
+}
+
+fn invoke_ws_handler(handler vphp.PersistentOwnedZVal, args []vphp.ZVal) vphp.ZVal {
+	if !is_ws_handler_valid(handler) {
+		return vphp.RequestOwnedZVal.new_null().to_zval()
+	}
+	return handler.clone_request_owned().to_zval().call_owned_request(args)
+}
+
+fn release_ws_handler(mut handler vphp.PersistentOwnedZVal) {
+	if !handler.is_valid() {
+		return
+	}
+	unsafe {
+		mut owned := handler
+		owned.release()
+	}
+}
+
+fn (mut app VSlimWebSocketApp) free() {
+	release_ws_handler(mut app.on_open_handler)
+	release_ws_handler(mut app.on_message_handler)
+	release_ws_handler(mut app.on_close_handler)
+	for id, _ in app.connections {
+		mut conn := app.connections[id] or { continue }
+		release_ws_handler(mut conn)
+	}
+	unsafe {
+		app.connections.free()
+		app.rooms.free()
+	}
+}
+
+fn websocket_connection_id(conn vphp.ZVal) string {
+	if !conn.is_object() || !conn.method_exists('id') {
+		return ''
+	}
+	return conn.method_owned_request('id', []).to_string().trim_space()
+}
+
+fn websocket_conn_key(conn_or_id vphp.ZVal) string {
+	if conn_or_id.is_string() {
+		return conn_or_id.to_string().trim_space()
+	}
+	return websocket_connection_id(conn_or_id)
+}
+
+fn normalize_ws_room(room string) string {
+	return room.trim_space()
+}
+
+fn (mut app VSlimWebSocketApp) remove_conn_from_rooms(id string) {
+	if id == '' {
+		return
+	}
+	mut empty := []string{}
+	for room, members in app.rooms {
+		filtered := members.filter(it != id)
+		app.rooms[room] = filtered
+		if filtered.len == 0 {
+			empty << room
+		}
+	}
+	for room in empty {
+		app.rooms.delete(room)
+	}
+}

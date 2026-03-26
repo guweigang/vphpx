@@ -1,0 +1,28 @@
+[server]
+host = "127.0.0.1"
+port = 19888
+
+[files]
+pid_file = "/tmp/vhttpd_vslim_demo.pid"
+event_log = "/tmp/vhttpd_vslim_demo.events.ndjson"
+
+[worker]
+autostart = true
+read_timeout_ms = 3000
+pool_size = 4
+socket = "/tmp/vslim_demo_worker.sock"
+cmd = "php -d extension=/Users/guweigang/Source/vphpx/vslim/vslim.so /Users/guweigang/Source/vphpx/vslim/examples/vendor/bin/php-worker"
+
+[worker.env]
+VHTTPD_APP = "/Users/guweigang/Source/vphpx/vslim/examples/demo_app.php"
+
+[admin]
+host = "127.0.0.1"
+port = 19988
+token = ""
+
+[assets]
+enabled = true
+prefix = "/assets"
+root = "/Users/guweigang/Source/vphpx/vslim/examples/public"
+cache_control = "public, max-age=3600"
