@@ -185,12 +185,12 @@ fn main() {
 
 	ext_name := vphp_c.compile() or {
 		eprintln('❌ 编译阶段失败: ${err}')
-		return
+		exit(1)
 	}
 
 	vphp_c.generate_all() or {
 		eprintln('❌ 代码生成失败: ${err}')
-		return
+		exit(1)
 	}
 
 	is_macos := os.user_os() == 'macos'
@@ -220,7 +220,7 @@ fn main() {
 	v_res := os.execute('v ${prod_flag}-nocache -enable-globals -gc ${gc_mode} -d use_openssl -path "${v_module_path}" -shared -o ${transpiled_c} ${source_dir}')
 	if v_res.exit_code != 0 {
 		println('❌ V 编译失败: ${v_res.output}')
-		return
+		exit(1)
 	}
 
 	if emit_only {
