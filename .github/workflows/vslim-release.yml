@@ -76,9 +76,9 @@ jobs:
         working-directory: vslim
         shell: bash
         run: |
-          php -d extension=./vslim.so examples/demo_app.php --self-test
           TEST_PHP_EXECUTABLE="$(command -v php)" php ../vphptest/run-tests.php -q --show-all -d extension=./vslim.so \
             tests/test_vslim_cli_run_argv.phpt \
+            tests/test_vslim_cli_template_bin_entry.phpt \
             tests/test_vslim_psr7_psr17_interface_contracts.phpt \
             tests/test_vslim_template_project_metadata.phpt
 
