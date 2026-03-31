@@ -1,5 +1,7 @@
 # vphpx
 
+![vphp brand](assets/vphp_brand.png)
+
 Split repo for the PHP-facing V stack:
 
 - `vphp/`: core V <-> PHP interop runtime and compiler
