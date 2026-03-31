@@ -1,0 +1,130 @@
+name: VSlim Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'vslim-*'
+
+jobs:
+  package:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runs_on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux bundle
+            runs_on: ubuntu-latest
+            package_type: binary
+            artifact_name: vslim-linux-binary
+            needs_build: true
+          - name: macos bundle
+            runs_on: macos-latest
+            package_type: binary
+            artifact_name: vslim-macos-binary
+            needs_build: true
+          - name: windows source bundle
+            runs_on: windows-latest
+            package_type: source
+            artifact_name: vslim-windows-source
+            needs_build: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.5
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+          extensions: zip
+
+      - name: Setup V
+        if: matrix.needs_build
+        uses: vlang/setup-v@v1
+        with:
+          v-version: latest
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc pkg-config libcjson-dev libssl-dev
+
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew install pkg-config cjson openssl@3
+
+      - name: Build VSlim extension
+        if: matrix.needs_build
+        working-directory: vslim
+        shell: bash
+        env:
+          VPHP_V_GC: none
+        run: |
+          make build
+
+      - name: Smoke check binary bundle
+        if: matrix.needs_build
+        working-directory: vslim
+        shell: bash
+        run: |
+          php -d extension=./vslim.so examples/demo_app.php --self-test
+          TEST_PHP_EXECUTABLE="$(command -v php)" php ../vphptest/run-tests.php -q --show-all -d extension=./vslim.so \
+            tests/test_vslim_cli_run_argv.phpt \
+            tests/test_vslim_psr7_psr17_interface_contracts.phpt \
+            tests/test_vslim_template_project_metadata.phpt
+
+      - name: Build release bundle
+        working-directory: vslim
+        shell: bash
+        run: |
+          if [ "${{ matrix.package_type }}" = "binary" ]; then
+            make dist PACKAGE_FORMAT=zip
+          else
+            php scripts/package_release.php --package-type=source --format=zip
+          fi
+
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: vslim/dist/*.zip
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub release assets
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download packaged artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Publish assets to GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          gh release view "$TAG_NAME" >/dev/null 2>&1 || \
+            gh release create "$TAG_NAME" \
+              --draft \
+              --title "VSlim $TAG_NAME" \
+              --notes "VSlim release bundles for PHP 8.5. Windows currently ships as a source bundle while the native DLL toolchain is still being finalized."
+          shopt -s globstar nullglob
+          files=(dist/**/*.zip)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No release bundles found."
+            exit 1
+          fi
+          gh release upload "$TAG_NAME" "${files[@]}" --clobber

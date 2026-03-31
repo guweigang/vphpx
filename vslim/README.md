@@ -54,6 +54,37 @@ make runtime-check
 
 这条命令会先构建预编译的 [vhttpd](/Users/guweigang/Source/vhttpd/vhttpd)，再运行 `httpd` / `vhttpd` / `worker` 相关测试。
 
+## Release Bundles
+
+`vslim` 现在有一套统一的 release 打包入口：
+
+```bash
+make dist
+```
+
+这会先构建当前平台扩展，再打出一个 release bundle，里面至少包含：
+
+- `extension/`
+  当前平台的预编译扩展二进制
+- `template/`
+  可直接起项目的 app 模板
+- `docs/`
+  上游 README 和模板说明
+
+如果只想打模板 + bridge source 包，用：
+
+```bash
+make dist-source
+```
+
+当前 GitHub workflow 的发布策略是：
+
+- Linux：发布二进制 bundle
+- macOS：发布二进制 bundle
+- Windows：先发布 source bundle
+
+Windows 暂时还是 source bundle，不是因为 workflow 没接，而是当前生成的 C 仍依赖 GNU/C99 特性；要稳定产出可直接加载的 `php_vslim.dll`，还需要单独补一条 Windows toolchain 兼容链路。
+
 ## PSR 进展
 
 当前主线已经不再以 legacy 兼容为目标；除了和 `vhttpd` 对接的 request / response 边界需要继续兼容生态，其余有 PSR 规范的位置都按 PSR 语义收口。

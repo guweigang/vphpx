@@ -1,4 +1,4 @@
-.PHONY: all build prod build-prod ext vhttpd serve test psr-matrix framework-matrix demo-self-test demo-verify mvp-check runtime-check clean
+.PHONY: all build prod build-prod ext dist dist-source vhttpd serve test psr-matrix framework-matrix demo-self-test demo-verify mvp-check runtime-check clean
 
 BREW_PATH ?= /opt/homebrew
 VPHP_V_GC ?= auto
@@ -25,6 +25,9 @@ ifeq ($(UNAME_S),Darwin)
 PLATFORM_LDFLAGS += -undefined dynamic_lookup
 endif
 ROOT := $(CURDIR)
+ARTIFACT_VERSION ?= $(shell git -C $(ROOT)/.. describe --tags --always --dirty)
+ARTIFACT_PLATFORM ?= $(shell php -r '$$os = strtolower(PHP_OS_FAMILY); if ($$os === "darwin") $$os = "macos"; $$arch = strtolower(php_uname("m")); if (in_array($$arch, ["amd64", "x64", "x86_64"], true)) $$arch = "x86_64"; if (in_array($$arch, ["aarch64", "arm64"], true)) $$arch = "arm64"; echo $$os . "-" . $$arch;')
+PACKAGE_FORMAT ?= zip
 VHTTPD_ROOT ?= $(abspath $(ROOT)/../../vhttpd)
 SRC_DIR := $(VHTTPD_ROOT)/src
 VHTTPD_BIN := $(VHTTPD_ROOT)/vhttpd
@@ -66,6 +69,21 @@ prod:
 	VPHP_V_GC="$(VPHP_V_GC)" v -path ".:..:@vlib" run build.v -prod
 
 build-prod: prod
+
+dist: build
+	php $(ROOT)/scripts/package_release.php \
+		--version="$(ARTIFACT_VERSION)" \
+		--platform="$(ARTIFACT_PLATFORM)" \
+		--package-type=binary \
+		--format="$(PACKAGE_FORMAT)" \
+		--ext-path="$(ROOT)/vslim.so"
+
+dist-source:
+	php $(ROOT)/scripts/package_release.php \
+		--version="$(ARTIFACT_VERSION)" \
+		--platform="$(ARTIFACT_PLATFORM)" \
+		--package-type=source \
+		--format="$(PACKAGE_FORMAT)"
 
 ext:
 	@if [ -z "$(EXT_C)" ]; then \
@@ -122,3 +140,4 @@ runtime-check: build vhttpd
 clean:
 	rm -f vslim.so $(VHTTPD_BIN)
 	rm -f *_generated.c
+	rm -rf dist
