@@ -6,8 +6,9 @@ Documentation entry:
 
 `VSlim` 是一个运行在 `vphp` 之上的 PHP 微框架扩展，核心目标是给 PHP 用户提供熟悉的 runtime builder 体验：
 
-- `VSlim\App` 负责路由注册、分发、middleware、hooks
-- `VSlim\Request` / `VSlim\Response` 提供轻量 request/response facade
+- `VSlim\App` 负责路由注册、分发、middleware、phase middleware
+- `VSlim\Cli\App` 负责共享 app service graph 上的 command bootstrap / discovery / execution
+- `VSlim\Vhttpd\Request` / `VSlim\Vhttpd\Response` 提供轻量 request/response facade
 - `VSlim\Stream\Response` 提供扩展原生流式响应类型
 - `VSlim\WebSocket\App` 提供扩展原生 WebSocket handler
 - `VSlim\Mcp\App` 提供扩展原生 MCP handler
@@ -21,6 +22,19 @@ Documentation entry:
 2. 作为整个 `docs/` 的索引页
 
 注意：本文档以代码和测试为准，旧文档只作为历史参考。
+
+## 从哪里开始
+
+如果你的目标是“起一个新项目，同时带 HTTP 和 CLI 入口”，推荐按这个顺序读：
+
+1. 项目模板入口：
+   [`templates/app/README.md`](/Users/guweigang/Source/vphpx/vslim/templates/app/README.md)
+2. 更接近真实目录布局的骨架示例：
+   [`examples/skeleton/README.md`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton/README.md)
+3. 骨架分层和 `bootstrapDir()` 设计说明：
+   [`docs/app/skeleton.md`](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
+
+如果你只是想先理解 API 和 builder，再继续往下读这份 README 即可。
 
 ## 测试分层
 
@@ -40,6 +54,90 @@ make runtime-check
 
 这条命令会先构建预编译的 [vhttpd](/Users/guweigang/Source/vhttpd/vhttpd)，再运行 `httpd` / `vhttpd` / `worker` 相关测试。
 
+## PSR 进展
+
+当前主线已经不再以 legacy 兼容为目标；除了和 `vhttpd` 对接的 request / response 边界需要继续兼容生态，其余有 PSR 规范的位置都按 PSR 语义收口。
+
+当前已经落地并稳定回归的部分：
+
+- `PSR-7`
+  原生提供 `VSlim\Psr7\Stream` / `Request` / `ServerRequest` / `Response` / `Uri` / `UploadedFile`
+- `PSR-15`
+  `VSlim\App`、route / group / global middleware、`before()` / `after()` phase middleware 都走 PSR-15 request/handler 语义
+- `PSR-17`
+  原生提供 `VSlim\Psr17\*Factory`
+- `PSR-14`
+  原生提供 `VSlim\Psr14\EventDispatcher` / `ListenerProvider`，支持 exact / parent / interface / wildcard listener 解析与 stoppable event
+- `PSR-11`
+  `VSlim\Container`、`ContainerException`、`NotFoundException` 已支持接口绑定与 first-touch metadata 查询
+- `PSR-3`
+  `VSlim\Log\PsrLogger` 已对齐 `LoggerInterface`，非法 level 会抛 `InvalidArgumentException`；`VSlim\App::psrLogger()` 会稳定复用同一个 PSR-3 wrapper，并始终绑定当前 native logger；`VSlim\App` 还会把 `logger` 与 `Psr\Log\LoggerInterface` 同步进 container
+- `PSR-16`
+  原生提供 `VSlim\Psr16\Cache` / `CacheException` / `InvalidArgumentException`；当前实现是 worker-local in-memory cache，已覆盖 first-touch 接口绑定、mixed value、iterable key/value、TTL 与异常语义，并支持注入 `Psr\Clock\ClockInterface`
+- `PSR-6`
+  原生提供 `VSlim\Psr6\CacheItemPool` / `CacheItem` / `CacheException` / `InvalidArgumentException`；当前实现与 `PSR-16` 一样是 worker-local in-memory cache，已覆盖 deferred write、expiration、first-touch 接口绑定与异常语义，并支持注入 `Psr\Clock\ClockInterface`
+- `PSR-18`
+  原生提供 `VSlim\Psr18\Client` / `ClientException` / `RequestException` / `NetworkException`；已覆盖 first-touch 接口绑定、异常 `getRequest()` 契约和 invalid-request 失败路径
+- `PSR-20`
+  原生提供 `VSlim\Psr20\Clock`；`now()` 直接返回 `DateTimeImmutable`，并已覆盖 first-touch 接口绑定与返回类型契约；`VSlim\App`、`PSR-16`、`PSR-6` 已能接入注入的 `ClockInterface`，其中 `VSlim\App` 还会把 `clock` 同步进内置 container
+
+这轮收进来的关键点：
+
+- `PSR-7 / 17` 不只是“行为像”，现在连 PHP 层接口签名也进一步对齐了更完整的 PSR contract
+- `PSR-7` 这轮继续补齐了几个容易被忽略但很关键的 contract：
+  `getHeaders()` 现在保留原始 header 大小写；
+  `withMethod()` / `createRequest()` / `createServerRequest()` 不再默默吞掉空 method；
+  `withRequestTarget()` 现在会拒绝带空白的非法 target；
+  `ServerRequest` 的 `serverParams` / `cookieParams` / `queryParams` 会保留数组结构，不再先被压平成字符串 map
+- `PSR-14` 这轮顺手补齐了 `vphp` 的 `php_return_type` 编译能力，让 `dispatch(object): object`、`getListenersForEvent(object): iterable` 这一类接口能按官方签名导出到 PHP
+- `PSR-16` 现在已经有一版可回归的 simple cache：`null|int|DateInterval` TTL、`iterable` keys / values、invalid key / invalid iterable key 异常路径都已按 contract 收口；当前边界明确是“单实例 / 单 worker 内存缓存”，还不是跨 worker 共享存储
+- `PSR-6` 现在也已经接上了完整的 cache item / item pool contract：`CacheItemInterface` / `CacheItemPoolInterface` 的 first-touch 绑定、`static` fluent return、`iterable getItems()`、`saveDeferred()` / `commit()` 和绝对/相对过期时间都已回归；当前边界同样明确是“单实例 / 单 worker 内存缓存”
+- `PSR-18` 已经不只是 first-touch `instanceof` 绿了；异常对象现在也有稳定的 request identity contract，可直接回归 `attachRequest()` / `getRequest()` 和 `sendRequest()` 的签名元数据
+- `PSR-20` 不再只是独立 class；`VSlim\Psr20\Clock::now()` 按标准直接吐出 `DateTimeImmutable`，`PSR-16 / PSR-6` 的 TTL / expiration 路径已经可以统一走注入的 `ClockInterface`，`VSlim\App` 的 runtime trace 时间戳也已经能走 app-level clock，并且 `container()->get('clock')` / `container()->get(Psr\Clock\ClockInterface::class)` 都会同步拿到同一个 clock 对象
+- `Stream::seek/read/write`、`Response::withStatus`、`Request/ServerRequest::withUri`、多组 `Psr17` factory 参数已经放宽到更接近官方接口的 mixed / optional 语义
+- `PSR-7 / 15 / 17` 与 `PSR-11` 都补了 first-touch / autoload binding 用例，避免只有“先 require 接口再 instanceof”这条路径是绿的
+- `vhttpd -> VSlim` 的 `PSR-7 / PSR-15` worker 对接链路保持可用
+
+当前 README 对应的高价值回归覆盖包括：
+
+- `tests/test_vslim_logger_psr3.phpt`
+- `tests/test_vslim_logger_psr3_first_touch.phpt`
+- `tests/test_vslim_app_logger_container_integration.phpt`
+- `tests/test_vslim_app_psr_logger_integration.phpt`
+- `tests/test_vslim_psr14_first_touch.phpt`
+- `tests/test_vslim_psr14_contracts.phpt`
+- `tests/test_vslim_psr16_first_touch.phpt`
+- `tests/test_vslim_psr16_cache_behaviour.phpt`
+- `tests/test_vslim_psr16_clock_integration.phpt`
+- `tests/test_vslim_psr6_first_touch.phpt`
+- `tests/test_vslim_psr6_cache_behaviour.phpt`
+- `tests/test_vslim_psr6_clock_integration.phpt`
+- `tests/test_vslim_psr18_first_touch.phpt`
+- `tests/test_vslim_psr18_contracts.phpt`
+- `tests/test_vslim_app_clock_integration.phpt`
+- `tests/test_vslim_app_clock_container_integration.phpt`
+- `tests/test_vslim_borrowed_framework_getters.phpt`
+- `tests/test_vslim_psr20_first_touch.phpt`
+- `tests/test_vslim_psr20_contracts.phpt`
+- `tests/test_vslim_psr7_stream_semantics.phpt`
+- `tests/test_vslim_psr7_validation_semantics.phpt`
+- `tests/test_vslim_psr7_psr17_interface_contracts.phpt`
+- `tests/test_vslim_psr7_psr15_first_touch.phpt`
+- `tests/test_vslim_psr15_app_handle.phpt`
+- `tests/test_vslim_psr15_container_middleware.phpt`
+- `tests/test_vslim_psr15_mixed_middleware.phpt`
+- `tests/test_vslim_container_psr11_ext.phpt`
+- `tests/test_vslim_container_psr11_instanceof_first_touch.phpt`
+- `tests/test_vslim_container_psr11_catch_first_touch.phpt`
+- `tests/test_vslim_container_psr11_class_string_first_touch.phpt`
+- `tests/test_psr7_bridge.phpt`
+- `tests/test_psr7_bridge_laminas.phpt`
+- `tests/test_psr7_worker_app.phpt`
+- `tests/test_psr15_worker_app.phpt`
+- `tests/test_psr15_worker_stack.phpt`
+
+如果你想看长期目标、推进顺序和哪些能力应该先升级 `vphp` 再下放，继续看 [`docs/psr-roadmap.md`](/Users/guweigang/Source/vphpx/vslim/docs/psr-roadmap.md)。
+
 ## 1 分钟认识 VSlim
 
 最小可用对象是 `VSlim\App`。你注册路由，然后直接 dispatch：
@@ -47,12 +145,14 @@ make runtime-check
 ```php
 <?php
 
+use Psr\Http\Message\ServerRequestInterface;
+
 $app = new VSlim\App();
 
-$app->get('/hello/:name', function (VSlim\Request $req) {
-    return new VSlim\Response(
+$app->get('/hello/:name', function (ServerRequestInterface $req) {
+    return new VSlim\Vhttpd\Response(
         200,
-        'Hello, ' . $req->param('name'),
+        'Hello, ' . $req->getAttribute('name'),
         'text/plain; charset=utf-8'
     );
 });
@@ -69,6 +169,40 @@ echo $res->body . PHP_EOL;
 200
 Hello, codex
 ```
+
+## CLI Quickstart
+
+`VSlim\Cli\App` 现在已经能和 `VSlim\App` 共用 bootstrap、container 和配置图，所以一个项目可以同时暴露 HTTP 入口和 CLI 入口，而不需要维护两套装配逻辑。
+
+最小示例：
+
+```php
+<?php
+
+$cli = new VSlim\Cli\App();
+$cli->bootstrapDir(__DIR__);
+
+$exitCode = $cli->runArgv([
+    'bin/vslim',
+    'about',
+    '--format=json',
+]);
+```
+
+如果 command 对象实现了 `definition(): array`，runtime 会自动完成几件事：
+
+- 在 `run()` / `runArgv()` 之前先解析 arguments / options
+- 通过 `argument()` / `option()` / `warnings()` 暴露解析结果
+- 为 `--help` / `commandHelp()` 自动生成 usage、options、examples、notes
+- 在解析失败时输出错误信息并附带对应 command usage
+
+模板里自带的 [`AboutCommand.php`](/Users/guweigang/Source/vphpx/vslim/templates/app/app/Commands/AboutCommand.php) 就是最小参考；更具体的模板说明见 [`templates/app/README.md`](/Users/guweigang/Source/vphpx/vslim/templates/app/README.md)。
+
+如果你想直接看“HTTP 入口 + CLI 入口 + provider/module/middleware/controller”怎样一起落到一个项目目录里，继续按这个顺序看最顺手：
+
+1. [`templates/app/README.md`](/Users/guweigang/Source/vphpx/vslim/templates/app/README.md)
+2. [`examples/skeleton/README.md`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton/README.md)
+3. [`examples/README.md`](/Users/guweigang/Source/vphpx/vslim/examples/README.md)
 
 ## 性能
 在MacBook Air M2 + 4 个 PHP 进程的条件下，用 K6 压测，详情如下
@@ -193,23 +327,27 @@ echo $res->body . PHP_EOL;   // pong
 
 - handler 可以返回 `string`
 - `string` 会被自动归一化成 `200 text/plain`
-- `dispatch()` 直接返回 `VSlim\Response`
+- `dispatch()` 直接返回 `VSlim\Vhttpd\Response`
 
 ### Tutorial 2：读取路径参数、query 和 body
 
 ```php
 <?php
 
+use Psr\Http\Message\ServerRequestInterface;
+
 $app = new VSlim\App();
 
-$app->post('/users/:id', function (VSlim\Request $req) {
+$app->post('/users/:id', function (ServerRequestInterface $req) {
+    $query = $req->getQueryParams();
+    parse_str((string) $req->getBody(), $body);
     return [
         'status' => 200,
         'content_type' => 'application/json; charset=utf-8',
         'body' => json_encode([
-            'id' => $req->param('id'),
-            'trace' => $req->query('trace_id'),
-            'name' => $req->input('name'),
+            'id' => $req->getAttribute('id'),
+            'trace' => $query['trace_id'] ?? null,
+            'name' => $body['name'] ?? null,
         ], JSON_UNESCAPED_UNICODE),
     ];
 });
@@ -225,9 +363,9 @@ echo $res->body . PHP_EOL;
 
 这里用到了：
 
-- `param()` 读取路由参数
-- `query()` 读取 query string
-- `input()` 读取“query + parsed body 合并后的输入”
+- `getAttribute()` 读取路由参数
+- `getQueryParams()` 读取 query string
+- `getBody()` 读取原始 body
 - handler 也可以返回数组，VSlim 会归一化成 `Response`
 
 ### Tutorial 3：middleware、before、after
@@ -235,29 +373,43 @@ echo $res->body . PHP_EOL;
 ```php
 <?php
 
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+
 $app = new VSlim\App();
 
-$app->before(function (VSlim\Request $req) {
-    if ($req->path === '/healthz') {
-        return 'ok-from-before';
+$app->middleware(new class implements MiddlewareInterface {
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        $query = $request->getQueryParams();
+        if (($query['token'] ?? '') !== 'demo') {
+            return (new VSlim\Psr7\Response(403, ''))->withBody(new VSlim\Psr7\Stream('forbidden'));
+        }
+        return $handler->handle($request);
     }
-    return null;
 });
 
-$app->middleware(function (VSlim\Request $req, callable $next) {
-    if ($req->query('token') !== 'demo') {
-        return new VSlim\Response(403, 'forbidden', 'text/plain; charset=utf-8');
+$app->before(new class implements MiddlewareInterface {
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        if ($request->getUri()->getPath() === '/healthz') {
+            return (new VSlim\Psr7\Response(200, ''))->withBody(new VSlim\Psr7\Stream('ok-from-before'));
+        }
+        return $handler->handle($request);
     }
-    return $next($req);
 });
 
-$app->after(function (VSlim\Request $req, VSlim\Response $res) {
-    $res->set_header('x-demo', 'yes');
-    return $res;
+$app->after(new class implements MiddlewareInterface {
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        return $handler->handle($request)->withHeader('x-demo', 'yes');
+    }
 });
 
-$app->get('/hello/:name', function (VSlim\Request $req) {
-    return 'hello:' . $req->param('name');
+$app->get('/hello/:name', function (ServerRequestInterface $req) {
+    return 'hello:' . $req->getAttribute('name');
 });
 
 $res = $app->dispatch('GET', '/hello/codex?token=demo');
@@ -268,22 +420,26 @@ echo $res->header('x-demo') . PHP_EOL;
 
 行为规则：
 
-- `before()` 返回非空值时会短路，不再进入 route
-- `middleware()` 必须返回一个有效响应，或者调用 `$next($req)`
-- `after()` 可以原地修改 `Response`，也可以返回一个新的 `Response`
+- `before()` / `after()` 是独立的 phase middleware 通道，使用 PSR-15 `process()` 签名
+- `before()` 可以短路返回响应，也可以 `return $handler->handle($request);`
+- `before()` 在继续链路里对内建 PSR request 做的修改会继续传给后续 route / middleware；当前已验证 `withAttribute()` 的 `string/int/bool/array`，以及 `withMethod()` / `withUri()` / `withHeader()` / `withQueryParams()` / `withParsedBody()` / `withBody()`
+- `middleware()` 是标准 PSR-15 middleware 通道，必须实现 `process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface`
+- `after()` 包裹最终响应，可以返回一个新的 `Response`
 
 ### Tutorial 4：group 和命名路由
 
 ```php
 <?php
 
+use Psr\Http\Message\ServerRequestInterface;
+
 $app = new VSlim\App();
 $app->set_base_path('/demo');
 
 $api = $app->group('/api');
 
-$api->get_named('users.show', '/users/:id', function (VSlim\Request $req) {
-    return 'user:' . $req->param('id');
+$api->get_named('users.show', '/users/:id', function (ServerRequestInterface $req) {
+    return 'user:' . $req->getAttribute('id');
 });
 
 echo $app->url_for('users.show', ['id' => '42']) . PHP_EOL;
@@ -316,15 +472,17 @@ https://example.local/demo/api/users/42
 ```php
 <?php
 
+use Psr\Http\Message\ServerRequestInterface;
+
 final class UserController
 {
-    public function index(VSlim\Request $req): string { return 'index'; }
-    public function show(VSlim\Request $req): string { return 'show:' . $req->param('id'); }
-    public function store(VSlim\Request $req): string { return 'store'; }
-    public function update(VSlim\Request $req): string { return 'update:' . $req->param('id'); }
-    public function destroy(VSlim\Request $req): string { return 'destroy:' . $req->param('id'); }
-    public function create(VSlim\Request $req): string { return 'create'; }
-    public function edit(VSlim\Request $req): string { return 'edit:' . $req->param('id'); }
+    public function index(ServerRequestInterface $req): string { return 'index'; }
+    public function show(ServerRequestInterface $req): string { return 'show:' . $req->getAttribute('id'); }
+    public function store(ServerRequestInterface $req): string { return 'store'; }
+    public function update(ServerRequestInterface $req): string { return 'update:' . $req->getAttribute('id'); }
+    public function destroy(ServerRequestInterface $req): string { return 'destroy:' . $req->getAttribute('id'); }
+    public function create(ServerRequestInterface $req): string { return 'create'; }
+    public function edit(ServerRequestInterface $req): string { return 'edit:' . $req->getAttribute('id'); }
 }
 
 $app = new VSlim\App();
@@ -342,7 +500,7 @@ $app->resource('/users', UserController::class);
 - `PUT/PATCH /users/:id` -> `update`
 - `DELETE /users/:id` -> `destroy`
 
-如果你不需要 `create/edit` 这种页面路由，使用 `api_resource()`。
+如果你不需要 `create/edit` 这种页面路由，使用 `api_resource()`。resource/singleton controller 现在也建议直接用 PSR `ServerRequestInterface`。
 
 ### Tutorial 6：最简单的 View
 
@@ -385,8 +543,8 @@ echo $res->body . PHP_EOL;
 <?php
 
 $app = new VSlim\App();
-$app->get('/hello/:name', function (VSlim\Request $req) {
-    return 'hello:' . $req->param('name');
+$app->get('/hello/:name', function (Psr\Http\Message\ServerRequestInterface $req) {
+    return 'hello:' . $req->getAttribute('name');
 });
 
 $res = $app->dispatch_envelope([
@@ -438,14 +596,16 @@ $app->get('/stream/sse', function () {
 ```php
 <?php
 
-$app->map(['GET', 'POST'], '/ollama/text', function (VSlim\Request $req) {
+$app->map(['GET', 'POST'], '/ollama/text', function (VSlim\Vhttpd\Request $req) {
     return VSlim\Stream\Factory::ollama_text($req);
 });
 
-$app->map(['GET', 'POST'], '/ollama/sse', function (VSlim\Request $req) {
+$app->map(['GET', 'POST'], '/ollama/sse', function (VSlim\Vhttpd\Request $req) {
     return VSlim\Stream\Factory::ollama_sse($req);
 });
 ```
+
+这里保留 `VSlim\Vhttpd\Request`，因为当前 `VSlim\Stream\Factory::ollama_*()` 仍然直接接收它。
 
 ### Tutorial 9：原生 MCP handler
 
@@ -496,13 +656,15 @@ return $app;
 ### 核心组件
 
 - [`docs/app/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/app/README.md)
-  `VSlim\App`：路由注册、dispatch、named routes、resource routes、hooks、错误处理、route metadata
+  `VSlim\App`：路由注册、dispatch、named routes、resource routes、phase middleware、错误处理、route metadata
 - [`docs/app/route-group.md`](/Users/guweigang/Source/vphpx/vslim/docs/app/route-group.md)
   `VSlim\RouteGroup`：分组、嵌套 group、组级 middleware / before / after
 - [`docs/http/request.md`](/Users/guweigang/Source/vphpx/vslim/docs/http/request.md)
-  `VSlim\Request`：query、input、JSON/form/multipart、header/cookie/attribute/server、trace/request id
+  `VSlim\Vhttpd\Request`：query、input、JSON/form/multipart、header/cookie/attribute/server、trace/request id
 - [`docs/http/response.md`](/Users/guweigang/Source/vphpx/vslim/docs/http/response.md)
-  `VSlim\Response`：headers、cookie、content type、redirect、trace/request id 透传
+  `VSlim\Vhttpd\Response`：headers、cookie、content type、redirect、trace/request id 透传
+- [`docs/http/psr-http.md`](/Users/guweigang/Source/vphpx/vslim/docs/http/psr-http.md)
+  `VSlim\\Psr7\\Stream`、`VSlim\\Psr7\\Response`、`VSlim\\Psr7\\Uri` 与 `VSlim\\Psr17\\*Factory`：当前原生 PSR HTTP 面
 - [`docs/stream/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/stream/README.md)
   `VSlim\Stream\Response`、`VSlim\Stream\Factory` 以及 VSlim + Ollama 的流式集成示例
 - [`docs/stream/factory.md`](/Users/guweigang/Source/vphpx/vslim/docs/stream/factory.md)
@@ -521,18 +683,64 @@ return $app;
   `VSlim\Container`：PSR-11、`set()`、`factory()`、handler 自动解析
 - [`docs/config/config.md`](/Users/guweigang/Source/vphpx/vslim/docs/config/config.md)
   `VSlim\Config`：TOML 加载、typed getter、JSON bridge、和 `App` 的整合
+- [`docs/logger/logger.md`](/Users/guweigang/Source/vphpx/vslim/docs/logger/logger.md)
+  `VSlim\\Log\\Logger` 与 `VSlim\\Log\\PsrLogger`：原生日志与 PSR-3 包装层
 
 ### 集成与运行时
 
 - [`docs/integration/worker.md`](/Users/guweigang/Source/vphpx/vslim/docs/integration/worker.md)
   envelope、`dispatch_envelope()`、`dispatch_envelope_map()`、worker 返回值归一化
 - [`docs/integration/psr7.md`](/Users/guweigang/Source/vphpx/vslim/docs/integration/psr7.md)
-  `VPhp\\VSlim\\Psr7Adapter`、PSR-7 request 转 `VSlim\Request`
+  `VPhp\\VSlim\\Psr7Adapter`、PSR-7 request 转 `VSlim\Vhttpd\Request`
+- [`docs/psr-roadmap.md`](/Users/guweigang/Source/vphpx/vslim/docs/psr-roadmap.md)
+  `vslim` 的长期 PSR 路线图：全 PSR 目标、推进顺序、以及何时先升级 `vphp`
+
+## 框架骨架
+
+- `VSlim\App` 现在会默认托管并同步一组标准服务到 container：
+  `config`、`clock`、`logger`、`events`、`events.provider`、`cache`、`cache.pool`、`http_client`
+- 这些服务同时暴露常用 contract key：
+  `Psr\\Clock\\ClockInterface`、`Psr\\Log\\LoggerInterface`、`Psr\\EventDispatcher\\EventDispatcherInterface`、`Psr\\EventDispatcher\\ListenerProviderInterface`、`Psr\\SimpleCache\\CacheInterface`、`Psr\\Cache\\CacheItemPoolInterface`、`Psr\\Http\\Client\\ClientInterface`
+- `VSlim\App` 还内建了 provider / module 两层 bootstrap：
+  `register()` / `registerMany()` / `boot()` 负责 service provider 生命周期，
+  `module()` / `moduleMany()` 则可以继续把 providers、routes、middleware 按语义收进模块
+- 现在还补了一层实例级 `bootstrap([...])` 入口，可以把 `config/container/providers/modules/routes/boot`
+  这些装配动作一次性收进 bootstrap spec；`before` / `middleware` / `after` 可以直接装 pipeline，
+  `middleware_setup` / `routes` 支持 callable 列表，`not_found` / `error` / `helpers` / `mcp`
+  也能直接在这层装配，已经可以作为项目级 app skeleton
+- 同时还补了 `bootstrapFile($path)`，支持把项目入口继续收进单独 PHP 文件；该文件可以返回
+  spec、closure 或 `VSlim\App`
+- 现在还补了 `bootstrapDir($path)`，把“项目根目录 -> bootstrap/app.php”固化成约定入口；
+  demo app 已经按这套 skeleton 拆成 `bootstrap/ + routes/ + provider + views`
+- `VSlim\Cli\App` 也复用这套 shared skeleton，并额外约定 `bootstrap/cli.php` 与
+  `app/Commands/*.php`；命令可以直接复用同一个 `container/config/provider/module` 图
+- `bootstrapDir($path)` 现在还有第二层 convention fallback：如果没有 `bootstrap/app.php`，
+  会继续按 `config/app.toml`、`bootstrap/runtime.php`、`bootstrap/services.php`、
+  `bootstrap/errors.php`、
+  `bootstrap/providers.php`、`bootstrap/modules.php`、`bootstrap/middleware.php`、
+  `routes/*.php`、`views/` 自动装配
+- 现在还补了一层 app 目录约定：`app/Providers/*.php`、`app/Modules/*.php`、
+  `app/Http/controllers.php`、`app/Http/errors.php`、`app/Http/routes/*.php`、
+  `app/Http/middleware.php`、`app/Http/Controllers/*.php`、
+  `app/Http/Middleware/*.php`、`resources/views`
+  也能直接被 `bootstrapDir()` 收进应用骨架
+- 这一层的推荐分工是：简单 `VSlim\Controller` 子类交给
+  `app/Http/Controllers/*.php` 自动绑定；需要业务构造参数的 controller 收到
+  `app/Http/controllers.php`；应用级错误处理收在 `app/Http/errors.php`；
+  middleware 挂载继续留在 `app/Http/middleware.php`
+- 目标是让 `VSlim\App` 直接成为上层框架的默认 kernel / service graph，而不是只做一个路由器壳
 
 ### 现成示例
 
 - [`examples/demo_app.php`](/Users/guweigang/Source/vphpx/vslim/examples/demo_app.php)
-  综合示例：路由、container、resource、view、error handler、worker 兼容
+  综合示例：现在按 `bootstrapDir()` skeleton 启动，覆盖路由、provider、resource、view、error handler、worker 兼容
+- [`examples/skeleton_app.php`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton_app.php)
+  更贴近真实项目目录的 app skeleton：`app/Providers`、`app/Modules`、`app/Http/controllers.php`、
+  `app/Http/Controllers`、`app/Http/middleware.php`、`resources/views`
+- [`templates/app/README.md`](/Users/guweigang/Source/vphpx/vslim/templates/app/README.md)
+  最小可复制的项目模板，现已同时带 `VSlim\App` 和 `VSlim\Cli\App` 入口约定
+- [`docs/app/skeleton.md`](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
+  `VSlim\App` 作为项目骨架入口时的推荐目录、职责边界和分工
 - [`examples/config_usage.php`](/Users/guweigang/Source/vphpx/vslim/examples/config_usage.php)
   `Config` 示例
 - [`tests/test_php_route_builder.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_php_route_builder.phpt)
@@ -542,15 +750,16 @@ return $app;
 
 ```mermaid
 flowchart LR
-    A["VSlim\\App"] --> B["VSlim\\Request"]
-    A --> C["VSlim\\Response"]
+    A["VSlim\\App"] --> B["VSlim\\Vhttpd\\Request"]
+    A --> C["VSlim\\Vhttpd\\Response"]
     A --> D["VSlim\\RouteGroup"]
     A --> E["VSlim\\Container"]
     A --> F["VSlim\\Config"]
-    A --> G["VSlim\\View"]
-    H["VSlim\\Controller"] --> A
-    H --> G
-    I["Worker / vhttpd / PSR-7"] --> A
+    A --> G["PSR Services"]
+    A --> H["VSlim\\View"]
+    I["VSlim\\Controller"] --> A
+    I --> H
+    J["Worker / vhttpd / PSR-7"] --> A
 ```
 
 ## 真理之源
