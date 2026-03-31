@@ -82,85 +82,45 @@ PHP_FUNCTION(v_pure_map_test) {
         return;
     }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_process_list, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_process_list, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_process_list(vphp_context_internal ctx);
 PHP_FUNCTION(v_process_list) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_process_list(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_test_map, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_test_map, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_test_map(vphp_context_internal ctx);
 PHP_FUNCTION(v_test_map) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_test_map(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_get_config, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_config, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_get_config(vphp_context_internal ctx);
 PHP_FUNCTION(v_get_config) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_get_config(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_get_user, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_user, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_get_user(vphp_context_internal ctx);
 PHP_FUNCTION(v_get_user) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_get_user(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_call_back, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_call_back, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_call_back(vphp_context_internal ctx);
 PHP_FUNCTION(v_call_back) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_call_back(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_bind_class_interface, 0, 2, _IS_BOOL, 0)
 ZEND_ARG_TYPE_INFO(0, class_name, IS_STRING, 0)
@@ -177,133 +137,69 @@ PHP_FUNCTION(v_bind_class_interface) {
         return;
     }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_complex_test, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_complex_test, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_complex_test(vphp_context_internal ctx);
 PHP_FUNCTION(v_complex_test) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_complex_test(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_analyze_user_object, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_analyze_user_object, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_analyze_user_object(vphp_context_internal ctx);
 PHP_FUNCTION(v_analyze_user_object) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_analyze_user_object(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_mutate_user_object, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_mutate_user_object, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_mutate_user_object(vphp_context_internal ctx);
 PHP_FUNCTION(v_mutate_user_object) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_mutate_user_object(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_check_user_object_props, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_check_user_object_props, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_check_user_object_props(vphp_context_internal ctx);
 PHP_FUNCTION(v_check_user_object_props) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_check_user_object_props(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_construct_php_object, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_construct_php_object, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_construct_php_object(vphp_context_internal ctx);
 PHP_FUNCTION(v_construct_php_object) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_construct_php_object(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_call_php_static_method, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_call_php_static_method, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_call_php_static_method(vphp_context_internal ctx);
 PHP_FUNCTION(v_call_php_static_method) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_call_php_static_method(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_mutate_php_static_prop, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_mutate_php_static_prop, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_mutate_php_static_prop(vphp_context_internal ctx);
 PHP_FUNCTION(v_mutate_php_static_prop) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_mutate_php_static_prop(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_read_php_class_constant, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_read_php_class_constant, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_read_php_class_constant(vphp_context_internal ctx);
 PHP_FUNCTION(v_read_php_class_constant) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_read_php_class_constant(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_typed_php_interop, 0, 1, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, obj, IS_MIXED, 0)
@@ -319,21 +215,13 @@ PHP_FUNCTION(v_typed_php_interop) {
         return;
     }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_typed_object_restore, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_typed_object_restore, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_typed_object_restore(vphp_context_internal ctx);
 PHP_FUNCTION(v_typed_object_restore) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_typed_object_restore(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_zval_conversion_api, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
@@ -348,213 +236,109 @@ PHP_FUNCTION(v_zval_conversion_api) {
         return;
     }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_unified_object_interop, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_unified_object_interop, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_unified_object_interop(vphp_context_internal ctx);
 PHP_FUNCTION(v_unified_object_interop) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_unified_object_interop(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_unified_ownership_interop, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_unified_ownership_interop, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_unified_ownership_interop(vphp_context_internal ctx);
 PHP_FUNCTION(v_unified_ownership_interop) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_unified_ownership_interop(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_read_php_global_const, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_read_php_global_const, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_read_php_global_const(vphp_context_internal ctx);
 PHP_FUNCTION(v_read_php_global_const) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_read_php_global_const(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_symbol_exists, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_php_symbol_exists, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_php_symbol_exists(vphp_context_internal ctx);
 PHP_FUNCTION(v_php_symbol_exists) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_php_symbol_exists(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_include_php_file, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_include_php_file, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_include_php_file(vphp_context_internal ctx);
 PHP_FUNCTION(v_include_php_file) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_include_php_file(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_include_php_file_once, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_include_php_file_once, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_include_php_file_once(vphp_context_internal ctx);
 PHP_FUNCTION(v_include_php_file_once) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_include_php_file_once(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_include_php_module_demo, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_include_php_module_demo, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_include_php_module_demo(vphp_context_internal ctx);
 PHP_FUNCTION(v_include_php_module_demo) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_include_php_module_demo(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_object_meta, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_php_object_meta, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_php_object_meta(vphp_context_internal ctx);
 PHP_FUNCTION(v_php_object_meta) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_php_object_meta(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_object_introspection, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_php_object_introspection, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_php_object_introspection(vphp_context_internal ctx);
 PHP_FUNCTION(v_php_object_introspection) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_php_object_introspection(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_array_introspection, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_php_array_introspection, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_php_array_introspection(vphp_context_internal ctx);
 PHP_FUNCTION(v_php_array_introspection) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_php_array_introspection(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_object_probe, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_php_object_probe, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_php_object_probe(vphp_context_internal ctx);
 PHP_FUNCTION(v_php_object_probe) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_php_object_probe(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_trigger_user_action, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_trigger_user_action, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_trigger_user_action(vphp_context_internal ctx);
 PHP_FUNCTION(v_trigger_user_action) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_trigger_user_action(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_call_php_closure, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_call_php_closure, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_call_php_closure(vphp_context_internal ctx);
 PHP_FUNCTION(v_call_php_closure) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_call_php_closure(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_call_php_closure_helper, 0, 1, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, raw, IS_MIXED, 0)
@@ -570,69 +354,37 @@ PHP_FUNCTION(v_call_php_closure_helper) {
         return;
     }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_test_globals, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_test_globals, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_test_globals(vphp_context_internal ctx);
 PHP_FUNCTION(v_test_globals) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_test_globals(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_get_v_closure, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_v_closure, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_get_v_closure(vphp_context_internal ctx);
 PHP_FUNCTION(v_get_v_closure) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_get_v_closure(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_get_v_closure_auto, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_v_closure_auto, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_get_v_closure_auto(vphp_context_internal ctx);
 PHP_FUNCTION(v_get_v_closure_auto) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_get_v_closure_auto(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_iter_helpers_demo, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_iter_helpers_demo, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_iter_helpers_demo(vphp_context_internal ctx);
 PHP_FUNCTION(v_iter_helpers_demo) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_iter_helpers_demo(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_iterable_object_demo, 0, 1, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, input, IS_MIXED, 0)
@@ -648,37 +400,21 @@ PHP_FUNCTION(v_iterable_object_demo) {
         return;
     }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_reverse_string, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_reverse_string, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_reverse_string(vphp_context_internal ctx);
 PHP_FUNCTION(v_reverse_string) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_reverse_string(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_logic_main, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_logic_main, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_logic_main(vphp_context_internal ctx);
 PHP_FUNCTION(v_logic_main) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_logic_main(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_invoke_callable, 0, 1, IS_STRING, 0)
 ZEND_ARG_CALLABLE_INFO(0, callback, 0)
@@ -859,53 +595,29 @@ PHP_FUNCTION(v_record_match) {
         return;
     }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_new_coach, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_new_coach, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_new_coach(vphp_context_internal ctx);
 PHP_FUNCTION(v_new_coach) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_new_coach(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_new_db, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_new_db, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_new_db(vphp_context_internal ctx);
 PHP_FUNCTION(v_new_db) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_new_db(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_check_res, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_check_res, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_check_res(vphp_context_internal ctx);
 PHP_FUNCTION(v_check_res) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_check_res(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
 ZEND_BEGIN_ARG_INFO_EX(arginfo_v_safe_divide, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, a, IS_LONG, 0)
@@ -951,37 +663,21 @@ PHP_FUNCTION(v_record_success) {
         return;
     }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_analyze_fitness_data, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_analyze_fitness_data, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_analyze_fitness_data(vphp_context_internal ctx);
 PHP_FUNCTION(v_analyze_fitness_data) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_analyze_fitness_data(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_get_alerts, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_alerts, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_get_alerts(vphp_context_internal ctx);
 PHP_FUNCTION(v_get_alerts) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
     vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     vphp_wrap_v_get_alerts(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
 zend_class_entry *contentcontract_ce = NULL;
 static const zend_function_entry contentcontract_methods[];
