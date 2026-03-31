@@ -66,7 +66,7 @@ flowchart LR
 - framework layer
 - runtime route registration
 - route groups
-- before/after hooks
+- before/after phase middleware
 - request/response facade
 - reverse routing
 
@@ -92,20 +92,19 @@ flowchart LR
 
 ### Request / response facade
 
-- `VSlim\Request`
-- `VSlim\Response`
+- `VSlim\Vhttpd\Request`
+- `VSlim\Vhttpd\Response`
 - query / header / cookie / param / attribute 访问
 - content type / response headers / cookie helpers
 - request metadata setter：
   - `set_scheme()/set_host()/set_port()/set_protocol_version()/set_remote_addr()`
 
-### Lifecycle hooks
+### Lifecycle middleware
 
 - app-level `before()`
 - app-level `after()`
 - group-level `before()`
 - group-level `after()`
-- `middleware()` 作为 `before()` 的兼容别名
 
 ### HTTP integration
 
@@ -133,7 +132,7 @@ flowchart LR
 
 ### 不做完整 PSR-7 内核
 
-- `VSlim\Request` / `VSlim\Response` 不追求 immutable core
+- `VSlim\Vhttpd\Request` / `VSlim\Vhttpd\Response` 不追求 immutable core
 - PSR-7 只放在 worker edge / adapter layer
 
 ### 不让 `vphp` 背 HTTP helper
@@ -181,7 +180,7 @@ flowchart LR
 1. `vhttpd -> php-worker` request envelope
 2. `php-worker -> vslim_handle_request(...)` request envelope
 3. `VSlim\App` 的 PHP-facing builder API
-4. `VSlim\Request` / `VSlim\Response` 的基础 helper 语义
+4. `VSlim\Vhttpd\Request` / `VSlim\Vhttpd\Response` 的基础 helper 语义
 5. `VSlim\View` 当前已经公开的模板语法分层：
    - 指令：`include / if / for / slot / fill / call: / asset: / raw:`
    - 表达式：变量、函数调用、pipe 链、对象方法调用
@@ -198,6 +197,11 @@ flowchart LR
 - 更系统的 app bootstrap 约定
 - 更深的 PSR-7 / PSR-15 适配
 - 更丰富的 worker supervision / reload 模型
+
+长期路线见：
+
+- [`psr-roadmap.md`](/Users/guweigang/Source/vphpx/vslim/docs/psr-roadmap.md)
+  `vslim` 后续以系统化覆盖 PSR 为目标；遇到能力边界先升级 `vphp`
 
 ## 一句话
 

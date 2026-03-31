@@ -8,7 +8,7 @@ $app = new VSlim\App();
 $app->set_view_base_path(__DIR__ . '/fixtures');
 
 final class CounterLiveView extends VSlim\Live\View {
-    public function mount(VSlim\Request $req, VSlim\Live\Socket $socket): void
+    public function mount(VSlim\Vhttpd\Request $req, VSlim\Live\Socket $socket): void
     {
         $socket
             ->set_id('lv-counter')
@@ -16,7 +16,7 @@ final class CounterLiveView extends VSlim\Live\View {
             ->assign('count', '41');
     }
 
-    public function render(VSlim\Request $req, VSlim\Live\Socket $socket): string
+    public function render(VSlim\Vhttpd\Request $req, VSlim\Live\Socket $socket): string
     {
         $this->set_app($GLOBALS['app']);
         $this->set_template('live_counter.html');

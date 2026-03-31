@@ -5,29 +5,29 @@ VSlim method semantics: HEAD fallback, OPTIONS allow, and method override
 --FILE--
 <?php
 $app = new VSlim\App();
-$app->get('/hello', function (VSlim\Request $req) {
+$app->get('/hello', function ($req) {
     return 'hello-body';
 });
-$app->delete('/items/:id', function (VSlim\Request $req) {
-    return 'deleted:' . $req->param('id') . ':' . $req->method;
+$app->delete('/items/:id', function ($req) {
+    return 'deleted:' . $req->getAttribute('id') . ':' . $req->getMethod();
 });
-$app->head('/explicit-head', function (VSlim\Request $req) {
+$app->head('/explicit-head', function ($req) {
     return 'explicit-head-body';
 });
 
-$head = new VSlim\Request('HEAD', '/hello', '');
+$head = new VSlim\Vhttpd\Request('HEAD', '/hello', '');
 $headRes = $app->dispatch_request($head);
 echo $headRes->status . '|' . strlen($headRes->body) . PHP_EOL;
 
-$explicitHead = new VSlim\Request('HEAD', '/explicit-head', '');
+$explicitHead = new VSlim\Vhttpd\Request('HEAD', '/explicit-head', '');
 $explicitHeadRes = $app->dispatch_request($explicitHead);
 echo $explicitHeadRes->status . '|' . strlen($explicitHeadRes->body) . PHP_EOL;
 
-$opt = new VSlim\Request('OPTIONS', '/items/9', '');
+$opt = new VSlim\Vhttpd\Request('OPTIONS', '/items/9', '');
 $optRes = $app->dispatch_request($opt);
 echo $optRes->status . '|' . $optRes->header('allow') . PHP_EOL;
 
-$overrideHeader = new VSlim\Request('POST', '/items/7', '');
+$overrideHeader = new VSlim\Vhttpd\Request('POST', '/items/7', '');
 $overrideHeader->set_headers(['x-http-method-override' => 'DELETE']);
 $overrideHeaderRes = $app->dispatch_request($overrideHeader);
 echo $overrideHeaderRes->status . '|' . $overrideHeaderRes->body . PHP_EOL;
@@ -35,7 +35,7 @@ echo $overrideHeaderRes->status . '|' . $overrideHeaderRes->body . PHP_EOL;
 $overrideQueryRes = $app->dispatch('POST', '/items/8?_method=DELETE');
 echo $overrideQueryRes->status . '|' . $overrideQueryRes->body . PHP_EOL;
 
-$overrideBody = new VSlim\Request('POST', '/items/10', '_method=DELETE');
+$overrideBody = new VSlim\Vhttpd\Request('POST', '/items/10', '_method=DELETE');
 $overrideBodyRes = $app->dispatch_request($overrideBody);
 echo $overrideBodyRes->status . '|' . $overrideBodyRes->body . PHP_EOL;
 ?>

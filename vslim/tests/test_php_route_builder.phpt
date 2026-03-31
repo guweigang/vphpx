@@ -4,101 +4,209 @@ VSlim\App can register PHP route handlers and dispatch them
 <?php if (!extension_loaded("vslim")) print "skip"; ?>
 --FILE--
 <?php
+if (!interface_exists('Psr\\Http\\Message\\MessageInterface')) {
+    eval('namespace Psr\\Http\\Message {
+        interface MessageInterface {
+            public function getProtocolVersion(): string;
+            public function withProtocolVersion(string $version);
+            public function getHeaders(): array;
+            public function hasHeader(string $name): bool;
+            public function getHeader($name): array;
+            public function getHeaderLine($name): string;
+            public function withHeader($name, $value);
+            public function withAddedHeader($name, $value);
+            public function withoutHeader($name);
+            public function getBody(): StreamInterface;
+            public function withBody(StreamInterface $body);
+        }
+        interface StreamInterface {
+            public function __toString(): string;
+            public function close(): void;
+            public function detach();
+            public function getSize(): ?int;
+            public function tell(): int;
+            public function eof(): bool;
+            public function isSeekable(): bool;
+            public function seek(int $offset, int $whence = SEEK_SET): void;
+            public function rewind(): void;
+            public function isWritable(): bool;
+            public function write(string $string): int;
+            public function isReadable(): bool;
+            public function read(int $length): string;
+            public function getContents(): string;
+            public function getMetadata($key = null);
+        }
+        interface UriInterface {
+            public function getScheme(): string;
+            public function getAuthority(): string;
+            public function getUserInfo(): string;
+            public function getHost(): string;
+            public function getPort(): ?int;
+            public function getPath(): string;
+            public function getQuery(): string;
+            public function getFragment(): string;
+            public function withScheme(string $scheme);
+            public function withUserInfo(string $user, ?string $password = null);
+            public function withHost(string $host);
+            public function withPort(?int $port);
+            public function withPath(string $path);
+            public function withQuery(string $query);
+            public function withFragment(string $fragment);
+            public function __toString(): string;
+        }
+        interface RequestInterface extends MessageInterface {
+            public function getRequestTarget(): string;
+            public function withRequestTarget(string $requestTarget);
+            public function getMethod(): string;
+            public function withMethod(string $method);
+            public function getUri(): UriInterface;
+            public function withUri(UriInterface $uri, bool $preserveHost = false);
+        }
+        interface ServerRequestInterface extends RequestInterface {
+            public function getServerParams(): array;
+            public function getCookieParams(): array;
+            public function withCookieParams(array $cookies);
+            public function getQueryParams(): array;
+            public function withQueryParams(array $query);
+            public function getUploadedFiles(): array;
+            public function withUploadedFiles(array $uploadedFiles);
+            public function getParsedBody();
+            public function withParsedBody($data);
+            public function getAttributes(): array;
+            public function getAttribute(string $name, $default = null);
+            public function withAttribute(string $name, $value);
+            public function withoutAttribute(string $name);
+        }
+        interface ResponseInterface extends MessageInterface {
+            public function getStatusCode(): int;
+            public function withStatus(int $code, string $reasonPhrase = "");
+            public function getReasonPhrase(): string;
+        }
+    }');
+}
+if (!interface_exists('Psr\\Http\\Server\\RequestHandlerInterface')) {
+    eval('namespace Psr\\Http\\Server {
+        interface RequestHandlerInterface { public function handle(\\Psr\\Http\\Message\\ServerRequestInterface $request): \\Psr\\Http\\Message\\ResponseInterface; }
+        interface MiddlewareInterface { public function process(\\Psr\\Http\\Message\\ServerRequestInterface $request, RequestHandlerInterface $handler): \\Psr\\Http\\Message\\ResponseInterface; }
+    }');
+}
+
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+
 $app = new VSlim\App();
-$app->before(function (VSlim\Request $req) {
-    if ($req->path === '/before-only') {
-        return 'before-only';
+$app->before(new class implements MiddlewareInterface {
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        if ($request->getUri()->getPath() === '/before-only') {
+            return (new VSlim\Psr7\Response(200, ''))->withBody(new VSlim\Psr7\Stream('before-only'));
+        }
+        return $handler->handle($request);
     }
-    return null;
 });
-$app->middleware(function (VSlim\Request $req, callable $next) {
-    if ($req->path === '/blocked') {
-        return new VSlim\Response(403, 'blocked', 'text/plain; charset=utf-8');
+$app->middleware(new class implements MiddlewareInterface {
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        if ($request->getUri()->getPath() === '/blocked') {
+            return (new VSlim\Psr7\Response(403, ''))->withBody(new VSlim\Psr7\Stream('blocked'));
+        }
+        return $handler->handle($request);
     }
-    return $next($req);
 });
-$app->middleware(function (VSlim\Request $req, callable $next) {
-    if ($req->path === '/submit' && $req->query('trace_id') === 'mw') {
-        return [
-            'status' => 202,
-            'content_type' => 'text/plain; charset=utf-8',
-            'body' => 'middleware:' . $req->body,
-        ];
+$app->middleware(new class implements MiddlewareInterface {
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        $query = $request->getQueryParams();
+        if ($request->getUri()->getPath() === '/submit' && ($query['trace_id'] ?? '') === 'mw') {
+            return (new VSlim\Psr7\Response(202, ''))->withBody(new VSlim\Psr7\Stream('middleware:' . (string) $request->getBody()));
+        }
+        return $handler->handle($request);
     }
-    return $next($req);
 });
-$app->get('/hello/:name', function (VSlim\Request $req) {
-    return new VSlim\Response(200, 'Hello, ' . $req->param('name'), 'text/plain; charset=utf-8');
+$app->get('/hello/:name', function (ServerRequestInterface $req) {
+    return new VSlim\Vhttpd\Response(200, 'Hello, ' . $req->getAttribute('name'), 'text/plain; charset=utf-8');
 });
-$app->get_named('hello.show', '/hello/:name', function (VSlim\Request $req) {
-    return new VSlim\Response(200, 'Named Hello, ' . $req->param('name'), 'text/plain; charset=utf-8');
+$app->get_named('hello.show', '/hello/:name', function (ServerRequestInterface $req) {
+    return new VSlim\Vhttpd\Response(200, 'Named Hello, ' . $req->getAttribute('name'), 'text/plain; charset=utf-8');
 });
-$app->post('/submit', function (VSlim\Request $req) {
+$app->post('/submit', function (ServerRequestInterface $req) {
+    $query = $req->getQueryParams();
     return [
         'status' => 201,
         'content_type' => 'application/json; charset=utf-8',
         'headers' => ['x-mode' => 'builder'],
-        'body' => json_encode(['body' => $req->body, 'trace' => $req->query('trace_id') ?: 'none']),
+        'body' => json_encode(['body' => (string) $req->getBody(), 'trace' => $query['trace_id'] ?? 'none']),
     ];
 });
-$app->after(function (VSlim\Request $req, VSlim\Response $res) {
-    if ($req->path === '/hello/codex') {
-        $res->set_header('x-after', 'app');
-        return $res;
+$app->after(new class implements MiddlewareInterface {
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        $response = $handler->handle($request);
+        if ($request->getUri()->getPath() !== '/hello/codex') {
+            return $response;
+        }
+        return $response->withHeader('x-after', 'app');
     }
-    return null;
 });
 $api = $app->group('/api');
-$api->middleware(function (VSlim\Request $req, callable $next) {
-    if ($req->path === '/api/blocked') {
-        return 'group-blocked';
+$api->middleware(new class implements MiddlewareInterface {
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        if ($request->getUri()->getPath() === '/api/blocked') {
+            return (new VSlim\Psr7\Response(200, ''))->withBody(new VSlim\Psr7\Stream('group-blocked'));
+        }
+        return $handler->handle($request);
     }
-    return $next($req);
 });
-$api->get('/users/:id', function (VSlim\Request $req) {
-    return 'user:' . $req->param('id');
+$api->get('/users/:id', function (ServerRequestInterface $req) {
+    return 'user:' . $req->getAttribute('id');
 });
-$api->after(function (VSlim\Request $req, VSlim\Response $res) {
-    if ($req->path === '/api/users/9') {
-        $res->text('after:' . $res->body);
-        return $res;
+$api->after(new class implements MiddlewareInterface {
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        $response = $handler->handle($request);
+        if ($request->getUri()->getPath() !== '/api/users/9') {
+            return $response;
+        }
+        return $response->withBody(new VSlim\Psr7\Stream('after:' . (string) $response->getBody()));
     }
-    return null;
 });
-$api->get_named('api.users.show', '/members/:id', function (VSlim\Request $req) {
-    return 'member:' . $req->param('id');
+$api->get_named('api.users.show', '/members/:id', function (ServerRequestInterface $req) {
+    return 'member:' . $req->getAttribute('id');
 });
-$api->get('/blocked', function (VSlim\Request $req) {
+$api->get('/blocked', function (ServerRequestInterface $req) {
     return 'route-blocked';
 });
-$api->put_named('api.users.update', '/users/:id', function (VSlim\Request $req) {
-    return 'put:' . $req->param('id');
+$api->put_named('api.users.update', '/users/:id', function (ServerRequestInterface $req) {
+    return 'put:' . $req->getAttribute('id');
 });
-$api->delete('/users/:id', function (VSlim\Request $req) {
-    return 'delete:' . $req->param('id');
+$api->delete('/users/:id', function (ServerRequestInterface $req) {
+    return 'delete:' . $req->getAttribute('id');
 });
-$api->patch('/users/:id', function (VSlim\Request $req) {
-    return 'patch:' . $req->param('id');
+$api->patch('/users/:id', function (ServerRequestInterface $req) {
+    return 'patch:' . $req->getAttribute('id');
 });
-$api->any_named('api.echo.any', '/echo/:id', function (VSlim\Request $req) {
-    return $req->method . ':' . $req->param('id');
+$api->any_named('api.echo.any', '/echo/:id', function (ServerRequestInterface $req) {
+    return $req->getMethod() . ':' . $req->getAttribute('id');
 });
 $v1 = $api->group('/v1');
-$v1->middleware(function (VSlim\Request $req, callable $next) {
-    if ($req->path === '/api/v1/ping' && $req->query('trace_id') === 'group') {
-        return [
-            'status' => 206,
-            'content_type' => 'text/plain; charset=utf-8',
-            'body' => 'group-middleware',
-        ];
+$v1->middleware(new class implements MiddlewareInterface {
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        $query = $request->getQueryParams();
+        if ($request->getUri()->getPath() === '/api/v1/ping' && ($query['trace_id'] ?? '') === 'group') {
+            return (new VSlim\Psr7\Response(206, ''))->withBody(new VSlim\Psr7\Stream('group-middleware'));
+        }
+        return $handler->handle($request);
     }
-    return $next($req);
 });
-$v1->get('/ping', function (VSlim\Request $req) {
+$v1->get('/ping', function (ServerRequestInterface $req) {
     return [
         'status' => 200,
         'content_type' => 'application/json; charset=utf-8',
-        'body' => json_encode(['pong' => true, 'path' => $req->path]),
+        'body' => json_encode(['pong' => true, 'path' => $req->getUri()->getPath()]),
     ];
 });
 $app->set_base_path('/v1');
@@ -110,7 +218,7 @@ echo $app->url_for_abs('hello.show', ['name' => 'nova'], 'https', 'demo.local') 
 $app->set_base_path('');
 $redirect = $app->redirect_to('hello.show', ['name' => 'jump']);
 echo $redirect->status . '|' . $redirect->header('location') . '|' . $redirect->body . PHP_EOL;
-$manual = new VSlim\Response(200, 'ignored', 'text/plain; charset=utf-8');
+$manual = new VSlim\Vhttpd\Response(200, 'ignored', 'text/plain; charset=utf-8');
 $manual->redirect_with_status('/moved', 307);
 echo $manual->status . '|' . $manual->header('location') . '|' . $manual->content_type . PHP_EOL;
 $res = $app->dispatch_body('POST', '/submit?trace_id=builder', 'payload');

@@ -1,6 +1,6 @@
 # PSR-7 适配
 
-VSlim 本身不是完整 PSR-7 实现，但当前项目已经提供了一个 PHP 侧桥接类，把 PSR-7 风格 request 转成 `VSlim\Request`。
+VSlim 本身不是完整 PSR-7 实现，但当前项目已经提供了一个 PHP 侧桥接类，把 PSR-7 风格 request 转成 `VSlim\Vhttpd\Request`。
 
 真理之源：
 
@@ -20,18 +20,19 @@ VPhp\VSlim\Psr7Adapter
 
 ## 核心方法
 
-- `dispatch(VSlim\App $app, object $request): VSlim\Response`
-- `toVSlimRequest(object $request): VSlim\Request`
+- `dispatch(VSlim\App $app, object $request): VSlim\Vhttpd\Response`
+- `toVSlimRequest(object $request): VSlim\Vhttpd\Request`
 - `toWorkerEnvelope(object $request): array`
 
 ## 最简单示例
 
 ```php
 use VPhp\VSlim\Psr7Adapter;
+use Psr\Http\Message\ServerRequestInterface;
 
 $app = new VSlim\App();
-$app->get('/users/:id', function (VSlim\Request $req) {
-    return $req->method . '|' . $req->path . '|' . $req->trace_id();
+$app->get('/users/:id', function (ServerRequestInterface $req) {
+    return $req->getMethod() . '|' . $req->getUri()->getPath() . '|' . $req->getHeaderLine('x-trace-id');
 });
 
 $res = Psr7Adapter::dispatch($app, $psrRequest);
@@ -62,7 +63,7 @@ $res = Psr7Adapter::dispatch($app, $psrRequest);
 
 ## `toVSlimRequest()`
 
-这个方法适合你只想复用适配逻辑，但后续还想继续手动加工 `VSlim\Request`：
+这个方法适合你只想复用适配逻辑，但后续还想继续手动加工 `VSlim\Vhttpd\Request`：
 
 ```php
 $vRequest = Psr7Adapter::toVSlimRequest($psrRequest);

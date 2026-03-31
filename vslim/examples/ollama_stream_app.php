@@ -40,13 +40,14 @@ function vslim_ollama_demo_app(): VSlim\App
 
     $app->get('/health', fn () => 'OK');
 
-    $app->get('/meta', function (VSlim\Request $req) {
+    $app->get('/meta', function ($req) {
+        $query = $req->getQueryParams();
         return [
             'status' => 200,
             'content_type' => 'application/json; charset=utf-8',
             'body' => json_encode([
                 'name' => 'vslim-ollama-stream-demo',
-                'prompt' => $req->query('prompt') ?: '',
+                'prompt' => $query['prompt'] ?? '',
                 'default_model' => (string) (getenv('OLLAMA_MODEL') ?: 'qwen2.5:7b-instruct'),
                 'chat_url' => (string) (getenv('OLLAMA_CHAT_URL') ?: 'http://127.0.0.1:11434/api/chat'),
                 'stream_fixture' => (string) (getenv('OLLAMA_STREAM_FIXTURE') ?: ''),
@@ -58,11 +59,11 @@ function vslim_ollama_demo_app(): VSlim\App
         ];
     });
 
-    $app->map(['GET', 'POST'], '/ollama/text', function (VSlim\Request $req) {
+    $app->map(['GET', 'POST'], '/ollama/text', function (VSlim\Vhttpd\Request $req) {
         return VSlim\Stream\Factory::ollama_text($req);
     });
 
-    $app->map(['GET', 'POST'], '/ollama/sse', function (VSlim\Request $req) {
+    $app->map(['GET', 'POST'], '/ollama/sse', function (VSlim\Vhttpd\Request $req) {
         return VSlim\Stream\Factory::ollama_sse($req);
     });
 

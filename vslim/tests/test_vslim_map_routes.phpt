@@ -5,18 +5,18 @@ VSlim map and map_named register one handler for multiple methods
 --FILE--
 <?php
 $app = new VSlim\App();
-$app->map(['GET', 'POST'], '/multi/:id', function (VSlim\Request $req) {
-    return $req->method . ':' . $req->param('id');
+$app->map(['GET', 'POST'], '/multi/:id', function ($req) {
+    return $req->getMethod() . ':' . $req->getAttribute('id');
 });
-$app->map('PUT|PATCH', '/edit/:id', function (VSlim\Request $req) {
-    return $req->method . ':' . $req->param('id');
+$app->map('PUT|PATCH', '/edit/:id', function ($req) {
+    return $req->getMethod() . ':' . $req->getAttribute('id');
 });
-$app->map_named(['DELETE', 'OPTIONS'], 'api.remove', '/api/items/:id', function (VSlim\Request $req) {
-    return $req->method . ':' . $req->param('id');
+$app->map_named(['DELETE', 'OPTIONS'], 'api.remove', '/api/items/:id', function ($req) {
+    return $req->getMethod() . ':' . $req->getAttribute('id');
 });
 $group = $app->group('/v1');
-$group->map(['GET', 'HEAD'], '/ping', function (VSlim\Request $req) {
-    return 'pong:' . $req->method;
+$group->map(['GET', 'HEAD'], '/ping', function ($req) {
+    return 'pong:' . $req->getMethod();
 });
 
 echo $app->dispatch('GET', '/multi/7')->body . PHP_EOL;

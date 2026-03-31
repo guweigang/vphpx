@@ -6,19 +6,12 @@ if (!extension_loaded('vslim')) {
     echo "skip vslim extension missing";
     return;
 }
-if (!is_file(dirname(__DIR__) . '/examples/vendor/autoload.php')) {
-    echo "skip vendor autoload missing";
-    return;
-}
 ?>
 --FILE--
 <?php
 declare(strict_types=1);
 
 define('VSLIM_HTTPD_WORKER_NOAUTO', true);
-$autoload = dirname(__DIR__) . '/examples/vendor/autoload.php';
-if (!is_file($autoload)) { echo "autoload_missing\n"; exit; }
-require_once $autoload;
 
 final class FakeWsConn {
     public array $sent = [];
@@ -30,7 +23,7 @@ final class FakeWsConn {
 putenv('OLLAMA_STREAM_FIXTURE=' . __DIR__ . '/fixtures/ollama_stream_fixture.ndjson');
 putenv('OLLAMA_MODEL=qwen-test');
 
-$req = new VSlim\Request('GET', '/ollama/text?prompt=demo', '');
+$req = new VSlim\Vhttpd\Request('GET', '/ollama/text?prompt=demo', '');
 $text = VSlim\Stream\Factory::ollama_text($req);
 echo ($text instanceof VSlim\Stream\Response ? "text_response\n" : "text_not_response\n");
 echo $text->stream_type . "\n";
@@ -46,6 +39,29 @@ echo count($rows) . "\n";
 $events = VSlim\Stream\SseEncoder::from_ollama($rows, 'qwen-test');
 echo ($events[0]['event'] ?? '') . "\n";
 echo ($events[3]['event'] ?? '') . "\n";
+
+$requestFactory = new VSlim\Psr17\ServerRequestFactory();
+$streamFactory = new VSlim\Psr17\StreamFactory();
+$psrReq = $requestFactory
+    ->createServerRequest('POST', 'https://demo.local/ollama/sse?prompt=psr-demo')
+    ->withHeader('x-trace-id', 'psr-trace')
+    ->withBody($streamFactory->createStream('{"model":"psr-body-model"}'));
+$psrPayload = $client->payload_from_request($psrReq);
+echo $psrPayload['model'] . "\n";
+echo $psrPayload['messages'][0]['content'] . "\n";
+
+$psrText = VSlim\Stream\Factory::ollama_text($psrReq);
+echo ($psrText instanceof VSlim\Stream\Response ? "psr_text_response\n" : "psr_text_not_response\n");
+echo $psrText->header('x-trace-id') . "\n";
+echo $psrText->header('x-vhttpd-trace-id') . "\n";
+echo implode('', iterator_to_array($psrText->chunks(), false)) . "\n";
+
+$psrSse = VSlim\Stream\Factory::ollama_sse($psrReq);
+$psrEvents = iterator_to_array($psrSse->chunks(), false);
+echo ($psrSse instanceof VSlim\Stream\Response ? "psr_sse_response\n" : "psr_sse_not_response\n");
+echo $psrSse->header('x-trace-id') . "\n";
+echo ($psrEvents[0]['event'] ?? '') . "\n";
+echo ($psrEvents[3]['event'] ?? '') . "\n";
 
 $ws = (new VSlim\WebSocket\App())
     ->on_open(static fn ($conn, array $frame): string => 'connected')
@@ -87,6 +103,16 @@ text
 Hello from VSlim
 qwen-test
 4
+token
+done
+psr-body-model
+psr-demo
+psr_text_response
+psr-trace
+psr-trace
+Hello from VSlim
+psr_sse_response
+psr-trace
 token
 done
 ws_open

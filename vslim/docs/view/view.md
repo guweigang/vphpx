@@ -119,8 +119,8 @@ $view = new VSlim\View(__DIR__ . '/views', '/assets');
 - `asset($path)`
 - `render($template, $data): string`
 - `render_with_layout($template, $layout, $data): string`
-- `render_response($template, $data): VSlim\Response`
-- `render_response_with_layout($template, $layout, $data): VSlim\Response`
+- `render_response($template, $data): VSlim\Vhttpd\Response`
+- `render_response_with_layout($template, $layout, $data): VSlim\Vhttpd\Response`
 
 通过 `App` 也可以直接调用：
 

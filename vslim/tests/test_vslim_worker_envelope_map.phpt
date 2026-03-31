@@ -39,9 +39,9 @@ $res = $worker->dispatchRequest([
 ]);
 echo $res['id'] . PHP_EOL;
 echo $res['status'] . '|' . $res['content_type'] . '|' . $res['body'] . PHP_EOL;
-echo $res['headers']['x-app'] . '|' . $res['headers']['x-request-id'] . '|' . $res['headers']['x-trace-id'] . '|' . $res['headers']['x-vhttpd-trace-id'] . PHP_EOL;
+echo $res['headers']['x-app'] . '|' . $res['headers']['x-route-trace'] . '|' . $res['headers']['x-request-id'] . '|' . $res['headers']['x-trace-id'] . '|' . $res['headers']['x-vhttpd-trace-id'] . PHP_EOL;
 ?>
 --EXPECT--
 map-req-1
-200|text/plain; charset=utf-8|Hello, codex
-map-fixture|rid-map-1|trace-map-1|trace-map-1
+200|text/plain; charset=utf-8|Hello, codex|phase-map|trace_id=phase-map
+map-fixture|phase-map|rid-map-1|phase-map|phase-map

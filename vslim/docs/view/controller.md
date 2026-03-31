@@ -42,13 +42,15 @@ $app->container()->set(PageController::class, new PageController($app));
 ## render
 
 ```php
+use Psr\Http\Message\ServerRequestInterface;
+
 final class PageController extends VSlim\Controller
 {
-    public function home(VSlim\Request $req): VSlim\Response
+    public function home(ServerRequestInterface $req): VSlim\Vhttpd\Response
     {
         return $this->render('home.html', [
             'title' => 'Controller Demo',
-            'name' => $req->param('name') ?: 'guest',
+            'name' => $req->getAttribute('name') ?: 'guest',
         ]);
     }
 }
@@ -64,7 +66,7 @@ final class PageController extends VSlim\Controller
 ```php
 final class PageController extends VSlim\Controller
 {
-    public function page(): VSlim\Response
+    public function page(): VSlim\Vhttpd\Response
     {
         return $this->render_with_layout('home.html', 'layout.html', [
             'title' => 'Layout Demo',
@@ -78,7 +80,7 @@ final class PageController extends VSlim\Controller
 ```php
 final class PageController extends VSlim\Controller
 {
-    public function jump(string $name): VSlim\Response
+    public function jump(string $name): VSlim\Vhttpd\Response
     {
         return $this->redirect_to('users.show', ['name' => $name], 302);
     }
@@ -118,4 +120,3 @@ VSlim 不强制你继承 `VSlim\Controller`。普通 PHP 类只要方法签名�
 
 - 极简 API route
 - 只是一个简单闭包就够的场景
-

@@ -59,7 +59,7 @@ Normalized worker response shape:
 - `headers` (`array<string,string>`)
 - `body` (string)
 
-`php-worker` normalizes app return values (`VSlim\Response`, `array`, PSR-7 response, string) to this shape.
+`php-worker` normalizes app return values (`VSlim\Vhttpd\Response`, `array`, PSR-7 response, string) to this shape.
 
 ## VSlim `dispatch_envelope_map(...)` shape
 

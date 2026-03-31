@@ -6,7 +6,14 @@ VHTTPD worker dispatches PSR-15 middleware stack bootstrap
 <?php
 namespace {
     if (!interface_exists('Psr\\Http\\Message\\ServerRequestInterface')) {
-        eval('namespace Psr\\Http\\Message { interface ServerRequestInterface {} interface ResponseInterface {} }');
+        eval(<<<'PHP'
+namespace Psr\Http\Message;
+
+interface StreamInterface {}
+interface UriInterface {}
+interface ServerRequestInterface {}
+interface ResponseInterface {}
+PHP);
     }
     if (!interface_exists('Psr\\Http\\Server\\RequestHandlerInterface')) {
         eval('namespace Psr\\Http\\Server { interface RequestHandlerInterface { public function handle(\\Psr\\Http\\Message\\ServerRequestInterface $request): \\Psr\\Http\\Message\\ResponseInterface; } }');

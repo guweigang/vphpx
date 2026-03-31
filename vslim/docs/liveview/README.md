@@ -166,7 +166,7 @@ Pubsub shape:
 ```php
 final class CounterLiveView extends VSlim\Live\View
 {
-    public function mount(VSlim\Request $req, VSlim\Live\Socket $socket): void
+    public function mount(VSlim\Vhttpd\Request $req, VSlim\Live\Socket $socket): void
     {
         if ($socket->connected()) {
             $socket->join_topic('counter-room');

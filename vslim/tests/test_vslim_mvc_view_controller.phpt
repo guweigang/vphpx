@@ -20,7 +20,7 @@ $view = new VSlim\View(__DIR__ . '/fixtures', '/assets');
 echo $view->asset('app.js') . PHP_EOL;
 
 final class TestPageController extends VSlim\Controller {
-    public function page(): VSlim\Response {
+    public function page(): VSlim\Vhttpd\Response {
         return $this->render('view_home.html', [
             'title' => 'controller-title',
             'name' => 'ada',
@@ -28,17 +28,17 @@ final class TestPageController extends VSlim\Controller {
         ]);
     }
 
-    public function jump(string $name): VSlim\Response {
+    public function jump(string $name): VSlim\Vhttpd\Response {
         return $this->redirect_to('mvc.home', ['name' => $name], 302);
     }
 
-    public function jumpWithQuery(string $name): VSlim\Response {
+    public function jumpWithQuery(string $name): VSlim\Vhttpd\Response {
         return $this->redirect_to_query('mvc.home', ['name' => $name], ['from' => 'controller'], 302);
     }
 }
 
-$app->get_named('mvc.home', '/mvc/home/:name', function (VSlim\Request $req) {
-    return "home:" . $req->param('name');
+$app->get_named('mvc.home', '/mvc/home/:name', function ($req) {
+    return "home:" . $req->getAttribute('name');
 });
 $controller = new TestPageController($app);
 $res2 = $controller->page();

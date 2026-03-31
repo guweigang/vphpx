@@ -4,13 +4,13 @@ VSlim Request body format helpers support json/form/multipart
 <?php if (!extension_loaded("vslim")) print "skip"; ?>
 --FILE--
 <?php
-$formReq = new VSlim\Request('POST', '/forms/echo?token=demo', 'name=neo&city=shanghai');
+$formReq = new VSlim\Vhttpd\Request('POST', '/forms/echo?token=demo', 'name=neo&city=shanghai');
 $formReq->set_headers(['content-type' => 'application/x-www-form-urlencoded']);
 echo $formReq->body_format() . PHP_EOL;
 echo ($formReq->is_form_body() ? 'yes' : 'no') . PHP_EOL;
 echo $formReq->form_body()['name'] . PHP_EOL;
 
-$jsonReq = new VSlim\Request('POST', '/json', '{"ok":"yes","trace":"demo"}');
+$jsonReq = new VSlim\Vhttpd\Request('POST', '/json', '{"ok":"yes","trace":"demo"}');
 $jsonReq->set_headers(['content-type' => 'application/json']);
 echo $jsonReq->body_format() . PHP_EOL;
 echo ($jsonReq->is_json_body() ? 'yes' : 'no') . PHP_EOL;
@@ -26,7 +26,7 @@ $multipartBody = ''
     . "Content-Type: text/plain\r\n\r\n"
     . "hello from body\r\n"
     . '--' . $boundary . "--\r\n";
-$multipartReq = new VSlim\Request('POST', '/forms/echo', $multipartBody);
+$multipartReq = new VSlim\Vhttpd\Request('POST', '/forms/echo', $multipartBody);
 $multipartReq->set_headers(['content-type' => 'multipart/form-data; boundary=' . $boundary]);
 echo $multipartReq->body_format() . PHP_EOL;
 echo ($multipartReq->is_multipart_body() ? 'yes' : 'no') . PHP_EOL;

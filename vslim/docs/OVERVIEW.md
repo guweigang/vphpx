@@ -67,15 +67,20 @@
 `VSlim\App` 负责：
 
 - 路由注册
-- middleware / before / after
+- middleware / before / after phase middleware
 - route group
 - resource route
 - dispatch / dispatch_envelope
 - URL generation
+- provider / module bootstrap
+- HTTP kernel orchestration
+- PSR-7 / PSR-15 bridge
 
 入口文档：
 
 - [app/README.md](/Users/guweigang/Source/vphpx/vslim/docs/app/README.md)
+- [app/kernel.md](/Users/guweigang/Source/vphpx/vslim/docs/app/kernel.md)
+- [app/skeleton.md](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
 
 ### Stream
 
@@ -150,13 +155,19 @@
 - request / response facade
   - [http/request.md](/Users/guweigang/Source/vphpx/vslim/docs/http/request.md)
   - [http/response.md](/Users/guweigang/Source/vphpx/vslim/docs/http/response.md)
+- native PSR HTTP objects / factories
+  - [http/psr-http.md](/Users/guweigang/Source/vphpx/vslim/docs/http/psr-http.md)
 - config
   - [config/config.md](/Users/guweigang/Source/vphpx/vslim/docs/config/config.md)
+- logger
+  - [logger/logger.md](/Users/guweigang/Source/vphpx/vslim/docs/logger/logger.md)
 - container
   - [container/container.md](/Users/guweigang/Source/vphpx/vslim/docs/container/container.md)
 - PSR-7 bridge / worker integration
   - [psr7_bridge.md](/Users/guweigang/Source/vphpx/vslim/docs/psr7_bridge.md)
   - [integration/psr7.md](/Users/guweigang/Source/vphpx/vslim/docs/integration/psr7.md)
+- PSR long-term roadmap
+  - [psr-roadmap.md](/Users/guweigang/Source/vphpx/vslim/docs/psr-roadmap.md)
 - ORM / View / Controller
   - [orm.md](/Users/guweigang/Source/vphpx/vslim/docs/orm.md)
   - [view/view.md](/Users/guweigang/Source/vphpx/vslim/docs/view/view.md)
@@ -170,6 +181,7 @@
 1. 先看这页
 2. 再看 [README.md](/Users/guweigang/Source/vphpx/vslim/README.md)
 3. 再看 [app/README.md](/Users/guweigang/Source/vphpx/vslim/docs/app/README.md)
+4. 如果你想直接搭项目骨架，再看 [app/skeleton.md](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
 
 如果你关注 AI / stream：
 

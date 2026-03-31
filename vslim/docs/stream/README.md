@@ -5,7 +5,7 @@
 推荐这样理解：
 
 - `VSlim\Stream\Response`
-  流式响应对象；和 `VSlim\Response` 并列
+  流式响应对象；和 `VSlim\Vhttpd\Response` 并列
 - `VSlim\Stream\Factory`
   更短的 text/sse/ollama 快捷入口
 - `VSlim\Stream\OllamaClient`
@@ -56,11 +56,11 @@ $app->get('/events', function () {
 ```php
 <?php
 
-$app->map(['GET', 'POST'], '/ollama/text', function (VSlim\Request $req) {
+$app->map(['GET', 'POST'], '/ollama/text', function (VSlim\Vhttpd\Request $req) {
     return VSlim\Stream\Factory::ollama_text($req);
 });
 
-$app->map(['GET', 'POST'], '/ollama/sse', function (VSlim\Request $req) {
+$app->map(['GET', 'POST'], '/ollama/sse', function (VSlim\Vhttpd\Request $req) {
     return VSlim\Stream\Factory::ollama_sse($req);
 });
 ```

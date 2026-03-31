@@ -19,7 +19,7 @@ define('VSLIM_HTTPD_WORKER_NOAUTO', true);
 require_once dirname(__DIR__) . '/examples/vendor/autoload.php';
 
 $app = new VSlim\App();
-$app->get('/stream/text', function (VSlim\Request $req) {
+$app->get('/stream/text', function (VSlim\Vhttpd\Request $req) {
     return VSlim\Stream\Response::text((function () use ($req): iterable {
         yield "hello:";
         yield $req->param('name') ?: 'world';

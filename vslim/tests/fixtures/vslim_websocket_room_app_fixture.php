@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 $app = new VSlim\App();
 
-$app->get('/meta', static function (): VSlim\Response {
-    return (new VSlim\Response(200, '', 'application/json; charset=utf-8'))->json((string) json_encode([
+$app->get('/meta', static function (): VSlim\Vhttpd\Response {
+    return (new VSlim\Vhttpd\Response(200, '', 'application/json; charset=utf-8'))->json((string) json_encode([
         'name' => 'vslim-websocket-room-fixture',
         'websocket' => '/ws',
     ], JSON_UNESCAPED_UNICODE));

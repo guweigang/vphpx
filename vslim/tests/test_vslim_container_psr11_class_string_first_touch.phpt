@@ -15,10 +15,24 @@ if (extension_loaded('psr')) {
 <?php
 $autoload = dirname(__DIR__) . '/examples/vendor/autoload.php';
 if (!is_file($autoload)) {
-    echo "skip missing Composer autoload\n";
-    return;
+    spl_autoload_register(function (string $class): void {
+        if (str_starts_with($class, 'Psr\\Container\\')) {
+            eval(<<<'PHP'
+namespace Psr\Container;
+
+interface ContainerExceptionInterface extends \Throwable {}
+interface NotFoundExceptionInterface extends ContainerExceptionInterface {}
+interface ContainerInterface
+{
+    public function get(string $id);
+    public function has(string $id): bool;
 }
-require_once $autoload;
+PHP);
+        }
+    });
+} else {
+    require_once $autoload;
+}
 
 $iface = 'Psr\\Container\\ContainerInterface';
 

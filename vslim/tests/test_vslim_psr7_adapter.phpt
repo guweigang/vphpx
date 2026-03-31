@@ -1,5 +1,5 @@
 --TEST--
-VSlim PSR-7 adapter converts requests into VSlim\Request and dispatches them
+VSlim PSR-7 adapter converts requests into VSlim\Vhttpd\Request and dispatches them
 --SKIPIF--
 <?php if (!extension_loaded("vslim")) print "skip"; ?>
 --FILE--

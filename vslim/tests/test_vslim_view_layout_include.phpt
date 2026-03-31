@@ -32,7 +32,7 @@ $res = $app->view_with_layout('view_home.html', 'view_layout.html', [
 echo $res->status . '|' . (str_contains($res->body, 'Header-2') ? 'res-ok' : 'res-miss') . PHP_EOL;
 
 final class LayoutController extends VSlim\Controller {
-    public function page(): VSlim\Response {
+    public function page(): VSlim\Vhttpd\Response {
         return $this->render_with_layout('view_home.html', 'view_layout.html', [
             'title' => 'Controller Layout',
             'subtitle' => 'Header-C',

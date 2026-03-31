@@ -5,12 +5,12 @@ VSlim route metadata helpers expose route names and allowed methods
 --FILE--
 <?php
 $app = new VSlim\App();
-$app->get('/health', function (VSlim\Request $req) { return 'ok'; });
-$app->post('/users', function (VSlim\Request $req) { return 'create'; });
-$app->put_named('users.update', '/users/:id', function (VSlim\Request $req) { return 'u'; });
-$app->delete_named('users.delete', '/users/:id', function (VSlim\Request $req) { return 'd'; });
-$app->any_named('echo.any', '/echo/:id', function (VSlim\Request $req) { return 'e'; });
-$app->get_named('health.dup', '/health', function (VSlim\Request $req) { return 'dup'; });
+$app->get('/health', function ($req) { return 'ok'; });
+$app->post('/users', function ($req) { return 'create'; });
+$app->put_named('users.update', '/users/:id', function ($req) { return 'u'; });
+$app->delete_named('users.delete', '/users/:id', function ($req) { return 'd'; });
+$app->any_named('echo.any', '/echo/:id', function ($req) { return 'e'; });
+$app->get_named('health.dup', '/health', function ($req) { return 'dup'; });
 
 echo $app->route_count() . PHP_EOL;
 echo implode(',', $app->route_names()) . PHP_EOL;

@@ -1,6 +1,6 @@
-# VSlim\Response
+# VSlim\Vhttpd\Response
 
-`VSlim\Response` 是 VSlim 的轻量响应对象，适合在 route、middleware、error handler 里直接返回。
+`VSlim\Vhttpd\Response` 是 VSlim 的轻量响应对象，适合在 route、middleware、error handler 里直接返回。
 
 真理之源：
 
@@ -11,7 +11,7 @@
 ## 构造
 
 ```php
-$res = new VSlim\Response(200, 'ok', 'text/plain; charset=utf-8');
+$res = new VSlim\Vhttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
 ```
 
 构造后会自动设置：
@@ -92,7 +92,7 @@ $res->set_cookie_full('sid', 'abc', '/', '', 3600, true, true, 'Lax');
 示例：
 
 ```php
-$res = new VSlim\Response(200, 'ignored', 'text/plain; charset=utf-8');
+$res = new VSlim\Vhttpd\Response(200, 'ignored', 'text/plain; charset=utf-8');
 $res->redirect_with_status('/moved', 307);
 ```
 
@@ -132,14 +132,14 @@ $res->with_request_id('rid-7')->with_trace_id('trace-7');
 
 ```php
 $app->get('/hello', function () {
-    return new VSlim\Response(200, 'hello', 'text/plain; charset=utf-8');
+    return new VSlim\Vhttpd\Response(200, 'hello', 'text/plain; charset=utf-8');
 });
 ```
 
 ### 先构造后修改
 
 ```php
-$res = new VSlim\Response(200, '', 'text/plain; charset=utf-8');
+$res = new VSlim\Vhttpd\Response(200, '', 'text/plain; charset=utf-8');
 $res->text('ok')->set_header('x-demo', 'yes');
 return $res;
 ```
@@ -147,9 +147,15 @@ return $res;
 ### 在 `after()` 里修改响应
 
 ```php
-$app->after(function (VSlim\Request $req, VSlim\Response $res) {
-    $res->set_header('x-after', '1');
-    return $res;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+
+$app->after(new class implements MiddlewareInterface {
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        return $handler->handle($request)->withHeader('x-after', '1');
+    }
 });
 ```
-

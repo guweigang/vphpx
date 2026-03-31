@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title | trim }}</title>
+</head>
+<body>
+  <main>
+    <h1>{{ title | trim }}</h1>
+    <p>trace: {{ trace | default('n/a') }}</p>
+    <p>middleware: {{ middleware | default('n/a') }}</p>
+    <p>catalog: {{ catalog_url | trim }}</p>
+  </main>
+</body>
+</html>

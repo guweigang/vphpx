@@ -5,30 +5,30 @@ VSlim\App supports custom not_found and error handlers
 --FILE--
 <?php
 $app = new VSlim\App();
-$app->get('/ok', function (VSlim\Request $req) {
+$app->get('/ok', function ($req) {
     return 'ok';
 });
-$app->post('/write', function (VSlim\Request $req) {
-    return 'w:' . $req->body;
+$app->post('/write', function ($req) {
+    return 'w:' . (string) $req->getBody();
 });
-$app->get('/bad', function (VSlim\Request $req) {
+$app->get('/bad', function ($req) {
     return 123;
 });
 
-$app->set_not_found_handler(function (VSlim\Request $req) {
+$app->set_not_found_handler(function ($req) {
     return [
         'status' => 404,
         'content_type' => 'application/json; charset=utf-8',
-        'body' => json_encode(['missing' => $req->path]),
+        'body' => json_encode(['missing' => $req->getUri()->getPath()]),
     ];
 });
 
-$app->set_error_handler(function (VSlim\Request $req, string $message, int $status) {
+$app->set_error_handler(function ($req, string $message, int $status) {
     return [
         'status' => $status,
         'content_type' => 'application/json; charset=utf-8',
         'body' => json_encode([
-            'path' => $req->path,
+            'path' => $req->getUri()->getPath(),
             'status' => $status,
             'message' => $message,
         ]),

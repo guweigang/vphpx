@@ -100,17 +100,23 @@ $container = $app->container();
 
 ## Route handler 如何从容器解析
 
-VSlim 路由不仅接受闭包，也接受容器服务 id 或数组形式的 handler。
+容器 route handler 现在走显式 PSR/方法契约，不再隐式执行容器里的 closure 或默认 `__invoke()`。
 
 ### 1. 字符串 service id
 
 ```php
-$container->set('hello.handler', function (VSlim\Request $req) {
-    return 'hello:' . $req->param('id');
+$container->set('hello.handler', new class implements Psr\Http\Server\RequestHandlerInterface {
+    public function handle(Psr\Http\Message\ServerRequestInterface $request): Psr\Http\Message\ResponseInterface
+    {
+        return (new VSlim\Psr7\Response(200, ''))
+            ->withBody(new VSlim\Psr7\Stream('hello:' . $request->getAttribute('id')));
+    }
 });
 
 $app->get('/hello/:id', 'hello.handler');
 ```
+
+要求 service 实现 `Psr\Http\Server\RequestHandlerInterface`，或者至少暴露 `handle()`。
 
 ### 2. `[service, method]`
 
@@ -119,13 +125,15 @@ $container->set('users.controller', new UserController());
 $app->get('/users/:id', ['users.controller', 'show']);
 ```
 
-### 3. `[service]`
+这里会显式调用 `show(ServerRequestInterface $request)`。
 
-如果 service 对象可调用或带 `__invoke()`，可以省略方法名：
+### 3. `[service, '__invoke']`
+
+如果你确实要走 `__invoke()`，也需要显式写出来：
 
 ```php
 $container->set('invoke.controller', new InvokableController());
-$app->get('/inv/:id', ['invoke.controller']);
+$app->get('/inv/:id', ['invoke.controller', '__invoke']);
 ```
 
 ### 4. 自动类名解析
@@ -137,10 +145,12 @@ $app->get('/auto/:id', AutoController::class);
 $app->get('/auto-show/:id', [AutoController::class, 'show']);
 ```
 
-这要求类可无参构造。
+这要求类可无参构造；如果直接把类名当字符串 handler 用，这个类同样需要实现 `RequestHandlerInterface` 或提供 `handle()`。
 
 ## 注意事项
 
 - `factory()` 参数必须是 callable，否则抛 `ContainerException`
 - 自动类名解析只在路由 handler 解析阶段触发
 - 对路由来说，字符串和数组 handler 都依赖容器
+- `[service]` 这种隐式 `__invoke` 形式已经不再支持
+- 容器 route handler 不再把 closure 当成 route handler 自动执行

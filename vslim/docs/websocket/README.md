@@ -13,7 +13,7 @@
 
 ```php
 $app = new VSlim\App();
-$app->get('/health', fn () => (new VSlim\Response(200, 'OK', 'text/plain; charset=utf-8'))->text('OK'));
+$app->get('/health', fn () => (new VSlim\Vhttpd\Response(200, 'OK', 'text/plain; charset=utf-8'))->text('OK'));
 
 $ws = (new VSlim\WebSocket\App())
     ->on_open(static fn ($conn, array $frame): string => 'connected')
