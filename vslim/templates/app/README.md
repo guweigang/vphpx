@@ -8,8 +8,11 @@
 - `composer.json`
 - `Makefile`
 - `public/index.php`
+- `public/worker.php`
 - `bootstrap/app.php`
+- `bootstrap/http.php`
 - `config/app.toml`
+- `vhttpd.example.toml`
 - `bootstrap/runtime.php`
 - `bootstrap/cli.php`
 - `app/Providers/AppServiceProvider.php`
@@ -30,12 +33,14 @@
 1. 复制这个目录到新项目
 2. 运行 `composer install`
 3. 用 `make serve EXT=./vslim.so` 启 HTTP 入口
-4. 用 `make cli-help EXT=./vslim.so` 看 CLI 入口
-5. 从 `app/Http/routes/web.php`、`app/Http/middleware.php`、`app/Modules/StatusModule.php`、`app/Commands/AboutCommand.php` 开始改自己的业务
+4. 用 `make vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd` 启 worker 入口
+5. 用 `make cli-help EXT=./vslim.so` 看 CLI 入口
+6. 从 `app/Http/routes/web.php`、`app/Http/middleware.php`、`app/Modules/StatusModule.php`、`app/Commands/AboutCommand.php` 开始改自己的业务
 
 模板自带的项目级入口有：
 
 - `make serve EXT=./vslim.so`
+- `make vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd`
 - `make cli EXT=./vslim.so`
 - `make cli-help EXT=./vslim.so`
 - `make health EXT=./vslim.so`
@@ -45,6 +50,16 @@
 
 ```bash
 php -d extension=./vslim.so -S 127.0.0.1:8080 public/index.php
+VHTTPD_APP=$(pwd)/public/worker.php /path/to/vhttpd/vhttpd \
+  --host 127.0.0.1 \
+  --port 19888 \
+  --pid-file /tmp/vslim_template_vhttpd.pid \
+  --event-log /tmp/vslim_template_vhttpd.events.ndjson \
+  --admin-host 127.0.0.1 \
+  --admin-port 19988 \
+  --worker-socket /tmp/vslim_template_worker.sock \
+  --worker-autostart 1 \
+  --worker-cmd 'php -d extension=./vslim.so /path/to/vhttpd/php/package/bin/php-worker'
 php -d extension=./vslim.so bin/vslim about --help
 ```
 
@@ -59,11 +74,43 @@ $app = (new VSlim\App())->bootstrapDir(__DIR__);
 `not_found` / `error` 和 `boot` 集中到一处。为了让“刚复制模板、还没跑 composer install”的场景也能先工作，
 这个文件和 `bootstrap/cli.php` 还会显式 `require_once` 模板里自己的类文件。
 
+## 同一个 app，两条 HTTP transport
+
+模板把 transport 适配和应用装配刻意拆开了：
+
+- `public/index.php`
+  给 `php -S` 这类“从 PHP globals 构造请求”的入口使用
+- `public/worker.php`
+  给 `php-worker` / `vhttpd` 这类“直接收 envelope”的入口使用
+- `bootstrap/http.php`
+  放两边共用的 request/response 适配 helper，确保它们最终都 dispatch 到同一个 `VSlim\App`
+
+推荐先把这两个命令都跑通，再开始改业务：
+
+```bash
+make serve EXT=./vslim.so
+make vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd
+```
+
+本地验证可以分别打：
+
+```bash
+curl --noproxy '*' http://127.0.0.1:8080/health
+curl --noproxy '*' http://127.0.0.1:19888/health
+```
+
+如果你更喜欢 TOML 配置，而不是在命令行上把参数全部展开，可以从 `vhttpd.example.toml` 开始。
+把里面的 `__PROJECT_ROOT__` 和 `__VHTTPD_ROOT__` 换成真实绝对路径后运行：
+
+```bash
+/path/to/vhttpd/vhttpd --config ./vhttpd.example.toml
+```
+
 ## 扩展点速查
 
 | 你要改什么 | 先看哪里 | 作用 |
 | --- | --- | --- |
-| HTTP 入口 | `public/index.php` / `Makefile` | built-in server 入口和本地启动命令 |
+| HTTP 入口 | `public/index.php` / `public/worker.php` / `bootstrap/http.php` / `Makefile` | built-in server、worker 入口和 transport 适配 |
 | CLI 入口 | `bin/vslim` / `bootstrap/cli.php` | CLI 启动脚本和命令装配 |
 | 显式总装配 | `bootstrap/app.php` | 把 config、provider、module、middleware、routes 收进一份 spec |
 | 配置 | `config/app.toml` | 基础 app 配置 |
@@ -87,6 +134,8 @@ $app = (new VSlim\App())->bootstrapDir(__DIR__);
 
 HTTP 侧的最小样板包括：
 
+- `bootstrap/http.php`
+  展示怎样把 built-in server globals 和 worker envelope 收到同一份 app dispatch
 - `app/Http/middleware.php`
   展示如何注册 `Psr\Http\Server\MiddlewareInterface`
 - `app/Http/controllers.php`

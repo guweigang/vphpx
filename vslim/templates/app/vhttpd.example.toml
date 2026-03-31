@@ -1,0 +1,21 @@
+[server]
+host = "127.0.0.1"
+port = 19888
+
+[files]
+pid_file = "/tmp/vslim_template_vhttpd.pid"
+event_log = "/tmp/vslim_template_vhttpd.events.ndjson"
+
+[worker]
+autostart = true
+read_timeout_ms = 3000
+socket = "/tmp/vslim_template_worker.sock"
+cmd = "php -d extension=__PROJECT_ROOT__/vslim.so __VHTTPD_ROOT__/php/package/bin/php-worker"
+
+[worker.env]
+VHTTPD_APP = "__PROJECT_ROOT__/public/worker.php"
+
+[admin]
+host = "127.0.0.1"
+port = 19988
+token = ""

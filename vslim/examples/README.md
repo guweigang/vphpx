@@ -28,6 +28,8 @@ php -d extension=./vslim.so vslim/examples/skeleton_app.php --self-test
   [`docs/app/skeleton.md`](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
 
 如果你不是想看示例，而是想直接复制一个最小项目起点，就不用先读这一页，直接去模板 README 即可。
+模板现在已经把 `php -S` 的 `public/index.php` 和 `vhttpd/php-worker` 的 `public/worker.php` 都配好；
+如果你要看“同一个 app 在两种 transport 下怎么跑”，优先读 [`templates/app/README.md`](/Users/guweigang/Source/vphpx/vslim/templates/app/README.md)。
 
 `demo_app.php` 现在不再自己堆所有定义，而是作为一个薄入口去加载：
 
