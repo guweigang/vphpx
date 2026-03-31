@@ -1,3 +1,85 @@
+## VSlim Demo App Skeleton
+
+如果你想直接看一套更接近应用目录的骨架入口，最短路径是：
+
+1. 先跑 `skeleton_app.php --self-test`
+2. 再读 [`examples/skeleton/README.md`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton/README.md) 的扩展点速查
+3. 如果目标是复制一个项目起点，继续读 [`templates/app/README.md`](/Users/guweigang/Source/vphpx/vslim/templates/app/README.md)
+
+```bash
+php -d extension=./vslim.so vslim/examples/skeleton_app.php --self-test
+```
+
+这个例子直接用 `bootstrapDir(__DIR__ . '/skeleton')` 启动，并刻意演示：
+
+- `app/Http/Controllers/*.php` 的简单 controller 自动绑定
+- `app/Http/controllers.php` 的复杂 controller 显式绑定
+- `app/Http/errors.php` 的应用级错误处理
+- `app/Http/middleware.php` 的 HTTP middleware 装配
+- `app/Modules/*.php` / `app/Providers/*.php` / `resources/views` 的组合
+
+相关入口按用途分三层看最省时间：
+
+- 示例骨架说明：
+  [`examples/skeleton/README.md`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton/README.md)
+- 模板项目起点：
+  [`templates/app/README.md`](/Users/guweigang/Source/vphpx/vslim/templates/app/README.md)
+- 骨架设计说明：
+  [`docs/app/skeleton.md`](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
+
+如果你不是想看示例，而是想直接复制一个最小项目起点，就不用先读这一页，直接去模板 README 即可。
+
+`demo_app.php` 现在不再自己堆所有定义，而是作为一个薄入口去加载：
+
+- `demo/bootstrap/app.php`
+- `demo/bootstrap/providers.php`
+- `demo/routes/web.php`
+- `demo/routes/api.php`
+- `demo/routes/debug.php`
+- `demo/support.php`
+
+推荐直接把这套结构当成项目骨架起点，然后在入口里这样启动：
+
+```php
+$app = (new VSlim\App())->bootstrapDir(__DIR__ . '/demo');
+```
+
+这样 `bootstrap/app.php` 负责总装配，provider 收服务绑定，routes 按语义拆分，入口文件只保留 worker / built-in server 的 transport 适配。
+
+如果你不想写 `bootstrap/app.php`，现在也可以直接只保留 convention 文件：
+
+- `config/app.toml`
+- `bootstrap/runtime.php`
+- `bootstrap/services.php`
+- `bootstrap/errors.php`
+- `bootstrap/providers.php`
+- `bootstrap/modules.php`
+- `bootstrap/middleware.php`
+- `routes/*.php`
+- `views/`
+
+`bootstrapDir()` 会自动把这层骨架收起来。
+
+如果你更喜欢应用层目录布局，现在也可以直接用：
+
+- `app/Providers/*.php`
+- `app/Modules/*.php`
+- `app/Http/controllers.php`
+- `app/Http/errors.php`
+- `app/Http/routes/*.php`
+- `app/Http/middleware.php`
+- `app/Http/Controllers/*.php`
+- `app/Http/Middleware/*.php`
+- `resources/views`
+
+`bootstrapDir()` 会把这层也当成默认 conventions。
+
+推荐分工：
+
+- `app/Http/Controllers/*.php` 放简单 `VSlim\Controller` 子类
+- `app/Http/controllers.php` 放需要构造参数的 controller 绑定
+- `app/Http/errors.php` 放应用级 not_found / error handler
+- `app/Http/middleware.php` 负责真正注册 middleware
 
 ## VSlim LiveView Demo
 
