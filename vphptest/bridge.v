@@ -750,6 +750,18 @@ pub fn runtimedemobaseexception_cleanup_raw(ptr voidptr) {
         return
     }
 }
+fn runtimedemobaseexception_load_from_php(obj &C.zend_object) RuntimeDemoBaseException {
+    mut recv := RuntimeDemoBaseException{}
+    if obj == 0 {
+        return recv
+    }
+    return recv
+}
+fn runtimedemobaseexception_sync_to_php(obj &C.zend_object, recv RuntimeDemoBaseException) {
+    if obj == 0 {
+        return
+    }
+}
 @[export: 'RuntimeDemoBaseException_get_prop']
 pub fn runtimedemobaseexception_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
@@ -795,6 +807,18 @@ pub fn runtimedemochildexception_free_raw(ptr voidptr) {
 @[export: 'RuntimeDemoChildException_cleanup_raw']
 pub fn runtimedemochildexception_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
+        return
+    }
+}
+fn runtimedemochildexception_load_from_php(obj &C.zend_object) RuntimeDemoChildException {
+    mut recv := RuntimeDemoChildException{}
+    if obj == 0 {
+        return recv
+    }
+    return recv
+}
+fn runtimedemochildexception_sync_to_php(obj &C.zend_object, recv RuntimeDemoChildException) {
+    if obj == 0 {
         return
     }
 }
@@ -878,7 +902,7 @@ pub fn callableprocessor_sync_props(ptr voidptr, zv &C.zval) {
     }
 }
 @[export: 'vphp_wrap_CallableProcessor_construct']
-pub fn vphp_wrap_callableprocessor_construct(ptr voidptr, ctx vphp.Context)  {
+pub fn vphp_wrap_callableprocessor_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &CallableProcessor(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
@@ -962,7 +986,7 @@ pub fn finder_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_Finder_construct']
-pub fn vphp_wrap_finder_construct(ptr voidptr, ctx vphp.Context)  {
+pub fn vphp_wrap_finder_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &Finder(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
@@ -1270,7 +1294,7 @@ pub fn validator_sync_props(ptr voidptr, zv &C.zval) {
     }
 }
 @[export: 'vphp_wrap_Validator_construct']
-pub fn vphp_wrap_validator_construct(ptr voidptr, ctx vphp.Context)  {
+pub fn vphp_wrap_validator_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &Validator(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
