@@ -45,13 +45,22 @@ jobs:
           extensions: zip
 
       - name: Setup V
-        if: matrix.needs_build
+        if: matrix.needs_build && runner.os != 'Windows'
         shell: bash
         run: |
           git clone --depth 1 https://github.com/vlang/v.git /tmp/vlang
           make -C /tmp/vlang
           echo "/tmp/vlang" >> "$GITHUB_PATH"
           /tmp/vlang/v version
+
+      - name: Setup V on Windows
+        if: matrix.needs_build && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          git clone --depth 1 https://github.com/vlang/v.git "$env:RUNNER_TEMP\vlang"
+          cmd /c "$env:RUNNER_TEMP\vlang\make.bat"
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:RUNNER_TEMP\vlang"
+          & "$env:RUNNER_TEMP\vlang\v.exe" version
 
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
@@ -66,17 +75,22 @@ jobs:
           brew install pkg-config cjson openssl@3 libsodium argon2
 
       - name: Build VSlim extension
-        if: matrix.needs_build
+        if: matrix.package_type == 'binary'
         working-directory: vslim
         shell: bash
         env:
           VPHP_V_GC: none
         run: |
-          if [ "${{ matrix.emit_only }}" = "true" ]; then
-            make emit-only
-          else
-            make build
-          fi
+          make build
+
+      - name: Emit VSlim bridge sources on Windows
+        if: runner.os == 'Windows' && matrix.emit_only
+        working-directory: vslim
+        shell: pwsh
+        env:
+          VPHP_V_GC: none
+        run: |
+          & v.exe -path ".:..:@vlib" run build.v -emit-only
 
       - name: Smoke check binary bundle
         if: matrix.package_type == 'binary'
