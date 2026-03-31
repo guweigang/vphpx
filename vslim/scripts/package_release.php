@@ -190,15 +190,14 @@ function stage_source_bundle(string $repoRoot, string $stageDir): void
         'vslim/Makefile',
         'vslim/php_bridge.c',
         'vslim/php_bridge.h',
-        'vslim/vslim_generated.c',
         'vphp/v_bridge.c',
         'vphp/v_bridge.h',
     ];
     foreach ($files as $relativePath) {
-        $src = $repoRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
-        $dst = $stageDir . DIRECTORY_SEPARATOR . 'source' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
-        copy_file($src, $dst);
+        copy_repo_file_if_present($repoRoot, $stageDir, $relativePath);
     }
+
+    copy_repo_file_if_present($repoRoot, $stageDir, 'vslim/vslim_generated.c');
 
     copy_tree(
         $repoRoot . DIRECTORY_SEPARATOR . 'vphp' . DIRECTORY_SEPARATOR . 'bridge',
@@ -326,6 +325,16 @@ function copy_file(string $from, string $to): void
     if (!copy($from, $to)) {
         fail('Failed to copy file: ' . $from);
     }
+}
+
+function copy_repo_file_if_present(string $repoRoot, string $stageDir, string $relativePath): void
+{
+    $src = $repoRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
+    if (!is_file($src)) {
+        return;
+    }
+    $dst = $stageDir . DIRECTORY_SEPARATOR . 'source' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
+    copy_file($src, $dst);
 }
 
 function ensure_dir(string $path): void

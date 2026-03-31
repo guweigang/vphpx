@@ -45,19 +45,19 @@ jobs:
         if: matrix.needs_build
         uses: vlang/setup-v@v1
         with:
-          v-version: latest
+          version: latest
 
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc pkg-config libcjson-dev libssl-dev
+          sudo apt-get install -y gcc pkg-config libcjson-dev libssl-dev libsodium-dev libargon2-dev
 
       - name: Install macOS dependencies
         if: runner.os == 'macOS'
         run: |
           brew update
-          brew install pkg-config cjson openssl@3
+          brew install pkg-config cjson openssl@3 libsodium argon2
 
       - name: Build VSlim extension
         if: matrix.needs_build
