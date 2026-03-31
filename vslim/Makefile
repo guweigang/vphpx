@@ -52,6 +52,7 @@ RUNTIME_EXTRA_TESTS := \
 	tests/test_php_worker_mcp_dispatch.phpt
 
 RUNTIME_VHTTPD_TESTS := \
+	tests/test_vslim_app_template_vhttpd_smoke.phpt \
 	tests/test_httpd_toml_worker_env.phpt \
 	tests/test_httpd_worker_streaming.phpt \
 	tests/test_httpd_worker_timeout.phpt
