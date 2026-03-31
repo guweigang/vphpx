@@ -51,6 +51,11 @@ RUNTIME_EXTRA_TESTS := \
 	tests/test_php_worker_stream_dispatch_json_maps.phpt \
 	tests/test_php_worker_mcp_dispatch.phpt
 
+RUNTIME_VHTTPD_TESTS := \
+	tests/test_httpd_toml_worker_env.phpt \
+	tests/test_httpd_worker_streaming.phpt \
+	tests/test_httpd_worker_timeout.phpt
+
 all: build
 
 build:
@@ -111,7 +116,7 @@ mvp-check: build
 
 runtime-check: build vhttpd
 	@echo "[runtime-check] phpt runtime regression set"
-	@./run_tests.sh tests/test_httpd*.phpt tests/test_vhttpd*.phpt $(RUNTIME_EXTRA_TESTS)
+	@./run_tests.sh $(RUNTIME_VHTTPD_TESTS) $(RUNTIME_EXTRA_TESTS)
 
 clean:
 	rm -f vslim.so $(VHTTPD_BIN)
