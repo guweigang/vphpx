@@ -110,36 +110,36 @@ fn my_universal_4_void(a vphp.ZVal, b vphp.ZVal, c vphp.ZVal, d vphp.ZVal) {
 }
 
 @[php_function]
-fn v_get_closure_0(ctx vphp.Context) {
-    ctx.wrap_closure_universal_0(my_universal_0)
+fn v_get_closure_0() vphp.ClosureUniversal0 {
+	return my_universal_0
 }
 
 @[php_function]
-fn v_get_closure_1(ctx vphp.Context) {
-    ctx.wrap_closure_universal_1(my_universal_1)
+fn v_get_closure_1() vphp.ClosureUniversal1 {
+	return my_universal_1
 }
 
 @[php_function]
-fn v_get_closure_2(ctx vphp.Context) {
-    ctx.wrap_closure_universal_2(my_universal_2)
+fn v_get_closure_2() vphp.ClosureUniversal2 {
+	return my_universal_2
 }
 
 @[php_function]
-fn v_get_closure_3(ctx vphp.Context) {
-    ctx.wrap_closure_universal_3(my_universal_3)
+fn v_get_closure_3() vphp.ClosureUniversal3 {
+	return my_universal_3
 }
 
 @[php_function]
-fn v_get_closure_4(ctx vphp.Context) {
-    ctx.wrap_closure_universal_4(my_universal_4)
+fn v_get_closure_4() vphp.ClosureUniversal4 {
+	return my_universal_4
 }
 
 @[php_function]
-fn v_get_closure_3_void(ctx vphp.Context) {
-    ctx.wrap_closure_universal_3_void(my_universal_3_void)
+fn v_get_closure_3_void() vphp.ClosureUniversal3Void {
+	return my_universal_3_void
 }
 
 @[php_function]
-fn v_get_closure_4_void(ctx vphp.Context) {
-    ctx.wrap_closure_universal_4_void(my_universal_4_void)
+fn v_get_closure_4_void() vphp.ClosureUniversal4Void {
+	return my_universal_4_void
 }

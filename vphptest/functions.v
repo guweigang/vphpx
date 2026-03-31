@@ -223,35 +223,34 @@ fn v_read_php_class_constant(ctx vphp.Context) {
 }
 
 @[php_function]
-fn v_typed_php_interop(ctx vphp.Context) {
-	obj := ctx.arg_raw(0)
+fn v_typed_php_interop(obj vphp.ZVal) string {
 	if !obj.is_object() {
 		vphp.throw_exception('需要 PhpTypedBox 对象', 0)
-		return
+		return ''
 	}
 
 	length := vphp.php_fn('strlen').call_v[int]([vphp.ZVal.new_string('codex')]) or {
 		vphp.throw_exception('调用 strlen 失败: ${err.msg()}', 0)
-		return
+		return ''
 	}
 	name := obj.prop_v[string]('name') or {
 		vphp.throw_exception('读取 name 属性失败: ${err.msg()}', 0)
-		return
+		return ''
 	}
 	score := obj.method_v[int]('doubleScore', []) or {
 		vphp.throw_exception('调用 doubleScore 失败: ${err.msg()}', 0)
-		return
+		return ''
 	}
 	count := vphp.php_class('PhpTypedBox').static_prop_v[int]('count') or {
 		vphp.throw_exception('读取静态属性 count 失败: ${err.msg()}', 0)
-		return
+		return ''
 	}
 	label := vphp.php_class('PhpTypedBox').const_v[string]('LABEL') or {
 		vphp.throw_exception('读取类常量 LABEL 失败: ${err.msg()}', 0)
-		return
+		return ''
 	}
 
-	ctx.return_string('typed=${length}:${name}:${score}:${count}:${label}')
+	return 'typed=${length}:${name}:${score}:${count}:${label}'
 }
 
 @[php_function]
@@ -275,39 +274,39 @@ fn v_typed_object_restore(ctx vphp.Context) {
 }
 
 @[php_function]
-fn v_zval_conversion_api(ctx vphp.Context) {
+fn v_zval_conversion_api() string {
 	cfg_z := vphp.ZVal.from[map[string]string]({
 		'lang':   'v'
 		'bridge': 'vphp'
 	}) or {
 		vphp.throw_exception('ZVal.from map failed: ${err.msg()}', 0)
-		return
+		return ''
 	}
 	cfg := cfg_z.to_v[map[string]string]() or {
 		vphp.throw_exception('to_v map failed: ${err.msg()}', 0)
-		return
+		return ''
 	}
 
 	mut nums_z := vphp.ZVal.new_null()
 	nums_z.from_v[[]int]([7, 8, 9]) or {
 		vphp.throw_exception('from_v list failed: ${err.msg()}', 0)
-		return
+		return ''
 	}
 	nums := nums_z.to_v[[]int]() or {
 		vphp.throw_exception('to_v list failed: ${err.msg()}', 0)
-		return
+		return ''
 	}
 
 	flag_z := vphp.ZVal.from[bool](true) or {
 		vphp.throw_exception('ZVal.from bool failed: ${err.msg()}', 0)
-		return
+		return ''
 	}
 	flag := flag_z.to_v[bool]() or {
 		vphp.throw_exception('to_v bool failed: ${err.msg()}', 0)
-		return
+		return ''
 	}
 
-	ctx.return_string('conv=${cfg['lang']}:${cfg['bridge']}:${nums.len}:${nums[0]}:${flag}')
+	return 'conv=${cfg['lang']}:${cfg['bridge']}:${nums.len}:${nums[0]}:${flag}'
 }
 
 @[php_function]
@@ -617,11 +616,10 @@ fn v_call_php_closure(ctx vphp.Context) {
 }
 
 @[php_function]
-fn v_call_php_closure_helper(ctx vphp.Context) {
-	raw := ctx.arg_raw(0)
+fn v_call_php_closure_helper(raw vphp.ZVal) string {
 	callable := raw.must_callable() or {
 		vphp.throw_exception(err.msg(), 0)
-		return
+		return ''
 	}
 
 	mut msg := vphp.ZVal{
@@ -631,14 +629,10 @@ fn v_call_php_closure_helper(ctx vphp.Context) {
 
 	res := callable.must_call([msg]) or {
 		vphp.throw_exception(err.msg(), 0)
-		return
+		return ''
 	}
 
-	if ctx.has_exception() {
-		return
-	}
-
-	ctx.return_string('Helper executed, PHP said: ' + res.to_string())
+	return 'Helper executed, PHP said: ' + res.to_string()
 }
 
 @[php_function]
@@ -715,8 +709,7 @@ fn v_iter_helpers_demo(ctx vphp.Context) {
 }
 
 @[php_function]
-fn v_iterable_object_demo(ctx vphp.Context) {
-	input := ctx.arg_raw(0)
+fn v_iterable_object_demo(input vphp.ZVal) string {
 	mut each_state := IterTextState{}
 	mut each_ref := &each_state
 	input.each(fn [each_ref] (key vphp.ZVal, val vphp.ZVal) {
@@ -731,5 +724,5 @@ fn v_iterable_object_demo(ctx vphp.Context) {
 	fold_items := input.fold[[]string]([]string{}, fn (key vphp.ZVal, val vphp.ZVal, mut acc []string) {
 		acc << '${key.to_string()}=${val.to_string()}'
 	})
-	ctx.return_string('each=${each_state.buf};fold=${fold_items.join(",")};count=${fold_items.len}')
+	return 'each=${each_state.buf};fold=${fold_items.join(",")};count=${fold_items.len}'
 }

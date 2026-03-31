@@ -908,6 +908,7 @@ pub fn vphp_wrap_callableprocessor_construct(ptr voidptr, ctx vphp.Context) void
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     recv.construct(arg_0)
+    return ptr
 }
 @[export: 'vphp_wrap_CallableProcessor_process']
 pub fn vphp_wrap_callableprocessor_process(ptr voidptr, ctx vphp.Context)  {
@@ -992,6 +993,7 @@ pub fn vphp_wrap_finder_construct(ptr voidptr, ctx vphp.Context) voidptr {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx
     recv.construct(arg_0)
+    return ptr
 }
 @[export: 'vphp_wrap_Finder_find']
 pub fn vphp_wrap_finder_find(ptr voidptr, ctx vphp.Context)  {
@@ -1300,6 +1302,7 @@ pub fn vphp_wrap_validator_construct(ptr voidptr, ctx vphp.Context) voidptr {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[bool](0)
     recv.construct(arg_0)
+    return ptr
 }
 @[export: 'vphp_wrap_Validator_check']
 pub fn vphp_wrap_validator_check(ptr voidptr, ctx vphp.Context)  {
@@ -1731,8 +1734,9 @@ fn vphp_wrap_v_read_php_class_constant(ctx vphp.Context) {
 fn vphp_wrap_v_typed_php_interop(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx
-    v_typed_php_interop(arg_0)
+    arg_0 := ctx.arg[vphp.ZVal](0)
+    res := v_typed_php_interop(arg_0)
+    ctx.return_val[string](res)
 }
 
 @[export: 'vphp_wrap_v_typed_object_restore']
@@ -1747,8 +1751,8 @@ fn vphp_wrap_v_typed_object_restore(ctx vphp.Context) {
 fn vphp_wrap_v_zval_conversion_api(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx
-    v_zval_conversion_api(arg_0)
+    res := v_zval_conversion_api()
+    ctx.return_val[string](res)
 }
 
 @[export: 'vphp_wrap_v_unified_object_interop']
@@ -1859,8 +1863,9 @@ fn vphp_wrap_v_call_php_closure(ctx vphp.Context) {
 fn vphp_wrap_v_call_php_closure_helper(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx
-    v_call_php_closure_helper(arg_0)
+    arg_0 := ctx.arg[vphp.ZVal](0)
+    res := v_call_php_closure_helper(arg_0)
+    ctx.return_val[string](res)
 }
 
 @[export: 'vphp_wrap_v_test_globals']
@@ -1899,8 +1904,9 @@ fn vphp_wrap_v_iter_helpers_demo(ctx vphp.Context) {
 fn vphp_wrap_v_iterable_object_demo(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx
-    v_iterable_object_demo(arg_0)
+    arg_0 := ctx.arg[vphp.ZVal](0)
+    res := v_iterable_object_demo(arg_0)
+    ctx.return_val[string](res)
 }
 
 @[export: 'vphp_wrap_v_reverse_string']
@@ -1942,56 +1948,63 @@ fn vphp_wrap_v_invoke_with_arg(ctx vphp.Context) {
 fn vphp_wrap_v_get_closure_0(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx
-    v_get_closure_0(arg_0)
+    res := v_get_closure_0()
+    // Wrap returned V closure using explicit helper: wrap_closure_universal_0
+    ctx.wrap_closure_universal_0(res)
 }
 
 @[export: 'vphp_wrap_v_get_closure_1']
 fn vphp_wrap_v_get_closure_1(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx
-    v_get_closure_1(arg_0)
+    res := v_get_closure_1()
+    // Wrap returned V closure using explicit helper: wrap_closure_universal_1
+    ctx.wrap_closure_universal_1(res)
 }
 
 @[export: 'vphp_wrap_v_get_closure_2']
 fn vphp_wrap_v_get_closure_2(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx
-    v_get_closure_2(arg_0)
+    res := v_get_closure_2()
+    // Wrap returned V closure using explicit helper: wrap_closure_universal_2
+    ctx.wrap_closure_universal_2(res)
 }
 
 @[export: 'vphp_wrap_v_get_closure_3']
 fn vphp_wrap_v_get_closure_3(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx
-    v_get_closure_3(arg_0)
+    res := v_get_closure_3()
+    // Wrap returned V closure using explicit helper: wrap_closure_universal_3
+    ctx.wrap_closure_universal_3(res)
 }
 
 @[export: 'vphp_wrap_v_get_closure_4']
 fn vphp_wrap_v_get_closure_4(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx
-    v_get_closure_4(arg_0)
+    res := v_get_closure_4()
+    // Wrap returned V closure using explicit helper: wrap_closure_universal_4
+    ctx.wrap_closure_universal_4(res)
 }
 
 @[export: 'vphp_wrap_v_get_closure_3_void']
 fn vphp_wrap_v_get_closure_3_void(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx
-    v_get_closure_3_void(arg_0)
+    res := v_get_closure_3_void()
+    // Wrap returned V closure using explicit helper: wrap_closure_universal_3_void
+    ctx.wrap_closure_universal_3_void(res)
 }
 
 @[export: 'vphp_wrap_v_get_closure_4_void']
 fn vphp_wrap_v_get_closure_4_void(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx
-    v_get_closure_4_void(arg_0)
+    res := v_get_closure_4_void()
+    // Wrap returned V closure using explicit helper: wrap_closure_universal_4_void
+    ctx.wrap_closure_universal_4_void(res)
 }
 
 @[export: 'vphp_wrap_v_lifecycle_hook_state']
