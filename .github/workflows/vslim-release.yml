@@ -90,7 +90,7 @@ jobs:
         env:
           VPHP_V_GC: none
         run: |
-          & v.exe -path ".:..:@vlib" run build.v -emit-only
+          & v.exe -path ".;..;@vlib" run build.v -emit-only
 
       - name: Smoke check binary bundle
         if: matrix.package_type == 'binary'

@@ -99,6 +99,11 @@ fn detect_v_root_include_flags() string {
 	return flags.join(' ')
 }
 
+fn detect_v_module_path() string {
+	sep := if os.user_os() == 'windows' { ';' } else { ':' }
+	return ['.', '..', '@vlib'].join(sep)
+}
+
 fn detect_v_gc_mode() string {
 	gc_mode := os.getenv_opt('VPHP_V_GC') or { '' }
 	mode := gc_mode.trim_space()
@@ -211,7 +216,8 @@ fn main() {
 	os.rm(legacy_transpiled_c) or {}
 
 	prod_flag := if prod_mode { '-prod ' } else { '' }
-	v_res := os.execute('v ${prod_flag}-nocache -enable-globals -gc ${gc_mode} -d use_openssl -path ".:..:@vlib" -shared -o ${transpiled_c} ${source_dir}')
+	v_module_path := detect_v_module_path()
+	v_res := os.execute('v ${prod_flag}-nocache -enable-globals -gc ${gc_mode} -d use_openssl -path "${v_module_path}" -shared -o ${transpiled_c} ${source_dir}')
 	if v_res.exit_code != 0 {
 		println('❌ V 编译失败: ${v_res.output}')
 		return
