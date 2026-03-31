@@ -43,9 +43,12 @@ jobs:
 
       - name: Setup V
         if: matrix.needs_build
-        uses: vlang/setup-v@v1
-        with:
-          version: latest
+        shell: bash
+        run: |
+          git clone --depth 1 https://github.com/vlang/v.git /tmp/vlang
+          make -C /tmp/vlang
+          echo "/tmp/vlang" >> "$GITHUB_PATH"
+          /tmp/vlang/v version
 
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
