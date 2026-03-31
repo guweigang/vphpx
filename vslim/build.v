@@ -141,6 +141,7 @@ fn main() {
 	source_dir := os.join_path(project_root, 'src')
 	mut target_files := []string{}
 	mut prod_mode := false
+	mut emit_only := false
 	os.chdir(project_root) or {
 		eprintln('❌ 无法切换到项目目录: ${project_root}')
 		return
@@ -149,6 +150,10 @@ fn main() {
 	for arg in os.args[1..] {
 		if arg == '-prod' {
 			prod_mode = true
+			continue
+		}
+		if arg == '-emit-only' {
+			emit_only = true
 			continue
 		}
 		if arg.ends_with('.v') {
@@ -209,6 +214,11 @@ fn main() {
 	v_res := os.execute('v ${prod_flag}-nocache -enable-globals -gc ${gc_mode} -d use_openssl -path ".:..:@vlib" -shared -o ${transpiled_c} ${source_dir}')
 	if v_res.exit_code != 0 {
 		println('❌ V 编译失败: ${v_res.output}')
+		return
+	}
+
+	if emit_only {
+		println('✅ 已生成扩展桥接源码（emit-only 模式），跳过最终本地链接。')
 		return
 	}
 

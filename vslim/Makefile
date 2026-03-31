@@ -1,4 +1,4 @@
-.PHONY: all build prod build-prod ext dist dist-source vhttpd serve test psr-matrix framework-matrix demo-self-test demo-verify mvp-check runtime-check clean
+.PHONY: all build emit-only prod build-prod ext dist dist-source vhttpd serve test psr-matrix framework-matrix demo-self-test demo-verify mvp-check runtime-check clean
 
 BREW_PATH ?= /opt/homebrew
 VPHP_V_GC ?= auto
@@ -64,6 +64,9 @@ all: build
 
 build:
 	VPHP_V_GC="$(VPHP_V_GC)" v -path ".:..:@vlib" run build.v
+
+emit-only:
+	VPHP_V_GC="$(VPHP_V_GC)" v -path ".:..:@vlib" run build.v -emit-only
 
 prod:
 	VPHP_V_GC="$(VPHP_V_GC)" v -path ".:..:@vlib" run build.v -prod

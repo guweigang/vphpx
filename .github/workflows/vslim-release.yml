@@ -19,16 +19,19 @@ jobs:
             package_type: binary
             artifact_name: vslim-linux-binary
             needs_build: true
+            emit_only: false
           - name: macos bundle
             runs_on: macos-latest
             package_type: binary
             artifact_name: vslim-macos-binary
             needs_build: true
+            emit_only: false
           - name: windows source bundle
             runs_on: windows-latest
             package_type: source
             artifact_name: vslim-windows-source
-            needs_build: false
+            needs_build: true
+            emit_only: true
 
     steps:
       - name: Checkout
@@ -69,10 +72,14 @@ jobs:
         env:
           VPHP_V_GC: none
         run: |
-          make build
+          if [ "${{ matrix.emit_only }}" = "true" ]; then
+            make emit-only
+          else
+            make build
+          fi
 
       - name: Smoke check binary bundle
-        if: matrix.needs_build
+        if: matrix.package_type == 'binary'
         working-directory: vslim
         shell: bash
         run: |
