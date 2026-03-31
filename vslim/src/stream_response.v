@@ -3,7 +3,7 @@ module main
 import vphp
 
 @[php_method]
-pub fn (mut r VSlimStreamResponse) construct(stream_type string, chunks vphp.ZVal, status int, content_type string, headers vphp.ZVal) &VSlimStreamResponse {
+pub fn (mut r VSlimStreamResponse) construct(stream_type string, chunks vphp.BorrowedValue, status int, content_type string, headers vphp.BorrowedValue) &VSlimStreamResponse {
 	r.stream_type = normalize_stream_type(stream_type)
 	r.status = if status <= 0 { 200 } else { status }
 	r.content_type = default_stream_content_type(r.stream_type, content_type)
@@ -16,24 +16,24 @@ pub fn (mut r VSlimStreamResponse) construct(stream_type string, chunks vphp.ZVa
 }
 
 @[php_method]
-pub fn VSlimStreamResponse.text(chunks vphp.ZVal) &VSlimStreamResponse {
-	return VSlimStreamResponse.text_with(chunks, 200, 'text/plain; charset=utf-8', vphp.RequestOwnedZVal.new_null().to_zval())
+pub fn VSlimStreamResponse.text(chunks vphp.BorrowedValue) &VSlimStreamResponse {
+	return VSlimStreamResponse.text_with(chunks, 200, 'text/plain; charset=utf-8', vphp.BorrowedValue.from_zval(vphp.RequestOwnedZVal.new_null().to_zval()))
 }
 
 @[php_method]
-pub fn VSlimStreamResponse.text_with(chunks vphp.ZVal, status int, content_type string, headers vphp.ZVal) &VSlimStreamResponse {
+pub fn VSlimStreamResponse.text_with(chunks vphp.BorrowedValue, status int, content_type string, headers vphp.BorrowedValue) &VSlimStreamResponse {
 	mut out := &VSlimStreamResponse{}
 	out.construct('text', chunks, status, content_type, headers)
 	return out
 }
 
 @[php_method]
-pub fn VSlimStreamResponse.sse(events vphp.ZVal) &VSlimStreamResponse {
-	return VSlimStreamResponse.sse_with(events, 200, vphp.RequestOwnedZVal.new_null().to_zval())
+pub fn VSlimStreamResponse.sse(events vphp.BorrowedValue) &VSlimStreamResponse {
+	return VSlimStreamResponse.sse_with(events, 200, vphp.BorrowedValue.from_zval(vphp.RequestOwnedZVal.new_null().to_zval()))
 }
 
 @[php_method]
-pub fn VSlimStreamResponse.sse_with(events vphp.ZVal, status int, headers vphp.ZVal) &VSlimStreamResponse {
+pub fn VSlimStreamResponse.sse_with(events vphp.BorrowedValue, status int, headers vphp.BorrowedValue) &VSlimStreamResponse {
 	mut out := &VSlimStreamResponse{}
 	out.construct('sse', events, status, 'text/event-stream', headers)
 	return out
@@ -80,29 +80,23 @@ pub fn (mut r VSlimStreamResponse) set_content_type(content_type string) &VSlimS
 }
 
 @[php_method]
-pub fn (mut r VSlimStreamResponse) set_chunks(chunks vphp.ZVal) &VSlimStreamResponse {
+pub fn (mut r VSlimStreamResponse) set_chunks(chunks vphp.BorrowedValue) &VSlimStreamResponse {
 	if r.chunks_ref.is_valid() {
 		unsafe {
 			mut owned := r.chunks_ref
 			owned.release()
 		}
 	}
-	r.chunks_ref = vphp.PersistentOwnedZVal.from_zval(chunks)
+	r.chunks_ref = vphp.PersistentOwnedZVal.from_zval(chunks.to_zval())
 	return &r
 }
 
 @[php_method]
-@[export: 'manual_stream_chunks']
-pub fn (r &VSlimStreamResponse) chunks() {}
-
-@[export: 'VSlimStreamResponse_chunks']
-pub fn vslimstreamresponse_chunks(ptr voidptr, ctx vphp.Context) {
-	recv := unsafe { &VSlimStreamResponse(ptr) }
-	if !recv.chunks_ref.is_valid() || recv.chunks_ref.is_null() || recv.chunks_ref.is_undef() {
-		ctx.return_zval(vphp.RequestOwnedZVal.new_null().to_zval())
-		return
+pub fn (r &VSlimStreamResponse) chunks() vphp.Value {
+	if !r.chunks_ref.is_valid() || r.chunks_ref.is_null() || r.chunks_ref.is_undef() {
+		return vphp.Value.new_null()
 	}
-	ctx.return_zval(recv.chunks_ref.clone_request_owned().to_zval())
+	return vphp.Value.from_zval(r.chunks_ref.clone_request_owned().to_zval())
 }
 
 fn (r &VSlimStreamResponse) header_values() map[string]string {
@@ -171,7 +165,7 @@ fn propagate_request_trace_headers_to_object(req &VSlimRequest, raw vphp.Borrowe
 	}
 }
 
-fn (mut r VSlimStreamResponse) free() {
+fn (r &VSlimStreamResponse) free() {
 	if r.chunks_ref.is_valid() {
 		unsafe {
 			mut owned := r.chunks_ref

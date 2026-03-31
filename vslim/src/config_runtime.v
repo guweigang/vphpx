@@ -52,24 +52,28 @@ pub fn (c &VSlimConfig) has(key string) bool {
 }
 
 @[php_method]
+@[php_optional_args: 'default_value']
 pub fn (c &VSlimConfig) get_string(key string, default_value string) string {
 	value := c.value_opt(key) or { return default_value }
 	return value.string()
 }
 
 @[php_method]
+@[php_optional_args: 'default_value']
 pub fn (c &VSlimConfig) get_int(key string, default_value int) int {
 	value := c.value_opt(key) or { return default_value }
 	return value.int()
 }
 
 @[php_method]
+@[php_optional_args: 'default_value']
 pub fn (c &VSlimConfig) get_bool(key string, default_value bool) bool {
 	value := c.value_opt(key) or { return default_value }
 	return value.bool()
 }
 
 @[php_method]
+@[php_optional_args: 'default_value']
 pub fn (c &VSlimConfig) get_float(key string, default_value f64) f64 {
 	value := c.value_opt(key) or { return default_value }
 	return value.f64()
@@ -83,44 +87,51 @@ pub fn (c &VSlimConfig) get_string_list(key string) []string {
 }
 
 @[php_method]
+@[php_optional_args: 'default_json']
 pub fn (c &VSlimConfig) get_json(key string, default_json string) string {
 	value := c.value_opt(key) or { return default_json }
 	return toml_any_to_json(value)
 }
 
 @[php_method]
-pub fn (c &VSlimConfig) get(key string, default_value vphp.ZVal) vphp.ZVal {
+@[php_optional_args: 'default_value']
+pub fn (c &VSlimConfig) get(key string, default_value vphp.BorrowedValue) vphp.Value {
+	raw_default := default_value.to_zval()
 	value := c.value_opt(key) or {
-		if default_value.is_valid() {
-			return default_value
+		if raw_default.is_valid() {
+			return vphp.Value.from_zval(raw_default)
 		}
-		return vphp.RequestOwnedZVal.new_null().to_zval()
+		return vphp.Value.new_null()
 	}
-	return toml_any_to_zval(value)
+	return vphp.Value.from_zval(toml_any_to_zval(value))
 }
 
 @[php_method]
-pub fn (c &VSlimConfig) get_map(key string, default_value vphp.ZVal) vphp.ZVal {
-	value := c.value_opt(key) or { return default_or_empty(default_value) }
+@[php_optional_args: 'default_value']
+pub fn (c &VSlimConfig) get_map(key string, default_value vphp.BorrowedValue) vphp.Value {
+	raw_default := default_value.to_zval()
+	value := c.value_opt(key) or { return vphp.Value.from_zval(default_or_empty(raw_default)) }
 	match value {
 		map[string]toml.Any {
-			return toml_map_to_zval(value)
+			return vphp.Value.from_zval(toml_map_to_zval(value))
 		}
 		else {
-			return default_or_empty(default_value)
+			return vphp.Value.from_zval(default_or_empty(raw_default))
 		}
 	}
 }
 
 @[php_method]
-pub fn (c &VSlimConfig) get_list(key string, default_value vphp.ZVal) vphp.ZVal {
-	value := c.value_opt(key) or { return default_or_empty(default_value) }
+@[php_optional_args: 'default_value']
+pub fn (c &VSlimConfig) get_list(key string, default_value vphp.BorrowedValue) vphp.Value {
+	raw_default := default_value.to_zval()
+	value := c.value_opt(key) or { return vphp.Value.from_zval(default_or_empty(raw_default)) }
 	match value {
 		[]toml.Any {
-			return toml_list_to_zval(value)
+			return vphp.Value.from_zval(toml_list_to_zval(value))
 		}
 		else {
-			return default_or_empty(default_value)
+			return vphp.Value.from_zval(default_or_empty(raw_default))
 		}
 	}
 }
@@ -172,16 +183,16 @@ fn toml_any_to_json(value toml.Any) string {
 			return '${value}'
 		}
 		string {
-			return vphp.call_php('json_encode', [vphp.RequestOwnedZVal.new_string(value).to_zval()]).to_string()
+			return vphp.json_encode(vphp.RequestOwnedZVal.new_string(value).to_zval())
 		}
 		toml.Date {
-			return vphp.call_php('json_encode', [vphp.RequestOwnedZVal.new_string(value.str()).to_zval()]).to_string()
+			return vphp.json_encode(vphp.RequestOwnedZVal.new_string(value.str()).to_zval())
 		}
 		toml.Time {
-			return vphp.call_php('json_encode', [vphp.RequestOwnedZVal.new_string(value.str()).to_zval()]).to_string()
+			return vphp.json_encode(vphp.RequestOwnedZVal.new_string(value.str()).to_zval())
 		}
 		toml.DateTime {
-			return vphp.call_php('json_encode', [vphp.RequestOwnedZVal.new_string(value.str()).to_zval()]).to_string()
+			return vphp.json_encode(vphp.RequestOwnedZVal.new_string(value.str()).to_zval())
 		}
 		map[string]toml.Any {
 			return toml_to.json(toml.Any(value))
@@ -270,7 +281,7 @@ fn toml_list_to_zval(input []toml.Any) vphp.ZVal {
 	return out
 }
 
-fn (mut c VSlimConfig) free() {
+fn (c &VSlimConfig) free() {
 	unsafe {
 		c.path.free()
 	}

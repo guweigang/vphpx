@@ -3,28 +3,28 @@ module main
 import vphp
 
 @[php_function]
-fn vslim_handle_request(ctx vphp.Context) {
+@[php_optional_args: 'raw_path,body']
+fn vslim_handle_request(method_or_envelope vphp.BorrowedValue, raw_path string, body string) vphp.Value {
 	mut res := VSlimResponse{}
-	if ctx.num_args() == 1 {
-		envelope := ctx.arg_raw(0)
-		res = dispatch_demo_request(request_from_envelope(envelope))
+	raw := method_or_envelope.to_zval()
+	if raw.is_string() {
+		res = dispatch_demo_request(new_vslim_request(raw.to_string(), raw_path, body).to_vslim_request())
 	} else {
-		method := ctx.arg[string](0)
-		raw_path := ctx.arg[string](1)
-		body := if ctx.num_args() > 2 { ctx.arg[string](2) } else { '' }
-		res = dispatch_demo_request(new_vslim_request(method, raw_path, body).to_vslim_request())
+		res = dispatch_demo_request(request_from_envelope(raw))
 	}
-
-	ctx.return_map({
+	return vphp.Value.from_zval(vphp.new_zval_from[map[string]string]({
 		'status': '${res.status}'
 		'body': res.body
 		'content_type': res.content_type
+	}) or {
+		vphp.ZVal.new_null()
 	})
 }
 
 @[php_function]
-fn vslim_demo_dispatch(ctx vphp.Context) {
-	vslim_handle_request(ctx)
+@[php_optional_args: 'raw_path,body']
+fn vslim_demo_dispatch(method_or_envelope vphp.BorrowedValue, raw_path string, body string) vphp.Value {
+	return vslim_handle_request(method_or_envelope, raw_path, body)
 }
 
 @[php_function]
@@ -39,27 +39,4 @@ fn vslim_response_headers(ctx vphp.Context) {
 		return
 	}
 	ctx.return_map(map[string]string{})
-}
-
-@[php_function]
-fn vslim_middleware_next(ctx vphp.Context) {
-	if ctx.num_args() < 1 {
-		ctx.return_map({
-			'status': '500'
-			'body': 'Middleware next requires a VSlim\\Request argument'
-			'content_type': 'text/plain; charset=utf-8'
-		})
-		return
-	}
-	req_payload := ctx.arg_raw(0)
-	raw := invoke_active_middleware_next(req_payload)
-	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
-		ctx.return_map({
-			'status': '500'
-			'body': 'Middleware chain is not initialized'
-			'content_type': 'text/plain; charset=utf-8'
-		})
-		return
-	}
-	ctx.return_zval(raw)
 }

@@ -4,66 +4,66 @@ import os
 import vphp
 
 @[php_method]
-pub fn VSlimStreamFactory.text(chunks vphp.ZVal) vphp.ZVal {
-	return vphp.php_class('VSlim\\Stream\\Response').static_method_owned_request('text', [
-		chunks,
-	])
+pub fn VSlimStreamFactory.text(chunks vphp.BorrowedValue) vphp.Value {
+	return vphp.Value.from_zval(vphp.php_class('VSlim\\Stream\\Response').static_method_owned_request('text', [
+		chunks.to_zval(),
+	]))
 }
 
 @[php_method]
-pub fn VSlimStreamFactory.text_with(chunks vphp.ZVal, status int, content_type string, headers vphp.ZVal) vphp.ZVal {
-	return vphp.php_class('VSlim\\Stream\\Response').static_method_owned_request('text_with', [
-		chunks,
+pub fn VSlimStreamFactory.text_with(chunks vphp.BorrowedValue, status int, content_type string, headers vphp.BorrowedValue) vphp.Value {
+	return vphp.Value.from_zval(vphp.php_class('VSlim\\Stream\\Response').static_method_owned_request('text_with', [
+		chunks.to_zval(),
 		vphp.RequestOwnedZVal.new_int(status).to_zval(),
 		vphp.RequestOwnedZVal.new_string(content_type).to_zval(),
-		headers,
-	])
+		headers.to_zval(),
+	]))
 }
 
 @[php_method]
-pub fn VSlimStreamFactory.sse(events vphp.ZVal) vphp.ZVal {
-	return vphp.php_class('VSlim\\Stream\\Response').static_method_owned_request('sse', [
-		events,
-	])
+pub fn VSlimStreamFactory.sse(events vphp.BorrowedValue) vphp.Value {
+	return vphp.Value.from_zval(vphp.php_class('VSlim\\Stream\\Response').static_method_owned_request('sse', [
+		events.to_zval(),
+	]))
 }
 
 @[php_method]
-pub fn VSlimStreamFactory.sse_with(events vphp.ZVal, status int, headers vphp.ZVal) vphp.ZVal {
-	return vphp.php_class('VSlim\\Stream\\Response').static_method_owned_request('sse_with', [
-		events,
+pub fn VSlimStreamFactory.sse_with(events vphp.BorrowedValue, status int, headers vphp.BorrowedValue) vphp.Value {
+	return vphp.Value.from_zval(vphp.php_class('VSlim\\Stream\\Response').static_method_owned_request('sse_with', [
+		events.to_zval(),
 		vphp.RequestOwnedZVal.new_int(status).to_zval(),
-		headers,
-	])
+		headers.to_zval(),
+	]))
 }
 
 @[php_method]
-pub fn VSlimStreamFactory.ollama_text(req &VSlimRequest) vphp.ZVal {
-	return VSlimStreamOllamaClient.from_env().text_response_from_request(req)
+pub fn VSlimStreamFactory.ollama_text(request_payload vphp.BorrowedValue) vphp.Value {
+	return VSlimStreamOllamaClient.from_env().text_response_from_request(request_payload)
 }
 
 @[php_method]
-pub fn VSlimStreamFactory.ollama_text_with(req &VSlimRequest, options vphp.ZVal) vphp.ZVal {
-	return VSlimStreamOllamaClient.from_options(options).text_response_from_request(req)
+pub fn VSlimStreamFactory.ollama_text_with(request_payload vphp.BorrowedValue, options vphp.BorrowedValue) vphp.Value {
+	return VSlimStreamOllamaClient.from_options(options).text_response_from_request(request_payload)
 }
 
 @[php_method]
-pub fn VSlimStreamFactory.ollama_sse(req &VSlimRequest) vphp.ZVal {
-	return VSlimStreamOllamaClient.from_env().sse_response_from_request(req)
+pub fn VSlimStreamFactory.ollama_sse(request_payload vphp.BorrowedValue) vphp.Value {
+	return VSlimStreamOllamaClient.from_env().sse_response_from_request(request_payload)
 }
 
 @[php_method]
-pub fn VSlimStreamFactory.ollama_sse_with(req &VSlimRequest, options vphp.ZVal) vphp.ZVal {
-	return VSlimStreamOllamaClient.from_options(options).sse_response_from_request(req)
+pub fn VSlimStreamFactory.ollama_sse_with(request_payload vphp.BorrowedValue, options vphp.BorrowedValue) vphp.Value {
+	return VSlimStreamOllamaClient.from_options(options).sse_response_from_request(request_payload)
 }
 
 @[php_method]
-pub fn VSlimStreamNdjsonDecoder.decode(stream vphp.ZVal) vphp.ZVal {
-	return decode_ndjson_rows(stream)
+pub fn VSlimStreamNdjsonDecoder.decode(stream vphp.BorrowedValue) vphp.Value {
+	return vphp.Value.from_zval(decode_ndjson_rows(stream.to_zval()))
 }
 
 @[php_method]
-pub fn VSlimStreamSseEncoder.from_ollama(rows vphp.ZVal, model string) vphp.ZVal {
-	return encode_ollama_sse_events(rows, model)
+pub fn VSlimStreamSseEncoder.from_ollama(rows vphp.BorrowedValue, model string) vphp.Value {
+	return vphp.Value.from_zval(encode_ollama_sse_events(rows.to_zval(), model))
 }
 
 @[php_method]
@@ -88,14 +88,15 @@ pub fn VSlimStreamOllamaClient.from_env() &VSlimStreamOllamaClient {
 }
 
 @[php_method]
-pub fn VSlimStreamOllamaClient.from_options(options vphp.ZVal) &VSlimStreamOllamaClient {
+pub fn VSlimStreamOllamaClient.from_options(options vphp.BorrowedValue) &VSlimStreamOllamaClient {
 	base := VSlimStreamOllamaClient.from_env()
 	mut out := &VSlimStreamOllamaClient{}
+	raw_options := options.to_zval()
 	out.construct(
-		zval_string_key(options, 'chat_url', base.chat_url_value()),
-		zval_string_key(options, 'model', base.default_model_value()),
-		zval_string_key(options, 'api_key', base.api_key_value()),
-		zval_string_key(options, 'fixture', base.fixture_path_value()),
+		zval_string_key(raw_options, 'chat_url', base.chat_url_value()),
+		zval_string_key(raw_options, 'model', base.default_model_value()),
+		zval_string_key(raw_options, 'api_key', base.api_key_value()),
+		zval_string_key(raw_options, 'fixture', base.fixture_path_value()),
 	)
 	return out
 }
@@ -121,9 +122,10 @@ pub fn (c &VSlimStreamOllamaClient) fixture_path() string {
 }
 
 @[php_method]
-pub fn (c &VSlimStreamOllamaClient) payload(input vphp.ZVal) vphp.ZVal {
-	query := zval_key(input, 'query')
-	body_input := zval_key(input, 'body')
+pub fn (c &VSlimStreamOllamaClient) payload(input vphp.BorrowedValue) vphp.Value {
+	raw_input := input.to_zval()
+	query := zval_key(raw_input, 'query')
+	body_input := zval_key(raw_input, 'body')
 	body := decode_ollama_body_payload(body_input)
 	prompt := first_non_empty([
 		zval_string_key(query, 'prompt', ''),
@@ -136,41 +138,37 @@ pub fn (c &VSlimStreamOllamaClient) payload(input vphp.ZVal) vphp.ZVal {
 		c.default_model_value(),
 	])
 	messages := normalize_ollama_messages(body, prompt)
-	return new_ollama_payload(prompt, model, messages)
+	return vphp.Value.from_zval(new_ollama_payload(prompt, model, messages))
 }
 
 @[php_method]
-pub fn (c &VSlimStreamOllamaClient) payload_from_request(req &VSlimRequest) vphp.ZVal {
-	mut input := new_array_zval()
-	add_assoc_zval(input, 'query', new_string_map_zval(req.query_params()))
-	add_assoc_zval(input, 'body', decode_request_body_to_payload_zval(req))
-	return c.payload(input)
+pub fn (c &VSlimStreamOllamaClient) payload_from_request(request_payload vphp.BorrowedValue) vphp.Value {
+	req := normalize_ollama_source_request(request_payload)
+	return c.payload_from_vslim_request(req)
 }
 
 @[php_method]
-pub fn (c &VSlimStreamOllamaClient) open_stream(payload vphp.ZVal) vphp.ZVal {
+pub fn (c &VSlimStreamOllamaClient) open_stream(payload vphp.BorrowedValue) vphp.Value {
+	raw_payload := payload.to_zval()
 	fixture := c.fixture_path_value()
 	if fixture != '' {
 		fp := vphp.call_php('fopen', [
 			vphp.RequestOwnedZVal.new_string(fixture).to_zval(),
 			vphp.RequestOwnedZVal.new_string('r').to_zval(),
 		])
-		if fp.is_resource() {
-			return new_open_stream_result(true, fp, '', 200, 'fixture://' + fixture)
+		if fp.is_stream_resource() {
+			return vphp.Value.from_zval(new_open_stream_result(true, fp, '', 200, 'fixture://' + fixture))
 		}
-		return new_open_stream_result(false, vphp.RequestOwnedZVal.new_null().to_zval(), 'failed to open stream fixture: ' + fixture, 500, 'fixture://' + fixture)
+		return vphp.Value.from_zval(new_open_stream_result(false, vphp.RequestOwnedZVal.new_null().to_zval(), 'failed to open stream fixture: ' + fixture, 500, 'fixture://' + fixture))
 	}
 
 	mut request_body := new_array_zval()
-	request_body.add_assoc_string('model', zval_string_key(payload, 'model', c.default_model_value()))
+	request_body.add_assoc_string('model', zval_string_key(raw_payload, 'model', c.default_model_value()))
 	request_body.add_assoc_bool('stream', true)
-	add_assoc_zval(request_body, 'messages', zval_key(payload, 'messages'))
-	encoded := vphp.call_php('json_encode', [
-		request_body,
-		vphp.RequestOwnedZVal.new_int(256).to_zval(),
-	])
-	if !encoded.is_valid() || encoded.to_string() == '' {
-		return new_open_stream_result(false, vphp.RequestOwnedZVal.new_null().to_zval(), 'failed to encode request payload', 500, c.chat_url_value())
+	add_assoc_zval(request_body, 'messages', zval_key(raw_payload, 'messages'))
+	encoded := vphp.json_encode_with_flags(request_body, 256)
+	if encoded == '' {
+		return vphp.Value.from_zval(new_open_stream_result(false, vphp.RequestOwnedZVal.new_null().to_zval(), 'failed to encode request payload', 500, c.chat_url_value()))
 	}
 
 	headers := new_array_zval()
@@ -183,7 +181,7 @@ pub fn (c &VSlimStreamOllamaClient) open_stream(payload vphp.ZVal) vphp.ZVal {
 	mut http_options := new_array_zval()
 	http_options.add_assoc_string('method', 'POST')
 	http_options.add_assoc_string('header', implode_lines(headers))
-	http_options.add_assoc_string('content', encoded.to_string())
+	http_options.add_assoc_string('content', encoded)
 	http_options.add_assoc_long('timeout', 300)
 	http_options.add_assoc_bool('ignore_errors', true)
 	mut ctx_opts := new_array_zval()
@@ -195,32 +193,34 @@ pub fn (c &VSlimStreamOllamaClient) open_stream(payload vphp.ZVal) vphp.ZVal {
 		vphp.RequestOwnedZVal.new_bool(false).to_zval(),
 		ctx,
 	])
-	if !fp.is_resource() {
-		return new_open_stream_result(false, vphp.RequestOwnedZVal.new_null().to_zval(), 'failed to open upstream stream: ' + c.chat_url_value(), 502, c.chat_url_value())
+	if !fp.is_stream_resource() {
+		return vphp.Value.from_zval(new_open_stream_result(false, vphp.RequestOwnedZVal.new_null().to_zval(), 'failed to open upstream stream: ' + c.chat_url_value(), 502, c.chat_url_value()))
 	}
 
 	status := read_last_http_status()
 	if status < 200 || status >= 300 {
-		err := vphp.call_php('stream_get_contents', [fp]).to_string().trim_space()
-		if fp.is_resource() {
-			_ = vphp.call_php('fclose', [fp])
+		err := (fp.stream_get_contents() or { '' }).trim_space()
+		if fp.is_stream_resource() {
+			_ = fp.stream_close()
 		}
-		return new_open_stream_result(false, vphp.RequestOwnedZVal.new_null().to_zval(), if err != '' { err } else { 'upstream status ${status}' }, status, c.chat_url_value())
+		return vphp.Value.from_zval(new_open_stream_result(false, vphp.RequestOwnedZVal.new_null().to_zval(), if err != '' { err } else { 'upstream status ${status}' }, status, c.chat_url_value()))
 	}
 
-	return new_open_stream_result(true, fp, '', status, c.chat_url_value())
+	return vphp.Value.from_zval(new_open_stream_result(true, fp, '', status, c.chat_url_value()))
 }
 
 @[php_method]
-pub fn (c &VSlimStreamOllamaClient) text_response_from_request(req &VSlimRequest) vphp.ZVal {
-	payload := c.payload_from_request(req)
-	upstream := c.open_stream(payload)
-	if !zval_bool_key(upstream, 'ok') {
-		return upstream_error_response(upstream)
+pub fn (c &VSlimStreamOllamaClient) text_response_from_request(request_payload vphp.BorrowedValue) vphp.Value {
+	req := normalize_ollama_source_request(request_payload)
+	payload := c.payload_from_vslim_request(req)
+	upstream := c.open_stream(payload.view())
+	upstream_raw := upstream.to_zval()
+	if !zval_bool_key(upstream_raw, 'ok') {
+		return vphp.Value.from_zval(upstream_error_response(upstream_raw))
 	}
-	rows := decode_ndjson_rows(zval_key(upstream, 'stream'))
+	rows := decode_ndjson_rows(zval_key(upstream_raw, 'stream'))
 	chunks := ollama_text_chunks(rows)
-	headers := new_ollama_response_headers(payload, upstream)
+	headers := new_ollama_response_headers(payload.to_zval(), upstream_raw)
 	mut response := vphp.php_class('VSlim\\Stream\\Response').static_method_owned_request('text_with', [
 		chunks,
 		vphp.RequestOwnedZVal.new_int(200).to_zval(),
@@ -228,26 +228,40 @@ pub fn (c &VSlimStreamOllamaClient) text_response_from_request(req &VSlimRequest
 		headers,
 	])
 	propagate_request_trace_headers_to_object(req, vphp.BorrowedZVal.from_zval(response))
-	return response
+	return vphp.Value.from_zval(response)
 }
 
 @[php_method]
-pub fn (c &VSlimStreamOllamaClient) sse_response_from_request(req &VSlimRequest) vphp.ZVal {
-	payload := c.payload_from_request(req)
-	upstream := c.open_stream(payload)
-	if !zval_bool_key(upstream, 'ok') {
-		return upstream_error_response(upstream)
+pub fn (c &VSlimStreamOllamaClient) sse_response_from_request(request_payload vphp.BorrowedValue) vphp.Value {
+	req := normalize_ollama_source_request(request_payload)
+	payload := c.payload_from_vslim_request(req)
+	upstream := c.open_stream(payload.view())
+	upstream_raw := upstream.to_zval()
+	if !zval_bool_key(upstream_raw, 'ok') {
+		return vphp.Value.from_zval(upstream_error_response(upstream_raw))
 	}
-	rows := decode_ndjson_rows(zval_key(upstream, 'stream'))
-	events := encode_ollama_sse_events(rows, zval_string_key(payload, 'model', c.default_model_value()))
-	headers := new_ollama_response_headers(payload, upstream)
+	rows := decode_ndjson_rows(zval_key(upstream_raw, 'stream'))
+	events := encode_ollama_sse_events(rows, zval_string_key(payload.to_zval(), 'model', c.default_model_value()))
+	headers := new_ollama_response_headers(payload.to_zval(), upstream_raw)
 	mut response := vphp.php_class('VSlim\\Stream\\Response').static_method_owned_request('sse_with', [
 		events,
 		vphp.RequestOwnedZVal.new_int(200).to_zval(),
 		headers,
 	])
 	propagate_request_trace_headers_to_object(req, vphp.BorrowedZVal.from_zval(response))
-	return response
+	return vphp.Value.from_zval(response)
+}
+
+fn normalize_ollama_source_request(payload vphp.BorrowedValue) &VSlimRequest {
+	raw := payload.to_zval()
+	return new_vslim_request_from_psr_server_request(vphp.BorrowedZVal.from_zval(raw), route_params_from_payload(vphp.BorrowedZVal.from_zval(raw)))
+}
+
+fn (c &VSlimStreamOllamaClient) payload_from_vslim_request(req &VSlimRequest) vphp.Value {
+	mut input := new_array_zval()
+	add_assoc_zval(input, 'query', new_string_map_zval(req.query_params()))
+	add_assoc_zval(input, 'body', decode_request_body_to_payload_zval(req))
+	return c.payload(vphp.BorrowedValue.from_zval(input))
 }
 
 fn (c &VSlimStreamOllamaClient) chat_url_value() string {
@@ -296,13 +310,10 @@ fn decode_request_body_to_payload_zval(req &VSlimRequest) vphp.ZVal {
 	if body == '' {
 		return new_array_zval()
 	}
-	decoded := vphp.php_fn('json_decode').call_owned_request([
-		vphp.RequestOwnedZVal.new_string(body).to_zval(),
-		vphp.RequestOwnedZVal.new_bool(true).to_zval(),
-	])
-	if decoded.is_array() {
-		return decoded
-	}
+		decoded := vphp.json_decode_assoc(body)
+		if decoded.is_array() {
+			return decoded
+		}
 	return new_string_map_zval(req.parsed_body())
 }
 
@@ -313,13 +324,10 @@ fn decode_ollama_body_payload(input vphp.ZVal) vphp.ZVal {
 	if input.to_string().trim_space() == '' {
 		return new_array_zval()
 	}
-	decoded := vphp.php_fn('json_decode').call_owned_request([
-		vphp.RequestOwnedZVal.new_string(input.to_string()).to_zval(),
-		vphp.RequestOwnedZVal.new_bool(true).to_zval(),
-	])
-	if decoded.is_array() {
-		return decoded
-	}
+		decoded := vphp.json_decode_assoc(input.to_string())
+		if decoded.is_array() {
+			return decoded
+		}
 	return new_array_zval()
 }
 
@@ -397,49 +405,42 @@ fn upstream_error_response(upstream vphp.ZVal) vphp.ZVal {
 	mut body := new_array_zval()
 	body.add_assoc_string('error', zval_string_key(upstream, 'error', 'failed to open upstream stream'))
 	body.add_assoc_string('url', zval_string_key(upstream, 'url', ''))
-	json := vphp.call_php('json_encode', [
-		body,
-		vphp.RequestOwnedZVal.new_int(256).to_zval(),
-	])
+	json := vphp.json_encode_with_flags(body, 256)
 	mut out := new_array_zval()
 	out.add_assoc_long('status', zval_int_key(upstream, 'status', 502))
 	out.add_assoc_string('content_type', 'application/json; charset=utf-8')
-	out.add_assoc_string('body', json.to_string())
+	out.add_assoc_string('body', json)
 	return out
 }
 
 fn decode_ndjson_rows(stream vphp.ZVal) vphp.ZVal {
 	mut rows := new_array_zval()
-	if !stream.is_resource() {
+	if !stream.is_stream_resource() {
 		return rows
 	}
 	for {
-		is_eof := vphp.call_php('feof', [stream])
-		if is_eof.is_valid() && is_eof.to_bool() {
+		if stream.stream_eof() {
 			break
 		}
-		line_raw := vphp.call_php('fgets', [stream])
-		line := line_raw.to_string().trim_space()
+		line_raw := stream.stream_read_line() or { '' }
+		line := line_raw.trim_space()
 		if line == '' {
-			if !line_raw.is_valid() || line_raw.is_null() {
+			if line_raw == '' && stream.stream_eof() {
 				break
 			}
 			continue
 		}
-		row := vphp.php_fn('json_decode').call_owned_request([
-			vphp.RequestOwnedZVal.new_string(line).to_zval(),
-			vphp.RequestOwnedZVal.new_bool(true).to_zval(),
-		])
-		if !row.is_array() {
-			continue
-		}
+			row := vphp.json_decode_assoc(line)
+			if !row.is_array() {
+				continue
+			}
 		rows.add_next_val(row)
 		if zval_bool_key(row, 'done') {
 			break
 		}
 	}
-	if stream.is_resource() {
-		_ = vphp.call_php('fclose', [stream])
+	if stream.is_stream_resource() {
+		_ = stream.stream_close()
 	}
 	return rows
 }
@@ -533,10 +534,7 @@ fn implode_lines(lines vphp.ZVal) string {
 }
 
 fn json_encode_zval(input vphp.ZVal) string {
-	return vphp.call_php('json_encode', [
-		input,
-		vphp.RequestOwnedZVal.new_int(256).to_zval(),
-	]).to_string()
+	return vphp.json_encode_with_flags(input, 256)
 }
 
 fn new_array_zval() vphp.ZVal {
@@ -601,7 +599,7 @@ fn zval_array_items(input vphp.ZVal) []vphp.ZVal {
 	return out
 }
 
-fn (mut c VSlimStreamOllamaClient) free() {
+fn (c &VSlimStreamOllamaClient) free() {
 	unsafe {
 		c.chat_url.free()
 		c.default_model.free()

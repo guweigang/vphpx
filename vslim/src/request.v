@@ -18,7 +18,7 @@ pub fn (r &VSlimRequest) str() string {
 }
 
 @[php_method]
-pub fn (mut r VSlimRequest) set_query(query vphp.ZVal) &VSlimRequest {
+pub fn (mut r VSlimRequest) set_query(query vphp.BorrowedValue) &VSlimRequest {
 	r.query = query.to_string_map()
 	return r
 }
@@ -73,37 +73,37 @@ pub fn (mut r VSlimRequest) set_remote_addr(remote_addr string) &VSlimRequest {
 }
 
 @[php_method]
-pub fn (mut r VSlimRequest) set_headers(headers vphp.ZVal) &VSlimRequest {
+pub fn (mut r VSlimRequest) set_headers(headers vphp.BorrowedValue) &VSlimRequest {
 	r.headers = normalize_header_map(headers.to_string_map())
 	return r
 }
 
 @[php_method]
-pub fn (mut r VSlimRequest) set_cookies(cookies vphp.ZVal) &VSlimRequest {
+pub fn (mut r VSlimRequest) set_cookies(cookies vphp.BorrowedValue) &VSlimRequest {
 	r.cookies = cookies.to_string_map()
 	return r
 }
 
 @[php_method]
-pub fn (mut r VSlimRequest) set_attributes(attributes vphp.ZVal) &VSlimRequest {
+pub fn (mut r VSlimRequest) set_attributes(attributes vphp.BorrowedValue) &VSlimRequest {
 	r.attributes = attributes.to_string_map()
 	return r
 }
 
 @[php_method]
-pub fn (mut r VSlimRequest) set_server(server vphp.ZVal) &VSlimRequest {
+pub fn (mut r VSlimRequest) set_server(server vphp.BorrowedValue) &VSlimRequest {
 	r.server = server.to_string_map()
 	return r
 }
 
 @[php_method]
-pub fn (mut r VSlimRequest) set_uploaded_files(uploaded_files vphp.ZVal) &VSlimRequest {
+pub fn (mut r VSlimRequest) set_uploaded_files(uploaded_files vphp.BorrowedValue) &VSlimRequest {
 	r.uploaded_files = uploaded_files.to_string_list()
 	return r
 }
 
 @[php_method]
-pub fn (mut r VSlimRequest) set_params(params vphp.ZVal) &VSlimRequest {
+pub fn (mut r VSlimRequest) set_params(params vphp.BorrowedValue) &VSlimRequest {
 	r.params = params.to_string_map()
 	return r
 }
@@ -130,6 +130,7 @@ pub fn (r &VSlimRequest) input(key string) string {
 }
 
 @[php_method]
+@[php_optional_args: 'default_value']
 pub fn (r &VSlimRequest) input_or(key string, default_value string) string {
 	inputs := r.input_values()
 	return inputs[key] or { default_value }
@@ -222,19 +223,16 @@ pub fn (r &VSlimRequest) parse_error() string {
 	if body == '' {
 		return ''
 	}
-	_ = vphp.call_php('json_decode', [
-		vphp.RequestOwnedZVal.new_string(body).to_zval(),
-		vphp.RequestOwnedZVal.new_bool(true).to_zval(),
-	])
-	err_code := vphp.call_php('json_last_error', [])
-	if !err_code.is_valid() || err_code.to_i64() == 0 {
-		return ''
-	}
-	err_msg := vphp.call_php('json_last_error_msg', [])
-	if !err_msg.is_valid() {
-		return 'invalid JSON body'
-	}
-	return err_msg.to_string()
+		_ = vphp.json_decode_assoc(body)
+		err_code := vphp.json_last_error_code()
+		if err_code == 0 {
+			return ''
+		}
+		err_msg := vphp.json_last_error_message()
+		if err_msg == '' {
+			return 'invalid JSON body'
+		}
+		return err_msg
 }
 
 @[php_method]
@@ -447,16 +445,13 @@ fn (r &VSlimRequest) parsed_body_values() map[string]string {
 		return out
 	}
 	raw_content_type := r.content_type()
-	content_type := raw_content_type.to_lower()
-	is_json := content_type.contains('application/json') || body.starts_with('{') || body.starts_with('[')
-	if is_json {
-		decoded := vphp.php_fn('json_decode').call_owned_request([
-			vphp.RequestOwnedZVal.new_string(body).to_zval(),
-			vphp.RequestOwnedZVal.new_bool(true).to_zval(),
-		])
-		if decoded.is_array() {
-			return decoded.to_string_map()
-		}
+		content_type := raw_content_type.to_lower()
+		is_json := content_type.contains('application/json') || body.starts_with('{') || body.starts_with('[')
+		if is_json {
+			decoded := vphp.json_decode_assoc(body)
+			if decoded.is_array() {
+				return decoded.to_string_map()
+			}
 		return out
 	}
 	if content_type.contains('multipart/form-data') {

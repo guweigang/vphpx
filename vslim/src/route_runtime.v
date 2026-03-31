@@ -1,0 +1,436 @@
+module main
+
+import vphp
+
+@[php_method]
+pub fn (mut app VSlimApp) handle_websocket(frame vphp.BorrowedValue, conn vphp.BorrowedValue) vphp.Value {
+	raw_frame := frame.to_zval()
+	raw_conn := conn.to_zval()
+	event := zval_string_key(raw_frame, 'event', '').trim_space().to_lower()
+	conn_id := zval_string_key(raw_frame, 'id', '').trim_space()
+	if event == '' || conn_id == '' {
+		return vphp.Value.new_null()
+	}
+	path := RoutePath.normalize(zval_string_key(raw_frame, 'path', '/'))
+	if event == 'open' {
+		idx, matched := app.websocket_route_index(path)
+		if !matched {
+			return vphp.Value.from_zval(vphp.RequestOwnedZVal.new_bool(false).to_zval())
+		}
+		app.websocket_conn_route[conn_id] = idx
+		return vphp.Value.from_zval(dispatch_websocket_route_handler(app, app.websocket_routes[idx], event,
+			raw_frame, raw_conn))
+	}
+	idx := app.websocket_conn_route[conn_id] or {
+		fallback_idx, matched := app.websocket_route_index(path)
+		if !matched {
+			return vphp.Value.new_null()
+		}
+		app.websocket_conn_route[conn_id] = fallback_idx
+		return vphp.Value.from_zval(dispatch_websocket_route_handler(app, app.websocket_routes[fallback_idx],
+			event, raw_frame, raw_conn))
+	}
+	if idx < 0 || idx >= app.websocket_routes.len {
+		app.websocket_conn_route.delete(conn_id)
+		fallback_idx, matched := app.websocket_route_index(path)
+		if !matched {
+			return vphp.Value.new_null()
+		}
+		app.websocket_conn_route[conn_id] = fallback_idx
+		result := dispatch_websocket_route_handler(app, app.websocket_routes[fallback_idx],
+			event, raw_frame, raw_conn)
+		if event == 'close' {
+			app.websocket_conn_route.delete(conn_id)
+		}
+		return vphp.Value.from_zval(result)
+	}
+	result := dispatch_websocket_route_handler(app, app.websocket_routes[idx], event,
+		raw_frame, raw_conn)
+	if event == 'close' {
+		app.websocket_conn_route.delete(conn_id)
+	}
+	return vphp.Value.from_zval(result)
+}
+
+@[php_method]
+pub fn (app &VSlimApp) route_count() int {
+	return app.routes.len
+}
+
+@[php_method]
+pub fn (app &VSlimApp) route_names() []string {
+	mut out := []string{}
+	for route in app.routes {
+		if route.name == '' {
+			continue
+		}
+		if route.name !in out {
+			out << route.name
+		}
+	}
+	return out
+}
+
+@[php_method]
+pub fn (app &VSlimApp) has_route_name(name string) bool {
+	for route in app.routes {
+		if route.name == name {
+			return true
+		}
+	}
+	return false
+}
+
+@[php_method]
+pub fn (app &VSlimApp) route_manifest_lines() []string {
+	mut out := []string{cap: app.routes.len}
+	for route in app.routes {
+		mut line := '${route.method} ${route.pattern}'
+		if route.name != '' {
+			line += ' #${route.name}'
+		}
+		out << line
+	}
+	return out
+}
+
+@[php_method]
+pub fn (app &VSlimApp) route_conflict_keys() []string {
+	mut grouped := map[string]int{}
+	for route in app.routes {
+		key := '${route.method} ${route.pattern}'
+		grouped[key] = (grouped[key] or { 0 }) + 1
+	}
+	mut out := []string{}
+	for key, count in grouped {
+		if count > 1 {
+			out << '${key} x${count}'
+		}
+	}
+	out.sort()
+	return out
+}
+
+@[php_method]
+pub fn (app &VSlimApp) route_manifest() []map[string]string {
+	mut out := []map[string]string{cap: app.routes.len}
+	for route in app.routes {
+		out << {
+			'method':       route.method
+			'name':         route.name
+			'pattern':      route.pattern
+			'handler_type': route.handler_type.str()
+		}
+	}
+	return out
+}
+
+@[php_method]
+pub fn (app &VSlimApp) route_conflicts() []map[string]string {
+	mut grouped := map[string][]VSlimRoute{}
+	for route in app.routes {
+		key := '${route.method} ${route.pattern}'
+		mut existing := grouped[key] or { []VSlimRoute{} }
+		existing << route
+		grouped[key] = existing
+	}
+	mut out := []map[string]string{}
+	for key, routes in grouped {
+		if routes.len <= 1 {
+			continue
+		}
+		parts := key.split_nth(' ', 2)
+		mut names := []string{}
+		for route in routes {
+			if route.name != '' {
+				names << route.name
+			}
+		}
+		out << {
+			'method':  parts[0]
+			'pattern': if parts.len > 1 { parts[1] } else { '' }
+			'count':   '${routes.len}'
+			'names':   names.join(',')
+		}
+	}
+	return out
+}
+
+@[php_method]
+pub fn (app &VSlimApp) allowed_methods_for(raw_path string) []string {
+	path := RoutePath.normalize(raw_path)
+	mut allowed := []string{}
+	for route in app.routes {
+		ok, _ := route.matches(path)
+		if !ok {
+			continue
+		}
+		allowed = collect_allowed_methods(allowed, route.method)
+	}
+	if allowed.len > 0 && 'OPTIONS' !in allowed {
+		allowed << 'OPTIONS'
+	}
+	return allowed
+}
+
+fn (mut app VSlimApp) add_php_route(method string, name string, pattern string, handler vphp.ZVal) {
+	if !handler.is_valid() || handler.is_null() || handler.is_undef() {
+		return
+	}
+	app.add_php_route_with_resource_meta(method, name, pattern, handler, '', vphp.PersistentOwnedZVal.new_null())
+}
+
+fn (mut app VSlimApp) add_php_websocket_route(name string, pattern string, handler vphp.ZVal) {
+	if !is_supported_websocket_handler(vphp.BorrowedZVal.from_zval(handler)) {
+		return
+	}
+	app.websocket_routes << VSlimRoute{
+		method:       'WS'
+		name:         name
+		pattern:      pattern
+		handler_type: .php_callable
+		php_handler:  vphp.PersistentOwnedZVal.from_zval(handler)
+	}
+}
+
+fn (mut app VSlimApp) add_php_route_with_resource_meta(method string, name string, pattern string, handler vphp.ZVal, resource_action string, resource_missing_handler vphp.PersistentOwnedZVal) {
+	if !handler.is_valid() || handler.is_null() || handler.is_undef() {
+		return
+	}
+	app.routes << VSlimRoute{
+		method:                   method.to_upper()
+		name:                     name
+		pattern:                  pattern
+		handler_type:             .php_callable
+		php_handler:              vphp.PersistentOwnedZVal.from_zval(handler)
+		resource_action:          resource_action
+		resource_missing_handler: resource_missing_handler
+	}
+}
+
+fn (app &VSlimApp) websocket_route_index(path string) (int, bool) {
+	for i, route in app.websocket_routes {
+		ok, _ := route.matches(path)
+		if ok {
+			return i, true
+		}
+	}
+	return -1, false
+}
+
+fn dispatch_websocket_route_handler(app &VSlimApp, route VSlimRoute, event string, frame vphp.ZVal, conn vphp.ZVal) vphp.ZVal {
+	handler := route.php_handler.borrowed()
+	if !handler.is_valid() {
+		return vphp.RequestOwnedZVal.new_null().to_zval()
+	}
+	if handler.is_object() {
+		obj := handler.to_zval()
+		if obj.method_exists('mount') || obj.method_exists('render')
+			|| obj.method_exists('live_marker') {
+			unsafe {
+				mut mutable_app := &VSlimApp(app)
+				return dispatch_live_websocket_handler(mut mutable_app, obj, event, frame,
+					conn)
+			}
+		}
+		if obj.method_exists('handle_websocket') {
+			return obj.method_owned_request('handle_websocket', [frame, conn])
+		}
+		match event {
+			'open' {
+				if obj.method_exists('on_open') {
+					return obj.method_owned_request('on_open', [conn, frame])
+				}
+			}
+			'message' {
+				if obj.method_exists('on_message') {
+					return obj.method_owned_request('on_message', [
+						conn,
+						vphp.RequestOwnedZVal.new_string(zval_string_key(frame, 'data',
+							'')).to_zval(),
+						frame,
+					])
+				}
+			}
+			'close' {
+				if obj.method_exists('on_close') {
+					return obj.method_owned_request('on_close', [
+						conn,
+						vphp.RequestOwnedZVal.new_int(zval_int_key(frame, 'code', 1000)).to_zval(),
+						vphp.RequestOwnedZVal.new_string(zval_string_key(frame, 'reason',
+							'')).to_zval(),
+						frame,
+					])
+				}
+			}
+			else {}
+		}
+	}
+	if handler.is_callable() {
+		match event {
+			'open' {
+				return handler.call_owned_request([conn, frame])
+			}
+			'message' {
+				return handler.call_owned_request([
+					conn,
+					vphp.RequestOwnedZVal.new_string(zval_string_key(frame, 'data', '')).to_zval(),
+					frame,
+				])
+			}
+			'close' {
+				return handler.call_owned_request([
+					conn,
+					vphp.RequestOwnedZVal.new_int(zval_int_key(frame, 'code', 1000)).to_zval(),
+					vphp.RequestOwnedZVal.new_string(zval_string_key(frame, 'reason',
+						'')).to_zval(),
+					frame,
+				])
+			}
+			else {
+				return vphp.RequestOwnedZVal.new_null().to_zval()
+			}
+		}
+	}
+	if handler.is_string() && app.has_container() {
+		service := resolve_container_service(app, handler.to_string()) or {
+			return vphp.RequestOwnedZVal.new_null().to_zval()
+		}
+		return dispatch_websocket_container_service(service, event, frame, conn)
+	}
+	if handler.is_array() && app.has_container() {
+		parts := handler.to_string_list()
+		if parts.len >= 1 && parts[0] != '' {
+			service := resolve_container_service(app, parts[0]) or {
+				return vphp.RequestOwnedZVal.new_null().to_zval()
+			}
+			if parts.len == 2 && parts[1] != '' && service.is_object()
+				&& service.method_exists(parts[1]) {
+				return service.method_owned_request(parts[1], websocket_handler_args(event,
+					frame, conn))
+			}
+			return dispatch_websocket_container_service(service, event, frame, conn)
+		}
+	}
+	return vphp.RequestOwnedZVal.new_null().to_zval()
+}
+
+fn dispatch_websocket_container_service(service vphp.ZVal, event string, frame vphp.ZVal, conn vphp.ZVal) vphp.ZVal {
+	if !service.is_valid() {
+		return vphp.RequestOwnedZVal.new_null().to_zval()
+	}
+	if service.is_object() && (service.method_exists('mount') || service.method_exists('render')
+		|| service.method_exists('live_marker')) {
+		return vphp.RequestOwnedZVal.new_null().to_zval()
+	}
+	if service.is_object() && service.method_exists('handle_websocket') {
+		return service.method_owned_request('handle_websocket', [frame, conn])
+	}
+	match event {
+		'open' {
+			if service.is_object() && service.method_exists('on_open') {
+				return service.method_owned_request('on_open', [conn, frame])
+			}
+		}
+		'message' {
+			if service.is_object() && service.method_exists('on_message') {
+				return service.method_owned_request('on_message', websocket_handler_args(event,
+					frame, conn))
+			}
+		}
+		'close' {
+			if service.is_object() && service.method_exists('on_close') {
+				return service.method_owned_request('on_close', websocket_handler_args(event,
+					frame, conn))
+			}
+		}
+		else {}
+	}
+	if service.is_callable() {
+		return service.call_owned_request(websocket_handler_args(event, frame, conn))
+	}
+	return vphp.RequestOwnedZVal.new_null().to_zval()
+}
+
+fn websocket_handler_args(event string, frame vphp.ZVal, conn vphp.ZVal) []vphp.ZVal {
+	return match event {
+		'open' {
+			[conn, frame]
+		}
+		'message' {
+			[
+				conn,
+				vphp.RequestOwnedZVal.new_string(zval_string_key(frame, 'data', '')).to_zval(),
+				frame,
+			]
+		}
+		'close' {
+			[
+				conn,
+				vphp.RequestOwnedZVal.new_int(zval_int_key(frame, 'code', 1000)).to_zval(),
+				vphp.RequestOwnedZVal.new_string(zval_string_key(frame, 'reason', '')).to_zval(),
+				frame,
+			]
+		}
+		else {
+			[frame, conn]
+		}
+	}
+}
+
+fn collect_allowed_methods(existing []string, route_method string) []string {
+	mut out := existing.clone()
+	mut incoming := []string{}
+	match route_method {
+		'*' {
+			incoming = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE']
+		}
+		'GET' {
+			incoming = ['GET', 'HEAD']
+		}
+		else {
+			incoming = [route_method]
+		}
+	}
+	for method in incoming {
+		if method !in out {
+			out << method
+		}
+	}
+	return out
+}
+
+fn normalize_methods(methods vphp.BorrowedZVal) []string {
+	mut out := []string{}
+	if methods.is_string() {
+		raw := methods.to_string().replace('|', ',')
+		for part in raw.split(',') {
+			method := part.trim_space().to_upper()
+			if method == '' {
+				continue
+			}
+			if method == 'ANY' || method == '*' {
+				return ['*']
+			}
+			if method !in out {
+				out << method
+			}
+		}
+		return out
+	}
+	if methods.is_array() {
+		for part in methods.to_string_list() {
+			method := part.trim_space().to_upper()
+			if method == '' {
+				continue
+			}
+			if method == 'ANY' || method == '*' {
+				return ['*']
+			}
+			if method !in out {
+				out << method
+			}
+		}
+	}
+	return out
+}

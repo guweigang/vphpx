@@ -24,6 +24,14 @@ mut:
 	resolved  map[string]vphp.PersistentOwnedZVal
 }
 
+fn new_vslim_container() &VSlimContainer {
+	return &VSlimContainer{
+		entries:   map[string]vphp.PersistentOwnedZVal{}
+		factories: map[string]vphp.PersistentOwnedZVal{}
+		resolved:  map[string]vphp.PersistentOwnedZVal{}
+	}
+}
+
 @[php_method]
 pub fn (mut c VSlimContainer) construct() &VSlimContainer {
 	c.entries = map[string]vphp.PersistentOwnedZVal{}
@@ -33,20 +41,20 @@ pub fn (mut c VSlimContainer) construct() &VSlimContainer {
 }
 
 @[php_method]
-pub fn (mut c VSlimContainer) set(id string, value vphp.ZVal) &VSlimContainer {
-	c.entries[id] = vphp.PersistentOwnedZVal.from_zval(value)
+pub fn (mut c VSlimContainer) set(id string, value vphp.BorrowedValue) &VSlimContainer {
+	c.entries[id] = vphp.PersistentOwnedZVal.from_zval(value.to_zval())
 	c.factories.delete(id)
 	c.resolved.delete(id)
 	return &c
 }
 
 @[php_method]
-pub fn (mut c VSlimContainer) factory(id string, callable vphp.ZVal) &VSlimContainer {
+pub fn (mut c VSlimContainer) factory(id string, callable vphp.BorrowedValue) &VSlimContainer {
 	if !callable.is_valid() || !callable.is_callable() {
 		throw_container_exception('factory for "${id}" must be callable')
 		return &c
 	}
-	c.factories[id] = vphp.PersistentOwnedZVal.from_zval(callable)
+	c.factories[id] = vphp.PersistentOwnedZVal.from_zval(callable.to_zval())
 	c.entries.delete(id)
 	c.resolved.delete(id)
 	return &c
@@ -57,19 +65,19 @@ pub fn (c &VSlimContainer) has(id string) bool {
 	return id in c.entries || id in c.factories || id in c.resolved
 }
 
-// `get()` is wired via a custom bridge export so we can return mixed zval values safely.
 @[php_method]
-@[export: 'manual']
-pub fn (c &VSlimContainer) get(id string) {}
+pub fn (mut c VSlimContainer) get(id string) vphp.Value {
+	return c.get_entry_or_throw(id)
+}
 
-fn (mut c VSlimContainer) get_entry(id string) !vphp.ZVal {
+fn (mut c VSlimContainer) get_entry(id string) !vphp.Value {
 	if id in c.resolved {
 		resolved := c.resolved[id] or { return error('entry "${id}" not found') }
-		return resolved.clone_request_owned().to_zval()
+		return vphp.Value.from_zval(resolved.clone_request_owned().to_zval())
 	}
 	if id in c.entries {
 		entry := c.entries[id] or { return error('entry "${id}" not found') }
-		return entry.clone_request_owned().to_zval()
+		return vphp.Value.from_zval(entry.clone_request_owned().to_zval())
 	}
 	if id in c.factories {
 		factory_owned := c.factories[id] or { return error('entry "${id}" not found') }
@@ -79,24 +87,20 @@ fn (mut c VSlimContainer) get_entry(id string) !vphp.ZVal {
 			return error('factory "${id}" returned invalid value')
 		}
 		c.resolved[id] = vphp.PersistentOwnedZVal.from_zval(res)
-		return res
+		return vphp.Value.from_zval(res)
 	}
 	return error('entry "${id}" not found')
 }
 
-@[export: 'VSlimContainer_get']
-pub fn vslimcontainer_get(ptr voidptr, ctx vphp.Context) {
-	mut recv := unsafe { &VSlimContainer(ptr) }
-	id := ctx.arg[string](0)
-	res := recv.get_entry(id) or {
+fn (mut c VSlimContainer) get_entry_or_throw(id string) vphp.Value {
+	return c.get_entry(id) or {
 		if err.msg().contains('not found') {
 			throw_not_found(id)
 		} else {
 			throw_container_exception(err.msg())
 		}
-		return
+		return vphp.Value.new_null()
 	}
-	ctx.return_zval(res)
 }
 
 fn throw_not_found(id string) {
@@ -108,7 +112,7 @@ fn throw_container_exception(msg string) {
 	vphp.throw_exception_class('VSlim\\Container\\ContainerException', msg, 0)
 }
 
-fn (mut c VSlimContainer) free() {
+fn (c &VSlimContainer) free() {
 	for _, entry in c.entries {
 		mut z := entry
 		z.release()

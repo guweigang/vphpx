@@ -19,6 +19,23 @@ fn sanitize_ldflags(ldflags string) string {
 	return kept.join(' ')
 }
 
+fn dedupe_link_flags(flags string) string {
+	mut kept := []string{}
+	mut seen := map[string]bool{}
+	for token in flags.split(' ') {
+		t := token.trim_space()
+		if t == '' {
+			continue
+		}
+		if t in seen {
+			continue
+		}
+		seen[t] = true
+		kept << t
+	}
+	return kept.join(' ')
+}
+
 fn shell_trim(cmd string) string {
 	res := os.execute(cmd)
 	if res.exit_code != 0 {
@@ -216,8 +233,7 @@ fn main() {
 	gcc_cmd := 'gcc -shared -fPIC ${disabled_warnings} -DCOMPILE_DL_${ext_name.to_upper()}=1 ' +
 		'${cjson_cflags} ${openssl_cflags} ${v_root_cflags} ${extra_compile_flags}-DcJSON_GetErrorPos=cJSON_GetErrorPtr ' +
 		'${php_inc} ${transpiled_c} php_bridge.c ../vphp/v_bridge.c -o ${output_so} ' +
-		'-I../vphp ' +
-		'${php_ldflags} ${php_libs} ${cjson_libs}${extra_link_flags} ${platform_link_flags}'
+		'-I../vphp ' + dedupe_link_flags('${php_ldflags} ${php_libs} ${cjson_libs}${extra_link_flags} ${platform_link_flags}')
 
 	println('执行命令: ${gcc_cmd}')
 	if os.system(gcc_cmd) != 0 {

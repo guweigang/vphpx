@@ -591,7 +591,7 @@ fn normalize_assets_prefix(prefix string) string {
 	return clean.trim_right('/')
 }
 
-fn (mut view VSlimView) free() {
+fn (view &VSlimView) free() {
 	for key, _ in view.helpers {
 		mut handler := view.helpers[key] or { continue }
 		release_view_helper(mut handler)

@@ -12,7 +12,7 @@ fn (view &VSlimView) render_template_path_with_slots(path string, scalars map[st
 }
 
 @[php_method]
-pub fn (view &VSlimView) render_response(template string, data vphp.ZVal) &VSlimResponse {
+pub fn (view &VSlimView) render_response(template string, data vphp.BorrowedValue) &VSlimResponse {
 	body := view.render(template, data)
 	return &VSlimResponse{
 		status: 200
@@ -25,7 +25,7 @@ pub fn (view &VSlimView) render_response(template string, data vphp.ZVal) &VSlim
 }
 
 @[php_method]
-pub fn (view &VSlimView) render_response_with_layout(template string, layout string, data vphp.ZVal) &VSlimResponse {
+pub fn (view &VSlimView) render_response_with_layout(template string, layout string, data vphp.BorrowedValue) &VSlimResponse {
 	body := view.render_with_layout(template, layout, data)
 	return &VSlimResponse{
 		status: 200

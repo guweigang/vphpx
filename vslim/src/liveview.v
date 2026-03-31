@@ -63,48 +63,50 @@ pub fn (socket &VSlimLiveSocket) root_id() string {
 }
 
 @[php_method]
-pub fn (mut socket VSlimLiveSocket) assign(key string, value vphp.ZVal) &VSlimLiveSocket {
+pub fn (mut socket VSlimLiveSocket) assign(key string, value vphp.BorrowedValue) &VSlimLiveSocket {
 	name := key.trim_space()
 	if name == '' {
 		return &socket
 	}
-	socket.assigns[name] = live_value_string(value)
+	socket.assigns[name] = live_value_string(value.to_zval())
 	return &socket
 }
 
 @[php_method]
-pub fn (mut socket VSlimLiveSocket) assign_many(values vphp.ZVal) &VSlimLiveSocket {
+pub fn (mut socket VSlimLiveSocket) assign_many(values vphp.BorrowedValue) &VSlimLiveSocket {
 	if !values.is_valid() || values.is_null() || values.is_undef() || !values.is_array() {
 		return &socket
 	}
-	for key in values.assoc_keys() {
-		socket.assign(key, zval_key(values, key))
+	raw := values.to_zval()
+	for key in raw.assoc_keys() {
+		socket.assign(key, vphp.BorrowedValue.from_zval(zval_key(raw, key)))
 	}
 	return &socket
 }
 
 @[php_method]
-pub fn (mut socket VSlimLiveSocket) assign_form(values vphp.ZVal) &VSlimLiveSocket {
+pub fn (mut socket VSlimLiveSocket) assign_form(values vphp.BorrowedValue) &VSlimLiveSocket {
 	if !values.is_valid() || values.is_null() || values.is_undef() || !values.is_array() {
 		return &socket
 	}
-	for key in values.assoc_keys() {
+	raw := values.to_zval()
+	for key in raw.assoc_keys() {
 		name := key.trim_space()
 		if name == '' {
 			continue
 		}
-		value := zval_key(values, key)
+		value := zval_key(raw, key)
 		if value.is_array() {
 			socket.assigns[name] = live_form_value_string(value)
 			continue
 		}
-		socket.assign(name, value)
+		socket.assign(name, vphp.BorrowedValue.from_zval(value))
 	}
 	return &socket
 }
 
 @[php_method]
-pub fn (mut socket VSlimLiveSocket) reset_form(values vphp.ZVal) &VSlimLiveSocket {
+pub fn (mut socket VSlimLiveSocket) reset_form(values vphp.BorrowedValue) &VSlimLiveSocket {
 	socket.clear_errors()
 	return socket.assign_form(values)
 }
@@ -125,8 +127,8 @@ pub fn (mut socket VSlimLiveSocket) forget_input(field string) &VSlimLiveSocket 
 }
 
 @[php_method]
-pub fn (mut socket VSlimLiveSocket) forget_inputs(fields vphp.ZVal) &VSlimLiveSocket {
-	for field in live_field_names(fields) {
+pub fn (mut socket VSlimLiveSocket) forget_inputs(fields vphp.BorrowedValue) &VSlimLiveSocket {
+	for field in live_field_names(fields.to_zval()) {
 		socket.forget(field)
 	}
 	return &socket
@@ -148,12 +150,12 @@ fn live_component_state_key(component_id string, field string) string {
 }
 
 @[php_method]
-pub fn (mut socket VSlimLiveSocket) assign_component_state(component_id string, field string, value vphp.ZVal) &VSlimLiveSocket {
+pub fn (mut socket VSlimLiveSocket) assign_component_state(component_id string, field string, value vphp.BorrowedValue) &VSlimLiveSocket {
 	key := live_component_state_key(component_id, field)
 	if key == '' {
 		return &socket
 	}
-	socket.assigns[key] = live_value_string(value)
+	socket.assigns[key] = live_value_string(value.to_zval())
 	return &socket
 }
 
@@ -192,16 +194,17 @@ pub fn (mut socket VSlimLiveSocket) assign_error(field string, message string) &
 }
 
 @[php_method]
-pub fn (mut socket VSlimLiveSocket) assign_errors(values vphp.ZVal) &VSlimLiveSocket {
+pub fn (mut socket VSlimLiveSocket) assign_errors(values vphp.BorrowedValue) &VSlimLiveSocket {
 	if !values.is_valid() || values.is_null() || values.is_undef() || !values.is_array() {
 		return &socket
 	}
-	for key in values.assoc_keys() {
+	raw := values.to_zval()
+	for key in raw.assoc_keys() {
 		field := key.trim_space()
 		if field == '' {
 			continue
 		}
-		socket.assign_error(field, live_value_string(zval_key(values, key)))
+		socket.assign_error(field, live_value_string(zval_key(raw, key)))
 	}
 	return &socket
 }
@@ -264,11 +267,11 @@ pub fn (socket &VSlimLiveSocket) has_error(field string) bool {
 @[php_method]
 pub fn (socket &VSlimLiveSocket) form(name string) &VSlimLiveForm {
 	return &VSlimLiveForm{
-		name: name.trim_space()
-		socket_ref: socket
-		fields: []string{}
+		name:             name.trim_space()
+		socket_ref:       socket
+		fields:           []string{}
 		last_error_count: 0
-		validated: false
+		validated:        false
 	}
 }
 
@@ -283,11 +286,11 @@ pub fn (form &VSlimLiveForm) available() bool {
 }
 
 @[php_method]
-pub fn (mut form VSlimLiveForm) fill(values vphp.ZVal) &VSlimLiveForm {
+pub fn (mut form VSlimLiveForm) fill(values vphp.BorrowedValue) &VSlimLiveForm {
 	if isnil(form.socket_ref) {
 		return &form
 	}
-	form.track_fields(values)
+	form.track_fields(values.to_zval())
 	unsafe {
 		mut socket := &VSlimLiveSocket(form.socket_ref)
 		socket.assign_form(values)
@@ -296,11 +299,11 @@ pub fn (mut form VSlimLiveForm) fill(values vphp.ZVal) &VSlimLiveForm {
 }
 
 @[php_method]
-pub fn (mut form VSlimLiveForm) reset(values vphp.ZVal) &VSlimLiveForm {
+pub fn (mut form VSlimLiveForm) reset(values vphp.BorrowedValue) &VSlimLiveForm {
 	if isnil(form.socket_ref) {
 		return &form
 	}
-	form.track_fields(values)
+	form.track_fields(values.to_zval())
 	unsafe {
 		mut socket := &VSlimLiveSocket(form.socket_ref)
 		socket.reset_form(values)
@@ -311,7 +314,7 @@ pub fn (mut form VSlimLiveForm) reset(values vphp.ZVal) &VSlimLiveForm {
 }
 
 @[php_method]
-pub fn (mut form VSlimLiveForm) validate(validator vphp.ZVal) &VSlimLiveForm {
+pub fn (mut form VSlimLiveForm) validate(validator vphp.BorrowedValue) &VSlimLiveForm {
 	form.validated = true
 	form.last_error_count = 0
 	if isnil(form.socket_ref) {
@@ -323,13 +326,14 @@ pub fn (mut form VSlimLiveForm) validate(validator vphp.ZVal) &VSlimLiveForm {
 		mut errors_z := vphp.RequestOwnedZVal.new_null().to_zval()
 		if validator.is_valid() && !validator.is_null() && !validator.is_undef() {
 			if validator.is_callable() {
-				errors_z = validator.call_owned_request([form.data()])
+				errors_z = validator.to_zval().call_owned_request([
+					form.data().to_zval()])
 			} else if validator.is_array() {
-				errors_z = validator
+				errors_z = validator.to_zval()
 			}
 		}
 		if errors_z.is_valid() && !errors_z.is_null() && !errors_z.is_undef() && errors_z.is_array() {
-			socket.assign_errors(errors_z)
+			socket.assign_errors(vphp.BorrowedValue.from_zval(errors_z))
 			form.last_error_count = errors_z.assoc_keys().len
 		}
 	}
@@ -337,7 +341,7 @@ pub fn (mut form VSlimLiveForm) validate(validator vphp.ZVal) &VSlimLiveForm {
 }
 
 @[php_method]
-pub fn (mut form VSlimLiveForm) errors(values vphp.ZVal) &VSlimLiveForm {
+pub fn (mut form VSlimLiveForm) errors(values vphp.BorrowedValue) &VSlimLiveForm {
 	if isnil(form.socket_ref) {
 		return &form
 	}
@@ -345,7 +349,7 @@ pub fn (mut form VSlimLiveForm) errors(values vphp.ZVal) &VSlimLiveForm {
 		mut socket := &VSlimLiveSocket(form.socket_ref)
 		socket.assign_errors(values)
 	}
-	form.last_error_count = if values.is_array() { values.assoc_keys().len } else { 0 }
+	form.last_error_count = if values.is_array() { values.to_zval().assoc_keys().len } else { 0 }
 	form.validated = true
 	return &form
 }
@@ -388,7 +392,7 @@ pub fn (mut form VSlimLiveForm) forget(field string) &VSlimLiveForm {
 }
 
 @[php_method]
-pub fn (mut form VSlimLiveForm) forget_many(fields vphp.ZVal) &VSlimLiveForm {
+pub fn (mut form VSlimLiveForm) forget_many(fields vphp.BorrowedValue) &VSlimLiveForm {
 	if isnil(form.socket_ref) {
 		return &form
 	}
@@ -442,15 +446,15 @@ pub fn (form &VSlimLiveForm) error_count() int {
 }
 
 @[php_method]
-pub fn (form &VSlimLiveForm) data() vphp.ZVal {
+pub fn (form &VSlimLiveForm) data() vphp.Value {
 	mut out := new_array_zval()
 	if isnil(form.socket_ref) {
-		return out
+		return vphp.Value.from_zval(out)
 	}
 	for field in form.field_names() {
 		out.add_assoc_string(field, form.socket_ref.input(field))
 	}
-	return out
+	return vphp.Value.from_zval(out)
 }
 
 fn (mut form VSlimLiveForm) track_fields(values vphp.ZVal) {
@@ -658,7 +662,7 @@ pub fn (mut socket VSlimLiveSocket) leave_topic(room string) &VSlimLiveSocket {
 }
 
 @[php_method]
-pub fn (mut socket VSlimLiveSocket) broadcast_info(room string, event string, payload vphp.ZVal, include_self bool) &VSlimLiveSocket {
+pub fn (mut socket VSlimLiveSocket) broadcast_info(room string, event string, payload vphp.BorrowedValue, include_self bool) &VSlimLiveSocket {
 	topic := room.trim_space()
 	name := event.trim_space()
 	if topic == '' || name == '' {
@@ -668,7 +672,7 @@ pub fn (mut socket VSlimLiveSocket) broadcast_info(room string, event string, pa
 		'op':           'broadcast_info'
 		'room':         topic
 		'event':        name
-		'payload':      live_json_payload(payload)
+		'payload':      live_json_payload(payload.to_zval())
 		'include_self': if include_self { 'true' } else { 'false' }
 	}
 	return &socket
@@ -818,18 +822,18 @@ pub fn (live &VSlimLiveView) bootstrap_attrs(socket &VSlimLiveSocket, endpoint s
 	if root_id == '' {
 		root_id = 'live-root'
 	}
-	return 'data-vphp-live="1" data-vphp-live-endpoint="' + escape_html_text(ws_path)
-		+ '" data-vphp-live-path="' + escape_html_text(target) + '" data-vphp-live-root="'
-		+ escape_html_text(root_id) + '"'
+	return 'data-vphp-live="1" data-vphp-live-endpoint="' + escape_html_text(ws_path) +
+		'" data-vphp-live-path="' + escape_html_text(target) + '" data-vphp-live-root="' +
+		escape_html_text(root_id) + '"'
 }
 
 @[php_method]
-pub fn (mut live VSlimLiveView) render_template(template string, data vphp.ZVal) string {
+pub fn (mut live VSlimLiveView) render_template(template string, data vphp.BorrowedValue) string {
 	return live.host.render_template_data(template, data)
 }
 
 @[php_method]
-pub fn (mut live VSlimLiveView) render_template_with_layout(template string, layout string, data vphp.ZVal) string {
+pub fn (mut live VSlimLiveView) render_template_with_layout(template string, layout string, data vphp.BorrowedValue) string {
 	return live.host.render_template_with_layout_data(template, layout, data)
 }
 
@@ -951,27 +955,28 @@ fn (component &VSlimLiveComponent) bound_socket() ?&VSlimLiveSocket {
 pub fn (component &VSlimLiveComponent) state() &VSlimLiveComponentState {
 	return &VSlimLiveComponentState{
 		component_id: component.id.trim_space()
-		socket_ref: component.socket_ref
+		socket_ref:   component.socket_ref
 	}
 }
 
 @[php_method]
-pub fn (mut component VSlimLiveComponent) assign(key string, value vphp.ZVal) &VSlimLiveComponent {
+pub fn (mut component VSlimLiveComponent) assign(key string, value vphp.BorrowedValue) &VSlimLiveComponent {
 	name := key.trim_space()
 	if name == '' {
 		return &component
 	}
-	component.assigns[name] = live_value_string(value)
+	component.assigns[name] = live_value_string(value.to_zval())
 	return &component
 }
 
 @[php_method]
-pub fn (mut component VSlimLiveComponent) assign_many(values vphp.ZVal) &VSlimLiveComponent {
+pub fn (mut component VSlimLiveComponent) assign_many(values vphp.BorrowedValue) &VSlimLiveComponent {
 	if !values.is_valid() || values.is_null() || values.is_undef() || !values.is_array() {
 		return &component
 	}
-	for key in values.assoc_keys() {
-		component.assign(key, zval_key(values, key))
+	raw := values.to_zval()
+	for key in raw.assoc_keys() {
+		component.assign(key, vphp.BorrowedValue.from_zval(zval_key(raw, key)))
 	}
 	return &component
 }
@@ -988,7 +993,7 @@ pub fn (mut component VSlimLiveComponent) clear_assigns() &VSlimLiveComponent {
 }
 
 @[php_method]
-pub fn (mut component VSlimLiveComponent) render_template(template string, data vphp.ZVal) string {
+pub fn (mut component VSlimLiveComponent) render_template(template string, data vphp.BorrowedValue) string {
 	return component.host.render_template_data(template, data)
 }
 
@@ -1086,7 +1091,7 @@ pub fn (mut component VSlimLiveComponent) remove_bound() &VSlimLiveSocket {
 }
 
 @[php_method]
-pub fn (mut state VSlimLiveComponentState) set(field string, value vphp.ZVal) &VSlimLiveComponentState {
+pub fn (mut state VSlimLiveComponentState) set(field string, value vphp.BorrowedValue) &VSlimLiveComponentState {
 	if isnil(state.socket_ref) {
 		return &state
 	}
@@ -1212,7 +1217,8 @@ fn live_json_payload(value vphp.ZVal) string {
 		out.add_assoc_string('value', raw)
 		return json_encode_zval(out)
 	}
-	if value.is_array() || value.is_object() || value.is_bool() || value.is_long() || value.is_double() {
+	if value.is_array() || value.is_object() || value.is_bool() || value.is_long()
+		|| value.is_double() {
 		return json_encode_zval(value)
 	}
 	mut out := new_array_zval()
@@ -1235,10 +1241,10 @@ fn live_normalize_target(raw_path string) string {
 
 fn live_html_response(body string) &VSlimResponse {
 	return &VSlimResponse{
-		status: 200
-		body: body
+		status:       200
+		body:         body
 		content_type: 'text/html; charset=utf-8'
-		headers: {
+		headers:      {
 			'content-type': 'text/html; charset=utf-8'
 		}
 	}
