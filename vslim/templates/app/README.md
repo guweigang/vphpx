@@ -34,13 +34,15 @@
 2. 运行 `composer install`
 3. 用 `make serve EXT=./vslim.so` 启 HTTP 入口
 4. 用 `make vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd` 启 worker 入口
-5. 用 `make cli-help EXT=./vslim.so` 看 CLI 入口
-6. 从 `app/Http/routes/web.php`、`app/Http/middleware.php`、`app/Modules/StatusModule.php`、`app/Commands/AboutCommand.php` 开始改自己的业务
+5. 用 `make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd` 跑一次最薄的 worker 验收
+6. 用 `make cli-help EXT=./vslim.so` 看 CLI 入口
+7. 从 `app/Http/routes/web.php`、`app/Http/middleware.php`、`app/Modules/StatusModule.php`、`app/Commands/AboutCommand.php` 开始改自己的业务
 
 模板自带的项目级入口有：
 
 - `make serve EXT=./vslim.so`
 - `make vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd`
+- `make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd`
 - `make cli EXT=./vslim.so`
 - `make cli-help EXT=./vslim.so`
 - `make health EXT=./vslim.so`
@@ -90,6 +92,7 @@ $app = (new VSlim\App())->bootstrapDir(__DIR__);
 ```bash
 make serve EXT=./vslim.so
 make vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd
+make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd
 ```
 
 本地验证可以分别打：
@@ -98,6 +101,14 @@ make vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd
 curl --noproxy '*' http://127.0.0.1:8080/health
 curl --noproxy '*' http://127.0.0.1:19888/health
 ```
+
+如果你只想做一次最薄的 worker 验收，不想自己起进程再手动 `curl`，可以直接跑：
+
+```bash
+make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd
+```
+
+它会临时启动一份 `vhttpd`，自动检查 `/health`、`/module/ping`、`/missing`，然后清理进程和临时文件。
 
 如果你更喜欢 TOML 配置，而不是在命令行上把参数全部展开，可以从 `vhttpd.example.toml` 开始。
 把里面的 `__PROJECT_ROOT__` 和 `__VHTTPD_ROOT__` 换成真实绝对路径后运行：
