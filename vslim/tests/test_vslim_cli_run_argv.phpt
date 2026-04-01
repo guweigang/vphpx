@@ -15,8 +15,11 @@ $output = trim((string) ob_get_clean());
 echo $code, '|', $output, PHP_EOL;
 
 $helpCli = new VSlim\Cli\App();
+ob_start();
 $helpCode = $helpCli->runArgv(['bin/vslim', '--bootstrap-dir', $root, '--help']);
+$helpOutput = rtrim((string) ob_get_clean());
 $help = $helpCli->helpText();
+echo $helpOutput, PHP_EOL;
 echo $helpCode, '|',
     (str_contains($help, 'Usage:') ? 'usage_yes' : 'usage_no'), '|',
     (str_contains($help, 'about') ? 'about_yes' : 'about_no'), '|',
@@ -24,12 +27,17 @@ echo $helpCode, '|',
     (str_contains($help, 'Show template bootstrap status.') ? 'desc_yes' : 'desc_no'), PHP_EOL;
 
 $listCli = new VSlim\Cli\App();
+ob_start();
 $listCode = $listCli->runArgv(['bin/vslim', '--bootstrap-dir', $root, '--list']);
+echo rtrim((string) ob_get_clean()), PHP_EOL;
 echo 'list_exit=', $listCode, PHP_EOL;
 
 $helpCommandCli = new VSlim\Cli\App();
+ob_start();
 $commandHelpCode = $helpCommandCli->runArgv(['bin/vslim', '--bootstrap-dir', $root, 'about', '--help']);
+$commandHelpOutput = rtrim((string) ob_get_clean());
 $commandHelp = $helpCommandCli->commandHelp('about');
+echo $commandHelpOutput, PHP_EOL;
 echo $commandHelpCode, '|',
     (str_contains($commandHelp, '<topic>') ? 'topic_yes' : 'topic_no'), '|',
     (str_contains($commandHelp, '--format <kind>') ? 'format_yes' : 'format_no'), '|',
@@ -58,7 +66,7 @@ echo $fileCode, '|', $fileOutput, PHP_EOL;
 ?>
 --EXPECT--
 2|vslim-template|provider-ready|foo,bar
-0Usage:
+Usage:
   vslim [--bootstrap-dir <path> | --bootstrap-file <path>] <command> [args...]
   vslim --help
 
@@ -78,14 +86,14 @@ Commands:
 
 Notes:
   Runtime options are parsed before the command name and remaining args are passed through unchanged.
-|usage_yes|about_yes|template_yes|desc_yes
-list_exit=General:
+0|usage_yes|about_yes|template_yes|desc_yes
+General:
   about                       Show template bootstrap status.
 
 template:
   template:about              Show template bootstrap status.
-0
-0Usage:
+list_exit=0
+Usage:
   vslim about [options] [<topic>] [<details>...]
 
 Description:
@@ -106,5 +114,5 @@ Examples:
 
 Notes:
   This command runs against the same app container and config graph as HTTP bootstrap.
-|topic_yes|format_yes|examples_yes|epilog_yes
+0|topic_yes|format_yes|examples_yes|epilog_yes
 2|inline|x,y|registered
