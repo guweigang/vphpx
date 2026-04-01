@@ -36,6 +36,27 @@ fn php_glob_paths(pattern string) []string {
 	return out
 }
 
+fn php_scandir_names(path string) []string {
+	result := vphp.call_php('scandir', [vphp.RequestOwnedZVal.new_string(path).to_zval()])
+	if !result.is_valid() || result.is_null() || result.is_undef() || !result.is_array() {
+		return []string{}
+	}
+	mut out := []string{}
+	for idx := 0; idx < result.array_count(); idx++ {
+		item := result.array_get(idx)
+		if !item.is_valid() || item.is_null() || item.is_undef() {
+			continue
+		}
+		name := item.to_string().trim_space()
+		if name == '' || name == '.' || name == '..' {
+			continue
+		}
+		out << name
+	}
+	out.sort()
+	return out
+}
+
 fn php_include_once(path string) vphp.ZVal {
 	return vphp.include_once(path)
 }
