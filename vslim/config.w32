@@ -40,6 +40,7 @@ if (PHP_VSLIM != "no") {
 		'/I "' + vslimVphpDir + '" ' +
 		'/I "' + vslimVphpDir + '\\bridge" ' +
 		'/I "' + vslimVRoot + '\\thirdparty\\zip" ' +
+		'/I "' + vslimVRoot + '\\thirdparty\\vschannel" ' +
 		'/I "' + vslimOpenSslInclude + '" ';
 
 	EXTENSION("vslim", "php_bridge.c vslim_generated.c", PHP_VSLIM_SHARED, vslimCflags);
