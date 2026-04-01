@@ -1,9 +1,21 @@
 module main
 
+import os
 import vphp
 
 fn cli_bootstrap_file_return_error(path string) string {
 	return 'CLI bootstrap file "${path}" must return iterable commands/spec, callable, or VSlim\\Cli\\App'
+}
+
+fn cli_debug_enabled() bool {
+	return os.getenv('VSLIM_CLI_DEBUG').trim_space().to_lower() in ['1', 'true', 'yes', 'on']
+}
+
+fn cli_debug_log(message string) {
+	if !cli_debug_enabled() {
+		return
+	}
+	eprintln('[vslim-cli-debug] ' + message)
 }
 
 fn cli_bootstrap_file_apply(mut cli VSlimCliApp, path string) ! {
@@ -24,6 +36,7 @@ fn cli_bootstrap_file_apply(mut cli VSlimCliApp, path string) ! {
 
 fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 	clean := normalize_bootstrap_dir_path(path)
+	cli_debug_log('bootstrap_dir input="${path}" clean="${clean}"')
 	if clean == '' {
 		return error('CLI bootstrap directory must not be empty')
 	}
@@ -32,6 +45,7 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 		return
 	}
 	project_root := if is_bootstrap_dir_path(clean) { path_dirname(clean) } else { clean }
+	cli_debug_log('project_root="${project_root}"')
 	if project_root == '' {
 		return error('CLI bootstrap directory has no project root')
 	}
@@ -41,6 +55,7 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 	app_candidates := [path_join(project_root, 'bootstrap/app.php'),
 		path_join(project_root, 'app.php')]
 	for candidate in app_candidates {
+		cli_debug_log('app_candidate="${candidate}" is_file=${php_is_file(candidate)}')
 		if php_is_file(candidate) {
 			core.bootstrap_file(candidate)
 			shared_applied = true
@@ -110,15 +125,20 @@ fn cli_display_path(path string) string {
 fn apply_cli_command_class_conventions(mut cli VSlimCliApp, project_root string) !bool {
 	mut applied := false
 	commands_dir := path_join(project_root, 'app/Commands')
-	for entry in php_scandir_names(commands_dir) {
+	entries := php_scandir_names(commands_dir)
+	cli_debug_log('commands_dir="${commands_dir}" entries=${entries}')
+	for entry in entries {
 		if !entry.ends_with('.php') {
+			cli_debug_log('skip_command_entry="${entry}"')
 			continue
 		}
 		file := path_join(commands_dir, entry)
 		_ = php_include_once(file)
 		display_file := cli_display_path(file)
 		class_name := 'App\\Commands\\' + path_file_stem(entry)
-		if !php_class_exists(class_name) {
+		class_exists := php_class_exists(class_name)
+		cli_debug_log('command_entry="${entry}" file="${display_file}" class="${class_name}" class_exists=${class_exists}')
+		if !class_exists {
 			return error('command convention file "${display_file}" must declare class ${class_name}')
 		}
 		name := derive_command_name_from_handler(vphp.RequestOwnedZVal.new_string(class_name).to_zval())!
