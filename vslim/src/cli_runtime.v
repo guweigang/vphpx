@@ -19,25 +19,36 @@ struct CliCommandListingGroup {
 	commands []string
 }
 
+fn cli_clone_string_list(items []string) []string {
+	if items.len == 0 {
+		return []string{}
+	}
+	mut out := []string{cap: items.len}
+	for item in items {
+		out << item.clone()
+	}
+	return out
+}
+
 fn cli_runtime_effective_args(argv []string, cli &VSlimCliApp) CliRuntimeInvocation {
 	mut inv := CliRuntimeInvocation{}
 	if argv.len == 0 {
 		return inv
 	}
-	inv.argv0 = argv[0]
+	inv.argv0 = argv[0].clone()
 	if argv[0].trim_space() == '' {
 		if argv.len > 1 {
-			inv.command_args = argv[1..]
+			inv.command_args = cli_clone_string_list(argv[1..])
 		}
 		return inv
 	}
 	if cli_runtime_should_strip_argv0(argv[0], cli, argv) {
 		if argv.len > 1 {
-			inv.command_args = argv[1..]
+			inv.command_args = cli_clone_string_list(argv[1..])
 		}
 		return inv
 	}
-	inv.command_args = argv.clone()
+	inv.command_args = cli_clone_string_list(argv)
 	return inv
 }
 
@@ -526,7 +537,7 @@ fn cli_runtime_print_help(mut cli VSlimCliApp, program string) {
 
 fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvocation {
 	mut inv := cli_runtime_effective_args(argv, cli)
-	mut args := inv.command_args.clone()
+	mut args := cli_clone_string_list(inv.command_args)
 	inv.command_args = []string{}
 	mut idx := 0
 	for idx < args.len {
@@ -559,7 +570,7 @@ fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvo
 				if idx + 1 >= args.len || args[idx + 1].trim_space() == '' {
 					return error('CLI option `--bootstrap-dir` requires a non-empty path')
 				}
-				inv.bootstrap_dir = args[idx + 1].trim_space()
+				inv.bootstrap_dir = args[idx + 1].trim_space().clone()
 				idx += 2
 				continue
 			}
@@ -567,31 +578,31 @@ fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvo
 				if idx + 1 >= args.len || args[idx + 1].trim_space() == '' {
 					return error('CLI option `--bootstrap-file` requires a non-empty path')
 				}
-				inv.bootstrap_file = args[idx + 1].trim_space()
+				inv.bootstrap_file = args[idx + 1].trim_space().clone()
 				idx += 2
 				continue
 			}
 			else {}
 		}
 		if dir_value := cli_runtime_parse_value_option(arg, 'bootstrap-dir') {
-			inv.bootstrap_dir = dir_value
+			inv.bootstrap_dir = dir_value.clone()
 			idx++
 			continue
 		}
 		if file_value := cli_runtime_parse_value_option(arg, 'bootstrap-file') {
-			inv.bootstrap_file = file_value
+			inv.bootstrap_file = file_value.clone()
 			idx++
 			continue
 		}
 		if arg.starts_with('-') {
 			return error('unknown CLI option `${arg}`')
 		}
-		inv.command_name = arg
+		inv.command_name = arg.clone()
 		idx++
 		break
 	}
 	if idx < args.len {
-		inv.command_args = args[idx..].clone()
+		inv.command_args = cli_clone_string_list(args[idx..])
 	}
 	if inv.bootstrap_dir != '' && inv.bootstrap_file != '' {
 		return error('CLI options `--bootstrap-dir` and `--bootstrap-file` cannot be used together')
