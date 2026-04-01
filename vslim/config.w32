@@ -1,0 +1,28 @@
+// vim:ft=javascript
+
+ARG_ENABLE("vslim", "VSlim support", "yes");
+
+if (PHP_VSLIM != "no") {
+	var vslimVphpDir = getenv("VSLIM_VPHP_DIR");
+	var vslimVRoot = getenv("VSLIM_V_ROOT");
+	var vslimCflags;
+
+	if (!vslimVphpDir) {
+		ERROR("VSLIM_VPHP_DIR is not set. Point it at the repo vphp directory.");
+	}
+	if (!vslimVRoot) {
+		ERROR("VSLIM_V_ROOT is not set. Point it at the V installation root.");
+	}
+
+	vslimVphpDir = vslimVphpDir.replace(new RegExp("/", "g"), "\\");
+	vslimVRoot = vslimVRoot.replace(new RegExp("/", "g"), "\\");
+
+	vslimCflags =
+		'/I "' + vslimVphpDir + '" ' +
+		'/I "' + vslimVphpDir + '\\bridge" ' +
+		'/I "' + vslimVRoot + '\\thirdparty\\zip" ';
+
+	EXTENSION("vslim", "php_bridge.c vslim_generated.c", PHP_VSLIM_SHARED, vslimCflags);
+	ADD_SOURCES(vslimVphpDir, "v_bridge.c", "vslim");
+	ADD_FLAG("LIBS_VSLIM", " ws2_32.lib bcrypt.lib crypt32.lib secur32.lib user32.lib advapi32.lib shell32.lib iphlpapi.lib normaliz.lib ");
+}

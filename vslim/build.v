@@ -131,6 +131,7 @@ fn run_v_transpile(project_root string, prod_mode bool, gc_mode string, module_p
 	v_exe := os.find_abs_path_of_executable('v') or {
 		return error('unable to resolve V executable from PATH')
 	}
+	use_openssl := should_use_openssl()
 	prod_arg := if prod_mode { '-prod' } else { '' }
 	mut args := []string{}
 	if prod_arg != '' {
@@ -140,8 +141,10 @@ fn run_v_transpile(project_root string, prod_mode bool, gc_mode string, module_p
 	args << '-enable-globals'
 	args << '-gc'
 	args << gc_mode
-	args << '-d'
-	args << 'use_openssl'
+	if use_openssl {
+		args << '-d'
+		args << 'use_openssl'
+	}
 	args << '-path'
 	args << module_path
 	args << '-shared'
@@ -161,6 +164,15 @@ fn run_v_transpile(project_root string, prod_mode bool, gc_mode string, module_p
 	if proc.code != 0 {
 		return error(output)
 	}
+}
+
+fn should_use_openssl() bool {
+	raw := os.getenv_opt('VPHP_V_USE_OPENSSL') or { '' }
+	flag := raw.trim_space().to_lower()
+	if flag == '' {
+		return true
+	}
+	return !(flag in ['0', 'false', 'no', 'off'])
 }
 
 fn detect_gc_compile_flags(gc_mode string) string {

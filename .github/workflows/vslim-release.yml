@@ -18,6 +18,7 @@ jobs:
             runs_on: ubuntu-latest
             platform: linux-amd64
             package_type: binary
+            extension_file: vslim.so
             artifact_name: vslim-linux-amd64-binary
             needs_build: true
             emit_only: false
@@ -25,6 +26,7 @@ jobs:
             runs_on: macos-15-intel
             platform: macos-amd64
             package_type: binary
+            extension_file: vslim.so
             artifact_name: vslim-macos-amd64-binary
             needs_build: true
             emit_only: false
@@ -32,16 +34,18 @@ jobs:
             runs_on: macos-15
             platform: macos-arm64
             package_type: binary
+            extension_file: vslim.so
             artifact_name: vslim-macos-arm64-binary
             needs_build: true
             emit_only: false
-          - name: windows amd64 source bundle
+          - name: windows amd64 bundle
             runs_on: windows-latest
             platform: windows-amd64
-            package_type: source
-            artifact_name: vslim-windows-amd64-source
+            package_type: binary
+            extension_file: php_vslim.dll
+            artifact_name: vslim-windows-amd64-binary
             needs_build: true
-            emit_only: true
+            emit_only: false
 
     steps:
       - name: Checkout
@@ -72,6 +76,12 @@ jobs:
           Add-Content -Path $env:GITHUB_PATH -Value "$env:RUNNER_TEMP\vlang"
           & "$env:RUNNER_TEMP\vlang\v.exe" version
 
+      - name: Setup MSVC on Windows
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
@@ -85,7 +95,7 @@ jobs:
           brew install pkg-config cjson openssl@3 libsodium argon2
 
       - name: Build VSlim extension
-        if: matrix.package_type == 'binary'
+        if: matrix.package_type == 'binary' && runner.os != 'Windows'
         working-directory: vslim
         shell: bash
         env:
@@ -93,37 +103,54 @@ jobs:
         run: |
           make build
 
-      - name: Emit VSlim bridge sources on Windows
-        if: runner.os == 'Windows' && matrix.emit_only
+      - name: Build VSlim extension on Windows
+        if: runner.os == 'Windows' && matrix.package_type == 'binary'
         working-directory: vslim
         shell: pwsh
         env:
           VPHP_V_GC: none
+          VPHP_V_USE_OPENSSL: 0
         run: |
           & v.exe -path ".;..;@vlib" run build.v -emit-only
+          .\scripts\build_windows_dll.ps1
 
       - name: Smoke check binary bundle
-        if: matrix.package_type == 'binary'
+        if: matrix.package_type == 'binary' && runner.os != 'Windows'
         working-directory: vslim
         shell: bash
         run: |
-          TEST_PHP_EXECUTABLE="$(command -v php)" php ../vphptest/run-tests.php -q --show-all -d extension=./vslim.so \
+          TEST_PHP_EXECUTABLE="$(command -v php)" php ../vphptest/run-tests.php -q --show-all -d extension=./${{ matrix.extension_file }} \
             tests/test_vslim_cli_run_argv.phpt \
             tests/test_vslim_cli_template_bin_entry.phpt \
             tests/test_vslim_psr7_psr17_interface_contracts.phpt \
             tests/test_vslim_template_project_metadata.phpt
 
+      - name: Smoke check binary bundle on Windows
+        if: matrix.package_type == 'binary' && runner.os == 'Windows'
+        working-directory: vslim
+        shell: pwsh
+        run: |
+          $env:TEST_PHP_EXECUTABLE = (Get-Command php).Source
+          php ..\vphptest\run-tests.php -q --show-all -d extension=.\${{ matrix.extension_file }} `
+            tests/test_vslim_cli_run_argv.phpt `
+            tests/test_vslim_cli_template_bin_entry.phpt `
+            tests/test_vslim_psr7_psr17_interface_contracts.phpt `
+            tests/test_vslim_template_project_metadata.phpt
+
       - name: Build release bundle
+        if: runner.os != 'Windows'
         working-directory: vslim
         shell: bash
         env:
           VSLIM_RELEASE_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
         run: |
           if [ "${{ matrix.package_type }}" = "binary" ]; then
-            make dist \
-              PACKAGE_FORMAT=zip \
-              ARTIFACT_VERSION="${VSLIM_RELEASE_VERSION}" \
-              ARTIFACT_PLATFORM="${{ matrix.platform }}"
+            php scripts/package_release.php \
+              --version="${VSLIM_RELEASE_VERSION}" \
+              --platform="${{ matrix.platform }}" \
+              --package-type=binary \
+              --format=zip \
+              --ext-path="./${{ matrix.extension_file }}"
           else
             php scripts/package_release.php \
               --version="${VSLIM_RELEASE_VERSION}" \
@@ -131,6 +158,20 @@ jobs:
               --package-type=source \
               --format=zip
           fi
+
+      - name: Build release bundle on Windows
+        if: runner.os == 'Windows'
+        working-directory: vslim
+        shell: pwsh
+        env:
+          VSLIM_RELEASE_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
+        run: |
+          php scripts/package_release.php `
+            --version="${env:VSLIM_RELEASE_VERSION}" `
+            --platform="${{ matrix.platform }}" `
+            --package-type=binary `
+            --format=zip `
+            --ext-path=".\${{ matrix.extension_file }}"
 
       - name: Upload bundle artifact
         uses: actions/upload-artifact@v4
@@ -163,7 +204,7 @@ jobs:
             gh release create "$TAG_NAME" \
               --draft \
               --title "VSlim $TAG_NAME" \
-              --notes "VSlim release bundles for PHP 8.5. Windows currently ships as a source bundle while the native DLL toolchain is still being finalized."
+              --notes "VSlim release bundles for PHP 8.5 across Linux, macOS, and Windows amd64."
           shopt -s globstar nullglob
           files=(dist/**/*.zip)
           if [ "${#files[@]}" -eq 0 ]; then

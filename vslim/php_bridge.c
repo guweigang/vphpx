@@ -4,7 +4,6 @@
 #include "../vphp/v_bridge.h"
 
 
-typedef struct { void* ex; void* ret; } vphp_context_internal;
 typedef struct { void* str; int len; int is_lit; } v_string;
 
 extern void vphp_framework_init(int module_number);
@@ -21,7 +20,7 @@ PHP_FUNCTION(vslim_handle_request) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     vphp_wrap_vslim_handle_request(ctx);
     if (!vphp_validate_internal_return(execute_data, return_value)) {
         return;
@@ -37,27 +36,19 @@ PHP_FUNCTION(vslim_demo_dispatch) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     vphp_wrap_vslim_demo_dispatch(ctx);
     if (!vphp_validate_internal_return(execute_data, return_value)) {
         return;
     }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslim_response_headers, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_vslim_response_headers, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_vslim_response_headers(vphp_context_internal ctx);
 PHP_FUNCTION(vslim_response_headers) {
-    if (!vphp_validate_internal_call(execute_data)) {
-        return;
-    }
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     vphp_wrap_vslim_response_headers(ctx);
-    if (!EG(exception)) {
-        vphp_mark_void_return(return_value);
-    }
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
 }
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslim_probe_object, 0, 3, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, obj, IS_MIXED, 0)
@@ -69,7 +60,7 @@ PHP_FUNCTION(vslim_probe_object) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     vphp_wrap_vslim_probe_object(ctx);
     if (!vphp_validate_internal_return(execute_data, return_value)) {
         return;
@@ -173,8 +164,7 @@ PHP_METHOD(VSlim__Cli__App, bootstrapFile) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimCliApp_bootstrap_file(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -196,8 +186,7 @@ PHP_METHOD(VSlim__Cli__App, bootstrapDir) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimCliApp_bootstrap_dir(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -218,8 +207,7 @@ PHP_METHOD(VSlim__Cli__App, helpText) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimCliApp_help_text(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -236,8 +224,7 @@ PHP_METHOD(VSlim__Cli__App, commandHelp) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimCliApp_command_help(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -254,8 +241,7 @@ PHP_METHOD(VSlim__Cli__App, runArgv) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimCliApp_run_argv(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -272,8 +258,7 @@ PHP_METHOD(VSlim__Cli__App, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_class_handlers *h = VSlimCliApp_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -292,8 +277,7 @@ PHP_METHOD(VSlim__Cli__App, app) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimCliApp_app(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -311,8 +295,7 @@ PHP_METHOD(VSlim__Cli__App, command) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimCliApp_command(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -334,8 +317,7 @@ PHP_METHOD(VSlim__Cli__App, commandMany) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimCliApp_command_many(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -356,8 +338,7 @@ PHP_METHOD(VSlim__Cli__App, commandNames) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimCliApp_command_names(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -374,8 +355,7 @@ PHP_METHOD(VSlim__Cli__App, hasCommand) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimCliApp_has_command(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -392,8 +372,7 @@ PHP_METHOD(VSlim__Cli__App, commandName) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimCliApp_command_name(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -410,8 +389,7 @@ PHP_METHOD(VSlim__Cli__App, rawArgs) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimCliApp_raw_args(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -428,8 +406,7 @@ PHP_METHOD(VSlim__Cli__App, inputParsed) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimCliApp_input_parsed(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -446,8 +423,7 @@ PHP_METHOD(VSlim__Cli__App, hasOption) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimCliApp_has_option(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -464,8 +440,7 @@ PHP_METHOD(VSlim__Cli__App, warnings) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimCliApp_warnings(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -482,8 +457,7 @@ PHP_METHOD(VSlim__Cli__App, options) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimCliApp_options(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -500,8 +474,7 @@ PHP_METHOD(VSlim__Cli__App, arguments) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimCliApp_arguments(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -518,8 +491,7 @@ PHP_METHOD(VSlim__Cli__App, option) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimCliApp_option(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -536,8 +508,7 @@ PHP_METHOD(VSlim__Cli__App, argument) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimCliApp_argument(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -554,8 +525,7 @@ PHP_METHOD(VSlim__Cli__App, run) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimCliApp_run(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimCliApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
@@ -671,8 +641,7 @@ PHP_METHOD(VSlim__View, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimView_handlers();
     vphp_class_handlers *h = VSlimView_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -692,8 +661,7 @@ PHP_METHOD(VSlim__View, set_base_path) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimView_set_base_path(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimView_handlers());
@@ -714,8 +682,7 @@ PHP_METHOD(VSlim__View, base_path) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimView_base_path(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimView_handlers());
@@ -733,8 +700,7 @@ PHP_METHOD(VSlim__View, set_assets_prefix) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimView_set_assets_prefix(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimView_handlers());
@@ -755,8 +721,7 @@ PHP_METHOD(VSlim__View, assets_prefix) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimView_assets_prefix(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimView_handlers());
@@ -774,8 +739,7 @@ PHP_METHOD(VSlim__View, set_cache_enabled) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimView_set_cache_enabled(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimView_handlers());
@@ -796,8 +760,7 @@ PHP_METHOD(VSlim__View, cache_enabled) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimView_cache_enabled(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimView_handlers());
@@ -815,8 +778,7 @@ PHP_METHOD(VSlim__View, clear_cache) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimView_clear_cache(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimView_handlers());
@@ -838,8 +800,7 @@ PHP_METHOD(VSlim__View, helper) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimView_helper(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimView_handlers());
@@ -860,8 +821,7 @@ PHP_METHOD(VSlim__View, asset) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimView_asset(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimView_handlers());
@@ -878,8 +838,7 @@ PHP_METHOD(VSlim__View, render) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimView_render(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimView_handlers());
@@ -896,8 +855,7 @@ PHP_METHOD(VSlim__View, render_with_layout) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimView_render_with_layout(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimView_handlers());
@@ -915,8 +873,7 @@ PHP_METHOD(VSlim__View, render_response) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimView_render_response(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimView_handlers());
@@ -938,8 +895,7 @@ PHP_METHOD(VSlim__View, render_response_with_layout) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimView_render_response_with_layout(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimView_handlers());
@@ -1058,8 +1014,7 @@ PHP_METHOD(VSlim__Controller, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimController_handlers();
     vphp_class_handlers *h = VSlimController_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -1079,8 +1034,7 @@ PHP_METHOD(VSlim__Controller, set_app) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimController_set_app(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimController_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimController_handlers());
@@ -1102,8 +1056,7 @@ PHP_METHOD(VSlim__Controller, set_view) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimController_set_view(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimController_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimController_handlers());
@@ -1125,8 +1078,7 @@ PHP_METHOD(VSlim__Controller, view) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimController_view(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimController_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimController_handlers());
@@ -1148,8 +1100,7 @@ PHP_METHOD(VSlim__Controller, render) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimController_render(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimController_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimController_handlers());
@@ -1171,8 +1122,7 @@ PHP_METHOD(VSlim__Controller, render_with_layout) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimController_render_with_layout(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimController_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimController_handlers());
@@ -1193,8 +1143,7 @@ PHP_METHOD(VSlim__Controller, url_for) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimController_url_for(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimController_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimController_handlers());
@@ -1211,8 +1160,7 @@ PHP_METHOD(VSlim__Controller, url_for_query) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimController_url_for_query(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimController_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimController_handlers());
@@ -1230,8 +1178,7 @@ PHP_METHOD(VSlim__Controller, text) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimController_text(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimController_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimController_handlers());
@@ -1253,8 +1200,7 @@ PHP_METHOD(VSlim__Controller, json) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimController_json(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimController_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimController_handlers());
@@ -1276,8 +1222,7 @@ PHP_METHOD(VSlim__Controller, redirect) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimController_redirect(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimController_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimController_handlers());
@@ -1299,8 +1244,7 @@ PHP_METHOD(VSlim__Controller, redirect_to) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimController_redirect_to(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimController_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimController_handlers());
@@ -1322,8 +1266,7 @@ PHP_METHOD(VSlim__Controller, redirect_to_query) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimController_redirect_to_query(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimController_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimController_handlers());
@@ -1894,8 +1837,7 @@ PHP_METHOD(VSlim__App, middleware) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_middleware(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -1917,8 +1859,7 @@ PHP_METHOD(VSlim__App, before) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_before(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -1940,8 +1881,7 @@ PHP_METHOD(VSlim__App, after) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_after(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -1963,8 +1903,7 @@ PHP_METHOD(VSlim__App, set_not_found_handler) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_set_not_found_handler(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -1986,8 +1925,7 @@ PHP_METHOD(VSlim__App, not_found) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_not_found(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2009,8 +1947,7 @@ PHP_METHOD(VSlim__App, set_error_handler) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_set_error_handler(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2032,8 +1969,7 @@ PHP_METHOD(VSlim__App, error) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_error(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2055,8 +1991,7 @@ PHP_METHOD(VSlim__App, set_error_response_json) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_set_error_response_json(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2077,8 +2012,7 @@ PHP_METHOD(VSlim__App, error_response_json_enabled) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_error_response_json_enabled(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2096,8 +2030,7 @@ PHP_METHOD(VSlim__App, group) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_group(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2119,8 +2052,7 @@ PHP_METHOD(VSlim__App, get) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_get(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2142,8 +2074,7 @@ PHP_METHOD(VSlim__App, post) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_post(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2165,8 +2096,7 @@ PHP_METHOD(VSlim__App, put) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_put(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2188,8 +2118,7 @@ PHP_METHOD(VSlim__App, head) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_head(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2211,8 +2140,7 @@ PHP_METHOD(VSlim__App, options) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_options(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2234,8 +2162,7 @@ PHP_METHOD(VSlim__App, patch) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_patch(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2257,8 +2184,7 @@ PHP_METHOD(VSlim__App, delete) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_delete(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2280,8 +2206,7 @@ PHP_METHOD(VSlim__App, any) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_any(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2303,8 +2228,7 @@ PHP_METHOD(VSlim__App, live) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_live(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2325,8 +2249,7 @@ PHP_METHOD(VSlim__App, live_ws) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_live_ws(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2344,8 +2267,7 @@ PHP_METHOD(VSlim__App, websocket) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_websocket(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2367,8 +2289,7 @@ PHP_METHOD(VSlim__App, websocket_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_websocket_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2390,8 +2311,7 @@ PHP_METHOD(VSlim__App, map) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_map(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2413,8 +2333,7 @@ PHP_METHOD(VSlim__App, resource) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_resource(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2436,8 +2355,7 @@ PHP_METHOD(VSlim__App, api_resource) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_api_resource(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2459,8 +2377,7 @@ PHP_METHOD(VSlim__App, singleton) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_singleton(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2482,8 +2399,7 @@ PHP_METHOD(VSlim__App, api_singleton) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_api_singleton(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2505,8 +2421,7 @@ PHP_METHOD(VSlim__App, resource_opts) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_resource_opts(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2528,8 +2443,7 @@ PHP_METHOD(VSlim__App, api_resource_opts) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_api_resource_opts(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2551,8 +2465,7 @@ PHP_METHOD(VSlim__App, singleton_opts) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_singleton_opts(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2574,8 +2487,7 @@ PHP_METHOD(VSlim__App, api_singleton_opts) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_api_singleton_opts(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2597,8 +2509,7 @@ PHP_METHOD(VSlim__App, get_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_get_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2620,8 +2531,7 @@ PHP_METHOD(VSlim__App, post_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_post_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2643,8 +2553,7 @@ PHP_METHOD(VSlim__App, put_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_put_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2666,8 +2575,7 @@ PHP_METHOD(VSlim__App, head_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_head_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2689,8 +2597,7 @@ PHP_METHOD(VSlim__App, options_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_options_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2712,8 +2619,7 @@ PHP_METHOD(VSlim__App, patch_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_patch_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2735,8 +2641,7 @@ PHP_METHOD(VSlim__App, delete_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_delete_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2758,8 +2663,7 @@ PHP_METHOD(VSlim__App, any_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_any_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2781,8 +2685,7 @@ PHP_METHOD(VSlim__App, map_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_map_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2803,8 +2706,7 @@ PHP_METHOD(VSlim__App, url_for) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_url_for(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2821,8 +2723,7 @@ PHP_METHOD(VSlim__App, url_for_query) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_url_for_query(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2839,8 +2740,7 @@ PHP_METHOD(VSlim__App, url_for_abs) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_url_for_abs(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2857,8 +2757,7 @@ PHP_METHOD(VSlim__App, url_for_query_abs) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_url_for_query_abs(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2876,8 +2775,7 @@ PHP_METHOD(VSlim__App, redirect_to) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_redirect_to(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2899,8 +2797,7 @@ PHP_METHOD(VSlim__App, redirect_to_query) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_redirect_to_query(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2922,8 +2819,7 @@ PHP_METHOD(VSlim__App, register) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_register(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2945,8 +2841,7 @@ PHP_METHOD(VSlim__App, registerMany) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_register_many(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2968,8 +2863,7 @@ PHP_METHOD(VSlim__App, boot) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_boot(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -2990,8 +2884,7 @@ PHP_METHOD(VSlim__App, booted) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_is_booted(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3008,8 +2901,7 @@ PHP_METHOD(VSlim__App, providerCount) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_provider_count(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3026,8 +2918,7 @@ PHP_METHOD(VSlim__App, hasProvider) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_has_provider(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3045,8 +2936,7 @@ PHP_METHOD(VSlim__App, dispatch) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_dispatch(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3068,8 +2958,7 @@ PHP_METHOD(VSlim__App, dispatch_body) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_dispatch_body(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3091,8 +2980,7 @@ PHP_METHOD(VSlim__App, dispatch_request) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_dispatch_request(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3114,8 +3002,7 @@ PHP_METHOD(VSlim__App, handle) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_handle(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3137,8 +3024,7 @@ PHP_METHOD(VSlim__App, dispatch_envelope) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_dispatch_envelope(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3159,8 +3045,7 @@ PHP_METHOD(VSlim__App, dispatch_envelope_worker) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_dispatch_envelope_worker(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3177,8 +3062,7 @@ PHP_METHOD(VSlim__App, dispatch_envelope_map) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_dispatch_envelope_map(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3195,8 +3079,7 @@ PHP_METHOD(VSlim__App, handle_websocket) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_handle_websocket(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3213,8 +3096,7 @@ PHP_METHOD(VSlim__App, route_count) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_route_count(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3231,8 +3113,7 @@ PHP_METHOD(VSlim__App, route_names) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_route_names(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3249,8 +3130,7 @@ PHP_METHOD(VSlim__App, has_route_name) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_has_route_name(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3267,8 +3147,7 @@ PHP_METHOD(VSlim__App, route_manifest_lines) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_route_manifest_lines(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3285,8 +3164,7 @@ PHP_METHOD(VSlim__App, route_conflict_keys) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_route_conflict_keys(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3303,8 +3181,7 @@ PHP_METHOD(VSlim__App, route_manifest) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_route_manifest(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3321,8 +3198,7 @@ PHP_METHOD(VSlim__App, route_conflicts) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_route_conflicts(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3339,8 +3215,7 @@ PHP_METHOD(VSlim__App, allowed_methods_for) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_allowed_methods_for(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3358,8 +3233,7 @@ PHP_METHOD(VSlim__App, set_base_path) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_set_base_path(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3380,8 +3254,7 @@ PHP_METHOD(VSlim__App, has_container) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_has_container(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3399,8 +3272,7 @@ PHP_METHOD(VSlim__App, set_container) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_set_container(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3422,8 +3294,7 @@ PHP_METHOD(VSlim__App, container) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_container(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3444,8 +3315,7 @@ PHP_METHOD(VSlim__App, has_config) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_has_config(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3463,8 +3333,7 @@ PHP_METHOD(VSlim__App, set_config) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_set_config(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3486,8 +3355,7 @@ PHP_METHOD(VSlim__App, config) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_config(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3509,8 +3377,7 @@ PHP_METHOD(VSlim__App, load_config) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_load_config(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3532,8 +3399,7 @@ PHP_METHOD(VSlim__App, load_config_text) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_load_config_text(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3554,8 +3420,7 @@ PHP_METHOD(VSlim__App, has_mcp) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_has_mcp(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3573,8 +3438,7 @@ PHP_METHOD(VSlim__App, set_mcp) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_set_mcp(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3596,8 +3460,7 @@ PHP_METHOD(VSlim__App, mcp) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_mcp(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3618,8 +3481,7 @@ PHP_METHOD(VSlim__App, handle_mcp_dispatch) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_handle_mcp_dispatch(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3636,8 +3498,7 @@ PHP_METHOD(VSlim__App, has_logger) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_has_logger(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3655,8 +3516,7 @@ PHP_METHOD(VSlim__App, setClock) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_set_clock(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3677,8 +3537,7 @@ PHP_METHOD(VSlim__App, clock) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_clock(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3696,8 +3555,7 @@ PHP_METHOD(VSlim__App, set_logger) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_set_logger(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3719,8 +3577,7 @@ PHP_METHOD(VSlim__App, logger) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_logger(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3742,8 +3599,7 @@ PHP_METHOD(VSlim__App, psrLogger) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_psr_logger(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3765,8 +3621,7 @@ PHP_METHOD(VSlim__App, setListenerProvider) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_set_listener_provider(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3788,8 +3643,7 @@ PHP_METHOD(VSlim__App, listenerProvider) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_listener_provider(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3811,8 +3665,7 @@ PHP_METHOD(VSlim__App, setDispatcher) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_set_dispatcher(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3834,8 +3687,7 @@ PHP_METHOD(VSlim__App, dispatcher) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_dispatcher(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3857,8 +3709,7 @@ PHP_METHOD(VSlim__App, events) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_events(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3880,8 +3731,7 @@ PHP_METHOD(VSlim__App, setCache) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_set_cache(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3903,8 +3753,7 @@ PHP_METHOD(VSlim__App, cache) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_cache(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3926,8 +3775,7 @@ PHP_METHOD(VSlim__App, setCachePool) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_set_cache_pool(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3949,8 +3797,7 @@ PHP_METHOD(VSlim__App, cachePool) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_cache_pool(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3972,8 +3819,7 @@ PHP_METHOD(VSlim__App, setHttpClient) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_set_http_client(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -3995,8 +3841,7 @@ PHP_METHOD(VSlim__App, httpClient) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_http_client(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -4018,8 +3863,7 @@ PHP_METHOD(VSlim__App, bootstrap) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_bootstrap(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -4041,8 +3885,7 @@ PHP_METHOD(VSlim__App, bootstrapFile) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_bootstrap_file(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -4064,8 +3907,7 @@ PHP_METHOD(VSlim__App, bootstrapDir) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_bootstrap_dir(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -4087,8 +3929,7 @@ PHP_METHOD(VSlim__App, module) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_mount_module(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -4110,8 +3951,7 @@ PHP_METHOD(VSlim__App, moduleMany) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_module_many(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -4132,8 +3972,7 @@ PHP_METHOD(VSlim__App, moduleCount) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_module_count(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -4150,8 +3989,7 @@ PHP_METHOD(VSlim__App, hasModule) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_has_module(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -4169,8 +4007,7 @@ PHP_METHOD(VSlim__App, set_view_base_path) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_set_view_base_path(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -4191,8 +4028,7 @@ PHP_METHOD(VSlim__App, view_base_path) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_view_base_path(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -4210,8 +4046,7 @@ PHP_METHOD(VSlim__App, set_assets_prefix) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_set_assets_prefix(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -4232,8 +4067,7 @@ PHP_METHOD(VSlim__App, assets_prefix) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_assets_prefix(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -4251,8 +4085,7 @@ PHP_METHOD(VSlim__App, set_view_cache) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_set_view_cache(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -4273,8 +4106,7 @@ PHP_METHOD(VSlim__App, view_cache_enabled) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimApp_view_cache_enabled(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -4292,8 +4124,7 @@ PHP_METHOD(VSlim__App, clear_view_cache) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_clear_view_cache(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -4315,8 +4146,7 @@ PHP_METHOD(VSlim__App, helper) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_helper(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -4338,8 +4168,7 @@ PHP_METHOD(VSlim__App, make_view) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_make_view(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -4361,8 +4190,7 @@ PHP_METHOD(VSlim__App, view) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_view(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -4384,8 +4212,7 @@ PHP_METHOD(VSlim__App, view_with_layout) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_view_with_layout(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
@@ -4406,8 +4233,7 @@ PHP_METHOD(VSlim__App, demo) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimApp_demo(vphp_context_internal ctx);
     void* v_instance = vphp_wrap_VSlimApp_demo(ctx);
     if (EG(exception)) {
@@ -4424,8 +4250,6 @@ PHP_METHOD(VSlim__App, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     extern vphp_class_handlers* VSlimApp_handlers();
     vphp_class_handlers *h = VSlimApp_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -4586,8 +4410,7 @@ PHP_METHOD(VSlim__Psr15__NextHandler, handle) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr15NextHandler_handle(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr15NextHandler_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr15NextHandler_handlers());
@@ -4609,8 +4432,6 @@ PHP_METHOD(VSlim__Psr15__NextHandler, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     extern vphp_class_handlers* VSlimPsr15NextHandler_handlers();
     vphp_class_handlers *h = VSlimPsr15NextHandler_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -4655,8 +4476,7 @@ PHP_METHOD(VSlim__Psr15__ContinueHandler, handle) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr15ContinueHandler_handle(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr15ContinueHandler_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr15ContinueHandler_handlers());
@@ -4678,8 +4498,6 @@ PHP_METHOD(VSlim__Psr15__ContinueHandler, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     extern vphp_class_handlers* VSlimPsr15ContinueHandler_handlers();
     vphp_class_handlers *h = VSlimPsr15ContinueHandler_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -4728,8 +4546,7 @@ PHP_METHOD(VSlim__Support__ServiceProvider, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimServiceProvider_handlers();
     vphp_class_handlers *h = VSlimServiceProvider_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -4749,8 +4566,7 @@ PHP_METHOD(VSlim__Support__ServiceProvider, setApp) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimServiceProvider_set_app(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimServiceProvider_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimServiceProvider_handlers());
@@ -4771,8 +4587,7 @@ PHP_METHOD(VSlim__Support__ServiceProvider, hasApp) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimServiceProvider_has_app(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimServiceProvider_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimServiceProvider_handlers());
@@ -4790,8 +4605,7 @@ PHP_METHOD(VSlim__Support__ServiceProvider, app) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimServiceProvider_app(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimServiceProvider_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimServiceProvider_handlers());
@@ -4849,8 +4663,7 @@ PHP_METHOD(VSlim__Support__Module, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimModule_handlers();
     vphp_class_handlers *h = VSlimModule_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -4870,8 +4683,7 @@ PHP_METHOD(VSlim__Support__Module, setApp) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimModule_set_app(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimModule_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimModule_handlers());
@@ -4892,8 +4704,7 @@ PHP_METHOD(VSlim__Support__Module, hasApp) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimModule_has_app(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimModule_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimModule_handlers());
@@ -4911,8 +4722,7 @@ PHP_METHOD(VSlim__Support__Module, app) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimModule_app(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimModule_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimModule_handlers());
@@ -5140,8 +4950,7 @@ PHP_METHOD(VSlim__RouteGroup, group) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_group(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5163,8 +4972,7 @@ PHP_METHOD(VSlim__RouteGroup, middleware) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_middleware(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5186,8 +4994,7 @@ PHP_METHOD(VSlim__RouteGroup, before) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_before(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5209,8 +5016,7 @@ PHP_METHOD(VSlim__RouteGroup, after) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_after(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5232,8 +5038,7 @@ PHP_METHOD(VSlim__RouteGroup, get) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_get(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5255,8 +5060,7 @@ PHP_METHOD(VSlim__RouteGroup, post) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_post(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5278,8 +5082,7 @@ PHP_METHOD(VSlim__RouteGroup, put) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_put(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5301,8 +5104,7 @@ PHP_METHOD(VSlim__RouteGroup, head) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_head(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5324,8 +5126,7 @@ PHP_METHOD(VSlim__RouteGroup, options) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_options(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5347,8 +5148,7 @@ PHP_METHOD(VSlim__RouteGroup, patch) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_patch(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5370,8 +5170,7 @@ PHP_METHOD(VSlim__RouteGroup, delete) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_delete(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5393,8 +5192,7 @@ PHP_METHOD(VSlim__RouteGroup, any) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_any(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5416,8 +5214,7 @@ PHP_METHOD(VSlim__RouteGroup, live) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_live(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5439,8 +5236,7 @@ PHP_METHOD(VSlim__RouteGroup, websocket) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_websocket(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5462,8 +5258,7 @@ PHP_METHOD(VSlim__RouteGroup, map) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_map(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5485,8 +5280,7 @@ PHP_METHOD(VSlim__RouteGroup, resource) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_resource(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5508,8 +5302,7 @@ PHP_METHOD(VSlim__RouteGroup, api_resource) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_api_resource(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5531,8 +5324,7 @@ PHP_METHOD(VSlim__RouteGroup, singleton) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_singleton(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5554,8 +5346,7 @@ PHP_METHOD(VSlim__RouteGroup, api_singleton) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_api_singleton(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5577,8 +5368,7 @@ PHP_METHOD(VSlim__RouteGroup, resource_opts) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_resource_opts(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5600,8 +5390,7 @@ PHP_METHOD(VSlim__RouteGroup, api_resource_opts) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_api_resource_opts(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5623,8 +5412,7 @@ PHP_METHOD(VSlim__RouteGroup, singleton_opts) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_singleton_opts(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5646,8 +5434,7 @@ PHP_METHOD(VSlim__RouteGroup, api_singleton_opts) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_api_singleton_opts(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5669,8 +5456,7 @@ PHP_METHOD(VSlim__RouteGroup, get_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_get_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5692,8 +5478,7 @@ PHP_METHOD(VSlim__RouteGroup, post_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_post_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5715,8 +5500,7 @@ PHP_METHOD(VSlim__RouteGroup, put_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_put_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5738,8 +5522,7 @@ PHP_METHOD(VSlim__RouteGroup, head_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_head_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5761,8 +5544,7 @@ PHP_METHOD(VSlim__RouteGroup, options_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_options_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5784,8 +5566,7 @@ PHP_METHOD(VSlim__RouteGroup, patch_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_patch_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5807,8 +5588,7 @@ PHP_METHOD(VSlim__RouteGroup, delete_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_delete_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5830,8 +5610,7 @@ PHP_METHOD(VSlim__RouteGroup, any_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_any_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5853,8 +5632,7 @@ PHP_METHOD(VSlim__RouteGroup, websocket_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_websocket_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5876,8 +5654,7 @@ PHP_METHOD(VSlim__RouteGroup, map_named) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_RouteGroup_map_named(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), RouteGroup_handlers());
@@ -5899,8 +5676,6 @@ PHP_METHOD(VSlim__RouteGroup, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     extern vphp_class_handlers* RouteGroup_handlers();
     vphp_class_handlers *h = RouteGroup_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -6159,8 +5934,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_class_handlers *h = VSlimRequest_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -6179,8 +5953,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, __toString) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_str(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6198,8 +5971,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, set_query) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimRequest_set_query(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6221,8 +5993,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, set_method) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimRequest_set_method(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6244,8 +6015,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, set_target) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimRequest_set_target(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6267,8 +6037,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, set_body) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimRequest_set_body(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6290,8 +6059,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, set_scheme) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimRequest_set_scheme(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6313,8 +6081,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, set_host) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimRequest_set_host(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6336,8 +6103,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, set_port) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimRequest_set_port(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6359,8 +6125,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, set_protocol_version) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimRequest_set_protocol_version(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6382,8 +6147,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, set_remote_addr) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimRequest_set_remote_addr(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6405,8 +6169,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, set_headers) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimRequest_set_headers(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6428,8 +6191,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, set_cookies) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimRequest_set_cookies(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6451,8 +6213,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, set_attributes) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimRequest_set_attributes(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6474,8 +6235,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, set_server) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimRequest_set_server(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6497,8 +6257,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, set_uploaded_files) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimRequest_set_uploaded_files(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6520,8 +6279,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, set_params) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimRequest_set_params(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6542,8 +6300,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, query) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_query(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6560,8 +6317,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, query_params) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_query_params(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6578,8 +6334,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, has_query) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_has_query(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6596,8 +6351,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, input) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_input(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6614,8 +6368,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, input_or) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_input_or(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6632,8 +6385,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, has_input) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_has_input(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6650,8 +6402,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, all_inputs) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_all_inputs(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6668,8 +6419,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, parsed_body) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_parsed_body(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6686,8 +6436,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, body_format) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_body_format(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6704,8 +6453,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, is_json_body) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_is_json_body(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6722,8 +6470,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, is_form_body) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_is_form_body(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6740,8 +6487,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, is_multipart_body) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_is_multipart_body(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6758,8 +6504,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, json_body) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_json_body(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6776,8 +6521,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, form_body) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_form_body(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6794,8 +6538,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, multipart_body) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_multipart_body(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6812,8 +6555,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, parse_error) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_parse_error(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6830,8 +6572,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, query_all) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_query_all(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6848,8 +6589,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, header) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6866,8 +6606,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, headers) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_headers(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6884,8 +6623,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, has_header) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_has_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6902,8 +6640,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, content_type) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_content_type(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6920,8 +6657,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, request_id) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_request_id(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6938,8 +6674,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, trace_id) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_trace_id(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6956,8 +6691,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, cookie) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_cookie(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6974,8 +6708,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, cookies) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_cookies(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -6992,8 +6725,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, has_cookie) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_has_cookie(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7010,8 +6742,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, param) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_param(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7028,8 +6759,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, route_params) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_route_params(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7046,8 +6776,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, has_param) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_has_param(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7064,8 +6793,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, attribute) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_attribute(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7082,8 +6810,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, attributes) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_attributes(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7100,8 +6827,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, has_attribute) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_has_attribute(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7118,8 +6844,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, server_value) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_server_value(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7136,8 +6861,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, server_params) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_server_params(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7154,8 +6878,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, has_server) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_has_server(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7172,8 +6895,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, uploaded_file_count) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_uploaded_file_count(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7190,8 +6912,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, uploaded_files) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_uploaded_files(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7208,8 +6929,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, has_uploaded_files) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_has_uploaded_files(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7226,8 +6946,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, is_secure) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_is_secure(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7244,8 +6963,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, headers_all) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_headers_all(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7262,8 +6980,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, cookies_all) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_cookies_all(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7280,8 +6997,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, params_all) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_params_all(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7298,8 +7014,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, attributes_all) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_attributes_all(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7316,8 +7031,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, server_all) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_server_all(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7334,8 +7048,7 @@ PHP_METHOD(VSlim__Vhttpd__Request, uploaded_files_all) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimRequest_uploaded_files_all(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimRequest_handlers());
@@ -7532,8 +7245,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_class_handlers *h = VSlimResponse_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -7552,8 +7264,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, header) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimResponse_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7570,8 +7281,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, headers) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimResponse_headers(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7588,8 +7298,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, has_header) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimResponse_has_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7607,8 +7316,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, set_header) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimResponse_set_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7630,8 +7338,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, with_request_id) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimResponse_with_request_id(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7653,8 +7360,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, with_trace_id) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimResponse_with_trace_id(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7676,8 +7382,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, set_content_type) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimResponse_set_content_type(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7698,8 +7403,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, cookie_header) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimResponse_cookie_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7717,8 +7421,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, set_cookie) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimResponse_set_cookie(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7740,8 +7443,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, set_cookie_opts) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimResponse_set_cookie_opts(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7763,8 +7465,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, set_cookie_full) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimResponse_set_cookie_full(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7786,8 +7487,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, delete_cookie) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimResponse_delete_cookie(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7809,8 +7509,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, set_status) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimResponse_set_status(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7832,8 +7531,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, with_status) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimResponse_with_status(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7855,8 +7553,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, text) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimResponse_text(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7878,8 +7575,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, json) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimResponse_json(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7901,8 +7597,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, html) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimResponse_html(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7924,8 +7619,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, redirect) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimResponse_redirect(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7947,8 +7641,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, redirect_with_status) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimResponse_redirect_with_status(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7969,8 +7662,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, headers_all) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimResponse_headers_all(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -7987,8 +7679,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, __toString) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimResponse_str(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -8005,8 +7696,7 @@ PHP_METHOD(VSlim__Vhttpd__Response, content_length) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimResponse_content_length(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimResponse_handlers());
@@ -8127,8 +7817,7 @@ PHP_METHOD(VSlim__Stream__Response, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimStreamResponse_handlers();
     vphp_class_handlers *h = VSlimStreamResponse_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -8147,8 +7836,7 @@ PHP_METHOD(VSlim__Stream__Response, text) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimStreamResponse_text(vphp_context_internal ctx);
     void* v_instance = vphp_wrap_VSlimStreamResponse_text(ctx);
     if (EG(exception)) {
@@ -8164,8 +7852,7 @@ PHP_METHOD(VSlim__Stream__Response, text_with) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimStreamResponse_text_with(vphp_context_internal ctx);
     void* v_instance = vphp_wrap_VSlimStreamResponse_text_with(ctx);
     if (EG(exception)) {
@@ -8181,8 +7868,7 @@ PHP_METHOD(VSlim__Stream__Response, sse) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimStreamResponse_sse(vphp_context_internal ctx);
     void* v_instance = vphp_wrap_VSlimStreamResponse_sse(ctx);
     if (EG(exception)) {
@@ -8198,8 +7884,7 @@ PHP_METHOD(VSlim__Stream__Response, sse_with) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimStreamResponse_sse_with(vphp_context_internal ctx);
     void* v_instance = vphp_wrap_VSlimStreamResponse_sse_with(ctx);
     if (EG(exception)) {
@@ -8215,8 +7900,7 @@ PHP_METHOD(VSlim__Stream__Response, header) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamResponse_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimStreamResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimStreamResponse_handlers());
@@ -8233,8 +7917,7 @@ PHP_METHOD(VSlim__Stream__Response, headers) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamResponse_headers(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimStreamResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimStreamResponse_handlers());
@@ -8251,8 +7934,7 @@ PHP_METHOD(VSlim__Stream__Response, has_header) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamResponse_has_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimStreamResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimStreamResponse_handlers());
@@ -8270,8 +7952,7 @@ PHP_METHOD(VSlim__Stream__Response, set_header) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimStreamResponse_set_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimStreamResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimStreamResponse_handlers());
@@ -8293,8 +7974,7 @@ PHP_METHOD(VSlim__Stream__Response, set_status) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimStreamResponse_set_status(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimStreamResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimStreamResponse_handlers());
@@ -8316,8 +7996,7 @@ PHP_METHOD(VSlim__Stream__Response, set_content_type) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimStreamResponse_set_content_type(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimStreamResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimStreamResponse_handlers());
@@ -8339,8 +8018,7 @@ PHP_METHOD(VSlim__Stream__Response, set_chunks) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimStreamResponse_set_chunks(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimStreamResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimStreamResponse_handlers());
@@ -8361,8 +8039,7 @@ PHP_METHOD(VSlim__Stream__Response, chunks) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamResponse_chunks(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimStreamResponse_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimStreamResponse_handlers());
@@ -8418,8 +8095,7 @@ PHP_METHOD(VSlim__Stream__NdjsonDecoder, decode) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamNdjsonDecoder_decode(vphp_context_internal ctx);
     vphp_wrap_VSlimStreamNdjsonDecoder_decode(ctx);
     if (EG(exception)) {
@@ -8434,8 +8110,6 @@ PHP_METHOD(VSlim__Stream__NdjsonDecoder, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     extern vphp_class_handlers* VSlimStreamNdjsonDecoder_handlers();
     vphp_class_handlers *h = VSlimStreamNdjsonDecoder_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -8478,8 +8152,7 @@ PHP_METHOD(VSlim__Stream__SseEncoder, from_ollama) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamSseEncoder_from_ollama(vphp_context_internal ctx);
     vphp_wrap_VSlimStreamSseEncoder_from_ollama(ctx);
     if (EG(exception)) {
@@ -8494,8 +8167,6 @@ PHP_METHOD(VSlim__Stream__SseEncoder, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     extern vphp_class_handlers* VSlimStreamSseEncoder_handlers();
     vphp_class_handlers *h = VSlimStreamSseEncoder_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -8572,8 +8243,7 @@ PHP_METHOD(VSlim__Stream__OllamaClient, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimStreamOllamaClient_handlers();
     vphp_class_handlers *h = VSlimStreamOllamaClient_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -8592,8 +8262,7 @@ PHP_METHOD(VSlim__Stream__OllamaClient, from_env) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimStreamOllamaClient_from_env(vphp_context_internal ctx);
     void* v_instance = vphp_wrap_VSlimStreamOllamaClient_from_env(ctx);
     if (EG(exception)) {
@@ -8609,8 +8278,7 @@ PHP_METHOD(VSlim__Stream__OllamaClient, from_options) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimStreamOllamaClient_from_options(vphp_context_internal ctx);
     void* v_instance = vphp_wrap_VSlimStreamOllamaClient_from_options(ctx);
     if (EG(exception)) {
@@ -8626,8 +8294,7 @@ PHP_METHOD(VSlim__Stream__OllamaClient, chat_url) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamOllamaClient_chat_url(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimStreamOllamaClient_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimStreamOllamaClient_handlers());
@@ -8644,8 +8311,7 @@ PHP_METHOD(VSlim__Stream__OllamaClient, default_model) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamOllamaClient_default_model(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimStreamOllamaClient_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimStreamOllamaClient_handlers());
@@ -8662,8 +8328,7 @@ PHP_METHOD(VSlim__Stream__OllamaClient, api_key) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamOllamaClient_api_key(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimStreamOllamaClient_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimStreamOllamaClient_handlers());
@@ -8680,8 +8345,7 @@ PHP_METHOD(VSlim__Stream__OllamaClient, fixture_path) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamOllamaClient_fixture_path(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimStreamOllamaClient_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimStreamOllamaClient_handlers());
@@ -8698,8 +8362,7 @@ PHP_METHOD(VSlim__Stream__OllamaClient, payload) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamOllamaClient_payload(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimStreamOllamaClient_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimStreamOllamaClient_handlers());
@@ -8716,8 +8379,7 @@ PHP_METHOD(VSlim__Stream__OllamaClient, payload_from_request) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamOllamaClient_payload_from_request(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimStreamOllamaClient_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimStreamOllamaClient_handlers());
@@ -8734,8 +8396,7 @@ PHP_METHOD(VSlim__Stream__OllamaClient, open_stream) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamOllamaClient_open_stream(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimStreamOllamaClient_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimStreamOllamaClient_handlers());
@@ -8752,8 +8413,7 @@ PHP_METHOD(VSlim__Stream__OllamaClient, text_response_from_request) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamOllamaClient_text_response_from_request(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimStreamOllamaClient_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimStreamOllamaClient_handlers());
@@ -8770,8 +8430,7 @@ PHP_METHOD(VSlim__Stream__OllamaClient, sse_response_from_request) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamOllamaClient_sse_response_from_request(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimStreamOllamaClient_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimStreamOllamaClient_handlers());
@@ -8854,8 +8513,7 @@ PHP_METHOD(VSlim__Stream__Factory, text) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamFactory_text(vphp_context_internal ctx);
     vphp_wrap_VSlimStreamFactory_text(ctx);
     if (EG(exception)) {
@@ -8869,8 +8527,7 @@ PHP_METHOD(VSlim__Stream__Factory, text_with) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamFactory_text_with(vphp_context_internal ctx);
     vphp_wrap_VSlimStreamFactory_text_with(ctx);
     if (EG(exception)) {
@@ -8884,8 +8541,7 @@ PHP_METHOD(VSlim__Stream__Factory, sse) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamFactory_sse(vphp_context_internal ctx);
     vphp_wrap_VSlimStreamFactory_sse(ctx);
     if (EG(exception)) {
@@ -8899,8 +8555,7 @@ PHP_METHOD(VSlim__Stream__Factory, sse_with) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamFactory_sse_with(vphp_context_internal ctx);
     vphp_wrap_VSlimStreamFactory_sse_with(ctx);
     if (EG(exception)) {
@@ -8914,8 +8569,7 @@ PHP_METHOD(VSlim__Stream__Factory, ollama_text) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamFactory_ollama_text(vphp_context_internal ctx);
     vphp_wrap_VSlimStreamFactory_ollama_text(ctx);
     if (EG(exception)) {
@@ -8929,8 +8583,7 @@ PHP_METHOD(VSlim__Stream__Factory, ollama_text_with) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamFactory_ollama_text_with(vphp_context_internal ctx);
     vphp_wrap_VSlimStreamFactory_ollama_text_with(ctx);
     if (EG(exception)) {
@@ -8944,8 +8597,7 @@ PHP_METHOD(VSlim__Stream__Factory, ollama_sse) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamFactory_ollama_sse(vphp_context_internal ctx);
     vphp_wrap_VSlimStreamFactory_ollama_sse(ctx);
     if (EG(exception)) {
@@ -8959,8 +8611,7 @@ PHP_METHOD(VSlim__Stream__Factory, ollama_sse_with) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimStreamFactory_ollama_sse_with(vphp_context_internal ctx);
     vphp_wrap_VSlimStreamFactory_ollama_sse_with(ctx);
     if (EG(exception)) {
@@ -8975,8 +8626,6 @@ PHP_METHOD(VSlim__Stream__Factory, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     extern vphp_class_handlers* VSlimStreamFactory_handlers();
     vphp_class_handlers *h = VSlimStreamFactory_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -9091,8 +8740,7 @@ PHP_METHOD(VSlim__WebSocket__App, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimWebSocketApp_handlers();
     vphp_class_handlers *h = VSlimWebSocketApp_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -9112,8 +8760,7 @@ PHP_METHOD(VSlim__WebSocket__App, on_open) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimWebSocketApp_on_open(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimWebSocketApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimWebSocketApp_handlers());
@@ -9135,8 +8782,7 @@ PHP_METHOD(VSlim__WebSocket__App, on_message) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimWebSocketApp_on_message(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimWebSocketApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimWebSocketApp_handlers());
@@ -9158,8 +8804,7 @@ PHP_METHOD(VSlim__WebSocket__App, on_close) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimWebSocketApp_on_close(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimWebSocketApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimWebSocketApp_handlers());
@@ -9180,8 +8825,7 @@ PHP_METHOD(VSlim__WebSocket__App, has_on_open) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimWebSocketApp_has_on_open(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimWebSocketApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimWebSocketApp_handlers());
@@ -9198,8 +8842,7 @@ PHP_METHOD(VSlim__WebSocket__App, has_on_message) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimWebSocketApp_has_on_message(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimWebSocketApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimWebSocketApp_handlers());
@@ -9216,8 +8859,7 @@ PHP_METHOD(VSlim__WebSocket__App, has_on_close) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimWebSocketApp_has_on_close(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimWebSocketApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimWebSocketApp_handlers());
@@ -9235,8 +8877,7 @@ PHP_METHOD(VSlim__WebSocket__App, remember) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimWebSocketApp_remember(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimWebSocketApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimWebSocketApp_handlers());
@@ -9258,8 +8899,7 @@ PHP_METHOD(VSlim__WebSocket__App, forget) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimWebSocketApp_forget(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimWebSocketApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimWebSocketApp_handlers());
@@ -9280,8 +8920,7 @@ PHP_METHOD(VSlim__WebSocket__App, has_connection) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimWebSocketApp_has_connection(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimWebSocketApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimWebSocketApp_handlers());
@@ -9299,8 +8938,7 @@ PHP_METHOD(VSlim__WebSocket__App, join) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimWebSocketApp_join(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimWebSocketApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimWebSocketApp_handlers());
@@ -9322,8 +8960,7 @@ PHP_METHOD(VSlim__WebSocket__App, leave) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimWebSocketApp_leave(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimWebSocketApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimWebSocketApp_handlers());
@@ -9344,8 +8981,7 @@ PHP_METHOD(VSlim__WebSocket__App, members) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimWebSocketApp_members(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimWebSocketApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimWebSocketApp_handlers());
@@ -9362,8 +8998,7 @@ PHP_METHOD(VSlim__WebSocket__App, connection_ids) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimWebSocketApp_connection_ids(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimWebSocketApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimWebSocketApp_handlers());
@@ -9380,8 +9015,7 @@ PHP_METHOD(VSlim__WebSocket__App, rooms_for) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimWebSocketApp_rooms_for(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimWebSocketApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimWebSocketApp_handlers());
@@ -9398,8 +9032,7 @@ PHP_METHOD(VSlim__WebSocket__App, send_to) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimWebSocketApp_send_to(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimWebSocketApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimWebSocketApp_handlers());
@@ -9416,8 +9049,7 @@ PHP_METHOD(VSlim__WebSocket__App, broadcast) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimWebSocketApp_broadcast(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimWebSocketApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimWebSocketApp_handlers());
@@ -9434,8 +9066,7 @@ PHP_METHOD(VSlim__WebSocket__App, handle_websocket) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimWebSocketApp_handle_websocket(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimWebSocketApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimWebSocketApp_handlers());
@@ -9658,8 +9289,7 @@ PHP_METHOD(VSlim__Mcp__App, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimMcpApp_handlers();
     vphp_class_handlers *h = VSlimMcpApp_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -9679,8 +9309,7 @@ PHP_METHOD(VSlim__Mcp__App, server_info) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimMcpApp_server_info(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimMcpApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimMcpApp_handlers());
@@ -9702,8 +9331,7 @@ PHP_METHOD(VSlim__Mcp__App, capability) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimMcpApp_capability(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimMcpApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimMcpApp_handlers());
@@ -9725,8 +9353,7 @@ PHP_METHOD(VSlim__Mcp__App, capabilities) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimMcpApp_capabilities(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimMcpApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimMcpApp_handlers());
@@ -9748,8 +9375,7 @@ PHP_METHOD(VSlim__Mcp__App, register) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimMcpApp_register(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimMcpApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimMcpApp_handlers());
@@ -9771,8 +9397,7 @@ PHP_METHOD(VSlim__Mcp__App, tool) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimMcpApp_tool(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimMcpApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimMcpApp_handlers());
@@ -9794,8 +9419,7 @@ PHP_METHOD(VSlim__Mcp__App, resource) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimMcpApp_resource(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimMcpApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimMcpApp_handlers());
@@ -9817,8 +9441,7 @@ PHP_METHOD(VSlim__Mcp__App, prompt) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimMcpApp_prompt(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimMcpApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimMcpApp_handlers());
@@ -9839,8 +9462,7 @@ PHP_METHOD(VSlim__Mcp__App, notification) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimMcpApp_notification(vphp_context_internal ctx);
     vphp_wrap_VSlimMcpApp_notification(ctx);
     if (EG(exception)) {
@@ -9854,8 +9476,7 @@ PHP_METHOD(VSlim__Mcp__App, request) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimMcpApp_request(vphp_context_internal ctx);
     vphp_wrap_VSlimMcpApp_request(ctx);
     if (EG(exception)) {
@@ -9869,8 +9490,7 @@ PHP_METHOD(VSlim__Mcp__App, sampling_request) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimMcpApp_sampling_request(vphp_context_internal ctx);
     vphp_wrap_VSlimMcpApp_sampling_request(ctx);
     if (EG(exception)) {
@@ -9884,8 +9504,7 @@ PHP_METHOD(VSlim__Mcp__App, queued_result) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimMcpApp_queued_result(vphp_context_internal ctx);
     vphp_wrap_VSlimMcpApp_queued_result(ctx);
     if (EG(exception)) {
@@ -9899,8 +9518,7 @@ PHP_METHOD(VSlim__Mcp__App, queue_messages) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimMcpApp_queue_messages(vphp_context_internal ctx);
     vphp_wrap_VSlimMcpApp_queue_messages(ctx);
     if (EG(exception)) {
@@ -9914,8 +9532,7 @@ PHP_METHOD(VSlim__Mcp__App, notify) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimMcpApp_notify(vphp_context_internal ctx);
     vphp_wrap_VSlimMcpApp_notify(ctx);
     if (EG(exception)) {
@@ -9929,8 +9546,7 @@ PHP_METHOD(VSlim__Mcp__App, queue_notification) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimMcpApp_queue_notification(vphp_context_internal ctx);
     vphp_wrap_VSlimMcpApp_queue_notification(ctx);
     if (EG(exception)) {
@@ -9944,8 +9560,7 @@ PHP_METHOD(VSlim__Mcp__App, queue_request) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimMcpApp_queue_request(vphp_context_internal ctx);
     vphp_wrap_VSlimMcpApp_queue_request(ctx);
     if (EG(exception)) {
@@ -9959,8 +9574,7 @@ PHP_METHOD(VSlim__Mcp__App, queue_progress) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimMcpApp_queue_progress(vphp_context_internal ctx);
     vphp_wrap_VSlimMcpApp_queue_progress(ctx);
     if (EG(exception)) {
@@ -9974,8 +9588,7 @@ PHP_METHOD(VSlim__Mcp__App, queue_log) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimMcpApp_queue_log(vphp_context_internal ctx);
     vphp_wrap_VSlimMcpApp_queue_log(ctx);
     if (EG(exception)) {
@@ -9989,8 +9602,7 @@ PHP_METHOD(VSlim__Mcp__App, queue_sampling) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimMcpApp_queue_sampling(vphp_context_internal ctx);
     vphp_wrap_VSlimMcpApp_queue_sampling(ctx);
     if (EG(exception)) {
@@ -10004,8 +9616,7 @@ PHP_METHOD(VSlim__Mcp__App, client_capabilities) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimMcpApp_client_capabilities(vphp_context_internal ctx);
     vphp_wrap_VSlimMcpApp_client_capabilities(ctx);
     if (EG(exception)) {
@@ -10019,8 +9630,7 @@ PHP_METHOD(VSlim__Mcp__App, client_supports) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimMcpApp_client_supports(vphp_context_internal ctx);
     vphp_wrap_VSlimMcpApp_client_supports(ctx);
     if (EG(exception)) {
@@ -10034,8 +9644,7 @@ PHP_METHOD(VSlim__Mcp__App, capability_error) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimMcpApp_capability_error(vphp_context_internal ctx);
     vphp_wrap_VSlimMcpApp_capability_error(ctx);
     if (EG(exception)) {
@@ -10049,8 +9658,7 @@ PHP_METHOD(VSlim__Mcp__App, require_capability) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimMcpApp_require_capability(vphp_context_internal ctx);
     vphp_wrap_VSlimMcpApp_require_capability(ctx);
     if (EG(exception)) {
@@ -10064,8 +9672,7 @@ PHP_METHOD(VSlim__Mcp__App, handle_mcp_dispatch) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimMcpApp_handle_mcp_dispatch(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimMcpApp_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimMcpApp_handlers());
@@ -10291,8 +9898,7 @@ PHP_METHOD(VSlim__Log__Logger, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_class_handlers *h = VSlimLogger_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -10311,8 +9917,7 @@ PHP_METHOD(VSlim__Log__Logger, disabled_level) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLogger_disabled_level(vphp_context_internal ctx);
     vphp_wrap_VSlimLogger_disabled_level(ctx);
     if (EG(exception)) {
@@ -10326,8 +9931,7 @@ PHP_METHOD(VSlim__Log__Logger, fatal_level) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLogger_fatal_level(vphp_context_internal ctx);
     vphp_wrap_VSlimLogger_fatal_level(ctx);
     if (EG(exception)) {
@@ -10341,8 +9945,7 @@ PHP_METHOD(VSlim__Log__Logger, error_level) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLogger_error_level(vphp_context_internal ctx);
     vphp_wrap_VSlimLogger_error_level(ctx);
     if (EG(exception)) {
@@ -10356,8 +9959,7 @@ PHP_METHOD(VSlim__Log__Logger, warn_level) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLogger_warn_level(vphp_context_internal ctx);
     vphp_wrap_VSlimLogger_warn_level(ctx);
     if (EG(exception)) {
@@ -10371,8 +9973,7 @@ PHP_METHOD(VSlim__Log__Logger, info_level) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLogger_info_level(vphp_context_internal ctx);
     vphp_wrap_VSlimLogger_info_level(ctx);
     if (EG(exception)) {
@@ -10386,8 +9987,7 @@ PHP_METHOD(VSlim__Log__Logger, debug_level) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLogger_debug_level(vphp_context_internal ctx);
     vphp_wrap_VSlimLogger_debug_level(ctx);
     if (EG(exception)) {
@@ -10402,8 +10002,7 @@ PHP_METHOD(VSlim__Log__Logger, set_level) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_set_level(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10424,8 +10023,7 @@ PHP_METHOD(VSlim__Log__Logger, level) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLogger_level(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10443,8 +10041,7 @@ PHP_METHOD(VSlim__Log__Logger, set_channel) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_set_channel(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10465,8 +10062,7 @@ PHP_METHOD(VSlim__Log__Logger, channel) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLogger_channel(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10484,8 +10080,7 @@ PHP_METHOD(VSlim__Log__Logger, set_context) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_set_context(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10506,8 +10101,7 @@ PHP_METHOD(VSlim__Log__Logger, context) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLogger_context(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10525,8 +10119,7 @@ PHP_METHOD(VSlim__Log__Logger, with_context) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_with_context(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10548,8 +10141,7 @@ PHP_METHOD(VSlim__Log__Logger, clear_context) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_clear_context(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10571,8 +10163,7 @@ PHP_METHOD(VSlim__Log__Logger, set_local_time) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_set_local_time(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10594,8 +10185,7 @@ PHP_METHOD(VSlim__Log__Logger, set_short_tag) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_set_short_tag(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10617,8 +10207,7 @@ PHP_METHOD(VSlim__Log__Logger, set_output_file) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_set_output_file(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10639,8 +10228,7 @@ PHP_METHOD(VSlim__Log__Logger, output_file) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLogger_output_file(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10658,8 +10246,7 @@ PHP_METHOD(VSlim__Log__Logger, use_stdout) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_use_stdout(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10681,8 +10268,7 @@ PHP_METHOD(VSlim__Log__Logger, use_stderr) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_use_stderr(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10703,8 +10289,7 @@ PHP_METHOD(VSlim__Log__Logger, output_target) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLogger_output_target(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10722,8 +10307,7 @@ PHP_METHOD(VSlim__Log__Logger, log) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_log(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10745,8 +10329,7 @@ PHP_METHOD(VSlim__Log__Logger, log_context) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_log_context(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10768,8 +10351,7 @@ PHP_METHOD(VSlim__Log__Logger, debug) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_debug(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10791,8 +10373,7 @@ PHP_METHOD(VSlim__Log__Logger, debug_context) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_debug_context(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10814,8 +10395,7 @@ PHP_METHOD(VSlim__Log__Logger, info) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_info(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10837,8 +10417,7 @@ PHP_METHOD(VSlim__Log__Logger, info_context) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_info_context(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10860,8 +10439,7 @@ PHP_METHOD(VSlim__Log__Logger, warn) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_warn(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10883,8 +10461,7 @@ PHP_METHOD(VSlim__Log__Logger, warn_context) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_warn_context(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10906,8 +10483,7 @@ PHP_METHOD(VSlim__Log__Logger, error) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_error(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10929,8 +10505,7 @@ PHP_METHOD(VSlim__Log__Logger, error_context) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_error_context(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10952,8 +10527,7 @@ PHP_METHOD(VSlim__Log__Logger, warning) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_warning(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10975,8 +10549,7 @@ PHP_METHOD(VSlim__Log__Logger, warning_context) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_warning_context(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -10998,8 +10571,7 @@ PHP_METHOD(VSlim__Log__Logger, notice) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_notice(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -11021,8 +10593,7 @@ PHP_METHOD(VSlim__Log__Logger, notice_context) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_notice_context(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -11044,8 +10615,7 @@ PHP_METHOD(VSlim__Log__Logger, critical) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_critical(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -11067,8 +10637,7 @@ PHP_METHOD(VSlim__Log__Logger, critical_context) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_critical_context(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -11090,8 +10659,7 @@ PHP_METHOD(VSlim__Log__Logger, alert) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_alert(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -11113,8 +10681,7 @@ PHP_METHOD(VSlim__Log__Logger, alert_context) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_alert_context(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -11136,8 +10703,7 @@ PHP_METHOD(VSlim__Log__Logger, emergency) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_emergency(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -11159,8 +10725,7 @@ PHP_METHOD(VSlim__Log__Logger, emergency_context) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLogger_emergency_context(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -11181,8 +10746,7 @@ PHP_METHOD(VSlim__Log__Logger, __toString) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLogger_str(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLogger_handlers());
@@ -11342,8 +10906,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_class_handlers *h = VSlimPsrLogger_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -11363,8 +10926,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, set_logger) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsrLogger_set_logger(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11386,8 +10948,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, logger) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsrLogger_logger(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11409,8 +10970,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, set_level) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsrLogger_set_level(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11432,8 +10992,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, set_channel) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsrLogger_set_channel(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11455,8 +11014,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, set_context) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsrLogger_set_context(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11478,8 +11036,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, with_context) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsrLogger_with_context(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11501,8 +11058,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, clear_context) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsrLogger_clear_context(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11524,8 +11080,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, set_output_file) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsrLogger_set_output_file(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11547,8 +11102,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, use_stdout) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsrLogger_use_stdout(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11570,8 +11124,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, use_stderr) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsrLogger_use_stderr(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11592,8 +11145,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, log) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsrLogger_log(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11610,8 +11162,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, emergency) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsrLogger_emergency(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11628,8 +11179,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, alert) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsrLogger_alert(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11646,8 +11196,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, critical) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsrLogger_critical(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11664,8 +11213,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, error) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsrLogger_error(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11682,8 +11230,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, warning) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsrLogger_warning(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11700,8 +11247,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, notice) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsrLogger_notice(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11718,8 +11264,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, info) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsrLogger_info(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11736,8 +11281,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, debug) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsrLogger_debug(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11754,8 +11298,7 @@ PHP_METHOD(VSlim__Log__PsrLogger, __toString) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsrLogger_str(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsrLogger_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsrLogger_handlers());
@@ -11836,8 +11379,7 @@ PHP_METHOD(VSlim__Log__Level, disabled) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLogLevel_disabled(vphp_context_internal ctx);
     vphp_wrap_VSlimLogLevel_disabled(ctx);
     if (EG(exception)) {
@@ -11851,8 +11393,7 @@ PHP_METHOD(VSlim__Log__Level, fatal) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLogLevel_fatal(vphp_context_internal ctx);
     vphp_wrap_VSlimLogLevel_fatal(ctx);
     if (EG(exception)) {
@@ -11866,8 +11407,7 @@ PHP_METHOD(VSlim__Log__Level, error) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLogLevel_error(vphp_context_internal ctx);
     vphp_wrap_VSlimLogLevel_error(ctx);
     if (EG(exception)) {
@@ -11881,8 +11421,7 @@ PHP_METHOD(VSlim__Log__Level, warn) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLogLevel_warn(vphp_context_internal ctx);
     vphp_wrap_VSlimLogLevel_warn(ctx);
     if (EG(exception)) {
@@ -11896,8 +11435,7 @@ PHP_METHOD(VSlim__Log__Level, info) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLogLevel_info(vphp_context_internal ctx);
     vphp_wrap_VSlimLogLevel_info(ctx);
     if (EG(exception)) {
@@ -11911,8 +11449,7 @@ PHP_METHOD(VSlim__Log__Level, debug) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLogLevel_debug(vphp_context_internal ctx);
     vphp_wrap_VSlimLogLevel_debug(ctx);
     if (EG(exception)) {
@@ -11926,8 +11463,7 @@ PHP_METHOD(VSlim__Log__Level, all) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLogLevel_all(vphp_context_internal ctx);
     vphp_wrap_VSlimLogLevel_all(ctx);
     if (EG(exception)) {
@@ -11942,8 +11478,6 @@ PHP_METHOD(VSlim__Log__Level, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     extern vphp_class_handlers* VSlimLogLevel_handlers();
     vphp_class_handlers *h = VSlimLogLevel_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -12028,8 +11562,7 @@ PHP_METHOD(VSlim__Psr7__Stream, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPsr7Stream_handlers();
     vphp_class_handlers *h = VSlimPsr7Stream_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -12048,8 +11581,7 @@ PHP_METHOD(VSlim__Psr7__Stream, __toString) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Stream_str(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Stream_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Stream_handlers());
@@ -12066,8 +11598,7 @@ PHP_METHOD(VSlim__Psr7__Stream, close) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Stream_close(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Stream_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Stream_handlers());
@@ -12084,8 +11615,7 @@ PHP_METHOD(VSlim__Psr7__Stream, detach) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Stream_detach(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Stream_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Stream_handlers());
@@ -12102,8 +11632,7 @@ PHP_METHOD(VSlim__Psr7__Stream, getSize) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Stream_get_size(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Stream_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Stream_handlers());
@@ -12120,8 +11649,7 @@ PHP_METHOD(VSlim__Psr7__Stream, tell) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Stream_tell(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Stream_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Stream_handlers());
@@ -12138,8 +11666,7 @@ PHP_METHOD(VSlim__Psr7__Stream, eof) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Stream_eof(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Stream_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Stream_handlers());
@@ -12156,8 +11683,7 @@ PHP_METHOD(VSlim__Psr7__Stream, isSeekable) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Stream_is_seekable(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Stream_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Stream_handlers());
@@ -12174,8 +11700,7 @@ PHP_METHOD(VSlim__Psr7__Stream, seek) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Stream_seek(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Stream_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Stream_handlers());
@@ -12192,8 +11717,7 @@ PHP_METHOD(VSlim__Psr7__Stream, rewind) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Stream_rewind(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Stream_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Stream_handlers());
@@ -12210,8 +11734,7 @@ PHP_METHOD(VSlim__Psr7__Stream, isWritable) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Stream_is_writable(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Stream_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Stream_handlers());
@@ -12228,8 +11751,7 @@ PHP_METHOD(VSlim__Psr7__Stream, write) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Stream_write(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Stream_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Stream_handlers());
@@ -12246,8 +11768,7 @@ PHP_METHOD(VSlim__Psr7__Stream, isReadable) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Stream_is_readable(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Stream_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Stream_handlers());
@@ -12264,8 +11785,7 @@ PHP_METHOD(VSlim__Psr7__Stream, read) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Stream_read(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Stream_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Stream_handlers());
@@ -12282,8 +11802,7 @@ PHP_METHOD(VSlim__Psr7__Stream, getContents) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Stream_get_contents(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Stream_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Stream_handlers());
@@ -12300,8 +11819,7 @@ PHP_METHOD(VSlim__Psr7__Stream, getMetadata) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Stream_get_metadata(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Stream_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Stream_handlers());
@@ -12385,8 +11903,7 @@ PHP_METHOD(VSlim__Psr7__UploadedFile, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPsr7UploadedFile_handlers();
     vphp_class_handlers *h = VSlimPsr7UploadedFile_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -12406,8 +11923,7 @@ PHP_METHOD(VSlim__Psr7__UploadedFile, getStream) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7UploadedFile_get_stream(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7UploadedFile_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7UploadedFile_handlers());
@@ -12428,8 +11944,7 @@ PHP_METHOD(VSlim__Psr7__UploadedFile, moveTo) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7UploadedFile_move_to(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7UploadedFile_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7UploadedFile_handlers());
@@ -12446,8 +11961,7 @@ PHP_METHOD(VSlim__Psr7__UploadedFile, getSize) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7UploadedFile_get_size(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7UploadedFile_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7UploadedFile_handlers());
@@ -12464,8 +11978,7 @@ PHP_METHOD(VSlim__Psr7__UploadedFile, getError) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7UploadedFile_get_error(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7UploadedFile_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7UploadedFile_handlers());
@@ -12482,8 +11995,7 @@ PHP_METHOD(VSlim__Psr7__UploadedFile, getClientFilename) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7UploadedFile_get_client_filename(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7UploadedFile_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7UploadedFile_handlers());
@@ -12500,8 +12012,7 @@ PHP_METHOD(VSlim__Psr7__UploadedFile, getClientMediaType) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7UploadedFile_get_client_media_type(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7UploadedFile_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7UploadedFile_handlers());
@@ -12518,8 +12029,7 @@ PHP_METHOD(VSlim__Psr7__UploadedFile, __toString) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7UploadedFile_str(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7UploadedFile_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7UploadedFile_handlers());
@@ -12624,8 +12134,7 @@ PHP_METHOD(VSlim__Psr7__Response, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPsr7Response_handlers();
     vphp_class_handlers *h = VSlimPsr7Response_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -12644,8 +12153,7 @@ PHP_METHOD(VSlim__Psr7__Response, getProtocolVersion) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Response_get_protocol_version(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Response_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Response_handlers());
@@ -12663,8 +12171,7 @@ PHP_METHOD(VSlim__Psr7__Response, withProtocolVersion) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Response_with_protocol_version(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Response_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Response_handlers());
@@ -12685,8 +12192,7 @@ PHP_METHOD(VSlim__Psr7__Response, getHeaders) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Response_get_headers(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Response_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Response_handlers());
@@ -12703,8 +12209,7 @@ PHP_METHOD(VSlim__Psr7__Response, hasHeader) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Response_has_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Response_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Response_handlers());
@@ -12721,8 +12226,7 @@ PHP_METHOD(VSlim__Psr7__Response, getHeader) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Response_get_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Response_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Response_handlers());
@@ -12739,8 +12243,7 @@ PHP_METHOD(VSlim__Psr7__Response, getHeaderLine) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Response_get_header_line(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Response_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Response_handlers());
@@ -12758,8 +12261,7 @@ PHP_METHOD(VSlim__Psr7__Response, withHeader) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Response_with_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Response_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Response_handlers());
@@ -12781,8 +12283,7 @@ PHP_METHOD(VSlim__Psr7__Response, withAddedHeader) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Response_with_added_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Response_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Response_handlers());
@@ -12804,8 +12305,7 @@ PHP_METHOD(VSlim__Psr7__Response, withoutHeader) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Response_without_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Response_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Response_handlers());
@@ -12827,8 +12327,7 @@ PHP_METHOD(VSlim__Psr7__Response, getBody) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Response_get_body(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Response_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Response_handlers());
@@ -12850,8 +12349,7 @@ PHP_METHOD(VSlim__Psr7__Response, withBody) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Response_with_body(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Response_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Response_handlers());
@@ -12872,8 +12370,7 @@ PHP_METHOD(VSlim__Psr7__Response, getStatusCode) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Response_get_status_code(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Response_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Response_handlers());
@@ -12891,8 +12388,7 @@ PHP_METHOD(VSlim__Psr7__Response, withStatus) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Response_with_status(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Response_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Response_handlers());
@@ -12913,8 +12409,7 @@ PHP_METHOD(VSlim__Psr7__Response, getReasonPhrase) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Response_get_reason_phrase(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Response_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Response_handlers());
@@ -12931,8 +12426,7 @@ PHP_METHOD(VSlim__Psr7__Response, __toString) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Response_str(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Response_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Response_handlers());
@@ -13044,8 +12538,7 @@ PHP_METHOD(VSlim__Psr7__Uri, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPsr7Uri_handlers();
     vphp_class_handlers *h = VSlimPsr7Uri_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -13064,8 +12557,7 @@ PHP_METHOD(VSlim__Psr7__Uri, __toString) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Uri_str(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Uri_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Uri_handlers());
@@ -13082,8 +12574,7 @@ PHP_METHOD(VSlim__Psr7__Uri, getScheme) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Uri_get_scheme(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Uri_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Uri_handlers());
@@ -13100,8 +12591,7 @@ PHP_METHOD(VSlim__Psr7__Uri, getAuthority) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Uri_get_authority(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Uri_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Uri_handlers());
@@ -13118,8 +12608,7 @@ PHP_METHOD(VSlim__Psr7__Uri, getUserInfo) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Uri_get_user_info(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Uri_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Uri_handlers());
@@ -13136,8 +12625,7 @@ PHP_METHOD(VSlim__Psr7__Uri, getHost) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Uri_get_host(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Uri_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Uri_handlers());
@@ -13154,8 +12642,7 @@ PHP_METHOD(VSlim__Psr7__Uri, getPort) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Uri_get_port(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Uri_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Uri_handlers());
@@ -13172,8 +12659,7 @@ PHP_METHOD(VSlim__Psr7__Uri, getPath) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Uri_get_path(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Uri_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Uri_handlers());
@@ -13190,8 +12676,7 @@ PHP_METHOD(VSlim__Psr7__Uri, getQuery) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Uri_get_query(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Uri_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Uri_handlers());
@@ -13208,8 +12693,7 @@ PHP_METHOD(VSlim__Psr7__Uri, getFragment) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Uri_get_fragment(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Uri_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Uri_handlers());
@@ -13227,8 +12711,7 @@ PHP_METHOD(VSlim__Psr7__Uri, withScheme) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Uri_with_scheme(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Uri_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Uri_handlers());
@@ -13250,8 +12733,7 @@ PHP_METHOD(VSlim__Psr7__Uri, withUserInfo) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Uri_with_user_info(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Uri_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Uri_handlers());
@@ -13273,8 +12755,7 @@ PHP_METHOD(VSlim__Psr7__Uri, withHost) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Uri_with_host(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Uri_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Uri_handlers());
@@ -13296,8 +12777,7 @@ PHP_METHOD(VSlim__Psr7__Uri, withPort) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Uri_with_port(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Uri_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Uri_handlers());
@@ -13319,8 +12799,7 @@ PHP_METHOD(VSlim__Psr7__Uri, withPath) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Uri_with_path(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Uri_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Uri_handlers());
@@ -13342,8 +12821,7 @@ PHP_METHOD(VSlim__Psr7__Uri, withQuery) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Uri_with_query(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Uri_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Uri_handlers());
@@ -13365,8 +12843,7 @@ PHP_METHOD(VSlim__Psr7__Uri, withFragment) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Uri_with_fragment(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Uri_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Uri_handlers());
@@ -13494,8 +12971,7 @@ PHP_METHOD(VSlim__Psr7__Request, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPsr7Request_handlers();
     vphp_class_handlers *h = VSlimPsr7Request_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -13514,8 +12990,7 @@ PHP_METHOD(VSlim__Psr7__Request, getProtocolVersion) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Request_get_protocol_version(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Request_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Request_handlers());
@@ -13533,8 +13008,7 @@ PHP_METHOD(VSlim__Psr7__Request, withProtocolVersion) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Request_with_protocol_version(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Request_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Request_handlers());
@@ -13555,8 +13029,7 @@ PHP_METHOD(VSlim__Psr7__Request, getHeaders) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Request_get_headers(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Request_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Request_handlers());
@@ -13573,8 +13046,7 @@ PHP_METHOD(VSlim__Psr7__Request, hasHeader) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Request_has_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Request_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Request_handlers());
@@ -13591,8 +13063,7 @@ PHP_METHOD(VSlim__Psr7__Request, getHeader) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Request_get_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Request_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Request_handlers());
@@ -13609,8 +13080,7 @@ PHP_METHOD(VSlim__Psr7__Request, getHeaderLine) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Request_get_header_line(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Request_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Request_handlers());
@@ -13628,8 +13098,7 @@ PHP_METHOD(VSlim__Psr7__Request, withHeader) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Request_with_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Request_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Request_handlers());
@@ -13651,8 +13120,7 @@ PHP_METHOD(VSlim__Psr7__Request, withAddedHeader) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Request_with_added_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Request_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Request_handlers());
@@ -13674,8 +13142,7 @@ PHP_METHOD(VSlim__Psr7__Request, withoutHeader) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Request_without_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Request_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Request_handlers());
@@ -13697,8 +13164,7 @@ PHP_METHOD(VSlim__Psr7__Request, getBody) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Request_get_body(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Request_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Request_handlers());
@@ -13720,8 +13186,7 @@ PHP_METHOD(VSlim__Psr7__Request, withBody) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Request_with_body(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Request_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Request_handlers());
@@ -13742,8 +13207,7 @@ PHP_METHOD(VSlim__Psr7__Request, getRequestTarget) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Request_get_request_target(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Request_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Request_handlers());
@@ -13761,8 +13225,7 @@ PHP_METHOD(VSlim__Psr7__Request, withRequestTarget) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Request_with_request_target(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Request_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Request_handlers());
@@ -13783,8 +13246,7 @@ PHP_METHOD(VSlim__Psr7__Request, getMethod) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Request_get_method(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Request_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Request_handlers());
@@ -13802,8 +13264,7 @@ PHP_METHOD(VSlim__Psr7__Request, withMethod) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Request_with_method(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Request_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Request_handlers());
@@ -13825,8 +13286,7 @@ PHP_METHOD(VSlim__Psr7__Request, getUri) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Request_get_uri(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Request_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Request_handlers());
@@ -13848,8 +13308,7 @@ PHP_METHOD(VSlim__Psr7__Request, withUri) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7Request_with_uri(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Request_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Request_handlers());
@@ -13870,8 +13329,7 @@ PHP_METHOD(VSlim__Psr7__Request, __toString) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7Request_str(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7Request_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7Request_handlers());
@@ -14044,8 +13502,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_class_handlers *h = VSlimPsr7ServerRequest_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -14064,8 +13521,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, getProtocolVersion) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7ServerRequest_get_protocol_version(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14083,8 +13539,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, withProtocolVersion) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7ServerRequest_with_protocol_version(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14105,8 +13560,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, getHeaders) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7ServerRequest_get_headers(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14123,8 +13577,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, hasHeader) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7ServerRequest_has_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14141,8 +13594,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, getHeader) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7ServerRequest_get_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14159,8 +13611,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, getHeaderLine) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7ServerRequest_get_header_line(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14178,8 +13629,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, withHeader) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7ServerRequest_with_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14201,8 +13651,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, withAddedHeader) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7ServerRequest_with_added_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14224,8 +13673,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, withoutHeader) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7ServerRequest_without_header(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14247,8 +13695,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, getBody) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7ServerRequest_get_body(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14270,8 +13717,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, withBody) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7ServerRequest_with_body(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14292,8 +13738,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, getRequestTarget) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7ServerRequest_get_request_target(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14311,8 +13756,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, withRequestTarget) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7ServerRequest_with_request_target(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14333,8 +13777,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, getMethod) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7ServerRequest_get_method(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14352,8 +13795,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, withMethod) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7ServerRequest_with_method(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14375,8 +13817,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, getUri) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7ServerRequest_get_uri(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14398,8 +13839,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, withUri) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7ServerRequest_with_uri(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14420,8 +13860,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, getServerParams) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7ServerRequest_get_server_params(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14438,8 +13877,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, getCookieParams) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7ServerRequest_get_cookie_params(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14457,8 +13895,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, withCookieParams) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7ServerRequest_with_cookie_params(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14479,8 +13916,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, getQueryParams) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7ServerRequest_get_query_params(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14498,8 +13934,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, withQueryParams) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7ServerRequest_with_query_params(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14520,8 +13955,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, getUploadedFiles) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7ServerRequest_get_uploaded_files(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14539,8 +13973,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, withUploadedFiles) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7ServerRequest_with_uploaded_files(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14561,8 +13994,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, getParsedBody) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7ServerRequest_get_parsed_body(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14580,8 +14012,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, withParsedBody) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7ServerRequest_with_parsed_body(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14602,8 +14033,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, getAttributes) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7ServerRequest_get_attributes(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14620,8 +14050,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, getAttribute) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7ServerRequest_get_attribute(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14639,8 +14068,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, withAttribute) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7ServerRequest_with_attribute(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14662,8 +14090,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, withoutAttribute) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr7ServerRequest_without_attribute(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14684,8 +14111,7 @@ PHP_METHOD(VSlim__Psr7__ServerRequest, __toString) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr7ServerRequest_str(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr7ServerRequest_handlers());
@@ -14762,8 +14188,7 @@ PHP_METHOD(VSlim__Psr17__ResponseFactory, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPsr17ResponseFactory_handlers();
     vphp_class_handlers *h = VSlimPsr17ResponseFactory_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -14783,8 +14208,7 @@ PHP_METHOD(VSlim__Psr17__ResponseFactory, createResponse) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr17ResponseFactory_create_response(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr17ResponseFactory_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr17ResponseFactory_handlers());
@@ -14835,8 +14259,7 @@ PHP_METHOD(VSlim__Psr17__RequestFactory, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPsr17RequestFactory_handlers();
     vphp_class_handlers *h = VSlimPsr17RequestFactory_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -14856,8 +14279,7 @@ PHP_METHOD(VSlim__Psr17__RequestFactory, createRequest) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr17RequestFactory_create_request(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr17RequestFactory_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr17RequestFactory_handlers());
@@ -14916,8 +14338,7 @@ PHP_METHOD(VSlim__Psr17__StreamFactory, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPsr17StreamFactory_handlers();
     vphp_class_handlers *h = VSlimPsr17StreamFactory_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -14937,8 +14358,7 @@ PHP_METHOD(VSlim__Psr17__StreamFactory, createStream) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr17StreamFactory_create_stream(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr17StreamFactory_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr17StreamFactory_handlers());
@@ -14960,8 +14380,7 @@ PHP_METHOD(VSlim__Psr17__StreamFactory, createStreamFromFile) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr17StreamFactory_create_stream_from_file(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr17StreamFactory_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr17StreamFactory_handlers());
@@ -14983,8 +14402,7 @@ PHP_METHOD(VSlim__Psr17__StreamFactory, createStreamFromResource) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr17StreamFactory_create_stream_from_resource(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr17StreamFactory_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr17StreamFactory_handlers());
@@ -15040,8 +14458,7 @@ PHP_METHOD(VSlim__Psr17__UploadedFileFactory, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPsr17UploadedFileFactory_handlers();
     vphp_class_handlers *h = VSlimPsr17UploadedFileFactory_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -15061,8 +14478,7 @@ PHP_METHOD(VSlim__Psr17__UploadedFileFactory, createUploadedFile) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr17UploadedFileFactory_create_uploaded_file(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr17UploadedFileFactory_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr17UploadedFileFactory_handlers());
@@ -15112,8 +14528,7 @@ PHP_METHOD(VSlim__Psr17__UriFactory, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPsr17UriFactory_handlers();
     vphp_class_handlers *h = VSlimPsr17UriFactory_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -15133,8 +14548,7 @@ PHP_METHOD(VSlim__Psr17__UriFactory, createUri) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr17UriFactory_create_uri(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr17UriFactory_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr17UriFactory_handlers());
@@ -15186,8 +14600,7 @@ PHP_METHOD(VSlim__Psr17__ServerRequestFactory, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPsr17ServerRequestFactory_handlers();
     vphp_class_handlers *h = VSlimPsr17ServerRequestFactory_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -15207,8 +14620,7 @@ PHP_METHOD(VSlim__Psr17__ServerRequestFactory, createServerRequest) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr17ServerRequestFactory_create_server_request(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr17ServerRequestFactory_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr17ServerRequestFactory_handlers());
@@ -15343,8 +14755,7 @@ PHP_METHOD(VSlim__Psr16__Cache, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPsr16Cache_handlers();
     vphp_class_handlers *h = VSlimPsr16Cache_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -15364,8 +14775,7 @@ PHP_METHOD(VSlim__Psr16__Cache, setClock) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr16Cache_set_clock(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr16Cache_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr16Cache_handlers());
@@ -15386,8 +14796,7 @@ PHP_METHOD(VSlim__Psr16__Cache, clock) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr16Cache_clock(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr16Cache_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr16Cache_handlers());
@@ -15404,8 +14813,7 @@ PHP_METHOD(VSlim__Psr16__Cache, get) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr16Cache_get(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr16Cache_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr16Cache_handlers());
@@ -15422,8 +14830,7 @@ PHP_METHOD(VSlim__Psr16__Cache, set) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr16Cache_set(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr16Cache_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr16Cache_handlers());
@@ -15440,8 +14847,7 @@ PHP_METHOD(VSlim__Psr16__Cache, delete) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr16Cache_delete(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr16Cache_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr16Cache_handlers());
@@ -15458,8 +14864,7 @@ PHP_METHOD(VSlim__Psr16__Cache, clear) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr16Cache_clear(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr16Cache_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr16Cache_handlers());
@@ -15476,8 +14881,7 @@ PHP_METHOD(VSlim__Psr16__Cache, getMultiple) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr16Cache_get_multiple(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr16Cache_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr16Cache_handlers());
@@ -15494,8 +14898,7 @@ PHP_METHOD(VSlim__Psr16__Cache, setMultiple) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr16Cache_set_multiple(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr16Cache_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr16Cache_handlers());
@@ -15512,8 +14915,7 @@ PHP_METHOD(VSlim__Psr16__Cache, deleteMultiple) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr16Cache_delete_multiple(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr16Cache_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr16Cache_handlers());
@@ -15530,8 +14932,7 @@ PHP_METHOD(VSlim__Psr16__Cache, has) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr16Cache_has(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr16Cache_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr16Cache_handlers());
@@ -15656,8 +15057,7 @@ PHP_METHOD(VSlim__Psr6__CacheItem, getKey) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr6CacheItem_get_key(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr6CacheItem_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItem_handlers());
@@ -15674,8 +15074,7 @@ PHP_METHOD(VSlim__Psr6__CacheItem, get) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr6CacheItem_get(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr6CacheItem_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItem_handlers());
@@ -15692,8 +15091,7 @@ PHP_METHOD(VSlim__Psr6__CacheItem, isHit) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr6CacheItem_is_hit(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr6CacheItem_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItem_handlers());
@@ -15711,8 +15109,7 @@ PHP_METHOD(VSlim__Psr6__CacheItem, set) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr6CacheItem_set(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr6CacheItem_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItem_handlers());
@@ -15734,8 +15131,7 @@ PHP_METHOD(VSlim__Psr6__CacheItem, expiresAt) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr6CacheItem_expires_at(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr6CacheItem_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItem_handlers());
@@ -15757,8 +15153,7 @@ PHP_METHOD(VSlim__Psr6__CacheItem, expiresAfter) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr6CacheItem_expires_after(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr6CacheItem_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItem_handlers());
@@ -15780,8 +15175,6 @@ PHP_METHOD(VSlim__Psr6__CacheItem, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     extern vphp_class_handlers* VSlimPsr6CacheItem_handlers();
     vphp_class_handlers *h = VSlimPsr6CacheItem_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -15863,8 +15256,7 @@ PHP_METHOD(VSlim__Psr6__CacheItemPool, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPsr6CacheItemPool_handlers();
     vphp_class_handlers *h = VSlimPsr6CacheItemPool_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -15884,8 +15276,7 @@ PHP_METHOD(VSlim__Psr6__CacheItemPool, setClock) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr6CacheItemPool_set_clock(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr6CacheItemPool_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItemPool_handlers());
@@ -15906,8 +15297,7 @@ PHP_METHOD(VSlim__Psr6__CacheItemPool, clock) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr6CacheItemPool_clock(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr6CacheItemPool_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItemPool_handlers());
@@ -15925,8 +15315,7 @@ PHP_METHOD(VSlim__Psr6__CacheItemPool, getItem) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr6CacheItemPool_get_item(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr6CacheItemPool_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItemPool_handlers());
@@ -15947,8 +15336,7 @@ PHP_METHOD(VSlim__Psr6__CacheItemPool, getItems) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr6CacheItemPool_get_items(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr6CacheItemPool_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItemPool_handlers());
@@ -15965,8 +15353,7 @@ PHP_METHOD(VSlim__Psr6__CacheItemPool, hasItem) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr6CacheItemPool_has_item(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr6CacheItemPool_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItemPool_handlers());
@@ -15983,8 +15370,7 @@ PHP_METHOD(VSlim__Psr6__CacheItemPool, clear) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr6CacheItemPool_clear(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr6CacheItemPool_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItemPool_handlers());
@@ -16001,8 +15387,7 @@ PHP_METHOD(VSlim__Psr6__CacheItemPool, deleteItem) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr6CacheItemPool_delete_item(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr6CacheItemPool_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItemPool_handlers());
@@ -16019,8 +15404,7 @@ PHP_METHOD(VSlim__Psr6__CacheItemPool, deleteItems) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr6CacheItemPool_delete_items(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr6CacheItemPool_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItemPool_handlers());
@@ -16037,8 +15421,7 @@ PHP_METHOD(VSlim__Psr6__CacheItemPool, save) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr6CacheItemPool_save(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr6CacheItemPool_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItemPool_handlers());
@@ -16055,8 +15438,7 @@ PHP_METHOD(VSlim__Psr6__CacheItemPool, saveDeferred) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr6CacheItemPool_save_deferred(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr6CacheItemPool_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItemPool_handlers());
@@ -16073,8 +15455,7 @@ PHP_METHOD(VSlim__Psr6__CacheItemPool, commit) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr6CacheItemPool_commit(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr6CacheItemPool_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItemPool_handlers());
@@ -16162,8 +15543,7 @@ PHP_METHOD(VSlim__Psr18__RequestException, attachRequest) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr18RequestException_attach_request(void* this_obj, vphp_context_internal ctx);
     vphp_wrap_VSlimPsr18RequestException_attach_request((void*)Z_OBJ_P(getThis()), ctx);
     if (!EG(exception)) {
@@ -16177,8 +15557,7 @@ PHP_METHOD(VSlim__Psr18__RequestException, getRequest) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr18RequestException_get_request(void* this_obj, vphp_context_internal ctx);
     vphp_wrap_VSlimPsr18RequestException_get_request((void*)Z_OBJ_P(getThis()), ctx);
     if (EG(exception)) {
@@ -16226,8 +15605,7 @@ PHP_METHOD(VSlim__Psr18__NetworkException, attachRequest) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr18NetworkException_attach_request(void* this_obj, vphp_context_internal ctx);
     vphp_wrap_VSlimPsr18NetworkException_attach_request((void*)Z_OBJ_P(getThis()), ctx);
     if (!EG(exception)) {
@@ -16241,8 +15619,7 @@ PHP_METHOD(VSlim__Psr18__NetworkException, getRequest) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr18NetworkException_get_request(void* this_obj, vphp_context_internal ctx);
     vphp_wrap_VSlimPsr18NetworkException_get_request((void*)Z_OBJ_P(getThis()), ctx);
     if (EG(exception)) {
@@ -16298,8 +15675,7 @@ PHP_METHOD(VSlim__Psr18__Client, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPsr18Client_handlers();
     vphp_class_handlers *h = VSlimPsr18Client_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -16319,8 +15695,7 @@ PHP_METHOD(VSlim__Psr18__Client, timeout) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr18Client_timeout(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr18Client_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr18Client_handlers());
@@ -16341,8 +15716,7 @@ PHP_METHOD(VSlim__Psr18__Client, ignorePhpWarning) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr18Client_ignore_php_warning(vphp_context_internal ctx);
     vphp_wrap_VSlimPsr18Client_ignore_php_warning(ctx);
     if (EG(exception)) {
@@ -16356,8 +15730,7 @@ PHP_METHOD(VSlim__Psr18__Client, timeout_seconds_value) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr18Client_timeout_seconds_value(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr18Client_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr18Client_handlers());
@@ -16375,8 +15748,7 @@ PHP_METHOD(VSlim__Psr18__Client, sendRequest) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr18Client_send_request(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr18Client_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr18Client_handlers());
@@ -16428,8 +15800,7 @@ PHP_METHOD(VSlim__Psr20__Clock, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPsr20Clock_handlers();
     vphp_class_handlers *h = VSlimPsr20Clock_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -16448,8 +15819,7 @@ PHP_METHOD(VSlim__Psr20__Clock, now) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr20Clock_now(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr20Clock_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr20Clock_handlers());
@@ -16506,8 +15876,7 @@ PHP_METHOD(VSlim__Psr14__ListenerProvider, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPsr14ListenerProvider_handlers();
     vphp_class_handlers *h = VSlimPsr14ListenerProvider_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -16527,8 +15896,7 @@ PHP_METHOD(VSlim__Psr14__ListenerProvider, listen) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr14ListenerProvider_listen(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr14ListenerProvider_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr14ListenerProvider_handlers());
@@ -16550,8 +15918,7 @@ PHP_METHOD(VSlim__Psr14__ListenerProvider, listenAny) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr14ListenerProvider_listen_any(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr14ListenerProvider_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr14ListenerProvider_handlers());
@@ -16572,8 +15939,7 @@ PHP_METHOD(VSlim__Psr14__ListenerProvider, listenerCount) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr14ListenerProvider_listener_count(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr14ListenerProvider_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr14ListenerProvider_handlers());
@@ -16590,8 +15956,7 @@ PHP_METHOD(VSlim__Psr14__ListenerProvider, getListenersForEvent) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr14ListenerProvider_get_listeners_for_event(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr14ListenerProvider_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr14ListenerProvider_handlers());
@@ -16656,8 +16021,7 @@ PHP_METHOD(VSlim__Psr14__EventDispatcher, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPsr14EventDispatcher_handlers();
     vphp_class_handlers *h = VSlimPsr14EventDispatcher_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -16677,8 +16041,7 @@ PHP_METHOD(VSlim__Psr14__EventDispatcher, setProvider) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr14EventDispatcher_set_provider(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr14EventDispatcher_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr14EventDispatcher_handlers());
@@ -16700,8 +16063,7 @@ PHP_METHOD(VSlim__Psr14__EventDispatcher, provider) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr14EventDispatcher_provider(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr14EventDispatcher_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr14EventDispatcher_handlers());
@@ -16723,8 +16085,7 @@ PHP_METHOD(VSlim__Psr14__EventDispatcher, listen) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr14EventDispatcher_listen(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr14EventDispatcher_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr14EventDispatcher_handlers());
@@ -16746,8 +16107,7 @@ PHP_METHOD(VSlim__Psr14__EventDispatcher, listenAny) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPsr14EventDispatcher_listen_any(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr14EventDispatcher_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr14EventDispatcher_handlers());
@@ -16768,8 +16128,7 @@ PHP_METHOD(VSlim__Psr14__EventDispatcher, dispatch) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPsr14EventDispatcher_dispatch(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPsr14EventDispatcher_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr14EventDispatcher_handlers());
@@ -16917,8 +16276,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_class_handlers *h = VSlimPhpSignatureProbe_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -16937,8 +16295,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, alwaysTrue) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPhpSignatureProbe_always_true(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -16955,8 +16312,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, alwaysFalse) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPhpSignatureProbe_always_false(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -16973,8 +16329,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, alwaysNull) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPhpSignatureProbe_always_null(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -16991,8 +16346,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, alwaysThrow) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPhpSignatureProbe_always_throw(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17009,8 +16363,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, acceptTrue) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPhpSignatureProbe_accept_true(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17027,8 +16380,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, acceptFalse) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPhpSignatureProbe_accept_false(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17045,8 +16397,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, acceptNull) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPhpSignatureProbe_accept_null(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17063,8 +16414,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, acceptCallable) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPhpSignatureProbe_accept_callable(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17081,8 +16431,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, optionalTail) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPhpSignatureProbe_optional_tail(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17100,8 +16449,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, makePsrResponse) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_make_psr_response(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17122,8 +16470,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, makeStaticPsrResponse) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_make_static_psr_response(vphp_context_internal ctx);
     void* v_instance = vphp_wrap_VSlimPhpSignatureProbe_make_static_psr_response(ctx);
     if (EG(exception)) {
@@ -17139,8 +16486,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, acceptPsrRequest) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPhpSignatureProbe_accept_psr_request(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17157,8 +16503,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, acceptDateTimeInterface) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimPhpSignatureProbe_accept_datetime_interface(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17176,8 +16521,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, setProvider) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_set_provider(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17199,8 +16543,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, borrowedProvider) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_borrowed_provider(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17222,8 +16565,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, borrowedProviderAlias) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_borrowed_provider_alias(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17245,8 +16587,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, borrowedProviderFromGuard) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_borrowed_provider_from_guard(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17268,8 +16609,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, borrowedProviderFromIfExpr) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_borrowed_provider_from_if_expr(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17291,8 +16631,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, borrowedProviderFromIfExprAlias) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_borrowed_provider_from_if_expr_alias(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17314,8 +16653,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, borrowedProviderFromMatchExpr) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_borrowed_provider_from_match_expr(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17337,8 +16675,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, borrowedProviderFromMatchExprAlias) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_borrowed_provider_from_match_expr_alias(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17360,8 +16697,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, borrowedProviderFromOrBlock) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_borrowed_provider_from_or_block(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17383,8 +16719,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, borrowedProviderFromOrBlockAlias) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_borrowed_provider_from_or_block_alias(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17406,8 +16741,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, freshProvider) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_fresh_provider(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17429,8 +16763,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, freshProviderAlias) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_fresh_provider_alias(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17452,8 +16785,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, freshProviderFromIfExpr) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_fresh_provider_from_if_expr(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17475,8 +16807,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, freshProviderFromIfExprAlias) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_fresh_provider_from_if_expr_alias(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17498,8 +16829,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, freshProviderFromMatchExpr) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_fresh_provider_from_match_expr(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17521,8 +16851,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, freshProviderFromMatchExprAlias) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_fresh_provider_from_match_expr_alias(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17544,8 +16873,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, freshProviderFromOrBlock) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_fresh_provider_from_or_block(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17567,8 +16895,7 @@ PHP_METHOD(VSlim__Dev__PhpSignatureProbe, freshProviderFromOrBlockAlias) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimPhpSignatureProbe_fresh_provider_from_or_block_alias(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimPhpSignatureProbe_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPhpSignatureProbe_handlers());
@@ -17872,8 +17199,7 @@ PHP_METHOD(VSlim__Live__Socket, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_class_handlers *h = VSlimLiveSocket_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -17893,8 +17219,7 @@ PHP_METHOD(VSlim__Live__Socket, set_id) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_set_id(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -17915,8 +17240,7 @@ PHP_METHOD(VSlim__Live__Socket, id) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_id(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -17934,8 +17258,7 @@ PHP_METHOD(VSlim__Live__Socket, set_connected) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_set_connected(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -17956,8 +17279,7 @@ PHP_METHOD(VSlim__Live__Socket, connected) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_connected(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -17975,8 +17297,7 @@ PHP_METHOD(VSlim__Live__Socket, set_target) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_set_target(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -17997,8 +17318,7 @@ PHP_METHOD(VSlim__Live__Socket, target) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_target(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18016,8 +17336,7 @@ PHP_METHOD(VSlim__Live__Socket, set_root_id) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_set_root_id(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18038,8 +17357,7 @@ PHP_METHOD(VSlim__Live__Socket, root_id) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_root_id(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18057,8 +17375,7 @@ PHP_METHOD(VSlim__Live__Socket, assign) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_assign(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18080,8 +17397,7 @@ PHP_METHOD(VSlim__Live__Socket, assign_many) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_assign_many(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18103,8 +17419,7 @@ PHP_METHOD(VSlim__Live__Socket, assign_form) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_assign_form(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18126,8 +17441,7 @@ PHP_METHOD(VSlim__Live__Socket, reset_form) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_reset_form(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18149,8 +17463,7 @@ PHP_METHOD(VSlim__Live__Socket, forget) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_forget(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18172,8 +17485,7 @@ PHP_METHOD(VSlim__Live__Socket, forget_input) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_forget_input(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18195,8 +17507,7 @@ PHP_METHOD(VSlim__Live__Socket, forget_inputs) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_forget_inputs(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18218,8 +17529,7 @@ PHP_METHOD(VSlim__Live__Socket, clear_assigns) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_clear_assigns(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18241,8 +17551,7 @@ PHP_METHOD(VSlim__Live__Socket, assign_component_state) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_assign_component_state(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18263,8 +17572,7 @@ PHP_METHOD(VSlim__Live__Socket, component_state) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_component_state(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18281,8 +17589,7 @@ PHP_METHOD(VSlim__Live__Socket, component_state_or) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_component_state_or(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18300,8 +17607,7 @@ PHP_METHOD(VSlim__Live__Socket, clear_component_state) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_clear_component_state(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18323,8 +17629,7 @@ PHP_METHOD(VSlim__Live__Socket, assign_error) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_assign_error(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18346,8 +17651,7 @@ PHP_METHOD(VSlim__Live__Socket, assign_errors) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_assign_errors(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18369,8 +17673,7 @@ PHP_METHOD(VSlim__Live__Socket, clear_error) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_clear_error(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18392,8 +17695,7 @@ PHP_METHOD(VSlim__Live__Socket, clear_errors) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_clear_errors(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18414,8 +17716,7 @@ PHP_METHOD(VSlim__Live__Socket, input) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_input(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18432,8 +17733,7 @@ PHP_METHOD(VSlim__Live__Socket, input_or) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_input_or(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18450,8 +17750,7 @@ PHP_METHOD(VSlim__Live__Socket, old) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_old(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18468,8 +17767,7 @@ PHP_METHOD(VSlim__Live__Socket, old_or) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_old_or(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18486,8 +17784,7 @@ PHP_METHOD(VSlim__Live__Socket, error) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_error(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18504,8 +17801,7 @@ PHP_METHOD(VSlim__Live__Socket, has_error) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_has_error(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18523,8 +17819,7 @@ PHP_METHOD(VSlim__Live__Socket, form) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_form(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18545,8 +17840,7 @@ PHP_METHOD(VSlim__Live__Socket, get) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_get(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18563,8 +17857,7 @@ PHP_METHOD(VSlim__Live__Socket, has) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_has(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18581,8 +17874,7 @@ PHP_METHOD(VSlim__Live__Socket, assigns) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_assigns(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18600,8 +17892,7 @@ PHP_METHOD(VSlim__Live__Socket, patch) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_patch(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18623,8 +17914,7 @@ PHP_METHOD(VSlim__Live__Socket, append) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_append(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18646,8 +17936,7 @@ PHP_METHOD(VSlim__Live__Socket, prepend) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_prepend(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18669,8 +17958,7 @@ PHP_METHOD(VSlim__Live__Socket, set_text) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_set_text(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18692,8 +17980,7 @@ PHP_METHOD(VSlim__Live__Socket, set_attr) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_set_attr(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18715,8 +18002,7 @@ PHP_METHOD(VSlim__Live__Socket, remove) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_remove(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18737,8 +18023,7 @@ PHP_METHOD(VSlim__Live__Socket, patches) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_patches(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18756,8 +18041,7 @@ PHP_METHOD(VSlim__Live__Socket, clear_patches) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_clear_patches(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18779,8 +18063,7 @@ PHP_METHOD(VSlim__Live__Socket, push_event) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_push_event(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18801,8 +18084,7 @@ PHP_METHOD(VSlim__Live__Socket, events) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_events(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18820,8 +18102,7 @@ PHP_METHOD(VSlim__Live__Socket, clear_events) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_clear_events(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18843,8 +18124,7 @@ PHP_METHOD(VSlim__Live__Socket, flash) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_flash(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18865,8 +18145,7 @@ PHP_METHOD(VSlim__Live__Socket, flashes) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_flashes(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18884,8 +18163,7 @@ PHP_METHOD(VSlim__Live__Socket, clear_flashes) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_clear_flashes(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18907,8 +18185,7 @@ PHP_METHOD(VSlim__Live__Socket, join_topic) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_join_topic(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18930,8 +18207,7 @@ PHP_METHOD(VSlim__Live__Socket, leave_topic) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_leave_topic(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18953,8 +18229,7 @@ PHP_METHOD(VSlim__Live__Socket, broadcast_info) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_broadcast_info(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18975,8 +18250,7 @@ PHP_METHOD(VSlim__Live__Socket, pubsub_commands) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_pubsub_commands(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -18994,8 +18268,7 @@ PHP_METHOD(VSlim__Live__Socket, clear_pubsub) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_clear_pubsub(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -19017,8 +18290,7 @@ PHP_METHOD(VSlim__Live__Socket, redirect) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_redirect(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -19039,8 +18311,7 @@ PHP_METHOD(VSlim__Live__Socket, redirect_to) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_redirect_to(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -19058,8 +18329,7 @@ PHP_METHOD(VSlim__Live__Socket, clear_redirect) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_clear_redirect(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -19081,8 +18351,7 @@ PHP_METHOD(VSlim__Live__Socket, navigate) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_navigate(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -19103,8 +18372,7 @@ PHP_METHOD(VSlim__Live__Socket, navigate_to) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveSocket_navigate_to(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -19122,8 +18390,7 @@ PHP_METHOD(VSlim__Live__Socket, clear_navigate) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveSocket_clear_navigate(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveSocket_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveSocket_handlers());
@@ -19288,8 +18555,7 @@ PHP_METHOD(VSlim__Live__Form, name) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveForm_name(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveForm_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveForm_handlers());
@@ -19306,8 +18572,7 @@ PHP_METHOD(VSlim__Live__Form, available) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveForm_available(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveForm_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveForm_handlers());
@@ -19325,8 +18590,7 @@ PHP_METHOD(VSlim__Live__Form, fill) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveForm_fill(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveForm_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveForm_handlers());
@@ -19348,8 +18612,7 @@ PHP_METHOD(VSlim__Live__Form, reset) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveForm_reset(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveForm_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveForm_handlers());
@@ -19371,8 +18634,7 @@ PHP_METHOD(VSlim__Live__Form, validate) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveForm_validate(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveForm_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveForm_handlers());
@@ -19394,8 +18656,7 @@ PHP_METHOD(VSlim__Live__Form, errors) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveForm_errors(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveForm_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveForm_handlers());
@@ -19417,8 +18678,7 @@ PHP_METHOD(VSlim__Live__Form, clear_errors) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveForm_clear_errors(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveForm_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveForm_handlers());
@@ -19440,8 +18700,7 @@ PHP_METHOD(VSlim__Live__Form, clear_error) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveForm_clear_error(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveForm_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveForm_handlers());
@@ -19463,8 +18722,7 @@ PHP_METHOD(VSlim__Live__Form, forget) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveForm_forget(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveForm_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveForm_handlers());
@@ -19486,8 +18744,7 @@ PHP_METHOD(VSlim__Live__Form, forget_many) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveForm_forget_many(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveForm_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveForm_handlers());
@@ -19508,8 +18765,7 @@ PHP_METHOD(VSlim__Live__Form, input) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveForm_input(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveForm_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveForm_handlers());
@@ -19526,8 +18782,7 @@ PHP_METHOD(VSlim__Live__Form, input_or) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveForm_input_or(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveForm_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveForm_handlers());
@@ -19544,8 +18799,7 @@ PHP_METHOD(VSlim__Live__Form, error) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveForm_error(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveForm_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveForm_handlers());
@@ -19562,8 +18816,7 @@ PHP_METHOD(VSlim__Live__Form, has_error) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveForm_has_error(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveForm_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveForm_handlers());
@@ -19580,8 +18833,7 @@ PHP_METHOD(VSlim__Live__Form, valid) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveForm_valid(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveForm_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveForm_handlers());
@@ -19598,8 +18850,7 @@ PHP_METHOD(VSlim__Live__Form, invalid) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveForm_invalid(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveForm_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveForm_handlers());
@@ -19616,8 +18867,7 @@ PHP_METHOD(VSlim__Live__Form, error_count) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveForm_error_count(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveForm_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveForm_handlers());
@@ -19634,8 +18884,7 @@ PHP_METHOD(VSlim__Live__Form, data) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveForm_data(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveForm_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveForm_handlers());
@@ -19653,8 +18902,6 @@ PHP_METHOD(VSlim__Live__Form, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     extern vphp_class_handlers* VSlimLiveForm_handlers();
     vphp_class_handlers *h = VSlimLiveForm_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -19793,8 +19040,7 @@ PHP_METHOD(VSlim__Live__View, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_class_handlers *h = VSlimLiveView_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -19814,8 +19060,7 @@ PHP_METHOD(VSlim__Live__View, set_app) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveView_set_app(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -19837,8 +19082,7 @@ PHP_METHOD(VSlim__Live__View, set_view) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveView_set_view(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -19860,8 +19104,7 @@ PHP_METHOD(VSlim__Live__View, view) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveView_view(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -19883,8 +19126,7 @@ PHP_METHOD(VSlim__Live__View, set_template) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveView_set_template(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -19905,8 +19147,7 @@ PHP_METHOD(VSlim__Live__View, template) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveView_template(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -19924,8 +19165,7 @@ PHP_METHOD(VSlim__Live__View, set_layout) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveView_set_layout(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -19946,8 +19186,7 @@ PHP_METHOD(VSlim__Live__View, layout) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveView_layout(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -19965,8 +19204,7 @@ PHP_METHOD(VSlim__Live__View, set_root_id) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveView_set_root_id(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -19987,8 +19225,7 @@ PHP_METHOD(VSlim__Live__View, root_id) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveView_root_id(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -20005,8 +19242,7 @@ PHP_METHOD(VSlim__Live__View, live_marker) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveView_live_marker(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -20023,8 +19259,7 @@ PHP_METHOD(VSlim__Live__View, attr_prefix) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveView_attr_prefix(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -20041,8 +19276,7 @@ PHP_METHOD(VSlim__Live__View, attr_name) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveView_attr_name(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -20059,8 +19293,7 @@ PHP_METHOD(VSlim__Live__View, runtime_asset) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveView_runtime_asset(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -20077,8 +19310,7 @@ PHP_METHOD(VSlim__Live__View, runtime_script_tag) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveView_runtime_script_tag(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -20095,8 +19327,7 @@ PHP_METHOD(VSlim__Live__View, bootstrap_attrs) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveView_bootstrap_attrs(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -20113,8 +19344,7 @@ PHP_METHOD(VSlim__Live__View, render_template) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveView_render_template(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -20131,8 +19361,7 @@ PHP_METHOD(VSlim__Live__View, render_template_with_layout) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveView_render_template_with_layout(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -20149,8 +19378,7 @@ PHP_METHOD(VSlim__Live__View, render_socket) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveView_render_socket(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -20167,8 +19395,7 @@ PHP_METHOD(VSlim__Live__View, render_socket_with_layout) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveView_render_socket_with_layout(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -20185,8 +19412,7 @@ PHP_METHOD(VSlim__Live__View, html) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveView_html(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -20204,8 +19430,7 @@ PHP_METHOD(VSlim__Live__View, response) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveView_response(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -20227,8 +19452,7 @@ PHP_METHOD(VSlim__Live__View, patch) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveView_patch(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -20250,8 +19474,7 @@ PHP_METHOD(VSlim__Live__View, patch_template) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveView_patch_template(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveView_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveView_handlers());
@@ -20415,8 +19638,7 @@ PHP_METHOD(VSlim__Live__Component, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_class_handlers *h = VSlimLiveComponent_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -20436,8 +19658,7 @@ PHP_METHOD(VSlim__Live__Component, set_app) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponent_set_app(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20459,8 +19680,7 @@ PHP_METHOD(VSlim__Live__Component, set_view) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponent_set_view(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20482,8 +19702,7 @@ PHP_METHOD(VSlim__Live__Component, view) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponent_view(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20505,8 +19724,7 @@ PHP_METHOD(VSlim__Live__Component, set_template) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponent_set_template(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20527,8 +19745,7 @@ PHP_METHOD(VSlim__Live__Component, template) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveComponent_template(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20546,8 +19763,7 @@ PHP_METHOD(VSlim__Live__Component, set_layout) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponent_set_layout(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20568,8 +19784,7 @@ PHP_METHOD(VSlim__Live__Component, layout) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveComponent_layout(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20587,8 +19802,7 @@ PHP_METHOD(VSlim__Live__Component, set_id) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponent_set_id(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20609,8 +19823,7 @@ PHP_METHOD(VSlim__Live__Component, id) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveComponent_id(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20628,8 +19841,7 @@ PHP_METHOD(VSlim__Live__Component, bind_socket) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponent_bind_socket(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20650,8 +19862,7 @@ PHP_METHOD(VSlim__Live__Component, has_socket) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveComponent_has_socket(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20669,8 +19880,7 @@ PHP_METHOD(VSlim__Live__Component, state) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponent_state(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20692,8 +19902,7 @@ PHP_METHOD(VSlim__Live__Component, assign) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponent_assign(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20715,8 +19924,7 @@ PHP_METHOD(VSlim__Live__Component, assign_many) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponent_assign_many(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20737,8 +19945,7 @@ PHP_METHOD(VSlim__Live__Component, assigns) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveComponent_assigns(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20756,8 +19963,7 @@ PHP_METHOD(VSlim__Live__Component, clear_assigns) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponent_clear_assigns(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20778,8 +19984,7 @@ PHP_METHOD(VSlim__Live__Component, render_template) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveComponent_render_template(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20796,8 +20001,7 @@ PHP_METHOD(VSlim__Live__Component, html) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveComponent_html(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20815,8 +20019,7 @@ PHP_METHOD(VSlim__Live__Component, patch) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponent_patch(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20838,8 +20041,7 @@ PHP_METHOD(VSlim__Live__Component, patch_bound) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponent_patch_bound(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20860,8 +20062,7 @@ PHP_METHOD(VSlim__Live__Component, component_marker) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveComponent_component_marker(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20879,8 +20080,7 @@ PHP_METHOD(VSlim__Live__Component, append_to) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponent_append_to(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20902,8 +20102,7 @@ PHP_METHOD(VSlim__Live__Component, append_to_bound) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponent_append_to_bound(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20925,8 +20124,7 @@ PHP_METHOD(VSlim__Live__Component, prepend_to) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponent_prepend_to(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20948,8 +20146,7 @@ PHP_METHOD(VSlim__Live__Component, prepend_to_bound) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponent_prepend_to_bound(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20971,8 +20168,7 @@ PHP_METHOD(VSlim__Live__Component, remove) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponent_remove(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -20994,8 +20190,7 @@ PHP_METHOD(VSlim__Live__Component, remove_bound) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponent_remove_bound(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponent_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponent_handlers());
@@ -21088,8 +20283,7 @@ PHP_METHOD(VSlim__Live__ComponentState, set) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponentState_set(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponentState_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponentState_handlers());
@@ -21110,8 +20304,7 @@ PHP_METHOD(VSlim__Live__ComponentState, get) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveComponentState_get(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponentState_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponentState_handlers());
@@ -21128,8 +20321,7 @@ PHP_METHOD(VSlim__Live__ComponentState, get_or) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveComponentState_get_or(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponentState_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponentState_handlers());
@@ -21147,8 +20339,7 @@ PHP_METHOD(VSlim__Live__ComponentState, clear) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimLiveComponentState_clear(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponentState_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponentState_handlers());
@@ -21169,8 +20360,7 @@ PHP_METHOD(VSlim__Live__ComponentState, available) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimLiveComponentState_available(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimLiveComponentState_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimLiveComponentState_handlers());
@@ -21188,8 +20378,6 @@ PHP_METHOD(VSlim__Live__ComponentState, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
     extern vphp_class_handlers* VSlimLiveComponentState_handlers();
     vphp_class_handlers *h = VSlimLiveComponentState_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -21287,8 +20475,7 @@ PHP_METHOD(VSlim__Config, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimConfig_handlers();
     vphp_class_handlers *h = VSlimConfig_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -21308,8 +20495,7 @@ PHP_METHOD(VSlim__Config, load) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimConfig_load(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimConfig_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimConfig_handlers());
@@ -21331,8 +20517,7 @@ PHP_METHOD(VSlim__Config, load_text) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimConfig_load_text(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimConfig_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimConfig_handlers());
@@ -21353,8 +20538,7 @@ PHP_METHOD(VSlim__Config, is_loaded) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimConfig_is_loaded(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimConfig_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimConfig_handlers());
@@ -21371,8 +20555,7 @@ PHP_METHOD(VSlim__Config, path) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimConfig_path(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimConfig_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimConfig_handlers());
@@ -21389,8 +20572,7 @@ PHP_METHOD(VSlim__Config, has) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimConfig_has(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimConfig_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimConfig_handlers());
@@ -21407,8 +20589,7 @@ PHP_METHOD(VSlim__Config, get_string) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimConfig_get_string(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimConfig_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimConfig_handlers());
@@ -21425,8 +20606,7 @@ PHP_METHOD(VSlim__Config, get_int) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimConfig_get_int(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimConfig_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimConfig_handlers());
@@ -21443,8 +20623,7 @@ PHP_METHOD(VSlim__Config, get_bool) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimConfig_get_bool(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimConfig_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimConfig_handlers());
@@ -21461,8 +20640,7 @@ PHP_METHOD(VSlim__Config, get_float) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimConfig_get_float(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimConfig_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimConfig_handlers());
@@ -21479,8 +20657,7 @@ PHP_METHOD(VSlim__Config, get_string_list) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimConfig_get_string_list(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimConfig_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimConfig_handlers());
@@ -21497,8 +20674,7 @@ PHP_METHOD(VSlim__Config, get_json) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimConfig_get_json(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimConfig_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimConfig_handlers());
@@ -21515,8 +20691,7 @@ PHP_METHOD(VSlim__Config, get) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimConfig_get(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimConfig_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimConfig_handlers());
@@ -21533,8 +20708,7 @@ PHP_METHOD(VSlim__Config, get_map) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimConfig_get_map(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimConfig_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimConfig_handlers());
@@ -21551,8 +20725,7 @@ PHP_METHOD(VSlim__Config, get_list) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimConfig_get_list(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimConfig_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimConfig_handlers());
@@ -21569,8 +20742,7 @@ PHP_METHOD(VSlim__Config, all_json) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimConfig_all_json(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimConfig_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimConfig_handlers());
@@ -21697,8 +20869,7 @@ PHP_METHOD(VSlim__Container, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern vphp_class_handlers* VSlimContainer_handlers();
     vphp_class_handlers *h = VSlimContainer_handlers();
     vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
@@ -21718,8 +20889,7 @@ PHP_METHOD(VSlim__Container, set) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimContainer_set(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimContainer_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimContainer_handlers());
@@ -21741,8 +20911,7 @@ PHP_METHOD(VSlim__Container, factory) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimContainer_factory(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimContainer_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimContainer_handlers());
@@ -21763,8 +20932,7 @@ PHP_METHOD(VSlim__Container, has) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimContainer_has(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimContainer_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimContainer_handlers());
@@ -21781,8 +20949,7 @@ PHP_METHOD(VSlim__Container, get) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
     }
-    typedef struct { void* ex; void* ret; } vphp_context_internal;
-    vphp_context_internal ctx = { .ex = (void*)execute_data, .ret = (void*)return_value };
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void vphp_wrap_VSlimContainer_get(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* VSlimContainer_handlers();
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimContainer_handlers());
@@ -21822,10 +20989,8 @@ static const zend_function_entry vslim_functions[] = {
 };
 PHP_MINIT_FUNCTION(vslim) {
     vphp_framework_init(module_number);
-    extern void vphp_ext_auto_startup() __attribute__((weak));
-    extern void vphp_ext_startup() __attribute__((weak));
-    if (vphp_ext_auto_startup) vphp_ext_auto_startup();
-    if (vphp_ext_startup) vphp_ext_startup();
+    vphp_call_optional_void_symbol("vphp_ext_auto_startup");
+    vphp_call_optional_void_symbol("vphp_ext_startup");
     if (vslim__cli__app_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__view_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__controller_register_class() != SUCCESS) { return FAILURE; }
@@ -21887,26 +21052,20 @@ PHP_MINIT_FUNCTION(vslim) {
     return SUCCESS;
 }
 PHP_MSHUTDOWN_FUNCTION(vslim) {
-    extern void vphp_ext_shutdown() __attribute__((weak));
-    extern void vphp_ext_auto_shutdown() __attribute__((weak));
-    if (vphp_ext_shutdown) vphp_ext_shutdown();
-    if (vphp_ext_auto_shutdown) vphp_ext_auto_shutdown();
+    vphp_call_optional_void_symbol("vphp_ext_shutdown");
+    vphp_call_optional_void_symbol("vphp_ext_auto_shutdown");
     vphp_framework_shutdown();
     return SUCCESS;
 }
 PHP_RINIT_FUNCTION(vslim) {
     vphp_framework_request_startup();
-    extern void vphp_ext_request_auto_startup() __attribute__((weak));
-    extern void vphp_ext_request_startup() __attribute__((weak));
-    if (vphp_ext_request_auto_startup) vphp_ext_request_auto_startup();
-    if (vphp_ext_request_startup) vphp_ext_request_startup();
+    vphp_call_optional_void_symbol("vphp_ext_request_auto_startup");
+    vphp_call_optional_void_symbol("vphp_ext_request_startup");
     return SUCCESS;
 }
 PHP_RSHUTDOWN_FUNCTION(vslim) {
-    extern void vphp_ext_request_shutdown() __attribute__((weak));
-    extern void vphp_ext_request_auto_shutdown() __attribute__((weak));
-    if (vphp_ext_request_shutdown) vphp_ext_request_shutdown();
-    if (vphp_ext_request_auto_shutdown) vphp_ext_request_auto_shutdown();
+    vphp_call_optional_void_symbol("vphp_ext_request_shutdown");
+    vphp_call_optional_void_symbol("vphp_ext_request_auto_shutdown");
     vphp_framework_request_shutdown();
     return SUCCESS;
 }
