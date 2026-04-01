@@ -82,6 +82,22 @@ jobs:
         with:
           arch: amd64
 
+      - name: Install Windows parser tools
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install winflexbison3 --no-progress -y
+          $chocoBin = Join-Path $env:ChocolateyInstall "bin"
+          $winBison = Join-Path $chocoBin "win_bison.exe"
+          $winFlex = Join-Path $chocoBin "win_flex.exe"
+          if (Test-Path $winBison) {
+            Copy-Item -Force $winBison (Join-Path $chocoBin "bison.exe")
+          }
+          if (Test-Path $winFlex) {
+            Copy-Item -Force $winFlex (Join-Path $chocoBin "flex.exe")
+          }
+          bison --version
+
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
