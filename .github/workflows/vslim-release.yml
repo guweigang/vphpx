@@ -86,16 +86,19 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          choco install winflexbison3 --no-progress -y
-          choco install re2c --no-progress -y
-          $chocoBin = Join-Path $env:ChocolateyInstall "bin"
-          $winBison = Join-Path $chocoBin "win_bison.exe"
-          $winFlex = Join-Path $chocoBin "win_flex.exe"
+          $pythonExe = (Get-Command python).Source
+          & $pythonExe -m pip install --user --disable-pip-version-check winflexbison-bin re2c
+          $userBase = (& $pythonExe -c "import site; print(site.USER_BASE)").Trim()
+          $userScripts = Join-Path $userBase "Scripts"
+          Add-Content -Path $env:GITHUB_PATH -Value $userScripts
+          $env:Path = "$userScripts;$env:Path"
+          $winBison = Join-Path $userScripts "win_bison.exe"
+          $winFlex = Join-Path $userScripts "win_flex.exe"
           if (Test-Path $winBison) {
-            Copy-Item -Force $winBison (Join-Path $chocoBin "bison.exe")
+            Copy-Item -Force $winBison (Join-Path $userScripts "bison.exe")
           }
           if (Test-Path $winFlex) {
-            Copy-Item -Force $winFlex (Join-Path $chocoBin "flex.exe")
+            Copy-Item -Force $winFlex (Join-Path $userScripts "flex.exe")
           }
           bison --version
           re2c --version
