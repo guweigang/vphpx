@@ -88,8 +88,7 @@ jobs:
         run: |
           $pythonExe = (Get-Command python).Source
           & $pythonExe -m pip install --user --disable-pip-version-check winflexbison-bin re2c
-          $userBase = (& $pythonExe -c "import site; print(site.USER_BASE)").Trim()
-          $userScripts = Join-Path $userBase "Scripts"
+          $userScripts = (& $pythonExe -c "import sysconfig; print(sysconfig.get_path('scripts', scheme='nt_user'))").Trim()
           Add-Content -Path $env:GITHUB_PATH -Value $userScripts
           $env:Path = "$userScripts;$env:Path"
           $winBison = Join-Path $userScripts "win_bison.exe"
