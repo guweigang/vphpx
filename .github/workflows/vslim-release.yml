@@ -87,6 +87,7 @@ jobs:
         shell: pwsh
         run: |
           choco install winflexbison3 --no-progress -y
+          choco install re2c --no-progress -y
           $chocoBin = Join-Path $env:ChocolateyInstall "bin"
           $winBison = Join-Path $chocoBin "win_bison.exe"
           $winFlex = Join-Path $chocoBin "win_flex.exe"
@@ -97,6 +98,7 @@ jobs:
             Copy-Item -Force $winFlex (Join-Path $chocoBin "flex.exe")
           }
           bison --version
+          re2c --version
 
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
