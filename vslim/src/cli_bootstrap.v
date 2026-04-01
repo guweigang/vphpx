@@ -12,6 +12,12 @@ fn cli_debug_enabled() bool {
 }
 
 fn cli_debug_log(message string) {
+	debug_file := os.getenv('VSLIM_CLI_DEBUG_FILE').trim_space()
+	if debug_file != '' {
+		mut line := '[vslim-cli-debug] ' + message + '\n'
+		os.write_file_array(debug_file, [line]) or {}
+		return
+	}
 	if !cli_debug_enabled() {
 		return
 	}

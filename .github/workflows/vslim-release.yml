@@ -151,7 +151,7 @@ jobs:
         working-directory: vslim
         shell: pwsh
         env:
-          VSLIM_CLI_DEBUG: 1
+          VSLIM_CLI_DEBUG_FILE: ${{ runner.temp }}\vslim-cli-debug.log
         run: |
           $env:TEST_PHP_EXECUTABLE = (Get-Command php).Source
           php ..\vphptest\run-tests.php -q --show-all -d extension=.\${{ matrix.extension_file }} `
@@ -159,6 +159,10 @@ jobs:
             tests/test_vslim_cli_template_bin_entry.phpt `
             tests/test_vslim_psr7_psr17_interface_contracts.phpt `
             tests/test_vslim_template_project_metadata.phpt
+          if (Test-Path $env:VSLIM_CLI_DEBUG_FILE) {
+            Write-Host "==== VSlim CLI debug log ===="
+            Get-Content $env:VSLIM_CLI_DEBUG_FILE
+          }
 
       - name: Build release bundle
         if: runner.os != 'Windows'
