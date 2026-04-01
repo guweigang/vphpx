@@ -105,7 +105,7 @@ Usage:
 
 Options:
   --version=VALUE        Package version label.
-  --platform=VALUE       Normalized platform label, for example linux-x86_64.
+  --platform=VALUE       Normalized platform label, for example linux-amd64.
   --package-type=VALUE   binary | source
   --ext-path=PATH        Path to compiled extension for binary packages.
   --format=VALUE         zip
@@ -153,7 +153,7 @@ function detect_platform(): string
 function normalize_arch(string $arch): string
 {
     return match (strtolower($arch)) {
-        'x86_64', 'amd64', 'x64' => 'x86_64',
+        'x86_64', 'amd64', 'x64' => 'amd64',
         'aarch64', 'arm64' => 'arm64',
         default => normalize_slug($arch),
     };

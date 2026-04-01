@@ -14,23 +14,32 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: linux bundle
+          - name: linux amd64 bundle
             runs_on: ubuntu-latest
+            platform: linux-amd64
             package_type: binary
-            artifact_name: vslim-linux-binary
+            artifact_name: vslim-linux-amd64-binary
             needs_build: true
             emit_only: false
-          - name: macos bundle
-            runs_on: macos-latest
+          - name: macos amd64 bundle
+            runs_on: macos-15-intel
+            platform: macos-amd64
             package_type: binary
-            artifact_name: vslim-macos-binary
+            artifact_name: vslim-macos-amd64-binary
             needs_build: true
             emit_only: false
-          - name: windows source bundle
+          - name: macos arm64 bundle
+            runs_on: macos-15
+            platform: macos-arm64
+            package_type: binary
+            artifact_name: vslim-macos-arm64-binary
+            needs_build: true
+            emit_only: false
+          - name: windows amd64 source bundle
             runs_on: windows-latest
-            platform: windows-x86_64
+            platform: windows-amd64
             package_type: source
-            artifact_name: vslim-windows-source
+            artifact_name: vslim-windows-amd64-source
             needs_build: true
             emit_only: true
 
@@ -113,7 +122,8 @@ jobs:
           if [ "${{ matrix.package_type }}" = "binary" ]; then
             make dist \
               PACKAGE_FORMAT=zip \
-              ARTIFACT_VERSION="${VSLIM_RELEASE_VERSION}"
+              ARTIFACT_VERSION="${VSLIM_RELEASE_VERSION}" \
+              ARTIFACT_PLATFORM="${{ matrix.platform }}"
           else
             php scripts/package_release.php \
               --version="${VSLIM_RELEASE_VERSION}" \

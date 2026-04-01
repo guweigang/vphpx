@@ -79,9 +79,10 @@ make dist-source
 
 当前 GitHub workflow 的发布策略是：
 
-- Linux：发布二进制 bundle
-- macOS：发布二进制 bundle
-- Windows：先发布 source bundle
+- Linux amd64：发布二进制 bundle
+- macOS amd64：发布 Intel 二进制 bundle
+- macOS arm64：发布 Apple Silicon 二进制 bundle
+- Windows amd64：先发布 source bundle
 
 Windows 暂时还是 source bundle，不是因为 workflow 没接，而是当前生成的 C 仍依赖 GNU/C99 特性；要稳定产出可直接加载的 `php_vslim.dll`，还需要单独补一条 Windows toolchain 兼容链路。
 

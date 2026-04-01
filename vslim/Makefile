@@ -26,7 +26,7 @@ PLATFORM_LDFLAGS += -undefined dynamic_lookup
 endif
 ROOT := $(CURDIR)
 ARTIFACT_VERSION ?= $(shell git -C $(ROOT)/.. describe --tags --always --dirty)
-ARTIFACT_PLATFORM ?= $(shell php -r '$$os = strtolower(PHP_OS_FAMILY); if ($$os === "darwin") $$os = "macos"; $$arch = strtolower(php_uname("m")); if (in_array($$arch, ["amd64", "x64", "x86_64"], true)) $$arch = "x86_64"; if (in_array($$arch, ["aarch64", "arm64"], true)) $$arch = "arm64"; echo $$os . "-" . $$arch;')
+ARTIFACT_PLATFORM ?= $(shell php -r '$$os = strtolower(PHP_OS_FAMILY); if ($$os === "darwin") $$os = "macos"; $$arch = strtolower(php_uname("m")); if (in_array($$arch, ["amd64", "x64", "x86_64"], true)) $$arch = "amd64"; if (in_array($$arch, ["aarch64", "arm64"], true)) $$arch = "arm64"; echo $$os . "-" . $$arch;')
 PACKAGE_FORMAT ?= zip
 VHTTPD_ROOT ?= $(abspath $(ROOT)/../../vhttpd)
 SRC_DIR := $(VHTTPD_ROOT)/src
