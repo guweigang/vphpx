@@ -2,6 +2,11 @@ import os
 import strings
 import vphp.compiler
 
+struct FixedArrayConstPatch {
+	declaration string
+	init_block  string
+}
+
 fn sanitize_ldflags(ldflags string) string {
 	mut kept := []string{}
 	for token in ldflags.split(' ') {
@@ -264,6 +269,81 @@ fn patch_windows_generated_const_suffixes(path string) ! {
 	}
 }
 
+fn build_fixed_array_const_patch(original string, index int) !FixedArrayConstPatch {
+	comment_marker := '// fixed array const'
+	comment_pos := original.index(comment_marker) or {
+		return error('missing fixed array const marker')
+	}
+	eq := original.index('=') or {
+		return error('missing assignment operator in fixed array const')
+	}
+	semi := original[..comment_pos].last_index(';') or {
+		return error('missing semicolon in fixed array const')
+	}
+	prefix := original[..eq].trim_space()
+	last_space := prefix.last_index(' ') or {
+		return error('missing array name in fixed array const')
+	}
+	typ := prefix[..last_space].trim_space()
+	name := prefix[last_space + 1..].trim_space()
+	initializer := original[eq + 1..semi].trim_space()
+	return FixedArrayConstPatch{
+		declaration: '${prefix}; // fixed array const, inited later'
+		init_block:  '\t{\n\t{\n\t\t${typ} _v_fixed_array_init_${index} = ${initializer};\n\t\tmemcpy(&${name}, &_v_fixed_array_init_${index}, sizeof(${typ}));\n\t}\n\t}\n'
+	}
+}
+
+fn patch_windows_generated_fixed_array_consts(path string) ! {
+	if os.user_os() != 'windows' {
+		return
+	}
+	content := os.read_file(path)!
+	marker := '// fixed array const'
+	mut cursor := 0
+	mut changed := false
+	mut patches := []FixedArrayConstPatch{}
+	mut rewritten := strings.new_builder(content.len + 4096)
+	for cursor < content.len {
+		relative := content[cursor..].index(marker) or { break }
+		marker_pos := cursor + relative
+		stmt_start := content[..marker_pos].last_index(';') or { -1 }
+		mut decl_start := if stmt_start >= 0 { stmt_start + 1 } else { 0 }
+		for decl_start < content.len && (content[decl_start] == `\n` || content[decl_start] == `\r`) {
+			decl_start++
+		}
+		line_end := content[marker_pos..].index('\n') or { content.len - marker_pos }
+		decl_end := marker_pos + line_end
+		original := content[decl_start..decl_end]
+		rewritten.write_string(content[cursor..decl_start])
+		patch := build_fixed_array_const_patch(original, patches.len + 1) or {
+			rewritten.write_string(original)
+			cursor = decl_end
+			continue
+		}
+		rewritten.write_string(patch.declaration)
+		patches << patch
+		changed = true
+		cursor = decl_end
+	}
+	rewritten.write_string(content[cursor..])
+	if !changed {
+		return
+	}
+	mut patched_content := rewritten.str()
+	vinit_marker := 'void _vinit(int ___argc, voidptr ___argv) {\n'
+	insert_at := patched_content.index(vinit_marker) or {
+		return error('unable to locate _vinit for fixed array initialization patch')
+	}
+	mut init_builder := strings.new_builder(256 * patches.len)
+	init_builder.writeln('\t// Windows/MSVC workaround: initialize fixed array consts at runtime.')
+	for patch in patches {
+		init_builder.write_string(patch.init_block)
+	}
+	patched_content = patched_content[..insert_at + vinit_marker.len] + init_builder.str() +
+		patched_content[insert_at + vinit_marker.len..]
+	os.write_file(path, patched_content)!
+}
+
 fn detect_gc_compile_flags(gc_mode string) string {
 	return match gc_mode {
 		'boehm' { pkg_config_flags('--cflags bdw-gc') }
@@ -360,6 +440,10 @@ fn main() {
 	}
 	patch_windows_generated_const_suffixes(transpiled_c) or {
 		println('❌ Windows 生成源码修补失败: ${err.msg()}')
+		exit(1)
+	}
+	patch_windows_generated_fixed_array_consts(transpiled_c) or {
+		println('❌ Windows fixed array 常量修补失败: ${err.msg()}')
 		exit(1)
 	}
 
