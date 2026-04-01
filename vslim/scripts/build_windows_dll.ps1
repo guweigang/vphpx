@@ -34,7 +34,7 @@ function Invoke-Cmd([string]$WorkingDirectory, [string]$CommandLine) {
     try {
         & cmd /c $CommandLine
         if ($LASTEXITCODE -ne 0) {
-            throw "Command failed with exit code $LASTEXITCODE: $CommandLine"
+            throw "Command failed with exit code ${LASTEXITCODE}: $CommandLine"
         }
     } finally {
         Pop-Location
