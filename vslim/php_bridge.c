@@ -67,7 +67,6 @@ PHP_FUNCTION(vslim_probe_object) {
     }
 }
 zend_class_entry *vslim__cli__app_ce = NULL;
-static const zend_function_entry vslim__cli__app_methods[];
 static const zend_internal_arg_info arginfo_vslimcliapp_bootstrap_file[] = {
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Cli\\App", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_ARG_TYPE_INFO(0, path, IS_STRING, 0)
@@ -130,35 +129,6 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimcliapp_run, 0, 2, IS_LONG, 
 ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
 ZEND_ARG_OBJ_TYPE_MASK(0, args, Traversable, MAY_BE_ARRAY, NULL)
 ZEND_END_ARG_INFO()
-static int vslim__cli__app_register_class(void) {
-    if (vslim__cli__app_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__cli__app_ce = vphp_find_loaded_class_entry("VSlim\\Cli\\App", sizeof("VSlim\\Cli\\App")-1);
-    if (vslim__cli__app_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Cli\\App", vslim__cli__app_methods);
-        vslim__cli__app_ce = zend_register_internal_class(&ce);
-        vslim__cli__app_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__cli__app_ce, "core_app_ref", sizeof("core_app_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__cli__app_ce, "command_handlers", sizeof("command_handlers")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__cli__app_ce, "command_order", sizeof("command_order")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__cli__app_ce, "command_aliases", sizeof("command_aliases")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__cli__app_ce, "command_hidden", sizeof("command_hidden")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__cli__app_ce, "command_canonical", sizeof("command_canonical")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__cli__app_ce, "project_root", sizeof("project_root")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__cli__app_ce, "last_command_name", sizeof("last_command_name")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__cli__app_ce, "last_raw_args", sizeof("last_raw_args")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__cli__app_ce, "last_arguments", sizeof("last_arguments")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__cli__app_ce, "last_options", sizeof("last_options")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__cli__app_ce, "last_option_seen", sizeof("last_option_seen")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__cli__app_ce, "last_warnings", sizeof("last_warnings")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_bool(vslim__cli__app_ce, "last_input_parsed", sizeof("last_input_parsed")-1, 0, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 
 PHP_METHOD(VSlim__Cli__App, bootstrapFile) {
     if (!vphp_validate_internal_call(execute_data)) {
@@ -563,8 +533,36 @@ static const zend_function_entry vslim__cli__app_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__cli__app_register_class(void) {
+    if (vslim__cli__app_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__cli__app_ce = vphp_find_loaded_class_entry("VSlim\\Cli\\App", sizeof("VSlim\\Cli\\App")-1);
+    if (vslim__cli__app_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Cli\\App", vslim__cli__app_methods);
+        vslim__cli__app_ce = zend_register_internal_class(&ce);
+        vslim__cli__app_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__cli__app_ce, "core_app_ref", sizeof("core_app_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__cli__app_ce, "command_handlers", sizeof("command_handlers")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__cli__app_ce, "command_order", sizeof("command_order")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__cli__app_ce, "command_aliases", sizeof("command_aliases")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__cli__app_ce, "command_hidden", sizeof("command_hidden")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__cli__app_ce, "command_canonical", sizeof("command_canonical")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__cli__app_ce, "project_root", sizeof("project_root")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__cli__app_ce, "last_command_name", sizeof("last_command_name")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__cli__app_ce, "last_raw_args", sizeof("last_raw_args")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__cli__app_ce, "last_arguments", sizeof("last_arguments")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__cli__app_ce, "last_options", sizeof("last_options")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__cli__app_ce, "last_option_seen", sizeof("last_option_seen")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__cli__app_ce, "last_warnings", sizeof("last_warnings")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__cli__app_ce, "last_input_parsed", sizeof("last_input_parsed")-1, 0, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__view_ce = NULL;
-static const zend_function_entry vslim__view_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimview_construct, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, base_path, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, assets_prefix, IS_STRING, 0)
@@ -618,25 +616,6 @@ ZEND_ARG_TYPE_INFO(0, template, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, layout, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, data, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
-static int vslim__view_register_class(void) {
-    if (vslim__view_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__view_ce = vphp_find_loaded_class_entry("VSlim\\View", sizeof("VSlim\\View")-1);
-    if (vslim__view_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\View", vslim__view_methods);
-        vslim__view_ce = zend_register_internal_class(&ce);
-        vslim__view_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(vslim__view_ce, "base_path", sizeof("base_path")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__view_ce, "assets_prefix", sizeof("assets_prefix")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_bool(vslim__view_ce, "cache_enabled", sizeof("cache_enabled")-1, 0, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__view_ce, "helpers", sizeof("helpers")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__View, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -930,8 +909,26 @@ static const zend_function_entry vslim__view_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__view_register_class(void) {
+    if (vslim__view_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__view_ce = vphp_find_loaded_class_entry("VSlim\\View", sizeof("VSlim\\View")-1);
+    if (vslim__view_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\View", vslim__view_methods);
+        vslim__view_ce = zend_register_internal_class(&ce);
+        vslim__view_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(vslim__view_ce, "base_path", sizeof("base_path")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__view_ce, "assets_prefix", sizeof("assets_prefix")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__view_ce, "cache_enabled", sizeof("cache_enabled")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__view_ce, "helpers", sizeof("helpers")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__controller_ce = NULL;
-static const zend_function_entry vslim__controller_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimcontroller_construct, 0, 0, 1)
 ZEND_ARG_INFO(0, app)
 ZEND_END_ARG_INFO()
@@ -994,22 +991,6 @@ ZEND_ARG_TYPE_INFO(0, params, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, query, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, status, IS_LONG, 0)
 ZEND_END_ARG_INFO()
-static int vslim__controller_register_class(void) {
-    if (vslim__controller_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__controller_ce = vphp_find_loaded_class_entry("VSlim\\Controller", sizeof("VSlim\\Controller")-1);
-    if (vslim__controller_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Controller", vslim__controller_methods);
-        vslim__controller_ce = zend_register_internal_class(&ce);
-        vslim__controller_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__controller_ce, "host", sizeof("host")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Controller, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -1300,8 +1281,23 @@ static const zend_function_entry vslim__controller_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__controller_register_class(void) {
+    if (vslim__controller_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__controller_ce = vphp_find_loaded_class_entry("VSlim\\Controller", sizeof("VSlim\\Controller")-1);
+    if (vslim__controller_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Controller", vslim__controller_methods);
+        vslim__controller_ce = zend_register_internal_class(&ce);
+        vslim__controller_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__controller_ce, "host", sizeof("host")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__app_ce = NULL;
-static const zend_function_entry vslim__app_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslim__app___construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimapp_middleware[] = {
@@ -1777,61 +1773,6 @@ ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimapp_demo[] = {
     { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\App", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_END_ARG_INFO()
-static int vslim__app_register_class(void) {
-    if (vslim__app_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__app_ce = vphp_find_loaded_class_entry("VSlim\\App", sizeof("VSlim\\App")-1);
-    if (vslim__app_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\App", vslim__app_methods);
-        vslim__app_ce = zend_register_internal_class(&ce);
-        vslim__app_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__app_ce, "routes", sizeof("routes")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "websocket_routes", sizeof("websocket_routes")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "websocket_conn_route", sizeof("websocket_conn_route")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "php_before_middlewares", sizeof("php_before_middlewares")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "php_middlewares", sizeof("php_middlewares")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "php_after_middlewares", sizeof("php_after_middlewares")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "php_group_before_middle", sizeof("php_group_before_middle")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "php_group_middle", sizeof("php_group_middle")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "php_group_after_middle", sizeof("php_group_after_middle")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "not_found_handler", sizeof("not_found_handler")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "error_handler", sizeof("error_handler")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "container_ref", sizeof("container_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "config_ref", sizeof("config_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "mcp_ref", sizeof("mcp_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__app_ce, "base_path", sizeof("base_path")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_bool(vslim__app_ce, "use_demo", sizeof("use_demo")-1, 0, ZEND_ACC_PROTECTED);
-        zend_declare_property_bool(vslim__app_ce, "error_response_json", sizeof("error_response_json")-1, 0, ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__app_ce, "view_base_path", sizeof("view_base_path")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__app_ce, "assets_prefix", sizeof("assets_prefix")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_bool(vslim__app_ce, "view_cache_enabled", sizeof("view_cache_enabled")-1, 0, ZEND_ACC_PROTECTED);
-        zend_declare_property_bool(vslim__app_ce, "view_cache_configured", sizeof("view_cache_configured")-1, 0, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "view_helpers", sizeof("view_helpers")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "logger_ref", sizeof("logger_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "psr_logger_ref", sizeof("psr_logger_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "clock_ref", sizeof("clock_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "listener_provider_ref", sizeof("listener_provider_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "dispatcher_ref", sizeof("dispatcher_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "cache_ref", sizeof("cache_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "cache_pool_ref", sizeof("cache_pool_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "http_client_ref", sizeof("http_client_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "providers", sizeof("providers")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "provider_classes", sizeof("provider_classes")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "modules", sizeof("modules")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "module_classes", sizeof("module_classes")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_bool(vslim__app_ce, "booted", sizeof("booted")-1, 0, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__app_ce, "live_ws_sockets", sizeof("live_ws_sockets")-1, ZEND_ACC_PROTECTED);
-        zend_string *attribute_vslim__app_0_name = zend_string_init_interned("VPhp\\\\VHttpd\\\\Attribute\\\\Dispatchable", sizeof("VPhp\\\\VHttpd\\\\Attribute\\\\Dispatchable")-1, 1);
-        zend_attribute *attribute_vslim__app_0 = zend_add_class_attribute(vslim__app_ce, attribute_vslim__app_0_name, 1);
-        zend_string_release(attribute_vslim__app_0_name);
-        ZVAL_STR(&attribute_vslim__app_0->args[0].value, zend_string_init_interned("http", sizeof("http")-1, 1));
-    }
-    return SUCCESS;
-}
 
 PHP_METHOD(VSlim__App, middleware) {
     if (!vphp_validate_internal_call(execute_data)) {
@@ -4381,30 +4322,68 @@ static const zend_function_entry vslim__app_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__app_register_class(void) {
+    if (vslim__app_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__app_ce = vphp_find_loaded_class_entry("VSlim\\App", sizeof("VSlim\\App")-1);
+    if (vslim__app_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\App", vslim__app_methods);
+        vslim__app_ce = zend_register_internal_class(&ce);
+        vslim__app_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__app_ce, "routes", sizeof("routes")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "websocket_routes", sizeof("websocket_routes")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "websocket_conn_route", sizeof("websocket_conn_route")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "php_before_middlewares", sizeof("php_before_middlewares")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "php_middlewares", sizeof("php_middlewares")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "php_after_middlewares", sizeof("php_after_middlewares")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "php_group_before_middle", sizeof("php_group_before_middle")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "php_group_middle", sizeof("php_group_middle")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "php_group_after_middle", sizeof("php_group_after_middle")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "not_found_handler", sizeof("not_found_handler")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "error_handler", sizeof("error_handler")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "container_ref", sizeof("container_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "config_ref", sizeof("config_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "mcp_ref", sizeof("mcp_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__app_ce, "base_path", sizeof("base_path")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__app_ce, "use_demo", sizeof("use_demo")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__app_ce, "error_response_json", sizeof("error_response_json")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__app_ce, "view_base_path", sizeof("view_base_path")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__app_ce, "assets_prefix", sizeof("assets_prefix")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__app_ce, "view_cache_enabled", sizeof("view_cache_enabled")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__app_ce, "view_cache_configured", sizeof("view_cache_configured")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "view_helpers", sizeof("view_helpers")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "logger_ref", sizeof("logger_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "psr_logger_ref", sizeof("psr_logger_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "clock_ref", sizeof("clock_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "listener_provider_ref", sizeof("listener_provider_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "dispatcher_ref", sizeof("dispatcher_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "cache_ref", sizeof("cache_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "cache_pool_ref", sizeof("cache_pool_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "http_client_ref", sizeof("http_client_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "providers", sizeof("providers")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "provider_classes", sizeof("provider_classes")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "modules", sizeof("modules")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "module_classes", sizeof("module_classes")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__app_ce, "booted", sizeof("booted")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "live_ws_sockets", sizeof("live_ws_sockets")-1, ZEND_ACC_PROTECTED);
+        zend_string *attribute_vslim__app_0_name = zend_string_init_interned("VPhp\\\\VHttpd\\\\Attribute\\\\Dispatchable", sizeof("VPhp\\\\VHttpd\\\\Attribute\\\\Dispatchable")-1, 1);
+        zend_attribute *attribute_vslim__app_0 = zend_add_class_attribute(vslim__app_ce, attribute_vslim__app_0_name, 1);
+        zend_string_release(attribute_vslim__app_0_name);
+        ZVAL_STR(&attribute_vslim__app_0->args[0].value, zend_string_init_interned("http", sizeof("http")-1, 1));
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr15__nexthandler_ce = NULL;
-static const zend_function_entry vslim__psr15__nexthandler_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslim__psr15__nexthandler___construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimpsr15nexthandler_handle[] = {
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\ResponseInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 { "request", ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\ServerRequestInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_END_ARG_INFO()
-static int vslim__psr15__nexthandler_register_class(void) {
-    if (vslim__psr15__nexthandler_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr15__nexthandler_ce = vphp_find_loaded_class_entry("VSlim\\Psr15\\NextHandler", sizeof("VSlim\\Psr15\\NextHandler")-1);
-    if (vslim__psr15__nexthandler_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr15\\NextHandler", vslim__psr15__nexthandler_methods);
-        vslim__psr15__nexthandler_ce = zend_register_internal_class(&ce);
-        vslim__psr15__nexthandler_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__psr15__nexthandler_ce, "state", sizeof("state")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 
 PHP_METHOD(VSlim__Psr15__NextHandler, handle) {
     if (!vphp_validate_internal_call(execute_data)) {
@@ -4447,30 +4426,29 @@ static const zend_function_entry vslim__psr15__nexthandler_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr15__nexthandler_register_class(void) {
+    if (vslim__psr15__nexthandler_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr15__nexthandler_ce = vphp_find_loaded_class_entry("VSlim\\Psr15\\NextHandler", sizeof("VSlim\\Psr15\\NextHandler")-1);
+    if (vslim__psr15__nexthandler_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr15\\NextHandler", vslim__psr15__nexthandler_methods);
+        vslim__psr15__nexthandler_ce = zend_register_internal_class(&ce);
+        vslim__psr15__nexthandler_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__psr15__nexthandler_ce, "state", sizeof("state")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr15__continuehandler_ce = NULL;
-static const zend_function_entry vslim__psr15__continuehandler_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslim__psr15__continuehandler___construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimpsr15continuehandler_handle[] = {
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\ResponseInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 { "request", ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\ServerRequestInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_END_ARG_INFO()
-static int vslim__psr15__continuehandler_register_class(void) {
-    if (vslim__psr15__continuehandler_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr15__continuehandler_ce = vphp_find_loaded_class_entry("VSlim\\Psr15\\ContinueHandler", sizeof("VSlim\\Psr15\\ContinueHandler")-1);
-    if (vslim__psr15__continuehandler_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr15\\ContinueHandler", vslim__psr15__continuehandler_methods);
-        vslim__psr15__continuehandler_ce = zend_register_internal_class(&ce);
-        vslim__psr15__continuehandler_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__psr15__continuehandler_ce, "state", sizeof("state")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 
 PHP_METHOD(VSlim__Psr15__ContinueHandler, handle) {
     if (!vphp_validate_internal_call(execute_data)) {
@@ -4513,8 +4491,23 @@ static const zend_function_entry vslim__psr15__continuehandler_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr15__continuehandler_register_class(void) {
+    if (vslim__psr15__continuehandler_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr15__continuehandler_ce = vphp_find_loaded_class_entry("VSlim\\Psr15\\ContinueHandler", sizeof("VSlim\\Psr15\\ContinueHandler")-1);
+    if (vslim__psr15__continuehandler_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr15\\ContinueHandler", vslim__psr15__continuehandler_methods);
+        vslim__psr15__continuehandler_ce = zend_register_internal_class(&ce);
+        vslim__psr15__continuehandler_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__psr15__continuehandler_ce, "state", sizeof("state")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__support__serviceprovider_ce = NULL;
-static const zend_function_entry vslim__support__serviceprovider_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimserviceprovider_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimserviceprovider_set_app[] = {
@@ -4526,22 +4519,6 @@ ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimserviceprovider_app[] = {
     { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\App", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_END_ARG_INFO()
-static int vslim__support__serviceprovider_register_class(void) {
-    if (vslim__support__serviceprovider_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__support__serviceprovider_ce = vphp_find_loaded_class_entry("VSlim\\Support\\ServiceProvider", sizeof("VSlim\\Support\\ServiceProvider")-1);
-    if (vslim__support__serviceprovider_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Support\\ServiceProvider", vslim__support__serviceprovider_methods);
-        vslim__support__serviceprovider_ce = zend_register_internal_class(&ce);
-        vslim__support__serviceprovider_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__support__serviceprovider_ce, "app_ref", sizeof("app_ref")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Support__ServiceProvider, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -4630,8 +4607,23 @@ static const zend_function_entry vslim__support__serviceprovider_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__support__serviceprovider_register_class(void) {
+    if (vslim__support__serviceprovider_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__support__serviceprovider_ce = vphp_find_loaded_class_entry("VSlim\\Support\\ServiceProvider", sizeof("VSlim\\Support\\ServiceProvider")-1);
+    if (vslim__support__serviceprovider_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Support\\ServiceProvider", vslim__support__serviceprovider_methods);
+        vslim__support__serviceprovider_ce = zend_register_internal_class(&ce);
+        vslim__support__serviceprovider_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__support__serviceprovider_ce, "app_ref", sizeof("app_ref")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__support__module_ce = NULL;
-static const zend_function_entry vslim__support__module_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimmodule_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimmodule_set_app[] = {
@@ -4643,22 +4635,6 @@ ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimmodule_app[] = {
     { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\App", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_END_ARG_INFO()
-static int vslim__support__module_register_class(void) {
-    if (vslim__support__module_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__support__module_ce = vphp_find_loaded_class_entry("VSlim\\Support\\Module", sizeof("VSlim\\Support\\Module")-1);
-    if (vslim__support__module_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Support\\Module", vslim__support__module_methods);
-        vslim__support__module_ce = zend_register_internal_class(&ce);
-        vslim__support__module_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__support__module_ce, "app_ref", sizeof("app_ref")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Support__Module, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -4747,8 +4723,23 @@ static const zend_function_entry vslim__support__module_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__support__module_register_class(void) {
+    if (vslim__support__module_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__support__module_ce = vphp_find_loaded_class_entry("VSlim\\Support\\Module", sizeof("VSlim\\Support\\Module")-1);
+    if (vslim__support__module_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Support\\Module", vslim__support__module_methods);
+        vslim__support__module_ce = zend_register_internal_class(&ce);
+        vslim__support__module_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__support__module_ce, "app_ref", sizeof("app_ref")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__routegroup_ce = NULL;
-static const zend_function_entry vslim__routegroup_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslim__routegroup___construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_routegroup_group[] = {
@@ -4928,23 +4919,6 @@ ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, pattern, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, handler, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
-static int vslim__routegroup_register_class(void) {
-    if (vslim__routegroup_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__routegroup_ce = vphp_find_loaded_class_entry("VSlim\\RouteGroup", sizeof("VSlim\\RouteGroup")-1);
-    if (vslim__routegroup_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\RouteGroup", vslim__routegroup_methods);
-        vslim__routegroup_ce = zend_register_internal_class(&ce);
-        vslim__routegroup_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__routegroup_ce, "app", sizeof("app")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__routegroup_ce, "prefix", sizeof("prefix")-1, "", ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 
 PHP_METHOD(VSlim__RouteGroup, group) {
     if (!vphp_validate_internal_call(execute_data)) {
@@ -5723,8 +5697,24 @@ static const zend_function_entry vslim__routegroup_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__routegroup_register_class(void) {
+    if (vslim__routegroup_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__routegroup_ce = vphp_find_loaded_class_entry("VSlim\\RouteGroup", sizeof("VSlim\\RouteGroup")-1);
+    if (vslim__routegroup_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\RouteGroup", vslim__routegroup_methods);
+        vslim__routegroup_ce = zend_register_internal_class(&ce);
+        vslim__routegroup_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__routegroup_ce, "app", sizeof("app")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__routegroup_ce, "prefix", sizeof("prefix")-1, "", ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__vhttpd__request_ce = NULL;
-static const zend_function_entry vslim__vhttpd__request_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimrequest_construct, 0, 0, 3)
 ZEND_ARG_TYPE_INFO(0, method, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, raw_path, IS_STRING, 0)
@@ -5898,38 +5888,6 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimrequest_server_all, 0, 0, I
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimrequest_uploaded_files_all, 0, 0, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
-static int vslim__vhttpd__request_register_class(void) {
-    if (vslim__vhttpd__request_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__vhttpd__request_ce = vphp_find_loaded_class_entry("VSlim\\Vhttpd\\Request", sizeof("VSlim\\Vhttpd\\Request")-1);
-    if (vslim__vhttpd__request_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Vhttpd\\Request", vslim__vhttpd__request_methods);
-        vslim__vhttpd__request_ce = zend_register_internal_class(&ce);
-        vslim__vhttpd__request_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(vslim__vhttpd__request_ce, "method", sizeof("method")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_string(vslim__vhttpd__request_ce, "raw_path", sizeof("raw_path")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_string(vslim__vhttpd__request_ce, "path", sizeof("path")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_string(vslim__vhttpd__request_ce, "body", sizeof("body")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_string(vslim__vhttpd__request_ce, "query_string", sizeof("query_string")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_string(vslim__vhttpd__request_ce, "scheme", sizeof("scheme")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_string(vslim__vhttpd__request_ce, "host", sizeof("host")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_string(vslim__vhttpd__request_ce, "port", sizeof("port")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_string(vslim__vhttpd__request_ce, "protocol_version", sizeof("protocol_version")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_string(vslim__vhttpd__request_ce, "remote_addr", sizeof("remote_addr")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_null(vslim__vhttpd__request_ce, "query", sizeof("query")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__vhttpd__request_ce, "headers", sizeof("headers")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__vhttpd__request_ce, "cookies", sizeof("cookies")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__vhttpd__request_ce, "attributes", sizeof("attributes")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__vhttpd__request_ce, "server", sizeof("server")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__vhttpd__request_ce, "uploaded_files", sizeof("uploaded_files")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__vhttpd__request_ce, "params", sizeof("params")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Vhttpd__Request, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -7127,8 +7085,39 @@ static const zend_function_entry vslim__vhttpd__request_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__vhttpd__request_register_class(void) {
+    if (vslim__vhttpd__request_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__vhttpd__request_ce = vphp_find_loaded_class_entry("VSlim\\Vhttpd\\Request", sizeof("VSlim\\Vhttpd\\Request")-1);
+    if (vslim__vhttpd__request_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Vhttpd\\Request", vslim__vhttpd__request_methods);
+        vslim__vhttpd__request_ce = zend_register_internal_class(&ce);
+        vslim__vhttpd__request_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(vslim__vhttpd__request_ce, "method", sizeof("method")-1, "", ZEND_ACC_PUBLIC);
+        zend_declare_property_string(vslim__vhttpd__request_ce, "raw_path", sizeof("raw_path")-1, "", ZEND_ACC_PUBLIC);
+        zend_declare_property_string(vslim__vhttpd__request_ce, "path", sizeof("path")-1, "", ZEND_ACC_PUBLIC);
+        zend_declare_property_string(vslim__vhttpd__request_ce, "body", sizeof("body")-1, "", ZEND_ACC_PUBLIC);
+        zend_declare_property_string(vslim__vhttpd__request_ce, "query_string", sizeof("query_string")-1, "", ZEND_ACC_PUBLIC);
+        zend_declare_property_string(vslim__vhttpd__request_ce, "scheme", sizeof("scheme")-1, "", ZEND_ACC_PUBLIC);
+        zend_declare_property_string(vslim__vhttpd__request_ce, "host", sizeof("host")-1, "", ZEND_ACC_PUBLIC);
+        zend_declare_property_string(vslim__vhttpd__request_ce, "port", sizeof("port")-1, "", ZEND_ACC_PUBLIC);
+        zend_declare_property_string(vslim__vhttpd__request_ce, "protocol_version", sizeof("protocol_version")-1, "", ZEND_ACC_PUBLIC);
+        zend_declare_property_string(vslim__vhttpd__request_ce, "remote_addr", sizeof("remote_addr")-1, "", ZEND_ACC_PUBLIC);
+        zend_declare_property_null(vslim__vhttpd__request_ce, "query", sizeof("query")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__vhttpd__request_ce, "headers", sizeof("headers")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__vhttpd__request_ce, "cookies", sizeof("cookies")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__vhttpd__request_ce, "attributes", sizeof("attributes")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__vhttpd__request_ce, "server", sizeof("server")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__vhttpd__request_ce, "uploaded_files", sizeof("uploaded_files")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__vhttpd__request_ce, "params", sizeof("params")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__vhttpd__response_ce = NULL;
-static const zend_function_entry vslim__vhttpd__response_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimresponse_construct, 0, 0, 3)
 ZEND_ARG_TYPE_INFO(0, status, IS_LONG, 0)
 ZEND_ARG_TYPE_INFO(0, body, IS_STRING, 0)
@@ -7222,25 +7211,6 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimresponse_str, 0, 0, IS_STRI
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimresponse_content_length, 0, 0, IS_LONG, 0)
 ZEND_END_ARG_INFO()
-static int vslim__vhttpd__response_register_class(void) {
-    if (vslim__vhttpd__response_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__vhttpd__response_ce = vphp_find_loaded_class_entry("VSlim\\Vhttpd\\Response", sizeof("VSlim\\Vhttpd\\Response")-1);
-    if (vslim__vhttpd__response_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Vhttpd\\Response", vslim__vhttpd__response_methods);
-        vslim__vhttpd__response_ce = zend_register_internal_class(&ce);
-        vslim__vhttpd__response_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_long(vslim__vhttpd__response_ce, "status", sizeof("status")-1, 0, ZEND_ACC_PUBLIC);
-        zend_declare_property_string(vslim__vhttpd__response_ce, "body", sizeof("body")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_string(vslim__vhttpd__response_ce, "content_type", sizeof("content_type")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_null(vslim__vhttpd__response_ce, "headers", sizeof("headers")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Vhttpd__Response, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -7736,8 +7706,26 @@ static const zend_function_entry vslim__vhttpd__response_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__vhttpd__response_register_class(void) {
+    if (vslim__vhttpd__response_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__vhttpd__response_ce = vphp_find_loaded_class_entry("VSlim\\Vhttpd\\Response", sizeof("VSlim\\Vhttpd\\Response")-1);
+    if (vslim__vhttpd__response_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Vhttpd\\Response", vslim__vhttpd__response_methods);
+        vslim__vhttpd__response_ce = zend_register_internal_class(&ce);
+        vslim__vhttpd__response_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_long(vslim__vhttpd__response_ce, "status", sizeof("status")-1, 0, ZEND_ACC_PUBLIC);
+        zend_declare_property_string(vslim__vhttpd__response_ce, "body", sizeof("body")-1, "", ZEND_ACC_PUBLIC);
+        zend_declare_property_string(vslim__vhttpd__response_ce, "content_type", sizeof("content_type")-1, "", ZEND_ACC_PUBLIC);
+        zend_declare_property_null(vslim__vhttpd__response_ce, "headers", sizeof("headers")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__stream__response_ce = NULL;
-static const zend_function_entry vslim__stream__response_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimstreamresponse_construct, 0, 0, 5)
 ZEND_ARG_TYPE_INFO(0, stream_type, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, chunks, IS_MIXED, 0)
@@ -7793,26 +7781,6 @@ ZEND_ARG_TYPE_INFO(0, chunks, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimstreamresponse_chunks, 0, 0, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
-static int vslim__stream__response_register_class(void) {
-    if (vslim__stream__response_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__stream__response_ce = vphp_find_loaded_class_entry("VSlim\\Stream\\Response", sizeof("VSlim\\Stream\\Response")-1);
-    if (vslim__stream__response_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Stream\\Response", vslim__stream__response_methods);
-        vslim__stream__response_ce = zend_register_internal_class(&ce);
-        vslim__stream__response_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(vslim__stream__response_ce, "stream_type", sizeof("stream_type")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_long(vslim__stream__response_ce, "status", sizeof("status")-1, 0, ZEND_ACC_PUBLIC);
-        zend_declare_property_string(vslim__stream__response_ce, "content_type", sizeof("content_type")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_null(vslim__stream__response_ce, "headers", sizeof("headers")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__stream__response_ce, "chunks_ref", sizeof("chunks_ref")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Stream__Response, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -8069,28 +8037,32 @@ static const zend_function_entry vslim__stream__response_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__stream__response_register_class(void) {
+    if (vslim__stream__response_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__stream__response_ce = vphp_find_loaded_class_entry("VSlim\\Stream\\Response", sizeof("VSlim\\Stream\\Response")-1);
+    if (vslim__stream__response_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Stream\\Response", vslim__stream__response_methods);
+        vslim__stream__response_ce = zend_register_internal_class(&ce);
+        vslim__stream__response_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(vslim__stream__response_ce, "stream_type", sizeof("stream_type")-1, "", ZEND_ACC_PUBLIC);
+        zend_declare_property_long(vslim__stream__response_ce, "status", sizeof("status")-1, 0, ZEND_ACC_PUBLIC);
+        zend_declare_property_string(vslim__stream__response_ce, "content_type", sizeof("content_type")-1, "", ZEND_ACC_PUBLIC);
+        zend_declare_property_null(vslim__stream__response_ce, "headers", sizeof("headers")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__stream__response_ce, "chunks_ref", sizeof("chunks_ref")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__stream__ndjsondecoder_ce = NULL;
-static const zend_function_entry vslim__stream__ndjsondecoder_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslim__stream__ndjsondecoder___construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimstreamndjsondecoder_decode, 0, 1, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, stream, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
-static int vslim__stream__ndjsondecoder_register_class(void) {
-    if (vslim__stream__ndjsondecoder_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__stream__ndjsondecoder_ce = vphp_find_loaded_class_entry("VSlim\\Stream\\NdjsonDecoder", sizeof("VSlim\\Stream\\NdjsonDecoder")-1);
-    if (vslim__stream__ndjsondecoder_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Stream\\NdjsonDecoder", vslim__stream__ndjsondecoder_methods);
-        vslim__stream__ndjsondecoder_ce = zend_register_internal_class(&ce);
-        vslim__stream__ndjsondecoder_ce->create_object = vphp_create_object_handler;
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Stream__NdjsonDecoder, decode) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -8125,29 +8097,28 @@ static const zend_function_entry vslim__stream__ndjsondecoder_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__stream__ndjsondecoder_register_class(void) {
+    if (vslim__stream__ndjsondecoder_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__stream__ndjsondecoder_ce = vphp_find_loaded_class_entry("VSlim\\Stream\\NdjsonDecoder", sizeof("VSlim\\Stream\\NdjsonDecoder")-1);
+    if (vslim__stream__ndjsondecoder_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Stream\\NdjsonDecoder", vslim__stream__ndjsondecoder_methods);
+        vslim__stream__ndjsondecoder_ce = zend_register_internal_class(&ce);
+        vslim__stream__ndjsondecoder_ce->create_object = vphp_create_object_handler;
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__stream__sseencoder_ce = NULL;
-static const zend_function_entry vslim__stream__sseencoder_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslim__stream__sseencoder___construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimstreamsseencoder_from_ollama, 0, 2, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, rows, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, model, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int vslim__stream__sseencoder_register_class(void) {
-    if (vslim__stream__sseencoder_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__stream__sseencoder_ce = vphp_find_loaded_class_entry("VSlim\\Stream\\SseEncoder", sizeof("VSlim\\Stream\\SseEncoder")-1);
-    if (vslim__stream__sseencoder_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Stream\\SseEncoder", vslim__stream__sseencoder_methods);
-        vslim__stream__sseencoder_ce = zend_register_internal_class(&ce);
-        vslim__stream__sseencoder_ce->create_object = vphp_create_object_handler;
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Stream__SseEncoder, from_ollama) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -8182,8 +8153,22 @@ static const zend_function_entry vslim__stream__sseencoder_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__stream__sseencoder_register_class(void) {
+    if (vslim__stream__sseencoder_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__stream__sseencoder_ce = vphp_find_loaded_class_entry("VSlim\\Stream\\SseEncoder", sizeof("VSlim\\Stream\\SseEncoder")-1);
+    if (vslim__stream__sseencoder_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Stream\\SseEncoder", vslim__stream__sseencoder_methods);
+        vslim__stream__sseencoder_ce = zend_register_internal_class(&ce);
+        vslim__stream__sseencoder_ce->create_object = vphp_create_object_handler;
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__stream__ollamaclient_ce = NULL;
-static const zend_function_entry vslim__stream__ollamaclient_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimstreamollamaclient_construct, 0, 0, 4)
 ZEND_ARG_TYPE_INFO(0, chat_url, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, default_model, IS_STRING, 0)
@@ -8220,25 +8205,6 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimstreamollamaclient_sse_response_from_request, 0, 1, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, request_payload, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
-static int vslim__stream__ollamaclient_register_class(void) {
-    if (vslim__stream__ollamaclient_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__stream__ollamaclient_ce = vphp_find_loaded_class_entry("VSlim\\Stream\\OllamaClient", sizeof("VSlim\\Stream\\OllamaClient")-1);
-    if (vslim__stream__ollamaclient_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Stream\\OllamaClient", vslim__stream__ollamaclient_methods);
-        vslim__stream__ollamaclient_ce = zend_register_internal_class(&ce);
-        vslim__stream__ollamaclient_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(vslim__stream__ollamaclient_ce, "chat_url", sizeof("chat_url")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__stream__ollamaclient_ce, "default_model", sizeof("default_model")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__stream__ollamaclient_ce, "api_key", sizeof("api_key")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__stream__ollamaclient_ce, "fixture_path", sizeof("fixture_path")-1, "", ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Stream__OllamaClient, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -8459,8 +8425,26 @@ static const zend_function_entry vslim__stream__ollamaclient_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__stream__ollamaclient_register_class(void) {
+    if (vslim__stream__ollamaclient_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__stream__ollamaclient_ce = vphp_find_loaded_class_entry("VSlim\\Stream\\OllamaClient", sizeof("VSlim\\Stream\\OllamaClient")-1);
+    if (vslim__stream__ollamaclient_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Stream\\OllamaClient", vslim__stream__ollamaclient_methods);
+        vslim__stream__ollamaclient_ce = zend_register_internal_class(&ce);
+        vslim__stream__ollamaclient_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(vslim__stream__ollamaclient_ce, "chat_url", sizeof("chat_url")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__stream__ollamaclient_ce, "default_model", sizeof("default_model")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__stream__ollamaclient_ce, "api_key", sizeof("api_key")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__stream__ollamaclient_ce, "fixture_path", sizeof("fixture_path")-1, "", ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__stream__factory_ce = NULL;
-static const zend_function_entry vslim__stream__factory_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslim__stream__factory___construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimstreamfactory_text, 0, 1, IS_MIXED, 0)
@@ -8494,21 +8478,6 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimstreamfactory_ollama_sse_wi
 ZEND_ARG_TYPE_INFO(0, request_payload, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
-static int vslim__stream__factory_register_class(void) {
-    if (vslim__stream__factory_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__stream__factory_ce = vphp_find_loaded_class_entry("VSlim\\Stream\\Factory", sizeof("VSlim\\Stream\\Factory")-1);
-    if (vslim__stream__factory_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Stream\\Factory", vslim__stream__factory_methods);
-        vslim__stream__factory_ce = zend_register_internal_class(&ce);
-        vslim__stream__factory_ce->create_object = vphp_create_object_handler;
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Stream__Factory, text) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -8648,8 +8617,22 @@ static const zend_function_entry vslim__stream__factory_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__stream__factory_register_class(void) {
+    if (vslim__stream__factory_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__stream__factory_ce = vphp_find_loaded_class_entry("VSlim\\Stream\\Factory", sizeof("VSlim\\Stream\\Factory")-1);
+    if (vslim__stream__factory_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Stream\\Factory", vslim__stream__factory_methods);
+        vslim__stream__factory_ce = zend_register_internal_class(&ce);
+        vslim__stream__factory_ce->create_object = vphp_create_object_handler;
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__websocket__app_ce = NULL;
-static const zend_function_entry vslim__websocket__app_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimwebsocketapp_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimwebsocketapp_on_open[] = {
@@ -8712,30 +8695,6 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimwebsocketapp_handle_websock
 ZEND_ARG_TYPE_INFO(0, frame, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, conn, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
-static int vslim__websocket__app_register_class(void) {
-    if (vslim__websocket__app_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__websocket__app_ce = vphp_find_loaded_class_entry("VSlim\\WebSocket\\App", sizeof("VSlim\\WebSocket\\App")-1);
-    if (vslim__websocket__app_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\WebSocket\\App", vslim__websocket__app_methods);
-        vslim__websocket__app_ce = zend_register_internal_class(&ce);
-        vslim__websocket__app_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__websocket__app_ce, "on_open_handler", sizeof("on_open_handler")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__websocket__app_ce, "on_message_handler", sizeof("on_message_handler")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__websocket__app_ce, "on_close_handler", sizeof("on_close_handler")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__websocket__app_ce, "connections", sizeof("connections")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__websocket__app_ce, "rooms", sizeof("rooms")-1, ZEND_ACC_PROTECTED);
-        zend_string *attribute_vslim__websocket__app_0_name = zend_string_init_interned("VPhp\\\\VHttpd\\\\Attribute\\\\Dispatchable", sizeof("VPhp\\\\VHttpd\\\\Attribute\\\\Dispatchable")-1, 1);
-        zend_attribute *attribute_vslim__websocket__app_0 = zend_add_class_attribute(vslim__websocket__app_ce, attribute_vslim__websocket__app_0_name, 1);
-        zend_string_release(attribute_vslim__websocket__app_0_name);
-        ZVAL_STR(&attribute_vslim__websocket__app_0->args[0].value, zend_string_init_interned("websocket", sizeof("websocket")-1, 1));
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__WebSocket__App, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -9101,8 +9060,31 @@ static const zend_function_entry vslim__websocket__app_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__websocket__app_register_class(void) {
+    if (vslim__websocket__app_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__websocket__app_ce = vphp_find_loaded_class_entry("VSlim\\WebSocket\\App", sizeof("VSlim\\WebSocket\\App")-1);
+    if (vslim__websocket__app_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\WebSocket\\App", vslim__websocket__app_methods);
+        vslim__websocket__app_ce = zend_register_internal_class(&ce);
+        vslim__websocket__app_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__websocket__app_ce, "on_open_handler", sizeof("on_open_handler")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__websocket__app_ce, "on_message_handler", sizeof("on_message_handler")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__websocket__app_ce, "on_close_handler", sizeof("on_close_handler")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__websocket__app_ce, "connections", sizeof("connections")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__websocket__app_ce, "rooms", sizeof("rooms")-1, ZEND_ACC_PROTECTED);
+        zend_string *attribute_vslim__websocket__app_0_name = zend_string_init_interned("VPhp\\\\VHttpd\\\\Attribute\\\\Dispatchable", sizeof("VPhp\\\\VHttpd\\\\Attribute\\\\Dispatchable")-1, 1);
+        zend_attribute *attribute_vslim__websocket__app_0 = zend_add_class_attribute(vslim__websocket__app_ce, attribute_vslim__websocket__app_0_name, 1);
+        zend_string_release(attribute_vslim__websocket__app_0_name);
+        ZVAL_STR(&attribute_vslim__websocket__app_0->args[0].value, zend_string_init_interned("websocket", sizeof("websocket")-1, 1));
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__mcp__app_ce = NULL;
-static const zend_function_entry vslim__mcp__app_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimmcpapp_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimmcpapp_server_info[] = {
@@ -9253,38 +9235,6 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimmcpapp_handle_mcp_dispatch, 0, 1, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, frame, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
-static int vslim__mcp__app_register_class(void) {
-    if (vslim__mcp__app_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__mcp__app_ce = vphp_find_loaded_class_entry("VSlim\\Mcp\\App", sizeof("VSlim\\Mcp\\App")-1);
-    if (vslim__mcp__app_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Mcp\\App", vslim__mcp__app_methods);
-        vslim__mcp__app_ce = zend_register_internal_class(&ce);
-        vslim__mcp__app_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__mcp__app_ce, "method_handlers", sizeof("method_handlers")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__mcp__app_ce, "tool_handlers", sizeof("tool_handlers")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__mcp__app_ce, "tool_descriptions", sizeof("tool_descriptions")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__mcp__app_ce, "tool_schemas", sizeof("tool_schemas")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__mcp__app_ce, "resource_handlers", sizeof("resource_handlers")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__mcp__app_ce, "resource_names", sizeof("resource_names")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__mcp__app_ce, "resource_descriptions", sizeof("resource_descriptions")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__mcp__app_ce, "resource_mime_types", sizeof("resource_mime_types")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__mcp__app_ce, "prompt_handlers", sizeof("prompt_handlers")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__mcp__app_ce, "prompt_descriptions", sizeof("prompt_descriptions")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__mcp__app_ce, "prompt_arguments", sizeof("prompt_arguments")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__mcp__app_ce, "server_info", sizeof("server_info")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__mcp__app_ce, "server_capabilities", sizeof("server_capabilities")-1, ZEND_ACC_PROTECTED);
-        zend_string *attribute_vslim__mcp__app_0_name = zend_string_init_interned("VPhp\\\\VHttpd\\\\Attribute\\\\Dispatchable", sizeof("VPhp\\\\VHttpd\\\\Attribute\\\\Dispatchable")-1, 1);
-        zend_attribute *attribute_vslim__mcp__app_0 = zend_add_class_attribute(vslim__mcp__app_ce, attribute_vslim__mcp__app_0_name, 1);
-        zend_string_release(attribute_vslim__mcp__app_0_name);
-        ZVAL_STR(&attribute_vslim__mcp__app_0->args[0].value, zend_string_init_interned("mcp", sizeof("mcp")-1, 1));
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Mcp__App, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -9713,8 +9663,39 @@ static const zend_function_entry vslim__mcp__app_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__mcp__app_register_class(void) {
+    if (vslim__mcp__app_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__mcp__app_ce = vphp_find_loaded_class_entry("VSlim\\Mcp\\App", sizeof("VSlim\\Mcp\\App")-1);
+    if (vslim__mcp__app_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Mcp\\App", vslim__mcp__app_methods);
+        vslim__mcp__app_ce = zend_register_internal_class(&ce);
+        vslim__mcp__app_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__mcp__app_ce, "method_handlers", sizeof("method_handlers")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__mcp__app_ce, "tool_handlers", sizeof("tool_handlers")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__mcp__app_ce, "tool_descriptions", sizeof("tool_descriptions")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__mcp__app_ce, "tool_schemas", sizeof("tool_schemas")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__mcp__app_ce, "resource_handlers", sizeof("resource_handlers")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__mcp__app_ce, "resource_names", sizeof("resource_names")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__mcp__app_ce, "resource_descriptions", sizeof("resource_descriptions")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__mcp__app_ce, "resource_mime_types", sizeof("resource_mime_types")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__mcp__app_ce, "prompt_handlers", sizeof("prompt_handlers")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__mcp__app_ce, "prompt_descriptions", sizeof("prompt_descriptions")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__mcp__app_ce, "prompt_arguments", sizeof("prompt_arguments")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__mcp__app_ce, "server_info", sizeof("server_info")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__mcp__app_ce, "server_capabilities", sizeof("server_capabilities")-1, ZEND_ACC_PROTECTED);
+        zend_string *attribute_vslim__mcp__app_0_name = zend_string_init_interned("VPhp\\\\VHttpd\\\\Attribute\\\\Dispatchable", sizeof("VPhp\\\\VHttpd\\\\Attribute\\\\Dispatchable")-1, 1);
+        zend_attribute *attribute_vslim__mcp__app_0 = zend_add_class_attribute(vslim__mcp__app_ce, attribute_vslim__mcp__app_0_name, 1);
+        zend_string_release(attribute_vslim__mcp__app_0_name);
+        ZVAL_STR(&attribute_vslim__mcp__app_0->args[0].value, zend_string_init_interned("mcp", sizeof("mcp")-1, 1));
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__log__logger_ce = NULL;
-static const zend_function_entry vslim__log__logger_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimlogger_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimlogger_disabled_level, 0, 0, IS_STRING, 0)
@@ -9871,29 +9852,6 @@ ZEND_ARG_TYPE_INFO(0, context, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimlogger_str, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int vslim__log__logger_register_class(void) {
-    if (vslim__log__logger_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__log__logger_ce = vphp_find_loaded_class_entry("VSlim\\Log\\Logger", sizeof("VSlim\\Log\\Logger")-1);
-    if (vslim__log__logger_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Log\\Logger", vslim__log__logger_methods);
-        vslim__log__logger_ce = zend_register_internal_class(&ce);
-        vslim__log__logger_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__log__logger_ce, "engine_ref", sizeof("engine_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__log__logger_ce, "channel", sizeof("channel")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__log__logger_ce, "context", sizeof("context")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__log__logger_ce, "level_name", sizeof("level_name")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__log__logger_ce, "output_file", sizeof("output_file")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__log__logger_ce, "console_target", sizeof("console_target")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_bool(vslim__log__logger_ce, "local_time_enabled", sizeof("local_time_enabled")-1, 0, ZEND_ACC_PROTECTED);
-        zend_declare_property_bool(vslim__log__logger_ce, "short_tag_enabled", sizeof("short_tag_enabled")-1, 0, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Log__Logger, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -10806,8 +10764,30 @@ static const zend_function_entry vslim__log__logger_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__log__logger_register_class(void) {
+    if (vslim__log__logger_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__log__logger_ce = vphp_find_loaded_class_entry("VSlim\\Log\\Logger", sizeof("VSlim\\Log\\Logger")-1);
+    if (vslim__log__logger_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Log\\Logger", vslim__log__logger_methods);
+        vslim__log__logger_ce = zend_register_internal_class(&ce);
+        vslim__log__logger_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__log__logger_ce, "engine_ref", sizeof("engine_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__log__logger_ce, "channel", sizeof("channel")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__log__logger_ce, "context", sizeof("context")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__log__logger_ce, "level_name", sizeof("level_name")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__log__logger_ce, "output_file", sizeof("output_file")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__log__logger_ce, "console_target", sizeof("console_target")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__log__logger_ce, "local_time_enabled", sizeof("local_time_enabled")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__log__logger_ce, "short_tag_enabled", sizeof("short_tag_enabled")-1, 0, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__log__psrlogger_ce = NULL;
-static const zend_function_entry vslim__log__psrlogger_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsrlogger_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimpsrlogger_set_logger[] = {
@@ -10886,22 +10866,6 @@ ZEND_ARG_TYPE_INFO(0, default_context, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimpsrlogger_str, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int vslim__log__psrlogger_register_class(void) {
-    if (vslim__log__psrlogger_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__log__psrlogger_ce = vphp_find_loaded_class_entry("VSlim\\Log\\PsrLogger", sizeof("VSlim\\Log\\PsrLogger")-1);
-    if (vslim__log__psrlogger_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Log\\PsrLogger", vslim__log__psrlogger_methods);
-        vslim__log__psrlogger_ce = zend_register_internal_class(&ce);
-        vslim__log__psrlogger_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__log__psrlogger_ce, "logger_ref", sizeof("logger_ref")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Log__PsrLogger, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -11336,8 +11300,23 @@ static const zend_function_entry vslim__log__psrlogger_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__log__psrlogger_register_class(void) {
+    if (vslim__log__psrlogger_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__log__psrlogger_ce = vphp_find_loaded_class_entry("VSlim\\Log\\PsrLogger", sizeof("VSlim\\Log\\PsrLogger")-1);
+    if (vslim__log__psrlogger_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Log\\PsrLogger", vslim__log__psrlogger_methods);
+        vslim__log__psrlogger_ce = zend_register_internal_class(&ce);
+        vslim__log__psrlogger_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__log__psrlogger_ce, "logger_ref", sizeof("logger_ref")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__log__level_ce = NULL;
-static const zend_function_entry vslim__log__level_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslim__log__level___construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimloglevel_disabled, 0, 0, IS_STRING, 0)
@@ -11354,27 +11333,6 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimloglevel_debug, 0, 0, IS_ST
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimloglevel_all, 0, 0, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
-static int vslim__log__level_register_class(void) {
-    if (vslim__log__level_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__log__level_ce = vphp_find_loaded_class_entry("VSlim\\Log\\Level", sizeof("VSlim\\Log\\Level")-1);
-    if (vslim__log__level_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Log\\Level", vslim__log__level_methods);
-        vslim__log__level_ce = zend_register_internal_class(&ce);
-        vslim__log__level_ce->create_object = vphp_create_object_handler;
-        zend_declare_class_constant_string(vslim__log__level_ce, "DISABLED", sizeof("DISABLED")-1, "disabled");
-        zend_declare_class_constant_string(vslim__log__level_ce, "FATAL", sizeof("FATAL")-1, "fatal");
-        zend_declare_class_constant_string(vslim__log__level_ce, "ERROR", sizeof("ERROR")-1, "error");
-        zend_declare_class_constant_string(vslim__log__level_ce, "WARN", sizeof("WARN")-1, "warn");
-        zend_declare_class_constant_string(vslim__log__level_ce, "INFO", sizeof("INFO")-1, "info");
-        zend_declare_class_constant_string(vslim__log__level_ce, "DEBUG", sizeof("DEBUG")-1, "debug");
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Log__Level, disabled) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -11499,8 +11457,28 @@ static const zend_function_entry vslim__log__level_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__log__level_register_class(void) {
+    if (vslim__log__level_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__log__level_ce = vphp_find_loaded_class_entry("VSlim\\Log\\Level", sizeof("VSlim\\Log\\Level")-1);
+    if (vslim__log__level_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Log\\Level", vslim__log__level_methods);
+        vslim__log__level_ce = zend_register_internal_class(&ce);
+        vslim__log__level_ce->create_object = vphp_create_object_handler;
+        zend_declare_class_constant_string(vslim__log__level_ce, "DISABLED", sizeof("DISABLED")-1, "disabled");
+        zend_declare_class_constant_string(vslim__log__level_ce, "FATAL", sizeof("FATAL")-1, "fatal");
+        zend_declare_class_constant_string(vslim__log__level_ce, "ERROR", sizeof("ERROR")-1, "error");
+        zend_declare_class_constant_string(vslim__log__level_ce, "WARN", sizeof("WARN")-1, "warn");
+        zend_declare_class_constant_string(vslim__log__level_ce, "INFO", sizeof("INFO")-1, "info");
+        zend_declare_class_constant_string(vslim__log__level_ce, "DEBUG", sizeof("DEBUG")-1, "debug");
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr7__stream_ce = NULL;
-static const zend_function_entry vslim__psr7__stream_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr7stream_construct, 0, 0, 0)
 ZEND_ARG_TYPE_INFO(0, default_content, IS_STRING, 0)
 ZEND_END_ARG_INFO()
@@ -11539,25 +11517,6 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimpsr7stream_get_metadata, 0, 0, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, default_key, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
-static int vslim__psr7__stream_register_class(void) {
-    if (vslim__psr7__stream_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr7__stream_ce = vphp_find_loaded_class_entry("VSlim\\Psr7\\Stream", sizeof("VSlim\\Psr7\\Stream")-1);
-    if (vslim__psr7__stream_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr7\\Stream", vslim__psr7__stream_methods);
-        vslim__psr7__stream_ce = zend_register_internal_class(&ce);
-        vslim__psr7__stream_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(vslim__psr7__stream_ce, "content", sizeof("content")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_long(vslim__psr7__stream_ce, "position", sizeof("position")-1, 0, ZEND_ACC_PROTECTED);
-        zend_declare_property_bool(vslim__psr7__stream_ce, "detached", sizeof("detached")-1, 0, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr7__stream_ce, "metadata", sizeof("metadata")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr7__Stream, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -11852,8 +11811,26 @@ static const zend_function_entry vslim__psr7__stream_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr7__stream_register_class(void) {
+    if (vslim__psr7__stream_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr7__stream_ce = vphp_find_loaded_class_entry("VSlim\\Psr7\\Stream", sizeof("VSlim\\Psr7\\Stream")-1);
+    if (vslim__psr7__stream_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr7\\Stream", vslim__psr7__stream_methods);
+        vslim__psr7__stream_ce = zend_register_internal_class(&ce);
+        vslim__psr7__stream_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(vslim__psr7__stream_ce, "content", sizeof("content")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_long(vslim__psr7__stream_ce, "position", sizeof("position")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__psr7__stream_ce, "detached", sizeof("detached")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr7__stream_ce, "metadata", sizeof("metadata")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr7__uploadedfile_ce = NULL;
-static const zend_function_entry vslim__psr7__uploadedfile_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr7uploadedfile_construct, 0, 0, 5)
 ZEND_ARG_TYPE_INFO(0, default_stream, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, default_size, IS_LONG, 1)
@@ -11877,28 +11854,6 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimpsr7uploadedfile_get_client
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimpsr7uploadedfile_str, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int vslim__psr7__uploadedfile_register_class(void) {
-    if (vslim__psr7__uploadedfile_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr7__uploadedfile_ce = vphp_find_loaded_class_entry("VSlim\\Psr7\\UploadedFile", sizeof("VSlim\\Psr7\\UploadedFile")-1);
-    if (vslim__psr7__uploadedfile_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr7\\UploadedFile", vslim__psr7__uploadedfile_methods);
-        vslim__psr7__uploadedfile_ce = zend_register_internal_class(&ce);
-        vslim__psr7__uploadedfile_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__psr7__uploadedfile_ce, "stream_ref", sizeof("stream_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_long(vslim__psr7__uploadedfile_ce, "size_hint", sizeof("size_hint")-1, 0, ZEND_ACC_PROTECTED);
-        zend_declare_property_long(vslim__psr7__uploadedfile_ce, "error_code", sizeof("error_code")-1, 0, ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__psr7__uploadedfile_ce, "client_filename", sizeof("client_filename")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__psr7__uploadedfile_ce, "client_media_type", sizeof("client_media_type")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_bool(vslim__psr7__uploadedfile_ce, "moved", sizeof("moved")-1, 0, ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__psr7__uploadedfile_ce, "target_path", sizeof("target_path")-1, "", ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr7__UploadedFile, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -12054,8 +12009,29 @@ static const zend_function_entry vslim__psr7__uploadedfile_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr7__uploadedfile_register_class(void) {
+    if (vslim__psr7__uploadedfile_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr7__uploadedfile_ce = vphp_find_loaded_class_entry("VSlim\\Psr7\\UploadedFile", sizeof("VSlim\\Psr7\\UploadedFile")-1);
+    if (vslim__psr7__uploadedfile_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr7\\UploadedFile", vslim__psr7__uploadedfile_methods);
+        vslim__psr7__uploadedfile_ce = zend_register_internal_class(&ce);
+        vslim__psr7__uploadedfile_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__psr7__uploadedfile_ce, "stream_ref", sizeof("stream_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_long(vslim__psr7__uploadedfile_ce, "size_hint", sizeof("size_hint")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_long(vslim__psr7__uploadedfile_ce, "error_code", sizeof("error_code")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__psr7__uploadedfile_ce, "client_filename", sizeof("client_filename")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__psr7__uploadedfile_ce, "client_media_type", sizeof("client_media_type")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__psr7__uploadedfile_ce, "moved", sizeof("moved")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__psr7__uploadedfile_ce, "target_path", sizeof("target_path")-1, "", ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr7__response_ce = NULL;
-static const zend_function_entry vslim__psr7__response_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr7response_construct, 0, 0, 0)
 ZEND_ARG_TYPE_INFO(0, default_status, IS_LONG, 0)
 ZEND_ARG_TYPE_INFO(0, default_reason_phrase, IS_STRING, 0)
@@ -12109,27 +12085,6 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimpsr7response_get_reason_phr
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimpsr7response_str, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int vslim__psr7__response_register_class(void) {
-    if (vslim__psr7__response_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr7__response_ce = vphp_find_loaded_class_entry("VSlim\\Psr7\\Response", sizeof("VSlim\\Psr7\\Response")-1);
-    if (vslim__psr7__response_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr7\\Response", vslim__psr7__response_methods);
-        vslim__psr7__response_ce = zend_register_internal_class(&ce);
-        vslim__psr7__response_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_long(vslim__psr7__response_ce, "status", sizeof("status")-1, 0, ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__psr7__response_ce, "reason_phrase", sizeof("reason_phrase")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__psr7__response_ce, "protocol_version", sizeof("protocol_version")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr7__response_ce, "headers", sizeof("headers")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr7__response_ce, "header_names", sizeof("header_names")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr7__response_ce, "body_ref", sizeof("body_ref")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr7__Response, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -12459,8 +12414,28 @@ static const zend_function_entry vslim__psr7__response_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr7__response_register_class(void) {
+    if (vslim__psr7__response_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr7__response_ce = vphp_find_loaded_class_entry("VSlim\\Psr7\\Response", sizeof("VSlim\\Psr7\\Response")-1);
+    if (vslim__psr7__response_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr7\\Response", vslim__psr7__response_methods);
+        vslim__psr7__response_ce = zend_register_internal_class(&ce);
+        vslim__psr7__response_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_long(vslim__psr7__response_ce, "status", sizeof("status")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__psr7__response_ce, "reason_phrase", sizeof("reason_phrase")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__psr7__response_ce, "protocol_version", sizeof("protocol_version")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr7__response_ce, "headers", sizeof("headers")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr7__response_ce, "header_names", sizeof("header_names")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr7__response_ce, "body_ref", sizeof("body_ref")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr7__uri_ce = NULL;
-static const zend_function_entry vslim__psr7__uri_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr7uri_construct, 0, 0, 0)
 ZEND_ARG_TYPE_INFO(0, default_uri, IS_STRING, 0)
 ZEND_END_ARG_INFO()
@@ -12511,29 +12486,6 @@ static const zend_internal_arg_info arginfo_vslimpsr7uri_with_fragment[] = {
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\UriInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_ARG_TYPE_INFO(0, fragment, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
-static int vslim__psr7__uri_register_class(void) {
-    if (vslim__psr7__uri_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr7__uri_ce = vphp_find_loaded_class_entry("VSlim\\Psr7\\Uri", sizeof("VSlim\\Psr7\\Uri")-1);
-    if (vslim__psr7__uri_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr7\\Uri", vslim__psr7__uri_methods);
-        vslim__psr7__uri_ce = zend_register_internal_class(&ce);
-        vslim__psr7__uri_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(vslim__psr7__uri_ce, "scheme", sizeof("scheme")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__psr7__uri_ce, "user", sizeof("user")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__psr7__uri_ce, "password", sizeof("password")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__psr7__uri_ce, "host", sizeof("host")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_long(vslim__psr7__uri_ce, "port", sizeof("port")-1, 0, ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__psr7__uri_ce, "path", sizeof("path")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__psr7__uri_ce, "query", sizeof("query")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__psr7__uri_ce, "fragment", sizeof("fragment")-1, "", ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr7__Uri, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -12881,8 +12833,30 @@ static const zend_function_entry vslim__psr7__uri_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr7__uri_register_class(void) {
+    if (vslim__psr7__uri_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr7__uri_ce = vphp_find_loaded_class_entry("VSlim\\Psr7\\Uri", sizeof("VSlim\\Psr7\\Uri")-1);
+    if (vslim__psr7__uri_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr7\\Uri", vslim__psr7__uri_methods);
+        vslim__psr7__uri_ce = zend_register_internal_class(&ce);
+        vslim__psr7__uri_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(vslim__psr7__uri_ce, "scheme", sizeof("scheme")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__psr7__uri_ce, "user", sizeof("user")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__psr7__uri_ce, "password", sizeof("password")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__psr7__uri_ce, "host", sizeof("host")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_long(vslim__psr7__uri_ce, "port", sizeof("port")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__psr7__uri_ce, "path", sizeof("path")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__psr7__uri_ce, "query", sizeof("query")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__psr7__uri_ce, "fragment", sizeof("fragment")-1, "", ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr7__request_ce = NULL;
-static const zend_function_entry vslim__psr7__request_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr7request_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimpsr7request_get_protocol_version, 0, 0, IS_STRING, 0)
@@ -12945,28 +12919,6 @@ ZEND_ARG_TYPE_INFO(0, default_preserve_host, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimpsr7request_str, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int vslim__psr7__request_register_class(void) {
-    if (vslim__psr7__request_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr7__request_ce = vphp_find_loaded_class_entry("VSlim\\Psr7\\Request", sizeof("VSlim\\Psr7\\Request")-1);
-    if (vslim__psr7__request_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr7\\Request", vslim__psr7__request_methods);
-        vslim__psr7__request_ce = zend_register_internal_class(&ce);
-        vslim__psr7__request_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(vslim__psr7__request_ce, "method", sizeof("method")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__psr7__request_ce, "request_target", sizeof("request_target")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__psr7__request_ce, "protocol_version", sizeof("protocol_version")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr7__request_ce, "headers", sizeof("headers")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr7__request_ce, "header_names", sizeof("header_names")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr7__request_ce, "body_ref", sizeof("body_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr7__request_ce, "uri_ref", sizeof("uri_ref")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr7__Request, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -13365,8 +13317,29 @@ static const zend_function_entry vslim__psr7__request_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr7__request_register_class(void) {
+    if (vslim__psr7__request_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr7__request_ce = vphp_find_loaded_class_entry("VSlim\\Psr7\\Request", sizeof("VSlim\\Psr7\\Request")-1);
+    if (vslim__psr7__request_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr7\\Request", vslim__psr7__request_methods);
+        vslim__psr7__request_ce = zend_register_internal_class(&ce);
+        vslim__psr7__request_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(vslim__psr7__request_ce, "method", sizeof("method")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__psr7__request_ce, "request_target", sizeof("request_target")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__psr7__request_ce, "protocol_version", sizeof("protocol_version")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr7__request_ce, "headers", sizeof("headers")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr7__request_ce, "header_names", sizeof("header_names")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr7__request_ce, "body_ref", sizeof("body_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr7__request_ce, "uri_ref", sizeof("uri_ref")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr7__serverrequest_ce = NULL;
-static const zend_function_entry vslim__psr7__serverrequest_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr7serverrequest_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimpsr7serverrequest_get_protocol_version, 0, 0, IS_STRING, 0)
@@ -13470,34 +13443,6 @@ ZEND_ARG_TYPE_INFO(0, name, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimpsr7serverrequest_str, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int vslim__psr7__serverrequest_register_class(void) {
-    if (vslim__psr7__serverrequest_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr7__serverrequest_ce = vphp_find_loaded_class_entry("VSlim\\Psr7\\ServerRequest", sizeof("VSlim\\Psr7\\ServerRequest")-1);
-    if (vslim__psr7__serverrequest_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr7\\ServerRequest", vslim__psr7__serverrequest_methods);
-        vslim__psr7__serverrequest_ce = zend_register_internal_class(&ce);
-        vslim__psr7__serverrequest_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(vslim__psr7__serverrequest_ce, "method", sizeof("method")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__psr7__serverrequest_ce, "request_target", sizeof("request_target")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__psr7__serverrequest_ce, "protocol_version", sizeof("protocol_version")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr7__serverrequest_ce, "headers", sizeof("headers")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr7__serverrequest_ce, "header_names", sizeof("header_names")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr7__serverrequest_ce, "body_ref", sizeof("body_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr7__serverrequest_ce, "uri_ref", sizeof("uri_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr7__serverrequest_ce, "server_params_ref", sizeof("server_params_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr7__serverrequest_ce, "cookie_params_ref", sizeof("cookie_params_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr7__serverrequest_ce, "query_params_ref", sizeof("query_params_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr7__serverrequest_ce, "uploaded_files_ref", sizeof("uploaded_files_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr7__serverrequest_ce, "parsed_body_ref", sizeof("parsed_body_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr7__serverrequest_ce, "attributes_ref", sizeof("attributes_ref")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr7__ServerRequest, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -14160,8 +14105,35 @@ static const zend_function_entry vslim__psr7__serverrequest_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr7__serverrequest_register_class(void) {
+    if (vslim__psr7__serverrequest_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr7__serverrequest_ce = vphp_find_loaded_class_entry("VSlim\\Psr7\\ServerRequest", sizeof("VSlim\\Psr7\\ServerRequest")-1);
+    if (vslim__psr7__serverrequest_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr7\\ServerRequest", vslim__psr7__serverrequest_methods);
+        vslim__psr7__serverrequest_ce = zend_register_internal_class(&ce);
+        vslim__psr7__serverrequest_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(vslim__psr7__serverrequest_ce, "method", sizeof("method")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__psr7__serverrequest_ce, "request_target", sizeof("request_target")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__psr7__serverrequest_ce, "protocol_version", sizeof("protocol_version")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr7__serverrequest_ce, "headers", sizeof("headers")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr7__serverrequest_ce, "header_names", sizeof("header_names")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr7__serverrequest_ce, "body_ref", sizeof("body_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr7__serverrequest_ce, "uri_ref", sizeof("uri_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr7__serverrequest_ce, "server_params_ref", sizeof("server_params_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr7__serverrequest_ce, "cookie_params_ref", sizeof("cookie_params_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr7__serverrequest_ce, "query_params_ref", sizeof("query_params_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr7__serverrequest_ce, "uploaded_files_ref", sizeof("uploaded_files_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr7__serverrequest_ce, "parsed_body_ref", sizeof("parsed_body_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr7__serverrequest_ce, "attributes_ref", sizeof("attributes_ref")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr17__responsefactory_ce = NULL;
-static const zend_function_entry vslim__psr17__responsefactory_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr17responsefactory_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimpsr17responsefactory_create_response[] = {
@@ -14169,21 +14141,6 @@ static const zend_internal_arg_info arginfo_vslimpsr17responsefactory_create_res
 ZEND_ARG_TYPE_INFO(0, default_status, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, default_reason_phrase, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
-static int vslim__psr17__responsefactory_register_class(void) {
-    if (vslim__psr17__responsefactory_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr17__responsefactory_ce = vphp_find_loaded_class_entry("VSlim\\Psr17\\ResponseFactory", sizeof("VSlim\\Psr17\\ResponseFactory")-1);
-    if (vslim__psr17__responsefactory_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr17\\ResponseFactory", vslim__psr17__responsefactory_methods);
-        vslim__psr17__responsefactory_ce = zend_register_internal_class(&ce);
-        vslim__psr17__responsefactory_ce->create_object = vphp_create_object_handler;
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr17__ResponseFactory, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -14231,8 +14188,22 @@ static const zend_function_entry vslim__psr17__responsefactory_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr17__responsefactory_register_class(void) {
+    if (vslim__psr17__responsefactory_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr17__responsefactory_ce = vphp_find_loaded_class_entry("VSlim\\Psr17\\ResponseFactory", sizeof("VSlim\\Psr17\\ResponseFactory")-1);
+    if (vslim__psr17__responsefactory_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr17\\ResponseFactory", vslim__psr17__responsefactory_methods);
+        vslim__psr17__responsefactory_ce = zend_register_internal_class(&ce);
+        vslim__psr17__responsefactory_ce->create_object = vphp_create_object_handler;
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr17__requestfactory_ce = NULL;
-static const zend_function_entry vslim__psr17__requestfactory_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr17requestfactory_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimpsr17requestfactory_create_request[] = {
@@ -14240,21 +14211,6 @@ static const zend_internal_arg_info arginfo_vslimpsr17requestfactory_create_requ
 ZEND_ARG_TYPE_INFO(0, method, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, uri, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
-static int vslim__psr17__requestfactory_register_class(void) {
-    if (vslim__psr17__requestfactory_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr17__requestfactory_ce = vphp_find_loaded_class_entry("VSlim\\Psr17\\RequestFactory", sizeof("VSlim\\Psr17\\RequestFactory")-1);
-    if (vslim__psr17__requestfactory_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr17\\RequestFactory", vslim__psr17__requestfactory_methods);
-        vslim__psr17__requestfactory_ce = zend_register_internal_class(&ce);
-        vslim__psr17__requestfactory_ce->create_object = vphp_create_object_handler;
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr17__RequestFactory, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -14302,8 +14258,22 @@ static const zend_function_entry vslim__psr17__requestfactory_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr17__requestfactory_register_class(void) {
+    if (vslim__psr17__requestfactory_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr17__requestfactory_ce = vphp_find_loaded_class_entry("VSlim\\Psr17\\RequestFactory", sizeof("VSlim\\Psr17\\RequestFactory")-1);
+    if (vslim__psr17__requestfactory_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr17\\RequestFactory", vslim__psr17__requestfactory_methods);
+        vslim__psr17__requestfactory_ce = zend_register_internal_class(&ce);
+        vslim__psr17__requestfactory_ce->create_object = vphp_create_object_handler;
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr17__streamfactory_ce = NULL;
-static const zend_function_entry vslim__psr17__streamfactory_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr17streamfactory_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimpsr17streamfactory_create_stream[] = {
@@ -14319,21 +14289,6 @@ static const zend_internal_arg_info arginfo_vslimpsr17streamfactory_create_strea
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\StreamInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_ARG_TYPE_INFO(0, resource, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
-static int vslim__psr17__streamfactory_register_class(void) {
-    if (vslim__psr17__streamfactory_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr17__streamfactory_ce = vphp_find_loaded_class_entry("VSlim\\Psr17\\StreamFactory", sizeof("VSlim\\Psr17\\StreamFactory")-1);
-    if (vslim__psr17__streamfactory_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr17\\StreamFactory", vslim__psr17__streamfactory_methods);
-        vslim__psr17__streamfactory_ce = zend_register_internal_class(&ce);
-        vslim__psr17__streamfactory_ce->create_object = vphp_create_object_handler;
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr17__StreamFactory, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -14427,8 +14382,22 @@ static const zend_function_entry vslim__psr17__streamfactory_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr17__streamfactory_register_class(void) {
+    if (vslim__psr17__streamfactory_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr17__streamfactory_ce = vphp_find_loaded_class_entry("VSlim\\Psr17\\StreamFactory", sizeof("VSlim\\Psr17\\StreamFactory")-1);
+    if (vslim__psr17__streamfactory_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr17\\StreamFactory", vslim__psr17__streamfactory_methods);
+        vslim__psr17__streamfactory_ce = zend_register_internal_class(&ce);
+        vslim__psr17__streamfactory_ce->create_object = vphp_create_object_handler;
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr17__uploadedfilefactory_ce = NULL;
-static const zend_function_entry vslim__psr17__uploadedfilefactory_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr17uploadedfilefactory_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimpsr17uploadedfilefactory_create_uploaded_file[] = {
@@ -14439,21 +14408,6 @@ ZEND_ARG_TYPE_INFO(0, default_error, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, default_client_filename, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, default_client_media_type, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
-static int vslim__psr17__uploadedfilefactory_register_class(void) {
-    if (vslim__psr17__uploadedfilefactory_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr17__uploadedfilefactory_ce = vphp_find_loaded_class_entry("VSlim\\Psr17\\UploadedFileFactory", sizeof("VSlim\\Psr17\\UploadedFileFactory")-1);
-    if (vslim__psr17__uploadedfilefactory_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr17\\UploadedFileFactory", vslim__psr17__uploadedfilefactory_methods);
-        vslim__psr17__uploadedfilefactory_ce = zend_register_internal_class(&ce);
-        vslim__psr17__uploadedfilefactory_ce->create_object = vphp_create_object_handler;
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr17__UploadedFileFactory, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -14501,29 +14455,28 @@ static const zend_function_entry vslim__psr17__uploadedfilefactory_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr17__uploadedfilefactory_register_class(void) {
+    if (vslim__psr17__uploadedfilefactory_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr17__uploadedfilefactory_ce = vphp_find_loaded_class_entry("VSlim\\Psr17\\UploadedFileFactory", sizeof("VSlim\\Psr17\\UploadedFileFactory")-1);
+    if (vslim__psr17__uploadedfilefactory_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr17\\UploadedFileFactory", vslim__psr17__uploadedfilefactory_methods);
+        vslim__psr17__uploadedfilefactory_ce = zend_register_internal_class(&ce);
+        vslim__psr17__uploadedfilefactory_ce->create_object = vphp_create_object_handler;
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr17__urifactory_ce = NULL;
-static const zend_function_entry vslim__psr17__urifactory_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr17urifactory_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimpsr17urifactory_create_uri[] = {
     { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\UriInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_ARG_TYPE_INFO(0, default_uri, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
-static int vslim__psr17__urifactory_register_class(void) {
-    if (vslim__psr17__urifactory_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr17__urifactory_ce = vphp_find_loaded_class_entry("VSlim\\Psr17\\UriFactory", sizeof("VSlim\\Psr17\\UriFactory")-1);
-    if (vslim__psr17__urifactory_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr17\\UriFactory", vslim__psr17__urifactory_methods);
-        vslim__psr17__urifactory_ce = zend_register_internal_class(&ce);
-        vslim__psr17__urifactory_ce->create_object = vphp_create_object_handler;
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr17__UriFactory, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -14571,8 +14524,22 @@ static const zend_function_entry vslim__psr17__urifactory_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr17__urifactory_register_class(void) {
+    if (vslim__psr17__urifactory_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr17__urifactory_ce = vphp_find_loaded_class_entry("VSlim\\Psr17\\UriFactory", sizeof("VSlim\\Psr17\\UriFactory")-1);
+    if (vslim__psr17__urifactory_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr17\\UriFactory", vslim__psr17__urifactory_methods);
+        vslim__psr17__urifactory_ce = zend_register_internal_class(&ce);
+        vslim__psr17__urifactory_ce->create_object = vphp_create_object_handler;
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr17__serverrequestfactory_ce = NULL;
-static const zend_function_entry vslim__psr17__serverrequestfactory_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr17serverrequestfactory_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimpsr17serverrequestfactory_create_server_request[] = {
@@ -14581,21 +14548,6 @@ ZEND_ARG_TYPE_INFO(0, method, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, uri, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, default_server_params, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
-static int vslim__psr17__serverrequestfactory_register_class(void) {
-    if (vslim__psr17__serverrequestfactory_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr17__serverrequestfactory_ce = vphp_find_loaded_class_entry("VSlim\\Psr17\\ServerRequestFactory", sizeof("VSlim\\Psr17\\ServerRequestFactory")-1);
-    if (vslim__psr17__serverrequestfactory_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr17\\ServerRequestFactory", vslim__psr17__serverrequestfactory_methods);
-        vslim__psr17__serverrequestfactory_ce = zend_register_internal_class(&ce);
-        vslim__psr17__serverrequestfactory_ce->create_object = vphp_create_object_handler;
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr17__ServerRequestFactory, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -14643,8 +14595,26 @@ static const zend_function_entry vslim__psr17__serverrequestfactory_methods[] = 
     PHP_FE_END
 };
 
+static int vslim__psr17__serverrequestfactory_register_class(void) {
+    if (vslim__psr17__serverrequestfactory_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr17__serverrequestfactory_ce = vphp_find_loaded_class_entry("VSlim\\Psr17\\ServerRequestFactory", sizeof("VSlim\\Psr17\\ServerRequestFactory")-1);
+    if (vslim__psr17__serverrequestfactory_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr17\\ServerRequestFactory", vslim__psr17__serverrequestfactory_methods);
+        vslim__psr17__serverrequestfactory_ce = zend_register_internal_class(&ce);
+        vslim__psr17__serverrequestfactory_ce->create_object = vphp_create_object_handler;
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr16__cacheexception_ce = NULL;
-static const zend_function_entry vslim__psr16__cacheexception_methods[];
+
+static const zend_function_entry vslim__psr16__cacheexception_methods[] = {
+    PHP_FE_END
+};
 
 static int vslim__psr16__cacheexception_register_class(void) {
     if (vslim__psr16__cacheexception_ce != NULL) {
@@ -14665,12 +14635,11 @@ static int vslim__psr16__cacheexception_register_class(void) {
     }
     return SUCCESS;
 }
-static const zend_function_entry vslim__psr16__cacheexception_methods[] = {
+zend_class_entry *vslim__psr16__invalidargumentexception_ce = NULL;
+
+static const zend_function_entry vslim__psr16__invalidargumentexception_methods[] = {
     PHP_FE_END
 };
-
-zend_class_entry *vslim__psr16__invalidargumentexception_ce = NULL;
-static const zend_function_entry vslim__psr16__invalidargumentexception_methods[];
 
 static int vslim__psr16__invalidargumentexception_register_class(void) {
     if (vslim__psr16__invalidargumentexception_ce != NULL) {
@@ -14691,12 +14660,7 @@ static int vslim__psr16__invalidargumentexception_register_class(void) {
     }
     return SUCCESS;
 }
-static const zend_function_entry vslim__psr16__invalidargumentexception_methods[] = {
-    PHP_FE_END
-};
-
 zend_class_entry *vslim__psr16__cache_ce = NULL;
-static const zend_function_entry vslim__psr16__cache_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr16cache_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimpsr16cache_set_clock[] = {
@@ -14734,23 +14698,6 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimpsr16cache_has, 0, 1, _IS_BOOL, 0)
 ZEND_ARG_TYPE_INFO(0, key, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int vslim__psr16__cache_register_class(void) {
-    if (vslim__psr16__cache_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr16__cache_ce = vphp_find_loaded_class_entry("VSlim\\Psr16\\Cache", sizeof("VSlim\\Psr16\\Cache")-1);
-    if (vslim__psr16__cache_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr16\\Cache", vslim__psr16__cache_methods);
-        vslim__psr16__cache_ce = zend_register_internal_class(&ce);
-        vslim__psr16__cache_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__psr16__cache_ce, "entries", sizeof("entries")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr16__cache_ce, "clock_ref", sizeof("clock_ref")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr16__Cache, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -14960,8 +14907,28 @@ static const zend_function_entry vslim__psr16__cache_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr16__cache_register_class(void) {
+    if (vslim__psr16__cache_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr16__cache_ce = vphp_find_loaded_class_entry("VSlim\\Psr16\\Cache", sizeof("VSlim\\Psr16\\Cache")-1);
+    if (vslim__psr16__cache_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr16\\Cache", vslim__psr16__cache_methods);
+        vslim__psr16__cache_ce = zend_register_internal_class(&ce);
+        vslim__psr16__cache_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__psr16__cache_ce, "entries", sizeof("entries")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr16__cache_ce, "clock_ref", sizeof("clock_ref")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr6__cacheexception_ce = NULL;
-static const zend_function_entry vslim__psr6__cacheexception_methods[];
+
+static const zend_function_entry vslim__psr6__cacheexception_methods[] = {
+    PHP_FE_END
+};
 
 static int vslim__psr6__cacheexception_register_class(void) {
     if (vslim__psr6__cacheexception_ce != NULL) {
@@ -14982,12 +14949,11 @@ static int vslim__psr6__cacheexception_register_class(void) {
     }
     return SUCCESS;
 }
-static const zend_function_entry vslim__psr6__cacheexception_methods[] = {
+zend_class_entry *vslim__psr6__invalidargumentexception_ce = NULL;
+
+static const zend_function_entry vslim__psr6__invalidargumentexception_methods[] = {
     PHP_FE_END
 };
-
-zend_class_entry *vslim__psr6__invalidargumentexception_ce = NULL;
-static const zend_function_entry vslim__psr6__invalidargumentexception_methods[];
 
 static int vslim__psr6__invalidargumentexception_register_class(void) {
     if (vslim__psr6__invalidargumentexception_ce != NULL) {
@@ -15008,12 +14974,7 @@ static int vslim__psr6__invalidargumentexception_register_class(void) {
     }
     return SUCCESS;
 }
-static const zend_function_entry vslim__psr6__invalidargumentexception_methods[] = {
-    PHP_FE_END
-};
-
 zend_class_entry *vslim__psr6__cacheitem_ce = NULL;
-static const zend_function_entry vslim__psr6__cacheitem_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslim__psr6__cacheitem___construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimpsr6cacheitem_get_key, 0, 0, IS_STRING, 0)
@@ -15032,27 +14993,6 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimpsr6cacheitem_expires_after, 0, 1, IS_STATIC, 0)
 ZEND_ARG_TYPE_INFO(0, time_value, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
-static int vslim__psr6__cacheitem_register_class(void) {
-    if (vslim__psr6__cacheitem_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr6__cacheitem_ce = vphp_find_loaded_class_entry("VSlim\\Psr6\\CacheItem", sizeof("VSlim\\Psr6\\CacheItem")-1);
-    if (vslim__psr6__cacheitem_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr6\\CacheItem", vslim__psr6__cacheitem_methods);
-        vslim__psr6__cacheitem_ce = zend_register_internal_class(&ce);
-        vslim__psr6__cacheitem_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(vslim__psr6__cacheitem_ce, "key", sizeof("key")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr6__cacheitem_ce, "value_ref", sizeof("value_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr6__cacheitem_ce, "clock_ref", sizeof("clock_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_bool(vslim__psr6__cacheitem_ce, "hit", sizeof("hit")-1, 0, ZEND_ACC_PROTECTED);
-        zend_declare_property_bool(vslim__psr6__cacheitem_ce, "has_value", sizeof("has_value")-1, 0, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr6__cacheitem_ce, "expires_at_unix", sizeof("expires_at_unix")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr6__CacheItem, getKey) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -15195,8 +15135,28 @@ static const zend_function_entry vslim__psr6__cacheitem_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr6__cacheitem_register_class(void) {
+    if (vslim__psr6__cacheitem_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr6__cacheitem_ce = vphp_find_loaded_class_entry("VSlim\\Psr6\\CacheItem", sizeof("VSlim\\Psr6\\CacheItem")-1);
+    if (vslim__psr6__cacheitem_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr6\\CacheItem", vslim__psr6__cacheitem_methods);
+        vslim__psr6__cacheitem_ce = zend_register_internal_class(&ce);
+        vslim__psr6__cacheitem_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(vslim__psr6__cacheitem_ce, "key", sizeof("key")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr6__cacheitem_ce, "value_ref", sizeof("value_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr6__cacheitem_ce, "clock_ref", sizeof("clock_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__psr6__cacheitem_ce, "hit", sizeof("hit")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__psr6__cacheitem_ce, "has_value", sizeof("has_value")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr6__cacheitem_ce, "expires_at_unix", sizeof("expires_at_unix")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr6__cacheitempool_ce = NULL;
-static const zend_function_entry vslim__psr6__cacheitempool_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr6cacheitempool_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimpsr6cacheitempool_set_clock[] = {
@@ -15234,24 +15194,6 @@ static const zend_internal_arg_info arginfo_vslimpsr6cacheitempool_save_deferred
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimpsr6cacheitempool_commit, 0, 0, _IS_BOOL, 0)
 ZEND_END_ARG_INFO()
-static int vslim__psr6__cacheitempool_register_class(void) {
-    if (vslim__psr6__cacheitempool_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr6__cacheitempool_ce = vphp_find_loaded_class_entry("VSlim\\Psr6\\CacheItemPool", sizeof("VSlim\\Psr6\\CacheItemPool")-1);
-    if (vslim__psr6__cacheitempool_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr6\\CacheItemPool", vslim__psr6__cacheitempool_methods);
-        vslim__psr6__cacheitempool_ce = zend_register_internal_class(&ce);
-        vslim__psr6__cacheitempool_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__psr6__cacheitempool_ce, "entries", sizeof("entries")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr6__cacheitempool_ce, "deferred", sizeof("deferred")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__psr6__cacheitempool_ce, "clock_ref", sizeof("clock_ref")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr6__CacheItemPool, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -15484,8 +15426,29 @@ static const zend_function_entry vslim__psr6__cacheitempool_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr6__cacheitempool_register_class(void) {
+    if (vslim__psr6__cacheitempool_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr6__cacheitempool_ce = vphp_find_loaded_class_entry("VSlim\\Psr6\\CacheItemPool", sizeof("VSlim\\Psr6\\CacheItemPool")-1);
+    if (vslim__psr6__cacheitempool_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr6\\CacheItemPool", vslim__psr6__cacheitempool_methods);
+        vslim__psr6__cacheitempool_ce = zend_register_internal_class(&ce);
+        vslim__psr6__cacheitempool_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__psr6__cacheitempool_ce, "entries", sizeof("entries")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr6__cacheitempool_ce, "deferred", sizeof("deferred")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__psr6__cacheitempool_ce, "clock_ref", sizeof("clock_ref")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr18__clientexception_ce = NULL;
-static const zend_function_entry vslim__psr18__clientexception_methods[];
+
+static const zend_function_entry vslim__psr18__clientexception_methods[] = {
+    PHP_FE_END
+};
 
 static int vslim__psr18__clientexception_register_class(void) {
     if (vslim__psr18__clientexception_ce != NULL) {
@@ -15506,12 +15469,7 @@ static int vslim__psr18__clientexception_register_class(void) {
     }
     return SUCCESS;
 }
-static const zend_function_entry vslim__psr18__clientexception_methods[] = {
-    PHP_FE_END
-};
-
 zend_class_entry *vslim__psr18__requestexception_ce = NULL;
-static const zend_function_entry vslim__psr18__requestexception_methods[];
 static const zend_internal_arg_info arginfo_vslimpsr18requestexception_attach_request[] = {
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CODE(IS_VOID, 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 { "request", ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\RequestInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
@@ -15519,26 +15477,6 @@ ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimpsr18requestexception_get_request[] = {
     { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\RequestInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_END_ARG_INFO()
-static int vslim__psr18__requestexception_register_class(void) {
-    if (vslim__psr18__requestexception_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr18__requestexception_ce = vphp_find_loaded_class_entry("VSlim\\Psr18\\RequestException", sizeof("VSlim\\Psr18\\RequestException")-1);
-    if (vslim__psr18__requestexception_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr18\\RequestException", vslim__psr18__requestexception_methods);
-        zend_class_entry *parent_ce = vphp_require_class_entry("VSlim\\Psr18\\ClientException", sizeof("VSlim\\Psr18\\ClientException")-1, 0);
-        if (!parent_ce) {
-            vphp_throw("parent class VSlim\\\\Psr18\\\\ClientException not found for VSlim\\Psr18\\RequestException", 0);
-            return FAILURE;
-        }
-        vslim__psr18__requestexception_ce = zend_register_internal_class_ex(&ce, parent_ce);
-        zend_declare_property_null(vslim__psr18__requestexception_ce, "request_ref", sizeof("request_ref")-1, ZEND_ACC_PUBLIC);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr18__RequestException, attachRequest) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -15573,8 +15511,27 @@ static const zend_function_entry vslim__psr18__requestexception_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr18__requestexception_register_class(void) {
+    if (vslim__psr18__requestexception_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr18__requestexception_ce = vphp_find_loaded_class_entry("VSlim\\Psr18\\RequestException", sizeof("VSlim\\Psr18\\RequestException")-1);
+    if (vslim__psr18__requestexception_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr18\\RequestException", vslim__psr18__requestexception_methods);
+        zend_class_entry *parent_ce = vphp_require_class_entry("VSlim\\Psr18\\ClientException", sizeof("VSlim\\Psr18\\ClientException")-1, 0);
+        if (!parent_ce) {
+            vphp_throw("parent class VSlim\\\\Psr18\\\\ClientException not found for VSlim\\Psr18\\RequestException", 0);
+            return FAILURE;
+        }
+        vslim__psr18__requestexception_ce = zend_register_internal_class_ex(&ce, parent_ce);
+        zend_declare_property_null(vslim__psr18__requestexception_ce, "request_ref", sizeof("request_ref")-1, ZEND_ACC_PUBLIC);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr18__networkexception_ce = NULL;
-static const zend_function_entry vslim__psr18__networkexception_methods[];
 static const zend_internal_arg_info arginfo_vslimpsr18networkexception_attach_request[] = {
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CODE(IS_VOID, 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 { "request", ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\RequestInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
@@ -15582,25 +15539,6 @@ ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimpsr18networkexception_get_request[] = {
     { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\RequestInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_END_ARG_INFO()
-static int vslim__psr18__networkexception_register_class(void) {
-    if (vslim__psr18__networkexception_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr18__networkexception_ce = vphp_find_loaded_class_entry("VSlim\\Psr18\\NetworkException", sizeof("VSlim\\Psr18\\NetworkException")-1);
-    if (vslim__psr18__networkexception_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr18\\NetworkException", vslim__psr18__networkexception_methods);
-        zend_class_entry *parent_ce = vphp_require_class_entry("VSlim\\Psr18\\RequestException", sizeof("VSlim\\Psr18\\RequestException")-1, 0);
-        if (!parent_ce) {
-            vphp_throw("parent class VSlim\\\\Psr18\\\\RequestException not found for VSlim\\Psr18\\NetworkException", 0);
-            return FAILURE;
-        }
-        vslim__psr18__networkexception_ce = zend_register_internal_class_ex(&ce, parent_ce);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr18__NetworkException, attachRequest) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -15635,8 +15573,26 @@ static const zend_function_entry vslim__psr18__networkexception_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr18__networkexception_register_class(void) {
+    if (vslim__psr18__networkexception_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr18__networkexception_ce = vphp_find_loaded_class_entry("VSlim\\Psr18\\NetworkException", sizeof("VSlim\\Psr18\\NetworkException")-1);
+    if (vslim__psr18__networkexception_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr18\\NetworkException", vslim__psr18__networkexception_methods);
+        zend_class_entry *parent_ce = vphp_require_class_entry("VSlim\\Psr18\\RequestException", sizeof("VSlim\\Psr18\\RequestException")-1, 0);
+        if (!parent_ce) {
+            vphp_throw("parent class VSlim\\\\Psr18\\\\RequestException not found for VSlim\\Psr18\\NetworkException", 0);
+            return FAILURE;
+        }
+        vslim__psr18__networkexception_ce = zend_register_internal_class_ex(&ce, parent_ce);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr18__client_ce = NULL;
-static const zend_function_entry vslim__psr18__client_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr18client_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimpsr18client_timeout[] = {
@@ -15655,22 +15611,6 @@ static const zend_internal_arg_info arginfo_vslimpsr18client_send_request[] = {
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\ResponseInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 { "request", ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\RequestInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_END_ARG_INFO()
-static int vslim__psr18__client_register_class(void) {
-    if (vslim__psr18__client_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr18__client_ce = vphp_find_loaded_class_entry("VSlim\\Psr18\\Client", sizeof("VSlim\\Psr18\\Client")-1);
-    if (vslim__psr18__client_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr18\\Client", vslim__psr18__client_methods);
-        vslim__psr18__client_ce = zend_register_internal_class(&ce);
-        vslim__psr18__client_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_long(vslim__psr18__client_ce, "timeout_seconds", sizeof("timeout_seconds")-1, 0, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr18__Client, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -15774,28 +15714,28 @@ static const zend_function_entry vslim__psr18__client_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr18__client_register_class(void) {
+    if (vslim__psr18__client_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr18__client_ce = vphp_find_loaded_class_entry("VSlim\\Psr18\\Client", sizeof("VSlim\\Psr18\\Client")-1);
+    if (vslim__psr18__client_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr18\\Client", vslim__psr18__client_methods);
+        vslim__psr18__client_ce = zend_register_internal_class(&ce);
+        vslim__psr18__client_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_long(vslim__psr18__client_ce, "timeout_seconds", sizeof("timeout_seconds")-1, 0, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr20__clock_ce = NULL;
-static const zend_function_entry vslim__psr20__clock_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr20clock_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimpsr20clock_now[] = {
     { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("DateTimeImmutable", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_END_ARG_INFO()
-static int vslim__psr20__clock_register_class(void) {
-    if (vslim__psr20__clock_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr20__clock_ce = vphp_find_loaded_class_entry("VSlim\\Psr20\\Clock", sizeof("VSlim\\Psr20\\Clock")-1);
-    if (vslim__psr20__clock_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr20\\Clock", vslim__psr20__clock_methods);
-        vslim__psr20__clock_ce = zend_register_internal_class(&ce);
-        vslim__psr20__clock_ce->create_object = vphp_create_object_handler;
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr20__Clock, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -15838,8 +15778,22 @@ static const zend_function_entry vslim__psr20__clock_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr20__clock_register_class(void) {
+    if (vslim__psr20__clock_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr20__clock_ce = vphp_find_loaded_class_entry("VSlim\\Psr20\\Clock", sizeof("VSlim\\Psr20\\Clock")-1);
+    if (vslim__psr20__clock_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr20\\Clock", vslim__psr20__clock_methods);
+        vslim__psr20__clock_ce = zend_register_internal_class(&ce);
+        vslim__psr20__clock_ce->create_object = vphp_create_object_handler;
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr14__listenerprovider_ce = NULL;
-static const zend_function_entry vslim__psr14__listenerprovider_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr14listenerprovider_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimpsr14listenerprovider_listen[] = {
@@ -15856,22 +15810,6 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_TENTATIVE_RETURN_OBJ_TYPE_MASK_EX(arginfo_vslimpsr14listenerprovider_get_listeners_for_event, 0, 1, Traversable, MAY_BE_ARRAY)
 ZEND_ARG_TYPE_INFO(0, event, IS_OBJECT, 0)
 ZEND_END_ARG_INFO()
-static int vslim__psr14__listenerprovider_register_class(void) {
-    if (vslim__psr14__listenerprovider_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr14__listenerprovider_ce = vphp_find_loaded_class_entry("VSlim\\Psr14\\ListenerProvider", sizeof("VSlim\\Psr14\\ListenerProvider")-1);
-    if (vslim__psr14__listenerprovider_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr14\\ListenerProvider", vslim__psr14__listenerprovider_methods);
-        vslim__psr14__listenerprovider_ce = zend_register_internal_class(&ce);
-        vslim__psr14__listenerprovider_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__psr14__listenerprovider_ce, "listeners", sizeof("listeners")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr14__ListenerProvider, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -15978,8 +15916,23 @@ static const zend_function_entry vslim__psr14__listenerprovider_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr14__listenerprovider_register_class(void) {
+    if (vslim__psr14__listenerprovider_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr14__listenerprovider_ce = vphp_find_loaded_class_entry("VSlim\\Psr14\\ListenerProvider", sizeof("VSlim\\Psr14\\ListenerProvider")-1);
+    if (vslim__psr14__listenerprovider_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr14\\ListenerProvider", vslim__psr14__listenerprovider_methods);
+        vslim__psr14__listenerprovider_ce = zend_register_internal_class(&ce);
+        vslim__psr14__listenerprovider_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__psr14__listenerprovider_ce, "listeners", sizeof("listeners")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__psr14__eventdispatcher_ce = NULL;
-static const zend_function_entry vslim__psr14__eventdispatcher_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr14eventdispatcher_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimpsr14eventdispatcher_set_provider[] = {
@@ -16001,22 +15954,6 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimpsr14eventdispatcher_dispatch, 0, 1, IS_OBJECT, 0)
 ZEND_ARG_TYPE_INFO(0, event, IS_OBJECT, 0)
 ZEND_END_ARG_INFO()
-static int vslim__psr14__eventdispatcher_register_class(void) {
-    if (vslim__psr14__eventdispatcher_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__psr14__eventdispatcher_ce = vphp_find_loaded_class_entry("VSlim\\Psr14\\EventDispatcher", sizeof("VSlim\\Psr14\\EventDispatcher")-1);
-    if (vslim__psr14__eventdispatcher_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Psr14\\EventDispatcher", vslim__psr14__eventdispatcher_methods);
-        vslim__psr14__eventdispatcher_ce = zend_register_internal_class(&ce);
-        vslim__psr14__eventdispatcher_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__psr14__eventdispatcher_ce, "provider_ref", sizeof("provider_ref")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Psr14__EventDispatcher, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -16151,8 +16088,23 @@ static const zend_function_entry vslim__psr14__eventdispatcher_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__psr14__eventdispatcher_register_class(void) {
+    if (vslim__psr14__eventdispatcher_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__psr14__eventdispatcher_ce = vphp_find_loaded_class_entry("VSlim\\Psr14\\EventDispatcher", sizeof("VSlim\\Psr14\\EventDispatcher")-1);
+    if (vslim__psr14__eventdispatcher_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Psr14\\EventDispatcher", vslim__psr14__eventdispatcher_methods);
+        vslim__psr14__eventdispatcher_ce = zend_register_internal_class(&ce);
+        vslim__psr14__eventdispatcher_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__psr14__eventdispatcher_ce, "provider_ref", sizeof("provider_ref")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__dev__phpsignatureprobe_ce = NULL;
-static const zend_function_entry vslim__dev__phpsignatureprobe_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimphpsignatureprobe_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimphpsignatureprobe_always_true, 0, 0, IS_TRUE, 0)
@@ -16256,22 +16208,6 @@ ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimphpsignatureprobe_fresh_provider_from_or_block_alias[] = {
     { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("Psr\\EventDispatcher\\ListenerProviderInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_END_ARG_INFO()
-static int vslim__dev__phpsignatureprobe_register_class(void) {
-    if (vslim__dev__phpsignatureprobe_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__dev__phpsignatureprobe_ce = vphp_find_loaded_class_entry("VSlim\\Dev\\PhpSignatureProbe", sizeof("VSlim\\Dev\\PhpSignatureProbe")-1);
-    if (vslim__dev__phpsignatureprobe_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Dev\\PhpSignatureProbe", vslim__dev__phpsignatureprobe_methods);
-        vslim__dev__phpsignatureprobe_ce = zend_register_internal_class(&ce);
-        vslim__dev__phpsignatureprobe_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__dev__phpsignatureprobe_ce, "provider_ref", sizeof("provider_ref")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Dev__PhpSignatureProbe, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -16948,8 +16884,23 @@ static const zend_function_entry vslim__dev__phpsignatureprobe_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__dev__phpsignatureprobe_register_class(void) {
+    if (vslim__dev__phpsignatureprobe_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__dev__phpsignatureprobe_ce = vphp_find_loaded_class_entry("VSlim\\Dev\\PhpSignatureProbe", sizeof("VSlim\\Dev\\PhpSignatureProbe")-1);
+    if (vslim__dev__phpsignatureprobe_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Dev\\PhpSignatureProbe", vslim__dev__phpsignatureprobe_methods);
+        vslim__dev__phpsignatureprobe_ce = zend_register_internal_class(&ce);
+        vslim__dev__phpsignatureprobe_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__dev__phpsignatureprobe_ce, "provider_ref", sizeof("provider_ref")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__live__socket_ce = NULL;
-static const zend_function_entry vslim__live__socket_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimlivesocket_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimlivesocket_set_id[] = {
@@ -17169,32 +17120,6 @@ ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimlivesocket_clear_navigate[] = {
     { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Live\\Socket", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_END_ARG_INFO()
-static int vslim__live__socket_register_class(void) {
-    if (vslim__live__socket_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__live__socket_ce = vphp_find_loaded_class_entry("VSlim\\Live\\Socket", sizeof("VSlim\\Live\\Socket")-1);
-    if (vslim__live__socket_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Live\\Socket", vslim__live__socket_methods);
-        vslim__live__socket_ce = zend_register_internal_class(&ce);
-        vslim__live__socket_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(vslim__live__socket_ce, "id", sizeof("id")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_bool(vslim__live__socket_ce, "connected", sizeof("connected")-1, 0, ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__live__socket_ce, "redirect_to", sizeof("redirect_to")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__live__socket_ce, "navigate_to", sizeof("navigate_to")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__live__socket_ce, "raw_path", sizeof("raw_path")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__live__socket_ce, "root_id", sizeof("root_id")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__live__socket_ce, "assigns", sizeof("assigns")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__live__socket_ce, "patches", sizeof("patches")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__live__socket_ce, "events", sizeof("events")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__live__socket_ce, "flashes", sizeof("flashes")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__live__socket_ce, "pubsub", sizeof("pubsub")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Live__Socket, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -18471,8 +18396,33 @@ static const zend_function_entry vslim__live__socket_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__live__socket_register_class(void) {
+    if (vslim__live__socket_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__live__socket_ce = vphp_find_loaded_class_entry("VSlim\\Live\\Socket", sizeof("VSlim\\Live\\Socket")-1);
+    if (vslim__live__socket_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Live\\Socket", vslim__live__socket_methods);
+        vslim__live__socket_ce = zend_register_internal_class(&ce);
+        vslim__live__socket_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(vslim__live__socket_ce, "id", sizeof("id")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__live__socket_ce, "connected", sizeof("connected")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__live__socket_ce, "redirect_to", sizeof("redirect_to")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__live__socket_ce, "navigate_to", sizeof("navigate_to")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__live__socket_ce, "raw_path", sizeof("raw_path")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__live__socket_ce, "root_id", sizeof("root_id")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__live__socket_ce, "assigns", sizeof("assigns")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__live__socket_ce, "patches", sizeof("patches")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__live__socket_ce, "events", sizeof("events")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__live__socket_ce, "flashes", sizeof("flashes")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__live__socket_ce, "pubsub", sizeof("pubsub")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__live__form_ce = NULL;
-static const zend_function_entry vslim__live__form_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslim__live__form___construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimliveform_name, 0, 0, IS_STRING, 0)
@@ -18531,26 +18481,6 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimliveform_error_count, 0, 0,
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimliveform_data, 0, 0, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
-static int vslim__live__form_register_class(void) {
-    if (vslim__live__form_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__live__form_ce = vphp_find_loaded_class_entry("VSlim\\Live\\Form", sizeof("VSlim\\Live\\Form")-1);
-    if (vslim__live__form_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Live\\Form", vslim__live__form_methods);
-        vslim__live__form_ce = zend_register_internal_class(&ce);
-        vslim__live__form_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(vslim__live__form_ce, "name", sizeof("name")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__live__form_ce, "socket_ref", sizeof("socket_ref")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__live__form_ce, "fields", sizeof("fields")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_long(vslim__live__form_ce, "last_error_count", sizeof("last_error_count")-1, 0, ZEND_ACC_PROTECTED);
-        zend_declare_property_bool(vslim__live__form_ce, "validated", sizeof("validated")-1, 0, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Live__Form, name) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -18934,8 +18864,27 @@ static const zend_function_entry vslim__live__form_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__live__form_register_class(void) {
+    if (vslim__live__form_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__live__form_ce = vphp_find_loaded_class_entry("VSlim\\Live\\Form", sizeof("VSlim\\Live\\Form")-1);
+    if (vslim__live__form_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Live\\Form", vslim__live__form_methods);
+        vslim__live__form_ce = zend_register_internal_class(&ce);
+        vslim__live__form_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(vslim__live__form_ce, "name", sizeof("name")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__live__form_ce, "socket_ref", sizeof("socket_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__live__form_ce, "fields", sizeof("fields")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_long(vslim__live__form_ce, "last_error_count", sizeof("last_error_count")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__live__form_ce, "validated", sizeof("validated")-1, 0, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__live__view_ce = NULL;
-static const zend_function_entry vslim__live__view_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimliveview_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimliveview_set_app[] = {
@@ -19018,24 +18967,6 @@ ZEND_ARG_INFO(0, socket)
 ZEND_ARG_TYPE_INFO(0, target_id, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, template, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int vslim__live__view_register_class(void) {
-    if (vslim__live__view_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__live__view_ce = vphp_find_loaded_class_entry("VSlim\\Live\\View", sizeof("VSlim\\Live\\View")-1);
-    if (vslim__live__view_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Live\\View", vslim__live__view_methods);
-        vslim__live__view_ce = zend_register_internal_class(&ce);
-        vslim__live__view_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__live__view_ce, "host", sizeof("host")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__live__view_ce, "root_id", sizeof("root_id")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__live__view_ce, "sockets", sizeof("sockets")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Live__View, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -19519,8 +19450,25 @@ static const zend_function_entry vslim__live__view_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__live__view_register_class(void) {
+    if (vslim__live__view_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__live__view_ce = vphp_find_loaded_class_entry("VSlim\\Live\\View", sizeof("VSlim\\Live\\View")-1);
+    if (vslim__live__view_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Live\\View", vslim__live__view_methods);
+        vslim__live__view_ce = zend_register_internal_class(&ce);
+        vslim__live__view_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__live__view_ce, "host", sizeof("host")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__live__view_ce, "root_id", sizeof("root_id")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__live__view_ce, "sockets", sizeof("sockets")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__live__component_ce = NULL;
-static const zend_function_entry vslim__live__component_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimlivecomponent_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimlivecomponent_set_app[] = {
@@ -19615,25 +19563,6 @@ ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimlivecomponent_remove_bound[] = {
     { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Live\\Socket", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_END_ARG_INFO()
-static int vslim__live__component_register_class(void) {
-    if (vslim__live__component_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__live__component_ce = vphp_find_loaded_class_entry("VSlim\\Live\\Component", sizeof("VSlim\\Live\\Component")-1);
-    if (vslim__live__component_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Live\\Component", vslim__live__component_methods);
-        vslim__live__component_ce = zend_register_internal_class(&ce);
-        vslim__live__component_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__live__component_ce, "host", sizeof("host")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_string(vslim__live__component_ce, "id", sizeof("id")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__live__component_ce, "assigns", sizeof("assigns")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__live__component_ce, "socket_ref", sizeof("socket_ref")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Live__Component, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -20239,8 +20168,26 @@ static const zend_function_entry vslim__live__component_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__live__component_register_class(void) {
+    if (vslim__live__component_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__live__component_ce = vphp_find_loaded_class_entry("VSlim\\Live\\Component", sizeof("VSlim\\Live\\Component")-1);
+    if (vslim__live__component_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Live\\Component", vslim__live__component_methods);
+        vslim__live__component_ce = zend_register_internal_class(&ce);
+        vslim__live__component_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__live__component_ce, "host", sizeof("host")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__live__component_ce, "id", sizeof("id")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__live__component_ce, "assigns", sizeof("assigns")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__live__component_ce, "socket_ref", sizeof("socket_ref")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__live__componentstate_ce = NULL;
-static const zend_function_entry vslim__live__componentstate_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslim__live__componentstate___construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimlivecomponentstate_set[] = {
@@ -20261,23 +20208,6 @@ ZEND_ARG_TYPE_INFO(0, field, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimlivecomponentstate_available, 0, 0, _IS_BOOL, 0)
 ZEND_END_ARG_INFO()
-static int vslim__live__componentstate_register_class(void) {
-    if (vslim__live__componentstate_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__live__componentstate_ce = vphp_find_loaded_class_entry("VSlim\\Live\\ComponentState", sizeof("VSlim\\Live\\ComponentState")-1);
-    if (vslim__live__componentstate_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Live\\ComponentState", vslim__live__componentstate_methods);
-        vslim__live__componentstate_ce = zend_register_internal_class(&ce);
-        vslim__live__componentstate_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(vslim__live__componentstate_ce, "component_id", sizeof("component_id")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__live__componentstate_ce, "socket_ref", sizeof("socket_ref")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 
 PHP_METHOD(VSlim__Live__ComponentState, set) {
     if (!vphp_validate_internal_call(execute_data)) {
@@ -20397,8 +20327,24 @@ static const zend_function_entry vslim__live__componentstate_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__live__componentstate_register_class(void) {
+    if (vslim__live__componentstate_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__live__componentstate_ce = vphp_find_loaded_class_entry("VSlim\\Live\\ComponentState", sizeof("VSlim\\Live\\ComponentState")-1);
+    if (vslim__live__componentstate_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Live\\ComponentState", vslim__live__componentstate_methods);
+        vslim__live__componentstate_ce = zend_register_internal_class(&ce);
+        vslim__live__componentstate_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(vslim__live__componentstate_ce, "component_id", sizeof("component_id")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__live__componentstate_ce, "socket_ref", sizeof("socket_ref")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__config_ce = NULL;
-static const zend_function_entry vslim__config_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimconfig_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimconfig_load[] = {
@@ -20453,24 +20399,6 @@ ZEND_ARG_TYPE_INFO(0, default_value, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimconfig_all_json, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int vslim__config_register_class(void) {
-    if (vslim__config_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__config_ce = vphp_find_loaded_class_entry("VSlim\\Config", sizeof("VSlim\\Config")-1);
-    if (vslim__config_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Config", vslim__config_methods);
-        vslim__config_ce = zend_register_internal_class(&ce);
-        vslim__config_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(vslim__config_ce, "path", sizeof("path")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_bool(vslim__config_ce, "loaded", sizeof("loaded")-1, 0, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__config_ce, "root", sizeof("root")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Config, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -20775,8 +20703,29 @@ static const zend_function_entry vslim__config_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__config_register_class(void) {
+    if (vslim__config_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__config_ce = vphp_find_loaded_class_entry("VSlim\\Config", sizeof("VSlim\\Config")-1);
+    if (vslim__config_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Config", vslim__config_methods);
+        vslim__config_ce = zend_register_internal_class(&ce);
+        vslim__config_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(vslim__config_ce, "path", sizeof("path")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__config_ce, "loaded", sizeof("loaded")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__config_ce, "root", sizeof("root")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__container__containerexception_ce = NULL;
-static const zend_function_entry vslim__container__containerexception_methods[];
+
+static const zend_function_entry vslim__container__containerexception_methods[] = {
+    PHP_FE_END
+};
 
 static int vslim__container__containerexception_register_class(void) {
     if (vslim__container__containerexception_ce != NULL) {
@@ -20797,12 +20746,11 @@ static int vslim__container__containerexception_register_class(void) {
     }
     return SUCCESS;
 }
-static const zend_function_entry vslim__container__containerexception_methods[] = {
+zend_class_entry *vslim__container__notfoundexception_ce = NULL;
+
+static const zend_function_entry vslim__container__notfoundexception_methods[] = {
     PHP_FE_END
 };
-
-zend_class_entry *vslim__container__notfoundexception_ce = NULL;
-static const zend_function_entry vslim__container__notfoundexception_methods[];
 
 static int vslim__container__notfoundexception_register_class(void) {
     if (vslim__container__notfoundexception_ce != NULL) {
@@ -20823,12 +20771,7 @@ static int vslim__container__notfoundexception_register_class(void) {
     }
     return SUCCESS;
 }
-static const zend_function_entry vslim__container__notfoundexception_methods[] = {
-    PHP_FE_END
-};
-
 zend_class_entry *vslim__container_ce = NULL;
-static const zend_function_entry vslim__container_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimcontainer_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimcontainer_set[] = {
@@ -20847,24 +20790,6 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimcontainer_get, 0, 1, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, id, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int vslim__container_register_class(void) {
-    if (vslim__container_ce != NULL) {
-        return SUCCESS;
-    }
-    vslim__container_ce = vphp_find_loaded_class_entry("VSlim\\Container", sizeof("VSlim\\Container")-1);
-    if (vslim__container_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VSlim\\Container", vslim__container_methods);
-        vslim__container_ce = zend_register_internal_class(&ce);
-        vslim__container_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(vslim__container_ce, "entries", sizeof("entries")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__container_ce, "factories", sizeof("factories")-1, ZEND_ACC_PROTECTED);
-        zend_declare_property_null(vslim__container_ce, "resolved", sizeof("resolved")-1, ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VSlim__Container, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -20971,6 +20896,24 @@ static const zend_function_entry vslim__container_methods[] = {
     PHP_FE_END
 };
 
+static int vslim__container_register_class(void) {
+    if (vslim__container_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__container_ce = vphp_find_loaded_class_entry("VSlim\\Container", sizeof("VSlim\\Container")-1);
+    if (vslim__container_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Container", vslim__container_methods);
+        vslim__container_ce = zend_register_internal_class(&ce);
+        vslim__container_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__container_ce, "entries", sizeof("entries")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__container_ce, "factories", sizeof("factories")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__container_ce, "resolved", sizeof("resolved")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 ZEND_BEGIN_MODULE_GLOBALS(vslim)
     zend_long request_count;
 ZEND_END_MODULE_GLOBALS(vslim)
