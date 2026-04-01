@@ -379,7 +379,7 @@ fn cli_command_help_text(mut cli VSlimCliApp, program string, command_name strin
 }
 
 fn cli_command_listing_line(mut cli VSlimCliApp, command_name string) string {
-	name := command_name.trim_space()
+	name := command_name.trim_space().clone()
 	if name == '' {
 		return ''
 	}
@@ -393,13 +393,13 @@ fn cli_command_listing_line(mut cli VSlimCliApp, command_name string) string {
 }
 
 fn cli_command_group_title(command_name string) string {
-	name := command_name.trim_space()
+	name := command_name.trim_space().clone()
 	if name == '' {
 		return ''
 	}
 	if idx := name.index(':') {
 		if idx > 0 {
-			return name[..idx]
+			return name[..idx].clone()
 		}
 	}
 	return ''
@@ -408,10 +408,11 @@ fn cli_command_group_title(command_name string) string {
 fn cli_visible_command_names(cli &VSlimCliApp) []string {
 	mut out := []string{}
 	for name in cli.command_order {
-		if name.trim_space() == '' || cli_hidden_command(cli, name) {
+		clean := name.trim_space().clone()
+		if clean == '' || cli_hidden_command(cli, clean) {
 			continue
 		}
-		out << name
+		out << clean
 	}
 	return out
 }
@@ -424,20 +425,29 @@ fn cli_command_listing_groups(cli &VSlimCliApp) []CliCommandListingGroup {
 	mut order := []string{}
 	mut grouped := map[string][]string{}
 	for name in visible {
-		title := cli_command_group_title(name)
+		command_name := name.trim_space().clone()
+		title := cli_command_group_title(command_name)
 		if title !in grouped {
-			order << title
+			order << title.clone()
 			grouped[title] = []string{}
 		}
 		mut items := grouped[title] or { []string{} }
-		items << name
+		items << command_name
 		grouped[title] = items
 	}
 	mut out := []CliCommandListingGroup{}
 	for title in order {
+		source := grouped[title] or { []string{} }
+		mut commands := []string{}
+		for name in source {
+			clean := name.trim_space().clone()
+			if clean != '' {
+				commands << clean
+			}
+		}
 		out << CliCommandListingGroup{
-			title:    title
-			commands: grouped[title] or { []string{} }
+			title:    title.clone()
+			commands: commands
 		}
 	}
 	return out
@@ -450,7 +460,8 @@ fn cli_append_command_listing_lines(mut lines []string, mut cli VSlimCliApp, gro
 	}
 	if groups.len == 1 && groups[0].title == '' {
 		for name in groups[0].commands {
-			lines << cli_command_listing_line(mut cli, name)
+			command_name := name.trim_space().clone()
+			lines << cli_command_listing_line(mut cli, command_name)
 		}
 		return
 	}
@@ -461,7 +472,8 @@ fn cli_append_command_listing_lines(mut lines []string, mut cli VSlimCliApp, gro
 		heading := if group.title == '' { 'General:' } else { '${group.title}:' }
 		lines << if indent { '  ${heading}' } else { heading }
 		for name in group.commands {
-			line := cli_command_listing_line(mut cli, name).trim_space()
+			command_name := name.trim_space().clone()
+			line := cli_command_listing_line(mut cli, command_name).trim_space().clone()
 			lines << if indent { '    ${line}' } else { '  ${line}' }
 		}
 	}

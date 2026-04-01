@@ -207,11 +207,11 @@ fn lookup_cli_command_handler(cli &VSlimCliApp, name string) !vphp.ZVal {
 }
 
 fn cli_canonical_command_name(cli &VSlimCliApp, name string) string {
-	command_name := name.trim_space()
+	command_name := name.trim_space().clone()
 	if command_name == '' {
 		return ''
 	}
-	return cli.command_canonical[command_name] or { command_name }
+	return (cli.command_canonical[command_name] or { command_name }).clone()
 }
 
 fn cli_hidden_command(cli &VSlimCliApp, name string) bool {
@@ -227,7 +227,15 @@ fn cli_command_aliases_for_listing(cli &VSlimCliApp, name string) []string {
 	if canonical == '' {
 		return []string{}
 	}
-	return cli.command_aliases[canonical] or { []string{} }
+	aliases := cli.command_aliases[canonical] or { []string{} }
+	mut out := []string{}
+	for alias in aliases {
+		clean := alias.trim_space().clone()
+		if clean != '' {
+			out << clean
+		}
+	}
+	return out
 }
 
 fn clear_cli_command_metadata(mut cli VSlimCliApp, canonical_name string) {
@@ -407,8 +415,9 @@ pub fn (mut cli VSlimCliApp) command_many(commands vphp.BorrowedValue) &VSlimCli
 pub fn (cli &VSlimCliApp) command_names() []string {
 	mut out := []string{}
 	for name in cli.command_order {
-		if name.trim_space() != '' {
-			out << name
+		clean := name.trim_space().clone()
+		if clean != '' {
+			out << clean
 		}
 	}
 	return out
