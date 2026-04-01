@@ -28,6 +28,7 @@ jobs:
             emit_only: false
           - name: windows source bundle
             runs_on: windows-latest
+            platform: windows-x86_64
             package_type: source
             artifact_name: vslim-windows-source
             needs_build: true
@@ -106,11 +107,19 @@ jobs:
       - name: Build release bundle
         working-directory: vslim
         shell: bash
+        env:
+          VSLIM_RELEASE_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
         run: |
           if [ "${{ matrix.package_type }}" = "binary" ]; then
-            make dist PACKAGE_FORMAT=zip
+            make dist \
+              PACKAGE_FORMAT=zip \
+              ARTIFACT_VERSION="${VSLIM_RELEASE_VERSION}"
           else
-            php scripts/package_release.php --package-type=source --format=zip
+            php scripts/package_release.php \
+              --version="${VSLIM_RELEASE_VERSION}" \
+              --platform="${{ matrix.platform }}" \
+              --package-type=source \
+              --format=zip
           fi
 
       - name: Upload bundle artifact
