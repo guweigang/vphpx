@@ -103,13 +103,47 @@ fn apply_cli_bootstrap_file_result(mut cli VSlimCliApp, path string, value vphp.
 	apply_cli_bootstrap_spec(mut cli, value)!
 }
 
+fn cli_display_path(path string) string {
+	return normalize_bootstrap_dir_path(path).replace('\\', '/')
+}
+
+fn cli_command_class_name_from_file(file string) string {
+	normalized := cli_display_path(file)
+	marker := '/app/Commands/'
+	mut relative := normalized
+	if idx := normalized.index(marker) {
+		relative = normalized[idx + marker.len..]
+	} else if idx := normalized.last_index('/') {
+		relative = normalized[idx + 1..]
+	}
+	mut trimmed := relative.trim_space()
+	if trimmed.ends_with('.php') && trimmed.len > 4 {
+		trimmed = trimmed[..trimmed.len - 4]
+	}
+	if trimmed == '' {
+		return ''
+	}
+	mut parts := []string{}
+	for raw in trimmed.split('/') {
+		part := raw.trim_space()
+		if part != '' {
+			parts << part
+		}
+	}
+	if parts.len == 0 {
+		return ''
+	}
+	return 'App\\Commands\\' + parts.join('\\')
+}
+
 fn apply_cli_command_class_conventions(mut cli VSlimCliApp, project_root string) !bool {
 	mut applied := false
 	for file in php_glob_paths(path_join(project_root, 'app/Commands/*.php')) {
 		_ = php_include_once(file)
-		class_name := 'App\\Commands\\' + path_file_stem(file)
+		display_file := cli_display_path(file)
+		class_name := cli_command_class_name_from_file(file)
 		if !php_class_exists(class_name) {
-			return error('command convention file "${file}" must declare class ${class_name}')
+			return error('command convention file "${display_file}" must declare class ${class_name}')
 		}
 		name := derive_command_name_from_handler(vphp.RequestOwnedZVal.new_string(class_name).to_zval())!
 		cli.command(name, vphp.BorrowedValue.from_zval(vphp.RequestOwnedZVal.new_string(class_name).to_zval()))

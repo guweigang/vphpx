@@ -6,7 +6,11 @@ VSlim CLI template bin entry can run commands from the project root convention
 <?php
 $root = realpath(__DIR__ . '/../templates/app');
 $php = escapeshellarg(PHP_BINARY);
-$extension = escapeshellarg(__DIR__ . '/../vslim.so');
+$extensionPath = __DIR__ . '/../vslim.so';
+if (DIRECTORY_SEPARATOR === '\\') {
+    $extensionPath = __DIR__ . '/../php_vslim.dll';
+}
+$extension = escapeshellarg($extensionPath);
 $script = escapeshellarg($root . '/bin/vslim');
 
 $about = shell_exec($php . ' -d extension=' . $extension . ' ' . $script . ' about services cache');
