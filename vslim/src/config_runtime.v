@@ -1,7 +1,7 @@
 module main
 
+import strings
 import toml
-import toml.to as toml_to
 import vphp
 
 @[php_method]
@@ -15,7 +15,8 @@ pub fn (mut c VSlimConfig) construct() &VSlimConfig {
 @[php_method]
 pub fn (mut c VSlimConfig) load(path string) &VSlimConfig {
 	doc := toml.parse_file(path) or {
-		vphp.throw_exception_class('InvalidArgumentException', 'config load failed: ${err.msg()}', 0)
+		vphp.throw_exception_class('InvalidArgumentException', 'config load failed: ${err.msg()}',
+			0)
 		return &c
 	}
 	c.path = path
@@ -27,7 +28,8 @@ pub fn (mut c VSlimConfig) load(path string) &VSlimConfig {
 @[php_method]
 pub fn (mut c VSlimConfig) load_text(text string) &VSlimConfig {
 	doc := toml.parse_text(text) or {
-		vphp.throw_exception_class('InvalidArgumentException', 'config parse failed: ${err.msg()}', 0)
+		vphp.throw_exception_class('InvalidArgumentException', 'config parse failed: ${err.msg()}',
+			0)
 		return &c
 	}
 	c.path = ''
@@ -51,29 +53,29 @@ pub fn (c &VSlimConfig) has(key string) bool {
 	return c.value_opt(key) != none
 }
 
-@[php_method]
 @[php_optional_args: 'default_value']
+@[php_method]
 pub fn (c &VSlimConfig) get_string(key string, default_value string) string {
 	value := c.value_opt(key) or { return default_value }
 	return value.string()
 }
 
-@[php_method]
 @[php_optional_args: 'default_value']
+@[php_method]
 pub fn (c &VSlimConfig) get_int(key string, default_value int) int {
 	value := c.value_opt(key) or { return default_value }
 	return value.int()
 }
 
-@[php_method]
 @[php_optional_args: 'default_value']
+@[php_method]
 pub fn (c &VSlimConfig) get_bool(key string, default_value bool) bool {
 	value := c.value_opt(key) or { return default_value }
 	return value.bool()
 }
 
-@[php_method]
 @[php_optional_args: 'default_value']
+@[php_method]
 pub fn (c &VSlimConfig) get_float(key string, default_value f64) f64 {
 	value := c.value_opt(key) or { return default_value }
 	return value.f64()
@@ -86,15 +88,15 @@ pub fn (c &VSlimConfig) get_string_list(key string) []string {
 	return arr.as_strings()
 }
 
-@[php_method]
 @[php_optional_args: 'default_json']
+@[php_method]
 pub fn (c &VSlimConfig) get_json(key string, default_json string) string {
 	value := c.value_opt(key) or { return default_json }
 	return toml_any_to_json(value)
 }
 
-@[php_method]
 @[php_optional_args: 'default_value']
+@[php_method]
 pub fn (c &VSlimConfig) get(key string, default_value vphp.BorrowedValue) vphp.Value {
 	raw_default := default_value.to_zval()
 	value := c.value_opt(key) or {
@@ -106,8 +108,8 @@ pub fn (c &VSlimConfig) get(key string, default_value vphp.BorrowedValue) vphp.V
 	return vphp.Value.from_zval(toml_any_to_zval(value))
 }
 
-@[php_method]
 @[php_optional_args: 'default_value']
+@[php_method]
 pub fn (c &VSlimConfig) get_map(key string, default_value vphp.BorrowedValue) vphp.Value {
 	raw_default := default_value.to_zval()
 	value := c.value_opt(key) or { return vphp.Value.from_zval(default_or_empty(raw_default)) }
@@ -121,8 +123,8 @@ pub fn (c &VSlimConfig) get_map(key string, default_value vphp.BorrowedValue) vp
 	}
 }
 
-@[php_method]
 @[php_optional_args: 'default_value']
+@[php_method]
 pub fn (c &VSlimConfig) get_list(key string, default_value vphp.BorrowedValue) vphp.Value {
 	raw_default := default_value.to_zval()
 	value := c.value_opt(key) or { return vphp.Value.from_zval(default_or_empty(raw_default)) }
@@ -195,13 +197,47 @@ fn toml_any_to_json(value toml.Any) string {
 			return vphp.json_encode(vphp.RequestOwnedZVal.new_string(value.str()).to_zval())
 		}
 		map[string]toml.Any {
-			return toml_to.json(toml.Any(value))
+			return toml_map_to_json(value)
 		}
 		[]toml.Any {
-			return toml_to.json(toml.Any(value))
+			return toml_list_to_json(value)
 		}
 	}
 	return 'null'
+}
+
+fn toml_json_string(value string) string {
+	return vphp.json_encode(vphp.RequestOwnedZVal.new_string(value).to_zval())
+}
+
+fn toml_map_to_json(input map[string]toml.Any) string {
+	mut sb := strings.new_builder(64)
+	sb.write_string('{')
+	mut is_first := true
+	for key, item in input {
+		if !is_first {
+			sb.write_string(',')
+		}
+		sb.write_string(toml_json_string(key))
+		sb.write_string(':')
+		sb.write_string(toml_any_to_json(item))
+		is_first = false
+	}
+	sb.write_string('}')
+	return sb.str()
+}
+
+fn toml_list_to_json(input []toml.Any) string {
+	mut sb := strings.new_builder(64)
+	sb.write_string('[')
+	for i, item in input {
+		if i > 0 {
+			sb.write_string(',')
+		}
+		sb.write_string(toml_any_to_json(item))
+	}
+	sb.write_string(']')
+	return sb.str()
 }
 
 fn empty_array_zval() vphp.ZVal {
