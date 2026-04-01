@@ -72,9 +72,13 @@ fn php_class_exists(class_name string) bool {
 	return exists.is_valid() && exists.to_bool()
 }
 
+fn is_windows_drive_root_path(path string) bool {
+	return path.len == 3 && path[1] == `:` && path[2] == `/`
+}
+
 fn normalize_bootstrap_dir_path(path string) string {
-	mut clean := path.trim_space()
-	for clean.len > 1 && (clean.ends_with('/') || clean.ends_with('\\')) {
+	mut clean := path.trim_space().replace('\\', '/')
+	for clean.len > 1 && clean.ends_with('/') && !is_windows_drive_root_path(clean) {
 		clean = clean[..clean.len - 1]
 	}
 	return clean
