@@ -118,7 +118,7 @@ fn detect_v_gc_mode() string {
 }
 
 fn pkg_config_flags(args string) string {
-	cmd := "pkg-config ${args}"
+	cmd := 'pkg-config ${args}'
 	res := os.execute(cmd)
 	if res.exit_code != 0 {
 		eprintln('❌ 执行 `${cmd}` 失败: ${res.output.trim_space()}')
@@ -132,6 +132,7 @@ fn run_v_transpile(project_root string, prod_mode bool, gc_mode string, module_p
 		return error('unable to resolve V executable from PATH')
 	}
 	use_openssl := should_use_openssl()
+	disable_vschannel := should_disable_vschannel()
 	prod_arg := if prod_mode { '-prod' } else { '' }
 	mut args := []string{}
 	if prod_arg != '' {
@@ -144,6 +145,10 @@ fn run_v_transpile(project_root string, prod_mode bool, gc_mode string, module_p
 	if use_openssl {
 		args << '-d'
 		args << 'use_openssl'
+	}
+	if disable_vschannel {
+		args << '-d'
+		args << 'no_vschannel'
 	}
 	args << '-path'
 	args << module_path
@@ -172,7 +177,16 @@ fn should_use_openssl() bool {
 	if flag == '' {
 		return true
 	}
-	return !(flag in ['0', 'false', 'no', 'off'])
+	return flag !in ['0', 'false', 'no', 'off']
+}
+
+fn should_disable_vschannel() bool {
+	raw := os.getenv_opt('VPHP_V_NO_VSCHANNEL') or { '' }
+	flag := raw.trim_space().to_lower()
+	if flag == '' {
+		return false
+	}
+	return flag !in ['0', 'false', 'no', 'off']
 }
 
 fn detect_gc_compile_flags(gc_mode string) string {
@@ -217,7 +231,8 @@ fn main() {
 	if target_files.len == 0 {
 		files := os.ls(source_dir) or { []string{} }
 		for f in files {
-			if f.ends_with('.v') && f != 'build.v' && f != 'bridge.v' && f != 'mod.v' && !f.ends_with('_test.v') {
+			if f.ends_with('.v') && f != 'build.v' && f != 'bridge.v' && f != 'mod.v'
+				&& !f.ends_with('_test.v') {
 				target_files << os.real_path(os.join_path(source_dir, f))
 			}
 		}
@@ -295,7 +310,8 @@ fn main() {
 	gcc_cmd := 'gcc -shared -fPIC ${disabled_warnings} -DCOMPILE_DL_${ext_name.to_upper()}=1 ' +
 		'${cjson_cflags} ${openssl_cflags} ${v_root_cflags} ${extra_compile_flags}-DcJSON_GetErrorPos=cJSON_GetErrorPtr ' +
 		'${php_inc} ${transpiled_c} php_bridge.c ../vphp/v_bridge.c -o ${output_so} ' +
-		'-I../vphp ' + dedupe_link_flags('${php_ldflags} ${php_libs} ${cjson_libs}${extra_link_flags} ${platform_link_flags}')
+		'-I../vphp ' +
+		dedupe_link_flags('${php_ldflags} ${php_libs} ${cjson_libs}${extra_link_flags} ${platform_link_flags}')
 
 	println('执行命令: ${gcc_cmd}')
 	if os.system(gcc_cmd) != 0 {

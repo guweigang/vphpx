@@ -130,6 +130,7 @@ jobs:
         env:
           VPHP_V_GC: none
           VPHP_V_USE_OPENSSL: 1
+          VPHP_V_NO_VSCHANNEL: 1
         run: |
           & v.exe -path ".;..;@vlib" run build.v -emit-only
           .\scripts\build_windows_dll.ps1
