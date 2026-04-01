@@ -14,8 +14,15 @@ fn cli_debug_enabled() bool {
 fn cli_debug_log(message string) {
 	debug_file := os.getenv('VSLIM_CLI_DEBUG_FILE').trim_space()
 	if debug_file != '' {
-		mut line := '[vslim-cli-debug] ' + message + '\n'
-		os.write_file_array(debug_file, [line]) or {}
+		line := '[vslim-cli-debug] ' + message + '\n'
+		mut file := os.open_append(debug_file) or {
+			mut created := os.create(debug_file) or { return }
+			created.write_string(line) or {}
+			created.close()
+			return
+		}
+		file.write_string(line) or {}
+		file.close()
 		return
 	}
 	if !cli_debug_enabled() {

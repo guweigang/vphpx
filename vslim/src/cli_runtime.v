@@ -521,7 +521,7 @@ fn cli_runtime_help_text(mut cli VSlimCliApp, program string) string {
 }
 
 fn cli_runtime_print_help(mut cli VSlimCliApp, program string) {
-	print(cli_runtime_help_text(mut cli, program))
+	vphp.write_output(cli_runtime_help_text(mut cli, program))
 }
 
 fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvocation {
@@ -631,24 +631,24 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.BorrowedValue) int {
 		return 1
 	}
 	inv := cli_runtime_parse_invocation(argv_list, &cli) or {
-		eprintln(err.msg())
+		vphp.report_error(vphp.e_warning, err.msg())
 		return 1
 	}
 	cli_runtime_apply_bootstrap(mut cli, inv) or {
-		eprintln(err.msg())
+		vphp.report_error(vphp.e_warning, err.msg())
 		return 1
 	}
 	program := cli_runtime_program_name(inv.argv0)
 	if inv.show_version {
-		println(cli_runtime_version_text())
+		vphp.write_output_line(cli_runtime_version_text())
 		if inv.command_name == '' && !inv.show_help && !inv.show_list {
 			return 0
 		}
 	}
 	if inv.show_help {
 		if inv.command_name != '' {
-			print(cli_command_help_text(mut cli, program, inv.command_name) or {
-				eprintln(err.msg())
+			vphp.write_output(cli_command_help_text(mut cli, program, inv.command_name) or {
+				vphp.report_error(vphp.e_warning, err.msg())
 				return 1
 			})
 			return 0
@@ -657,7 +657,7 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.BorrowedValue) int {
 		return 0
 	}
 	if inv.show_list {
-		print(cli_runtime_list_text(mut cli))
+		vphp.write_output(cli_runtime_list_text(mut cli))
 		return 0
 	}
 	if inv.command_name == '' {
@@ -665,20 +665,20 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.BorrowedValue) int {
 		return 1
 	}
 	if cli_args_request_command_help(inv.command_args) {
-		print(cli_command_help_text(mut cli, program, inv.command_name) or {
-			eprintln(err.msg())
+		vphp.write_output(cli_command_help_text(mut cli, program, inv.command_name) or {
+			vphp.report_error(vphp.e_warning, err.msg())
 			return 1
 		})
 		return 0
 	}
 	code := run_registered_cli_command_with_program(mut cli, inv.command_name, inv.command_args,
 		program) or {
-		eprintln(err.msg())
+		vphp.report_error(vphp.e_warning, err.msg())
 		return 1
 	}
 	for warning in cli.warnings() {
 		if warning.trim_space() != '' {
-			eprintln(warning)
+			vphp.report_error(vphp.e_warning, warning)
 		}
 	}
 	return code
