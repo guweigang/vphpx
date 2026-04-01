@@ -3,8 +3,9 @@
 ARG_ENABLE("vslim", "VSlim support", "yes");
 
 if (PHP_VSLIM != "no") {
-	var vslimVphpDir = getenv("VSLIM_VPHP_DIR");
-	var vslimVRoot = getenv("VSLIM_V_ROOT");
+	var vslimProcessEnv = WshShell.Environment("Process");
+	var vslimVphpDir = vslimProcessEnv.Item("VSLIM_VPHP_DIR");
+	var vslimVRoot = vslimProcessEnv.Item("VSLIM_V_ROOT");
 	var vslimCflags;
 
 	if (!vslimVphpDir) {
