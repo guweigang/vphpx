@@ -251,19 +251,21 @@ fn cli_command_metadata_aliases(runtime vphp.ZVal) []string {
 	mut seen := map[string]bool{}
 	if def := cli_command_definition(runtime) {
 		for alias in def.aliases {
-			if alias == '' || alias in seen {
+			alias_name := alias.trim_space().clone()
+			if alias_name == '' || alias_name in seen {
 				continue
 			}
-			seen[alias] = true
-			out << alias
+			seen[alias_name] = true
+			out << alias_name
 		}
 	}
 	for alias in cli_runtime_string_list_method(runtime, 'aliases') {
-		if alias == '' || alias in seen {
+		alias_name := alias.trim_space().clone()
+		if alias_name == '' || alias_name in seen {
 			continue
 		}
-		seen[alias] = true
-		out << alias
+		seen[alias_name] = true
+		out << alias_name
 	}
 	return out
 }
@@ -278,33 +280,34 @@ fn cli_command_metadata_hidden(runtime vphp.ZVal) bool {
 }
 
 fn apply_cli_command_metadata(mut cli VSlimCliApp, canonical_name string, handler_z vphp.ZVal) ! {
-	clear_cli_command_metadata(mut cli, canonical_name)
+	canonical := canonical_name.trim_space().clone()
+	clear_cli_command_metadata(mut cli, canonical)
 	runtime := resolve_cli_command_runtime(mut cli, handler_z)!
-	cli.command_canonical[canonical_name] = canonical_name
-	cli.command_hidden[canonical_name] = cli_command_metadata_hidden(runtime)
+	cli.command_canonical[canonical] = canonical.clone()
+	cli.command_hidden[canonical] = cli_command_metadata_hidden(runtime)
 	aliases := cli_command_metadata_aliases(runtime)
 	if aliases.len == 0 {
 		return
 	}
 	mut registered_aliases := []string{}
 	for alias in aliases {
-		alias_name := alias.trim_space()
-		if alias_name == '' || alias_name == canonical_name {
+		alias_name := alias.trim_space().clone()
+		if alias_name == '' || alias_name == canonical {
 			continue
 		}
 		existing_canonical := cli.command_canonical[alias_name] or { '' }
-		if existing_canonical != '' && existing_canonical != canonical_name {
+		if existing_canonical != '' && existing_canonical != canonical {
 			return error('CLI alias "${alias_name}" conflicts with registered command "${existing_canonical}"')
 		}
 		if alias_name in cli.command_handlers {
 			continue
 		}
 		cli.command_handlers[alias_name] = vphp.PersistentOwnedZVal.from_zval(handler_z)
-		cli.command_canonical[alias_name] = canonical_name
-		registered_aliases << alias_name
+		cli.command_canonical[alias_name] = canonical.clone()
+		registered_aliases << alias_name.clone()
 	}
 	if registered_aliases.len > 0 {
-		cli.command_aliases[canonical_name] = registered_aliases
+		cli.command_aliases[canonical] = registered_aliases
 	}
 }
 
@@ -342,7 +345,7 @@ pub fn (mut cli VSlimCliApp) app() vphp.Value {
 @[php_method]
 pub fn (mut cli VSlimCliApp) command(name string, handler vphp.BorrowedValue) &VSlimCliApp {
 	ensure_cli_registry(mut cli)
-	command_name := name.trim_space()
+	command_name := name.trim_space().clone()
 	if command_name == '' {
 		vphp.throw_exception_class('InvalidArgumentException', 'command name must not be empty',
 			0)
@@ -359,11 +362,11 @@ pub fn (mut cli VSlimCliApp) command(name string, handler vphp.BorrowedValue) &V
 		return &cli
 	}
 	if command_name !in cli.command_handlers {
-		cli.command_order << command_name
+		cli.command_order << command_name.clone()
 	}
 	clear_cli_command_metadata(mut cli, command_name)
 	cli.command_handlers[command_name] = vphp.PersistentOwnedZVal.from_zval(handler_z)
-	cli.command_canonical[command_name] = command_name
+	cli.command_canonical[command_name] = command_name.clone()
 	apply_cli_command_metadata(mut cli, command_name, handler_z) or {
 		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
 		return &cli
@@ -393,7 +396,7 @@ pub fn (mut cli VSlimCliApp) command_many(commands vphp.BorrowedValue) &VSlimCli
 			name := derive_command_name_from_handler(handler) or {
 				vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
 				return &cli
-			}
+			}.clone()
 			cli.command(name, vphp.BorrowedValue.from_zval(handler))
 		}
 	}
