@@ -195,6 +195,19 @@ fn should_disable_vschannel() bool {
 	return flag !in ['0', 'false', 'no', 'off']
 }
 
+fn should_force_windows_patch() bool {
+	raw := os.getenv_opt('VPHP_V_FORCE_WINDOWS_PATCH') or { '' }
+	flag := raw.trim_space().to_lower()
+	if flag == '' {
+		return false
+	}
+	return flag !in ['0', 'false', 'no', 'off']
+}
+
+fn should_patch_windows_generated_c() bool {
+	return os.user_os() == 'windows' || should_force_windows_patch()
+}
+
 fn is_decimal_literal(value string) bool {
 	if value.len == 0 {
 		return false
@@ -236,7 +249,7 @@ fn normalize_unsigned_literal_suffix(value string, width int) string {
 }
 
 fn patch_windows_generated_const_suffixes(path string) ! {
-	if os.user_os() != 'windows' {
+	if !should_patch_windows_generated_c() {
 		return
 	}
 	content := os.read_file(path)!
@@ -294,7 +307,7 @@ fn build_fixed_array_const_patch(original string, index int) !FixedArrayConstPat
 }
 
 fn patch_windows_generated_fixed_array_consts(path string) ! {
-	if os.user_os() != 'windows' {
+	if !should_patch_windows_generated_c() {
 		return
 	}
 	content := os.read_file(path)!
@@ -306,8 +319,12 @@ fn patch_windows_generated_fixed_array_consts(path string) ! {
 	for cursor < content.len {
 		relative := content[cursor..].index(marker) or { break }
 		marker_pos := cursor + relative
-		stmt_start := content[..marker_pos].last_index(';') or { -1 }
-		mut decl_start := if stmt_start >= 0 { stmt_start + 1 } else { 0 }
+		eq_pos := content[..marker_pos].last_index('=') or {
+			cursor = marker_pos + marker.len
+			continue
+		}
+		line_start := content[..eq_pos].last_index('\n') or { -1 }
+		mut decl_start := if line_start >= 0 { line_start + 1 } else { 0 }
 		for decl_start < content.len && (content[decl_start] == `\n` || content[decl_start] == `\r`) {
 			decl_start++
 		}
@@ -342,6 +359,7 @@ fn patch_windows_generated_fixed_array_consts(path string) ! {
 	patched_content = patched_content[..insert_at + vinit_marker.len] + init_builder.str() +
 		patched_content[insert_at + vinit_marker.len..]
 	os.write_file(path, patched_content)!
+	println('🩹 Windows fixed array workaround patched ${patches.len} const definitions.')
 }
 
 fn detect_gc_compile_flags(gc_mode string) string {
