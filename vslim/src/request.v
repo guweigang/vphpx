@@ -1,5 +1,6 @@
 module main
 
+import net.http
 import vphp
 
 @[php_method]
@@ -128,8 +129,8 @@ pub fn (r &VSlimRequest) input(key string) string {
 	return inputs[key] or { '' }
 }
 
-@[php_optional_args: 'default_value']
 @[php_method]
+@[php_optional_args: 'default_value']
 pub fn (r &VSlimRequest) input_or(key string, default_value string) string {
 	inputs := r.input_values()
 	return inputs[key] or { default_value }
@@ -222,16 +223,16 @@ pub fn (r &VSlimRequest) parse_error() string {
 	if body == '' {
 		return ''
 	}
-	_ = vphp.json_decode_assoc(body)
-	err_code := vphp.json_last_error_code()
-	if err_code == 0 {
-		return ''
-	}
-	err_msg := vphp.json_last_error_message()
-	if err_msg == '' {
-		return 'invalid JSON body'
-	}
-	return err_msg
+		_ = vphp.json_decode_assoc(body)
+		err_code := vphp.json_last_error_code()
+		if err_code == 0 {
+			return ''
+		}
+		err_msg := vphp.json_last_error_message()
+		if err_msg == '' {
+			return 'invalid JSON body'
+		}
+		return err_msg
 }
 
 @[php_method]
@@ -444,30 +445,29 @@ fn (r &VSlimRequest) parsed_body_values() map[string]string {
 		return out
 	}
 	raw_content_type := r.content_type()
-	content_type := raw_content_type.to_lower()
-	is_json := content_type.contains('application/json') || body.starts_with('{')
-		|| body.starts_with('[')
-	if is_json {
-		decoded := vphp.json_decode_assoc(body)
-		if decoded.is_array() {
-			return decoded.to_string_map()
-		}
+		content_type := raw_content_type.to_lower()
+		is_json := content_type.contains('application/json') || body.starts_with('{') || body.starts_with('[')
+		if is_json {
+			decoded := vphp.json_decode_assoc(body)
+			if decoded.is_array() {
+				return decoded.to_string_map()
+			}
 		return out
 	}
 	if content_type.contains('multipart/form-data') {
 		boundary := multipart_boundary_from_content_type(raw_content_type)
 		if boundary != '' {
-			form, _ := parse_multipart_form_data(r.body, boundary)
+			form, _ := http.parse_multipart_form(r.body, boundary)
 			return form
 		}
 		return out
 	}
 	if content_type.contains('application/x-www-form-urlencoded') {
-		return parse_urlencoded_form(r.body)
+		return http.parse_form(r.body)
 	}
 	// Backward-compatible fallback for missing Content-Type in demo/tests.
 	if body.contains('=') {
-		return parse_urlencoded_form(r.body)
+		return http.parse_form(r.body)
 	}
 	return out
 }
@@ -499,13 +499,15 @@ fn (r &VSlimRequest) uploaded_file_values() []string {
 	if boundary == '' {
 		return out
 	}
-	_, files := parse_multipart_form_data(r.body, boundary)
-	for item in files {
-		if item.filename == '' {
-			continue
-		}
-		if item.filename !in out {
-			out << item.filename
+	_, files := http.parse_multipart_form(r.body, boundary)
+	for _, items in files {
+		for item in items {
+			if item.filename == '' {
+				continue
+			}
+			if item.filename !in out {
+				out << item.filename
+			}
 		}
 	}
 	return out
@@ -513,34 +515,34 @@ fn (r &VSlimRequest) uploaded_file_values() []string {
 
 pub fn (r &VSlimRequest) to_vslim_request() VSlimRequest {
 	return VSlimRequest{
-		method:           r.method
-		raw_path:         r.raw_path
-		path:             r.path
-		query_string:     r.query_string
-		scheme:           r.scheme
-		host:             r.host
-		port:             r.port
+		method: r.method
+		raw_path: r.raw_path
+		path: r.path
+		query_string: r.query_string
+		scheme: r.scheme
+		host: r.host
+		port: r.port
 		protocol_version: r.protocol_version
-		remote_addr:      r.remote_addr
-		params:           r.route_params()
-		query:            r.query_params()
-		body:             r.body
-		headers:          r.headers()
-		cookies:          r.cookies()
-		attributes:       r.attributes()
-		server:           r.server_params()
-		uploaded_files:   r.uploaded_files()
+		remote_addr: r.remote_addr
+		params: r.route_params()
+		query: r.query_params()
+		body: r.body
+		headers: r.headers()
+		cookies: r.cookies()
+		attributes: r.attributes()
+		server: r.server_params()
+		uploaded_files: r.uploaded_files()
 	}
 }
 
 pub fn new_vslim_request(method string, raw_path string, body string) &VSlimRequest {
 	path, query_string := VSlimRequest.normalize_target(raw_path)
 	mut req := &VSlimRequest{
-		method:       method
-		raw_path:     raw_path
-		path:         path
+		method: method
+		raw_path: raw_path
+		path: path
 		query_string: query_string
-		body:         body
+		body: body
 	}
 	apply_request_defaults(mut req)
 	return req
@@ -552,61 +554,25 @@ pub fn new_vslim_request_from_zval(envelope vphp.ZVal) &VSlimRequest {
 	body := if part := envelope.get('body') { part.to_string() } else { '' }
 	path, query_string := VSlimRequest.normalize_target(raw_path)
 	mut req := &VSlimRequest{
-		method:       method
-		raw_path:     raw_path
-		path:         path
+		method: method
+		raw_path: raw_path
+		path: path
 		query_string: query_string
-		body:         body
+		body: body
 	}
 	apply_request_defaults(mut req)
 	req.scheme = if part := envelope.get('scheme') { part.to_string() } else { req.scheme }
 	req.host = if part := envelope.get('host') { part.to_string() } else { req.host }
 	req.port = if part := envelope.get('port') { part.to_string() } else { req.port }
-	req.protocol_version = if part := envelope.get('protocol_version') {
-		part.to_string()
-	} else {
-		req.protocol_version
-	}
-	req.remote_addr = if part := envelope.get('remote_addr') {
-		part.to_string()
-	} else {
-		req.remote_addr
-	}
-	req.query = if part := envelope.get('query') {
-		part.to_string_map()
-	} else {
-		map[string]string{}
-	}
-	req.headers = if part := envelope.get('headers') {
-		normalize_header_map(part.to_string_map())
-	} else {
-		map[string]string{}
-	}
-	req.cookies = if part := envelope.get('cookies') {
-		part.to_string_map()
-	} else {
-		map[string]string{}
-	}
-	req.attributes = if part := envelope.get('attributes') {
-		part.to_string_map()
-	} else {
-		map[string]string{}
-	}
-	req.server = if part := envelope.get('server') {
-		part.to_string_map()
-	} else {
-		map[string]string{}
-	}
-	req.uploaded_files = if part := envelope.get('uploaded_files') {
-		part.to_string_list()
-	} else {
-		[]string{}
-	}
-	req.params = if part := envelope.get('params') {
-		part.to_string_map()
-	} else {
-		map[string]string{}
-	}
+	req.protocol_version = if part := envelope.get('protocol_version') { part.to_string() } else { req.protocol_version }
+	req.remote_addr = if part := envelope.get('remote_addr') { part.to_string() } else { req.remote_addr }
+	req.query = if part := envelope.get('query') { part.to_string_map() } else { map[string]string{} }
+	req.headers = if part := envelope.get('headers') { normalize_header_map(part.to_string_map()) } else { map[string]string{} }
+	req.cookies = if part := envelope.get('cookies') { part.to_string_map() } else { map[string]string{} }
+	req.attributes = if part := envelope.get('attributes') { part.to_string_map() } else { map[string]string{} }
+	req.server = if part := envelope.get('server') { part.to_string_map() } else { map[string]string{} }
+	req.uploaded_files = if part := envelope.get('uploaded_files') { part.to_string_list() } else { []string{} }
+	req.params = if part := envelope.get('params') { part.to_string_map() } else { map[string]string{} }
 	return req
 }
 
