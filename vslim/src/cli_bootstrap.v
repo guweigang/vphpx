@@ -132,12 +132,14 @@ fn apply_cli_command_class_conventions(mut cli VSlimCliApp, project_root string)
 			cli_debug_log('skip_command_entry="${entry}"')
 			continue
 		}
-		file := path_join(commands_dir, entry)
+		entry_name := entry.clone()
+		file := path_join(commands_dir, entry_name).clone()
+		display_file := cli_display_path(file).clone()
+		class_name := ('App\\Commands\\' + path_file_stem(entry_name)).clone()
+		cli_debug_log('command_entry_preinclude="${entry_name}" file="${display_file}" class="${class_name}"')
 		_ = php_include_once(file)
-		display_file := cli_display_path(file)
-		class_name := 'App\\Commands\\' + path_file_stem(entry)
 		class_exists := php_class_exists(class_name)
-		cli_debug_log('command_entry="${entry}" file="${display_file}" class="${class_name}" class_exists=${class_exists}')
+		cli_debug_log('command_entry="${entry_name}" file="${display_file}" class="${class_name}" class_exists=${class_exists}')
 		if !class_exists {
 			return error('command convention file "${display_file}" must declare class ${class_name}')
 		}
