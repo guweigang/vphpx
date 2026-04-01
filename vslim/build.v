@@ -127,6 +127,42 @@ fn pkg_config_flags(args string) string {
 	return res.output.trim_space()
 }
 
+fn run_v_transpile(project_root string, prod_mode bool, gc_mode string, module_path string, output_path string, source_dir string) ! {
+	v_exe := os.find_abs_path_of_executable('v') or {
+		return error('unable to resolve V executable from PATH')
+	}
+	prod_arg := if prod_mode { '-prod' } else { '' }
+	mut args := []string{}
+	if prod_arg != '' {
+		args << prod_arg
+	}
+	args << '-nocache'
+	args << '-enable-globals'
+	args << '-gc'
+	args << gc_mode
+	args << '-d'
+	args << 'use_openssl'
+	args << '-path'
+	args << module_path
+	args << '-shared'
+	args << '-o'
+	args << output_path
+	args << source_dir
+
+	mut proc := os.new_process(v_exe)
+	proc.set_work_folder(project_root)
+	proc.set_args(args)
+	proc.set_redirect_stdio()
+	proc.run()
+	proc.wait()
+	stdout := proc.stdout_slurp()
+	stderr := proc.stderr_slurp()
+	output := (stdout + stderr).trim_space()
+	if proc.code != 0 {
+		return error(output)
+	}
+}
+
 fn detect_gc_compile_flags(gc_mode string) string {
 	return match gc_mode {
 		'boehm' { pkg_config_flags('--cflags bdw-gc') }
@@ -215,11 +251,9 @@ fn main() {
 	os.rm(output_so) or {}
 	os.rm(legacy_transpiled_c) or {}
 
-	prod_flag := if prod_mode { '-prod ' } else { '' }
 	v_module_path := detect_v_module_path()
-	v_res := os.execute('v ${prod_flag}-nocache -enable-globals -gc ${gc_mode} -d use_openssl -path "${v_module_path}" -shared -o ${transpiled_c} ${source_dir}')
-	if v_res.exit_code != 0 {
-		println('❌ V 编译失败: ${v_res.output}')
+	run_v_transpile(project_root, prod_mode, gc_mode, v_module_path, transpiled_c, source_dir) or {
+		println('❌ V 编译失败: ${err.msg()}')
 		exit(1)
 	}
 
