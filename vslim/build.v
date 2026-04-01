@@ -1,4 +1,5 @@
 import os
+import strings
 import vphp.compiler
 
 fn sanitize_ldflags(ldflags string) string {
@@ -189,6 +190,80 @@ fn should_disable_vschannel() bool {
 	return flag !in ['0', 'false', 'no', 'off']
 }
 
+fn is_decimal_literal(value string) bool {
+	if value.len == 0 {
+		return false
+	}
+	for ch in value {
+		if ch < `0` || ch > `9` {
+			return false
+		}
+	}
+	return true
+}
+
+fn normalize_unsigned_literal_suffix(value string, width int) string {
+	literal := value.trim_space()
+	if literal == '' {
+		return value
+	}
+	if width == 32 {
+		if is_decimal_literal(literal) {
+			return literal + 'U'
+		}
+		return literal
+	}
+	if width == 64 {
+		if literal.ends_with('ULL') {
+			return literal
+		}
+		if literal.ends_with('UL') {
+			return literal[..literal.len - 2] + 'ULL'
+		}
+		if literal.ends_with('U') {
+			return literal[..literal.len - 1] + 'ULL'
+		}
+		if is_decimal_literal(literal) {
+			return literal + 'ULL'
+		}
+	}
+	return literal
+}
+
+fn patch_windows_generated_const_suffixes(path string) ! {
+	if os.user_os() != 'windows' {
+		return
+	}
+	content := os.read_file(path)!
+	mut builder := strings.new_builder(content.len + 256)
+	mut changed := false
+	for line in content.split_into_lines() {
+		mut patched := line
+		if line.contains('// precomputed2') && line.contains(' = ') {
+			eq := line.index('=') or { -1 }
+			semi := line.index(';') or { -1 }
+			if eq > 0 && semi > eq {
+				lhs := line[..eq]
+				rhs := line[eq + 1..semi].trim_space()
+				mut next_rhs := rhs
+				if lhs.contains('const u32 ') {
+					next_rhs = normalize_unsigned_literal_suffix(rhs, 32)
+				} else if lhs.contains('const u64 ') {
+					next_rhs = normalize_unsigned_literal_suffix(rhs, 64)
+				}
+				if next_rhs != rhs {
+					patched = '${line[..eq + 1]} ${next_rhs}${line[semi..]}'
+					changed = true
+				}
+			}
+		}
+		builder.writeln(patched)
+	}
+	if changed {
+		os.write_file(path, builder.str())!
+	}
+}
+
 fn detect_gc_compile_flags(gc_mode string) string {
 	return match gc_mode {
 		'boehm' { pkg_config_flags('--cflags bdw-gc') }
@@ -281,6 +356,10 @@ fn main() {
 	v_module_path := detect_v_module_path()
 	run_v_transpile(project_root, prod_mode, gc_mode, v_module_path, transpiled_c, source_dir) or {
 		println('❌ V 编译失败: ${err.msg()}')
+		exit(1)
+	}
+	patch_windows_generated_const_suffixes(transpiled_c) or {
+		println('❌ Windows 生成源码修补失败: ${err.msg()}')
 		exit(1)
 	}
 
