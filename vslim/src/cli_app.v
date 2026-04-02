@@ -543,14 +543,25 @@ pub fn (mut cli VSlimCliApp) run(name string, args vphp.BorrowedValue) int {
 	}
 }
 
-fn (cli &VSlimCliApp) free() {
+fn (mut cli VSlimCliApp) free() {
+	cli_debug_log('cli.free enter handlers=${cli.command_handlers.len} core_valid=${cli.core_app_zref.is_valid()} core_raw=${usize(cli.core_app_zref.to_zval().raw)}')
+	mut handler_names := []string{}
 	for key, _ in cli.command_handlers {
+		handler_names << key.clone()
+	}
+	for key in handler_names {
 		mut handler := cli.command_handlers[key] or { continue }
 		handler.release()
+		cli.command_handlers.delete(key)
 	}
+	cli_debug_log('cli.free handlers_released')
+	cli.core_app_ref = unsafe { nil }
 	mut core_app_zref := cli.core_app_zref
+	cli.core_app_zref = vphp.PersistentOwnedZVal.invalid()
 	core_app_zref.release()
+	cli_debug_log('cli.free core_app_released')
 	unsafe {
+		handler_names.free()
 		cli.command_handlers.free()
 		cli.command_order.free()
 		cli.command_aliases.free()
@@ -564,4 +575,5 @@ fn (cli &VSlimCliApp) free() {
 		cli.last_option_seen.free()
 		cli.last_warnings.free()
 	}
+	cli_debug_log('cli.free exit')
 }
