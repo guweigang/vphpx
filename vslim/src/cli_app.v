@@ -176,33 +176,6 @@ fn resolve_cli_command_runtime(mut cli VSlimCliApp, handler_z vphp.ZVal) !vphp.Z
 	return handler_z
 }
 
-fn invoke_cli_command(mut cli VSlimCliApp, handler_z vphp.ZVal, args []string) !int {
-	cli_debug_log('invoke_cli_command start args=${args.len}')
-	runtime := resolve_cli_command_runtime(mut cli, handler_z)!
-	args_z := cli_args_zval(args)
-	cli_z := cli_self_zval(&cli)
-	if runtime.is_object() {
-		cli_debug_log('invoke_cli_command runtime=object')
-		bind_cli_runtime_to_command(mut cli, runtime)
-		if runtime.method_exists('handle') {
-			cli_debug_log('invoke_cli_command object_handle enter')
-			code := cli_command_exit_code(runtime.method_owned_request('handle', [
-				args_z,
-				cli_z,
-			]))
-			cli_debug_log('invoke_cli_command object_handle exit code=${code}')
-			return code
-		}
-	}
-	if runtime.is_callable() {
-		cli_debug_log('invoke_cli_command runtime=callable')
-		code := cli_command_exit_code(runtime.call_owned_request([args_z, cli_z]))
-		cli_debug_log('invoke_cli_command callable exit code=${code}')
-		return code
-	}
-	return error('command handler must be callable or expose handle(array \$args, VSlim\\Cli\\App \$cli)')
-}
-
 fn lookup_cli_command_handler(cli &VSlimCliApp, name string) !vphp.ZVal {
 	command_name := name.trim_space()
 	if command_name == '' {
@@ -339,9 +312,32 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 	}
 	cli_debug_log('run_registered_cli_command input_ready name="${name}" parsed=${input.parsed} positional=${input.positional_args.len}')
 	set_cli_command_input(mut cli, name.trim_space(), input)
-	code := invoke_cli_command(mut cli, runtime, input.positional_args)!
-	cli_debug_log('run_registered_cli_command exit name="${name}" code=${code}')
-	return code
+	cli_debug_log('invoke_cli_command start args=${input.positional_args.len}')
+	args_z := cli_args_zval(input.positional_args)
+	cli_z := cli_self_zval(&cli)
+	mut code := 0
+	if runtime.is_object() {
+		cli_debug_log('invoke_cli_command runtime=object')
+		bind_cli_runtime_to_command(mut cli, runtime)
+		if runtime.method_exists('handle') {
+			cli_debug_log('invoke_cli_command object_handle enter')
+			code = cli_command_exit_code(runtime.method_owned_request('handle', [
+				args_z,
+				cli_z,
+			]))
+			cli_debug_log('invoke_cli_command object_handle exit code=${code}')
+			cli_debug_log('run_registered_cli_command exit name="${name}" code=${code}')
+			return code
+		}
+	}
+	if runtime.is_callable() {
+		cli_debug_log('invoke_cli_command runtime=callable')
+		code = cli_command_exit_code(runtime.call_owned_request([args_z, cli_z]))
+		cli_debug_log('invoke_cli_command callable exit code=${code}')
+		cli_debug_log('run_registered_cli_command exit name="${name}" code=${code}')
+		return code
+	}
+	return error('command handler must be callable or expose handle(array \$args, VSlim\\Cli\\App \$cli)')
 }
 
 fn run_registered_cli_command(mut cli VSlimCliApp, name string, args []string) !int {
