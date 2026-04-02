@@ -630,7 +630,13 @@ pub fn (mut cli VSlimCliApp) help_text() string {
 
 @[php_method: 'commandHelp']
 pub fn (mut cli VSlimCliApp) command_help(command_name string) string {
-	return cli_command_help_text(mut cli, 'vslim', command_name) or { '' }
+	cli_debug_log('command_help start command="${command_name}"')
+	res := cli_command_help_text(mut cli, 'vslim', command_name) or {
+		cli_debug_log('command_help failed command="${command_name}"')
+		return ''
+	}
+	cli_debug_log('command_help done command="${command_name}"')
+	return res
 }
 
 @[php_arg_type: 'argv=iterable']
@@ -641,34 +647,44 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.BorrowedValue) int {
 			0)
 		return 1
 	}
+	cli_debug_log('run_argv start argv=${argv_list}')
 	inv := cli_runtime_parse_invocation(argv_list, &cli) or {
 		vphp.report_error(vphp.e_warning, err.msg())
 		return 1
 	}
+	cli_debug_log('run_argv parsed command="${inv.command_name}" help=${inv.show_help} list=${inv.show_list} version=${inv.show_version} bootstrap_dir="${inv.bootstrap_dir}" bootstrap_file="${inv.bootstrap_file}" args=${inv.command_args}')
 	cli_runtime_apply_bootstrap(mut cli, inv) or {
 		vphp.report_error(vphp.e_warning, err.msg())
 		return 1
 	}
+	cli_debug_log('run_argv bootstrap applied command="${inv.command_name}"')
 	program := cli_runtime_program_name(inv.argv0)
 	if inv.show_version {
+		cli_debug_log('run_argv version branch command="${inv.command_name}"')
 		vphp.write_output_line(cli_runtime_version_text())
 		if inv.command_name == '' && !inv.show_help && !inv.show_list {
 			return 0
 		}
 	}
 	if inv.show_help {
+		cli_debug_log('run_argv help branch command="${inv.command_name}"')
 		if inv.command_name != '' {
+			cli_debug_log('run_argv command help branch command="${inv.command_name}"')
 			vphp.write_output(cli_command_help_text(mut cli, program, inv.command_name) or {
 				vphp.report_error(vphp.e_warning, err.msg())
 				return 1
 			})
+			cli_debug_log('run_argv command help branch wrote command="${inv.command_name}"')
 			return 0
 		}
 		cli_runtime_print_help(mut cli, program)
+		cli_debug_log('run_argv help branch wrote runtime help')
 		return 0
 	}
 	if inv.show_list {
+		cli_debug_log('run_argv list branch start')
 		vphp.write_output(cli_runtime_list_text(mut cli))
+		cli_debug_log('run_argv list branch wrote listing')
 		return 0
 	}
 	if inv.command_name == '' {
@@ -676,17 +692,21 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.BorrowedValue) int {
 		return 1
 	}
 	if cli_args_request_command_help(inv.command_args) {
+		cli_debug_log('run_argv args help branch command="${inv.command_name}" args=${inv.command_args}')
 		vphp.write_output(cli_command_help_text(mut cli, program, inv.command_name) or {
 			vphp.report_error(vphp.e_warning, err.msg())
 			return 1
 		})
+		cli_debug_log('run_argv args help branch wrote command="${inv.command_name}"')
 		return 0
 	}
+	cli_debug_log('run_argv execute branch command="${inv.command_name}" args=${inv.command_args}')
 	code := run_registered_cli_command_with_program(mut cli, inv.command_name, inv.command_args,
 		program) or {
 		vphp.report_error(vphp.e_warning, err.msg())
 		return 1
 	}
+	cli_debug_log('run_argv execute branch done command="${inv.command_name}" code=${code}')
 	for warning in cli.warnings() {
 		if warning.trim_space() != '' {
 			vphp.report_error(vphp.e_warning, warning)
