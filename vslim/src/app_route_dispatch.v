@@ -191,12 +191,7 @@ fn resolve_php_route_dispatch_raw(app &VSlimApp, req &VSlimRequest, source_paylo
 }
 
 fn dispatch_php_route_match_raw(app &VSlimApp, path string, initial_payload vphp.BorrowedZVal, validation_req &VSlimRequest, route VSlimRoute, params map[string]string) (vphp.ZVal, vphp.RequestOwnedZVal) {
-	mut validation_meta := MiddlewareTerminalMeta{}
-	mut has_validation_meta := false
-	if meta := request_validation_terminal_meta(validation_req) {
-		validation_meta = meta
-		has_validation_meta = true
-	}
+	validation_meta, has_validation_meta := request_validation_terminal_meta(validation_req)
 	if has_validation_meta {
 		return dispatch_php_pipeline_raw(app, path, initial_payload, RawDispatchPlan{
 			route_params:  params.clone()
@@ -276,15 +271,16 @@ fn vslim_max_body_bytes() int {
 	return max_bytes
 }
 
-fn request_validation_terminal_meta(req &VSlimRequest) ?MiddlewareTerminalMeta {
+fn request_validation_terminal_meta(req &VSlimRequest) (MiddlewareTerminalMeta, bool) {
 	max_bytes := vslim_max_body_bytes()
 	if max_bytes > 0 && req.body.len > max_bytes {
-		return error_terminal_meta(413, 'Payload too large', 'Payload Too Large', 'payload_too_large')
+		return error_terminal_meta(413, 'Payload too large', 'Payload Too Large', 'payload_too_large'),
+			true
 	}
 	parse_msg := req.parse_error()
 	if parse_msg != '' {
 		return error_terminal_meta(400, 'Bad Request: invalid JSON body', 'Bad Request: invalid JSON body',
-			'bad_json_body')
+			'bad_json_body'), true
 	}
-	return none
+	return MiddlewareTerminalMeta{}, false
 }
