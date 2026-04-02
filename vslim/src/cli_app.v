@@ -56,8 +56,10 @@ fn wrap_runtime_cli_zval(cli &VSlimCliApp) vphp.ZVal {
 		if isnil(cli) || C.vslim__cli__app_ce == 0 {
 			return vphp.ZVal.new_null()
 		}
+		cli_debug_log('wrap_runtime_cli_zval enter cli=${usize(cli)} ce=${usize(C.vslim__cli__app_ce)}')
 		mut payload := vphp.RequestOwnedZVal.new_null().to_zval()
 		vphp.return_borrowed_object_raw(payload.raw, cli, C.vslim__cli__app_ce, &C.vphp_class_handlers(vslimcliapp_handlers()))
+		cli_debug_log('wrap_runtime_cli_zval exit cli=${usize(cli)} payload=${usize(payload.raw)} valid=${payload.is_valid()} type=${payload.type_name()}')
 		return payload
 	}
 }
@@ -326,7 +328,9 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 	set_cli_command_input(mut cli, name.trim_space(), input)
 	cli_debug_log('invoke_cli_command start args=${input.positional_args.len}')
 	args_z := cli_args_zval(input.positional_args)
+	cli_debug_log('invoke_cli_command args_ready raw=${usize(args_z.raw)} valid=${args_z.is_valid()} type=${args_z.type_name()}')
 	cli_z := cli_self_zval(&cli)
+	cli_debug_log('invoke_cli_command cli_ready raw=${usize(cli_z.raw)} valid=${cli_z.is_valid()} type=${cli_z.type_name()}')
 	runtime_is_command_object := input.parsed && runtime.is_object() && runtime.method_exists('handle')
 	mut code := 0
 	if runtime_is_command_object {
@@ -344,6 +348,7 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 	if !input.parsed {
 		cli_debug_log('invoke_cli_command runtime=callable')
 		result := runtime.call_owned_request([args_z, cli_z])
+		cli_debug_log('invoke_cli_command callable_result raw=${usize(result.raw)} valid=${result.is_valid()} type=${result.type_name()}')
 		if !result.is_valid() {
 			return error('command handler must be callable or expose handle(array \$args, VSlim\\Cli\\App \$cli)')
 		}
