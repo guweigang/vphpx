@@ -184,6 +184,10 @@ fn lookup_cli_command_handler(cli &VSlimCliApp, name string) !vphp.ZVal {
 	handler := cli.command_handlers[command_name] or {
 		return error('command "${command_name}" is not registered')
 	}
+	raw := handler.to_zval()
+	if raw.is_valid() && raw.is_object() && raw.is_callable() {
+		return raw
+	}
 	return handler.clone_request_owned().to_zval()
 }
 
