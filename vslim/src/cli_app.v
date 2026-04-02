@@ -195,25 +195,6 @@ fn invoke_cli_command(mut cli VSlimCliApp, handler_z vphp.ZVal, args []string) !
 	return error('command handler must be callable or expose handle(array \$args, VSlim\\Cli\\App \$cli)')
 }
 
-fn cli_debug_handler_summary(handler vphp.ZVal) string {
-	if !handler.is_valid() || handler.is_null() || handler.is_undef() {
-		return 'invalid'
-	}
-	if handler.is_string() {
-		name := handler.to_string().trim_space()
-		return if name != '' { 'string:${name}' } else { 'string' }
-	}
-	if handler.is_object() {
-		class_name := handler.class_name().trim_space()
-		kind := if handler.is_callable() { 'callable-object' } else { 'object' }
-		return if class_name != '' { '${kind}:${class_name}' } else { kind }
-	}
-	if handler.is_callable() {
-		return 'callable'
-	}
-	return 'other'
-}
-
 fn lookup_cli_command_handler(cli &VSlimCliApp, name string) !vphp.ZVal {
 	command_name := name.trim_space()
 	if command_name == '' {
@@ -534,23 +515,16 @@ pub fn (mut cli VSlimCliApp) run(name string, args vphp.BorrowedValue) int {
 }
 
 fn (cli &VSlimCliApp) free() {
-	cli_debug_log('cli_free start handlers=${cli.command_handlers.len} last_command="${cli.last_command_name}"')
 	for key, _ in cli.command_handlers {
 		mut handler := cli.command_handlers[key] or { continue }
-		cli_debug_log('cli_free release handler name="${key}" summary="${cli_debug_handler_summary(handler.to_zval())}"')
 		handler.release()
-		cli_debug_log('cli_free released handler name="${key}"')
 	}
 	if cli.core_app_ref != unsafe { nil } {
-		cli_debug_log('cli_free core_app free start')
 		cli.core_app_ref.free()
-		cli_debug_log('cli_free core_app free done')
 		unsafe {
 			free(cli.core_app_ref)
 		}
-		cli_debug_log('cli_free core_app pointer free done')
 	}
-	cli_debug_log('cli_free container free start')
 	unsafe {
 		cli.command_handlers.free()
 		cli.command_order.free()
@@ -565,5 +539,4 @@ fn (cli &VSlimCliApp) free() {
 		cli.last_option_seen.free()
 		cli.last_warnings.free()
 	}
-	cli_debug_log('cli_free done')
 }
