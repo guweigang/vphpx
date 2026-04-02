@@ -341,9 +341,13 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 		cli_debug_log('run_registered_cli_command exit name="${name}" code=${code}')
 		return code
 	}
-	if runtime.is_callable() {
+	if !input.parsed {
 		cli_debug_log('invoke_cli_command runtime=callable')
-		code = cli_command_exit_code(runtime.call_owned_request([args_z, cli_z]))
+		result := runtime.call_owned_request([args_z, cli_z])
+		if !result.is_valid() {
+			return error('command handler must be callable or expose handle(array \$args, VSlim\\Cli\\App \$cli)')
+		}
+		code = cli_command_exit_code(result)
 		cli_debug_log('invoke_cli_command callable exit code=${code}')
 		cli_debug_log('run_registered_cli_command exit name="${name}" code=${code}')
 		return code
