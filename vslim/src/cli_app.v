@@ -327,7 +327,7 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 	cli_debug_log('invoke_cli_command start args=${input.positional_args.len}')
 	args_z := cli_args_zval(input.positional_args)
 	cli_z := cli_self_zval(&cli)
-	runtime_is_command_object := runtime.is_object() && !runtime.is_instance_of('Closure')
+	runtime_is_command_object := runtime.is_object() && !cli_runtime_is_closure(runtime)
 	mut code := 0
 	if runtime_is_command_object {
 		cli_debug_log('invoke_cli_command runtime=object')
