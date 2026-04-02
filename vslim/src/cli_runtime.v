@@ -630,17 +630,20 @@ fn cli_runtime_apply_bootstrap(mut cli VSlimCliApp, bootstrap_file string, boots
 
 @[php_method: 'helpText']
 pub fn (mut cli VSlimCliApp) help_text() string {
+	cli_debug_log('help_text cli=${usize(&cli)} core=${usize(cli.core_app_ref)}')
 	return cli_runtime_help_text(mut cli, 'vslim')
 }
 
 @[php_method: 'commandHelp']
 pub fn (mut cli VSlimCliApp) command_help(command_name string) string {
+	cli_debug_log('command_help cli=${usize(&cli)} core=${usize(cli.core_app_ref)} command="${command_name}"')
 	return cli_command_help_text(mut cli, 'vslim', command_name) or { '' }
 }
 
 @[php_arg_type: 'argv=iterable']
 @[php_method: 'runArgv']
 pub fn (mut cli VSlimCliApp) run_argv(argv vphp.BorrowedValue) int {
+	cli_debug_log('run_argv enter cli=${usize(&cli)} core=${usize(cli.core_app_ref)}')
 	argv_list := cli_args_to_array(argv.to_zval()) or {
 		vphp.throw_exception_class('InvalidArgumentException', 'argv must be iterable',
 			0)
@@ -709,5 +712,6 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.BorrowedValue) int {
 			vphp.report_error(vphp.e_warning, warning)
 		}
 	}
+	cli_debug_log('run_argv exit cli=${usize(&cli)} code=${code}')
 	return code
 }

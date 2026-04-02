@@ -21,6 +21,7 @@ fn new_cli_core_app() &VSlimApp {
 fn ensure_cli_core_app(mut cli VSlimCliApp) &VSlimApp {
 	if cli.core_app_ref == unsafe { nil } {
 		cli.core_app_ref = new_cli_core_app()
+		cli_debug_log('ensure_cli_core_app new cli=${usize(&cli)} core=${usize(cli.core_app_ref)}')
 	}
 	if !cli.core_app_zref.to_zval().is_valid() && cli.core_app_ref != unsafe { nil } {
 		unsafe {
@@ -28,6 +29,7 @@ fn ensure_cli_core_app(mut cli VSlimCliApp) &VSlimApp {
 			vphp.return_owned_object_raw(payload.raw, cli.core_app_ref, C.vslim__app_ce,
 				&C.vphp_class_handlers(vslimapp_handlers()))
 			cli.core_app_zref = vphp.PersistentOwnedZVal.from_zval(payload)
+			cli_debug_log('ensure_cli_core_app bind cli=${usize(&cli)} core=${usize(cli.core_app_ref)} payload=${usize(payload.raw)}')
 		}
 	}
 	return cli.core_app_ref
@@ -370,6 +372,7 @@ pub fn (mut cli VSlimCliApp) construct() &VSlimCliApp {
 	ensure_cli_registry(mut cli)
 	cli.project_root = ''
 	reset_cli_command_input(mut cli)
+	cli_debug_log('cli.construct cli=${usize(&cli)} core=${usize(cli.core_app_ref)}')
 	return &cli
 }
 
@@ -544,7 +547,7 @@ pub fn (mut cli VSlimCliApp) run(name string, args vphp.BorrowedValue) int {
 }
 
 fn (mut cli VSlimCliApp) free() {
-	cli_debug_log('cli.free enter handlers=${cli.command_handlers.len} core_valid=${cli.core_app_zref.is_valid()} core_raw=${usize(cli.core_app_zref.to_zval().raw)}')
+	cli_debug_log('cli.free enter cli=${usize(&cli)} core=${usize(cli.core_app_ref)} handlers=${cli.command_handlers.len} core_valid=${cli.core_app_zref.is_valid()} core_raw=${usize(cli.core_app_zref.to_zval().raw)}')
 	mut handler_names := []string{}
 	for key, _ in cli.command_handlers {
 		handler_names << key.clone()

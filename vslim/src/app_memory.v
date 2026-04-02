@@ -1,6 +1,7 @@
 module main
 
 fn (app &VSlimApp) free() {
+	cli_debug_log('app.free enter app=${usize(app)} routes=${app.routes.len} ws_routes=${app.websocket_routes.len} providers=${app.providers.len} modules=${app.modules.len} helpers=${app.view_helpers.len}')
 	for i in 0 .. app.php_middlewares.len {
 		mut z := app.php_middlewares[i]
 		z.release()
@@ -87,4 +88,5 @@ fn (app &VSlimApp) free() {
 		app.modules.free()
 		app.module_classes.free()
 	}
+	cli_debug_log('app.free exit app=${usize(app)}')
 }
