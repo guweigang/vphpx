@@ -27,7 +27,7 @@ fn ensure_cli_core_app(mut cli VSlimCliApp) &VSlimApp {
 
 fn ensure_cli_registry(mut cli VSlimCliApp) {
 	if cli.command_handlers.len == 0 {
-		cli.command_handlers = map[string]vphp.RequestOwnedZVal{}
+		cli.command_handlers = map[string]vphp.PersistentOwnedZVal{}
 	}
 	if cli.command_order.len == 0 {
 		cli.command_order = []string{}
@@ -291,7 +291,7 @@ fn apply_cli_command_metadata(mut cli VSlimCliApp, canonical_name string, handle
 		if alias_name in cli.command_handlers {
 			continue
 		}
-		cli.command_handlers[alias_name] = vphp.RequestOwnedZVal.from_zval(handler_z)
+		cli.command_handlers[alias_name] = vphp.PersistentOwnedZVal.from_zval(handler_z)
 		cli.command_canonical[alias_name] = canonical.clone()
 		registered_aliases << alias_name.clone()
 	}
@@ -383,7 +383,7 @@ pub fn (mut cli VSlimCliApp) command(name string, handler vphp.BorrowedValue) &V
 		cli.command_order << command_name.clone()
 	}
 	clear_cli_command_metadata(mut cli, command_name)
-	cli.command_handlers[command_name] = vphp.RequestOwnedZVal.from_zval(handler_z)
+	cli.command_handlers[command_name] = vphp.PersistentOwnedZVal.from_zval(handler_z)
 	cli.command_canonical[command_name] = command_name.clone()
 	apply_cli_command_metadata(mut cli, command_name, handler_z) or {
 		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
