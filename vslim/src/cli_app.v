@@ -22,6 +22,14 @@ fn ensure_cli_core_app(mut cli VSlimCliApp) &VSlimApp {
 	if cli.core_app_ref == unsafe { nil } {
 		cli.core_app_ref = new_cli_core_app()
 	}
+	if !cli.core_app_zref.to_zval().is_valid() && cli.core_app_ref != unsafe { nil } {
+		unsafe {
+			mut payload := vphp.RequestOwnedZVal.new_null().to_zval()
+			vphp.return_owned_object_raw(payload.raw, cli.core_app_ref, C.vslim__app_ce,
+				&C.vphp_class_handlers(vslimapp_handlers()))
+			cli.core_app_zref = vphp.PersistentOwnedZVal.from_zval(payload)
+		}
+	}
 	return cli.core_app_ref
 }
 
@@ -533,12 +541,8 @@ fn (cli &VSlimCliApp) free() {
 		mut handler := cli.command_handlers[key] or { continue }
 		handler.release()
 	}
-	if cli.core_app_ref != unsafe { nil } {
-		cli.core_app_ref.free()
-		unsafe {
-			free(cli.core_app_ref)
-		}
-	}
+	mut core_app_zref := cli.core_app_zref
+	core_app_zref.release()
 	unsafe {
 		cli.command_handlers.free()
 		cli.command_order.free()

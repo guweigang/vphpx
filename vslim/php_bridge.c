@@ -546,6 +546,7 @@ static int vslim__cli__app_register_class(void) {
         vslim__cli__app_ce = zend_register_internal_class(&ce);
         vslim__cli__app_ce->create_object = vphp_create_object_handler;
         zend_declare_property_null(vslim__cli__app_ce, "core_app_ref", sizeof("core_app_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__cli__app_ce, "core_app_zref", sizeof("core_app_zref")-1, ZEND_ACC_PROTECTED);
         zend_declare_property_null(vslim__cli__app_ce, "command_handlers", sizeof("command_handlers")-1, ZEND_ACC_PROTECTED);
         zend_declare_property_null(vslim__cli__app_ce, "command_order", sizeof("command_order")-1, ZEND_ACC_PROTECTED);
         zend_declare_property_null(vslim__cli__app_ce, "command_aliases", sizeof("command_aliases")-1, ZEND_ACC_PROTECTED);
