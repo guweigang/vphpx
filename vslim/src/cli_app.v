@@ -335,16 +335,6 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 			return code
 		}
 	}
-	if runtime.is_object() && runtime.is_callable() && runtime.method_exists('__invoke') {
-		cli_debug_log('invoke_cli_command runtime=invoke-object')
-		code = cli_command_exit_code(runtime.method_owned_request('__invoke', [
-			args_z,
-			cli_z,
-		]))
-		cli_debug_log('invoke_cli_command invoke-object exit code=${code}')
-		cli_debug_log('run_registered_cli_command exit name="${name}" code=${code}')
-		return code
-	}
 	if runtime.is_callable() {
 		cli_debug_log('invoke_cli_command runtime=callable')
 		code = cli_command_exit_code(runtime.call_owned_request([args_z, cli_z]))
