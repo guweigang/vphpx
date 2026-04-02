@@ -7,7 +7,7 @@ import vphp
 struct VSlimCliApp {
 mut:
 	core_app_ref      &VSlimApp = unsafe { nil }
-	command_handlers  map[string]vphp.PersistentOwnedZVal
+	command_handlers  map[string]vphp.RequestOwnedZVal
 	command_order     []string
 	command_aliases   map[string][]string
 	command_hidden    map[string]bool
