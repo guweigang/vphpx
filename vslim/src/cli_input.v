@@ -735,15 +735,8 @@ fn cli_runtime_bool_method(runtime vphp.ZVal, method_name string, fallback bool)
 		fallback)
 }
 
-fn cli_runtime_is_closure(runtime vphp.ZVal) bool {
-	if !runtime.is_valid() || !runtime.is_object() {
-		return false
-	}
-	return runtime.class_name() == 'Closure'
-}
-
 fn bind_cli_runtime_to_command(mut cli VSlimCliApp, runtime vphp.ZVal) {
-	if !runtime.is_valid() || !runtime.is_object() || cli_runtime_is_closure(runtime) {
+	if !runtime.is_valid() || !runtime.is_object() {
 		return
 	}
 	cli_z := cli_self_zval(&cli)
@@ -758,8 +751,7 @@ fn bind_cli_runtime_to_command(mut cli VSlimCliApp, runtime vphp.ZVal) {
 
 fn resolve_cli_command_input(mut cli VSlimCliApp, runtime vphp.ZVal, raw_args []string) !CliCommandInput {
 	bind_cli_runtime_to_command(mut cli, runtime)
-	if !runtime.is_valid() || !runtime.is_object() || cli_runtime_is_closure(runtime)
-		|| !runtime.method_exists('definition') {
+	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists('definition') {
 		return CliCommandInput{
 			positional_args: raw_args.clone()
 			arguments:       map[string]vphp.DynValue{}
