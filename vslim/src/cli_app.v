@@ -284,11 +284,15 @@ fn cli_command_metadata_hidden(runtime vphp.ZVal) bool {
 fn apply_cli_command_metadata(mut cli VSlimCliApp, canonical_name string, handler_z vphp.ZVal) ! {
 	canonical := canonical_name.trim_space().clone()
 	clear_cli_command_metadata(mut cli, canonical)
+	cli.command_canonical[canonical] = canonical.clone()
+	if handler_z.is_valid() && handler_z.is_object() && handler_z.class_name() == 'Closure' {
+		cli.command_hidden[canonical] = false
+		return
+	}
 	mut runtime := resolve_cli_command_runtime(mut cli, handler_z)!
 	defer {
 		runtime.release()
 	}
-	cli.command_canonical[canonical] = canonical.clone()
 	cli.command_hidden[canonical] = cli_command_metadata_hidden(runtime)
 	aliases := cli_command_metadata_aliases(runtime)
 	if aliases.len == 0 {
