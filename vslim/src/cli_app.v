@@ -10,9 +10,9 @@ fn new_cli_core_app() &VSlimApp {
 		error_handler:     vphp.PersistentOwnedZVal.new_null()
 		clock_ref:         vphp.PersistentOwnedZVal.new_null()
 		view_helpers:      map[string]vphp.PersistentOwnedZVal{}
-		providers:         []vphp.PersistentOwnedZVal{}
+		providers:         []vphp.RetainedObject{}
 		provider_classes:  map[string]bool{}
-		modules:           []vphp.PersistentOwnedZVal{}
+		modules:           []vphp.RetainedObject{}
 		module_classes:    map[string]bool{}
 		live_ws_sockets:   map[string]vphp.PersistentOwnedZVal{}
 	}

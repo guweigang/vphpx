@@ -111,7 +111,10 @@ fn register_module_zval(mut app VSlimApp, module_z vphp.ZVal) ! {
 	bind_module_to_app(module_z, app_z)
 	call_module_lifecycle(module_z, 'register', app_z)!
 	register_module_providers(mut app, module_z, app_z)!
-	app.modules << vphp.PersistentOwnedZVal.from_zval(module_z)
+	retained := vphp.RetainedObject.from_zval(module_z) or {
+		return error('module "${class_key}" could not be retained')
+	}
+	app.modules << retained
 	app.module_classes[class_key] = true
 	if app.booted {
 		boot_module_zval(mut app, module_z)!

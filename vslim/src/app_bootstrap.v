@@ -90,7 +90,10 @@ fn register_service_provider_zval(mut app VSlimApp, provider_z vphp.ZVal) ! {
 	}
 	bind_provider_to_app(provider_z, app_z)
 	call_provider_lifecycle(provider_z, 'register', app_z)!
-	app.providers << vphp.PersistentOwnedZVal.from_zval(provider_z)
+	retained := vphp.RetainedObject.from_zval(provider_z) or {
+		return error('provider "${class_key}" could not be retained')
+	}
+	app.providers << retained
 	app.provider_classes[class_key] = true
 	if app.booted {
 		call_provider_lifecycle(provider_z, 'boot', app_z)!
@@ -147,7 +150,7 @@ pub fn (mut app VSlimApp) boot() &VSlimApp {
 	ensure_module_registry(mut app)
 	app_z := app_self_zval(&app)
 	for provider in app.providers {
-		provider_z := provider.clone_request_owned().to_zval()
+		provider_z := provider.to_request_owned_zval()
 		bind_provider_to_app(provider_z, app_z)
 		call_provider_lifecycle(provider_z, 'boot', app_z) or {
 			vphp.throw_exception_class('RuntimeException', err.msg(), 0)
@@ -155,7 +158,7 @@ pub fn (mut app VSlimApp) boot() &VSlimApp {
 		}
 	}
 	for mod_ref in app.modules {
-		module_z := mod_ref.clone_request_owned().to_zval()
+		module_z := mod_ref.to_request_owned_zval()
 		boot_module_zval(mut app, module_z) or {
 			vphp.throw_exception_class('RuntimeException', err.msg(), 0)
 			return &app

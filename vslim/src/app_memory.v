@@ -64,14 +64,14 @@ fn (app &VSlimApp) free() {
 	cli_debug_log('app.free release terminal handlers done app=${usize(app)}')
 	cli_debug_log('app.free release providers begin app=${usize(app)} count=${app.providers.len}')
 	for provider in app.providers {
-		mut owned := provider
-		owned.release()
+		mut retained := provider
+		retained.release()
 	}
 	cli_debug_log('app.free release providers done app=${usize(app)}')
 	cli_debug_log('app.free release modules begin app=${usize(app)} count=${app.modules.len}')
 	for mod_ref in app.modules {
-		mut owned := mod_ref
-		owned.release()
+		mut retained := mod_ref
+		retained.release()
 	}
 	cli_debug_log('app.free release modules done app=${usize(app)}')
 	cli_debug_log('app.free release view helpers begin app=${usize(app)} count=${app.view_helpers.len}')

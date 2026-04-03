@@ -118,9 +118,9 @@ mut:
 	cache_ref               &VSlimPsr16Cache            = unsafe { nil }
 	cache_pool_ref          &VSlimPsr6CacheItemPool     = unsafe { nil }
 	http_client_ref         &VSlimPsr18Client           = unsafe { nil }
-	providers               []vphp.PersistentOwnedZVal
+	providers               []vphp.RetainedObject
 	provider_classes        map[string]bool
-	modules                 []vphp.PersistentOwnedZVal
+	modules                 []vphp.RetainedObject
 	module_classes          map[string]bool
 	booted                  bool
 	live_ws_sockets         map[string]vphp.PersistentOwnedZVal
