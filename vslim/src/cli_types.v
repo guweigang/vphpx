@@ -21,4 +21,5 @@ mut:
 	last_option_seen  map[string]bool
 	last_warnings     []string
 	last_input_parsed bool
+	current_trace     string
 }
