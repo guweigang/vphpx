@@ -90,8 +90,11 @@ fn (mut c VSlimContainer) get_entry(id string) !vphp.Value {
 	}
 	if id in c.factories {
 		factory_owned := c.factories[id] or { return error('entry "${id}" not found') }
-		factory := factory_owned.to_zval()
-		res := factory.call_owned_request([])
+		mut factory := factory_owned.clone_request_owned()
+		defer {
+			factory.release()
+		}
+		res := factory.to_zval().call_owned_request([])
 		if !res.is_valid() {
 			return error('factory "${id}" returned invalid value')
 		}

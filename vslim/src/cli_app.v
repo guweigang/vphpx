@@ -191,8 +191,7 @@ fn lookup_cli_command_handler(cli &VSlimCliApp, name string) !vphp.ZVal {
 }
 
 fn cli_release_command_handler(mut handler vphp.PersistentOwnedZVal) {
-	raw := handler.to_zval()
-	if raw.is_valid() && raw.is_object() {
+	if handler.is_object() {
 		return
 	}
 	handler.release()
