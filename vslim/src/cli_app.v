@@ -363,15 +363,16 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 	mut args_z := vphp.ZVal.new_null()
 	args_z.array_init()
 	cli_debug_log('[${trace}] invoke_cli_command args_array_init raw=${usize(args_z.raw)}')
-	for idx := 0; idx < args_copy.len; idx++ {
-		cli_debug_log('[${trace}] invoke_cli_command args_read_begin idx=${idx}')
-		arg_raw := args_copy[idx]
-		cli_debug_log('[${trace}] invoke_cli_command args_read_done idx=${idx} len=${arg_raw.len}')
+	mut arg_idx := 0
+	for arg_raw in args_copy {
+		cli_debug_log('[${trace}] invoke_cli_command args_iter_begin idx=${arg_idx}')
+		cli_debug_log('[${trace}] invoke_cli_command args_read_done idx=${arg_idx} len=${arg_raw.len}')
 		arg := arg_raw.clone()
-		cli_debug_log('[${trace}] invoke_cli_command args_clone_done idx=${idx} value="${arg}"')
-		cli_debug_log('[${trace}] invoke_cli_command args_push_begin idx=${idx}')
+		cli_debug_log('[${trace}] invoke_cli_command args_clone_done idx=${arg_idx} value="${arg}"')
+		cli_debug_log('[${trace}] invoke_cli_command args_push_begin idx=${arg_idx}')
 		args_z.push_string(arg)
-		cli_debug_log('[${trace}] invoke_cli_command args_push_done idx=${idx} raw=${usize(args_z.raw)}')
+		cli_debug_log('[${trace}] invoke_cli_command args_push_done idx=${arg_idx} raw=${usize(args_z.raw)}')
+		arg_idx++
 	}
 	defer {
 		cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command args_release raw=${usize(args_z.raw)} valid=${args_z.is_valid()} type=${args_z.type_name()}'))
