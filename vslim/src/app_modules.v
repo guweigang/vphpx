@@ -42,7 +42,8 @@ fn bind_module_to_app(mod_z vphp.ZVal, app_z vphp.ZVal) {
 		return
 	}
 	if mod_z.method_exists('setApp') {
-		_ = mod_z.method_owned_request('setApp', [app_z])
+		mut result := mod_z.method_owned_request('setApp', [app_z])
+		result.release()
 	}
 }
 
@@ -51,10 +52,12 @@ fn call_module_lifecycle(mod_z vphp.ZVal, method_name string, app_z vphp.ZVal) !
 		return
 	}
 	if app_z.is_valid() && app_z.is_object() {
-		_ = mod_z.method_owned_request(method_name, [app_z])
+		mut result := mod_z.method_owned_request(method_name, [app_z])
+		result.release()
 		return
 	}
-	_ = mod_z.method_owned_request(method_name, [])
+	mut result := mod_z.method_owned_request(method_name, [])
+	result.release()
 }
 
 fn call_module_first_supported_lifecycle(mod_z vphp.ZVal, method_names []string, app_z vphp.ZVal) ! {

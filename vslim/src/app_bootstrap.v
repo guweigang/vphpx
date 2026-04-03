@@ -63,7 +63,8 @@ fn bind_provider_to_app(provider vphp.ZVal, app_z vphp.ZVal) {
 		return
 	}
 	if provider.method_exists('setApp') {
-		_ = provider.method_owned_request('setApp', [app_z])
+		mut result := provider.method_owned_request('setApp', [app_z])
+		result.release()
 	}
 }
 
@@ -72,10 +73,12 @@ fn call_provider_lifecycle(provider vphp.ZVal, method_name string, app_z vphp.ZV
 		return
 	}
 	if app_z.is_valid() && app_z.is_object() {
-		_ = provider.method_owned_request(method_name, [app_z])
+		mut result := provider.method_owned_request(method_name, [app_z])
+		result.release()
 		return
 	}
-	_ = provider.method_owned_request(method_name, [])
+	mut result := provider.method_owned_request(method_name, [])
+	result.release()
 }
 
 fn register_service_provider_zval(mut app VSlimApp, provider_z vphp.ZVal) ! {
