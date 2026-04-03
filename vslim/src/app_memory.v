@@ -2,6 +2,7 @@ module main
 
 fn (app &VSlimApp) free() {
 	cli_debug_log('app.free enter app=${usize(app)} routes=${app.routes.len} ws_routes=${app.websocket_routes.len} providers=${app.providers.len} modules=${app.modules.len} helpers=${app.view_helpers.len}')
+	cli_debug_log('app.free release middleware begin app=${usize(app)}')
 	for i in 0 .. app.php_middlewares.len {
 		mut z := app.php_middlewares[i]
 		z.release()
@@ -32,6 +33,8 @@ fn (app &VSlimApp) free() {
 			z.release()
 		}
 	}
+	cli_debug_log('app.free release middleware done app=${usize(app)}')
+	cli_debug_log('app.free release route handlers begin app=${usize(app)}')
 	for i in 0 .. app.routes.len {
 		unsafe {
 			app.routes[i].method.free()
@@ -50,24 +53,33 @@ fn (app &VSlimApp) free() {
 		mut z := app.websocket_routes[i].php_handler
 		z.release()
 	}
+	cli_debug_log('app.free release route handlers done app=${usize(app)}')
+	cli_debug_log('app.free release terminal handlers begin app=${usize(app)}')
 	mut nf := app.not_found_handler
 	nf.release()
 	mut eh := app.error_handler
 	eh.release()
 	mut clock := app.clock_ref
 	clock.release()
+	cli_debug_log('app.free release terminal handlers done app=${usize(app)}')
+	cli_debug_log('app.free release providers begin app=${usize(app)} count=${app.providers.len}')
 	for provider in app.providers {
 		mut owned := provider
 		owned.release()
 	}
+	cli_debug_log('app.free release providers done app=${usize(app)}')
+	cli_debug_log('app.free release modules begin app=${usize(app)} count=${app.modules.len}')
 	for mod_ref in app.modules {
 		mut owned := mod_ref
 		owned.release()
 	}
+	cli_debug_log('app.free release modules done app=${usize(app)}')
+	cli_debug_log('app.free release view helpers begin app=${usize(app)} count=${app.view_helpers.len}')
 	for key, _ in app.view_helpers {
 		mut handler := app.view_helpers[key] or { continue }
 		release_view_helper(mut handler)
 	}
+	cli_debug_log('app.free release view helpers done app=${usize(app)}')
 	unsafe {
 		app.base_path.free()
 		app.routes.free()
@@ -88,5 +100,6 @@ fn (app &VSlimApp) free() {
 		app.modules.free()
 		app.module_classes.free()
 	}
+	cli_debug_log('app.free release collections done app=${usize(app)}')
 	cli_debug_log('app.free exit app=${usize(app)}')
 }
