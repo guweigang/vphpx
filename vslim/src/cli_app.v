@@ -142,9 +142,6 @@ fn normalize_cli_command_handler_input(raw vphp.ZVal) !vphp.ZVal {
 }
 
 fn cli_command_exit_code(mut result vphp.ZVal) int {
-	defer {
-		result.release()
-	}
 	if !result.is_valid() || result.is_null() || result.is_undef() {
 		return 0
 	}
@@ -400,6 +397,11 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 			args_z,
 			cli_z,
 		])
+		defer {
+			cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command object_handle_result_release begin raw=${usize(handle_result.raw)}'))
+			handle_result.release()
+			cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command object_handle_result_release done'))
+		}
 		code = cli_command_exit_code(mut handle_result)
 		cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command object_handle exit code=${code}'))
 		cli_debug_log(cli_trace_message(&cli, 'run_registered_cli_command exit name="${name}" code=${code}'))
@@ -409,8 +411,9 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 		cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command callable enter runtime_raw=${usize(runtime.raw)} runtime_type=${runtime.type_name()} runtime_class=${runtime.class_name()} args_raw=${usize(args_z.raw)} cli_raw=${usize(cli_z.raw)}'))
 		mut result := runtime.call_owned_request([args_z, cli_z])
 		defer {
-			cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command callable_result_release raw=${usize(result.raw)} valid=${result.is_valid()} type=${result.type_name()}'))
+			cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command callable_result_release begin raw=${usize(result.raw)}'))
 			result.release()
+			cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command callable_result_release done'))
 		}
 		cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command callable_result raw=${usize(result.raw)} valid=${result.is_valid()} type=${result.type_name()}'))
 		if !result.is_valid() {
