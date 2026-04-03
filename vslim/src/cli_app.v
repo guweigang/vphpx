@@ -339,15 +339,17 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 	cli_debug_log(cli_trace_message(&cli, 'run_registered_cli_command start name="${name}" args=${args.len}'))
 	mut handler_z := lookup_cli_command_handler(&cli, name)!
 	defer {
-		cli_debug_log(cli_trace_message(&cli, 'run_registered_cli_command handler_release raw=${usize(handler_z.raw)} valid=${handler_z.is_valid()} type=${handler_z.type_name()}'))
+		cli_debug_log(cli_trace_message(&cli, 'run_registered_cli_command handler_release begin raw=${usize(handler_z.raw)}'))
 		handler_z.release()
+		cli_debug_log(cli_trace_message(&cli, 'run_registered_cli_command handler_release done'))
 	}
 	reset_cli_command_input(mut cli)
 	cli.last_command_name = name.trim_space()
 	mut runtime := resolve_cli_command_runtime(mut cli, handler_z)!
 	defer {
-		cli_debug_log(cli_trace_message(&cli, 'run_registered_cli_command runtime_release raw=${usize(runtime.raw)} valid=${runtime.is_valid()} type=${runtime.type_name()} class=${runtime.class_name()}'))
+		cli_debug_log(cli_trace_message(&cli, 'run_registered_cli_command runtime_release begin raw=${usize(runtime.raw)}'))
 		runtime.release()
+		cli_debug_log(cli_trace_message(&cli, 'run_registered_cli_command runtime_release done'))
 	}
 	cli_debug_log(cli_trace_message(&cli, 'run_registered_cli_command runtime_ready name="${name}" raw=${usize(runtime.raw)} valid=${runtime.is_valid()} type=${runtime.type_name()} class=${runtime.class_name()}'))
 	input := resolve_cli_command_input(mut cli, runtime, args) or {
@@ -375,14 +377,16 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 		arg_idx++
 	}
 	defer {
-		cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command args_release raw=${usize(args_z.raw)} valid=${args_z.is_valid()} type=${args_z.type_name()}'))
+		cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command args_release begin raw=${usize(args_z.raw)}'))
 		args_z.release()
+		cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command args_release done'))
 	}
 	cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command args_ready raw=${usize(args_z.raw)} valid=${args_z.is_valid()} type=${args_z.type_name()}'))
 	mut cli_z := cli_self_zval(&cli)
 	defer {
-		cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command cli_release raw=${usize(cli_z.raw)} valid=${cli_z.is_valid()} type=${cli_z.type_name()} class=${cli_z.class_name()}'))
+		cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command cli_release begin raw=${usize(cli_z.raw)}'))
 		cli_z.release()
+		cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command cli_release done'))
 	}
 	cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command cli_ready raw=${usize(cli_z.raw)} valid=${cli_z.is_valid()} type=${cli_z.type_name()}'))
 	runtime_is_command_object := input.parsed && runtime.is_object() && runtime.method_exists('handle')
