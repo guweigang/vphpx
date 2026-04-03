@@ -760,11 +760,15 @@ fn bind_cli_runtime_to_command(mut cli VSlimCliApp, runtime vphp.ZVal) {
 	}
 	cli_z := cli_self_zval(&cli)
 	if runtime.method_exists('setCli') {
-		_ = runtime.method_owned_request('setCli', [cli_z])
+		mut set_cli_result := vphp.RequestOwnedZVal.from_zval(runtime.method_owned_request('setCli',
+			[cli_z]))
+		set_cli_result.release()
 	}
 	if runtime.method_exists('setApp') {
 		app_z := app_self_zval(ensure_cli_core_app(mut cli))
-		_ = runtime.method_owned_request('setApp', [app_z])
+		mut set_app_result := vphp.RequestOwnedZVal.from_zval(runtime.method_owned_request('setApp',
+			[app_z]))
+		set_app_result.release()
 	}
 }
 
