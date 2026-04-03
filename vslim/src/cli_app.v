@@ -166,25 +166,6 @@ fn cli_args_to_array(raw vphp.ZVal) ![]string {
 	return out
 }
 
-fn cli_args_zval(trace string, args []string) vphp.ZVal {
-	cli_debug_log('[${trace}] cli_args_zval enter len=${args.len}')
-	mut out := vphp.ZVal.new_null()
-	out.array_init()
-	cli_debug_log('[${trace}] cli_args_zval array_init raw=${usize(out.raw)}')
-	for idx := 0; idx < args.len; idx++ {
-		cli_debug_log('[${trace}] cli_args_zval read_begin idx=${idx}')
-		arg_raw := args[idx]
-		cli_debug_log('[${trace}] cli_args_zval read_done idx=${idx} len=${arg_raw.len}')
-		arg := arg_raw.clone()
-		cli_debug_log('[${trace}] cli_args_zval clone_done idx=${idx} value="${arg}"')
-		cli_debug_log('[${trace}] cli_args_zval push_begin idx=${idx}')
-		out.push_string(arg)
-		cli_debug_log('[${trace}] cli_args_zval pushed idx=${idx} raw=${usize(out.raw)}')
-	}
-	cli_debug_log('[${trace}] cli_args_zval exit raw=${usize(out.raw)} valid=${out.is_valid()} type=${out.type_name()}')
-	return out
-}
-
 fn resolve_cli_command_runtime(mut cli VSlimCliApp, handler_z vphp.ZVal) !vphp.ZVal {
 	if handler_z.is_valid() && handler_z.is_string() {
 		class_name := handler_z.to_string().trim_space()
@@ -377,7 +358,20 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 	cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command start args=${input.positional_args.len}'))
 	args_copy := input.positional_args.clone()
 	cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command args_copy len=${args_copy.len}'))
-	mut args_z := cli_args_zval(cli_trace_label(&cli), args_copy)
+	trace := cli_trace_label(&cli)
+	mut args_z := vphp.ZVal.new_null()
+	args_z.array_init()
+	cli_debug_log('[${trace}] invoke_cli_command args_array_init raw=${usize(args_z.raw)}')
+	for idx := 0; idx < args_copy.len; idx++ {
+		cli_debug_log('[${trace}] invoke_cli_command args_read_begin idx=${idx}')
+		arg_raw := args_copy[idx]
+		cli_debug_log('[${trace}] invoke_cli_command args_read_done idx=${idx} len=${arg_raw.len}')
+		arg := arg_raw.clone()
+		cli_debug_log('[${trace}] invoke_cli_command args_clone_done idx=${idx} value="${arg}"')
+		cli_debug_log('[${trace}] invoke_cli_command args_push_begin idx=${idx}')
+		args_z.push_string(arg)
+		cli_debug_log('[${trace}] invoke_cli_command args_push_done idx=${idx} raw=${usize(args_z.raw)}')
+	}
 	defer {
 		cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command args_release raw=${usize(args_z.raw)} valid=${args_z.is_valid()} type=${args_z.type_name()}'))
 		args_z.release()
