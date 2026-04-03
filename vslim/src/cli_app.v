@@ -354,9 +354,10 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 		return cli_command_input_error(runtime, program, name.trim_space(), err.msg())
 	}
 	cli_debug_log(cli_trace_message(&cli, 'run_registered_cli_command input_ready name="${name}" parsed=${input.parsed} positional=${input.positional_args.len}'))
+	args_copy := input.positional_args.clone()
+	cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command args_copy_pre_set len=${args_copy.len}'))
 	set_cli_command_input(mut cli, name.trim_space(), input)
 	cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command start args=${input.positional_args.len}'))
-	args_copy := input.positional_args.clone()
 	cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command args_copy len=${args_copy.len}'))
 	trace := cli_trace_label(&cli)
 	mut args_z := vphp.ZVal.new_null()
