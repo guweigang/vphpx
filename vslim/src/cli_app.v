@@ -179,7 +179,7 @@ fn resolve_cli_command_runtime(mut cli VSlimCliApp, handler_z vphp.ZVal) !vphp.Z
 		}
 		return command
 	}
-	return handler_z
+	return vphp.RequestOwnedZVal.from_zval(handler_z).to_zval()
 }
 
 fn lookup_cli_command_handler(cli &VSlimCliApp, name string) !vphp.ZVal {
@@ -284,7 +284,10 @@ fn cli_command_metadata_hidden(runtime vphp.ZVal) bool {
 fn apply_cli_command_metadata(mut cli VSlimCliApp, canonical_name string, handler_z vphp.ZVal) ! {
 	canonical := canonical_name.trim_space().clone()
 	clear_cli_command_metadata(mut cli, canonical)
-	runtime := resolve_cli_command_runtime(mut cli, handler_z)!
+	mut runtime := resolve_cli_command_runtime(mut cli, handler_z)!
+	defer {
+		runtime.release()
+	}
 	cli.command_canonical[canonical] = canonical.clone()
 	cli.command_hidden[canonical] = cli_command_metadata_hidden(runtime)
 	aliases := cli_command_metadata_aliases(runtime)
@@ -315,10 +318,16 @@ fn apply_cli_command_metadata(mut cli VSlimCliApp, canonical_name string, handle
 
 fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, args []string, program string) !int {
 	cli_debug_log('run_registered_cli_command start name="${name}" args=${args.len}')
-	handler_z := lookup_cli_command_handler(&cli, name)!
+	mut handler_z := lookup_cli_command_handler(&cli, name)!
+	defer {
+		handler_z.release()
+	}
 	reset_cli_command_input(mut cli)
 	cli.last_command_name = name.trim_space()
-	runtime := resolve_cli_command_runtime(mut cli, handler_z)!
+	mut runtime := resolve_cli_command_runtime(mut cli, handler_z)!
+	defer {
+		runtime.release()
+	}
 	cli_debug_log('run_registered_cli_command runtime_ready name="${name}"')
 	input := resolve_cli_command_input(mut cli, runtime, args) or {
 		return cli_command_input_error(runtime, program, name.trim_space(), err.msg())
@@ -326,9 +335,15 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 	cli_debug_log('run_registered_cli_command input_ready name="${name}" parsed=${input.parsed} positional=${input.positional_args.len}')
 	set_cli_command_input(mut cli, name.trim_space(), input)
 	cli_debug_log('invoke_cli_command start args=${input.positional_args.len}')
-	args_z := cli_args_zval(input.positional_args)
+	mut args_z := cli_args_zval(input.positional_args)
+	defer {
+		args_z.release()
+	}
 	cli_debug_log('invoke_cli_command args_ready raw=${usize(args_z.raw)} valid=${args_z.is_valid()} type=${args_z.type_name()}')
-	cli_z := cli_self_zval(&cli)
+	mut cli_z := cli_self_zval(&cli)
+	defer {
+		cli_z.release()
+	}
 	cli_debug_log('invoke_cli_command cli_ready raw=${usize(cli_z.raw)} valid=${cli_z.is_valid()} type=${cli_z.type_name()}')
 	runtime_is_command_object := input.parsed && runtime.is_object() && runtime.method_exists('handle')
 	mut code := 0

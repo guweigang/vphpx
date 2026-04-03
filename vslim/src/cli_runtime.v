@@ -378,15 +378,27 @@ fn cli_command_summary_text_from_runtime(runtime vphp.ZVal) string {
 }
 
 fn cli_command_summary_text(mut cli VSlimCliApp, command_name string) !string {
-	handler_z := lookup_cli_command_handler(&cli, command_name)!
-	runtime := resolve_cli_command_runtime(mut cli, handler_z)!
+	mut handler_z := lookup_cli_command_handler(&cli, command_name)!
+	defer {
+		handler_z.release()
+	}
+	mut runtime := resolve_cli_command_runtime(mut cli, handler_z)!
+	defer {
+		runtime.release()
+	}
 	return cli_command_summary_text_from_runtime(runtime)
 }
 
 fn cli_command_help_text(mut cli VSlimCliApp, program string, command_name string) !string {
 	cli_debug_log('command_help_text start command="${command_name}" program="${program}"')
-	handler_z := lookup_cli_command_handler(&cli, command_name)!
-	runtime := resolve_cli_command_runtime(mut cli, handler_z)!
+	mut handler_z := lookup_cli_command_handler(&cli, command_name)!
+	defer {
+		handler_z.release()
+	}
+	mut runtime := resolve_cli_command_runtime(mut cli, handler_z)!
+	defer {
+		runtime.release()
+	}
 	cli_debug_log('command_help_text runtime_ready command="${command_name}"')
 	return cli_command_help_text_from_runtime(runtime, program, command_name)
 }
