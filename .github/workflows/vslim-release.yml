@@ -2,12 +2,25 @@ name: VSlim Release
 
 on:
   workflow_dispatch:
+    inputs:
+      bundle_target:
+        description: Bundle target to build during manual dispatch
+        required: false
+        default: all
+        type: choice
+        options:
+          - all
+          - linux-amd64
+          - macos-amd64
+          - macos-arm64
+          - windows-amd64
   push:
     tags:
       - 'vslim-*'
 
 jobs:
   package:
+    if: github.event_name != 'workflow_dispatch' || inputs.bundle_target == 'all' || matrix.platform == inputs.bundle_target
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
     strategy:
