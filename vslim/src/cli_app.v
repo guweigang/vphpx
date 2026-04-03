@@ -375,7 +375,9 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 	cli_debug_log(cli_trace_message(&cli, 'run_registered_cli_command input_ready name="${name}" parsed=${input.parsed} positional=${input.positional_args.len}'))
 	set_cli_command_input(mut cli, name.trim_space(), input)
 	cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command start args=${input.positional_args.len}'))
-	mut args_z := cli_args_zval(cli_trace_label(&cli), input.positional_args)
+	args_copy := input.positional_args.clone()
+	cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command args_copy len=${args_copy.len}'))
+	mut args_z := cli_args_zval(cli_trace_label(&cli), args_copy)
 	defer {
 		cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command args_release raw=${usize(args_z.raw)} valid=${args_z.is_valid()} type=${args_z.type_name()}'))
 		args_z.release()
