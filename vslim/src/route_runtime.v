@@ -219,7 +219,11 @@ fn (app &VSlimApp) websocket_route_index(path string) (int, bool) {
 }
 
 fn dispatch_websocket_route_handler(app &VSlimApp, route VSlimRoute, event string, frame vphp.ZVal, conn vphp.ZVal) vphp.ZVal {
-	handler := route.php_handler.borrowed()
+	mut handler_ref := route.php_handler.clone_request_owned()
+	defer {
+		handler_ref.release()
+	}
+	handler := handler_ref.borrowed()
 	if !handler.is_valid() {
 		return vphp.RequestOwnedZVal.new_null().to_zval()
 	}

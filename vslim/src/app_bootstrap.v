@@ -150,19 +150,31 @@ pub fn (mut app VSlimApp) boot() &VSlimApp {
 	ensure_module_registry(mut app)
 	app_z := app_self_zval(&app)
 	for provider in app.providers {
-		provider_z := provider.to_request_owned_zval()
-		bind_provider_to_app(provider_z, app_z)
-		call_provider_lifecycle(provider_z, 'boot', app_z) or {
+		mut provider_z := vphp.RequestOwnedZVal{
+			ZValViewState: vphp.ZValViewState{
+				z: provider.to_request_owned_zval()
+			}
+		}
+		bind_provider_to_app(provider_z.to_zval(), app_z)
+		call_provider_lifecycle(provider_z.to_zval(), 'boot', app_z) or {
+			provider_z.release()
 			vphp.throw_exception_class('RuntimeException', err.msg(), 0)
 			return &app
 		}
+		provider_z.release()
 	}
 	for mod_ref in app.modules {
-		module_z := mod_ref.to_request_owned_zval()
-		boot_module_zval(mut app, module_z) or {
+		mut module_z := vphp.RequestOwnedZVal{
+			ZValViewState: vphp.ZValViewState{
+				z: mod_ref.to_request_owned_zval()
+			}
+		}
+		boot_module_zval(mut app, module_z.to_zval()) or {
+			module_z.release()
 			vphp.throw_exception_class('RuntimeException', err.msg(), 0)
 			return &app
 		}
+		module_z.release()
 	}
 	app.booted = true
 	return &app

@@ -134,7 +134,7 @@ fn collect_matching_route_hooks(table HookTable, path string) []vphp.RequestOwne
 	mut out := []vphp.RequestOwnedZVal{}
 	for i, prefix in table.prefixes {
 		if path_has_prefix(path, prefix) && i < table.handlers.len {
-			out << table.handlers[i].borrowed().clone_request_owned()
+			out << table.handlers[i].clone_request_owned()
 		}
 	}
 	return out
@@ -143,7 +143,7 @@ fn collect_matching_route_hooks(table HookTable, path string) []vphp.RequestOwne
 fn collect_registered_middlewares(app_hooks []vphp.PersistentOwnedZVal, group_hooks []vphp.RequestOwnedZVal) []vphp.RequestOwnedZVal {
 	mut out := []vphp.RequestOwnedZVal{}
 	for hook in app_hooks {
-		out << hook.borrowed().clone_request_owned()
+		out << hook.clone_request_owned()
 	}
 	for hook in group_hooks {
 		out << hook.borrowed().clone_request_owned()

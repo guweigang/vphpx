@@ -20,9 +20,9 @@ fn build_php_psr15_next_handler_object(chain &MiddlewareChain) vphp.ZVal {
 fn dispatch_php_middleware_chain(app &VSlimApp, path string, payload vphp.BorrowedZVal, route_middle []vphp.RequestOwnedZVal, route_handler vphp.PersistentOwnedZVal, resource_action string, resource_missing_handler vphp.PersistentOwnedZVal, route_params map[string]string) !(vphp.ZVal, vphp.RequestOwnedZVal) {
 	return dispatch_php_middleware_chain_with_plan(app, path, payload, route_middle, RawDispatchPlan{
 		route_params:             route_params.clone()
-		route_handler:            route_handler.borrowed().clone_persistent_owned()
+		route_handler:            route_handler.clone_persistent_owned()
 		resource_action:          resource_action
-		resource_missing_handler: resource_missing_handler.borrowed().clone_persistent_owned()
+		resource_missing_handler: resource_missing_handler.clone_persistent_owned()
 	})
 }
 

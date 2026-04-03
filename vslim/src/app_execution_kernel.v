@@ -73,9 +73,9 @@ fn clone_raw_dispatch_plan(plan RawDispatchPlan) RawDispatchPlan {
 	return RawDispatchPlan{
 		route_params:             plan.route_params.clone()
 		terminal_meta:            plan.terminal_meta
-		route_handler:            plan.route_handler.borrowed().clone_persistent_owned()
+		route_handler:            plan.route_handler.clone_persistent_owned()
 		resource_action:          plan.resource_action
-		resource_missing_handler: plan.resource_missing_handler.borrowed().clone_persistent_owned()
+		resource_missing_handler: plan.resource_missing_handler.clone_persistent_owned()
 	}
 }
 
@@ -94,7 +94,11 @@ fn resolve_raw_route_response(app &VSlimApp, ctx PipelineRequestContext, raw_res
 	if raw_res.is_valid() && !raw_res.is_null() && !raw_res.is_undef() {
 		return raw_res
 	}
-	missing_raw := dispatch_resource_missing_meta(plan.resource_action, plan.resource_missing_handler.borrowed(),
+	mut missing_handler := plan.resource_missing_handler.clone_request_owned()
+	defer {
+		missing_handler.release()
+	}
+	missing_raw := dispatch_resource_missing_meta(plan.resource_action, missing_handler.borrowed(),
 		ctx.payload_ref.borrowed(), ctx.route_params)
 	if missing_raw.is_valid() && !missing_raw.is_null() && !missing_raw.is_undef() {
 		return missing_raw
@@ -106,7 +110,11 @@ fn execute_raw_dispatch_plan(app &VSlimApp, ctx PipelineRequestContext, plan Raw
 	if raw_dispatch_plan_has_terminal(plan) {
 		return build_php_response_object(build_terminal_response(app, ctx, plan.terminal_meta))
 	}
-	raw_res := dispatch_route_handler(app, plan.route_handler.borrowed(), ctx.payload_ref.borrowed(),
+	mut route_handler := plan.route_handler.clone_request_owned()
+	defer {
+		route_handler.release()
+	}
+	raw_res := dispatch_route_handler(app, route_handler.borrowed(), ctx.payload_ref.borrowed(),
 		ctx.route_params)!
 	return resolve_raw_route_response(app, ctx, raw_res, plan)
 }
