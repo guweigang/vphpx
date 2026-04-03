@@ -373,7 +373,7 @@ pub fn (mut cli VSlimCliApp) construct() &VSlimCliApp {
 @[php_return_type: 'VSlim\\App']
 @[php_method]
 pub fn (mut cli VSlimCliApp) app() vphp.Value {
-	return vphp.Value.from_zval(wrap_runtime_app_zval(ensure_cli_core_app(mut cli)))
+	return vphp.Value.adopt_request_zval(wrap_runtime_app_zval(ensure_cli_core_app(mut cli)))
 }
 
 @[php_method]

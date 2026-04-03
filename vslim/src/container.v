@@ -99,7 +99,7 @@ fn (mut c VSlimContainer) get_entry(id string) !vphp.Value {
 			return error('factory "${id}" returned invalid value')
 		}
 		c.resolved[id] = vphp.PersistentOwnedZVal.from_zval(res)
-		return vphp.Value.from_zval(res)
+		return vphp.Value.adopt_request_zval(res)
 	}
 	return error('entry "${id}" not found')
 }
@@ -134,7 +134,7 @@ fn container_borrowed_object_value(v_ptr voidptr, ce voidptr, handlers voidptr) 
 		}
 		mut payload := vphp.RequestOwnedZVal.new_null().to_zval()
 		vphp.return_borrowed_object_raw(payload.raw, v_ptr, ce, handlers)
-		return vphp.Value.from_zval(payload)
+		return vphp.Value.adopt_request_zval(payload)
 	}
 }
 

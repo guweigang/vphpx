@@ -88,7 +88,9 @@ fn set_cli_command_input(mut cli VSlimCliApp, command_name string, input CliComm
 }
 
 fn cli_dyn_value_to_value(value vphp.DynValue) vphp.Value {
-	return vphp.Value.from_zval(vphp.new_zval_from_dyn_value(value) or { vphp.ZVal.new_null() })
+	return vphp.Value.adopt_request_zval(vphp.new_zval_from_dyn_value(value) or {
+		vphp.ZVal.new_null()
+	})
 }
 
 fn cli_definition_string_item(item vphp.ZVal) ?string {
