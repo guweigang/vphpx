@@ -546,7 +546,7 @@ pub fn (mut cli VSlimCliApp) run(name string, args vphp.BorrowedValue) int {
 }
 
 fn (mut cli VSlimCliApp) free() {
-	cli_debug_log('cli.free enter cli=${usize(&cli)} core=${usize(cli.core_app_ref)} handlers=${cli.command_handlers.len} core_valid=${cli.core_app_zref.is_valid()} core_raw=${usize(cli.core_app_zref.to_zval().raw)}')
+	cli_debug_log('cli.free enter cli=${usize(&cli)} core=${usize(cli.core_app_ref)} handlers=${cli.command_handlers.len} core_valid=${cli.core_app_zref.is_valid()}')
 	mut handler_names := []string{}
 	for key, _ in cli.command_handlers {
 		handler_names << key.clone()

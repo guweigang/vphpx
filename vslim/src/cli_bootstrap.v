@@ -43,7 +43,10 @@ fn cli_bootstrap_file_apply(mut cli VSlimCliApp, path string) ! {
 		core.bootstrap_file(clean)
 		return
 	}
-	result := vphp.include(clean)
+	mut result := vphp.include(clean)
+	defer {
+		result.release()
+	}
 	apply_cli_bootstrap_file_result(mut cli, clean, result)!
 }
 
@@ -122,7 +125,17 @@ fn apply_cli_bootstrap_file_result(mut cli VSlimCliApp, path string, value vphp.
 		return error(cli_bootstrap_file_return_error(path))
 	}
 	if value.is_callable() {
-		_ = value.call_owned_request([cli_self_zval(&cli)])
+		mut result := value.call_owned_request([cli_self_zval(&cli)])
+		defer {
+			result.release()
+		}
+		if !result.is_valid() || result.is_null() || result.is_undef() {
+			return
+		}
+		if result.is_object() && result.is_instance_of('VSlim\\Cli\\App') {
+			return
+		}
+		apply_cli_bootstrap_spec(mut cli, result)!
 		return
 	}
 	if value.is_object() && value.is_instance_of('VSlim\\Cli\\App') {
@@ -156,8 +169,12 @@ fn apply_cli_command_class_conventions(mut cli VSlimCliApp, project_root string)
 		if !class_exists {
 			return error('command convention file "${display_file}" must declare class ${class_name}')
 		}
-		name := derive_command_name_from_handler(vphp.RequestOwnedZVal.new_string(class_name).to_zval())!
-		cli.command(name, vphp.BorrowedValue.from_zval(vphp.RequestOwnedZVal.new_string(class_name).to_zval()))
+		mut class_name_z := vphp.RequestOwnedZVal.new_string(class_name).to_zval()
+		defer {
+			class_name_z.release()
+		}
+		name := derive_command_name_from_handler(class_name_z)!
+		cli.command(name, vphp.BorrowedValue.from_zval(class_name_z))
 		applied = true
 	}
 	return applied
@@ -170,7 +187,10 @@ fn apply_cli_bootstrap_conventions(mut cli VSlimCliApp, project_root string) !bo
 	}
 	cli_bootstrap_path := path_join(project_root, 'bootstrap/cli.php')
 	if php_is_file(cli_bootstrap_path) {
-		raw := vphp.include(cli_bootstrap_path)
+		mut raw := vphp.include(cli_bootstrap_path)
+		defer {
+			raw.release()
+		}
 		apply_cli_bootstrap_file_result(mut cli, cli_bootstrap_path, raw)!
 		applied = true
 	}
