@@ -1,0 +1,87 @@
+name: VSlim Windows Debug
+
+on:
+  workflow_dispatch:
+
+jobs:
+  windows-smoke:
+    name: windows smoke debug
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.5
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+          extensions: zip
+
+      - name: Setup V on Windows
+        shell: pwsh
+        run: |
+          git clone --depth 1 https://github.com/vlang/v.git "$env:RUNNER_TEMP\vlang"
+          cmd /c "$env:RUNNER_TEMP\vlang\make.bat"
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:RUNNER_TEMP\vlang"
+          & "$env:RUNNER_TEMP\vlang\v.exe" version
+
+      - name: Setup MSVC on Windows
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+
+      - name: Install Windows parser tools
+        shell: pwsh
+        run: |
+          $pythonExe = (Get-Command python).Source
+          & $pythonExe -m pip install --user --disable-pip-version-check winflexbison-bin re2c
+          $userScripts = (& $pythonExe -c "import sysconfig; print(sysconfig.get_path('scripts', scheme='nt_user'))").Trim()
+          Add-Content -Path $env:GITHUB_PATH -Value $userScripts
+          $env:Path = "$userScripts;$env:Path"
+          $winBison = Join-Path $userScripts "win_bison.exe"
+          $winFlex = Join-Path $userScripts "win_flex.exe"
+          if (Test-Path $winBison) {
+            Copy-Item -Force $winBison (Join-Path $userScripts "bison.exe")
+          }
+          if (Test-Path $winFlex) {
+            Copy-Item -Force $winFlex (Join-Path $userScripts "flex.exe")
+          }
+          bison --version
+          re2c --version
+
+      - name: Build VSlim extension on Windows
+        working-directory: vslim
+        shell: pwsh
+        env:
+          VPHP_V_GC: none
+          VPHP_V_USE_OPENSSL: 1
+          VPHP_V_NO_VSCHANNEL: 1
+        run: |
+          & cl
+          & nmake /?
+          & v.exe -cc msvc -path ".;..;@vlib" run build.v -emit-only
+          .\scripts\build_windows_dll.ps1
+
+      - name: Smoke check binary bundle on Windows
+        working-directory: vslim
+        shell: pwsh
+        env:
+          VSLIM_CLI_DEBUG_FILE: ${{ runner.temp }}\vslim-cli-debug.log
+        run: |
+          $env:TEST_PHP_EXECUTABLE = (Get-Command php).Source
+          $exitCode = 0
+          php ..\vphptest\run-tests.php -q --show-all -d extension=.\php_vslim.dll `
+            tests/test_vslim_cli_run_argv.phpt `
+            tests/test_vslim_cli_template_bin_entry.phpt `
+            tests/test_vslim_psr7_psr17_interface_contracts.phpt `
+            tests/test_vslim_template_project_metadata.phpt
+          if ($LASTEXITCODE -ne 0) {
+            $exitCode = $LASTEXITCODE
+          }
+          if (Test-Path $env:VSLIM_CLI_DEBUG_FILE) {
+            Write-Host "==== VSlim CLI debug log ===="
+            Get-Content $env:VSLIM_CLI_DEBUG_FILE
+          }
+          exit $exitCode
