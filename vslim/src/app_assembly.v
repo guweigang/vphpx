@@ -176,7 +176,10 @@ fn apply_bootstrap_file_result(mut app VSlimApp, path string, value vphp.ZVal) !
 		return error(bootstrap_file_return_error(path))
 	}
 	if value.is_callable() {
-		result := value.call_owned_request([app_self_zval(&app)])
+		mut result := value.call_owned_request([app_self_zval(&app)])
+		defer {
+			result.release()
+		}
 		if !result.is_valid() || result.is_null() || result.is_undef() {
 			return
 		}
@@ -380,7 +383,8 @@ fn call_app_bootstrap_hooks(spec vphp.ZVal, keys []string, app_z vphp.ZVal, labe
 		if !item.is_valid() || !item.is_callable() {
 			return error('bootstrap ${label} entries must be callable')
 		}
-		_ = item.call_owned_request([app_z])
+		mut result := item.call_owned_request([app_z])
+		result.release()
 	}
 }
 
@@ -390,7 +394,8 @@ fn call_app_bootstrap_hook_result(raw vphp.ZVal, app_z vphp.ZVal, label string) 
 		if !item.is_valid() || !item.is_callable() {
 			return error('bootstrap ${label} entries must be callable')
 		}
-		_ = item.call_owned_request([app_z])
+		mut result := item.call_owned_request([app_z])
+		result.release()
 	}
 }
 
@@ -498,7 +503,8 @@ fn apply_bootstrap_convention_spec(mut app VSlimApp, path string, label string) 
 		return error('bootstrap ${label} file "${path}" must return iterable spec or callable')
 	}
 	if raw.is_callable() {
-		_ = raw.call_owned_request([app_self_zval(&app)])
+		mut result := raw.call_owned_request([app_self_zval(&app)])
+		result.release()
 		return true
 	}
 	apply_app_bootstrap_spec(mut app, raw)!
