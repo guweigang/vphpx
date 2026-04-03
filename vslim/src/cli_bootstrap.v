@@ -125,7 +125,11 @@ fn apply_cli_bootstrap_file_result(mut cli VSlimCliApp, path string, value vphp.
 		return error(cli_bootstrap_file_return_error(path))
 	}
 	if value.is_callable() {
-		mut result := value.call_owned_request([cli_self_zval(&cli)])
+		mut cli_z := cli_self_zval(&cli)
+		defer {
+			cli_z.release()
+		}
+		mut result := value.call_owned_request([cli_z])
 		defer {
 			result.release()
 		}
