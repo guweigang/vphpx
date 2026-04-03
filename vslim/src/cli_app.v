@@ -172,8 +172,12 @@ fn cli_args_zval(trace string, args []string) vphp.ZVal {
 	out.array_init()
 	cli_debug_log('[${trace}] cli_args_zval array_init raw=${usize(out.raw)}')
 	for idx := 0; idx < args.len; idx++ {
-		arg := args[idx].clone()
-		cli_debug_log('[${trace}] cli_args_zval item idx=${idx} value="${arg}"')
+		cli_debug_log('[${trace}] cli_args_zval read_begin idx=${idx}')
+		arg_raw := args[idx]
+		cli_debug_log('[${trace}] cli_args_zval read_done idx=${idx} len=${arg_raw.len}')
+		arg := arg_raw.clone()
+		cli_debug_log('[${trace}] cli_args_zval clone_done idx=${idx} value="${arg}"')
+		cli_debug_log('[${trace}] cli_args_zval push_begin idx=${idx}')
 		out.push_string(arg)
 		cli_debug_log('[${trace}] cli_args_zval pushed idx=${idx} raw=${usize(out.raw)}')
 	}
