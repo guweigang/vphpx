@@ -123,6 +123,17 @@ fn detect_v_gc_mode() string {
 	return mode
 }
 
+fn detect_v_c_compiler() string {
+	override := (os.getenv_opt('VPHP_V_CC') or { '' }).trim_space()
+	if override != '' {
+		return override
+	}
+	if os.user_os() == 'windows' {
+		return 'msvc'
+	}
+	return ''
+}
+
 fn pkg_config_flags(args string) string {
 	cmd := 'pkg-config ${args}'
 	res := os.execute(cmd)
@@ -139,6 +150,7 @@ fn run_v_transpile(project_root string, prod_mode bool, gc_mode string, module_p
 	}
 	use_openssl := should_use_openssl()
 	disable_vschannel := should_disable_vschannel()
+	v_cc := detect_v_c_compiler()
 	prod_arg := if prod_mode { '-prod' } else { '' }
 	mut args := []string{}
 	if prod_arg != '' {
@@ -155,6 +167,10 @@ fn run_v_transpile(project_root string, prod_mode bool, gc_mode string, module_p
 	if disable_vschannel {
 		args << '-d'
 		args << 'no_vschannel'
+	}
+	if v_cc != '' {
+		args << '-cc'
+		args << v_cc
 	}
 	args << '-path'
 	args << module_path
