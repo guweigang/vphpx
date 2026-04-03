@@ -18,6 +18,7 @@ pub fn (app &VSlimApp) has_container() bool {
 @[php_method]
 pub fn (mut app VSlimApp) set_container(container &VSlimContainer) &VSlimApp {
 	app.container_ref = container
+	app.container_ref.app_ref = &app
 	app.sync_standard_services_to_container()
 	return app
 }
@@ -27,6 +28,7 @@ pub fn (mut app VSlimApp) container() &VSlimContainer {
 	if app.container_ref == unsafe { nil } {
 		app.container_ref = new_vslim_container()
 	}
+	app.container_ref.app_ref = &app
 	app.sync_standard_services_to_container()
 	return app.container_ref
 }
@@ -74,81 +76,31 @@ fn (mut app VSlimApp) sync_standard_services_to_container() {
 	if app.container_ref == unsafe { nil } {
 		return
 	}
-	app.sync_config_service_to_container()
-	app.sync_clock_service_to_container()
-	app.sync_logger_services_to_container()
-	app.sync_event_services_to_container()
-	app.sync_cache_services_to_container()
-	app.sync_http_client_service_to_container()
+	app.container_ref.app_ref = &app
 }
 
 fn (mut app VSlimApp) sync_config_service_to_container() {
-	if app.container_ref == unsafe { nil } || app.config_ref == unsafe { nil } {
-		return
-	}
-	unsafe {
-		z := C.vphp_new_zval()
-		if z == 0 {
-			return
-		}
-		vphp.return_owned_object_raw(z, app.config_ref, C.vslim__config_ce, &C.vphp_class_handlers(vslimconfig_handlers()))
-		app.container_ref.set('config', vphp.BorrowedValue.from_zval(vphp.ZVal{
-			raw: z
-		}))
-		C.vphp_release_zval(z)
-	}
+	app.sync_standard_services_to_container()
 }
 
 fn (mut app VSlimApp) sync_clock_service_to_container() {
-	if app.container_ref == unsafe { nil } {
-		return
-	}
-	clock_value := vphp.BorrowedValue.from_zval(app.clock().to_zval())
-	app.container_ref.set('clock', clock_value)
-	app.container_ref.set('Psr\\Clock\\ClockInterface', clock_value)
+	app.sync_standard_services_to_container()
 }
 
 fn (mut app VSlimApp) sync_logger_services_to_container() {
-	app.sync_container_service_aliases('logger', ['logger'])
-	app.sync_container_service_aliases('psrLogger', ['Psr\\Log\\LoggerInterface'])
+	app.sync_standard_services_to_container()
 }
 
 fn (mut app VSlimApp) sync_event_services_to_container() {
-	app.sync_container_service_aliases('listenerProvider', ['listener_provider', 'events.provider',
-		'Psr\\EventDispatcher\\ListenerProviderInterface'])
-	app.sync_container_service_aliases('dispatcher', ['events', 'dispatcher',
-		'Psr\\EventDispatcher\\EventDispatcherInterface'])
+	app.sync_standard_services_to_container()
 }
 
 fn (mut app VSlimApp) sync_cache_services_to_container() {
-	app.sync_container_service_aliases('cache', ['cache', 'Psr\\SimpleCache\\CacheInterface'])
-	app.sync_container_service_aliases('cachePool', ['cache.pool',
-		'Psr\\Cache\\CacheItemPoolInterface'])
+	app.sync_standard_services_to_container()
 }
 
 fn (mut app VSlimApp) sync_http_client_service_to_container() {
-	app.sync_container_service_aliases('httpClient', ['http', 'http_client',
-		'Psr\\Http\\Client\\ClientInterface'])
-}
-
-fn (mut app VSlimApp) sync_container_service_aliases(method_name string, ids []string) {
-	if app.container_ref == unsafe { nil } {
-		return
-	}
-	self_z := app_self_zval(app)
-	if !self_z.is_valid() || !self_z.is_object() {
-		return
-	}
-	value := self_z.method_owned_request(method_name, [])
-	if value.is_valid() && value.is_object() {
-		borrowed := vphp.BorrowedValue.from_zval(value)
-		for id in ids {
-			if id.trim_space() == '' {
-				continue
-			}
-			app.container_ref.set(id, borrowed)
-		}
-	}
+	app.sync_standard_services_to_container()
 }
 
 fn (mut app VSlimApp) sync_clock_dependent_services() {

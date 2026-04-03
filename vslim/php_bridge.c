@@ -20912,6 +20912,7 @@ static int vslim__container_register_class(void) {
         zend_declare_property_null(vslim__container_ce, "entries", sizeof("entries")-1, ZEND_ACC_PROTECTED);
         zend_declare_property_null(vslim__container_ce, "factories", sizeof("factories")-1, ZEND_ACC_PROTECTED);
         zend_declare_property_null(vslim__container_ce, "resolved", sizeof("resolved")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__container_ce, "app_ref", sizeof("app_ref")-1, ZEND_ACC_PROTECTED);
     }
     return SUCCESS;
 }
