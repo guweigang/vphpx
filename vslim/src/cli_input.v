@@ -67,6 +67,14 @@ struct CliCommandInput {
 	parsed          bool
 }
 
+fn clone_cli_string_slice(items []string) []string {
+	mut out := []string{cap: items.len}
+	for item in items {
+		out << item.clone()
+	}
+	return out
+}
+
 fn reset_cli_command_input(mut cli VSlimCliApp) {
 	cli.last_command_name = ''
 	cli.last_raw_args = []string{}
@@ -79,11 +87,11 @@ fn reset_cli_command_input(mut cli VSlimCliApp) {
 
 fn set_cli_command_input(mut cli VSlimCliApp, command_name string, input CliCommandInput) {
 	cli.last_command_name = command_name
-	cli.last_raw_args = input.raw_args.clone()
+	cli.last_raw_args = clone_cli_string_slice(input.raw_args)
 	cli.last_arguments = input.arguments.clone()
 	cli.last_options = input.options.clone()
 	cli.last_option_seen = input.option_seen.clone()
-	cli.last_warnings = input.warnings.clone()
+	cli.last_warnings = clone_cli_string_slice(input.warnings)
 	cli.last_input_parsed = input.parsed
 }
 
@@ -778,12 +786,12 @@ fn resolve_cli_command_input(mut cli VSlimCliApp, runtime vphp.ZVal, raw_args []
 	bind_cli_runtime_to_command(mut cli, runtime)
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists('definition') {
 		return CliCommandInput{
-			positional_args: raw_args.clone()
+			positional_args: clone_cli_string_slice(raw_args)
 			arguments:       map[string]vphp.DynValue{}
 			options:         map[string]vphp.DynValue{}
 			option_seen:     map[string]bool{}
 			warnings:        []string{}
-			raw_args:        raw_args.clone()
+			raw_args:        clone_cli_string_slice(raw_args)
 			parsed:          false
 		}
 	}
