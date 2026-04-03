@@ -152,11 +152,19 @@ fn cli_args_to_array(raw vphp.ZVal) ![]string {
 }
 
 fn cli_args_zval(args []string) vphp.ZVal {
+	cli_debug_log('cli_args_zval enter len=${args.len}')
 	mut items := []vphp.DynValue{cap: args.len}
-	for arg in args {
+	for idx, arg in args {
+		cli_debug_log('cli_args_zval item idx=${idx} value="${arg}"')
 		items << vphp.dyn_value_string(arg)
 	}
-	return vphp.new_zval_from_dyn_value(vphp.dyn_value_list(items)) or { vphp.ZVal.new_null() }
+	cli_debug_log('cli_args_zval encode begin len=${items.len}')
+	z := vphp.new_zval_from_dyn_value(vphp.dyn_value_list(items)) or {
+		cli_debug_log('cli_args_zval encode failed')
+		return vphp.ZVal.new_null()
+	}
+	cli_debug_log('cli_args_zval exit raw=${usize(z.raw)} valid=${z.is_valid()} type=${z.type_name()}')
+	return z
 }
 
 fn resolve_cli_command_runtime(mut cli VSlimCliApp, handler_z vphp.ZVal) !vphp.ZVal {
