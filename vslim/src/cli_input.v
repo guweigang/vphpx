@@ -756,7 +756,7 @@ fn bind_cli_runtime_to_command(mut cli VSlimCliApp, runtime vphp.ZVal) {
 	if !runtime.is_valid() || !runtime.is_object() {
 		return
 	}
-	cli_z := cli_self_zval(&cli)
+	mut cli_z := cli_self_zval(&cli)
 	defer {
 		cli_z.release()
 	}
@@ -765,7 +765,7 @@ fn bind_cli_runtime_to_command(mut cli VSlimCliApp, runtime vphp.ZVal) {
 		set_cli_result.release()
 	}
 	if runtime.method_exists('setApp') {
-		app_z := app_self_zval(ensure_cli_core_app(mut cli))
+		mut app_z := app_self_zval(ensure_cli_core_app(mut cli))
 		defer {
 			app_z.release()
 		}
