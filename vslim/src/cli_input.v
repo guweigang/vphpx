@@ -708,21 +708,36 @@ fn cli_command_definition(runtime vphp.ZVal) !CliCommandDefinition {
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists('definition') {
 		return error('command has no CLI definition')
 	}
-	return cli_parse_command_definition(runtime.method_owned_request('definition', []vphp.ZVal{}))!
+	mut definition_z := vphp.RequestOwnedZVal.from_zval(runtime.method_owned_request('definition',
+		[]vphp.ZVal{}))
+	defer {
+		definition_z.release()
+	}
+	return cli_parse_command_definition(definition_z.to_zval())!
 }
 
 fn cli_runtime_text_method(runtime vphp.ZVal, method_name string) string {
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists(method_name) {
 		return ''
 	}
-	return runtime.method_owned_request(method_name, []vphp.ZVal{}).to_string().trim_space()
+	mut value_z := vphp.RequestOwnedZVal.from_zval(runtime.method_owned_request(method_name,
+		[]vphp.ZVal{}))
+	defer {
+		value_z.release()
+	}
+	return value_z.to_zval().to_string().trim_space()
 }
 
 fn cli_runtime_string_list_method(runtime vphp.ZVal, method_name string) []string {
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists(method_name) {
 		return []string{}
 	}
-	return cli_string_list_from_value(runtime.method_owned_request(method_name, []vphp.ZVal{})) or {
+	mut value_z := vphp.RequestOwnedZVal.from_zval(runtime.method_owned_request(method_name,
+		[]vphp.ZVal{}))
+	defer {
+		value_z.release()
+	}
+	return cli_string_list_from_value(value_z.to_zval()) or {
 		[]string{}
 	}
 }
@@ -731,8 +746,12 @@ fn cli_runtime_bool_method(runtime vphp.ZVal, method_name string, fallback bool)
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists(method_name) {
 		return fallback
 	}
-	return cli_bool_from_value(runtime.method_owned_request(method_name, []vphp.ZVal{}),
-		fallback)
+	mut value_z := vphp.RequestOwnedZVal.from_zval(runtime.method_owned_request(method_name,
+		[]vphp.ZVal{}))
+	defer {
+		value_z.release()
+	}
+	return cli_bool_from_value(value_z.to_zval(), fallback)
 }
 
 fn bind_cli_runtime_to_command(mut cli VSlimCliApp, runtime vphp.ZVal) {
