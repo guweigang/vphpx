@@ -86,5 +86,5 @@ scan_yes|peek_yes
 inspect_yes|aliases_yes|secret_hidden
 usage_yes|alias_usage_yes
 list_start
-list_exit=  inspect                     Inspect via aliases. [aliases: scan,peek]
-0
+  inspect                     Inspect via aliases. [aliases: scan,peek]
+list_exit=0

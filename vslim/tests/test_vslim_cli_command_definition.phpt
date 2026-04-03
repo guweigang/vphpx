@@ -134,7 +134,7 @@ Use --mode instead of --legacy-mode.
 3|neo,first,second|neo|first,second|zh|fast|1.25|verbose|3|a,b|seen|parsed|neo,first,-l,zh,--legacy-mode,safe,--internal-token,s3cr3t,--mode=fast,--ratio,1.25,-v,--count=3,--tag=a,-t,b,second|argmap_yes|optmap_yes|Use --mode instead of --legacy-mode.
 Use --mode instead of --legacy-mode.
 1|env-subject|env-subject||fr|safe|0.5|quiet|1||unseen|parsed||argmap_yes|optmap_yes|
-0Usage:
+Usage:
   vslim inspect [options] <target> [<extras>...]
 
 Description:
@@ -161,4 +161,4 @@ Examples:
 Notes:
   Parsed values are exposed through VSlim\Cli\App accessors.
   Use commandHelp() for the same rendered text.
-|desc_yes|subject_yes|lang_yes|choices_yes|help_yes|hidden_yes|deprecated_yes|env_yes|hint_yes|examples_yes|example_line_yes|epilog_yes
+0|desc_yes|subject_yes|lang_yes|choices_yes|help_yes|hidden_yes|deprecated_yes|env_yes|hint_yes|examples_yes|example_line_yes|epilog_yes

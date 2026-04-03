@@ -540,6 +540,14 @@ fn cli_runtime_print_help(mut cli VSlimCliApp, program string) {
 	vphp.write_output(cli_runtime_help_text(mut cli, program))
 }
 
+fn cli_runtime_write_stderr(message string) {
+	text := message.trim_space()
+	if text == '' {
+		return
+	}
+	eprintln(text)
+}
+
 fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvocation {
 	mut inv := cli_runtime_effective_args(argv, cli)
 	mut args := cli_clone_string_list(inv.command_args)
@@ -650,7 +658,7 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.BorrowedValue) int {
 		return 1
 	}
 	inv := cli_runtime_parse_invocation(argv_list, &cli) or {
-		vphp.report_error(vphp.e_warning, err.msg())
+		cli_runtime_write_stderr(err.msg())
 		return 1
 	}
 	argv0 := inv.argv0.clone()
@@ -663,7 +671,7 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.BorrowedValue) int {
 	show_version := inv.show_version
 	cli_debug_log('run_argv parsed argv0="${argv0}" command="${command_name}" show_help=${show_help} show_list=${show_list} show_version=${show_version}')
 	cli_runtime_apply_bootstrap(mut cli, bootstrap_file, bootstrap_dir) or {
-		vphp.report_error(vphp.e_warning, err.msg())
+		cli_runtime_write_stderr(err.msg())
 		return 1
 	}
 	program := cli_runtime_program_name(argv0)
@@ -677,7 +685,7 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.BorrowedValue) int {
 		cli_debug_log('run_argv branch=help command="${command_name}"')
 		if command_name != '' {
 			vphp.write_output(cli_command_help_text(mut cli, program, command_name) or {
-				vphp.report_error(vphp.e_warning, err.msg())
+				cli_runtime_write_stderr(err.msg())
 				return 1
 			})
 			return 0
@@ -698,18 +706,18 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.BorrowedValue) int {
 	if cli_args_request_command_help(command_args) {
 		cli_debug_log('run_argv branch=command_help command="${command_name}"')
 		vphp.write_output(cli_command_help_text(mut cli, program, command_name) or {
-			vphp.report_error(vphp.e_warning, err.msg())
+			cli_runtime_write_stderr(err.msg())
 			return 1
 		})
 		return 0
 	}
 	code := run_registered_cli_command_with_program(mut cli, command_name, command_args, program) or {
-		vphp.report_error(vphp.e_warning, err.msg())
+		cli_runtime_write_stderr(err.msg())
 		return 1
 	}
 	for warning in cli.warnings() {
 		if warning.trim_space() != '' {
-			vphp.report_error(vphp.e_warning, warning)
+			cli_runtime_write_stderr(warning)
 		}
 	}
 	cli_debug_log('run_argv exit cli=${usize(&cli)} code=${code}')
