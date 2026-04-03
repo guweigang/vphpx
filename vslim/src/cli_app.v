@@ -199,6 +199,14 @@ fn lookup_cli_command_handler(cli &VSlimCliApp, name string) !vphp.ZVal {
 	return handler.clone_request_owned().to_zval()
 }
 
+fn cli_release_command_handler(mut handler vphp.PersistentOwnedZVal) {
+	raw := handler.to_zval()
+	if raw.is_valid() && raw.is_object() {
+		return
+	}
+	handler.release()
+}
+
 fn cli_canonical_command_name(cli &VSlimCliApp, name string) string {
 	command_name := name.trim_space().clone()
 	if command_name == '' {
@@ -239,7 +247,7 @@ fn clear_cli_command_metadata(mut cli VSlimCliApp, canonical_name string) {
 			continue
 		}
 		mut alias_handler := cli.command_handlers[alias] or { continue }
-		alias_handler.release()
+		cli_release_command_handler(mut alias_handler)
 		cli.command_handlers.delete(alias)
 		cli.command_canonical.delete(alias)
 	}
@@ -550,7 +558,7 @@ fn (mut cli VSlimCliApp) free() {
 	}
 	for key in handler_names {
 		mut handler := cli.command_handlers[key] or { continue }
-		handler.release()
+		cli_release_command_handler(mut handler)
 		cli.command_handlers.delete(key)
 	}
 	cli_debug_log('cli.free handlers_released')
