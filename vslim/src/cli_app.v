@@ -126,7 +126,10 @@ fn normalize_cli_command_handler_input(raw vphp.ZVal) !vphp.ZVal {
 	return error('command handler must be callable, object, or class-string')
 }
 
-fn cli_command_exit_code(result vphp.ZVal) int {
+fn cli_command_exit_code(mut result vphp.ZVal) int {
+	defer {
+		result.release()
+	}
 	if !result.is_valid() || result.is_null() || result.is_undef() {
 		return 0
 	}
@@ -333,10 +336,11 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 		cli_debug_log('invoke_cli_command runtime=object')
 		bind_cli_runtime_to_command(mut cli, runtime)
 		cli_debug_log('invoke_cli_command object_handle enter')
-		code = cli_command_exit_code(runtime.method_owned_request('handle', [
+		mut handle_result := runtime.method_owned_request('handle', [
 			args_z,
 			cli_z,
-		]))
+		])
+		code = cli_command_exit_code(mut handle_result)
 		cli_debug_log('invoke_cli_command object_handle exit code=${code}')
 		cli_debug_log('run_registered_cli_command exit name="${name}" code=${code}')
 		return code
@@ -348,7 +352,8 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 		if !result.is_valid() {
 			return error('command handler must be callable or expose handle(array \$args, VSlim\\Cli\\App \$cli)')
 		}
-		code = cli_command_exit_code(result)
+		mut owned_result := result
+		code = cli_command_exit_code(mut owned_result)
 		cli_debug_log('invoke_cli_command callable exit code=${code}')
 		cli_debug_log('run_registered_cli_command exit name="${name}" code=${code}')
 		return code
