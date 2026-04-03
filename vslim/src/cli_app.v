@@ -324,15 +324,17 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 	cli_debug_log('run_registered_cli_command start name="${name}" args=${args.len}')
 	mut handler_z := lookup_cli_command_handler(&cli, name)!
 	defer {
+		cli_debug_log('run_registered_cli_command handler_release raw=${usize(handler_z.raw)} valid=${handler_z.is_valid()} type=${handler_z.type_name()}')
 		handler_z.release()
 	}
 	reset_cli_command_input(mut cli)
 	cli.last_command_name = name.trim_space()
 	mut runtime := resolve_cli_command_runtime(mut cli, handler_z)!
 	defer {
+		cli_debug_log('run_registered_cli_command runtime_release raw=${usize(runtime.raw)} valid=${runtime.is_valid()} type=${runtime.type_name()} class=${runtime.class_name()}')
 		runtime.release()
 	}
-	cli_debug_log('run_registered_cli_command runtime_ready name="${name}"')
+	cli_debug_log('run_registered_cli_command runtime_ready name="${name}" raw=${usize(runtime.raw)} valid=${runtime.is_valid()} type=${runtime.type_name()} class=${runtime.class_name()}')
 	input := resolve_cli_command_input(mut cli, runtime, args) or {
 		return cli_command_input_error(runtime, program, name.trim_space(), err.msg())
 	}
@@ -341,15 +343,18 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 	cli_debug_log('invoke_cli_command start args=${input.positional_args.len}')
 	mut args_z := cli_args_zval(input.positional_args)
 	defer {
+		cli_debug_log('invoke_cli_command args_release raw=${usize(args_z.raw)} valid=${args_z.is_valid()} type=${args_z.type_name()}')
 		args_z.release()
 	}
 	cli_debug_log('invoke_cli_command args_ready raw=${usize(args_z.raw)} valid=${args_z.is_valid()} type=${args_z.type_name()}')
 	mut cli_z := cli_self_zval(&cli)
 	defer {
+		cli_debug_log('invoke_cli_command cli_release raw=${usize(cli_z.raw)} valid=${cli_z.is_valid()} type=${cli_z.type_name()} class=${cli_z.class_name()}')
 		cli_z.release()
 	}
 	cli_debug_log('invoke_cli_command cli_ready raw=${usize(cli_z.raw)} valid=${cli_z.is_valid()} type=${cli_z.type_name()}')
 	runtime_is_command_object := input.parsed && runtime.is_object() && runtime.method_exists('handle')
+	cli_debug_log('invoke_cli_command runtime_state raw=${usize(runtime.raw)} valid=${runtime.is_valid()} type=${runtime.type_name()} class=${runtime.class_name()} parsed=${input.parsed} object_path=${runtime_is_command_object}')
 	mut code := 0
 	if runtime_is_command_object {
 		cli_debug_log('invoke_cli_command runtime=object')
@@ -365,14 +370,17 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 		return code
 	}
 	if !input.parsed {
-		cli_debug_log('invoke_cli_command runtime=callable')
-		result := runtime.call_owned_request([args_z, cli_z])
+		cli_debug_log('invoke_cli_command callable enter runtime_raw=${usize(runtime.raw)} runtime_type=${runtime.type_name()} runtime_class=${runtime.class_name()} args_raw=${usize(args_z.raw)} cli_raw=${usize(cli_z.raw)}')
+		mut result := runtime.call_owned_request([args_z, cli_z])
+		defer {
+			cli_debug_log('invoke_cli_command callable_result_release raw=${usize(result.raw)} valid=${result.is_valid()} type=${result.type_name()}')
+			result.release()
+		}
 		cli_debug_log('invoke_cli_command callable_result raw=${usize(result.raw)} valid=${result.is_valid()} type=${result.type_name()}')
 		if !result.is_valid() {
 			return error('command handler must be callable or expose handle(array \$args, VSlim\\Cli\\App \$cli)')
 		}
-		mut owned_result := result
-		code = cli_command_exit_code(mut owned_result)
+		code = cli_command_exit_code(mut result)
 		cli_debug_log('invoke_cli_command callable exit code=${code}')
 		cli_debug_log('run_registered_cli_command exit name="${name}" code=${code}')
 		return code
