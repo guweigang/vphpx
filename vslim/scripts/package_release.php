@@ -248,7 +248,7 @@ TXT
 
 ## Current status
 
-This package is source-only on purpose. The GitHub workflow already publishes Linux and macOS binary bundles, but the Windows native DLL pipeline still needs dedicated compiler/runtime work because the generated C currently depends on GNU/C99 features.
+This package contains a native Windows DLL built with the PHP 8.5 NTS x64 devel pack and the matching MSVC/NMake toolchain. The V side is used to emit bridge C sources; the final `php_vslim.dll` is compiled through the PHP Windows extension build flow.
 
 TXT;
 

@@ -41,6 +41,14 @@ function Invoke-Cmd([string]$WorkingDirectory, [string]$CommandLine) {
     }
 }
 
+function Assert-CommandAvailable([string]$CommandName) {
+    $cmd = Get-Command $CommandName -ErrorAction SilentlyContinue
+    if ($null -eq $cmd) {
+        throw "Required command not found in PATH: $CommandName"
+    }
+    return $cmd.Source
+}
+
 function Find-FirstPath([string[]]$Candidates, [string]$ChildPath) {
     foreach ($candidate in $Candidates) {
         if ([string]::IsNullOrWhiteSpace($candidate)) {
@@ -104,8 +112,15 @@ $vslimRoot = (Resolve-Path (Join-Path $repoRoot "vslim")).Path
 $vphpRoot = (Resolve-Path (Join-Path $repoRoot "vphp")).Path
 $vExe = (Get-Command v).Source
 $vRoot = Split-Path -Parent $vExe
+$clExe = Assert-CommandAvailable "cl.exe"
+$nmakeExe = Assert-CommandAvailable "nmake.exe"
 $resolvedPhpDir = Get-PhpDir
 $resolvedPhpVersion = Get-PhpVersion
+
+Write-Host "Using MSVC compiler: $clExe"
+Write-Host "Using NMake: $nmakeExe"
+Write-Host "Using PHP runtime: $resolvedPhpDir"
+Write-Host "Using PHP version: $resolvedPhpVersion"
 
 $archiveName = Get-DevelArchiveName $resolvedPhpVersion
 $archiveUrl = "https://windows.php.net/downloads/releases/$archiveName"
@@ -129,6 +144,7 @@ $develRoot = Get-ChildItem -Path $extractRoot -Directory | Select-Object -First 
 if ($null -eq $develRoot) {
     throw "Unable to locate extracted PHP devel pack directory."
 }
+Write-Host "Using PHP devel pack: $($develRoot.FullName)"
 
 $env:VSLIM_VPHP_DIR = $vphpRoot
 $env:VSLIM_V_ROOT = $vRoot

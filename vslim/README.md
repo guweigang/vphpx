@@ -82,9 +82,9 @@ make dist-source
 - Linux amd64：发布二进制 bundle
 - macOS amd64：发布 Intel 二进制 bundle
 - macOS arm64：发布 Apple Silicon 二进制 bundle
-- Windows amd64：先发布 source bundle
+- Windows amd64：发布 x64 二进制 bundle
 
-Windows 暂时还是 source bundle，不是因为 workflow 没接，而是当前生成的 C 仍依赖 GNU/C99 特性；要稳定产出可直接加载的 `php_vslim.dll`，还需要单独补一条 Windows toolchain 兼容链路。
+Windows bundle 的原生 DLL 通过 PHP 官方 devel pack + `nmake` 构建，目标是与 PHP `8.5`、`NTS`、`x64` 的 MSVC toolchain 保持一致。V 侧在 Windows job 中只负责 `emit-only` 生成桥接 C，最终 `php_vslim.dll` 由 MSVC 编译链产出。
 
 ## PSR 进展
 
