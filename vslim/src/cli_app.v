@@ -168,18 +168,17 @@ fn cli_args_to_array(raw vphp.ZVal) ![]string {
 
 fn cli_args_zval(trace string, args []string) vphp.ZVal {
 	cli_debug_log('[${trace}] cli_args_zval enter len=${args.len}')
-	mut items := []vphp.DynValue{cap: args.len}
-	for idx, arg in args {
+	mut out := vphp.ZVal.new_null()
+	out.array_init()
+	cli_debug_log('[${trace}] cli_args_zval array_init raw=${usize(out.raw)}')
+	for idx := 0; idx < args.len; idx++ {
+		arg := args[idx].clone()
 		cli_debug_log('[${trace}] cli_args_zval item idx=${idx} value="${arg}"')
-		items << vphp.dyn_value_string(arg)
+		out.push_string(arg)
+		cli_debug_log('[${trace}] cli_args_zval pushed idx=${idx} raw=${usize(out.raw)}')
 	}
-	cli_debug_log('[${trace}] cli_args_zval encode begin len=${items.len}')
-	z := vphp.new_zval_from_dyn_value(vphp.dyn_value_list(items)) or {
-		cli_debug_log('[${trace}] cli_args_zval encode failed')
-		return vphp.ZVal.new_null()
-	}
-	cli_debug_log('[${trace}] cli_args_zval exit raw=${usize(z.raw)} valid=${z.is_valid()} type=${z.type_name()}')
-	return z
+	cli_debug_log('[${trace}] cli_args_zval exit raw=${usize(out.raw)} valid=${out.is_valid()} type=${out.type_name()}')
+	return out
 }
 
 fn resolve_cli_command_runtime(mut cli VSlimCliApp, handler_z vphp.ZVal) !vphp.ZVal {
