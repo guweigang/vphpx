@@ -84,7 +84,7 @@ pub fn vphp_wrap_vslimcliapp_run_argv(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimCliApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.run_argv(arg_0)
     ctx.return_val[int](res)
 }
@@ -110,7 +110,7 @@ pub fn vphp_wrap_vslimcliapp_command(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.command(arg_0, arg_1)
     return voidptr(res)
 }
@@ -119,7 +119,7 @@ pub fn vphp_wrap_vslimcliapp_command_many(ptr voidptr, ctx vphp.Context) voidptr
     mut recv := unsafe { &VSlimCliApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.command_many(arg_0)
     return voidptr(res)
 }
@@ -203,7 +203,7 @@ pub fn vphp_wrap_vslimcliapp_option(ptr voidptr, ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.option(arg_0, arg_1)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -213,7 +213,7 @@ pub fn vphp_wrap_vslimcliapp_argument(ptr voidptr, ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.argument(arg_0, arg_1)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -223,7 +223,7 @@ pub fn vphp_wrap_vslimcliapp_run(ptr voidptr, ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.run(arg_0, arg_1)
     ctx.return_val[int](res)
 }
@@ -354,7 +354,7 @@ pub fn vphp_wrap_vslimview_helper(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.helper(arg_0, arg_1)
     return voidptr(res)
 }
@@ -373,7 +373,7 @@ pub fn vphp_wrap_vslimview_render(ptr voidptr, ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.render(arg_0, arg_1)
     ctx.return_val[string](res)
 }
@@ -384,7 +384,7 @@ pub fn vphp_wrap_vslimview_render_with_layout(ptr voidptr, ctx vphp.Context)  {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.render_with_layout(arg_0, arg_1, arg_2)
     ctx.return_val[string](res)
 }
@@ -394,7 +394,7 @@ pub fn vphp_wrap_vslimview_render_response(ptr voidptr, ctx vphp.Context) voidpt
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.render_response(arg_0, arg_1)
     return voidptr(res)
 }
@@ -405,7 +405,7 @@ pub fn vphp_wrap_vslimview_render_response_with_layout(ptr voidptr, ctx vphp.Con
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.render_response_with_layout(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -498,7 +498,7 @@ pub fn vphp_wrap_vslimcontroller_render(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.render(arg_0, arg_1)
     return voidptr(res)
 }
@@ -509,7 +509,7 @@ pub fn vphp_wrap_vslimcontroller_render_with_layout(ptr voidptr, ctx vphp.Contex
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.render_with_layout(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -519,7 +519,7 @@ pub fn vphp_wrap_vslimcontroller_url_for(ptr voidptr, ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.url_for(arg_0, arg_1)
     ctx.return_val[string](res)
 }
@@ -529,8 +529,8 @@ pub fn vphp_wrap_vslimcontroller_url_for_query(ptr voidptr, ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.url_for_query(arg_0, arg_1, arg_2)
     ctx.return_val[string](res)
 }
@@ -570,7 +570,7 @@ pub fn vphp_wrap_vslimcontroller_redirect_to(ptr voidptr, ctx vphp.Context) void
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     arg_2 := ctx.arg[int](2)
     res := recv.redirect_to(arg_0, arg_1, arg_2)
     return voidptr(res)
@@ -581,8 +581,8 @@ pub fn vphp_wrap_vslimcontroller_redirect_to_query(ptr voidptr, ctx vphp.Context
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     arg_3 := ctx.arg[int](3)
     res := recv.redirect_to_query(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
@@ -644,7 +644,7 @@ pub fn vphp_wrap_vslimapp_middleware(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.middleware(arg_0)
     return voidptr(res)
 }
@@ -653,7 +653,7 @@ pub fn vphp_wrap_vslimapp_before(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.before(arg_0)
     return voidptr(res)
 }
@@ -662,7 +662,7 @@ pub fn vphp_wrap_vslimapp_after(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.after(arg_0)
     return voidptr(res)
 }
@@ -671,7 +671,7 @@ pub fn vphp_wrap_vslimapp_set_not_found_handler(ptr voidptr, ctx vphp.Context) v
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.set_not_found_handler(arg_0)
     return voidptr(res)
 }
@@ -680,7 +680,7 @@ pub fn vphp_wrap_vslimapp_not_found(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.not_found(arg_0)
     return voidptr(res)
 }
@@ -689,7 +689,7 @@ pub fn vphp_wrap_vslimapp_set_error_handler(ptr voidptr, ctx vphp.Context) voidp
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.set_error_handler(arg_0)
     return voidptr(res)
 }
@@ -698,7 +698,7 @@ pub fn vphp_wrap_vslimapp_error(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.error(arg_0)
     return voidptr(res)
 }
@@ -734,7 +734,7 @@ pub fn vphp_wrap_vslimapp_get(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.get(arg_0, arg_1)
     return voidptr(res)
 }
@@ -744,7 +744,7 @@ pub fn vphp_wrap_vslimapp_post(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.post(arg_0, arg_1)
     return voidptr(res)
 }
@@ -754,7 +754,7 @@ pub fn vphp_wrap_vslimapp_put(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.put(arg_0, arg_1)
     return voidptr(res)
 }
@@ -764,7 +764,7 @@ pub fn vphp_wrap_vslimapp_head(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.head(arg_0, arg_1)
     return voidptr(res)
 }
@@ -774,7 +774,7 @@ pub fn vphp_wrap_vslimapp_options(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.options(arg_0, arg_1)
     return voidptr(res)
 }
@@ -784,7 +784,7 @@ pub fn vphp_wrap_vslimapp_patch(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.patch(arg_0, arg_1)
     return voidptr(res)
 }
@@ -794,7 +794,7 @@ pub fn vphp_wrap_vslimapp_delete(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.delete(arg_0, arg_1)
     return voidptr(res)
 }
@@ -804,7 +804,7 @@ pub fn vphp_wrap_vslimapp_any(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.any(arg_0, arg_1)
     return voidptr(res)
 }
@@ -814,7 +814,7 @@ pub fn vphp_wrap_vslimapp_live(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.live(arg_0, arg_1)
     return voidptr(res)
 }
@@ -823,9 +823,9 @@ pub fn vphp_wrap_vslimapp_live_ws(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.live_ws(arg_0, arg_1, arg_2)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -835,7 +835,7 @@ pub fn vphp_wrap_vslimapp_websocket(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.websocket(arg_0, arg_1)
     return voidptr(res)
 }
@@ -846,7 +846,7 @@ pub fn vphp_wrap_vslimapp_websocket_named(ptr voidptr, ctx vphp.Context) voidptr
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.websocket_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -855,9 +855,9 @@ pub fn vphp_wrap_vslimapp_map(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.map(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -908,7 +908,7 @@ pub fn vphp_wrap_vslimapp_resource_opts(ptr voidptr, ctx vphp.Context) voidptr {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.resource_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -919,7 +919,7 @@ pub fn vphp_wrap_vslimapp_api_resource_opts(ptr voidptr, ctx vphp.Context) voidp
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.api_resource_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -930,7 +930,7 @@ pub fn vphp_wrap_vslimapp_singleton_opts(ptr voidptr, ctx vphp.Context) voidptr 
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.singleton_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -941,7 +941,7 @@ pub fn vphp_wrap_vslimapp_api_singleton_opts(ptr voidptr, ctx vphp.Context) void
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.api_singleton_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -952,7 +952,7 @@ pub fn vphp_wrap_vslimapp_get_named(ptr voidptr, ctx vphp.Context) voidptr {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.get_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -963,7 +963,7 @@ pub fn vphp_wrap_vslimapp_post_named(ptr voidptr, ctx vphp.Context) voidptr {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.post_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -974,7 +974,7 @@ pub fn vphp_wrap_vslimapp_put_named(ptr voidptr, ctx vphp.Context) voidptr {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.put_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -985,7 +985,7 @@ pub fn vphp_wrap_vslimapp_head_named(ptr voidptr, ctx vphp.Context) voidptr {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.head_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -996,7 +996,7 @@ pub fn vphp_wrap_vslimapp_options_named(ptr voidptr, ctx vphp.Context) voidptr {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.options_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -1007,7 +1007,7 @@ pub fn vphp_wrap_vslimapp_patch_named(ptr voidptr, ctx vphp.Context) voidptr {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.patch_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -1018,7 +1018,7 @@ pub fn vphp_wrap_vslimapp_delete_named(ptr voidptr, ctx vphp.Context) voidptr {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.delete_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -1029,7 +1029,7 @@ pub fn vphp_wrap_vslimapp_any_named(ptr voidptr, ctx vphp.Context) voidptr {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.any_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -1038,10 +1038,10 @@ pub fn vphp_wrap_vslimapp_map_named(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[string](1)
     arg_2 := ctx.arg[string](2)
-    arg_3 := ctx.arg[vphp.RequestBorrowedZBox](3)
+    arg_3 := ctx.arg_borrowed_zbox(3)
     res := recv.map_named(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
 }
@@ -1051,7 +1051,7 @@ pub fn vphp_wrap_vslimapp_url_for(ptr voidptr, ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.url_for(arg_0, arg_1)
     ctx.return_val[string](res)
 }
@@ -1061,8 +1061,8 @@ pub fn vphp_wrap_vslimapp_url_for_query(ptr voidptr, ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.url_for_query(arg_0, arg_1, arg_2)
     ctx.return_val[string](res)
 }
@@ -1072,7 +1072,7 @@ pub fn vphp_wrap_vslimapp_url_for_abs(ptr voidptr, ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     arg_2 := ctx.arg[string](2)
     arg_3 := ctx.arg[string](3)
     res := recv.url_for_abs(arg_0, arg_1, arg_2, arg_3)
@@ -1084,8 +1084,8 @@ pub fn vphp_wrap_vslimapp_url_for_query_abs(ptr voidptr, ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     arg_3 := ctx.arg[string](3)
     arg_4 := ctx.arg[string](4)
     res := recv.url_for_query_abs(arg_0, arg_1, arg_2, arg_3, arg_4)
@@ -1097,7 +1097,7 @@ pub fn vphp_wrap_vslimapp_redirect_to(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.redirect_to(arg_0, arg_1)
     return voidptr(res)
 }
@@ -1107,8 +1107,8 @@ pub fn vphp_wrap_vslimapp_redirect_to_query(ptr voidptr, ctx vphp.Context) voidp
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.redirect_to_query(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -1117,7 +1117,7 @@ pub fn vphp_wrap_vslimapp_register(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.register(arg_0)
     return voidptr(res)
 }
@@ -1126,7 +1126,7 @@ pub fn vphp_wrap_vslimapp_register_many(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.register_many(arg_0)
     return voidptr(res)
 }
@@ -1198,7 +1198,7 @@ pub fn vphp_wrap_vslimapp_handle(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.handle(arg_0)
     return voidptr(res)
 }
@@ -1207,7 +1207,7 @@ pub fn vphp_wrap_vslimapp_dispatch_envelope(ptr voidptr, ctx vphp.Context) voidp
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.dispatch_envelope(arg_0)
     return voidptr(res)
 }
@@ -1216,7 +1216,7 @@ pub fn vphp_wrap_vslimapp_dispatch_envelope_worker(ptr voidptr, ctx vphp.Context
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.dispatch_envelope_worker(arg_0)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -1225,7 +1225,7 @@ pub fn vphp_wrap_vslimapp_dispatch_envelope_map(ptr voidptr, ctx vphp.Context)  
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.dispatch_envelope_map(arg_0)
     ctx.return_val[map[string]string](res)
 }
@@ -1234,8 +1234,8 @@ pub fn vphp_wrap_vslimapp_handle_websocket(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.handle_websocket(arg_0, arg_1)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -1412,7 +1412,7 @@ pub fn vphp_wrap_vslimapp_handle_mcp_dispatch(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.handle_mcp_dispatch(arg_0)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -1429,7 +1429,7 @@ pub fn vphp_wrap_vslimapp_set_clock(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.set_clock(arg_0)
     return voidptr(res)
 }
@@ -1564,7 +1564,7 @@ pub fn vphp_wrap_vslimapp_bootstrap(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.bootstrap(arg_0)
     return voidptr(res)
 }
@@ -1591,7 +1591,7 @@ pub fn vphp_wrap_vslimapp_mount_module(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.mount_module(arg_0)
     return voidptr(res)
 }
@@ -1600,7 +1600,7 @@ pub fn vphp_wrap_vslimapp_module_many(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.module_many(arg_0)
     return voidptr(res)
 }
@@ -1686,7 +1686,7 @@ pub fn vphp_wrap_vslimapp_helper(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.helper(arg_0, arg_1)
     return voidptr(res)
 }
@@ -1704,7 +1704,7 @@ pub fn vphp_wrap_vslimapp_view(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.view(arg_0, arg_1)
     return voidptr(res)
 }
@@ -1715,7 +1715,7 @@ pub fn vphp_wrap_vslimapp_view_with_layout(ptr voidptr, ctx vphp.Context) voidpt
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.view_with_layout(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -1779,7 +1779,7 @@ pub fn vphp_wrap_vslimpsr15nexthandler_handle(ptr voidptr, ctx vphp.Context) voi
     mut recv := unsafe { &VSlimPsr15NextHandler(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.handle(arg_0)
     return voidptr(res)
 }
@@ -1836,7 +1836,7 @@ pub fn vphp_wrap_vslimpsr15continuehandler_handle(ptr voidptr, ctx vphp.Context)
     mut recv := unsafe { &VSlimPsr15ContinueHandler(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.handle(arg_0)
     return voidptr(res)
 }
@@ -2064,7 +2064,7 @@ pub fn vphp_wrap_routegroup_middleware(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.middleware(arg_0)
     return voidptr(res)
 }
@@ -2073,7 +2073,7 @@ pub fn vphp_wrap_routegroup_before(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.before(arg_0)
     return voidptr(res)
 }
@@ -2082,7 +2082,7 @@ pub fn vphp_wrap_routegroup_after(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.after(arg_0)
     return voidptr(res)
 }
@@ -2092,7 +2092,7 @@ pub fn vphp_wrap_routegroup_get(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.get(arg_0, arg_1)
     return voidptr(res)
 }
@@ -2102,7 +2102,7 @@ pub fn vphp_wrap_routegroup_post(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.post(arg_0, arg_1)
     return voidptr(res)
 }
@@ -2112,7 +2112,7 @@ pub fn vphp_wrap_routegroup_put(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.put(arg_0, arg_1)
     return voidptr(res)
 }
@@ -2122,7 +2122,7 @@ pub fn vphp_wrap_routegroup_head(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.head(arg_0, arg_1)
     return voidptr(res)
 }
@@ -2132,7 +2132,7 @@ pub fn vphp_wrap_routegroup_options(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.options(arg_0, arg_1)
     return voidptr(res)
 }
@@ -2142,7 +2142,7 @@ pub fn vphp_wrap_routegroup_patch(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.patch(arg_0, arg_1)
     return voidptr(res)
 }
@@ -2152,7 +2152,7 @@ pub fn vphp_wrap_routegroup_delete(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.delete(arg_0, arg_1)
     return voidptr(res)
 }
@@ -2162,7 +2162,7 @@ pub fn vphp_wrap_routegroup_any(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.any(arg_0, arg_1)
     return voidptr(res)
 }
@@ -2172,7 +2172,7 @@ pub fn vphp_wrap_routegroup_live(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.live(arg_0, arg_1)
     return voidptr(res)
 }
@@ -2182,7 +2182,7 @@ pub fn vphp_wrap_routegroup_websocket(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.websocket(arg_0, arg_1)
     return voidptr(res)
 }
@@ -2191,9 +2191,9 @@ pub fn vphp_wrap_routegroup_map(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.map(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -2244,7 +2244,7 @@ pub fn vphp_wrap_routegroup_resource_opts(ptr voidptr, ctx vphp.Context) voidptr
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.resource_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -2255,7 +2255,7 @@ pub fn vphp_wrap_routegroup_api_resource_opts(ptr voidptr, ctx vphp.Context) voi
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.api_resource_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -2266,7 +2266,7 @@ pub fn vphp_wrap_routegroup_singleton_opts(ptr voidptr, ctx vphp.Context) voidpt
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.singleton_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -2277,7 +2277,7 @@ pub fn vphp_wrap_routegroup_api_singleton_opts(ptr voidptr, ctx vphp.Context) vo
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.api_singleton_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -2288,7 +2288,7 @@ pub fn vphp_wrap_routegroup_get_named(ptr voidptr, ctx vphp.Context) voidptr {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.get_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -2299,7 +2299,7 @@ pub fn vphp_wrap_routegroup_post_named(ptr voidptr, ctx vphp.Context) voidptr {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.post_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -2310,7 +2310,7 @@ pub fn vphp_wrap_routegroup_put_named(ptr voidptr, ctx vphp.Context) voidptr {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.put_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -2321,7 +2321,7 @@ pub fn vphp_wrap_routegroup_head_named(ptr voidptr, ctx vphp.Context) voidptr {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.head_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -2332,7 +2332,7 @@ pub fn vphp_wrap_routegroup_options_named(ptr voidptr, ctx vphp.Context) voidptr
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.options_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -2343,7 +2343,7 @@ pub fn vphp_wrap_routegroup_patch_named(ptr voidptr, ctx vphp.Context) voidptr {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.patch_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -2354,7 +2354,7 @@ pub fn vphp_wrap_routegroup_delete_named(ptr voidptr, ctx vphp.Context) voidptr 
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.delete_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -2365,7 +2365,7 @@ pub fn vphp_wrap_routegroup_any_named(ptr voidptr, ctx vphp.Context) voidptr {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.any_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -2376,7 +2376,7 @@ pub fn vphp_wrap_routegroup_websocket_named(ptr voidptr, ctx vphp.Context) voidp
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.websocket_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -2385,10 +2385,10 @@ pub fn vphp_wrap_routegroup_map_named(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[string](1)
     arg_2 := ctx.arg[string](2)
-    arg_3 := ctx.arg[vphp.RequestBorrowedZBox](3)
+    arg_3 := ctx.arg_borrowed_zbox(3)
     res := recv.map_named(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
 }
@@ -2561,7 +2561,7 @@ pub fn vphp_wrap_vslimrequest_set_query(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.set_query(arg_0)
     return voidptr(res)
 }
@@ -2642,7 +2642,7 @@ pub fn vphp_wrap_vslimrequest_set_headers(ptr voidptr, ctx vphp.Context) voidptr
     mut recv := unsafe { &VSlimRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.set_headers(arg_0)
     return voidptr(res)
 }
@@ -2651,7 +2651,7 @@ pub fn vphp_wrap_vslimrequest_set_cookies(ptr voidptr, ctx vphp.Context) voidptr
     mut recv := unsafe { &VSlimRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.set_cookies(arg_0)
     return voidptr(res)
 }
@@ -2660,7 +2660,7 @@ pub fn vphp_wrap_vslimrequest_set_attributes(ptr voidptr, ctx vphp.Context) void
     mut recv := unsafe { &VSlimRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.set_attributes(arg_0)
     return voidptr(res)
 }
@@ -2669,7 +2669,7 @@ pub fn vphp_wrap_vslimrequest_set_server(ptr voidptr, ctx vphp.Context) voidptr 
     mut recv := unsafe { &VSlimRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.set_server(arg_0)
     return voidptr(res)
 }
@@ -2678,7 +2678,7 @@ pub fn vphp_wrap_vslimrequest_set_uploaded_files(ptr voidptr, ctx vphp.Context) 
     mut recv := unsafe { &VSlimRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.set_uploaded_files(arg_0)
     return voidptr(res)
 }
@@ -2687,7 +2687,7 @@ pub fn vphp_wrap_vslimrequest_set_params(ptr voidptr, ctx vphp.Context) voidptr 
     mut recv := unsafe { &VSlimRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.set_params(arg_0)
     return voidptr(res)
 }
@@ -3453,10 +3453,10 @@ pub fn vphp_wrap_vslimstreamresponse_construct(ptr voidptr, ctx vphp.Context) vo
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     arg_2 := ctx.arg[int](2)
     arg_3 := ctx.arg[string](3)
-    arg_4 := ctx.arg[vphp.RequestBorrowedZBox](4)
+    arg_4 := ctx.arg_borrowed_zbox(4)
     res := recv.construct(arg_0, arg_1, arg_2, arg_3, arg_4)
     return voidptr(res)
 }
@@ -3464,7 +3464,7 @@ pub fn vphp_wrap_vslimstreamresponse_construct(ptr voidptr, ctx vphp.Context) vo
 pub fn vphp_wrap_vslimstreamresponse_text(ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := VSlimStreamResponse.text(arg_0)
     return voidptr(res)
 }
@@ -3472,10 +3472,10 @@ pub fn vphp_wrap_vslimstreamresponse_text(ctx vphp.Context) voidptr {
 pub fn vphp_wrap_vslimstreamresponse_text_with(ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[int](1)
     arg_2 := ctx.arg[string](2)
-    arg_3 := ctx.arg[vphp.RequestBorrowedZBox](3)
+    arg_3 := ctx.arg_borrowed_zbox(3)
     res := VSlimStreamResponse.text_with(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
 }
@@ -3483,7 +3483,7 @@ pub fn vphp_wrap_vslimstreamresponse_text_with(ctx vphp.Context) voidptr {
 pub fn vphp_wrap_vslimstreamresponse_sse(ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := VSlimStreamResponse.sse(arg_0)
     return voidptr(res)
 }
@@ -3491,9 +3491,9 @@ pub fn vphp_wrap_vslimstreamresponse_sse(ctx vphp.Context) voidptr {
 pub fn vphp_wrap_vslimstreamresponse_sse_with(ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[int](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := VSlimStreamResponse.sse_with(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -3556,7 +3556,7 @@ pub fn vphp_wrap_vslimstreamresponse_set_chunks(ptr voidptr, ctx vphp.Context) v
     mut recv := unsafe { &VSlimStreamResponse(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.set_chunks(arg_0)
     return voidptr(res)
 }
@@ -3620,7 +3620,7 @@ pub fn vslimstreamndjsondecoder_sync_props(ptr voidptr, zv &C.zval) {
 pub fn vphp_wrap_vslimstreamndjsondecoder_decode(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := VSlimStreamNdjsonDecoder.decode(arg_0)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -3676,7 +3676,7 @@ pub fn vslimstreamsseencoder_sync_props(ptr voidptr, zv &C.zval) {
 pub fn vphp_wrap_vslimstreamsseencoder_from_ollama(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[string](1)
     res := VSlimStreamSseEncoder.from_ollama(arg_0, arg_1)
     ctx.return_val[vphp.RequestOwnedZBox](res)
@@ -3756,7 +3756,7 @@ pub fn vphp_wrap_vslimstreamollamaclient_from_env(ctx vphp.Context) voidptr {
 pub fn vphp_wrap_vslimstreamollamaclient_from_options(ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := VSlimStreamOllamaClient.from_options(arg_0)
     return voidptr(res)
 }
@@ -3797,7 +3797,7 @@ pub fn vphp_wrap_vslimstreamollamaclient_payload(ptr voidptr, ctx vphp.Context) 
     mut recv := unsafe { &VSlimStreamOllamaClient(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.payload(arg_0)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -3806,7 +3806,7 @@ pub fn vphp_wrap_vslimstreamollamaclient_payload_from_request(ptr voidptr, ctx v
     mut recv := unsafe { &VSlimStreamOllamaClient(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.payload_from_request(arg_0)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -3815,7 +3815,7 @@ pub fn vphp_wrap_vslimstreamollamaclient_open_stream(ptr voidptr, ctx vphp.Conte
     mut recv := unsafe { &VSlimStreamOllamaClient(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.open_stream(arg_0)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -3824,7 +3824,7 @@ pub fn vphp_wrap_vslimstreamollamaclient_text_response_from_request(ptr voidptr,
     mut recv := unsafe { &VSlimStreamOllamaClient(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.text_response_from_request(arg_0)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -3833,7 +3833,7 @@ pub fn vphp_wrap_vslimstreamollamaclient_sse_response_from_request(ptr voidptr, 
     mut recv := unsafe { &VSlimStreamOllamaClient(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.sse_response_from_request(arg_0)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -3889,7 +3889,7 @@ pub fn vslimstreamfactory_sync_props(ptr voidptr, zv &C.zval) {
 pub fn vphp_wrap_vslimstreamfactory_text(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := VSlimStreamFactory.text(arg_0)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -3897,10 +3897,10 @@ pub fn vphp_wrap_vslimstreamfactory_text(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimstreamfactory_text_with(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[int](1)
     arg_2 := ctx.arg[string](2)
-    arg_3 := ctx.arg[vphp.RequestBorrowedZBox](3)
+    arg_3 := ctx.arg_borrowed_zbox(3)
     res := VSlimStreamFactory.text_with(arg_0, arg_1, arg_2, arg_3)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -3908,7 +3908,7 @@ pub fn vphp_wrap_vslimstreamfactory_text_with(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimstreamfactory_sse(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := VSlimStreamFactory.sse(arg_0)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -3916,9 +3916,9 @@ pub fn vphp_wrap_vslimstreamfactory_sse(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimstreamfactory_sse_with(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[int](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := VSlimStreamFactory.sse_with(arg_0, arg_1, arg_2)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -3926,7 +3926,7 @@ pub fn vphp_wrap_vslimstreamfactory_sse_with(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimstreamfactory_ollama_text(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := VSlimStreamFactory.ollama_text(arg_0)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -3934,8 +3934,8 @@ pub fn vphp_wrap_vslimstreamfactory_ollama_text(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimstreamfactory_ollama_text_with(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := VSlimStreamFactory.ollama_text_with(arg_0, arg_1)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -3943,7 +3943,7 @@ pub fn vphp_wrap_vslimstreamfactory_ollama_text_with(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimstreamfactory_ollama_sse(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := VSlimStreamFactory.ollama_sse(arg_0)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -3951,8 +3951,8 @@ pub fn vphp_wrap_vslimstreamfactory_ollama_sse(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimstreamfactory_ollama_sse_with(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := VSlimStreamFactory.ollama_sse_with(arg_0, arg_1)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -4021,7 +4021,7 @@ pub fn vphp_wrap_vslimwebsocketapp_on_open(ptr voidptr, ctx vphp.Context) voidpt
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.on_open(arg_0)
     return voidptr(res)
 }
@@ -4030,7 +4030,7 @@ pub fn vphp_wrap_vslimwebsocketapp_on_message(ptr voidptr, ctx vphp.Context) voi
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.on_message(arg_0)
     return voidptr(res)
 }
@@ -4039,7 +4039,7 @@ pub fn vphp_wrap_vslimwebsocketapp_on_close(ptr voidptr, ctx vphp.Context) voidp
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.on_close(arg_0)
     return voidptr(res)
 }
@@ -4072,7 +4072,7 @@ pub fn vphp_wrap_vslimwebsocketapp_remember(ptr voidptr, ctx vphp.Context) voidp
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.remember(arg_0)
     return voidptr(res)
 }
@@ -4081,7 +4081,7 @@ pub fn vphp_wrap_vslimwebsocketapp_forget(ptr voidptr, ctx vphp.Context) voidptr
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.forget(arg_0)
     return voidptr(res)
 }
@@ -4090,7 +4090,7 @@ pub fn vphp_wrap_vslimwebsocketapp_has_connection(ptr voidptr, ctx vphp.Context)
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.has_connection(arg_0)
     ctx.return_val[bool](res)
 }
@@ -4100,7 +4100,7 @@ pub fn vphp_wrap_vslimwebsocketapp_join(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.join(arg_0, arg_1)
     return voidptr(res)
 }
@@ -4110,7 +4110,7 @@ pub fn vphp_wrap_vslimwebsocketapp_leave(ptr voidptr, ctx vphp.Context) voidptr 
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.leave(arg_0, arg_1)
     return voidptr(res)
 }
@@ -4136,7 +4136,7 @@ pub fn vphp_wrap_vslimwebsocketapp_rooms_for(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.rooms_for(arg_0)
     ctx.return_val[[]string](res)
 }
@@ -4145,7 +4145,7 @@ pub fn vphp_wrap_vslimwebsocketapp_send_to(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[string](1)
     res := recv.send_to(arg_0, arg_1)
     ctx.return_val[bool](res)
@@ -4166,8 +4166,8 @@ pub fn vphp_wrap_vslimwebsocketapp_handle_websocket(ptr voidptr, ctx vphp.Contex
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.handle_websocket(arg_0, arg_1)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -4236,7 +4236,7 @@ pub fn vphp_wrap_vslimmcpapp_server_info(ptr voidptr, ctx vphp.Context) voidptr 
     mut recv := unsafe { &VSlimMcpApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.server_info(arg_0)
     return voidptr(res)
 }
@@ -4246,7 +4246,7 @@ pub fn vphp_wrap_vslimmcpapp_capability(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.capability(arg_0, arg_1)
     return voidptr(res)
 }
@@ -4255,7 +4255,7 @@ pub fn vphp_wrap_vslimmcpapp_capabilities(ptr voidptr, ctx vphp.Context) voidptr
     mut recv := unsafe { &VSlimMcpApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.capabilities(arg_0)
     return voidptr(res)
 }
@@ -4265,7 +4265,7 @@ pub fn vphp_wrap_vslimmcpapp_register(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.register(arg_0, arg_1)
     return voidptr(res)
 }
@@ -4276,8 +4276,8 @@ pub fn vphp_wrap_vslimmcpapp_tool(ptr voidptr, ctx vphp.Context) voidptr {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
-    arg_3 := ctx.arg[vphp.RequestBorrowedZBox](3)
+    arg_2 := ctx.arg_borrowed_zbox(2)
+    arg_3 := ctx.arg_borrowed_zbox(3)
     res := recv.tool(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
 }
@@ -4290,7 +4290,7 @@ pub fn vphp_wrap_vslimmcpapp_resource(ptr voidptr, ctx vphp.Context) voidptr {
     arg_1 := ctx.arg[string](1)
     arg_2 := ctx.arg[string](2)
     arg_3 := ctx.arg[string](3)
-    arg_4 := ctx.arg[vphp.RequestBorrowedZBox](4)
+    arg_4 := ctx.arg_borrowed_zbox(4)
     res := recv.resource(arg_0, arg_1, arg_2, arg_3, arg_4)
     return voidptr(res)
 }
@@ -4301,8 +4301,8 @@ pub fn vphp_wrap_vslimmcpapp_prompt(ptr voidptr, ctx vphp.Context) voidptr {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
-    arg_3 := ctx.arg[vphp.RequestBorrowedZBox](3)
+    arg_2 := ctx.arg_borrowed_zbox(2)
+    arg_3 := ctx.arg_borrowed_zbox(3)
     res := recv.prompt(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
 }
@@ -4311,7 +4311,7 @@ pub fn vphp_wrap_vslimmcpapp_notification(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := VSlimMcpApp.notification(arg_0, arg_1)
     ctx.return_val[string](res)
 }
@@ -4319,9 +4319,9 @@ pub fn vphp_wrap_vslimmcpapp_notification(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimmcpapp_request(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := VSlimMcpApp.request(arg_0, arg_1, arg_2)
     ctx.return_val[string](res)
 }
@@ -4329,14 +4329,14 @@ pub fn vphp_wrap_vslimmcpapp_request(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimmcpapp_sampling_request(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     arg_3 := ctx.arg[string](3)
     arg_4 := ctx.arg[int](4)
-    arg_5 := ctx.arg[vphp.RequestBorrowedZBox](5)
-    arg_6 := ctx.arg[vphp.RequestBorrowedZBox](6)
-    arg_7 := ctx.arg[vphp.RequestBorrowedZBox](7)
+    arg_5 := ctx.arg_borrowed_zbox(5)
+    arg_6 := ctx.arg_borrowed_zbox(6)
+    arg_7 := ctx.arg_borrowed_zbox(7)
     res := VSlimMcpApp.sampling_request(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6, arg_7)
     ctx.return_val[string](res)
 }
@@ -4344,13 +4344,13 @@ pub fn vphp_wrap_vslimmcpapp_sampling_request(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimmcpapp_queued_result(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     arg_3 := ctx.arg[int](3)
     arg_4 := ctx.arg[string](4)
     arg_5 := ctx.arg[string](5)
-    arg_6 := ctx.arg[vphp.RequestBorrowedZBox](6)
+    arg_6 := ctx.arg_borrowed_zbox(6)
     res := VSlimMcpApp.queued_result(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -4358,13 +4358,13 @@ pub fn vphp_wrap_vslimmcpapp_queued_result(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimmcpapp_queue_messages(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     arg_3 := ctx.arg[int](3)
     arg_4 := ctx.arg[string](4)
     arg_5 := ctx.arg[string](5)
-    arg_6 := ctx.arg[vphp.RequestBorrowedZBox](6)
+    arg_6 := ctx.arg_borrowed_zbox(6)
     res := VSlimMcpApp.queue_messages(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -4372,9 +4372,9 @@ pub fn vphp_wrap_vslimmcpapp_queue_messages(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimmcpapp_notify(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     arg_3 := ctx.arg[string](3)
     arg_4 := ctx.arg[string](4)
     res := VSlimMcpApp.notify(arg_0, arg_1, arg_2, arg_3, arg_4)
@@ -4384,9 +4384,9 @@ pub fn vphp_wrap_vslimmcpapp_notify(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimmcpapp_queue_notification(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     arg_3 := ctx.arg[string](3)
     arg_4 := ctx.arg[string](4)
     res := VSlimMcpApp.queue_notification(arg_0, arg_1, arg_2, arg_3, arg_4)
@@ -4396,10 +4396,10 @@ pub fn vphp_wrap_vslimmcpapp_queue_notification(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimmcpapp_queue_request(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     arg_2 := ctx.arg[string](2)
-    arg_3 := ctx.arg[vphp.RequestBorrowedZBox](3)
+    arg_3 := ctx.arg_borrowed_zbox(3)
     arg_4 := ctx.arg[string](4)
     arg_5 := ctx.arg[string](5)
     res := VSlimMcpApp.queue_request(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5)
@@ -4409,10 +4409,10 @@ pub fn vphp_wrap_vslimmcpapp_queue_request(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimmcpapp_queue_progress(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
-    arg_3 := ctx.arg[vphp.RequestBorrowedZBox](3)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    arg_2 := ctx.arg_borrowed_zbox(2)
+    arg_3 := ctx.arg_borrowed_zbox(3)
     arg_4 := ctx.arg[string](4)
     arg_5 := ctx.arg[string](5)
     arg_6 := ctx.arg[string](6)
@@ -4423,10 +4423,10 @@ pub fn vphp_wrap_vslimmcpapp_queue_progress(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimmcpapp_queue_log(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[string](1)
     arg_2 := ctx.arg[string](2)
-    arg_3 := ctx.arg[vphp.RequestBorrowedZBox](3)
+    arg_3 := ctx.arg_borrowed_zbox(3)
     arg_4 := ctx.arg[string](4)
     arg_5 := ctx.arg[string](5)
     arg_6 := ctx.arg[string](6)
@@ -4437,12 +4437,12 @@ pub fn vphp_wrap_vslimmcpapp_queue_log(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimmcpapp_queue_sampling(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     arg_3 := ctx.arg[string](3)
     arg_4 := ctx.arg[string](4)
-    arg_5 := ctx.arg[vphp.RequestBorrowedZBox](5)
+    arg_5 := ctx.arg_borrowed_zbox(5)
     arg_6 := ctx.arg[string](6)
     arg_7 := ctx.arg[int](7)
     res := VSlimMcpApp.queue_sampling(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6, arg_7)
@@ -4452,7 +4452,7 @@ pub fn vphp_wrap_vslimmcpapp_queue_sampling(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimmcpapp_client_capabilities(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := VSlimMcpApp.client_capabilities(arg_0)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -4460,7 +4460,7 @@ pub fn vphp_wrap_vslimmcpapp_client_capabilities(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimmcpapp_client_supports(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[string](1)
     res := VSlimMcpApp.client_supports(arg_0, arg_1)
     ctx.return_val[bool](res)
@@ -4469,7 +4469,7 @@ pub fn vphp_wrap_vslimmcpapp_client_supports(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimmcpapp_capability_error(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[string](1)
     arg_2 := ctx.arg[int](2)
     res := VSlimMcpApp.capability_error(arg_0, arg_1, arg_2)
@@ -4479,7 +4479,7 @@ pub fn vphp_wrap_vslimmcpapp_capability_error(ctx vphp.Context)  {
 pub fn vphp_wrap_vslimmcpapp_require_capability(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[string](1)
     arg_2 := ctx.arg[string](2)
     arg_3 := ctx.arg[int](3)
@@ -4491,7 +4491,7 @@ pub fn vphp_wrap_vslimmcpapp_handle_mcp_dispatch(ptr voidptr, ctx vphp.Context) 
     mut recv := unsafe { &VSlimMcpApp(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.handle_mcp_dispatch(arg_0)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -4632,7 +4632,7 @@ pub fn vphp_wrap_vslimlogger_set_context(ptr voidptr, ctx vphp.Context) voidptr 
     mut recv := unsafe { &VSlimLogger(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.set_context(arg_0)
     return voidptr(res)
 }
@@ -4738,7 +4738,7 @@ pub fn vphp_wrap_vslimlogger_log_context(ptr voidptr, ctx vphp.Context) voidptr 
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.log_context(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -4757,7 +4757,7 @@ pub fn vphp_wrap_vslimlogger_debug_context(ptr voidptr, ctx vphp.Context) voidpt
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.debug_context(arg_0, arg_1)
     return voidptr(res)
 }
@@ -4776,7 +4776,7 @@ pub fn vphp_wrap_vslimlogger_info_context(ptr voidptr, ctx vphp.Context) voidptr
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.info_context(arg_0, arg_1)
     return voidptr(res)
 }
@@ -4795,7 +4795,7 @@ pub fn vphp_wrap_vslimlogger_warn_context(ptr voidptr, ctx vphp.Context) voidptr
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.warn_context(arg_0, arg_1)
     return voidptr(res)
 }
@@ -4814,7 +4814,7 @@ pub fn vphp_wrap_vslimlogger_error_context(ptr voidptr, ctx vphp.Context) voidpt
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.error_context(arg_0, arg_1)
     return voidptr(res)
 }
@@ -4833,7 +4833,7 @@ pub fn vphp_wrap_vslimlogger_warning_context(ptr voidptr, ctx vphp.Context) void
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.warning_context(arg_0, arg_1)
     return voidptr(res)
 }
@@ -4852,7 +4852,7 @@ pub fn vphp_wrap_vslimlogger_notice_context(ptr voidptr, ctx vphp.Context) voidp
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.notice_context(arg_0, arg_1)
     return voidptr(res)
 }
@@ -4871,7 +4871,7 @@ pub fn vphp_wrap_vslimlogger_critical_context(ptr voidptr, ctx vphp.Context) voi
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.critical_context(arg_0, arg_1)
     return voidptr(res)
 }
@@ -4890,7 +4890,7 @@ pub fn vphp_wrap_vslimlogger_alert_context(ptr voidptr, ctx vphp.Context) voidpt
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.alert_context(arg_0, arg_1)
     return voidptr(res)
 }
@@ -4909,7 +4909,7 @@ pub fn vphp_wrap_vslimlogger_emergency_context(ptr voidptr, ctx vphp.Context) vo
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.emergency_context(arg_0, arg_1)
     return voidptr(res)
 }
@@ -5017,7 +5017,7 @@ pub fn vphp_wrap_vslimpsrlogger_set_context(ptr voidptr, ctx vphp.Context) voidp
     mut recv := unsafe { &VSlimPsrLogger(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.set_context(arg_0)
     return voidptr(res)
 }
@@ -5069,9 +5069,9 @@ pub fn vphp_wrap_vslimpsrlogger_log(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsrLogger(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     recv.log(arg_0, arg_1, arg_2)
 }
 @[export: 'vphp_wrap_VSlimPsrLogger_emergency']
@@ -5079,8 +5079,8 @@ pub fn vphp_wrap_vslimpsrlogger_emergency(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsrLogger(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     recv.emergency(arg_0, arg_1)
 }
 @[export: 'vphp_wrap_VSlimPsrLogger_alert']
@@ -5088,8 +5088,8 @@ pub fn vphp_wrap_vslimpsrlogger_alert(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsrLogger(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     recv.alert(arg_0, arg_1)
 }
 @[export: 'vphp_wrap_VSlimPsrLogger_critical']
@@ -5097,8 +5097,8 @@ pub fn vphp_wrap_vslimpsrlogger_critical(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsrLogger(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     recv.critical(arg_0, arg_1)
 }
 @[export: 'vphp_wrap_VSlimPsrLogger_error']
@@ -5106,8 +5106,8 @@ pub fn vphp_wrap_vslimpsrlogger_error(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsrLogger(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     recv.error(arg_0, arg_1)
 }
 @[export: 'vphp_wrap_VSlimPsrLogger_warning']
@@ -5115,8 +5115,8 @@ pub fn vphp_wrap_vslimpsrlogger_warning(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsrLogger(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     recv.warning(arg_0, arg_1)
 }
 @[export: 'vphp_wrap_VSlimPsrLogger_notice']
@@ -5124,8 +5124,8 @@ pub fn vphp_wrap_vslimpsrlogger_notice(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsrLogger(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     recv.notice(arg_0, arg_1)
 }
 @[export: 'vphp_wrap_VSlimPsrLogger_info']
@@ -5133,8 +5133,8 @@ pub fn vphp_wrap_vslimpsrlogger_info(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsrLogger(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     recv.info(arg_0, arg_1)
 }
 @[export: 'vphp_wrap_VSlimPsrLogger_debug']
@@ -5142,8 +5142,8 @@ pub fn vphp_wrap_vslimpsrlogger_debug(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsrLogger(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     recv.debug(arg_0, arg_1)
 }
 @[export: 'vphp_wrap_VSlimPsrLogger_str']
@@ -5372,8 +5372,8 @@ pub fn vphp_wrap_vslimpsr7stream_seek(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     recv.seek(arg_0, arg_1)
 }
 @[export: 'vphp_wrap_VSlimPsr7Stream_rewind']
@@ -5396,7 +5396,7 @@ pub fn vphp_wrap_vslimpsr7stream_write(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.write(arg_0)
     ctx.return_val[int](res)
 }
@@ -5413,7 +5413,7 @@ pub fn vphp_wrap_vslimpsr7stream_read(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.read(arg_0)
     ctx.return_val[string](res)
 }
@@ -5430,7 +5430,7 @@ pub fn vphp_wrap_vslimpsr7stream_get_metadata(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.get_metadata(arg_0)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -5487,7 +5487,7 @@ pub fn vphp_wrap_vslimpsr7uploadedfile_construct(ptr voidptr, ctx vphp.Context) 
     mut recv := unsafe { &VSlimPsr7UploadedFile(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg_opt[int](1)
     arg_2 := ctx.arg[int](2)
     arg_3 := ctx.arg_opt[string](3)
@@ -5508,7 +5508,7 @@ pub fn vphp_wrap_vslimpsr7uploadedfile_move_to(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7UploadedFile(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     recv.move_to(arg_0)
 }
 @[export: 'vphp_wrap_VSlimPsr7UploadedFile_get_size']
@@ -5625,7 +5625,7 @@ pub fn vphp_wrap_vslimpsr7response_with_protocol_version(ptr voidptr, ctx vphp.C
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_protocol_version(arg_0)
     return voidptr(res)
 }
@@ -5642,7 +5642,7 @@ pub fn vphp_wrap_vslimpsr7response_has_header(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.has_header(arg_0)
     ctx.return_val[bool](res)
 }
@@ -5651,7 +5651,7 @@ pub fn vphp_wrap_vslimpsr7response_get_header(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.get_header(arg_0)
     ctx.return_val[[]string](res)
 }
@@ -5660,7 +5660,7 @@ pub fn vphp_wrap_vslimpsr7response_get_header_line(ptr voidptr, ctx vphp.Context
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.get_header_line(arg_0)
     ctx.return_val[string](res)
 }
@@ -5669,8 +5669,8 @@ pub fn vphp_wrap_vslimpsr7response_with_header(ptr voidptr, ctx vphp.Context) vo
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.with_header(arg_0, arg_1)
     return voidptr(res)
 }
@@ -5679,8 +5679,8 @@ pub fn vphp_wrap_vslimpsr7response_with_added_header(ptr voidptr, ctx vphp.Conte
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.with_added_header(arg_0, arg_1)
     return voidptr(res)
 }
@@ -5689,7 +5689,7 @@ pub fn vphp_wrap_vslimpsr7response_without_header(ptr voidptr, ctx vphp.Context)
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.without_header(arg_0)
     return voidptr(res)
 }
@@ -5706,7 +5706,7 @@ pub fn vphp_wrap_vslimpsr7response_with_body(ptr voidptr, ctx vphp.Context) void
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_body(arg_0)
     return voidptr(res)
 }
@@ -5723,8 +5723,8 @@ pub fn vphp_wrap_vslimpsr7response_with_status(ptr voidptr, ctx vphp.Context) vo
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.with_status(arg_0, arg_1)
     return voidptr(res)
 }
@@ -5879,7 +5879,7 @@ pub fn vphp_wrap_vslimpsr7uri_with_scheme(ptr voidptr, ctx vphp.Context) voidptr
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_scheme(arg_0)
     return voidptr(res)
 }
@@ -5888,8 +5888,8 @@ pub fn vphp_wrap_vslimpsr7uri_with_user_info(ptr voidptr, ctx vphp.Context) void
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.with_user_info(arg_0, arg_1)
     return voidptr(res)
 }
@@ -5898,7 +5898,7 @@ pub fn vphp_wrap_vslimpsr7uri_with_host(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_host(arg_0)
     return voidptr(res)
 }
@@ -5907,7 +5907,7 @@ pub fn vphp_wrap_vslimpsr7uri_with_port(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_port(arg_0)
     return voidptr(res)
 }
@@ -5916,7 +5916,7 @@ pub fn vphp_wrap_vslimpsr7uri_with_path(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_path(arg_0)
     return voidptr(res)
 }
@@ -5925,7 +5925,7 @@ pub fn vphp_wrap_vslimpsr7uri_with_query(ptr voidptr, ctx vphp.Context) voidptr 
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_query(arg_0)
     return voidptr(res)
 }
@@ -5934,7 +5934,7 @@ pub fn vphp_wrap_vslimpsr7uri_with_fragment(ptr voidptr, ctx vphp.Context) voidp
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_fragment(arg_0)
     return voidptr(res)
 }
@@ -6007,7 +6007,7 @@ pub fn vphp_wrap_vslimpsr7request_with_protocol_version(ptr voidptr, ctx vphp.Co
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_protocol_version(arg_0)
     return voidptr(res)
 }
@@ -6024,7 +6024,7 @@ pub fn vphp_wrap_vslimpsr7request_has_header(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.has_header(arg_0)
     ctx.return_val[bool](res)
 }
@@ -6033,7 +6033,7 @@ pub fn vphp_wrap_vslimpsr7request_get_header(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.get_header(arg_0)
     ctx.return_val[[]string](res)
 }
@@ -6042,7 +6042,7 @@ pub fn vphp_wrap_vslimpsr7request_get_header_line(ptr voidptr, ctx vphp.Context)
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.get_header_line(arg_0)
     ctx.return_val[string](res)
 }
@@ -6051,8 +6051,8 @@ pub fn vphp_wrap_vslimpsr7request_with_header(ptr voidptr, ctx vphp.Context) voi
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.with_header(arg_0, arg_1)
     return voidptr(res)
 }
@@ -6061,8 +6061,8 @@ pub fn vphp_wrap_vslimpsr7request_with_added_header(ptr voidptr, ctx vphp.Contex
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.with_added_header(arg_0, arg_1)
     return voidptr(res)
 }
@@ -6071,7 +6071,7 @@ pub fn vphp_wrap_vslimpsr7request_without_header(ptr voidptr, ctx vphp.Context) 
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.without_header(arg_0)
     return voidptr(res)
 }
@@ -6088,7 +6088,7 @@ pub fn vphp_wrap_vslimpsr7request_with_body(ptr voidptr, ctx vphp.Context) voidp
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_body(arg_0)
     return voidptr(res)
 }
@@ -6105,7 +6105,7 @@ pub fn vphp_wrap_vslimpsr7request_with_request_target(ptr voidptr, ctx vphp.Cont
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_request_target(arg_0)
     return voidptr(res)
 }
@@ -6122,7 +6122,7 @@ pub fn vphp_wrap_vslimpsr7request_with_method(ptr voidptr, ctx vphp.Context) voi
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_method(arg_0)
     return voidptr(res)
 }
@@ -6139,8 +6139,8 @@ pub fn vphp_wrap_vslimpsr7request_with_uri(ptr voidptr, ctx vphp.Context) voidpt
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.with_uri(arg_0, arg_1)
     return voidptr(res)
 }
@@ -6225,7 +6225,7 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_protocol_version(ptr voidptr, ctx v
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_protocol_version(arg_0)
     return voidptr(res)
 }
@@ -6242,7 +6242,7 @@ pub fn vphp_wrap_vslimpsr7serverrequest_has_header(ptr voidptr, ctx vphp.Context
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.has_header(arg_0)
     ctx.return_val[bool](res)
 }
@@ -6251,7 +6251,7 @@ pub fn vphp_wrap_vslimpsr7serverrequest_get_header(ptr voidptr, ctx vphp.Context
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.get_header(arg_0)
     ctx.return_val[[]string](res)
 }
@@ -6260,7 +6260,7 @@ pub fn vphp_wrap_vslimpsr7serverrequest_get_header_line(ptr voidptr, ctx vphp.Co
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.get_header_line(arg_0)
     ctx.return_val[string](res)
 }
@@ -6269,8 +6269,8 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_header(ptr voidptr, ctx vphp.Contex
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.with_header(arg_0, arg_1)
     return voidptr(res)
 }
@@ -6279,8 +6279,8 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_added_header(ptr voidptr, ctx vphp.
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.with_added_header(arg_0, arg_1)
     return voidptr(res)
 }
@@ -6289,7 +6289,7 @@ pub fn vphp_wrap_vslimpsr7serverrequest_without_header(ptr voidptr, ctx vphp.Con
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.without_header(arg_0)
     return voidptr(res)
 }
@@ -6306,7 +6306,7 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_body(ptr voidptr, ctx vphp.Context)
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_body(arg_0)
     return voidptr(res)
 }
@@ -6323,7 +6323,7 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_request_target(ptr voidptr, ctx vph
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_request_target(arg_0)
     return voidptr(res)
 }
@@ -6340,7 +6340,7 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_method(ptr voidptr, ctx vphp.Contex
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_method(arg_0)
     return voidptr(res)
 }
@@ -6357,8 +6357,8 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_uri(ptr voidptr, ctx vphp.Context) 
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.with_uri(arg_0, arg_1)
     return voidptr(res)
 }
@@ -6383,7 +6383,7 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_cookie_params(ptr voidptr, ctx vphp
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_cookie_params(arg_0)
     return voidptr(res)
 }
@@ -6400,7 +6400,7 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_query_params(ptr voidptr, ctx vphp.
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_query_params(arg_0)
     return voidptr(res)
 }
@@ -6417,7 +6417,7 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_uploaded_files(ptr voidptr, ctx vph
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_uploaded_files(arg_0)
     return voidptr(res)
 }
@@ -6434,7 +6434,7 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_parsed_body(ptr voidptr, ctx vphp.C
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.with_parsed_body(arg_0)
     return voidptr(res)
 }
@@ -6451,8 +6451,8 @@ pub fn vphp_wrap_vslimpsr7serverrequest_get_attribute(ptr voidptr, ctx vphp.Cont
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.get_attribute(arg_0, arg_1)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -6461,8 +6461,8 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_attribute(ptr voidptr, ctx vphp.Con
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.with_attribute(arg_0, arg_1)
     return voidptr(res)
 }
@@ -6471,7 +6471,7 @@ pub fn vphp_wrap_vslimpsr7serverrequest_without_attribute(ptr voidptr, ctx vphp.
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.without_attribute(arg_0)
     return voidptr(res)
 }
@@ -6544,8 +6544,8 @@ pub fn vphp_wrap_vslimpsr17responsefactory_create_response(ptr voidptr, ctx vphp
     mut recv := unsafe { &VSlimPsr17ResponseFactory(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.create_response(arg_0, arg_1)
     return voidptr(res)
 }
@@ -6610,8 +6610,8 @@ pub fn vphp_wrap_vslimpsr17requestfactory_create_request(ptr voidptr, ctx vphp.C
     mut recv := unsafe { &VSlimPsr17RequestFactory(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.create_request(arg_0, arg_1)
     return voidptr(res)
 }
@@ -6676,7 +6676,7 @@ pub fn vphp_wrap_vslimpsr17streamfactory_create_stream(ptr voidptr, ctx vphp.Con
     mut recv := unsafe { &VSlimPsr17StreamFactory(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.create_stream(arg_0)
     return voidptr(res)
 }
@@ -6685,8 +6685,8 @@ pub fn vphp_wrap_vslimpsr17streamfactory_create_stream_from_file(ptr voidptr, ct
     mut recv := unsafe { &VSlimPsr17StreamFactory(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.create_stream_from_file(arg_0, arg_1)
     return voidptr(res)
 }
@@ -6695,7 +6695,7 @@ pub fn vphp_wrap_vslimpsr17streamfactory_create_stream_from_resource(ptr voidptr
     mut recv := unsafe { &VSlimPsr17StreamFactory(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.create_stream_from_resource(arg_0)
     return voidptr(res)
 }
@@ -6760,11 +6760,11 @@ pub fn vphp_wrap_vslimpsr17uploadedfilefactory_create_uploaded_file(ptr voidptr,
     mut recv := unsafe { &VSlimPsr17UploadedFileFactory(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
-    arg_3 := ctx.arg[vphp.RequestBorrowedZBox](3)
-    arg_4 := ctx.arg[vphp.RequestBorrowedZBox](4)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    arg_2 := ctx.arg_borrowed_zbox(2)
+    arg_3 := ctx.arg_borrowed_zbox(3)
+    arg_4 := ctx.arg_borrowed_zbox(4)
     res := recv.create_uploaded_file(arg_0, arg_1, arg_2, arg_3, arg_4)
     return voidptr(res)
 }
@@ -6829,7 +6829,7 @@ pub fn vphp_wrap_vslimpsr17urifactory_create_uri(ptr voidptr, ctx vphp.Context) 
     mut recv := unsafe { &VSlimPsr17UriFactory(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.create_uri(arg_0)
     return voidptr(res)
 }
@@ -6894,9 +6894,9 @@ pub fn vphp_wrap_vslimpsr17serverrequestfactory_create_server_request(ptr voidpt
     mut recv := unsafe { &VSlimPsr17ServerRequestFactory(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.create_server_request(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -7085,7 +7085,7 @@ pub fn vphp_wrap_vslimpsr16cache_set_clock(ptr voidptr, ctx vphp.Context) voidpt
     mut recv := unsafe { &VSlimPsr16Cache(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.set_clock(arg_0)
     return voidptr(res)
 }
@@ -7103,7 +7103,7 @@ pub fn vphp_wrap_vslimpsr16cache_get(ptr voidptr, ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.get(arg_0, arg_1)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -7113,8 +7113,8 @@ pub fn vphp_wrap_vslimpsr16cache_set(ptr voidptr, ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.set(arg_0, arg_1, arg_2)
     ctx.return_val[bool](res)
 }
@@ -7140,8 +7140,8 @@ pub fn vphp_wrap_vslimpsr16cache_get_multiple(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr16Cache(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.get_multiple(arg_0, arg_1)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -7150,8 +7150,8 @@ pub fn vphp_wrap_vslimpsr16cache_set_multiple(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr16Cache(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.set_multiple(arg_0, arg_1)
     ctx.return_val[bool](res)
 }
@@ -7160,7 +7160,7 @@ pub fn vphp_wrap_vslimpsr16cache_delete_multiple(ptr voidptr, ctx vphp.Context) 
     mut recv := unsafe { &VSlimPsr16Cache(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.delete_multiple(arg_0)
     ctx.return_val[bool](res)
 }
@@ -7374,7 +7374,7 @@ pub fn vphp_wrap_vslimpsr6cacheitem_set(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr6CacheItem(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.set(arg_0)
     return voidptr(res)
 }
@@ -7383,7 +7383,7 @@ pub fn vphp_wrap_vslimpsr6cacheitem_expires_at(ptr voidptr, ctx vphp.Context) vo
     mut recv := unsafe { &VSlimPsr6CacheItem(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.expires_at(arg_0)
     return voidptr(res)
 }
@@ -7392,7 +7392,7 @@ pub fn vphp_wrap_vslimpsr6cacheitem_expires_after(ptr voidptr, ctx vphp.Context)
     mut recv := unsafe { &VSlimPsr6CacheItem(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.expires_after(arg_0)
     return voidptr(res)
 }
@@ -7461,7 +7461,7 @@ pub fn vphp_wrap_vslimpsr6cacheitempool_set_clock(ptr voidptr, ctx vphp.Context)
     mut recv := unsafe { &VSlimPsr6CacheItemPool(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.set_clock(arg_0)
     return voidptr(res)
 }
@@ -7487,7 +7487,7 @@ pub fn vphp_wrap_vslimpsr6cacheitempool_get_items(ptr voidptr, ctx vphp.Context)
     mut recv := unsafe { &VSlimPsr6CacheItemPool(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.get_items(arg_0)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -7522,7 +7522,7 @@ pub fn vphp_wrap_vslimpsr6cacheitempool_delete_items(ptr voidptr, ctx vphp.Conte
     mut recv := unsafe { &VSlimPsr6CacheItemPool(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.delete_items(arg_0)
     ctx.return_val[bool](res)
 }
@@ -7531,7 +7531,7 @@ pub fn vphp_wrap_vslimpsr6cacheitempool_save(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr6CacheItemPool(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.save(arg_0)
     ctx.return_val[bool](res)
 }
@@ -7540,7 +7540,7 @@ pub fn vphp_wrap_vslimpsr6cacheitempool_save_deferred(ptr voidptr, ctx vphp.Cont
     mut recv := unsafe { &VSlimPsr6CacheItemPool(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.save_deferred(arg_0)
     ctx.return_val[bool](res)
 }
@@ -7678,7 +7678,7 @@ pub fn vphp_wrap_vslimpsr18requestexception_attach_request(ptr voidptr, ctx vphp
     mut recv := vslimpsr18requestexception_load_from_php(this_obj)
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     recv.attach_request(arg_0)
     vslimpsr18requestexception_sync_to_php(this_obj, recv)
 }
@@ -7758,7 +7758,7 @@ pub fn vphp_wrap_vslimpsr18networkexception_attach_request(ptr voidptr, ctx vphp
     mut recv := vslimpsr18networkexception_load_from_php(this_obj)
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     recv.attach_request(arg_0)
     vslimpsr18networkexception_sync_to_php(this_obj, recv)
 }
@@ -7861,7 +7861,7 @@ pub fn vphp_wrap_vslimpsr18client_send_request(ptr voidptr, ctx vphp.Context) vo
     mut recv := unsafe { &VSlimPsr18Client(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.send_request(arg_0)
     return voidptr(res)
 }
@@ -7995,7 +7995,7 @@ pub fn vphp_wrap_vslimpsr14listenerprovider_listen(ptr voidptr, ctx vphp.Context
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.listen(arg_0, arg_1)
     return voidptr(res)
 }
@@ -8004,7 +8004,7 @@ pub fn vphp_wrap_vslimpsr14listenerprovider_listen_any(ptr voidptr, ctx vphp.Con
     mut recv := unsafe { &VSlimPsr14ListenerProvider(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.listen_any(arg_0)
     return voidptr(res)
 }
@@ -8021,7 +8021,7 @@ pub fn vphp_wrap_vslimpsr14listenerprovider_get_listeners_for_event(ptr voidptr,
     mut recv := unsafe { &VSlimPsr14ListenerProvider(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.get_listeners_for_event(arg_0)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -8104,7 +8104,7 @@ pub fn vphp_wrap_vslimpsr14eventdispatcher_listen(ptr voidptr, ctx vphp.Context)
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.listen(arg_0, arg_1)
     return voidptr(res)
 }
@@ -8113,7 +8113,7 @@ pub fn vphp_wrap_vslimpsr14eventdispatcher_listen_any(ptr voidptr, ctx vphp.Cont
     mut recv := unsafe { &VSlimPsr14EventDispatcher(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.listen_any(arg_0)
     return voidptr(res)
 }
@@ -8122,7 +8122,7 @@ pub fn vphp_wrap_vslimpsr14eventdispatcher_dispatch(ptr voidptr, ctx vphp.Contex
     mut recv := unsafe { &VSlimPsr14EventDispatcher(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.dispatch(arg_0)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -8219,7 +8219,7 @@ pub fn vphp_wrap_vslimphpsignatureprobe_accept_true(ptr voidptr, ctx vphp.Contex
     mut recv := unsafe { &VSlimPhpSignatureProbe(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.accept_true(arg_0)
     ctx.return_val[bool](res)
 }
@@ -8228,7 +8228,7 @@ pub fn vphp_wrap_vslimphpsignatureprobe_accept_false(ptr voidptr, ctx vphp.Conte
     mut recv := unsafe { &VSlimPhpSignatureProbe(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.accept_false(arg_0)
     ctx.return_val[bool](res)
 }
@@ -8237,7 +8237,7 @@ pub fn vphp_wrap_vslimphpsignatureprobe_accept_null(ptr voidptr, ctx vphp.Contex
     mut recv := unsafe { &VSlimPhpSignatureProbe(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.accept_null(arg_0)
     ctx.return_val[bool](res)
 }
@@ -8246,7 +8246,7 @@ pub fn vphp_wrap_vslimphpsignatureprobe_accept_callable(ptr voidptr, ctx vphp.Co
     mut recv := unsafe { &VSlimPhpSignatureProbe(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.accept_callable(arg_0)
     ctx.return_val[bool](res)
 }
@@ -8280,7 +8280,7 @@ pub fn vphp_wrap_vslimphpsignatureprobe_accept_psr_request(ptr voidptr, ctx vphp
     mut recv := unsafe { &VSlimPhpSignatureProbe(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.accept_psr_request(arg_0)
     ctx.return_val[bool](res)
 }
@@ -8289,7 +8289,7 @@ pub fn vphp_wrap_vslimphpsignatureprobe_accept_datetime_interface(ptr voidptr, c
     mut recv := unsafe { &VSlimPhpSignatureProbe(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.accept_datetime_interface(arg_0)
     ctx.return_val[bool](res)
 }
@@ -8576,7 +8576,7 @@ pub fn vphp_wrap_vslimlivesocket_assign(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.assign(arg_0, arg_1)
     return voidptr(res)
 }
@@ -8585,7 +8585,7 @@ pub fn vphp_wrap_vslimlivesocket_assign_many(ptr voidptr, ctx vphp.Context) void
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.assign_many(arg_0)
     return voidptr(res)
 }
@@ -8594,7 +8594,7 @@ pub fn vphp_wrap_vslimlivesocket_assign_form(ptr voidptr, ctx vphp.Context) void
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.assign_form(arg_0)
     return voidptr(res)
 }
@@ -8603,7 +8603,7 @@ pub fn vphp_wrap_vslimlivesocket_reset_form(ptr voidptr, ctx vphp.Context) voidp
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.reset_form(arg_0)
     return voidptr(res)
 }
@@ -8630,7 +8630,7 @@ pub fn vphp_wrap_vslimlivesocket_forget_inputs(ptr voidptr, ctx vphp.Context) vo
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.forget_inputs(arg_0)
     return voidptr(res)
 }
@@ -8649,7 +8649,7 @@ pub fn vphp_wrap_vslimlivesocket_assign_component_state(ptr voidptr, ctx vphp.Co
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.assign_component_state(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -8699,7 +8699,7 @@ pub fn vphp_wrap_vslimlivesocket_assign_errors(ptr voidptr, ctx vphp.Context) vo
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.assign_errors(arg_0)
     return voidptr(res)
 }
@@ -8964,7 +8964,7 @@ pub fn vphp_wrap_vslimlivesocket_broadcast_info(ptr voidptr, ctx vphp.Context) v
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     arg_3 := ctx.arg[bool](3)
     res := recv.broadcast_info(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
@@ -9104,7 +9104,7 @@ pub fn vphp_wrap_vslimliveform_fill(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.fill(arg_0)
     return voidptr(res)
 }
@@ -9113,7 +9113,7 @@ pub fn vphp_wrap_vslimliveform_reset(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.reset(arg_0)
     return voidptr(res)
 }
@@ -9122,7 +9122,7 @@ pub fn vphp_wrap_vslimliveform_validate(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.validate(arg_0)
     return voidptr(res)
 }
@@ -9131,7 +9131,7 @@ pub fn vphp_wrap_vslimliveform_errors(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.errors(arg_0)
     return voidptr(res)
 }
@@ -9166,7 +9166,7 @@ pub fn vphp_wrap_vslimliveform_forget_many(ptr voidptr, ctx vphp.Context) voidpt
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.forget_many(arg_0)
     return voidptr(res)
 }
@@ -9429,7 +9429,7 @@ pub fn vphp_wrap_vslimliveview_render_template(ptr voidptr, ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.render_template(arg_0, arg_1)
     ctx.return_val[string](res)
 }
@@ -9440,7 +9440,7 @@ pub fn vphp_wrap_vslimliveview_render_template_with_layout(ptr voidptr, ctx vphp
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[vphp.RequestBorrowedZBox](2)
+    arg_2 := ctx.arg_borrowed_zbox(2)
     res := recv.render_template_with_layout(arg_0, arg_1, arg_2)
     ctx.return_val[string](res)
 }
@@ -9668,7 +9668,7 @@ pub fn vphp_wrap_vslimlivecomponent_assign(ptr voidptr, ctx vphp.Context) voidpt
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.assign(arg_0, arg_1)
     return voidptr(res)
 }
@@ -9677,7 +9677,7 @@ pub fn vphp_wrap_vslimlivecomponent_assign_many(ptr voidptr, ctx vphp.Context) v
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.assign_many(arg_0)
     return voidptr(res)
 }
@@ -9703,7 +9703,7 @@ pub fn vphp_wrap_vslimlivecomponent_render_template(ptr voidptr, ctx vphp.Contex
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.render_template(arg_0, arg_1)
     ctx.return_val[string](res)
 }
@@ -9849,7 +9849,7 @@ pub fn vphp_wrap_vslimlivecomponentstate_set(ptr voidptr, ctx vphp.Context) void
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.set(arg_0, arg_1)
     return voidptr(res)
 }
@@ -10057,7 +10057,7 @@ pub fn vphp_wrap_vslimconfig_get(ptr voidptr, ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.get(arg_0, arg_1)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -10067,7 +10067,7 @@ pub fn vphp_wrap_vslimconfig_get_map(ptr voidptr, ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.get_map(arg_0, arg_1)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -10077,7 +10077,7 @@ pub fn vphp_wrap_vslimconfig_get_list(ptr voidptr, ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.get_list(arg_0, arg_1)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
@@ -10275,7 +10275,7 @@ pub fn vphp_wrap_vslimcontainer_set(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.set(arg_0, arg_1)
     return voidptr(res)
 }
@@ -10285,7 +10285,7 @@ pub fn vphp_wrap_vslimcontainer_factory(ptr voidptr, ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[vphp.RequestBorrowedZBox](1)
+    arg_1 := ctx.arg_borrowed_zbox(1)
     res := recv.factory(arg_0, arg_1)
     return voidptr(res)
 }
@@ -10323,7 +10323,7 @@ pub fn vslimcontainer_handlers() voidptr {
 fn vphp_wrap_vslim_handle_request(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[string](1)
     arg_2 := ctx.arg[string](2)
     res := vslim_handle_request(arg_0, arg_1, arg_2)
@@ -10334,7 +10334,7 @@ fn vphp_wrap_vslim_handle_request(ctx vphp.Context) {
 fn vphp_wrap_vslim_demo_dispatch(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[string](1)
     arg_2 := ctx.arg[string](2)
     res := vslim_demo_dispatch(arg_0, arg_1, arg_2)
@@ -10353,7 +10353,7 @@ fn vphp_wrap_vslim_response_headers(ctx vphp.Context) {
 fn vphp_wrap_vslim_probe_object(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.RequestBorrowedZBox](0)
+    arg_0 := ctx.arg_borrowed_zbox(0)
     arg_1 := ctx.arg[string](1)
     arg_2 := ctx.arg[string](2)
     res := vslim_probe_object(arg_0, arg_1, arg_2)
