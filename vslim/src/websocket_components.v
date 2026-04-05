@@ -13,38 +13,38 @@ pub fn (mut app VSlimWebSocketApp) construct() &VSlimWebSocketApp {
 }
 
 @[php_method]
-pub fn (mut app VSlimWebSocketApp) on_open(handler vphp.BorrowedValue) &VSlimWebSocketApp {
+pub fn (mut app VSlimWebSocketApp) on_open(handler vphp.RequestBorrowedZBox) &VSlimWebSocketApp {
 	if !handler.is_valid() || !handler.is_callable() {
 		vphp.throw_exception_class('InvalidArgumentException', 'on_open handler must be callable',
 			0)
 		return &app
 	}
 	release_ws_handler(mut app.on_open_handler)
-	app.on_open_handler = vphp.PersistentOwnedZVal.from_zval(handler.to_zval())
+	app.on_open_handler = vphp.PersistentOwnedZVal.from_value_zval(handler.to_zval())
 	return &app
 }
 
 @[php_method]
-pub fn (mut app VSlimWebSocketApp) on_message(handler vphp.BorrowedValue) &VSlimWebSocketApp {
+pub fn (mut app VSlimWebSocketApp) on_message(handler vphp.RequestBorrowedZBox) &VSlimWebSocketApp {
 	if !handler.is_valid() || !handler.is_callable() {
 		vphp.throw_exception_class('InvalidArgumentException', 'on_message handler must be callable',
 			0)
 		return &app
 	}
 	release_ws_handler(mut app.on_message_handler)
-	app.on_message_handler = vphp.PersistentOwnedZVal.from_zval(handler.to_zval())
+	app.on_message_handler = vphp.PersistentOwnedZVal.from_value_zval(handler.to_zval())
 	return &app
 }
 
 @[php_method]
-pub fn (mut app VSlimWebSocketApp) on_close(handler vphp.BorrowedValue) &VSlimWebSocketApp {
+pub fn (mut app VSlimWebSocketApp) on_close(handler vphp.RequestBorrowedZBox) &VSlimWebSocketApp {
 	if !handler.is_valid() || !handler.is_callable() {
 		vphp.throw_exception_class('InvalidArgumentException', 'on_close handler must be callable',
 			0)
 		return &app
 	}
 	release_ws_handler(mut app.on_close_handler)
-	app.on_close_handler = vphp.PersistentOwnedZVal.from_zval(handler.to_zval())
+	app.on_close_handler = vphp.PersistentOwnedZVal.from_value_zval(handler.to_zval())
 	return &app
 }
 
@@ -64,7 +64,7 @@ pub fn (app &VSlimWebSocketApp) has_on_close() bool {
 }
 
 @[php_method]
-pub fn (mut app VSlimWebSocketApp) remember(conn vphp.BorrowedValue) &VSlimWebSocketApp {
+pub fn (mut app VSlimWebSocketApp) remember(conn vphp.RequestBorrowedZBox) &VSlimWebSocketApp {
 	id := websocket_connection_id(conn.to_zval())
 	if id == '' {
 		return &app
@@ -73,12 +73,12 @@ pub fn (mut app VSlimWebSocketApp) remember(conn vphp.BorrowedValue) &VSlimWebSo
 		mut existing := app.connections[id] or { vphp.PersistentOwnedZVal.new_null() }
 		release_ws_handler(mut existing)
 	}
-	app.connections[id] = vphp.PersistentOwnedZVal.from_zval(conn.to_zval())
+	app.connections[id] = vphp.PersistentOwnedZVal.from_value_zval(conn.to_zval())
 	return &app
 }
 
 @[php_method]
-pub fn (mut app VSlimWebSocketApp) forget(conn_or_id vphp.BorrowedValue) &VSlimWebSocketApp {
+pub fn (mut app VSlimWebSocketApp) forget(conn_or_id vphp.RequestBorrowedZBox) &VSlimWebSocketApp {
 	id := websocket_conn_key(conn_or_id.to_zval())
 	if id == '' {
 		return &app
@@ -93,13 +93,13 @@ pub fn (mut app VSlimWebSocketApp) forget(conn_or_id vphp.BorrowedValue) &VSlimW
 }
 
 @[php_method]
-pub fn (app &VSlimWebSocketApp) has_connection(conn_or_id vphp.BorrowedValue) bool {
+pub fn (app &VSlimWebSocketApp) has_connection(conn_or_id vphp.RequestBorrowedZBox) bool {
 	id := websocket_conn_key(conn_or_id.to_zval())
 	return id != '' && id in app.connections
 }
 
 @[php_method]
-pub fn (mut app VSlimWebSocketApp) join(room string, conn_or_id vphp.BorrowedValue) &VSlimWebSocketApp {
+pub fn (mut app VSlimWebSocketApp) join(room string, conn_or_id vphp.RequestBorrowedZBox) &VSlimWebSocketApp {
 	id := websocket_conn_key(conn_or_id.to_zval())
 	key := normalize_ws_room(room)
 	if id == '' || key == '' {
@@ -114,7 +114,7 @@ pub fn (mut app VSlimWebSocketApp) join(room string, conn_or_id vphp.BorrowedVal
 }
 
 @[php_method]
-pub fn (mut app VSlimWebSocketApp) leave(room string, conn_or_id vphp.BorrowedValue) &VSlimWebSocketApp {
+pub fn (mut app VSlimWebSocketApp) leave(room string, conn_or_id vphp.RequestBorrowedZBox) &VSlimWebSocketApp {
 	id := websocket_conn_key(conn_or_id.to_zval())
 	key := normalize_ws_room(room)
 	if id == '' || key == '' || key !in app.rooms {
@@ -146,7 +146,7 @@ pub fn (app &VSlimWebSocketApp) connection_ids() []string {
 }
 
 @[php_method]
-pub fn (app &VSlimWebSocketApp) rooms_for(conn_or_id vphp.BorrowedValue) []string {
+pub fn (app &VSlimWebSocketApp) rooms_for(conn_or_id vphp.RequestBorrowedZBox) []string {
 	id := websocket_conn_key(conn_or_id.to_zval())
 	if id == '' {
 		return []string{}
@@ -162,20 +162,23 @@ pub fn (app &VSlimWebSocketApp) rooms_for(conn_or_id vphp.BorrowedValue) []strin
 }
 
 @[php_method]
-pub fn (app &VSlimWebSocketApp) send_to(conn_or_id vphp.BorrowedValue, data string) bool {
+pub fn (app &VSlimWebSocketApp) send_to(conn_or_id vphp.RequestBorrowedZBox, data string) bool {
 	id := websocket_conn_key(conn_or_id.to_zval())
 	if id == '' || id !in app.connections {
 		return false
 	}
 	conn_owned := app.connections[id] or { return false }
-	conn := conn_owned.clone_request_owned().to_zval()
-	if !conn.is_object() || !conn.method_exists('send') {
-		return false
-	}
-	_ = conn.method_owned_request('send', [
-		vphp.RequestOwnedZVal.new_string(data).to_zval(),
-	])
-	return true
+	return conn_owned.with_request_zval(fn [data] (conn vphp.ZVal) bool {
+		if !conn.is_object() || !conn.method_exists('send') {
+			return false
+		}
+		vphp.with_method_result_zval(conn, 'send', [
+			vphp.RequestOwnedZBox.new_string(data).to_zval(),
+		], fn (result vphp.ZVal) bool {
+			return result.is_valid()
+		})
+		return true
+	})
 }
 
 @[php_method]
@@ -188,7 +191,7 @@ pub fn (app &VSlimWebSocketApp) broadcast(data string, room string, except_id st
 			if except != '' && id == except {
 				continue
 			}
-			if app.send_to(vphp.BorrowedValue.from_zval(vphp.RequestOwnedZVal.new_string(id).to_zval()),
+			if app.send_to(vphp.borrow_zbox(vphp.RequestOwnedZBox.new_string(id).to_zval()),
 				data) {
 				sent++
 			}
@@ -199,7 +202,7 @@ pub fn (app &VSlimWebSocketApp) broadcast(data string, room string, except_id st
 		if except != '' && id == except {
 			continue
 		}
-		if app.send_to(vphp.BorrowedValue.from_zval(vphp.RequestOwnedZVal.new_string(id).to_zval()),
+		if app.send_to(vphp.borrow_zbox(vphp.RequestOwnedZBox.new_string(id).to_zval()),
 			data) {
 			sent++
 		}
@@ -208,37 +211,37 @@ pub fn (app &VSlimWebSocketApp) broadcast(data string, room string, except_id st
 }
 
 @[php_method]
-pub fn (mut app VSlimWebSocketApp) handle_websocket(frame vphp.BorrowedValue, conn vphp.BorrowedValue) vphp.Value {
+pub fn (mut app VSlimWebSocketApp) handle_websocket(frame vphp.RequestBorrowedZBox, conn vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	raw_frame := frame.to_zval()
 	raw_conn := conn.to_zval()
 	event := zval_string_key(raw_frame, 'event', '').trim_space().to_lower()
 	match event {
 		'open' {
 			app.remember(conn)
-			return vphp.Value.from_zval(invoke_ws_handler(app.on_open_handler, [
+			return vphp.RequestOwnedZBox.adopt_zval(invoke_ws_handler(app.on_open_handler, [
 				raw_conn,
 				raw_frame,
 			]))
 		}
 		'message' {
-			return vphp.Value.from_zval(invoke_ws_handler(app.on_message_handler, [
+			return vphp.RequestOwnedZBox.adopt_zval(invoke_ws_handler(app.on_message_handler, [
 				raw_conn,
-				vphp.RequestOwnedZVal.new_string(zval_string_key(raw_frame, 'data', '')).to_zval(),
+				vphp.RequestOwnedZBox.new_string(zval_string_key(raw_frame, 'data', '')).to_zval(),
 				raw_frame,
 			]))
 		}
 		'close' {
 			result := invoke_ws_handler(app.on_close_handler, [
 				raw_conn,
-				vphp.RequestOwnedZVal.new_int(zval_int_key(raw_frame, 'code', 1000)).to_zval(),
-				vphp.RequestOwnedZVal.new_string(zval_string_key(raw_frame, 'reason', '')).to_zval(),
+				vphp.RequestOwnedZBox.new_int(zval_int_key(raw_frame, 'code', 1000)).to_zval(),
+				vphp.RequestOwnedZBox.new_string(zval_string_key(raw_frame, 'reason', '')).to_zval(),
 				raw_frame,
 			])
 			app.forget(conn)
-			return vphp.Value.from_zval(result)
+			return vphp.RequestOwnedZBox.adopt_zval(result)
 		}
 		else {
-			return vphp.Value.new_null()
+			return vphp.RequestOwnedZBox.new_null()
 		}
 	}
 }
@@ -249,9 +252,10 @@ fn is_ws_handler_valid(handler vphp.PersistentOwnedZVal) bool {
 
 fn invoke_ws_handler(handler vphp.PersistentOwnedZVal, args []vphp.ZVal) vphp.ZVal {
 	if !is_ws_handler_valid(handler) {
-		return vphp.RequestOwnedZVal.new_null().to_zval()
+		return vphp.RequestOwnedZBox.new_null().to_zval()
 	}
-	return handler.clone_request_owned().to_zval().call_owned_request(args)
+	mut result := handler.call_request_owned(args)
+	return result.take_zval()
 }
 
 fn release_ws_handler(mut handler vphp.PersistentOwnedZVal) {
@@ -283,7 +287,9 @@ fn websocket_connection_id(conn vphp.ZVal) string {
 	if !conn.is_object() || !conn.method_exists('id') {
 		return ''
 	}
-	return conn.method_owned_request('id', []).to_string().trim_space()
+	return vphp.with_method_result_zval(conn, 'id', []vphp.ZVal{}, fn (result vphp.ZVal) string {
+		return result.to_string().trim_space()
+	})
 }
 
 fn websocket_conn_key(conn_or_id vphp.ZVal) string {

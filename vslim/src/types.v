@@ -78,7 +78,7 @@ mut:
 struct PipelineRequestContext {
 mut:
 	path         string
-	payload_ref  vphp.RequestOwnedZVal = vphp.RequestOwnedZVal.new_null()
+	payload_ref  vphp.RequestOwnedZBox = vphp.RequestOwnedZBox.new_null()
 	route_params map[string]string
 }
 
@@ -131,7 +131,7 @@ struct MiddlewareChain {
 	app         &VSlimApp            = unsafe { nil }
 	request_ctx PipelineRequestContext
 mut:
-	middlewares []vphp.RequestOwnedZVal
+	middlewares []vphp.RequestOwnedZBox
 	plan        RawDispatchPlan
 	index       int
 }
@@ -191,13 +191,13 @@ struct PhaseForwardedServerRequestSnapshot {
 }
 
 struct VSlimBeforeMiddlewareResult {
-	response_ref vphp.RequestOwnedZVal = vphp.RequestOwnedZVal.new_null()
-	payload_ref  vphp.RequestOwnedZVal = vphp.RequestOwnedZVal.new_null()
+	response_ref vphp.RequestOwnedZBox = vphp.RequestOwnedZBox.new_null()
+	payload_ref  vphp.RequestOwnedZBox = vphp.RequestOwnedZBox.new_null()
 }
 
 struct PhaseMiddlewareDispatchResult {
-	raw_response_ref vphp.RequestOwnedZVal = vphp.RequestOwnedZVal.new_null()
-	payload_ref      vphp.RequestOwnedZVal = vphp.RequestOwnedZVal.new_null()
+	raw_response_ref vphp.RequestOwnedZBox = vphp.RequestOwnedZBox.new_null()
+	payload_ref      vphp.RequestOwnedZBox = vphp.RequestOwnedZBox.new_null()
 	continued        bool
 }
 

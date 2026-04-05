@@ -115,7 +115,7 @@ fn parse_template_condition_syntax(raw string, line int, col int) !TemplateCondi
 	return parse_template_condition_node(trimmed)
 }
 
-fn (view &VSlimView) eval_template_condition_node(node TemplateConditionNode, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZVal, template_path string) bool {
+fn (view &VSlimView) eval_template_condition_node(node TemplateConditionNode, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZBox, template_path string) bool {
 	match node.kind {
 		.expr {
 			value := view.eval_template_expr_node(node.expr, scalars, lists, objects, template_path, 0, 0)

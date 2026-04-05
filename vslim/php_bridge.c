@@ -560,6 +560,7 @@ static int vslim__cli__app_register_class(void) {
         zend_declare_property_null(vslim__cli__app_ce, "last_option_seen", sizeof("last_option_seen")-1, ZEND_ACC_PROTECTED);
         zend_declare_property_null(vslim__cli__app_ce, "last_warnings", sizeof("last_warnings")-1, ZEND_ACC_PROTECTED);
         zend_declare_property_bool(vslim__cli__app_ce, "last_input_parsed", sizeof("last_input_parsed")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__cli__app_ce, "current_trace", sizeof("current_trace")-1, "", ZEND_ACC_PROTECTED);
     }
     return SUCCESS;
 }

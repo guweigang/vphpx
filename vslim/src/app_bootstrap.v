@@ -15,7 +15,7 @@ fn wrap_runtime_app_zval(app &VSlimApp) vphp.ZVal {
 		if isnil(app) || C.vslim__app_ce == 0 {
 			return vphp.ZVal.new_null()
 		}
-		mut payload := vphp.RequestOwnedZVal.new_null().to_zval()
+		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
 		vphp.return_borrowed_object_raw(payload.raw, app, C.vslim__app_ce, &C.vphp_class_handlers(vslimapp_handlers()))
 		return payload
 	}
@@ -39,8 +39,8 @@ fn normalize_service_provider_input(raw vphp.ZVal) !vphp.ZVal {
 			return error('provider class name must not be empty')
 		}
 		exists := vphp.call_php('class_exists', [
-			vphp.RequestOwnedZVal.new_string(class_name).to_zval(),
-			vphp.RequestOwnedZVal.new_bool(true).to_zval(),
+			vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
+			vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 		])
 		if !exists.to_bool() {
 			return error('provider class "${class_name}" does not exist')
@@ -63,8 +63,9 @@ fn bind_provider_to_app(provider vphp.ZVal, app_z vphp.ZVal) {
 		return
 	}
 	if provider.method_exists('setApp') {
-		mut result := provider.method_owned_request('setApp', [app_z])
-		result.release()
+		vphp.with_method_result_zval(provider, 'setApp', [app_z], fn (_ vphp.ZVal) bool {
+			return true
+		})
 	}
 }
 
@@ -73,12 +74,14 @@ fn call_provider_lifecycle(provider vphp.ZVal, method_name string, app_z vphp.ZV
 		return
 	}
 	if app_z.is_valid() && app_z.is_object() {
-		mut result := provider.method_owned_request(method_name, [app_z])
-		result.release()
+		vphp.with_method_result_zval(provider, method_name, [app_z], fn (_ vphp.ZVal) bool {
+			return true
+		})
 		return
 	}
-	mut result := provider.method_owned_request(method_name, [])
-	result.release()
+	vphp.with_method_result_zval(provider, method_name, []vphp.ZVal{}, fn (_ vphp.ZVal) bool {
+		return true
+	})
 }
 
 fn register_service_provider_zval(mut app VSlimApp, provider_z vphp.ZVal) ! {
@@ -118,7 +121,7 @@ fn bootstrap_provider_values(value vphp.ZVal) ![]vphp.ZVal {
 }
 
 @[php_method]
-pub fn (mut app VSlimApp) register(provider vphp.BorrowedValue) &VSlimApp {
+pub fn (mut app VSlimApp) register(provider vphp.RequestBorrowedZBox) &VSlimApp {
 	provider_z := normalize_service_provider_input(provider.to_zval()) or {
 		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
 		return &app
@@ -132,14 +135,14 @@ pub fn (mut app VSlimApp) register(provider vphp.BorrowedValue) &VSlimApp {
 
 @[php_arg_type: 'providers=iterable']
 @[php_method: 'registerMany']
-pub fn (mut app VSlimApp) register_many(providers vphp.BorrowedValue) &VSlimApp {
+pub fn (mut app VSlimApp) register_many(providers vphp.RequestBorrowedZBox) &VSlimApp {
 	items := bootstrap_provider_values(providers.to_zval()) or {
 		vphp.throw_exception_class('InvalidArgumentException', 'providers must be iterable',
 			0)
 		return &app
 	}
 	for item in items {
-		app.register(vphp.BorrowedValue.from_zval(item))
+		app.register(vphp.borrow_zbox(item))
 	}
 	return &app
 }
@@ -153,31 +156,31 @@ pub fn (mut app VSlimApp) boot() &VSlimApp {
 	ensure_module_registry(mut app)
 	app_z := app_self_zval(&app)
 	for provider in app.providers {
-		mut provider_z := vphp.RequestOwnedZVal{
-			ZValViewState: vphp.ZValViewState{
-				z: provider.to_request_owned_zval()
+		ok := provider.with_request_zval(fn [mut app, app_z] (provider_z vphp.ZVal) bool {
+			bind_provider_to_app(provider_z, app_z)
+			call_provider_lifecycle(provider_z, 'boot', app_z) or {
+				vphp.throw_exception_class('RuntimeException', err.msg(), 0)
+				return false
 			}
-		}
-		bind_provider_to_app(provider_z.to_zval(), app_z)
-		call_provider_lifecycle(provider_z.to_zval(), 'boot', app_z) or {
-			provider_z.release()
-			vphp.throw_exception_class('RuntimeException', err.msg(), 0)
+			return true
+		})
+		if !ok {
+			app.booted = false
 			return &app
 		}
-		provider_z.release()
 	}
 	for mod_ref in app.modules {
-		mut module_z := vphp.RequestOwnedZVal{
-			ZValViewState: vphp.ZValViewState{
-				z: mod_ref.to_request_owned_zval()
+		ok := mod_ref.with_request_zval(fn [mut app] (module_z vphp.ZVal) bool {
+			boot_module_zval(mut app, module_z) or {
+				vphp.throw_exception_class('RuntimeException', err.msg(), 0)
+				return false
 			}
-		}
-		boot_module_zval(mut app, module_z.to_zval()) or {
-			module_z.release()
-			vphp.throw_exception_class('RuntimeException', err.msg(), 0)
+			return true
+		})
+		if !ok {
+			app.booted = false
 			return &app
 		}
-		module_z.release()
 	}
 	app.booted = true
 	return &app

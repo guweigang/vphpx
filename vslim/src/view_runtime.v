@@ -51,11 +51,13 @@ fn (view &VSlimView) invoke_template_helper_zargs(name string, zargs []vphp.ZVal
 	if !handler.is_valid() || !handler.is_callable() {
 		return debug_template_error('helper.invalid', template_path, key, line, col)
 	}
-	return handler.clone_request_owned().to_zval().call_owned_request(zargs).to_string()
+	return handler.with_call_result(zargs, fn (result vphp.ZVal) string {
+		return result.to_string()
+	})
 }
 
 fn new_template_list_zval(items []string) vphp.ZVal {
-	mut out := vphp.RequestOwnedZVal.new_null().to_zval()
+	mut out := vphp.RequestOwnedZBox.new_null().to_zval()
 	out.array_init()
 	for item in items {
 		out.add_next_val(infer_template_scalar_zval(item))
@@ -86,7 +88,7 @@ fn infer_template_scalar_zval(raw string) vphp.ZVal {
 	if typed := parse_template_scalar_literal_zval(trimmed) {
 		return typed
 	}
-	return vphp.RequestOwnedZVal.new_string(raw).to_zval()
+	return vphp.RequestOwnedZBox.new_string(raw).to_zval()
 }
 
 fn parse_template_scalar_literal_zval(raw string) ?vphp.ZVal {
@@ -96,19 +98,19 @@ fn parse_template_scalar_literal_zval(raw string) ?vphp.ZVal {
 	}
 	lower := trimmed.to_lower()
 	if lower == 'null' {
-		return vphp.RequestOwnedZVal.new_null().to_zval()
+		return vphp.RequestOwnedZBox.new_null().to_zval()
 	}
 	if lower == 'true' {
-		return vphp.RequestOwnedZVal.new_bool(true).to_zval()
+		return vphp.RequestOwnedZBox.new_bool(true).to_zval()
 	}
 	if lower == 'false' {
-		return vphp.RequestOwnedZVal.new_bool(false).to_zval()
+		return vphp.RequestOwnedZBox.new_bool(false).to_zval()
 	}
 	if is_template_int_literal(trimmed) {
-		return vphp.RequestOwnedZVal.new_int(trimmed.i64()).to_zval()
+		return vphp.RequestOwnedZBox.new_int(trimmed.i64()).to_zval()
 	}
 	if is_template_float_literal(trimmed) {
-		return vphp.RequestOwnedZVal.new_float(trimmed.f64()).to_zval()
+		return vphp.RequestOwnedZBox.new_float(trimmed.f64()).to_zval()
 	}
 	return none
 }
@@ -139,7 +141,7 @@ fn is_template_float_literal(raw string) bool {
 }
 
 fn new_template_assoc_zval(prefix string, scalars map[string]string, lists map[string][]string) vphp.ZVal {
-	mut out := vphp.RequestOwnedZVal.new_null().to_zval()
+	mut out := vphp.RequestOwnedZBox.new_null().to_zval()
 	out.array_init()
 	for child in template_child_keys(prefix, scalars, lists) {
 		child_prefix := if prefix == '' { child } else { '${prefix}.${child}' }
@@ -251,7 +253,7 @@ fn split_template_top_level_segments(raw string, seps []u8) []string {
 	return out.filter(it != '')
 }
 
-fn copy_template_branch(source_path string, target_path string, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZVal, mut out_scalars map[string]string, mut out_lists map[string][]string, mut out_objects map[string]vphp.RequestOwnedZVal) {
+fn copy_template_branch(source_path string, target_path string, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZBox, mut out_scalars map[string]string, mut out_lists map[string][]string, mut out_objects map[string]vphp.RequestOwnedZBox) {
 	source_prefix := alias_template_key(source_path.trim_space())
 	target_prefix := alias_template_key(target_path.trim_space())
 	if source_prefix == '' || target_prefix == '' {
@@ -340,8 +342,8 @@ fn clone_template_lists(src map[string][]string) map[string][]string {
 	return out
 }
 
-fn clone_template_objects(src map[string]vphp.RequestOwnedZVal) map[string]vphp.RequestOwnedZVal {
-	mut out := map[string]vphp.RequestOwnedZVal{}
+fn clone_template_objects(src map[string]vphp.RequestOwnedZBox) map[string]vphp.RequestOwnedZBox {
+	mut out := map[string]vphp.RequestOwnedZBox{}
 	for key, value in src {
 		out[key] = value.clone_request_owned()
 	}

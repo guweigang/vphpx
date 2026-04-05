@@ -2,6 +2,10 @@ module main
 
 import vphp
 
+fn psr16_owned_value(z vphp.ZVal) vphp.RequestOwnedZBox {
+	return vphp.own_request_zbox(z)
+}
+
 const psr_cache_reserved_key_chars = ['{', '}', '(', ')', '/', '\\', '@', ':']
 
 @[php_method]
@@ -12,7 +16,7 @@ pub fn (mut cache VSlimPsr16Cache) construct() &VSlimPsr16Cache {
 
 @[php_method: 'setClock']
 @[php_arg_type: 'clock=Psr\\Clock\\ClockInterface']
-pub fn (mut cache VSlimPsr16Cache) set_clock(clock vphp.BorrowedValue) &VSlimPsr16Cache {
+pub fn (mut cache VSlimPsr16Cache) set_clock(clock vphp.RequestBorrowedZBox) &VSlimPsr16Cache {
 	ensure_psr16_cache(mut cache)
 	if !psr20_is_clock(clock.to_zval()) {
 		vphp.throw_exception_class('InvalidArgumentException', 'clock must implement Psr\\Clock\\ClockInterface', 0)
@@ -20,33 +24,35 @@ pub fn (mut cache VSlimPsr16Cache) set_clock(clock vphp.BorrowedValue) &VSlimPsr
 	}
 	mut old := cache.clock_ref
 	old.release()
-	cache.clock_ref = vphp.PersistentOwnedZVal.from_zval(clock.to_zval())
+	cache.clock_ref = vphp.PersistentOwnedZVal.from_value_zval(clock.to_zval())
 	return &cache
 }
 
 @[php_method]
 @[php_return_type: 'Psr\\Clock\\ClockInterface']
-pub fn (mut cache VSlimPsr16Cache) clock() vphp.Value {
+pub fn (mut cache VSlimPsr16Cache) clock() vphp.RequestOwnedZBox {
 	ensure_psr16_cache(mut cache)
-	return vphp.Value.from_zval(cache.clock_ref.clone_request_owned().to_zval())
+	return cache.clock_ref.clone_request_owned()
 }
 
 @[php_method]
 @[php_optional_args: 'default_value']
-pub fn (mut cache VSlimPsr16Cache) get(key string, default_value vphp.BorrowedValue) vphp.Value {
+pub fn (mut cache VSlimPsr16Cache) get(key string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	ensure_psr16_cache(mut cache)
 	normalized := psr_cache_validate_key_or_throw(key) or {
 		throw_psr16_invalid_argument(err.msg())
-		return vphp.Value.from_zval(default_value.to_zval())
+		return default_value.clone_request_owned()
 	}
 	cache.prune_expired_entry(normalized)
-	entry := cache.entries[normalized] or { return vphp.Value.from_zval(default_value.to_zval()) }
-	return vphp.Value.from_zval(entry.value.clone_request_owned().to_zval())
+	entry := cache.entries[normalized] or {
+		return default_value.clone_request_owned()
+	}
+	return entry.value.clone_request_owned()
 }
 
 @[php_method]
 @[php_optional_args: 'ttl']
-pub fn (mut cache VSlimPsr16Cache) set(key string, value vphp.BorrowedValue, ttl vphp.BorrowedValue) bool {
+pub fn (mut cache VSlimPsr16Cache) set(key string, value vphp.RequestBorrowedZBox, ttl vphp.RequestBorrowedZBox) bool {
 	ensure_psr16_cache(mut cache)
 	normalized := psr_cache_validate_key_or_throw(key) or {
 		throw_psr16_invalid_argument(err.msg())
@@ -59,7 +65,8 @@ pub fn (mut cache VSlimPsr16Cache) set(key string, value vphp.BorrowedValue, ttl
 	if expires_at < 0 {
 		return cache.delete(normalized)
 	}
-	cache.replace_entry(normalized, vphp.PersistentOwnedZVal.from_zval(value.to_zval()), expires_at)
+	cache.replace_entry(normalized, vphp.PersistentOwnedZVal.from_value_zval(value.to_zval()),
+		expires_at)
 	return true
 }
 
@@ -85,27 +92,28 @@ pub fn (mut cache VSlimPsr16Cache) clear() bool {
 @[php_arg_type: 'keys=iterable']
 @[php_return_type: 'iterable']
 @[php_optional_args: 'default_value']
-pub fn (mut cache VSlimPsr16Cache) get_multiple(keys vphp.BorrowedValue, default_value vphp.BorrowedValue) vphp.Value {
+pub fn (mut cache VSlimPsr16Cache) get_multiple(keys vphp.RequestBorrowedZBox, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	ensure_psr16_cache(mut cache)
 	mut out := new_array_zval()
 	if !psr16_is_iterable(keys.to_zval()) {
 		throw_psr16_invalid_argument('keys must be iterable')
-		return vphp.Value.from_zval(out)
+		return vphp.own_request_zbox(out)
 	}
 	for key_name in psr16_iterable_key_list(keys.to_zval()) or {
-		throw_psr16_invalid_argument(err.msg())
-		return vphp.Value.from_zval(out)
+		msg := err.msg()
+		throw_psr16_invalid_argument(msg)
+		return psr16_owned_value(out)
 	} {
 		value := cache.get(key_name, default_value)
 		add_assoc_zval(out, key_name, value.to_zval())
 	}
-	return vphp.Value.from_zval(out)
+	return vphp.own_request_zbox(out)
 }
 
 @[php_method: 'setMultiple']
 @[php_arg_type: 'values=iterable']
 @[php_optional_args: 'ttl']
-pub fn (mut cache VSlimPsr16Cache) set_multiple(values vphp.BorrowedValue, ttl vphp.BorrowedValue) bool {
+pub fn (mut cache VSlimPsr16Cache) set_multiple(values vphp.RequestBorrowedZBox, ttl vphp.RequestBorrowedZBox) bool {
 	ensure_psr16_cache(mut cache)
 	if !psr16_is_iterable(values.to_zval()) {
 		throw_psr16_invalid_argument('values must be iterable')
@@ -135,7 +143,7 @@ pub fn (mut cache VSlimPsr16Cache) set_multiple(values vphp.BorrowedValue, ttl v
 
 @[php_method: 'deleteMultiple']
 @[php_arg_type: 'keys=iterable']
-pub fn (mut cache VSlimPsr16Cache) delete_multiple(keys vphp.BorrowedValue) bool {
+pub fn (mut cache VSlimPsr16Cache) delete_multiple(keys vphp.RequestBorrowedZBox) bool {
 	ensure_psr16_cache(mut cache)
 	if !psr16_is_iterable(keys.to_zval()) {
 		throw_psr16_invalid_argument('keys must be iterable')
@@ -249,11 +257,14 @@ fn psr_cache_resolve_relative_ttl_or_throw(clock vphp.ZVal, ttl vphp.ZVal) !i64 
 		now_dt := psr20_now_datetime_or_throw(clock) or {
 			return error('failed to resolve clock time for TTL resolution')
 		}
-		added := now_dt.method_owned_request('add', [ttl])
-		if !added.is_valid() || !added.is_object() {
-			return error('failed to apply DateInterval TTL')
-		}
-		expires_at := added.method_owned_request('getTimestamp', []).to_i64()
+		expires_at := vphp.with_method_result_zval(now_dt, 'add', [ttl], fn (added vphp.ZVal) i64 {
+			if !added.is_valid() || !added.is_object() {
+				return i64(-1)
+			}
+			return vphp.with_method_result_zval(added, 'getTimestamp', []vphp.ZVal{}, fn (ts vphp.ZVal) i64 {
+				return ts.to_i64()
+			})
+		})
 		if expires_at <= now_unix {
 			return i64(-1)
 		}
@@ -297,7 +308,7 @@ fn psr16_iterable_assoc_pairs(value vphp.ZVal) !map[string]vphp.PersistentOwnedZ
 			psr16_release_pairs(mut out)
 			return error(err.msg())
 		}
-		out[safe_key] = vphp.PersistentOwnedZVal.from_zval(values.array_get(idx))
+		out[safe_key] = vphp.PersistentOwnedZVal.from_value_zval(values.array_get(idx))
 	}
 	return out
 }

@@ -3,7 +3,7 @@ module main
 import vphp
 
 @[php_method]
-pub fn (mut r VSlimStreamResponse) construct(stream_type string, chunks vphp.BorrowedValue, status int, content_type string, headers vphp.BorrowedValue) &VSlimStreamResponse {
+pub fn (mut r VSlimStreamResponse) construct(stream_type string, chunks vphp.RequestBorrowedZBox, status int, content_type string, headers vphp.RequestBorrowedZBox) &VSlimStreamResponse {
 	r.stream_type = normalize_stream_type(stream_type)
 	r.status = if status <= 0 { 200 } else { status }
 	r.content_type = default_stream_content_type(r.stream_type, content_type)
@@ -16,24 +16,24 @@ pub fn (mut r VSlimStreamResponse) construct(stream_type string, chunks vphp.Bor
 }
 
 @[php_method]
-pub fn VSlimStreamResponse.text(chunks vphp.BorrowedValue) &VSlimStreamResponse {
-	return VSlimStreamResponse.text_with(chunks, 200, 'text/plain; charset=utf-8', vphp.BorrowedValue.from_zval(vphp.RequestOwnedZVal.new_null().to_zval()))
+pub fn VSlimStreamResponse.text(chunks vphp.RequestBorrowedZBox) &VSlimStreamResponse {
+	return VSlimStreamResponse.text_with(chunks, 200, 'text/plain; charset=utf-8', vphp.borrow_zbox(vphp.RequestOwnedZBox.new_null().to_zval()))
 }
 
 @[php_method]
-pub fn VSlimStreamResponse.text_with(chunks vphp.BorrowedValue, status int, content_type string, headers vphp.BorrowedValue) &VSlimStreamResponse {
+pub fn VSlimStreamResponse.text_with(chunks vphp.RequestBorrowedZBox, status int, content_type string, headers vphp.RequestBorrowedZBox) &VSlimStreamResponse {
 	mut out := &VSlimStreamResponse{}
 	out.construct('text', chunks, status, content_type, headers)
 	return out
 }
 
 @[php_method]
-pub fn VSlimStreamResponse.sse(events vphp.BorrowedValue) &VSlimStreamResponse {
-	return VSlimStreamResponse.sse_with(events, 200, vphp.BorrowedValue.from_zval(vphp.RequestOwnedZVal.new_null().to_zval()))
+pub fn VSlimStreamResponse.sse(events vphp.RequestBorrowedZBox) &VSlimStreamResponse {
+	return VSlimStreamResponse.sse_with(events, 200, vphp.borrow_zbox(vphp.RequestOwnedZBox.new_null().to_zval()))
 }
 
 @[php_method]
-pub fn VSlimStreamResponse.sse_with(events vphp.BorrowedValue, status int, headers vphp.BorrowedValue) &VSlimStreamResponse {
+pub fn VSlimStreamResponse.sse_with(events vphp.RequestBorrowedZBox, status int, headers vphp.RequestBorrowedZBox) &VSlimStreamResponse {
 	mut out := &VSlimStreamResponse{}
 	out.construct('sse', events, status, 'text/event-stream', headers)
 	return out
@@ -80,23 +80,23 @@ pub fn (mut r VSlimStreamResponse) set_content_type(content_type string) &VSlimS
 }
 
 @[php_method]
-pub fn (mut r VSlimStreamResponse) set_chunks(chunks vphp.BorrowedValue) &VSlimStreamResponse {
+pub fn (mut r VSlimStreamResponse) set_chunks(chunks vphp.RequestBorrowedZBox) &VSlimStreamResponse {
 	if r.chunks_ref.is_valid() {
 		unsafe {
 			mut owned := r.chunks_ref
 			owned.release()
 		}
 	}
-	r.chunks_ref = vphp.PersistentOwnedZVal.from_zval(chunks.to_zval())
+	r.chunks_ref = vphp.PersistentOwnedZVal.from_value_zval(chunks.to_zval())
 	return &r
 }
 
 @[php_method]
-pub fn (r &VSlimStreamResponse) chunks() vphp.Value {
+pub fn (r &VSlimStreamResponse) chunks() vphp.RequestOwnedZBox {
 	if !r.chunks_ref.is_valid() || r.chunks_ref.is_null() || r.chunks_ref.is_undef() {
-		return vphp.Value.new_null()
+		return vphp.RequestOwnedZBox.new_null()
 	}
-	return vphp.Value.from_zval(r.chunks_ref.clone_request_owned().to_zval())
+	return r.chunks_ref.clone_request_owned()
 }
 
 fn (r &VSlimStreamResponse) header_values() map[string]string {
@@ -137,31 +137,43 @@ fn propagate_request_trace_headers_to_object(req &VSlimRequest, raw vphp.Borrowe
 	}
 	rid := req.request_id()
 	if rid != '' {
-		has := obj.method_owned_request('has_header', [vphp.RequestOwnedZVal.new_string('x-request-id').to_zval()])
-		if !has.is_valid() || !has.to_bool() {
-			_ = obj.method_owned_request('set_header', [
-				vphp.RequestOwnedZVal.new_string('x-request-id').to_zval(),
-				vphp.RequestOwnedZVal.new_string(rid).to_zval(),
-			])
+		missing := vphp.with_method_result_zval(obj, 'has_header', [vphp.RequestOwnedZBox.new_string('x-request-id').to_zval()], fn (has vphp.ZVal) bool {
+			return !has.is_valid() || !has.to_bool()
+		})
+		if missing {
+			vphp.with_method_result_zval(obj, 'set_header', [
+				vphp.RequestOwnedZBox.new_string('x-request-id').to_zval(),
+				vphp.RequestOwnedZBox.new_string(rid).to_zval(),
+			], fn (_ vphp.ZVal) bool {
+				return true
+			})
 		}
 	}
 	tid := req.trace_id()
 	if tid == '' {
 		return
 	}
-	has_trace := obj.method_owned_request('has_header', [vphp.RequestOwnedZVal.new_string('x-trace-id').to_zval()])
-	if !has_trace.is_valid() || !has_trace.to_bool() {
-		_ = obj.method_owned_request('set_header', [
-			vphp.RequestOwnedZVal.new_string('x-trace-id').to_zval(),
-			vphp.RequestOwnedZVal.new_string(tid).to_zval(),
-		])
+	missing_trace := vphp.with_method_result_zval(obj, 'has_header', [vphp.RequestOwnedZBox.new_string('x-trace-id').to_zval()], fn (has vphp.ZVal) bool {
+		return !has.is_valid() || !has.to_bool()
+	})
+	if missing_trace {
+		vphp.with_method_result_zval(obj, 'set_header', [
+			vphp.RequestOwnedZBox.new_string('x-trace-id').to_zval(),
+			vphp.RequestOwnedZBox.new_string(tid).to_zval(),
+		], fn (_ vphp.ZVal) bool {
+			return true
+		})
 	}
-	has_vhttpd := obj.method_owned_request('has_header', [vphp.RequestOwnedZVal.new_string('x-vhttpd-trace-id').to_zval()])
-	if !has_vhttpd.is_valid() || !has_vhttpd.to_bool() {
-		_ = obj.method_owned_request('set_header', [
-			vphp.RequestOwnedZVal.new_string('x-vhttpd-trace-id').to_zval(),
-			vphp.RequestOwnedZVal.new_string(tid).to_zval(),
-		])
+	missing_vhttpd := vphp.with_method_result_zval(obj, 'has_header', [vphp.RequestOwnedZBox.new_string('x-vhttpd-trace-id').to_zval()], fn (has vphp.ZVal) bool {
+		return !has.is_valid() || !has.to_bool()
+	})
+	if missing_vhttpd {
+		vphp.with_method_result_zval(obj, 'set_header', [
+			vphp.RequestOwnedZBox.new_string('x-vhttpd-trace-id').to_zval(),
+			vphp.RequestOwnedZBox.new_string(tid).to_zval(),
+		], fn (_ vphp.ZVal) bool {
+			return true
+		})
 	}
 }
 

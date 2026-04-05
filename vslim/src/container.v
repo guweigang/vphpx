@@ -44,20 +44,20 @@ pub fn (mut c VSlimContainer) construct() &VSlimContainer {
 }
 
 @[php_method]
-pub fn (mut c VSlimContainer) set(id string, value vphp.BorrowedValue) &VSlimContainer {
-	c.entries[id] = vphp.PersistentOwnedZVal.from_zval(value.to_zval())
+pub fn (mut c VSlimContainer) set(id string, value vphp.RequestBorrowedZBox) &VSlimContainer {
+	c.entries[id] = vphp.PersistentOwnedZVal.from_value_zval(value.to_zval())
 	c.factories.delete(id)
 	c.resolved.delete(id)
 	return &c
 }
 
 @[php_method]
-pub fn (mut c VSlimContainer) factory(id string, callable vphp.BorrowedValue) &VSlimContainer {
+pub fn (mut c VSlimContainer) factory(id string, callable vphp.RequestBorrowedZBox) &VSlimContainer {
 	if !callable.is_valid() || !callable.is_callable() {
 		throw_container_exception('factory for "${id}" must be callable')
 		return &c
 	}
-	c.factories[id] = vphp.PersistentOwnedZVal.from_zval(callable.to_zval())
+	c.factories[id] = vphp.PersistentOwnedZVal.from_value_zval(callable.to_zval())
 	c.entries.delete(id)
 	c.resolved.delete(id)
 	return &c
@@ -72,34 +72,30 @@ pub fn (c &VSlimContainer) has(id string) bool {
 }
 
 @[php_method]
-pub fn (mut c VSlimContainer) get(id string) vphp.Value {
+pub fn (mut c VSlimContainer) get(id string) vphp.RequestOwnedZBox {
 	return c.get_entry_or_throw(id)
 }
 
-fn (mut c VSlimContainer) get_entry(id string) !vphp.Value {
+fn (mut c VSlimContainer) get_entry(id string) !vphp.RequestOwnedZBox {
 	if native := c.get_native_service(id) {
 		return native
 	}
 	if id in c.resolved {
 		resolved := c.resolved[id] or { return error('entry "${id}" not found') }
-		return vphp.Value.from_zval(resolved.clone_request_owned().to_zval())
+		return resolved.clone_request_owned()
 	}
 	if id in c.entries {
 		entry := c.entries[id] or { return error('entry "${id}" not found') }
-		return vphp.Value.from_zval(entry.clone_request_owned().to_zval())
+		return entry.clone_request_owned()
 	}
 	if id in c.factories {
 		factory_owned := c.factories[id] or { return error('entry "${id}" not found') }
-		mut factory := factory_owned.clone_request_owned()
-		defer {
-			factory.release()
-		}
-		res := factory.to_zval().call_owned_request([])
+		mut res := factory_owned.call_request_owned([])
 		if !res.is_valid() {
 			return error('factory "${id}" returned invalid value')
 		}
-		c.resolved[id] = vphp.PersistentOwnedZVal.from_zval(res)
-		return vphp.Value.adopt_request_zval(res)
+		c.resolved[id] = vphp.PersistentOwnedZVal.from_value_zval(res.to_zval())
+		return res
 	}
 	return error('entry "${id}" not found')
 }
@@ -127,18 +123,18 @@ fn (c &VSlimContainer) has_native_service(id string) bool {
 	]
 }
 
-fn container_borrowed_object_value(v_ptr voidptr, ce voidptr, handlers voidptr) ?vphp.Value {
+fn container_borrowed_object_value(v_ptr voidptr, ce voidptr, handlers voidptr) ?vphp.RequestOwnedZBox {
 	unsafe {
 		if v_ptr == 0 || ce == 0 {
 			return none
 		}
-		mut payload := vphp.RequestOwnedZVal.new_null().to_zval()
+		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
 		vphp.return_borrowed_object_raw(payload.raw, v_ptr, ce, handlers)
-		return vphp.Value.adopt_request_zval(payload)
+		return vphp.RequestOwnedZBox.adopt_zval(payload)
 	}
 }
 
-fn (mut c VSlimContainer) get_native_service(id string) ?vphp.Value {
+fn (mut c VSlimContainer) get_native_service(id string) ?vphp.RequestOwnedZBox {
 	if c.app_ref == unsafe { nil } {
 		return none
 	}
@@ -186,14 +182,14 @@ fn (mut c VSlimContainer) get_native_service(id string) ?vphp.Value {
 	return none
 }
 
-fn (mut c VSlimContainer) get_entry_or_throw(id string) vphp.Value {
+fn (mut c VSlimContainer) get_entry_or_throw(id string) vphp.RequestOwnedZBox {
 	return c.get_entry(id) or {
 		if err.msg().contains('not found') {
 			throw_not_found(id)
 		} else {
 			throw_container_exception(err.msg())
 		}
-		return vphp.Value.new_null()
+		return vphp.RequestOwnedZBox.new_null()
 	}
 }
 

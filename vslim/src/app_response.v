@@ -47,7 +47,7 @@ fn normalize_php_route_response(result vphp.ZVal) (VSlimResponse, bool) {
 		return VSlimResponse{
 			status:       psr.get_status_code()
 			body:         psr7_stream_string(response_body_or_empty(psr))
-			content_type: psr.get_header_line(vphp.BorrowedValue.from_zval(vphp.RequestOwnedZVal.new_string('content-type').to_zval()))
+			content_type: psr.get_header_line(vphp.borrow_zbox(vphp.RequestOwnedZBox.new_string('content-type').to_zval()))
 			headers:      flatten_psr7_header_map(psr.get_headers())
 		}, true
 	}

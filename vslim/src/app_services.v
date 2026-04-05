@@ -104,7 +104,7 @@ fn (mut app VSlimApp) sync_http_client_service_to_container() {
 }
 
 fn (mut app VSlimApp) sync_clock_dependent_services() {
-	clock_value := vphp.BorrowedValue.from_zval(app.clock().to_zval())
+	clock_value := vphp.borrow_zbox(app.clock().to_zval())
 	if app.cache_ref != unsafe { nil } {
 		app.cache_ref.set_clock(clock_value)
 	}
@@ -135,11 +135,11 @@ pub fn (mut app VSlimApp) mcp() &VSlimMcpApp {
 }
 
 @[php_method]
-pub fn (app &VSlimApp) handle_mcp_dispatch(frame vphp.BorrowedValue) vphp.Value {
+pub fn (app &VSlimApp) handle_mcp_dispatch(frame vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	if app.mcp_ref == unsafe { nil } {
-		return vphp.Value.new_null()
+		return vphp.RequestOwnedZBox.new_null()
 	}
-	return vphp.Value.from_zval(app.mcp_ref.handle_mcp_dispatch(frame).to_zval())
+	return app.mcp_ref.handle_mcp_dispatch(frame)
 }
 
 @[php_method]
@@ -149,7 +149,7 @@ pub fn (app &VSlimApp) has_logger() bool {
 
 @[php_arg_type: 'clock=Psr\\Clock\\ClockInterface']
 @[php_method: 'setClock']
-pub fn (mut app VSlimApp) set_clock(clock vphp.BorrowedValue) &VSlimApp {
+pub fn (mut app VSlimApp) set_clock(clock vphp.RequestBorrowedZBox) &VSlimApp {
 	if !psr20_is_clock(clock.to_zval()) {
 		vphp.throw_exception_class('InvalidArgumentException', 'clock must implement Psr\\Clock\\ClockInterface',
 			0)
@@ -157,7 +157,7 @@ pub fn (mut app VSlimApp) set_clock(clock vphp.BorrowedValue) &VSlimApp {
 	}
 	mut old := app.clock_ref
 	old.release()
-	app.clock_ref = vphp.PersistentOwnedZVal.from_zval(clock.to_zval())
+	app.clock_ref = vphp.PersistentOwnedZVal.from_value_zval(clock.to_zval())
 	app.sync_clock_dependent_services()
 	app.sync_clock_service_to_container()
 	return app
@@ -165,14 +165,14 @@ pub fn (mut app VSlimApp) set_clock(clock vphp.BorrowedValue) &VSlimApp {
 
 @[php_return_type: 'Psr\\Clock\\ClockInterface']
 @[php_method]
-pub fn (mut app VSlimApp) clock() vphp.Value {
+pub fn (mut app VSlimApp) clock() vphp.RequestOwnedZBox {
 	if !psr20_is_clock(app.clock_ref.to_zval()) {
 		mut old := app.clock_ref
 		old.release()
 		app.clock_ref = new_psr20_system_clock_ref()
 		app.sync_clock_service_to_container()
 	}
-	return vphp.Value.from_zval(app.clock_ref.clone_request_owned().to_zval())
+	return app.clock_ref.clone_request_owned()
 }
 
 @[php_method]
@@ -272,7 +272,7 @@ pub fn (mut app VSlimApp) events() &VSlimPsr14EventDispatcher {
 pub fn (mut app VSlimApp) set_cache(cache &VSlimPsr16Cache) &VSlimApp {
 	unsafe {
 		mut writable := &VSlimPsr16Cache(cache)
-		writable.set_clock(vphp.BorrowedValue.from_zval(app.clock().to_zval()))
+		writable.set_clock(vphp.borrow_zbox(app.clock().to_zval()))
 	}
 	app.cache_ref = cache
 	app.sync_cache_services_to_container()
@@ -285,7 +285,7 @@ pub fn (mut app VSlimApp) cache() &VSlimPsr16Cache {
 	if app.cache_ref == unsafe { nil } {
 		mut created := &VSlimPsr16Cache{}
 		created.construct()
-		created.set_clock(vphp.BorrowedValue.from_zval(app.clock().to_zval()))
+		created.set_clock(vphp.borrow_zbox(app.clock().to_zval()))
 		app.cache_ref = created
 	}
 	return app.cache_ref
@@ -296,7 +296,7 @@ pub fn (mut app VSlimApp) cache() &VSlimPsr16Cache {
 pub fn (mut app VSlimApp) set_cache_pool(pool &VSlimPsr6CacheItemPool) &VSlimApp {
 	unsafe {
 		mut writable := &VSlimPsr6CacheItemPool(pool)
-		writable.set_clock(vphp.BorrowedValue.from_zval(app.clock().to_zval()))
+		writable.set_clock(vphp.borrow_zbox(app.clock().to_zval()))
 	}
 	app.cache_pool_ref = pool
 	app.sync_cache_services_to_container()
@@ -309,7 +309,7 @@ pub fn (mut app VSlimApp) cache_pool() &VSlimPsr6CacheItemPool {
 	if app.cache_pool_ref == unsafe { nil } {
 		mut created := &VSlimPsr6CacheItemPool{}
 		created.construct()
-		created.set_clock(vphp.BorrowedValue.from_zval(app.clock().to_zval()))
+		created.set_clock(vphp.borrow_zbox(app.clock().to_zval()))
 		app.cache_pool_ref = created
 	}
 	return app.cache_pool_ref

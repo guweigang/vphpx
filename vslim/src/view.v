@@ -49,7 +49,7 @@ pub fn (mut app VSlimApp) clear_view_cache() &VSlimApp {
 }
 
 @[php_method]
-pub fn (mut app VSlimApp) helper(name string, handler vphp.BorrowedValue) &VSlimApp {
+pub fn (mut app VSlimApp) helper(name string, handler vphp.RequestBorrowedZBox) &VSlimApp {
 	key := name.trim_space()
 	if key == '' || !handler.is_valid() || !handler.is_callable() {
 		vphp.throw_exception_class('InvalidArgumentException', 'view helper must be callable', 0)
@@ -60,7 +60,7 @@ pub fn (mut app VSlimApp) helper(name string, handler vphp.BorrowedValue) &VSlim
 		mut existing := app.view_helpers[key] or { vphp.PersistentOwnedZVal.new_null() }
 		release_view_helper(mut existing)
 	}
-	app.view_helpers[key] = vphp.PersistentOwnedZVal.from_zval(handler.to_zval())
+	app.view_helpers[key] = vphp.PersistentOwnedZVal.from_value_zval(handler.to_zval())
 	return &app
 }
 
@@ -122,12 +122,12 @@ fn (host &VSlimViewHost) layout_name() string {
 	return host.layout
 }
 
-fn (mut host VSlimViewHost) render_template_data(template string, data vphp.BorrowedValue) string {
+fn (mut host VSlimViewHost) render_template_data(template string, data vphp.RequestBorrowedZBox) string {
 	mut view := host.view()
 	return view.render(template, data)
 }
 
-fn (mut host VSlimViewHost) render_template_with_layout_data(template string, layout string, data vphp.BorrowedValue) string {
+fn (mut host VSlimViewHost) render_template_with_layout_data(template string, layout string, data vphp.RequestBorrowedZBox) string {
 	mut view := host.view()
 	return view.render_with_layout(template, layout, data)
 }
@@ -139,7 +139,7 @@ fn (mut host VSlimViewHost) render_map_template(template string, data map[string
 
 fn (mut host VSlimViewHost) render_map_template_with_layout(template string, layout string, data map[string]string) string {
 	mut view := host.view()
-	return view.render_maps_with_layout(template, layout, data, map[string][]string{}, map[string]vphp.RequestOwnedZVal{})
+	return view.render_maps_with_layout(template, layout, data, map[string][]string{}, map[string]vphp.RequestOwnedZBox{})
 }
 
 fn (mut host VSlimViewHost) html_map(data map[string]string) string {
@@ -153,13 +153,13 @@ fn (mut host VSlimViewHost) html_map(data map[string]string) string {
 }
 
 @[php_method]
-pub fn (app &VSlimApp) view(template string, data vphp.BorrowedValue) &VSlimResponse {
+pub fn (app &VSlimApp) view(template string, data vphp.RequestBorrowedZBox) &VSlimResponse {
 	mut view := app.make_view()
 	return view.render_response(template, data)
 }
 
 @[php_method]
-pub fn (app &VSlimApp) view_with_layout(template string, layout string, data vphp.BorrowedValue) &VSlimResponse {
+pub fn (app &VSlimApp) view_with_layout(template string, layout string, data vphp.RequestBorrowedZBox) &VSlimResponse {
 	mut view := app.make_view()
 	return view.render_response_with_layout(template, layout, data)
 }
@@ -216,7 +216,7 @@ pub fn (mut view VSlimView) clear_cache() &VSlimView {
 }
 
 @[php_method]
-pub fn (mut view VSlimView) helper(name string, handler vphp.BorrowedValue) &VSlimView {
+pub fn (mut view VSlimView) helper(name string, handler vphp.RequestBorrowedZBox) &VSlimView {
 	key := name.trim_space()
 	if key == '' || !handler.is_valid() || !handler.is_callable() {
 		vphp.throw_exception_class('InvalidArgumentException', 'view helper must be callable', 0)
@@ -227,7 +227,7 @@ pub fn (mut view VSlimView) helper(name string, handler vphp.BorrowedValue) &VSl
 		mut existing := view.helpers[key] or { vphp.PersistentOwnedZVal.new_null() }
 		release_view_helper(mut existing)
 	}
-	view.helpers[key] = vphp.PersistentOwnedZVal.from_zval(handler.to_zval())
+	view.helpers[key] = vphp.PersistentOwnedZVal.from_value_zval(handler.to_zval())
 	return &view
 }
 
@@ -241,20 +241,20 @@ pub fn (view &VSlimView) asset(path string) string {
 }
 
 @[php_method]
-pub fn (view &VSlimView) render(template string, data vphp.BorrowedValue) string {
+pub fn (view &VSlimView) render(template string, data vphp.RequestBorrowedZBox) string {
 	scalars, lists, objects := extract_template_data(data.to_zval())
 	return view.render_maps(template, scalars, lists, objects)
 }
 
 pub fn (view &VSlimView) render_map(template string, data map[string]string) string {
-	return view.render_maps(template, data, map[string][]string{}, map[string]vphp.RequestOwnedZVal{})
+	return view.render_maps(template, data, map[string][]string{}, map[string]vphp.RequestOwnedZBox{})
 }
 
-fn (view &VSlimView) render_maps(template string, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZVal) string {
+fn (view &VSlimView) render_maps(template string, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZBox) string {
 	return view.render_map_with_depth(template, scalars, lists, objects, 0)
 }
 
-fn (view &VSlimView) render_map_with_depth(template string, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZVal, depth int) string {
+fn (view &VSlimView) render_map_with_depth(template string, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZBox, depth int) string {
 	if depth > 8 {
 		return ''
 	}
@@ -265,16 +265,16 @@ fn (view &VSlimView) render_map_with_depth(template string, scalars map[string]s
 }
 
 @[php_method]
-pub fn (view &VSlimView) render_with_layout(template string, layout string, data vphp.BorrowedValue) string {
+pub fn (view &VSlimView) render_with_layout(template string, layout string, data vphp.RequestBorrowedZBox) string {
 	scalars, lists, objects := extract_template_data(data.to_zval())
 	return view.render_maps_with_layout(template, layout, scalars, lists, objects)
 }
 
 pub fn (view &VSlimView) render_map_with_layout(template string, layout string, data map[string]string) string {
-	return view.render_maps_with_layout(template, layout, data, map[string][]string{}, map[string]vphp.RequestOwnedZVal{})
+	return view.render_maps_with_layout(template, layout, data, map[string][]string{}, map[string]vphp.RequestOwnedZBox{})
 }
 
-pub fn (view &VSlimView) render_maps_with_layout(template string, layout string, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZVal) string {
+pub fn (view &VSlimView) render_maps_with_layout(template string, layout string, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZBox) string {
 	template_path := view.resolve_template_path(template)
 	program := view.read_template_program(template_path) or {
 		return debug_template_error('template.missing', template_path, template, 0, 0)

@@ -107,7 +107,7 @@ fn apply_cli_bootstrap_spec(mut cli VSlimCliApp, spec vphp.ZVal) ! {
 	normalized := normalize_app_bootstrap_spec(spec)!
 	if cli_bootstrap_has_meta_keys(normalized) {
 		if commands := app_bootstrap_lookup(normalized, ['commands']) {
-			cli.command_many(vphp.BorrowedValue.from_zval(commands))
+			cli.command_many(vphp.borrow_zbox(commands))
 		}
 		if should_boot := app_bootstrap_bool(normalized, ['boot']) {
 			if should_boot {
@@ -117,7 +117,7 @@ fn apply_cli_bootstrap_spec(mut cli VSlimCliApp, spec vphp.ZVal) ! {
 		}
 		return
 	}
-	cli.command_many(vphp.BorrowedValue.from_zval(normalized))
+	cli.command_many(vphp.borrow_zbox(normalized))
 }
 
 fn apply_cli_bootstrap_file_result(mut cli VSlimCliApp, path string, value vphp.ZVal) ! {
@@ -129,17 +129,18 @@ fn apply_cli_bootstrap_file_result(mut cli VSlimCliApp, path string, value vphp.
 		defer {
 			cli_z.release()
 		}
-		mut result := value.call_owned_request([cli_z])
+		mut result := vphp.call_request_owned_zval(value, [cli_z])
 		defer {
 			result.release()
 		}
-		if !result.is_valid() || result.is_null() || result.is_undef() {
+		result_z := result.to_zval()
+		if !result_z.is_valid() || result_z.is_null() || result_z.is_undef() {
 			return
 		}
-		if result.is_object() && result.is_instance_of('VSlim\\Cli\\App') {
+		if result_z.is_object() && result_z.is_instance_of('VSlim\\Cli\\App') {
 			return
 		}
-		apply_cli_bootstrap_spec(mut cli, result)!
+		apply_cli_bootstrap_spec(mut cli, result_z)!
 		return
 	}
 	if value.is_object() && value.is_instance_of('VSlim\\Cli\\App') {
@@ -173,12 +174,12 @@ fn apply_cli_command_class_conventions(mut cli VSlimCliApp, project_root string)
 		if !class_exists {
 			return error('command convention file "${display_file}" must declare class ${class_name}')
 		}
-		mut class_name_z := vphp.RequestOwnedZVal.new_string(class_name).to_zval()
+		mut class_name_z := vphp.RequestOwnedZBox.new_string(class_name).to_zval()
 		defer {
 			class_name_z.release()
 		}
 		name := derive_command_name_from_handler(class_name_z)!
-		cli.command(name, vphp.BorrowedValue.from_zval(class_name_z))
+		cli.command(name, vphp.borrow_zbox(class_name_z))
 		applied = true
 	}
 	return applied

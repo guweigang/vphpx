@@ -104,7 +104,7 @@ fn build_method_not_allowed_response_with_context(app &VSlimApp, ctx PipelineReq
 fn run_not_found(app &VSlimApp, req &VSlimRequest) VSlimResponse {
 	payload := build_php_request_object(req, map[string]string{})
 	path := RoutePath.normalize(req.path)
-	ctx := new_pipeline_request_context(path, vphp.RequestOwnedZVal.from_zval(payload),
+	ctx := new_pipeline_request_context(path, vphp.RequestOwnedZBox.from_zval(payload),
 		map[string]string{})
 	res := run_not_found_core_with_context(app, ctx)
 	return finalize_php_response(app, ctx, res)
@@ -115,8 +115,8 @@ fn run_not_found_core_with_context(app &VSlimApp, ctx PipelineRequestContext) VS
 	if nf.is_valid() && nf.is_callable() {
 		psr_payload := normalize_psr15_server_request_payload(ctx.payload_ref.borrowed(),
 			ctx.route_params)
-		raw := nf.call_owned_request([psr_payload])
-		return normalize_or_handle_error_with_context(app, ctx, vphp.BorrowedZVal.from_zval(raw),
+		mut raw := nf.call_request_owned([psr_payload])
+		return normalize_or_handle_error_with_context(app, ctx, raw.borrowed(),
 			404, 'Not Found')
 	}
 	return default_error_response(app, 404, 'Not Found', 'not_found')
@@ -135,12 +135,12 @@ fn run_error_handler_with_context(app &VSlimApp, ctx PipelineRequestContext, sta
 	}
 	psr_payload := normalize_psr15_server_request_payload(ctx.payload_ref.borrowed(),
 		ctx.route_params)
-	raw := eh.call_owned_request([
+	mut raw := eh.call_request_owned([
 		psr_payload,
-		vphp.RequestOwnedZVal.new_string(message).to_zval(),
-		vphp.RequestOwnedZVal.new_int(status).to_zval(),
+		vphp.RequestOwnedZBox.new_string(message).to_zval(),
+		vphp.RequestOwnedZBox.new_int(status).to_zval(),
 	])
-	res, ok := normalize_php_route_response_borrowed(vphp.BorrowedZVal.from_zval(raw))
+	res, ok := normalize_php_route_response_borrowed(raw.borrowed())
 	if !ok {
 		return none
 	}

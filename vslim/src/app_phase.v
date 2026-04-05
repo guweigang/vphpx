@@ -4,10 +4,11 @@ import vphp
 
 fn dispatch_php_phase_middleware_raw(app &VSlimApp, payload vphp.BorrowedZVal, route_params map[string]string, handler vphp.BorrowedZVal, next_handler vphp.ZVal) !vphp.ZVal {
 	target := resolve_php_phase_middleware_target(app, handler)!
-	return target.method_owned_request('process', [
+	mut result := vphp.method_request_owned_zval(target, 'process', [
 		normalize_psr15_server_request_payload(payload, route_params),
 		next_handler,
 	])
+	return result.take_zval()
 }
 
 fn is_internal_phase_continue_response(result vphp.ZVal) bool {
@@ -21,7 +22,7 @@ fn is_internal_phase_continue_response(result vphp.ZVal) bool {
 fn build_before_phase_dispatch_result(payload vphp.BorrowedZVal, route_params map[string]string, cont &VSlimPsr15ContinueHandler, raw vphp.ZVal) PhaseMiddlewareDispatchResult {
 	continued := cont.state.has_forwarded_request && is_internal_phase_continue_response(raw)
 	return PhaseMiddlewareDispatchResult{
-		raw_response_ref: vphp.RequestOwnedZVal.from_zval(raw)
+		raw_response_ref: vphp.RequestOwnedZBox.from_zval(raw)
 		payload_ref:      continued_phase_request_payload(payload, route_params, cont)
 		continued:        continued
 	}
@@ -64,15 +65,15 @@ fn apply_php_before_middlewares(app &VSlimApp, path string, payload vphp.Borrowe
 	}
 }
 
-fn matching_group_before_middlewares(app &VSlimApp, path string) []vphp.RequestOwnedZVal {
+fn matching_group_before_middlewares(app &VSlimApp, path string) []vphp.RequestOwnedZBox {
 	return collect_matching_route_hooks(app.php_group_before_middle, path)
 }
 
-fn matching_group_middle_hooks(app &VSlimApp, path string) []vphp.RequestOwnedZVal {
+fn matching_group_middle_hooks(app &VSlimApp, path string) []vphp.RequestOwnedZBox {
 	return collect_matching_route_hooks(app.php_group_middle, path)
 }
 
-fn matching_group_after_middlewares(app &VSlimApp, path string) []vphp.RequestOwnedZVal {
+fn matching_group_after_middlewares(app &VSlimApp, path string) []vphp.RequestOwnedZBox {
 	return collect_matching_route_hooks(app.php_group_after_middle, path)
 }
 
@@ -91,7 +92,7 @@ fn build_php_psr15_continue_handler_object(handler &VSlimPsr15ContinueHandler) v
 		(&VSlimPsr15ContinueHandler(handler)).state = Psr15NextHandlerState{
 			mode: .continue_marker
 		}
-		mut payload := vphp.RequestOwnedZVal.new_null().to_zval()
+		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
 		vphp.return_owned_object_raw(payload.raw, handler, C.vslim__psr15__continuehandler_ce,
 			&C.vphp_class_handlers(vslimpsr15continuehandler_handlers()))
 		return payload

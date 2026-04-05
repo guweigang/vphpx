@@ -129,8 +129,8 @@ fn make_resource_handler(controller string, action string) vphp.ZVal {
 	}
 	if vphp.class_exists(controller) {
 		exists := vphp.call_php('method_exists', [
-			vphp.RequestOwnedZVal.new_string(controller).to_zval(),
-			vphp.RequestOwnedZVal.new_string(action).to_zval(),
+			vphp.RequestOwnedZBox.new_string(controller).to_zval(),
+			vphp.RequestOwnedZBox.new_string(action).to_zval(),
 		])
 		if !exists.is_valid() || !exists.to_bool() {
 			return vphp.ZVal.new_null()
@@ -195,7 +195,7 @@ fn parse_resource_options(options vphp.BorrowedZVal) ResourceRouteOptions {
 	}
 	missing_raw := options.to_zval().get('missing') or { vphp.ZVal.new_null() }
 	if missing_raw.is_valid() && missing_raw.is_callable() {
-		out.missing_handler = vphp.PersistentOwnedZVal.from_zval(missing_raw)
+		out.missing_handler = vphp.PersistentOwnedZVal.from_value_zval(missing_raw)
 	}
 	for action in parse_action_list(only_raw) {
 		out.only[action] = true

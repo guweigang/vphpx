@@ -117,6 +117,5 @@ struct TemplateExprValue {
 	list          []string
 	explicit_type string
 	map_path      string
-	object        vphp.RequestOwnedZVal = vphp.RequestOwnedZVal.new_null()
+	object        vphp.RequestOwnedZBox = vphp.RequestOwnedZBox.new_null()
 }
-

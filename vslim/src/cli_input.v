@@ -95,8 +95,8 @@ fn set_cli_command_input(mut cli VSlimCliApp, command_name string, input CliComm
 	cli.last_input_parsed = input.parsed
 }
 
-fn cli_dyn_value_to_value(value vphp.DynValue) vphp.Value {
-	return vphp.Value.adopt_request_zval(vphp.new_zval_from_dyn_value(value) or {
+fn cli_dyn_value_to_zbox(value vphp.DynValue) vphp.RequestOwnedZBox {
+	return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(value) or {
 		vphp.ZVal.new_null()
 	})
 }
@@ -718,33 +718,33 @@ fn cli_command_definition(runtime vphp.ZVal) !CliCommandDefinition {
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists('definition') {
 		return error('command has no CLI definition')
 	}
-	mut definition_z := runtime.method_owned_request('definition', []vphp.ZVal{})
+	mut definition_z := vphp.method_request_owned_zval(runtime, 'definition', []vphp.ZVal{})
 	defer {
 		definition_z.release()
 	}
-	return cli_parse_command_definition(definition_z)!
+	return cli_parse_command_definition(definition_z.to_zval())!
 }
 
 fn cli_runtime_text_method(runtime vphp.ZVal, method_name string) string {
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists(method_name) {
 		return ''
 	}
-	mut value_z := runtime.method_owned_request(method_name, []vphp.ZVal{})
+	mut value_z := vphp.method_request_owned_zval(runtime, method_name, []vphp.ZVal{})
 	defer {
 		value_z.release()
 	}
-	return value_z.to_string().trim_space()
+	return value_z.to_zval().to_string().trim_space()
 }
 
 fn cli_runtime_string_list_method(runtime vphp.ZVal, method_name string) []string {
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists(method_name) {
 		return []string{}
 	}
-	mut value_z := runtime.method_owned_request(method_name, []vphp.ZVal{})
+	mut value_z := vphp.method_request_owned_zval(runtime, method_name, []vphp.ZVal{})
 	defer {
 		value_z.release()
 	}
-	return cli_string_list_from_value(value_z) or {
+	return cli_string_list_from_value(value_z.to_zval()) or {
 		[]string{}
 	}
 }
@@ -753,11 +753,11 @@ fn cli_runtime_bool_method(runtime vphp.ZVal, method_name string, fallback bool)
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists(method_name) {
 		return fallback
 	}
-	mut value_z := runtime.method_owned_request(method_name, []vphp.ZVal{})
+	mut value_z := vphp.method_request_owned_zval(runtime, method_name, []vphp.ZVal{})
 	defer {
 		value_z.release()
 	}
-	return cli_bool_from_value(value_z, fallback)
+	return cli_bool_from_value(value_z.to_zval(), fallback)
 }
 
 fn bind_cli_runtime_to_command(mut cli VSlimCliApp, runtime vphp.ZVal) {
@@ -769,7 +769,7 @@ fn bind_cli_runtime_to_command(mut cli VSlimCliApp, runtime vphp.ZVal) {
 		cli_z.release()
 	}
 	if runtime.method_exists('setCli') {
-		mut set_cli_result := runtime.method_owned_request('setCli', [cli_z])
+		mut set_cli_result := vphp.method_request_owned_zval(runtime, 'setCli', [cli_z])
 		set_cli_result.release()
 	}
 	if runtime.method_exists('setApp') {
@@ -777,7 +777,7 @@ fn bind_cli_runtime_to_command(mut cli VSlimCliApp, runtime vphp.ZVal) {
 		defer {
 			app_z.release()
 		}
-		mut set_app_result := runtime.method_owned_request('setApp', [app_z])
+		mut set_app_result := vphp.method_request_owned_zval(runtime, 'setApp', [app_z])
 		set_app_result.release()
 	}
 }

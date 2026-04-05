@@ -97,43 +97,47 @@ pub fn (c &VSlimConfig) get_json(key string, default_json string) string {
 
 @[php_optional_args: 'default_value']
 @[php_method]
-pub fn (c &VSlimConfig) get(key string, default_value vphp.BorrowedValue) vphp.Value {
+pub fn (c &VSlimConfig) get(key string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	raw_default := default_value.to_zval()
 	value := c.value_opt(key) or {
 		if raw_default.is_valid() {
-			return vphp.Value.from_zval(raw_default)
+			return vphp.own_request_zbox(raw_default)
 		}
-		return vphp.Value.new_null()
+		return vphp.RequestOwnedZBox.new_null()
 	}
-	return vphp.Value.from_zval(toml_any_to_zval(value))
+	return vphp.own_request_zbox(toml_any_to_zval(value))
 }
 
 @[php_optional_args: 'default_value']
 @[php_method]
-pub fn (c &VSlimConfig) get_map(key string, default_value vphp.BorrowedValue) vphp.Value {
+pub fn (c &VSlimConfig) get_map(key string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	raw_default := default_value.to_zval()
-	value := c.value_opt(key) or { return vphp.Value.from_zval(default_or_empty(raw_default)) }
+	value := c.value_opt(key) or {
+		return vphp.own_request_zbox(default_or_empty(raw_default))
+	}
 	match value {
 		map[string]toml.Any {
-			return vphp.Value.from_zval(toml_map_to_zval(value))
+			return vphp.own_request_zbox(toml_map_to_zval(value))
 		}
 		else {
-			return vphp.Value.from_zval(default_or_empty(raw_default))
+			return vphp.own_request_zbox(default_or_empty(raw_default))
 		}
 	}
 }
 
 @[php_optional_args: 'default_value']
 @[php_method]
-pub fn (c &VSlimConfig) get_list(key string, default_value vphp.BorrowedValue) vphp.Value {
+pub fn (c &VSlimConfig) get_list(key string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	raw_default := default_value.to_zval()
-	value := c.value_opt(key) or { return vphp.Value.from_zval(default_or_empty(raw_default)) }
+	value := c.value_opt(key) or {
+		return vphp.own_request_zbox(default_or_empty(raw_default))
+	}
 	match value {
 		[]toml.Any {
-			return vphp.Value.from_zval(toml_list_to_zval(value))
+			return vphp.own_request_zbox(toml_list_to_zval(value))
 		}
 		else {
-			return vphp.Value.from_zval(default_or_empty(raw_default))
+			return vphp.own_request_zbox(default_or_empty(raw_default))
 		}
 	}
 }
@@ -185,16 +189,16 @@ fn toml_any_to_json(value toml.Any) string {
 			return '${value}'
 		}
 		string {
-			return vphp.json_encode(vphp.RequestOwnedZVal.new_string(value).to_zval())
+			return vphp.json_encode(vphp.RequestOwnedZBox.new_string(value).to_zval())
 		}
 		toml.Date {
-			return vphp.json_encode(vphp.RequestOwnedZVal.new_string(value.str()).to_zval())
+			return vphp.json_encode(vphp.RequestOwnedZBox.new_string(value.str()).to_zval())
 		}
 		toml.Time {
-			return vphp.json_encode(vphp.RequestOwnedZVal.new_string(value.str()).to_zval())
+			return vphp.json_encode(vphp.RequestOwnedZBox.new_string(value.str()).to_zval())
 		}
 		toml.DateTime {
-			return vphp.json_encode(vphp.RequestOwnedZVal.new_string(value.str()).to_zval())
+			return vphp.json_encode(vphp.RequestOwnedZBox.new_string(value.str()).to_zval())
 		}
 		map[string]toml.Any {
 			return toml_map_to_json(value)
@@ -207,7 +211,7 @@ fn toml_any_to_json(value toml.Any) string {
 }
 
 fn toml_json_string(value string) string {
-	return vphp.json_encode(vphp.RequestOwnedZVal.new_string(value).to_zval())
+	return vphp.json_encode(vphp.RequestOwnedZBox.new_string(value).to_zval())
 }
 
 fn toml_map_to_json(input map[string]toml.Any) string {
@@ -241,7 +245,7 @@ fn toml_list_to_json(input []toml.Any) string {
 }
 
 fn empty_array_zval() vphp.ZVal {
-	mut out := vphp.RequestOwnedZVal.new_null().to_zval()
+	mut out := vphp.RequestOwnedZBox.new_null().to_zval()
 	out.array_init()
 	return out
 }
@@ -256,37 +260,37 @@ fn default_or_empty(default_value vphp.ZVal) vphp.ZVal {
 fn toml_any_to_zval(value toml.Any) vphp.ZVal {
 	match value {
 		toml.Null {
-			return vphp.RequestOwnedZVal.new_null().to_zval()
+			return vphp.RequestOwnedZBox.new_null().to_zval()
 		}
 		bool {
-			return vphp.RequestOwnedZVal.new_bool(value).to_zval()
+			return vphp.RequestOwnedZBox.new_bool(value).to_zval()
 		}
 		int {
-			return vphp.RequestOwnedZVal.new_int(value).to_zval()
+			return vphp.RequestOwnedZBox.new_int(value).to_zval()
 		}
 		i64 {
-			return vphp.RequestOwnedZVal.new_int(value).to_zval()
+			return vphp.RequestOwnedZBox.new_int(value).to_zval()
 		}
 		u64 {
-			return vphp.RequestOwnedZVal.new_int(i64(value)).to_zval()
+			return vphp.RequestOwnedZBox.new_int(i64(value)).to_zval()
 		}
 		f32 {
-			return vphp.RequestOwnedZVal.new_float(f64(value)).to_zval()
+			return vphp.RequestOwnedZBox.new_float(f64(value)).to_zval()
 		}
 		f64 {
-			return vphp.RequestOwnedZVal.new_float(value).to_zval()
+			return vphp.RequestOwnedZBox.new_float(value).to_zval()
 		}
 		string {
-			return vphp.RequestOwnedZVal.new_string(value).to_zval()
+			return vphp.RequestOwnedZBox.new_string(value).to_zval()
 		}
 		toml.Date {
-			return vphp.RequestOwnedZVal.new_string(value.str()).to_zval()
+			return vphp.RequestOwnedZBox.new_string(value.str()).to_zval()
 		}
 		toml.Time {
-			return vphp.RequestOwnedZVal.new_string(value.str()).to_zval()
+			return vphp.RequestOwnedZBox.new_string(value.str()).to_zval()
 		}
 		toml.DateTime {
-			return vphp.RequestOwnedZVal.new_string(value.str()).to_zval()
+			return vphp.RequestOwnedZBox.new_string(value.str()).to_zval()
 		}
 		map[string]toml.Any {
 			return toml_map_to_zval(value)
@@ -295,11 +299,11 @@ fn toml_any_to_zval(value toml.Any) vphp.ZVal {
 			return toml_list_to_zval(value)
 		}
 	}
-	return vphp.RequestOwnedZVal.new_null().to_zval()
+	return vphp.RequestOwnedZBox.new_null().to_zval()
 }
 
 fn toml_map_to_zval(input map[string]toml.Any) vphp.ZVal {
-	mut out := vphp.RequestOwnedZVal.new_null().to_zval()
+	mut out := vphp.RequestOwnedZBox.new_null().to_zval()
 	out.array_init()
 	for key, item in input {
 		child := toml_any_to_zval(item)
@@ -309,7 +313,7 @@ fn toml_map_to_zval(input map[string]toml.Any) vphp.ZVal {
 }
 
 fn toml_list_to_zval(input []toml.Any) vphp.ZVal {
-	mut out := vphp.RequestOwnedZVal.new_null().to_zval()
+	mut out := vphp.RequestOwnedZBox.new_null().to_zval()
 	out.array_init()
 	for item in input {
 		out.add_next_val(toml_any_to_zval(item))

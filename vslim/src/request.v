@@ -18,7 +18,7 @@ pub fn (r &VSlimRequest) str() string {
 }
 
 @[php_method]
-pub fn (mut r VSlimRequest) set_query(query vphp.BorrowedValue) &VSlimRequest {
+pub fn (mut r VSlimRequest) set_query(query vphp.RequestBorrowedZBox) &VSlimRequest {
 	r.query = query.to_string_map()
 	return r
 }
@@ -73,37 +73,37 @@ pub fn (mut r VSlimRequest) set_remote_addr(remote_addr string) &VSlimRequest {
 }
 
 @[php_method]
-pub fn (mut r VSlimRequest) set_headers(headers vphp.BorrowedValue) &VSlimRequest {
+pub fn (mut r VSlimRequest) set_headers(headers vphp.RequestBorrowedZBox) &VSlimRequest {
 	r.headers = normalize_header_map(headers.to_string_map())
 	return r
 }
 
 @[php_method]
-pub fn (mut r VSlimRequest) set_cookies(cookies vphp.BorrowedValue) &VSlimRequest {
+pub fn (mut r VSlimRequest) set_cookies(cookies vphp.RequestBorrowedZBox) &VSlimRequest {
 	r.cookies = cookies.to_string_map()
 	return r
 }
 
 @[php_method]
-pub fn (mut r VSlimRequest) set_attributes(attributes vphp.BorrowedValue) &VSlimRequest {
+pub fn (mut r VSlimRequest) set_attributes(attributes vphp.RequestBorrowedZBox) &VSlimRequest {
 	r.attributes = attributes.to_string_map()
 	return r
 }
 
 @[php_method]
-pub fn (mut r VSlimRequest) set_server(server vphp.BorrowedValue) &VSlimRequest {
+pub fn (mut r VSlimRequest) set_server(server vphp.RequestBorrowedZBox) &VSlimRequest {
 	r.server = server.to_string_map()
 	return r
 }
 
 @[php_method]
-pub fn (mut r VSlimRequest) set_uploaded_files(uploaded_files vphp.BorrowedValue) &VSlimRequest {
+pub fn (mut r VSlimRequest) set_uploaded_files(uploaded_files vphp.RequestBorrowedZBox) &VSlimRequest {
 	r.uploaded_files = uploaded_files.to_string_list()
 	return r
 }
 
 @[php_method]
-pub fn (mut r VSlimRequest) set_params(params vphp.BorrowedValue) &VSlimRequest {
+pub fn (mut r VSlimRequest) set_params(params vphp.RequestBorrowedZBox) &VSlimRequest {
 	r.params = params.to_string_map()
 	return r
 }

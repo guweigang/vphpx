@@ -329,7 +329,7 @@ fn template_indexed_list_item_value(path string, lists map[string][]string) ?str
 	return items[idx]
 }
 
-fn template_object_value(path string, objects map[string]vphp.RequestOwnedZVal) ?vphp.RequestOwnedZVal {
+fn template_object_value(path string, objects map[string]vphp.RequestOwnedZBox) ?vphp.RequestOwnedZBox {
 	key := path.trim_space()
 	if key == '' {
 		return none
@@ -388,10 +388,10 @@ fn populate_indexed_item_fields(loop_key string, idx string, scalars map[string]
 	}
 }
 
-fn extract_template_data(data vphp.ZVal) (map[string]string, map[string][]string, map[string]vphp.RequestOwnedZVal) {
+fn extract_template_data(data vphp.ZVal) (map[string]string, map[string][]string, map[string]vphp.RequestOwnedZBox) {
 	mut scalars := map[string]string{}
 	mut lists := map[string][]string{}
-	mut objects := map[string]vphp.RequestOwnedZVal{}
+	mut objects := map[string]vphp.RequestOwnedZBox{}
 	if !data.is_valid() || (!data.is_array() && !data.is_object()) {
 		return scalars, lists, objects
 	}
@@ -399,7 +399,7 @@ fn extract_template_data(data vphp.ZVal) (map[string]string, map[string][]string
 	return scalars, lists, objects
 }
 
-fn collect_template_values(prefix string, value vphp.ZVal, mut scalars map[string]string, mut lists map[string][]string, mut objects map[string]vphp.RequestOwnedZVal, depth int) {
+fn collect_template_values(prefix string, value vphp.ZVal, mut scalars map[string]string, mut lists map[string][]string, mut objects map[string]vphp.RequestOwnedZBox, depth int) {
 	if depth > 8 || !value.is_valid() || value.is_null() || value.is_undef() {
 		if prefix != '' && prefix !in scalars {
 			scalars[prefix] = ''
@@ -454,10 +454,10 @@ fn collect_template_values(prefix string, value vphp.ZVal, mut scalars map[strin
 	}
 	if value.is_object() {
 		if prefix != '' {
-			objects[prefix] = vphp.RequestOwnedZVal.from_zval(value)
+			objects[prefix] = vphp.RequestOwnedZBox.from_zval(value)
 			alias := alias_template_key(prefix)
 			if alias != '' && alias != prefix {
-				objects[alias] = vphp.RequestOwnedZVal.from_zval(value)
+				objects[alias] = vphp.RequestOwnedZBox.from_zval(value)
 			}
 		}
 		children := template_object_children(value)

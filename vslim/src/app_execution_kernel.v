@@ -12,7 +12,7 @@ fn has_php_not_found_pipeline(app &VSlimApp, path string) bool {
 	return matching_group_middle_hooks(app, path).len > 0
 }
 
-fn dispatch_php_terminal_raw(app &VSlimApp, req &VSlimRequest, terminal_meta MiddlewareTerminalMeta) (vphp.ZVal, vphp.RequestOwnedZVal) {
+fn dispatch_php_terminal_raw(app &VSlimApp, req &VSlimRequest, terminal_meta MiddlewareTerminalMeta) (vphp.ZVal, vphp.RequestOwnedZBox) {
 	path := RoutePath.normalize(req.path)
 	payload := build_php_request_object(req, map[string]string{})
 	return dispatch_php_pipeline_raw(app, path, vphp.BorrowedZVal.from_zval(payload),
@@ -22,13 +22,13 @@ fn dispatch_php_terminal_raw(app &VSlimApp, req &VSlimRequest, terminal_meta Mid
 	})
 }
 
-fn dispatch_php_not_found_terminal_raw(app &VSlimApp, req &VSlimRequest) (vphp.ZVal, vphp.RequestOwnedZVal) {
+fn dispatch_php_not_found_terminal_raw(app &VSlimApp, req &VSlimRequest) (vphp.ZVal, vphp.RequestOwnedZBox) {
 	method := resolve_effective_method(req)
 	dispatch_req := request_with_method(req, method)
 	return dispatch_php_terminal_raw(app, &dispatch_req, not_found_terminal_meta())
 }
 
-fn new_pipeline_request_context(path string, payload vphp.RequestOwnedZVal, route_params map[string]string) PipelineRequestContext {
+fn new_pipeline_request_context(path string, payload vphp.RequestOwnedZBox, route_params map[string]string) PipelineRequestContext {
 	return PipelineRequestContext{
 		path:         path
 		payload_ref:  payload.clone_request_owned()
@@ -36,7 +36,7 @@ fn new_pipeline_request_context(path string, payload vphp.RequestOwnedZVal, rout
 	}
 }
 
-fn pipeline_request_context_with_payload(ctx PipelineRequestContext, payload vphp.RequestOwnedZVal) PipelineRequestContext {
+fn pipeline_request_context_with_payload(ctx PipelineRequestContext, payload vphp.RequestOwnedZBox) PipelineRequestContext {
 	return new_pipeline_request_context(ctx.path, payload, ctx.route_params)
 }
 
@@ -62,7 +62,7 @@ fn apply_before_stage_raw(app &VSlimApp, ctx PipelineRequestContext) (PipelineRe
 			before_middle.response_ref.to_zval(), true
 	}
 	return pipeline_request_context_with_payload(ctx, before_middle.payload_ref),
-		vphp.RequestOwnedZVal.new_null().to_zval(), false
+		vphp.RequestOwnedZBox.new_null().to_zval(), false
 }
 
 fn raw_dispatch_plan_has_terminal(plan RawDispatchPlan) bool {
@@ -119,7 +119,7 @@ fn execute_raw_dispatch_plan(app &VSlimApp, ctx PipelineRequestContext, plan Raw
 	return resolve_raw_route_response(app, ctx, raw_res, plan)
 }
 
-fn dispatch_plan_from_payload_raw(app &VSlimApp, ctx PipelineRequestContext, route_middle []vphp.RequestOwnedZVal, plan RawDispatchPlan) (vphp.ZVal, vphp.RequestOwnedZVal) {
+fn dispatch_plan_from_payload_raw(app &VSlimApp, ctx PipelineRequestContext, route_middle []vphp.RequestOwnedZBox, plan RawDispatchPlan) (vphp.ZVal, vphp.RequestOwnedZBox) {
 	raw_res, middleware_payload := dispatch_php_middleware_chain_with_context(app, ctx,
 		route_middle, plan) or {
 		msg := if err.msg() == '' { 'Route handler is not callable' } else { err.msg() }
@@ -129,7 +129,7 @@ fn dispatch_plan_from_payload_raw(app &VSlimApp, ctx PipelineRequestContext, rou
 	return raw_res, middleware_payload
 }
 
-fn dispatch_php_pipeline_raw(app &VSlimApp, path string, initial_payload vphp.BorrowedZVal, plan RawDispatchPlan) (vphp.ZVal, vphp.RequestOwnedZVal) {
+fn dispatch_php_pipeline_raw(app &VSlimApp, path string, initial_payload vphp.BorrowedZVal, plan RawDispatchPlan) (vphp.ZVal, vphp.RequestOwnedZBox) {
 	initial_ctx := new_pipeline_request_context(path, initial_payload.clone_request_owned(),
 		plan.route_params)
 	effective_ctx, early_raw, halted := apply_before_stage_raw(app, initial_ctx)

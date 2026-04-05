@@ -41,7 +41,7 @@ fn ensure_view_helper_map(mut helpers map[string]vphp.PersistentOwnedZVal) {
 fn clone_view_helper_map(src map[string]vphp.PersistentOwnedZVal) map[string]vphp.PersistentOwnedZVal {
 	mut out := map[string]vphp.PersistentOwnedZVal{}
 	for key, handler in src {
-		out[key] = vphp.PersistentOwnedZVal.from_zval(handler.to_zval())
+		out[key] = handler.clone_persistent_owned()
 	}
 	return out
 }
@@ -411,4 +411,3 @@ fn looks_like_template_expression(token string) bool {
 	}
 	return split_template_expr_pipes(trimmed).len > 1
 }
-

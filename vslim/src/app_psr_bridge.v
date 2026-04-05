@@ -38,12 +38,12 @@ fn clone_phase_forwarded_request_snapshot(snapshot PhaseForwardedServerRequestSn
 		uri_query:          snapshot.uri_query
 		uri_fragment:       snapshot.uri_fragment
 		header_names:       clone_header_names(snapshot.header_names)
-		server_params_ref:  vphp.PersistentOwnedZVal.from_zval(snapshot.server_params_ref.to_zval())
-		cookie_params_ref:  vphp.PersistentOwnedZVal.from_zval(snapshot.cookie_params_ref.to_zval())
-		query_params_ref:   vphp.PersistentOwnedZVal.from_zval(snapshot.query_params_ref.to_zval())
-		uploaded_files_ref: vphp.PersistentOwnedZVal.from_zval(snapshot.uploaded_files_ref.to_zval())
-		parsed_body_ref:    vphp.PersistentOwnedZVal.from_zval(snapshot.parsed_body_ref.to_zval())
-		attributes_ref:     vphp.PersistentOwnedZVal.from_zval(snapshot.attributes_ref.to_zval())
+		server_params_ref:  snapshot.server_params_ref.clone_persistent_owned()
+		cookie_params_ref:  snapshot.cookie_params_ref.clone_persistent_owned()
+		query_params_ref:   snapshot.query_params_ref.clone_persistent_owned()
+		uploaded_files_ref: snapshot.uploaded_files_ref.clone_persistent_owned()
+		parsed_body_ref:    snapshot.parsed_body_ref.clone_persistent_owned()
+		attributes_ref:     snapshot.attributes_ref.clone_persistent_owned()
 	}
 }
 
@@ -72,12 +72,12 @@ fn snapshot_phase_forwarded_request(payload vphp.BorrowedZVal) ?PhaseForwardedSe
 			uri_query:          uri.query
 			uri_fragment:       uri.fragment
 			header_names:       clone_header_names(internal.header_names)
-			server_params_ref:  vphp.PersistentOwnedZVal.from_zval(internal.server_params_ref.to_zval())
-			cookie_params_ref:  vphp.PersistentOwnedZVal.from_zval(internal.cookie_params_ref.to_zval())
-			query_params_ref:   vphp.PersistentOwnedZVal.from_zval(internal.query_params_ref.to_zval())
-			uploaded_files_ref: vphp.PersistentOwnedZVal.from_zval(internal.uploaded_files_ref.to_zval())
-			parsed_body_ref:    vphp.PersistentOwnedZVal.from_zval(internal.parsed_body_ref.to_zval())
-			attributes_ref:     vphp.PersistentOwnedZVal.from_zval(internal.attributes_ref.to_zval())
+			server_params_ref:  internal.server_params_ref.clone_persistent_owned()
+			cookie_params_ref:  internal.cookie_params_ref.clone_persistent_owned()
+			query_params_ref:   internal.query_params_ref.clone_persistent_owned()
+			uploaded_files_ref: internal.uploaded_files_ref.clone_persistent_owned()
+			parsed_body_ref:    internal.parsed_body_ref.clone_persistent_owned()
+			attributes_ref:     internal.attributes_ref.clone_persistent_owned()
 		}
 	}
 	return none
@@ -126,31 +126,31 @@ fn request_with_forwarded_snapshot(payload vphp.BorrowedZVal, route_params map[s
 				query:    snapshot.uri_query
 				fragment: snapshot.uri_fragment
 			}
-			server_params_ref:  vphp.PersistentOwnedZVal.from_zval(snapshot.server_params_ref.to_zval())
-			cookie_params_ref:  vphp.PersistentOwnedZVal.from_zval(snapshot.cookie_params_ref.to_zval())
-			query_params_ref:   vphp.PersistentOwnedZVal.from_zval(snapshot.query_params_ref.to_zval())
-			uploaded_files_ref: vphp.PersistentOwnedZVal.from_zval(snapshot.uploaded_files_ref.to_zval())
-			parsed_body_ref:    vphp.PersistentOwnedZVal.from_zval(snapshot.parsed_body_ref.to_zval())
+			server_params_ref:  snapshot.server_params_ref.clone_persistent_owned()
+			cookie_params_ref:  snapshot.cookie_params_ref.clone_persistent_owned()
+			query_params_ref:   snapshot.query_params_ref.clone_persistent_owned()
+			uploaded_files_ref: snapshot.uploaded_files_ref.clone_persistent_owned()
+			parsed_body_ref:    snapshot.parsed_body_ref.clone_persistent_owned()
 			attributes_ref:     attrs_owned
 		})
 	}
 	return normalized
 }
 
-fn continued_phase_request_payload(payload vphp.BorrowedZVal, route_params map[string]string, cont &VSlimPsr15ContinueHandler) vphp.RequestOwnedZVal {
+fn continued_phase_request_payload(payload vphp.BorrowedZVal, route_params map[string]string, cont &VSlimPsr15ContinueHandler) vphp.RequestOwnedZBox {
 	if cont.state.has_forwarded_request {
 		if forwarded_request := take_forwarded_request_snapshot(forwarded_request_key(cont)) {
-			return vphp.RequestOwnedZVal.from_zval(request_with_forwarded_snapshot(payload,
+			return vphp.RequestOwnedZBox.from_zval(request_with_forwarded_snapshot(payload,
 				route_params, forwarded_request))
 		}
 	}
-	return vphp.RequestOwnedZVal.from_zval(normalize_psr15_server_request_payload(payload,
+	return vphp.RequestOwnedZBox.from_zval(normalize_psr15_server_request_payload(payload,
 		route_params))
 }
 
 fn build_php_request_object(req &VSlimRequest, params map[string]string) vphp.ZVal {
 	unsafe {
-		mut payload := vphp.RequestOwnedZVal.new_null().to_zval()
+		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
 		mut bound := &VSlimRequest{
 			method:           req.method
 			raw_path:         req.raw_path
@@ -178,7 +178,7 @@ fn build_php_request_object(req &VSlimRequest, params map[string]string) vphp.ZV
 
 fn build_php_response_object(res VSlimResponse) vphp.ZVal {
 	unsafe {
-		mut payload := vphp.RequestOwnedZVal.new_null().to_zval()
+		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
 		bound := to_vslim_response(res)
 		vphp.return_owned_object_raw(payload.raw, bound, C.vslim__vhttpd__response_ce,
 			&C.vphp_class_handlers(vslimresponse_handlers()))
@@ -188,7 +188,7 @@ fn build_php_response_object(res VSlimResponse) vphp.ZVal {
 
 fn build_php_psr7_server_request_object(req &VSlimPsr7ServerRequest) vphp.ZVal {
 	unsafe {
-		mut payload := vphp.RequestOwnedZVal.new_null().to_zval()
+		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
 		vphp.return_owned_object_raw(payload.raw, req, C.vslim__psr7__serverrequest_ce,
 			&C.vphp_class_handlers(vslimpsr7serverrequest_handlers()))
 		return payload
@@ -208,11 +208,11 @@ fn normalize_psr15_server_request_payload(payload vphp.BorrowedZVal, route_param
 				header_names:       clone_header_names(internal.header_names)
 				body_ref:           server_request_body_or_empty(internal)
 				uri_ref:            server_request_uri_or_default(internal)
-				server_params_ref:  vphp.PersistentOwnedZVal.from_zval(internal.server_params_ref.to_zval())
-				cookie_params_ref:  vphp.PersistentOwnedZVal.from_zval(internal.cookie_params_ref.to_zval())
-				query_params_ref:   vphp.PersistentOwnedZVal.from_zval(internal.query_params_ref.to_zval())
-				uploaded_files_ref: vphp.PersistentOwnedZVal.from_zval(internal.uploaded_files_ref.to_zval())
-				parsed_body_ref:    vphp.PersistentOwnedZVal.from_zval(internal.parsed_body_ref.to_zval())
+				server_params_ref:  internal.server_params_ref.clone_persistent_owned()
+				cookie_params_ref:  internal.cookie_params_ref.clone_persistent_owned()
+				query_params_ref:   internal.query_params_ref.clone_persistent_owned()
+				uploaded_files_ref: internal.uploaded_files_ref.clone_persistent_owned()
+				parsed_body_ref:    internal.parsed_body_ref.clone_persistent_owned()
 				attributes_ref:     persistent_assoc_with_strings(internal.attributes_ref,
 					route_params)
 			})
@@ -231,64 +231,88 @@ fn normalize_psr15_server_request_payload(payload vphp.BorrowedZVal, route_param
 	}
 	request := payload.to_zval()
 	method := if request.method_exists('getMethod') {
-		request.method_owned_request('getMethod', []).to_string()
+		vphp.with_method_result_zval(request, 'getMethod', []vphp.ZVal{}, fn (z vphp.ZVal) string {
+			return z.to_string()
+		})
 	} else {
 		'GET'
 	}
 	request_target := if request.method_exists('getRequestTarget') {
-		request.method_owned_request('getRequestTarget', []).to_string()
+		vphp.with_method_result_zval(request, 'getRequestTarget', []vphp.ZVal{}, fn (z vphp.ZVal) string {
+			return z.to_string()
+		})
 	} else {
 		''
 	}
 	protocol_version := if request.method_exists('getProtocolVersion') {
-		request.method_owned_request('getProtocolVersion', []).to_string()
+		vphp.with_method_result_zval(request, 'getProtocolVersion', []vphp.ZVal{}, fn (z vphp.ZVal) string {
+			return z.to_string()
+		})
 	} else {
 		'1.1'
 	}
 	header_map, header_names := if request.method_exists('getHeaders') {
-		zval_to_psr7_header_state(request.method_owned_request('getHeaders', []))
+		mut headers_z := vphp.method_request_owned_zval(request, 'getHeaders', []vphp.ZVal{})
+		defer {
+			headers_z.release()
+		}
+		zval_to_psr7_header_state(headers_z.to_zval())
 	} else {
 		map[string][]string{}, map[string]string{}
 	}
 	body_ref := if request.method_exists('getBody') {
-		zval_to_psr7_stream(request.method_owned_request('getBody', []))
+		vphp.with_method_result_zval(request, 'getBody', []vphp.ZVal{}, fn (z vphp.ZVal) &VSlimPsr7Stream {
+			return zval_to_psr7_stream(z)
+		})
 	} else {
 		new_psr7_stream('')
 	}
 	uri_ref := if request.method_exists('getUri') {
-		zval_to_psr7_uri(request.method_owned_request('getUri', []))
+		vphp.with_method_result_zval(request, 'getUri', []vphp.ZVal{}, fn (z vphp.ZVal) &VSlimPsr7Uri {
+			return zval_to_psr7_uri(z)
+		})
 	} else {
 		new_psr7_uri('/')
 	}
 	server_params_ref := if request.method_exists('getServerParams') {
-		persistent_array_owned(request.method_owned_request('getServerParams', []))
+		vphp.with_method_result_zval(request, 'getServerParams', []vphp.ZVal{}, fn (z vphp.ZVal) vphp.PersistentOwnedZVal {
+			return persistent_array_owned(z)
+		})
 	} else {
 		empty_persistent_array()
 	}
 	cookie_params_ref := if request.method_exists('getCookieParams') {
-		persistent_array_owned(request.method_owned_request('getCookieParams', []))
+		vphp.with_method_result_zval(request, 'getCookieParams', []vphp.ZVal{}, fn (z vphp.ZVal) vphp.PersistentOwnedZVal {
+			return persistent_array_owned(z)
+		})
 	} else {
 		empty_persistent_array()
 	}
 	query_params_ref := if request.method_exists('getQueryParams') {
-		persistent_array_owned(request.method_owned_request('getQueryParams', []))
+		vphp.with_method_result_zval(request, 'getQueryParams', []vphp.ZVal{}, fn (z vphp.ZVal) vphp.PersistentOwnedZVal {
+			return persistent_array_owned(z)
+		})
 	} else {
 		empty_persistent_array()
 	}
 	uploaded_files_ref := if request.method_exists('getUploadedFiles') {
-		normalize_uploaded_files_tree(request.method_owned_request('getUploadedFiles',
-			[]))
+		vphp.with_method_result_zval(request, 'getUploadedFiles', []vphp.ZVal{}, fn (z vphp.ZVal) vphp.PersistentOwnedZVal {
+			return normalize_uploaded_files_tree(z)
+		})
 	} else {
 		empty_persistent_array()
 	}
 	parsed_body_ref := if request.method_exists('getParsedBody') {
-		persistent_owned_or_null(request.method_owned_request('getParsedBody', []))
+		vphp.with_method_result_zval(request, 'getParsedBody', []vphp.ZVal{}, fn (z vphp.ZVal) vphp.PersistentOwnedZVal {
+			return persistent_owned_or_null(z)
+		})
 	} else {
 		vphp.PersistentOwnedZVal.new_null()
 	}
 	attributes_ref := if request.method_exists('getAttributes') {
-		persistent_assoc_with_strings(persistent_array_owned(request.method_owned_request('getAttributes',
-			[])), route_params)
+		vphp.with_method_result_zval(request, 'getAttributes', []vphp.ZVal{}, fn [route_params] (z vphp.ZVal) vphp.PersistentOwnedZVal {
+			return persistent_assoc_with_strings(persistent_array_owned(z), route_params)
+		})
 	} else {
 		persistent_assoc_with_strings(empty_persistent_array(), route_params)
 	}
@@ -343,7 +367,7 @@ fn build_php_psr7_server_request_from_vslim(req &VSlimRequest, route_params map[
 fn persistent_attrs_from_request(req &VSlimRequest, route_params map[string]string) vphp.PersistentOwnedZVal {
 	mut attrs := empty_persistent_array()
 	for key, value in req.attributes() {
-		attrs = persistent_assoc_with_value(attrs, key, vphp.RequestOwnedZVal.new_string(value).to_zval())
+		attrs = persistent_assoc_with_value(attrs, key, vphp.RequestOwnedZBox.new_string(value).to_zval())
 	}
 	return persistent_assoc_with_strings(attrs, route_params)
 }
@@ -351,15 +375,17 @@ fn persistent_attrs_from_request(req &VSlimRequest, route_params map[string]stri
 fn persistent_assoc_with_strings(value vphp.PersistentOwnedZVal, extras map[string]string) vphp.PersistentOwnedZVal {
 	mut out := new_array_zval()
 	if value.is_valid() && !value.is_null() && !value.is_undef() && value.is_array() {
-		raw := value.clone_request_owned().to_zval()
-		for existing_key in raw.assoc_keys() {
-			add_assoc_zval(out, existing_key, raw.get(existing_key) or { continue })
-		}
+		value.with_request_zval(fn [mut out] (raw vphp.ZVal) bool {
+			for existing_key in raw.assoc_keys() {
+				add_assoc_zval(out, existing_key, raw.get(existing_key) or { continue })
+			}
+			return true
+		})
 	}
 	for key, item in extras {
-		add_assoc_zval(out, key, vphp.RequestOwnedZVal.new_string(item).to_zval())
+		add_assoc_zval(out, key, vphp.RequestOwnedZBox.new_string(item).to_zval())
 	}
-	return vphp.PersistentOwnedZVal.from_zval(out)
+	return vphp.PersistentOwnedZVal.from_value_zval(out)
 }
 
 fn vslim_request_uri_string(req &VSlimRequest) string {
@@ -447,7 +473,9 @@ fn uploaded_files_to_filenames(files map[string]vphp.ZVal) []string {
 			continue
 		}
 		filename := if item.method_exists('getClientFilename') {
-			item.method_owned_request('getClientFilename', []).to_string()
+			vphp.with_method_result_zval(item, 'getClientFilename', []vphp.ZVal{}, fn (result vphp.ZVal) string {
+				return result.to_string()
+			})
 		} else {
 			''
 		}
@@ -531,27 +559,39 @@ fn normalize_to_psr7_response(result vphp.ZVal) &VSlimPsr7Response {
 	}
 	if result.is_object() && result.is_instance_of('Psr\\Http\\Message\\ResponseInterface') {
 		status := if result.method_exists('getStatusCode') {
-			int(result.method_owned_request('getStatusCode', []).to_i64())
+			int(vphp.with_method_result_zval(result, 'getStatusCode', []vphp.ZVal{}, fn (z vphp.ZVal) i64 {
+				return z.to_i64()
+			}))
 		} else {
 			200
 		}
 		reason := if result.method_exists('getReasonPhrase') {
-			result.method_owned_request('getReasonPhrase', []).to_string()
+			vphp.with_method_result_zval(result, 'getReasonPhrase', []vphp.ZVal{}, fn (z vphp.ZVal) string {
+				return z.to_string()
+			})
 		} else {
 			''
 		}
 		protocol := if result.method_exists('getProtocolVersion') {
-			result.method_owned_request('getProtocolVersion', []).to_string()
+			vphp.with_method_result_zval(result, 'getProtocolVersion', []vphp.ZVal{}, fn (z vphp.ZVal) string {
+				return z.to_string()
+			})
 		} else {
 			'1.1'
 		}
 		headers, header_names := if result.method_exists('getHeaders') {
-			zval_to_psr7_header_state(result.method_owned_request('getHeaders', []))
+			mut headers_z := vphp.method_request_owned_zval(result, 'getHeaders', []vphp.ZVal{})
+			defer {
+				headers_z.release()
+			}
+			zval_to_psr7_header_state(headers_z.to_zval())
 		} else {
 			map[string][]string{}, map[string]string{}
 		}
 		body_ref := if result.method_exists('getBody') {
-			zval_to_psr7_stream(result.method_owned_request('getBody', []))
+			vphp.with_method_result_zval(result, 'getBody', []vphp.ZVal{}, fn (z vphp.ZVal) &VSlimPsr7Stream {
+				return zval_to_psr7_stream(z)
+			})
 		} else {
 			new_psr7_stream('')
 		}

@@ -56,7 +56,7 @@ fn vslim_trace_mem_should_log() bool {
 }
 
 fn vslim_mem_usage_bytes() i64 {
-	val := vphp.call_php('memory_get_usage', [vphp.RequestOwnedZVal.new_bool(true).to_zval()])
+	val := vphp.call_php('memory_get_usage', [vphp.RequestOwnedZBox.new_bool(true).to_zval()])
 	if !val.is_valid() || val.is_null() || val.is_undef() {
 		return -1
 	}
@@ -82,7 +82,7 @@ fn vslim_trace_mem_log(app &VSlimApp, req &VSlimRequest, stage string, base_byte
 	context['obj_reg'] = '${counters.obj_registry_len}'
 	context['rev_reg'] = '${counters.rev_registry_len}'
 	mut logger := resolve_app_logger(app)
-	logger.debug_context('memory trace', vphp.BorrowedValue.from_zval(vphp.new_zval_from[map[string]string](context) or {
+	logger.debug_context('memory trace', vphp.borrow_zbox(vphp.new_zval_from[map[string]string](context) or {
 		vphp.ZVal.new_null()
 	}))
 }
@@ -102,16 +102,16 @@ fn resolve_app_clock_zval(app &VSlimApp) vphp.ZVal {
 }
 
 @[php_function]
-fn vslim_probe_object(obj vphp.BorrowedValue, class_name string, method_name string) vphp.Value {
+fn vslim_probe_object(obj vphp.RequestBorrowedZBox, class_name string, method_name string) vphp.RequestOwnedZBox {
 	raw := obj.to_zval()
 	if !raw.is_object() {
-		return vphp.Value.from_zval(vphp.new_zval_from[map[string]string]({
+		return vphp.own_request_zbox(vphp.new_zval_from[map[string]string]({
 			'is_object': 'false'
 		}) or {
 			vphp.ZVal.new_null()
 		})
 	}
-	return vphp.Value.from_zval(vphp.new_zval_from[map[string]string]({
+	return vphp.own_request_zbox(vphp.new_zval_from[map[string]string]({
 		'is_object': raw.is_object().str()
 		'class': raw.class_name()
 		'is_instance_of': raw.is_instance_of(class_name).str()
