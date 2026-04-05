@@ -679,11 +679,16 @@ PHP_FUNCTION(v_get_alerts) {
     vphp_wrap_v_get_alerts(ctx);
 }
 zend_class_entry *contentcontract_ce = NULL;
-static const zend_function_entry contentcontract_methods[];
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_contentcontract_save, 0, 0, _IS_BOOL, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_contentcontract_get_formatted_title, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
+static const zend_function_entry contentcontract_methods[] = {
+    ZEND_RAW_FENTRY("save", NULL, arginfo_contentcontract_save, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT, NULL, NULL)
+    ZEND_RAW_FENTRY("get_formatted_title", NULL, arginfo_contentcontract_get_formatted_title, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT, NULL, NULL)
+    PHP_FE_END
+};
+
 static int contentcontract_register_class(void) {
     if (contentcontract_ce != NULL) {
         return SUCCESS;
@@ -698,14 +703,11 @@ static int contentcontract_register_class(void) {
     }
     return SUCCESS;
 }
-static const zend_function_entry contentcontract_methods[] = {
-    ZEND_RAW_FENTRY("save", NULL, arginfo_contentcontract_save, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT, NULL, NULL)
-    ZEND_RAW_FENTRY("get_formatted_title", NULL, arginfo_contentcontract_get_formatted_title, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT, NULL, NULL)
+zend_class_entry *demo__contracts__namedcontract_ce = NULL;
+
+static const zend_function_entry demo__contracts__namedcontract_methods[] = {
     PHP_FE_END
 };
-
-zend_class_entry *demo__contracts__namedcontract_ce = NULL;
-static const zend_function_entry demo__contracts__namedcontract_methods[];
 
 static int demo__contracts__namedcontract_register_class(void) {
     if (demo__contracts__namedcontract_ce != NULL) {
@@ -721,14 +723,14 @@ static int demo__contracts__namedcontract_register_class(void) {
     }
     return SUCCESS;
 }
-static const zend_function_entry demo__contracts__namedcontract_methods[] = {
+zend_class_entry *demo__contracts__aliascontract_ce = NULL;
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_demo__contracts__aliascontract_ping, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_function_entry demo__contracts__aliascontract_methods[] = {
+    ZEND_RAW_FENTRY("ping", NULL, arginfo_demo__contracts__aliascontract_ping, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT, NULL, NULL)
     PHP_FE_END
 };
 
-zend_class_entry *demo__contracts__aliascontract_ce = NULL;
-static const zend_function_entry demo__contracts__aliascontract_methods[];
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_demo__contracts__aliascontract_ping, 0, 0, IS_STRING, 0)
-ZEND_END_ARG_INFO()
 static int demo__contracts__aliascontract_register_class(void) {
     if (demo__contracts__aliascontract_ce != NULL) {
         return SUCCESS;
@@ -749,36 +751,13 @@ static int demo__contracts__aliascontract_register_class(void) {
     }
     return SUCCESS;
 }
-static const zend_function_entry demo__contracts__aliascontract_methods[] = {
-    ZEND_RAW_FENTRY("ping", NULL, arginfo_demo__contracts__aliascontract_ping, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT, NULL, NULL)
-    PHP_FE_END
-};
-
 zend_class_entry *abstractreport_ce = NULL;
-static const zend_function_entry abstractreport_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_abstractreport___construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_abstractreport_label, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_abstractreport_summarize, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int abstractreport_register_class(void) {
-    if (abstractreport_ce != NULL) {
-        return SUCCESS;
-    }
-    abstractreport_ce = vphp_find_loaded_class_entry("AbstractReport", sizeof("AbstractReport")-1);
-    if (abstractreport_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "AbstractReport", abstractreport_methods);
-        abstractreport_ce = zend_register_internal_class(&ce);
-        abstractreport_ce->ce_flags |= ZEND_ACC_EXPLICIT_ABSTRACT_CLASS;
-        abstractreport_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(abstractreport_ce, "title", sizeof("title")-1, "", ZEND_ACC_PUBLIC);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(AbstractReport, label) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -817,35 +796,30 @@ static const zend_function_entry abstractreport_methods[] = {
     PHP_FE_END
 };
 
+static int abstractreport_register_class(void) {
+    if (abstractreport_ce != NULL) {
+        return SUCCESS;
+    }
+    abstractreport_ce = vphp_find_loaded_class_entry("AbstractReport", sizeof("AbstractReport")-1);
+    if (abstractreport_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "AbstractReport", abstractreport_methods);
+        abstractreport_ce = zend_register_internal_class(&ce);
+        abstractreport_ce->ce_flags |= ZEND_ACC_EXPLICIT_ABSTRACT_CLASS;
+        abstractreport_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(abstractreport_ce, "title", sizeof("title")-1, "", ZEND_ACC_PUBLIC);
+    }
+    return SUCCESS;
+}
 zend_class_entry *dailyreport_ce = NULL;
-static const zend_function_entry dailyreport_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_dailyreport_construct, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, title, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, summary, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_dailyreport_summarize, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int dailyreport_register_class(void) {
-    if (dailyreport_ce != NULL) {
-        return SUCCESS;
-    }
-    dailyreport_ce = vphp_find_loaded_class_entry("DailyReport", sizeof("DailyReport")-1);
-    if (dailyreport_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "DailyReport", dailyreport_methods);
-        zend_class_entry *parent_ce = vphp_require_class_entry("AbstractReport", sizeof("AbstractReport")-1, 0);
-        if (!parent_ce) {
-            vphp_throw("parent class AbstractReport not found for DailyReport", 0);
-            return FAILURE;
-        }
-        dailyreport_ce = zend_register_internal_class_ex(&ce, parent_ce);
-        dailyreport_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(dailyreport_ce, "summary", sizeof("summary")-1, "", ZEND_ACC_PUBLIC);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(DailyReport, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -888,8 +862,28 @@ static const zend_function_entry dailyreport_methods[] = {
     PHP_FE_END
 };
 
+static int dailyreport_register_class(void) {
+    if (dailyreport_ce != NULL) {
+        return SUCCESS;
+    }
+    dailyreport_ce = vphp_find_loaded_class_entry("DailyReport", sizeof("DailyReport")-1);
+    if (dailyreport_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "DailyReport", dailyreport_methods);
+        zend_class_entry *parent_ce = vphp_require_class_entry("AbstractReport", sizeof("AbstractReport")-1, 0);
+        if (!parent_ce) {
+            vphp_throw("parent class AbstractReport not found for DailyReport", 0);
+            return FAILURE;
+        }
+        dailyreport_ce = zend_register_internal_class_ex(&ce, parent_ce);
+        dailyreport_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(dailyreport_ce, "summary", sizeof("summary")-1, "", ZEND_ACC_PUBLIC);
+    }
+    return SUCCESS;
+}
 zend_class_entry *author_ce = NULL;
-static const zend_function_entry author_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_author___construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_author_create, 0, 1, Author, 0)
@@ -897,22 +891,6 @@ ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_author_get_name, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int author_register_class(void) {
-    if (author_ce != NULL) {
-        return SUCCESS;
-    }
-    author_ce = vphp_find_loaded_class_entry("Author", sizeof("Author")-1);
-    if (author_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "Author", author_methods);
-        author_ce = zend_register_internal_class(&ce);
-        author_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(author_ce, "name", sizeof("name")-1, "", ZEND_ACC_PUBLIC);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(Author, create) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -967,8 +945,23 @@ static const zend_function_entry author_methods[] = {
     PHP_FE_END
 };
 
+static int author_register_class(void) {
+    if (author_ce != NULL) {
+        return SUCCESS;
+    }
+    author_ce = vphp_find_loaded_class_entry("Author", sizeof("Author")-1);
+    if (author_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "Author", author_methods);
+        author_ce = zend_register_internal_class(&ce);
+        author_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(author_ce, "name", sizeof("name")-1, "", ZEND_ACC_PUBLIC);
+    }
+    return SUCCESS;
+}
 zend_class_entry *post_ce = NULL;
-static const zend_function_entry post_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_post___construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_post_set_author, 0, 1, IS_VOID, 0)
@@ -976,23 +969,6 @@ ZEND_ARG_INFO(0, author)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_post_get_author, 0, 0, Author, 0)
 ZEND_END_ARG_INFO()
-static int post_register_class(void) {
-    if (post_ce != NULL) {
-        return SUCCESS;
-    }
-    post_ce = vphp_find_loaded_class_entry("Post", sizeof("Post")-1);
-    if (post_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "Post", post_methods);
-        post_ce = zend_register_internal_class(&ce);
-        post_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_long(post_ce, "post_id", sizeof("post_id")-1, 0, ZEND_ACC_PUBLIC);
-        zend_declare_property_null(post_ce, "author", sizeof("author")-1, ZEND_ACC_PUBLIC);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(Post, set_author) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -1053,8 +1029,24 @@ static const zend_function_entry post_methods[] = {
     PHP_FE_END
 };
 
+static int post_register_class(void) {
+    if (post_ce != NULL) {
+        return SUCCESS;
+    }
+    post_ce = vphp_find_loaded_class_entry("Post", sizeof("Post")-1);
+    if (post_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "Post", post_methods);
+        post_ce = zend_register_internal_class(&ce);
+        post_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_long(post_ce, "post_id", sizeof("post_id")-1, 0, ZEND_ACC_PUBLIC);
+        zend_declare_property_null(post_ce, "author", sizeof("author")-1, ZEND_ACC_PUBLIC);
+    }
+    return SUCCESS;
+}
 zend_class_entry *article_ce = NULL;
-static const zend_function_entry article_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_article_construct, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, title, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, id, IS_LONG, 0)
@@ -1077,41 +1069,6 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_article_restore_author, 0, 1, Author, 0)
 ZEND_ARG_TYPE_INFO(0, author_val, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
-static int article_register_class(void) {
-    if (article_ce != NULL) {
-        return SUCCESS;
-    }
-    article_ce = vphp_find_loaded_class_entry("Article", sizeof("Article")-1);
-    if (article_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "Article", article_methods);
-        zend_class_entry *parent_ce = vphp_require_class_entry("Post", sizeof("Post")-1, 0);
-        if (!parent_ce) {
-            vphp_throw("parent class Post not found for Article", 0);
-            return FAILURE;
-        }
-        article_ce = zend_register_internal_class_ex(&ce, parent_ce);
-        article_ce->create_object = vphp_create_object_handler;
-        zend_class_entry *iface_0_ce = vphp_require_class_entry("ContentContract", sizeof("ContentContract")-1, 0);
-        if (!iface_0_ce) {
-            vphp_throw("interface ContentContract not found for Article", 0);
-            return FAILURE;
-        }
-        zend_class_implements(article_ce, 1, iface_0_ce);
-        zend_declare_class_constant_long(article_ce, "MAX_TITLE_LEN", sizeof("MAX_TITLE_LEN")-1, 1024);
-        zend_declare_class_constant_string(article_ce, "NAME", sizeof("NAME")-1, "Samantha Black");
-        zend_declare_class_constant_long(article_ce, "AGE", sizeof("AGE")-1, 24);
-        zend_declare_property_long(article_ce, "created_at", sizeof("created_at")-1, 0, ZEND_ACC_PUBLIC | ZEND_ACC_READONLY);
-        zend_declare_property_long(article_ce, "id", sizeof("id")-1, 0, ZEND_ACC_PUBLIC);
-        zend_declare_property_string(article_ce, "title", sizeof("title")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_bool(article_ce, "is_top", sizeof("is_top")-1, 0, ZEND_ACC_PUBLIC);
-        zend_declare_property_string(article_ce, "content", sizeof("content")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_long(article_ce, "total_count", sizeof("total_count")-1, 0, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(Article, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -1260,8 +1217,42 @@ static const zend_function_entry article_methods[] = {
     PHP_FE_END
 };
 
+static int article_register_class(void) {
+    if (article_ce != NULL) {
+        return SUCCESS;
+    }
+    article_ce = vphp_find_loaded_class_entry("Article", sizeof("Article")-1);
+    if (article_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "Article", article_methods);
+        zend_class_entry *parent_ce = vphp_require_class_entry("Post", sizeof("Post")-1, 0);
+        if (!parent_ce) {
+            vphp_throw("parent class Post not found for Article", 0);
+            return FAILURE;
+        }
+        article_ce = zend_register_internal_class_ex(&ce, parent_ce);
+        article_ce->create_object = vphp_create_object_handler;
+        zend_class_entry *iface_0_ce = vphp_require_class_entry("ContentContract", sizeof("ContentContract")-1, 0);
+        if (!iface_0_ce) {
+            vphp_throw("interface ContentContract not found for Article", 0);
+            return FAILURE;
+        }
+        zend_class_implements(article_ce, 1, iface_0_ce);
+        zend_declare_class_constant_long(article_ce, "MAX_TITLE_LEN", sizeof("MAX_TITLE_LEN")-1, 1024);
+        zend_declare_class_constant_string(article_ce, "NAME", sizeof("NAME")-1, "Samantha Black");
+        zend_declare_class_constant_long(article_ce, "AGE", sizeof("AGE")-1, 24);
+        zend_declare_property_long(article_ce, "created_at", sizeof("created_at")-1, 0, ZEND_ACC_PUBLIC | ZEND_ACC_READONLY);
+        zend_declare_property_long(article_ce, "id", sizeof("id")-1, 0, ZEND_ACC_PUBLIC);
+        zend_declare_property_string(article_ce, "title", sizeof("title")-1, "", ZEND_ACC_PUBLIC);
+        zend_declare_property_bool(article_ce, "is_top", sizeof("is_top")-1, 0, ZEND_ACC_PUBLIC);
+        zend_declare_property_string(article_ce, "content", sizeof("content")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_long(article_ce, "total_count", sizeof("total_count")-1, 0, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC);
+    }
+    return SUCCESS;
+}
 zend_class_entry *story_ce = NULL;
-static const zend_function_entry story_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_story___construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_story_create, 0, 2, Story, 0)
@@ -1270,27 +1261,6 @@ ZEND_ARG_TYPE_INFO(0, chapters, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_story_tell, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int story_register_class(void) {
-    if (story_ce != NULL) {
-        return SUCCESS;
-    }
-    story_ce = vphp_find_loaded_class_entry("Story", sizeof("Story")-1);
-    if (story_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "Story", story_methods);
-        zend_class_entry *parent_ce = vphp_require_class_entry("Post", sizeof("Post")-1, 0);
-        if (!parent_ce) {
-            vphp_throw("parent class Post not found for Story", 0);
-            return FAILURE;
-        }
-        story_ce = zend_register_internal_class_ex(&ce, parent_ce);
-        story_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_long(story_ce, "chapter_count", sizeof("chapter_count")-1, 0, ZEND_ACC_PUBLIC);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(Story, create) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -1345,27 +1315,31 @@ static const zend_function_entry story_methods[] = {
     PHP_FE_END
 };
 
-zend_class_entry *demo__contracts__aliasbase_ce = NULL;
-static const zend_function_entry demo__contracts__aliasbase_methods[];
-ZEND_BEGIN_ARG_INFO_EX(arginfo_aliasbase_construct, 0, 0, 1)
-ZEND_ARG_TYPE_INFO(0, label, IS_STRING, 0)
-ZEND_END_ARG_INFO()
-static int demo__contracts__aliasbase_register_class(void) {
-    if (demo__contracts__aliasbase_ce != NULL) {
+static int story_register_class(void) {
+    if (story_ce != NULL) {
         return SUCCESS;
     }
-    demo__contracts__aliasbase_ce = vphp_find_loaded_class_entry("Demo\\Contracts\\AliasBase", sizeof("Demo\\Contracts\\AliasBase")-1);
-    if (demo__contracts__aliasbase_ce != NULL) {
+    story_ce = vphp_find_loaded_class_entry("Story", sizeof("Story")-1);
+    if (story_ce != NULL) {
         return SUCCESS;
     }
     {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "Demo\\Contracts\\AliasBase", demo__contracts__aliasbase_methods);
-        demo__contracts__aliasbase_ce = zend_register_internal_class(&ce);
-        demo__contracts__aliasbase_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(demo__contracts__aliasbase_ce, "label", sizeof("label")-1, "", ZEND_ACC_PUBLIC);
+        INIT_CLASS_ENTRY(ce, "Story", story_methods);
+        zend_class_entry *parent_ce = vphp_require_class_entry("Post", sizeof("Post")-1, 0);
+        if (!parent_ce) {
+            vphp_throw("parent class Post not found for Story", 0);
+            return FAILURE;
+        }
+        story_ce = zend_register_internal_class_ex(&ce, parent_ce);
+        story_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_long(story_ce, "chapter_count", sizeof("chapter_count")-1, 0, ZEND_ACC_PUBLIC);
     }
     return SUCCESS;
 }
+zend_class_entry *demo__contracts__aliasbase_ce = NULL;
+ZEND_BEGIN_ARG_INFO_EX(arginfo_aliasbase_construct, 0, 0, 1)
+ZEND_ARG_TYPE_INFO(0, label, IS_STRING, 0)
+ZEND_END_ARG_INFO()
 PHP_METHOD(Demo__Contracts__AliasBase, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -1390,8 +1364,23 @@ static const zend_function_entry demo__contracts__aliasbase_methods[] = {
     PHP_FE_END
 };
 
+static int demo__contracts__aliasbase_register_class(void) {
+    if (demo__contracts__aliasbase_ce != NULL) {
+        return SUCCESS;
+    }
+    demo__contracts__aliasbase_ce = vphp_find_loaded_class_entry("Demo\\Contracts\\AliasBase", sizeof("Demo\\Contracts\\AliasBase")-1);
+    if (demo__contracts__aliasbase_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "Demo\\Contracts\\AliasBase", demo__contracts__aliasbase_methods);
+        demo__contracts__aliasbase_ce = zend_register_internal_class(&ce);
+        demo__contracts__aliasbase_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(demo__contracts__aliasbase_ce, "label", sizeof("label")-1, "", ZEND_ACC_PUBLIC);
+    }
+    return SUCCESS;
+}
 zend_class_entry *aliasworker_ce = NULL;
-static const zend_function_entry aliasworker_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_aliasworker_construct, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, label, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, title, IS_STRING, 0)
@@ -1402,38 +1391,6 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_aliasworker_get_formatted_title,
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_aliasworker_ping, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int aliasworker_register_class(void) {
-    if (aliasworker_ce != NULL) {
-        return SUCCESS;
-    }
-    aliasworker_ce = vphp_find_loaded_class_entry("AliasWorker", sizeof("AliasWorker")-1);
-    if (aliasworker_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "AliasWorker", aliasworker_methods);
-        zend_class_entry *parent_ce = vphp_require_class_entry("Demo\\Contracts\\AliasBase", sizeof("Demo\\Contracts\\AliasBase")-1, 0);
-        if (!parent_ce) {
-            vphp_throw("parent class Demo\\\\Contracts\\\\AliasBase not found for AliasWorker", 0);
-            return FAILURE;
-        }
-        aliasworker_ce = zend_register_internal_class_ex(&ce, parent_ce);
-        aliasworker_ce->create_object = vphp_create_object_handler;
-        zend_class_entry *iface_0_ce = vphp_require_class_entry("ContentContract", sizeof("ContentContract")-1, 0);
-        if (!iface_0_ce) {
-            vphp_throw("interface ContentContract not found for AliasWorker", 0);
-            return FAILURE;
-        }
-        zend_class_entry *iface_1_ce = vphp_require_class_entry("Demo\\Contracts\\AliasContract", sizeof("Demo\\Contracts\\AliasContract")-1, 0);
-        if (!iface_1_ce) {
-            vphp_throw("interface Demo\\\\Contracts\\\\AliasContract not found for AliasWorker", 0);
-            return FAILURE;
-        }
-        zend_class_implements(aliasworker_ce, 2, iface_0_ce, iface_1_ce);
-        zend_declare_property_string(aliasworker_ce, "title", sizeof("title")-1, "", ZEND_ACC_PUBLIC);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(AliasWorker, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -1512,8 +1469,43 @@ static const zend_function_entry aliasworker_methods[] = {
     PHP_FE_END
 };
 
+static int aliasworker_register_class(void) {
+    if (aliasworker_ce != NULL) {
+        return SUCCESS;
+    }
+    aliasworker_ce = vphp_find_loaded_class_entry("AliasWorker", sizeof("AliasWorker")-1);
+    if (aliasworker_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "AliasWorker", aliasworker_methods);
+        zend_class_entry *parent_ce = vphp_require_class_entry("Demo\\Contracts\\AliasBase", sizeof("Demo\\Contracts\\AliasBase")-1, 0);
+        if (!parent_ce) {
+            vphp_throw("parent class Demo\\\\Contracts\\\\AliasBase not found for AliasWorker", 0);
+            return FAILURE;
+        }
+        aliasworker_ce = zend_register_internal_class_ex(&ce, parent_ce);
+        aliasworker_ce->create_object = vphp_create_object_handler;
+        zend_class_entry *iface_0_ce = vphp_require_class_entry("ContentContract", sizeof("ContentContract")-1, 0);
+        if (!iface_0_ce) {
+            vphp_throw("interface ContentContract not found for AliasWorker", 0);
+            return FAILURE;
+        }
+        zend_class_entry *iface_1_ce = vphp_require_class_entry("Demo\\Contracts\\AliasContract", sizeof("Demo\\Contracts\\AliasContract")-1, 0);
+        if (!iface_1_ce) {
+            vphp_throw("interface Demo\\\\Contracts\\\\AliasContract not found for AliasWorker", 0);
+            return FAILURE;
+        }
+        zend_class_implements(aliasworker_ce, 2, iface_0_ce, iface_1_ce);
+        zend_declare_property_string(aliasworker_ce, "title", sizeof("title")-1, "", ZEND_ACC_PUBLIC);
+    }
+    return SUCCESS;
+}
 zend_class_entry *runtimedemo__baseexception_ce = NULL;
-static const zend_function_entry runtimedemo__baseexception_methods[];
+
+static const zend_function_entry runtimedemo__baseexception_methods[] = {
+    PHP_FE_END
+};
 
 static int runtimedemo__baseexception_register_class(void) {
     if (runtimedemo__baseexception_ce != NULL) {
@@ -1534,12 +1526,11 @@ static int runtimedemo__baseexception_register_class(void) {
     }
     return SUCCESS;
 }
-static const zend_function_entry runtimedemo__baseexception_methods[] = {
+zend_class_entry *runtimedemo__childexception_ce = NULL;
+
+static const zend_function_entry runtimedemo__childexception_methods[] = {
     PHP_FE_END
 };
-
-zend_class_entry *runtimedemo__childexception_ce = NULL;
-static const zend_function_entry runtimedemo__childexception_methods[];
 
 static int runtimedemo__childexception_register_class(void) {
     if (runtimedemo__childexception_ce != NULL) {
@@ -1560,12 +1551,7 @@ static int runtimedemo__childexception_register_class(void) {
     }
     return SUCCESS;
 }
-static const zend_function_entry runtimedemo__childexception_methods[] = {
-    PHP_FE_END
-};
-
 zend_class_entry *callableprocessor_ce = NULL;
-static const zend_function_entry callableprocessor_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_callableprocessor_construct, 0, 0, 1)
 ZEND_ARG_TYPE_INFO(0, prefix, IS_STRING, 0)
 ZEND_END_ARG_INFO()
@@ -1580,22 +1566,6 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_callableprocessor_apply, 0, 2, I
 ZEND_ARG_CALLABLE_INFO(0, callback, 0)
 ZEND_ARG_TYPE_INFO(0, data, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int callableprocessor_register_class(void) {
-    if (callableprocessor_ce != NULL) {
-        return SUCCESS;
-    }
-    callableprocessor_ce = vphp_find_loaded_class_entry("CallableProcessor", sizeof("CallableProcessor")-1);
-    if (callableprocessor_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "CallableProcessor", callableprocessor_methods);
-        callableprocessor_ce = zend_register_internal_class(&ce);
-        callableprocessor_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(callableprocessor_ce, "prefix", sizeof("prefix")-1, "", ZEND_ACC_PUBLIC);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(CallableProcessor, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -1671,8 +1641,23 @@ static const zend_function_entry callableprocessor_methods[] = {
     PHP_FE_END
 };
 
+static int callableprocessor_register_class(void) {
+    if (callableprocessor_ce != NULL) {
+        return SUCCESS;
+    }
+    callableprocessor_ce = vphp_find_loaded_class_entry("CallableProcessor", sizeof("CallableProcessor")-1);
+    if (callableprocessor_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "CallableProcessor", callableprocessor_methods);
+        callableprocessor_ce = zend_register_internal_class(&ce);
+        callableprocessor_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(callableprocessor_ce, "prefix", sizeof("prefix")-1, "", ZEND_ACC_PUBLIC);
+    }
+    return SUCCESS;
+}
 zend_class_entry *finder_ce = NULL;
-static const zend_function_entry finder_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_finder_construct, 0, 0, 1)
 ZEND_ARG_INFO(0, ctx)
 ZEND_END_ARG_INFO()
@@ -1688,22 +1673,6 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_finder_try_parse_int, 0, 1, IS_LONG, 1)
 ZEND_ARG_TYPE_INFO(0, s, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int finder_register_class(void) {
-    if (finder_ce != NULL) {
-        return SUCCESS;
-    }
-    finder_ce = vphp_find_loaded_class_entry("Finder", sizeof("Finder")-1);
-    if (finder_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "Finder", finder_methods);
-        finder_ce = zend_register_internal_class(&ce);
-        finder_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(finder_ce, "items", sizeof("items")-1, ZEND_ACC_PUBLIC);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(Finder, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -1797,31 +1766,28 @@ static const zend_function_entry finder_methods[] = {
     PHP_FE_END
 };
 
+static int finder_register_class(void) {
+    if (finder_ce != NULL) {
+        return SUCCESS;
+    }
+    finder_ce = vphp_find_loaded_class_entry("Finder", sizeof("Finder")-1);
+    if (finder_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "Finder", finder_methods);
+        finder_ce = zend_register_internal_class(&ce);
+        finder_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(finder_ce, "items", sizeof("items")-1, ZEND_ACC_PUBLIC);
+    }
+    return SUCCESS;
+}
 zend_class_entry *readonlyrecord_ce = NULL;
-static const zend_function_entry readonlyrecord_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_readonlyrecord_construct, 0, 0, 1)
 ZEND_ARG_TYPE_INFO(0, title, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_readonlyrecord_reveal, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int readonlyrecord_register_class(void) {
-    if (readonlyrecord_ce != NULL) {
-        return SUCCESS;
-    }
-    readonlyrecord_ce = vphp_find_loaded_class_entry("ReadonlyRecord", sizeof("ReadonlyRecord")-1);
-    if (readonlyrecord_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "ReadonlyRecord", readonlyrecord_methods);
-        readonlyrecord_ce = zend_register_internal_class(&ce);
-        readonlyrecord_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_long(readonlyrecord_ce, "created_at", sizeof("created_at")-1, 0, ZEND_ACC_PUBLIC | ZEND_ACC_READONLY);
-        zend_declare_property_string(readonlyrecord_ce, "title", sizeof("title")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_string(readonlyrecord_ce, "internal_note", sizeof("internal_note")-1, "", ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(ReadonlyRecord, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -1864,8 +1830,25 @@ static const zend_function_entry readonlyrecord_methods[] = {
     PHP_FE_END
 };
 
+static int readonlyrecord_register_class(void) {
+    if (readonlyrecord_ce != NULL) {
+        return SUCCESS;
+    }
+    readonlyrecord_ce = vphp_find_loaded_class_entry("ReadonlyRecord", sizeof("ReadonlyRecord")-1);
+    if (readonlyrecord_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "ReadonlyRecord", readonlyrecord_methods);
+        readonlyrecord_ce = zend_register_internal_class(&ce);
+        readonlyrecord_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_long(readonlyrecord_ce, "created_at", sizeof("created_at")-1, 0, ZEND_ACC_PUBLIC | ZEND_ACC_READONLY);
+        zend_declare_property_string(readonlyrecord_ce, "title", sizeof("title")-1, "", ZEND_ACC_PUBLIC);
+        zend_declare_property_string(readonlyrecord_ce, "internal_note", sizeof("internal_note")-1, "", ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *traitpost_ce = NULL;
-static const zend_function_entry traitpost_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_traitpost_construct, 0, 0, 1)
 ZEND_ARG_TYPE_INFO(0, title, IS_STRING, 0)
 ZEND_END_ARG_INFO()
@@ -1877,25 +1860,6 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_slugtrait_trait_only, 0, 0, IS_S
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_slugtrait_internal_trait, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int traitpost_register_class(void) {
-    if (traitpost_ce != NULL) {
-        return SUCCESS;
-    }
-    traitpost_ce = vphp_find_loaded_class_entry("TraitPost", sizeof("TraitPost")-1);
-    if (traitpost_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "TraitPost", traitpost_methods);
-        traitpost_ce = zend_register_internal_class(&ce);
-        traitpost_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(traitpost_ce, "title", sizeof("title")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_string(traitpost_ce, "slug", sizeof("slug")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_long(traitpost_ce, "visits", sizeof("visits")-1, 0, ZEND_ACC_PUBLIC);
-        zend_declare_property_string(traitpost_ce, "internal_note", sizeof("internal_note")-1, "", ZEND_ACC_PROTECTED);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(TraitPost, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -1992,8 +1956,26 @@ static const zend_function_entry traitpost_methods[] = {
     PHP_FE_END
 };
 
+static int traitpost_register_class(void) {
+    if (traitpost_ce != NULL) {
+        return SUCCESS;
+    }
+    traitpost_ce = vphp_find_loaded_class_entry("TraitPost", sizeof("TraitPost")-1);
+    if (traitpost_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "TraitPost", traitpost_methods);
+        traitpost_ce = zend_register_internal_class(&ce);
+        traitpost_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(traitpost_ce, "title", sizeof("title")-1, "", ZEND_ACC_PUBLIC);
+        zend_declare_property_string(traitpost_ce, "slug", sizeof("slug")-1, "", ZEND_ACC_PUBLIC);
+        zend_declare_property_long(traitpost_ce, "visits", sizeof("visits")-1, 0, ZEND_ACC_PUBLIC);
+        zend_declare_property_string(traitpost_ce, "internal_note", sizeof("internal_note")-1, "", ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *validator_ce = NULL;
-static const zend_function_entry validator_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_validator_construct, 0, 0, 1)
 ZEND_ARG_TYPE_INFO(0, strict, _IS_BOOL, 0)
 ZEND_END_ARG_INFO()
@@ -2009,22 +1991,6 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(arginfo_validator_parse_int, 0, 0, 1)
 ZEND_ARG_TYPE_INFO(0, s, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int validator_register_class(void) {
-    if (validator_ce != NULL) {
-        return SUCCESS;
-    }
-    validator_ce = vphp_find_loaded_class_entry("Validator", sizeof("Validator")-1);
-    if (validator_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "Validator", validator_methods);
-        validator_ce = zend_register_internal_class(&ce);
-        validator_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_bool(validator_ce, "strict", sizeof("strict")-1, 0, ZEND_ACC_PUBLIC);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(Validator, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -2118,31 +2084,26 @@ static const zend_function_entry validator_methods[] = {
     PHP_FE_END
 };
 
-zend_class_entry *dispatchablesample_ce = NULL;
-static const zend_function_entry dispatchablesample_methods[];
-ZEND_BEGIN_ARG_INFO_EX(arginfo_dispatchablesample_construct, 0, 0, 1)
-ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
-ZEND_END_ARG_INFO()
-static int dispatchablesample_register_class(void) {
-    if (dispatchablesample_ce != NULL) {
+static int validator_register_class(void) {
+    if (validator_ce != NULL) {
         return SUCCESS;
     }
-    dispatchablesample_ce = vphp_find_loaded_class_entry("DispatchableSample", sizeof("DispatchableSample")-1);
-    if (dispatchablesample_ce != NULL) {
+    validator_ce = vphp_find_loaded_class_entry("Validator", sizeof("Validator")-1);
+    if (validator_ce != NULL) {
         return SUCCESS;
     }
     {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "DispatchableSample", dispatchablesample_methods);
-        dispatchablesample_ce = zend_register_internal_class(&ce);
-        dispatchablesample_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(dispatchablesample_ce, "name", sizeof("name")-1, "", ZEND_ACC_PUBLIC);
-        zend_string *attribute_dispatchablesample_0_name = zend_string_init_interned("PhpDispatchable", sizeof("PhpDispatchable")-1, 1);
-        zend_attribute *attribute_dispatchablesample_0 = zend_add_class_attribute(dispatchablesample_ce, attribute_dispatchablesample_0_name, 1);
-        zend_string_release(attribute_dispatchablesample_0_name);
-        ZVAL_STR(&attribute_dispatchablesample_0->args[0].value, zend_string_init_interned("worker", sizeof("worker")-1, 1));
+        INIT_CLASS_ENTRY(ce, "Validator", validator_methods);
+        validator_ce = zend_register_internal_class(&ce);
+        validator_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_bool(validator_ce, "strict", sizeof("strict")-1, 0, ZEND_ACC_PUBLIC);
     }
     return SUCCESS;
 }
+zend_class_entry *dispatchablesample_ce = NULL;
+ZEND_BEGIN_ARG_INFO_EX(arginfo_dispatchablesample_construct, 0, 0, 1)
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_END_ARG_INFO()
 PHP_METHOD(DispatchableSample, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -2167,8 +2128,31 @@ static const zend_function_entry dispatchablesample_methods[] = {
     PHP_FE_END
 };
 
+static int dispatchablesample_register_class(void) {
+    if (dispatchablesample_ce != NULL) {
+        return SUCCESS;
+    }
+    dispatchablesample_ce = vphp_find_loaded_class_entry("DispatchableSample", sizeof("DispatchableSample")-1);
+    if (dispatchablesample_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "DispatchableSample", dispatchablesample_methods);
+        dispatchablesample_ce = zend_register_internal_class(&ce);
+        dispatchablesample_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(dispatchablesample_ce, "name", sizeof("name")-1, "", ZEND_ACC_PUBLIC);
+        zend_string *attribute_dispatchablesample_0_name = zend_string_init_interned("PhpDispatchable", sizeof("PhpDispatchable")-1, 1);
+        zend_attribute *attribute_dispatchablesample_0 = zend_add_class_attribute(dispatchablesample_ce, attribute_dispatchablesample_0_name, 1);
+        zend_string_release(attribute_dispatchablesample_0_name);
+        ZVAL_STR(&attribute_dispatchablesample_0->args[0].value, zend_string_init_interned("worker", sizeof("worker")-1, 1));
+    }
+    return SUCCESS;
+}
 zend_class_entry *articlestatus_ce = NULL;
-static const zend_function_entry articlestatus_methods[];
+
+static const zend_function_entry articlestatus_methods[] = {
+    PHP_FE_END
+};
 
 static int articlestatus_register_class(void) {
     if (articlestatus_ce != NULL) {
@@ -2184,12 +2168,7 @@ static int articlestatus_register_class(void) {
     { zval _ev; ZVAL_LONG(&_ev, 2); zend_enum_add_case_cstr(articlestatus_ce, "published", &_ev); }
     return SUCCESS;
 }
-static const zend_function_entry articlestatus_methods[] = {
-    PHP_FE_END
-};
-
 zend_class_entry *vphp__task_ce = NULL;
-static const zend_function_entry vphp__task_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vphp__task___construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vphptask_spawn, 0, 1, IS_VOID, 0)
@@ -2201,21 +2180,6 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vphptask_list, 0, 1, IS_VOID, 0)
 ZEND_ARG_INFO(0, ctx)
 ZEND_END_ARG_INFO()
-static int vphp__task_register_class(void) {
-    if (vphp__task_ce != NULL) {
-        return SUCCESS;
-    }
-    vphp__task_ce = vphp_find_loaded_class_entry("VPhp\\Task", sizeof("VPhp\\Task")-1);
-    if (vphp__task_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "VPhp\\Task", vphp__task_methods);
-        vphp__task_ce = zend_register_internal_class(&ce);
-        vphp__task_ce->create_object = vphp_create_object_handler;
-    }
-    return SUCCESS;
-}
 PHP_METHOD(VPhp__Task, spawn) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -2280,29 +2244,27 @@ static const zend_function_entry vphp__task_methods[] = {
     PHP_FE_END
 };
 
+static int vphp__task_register_class(void) {
+    if (vphp__task_ce != NULL) {
+        return SUCCESS;
+    }
+    vphp__task_ce = vphp_find_loaded_class_entry("VPhp\\Task", sizeof("VPhp\\Task")-1);
+    if (vphp__task_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VPhp\\Task", vphp__task_methods);
+        vphp__task_ce = zend_register_internal_class(&ce);
+        vphp__task_ce->create_object = vphp_create_object_handler;
+    }
+    return SUCCESS;
+}
 zend_class_entry *stringablebox_ce = NULL;
-static const zend_function_entry stringablebox_methods[];
 ZEND_BEGIN_ARG_INFO_EX(arginfo_stringablebox_construct, 0, 0, 1)
 ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_stringablebox_str, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
-static int stringablebox_register_class(void) {
-    if (stringablebox_ce != NULL) {
-        return SUCCESS;
-    }
-    stringablebox_ce = vphp_find_loaded_class_entry("StringableBox", sizeof("StringableBox")-1);
-    if (stringablebox_ce != NULL) {
-        return SUCCESS;
-    }
-    {   zend_class_entry ce;
-        INIT_CLASS_ENTRY(ce, "StringableBox", stringablebox_methods);
-        stringablebox_ce = zend_register_internal_class(&ce);
-        stringablebox_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(stringablebox_ce, "name", sizeof("name")-1, "", ZEND_ACC_PUBLIC);
-    }
-    return SUCCESS;
-}
 PHP_METHOD(StringableBox, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -2345,6 +2307,22 @@ static const zend_function_entry stringablebox_methods[] = {
     PHP_FE_END
 };
 
+static int stringablebox_register_class(void) {
+    if (stringablebox_ce != NULL) {
+        return SUCCESS;
+    }
+    stringablebox_ce = vphp_find_loaded_class_entry("StringableBox", sizeof("StringableBox")-1);
+    if (stringablebox_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "StringableBox", stringablebox_methods);
+        stringablebox_ce = zend_register_internal_class(&ce);
+        stringablebox_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(stringablebox_ce, "name", sizeof("name")-1, "", ZEND_ACC_PUBLIC);
+    }
+    return SUCCESS;
+}
 ZEND_BEGIN_MODULE_GLOBALS(vphptest)
     zend_long request_count;
     v_string last_user;

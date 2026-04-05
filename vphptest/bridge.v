@@ -455,7 +455,7 @@ pub fn vphp_wrap_article_dump_properties(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Article(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_val(0)
+    arg_0 := ctx.arg_raw(0)
     Article.sync_statics_from_php(ctx)
     recv.dump_properties(arg_0)
     Article.sync_statics_to_php(ctx)
@@ -465,7 +465,7 @@ pub fn vphp_wrap_article_process_with_callback(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Article(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_val(0)
+    arg_0 := ctx.arg_raw(0)
     Article.sync_statics_from_php(ctx)
     res := recv.process_with_callback(arg_0)
     Article.sync_statics_to_php(ctx)
@@ -475,7 +475,7 @@ pub fn vphp_wrap_article_process_with_callback(ptr voidptr, ctx vphp.Context)  {
 pub fn vphp_wrap_article_restore_author(ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_val(0)
+    arg_0 := ctx.arg_raw(0)
     Article.sync_statics_from_php(ctx)
     res := Article.restore_author(arg_0)
     Article.sync_statics_to_php(ctx)
@@ -915,7 +915,7 @@ pub fn vphp_wrap_callableprocessor_process(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &CallableProcessor(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_val(0)
+    arg_0 := ctx.arg_raw(0)
     res := recv.process(arg_0)
     ctx.return_val[string](res)
 }
@@ -924,7 +924,7 @@ pub fn vphp_wrap_callableprocessor_transform(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &CallableProcessor(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_val(0)
+    arg_0 := ctx.arg_raw(0)
     arg_1 := ctx.arg[string](1)
     res := recv.transform(arg_0, arg_1)
     ctx.return_val[string](res)
@@ -933,7 +933,7 @@ pub fn vphp_wrap_callableprocessor_transform(ptr voidptr, ctx vphp.Context)  {
 pub fn vphp_wrap_callableprocessor_apply(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_val(0)
+    arg_0 := ctx.arg_raw(0)
     arg_1 := ctx.arg[string](1)
     res := CallableProcessor.apply(arg_0, arg_1)
     ctx.return_val[string](res)
@@ -1734,7 +1734,7 @@ fn vphp_wrap_v_read_php_class_constant(ctx vphp.Context) {
 fn vphp_wrap_v_typed_php_interop(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.ZVal](0)
+    arg_0 := ctx.arg_raw(0)
     res := v_typed_php_interop(arg_0)
     ctx.return_val[string](res)
 }
@@ -1863,7 +1863,7 @@ fn vphp_wrap_v_call_php_closure(ctx vphp.Context) {
 fn vphp_wrap_v_call_php_closure_helper(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.ZVal](0)
+    arg_0 := ctx.arg_raw(0)
     res := v_call_php_closure_helper(arg_0)
     ctx.return_val[string](res)
 }
@@ -1904,7 +1904,7 @@ fn vphp_wrap_v_iter_helpers_demo(ctx vphp.Context) {
 fn vphp_wrap_v_iterable_object_demo(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[vphp.ZVal](0)
+    arg_0 := ctx.arg_raw(0)
     res := v_iterable_object_demo(arg_0)
     ctx.return_val[string](res)
 }
