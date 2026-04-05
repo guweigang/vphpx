@@ -39,6 +39,11 @@ $containerIface = 'Psr\\Container\\ContainerInterface';
 $containerExceptionIface = 'Psr\\Container\\ContainerExceptionInterface';
 $notFoundExceptionIface = 'Psr\\Container\\NotFoundExceptionInterface';
 
+function vslim_test_factory_string(): string
+{
+    return 'string-codex';
+}
+
 var_dump(interface_exists($containerIface, false));
 var_dump(interface_exists($containerIface));
 $implementsBefore = class_implements(VSlim\Container::class);
@@ -54,9 +59,28 @@ var_dump(interface_exists($containerIface, false));
 var_dump($c instanceof $containerIface);
 
 $c->set('name', 'codex');
+$c->factory('hello.str', 'vslim_test_factory_string');
+$c->factory('hello.static', [new class {
+    public static function makeStatic(): string
+    {
+        return 'static-codex';
+    }
+}::class, 'makeStatic']);
 $c->factory('hello', fn () => 'hi-' . $c->get('name'));
+ $factoryObj = new class($c) {
+    public function __construct(private VSlim\Container $container) {}
+
+    public function makeHi(): string
+    {
+        return 'obj-' . $this->container->get('name');
+    }
+};
+ $c->factory('hello.obj', [$factoryObj, 'makeHi']);
 echo $c->get('name') . PHP_EOL;
+echo $c->get('hello.str') . PHP_EOL;
+echo $c->get('hello.static') . PHP_EOL;
 echo $c->get('hello') . PHP_EOL;
+echo $c->get('hello.obj') . PHP_EOL;
 var_dump($c->has('name'));
 var_dump($c->has('missing'));
 
@@ -81,7 +105,10 @@ bool(true)
 bool(true)
 bool(true)
 codex
+string-codex
+static-codex
 hi-codex
+obj-codex
 bool(true)
 bool(false)
 not_found_class

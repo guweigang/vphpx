@@ -27,7 +27,7 @@ pub fn (mut app VSlimApp) set_not_found_handler(handler vphp.RequestBorrowedZBox
 			0)
 		return app
 	}
-	app.not_found_handler = vphp.PersistentOwnedZVal.from_value_zval(handler.to_zval())
+	app.not_found_handler = vphp.PersistentOwnedZBox.from_callable_zval(handler.to_zval())
 	return app
 }
 
@@ -43,7 +43,7 @@ pub fn (mut app VSlimApp) set_error_handler(handler vphp.RequestBorrowedZBox) &V
 			0)
 		return app
 	}
-	app.error_handler = vphp.PersistentOwnedZVal.from_value_zval(handler.to_zval())
+	app.error_handler = vphp.PersistentOwnedZBox.from_callable_zval(handler.to_zval())
 	return app
 }
 

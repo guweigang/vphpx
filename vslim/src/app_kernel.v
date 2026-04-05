@@ -103,7 +103,7 @@ fn propagate_request_trace_headers(req &VSlimRequest, mut res VSlimResponse) {
 	}
 }
 
-fn request_snapshot_from_payload(payload vphp.BorrowedZVal, route_params map[string]string) VSlimRequest {
+fn request_snapshot_from_payload(payload vphp.RequestBorrowedZBox, route_params map[string]string) VSlimRequest {
 	return new_vslim_request_from_psr_server_request(payload, route_params).to_vslim_request()
 }
 

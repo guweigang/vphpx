@@ -531,7 +531,7 @@ fn (view &VSlimView) invoke_template_expr_method(name string, args []TemplateExp
 	for arg in args[1..] {
 		zargs << template_expr_value_to_zval(arg)
 	}
-	mut result := vphp.method_request_owned_zval(args[0].object.to_zval(), method, zargs)
+	mut result := vphp.method_request_owned_box(args[0].object.to_zval(), method, zargs)
 	defer {
 		result.release()
 	}

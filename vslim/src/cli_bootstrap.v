@@ -129,7 +129,7 @@ fn apply_cli_bootstrap_file_result(mut cli VSlimCliApp, path string, value vphp.
 		defer {
 			cli_z.release()
 		}
-		mut result := vphp.call_request_owned_zval(value, [cli_z])
+		mut result := vphp.call_request_owned_box(value, [cli_z])
 		defer {
 			result.release()
 		}

@@ -87,7 +87,7 @@ pub fn (mut r VSlimStreamResponse) set_chunks(chunks vphp.RequestBorrowedZBox) &
 			owned.release()
 		}
 	}
-	r.chunks_ref = vphp.PersistentOwnedZVal.from_value_zval(chunks.to_zval())
+	r.chunks_ref = vphp.PersistentOwnedZBox.from_mixed_zval(chunks.to_zval())
 	return &r
 }
 
@@ -122,7 +122,7 @@ fn normalize_stream_type(stream_type string) string {
 	return if stream_type.trim_space().to_lower() == 'sse' { 'sse' } else { 'text' }
 }
 
-fn is_worker_stream_response_borrowed(result vphp.BorrowedZVal) bool {
+fn is_worker_stream_response_borrowed(result vphp.RequestBorrowedZBox) bool {
 	raw := result.to_zval()
 	return raw.is_object()
 		&& (raw.is_instance_of('VSlim\\Stream\\Response')
@@ -130,7 +130,7 @@ fn is_worker_stream_response_borrowed(result vphp.BorrowedZVal) bool {
 		|| raw.is_instance_of('VPhp\\VHttpd\\PhpWorker\\StreamResponse'))
 }
 
-fn propagate_request_trace_headers_to_object(req &VSlimRequest, raw vphp.BorrowedZVal) {
+fn propagate_request_trace_headers_to_object(req &VSlimRequest, raw vphp.RequestBorrowedZBox) {
 	obj := raw.to_zval()
 	if !obj.is_object() || !obj.method_exists('has_header') || !obj.method_exists('set_header') {
 		return

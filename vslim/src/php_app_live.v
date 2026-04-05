@@ -2,13 +2,13 @@ module main
 
 import vphp
 
-fn dispatch_live_route_handler(handler vphp.ZVal, payload vphp.BorrowedZVal) !vphp.ZVal {
+fn dispatch_live_route_handler(handler vphp.ZVal, payload vphp.RequestBorrowedZBox) !vphp.ZVal {
 	socket := vphp.php_class('VSlim\\Live\\Socket').construct([])
 	if !socket.is_valid() || !socket.is_object() {
 		return error('Live socket bootstrap failed')
 	}
 	if handler.method_exists('mount') {
-		mut mount_res := vphp.method_request_owned_zval(handler, 'mount', [
+		mut mount_res := vphp.method_request_owned_box(handler, 'mount', [
 			payload.to_zval(),
 			socket,
 		])
@@ -18,7 +18,7 @@ fn dispatch_live_route_handler(handler vphp.ZVal, payload vphp.BorrowedZVal) !vp
 		mount_res.release()
 	}
 	if handler.method_exists('render') {
-		mut res := vphp.method_request_owned_zval(handler, 'render', [
+		mut res := vphp.method_request_owned_box(handler, 'render', [
 			payload.to_zval(),
 			socket,
 		])
@@ -35,7 +35,7 @@ fn dispatch_live_route_handler(handler vphp.ZVal, payload vphp.BorrowedZVal) !vp
 		return res.take_zval()
 	}
 	if handler.method_exists('__invoke') {
-		mut result := vphp.method_request_owned_zval(handler, '__invoke', [
+		mut result := vphp.method_request_owned_box(handler, '__invoke', [
 			payload.to_zval(),
 			socket,
 		])
@@ -189,7 +189,7 @@ fn dispatch_live_info(mut app VSlimApp, handler vphp.ZVal, frame vphp.ZVal, conn
 
 fn render_live_html(handler vphp.ZVal, req_z vphp.ZVal, socket_z vphp.ZVal, socket &VSlimLiveSocket) string {
 	if handler.method_exists('render') {
-		mut rendered := vphp.method_request_owned_zval(handler, 'render', [req_z, socket_z])
+		mut rendered := vphp.method_request_owned_box(handler, 'render', [req_z, socket_z])
 		if rendered.is_string() {
 			return rendered.to_zval().to_string()
 		}
@@ -212,7 +212,7 @@ fn dispatch_live_component_event(handler vphp.ZVal, payload vphp.ZVal, event_nam
 	}
 	target_z := vphp.RequestOwnedZBox.new_string(target).to_zval()
 	if handler.method_exists('component') {
-		mut component := vphp.method_request_owned_zval(handler, 'component', [target_z, socket_z])
+		mut component := vphp.method_request_owned_box(handler, 'component', [target_z, socket_z])
 		if component.is_object() {
 			bind_live_component_socket(component.to_zval(), socket_z)
 		}
@@ -251,7 +251,7 @@ fn dispatch_live_component_info(handler vphp.ZVal, payload vphp.ZVal, event_name
 	}
 	target_z := vphp.RequestOwnedZBox.new_string(target).to_zval()
 	if handler.method_exists('component') {
-		mut component := vphp.method_request_owned_zval(handler, 'component', [target_z, socket_z])
+		mut component := vphp.method_request_owned_box(handler, 'component', [target_z, socket_z])
 		if component.is_object() {
 			bind_live_component_socket(component.to_zval(), socket_z)
 		}
@@ -342,7 +342,7 @@ fn live_socket_for_message(mut app VSlimApp, handler vphp.ZVal, frame vphp.ZVal,
 	}
 	conn_id := zval_string_key(frame, 'id', '').trim_space()
 	if conn_id != '' && conn_id in app.live_ws_sockets {
-		socket_owned := app.live_ws_sockets[conn_id] or { vphp.PersistentOwnedZVal.new_null() }
+		socket_owned := app.live_ws_sockets[conn_id] or { vphp.PersistentOwnedZBox.new_null() }
 		mut socket_request := socket_owned.clone_request_owned()
 		socket_z := socket_request.take_zval()
 		mut existing := socket_z.to_object[VSlimLiveSocket]() or { unsafe { nil } }
@@ -372,7 +372,7 @@ fn live_socket_for_message(mut app VSlimApp, handler vphp.ZVal, frame vphp.ZVal,
 	}
 	created.root_id = root_id
 	if conn_id != '' {
-		app.live_ws_sockets[conn_id] = vphp.PersistentOwnedZVal.from_value_zval(socket_z)
+		app.live_ws_sockets[conn_id] = vphp.PersistentOwnedZBox.from_object_zval(socket_z)
 	}
 	return socket_z, created
 }
@@ -383,7 +383,7 @@ fn live_socket_for_event(mut app VSlimApp, handler vphp.ZVal, frame vphp.ZVal) (
 	}
 	conn_id := zval_string_key(frame, 'id', '').trim_space()
 	if conn_id != '' && conn_id in app.live_ws_sockets {
-		socket_owned := app.live_ws_sockets[conn_id] or { vphp.PersistentOwnedZVal.new_null() }
+		socket_owned := app.live_ws_sockets[conn_id] or { vphp.PersistentOwnedZBox.new_null() }
 		mut socket_request := socket_owned.clone_request_owned()
 		socket_z := socket_request.take_zval()
 		mut existing := socket_z.to_object[VSlimLiveSocket]() or { unsafe { nil } }
@@ -402,7 +402,7 @@ fn live_socket_for_event(mut app VSlimApp, handler vphp.ZVal, frame vphp.ZVal) (
 	created.raw_path = live_normalize_target(zval_string_key(frame, 'path', '/'))
 	created.root_id = live_view_root_id(handler)
 	if conn_id != '' {
-		app.live_ws_sockets[conn_id] = vphp.PersistentOwnedZVal.from_value_zval(socket_z)
+		app.live_ws_sockets[conn_id] = vphp.PersistentOwnedZBox.from_object_zval(socket_z)
 	}
 	return socket_z, created
 }

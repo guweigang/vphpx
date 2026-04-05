@@ -4,10 +4,10 @@ import vphp
 
 @[php_method]
 pub fn (mut app VSlimWebSocketApp) construct() &VSlimWebSocketApp {
-	app.on_open_handler = vphp.PersistentOwnedZVal.new_null()
-	app.on_message_handler = vphp.PersistentOwnedZVal.new_null()
-	app.on_close_handler = vphp.PersistentOwnedZVal.new_null()
-	app.connections = map[string]vphp.PersistentOwnedZVal{}
+	app.on_open_handler = vphp.PersistentOwnedZBox.new_null()
+	app.on_message_handler = vphp.PersistentOwnedZBox.new_null()
+	app.on_close_handler = vphp.PersistentOwnedZBox.new_null()
+	app.connections = map[string]vphp.PersistentOwnedZBox{}
 	app.rooms = map[string][]string{}
 	return &app
 }
@@ -20,7 +20,7 @@ pub fn (mut app VSlimWebSocketApp) on_open(handler vphp.RequestBorrowedZBox) &VS
 		return &app
 	}
 	release_ws_handler(mut app.on_open_handler)
-	app.on_open_handler = vphp.PersistentOwnedZVal.from_value_zval(handler.to_zval())
+	app.on_open_handler = vphp.PersistentOwnedZBox.from_callable_zval(handler.to_zval())
 	return &app
 }
 
@@ -32,7 +32,7 @@ pub fn (mut app VSlimWebSocketApp) on_message(handler vphp.RequestBorrowedZBox) 
 		return &app
 	}
 	release_ws_handler(mut app.on_message_handler)
-	app.on_message_handler = vphp.PersistentOwnedZVal.from_value_zval(handler.to_zval())
+	app.on_message_handler = vphp.PersistentOwnedZBox.from_callable_zval(handler.to_zval())
 	return &app
 }
 
@@ -44,7 +44,7 @@ pub fn (mut app VSlimWebSocketApp) on_close(handler vphp.RequestBorrowedZBox) &V
 		return &app
 	}
 	release_ws_handler(mut app.on_close_handler)
-	app.on_close_handler = vphp.PersistentOwnedZVal.from_value_zval(handler.to_zval())
+	app.on_close_handler = vphp.PersistentOwnedZBox.from_callable_zval(handler.to_zval())
 	return &app
 }
 
@@ -70,10 +70,10 @@ pub fn (mut app VSlimWebSocketApp) remember(conn vphp.RequestBorrowedZBox) &VSli
 		return &app
 	}
 	if id in app.connections {
-		mut existing := app.connections[id] or { vphp.PersistentOwnedZVal.new_null() }
+		mut existing := app.connections[id] or { vphp.PersistentOwnedZBox.new_null() }
 		release_ws_handler(mut existing)
 	}
-	app.connections[id] = vphp.PersistentOwnedZVal.from_value_zval(conn.to_zval())
+	app.connections[id] = vphp.PersistentOwnedZBox.from_object_zval(conn.to_zval())
 	return &app
 }
 
@@ -84,7 +84,7 @@ pub fn (mut app VSlimWebSocketApp) forget(conn_or_id vphp.RequestBorrowedZBox) &
 		return &app
 	}
 	if id in app.connections {
-		mut existing := app.connections[id] or { vphp.PersistentOwnedZVal.new_null() }
+		mut existing := app.connections[id] or { vphp.PersistentOwnedZBox.new_null() }
 		release_ws_handler(mut existing)
 		app.connections.delete(id)
 	}
@@ -246,11 +246,11 @@ pub fn (mut app VSlimWebSocketApp) handle_websocket(frame vphp.RequestBorrowedZB
 	}
 }
 
-fn is_ws_handler_valid(handler vphp.PersistentOwnedZVal) bool {
+fn is_ws_handler_valid(handler vphp.PersistentOwnedZBox) bool {
 	return handler.is_valid() && !handler.is_null() && !handler.is_undef() && handler.is_callable()
 }
 
-fn invoke_ws_handler(handler vphp.PersistentOwnedZVal, args []vphp.ZVal) vphp.ZVal {
+fn invoke_ws_handler(handler vphp.PersistentOwnedZBox, args []vphp.ZVal) vphp.ZVal {
 	if !is_ws_handler_valid(handler) {
 		return vphp.RequestOwnedZBox.new_null().to_zval()
 	}
@@ -258,7 +258,7 @@ fn invoke_ws_handler(handler vphp.PersistentOwnedZVal, args []vphp.ZVal) vphp.ZV
 	return result.take_zval()
 }
 
-fn release_ws_handler(mut handler vphp.PersistentOwnedZVal) {
+fn release_ws_handler(mut handler vphp.PersistentOwnedZBox) {
 	if !handler.is_valid() {
 		return
 	}

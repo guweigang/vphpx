@@ -21,31 +21,31 @@ struct VSlimContainerNotFoundException {}
 @[php_implements: 'Psr\\Container\\ContainerInterface']
 struct VSlimContainer {
 mut:
-	entries   map[string]vphp.PersistentOwnedZVal
-	factories map[string]vphp.PersistentOwnedZVal
-	resolved  map[string]vphp.PersistentOwnedZVal
+	entries   map[string]vphp.PersistentOwnedZBox
+	factories map[string]vphp.PersistentOwnedZBox
+	resolved  map[string]vphp.PersistentOwnedZBox
 	app_ref   &VSlimApp = unsafe { nil }
 }
 
 fn new_vslim_container() &VSlimContainer {
 	return &VSlimContainer{
-		entries:   map[string]vphp.PersistentOwnedZVal{}
-		factories: map[string]vphp.PersistentOwnedZVal{}
-		resolved:  map[string]vphp.PersistentOwnedZVal{}
+		entries:   map[string]vphp.PersistentOwnedZBox{}
+		factories: map[string]vphp.PersistentOwnedZBox{}
+		resolved:  map[string]vphp.PersistentOwnedZBox{}
 	}
 }
 
 @[php_method]
 pub fn (mut c VSlimContainer) construct() &VSlimContainer {
-	c.entries = map[string]vphp.PersistentOwnedZVal{}
-	c.factories = map[string]vphp.PersistentOwnedZVal{}
-	c.resolved = map[string]vphp.PersistentOwnedZVal{}
+	c.entries = map[string]vphp.PersistentOwnedZBox{}
+	c.factories = map[string]vphp.PersistentOwnedZBox{}
+	c.resolved = map[string]vphp.PersistentOwnedZBox{}
 	return &c
 }
 
 @[php_method]
 pub fn (mut c VSlimContainer) set(id string, value vphp.RequestBorrowedZBox) &VSlimContainer {
-	c.entries[id] = vphp.PersistentOwnedZVal.from_value_zval(value.to_zval())
+	c.entries[id] = vphp.PersistentOwnedZBox.from_mixed_zval(value.to_zval())
 	c.factories.delete(id)
 	c.resolved.delete(id)
 	return &c
@@ -57,7 +57,7 @@ pub fn (mut c VSlimContainer) factory(id string, callable vphp.RequestBorrowedZB
 		throw_container_exception('factory for "${id}" must be callable')
 		return &c
 	}
-	c.factories[id] = vphp.PersistentOwnedZVal.from_value_zval(callable.to_zval())
+	c.factories[id] = vphp.PersistentOwnedZBox.from_callable_zval(callable.to_zval())
 	c.entries.delete(id)
 	c.resolved.delete(id)
 	return &c
@@ -94,7 +94,7 @@ fn (mut c VSlimContainer) get_entry(id string) !vphp.RequestOwnedZBox {
 		if !res.is_valid() {
 			return error('factory "${id}" returned invalid value')
 		}
-		c.resolved[id] = vphp.PersistentOwnedZVal.from_value_zval(res.to_zval())
+		c.resolved[id] = vphp.PersistentOwnedZBox.from_mixed_zval(res.to_zval())
 		return res
 	}
 	return error('entry "${id}" not found')

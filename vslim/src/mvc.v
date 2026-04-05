@@ -9,7 +9,7 @@ mut:
 	base_path     string
 	assets_prefix string
 	cache_enabled bool
-	helpers       map[string]vphp.PersistentOwnedZVal
+	helpers       map[string]vphp.PersistentOwnedZBox
 }
 
 struct VSlimViewHost {

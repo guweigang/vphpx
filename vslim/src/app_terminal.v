@@ -2,7 +2,7 @@ module main
 
 import vphp
 
-fn normalize_or_handle_error_with_context(app &VSlimApp, ctx PipelineRequestContext, result vphp.BorrowedZVal, fallback_status int, fallback_message string) VSlimResponse {
+fn normalize_or_handle_error_with_context(app &VSlimApp, ctx PipelineRequestContext, result vphp.RequestBorrowedZBox, fallback_status int, fallback_message string) VSlimResponse {
 	res, ok := normalize_php_route_response_borrowed(result)
 	if ok {
 		return res
@@ -10,7 +10,7 @@ fn normalize_or_handle_error_with_context(app &VSlimApp, ctx PipelineRequestCont
 	return error_response_from_context(app, ctx, fallback_status, fallback_message, 'invalid_response')
 }
 
-fn normalize_or_handle_error(app &VSlimApp, request_payload vphp.BorrowedZVal, result vphp.BorrowedZVal, fallback_status int, fallback_message string) VSlimResponse {
+fn normalize_or_handle_error(app &VSlimApp, request_payload vphp.RequestBorrowedZBox, result vphp.RequestBorrowedZBox, fallback_status int, fallback_message string) VSlimResponse {
 	ctx := new_pipeline_request_context(RoutePath.normalize('/'),
 		request_payload.clone_request_owned(), route_params_from_payload(request_payload))
 	return normalize_or_handle_error_with_context(app, ctx, result, fallback_status,
@@ -85,7 +85,7 @@ fn build_options_response(allowed_methods []string) VSlimResponse {
 	}
 }
 
-fn build_method_not_allowed_response(app &VSlimApp, payload vphp.BorrowedZVal, allowed_methods []string) VSlimResponse {
+fn build_method_not_allowed_response(app &VSlimApp, payload vphp.RequestBorrowedZBox, allowed_methods []string) VSlimResponse {
 	ctx := new_pipeline_request_context(RoutePath.normalize('/'), payload.clone_request_owned(),
 		route_params_from_payload(payload))
 	return build_method_not_allowed_response_with_context(app, ctx, allowed_methods)
@@ -122,7 +122,7 @@ fn run_not_found_core_with_context(app &VSlimApp, ctx PipelineRequestContext) VS
 	return default_error_response(app, 404, 'Not Found', 'not_found')
 }
 
-fn run_not_found_core(app &VSlimApp, payload vphp.BorrowedZVal) VSlimResponse {
+fn run_not_found_core(app &VSlimApp, payload vphp.RequestBorrowedZBox) VSlimResponse {
 	ctx := new_pipeline_request_context(RoutePath.normalize('/'), payload.clone_request_owned(),
 		route_params_from_payload(payload))
 	return run_not_found_core_with_context(app, ctx)
@@ -147,7 +147,7 @@ fn run_error_handler_with_context(app &VSlimApp, ctx PipelineRequestContext, sta
 	return res
 }
 
-fn run_error_handler(app &VSlimApp, request_payload vphp.BorrowedZVal, status int, message string) ?VSlimResponse {
+fn run_error_handler(app &VSlimApp, request_payload vphp.RequestBorrowedZBox, status int, message string) ?VSlimResponse {
 	ctx := new_pipeline_request_context(RoutePath.normalize('/'),
 		request_payload.clone_request_owned(), route_params_from_payload(request_payload))
 	return run_error_handler_with_context(app, ctx, status, message)

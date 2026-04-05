@@ -34,7 +34,7 @@ fn parse_body_method_override(body string) string {
 	return ''
 }
 
-fn normalize_php_route_response_borrowed(result vphp.BorrowedZVal) (VSlimResponse, bool) {
+fn normalize_php_route_response_borrowed(result vphp.RequestBorrowedZBox) (VSlimResponse, bool) {
 	return normalize_php_route_response(result.to_zval())
 }
 

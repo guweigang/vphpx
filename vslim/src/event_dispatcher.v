@@ -5,7 +5,7 @@ import vphp
 @[php_method]
 pub fn (mut provider VSlimPsr14ListenerProvider) construct() &VSlimPsr14ListenerProvider {
 	if provider.listeners.len == 0 {
-		provider.listeners = map[string][]vphp.PersistentOwnedZVal{}
+		provider.listeners = map[string][]vphp.PersistentOwnedZBox{}
 	}
 	return &provider
 }
@@ -22,8 +22,8 @@ pub fn (mut provider VSlimPsr14ListenerProvider) listen(event_class string, list
 		vphp.throw_exception_class('InvalidArgumentException', 'listener must be callable', 0)
 		return &provider
 	}
-	mut listeners := provider.listeners[key] or { []vphp.PersistentOwnedZVal{} }
-	listeners << vphp.PersistentOwnedZVal.from_value_zval(listener.to_zval())
+	mut listeners := provider.listeners[key] or { []vphp.PersistentOwnedZBox{} }
+	listeners << vphp.PersistentOwnedZBox.from_callable_zval(listener.to_zval())
 	provider.listeners[key] = listeners
 	return &provider
 }
@@ -119,7 +119,7 @@ pub fn (mut dispatcher VSlimPsr14EventDispatcher) dispatch(event vphp.RequestBor
 
 fn ensure_psr14_listener_provider(mut provider VSlimPsr14ListenerProvider) {
 	if provider.listeners.len == 0 {
-		provider.listeners = map[string][]vphp.PersistentOwnedZVal{}
+		provider.listeners = map[string][]vphp.PersistentOwnedZBox{}
 	}
 }
 
@@ -132,8 +132,8 @@ fn ensure_psr14_dispatcher(mut dispatcher VSlimPsr14EventDispatcher) {
 	dispatcher.provider_ref = provider
 }
 
-fn (provider &VSlimPsr14ListenerProvider) listeners_for_event(event vphp.ZVal) []vphp.PersistentOwnedZVal {
-	mut out := []vphp.PersistentOwnedZVal{}
+fn (provider &VSlimPsr14ListenerProvider) listeners_for_event(event vphp.ZVal) []vphp.PersistentOwnedZBox {
+	mut out := []vphp.PersistentOwnedZBox{}
 	for key in psr14_event_keys(event) {
 		if key !in provider.listeners {
 			continue

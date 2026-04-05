@@ -2,7 +2,7 @@ module main
 
 import vphp
 
-fn route_params_from_payload(payload vphp.BorrowedZVal) map[string]string {
+fn route_params_from_payload(payload vphp.RequestBorrowedZBox) map[string]string {
 	if !payload.is_valid() || !payload.to_zval().is_object() {
 		return map[string]string{}
 	}
@@ -47,7 +47,7 @@ fn clone_phase_forwarded_request_snapshot(snapshot PhaseForwardedServerRequestSn
 	}
 }
 
-fn snapshot_phase_forwarded_request(payload vphp.BorrowedZVal) ?PhaseForwardedServerRequestSnapshot {
+fn snapshot_phase_forwarded_request(payload vphp.RequestBorrowedZBox) ?PhaseForwardedServerRequestSnapshot {
 	if !payload.is_valid() || !payload.to_zval().is_object() {
 		return none
 	}
@@ -100,7 +100,7 @@ fn take_forwarded_request_snapshot(key u64) ?PhaseForwardedServerRequestSnapshot
 	}
 }
 
-fn request_with_forwarded_snapshot(payload vphp.BorrowedZVal, route_params map[string]string, snapshot PhaseForwardedServerRequestSnapshot) vphp.ZVal {
+fn request_with_forwarded_snapshot(payload vphp.RequestBorrowedZBox, route_params map[string]string, snapshot PhaseForwardedServerRequestSnapshot) vphp.ZVal {
 	normalized := normalize_psr15_server_request_payload(payload, route_params)
 	if _ := normalized.to_object[VSlimPsr7ServerRequest]() {
 		attrs_owned := persistent_assoc_with_strings(snapshot.attributes_ref, route_params)
@@ -137,7 +137,7 @@ fn request_with_forwarded_snapshot(payload vphp.BorrowedZVal, route_params map[s
 	return normalized
 }
 
-fn continued_phase_request_payload(payload vphp.BorrowedZVal, route_params map[string]string, cont &VSlimPsr15ContinueHandler) vphp.RequestOwnedZBox {
+fn continued_phase_request_payload(payload vphp.RequestBorrowedZBox, route_params map[string]string, cont &VSlimPsr15ContinueHandler) vphp.RequestOwnedZBox {
 	if cont.state.has_forwarded_request {
 		if forwarded_request := take_forwarded_request_snapshot(forwarded_request_key(cont)) {
 			return vphp.RequestOwnedZBox.from_zval(request_with_forwarded_snapshot(payload,
@@ -195,7 +195,7 @@ fn build_php_psr7_server_request_object(req &VSlimPsr7ServerRequest) vphp.ZVal {
 	}
 }
 
-fn normalize_psr15_server_request_payload(payload vphp.BorrowedZVal, route_params map[string]string) vphp.ZVal {
+fn normalize_psr15_server_request_payload(payload vphp.RequestBorrowedZBox, route_params map[string]string) vphp.ZVal {
 	if payload.is_valid() && payload.to_zval().is_object()
 		&& (payload.to_zval().is_instance_of('VSlim\\Psr7\\ServerRequest')
 		|| payload.to_zval().is_instance_of('VSlimPsr7ServerRequest')) {
@@ -252,7 +252,7 @@ fn normalize_psr15_server_request_payload(payload vphp.BorrowedZVal, route_param
 		'1.1'
 	}
 	header_map, header_names := if request.method_exists('getHeaders') {
-		mut headers_z := vphp.method_request_owned_zval(request, 'getHeaders', []vphp.ZVal{})
+		mut headers_z := vphp.method_request_owned_box(request, 'getHeaders', []vphp.ZVal{})
 		defer {
 			headers_z.release()
 		}
@@ -275,42 +275,42 @@ fn normalize_psr15_server_request_payload(payload vphp.BorrowedZVal, route_param
 		new_psr7_uri('/')
 	}
 	server_params_ref := if request.method_exists('getServerParams') {
-		vphp.with_method_result_zval(request, 'getServerParams', []vphp.ZVal{}, fn (z vphp.ZVal) vphp.PersistentOwnedZVal {
+		vphp.with_method_result_zval(request, 'getServerParams', []vphp.ZVal{}, fn (z vphp.ZVal) vphp.PersistentOwnedZBox {
 			return persistent_array_owned(z)
 		})
 	} else {
 		empty_persistent_array()
 	}
 	cookie_params_ref := if request.method_exists('getCookieParams') {
-		vphp.with_method_result_zval(request, 'getCookieParams', []vphp.ZVal{}, fn (z vphp.ZVal) vphp.PersistentOwnedZVal {
+		vphp.with_method_result_zval(request, 'getCookieParams', []vphp.ZVal{}, fn (z vphp.ZVal) vphp.PersistentOwnedZBox {
 			return persistent_array_owned(z)
 		})
 	} else {
 		empty_persistent_array()
 	}
 	query_params_ref := if request.method_exists('getQueryParams') {
-		vphp.with_method_result_zval(request, 'getQueryParams', []vphp.ZVal{}, fn (z vphp.ZVal) vphp.PersistentOwnedZVal {
+		vphp.with_method_result_zval(request, 'getQueryParams', []vphp.ZVal{}, fn (z vphp.ZVal) vphp.PersistentOwnedZBox {
 			return persistent_array_owned(z)
 		})
 	} else {
 		empty_persistent_array()
 	}
 	uploaded_files_ref := if request.method_exists('getUploadedFiles') {
-		vphp.with_method_result_zval(request, 'getUploadedFiles', []vphp.ZVal{}, fn (z vphp.ZVal) vphp.PersistentOwnedZVal {
+		vphp.with_method_result_zval(request, 'getUploadedFiles', []vphp.ZVal{}, fn (z vphp.ZVal) vphp.PersistentOwnedZBox {
 			return normalize_uploaded_files_tree(z)
 		})
 	} else {
 		empty_persistent_array()
 	}
 	parsed_body_ref := if request.method_exists('getParsedBody') {
-		vphp.with_method_result_zval(request, 'getParsedBody', []vphp.ZVal{}, fn (z vphp.ZVal) vphp.PersistentOwnedZVal {
+		vphp.with_method_result_zval(request, 'getParsedBody', []vphp.ZVal{}, fn (z vphp.ZVal) vphp.PersistentOwnedZBox {
 			return persistent_owned_or_null(z)
 		})
 	} else {
-		vphp.PersistentOwnedZVal.new_null()
+		vphp.PersistentOwnedZBox.new_null()
 	}
 	attributes_ref := if request.method_exists('getAttributes') {
-		vphp.with_method_result_zval(request, 'getAttributes', []vphp.ZVal{}, fn [route_params] (z vphp.ZVal) vphp.PersistentOwnedZVal {
+		vphp.with_method_result_zval(request, 'getAttributes', []vphp.ZVal{}, fn [route_params] (z vphp.ZVal) vphp.PersistentOwnedZBox {
 			return persistent_assoc_with_strings(persistent_array_owned(z), route_params)
 		})
 	} else {
@@ -359,12 +359,12 @@ fn build_php_psr7_server_request_from_vslim(req &VSlimRequest, route_params map[
 		cookie_params_ref:  string_map_to_persistent_array(req.cookies())
 		query_params_ref:   string_map_to_persistent_array(req.query_params())
 		uploaded_files_ref: empty_persistent_array()
-		parsed_body_ref:    vphp.PersistentOwnedZVal.new_null()
+		parsed_body_ref:    vphp.PersistentOwnedZBox.new_null()
 		attributes_ref:     persistent_attrs_from_request(req, route_params)
 	})
 }
 
-fn persistent_attrs_from_request(req &VSlimRequest, route_params map[string]string) vphp.PersistentOwnedZVal {
+fn persistent_attrs_from_request(req &VSlimRequest, route_params map[string]string) vphp.PersistentOwnedZBox {
 	mut attrs := empty_persistent_array()
 	for key, value in req.attributes() {
 		attrs = persistent_assoc_with_value(attrs, key, vphp.RequestOwnedZBox.new_string(value).to_zval())
@@ -372,7 +372,7 @@ fn persistent_attrs_from_request(req &VSlimRequest, route_params map[string]stri
 	return persistent_assoc_with_strings(attrs, route_params)
 }
 
-fn persistent_assoc_with_strings(value vphp.PersistentOwnedZVal, extras map[string]string) vphp.PersistentOwnedZVal {
+fn persistent_assoc_with_strings(value vphp.PersistentOwnedZBox, extras map[string]string) vphp.PersistentOwnedZBox {
 	mut out := new_array_zval()
 	if value.is_valid() && !value.is_null() && !value.is_undef() && value.is_array() {
 		value.with_request_zval(fn [mut out] (raw vphp.ZVal) bool {
@@ -385,7 +385,7 @@ fn persistent_assoc_with_strings(value vphp.PersistentOwnedZVal, extras map[stri
 	for key, item in extras {
 		add_assoc_zval(out, key, vphp.RequestOwnedZBox.new_string(item).to_zval())
 	}
-	return vphp.PersistentOwnedZVal.from_value_zval(out)
+	return vphp.PersistentOwnedZBox.from_mixed_zval(out)
 }
 
 fn vslim_request_uri_string(req &VSlimRequest) string {
@@ -409,7 +409,7 @@ fn vslim_request_uri_string(req &VSlimRequest) string {
 	return uri
 }
 
-fn new_vslim_request_from_psr_server_request(payload vphp.BorrowedZVal, route_params map[string]string) &VSlimRequest {
+fn new_vslim_request_from_psr_server_request(payload vphp.RequestBorrowedZBox, route_params map[string]string) &VSlimRequest {
 	if payload.is_valid() && payload.to_zval().is_object()
 		&& (payload.to_zval().is_instance_of('VSlim\\Vhttpd\\Request')
 		|| payload.to_zval().is_instance_of('VSlimRequest')) {
@@ -580,7 +580,7 @@ fn normalize_to_psr7_response(result vphp.ZVal) &VSlimPsr7Response {
 			'1.1'
 		}
 		headers, header_names := if result.method_exists('getHeaders') {
-			mut headers_z := vphp.method_request_owned_zval(result, 'getHeaders', []vphp.ZVal{})
+			mut headers_z := vphp.method_request_owned_box(result, 'getHeaders', []vphp.ZVal{})
 			defer {
 				headers_z.release()
 			}

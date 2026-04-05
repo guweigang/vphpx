@@ -2,7 +2,7 @@ module main
 
 import vphp
 
-fn is_supported_route_handler(handler vphp.BorrowedZVal) bool {
+fn is_supported_route_handler(handler vphp.RequestBorrowedZBox) bool {
 	if !handler.is_valid() {
 		return false
 	}
@@ -26,7 +26,7 @@ fn middleware_registration_error(kind MiddlewareRegistrationKind) string {
 	}
 }
 
-fn is_supported_registration_kind(kind MiddlewareRegistrationKind, handler vphp.BorrowedZVal) bool {
+fn is_supported_registration_kind(kind MiddlewareRegistrationKind, handler vphp.RequestBorrowedZBox) bool {
 	return match kind {
 		.standard { is_supported_middleware_registration(handler) }
 		.before, .after { is_supported_phase_middleware_registration(handler) }
@@ -34,13 +34,13 @@ fn is_supported_registration_kind(kind MiddlewareRegistrationKind, handler vphp.
 }
 
 fn register_app_middleware_kind(mut app VSlimApp, handler vphp.ZVal, kind MiddlewareRegistrationKind) {
-	borrowed := vphp.BorrowedZVal.from_zval(handler)
+	borrowed := vphp.RequestBorrowedZBox.from_zval(handler)
 	if !is_supported_registration_kind(kind, borrowed) {
 		vphp.throw_exception_class('InvalidArgumentException', middleware_registration_error(kind),
 			0)
 		return
 	}
-	entry := vphp.PersistentOwnedZVal.from_value_zval(handler)
+	entry := vphp.PersistentOwnedZBox.from_callable_zval(handler)
 	match kind {
 		.standard { app.php_middlewares << entry }
 		.before { app.php_before_middlewares << entry }
@@ -49,7 +49,7 @@ fn register_app_middleware_kind(mut app VSlimApp, handler vphp.ZVal, kind Middle
 }
 
 fn register_group_middleware_kind(group &RouteGroup, handler vphp.ZVal, kind MiddlewareRegistrationKind) {
-	borrowed := vphp.BorrowedZVal.from_zval(handler)
+	borrowed := vphp.RequestBorrowedZBox.from_zval(handler)
 	if !is_supported_registration_kind(kind, borrowed) {
 		vphp.throw_exception_class('InvalidArgumentException', middleware_registration_error(kind),
 			0)
@@ -61,21 +61,21 @@ fn register_group_middleware_kind(group &RouteGroup, handler vphp.ZVal, kind Mid
 		match kind {
 			.standard {
 				app.php_group_middle.prefixes << prefix
-				app.php_group_middle.handlers << vphp.PersistentOwnedZVal.from_value_zval(handler)
+				app.php_group_middle.handlers << vphp.PersistentOwnedZBox.from_callable_zval(handler)
 			}
 			.before {
 				app.php_group_before_middle.prefixes << prefix
-				app.php_group_before_middle.handlers << vphp.PersistentOwnedZVal.from_value_zval(handler)
+				app.php_group_before_middle.handlers << vphp.PersistentOwnedZBox.from_callable_zval(handler)
 			}
 			.after {
 				app.php_group_after_middle.prefixes << prefix
-				app.php_group_after_middle.handlers << vphp.PersistentOwnedZVal.from_value_zval(handler)
+				app.php_group_after_middle.handlers << vphp.PersistentOwnedZBox.from_callable_zval(handler)
 			}
 		}
 	}
 }
 
-fn is_supported_php_middleware_handler(handler vphp.BorrowedZVal) bool {
+fn is_supported_php_middleware_handler(handler vphp.RequestBorrowedZBox) bool {
 	if !handler.is_valid() {
 		return false
 	}
@@ -89,7 +89,7 @@ fn is_supported_php_middleware_handler(handler vphp.BorrowedZVal) bool {
 	return raw.is_instance_of('Psr\\Http\\Server\\MiddlewareInterface')
 }
 
-fn is_supported_middleware_registration(handler vphp.BorrowedZVal) bool {
+fn is_supported_middleware_registration(handler vphp.RequestBorrowedZBox) bool {
 	if !handler.is_valid() || handler.to_zval().is_null() || handler.to_zval().is_undef() {
 		return false
 	}
@@ -99,7 +99,7 @@ fn is_supported_middleware_registration(handler vphp.BorrowedZVal) bool {
 	return is_supported_php_middleware_handler(handler)
 }
 
-fn is_supported_phase_middleware_registration(handler vphp.BorrowedZVal) bool {
+fn is_supported_phase_middleware_registration(handler vphp.RequestBorrowedZBox) bool {
 	if !handler.is_valid() || handler.to_zval().is_null() || handler.to_zval().is_undef() {
 		return false
 	}
@@ -109,11 +109,11 @@ fn is_supported_phase_middleware_registration(handler vphp.BorrowedZVal) bool {
 	return is_supported_php_middleware_handler(handler)
 }
 
-fn is_psr15_middleware_handler(handler vphp.BorrowedZVal) bool {
+fn is_psr15_middleware_handler(handler vphp.RequestBorrowedZBox) bool {
 	return is_supported_php_middleware_handler(handler)
 }
 
-fn is_psr15_request_handler(handler vphp.BorrowedZVal) bool {
+fn is_psr15_request_handler(handler vphp.RequestBorrowedZBox) bool {
 	if !handler.is_valid() {
 		return false
 	}
@@ -121,7 +121,7 @@ fn is_psr15_request_handler(handler vphp.BorrowedZVal) bool {
 	return raw.is_object() && raw.is_instance_of('Psr\\Http\\Server\\RequestHandlerInterface')
 }
 
-fn is_psr_server_request_payload(payload vphp.BorrowedZVal) bool {
+fn is_psr_server_request_payload(payload vphp.RequestBorrowedZBox) bool {
 	if !payload.is_valid() {
 		return false
 	}
@@ -140,7 +140,7 @@ fn collect_matching_route_hooks(table HookTable, path string) []vphp.RequestOwne
 	return out
 }
 
-fn collect_registered_middlewares(app_hooks []vphp.PersistentOwnedZVal, group_hooks []vphp.RequestOwnedZBox) []vphp.RequestOwnedZBox {
+fn collect_registered_middlewares(app_hooks []vphp.PersistentOwnedZBox, group_hooks []vphp.RequestOwnedZBox) []vphp.RequestOwnedZBox {
 	mut out := []vphp.RequestOwnedZBox{}
 	for hook in app_hooks {
 		out << hook.clone_request_owned()
@@ -151,7 +151,7 @@ fn collect_registered_middlewares(app_hooks []vphp.PersistentOwnedZVal, group_ho
 	return out
 }
 
-fn legacy_middleware_payload(payload vphp.BorrowedZVal, route_params map[string]string) vphp.ZVal {
+fn legacy_middleware_payload(payload vphp.RequestBorrowedZBox, route_params map[string]string) vphp.ZVal {
 	if payload.is_valid() && payload.to_zval().is_object()
 		&& (payload.to_zval().is_instance_of('VSlim\\Vhttpd\\Request')
 		|| payload.to_zval().is_instance_of('VSlimRequest')) {
@@ -175,7 +175,7 @@ fn middleware_target_method(target vphp.ZVal, explicit_method string) string {
 	return ''
 }
 
-fn resolve_php_middleware_target(app &VSlimApp, handler vphp.BorrowedZVal) !(vphp.ZVal, string) {
+fn resolve_php_middleware_target(app &VSlimApp, handler vphp.RequestBorrowedZBox) !(vphp.ZVal, string) {
 	if !handler.is_valid() {
 		return error('Middleware is not valid')
 	}
@@ -200,7 +200,7 @@ fn resolve_php_middleware_target(app &VSlimApp, handler vphp.BorrowedZVal) !(vph
 	return handler.to_zval(), ''
 }
 
-fn resolve_php_phase_middleware_target(app &VSlimApp, handler vphp.BorrowedZVal) !vphp.ZVal {
+fn resolve_php_phase_middleware_target(app &VSlimApp, handler vphp.RequestBorrowedZBox) !vphp.ZVal {
 	target, explicit_method := resolve_php_middleware_target(app, handler)!
 	method := middleware_target_method(target, explicit_method)
 	if method != 'process' || !target.is_object()
@@ -210,7 +210,7 @@ fn resolve_php_phase_middleware_target(app &VSlimApp, handler vphp.BorrowedZVal)
 	return target
 }
 
-fn resolve_php_route_target(app &VSlimApp, handler vphp.BorrowedZVal) !(vphp.ZVal, string) {
+fn resolve_php_route_target(app &VSlimApp, handler vphp.RequestBorrowedZBox) !(vphp.ZVal, string) {
 	if !handler.is_valid() {
 		return error('Invalid route handler')
 	}
@@ -247,20 +247,20 @@ fn resolve_php_route_target(app &VSlimApp, handler vphp.BorrowedZVal) !(vphp.ZVa
 	return handler.to_zval(), ''
 }
 
-fn dispatch_php_middleware_entry(mut chain MiddlewareChain, handler vphp.BorrowedZVal, payload vphp.BorrowedZVal) !vphp.ZVal {
+fn dispatch_php_middleware_entry(mut chain MiddlewareChain, handler vphp.RequestBorrowedZBox, payload vphp.RequestBorrowedZBox) !vphp.ZVal {
 	target, explicit_method := resolve_php_middleware_target(chain.app, handler)!
 	method := middleware_target_method(target, explicit_method)
 	if method == 'process' && target.is_object()
 		&& target.is_instance_of('Psr\\Http\\Server\\MiddlewareInterface') {
 		psr_payload := normalize_psr15_server_request_payload(payload, chain.request_ctx.route_params)
 		next_handler := build_php_psr15_next_handler_object(&chain)
-		mut result := vphp.method_request_owned_zval(target, method, [psr_payload, next_handler])
+		mut result := vphp.method_request_owned_box(target, method, [psr_payload, next_handler])
 		return result.take_zval()
 	}
 	return error('Middleware must implement Psr\\Http\\Server\\MiddlewareInterface')
 }
 
-fn is_supported_websocket_handler(handler vphp.BorrowedZVal) bool {
+fn is_supported_websocket_handler(handler vphp.RequestBorrowedZBox) bool {
 	if !handler.is_valid() {
 		return false
 	}
@@ -277,24 +277,24 @@ fn is_supported_websocket_handler(handler vphp.BorrowedZVal) bool {
 		|| raw.method_exists('live_marker')
 }
 
-fn dispatch_route_handler(app &VSlimApp, handler vphp.BorrowedZVal, payload vphp.BorrowedZVal, route_params map[string]string) !vphp.ZVal {
+fn dispatch_route_handler(app &VSlimApp, handler vphp.RequestBorrowedZBox, payload vphp.RequestBorrowedZBox, route_params map[string]string) !vphp.ZVal {
 	if !handler.is_valid() {
 		return error('Invalid route handler')
 	}
 	if handler.is_string() || handler.is_array() {
 		target, method := resolve_php_route_target(app, handler)!
 		psr_payload := normalize_psr15_server_request_payload(payload, route_params)
-		mut result := vphp.method_request_owned_zval(target, method, [psr_payload])
+		mut result := vphp.method_request_owned_box(target, method, [psr_payload])
 		return result.take_zval()
 	}
 	if is_psr15_request_handler(handler) {
 		psr_payload := normalize_psr15_server_request_payload(payload, route_params)
-		mut result := vphp.method_request_owned_zval(handler.to_zval(), 'handle', [psr_payload])
+		mut result := vphp.method_request_owned_box(handler.to_zval(), 'handle', [psr_payload])
 		return result.take_zval()
 	}
 	psr_payload := normalize_psr15_server_request_payload(payload, route_params)
 	if handler.is_callable() {
-		mut result := vphp.call_request_owned_zval(handler.to_zval(), [psr_payload])
+		mut result := vphp.call_request_owned_box(handler.to_zval(), [psr_payload])
 		return result.take_zval()
 	}
 	raw := handler.to_zval()
@@ -304,7 +304,7 @@ fn dispatch_route_handler(app &VSlimApp, handler vphp.BorrowedZVal, payload vphp
 		}
 		if raw.method_exists('mount') || raw.method_exists('render') {
 			effective_payload := if is_psr_server_request_payload(payload) {
-				vphp.BorrowedZVal.from_zval(legacy_middleware_payload(payload, route_params))
+				vphp.RequestBorrowedZBox.from_zval(legacy_middleware_payload(payload, route_params))
 			} else {
 				payload
 			}
@@ -315,7 +315,7 @@ fn dispatch_route_handler(app &VSlimApp, handler vphp.BorrowedZVal, payload vphp
 }
 
 fn dispatch_psr15_next_handler(mut state Psr15NextHandlerState, key u64, request vphp.ZVal) &VSlimPsr7Response {
-	request_borrowed := vphp.BorrowedZVal.from_zval(request)
+	request_borrowed := vphp.RequestBorrowedZBox.from_zval(request)
 	return match state.mode {
 		.middleware_chain {
 			if state.chain_ref == unsafe { nil } {
@@ -335,7 +335,7 @@ fn dispatch_psr15_next_handler(mut state Psr15NextHandlerState, key u64, request
 		}
 		.continue_marker {
 			normalized := normalize_psr15_server_request_payload(request_borrowed, map[string]string{})
-			if snapshot := snapshot_phase_forwarded_request(vphp.BorrowedZVal.from_zval(normalized)) {
+			if snapshot := snapshot_phase_forwarded_request(vphp.RequestBorrowedZBox.from_zval(normalized)) {
 				store_forwarded_request_snapshot(key, snapshot)
 			}
 			state.has_forwarded_request = true

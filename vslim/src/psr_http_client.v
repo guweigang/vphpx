@@ -116,7 +116,7 @@ fn normalize_psr18_request(request vphp.ZVal) !Psr18OutboundRequest {
 	})) or {
 		return error('request method must be a non-empty token')
 	}
-	mut uri_z := vphp.method_request_owned_zval(request, 'getUri', []vphp.ZVal{})
+	mut uri_z := vphp.method_request_owned_box(request, 'getUri', []vphp.ZVal{})
 	if !uri_z.is_valid() || !uri_z.is_object() {
 		uri_z.release()
 		return error('request URI must be a valid UriInterface object')
@@ -151,7 +151,7 @@ fn normalize_psr18_request(request vphp.ZVal) !Psr18OutboundRequest {
 	if !request_target.starts_with('/') && !request_target.contains('://') {
 		return error('request target must be origin-form or absolute-form for the stream transport')
 	}
-	mut headers_z := vphp.method_request_owned_zval(request, 'getHeaders', []vphp.ZVal{})
+	mut headers_z := vphp.method_request_owned_box(request, 'getHeaders', []vphp.ZVal{})
 	defer {
 		headers_z.release()
 	}

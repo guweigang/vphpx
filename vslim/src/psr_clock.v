@@ -19,12 +19,12 @@ pub fn (clock &VSlimPsr20Clock) now() vphp.RequestOwnedZBox {
 	return vphp.own_request_zbox(now)
 }
 
-fn new_psr20_system_clock_ref() vphp.PersistentOwnedZVal {
+fn new_psr20_system_clock_ref() vphp.PersistentOwnedZBox {
 	clock := vphp.php_class('VSlim\\Psr20\\Clock').construct([])
 	if !clock.is_valid() || !clock.is_object() {
-		return vphp.PersistentOwnedZVal.new_null()
+		return vphp.PersistentOwnedZBox.new_null()
 	}
-	return vphp.PersistentOwnedZVal.from_value_zval(clock)
+	return vphp.PersistentOwnedZBox.from_object_zval(clock)
 }
 
 fn psr20_is_clock(value vphp.ZVal) bool {
@@ -36,7 +36,7 @@ fn psr20_now_datetime_or_throw(clock vphp.ZVal) !vphp.ZVal {
 	if !psr20_is_clock(clock) {
 		return error('clock must implement Psr\\Clock\\ClockInterface')
 	}
-	mut now := vphp.method_request_owned_zval(clock, 'now', []vphp.ZVal{})
+	mut now := vphp.method_request_owned_box(clock, 'now', []vphp.ZVal{})
 	if !now.is_valid() || !now.is_object() || !now.to_zval().is_instance_of('DateTimeImmutable') {
 		now.release()
 		return error('clock::now() must return DateTimeImmutable')

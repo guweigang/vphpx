@@ -9,7 +9,7 @@ fn psr6_owned_value(z vphp.ZVal) vphp.RequestOwnedZBox {
 struct Psr6ItemSnapshot {
 	key string
 mut:
-	value           vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
+	value           vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 	has_value       bool
 	expires_at_unix i64
 }
@@ -30,7 +30,7 @@ pub fn (mut pool VSlimPsr6CacheItemPool) set_clock(clock vphp.RequestBorrowedZBo
 	}
 	mut old := pool.clock_ref
 	old.release()
-	pool.clock_ref = vphp.PersistentOwnedZVal.from_value_zval(clock.to_zval())
+	pool.clock_ref = vphp.PersistentOwnedZBox.from_object_zval(clock.to_zval())
 	return &pool
 }
 
@@ -285,7 +285,7 @@ fn (mut pool VSlimPsr6CacheItemPool) persist_snapshot(snapshot Psr6ItemSnapshot)
 	return true
 }
 
-fn (mut pool VSlimPsr6CacheItemPool) replace_entry(key string, value vphp.PersistentOwnedZVal, expires_at_unix i64) {
+fn (mut pool VSlimPsr6CacheItemPool) replace_entry(key string, value vphp.PersistentOwnedZBox, expires_at_unix i64) {
 	if key in pool.entries {
 		mut old := pool.entries[key] or { PsrCacheEntry{} }
 		old.value.release()
@@ -356,17 +356,17 @@ fn psr6_deferred_entry_expired(clock vphp.ZVal, entry Psr6DeferredEntry) bool {
 	return entry.expires_at_unix > 0 && entry.expires_at_unix <= now_unix
 }
 
-fn psr6_new_missing_item_with_clock(key string, clock_ref vphp.PersistentOwnedZVal) &VSlimPsr6CacheItem {
+fn psr6_new_missing_item_with_clock(key string, clock_ref vphp.PersistentOwnedZBox) &VSlimPsr6CacheItem {
 	return &VSlimPsr6CacheItem{
 		key:       key
-		value_ref: vphp.PersistentOwnedZVal.new_null()
+		value_ref: vphp.PersistentOwnedZBox.new_null()
 		clock_ref: psr6_clone_persistent(clock_ref)
 		hit:       false
 		has_value: false
 	}
 }
 
-fn psr6_new_hit_item_with_clock(key string, value vphp.PersistentOwnedZVal, expires_at_unix i64, clock_ref vphp.PersistentOwnedZVal) &VSlimPsr6CacheItem {
+fn psr6_new_hit_item_with_clock(key string, value vphp.PersistentOwnedZBox, expires_at_unix i64, clock_ref vphp.PersistentOwnedZBox) &VSlimPsr6CacheItem {
 	return &VSlimPsr6CacheItem{
 		key:             key
 		value_ref:       psr6_clone_persistent(value)
@@ -466,14 +466,14 @@ fn psr6_resolve_relative_expiration_or_throw(clock vphp.ZVal, time_value vphp.ZV
 	return error('time must be null, an integer, or DateInterval')
 }
 
-fn psr6_clone_persistent(value vphp.PersistentOwnedZVal) vphp.PersistentOwnedZVal {
+fn psr6_clone_persistent(value vphp.PersistentOwnedZBox) vphp.PersistentOwnedZBox {
 	return value.clone_persistent_owned()
 }
 
 fn (mut item VSlimPsr6CacheItem) replace_value(value vphp.ZVal) {
 	mut old := item.value_ref
 	old.release()
-	item.value_ref = vphp.PersistentOwnedZVal.from_value_zval(value)
+	item.value_ref = vphp.PersistentOwnedZBox.from_mixed_zval(value)
 	item.has_value = true
 }
 

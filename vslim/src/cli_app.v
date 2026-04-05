@@ -6,15 +6,15 @@ import vphp
 
 fn new_cli_core_app() &VSlimApp {
 	return &VSlimApp{
-		not_found_handler: vphp.PersistentOwnedZVal.new_null()
-		error_handler:     vphp.PersistentOwnedZVal.new_null()
-		clock_ref:         vphp.PersistentOwnedZVal.new_null()
-		view_helpers:      map[string]vphp.PersistentOwnedZVal{}
+		not_found_handler: vphp.PersistentOwnedZBox.new_null()
+		error_handler:     vphp.PersistentOwnedZBox.new_null()
+		clock_ref:         vphp.PersistentOwnedZBox.new_null()
+		view_helpers:      map[string]vphp.PersistentOwnedZBox{}
 		providers:         []vphp.RetainedObject{}
 		provider_classes:  map[string]bool{}
 		modules:           []vphp.RetainedObject{}
 		module_classes:    map[string]bool{}
-		live_ws_sockets:   map[string]vphp.PersistentOwnedZVal{}
+		live_ws_sockets:   map[string]vphp.PersistentOwnedZBox{}
 	}
 }
 
@@ -28,7 +28,7 @@ fn ensure_cli_core_app(mut cli VSlimCliApp) &VSlimApp {
 
 fn ensure_cli_registry(mut cli VSlimCliApp) {
 	if cli.command_handlers.len == 0 {
-		cli.command_handlers = map[string]vphp.PersistentOwnedZVal{}
+		cli.command_handlers = map[string]vphp.PersistentOwnedZBox{}
 	}
 	if cli.command_order.len == 0 {
 		cli.command_order = []string{}
@@ -108,7 +108,13 @@ fn command_name_from_short_name(short_name string) string {
 
 fn derive_command_name_from_handler(handler_z vphp.ZVal) !string {
 	if handler_z.is_valid() && handler_z.is_string() {
-		name := command_name_from_short_name(short_class_name(handler_z.to_string()))
+		raw_name := handler_z.to_string().trim_space()
+		source := if cli_handler_string_is_function_callable(raw_name) {
+			raw_name
+		} else {
+			short_class_name(raw_name)
+		}
+		name := command_name_from_short_name(source)
 		if name == '' {
 			return error('command name must not be empty')
 		}
@@ -122,6 +128,17 @@ fn derive_command_name_from_handler(handler_z vphp.ZVal) !string {
 		return name
 	}
 	return error('command name cannot be derived from anonymous callable; use command(name, handler)')
+}
+
+fn cli_handler_string_is_function_callable(name string) bool {
+	callable_name := name.trim_space()
+	if callable_name == '' {
+		return false
+	}
+	exists := vphp.call_php('function_exists', [
+		vphp.RequestOwnedZBox.new_string(callable_name).to_zval(),
+	])
+	return exists.is_valid() && exists.to_bool()
 }
 
 fn normalize_cli_command_handler_input(raw vphp.ZVal) !vphp.ZVal {
@@ -169,6 +186,9 @@ fn resolve_cli_command_runtime(mut cli VSlimCliApp, handler_z vphp.ZVal) !vphp.Z
 		if class_name == '' {
 			return error('command class name must not be empty')
 		}
+		if cli_handler_string_is_function_callable(class_name) {
+			return vphp.RequestOwnedZBox.new_string(class_name).to_zval()
+		}
 		exists := vphp.call_php('class_exists', [
 			vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
 			vphp.RequestOwnedZBox.new_bool(true).to_zval(),
@@ -202,7 +222,7 @@ fn lookup_cli_command_handler(cli &VSlimCliApp, name string) !vphp.ZVal {
 	return out.take_zval()
 }
 
-fn cli_release_command_handler(mut handler vphp.PersistentOwnedZVal) {
+fn cli_release_command_handler(mut handler vphp.PersistentOwnedZBox) {
 	if handler.is_object() {
 		return
 	}
@@ -320,7 +340,11 @@ fn apply_cli_command_metadata(mut cli VSlimCliApp, canonical_name string, handle
 		if alias_name in cli.command_handlers {
 			continue
 		}
-		cli.command_handlers[alias_name] = vphp.PersistentOwnedZVal.from_value_zval(handler_z)
+		cli.command_handlers[alias_name] = if handler_z.is_callable() || handler_z.is_object() {
+			vphp.PersistentOwnedZBox.from_callable_zval(handler_z)
+		} else {
+			vphp.PersistentOwnedZBox.from_mixed_zval(handler_z)
+		}
 		cli.command_canonical[alias_name] = canonical.clone()
 		registered_aliases << alias_name.clone()
 	}
@@ -394,7 +418,7 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 		cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command runtime=object'))
 		bind_cli_runtime_to_command(mut cli, runtime)
 		cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command object_handle enter'))
-		mut handle_result := vphp.method_request_owned_zval(runtime, 'handle', [
+		mut handle_result := vphp.method_request_owned_box(runtime, 'handle', [
 			args_z,
 			cli_z,
 		])
@@ -411,7 +435,7 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 	}
 	if !input.parsed {
 		cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command callable enter runtime_raw=${usize(runtime.raw)} runtime_type=${runtime.type_name()} runtime_class=${runtime.class_name()} args_raw=${usize(args_z.raw)} cli_raw=${usize(cli_z.raw)}'))
-		mut result := vphp.call_request_owned_zval(runtime, [args_z, cli_z])
+		mut result := vphp.call_request_owned_box(runtime, [args_z, cli_z])
 		defer {
 			cli_debug_log(cli_trace_message(&cli, 'invoke_cli_command callable_result_release begin raw=${usize(result.to_zval().raw)}'))
 			result.release()
@@ -474,7 +498,11 @@ pub fn (mut cli VSlimCliApp) command(name string, handler vphp.RequestBorrowedZB
 		cli.command_order << command_name.clone()
 	}
 	clear_cli_command_metadata(mut cli, command_name)
-	cli.command_handlers[command_name] = vphp.PersistentOwnedZVal.from_value_zval(handler_z)
+	cli.command_handlers[command_name] = if handler_z.is_callable() || handler_z.is_object() {
+		vphp.PersistentOwnedZBox.from_callable_zval(handler_z)
+	} else {
+		vphp.PersistentOwnedZBox.from_mixed_zval(handler_z)
+	}
 	cli.command_canonical[command_name] = command_name.clone()
 	apply_cli_command_metadata(mut cli, command_name, handler_z) or {
 		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
@@ -632,7 +660,7 @@ fn (mut cli VSlimCliApp) free() {
 	}
 	cli_debug_log('cli.free handlers_released')
 	cli.core_app_ref = unsafe { nil }
-	cli.core_app_zref = vphp.PersistentOwnedZVal.invalid()
+	cli.core_app_zref = vphp.PersistentOwnedZBox.invalid()
 	cli_debug_log('cli.free core_app_released')
 	unsafe {
 		handler_names.free()

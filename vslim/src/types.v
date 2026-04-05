@@ -22,9 +22,9 @@ pub mut:
 	pattern                  string
 	handler_type             VSlimRouteHandlerType
 	v_handler                VSlimHandler             = unsafe { nil }
-	php_handler              vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
+	php_handler              vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 	resource_action          string
-	resource_missing_handler vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
+	resource_missing_handler vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 }
 
 pub struct RoutePath {}
@@ -38,7 +38,7 @@ mut:
 struct HookTable {
 mut:
 	prefixes []string
-	handlers []vphp.PersistentOwnedZVal
+	handlers []vphp.PersistentOwnedZBox
 }
 
 enum MiddlewareRegistrationKind {
@@ -70,9 +70,9 @@ struct RawDispatchPlan {
 mut:
 	route_params             map[string]string
 	terminal_meta            MiddlewareTerminalMeta
-	route_handler            vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
+	route_handler            vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 	resource_action          string
-	resource_missing_handler vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
+	resource_missing_handler vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 }
 
 struct PipelineRequestContext {
@@ -91,14 +91,14 @@ mut:
 	routes                  []VSlimRoute
 	websocket_routes        []VSlimRoute
 	websocket_conn_route    map[string]int
-	php_before_middlewares  []vphp.PersistentOwnedZVal
-	php_middlewares         []vphp.PersistentOwnedZVal
-	php_after_middlewares   []vphp.PersistentOwnedZVal
+	php_before_middlewares  []vphp.PersistentOwnedZBox
+	php_middlewares         []vphp.PersistentOwnedZBox
+	php_after_middlewares   []vphp.PersistentOwnedZBox
 	php_group_before_middle HookTable
 	php_group_middle        HookTable
 	php_group_after_middle  HookTable
-	not_found_handler       vphp.PersistentOwnedZVal
-	error_handler           vphp.PersistentOwnedZVal
+	not_found_handler       vphp.PersistentOwnedZBox
+	error_handler           vphp.PersistentOwnedZBox
 	container_ref           &VSlimContainer = unsafe { nil }
 	config_ref              &VSlimConfig    = unsafe { nil }
 	mcp_ref                 &VSlimMcpApp    = unsafe { nil }
@@ -109,10 +109,10 @@ mut:
 	assets_prefix           string
 	view_cache_enabled      bool
 	view_cache_configured   bool
-	view_helpers            map[string]vphp.PersistentOwnedZVal
+	view_helpers            map[string]vphp.PersistentOwnedZBox
 	logger_ref              &VSlimLogger    = unsafe { nil }
 	psr_logger_ref          &VSlimPsrLogger = unsafe { nil }
-	clock_ref               vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
+	clock_ref               vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 	listener_provider_ref   &VSlimPsr14ListenerProvider = unsafe { nil }
 	dispatcher_ref          &VSlimPsr14EventDispatcher  = unsafe { nil }
 	cache_ref               &VSlimPsr16Cache            = unsafe { nil }
@@ -123,7 +123,7 @@ mut:
 	modules                 []vphp.RetainedObject
 	module_classes          map[string]bool
 	booted                  bool
-	live_ws_sockets         map[string]vphp.PersistentOwnedZVal
+	live_ws_sockets         map[string]vphp.PersistentOwnedZBox
 }
 
 @[heap]
@@ -182,12 +182,12 @@ struct PhaseForwardedServerRequestSnapshot {
 	uri_query          string
 	uri_fragment       string
 	header_names       map[string]string
-	server_params_ref  vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
-	cookie_params_ref  vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
-	query_params_ref   vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
-	uploaded_files_ref vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
-	parsed_body_ref    vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
-	attributes_ref     vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
+	server_params_ref  vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	cookie_params_ref  vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	query_params_ref   vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	uploaded_files_ref vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	parsed_body_ref    vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	attributes_ref     vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 }
 
 struct VSlimBeforeMiddlewareResult {
@@ -267,7 +267,7 @@ pub mut:
 	content_type string
 mut:
 	headers    map[string]string
-	chunks_ref vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
+	chunks_ref vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 }
 
 @[php_class: 'VSlim\\Stream\\NdjsonDecoder']
@@ -297,10 +297,10 @@ struct VSlimStreamFactory {}
 @[heap]
 struct VSlimWebSocketApp {
 mut:
-	on_open_handler    vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
-	on_message_handler vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
-	on_close_handler   vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
-	connections        map[string]vphp.PersistentOwnedZVal
+	on_open_handler    vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	on_message_handler vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	on_close_handler   vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	connections        map[string]vphp.PersistentOwnedZBox
 	rooms              map[string][]string
 }
 
@@ -309,19 +309,19 @@ mut:
 @[heap]
 struct VSlimMcpApp {
 mut:
-	method_handlers       map[string]vphp.PersistentOwnedZVal
-	tool_handlers         map[string]vphp.PersistentOwnedZVal
+	method_handlers       map[string]vphp.PersistentOwnedZBox
+	tool_handlers         map[string]vphp.PersistentOwnedZBox
 	tool_descriptions     map[string]string
-	tool_schemas          map[string]vphp.PersistentOwnedZVal
-	resource_handlers     map[string]vphp.PersistentOwnedZVal
+	tool_schemas          map[string]vphp.PersistentOwnedZBox
+	resource_handlers     map[string]vphp.PersistentOwnedZBox
 	resource_names        map[string]string
 	resource_descriptions map[string]string
 	resource_mime_types   map[string]string
-	prompt_handlers       map[string]vphp.PersistentOwnedZVal
+	prompt_handlers       map[string]vphp.PersistentOwnedZBox
 	prompt_descriptions   map[string]string
-	prompt_arguments      map[string]vphp.PersistentOwnedZVal
+	prompt_arguments      map[string]vphp.PersistentOwnedZBox
 	server_info           map[string]string
-	server_capabilities   map[string]vphp.PersistentOwnedZVal
+	server_capabilities   map[string]vphp.PersistentOwnedZBox
 }
 
 @[php_class: 'VSlim\\Log\\Logger']
@@ -430,12 +430,12 @@ mut:
 	header_names       map[string]string
 	body_ref           &VSlimPsr7Stream         = unsafe { nil }
 	uri_ref            &VSlimPsr7Uri            = unsafe { nil }
-	server_params_ref  vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
-	cookie_params_ref  vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
-	query_params_ref   vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
-	uploaded_files_ref vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
-	parsed_body_ref    vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
-	attributes_ref     vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
+	server_params_ref  vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	cookie_params_ref  vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	query_params_ref   vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	uploaded_files_ref vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	parsed_body_ref    vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	attributes_ref     vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 }
 
 @[php_implements: 'Psr\\Http\\Message\\ResponseFactoryInterface']
@@ -470,13 +470,13 @@ struct VSlimPsr17ServerRequestFactory {}
 
 struct PsrCacheEntry {
 mut:
-	value           vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
+	value           vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 	expires_at_unix i64
 }
 
 struct Psr6DeferredEntry {
 mut:
-	value           vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
+	value           vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 	has_value       bool
 	expires_at_unix i64
 }
@@ -499,7 +499,7 @@ struct VSlimPsr16InvalidArgumentException {}
 struct VSlimPsr16Cache {
 mut:
 	entries   map[string]PsrCacheEntry
-	clock_ref vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
+	clock_ref vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 }
 
 @[php_class: 'VSlim\\Psr6\\CacheException']
@@ -520,8 +520,8 @@ struct VSlimPsr6InvalidArgumentException {}
 struct VSlimPsr6CacheItem {
 mut:
 	key             string
-	value_ref       vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
-	clock_ref       vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
+	value_ref       vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	clock_ref       vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 	hit             bool
 	has_value       bool
 	expires_at_unix i64
@@ -534,7 +534,7 @@ struct VSlimPsr6CacheItemPool {
 mut:
 	entries   map[string]PsrCacheEntry
 	deferred  map[string]Psr6DeferredEntry
-	clock_ref vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
+	clock_ref vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 }
 
 @[php_implements: 'Psr\\Http\\Client\\ClientExceptionInterface']
@@ -574,7 +574,7 @@ struct VSlimPsr20Clock {}
 @[heap]
 struct VSlimPsr14ListenerProvider {
 mut:
-	listeners map[string][]vphp.PersistentOwnedZVal
+	listeners map[string][]vphp.PersistentOwnedZBox
 }
 
 @[php_implements: 'Psr\\EventDispatcher\\EventDispatcherInterface']

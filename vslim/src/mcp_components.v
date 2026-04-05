@@ -4,22 +4,22 @@ import vphp
 
 @[php_method]
 pub fn (mut app VSlimMcpApp) construct() &VSlimMcpApp {
-	app.method_handlers = map[string]vphp.PersistentOwnedZVal{}
-	app.tool_handlers = map[string]vphp.PersistentOwnedZVal{}
+	app.method_handlers = map[string]vphp.PersistentOwnedZBox{}
+	app.tool_handlers = map[string]vphp.PersistentOwnedZBox{}
 	app.tool_descriptions = map[string]string{}
-	app.tool_schemas = map[string]vphp.PersistentOwnedZVal{}
-	app.resource_handlers = map[string]vphp.PersistentOwnedZVal{}
+	app.tool_schemas = map[string]vphp.PersistentOwnedZBox{}
+	app.resource_handlers = map[string]vphp.PersistentOwnedZBox{}
 	app.resource_names = map[string]string{}
 	app.resource_descriptions = map[string]string{}
 	app.resource_mime_types = map[string]string{}
-	app.prompt_handlers = map[string]vphp.PersistentOwnedZVal{}
+	app.prompt_handlers = map[string]vphp.PersistentOwnedZBox{}
 	app.prompt_descriptions = map[string]string{}
-	app.prompt_arguments = map[string]vphp.PersistentOwnedZVal{}
+	app.prompt_arguments = map[string]vphp.PersistentOwnedZBox{}
 	app.server_info = {
 		'name':    'vslim-mcp'
 		'version': '0.1.0'
 	}
-	app.server_capabilities = map[string]vphp.PersistentOwnedZVal{}
+	app.server_capabilities = map[string]vphp.PersistentOwnedZBox{}
 	return &app
 }
 
@@ -39,7 +39,7 @@ pub fn (mut app VSlimMcpApp) capability(name string, definition vphp.RequestBorr
 		return &app
 	}
 	if key in app.server_capabilities {
-		mut existing := app.server_capabilities[key] or { vphp.PersistentOwnedZVal.new_null() }
+		mut existing := app.server_capabilities[key] or { vphp.PersistentOwnedZBox.new_null() }
 		release_mcp_handler(mut existing)
 	}
 	app.server_capabilities[key] = persistent_array_or_empty(definition.to_zval())
@@ -64,10 +64,10 @@ pub fn (mut app VSlimMcpApp) register(method string, handler vphp.RequestBorrowe
 		return &app
 	}
 	if key in app.method_handlers {
-		mut existing := app.method_handlers[key] or { vphp.PersistentOwnedZVal.new_null() }
+		mut existing := app.method_handlers[key] or { vphp.PersistentOwnedZBox.new_null() }
 		release_mcp_handler(mut existing)
 	}
-	app.method_handlers[key] = vphp.PersistentOwnedZVal.from_value_zval(raw_handler)
+	app.method_handlers[key] = vphp.PersistentOwnedZBox.from_callable_zval(raw_handler)
 	return &app
 }
 
@@ -81,14 +81,14 @@ pub fn (mut app VSlimMcpApp) tool(name string, description string, input_schema 
 		return &app
 	}
 	if key in app.tool_handlers {
-		mut existing := app.tool_handlers[key] or { vphp.PersistentOwnedZVal.new_null() }
+		mut existing := app.tool_handlers[key] or { vphp.PersistentOwnedZBox.new_null() }
 		release_mcp_handler(mut existing)
 	}
 	if key in app.tool_schemas {
-		mut existing := app.tool_schemas[key] or { vphp.PersistentOwnedZVal.new_null() }
+		mut existing := app.tool_schemas[key] or { vphp.PersistentOwnedZBox.new_null() }
 		release_mcp_handler(mut existing)
 	}
-	app.tool_handlers[key] = vphp.PersistentOwnedZVal.from_value_zval(raw_handler)
+	app.tool_handlers[key] = vphp.PersistentOwnedZBox.from_callable_zval(raw_handler)
 	app.tool_schemas[key] = persistent_array_or_empty(raw_schema)
 	app.tool_descriptions[key] = description
 	return &app
@@ -103,10 +103,10 @@ pub fn (mut app VSlimMcpApp) resource(uri string, name string, description strin
 		return &app
 	}
 	if key in app.resource_handlers {
-		mut existing := app.resource_handlers[key] or { vphp.PersistentOwnedZVal.new_null() }
+		mut existing := app.resource_handlers[key] or { vphp.PersistentOwnedZBox.new_null() }
 		release_mcp_handler(mut existing)
 	}
-	app.resource_handlers[key] = vphp.PersistentOwnedZVal.from_value_zval(raw_handler)
+	app.resource_handlers[key] = vphp.PersistentOwnedZBox.from_callable_zval(raw_handler)
 	app.resource_names[key] = name
 	app.resource_descriptions[key] = description
 	app.resource_mime_types[key] = mime_type
@@ -123,14 +123,14 @@ pub fn (mut app VSlimMcpApp) prompt(name string, description string, arguments v
 		return &app
 	}
 	if key in app.prompt_handlers {
-		mut existing := app.prompt_handlers[key] or { vphp.PersistentOwnedZVal.new_null() }
+		mut existing := app.prompt_handlers[key] or { vphp.PersistentOwnedZBox.new_null() }
 		release_mcp_handler(mut existing)
 	}
 	if key in app.prompt_arguments {
-		mut existing := app.prompt_arguments[key] or { vphp.PersistentOwnedZVal.new_null() }
+		mut existing := app.prompt_arguments[key] or { vphp.PersistentOwnedZBox.new_null() }
 		release_mcp_handler(mut existing)
 	}
-	app.prompt_handlers[key] = vphp.PersistentOwnedZVal.from_value_zval(raw_handler)
+	app.prompt_handlers[key] = vphp.PersistentOwnedZBox.from_callable_zval(raw_handler)
 	app.prompt_arguments[key] = persistent_array_or_empty(raw_arguments)
 	app.prompt_descriptions[key] = description
 	return &app
@@ -417,7 +417,7 @@ fn (app &VSlimMcpApp) tool_definitions() vphp.ZVal {
 		mut row := new_array_zval()
 		row.add_assoc_string('name', key)
 		row.add_assoc_string('description', app.tool_descriptions[key] or { '' })
-		schema := app.tool_schemas[key] or { vphp.PersistentOwnedZVal.from_dyn(vphp.dyn_value_map(map[string]vphp.DynValue{})) }
+		schema := app.tool_schemas[key] or { vphp.PersistentOwnedZBox.from_dyn(vphp.dyn_value_map(map[string]vphp.DynValue{})) }
 		schema.with_request_zval(fn [mut row] (z vphp.ZVal) bool {
 			add_assoc_zval(row, 'inputSchema', z)
 			return true
@@ -450,7 +450,7 @@ fn (app &VSlimMcpApp) prompt_definitions() vphp.ZVal {
 		mut row := new_array_zval()
 		row.add_assoc_string('name', key)
 		row.add_assoc_string('description', app.prompt_descriptions[key] or { '' })
-		args := app.prompt_arguments[key] or { vphp.PersistentOwnedZVal.from_dyn(vphp.dyn_value_list([]vphp.DynValue{})) }
+		args := app.prompt_arguments[key] or { vphp.PersistentOwnedZBox.from_dyn(vphp.dyn_value_list([]vphp.DynValue{})) }
 		args.with_request_zval(fn [mut row] (z vphp.ZVal) bool {
 			add_assoc_zval(row, 'arguments', z)
 			return true
@@ -672,14 +672,14 @@ fn string_array_or_empty(input vphp.ZVal) vphp.ZVal {
 	return out
 }
 
-fn persistent_array_or_empty(input vphp.ZVal) vphp.PersistentOwnedZVal {
+fn persistent_array_or_empty(input vphp.ZVal) vphp.PersistentOwnedZBox {
 	if input.is_array() {
-		return vphp.PersistentOwnedZVal.from_value_zval(input)
+		return vphp.PersistentOwnedZBox.from_mixed_zval(input)
 	}
-	return vphp.PersistentOwnedZVal.from_dyn(vphp.dyn_value_map(map[string]vphp.DynValue{}))
+	return vphp.PersistentOwnedZBox.from_dyn(vphp.dyn_value_map(map[string]vphp.DynValue{}))
 }
 
-fn invoke_mcp_handler(handler vphp.PersistentOwnedZVal, args []vphp.ZVal) vphp.ZVal {
+fn invoke_mcp_handler(handler vphp.PersistentOwnedZBox, args []vphp.ZVal) vphp.ZVal {
 	if !handler.is_valid() || handler.is_null() || handler.is_undef() || !handler.is_callable() {
 		return vphp.RequestOwnedZBox.new_null().to_zval()
 	}
@@ -687,7 +687,7 @@ fn invoke_mcp_handler(handler vphp.PersistentOwnedZVal, args []vphp.ZVal) vphp.Z
 	return result.take_zval()
 }
 
-fn release_mcp_handler(mut handler vphp.PersistentOwnedZVal) {
+fn release_mcp_handler(mut handler vphp.PersistentOwnedZBox) {
 	if !handler.is_valid() {
 		return
 	}

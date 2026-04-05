@@ -24,7 +24,7 @@ pub fn (mut cache VSlimPsr16Cache) set_clock(clock vphp.RequestBorrowedZBox) &VS
 	}
 	mut old := cache.clock_ref
 	old.release()
-	cache.clock_ref = vphp.PersistentOwnedZVal.from_value_zval(clock.to_zval())
+	cache.clock_ref = vphp.PersistentOwnedZBox.from_object_zval(clock.to_zval())
 	return &cache
 }
 
@@ -65,7 +65,7 @@ pub fn (mut cache VSlimPsr16Cache) set(key string, value vphp.RequestBorrowedZBo
 	if expires_at < 0 {
 		return cache.delete(normalized)
 	}
-	cache.replace_entry(normalized, vphp.PersistentOwnedZVal.from_value_zval(value.to_zval()),
+	cache.replace_entry(normalized, vphp.PersistentOwnedZBox.from_mixed_zval(value.to_zval()),
 		expires_at)
 	return true
 }
@@ -178,7 +178,7 @@ fn ensure_psr16_cache(mut cache VSlimPsr16Cache) {
 	}
 }
 
-fn (mut cache VSlimPsr16Cache) replace_entry(key string, value vphp.PersistentOwnedZVal, expires_at_unix i64) {
+fn (mut cache VSlimPsr16Cache) replace_entry(key string, value vphp.PersistentOwnedZBox, expires_at_unix i64) {
 	cache.construct()
 	if key in cache.entries {
 		mut old := cache.entries[key] or { PsrCacheEntry{} }
@@ -291,14 +291,14 @@ fn psr16_iterable_key_list(value vphp.ZVal) ![]string {
 	return out
 }
 
-fn psr16_iterable_assoc_pairs(value vphp.ZVal) !map[string]vphp.PersistentOwnedZVal {
+fn psr16_iterable_assoc_pairs(value vphp.ZVal) !map[string]vphp.PersistentOwnedZBox {
 	normalized := psr16_iterable_to_array(value)!
 	keys := vphp.php_fn('array_keys').call([normalized])
 	values := vphp.php_fn('array_values').call([normalized])
 	if !keys.is_array() || !values.is_array() {
 		return error('values must be iterable')
 	}
-	mut out := map[string]vphp.PersistentOwnedZVal{}
+	mut out := map[string]vphp.PersistentOwnedZBox{}
 	for idx := 0; idx < keys.array_count(); idx++ {
 		key_name := psr16_zval_to_key(keys.array_get(idx)) or {
 			psr16_release_pairs(mut out)
@@ -308,7 +308,7 @@ fn psr16_iterable_assoc_pairs(value vphp.ZVal) !map[string]vphp.PersistentOwnedZ
 			psr16_release_pairs(mut out)
 			return error(err.msg())
 		}
-		out[safe_key] = vphp.PersistentOwnedZVal.from_value_zval(values.array_get(idx))
+		out[safe_key] = vphp.PersistentOwnedZBox.from_mixed_zval(values.array_get(idx))
 	}
 	return out
 }
@@ -340,7 +340,7 @@ fn psr16_iterable_to_array(value vphp.ZVal) !vphp.ZVal {
 	return error('value must be iterable')
 }
 
-fn psr16_release_pairs(mut pairs map[string]vphp.PersistentOwnedZVal) {
+fn psr16_release_pairs(mut pairs map[string]vphp.PersistentOwnedZBox) {
 	for _, persistent in pairs {
 		mut owned := persistent
 		owned.release()

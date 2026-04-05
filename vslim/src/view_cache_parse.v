@@ -32,21 +32,21 @@ fn clear_template_source_cache() {
 	}
 }
 
-fn ensure_view_helper_map(mut helpers map[string]vphp.PersistentOwnedZVal) {
+fn ensure_view_helper_map(mut helpers map[string]vphp.PersistentOwnedZBox) {
 	if helpers.len == 0 {
-		helpers = map[string]vphp.PersistentOwnedZVal{}
+		helpers = map[string]vphp.PersistentOwnedZBox{}
 	}
 }
 
-fn clone_view_helper_map(src map[string]vphp.PersistentOwnedZVal) map[string]vphp.PersistentOwnedZVal {
-	mut out := map[string]vphp.PersistentOwnedZVal{}
+fn clone_view_helper_map(src map[string]vphp.PersistentOwnedZBox) map[string]vphp.PersistentOwnedZBox {
+	mut out := map[string]vphp.PersistentOwnedZBox{}
 	for key, handler in src {
 		out[key] = handler.clone_persistent_owned()
 	}
 	return out
 }
 
-fn release_view_helper(mut handler vphp.PersistentOwnedZVal) {
+fn release_view_helper(mut handler vphp.PersistentOwnedZBox) {
 	if !handler.is_valid() {
 		return
 	}

@@ -15,7 +15,7 @@ fn has_php_not_found_pipeline(app &VSlimApp, path string) bool {
 fn dispatch_php_terminal_raw(app &VSlimApp, req &VSlimRequest, terminal_meta MiddlewareTerminalMeta) (vphp.ZVal, vphp.RequestOwnedZBox) {
 	path := RoutePath.normalize(req.path)
 	payload := build_php_request_object(req, map[string]string{})
-	return dispatch_php_pipeline_raw(app, path, vphp.BorrowedZVal.from_zval(payload),
+	return dispatch_php_pipeline_raw(app, path, vphp.RequestBorrowedZBox.from_zval(payload),
 		RawDispatchPlan{
 		route_params:  map[string]string{}
 		terminal_meta: terminal_meta
@@ -40,7 +40,7 @@ fn pipeline_request_context_with_payload(ctx PipelineRequestContext, payload vph
 	return new_pipeline_request_context(ctx.path, payload, ctx.route_params)
 }
 
-fn build_handler_not_callable_raw_response(app &VSlimApp, request_payload vphp.BorrowedZVal, msg string) vphp.ZVal {
+fn build_handler_not_callable_raw_response(app &VSlimApp, request_payload vphp.RequestBorrowedZBox, msg string) vphp.ZVal {
 	ctx := new_pipeline_request_context(RoutePath.normalize('/'),
 		request_payload.clone_request_owned(), route_params_from_payload(request_payload))
 	return build_handler_not_callable_raw_response_with_context(app, ctx, msg)
@@ -129,7 +129,7 @@ fn dispatch_plan_from_payload_raw(app &VSlimApp, ctx PipelineRequestContext, rou
 	return raw_res, middleware_payload
 }
 
-fn dispatch_php_pipeline_raw(app &VSlimApp, path string, initial_payload vphp.BorrowedZVal, plan RawDispatchPlan) (vphp.ZVal, vphp.RequestOwnedZBox) {
+fn dispatch_php_pipeline_raw(app &VSlimApp, path string, initial_payload vphp.RequestBorrowedZBox, plan RawDispatchPlan) (vphp.ZVal, vphp.RequestOwnedZBox) {
 	initial_ctx := new_pipeline_request_context(path, initial_payload.clone_request_owned(),
 		plan.route_params)
 	effective_ctx, early_raw, halted := apply_before_stage_raw(app, initial_ctx)
@@ -141,7 +141,7 @@ fn dispatch_php_pipeline_raw(app &VSlimApp, path string, initial_payload vphp.Bo
 }
 
 fn finalize_raw_response(app &VSlimApp, ctx PipelineRequestContext, raw_res vphp.ZVal) VSlimResponse {
-	res := normalize_or_handle_error_with_context(app, ctx, vphp.BorrowedZVal.from_zval(raw_res),
+	res := normalize_or_handle_error_with_context(app, ctx, vphp.RequestBorrowedZBox.from_zval(raw_res),
 		500, 'Invalid route response')
 	return finalize_php_response(app, ctx, res)
 }
@@ -156,7 +156,7 @@ fn finalize_raw_response_for_psr(app &VSlimApp, ctx PipelineRequestContext, raw_
 }
 
 fn finalize_raw_response_for_worker(app &VSlimApp, ctx PipelineRequestContext, raw_res vphp.ZVal) (vphp.ZVal, VSlimRequest) {
-	if is_worker_stream_response_borrowed(vphp.BorrowedZVal.from_zval(raw_res)) {
+	if is_worker_stream_response_borrowed(vphp.RequestBorrowedZBox.from_zval(raw_res)) {
 		return raw_res, request_snapshot_from_payload(ctx.payload_ref.borrowed(), ctx.route_params)
 	}
 	res, snapshot := finalize_raw_response_with_snapshot(app, ctx, raw_res)

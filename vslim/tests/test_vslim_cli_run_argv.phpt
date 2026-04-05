@@ -49,11 +49,39 @@ file_put_contents($bootstrapFile, <<<'PHP'
 <?php
 declare(strict_types=1);
 
+if (!function_exists('vslim_cli_string_handler')) {
+    function vslim_cli_string_handler(array $args, VSlim\Cli\App $runtime): int
+    {
+        echo 'string|', implode(',', $args), '|', ($runtime->hasCommand('inline:string') ? 'registered' : 'missing'), PHP_EOL;
+        return count($args) + 20;
+    }
+}
+
+if (!class_exists('VslimCliStaticHandler', false)) {
+    final class VslimCliStaticHandler
+    {
+        public static function handle(array $args, VSlim\Cli\App $runtime): int
+        {
+            echo 'static|', implode(',', $args), '|', ($runtime->hasCommand('inline:static') ? 'registered' : 'missing'), PHP_EOL;
+            return count($args) + 30;
+        }
+    }
+}
+
 return function (VSlim\Cli\App $cli): void {
     $cli->command('inline:echo', function (array $args, VSlim\Cli\App $runtime): int {
         echo 'inline|', implode(',', $args), '|', ($runtime->hasCommand('inline:echo') ? 'registered' : 'missing'), PHP_EOL;
         return count($args);
     });
+    $cli->command('inline:array', [new class {
+        public function handle(array $args, VSlim\Cli\App $runtime): int
+        {
+            echo 'array|', implode(',', $args), '|', ($runtime->hasCommand('inline:array') ? 'registered' : 'missing'), PHP_EOL;
+            return count($args) + 10;
+        }
+    }, 'handle']);
+    $cli->command('inline:string', 'vslim_cli_string_handler');
+    $cli->command('inline:static', [VslimCliStaticHandler::class, 'handle']);
 };
 PHP);
 
@@ -62,6 +90,24 @@ ob_start();
 $fileCode = $fileCli->runArgv(['php', '--bootstrap-file', $bootstrapFile, 'inline:echo', 'x', 'y']);
 $fileOutput = trim((string) ob_get_clean());
 echo $fileCode, '|', $fileOutput, PHP_EOL;
+
+$fileCli2 = new VSlim\Cli\App();
+ob_start();
+$fileCode2 = $fileCli2->runArgv(['php', '--bootstrap-file', $bootstrapFile, 'inline:array', 'm', 'n']);
+$fileOutput2 = trim((string) ob_get_clean());
+echo $fileCode2, '|', $fileOutput2, PHP_EOL;
+
+$fileCli3 = new VSlim\Cli\App();
+ob_start();
+$fileCode3 = $fileCli3->runArgv(['php', '--bootstrap-file', $bootstrapFile, 'inline:string', 'p', 'q']);
+$fileOutput3 = trim((string) ob_get_clean());
+echo $fileCode3, '|', $fileOutput3, PHP_EOL;
+
+$fileCli4 = new VSlim\Cli\App();
+ob_start();
+$fileCode4 = $fileCli4->runArgv(['php', '--bootstrap-file', $bootstrapFile, 'inline:static', 'u', 'v']);
+$fileOutput4 = trim((string) ob_get_clean());
+echo $fileCode4, '|', $fileOutput4, PHP_EOL;
 @unlink($bootstrapFile);
 ?>
 --EXPECT--
@@ -116,3 +162,6 @@ Notes:
   This command runs against the same app container and config graph as HTTP bootstrap.
 0|topic_yes|format_yes|examples_yes|epilog_yes
 2|inline|x,y|registered
+12|array|m,n|registered
+22|string|p,q|registered
+32|static|u,v|registered

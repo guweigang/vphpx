@@ -17,7 +17,7 @@ fn build_php_psr15_next_handler_object(chain &MiddlewareChain) vphp.ZVal {
 	}
 }
 
-fn dispatch_php_middleware_chain(app &VSlimApp, path string, payload vphp.BorrowedZVal, route_middle []vphp.RequestOwnedZBox, route_handler vphp.PersistentOwnedZVal, resource_action string, resource_missing_handler vphp.PersistentOwnedZVal, route_params map[string]string) !(vphp.ZVal, vphp.RequestOwnedZBox) {
+fn dispatch_php_middleware_chain(app &VSlimApp, path string, payload vphp.RequestBorrowedZBox, route_middle []vphp.RequestOwnedZBox, route_handler vphp.PersistentOwnedZBox, resource_action string, resource_missing_handler vphp.PersistentOwnedZBox, route_params map[string]string) !(vphp.ZVal, vphp.RequestOwnedZBox) {
 	return dispatch_php_middleware_chain_with_plan(app, path, payload, route_middle, RawDispatchPlan{
 		route_params:             route_params.clone()
 		route_handler:            route_handler.clone_persistent_owned()
@@ -26,14 +26,14 @@ fn dispatch_php_middleware_chain(app &VSlimApp, path string, payload vphp.Borrow
 	})
 }
 
-fn dispatch_php_middleware_chain_terminal(app &VSlimApp, path string, payload vphp.BorrowedZVal, route_middle []vphp.RequestOwnedZBox, route_params map[string]string, terminal_meta MiddlewareTerminalMeta) !(vphp.ZVal, vphp.RequestOwnedZBox) {
+fn dispatch_php_middleware_chain_terminal(app &VSlimApp, path string, payload vphp.RequestBorrowedZBox, route_middle []vphp.RequestOwnedZBox, route_params map[string]string, terminal_meta MiddlewareTerminalMeta) !(vphp.ZVal, vphp.RequestOwnedZBox) {
 	return dispatch_php_middleware_chain_with_plan(app, path, payload, route_middle, RawDispatchPlan{
 		route_params:  route_params.clone()
 		terminal_meta: terminal_meta
 	})
 }
 
-fn dispatch_php_middleware_chain_with_plan(app &VSlimApp, path string, payload vphp.BorrowedZVal, route_middle []vphp.RequestOwnedZBox, plan RawDispatchPlan) !(vphp.ZVal, vphp.RequestOwnedZBox) {
+fn dispatch_php_middleware_chain_with_plan(app &VSlimApp, path string, payload vphp.RequestBorrowedZBox, route_middle []vphp.RequestOwnedZBox, plan RawDispatchPlan) !(vphp.ZVal, vphp.RequestOwnedZBox) {
 	request_ctx := new_pipeline_request_context(path, payload.clone_request_owned(), plan.route_params)
 	return dispatch_php_middleware_chain_with_context(app, request_ctx, route_middle, plan)
 }
@@ -71,9 +71,9 @@ fn dispatch_php_middleware_chain_with_context(app &VSlimApp, ctx PipelineRequest
 	return raw, ctx.payload_ref.clone_request_owned()
 }
 
-fn (mut chain MiddlewareChain) dispatch(payload vphp.BorrowedZVal) !vphp.ZVal {
+fn (mut chain MiddlewareChain) dispatch(payload vphp.RequestBorrowedZBox) !vphp.ZVal {
 	normalized := normalize_psr15_server_request_payload(payload, chain.request_ctx.route_params)
-	if snapshot := snapshot_phase_forwarded_request(vphp.BorrowedZVal.from_zval(normalized)) {
+	if snapshot := snapshot_phase_forwarded_request(vphp.RequestBorrowedZBox.from_zval(normalized)) {
 		store_forwarded_request_snapshot(forwarded_request_key(chain), snapshot)
 	}
 	effective_ctx := pipeline_request_context_with_payload(chain.request_ctx,
@@ -141,7 +141,7 @@ fn apply_php_after_middlewares(app &VSlimApp, ctx PipelineRequestContext, initia
 			msg := if err.msg() == '' { 'Middleware is not callable' } else { err.msg() }
 			return error_response_from_context(app, ctx, 500, msg, 'handler_not_callable')
 		}
-		raw_borrowed := vphp.BorrowedZVal.from_zval(raw)
+		raw_borrowed := vphp.RequestBorrowedZBox.from_zval(raw)
 		res, ok := normalize_php_route_response_borrowed(raw_borrowed)
 		if ok {
 			current = res

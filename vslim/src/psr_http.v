@@ -689,7 +689,7 @@ pub fn (mut r VSlimPsr7ServerRequest) construct() &VSlimPsr7ServerRequest {
 		r.attributes_ref = empty_persistent_array()
 	}
 	if !r.parsed_body_ref.is_valid() {
-		r.parsed_body_ref = vphp.PersistentOwnedZVal.new_null()
+		r.parsed_body_ref = vphp.PersistentOwnedZBox.new_null()
 	}
 	return &r
 }
@@ -1225,7 +1225,7 @@ fn new_psr7_server_request(method string, uri_input vphp.ZVal, server_params_inp
 		cookie_params_ref: empty_persistent_array()
 		query_params_ref: string_map_to_persistent_array(VSlimRequest.parse_query(normalize_psr7_query(uri.query)))
 		uploaded_files_ref: empty_persistent_array()
-		parsed_body_ref: vphp.PersistentOwnedZVal.new_null()
+		parsed_body_ref: vphp.PersistentOwnedZBox.new_null()
 		attributes_ref: empty_persistent_array()
 	}
 }
@@ -1303,7 +1303,7 @@ fn clone_psr7_request(r &VSlimPsr7Request, method string, request_target string,
 	}
 }
 
-fn clone_psr7_server_request(r &VSlimPsr7ServerRequest, method string, request_target string, protocol_version string, headers map[string][]string, header_names map[string]string, body &VSlimPsr7Stream, uri &VSlimPsr7Uri, server_params_ref vphp.PersistentOwnedZVal, cookie_params_ref vphp.PersistentOwnedZVal, query_params_ref vphp.PersistentOwnedZVal, uploaded_files_ref vphp.PersistentOwnedZVal, parsed_body_ref vphp.PersistentOwnedZVal, attributes_ref vphp.PersistentOwnedZVal) &VSlimPsr7ServerRequest {
+fn clone_psr7_server_request(r &VSlimPsr7ServerRequest, method string, request_target string, protocol_version string, headers map[string][]string, header_names map[string]string, body &VSlimPsr7Stream, uri &VSlimPsr7Uri, server_params_ref vphp.PersistentOwnedZBox, cookie_params_ref vphp.PersistentOwnedZBox, query_params_ref vphp.PersistentOwnedZBox, uploaded_files_ref vphp.PersistentOwnedZBox, parsed_body_ref vphp.PersistentOwnedZBox, attributes_ref vphp.PersistentOwnedZBox) &VSlimPsr7ServerRequest {
 	return &VSlimPsr7ServerRequest{
 		method: method
 		request_target: request_target
@@ -1408,15 +1408,15 @@ fn zval_to_string_map(value vphp.ZVal) map[string]string {
 	return value.to_string_map()
 }
 
-fn string_map_to_persistent_array(values map[string]string) vphp.PersistentOwnedZVal {
+fn string_map_to_persistent_array(values map[string]string) vphp.PersistentOwnedZBox {
 	mut out := new_array_zval()
 	for key, value in values {
 		add_assoc_zval(out, key, vphp.RequestOwnedZBox.new_string(value).to_zval())
 	}
-	return vphp.PersistentOwnedZVal.from_value_zval(out)
+	return vphp.PersistentOwnedZBox.from_mixed_zval(out)
 }
 
-fn persistent_array_or_empty_zval(value vphp.PersistentOwnedZVal) vphp.ZVal {
+fn persistent_array_or_empty_zval(value vphp.PersistentOwnedZBox) vphp.ZVal {
 	if !value.is_valid() || value.is_null() || value.is_undef() || !value.is_array() {
 		return new_array_zval()
 	}
@@ -1425,7 +1425,7 @@ fn persistent_array_or_empty_zval(value vphp.PersistentOwnedZVal) vphp.ZVal {
 	})
 }
 
-fn persistent_array_to_string_map(value vphp.PersistentOwnedZVal) map[string]string {
+fn persistent_array_to_string_map(value vphp.PersistentOwnedZBox) map[string]string {
 	if !value.is_valid() || value.is_null() || value.is_undef() || !value.is_array() {
 		return map[string]string{}
 	}
@@ -1496,25 +1496,25 @@ fn zval_to_optional_trimmed_string(value vphp.ZVal) ?string {
 	return value.to_string().trim_space()
 }
 
-fn empty_persistent_array() vphp.PersistentOwnedZVal {
-	return vphp.PersistentOwnedZVal.from_dyn(vphp.dyn_value_map(map[string]vphp.DynValue{}))
+fn empty_persistent_array() vphp.PersistentOwnedZBox {
+	return vphp.PersistentOwnedZBox.from_dyn(vphp.dyn_value_map(map[string]vphp.DynValue{}))
 }
 
-fn persistent_array_owned(value vphp.ZVal) vphp.PersistentOwnedZVal {
+fn persistent_array_owned(value vphp.ZVal) vphp.PersistentOwnedZBox {
 	if value.is_valid() && !value.is_null() && !value.is_undef() && value.is_array() {
-		return vphp.PersistentOwnedZVal.from_value_zval(value)
+		return vphp.PersistentOwnedZBox.from_mixed_zval(value)
 	}
 	return empty_persistent_array()
 }
 
-fn persistent_owned_or_null(value vphp.ZVal) vphp.PersistentOwnedZVal {
+fn persistent_owned_or_null(value vphp.ZVal) vphp.PersistentOwnedZBox {
 	if value.is_valid() && !value.is_undef() {
-		return vphp.PersistentOwnedZVal.from_value_zval(value)
+		return vphp.PersistentOwnedZBox.from_mixed_zval(value)
 	}
-	return vphp.PersistentOwnedZVal.new_null()
+	return vphp.PersistentOwnedZBox.new_null()
 }
 
-fn persistent_or_null(value vphp.PersistentOwnedZVal) vphp.ZVal {
+fn persistent_or_null(value vphp.PersistentOwnedZBox) vphp.ZVal {
 	if !value.is_valid() || value.is_undef() {
 		return vphp.ZVal.new_null()
 	}
@@ -1523,7 +1523,7 @@ fn persistent_or_null(value vphp.PersistentOwnedZVal) vphp.ZVal {
 	})
 }
 
-fn persistent_assoc_zvals(value vphp.PersistentOwnedZVal) map[string]vphp.ZVal {
+fn persistent_assoc_zvals(value vphp.PersistentOwnedZBox) map[string]vphp.ZVal {
 	if !value.is_valid() || value.is_null() || value.is_undef() || !value.is_array() {
 		return map[string]vphp.ZVal{}
 	}
@@ -1532,10 +1532,10 @@ fn persistent_assoc_zvals(value vphp.PersistentOwnedZVal) map[string]vphp.ZVal {
 	})
 }
 
-fn persistent_assoc_with_value(value vphp.PersistentOwnedZVal, key string, child vphp.ZVal) vphp.PersistentOwnedZVal {
+fn persistent_assoc_with_value(value vphp.PersistentOwnedZBox, key string, child vphp.ZVal) vphp.PersistentOwnedZBox {
 	mut out := new_array_zval()
 	if key == '' {
-		return vphp.PersistentOwnedZVal.from_value_zval(out)
+		return vphp.PersistentOwnedZBox.from_mixed_zval(out)
 	}
 	if value.is_valid() && !value.is_null() && !value.is_undef() && value.is_array() {
 		value.with_request_zval(fn [mut out] (raw vphp.ZVal) bool {
@@ -1546,10 +1546,10 @@ fn persistent_assoc_with_value(value vphp.PersistentOwnedZVal, key string, child
 		})
 	}
 	add_assoc_zval(out, key, child)
-	return vphp.PersistentOwnedZVal.from_value_zval(out)
+	return vphp.PersistentOwnedZBox.from_mixed_zval(out)
 }
 
-fn persistent_assoc_without_key(value vphp.PersistentOwnedZVal, key string) vphp.PersistentOwnedZVal {
+fn persistent_assoc_without_key(value vphp.PersistentOwnedZBox, key string) vphp.PersistentOwnedZBox {
 	mut out := new_array_zval()
 	if value.is_valid() && !value.is_null() && !value.is_undef() && value.is_array() {
 		value.with_request_zval(fn [mut out, key] (raw vphp.ZVal) bool {
@@ -1562,7 +1562,7 @@ fn persistent_assoc_without_key(value vphp.PersistentOwnedZVal, key string) vphp
 			return true
 		})
 	}
-	return vphp.PersistentOwnedZVal.from_value_zval(out)
+	return vphp.PersistentOwnedZBox.from_mixed_zval(out)
 }
 
 fn normalize_uploaded_file_error(code int) int {
@@ -1609,7 +1609,7 @@ fn uploaded_files_tree_is_valid(value vphp.ZVal) bool {
 	return true
 }
 
-fn normalize_uploaded_files_tree(value vphp.ZVal) vphp.PersistentOwnedZVal {
+fn normalize_uploaded_files_tree(value vphp.ZVal) vphp.PersistentOwnedZBox {
 	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return empty_persistent_array()
 	}
@@ -1618,7 +1618,7 @@ fn normalize_uploaded_files_tree(value vphp.ZVal) vphp.PersistentOwnedZVal {
 			'uploaded files must be an array tree of UploadedFileInterface instances', 0)
 		return empty_persistent_array()
 	}
-	return vphp.PersistentOwnedZVal.from_value_zval(value)
+	return vphp.PersistentOwnedZBox.from_mixed_zval(value)
 }
 
 fn normalize_psr7_header_name(name string) string {

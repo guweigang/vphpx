@@ -327,7 +327,7 @@ pub fn (mut form VSlimLiveForm) validate(validator vphp.RequestBorrowedZBox) &VS
 		mut errors_owned := false
 		if validator.is_valid() && !validator.is_null() && !validator.is_undef() {
 			if validator.is_callable() {
-				mut result := vphp.call_request_owned_zval(validator.to_zval(), [
+				mut result := vphp.call_request_owned_box(validator.to_zval(), [
 					form.data().to_zval(),
 				])
 				errors_z = result.take_zval()

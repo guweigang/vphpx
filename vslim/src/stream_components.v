@@ -236,7 +236,7 @@ pub fn (c &VSlimStreamOllamaClient) text_response_from_request(request_payload v
 		vphp.RequestOwnedZBox.new_string('text/plain; charset=utf-8').to_zval(),
 		headers,
 	]))
-	propagate_request_trace_headers_to_object(req, vphp.BorrowedZVal.from_zval(response.to_zval()))
+	propagate_request_trace_headers_to_object(req, vphp.RequestBorrowedZBox.from_zval(response.to_zval()))
 	return response
 }
 
@@ -257,13 +257,13 @@ pub fn (c &VSlimStreamOllamaClient) sse_response_from_request(request_payload vp
 		vphp.RequestOwnedZBox.new_int(200).to_zval(),
 		headers,
 	]))
-	propagate_request_trace_headers_to_object(req, vphp.BorrowedZVal.from_zval(response.to_zval()))
+	propagate_request_trace_headers_to_object(req, vphp.RequestBorrowedZBox.from_zval(response.to_zval()))
 	return response
 }
 
 fn normalize_ollama_source_request(payload vphp.RequestBorrowedZBox) &VSlimRequest {
 	raw := payload.to_zval()
-	return new_vslim_request_from_psr_server_request(vphp.BorrowedZVal.from_zval(raw), route_params_from_payload(vphp.BorrowedZVal.from_zval(raw)))
+	return new_vslim_request_from_psr_server_request(vphp.RequestBorrowedZBox.from_zval(raw), route_params_from_payload(vphp.RequestBorrowedZBox.from_zval(raw)))
 }
 
 fn (c &VSlimStreamOllamaClient) payload_from_vslim_request(req &VSlimRequest) vphp.RequestOwnedZBox {

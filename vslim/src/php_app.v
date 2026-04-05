@@ -134,8 +134,8 @@ fn vslim_probe_object(obj vphp.RequestBorrowedZBox, class_name string, method_na
 @[php_method]
 pub fn VSlimApp.demo() &VSlimApp {
 	return &VSlimApp{
-		not_found_handler: vphp.PersistentOwnedZVal.new_null()
-		error_handler:     vphp.PersistentOwnedZVal.new_null()
+		not_found_handler: vphp.PersistentOwnedZBox.new_null()
+		error_handler:     vphp.PersistentOwnedZBox.new_null()
 		use_demo:          true
 	}
 }

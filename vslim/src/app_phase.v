@@ -2,9 +2,9 @@ module main
 
 import vphp
 
-fn dispatch_php_phase_middleware_raw(app &VSlimApp, payload vphp.BorrowedZVal, route_params map[string]string, handler vphp.BorrowedZVal, next_handler vphp.ZVal) !vphp.ZVal {
+fn dispatch_php_phase_middleware_raw(app &VSlimApp, payload vphp.RequestBorrowedZBox, route_params map[string]string, handler vphp.RequestBorrowedZBox, next_handler vphp.ZVal) !vphp.ZVal {
 	target := resolve_php_phase_middleware_target(app, handler)!
-	mut result := vphp.method_request_owned_zval(target, 'process', [
+	mut result := vphp.method_request_owned_box(target, 'process', [
 		normalize_psr15_server_request_payload(payload, route_params),
 		next_handler,
 	])
@@ -19,7 +19,7 @@ fn is_internal_phase_continue_response(result vphp.ZVal) bool {
 	return res.status == 299 && (res.headers['x-vslim-continue'] or { '' }) == '1'
 }
 
-fn build_before_phase_dispatch_result(payload vphp.BorrowedZVal, route_params map[string]string, cont &VSlimPsr15ContinueHandler, raw vphp.ZVal) PhaseMiddlewareDispatchResult {
+fn build_before_phase_dispatch_result(payload vphp.RequestBorrowedZBox, route_params map[string]string, cont &VSlimPsr15ContinueHandler, raw vphp.ZVal) PhaseMiddlewareDispatchResult {
 	continued := cont.state.has_forwarded_request && is_internal_phase_continue_response(raw)
 	return PhaseMiddlewareDispatchResult{
 		raw_response_ref: vphp.RequestOwnedZBox.from_zval(raw)
@@ -28,14 +28,14 @@ fn build_before_phase_dispatch_result(payload vphp.BorrowedZVal, route_params ma
 	}
 }
 
-fn dispatch_php_before_phase_middleware(app &VSlimApp, payload vphp.BorrowedZVal, route_params map[string]string, handler vphp.BorrowedZVal) !PhaseMiddlewareDispatchResult {
+fn dispatch_php_before_phase_middleware(app &VSlimApp, payload vphp.RequestBorrowedZBox, route_params map[string]string, handler vphp.RequestBorrowedZBox) !PhaseMiddlewareDispatchResult {
 	mut cont := &VSlimPsr15ContinueHandler{}
 	next_handler := build_php_psr15_continue_handler_object(cont)
 	raw := dispatch_php_phase_middleware_raw(app, payload, route_params, handler, next_handler)!
 	return build_before_phase_dispatch_result(payload, route_params, cont, raw)
 }
 
-fn apply_php_before_middlewares(app &VSlimApp, path string, payload vphp.BorrowedZVal) !VSlimBeforeMiddlewareResult {
+fn apply_php_before_middlewares(app &VSlimApp, path string, payload vphp.RequestBorrowedZBox) !VSlimBeforeMiddlewareResult {
 	group_before := matching_group_before_middlewares(app, path)
 	if app.php_before_middlewares.len == 0 && group_before.len == 0 {
 		return VSlimBeforeMiddlewareResult{

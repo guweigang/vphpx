@@ -176,7 +176,7 @@ fn apply_bootstrap_file_result(mut app VSlimApp, path string, value vphp.ZVal) !
 		return error(bootstrap_file_return_error(path))
 	}
 	if value.is_callable() {
-		mut result := vphp.call_request_owned_zval(value, [app_self_zval(&app)])
+		mut result := vphp.call_request_owned_box(value, [app_self_zval(&app)])
 		defer {
 			result.release()
 		}
@@ -210,7 +210,7 @@ fn normalize_app_bootstrap_middleware_items(raw vphp.ZVal, kind MiddlewareRegist
 	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
 		return error('bootstrap ${label} must not be null')
 	}
-	borrowed := vphp.BorrowedZVal.from_zval(raw)
+	borrowed := vphp.RequestBorrowedZBox.from_zval(raw)
 	if raw.is_string() || is_supported_php_middleware_handler(borrowed) {
 		if !is_supported_registration_kind(kind, borrowed) {
 			return error('bootstrap ${label} must contain valid middleware registrations')
@@ -228,7 +228,7 @@ fn normalize_app_bootstrap_middleware_items(raw vphp.ZVal, kind MiddlewareRegist
 		mut items := []vphp.ZVal{}
 		for idx := 0; idx < raw.array_count(); idx++ {
 			item := raw.array_get(idx)
-			if !is_supported_registration_kind(kind, vphp.BorrowedZVal.from_zval(item)) {
+			if !is_supported_registration_kind(kind, vphp.RequestBorrowedZBox.from_zval(item)) {
 				return error('bootstrap ${label} entries must be middleware registrations')
 			}
 			items << item

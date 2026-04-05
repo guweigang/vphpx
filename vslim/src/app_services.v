@@ -157,7 +157,7 @@ pub fn (mut app VSlimApp) set_clock(clock vphp.RequestBorrowedZBox) &VSlimApp {
 	}
 	mut old := app.clock_ref
 	old.release()
-	app.clock_ref = vphp.PersistentOwnedZVal.from_value_zval(clock.to_zval())
+	app.clock_ref = vphp.PersistentOwnedZBox.from_object_zval(clock.to_zval())
 	app.sync_clock_dependent_services()
 	app.sync_clock_service_to_container()
 	return app

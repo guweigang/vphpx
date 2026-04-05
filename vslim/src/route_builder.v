@@ -91,7 +91,7 @@ pub fn (mut app VSlimApp) websocket_named(name string, pattern string, handler v
 
 @[php_method]
 pub fn (mut app VSlimApp) map(methods vphp.RequestBorrowedZBox, pattern string, handler vphp.RequestBorrowedZBox) &VSlimApp {
-	for method in normalize_methods(vphp.BorrowedZVal.from_zval(methods.to_zval())) {
+	for method in normalize_methods(vphp.RequestBorrowedZBox.from_zval(methods.to_zval())) {
 		app.add_php_route(method, '', pattern, handler.to_zval())
 	}
 	return app
@@ -123,28 +123,28 @@ pub fn (mut app VSlimApp) api_singleton(resource_path string, controller string)
 
 @[php_method]
 pub fn (mut app VSlimApp) resource_opts(resource_path string, controller string, options vphp.RequestBorrowedZBox) &VSlimApp {
-	opts := parse_resource_options(vphp.BorrowedZVal.from_zval(options.to_zval()))
+	opts := parse_resource_options(vphp.RequestBorrowedZBox.from_zval(options.to_zval()))
 	register_resource_routes_with_options(mut app, resource_path, controller, true, opts)
 	return app
 }
 
 @[php_method]
 pub fn (mut app VSlimApp) api_resource_opts(resource_path string, controller string, options vphp.RequestBorrowedZBox) &VSlimApp {
-	opts := parse_resource_options(vphp.BorrowedZVal.from_zval(options.to_zval()))
+	opts := parse_resource_options(vphp.RequestBorrowedZBox.from_zval(options.to_zval()))
 	register_resource_routes_with_options(mut app, resource_path, controller, false, opts)
 	return app
 }
 
 @[php_method]
 pub fn (mut app VSlimApp) singleton_opts(resource_path string, controller string, options vphp.RequestBorrowedZBox) &VSlimApp {
-	opts := parse_resource_options(vphp.BorrowedZVal.from_zval(options.to_zval()))
+	opts := parse_resource_options(vphp.RequestBorrowedZBox.from_zval(options.to_zval()))
 	register_singleton_routes_with_options(mut app, resource_path, controller, true, opts)
 	return app
 }
 
 @[php_method]
 pub fn (mut app VSlimApp) api_singleton_opts(resource_path string, controller string, options vphp.RequestBorrowedZBox) &VSlimApp {
-	opts := parse_resource_options(vphp.BorrowedZVal.from_zval(options.to_zval()))
+	opts := parse_resource_options(vphp.RequestBorrowedZBox.from_zval(options.to_zval()))
 	register_singleton_routes_with_options(mut app, resource_path, controller, false,
 		opts)
 	return app
@@ -200,7 +200,7 @@ pub fn (mut app VSlimApp) any_named(name string, pattern string, handler vphp.Re
 
 @[php_method]
 pub fn (mut app VSlimApp) map_named(methods vphp.RequestBorrowedZBox, name string, pattern string, handler vphp.RequestBorrowedZBox) &VSlimApp {
-	for method in normalize_methods(vphp.BorrowedZVal.from_zval(methods.to_zval())) {
+	for method in normalize_methods(vphp.RequestBorrowedZBox.from_zval(methods.to_zval())) {
 		app.add_php_route(method, name, pattern, handler.to_zval())
 	}
 	return app
@@ -328,7 +328,7 @@ pub fn (group &RouteGroup) websocket(pattern string, handler vphp.RequestBorrowe
 pub fn (group &RouteGroup) map(methods vphp.RequestBorrowedZBox, pattern string, handler vphp.RequestBorrowedZBox) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		for method in normalize_methods(vphp.BorrowedZVal.from_zval(methods.to_zval())) {
+		for method in normalize_methods(vphp.RequestBorrowedZBox.from_zval(methods.to_zval())) {
 			app.add_php_route(method, '', group.prefixed_pattern(pattern), handler.to_zval())
 		}
 	}
@@ -379,7 +379,7 @@ pub fn (group &RouteGroup) api_singleton(resource_path string, controller string
 pub fn (group &RouteGroup) resource_opts(resource_path string, controller string, options vphp.RequestBorrowedZBox) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		opts := parse_resource_options(vphp.BorrowedZVal.from_zval(options.to_zval()))
+		opts := parse_resource_options(vphp.RequestBorrowedZBox.from_zval(options.to_zval()))
 		register_resource_routes_with_options(mut app, group.prefixed_pattern(resource_path),
 			controller, true, opts)
 	}
@@ -390,7 +390,7 @@ pub fn (group &RouteGroup) resource_opts(resource_path string, controller string
 pub fn (group &RouteGroup) api_resource_opts(resource_path string, controller string, options vphp.RequestBorrowedZBox) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		opts := parse_resource_options(vphp.BorrowedZVal.from_zval(options.to_zval()))
+		opts := parse_resource_options(vphp.RequestBorrowedZBox.from_zval(options.to_zval()))
 		register_resource_routes_with_options(mut app, group.prefixed_pattern(resource_path),
 			controller, false, opts)
 	}
@@ -401,7 +401,7 @@ pub fn (group &RouteGroup) api_resource_opts(resource_path string, controller st
 pub fn (group &RouteGroup) singleton_opts(resource_path string, controller string, options vphp.RequestBorrowedZBox) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		opts := parse_resource_options(vphp.BorrowedZVal.from_zval(options.to_zval()))
+		opts := parse_resource_options(vphp.RequestBorrowedZBox.from_zval(options.to_zval()))
 		register_singleton_routes_with_options(mut app, group.prefixed_pattern(resource_path),
 			controller, true, opts)
 	}
@@ -412,7 +412,7 @@ pub fn (group &RouteGroup) singleton_opts(resource_path string, controller strin
 pub fn (group &RouteGroup) api_singleton_opts(resource_path string, controller string, options vphp.RequestBorrowedZBox) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		opts := parse_resource_options(vphp.BorrowedZVal.from_zval(options.to_zval()))
+		opts := parse_resource_options(vphp.RequestBorrowedZBox.from_zval(options.to_zval()))
 		register_singleton_routes_with_options(mut app, group.prefixed_pattern(resource_path),
 			controller, false, opts)
 	}
@@ -504,7 +504,7 @@ pub fn (group &RouteGroup) websocket_named(name string, pattern string, handler 
 pub fn (group &RouteGroup) map_named(methods vphp.RequestBorrowedZBox, name string, pattern string, handler vphp.RequestBorrowedZBox) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		for method in normalize_methods(vphp.BorrowedZVal.from_zval(methods.to_zval())) {
+		for method in normalize_methods(vphp.RequestBorrowedZBox.from_zval(methods.to_zval())) {
 			app.add_php_route(method, name, group.prefixed_pattern(pattern), handler.to_zval())
 		}
 	}
@@ -513,15 +513,15 @@ pub fn (group &RouteGroup) map_named(methods vphp.RequestBorrowedZBox, name stri
 
 @[php_method]
 pub fn (app &VSlimApp) url_for(name string, params vphp.RequestBorrowedZBox) string {
-	return app.url_for_query_borrowed(name, vphp.BorrowedZVal.from_zval(params.to_zval()), vphp.BorrowedZVal.null())
+	return app.url_for_query_borrowed(name, vphp.RequestBorrowedZBox.from_zval(params.to_zval()), vphp.RequestBorrowedZBox.null())
 }
 
 @[php_method]
 pub fn (app &VSlimApp) url_for_query(name string, params vphp.RequestBorrowedZBox, query vphp.RequestBorrowedZBox) string {
-	return app.url_for_query_borrowed(name, vphp.BorrowedZVal.from_zval(params.to_zval()), vphp.BorrowedZVal.from_zval(query.to_zval()))
+	return app.url_for_query_borrowed(name, vphp.RequestBorrowedZBox.from_zval(params.to_zval()), vphp.RequestBorrowedZBox.from_zval(query.to_zval()))
 }
 
-fn (app &VSlimApp) url_for_query_borrowed(name string, params vphp.BorrowedZVal, query vphp.BorrowedZVal) string {
+fn (app &VSlimApp) url_for_query_borrowed(name string, params vphp.RequestBorrowedZBox, query vphp.RequestBorrowedZBox) string {
 	params_map := params.to_string_map()
 	query_map := query.to_string_map()
 	for route in app.routes {
@@ -535,17 +535,17 @@ fn (app &VSlimApp) url_for_query_borrowed(name string, params vphp.BorrowedZVal,
 
 @[php_method]
 pub fn (app &VSlimApp) url_for_abs(name string, params vphp.RequestBorrowedZBox, scheme string, host string) string {
-	return app.url_for_query_abs_borrowed(name, vphp.BorrowedZVal.from_zval(params.to_zval()), vphp.BorrowedZVal.null(),
+	return app.url_for_query_abs_borrowed(name, vphp.RequestBorrowedZBox.from_zval(params.to_zval()), vphp.RequestBorrowedZBox.null(),
 		scheme, host)
 }
 
 @[php_method]
 pub fn (app &VSlimApp) url_for_query_abs(name string, params vphp.RequestBorrowedZBox, query vphp.RequestBorrowedZBox, scheme string, host string) string {
-	return app.url_for_query_abs_borrowed(name, vphp.BorrowedZVal.from_zval(params.to_zval()), vphp.BorrowedZVal.from_zval(query.to_zval()),
+	return app.url_for_query_abs_borrowed(name, vphp.RequestBorrowedZBox.from_zval(params.to_zval()), vphp.RequestBorrowedZBox.from_zval(query.to_zval()),
 		scheme, host)
 }
 
-fn (app &VSlimApp) url_for_query_abs_borrowed(name string, params vphp.BorrowedZVal, query vphp.BorrowedZVal, scheme string, host string) string {
+fn (app &VSlimApp) url_for_query_abs_borrowed(name string, params vphp.RequestBorrowedZBox, query vphp.RequestBorrowedZBox, scheme string, host string) string {
 	path := app.url_for_query_borrowed(name, params, query)
 	if path == '' {
 		return ''
@@ -555,15 +555,15 @@ fn (app &VSlimApp) url_for_query_abs_borrowed(name string, params vphp.BorrowedZ
 
 @[php_method]
 pub fn (app &VSlimApp) redirect_to(name string, params vphp.RequestBorrowedZBox) &VSlimResponse {
-	return app.redirect_to_query_borrowed(name, vphp.BorrowedZVal.from_zval(params.to_zval()), vphp.BorrowedZVal.null())
+	return app.redirect_to_query_borrowed(name, vphp.RequestBorrowedZBox.from_zval(params.to_zval()), vphp.RequestBorrowedZBox.null())
 }
 
 @[php_method]
 pub fn (app &VSlimApp) redirect_to_query(name string, params vphp.RequestBorrowedZBox, query vphp.RequestBorrowedZBox) &VSlimResponse {
-	return app.redirect_to_query_borrowed(name, vphp.BorrowedZVal.from_zval(params.to_zval()), vphp.BorrowedZVal.from_zval(query.to_zval()))
+	return app.redirect_to_query_borrowed(name, vphp.RequestBorrowedZBox.from_zval(params.to_zval()), vphp.RequestBorrowedZBox.from_zval(query.to_zval()))
 }
 
-fn (app &VSlimApp) redirect_to_query_borrowed(name string, params vphp.BorrowedZVal, query vphp.BorrowedZVal) &VSlimResponse {
+fn (app &VSlimApp) redirect_to_query_borrowed(name string, params vphp.RequestBorrowedZBox, query vphp.RequestBorrowedZBox) &VSlimResponse {
 	location := app.url_for_query_borrowed(name, params, query)
 	mut res := &VSlimResponse{}
 	res.construct(302, '', 'text/plain; charset=utf-8')

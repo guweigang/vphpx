@@ -57,10 +57,10 @@ pub fn (mut app VSlimApp) helper(name string, handler vphp.RequestBorrowedZBox) 
 	}
 	ensure_view_helper_map(mut app.view_helpers)
 	if key in app.view_helpers {
-		mut existing := app.view_helpers[key] or { vphp.PersistentOwnedZVal.new_null() }
+		mut existing := app.view_helpers[key] or { vphp.PersistentOwnedZBox.new_null() }
 		release_view_helper(mut existing)
 	}
-	app.view_helpers[key] = vphp.PersistentOwnedZVal.from_value_zval(handler.to_zval())
+	app.view_helpers[key] = vphp.PersistentOwnedZBox.from_callable_zval(handler.to_zval())
 	return &app
 }
 
@@ -101,7 +101,7 @@ fn (mut host VSlimViewHost) view() &VSlimView {
 		base_path: ''
 		assets_prefix: '/assets'
 		cache_enabled: default_view_cache_enabled()
-		helpers: map[string]vphp.PersistentOwnedZVal{}
+		helpers: map[string]vphp.PersistentOwnedZBox{}
 	}
 	return host.view_ref
 }
@@ -169,7 +169,7 @@ pub fn (mut view VSlimView) construct(base_path string, assets_prefix string) &V
 	view.base_path = base_path.trim_space()
 	view.assets_prefix = normalize_assets_prefix(assets_prefix)
 	view.cache_enabled = default_view_cache_enabled()
-	view.helpers = map[string]vphp.PersistentOwnedZVal{}
+	view.helpers = map[string]vphp.PersistentOwnedZBox{}
 	return &view
 }
 
@@ -224,10 +224,10 @@ pub fn (mut view VSlimView) helper(name string, handler vphp.RequestBorrowedZBox
 	}
 	ensure_view_helper_map(mut view.helpers)
 	if key in view.helpers {
-		mut existing := view.helpers[key] or { vphp.PersistentOwnedZVal.new_null() }
+		mut existing := view.helpers[key] or { vphp.PersistentOwnedZBox.new_null() }
 		release_view_helper(mut existing)
 	}
-	view.helpers[key] = vphp.PersistentOwnedZVal.from_value_zval(handler.to_zval())
+	view.helpers[key] = vphp.PersistentOwnedZBox.from_callable_zval(handler.to_zval())
 	return &view
 }
 

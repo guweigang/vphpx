@@ -20,7 +20,7 @@ mut:
 	name_prefix     string
 	param_name      string                   = 'id'
 	shallow         bool
-	missing_handler vphp.PersistentOwnedZVal = vphp.PersistentOwnedZVal.new_null()
+	missing_handler vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 }
 
 fn register_resource_routes_with_options(mut app VSlimApp, raw_resource_path string, controller string, include_page_routes bool, options ResourceRouteOptions) {
@@ -166,7 +166,7 @@ fn resource_name_from_path(path string) string {
 	return clean.replace('/', '.')
 }
 
-fn parse_resource_options(options vphp.BorrowedZVal) ResourceRouteOptions {
+fn parse_resource_options(options vphp.RequestBorrowedZBox) ResourceRouteOptions {
 	mut out := ResourceRouteOptions{
 		only:            map[string]bool{}
 		except:          map[string]bool{}
@@ -174,7 +174,7 @@ fn parse_resource_options(options vphp.BorrowedZVal) ResourceRouteOptions {
 		name_prefix:     ''
 		param_name:      'id'
 		shallow:         false
-		missing_handler: vphp.PersistentOwnedZVal.new_null()
+		missing_handler: vphp.PersistentOwnedZBox.new_null()
 	}
 	if !options.is_valid() || !options.is_array() {
 		return out
@@ -195,7 +195,7 @@ fn parse_resource_options(options vphp.BorrowedZVal) ResourceRouteOptions {
 	}
 	missing_raw := options.to_zval().get('missing') or { vphp.ZVal.new_null() }
 	if missing_raw.is_valid() && missing_raw.is_callable() {
-		out.missing_handler = vphp.PersistentOwnedZVal.from_value_zval(missing_raw)
+		out.missing_handler = vphp.PersistentOwnedZBox.from_callable_zval(missing_raw)
 	}
 	for action in parse_action_list(only_raw) {
 		out.only[action] = true
