@@ -52,6 +52,7 @@ config/
   http.toml
   cli.toml
   cache.toml
+  database.toml
   logging.toml
   stream.toml
 ```
@@ -199,6 +200,13 @@ VSlim 的一些默认 service 也会优先吃配置：
 - `cache.default_ttl_seconds`
 - `cache.pool.prefix`
 - `cache.pool.default_ttl_seconds`
+- `database.driver`
+- `database.pool_size`
+- `database.mysql.host`
+- `database.mysql.port`
+- `database.mysql.username`
+- `database.mysql.password`
+- `database.mysql.database`
 - `stream.ollama.chat_url`
 - `stream.ollama.model`
 - `stream.ollama.api_key`
@@ -216,6 +224,7 @@ VSlim 的一些默认 service 也会优先吃配置：
 - 读取项目 `config/*.toml`
 - 给容器和业务服务提供只读配置
 - 作为 logger / cache / http client / stream 等默认 service 的配置来源
+- 作为 database manager、连接池和事务默认值的配置来源
 - 在 worker / demo app 里统一接住环境变量和静态配置
 
 不适合：

@@ -177,6 +177,10 @@ fn (mut c VSlimContainer) get_native_service(id string) ?vphp.RequestOwnedZBox {
 			return container_borrowed_object_value(c.app_ref.http_client(), C.vslim__psr18__client_ce,
 				vslimpsr18client_handlers())
 		}
+		'database', 'db', 'VSlim\\Database\\Manager' {
+			return container_borrowed_object_value(c.app_ref.database(), C.vslim__database__manager_ce,
+				vslimdatabasemanager_handlers())
+		}
 		else {}
 	}
 	return none

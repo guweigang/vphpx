@@ -1638,6 +1638,14 @@ static const zend_internal_arg_info arginfo_vslimapp_load_config_text[] = {
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\App", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_ARG_TYPE_INFO(0, text, IS_STRING, 0)
 ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimapp_merge_config[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\App", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, path, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimapp_merge_config_text[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\App", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, text, IS_STRING, 0)
+ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimapp_has_mcp, 0, 0, _IS_BOOL, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimapp_set_mcp[] = {
@@ -1706,6 +1714,18 @@ static const zend_internal_arg_info arginfo_vslimapp_set_http_client[] = {
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimapp_http_client[] = {
     { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Client\\ClientInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimapp_has_database, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimapp_set_database[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\App", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_INFO(0, database)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimapp_database[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Manager", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimapp_db[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Manager", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimapp_bootstrap[] = {
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\App", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
@@ -3359,6 +3379,50 @@ PHP_METHOD(VSlim__App, load_config_text) {
     }
 }
 
+
+PHP_METHOD(VSlim__App, merge_config) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimApp_merge_config(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    // printf("PHP_METHOD VSlim__App::merge_config called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimApp_merge_config(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__app_ce, VSlimApp_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__App, merge_config_text) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimApp_merge_config_text(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    // printf("PHP_METHOD VSlim__App::merge_config_text called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimApp_merge_config_text(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__app_ce, VSlimApp_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
 PHP_METHOD(VSlim__App, has_mcp) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -3796,6 +3860,89 @@ PHP_METHOD(VSlim__App, httpClient) {
     }
     extern vphp_class_handlers* VSlimPsr18Client_handlers();
     vphp_return_bound_object(return_value, v_instance, vslim__psr18__client_ce, VSlimPsr18Client_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__App, hasDatabase) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimApp_has_database(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimApp_has_database(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__App, setDatabase) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimApp_set_database(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    // printf("PHP_METHOD VSlim__App::setDatabase called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimApp_set_database(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__app_ce, VSlimApp_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__App, database) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimApp_database(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    // printf("PHP_METHOD VSlim__App::database called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimApp_database(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__manager_ce, VSlimDatabaseManager_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__App, db) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimApp_db(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    // printf("PHP_METHOD VSlim__App::db called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimApp_db(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__manager_ce, VSlimDatabaseManager_handlers(), VPHP_BORROWS_VPTR);
     if (!vphp_validate_internal_return(execute_data, return_value)) {
         return;
     }
@@ -4281,6 +4428,8 @@ static const zend_function_entry vslim__app_methods[] = {
     PHP_ME(VSlim__App, config, arginfo_vslimapp_config, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, load_config, arginfo_vslimapp_load_config, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, load_config_text, arginfo_vslimapp_load_config_text, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, merge_config, arginfo_vslimapp_merge_config, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, merge_config_text, arginfo_vslimapp_merge_config_text, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, has_mcp, arginfo_vslimapp_has_mcp, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, set_mcp, arginfo_vslimapp_set_mcp, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, mcp, arginfo_vslimapp_mcp, ZEND_ACC_PUBLIC)
@@ -4302,6 +4451,10 @@ static const zend_function_entry vslim__app_methods[] = {
     PHP_ME(VSlim__App, cachePool, arginfo_vslimapp_cache_pool, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, setHttpClient, arginfo_vslimapp_set_http_client, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, httpClient, arginfo_vslimapp_http_client, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, hasDatabase, arginfo_vslimapp_has_database, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, setDatabase, arginfo_vslimapp_set_database, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, database, arginfo_vslimapp_database, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, db, arginfo_vslimapp_db, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, bootstrap, arginfo_vslimapp_bootstrap, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, bootstrapFile, arginfo_vslimapp_bootstrap_file, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, bootstrapDir, arginfo_vslimapp_bootstrap_dir, ZEND_ACC_PUBLIC)
@@ -4366,6 +4519,7 @@ static int vslim__app_register_class(void) {
         zend_declare_property_null(vslim__app_ce, "cache_ref", sizeof("cache_ref")-1, ZEND_ACC_PROTECTED);
         zend_declare_property_null(vslim__app_ce, "cache_pool_ref", sizeof("cache_pool_ref")-1, ZEND_ACC_PROTECTED);
         zend_declare_property_null(vslim__app_ce, "http_client_ref", sizeof("http_client_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "database_ref", sizeof("database_ref")-1, ZEND_ACC_PROTECTED);
         zend_declare_property_null(vslim__app_ce, "providers", sizeof("providers")-1, ZEND_ACC_PROTECTED);
         zend_declare_property_null(vslim__app_ce, "provider_classes", sizeof("provider_classes")-1, ZEND_ACC_PROTECTED);
         zend_declare_property_null(vslim__app_ce, "modules", sizeof("modules")-1, ZEND_ACC_PROTECTED);
@@ -8278,6 +8432,14 @@ ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimstreamollamaclient_from_env[] = {
     { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Stream\\OllamaClient", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimstreamollamaclient_from_config[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Stream\\OllamaClient", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_INFO(0, config)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimstreamollamaclient_from_app[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Stream\\OllamaClient", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_INFO(0, app)
+ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimstreamollamaclient_from_options[] = {
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Stream\\OllamaClient", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_ARG_TYPE_INFO(0, options, IS_MIXED, 0)
@@ -8331,6 +8493,38 @@ PHP_METHOD(VSlim__Stream__OllamaClient, from_env) {
     vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     extern void* vphp_wrap_VSlimStreamOllamaClient_from_env(vphp_context_internal ctx);
     void* v_instance = vphp_wrap_VSlimStreamOllamaClient_from_env(ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimStreamOllamaClient_handlers();
+    vphp_return_owned_object(return_value, v_instance, vslim__stream__ollamaclient_ce, VSlimStreamOllamaClient_handlers());
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Stream__OllamaClient, from_config) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimStreamOllamaClient_from_config(vphp_context_internal ctx);
+    void* v_instance = vphp_wrap_VSlimStreamOllamaClient_from_config(ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimStreamOllamaClient_handlers();
+    vphp_return_owned_object(return_value, v_instance, vslim__stream__ollamaclient_ce, VSlimStreamOllamaClient_handlers());
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Stream__OllamaClient, from_app) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimStreamOllamaClient_from_app(vphp_context_internal ctx);
+    void* v_instance = vphp_wrap_VSlimStreamOllamaClient_from_app(ctx);
     if (EG(exception)) {
         return;
     }
@@ -8512,6 +8706,8 @@ PHP_METHOD(VSlim__Stream__OllamaClient, sse_response_from_request) {
 static const zend_function_entry vslim__stream__ollamaclient_methods[] = {
     PHP_ME(VSlim__Stream__OllamaClient, __construct, arginfo_vslimstreamollamaclient_construct, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Stream__OllamaClient, from_env, arginfo_vslimstreamollamaclient_from_env, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(VSlim__Stream__OllamaClient, from_config, arginfo_vslimstreamollamaclient_from_config, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(VSlim__Stream__OllamaClient, from_app, arginfo_vslimstreamollamaclient_from_app, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(VSlim__Stream__OllamaClient, from_options, arginfo_vslimstreamollamaclient_from_options, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(VSlim__Stream__OllamaClient, chat_url, arginfo_vslimstreamollamaclient_chat_url, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Stream__OllamaClient, default_model, arginfo_vslimstreamollamaclient_default_model, ZEND_ACC_PUBLIC)
@@ -14763,6 +14959,18 @@ static int vslim__psr16__invalidargumentexception_register_class(void) {
 zend_class_entry *vslim__psr16__cache_ce = NULL;
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr16cache_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimpsr16cache_set_namespace[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Psr16\\Cache", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, prefix, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimpsr16cache_namespace, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimpsr16cache_set_default_ttl_seconds[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Psr16\\Cache", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, seconds, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimpsr16cache_default_ttl_seconds_value, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimpsr16cache_set_clock[] = {
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Psr16\\Cache", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 { "clock", ZEND_TYPE_INIT_CLASS_CONST("Psr\\Clock\\ClockInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
@@ -14810,6 +15018,84 @@ PHP_METHOD(VSlim__Psr16__Cache, __construct) {
     extern void vphp_wrap_VSlimPsr16Cache_construct(void* v_ptr, vphp_context_internal ctx);
     void* v_ptr = wrapper->v_ptr;
     vphp_wrap_VSlimPsr16Cache_construct(v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Psr16__Cache, setNamespace) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimPsr16Cache_set_namespace(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimPsr16Cache_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr16Cache_handlers());
+    // printf("PHP_METHOD VSlim__Psr16__Cache::setNamespace called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimPsr16Cache_set_namespace(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimPsr16Cache_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__psr16__cache_ce, VSlimPsr16Cache_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Psr16__Cache, namespace) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimPsr16Cache_namespace(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimPsr16Cache_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr16Cache_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimPsr16Cache_namespace(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Psr16__Cache, setDefaultTtlSeconds) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimPsr16Cache_set_default_ttl_seconds(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimPsr16Cache_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr16Cache_handlers());
+    // printf("PHP_METHOD VSlim__Psr16__Cache::setDefaultTtlSeconds called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimPsr16Cache_set_default_ttl_seconds(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimPsr16Cache_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__psr16__cache_ce, VSlimPsr16Cache_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Psr16__Cache, defaultTtlSeconds) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimPsr16Cache_default_ttl_seconds_value(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimPsr16Cache_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr16Cache_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimPsr16Cache_default_ttl_seconds_value(wrapper->v_ptr, ctx);
     if (EG(exception)) {
         return;
     }
@@ -14994,6 +15280,10 @@ PHP_METHOD(VSlim__Psr16__Cache, has) {
 }
 static const zend_function_entry vslim__psr16__cache_methods[] = {
     PHP_ME(VSlim__Psr16__Cache, __construct, arginfo_vslimpsr16cache_construct, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Psr16__Cache, setNamespace, arginfo_vslimpsr16cache_set_namespace, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Psr16__Cache, namespace, arginfo_vslimpsr16cache_namespace, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Psr16__Cache, setDefaultTtlSeconds, arginfo_vslimpsr16cache_set_default_ttl_seconds, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Psr16__Cache, defaultTtlSeconds, arginfo_vslimpsr16cache_default_ttl_seconds_value, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Psr16__Cache, setClock, arginfo_vslimpsr16cache_set_clock, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Psr16__Cache, clock, arginfo_vslimpsr16cache_clock, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Psr16__Cache, get, arginfo_vslimpsr16cache_get, ZEND_ACC_PUBLIC)
@@ -15021,6 +15311,8 @@ static int vslim__psr16__cache_register_class(void) {
         vslim__psr16__cache_ce->create_object = vphp_create_object_handler;
         zend_declare_property_null(vslim__psr16__cache_ce, "entries", sizeof("entries")-1, ZEND_ACC_PROTECTED);
         zend_declare_property_null(vslim__psr16__cache_ce, "clock_ref", sizeof("clock_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__psr16__cache_ce, "namespace_prefix", sizeof("namespace_prefix")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_long(vslim__psr16__cache_ce, "default_ttl_seconds", sizeof("default_ttl_seconds")-1, 0, ZEND_ACC_PROTECTED);
     }
     return SUCCESS;
 }
@@ -15259,6 +15551,18 @@ static int vslim__psr6__cacheitem_register_class(void) {
 zend_class_entry *vslim__psr6__cacheitempool_ce = NULL;
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimpsr6cacheitempool_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimpsr6cacheitempool_set_namespace[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Psr6\\CacheItemPool", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, prefix, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimpsr6cacheitempool_namespace, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimpsr6cacheitempool_set_default_ttl_seconds[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Psr6\\CacheItemPool", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, seconds, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimpsr6cacheitempool_default_ttl_seconds_value, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimpsr6cacheitempool_set_clock[] = {
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Psr6\\CacheItemPool", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 { "clock", ZEND_TYPE_INIT_CLASS_CONST("Psr\\Clock\\ClockInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
@@ -15306,6 +15610,84 @@ PHP_METHOD(VSlim__Psr6__CacheItemPool, __construct) {
     extern void vphp_wrap_VSlimPsr6CacheItemPool_construct(void* v_ptr, vphp_context_internal ctx);
     void* v_ptr = wrapper->v_ptr;
     vphp_wrap_VSlimPsr6CacheItemPool_construct(v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Psr6__CacheItemPool, setNamespace) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimPsr6CacheItemPool_set_namespace(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimPsr6CacheItemPool_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItemPool_handlers());
+    // printf("PHP_METHOD VSlim__Psr6__CacheItemPool::setNamespace called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimPsr6CacheItemPool_set_namespace(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimPsr6CacheItemPool_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__psr6__cacheitempool_ce, VSlimPsr6CacheItemPool_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Psr6__CacheItemPool, namespace) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimPsr6CacheItemPool_namespace(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimPsr6CacheItemPool_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItemPool_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimPsr6CacheItemPool_namespace(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Psr6__CacheItemPool, setDefaultTtlSeconds) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimPsr6CacheItemPool_set_default_ttl_seconds(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimPsr6CacheItemPool_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItemPool_handlers());
+    // printf("PHP_METHOD VSlim__Psr6__CacheItemPool::setDefaultTtlSeconds called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimPsr6CacheItemPool_set_default_ttl_seconds(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimPsr6CacheItemPool_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__psr6__cacheitempool_ce, VSlimPsr6CacheItemPool_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Psr6__CacheItemPool, defaultTtlSeconds) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimPsr6CacheItemPool_default_ttl_seconds_value(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimPsr6CacheItemPool_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimPsr6CacheItemPool_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimPsr6CacheItemPool_default_ttl_seconds_value(wrapper->v_ptr, ctx);
     if (EG(exception)) {
         return;
     }
@@ -15512,6 +15894,10 @@ PHP_METHOD(VSlim__Psr6__CacheItemPool, commit) {
 }
 static const zend_function_entry vslim__psr6__cacheitempool_methods[] = {
     PHP_ME(VSlim__Psr6__CacheItemPool, __construct, arginfo_vslimpsr6cacheitempool_construct, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Psr6__CacheItemPool, setNamespace, arginfo_vslimpsr6cacheitempool_set_namespace, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Psr6__CacheItemPool, namespace, arginfo_vslimpsr6cacheitempool_namespace, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Psr6__CacheItemPool, setDefaultTtlSeconds, arginfo_vslimpsr6cacheitempool_set_default_ttl_seconds, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Psr6__CacheItemPool, defaultTtlSeconds, arginfo_vslimpsr6cacheitempool_default_ttl_seconds_value, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Psr6__CacheItemPool, setClock, arginfo_vslimpsr6cacheitempool_set_clock, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Psr6__CacheItemPool, clock, arginfo_vslimpsr6cacheitempool_clock, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Psr6__CacheItemPool, getItem, arginfo_vslimpsr6cacheitempool_get_item, ZEND_ACC_PUBLIC)
@@ -15541,6 +15927,8 @@ static int vslim__psr6__cacheitempool_register_class(void) {
         zend_declare_property_null(vslim__psr6__cacheitempool_ce, "entries", sizeof("entries")-1, ZEND_ACC_PROTECTED);
         zend_declare_property_null(vslim__psr6__cacheitempool_ce, "deferred", sizeof("deferred")-1, ZEND_ACC_PROTECTED);
         zend_declare_property_null(vslim__psr6__cacheitempool_ce, "clock_ref", sizeof("clock_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__psr6__cacheitempool_ce, "namespace_prefix", sizeof("namespace_prefix")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_long(vslim__psr6__cacheitempool_ce, "default_ttl_seconds", sizeof("default_ttl_seconds")-1, 0, ZEND_ACC_PROTECTED);
     }
     return SUCCESS;
 }
@@ -15827,6 +16215,1961 @@ static int vslim__psr18__client_register_class(void) {
         vslim__psr18__client_ce = zend_register_internal_class(&ce);
         vslim__psr18__client_ce->create_object = vphp_create_object_handler;
         zend_declare_property_long(vslim__psr18__client_ce, "timeout_seconds", sizeof("timeout_seconds")-1, 0, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
+zend_class_entry *vslim__database__config_ce = NULL;
+ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimdatabaseconfig_construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabaseconfig_set_driver[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Config", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, driver, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabaseconfig_driver, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabaseconfig_set_host[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Config", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, host, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabaseconfig_host, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabaseconfig_set_port[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Config", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, port, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabaseconfig_port, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabaseconfig_set_username[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Config", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, username, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabaseconfig_username, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabaseconfig_set_password[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Config", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, password, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabaseconfig_password, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabaseconfig_set_database[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Config", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabaseconfig_database, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabaseconfig_set_pool_size[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Config", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, size, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabaseconfig_pool_size_value, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabaseconfig_to_json, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+PHP_METHOD(VSlim__Database__Config, __construct) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_class_handlers *h = VSlimDatabaseConfig_handlers();
+    vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
+    vphp_object_wrapper *wrapper = vphp_obj_from_obj(Z_OBJ_P(getThis()));
+    extern void vphp_wrap_VSlimDatabaseConfig_construct(void* v_ptr, vphp_context_internal ctx);
+    void* v_ptr = wrapper->v_ptr;
+    vphp_wrap_VSlimDatabaseConfig_construct(v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Config, set_driver) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseConfig_set_driver(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseConfig_handlers());
+    // printf("PHP_METHOD VSlim__Database__Config::set_driver called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseConfig_set_driver(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__config_ce, VSlimDatabaseConfig_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Config, driver) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseConfig_driver(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseConfig_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseConfig_driver(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Config, set_host) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseConfig_set_host(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseConfig_handlers());
+    // printf("PHP_METHOD VSlim__Database__Config::set_host called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseConfig_set_host(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__config_ce, VSlimDatabaseConfig_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Config, host) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseConfig_host(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseConfig_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseConfig_host(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Config, set_port) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseConfig_set_port(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseConfig_handlers());
+    // printf("PHP_METHOD VSlim__Database__Config::set_port called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseConfig_set_port(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__config_ce, VSlimDatabaseConfig_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Config, port) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseConfig_port(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseConfig_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseConfig_port(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Config, set_username) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseConfig_set_username(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseConfig_handlers());
+    // printf("PHP_METHOD VSlim__Database__Config::set_username called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseConfig_set_username(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__config_ce, VSlimDatabaseConfig_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Config, username) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseConfig_username(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseConfig_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseConfig_username(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Config, set_password) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseConfig_set_password(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseConfig_handlers());
+    // printf("PHP_METHOD VSlim__Database__Config::set_password called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseConfig_set_password(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__config_ce, VSlimDatabaseConfig_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Config, password) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseConfig_password(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseConfig_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseConfig_password(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Config, setDatabase) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseConfig_set_database(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseConfig_handlers());
+    // printf("PHP_METHOD VSlim__Database__Config::setDatabase called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseConfig_set_database(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__config_ce, VSlimDatabaseConfig_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Config, database) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseConfig_database(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseConfig_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseConfig_database(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Config, setPoolSize) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseConfig_set_pool_size(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseConfig_handlers());
+    // printf("PHP_METHOD VSlim__Database__Config::setPoolSize called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseConfig_set_pool_size(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__config_ce, VSlimDatabaseConfig_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Config, poolSize) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseConfig_pool_size_value(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseConfig_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseConfig_pool_size_value(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Config, to_json) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseConfig_to_json(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseConfig_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseConfig_to_json(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+static const zend_function_entry vslim__database__config_methods[] = {
+    PHP_ME(VSlim__Database__Config, __construct, arginfo_vslimdatabaseconfig_construct, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Config, set_driver, arginfo_vslimdatabaseconfig_set_driver, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Config, driver, arginfo_vslimdatabaseconfig_driver, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Config, set_host, arginfo_vslimdatabaseconfig_set_host, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Config, host, arginfo_vslimdatabaseconfig_host, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Config, set_port, arginfo_vslimdatabaseconfig_set_port, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Config, port, arginfo_vslimdatabaseconfig_port, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Config, set_username, arginfo_vslimdatabaseconfig_set_username, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Config, username, arginfo_vslimdatabaseconfig_username, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Config, set_password, arginfo_vslimdatabaseconfig_set_password, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Config, password, arginfo_vslimdatabaseconfig_password, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Config, setDatabase, arginfo_vslimdatabaseconfig_set_database, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Config, database, arginfo_vslimdatabaseconfig_database, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Config, setPoolSize, arginfo_vslimdatabaseconfig_set_pool_size, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Config, poolSize, arginfo_vslimdatabaseconfig_pool_size_value, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Config, to_json, arginfo_vslimdatabaseconfig_to_json, ZEND_ACC_PUBLIC)
+    PHP_FE_END
+};
+
+static int vslim__database__config_register_class(void) {
+    if (vslim__database__config_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__database__config_ce = vphp_find_loaded_class_entry("VSlim\\Database\\Config", sizeof("VSlim\\Database\\Config")-1);
+    if (vslim__database__config_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Database\\Config", vslim__database__config_methods);
+        vslim__database__config_ce = zend_register_internal_class(&ce);
+        vslim__database__config_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_string(vslim__database__config_ce, "driver", sizeof("driver")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__database__config_ce, "host", sizeof("host")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_long(vslim__database__config_ce, "port", sizeof("port")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__database__config_ce, "username", sizeof("username")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__database__config_ce, "password", sizeof("password")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__database__config_ce, "database", sizeof("database")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_long(vslim__database__config_ce, "pool_size", sizeof("pool_size")-1, 0, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
+zend_class_entry *vslim__database__manager_ce = NULL;
+ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimdatabasemanager_construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasemanager_set_config[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Manager", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_INFO(0, config)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasemanager_config[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Config", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemanager_driver, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemanager_pool_size_value, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemanager_is_connected, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemanager_last_error_message, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemanager_affected_rows_value, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemanager_last_insert_id_value, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasemanager_table_query[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Query", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemanager_connect, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasemanager_disconnect[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Manager", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemanager_ping, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemanager_execute, 0, 1, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, query, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemanager_execute_params, 0, 2, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, query, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, params, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemanager_query, 0, 1, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, query, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemanager_query_params, 0, 2, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, query, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, params, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemanager_query_one, 0, 1, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, query, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemanager_query_one_params, 0, 2, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, query, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, params, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemanager_begin_transaction, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemanager_commit, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemanager_rollback, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+PHP_METHOD(VSlim__Database__Manager, __construct) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_class_handlers *h = VSlimDatabaseManager_handlers();
+    vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
+    vphp_object_wrapper *wrapper = vphp_obj_from_obj(Z_OBJ_P(getThis()));
+    extern void vphp_wrap_VSlimDatabaseManager_construct(void* v_ptr, vphp_context_internal ctx);
+    void* v_ptr = wrapper->v_ptr;
+    vphp_wrap_VSlimDatabaseManager_construct(v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Manager, setConfig) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseManager_set_config(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    // printf("PHP_METHOD VSlim__Database__Manager::setConfig called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseManager_set_config(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__manager_ce, VSlimDatabaseManager_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Database__Manager, config) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseManager_config(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    // printf("PHP_METHOD VSlim__Database__Manager::config called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseManager_config(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseConfig_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__config_ce, VSlimDatabaseConfig_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Manager, driver) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseManager_driver(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseManager_driver(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Manager, poolSize) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseManager_pool_size_value(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseManager_pool_size_value(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Manager, is_connected) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseManager_is_connected(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseManager_is_connected(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Manager, lastError) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseManager_last_error_message(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseManager_last_error_message(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Manager, affectedRows) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseManager_affected_rows_value(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseManager_affected_rows_value(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Manager, lastInsertId) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseManager_last_insert_id_value(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseManager_last_insert_id_value(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Manager, table) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseManager_table_query(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    // printf("PHP_METHOD VSlim__Database__Manager::table called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseManager_table_query(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__query_ce, VSlimDatabaseQuery_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Manager, connect) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseManager_connect(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseManager_connect(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Manager, disconnect) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseManager_disconnect(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    // printf("PHP_METHOD VSlim__Database__Manager::disconnect called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseManager_disconnect(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__manager_ce, VSlimDatabaseManager_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Manager, ping) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseManager_ping(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseManager_ping(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Manager, execute) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseManager_execute(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseManager_execute(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Manager, executeParams) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseManager_execute_params(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseManager_execute_params(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Manager, query) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseManager_query(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseManager_query(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Manager, queryParams) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseManager_query_params(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseManager_query_params(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Manager, queryOne) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseManager_query_one(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseManager_query_one(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Manager, queryOneParams) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseManager_query_one_params(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseManager_query_one_params(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Manager, beginTransaction) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseManager_begin_transaction(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseManager_begin_transaction(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Manager, commit) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseManager_commit(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseManager_commit(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Manager, rollback) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseManager_rollback(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseManager_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseManager_rollback(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+static const zend_function_entry vslim__database__manager_methods[] = {
+    PHP_ME(VSlim__Database__Manager, __construct, arginfo_vslimdatabasemanager_construct, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, setConfig, arginfo_vslimdatabasemanager_set_config, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, config, arginfo_vslimdatabasemanager_config, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, driver, arginfo_vslimdatabasemanager_driver, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, poolSize, arginfo_vslimdatabasemanager_pool_size_value, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, is_connected, arginfo_vslimdatabasemanager_is_connected, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, lastError, arginfo_vslimdatabasemanager_last_error_message, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, affectedRows, arginfo_vslimdatabasemanager_affected_rows_value, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, lastInsertId, arginfo_vslimdatabasemanager_last_insert_id_value, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, table, arginfo_vslimdatabasemanager_table_query, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, connect, arginfo_vslimdatabasemanager_connect, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, disconnect, arginfo_vslimdatabasemanager_disconnect, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, ping, arginfo_vslimdatabasemanager_ping, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, execute, arginfo_vslimdatabasemanager_execute, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, executeParams, arginfo_vslimdatabasemanager_execute_params, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, query, arginfo_vslimdatabasemanager_query, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, queryParams, arginfo_vslimdatabasemanager_query_params, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, queryOne, arginfo_vslimdatabasemanager_query_one, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, queryOneParams, arginfo_vslimdatabasemanager_query_one_params, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, beginTransaction, arginfo_vslimdatabasemanager_begin_transaction, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, commit, arginfo_vslimdatabasemanager_commit, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Manager, rollback, arginfo_vslimdatabasemanager_rollback, ZEND_ACC_PUBLIC)
+    PHP_FE_END
+};
+
+static int vslim__database__manager_register_class(void) {
+    if (vslim__database__manager_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__database__manager_ce = vphp_find_loaded_class_entry("VSlim\\Database\\Manager", sizeof("VSlim\\Database\\Manager")-1);
+    if (vslim__database__manager_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Database\\Manager", vslim__database__manager_methods);
+        vslim__database__manager_ce = zend_register_internal_class(&ce);
+        vslim__database__manager_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__database__manager_ce, "config_ref", sizeof("config_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__database__manager_ce, "mysql_pool", sizeof("mysql_pool")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__database__manager_ce, "mysql_connected", sizeof("mysql_connected")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__database__manager_ce, "mysql_tx_conn", sizeof("mysql_tx_conn")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__database__manager_ce, "mysql_tx_active", sizeof("mysql_tx_active")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__database__manager_ce, "last_affected_rows", sizeof("last_affected_rows")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__database__manager_ce, "last_insert_id", sizeof("last_insert_id")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__database__manager_ce, "last_error", sizeof("last_error")-1, "", ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
+zend_class_entry *vslim__database__query_ce = NULL;
+ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimdatabasequery_construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasequery_set_manager[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Query", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_INFO(0, manager)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasequery_manager[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Manager", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasequery_reset[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Query", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasequery_table[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Query", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasequery_select[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Query", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, columns, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasequery_where_eq[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Query", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, column, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, value, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasequery_where_op[] = {
+    { (const char*)(uintptr_t)(3), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Query", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, column, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, op, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, value, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasequery_order_by[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Query", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, column, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, direction, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasequery_limit[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Query", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, limit, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasequery_offset[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Query", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, offset, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasequery_insert[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Query", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, values, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasequery_update[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Query", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, values, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasequery_delete_query[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Query", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasequery_to_sql, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasequery_params, 0, 0, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasequery_get, 0, 0, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasequery_first, 0, 0, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasequery_run, 0, 0, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasequery_insert_get_id, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+PHP_METHOD(VSlim__Database__Query, __construct) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_class_handlers *h = VSlimDatabaseQuery_handlers();
+    vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
+    vphp_object_wrapper *wrapper = vphp_obj_from_obj(Z_OBJ_P(getThis()));
+    extern void vphp_wrap_VSlimDatabaseQuery_construct(void* v_ptr, vphp_context_internal ctx);
+    void* v_ptr = wrapper->v_ptr;
+    vphp_wrap_VSlimDatabaseQuery_construct(v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Query, setManager) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseQuery_set_manager(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseQuery_handlers());
+    // printf("PHP_METHOD VSlim__Database__Query::setManager called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseQuery_set_manager(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__query_ce, VSlimDatabaseQuery_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Database__Query, manager) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseQuery_manager(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseQuery_handlers());
+    // printf("PHP_METHOD VSlim__Database__Query::manager called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseQuery_manager(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__manager_ce, VSlimDatabaseManager_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Database__Query, reset) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseQuery_reset(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseQuery_handlers());
+    // printf("PHP_METHOD VSlim__Database__Query::reset called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseQuery_reset(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__query_ce, VSlimDatabaseQuery_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Database__Query, table) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseQuery_table(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseQuery_handlers());
+    // printf("PHP_METHOD VSlim__Database__Query::table called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseQuery_table(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__query_ce, VSlimDatabaseQuery_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Database__Query, select) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseQuery_select(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseQuery_handlers());
+    // printf("PHP_METHOD VSlim__Database__Query::select called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseQuery_select(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__query_ce, VSlimDatabaseQuery_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Database__Query, where) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseQuery_where_eq(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseQuery_handlers());
+    // printf("PHP_METHOD VSlim__Database__Query::where called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseQuery_where_eq(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__query_ce, VSlimDatabaseQuery_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Database__Query, whereOp) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseQuery_where_op(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseQuery_handlers());
+    // printf("PHP_METHOD VSlim__Database__Query::whereOp called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseQuery_where_op(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__query_ce, VSlimDatabaseQuery_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Database__Query, orderBy) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseQuery_order_by(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseQuery_handlers());
+    // printf("PHP_METHOD VSlim__Database__Query::orderBy called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseQuery_order_by(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__query_ce, VSlimDatabaseQuery_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Database__Query, limit) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseQuery_limit(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseQuery_handlers());
+    // printf("PHP_METHOD VSlim__Database__Query::limit called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseQuery_limit(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__query_ce, VSlimDatabaseQuery_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Database__Query, offset) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseQuery_offset(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseQuery_handlers());
+    // printf("PHP_METHOD VSlim__Database__Query::offset called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseQuery_offset(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__query_ce, VSlimDatabaseQuery_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Database__Query, insert) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseQuery_insert(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseQuery_handlers());
+    // printf("PHP_METHOD VSlim__Database__Query::insert called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseQuery_insert(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__query_ce, VSlimDatabaseQuery_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Database__Query, update) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseQuery_update(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseQuery_handlers());
+    // printf("PHP_METHOD VSlim__Database__Query::update called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseQuery_update(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__query_ce, VSlimDatabaseQuery_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Database__Query, delete) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseQuery_delete_query(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseQuery_handlers());
+    // printf("PHP_METHOD VSlim__Database__Query::delete called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseQuery_delete_query(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__query_ce, VSlimDatabaseQuery_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Query, toSql) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseQuery_to_sql(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseQuery_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseQuery_to_sql(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Query, params) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseQuery_params(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseQuery_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseQuery_params(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Query, get) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseQuery_get(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseQuery_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseQuery_get(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Query, first) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseQuery_first(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseQuery_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseQuery_first(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Query, run) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseQuery_run(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseQuery_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseQuery_run(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Query, insertGetId) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseQuery_insert_get_id(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseQuery_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseQuery_insert_get_id(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+static const zend_function_entry vslim__database__query_methods[] = {
+    PHP_ME(VSlim__Database__Query, __construct, arginfo_vslimdatabasequery_construct, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Query, setManager, arginfo_vslimdatabasequery_set_manager, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Query, manager, arginfo_vslimdatabasequery_manager, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Query, reset, arginfo_vslimdatabasequery_reset, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Query, table, arginfo_vslimdatabasequery_table, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Query, select, arginfo_vslimdatabasequery_select, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Query, where, arginfo_vslimdatabasequery_where_eq, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Query, whereOp, arginfo_vslimdatabasequery_where_op, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Query, orderBy, arginfo_vslimdatabasequery_order_by, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Query, limit, arginfo_vslimdatabasequery_limit, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Query, offset, arginfo_vslimdatabasequery_offset, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Query, insert, arginfo_vslimdatabasequery_insert, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Query, update, arginfo_vslimdatabasequery_update, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Query, delete, arginfo_vslimdatabasequery_delete_query, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Query, toSql, arginfo_vslimdatabasequery_to_sql, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Query, params, arginfo_vslimdatabasequery_params, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Query, get, arginfo_vslimdatabasequery_get, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Query, first, arginfo_vslimdatabasequery_first, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Query, run, arginfo_vslimdatabasequery_run, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Query, insertGetId, arginfo_vslimdatabasequery_insert_get_id, ZEND_ACC_PUBLIC)
+    PHP_FE_END
+};
+
+static int vslim__database__query_register_class(void) {
+    if (vslim__database__query_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__database__query_ce = vphp_find_loaded_class_entry("VSlim\\Database\\Query", sizeof("VSlim\\Database\\Query")-1);
+    if (vslim__database__query_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Database\\Query", vslim__database__query_methods);
+        vslim__database__query_ce = zend_register_internal_class(&ce);
+        vslim__database__query_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__database__query_ce, "manager_ref", sizeof("manager_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__database__query_ce, "table_name", sizeof("table_name")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__database__query_ce, "kind", sizeof("kind")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__database__query_ce, "select_columns", sizeof("select_columns")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__database__query_ce, "where_clauses", sizeof("where_clauses")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__database__query_ce, "order_clauses", sizeof("order_clauses")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_long(vslim__database__query_ce, "limit_count", sizeof("limit_count")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_long(vslim__database__query_ce, "offset_count", sizeof("offset_count")-1, 0, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__database__query_ce, "mutation_values", sizeof("mutation_values")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
+zend_class_entry *vslim__database__model_ce = NULL;
+ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimdatabasemodel_construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasemodel_set_manager[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Model", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_INFO(0, manager)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasemodel_manager[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Manager", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasemodel_set_table[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Model", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemodel_table, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasemodel_set_primary_key[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Model", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemodel_primary_key_name, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasemodel_fill[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Model", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, values, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemodel_attributes, 0, 0, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemodel_get, 0, 2, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, key, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, default_value, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasemodel_set_attr[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Model", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, key, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, value, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemodel_exists_in_database, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasemodel_new_query[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Query", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasemodel_all_query[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Query", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasemodel_find_query[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Query", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, id, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasemodel_save_query[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Query", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasemodel_delete_query[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Query", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemodel_all, 0, 0, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemodel_find, 0, 1, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, id, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimdatabasemodel_save[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Database\\Model", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimdatabasemodel_delete_model, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+PHP_METHOD(VSlim__Database__Model, __construct) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_class_handlers *h = VSlimDatabaseModel_handlers();
+    vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
+    vphp_object_wrapper *wrapper = vphp_obj_from_obj(Z_OBJ_P(getThis()));
+    extern void vphp_wrap_VSlimDatabaseModel_construct(void* v_ptr, vphp_context_internal ctx);
+    void* v_ptr = wrapper->v_ptr;
+    vphp_wrap_VSlimDatabaseModel_construct(v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Model, setManager) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseModel_set_manager(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    // printf("PHP_METHOD VSlim__Database__Model::setManager called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseModel_set_manager(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__model_ce, VSlimDatabaseModel_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Database__Model, manager) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseModel_manager(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    // printf("PHP_METHOD VSlim__Database__Model::manager called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseModel_manager(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseManager_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__manager_ce, VSlimDatabaseManager_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Database__Model, setTable) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseModel_set_table(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    // printf("PHP_METHOD VSlim__Database__Model::setTable called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseModel_set_table(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__model_ce, VSlimDatabaseModel_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Model, table) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseModel_table(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseModel_table(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Model, setPrimaryKey) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseModel_set_primary_key(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    // printf("PHP_METHOD VSlim__Database__Model::setPrimaryKey called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseModel_set_primary_key(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__model_ce, VSlimDatabaseModel_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Model, primaryKey) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseModel_primary_key_name(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseModel_primary_key_name(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Model, fill) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseModel_fill(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    // printf("PHP_METHOD VSlim__Database__Model::fill called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseModel_fill(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__model_ce, VSlimDatabaseModel_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Model, attributes) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseModel_attributes(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseModel_attributes(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Model, get) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseModel_get(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseModel_get(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Model, set) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseModel_set_attr(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    // printf("PHP_METHOD VSlim__Database__Model::set called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseModel_set_attr(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__model_ce, VSlimDatabaseModel_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Model, exists) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseModel_exists_in_database(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseModel_exists_in_database(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Model, newQuery) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseModel_new_query(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    // printf("PHP_METHOD VSlim__Database__Model::newQuery called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseModel_new_query(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__query_ce, VSlimDatabaseQuery_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Database__Model, allQuery) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseModel_all_query(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    // printf("PHP_METHOD VSlim__Database__Model::allQuery called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseModel_all_query(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__query_ce, VSlimDatabaseQuery_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Database__Model, findQuery) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseModel_find_query(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    // printf("PHP_METHOD VSlim__Database__Model::findQuery called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseModel_find_query(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__query_ce, VSlimDatabaseQuery_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Database__Model, saveQuery) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseModel_save_query(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    // printf("PHP_METHOD VSlim__Database__Model::saveQuery called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseModel_save_query(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__query_ce, VSlimDatabaseQuery_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Database__Model, deleteQuery) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseModel_delete_query(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    // printf("PHP_METHOD VSlim__Database__Model::deleteQuery called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseModel_delete_query(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseQuery_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__query_ce, VSlimDatabaseQuery_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Model, all) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseModel_all(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseModel_all(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Database__Model, find) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseModel_find(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseModel_find(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Model, save) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimDatabaseModel_save(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    // printf("PHP_METHOD VSlim__Database__Model::save called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimDatabaseModel_save(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__database__model_ce, VSlimDatabaseModel_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Database__Model, delete) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimDatabaseModel_delete_model(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimDatabaseModel_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimDatabaseModel_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimDatabaseModel_delete_model(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+static const zend_function_entry vslim__database__model_methods[] = {
+    PHP_ME(VSlim__Database__Model, __construct, arginfo_vslimdatabasemodel_construct, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, setManager, arginfo_vslimdatabasemodel_set_manager, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, manager, arginfo_vslimdatabasemodel_manager, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, setTable, arginfo_vslimdatabasemodel_set_table, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, table, arginfo_vslimdatabasemodel_table, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, setPrimaryKey, arginfo_vslimdatabasemodel_set_primary_key, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, primaryKey, arginfo_vslimdatabasemodel_primary_key_name, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, fill, arginfo_vslimdatabasemodel_fill, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, attributes, arginfo_vslimdatabasemodel_attributes, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, get, arginfo_vslimdatabasemodel_get, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, set, arginfo_vslimdatabasemodel_set_attr, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, exists, arginfo_vslimdatabasemodel_exists_in_database, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, newQuery, arginfo_vslimdatabasemodel_new_query, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, allQuery, arginfo_vslimdatabasemodel_all_query, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, findQuery, arginfo_vslimdatabasemodel_find_query, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, saveQuery, arginfo_vslimdatabasemodel_save_query, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, deleteQuery, arginfo_vslimdatabasemodel_delete_query, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, all, arginfo_vslimdatabasemodel_all, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, find, arginfo_vslimdatabasemodel_find, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, save, arginfo_vslimdatabasemodel_save, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Database__Model, delete, arginfo_vslimdatabasemodel_delete_model, ZEND_ACC_PUBLIC)
+    PHP_FE_END
+};
+
+static int vslim__database__model_register_class(void) {
+    if (vslim__database__model_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__database__model_ce = vphp_find_loaded_class_entry("VSlim\\Database\\Model", sizeof("VSlim\\Database\\Model")-1);
+    if (vslim__database__model_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Database\\Model", vslim__database__model_methods);
+        vslim__database__model_ce = zend_register_internal_class(&ce);
+        vslim__database__model_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__database__model_ce, "manager_ref", sizeof("manager_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__database__model_ce, "table_name", sizeof("table_name")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__database__model_ce, "primary_key", sizeof("primary_key")-1, "", ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__database__model_ce, "attributes", sizeof("attributes")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__database__model_ce, "exists_in_db", sizeof("exists_in_db")-1, 0, ZEND_ACC_PROTECTED);
     }
     return SUCCESS;
 }
@@ -20451,7 +22794,23 @@ static const zend_internal_arg_info arginfo_vslimconfig_load[] = {
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Config", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_ARG_TYPE_INFO(0, path, IS_STRING, 0)
 ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimconfig_load_dir[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Config", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, path, IS_STRING, 0)
+ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimconfig_load_text[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Config", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, text, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimconfig_merge_file[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Config", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, path, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimconfig_merge_dir[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Config", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, path, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimconfig_merge_text[] = {
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Config", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_ARG_TYPE_INFO(0, text, IS_STRING, 0)
 ZEND_END_ARG_INFO()
@@ -20541,6 +22900,28 @@ PHP_METHOD(VSlim__Config, load) {
 }
 
 
+PHP_METHOD(VSlim__Config, load_dir) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimConfig_load_dir(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimConfig_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimConfig_handlers());
+    // printf("PHP_METHOD VSlim__Config::load_dir called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimConfig_load_dir(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimConfig_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__config_ce, VSlimConfig_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
 PHP_METHOD(VSlim__Config, load_text) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -20552,6 +22933,72 @@ PHP_METHOD(VSlim__Config, load_text) {
     // printf("PHP_METHOD VSlim__Config::load_text called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
     if (!wrapper->v_ptr) RETURN_NULL();
     void* v_instance = vphp_wrap_VSlimConfig_load_text(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimConfig_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__config_ce, VSlimConfig_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Config, merge_file) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimConfig_merge_file(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimConfig_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimConfig_handlers());
+    // printf("PHP_METHOD VSlim__Config::merge_file called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimConfig_merge_file(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimConfig_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__config_ce, VSlimConfig_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Config, merge_dir) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimConfig_merge_dir(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimConfig_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimConfig_handlers());
+    // printf("PHP_METHOD VSlim__Config::merge_dir called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimConfig_merge_dir(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimConfig_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__config_ce, VSlimConfig_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Config, merge_text) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimConfig_merge_text(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimConfig_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimConfig_handlers());
+    // printf("PHP_METHOD VSlim__Config::merge_text called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimConfig_merge_text(wrapper->v_ptr, ctx);
     if (EG(exception)) {
         return;
     }
@@ -20786,7 +23233,11 @@ PHP_METHOD(VSlim__Config, all_json) {
 static const zend_function_entry vslim__config_methods[] = {
     PHP_ME(VSlim__Config, __construct, arginfo_vslimconfig_construct, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Config, load, arginfo_vslimconfig_load, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Config, load_dir, arginfo_vslimconfig_load_dir, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Config, load_text, arginfo_vslimconfig_load_text, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Config, merge_file, arginfo_vslimconfig_merge_file, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Config, merge_dir, arginfo_vslimconfig_merge_dir, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Config, merge_text, arginfo_vslimconfig_merge_text, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Config, is_loaded, arginfo_vslimconfig_is_loaded, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Config, path, arginfo_vslimconfig_path, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Config, has, arginfo_vslimconfig_has, ZEND_ACC_PUBLIC)
@@ -21080,6 +23531,10 @@ PHP_MINIT_FUNCTION(vslim) {
     if (vslim__psr18__requestexception_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__psr18__networkexception_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__psr18__client_register_class() != SUCCESS) { return FAILURE; }
+    if (vslim__database__config_register_class() != SUCCESS) { return FAILURE; }
+    if (vslim__database__manager_register_class() != SUCCESS) { return FAILURE; }
+    if (vslim__database__query_register_class() != SUCCESS) { return FAILURE; }
+    if (vslim__database__model_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__psr20__clock_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__psr14__listenerprovider_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__psr14__eventdispatcher_register_class() != SUCCESS) { return FAILURE; }

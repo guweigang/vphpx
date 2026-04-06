@@ -212,6 +212,8 @@
   - [http/psr-http.md](/Users/guweigang/Source/vphpx/vslim/docs/http/psr-http.md)
 - config
   - [config/config.md](/Users/guweigang/Source/vphpx/vslim/docs/config/config.md)
+- database
+  - [database/README.md](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
 - logger
   - [logger/logger.md](/Users/guweigang/Source/vphpx/vslim/docs/logger/logger.md)
 - container

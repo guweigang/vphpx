@@ -1,5 +1,6 @@
 module main
 
+import db.mysql
 import log
 import toml
 import vphp
@@ -118,6 +119,7 @@ mut:
 	cache_ref               &VSlimPsr16Cache            = unsafe { nil }
 	cache_pool_ref          &VSlimPsr6CacheItemPool     = unsafe { nil }
 	http_client_ref         &VSlimPsr18Client           = unsafe { nil }
+	database_ref            &VSlimDatabaseManager       = unsafe { nil }
 	providers               []vphp.RetainedObject
 	provider_classes        map[string]bool
 	modules                 []vphp.RetainedObject
@@ -572,6 +574,72 @@ struct VSlimPsr18NetworkException {}
 struct VSlimPsr18Client {
 mut:
 	timeout_seconds int = 30
+}
+
+@[php_class: 'VSlim\\Database\\Config']
+@[heap]
+struct VSlimDatabaseConfig {
+mut:
+	driver    string = 'mysql'
+	host      string = '127.0.0.1'
+	port      int    = 3306
+	username  string
+	password  string
+	database  string
+	pool_size int = 5
+}
+
+@[php_class: 'VSlim\\Database\\Manager']
+@[heap]
+struct VSlimDatabaseManager {
+mut:
+	config_ref       &VSlimDatabaseConfig = unsafe { nil }
+	mysql_pool       mysql.ConnectionPool
+	mysql_connected  bool
+	mysql_tx_conn    mysql.DB
+	mysql_tx_active  bool
+	last_affected_rows u64
+	last_insert_id     i64
+	last_error       string
+}
+
+pub enum VSlimDatabaseQueryKind {
+	select_
+	insert
+	update
+	delete_
+}
+
+struct VSlimDatabaseWhereClause {
+	column string
+	op     string
+	value  string
+}
+
+@[php_class: 'VSlim\\Database\\Query']
+@[heap]
+struct VSlimDatabaseQuery {
+mut:
+	manager_ref     &VSlimDatabaseManager = unsafe { nil }
+	table_name      string
+	kind            VSlimDatabaseQueryKind = .select_
+	select_columns  []string
+	where_clauses   []VSlimDatabaseWhereClause
+	order_clauses   []string
+	limit_count     int = -1
+	offset_count    int = -1
+	mutation_values map[string]string
+}
+
+@[php_class: 'VSlim\\Database\\Model']
+@[heap]
+struct VSlimDatabaseModel {
+mut:
+	manager_ref   &VSlimDatabaseManager = unsafe { nil }
+	table_name    string
+	primary_key   string = 'id'
+	attributes    map[string]string
+	exists_in_db  bool
 }
 
 @[php_implements: 'Psr\\Clock\\ClockInterface']

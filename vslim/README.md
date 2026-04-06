@@ -14,6 +14,7 @@ Documentation entry:
 - `VSlim\Mcp\App` 提供扩展原生 MCP handler
 - `VSlim\View` / `VSlim\Controller` 提供轻量 MVC 能力；View 现在按“指令 + 表达式 + 变量路径”三层组织
 - `VSlim\Container` / `VSlim\Config` 提供基础依赖注入与 TOML 配置
+- `VSlim\Database\Config` / `VSlim\Database\Manager` / `VSlim\Database\Query` 提供 mysql-first 的连接池、事务与轻量 query builder
 - `vslim_handle_request(...)` / `dispatch_envelope(...)` 提供和 worker / `vhttpd` 的集成边界
 
 ## VSlim 和 vhttpd 的边界
@@ -776,6 +777,7 @@ return $app;
 - [`docs/config/config.md`](/Users/guweigang/Source/vphpx/vslim/docs/config/config.md)
   `VSlim\Config`：TOML 加载、typed getter、JSON bridge、和 `App` 的整合
 - [`docs/logger/logger.md`](/Users/guweigang/Source/vphpx/vslim/docs/logger/logger.md)
+- [`docs/database/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
   `VSlim\\Log\\Logger` 与 `VSlim\\Log\\PsrLogger`：原生日志与 PSR-3 包装层
 
 ### 集成与运行时
@@ -790,7 +792,7 @@ return $app;
 ## 框架骨架
 
 - `VSlim\App` 现在会默认托管并同步一组标准服务到 container：
-  `config`、`clock`、`logger`、`events`、`events.provider`、`cache`、`cache.pool`、`http_client`
+  `config`、`clock`、`logger`、`events`、`events.provider`、`cache`、`cache.pool`、`http_client`、`database`
 - 这些服务同时暴露常用 contract key：
   `Psr\\Clock\\ClockInterface`、`Psr\\Log\\LoggerInterface`、`Psr\\EventDispatcher\\EventDispatcherInterface`、`Psr\\EventDispatcher\\ListenerProviderInterface`、`Psr\\SimpleCache\\CacheInterface`、`Psr\\Cache\\CacheItemPoolInterface`、`Psr\\Http\\Client\\ClientInterface`
 - `VSlim\App` 还内建了 provider / module 两层 bootstrap：

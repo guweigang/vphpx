@@ -15,6 +15,7 @@
 - `config/http.toml`
 - `config/cli.toml`
 - `config/cache.toml`
+- `config/database.toml`
 - `config/logging.toml`
 - `config/stream.toml`
 - `vhttpd.example.toml`
@@ -130,6 +131,7 @@ make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd
 | CLI 入口 | `bin/vslim` / `bootstrap/cli.php` | CLI 启动脚本和命令装配 |
 | 显式总装配 | `bootstrap/app.php` | 把 config、provider、module、middleware、routes 收进一份 spec |
 | 配置 | `config/*.toml` | app / logging / stream 等分域配置 |
+| 数据库 | `config/database.toml` / `app()->database()` | 默认数据库 manager、连接池和事务入口 |
 | 服务注册 | `app/Providers/AppServiceProvider.php` | container 里的基础 service |
 | 模块 | `app/Modules/StatusModule.php` | 一组 service + routes 的独立装配单元 |
 | 简单 controller | `app/Http/Controllers/HomeController.php` | 直接处理页面/接口请求 |

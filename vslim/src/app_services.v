@@ -119,6 +119,10 @@ fn (mut app VSlimApp) sync_http_client_service_to_container() {
 	app.sync_standard_services_to_container()
 }
 
+fn (mut app VSlimApp) sync_database_service_to_container() {
+	app.sync_standard_services_to_container()
+}
+
 fn configure_default_app_logger(mut logger VSlimLogger, config &VSlimConfig) {
 	if config == unsafe { nil } {
 		return
@@ -193,6 +197,10 @@ fn configure_default_cache_pool(mut pool VSlimPsr6CacheItemPool, config &VSlimCo
 		pool.set_default_ttl_seconds(config.get_int('cache.default_ttl_seconds',
 			pool.default_ttl_seconds_value()))
 	}
+}
+
+fn configure_default_database_service(mut db VSlimDatabaseManager, config &VSlimConfig) {
+	configure_default_database_manager(mut db, config)
 }
 
 fn (mut app VSlimApp) sync_clock_dependent_services() {
@@ -428,4 +436,32 @@ pub fn (mut app VSlimApp) http_client() &VSlimPsr18Client {
 		app.http_client_ref = created
 	}
 	return app.http_client_ref
+}
+
+@[php_method: 'hasDatabase']
+pub fn (app &VSlimApp) has_database() bool {
+	return app.database_ref != unsafe { nil }
+}
+
+@[php_method: 'setDatabase']
+pub fn (mut app VSlimApp) set_database(database &VSlimDatabaseManager) &VSlimApp {
+	app.database_ref = database
+	app.sync_database_service_to_container()
+	return app
+}
+
+@[php_method]
+pub fn (mut app VSlimApp) database() &VSlimDatabaseManager {
+	if app.database_ref == unsafe { nil } {
+		mut created := &VSlimDatabaseManager{}
+		created.construct()
+		configure_default_database_service(mut created, app.config_ref)
+		app.database_ref = created
+	}
+	return app.database_ref
+}
+
+@[php_method]
+pub fn (mut app VSlimApp) db() &VSlimDatabaseManager {
+	return app.database()
 }
