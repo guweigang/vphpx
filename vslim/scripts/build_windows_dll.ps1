@@ -69,6 +69,20 @@ function Find-FirstPath([string[]]$Candidates, [string]$ChildPath) {
     return ""
 }
 
+function Find-FirstFileRecursive([string]$Root, [string[]]$FileNames) {
+    if ([string]::IsNullOrWhiteSpace($Root) -or !(Test-Path $Root)) {
+        return ""
+    }
+    foreach ($fileName in $FileNames) {
+        $match = Get-ChildItem -Path $Root -Filter $fileName -File -Recurse -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+        if ($null -ne $match) {
+            return (Resolve-Path $match.FullName).Path
+        }
+    }
+    return ""
+}
+
 function Find-OpenSslRoot {
     $candidates = @(
         $env:OPENSSL_ROOT_DIR,
@@ -122,10 +136,9 @@ function Find-MySqlRoot {
         if (!(Test-Path $resolved)) {
             continue
         }
-        if (Test-Path (Join-Path $resolved "include\mysql.h")) {
-            return (Resolve-Path $resolved).Path
-        }
-        if (Test-Path (Join-Path $resolved "include\mariadb\mysql.h")) {
+        $headerPath = Find-FirstFileRecursive $resolved @("mysql.h")
+        $importLibPath = Find-FirstFileRecursive $resolved @("libmariadb.lib", "mysqlclient.lib")
+        if ($headerPath -ne "" -and $importLibPath -ne "") {
             return (Resolve-Path $resolved).Path
         }
     }
@@ -133,36 +146,19 @@ function Find-MySqlRoot {
 }
 
 function Find-MySqlIncludeDir([string]$Root) {
-    $candidates = @(
-        (Join-Path $Root "include"),
-        (Join-Path $Root "include\mariadb")
-    )
-    foreach ($candidate in $candidates) {
-        if ([string]::IsNullOrWhiteSpace($candidate) -or !(Test-Path $candidate)) {
-            continue
-        }
-        if ((Test-Path (Join-Path $candidate "mysql.h")) -or (Test-Path (Join-Path $candidate "mariadb\mysql.h"))) {
-            return (Resolve-Path $candidate).Path
-        }
+    $headerPath = Find-FirstFileRecursive $Root @("mysql.h")
+    if ($headerPath -eq "") {
+        return ""
     }
-    return ""
+    return Split-Path -Parent $headerPath
 }
 
 function Find-MySqlLibDir([string]$Root) {
-    $candidates = @(
-        (Join-Path $Root "lib"),
-        (Join-Path $Root "lib\mariadb")
-    )
-    foreach ($candidate in $candidates) {
-        if ([string]::IsNullOrWhiteSpace($candidate) -or !(Test-Path $candidate)) {
-            continue
-        }
-        if ((Get-ChildItem -Path $candidate -Filter "libmariadb.lib" -File | Select-Object -First 1) -or
-            (Get-ChildItem -Path $candidate -Filter "mysqlclient.lib" -File | Select-Object -First 1)) {
-            return (Resolve-Path $candidate).Path
-        }
+    $importLibPath = Find-FirstFileRecursive $Root @("libmariadb.lib", "mysqlclient.lib")
+    if ($importLibPath -eq "") {
+        return ""
     }
-    return ""
+    return Split-Path -Parent $importLibPath
 }
 
 function Find-MySqlLibName([string]$LibDir) {
@@ -178,18 +174,7 @@ function Find-MySqlLibName([string]$LibDir) {
 }
 
 function Find-MySqlRuntimeDll([string]$Root) {
-    $candidates = @(
-        (Join-Path $Root "bin\libmariadb.dll"),
-        (Join-Path $Root "bin\libmysql.dll"),
-        (Join-Path $Root "lib\libmariadb.dll"),
-        (Join-Path $Root "lib\libmysql.dll")
-    )
-    foreach ($candidate in $candidates) {
-        if (Test-Path $candidate) {
-            return (Resolve-Path $candidate).Path
-        }
-    }
-    return ""
+    return Find-FirstFileRecursive $Root @("libmariadb.dll", "libmysql.dll")
 }
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
@@ -269,6 +254,14 @@ if ($mySqlClientLib -eq "") {
     throw "Unable to locate libmariadb.lib or mysqlclient.lib under $mySqlLibDir"
 }
 $mySqlRuntimeDll = Find-MySqlRuntimeDll $mySqlRoot
+
+Write-Host "Using MariaDB/MySQL SDK root: $mySqlRoot"
+Write-Host "Using MariaDB/MySQL include dir: $mySqlIncludeDir"
+Write-Host "Using MariaDB/MySQL lib dir: $mySqlLibDir"
+Write-Host "Using MariaDB/MySQL import lib: $mySqlClientLib"
+if ($mySqlRuntimeDll -ne "") {
+    Write-Host "Using MariaDB/MySQL runtime DLL: $mySqlRuntimeDll"
+}
 
 $env:VSLIM_MYSQL_INCLUDE = $mySqlIncludeDir
 $env:VSLIM_MYSQL_LIB = $mySqlLibDir
