@@ -1,0 +1,7 @@
+[cache]
+prefix = "${env.VSLIM_CACHE_PREFIX:-app}"
+default_ttl_seconds = "${env.int.VSLIM_CACHE_TTL:-0}"
+
+[cache.pool]
+prefix = "${env.VSLIM_CACHE_POOL_PREFIX:-app}"
+default_ttl_seconds = "${env.int.VSLIM_CACHE_POOL_TTL:-0}"

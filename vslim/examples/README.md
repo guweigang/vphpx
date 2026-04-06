@@ -269,6 +269,7 @@ make -C /Users/guweigang/Source/vphpx/vslim demo-verify
 
 - `config_usage.php`
 - `config_usage.toml`
+- `config_usage.toml` 里的配置值现在支持 shell 风格环境占位符，例如 `${env.VSLIM_EXAMPLE_APP_NAME:-vslim-demo}`、`${env.bool.VSLIM_EXAMPLE_APP_DEBUG:-true}`、`${env.int.VSLIM_EXAMPLE_APP_PORT:-19888}`
 
 运行：
 
@@ -493,9 +494,15 @@ curl --noproxy '*' -N \
 
 ```bash
 cp /Users/guweigang/Source/vphpx/vslim/examples/ollama.toml /tmp/vslim-ollama-fixture.toml
-# 把 /tmp/vslim-ollama-fixture.toml 里的 OLLAMA_STREAM_FIXTURE 改成：
+# 把 /tmp/vslim-ollama-fixture.toml 里的 worker.env.OLLAMA_STREAM_FIXTURE 改成：
 # /Users/guweigang/Source/vphpx/vslim/tests/fixtures/ollama_stream_fixture.ndjson
 # 然后启动：
 cd /Users/guweigang/Source/vhttpd
 ./vhttpd --config /tmp/vslim-ollama-fixture.toml
 ```
+
+`ollama_stream_app.php` 和 `stream_factory_app.php` 现在都会优先走
+`VSlim\Stream\OllamaClient::fromApp($app)`。
+如果应用本身加载了 `config/` 目录，可以直接通过 `stream.ollama.*` 配置驱动；
+如果只是像这里一样用独立 demo 入口跑 `vhttpd` worker，则会继续兼容读取
+`worker.env` 里的 `OLLAMA_*`。

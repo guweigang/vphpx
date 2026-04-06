@@ -9,6 +9,15 @@
 - [`src/app_psr_bridge.v`](/Users/guweigang/Source/vphpx/vslim/src/app_psr_bridge.v)
 - [`tests/test_php_route_builder.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_php_route_builder.phpt)
 
+先定一个产品边界：
+
+- `VSlim\App`
+  面向“直接用 VSlim 写应用”
+- `vhttpd + php package`
+  面向“让现有 PHP 应用接入新的 runtime”
+
+所以这一页讲的是 `VSlim` 作为原生框架时的应用入口，不是现有框架兼容层。
+
 ## 它负责什么
 
 - 注册路由：`get/post/put/patch/delete/head/options/any/map`
@@ -67,6 +76,13 @@
 
 - `VSlim\Vhttpd\Request/Response` 偏 adapter / facade
 - `handle()` 对应的 PSR request/response 更接近框架内部 canonical HTTP 通道
+
+对应产品定位也可以这样看：
+
+- 你要兼容现有 PHP 生态
+  - 优先想 `vhttpd + php package`
+- 你要围绕 route / middleware / stream / websocket / mcp 原生写应用
+  - 优先想 `VSlim\App`
 
 详细说明见：
 

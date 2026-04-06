@@ -1,0 +1,5 @@
+[http]
+max_body_bytes = "${env.int.VSLIM_MAX_BODY_BYTES:-1048576}"
+
+[http.client]
+timeout_seconds = "${env.int.VSLIM_HTTP_CLIENT_TIMEOUT:-30}"

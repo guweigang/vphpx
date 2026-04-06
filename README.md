@@ -97,6 +97,27 @@
 - 给 PHP 用户提供熟悉的 app / route / middleware / container / CLI 体验
 - 把这套底层桥接推进到 PSR、HTTP、CLI、View、WebSocket、MCP 等真实场景
 
+这里有一条很重要的产品边界：
+
+- `vhttpd`
+  解决“现有 PHP 应用怎么跑在新的 runtime 上”
+- `vslim`
+  解决“围绕这些 runtime 能力，原生应用该怎么写”
+
+也就是说：
+
+- 如果你已经有 `wordpress`、`laravel`、`symfony` 或普通 PHP 应用
+  - 更合适的路径是 `vhttpd + php package`
+  - 重点是接入 worker、stream、websocket、mcp 这类 runtime 能力
+- 如果你想直接使用这些能力作为框架一等能力
+  - 更合适的路径是 `VSlim`
+  - 它不是“再适配一次 vhttpd”，而是把这些能力直接内建进 app model
+
+一句话：
+
+- `vhttpd` 负责“怎么跑”
+- `VSlim` 负责“怎么写”
+
 `vslim` 现在已经不只是 demo，已经覆盖：
 
 - `VSlim\App`

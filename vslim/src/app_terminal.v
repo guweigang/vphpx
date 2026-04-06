@@ -28,8 +28,17 @@ fn normalize_or_handle_error(app &VSlimApp, request_payload vphp.RequestBorrowed
 
 fn fixed_terminal_meta(res VSlimResponse) MiddlewareTerminalMeta {
 	return MiddlewareTerminalMeta{
-		kind:           .fixed_response
-		fixed_response: res
+		kind:               .fixed_response
+		fixed_response_ref: new_psr7_response_from_vslim_response(res)
+	}
+}
+
+fn fixed_terminal_meta_psr(res &VSlimPsr7Response) MiddlewareTerminalMeta {
+	return MiddlewareTerminalMeta{
+		kind:               .fixed_response
+		fixed_response_ref: clone_psr7_response(res, res.get_protocol_version(), res.headers.clone(),
+			clone_header_names(res.header_names), response_body_or_empty(res), res.get_status_code(),
+			res.get_reason_phrase())
 	}
 }
 
@@ -59,7 +68,11 @@ fn error_terminal_meta(status int, message string, fallback_message string, erro
 fn build_terminal_response(app &VSlimApp, ctx PipelineRequestContext, meta MiddlewareTerminalMeta) VSlimResponse {
 	return match meta.kind {
 		.fixed_response {
-			meta.fixed_response
+			if meta.fixed_response_ref == unsafe { nil } {
+				text_response(500, 'Invalid terminal response')
+			} else {
+				new_vslim_response_from_psr_response(meta.fixed_response_ref)
+			}
 		}
 		.not_found {
 			run_not_found_core_with_context(app, ctx)
@@ -81,7 +94,14 @@ fn build_terminal_response(app &VSlimApp, ctx PipelineRequestContext, meta Middl
 fn build_terminal_response_psr(app &VSlimApp, ctx PipelineRequestContext, meta MiddlewareTerminalMeta) &VSlimPsr7Response {
 	return match meta.kind {
 		.fixed_response {
-			new_psr7_response_from_vslim_response(meta.fixed_response)
+			if meta.fixed_response_ref == unsafe { nil } {
+				new_psr7_text_response(500, 'Invalid terminal response')
+			} else {
+				res := meta.fixed_response_ref
+				clone_psr7_response(res, res.protocol_version, res.headers.clone(),
+					clone_header_names(res.header_names), response_body_or_empty(res), res.status,
+					res.reason_phrase)
+			}
 		}
 		.not_found {
 			run_not_found_core_with_context_psr(app, ctx)
@@ -95,7 +115,7 @@ fn build_terminal_response_psr(app &VSlimApp, ctx PipelineRequestContext, meta M
 			}
 		}
 		.none {
-			new_psr7_response_from_vslim_response(text_response(500, 'Invalid terminal response'))
+			new_psr7_text_response(500, 'Invalid terminal response')
 		}
 	}
 }
@@ -134,7 +154,7 @@ fn build_method_not_allowed_response_with_context(app &VSlimApp, ctx PipelineReq
 
 fn build_method_not_allowed_response_with_context_psr(app &VSlimApp, ctx PipelineRequestContext, allowed_methods []string) &VSlimPsr7Response {
 	mut res := run_error_handler_with_context_psr(app, ctx, 405, 'Method not allowed') or {
-		new_psr7_response_from_vslim_response(method_not_allowed_response())
+		new_psr7_text_response(405, 'Method Not Allowed')
 	}
 	if allowed_methods.len == 0 {
 		return res
@@ -241,8 +261,28 @@ fn default_error_response(app &VSlimApp, status int, message string, error_code 
 }
 
 fn default_error_response_psr(app &VSlimApp, status int, message string, error_code string) &VSlimPsr7Response {
-	return new_psr7_response_from_vslim_response(default_error_response(app, status, message,
-		error_code))
+	if app.error_response_json {
+		esc_code := json_escape(error_code)
+		return new_psr7_json_response(status, '{"ok":false,"code":"${esc_code}","error":"${esc_code}","status":${status},"message":"${json_escape(message)}"}')
+	}
+	return new_psr7_text_response(status, message)
+}
+
+fn internal_phase_continue_response_psr() &VSlimPsr7Response {
+	return &VSlimPsr7Response{
+		status:           299
+		reason_phrase:    normalize_reason_phrase(299, '')
+		protocol_version: '1.1'
+		headers:          {
+			'content-type':     ['text/plain; charset=utf-8']
+			'x-vslim-continue': ['1']
+		}
+		header_names:     {
+			'content-type':     'content-type'
+			'x-vslim-continue': 'x-vslim-continue'
+		}
+		body_ref:         new_psr7_stream('')
+	}
 }
 
 fn json_escape(input string) string {

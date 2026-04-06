@@ -58,7 +58,7 @@ enum MiddlewareTerminalKind {
 struct MiddlewareTerminalMeta {
 mut:
 	kind             MiddlewareTerminalKind = .none
-	fixed_response   VSlimResponse
+	fixed_response_ref &VSlimPsr7Response = unsafe { nil }
 	status           int
 	message          string
 	fallback_message string
@@ -504,8 +504,10 @@ struct VSlimPsr16InvalidArgumentException {}
 @[heap]
 struct VSlimPsr16Cache {
 mut:
-	entries   map[string]PsrCacheEntry
-	clock_ref vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	entries             map[string]PsrCacheEntry
+	clock_ref           vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	namespace_prefix    string
+	default_ttl_seconds int
 }
 
 @[php_class: 'VSlim\\Psr6\\CacheException']
@@ -538,9 +540,11 @@ mut:
 @[heap]
 struct VSlimPsr6CacheItemPool {
 mut:
-	entries   map[string]PsrCacheEntry
-	deferred  map[string]Psr6DeferredEntry
-	clock_ref vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	entries             map[string]PsrCacheEntry
+	deferred            map[string]Psr6DeferredEntry
+	clock_ref           vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	namespace_prefix    string
+	default_ttl_seconds int
 }
 
 @[php_implements: 'Psr\\Http\\Client\\ClientExceptionInterface']

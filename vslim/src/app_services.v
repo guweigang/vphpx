@@ -72,6 +72,22 @@ pub fn (mut app VSlimApp) load_config_text(text string) &VSlimApp {
 	return app
 }
 
+@[php_method]
+pub fn (mut app VSlimApp) merge_config(path string) &VSlimApp {
+	mut cfg := app.config()
+	cfg.merge_file(path)
+	app.sync_standard_services_to_container()
+	return app
+}
+
+@[php_method]
+pub fn (mut app VSlimApp) merge_config_text(text string) &VSlimApp {
+	mut cfg := app.config()
+	cfg.merge_text(text)
+	app.sync_standard_services_to_container()
+	return app
+}
+
 fn (mut app VSlimApp) sync_standard_services_to_container() {
 	if app.container_ref == unsafe { nil } {
 		return
@@ -101,6 +117,82 @@ fn (mut app VSlimApp) sync_cache_services_to_container() {
 
 fn (mut app VSlimApp) sync_http_client_service_to_container() {
 	app.sync_standard_services_to_container()
+}
+
+fn configure_default_app_logger(mut logger VSlimLogger, config &VSlimConfig) {
+	if config == unsafe { nil } {
+		return
+	}
+	if config.has('logging.channel') {
+		logger.set_channel(config.get_string('logging.channel', logger.channel()))
+	}
+	if config.has('logging.level') {
+		logger.set_level(config.get_string('logging.level', logger.level()))
+	}
+	if config.has('logging.output_file') {
+		output_file := config.get_string('logging.output_file', '').trim_space()
+		if output_file != '' {
+			logger.set_output_file(output_file)
+		}
+	}
+	if config.has('logging.target') {
+		target := config.get_string('logging.target', '').trim_space().to_lower()
+		match target {
+			'stdout' {
+				logger.console_target = 'stdout'
+				reconfigure_vslim_logger(mut logger)
+			}
+			'stderr' {
+				logger.console_target = 'stderr'
+				reconfigure_vslim_logger(mut logger)
+			}
+			'file' {
+				logger.console_target = ''
+				reconfigure_vslim_logger(mut logger)
+			}
+			else {}
+		}
+	}
+}
+
+fn configure_default_http_client(mut client VSlimPsr18Client, config &VSlimConfig) {
+	if config == unsafe { nil } {
+		return
+	}
+	if config.has('http.client.timeout_seconds') {
+		client.timeout(config.get_int('http.client.timeout_seconds', client.timeout_seconds_value()))
+	}
+}
+
+fn configure_default_simple_cache(mut cache VSlimPsr16Cache, config &VSlimConfig) {
+	if config == unsafe { nil } {
+		return
+	}
+	if config.has('cache.prefix') {
+		cache.set_namespace(config.get_string('cache.prefix', cache.namespace()))
+	}
+	if config.has('cache.default_ttl_seconds') {
+		cache.set_default_ttl_seconds(config.get_int('cache.default_ttl_seconds',
+			cache.default_ttl_seconds_value()))
+	}
+}
+
+fn configure_default_cache_pool(mut pool VSlimPsr6CacheItemPool, config &VSlimConfig) {
+	if config == unsafe { nil } {
+		return
+	}
+	if config.has('cache.pool.prefix') {
+		pool.set_namespace(config.get_string('cache.pool.prefix', pool.namespace()))
+	} else if config.has('cache.prefix') {
+		pool.set_namespace(config.get_string('cache.prefix', pool.namespace()))
+	}
+	if config.has('cache.pool.default_ttl_seconds') {
+		pool.set_default_ttl_seconds(config.get_int('cache.pool.default_ttl_seconds',
+			pool.default_ttl_seconds_value()))
+	} else if config.has('cache.default_ttl_seconds') {
+		pool.set_default_ttl_seconds(config.get_int('cache.default_ttl_seconds',
+			pool.default_ttl_seconds_value()))
+	}
 }
 
 fn (mut app VSlimApp) sync_clock_dependent_services() {
@@ -191,6 +283,7 @@ pub fn (mut app VSlimApp) logger() &VSlimLogger {
 		mut created := &VSlimLogger{}
 		created.construct()
 		created.set_channel('vslim.app')
+		configure_default_app_logger(mut created, app.config_ref)
 		app.logger_ref = created
 	}
 	return app.logger_ref
@@ -286,6 +379,7 @@ pub fn (mut app VSlimApp) cache() &VSlimPsr16Cache {
 		mut created := &VSlimPsr16Cache{}
 		created.construct()
 		created.set_clock(vphp.borrow_zbox(app.clock().to_zval()))
+		configure_default_simple_cache(mut created, app.config_ref)
 		app.cache_ref = created
 	}
 	return app.cache_ref
@@ -310,6 +404,7 @@ pub fn (mut app VSlimApp) cache_pool() &VSlimPsr6CacheItemPool {
 		mut created := &VSlimPsr6CacheItemPool{}
 		created.construct()
 		created.set_clock(vphp.borrow_zbox(app.clock().to_zval()))
+		configure_default_cache_pool(mut created, app.config_ref)
 		app.cache_pool_ref = created
 	}
 	return app.cache_pool_ref
@@ -329,6 +424,7 @@ pub fn (mut app VSlimApp) http_client() &VSlimPsr18Client {
 	if app.http_client_ref == unsafe { nil } {
 		mut created := &VSlimPsr18Client{}
 		created.construct()
+		configure_default_http_client(mut created, app.config_ref)
 		app.http_client_ref = created
 	}
 	return app.http_client_ref

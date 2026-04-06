@@ -1,28 +1,42 @@
-[server]
-host = "127.0.0.1"
-port = 19888
+[paths]
+root = ".."
+php_app = "vslim/examples/demo_app.php"
+php_worker = "vslim/examples/vendor/bin/php-worker"
+vslim_ext = "vslim/vslim.so"
+public_root = "vslim/examples/public"
 
 [files]
-pid_file = "/tmp/vhttpd_vslim_demo.pid"
-event_log = "/tmp/vhttpd_vslim_demo.events.ndjson"
+pid_file = "tmp/vhttpd_vslim_demo.pid"
+event_log = "tmp/vhttpd_vslim_demo.events.ndjson"
 
-[worker]
-autostart = true
-read_timeout_ms = 3000
-pool_size = 4
-socket = "/tmp/vslim_demo_worker.sock"
-cmd = "php -d extension=/Users/guweigang/Source/vphpx/vslim/vslim.so /Users/guweigang/Source/vphpx/vslim/examples/vendor/bin/php-worker"
-
-[worker.env]
-VHTTPD_APP = "/Users/guweigang/Source/vphpx/vslim/examples/demo_app.php"
+[runtime]
+timezone = "Asia/Shanghai"
 
 [admin]
 host = "127.0.0.1"
 port = 19988
-token = ""
+token = "change-me"
 
 [assets]
 enabled = true
 prefix = "/assets"
-root = "/Users/guweigang/Source/vphpx/vslim/examples/public"
+root = "${paths.public_root}"
 cache_control = "public, max-age=3600"
+
+[sites.demo]
+host = "127.0.0.1"
+port = 19888
+root = "${paths.root}"
+executor = "php"
+worker.entry = "${paths.php_worker}"
+worker.autostart = true
+worker.read_timeout_ms = 3000
+worker.pool_size = 4
+worker.socket_prefix = "tmp/vslim_demo_worker"
+worker.max_requests = 5000
+worker.restart_backoff_ms = 500
+worker.restart_backoff_max_ms = 8000
+app = "${paths.php_app}"
+php.bin = "php"
+php.extensions = ["${paths.vslim_ext}"]
+php.args = []

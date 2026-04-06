@@ -13,6 +13,7 @@ echo "app.name: " . $cfg->get_string('app.name', 'n/a') . PHP_EOL;
 echo "app.port: " . $cfg->get_int('app.port', 0) . PHP_EOL;
 echo "app.debug: " . ($cfg->get_bool('app.debug', false) ? 'true' : 'false') . PHP_EOL;
 echo "app.ratio: " . $cfg->get_float('app.ratio', 0.0) . PHP_EOL;
+echo "app.env: " . $cfg->get_string('app.env', 'n/a') . PHP_EOL;
 
 echo "\n== mixed get ==\n";
 echo "feature.flags[0]: " . $cfg->get('feature.flags')[0] . PHP_EOL;

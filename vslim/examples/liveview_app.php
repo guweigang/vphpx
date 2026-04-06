@@ -223,7 +223,14 @@ if (!class_exists('ExampleCounterLiveView', false)) {
             }
             $line .= PHP_EOL;
             file_put_contents('php://stderr', $line);
-            $logFile = getenv('VSLIM_LIVEVIEW_LOG');
+            $logFile = '';
+            $app = vslim_liveview_demo_app();
+            if ($app->has_config()) {
+                $logFile = (string) $app->config()->get_string('liveview.log_file', '');
+            }
+            if ($logFile === '') {
+                $logFile = (string) (getenv('VSLIM_LIVEVIEW_LOG') ?: '');
+            }
             if (is_string($logFile) && $logFile !== '') {
                 @mkdir(dirname($logFile), 0777, true);
                 @file_put_contents($logFile, $line, FILE_APPEND);

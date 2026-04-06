@@ -16,6 +16,33 @@ Documentation entry:
 - `VSlim\Container` / `VSlim\Config` 提供基础依赖注入与 TOML 配置
 - `vslim_handle_request(...)` / `dispatch_envelope(...)` 提供和 worker / `vhttpd` 的集成边界
 
+## VSlim 和 vhttpd 的边界
+
+这条边界最好直接理解成两句话：
+
+- `vhttpd` 负责“怎么跑”
+- `VSlim` 负责“怎么写”
+
+更展开一点：
+
+- `vhttpd`
+  - 是 transport / runtime / worker 层
+  - 可以通过 PHP package 承载现有 PHP 应用
+  - 包括 `wordpress`、`laravel`、`symfony`、普通 PHP app
+  - 并把 stream、websocket、mcp 这类运行时能力带给它们
+- `VSlim`
+  - 是原生框架层
+  - 不是为了兼容现有框架而存在
+  - 而是把这些能力直接内建成一等应用模型
+  - 开箱即用，不需要再靠外部 PHP package 拼 runtime 能力
+
+所以：
+
+- 如果你已经有现成 PHP 项目
+  - 优先看 `vhttpd + php package`
+- 如果你要新写一个原生利用 stream / websocket / mcp / worker 的应用
+  - 优先看 `VSlim`
+
 ## 它和上游 Web Server 的关系
 
 `VSlim` 不是 web server，也不绑死某一个 web server。
@@ -47,6 +74,7 @@ Documentation entry:
 - `VSlim\Vhttpd\Request/Response` 是 transport-friendly facade
 - `Psr\Http\Message\ServerRequestInterface` / `ResponseInterface` 是框架内部更标准的 HTTP 契约
 - `vhttpd`、PHP 内置 server、nginx 只是不同的上游接入方式，不改变 `VSlim` 作为框架层的定位
+- `vhttpd` 是最重要的原生 runtime 集成对象，但不是 `VSlim` 的唯一宿主
 
 这份 README 只做两件事：
 

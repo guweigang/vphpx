@@ -21,7 +21,7 @@ fn app_kernel_prepare(app &VSlimApp) {
 }
 
 fn new_app_kernel_trace(app &VSlimApp, req &VSlimRequest, enter_stage string) AppKernelTraceState {
-	enabled := vslim_trace_mem_should_log()
+	enabled := vslim_trace_mem_should_log(app)
 	mut base_bytes := i64(0)
 	if enabled {
 		base_bytes = vslim_mem_usage_bytes()
@@ -126,4 +126,3 @@ fn sync_vslim_request_from_snapshot(mut target VSlimRequest, snapshot VSlimReque
 	target.uploaded_files = snapshot.uploaded_files.clone()
 	target.params = snapshot.params.clone()
 }
-

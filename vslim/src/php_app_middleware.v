@@ -319,24 +319,22 @@ fn dispatch_psr15_next_handler(mut state Psr15NextHandlerState, key u64, request
 	return match state.mode {
 		.middleware_chain {
 			if state.chain_ref == unsafe { nil } {
-				new_psr7_response_from_vslim_response(text_response(500,
-					'Middleware chain is not available'))
+				new_psr7_text_response(500, 'Middleware chain is not available')
 			} else {
 				mut chain := state.chain_ref
 				raw := chain.dispatch(request_borrowed) or {
 					msg := if err.msg() == '' { 'Route handler is not callable' } else { err.msg() }
-					res := run_error_handler(chain.app, request_borrowed, 500, msg) or {
-						default_error_response(chain.app, 500, msg, 'handler_not_callable')
+					res := run_error_handler_with_context_psr(chain.app, chain.request_ctx, 500, msg) or {
+						default_error_response_psr(chain.app, 500, msg, 'handler_not_callable')
 					}
-					return new_psr7_response_from_vslim_response(res)
+					return res
 				}
 				normalize_to_psr7_response(raw)
 			}
 		}
 		.fixed_response {
 			if state.fixed_response_ref == unsafe { nil } {
-				new_psr7_response_from_vslim_response(text_response(500,
-					'Middleware fixed response is not available'))
+				new_psr7_text_response(500, 'Middleware fixed response is not available')
 			} else {
 				res := state.fixed_response_ref
 				clone_psr7_response(res, res.get_protocol_version(), res.headers.clone(),
@@ -350,7 +348,7 @@ fn dispatch_psr15_next_handler(mut state Psr15NextHandlerState, key u64, request
 				store_forwarded_request_snapshot(key, snapshot)
 			}
 			state.has_forwarded_request = true
-			new_psr7_response_from_vslim_response(internal_phase_continue_response())
+			internal_phase_continue_response_psr()
 		}
 	}
 }

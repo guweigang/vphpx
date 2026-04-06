@@ -40,6 +40,22 @@
 - `vslim` 解决“应用怎么写”
 - `vhttpd` 解决“应用怎么跑”
 
+这还可以再分成两条更容易理解的产品线：
+
+- `vhttpd`
+  - 让现有 PHP 应用和主流框架接入新的 runtime 能力
+  - 重点是兼容、承载和增强
+- `VSlim`
+  - 直接把这些 runtime 能力做成框架内建能力
+  - 重点是原生应用模型和开箱即用
+
+所以在产品定位上：
+
+- `vhttpd + php package`
+  更像“把 `wordpress / laravel / symfony / 普通 php app` 跑到新的 runtime 上”
+- `VSlim`
+  更像“围绕 stream / websocket / mcp / worker 原生写应用”
+
 这里要特别注意一层边界：
 
 - `VSlim` 不是 web server

@@ -39,6 +39,9 @@ pub fn (app &VSlimApp) view_cache_enabled() bool {
 	if app.view_cache_configured {
 		return app.view_cache_enabled
 	}
+	if app.config_ref != unsafe { nil } && app.config_ref.has('view.cache') {
+		return app.config_ref.get_bool('view.cache', default_view_cache_enabled())
+	}
 	return default_view_cache_enabled()
 }
 

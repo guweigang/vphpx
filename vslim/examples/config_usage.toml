@@ -1,13 +1,13 @@
 [app]
-name = "vslim-demo"
-env = "dev"
-port = 19888
-debug = true
-ratio = 1.5
+name = "${env.VSLIM_EXAMPLE_APP_NAME:-vslim-demo}"
+env = "${env.VSLIM_EXAMPLE_APP_ENV:-dev}"
+port = "${env.int.VSLIM_EXAMPLE_APP_PORT:-19888}"
+debug = "${env.bool.VSLIM_EXAMPLE_APP_DEBUG:-true}"
+ratio = "${env.float.VSLIM_EXAMPLE_APP_RATIO:-1.5}"
 
 [db]
 driver = "pgsql"
-hosts = ["127.0.0.1", "127.0.0.2"]
+hosts = ["${env.VSLIM_EXAMPLE_DB_HOST1:-127.0.0.1}", "${env.VSLIM_EXAMPLE_DB_HOST2:-127.0.0.2}"]
 
 [feature]
 flags = ["stream", "mvc", "config"]

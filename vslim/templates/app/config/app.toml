@@ -1,5 +1,9 @@
 [app]
 name = "vslim-template"
 
+[app.trace]
+memory = "${env.bool.VSLIM_TRACE_MEM:-false}"
+memory_every = "${env.int.VSLIM_TRACE_MEM_EVERY:-1}"
+
 [ui]
 title = "VSlim Template"

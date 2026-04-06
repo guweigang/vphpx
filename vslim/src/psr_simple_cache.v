@@ -14,6 +14,28 @@ pub fn (mut cache VSlimPsr16Cache) construct() &VSlimPsr16Cache {
 	return &cache
 }
 
+@[php_method: 'setNamespace']
+pub fn (mut cache VSlimPsr16Cache) set_namespace(prefix string) &VSlimPsr16Cache {
+	cache.namespace_prefix = psr_cache_normalize_namespace(prefix)
+	return &cache
+}
+
+@[php_method: 'namespace']
+pub fn (cache &VSlimPsr16Cache) namespace() string {
+	return cache.namespace_prefix
+}
+
+@[php_method: 'setDefaultTtlSeconds']
+pub fn (mut cache VSlimPsr16Cache) set_default_ttl_seconds(seconds int) &VSlimPsr16Cache {
+	cache.default_ttl_seconds = if seconds <= 0 { 0 } else { seconds }
+	return &cache
+}
+
+@[php_method: 'defaultTtlSeconds']
+pub fn (cache &VSlimPsr16Cache) default_ttl_seconds_value() int {
+	return if cache.default_ttl_seconds <= 0 { 0 } else { cache.default_ttl_seconds }
+}
+
 @[php_method: 'setClock']
 @[php_arg_type: 'clock=Psr\\Clock\\ClockInterface']
 pub fn (mut cache VSlimPsr16Cache) set_clock(clock vphp.RequestBorrowedZBox) &VSlimPsr16Cache {
@@ -43,8 +65,9 @@ pub fn (mut cache VSlimPsr16Cache) get(key string, default_value vphp.RequestBor
 		throw_psr16_invalid_argument(err.msg())
 		return default_value.clone_request_owned()
 	}
-	cache.prune_expired_entry(normalized)
-	entry := cache.entries[normalized] or {
+	storage_key := psr16_storage_key(cache, normalized)
+	cache.prune_expired_entry(storage_key)
+	entry := cache.entries[storage_key] or {
 		return default_value.clone_request_owned()
 	}
 	return entry.value.clone_request_owned()
@@ -65,8 +88,10 @@ pub fn (mut cache VSlimPsr16Cache) set(key string, value vphp.RequestBorrowedZBo
 	if expires_at < 0 {
 		return cache.delete(normalized)
 	}
-	cache.replace_entry(normalized, vphp.PersistentOwnedZBox.from_mixed_zval(value.to_zval()),
-		expires_at)
+	cache.replace_entry(psr16_storage_key(cache, normalized),
+		vphp.PersistentOwnedZBox.from_mixed_zval(value.to_zval()),
+		psr_cache_apply_default_ttl(cache.clock_ref.to_zval(), expires_at,
+		cache.default_ttl_seconds))
 	return true
 }
 
@@ -77,7 +102,7 @@ pub fn (mut cache VSlimPsr16Cache) delete(key string) bool {
 		throw_psr16_invalid_argument(err.msg())
 		return false
 	}
-	cache.remove_entry(normalized)
+	cache.remove_entry(psr16_storage_key(cache, normalized))
 	return true
 }
 
@@ -128,7 +153,7 @@ pub fn (mut cache VSlimPsr16Cache) set_multiple(values vphp.RequestBorrowedZBox,
 			throw_psr16_invalid_argument(err.msg())
 			return false
 		} {
-			cache.remove_entry(key_name)
+			cache.remove_entry(psr16_storage_key(cache, key_name))
 		}
 		return true
 	}
@@ -136,7 +161,9 @@ pub fn (mut cache VSlimPsr16Cache) set_multiple(values vphp.RequestBorrowedZBox,
 		throw_psr16_invalid_argument(err.msg())
 		return false
 	} {
-		cache.replace_entry(key_name, value, expires_at)
+		cache.replace_entry(psr16_storage_key(cache, key_name), value,
+			psr_cache_apply_default_ttl(cache.clock_ref.to_zval(), expires_at,
+			cache.default_ttl_seconds))
 	}
 	return true
 }
@@ -153,7 +180,7 @@ pub fn (mut cache VSlimPsr16Cache) delete_multiple(keys vphp.RequestBorrowedZBox
 		throw_psr16_invalid_argument(err.msg())
 		return false
 	} {
-		cache.remove_entry(key_name)
+		cache.remove_entry(psr16_storage_key(cache, key_name))
 	}
 	return true
 }
@@ -165,8 +192,9 @@ pub fn (mut cache VSlimPsr16Cache) has(key string) bool {
 		throw_psr16_invalid_argument(err.msg())
 		return false
 	}
-	cache.prune_expired_entry(normalized)
-	return normalized in cache.entries
+	storage_key := psr16_storage_key(cache, normalized)
+	cache.prune_expired_entry(storage_key)
+	return storage_key in cache.entries
 }
 
 fn ensure_psr16_cache(mut cache VSlimPsr16Cache) {
@@ -175,6 +203,9 @@ fn ensure_psr16_cache(mut cache VSlimPsr16Cache) {
 	}
 	if !cache.clock_ref.is_valid() || cache.clock_ref.is_null() || cache.clock_ref.is_undef() {
 		cache.clock_ref = new_psr20_system_clock_ref()
+	}
+	if cache.default_ttl_seconds < 0 {
+		cache.default_ttl_seconds = 0
 	}
 }
 
@@ -232,6 +263,25 @@ fn psr_cache_validate_key_or_throw(key string) !string {
 		}
 	}
 	return key
+}
+
+fn psr_cache_normalize_namespace(prefix string) string {
+	return prefix.trim_space()
+}
+
+fn psr16_storage_key(cache VSlimPsr16Cache, key string) string {
+	if cache.namespace_prefix == '' {
+		return key
+	}
+	return '${cache.namespace_prefix}:${key}'
+}
+
+fn psr_cache_apply_default_ttl(clock vphp.ZVal, expires_at i64, default_ttl_seconds int) i64 {
+	if expires_at != 0 || default_ttl_seconds <= 0 {
+		return expires_at
+	}
+	now_unix := psr20_now_unix_or_throw(clock) or { return expires_at }
+	return now_unix + i64(default_ttl_seconds)
 }
 
 fn psr_cache_resolve_relative_ttl_or_throw(clock vphp.ZVal, ttl vphp.ZVal) !i64 {

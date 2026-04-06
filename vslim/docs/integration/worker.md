@@ -21,6 +21,21 @@
 - `VSlim` 也不是 web server
 - 它只定义 app 层边界
 
+这页讨论的不是“怎么兼容现有 PHP 框架”，而是：
+
+- 当你已经决定用 `VSlim` 写应用
+- 上游再选择什么 transport / worker runtime 把请求交给它
+
+如果你的目标是：
+
+- `wordpress`
+- `laravel`
+- `symfony`
+- 或别的现成 PHP 应用
+
+那更应该先看 `vhttpd + php package` 这条线。  
+这页讲的是 `VSlim` 自己作为原生框架时，和 worker/runtime 怎么对接。
+
 上游可以是：
 
 - `vhttpd` + php-worker
@@ -52,6 +67,13 @@ VSlim 当前有三种 worker 相关入口：
   - transport / worker-friendly facade
 - `handle()`
   - PSR-7 / PSR-15 主通道
+
+也就是说：
+
+- `dispatch_envelope*`
+  更像 `VSlim` 暴露给 worker/runtime 的适配面
+- `handle()`
+  更像框架内部和标准 PHP 生态靠拢的 canonical 通道
 
 ## request envelope 形状
 
@@ -184,6 +206,11 @@ return [
 
 - transport / socket / process supervision 交给 `vhttpd` / worker
 - app routing / middleware / response normalization 交给 VSlim
+
+如果要用一句最短的话总结：
+
+- `vhttpd` 负责“怎么跑”
+- `VSlim` 负责“怎么写”
 
 如果你在设计系统边界，推荐这样理解：
 
