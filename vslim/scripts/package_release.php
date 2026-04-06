@@ -66,6 +66,7 @@ function main(array $argv): void
         $extensionFile = basename($extensionPath);
         ensure_dir($stageDir . DIRECTORY_SEPARATOR . 'extension');
         copy_file($extensionPath, $stageDir . DIRECTORY_SEPARATOR . 'extension' . DIRECTORY_SEPARATOR . $extensionFile);
+        stage_runtime_dependencies($extensionPath, $stageDir);
     } else {
         stage_source_bundle($repoRoot, $stageDir);
     }
@@ -220,11 +221,32 @@ function stage_docs(string $repoRoot, string $stageDir): void
 
 function build_release_readme(string $version, string $platform, string $packageType, ?string $extensionFile): string
 {
+    $runtimeSection = '';
+    if ($packageType === 'binary' && $extensionFile !== null) {
+        $runtimeSection = <<<TXT
+## Native runtime libraries
+
+If the bundle contains `extension/runtime/`, those files are extra native client libraries detected from the build machine.
+This is especially relevant now that direct mysql support can pull in `libmysqlclient` / `libmariadb`.
+
+If your PHP runtime cannot find the database client library automatically, point the dynamic loader at the bundled runtime directory before loading the extension:
+
+- Linux:
+  `LD_LIBRARY_PATH=/absolute/path/extension/runtime php -d extension=/absolute/path/{$extensionFile} -m`
+- macOS:
+  `DYLD_LIBRARY_PATH=/absolute/path/extension/runtime php -d extension=/absolute/path/{$extensionFile} -m`
+- Windows:
+  put the DLLs next to `php.exe` or add `extension\\runtime` to `PATH`
+
+TXT;
+    }
+
     $binarySection = $packageType === 'binary'
         ? <<<TXT
 ## Bundle contents
 
 - `extension/{$extensionFile}`: prebuilt VSlim PHP extension for this platform.
+- `extension/runtime/`: bundled native runtime libraries detected from the extension, when needed.
 - `template/`: starter app template that matches the current PSR-oriented project layout.
 - `docs/`: VSlim framework and template references.
 
@@ -259,12 +281,123 @@ TXT;
 - Package type: `{$packageType}`
 
 {$binarySection}
+{$runtimeSection}
 ## Notes
 
 - CI builds target PHP `8.5`.
 - `template/` is the release-facing app skeleton; the repository source tree remains the canonical development layout.
 - `docs/TEMPLATE_README.md` is the best entry point if you want the HTTP + CLI bootstrap flow first.
 MD;
+}
+
+function stage_runtime_dependencies(string $extensionPath, string $stageDir): void
+{
+    $deps = detect_runtime_dependencies($extensionPath);
+    if ($deps === []) {
+        return;
+    }
+
+    $runtimeDir = $stageDir . DIRECTORY_SEPARATOR . 'extension' . DIRECTORY_SEPARATOR . 'runtime';
+    ensure_dir($runtimeDir);
+    foreach ($deps as $dep) {
+        copy_file($dep, $runtimeDir . DIRECTORY_SEPARATOR . basename($dep));
+    }
+}
+
+function detect_runtime_dependencies(string $extensionPath): array
+{
+    return match (PHP_OS_FAMILY) {
+        'Darwin' => detect_macos_runtime_dependencies($extensionPath),
+        'Linux' => detect_linux_runtime_dependencies($extensionPath),
+        'Windows' => detect_windows_runtime_dependencies($extensionPath),
+        default => [],
+    };
+}
+
+function detect_macos_runtime_dependencies(string $extensionPath): array
+{
+    $cmd = 'otool -L ' . escapeshellarg($extensionPath);
+    exec($cmd, $output, $exitCode);
+    if ($exitCode !== 0) {
+        return [];
+    }
+
+    $deps = [];
+    foreach ($output as $index => $line) {
+        if ($index === 0) {
+            continue;
+        }
+        if (!preg_match('/^\s+(\S+)/', $line, $m)) {
+            continue;
+        }
+        $path = trim($m[1]);
+        if (!should_bundle_runtime_dependency($path)) {
+            continue;
+        }
+        if (is_file($path)) {
+            $deps[$path] = true;
+        }
+    }
+
+    return array_keys($deps);
+}
+
+function detect_linux_runtime_dependencies(string $extensionPath): array
+{
+    $cmd = 'ldd ' . escapeshellarg($extensionPath);
+    exec($cmd, $output, $exitCode);
+    if ($exitCode !== 0) {
+        return [];
+    }
+
+    $deps = [];
+    foreach ($output as $line) {
+        if (!preg_match('/=>\s+(\S+)/', $line, $m)) {
+            continue;
+        }
+        $path = trim($m[1]);
+        if (!should_bundle_runtime_dependency($path)) {
+            continue;
+        }
+        if (is_file($path)) {
+            $deps[$path] = true;
+        }
+    }
+
+    return array_keys($deps);
+}
+
+function detect_windows_runtime_dependencies(string $extensionPath): array
+{
+    $dir = dirname($extensionPath);
+    $candidates = [
+        $dir . DIRECTORY_SEPARATOR . 'libmysql.dll',
+        $dir . DIRECTORY_SEPARATOR . 'libmariadb.dll',
+    ];
+
+    $deps = [];
+    foreach ($candidates as $candidate) {
+        if (is_file($candidate)) {
+            $deps[$candidate] = true;
+        }
+    }
+
+    return array_keys($deps);
+}
+
+function should_bundle_runtime_dependency(string $path): bool
+{
+    $normalized = strtolower(trim($path));
+    if ($normalized === '') {
+        return false;
+    }
+    if (!str_contains($normalized, 'mysql') && !str_contains($normalized, 'mariadb')) {
+        return false;
+    }
+    if (str_starts_with($normalized, '/usr/lib/') || str_starts_with($normalized, '/system/library/')) {
+        return false;
+    }
+    return true;
 }
 
 function create_zip_archive(string $sourceDir, string $archivePath): void

@@ -107,6 +107,91 @@ function Find-OpenSslLibName([string]$LibDir, [string]$Pattern) {
     return $match.Name
 }
 
+function Find-MySqlRoot {
+    $candidates = @(
+        $env:VSLIM_MYSQL_ROOT,
+        $env:MARIADB_CONNECTOR_C_ROOT,
+        $env:MYSQL_ROOT,
+        $env:VCPKG_INSTALLED_DIR
+    )
+    foreach ($candidate in $candidates) {
+        if ([string]::IsNullOrWhiteSpace($candidate)) {
+            continue
+        }
+        $resolved = $candidate.Trim()
+        if (!(Test-Path $resolved)) {
+            continue
+        }
+        if (Test-Path (Join-Path $resolved "include\mysql.h")) {
+            return (Resolve-Path $resolved).Path
+        }
+        if (Test-Path (Join-Path $resolved "include\mariadb\mysql.h")) {
+            return (Resolve-Path $resolved).Path
+        }
+    }
+    return ""
+}
+
+function Find-MySqlIncludeDir([string]$Root) {
+    $candidates = @(
+        (Join-Path $Root "include"),
+        (Join-Path $Root "include\mariadb")
+    )
+    foreach ($candidate in $candidates) {
+        if ([string]::IsNullOrWhiteSpace($candidate) -or !(Test-Path $candidate)) {
+            continue
+        }
+        if ((Test-Path (Join-Path $candidate "mysql.h")) -or (Test-Path (Join-Path $candidate "mariadb\mysql.h"))) {
+            return (Resolve-Path $candidate).Path
+        }
+    }
+    return ""
+}
+
+function Find-MySqlLibDir([string]$Root) {
+    $candidates = @(
+        (Join-Path $Root "lib"),
+        (Join-Path $Root "lib\mariadb")
+    )
+    foreach ($candidate in $candidates) {
+        if ([string]::IsNullOrWhiteSpace($candidate) -or !(Test-Path $candidate)) {
+            continue
+        }
+        if ((Get-ChildItem -Path $candidate -Filter "libmariadb.lib" -File | Select-Object -First 1) -or
+            (Get-ChildItem -Path $candidate -Filter "mysqlclient.lib" -File | Select-Object -First 1)) {
+            return (Resolve-Path $candidate).Path
+        }
+    }
+    return ""
+}
+
+function Find-MySqlLibName([string]$LibDir) {
+    $libMaria = Get-ChildItem -Path $LibDir -Filter "libmariadb.lib" -File | Select-Object -First 1
+    if ($null -ne $libMaria) {
+        return $libMaria.Name
+    }
+    $mysqlClient = Get-ChildItem -Path $LibDir -Filter "mysqlclient.lib" -File | Select-Object -First 1
+    if ($null -ne $mysqlClient) {
+        return $mysqlClient.Name
+    }
+    return ""
+}
+
+function Find-MySqlRuntimeDll([string]$Root) {
+    $candidates = @(
+        (Join-Path $Root "bin\libmariadb.dll"),
+        (Join-Path $Root "bin\libmysql.dll"),
+        (Join-Path $Root "lib\libmariadb.dll"),
+        (Join-Path $Root "lib\libmysql.dll")
+    )
+    foreach ($candidate in $candidates) {
+        if (Test-Path $candidate) {
+            return (Resolve-Path $candidate).Path
+        }
+    }
+    return ""
+}
+
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $vslimRoot = (Resolve-Path (Join-Path $repoRoot "vslim")).Path
 $vphpRoot = (Resolve-Path (Join-Path $repoRoot "vphp")).Path
@@ -167,6 +252,28 @@ if ($env:VSLIM_OPENSSL_CRYPTO_LIB -eq "") {
     throw "Unable to locate an OpenSSL crypto import library under $openSslLibDir"
 }
 
+$mySqlRoot = Find-MySqlRoot
+if ($mySqlRoot -eq "") {
+    throw "Unable to locate a MariaDB/MySQL client SDK. Set VSLIM_MYSQL_ROOT or MARIADB_CONNECTOR_C_ROOT."
+}
+$mySqlIncludeDir = Find-MySqlIncludeDir $mySqlRoot
+if ($mySqlIncludeDir -eq "") {
+    throw "Unable to locate MariaDB/MySQL headers under $mySqlRoot"
+}
+$mySqlLibDir = Find-MySqlLibDir $mySqlRoot
+if ($mySqlLibDir -eq "") {
+    throw "Unable to locate MariaDB/MySQL import libraries under $mySqlRoot"
+}
+$mySqlClientLib = Find-MySqlLibName $mySqlLibDir
+if ($mySqlClientLib -eq "") {
+    throw "Unable to locate libmariadb.lib or mysqlclient.lib under $mySqlLibDir"
+}
+$mySqlRuntimeDll = Find-MySqlRuntimeDll $mySqlRoot
+
+$env:VSLIM_MYSQL_INCLUDE = $mySqlIncludeDir
+$env:VSLIM_MYSQL_LIB = $mySqlLibDir
+$env:VSLIM_MYSQL_CLIENT_LIB = $mySqlClientLib
+
 $phpizePath = Join-Path $develRoot.FullName "phpize.bat"
 if (!(Test-Path $phpizePath)) {
     throw "phpize.bat not found in devel pack: $phpizePath"
@@ -188,6 +295,11 @@ if ($null -eq $dll) {
 $targetPath = Join-Path $vslimRoot $OutputName
 if ($dll.FullName -ne $targetPath) {
     Copy-Item -Force $dll.FullName $targetPath
+}
+
+if ($mySqlRuntimeDll -ne "") {
+    Copy-Item -Force $mySqlRuntimeDll (Join-Path $vslimRoot (Split-Path -Leaf $mySqlRuntimeDll))
+    Write-Host "Copied MySQL runtime DLL: $mySqlRuntimeDll"
 }
 
 Write-Host "Built Windows DLL: $targetPath"

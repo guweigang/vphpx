@@ -114,17 +114,35 @@ jobs:
           bison --version
           re2c --version
 
+      - name: Install MariaDB client SDK on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          git clone --depth 1 https://github.com/microsoft/vcpkg "$env:RUNNER_TEMP\vcpkg"
+          & "$env:RUNNER_TEMP\vcpkg\bootstrap-vcpkg.bat" -disableMetrics
+          & "$env:RUNNER_TEMP\vcpkg\vcpkg.exe" install libmariadb:x64-windows
+          $mysqlRoot = Join-Path $env:RUNNER_TEMP "vcpkg\installed\x64-windows"
+          Add-Content -Path $env:GITHUB_ENV -Value "VSLIM_MYSQL_ROOT=$mysqlRoot"
+
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc pkg-config libcjson-dev libssl-dev libsodium-dev libargon2-dev
+          sudo apt-get install -y \
+            gcc \
+            pkg-config \
+            libcjson-dev \
+            libssl-dev \
+            libsodium-dev \
+            libargon2-dev \
+            libmariadb-dev \
+            libmariadb-dev-compat
 
       - name: Install macOS dependencies
         if: runner.os == 'macOS'
         run: |
           brew update
-          brew install pkg-config cjson openssl@3 libsodium argon2
+          brew install pkg-config cjson openssl@3 libsodium argon2 mysql
 
       - name: Build VSlim extension
         if: matrix.package_type == 'binary' && runner.os != 'Windows'
@@ -143,6 +161,7 @@ jobs:
           VPHP_V_GC: none
           VPHP_V_USE_OPENSSL: 1
           VPHP_V_NO_VSCHANNEL: 1
+          VSLIM_MYSQL_ROOT: ${{ env.VSLIM_MYSQL_ROOT }}
         run: |
           & cl
           & nmake /?
