@@ -755,7 +755,7 @@ return $app;
 - [`docs/integration/worker.md`](/Users/guweigang/Source/vphpx/vslim/docs/integration/worker.md)
   envelope、`dispatch_envelope()`、`dispatch_envelope_map()`、worker 返回值归一化
 - [`docs/integration/psr7.md`](/Users/guweigang/Source/vphpx/vslim/docs/integration/psr7.md)
-  `VPhp\\VSlim\\Psr7Adapter`、PSR-7 request 转 `VSlim\Vhttpd\Request`
+  `VPhp\\VSlim\\Psr7Adapter`、扩展内建的 PSR-7 request -> `VSlim\Vhttpd\Request` 适配器
 - [`docs/psr-roadmap.md`](/Users/guweigang/Source/vphpx/vslim/docs/psr-roadmap.md)
   `vslim` 的长期 PSR 路线图：全 PSR 目标、推进顺序、以及何时先升级 `vphp`
 

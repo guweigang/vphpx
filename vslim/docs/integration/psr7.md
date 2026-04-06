@@ -1,16 +1,16 @@
 # PSR-7 适配
 
-VSlim 本身不是完整 PSR-7 实现，但当前项目已经提供了一个 PHP 侧桥接类，把 PSR-7 风格 request 转成 `VSlim\Vhttpd\Request`。
+VSlim 本身不是完整 PSR-7 实现，但当前扩展已经内建了一个桥接类，把 PSR-7 风格 request 转成 `VSlim\Vhttpd\Request`。
 
 真理之源：
 
-- [`vhttpd/php/package/src/VSlim/Psr7Adapter.php`](/Users/guweigang/Source/vhttpd/php/package/src/VSlim/Psr7Adapter.php)
+- [`vslim/src/psr7_adapter_runtime.v`](/Users/guweigang/Source/vphpx/vslim/src/psr7_adapter_runtime.v)
 - [`tests/test_vslim_psr7_adapter.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_psr7_adapter.phpt)
 - [`tests/test_psr7_worker_app.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_psr7_worker_app.phpt)
 
 ## 类名
 
-当前主类是：
+当前主类是扩展内建的：
 
 ```php
 VPhp\VSlim\Psr7Adapter

@@ -1,7 +1,16 @@
 --TEST--
 VHTTPD worker dispatches to a PSR-7 app handler when available
 --SKIPIF--
-<?php if (!extension_loaded("vslim")) print "skip"; ?>
+<?php
+if (!extension_loaded("vslim")) {
+    print "skip";
+    return;
+}
+$worker = dirname(__DIR__, 3) . '/vhttpd/php/package/bin/php-worker';
+if (is_file($worker) && class_exists('VPhp\\VSlim\\Psr7Adapter', false)) {
+    print "skip external php-worker still hard-loads VPhp\\\\VSlim\\\\Psr7Adapter";
+}
+?>
 --FILE--
 <?php
 namespace Nyholm\Psr7\Factory {

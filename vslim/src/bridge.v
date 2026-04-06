@@ -3377,6 +3377,79 @@ pub fn vslimresponse_handlers() voidptr {
     } }
 }
 
+@[export: 'VPhpVSlimPsr7Adapter_new_raw']
+pub fn vphpvslimpsr7adapter_new_raw() voidptr {
+    return vphp.generic_new_raw[VPhpVSlimPsr7Adapter]()
+}
+@[export: 'VPhpVSlimPsr7Adapter_free_raw']
+pub fn vphpvslimpsr7adapter_free_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+    vphp.generic_free_raw[VPhpVSlimPsr7Adapter](ptr)
+}
+@[export: 'VPhpVSlimPsr7Adapter_cleanup_raw']
+pub fn vphpvslimpsr7adapter_cleanup_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+}
+@[export: 'VPhpVSlimPsr7Adapter_get_prop']
+pub fn vphpvslimpsr7adapter_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    _ = ptr
+    _ = name_ptr
+    _ = name_len
+    _ = rv
+}
+@[export: 'VPhpVSlimPsr7Adapter_set_prop']
+pub fn vphpvslimpsr7adapter_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    _ = ptr
+    _ = name_ptr
+    _ = name_len
+    _ = value
+}
+@[export: 'VPhpVSlimPsr7Adapter_sync_props']
+pub fn vphpvslimpsr7adapter_sync_props(ptr voidptr, zv &C.zval) {
+    _ = ptr
+    _ = zv
+}
+@[export: 'vphp_wrap_VPhpVSlimPsr7Adapter_dispatch']
+pub fn vphp_wrap_vphpvslimpsr7adapter_dispatch(ctx vphp.Context) voidptr {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := unsafe { &VSlimApp(ctx.arg_raw_obj(0)) }
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    res := VPhpVSlimPsr7Adapter.dispatch(arg_0, arg_1)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VPhpVSlimPsr7Adapter_to_vslim_request']
+pub fn vphp_wrap_vphpvslimpsr7adapter_to_vslim_request(ctx vphp.Context) voidptr {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    res := VPhpVSlimPsr7Adapter.to_vslim_request(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VPhpVSlimPsr7Adapter_to_worker_envelope']
+pub fn vphp_wrap_vphpvslimpsr7adapter_to_worker_envelope(ctx vphp.Context)  {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    res := VPhpVSlimPsr7Adapter.to_worker_envelope(arg_0)
+    ctx.return_val[vphp.RequestOwnedZBox](res)
+}
+@[export: 'VPhpVSlimPsr7Adapter_handlers']
+pub fn vphpvslimpsr7adapter_handlers() voidptr {
+    return unsafe { &C.vphp_class_handlers{
+        prop_handler:  voidptr(vphpvslimpsr7adapter_get_prop)
+        write_handler: voidptr(vphpvslimpsr7adapter_set_prop)
+        sync_handler:  voidptr(vphpvslimpsr7adapter_sync_props)
+        new_raw:       voidptr(vphpvslimpsr7adapter_new_raw)
+        cleanup_raw:   voidptr(vphpvslimpsr7adapter_cleanup_raw)
+        free_raw:      voidptr(vphpvslimpsr7adapter_free_raw)
+    } }
+}
+
 @[export: 'VSlimStreamResponse_new_raw']
 pub fn vslimstreamresponse_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimStreamResponse]()

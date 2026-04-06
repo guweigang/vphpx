@@ -7727,6 +7727,104 @@ static int vslim__vhttpd__response_register_class(void) {
     }
     return SUCCESS;
 }
+zend_class_entry *vphp__vslim__psr7adapter_ce = NULL;
+ZEND_BEGIN_ARG_INFO_EX(arginfo_vphp__vslim__psr7adapter___construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vphpvslimpsr7adapter_dispatch[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_INFO(0, app)
+ZEND_ARG_TYPE_INFO(0, request, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vphpvslimpsr7adapter_to_vslim_request[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Request", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, request, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vphpvslimpsr7adapter_to_worker_envelope, 0, 1, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, request, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+PHP_METHOD(VPhp__VSlim__Psr7Adapter, dispatch) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VPhpVSlimPsr7Adapter_dispatch(vphp_context_internal ctx);
+    void* v_instance = vphp_wrap_VPhpVSlimPsr7Adapter_dispatch(ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimResponse_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__vhttpd__response_ce, VSlimResponse_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VPhp__VSlim__Psr7Adapter, toVSlimRequest) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VPhpVSlimPsr7Adapter_to_vslim_request(vphp_context_internal ctx);
+    void* v_instance = vphp_wrap_VPhpVSlimPsr7Adapter_to_vslim_request(ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimRequest_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__vhttpd__request_ce, VSlimRequest_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VPhp__VSlim__Psr7Adapter, toWorkerEnvelope) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VPhpVSlimPsr7Adapter_to_worker_envelope(vphp_context_internal ctx);
+    vphp_wrap_VPhpVSlimPsr7Adapter_to_worker_envelope(ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VPhp__VSlim__Psr7Adapter, __construct) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    extern vphp_class_handlers* VPhpVSlimPsr7Adapter_handlers();
+    vphp_class_handlers *h = VPhpVSlimPsr7Adapter_handlers();
+    vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
+    vphp_object_wrapper *wrapper = vphp_obj_from_obj(Z_OBJ_P(getThis()));
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+static const zend_function_entry vphp__vslim__psr7adapter_methods[] = {
+    PHP_ME(VPhp__VSlim__Psr7Adapter, __construct, arginfo_vphp__vslim__psr7adapter___construct, ZEND_ACC_PUBLIC)
+    PHP_ME(VPhp__VSlim__Psr7Adapter, dispatch, arginfo_vphpvslimpsr7adapter_dispatch, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(VPhp__VSlim__Psr7Adapter, toVSlimRequest, arginfo_vphpvslimpsr7adapter_to_vslim_request, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(VPhp__VSlim__Psr7Adapter, toWorkerEnvelope, arginfo_vphpvslimpsr7adapter_to_worker_envelope, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_FE_END
+};
+
+static int vphp__vslim__psr7adapter_register_class(void) {
+    if (vphp__vslim__psr7adapter_ce != NULL) {
+        return SUCCESS;
+    }
+    vphp__vslim__psr7adapter_ce = vphp_find_loaded_class_entry("VPhp\\VSlim\\Psr7Adapter", sizeof("VPhp\\VSlim\\Psr7Adapter")-1);
+    if (vphp__vslim__psr7adapter_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VPhp\\VSlim\\Psr7Adapter", vphp__vslim__psr7adapter_methods);
+        vphp__vslim__psr7adapter_ce = zend_register_internal_class(&ce);
+        vphp__vslim__psr7adapter_ce->create_object = vphp_create_object_handler;
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__stream__response_ce = NULL;
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimstreamresponse_construct, 0, 0, 5)
 ZEND_ARG_TYPE_INFO(0, stream_type, IS_STRING, 0)
@@ -20948,6 +21046,7 @@ PHP_MINIT_FUNCTION(vslim) {
     if (vslim__routegroup_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__vhttpd__request_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__vhttpd__response_register_class() != SUCCESS) { return FAILURE; }
+    if (vphp__vslim__psr7adapter_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__stream__response_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__stream__ndjsondecoder_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__stream__sseencoder_register_class() != SUCCESS) { return FAILURE; }

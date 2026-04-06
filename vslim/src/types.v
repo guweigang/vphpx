@@ -260,6 +260,10 @@ mut:
 	headers map[string]string
 }
 
+@[php_class: 'VPhp\\VSlim\\Psr7Adapter']
+@[heap]
+struct VPhpVSlimPsr7Adapter {}
+
 @[php_class: 'VSlim\\Stream\\Response']
 @[heap]
 struct VSlimStreamResponse {
