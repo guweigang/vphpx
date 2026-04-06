@@ -10,6 +10,15 @@ fn normalize_or_handle_error_with_context(app &VSlimApp, ctx PipelineRequestCont
 	return error_response_from_context(app, ctx, fallback_status, fallback_message, 'invalid_response')
 }
 
+fn normalize_or_handle_error_with_context_psr(app &VSlimApp, ctx PipelineRequestContext, result vphp.RequestBorrowedZBox, fallback_status int, fallback_message string) &VSlimPsr7Response {
+	res, ok := normalize_php_route_response_psr_borrowed(result)
+	if ok {
+		return res
+	}
+	return error_response_from_context_psr(app, ctx, fallback_status, fallback_message,
+		'invalid_response')
+}
+
 fn normalize_or_handle_error(app &VSlimApp, request_payload vphp.RequestBorrowedZBox, result vphp.RequestBorrowedZBox, fallback_status int, fallback_message string) VSlimResponse {
 	ctx := new_pipeline_request_context(RoutePath.normalize('/'),
 		request_payload.clone_request_owned(), route_params_from_payload(request_payload))
@@ -69,6 +78,28 @@ fn build_terminal_response(app &VSlimApp, ctx PipelineRequestContext, meta Middl
 	}
 }
 
+fn build_terminal_response_psr(app &VSlimApp, ctx PipelineRequestContext, meta MiddlewareTerminalMeta) &VSlimPsr7Response {
+	return match meta.kind {
+		.fixed_response {
+			new_psr7_response_from_vslim_response(meta.fixed_response)
+		}
+		.not_found {
+			run_not_found_core_with_context_psr(app, ctx)
+		}
+		.method_not_allowed {
+			build_method_not_allowed_response_with_context_psr(app, ctx, meta.allowed_methods)
+		}
+		.error_response {
+			run_error_handler_with_context_psr(app, ctx, meta.status, meta.message) or {
+				default_error_response_psr(app, meta.status, meta.fallback_message, meta.error_code)
+			}
+		}
+		.none {
+			new_psr7_response_from_vslim_response(text_response(500, 'Invalid terminal response'))
+		}
+	}
+}
+
 fn build_options_response(allowed_methods []string) VSlimResponse {
 	mut allow := allowed_methods.clone()
 	if 'OPTIONS' !in allow {
@@ -101,6 +132,23 @@ fn build_method_not_allowed_response_with_context(app &VSlimApp, ctx PipelineReq
 	return res
 }
 
+fn build_method_not_allowed_response_with_context_psr(app &VSlimApp, ctx PipelineRequestContext, allowed_methods []string) &VSlimPsr7Response {
+	mut res := run_error_handler_with_context_psr(app, ctx, 405, 'Method not allowed') or {
+		new_psr7_response_from_vslim_response(method_not_allowed_response())
+	}
+	if allowed_methods.len == 0 {
+		return res
+	}
+	mut headers := res.headers.clone()
+	mut header_names := clone_header_names(res.header_names)
+	if 'allow' !in headers {
+		headers['allow'] = [allowed_methods.join(', ')]
+		header_names['allow'] = 'Allow'
+	}
+	return clone_psr7_response(res, res.protocol_version, headers, header_names,
+		response_body_or_empty(res), res.status, res.reason_phrase)
+}
+
 fn run_not_found(app &VSlimApp, req &VSlimRequest) VSlimResponse {
 	payload := build_php_request_object(req, map[string]string{})
 	path := RoutePath.normalize(req.path)
@@ -120,6 +168,18 @@ fn run_not_found_core_with_context(app &VSlimApp, ctx PipelineRequestContext) VS
 			404, 'Not Found')
 	}
 	return default_error_response(app, 404, 'Not Found', 'not_found')
+}
+
+fn run_not_found_core_with_context_psr(app &VSlimApp, ctx PipelineRequestContext) &VSlimPsr7Response {
+	nf := app.not_found_handler
+	if nf.is_valid() && nf.is_callable() {
+		psr_payload := normalize_psr15_server_request_payload(ctx.payload_ref.borrowed(),
+			ctx.route_params)
+		mut raw := nf.call_request_owned([psr_payload])
+		return normalize_or_handle_error_with_context_psr(app, ctx, raw.borrowed(), 404,
+			'Not Found')
+	}
+	return default_error_response_psr(app, 404, 'Not Found', 'not_found')
 }
 
 fn run_not_found_core(app &VSlimApp, payload vphp.RequestBorrowedZBox) VSlimResponse {
@@ -147,6 +207,25 @@ fn run_error_handler_with_context(app &VSlimApp, ctx PipelineRequestContext, sta
 	return res
 }
 
+fn run_error_handler_with_context_psr(app &VSlimApp, ctx PipelineRequestContext, status int, message string) ?&VSlimPsr7Response {
+	eh := app.error_handler
+	if !eh.is_valid() || !eh.is_callable() {
+		return none
+	}
+	psr_payload := normalize_psr15_server_request_payload(ctx.payload_ref.borrowed(),
+		ctx.route_params)
+	mut raw := eh.call_request_owned([
+		psr_payload,
+		vphp.RequestOwnedZBox.new_string(message).to_zval(),
+		vphp.RequestOwnedZBox.new_int(status).to_zval(),
+	])
+	res, ok := normalize_php_route_response_psr_borrowed(raw.borrowed())
+	if !ok {
+		return none
+	}
+	return res
+}
+
 fn run_error_handler(app &VSlimApp, request_payload vphp.RequestBorrowedZBox, status int, message string) ?VSlimResponse {
 	ctx := new_pipeline_request_context(RoutePath.normalize('/'),
 		request_payload.clone_request_owned(), route_params_from_payload(request_payload))
@@ -159,6 +238,11 @@ fn default_error_response(app &VSlimApp, status int, message string, error_code 
 		return json_response(status, '{"ok":false,"code":"${esc_code}","error":"${esc_code}","status":${status},"message":"${json_escape(message)}"}')
 	}
 	return text_response(status, message)
+}
+
+fn default_error_response_psr(app &VSlimApp, status int, message string, error_code string) &VSlimPsr7Response {
+	return new_psr7_response_from_vslim_response(default_error_response(app, status, message,
+		error_code))
 }
 
 fn json_escape(input string) string {

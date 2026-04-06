@@ -333,6 +333,17 @@ fn dispatch_psr15_next_handler(mut state Psr15NextHandlerState, key u64, request
 				normalize_to_psr7_response(raw)
 			}
 		}
+		.fixed_response {
+			if state.fixed_response_ref == unsafe { nil } {
+				new_psr7_response_from_vslim_response(text_response(500,
+					'Middleware fixed response is not available'))
+			} else {
+				res := state.fixed_response_ref
+				clone_psr7_response(res, res.get_protocol_version(), res.headers.clone(),
+					clone_header_names(res.header_names), response_body_or_empty(res), res.get_status_code(),
+					res.get_reason_phrase())
+			}
+		}
 		.continue_marker {
 			normalized := normalize_psr15_server_request_payload(request_borrowed, map[string]string{})
 			if snapshot := snapshot_phase_forwarded_request(vphp.RequestBorrowedZBox.from_zval(normalized)) {

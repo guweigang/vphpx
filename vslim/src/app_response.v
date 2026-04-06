@@ -38,6 +38,24 @@ fn normalize_php_route_response_borrowed(result vphp.RequestBorrowedZBox) (VSlim
 	return normalize_php_route_response(result.to_zval())
 }
 
+fn normalize_php_route_response_psr_borrowed(result vphp.RequestBorrowedZBox) (&VSlimPsr7Response, bool) {
+	return normalize_php_route_response_psr(result.to_zval())
+}
+
+fn normalize_php_route_response_psr(result vphp.ZVal) (&VSlimPsr7Response, bool) {
+	if !result.is_valid() || result.is_null() || result.is_undef() {
+		return new_psr7_response_from_vslim_response(text_response(200, '')), true
+	}
+	if result.is_object() && result.is_instance_of('Psr\\Http\\Message\\ResponseInterface') {
+		return normalize_to_psr7_response(result), true
+	}
+	res, ok := normalize_php_route_response(result)
+	if !ok {
+		return unsafe { nil }, false
+	}
+	return new_psr7_response_from_vslim_response(res), true
+}
+
 fn normalize_php_route_response(result vphp.ZVal) (VSlimResponse, bool) {
 	if !result.is_valid() || result.is_null() || result.is_undef() {
 		return text_response(200, ''), true

@@ -38,6 +38,36 @@
 - transport edge
   - 只在 `vhttpd` 边界保留 `VSlim\Vhttpd\Request/Response`
 
+## 它和 web server 的边界
+
+`VSlim\App` 是框架入口，不是 server runtime。
+
+所以要把两层分开看：
+
+- 上游 web server / runtime
+  - PHP built-in server
+  - `vhttpd` + php-worker
+  - nginx / Apache / Caddy + PHP-FPM
+- `VSlim\App`
+  - 统一处理 app kernel、route、middleware、PSR bridge
+
+当前几种常见入口分别是：
+
+- `dispatch(method, rawPath)`
+  - 最轻量的本地 facade
+  - 适合 demo / 自测 / 小工具
+- `dispatch_request(VSlim\Vhttpd\Request $req)`
+  - 适合 built-in server 或自己拼装 request 的传统入口
+- `dispatch_envelope(array $envelope)`
+  - 适合 worker / transport 集成
+- `handle(ServerRequestInterface $request)`
+  - 适合 PSR-7 / PSR-15 主通道
+
+建议理解成：
+
+- `VSlim\Vhttpd\Request/Response` 偏 adapter / facade
+- `handle()` 对应的 PSR request/response 更接近框架内部 canonical HTTP 通道
+
 详细说明见：
 
 - [kernel.md](/Users/guweigang/Source/vphpx/vslim/docs/app/kernel.md)

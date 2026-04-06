@@ -109,7 +109,9 @@ fn dispatch_app_psr15_request(app &VSlimApp, request_payload vphp.ZVal) &VSlimPs
 		res, _ := dispatch_demo_request_with_params(req.to_vslim_request())
 		return new_psr7_response_from_vslim_response(res)
 	}
-	return new_psr7_response_from_vslim_response(run_not_found(app, req))
+	ctx := new_pipeline_request_context(path, vphp.RequestOwnedZBox.from_zval(normalized_request),
+		map[string]string{})
+	return run_not_found_core_with_context_psr(app, ctx)
 }
 
 fn build_route_dispatch_payload(req &VSlimRequest, source_payload vphp.RequestBorrowedZBox, params map[string]string) (vphp.ZVal, VSlimRequest) {

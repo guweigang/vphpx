@@ -16,6 +16,38 @@ Documentation entry:
 - `VSlim\Container` / `VSlim\Config` 提供基础依赖注入与 TOML 配置
 - `vslim_handle_request(...)` / `dispatch_envelope(...)` 提供和 worker / `vhttpd` 的集成边界
 
+## 它和上游 Web Server 的关系
+
+`VSlim` 不是 web server，也不绑死某一个 web server。
+
+更准确地说：
+
+- `VSlim`
+  - 负责应用层：route / middleware / controller / PSR bridge / response normalization
+- 上游 web server / runtime
+  - 负责 transport：socket / keep-alive / TLS / process model / static files / reverse proxy
+
+当前推荐把接入方式分成 3 类看：
+
+- PHP 内置 server
+  - 适合本地开发和最小 demo
+  - 通常是 `php -S ... demo_app.php`
+  - 入口一般是 `VSlim\Vhttpd\Request -> $app->dispatch_request(...) -> VSlim\Vhttpd\Response`
+- `vhttpd` + php-worker
+  - 适合当前主线 worker/runtime 集成
+  - transport 边界可以是 envelope，也可以是 `Psr7Adapter`
+  - 这条链路里 `VSlim\Vhttpd\Request/Response` 更像 worker facade，框架内核正在继续收成 PSR-7 / PSR-15 主通道
+- nginx / Apache / Caddy + PHP-FPM
+  - 适合传统部署
+  - nginx 只做 reverse proxy / static / process boundary
+  - PHP 侧可以自己把全局变量组装成 `VSlim\Vhttpd\Request`，也可以直接走 PSR-7 request adapter
+
+一句话：
+
+- `VSlim\Vhttpd\Request/Response` 是 transport-friendly facade
+- `Psr\Http\Message\ServerRequestInterface` / `ResponseInterface` 是框架内部更标准的 HTTP 契约
+- `vhttpd`、PHP 内置 server、nginx 只是不同的上游接入方式，不改变 `VSlim` 作为框架层的定位
+
 这份 README 只做两件事：
 
 1. 给一个最简单、能跑通的 tutorial

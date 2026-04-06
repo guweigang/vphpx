@@ -90,6 +90,12 @@ fn error_response_from_context(app &VSlimApp, ctx PipelineRequestContext, status
 	}
 }
 
+fn error_response_from_context_psr(app &VSlimApp, ctx PipelineRequestContext, status int, message string, fallback_code string) &VSlimPsr7Response {
+	return run_error_handler_with_context_psr(app, ctx, status, message) or {
+		default_error_response_psr(app, status, message, fallback_code)
+	}
+}
+
 fn resolve_raw_route_response(app &VSlimApp, ctx PipelineRequestContext, raw_res vphp.ZVal, plan RawDispatchPlan) vphp.ZVal {
 	if raw_res.is_valid() && !raw_res.is_null() && !raw_res.is_undef() {
 		return raw_res
@@ -152,7 +158,20 @@ fn finalize_raw_response_with_snapshot(app &VSlimApp, ctx PipelineRequestContext
 }
 
 fn finalize_raw_response_for_psr(app &VSlimApp, ctx PipelineRequestContext, raw_res vphp.ZVal) &VSlimPsr7Response {
-	return new_psr7_response_from_vslim_response(finalize_raw_response(app, ctx, raw_res))
+	if app.php_after_middlewares.len == 0 && matching_group_after_middlewares(app, ctx.path).len == 0 {
+		res, ok := normalize_php_route_response_psr(raw_res)
+		if ok {
+			return res
+		}
+		return error_response_from_context_psr(app, ctx, 500, 'Invalid route response',
+			'invalid_response')
+	}
+	res, ok := normalize_php_route_response_psr(raw_res)
+	if !ok {
+		return error_response_from_context_psr(app, ctx, 500, 'Invalid route response',
+			'invalid_response')
+	}
+	return finalize_php_response_psr(app, ctx, res)
 }
 
 fn finalize_raw_response_for_worker(app &VSlimApp, ctx PipelineRequestContext, raw_res vphp.ZVal) (vphp.ZVal, VSlimRequest) {

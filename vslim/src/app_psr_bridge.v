@@ -186,6 +186,18 @@ fn build_php_response_object(res VSlimResponse) vphp.ZVal {
 	}
 }
 
+fn build_php_psr7_response_object(res &VSlimPsr7Response) vphp.ZVal {
+	unsafe {
+		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
+		bound := clone_psr7_response(res, res.get_protocol_version(), res.headers.clone(),
+			clone_header_names(res.header_names), response_body_or_empty(res), res.get_status_code(),
+			res.get_reason_phrase())
+		vphp.return_owned_object_raw(payload.raw, bound, C.vslim__psr7__response_ce,
+			&C.vphp_class_handlers(vslimpsr7response_handlers()))
+		return payload
+	}
+}
+
 fn build_php_psr7_server_request_object(req &VSlimPsr7ServerRequest) vphp.ZVal {
 	unsafe {
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
@@ -604,9 +616,9 @@ fn normalize_to_psr7_response(result vphp.ZVal) &VSlimPsr7Response {
 			body_ref:         body_ref
 		}
 	}
-	res, ok := normalize_php_route_response(result)
+	res, ok := normalize_php_route_response_psr(result)
 	if ok {
-		return new_psr7_response_from_vslim_response(res)
+		return res
 	}
 	return new_psr7_response_from_vslim_response(text_response(500, 'Invalid route response'))
 }

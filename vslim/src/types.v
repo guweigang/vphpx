@@ -138,6 +138,7 @@ mut:
 
 enum Psr15NextHandlerMode {
 	middleware_chain
+	fixed_response
 	continue_marker
 }
 
@@ -145,6 +146,7 @@ struct Psr15NextHandlerState {
 mut:
 	mode                  Psr15NextHandlerMode = .continue_marker
 	chain_ref             &MiddlewareChain     = unsafe { nil }
+	fixed_response_ref    &VSlimPsr7Response   = unsafe { nil }
 	has_forwarded_request bool
 }
 

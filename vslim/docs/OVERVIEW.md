@@ -40,6 +40,43 @@
 - `vslim` 解决“应用怎么写”
 - `vhttpd` 解决“应用怎么跑”
 
+这里要特别注意一层边界：
+
+- `VSlim` 不是 web server
+- `VSlim` 也不要求必须跑在 `vhttpd` 上
+
+你可以把它接在不同上游之下：
+
+- PHP built-in server
+  - 适合本地开发 / demo
+- `vhttpd` + php-worker
+  - 适合当前主线 runtime / worker 集成
+- nginx / Apache / Caddy + PHP-FPM
+  - 适合传统部署
+
+区别主要在 transport/runtime，不在框架内核：
+
+- 上游负责：
+  - socket
+  - TLS
+  - keep-alive
+  - process / worker model
+  - static files / reverse proxy
+- `VSlim` 负责：
+  - route
+  - middleware
+  - controller
+  - PSR bridge
+  - response normalization
+
+当前推荐的 HTTP 语义理解是：
+
+- `VSlim\Vhttpd\Request/Response`
+  - transport-friendly facade
+  - 适合 worker / built-in server / demo 边界
+- `Psr\Http\Message\ServerRequestInterface` / `ResponseInterface`
+  - 框架内部更标准的 request/response 契约
+
 ## Core App Shapes
 
 `VSlim` 当前最重要的应用形态有：
