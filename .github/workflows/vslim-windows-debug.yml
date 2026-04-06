@@ -60,6 +60,16 @@ jobs:
           $mysqlRoot = Join-Path $env:RUNNER_TEMP "vcpkg\installed\x64-windows"
           Add-Content -Path $env:GITHUB_ENV -Value "VSLIM_MYSQL_ROOT=$mysqlRoot"
 
+      - name: Debug MariaDB SDK layout
+        shell: pwsh
+        run: |
+          Write-Host "VSLIM_MYSQL_ROOT=$env:VSLIM_MYSQL_ROOT"
+          if (Test-Path $env:VSLIM_MYSQL_ROOT) {
+            Get-ChildItem -Path $env:VSLIM_MYSQL_ROOT -Depth 3 | Select-Object FullName
+          } else {
+            Write-Host "MariaDB SDK root missing"
+          }
+
       - name: Build VSlim extension on Windows
         working-directory: vslim
         shell: pwsh

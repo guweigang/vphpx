@@ -133,11 +133,23 @@ function Find-MySqlRoot {
             continue
         }
         $resolved = $candidate.Trim()
+        Write-Host "Probing MariaDB/MySQL SDK candidate: $resolved"
         if (!(Test-Path $resolved)) {
+            Write-Host "  -> path missing"
             continue
         }
         $headerPath = Find-FirstFileRecursive $resolved @("mysql.h")
         $importLibPath = Find-FirstFileRecursive $resolved @("libmariadb.lib", "mysqlclient.lib")
+        if ($headerPath -ne "") {
+            Write-Host "  -> header: $headerPath"
+        } else {
+            Write-Host "  -> header: <not found>"
+        }
+        if ($importLibPath -ne "") {
+            Write-Host "  -> import lib: $importLibPath"
+        } else {
+            Write-Host "  -> import lib: <not found>"
+        }
         if ($headerPath -ne "" -and $importLibPath -ne "") {
             return (Resolve-Path $resolved).Path
         }
