@@ -339,29 +339,59 @@ fn database_rows_from_mysql_rows(rows []mysql.Row) []map[string]string {
 }
 
 fn database_query_maps_with_params(mut conn mysql.DB, query string, params []string) ![]map[string]string {
-	final_query := database_inline_mysql_params(mut conn, query, params)
-	mut result := conn.query(final_query)!
-	rows := result.maps()
-	unsafe {
-		result.free()
+	column_names := database_mysql_stmt_column_names(mut conn, query, params)!
+	mut stmt := conn.prepare(query)!
+	defer {
+		stmt.close()
 	}
-	return rows
+	rows := stmt.execute(params)!
+	return database_rows_with_column_names(rows, column_names)
 }
 
-fn database_inline_mysql_params(mut conn mysql.DB, query string, params []string) string {
-	if params.len == 0 {
-		return query
+fn database_mysql_stmt_column_names(mut conn mysql.DB, query string, params []string) ![]string {
+	mut stmt := conn.init_stmt(query)
+	defer {
+		stmt.close() or {}
 	}
-	mut out := ''
-	mut param_idx := 0
-	for ch in query {
-		if ch == `?` && param_idx < params.len {
-			escaped := conn.escape_string(params[param_idx])
-			out += '\'' + escaped + '\''
-			param_idx++
-			continue
+	stmt.prepare()!
+	for param in params {
+		stmt.bind_text(param)
+	}
+	if params.len > 0 {
+		stmt.bind_params()!
+	}
+	stmt.execute()!
+	metadata := stmt.gen_metadata()
+	if metadata == unsafe { nil } {
+		return []string{}
+	}
+	defer {
+		C.mysql_free_result(metadata)
+	}
+	num_fields := int(C.mysql_num_fields(metadata))
+	if num_fields <= 0 {
+		return []string{}
+	}
+	fields := stmt.fetch_fields(metadata)
+	mut column_names := []string{cap: num_fields}
+	for i in 0 .. num_fields {
+		column_names << unsafe { fields[i].name.vstring() }
+	}
+	return column_names
+}
+
+fn database_rows_with_column_names(rows []mysql.Row, column_names []string) []map[string]string {
+	if column_names.len == 0 {
+		return database_rows_from_mysql_rows(rows)
+	}
+	mut out := []map[string]string{}
+	for row in rows {
+		mut mapped := map[string]string{}
+		for idx, value in row.vals {
+			key := if idx < column_names.len { column_names[idx] } else { '${idx}' }
+			mapped[key] = value
 		}
-		out += ch.ascii_str()
+		out << mapped
 	}
 	return out
 }
