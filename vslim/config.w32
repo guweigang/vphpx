@@ -71,7 +71,8 @@ if (PHP_VSLIM != "no") {
 		'/I "' + vslimVRoot + '\\thirdparty\\vschannel" ' +
 		'/I "' + vslimOpenSslInclude + '" ' +
 		'/I "' + vslimCJsonInclude + '" ' +
-		'/I "' + vslimMySqlInclude + '" ';
+		'/I "' + vslimMySqlInclude + '" ' +
+		'/DcJSON_GetErrorPos=cJSON_GetErrorPtr ';
 
 	EXTENSION("vslim", "php_bridge.c vslim_generated.c", PHP_VSLIM_SHARED, vslimCflags);
 	ADD_SOURCES(vslimVphpDir, "v_bridge.c", "vslim");
