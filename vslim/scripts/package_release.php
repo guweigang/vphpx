@@ -208,7 +208,6 @@ function stage_source_bundle(string $repoRoot, string $stageDir): void
 function stage_docs(string $repoRoot, string $stageDir): void
 {
     $docs = [
-        'README.md' => 'UPSTREAM_README.md',
         'vslim/README.md' => 'docs/VSlim_README.md',
         'vslim/templates/app/README.md' => 'docs/TEMPLATE_README.md',
     ];
@@ -227,7 +226,7 @@ function build_release_readme(string $version, string $platform, string $package
 
 - `extension/{$extensionFile}`: prebuilt VSlim PHP extension for this platform.
 - `template/`: starter app template that matches the current PSR-oriented project layout.
-- `docs/`: upstream framework and template references.
+- `docs/`: VSlim framework and template references.
 
 ## Quick start
 
@@ -244,7 +243,7 @@ TXT
 
 - `template/`: starter app template that matches the current PSR-oriented project layout.
 - `source/`: generated C bridge sources plus the current `vphp` bridge shim.
-- `docs/`: upstream framework and template references.
+- `docs/`: VSlim framework and template references.
 
 ## Current status
 
