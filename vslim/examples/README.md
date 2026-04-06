@@ -239,6 +239,23 @@ curl --noproxy '*' -I http://127.0.0.1:19888/assets/app.js
 
 脚本：`verify_demo.sh`
 
+## Database 查询示例
+
+如果你已经把 `VSlim\Database` 接到 mysql 或 `vhttpd` 的 DB upstream，可以直接跑：
+
+```bash
+php -d extension=./vslim.so vslim/examples/lianhanghao_query.php cnaps 102100099996
+php -d extension=./vslim.so vslim/examples/lianhanghao_query.php bank 招商 5
+php -d extension=./vslim.so vslim/examples/lianhanghao_query.php city 深圳 10
+```
+
+默认会优先走：
+
+- `DB_TRANSPORT=vhttpd_upstream`
+- `VHTTPD_DB_SOCKET`
+
+所以如果脚本是在 `vhttpd/php-worker` 环境里跑，通常不需要手传 socket。
+
 用途：
 
 - 端到端验证 demo app 的关键链路

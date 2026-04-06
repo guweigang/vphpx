@@ -2,6 +2,7 @@ module main
 
 import db.mysql
 import json
+import os
 import vphp
 
 @[php_method]
@@ -1540,6 +1541,11 @@ fn configure_default_database_manager(mut db VSlimDatabaseManager, config &VSlim
 	}
 	if config.has('database.upstream.socket') {
 		cfg.set_upstream_socket(config.get_string('database.upstream.socket', cfg.upstream_socket_value()))
+	} else {
+		env_socket := os.getenv_opt('VHTTPD_DB_SOCKET') or { '' }
+		if env_socket.trim_space() != '' {
+			cfg.set_upstream_socket(env_socket)
+		}
 	}
 }
 
