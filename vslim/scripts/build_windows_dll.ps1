@@ -189,6 +189,74 @@ function Find-MySqlRuntimeDll([string]$Root) {
     return Find-FirstFileRecursive $Root @("libmariadb.dll", "libmysql.dll")
 }
 
+function Find-CJsonRoot {
+    $candidates = @(
+        $env:VSLIM_CJSON_ROOT,
+        $env:CJSON_ROOT,
+        $env:VCPKG_INSTALLED_DIR,
+        $env:VSLIM_MYSQL_ROOT
+    )
+    foreach ($candidate in $candidates) {
+        if ([string]::IsNullOrWhiteSpace($candidate)) {
+            continue
+        }
+        $resolved = $candidate.Trim()
+        Write-Host "Probing cJSON SDK candidate: $resolved"
+        if (!(Test-Path $resolved)) {
+            Write-Host "  -> path missing"
+            continue
+        }
+        $headerPath = Find-FirstFileRecursive $resolved @("cJSON.h")
+        $importLibPath = Find-FirstFileRecursive $resolved @("cjson.lib", "libcjson.lib")
+        if ($headerPath -ne "") {
+            Write-Host "  -> header: $headerPath"
+        } else {
+            Write-Host "  -> header: <not found>"
+        }
+        if ($importLibPath -ne "") {
+            Write-Host "  -> import lib: $importLibPath"
+        } else {
+            Write-Host "  -> import lib: <not found>"
+        }
+        if ($headerPath -ne "" -and $importLibPath -ne "") {
+            return (Resolve-Path $resolved).Path
+        }
+    }
+    return ""
+}
+
+function Find-CJsonIncludeDir([string]$Root) {
+    $headerPath = Find-FirstFileRecursive $Root @("cJSON.h")
+    if ($headerPath -eq "") {
+        return ""
+    }
+    return Split-Path -Parent $headerPath
+}
+
+function Find-CJsonLibDir([string]$Root) {
+    $importLibPath = Find-FirstFileRecursive $Root @("cjson.lib", "libcjson.lib")
+    if ($importLibPath -eq "") {
+        return ""
+    }
+    return Split-Path -Parent $importLibPath
+}
+
+function Find-CJsonLibName([string]$LibDir) {
+    $cjson = Get-ChildItem -Path $LibDir -Filter "cjson.lib" -File | Select-Object -First 1
+    if ($null -ne $cjson) {
+        return $cjson.Name
+    }
+    $libcjson = Get-ChildItem -Path $LibDir -Filter "libcjson.lib" -File | Select-Object -First 1
+    if ($null -ne $libcjson) {
+        return $libcjson.Name
+    }
+    return ""
+}
+
+function Find-CJsonRuntimeDll([string]$Root) {
+    return Find-FirstFileRecursive $Root @("cjson.dll", "libcjson.dll")
+}
+
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $vslimRoot = (Resolve-Path (Join-Path $repoRoot "vslim")).Path
 $vphpRoot = (Resolve-Path (Join-Path $repoRoot "vphp")).Path
@@ -279,6 +347,36 @@ $env:VSLIM_MYSQL_INCLUDE = $mySqlIncludeDir
 $env:VSLIM_MYSQL_LIB = $mySqlLibDir
 $env:VSLIM_MYSQL_CLIENT_LIB = $mySqlClientLib
 
+$cjsonRoot = Find-CJsonRoot
+if ($cjsonRoot -eq "") {
+    throw "Unable to locate a cJSON SDK. Set VSLIM_CJSON_ROOT or CJSON_ROOT."
+}
+$cjsonIncludeDir = Find-CJsonIncludeDir $cjsonRoot
+if ($cjsonIncludeDir -eq "") {
+    throw "Unable to locate cJSON headers under $cjsonRoot"
+}
+$cjsonLibDir = Find-CJsonLibDir $cjsonRoot
+if ($cjsonLibDir -eq "") {
+    throw "Unable to locate cJSON import libraries under $cjsonRoot"
+}
+$cjsonClientLib = Find-CJsonLibName $cjsonLibDir
+if ($cjsonClientLib -eq "") {
+    throw "Unable to locate cjson.lib or libcjson.lib under $cjsonLibDir"
+}
+$cjsonRuntimeDll = Find-CJsonRuntimeDll $cjsonRoot
+
+Write-Host "Using cJSON SDK root: $cjsonRoot"
+Write-Host "Using cJSON include dir: $cjsonIncludeDir"
+Write-Host "Using cJSON lib dir: $cjsonLibDir"
+Write-Host "Using cJSON import lib: $cjsonClientLib"
+if ($cjsonRuntimeDll -ne "") {
+    Write-Host "Using cJSON runtime DLL: $cjsonRuntimeDll"
+}
+
+$env:VSLIM_CJSON_INCLUDE = $cjsonIncludeDir
+$env:VSLIM_CJSON_LIB = $cjsonLibDir
+$env:VSLIM_CJSON_CLIENT_LIB = $cjsonClientLib
+
 $phpizePath = Join-Path $develRoot.FullName "phpize.bat"
 if (!(Test-Path $phpizePath)) {
     throw "phpize.bat not found in devel pack: $phpizePath"
@@ -305,6 +403,10 @@ if ($dll.FullName -ne $targetPath) {
 if ($mySqlRuntimeDll -ne "") {
     Copy-Item -Force $mySqlRuntimeDll (Join-Path $vslimRoot (Split-Path -Leaf $mySqlRuntimeDll))
     Write-Host "Copied MySQL runtime DLL: $mySqlRuntimeDll"
+}
+if ($cjsonRuntimeDll -ne "") {
+    Copy-Item -Force $cjsonRuntimeDll (Join-Path $vslimRoot (Split-Path -Leaf $cjsonRuntimeDll))
+    Write-Host "Copied cJSON runtime DLL: $cjsonRuntimeDll"
 }
 
 Write-Host "Built Windows DLL: $targetPath"

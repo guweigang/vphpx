@@ -373,6 +373,8 @@ function detect_windows_runtime_dependencies(string $extensionPath): array
     $candidates = [
         $dir . DIRECTORY_SEPARATOR . 'libmysql.dll',
         $dir . DIRECTORY_SEPARATOR . 'libmariadb.dll',
+        $dir . DIRECTORY_SEPARATOR . 'cjson.dll',
+        $dir . DIRECTORY_SEPARATOR . 'libcjson.dll',
     ];
 
     $deps = [];
