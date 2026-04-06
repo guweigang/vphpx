@@ -26,6 +26,7 @@ extern zend_class_entry *vslim__support__serviceprovider_ce;
 extern zend_class_entry *vslim__support__module_ce;
 extern zend_class_entry *vslim__routegroup_ce;
 extern zend_class_entry *vslim__vhttpd__request_ce;
+extern zend_class_entry *vslim__vhttpd__client_ce;
 extern zend_class_entry *vslim__vhttpd__response_ce;
 extern zend_class_entry *vphp__vslim__psr7adapter_ce;
 extern zend_class_entry *vslim__stream__response_ce;

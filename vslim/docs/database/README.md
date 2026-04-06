@@ -16,6 +16,7 @@
 - [app_services.v](/Users/guweigang/Source/vphpx/vslim/src/app_services.v)
 - [container.v](/Users/guweigang/Source/vphpx/vslim/src/container.v)
 - [test_vslim_database_config.phpt](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_database_config.phpt)
+- [vhttpd-upstream.md](/Users/guweigang/Source/vphpx/vslim/docs/database/vhttpd-upstream.md)
 
 ## 当前提供的对象
 
@@ -39,7 +40,10 @@
 ```toml
 [database]
 driver = "${env.DB_DRIVER:-mysql}"
+transport = "${env.DB_TRANSPORT:-direct}"
 pool_size = "${env.int.DB_POOL_SIZE:-5}"
+pool_name = "${env.DB_POOL_NAME:-default}"
+timeout_ms = "${env.int.DB_TIMEOUT_MS:-1000}"
 
 [database.mysql]
 host = "${env.DB_HOST:-127.0.0.1}"
@@ -47,17 +51,24 @@ port = "${env.int.DB_PORT:-3306}"
 username = "${env.DB_USERNAME:-root}"
 password = "${env.DB_PASSWORD:-}"
 database = "${env.DB_NAME:-app}"
+
+[database.upstream]
+socket = "${env.DB_UPSTREAM_SOCKET:-tmp/vhttpd-db.sock}"
 ```
 
 当前默认读取：
 
 - `database.driver`
+- `database.transport`
 - `database.pool_size`
+- `database.pool_name`
+- `database.timeout_ms`
 - `database.mysql.host`
 - `database.mysql.port`
 - `database.mysql.username`
 - `database.mysql.password`
 - `database.mysql.database`
+- `database.upstream.socket`
 
 ## 基本用法
 
@@ -188,3 +199,7 @@ $users = $db->table('users')
 - `lastInsertId()` 行为回归
 - migration / seed
 - 然后再考虑 ORM
+
+如果要把数据库连接池进一步交给 `vhttpd` 托管，而不是留在 PHP worker 进程内，设计见：
+
+- [VSlim Database over vhttpd Upstream](/Users/guweigang/Source/vphpx/vslim/docs/database/vhttpd-upstream.md)

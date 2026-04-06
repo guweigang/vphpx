@@ -251,6 +251,14 @@ mut:
 	params         map[string]string
 }
 
+@[php_class: 'VSlim\\Vhttpd\\Client']
+@[heap]
+struct VSlimVhttpdClient {
+mut:
+	socket_path             string
+	connect_timeout_seconds f64 = 2.0
+}
+
 @[php_class: 'VSlim\\Vhttpd\\Response']
 @[heap]
 struct VSlimResponse {
@@ -580,27 +588,35 @@ mut:
 @[heap]
 struct VSlimDatabaseConfig {
 mut:
-	driver    string = 'mysql'
-	host      string = '127.0.0.1'
-	port      int    = 3306
-	username  string
-	password  string
-	database  string
-	pool_size int = 5
+	driver          string = 'mysql'
+	transport       string = 'direct'
+	host            string = '127.0.0.1'
+	port            int    = 3306
+	username        string
+	password        string
+	database        string
+	pool_size       int    = 5
+	pool_name       string = 'default'
+	timeout_ms      int    = 1000
+	upstream_socket string
 }
 
 @[php_class: 'VSlim\\Database\\Manager']
 @[heap]
 struct VSlimDatabaseManager {
 mut:
-	config_ref       &VSlimDatabaseConfig = unsafe { nil }
-	mysql_pool       mysql.ConnectionPool
-	mysql_connected  bool
-	mysql_tx_conn    mysql.DB
-	mysql_tx_active  bool
+	config_ref         &VSlimDatabaseConfig = unsafe { nil }
+	vhttpd_client_ref  &VSlimVhttpdClient   = unsafe { nil }
+	mysql_pool         mysql.ConnectionPool
+	mysql_connected    bool
+	mysql_tx_conn      mysql.DB
+	mysql_tx_active    bool
+	upstream_connected bool
+	upstream_tx_active bool
+	upstream_session_id string
 	last_affected_rows u64
 	last_insert_id     i64
-	last_error       string
+	last_error         string
 }
 
 pub enum VSlimDatabaseQueryKind {

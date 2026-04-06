@@ -214,6 +214,7 @@
   - [config/config.md](/Users/guweigang/Source/vphpx/vslim/docs/config/config.md)
 - database
   - [database/README.md](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
+  - [database/vhttpd-upstream.md](/Users/guweigang/Source/vphpx/vslim/docs/database/vhttpd-upstream.md)
 - logger
   - [logger/logger.md](/Users/guweigang/Source/vphpx/vslim/docs/logger/logger.md)
 - container

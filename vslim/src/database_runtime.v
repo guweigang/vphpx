@@ -25,6 +25,21 @@ pub fn (cfg &VSlimDatabaseConfig) driver() string {
 	return cfg.driver
 }
 
+@[php_method: 'setTransport']
+pub fn (mut cfg VSlimDatabaseConfig) set_transport(transport string) &VSlimDatabaseConfig {
+	clean := transport.trim_space().to_lower()
+	cfg.transport = if clean == '' { 'direct' } else { clean }
+	return &cfg
+}
+
+@[php_method]
+pub fn (cfg &VSlimDatabaseConfig) transport() string {
+	if cfg.transport.trim_space() == '' {
+		return 'direct'
+	}
+	return cfg.transport
+}
+
 @[php_method]
 pub fn (mut cfg VSlimDatabaseConfig) set_host(host string) &VSlimDatabaseConfig {
 	cfg.host = if host.trim_space() == '' { '127.0.0.1' } else { host.trim_space() }
@@ -100,15 +115,58 @@ pub fn (cfg &VSlimDatabaseConfig) pool_size_value() int {
 	return cfg.pool_size
 }
 
+@[php_method: 'setPoolName']
+pub fn (mut cfg VSlimDatabaseConfig) set_pool_name(name string) &VSlimDatabaseConfig {
+	cfg.pool_name = if name.trim_space() == '' { 'default' } else { name.trim_space() }
+	return &cfg
+}
+
+@[php_method: 'poolName']
+pub fn (cfg &VSlimDatabaseConfig) pool_name_value() string {
+	if cfg.pool_name.trim_space() == '' {
+		return 'default'
+	}
+	return cfg.pool_name
+}
+
+@[php_method: 'setTimeoutMs']
+pub fn (mut cfg VSlimDatabaseConfig) set_timeout_ms(timeout_ms int) &VSlimDatabaseConfig {
+	cfg.timeout_ms = if timeout_ms <= 0 { 1000 } else { timeout_ms }
+	return &cfg
+}
+
+@[php_method: 'timeoutMs']
+pub fn (cfg &VSlimDatabaseConfig) timeout_ms_value() int {
+	if cfg.timeout_ms <= 0 {
+		return 1000
+	}
+	return cfg.timeout_ms
+}
+
+@[php_method: 'setUpstreamSocket']
+pub fn (mut cfg VSlimDatabaseConfig) set_upstream_socket(socket_path string) &VSlimDatabaseConfig {
+	cfg.upstream_socket = socket_path.trim_space()
+	return &cfg
+}
+
+@[php_method: 'upstreamSocket']
+pub fn (cfg &VSlimDatabaseConfig) upstream_socket_value() string {
+	return cfg.upstream_socket.trim_space()
+}
+
 @[php_method]
 pub fn (cfg &VSlimDatabaseConfig) to_json() string {
 	mut payload := map[string]string{}
 	payload['driver'] = cfg.driver()
+	payload['transport'] = cfg.transport()
 	payload['host'] = cfg.host()
 	payload['port'] = '${cfg.port()}'
 	payload['username'] = cfg.username()
 	payload['database'] = cfg.database()
 	payload['pool_size'] = '${cfg.pool_size_value()}'
+	payload['pool_name'] = cfg.pool_name_value()
+	payload['timeout_ms'] = '${cfg.timeout_ms_value()}'
+	payload['upstream_socket'] = cfg.upstream_socket_value()
 	return json.encode(payload)
 }
 
@@ -129,6 +187,7 @@ pub fn (mut db VSlimDatabaseManager) construct() &VSlimDatabaseManager {
 pub fn (mut db VSlimDatabaseManager) set_config(config &VSlimDatabaseConfig) &VSlimDatabaseManager {
 	db.config_ref = config
 	ensure_database_config(mut db.config_ref)
+	db.vhttpd_client_ref = unsafe { nil }
 	return &db
 }
 
@@ -148,6 +207,25 @@ pub fn (db &VSlimDatabaseManager) driver() string {
 	return db.config_ref.driver()
 }
 
+@[php_method]
+pub fn (db &VSlimDatabaseManager) transport() string {
+	return db.config_ref.transport()
+}
+
+@[php_method: 'vhttpdClient']
+pub fn (mut db VSlimDatabaseManager) vhttpd_client() &VSlimVhttpdClient {
+	db.construct()
+	if db.vhttpd_client_ref == unsafe { nil } {
+		mut client := &VSlimVhttpdClient{}
+		client.construct(
+			db.config_ref.upstream_socket_value(),
+			f64(db.config_ref.timeout_ms_value()) / 1000.0,
+		)
+		db.vhttpd_client_ref = client
+	}
+	return db.vhttpd_client_ref
+}
+
 @[php_method: 'poolSize']
 pub fn (db &VSlimDatabaseManager) pool_size_value() int {
 	return db.config_ref.pool_size_value()
@@ -155,7 +233,7 @@ pub fn (db &VSlimDatabaseManager) pool_size_value() int {
 
 @[php_method]
 pub fn (db &VSlimDatabaseManager) is_connected() bool {
-	return db.mysql_connected
+	return db.mysql_connected || db.upstream_connected
 }
 
 @[php_method: 'lastError']
@@ -185,6 +263,19 @@ pub fn (mut db VSlimDatabaseManager) table_query(name string) &VSlimDatabaseQuer
 @[php_method]
 pub fn (mut db VSlimDatabaseManager) connect() bool {
 	db.construct()
+	if db.config_ref.transport() == 'vhttpd_upstream' {
+		if db.upstream_connected {
+			return true
+		}
+		ok := db.database_upstream_ping() or {
+			db.last_error = err.msg()
+			vphp.throw_exception_class('RuntimeException', 'database connect failed: ${err.msg()}', 0)
+			return false
+		}
+		db.upstream_connected = ok
+		db.last_error = ''
+		return ok
+	}
 	if db.mysql_connected {
 		return true
 	}
@@ -318,6 +409,124 @@ fn database_param_from_box(value vphp.RequestBorrowedZBox) string {
 	return value.to_string()
 }
 
+fn (db &VSlimDatabaseManager) database_uses_upstream() bool {
+	return db.config_ref != unsafe { nil } && db.config_ref.transport() == 'vhttpd_upstream'
+}
+
+fn (db &VSlimDatabaseManager) database_upstream_timeout_seconds() f64 {
+	return f64(db.config_ref.timeout_ms_value()) / 1000.0
+}
+
+fn (mut db VSlimDatabaseManager) database_upstream_client() &VSlimVhttpdClient {
+	return db.vhttpd_client()
+}
+
+fn database_response_error_message(raw vphp.ZVal) string {
+	error_z := zval_key(raw, 'error')
+	if error_z.is_array() {
+		message := zval_string_key(error_z, 'message', '')
+		if message != '' {
+			return message
+		}
+	}
+	return zval_string_key(raw, 'message', 'upstream request failed')
+}
+
+fn (mut db VSlimDatabaseManager) database_upstream_request(op string, statement string, params []string) !vphp.RequestOwnedZBox {
+	mut payload := new_array_zval()
+	payload.add_assoc_string('mode', 'db')
+	payload.add_assoc_long('version', 1)
+	payload.add_assoc_string('pool', db.config_ref.pool_name_value())
+	payload.add_assoc_string('op', op)
+	payload.add_assoc_long('timeout_ms', db.config_ref.timeout_ms_value())
+	if statement.trim_space() != '' {
+		payload.add_assoc_string('sql', statement)
+	}
+	if db.upstream_session_id != '' {
+		payload.add_assoc_string('session_id', db.upstream_session_id)
+	}
+	if params.len > 0 {
+		mut params_box := database_string_params_box(params)
+		add_assoc_zval(payload, 'params', params_box.take_zval())
+	}
+	mut request_box := vphp.own_request_zbox(payload)
+	defer {
+		request_box.release()
+	}
+	mut response := db.database_upstream_client().request(request_box.borrowed())
+	if !response.is_valid() || response.is_null() || !response.to_zval().is_array() {
+		response.release()
+		return error('connect_failed')
+	}
+	raw := response.to_zval()
+	if !zval_bool_key(raw, 'ok') {
+		msg := database_response_error_message(raw)
+		response.release()
+		return error(msg)
+	}
+	if zval_key(raw, 'session_id').is_valid() {
+		db.upstream_session_id = zval_string_key(raw, 'session_id', db.upstream_session_id)
+	}
+	return response
+}
+
+fn (mut db VSlimDatabaseManager) database_upstream_ping() !bool {
+	mut response := db.database_upstream_request('ping', '', []string{})!
+	defer {
+		response.release()
+	}
+	return true
+}
+
+fn (mut db VSlimDatabaseManager) database_upstream_query(query string, params []string) !vphp.RequestOwnedZBox {
+	mut response := db.database_upstream_request('query', query, params)!
+	defer {
+		raw := response.to_zval()
+		db.last_affected_rows = u64(zval_int_key(raw, 'affected_rows', 0))
+		db.last_insert_id = i64(zval_int_key(raw, 'last_insert_id', 0))
+	}
+	raw := response.to_zval()
+	rows_z := zval_key(raw, 'rows')
+	return vphp.RequestOwnedZBox.of(rows_z)
+}
+
+fn (mut db VSlimDatabaseManager) database_upstream_execute(query string, params []string) !vphp.RequestOwnedZBox {
+	mut response := db.database_upstream_request('execute', query, params)!
+	defer {
+		response.release()
+	}
+	raw := response.to_zval()
+	db.last_affected_rows = u64(zval_int_key(raw, 'affected_rows', 0))
+	db.last_insert_id = i64(zval_int_key(raw, 'last_insert_id', 0))
+	return database_exec_meta_box(db.last_affected_rows)
+}
+
+fn (mut db VSlimDatabaseManager) database_upstream_begin_transaction() !bool {
+	_ = db.database_upstream_request('begin_transaction', '', []string{}) or { return err }
+	db.upstream_tx_active = true
+	return true
+}
+
+fn (mut db VSlimDatabaseManager) database_upstream_commit() !bool {
+	if !db.upstream_tx_active {
+		return true
+	}
+	_ = db.database_upstream_request('commit', '', []string{}) or { return err }
+	db.upstream_tx_active = false
+	db.upstream_session_id = ''
+	return true
+}
+
+fn (mut db VSlimDatabaseManager) database_upstream_rollback() !bool {
+	if !db.upstream_tx_active {
+		return true
+	}
+	_ = db.database_upstream_request('rollback', '', []string{}) or { return err }
+	db.upstream_tx_active = false
+	db.upstream_session_id = ''
+	return true
+}
+
 fn database_string_map_from_box(values vphp.RequestBorrowedZBox) map[string]string {
 	raw := values.to_zval()
 	if !raw.is_array() {
@@ -429,6 +638,9 @@ fn (mut db VSlimDatabaseManager) release_mysql_conn(conn mysql.DB) {
 
 @[php_method]
 pub fn (mut db VSlimDatabaseManager) disconnect() &VSlimDatabaseManager {
+	if db.upstream_tx_active {
+		db.database_upstream_rollback() or {}
+	}
 	if db.mysql_tx_active {
 		db.mysql_tx_conn.rollback() or {}
 		db.mysql_tx_conn.autocommit(true) or {}
@@ -439,6 +651,10 @@ pub fn (mut db VSlimDatabaseManager) disconnect() &VSlimDatabaseManager {
 		db.mysql_pool.close()
 		db.mysql_connected = false
 	}
+	db.vhttpd_client_ref = unsafe { nil }
+	db.upstream_connected = false
+	db.upstream_tx_active = false
+	db.upstream_session_id = ''
 	db.last_affected_rows = 0
 	db.last_insert_id = 0
 	db.last_error = ''
@@ -447,6 +663,15 @@ pub fn (mut db VSlimDatabaseManager) disconnect() &VSlimDatabaseManager {
 
 @[php_method]
 pub fn (mut db VSlimDatabaseManager) ping() bool {
+	if db.database_uses_upstream() {
+		ok := db.database_upstream_ping() or {
+			db.last_error = err.msg()
+			return false
+		}
+		db.upstream_connected = ok
+		db.last_error = ''
+		return ok
+	}
 	mut conn := db.acquire_mysql_conn() or {
 		db.last_error = err.msg()
 		return false
@@ -463,6 +688,15 @@ pub fn (mut db VSlimDatabaseManager) ping() bool {
 
 @[php_method]
 pub fn (mut db VSlimDatabaseManager) execute(query string) vphp.RequestOwnedZBox {
+	if db.database_uses_upstream() {
+		result := db.database_upstream_execute(query, []string{}) or {
+			db.last_error = err.msg()
+			vphp.throw_exception_class('RuntimeException', 'database execute failed: ${err.msg()}', 0)
+			return vphp.RequestOwnedZBox.new_null()
+		}
+		db.last_error = ''
+		return result
+	}
 	mut conn := db.acquire_mysql_conn() or {
 		db.last_error = err.msg()
 		vphp.throw_exception_class('RuntimeException', 'database execute failed: ${err.msg()}', 0)
@@ -485,6 +719,15 @@ pub fn (mut db VSlimDatabaseManager) execute(query string) vphp.RequestOwnedZBox
 @[php_method: 'executeParams']
 pub fn (mut db VSlimDatabaseManager) execute_params(query string, params vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	values := database_params_from_box(params)
+	if db.database_uses_upstream() {
+		result := db.database_upstream_execute(query, values) or {
+			db.last_error = err.msg()
+			vphp.throw_exception_class('RuntimeException', 'database execute failed: ${err.msg()}', 0)
+			return vphp.RequestOwnedZBox.new_null()
+		}
+		db.last_error = ''
+		return result
+	}
 	mut conn := db.acquire_mysql_conn() or {
 		db.last_error = err.msg()
 		vphp.throw_exception_class('RuntimeException', 'database execute failed: ${err.msg()}', 0)
@@ -506,6 +749,15 @@ pub fn (mut db VSlimDatabaseManager) execute_params(query string, params vphp.Re
 
 @[php_method]
 pub fn (mut db VSlimDatabaseManager) query(query string) vphp.RequestOwnedZBox {
+	if db.database_uses_upstream() {
+		rows := db.database_upstream_query(query, []string{}) or {
+			db.last_error = err.msg()
+			vphp.throw_exception_class('RuntimeException', 'database query failed: ${err.msg()}', 0)
+			return vphp.RequestOwnedZBox.new_null()
+		}
+		db.last_error = ''
+		return rows
+	}
 	mut conn := db.acquire_mysql_conn() or {
 		db.last_error = err.msg()
 		vphp.throw_exception_class('RuntimeException', 'database query failed: ${err.msg()}', 0)
@@ -529,6 +781,15 @@ pub fn (mut db VSlimDatabaseManager) query(query string) vphp.RequestOwnedZBox {
 @[php_method: 'queryParams']
 pub fn (mut db VSlimDatabaseManager) query_params(query string, params vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	values := database_params_from_box(params)
+	if db.database_uses_upstream() {
+		rows := db.database_upstream_query(query, values) or {
+			db.last_error = err.msg()
+			vphp.throw_exception_class('RuntimeException', 'database query failed: ${err.msg()}', 0)
+			return vphp.RequestOwnedZBox.new_null()
+		}
+		db.last_error = ''
+		return rows
+	}
 	mut conn := db.acquire_mysql_conn() or {
 		db.last_error = err.msg()
 		vphp.throw_exception_class('RuntimeException', 'database query failed: ${err.msg()}', 0)
@@ -575,6 +836,16 @@ pub fn (mut db VSlimDatabaseManager) query_one_params(query string, params vphp.
 
 @[php_method: 'beginTransaction']
 pub fn (mut db VSlimDatabaseManager) begin_transaction() bool {
+	if db.database_uses_upstream() {
+		ok := db.database_upstream_begin_transaction() or {
+			db.last_error = err.msg()
+			vphp.throw_exception_class('RuntimeException', 'database begin transaction failed: ${err.msg()}', 0)
+			return false
+		}
+		db.upstream_connected = true
+		db.last_error = ''
+		return ok
+	}
 	if db.mysql_tx_active {
 		return true
 	}
@@ -606,6 +877,15 @@ pub fn (mut db VSlimDatabaseManager) begin_transaction() bool {
 
 @[php_method]
 pub fn (mut db VSlimDatabaseManager) commit() bool {
+	if db.database_uses_upstream() {
+		ok := db.database_upstream_commit() or {
+			db.last_error = err.msg()
+			vphp.throw_exception_class('RuntimeException', 'database commit failed: ${err.msg()}', 0)
+			return false
+		}
+		db.last_error = ''
+		return ok
+	}
 	if !db.mysql_tx_active {
 		return true
 	}
@@ -627,6 +907,15 @@ pub fn (mut db VSlimDatabaseManager) commit() bool {
 
 @[php_method]
 pub fn (mut db VSlimDatabaseManager) rollback() bool {
+	if db.database_uses_upstream() {
+		ok := db.database_upstream_rollback() or {
+			db.last_error = err.msg()
+			vphp.throw_exception_class('RuntimeException', 'database rollback failed: ${err.msg()}', 0)
+			return false
+		}
+		db.last_error = ''
+		return ok
+	}
 	if !db.mysql_tx_active {
 		return true
 	}
@@ -1194,6 +1483,9 @@ fn ensure_database_config(mut cfg VSlimDatabaseConfig) {
 	if cfg.driver.trim_space() == '' {
 		cfg.driver = 'mysql'
 	}
+	if cfg.transport.trim_space() == '' {
+		cfg.transport = 'direct'
+	}
 	if cfg.host.trim_space() == '' {
 		cfg.host = '127.0.0.1'
 	}
@@ -1202,6 +1494,12 @@ fn ensure_database_config(mut cfg VSlimDatabaseConfig) {
 	}
 	if cfg.pool_size <= 0 {
 		cfg.pool_size = 5
+	}
+	if cfg.pool_name.trim_space() == '' {
+		cfg.pool_name = 'default'
+	}
+	if cfg.timeout_ms <= 0 {
+		cfg.timeout_ms = 1000
 	}
 }
 
@@ -1213,8 +1511,17 @@ fn configure_default_database_manager(mut db VSlimDatabaseManager, config &VSlim
 	if config.has('database.driver') {
 		cfg.set_driver(config.get_string('database.driver', cfg.driver()))
 	}
+	if config.has('database.transport') {
+		cfg.set_transport(config.get_string('database.transport', cfg.transport()))
+	}
 	if config.has('database.pool_size') {
 		cfg.set_pool_size(config.get_int('database.pool_size', cfg.pool_size_value()))
+	}
+	if config.has('database.pool_name') {
+		cfg.set_pool_name(config.get_string('database.pool_name', cfg.pool_name_value()))
+	}
+	if config.has('database.timeout_ms') {
+		cfg.set_timeout_ms(config.get_int('database.timeout_ms', cfg.timeout_ms_value()))
 	}
 	if config.has('database.mysql.host') {
 		cfg.set_host(config.get_string('database.mysql.host', cfg.host()))
@@ -1230,6 +1537,9 @@ fn configure_default_database_manager(mut db VSlimDatabaseManager, config &VSlim
 	}
 	if config.has('database.mysql.database') {
 		cfg.set_database(config.get_string('database.mysql.database', cfg.database()))
+	}
+	if config.has('database.upstream.socket') {
+		cfg.set_upstream_socket(config.get_string('database.upstream.socket', cfg.upstream_socket_value()))
 	}
 }
 
