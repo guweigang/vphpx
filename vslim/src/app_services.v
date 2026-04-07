@@ -1,5 +1,6 @@
 module main
 
+import os
 import vphp
 
 #include "php_bridge.h"
@@ -93,6 +94,46 @@ pub fn (mut app VSlimApp) validate(data vphp.RequestBorrowedZBox, rules vphp.Req
 	mut validator := VSlimValidator.make(data, rules)
 	validator.validate()
 	return validator
+}
+
+@[php_method]
+pub fn (app &VSlimApp) session(request vphp.RequestBorrowedZBox) &VSlimSessionStore {
+	mut session := &VSlimSessionStore{}
+	session.construct()
+	configure_default_session_store(mut session, app.config_ref)
+	session.load(request)
+	return session
+}
+
+@[php_method]
+pub fn (app &VSlimApp) auth(request vphp.RequestBorrowedZBox) &VSlimAuthSessionGuard {
+	mut session := app.session(request)
+	mut guard := &VSlimAuthSessionGuard{}
+	guard.construct()
+	guard.set_store(session)
+	configure_default_auth_guard(mut guard, app.config_ref)
+	return guard
+}
+
+fn (app &VSlimApp) migrator_project_root() string {
+	if app.config_ref != unsafe { nil } {
+		mut config_path := app.config_ref.path().trim_space()
+		if config_path != '' {
+			config_path = config_path.trim_right('/\\')
+			if php_is_dir(config_path) {
+				if config_path.ends_with('/config') || config_path.ends_with('\\config') {
+					return os.dir(config_path)
+				}
+				return config_path
+			}
+			config_dir := os.dir(config_path)
+			if config_dir.ends_with('/config') || config_dir.ends_with('\\config') {
+				return os.dir(config_dir)
+			}
+			return config_dir
+		}
+	}
+	return os.getwd()
 }
 
 fn (mut app VSlimApp) sync_standard_services_to_container() {
@@ -208,6 +249,47 @@ fn configure_default_cache_pool(mut pool VSlimPsr6CacheItemPool, config &VSlimCo
 
 fn configure_default_database_service(mut db VSlimDatabaseManager, config &VSlimConfig) {
 	configure_default_database_manager(mut db, config)
+}
+
+fn configure_default_session_store(mut session VSlimSessionStore, config &VSlimConfig) {
+	if config == unsafe { nil } {
+		return
+	}
+	if config.has('session.cookie') {
+		session.set_cookie_name(config.get_string('session.cookie', session.cookie_name_value()))
+	}
+	if config.has('session.secret') {
+		session.set_secret(config.get_string('session.secret', session.secret_value()))
+	} else if config.has('app.key') {
+		session.set_secret(config.get_string('app.key', session.secret_value()))
+	}
+	if config.has('session.ttl_seconds') {
+		session.set_ttl_seconds(config.get_int('session.ttl_seconds', session.ttl_seconds_value()))
+	}
+	if config.has('session.path') {
+		session.set_path(config.get_string('session.path', session.path_value()))
+	}
+	if config.has('session.domain') {
+		session.set_domain(config.get_string('session.domain', session.domain_value()))
+	}
+	if config.has('session.secure') {
+		session.set_secure(config.get_bool('session.secure', session.secure_value()))
+	}
+	if config.has('session.http_only') {
+		session.set_http_only(config.get_bool('session.http_only', session.http_only_value()))
+	}
+	if config.has('session.same_site') {
+		session.set_same_site(config.get_string('session.same_site', session.same_site_value()))
+	}
+}
+
+fn configure_default_auth_guard(mut guard VSlimAuthSessionGuard, config &VSlimConfig) {
+	if config == unsafe { nil } {
+		return
+	}
+	if config.has('auth.session_key') {
+		guard.set_user_key(config.get_string('auth.session_key', guard.user_key_value()))
+	}
 }
 
 fn (mut app VSlimApp) sync_clock_dependent_services() {
@@ -471,4 +553,33 @@ pub fn (mut app VSlimApp) database() &VSlimDatabaseManager {
 @[php_method]
 pub fn (mut app VSlimApp) db() &VSlimDatabaseManager {
 	return app.database()
+}
+
+@[php_method]
+pub fn (app &VSlimApp) has_migrator() bool {
+	return app.migrator_ref != unsafe { nil }
+}
+
+@[php_method: 'setMigrator']
+pub fn (mut app VSlimApp) set_migrator(migrator &VSlimDatabaseMigrator) &VSlimApp {
+	app.migrator_ref = migrator
+	app.migrator_ref.set_manager(app.database())
+	root := app.migrator_project_root()
+	app.migrator_ref.set_migrations_path(path_join(root, 'database/migrations'))
+	app.migrator_ref.set_seeds_path(path_join(root, 'database/seeds'))
+	return &app
+}
+
+@[php_method]
+pub fn (mut app VSlimApp) migrator() &VSlimDatabaseMigrator {
+	if app.migrator_ref == unsafe { nil } {
+		mut created := &VSlimDatabaseMigrator{}
+		created.construct()
+		app.migrator_ref = created
+	}
+	app.migrator_ref.set_manager(app.database())
+	root := app.migrator_project_root()
+	app.migrator_ref.set_migrations_path(path_join(root, 'database/migrations'))
+	app.migrator_ref.set_seeds_path(path_join(root, 'database/seeds'))
+	return app.migrator_ref
 }

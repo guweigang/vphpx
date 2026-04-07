@@ -130,8 +130,9 @@ make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd
 | HTTP 入口 | `public/index.php` / `public/worker.php` / `bootstrap/http.php` / `Makefile` | built-in server、worker 入口和 transport 适配 |
 | CLI 入口 | `bin/vslim` / `bootstrap/cli.php` | CLI 启动脚本和命令装配 |
 | 显式总装配 | `bootstrap/app.php` | 把 config、provider、module、middleware、routes 收进一份 spec |
-| 配置 | `config/*.toml` | app / logging / stream 等分域配置 |
-| 数据库 | `config/database.toml` / `app()->database()` | 默认数据库 manager、连接池和事务入口 |
+| 配置 | `config/*.toml` | app / logging / stream / session 等分域配置 |
+| 数据库 | `config/database.toml` / `app()->database()` / `app()->migrator()` | 默认数据库 manager、连接池、migration 和 seed 入口 |
+| Session / Auth | `config/session.toml` / `app()->session($request)` / `app()->auth($request)` | cookie session store 和 session guard |
 | 服务注册 | `app/Providers/AppServiceProvider.php` | container 里的基础 service |
 | 模块 | `app/Modules/StatusModule.php` | 一组 service + routes 的独立装配单元 |
 | 简单 controller | `app/Http/Controllers/HomeController.php` | 直接处理页面/接口请求 |
@@ -140,6 +141,7 @@ make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd
 | 路由 | `app/Http/routes/web.php` | 页面 / HTTP 路由 |
 | 错误处理 | `app/Http/errors.php` | not_found / runtime error 响应 |
 | CLI command | `app/Commands/AboutCommand.php` | command schema、help、handle |
+| 数据库命令 | `app/Commands/DbMigrateCommand.php` / `DbRollbackCommand.php` / `DbSeedCommand.php` | migrate、rollback、seed 入口 |
 | 视图 | `resources/views/home.html` | 模板页面 |
 
 ## 深入阅读

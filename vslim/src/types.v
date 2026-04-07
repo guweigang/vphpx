@@ -120,6 +120,7 @@ mut:
 	cache_pool_ref          &VSlimPsr6CacheItemPool     = unsafe { nil }
 	http_client_ref         &VSlimPsr18Client           = unsafe { nil }
 	database_ref            &VSlimDatabaseManager       = unsafe { nil }
+	migrator_ref            &VSlimDatabaseMigrator      = unsafe { nil }
 	providers               []vphp.RetainedObject
 	provider_classes        map[string]bool
 	modules                 []vphp.RetainedObject
@@ -257,6 +258,32 @@ struct VSlimVhttpdClient {
 mut:
 	socket_path             string
 	connect_timeout_seconds f64 = 2.0
+}
+
+@[php_class: 'VSlim\\Session\\Store']
+@[heap]
+struct VSlimSessionStore {
+mut:
+	cookie_name string = 'vslim_session'
+	secret      string
+	ttl_seconds int = 7200
+	path        string = '/'
+	domain      string
+	secure      bool
+	http_only   bool = true
+	same_site   string = 'lax'
+	values      map[string]string
+	loaded      bool
+	dirty       bool
+	destroyed   bool
+}
+
+@[php_class: 'VSlim\\Auth\\SessionGuard']
+@[heap]
+struct VSlimAuthSessionGuard {
+mut:
+	store_ref &VSlimSessionStore = unsafe { nil }
+	user_key  string             = 'auth.user_id'
 }
 
 @[php_class: 'VSlim\\Vhttpd\\Response']
@@ -656,6 +683,32 @@ mut:
 	primary_key   string = 'id'
 	attributes    map[string]string
 	exists_in_db  bool
+}
+
+@[php_class: 'VSlim\\Database\\Migration']
+@[heap]
+struct VSlimDatabaseMigration {
+mut:
+	manager_ref &VSlimDatabaseManager = unsafe { nil }
+	name        string
+}
+
+@[php_class: 'VSlim\\Database\\Seeder']
+@[heap]
+struct VSlimDatabaseSeeder {
+mut:
+	manager_ref &VSlimDatabaseManager = unsafe { nil }
+	name        string
+}
+
+@[php_class: 'VSlim\\Database\\Migrator']
+@[heap]
+struct VSlimDatabaseMigrator {
+mut:
+	manager_ref      &VSlimDatabaseManager = unsafe { nil }
+	migrations_path  string = 'database/migrations'
+	seeds_path       string = 'database/seeds'
+	table_name       string = 'vslim_migrations'
 }
 
 @[php_implements: 'Psr\\Clock\\ClockInterface']
