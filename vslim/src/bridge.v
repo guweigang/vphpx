@@ -2257,6 +2257,74 @@ pub fn vphp_wrap_vslimtestingharness_dispatch_json(ptr voidptr, ctx vphp.Context
     res := recv.dispatch_json(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
+@[export: 'vphp_wrap_VSlimTestingHarness_response_status']
+pub fn vphp_wrap_vslimtestingharness_response_status(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimTestingHarness(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    res := recv.response_status(arg_0)
+    ctx.return_val[int](res)
+}
+@[export: 'vphp_wrap_VSlimTestingHarness_response_header']
+pub fn vphp_wrap_vslimtestingharness_response_header(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimTestingHarness(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg[string](1)
+    res := recv.response_header(arg_0, arg_1)
+    ctx.return_val[string](res)
+}
+@[export: 'vphp_wrap_VSlimTestingHarness_response_body']
+pub fn vphp_wrap_vslimtestingharness_response_body(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimTestingHarness(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    res := recv.response_body(arg_0)
+    ctx.return_val[string](res)
+}
+@[export: 'vphp_wrap_VSlimTestingHarness_response_json']
+pub fn vphp_wrap_vslimtestingharness_response_json(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimTestingHarness(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    res := recv.response_json(arg_0)
+    ctx.return_val[vphp.RequestOwnedZBox](res)
+}
+@[export: 'vphp_wrap_VSlimTestingHarness_assert_status']
+pub fn vphp_wrap_vslimtestingharness_assert_status(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimTestingHarness(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg[int](1)
+    res := recv.assert_status(arg_0, arg_1)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimTestingHarness_assert_header']
+pub fn vphp_wrap_vslimtestingharness_assert_header(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimTestingHarness(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg[string](1)
+    arg_2 := ctx.arg[string](2)
+    res := recv.assert_header(arg_0, arg_1, arg_2)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimTestingHarness_assert_body_contains']
+pub fn vphp_wrap_vslimtestingharness_assert_body_contains(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimTestingHarness(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg[string](1)
+    res := recv.assert_body_contains(arg_0, arg_1)
+    return voidptr(res)
+}
 @[export: 'vphp_wrap_VSlimTestingHarness_dispatch']
 pub fn vphp_wrap_vslimtestingharness_dispatch(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }

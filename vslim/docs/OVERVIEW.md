@@ -218,6 +218,7 @@
 - validation / session / auth
   - 轻量输入校验、cookie session、auth user provider、auth/guest/ability middleware、app-level gate helper
 - testing
+  - `app()->testing()` 轻量测试 harness，支持 service/config override、quick dispatch、JSON 请求、response 断言和 PSR handle
   - `app()->testing()`、service override、quick dispatch、PSR request handle
 - logger
   - [logger/logger.md](/Users/guweigang/Source/vphpx/vslim/docs/logger/logger.md)

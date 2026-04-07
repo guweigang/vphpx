@@ -19,11 +19,20 @@ $test = $app->testing();
 $test->withService('message', 'from-test');
 $test->withConfigText("[testing]\nmessage = 'from-config'\n");
 
-echo $test->get('/hello')->body . PHP_EOL;
-echo $test->post('/echo', 'payload')->body . PHP_EOL;
-echo $test->postJson('/json', ['name' => 'codex'])->body . PHP_EOL;
+$hello = $test->get('/hello');
+$echo = $test->post('/echo', 'payload');
+$json = $test->postJson('/json', ['name' => 'codex']);
+
+$test->assertStatus($hello, 200);
+$test->assertBodyContains($hello, 'from-config');
+
+echo $test->responseBody($hello) . PHP_EOL;
+echo $test->responseBody($echo) . PHP_EOL;
+echo $test->responseBody($json) . PHP_EOL;
+echo $test->responseJson($json)['name'] . PHP_EOL;
 
 $psr = $test->handleRequest('GET', 'https://example.com/hello');
+$test->assertStatus($psr, 200);
 echo $psr->getStatusCode() . PHP_EOL;
 echo $psr->getBody()->getContents() . PHP_EOL;
 ?>
@@ -31,5 +40,6 @@ echo $psr->getBody()->getContents() . PHP_EOL;
 from-config
 payload
 {"name":"codex"}
+codex
 200
 from-config

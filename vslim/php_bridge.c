@@ -5409,6 +5409,35 @@ ZEND_ARG_TYPE_INFO(0, method, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, uri, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, payload, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimtestingharness_response_status, 0, 1, IS_LONG, 0)
+ZEND_ARG_TYPE_INFO(0, response, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimtestingharness_response_header, 0, 2, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, response, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimtestingharness_response_body, 0, 1, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, response, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimtestingharness_response_json, 0, 1, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, response, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_assert_status[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Testing\\Harness", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, response, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, expected, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_assert_header[] = {
+    { (const char*)(uintptr_t)(3), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Testing\\Harness", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, response, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, expected, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_assert_body_contains[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Testing\\Harness", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, response, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, needle, IS_STRING, 0)
+ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimtestingharness_dispatch[] = {
     { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_ARG_TYPE_INFO(0, method, IS_STRING, 0)
@@ -5768,6 +5797,140 @@ PHP_METHOD(VSlim__Testing__Harness, dispatchJson) {
     }
 }
 
+PHP_METHOD(VSlim__Testing__Harness, responseStatus) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimTestingHarness_response_status(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimTestingHarness_response_status(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Testing__Harness, responseHeader) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimTestingHarness_response_header(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimTestingHarness_response_header(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Testing__Harness, responseBody) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimTestingHarness_response_body(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimTestingHarness_response_body(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Testing__Harness, responseJson) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimTestingHarness_response_json(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimTestingHarness_response_json(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Testing__Harness, assertStatus) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_assert_status(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::assertStatus called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_assert_status(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__testing__harness_ce, VSlimTestingHarness_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, assertHeader) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_assert_header(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::assertHeader called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_assert_header(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__testing__harness_ce, VSlimTestingHarness_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, assertBodyContains) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_assert_body_contains(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::assertBodyContains called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_assert_body_contains(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__testing__harness_ce, VSlimTestingHarness_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
 
 PHP_METHOD(VSlim__Testing__Harness, dispatch) {
     if (!vphp_validate_internal_call(execute_data)) {
@@ -6025,6 +6188,13 @@ static const zend_function_entry vslim__testing__harness_methods[] = {
     PHP_ME(VSlim__Testing__Harness, handleRequest, arginfo_vslimtestingharness_handle_request, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Testing__Harness, handleJson, arginfo_vslimtestingharness_handle_json, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Testing__Harness, dispatchJson, arginfo_vslimtestingharness_dispatch_json, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, responseStatus, arginfo_vslimtestingharness_response_status, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, responseHeader, arginfo_vslimtestingharness_response_header, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, responseBody, arginfo_vslimtestingharness_response_body, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, responseJson, arginfo_vslimtestingharness_response_json, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, assertStatus, arginfo_vslimtestingharness_assert_status, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, assertHeader, arginfo_vslimtestingharness_assert_header, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, assertBodyContains, arginfo_vslimtestingharness_assert_body_contains, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Testing__Harness, dispatch, arginfo_vslimtestingharness_dispatch, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Testing__Harness, get, arginfo_vslimtestingharness_get, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Testing__Harness, getJson, arginfo_vslimtestingharness_get_json, ZEND_ACC_PUBLIC)
