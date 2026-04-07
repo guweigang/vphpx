@@ -272,6 +272,10 @@ $app->setAuthUserProvider(fn (string $id): array => ['id' => $id]);
   - `app()->testing()` 的 HTTP/JSON 集成测试
   - `db:migrate` / `db:seed` 的 smoke
 
+如果你想要一份更完整、可直接照着执行的版本，继续看：
+
+- [`docs/operations/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/operations/README.md)
+
 CLI schema 当前支持这些常用字段：
 
 - `name`

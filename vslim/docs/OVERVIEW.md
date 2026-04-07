@@ -219,6 +219,9 @@
   - 轻量输入校验、cookie session、auth user provider、auth/guest/ability middleware、app-level gate helper
 - testing
   - `app()->testing()` 轻量测试 harness，支持 service/config override、quick dispatch、JSON 请求、response 断言、cookie jar、session/auth helper 和 PSR handle
+- operations
+  - [`operations/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/operations/README.md)
+    从模板初始化、数据库 transport 选择到上线前检查的一页清单
   - [testing/README.md](/Users/guweigang/Source/vphpx/vslim/docs/testing/README.md)
 - logger
   - [logger/logger.md](/Users/guweigang/Source/vphpx/vslim/docs/logger/logger.md)

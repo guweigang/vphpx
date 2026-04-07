@@ -99,6 +99,8 @@ Documentation entry:
 4. 数据库与测试：
    [`docs/database/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
    [`docs/testing/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/testing/README.md)
+5. 从初始化到上线的操作清单：
+   [`docs/operations/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/operations/README.md)
 
 如果你只是想先理解 API 和 builder，再继续往下读这份 README 即可。
 
@@ -117,6 +119,7 @@ Documentation entry:
 - [`docs/config/config.md`](/Users/guweigang/Source/vphpx/vslim/docs/config/config.md)
 - [`docs/database/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
 - [`docs/testing/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/testing/README.md)
+- [`docs/operations/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/operations/README.md)
 
 ## 数据库 transport 怎么选
 
