@@ -32,6 +32,9 @@ final class AppDoctorCommand
         if (($doctor['session_configured'] ?? 'false') !== 'true') {
             $issues[] = 'session_not_configured';
         }
+        if (($doctor['session_secret_placeholder'] ?? 'false') === 'true') {
+            $issues[] = 'session_secret_placeholder';
+        }
         if (($doctor['database_transport'] ?? '') === 'vhttpd_upstream'
             && trim((string) ($doctor['database_upstream_socket'] ?? '')) === '') {
             $issues[] = 'database_upstream_socket_missing';

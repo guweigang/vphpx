@@ -34,6 +34,7 @@ final class ConfigCheckCommand
             'database.upstream.socket' => $config->get_string('database.upstream.socket', ''),
             'session.cookie' => $config->get_string('session.cookie', ''),
             'session.secret_configured' => $config->get_string('session.secret', '') !== '' ? 'true' : 'false',
+            'session.secret_placeholder' => trim($config->get_string('session.secret', '')) === 'change-me' ? 'true' : 'false',
             'auth.redirect_to' => $config->get_string('auth.redirect_to', ''),
         ];
 

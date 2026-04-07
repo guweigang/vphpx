@@ -258,6 +258,20 @@ $app->setAuthUserProvider(new class {
 $app->setAuthUserProvider(fn (string $id): array => ['id' => $id]);
 ```
 
+## 上线前 Checklist
+
+在把模板应用推到长期环境前，至少确认这几件事：
+
+- 把 `config/session.toml` 里的 `session.secret` 从 `change-me` 换成真实随机密钥
+- 如果你走 `database.transport = "direct"`，确认 PHP 运行时能找到 `extension/runtime/` 里的 mysql / mariadb client 库
+- 如果你走 `database.transport = "vhttpd_upstream"`，确认 worker 环境里有 `VHTTPD_DB_SOCKET`
+- 跑一次：
+  - `bin/vslim config:check`
+  - `bin/vslim app:doctor`
+- 至少补一条：
+  - `app()->testing()` 的 HTTP/JSON 集成测试
+  - `db:migrate` / `db:seed` 的 smoke
+
 CLI schema 当前支持这些常用字段：
 
 - `name`

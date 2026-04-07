@@ -574,6 +574,18 @@ pub fn (mut app VSlimApp) doctor_report() map[string]string {
 	} else {
 		'false'
 	}
+	session_secret_placeholder := if cfg_ref != unsafe { nil } {
+		secret := cfg_ref.get_string('session.secret', '').trim_space()
+		if secret == '' {
+			'false'
+		} else if secret == 'change-me' {
+			'true'
+		} else {
+			'false'
+		}
+	} else {
+		'false'
+	}
 	session_configured := if session_cookie != '' && session_secret_configured == 'true' {
 		'true'
 	} else {
@@ -596,6 +608,7 @@ pub fn (mut app VSlimApp) doctor_report() map[string]string {
 		'auth_redirect_to':      app.auth_redirect_to()
 		'session_cookie':        session_cookie
 		'session_secret_configured': session_secret_configured
+		'session_secret_placeholder': session_secret_placeholder
 		'session_configured':    session_configured
 		'auth_user_provider_defined': auth_provider_defined
 		'auth_resolver_defined': if app.auth_user_resolver.is_valid() && app.auth_user_resolver.is_callable() { 'true' } else { 'false' }

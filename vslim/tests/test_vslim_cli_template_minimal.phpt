@@ -53,7 +53,8 @@ $configOutput = trim((string) ob_get_clean());
 echo $configCode, "|",
     (str_contains($configOutput, 'app.name=vslim-template') ? 'config_app_yes' : 'config_app_no'), "|",
     (str_contains($configOutput, 'database.transport=direct') ? 'config_db_transport_yes' : 'config_db_transport_no'), "|",
-    (str_contains($configOutput, 'session.secret_configured=true') ? 'config_session_secret_yes' : 'config_session_secret_no'), PHP_EOL;
+    (str_contains($configOutput, 'session.secret_configured=true') ? 'config_session_secret_yes' : 'config_session_secret_no'), "|",
+    (str_contains($configOutput, 'session.secret_placeholder=true') ? 'config_session_placeholder_yes' : 'config_session_placeholder_no'), PHP_EOL;
 
 ob_start();
 $doctorCode = $cli->run("app:doctor", []);
@@ -61,7 +62,9 @@ $doctorOutput = trim((string) ob_get_clean());
 echo $doctorCode, "|",
     (str_contains($doctorOutput, 'config_loaded=true') ? 'doctor_config_yes' : 'doctor_config_no'), "|",
     (str_contains($doctorOutput, 'session_secret_configured=true') ? 'doctor_session_secret_yes' : 'doctor_session_secret_no'), "|",
-    (str_contains($doctorOutput, 'database_transport=direct') ? 'doctor_db_transport_yes' : 'doctor_db_transport_no'), PHP_EOL;
+    (str_contains($doctorOutput, 'session_secret_placeholder=true') ? 'doctor_session_placeholder_yes' : 'doctor_session_placeholder_no'), "|",
+    (str_contains($doctorOutput, 'database_transport=direct') ? 'doctor_db_transport_yes' : 'doctor_db_transport_no'), "|",
+    (str_contains($doctorOutput, 'issues=session_secret_placeholder,auth_user_provider_missing') ? 'doctor_issues_yes' : 'doctor_issues_no'), PHP_EOL;
 
 $help = $cli->commandHelp("about");
 echo (str_contains($help, 'Usage:') ? 'usage_yes' : 'usage_no'), '|',
@@ -93,6 +96,6 @@ make_test_yes
 2|vslim-template|provider-ready|foo,bar
 1|vslim-template|provider-ready|baz
 4|4|GET|/|template.home|php_callable
-0|config_app_yes|config_db_transport_yes|config_session_secret_yes
-1|doctor_config_yes|doctor_session_secret_yes|doctor_db_transport_yes
+0|config_app_yes|config_db_transport_yes|config_session_secret_yes|config_session_placeholder_yes
+1|doctor_config_yes|doctor_session_secret_yes|doctor_session_placeholder_yes|doctor_db_transport_yes|doctor_issues_yes
 usage_yes|format_yes|env_yes|hint_yes|examples_yes
