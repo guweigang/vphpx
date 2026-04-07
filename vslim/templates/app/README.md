@@ -44,6 +44,16 @@
 6. 用 `make cli-help EXT=./vslim.so` 看 CLI 入口
 7. 从 `app/Http/routes/web.php`、`app/Http/middleware.php`、`app/Modules/StatusModule.php`、`app/Commands/AboutCommand.php` 开始改自己的业务
 
+如果你准备同时把数据库也接起来，推荐在这一步顺手决定 transport：
+
+- 本地开发最省事
+  - 保持 `config/database.toml` 里的 `transport = "direct"`
+- 已经接 `vhttpd` worker，想让数据库连接池也由 `vhttpd` 托管
+  - 改成 `transport = "vhttpd_upstream"`
+  - 并让 worker 环境里有 `VHTTPD_DB_SOCKET`
+
+模板里的 `config/database.toml` 已经把这两条路径都预留好了。
+
 模板自带的项目级入口有：
 
 - `make serve EXT=./vslim.so`
@@ -122,6 +132,14 @@ make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd
 ```bash
 /path/to/vhttpd/vhttpd --config ./vhttpd.example.toml
 ```
+
+如果你还要一起验证数据库 upstream，可以再跑：
+
+```bash
+php -d extension=./vslim.so examples/db_upstream_probe.php
+```
+
+只要 `php-worker` 环境里已经注入了 `VHTTPD_DB_SOCKET`，这个 probe 就不用再手传 socket。
 
 ## 扩展点速查
 

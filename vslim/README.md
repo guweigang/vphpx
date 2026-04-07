@@ -118,6 +118,32 @@ Documentation entry:
 - [`docs/database/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
 - [`docs/testing/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/testing/README.md)
 
+## 数据库 transport 怎么选
+
+`VSlim` 现在有两条数据库主路径：
+
+- `database.transport = "direct"`
+  - `VSlim` 进程内直接连 MySQL
+  - 适合本地开发、单机服务、最短链路
+  - 优点是路径短、调试简单
+  - 代价是扩展本体会直接依赖 MySQL/MariaDB 原生客户端运行库
+- `database.transport = "vhttpd_upstream"`
+  - `VSlim` 通过 unix socket 请求 `vhttpd` 访问数据库
+  - 适合 worker/runtime 主部署路径
+  - 优点是连接池、事务会话和原生依赖都收敛到 `vhttpd`
+  - 更适合多 worker、多进程和跨平台发布
+
+当前推荐策略很简单：
+
+- 本地开发、最薄 demo
+  - 先用 `direct`
+- 生产 worker/runtime、尤其是你已经在用 `vhttpd`
+  - 优先用 `vhttpd_upstream`
+
+如果你要直接走 `vhttpd` 托管数据库，继续看：
+
+- [`docs/database/vhttpd-upstream.md`](/Users/guweigang/Source/vphpx/vslim/docs/database/vhttpd-upstream.md)
+
 ## 测试分层
 
 日常开发默认跑：
@@ -148,6 +174,8 @@ make dist
 
 - `extension/`
   当前平台的预编译扩展二进制
+- `extension/runtime/`
+  扩展依赖的原生运行库，例如 mysql / mariadb client
 - `template/`
   可直接起项目的 app 模板
 - `docs/`
@@ -167,6 +195,17 @@ make dist-source
 - Windows amd64：发布 x64 二进制 bundle
 
 Windows bundle 的原生 DLL 通过 PHP 官方 devel pack + `nmake` 构建，目标是与 PHP `8.5`、`NTS`、`x64` 的 MSVC toolchain 保持一致。V 侧在 Windows job 中只负责 `emit-only` 生成桥接 C，最终 `php_vslim.dll` 由 MSVC 编译链产出。
+
+如果你选择 `database.transport = "direct"`，运行时还需要让 PHP 能找到 bundle 里的数据库客户端库：
+
+- macOS
+  - `DYLD_LIBRARY_PATH=./extension/runtime`
+- Linux
+  - `LD_LIBRARY_PATH=./extension/runtime`
+- Windows
+  - 把 `extension\\runtime` 加到 `PATH`，或者把 DLL 放到 `php.exe` 同级
+
+如果你不想处理这层原生库发现，优先改用 `database.transport = "vhttpd_upstream"`。
 
 ## PSR 进展
 

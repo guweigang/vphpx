@@ -71,6 +71,40 @@ socket = "${env.DB_UPSTREAM_SOCKET:-tmp/vhttpd-db.sock}"
 - `database.mysql.database`
 - `database.upstream.socket`
 
+## direct 和 upstream 怎么选
+
+第一版可以直接按这条经验法则：
+
+- `direct`
+  - 本地开发更顺手
+  - 调试最直接
+  - 适合单机、最短链路、先把业务写起来
+- `vhttpd_upstream`
+  - 更适合 worker/runtime 主部署路径
+  - 连接池和事务会话由 `vhttpd` 托管
+  - `VSlim` 侧基本无感，只改配置
+
+推荐：
+
+- 开发环境：先 `direct`
+- 接到 `vhttpd`、多 worker、准备发版：优先 `vhttpd_upstream`
+
+## 原生运行库说明
+
+当你使用 `database.transport = "direct"` 时，`vslim` 扩展会直接依赖 mysql / mariadb client 运行库。
+
+release bundle 现在会把这些库一并打进：
+
+- `extension/runtime/`
+
+运行时需要让 PHP loader 能找到它们：
+
+- macOS：`DYLD_LIBRARY_PATH=./extension/runtime`
+- Linux：`LD_LIBRARY_PATH=./extension/runtime`
+- Windows：把 `extension\\runtime` 加到 `PATH`
+
+如果你不想在应用进程里处理这层原生依赖，改用 `vhttpd_upstream` 会更省心。
+
 ## 基本用法
 
 ```php
