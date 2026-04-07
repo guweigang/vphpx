@@ -32,6 +32,7 @@ extern zend_class_entry *vslim__auth__sessionguard_ce;
 extern zend_class_entry *vslim__session__startmiddleware_ce;
 extern zend_class_entry *vslim__auth__requireauthmiddleware_ce;
 extern zend_class_entry *vslim__auth__guestmiddleware_ce;
+extern zend_class_entry *vslim__auth__requireabilitymiddleware_ce;
 extern zend_class_entry *vslim__vhttpd__response_ce;
 extern zend_class_entry *vphp__vslim__psr7adapter_ce;
 extern zend_class_entry *vslim__stream__response_ce;

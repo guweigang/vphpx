@@ -630,3 +630,78 @@ pub fn (middleware &VSlimAuthGuestMiddleware) process(request vphp.RequestBorrow
 	])
 	return normalize_to_psr7_response(result.to_zval())
 }
+
+@[php_method]
+pub fn (mut middleware VSlimAuthRequireAbilityMiddleware) construct() &VSlimAuthRequireAbilityMiddleware {
+	middleware.ability = ''
+	middleware.status = 403
+	middleware.message = 'Forbidden'
+	return &middleware
+}
+
+@[php_method: 'setApp']
+pub fn (mut middleware VSlimAuthRequireAbilityMiddleware) set_app(app &VSlimApp) &VSlimAuthRequireAbilityMiddleware {
+	middleware.app_ref = app
+	return &middleware
+}
+
+@[php_method: 'setAbility']
+pub fn (mut middleware VSlimAuthRequireAbilityMiddleware) set_ability(ability string) &VSlimAuthRequireAbilityMiddleware {
+	middleware.ability = ability.trim_space()
+	return &middleware
+}
+
+@[php_method]
+pub fn (middleware &VSlimAuthRequireAbilityMiddleware) ability() string {
+	return middleware.ability.trim_space()
+}
+
+@[php_method: 'setStatus']
+pub fn (mut middleware VSlimAuthRequireAbilityMiddleware) set_status(status int) &VSlimAuthRequireAbilityMiddleware {
+	if status > 0 {
+		middleware.status = status
+	}
+	return &middleware
+}
+
+@[php_method]
+pub fn (middleware &VSlimAuthRequireAbilityMiddleware) status() int {
+	if middleware.status <= 0 {
+		return 403
+	}
+	return middleware.status
+}
+
+@[php_method: 'setMessage']
+pub fn (mut middleware VSlimAuthRequireAbilityMiddleware) set_message(message string) &VSlimAuthRequireAbilityMiddleware {
+	middleware.message = message.trim_space()
+	return &middleware
+}
+
+@[php_method]
+pub fn (middleware &VSlimAuthRequireAbilityMiddleware) message() string {
+	if middleware.message.trim_space() == '' {
+		return 'Forbidden'
+	}
+	return middleware.message.trim_space()
+}
+
+@[php_method]
+@[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (middleware &VSlimAuthRequireAbilityMiddleware) process(request vphp.RequestBorrowedZBox, handler vphp.RequestBorrowedZBox) &VSlimPsr7Response {
+	if middleware.app_ref == unsafe { nil } {
+		return new_psr7_text_response(500, 'Ability middleware app is not configured')
+	}
+	if middleware.ability() == '' {
+		return new_psr7_text_response(500, 'Ability middleware ability is not configured')
+	}
+	if !middleware.app_ref.can(middleware.ability(), request) {
+		return default_error_response_psr(middleware.app_ref, middleware.status(), middleware.message(),
+			'forbidden')
+	}
+	mut result := vphp.method_request_owned_box(handler.to_zval(), 'handle', [
+		request.to_zval(),
+	])
+	return normalize_to_psr7_response(result.to_zval())
+}

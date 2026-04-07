@@ -238,6 +238,17 @@ pub fn (app &VSlimApp) guest_middleware() &VSlimAuthGuestMiddleware {
 	}
 }
 
+@[php_return_type: 'Psr\\Http\\Server\\MiddlewareInterface']
+@[php_method: 'abilityMiddleware']
+pub fn (app &VSlimApp) ability_middleware(ability string) &VSlimAuthRequireAbilityMiddleware {
+	return &VSlimAuthRequireAbilityMiddleware{
+		app_ref: app
+		ability: ability.trim_space()
+		status:  403
+		message: 'Forbidden'
+	}
+}
+
 @[php_optional_args: 'error_code']
 @[php_method: 'errorResponse']
 pub fn (app &VSlimApp) error_response(status int, message string, error_code string) &VSlimResponse {

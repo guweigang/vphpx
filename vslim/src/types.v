@@ -315,6 +315,17 @@ mut:
 	redirect_path string
 }
 
+@[php_implements: 'Psr\\Http\\Server\\MiddlewareInterface']
+@[php_class: 'VSlim\\Auth\\RequireAbilityMiddleware']
+@[heap]
+struct VSlimAuthRequireAbilityMiddleware {
+mut:
+	app_ref  &VSlimApp = unsafe { nil }
+	ability  string
+	status   int = 403
+	message  string
+}
+
 @[php_class: 'VSlim\\Vhttpd\\Response']
 @[heap]
 struct VSlimResponse {
