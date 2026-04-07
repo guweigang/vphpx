@@ -216,7 +216,19 @@ pub fn (mut app VSlimApp) set_auth_user_resolver(resolver vphp.RequestBorrowedZB
 
 @[php_method: 'setAuthUserProvider']
 pub fn (mut app VSlimApp) set_auth_user_provider(provider vphp.RequestBorrowedZBox) &VSlimApp {
-	return app.set_auth_user_resolver(provider)
+	raw := provider.to_zval()
+	if provider.is_valid() && provider.is_callable() {
+		return app.set_auth_user_resolver(provider)
+	}
+	if raw.is_valid() && raw.is_object() && (raw.method_exists('findById') || raw.method_exists('resolve')) {
+		mut old := app.auth_user_resolver
+		old.release()
+		app.auth_user_resolver = vphp.PersistentOwnedZBox.from_object_zval(raw)
+		return &app
+	}
+	vphp.throw_exception_class('InvalidArgumentException',
+		'auth user provider must be callable or an object with findById()/resolve()', 0)
+	return &app
 }
 
 @[php_method: 'setAuthGateResolver']
@@ -240,7 +252,19 @@ pub fn (mut app VSlimApp) set_auth_redirect_path(path string) &VSlimApp {
 
 @[php_method: 'hasAuthUserProvider']
 pub fn (app &VSlimApp) has_auth_user_provider() bool {
-	return app.auth_user_resolver.is_valid() && app.auth_user_resolver.is_callable()
+	if !app.auth_user_resolver.is_valid() {
+		return false
+	}
+	if app.auth_user_resolver.is_callable() {
+		return true
+	}
+	mut raw := app.auth_user_resolver.clone_request_owned()
+	defer {
+		raw.release()
+	}
+	value := raw.to_zval()
+	return value.is_valid() && value.is_object() && (value.method_exists('findById')
+		|| value.method_exists('resolve'))
 }
 
 @[php_method: 'authRedirectTo']
@@ -254,13 +278,33 @@ pub fn (app &VSlimApp) resolve_auth_user(user_id string) vphp.RequestOwnedZBox {
 	if normalized_id == '' {
 		return vphp.RequestOwnedZBox.new_null()
 	}
-	if !app.auth_user_resolver.is_valid() || !app.auth_user_resolver.is_callable() {
+	if !app.auth_user_resolver.is_valid() {
 		return vphp.RequestOwnedZBox.new_string(normalized_id)
 	}
-	mut result := app.auth_user_resolver.call_request_owned([
-		vphp.RequestOwnedZBox.new_string(normalized_id).to_zval(),
-	])
-	return result
+	if app.auth_user_resolver.is_callable() {
+		mut result := app.auth_user_resolver.call_request_owned([
+			vphp.RequestOwnedZBox.new_string(normalized_id).to_zval(),
+		])
+		return result
+	}
+	mut provider := app.auth_user_resolver.clone_request_owned()
+	defer {
+		provider.release()
+	}
+	value := provider.to_zval()
+	if value.is_valid() && value.is_object() {
+		if value.method_exists('findById') {
+			return vphp.method_request_owned_box(value, 'findById', [
+				vphp.RequestOwnedZBox.new_string(normalized_id).to_zval(),
+			])
+		}
+		if value.method_exists('resolve') {
+			return vphp.method_request_owned_box(value, 'resolve', [
+				vphp.RequestOwnedZBox.new_string(normalized_id).to_zval(),
+			])
+		}
+	}
+	return vphp.RequestOwnedZBox.new_string(normalized_id)
 }
 
 @[php_method: 'authUser']

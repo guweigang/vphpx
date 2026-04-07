@@ -80,8 +80,10 @@ TOML);
     $app->setAuthGateResolver(function (string $ability, $user, $request): bool {
         return $ability === 'view-admin' && is_array($user) && ($user['role'] ?? '') === 'admin';
     });
-    $app->setAuthUserProvider(function (string $id): array {
-        return ['id' => $id, 'role' => 'admin'];
+    $app->setAuthUserProvider(new class {
+        public function findById(string $id): array {
+            return ['id' => $id, 'role' => 'admin'];
+        }
     });
 
     echo ($app->hasAuthUserProvider() ? 'provider_yes' : 'provider_no') . PHP_EOL;

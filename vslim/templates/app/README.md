@@ -198,7 +198,7 @@ CLI 侧的最小样板包括：
 
 - `app()->startSessionMiddleware()`
   先挂上 session middleware
-- `app()->setAuthUserProvider(fn (string $id) => ...)`
+- `app()->setAuthUserProvider($provider)`
   注册按用户 ID 解析用户对象/数组的 provider
 - `app()->setAuthGateResolver(fn (string $ability, $user, $request) => ...)`
   注册能力判断
@@ -217,6 +217,23 @@ CLI 侧的最小样板包括：
 如果你想在业务里手动根据 user id 解析用户：
 
 - `app()->resolveAuthUser($id)`
+
+推荐的 provider 形态是一个有 `findById(string $id)` 方法的对象：
+
+```php
+$app->setAuthUserProvider(new class {
+    public function findById(string $id): array
+    {
+        return ['id' => $id, 'role' => 'admin'];
+    }
+});
+```
+
+如果你只是想快速接一条闭包，也可以继续用：
+
+```php
+$app->setAuthUserProvider(fn (string $id): array => ['id' => $id]);
+```
 
 CLI schema 当前支持这些常用字段：
 
