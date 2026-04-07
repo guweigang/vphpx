@@ -3,6 +3,7 @@
 Documentation entry:
 
 - overview: [docs/OVERVIEW.md](/Users/guweigang/Source/vphpx/vslim/docs/OVERVIEW.md)
+- capability map: [docs/capabilities.md](/Users/guweigang/Source/vphpx/vslim/docs/capabilities.md)
 
 `VSlim` 是一个运行在 `vphp` 之上的 PHP 微框架扩展，核心目标是给 PHP 用户提供熟悉的 runtime builder 体验：
 
@@ -101,6 +102,8 @@ Documentation entry:
    [`docs/testing/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/testing/README.md)
 5. 从初始化到上线的操作清单：
    [`docs/operations/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/operations/README.md)
+6. 当前能力总表：
+   [`docs/capabilities.md`](/Users/guweigang/Source/vphpx/vslim/docs/capabilities.md)
 
 如果你只是想先理解 API 和 builder，再继续往下读这份 README 即可。
 

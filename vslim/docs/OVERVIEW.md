@@ -8,8 +8,13 @@
 - 它和 `vphp`、`vhttpd` 的关系是什么？
 - 它支持哪些应用形态？
 - 先看哪几页最有效？
+- 它现在到底已经做到什么程度？
 
 先看这页就够了。
+
+如果你想快速看“现在有什么、什么已成熟、什么还在第一版”，继续看：
+
+- [capabilities.md](/Users/guweigang/Source/vphpx/vslim/docs/capabilities.md)
 
 ## Product Definition
 
@@ -243,9 +248,10 @@
 第一次接触 `VSlim`：
 
 1. 先看这页
-2. 再看 [README.md](/Users/guweigang/Source/vphpx/vslim/README.md)
-3. 再看 [app/README.md](/Users/guweigang/Source/vphpx/vslim/docs/app/README.md)
-4. 如果你想直接搭项目骨架，再看 [app/skeleton.md](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
+2. 再看 [capabilities.md](/Users/guweigang/Source/vphpx/vslim/docs/capabilities.md)
+3. 再看 [README.md](/Users/guweigang/Source/vphpx/vslim/README.md)
+4. 再看 [app/README.md](/Users/guweigang/Source/vphpx/vslim/docs/app/README.md)
+5. 如果你想直接搭项目骨架，再看 [app/skeleton.md](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
 
 如果你关注 AI / stream：
 
