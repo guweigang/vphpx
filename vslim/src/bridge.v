@@ -1507,6 +1507,27 @@ pub fn vphp_wrap_vslimapp_auth_id(ptr voidptr, ctx vphp.Context)  {
     res := recv.auth_id(arg_0)
     ctx.return_val[string](res)
 }
+@[export: 'vphp_wrap_VSlimApp_login']
+pub fn vphp_wrap_vslimapp_login(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    arg_2 := ctx.arg[string](2)
+    res := recv.login(arg_0, arg_1, arg_2)
+    ctx.return_val[bool](res)
+}
+@[export: 'vphp_wrap_VSlimApp_logout']
+pub fn vphp_wrap_vslimapp_logout(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    res := recv.logout(arg_0, arg_1)
+    ctx.return_val[bool](res)
+}
 @[export: 'vphp_wrap_VSlimApp_can']
 pub fn vphp_wrap_vslimapp_can(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimApp(ptr) }
@@ -3681,6 +3702,53 @@ pub fn vphp_wrap_vslimsessionstore_pull(ptr voidptr, ctx vphp.Context)  {
     arg_1 := ctx.arg[string](1)
     res := recv.pull(arg_0, arg_1)
     ctx.return_val[string](res)
+}
+@[export: 'vphp_wrap_VSlimSessionStore_flash']
+pub fn vphp_wrap_vslimsessionstore_flash(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimSessionStore(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    arg_1 := ctx.arg[string](1)
+    res := recv.flash(arg_0, arg_1)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimSessionStore_has_flash']
+pub fn vphp_wrap_vslimsessionstore_has_flash(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimSessionStore(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    res := recv.has_flash(arg_0)
+    ctx.return_val[bool](res)
+}
+@[export: 'vphp_wrap_VSlimSessionStore_get_flash']
+pub fn vphp_wrap_vslimsessionstore_get_flash(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimSessionStore(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    arg_1 := ctx.arg[string](1)
+    res := recv.get_flash(arg_0, arg_1)
+    ctx.return_val[string](res)
+}
+@[export: 'vphp_wrap_VSlimSessionStore_pull_flash']
+pub fn vphp_wrap_vslimsessionstore_pull_flash(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimSessionStore(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    arg_1 := ctx.arg[string](1)
+    res := recv.pull_flash(arg_0, arg_1)
+    ctx.return_val[string](res)
+}
+@[export: 'vphp_wrap_VSlimSessionStore_clear_flashes']
+pub fn vphp_wrap_vslimsessionstore_clear_flashes(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimSessionStore(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.clear_flashes()
+    return voidptr(res)
 }
 @[export: 'vphp_wrap_VSlimSessionStore_has']
 pub fn vphp_wrap_vslimsessionstore_has(ptr voidptr, ctx vphp.Context)  {

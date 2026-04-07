@@ -273,6 +273,22 @@ pub fn (app &VSlimApp) auth_id(request vphp.RequestBorrowedZBox) string {
 }
 
 @[php_method]
+pub fn (app &VSlimApp) login(request vphp.RequestBorrowedZBox, response vphp.RequestBorrowedZBox, user_id string) bool {
+	mut guard := app.auth(request)
+	guard.login(user_id)
+	mut store := guard.store()
+	return store.commit(response)
+}
+
+@[php_method]
+pub fn (app &VSlimApp) logout(request vphp.RequestBorrowedZBox, response vphp.RequestBorrowedZBox) bool {
+	mut guard := app.auth(request)
+	guard.logout()
+	mut store := guard.store()
+	return store.destroy(response)
+}
+
+@[php_method]
 pub fn (app &VSlimApp) can(ability string, request vphp.RequestBorrowedZBox) bool {
 	normalized := ability.trim_space().to_lower()
 	mut guard := app.auth(request)

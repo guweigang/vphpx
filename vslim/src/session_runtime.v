@@ -2,6 +2,8 @@ module main
 
 import vphp
 
+const session_flash_prefix = '__flash__.'
+
 fn auth_request_with_attribute(request vphp.RequestBorrowedZBox, name string, value vphp.ZVal) vphp.RequestOwnedZBox {
 	raw_request := request.to_zval()
 	if raw_request.is_valid() && raw_request.is_object() && raw_request.method_exists('withAttribute') {
@@ -399,6 +401,52 @@ pub fn (mut session VSlimSessionStore) pull(key string, default_value string) st
 		session.dirty = true
 	}
 	return value
+}
+
+@[php_method]
+pub fn (mut session VSlimSessionStore) flash(key string, value string) &VSlimSessionStore {
+	session.values['${session_flash_prefix}${key}'] = value
+	session.dirty = true
+	session.destroyed = false
+	return &session
+}
+
+@[php_method: 'hasFlash']
+pub fn (session &VSlimSessionStore) has_flash(key string) bool {
+	return '${session_flash_prefix}${key}' in session.values
+}
+
+@[php_method: 'getFlash']
+@[php_optional_args: 'default_value']
+pub fn (session &VSlimSessionStore) get_flash(key string, default_value string) string {
+	return session.values['${session_flash_prefix}${key}'] or { default_value }
+}
+
+@[php_method: 'pullFlash']
+@[php_optional_args: 'default_value']
+pub fn (mut session VSlimSessionStore) pull_flash(key string, default_value string) string {
+	flash_key := '${session_flash_prefix}${key}'
+	value := session.values[flash_key] or { default_value }
+	if flash_key in session.values {
+		session.values.delete(flash_key)
+		session.dirty = true
+	}
+	return value
+}
+
+@[php_method: 'clearFlashes']
+pub fn (mut session VSlimSessionStore) clear_flashes() &VSlimSessionStore {
+	mut changed := false
+	for key in session.values.keys() {
+		if key.starts_with(session_flash_prefix) {
+			session.values.delete(key)
+			changed = true
+		}
+	}
+	if changed {
+		session.dirty = true
+	}
+	return &session
 }
 
 @[php_method]

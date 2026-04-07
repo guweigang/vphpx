@@ -1705,6 +1705,15 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimapp_auth_id, 0, 1, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, request, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimapp_login, 0, 3, _IS_BOOL, 0)
+ZEND_ARG_TYPE_INFO(0, request, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, response, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, user_id, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimapp_logout, 0, 2, _IS_BOOL, 0)
+ZEND_ARG_TYPE_INFO(0, request, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, response, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimapp_can, 0, 2, _IS_BOOL, 0)
 ZEND_ARG_TYPE_INFO(0, ability, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, request, IS_MIXED, 0)
@@ -3755,6 +3764,40 @@ PHP_METHOD(VSlim__App, authId) {
         return;
     }
 }
+PHP_METHOD(VSlim__App, login) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimApp_login(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimApp_login(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__App, logout) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimApp_logout(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimApp_logout(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
 PHP_METHOD(VSlim__App, can) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -5083,6 +5126,8 @@ static const zend_function_entry vslim__app_methods[] = {
     PHP_ME(VSlim__App, authCheck, arginfo_vslimapp_auth_check, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, authGuest, arginfo_vslimapp_auth_guest, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, authId, arginfo_vslimapp_auth_id, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, login, arginfo_vslimapp_login, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, logout, arginfo_vslimapp_logout, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, can, arginfo_vslimapp_can, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, cannot, arginfo_vslimapp_cannot, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, startSessionMiddleware, arginfo_vslimapp_start_session_middleware, ZEND_ACC_PUBLIC)
@@ -8139,6 +8184,25 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimsessionstore_pull, 0, 1, IS
 ZEND_ARG_TYPE_INFO(0, key, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, default_value, IS_STRING, 0)
 ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimsessionstore_flash[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Session\\Store", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, key, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, value, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimsessionstore_has_flash, 0, 1, _IS_BOOL, 0)
+ZEND_ARG_TYPE_INFO(0, key, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimsessionstore_get_flash, 0, 1, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, key, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, default_value, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimsessionstore_pull_flash, 0, 1, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, key, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, default_value, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimsessionstore_clear_flashes[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Session\\Store", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimsessionstore_has, 0, 1, _IS_BOOL, 0)
 ZEND_ARG_TYPE_INFO(0, key, IS_STRING, 0)
 ZEND_END_ARG_INFO()
@@ -8566,6 +8630,101 @@ PHP_METHOD(VSlim__Session__Store, pull) {
         return;
     }
 }
+
+PHP_METHOD(VSlim__Session__Store, flash) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimSessionStore_flash(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimSessionStore_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimSessionStore_handlers());
+    // printf("PHP_METHOD VSlim__Session__Store::flash called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimSessionStore_flash(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimSessionStore_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__session__store_ce, VSlimSessionStore_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Session__Store, hasFlash) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimSessionStore_has_flash(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimSessionStore_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimSessionStore_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimSessionStore_has_flash(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Session__Store, getFlash) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimSessionStore_get_flash(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimSessionStore_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimSessionStore_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimSessionStore_get_flash(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Session__Store, pullFlash) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimSessionStore_pull_flash(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimSessionStore_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimSessionStore_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimSessionStore_pull_flash(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Session__Store, clearFlashes) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimSessionStore_clear_flashes(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimSessionStore_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimSessionStore_handlers());
+    // printf("PHP_METHOD VSlim__Session__Store::clearFlashes called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimSessionStore_clear_flashes(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimSessionStore_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__session__store_ce, VSlimSessionStore_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
 PHP_METHOD(VSlim__Session__Store, has) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -8722,6 +8881,11 @@ static const zend_function_entry vslim__session__store_methods[] = {
     PHP_ME(VSlim__Session__Store, all, arginfo_vslimsessionstore_all, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Session__Store, get, arginfo_vslimsessionstore_get, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Session__Store, pull, arginfo_vslimsessionstore_pull, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Session__Store, flash, arginfo_vslimsessionstore_flash, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Session__Store, hasFlash, arginfo_vslimsessionstore_has_flash, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Session__Store, getFlash, arginfo_vslimsessionstore_get_flash, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Session__Store, pullFlash, arginfo_vslimsessionstore_pull_flash, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Session__Store, clearFlashes, arginfo_vslimsessionstore_clear_flashes, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Session__Store, has, arginfo_vslimsessionstore_has, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Session__Store, set, arginfo_vslimsessionstore_set, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Session__Store, forget, arginfo_vslimsessionstore_forget, ZEND_ACC_PUBLIC)
