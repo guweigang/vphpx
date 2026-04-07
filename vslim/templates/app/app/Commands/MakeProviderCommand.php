@@ -3,14 +3,14 @@ declare(strict_types=1);
 
 namespace App\Commands;
 
-final class MakeSeedCommand
+final class MakeProviderCommand
 {
     public function definition(): array
     {
         return [
-            'description' => 'Generate a new database seeder.',
+            'description' => 'Generate a new service provider class.',
             'arguments' => [
-                ['name' => 'name', 'required' => true, 'description' => 'Seeder class base name'],
+                ['name' => 'name', 'required' => true, 'description' => 'Provider class base name'],
             ],
         ];
     }
@@ -22,25 +22,32 @@ final class MakeSeedCommand
             $name = trim((string) $args[0]);
         }
         if ($name === '') {
-            fwrite(STDERR, "make-seed-failed|missing-name\n");
+            fwrite(STDERR, "make-provider-failed|missing-name\n");
             return 1;
         }
         $root = rtrim((string) $cli->projectRoot(), DIRECTORY_SEPARATOR);
-        $class = preg_replace('/[^A-Za-z0-9_]/', '', $name) ?: 'Database';
-        if (!str_ends_with($class, 'Seeder')) {
-            $class .= 'Seeder';
+        $class = preg_replace('/[^A-Za-z0-9_]/', '', $name) ?: 'Generated';
+        if (!str_ends_with($class, 'Provider')) {
+            $class .= 'Provider';
         }
-        $path = $root . '/database/seeds/' . $class . '.php';
+        $path = $root . '/app/Providers/' . $class . '.php';
+        if (is_file($path)) {
+            fwrite(STDERR, "make-provider-failed|exists|{$path}\n");
+            return 1;
+        }
         $body = <<<PHP
 <?php
 declare(strict_types=1);
 
-return new class extends VSlim\\Database\\Seeder {
-    public function run(): void
+namespace App\\Providers;
+
+final class {$class} extends \\VSlim\\Support\\ServiceProvider
+{
+    public function register(): void
     {
-        // \$this->db()->executeParams('insert into ...', []);
+        // \$this->app()->container()->set('service.id', 'value');
     }
-};
+}
 PHP;
         if (!is_dir(dirname($path))) {
             mkdir(dirname($path), 0777, true);

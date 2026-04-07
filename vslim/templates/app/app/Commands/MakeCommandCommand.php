@@ -18,6 +18,9 @@ final class MakeCommandCommand
     public function handle(array $args, \VSlim\Cli\App $cli): int
     {
         $name = trim((string) $cli->argument('name', ''));
+        if ($name === '' && isset($args[0])) {
+            $name = trim((string) $args[0]);
+        }
         if ($name === '') {
             fwrite(STDERR, "make-command-failed|missing-name\n");
             return 1;

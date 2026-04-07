@@ -144,7 +144,7 @@ make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd
 | CLI command | `app/Commands/AboutCommand.php` | command schema、help、handle |
 | 数据库命令 | `app/Commands/DbMigrateCommand.php` / `DbRollbackCommand.php` / `DbSeedCommand.php` | migrate、rollback、seed 入口 |
 | 诊断命令 | `app/Commands/RouteListCommand.php` / `ConfigCheckCommand.php` / `AppDoctorCommand.php` | route 清单、config 检查、app 健康检查 |
-| 生成命令 | `app/Commands/MakeCommandCommand.php` / `MakeControllerCommand.php` / `MakeMiddlewareCommand.php` / `MakeMigrationCommand.php` / `MakeSeedCommand.php` | command / controller / middleware / migration / seeder 脚手架 |
+| 生成命令 | `app/Commands/MakeCommandCommand.php` / `MakeControllerCommand.php` / `MakeMiddlewareCommand.php` / `MakeProviderCommand.php` / `MakeMigrationCommand.php` / `MakeSeedCommand.php` / `MakeTestCommand.php` | command / controller / middleware / provider / migration / seeder / test 脚手架 |
 | 视图 | `resources/views/home.html` | 模板页面 |
 
 ## 深入阅读
@@ -191,7 +191,9 @@ CLI 侧的最小样板包括：
 - `db:seed`
 - `make:command`
 - `make:migration`
+- `make:provider`
 - `make:seed`
+- `make:test`
 
 ## Auth Best Practice
 

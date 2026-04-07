@@ -27,7 +27,9 @@ echo ($cli->hasCommand("make:command") ? "make_command_yes" : "make_command_no")
 echo ($cli->hasCommand("make:controller") ? "make_controller_yes" : "make_controller_no"), PHP_EOL;
 echo ($cli->hasCommand("make:migration") ? "make_migration_yes" : "make_migration_no"), PHP_EOL;
 echo ($cli->hasCommand("make:middleware") ? "make_middleware_yes" : "make_middleware_no"), PHP_EOL;
+echo ($cli->hasCommand("make:provider") ? "make_provider_yes" : "make_provider_no"), PHP_EOL;
 echo ($cli->hasCommand("make:seed") ? "make_seed_yes" : "make_seed_no"), PHP_EOL;
+echo ($cli->hasCommand("make:test") ? "make_test_yes" : "make_test_no"), PHP_EOL;
 
 ob_start();
 $code = $cli->run("about", ["foo", "bar"]);
@@ -63,7 +65,7 @@ echo (str_contains($help, 'Usage:') ? 'usage_yes' : 'usage_no'), '|',
     (str_contains($help, 'Examples:') ? 'examples_yes' : 'examples_no'), PHP_EOL;
 ?>
 --EXPECT--
-about,app-doctor,app:doctor,config-check,config:check,db-migrate,db-rollback,db-seed,db:migrate,db:rollback,db:seed,make-command,make-controller,make-middleware,make-migration,make-seed,make:command,make:controller,make:middleware,make:migration,make:seed,route-list,route:list,template:about
+about,app-doctor,app:doctor,config-check,config:check,db-migrate,db-rollback,db-seed,db:migrate,db:rollback,db:seed,make-command,make-controller,make-middleware,make-migration,make-provider,make-seed,make-test,make:command,make:controller,make:middleware,make:migration,make:provider,make:seed,make:test,route-list,route:list,template:about
 doctor_yes
 about_yes
 config_yes
@@ -79,7 +81,9 @@ make_command_yes
 make_controller_yes
 make_migration_yes
 make_middleware_yes
+make_provider_yes
 make_seed_yes
+make_test_yes
 2|vslim-template|provider-ready|foo,bar
 1|vslim-template|provider-ready|baz
 4|4|GET|/|template.home|php_callable

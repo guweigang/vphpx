@@ -11,7 +11,9 @@ require_once __DIR__ . '/../app/Commands/MakeCommandCommand.php';
 require_once __DIR__ . '/../app/Commands/MakeControllerCommand.php';
 require_once __DIR__ . '/../app/Commands/MakeMigrationCommand.php';
 require_once __DIR__ . '/../app/Commands/MakeMiddlewareCommand.php';
+require_once __DIR__ . '/../app/Commands/MakeProviderCommand.php';
 require_once __DIR__ . '/../app/Commands/MakeSeedCommand.php';
+require_once __DIR__ . '/../app/Commands/MakeTestCommand.php';
 require_once __DIR__ . '/../app/Commands/RouteListCommand.php';
 
 return [
@@ -26,7 +28,9 @@ return [
         "make:controller" => \App\Commands\MakeControllerCommand::class,
         "make:migration" => \App\Commands\MakeMigrationCommand::class,
         "make:middleware" => \App\Commands\MakeMiddlewareCommand::class,
+        "make:provider" => \App\Commands\MakeProviderCommand::class,
         "make:seed" => \App\Commands\MakeSeedCommand::class,
+        "make:test" => \App\Commands\MakeTestCommand::class,
         "route:list" => \App\Commands\RouteListCommand::class,
     ],
 ];

@@ -3,14 +3,14 @@ declare(strict_types=1);
 
 namespace App\Commands;
 
-final class MakeControllerCommand
+final class MakeTestCommand
 {
     public function definition(): array
     {
         return [
-            'description' => 'Generate a new controller class.',
+            'description' => 'Generate a lightweight VSlim PHPT test file.',
             'arguments' => [
-                ['name' => 'name', 'required' => true, 'description' => 'Controller class base name'],
+                ['name' => 'name', 'required' => true, 'description' => 'Test file base name'],
             ],
         ];
     }
@@ -22,33 +22,34 @@ final class MakeControllerCommand
             $name = trim((string) $args[0]);
         }
         if ($name === '') {
-            fwrite(STDERR, "make-controller-failed|missing-name\n");
+            fwrite(STDERR, "make-test-failed|missing-name\n");
             return 1;
         }
         $root = rtrim((string) $cli->projectRoot(), DIRECTORY_SEPARATOR);
-        $class = preg_replace('/[^A-Za-z0-9_]/', '', $name) ?: 'Generated';
-        if (!str_ends_with($class, 'Controller')) {
-            $class .= 'Controller';
+        $slug = strtolower(trim((string) preg_replace('/[^A-Za-z0-9]+/', '_', $name), '_')) ?: 'generated';
+        if (!str_starts_with($slug, 'test_')) {
+            $slug = 'test_' . $slug;
         }
-        $path = $root . '/app/Http/Controllers/' . $class . '.php';
+        if (!str_ends_with($slug, '.phpt')) {
+            $slug .= '.phpt';
+        }
+        $path = $root . '/tests/' . $slug;
         if (is_file($path)) {
-            fwrite(STDERR, "make-controller-failed|exists|{$path}\n");
+            fwrite(STDERR, "make-test-failed|exists|{$path}\n");
             return 1;
         }
-        $body = <<<PHP
+        $body = <<<PHPT
+--TEST--
+Template generated test
+--SKIPIF--
+<?php if (!extension_loaded("vslim")) print "skip"; ?>
+--FILE--
 <?php
-declare(strict_types=1);
-
-namespace App\Http\Controllers;
-
-final class {$class}
-{
-    public function __invoke(): string
-    {
-        return '{$class}|todo';
-    }
-}
-PHP;
+echo "ok", PHP_EOL;
+?>
+--EXPECT--
+ok
+PHPT;
         if (!is_dir(dirname($path))) {
             mkdir(dirname($path), 0777, true);
         }
