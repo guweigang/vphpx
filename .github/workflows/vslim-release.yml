@@ -179,6 +179,8 @@ jobs:
           TEST_PHP_EXECUTABLE="$(command -v php)" php ../vphptest/run-tests.php -q --show-all -d extension=./${{ matrix.extension_file }} \
             tests/test_vslim_cli_run_argv.phpt \
             tests/test_vslim_cli_template_bin_entry.phpt \
+            tests/test_vslim_database_config.phpt \
+            tests/test_vslim_config_toml.phpt \
             tests/test_vslim_psr7_psr17_interface_contracts.phpt \
             tests/test_vslim_template_project_metadata.phpt
 
@@ -194,6 +196,8 @@ jobs:
           php ..\vphptest\run-tests.php -q --show-all -d extension=.\${{ matrix.extension_file }} `
             tests/test_vslim_cli_run_argv.phpt `
             tests/test_vslim_cli_template_bin_entry.phpt `
+            tests/test_vslim_database_config.phpt `
+            tests/test_vslim_config_toml.phpt `
             tests/test_vslim_psr7_psr17_interface_contracts.phpt `
             tests/test_vslim_template_project_metadata.phpt
           if ($LASTEXITCODE -ne 0) {
