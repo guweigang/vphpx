@@ -106,3 +106,7 @@
 3. schema / migration 体验继续增强
 4. 异常与错误输出再统一
 5. 文档和模板继续收口
+
+更完整的成熟度视角见：
+
+- [maturity-roadmap.md](/Users/guweigang/Source/vphpx/vslim/docs/maturity-roadmap.md)

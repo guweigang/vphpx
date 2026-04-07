@@ -15,6 +15,7 @@
 如果你想快速看“现在有什么、什么已成熟、什么还在第一版”，继续看：
 
 - [capabilities.md](/Users/guweigang/Source/vphpx/vslim/docs/capabilities.md)
+- [maturity-roadmap.md](/Users/guweigang/Source/vphpx/vslim/docs/maturity-roadmap.md)
 
 ## Product Definition
 
