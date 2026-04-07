@@ -5375,6 +5375,28 @@ static const zend_internal_arg_info arginfo_vslimtestingharness_with_config_text
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Testing\\Harness", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_ARG_TYPE_INFO(0, text, IS_STRING, 0)
 ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_with_cookie[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Testing\\Harness", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, value, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_without_cookie[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Testing\\Harness", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_clear_cookies[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Testing\\Harness", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimtestingharness_cookies, 0, 0, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_with_session[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Testing\\Harness", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, values, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_acting_as[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Testing\\Harness", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, user_id, IS_STRING, 0)
+ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimtestingharness_request[] = {
     { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\ServerRequestInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_ARG_TYPE_INFO(0, method, IS_STRING, 0)
@@ -5655,6 +5677,133 @@ PHP_METHOD(VSlim__Testing__Harness, withConfigText) {
     // printf("PHP_METHOD VSlim__Testing__Harness::withConfigText called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
     if (!wrapper->v_ptr) RETURN_NULL();
     void* v_instance = vphp_wrap_VSlimTestingHarness_with_config_text(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__testing__harness_ce, VSlimTestingHarness_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, withCookie) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_with_cookie(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::withCookie called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_with_cookie(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__testing__harness_ce, VSlimTestingHarness_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, withoutCookie) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_without_cookie(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::withoutCookie called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_without_cookie(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__testing__harness_ce, VSlimTestingHarness_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, clearCookies) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_clear_cookies(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::clearCookies called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_clear_cookies(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__testing__harness_ce, VSlimTestingHarness_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Testing__Harness, cookies) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimTestingHarness_cookies(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimTestingHarness_cookies(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Testing__Harness, withSession) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_with_session(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::withSession called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_with_session(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__testing__harness_ce, VSlimTestingHarness_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, actingAs) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_acting_as(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::actingAs called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_acting_as(wrapper->v_ptr, ctx);
     if (EG(exception)) {
         return;
     }
@@ -6182,6 +6331,12 @@ static const zend_function_entry vslim__testing__harness_methods[] = {
     PHP_ME(VSlim__Testing__Harness, withFactory, arginfo_vslimtestingharness_with_factory, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Testing__Harness, withConfig, arginfo_vslimtestingharness_with_config, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Testing__Harness, withConfigText, arginfo_vslimtestingharness_with_config_text, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, withCookie, arginfo_vslimtestingharness_with_cookie, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, withoutCookie, arginfo_vslimtestingharness_without_cookie, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, clearCookies, arginfo_vslimtestingharness_clear_cookies, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, cookies, arginfo_vslimtestingharness_cookies, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, withSession, arginfo_vslimtestingharness_with_session, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, actingAs, arginfo_vslimtestingharness_acting_as, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Testing__Harness, request, arginfo_vslimtestingharness_request, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Testing__Harness, jsonRequest, arginfo_vslimtestingharness_json_request, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Testing__Harness, handle, arginfo_vslimtestingharness_handle, ZEND_ACC_PUBLIC)
@@ -6222,6 +6377,7 @@ static int vslim__testing__harness_register_class(void) {
         vslim__testing__harness_ce = zend_register_internal_class(&ce);
         vslim__testing__harness_ce->create_object = vphp_create_object_handler;
         zend_declare_property_null(vslim__testing__harness_ce, "app_ref", sizeof("app_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__testing__harness_ce, "cookies", sizeof("cookies")-1, ZEND_ACC_PROTECTED);
     }
     return SUCCESS;
 }

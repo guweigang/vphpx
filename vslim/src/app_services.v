@@ -185,7 +185,8 @@ pub fn (mut app VSlimApp) validate(data vphp.RequestBorrowedZBox, rules vphp.Req
 @[php_method]
 pub fn (app &VSlimApp) testing() &VSlimTestingHarness {
 	return &VSlimTestingHarness{
-		app_ref: app
+		app_ref:  app
+		cookies: map[string]string{}
 	}
 }
 

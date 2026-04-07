@@ -2193,6 +2193,59 @@ pub fn vphp_wrap_vslimtestingharness_with_config_text(ptr voidptr, ctx vphp.Cont
     res := recv.with_config_text(arg_0)
     return voidptr(res)
 }
+@[export: 'vphp_wrap_VSlimTestingHarness_with_cookie']
+pub fn vphp_wrap_vslimtestingharness_with_cookie(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimTestingHarness(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    arg_1 := ctx.arg[string](1)
+    res := recv.with_cookie(arg_0, arg_1)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimTestingHarness_without_cookie']
+pub fn vphp_wrap_vslimtestingharness_without_cookie(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimTestingHarness(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    res := recv.without_cookie(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimTestingHarness_clear_cookies']
+pub fn vphp_wrap_vslimtestingharness_clear_cookies(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimTestingHarness(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.clear_cookies()
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimTestingHarness_cookies']
+pub fn vphp_wrap_vslimtestingharness_cookies(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimTestingHarness(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.cookies()
+    ctx.return_val[map[string]string](res)
+}
+@[export: 'vphp_wrap_VSlimTestingHarness_with_session']
+pub fn vphp_wrap_vslimtestingharness_with_session(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimTestingHarness(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    res := recv.with_session(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimTestingHarness_acting_as']
+pub fn vphp_wrap_vslimtestingharness_acting_as(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimTestingHarness(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    res := recv.acting_as(arg_0)
+    return voidptr(res)
+}
 @[export: 'vphp_wrap_VSlimTestingHarness_request']
 pub fn vphp_wrap_vslimtestingharness_request(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }

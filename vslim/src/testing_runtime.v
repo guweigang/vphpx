@@ -2,6 +2,65 @@ module main
 
 import vphp
 
+fn testing_parse_set_cookie(header string) !(string, string) {
+	head := header.split(';')[0].trim_space()
+	if head == '' || !head.contains('=') {
+		return error('invalid set-cookie header')
+	}
+	parts := head.split_nth('=', 2)
+	if parts.len != 2 {
+		return error('invalid set-cookie header')
+	}
+	return parts[0].trim_space(), parts[1]
+}
+
+fn testing_apply_cookies(request &VSlimPsr7ServerRequest, cookies map[string]string) &VSlimPsr7ServerRequest {
+	if cookies.len == 0 {
+		return request
+	}
+	mut merged := persistent_array_to_string_map(request.cookie_params_ref)
+	for key, value in cookies {
+		merged[key] = value
+	}
+	return clone_psr7_server_request(request, request.method, request.request_target,
+		request.protocol_version, request.headers.clone(), clone_header_names(request.header_names),
+		server_request_body_or_empty(request), server_request_uri_or_default(request),
+		request.server_params_ref, string_map_to_persistent_array(merged), request.query_params_ref,
+		request.uploaded_files_ref, request.parsed_body_ref, request.attributes_ref)
+}
+
+fn testing_capture_response_cookie(mut h VSlimTestingHarness, response vphp.RequestBorrowedZBox) {
+	header := testing_response_header(response, 'set-cookie').trim_space()
+	if header == '' {
+		return
+	}
+	name, value := testing_parse_set_cookie(header) or { return }
+	if name == '' {
+		return
+	}
+	if value == '' {
+		h.cookies.delete(name)
+		return
+	}
+	h.cookies[name] = value
+}
+
+fn testing_build_session_store(app &VSlimApp, cookies map[string]string) VSlimSessionStore {
+	mut session := VSlimSessionStore{}
+	session.construct()
+	configure_default_session_store(mut session, app.config_ref)
+	if cookie := cookies[session.cookie_name_value()] {
+		session.values = session_decode_values(cookie, session.secret_value())
+		session.loaded = true
+	}
+	return session
+}
+
+fn testing_store_session_cookie(mut h VSlimTestingHarness, session VSlimSessionStore) {
+	h.cookies[session.cookie_name_value()] = session_encode_values(session.values,
+		session.secret_value())
+}
+
 fn testing_response_object_vars(raw vphp.ZVal) map[string]vphp.ZVal {
 	props := vphp.php_fn('get_object_vars').call([raw])
 	if !props.is_array() {
@@ -107,6 +166,7 @@ fn testing_new_json_request(method string, uri string, payload vphp.ZVal) &VSlim
 
 @[php_method]
 pub fn (mut h VSlimTestingHarness) construct() &VSlimTestingHarness {
+	h.cookies = map[string]string{}
 	return &h
 }
 
@@ -171,17 +231,79 @@ pub fn (mut h VSlimTestingHarness) with_config_text(text string) &VSlimTestingHa
 	return &h
 }
 
+@[php_method: 'withCookie']
+pub fn (mut h VSlimTestingHarness) with_cookie(name string, value string) &VSlimTestingHarness {
+	key := name.trim_space()
+	if key == '' {
+		return &h
+	}
+	h.cookies[key] = value
+	return &h
+}
+
+@[php_method: 'withoutCookie']
+pub fn (mut h VSlimTestingHarness) without_cookie(name string) &VSlimTestingHarness {
+	key := name.trim_space()
+	if key == '' {
+		return &h
+	}
+	h.cookies.delete(key)
+	return &h
+}
+
+@[php_method: 'clearCookies']
+pub fn (mut h VSlimTestingHarness) clear_cookies() &VSlimTestingHarness {
+	h.cookies = map[string]string{}
+	return &h
+}
+
+@[php_method]
+pub fn (h &VSlimTestingHarness) cookies() map[string]string {
+	return h.cookies.clone()
+}
+
+@[php_method: 'withSession']
+pub fn (mut h VSlimTestingHarness) with_session(values vphp.RequestBorrowedZBox) &VSlimTestingHarness {
+	if h.app_ref == unsafe { nil } {
+		vphp.throw_exception_class('RuntimeException', 'testing harness app is not configured', 0)
+		return &h
+	}
+	mut session := testing_build_session_store(h.app_ref, h.cookies)
+	for key, value in values.to_zval().to_string_map() {
+		session.values[key] = value
+	}
+	testing_store_session_cookie(mut h, session)
+	return &h
+}
+
+@[php_method: 'actingAs']
+pub fn (mut h VSlimTestingHarness) acting_as(user_id string) &VSlimTestingHarness {
+	if h.app_ref == unsafe { nil } {
+		vphp.throw_exception_class('RuntimeException', 'testing harness app is not configured', 0)
+		return &h
+	}
+	mut session := testing_build_session_store(h.app_ref, h.cookies)
+	mut guard := VSlimAuthSessionGuard{}
+	guard.construct()
+	guard.set_store(&session)
+	configure_default_auth_guard(mut guard, h.app_ref.config_ref)
+	guard.login(user_id)
+	testing_store_session_cookie(mut h, session)
+	return &h
+}
+
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
 @[php_method]
 @[php_optional_args: 'body']
 pub fn (h &VSlimTestingHarness) request(method string, uri string, body string) &VSlimPsr7ServerRequest {
-	return testing_new_request(method, uri, body)
+	return testing_apply_cookies(testing_new_request(method, uri, body), h.cookies)
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
 @[php_method: 'jsonRequest']
 pub fn (h &VSlimTestingHarness) json_request(method string, uri string, payload vphp.RequestBorrowedZBox) &VSlimPsr7ServerRequest {
-	return testing_new_json_request(method, uri, payload.to_zval())
+	return testing_apply_cookies(testing_new_json_request(method, uri, payload.to_zval()),
+		h.cookies)
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
@@ -191,7 +313,16 @@ pub fn (h &VSlimTestingHarness) handle(request vphp.RequestBorrowedZBox) &VSlimP
 	if h.app_ref == unsafe { nil } {
 		return new_psr7_text_response(500, 'testing harness app is not configured')
 	}
-	return h.app_ref.handle(request)
+	response := h.app_ref.handle(request)
+	unsafe {
+		mut writable := &VSlimTestingHarness(h)
+		mut response_z := build_php_psr7_response_object(response)
+		defer {
+			response_z.release()
+		}
+		testing_capture_response_cookie(mut writable, vphp.borrow_zbox(response_z))
+	}
+	return response
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
@@ -201,7 +332,8 @@ pub fn (h &VSlimTestingHarness) handle_request(method string, uri string, body s
 	if h.app_ref == unsafe { nil } {
 		return new_psr7_text_response(500, 'testing harness app is not configured')
 	}
-	mut req_z := build_php_psr7_server_request_object(testing_new_request(method, uri, body))
+	mut req_z := build_php_psr7_server_request_object(testing_apply_cookies(testing_new_request(method,
+		uri, body), h.cookies))
 	defer {
 		req_z.release()
 	}
@@ -214,8 +346,8 @@ pub fn (h &VSlimTestingHarness) handle_json(method string, uri string, payload v
 	if h.app_ref == unsafe { nil } {
 		return new_psr7_text_response(500, 'testing harness app is not configured')
 	}
-	mut req_z := build_php_psr7_server_request_object(testing_new_json_request(method, uri,
-		payload.to_zval()))
+	mut req_z := build_php_psr7_server_request_object(testing_apply_cookies(testing_new_json_request(method,
+		uri, payload.to_zval()), h.cookies))
 	defer {
 		req_z.release()
 	}
@@ -224,8 +356,17 @@ pub fn (h &VSlimTestingHarness) handle_json(method string, uri string, payload v
 
 @[php_method: 'dispatchJson']
 pub fn (h &VSlimTestingHarness) dispatch_json(method string, uri string, payload vphp.RequestBorrowedZBox) &VSlimResponse {
-	return to_vslim_response(new_vslim_response_from_psr_response(h.handle_json(method, uri,
+	response := to_vslim_response(new_vslim_response_from_psr_response(h.handle_json(method, uri,
 		payload)))
+	unsafe {
+		mut writable := &VSlimTestingHarness(h)
+		mut response_z := build_php_response_object(*response)
+		defer {
+			response_z.release()
+		}
+		testing_capture_response_cookie(mut writable, vphp.borrow_zbox(response_z))
+	}
+	return response
 }
 
 @[php_method: 'responseStatus']
@@ -288,7 +429,17 @@ pub fn (h &VSlimTestingHarness) dispatch(method string, uri string, body string)
 			}
 		})
 	}
-	return h.app_ref.dispatch_body(method, uri, body)
+	response := to_vslim_response(new_vslim_response_from_psr_response(h.handle_request(method, uri,
+		body)))
+	unsafe {
+		mut writable := &VSlimTestingHarness(h)
+		mut response_z := build_php_response_object(*response)
+		defer {
+			response_z.release()
+		}
+		testing_capture_response_cookie(mut writable, vphp.borrow_zbox(response_z))
+	}
+	return response
 }
 
 @[php_method]

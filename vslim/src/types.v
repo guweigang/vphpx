@@ -136,7 +136,8 @@ mut:
 @[heap]
 struct VSlimTestingHarness {
 mut:
-	app_ref &VSlimApp = unsafe { nil }
+	app_ref  &VSlimApp = unsafe { nil }
+	cookies map[string]string
 }
 
 @[heap]
