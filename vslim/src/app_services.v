@@ -37,6 +37,7 @@ fn exception_message_value(exception vphp.RequestBorrowedZBox, fallback string) 
 }
 
 fn exception_status_code(exception vphp.RequestBorrowedZBox, fallback_status int) int {
+	message := exception_message_value(exception, '').to_lower()
 	raw := exception.to_zval()
 	if raw.is_valid() && raw.is_object() && raw.method_exists('getCode') {
 		mut out := vphp.method_request_owned_box(raw, 'getCode', []vphp.ZVal{})
@@ -69,11 +70,40 @@ fn exception_status_code(exception vphp.RequestBorrowedZBox, fallback_status int
 	if class_name == 'VSlim\\ValidationException' || class_name == 'ValidationException' {
 		return 422
 	}
+	if message.starts_with('connect_failed:') || message.contains('database transport ')
+		|| message.contains('database unavailable') {
+		return 503
+	}
+	if message.starts_with('config load failed:') || message.starts_with('config parse failed:')
+		|| message.starts_with('config env resolve failed:') {
+		return 500
+	}
+	if message.starts_with('query_failed:') || message.starts_with('execute_failed:')
+		|| message.starts_with('begin_transaction_failed:')
+		|| message.starts_with('commit_failed:')
+		|| message.starts_with('rollback_failed:') {
+		return 500
+	}
 	return fallback_status
 }
 
 fn exception_error_code(exception vphp.RequestBorrowedZBox) string {
 	class_name := exception_class_name(exception)
+	message := exception_message_value(exception, '').to_lower()
+	if message.starts_with('config load failed:') || message.starts_with('config parse failed:')
+		|| message.starts_with('config env resolve failed:') {
+		return 'config_error'
+	}
+	if message.starts_with('connect_failed:') || message.contains('database transport ')
+		|| message.contains('database unavailable') {
+		return 'database_unavailable'
+	}
+	if message.starts_with('query_failed:') || message.starts_with('execute_failed:')
+		|| message.starts_with('begin_transaction_failed:')
+		|| message.starts_with('commit_failed:')
+		|| message.starts_with('rollback_failed:') {
+		return 'database_error'
+	}
 	return match class_name {
 		'InvalidArgumentException', 'DomainException', 'VSlim\\Psr16\\InvalidArgumentException',
 		'VSlim\\Psr6\\InvalidArgumentException' { 'invalid_argument' }
@@ -454,6 +484,34 @@ pub fn (app &VSlimApp) unauthorized_response(message string) &VSlimResponse {
 pub fn (app &VSlimApp) forbidden_response(message string) &VSlimResponse {
 	msg := if message.trim_space() == '' { 'Forbidden' } else { message }
 	return to_vslim_response(default_error_response(app, 403, msg, 'forbidden'))
+}
+
+@[php_optional_args: 'message']
+@[php_method: 'badRequest']
+pub fn (app &VSlimApp) bad_request_response(message string) &VSlimResponse {
+	msg := if message.trim_space() == '' { 'Bad Request' } else { message }
+	return to_vslim_response(default_error_response(app, 400, msg, 'bad_request'))
+}
+
+@[php_optional_args: 'message']
+@[php_method: 'notFound']
+pub fn (app &VSlimApp) not_found_response_helper(message string) &VSlimResponse {
+	msg := if message.trim_space() == '' { 'Not Found' } else { message }
+	return to_vslim_response(default_error_response(app, 404, msg, 'not_found'))
+}
+
+@[php_optional_args: 'message']
+@[php_method: 'conflict']
+pub fn (app &VSlimApp) conflict_response(message string) &VSlimResponse {
+	msg := if message.trim_space() == '' { 'Conflict' } else { message }
+	return to_vslim_response(default_error_response(app, 409, msg, 'conflict'))
+}
+
+@[php_optional_args: 'message']
+@[php_method: 'serviceUnavailable']
+pub fn (app &VSlimApp) service_unavailable_response(message string) &VSlimResponse {
+	msg := if message.trim_space() == '' { 'Service Unavailable' } else { message }
+	return to_vslim_response(default_error_response(app, 503, msg, 'service_unavailable'))
 }
 
 @[php_optional_args: 'fallback_status']

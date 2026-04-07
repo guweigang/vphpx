@@ -22,6 +22,18 @@ try {
 $runtime = $app->exceptionResponse(new RuntimeException('Boom'));
 echo $runtime->status . PHP_EOL;
 echo (str_contains($runtime->body, '"runtime_error"') ? 'runtime_code_yes' : 'runtime_code_no') . PHP_EOL;
+
+$config = $app->exceptionResponse(new RuntimeException('config load failed: missing file'));
+echo $config->status . PHP_EOL;
+echo (str_contains($config->body, '"config_error"') ? 'config_code_yes' : 'config_code_no') . PHP_EOL;
+
+$dbUnavailable = $app->exceptionResponse(new RuntimeException('connect_failed: no route to host'));
+echo $dbUnavailable->status . PHP_EOL;
+echo (str_contains($dbUnavailable->body, '"database_unavailable"') ? 'db_unavailable_yes' : 'db_unavailable_no') . PHP_EOL;
+
+$dbError = $app->exceptionResponse(new RuntimeException('query_failed: syntax error'));
+echo $dbError->status . PHP_EOL;
+echo (str_contains($dbError->body, '"database_error"') ? 'db_error_yes' : 'db_error_no') . PHP_EOL;
 ?>
 --EXPECT--
 400
@@ -30,3 +42,9 @@ invalid_code_yes
 missing_code_yes
 500
 runtime_code_yes
+500
+config_code_yes
+503
+db_unavailable_yes
+500
+db_error_yes
