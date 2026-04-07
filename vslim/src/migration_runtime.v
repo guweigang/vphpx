@@ -65,6 +65,38 @@ fn database_migration_table_sql(table_name string) string {
 	return 'CREATE TABLE IF NOT EXISTS ${table} (`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, `migration` VARCHAR(255) NOT NULL, `batch` INT NOT NULL, `applied_at_unix` BIGINT NOT NULL, PRIMARY KEY (`id`), UNIQUE KEY `vslim_migrations_migration_unique` (`migration`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
 }
 
+fn migration_join_column_defs(columns []string) string {
+	mut defs := []string{}
+	for column in columns {
+		def := column.trim_space()
+		if def != '' {
+			defs << def
+		}
+	}
+	return defs.join(', ')
+}
+
+fn migration_create_table_sql(table_name string, columns []string) string {
+	table := database_quote_identifier(table_name)
+	column_defs := migration_join_column_defs(columns)
+	if column_defs == '' {
+		return 'CREATE TABLE IF NOT EXISTS ${table} ()'
+	}
+	return 'CREATE TABLE IF NOT EXISTS ${table} (${column_defs})'
+}
+
+fn migration_drop_table_sql(table_name string) string {
+	return 'DROP TABLE IF EXISTS ${database_quote_identifier(table_name)}'
+}
+
+fn migration_add_column_sql(table_name string, column_def string) string {
+	return 'ALTER TABLE ${database_quote_identifier(table_name)} ADD COLUMN ${column_def.trim_space()}'
+}
+
+fn migration_drop_column_sql(table_name string, column_name string) string {
+	return 'ALTER TABLE ${database_quote_identifier(table_name)} DROP COLUMN ${database_quote_identifier(column_name)}'
+}
+
 fn migration_apply_manager(instance vphp.ZVal, manager &VSlimDatabaseManager, name string) {
 	manager_z := database_manager_self_zval(manager)
 	if instance.method_exists('setManager') && manager_z.is_valid() && manager_z.is_object() {
@@ -219,6 +251,46 @@ pub fn (migration &VSlimDatabaseMigration) up() bool {
 @[php_method]
 pub fn (migration &VSlimDatabaseMigration) down() bool {
 	return true
+}
+
+@[php_method: 'createTableSql']
+pub fn (migration &VSlimDatabaseMigration) create_table_sql(table_name string, columns []string) string {
+	return migration_create_table_sql(table_name, columns)
+}
+
+@[php_method: 'dropTableSql']
+pub fn (migration &VSlimDatabaseMigration) drop_table_sql(table_name string) string {
+	return migration_drop_table_sql(table_name)
+}
+
+@[php_method: 'addColumnSql']
+pub fn (migration &VSlimDatabaseMigration) add_column_sql(table_name string, column_def string) string {
+	return migration_add_column_sql(table_name, column_def)
+}
+
+@[php_method: 'dropColumnSql']
+pub fn (migration &VSlimDatabaseMigration) drop_column_sql(table_name string, column_name string) string {
+	return migration_drop_column_sql(table_name, column_name)
+}
+
+@[php_method: 'createTable']
+pub fn (mut migration VSlimDatabaseMigration) create_table(table_name string, columns []string) vphp.RequestOwnedZBox {
+	return migration.execute(migration_create_table_sql(table_name, columns))
+}
+
+@[php_method: 'dropTable']
+pub fn (mut migration VSlimDatabaseMigration) drop_table(table_name string) vphp.RequestOwnedZBox {
+	return migration.execute(migration_drop_table_sql(table_name))
+}
+
+@[php_method: 'addColumn']
+pub fn (mut migration VSlimDatabaseMigration) add_column(table_name string, column_def string) vphp.RequestOwnedZBox {
+	return migration.execute(migration_add_column_sql(table_name, column_def))
+}
+
+@[php_method: 'dropColumn']
+pub fn (mut migration VSlimDatabaseMigration) drop_column(table_name string, column_name string) vphp.RequestOwnedZBox {
+	return migration.execute(migration_drop_column_sql(table_name, column_name))
 }
 
 @[php_method]

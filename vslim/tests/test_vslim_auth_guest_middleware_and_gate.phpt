@@ -80,10 +80,12 @@ TOML);
     $app->setAuthGateResolver(function (string $ability, $user, $request): bool {
         return $ability === 'view-admin' && is_array($user) && ($user['role'] ?? '') === 'admin';
     });
-    $app->setAuthUserResolver(function (string $id): array {
+    $app->setAuthUserProvider(function (string $id): array {
         return ['id' => $id, 'role' => 'admin'];
     });
 
+    echo ($app->hasAuthUserProvider() ? 'provider_yes' : 'provider_no') . PHP_EOL;
+    echo json_encode($app->resolveAuthUser('7'), JSON_UNESCAPED_SLASHES) . PHP_EOL;
     echo ($app->can('view-admin', $authRequest) ? 'can_yes' : 'can_no') . PHP_EOL;
     echo ($app->cannot('view-admin', $requestFactory->createServerRequest('GET', 'https://example.com/login')) ? 'cannot_yes' : 'cannot_no') . PHP_EOL;
 }
@@ -92,5 +94,7 @@ TOML);
 204
 302
 /home
+provider_yes
+{"id":"7","role":"admin"}
 can_yes
 cannot_yes

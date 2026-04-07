@@ -8,6 +8,7 @@
 - 先把连接池、查询、事务这些基础设施做稳
 - API 心智尽量贴近 PHP 开发者熟悉的 DBAL / PDO 用法
 - 底层实现先吃 V 的 `db.mysql`，把 worker 常驻和连接池优势保留下来
+- migration / seed / 轻量 schema helper 先补到“够顺手”
 
 真理之源：
 
@@ -182,8 +183,7 @@ $users = $db->table('users')
 
 还没有：
 
-- migration / seed
-- schema abstraction
+- 完整 schema builder
 - 完整 ORM / active record
 - 多数据库驱动统一实现
 
@@ -192,12 +192,37 @@ $users = $db->table('users')
 - `VSlim` 的 database manager / DBAL 起点
 - 不是完整 ORM
 
+## Migration / Seed
+
+现在已经有：
+
+- `VSlim\Database\Migration`
+- `VSlim\Database\Seeder`
+- `VSlim\Database\Migrator`
+- `app()->migrator()`
+- `db:migrate`
+- `db:rollback`
+- `db:seed`
+
+第一版 migration 仍然是 SQL-first，但已经补了几条最常用的 schema helper：
+
+- `createTableSql($table, array $columns)`
+- `dropTableSql($table)`
+- `addColumnSql($table, $columnDef)`
+- `dropColumnSql($table, $column)`
+- `createTable(...)`
+- `dropTable(...)`
+- `addColumn(...)`
+- `dropColumn(...)`
+
+适合做简单表结构演进，但还不是完整 schema builder。
+
 ## 下一步适合做什么
 
 - prepared statement / statement facade
 - 更稳定的结果对象
 - `lastInsertId()` 行为回归
-- migration / seed
+- 更完整的 schema builder
 - 然后再考虑 ORM
 
 如果要把数据库连接池进一步交给 `vhttpd` 托管，而不是留在 PHP worker 进程内，设计见：

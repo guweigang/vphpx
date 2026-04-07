@@ -192,6 +192,32 @@ CLI 侧的最小样板包括：
 - `make:migration`
 - `make:seed`
 
+## Auth Best Practice
+
+模板当前推荐的 auth 写法是：
+
+- `app()->startSessionMiddleware()`
+  先挂上 session middleware
+- `app()->setAuthUserProvider(fn (string $id) => ...)`
+  注册按用户 ID 解析用户对象/数组的 provider
+- `app()->setAuthGateResolver(fn (string $ability, $user, $request) => ...)`
+  注册能力判断
+- `app()->authMiddleware()`
+  保护需要登录的路由
+- `app()->guestMiddleware()`
+  保护登录页/注册页这类“只允许游客访问”的路由
+- `app()->abilityMiddleware('admin')`
+  保护需要特定能力的路由
+
+如果你只需要拿当前登录用户：
+
+- `app()->authId($request)`
+- `app()->authUser($request)`
+
+如果你想在业务里手动根据 user id 解析用户：
+
+- `app()->resolveAuthUser($id)`
+
 CLI schema 当前支持这些常用字段：
 
 - `name`

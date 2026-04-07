@@ -214,6 +214,11 @@ pub fn (mut app VSlimApp) set_auth_user_resolver(resolver vphp.RequestBorrowedZB
 	return &app
 }
 
+@[php_method: 'setAuthUserProvider']
+pub fn (mut app VSlimApp) set_auth_user_provider(provider vphp.RequestBorrowedZBox) &VSlimApp {
+	return app.set_auth_user_resolver(provider)
+}
+
 @[php_method: 'setAuthGateResolver']
 pub fn (mut app VSlimApp) set_auth_gate_resolver(resolver vphp.RequestBorrowedZBox) &VSlimApp {
 	if !resolver.is_valid() || !resolver.is_callable() {
@@ -233,9 +238,29 @@ pub fn (mut app VSlimApp) set_auth_redirect_path(path string) &VSlimApp {
 	return &app
 }
 
+@[php_method: 'hasAuthUserProvider']
+pub fn (app &VSlimApp) has_auth_user_provider() bool {
+	return app.auth_user_resolver.is_valid() && app.auth_user_resolver.is_callable()
+}
+
 @[php_method: 'authRedirectTo']
 pub fn (app &VSlimApp) auth_redirect_to() string {
 	return app.auth_redirect_path.trim_space()
+}
+
+@[php_method: 'resolveAuthUser']
+pub fn (app &VSlimApp) resolve_auth_user(user_id string) vphp.RequestOwnedZBox {
+	normalized_id := user_id.trim_space()
+	if normalized_id == '' {
+		return vphp.RequestOwnedZBox.new_null()
+	}
+	if !app.auth_user_resolver.is_valid() || !app.auth_user_resolver.is_callable() {
+		return vphp.RequestOwnedZBox.new_string(normalized_id)
+	}
+	mut result := app.auth_user_resolver.call_request_owned([
+		vphp.RequestOwnedZBox.new_string(normalized_id).to_zval(),
+	])
+	return result
 }
 
 @[php_method: 'authUser']
@@ -245,13 +270,7 @@ pub fn (app &VSlimApp) auth_user(request vphp.RequestBorrowedZBox) vphp.RequestO
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	user_id := guard.id()
-	if !app.auth_user_resolver.is_valid() || !app.auth_user_resolver.is_callable() {
-		return vphp.RequestOwnedZBox.new_string(user_id)
-	}
-	mut result := app.auth_user_resolver.call_request_owned([
-		vphp.RequestOwnedZBox.new_string(user_id).to_zval(),
-	])
-	return result
+	return app.resolve_auth_user(user_id)
 }
 
 @[php_method: 'authCheck']

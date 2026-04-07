@@ -216,7 +216,7 @@
   - [database/README.md](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
   - [database/vhttpd-upstream.md](/Users/guweigang/Source/vphpx/vslim/docs/database/vhttpd-upstream.md)
 - validation / session / auth
-  - 轻量输入校验、cookie session、auth/guest middleware、app-level gate helper
+  - 轻量输入校验、cookie session、auth user provider、auth/guest/ability middleware、app-level gate helper
 - logger
   - [logger/logger.md](/Users/guweigang/Source/vphpx/vslim/docs/logger/logger.md)
 - container

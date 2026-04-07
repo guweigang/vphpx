@@ -1445,6 +1445,15 @@ pub fn vphp_wrap_vslimapp_set_auth_user_resolver(ptr voidptr, ctx vphp.Context) 
     res := recv.set_auth_user_resolver(arg_0)
     return voidptr(res)
 }
+@[export: 'vphp_wrap_VSlimApp_set_auth_user_provider']
+pub fn vphp_wrap_vslimapp_set_auth_user_provider(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    res := recv.set_auth_user_provider(arg_0)
+    return voidptr(res)
+}
 @[export: 'vphp_wrap_VSlimApp_set_auth_gate_resolver']
 pub fn vphp_wrap_vslimapp_set_auth_gate_resolver(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimApp(ptr) }
@@ -1463,6 +1472,14 @@ pub fn vphp_wrap_vslimapp_set_auth_redirect_path(ptr voidptr, ctx vphp.Context) 
     res := recv.set_auth_redirect_path(arg_0)
     return voidptr(res)
 }
+@[export: 'vphp_wrap_VSlimApp_has_auth_user_provider']
+pub fn vphp_wrap_vslimapp_has_auth_user_provider(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.has_auth_user_provider()
+    ctx.return_val[bool](res)
+}
 @[export: 'vphp_wrap_VSlimApp_auth_redirect_to']
 pub fn vphp_wrap_vslimapp_auth_redirect_to(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimApp(ptr) }
@@ -1470,6 +1487,15 @@ pub fn vphp_wrap_vslimapp_auth_redirect_to(ptr voidptr, ctx vphp.Context)  {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     res := recv.auth_redirect_to()
     ctx.return_val[string](res)
+}
+@[export: 'vphp_wrap_VSlimApp_resolve_auth_user']
+pub fn vphp_wrap_vslimapp_resolve_auth_user(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    res := recv.resolve_auth_user(arg_0)
+    ctx.return_val[vphp.RequestOwnedZBox](res)
 }
 @[export: 'vphp_wrap_VSlimApp_auth_user']
 pub fn vphp_wrap_vslimapp_auth_user(ptr voidptr, ctx vphp.Context)  {
@@ -10358,6 +10384,84 @@ pub fn vphp_wrap_vslimdatabasemigration_down(ptr voidptr, ctx vphp.Context)  {
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     res := recv.down()
     ctx.return_val[bool](res)
+}
+@[export: 'vphp_wrap_VSlimDatabaseMigration_create_table_sql']
+pub fn vphp_wrap_vslimdatabasemigration_create_table_sql(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimDatabaseMigration(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    arg_1 := ctx.arg[[]string](1)
+    res := recv.create_table_sql(arg_0, arg_1)
+    ctx.return_val[string](res)
+}
+@[export: 'vphp_wrap_VSlimDatabaseMigration_drop_table_sql']
+pub fn vphp_wrap_vslimdatabasemigration_drop_table_sql(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimDatabaseMigration(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    res := recv.drop_table_sql(arg_0)
+    ctx.return_val[string](res)
+}
+@[export: 'vphp_wrap_VSlimDatabaseMigration_add_column_sql']
+pub fn vphp_wrap_vslimdatabasemigration_add_column_sql(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimDatabaseMigration(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    arg_1 := ctx.arg[string](1)
+    res := recv.add_column_sql(arg_0, arg_1)
+    ctx.return_val[string](res)
+}
+@[export: 'vphp_wrap_VSlimDatabaseMigration_drop_column_sql']
+pub fn vphp_wrap_vslimdatabasemigration_drop_column_sql(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimDatabaseMigration(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    arg_1 := ctx.arg[string](1)
+    res := recv.drop_column_sql(arg_0, arg_1)
+    ctx.return_val[string](res)
+}
+@[export: 'vphp_wrap_VSlimDatabaseMigration_create_table']
+pub fn vphp_wrap_vslimdatabasemigration_create_table(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimDatabaseMigration(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    arg_1 := ctx.arg[[]string](1)
+    res := recv.create_table(arg_0, arg_1)
+    ctx.return_val[vphp.RequestOwnedZBox](res)
+}
+@[export: 'vphp_wrap_VSlimDatabaseMigration_drop_table']
+pub fn vphp_wrap_vslimdatabasemigration_drop_table(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimDatabaseMigration(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    res := recv.drop_table(arg_0)
+    ctx.return_val[vphp.RequestOwnedZBox](res)
+}
+@[export: 'vphp_wrap_VSlimDatabaseMigration_add_column']
+pub fn vphp_wrap_vslimdatabasemigration_add_column(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimDatabaseMigration(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    arg_1 := ctx.arg[string](1)
+    res := recv.add_column(arg_0, arg_1)
+    ctx.return_val[vphp.RequestOwnedZBox](res)
+}
+@[export: 'vphp_wrap_VSlimDatabaseMigration_drop_column']
+pub fn vphp_wrap_vslimdatabasemigration_drop_column(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimDatabaseMigration(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    arg_1 := ctx.arg[string](1)
+    res := recv.drop_column(arg_0, arg_1)
+    ctx.return_val[vphp.RequestOwnedZBox](res)
 }
 @[export: 'vphp_wrap_VSlimDatabaseMigration_execute']
 pub fn vphp_wrap_vslimdatabasemigration_execute(ptr voidptr, ctx vphp.Context)  {
