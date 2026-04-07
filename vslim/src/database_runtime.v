@@ -304,6 +304,17 @@ pub fn (mut db VSlimDatabaseManager) connect() bool {
 	return true
 }
 
+fn (mut db VSlimDatabaseManager) ensure_direct_mysql_supported() ! {
+	db.construct()
+	if db.database_uses_upstream() {
+		return
+	}
+	if db.config_ref.driver() != 'mysql' {
+		db.last_error = 'database driver ${db.config_ref.driver()} is not supported yet'
+		return error(db.last_error)
+	}
+}
+
 fn database_result_box_from_dyn(value vphp.DynValue) vphp.RequestOwnedZBox {
 	return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(value) or {
 		vphp.ZVal.new_null()
@@ -650,6 +661,7 @@ fn database_params_from_box(params vphp.RequestBorrowedZBox) []string {
 }
 
 fn (mut db VSlimDatabaseManager) acquire_mysql_conn() !mysql.DB {
+	db.ensure_direct_mysql_supported()!
 	if !db.mysql_connected && !db.connect() {
 		msg := if db.last_error != '' { db.last_error } else { 'database is not connected' }
 		return error(msg)
@@ -703,6 +715,10 @@ pub fn (mut db VSlimDatabaseManager) ping() bool {
 		db.last_error = ''
 		return ok
 	}
+	db.ensure_direct_mysql_supported() or {
+		db.last_error = err.msg()
+		return false
+	}
 	mut conn := db.acquire_mysql_conn() or {
 		db.last_error = err.msg()
 		return false
@@ -727,6 +743,11 @@ pub fn (mut db VSlimDatabaseManager) execute(query string) vphp.RequestOwnedZBox
 		}
 		db.last_error = ''
 		return result
+	}
+	db.ensure_direct_mysql_supported() or {
+		db.last_error = err.msg()
+		vphp.throw_exception_class('RuntimeException', 'database execute failed: ${err.msg()}', 0)
+		return vphp.RequestOwnedZBox.new_null()
 	}
 	mut conn := db.acquire_mysql_conn() or {
 		db.last_error = err.msg()
@@ -759,6 +780,11 @@ pub fn (mut db VSlimDatabaseManager) execute_params(query string, params vphp.Re
 		db.last_error = ''
 		return result
 	}
+	db.ensure_direct_mysql_supported() or {
+		db.last_error = err.msg()
+		vphp.throw_exception_class('RuntimeException', 'database execute failed: ${err.msg()}', 0)
+		return vphp.RequestOwnedZBox.new_null()
+	}
 	mut conn := db.acquire_mysql_conn() or {
 		db.last_error = err.msg()
 		vphp.throw_exception_class('RuntimeException', 'database execute failed: ${err.msg()}', 0)
@@ -788,6 +814,11 @@ pub fn (mut db VSlimDatabaseManager) query(query string) vphp.RequestOwnedZBox {
 		}
 		db.last_error = ''
 		return rows
+	}
+	db.ensure_direct_mysql_supported() or {
+		db.last_error = err.msg()
+		vphp.throw_exception_class('RuntimeException', 'database query failed: ${err.msg()}', 0)
+		return vphp.RequestOwnedZBox.new_null()
 	}
 	mut conn := db.acquire_mysql_conn() or {
 		db.last_error = err.msg()
@@ -820,6 +851,11 @@ pub fn (mut db VSlimDatabaseManager) query_params(query string, params vphp.Requ
 		}
 		db.last_error = ''
 		return rows
+	}
+	db.ensure_direct_mysql_supported() or {
+		db.last_error = err.msg()
+		vphp.throw_exception_class('RuntimeException', 'database query failed: ${err.msg()}', 0)
+		return vphp.RequestOwnedZBox.new_null()
 	}
 	mut conn := db.acquire_mysql_conn() or {
 		db.last_error = err.msg()
@@ -879,6 +915,11 @@ pub fn (mut db VSlimDatabaseManager) begin_transaction() bool {
 	}
 	if db.mysql_tx_active {
 		return true
+	}
+	db.ensure_direct_mysql_supported() or {
+		db.last_error = err.msg()
+		vphp.throw_exception_class('RuntimeException', 'database begin transaction failed: ${err.msg()}', 0)
+		return false
 	}
 	if !db.mysql_connected && !db.connect() {
 		return false
