@@ -88,6 +88,13 @@ pub fn (mut app VSlimApp) merge_config_text(text string) &VSlimApp {
 	return app
 }
 
+@[php_method]
+pub fn (mut app VSlimApp) validate(data vphp.RequestBorrowedZBox, rules vphp.RequestBorrowedZBox) &VSlimValidator {
+	mut validator := VSlimValidator.make(data, rules)
+	validator.validate()
+	return validator
+}
+
 fn (mut app VSlimApp) sync_standard_services_to_container() {
 	if app.container_ref == unsafe { nil } {
 		return

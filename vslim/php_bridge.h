@@ -75,6 +75,7 @@ extern zend_class_entry *vslim__live__form_ce;
 extern zend_class_entry *vslim__live__view_ce;
 extern zend_class_entry *vslim__live__component_ce;
 extern zend_class_entry *vslim__live__componentstate_ce;
+extern zend_class_entry *vslim__validate__validator_ce;
 extern zend_class_entry *vslim__config_ce;
 extern zend_class_entry *vslim__container__containerexception_ce;
 extern zend_class_entry *vslim__container__notfoundexception_ce;

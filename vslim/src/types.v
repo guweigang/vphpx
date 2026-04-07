@@ -750,6 +750,17 @@ mut:
 	socket_ref   &VSlimLiveSocket = unsafe { nil }
 }
 
+@[php_class: 'VSlim\\Validate\\Validator']
+@[heap]
+struct VSlimValidator {
+mut:
+	input_data      map[string]vphp.DynValue
+	rule_map        map[string][]string
+	error_map       map[string][]string
+	validated_data  map[string]vphp.DynValue
+	validation_ran  bool
+}
+
 @[php_class: 'VSlim\\Config']
 @[heap]
 struct VSlimConfig {

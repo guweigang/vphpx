@@ -1646,6 +1646,11 @@ static const zend_internal_arg_info arginfo_vslimapp_merge_config_text[] = {
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\App", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_ARG_TYPE_INFO(0, text, IS_STRING, 0)
 ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimapp_validate[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Validate\\Validator", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, data, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, rules, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimapp_has_mcp, 0, 0, _IS_BOOL, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimapp_set_mcp[] = {
@@ -3423,6 +3428,28 @@ PHP_METHOD(VSlim__App, merge_config_text) {
     }
 }
 
+
+PHP_METHOD(VSlim__App, validate) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimApp_validate(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    // printf("PHP_METHOD VSlim__App::validate called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimApp_validate(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimValidator_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__validate__validator_ce, VSlimValidator_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
 PHP_METHOD(VSlim__App, has_mcp) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -4430,6 +4457,7 @@ static const zend_function_entry vslim__app_methods[] = {
     PHP_ME(VSlim__App, load_config_text, arginfo_vslimapp_load_config_text, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, merge_config, arginfo_vslimapp_merge_config, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, merge_config_text, arginfo_vslimapp_merge_config_text, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, validate, arginfo_vslimapp_validate, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, has_mcp, arginfo_vslimapp_has_mcp, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, set_mcp, arginfo_vslimapp_set_mcp, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, mcp, arginfo_vslimapp_mcp, ZEND_ACC_PUBLIC)
@@ -23158,6 +23186,255 @@ static int vslim__live__componentstate_register_class(void) {
     }
     return SUCCESS;
 }
+zend_class_entry *vslim__validate__validator_ce = NULL;
+static const zend_internal_arg_info arginfo_vslimvalidator_make[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Validate\\Validator", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, data, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, rules, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimvalidator_construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimvalidator_set_data[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Validate\\Validator", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, data, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimvalidator_set_rules[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Validate\\Validator", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, rules, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimvalidator_validate[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Validate\\Validator", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimvalidator_passes, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimvalidator_fails, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimvalidator_errors, 0, 0, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimvalidator_validated, 0, 0, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimvalidator_data, 0, 0, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+PHP_METHOD(VSlim__Validate__Validator, make) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimValidator_make(vphp_context_internal ctx);
+    void* v_instance = vphp_wrap_VSlimValidator_make(ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimValidator_handlers();
+    vphp_return_owned_object(return_value, v_instance, vslim__validate__validator_ce, VSlimValidator_handlers());
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Validate__Validator, __construct) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern vphp_class_handlers* VSlimValidator_handlers();
+    vphp_class_handlers *h = VSlimValidator_handlers();
+    vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
+    vphp_object_wrapper *wrapper = vphp_obj_from_obj(Z_OBJ_P(getThis()));
+    extern void vphp_wrap_VSlimValidator_construct(void* v_ptr, vphp_context_internal ctx);
+    void* v_ptr = wrapper->v_ptr;
+    vphp_wrap_VSlimValidator_construct(v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Validate__Validator, setData) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimValidator_set_data(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimValidator_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimValidator_handlers());
+    // printf("PHP_METHOD VSlim__Validate__Validator::setData called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimValidator_set_data(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimValidator_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__validate__validator_ce, VSlimValidator_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Validate__Validator, setRules) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimValidator_set_rules(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimValidator_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimValidator_handlers());
+    // printf("PHP_METHOD VSlim__Validate__Validator::setRules called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimValidator_set_rules(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimValidator_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__validate__validator_ce, VSlimValidator_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Validate__Validator, validate) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimValidator_validate(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimValidator_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimValidator_handlers());
+    // printf("PHP_METHOD VSlim__Validate__Validator::validate called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimValidator_validate(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimValidator_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__validate__validator_ce, VSlimValidator_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Validate__Validator, passes) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimValidator_passes(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimValidator_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimValidator_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimValidator_passes(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Validate__Validator, fails) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimValidator_fails(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimValidator_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimValidator_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimValidator_fails(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Validate__Validator, errors) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimValidator_errors(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimValidator_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimValidator_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimValidator_errors(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Validate__Validator, validated) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimValidator_validated(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimValidator_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimValidator_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimValidator_validated(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Validate__Validator, data) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimValidator_data(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimValidator_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimValidator_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimValidator_data(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+static const zend_function_entry vslim__validate__validator_methods[] = {
+    PHP_ME(VSlim__Validate__Validator, make, arginfo_vslimvalidator_make, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(VSlim__Validate__Validator, __construct, arginfo_vslimvalidator_construct, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Validate__Validator, setData, arginfo_vslimvalidator_set_data, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Validate__Validator, setRules, arginfo_vslimvalidator_set_rules, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Validate__Validator, validate, arginfo_vslimvalidator_validate, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Validate__Validator, passes, arginfo_vslimvalidator_passes, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Validate__Validator, fails, arginfo_vslimvalidator_fails, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Validate__Validator, errors, arginfo_vslimvalidator_errors, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Validate__Validator, validated, arginfo_vslimvalidator_validated, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Validate__Validator, data, arginfo_vslimvalidator_data, ZEND_ACC_PUBLIC)
+    PHP_FE_END
+};
+
+static int vslim__validate__validator_register_class(void) {
+    if (vslim__validate__validator_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__validate__validator_ce = vphp_find_loaded_class_entry("VSlim\\Validate\\Validator", sizeof("VSlim\\Validate\\Validator")-1);
+    if (vslim__validate__validator_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Validate\\Validator", vslim__validate__validator_methods);
+        vslim__validate__validator_ce = zend_register_internal_class(&ce);
+        vslim__validate__validator_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__validate__validator_ce, "input_data", sizeof("input_data")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__validate__validator_ce, "rule_map", sizeof("rule_map")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__validate__validator_ce, "error_map", sizeof("error_map")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__validate__validator_ce, "validated_data", sizeof("validated_data")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_bool(vslim__validate__validator_ce, "validation_ran", sizeof("validation_ran")-1, 0, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
 zend_class_entry *vslim__config_ce = NULL;
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimconfig_construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
@@ -23916,6 +24193,7 @@ PHP_MINIT_FUNCTION(vslim) {
     if (vslim__live__view_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__live__component_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__live__componentstate_register_class() != SUCCESS) { return FAILURE; }
+    if (vslim__validate__validator_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__config_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__container__containerexception_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__container__notfoundexception_register_class() != SUCCESS) { return FAILURE; }

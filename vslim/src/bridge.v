@@ -1400,6 +1400,16 @@ pub fn vphp_wrap_vslimapp_merge_config_text(ptr voidptr, ctx vphp.Context) voidp
     res := recv.merge_config_text(arg_0)
     return voidptr(res)
 }
+@[export: 'vphp_wrap_VSlimApp_validate']
+pub fn vphp_wrap_vslimapp_validate(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    res := recv.validate(arg_0, arg_1)
+    return voidptr(res)
+}
 @[export: 'vphp_wrap_VSlimApp_has_mcp']
 pub fn vphp_wrap_vslimapp_has_mcp(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimApp(ptr) }
@@ -11153,6 +11163,137 @@ pub fn vslimlivecomponentstate_handlers() voidptr {
         new_raw:       voidptr(vslimlivecomponentstate_new_raw)
         cleanup_raw:   voidptr(vslimlivecomponentstate_cleanup_raw)
         free_raw:      voidptr(vslimlivecomponentstate_free_raw)
+    } }
+}
+
+@[export: 'VSlimValidator_new_raw']
+pub fn vslimvalidator_new_raw() voidptr {
+    return vphp.generic_new_raw[VSlimValidator]()
+}
+@[export: 'VSlimValidator_free_raw']
+pub fn vslimvalidator_free_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+    vphp.generic_free_raw[VSlimValidator](ptr)
+}
+@[export: 'VSlimValidator_cleanup_raw']
+pub fn vslimvalidator_cleanup_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+}
+@[export: 'VSlimValidator_get_prop']
+pub fn vslimvalidator_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    _ = ptr
+    _ = name_ptr
+    _ = name_len
+    _ = rv
+}
+@[export: 'VSlimValidator_set_prop']
+pub fn vslimvalidator_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    _ = ptr
+    _ = name_ptr
+    _ = name_len
+    _ = value
+}
+@[export: 'VSlimValidator_sync_props']
+pub fn vslimvalidator_sync_props(ptr voidptr, zv &C.zval) {
+    _ = ptr
+    _ = zv
+}
+@[export: 'vphp_wrap_VSlimValidator_make']
+pub fn vphp_wrap_vslimvalidator_make(ctx vphp.Context) voidptr {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    res := VSlimValidator.make(arg_0, arg_1)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimValidator_construct']
+pub fn vphp_wrap_vslimvalidator_construct(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimValidator(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.construct()
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimValidator_set_data']
+pub fn vphp_wrap_vslimvalidator_set_data(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimValidator(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    res := recv.set_data(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimValidator_set_rules']
+pub fn vphp_wrap_vslimvalidator_set_rules(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimValidator(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    res := recv.set_rules(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimValidator_validate']
+pub fn vphp_wrap_vslimvalidator_validate(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimValidator(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.validate()
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimValidator_passes']
+pub fn vphp_wrap_vslimvalidator_passes(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimValidator(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.passes()
+    ctx.return_val[bool](res)
+}
+@[export: 'vphp_wrap_VSlimValidator_fails']
+pub fn vphp_wrap_vslimvalidator_fails(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimValidator(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.fails()
+    ctx.return_val[bool](res)
+}
+@[export: 'vphp_wrap_VSlimValidator_errors']
+pub fn vphp_wrap_vslimvalidator_errors(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimValidator(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.errors()
+    ctx.return_val[vphp.RequestOwnedZBox](res)
+}
+@[export: 'vphp_wrap_VSlimValidator_validated']
+pub fn vphp_wrap_vslimvalidator_validated(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimValidator(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.validated()
+    ctx.return_val[vphp.RequestOwnedZBox](res)
+}
+@[export: 'vphp_wrap_VSlimValidator_data']
+pub fn vphp_wrap_vslimvalidator_data(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimValidator(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.data()
+    ctx.return_val[vphp.RequestOwnedZBox](res)
+}
+@[export: 'VSlimValidator_handlers']
+pub fn vslimvalidator_handlers() voidptr {
+    return unsafe { &C.vphp_class_handlers{
+        prop_handler:  voidptr(vslimvalidator_get_prop)
+        write_handler: voidptr(vslimvalidator_set_prop)
+        sync_handler:  voidptr(vslimvalidator_sync_props)
+        new_raw:       voidptr(vslimvalidator_new_raw)
+        cleanup_raw:   voidptr(vslimvalidator_cleanup_raw)
+        free_raw:      voidptr(vslimvalidator_free_raw)
     } }
 }
 
