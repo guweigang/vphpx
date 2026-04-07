@@ -21,6 +21,10 @@ echo (str_contains($unauthorized->body, '"unauthorized"') ? 'unauthorized_yes' :
 $forbidden = $app->forbidden('Stop');
 echo $forbidden->status . PHP_EOL;
 echo (str_contains($forbidden->body, '"Stop"') ? 'forbidden_yes' : 'forbidden_no') . PHP_EOL;
+
+$exception = $app->exceptionResponse(new InvalidArgumentException('Wrong'));
+echo $exception->status . PHP_EOL;
+echo (str_contains($exception->body, '"invalid_argument"') ? 'exception_yes' : 'exception_no') . PHP_EOL;
 ?>
 --EXPECT--
 422
@@ -31,3 +35,5 @@ field_yes
 unauthorized_yes
 403
 forbidden_yes
+400
+exception_yes

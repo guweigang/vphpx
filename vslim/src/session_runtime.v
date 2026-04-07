@@ -391,6 +391,17 @@ pub fn (session &VSlimSessionStore) get(key string, default_value string) string
 }
 
 @[php_method]
+@[php_optional_args: 'default_value']
+pub fn (mut session VSlimSessionStore) pull(key string, default_value string) string {
+	value := session.values[key] or { default_value }
+	if key in session.values {
+		session.values.delete(key)
+		session.dirty = true
+	}
+	return value
+}
+
+@[php_method]
 pub fn (session &VSlimSessionStore) has(key string) bool {
 	return key in session.values
 }
@@ -485,6 +496,11 @@ pub fn (guard &VSlimAuthSessionGuard) id() string {
 		return ''
 	}
 	return guard.store_ref.get(guard.user_key_value(), '')
+}
+
+@[php_method]
+pub fn (guard &VSlimAuthSessionGuard) user_id() string {
+	return guard.id()
 }
 
 @[php_method]

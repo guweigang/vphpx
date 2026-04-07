@@ -1480,6 +1480,33 @@ pub fn vphp_wrap_vslimapp_auth_user(ptr voidptr, ctx vphp.Context)  {
     res := recv.auth_user(arg_0)
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
+@[export: 'vphp_wrap_VSlimApp_auth_check']
+pub fn vphp_wrap_vslimapp_auth_check(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    res := recv.auth_check(arg_0)
+    ctx.return_val[bool](res)
+}
+@[export: 'vphp_wrap_VSlimApp_auth_guest']
+pub fn vphp_wrap_vslimapp_auth_guest(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    res := recv.auth_guest(arg_0)
+    ctx.return_val[bool](res)
+}
+@[export: 'vphp_wrap_VSlimApp_auth_id']
+pub fn vphp_wrap_vslimapp_auth_id(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    res := recv.auth_id(arg_0)
+    ctx.return_val[string](res)
+}
 @[export: 'vphp_wrap_VSlimApp_can']
 pub fn vphp_wrap_vslimapp_can(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimApp(ptr) }
@@ -1570,6 +1597,16 @@ pub fn vphp_wrap_vslimapp_forbidden_response(ptr voidptr, ctx vphp.Context) void
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     arg_0 := ctx.arg[string](0)
     res := recv.forbidden_response(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimApp_exception_response']
+pub fn vphp_wrap_vslimapp_exception_response(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg[int](1)
+    res := recv.exception_response(arg_0, arg_1)
     return voidptr(res)
 }
 @[export: 'vphp_wrap_VSlimApp_doctor_report']
@@ -3635,6 +3672,16 @@ pub fn vphp_wrap_vslimsessionstore_get(ptr voidptr, ctx vphp.Context)  {
     res := recv.get(arg_0, arg_1)
     ctx.return_val[string](res)
 }
+@[export: 'vphp_wrap_VSlimSessionStore_pull']
+pub fn vphp_wrap_vslimsessionstore_pull(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimSessionStore(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    arg_1 := ctx.arg[string](1)
+    res := recv.pull(arg_0, arg_1)
+    ctx.return_val[string](res)
+}
 @[export: 'vphp_wrap_VSlimSessionStore_has']
 pub fn vphp_wrap_vslimsessionstore_has(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimSessionStore(ptr) }
@@ -3809,6 +3856,14 @@ pub fn vphp_wrap_vslimauthsessionguard_id(ptr voidptr, ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
     res := recv.id()
+    ctx.return_val[string](res)
+}
+@[export: 'vphp_wrap_VSlimAuthSessionGuard_user_id']
+pub fn vphp_wrap_vslimauthsessionguard_user_id(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimAuthSessionGuard(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.user_id()
     ctx.return_val[string](res)
 }
 @[export: 'vphp_wrap_VSlimAuthSessionGuard_login']

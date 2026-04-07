@@ -1696,6 +1696,15 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimapp_auth_user, 0, 1, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, request, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimapp_auth_check, 0, 1, _IS_BOOL, 0)
+ZEND_ARG_TYPE_INFO(0, request, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimapp_auth_guest, 0, 1, _IS_BOOL, 0)
+ZEND_ARG_TYPE_INFO(0, request, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimapp_auth_id, 0, 1, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, request, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimapp_can, 0, 2, _IS_BOOL, 0)
 ZEND_ARG_TYPE_INFO(0, ability, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, request, IS_MIXED, 0)
@@ -1735,6 +1744,11 @@ ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimapp_forbidden_response[] = {
     { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_ARG_TYPE_INFO(0, message, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimapp_exception_response[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, exception, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, fallback_status, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimapp_doctor_report, 0, 0, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
@@ -3690,6 +3704,57 @@ PHP_METHOD(VSlim__App, authUser) {
         return;
     }
 }
+PHP_METHOD(VSlim__App, authCheck) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimApp_auth_check(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimApp_auth_check(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__App, authGuest) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimApp_auth_guest(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimApp_auth_guest(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__App, authId) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimApp_auth_id(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimApp_auth_id(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
 PHP_METHOD(VSlim__App, can) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -3890,6 +3955,28 @@ PHP_METHOD(VSlim__App, forbidden) {
     // printf("PHP_METHOD VSlim__App::forbidden called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
     if (!wrapper->v_ptr) RETURN_NULL();
     void* v_instance = vphp_wrap_VSlimApp_forbidden_response(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimResponse_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__vhttpd__response_ce, VSlimResponse_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__App, exceptionResponse) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimApp_exception_response(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    // printf("PHP_METHOD VSlim__App::exceptionResponse called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimApp_exception_response(wrapper->v_ptr, ctx);
     if (EG(exception)) {
         return;
     }
@@ -4993,6 +5080,9 @@ static const zend_function_entry vslim__app_methods[] = {
     PHP_ME(VSlim__App, setAuthRedirectTo, arginfo_vslimapp_set_auth_redirect_path, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, authRedirectTo, arginfo_vslimapp_auth_redirect_to, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, authUser, arginfo_vslimapp_auth_user, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, authCheck, arginfo_vslimapp_auth_check, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, authGuest, arginfo_vslimapp_auth_guest, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, authId, arginfo_vslimapp_auth_id, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, can, arginfo_vslimapp_can, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, cannot, arginfo_vslimapp_cannot, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, startSessionMiddleware, arginfo_vslimapp_start_session_middleware, ZEND_ACC_PUBLIC)
@@ -5003,6 +5093,7 @@ static const zend_function_entry vslim__app_methods[] = {
     PHP_ME(VSlim__App, validationError, arginfo_vslimapp_validation_error, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, unauthorized, arginfo_vslimapp_unauthorized_response, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, forbidden, arginfo_vslimapp_forbidden_response, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, exceptionResponse, arginfo_vslimapp_exception_response, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, doctor, arginfo_vslimapp_doctor_report, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, has_mcp, arginfo_vslimapp_has_mcp, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, set_mcp, arginfo_vslimapp_set_mcp, ZEND_ACC_PUBLIC)
@@ -8044,6 +8135,10 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimsessionstore_get, 0, 1, IS_
 ZEND_ARG_TYPE_INFO(0, key, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, default_value, IS_STRING, 0)
 ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimsessionstore_pull, 0, 1, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, key, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, default_value, IS_STRING, 0)
+ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimsessionstore_has, 0, 1, _IS_BOOL, 0)
 ZEND_ARG_TYPE_INFO(0, key, IS_STRING, 0)
 ZEND_END_ARG_INFO()
@@ -8454,6 +8549,23 @@ PHP_METHOD(VSlim__Session__Store, get) {
         return;
     }
 }
+PHP_METHOD(VSlim__Session__Store, pull) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimSessionStore_pull(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimSessionStore_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimSessionStore_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimSessionStore_pull(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
 PHP_METHOD(VSlim__Session__Store, has) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -8609,6 +8721,7 @@ static const zend_function_entry vslim__session__store_methods[] = {
     PHP_ME(VSlim__Session__Store, load, arginfo_vslimsessionstore_load, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Session__Store, all, arginfo_vslimsessionstore_all, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Session__Store, get, arginfo_vslimsessionstore_get, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Session__Store, pull, arginfo_vslimsessionstore_pull, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Session__Store, has, arginfo_vslimsessionstore_has, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Session__Store, set, arginfo_vslimsessionstore_set, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Session__Store, forget, arginfo_vslimsessionstore_forget, ZEND_ACC_PUBLIC)
@@ -8667,6 +8780,8 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimauthsessionguard_guest, 0, 0, _IS_BOOL, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimauthsessionguard_id, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimauthsessionguard_user_id, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimauthsessionguard_login[] = {
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Auth\\SessionGuard", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
@@ -8828,6 +8943,23 @@ PHP_METHOD(VSlim__Auth__SessionGuard, id) {
         return;
     }
 }
+PHP_METHOD(VSlim__Auth__SessionGuard, user_id) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimAuthSessionGuard_user_id(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimAuthSessionGuard_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimAuthSessionGuard_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimAuthSessionGuard_user_id(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
 
 PHP_METHOD(VSlim__Auth__SessionGuard, login) {
     if (!vphp_validate_internal_call(execute_data)) {
@@ -8881,6 +9013,7 @@ static const zend_function_entry vslim__auth__sessionguard_methods[] = {
     PHP_ME(VSlim__Auth__SessionGuard, check, arginfo_vslimauthsessionguard_check, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Auth__SessionGuard, guest, arginfo_vslimauthsessionguard_guest, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Auth__SessionGuard, id, arginfo_vslimauthsessionguard_id, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Auth__SessionGuard, user_id, arginfo_vslimauthsessionguard_user_id, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Auth__SessionGuard, login, arginfo_vslimauthsessionguard_login, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Auth__SessionGuard, logout, arginfo_vslimauthsessionguard_logout, ZEND_ACC_PUBLIC)
     PHP_FE_END

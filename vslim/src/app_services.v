@@ -12,6 +12,79 @@ fn zval_to_json_fragment(value vphp.ZVal) string {
 	return vphp.json_encode(value)
 }
 
+fn exception_class_name(exception vphp.RequestBorrowedZBox) string {
+	raw := exception.to_zval()
+	if !raw.is_valid() || !raw.is_object() {
+		return ''
+	}
+	return raw.class_name().trim_space()
+}
+
+fn exception_message_value(exception vphp.RequestBorrowedZBox, fallback string) string {
+	raw := exception.to_zval()
+	if !raw.is_valid() || !raw.is_object() || !raw.method_exists('getMessage') {
+		return fallback
+	}
+	mut out := vphp.method_request_owned_box(raw, 'getMessage', []vphp.ZVal{})
+	defer {
+		out.release()
+	}
+	message := out.to_zval().to_string().trim_space()
+	if message == '' {
+		return fallback
+	}
+	return message
+}
+
+fn exception_status_code(exception vphp.RequestBorrowedZBox, fallback_status int) int {
+	raw := exception.to_zval()
+	if raw.is_valid() && raw.is_object() && raw.method_exists('getCode') {
+		mut out := vphp.method_request_owned_box(raw, 'getCode', []vphp.ZVal{})
+		defer {
+			out.release()
+		}
+		code := out.to_zval().to_int()
+		if code >= 400 && code <= 599 {
+			return code
+		}
+	}
+	class_name := exception_class_name(exception)
+	if class_name == '' {
+		return fallback_status
+	}
+	if class_name == 'InvalidArgumentException' || class_name == 'DomainException'
+		|| class_name == 'VSlim\\Psr16\\InvalidArgumentException'
+		|| class_name == 'VSlim\\Psr6\\InvalidArgumentException' {
+		return 400
+	}
+	if class_name == 'VSlim\\Container\\NotFoundException' {
+		return 404
+	}
+	if class_name == 'VSlim\\Auth\\UnauthorizedException' {
+		return 401
+	}
+	if class_name == 'VSlim\\Auth\\ForbiddenException' {
+		return 403
+	}
+	if class_name == 'VSlim\\ValidationException' || class_name == 'ValidationException' {
+		return 422
+	}
+	return fallback_status
+}
+
+fn exception_error_code(exception vphp.RequestBorrowedZBox) string {
+	class_name := exception_class_name(exception)
+	return match class_name {
+		'InvalidArgumentException', 'DomainException', 'VSlim\\Psr16\\InvalidArgumentException',
+		'VSlim\\Psr6\\InvalidArgumentException' { 'invalid_argument' }
+		'VSlim\\Container\\NotFoundException' { 'not_found' }
+		'VSlim\\Auth\\UnauthorizedException' { 'unauthorized' }
+		'VSlim\\Auth\\ForbiddenException' { 'forbidden' }
+		'VSlim\\ValidationException', 'ValidationException' { 'validation_error' }
+		else { 'runtime_error' }
+	}
+}
+
 @[php_method]
 pub fn (mut app VSlimApp) set_base_path(base_path string) &VSlimApp {
 	app.base_path = RoutePath.normalize_base_path(base_path)
@@ -181,6 +254,24 @@ pub fn (app &VSlimApp) auth_user(request vphp.RequestBorrowedZBox) vphp.RequestO
 	return result
 }
 
+@[php_method: 'authCheck']
+pub fn (app &VSlimApp) auth_check(request vphp.RequestBorrowedZBox) bool {
+	mut guard := app.auth(request)
+	return guard.check()
+}
+
+@[php_method: 'authGuest']
+pub fn (app &VSlimApp) auth_guest(request vphp.RequestBorrowedZBox) bool {
+	mut guard := app.auth(request)
+	return guard.guest()
+}
+
+@[php_method: 'authId']
+pub fn (app &VSlimApp) auth_id(request vphp.RequestBorrowedZBox) string {
+	mut guard := app.auth(request)
+	return guard.id()
+}
+
 @[php_method]
 pub fn (app &VSlimApp) can(ability string, request vphp.RequestBorrowedZBox) bool {
 	normalized := ability.trim_space().to_lower()
@@ -276,6 +367,16 @@ pub fn (app &VSlimApp) unauthorized_response(message string) &VSlimResponse {
 pub fn (app &VSlimApp) forbidden_response(message string) &VSlimResponse {
 	msg := if message.trim_space() == '' { 'Forbidden' } else { message }
 	return to_vslim_response(default_error_response(app, 403, msg, 'forbidden'))
+}
+
+@[php_optional_args: 'fallback_status']
+@[php_method: 'exceptionResponse']
+pub fn (app &VSlimApp) exception_response(exception vphp.RequestBorrowedZBox, fallback_status int) &VSlimResponse {
+	status := if fallback_status >= 400 && fallback_status <= 599 { fallback_status } else { 500 }
+	resolved_status := exception_status_code(exception, status)
+	message := exception_message_value(exception, 'Internal Server Error')
+	code := exception_error_code(exception)
+	return to_vslim_response(default_error_response(app, resolved_status, message, code))
 }
 
 @[php_method: 'doctor']
