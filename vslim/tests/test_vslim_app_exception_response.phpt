@@ -34,6 +34,14 @@ echo (str_contains($dbUnavailable->body, '"database_unavailable"') ? 'db_unavail
 $dbError = $app->exceptionResponse(new RuntimeException('query_failed: syntax error'));
 echo $dbError->status . PHP_EOL;
 echo (str_contains($dbError->body, '"database_error"') ? 'db_error_yes' : 'db_error_no') . PHP_EOL;
+
+$dbError2 = $app->exceptionResponse(new RuntimeException('database query failed: syntax error'));
+echo $dbError2->status . PHP_EOL;
+echo (str_contains($dbError2->body, '"database_error"') ? 'db_error2_yes' : 'db_error2_no') . PHP_EOL;
+
+$dbError3 = $app->exceptionResponse(new RuntimeException('database commit failed: deadlock'));
+echo $dbError3->status . PHP_EOL;
+echo (str_contains($dbError3->body, '"database_error"') ? 'db_error3_yes' : 'db_error3_no') . PHP_EOL;
 ?>
 --EXPECT--
 400
@@ -48,3 +56,7 @@ config_code_yes
 db_unavailable_yes
 500
 db_error_yes
+500
+db_error2_yes
+500
+db_error3_yes

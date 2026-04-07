@@ -81,7 +81,13 @@ fn exception_status_code(exception vphp.RequestBorrowedZBox, fallback_status int
 	if message.starts_with('query_failed:') || message.starts_with('execute_failed:')
 		|| message.starts_with('begin_transaction_failed:')
 		|| message.starts_with('commit_failed:')
-		|| message.starts_with('rollback_failed:') {
+		|| message.starts_with('rollback_failed:')
+		|| message.starts_with('database query failed:')
+		|| message.starts_with('database execute failed:')
+		|| message.starts_with('database begin transaction failed:')
+		|| message.starts_with('database commit failed:')
+		|| message.starts_with('database rollback failed:')
+		|| message.starts_with('database connect failed:') {
 		return 500
 	}
 	return fallback_status
@@ -101,7 +107,13 @@ fn exception_error_code(exception vphp.RequestBorrowedZBox) string {
 	if message.starts_with('query_failed:') || message.starts_with('execute_failed:')
 		|| message.starts_with('begin_transaction_failed:')
 		|| message.starts_with('commit_failed:')
-		|| message.starts_with('rollback_failed:') {
+		|| message.starts_with('rollback_failed:')
+		|| message.starts_with('database query failed:')
+		|| message.starts_with('database execute failed:')
+		|| message.starts_with('database begin transaction failed:')
+		|| message.starts_with('database commit failed:')
+		|| message.starts_with('database rollback failed:')
+		|| message.starts_with('database connect failed:') {
 		return 'database_error'
 	}
 	return match class_name {
