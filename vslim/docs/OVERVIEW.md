@@ -217,6 +217,8 @@
   - [database/vhttpd-upstream.md](/Users/guweigang/Source/vphpx/vslim/docs/database/vhttpd-upstream.md)
 - validation / session / auth
   - 轻量输入校验、cookie session、auth user provider、auth/guest/ability middleware、app-level gate helper
+- testing
+  - `app()->testing()`、service override、quick dispatch、PSR request handle
 - logger
   - [logger/logger.md](/Users/guweigang/Source/vphpx/vslim/docs/logger/logger.md)
 - container

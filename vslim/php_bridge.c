@@ -1671,6 +1671,9 @@ static const zend_internal_arg_info arginfo_vslimapp_validate[] = {
 ZEND_ARG_TYPE_INFO(0, data, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, rules, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimapp_testing[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Testing\\Harness", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimapp_session[] = {
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Session\\Store", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_ARG_TYPE_INFO(0, request, IS_MIXED, 0)
@@ -3579,6 +3582,28 @@ PHP_METHOD(VSlim__App, validate) {
 }
 
 
+PHP_METHOD(VSlim__App, testing) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimApp_testing(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    // printf("PHP_METHOD VSlim__App::testing called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimApp_testing(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__testing__harness_ce, VSlimTestingHarness_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
 PHP_METHOD(VSlim__App, session) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -5181,6 +5206,7 @@ static const zend_function_entry vslim__app_methods[] = {
     PHP_ME(VSlim__App, merge_config, arginfo_vslimapp_merge_config, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, merge_config_text, arginfo_vslimapp_merge_config_text, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, validate, arginfo_vslimapp_validate, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, testing, arginfo_vslimapp_testing, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, session, arginfo_vslimapp_session, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, auth, arginfo_vslimapp_auth, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, setAuthUserResolver, arginfo_vslimapp_set_auth_user_resolver, ZEND_ACC_PUBLIC)
@@ -5315,6 +5341,717 @@ static int vslim__app_register_class(void) {
         zend_attribute *attribute_vslim__app_0 = zend_add_class_attribute(vslim__app_ce, attribute_vslim__app_0_name, 1);
         zend_string_release(attribute_vslim__app_0_name);
         ZVAL_STR(&attribute_vslim__app_0->args[0].value, zend_string_init_interned("http", sizeof("http")-1, 1));
+    }
+    return SUCCESS;
+}
+zend_class_entry *vslim__testing__harness_ce = NULL;
+ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimtestingharness_construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_set_app[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Testing\\Harness", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_INFO(0, app)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_app[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\App", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_container[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Container", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_with_service[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Testing\\Harness", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, id, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, value, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_with_factory[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Testing\\Harness", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, id, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, callable, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_with_config[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Testing\\Harness", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, path, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_with_config_text[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Testing\\Harness", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, text, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_request[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\ServerRequestInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, method, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, uri, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, body, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_json_request[] = {
+    { (const char*)(uintptr_t)(3), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\ServerRequestInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, method, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, uri, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, payload, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_handle[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\ResponseInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+{ "request", ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\ServerRequestInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_handle_request[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\ResponseInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, method, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, uri, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, body, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_handle_json[] = {
+    { (const char*)(uintptr_t)(3), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\ResponseInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, method, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, uri, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, payload, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_dispatch_json[] = {
+    { (const char*)(uintptr_t)(3), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, method, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, uri, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, payload, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_dispatch[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, method, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, uri, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, body, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_get[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, uri, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_get_json[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, uri, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_post[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, uri, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, body, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_post_json[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, uri, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, payload, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_put[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, uri, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, body, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_put_json[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, uri, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, payload, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_patch[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, uri, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, body, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_patch_json[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, uri, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, payload, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_delete[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, uri, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, body, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimtestingharness_delete_json[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, uri, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, payload, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+PHP_METHOD(VSlim__Testing__Harness, __construct) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_class_handlers *h = VSlimTestingHarness_handlers();
+    vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
+    vphp_object_wrapper *wrapper = vphp_obj_from_obj(Z_OBJ_P(getThis()));
+    extern void vphp_wrap_VSlimTestingHarness_construct(void* v_ptr, vphp_context_internal ctx);
+    void* v_ptr = wrapper->v_ptr;
+    vphp_wrap_VSlimTestingHarness_construct(v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Testing__Harness, setApp) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_set_app(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::setApp called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_set_app(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__testing__harness_ce, VSlimTestingHarness_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, app) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_app(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::app called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_app(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__app_ce, VSlimApp_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, container) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_container(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::container called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_container(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimContainer_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__container_ce, VSlimContainer_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, withService) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_with_service(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::withService called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_with_service(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__testing__harness_ce, VSlimTestingHarness_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, withFactory) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_with_factory(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::withFactory called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_with_factory(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__testing__harness_ce, VSlimTestingHarness_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, withConfig) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_with_config(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::withConfig called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_with_config(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__testing__harness_ce, VSlimTestingHarness_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, withConfigText) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_with_config_text(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::withConfigText called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_with_config_text(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__testing__harness_ce, VSlimTestingHarness_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, request) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_request(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::request called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_request(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__psr7__serverrequest_ce, VSlimPsr7ServerRequest_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, jsonRequest) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_json_request(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::jsonRequest called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_json_request(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimPsr7ServerRequest_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__psr7__serverrequest_ce, VSlimPsr7ServerRequest_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, handle) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_handle(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::handle called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_handle(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimPsr7Response_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__psr7__response_ce, VSlimPsr7Response_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, handleRequest) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_handle_request(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::handleRequest called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_handle_request(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimPsr7Response_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__psr7__response_ce, VSlimPsr7Response_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, handleJson) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_handle_json(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::handleJson called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_handle_json(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimPsr7Response_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__psr7__response_ce, VSlimPsr7Response_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, dispatchJson) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_dispatch_json(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::dispatchJson called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_dispatch_json(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimResponse_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__vhttpd__response_ce, VSlimResponse_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, dispatch) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_dispatch(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::dispatch called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_dispatch(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimResponse_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__vhttpd__response_ce, VSlimResponse_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, get) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_get(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::get called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_get(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimResponse_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__vhttpd__response_ce, VSlimResponse_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, getJson) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_get_json(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::getJson called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_get_json(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimResponse_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__vhttpd__response_ce, VSlimResponse_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, post) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_post(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::post called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_post(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimResponse_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__vhttpd__response_ce, VSlimResponse_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, postJson) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_post_json(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::postJson called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_post_json(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimResponse_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__vhttpd__response_ce, VSlimResponse_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, put) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_put(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::put called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_put(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimResponse_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__vhttpd__response_ce, VSlimResponse_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, putJson) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_put_json(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::putJson called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_put_json(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimResponse_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__vhttpd__response_ce, VSlimResponse_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, patch) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_patch(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::patch called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_patch(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimResponse_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__vhttpd__response_ce, VSlimResponse_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, patchJson) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_patch_json(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::patchJson called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_patch_json(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimResponse_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__vhttpd__response_ce, VSlimResponse_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, delete) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_delete(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::delete called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_delete(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimResponse_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__vhttpd__response_ce, VSlimResponse_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Testing__Harness, deleteJson) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimTestingHarness_delete_json(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimTestingHarness_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimTestingHarness_handlers());
+    // printf("PHP_METHOD VSlim__Testing__Harness::deleteJson called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimTestingHarness_delete_json(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimResponse_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__vhttpd__response_ce, VSlimResponse_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+static const zend_function_entry vslim__testing__harness_methods[] = {
+    PHP_ME(VSlim__Testing__Harness, __construct, arginfo_vslimtestingharness_construct, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, setApp, arginfo_vslimtestingharness_set_app, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, app, arginfo_vslimtestingharness_app, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, container, arginfo_vslimtestingharness_container, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, withService, arginfo_vslimtestingharness_with_service, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, withFactory, arginfo_vslimtestingharness_with_factory, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, withConfig, arginfo_vslimtestingharness_with_config, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, withConfigText, arginfo_vslimtestingharness_with_config_text, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, request, arginfo_vslimtestingharness_request, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, jsonRequest, arginfo_vslimtestingharness_json_request, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, handle, arginfo_vslimtestingharness_handle, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, handleRequest, arginfo_vslimtestingharness_handle_request, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, handleJson, arginfo_vslimtestingharness_handle_json, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, dispatchJson, arginfo_vslimtestingharness_dispatch_json, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, dispatch, arginfo_vslimtestingharness_dispatch, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, get, arginfo_vslimtestingharness_get, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, getJson, arginfo_vslimtestingharness_get_json, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, post, arginfo_vslimtestingharness_post, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, postJson, arginfo_vslimtestingharness_post_json, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, put, arginfo_vslimtestingharness_put, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, putJson, arginfo_vslimtestingharness_put_json, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, patch, arginfo_vslimtestingharness_patch, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, patchJson, arginfo_vslimtestingharness_patch_json, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, delete, arginfo_vslimtestingharness_delete, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Testing__Harness, deleteJson, arginfo_vslimtestingharness_delete_json, ZEND_ACC_PUBLIC)
+    PHP_FE_END
+};
+
+static int vslim__testing__harness_register_class(void) {
+    if (vslim__testing__harness_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__testing__harness_ce = vphp_find_loaded_class_entry("VSlim\\Testing\\Harness", sizeof("VSlim\\Testing\\Harness")-1);
+    if (vslim__testing__harness_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Testing\\Harness", vslim__testing__harness_methods);
+        vslim__testing__harness_ce = zend_register_internal_class(&ce);
+        vslim__testing__harness_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__testing__harness_ce, "app_ref", sizeof("app_ref")-1, ZEND_ACC_PROTECTED);
     }
     return SUCCESS;
 }
@@ -27671,6 +28408,7 @@ PHP_MINIT_FUNCTION(vslim) {
     if (vslim__view_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__controller_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__app_register_class() != SUCCESS) { return FAILURE; }
+    if (vslim__testing__harness_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__psr15__nexthandler_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__psr15__continuehandler_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__support__serviceprovider_register_class() != SUCCESS) { return FAILURE; }

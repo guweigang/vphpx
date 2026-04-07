@@ -183,6 +183,13 @@ pub fn (mut app VSlimApp) validate(data vphp.RequestBorrowedZBox, rules vphp.Req
 }
 
 @[php_method]
+pub fn (app &VSlimApp) testing() &VSlimTestingHarness {
+	return &VSlimTestingHarness{
+		app_ref: app
+	}
+}
+
+@[php_method]
 pub fn (app &VSlimApp) session(request vphp.RequestBorrowedZBox) &VSlimSessionStore {
 	mut session := &VSlimSessionStore{}
 	session.construct()

@@ -20,6 +20,7 @@ extern zend_class_entry *vslim__cli__app_ce;
 extern zend_class_entry *vslim__view_ce;
 extern zend_class_entry *vslim__controller_ce;
 extern zend_class_entry *vslim__app_ce;
+extern zend_class_entry *vslim__testing__harness_ce;
 extern zend_class_entry *vslim__psr15__nexthandler_ce;
 extern zend_class_entry *vslim__psr15__continuehandler_ce;
 extern zend_class_entry *vslim__support__serviceprovider_ce;

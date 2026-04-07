@@ -132,6 +132,13 @@ mut:
 	live_ws_sockets         map[string]vphp.PersistentOwnedZBox
 }
 
+@[php_class: 'VSlim\\Testing\\Harness']
+@[heap]
+struct VSlimTestingHarness {
+mut:
+	app_ref &VSlimApp = unsafe { nil }
+}
+
 @[heap]
 struct MiddlewareChain {
 	app         &VSlimApp            = unsafe { nil }

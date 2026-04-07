@@ -133,6 +133,7 @@ make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd
 | 配置 | `config/*.toml` | app / logging / stream / session 等分域配置 |
 | 数据库 | `config/database.toml` / `app()->database()` / `app()->migrator()` | 默认数据库 manager、连接池、migration 和 seed 入口 |
 | Session / Auth | `config/session.toml` / `app()->session($request)` / `app()->auth($request)` / `app()->authMiddleware()` / `app()->guestMiddleware()` / `app()->abilityMiddleware('admin')` | cookie session、session guard、auth/guest/ability middleware |
+| Testing | `app()->testing()` | 轻量测试 harness，支持 service override、quick dispatch、PSR request handle |
 | 服务注册 | `app/Providers/AppServiceProvider.php` | container 里的基础 service |
 | 模块 | `app/Modules/StatusModule.php` | 一组 service + routes 的独立装配单元 |
 | 简单 controller | `app/Http/Controllers/HomeController.php` | 直接处理页面/接口请求 |
