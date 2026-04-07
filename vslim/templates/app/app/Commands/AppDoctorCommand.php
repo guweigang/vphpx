@@ -26,13 +26,19 @@ final class AppDoctorCommand
     {
         $doctor = $cli->app()->doctor();
         $issues = [];
-        foreach ([
-            'config_loaded' => 'config_not_loaded',
-            'session_configured' => 'session_not_configured',
-        ] as $key => $issue) {
-            if (($doctor[$key] ?? 'false') !== 'true') {
-                $issues[] = $issue;
-            }
+        if (($doctor['config_loaded'] ?? 'false') !== 'true') {
+            $issues[] = 'config_not_loaded';
+        }
+        if (($doctor['session_configured'] ?? 'false') !== 'true') {
+            $issues[] = 'session_not_configured';
+        }
+        if (($doctor['database_transport'] ?? '') === 'vhttpd_upstream'
+            && trim((string) ($doctor['database_upstream_socket'] ?? '')) === '') {
+            $issues[] = 'database_upstream_socket_missing';
+        }
+        if (($doctor['auth_user_provider_defined'] ?? 'false') !== 'true'
+            && ($doctor['auth_resolver_defined'] ?? 'false') !== 'true') {
+            $issues[] = 'auth_user_provider_missing';
         }
 
         if ((string) $cli->option('format', 'text') === 'json') {

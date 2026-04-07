@@ -199,6 +199,8 @@ CLI 侧的最小样板包括：
 
 模板当前推荐的 auth 写法是：
 
+- `config/session.toml`
+  默认 `session.secret` 给了 `change-me` 占位值，初始化项目后应尽快换成真实随机密钥
 - `app()->startSessionMiddleware()`
   先挂上 session middleware
 - `app()->setAuthUserProvider($provider)`

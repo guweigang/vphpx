@@ -526,26 +526,78 @@ pub fn (app &VSlimApp) exception_response(exception vphp.RequestBorrowedZBox, fa
 
 @[php_method: 'doctor']
 pub fn (mut app VSlimApp) doctor_report() map[string]string {
-	config_loaded := app.has_config() && app.config().is_loaded()
-	mut transport := ''
-	if app.has_database() || (app.config_ref != unsafe { nil } && app.config_ref.has('database.driver')) {
-		transport = app.database().transport()
+	mut cfg_ref := &VSlimConfig(unsafe { nil })
+	if app.has_config() {
+		cfg_ref = app.config()
 	}
-	session_configured := if app.config_ref != unsafe { nil } {
-		if app.config_ref.has('session.cookie') || app.config_ref.has('session.secret') { 'true' } else { 'false' }
+	config_loaded := cfg_ref != unsafe { nil } && cfg_ref.is_loaded()
+	config_path := if cfg_ref != unsafe { nil } { cfg_ref.path() } else { '' }
+	config_mode := if config_path.trim_space() == '' {
+		'none'
+	} else if php_is_dir(config_path) {
+		'dir'
+	} else {
+		'file'
+	}
+	mut transport := ''
+	mut driver := ''
+	mut pool_name := ''
+	mut upstream_socket := ''
+	mut upstream_socket_source := 'none'
+	if app.has_database() || (cfg_ref != unsafe { nil } && cfg_ref.has('database.driver')) {
+		mut db := app.database()
+		transport = db.transport()
+		cfg := db.config()
+		driver = cfg.driver()
+		pool_name = cfg.pool_name_value()
+		upstream_socket = cfg.upstream_socket_value()
+		if transport == 'vhttpd_upstream' {
+			if cfg_ref != unsafe { nil } && cfg_ref.has('database.upstream.socket') {
+				upstream_socket_source = 'config'
+			} else if os.getenv_opt('VHTTPD_DB_SOCKET') or { '' } != '' {
+				upstream_socket_source = 'env'
+			}
+		}
+	}
+	session_cookie := if cfg_ref != unsafe { nil } {
+		cfg_ref.get_string('session.cookie', '').trim_space()
+	} else {
+		''
+	}
+	session_secret_configured := if cfg_ref != unsafe { nil } {
+		if cfg_ref.get_string('session.secret', '').trim_space() != ''
+			|| cfg_ref.get_string('app.key', '').trim_space() != '' {
+			'true'
+		} else {
+			'false'
+		}
 	} else {
 		'false'
 	}
+	session_configured := if session_cookie != '' && session_secret_configured == 'true' {
+		'true'
+	} else {
+		'false'
+	}
+	auth_provider_defined := if app.has_auth_user_provider() { 'true' } else { 'false' }
 	return {
 		'config_loaded':         if config_loaded { 'true' } else { 'false' }
-		'config_path':           if app.has_config() { app.config().path() } else { '' }
+		'config_path':           config_path
+		'config_mode':           config_mode
 		'route_count':           app.route_count().str()
 		'provider_count':        app.provider_count().str()
 		'module_count':          app.module_count().str()
 		'database_transport':    transport
+		'database_driver':       driver
+		'database_pool_name':    pool_name
+		'database_upstream_socket': upstream_socket
+		'database_upstream_socket_source': upstream_socket_source
 		'error_response_json':   if app.error_response_json_enabled() { 'true' } else { 'false' }
 		'auth_redirect_to':      app.auth_redirect_to()
+		'session_cookie':        session_cookie
+		'session_secret_configured': session_secret_configured
 		'session_configured':    session_configured
+		'auth_user_provider_defined': auth_provider_defined
 		'auth_resolver_defined': if app.auth_user_resolver.is_valid() && app.auth_user_resolver.is_callable() { 'true' } else { 'false' }
 	}
 }

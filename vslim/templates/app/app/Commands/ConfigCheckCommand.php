@@ -29,8 +29,11 @@ final class ConfigCheckCommand
             'loaded' => $config->is_loaded(),
             'path' => $config->path(),
             'app.name' => $config->get_string('app.name', ''),
+            'database.transport' => $config->get_string('database.transport', ''),
             'database.driver' => $config->get_string('database.driver', ''),
+            'database.upstream.socket' => $config->get_string('database.upstream.socket', ''),
             'session.cookie' => $config->get_string('session.cookie', ''),
+            'session.secret_configured' => $config->get_string('session.secret', '') !== '' ? 'true' : 'false',
             'auth.redirect_to' => $config->get_string('auth.redirect_to', ''),
         ];
 

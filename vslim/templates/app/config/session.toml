@@ -1,6 +1,6 @@
 [session]
 cookie = "${env.VSLIM_SESSION_COOKIE:-vslim_session}"
-secret = "${env.VSLIM_SESSION_SECRET:-}"
+secret = "${env.VSLIM_SESSION_SECRET:-change-me}"
 ttl_seconds = "${env.int.VSLIM_SESSION_TTL:-7200}"
 path = "${env.VSLIM_SESSION_PATH:-/}"
 domain = "${env.VSLIM_SESSION_DOMAIN:-}"
