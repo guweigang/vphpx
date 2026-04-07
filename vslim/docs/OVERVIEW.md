@@ -218,8 +218,8 @@
 - validation / session / auth
   - 轻量输入校验、cookie session、auth user provider、auth/guest/ability middleware、app-level gate helper
 - testing
-  - `app()->testing()` 轻量测试 harness，支持 service/config override、quick dispatch、JSON 请求、response 断言和 PSR handle
-  - `app()->testing()`、service override、quick dispatch、PSR request handle
+  - `app()->testing()` 轻量测试 harness，支持 service/config override、quick dispatch、JSON 请求、response 断言、cookie jar、session/auth helper 和 PSR handle
+  - [testing/README.md](/Users/guweigang/Source/vphpx/vslim/docs/testing/README.md)
 - logger
   - [logger/logger.md](/Users/guweigang/Source/vphpx/vslim/docs/logger/logger.md)
 - container
@@ -254,3 +254,9 @@
 
 1. [protocol.md](/Users/guweigang/Source/vphpx/vslim/docs/protocol.md)
 2. [integration/worker.md](/Users/guweigang/Source/vphpx/vslim/docs/integration/worker.md)
+
+如果你准备开始写业务：
+
+1. [config/config.md](/Users/guweigang/Source/vphpx/vslim/docs/config/config.md)
+2. [database/README.md](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
+3. [testing/README.md](/Users/guweigang/Source/vphpx/vslim/docs/testing/README.md)

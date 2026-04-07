@@ -16,6 +16,7 @@ Documentation entry:
 - `VSlim\Container` / `VSlim\Config` 提供基础依赖注入与 TOML 配置
 - `VSlim\Database\Config` / `VSlim\Database\Manager` / `VSlim\Database\Query` 提供 mysql-first 的连接池、事务与轻量 query builder
 - `VSlim\Validate\Validator`、`VSlim\Session\StartMiddleware`、`VSlim\Auth\RequireAuthMiddleware` 提供轻量 validation、cookie session、auth/guest middleware
+- `app()->testing()` 提供轻量测试 harness，支持 service/config override、quick dispatch、cookie jar、session/auth helper 和 response 断言
 - `vslim_handle_request(...)` / `dispatch_envelope(...)` 提供和 worker / `vhttpd` 的集成边界
 
 ## VSlim 和 vhttpd 的边界
@@ -95,8 +96,27 @@ Documentation entry:
    [`examples/skeleton/README.md`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton/README.md)
 3. 骨架分层和 `bootstrapDir()` 设计说明：
    [`docs/app/skeleton.md`](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
+4. 数据库与测试：
+   [`docs/database/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
+   [`docs/testing/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/testing/README.md)
 
 如果你只是想先理解 API 和 builder，再继续往下读这份 README 即可。
+
+## 推荐业务栈
+
+如果你想按一套“简单但成熟”的方式开始写业务，当前推荐主路径是：
+
+1. 用 `config/*.toml` 管理配置
+2. 用 `app()->database()` / `app()->migrator()` 管数据库
+3. 用 `app()->validate(...)` 做输入校验
+4. 用 `app()->startSessionMiddleware()` + `app()->authMiddleware()` 管会话和登录态
+5. 用 `app()->testing()` 写集成测试
+
+对应文档：
+
+- [`docs/config/config.md`](/Users/guweigang/Source/vphpx/vslim/docs/config/config.md)
+- [`docs/database/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
+- [`docs/testing/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/testing/README.md)
 
 ## 测试分层
 

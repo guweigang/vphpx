@@ -133,7 +133,7 @@ make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd
 | 配置 | `config/*.toml` | app / logging / stream / session 等分域配置 |
 | 数据库 | `config/database.toml` / `app()->database()` / `app()->migrator()` | 默认数据库 manager、连接池、migration 和 seed 入口 |
 | Session / Auth | `config/session.toml` / `app()->session($request)` / `app()->auth($request)` / `app()->authMiddleware()` / `app()->guestMiddleware()` / `app()->abilityMiddleware('admin')` | cookie session、session guard、auth/guest/ability middleware |
-| Testing | `app()->testing()` | 轻量测试 harness，支持 service/config override、quick dispatch、JSON 请求、response 断言和 PSR request handle |
+| Testing | `app()->testing()` | 轻量测试 harness，支持 service/config override、quick dispatch、JSON 请求、response 断言、cookie jar、`withSession()`、`actingAs()` 和 PSR request handle |
 | 服务注册 | `app/Providers/AppServiceProvider.php` | container 里的基础 service |
 | 模块 | `app/Modules/StatusModule.php` | 一组 service + routes 的独立装配单元 |
 | 简单 controller | `app/Http/Controllers/HomeController.php` | 直接处理页面/接口请求 |
@@ -256,6 +256,38 @@ CLI schema 当前支持这些常用字段：
 
 如果参数解析失败，比如缺少 required argument、option 值类型不合法、choice 不匹配，
 `runArgv()` 会直接输出错误信息，并自动附带该 command 的 usage。
+
+## Testing Best Practice
+
+模板当前推荐的测试写法是：
+
+- `app()->testing()`
+- `withConfigText(...)`
+- `withService(...)`
+- `get()/post()/postJson()`
+- `assertStatus()/assertBodyContains()`
+- 需要登录态时优先用：
+  - `withSession([...])`
+  - `actingAs('42')`
+
+最小示例：
+
+```php
+$test = $app->testing()
+    ->withConfigText("[testing]\nmessage = 'from-config'\n");
+
+$res = $test->get('/hello');
+
+$test->assertStatus($res, 200)
+     ->assertBodyContains($res, 'from-config');
+```
+
+如果你的路由依赖 session/auth：
+
+```php
+$test->withSession(['name' => 'alice']);
+$test->actingAs('42');
+```
 
 如果你需要更完整的目录骨架，可以继续参考：
 
