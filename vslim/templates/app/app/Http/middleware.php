@@ -10,5 +10,6 @@ if (!interface_exists(MiddlewareInterface::class)) {
 require_once __DIR__ . '/Middleware/TraceMiddleware.php';
 
 return function (VSlim\App $app): void {
+    $app->middleware($app->startSessionMiddleware());
     $app->middleware(\App\Http\Middleware\TraceMiddleware::class);
 };

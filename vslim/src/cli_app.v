@@ -484,6 +484,11 @@ pub fn (mut cli VSlimCliApp) app() vphp.RequestOwnedZBox {
 	return vphp.RequestOwnedZBox.adopt_zval(wrap_runtime_app_zval(ensure_cli_core_app(mut cli)))
 }
 
+@[php_method: 'projectRoot']
+pub fn (cli &VSlimCliApp) project_root_value() string {
+	return cli.project_root
+}
+
 @[php_method]
 pub fn (mut cli VSlimCliApp) command(name string, handler vphp.RequestBorrowedZBox) &VSlimCliApp {
 	ensure_cli_registry(mut cli)

@@ -104,6 +104,14 @@ pub fn vphp_wrap_vslimcliapp_app(ptr voidptr, ctx vphp.Context)  {
     res := recv.app()
     ctx.return_val[vphp.RequestOwnedZBox](res)
 }
+@[export: 'vphp_wrap_VSlimCliApp_project_root_value']
+pub fn vphp_wrap_vslimcliapp_project_root_value(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimCliApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.project_root_value()
+    ctx.return_val[string](res)
+}
 @[export: 'vphp_wrap_VSlimCliApp_command']
 pub fn vphp_wrap_vslimcliapp_command(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimCliApp(ptr) }
@@ -1427,6 +1435,141 @@ pub fn vphp_wrap_vslimapp_auth(ptr voidptr, ctx vphp.Context) voidptr {
     arg_0 := ctx.arg_borrowed_zbox(0)
     res := recv.auth(arg_0)
     return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimApp_set_auth_user_resolver']
+pub fn vphp_wrap_vslimapp_set_auth_user_resolver(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    res := recv.set_auth_user_resolver(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimApp_set_auth_gate_resolver']
+pub fn vphp_wrap_vslimapp_set_auth_gate_resolver(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    res := recv.set_auth_gate_resolver(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimApp_set_auth_redirect_path']
+pub fn vphp_wrap_vslimapp_set_auth_redirect_path(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    res := recv.set_auth_redirect_path(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimApp_auth_redirect_to']
+pub fn vphp_wrap_vslimapp_auth_redirect_to(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.auth_redirect_to()
+    ctx.return_val[string](res)
+}
+@[export: 'vphp_wrap_VSlimApp_auth_user']
+pub fn vphp_wrap_vslimapp_auth_user(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    res := recv.auth_user(arg_0)
+    ctx.return_val[vphp.RequestOwnedZBox](res)
+}
+@[export: 'vphp_wrap_VSlimApp_can']
+pub fn vphp_wrap_vslimapp_can(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    res := recv.can(arg_0, arg_1)
+    ctx.return_val[bool](res)
+}
+@[export: 'vphp_wrap_VSlimApp_cannot']
+pub fn vphp_wrap_vslimapp_cannot(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    res := recv.cannot(arg_0, arg_1)
+    ctx.return_val[bool](res)
+}
+@[export: 'vphp_wrap_VSlimApp_start_session_middleware']
+pub fn vphp_wrap_vslimapp_start_session_middleware(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.start_session_middleware()
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimApp_auth_middleware']
+pub fn vphp_wrap_vslimapp_auth_middleware(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.auth_middleware()
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimApp_guest_middleware']
+pub fn vphp_wrap_vslimapp_guest_middleware(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.guest_middleware()
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimApp_error_response']
+pub fn vphp_wrap_vslimapp_error_response(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[int](0)
+    arg_1 := ctx.arg[string](1)
+    arg_2 := ctx.arg[string](2)
+    res := recv.error_response(arg_0, arg_1, arg_2)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimApp_validation_error']
+pub fn vphp_wrap_vslimapp_validation_error(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg[int](1)
+    res := recv.validation_error(arg_0, arg_1)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimApp_unauthorized_response']
+pub fn vphp_wrap_vslimapp_unauthorized_response(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    res := recv.unauthorized_response(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimApp_forbidden_response']
+pub fn vphp_wrap_vslimapp_forbidden_response(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    res := recv.forbidden_response(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimApp_doctor_report']
+pub fn vphp_wrap_vslimapp_doctor_report(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimApp(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.doctor_report()
+    ctx.return_val[map[string]string](res)
 }
 @[export: 'vphp_wrap_VSlimApp_has_mcp']
 pub fn vphp_wrap_vslimapp_has_mcp(ptr voidptr, ctx vphp.Context)  {
@@ -3685,6 +3828,265 @@ pub fn vslimauthsessionguard_handlers() voidptr {
         new_raw:       voidptr(vslimauthsessionguard_new_raw)
         cleanup_raw:   voidptr(vslimauthsessionguard_cleanup_raw)
         free_raw:      voidptr(vslimauthsessionguard_free_raw)
+    } }
+}
+
+@[export: 'VSlimSessionStartMiddleware_new_raw']
+pub fn vslimsessionstartmiddleware_new_raw() voidptr {
+    return vphp.generic_new_raw[VSlimSessionStartMiddleware]()
+}
+@[export: 'VSlimSessionStartMiddleware_free_raw']
+pub fn vslimsessionstartmiddleware_free_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+    vphp.generic_free_raw[VSlimSessionStartMiddleware](ptr)
+}
+@[export: 'VSlimSessionStartMiddleware_cleanup_raw']
+pub fn vslimsessionstartmiddleware_cleanup_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+}
+@[export: 'VSlimSessionStartMiddleware_get_prop']
+pub fn vslimsessionstartmiddleware_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    _ = ptr
+    _ = name_ptr
+    _ = name_len
+    _ = rv
+}
+@[export: 'VSlimSessionStartMiddleware_set_prop']
+pub fn vslimsessionstartmiddleware_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    _ = ptr
+    _ = name_ptr
+    _ = name_len
+    _ = value
+}
+@[export: 'VSlimSessionStartMiddleware_sync_props']
+pub fn vslimsessionstartmiddleware_sync_props(ptr voidptr, zv &C.zval) {
+    _ = ptr
+    _ = zv
+}
+@[export: 'vphp_wrap_VSlimSessionStartMiddleware_construct']
+pub fn vphp_wrap_vslimsessionstartmiddleware_construct(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimSessionStartMiddleware(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.construct()
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimSessionStartMiddleware_set_app']
+pub fn vphp_wrap_vslimsessionstartmiddleware_set_app(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimSessionStartMiddleware(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := unsafe { &VSlimApp(ctx.arg_raw_obj(0)) }
+    res := recv.set_app(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimSessionStartMiddleware_process']
+pub fn vphp_wrap_vslimsessionstartmiddleware_process(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimSessionStartMiddleware(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    res := recv.process(arg_0, arg_1)
+    return voidptr(res)
+}
+@[export: 'VSlimSessionStartMiddleware_handlers']
+pub fn vslimsessionstartmiddleware_handlers() voidptr {
+    return unsafe { &C.vphp_class_handlers{
+        prop_handler:  voidptr(vslimsessionstartmiddleware_get_prop)
+        write_handler: voidptr(vslimsessionstartmiddleware_set_prop)
+        sync_handler:  voidptr(vslimsessionstartmiddleware_sync_props)
+        new_raw:       voidptr(vslimsessionstartmiddleware_new_raw)
+        cleanup_raw:   voidptr(vslimsessionstartmiddleware_cleanup_raw)
+        free_raw:      voidptr(vslimsessionstartmiddleware_free_raw)
+    } }
+}
+
+@[export: 'VSlimAuthRequireMiddleware_new_raw']
+pub fn vslimauthrequiremiddleware_new_raw() voidptr {
+    return vphp.generic_new_raw[VSlimAuthRequireMiddleware]()
+}
+@[export: 'VSlimAuthRequireMiddleware_free_raw']
+pub fn vslimauthrequiremiddleware_free_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+    vphp.generic_free_raw[VSlimAuthRequireMiddleware](ptr)
+}
+@[export: 'VSlimAuthRequireMiddleware_cleanup_raw']
+pub fn vslimauthrequiremiddleware_cleanup_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+}
+@[export: 'VSlimAuthRequireMiddleware_get_prop']
+pub fn vslimauthrequiremiddleware_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    _ = ptr
+    _ = name_ptr
+    _ = name_len
+    _ = rv
+}
+@[export: 'VSlimAuthRequireMiddleware_set_prop']
+pub fn vslimauthrequiremiddleware_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    _ = ptr
+    _ = name_ptr
+    _ = name_len
+    _ = value
+}
+@[export: 'VSlimAuthRequireMiddleware_sync_props']
+pub fn vslimauthrequiremiddleware_sync_props(ptr voidptr, zv &C.zval) {
+    _ = ptr
+    _ = zv
+}
+@[export: 'vphp_wrap_VSlimAuthRequireMiddleware_construct']
+pub fn vphp_wrap_vslimauthrequiremiddleware_construct(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimAuthRequireMiddleware(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.construct()
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimAuthRequireMiddleware_set_app']
+pub fn vphp_wrap_vslimauthrequiremiddleware_set_app(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimAuthRequireMiddleware(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := unsafe { &VSlimApp(ctx.arg_raw_obj(0)) }
+    res := recv.set_app(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimAuthRequireMiddleware_set_redirect_path']
+pub fn vphp_wrap_vslimauthrequiremiddleware_set_redirect_path(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimAuthRequireMiddleware(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    res := recv.set_redirect_path(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimAuthRequireMiddleware_redirect_path_value']
+pub fn vphp_wrap_vslimauthrequiremiddleware_redirect_path_value(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimAuthRequireMiddleware(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.redirect_path_value()
+    ctx.return_val[string](res)
+}
+@[export: 'vphp_wrap_VSlimAuthRequireMiddleware_process']
+pub fn vphp_wrap_vslimauthrequiremiddleware_process(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimAuthRequireMiddleware(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    res := recv.process(arg_0, arg_1)
+    return voidptr(res)
+}
+@[export: 'VSlimAuthRequireMiddleware_handlers']
+pub fn vslimauthrequiremiddleware_handlers() voidptr {
+    return unsafe { &C.vphp_class_handlers{
+        prop_handler:  voidptr(vslimauthrequiremiddleware_get_prop)
+        write_handler: voidptr(vslimauthrequiremiddleware_set_prop)
+        sync_handler:  voidptr(vslimauthrequiremiddleware_sync_props)
+        new_raw:       voidptr(vslimauthrequiremiddleware_new_raw)
+        cleanup_raw:   voidptr(vslimauthrequiremiddleware_cleanup_raw)
+        free_raw:      voidptr(vslimauthrequiremiddleware_free_raw)
+    } }
+}
+
+@[export: 'VSlimAuthGuestMiddleware_new_raw']
+pub fn vslimauthguestmiddleware_new_raw() voidptr {
+    return vphp.generic_new_raw[VSlimAuthGuestMiddleware]()
+}
+@[export: 'VSlimAuthGuestMiddleware_free_raw']
+pub fn vslimauthguestmiddleware_free_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+    vphp.generic_free_raw[VSlimAuthGuestMiddleware](ptr)
+}
+@[export: 'VSlimAuthGuestMiddleware_cleanup_raw']
+pub fn vslimauthguestmiddleware_cleanup_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+}
+@[export: 'VSlimAuthGuestMiddleware_get_prop']
+pub fn vslimauthguestmiddleware_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    _ = ptr
+    _ = name_ptr
+    _ = name_len
+    _ = rv
+}
+@[export: 'VSlimAuthGuestMiddleware_set_prop']
+pub fn vslimauthguestmiddleware_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    _ = ptr
+    _ = name_ptr
+    _ = name_len
+    _ = value
+}
+@[export: 'VSlimAuthGuestMiddleware_sync_props']
+pub fn vslimauthguestmiddleware_sync_props(ptr voidptr, zv &C.zval) {
+    _ = ptr
+    _ = zv
+}
+@[export: 'vphp_wrap_VSlimAuthGuestMiddleware_construct']
+pub fn vphp_wrap_vslimauthguestmiddleware_construct(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimAuthGuestMiddleware(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.construct()
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimAuthGuestMiddleware_set_app']
+pub fn vphp_wrap_vslimauthguestmiddleware_set_app(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimAuthGuestMiddleware(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := unsafe { &VSlimApp(ctx.arg_raw_obj(0)) }
+    res := recv.set_app(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimAuthGuestMiddleware_set_redirect_path']
+pub fn vphp_wrap_vslimauthguestmiddleware_set_redirect_path(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimAuthGuestMiddleware(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[string](0)
+    res := recv.set_redirect_path(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_VSlimAuthGuestMiddleware_redirect_path_value']
+pub fn vphp_wrap_vslimauthguestmiddleware_redirect_path_value(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimAuthGuestMiddleware(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := recv.redirect_path_value()
+    ctx.return_val[string](res)
+}
+@[export: 'vphp_wrap_VSlimAuthGuestMiddleware_process']
+pub fn vphp_wrap_vslimauthguestmiddleware_process(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimAuthGuestMiddleware(ptr) }
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_borrowed_zbox(0)
+    arg_1 := ctx.arg_borrowed_zbox(1)
+    res := recv.process(arg_0, arg_1)
+    return voidptr(res)
+}
+@[export: 'VSlimAuthGuestMiddleware_handlers']
+pub fn vslimauthguestmiddleware_handlers() voidptr {
+    return unsafe { &C.vphp_class_handlers{
+        prop_handler:  voidptr(vslimauthguestmiddleware_get_prop)
+        write_handler: voidptr(vslimauthguestmiddleware_set_prop)
+        sync_handler:  voidptr(vslimauthguestmiddleware_sync_props)
+        new_raw:       voidptr(vslimauthguestmiddleware_new_raw)
+        cleanup_raw:   voidptr(vslimauthguestmiddleware_cleanup_raw)
+        free_raw:      voidptr(vslimauthguestmiddleware_free_raw)
     } }
 }
 
@@ -12703,6 +13105,12 @@ fn vphp_ext_auto_startup() {
     vphp.register_auto_interface_binding('VSlim\\Psr15\\NextHandler', 'Psr\\Http\\Server\\RequestHandlerInterface')
 
     vphp.register_auto_interface_binding('VSlim\\Psr15\\ContinueHandler', 'Psr\\Http\\Server\\RequestHandlerInterface')
+
+    vphp.register_auto_interface_binding('VSlim\\Session\\StartMiddleware', 'Psr\\Http\\Server\\MiddlewareInterface')
+
+    vphp.register_auto_interface_binding('VSlim\\Auth\\RequireAuthMiddleware', 'Psr\\Http\\Server\\MiddlewareInterface')
+
+    vphp.register_auto_interface_binding('VSlim\\Auth\\GuestMiddleware', 'Psr\\Http\\Server\\MiddlewareInterface')
 
     vphp.register_auto_interface_binding('VSlim\\Log\\PsrLogger', 'Psr\\Log\\LoggerInterface')
 

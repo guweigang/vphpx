@@ -132,7 +132,7 @@ make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd
 | 显式总装配 | `bootstrap/app.php` | 把 config、provider、module、middleware、routes 收进一份 spec |
 | 配置 | `config/*.toml` | app / logging / stream / session 等分域配置 |
 | 数据库 | `config/database.toml` / `app()->database()` / `app()->migrator()` | 默认数据库 manager、连接池、migration 和 seed 入口 |
-| Session / Auth | `config/session.toml` / `app()->session($request)` / `app()->auth($request)` | cookie session store 和 session guard |
+| Session / Auth | `config/session.toml` / `app()->session($request)` / `app()->auth($request)` / `app()->authMiddleware()` / `app()->guestMiddleware()` | cookie session、session guard、auth/guest middleware |
 | 服务注册 | `app/Providers/AppServiceProvider.php` | container 里的基础 service |
 | 模块 | `app/Modules/StatusModule.php` | 一组 service + routes 的独立装配单元 |
 | 简单 controller | `app/Http/Controllers/HomeController.php` | 直接处理页面/接口请求 |
@@ -142,6 +142,8 @@ make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd
 | 错误处理 | `app/Http/errors.php` | not_found / runtime error 响应 |
 | CLI command | `app/Commands/AboutCommand.php` | command schema、help、handle |
 | 数据库命令 | `app/Commands/DbMigrateCommand.php` / `DbRollbackCommand.php` / `DbSeedCommand.php` | migrate、rollback、seed 入口 |
+| 诊断命令 | `app/Commands/RouteListCommand.php` / `ConfigCheckCommand.php` / `AppDoctorCommand.php` | route 清单、config 检查、app 健康检查 |
+| 生成命令 | `app/Commands/MakeCommandCommand.php` / `MakeControllerCommand.php` / `MakeMiddlewareCommand.php` / `MakeMigrationCommand.php` / `MakeSeedCommand.php` | command / controller / middleware / migration / seeder 脚手架 |
 | 视图 | `resources/views/home.html` | 模板页面 |
 
 ## 深入阅读
@@ -169,6 +171,26 @@ CLI 侧的最小样板包括：
   现成的命令行入口脚本
 - `app/Commands/AboutCommand.php`
   一个完整 command 示例，已经包含 `definition()`、help、examples、notes
+- `app/Commands/RouteListCommand.php`
+  route 清单和冲突检查示例
+- `app/Commands/ConfigCheckCommand.php`
+  config-first 项目的快速自检入口
+- `app/Commands/AppDoctorCommand.php`
+  `app()->doctor()` 的轻量健康检查示例
+- `app/Commands/Make*Command.php`
+  模板级脚手架命令示例
+
+模板默认已经带上这些常用命令：
+
+- `route:list`
+- `config:check`
+- `app:doctor`
+- `db:migrate`
+- `db:rollback`
+- `db:seed`
+- `make:command`
+- `make:migration`
+- `make:seed`
 
 CLI schema 当前支持这些常用字段：
 

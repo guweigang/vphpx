@@ -103,6 +103,9 @@ mut:
 	container_ref           &VSlimContainer = unsafe { nil }
 	config_ref              &VSlimConfig    = unsafe { nil }
 	mcp_ref                 &VSlimMcpApp    = unsafe { nil }
+	auth_user_resolver      vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	auth_gate_resolver      vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	auth_redirect_path      string
 	base_path               string
 	use_demo                bool
 	error_response_json     bool
@@ -284,6 +287,32 @@ struct VSlimAuthSessionGuard {
 mut:
 	store_ref &VSlimSessionStore = unsafe { nil }
 	user_key  string             = 'auth.user_id'
+}
+
+@[php_implements: 'Psr\\Http\\Server\\MiddlewareInterface']
+@[php_class: 'VSlim\\Session\\StartMiddleware']
+@[heap]
+struct VSlimSessionStartMiddleware {
+mut:
+	app_ref &VSlimApp = unsafe { nil }
+}
+
+@[php_implements: 'Psr\\Http\\Server\\MiddlewareInterface']
+@[php_class: 'VSlim\\Auth\\RequireAuthMiddleware']
+@[heap]
+struct VSlimAuthRequireMiddleware {
+mut:
+	app_ref       &VSlimApp = unsafe { nil }
+	redirect_path string
+}
+
+@[php_implements: 'Psr\\Http\\Server\\MiddlewareInterface']
+@[php_class: 'VSlim\\Auth\\GuestMiddleware']
+@[heap]
+struct VSlimAuthGuestMiddleware {
+mut:
+	app_ref       &VSlimApp = unsafe { nil }
+	redirect_path string
 }
 
 @[php_class: 'VSlim\\Vhttpd\\Response']

@@ -88,6 +88,8 @@ ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimcliapp_app[] = {
     { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\App", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimcliapp_project_root_value, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimcliapp_command[] = {
     { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Cli\\App", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
@@ -253,6 +255,23 @@ PHP_METHOD(VSlim__Cli__App, app) {
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
     if (!wrapper->v_ptr) RETURN_FALSE;
     vphp_wrap_VSlimCliApp_app(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__Cli__App, projectRoot) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimCliApp_project_root_value(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimCliApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimCliApp_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimCliApp_project_root_value(wrapper->v_ptr, ctx);
     if (EG(exception)) {
         return;
     }
@@ -516,6 +535,7 @@ static const zend_function_entry vslim__cli__app_methods[] = {
     PHP_ME(VSlim__Cli__App, runArgv, arginfo_vslimcliapp_run_argv, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Cli__App, __construct, arginfo_vslimcliapp_construct, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Cli__App, app, arginfo_vslimcliapp_app, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Cli__App, projectRoot, arginfo_vslimcliapp_project_root_value, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Cli__App, command, arginfo_vslimcliapp_command, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Cli__App, commandMany, arginfo_vslimcliapp_command_many, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__Cli__App, commandNames, arginfo_vslimcliapp_command_names, ZEND_ACC_PUBLIC)
@@ -1658,6 +1678,61 @@ ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vslimapp_auth[] = {
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Auth\\SessionGuard", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_ARG_TYPE_INFO(0, request, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimapp_set_auth_user_resolver[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\App", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, resolver, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimapp_set_auth_gate_resolver[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\App", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, resolver, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimapp_set_auth_redirect_path[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\App", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, path, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimapp_auth_redirect_to, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimapp_auth_user, 0, 1, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, request, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimapp_can, 0, 2, _IS_BOOL, 0)
+ZEND_ARG_TYPE_INFO(0, ability, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, request, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimapp_cannot, 0, 2, _IS_BOOL, 0)
+ZEND_ARG_TYPE_INFO(0, ability, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, request, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimapp_start_session_middleware[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Server\\MiddlewareInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimapp_auth_middleware[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Server\\MiddlewareInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimapp_guest_middleware[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Server\\MiddlewareInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimapp_error_response[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, status, IS_LONG, 0)
+ZEND_ARG_TYPE_INFO(0, message, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, error_code, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimapp_validation_error[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, errors, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, status, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimapp_unauthorized_response[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, message, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimapp_forbidden_response[] = {
+    { (const char*)(uintptr_t)(0), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Vhttpd\\Response", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, message, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimapp_doctor_report, 0, 0, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimapp_has_mcp, 0, 0, _IS_BOOL, 0)
 ZEND_END_ARG_INFO()
@@ -3511,6 +3586,311 @@ PHP_METHOD(VSlim__App, auth) {
     }
 }
 
+
+PHP_METHOD(VSlim__App, setAuthUserResolver) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimApp_set_auth_user_resolver(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    // printf("PHP_METHOD VSlim__App::setAuthUserResolver called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimApp_set_auth_user_resolver(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__app_ce, VSlimApp_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__App, setAuthGateResolver) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimApp_set_auth_gate_resolver(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    // printf("PHP_METHOD VSlim__App::setAuthGateResolver called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimApp_set_auth_gate_resolver(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__app_ce, VSlimApp_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__App, setAuthRedirectTo) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimApp_set_auth_redirect_path(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    // printf("PHP_METHOD VSlim__App::setAuthRedirectTo called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimApp_set_auth_redirect_path(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__app_ce, VSlimApp_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__App, authRedirectTo) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimApp_auth_redirect_to(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimApp_auth_redirect_to(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__App, authUser) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimApp_auth_user(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimApp_auth_user(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__App, can) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimApp_can(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimApp_can(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VSlim__App, cannot) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimApp_cannot(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimApp_cannot(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__App, startSessionMiddleware) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimApp_start_session_middleware(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    // printf("PHP_METHOD VSlim__App::startSessionMiddleware called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimApp_start_session_middleware(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimSessionStartMiddleware_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__session__startmiddleware_ce, VSlimSessionStartMiddleware_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__App, authMiddleware) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimApp_auth_middleware(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    // printf("PHP_METHOD VSlim__App::authMiddleware called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimApp_auth_middleware(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimAuthRequireMiddleware_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__auth__requireauthmiddleware_ce, VSlimAuthRequireMiddleware_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__App, guestMiddleware) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimApp_guest_middleware(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    // printf("PHP_METHOD VSlim__App::guestMiddleware called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimApp_guest_middleware(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimAuthGuestMiddleware_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__auth__guestmiddleware_ce, VSlimAuthGuestMiddleware_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__App, errorResponse) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimApp_error_response(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    // printf("PHP_METHOD VSlim__App::errorResponse called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimApp_error_response(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimResponse_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__vhttpd__response_ce, VSlimResponse_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__App, validationError) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimApp_validation_error(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    // printf("PHP_METHOD VSlim__App::validationError called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimApp_validation_error(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimResponse_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__vhttpd__response_ce, VSlimResponse_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__App, unauthorized) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimApp_unauthorized_response(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    // printf("PHP_METHOD VSlim__App::unauthorized called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimApp_unauthorized_response(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimResponse_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__vhttpd__response_ce, VSlimResponse_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__App, forbidden) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimApp_forbidden_response(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    // printf("PHP_METHOD VSlim__App::forbidden called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimApp_forbidden_response(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimResponse_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__vhttpd__response_ce, VSlimResponse_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__App, doctor) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimApp_doctor_report(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimApp_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimApp_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimApp_doctor_report(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
 PHP_METHOD(VSlim__App, has_mcp) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -4582,6 +4962,21 @@ static const zend_function_entry vslim__app_methods[] = {
     PHP_ME(VSlim__App, validate, arginfo_vslimapp_validate, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, session, arginfo_vslimapp_session, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, auth, arginfo_vslimapp_auth, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, setAuthUserResolver, arginfo_vslimapp_set_auth_user_resolver, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, setAuthGateResolver, arginfo_vslimapp_set_auth_gate_resolver, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, setAuthRedirectTo, arginfo_vslimapp_set_auth_redirect_path, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, authRedirectTo, arginfo_vslimapp_auth_redirect_to, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, authUser, arginfo_vslimapp_auth_user, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, can, arginfo_vslimapp_can, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, cannot, arginfo_vslimapp_cannot, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, startSessionMiddleware, arginfo_vslimapp_start_session_middleware, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, authMiddleware, arginfo_vslimapp_auth_middleware, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, guestMiddleware, arginfo_vslimapp_guest_middleware, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, errorResponse, arginfo_vslimapp_error_response, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, validationError, arginfo_vslimapp_validation_error, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, unauthorized, arginfo_vslimapp_unauthorized_response, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, forbidden, arginfo_vslimapp_forbidden_response, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__App, doctor, arginfo_vslimapp_doctor_report, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, has_mcp, arginfo_vslimapp_has_mcp, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, set_mcp, arginfo_vslimapp_set_mcp, ZEND_ACC_PUBLIC)
     PHP_ME(VSlim__App, mcp, arginfo_vslimapp_mcp, ZEND_ACC_PUBLIC)
@@ -4658,6 +5053,9 @@ static int vslim__app_register_class(void) {
         zend_declare_property_null(vslim__app_ce, "container_ref", sizeof("container_ref")-1, ZEND_ACC_PROTECTED);
         zend_declare_property_null(vslim__app_ce, "config_ref", sizeof("config_ref")-1, ZEND_ACC_PROTECTED);
         zend_declare_property_null(vslim__app_ce, "mcp_ref", sizeof("mcp_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "auth_user_resolver", sizeof("auth_user_resolver")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_null(vslim__app_ce, "auth_gate_resolver", sizeof("auth_gate_resolver")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__app_ce, "auth_redirect_path", sizeof("auth_redirect_path")-1, "", ZEND_ACC_PROTECTED);
         zend_declare_property_string(vslim__app_ce, "base_path", sizeof("base_path")-1, "", ZEND_ACC_PROTECTED);
         zend_declare_property_bool(vslim__app_ce, "use_demo", sizeof("use_demo")-1, 0, ZEND_ACC_PROTECTED);
         zend_declare_property_bool(vslim__app_ce, "error_response_json", sizeof("error_response_json")-1, 0, ZEND_ACC_PROTECTED);
@@ -8475,6 +8873,396 @@ static int vslim__auth__sessionguard_register_class(void) {
         vslim__auth__sessionguard_ce->create_object = vphp_create_object_handler;
         zend_declare_property_null(vslim__auth__sessionguard_ce, "store_ref", sizeof("store_ref")-1, ZEND_ACC_PROTECTED);
         zend_declare_property_string(vslim__auth__sessionguard_ce, "user_key", sizeof("user_key")-1, "", ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
+zend_class_entry *vslim__session__startmiddleware_ce = NULL;
+ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimsessionstartmiddleware_construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimsessionstartmiddleware_set_app[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Session\\StartMiddleware", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_INFO(0, app)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimsessionstartmiddleware_process[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\ResponseInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+{ "request", ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\ServerRequestInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+{ "handler", ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Server\\RequestHandlerInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+PHP_METHOD(VSlim__Session__StartMiddleware, __construct) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern vphp_class_handlers* VSlimSessionStartMiddleware_handlers();
+    vphp_class_handlers *h = VSlimSessionStartMiddleware_handlers();
+    vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
+    vphp_object_wrapper *wrapper = vphp_obj_from_obj(Z_OBJ_P(getThis()));
+    extern void vphp_wrap_VSlimSessionStartMiddleware_construct(void* v_ptr, vphp_context_internal ctx);
+    void* v_ptr = wrapper->v_ptr;
+    vphp_wrap_VSlimSessionStartMiddleware_construct(v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Session__StartMiddleware, setApp) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimSessionStartMiddleware_set_app(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimSessionStartMiddleware_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimSessionStartMiddleware_handlers());
+    // printf("PHP_METHOD VSlim__Session__StartMiddleware::setApp called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimSessionStartMiddleware_set_app(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimSessionStartMiddleware_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__session__startmiddleware_ce, VSlimSessionStartMiddleware_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Session__StartMiddleware, process) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimSessionStartMiddleware_process(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimSessionStartMiddleware_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimSessionStartMiddleware_handlers());
+    // printf("PHP_METHOD VSlim__Session__StartMiddleware::process called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimSessionStartMiddleware_process(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimPsr7Response_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__psr7__response_ce, VSlimPsr7Response_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+static const zend_function_entry vslim__session__startmiddleware_methods[] = {
+    PHP_ME(VSlim__Session__StartMiddleware, __construct, arginfo_vslimsessionstartmiddleware_construct, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Session__StartMiddleware, setApp, arginfo_vslimsessionstartmiddleware_set_app, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Session__StartMiddleware, process, arginfo_vslimsessionstartmiddleware_process, ZEND_ACC_PUBLIC)
+    PHP_FE_END
+};
+
+static int vslim__session__startmiddleware_register_class(void) {
+    if (vslim__session__startmiddleware_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__session__startmiddleware_ce = vphp_find_loaded_class_entry("VSlim\\Session\\StartMiddleware", sizeof("VSlim\\Session\\StartMiddleware")-1);
+    if (vslim__session__startmiddleware_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Session\\StartMiddleware", vslim__session__startmiddleware_methods);
+        vslim__session__startmiddleware_ce = zend_register_internal_class(&ce);
+        vslim__session__startmiddleware_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__session__startmiddleware_ce, "app_ref", sizeof("app_ref")-1, ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
+zend_class_entry *vslim__auth__requireauthmiddleware_ce = NULL;
+ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimauthrequiremiddleware_construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimauthrequiremiddleware_set_app[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Auth\\RequireAuthMiddleware", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_INFO(0, app)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimauthrequiremiddleware_set_redirect_path[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Auth\\RequireAuthMiddleware", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, path, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimauthrequiremiddleware_redirect_path_value, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimauthrequiremiddleware_process[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\ResponseInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+{ "request", ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\ServerRequestInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+{ "handler", ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Server\\RequestHandlerInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+PHP_METHOD(VSlim__Auth__RequireAuthMiddleware, __construct) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern vphp_class_handlers* VSlimAuthRequireMiddleware_handlers();
+    vphp_class_handlers *h = VSlimAuthRequireMiddleware_handlers();
+    vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
+    vphp_object_wrapper *wrapper = vphp_obj_from_obj(Z_OBJ_P(getThis()));
+    extern void vphp_wrap_VSlimAuthRequireMiddleware_construct(void* v_ptr, vphp_context_internal ctx);
+    void* v_ptr = wrapper->v_ptr;
+    vphp_wrap_VSlimAuthRequireMiddleware_construct(v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Auth__RequireAuthMiddleware, setApp) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimAuthRequireMiddleware_set_app(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimAuthRequireMiddleware_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimAuthRequireMiddleware_handlers());
+    // printf("PHP_METHOD VSlim__Auth__RequireAuthMiddleware::setApp called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimAuthRequireMiddleware_set_app(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimAuthRequireMiddleware_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__auth__requireauthmiddleware_ce, VSlimAuthRequireMiddleware_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Auth__RequireAuthMiddleware, setRedirectTo) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimAuthRequireMiddleware_set_redirect_path(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimAuthRequireMiddleware_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimAuthRequireMiddleware_handlers());
+    // printf("PHP_METHOD VSlim__Auth__RequireAuthMiddleware::setRedirectTo called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimAuthRequireMiddleware_set_redirect_path(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimAuthRequireMiddleware_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__auth__requireauthmiddleware_ce, VSlimAuthRequireMiddleware_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Auth__RequireAuthMiddleware, redirectTo) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimAuthRequireMiddleware_redirect_path_value(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimAuthRequireMiddleware_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimAuthRequireMiddleware_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimAuthRequireMiddleware_redirect_path_value(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Auth__RequireAuthMiddleware, process) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimAuthRequireMiddleware_process(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimAuthRequireMiddleware_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimAuthRequireMiddleware_handlers());
+    // printf("PHP_METHOD VSlim__Auth__RequireAuthMiddleware::process called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimAuthRequireMiddleware_process(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimPsr7Response_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__psr7__response_ce, VSlimPsr7Response_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+static const zend_function_entry vslim__auth__requireauthmiddleware_methods[] = {
+    PHP_ME(VSlim__Auth__RequireAuthMiddleware, __construct, arginfo_vslimauthrequiremiddleware_construct, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Auth__RequireAuthMiddleware, setApp, arginfo_vslimauthrequiremiddleware_set_app, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Auth__RequireAuthMiddleware, setRedirectTo, arginfo_vslimauthrequiremiddleware_set_redirect_path, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Auth__RequireAuthMiddleware, redirectTo, arginfo_vslimauthrequiremiddleware_redirect_path_value, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Auth__RequireAuthMiddleware, process, arginfo_vslimauthrequiremiddleware_process, ZEND_ACC_PUBLIC)
+    PHP_FE_END
+};
+
+static int vslim__auth__requireauthmiddleware_register_class(void) {
+    if (vslim__auth__requireauthmiddleware_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__auth__requireauthmiddleware_ce = vphp_find_loaded_class_entry("VSlim\\Auth\\RequireAuthMiddleware", sizeof("VSlim\\Auth\\RequireAuthMiddleware")-1);
+    if (vslim__auth__requireauthmiddleware_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Auth\\RequireAuthMiddleware", vslim__auth__requireauthmiddleware_methods);
+        vslim__auth__requireauthmiddleware_ce = zend_register_internal_class(&ce);
+        vslim__auth__requireauthmiddleware_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__auth__requireauthmiddleware_ce, "app_ref", sizeof("app_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__auth__requireauthmiddleware_ce, "redirect_path", sizeof("redirect_path")-1, "", ZEND_ACC_PROTECTED);
+    }
+    return SUCCESS;
+}
+zend_class_entry *vslim__auth__guestmiddleware_ce = NULL;
+ZEND_BEGIN_ARG_INFO_EX(arginfo_vslimauthguestmiddleware_construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimauthguestmiddleware_set_app[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Auth\\GuestMiddleware", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_INFO(0, app)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimauthguestmiddleware_set_redirect_path[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VSlim\\Auth\\GuestMiddleware", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_INFO(0, path, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vslimauthguestmiddleware_redirect_path_value, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vslimauthguestmiddleware_process[] = {
+    { (const char*)(uintptr_t)(2), ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\ResponseInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+{ "request", ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Message\\ServerRequestInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+{ "handler", ZEND_TYPE_INIT_CLASS_CONST("Psr\\Http\\Server\\RequestHandlerInterface", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+PHP_METHOD(VSlim__Auth__GuestMiddleware, __construct) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern vphp_class_handlers* VSlimAuthGuestMiddleware_handlers();
+    vphp_class_handlers *h = VSlimAuthGuestMiddleware_handlers();
+    vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
+    vphp_object_wrapper *wrapper = vphp_obj_from_obj(Z_OBJ_P(getThis()));
+    extern void vphp_wrap_VSlimAuthGuestMiddleware_construct(void* v_ptr, vphp_context_internal ctx);
+    void* v_ptr = wrapper->v_ptr;
+    vphp_wrap_VSlimAuthGuestMiddleware_construct(v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Auth__GuestMiddleware, setApp) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimAuthGuestMiddleware_set_app(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimAuthGuestMiddleware_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimAuthGuestMiddleware_handlers());
+    // printf("PHP_METHOD VSlim__Auth__GuestMiddleware::setApp called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimAuthGuestMiddleware_set_app(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimAuthGuestMiddleware_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__auth__guestmiddleware_ce, VSlimAuthGuestMiddleware_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+
+PHP_METHOD(VSlim__Auth__GuestMiddleware, setRedirectTo) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimAuthGuestMiddleware_set_redirect_path(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimAuthGuestMiddleware_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimAuthGuestMiddleware_handlers());
+    // printf("PHP_METHOD VSlim__Auth__GuestMiddleware::setRedirectTo called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimAuthGuestMiddleware_set_redirect_path(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimAuthGuestMiddleware_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__auth__guestmiddleware_ce, VSlimAuthGuestMiddleware_handlers(), VPHP_BORROWS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Auth__GuestMiddleware, redirectTo) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_VSlimAuthGuestMiddleware_redirect_path_value(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimAuthGuestMiddleware_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimAuthGuestMiddleware_handlers());
+    if (!wrapper->v_ptr) RETURN_FALSE;
+    vphp_wrap_VSlimAuthGuestMiddleware_redirect_path_value(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VSlim__Auth__GuestMiddleware, process) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void* vphp_wrap_VSlimAuthGuestMiddleware_process(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* VSlimAuthGuestMiddleware_handlers();
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(Z_OBJ_P(getThis()), VSlimAuthGuestMiddleware_handlers());
+    // printf("PHP_METHOD VSlim__Auth__GuestMiddleware::process called, wrapper->v_ptr=%p\n", wrapper->v_ptr);
+    if (!wrapper->v_ptr) RETURN_NULL();
+    void* v_instance = vphp_wrap_VSlimAuthGuestMiddleware_process(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        return;
+    }
+    extern vphp_class_handlers* VSlimPsr7Response_handlers();
+    vphp_return_bound_object(return_value, v_instance, vslim__psr7__response_ce, VSlimPsr7Response_handlers(), VPHP_OWNS_VPTR);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+static const zend_function_entry vslim__auth__guestmiddleware_methods[] = {
+    PHP_ME(VSlim__Auth__GuestMiddleware, __construct, arginfo_vslimauthguestmiddleware_construct, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Auth__GuestMiddleware, setApp, arginfo_vslimauthguestmiddleware_set_app, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Auth__GuestMiddleware, setRedirectTo, arginfo_vslimauthguestmiddleware_set_redirect_path, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Auth__GuestMiddleware, redirectTo, arginfo_vslimauthguestmiddleware_redirect_path_value, ZEND_ACC_PUBLIC)
+    PHP_ME(VSlim__Auth__GuestMiddleware, process, arginfo_vslimauthguestmiddleware_process, ZEND_ACC_PUBLIC)
+    PHP_FE_END
+};
+
+static int vslim__auth__guestmiddleware_register_class(void) {
+    if (vslim__auth__guestmiddleware_ce != NULL) {
+        return SUCCESS;
+    }
+    vslim__auth__guestmiddleware_ce = vphp_find_loaded_class_entry("VSlim\\Auth\\GuestMiddleware", sizeof("VSlim\\Auth\\GuestMiddleware")-1);
+    if (vslim__auth__guestmiddleware_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VSlim\\Auth\\GuestMiddleware", vslim__auth__guestmiddleware_methods);
+        vslim__auth__guestmiddleware_ce = zend_register_internal_class(&ce);
+        vslim__auth__guestmiddleware_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vslim__auth__guestmiddleware_ce, "app_ref", sizeof("app_ref")-1, ZEND_ACC_PROTECTED);
+        zend_declare_property_string(vslim__auth__guestmiddleware_ce, "redirect_path", sizeof("redirect_path")-1, "", ZEND_ACC_PROTECTED);
     }
     return SUCCESS;
 }
@@ -26084,6 +26872,9 @@ PHP_MINIT_FUNCTION(vslim) {
     if (vslim__vhttpd__client_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__session__store_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__auth__sessionguard_register_class() != SUCCESS) { return FAILURE; }
+    if (vslim__session__startmiddleware_register_class() != SUCCESS) { return FAILURE; }
+    if (vslim__auth__requireauthmiddleware_register_class() != SUCCESS) { return FAILURE; }
+    if (vslim__auth__guestmiddleware_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__vhttpd__response_register_class() != SUCCESS) { return FAILURE; }
     if (vphp__vslim__psr7adapter_register_class() != SUCCESS) { return FAILURE; }
     if (vslim__stream__response_register_class() != SUCCESS) { return FAILURE; }

@@ -2,6 +2,73 @@ module main
 
 import vphp
 
+fn auth_request_with_attribute(request vphp.RequestBorrowedZBox, name string, value vphp.ZVal) vphp.RequestOwnedZBox {
+	raw_request := request.to_zval()
+	if raw_request.is_valid() && raw_request.is_object() && raw_request.method_exists('withAttribute') {
+		mut out := vphp.method_request_owned_box(raw_request, 'withAttribute', [
+			vphp.RequestOwnedZBox.new_string(name).to_zval(),
+			value,
+		])
+		return out
+	}
+	return request.clone_request_owned()
+}
+
+fn auth_unauthorized_psr_response(app &VSlimApp, redirect_path string) &VSlimPsr7Response {
+	if redirect_path.trim_space() != '' {
+		mut redirect := VSlimResponse{
+			status: 302
+			body: ''
+			content_type: 'text/plain; charset=utf-8'
+			headers: {
+				'content-type': 'text/plain; charset=utf-8'
+			}
+		}
+		redirect.redirect(redirect_path.trim_space())
+		return new_psr7_response_from_vslim_response(redirect)
+	}
+	return default_error_response_psr(app, 401, 'Unauthorized', 'unauthorized')
+}
+
+fn auth_guest_redirect_psr_response(redirect_path string) &VSlimPsr7Response {
+	target := if redirect_path.trim_space() == '' { '/' } else { redirect_path.trim_space() }
+	mut redirect := VSlimResponse{
+		status: 302
+		body: ''
+		content_type: 'text/plain; charset=utf-8'
+		headers: {
+			'content-type': 'text/plain; charset=utf-8'
+		}
+	}
+	redirect.redirect(target)
+	return new_psr7_response_from_vslim_response(redirect)
+}
+
+fn session_cookie_header_value(session &VSlimSessionStore) string {
+	if session.destroyed {
+		return build_set_cookie_header(session.cookie_name_value(), '', session.path_value(),
+			session.domain_value(), -1, session.secure_value(), session.http_only_value(),
+			session.same_site_value())
+	}
+	return build_set_cookie_header(session.cookie_name_value(),
+		session_encode_values(session.values, session.secret_value()), session.path_value(),
+		session.domain_value(), session.ttl_seconds_value(), session.secure_value(),
+		session.http_only_value(), session.same_site_value())
+}
+
+fn session_commit_psr_response(mut session VSlimSessionStore, response &VSlimPsr7Response) &VSlimPsr7Response {
+	if !session.dirty && !session.destroyed {
+		return response
+	}
+	mut headers := response.headers.clone()
+	mut header_names := clone_header_names(response.header_names)
+	headers['set-cookie'] = [session_cookie_header_value(session)]
+	header_names['set-cookie'] = 'Set-Cookie'
+	session.dirty = false
+	return clone_psr7_response(response, response.protocol_version, headers, header_names,
+		response_body_or_empty(response), response.status, response.reason_phrase)
+}
+
 fn session_new_string_map_zval(values map[string]string) vphp.ZVal {
 	mut out := vphp.ZVal.new_null()
 	out.array_init()
@@ -434,4 +501,132 @@ pub fn (mut guard VSlimAuthSessionGuard) logout() &VSlimAuthSessionGuard {
 		guard.store_ref.forget(guard.user_key_value())
 	}
 	return &guard
+}
+
+@[php_method]
+pub fn (mut middleware VSlimSessionStartMiddleware) construct() &VSlimSessionStartMiddleware {
+	return &middleware
+}
+
+@[php_method: 'setApp']
+pub fn (mut middleware VSlimSessionStartMiddleware) set_app(app &VSlimApp) &VSlimSessionStartMiddleware {
+	middleware.app_ref = app
+	return &middleware
+}
+
+@[php_method]
+@[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (middleware &VSlimSessionStartMiddleware) process(request vphp.RequestBorrowedZBox, handler vphp.RequestBorrowedZBox) &VSlimPsr7Response {
+	if middleware.app_ref == unsafe { nil } {
+		return new_psr7_text_response(500, 'Session middleware app is not configured')
+	}
+	mut session := middleware.app_ref.session(request)
+	mut result := vphp.method_request_owned_box(handler.to_zval(), 'handle', [
+		request.to_zval(),
+	])
+	response := normalize_to_psr7_response(result.to_zval())
+	return session_commit_psr_response(mut session, response)
+}
+
+@[php_method]
+pub fn (mut middleware VSlimAuthRequireMiddleware) construct() &VSlimAuthRequireMiddleware {
+	middleware.redirect_path = ''
+	return &middleware
+}
+
+@[php_method: 'setApp']
+pub fn (mut middleware VSlimAuthRequireMiddleware) set_app(app &VSlimApp) &VSlimAuthRequireMiddleware {
+	middleware.app_ref = app
+	return &middleware
+}
+
+@[php_method: 'setRedirectTo']
+pub fn (mut middleware VSlimAuthRequireMiddleware) set_redirect_path(path string) &VSlimAuthRequireMiddleware {
+	middleware.redirect_path = path.trim_space()
+	return &middleware
+}
+
+@[php_method: 'redirectTo']
+pub fn (middleware &VSlimAuthRequireMiddleware) redirect_path_value() string {
+	return middleware.redirect_path.trim_space()
+}
+
+@[php_method]
+@[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.RequestBorrowedZBox, handler vphp.RequestBorrowedZBox) &VSlimPsr7Response {
+	if middleware.app_ref == unsafe { nil } {
+		return new_psr7_text_response(500, 'Auth middleware app is not configured')
+	}
+	mut guard := middleware.app_ref.auth(request)
+	if !guard.check() {
+		redirect_path := if middleware.redirect_path.trim_space() != '' {
+			middleware.redirect_path_value()
+		} else {
+			middleware.app_ref.auth_redirect_to()
+		}
+		return auth_unauthorized_psr_response(middleware.app_ref, redirect_path)
+	}
+	user_id := guard.id()
+	mut next_request := auth_request_with_attribute(request, 'auth.user_id',
+		vphp.RequestOwnedZBox.new_string(user_id).to_zval())
+	if middleware.app_ref.auth_user_resolver.is_valid() && middleware.app_ref.auth_user_resolver.is_callable() {
+		mut user := middleware.app_ref.auth_user(request)
+		if user.is_valid() && !user.to_zval().is_null() && !user.to_zval().is_undef() {
+			mut enriched := auth_request_with_attribute(vphp.borrow_zbox(next_request.to_zval()),
+				'auth.user', user.to_zval())
+			next_request.release()
+			next_request = enriched
+		}
+	}
+	mut result := vphp.method_request_owned_box(handler.to_zval(), 'handle', [
+		next_request.to_zval(),
+	])
+	return normalize_to_psr7_response(result.to_zval())
+}
+
+@[php_method]
+pub fn (mut middleware VSlimAuthGuestMiddleware) construct() &VSlimAuthGuestMiddleware {
+	middleware.redirect_path = ''
+	return &middleware
+}
+
+@[php_method: 'setApp']
+pub fn (mut middleware VSlimAuthGuestMiddleware) set_app(app &VSlimApp) &VSlimAuthGuestMiddleware {
+	middleware.app_ref = app
+	return &middleware
+}
+
+@[php_method: 'setRedirectTo']
+pub fn (mut middleware VSlimAuthGuestMiddleware) set_redirect_path(path string) &VSlimAuthGuestMiddleware {
+	middleware.redirect_path = path.trim_space()
+	return &middleware
+}
+
+@[php_method: 'redirectTo']
+pub fn (middleware &VSlimAuthGuestMiddleware) redirect_path_value() string {
+	return middleware.redirect_path.trim_space()
+}
+
+@[php_method]
+@[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (middleware &VSlimAuthGuestMiddleware) process(request vphp.RequestBorrowedZBox, handler vphp.RequestBorrowedZBox) &VSlimPsr7Response {
+	if middleware.app_ref == unsafe { nil } {
+		return new_psr7_text_response(500, 'Guest middleware app is not configured')
+	}
+	mut guard := middleware.app_ref.auth(request)
+	if !guard.guest() {
+		redirect_path := if middleware.redirect_path.trim_space() != '' {
+			middleware.redirect_path_value()
+		} else {
+			middleware.app_ref.auth_redirect_to()
+		}
+		return auth_guest_redirect_psr_response(redirect_path)
+	}
+	mut result := vphp.method_request_owned_box(handler.to_zval(), 'handle', [
+		request.to_zval(),
+	])
+	return normalize_to_psr7_response(result.to_zval())
 }

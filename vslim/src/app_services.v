@@ -5,6 +5,13 @@ import vphp
 
 #include "php_bridge.h"
 
+fn zval_to_json_fragment(value vphp.ZVal) string {
+	if !value.is_valid() || value.is_null() || value.is_undef() {
+		return 'null'
+	}
+	return vphp.json_encode(value)
+}
+
 @[php_method]
 pub fn (mut app VSlimApp) set_base_path(base_path string) &VSlimApp {
 	app.base_path = RoutePath.normalize_base_path(base_path)
@@ -42,6 +49,7 @@ pub fn (app &VSlimApp) has_config() bool {
 @[php_method]
 pub fn (mut app VSlimApp) set_config(config &VSlimConfig) &VSlimApp {
 	app.config_ref = config
+	configure_default_auth_settings(mut app, app.config_ref)
 	app.sync_standard_services_to_container()
 	return app
 }
@@ -52,6 +60,7 @@ pub fn (mut app VSlimApp) config() &VSlimConfig {
 		mut created := &VSlimConfig{}
 		created.construct()
 		app.config_ref = created
+		configure_default_auth_settings(mut app, app.config_ref)
 		app.sync_standard_services_to_container()
 	}
 	return app.config_ref
@@ -61,6 +70,7 @@ pub fn (mut app VSlimApp) config() &VSlimConfig {
 pub fn (mut app VSlimApp) load_config(path string) &VSlimApp {
 	mut cfg := app.config()
 	cfg.load(path)
+	configure_default_auth_settings(mut app, app.config_ref)
 	app.sync_standard_services_to_container()
 	return app
 }
@@ -69,6 +79,7 @@ pub fn (mut app VSlimApp) load_config(path string) &VSlimApp {
 pub fn (mut app VSlimApp) load_config_text(text string) &VSlimApp {
 	mut cfg := app.config()
 	cfg.load_text(text)
+	configure_default_auth_settings(mut app, app.config_ref)
 	app.sync_standard_services_to_container()
 	return app
 }
@@ -77,6 +88,7 @@ pub fn (mut app VSlimApp) load_config_text(text string) &VSlimApp {
 pub fn (mut app VSlimApp) merge_config(path string) &VSlimApp {
 	mut cfg := app.config()
 	cfg.merge_file(path)
+	configure_default_auth_settings(mut app, app.config_ref)
 	app.sync_standard_services_to_container()
 	return app
 }
@@ -85,6 +97,7 @@ pub fn (mut app VSlimApp) merge_config(path string) &VSlimApp {
 pub fn (mut app VSlimApp) merge_config_text(text string) &VSlimApp {
 	mut cfg := app.config()
 	cfg.merge_text(text)
+	configure_default_auth_settings(mut app, app.config_ref)
 	app.sync_standard_services_to_container()
 	return app
 }
@@ -113,6 +126,171 @@ pub fn (app &VSlimApp) auth(request vphp.RequestBorrowedZBox) &VSlimAuthSessionG
 	guard.set_store(session)
 	configure_default_auth_guard(mut guard, app.config_ref)
 	return guard
+}
+
+@[php_method: 'setAuthUserResolver']
+pub fn (mut app VSlimApp) set_auth_user_resolver(resolver vphp.RequestBorrowedZBox) &VSlimApp {
+	if !resolver.is_valid() || !resolver.is_callable() {
+		vphp.throw_exception_class('InvalidArgumentException', 'auth user resolver must be callable',
+			0)
+		return &app
+	}
+	mut old := app.auth_user_resolver
+	old.release()
+	app.auth_user_resolver = vphp.PersistentOwnedZBox.from_callable_zval(resolver.to_zval())
+	return &app
+}
+
+@[php_method: 'setAuthGateResolver']
+pub fn (mut app VSlimApp) set_auth_gate_resolver(resolver vphp.RequestBorrowedZBox) &VSlimApp {
+	if !resolver.is_valid() || !resolver.is_callable() {
+		vphp.throw_exception_class('InvalidArgumentException', 'auth gate resolver must be callable',
+			0)
+		return &app
+	}
+	mut old := app.auth_gate_resolver
+	old.release()
+	app.auth_gate_resolver = vphp.PersistentOwnedZBox.from_callable_zval(resolver.to_zval())
+	return &app
+}
+
+@[php_method: 'setAuthRedirectTo']
+pub fn (mut app VSlimApp) set_auth_redirect_path(path string) &VSlimApp {
+	app.auth_redirect_path = path.trim_space()
+	return &app
+}
+
+@[php_method: 'authRedirectTo']
+pub fn (app &VSlimApp) auth_redirect_to() string {
+	return app.auth_redirect_path.trim_space()
+}
+
+@[php_method: 'authUser']
+pub fn (app &VSlimApp) auth_user(request vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
+	mut guard := app.auth(request)
+	if !guard.check() {
+		return vphp.RequestOwnedZBox.new_null()
+	}
+	user_id := guard.id()
+	if !app.auth_user_resolver.is_valid() || !app.auth_user_resolver.is_callable() {
+		return vphp.RequestOwnedZBox.new_string(user_id)
+	}
+	mut result := app.auth_user_resolver.call_request_owned([
+		vphp.RequestOwnedZBox.new_string(user_id).to_zval(),
+	])
+	return result
+}
+
+@[php_method]
+pub fn (app &VSlimApp) can(ability string, request vphp.RequestBorrowedZBox) bool {
+	normalized := ability.trim_space().to_lower()
+	mut guard := app.auth(request)
+	if !app.auth_gate_resolver.is_valid() || !app.auth_gate_resolver.is_callable() {
+		return match normalized {
+			'authenticated', 'auth' { guard.check() }
+			'guest' { guard.guest() }
+			else { false }
+		}
+	}
+	mut user := app.auth_user(request)
+	defer {
+		user.release()
+	}
+	mut result := app.auth_gate_resolver.call_request_owned([
+		vphp.RequestOwnedZBox.new_string(ability).to_zval(),
+		user.to_zval(),
+		request.to_zval(),
+	])
+	defer {
+		result.release()
+	}
+	return result.to_zval().to_bool()
+}
+
+@[php_method]
+pub fn (app &VSlimApp) cannot(ability string, request vphp.RequestBorrowedZBox) bool {
+	return !app.can(ability, request)
+}
+
+@[php_return_type: 'Psr\\Http\\Server\\MiddlewareInterface']
+@[php_method: 'startSessionMiddleware']
+pub fn (app &VSlimApp) start_session_middleware() &VSlimSessionStartMiddleware {
+	return &VSlimSessionStartMiddleware{
+		app_ref: app
+	}
+}
+
+@[php_return_type: 'Psr\\Http\\Server\\MiddlewareInterface']
+@[php_method: 'authMiddleware']
+pub fn (app &VSlimApp) auth_middleware() &VSlimAuthRequireMiddleware {
+	return &VSlimAuthRequireMiddleware{
+		app_ref:       app
+		redirect_path: app.auth_redirect_path.trim_space()
+	}
+}
+
+@[php_return_type: 'Psr\\Http\\Server\\MiddlewareInterface']
+@[php_method: 'guestMiddleware']
+pub fn (app &VSlimApp) guest_middleware() &VSlimAuthGuestMiddleware {
+	return &VSlimAuthGuestMiddleware{
+		app_ref:       app
+		redirect_path: app.auth_redirect_path.trim_space()
+	}
+}
+
+@[php_optional_args: 'error_code']
+@[php_method: 'errorResponse']
+pub fn (app &VSlimApp) error_response(status int, message string, error_code string) &VSlimResponse {
+	code := if error_code.trim_space() == '' { 'runtime_error' } else { error_code.trim_space() }
+	return to_vslim_response(default_error_response(app, status, message, code))
+}
+
+@[php_optional_args: 'status']
+@[php_method: 'validationError']
+pub fn (app &VSlimApp) validation_error(errors vphp.RequestBorrowedZBox, status int) &VSlimResponse {
+	error_status := if status <= 0 { 422 } else { status }
+	json_body := '{"ok":false,"code":"validation_error","error":"validation_error","status":${error_status},"message":"Validation failed","errors":${zval_to_json_fragment(errors.to_zval())}}'
+	return to_vslim_response(json_response(error_status, json_body))
+}
+
+@[php_optional_args: 'message']
+@[php_method: 'unauthorized']
+pub fn (app &VSlimApp) unauthorized_response(message string) &VSlimResponse {
+	msg := if message.trim_space() == '' { 'Unauthorized' } else { message }
+	return to_vslim_response(default_error_response(app, 401, msg, 'unauthorized'))
+}
+
+@[php_optional_args: 'message']
+@[php_method: 'forbidden']
+pub fn (app &VSlimApp) forbidden_response(message string) &VSlimResponse {
+	msg := if message.trim_space() == '' { 'Forbidden' } else { message }
+	return to_vslim_response(default_error_response(app, 403, msg, 'forbidden'))
+}
+
+@[php_method: 'doctor']
+pub fn (mut app VSlimApp) doctor_report() map[string]string {
+	config_loaded := app.has_config() && app.config().is_loaded()
+	mut transport := ''
+	if app.has_database() || (app.config_ref != unsafe { nil } && app.config_ref.has('database.driver')) {
+		transport = app.database().transport()
+	}
+	session_configured := if app.config_ref != unsafe { nil } {
+		if app.config_ref.has('session.cookie') || app.config_ref.has('session.secret') { 'true' } else { 'false' }
+	} else {
+		'false'
+	}
+	return {
+		'config_loaded':         if config_loaded { 'true' } else { 'false' }
+		'config_path':           if app.has_config() { app.config().path() } else { '' }
+		'route_count':           app.route_count().str()
+		'provider_count':        app.provider_count().str()
+		'module_count':          app.module_count().str()
+		'database_transport':    transport
+		'error_response_json':   if app.error_response_json_enabled() { 'true' } else { 'false' }
+		'auth_redirect_to':      app.auth_redirect_to()
+		'session_configured':    session_configured
+		'auth_resolver_defined': if app.auth_user_resolver.is_valid() && app.auth_user_resolver.is_callable() { 'true' } else { 'false' }
+	}
 }
 
 fn (app &VSlimApp) migrator_project_root() string {
@@ -289,6 +467,15 @@ fn configure_default_auth_guard(mut guard VSlimAuthSessionGuard, config &VSlimCo
 	}
 	if config.has('auth.session_key') {
 		guard.set_user_key(config.get_string('auth.session_key', guard.user_key_value()))
+	}
+}
+
+fn configure_default_auth_settings(mut app VSlimApp, config &VSlimConfig) {
+	if config == unsafe { nil } {
+		return
+	}
+	if config.has('auth.redirect_to') {
+		app.auth_redirect_path = config.get_string('auth.redirect_to', app.auth_redirect_to()).trim_space()
 	}
 }
 

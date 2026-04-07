@@ -15,6 +15,7 @@ Documentation entry:
 - `VSlim\View` / `VSlim\Controller` 提供轻量 MVC 能力；View 现在按“指令 + 表达式 + 变量路径”三层组织
 - `VSlim\Container` / `VSlim\Config` 提供基础依赖注入与 TOML 配置
 - `VSlim\Database\Config` / `VSlim\Database\Manager` / `VSlim\Database\Query` 提供 mysql-first 的连接池、事务与轻量 query builder
+- `VSlim\Validate\Validator`、`VSlim\Session\StartMiddleware`、`VSlim\Auth\RequireAuthMiddleware` 提供轻量 validation、cookie session、auth/guest middleware
 - `vslim_handle_request(...)` / `dispatch_envelope(...)` 提供和 worker / `vhttpd` 的集成边界
 
 ## VSlim 和 vhttpd 的边界
