@@ -20,6 +20,28 @@ pub fn (mut pool VSlimPsr6CacheItemPool) construct() &VSlimPsr6CacheItemPool {
 	return &pool
 }
 
+@[php_method: 'setNamespace']
+pub fn (mut pool VSlimPsr6CacheItemPool) set_namespace(prefix string) &VSlimPsr6CacheItemPool {
+	pool.namespace_prefix = psr_cache_normalize_namespace(prefix)
+	return &pool
+}
+
+@[php_method: 'namespace']
+pub fn (pool &VSlimPsr6CacheItemPool) namespace() string {
+	return pool.namespace_prefix
+}
+
+@[php_method: 'setDefaultTtlSeconds']
+pub fn (mut pool VSlimPsr6CacheItemPool) set_default_ttl_seconds(seconds int) &VSlimPsr6CacheItemPool {
+	pool.default_ttl_seconds = if seconds <= 0 { 0 } else { seconds }
+	return &pool
+}
+
+@[php_method: 'defaultTtlSeconds']
+pub fn (pool &VSlimPsr6CacheItemPool) default_ttl_seconds_value() int {
+	return if pool.default_ttl_seconds <= 0 { 0 } else { pool.default_ttl_seconds }
+}
+
 @[php_method: 'setClock']
 @[php_arg_type: 'clock=Psr\\Clock\\ClockInterface']
 pub fn (mut pool VSlimPsr6CacheItemPool) set_clock(clock vphp.RequestBorrowedZBox) &VSlimPsr6CacheItemPool {
@@ -83,16 +105,17 @@ pub fn (mut pool VSlimPsr6CacheItemPool) has_item(key string) bool {
 		return false
 	}
 	ensure_psr6_pool(mut pool)
-	if normalized in pool.deferred {
-		entry := pool.deferred[normalized] or { Psr6DeferredEntry{} }
+	storage_key := psr6_storage_key(pool, normalized)
+	if storage_key in pool.deferred {
+		entry := pool.deferred[storage_key] or { Psr6DeferredEntry{} }
 		if psr6_deferred_entry_expired(pool.clock_ref.to_zval(), entry) || !entry.has_value {
-			pool.remove_deferred_entry(normalized)
+			pool.remove_deferred_entry(storage_key)
 			return false
 		}
 		return true
 	}
-	pool.prune_expired_entry(normalized)
-	return normalized in pool.entries
+	pool.prune_expired_entry(storage_key)
+	return storage_key in pool.entries
 }
 
 @[php_method]
@@ -110,8 +133,9 @@ pub fn (mut pool VSlimPsr6CacheItemPool) delete_item(key string) bool {
 		return false
 	}
 	ensure_psr6_pool(mut pool)
-	pool.remove_entry(normalized)
-	pool.remove_deferred_entry(normalized)
+	storage_key := psr6_storage_key(pool, normalized)
+	pool.remove_entry(storage_key)
+	pool.remove_deferred_entry(storage_key)
 	return true
 }
 
@@ -127,8 +151,9 @@ pub fn (mut pool VSlimPsr6CacheItemPool) delete_items(keys vphp.RequestBorrowedZ
 		throw_psr6_invalid_argument(err.msg())
 		return false
 	} {
-		pool.remove_entry(key_name)
-		pool.remove_deferred_entry(key_name)
+		storage_key := psr6_storage_key(pool, key_name)
+		pool.remove_entry(storage_key)
+		pool.remove_deferred_entry(storage_key)
 	}
 	return true
 }
@@ -156,7 +181,7 @@ pub fn (mut pool VSlimPsr6CacheItemPool) save_deferred(item vphp.RequestBorrowed
 		throw_psr6_cache_exception(err.msg())
 		return false
 	}
-	pool.replace_deferred_entry(snapshot.key, snapshot)
+	pool.replace_deferred_entry(psr6_storage_key(pool, snapshot.key), snapshot)
 	mut owned := snapshot.value
 	owned.release()
 	return true
@@ -168,8 +193,13 @@ pub fn (mut pool VSlimPsr6CacheItemPool) commit() bool {
 	keys := pool.deferred.keys()
 	for key in keys {
 		entry := pool.deferred[key] or { continue }
+		original_key := if pool.namespace_prefix != '' && key.starts_with(pool.namespace_prefix + ':') {
+			key[pool.namespace_prefix.len + 1..]
+		} else {
+			key
+		}
 		snapshot := Psr6ItemSnapshot{
-			key:             key
+			key:             original_key
 			value:           psr6_clone_persistent(entry.value)
 			has_value:       entry.has_value
 			expires_at_unix: entry.expires_at_unix
@@ -252,6 +282,9 @@ fn ensure_psr6_pool(mut pool VSlimPsr6CacheItemPool) {
 	if !pool.clock_ref.is_valid() || pool.clock_ref.is_null() || pool.clock_ref.is_undef() {
 		pool.clock_ref = new_psr20_system_clock_ref()
 	}
+	if pool.default_ttl_seconds < 0 {
+		pool.default_ttl_seconds = 0
+	}
 }
 
 fn ensure_psr6_item_clock(mut item VSlimPsr6CacheItem) {
@@ -261,16 +294,17 @@ fn ensure_psr6_item_clock(mut item VSlimPsr6CacheItem) {
 }
 
 fn (mut pool VSlimPsr6CacheItemPool) item_for_key(key string) &VSlimPsr6CacheItem {
-	if key in pool.deferred {
-		entry := pool.deferred[key] or { Psr6DeferredEntry{} }
+	storage_key := psr6_storage_key(pool, key)
+	if storage_key in pool.deferred {
+		entry := pool.deferred[storage_key] or { Psr6DeferredEntry{} }
 		if psr6_deferred_entry_expired(pool.clock_ref.to_zval(), entry) || !entry.has_value {
-			pool.remove_deferred_entry(key)
+			pool.remove_deferred_entry(storage_key)
 			return psr6_new_missing_item_with_clock(key, pool.clock_ref)
 		}
 		return psr6_new_hit_item_with_clock(key, entry.value, entry.expires_at_unix, pool.clock_ref)
 	}
-	pool.prune_expired_entry(key)
-	entry := pool.entries[key] or { return psr6_new_missing_item_with_clock(key, pool.clock_ref) }
+	pool.prune_expired_entry(storage_key)
+	entry := pool.entries[storage_key] or { return psr6_new_missing_item_with_clock(key, pool.clock_ref) }
 	return psr6_new_hit_item_with_clock(key, entry.value, entry.expires_at_unix, pool.clock_ref)
 }
 
@@ -278,10 +312,13 @@ fn (mut pool VSlimPsr6CacheItemPool) persist_snapshot(snapshot Psr6ItemSnapshot)
 	now_unix := psr20_now_unix_or_throw(pool.clock_ref.to_zval()) or { return false }
 	if !snapshot.has_value || snapshot.expires_at_unix < 0
 		|| (snapshot.expires_at_unix > 0 && snapshot.expires_at_unix <= now_unix) {
-		pool.remove_entry(snapshot.key)
+		pool.remove_entry(psr6_storage_key(pool, snapshot.key))
 		return true
 	}
-	pool.replace_entry(snapshot.key, psr6_clone_persistent(snapshot.value), snapshot.expires_at_unix)
+	expires_at := psr_cache_apply_default_ttl(pool.clock_ref.to_zval(), snapshot.expires_at_unix,
+		pool.default_ttl_seconds)
+	pool.replace_entry(psr6_storage_key(pool, snapshot.key), psr6_clone_persistent(snapshot.value),
+		expires_at)
 	return true
 }
 
@@ -333,6 +370,13 @@ fn (mut pool VSlimPsr6CacheItemPool) replace_deferred_entry(key string, snapshot
 		has_value:       snapshot.has_value
 		expires_at_unix: snapshot.expires_at_unix
 	}
+}
+
+fn psr6_storage_key(pool VSlimPsr6CacheItemPool, key string) string {
+	if pool.namespace_prefix == '' {
+		return key
+	}
+	return '${pool.namespace_prefix}:${key}'
 }
 
 fn (mut pool VSlimPsr6CacheItemPool) remove_deferred_entry(key string) {

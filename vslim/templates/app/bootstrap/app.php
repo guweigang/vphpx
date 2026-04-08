@@ -7,7 +7,7 @@ require_once __DIR__ . '/../app/Modules/StatusModule.php';
 $errors = require __DIR__ . '/../app/Http/errors.php';
 
 return [
-    'config_path' => dirname(__DIR__) . '/config/app.toml',
+    'config_path' => dirname(__DIR__) . '/config',
     'base_path' => '/template',
     'view_base_path' => dirname(__DIR__) . '/resources/views',
     'not_found' => $errors['not_found'] ?? null,

@@ -87,6 +87,21 @@ fn detect_openssl_cflags() string {
 	return ''
 }
 
+fn detect_mysql_flags() (string, string) {
+	for pkg in ['mysqlclient', 'mariadb', 'libmariadb'] {
+		pkg_cflags := shell_trim('pkg-config --cflags ${pkg}')
+		pkg_libs := shell_trim('pkg-config --libs ${pkg}')
+		if pkg_cflags != '' || pkg_libs != '' {
+			return pkg_cflags, pkg_libs
+		}
+	}
+	brew_prefix := shell_trim('brew --prefix mysql')
+	if brew_prefix != '' {
+		return '-I${brew_prefix}/include/mysql', '-L${brew_prefix}/lib -lmysqlclient'
+	}
+	return '', ''
+}
+
 fn detect_v_root_include_flags() string {
 	v_exe := os.find_abs_path_of_executable('v') or { '' }
 	if v_exe == '' {
@@ -446,7 +461,7 @@ fn main() {
 	}
 
 	is_macos := os.user_os() == 'macos'
-	mut disabled_warnings := '-Wno-pointer-to-int-cast -Wno-incompatible-pointer-types -Wno-unused-value'
+	mut disabled_warnings := '-Wno-pointer-to-int-cast -Wno-incompatible-pointer-types -Wno-unused-value -Wno-pointer-sign'
 	if is_macos {
 		disabled_warnings += ' -Wno-initializer-overrides'
 	} else {
@@ -454,6 +469,7 @@ fn main() {
 	}
 	cjson_cflags, cjson_libs := detect_cjson_flags()
 	openssl_cflags := detect_openssl_cflags()
+	mysql_cflags, mysql_libs := detect_mysql_flags()
 	v_root_cflags := detect_v_root_include_flags()
 
 	transpiled_c := os.join_path(project_root, '${ext_name}_generated.c')
@@ -505,10 +521,10 @@ fn main() {
 	}
 
 	gcc_cmd := 'gcc -shared -fPIC ${disabled_warnings} -DCOMPILE_DL_${ext_name.to_upper()}=1 ' +
-		'${cjson_cflags} ${openssl_cflags} ${v_root_cflags} ${extra_compile_flags}-DcJSON_GetErrorPos=cJSON_GetErrorPtr ' +
+		'${cjson_cflags} ${openssl_cflags} ${mysql_cflags} ${v_root_cflags} ${extra_compile_flags}-DcJSON_GetErrorPos=cJSON_GetErrorPtr ' +
 		'${php_inc} ${transpiled_c} php_bridge.c ../vphp/v_bridge.c -o ${output_so} ' +
 		'-I../vphp ' +
-		dedupe_link_flags('${php_ldflags} ${php_libs} ${cjson_libs}${extra_link_flags} ${platform_link_flags}')
+		dedupe_link_flags('${php_ldflags} ${php_libs} ${cjson_libs} ${mysql_libs}${extra_link_flags} ${platform_link_flags}')
 
 	println('执行命令: ${gcc_cmd}')
 	if os.system(gcc_cmd) != 0 {

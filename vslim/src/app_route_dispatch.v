@@ -193,7 +193,7 @@ fn resolve_php_route_dispatch_raw(app &VSlimApp, req &VSlimRequest, source_paylo
 }
 
 fn dispatch_php_route_match_raw(app &VSlimApp, path string, initial_payload vphp.RequestBorrowedZBox, validation_req &VSlimRequest, route VSlimRoute, params map[string]string) (vphp.ZVal, vphp.RequestOwnedZBox) {
-	validation_meta, has_validation_meta := request_validation_terminal_meta(validation_req)
+	validation_meta, has_validation_meta := request_validation_terminal_meta(app, validation_req)
 	if has_validation_meta {
 		return dispatch_php_pipeline_raw(app, path, initial_payload, RawDispatchPlan{
 			route_params:  params.clone()
@@ -262,7 +262,14 @@ fn dispatch_resource_missing_meta(action string, handler vphp.RequestBorrowedZBo
 	return result.take_zval()
 }
 
-fn vslim_max_body_bytes() int {
+fn vslim_max_body_bytes(app &VSlimApp) int {
+	if app.config_ref != unsafe { nil } && app.config_ref.has('http.max_body_bytes') {
+		max_bytes := app.config_ref.get_int('http.max_body_bytes', 0)
+		if max_bytes > 0 {
+			return max_bytes
+		}
+		return 0
+	}
 	raw := os.getenv('VSLIM_MAX_BODY_BYTES').trim_space()
 	if raw == '' {
 		return 0
@@ -274,8 +281,8 @@ fn vslim_max_body_bytes() int {
 	return max_bytes
 }
 
-fn request_validation_terminal_meta(req &VSlimRequest) (MiddlewareTerminalMeta, bool) {
-	max_bytes := vslim_max_body_bytes()
+fn request_validation_terminal_meta(app &VSlimApp, req &VSlimRequest) (MiddlewareTerminalMeta, bool) {
+	max_bytes := vslim_max_body_bytes(app)
 	if max_bytes > 0 && req.body.len > max_bytes {
 		return error_terminal_meta(413, 'Payload too large', 'Payload Too Large', 'payload_too_large'),
 			true

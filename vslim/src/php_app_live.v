@@ -193,9 +193,9 @@ fn render_live_html(handler vphp.ZVal, req_z vphp.ZVal, socket_z vphp.ZVal, sock
 		if rendered.is_string() {
 			return rendered.to_zval().to_string()
 		}
-		res, ok := normalize_php_route_response(rendered.to_zval())
+		body, ok := normalize_php_route_response_body(rendered.to_zval())
 		if ok {
-			return res.body
+			return body
 		}
 	}
 	if is_live_view_object(handler) {

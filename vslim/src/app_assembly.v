@@ -525,10 +525,11 @@ fn apply_bootstrap_convention_spec(mut app VSlimApp, path string, label string) 
 
 fn apply_bootstrap_shared_conventions(mut app VSlimApp, project_root string) !bool {
 	mut applied := false
-	config_candidates := [path_join(project_root, 'config/app.toml'),
+	config_candidates := [path_join(project_root, 'config'),
+		path_join(project_root, 'config/app.toml'),
 		path_join(project_root, 'app.toml')]
 	for candidate in config_candidates {
-		if php_is_file(candidate) {
+		if php_is_file(candidate) || php_is_dir(candidate) {
 			app.load_config(candidate)
 			applied = true
 			break

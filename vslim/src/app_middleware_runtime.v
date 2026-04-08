@@ -109,29 +109,6 @@ fn (mut chain MiddlewareChain) dispatch(payload vphp.RequestBorrowedZBox) !vphp.
 	return raw
 }
 
-fn new_fixed_terminal_phase_chain(app &VSlimApp, ctx PipelineRequestContext, current VSlimResponse) &MiddlewareChain {
-	return &MiddlewareChain{
-		app:         app
-		request_ctx: ctx
-		middlewares: []vphp.RequestOwnedZBox{}
-		plan:        RawDispatchPlan{
-			route_params:  ctx.route_params.clone()
-			terminal_meta: fixed_terminal_meta(current)
-		}
-		index:       0
-	}
-}
-
-fn dispatch_php_after_phase_middleware(app &VSlimApp, ctx PipelineRequestContext, hook vphp.RequestOwnedZBox, current VSlimResponse) !vphp.ZVal {
-	mut chain := new_fixed_terminal_phase_chain(app, ctx, current)
-	next_handler := build_php_psr15_next_handler_object(chain)
-	if !hook.is_valid() || hook.is_null() || hook.is_undef() {
-		return error('Middleware is not valid')
-	}
-	return dispatch_php_phase_middleware_raw(app, ctx.payload_ref.borrowed(), ctx.route_params, hook.borrowed(),
-		next_handler)
-}
-
 fn dispatch_php_after_phase_middleware_psr(app &VSlimApp, ctx PipelineRequestContext, hook vphp.RequestOwnedZBox, current &VSlimPsr7Response) !vphp.ZVal {
 	next_handler := build_php_psr15_fixed_response_handler_object(current)
 	if !hook.is_valid() || hook.is_null() || hook.is_undef() {
@@ -142,39 +119,8 @@ fn dispatch_php_after_phase_middleware_psr(app &VSlimApp, ctx PipelineRequestCon
 }
 
 fn apply_php_after_middlewares(app &VSlimApp, ctx PipelineRequestContext, initial VSlimResponse) VSlimResponse {
-	group_after := matching_group_after_middlewares(app, ctx.path)
-	if app.php_after_middlewares.len == 0 && group_after.len == 0 {
-		return initial
-	}
-	mut current := initial
-	all := collect_registered_middlewares(app.php_after_middlewares, group_after)
-	for hook in all {
-		if !hook.is_valid() || hook.is_null() || hook.is_undef() {
-			return error_response_from_context(app, ctx, 500, 'Middleware is not valid',
-				'handler_not_callable')
-		}
-		resolve_php_phase_middleware_target(app, hook.borrowed()) or {
-			msg := if err.msg() == '' {
-				'Phase middleware must implement Psr\\Http\\Server\\MiddlewareInterface'
-			} else {
-				err.msg()
-			}
-			return error_response_from_context(app, ctx, 500, msg, 'handler_not_callable')
-		}
-		raw := dispatch_php_after_phase_middleware(app, ctx, hook, current) or {
-			msg := if err.msg() == '' { 'Middleware is not callable' } else { err.msg() }
-			return error_response_from_context(app, ctx, 500, msg, 'handler_not_callable')
-		}
-		raw_borrowed := vphp.RequestBorrowedZBox.from_zval(raw)
-		res, ok := normalize_php_route_response_borrowed(raw_borrowed)
-		if ok {
-			current = res
-			continue
-		}
-		current = error_response_from_context(app, ctx, 500, 'Invalid route response',
-			'invalid_response')
-	}
-	return current
+	return new_vslim_response_from_psr_response(apply_php_after_middlewares_psr(app, ctx,
+		new_psr7_response_from_vslim_response(initial)))
 }
 
 fn apply_php_after_middlewares_psr(app &VSlimApp, ctx PipelineRequestContext, initial &VSlimPsr7Response) &VSlimPsr7Response {

@@ -12,6 +12,12 @@
 - `bootstrap/app.php`
 - `bootstrap/http.php`
 - `config/app.toml`
+- `config/http.toml`
+- `config/cli.toml`
+- `config/cache.toml`
+- `config/database.toml`
+- `config/logging.toml`
+- `config/stream.toml`
 - `vhttpd.example.toml`
 - `bootstrap/runtime.php`
 - `bootstrap/cli.php`
@@ -37,6 +43,16 @@
 5. 用 `make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd` 跑一次最薄的 worker 验收
 6. 用 `make cli-help EXT=./vslim.so` 看 CLI 入口
 7. 从 `app/Http/routes/web.php`、`app/Http/middleware.php`、`app/Modules/StatusModule.php`、`app/Commands/AboutCommand.php` 开始改自己的业务
+
+如果你准备同时把数据库也接起来，推荐在这一步顺手决定 transport：
+
+- 本地开发最省事
+  - 保持 `config/database.toml` 里的 `transport = "direct"`
+- 已经接 `vhttpd` worker，想让数据库连接池也由 `vhttpd` 托管
+  - 改成 `transport = "vhttpd_upstream"`
+  - 并让 worker 环境里有 `VHTTPD_DB_SOCKET`
+
+模板里的 `config/database.toml` 已经把这两条路径都预留好了。
 
 模板自带的项目级入口有：
 
@@ -117,6 +133,14 @@ make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd
 /path/to/vhttpd/vhttpd --config ./vhttpd.example.toml
 ```
 
+如果你还要一起验证数据库 upstream，可以再跑：
+
+```bash
+php -d extension=./vslim.so examples/db_upstream_probe.php
+```
+
+只要 `php-worker` 环境里已经注入了 `VHTTPD_DB_SOCKET`，这个 probe 就不用再手传 socket。
+
 ## 扩展点速查
 
 | 你要改什么 | 先看哪里 | 作用 |
@@ -124,7 +148,10 @@ make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd
 | HTTP 入口 | `public/index.php` / `public/worker.php` / `bootstrap/http.php` / `Makefile` | built-in server、worker 入口和 transport 适配 |
 | CLI 入口 | `bin/vslim` / `bootstrap/cli.php` | CLI 启动脚本和命令装配 |
 | 显式总装配 | `bootstrap/app.php` | 把 config、provider、module、middleware、routes 收进一份 spec |
-| 配置 | `config/app.toml` | 基础 app 配置 |
+| 配置 | `config/*.toml` | app / logging / stream / session 等分域配置 |
+| 数据库 | `config/database.toml` / `app()->database()` / `app()->migrator()` | 默认数据库 manager、连接池、migration 和 seed 入口 |
+| Session / Auth | `config/session.toml` / `app()->session($request)` / `app()->auth($request)` / `app()->authMiddleware()` / `app()->guestMiddleware()` / `app()->abilityMiddleware('admin')` | cookie session、session guard、auth/guest/ability middleware |
+| Testing | `app()->testing()` | 轻量测试 harness，支持 service/config override、quick dispatch、JSON 请求、response 断言、cookie jar、`withSession()`、`actingAs()` 和 PSR request handle |
 | 服务注册 | `app/Providers/AppServiceProvider.php` | container 里的基础 service |
 | 模块 | `app/Modules/StatusModule.php` | 一组 service + routes 的独立装配单元 |
 | 简单 controller | `app/Http/Controllers/HomeController.php` | 直接处理页面/接口请求 |
@@ -133,6 +160,9 @@ make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd
 | 路由 | `app/Http/routes/web.php` | 页面 / HTTP 路由 |
 | 错误处理 | `app/Http/errors.php` | not_found / runtime error 响应 |
 | CLI command | `app/Commands/AboutCommand.php` | command schema、help、handle |
+| 数据库命令 | `app/Commands/DbMigrateCommand.php` / `DbRollbackCommand.php` / `DbSeedCommand.php` | migrate、rollback、seed 入口 |
+| 诊断命令 | `app/Commands/RouteListCommand.php` / `ConfigCheckCommand.php` / `AppDoctorCommand.php` | route 清单、config 检查、app 健康检查 |
+| 生成命令 | `app/Commands/MakeCommandCommand.php` / `MakeControllerCommand.php` / `MakeMiddlewareCommand.php` / `MakeProviderCommand.php` / `MakeMigrationCommand.php` / `MakeSeedCommand.php` / `MakeTestCommand.php` | command / controller / middleware / provider / migration / seeder / test 脚手架 |
 | 视图 | `resources/views/home.html` | 模板页面 |
 
 ## 深入阅读
@@ -160,6 +190,91 @@ CLI 侧的最小样板包括：
   现成的命令行入口脚本
 - `app/Commands/AboutCommand.php`
   一个完整 command 示例，已经包含 `definition()`、help、examples、notes
+- `app/Commands/RouteListCommand.php`
+  route 清单和冲突检查示例
+- `app/Commands/ConfigCheckCommand.php`
+  config-first 项目的快速自检入口
+- `app/Commands/AppDoctorCommand.php`
+  `app()->doctor()` 的轻量健康检查示例
+- `app/Commands/Make*Command.php`
+  模板级脚手架命令示例
+
+模板默认已经带上这些常用命令：
+
+- `route:list`
+- `config:check`
+- `app:doctor`
+- `db:migrate`
+- `db:rollback`
+- `db:seed`
+- `make:command`
+- `make:migration`
+- `make:provider`
+- `make:seed`
+- `make:test`
+
+## Auth Best Practice
+
+模板当前推荐的 auth 写法是：
+
+- `config/session.toml`
+  默认 `session.secret` 给了 `change-me` 占位值，初始化项目后应尽快换成真实随机密钥
+- `app()->startSessionMiddleware()`
+  先挂上 session middleware
+- `app()->setAuthUserProvider($provider)`
+  注册按用户 ID 解析用户对象/数组的 provider
+- `app()->setAuthGateResolver(fn (string $ability, $user, $request) => ...)`
+  注册能力判断
+- `app()->authMiddleware()`
+  保护需要登录的路由
+- `app()->guestMiddleware()`
+  保护登录页/注册页这类“只允许游客访问”的路由
+- `app()->abilityMiddleware('admin')`
+  保护需要特定能力的路由
+
+如果你只需要拿当前登录用户：
+
+- `app()->authId($request)`
+- `app()->authUser($request)`
+
+如果你想在业务里手动根据 user id 解析用户：
+
+- `app()->resolveAuthUser($id)`
+
+推荐的 provider 形态是一个有 `findById(string $id)` 方法的对象：
+
+```php
+$app->setAuthUserProvider(new class {
+    public function findById(string $id): array
+    {
+        return ['id' => $id, 'role' => 'admin'];
+    }
+});
+```
+
+如果你只是想快速接一条闭包，也可以继续用：
+
+```php
+$app->setAuthUserProvider(fn (string $id): array => ['id' => $id]);
+```
+
+## 上线前 Checklist
+
+在把模板应用推到长期环境前，至少确认这几件事：
+
+- 把 `config/session.toml` 里的 `session.secret` 从 `change-me` 换成真实随机密钥
+- 如果你走 `database.transport = "direct"`，确认 PHP 运行时能找到 `extension/runtime/` 里的 mysql / mariadb client 库
+- 如果你走 `database.transport = "vhttpd_upstream"`，确认 worker 环境里有 `VHTTPD_DB_SOCKET`
+- 跑一次：
+  - `bin/vslim config:check`
+  - `bin/vslim app:doctor`
+- 至少补一条：
+  - `app()->testing()` 的 HTTP/JSON 集成测试
+  - `db:migrate` / `db:seed` 的 smoke
+
+如果你想要一份更完整、可直接照着执行的版本，继续看：
+
+- [`docs/operations/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/operations/README.md)
 
 CLI schema 当前支持这些常用字段：
 
@@ -181,6 +296,38 @@ CLI schema 当前支持这些常用字段：
 
 如果参数解析失败，比如缺少 required argument、option 值类型不合法、choice 不匹配，
 `runArgv()` 会直接输出错误信息，并自动附带该 command 的 usage。
+
+## Testing Best Practice
+
+模板当前推荐的测试写法是：
+
+- `app()->testing()`
+- `withConfigText(...)`
+- `withService(...)`
+- `get()/post()/postJson()`
+- `assertStatus()/assertBodyContains()`
+- 需要登录态时优先用：
+  - `withSession([...])`
+  - `actingAs('42')`
+
+最小示例：
+
+```php
+$test = $app->testing()
+    ->withConfigText("[testing]\nmessage = 'from-config'\n");
+
+$res = $test->get('/hello');
+
+$test->assertStatus($res, 200)
+     ->assertBodyContains($res, 'from-config');
+```
+
+如果你的路由依赖 session/auth：
+
+```php
+$test->withSession(['name' => 'alice']);
+$test->actingAs('42');
+```
 
 如果你需要更完整的目录骨架，可以继续参考：
 

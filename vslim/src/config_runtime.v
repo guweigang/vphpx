@@ -1,5 +1,6 @@
 module main
 
+import os
 import strings
 import toml
 import vphp
@@ -14,14 +15,49 @@ pub fn (mut c VSlimConfig) construct() &VSlimConfig {
 
 @[php_method]
 pub fn (mut c VSlimConfig) load(path string) &VSlimConfig {
+	if os.is_dir(path) {
+		return c.load_dir(path)
+	}
 	doc := toml.parse_file(path) or {
 		vphp.throw_exception_class('InvalidArgumentException', 'config load failed: ${err.msg()}',
 			0)
 		return &c
 	}
+	root := resolve_config_env_any(doc.to_any()) or {
+		vphp.throw_exception_class('InvalidArgumentException',
+			'config env resolve failed: ${err.msg()}', 0)
+		return &c
+	}
 	c.path = path
 	c.loaded = true
-	c.root = doc.to_any()
+	c.root = root
+	return &c
+}
+
+@[php_method]
+pub fn (mut c VSlimConfig) load_dir(path string) &VSlimConfig {
+	files := config_dir_files(path) or {
+		vphp.throw_exception_class('InvalidArgumentException', 'config load failed: ${err.msg()}',
+			0)
+		return &c
+	}
+	mut root := toml.Any(toml.null)
+	for file in files {
+		doc := toml.parse_file(file) or {
+			vphp.throw_exception_class('InvalidArgumentException',
+				'config load failed: ${err.msg()}', 0)
+			return &c
+		}
+		resolved := resolve_config_env_any(doc.to_any()) or {
+			vphp.throw_exception_class('InvalidArgumentException',
+				'config env resolve failed: ${err.msg()}', 0)
+			return &c
+		}
+		root = merge_config_any(root, resolved)
+	}
+	c.path = path
+	c.loaded = true
+	c.root = root
 	return &c
 }
 
@@ -32,9 +68,72 @@ pub fn (mut c VSlimConfig) load_text(text string) &VSlimConfig {
 			0)
 		return &c
 	}
+	root := resolve_config_env_any(doc.to_any()) or {
+		vphp.throw_exception_class('InvalidArgumentException',
+			'config env resolve failed: ${err.msg()}', 0)
+		return &c
+	}
 	c.path = ''
 	c.loaded = true
-	c.root = doc.to_any()
+	c.root = root
+	return &c
+}
+
+@[php_method]
+pub fn (mut c VSlimConfig) merge_file(path string) &VSlimConfig {
+	if os.is_dir(path) {
+		return c.merge_dir(path)
+	}
+	doc := toml.parse_file(path) or {
+		vphp.throw_exception_class('InvalidArgumentException', 'config load failed: ${err.msg()}',
+			0)
+		return &c
+	}
+	resolved := resolve_config_env_any(doc.to_any()) or {
+		vphp.throw_exception_class('InvalidArgumentException',
+			'config env resolve failed: ${err.msg()}', 0)
+		return &c
+	}
+	c.merge_root(resolved)
+	return &c
+}
+
+@[php_method]
+pub fn (mut c VSlimConfig) merge_dir(path string) &VSlimConfig {
+	files := config_dir_files(path) or {
+		vphp.throw_exception_class('InvalidArgumentException', 'config load failed: ${err.msg()}',
+			0)
+		return &c
+	}
+	for file in files {
+		doc := toml.parse_file(file) or {
+			vphp.throw_exception_class('InvalidArgumentException',
+				'config load failed: ${err.msg()}', 0)
+			return &c
+		}
+		resolved := resolve_config_env_any(doc.to_any()) or {
+			vphp.throw_exception_class('InvalidArgumentException',
+				'config env resolve failed: ${err.msg()}', 0)
+			return &c
+		}
+		c.merge_root(resolved)
+	}
+	return &c
+}
+
+@[php_method]
+pub fn (mut c VSlimConfig) merge_text(text string) &VSlimConfig {
+	doc := toml.parse_text(text) or {
+		vphp.throw_exception_class('InvalidArgumentException', 'config parse failed: ${err.msg()}',
+			0)
+		return &c
+	}
+	resolved := resolve_config_env_any(doc.to_any()) or {
+		vphp.throw_exception_class('InvalidArgumentException',
+			'config env resolve failed: ${err.msg()}', 0)
+		return &c
+	}
+	c.merge_root(resolved)
 	return &c
 }
 
@@ -150,6 +249,22 @@ pub fn (c &VSlimConfig) all_json() string {
 	return toml_any_to_json(c.root)
 }
 
+fn (mut c VSlimConfig) merge_root(root toml.Any) {
+	if !c.loaded {
+		c.root = root
+		c.loaded = true
+		if c.path == '' {
+			c.path = '<merged>'
+		}
+		return
+	}
+	c.root = merge_config_any(c.root, root)
+	c.loaded = true
+	if c.path == '' {
+		c.path = '<merged>'
+	}
+}
+
 fn (c &VSlimConfig) value_opt(key string) ?toml.Any {
 	if !c.loaded {
 		return none
@@ -255,6 +370,190 @@ fn default_or_empty(default_value vphp.ZVal) vphp.ZVal {
 		return default_value
 	}
 	return empty_array_zval()
+}
+
+const config_file_priority = [
+	'app.toml',
+	'http.toml',
+	'logging.toml',
+	'cache.toml',
+	'database.toml',
+	'stream.toml',
+	'vhttpd.toml',
+]
+
+fn config_dir_files(path string) ![]string {
+	if !os.is_dir(path) {
+		return error('config path "${path}" is not a directory')
+	}
+	entries := os.ls(path)!
+	mut files := []string{}
+	for name in entries {
+		if !name.ends_with('.toml') {
+			continue
+		}
+		full := os.join_path(path, name)
+		if os.is_file(full) {
+			files << full
+		}
+	}
+	files.sort()
+	mut ordered := []string{}
+	for name in config_file_priority {
+		full := os.join_path(path, name)
+		idx := files.index(full)
+		if idx >= 0 {
+			ordered << full
+			files.delete(idx)
+		}
+	}
+	ordered << files
+	return ordered
+}
+
+fn merge_config_any(base toml.Any, incoming toml.Any) toml.Any {
+	match base {
+		toml.Null {
+			return incoming
+		}
+		map[string]toml.Any {
+			match incoming {
+				map[string]toml.Any {
+					return merge_config_maps(base, incoming)
+				}
+				else {
+					return incoming
+				}
+			}
+		}
+		else {
+			return incoming
+		}
+	}
+}
+
+fn merge_config_maps(base map[string]toml.Any, incoming map[string]toml.Any) toml.Any {
+	mut out := base.clone()
+	for key, value in incoming {
+		if key in out {
+			out[key] = merge_config_any(out[key], value)
+		} else {
+			out[key] = value
+		}
+	}
+	return out
+}
+
+fn resolve_config_env_any(value toml.Any) !toml.Any {
+	return match value {
+		string {
+			resolve_config_env_string(value)!
+		}
+		map[string]toml.Any {
+			mut out := map[string]toml.Any{}
+			for key, item in value {
+				out[key] = resolve_config_env_any(item)!
+			}
+			out
+		}
+		[]toml.Any {
+			mut out := []toml.Any{cap: value.len}
+			for item in value {
+				out << resolve_config_env_any(item)!
+			}
+			out
+		}
+		else {
+			value
+		}
+	}
+}
+
+fn resolve_config_env_string(raw string) !toml.Any {
+	trimmed := raw.trim_space()
+	if !trimmed.starts_with('\${') || !trimmed.ends_with('}') || trimmed.len < 7 {
+		return raw
+	}
+	body := trimmed[2..trimmed.len - 1]
+	if !body.starts_with('env.') || body.len <= 4 {
+		return raw
+	}
+	spec := body[4..]
+	default_value, has_default := split_env_placeholder_default(spec)
+	key_spec := if has_default { spec[..spec.len - default_value.len - 2] } else { spec }
+	env_type, env_key := parse_env_placeholder_key(key_spec)!
+	env_value := os.getenv(env_key)
+	if env_value == '' && has_default {
+		return parse_env_placeholder_value(env_type, default_value)!
+	}
+	if env_value == '' {
+		return toml.null
+	}
+	return parse_env_placeholder_value(env_type, env_value)!
+}
+
+fn split_env_placeholder_default(spec string) (string, bool) {
+	idx := spec.index(':-') or { return '', false }
+	return spec[idx + 2..], true
+}
+
+fn parse_env_placeholder_key(spec string) !(string, string) {
+	parts := spec.split('.')
+	if parts.len == 0 {
+		return error('empty env placeholder')
+	}
+	if parts.len == 1 {
+		key := parts[0].trim_space()
+		if key == '' {
+			return error('empty env key')
+		}
+		return 'string', key
+	}
+	type_name := parts[0].trim_space().to_lower()
+	key := parts[1..].join('.').trim_space()
+	if key == '' {
+		return error('empty env key')
+	}
+	return match type_name {
+		'str', 'string' { 'string', key }
+		'bool', 'boolean' { 'bool', key }
+		'int', 'integer' { 'int', key }
+		'float', 'double' { 'float', key }
+		else { 'string', spec.trim_space() }
+	}
+}
+
+fn parse_env_placeholder_value(type_name string, raw string) !toml.Any {
+	return match type_name {
+		'bool' {
+			parse_env_placeholder_bool(raw)!
+		}
+		'int' {
+			clean := raw.trim_space()
+			if clean == '' {
+				return error('empty int env value')
+			}
+			clean.i64()
+		}
+		'float' {
+			clean := raw.trim_space()
+			if clean == '' {
+				return error('empty float env value')
+			}
+			clean.f64()
+		}
+		else {
+			raw
+		}
+	}
+}
+
+fn parse_env_placeholder_bool(raw string) !bool {
+	return match raw.trim_space().to_lower() {
+		'1', 'true', 'yes', 'on' { true }
+		'0', 'false', 'no', 'off' { false }
+		else { error('invalid bool env value "${raw}"') }
+	}
 }
 
 fn toml_any_to_zval(value toml.Any) vphp.ZVal {

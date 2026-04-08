@@ -1,0 +1,13 @@
+[session]
+cookie = "${env.VSLIM_SESSION_COOKIE:-vslim_session}"
+secret = "${env.VSLIM_SESSION_SECRET:-change-me}"
+ttl_seconds = "${env.int.VSLIM_SESSION_TTL:-7200}"
+path = "${env.VSLIM_SESSION_PATH:-/}"
+domain = "${env.VSLIM_SESSION_DOMAIN:-}"
+secure = "${env.bool.VSLIM_SESSION_SECURE:-false}"
+http_only = "${env.bool.VSLIM_SESSION_HTTP_ONLY:-true}"
+same_site = "${env.VSLIM_SESSION_SAME_SITE:-lax}"
+
+[auth]
+session_key = "${env.VSLIM_AUTH_SESSION_KEY:-auth.user_id}"
+redirect_to = "${env.VSLIM_AUTH_REDIRECT_TO:-/login}"

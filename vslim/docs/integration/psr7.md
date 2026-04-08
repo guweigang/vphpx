@@ -1,16 +1,33 @@
 # PSR-7 适配
 
-VSlim 本身不是完整 PSR-7 实现，但当前项目已经提供了一个 PHP 侧桥接类，把 PSR-7 风格 request 转成 `VSlim\Vhttpd\Request`。
+VSlim 本身不是完整 PSR-7 实现，但当前扩展已经内建了一个桥接类，把 PSR-7 风格 request 转成 `VSlim\Vhttpd\Request`。
+
+这层适配的定位要先说清楚：
+
+- 它不是为了让 `VSlim` 变成“另一个 PSR-7 package”
+- 它是为了把
+  - `vhttpd/php-worker`
+  - 现有 PSR-7 request 来源
+  - 以及 `VSlim` 原生 app model
+  接在一起
+
+所以它更像：
+
+- runtime / ecosystem bridge
+
+而不是：
+
+- 框架核心 API 的唯一入口
 
 真理之源：
 
-- [`vhttpd/php/package/src/VSlim/Psr7Adapter.php`](/Users/guweigang/Source/vhttpd/php/package/src/VSlim/Psr7Adapter.php)
+- [`vslim/src/psr7_adapter_runtime.v`](/Users/guweigang/Source/vphpx/vslim/src/psr7_adapter_runtime.v)
 - [`tests/test_vslim_psr7_adapter.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_psr7_adapter.phpt)
 - [`tests/test_psr7_worker_app.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_psr7_worker_app.phpt)
 
 ## 类名
 
-当前主类是：
+当前主类是扩展内建的：
 
 ```php
 VPhp\VSlim\Psr7Adapter
@@ -87,6 +104,15 @@ $map = $app->dispatch_envelope_map($envelope);
 - `vhttpd` / PHP worker 想接入 PSR-7 request
 - 现有 middleware / bridge 产出的是 PSR-7 风格 request
 - 想把 PHP 生态边界和 VSlim runtime 接起来
+
+这也正好对应两条不同产品线：
+
+- `vhttpd + php package`
+  更强调“承载现有 PHP 生态”
+- `VSlim`
+  更强调“把这些能力原生做进框架”
+
+`Psr7Adapter` 站在这两条线的交界处。
 
 不适合：
 

@@ -1,0 +1,6 @@
+[stream.ollama]
+chat_url = "${env.OLLAMA_CHAT_URL:-http://127.0.0.1:11434/api/chat}"
+model = "${env.OLLAMA_MODEL:-qwen2.5:7b-instruct}"
+api_key = "${env.OLLAMA_API_KEY:-}"
+fixture = "${env.OLLAMA_STREAM_FIXTURE:-}"
+

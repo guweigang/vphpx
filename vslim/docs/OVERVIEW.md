@@ -8,8 +8,14 @@
 - 它和 `vphp`、`vhttpd` 的关系是什么？
 - 它支持哪些应用形态？
 - 先看哪几页最有效？
+- 它现在到底已经做到什么程度？
 
 先看这页就够了。
+
+如果你想快速看“现在有什么、什么已成熟、什么还在第一版”，继续看：
+
+- [capabilities.md](/Users/guweigang/Source/vphpx/vslim/docs/capabilities.md)
+- [maturity-roadmap.md](/Users/guweigang/Source/vphpx/vslim/docs/maturity-roadmap.md)
 
 ## Product Definition
 
@@ -39,6 +45,22 @@
 - `vphp` 解决“V 和 PHP 怎么互通”
 - `vslim` 解决“应用怎么写”
 - `vhttpd` 解决“应用怎么跑”
+
+这还可以再分成两条更容易理解的产品线：
+
+- `vhttpd`
+  - 让现有 PHP 应用和主流框架接入新的 runtime 能力
+  - 重点是兼容、承载和增强
+- `VSlim`
+  - 直接把这些 runtime 能力做成框架内建能力
+  - 重点是原生应用模型和开箱即用
+
+所以在产品定位上：
+
+- `vhttpd + php package`
+  更像“把 `wordpress / laravel / symfony / 普通 php app` 跑到新的 runtime 上”
+- `VSlim`
+  更像“围绕 stream / websocket / mcp / worker 原生写应用”
 
 这里要特别注意一层边界：
 
@@ -196,6 +218,17 @@
   - [http/psr-http.md](/Users/guweigang/Source/vphpx/vslim/docs/http/psr-http.md)
 - config
   - [config/config.md](/Users/guweigang/Source/vphpx/vslim/docs/config/config.md)
+- database
+  - [database/README.md](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
+  - [database/vhttpd-upstream.md](/Users/guweigang/Source/vphpx/vslim/docs/database/vhttpd-upstream.md)
+- validation / session / auth
+  - 轻量输入校验、cookie session、auth user provider、auth/guest/ability middleware、app-level gate helper
+- testing
+  - `app()->testing()` 轻量测试 harness，支持 service/config override、quick dispatch、JSON 请求、response 断言、cookie jar、session/auth helper 和 PSR handle
+- operations
+  - [`operations/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/operations/README.md)
+    从模板初始化、数据库 transport 选择到上线前检查的一页清单
+  - [testing/README.md](/Users/guweigang/Source/vphpx/vslim/docs/testing/README.md)
 - logger
   - [logger/logger.md](/Users/guweigang/Source/vphpx/vslim/docs/logger/logger.md)
 - container
@@ -216,9 +249,10 @@
 第一次接触 `VSlim`：
 
 1. 先看这页
-2. 再看 [README.md](/Users/guweigang/Source/vphpx/vslim/README.md)
-3. 再看 [app/README.md](/Users/guweigang/Source/vphpx/vslim/docs/app/README.md)
-4. 如果你想直接搭项目骨架，再看 [app/skeleton.md](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
+2. 再看 [capabilities.md](/Users/guweigang/Source/vphpx/vslim/docs/capabilities.md)
+3. 再看 [README.md](/Users/guweigang/Source/vphpx/vslim/README.md)
+4. 再看 [app/README.md](/Users/guweigang/Source/vphpx/vslim/docs/app/README.md)
+5. 如果你想直接搭项目骨架，再看 [app/skeleton.md](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
 
 如果你关注 AI / stream：
 
@@ -230,3 +264,9 @@
 
 1. [protocol.md](/Users/guweigang/Source/vphpx/vslim/docs/protocol.md)
 2. [integration/worker.md](/Users/guweigang/Source/vphpx/vslim/docs/integration/worker.md)
+
+如果你准备开始写业务：
+
+1. [config/config.md](/Users/guweigang/Source/vphpx/vslim/docs/config/config.md)
+2. [database/README.md](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
+3. [testing/README.md](/Users/guweigang/Source/vphpx/vslim/docs/testing/README.md)

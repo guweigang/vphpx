@@ -69,6 +69,20 @@ function Find-FirstPath([string[]]$Candidates, [string]$ChildPath) {
     return ""
 }
 
+function Find-FirstFileRecursive([string]$Root, [string[]]$FileNames) {
+    if ([string]::IsNullOrWhiteSpace($Root) -or !(Test-Path $Root)) {
+        return ""
+    }
+    foreach ($fileName in $FileNames) {
+        $match = Get-ChildItem -Path $Root -Filter $fileName -File -Recurse -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+        if ($null -ne $match) {
+            return (Resolve-Path $match.FullName).Path
+        }
+    }
+    return ""
+}
+
 function Find-OpenSslRoot {
     $candidates = @(
         $env:OPENSSL_ROOT_DIR,
@@ -105,6 +119,142 @@ function Find-OpenSslLibName([string]$LibDir, [string]$Pattern) {
         return ""
     }
     return $match.Name
+}
+
+function Find-MySqlRoot {
+    $candidates = @(
+        $env:VSLIM_MYSQL_ROOT,
+        $env:MARIADB_CONNECTOR_C_ROOT,
+        $env:MYSQL_ROOT,
+        $env:VCPKG_INSTALLED_DIR
+    )
+    foreach ($candidate in $candidates) {
+        if ([string]::IsNullOrWhiteSpace($candidate)) {
+            continue
+        }
+        $resolved = $candidate.Trim()
+        Write-Host "Probing MariaDB/MySQL SDK candidate: $resolved"
+        if (!(Test-Path $resolved)) {
+            Write-Host "  -> path missing"
+            continue
+        }
+        $headerPath = Find-FirstFileRecursive $resolved @("mysql.h")
+        $importLibPath = Find-FirstFileRecursive $resolved @("libmariadb.lib", "mysqlclient.lib")
+        if ($headerPath -ne "") {
+            Write-Host "  -> header: $headerPath"
+        } else {
+            Write-Host "  -> header: <not found>"
+        }
+        if ($importLibPath -ne "") {
+            Write-Host "  -> import lib: $importLibPath"
+        } else {
+            Write-Host "  -> import lib: <not found>"
+        }
+        if ($headerPath -ne "" -and $importLibPath -ne "") {
+            return (Resolve-Path $resolved).Path
+        }
+    }
+    return ""
+}
+
+function Find-MySqlIncludeDir([string]$Root) {
+    $headerPath = Find-FirstFileRecursive $Root @("mysql.h")
+    if ($headerPath -eq "") {
+        return ""
+    }
+    return Split-Path -Parent $headerPath
+}
+
+function Find-MySqlLibDir([string]$Root) {
+    $importLibPath = Find-FirstFileRecursive $Root @("libmariadb.lib", "mysqlclient.lib")
+    if ($importLibPath -eq "") {
+        return ""
+    }
+    return Split-Path -Parent $importLibPath
+}
+
+function Find-MySqlLibName([string]$LibDir) {
+    $libMaria = Get-ChildItem -Path $LibDir -Filter "libmariadb.lib" -File | Select-Object -First 1
+    if ($null -ne $libMaria) {
+        return $libMaria.Name
+    }
+    $mysqlClient = Get-ChildItem -Path $LibDir -Filter "mysqlclient.lib" -File | Select-Object -First 1
+    if ($null -ne $mysqlClient) {
+        return $mysqlClient.Name
+    }
+    return ""
+}
+
+function Find-MySqlRuntimeDll([string]$Root) {
+    return Find-FirstFileRecursive $Root @("libmariadb.dll", "libmysql.dll")
+}
+
+function Find-CJsonRoot {
+    $candidates = @(
+        $env:VSLIM_CJSON_ROOT,
+        $env:CJSON_ROOT,
+        $env:VCPKG_INSTALLED_DIR,
+        $env:VSLIM_MYSQL_ROOT
+    )
+    foreach ($candidate in $candidates) {
+        if ([string]::IsNullOrWhiteSpace($candidate)) {
+            continue
+        }
+        $resolved = $candidate.Trim()
+        Write-Host "Probing cJSON SDK candidate: $resolved"
+        if (!(Test-Path $resolved)) {
+            Write-Host "  -> path missing"
+            continue
+        }
+        $headerPath = Find-FirstFileRecursive $resolved @("cJSON.h")
+        $importLibPath = Find-FirstFileRecursive $resolved @("cjson.lib", "libcjson.lib")
+        if ($headerPath -ne "") {
+            Write-Host "  -> header: $headerPath"
+        } else {
+            Write-Host "  -> header: <not found>"
+        }
+        if ($importLibPath -ne "") {
+            Write-Host "  -> import lib: $importLibPath"
+        } else {
+            Write-Host "  -> import lib: <not found>"
+        }
+        if ($headerPath -ne "" -and $importLibPath -ne "") {
+            return (Resolve-Path $resolved).Path
+        }
+    }
+    return ""
+}
+
+function Find-CJsonIncludeDir([string]$Root) {
+    $headerPath = Find-FirstFileRecursive $Root @("cJSON.h")
+    if ($headerPath -eq "") {
+        return ""
+    }
+    return Split-Path -Parent $headerPath
+}
+
+function Find-CJsonLibDir([string]$Root) {
+    $importLibPath = Find-FirstFileRecursive $Root @("cjson.lib", "libcjson.lib")
+    if ($importLibPath -eq "") {
+        return ""
+    }
+    return Split-Path -Parent $importLibPath
+}
+
+function Find-CJsonLibName([string]$LibDir) {
+    $cjson = Get-ChildItem -Path $LibDir -Filter "cjson.lib" -File | Select-Object -First 1
+    if ($null -ne $cjson) {
+        return $cjson.Name
+    }
+    $libcjson = Get-ChildItem -Path $LibDir -Filter "libcjson.lib" -File | Select-Object -First 1
+    if ($null -ne $libcjson) {
+        return $libcjson.Name
+    }
+    return ""
+}
+
+function Find-CJsonRuntimeDll([string]$Root) {
+    return Find-FirstFileRecursive $Root @("cjson.dll", "libcjson.dll")
 }
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
@@ -167,6 +317,66 @@ if ($env:VSLIM_OPENSSL_CRYPTO_LIB -eq "") {
     throw "Unable to locate an OpenSSL crypto import library under $openSslLibDir"
 }
 
+$mySqlRoot = Find-MySqlRoot
+if ($mySqlRoot -eq "") {
+    throw "Unable to locate a MariaDB/MySQL client SDK. Set VSLIM_MYSQL_ROOT or MARIADB_CONNECTOR_C_ROOT."
+}
+$mySqlIncludeDir = Find-MySqlIncludeDir $mySqlRoot
+if ($mySqlIncludeDir -eq "") {
+    throw "Unable to locate MariaDB/MySQL headers under $mySqlRoot"
+}
+$mySqlLibDir = Find-MySqlLibDir $mySqlRoot
+if ($mySqlLibDir -eq "") {
+    throw "Unable to locate MariaDB/MySQL import libraries under $mySqlRoot"
+}
+$mySqlClientLib = Find-MySqlLibName $mySqlLibDir
+if ($mySqlClientLib -eq "") {
+    throw "Unable to locate libmariadb.lib or mysqlclient.lib under $mySqlLibDir"
+}
+$mySqlRuntimeDll = Find-MySqlRuntimeDll $mySqlRoot
+
+Write-Host "Using MariaDB/MySQL SDK root: $mySqlRoot"
+Write-Host "Using MariaDB/MySQL include dir: $mySqlIncludeDir"
+Write-Host "Using MariaDB/MySQL lib dir: $mySqlLibDir"
+Write-Host "Using MariaDB/MySQL import lib: $mySqlClientLib"
+if ($mySqlRuntimeDll -ne "") {
+    Write-Host "Using MariaDB/MySQL runtime DLL: $mySqlRuntimeDll"
+}
+
+$env:VSLIM_MYSQL_INCLUDE = $mySqlIncludeDir
+$env:VSLIM_MYSQL_LIB = $mySqlLibDir
+$env:VSLIM_MYSQL_CLIENT_LIB = $mySqlClientLib
+
+$cjsonRoot = Find-CJsonRoot
+if ($cjsonRoot -eq "") {
+    throw "Unable to locate a cJSON SDK. Set VSLIM_CJSON_ROOT or CJSON_ROOT."
+}
+$cjsonIncludeDir = Find-CJsonIncludeDir $cjsonRoot
+if ($cjsonIncludeDir -eq "") {
+    throw "Unable to locate cJSON headers under $cjsonRoot"
+}
+$cjsonLibDir = Find-CJsonLibDir $cjsonRoot
+if ($cjsonLibDir -eq "") {
+    throw "Unable to locate cJSON import libraries under $cjsonRoot"
+}
+$cjsonClientLib = Find-CJsonLibName $cjsonLibDir
+if ($cjsonClientLib -eq "") {
+    throw "Unable to locate cjson.lib or libcjson.lib under $cjsonLibDir"
+}
+$cjsonRuntimeDll = Find-CJsonRuntimeDll $cjsonRoot
+
+Write-Host "Using cJSON SDK root: $cjsonRoot"
+Write-Host "Using cJSON include dir: $cjsonIncludeDir"
+Write-Host "Using cJSON lib dir: $cjsonLibDir"
+Write-Host "Using cJSON import lib: $cjsonClientLib"
+if ($cjsonRuntimeDll -ne "") {
+    Write-Host "Using cJSON runtime DLL: $cjsonRuntimeDll"
+}
+
+$env:VSLIM_CJSON_INCLUDE = $cjsonIncludeDir
+$env:VSLIM_CJSON_LIB = $cjsonLibDir
+$env:VSLIM_CJSON_CLIENT_LIB = $cjsonClientLib
+
 $phpizePath = Join-Path $develRoot.FullName "phpize.bat"
 if (!(Test-Path $phpizePath)) {
     throw "phpize.bat not found in devel pack: $phpizePath"
@@ -188,6 +398,15 @@ if ($null -eq $dll) {
 $targetPath = Join-Path $vslimRoot $OutputName
 if ($dll.FullName -ne $targetPath) {
     Copy-Item -Force $dll.FullName $targetPath
+}
+
+if ($mySqlRuntimeDll -ne "") {
+    Copy-Item -Force $mySqlRuntimeDll (Join-Path $vslimRoot (Split-Path -Leaf $mySqlRuntimeDll))
+    Write-Host "Copied MySQL runtime DLL: $mySqlRuntimeDll"
+}
+if ($cjsonRuntimeDll -ne "") {
+    Copy-Item -Force $cjsonRuntimeDll (Join-Path $vslimRoot (Split-Path -Leaf $cjsonRuntimeDll))
+    Write-Host "Copied cJSON runtime DLL: $cjsonRuntimeDll"
 }
 
 Write-Host "Built Windows DLL: $targetPath"

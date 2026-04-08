@@ -88,6 +88,26 @@ pub fn VSlimStreamOllamaClient.from_env() &VSlimStreamOllamaClient {
 }
 
 @[php_method]
+pub fn VSlimStreamOllamaClient.from_config(config &VSlimConfig) &VSlimStreamOllamaClient {
+	mut out := &VSlimStreamOllamaClient{}
+	out.construct(
+		config.get_string('stream.ollama.chat_url', os.getenv('OLLAMA_CHAT_URL')),
+		config.get_string('stream.ollama.model', os.getenv('OLLAMA_MODEL')),
+		config.get_string('stream.ollama.api_key', os.getenv('OLLAMA_API_KEY')),
+		config.get_string('stream.ollama.fixture', os.getenv('OLLAMA_STREAM_FIXTURE')),
+	)
+	return out
+}
+
+@[php_method]
+pub fn VSlimStreamOllamaClient.from_app(app &VSlimApp) &VSlimStreamOllamaClient {
+	if app.config_ref != unsafe { nil } {
+		return VSlimStreamOllamaClient.from_config(app.config_ref)
+	}
+	return VSlimStreamOllamaClient.from_env()
+}
+
+@[php_method]
 pub fn VSlimStreamOllamaClient.from_options(options vphp.RequestBorrowedZBox) &VSlimStreamOllamaClient {
 	base := VSlimStreamOllamaClient.from_env()
 	mut out := &VSlimStreamOllamaClient{}

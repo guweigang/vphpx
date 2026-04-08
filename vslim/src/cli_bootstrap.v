@@ -3,16 +3,51 @@ module main
 import os
 import vphp
 
+__global (
+	vslim_cli_debug_override_inited  bool
+	vslim_cli_debug_enabled_override bool
+	vslim_cli_debug_file_override    string
+)
+
 fn cli_bootstrap_file_return_error(path string) string {
 	return 'CLI bootstrap file "${path}" must return iterable commands/spec, callable, or VSlim\\Cli\\App'
 }
 
+fn cli_debug_sync_from_app(app &VSlimApp) {
+	if app == unsafe { nil } || app.config_ref == unsafe { nil } {
+		return
+	}
+	unsafe {
+		if app.config_ref.has('cli.debug') {
+			vslim_cli_debug_enabled_override = app.config_ref.get_bool('cli.debug', false)
+			vslim_cli_debug_override_inited = true
+		}
+		if app.config_ref.has('cli.debug_file') {
+			vslim_cli_debug_file_override = app.config_ref.get_string('cli.debug_file', '').trim_space()
+			vslim_cli_debug_override_inited = true
+		}
+	}
+}
+
 fn cli_debug_enabled() bool {
+	unsafe {
+		if vslim_cli_debug_override_inited {
+			return vslim_cli_debug_enabled_override
+		}
+	}
 	return os.getenv('VSLIM_CLI_DEBUG').trim_space().to_lower() in ['1', 'true', 'yes', 'on']
 }
 
 fn cli_debug_log(message string) {
-	debug_file := os.getenv('VSLIM_CLI_DEBUG_FILE').trim_space()
+	mut debug_file := ''
+	unsafe {
+		if vslim_cli_debug_override_inited {
+			debug_file = vslim_cli_debug_file_override.trim_space()
+		}
+	}
+	if debug_file == '' {
+		debug_file = os.getenv('VSLIM_CLI_DEBUG_FILE').trim_space()
+	}
 	if debug_file != '' {
 		line := '[vslim-cli-debug] ' + message + '\n'
 		mut file := os.open_append(debug_file) or {
@@ -41,6 +76,7 @@ fn cli_bootstrap_file_apply(mut cli VSlimCliApp, path string) ! {
 		|| lower.ends_with('/app.php') || lower.ends_with('\\app.php')) && php_is_file(clean) {
 		mut core := ensure_cli_core_app(mut cli)
 		core.bootstrap_file(clean)
+		cli_debug_sync_from_app(core)
 		return
 	}
 	mut result := vphp.include(clean)
@@ -87,6 +123,7 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 			core.boot()
 		}
 	}
+	cli_debug_sync_from_app(core)
 	cli_applied := apply_cli_bootstrap_conventions(mut cli, project_root)!
 	if !shared_applied && !cli_applied {
 		return error('CLI bootstrap directory "${path}" must contain bootstrap/app.php, app.php, shared conventions, or CLI command conventions')

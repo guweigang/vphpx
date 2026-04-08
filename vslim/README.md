@@ -3,6 +3,8 @@
 Documentation entry:
 
 - overview: [docs/OVERVIEW.md](/Users/guweigang/Source/vphpx/vslim/docs/OVERVIEW.md)
+- capability map: [docs/capabilities.md](/Users/guweigang/Source/vphpx/vslim/docs/capabilities.md)
+- maturity roadmap: [docs/maturity-roadmap.md](/Users/guweigang/Source/vphpx/vslim/docs/maturity-roadmap.md)
 
 `VSlim` 是一个运行在 `vphp` 之上的 PHP 微框架扩展，核心目标是给 PHP 用户提供熟悉的 runtime builder 体验：
 
@@ -14,7 +16,37 @@ Documentation entry:
 - `VSlim\Mcp\App` 提供扩展原生 MCP handler
 - `VSlim\View` / `VSlim\Controller` 提供轻量 MVC 能力；View 现在按“指令 + 表达式 + 变量路径”三层组织
 - `VSlim\Container` / `VSlim\Config` 提供基础依赖注入与 TOML 配置
+- `VSlim\Database\Config` / `VSlim\Database\Manager` / `VSlim\Database\Query` 提供 mysql-first 的连接池、事务与轻量 query builder
+- `VSlim\Validate\Validator`、`VSlim\Session\StartMiddleware`、`VSlim\Auth\RequireAuthMiddleware` 提供轻量 validation、cookie session、auth/guest middleware
+- `app()->testing()` 提供轻量测试 harness，支持 service/config override、quick dispatch、cookie jar、session/auth helper 和 response 断言
 - `vslim_handle_request(...)` / `dispatch_envelope(...)` 提供和 worker / `vhttpd` 的集成边界
+
+## VSlim 和 vhttpd 的边界
+
+这条边界最好直接理解成两句话：
+
+- `vhttpd` 负责“怎么跑”
+- `VSlim` 负责“怎么写”
+
+更展开一点：
+
+- `vhttpd`
+  - 是 transport / runtime / worker 层
+  - 可以通过 PHP package 承载现有 PHP 应用
+  - 包括 `wordpress`、`laravel`、`symfony`、普通 PHP app
+  - 并把 stream、websocket、mcp 这类运行时能力带给它们
+- `VSlim`
+  - 是原生框架层
+  - 不是为了兼容现有框架而存在
+  - 而是把这些能力直接内建成一等应用模型
+  - 开箱即用，不需要再靠外部 PHP package 拼 runtime 能力
+
+所以：
+
+- 如果你已经有现成 PHP 项目
+  - 优先看 `vhttpd + php package`
+- 如果你要新写一个原生利用 stream / websocket / mcp / worker 的应用
+  - 优先看 `VSlim`
 
 ## 它和上游 Web Server 的关系
 
@@ -47,6 +79,7 @@ Documentation entry:
 - `VSlim\Vhttpd\Request/Response` 是 transport-friendly facade
 - `Psr\Http\Message\ServerRequestInterface` / `ResponseInterface` 是框架内部更标准的 HTTP 契约
 - `vhttpd`、PHP 内置 server、nginx 只是不同的上游接入方式，不改变 `VSlim` 作为框架层的定位
+- `vhttpd` 是最重要的原生 runtime 集成对象，但不是 `VSlim` 的唯一宿主
 
 这份 README 只做两件事：
 
@@ -65,8 +98,58 @@ Documentation entry:
    [`examples/skeleton/README.md`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton/README.md)
 3. 骨架分层和 `bootstrapDir()` 设计说明：
    [`docs/app/skeleton.md`](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
+4. 数据库与测试：
+   [`docs/database/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
+   [`docs/testing/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/testing/README.md)
+5. 从初始化到上线的操作清单：
+   [`docs/operations/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/operations/README.md)
+6. 当前能力总表：
+   [`docs/capabilities.md`](/Users/guweigang/Source/vphpx/vslim/docs/capabilities.md)
 
 如果你只是想先理解 API 和 builder，再继续往下读这份 README 即可。
+
+## 推荐业务栈
+
+如果你想按一套“简单但成熟”的方式开始写业务，当前推荐主路径是：
+
+1. 用 `config/*.toml` 管理配置
+2. 用 `app()->database()` / `app()->migrator()` 管数据库
+3. 用 `app()->validate(...)` 做输入校验
+4. 用 `app()->startSessionMiddleware()` + `app()->authMiddleware()` 管会话和登录态
+5. 用 `app()->testing()` 写集成测试
+
+对应文档：
+
+- [`docs/config/config.md`](/Users/guweigang/Source/vphpx/vslim/docs/config/config.md)
+- [`docs/database/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
+- [`docs/testing/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/testing/README.md)
+- [`docs/operations/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/operations/README.md)
+
+## 数据库 transport 怎么选
+
+`VSlim` 现在有两条数据库主路径：
+
+- `database.transport = "direct"`
+  - `VSlim` 进程内直接连 MySQL
+  - 适合本地开发、单机服务、最短链路
+  - 优点是路径短、调试简单
+  - 代价是扩展本体会直接依赖 MySQL/MariaDB 原生客户端运行库
+- `database.transport = "vhttpd_upstream"`
+  - `VSlim` 通过 unix socket 请求 `vhttpd` 访问数据库
+  - 适合 worker/runtime 主部署路径
+  - 优点是连接池、事务会话和原生依赖都收敛到 `vhttpd`
+  - 更适合多 worker、多进程和跨平台发布
+
+当前推荐策略很简单：
+
+- 本地开发、最薄 demo
+  - 先用 `direct`
+- 生产 worker/runtime、尤其是你已经在用 `vhttpd`
+  - 优先用 `vhttpd_upstream`
+
+如果你要直接走 `vhttpd` 托管数据库，继续看：
+
+- [`docs/database/vhttpd-upstream.md`](/Users/guweigang/Source/vphpx/vslim/docs/database/vhttpd-upstream.md)
 
 ## 测试分层
 
@@ -98,6 +181,8 @@ make dist
 
 - `extension/`
   当前平台的预编译扩展二进制
+- `extension/runtime/`
+  扩展依赖的原生运行库，例如 mysql / mariadb client
 - `template/`
   可直接起项目的 app 模板
 - `docs/`
@@ -117,6 +202,17 @@ make dist-source
 - Windows amd64：发布 x64 二进制 bundle
 
 Windows bundle 的原生 DLL 通过 PHP 官方 devel pack + `nmake` 构建，目标是与 PHP `8.5`、`NTS`、`x64` 的 MSVC toolchain 保持一致。V 侧在 Windows job 中只负责 `emit-only` 生成桥接 C，最终 `php_vslim.dll` 由 MSVC 编译链产出。
+
+如果你选择 `database.transport = "direct"`，运行时还需要让 PHP 能找到 bundle 里的数据库客户端库：
+
+- macOS
+  - `DYLD_LIBRARY_PATH=./extension/runtime`
+- Linux
+  - `LD_LIBRARY_PATH=./extension/runtime`
+- Windows
+  - 把 `extension\\runtime` 加到 `PATH`，或者把 DLL 放到 `php.exe` 同级
+
+如果你不想处理这层原生库发现，优先改用 `database.transport = "vhttpd_upstream"`。
 
 ## PSR 进展
 
@@ -748,6 +844,7 @@ return $app;
 - [`docs/config/config.md`](/Users/guweigang/Source/vphpx/vslim/docs/config/config.md)
   `VSlim\Config`：TOML 加载、typed getter、JSON bridge、和 `App` 的整合
 - [`docs/logger/logger.md`](/Users/guweigang/Source/vphpx/vslim/docs/logger/logger.md)
+- [`docs/database/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
   `VSlim\\Log\\Logger` 与 `VSlim\\Log\\PsrLogger`：原生日志与 PSR-3 包装层
 
 ### 集成与运行时
@@ -755,14 +852,14 @@ return $app;
 - [`docs/integration/worker.md`](/Users/guweigang/Source/vphpx/vslim/docs/integration/worker.md)
   envelope、`dispatch_envelope()`、`dispatch_envelope_map()`、worker 返回值归一化
 - [`docs/integration/psr7.md`](/Users/guweigang/Source/vphpx/vslim/docs/integration/psr7.md)
-  `VPhp\\VSlim\\Psr7Adapter`、PSR-7 request 转 `VSlim\Vhttpd\Request`
+  `VPhp\\VSlim\\Psr7Adapter`、扩展内建的 PSR-7 request -> `VSlim\Vhttpd\Request` 适配器
 - [`docs/psr-roadmap.md`](/Users/guweigang/Source/vphpx/vslim/docs/psr-roadmap.md)
   `vslim` 的长期 PSR 路线图：全 PSR 目标、推进顺序、以及何时先升级 `vphp`
 
 ## 框架骨架
 
 - `VSlim\App` 现在会默认托管并同步一组标准服务到 container：
-  `config`、`clock`、`logger`、`events`、`events.provider`、`cache`、`cache.pool`、`http_client`
+  `config`、`clock`、`logger`、`events`、`events.provider`、`cache`、`cache.pool`、`http_client`、`database`
 - 这些服务同时暴露常用 contract key：
   `Psr\\Clock\\ClockInterface`、`Psr\\Log\\LoggerInterface`、`Psr\\EventDispatcher\\EventDispatcherInterface`、`Psr\\EventDispatcher\\ListenerProviderInterface`、`Psr\\SimpleCache\\CacheInterface`、`Psr\\Cache\\CacheItemPoolInterface`、`Psr\\Http\\Client\\ClientInterface`
 - `VSlim\App` 还内建了 provider / module 两层 bootstrap：

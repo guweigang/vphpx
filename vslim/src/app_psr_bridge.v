@@ -557,6 +557,31 @@ fn new_psr7_response_from_vslim_response(res VSlimResponse) &VSlimPsr7Response {
 	}
 }
 
+fn new_vslim_response_from_psr_response(res &VSlimPsr7Response) VSlimResponse {
+	mut headers := map[string]string{}
+	for key, values in res.headers {
+		if values.len == 0 {
+			continue
+		}
+		headers[key] = values.join(', ')
+	}
+	content_type := headers['content-type'] or { 'text/plain; charset=utf-8' }
+	return VSlimResponse{
+		status:       res.status
+		body:         psr7_stream_string(response_body_or_empty(res))
+		content_type: content_type
+		headers:      headers
+	}
+}
+
+fn new_psr7_text_response(status int, body string) &VSlimPsr7Response {
+	return new_psr7_response_from_vslim_response(text_response(status, body))
+}
+
+fn new_psr7_json_response(status int, json_body string) &VSlimPsr7Response {
+	return new_psr7_response_from_vslim_response(json_response(status, json_body))
+}
+
 fn normalize_to_psr7_response(result vphp.ZVal) &VSlimPsr7Response {
 	if !result.is_valid() || result.is_null() || result.is_undef() {
 		return new_psr7_response_from_vslim_response(text_response(200, ''))

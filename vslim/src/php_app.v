@@ -13,7 +13,10 @@ __global (
 	vslim_trace_mem_counter       u64
 )
 
-fn vslim_trace_mem_enabled() bool {
+fn vslim_trace_mem_enabled(app &VSlimApp) bool {
+	if app.config_ref != unsafe { nil } && app.config_ref.has('app.trace.memory') {
+		return app.config_ref.get_bool('app.trace.memory', false)
+	}
 	unsafe {
 		if !vslim_trace_mem_cache_inited {
 			mut raw := os.getenv('VSLIM_TRACE_MEM').trim_space().to_lower()
@@ -37,20 +40,27 @@ fn vslim_trace_mem_enabled() bool {
 	}
 }
 
-fn vslim_trace_mem_every() int {
+fn vslim_trace_mem_every(app &VSlimApp) int {
+	if app.config_ref != unsafe { nil } && app.config_ref.has('app.trace.memory_every') {
+		every := app.config_ref.get_int('app.trace.memory_every', 1)
+		if every <= 0 {
+			return 1
+		}
+		return every
+	}
 	unsafe {
-		_ = vslim_trace_mem_enabled()
+		_ = vslim_trace_mem_enabled(app)
 		return vslim_trace_mem_every_cache
 	}
 }
 
-fn vslim_trace_mem_should_log() bool {
-	if !vslim_trace_mem_enabled() {
+fn vslim_trace_mem_should_log(app &VSlimApp) bool {
+	if !vslim_trace_mem_enabled(app) {
 		return false
 	}
 	unsafe {
 		vslim_trace_mem_counter++
-		every := u64(vslim_trace_mem_every())
+		every := u64(vslim_trace_mem_every(app))
 		return every > 0 && vslim_trace_mem_counter % every == 0
 	}
 }

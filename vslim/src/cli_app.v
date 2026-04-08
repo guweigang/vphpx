@@ -18,6 +18,14 @@ fn new_cli_core_app() &VSlimApp {
 	}
 }
 
+fn cli_debug_reset_overrides() {
+	unsafe {
+		vslim_cli_debug_override_inited = false
+		vslim_cli_debug_enabled_override = false
+		vslim_cli_debug_file_override = ''
+	}
+}
+
 fn ensure_cli_core_app(mut cli VSlimCliApp) &VSlimApp {
 	if cli.core_app_ref == unsafe { nil } {
 		cli.core_app_ref = new_cli_core_app()
@@ -461,6 +469,7 @@ fn run_registered_cli_command(mut cli VSlimCliApp, name string, args []string) !
 
 @[php_method]
 pub fn (mut cli VSlimCliApp) construct() &VSlimCliApp {
+	cli_debug_reset_overrides()
 	ensure_cli_core_app(mut cli)
 	ensure_cli_registry(mut cli)
 	cli.project_root = ''
@@ -473,6 +482,11 @@ pub fn (mut cli VSlimCliApp) construct() &VSlimCliApp {
 @[php_method]
 pub fn (mut cli VSlimCliApp) app() vphp.RequestOwnedZBox {
 	return vphp.RequestOwnedZBox.adopt_zval(wrap_runtime_app_zval(ensure_cli_core_app(mut cli)))
+}
+
+@[php_method: 'projectRoot']
+pub fn (cli &VSlimCliApp) project_root_value() string {
+	return cli.project_root
 }
 
 @[php_method]
@@ -677,5 +691,6 @@ fn (mut cli VSlimCliApp) free() {
 		cli.last_option_seen.free()
 		cli.last_warnings.free()
 	}
+	cli_debug_reset_overrides()
 	cli_debug_log('cli.free exit')
 }

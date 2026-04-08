@@ -1,0 +1,3 @@
+[cli]
+debug = "${env.bool.VSLIM_CLI_DEBUG:-false}"
+debug_file = "${env.VSLIM_CLI_DEBUG_FILE:-}"

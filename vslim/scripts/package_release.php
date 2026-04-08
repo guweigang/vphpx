@@ -64,8 +64,10 @@ function main(array $argv): void
             fail('Extension binary not found: ' . $extensionPath);
         }
         $extensionFile = basename($extensionPath);
+        $stagedExtensionPath = $stageDir . DIRECTORY_SEPARATOR . 'extension' . DIRECTORY_SEPARATOR . $extensionFile;
         ensure_dir($stageDir . DIRECTORY_SEPARATOR . 'extension');
-        copy_file($extensionPath, $stageDir . DIRECTORY_SEPARATOR . 'extension' . DIRECTORY_SEPARATOR . $extensionFile);
+        copy_file($extensionPath, $stagedExtensionPath);
+        stage_runtime_dependencies($stagedExtensionPath, $extensionPath, $stageDir);
     } else {
         stage_source_bundle($repoRoot, $stageDir);
     }
@@ -220,11 +222,38 @@ function stage_docs(string $repoRoot, string $stageDir): void
 
 function build_release_readme(string $version, string $platform, string $packageType, ?string $extensionFile): string
 {
+    $runtimeSection = '';
+    if ($packageType === 'binary' && $extensionFile !== null) {
+        $runtimeSection = <<<TXT
+## Native runtime libraries
+
+If the bundle contains native runtime libraries, the release packager now rewrites the extension to prefer the bundled copies. This is mainly used for direct mysql and other non-system client libraries such as `libmysqlclient`, `libmariadb`, and `libcjson`.
+
+- Linux:
+  the extension bundle is patched with `RPATH=\$ORIGIN/runtime`
+- macOS:
+  mysql client references are rewritten to `@loader_path/runtime/...`
+- Windows:
+  detected DLLs are copied next to `php_vslim.dll`
+
+If your environment still needs an explicit loader hint, point it at the bundled runtime directory before loading the extension:
+
+- Linux:
+  `LD_LIBRARY_PATH=/absolute/path/extension/runtime php -d extension=/absolute/path/{$extensionFile} -m`
+- macOS:
+  `DYLD_LIBRARY_PATH=/absolute/path/extension/runtime php -d extension=/absolute/path/{$extensionFile} -m`
+- Windows:
+  add `extension` or `extension\\runtime` to `PATH`
+
+TXT;
+    }
+
     $binarySection = $packageType === 'binary'
         ? <<<TXT
 ## Bundle contents
 
 - `extension/{$extensionFile}`: prebuilt VSlim PHP extension for this platform.
+- `extension/runtime/`: bundled native runtime libraries detected from the extension, when needed.
 - `template/`: starter app template that matches the current PSR-oriented project layout.
 - `docs/`: VSlim framework and template references.
 
@@ -259,12 +288,185 @@ TXT;
 - Package type: `{$packageType}`
 
 {$binarySection}
+{$runtimeSection}
 ## Notes
 
 - CI builds target PHP `8.5`.
 - `template/` is the release-facing app skeleton; the repository source tree remains the canonical development layout.
 - `docs/TEMPLATE_README.md` is the best entry point if you want the HTTP + CLI bootstrap flow first.
 MD;
+}
+
+function stage_runtime_dependencies(string $stagedExtensionPath, string $sourceExtensionPath, string $stageDir): void
+{
+    $deps = detect_runtime_dependencies($sourceExtensionPath);
+    if ($deps === []) {
+        return;
+    }
+
+    $stagedDeps = [];
+    $runtimeDir = $stageDir . DIRECTORY_SEPARATOR . 'extension' . DIRECTORY_SEPARATOR . 'runtime';
+    if (PHP_OS_FAMILY !== 'Windows') {
+        ensure_dir($runtimeDir);
+    }
+    foreach ($deps as $dep) {
+        $targetDir = PHP_OS_FAMILY === 'Windows'
+            ? $stageDir . DIRECTORY_SEPARATOR . 'extension'
+            : $runtimeDir;
+        $stagedPath = $targetDir . DIRECTORY_SEPARATOR . basename($dep);
+        copy_file($dep, $stagedPath);
+        $stagedDeps[$dep] = $stagedPath;
+    }
+
+    relink_bundled_runtime_dependencies($stagedExtensionPath, $stagedDeps);
+}
+
+function detect_runtime_dependencies(string $extensionPath): array
+{
+    return match (PHP_OS_FAMILY) {
+        'Darwin' => detect_macos_runtime_dependencies($extensionPath),
+        'Linux' => detect_linux_runtime_dependencies($extensionPath),
+        'Windows' => detect_windows_runtime_dependencies($extensionPath),
+        default => [],
+    };
+}
+
+function detect_macos_runtime_dependencies(string $extensionPath): array
+{
+    $cmd = 'otool -L ' . escapeshellarg($extensionPath);
+    exec($cmd, $output, $exitCode);
+    if ($exitCode !== 0) {
+        return [];
+    }
+
+    $deps = [];
+    foreach ($output as $index => $line) {
+        if ($index === 0) {
+            continue;
+        }
+        if (!preg_match('/^\s+(\S+)/', $line, $m)) {
+            continue;
+        }
+        $path = trim($m[1]);
+        if (!should_bundle_runtime_dependency($path)) {
+            continue;
+        }
+        if (is_file($path)) {
+            $deps[$path] = true;
+        }
+    }
+
+    return array_keys($deps);
+}
+
+function detect_linux_runtime_dependencies(string $extensionPath): array
+{
+    $cmd = 'ldd ' . escapeshellarg($extensionPath);
+    exec($cmd, $output, $exitCode);
+    if ($exitCode !== 0) {
+        return [];
+    }
+
+    $deps = [];
+    foreach ($output as $line) {
+        if (!preg_match('/=>\s+(\S+)/', $line, $m)) {
+            continue;
+        }
+        $path = trim($m[1]);
+        if (!should_bundle_runtime_dependency($path)) {
+            continue;
+        }
+        if (is_file($path)) {
+            $deps[$path] = true;
+        }
+    }
+
+    return array_keys($deps);
+}
+
+function detect_windows_runtime_dependencies(string $extensionPath): array
+{
+    $dir = dirname($extensionPath);
+    $candidates = [
+        $dir . DIRECTORY_SEPARATOR . 'libmysql.dll',
+        $dir . DIRECTORY_SEPARATOR . 'libmariadb.dll',
+        $dir . DIRECTORY_SEPARATOR . 'cjson.dll',
+        $dir . DIRECTORY_SEPARATOR . 'libcjson.dll',
+    ];
+
+    $deps = [];
+    foreach ($candidates as $candidate) {
+        if (is_file($candidate)) {
+            $deps[$candidate] = true;
+        }
+    }
+
+    return array_keys($deps);
+}
+
+function should_bundle_runtime_dependency(string $path): bool
+{
+    $normalized = strtolower(trim($path));
+    if ($normalized === '') {
+        return false;
+    }
+    if (
+        !str_contains($normalized, 'mysql')
+        && !str_contains($normalized, 'mariadb')
+        && !str_contains($normalized, 'cjson')
+    ) {
+        return false;
+    }
+    if (str_starts_with($normalized, '/usr/lib/') || str_starts_with($normalized, '/system/library/')) {
+        return false;
+    }
+    return true;
+}
+
+function relink_bundled_runtime_dependencies(string $stagedExtensionPath, array $stagedDeps): void
+{
+    if ($stagedDeps === []) {
+        return;
+    }
+
+    match (PHP_OS_FAMILY) {
+        'Darwin' => relink_macos_runtime_dependencies($stagedExtensionPath, $stagedDeps),
+        'Linux' => relink_linux_runtime_dependencies($stagedExtensionPath),
+        default => null,
+    };
+}
+
+function relink_macos_runtime_dependencies(string $stagedExtensionPath, array $stagedDeps): void
+{
+    foreach ($stagedDeps as $sourcePath => $stagedPath) {
+        $cmd = 'install_name_tool -change '
+            . escapeshellarg($sourcePath)
+            . ' '
+            . escapeshellarg('@loader_path/runtime/' . basename($stagedPath))
+            . ' '
+            . escapeshellarg($stagedExtensionPath);
+        exec($cmd, $output, $exitCode);
+        if ($exitCode !== 0) {
+            fail('Failed to rewrite macOS runtime dependency: ' . $sourcePath);
+        }
+    }
+}
+
+function relink_linux_runtime_dependencies(string $stagedExtensionPath): void
+{
+    $patchelf = trim((string) shell_exec('command -v patchelf 2>/dev/null'));
+    if ($patchelf === '') {
+        fail('patchelf is required to bundle linux runtime libraries.');
+    }
+    $cmd = escapeshellarg($patchelf)
+        . ' --set-rpath '
+        . escapeshellarg('$ORIGIN/runtime')
+        . ' '
+        . escapeshellarg($stagedExtensionPath);
+    exec($cmd, $output, $exitCode);
+    if ($exitCode !== 0) {
+        fail('Failed to patch linux RPATH for bundled runtime libraries.');
+    }
 }
 
 function create_zip_archive(string $sourceDir, string $archivePath): void

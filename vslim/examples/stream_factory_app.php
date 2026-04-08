@@ -20,19 +20,20 @@ function vslim_stream_factory_demo_app(): VSlim\App
     $app->set_error_response_json(true);
     $app->set_view_base_path(__DIR__ . '/views');
     $app->set_assets_prefix('/assets');
+    $ollama = VSlim\Stream\OllamaClient::fromApp($app);
 
-    $app->get('/', function () use ($app) {
+    $app->get('/', function () use ($app, $ollama) {
         return $app->view('stream_factory.html', [
             'title' => 'VSlim Stream Factory Demo',
             'default_prompt' => 'Explain VSlim stream factory in one paragraph.',
-            'default_model' => (string) (getenv('OLLAMA_MODEL') ?: 'qwen2.5:7b-instruct'),
-            'chat_url' => (string) (getenv('OLLAMA_CHAT_URL') ?: 'http://127.0.0.1:11434/api/chat'),
+            'default_model' => $ollama->defaultModel(),
+            'chat_url' => $ollama->chatUrl(),
         ]);
     });
 
     $app->get('/health', fn () => 'OK');
 
-    $app->get('/meta', function ($req) {
+    $app->get('/meta', function ($req) use ($ollama) {
         $query = $req->getQueryParams();
         return [
             'status' => 200,
@@ -40,9 +41,9 @@ function vslim_stream_factory_demo_app(): VSlim\App
             'body' => json_encode([
                 'name' => 'vslim-stream-factory-demo',
                 'prompt' => $query['prompt'] ?? '',
-                'default_model' => (string) (getenv('OLLAMA_MODEL') ?: 'qwen2.5:7b-instruct'),
-                'chat_url' => (string) (getenv('OLLAMA_CHAT_URL') ?: 'http://127.0.0.1:11434/api/chat'),
-                'stream_fixture' => (string) (getenv('OLLAMA_STREAM_FIXTURE') ?: ''),
+                'default_model' => $ollama->defaultModel(),
+                'chat_url' => $ollama->chatUrl(),
+                'stream_fixture' => $ollama->fixturePath(),
                 'stream_routes' => [
                     'text' => '/stream/text',
                     'sse' => '/stream/sse',
