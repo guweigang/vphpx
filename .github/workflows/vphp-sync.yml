@@ -1,0 +1,81 @@
+name: Sync vphp Repo
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_ref:
+        description: Source ref to split and publish
+        required: false
+        default: main
+        type: string
+      publish_tag:
+        description: Optional tag to create in guweigang/vphp
+        required: false
+        default: ''
+        type: string
+  push:
+    branches:
+      - main
+    paths:
+      - 'vphp/**'
+      - '.github/workflows/vphp-sync.yml'
+    tags:
+      - 'vphp-*'
+
+jobs:
+  sync:
+    name: split vphp and push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.target_ref || github.ref }}
+
+      - name: Validate push token
+        shell: bash
+        run: |
+          if [ -z "${{ secrets.VPHP_REPO_PUSH_TOKEN }}" ]; then
+            echo "Missing secret VPHP_REPO_PUSH_TOKEN" >&2
+            exit 1
+          fi
+
+      - name: Configure git identity
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Split vphp subtree
+        shell: bash
+        run: |
+          git subtree split --prefix=vphp --branch vphp-split
+
+      - name: Push split branch to guweigang/vphp
+        shell: bash
+        env:
+          TARGET_REPO: https://x-access-token:${{ secrets.VPHP_REPO_PUSH_TOKEN }}@github.com/guweigang/vphp.git
+        run: |
+          git remote add vphp-publish "$TARGET_REPO"
+          git push --force vphp-publish vphp-split:main
+
+      - name: Publish tag from workflow input
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_tag != ''
+        shell: bash
+        run: |
+          split_sha="$(git rev-parse vphp-split)"
+          git tag -f "${{ inputs.publish_tag }}" "$split_sha"
+          git push --force vphp-publish "refs/tags/${{ inputs.publish_tag }}"
+
+      - name: Publish tag from monorepo tag
+        if: startsWith(github.ref, 'refs/tags/vphp-')
+        shell: bash
+        run: |
+          split_sha="$(git rev-parse vphp-split)"
+          target_tag="${GITHUB_REF_NAME#vphp-}"
+          git tag -f "$target_tag" "$split_sha"
+          git push --force vphp-publish "refs/tags/$target_tag"
