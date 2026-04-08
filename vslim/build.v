@@ -461,7 +461,7 @@ fn main() {
 	}
 
 	is_macos := os.user_os() == 'macos'
-	mut disabled_warnings := '-Wno-pointer-to-int-cast -Wno-incompatible-pointer-types -Wno-unused-value'
+	mut disabled_warnings := '-Wno-pointer-to-int-cast -Wno-incompatible-pointer-types -Wno-unused-value -Wno-pointer-sign'
 	if is_macos {
 		disabled_warnings += ' -Wno-initializer-overrides'
 	} else {

@@ -386,7 +386,7 @@ fn database_mysql_stmt_column_names(mut conn mysql.DB, query string, params []st
 	fields := stmt.fetch_fields(metadata)
 	mut column_names := []string{cap: num_fields}
 	for i in 0 .. num_fields {
-		column_names << unsafe { fields[i].name.vstring() }
+		column_names << unsafe { cstring_to_vstring(&char(fields[i].name)) }
 	}
 	return column_names
 }
