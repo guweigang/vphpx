@@ -167,13 +167,13 @@ fn testing_new_json_request(method string, uri string, payload vphp.ZVal) &VSlim
 @[php_method]
 pub fn (mut h VSlimTestingHarness) construct() &VSlimTestingHarness {
 	h.cookies = map[string]string{}
-	return &h
+	return h
 }
 
 @[php_method: 'setApp']
 pub fn (mut h VSlimTestingHarness) set_app(app &VSlimApp) &VSlimTestingHarness {
 	h.app_ref = app
-	return &h
+	return h
 }
 
 @[php_method]
@@ -193,68 +193,68 @@ pub fn (mut h VSlimTestingHarness) container() &VSlimContainer {
 pub fn (mut h VSlimTestingHarness) with_service(id string, value vphp.RequestBorrowedZBox) &VSlimTestingHarness {
 	if h.app_ref == unsafe { nil } {
 		vphp.throw_exception_class('RuntimeException', 'testing harness app is not configured', 0)
-		return &h
+		return h
 	}
 	mut container := h.app_ref.container()
 	container.set(id, value)
-	return &h
+	return h
 }
 
 @[php_method: 'withFactory']
 pub fn (mut h VSlimTestingHarness) with_factory(id string, callable vphp.RequestBorrowedZBox) &VSlimTestingHarness {
 	if h.app_ref == unsafe { nil } {
 		vphp.throw_exception_class('RuntimeException', 'testing harness app is not configured', 0)
-		return &h
+		return h
 	}
 	mut container := h.app_ref.container()
 	container.factory(id, callable)
-	return &h
+	return h
 }
 
 @[php_method: 'withConfig']
 pub fn (mut h VSlimTestingHarness) with_config(path string) &VSlimTestingHarness {
 	if h.app_ref == unsafe { nil } {
 		vphp.throw_exception_class('RuntimeException', 'testing harness app is not configured', 0)
-		return &h
+		return h
 	}
 	h.app_ref.merge_config(path)
-	return &h
+	return h
 }
 
 @[php_method: 'withConfigText']
 pub fn (mut h VSlimTestingHarness) with_config_text(text string) &VSlimTestingHarness {
 	if h.app_ref == unsafe { nil } {
 		vphp.throw_exception_class('RuntimeException', 'testing harness app is not configured', 0)
-		return &h
+		return h
 	}
 	h.app_ref.merge_config_text(text)
-	return &h
+	return h
 }
 
 @[php_method: 'withCookie']
 pub fn (mut h VSlimTestingHarness) with_cookie(name string, value string) &VSlimTestingHarness {
 	key := name.trim_space()
 	if key == '' {
-		return &h
+		return h
 	}
 	h.cookies[key] = value
-	return &h
+	return h
 }
 
 @[php_method: 'withoutCookie']
 pub fn (mut h VSlimTestingHarness) without_cookie(name string) &VSlimTestingHarness {
 	key := name.trim_space()
 	if key == '' {
-		return &h
+		return h
 	}
 	h.cookies.delete(key)
-	return &h
+	return h
 }
 
 @[php_method: 'clearCookies']
 pub fn (mut h VSlimTestingHarness) clear_cookies() &VSlimTestingHarness {
 	h.cookies = map[string]string{}
-	return &h
+	return h
 }
 
 @[php_method]
@@ -266,21 +266,21 @@ pub fn (h &VSlimTestingHarness) cookies() map[string]string {
 pub fn (mut h VSlimTestingHarness) with_session(values vphp.RequestBorrowedZBox) &VSlimTestingHarness {
 	if h.app_ref == unsafe { nil } {
 		vphp.throw_exception_class('RuntimeException', 'testing harness app is not configured', 0)
-		return &h
+		return h
 	}
 	mut session := testing_build_session_store(h.app_ref, h.cookies)
 	for key, value in values.to_zval().to_string_map() {
 		session.values[key] = value
 	}
 	testing_store_session_cookie(mut h, session)
-	return &h
+	return h
 }
 
 @[php_method: 'actingAs']
 pub fn (mut h VSlimTestingHarness) acting_as(user_id string) &VSlimTestingHarness {
 	if h.app_ref == unsafe { nil } {
 		vphp.throw_exception_class('RuntimeException', 'testing harness app is not configured', 0)
-		return &h
+		return h
 	}
 	mut session := testing_build_session_store(h.app_ref, h.cookies)
 	mut guard := VSlimAuthSessionGuard{}
@@ -289,7 +289,7 @@ pub fn (mut h VSlimTestingHarness) acting_as(user_id string) &VSlimTestingHarnes
 	configure_default_auth_guard(mut guard, h.app_ref.config_ref)
 	guard.login(user_id)
 	testing_store_session_cookie(mut h, session)
-	return &h
+	return h
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
@@ -395,7 +395,7 @@ pub fn (h &VSlimTestingHarness) assert_status(response vphp.RequestBorrowedZBox,
 	if actual != expected {
 		vphp.throw_exception_class('RuntimeException', 'expected response status ${expected}, got ${actual}', 0)
 	}
-	return &h
+	return h
 }
 
 @[php_method: 'assertHeader']
@@ -404,7 +404,7 @@ pub fn (h &VSlimTestingHarness) assert_header(response vphp.RequestBorrowedZBox,
 	if actual != expected {
 		vphp.throw_exception_class('RuntimeException', 'expected header ${name}=${expected}, got ${actual}', 0)
 	}
-	return &h
+	return h
 }
 
 @[php_method: 'assertBodyContains']
@@ -413,7 +413,7 @@ pub fn (h &VSlimTestingHarness) assert_body_contains(response vphp.RequestBorrow
 	if !body.contains(needle) {
 		vphp.throw_exception_class('RuntimeException', 'expected response body to contain ${needle}', 0)
 	}
-	return &h
+	return h
 }
 
 @[php_method]
