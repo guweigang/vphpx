@@ -1,0 +1,14 @@
+{{fill:nav}}{{ nav_label }}{{/fill}}
+{{fill:sidebar}}<p>Workspace-first sample</p>{{/fill}}
+{{fill:footer}}<small>{{ footer_note }}</small>{{/fill}}
+<section>
+  <h1>{{ title | trim }}</h1>
+  <p>{{ tagline | trim }}</p>
+  <p>trace: {{ trace | default('n/a') }}</p>
+  {{if:viewer_name}}<p>signed in as {{ viewer_name }} ({{ viewer_role }})</p>{{/if}}
+  <ul>
+    <li><a href="{{ login_url | trim }}">Sign in</a></li>
+    <li><a href="{{ console_url | trim }}">Workspace console</a></li>
+    <li><a href="{{ brand_url | trim }}">Public brand demo</a></li>
+  </ul>
+</section>

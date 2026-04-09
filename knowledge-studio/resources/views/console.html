@@ -1,0 +1,42 @@
+{{fill:nav}}{{ nav_label }}{{/fill}}
+{{fill:sidebar}}<p>{{ workspace_brand }}</p><p>plan: {{ workspace_plan }}</p>{{/fill}}
+{{fill:footer}}<small>{{ footer_note }}</small>{{/fill}}
+<section>
+  <h1>{{ title | trim }}</h1>
+  <p>{{ viewer_name | trim }} ({{ viewer_role | trim }})</p>
+  <p>Workspace: {{ workspace_name | trim }} / {{ workspace_slug | trim }}</p>
+  <p>Brand: {{ workspace_brand | trim }}</p>
+  <p>Plan: {{ workspace_plan | trim }}</p>
+  <p>Workspace members: {{ workspace_members | trim }}</p>
+  <p>Membership records loaded: {{ member_count }}</p>
+  <p>Published documents: {{ published_documents }}</p>
+  <p>Assistant status: {{ assistant_status }}</p>
+  <ul>
+    <li><a href="{{ documents_url | trim }}">Documents</a></li>
+    <li><a href="{{ faqs_url | trim }}">FAQ and topics</a></li>
+    <li><a href="{{ ops_url | trim }}">Ops and audit</a></li>
+  </ul>
+  <h2>Current metrics</h2>
+  <p>Documents: {{ documents_total }}</p>
+  <p>Entries: {{ entries_total }}</p>
+  <p>Jobs: {{ jobs_total }}</p>
+  <h2>Recent documents</h2>
+  <ul>
+{{for:documents}}    <li>{{ item.title }} / {{ item.status }} / chunks={{ item.chunks }}</li>{{/for}}
+  </ul>
+  <h2>Recent entries</h2>
+  <ul>
+{{for:entries}}    <li>{{ item.title }} / {{ item.kind }} / {{ item.status }}</li>{{/for}}
+  </ul>
+  <h2>Recent jobs</h2>
+  <ul>
+{{for:jobs}}    <li>{{ item.name }} / {{ item.status }}</li>{{/for}}
+  </ul>
+  <ul>
+{{for:memberships}}    <li>{{ item.workspace_slug }} / {{ item.role }}</li>{{/for}}
+  </ul>
+  <p><a href="{{ public_url | trim }}">Open public brand page</a></p>
+  <form method="post" action="/logout">
+    <button type="submit">Sign out</button>
+  </form>
+</section>

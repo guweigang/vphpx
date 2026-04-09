@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title | trim }}</title>
+</head>
+<body>
+  <header>
+    <strong>Knowledge Studio</strong>
+    <span>{{ page_section | default('Workspace App') }}</span>
+  </header>
+  <nav>{{slot:nav|studio}}</nav>
+  <aside>{{slot:sidebar}}</aside>
+  <main>{{slot:content}}</main>
+  <footer>{{slot:footer}}</footer>
+</body>
+</html>

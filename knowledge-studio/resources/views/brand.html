@@ -1,0 +1,10 @@
+{{fill:nav}}{{ nav_label }}{{/fill}}
+{{fill:sidebar}}<p>Public-facing tenant page</p>{{/fill}}
+{{fill:footer}}<small>{{ footer_note }}</small>{{/fill}}
+<section>
+  <h1>{{ title | trim }}</h1>
+  <p>{{ workspace_name | trim }}</p>
+  <p>{{ tagline | trim }}</p>
+  <p>Tenant slug: {{ workspace_slug | trim }}</p>
+  <p><a href="{{ assistant_url | trim }}">Open assistant preview</a></p>
+</section>

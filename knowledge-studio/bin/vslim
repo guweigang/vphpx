@@ -1,0 +1,24 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types=1);
+
+$root = dirname(__DIR__);
+$autoload = $root . '/vendor/autoload.php';
+if (!is_file($autoload)) {
+    $autoload = $root . '/../../../vhttpd/php/package/vendor/autoload.php';
+}
+if (is_file($autoload)) {
+    require_once $autoload;
+}
+require_once $root . '/app/Support/EnvLoader.php';
+require_once $root . '/app/Support/PsrStubLoader.php';
+\App\Support\EnvLoader::bootstrap($root);
+\App\Support\PsrStubLoader::load();
+
+if (!extension_loaded('vslim')) {
+    fwrite(STDERR, "vslim extension is not loaded\n");
+    exit(1);
+}
+
+$cli = (new VSlim\Cli\App())->bootstrapDir($root);
+exit($cli->runArgv($_SERVER['argv'] ?? $argv ?? []));

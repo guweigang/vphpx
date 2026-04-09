@@ -1,0 +1,16 @@
+[database]
+transport = "${env.VSLIM_DB_TRANSPORT:-direct}"
+driver = "${env.VSLIM_DB_DRIVER:-mysql}"
+pool_size = "${env.int.VSLIM_DB_POOL_SIZE:-5}"
+pool_name = "${env.VSLIM_DB_POOL_NAME:-default}"
+timeout_ms = "${env.int.VSLIM_DB_TIMEOUT_MS:-1000}"
+
+[database.mysql]
+host = "${env.VSLIM_DB_HOST:-127.0.0.1}"
+port = "${env.int.VSLIM_DB_PORT:-3306}"
+username = "${env.VSLIM_DB_USER:-root}"
+password = "${env.VSLIM_DB_PASSWORD:-}"
+database = "${env.VSLIM_DB_NAME:-knowledge_studio}"
+
+[database.upstream]
+socket = "${env.VSLIM_DB_UPSTREAM_SOCKET:-/tmp/vhttpd_db.sock}"

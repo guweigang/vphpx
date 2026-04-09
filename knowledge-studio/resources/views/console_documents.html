@@ -1,0 +1,11 @@
+{{fill:nav}}{{ nav_label }}{{/fill}}
+{{fill:sidebar}}<p>{{ workspace_name }}</p><p>{{ workspace_slug }}</p>{{/fill}}
+{{fill:footer}}<small>{{ footer_note }}</small>{{/fill}}
+<section>
+  <h1>{{ title | trim }}</h1>
+  <p>Viewer: {{ viewer_name | trim }}</p>
+  <p>Workspace: {{ workspace_name | trim }} / {{ workspace_slug | trim }}</p>
+  <ul>
+{{for:documents}}    <li>{{ item.title }} / {{ item.source_type }} / {{ item.status }} / chunks={{ item.chunks }} / updated={{ item.updated_at }}</li>{{/for}}
+  </ul>
+</section>

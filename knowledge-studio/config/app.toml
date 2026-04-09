@@ -1,0 +1,15 @@
+[app]
+name = "knowledge-studio"
+
+[app.trace]
+memory = "${env.bool.VSLIM_TRACE_MEM:-false}"
+memory_every = "${env.int.VSLIM_TRACE_MEM_EVERY:-1}"
+
+[ui]
+title = "Knowledge Studio"
+
+[studio]
+tagline = "Multi-tenant AI knowledge brand platform"
+
+[studio.storage]
+source = "${env.STUDIO_DATA_SOURCE:-demo}"

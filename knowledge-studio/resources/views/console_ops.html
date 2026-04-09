@@ -1,0 +1,16 @@
+{{fill:nav}}{{ nav_label }}{{/fill}}
+{{fill:sidebar}}<p>{{ workspace_name }}</p><p>ops</p>{{/fill}}
+{{fill:footer}}<small>{{ footer_note }}</small>{{/fill}}
+<section>
+  <h1>{{ title | trim }}</h1>
+  <p>Viewer: {{ viewer_name | trim }}</p>
+  <p>Workspace: {{ workspace_name | trim }} / {{ workspace_slug | trim }}</p>
+  <h2>Jobs</h2>
+  <ul>
+{{for:jobs}}    <li>{{ item.name }} / {{ item.status }} / queued={{ item.queued_at }}</li>{{/for}}
+  </ul>
+  <h2>Audit log</h2>
+  <ul>
+{{for:logs}}    <li>{{ item.created_at }} / {{ item.actor }} / {{ item.action }} / {{ item.target }}</li>{{/for}}
+  </ul>
+</section>

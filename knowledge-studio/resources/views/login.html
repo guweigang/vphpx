@@ -1,0 +1,23 @@
+{{fill:nav}}{{ nav_label }}{{/fill}}
+{{fill:sidebar}}<p>Demo tenant access</p>{{/fill}}
+{{fill:footer}}<small>{{ footer_note }}</small>{{/fill}}
+<section>
+  <h1>{{ title | trim }}</h1>
+  <p>Use one of the demo workspace accounts to enter the tenant console.</p>
+  {{if:error}}<p>{{ error }}</p>{{/if}}
+  <form method="post" action="/login">
+    <label>
+      Email
+      <input type="email" name="email" value="owner@acme.test">
+    </label>
+    <br>
+    <label>
+      Password
+      <input type="password" name="password" value="{{ password_hint | trim }}">
+    </label>
+    <br>
+    <button type="submit">Sign in</button>
+  </form>
+  <p>Demo accounts: owner@acme.test, editor@acme.test, owner@nova.test</p>
+  <p>Password: {{ password_hint | trim }}</p>
+</section>
