@@ -16,7 +16,7 @@ pub fn (view &VSlimView) render_response(template string, data vphp.RequestBorro
 	body := view.render(template, data)
 	return &VSlimResponse{
 		status: 200
-		body: body
+		body: body.clone()
 		content_type: 'text/html; charset=utf-8'
 		headers: {
 			'content-type': 'text/html; charset=utf-8'
@@ -29,7 +29,7 @@ pub fn (view &VSlimView) render_response_with_layout(template string, layout str
 	body := view.render_with_layout(template, layout, data)
 	return &VSlimResponse{
 		status: 200
-		body: body
+		body: body.clone()
 		content_type: 'text/html; charset=utf-8'
 		headers: {
 			'content-type': 'text/html; charset=utf-8'

@@ -189,7 +189,7 @@ fn build_php_response_object(res VSlimResponse) vphp.ZVal {
 fn build_php_psr7_response_object(res &VSlimPsr7Response) vphp.ZVal {
 	unsafe {
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
-		bound := clone_psr7_response(res, res.get_protocol_version(), res.headers.clone(),
+		bound := clone_psr7_response(res, res.get_protocol_version(), clone_header_values(res.headers),
 			clone_header_names(res.header_names), response_body_or_empty(res), res.get_status_code(),
 			res.get_reason_phrase())
 		vphp.return_owned_object_raw(payload.raw, bound, C.vslim__psr7__response_ce,
@@ -218,8 +218,8 @@ fn normalize_psr15_server_request_payload(payload vphp.RequestBorrowedZBox, rout
 				protocol_version:   internal.get_protocol_version()
 				headers:            clone_header_values(internal.headers)
 				header_names:       clone_header_names(internal.header_names)
-				body_ref:           server_request_body_or_empty(internal)
-				uri_ref:            server_request_uri_or_default(internal)
+				body_ref:           clone_psr7_stream(server_request_body_or_empty(internal))
+				uri_ref:            clone_psr7_uri_or_default(server_request_uri_or_default(internal))
 				server_params_ref:  internal.server_params_ref.clone_persistent_owned()
 				cookie_params_ref:  internal.cookie_params_ref.clone_persistent_owned()
 				query_params_ref:   internal.query_params_ref.clone_persistent_owned()
@@ -589,7 +589,7 @@ fn normalize_to_psr7_response(result vphp.ZVal) &VSlimPsr7Response {
 	if result.is_object() && (result.is_instance_of('VSlim\\Psr7\\Response')
 		|| result.is_instance_of('VSlimPsr7Response')) {
 		if resp := result.to_object[VSlimPsr7Response]() {
-			return clone_psr7_response(resp, resp.get_protocol_version(), resp.headers.clone(),
+			return clone_psr7_response(resp, resp.get_protocol_version(), clone_header_values(resp.headers),
 				clone_header_names(resp.header_names), response_body_or_empty(resp), resp.get_status_code(),
 				resp.get_reason_phrase())
 		}
@@ -627,7 +627,7 @@ fn normalize_to_psr7_response(result vphp.ZVal) &VSlimPsr7Response {
 		}
 		body_ref := if result.method_exists('getBody') {
 			vphp.with_method_result_zval(result, 'getBody', []vphp.ZVal{}, fn (z vphp.ZVal) &VSlimPsr7Stream {
-				return zval_to_psr7_stream(z)
+				return clone_psr7_stream(zval_to_psr7_stream(z))
 			})
 		} else {
 			new_psr7_stream('')

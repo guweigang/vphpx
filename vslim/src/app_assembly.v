@@ -474,6 +474,27 @@ fn apply_bootstrap_convention_module_classes(mut app VSlimApp, project_root stri
 	return applied
 }
 
+fn bootstrap_controller_declares_own_constructor(class_name string) bool {
+	if class_name.trim_space() == '' || !php_class_exists(class_name) {
+		return false
+	}
+	ref := vphp.php_class('ReflectionClass').construct([
+		vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
+	])
+	if !ref.is_valid() || !ref.is_object() {
+		return false
+	}
+	ctor := ref.method('getConstructor', []vphp.ZVal{})
+	if !ctor.is_valid() || ctor.is_null() || !ctor.is_object() {
+		return false
+	}
+	declaring := ctor.method('getDeclaringClass', []vphp.ZVal{})
+	if !declaring.is_valid() || !declaring.is_object() {
+		return false
+	}
+	return declaring.method('getName', []vphp.ZVal{}).to_string().trim_space() == class_name
+}
+
 fn apply_bootstrap_convention_http_classes(mut app VSlimApp, project_root string) !bool {
 	mut applied := false
 	mut container := app.container()
@@ -485,7 +506,8 @@ fn apply_bootstrap_convention_http_classes(mut app VSlimApp, project_root string
 			return error('controller convention file "${file}" must declare class ${class_name}')
 		}
 		if !container.has(class_name)
-			&& vphp.php_class(class_name).is_subclass_of('VSlim\\Controller') {
+			&& vphp.php_class(class_name).is_subclass_of('VSlim\\Controller')
+			&& !bootstrap_controller_declares_own_constructor(class_name) {
 			controller := vphp.php_class(class_name).construct([app_z])
 			if !controller.is_valid() || !controller.is_object() {
 				return error('controller class "${class_name}" could not be instantiated')

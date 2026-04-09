@@ -4,33 +4,57 @@ import vphp
 
 @[php_method]
 pub fn (mut c VSlimController) construct(app &VSlimApp) &VSlimController {
-	c.host.set_app_ref(app)
+	c.app_ref = app
 	return &c
 }
 
 @[php_method]
 pub fn (mut c VSlimController) set_app(app &VSlimApp) &VSlimController {
-	c.host.set_app_ref(app)
+	c.app_ref = app
 	return &c
 }
 
 @[php_method]
 pub fn (mut c VSlimController) set_view(view &VSlimView) &VSlimController {
-	c.host.set_view_ref(view)
+	c.view_ref = view
 	return &c
 }
 
 @[php_method]
+@[php_borrowed_return]
+pub fn (c &VSlimController) app() &VSlimApp {
+	if c.app_ref == unsafe { nil } {
+		vphp.throw_exception_class('RuntimeException', 'controller is not bound to an app', 0)
+		return unsafe { nil }
+	}
+	return c.app_ref
+}
+
+@[php_method]
 pub fn (mut c VSlimController) view() &VSlimView {
-	return c.host.view()
+	if c.view_ref != unsafe { nil } {
+		return c.view_ref
+	}
+	if c.app_ref != unsafe { nil } {
+		c.view_ref = c.app_ref.make_view()
+		return c.view_ref
+	}
+	c.view_ref = &VSlimView{
+		base_path: ''
+		assets_prefix: '/assets'
+		cache_enabled: default_view_cache_enabled()
+		helpers: map[string]vphp.PersistentOwnedZBox{}
+	}
+	return c.view_ref
 }
 
 @[php_method]
 pub fn (mut c VSlimController) render(template string, data vphp.RequestBorrowedZBox) &VSlimResponse {
-	body := c.host.render_template_data(template, data)
+	mut view := c.view()
+	body := view.render(template, data)
 	return &VSlimResponse{
 		status:       200
-		body:         body
+		body:         body.clone()
 		content_type: 'text/html; charset=utf-8'
 		headers:      map[string]string{}
 	}
@@ -38,10 +62,11 @@ pub fn (mut c VSlimController) render(template string, data vphp.RequestBorrowed
 
 @[php_method]
 pub fn (mut c VSlimController) render_with_layout(template string, layout string, data vphp.RequestBorrowedZBox) &VSlimResponse {
-	body := c.host.render_template_with_layout_data(template, layout, data)
+	mut view := c.view()
+	body := view.render_with_layout(template, layout, data)
 	return &VSlimResponse{
 		status:       200
-		body:         body
+		body:         body.clone()
 		content_type: 'text/html; charset=utf-8'
 		headers:      map[string]string{}
 	}
@@ -49,27 +74,25 @@ pub fn (mut c VSlimController) render_with_layout(template string, layout string
 
 @[php_method]
 pub fn (c &VSlimController) url_for(name string, params vphp.RequestBorrowedZBox) string {
-	mut host := c.host
-	if host.app() == unsafe { nil } {
+	if c.app_ref == unsafe { nil } {
 		return ''
 	}
-	return host.app().url_for(name, params)
+	return c.app_ref.url_for(name, params)
 }
 
 @[php_method]
 pub fn (c &VSlimController) url_for_query(name string, params vphp.RequestBorrowedZBox, query vphp.RequestBorrowedZBox) string {
-	mut host := c.host
-	if host.app() == unsafe { nil } {
+	if c.app_ref == unsafe { nil } {
 		return ''
 	}
-	return host.app().url_for_query(name, params, query)
+	return c.app_ref.url_for_query(name, params, query)
 }
 
 @[php_method]
 pub fn (c &VSlimController) text(body string, status int) &VSlimResponse {
 	return &VSlimResponse{
 		status:       status
-		body:         body
+		body:         body.clone()
 		content_type: 'text/plain; charset=utf-8'
 		headers:      {
 			'content-type': 'text/plain; charset=utf-8'
@@ -81,7 +104,7 @@ pub fn (c &VSlimController) text(body string, status int) &VSlimResponse {
 pub fn (c &VSlimController) json(body string, status int) &VSlimResponse {
 	return &VSlimResponse{
 		status:       status
-		body:         body
+		body:         body.clone()
 		content_type: 'application/json; charset=utf-8'
 		headers:      {
 			'content-type': 'application/json; charset=utf-8'

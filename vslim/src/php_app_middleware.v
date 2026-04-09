@@ -247,15 +247,51 @@ fn resolve_php_route_target(app &VSlimApp, handler vphp.RequestBorrowedZBox) !(v
 	return handler.to_zval(), ''
 }
 
+fn bind_route_target_to_app_if_supported(app &VSlimApp, target vphp.ZVal) {
+	if !target.is_valid() || !target.is_object() {
+		return
+	}
+	if target.is_instance_of('VSlim\\Controller') {
+		if target.method_exists('set_app') {
+			vphp.with_method_result_zval(target, 'set_app', [wrap_runtime_app_zval(app)], fn (_ vphp.ZVal) bool {
+				return true
+			})
+			return
+		}
+		if target.method_exists('setApp') {
+			vphp.with_method_result_zval(target, 'setApp', [wrap_runtime_app_zval(app)], fn (_ vphp.ZVal) bool {
+				return true
+			})
+		}
+		return
+	}
+	if target.method_exists('setApp') {
+		vphp.with_method_result_zval(target, 'setApp', [wrap_runtime_app_zval(app)], fn (_ vphp.ZVal) bool {
+			return true
+		})
+	}
+}
+
+fn call_route_target_method(target vphp.ZVal, method string, args []vphp.ZVal) vphp.RequestOwnedZBox {
+	return vphp.method_request_owned_box(target, method, args)
+}
+
 fn dispatch_php_middleware_entry(mut chain MiddlewareChain, handler vphp.RequestBorrowedZBox, payload vphp.RequestBorrowedZBox) !vphp.ZVal {
 	target, explicit_method := resolve_php_middleware_target(chain.app, handler)!
 	method := middleware_target_method(target, explicit_method)
 	if method == 'process' && target.is_object()
 		&& target.is_instance_of('Psr\\Http\\Server\\MiddlewareInterface') {
 		psr_payload := normalize_psr15_server_request_payload(payload, chain.request_ctx.route_params)
-		next_handler := build_php_psr15_next_handler_object(&chain)
-		mut result := vphp.method_request_owned_box(target, method, [psr_payload, next_handler])
-		return result.take_zval()
+		mut next_handler := vphp.RequestOwnedZBox.from_zval(build_php_psr15_next_handler_object(&chain))
+		defer {
+			next_handler.release()
+		}
+		mut result := vphp.method_request_owned_box(target, method, [psr_payload, next_handler.to_zval()])
+		defer {
+			result.release()
+		}
+		normalized := normalize_to_psr7_response(result.to_zval())
+		return build_php_psr7_response_object(normalized)
 	}
 	return error('Middleware must implement Psr\\Http\\Server\\MiddlewareInterface')
 }
@@ -283,8 +319,9 @@ fn dispatch_route_handler(app &VSlimApp, handler vphp.RequestBorrowedZBox, paylo
 	}
 	if handler.is_string() || handler.is_array() {
 		target, method := resolve_php_route_target(app, handler)!
+		bind_route_target_to_app_if_supported(app, target)
 		psr_payload := normalize_psr15_server_request_payload(payload, route_params)
-		mut result := vphp.method_request_owned_box(target, method, [psr_payload])
+		mut result := call_route_target_method(target, method, [psr_payload])
 		return result.take_zval()
 	}
 	if is_psr15_request_handler(handler) {
