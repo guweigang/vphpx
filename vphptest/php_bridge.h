@@ -24,6 +24,8 @@ PHP_FUNCTION(v_get_user);
 PHP_FUNCTION(v_call_back);
 PHP_FUNCTION(v_bind_class_interface);
 PHP_FUNCTION(v_complex_test);
+PHP_FUNCTION(v_persistent_nested_roundtrip);
+PHP_FUNCTION(v_persistent_multi_nested_stress);
 PHP_FUNCTION(v_analyze_user_object);
 PHP_FUNCTION(v_mutate_user_object);
 PHP_FUNCTION(v_check_user_object_props);

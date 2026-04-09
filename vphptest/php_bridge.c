@@ -144,6 +144,22 @@ PHP_FUNCTION(v_complex_test) {
     vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     vphp_wrap_v_complex_test(ctx);
 }
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_persistent_nested_roundtrip, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_persistent_nested_roundtrip(vphp_context_internal ctx);
+PHP_FUNCTION(v_persistent_nested_roundtrip) {
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_persistent_nested_roundtrip(ctx);
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_persistent_multi_nested_stress, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_persistent_multi_nested_stress(vphp_context_internal ctx);
+PHP_FUNCTION(v_persistent_multi_nested_stress) {
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_persistent_multi_nested_stress(ctx);
+}
 ZEND_BEGIN_ARG_INFO_EX(arginfo_v_analyze_user_object, 0, 0, 0)
 ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
@@ -2353,6 +2369,8 @@ static const zend_function_entry vphptest_functions[] = {
     PHP_FE(v_call_back, arginfo_v_call_back)
     PHP_FE(v_bind_class_interface, arginfo_v_bind_class_interface)
     PHP_FE(v_complex_test, arginfo_v_complex_test)
+    PHP_FE(v_persistent_nested_roundtrip, arginfo_v_persistent_nested_roundtrip)
+    PHP_FE(v_persistent_multi_nested_stress, arginfo_v_persistent_multi_nested_stress)
     PHP_FE(v_analyze_user_object, arginfo_v_analyze_user_object)
     PHP_FE(v_mutate_user_object, arginfo_v_mutate_user_object)
     PHP_FE(v_check_user_object_props, arginfo_v_check_user_object_props)
