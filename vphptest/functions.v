@@ -166,7 +166,7 @@ fn v_persistent_nested_roundtrip(ctx vphp.Context) {
 	defer {
 		box.release()
 	}
-	mut clone := box.clone_persistent_owned()
+	mut clone := box.clone()
 	defer {
 		clone.release()
 	}
@@ -189,7 +189,7 @@ fn v_persistent_multi_nested_stress(ctx vphp.Context) {
 	}
 	mut last := ''
 	for _ in 0 .. total {
-		mut clone := box.clone_persistent_owned()
+		mut clone := box.clone()
 		last = nested_payload_summary(clone)
 		clone.release()
 	}

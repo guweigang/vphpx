@@ -1965,7 +1965,7 @@ fn fallback_psr7_uri(raw string) VSlimPsr7Uri {
 	}
 }
 
-fn (r &VSlimPsr7ServerRequest) free() {
+pub fn (r &VSlimPsr7ServerRequest) free() {
 	_ = r
 }
 
@@ -2013,7 +2013,7 @@ fn build_psr7_stream_from_resource(resource vphp.ZVal) &VSlimPsr7Stream {
 	}
 }
 
-fn (s &VSlimPsr7Stream) stream_string() string {
+pub fn (s &VSlimPsr7Stream) stream_string() string {
 	if s.detached {
 		return ''
 	}

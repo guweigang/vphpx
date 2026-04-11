@@ -132,7 +132,7 @@ fn ensure_psr14_dispatcher(mut dispatcher VSlimPsr14EventDispatcher) {
 	dispatcher.provider_ref = provider
 }
 
-fn (provider &VSlimPsr14ListenerProvider) listeners_for_event(event vphp.ZVal) []vphp.PersistentOwnedZBox {
+pub fn (provider &VSlimPsr14ListenerProvider) listeners_for_event(event vphp.ZVal) []vphp.PersistentOwnedZBox {
 	mut out := []vphp.PersistentOwnedZBox{}
 	for key in psr14_event_keys(event) {
 		if key !in provider.listeners {
@@ -212,7 +212,7 @@ fn new_psr14_listener_array() vphp.ZVal {
 	return out
 }
 
-fn (provider &VSlimPsr14ListenerProvider) free() {
+pub fn (provider &VSlimPsr14ListenerProvider) free() {
 	for _, listeners in provider.listeners {
 		for listener in listeners {
 			mut owned := listener

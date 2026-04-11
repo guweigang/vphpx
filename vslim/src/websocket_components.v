@@ -268,7 +268,7 @@ fn release_ws_handler(mut handler vphp.PersistentOwnedZBox) {
 	}
 }
 
-fn (app &VSlimWebSocketApp) free() {
+pub fn (app &VSlimWebSocketApp) free() {
 	unsafe {
 		mut writable := &VSlimWebSocketApp(app)
 		release_ws_handler(mut writable.on_open_handler)
@@ -303,7 +303,7 @@ fn normalize_ws_room(room string) string {
 	return room.trim_space()
 }
 
-fn (mut app VSlimWebSocketApp) remove_conn_from_rooms(id string) {
+pub fn (mut app VSlimWebSocketApp) remove_conn_from_rooms(id string) {
 	if id == '' {
 		return
 	}

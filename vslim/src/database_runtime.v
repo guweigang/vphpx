@@ -304,7 +304,7 @@ pub fn (mut db VSlimDatabaseManager) connect() bool {
 	return true
 }
 
-fn (mut db VSlimDatabaseManager) ensure_direct_mysql_supported() ! {
+pub fn (mut db VSlimDatabaseManager) ensure_direct_mysql_supported() ! {
 	db.construct()
 	if db.database_uses_upstream() {
 		return
@@ -442,15 +442,15 @@ fn database_param_from_box(value vphp.RequestBorrowedZBox) string {
 	return value.to_string()
 }
 
-fn (db &VSlimDatabaseManager) database_uses_upstream() bool {
+pub fn (db &VSlimDatabaseManager) database_uses_upstream() bool {
 	return db.config_ref != unsafe { nil } && db.config_ref.transport() == 'vhttpd_upstream'
 }
 
-fn (db &VSlimDatabaseManager) database_upstream_timeout_seconds() f64 {
+pub fn (db &VSlimDatabaseManager) database_upstream_timeout_seconds() f64 {
 	return f64(db.config_ref.timeout_ms_value()) / 1000.0
 }
 
-fn (mut db VSlimDatabaseManager) database_upstream_client() &VSlimVhttpdClient {
+pub fn (mut db VSlimDatabaseManager) database_upstream_client() &VSlimVhttpdClient {
 	return db.vhttpd_client()
 }
 
@@ -465,7 +465,7 @@ fn database_response_error_message(raw vphp.ZVal) string {
 	return zval_string_key(raw, 'message', 'upstream request failed')
 }
 
-fn (mut db VSlimDatabaseManager) database_upstream_request(op string, statement string, params []string) !vphp.RequestOwnedZBox {
+pub fn (mut db VSlimDatabaseManager) database_upstream_request(op string, statement string, params []string) !vphp.RequestOwnedZBox {
 	mut payload := new_array_zval()
 	payload.add_assoc_string('mode', 'db')
 	payload.add_assoc_long('version', 1)
@@ -503,7 +503,7 @@ fn (mut db VSlimDatabaseManager) database_upstream_request(op string, statement 
 	return response
 }
 
-fn (mut db VSlimDatabaseManager) database_upstream_ping() !bool {
+pub fn (mut db VSlimDatabaseManager) database_upstream_ping() !bool {
 	mut response := db.database_upstream_request('ping', '', []string{})!
 	defer {
 		response.release()
@@ -511,7 +511,7 @@ fn (mut db VSlimDatabaseManager) database_upstream_ping() !bool {
 	return true
 }
 
-fn (mut db VSlimDatabaseManager) database_upstream_query(query string, params []string) !vphp.RequestOwnedZBox {
+pub fn (mut db VSlimDatabaseManager) database_upstream_query(query string, params []string) !vphp.RequestOwnedZBox {
 	mut response := db.database_upstream_request('query', query, params)!
 	defer {
 		raw := response.to_zval()
@@ -523,7 +523,7 @@ fn (mut db VSlimDatabaseManager) database_upstream_query(query string, params []
 	return vphp.RequestOwnedZBox.of(rows_z)
 }
 
-fn (mut db VSlimDatabaseManager) database_upstream_execute(query string, params []string) !vphp.RequestOwnedZBox {
+pub fn (mut db VSlimDatabaseManager) database_upstream_execute(query string, params []string) !vphp.RequestOwnedZBox {
 	mut response := db.database_upstream_request('execute', query, params)!
 	defer {
 		response.release()
@@ -534,13 +534,13 @@ fn (mut db VSlimDatabaseManager) database_upstream_execute(query string, params 
 	return database_exec_meta_box(db.last_affected_rows)
 }
 
-fn (mut db VSlimDatabaseManager) database_upstream_begin_transaction() !bool {
+pub fn (mut db VSlimDatabaseManager) database_upstream_begin_transaction() !bool {
 	_ = db.database_upstream_request('begin_transaction', '', []string{}) or { return err }
 	db.upstream_tx_active = true
 	return true
 }
 
-fn (mut db VSlimDatabaseManager) database_upstream_commit() !bool {
+pub fn (mut db VSlimDatabaseManager) database_upstream_commit() !bool {
 	if !db.upstream_tx_active {
 		return true
 	}
@@ -550,7 +550,7 @@ fn (mut db VSlimDatabaseManager) database_upstream_commit() !bool {
 	return true
 }
 
-fn (mut db VSlimDatabaseManager) database_upstream_rollback() !bool {
+pub fn (mut db VSlimDatabaseManager) database_upstream_rollback() !bool {
 	if !db.upstream_tx_active {
 		return true
 	}
@@ -651,7 +651,7 @@ fn database_params_from_box(params vphp.RequestBorrowedZBox) []string {
 	return params.to_string_list()
 }
 
-fn (mut db VSlimDatabaseManager) acquire_mysql_conn() !mysql.DB {
+pub fn (mut db VSlimDatabaseManager) acquire_mysql_conn() !mysql.DB {
 	db.ensure_direct_mysql_supported()!
 	if !db.mysql_connected && !db.connect() {
 		msg := if db.last_error != '' { db.last_error } else { 'database is not connected' }
@@ -663,7 +663,7 @@ fn (mut db VSlimDatabaseManager) acquire_mysql_conn() !mysql.DB {
 	return db.mysql_pool.acquire()!
 }
 
-fn (mut db VSlimDatabaseManager) release_mysql_conn(conn mysql.DB) {
+pub fn (mut db VSlimDatabaseManager) release_mysql_conn(conn mysql.DB) {
 	if db.mysql_tx_active {
 		return
 	}
@@ -1410,21 +1410,21 @@ pub fn (mut model VSlimDatabaseModel) delete_model() bool {
 	return true
 }
 
-fn (model &VSlimDatabaseModel) require_manager() !&VSlimDatabaseManager {
+pub fn (model &VSlimDatabaseModel) require_manager() !&VSlimDatabaseManager {
 	if model.manager_ref == unsafe { nil } {
 		return error('database model manager is not configured')
 	}
 	return model.manager_ref
 }
 
-fn (model &VSlimDatabaseModel) require_table() !string {
+pub fn (model &VSlimDatabaseModel) require_table() !string {
 	if model.table_name.trim_space() == '' {
 		return error('database model table is not configured')
 	}
 	return model.table_name
 }
 
-fn (query &VSlimDatabaseQuery) clone() VSlimDatabaseQuery {
+pub fn (query &VSlimDatabaseQuery) clone() VSlimDatabaseQuery {
 	return VSlimDatabaseQuery{
 		manager_ref:     query.manager_ref
 		table_name:      query.table_name.clone()
@@ -1438,7 +1438,7 @@ fn (query &VSlimDatabaseQuery) clone() VSlimDatabaseQuery {
 	}
 }
 
-fn (query &VSlimDatabaseQuery) build() (string, []string) {
+pub fn (query &VSlimDatabaseQuery) build() (string, []string) {
 	if query.table_name == '' {
 		vphp.throw_exception_class('InvalidArgumentException', 'database query table is required', 0)
 		return '', []string{}
@@ -1451,7 +1451,7 @@ fn (query &VSlimDatabaseQuery) build() (string, []string) {
 	}
 }
 
-fn (query &VSlimDatabaseQuery) build_select() (string, []string) {
+pub fn (query &VSlimDatabaseQuery) build_select() (string, []string) {
 	columns := if query.select_columns.len == 0 { '*' } else { query.select_columns.join(', ') }
 	mut statement := 'SELECT ${columns} FROM ${query.table_name}'
 	mut params := []string{}
@@ -1461,7 +1461,7 @@ fn (query &VSlimDatabaseQuery) build_select() (string, []string) {
 	return statement, params
 }
 
-fn (query &VSlimDatabaseQuery) build_insert() (string, []string) {
+pub fn (query &VSlimDatabaseQuery) build_insert() (string, []string) {
 	if query.mutation_values.len == 0 {
 		vphp.throw_exception_class('InvalidArgumentException', 'database insert values are required', 0)
 		return '', []string{}
@@ -1480,7 +1480,7 @@ fn (query &VSlimDatabaseQuery) build_insert() (string, []string) {
 	return statement, params
 }
 
-fn (query &VSlimDatabaseQuery) build_update() (string, []string) {
+pub fn (query &VSlimDatabaseQuery) build_update() (string, []string) {
 	if query.mutation_values.len == 0 {
 		vphp.throw_exception_class('InvalidArgumentException', 'database update values are required', 0)
 		return '', []string{}
@@ -1500,7 +1500,7 @@ fn (query &VSlimDatabaseQuery) build_update() (string, []string) {
 	return statement, params
 }
 
-fn (query &VSlimDatabaseQuery) build_delete() (string, []string) {
+pub fn (query &VSlimDatabaseQuery) build_delete() (string, []string) {
 	mut statement := 'DELETE FROM ${query.table_name}'
 	mut params := []string{}
 	statement = query.append_where(statement, mut params)
@@ -1509,7 +1509,7 @@ fn (query &VSlimDatabaseQuery) build_delete() (string, []string) {
 	return statement, params
 }
 
-fn (query &VSlimDatabaseQuery) append_where(statement string, mut params []string) string {
+pub fn (query &VSlimDatabaseQuery) append_where(statement string, mut params []string) string {
 	if query.where_clauses.len == 0 {
 		return statement
 	}
@@ -1521,14 +1521,14 @@ fn (query &VSlimDatabaseQuery) append_where(statement string, mut params []strin
 	return statement + ' WHERE ' + parts.join(' AND ')
 }
 
-fn (query &VSlimDatabaseQuery) append_order(statement string) string {
+pub fn (query &VSlimDatabaseQuery) append_order(statement string) string {
 	if query.order_clauses.len > 0 {
 		return statement + ' ORDER BY ' + query.order_clauses.join(', ')
 	}
 	return statement
 }
 
-fn (query &VSlimDatabaseQuery) append_limit(statement string) string {
+pub fn (query &VSlimDatabaseQuery) append_limit(statement string) string {
 	mut out := statement
 	if query.limit_count >= 0 {
 		out += ' LIMIT ${query.limit_count}'
@@ -1611,6 +1611,6 @@ fn configure_default_database_manager(mut db VSlimDatabaseManager, config &VSlim
 	}
 }
 
-fn (mut db VSlimDatabaseManager) free() {
+pub fn (mut db VSlimDatabaseManager) free() {
 	db.disconnect()
 }

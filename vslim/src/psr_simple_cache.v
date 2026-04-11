@@ -209,7 +209,7 @@ fn ensure_psr16_cache(mut cache VSlimPsr16Cache) {
 	}
 }
 
-fn (mut cache VSlimPsr16Cache) replace_entry(key string, value vphp.PersistentOwnedZBox, expires_at_unix i64) {
+pub fn (mut cache VSlimPsr16Cache) replace_entry(key string, value vphp.PersistentOwnedZBox, expires_at_unix i64) {
 	cache.construct()
 	if key in cache.entries {
 		mut old := cache.entries[key] or { PsrCacheEntry{} }
@@ -221,7 +221,7 @@ fn (mut cache VSlimPsr16Cache) replace_entry(key string, value vphp.PersistentOw
 	}
 }
 
-fn (mut cache VSlimPsr16Cache) remove_entry(key string) {
+pub fn (mut cache VSlimPsr16Cache) remove_entry(key string) {
 	if key !in cache.entries {
 		return
 	}
@@ -230,14 +230,14 @@ fn (mut cache VSlimPsr16Cache) remove_entry(key string) {
 	cache.entries.delete(key)
 }
 
-fn (mut cache VSlimPsr16Cache) clear_entries() {
+pub fn (mut cache VSlimPsr16Cache) clear_entries() {
 	keys := cache.entries.keys()
 	for key in keys {
 		cache.remove_entry(key)
 	}
 }
 
-fn (mut cache VSlimPsr16Cache) prune_expired_entry(key string) {
+pub fn (mut cache VSlimPsr16Cache) prune_expired_entry(key string) {
 	if key !in cache.entries {
 		return
 	}
@@ -408,7 +408,7 @@ fn throw_psr16_invalid_argument(message string) {
 	vphp.throw_exception_class('VSlim\\Psr16\\InvalidArgumentException', message, 0)
 }
 
-fn (cache &VSlimPsr16Cache) free() {
+pub fn (cache &VSlimPsr16Cache) free() {
 	unsafe {
 		mut writable := &VSlimPsr16Cache(cache)
 		writable.clear_entries()

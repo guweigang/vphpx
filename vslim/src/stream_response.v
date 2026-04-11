@@ -99,7 +99,7 @@ pub fn (r &VSlimStreamResponse) chunks() vphp.RequestOwnedZBox {
 	return r.chunks_ref.clone_request_owned()
 }
 
-fn (r &VSlimStreamResponse) header_values() map[string]string {
+pub fn (r &VSlimStreamResponse) header_values() map[string]string {
 	return snapshot_string_map(r.headers)
 }
 
@@ -177,7 +177,7 @@ fn propagate_request_trace_headers_to_object(req &VSlimRequest, raw vphp.Request
 	}
 }
 
-fn (r &VSlimStreamResponse) free() {
+pub fn (r &VSlimStreamResponse) free() {
 	if r.chunks_ref.is_valid() {
 		unsafe {
 			mut owned := r.chunks_ref

@@ -871,10 +871,10 @@ mut:
 	root   toml.Any = toml.null
 }
 
-fn (req &VSlimRequest) free() {
+pub fn (req &VSlimRequest) free() {
 	_ = req
 }
 
-fn (res &VSlimResponse) free() {
+pub fn (res &VSlimResponse) free() {
 	_ = res
 }

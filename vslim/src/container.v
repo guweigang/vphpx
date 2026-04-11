@@ -81,7 +81,7 @@ pub fn (mut c VSlimContainer) get(id string) vphp.RequestOwnedZBox {
 	return c.get_entry_or_throw(id)
 }
 
-fn (mut c VSlimContainer) get_entry(id string) !vphp.RequestOwnedZBox {
+pub fn (mut c VSlimContainer) get_entry(id string) !vphp.RequestOwnedZBox {
 	if native := c.get_native_service(id) {
 		return native
 	}
@@ -110,7 +110,7 @@ fn (mut c VSlimContainer) get_entry(id string) !vphp.RequestOwnedZBox {
 	return error('entry "${id}" not found')
 }
 
-fn (c &VSlimContainer) has_native_service(id string) bool {
+pub fn (c &VSlimContainer) has_native_service(id string) bool {
 	app := container_effective_app(c)
 	return app != unsafe { nil } && id.trim_space() in [
 		'config',
@@ -153,7 +153,7 @@ fn container_borrowed_object_value(v_ptr voidptr, ce voidptr, handlers voidptr) 
 	}
 }
 
-fn (mut c VSlimContainer) get_native_service(id string) ?vphp.RequestOwnedZBox {
+pub fn (mut c VSlimContainer) get_native_service(id string) ?vphp.RequestOwnedZBox {
 	mut app := container_effective_app(c)
 	if app == unsafe { nil } {
 		return none
@@ -206,7 +206,7 @@ fn (mut c VSlimContainer) get_native_service(id string) ?vphp.RequestOwnedZBox {
 	return none
 }
 
-fn (mut c VSlimContainer) get_entry_or_throw(id string) vphp.RequestOwnedZBox {
+pub fn (mut c VSlimContainer) get_entry_or_throw(id string) vphp.RequestOwnedZBox {
 	return c.get_entry(id) or {
 		if err.msg().contains('not found') {
 			throw_not_found(id)
@@ -226,7 +226,7 @@ fn throw_container_exception(msg string) {
 	vphp.throw_exception_class('VSlim\\Container\\ContainerException', msg, 0)
 }
 
-fn (c &VSlimContainer) free() {
+pub fn (c &VSlimContainer) free() {
 	unsafe {
 		c.entries.free()
 		c.factories.free()
