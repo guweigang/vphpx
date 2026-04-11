@@ -34,7 +34,7 @@ fn build_php_psr15_fixed_response_handler_object(res &VSlimPsr7Response) vphp.ZV
 
 fn dispatch_php_middleware_chain(app &VSlimApp, path string, payload vphp.RequestBorrowedZBox, route_middle []vphp.RequestOwnedZBox, route_handler vphp.PersistentOwnedZBox, resource_action string, resource_missing_handler vphp.PersistentOwnedZBox, route_params map[string]string) !(vphp.ZVal, vphp.RequestOwnedZBox) {
 	return dispatch_php_middleware_chain_with_plan(app, path, payload, route_middle, RawDispatchPlan{
-		route_params:             route_params.clone()
+		route_params:             snapshot_string_map(route_params)
 		route_handler:            route_handler.clone_persistent_owned()
 		resource_action:          resource_action
 		resource_missing_handler: resource_missing_handler.clone_persistent_owned()
@@ -43,7 +43,7 @@ fn dispatch_php_middleware_chain(app &VSlimApp, path string, payload vphp.Reques
 
 fn dispatch_php_middleware_chain_terminal(app &VSlimApp, path string, payload vphp.RequestBorrowedZBox, route_middle []vphp.RequestOwnedZBox, route_params map[string]string, terminal_meta MiddlewareTerminalMeta) !(vphp.ZVal, vphp.RequestOwnedZBox) {
 	return dispatch_php_middleware_chain_with_plan(app, path, payload, route_middle, RawDispatchPlan{
-		route_params:  route_params.clone()
+		route_params:  snapshot_string_map(route_params)
 		terminal_meta: terminal_meta
 	})
 }
@@ -99,23 +99,59 @@ fn (mut chain MiddlewareChain) dispatch(payload vphp.RequestBorrowedZBox) !vphp.
 	mw := chain.middlewares[chain.index]
 	chain.index++
 	if !mw.is_valid() || mw.is_null() || mw.is_undef() {
+		cli_debug_log('middleware.invalid idx=${chain.index - 1} kind=${mw.kind_name()} valid=${mw.is_valid()} null=${mw.is_null()} undef=${mw.is_undef()} total=${chain.middlewares.len}')
 		return error('Middleware is not valid')
 	}
-	raw := dispatch_php_middleware_entry(mut chain, mw.borrowed(),
-		payload)!
+	mut mw_req := mw.clone_request_owned()
+	defer {
+		mw_req.release()
+	}
+	if !mw_req.is_valid() || mw_req.is_null() || mw_req.is_undef() {
+		cli_debug_log('middleware.req.invalid idx=${chain.index - 1} valid=${mw_req.is_valid()} null=${mw_req.is_null()} undef=${mw_req.is_undef()} kind=${mw.kind_name()}')
+	}
+	raw := dispatch_php_middleware_entry(mut chain, mw_req.borrowed(), payload)!
 	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
 		return error('Middleware must return a response')
 	}
 	return raw
 }
 
-fn dispatch_php_after_phase_middleware_psr(app &VSlimApp, ctx PipelineRequestContext, hook vphp.RequestOwnedZBox, current &VSlimPsr7Response) !vphp.ZVal {
+fn (mut chain MiddlewareChain) dispatch_pre_normalized(payload vphp.RequestBorrowedZBox) !vphp.ZVal {
+	if snapshot := snapshot_phase_forwarded_request(payload) {
+		store_forwarded_request_snapshot(forwarded_request_key(chain), snapshot)
+	}
+	effective_ctx := pipeline_request_context_with_payload(chain.request_ctx,
+		payload.clone_request_owned())
+	if chain.index >= chain.middlewares.len {
+		return execute_raw_dispatch_plan(chain.app, effective_ctx, chain.plan)!
+	}
+	mw := chain.middlewares[chain.index]
+	chain.index++
+	if !mw.is_valid() || mw.is_null() || mw.is_undef() {
+		return error('Middleware is not valid')
+	}
+	mut mw_req := mw.clone_request_owned()
+	defer {
+		mw_req.release()
+	}
+	raw := dispatch_php_middleware_entry(mut chain, mw_req.borrowed(), payload)!
+	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
+		return error('Middleware must return a response')
+	}
+	return raw
+}
+
+fn dispatch_php_after_phase_middleware_psr(app &VSlimApp, ctx PipelineRequestContext, hook vphp.PersistentOwnedZBox, current &VSlimPsr7Response) !vphp.ZVal {
 	next_handler := build_php_psr15_fixed_response_handler_object(current)
 	if !hook.is_valid() || hook.is_null() || hook.is_undef() {
 		return error('Middleware is not valid')
 	}
+	mut hook_req := hook.clone_request_owned()
+	defer {
+		hook_req.release()
+	}
 	return dispatch_php_phase_middleware_raw(app, ctx.payload_ref.borrowed(), ctx.route_params,
-		hook.borrowed(), next_handler)
+		hook_req.borrowed(), next_handler)
 }
 
 fn apply_php_after_middlewares(app &VSlimApp, ctx PipelineRequestContext, initial VSlimResponse) VSlimResponse {
@@ -135,7 +171,9 @@ fn apply_php_after_middlewares_psr(app &VSlimApp, ctx PipelineRequestContext, in
 			return error_response_from_context_psr(app, ctx, 500, 'Middleware is not valid',
 				'handler_not_callable')
 		}
-		resolve_php_phase_middleware_target(app, hook.borrowed()) or {
+		mut hook_req := hook.clone_request_owned()
+		resolve_php_phase_middleware_target(app, hook_req.borrowed()) or {
+			hook_req.release()
 			msg := if err.msg() == '' {
 				'Phase middleware must implement Psr\\Http\\Server\\MiddlewareInterface'
 			} else {
@@ -143,6 +181,7 @@ fn apply_php_after_middlewares_psr(app &VSlimApp, ctx PipelineRequestContext, in
 			}
 			return error_response_from_context_psr(app, ctx, 500, msg, 'handler_not_callable')
 		}
+		hook_req.release()
 		raw := dispatch_php_after_phase_middleware_psr(app, ctx, hook, current) or {
 			msg := if err.msg() == '' { 'Middleware is not callable' } else { err.msg() }
 			return error_response_from_context_psr(app, ctx, 500, msg, 'handler_not_callable')
@@ -168,23 +207,7 @@ fn finalize_php_response_psr(app &VSlimApp, ctx PipelineRequestContext, initial 
 }
 
 fn request_with_method(req &VSlimRequest, method string) VSlimRequest {
-	return VSlimRequest{
-		method:           method
-		raw_path:         req.raw_path
-		path:             req.path
-		body:             req.body
-		query_string:     req.query_string
-		scheme:           req.scheme
-		host:             req.host
-		port:             req.port
-		protocol_version: req.protocol_version
-		remote_addr:      req.remote_addr
-		query:            req.query.clone()
-		headers:          req.headers.clone()
-		cookies:          req.cookies.clone()
-		attributes:       req.attributes.clone()
-		server:           req.server.clone()
-		uploaded_files:   req.uploaded_files.clone()
-		params:           req.params.clone()
-	}
+	mut out := snapshot_vslim_request(req)
+	out.method = method.clone()
+	return out
 }

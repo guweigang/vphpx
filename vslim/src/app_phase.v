@@ -50,8 +50,10 @@ fn apply_php_before_middlewares(app &VSlimApp, path string, payload vphp.Request
 		if !hook.is_valid() || hook.is_null() || hook.is_undef() {
 			return error('Middleware is not valid')
 		}
+		mut hook_req := hook.clone_request_owned()
 		phase_result := dispatch_php_before_phase_middleware(app, current_borrowed, route_params,
-			hook.borrowed())!
+			hook_req.borrowed())!
+		hook_req.release()
 		if !phase_result.continued {
 			return VSlimBeforeMiddlewareResult{
 				response_ref: phase_result.raw_response_ref.clone_request_owned()

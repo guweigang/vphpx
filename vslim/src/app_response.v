@@ -54,8 +54,8 @@ fn normalize_php_route_response_psr(result vphp.ZVal) (&VSlimPsr7Response, bool)
 		if resp := result.to_object[VSlimResponse]() {
 			return new_psr7_response_from_vslim_response(VSlimResponse{
 				status:       resp.status
-				body:         resp.body
-				content_type: resp.content_type
+				body:         resp.body.clone()
+				content_type: resp.content_type.clone()
 				headers:      resp.headers()
 			}), true
 		}
@@ -89,11 +89,11 @@ fn normalize_php_route_response_psr(result vphp.ZVal) (&VSlimPsr7Response, bool)
 		}
 		return &VSlimPsr7Response{
 			status:           normalize_psr7_status(status)
-			reason_phrase:    normalize_reason_phrase(status, '')
+			reason_phrase:    normalize_reason_phrase(status, '').clone()
 			protocol_version: '1.1'
-			headers:          headers
+			headers:          clone_header_values(headers)
 			header_names:     header_names
-			body_ref:         new_psr7_stream(body)
+			body_ref:         new_psr7_stream(body.clone())
 		}, true
 	}
 	return unsafe { nil }, false
@@ -103,13 +103,19 @@ fn normalize_php_route_response(result vphp.ZVal) (VSlimResponse, bool) {
 	if !result.is_valid() || result.is_null() || result.is_undef() {
 		return text_response(200, ''), true
 	}
+	if result.is_object() && (result.is_instance_of('VSlim\\Psr7\\Response')
+		|| result.is_instance_of('VSlimPsr7Response')) {
+		if psr := result.to_object[VSlimPsr7Response]() {
+			return new_vslim_response_from_psr_response(psr), true
+		}
+	}
 	if result.is_object() && result.is_instance_of('Psr\\Http\\Message\\ResponseInterface') {
 		psr := normalize_to_psr7_response(result)
 		return VSlimResponse{
 			status:       psr.get_status_code()
-			body:         psr7_stream_string(response_body_or_empty(psr))
-			content_type: psr.get_header_line(vphp.borrow_zbox(vphp.RequestOwnedZBox.new_string('content-type').to_zval()))
-			headers:      flatten_psr7_header_map(psr.get_headers())
+			body:         psr7_stream_string(response_body_or_empty(psr)).clone()
+			content_type: psr.get_header_line(vphp.borrow_zbox(vphp.RequestOwnedZBox.new_string('content-type').to_zval())).clone()
+			headers:      snapshot_string_map(flatten_psr7_header_map(psr.get_headers()))
 		}, true
 	}
 	if result.is_object()
@@ -117,8 +123,8 @@ fn normalize_php_route_response(result vphp.ZVal) (VSlimResponse, bool) {
 		if resp := result.to_object[VSlimResponse]() {
 			return VSlimResponse{
 				status:       resp.status
-				body:         resp.body
-				content_type: resp.content_type
+				body:         resp.body.clone()
+				content_type: resp.content_type.clone()
 				headers:      resp.headers()
 			}, true
 		}
@@ -139,13 +145,13 @@ fn normalize_php_route_response(result vphp.ZVal) (VSlimResponse, bool) {
 			'text/plain; charset=utf-8'
 		})
 		if 'content-type' !in headers {
-			headers['content-type'] = content_type
+			headers['content-type'] = content_type.clone()
 		}
 		return VSlimResponse{
 			status:       status
-			body:         body
-			content_type: headers['content-type'] or { '' }
-			headers:      headers
+			body:         body.clone()
+			content_type: (headers['content-type'] or { '' }).clone()
+			headers:      snapshot_string_map(headers)
 		}, true
 	}
 	return VSlimResponse{}, false
@@ -161,7 +167,7 @@ fn normalize_php_route_response_body(result vphp.ZVal) (string, bool) {
 	if result.is_object()
 		&& (result.is_instance_of('VSlim\\Vhttpd\\Response') || result.is_instance_of('VSlimResponse')) {
 		if resp := result.to_object[VSlimResponse]() {
-			return resp.body, true
+			return resp.body.clone(), true
 		}
 	}
 	if result.is_string() {

@@ -32,7 +32,7 @@ fn new_pipeline_request_context(path string, payload vphp.RequestOwnedZBox, rout
 	return PipelineRequestContext{
 		path:         path
 		payload_ref:  payload.clone_request_owned()
-		route_params: route_params.clone()
+		route_params: snapshot_string_map(route_params)
 	}
 }
 
@@ -71,7 +71,7 @@ fn raw_dispatch_plan_has_terminal(plan RawDispatchPlan) bool {
 
 fn clone_raw_dispatch_plan(plan RawDispatchPlan) RawDispatchPlan {
 	return RawDispatchPlan{
-		route_params:             plan.route_params.clone()
+		route_params:             snapshot_string_map(plan.route_params)
 		terminal_meta:            plan.terminal_meta
 		route_handler:            plan.route_handler.clone_persistent_owned()
 		resource_action:          plan.resource_action
@@ -152,9 +152,9 @@ fn finalize_raw_response(app &VSlimApp, ctx PipelineRequestContext, raw_res vphp
 	return finalize_php_response(app, ctx, res)
 }
 
-fn finalize_raw_response_with_snapshot(app &VSlimApp, ctx PipelineRequestContext, raw_res vphp.ZVal) (VSlimResponse, VSlimRequest) {
+fn finalize_raw_response_with_snapshot(app &VSlimApp, ctx PipelineRequestContext, raw_res vphp.ZVal) (VSlimResponse, &VSlimRequest) {
 	res := finalize_raw_response(app, ctx, raw_res)
-	return res, request_snapshot_from_payload(ctx.payload_ref.borrowed(), ctx.route_params)
+	return snapshot_vslim_response(res), request_snapshot_from_payload(ctx.payload_ref.borrowed(), ctx.route_params)
 }
 
 fn finalize_raw_response_for_psr(app &VSlimApp, ctx PipelineRequestContext, raw_res vphp.ZVal) &VSlimPsr7Response {
@@ -174,7 +174,7 @@ fn finalize_raw_response_for_psr(app &VSlimApp, ctx PipelineRequestContext, raw_
 	return finalize_php_response_psr(app, ctx, res)
 }
 
-fn finalize_raw_response_for_worker(app &VSlimApp, ctx PipelineRequestContext, raw_res vphp.ZVal) (vphp.ZVal, VSlimRequest) {
+fn finalize_raw_response_for_worker(app &VSlimApp, ctx PipelineRequestContext, raw_res vphp.ZVal) (vphp.ZVal, &VSlimRequest) {
 	if is_worker_stream_response_borrowed(vphp.RequestBorrowedZBox.from_zval(raw_res)) {
 		return raw_res, request_snapshot_from_payload(ctx.payload_ref.borrowed(), ctx.route_params)
 	}

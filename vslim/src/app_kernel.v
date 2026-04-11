@@ -8,9 +8,9 @@ struct AppKernelTraceState {
 }
 
 struct AppKernelDispatchResult {
-	response          VSlimResponse
+	response_ref      &VSlimResponse = unsafe { nil }
 	route_params      map[string]string
-	effective_request VSlimRequest
+	effective_request_ref &VSlimRequest = unsafe { nil }
 }
 
 fn app_kernel_prepare(app &VSlimApp) {
@@ -44,15 +44,15 @@ fn app_kernel_dispatch_request_with_trace_labels(app &VSlimApp, req &VSlimReques
 	mut res, params, effective_req := dispatch_app_request_with_params(app, req, trace.enabled,
 		trace.base_bytes)
 	app_kernel_trace_log(trace, app, req, after_core_stage)
-	propagate_request_trace_headers(&effective_req, mut res)
+	propagate_request_trace_headers(effective_req, mut res)
 	if resolve_effective_method(req) == 'HEAD' {
 		res.body = ''
 	}
 	app_kernel_trace_log(trace, app, req, before_return_stage)
 	return AppKernelDispatchResult{
-		response:          res
-		route_params:      params.clone()
-		effective_request: effective_req
+		response_ref:          new_vslim_response_snapshot_ref(&res)
+		route_params:          snapshot_string_map(params)
+		effective_request_ref: new_vslim_request_snapshot(effective_req)
 	}
 }
 
@@ -64,7 +64,10 @@ fn app_kernel_dispatch_request(app &VSlimApp, req &VSlimRequest) AppKernelDispat
 fn app_kernel_dispatch_envelope_map(app &VSlimApp, req &VSlimRequest) map[string]string {
 	result := app_kernel_dispatch_request_with_trace_labels(app, req, 'dispatch_map.enter',
 		'dispatch_map.after_core', 'dispatch_map.before_return')
-	return app_kernel_response_map(result.response)
+	if result.response_ref == unsafe { nil } {
+		return app_kernel_response_map(VSlimResponse{})
+	}
+	return app_kernel_response_map(*result.response_ref)
 }
 
 fn app_kernel_response_map(res VSlimResponse) map[string]string {
@@ -83,8 +86,7 @@ fn app_kernel_response_map(res VSlimResponse) map[string]string {
 }
 
 fn app_kernel_sync_dispatch_request(mut target VSlimRequest, result AppKernelDispatchResult) {
-	sync_vslim_request_from_snapshot(mut target, result.effective_request)
-	target.params = result.route_params.clone()
+	target.params = snapshot_string_map(result.route_params)
 }
 
 fn propagate_request_trace_headers(req &VSlimRequest, mut res VSlimResponse) {
@@ -103,26 +105,19 @@ fn propagate_request_trace_headers(req &VSlimRequest, mut res VSlimResponse) {
 	}
 }
 
-fn request_snapshot_from_payload(payload vphp.RequestBorrowedZBox, route_params map[string]string) VSlimRequest {
-	return new_vslim_request_from_psr_server_request(payload, route_params).to_vslim_request()
+fn request_snapshot_from_payload(payload vphp.RequestBorrowedZBox, route_params map[string]string) &VSlimRequest {
+	return new_vslim_request_from_psr_server_request(payload, route_params)
 }
 
 fn sync_vslim_request_from_snapshot(mut target VSlimRequest, snapshot VSlimRequest) {
-	target.method = snapshot.method
-	target.raw_path = snapshot.raw_path
-	target.path = snapshot.path
-	target.body = snapshot.body
-	target.query_string = snapshot.query_string
-	target.scheme = snapshot.scheme
-	target.host = snapshot.host
-	target.port = snapshot.port
-	target.protocol_version = snapshot.protocol_version
-	target.remote_addr = snapshot.remote_addr
-	target.query = snapshot.query.clone()
-	target.headers = snapshot.headers.clone()
-	target.cookies = snapshot.cookies.clone()
-	target.attributes = snapshot.attributes.clone()
-	target.server = snapshot.server.clone()
-	target.uploaded_files = snapshot.uploaded_files.clone()
-	target.params = snapshot.params.clone()
+	target.method = snapshot.method.clone()
+	target.raw_path = snapshot.raw_path.clone()
+	target.path = snapshot.path.clone()
+	target.body = snapshot.body.clone()
+	target.query_string = snapshot.query_string.clone()
+	target.scheme = snapshot.scheme.clone()
+	target.host = snapshot.host.clone()
+	target.port = snapshot.port.clone()
+	target.protocol_version = snapshot.protocol_version.clone()
+	target.remote_addr = snapshot.remote_addr.clone()
 }
