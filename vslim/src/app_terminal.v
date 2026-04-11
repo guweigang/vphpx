@@ -36,7 +36,7 @@ fn fixed_terminal_meta(res VSlimResponse) MiddlewareTerminalMeta {
 fn fixed_terminal_meta_psr(res &VSlimPsr7Response) MiddlewareTerminalMeta {
 	return MiddlewareTerminalMeta{
 		kind:               .fixed_response
-		fixed_response_ref: clone_psr7_response(res, res.get_protocol_version(), res.headers.clone(),
+		fixed_response_ref: clone_psr7_response(res, res.get_protocol_version(), clone_header_values(res.headers),
 			clone_header_names(res.header_names), response_body_or_empty(res), res.get_status_code(),
 			res.get_reason_phrase())
 	}
@@ -98,7 +98,7 @@ fn build_terminal_response_psr(app &VSlimApp, ctx PipelineRequestContext, meta M
 				new_psr7_text_response(500, 'Invalid terminal response')
 			} else {
 				res := meta.fixed_response_ref
-				clone_psr7_response(res, res.protocol_version, res.headers.clone(),
+				clone_psr7_response(res, res.protocol_version, clone_header_values(res.headers),
 					clone_header_names(res.header_names), response_body_or_empty(res), res.status,
 					res.reason_phrase)
 			}
@@ -159,7 +159,7 @@ fn build_method_not_allowed_response_with_context_psr(app &VSlimApp, ctx Pipelin
 	if allowed_methods.len == 0 {
 		return res
 	}
-	mut headers := res.headers.clone()
+	mut headers := clone_header_values(res.headers)
 	mut header_names := clone_header_names(res.header_names)
 	if 'allow' !in headers {
 		headers['allow'] = [allowed_methods.join(', ')]

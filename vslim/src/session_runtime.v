@@ -4,6 +4,14 @@ import vphp
 
 const session_flash_prefix = '__flash__.'
 
+fn effective_auth_middleware_app(app_ref &VSlimApp) &VSlimApp {
+	runtime := current_runtime_dispatch_app()
+	if runtime != unsafe { nil } {
+		return runtime
+	}
+	return app_ref
+}
+
 fn auth_request_with_attribute(request vphp.RequestBorrowedZBox, name string, value vphp.ZVal) vphp.RequestOwnedZBox {
 	raw_request := request.to_zval()
 	if raw_request.is_valid() && raw_request.is_object() && raw_request.method_exists('withAttribute') {
@@ -62,7 +70,7 @@ fn session_commit_psr_response(mut session VSlimSessionStore, response &VSlimPsr
 	if !session.dirty && !session.destroyed {
 		return response
 	}
-	mut headers := response.headers.clone()
+	mut headers := clone_header_values(response.headers)
 	mut header_names := clone_header_names(response.header_names)
 	headers['set-cookie'] = [session_cookie_header_value(session)]
 	header_names['set-cookie'] = 'Set-Cookie'
@@ -582,13 +590,17 @@ pub fn (mut middleware VSlimSessionStartMiddleware) set_app(app &VSlimApp) &VSli
 @[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 pub fn (middleware &VSlimSessionStartMiddleware) process(request vphp.RequestBorrowedZBox, handler vphp.RequestBorrowedZBox) &VSlimPsr7Response {
-	if middleware.app_ref == unsafe { nil } {
+	app := effective_auth_middleware_app(middleware.app_ref)
+	if app == unsafe { nil } {
 		return new_psr7_text_response(500, 'Session middleware app is not configured')
 	}
-	mut session := middleware.app_ref.session(request)
+	mut session := app.session(request)
 	mut result := vphp.method_request_owned_box(handler.to_zval(), 'handle', [
 		request.to_zval(),
 	])
+	defer {
+		result.release()
+	}
 	response := normalize_to_psr7_response(result.to_zval())
 	return session_commit_psr_response(mut session, response)
 }
@@ -620,23 +632,30 @@ pub fn (middleware &VSlimAuthRequireMiddleware) redirect_path_value() string {
 @[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.RequestBorrowedZBox, handler vphp.RequestBorrowedZBox) &VSlimPsr7Response {
-	if middleware.app_ref == unsafe { nil } {
+	app := effective_auth_middleware_app(middleware.app_ref)
+	if app == unsafe { nil } {
 		return new_psr7_text_response(500, 'Auth middleware app is not configured')
 	}
-	mut guard := middleware.app_ref.auth(request)
+	mut guard := app.auth(request)
 	if !guard.check() {
 		redirect_path := if middleware.redirect_path.trim_space() != '' {
 			middleware.redirect_path_value()
 		} else {
-			middleware.app_ref.auth_redirect_to()
+			app.auth_redirect_to()
 		}
-		return auth_unauthorized_psr_response(middleware.app_ref, redirect_path)
+		return auth_unauthorized_psr_response(app, redirect_path)
 	}
 	user_id := guard.id()
 	mut next_request := auth_request_with_attribute(request, 'auth.user_id',
 		vphp.RequestOwnedZBox.new_string(user_id).to_zval())
-	if middleware.app_ref.auth_user_resolver.is_valid() && middleware.app_ref.auth_user_resolver.is_callable() {
-		mut user := middleware.app_ref.auth_user(request)
+	defer {
+		next_request.release()
+	}
+	if app.auth_user_resolver.is_valid() && app.auth_user_resolver.is_callable() {
+		mut user := app.auth_user(request)
+		defer {
+			user.release()
+		}
 		if user.is_valid() && !user.to_zval().is_null() && !user.to_zval().is_undef() {
 			mut enriched := auth_request_with_attribute(vphp.borrow_zbox(next_request.to_zval()),
 				'auth.user', user.to_zval())
@@ -647,6 +666,9 @@ pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.RequestBorr
 	mut result := vphp.method_request_owned_box(handler.to_zval(), 'handle', [
 		next_request.to_zval(),
 	])
+	defer {
+		result.release()
+	}
 	return normalize_to_psr7_response(result.to_zval())
 }
 
@@ -677,21 +699,25 @@ pub fn (middleware &VSlimAuthGuestMiddleware) redirect_path_value() string {
 @[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 pub fn (middleware &VSlimAuthGuestMiddleware) process(request vphp.RequestBorrowedZBox, handler vphp.RequestBorrowedZBox) &VSlimPsr7Response {
-	if middleware.app_ref == unsafe { nil } {
+	app := effective_auth_middleware_app(middleware.app_ref)
+	if app == unsafe { nil } {
 		return new_psr7_text_response(500, 'Guest middleware app is not configured')
 	}
-	mut guard := middleware.app_ref.auth(request)
+	mut guard := app.auth(request)
 	if !guard.guest() {
 		redirect_path := if middleware.redirect_path.trim_space() != '' {
 			middleware.redirect_path_value()
 		} else {
-			middleware.app_ref.auth_redirect_to()
+			app.auth_redirect_to()
 		}
 		return auth_guest_redirect_psr_response(redirect_path)
 	}
 	mut result := vphp.method_request_owned_box(handler.to_zval(), 'handle', [
 		request.to_zval(),
 	])
+	defer {
+		result.release()
+	}
 	return normalize_to_psr7_response(result.to_zval())
 }
 
@@ -754,18 +780,22 @@ pub fn (middleware &VSlimAuthRequireAbilityMiddleware) message() string {
 @[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 pub fn (middleware &VSlimAuthRequireAbilityMiddleware) process(request vphp.RequestBorrowedZBox, handler vphp.RequestBorrowedZBox) &VSlimPsr7Response {
-	if middleware.app_ref == unsafe { nil } {
+	app := effective_auth_middleware_app(middleware.app_ref)
+	if app == unsafe { nil } {
 		return new_psr7_text_response(500, 'Ability middleware app is not configured')
 	}
 	if middleware.ability() == '' {
 		return new_psr7_text_response(500, 'Ability middleware ability is not configured')
 	}
-	if !middleware.app_ref.can(middleware.ability(), request) {
-		return default_error_response_psr(middleware.app_ref, middleware.status(), middleware.message(),
+	if !app.can(middleware.ability(), request) {
+		return default_error_response_psr(app, middleware.status(), middleware.message(),
 			'forbidden')
 	}
 	mut result := vphp.method_request_owned_box(handler.to_zval(), 'handle', [
 		request.to_zval(),
 	])
+	defer {
+		result.release()
+	}
 	return normalize_to_psr7_response(result.to_zval())
 }

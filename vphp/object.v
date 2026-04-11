@@ -6,6 +6,35 @@ module vphp
 // 替代 codegen 生成的局部 getter/setter 代码
 // ============================================
 
+__global (
+	vphp_vptr_roots &map[voidptr]int
+)
+
+fn register_vptr_root(ptr voidptr) {
+	if ptr == 0 {
+		return
+	}
+	unsafe {
+		if isnil(vphp_vptr_roots) {
+			vphp_vptr_roots = &map[voidptr]int{}
+		}
+		mut m := vphp_vptr_roots
+		m[ptr] = 1
+	}
+}
+
+fn unregister_vptr_root(ptr voidptr) {
+	if ptr == 0 {
+		return
+	}
+	unsafe {
+		if !isnil(vphp_vptr_roots) {
+			mut m := vphp_vptr_roots
+			m.delete(ptr)
+		}
+	}
+}
+
 // 泛型属性读取器 — 替代生成的 Article_get_prop 等函数
 pub fn generic_get_prop[T](ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
 	unsafe {
@@ -80,6 +109,7 @@ pub fn generic_sync_props[T](ptr voidptr, zv &C.zval) {
 // 连体分配器声明
 fn C.vphp_allocate_contiguous_object(ce voidptr, v_size usize) voidptr
 fn C.vphp_get_wrapper_from_vptr(v_ptr voidptr) voidptr
+fn C.builtin___v_free(ptr voidptr)
 
 // 泛型堆分配器必须保留 V 的默认字段初始化语义。
 // 单纯 `vcalloc(sizeof(T))` 只会得到零内存，像 `[]T{}`、`map{}`、
@@ -87,7 +117,9 @@ fn C.vphp_get_wrapper_from_vptr(v_ptr voidptr) voidptr
 // PHP `new` 出来的 @[php_class] 对象是“半初始化”状态。
 pub fn generic_new_raw[T]() voidptr {
 	unsafe {
-		return &T{}
+		ptr := &T{}
+		register_vptr_root(ptr)
+		return ptr
 	}
 }
 
@@ -97,8 +129,48 @@ pub fn generic_free_raw[T](ptr voidptr) {
 	if ptr == 0 {
 		return
 	}
+	unregister_vptr_root(ptr)
 	unsafe {
-		free(ptr)
+		mut obj := &T(ptr)
+		// 1. 自动释放识别到的持久化盒子与句柄。
+		// cleanup()/free() 由 codegen 生成的 *_cleanup_raw 显式调用，
+		// 这里避免使用泛型接口反射，防止 V 为数组/map 等类型生成
+		// 不存在的 *_free 符号引用。
+		$for field in T.fields {
+			$if field.typ is PersistentOwnedZBox {
+				obj.$(field.name).release()
+			} $else $if field.typ is RetainedObject {
+				obj.$(field.name).release()
+			} $else $if field.typ is RetainedCallable {
+				obj.$(field.name).release()
+			} $else $if field.typ is []PersistentOwnedZBox {
+				for mut box in obj.$(field.name) {
+					box.release()
+				}
+			} $else $if field.typ is map[string]PersistentOwnedZBox {
+				for _, mut box in obj.$(field.name) {
+					box.release()
+				}
+			} $else $if field.typ is []RetainedObject {
+				for mut box in obj.$(field.name) {
+					box.release()
+				}
+			} $else $if field.typ is map[string]RetainedObject {
+				for _, mut box in obj.$(field.name) {
+					box.release()
+				}
+			} $else $if field.typ is []RetainedCallable {
+				for mut box in obj.$(field.name) {
+					box.release()
+				}
+			} $else $if field.typ is map[string]RetainedCallable {
+				for _, mut box in obj.$(field.name) {
+					box.release()
+				}
+			}
+		}
+		// 2. 释放 V 侧对象内存
+		C.builtin___v_free(ptr)
 	}
 }
 
@@ -174,6 +246,7 @@ pub fn return_bound_object_raw(ret &C.zval, v_ptr voidptr, ce voidptr, handlers 
 			C.vphp_return_borrowed_object(ret, v_ptr, ce, handlers)
 		}
 		.owned_request, .owned_persistent {
+			register_vptr_root(v_ptr)
 			C.vphp_return_owned_object(ret, v_ptr, ce, handlers)
 		}
 	}

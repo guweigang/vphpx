@@ -584,6 +584,34 @@ static void vphp_runtime_debug_dump_owned_pool(const char *phase, int limit) {
   }
 }
 
+static void vphp_runtime_debug_dump_autorelease_range(const char *phase, int mark,
+                                                      int limit) {
+  char debug_buf[512];
+  int emitted = 0;
+  if (mark < 0) {
+    mark = 0;
+  }
+  for (int i = vphp_autorelease_pool.len - 1; i >= mark; i--) {
+    zval *z = vphp_autorelease_pool.items[i];
+    uint32_t refcount = 0;
+    if (z == NULL) {
+      continue;
+    }
+    if (Z_REFCOUNTED_P(z)) {
+      refcount = GC_REFCOUNT(Z_COUNTED_P(z));
+    }
+    snprintf(debug_buf, sizeof(debug_buf),
+             "autorelease_pool %s idx=%d z=%p type=%d class=%s refcount=%u",
+             phase, i, (void *)z, Z_TYPE_P(z),
+             vphp_runtime_debug_zval_class_name(z), refcount);
+    vphp_runtime_debug_log(debug_buf);
+    emitted++;
+    if (limit > 0 && emitted >= limit) {
+      break;
+    }
+  }
+}
+
 static bool vphp_owned_contains(zval *z) {
   if (z == NULL) {
     return false;
@@ -717,6 +745,13 @@ void vphp_autorelease_forget(zval *z) {
 void vphp_autorelease_drain(int mark) {
   if (mark < 0 || mark > vphp_autorelease_pool.len) {
     return;
+  }
+  if (vphp_runtime_debug_enabled() != 0 && vphp_autorelease_pool.len > mark) {
+    char debug_buf[128];
+    snprintf(debug_buf, sizeof(debug_buf),
+             "autorelease_drain mark=%d len=%d", mark, vphp_autorelease_pool.len);
+    vphp_runtime_debug_log(debug_buf);
+    vphp_runtime_debug_dump_autorelease_range("before_drain", mark, 32);
   }
   if (EG(exception) != NULL) {
     for (int i = vphp_autorelease_pool.len - 1; i >= mark; i--) {
@@ -982,6 +1017,7 @@ static void vphp_prepare_auto_interfaces_for_class(zend_class_entry *class_ce,
   }
 
   vphp_runtime_autoloading = 1;
+  vphp_runtime_binding_applying = 1;
   for (uint32_t i = 0; i < vphp_auto_iface_bindings_len; i++) {
     vphp_auto_iface_binding_t *entry = &vphp_auto_iface_bindings[i];
     zend_class_entry *bound_class_ce = vphp_find_loaded_class_no_autoload(
@@ -1010,12 +1046,19 @@ static void vphp_prepare_auto_interfaces_for_class(zend_class_entry *class_ce,
     zend_string_release(iface_name);
   }
 
+  vphp_runtime_autoloading = 0;
+  vphp_runtime_binding_applying = 0;
   if (matched_any) {
+    /*
+     * Do not mutate class/interface relationships while Zend is still inside
+     * an autoload stack. Composer-style PSR interfaces are loaded one file at
+     * a time, and applying zend_do_implement_interface() mid-autoload can
+     * corrupt subsequent interface queries/instantiation.
+     */
     vphp_apply_registered_auto_interface_bindings(0);
     vphp_flush_pending_auto_interface_bindings();
     vphp_last_class_table_count = zend_hash_num_elements(CG(class_table));
   }
-  vphp_runtime_autoloading = 0;
 }
 
 static zend_class_entry *vphp_runtime_query_class_from_arg(zval *arg,
@@ -1385,18 +1428,41 @@ static void vphp_runtime_binding_execute_internal(zend_execute_data *execute_dat
                                                   zval *return_value) {
   uint32_t class_count_before = 0;
   int should_check = 0;
+  int suspend_binding_during_call = 0;
+  int prev_binding_applying = 0;
+  zend_function *func = NULL;
+  zend_string *function_name = NULL;
 
   if (vphp_auto_iface_bindings_len > 0 && !vphp_runtime_binding_applying) {
     class_count_before = zend_hash_num_elements(CG(class_table));
     should_check = 1;
   }
 
+  func = execute_data != NULL ? execute_data->func : NULL;
+  if (func != NULL && func->type == ZEND_INTERNAL_FUNCTION &&
+      func->common.scope == NULL && func->common.function_name != NULL) {
+    function_name = func->common.function_name;
+    if (zend_string_equals_literal(function_name, "interface_exists") ||
+        zend_string_equals_literal(function_name, "class_exists") ||
+        zend_string_equals_literal(function_name, "trait_exists")) {
+      should_check = 0;
+      suspend_binding_during_call = 1;
+    }
+  }
+
   vphp_runtime_prepare_internal_query_bindings(execute_data);
   vphp_runtime_internal_call_depth++;
+  if (suspend_binding_during_call) {
+    prev_binding_applying = vphp_runtime_binding_applying;
+    vphp_runtime_binding_applying = 1;
+  }
   if (vphp_prev_execute_internal != NULL) {
     vphp_prev_execute_internal(execute_data, return_value);
   } else {
     execute_internal(execute_data, return_value);
+  }
+  if (suspend_binding_during_call) {
+    vphp_runtime_binding_applying = prev_binding_applying;
   }
   if (vphp_runtime_internal_call_depth > 0) {
     vphp_runtime_internal_call_depth--;

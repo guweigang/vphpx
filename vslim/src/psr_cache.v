@@ -293,7 +293,7 @@ fn ensure_psr6_item_clock(mut item VSlimPsr6CacheItem) {
 	}
 }
 
-fn (mut pool VSlimPsr6CacheItemPool) item_for_key(key string) &VSlimPsr6CacheItem {
+pub fn (mut pool VSlimPsr6CacheItemPool) item_for_key(key string) &VSlimPsr6CacheItem {
 	storage_key := psr6_storage_key(pool, key)
 	if storage_key in pool.deferred {
 		entry := pool.deferred[storage_key] or { Psr6DeferredEntry{} }
@@ -308,7 +308,7 @@ fn (mut pool VSlimPsr6CacheItemPool) item_for_key(key string) &VSlimPsr6CacheIte
 	return psr6_new_hit_item_with_clock(key, entry.value, entry.expires_at_unix, pool.clock_ref)
 }
 
-fn (mut pool VSlimPsr6CacheItemPool) persist_snapshot(snapshot Psr6ItemSnapshot) bool {
+pub fn (mut pool VSlimPsr6CacheItemPool) persist_snapshot(snapshot Psr6ItemSnapshot) bool {
 	now_unix := psr20_now_unix_or_throw(pool.clock_ref.to_zval()) or { return false }
 	if !snapshot.has_value || snapshot.expires_at_unix < 0
 		|| (snapshot.expires_at_unix > 0 && snapshot.expires_at_unix <= now_unix) {
@@ -322,7 +322,7 @@ fn (mut pool VSlimPsr6CacheItemPool) persist_snapshot(snapshot Psr6ItemSnapshot)
 	return true
 }
 
-fn (mut pool VSlimPsr6CacheItemPool) replace_entry(key string, value vphp.PersistentOwnedZBox, expires_at_unix i64) {
+pub fn (mut pool VSlimPsr6CacheItemPool) replace_entry(key string, value vphp.PersistentOwnedZBox, expires_at_unix i64) {
 	if key in pool.entries {
 		mut old := pool.entries[key] or { PsrCacheEntry{} }
 		old.value.release()
@@ -333,7 +333,7 @@ fn (mut pool VSlimPsr6CacheItemPool) replace_entry(key string, value vphp.Persis
 	}
 }
 
-fn (mut pool VSlimPsr6CacheItemPool) remove_entry(key string) {
+pub fn (mut pool VSlimPsr6CacheItemPool) remove_entry(key string) {
 	if key !in pool.entries {
 		return
 	}
@@ -342,14 +342,14 @@ fn (mut pool VSlimPsr6CacheItemPool) remove_entry(key string) {
 	pool.entries.delete(key)
 }
 
-fn (mut pool VSlimPsr6CacheItemPool) clear_entries() {
+pub fn (mut pool VSlimPsr6CacheItemPool) clear_entries() {
 	keys := pool.entries.keys()
 	for key in keys {
 		pool.remove_entry(key)
 	}
 }
 
-fn (mut pool VSlimPsr6CacheItemPool) prune_expired_entry(key string) {
+pub fn (mut pool VSlimPsr6CacheItemPool) prune_expired_entry(key string) {
 	if key !in pool.entries {
 		return
 	}
@@ -360,7 +360,7 @@ fn (mut pool VSlimPsr6CacheItemPool) prune_expired_entry(key string) {
 	pool.remove_entry(key)
 }
 
-fn (mut pool VSlimPsr6CacheItemPool) replace_deferred_entry(key string, snapshot Psr6ItemSnapshot) {
+pub fn (mut pool VSlimPsr6CacheItemPool) replace_deferred_entry(key string, snapshot Psr6ItemSnapshot) {
 	if key in pool.deferred {
 		mut old := pool.deferred[key] or { Psr6DeferredEntry{} }
 		old.value.release()
@@ -379,7 +379,7 @@ fn psr6_storage_key(pool VSlimPsr6CacheItemPool, key string) string {
 	return '${pool.namespace_prefix}:${key}'
 }
 
-fn (mut pool VSlimPsr6CacheItemPool) remove_deferred_entry(key string) {
+pub fn (mut pool VSlimPsr6CacheItemPool) remove_deferred_entry(key string) {
 	if key !in pool.deferred {
 		return
 	}
@@ -388,7 +388,7 @@ fn (mut pool VSlimPsr6CacheItemPool) remove_deferred_entry(key string) {
 	pool.deferred.delete(key)
 }
 
-fn (mut pool VSlimPsr6CacheItemPool) clear_deferred_entries() {
+pub fn (mut pool VSlimPsr6CacheItemPool) clear_deferred_entries() {
 	keys := pool.deferred.keys()
 	for key in keys {
 		pool.remove_deferred_entry(key)
@@ -511,10 +511,10 @@ fn psr6_resolve_relative_expiration_or_throw(clock vphp.ZVal, time_value vphp.ZV
 }
 
 fn psr6_clone_persistent(value vphp.PersistentOwnedZBox) vphp.PersistentOwnedZBox {
-	return value.clone_persistent_owned()
+	return value.clone()
 }
 
-fn (mut item VSlimPsr6CacheItem) replace_value(value vphp.ZVal) {
+pub fn (mut item VSlimPsr6CacheItem) replace_value(value vphp.ZVal) {
 	mut old := item.value_ref
 	old.release()
 	item.value_ref = vphp.PersistentOwnedZBox.from_mixed_zval(value)
@@ -529,7 +529,7 @@ fn throw_psr6_cache_exception(message string) {
 	vphp.throw_exception_class('VSlim\\Psr6\\CacheException', message, 0)
 }
 
-fn (item &VSlimPsr6CacheItem) free() {
+pub fn (item &VSlimPsr6CacheItem) free() {
 	unsafe {
 		mut writable := &VSlimPsr6CacheItem(item)
 		writable.value_ref.release()
@@ -537,7 +537,7 @@ fn (item &VSlimPsr6CacheItem) free() {
 	}
 }
 
-fn (pool &VSlimPsr6CacheItemPool) free() {
+pub fn (pool &VSlimPsr6CacheItemPool) free() {
 	unsafe {
 		mut writable := &VSlimPsr6CacheItemPool(pool)
 		writable.clear_entries()

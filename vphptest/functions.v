@@ -121,6 +121,81 @@ fn v_complex_test(ctx vphp.Context) {
 	ctx.return_map(res)
 }
 
+fn nested_payload_summary(box vphp.PersistentOwnedZBox) string {
+	return box.with_request_zval(fn (z vphp.ZVal) string {
+		if !z.is_array() {
+			return 'not-array'
+		}
+		viewer := z.get('viewer') or { vphp.ZVal.new_null() }
+		workspace := z.get('workspace') or { vphp.ZVal.new_null() }
+		metrics := z.get('metrics') or { vphp.ZVal.new_null() }
+
+		viewer_id := if viewer.is_array() { viewer.get_or('id', '') } else { '' }
+		members := if workspace.is_array() { workspace.get('members') or { vphp.ZVal.new_null() } } else { vphp.ZVal.new_null() }
+		collections := if workspace.is_array() { workspace.get('collections') or { vphp.ZVal.new_null() } } else { vphp.ZVal.new_null() }
+		jobs := if metrics.is_array() { metrics.get('jobs') or { vphp.ZVal.new_null() } } else { vphp.ZVal.new_null() }
+
+		member_count := if members.is_array() { members.array_count() } else { 0 }
+		job_count := if jobs.is_array() { jobs.array_count() } else { 0 }
+		mut chunk_count := 0
+		if collections.is_array() {
+			for idx := 0; idx < collections.array_count(); idx++ {
+				row := collections.array_get(idx)
+				if !row.is_array() {
+					continue
+				}
+				chunks := row.get('chunks') or { vphp.ZVal.new_null() }
+				if chunks.is_array() {
+					chunk_count += chunks.array_count()
+				}
+			}
+		}
+		return '${viewer_id}|${member_count}|${chunk_count}|${job_count}'
+	})
+}
+
+@[php_function]
+fn v_persistent_nested_roundtrip(ctx vphp.Context) {
+	raw := ctx.arg_raw(0)
+	mode := ctx.arg[string](1)
+	mut box := if mode == 'persistent' {
+		vphp.PersistentOwnedZBox.from_persistent_zval(raw)
+	} else {
+		vphp.PersistentOwnedZBox.from_mixed_zval(raw)
+	}
+	defer {
+		box.release()
+	}
+	mut clone := box.clone()
+	defer {
+		clone.release()
+	}
+	ctx.return_string(nested_payload_summary(clone))
+}
+
+@[php_function]
+fn v_persistent_multi_nested_stress(ctx vphp.Context) {
+	raw := ctx.arg_raw(0)
+	mode := ctx.arg[string](1)
+	loops := ctx.arg[int](2)
+	total := if loops <= 0 { 1 } else { loops }
+	mut box := if mode == 'persistent' {
+		vphp.PersistentOwnedZBox.from_persistent_zval(raw)
+	} else {
+		vphp.PersistentOwnedZBox.from_mixed_zval(raw)
+	}
+	defer {
+		box.release()
+	}
+	mut last := ''
+	for _ in 0 .. total {
+		mut clone := box.clone()
+		last = nested_payload_summary(clone)
+		clone.release()
+	}
+	ctx.return_string(last)
+}
+
 @[php_function]
 fn v_analyze_user_object(ctx vphp.Context) {
 	user_obj := ctx.arg_raw(0)

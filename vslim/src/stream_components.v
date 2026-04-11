@@ -286,26 +286,26 @@ fn normalize_ollama_source_request(payload vphp.RequestBorrowedZBox) &VSlimReque
 	return new_vslim_request_from_psr_server_request(vphp.RequestBorrowedZBox.from_zval(raw), route_params_from_payload(vphp.RequestBorrowedZBox.from_zval(raw)))
 }
 
-fn (c &VSlimStreamOllamaClient) payload_from_vslim_request(req &VSlimRequest) vphp.RequestOwnedZBox {
+pub fn (c &VSlimStreamOllamaClient) payload_from_vslim_request(req &VSlimRequest) vphp.RequestOwnedZBox {
 	mut input := new_array_zval()
 	add_assoc_zval(input, 'query', new_string_map_zval(req.query_params()))
 	add_assoc_zval(input, 'body', decode_request_body_to_payload_zval(req))
 	return c.payload(vphp.borrow_zbox(input))
 }
 
-fn (c &VSlimStreamOllamaClient) chat_url_value() string {
+pub fn (c &VSlimStreamOllamaClient) chat_url_value() string {
 	return normalize_ollama_chat_url(c.chat_url)
 }
 
-fn (c &VSlimStreamOllamaClient) default_model_value() string {
+pub fn (c &VSlimStreamOllamaClient) default_model_value() string {
 	return normalize_ollama_model(c.default_model)
 }
 
-fn (c &VSlimStreamOllamaClient) api_key_value() string {
+pub fn (c &VSlimStreamOllamaClient) api_key_value() string {
 	return c.api_key.trim_space()
 }
 
-fn (c &VSlimStreamOllamaClient) fixture_path_value() string {
+pub fn (c &VSlimStreamOllamaClient) fixture_path_value() string {
 	return c.fixture_path.trim_space()
 }
 
@@ -628,7 +628,7 @@ fn zval_array_items(input vphp.ZVal) []vphp.ZVal {
 	return out
 }
 
-fn (c &VSlimStreamOllamaClient) free() {
+pub fn (c &VSlimStreamOllamaClient) free() {
 	unsafe {
 		c.chat_url.free()
 		c.default_model.free()

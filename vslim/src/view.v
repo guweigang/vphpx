@@ -70,8 +70,8 @@ pub fn (mut app VSlimApp) helper(name string, handler vphp.RequestBorrowedZBox) 
 @[php_method]
 pub fn (app &VSlimApp) make_view() &VSlimView {
 	return &VSlimView{
-		base_path: app.view_base_path
-		assets_prefix: app.assets_prefix()
+		base_path: app.view_base_path.clone()
+		assets_prefix: app.assets_prefix().clone()
 		cache_enabled: app.view_cache_enabled()
 		helpers: clone_view_helper_map(app.view_helpers)
 	}

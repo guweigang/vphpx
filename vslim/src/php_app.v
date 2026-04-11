@@ -11,7 +11,28 @@ __global (
 	vslim_trace_mem_enabled_cache bool
 	vslim_trace_mem_every_cache   int
 	vslim_trace_mem_counter       u64
+	vslim_current_dispatch_app    &VSlimApp
 )
+
+fn enter_runtime_dispatch_app(app &VSlimApp) &VSlimApp {
+	unsafe {
+		prev := vslim_current_dispatch_app
+		vslim_current_dispatch_app = app
+		return prev
+	}
+}
+
+fn leave_runtime_dispatch_app(prev &VSlimApp) {
+	unsafe {
+		vslim_current_dispatch_app = prev
+	}
+}
+
+fn current_runtime_dispatch_app() &VSlimApp {
+	unsafe {
+		return vslim_current_dispatch_app
+	}
+}
 
 fn vslim_trace_mem_enabled(app &VSlimApp) bool {
 	if app.config_ref != unsafe { nil } && app.config_ref.has('app.trace.memory') {

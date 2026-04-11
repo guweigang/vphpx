@@ -2,11 +2,11 @@ long vphp_get_lval(zval *z) { return Z_LVAL_P(z); }
 
 void vphp_set_lval(zval *z, long val) { ZVAL_LONG(z, val); }
 
-char *vphp_get_strval(zval *z) { return Z_STRVAL_P(z); }
+char *vphp_get_strval(zval *z) { return z ? Z_STRVAL_P(z) : ""; }
 
-int vphp_get_strlen(zval *z) { return Z_STRLEN_P(z); }
+int vphp_get_strlen(zval *z) { return z ? Z_STRLEN_P(z) : 0; }
 
-int vphp_get_type(zval *z) { return Z_TYPE_P(z); }
+int vphp_get_type(zval *z) { return z ? Z_TYPE_P(z) : IS_UNDEF; }
 
 const char *vphp_get_string_ptr(zval *z, int *len) {
   if (z && Z_TYPE_P(z) == IS_STRING) {
@@ -106,8 +106,12 @@ static const char *vphp_debug_zval_class_name(zval *z) {
 
 static void vphp_debug_log_release_zval(const char *phase, zval *z, int removed) {
   char debug_buf[256];
-  int type = z != NULL ? Z_TYPE_P(z) : -1;
+  int type = -1;
   uint32_t refcount = 0;
+  if (vphp_bridge_value_debug_enabled() == 0) {
+    return;
+  }
+  type = z != NULL ? Z_TYPE_P(z) : -1;
   if (z != NULL && Z_REFCOUNTED_P(z)) {
     refcount = GC_REFCOUNT(Z_COUNTED_P(z));
   }
@@ -182,6 +186,23 @@ zval *vphp_new_strl(const char *s, int len) {
   zval *z = vphp_new_zval();
   ZVAL_STRINGL(z, s, len);
   return z;
+}
+
+zval *vphp_new_persistent_zval() {
+  zval *z = (zval *)pemalloc(sizeof(zval), 1);
+  if (z == NULL) {
+    return NULL;
+  }
+  ZVAL_UNDEF(z);
+  return z;
+}
+
+void vphp_release_persistent_zval(zval *z) {
+  if (z == NULL) {
+    return;
+  }
+  zval_ptr_dtor(z);
+  pefree(z, 1);
 }
 
 void vphp_release_zval(zval *z) {

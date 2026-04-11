@@ -11,8 +11,9 @@ module vphp
 
 pub struct ZVal {
 pub mut:
-	raw   &C.zval
-	owned bool
+	raw           &C.zval
+	owned         bool
+	is_persistent bool
 }
 
 // Callable — semantic alias for ZVal used as a PHP callable parameter.
@@ -62,6 +63,9 @@ fn adopt_raw_with_ownership(raw &C.zval, ownership OwnershipKind) ZVal {
 	}
 	if ownership == .owned_request {
 		autorelease_add(out.raw)
+		if out.is_object() {
+			autorelease_forget(out.raw)
+		}
 	}
 	return out
 }
@@ -71,12 +75,20 @@ fn clone_raw_with_ownership(src &C.zval, ownership OwnershipKind) ZVal {
 		return invalid_zval()
 	}
 	mut out := ZVal{
-		raw: C.vphp_new_zval()
-		owned: true
+		raw: if ownership == .owned_persistent {
+			C.vphp_new_persistent_zval()
+		} else {
+			C.vphp_new_zval()
+		}
+		owned:         true
+		is_persistent: ownership == .owned_persistent
 	}
 	C.ZVAL_COPY(out.raw, src)
 	if ownership == .owned_request {
 		autorelease_add(out.raw)
+		if out.is_object() {
+			autorelease_forget(out.raw)
+		}
 	}
 	return out
 }
@@ -157,6 +169,9 @@ pub fn (v ZVal) is_valid() bool {
 // ======== 类型判断 ========
 
 pub fn (v ZVal) type_raw() int {
+	if v.raw == 0 {
+		return int(PHPType.undef)
+	}
 	return C.vphp_get_type(v.raw)
 }
 
@@ -977,7 +992,11 @@ pub fn (v ZVal) method_owned_request(method string, args []ZVal) ZVal {
 			C.vphp_release_zval(retval)
 			return invalid_zval()
 		}
-		return adopt_raw_with_ownership(retval, .owned_request)
+		mut result := adopt_raw_with_ownership(retval, .owned_request)
+		if result.is_object() {
+			autorelease_forget(result.raw)
+		}
+		return result
 	}
 }
 
@@ -1036,7 +1055,10 @@ pub fn (v ZVal) call_owned_request(args []ZVal) ZVal {
 			C.vphp_release_zval(retval)
 			return invalid_zval()
 		}
-		result := adopt_raw_with_ownership(retval, .owned_request)
+		mut result := adopt_raw_with_ownership(retval, .owned_request)
+		if result.is_object() {
+			autorelease_forget(result.raw)
+		}
 		framework_debug_log('zval.call_owned_request exit raw=${usize(v.raw)} retval=${usize(result.raw)} valid=${result.is_valid()} type=${result.type_name()} class=${result.class_name()}')
 		return result
 	}
@@ -1090,13 +1112,30 @@ pub fn (mut v ZVal) release() {
 		return
 	}
 	autorelease_forget(v.raw)
-	unsafe { C.vphp_release_zval(v.raw) }
+	unsafe {
+		if v.is_persistent {
+			C.vphp_release_persistent_zval(v.raw)
+		} else {
+			C.vphp_release_zval(v.raw)
+		}
+	}
 	v.raw = unsafe { nil }
 	v.owned = false
+	v.is_persistent = false
+}
+
+pub fn (v ZVal) dup_persistent() ZVal {
+	if v.raw == 0 {
+		return invalid_zval()
+	}
+	return clone_raw_with_ownership(v.raw, .owned_persistent)
 }
 
 // Duplicate and keep beyond current autorelease scope.
-pub fn (v ZVal) dup_persistent() ZVal {
+// dup_escaped creates an emalloc'd copy that escapes the current autorelease
+// scope. The zval is still request-scoped memory — it will NOT survive across
+// PHP requests. Use dup_persistent() for truly long-lived storage.
+pub fn (v ZVal) dup_escaped() ZVal {
 	mut out := v.dup()
 	autorelease_forget(out.raw)
 	return out
@@ -1146,7 +1185,11 @@ pub fn (v ZVal) construct_owned_request(args []ZVal) ZVal {
 			C.vphp_release_zval(retval)
 			return invalid_zval()
 		}
-		return adopt_raw_with_ownership(retval, .owned_request)
+		mut result := adopt_raw_with_ownership(retval, .owned_request)
+		if result.is_object() {
+			autorelease_forget(result.raw)
+		}
+		return result
 	}
 }
 
@@ -1196,7 +1239,11 @@ pub fn (v ZVal) static_method_owned_request(method string, args []ZVal) ZVal {
 			C.vphp_release_zval(retval)
 			return invalid_zval()
 		}
-		return adopt_raw_with_ownership(retval, .owned_request)
+		mut result := adopt_raw_with_ownership(retval, .owned_request)
+		if result.is_object() {
+			autorelease_forget(result.raw)
+		}
+		return result
 	}
 }
 

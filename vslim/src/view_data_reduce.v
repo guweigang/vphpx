@@ -591,14 +591,11 @@ fn normalize_assets_prefix(prefix string) string {
 	return clean.trim_right('/')
 }
 
-fn (view &VSlimView) free() {
-	for key, _ in view.helpers {
-		mut handler := view.helpers[key] or { continue }
-		release_view_helper(mut handler)
-	}
+pub fn (mut view VSlimView) cleanup() {
+	// helpers is a direct bridge-owned field, so generic_free_raw() will
+	// release it after cleanup() returns.
 	unsafe {
 		view.base_path.free()
 		view.assets_prefix.free()
-		view.helpers.free()
 	}
 }

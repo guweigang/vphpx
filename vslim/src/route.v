@@ -143,11 +143,11 @@ fn (app &VSlimApp) encode_query_params(query &map[string]string) string {
 fn VSlimRequest.normalize_target(raw_path string) (string, string) {
 	path := RoutePath.normalize(raw_path)
 	if !path.contains('?') {
-		return path, ''
+		return path.clone(), ''
 	}
 	base := RoutePath.normalize(path.all_before('?'))
-	query := path.all_after('?')
-	return base, query
+	query := path.all_after('?').clone()
+	return base.clone(), query
 }
 
 fn RoutePath.normalize(path string) string {
@@ -155,7 +155,7 @@ fn RoutePath.normalize(path string) string {
 		return '/'
 	}
 	if path.starts_with('/') {
-		return path
+		return path.clone()
 	}
 	return '/${path}'
 }

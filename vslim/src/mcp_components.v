@@ -376,7 +376,7 @@ pub fn (app &VSlimMcpApp) handle_mcp_dispatch(frame vphp.RequestBorrowedZBox) vp
 	return vphp.RequestOwnedZBox.adopt_zval(new_mcp_result_response(id, result, 200, protocol_version))
 }
 
-fn (app &VSlimMcpApp) effective_capabilities() vphp.ZVal {
+pub fn (app &VSlimMcpApp) effective_capabilities() vphp.ZVal {
 	mut caps := new_array_zval()
 	mut keys := app.server_capabilities.keys()
 	keys.sort()
@@ -405,11 +405,11 @@ fn (app &VSlimMcpApp) effective_capabilities() vphp.ZVal {
 	return caps
 }
 
-fn (app &VSlimMcpApp) server_info_zval() vphp.ZVal {
+pub fn (app &VSlimMcpApp) server_info_zval() vphp.ZVal {
 	return new_string_map_zval(app.server_info)
 }
 
-fn (app &VSlimMcpApp) tool_definitions() vphp.ZVal {
+pub fn (app &VSlimMcpApp) tool_definitions() vphp.ZVal {
 	mut out := new_array_zval()
 	mut keys := app.tool_handlers.keys()
 	keys.sort()
@@ -427,7 +427,7 @@ fn (app &VSlimMcpApp) tool_definitions() vphp.ZVal {
 	return out
 }
 
-fn (app &VSlimMcpApp) resource_definitions() vphp.ZVal {
+pub fn (app &VSlimMcpApp) resource_definitions() vphp.ZVal {
 	mut out := new_array_zval()
 	mut keys := app.resource_handlers.keys()
 	keys.sort()
@@ -442,7 +442,7 @@ fn (app &VSlimMcpApp) resource_definitions() vphp.ZVal {
 	return out
 }
 
-fn (app &VSlimMcpApp) prompt_definitions() vphp.ZVal {
+pub fn (app &VSlimMcpApp) prompt_definitions() vphp.ZVal {
 	mut out := new_array_zval()
 	mut keys := app.prompt_handlers.keys()
 	keys.sort()
@@ -460,7 +460,7 @@ fn (app &VSlimMcpApp) prompt_definitions() vphp.ZVal {
 	return out
 }
 
-fn (app &VSlimMcpApp) handle_builtin_tool_call(message vphp.ZVal, frame vphp.ZVal, protocol_version string) vphp.ZVal {
+pub fn (app &VSlimMcpApp) handle_builtin_tool_call(message vphp.ZVal, frame vphp.ZVal, protocol_version string) vphp.ZVal {
 	params := zval_key(message, 'params')
 	name := zval_string_key(params, 'name', '')
 	id := zval_key(message, 'id')
@@ -495,7 +495,7 @@ fn (app &VSlimMcpApp) handle_builtin_tool_call(message vphp.ZVal, frame vphp.ZVa
 	return new_mcp_result_response(id, result, 200, protocol_version)
 }
 
-fn (app &VSlimMcpApp) handle_builtin_resource_read(message vphp.ZVal, frame vphp.ZVal, protocol_version string) vphp.ZVal {
+pub fn (app &VSlimMcpApp) handle_builtin_resource_read(message vphp.ZVal, frame vphp.ZVal, protocol_version string) vphp.ZVal {
 	params := zval_key(message, 'params')
 	uri := zval_string_key(params, 'uri', '')
 	id := zval_key(message, 'id')
@@ -522,7 +522,7 @@ fn (app &VSlimMcpApp) handle_builtin_resource_read(message vphp.ZVal, frame vphp
 	return new_mcp_result_response(id, result, 200, protocol_version)
 }
 
-fn (app &VSlimMcpApp) handle_builtin_prompt_get(message vphp.ZVal, frame vphp.ZVal, protocol_version string) vphp.ZVal {
+pub fn (app &VSlimMcpApp) handle_builtin_prompt_get(message vphp.ZVal, frame vphp.ZVal, protocol_version string) vphp.ZVal {
 	params := zval_key(message, 'params')
 	name := zval_string_key(params, 'name', '')
 	id := zval_key(message, 'id')
@@ -697,48 +697,15 @@ fn release_mcp_handler(mut handler vphp.PersistentOwnedZBox) {
 	}
 }
 
-fn (app &VSlimMcpApp) free() {
-	for key, _ in app.method_handlers {
-		mut handler := app.method_handlers[key] or { continue }
-		release_mcp_handler(mut handler)
-	}
-	for key, _ in app.tool_handlers {
-		mut handler := app.tool_handlers[key] or { continue }
-		release_mcp_handler(mut handler)
-	}
-	for key, _ in app.tool_schemas {
-		mut handler := app.tool_schemas[key] or { continue }
-		release_mcp_handler(mut handler)
-	}
-	for key, _ in app.resource_handlers {
-		mut handler := app.resource_handlers[key] or { continue }
-		release_mcp_handler(mut handler)
-	}
-	for key, _ in app.prompt_handlers {
-		mut handler := app.prompt_handlers[key] or { continue }
-		release_mcp_handler(mut handler)
-	}
-	for key, _ in app.prompt_arguments {
-		mut handler := app.prompt_arguments[key] or { continue }
-		release_mcp_handler(mut handler)
-	}
-	for key, _ in app.server_capabilities {
-		mut handler := app.server_capabilities[key] or { continue }
-		release_mcp_handler(mut handler)
-	}
+pub fn (mut app VSlimMcpApp) cleanup() {
+	// Direct bridge-owned handler/schema maps are released by generic_free_raw()
+	// after cleanup() returns. We only free native V string maps here.
 	unsafe {
-		app.method_handlers.free()
-		app.tool_handlers.free()
 		app.tool_descriptions.free()
-		app.tool_schemas.free()
-		app.resource_handlers.free()
 		app.resource_names.free()
 		app.resource_descriptions.free()
 		app.resource_mime_types.free()
-		app.prompt_handlers.free()
 		app.prompt_descriptions.free()
-		app.prompt_arguments.free()
 		app.server_info.free()
-		app.server_capabilities.free()
 	}
 }

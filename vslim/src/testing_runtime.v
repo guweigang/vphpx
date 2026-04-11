@@ -23,7 +23,7 @@ fn testing_apply_cookies(request &VSlimPsr7ServerRequest, cookies map[string]str
 		merged[key] = value
 	}
 	return clone_psr7_server_request(request, request.method, request.request_target,
-		request.protocol_version, request.headers.clone(), clone_header_names(request.header_names),
+		request.protocol_version, clone_header_values(request.headers), clone_header_names(request.header_names),
 		server_request_body_or_empty(request), server_request_uri_or_default(request),
 		request.server_params_ref, string_map_to_persistent_array(merged), request.query_params_ref,
 		request.uploaded_files_ref, request.parsed_body_ref, request.attributes_ref)
@@ -142,7 +142,7 @@ fn testing_new_request(method string, uri string, body string) &VSlimPsr7ServerR
 		return req
 	}
 	return clone_psr7_server_request(req, req.method, req.request_target, req.protocol_version,
-		req.headers.clone(), clone_header_names(req.header_names), new_psr7_stream(body),
+		clone_header_values(req.headers), clone_header_names(req.header_names), new_psr7_stream(body),
 		server_request_uri_or_default(req), req.server_params_ref, req.cookie_params_ref,
 		req.query_params_ref, req.uploaded_files_ref, req.parsed_body_ref, req.attributes_ref)
 }
@@ -154,7 +154,7 @@ fn testing_new_json_request(method string, uri string, payload vphp.ZVal) &VSlim
 	}
 	payload_json := vphp.json_encode(payload)
 	mut req := testing_new_request(method, uri, payload_json)
-	mut headers := req.headers.clone()
+	mut headers := clone_header_values(req.headers)
 	mut header_names := clone_header_names(req.header_names)
 	headers['content-type'] = ['application/json']
 	header_names['content-type'] = 'Content-Type'
@@ -259,7 +259,7 @@ pub fn (mut h VSlimTestingHarness) clear_cookies() &VSlimTestingHarness {
 
 @[php_method]
 pub fn (h &VSlimTestingHarness) cookies() map[string]string {
-	return h.cookies.clone()
+	return snapshot_string_map(h.cookies)
 }
 
 @[php_method: 'withSession']

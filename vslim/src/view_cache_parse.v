@@ -41,7 +41,7 @@ fn ensure_view_helper_map(mut helpers map[string]vphp.PersistentOwnedZBox) {
 fn clone_view_helper_map(src map[string]vphp.PersistentOwnedZBox) map[string]vphp.PersistentOwnedZBox {
 	mut out := map[string]vphp.PersistentOwnedZBox{}
 	for key, handler in src {
-		out[key] = handler.clone_persistent_owned()
+		out[key] = handler.clone()
 	}
 	return out
 }

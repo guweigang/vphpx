@@ -45,7 +45,12 @@ pub fn (mut c VSlimContainer) construct() &VSlimContainer {
 
 @[php_method]
 pub fn (mut c VSlimContainer) set(id string, value vphp.RequestBorrowedZBox) &VSlimContainer {
-	c.entries[id] = vphp.PersistentOwnedZBox.from_mixed_zval(value.to_zval())
+	raw := value.to_zval()
+	c.entries[id] = if raw.is_object() && !raw.is_callable() {
+		vphp.PersistentOwnedZBox.from_object_zval(raw)
+	} else {
+		vphp.PersistentOwnedZBox.from_mixed_zval(raw)
+	}
 	c.factories.delete(id)
 	c.resolved.delete(id)
 	return &c
@@ -76,7 +81,7 @@ pub fn (mut c VSlimContainer) get(id string) vphp.RequestOwnedZBox {
 	return c.get_entry_or_throw(id)
 }
 
-fn (mut c VSlimContainer) get_entry(id string) !vphp.RequestOwnedZBox {
+pub fn (mut c VSlimContainer) get_entry(id string) !vphp.RequestOwnedZBox {
 	if native := c.get_native_service(id) {
 		return native
 	}
@@ -94,14 +99,20 @@ fn (mut c VSlimContainer) get_entry(id string) !vphp.RequestOwnedZBox {
 		if !res.is_valid() {
 			return error('factory "${id}" returned invalid value')
 		}
-		c.resolved[id] = vphp.PersistentOwnedZBox.from_mixed_zval(res.to_zval())
+		raw := res.to_zval()
+		c.resolved[id] = if raw.is_object() && !raw.is_callable() {
+			vphp.PersistentOwnedZBox.from_object_zval(raw)
+		} else {
+			vphp.PersistentOwnedZBox.from_mixed_zval(raw)
+		}
 		return res
 	}
 	return error('entry "${id}" not found')
 }
 
-fn (c &VSlimContainer) has_native_service(id string) bool {
-	return c.app_ref != unsafe { nil } && id.trim_space() in [
+pub fn (c &VSlimContainer) has_native_service(id string) bool {
+	app := container_effective_app(c)
+	return app != unsafe { nil } && id.trim_space() in [
 		'config',
 		'clock',
 		'Psr\\Clock\\ClockInterface',
@@ -123,6 +134,14 @@ fn (c &VSlimContainer) has_native_service(id string) bool {
 	]
 }
 
+fn container_effective_app(c &VSlimContainer) &VSlimApp {
+	runtime := current_runtime_dispatch_app()
+	if runtime != unsafe { nil } {
+		return runtime
+	}
+	return c.app_ref
+}
+
 fn container_borrowed_object_value(v_ptr voidptr, ce voidptr, handlers voidptr) ?vphp.RequestOwnedZBox {
 	unsafe {
 		if v_ptr == 0 || ce == 0 {
@@ -134,51 +153,52 @@ fn container_borrowed_object_value(v_ptr voidptr, ce voidptr, handlers voidptr) 
 	}
 }
 
-fn (mut c VSlimContainer) get_native_service(id string) ?vphp.RequestOwnedZBox {
-	if c.app_ref == unsafe { nil } {
+pub fn (mut c VSlimContainer) get_native_service(id string) ?vphp.RequestOwnedZBox {
+	mut app := container_effective_app(c)
+	if app == unsafe { nil } {
 		return none
 	}
 	match id.trim_space() {
 		'config' {
-			return container_borrowed_object_value(c.app_ref.config(), C.vslim__config_ce,
+			return container_borrowed_object_value(app.config(), C.vslim__config_ce,
 				vslimconfig_handlers())
 		}
 		'clock', 'Psr\\Clock\\ClockInterface' {
-			return c.app_ref.clock()
+			return app.clock()
 		}
 		'logger' {
-			return container_borrowed_object_value(c.app_ref.logger(), C.vslim__log__logger_ce,
+			return container_borrowed_object_value(app.logger(), C.vslim__log__logger_ce,
 				vslimlogger_handlers())
 		}
 		'Psr\\Log\\LoggerInterface' {
-			return container_borrowed_object_value(c.app_ref.psr_logger(), C.vslim__log__psrlogger_ce,
+			return container_borrowed_object_value(app.psr_logger(), C.vslim__log__psrlogger_ce,
 				vslimpsrlogger_handlers())
 		}
 		'listener_provider', 'events.provider', 'Psr\\EventDispatcher\\ListenerProviderInterface' {
-			return container_borrowed_object_value(c.app_ref.listener_provider(),
+			return container_borrowed_object_value(app.listener_provider(),
 				C.vslim__psr14__listenerprovider_ce,
 				vslimpsr14listenerprovider_handlers())
 		}
 		'events', 'dispatcher', 'Psr\\EventDispatcher\\EventDispatcherInterface' {
-			return container_borrowed_object_value(c.app_ref.dispatcher(),
+			return container_borrowed_object_value(app.dispatcher(),
 				C.vslim__psr14__eventdispatcher_ce,
 				vslimpsr14eventdispatcher_handlers())
 		}
 		'cache', 'Psr\\SimpleCache\\CacheInterface' {
-			return container_borrowed_object_value(c.app_ref.cache(), C.vslim__psr16__cache_ce,
+			return container_borrowed_object_value(app.cache(), C.vslim__psr16__cache_ce,
 				vslimpsr16cache_handlers())
 		}
 		'cache.pool', 'Psr\\Cache\\CacheItemPoolInterface' {
-			return container_borrowed_object_value(c.app_ref.cache_pool(),
+			return container_borrowed_object_value(app.cache_pool(),
 				C.vslim__psr6__cacheitempool_ce,
 				vslimpsr6cacheitempool_handlers())
 		}
 		'http', 'http_client', 'Psr\\Http\\Client\\ClientInterface' {
-			return container_borrowed_object_value(c.app_ref.http_client(), C.vslim__psr18__client_ce,
+			return container_borrowed_object_value(app.http_client(), C.vslim__psr18__client_ce,
 				vslimpsr18client_handlers())
 		}
 		'database', 'db', 'VSlim\\Database\\Manager' {
-			return container_borrowed_object_value(c.app_ref.database(), C.vslim__database__manager_ce,
+			return container_borrowed_object_value(app.database(), C.vslim__database__manager_ce,
 				vslimdatabasemanager_handlers())
 		}
 		else {}
@@ -186,7 +206,7 @@ fn (mut c VSlimContainer) get_native_service(id string) ?vphp.RequestOwnedZBox {
 	return none
 }
 
-fn (mut c VSlimContainer) get_entry_or_throw(id string) vphp.RequestOwnedZBox {
+pub fn (mut c VSlimContainer) get_entry_or_throw(id string) vphp.RequestOwnedZBox {
 	return c.get_entry(id) or {
 		if err.msg().contains('not found') {
 			throw_not_found(id)
@@ -206,19 +226,7 @@ fn throw_container_exception(msg string) {
 	vphp.throw_exception_class('VSlim\\Container\\ContainerException', msg, 0)
 }
 
-fn (c &VSlimContainer) free() {
-	for _, entry in c.entries {
-		mut z := entry
-		z.release()
-	}
-	for _, factory in c.factories {
-		mut z := factory
-		z.release()
-	}
-	for _, resolved in c.resolved {
-		mut z := resolved
-		z.release()
-	}
+pub fn (c &VSlimContainer) free() {
 	unsafe {
 		c.entries.free()
 		c.factories.free()

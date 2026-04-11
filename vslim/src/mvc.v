@@ -24,5 +24,6 @@ mut:
 @[heap]
 struct VSlimController {
 mut:
-	host VSlimViewHost
+	app_ref  &VSlimApp  = unsafe { nil }
+	view_ref &VSlimView = unsafe { nil }
 }

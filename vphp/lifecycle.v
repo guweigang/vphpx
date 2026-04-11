@@ -41,7 +41,7 @@ pub interface ZValInvoke {
 pub interface ZValOwnership {
 	borrowed() RequestBorrowedZBox
 	clone_request_owned() RequestOwnedZBox
-	clone_persistent_owned() PersistentOwnedZBox
+	clone() PersistentOwnedZBox
 mut:
 	release()
 }
@@ -321,9 +321,16 @@ pub fn own_persistent_zbox_raw(z ZVal) PersistentOwnedZBox {
 		ZValViewState: zbox_view_state(z.dup_persistent())
 		kind:          .fallback_zval
 	}
+
 }
 
 pub fn PersistentOwnedZBox.from_callable_zval(z ZVal) PersistentOwnedZBox {
+	if retained_callable := RetainedCallable.from_zval(z) {
+		return persistent_owned_retained_callable_box(retained_callable)
+	}
+	if retained := RetainedObject.from_zval(z) {
+		return persistent_owned_retained_object_box(retained)
+	}
 	return own_persistent_zbox_raw(z)
 }
 
@@ -334,6 +341,9 @@ pub fn PersistentOwnedZBox.of_callable(z ZVal) PersistentOwnedZBox {
 // from_object_zval is the explicit long-lived path for PHP objects.
 // Prefer this over generic value routing when the input is known to be object-like.
 pub fn PersistentOwnedZBox.from_object_zval(z ZVal) PersistentOwnedZBox {
+	if retained := RetainedObject.from_zval(z) {
+		return persistent_owned_retained_object_box(retained)
+	}
 	return own_persistent_zbox_raw(z)
 }
 
@@ -370,6 +380,18 @@ fn dyn_value_is_persistent_safe(value DynValue) bool {
 
 pub fn PersistentOwnedZBox.from_zval(z ZVal) PersistentOwnedZBox {
 	return own_persistent_zbox_raw(z)
+}
+
+// from_persistent_zval keeps the original zval payload as a persistent duplicate
+// without routing through detached DynValue decoding.
+pub fn PersistentOwnedZBox.from_persistent_zval(z ZVal) PersistentOwnedZBox {
+	if !z.is_valid() || z.is_undef() {
+		return PersistentOwnedZBox.new_null()
+	}
+	return PersistentOwnedZBox{
+		ZValViewState: zbox_view_state(z.dup_persistent())
+		kind:          .fallback_zval
+	}
 }
 
 // of is the friendly long-lived entry point for a general PHP value.
@@ -452,7 +474,19 @@ pub fn PersistentOwnedZBox.new_null() PersistentOwnedZBox {
 }
 
 pub fn PersistentOwnedZBox.invalid() PersistentOwnedZBox {
-	return own_persistent_zbox_raw(ZVal.invalid())
+	return PersistentOwnedZBox{
+		ZValViewState: zbox_view_state(invalid_zval())
+		kind:          .fallback_zval
+	}
+}
+
+pub fn release_persistent_boxes(mut list []PersistentOwnedZBox) {
+	for i in 0 .. list.len {
+		list[i].release()
+	}
+	unsafe {
+		list.free()
+	}
 }
 
 pub fn PersistentOwnedZBox.new_int(n i64) PersistentOwnedZBox {
@@ -588,7 +622,7 @@ pub fn (v RequestBorrowedZBox) clone_request_owned() RequestOwnedZBox {
 	return own_request_zbox_raw(v.z)
 }
 
-pub fn (v RequestBorrowedZBox) clone_persistent_owned() PersistentOwnedZBox {
+pub fn (v RequestBorrowedZBox) clone() PersistentOwnedZBox {
 	return own_persistent_zbox_raw(v.z)
 }
 
@@ -596,7 +630,7 @@ pub fn (v RequestOwnedZBox) borrowed() RequestBorrowedZBox {
 	return borrow_zbox_raw(v.z)
 }
 
-pub fn (v RequestOwnedZBox) clone_persistent_owned() PersistentOwnedZBox {
+pub fn (v RequestOwnedZBox) clone() PersistentOwnedZBox {
 	return own_persistent_zbox_raw(v.z)
 }
 
@@ -840,10 +874,10 @@ pub fn (mut v PersistentOwnedZBox) release() {
 	v.kind = .fallback_zval
 }
 
-pub fn (v PersistentOwnedZBox) clone_persistent_owned() PersistentOwnedZBox {
+pub fn (v PersistentOwnedZBox) clone() PersistentOwnedZBox {
 	match v.kind {
 		.dyn_data {
-			return persistent_owned_dyn_box(v.dyn_data)
+			return persistent_owned_dyn_box(v.dyn_data.clone())
 		}
 		.retained_callable {
 			return persistent_owned_retained_callable_box(v.retained_callable.clone())
@@ -852,7 +886,7 @@ pub fn (v PersistentOwnedZBox) clone_persistent_owned() PersistentOwnedZBox {
 			return persistent_owned_retained_object_box(v.retained.clone())
 		}
 		.fallback_zval {
-			return own_persistent_zbox_raw(v.z)
+			return PersistentOwnedZBox.from_persistent_zval(v.z)
 		}
 	}
 }

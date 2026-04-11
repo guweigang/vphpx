@@ -14,27 +14,17 @@ fn (view &VSlimView) render_template_path_with_slots(path string, scalars map[st
 @[php_method]
 pub fn (view &VSlimView) render_response(template string, data vphp.RequestBorrowedZBox) &VSlimResponse {
 	body := view.render(template, data)
-	return &VSlimResponse{
-		status: 200
-		body: body
-		content_type: 'text/html; charset=utf-8'
-		headers: {
-			'content-type': 'text/html; charset=utf-8'
-		}
-	}
+	mut res := &VSlimResponse{}
+	res.construct(200, body, 'text/html; charset=utf-8')
+	return res
 }
 
 @[php_method]
 pub fn (view &VSlimView) render_response_with_layout(template string, layout string, data vphp.RequestBorrowedZBox) &VSlimResponse {
 	body := view.render_with_layout(template, layout, data)
-	return &VSlimResponse{
-		status: 200
-		body: body
-		content_type: 'text/html; charset=utf-8'
-		headers: {
-			'content-type': 'text/html; charset=utf-8'
-		}
-	}
+	mut res := &VSlimResponse{}
+	res.construct(200, body, 'text/html; charset=utf-8')
+	return res
 }
 
 fn (view &VSlimView) render_source(source string, scalars map[string]string, lists map[string][]string, depth int) string {

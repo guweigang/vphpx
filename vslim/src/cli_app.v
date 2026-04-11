@@ -661,24 +661,11 @@ pub fn (mut cli VSlimCliApp) run(name string, args vphp.RequestBorrowedZBox) int
 	}
 }
 
-fn (mut cli VSlimCliApp) free() {
-	cli_debug_log('cli.free enter cli=${usize(&cli)} core=${usize(cli.core_app_ref)} handlers=${cli.command_handlers.len} core_valid=${cli.core_app_zref.is_valid()}')
-	mut handler_names := []string{}
-	for key, _ in cli.command_handlers {
-		handler_names << key.clone()
-	}
-	for key in handler_names {
-		mut handler := cli.command_handlers[key] or { continue }
-		cli_release_command_handler(mut handler)
-		cli.command_handlers.delete(key)
-	}
-	cli_debug_log('cli.free handlers_released')
-	cli.core_app_ref = unsafe { nil }
-	cli.core_app_zref = vphp.PersistentOwnedZBox.invalid()
-	cli_debug_log('cli.free core_app_released')
+pub fn (mut cli VSlimCliApp) cleanup() {
+	cli_debug_log('cli.cleanup auto-release entry cli=${usize(&cli)} handlers=${cli.command_handlers.len}')
+	// command_handlers and core_app_zref are direct bridge-owned fields, so
+	// generic_free_raw() will release them after cleanup() returns.
 	unsafe {
-		handler_names.free()
-		cli.command_handlers.free()
 		cli.command_order.free()
 		cli.command_aliases.free()
 		cli.command_hidden.free()
@@ -692,5 +679,5 @@ fn (mut cli VSlimCliApp) free() {
 		cli.last_warnings.free()
 	}
 	cli_debug_reset_overrides()
-	cli_debug_log('cli.free exit')
+	cli_debug_log('cli.cleanup native done')
 }

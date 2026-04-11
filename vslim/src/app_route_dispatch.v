@@ -10,7 +10,7 @@ struct RawRouteDispatchResolution {
 	handled          bool
 }
 
-fn dispatch_app_request_with_params(app &VSlimApp, req &VSlimRequest, trace_on bool, trace_base i64) (VSlimResponse, map[string]string, VSlimRequest) {
+fn dispatch_app_request_with_params(app &VSlimApp, req &VSlimRequest, trace_on bool, trace_base i64) (VSlimResponse, map[string]string, &VSlimRequest) {
 	if app.routes.len > 0 {
 		if trace_on {
 			vslim_trace_mem_log(app, req, 'dispatch.routes.begin', trace_base)
@@ -20,7 +20,7 @@ fn dispatch_app_request_with_params(app &VSlimApp, req &VSlimRequest, trace_on b
 			vslim_trace_mem_log(app, req, 'dispatch.routes.end', trace_base)
 		}
 		if ok {
-			return res, params, effective_req
+			return snapshot_vslim_response(res), snapshot_string_map(params), new_vslim_request_snapshot(effective_req)
 		}
 	}
 	path := RoutePath.normalize(req.path)
@@ -28,26 +28,26 @@ fn dispatch_app_request_with_params(app &VSlimApp, req &VSlimRequest, trace_on b
 		raw, not_found_payload := dispatch_php_not_found_terminal_raw(app, req)
 		ctx := new_pipeline_request_context(path, not_found_payload, map[string]string{})
 		res, snapshot := finalize_raw_response_with_snapshot(app, ctx, raw)
-		return res, map[string]string{}, snapshot
+		return snapshot_vslim_response(res), map[string]string{}, new_vslim_request_snapshot(snapshot)
 	}
 	if app.use_demo {
 		if trace_on {
 			vslim_trace_mem_log(app, req, 'dispatch.demo_fallback', trace_base)
 		}
 		res, params := dispatch_demo_request_with_params(req.to_vslim_request())
-		return res, params, req.to_vslim_request()
+		return snapshot_vslim_response(res), snapshot_string_map(params), new_vslim_request_snapshot(req)
 	}
 	if trace_on {
 		vslim_trace_mem_log(app, req, 'dispatch.not_found_fallback', trace_base)
 	}
-	return run_not_found(app, req), map[string]string{}, req.to_vslim_request()
+	return snapshot_vslim_response(run_not_found(app, req)), map[string]string{}, new_vslim_request_snapshot(req)
 }
 
 fn dispatch_app_request_worker(app &VSlimApp, req &VSlimRequest) vphp.ZVal {
 	if app.routes.len > 0 {
 		raw, _, effective_req, ok := dispatch_php_routes_worker_with_params(app, req)
 		if ok {
-			propagate_request_trace_headers_to_object(&effective_req, vphp.RequestBorrowedZBox.from_zval(raw))
+			propagate_request_trace_headers_to_object(effective_req, vphp.RequestBorrowedZBox.from_zval(raw))
 			if resolve_effective_method(req) == 'HEAD' && raw.is_object()
 				&& raw.is_instance_of('VSlim\\Vhttpd\\Response') {
 				if mut resp := raw.to_object[VSlimResponse]() {
@@ -66,7 +66,7 @@ fn dispatch_app_request_worker(app &VSlimApp, req &VSlimRequest) vphp.ZVal {
 			return raw_out
 		}
 		mut final_res := raw_out.to_object[VSlimResponse]() or { return raw_out }
-		propagate_request_trace_headers(&final_request, mut final_res)
+		propagate_request_trace_headers(final_request, mut final_res)
 		if resolve_effective_method(req) == 'HEAD' {
 			final_res.body = ''
 		}
@@ -129,7 +129,7 @@ fn raw_route_dispatch_resolution(raw vphp.ZVal, payload vphp.RequestOwnedZBox, r
 	return RawRouteDispatchResolution{
 		raw_response_ref: vphp.RequestOwnedZBox.from_zval(raw)
 		payload_ref:      payload.clone_request_owned()
-		route_params:     route_params.clone()
+		route_params:     snapshot_string_map(route_params)
 		handled:          true
 	}
 }
@@ -196,15 +196,15 @@ fn dispatch_php_route_match_raw(app &VSlimApp, path string, initial_payload vphp
 	validation_meta, has_validation_meta := request_validation_terminal_meta(app, validation_req)
 	if has_validation_meta {
 		return dispatch_php_pipeline_raw(app, path, initial_payload, RawDispatchPlan{
-			route_params:  params.clone()
+			route_params:  snapshot_string_map(params)
 			terminal_meta: validation_meta
 		})
 	}
 	return dispatch_php_pipeline_raw(app, path, initial_payload, RawDispatchPlan{
-		route_params:             params.clone()
-		route_handler:            route.php_handler.clone_persistent_owned()
+		route_params:             snapshot_string_map(params)
+		route_handler:            route.php_handler.clone()
 		resource_action:          route.resource_action
-		resource_missing_handler: route.resource_missing_handler.clone_persistent_owned()
+		resource_missing_handler: route.resource_missing_handler.clone()
 	})
 }
 
@@ -219,7 +219,7 @@ fn dispatch_php_routes_psr15(app &VSlimApp, req &VSlimRequest, request_payload v
 	return new_psr7_response_from_vslim_response(VSlimResponse{}), false
 }
 
-fn dispatch_php_routes_with_params(app &VSlimApp, req &VSlimRequest, trace_on bool, trace_base i64) (VSlimResponse, map[string]string, VSlimRequest, bool) {
+fn dispatch_php_routes_with_params(app &VSlimApp, req &VSlimRequest, trace_on bool, trace_base i64) (VSlimResponse, map[string]string, &VSlimRequest, bool) {
 	path := RoutePath.normalize(req.path)
 	resolved := resolve_php_route_dispatch_raw(app, req, vphp.RequestBorrowedZBox.null(), trace_on,
 		trace_base)
@@ -229,24 +229,24 @@ fn dispatch_php_routes_with_params(app &VSlimApp, req &VSlimRequest, trace_on bo
 		}
 		ctx := new_pipeline_request_context(path, resolved.payload_ref, resolved.route_params)
 		res, snapshot := finalize_raw_response_with_snapshot(app, ctx, resolved.raw_response_ref.to_zval())
-		return res, resolved.route_params.clone(), snapshot, true
+		return res, snapshot_string_map(resolved.route_params), snapshot, true
 	}
-	return VSlimResponse{}, map[string]string{}, req.to_vslim_request(), false
+	return VSlimResponse{}, map[string]string{}, new_vslim_request_snapshot(req), false
 }
 
-fn dispatch_php_routes_worker_with_params(app &VSlimApp, req &VSlimRequest) (vphp.ZVal, map[string]string, VSlimRequest, bool) {
+fn dispatch_php_routes_worker_with_params(app &VSlimApp, req &VSlimRequest) (vphp.ZVal, map[string]string, &VSlimRequest, bool) {
 	path := RoutePath.normalize(req.path)
 	resolved := resolve_php_route_dispatch_raw(app, req, vphp.RequestBorrowedZBox.null(), false, 0)
 	if resolved.handled {
 		ctx := new_pipeline_request_context(path, resolved.payload_ref, resolved.route_params)
 		if is_worker_stream_response_borrowed(resolved.raw_response_ref.borrowed()) {
-			return resolved.raw_response_ref.to_zval(), resolved.route_params.clone(), request_snapshot_from_payload(ctx.payload_ref.borrowed(),
+			return resolved.raw_response_ref.to_zval(), snapshot_string_map(resolved.route_params), request_snapshot_from_payload(ctx.payload_ref.borrowed(),
 				ctx.route_params), true
 		}
 		raw_out, snapshot := finalize_raw_response_for_worker(app, ctx, resolved.raw_response_ref.to_zval())
-		return raw_out, resolved.route_params.clone(), snapshot, true
+		return raw_out, snapshot_string_map(resolved.route_params), snapshot, true
 	}
-	return vphp.RequestOwnedZBox.new_null().to_zval(), map[string]string{}, req.to_vslim_request(), false
+	return vphp.RequestOwnedZBox.new_null().to_zval(), map[string]string{}, new_vslim_request_snapshot(req), false
 }
 
 fn dispatch_resource_missing_meta(action string, handler vphp.RequestBorrowedZBox, request_payload vphp.RequestBorrowedZBox, params map[string]string) vphp.ZVal {

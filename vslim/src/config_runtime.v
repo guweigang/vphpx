@@ -249,7 +249,7 @@ pub fn (c &VSlimConfig) all_json() string {
 	return toml_any_to_json(c.root)
 }
 
-fn (mut c VSlimConfig) merge_root(root toml.Any) {
+pub fn (mut c VSlimConfig) merge_root(root toml.Any) {
 	if !c.loaded {
 		c.root = root
 		c.loaded = true
@@ -265,7 +265,7 @@ fn (mut c VSlimConfig) merge_root(root toml.Any) {
 	}
 }
 
-fn (c &VSlimConfig) value_opt(key string) ?toml.Any {
+pub fn (c &VSlimConfig) value_opt(key string) ?toml.Any {
 	if !c.loaded {
 		return none
 	}
@@ -620,7 +620,7 @@ fn toml_list_to_zval(input []toml.Any) vphp.ZVal {
 	return out
 }
 
-fn (c &VSlimConfig) free() {
+pub fn (c &VSlimConfig) free() {
 	unsafe {
 		c.path.free()
 	}

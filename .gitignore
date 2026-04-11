@@ -2,3 +2,8 @@
 *_generated.c
 .DS_Store
 vslim/examples/vendor/
+*.dSYM/
+vslim/tests/*.diff
+vslim/tests/*.exp
+vslim/tests/*.log
+vslim/tests/*.out

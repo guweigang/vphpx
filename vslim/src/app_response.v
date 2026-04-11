@@ -91,7 +91,7 @@ fn normalize_php_route_response_psr(result vphp.ZVal) (&VSlimPsr7Response, bool)
 			status:           normalize_psr7_status(status)
 			reason_phrase:    normalize_reason_phrase(status, '')
 			protocol_version: '1.1'
-			headers:          headers
+			headers:          clone_header_values(headers)
 			header_names:     header_names
 			body_ref:         new_psr7_stream(body)
 		}, true
@@ -103,13 +103,22 @@ fn normalize_php_route_response(result vphp.ZVal) (VSlimResponse, bool) {
 	if !result.is_valid() || result.is_null() || result.is_undef() {
 		return text_response(200, ''), true
 	}
+	if result.is_object() && (result.is_instance_of('VSlim\\Psr7\\Response')
+		|| result.is_instance_of('VSlimPsr7Response')) {
+		if psr := result.to_object[VSlimPsr7Response]() {
+			cli_debug_log('normalize.response.vslim_psr status=${psr.get_status_code()} body_len=${psr7_stream_string(response_body_or_empty(psr)).len}')
+			return new_vslim_response_from_psr_response(psr), true
+		}
+	}
 	if result.is_object() && result.is_instance_of('Psr\\Http\\Message\\ResponseInterface') {
 		psr := normalize_to_psr7_response(result)
+		body := psr7_stream_string(response_body_or_empty(psr))
+		cli_debug_log('normalize.response.psr status=${psr.get_status_code()} body_len=${body.len}')
 		return VSlimResponse{
 			status:       psr.get_status_code()
-			body:         psr7_stream_string(response_body_or_empty(psr))
+			body:         body
 			content_type: psr.get_header_line(vphp.borrow_zbox(vphp.RequestOwnedZBox.new_string('content-type').to_zval()))
-			headers:      flatten_psr7_header_map(psr.get_headers())
+			headers:      snapshot_string_map(flatten_psr7_header_map(psr.get_headers()))
 		}, true
 	}
 	if result.is_object()
@@ -145,7 +154,7 @@ fn normalize_php_route_response(result vphp.ZVal) (VSlimResponse, bool) {
 			status:       status
 			body:         body
 			content_type: headers['content-type'] or { '' }
-			headers:      headers
+			headers:      snapshot_string_map(headers)
 		}, true
 	}
 	return VSlimResponse{}, false

@@ -99,8 +99,8 @@ fn (app VSlimRuntime) dispatch_route(req VSlimRequest) VSlimResponse {
 			method_not_allowed = true
 			continue
 		}
-		mut bound := req
-		bound.params = params.clone()
+		mut bound := snapshot_vslim_request(&req)
+		bound.params = snapshot_string_map(params)
 		return route.v_handler(bound)
 	}
 
@@ -185,8 +185,8 @@ fn dispatch_demo_request_with_params(req VSlimRequest) (VSlimResponse, map[strin
 			method_not_allowed = true
 			continue
 		}
-		mut bound := req
-		bound.params = params.clone()
+		mut bound := snapshot_vslim_request(&req)
+		bound.params = snapshot_string_map(params)
 		return app.run_middleware(0, bound), params
 	}
 	if method_not_allowed {

@@ -6,10 +6,10 @@ import vphp
 pub fn (mut r VSlimStreamResponse) construct(stream_type string, chunks vphp.RequestBorrowedZBox, status int, content_type string, headers vphp.RequestBorrowedZBox) &VSlimStreamResponse {
 	r.stream_type = normalize_stream_type(stream_type)
 	r.status = if status <= 0 { 200 } else { status }
-	r.content_type = default_stream_content_type(r.stream_type, content_type)
-	r.headers = normalize_header_map(headers.to_string_map())
+	r.content_type = default_stream_content_type(r.stream_type, content_type).clone()
+	r.headers = snapshot_string_map(normalize_header_map(headers.to_string_map()))
 	if 'content-type' !in r.headers {
-		r.headers['content-type'] = r.content_type
+		r.headers['content-type'] = r.content_type.clone()
 	}
 	r.set_chunks(chunks)
 	return &r
@@ -59,7 +59,7 @@ pub fn (r &VSlimStreamResponse) has_header(name string) bool {
 @[php_method]
 pub fn (mut r VSlimStreamResponse) set_header(name string, value string) &VSlimStreamResponse {
 	mut headers := r.header_values()
-	headers[VSlimRequest.normalize_header_name(name)] = value
+	headers[VSlimRequest.normalize_header_name(name)] = value.clone()
 	apply_stream_headers(mut r, headers)
 	return &r
 }
@@ -72,9 +72,9 @@ pub fn (mut r VSlimStreamResponse) set_status(status int) &VSlimStreamResponse {
 
 @[php_method]
 pub fn (mut r VSlimStreamResponse) set_content_type(content_type string) &VSlimStreamResponse {
-	r.content_type = default_stream_content_type(r.stream_type, content_type)
+	r.content_type = default_stream_content_type(r.stream_type, content_type).clone()
 	mut headers := r.header_values()
-	headers['content-type'] = r.content_type
+	headers['content-type'] = r.content_type.clone()
 	apply_stream_headers(mut r, headers)
 	return &r
 }
@@ -99,13 +99,13 @@ pub fn (r &VSlimStreamResponse) chunks() vphp.RequestOwnedZBox {
 	return r.chunks_ref.clone_request_owned()
 }
 
-fn (r &VSlimStreamResponse) header_values() map[string]string {
-	return r.headers.clone()
+pub fn (r &VSlimStreamResponse) header_values() map[string]string {
+	return snapshot_string_map(r.headers)
 }
 
 fn apply_stream_headers(mut r VSlimStreamResponse, headers map[string]string) {
-	r.headers = normalize_header_map(headers)
-	r.content_type = r.headers['content-type'] or { default_stream_content_type(r.stream_type, r.content_type) }
+	r.headers = snapshot_string_map(normalize_header_map(headers))
+	r.content_type = (r.headers['content-type'] or { default_stream_content_type(r.stream_type, r.content_type) }).clone()
 }
 
 fn default_stream_content_type(stream_type string, content_type string) string {
@@ -177,7 +177,7 @@ fn propagate_request_trace_headers_to_object(req &VSlimRequest, raw vphp.Request
 	}
 }
 
-fn (r &VSlimStreamResponse) free() {
+pub fn (r &VSlimStreamResponse) free() {
 	if r.chunks_ref.is_valid() {
 		unsafe {
 			mut owned := r.chunks_ref

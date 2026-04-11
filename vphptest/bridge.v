@@ -1674,6 +1674,22 @@ fn vphp_wrap_v_complex_test(ctx vphp.Context) {
     v_complex_test(arg_0)
 }
 
+@[export: 'vphp_wrap_v_persistent_nested_roundtrip']
+fn vphp_wrap_v_persistent_nested_roundtrip(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx
+    v_persistent_nested_roundtrip(arg_0)
+}
+
+@[export: 'vphp_wrap_v_persistent_multi_nested_stress']
+fn vphp_wrap_v_persistent_multi_nested_stress(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx
+    v_persistent_multi_nested_stress(arg_0)
+}
+
 @[export: 'vphp_wrap_v_analyze_user_object']
 fn vphp_wrap_v_analyze_user_object(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()

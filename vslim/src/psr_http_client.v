@@ -88,9 +88,9 @@ pub fn (mut e VSlimPsr18RequestException) attach_request(request vphp.RequestBor
 
 @[php_method: 'getRequest']
 @[php_return_type: 'Psr\\Http\\Message\\RequestInterface']
-pub fn (e &VSlimPsr18RequestException) get_request() vphp.RequestOwnedZBox {
+pub fn (e &VSlimPsr18RequestException) get_request() vphp.RequestBorrowedZBox {
 	_ = e
-	return vphp.own_request_zbox(psr18_exception_load_request())
+	return vphp.borrow_zbox(psr18_exception_load_request())
 }
 
 @[php_method: 'attachRequest']
@@ -102,9 +102,9 @@ pub fn (mut e VSlimPsr18NetworkException) attach_request(request vphp.RequestBor
 
 @[php_method: 'getRequest']
 @[php_return_type: 'Psr\\Http\\Message\\RequestInterface']
-pub fn (e &VSlimPsr18NetworkException) get_request() vphp.RequestOwnedZBox {
+pub fn (e &VSlimPsr18NetworkException) get_request() vphp.RequestBorrowedZBox {
 	_ = e
-	return vphp.own_request_zbox(psr18_exception_load_request())
+	return vphp.borrow_zbox(psr18_exception_load_request())
 }
 
 fn normalize_psr18_request(request vphp.ZVal) !Psr18OutboundRequest {
@@ -344,6 +344,8 @@ fn throw_psr18_exception_object(class_name string, message string, request vphp.
 		vphp.RequestOwnedZBox.new_int(0).to_zval(),
 	])
 	if exception.is_valid() && exception.is_object() {
+		// attachRequest → store_request will dup the zval to anchor
+		// its own refcount in the exception's property table.
 		vphp.with_method_result_zval(exception, 'attachRequest', [request], fn (result vphp.ZVal) bool {
 			return result.is_valid()
 		})
@@ -371,7 +373,9 @@ fn psr18_exception_load_request() vphp.ZVal {
 				raw: res
 			}
 			if value.is_valid() && !value.is_null() && !value.is_undef() {
-				return value.dup()
+				// Return without dup — the caller (own_request_zbox) already
+				// does its own dup when wrapping into RequestOwnedZBox.
+				return value
 			}
 		}
 	}

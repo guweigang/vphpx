@@ -364,7 +364,13 @@ pub fn (app &VSlimApp) auth_user(request vphp.RequestBorrowedZBox) vphp.RequestO
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	user_id := guard.id()
-	return app.resolve_auth_user(user_id)
+	mut user := app.resolve_auth_user(user_id)
+	if !user.is_valid() || user.to_zval().is_null() || user.to_zval().is_undef() {
+		return user
+	}
+	detached := vphp.RequestOwnedZBox.from_zval(user.to_zval())
+	user.release()
+	return detached
 }
 
 @[php_method: 'authCheck']
