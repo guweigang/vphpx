@@ -5,6 +5,19 @@
   <h1>{{ title | trim }}</h1>
   <p>Viewer: {{ viewer_name | trim }}</p>
   <p>Workspace: {{ workspace_name | trim }} / {{ workspace_slug | trim }}</p>
+  <p>{{ write_notice | trim }}</p>
+  <p>{{ write_error | trim }}</p>
+  <form method="post" action="/console/knowledge/faqs">
+    <label>Kind
+      <select name="kind">
+        <option value="faq">faq</option>
+        <option value="topic">topic</option>
+      </select>
+    </label>
+    <label>Title <input type="text" name="title"></label>
+    <label>Body <textarea name="body"></textarea></label>
+    <button type="submit">Create Entry</button>
+  </form>
   <ul>
 {{for:entries}}    <li>{{ item.title }} / {{ item.kind }} / {{ item.status }} / owner={{ item.owner }}</li>{{/for}}
   </ul>

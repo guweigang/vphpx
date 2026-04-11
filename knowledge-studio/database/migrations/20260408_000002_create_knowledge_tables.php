@@ -10,6 +10,8 @@ return new class extends VSlim\Database\Migration {
             'title varchar(200) not null',
             'source_type varchar(32) not null',
             'status varchar(32) not null',
+            'chunks int not null',
+            'updated_at datetime not null',
             'created_at datetime not null',
         ]);
 
@@ -19,6 +21,8 @@ return new class extends VSlim\Database\Migration {
             'kind varchar(32) not null',
             'title varchar(200) not null',
             'body text not null',
+            'status varchar(32) not null',
+            'owner varchar(120) not null',
             'created_at datetime not null',
         ]);
 

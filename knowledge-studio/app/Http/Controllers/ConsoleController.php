@@ -129,20 +129,35 @@ final class ConsoleController extends \VSlim\Controller
             return new \VSlim\Vhttpd\Response(200, $html, 'text/html; charset=utf-8');
         }
 
+        if (getenv('KS_RAW_STRING_DOCUMENTS_RESPONSE') !== false && getenv('KS_RAW_STRING_DOCUMENTS_RESPONSE') !== '') {
+            $this->debug('documents.raw-string-response');
+            return $this->view()->render_with_layout('console_documents.html', 'layout.html', [
+                'title' => 'Knowledge Documents',
+                'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
+                'workspace_name' => is_array($workspace) ? (string) ($workspace['name'] ?? '') : '',
+                'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
+                'documents' => $documents,
+                'write_error' => $this->flash($request, 'console.documents.error'),
+                'write_notice' => $this->flash($request, 'console.documents.notice'),
+                'page_section' => 'Knowledge Documents',
+                'nav_label' => 'documents',
+                'footer_note' => 'Document ingest will move from demo arrays to database-backed records next',
+            ]);
+        }
+
         $this->debug('documents.render');
-        $response = $this->render_with_layout('console_documents.html', 'layout.html', [
+        return $this->render_with_layout('console_documents.html', 'layout.html', [
             'title' => 'Knowledge Documents',
             'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
             'workspace_name' => is_array($workspace) ? (string) ($workspace['name'] ?? '') : '',
             'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
             'documents' => $documents,
+            'write_error' => $this->flash($request, 'console.documents.error'),
+            'write_notice' => $this->flash($request, 'console.documents.notice'),
             'page_section' => 'Knowledge Documents',
             'nav_label' => 'documents',
             'footer_note' => 'Document ingest will move from demo arrays to database-backed records next',
         ]);
-        $body = (string) $response->body;
-        $this->debug('documents.render-response-len=' . strlen($body) . ' md5=' . md5($body) . ' head=' . substr($body, 0, 160) . ' tail=' . substr($body, -160));
-        return $response;
     }
 
     public function faqs(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
@@ -160,6 +175,8 @@ final class ConsoleController extends \VSlim\Controller
             'workspace_name' => is_array($workspace) ? (string) ($workspace['name'] ?? '') : '',
             'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
             'entries' => $entries,
+            'write_error' => $this->flash($request, 'console.entries.error'),
+            'write_notice' => $this->flash($request, 'console.entries.notice'),
             'page_section' => 'FAQ and Topics',
             'nav_label' => 'entries',
             'footer_note' => 'Published vs draft entry state will later be driven by releases',
@@ -184,10 +201,75 @@ final class ConsoleController extends \VSlim\Controller
             'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
             'jobs' => $jobs,
             'logs' => $logs,
+            'write_error' => $this->flash($request, 'console.ops.error'),
+            'write_notice' => $this->flash($request, 'console.ops.notice'),
             'page_section' => 'Ops and Audit',
             'nav_label' => 'ops',
             'footer_note' => 'Realtime job state and tool call logs will attach here next',
         ]);
+    }
+
+    public function storeDocument(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    {
+        if (!$this->app()->authCheck($request)) {
+            return $this->redirect('/login', 302);
+        }
+
+        [$viewer, $workspace] = $this->consoleContext($request);
+        $result = $this->console->createDocument(
+            is_array($workspace) ? $workspace : null,
+            is_array($viewer) ? $viewer : null,
+            $this->requestData($request),
+        );
+
+        return $this->flashRedirect(
+            $request,
+            '/console/knowledge/documents',
+            $result['ok'] ? 'console.documents.notice' : 'console.documents.error',
+            $result['message'],
+        );
+    }
+
+    public function storeEntry(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    {
+        if (!$this->app()->authCheck($request)) {
+            return $this->redirect('/login', 302);
+        }
+
+        [$viewer, $workspace] = $this->consoleContext($request);
+        $result = $this->console->createEntry(
+            is_array($workspace) ? $workspace : null,
+            is_array($viewer) ? $viewer : null,
+            $this->requestData($request),
+        );
+
+        return $this->flashRedirect(
+            $request,
+            '/console/knowledge/faqs',
+            $result['ok'] ? 'console.entries.notice' : 'console.entries.error',
+            $result['message'],
+        );
+    }
+
+    public function storeJob(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    {
+        if (!$this->app()->authCheck($request)) {
+            return $this->redirect('/login', 302);
+        }
+
+        [$viewer, $workspace] = $this->consoleContext($request);
+        $result = $this->console->queueJob(
+            is_array($workspace) ? $workspace : null,
+            is_array($viewer) ? $viewer : null,
+            $this->requestData($request),
+        );
+
+        return $this->flashRedirect(
+            $request,
+            '/console/ops',
+            $result['ok'] ? 'console.ops.notice' : 'console.ops.error',
+            $result['message'],
+        );
     }
 
     /**
@@ -204,5 +286,41 @@ final class ConsoleController extends \VSlim\Controller
         $memberships = $resolved['memberships'];
 
         return [$viewer, $workspace, $memberships];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function requestData(\VSlim\Psr7\ServerRequest $request): array
+    {
+        $parsed = $request->getParsedBody();
+        if (is_array($parsed)) {
+            return $parsed;
+        }
+
+        $raw = trim((string) $request->getBody());
+        if ($raw === '') {
+            return [];
+        }
+
+        parse_str($raw, $fallback);
+        return is_array($fallback) ? $fallback : [];
+    }
+
+    private function flash(\VSlim\Psr7\ServerRequest $request, string $key): string
+    {
+        return $this->app()->session($request)->pullFlash($key, '');
+    }
+
+    private function flashRedirect(\VSlim\Psr7\ServerRequest $request, string $location, string $key, string $message): \VSlim\Vhttpd\Response
+    {
+        $session = $this->app()->session($request);
+        if ($message !== '') {
+            $session->flash($key, $message);
+        }
+        $response = new \VSlim\Vhttpd\Response(302, '', 'text/plain; charset=utf-8');
+        $response->redirect_with_status($location, 302);
+        $session->commit($response);
+        return $response;
     }
 }

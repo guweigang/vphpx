@@ -5,6 +5,12 @@
   <h1>{{ title | trim }}</h1>
   <p>Viewer: {{ viewer_name | trim }}</p>
   <p>Workspace: {{ workspace_name | trim }} / {{ workspace_slug | trim }}</p>
+  <p>{{ write_notice | trim }}</p>
+  <p>{{ write_error | trim }}</p>
+  <form method="post" action="/console/ops/jobs">
+    <label>Job Name <input type="text" name="name"></label>
+    <button type="submit">Queue Job</button>
+  </form>
   <h2>Jobs</h2>
   <ul>
 {{for:jobs}}    <li>{{ item.name }} / {{ item.status }} / queued={{ item.queued_at }}</li>{{/for}}

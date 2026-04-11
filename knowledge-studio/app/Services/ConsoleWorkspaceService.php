@@ -97,4 +97,139 @@ final class ConsoleWorkspaceService
             'logs' => $this->ops->auditLogsForWorkspace($workspaceId),
         ];
     }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @param array<string, mixed>|null $viewer
+     * @param array<string, mixed> $input
+     * @return array{ok:bool,message:string}
+     */
+    public function createDocument(?array $workspace, ?array $viewer, array $input): array
+    {
+        if (!$this->knowledge->writesEnabled() || !$this->ops->writesEnabled()) {
+            return [
+                'ok' => false,
+                'message' => 'Database write path is disabled. Set STUDIO_DATA_SOURCE=db and run migrations first.',
+            ];
+        }
+
+        $workspaceId = is_array($workspace) ? trim((string) ($workspace['id'] ?? '')) : '';
+        $title = trim((string) ($input['title'] ?? ''));
+        $sourceType = trim((string) ($input['source_type'] ?? ''));
+        if ($workspaceId === '' || $title === '' || $sourceType === '') {
+            return [
+                'ok' => false,
+                'message' => 'Document title and source type are required.',
+            ];
+        }
+
+        $document = $this->knowledge->createDocument($workspaceId, $title, $sourceType);
+        $this->ops->queueJob($workspaceId, 'Index ' . $title, 'queued');
+        $this->ops->recordAudit(
+            $workspaceId,
+            $this->viewerLabel($viewer),
+            'knowledge.document.created',
+            (string) ($document['title'] ?? $title),
+        );
+
+        return [
+            'ok' => true,
+            'message' => 'Document queued for indexing.',
+        ];
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @param array<string, mixed>|null $viewer
+     * @param array<string, mixed> $input
+     * @return array{ok:bool,message:string}
+     */
+    public function createEntry(?array $workspace, ?array $viewer, array $input): array
+    {
+        if (!$this->knowledge->writesEnabled() || !$this->ops->writesEnabled()) {
+            return [
+                'ok' => false,
+                'message' => 'Database write path is disabled. Set STUDIO_DATA_SOURCE=db and run migrations first.',
+            ];
+        }
+
+        $workspaceId = is_array($workspace) ? trim((string) ($workspace['id'] ?? '')) : '';
+        $kind = trim((string) ($input['kind'] ?? 'faq'));
+        $title = trim((string) ($input['title'] ?? ''));
+        $body = trim((string) ($input['body'] ?? ''));
+        if ($workspaceId === '' || $title === '' || $body === '') {
+            return [
+                'ok' => false,
+                'message' => 'Entry title and body are required.',
+            ];
+        }
+
+        $entry = $this->knowledge->createEntry($workspaceId, $kind, $title, $body, $this->viewerLabel($viewer));
+        $this->ops->recordAudit(
+            $workspaceId,
+            $this->viewerLabel($viewer),
+            'knowledge.entry.created',
+            (string) ($entry['title'] ?? $title),
+        );
+
+        return [
+            'ok' => true,
+            'message' => 'Knowledge entry saved as draft.',
+        ];
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @param array<string, mixed>|null $viewer
+     * @param array<string, mixed> $input
+     * @return array{ok:bool,message:string}
+     */
+    public function queueJob(?array $workspace, ?array $viewer, array $input): array
+    {
+        if (!$this->ops->writesEnabled()) {
+            return [
+                'ok' => false,
+                'message' => 'Database write path is disabled. Set STUDIO_DATA_SOURCE=db and run migrations first.',
+            ];
+        }
+
+        $workspaceId = is_array($workspace) ? trim((string) ($workspace['id'] ?? '')) : '';
+        $name = trim((string) ($input['name'] ?? ''));
+        if ($workspaceId === '' || $name === '') {
+            return [
+                'ok' => false,
+                'message' => 'Job name is required.',
+            ];
+        }
+
+        $job = $this->ops->queueJob($workspaceId, $name, 'queued');
+        $this->ops->recordAudit(
+            $workspaceId,
+            $this->viewerLabel($viewer),
+            'ops.job.queued',
+            (string) ($job['name'] ?? $name),
+        );
+
+        return [
+            'ok' => true,
+            'message' => 'Job queued for worker execution.',
+        ];
+    }
+
+    /**
+     * @param array<string, mixed>|null $viewer
+     */
+    private function viewerLabel(?array $viewer): string
+    {
+        if (!is_array($viewer)) {
+            return 'system';
+        }
+
+        $name = trim((string) ($viewer['name'] ?? ''));
+        if ($name !== '') {
+            return $name;
+        }
+
+        return trim((string) ($viewer['id'] ?? 'system')) ?: 'system';
+    }
 }

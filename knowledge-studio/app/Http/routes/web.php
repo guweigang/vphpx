@@ -26,15 +26,27 @@ return function (VSlim\App $app): void {
         '/console/knowledge/documents',
         [\App\Http\Controllers\ConsoleController::class, 'documents'],
     );
+    $app->post(
+        '/console/knowledge/documents',
+        [\App\Http\Controllers\ConsoleController::class, 'storeDocument'],
+    );
     $app->get_named(
         'studio.console.faqs',
         '/console/knowledge/faqs',
         [\App\Http\Controllers\ConsoleController::class, 'faqs'],
     );
+    $app->post(
+        '/console/knowledge/faqs',
+        [\App\Http\Controllers\ConsoleController::class, 'storeEntry'],
+    );
     $app->get_named(
         'studio.console.ops',
         '/console/ops',
         [\App\Http\Controllers\ConsoleController::class, 'ops'],
+    );
+    $app->post(
+        '/console/ops/jobs',
+        [\App\Http\Controllers\ConsoleController::class, 'storeJob'],
     );
 
     $app->get_named(
