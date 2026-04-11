@@ -202,9 +202,9 @@ fn dispatch_php_route_match_raw(app &VSlimApp, path string, initial_payload vphp
 	}
 	return dispatch_php_pipeline_raw(app, path, initial_payload, RawDispatchPlan{
 		route_params:             snapshot_string_map(params)
-		route_handler:            route.php_handler.clone_persistent_owned()
+		route_handler:            route.php_handler.clone()
 		resource_action:          route.resource_action
-		resource_missing_handler: route.resource_missing_handler.clone_persistent_owned()
+		resource_missing_handler: route.resource_missing_handler.clone()
 	})
 }
 

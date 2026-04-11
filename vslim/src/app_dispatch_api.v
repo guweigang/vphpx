@@ -15,6 +15,7 @@ fn dispatch_request_facade(app &VSlimApp, req &VSlimRequest) &VSlimResponse {
 	if result.response_ref == unsafe { nil } {
 		return new_vslim_response_snapshot(VSlimResponse{})
 	}
+	cli_debug_log('dispatch.facade result status=${result.response_ref.status} body_len=${result.response_ref.body.len}')
 	return new_vslim_response_snapshot_ref(result.response_ref)
 }
 
@@ -40,7 +41,9 @@ fn dispatch_php_response_box(app &VSlimApp, req &VSlimRequest) vphp.RequestOwned
 	mark := vphp.request_scope_enter()
 	app_kernel_prepare(app)
 	response := dispatch_request_facade(app, req)
+	cli_debug_log('dispatch.box before_leave status=${response.status} body_len=${response.body.len}')
 	vphp.request_scope_leave(mark)
+	cli_debug_log('dispatch.box after_leave status=${response.status} body_len=${response.body.len}')
 	return vphp.RequestOwnedZBox.adopt_zval(build_php_response_object_ref(response))
 }
 

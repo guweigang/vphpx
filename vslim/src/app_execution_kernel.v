@@ -73,9 +73,9 @@ fn clone_raw_dispatch_plan(plan RawDispatchPlan) RawDispatchPlan {
 	return RawDispatchPlan{
 		route_params:             snapshot_string_map(plan.route_params)
 		terminal_meta:            plan.terminal_meta
-		route_handler:            plan.route_handler.clone_persistent_owned()
+		route_handler:            plan.route_handler.clone()
 		resource_action:          plan.resource_action
-		resource_missing_handler: plan.resource_missing_handler.clone_persistent_owned()
+		resource_missing_handler: plan.resource_missing_handler.clone()
 	}
 }
 

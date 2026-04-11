@@ -3,10 +3,10 @@ module main
 @[php_method]
 pub fn (mut r VSlimResponse) construct(status int, body string, content_type string) &VSlimResponse {
 	r.status = status
-	r.body = body.clone()
-	r.content_type = content_type.clone()
+	r.body = body
+	r.content_type = content_type
 	mut headers := map[string]string{}
-	headers['content-type'] = r.content_type.clone()
+	headers['content-type'] = r.content_type
 	apply_response_headers(mut r, headers)
 	return r
 }
@@ -31,7 +31,7 @@ pub fn (r &VSlimResponse) has_header(name string) bool {
 @[php_method]
 pub fn (mut r VSlimResponse) set_header(name string, value string) &VSlimResponse {
 	mut headers := r.header_values()
-	headers[VSlimRequest.normalize_header_name(name)] = value.clone()
+	headers[VSlimRequest.normalize_header_name(name)] = value
 	apply_response_headers(mut r, headers)
 	return r
 }
@@ -58,9 +58,9 @@ pub fn (mut r VSlimResponse) with_trace_id(trace_id string) &VSlimResponse {
 
 @[php_method]
 pub fn (mut r VSlimResponse) set_content_type(content_type string) &VSlimResponse {
-	r.content_type = content_type.clone()
+	r.content_type = content_type
 	mut headers := r.header_values()
-	headers['content-type'] = content_type.clone()
+	headers['content-type'] = content_type
 	apply_response_headers(mut r, headers)
 	return r
 }
@@ -111,30 +111,30 @@ pub fn (mut r VSlimResponse) with_status(status int) &VSlimResponse {
 
 @[php_method]
 pub fn (mut r VSlimResponse) text(body string) &VSlimResponse {
-	r.body = body.clone()
+	r.body = body
 	r.content_type = 'text/plain; charset=utf-8'
 	mut headers := r.header_values()
-	headers['content-type'] = r.content_type.clone()
+	headers['content-type'] = r.content_type
 	apply_response_headers(mut r, headers)
 	return r
 }
 
 @[php_method]
 pub fn (mut r VSlimResponse) json(body string) &VSlimResponse {
-	r.body = body.clone()
+	r.body = body
 	r.content_type = 'application/json; charset=utf-8'
 	mut headers := r.header_values()
-	headers['content-type'] = r.content_type.clone()
+	headers['content-type'] = r.content_type
 	apply_response_headers(mut r, headers)
 	return r
 }
 
 @[php_method]
 pub fn (mut r VSlimResponse) html(body string) &VSlimResponse {
-	r.body = body.clone()
+	r.body = body
 	r.content_type = 'text/html'
 	mut headers := r.header_values()
-	headers['content-type'] = r.content_type.clone()
+	headers['content-type'] = r.content_type
 	apply_response_headers(mut r, headers)
 	return r
 }
@@ -149,9 +149,9 @@ pub fn (mut r VSlimResponse) redirect_with_status(location string, status int) &
 	r.status = status
 	r.body = ''
 	mut headers := r.header_values()
-	headers['location'] = location.clone()
+	headers['location'] = location
 	if 'content-type' !in headers {
-		headers['content-type'] = r.content_type.clone()
+		headers['content-type'] = r.content_type
 	}
 	apply_response_headers(mut r, headers)
 	return r
@@ -209,7 +209,7 @@ fn new_vslim_response_snapshot_ref(res &VSlimResponse) &VSlimResponse {
 
 fn apply_response_headers(mut r VSlimResponse, headers map[string]string) {
 	r.headers = snapshot_string_map(normalize_header_map(headers))
-	r.content_type = (r.headers['content-type'] or { r.content_type }).clone()
+	r.content_type = r.headers['content-type'] or { r.content_type }
 }
 
 fn build_set_cookie_header(name string, value string, path string, domain string, max_age int, secure bool, http_only bool, same_site string) string {

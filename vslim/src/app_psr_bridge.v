@@ -406,7 +406,7 @@ fn persistent_assoc_with_strings(value vphp.PersistentOwnedZBox, extras map[stri
 	for key, item in extras {
 		add_assoc_zval(out, key, vphp.RequestOwnedZBox.new_string(item).to_zval())
 	}
-	return vphp.PersistentOwnedZBox.from_mixed_zval(out)
+	return vphp.PersistentOwnedZBox.of(out)
 }
 
 fn vslim_request_uri_string(req &VSlimRequest) string {
@@ -481,6 +481,9 @@ fn new_vslim_request_from_psr_server_request(payload vphp.RequestBorrowedZBox, r
 			if key !in out.attributes {
 				out.attributes[key] = value
 			}
+		}
+		if out.path != '/probe' || out.raw_path != '/probe' {
+			cli_debug_log('psr->vslim method=${out.method} raw_path=${out.raw_path} path=${out.path} query=${out.query_string} attrs=${out.attributes.len} params=${out.params.len}')
 		}
 		return out
 	}

@@ -44,7 +44,10 @@ fn apply_php_before_middlewares(app &VSlimApp, path string, payload vphp.Request
 	}
 	route_params := route_params_from_payload(payload)
 	mut current_payload := payload.clone_request_owned()
-	all := collect_registered_middlewares(app.php_before_middlewares, group_before)
+	mut all := collect_before_middlewares(app, group_before)
+	defer {
+		vphp.release_persistent_boxes(mut all)
+	}
 	for hook in all {
 		current_borrowed := current_payload.borrowed()
 		if !hook.is_valid() || hook.is_null() || hook.is_undef() {

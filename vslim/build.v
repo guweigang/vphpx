@@ -460,7 +460,7 @@ fn main() {
 		exit(1)
 	}
 
-	is_macos := os.user_os() == 'macos'
+	is_macos := os.user_os() == 'macos' || os.user_os() == 'darwin'
 	mut disabled_warnings := '-Wno-pointer-to-int-cast -Wno-incompatible-pointer-types -Wno-unused-value -Wno-pointer-sign'
 	if is_macos {
 		disabled_warnings += ' -Wno-initializer-overrides'
@@ -508,16 +508,17 @@ fn main() {
 	php_libs := os.execute('php-config --libs').output.replace('-lzip', '').trim_space()
 
 	mut platform_link_flags := '-fvisibility=default'
+	mut extra_link_flags := ''
 	if is_macos {
 		platform_link_flags = '-undefined dynamic_lookup -fvisibility=default'
+		extra_link_flags += ' -L/opt/homebrew/lib -L/usr/local/lib'
 	}
 	mut extra_compile_flags := ''
-	mut extra_link_flags := ''
 	if gc_compile_flags != '' {
 		extra_compile_flags = '${gc_compile_flags} '
 	}
 	if gc_link_flags != '' {
-		extra_link_flags = ' ${gc_link_flags}'
+		extra_link_flags += ' ${gc_link_flags}'
 	}
 
 	gcc_cmd := 'gcc -shared -fPIC ${disabled_warnings} -DCOMPILE_DL_${ext_name.to_upper()}=1 ' +

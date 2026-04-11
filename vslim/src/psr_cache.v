@@ -511,7 +511,7 @@ fn psr6_resolve_relative_expiration_or_throw(clock vphp.ZVal, time_value vphp.ZV
 }
 
 fn psr6_clone_persistent(value vphp.PersistentOwnedZBox) vphp.PersistentOwnedZBox {
-	return value.clone_persistent_owned()
+	return value.clone()
 }
 
 fn (mut item VSlimPsr6CacheItem) replace_value(value vphp.ZVal) {

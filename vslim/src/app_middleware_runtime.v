@@ -35,9 +35,9 @@ fn build_php_psr15_fixed_response_handler_object(res &VSlimPsr7Response) vphp.ZV
 fn dispatch_php_middleware_chain(app &VSlimApp, path string, payload vphp.RequestBorrowedZBox, route_middle []vphp.RequestOwnedZBox, route_handler vphp.PersistentOwnedZBox, resource_action string, resource_missing_handler vphp.PersistentOwnedZBox, route_params map[string]string) !(vphp.ZVal, vphp.RequestOwnedZBox) {
 	return dispatch_php_middleware_chain_with_plan(app, path, payload, route_middle, RawDispatchPlan{
 		route_params:             snapshot_string_map(route_params)
-		route_handler:            route_handler.clone_persistent_owned()
+		route_handler:            route_handler.clone()
 		resource_action:          resource_action
-		resource_missing_handler: resource_missing_handler.clone_persistent_owned()
+		resource_missing_handler: resource_missing_handler.clone()
 	})
 }
 
@@ -65,8 +65,11 @@ fn dispatch_php_middleware_chain_with_context(app &VSlimApp, ctx PipelineRequest
 	mut chain := &MiddlewareChain{
 		app:         app
 		request_ctx: ctx
-		middlewares: collect_registered_middlewares(app.php_middlewares, route_middle)
+		middlewares: collect_standard_middlewares(app, route_middle)
 		plan:        chain_plan
+	}
+	defer {
+		vphp.release_persistent_boxes(mut chain.middlewares)
 	}
 	raw := chain.dispatch(ctx.payload_ref.borrowed()) or {
 		msg := if err.msg() == '' { 'Route handler is not callable' } else { err.msg() }
@@ -79,6 +82,7 @@ fn dispatch_php_middleware_chain_with_context(app &VSlimApp, ctx PipelineRequest
 		res := error_response_from_context(app, error_ctx, 500, msg, 'handler_not_callable')
 		return build_php_response_object(res), error_payload.clone_request_owned()
 	}
+	cli_debug_log('middleware.chain.raw type=${raw.type_name()} class=${raw.class_name()} valid=${raw.is_valid()} null=${raw.is_null()} undef=${raw.is_undef()}')
 	if forwarded_request := take_forwarded_request_snapshot(forwarded_request_key(chain)) {
 		return raw, vphp.RequestOwnedZBox.from_zval(request_with_forwarded_snapshot(ctx.payload_ref.borrowed(),
 			ctx.route_params, forwarded_request))
@@ -155,8 +159,14 @@ fn dispatch_php_after_phase_middleware_psr(app &VSlimApp, ctx PipelineRequestCon
 }
 
 fn apply_php_after_middlewares(app &VSlimApp, ctx PipelineRequestContext, initial VSlimResponse) VSlimResponse {
-	return new_vslim_response_from_psr_response(apply_php_after_middlewares_psr(app, ctx,
-		new_psr7_response_from_vslim_response(initial)))
+	cli_debug_log('after.input vslim status=${initial.status} body_len=${initial.body.len}')
+	initial_psr := new_psr7_response_from_vslim_response(initial)
+	cli_debug_log('after.input psr status=${initial_psr.get_status_code()} body_len=${psr7_stream_string(response_body_or_empty(initial_psr)).len}')
+	psr := apply_php_after_middlewares_psr(app, ctx, initial_psr)
+	cli_debug_log('after.psr final status=${psr.get_status_code()} body_len=${psr7_stream_string(response_body_or_empty(psr)).len}')
+	res := new_vslim_response_from_psr_response(psr)
+	cli_debug_log('after.vslim final status=${res.status} body_len=${res.body.len}')
+	return res
 }
 
 fn apply_php_after_middlewares_psr(app &VSlimApp, ctx PipelineRequestContext, initial &VSlimPsr7Response) &VSlimPsr7Response {
@@ -164,8 +174,11 @@ fn apply_php_after_middlewares_psr(app &VSlimApp, ctx PipelineRequestContext, in
 	if app.php_after_middlewares.len == 0 && group_after.len == 0 {
 		return initial
 	}
-	mut current := initial
-	all := collect_registered_middlewares(app.php_after_middlewares, group_after)
+	mut current := unsafe { initial }
+	mut all := collect_after_middlewares(app, group_after)
+	defer {
+		vphp.release_persistent_boxes(mut all)
+	}
 	for hook in all {
 		if !hook.is_valid() || hook.is_null() || hook.is_undef() {
 			return error_response_from_context_psr(app, ctx, 500, 'Middleware is not valid',
@@ -187,8 +200,13 @@ fn apply_php_after_middlewares_psr(app &VSlimApp, ctx PipelineRequestContext, in
 			return error_response_from_context_psr(app, ctx, 500, msg, 'handler_not_callable')
 		}
 		raw_borrowed := vphp.RequestBorrowedZBox.from_zval(raw)
+		if raw.is_object() && raw.is_instance_of('Psr\\Http\\Message\\ResponseInterface') {
+			psr := normalize_to_psr7_response(raw)
+			cli_debug_log('after.raw psr status=${psr.get_status_code()} body_len=${psr7_stream_string(response_body_or_empty(psr)).len}')
+		}
 		res, ok := normalize_php_route_response_psr_borrowed(raw_borrowed)
 		if ok {
+			cli_debug_log('after.normalized psr status=${res.get_status_code()} body_len=${psr7_stream_string(response_body_or_empty(res)).len}')
 			current = res
 			continue
 		}

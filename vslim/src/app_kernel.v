@@ -43,11 +43,14 @@ fn app_kernel_dispatch_request_with_trace_labels(app &VSlimApp, req &VSlimReques
 	trace := new_app_kernel_trace(app, req, enter_stage)
 	mut res, params, effective_req := dispatch_app_request_with_params(app, req, trace.enabled,
 		trace.base_bytes)
+	cli_debug_log('kernel.after_dispatch status=${res.status} body_len=${res.body.len}')
 	app_kernel_trace_log(trace, app, req, after_core_stage)
 	propagate_request_trace_headers(effective_req, mut res)
+	cli_debug_log('kernel.after_propagate status=${res.status} body_len=${res.body.len}')
 	if resolve_effective_method(req) == 'HEAD' {
 		res.body = ''
 	}
+	cli_debug_log('kernel.before_snapshot status=${res.status} body_len=${res.body.len}')
 	app_kernel_trace_log(trace, app, req, before_return_stage)
 	return AppKernelDispatchResult{
 		response_ref:          new_vslim_response_snapshot_ref(&res)

@@ -41,6 +41,9 @@ fn register_app_middleware_kind(mut app VSlimApp, handler vphp.ZVal, kind Middle
 		return
 	}
 	entry := vphp.PersistentOwnedZBox.from_callable_zval(handler)
+	if kind == .standard && app.php_middlewares.len == 0 {
+		cli_debug_log('middleware.register kind=${entry.kind_name()} valid=${entry.is_valid()} null=${entry.is_null()} undef=${entry.is_undef()} handler_type=${handler.type_name()} handler_class=${handler.class_name()}')
+	}
 	match kind {
 		.standard { app.php_middlewares << entry }
 		.before { app.php_before_middlewares << entry }
@@ -140,13 +143,40 @@ fn collect_matching_route_hooks(table HookTable, path string) []vphp.RequestOwne
 	return out
 }
 
-fn collect_registered_middlewares(app_hooks []vphp.PersistentOwnedZBox, group_hooks []vphp.RequestOwnedZBox) []vphp.PersistentOwnedZBox {
+fn collect_standard_middlewares(app &VSlimApp, group_hooks []vphp.RequestOwnedZBox) []vphp.PersistentOwnedZBox {
 	mut out := []vphp.PersistentOwnedZBox{}
-	for hook in app_hooks {
-		out << hook.clone_persistent_owned()
+	for idx, hook in app.php_middlewares {
+		cloned := hook.clone()
+		if idx == 0 {
+			slot_addr := unsafe { usize(&app.php_middlewares[idx]) }
+			cli_debug_log('middleware.collect app idx=${idx} slot=${slot_addr} src_kind=${hook.kind_name()} src_valid=${hook.is_valid()} src_null=${hook.is_null()} src_undef=${hook.is_undef()} clone_kind=${cloned.kind_name()} clone_valid=${cloned.is_valid()} clone_null=${cloned.is_null()} clone_undef=${cloned.is_undef()}')
+		}
+		out << cloned
 	}
 	for hook in group_hooks {
-		out << hook.clone_persistent_owned()
+		out << hook.clone()
+	}
+	return out
+}
+
+fn collect_before_middlewares(app &VSlimApp, group_hooks []vphp.RequestOwnedZBox) []vphp.PersistentOwnedZBox {
+	mut out := []vphp.PersistentOwnedZBox{}
+	for hook in app.php_before_middlewares {
+		out << hook.clone()
+	}
+	for hook in group_hooks {
+		out << hook.clone()
+	}
+	return out
+}
+
+fn collect_after_middlewares(app &VSlimApp, group_hooks []vphp.RequestOwnedZBox) []vphp.PersistentOwnedZBox {
+	mut out := []vphp.PersistentOwnedZBox{}
+	for hook in app.php_after_middlewares {
+		out << hook.clone()
+	}
+	for hook in group_hooks {
+		out << hook.clone()
 	}
 	return out
 }
@@ -289,13 +319,15 @@ fn detach_route_handler_result(mut result vphp.RequestOwnedZBox) vphp.ZVal {
 	}
 	res, ok := normalize_php_route_response_borrowed(result.borrowed())
 	if ok {
+		cli_debug_log('route.result normalized status=${res.status} body_len=${res.body.len} content_type=${res.content_type}')
 		result.release()
-		return build_php_psr7_response_object(new_psr7_response_from_vslim_response(res))
+		return build_php_response_object(res)
 	}
 	psr, psr_ok := normalize_php_route_response_psr_borrowed(result.borrowed())
 	if psr_ok {
+		cli_debug_log('route.result psr status=${psr.get_status_code()} body_len=${psr7_stream_string(response_body_or_empty(psr)).len}')
 		result.release()
-		return build_php_psr7_response_object(psr)
+		return build_php_response_object(new_vslim_response_from_psr_response(psr))
 	}
 	return result.take_zval()
 }
@@ -322,7 +354,7 @@ fn dispatch_php_middleware_entry(mut chain MiddlewareChain, handler vphp.Request
 			result.release()
 		}
 		normalized := normalize_to_psr7_response(result.to_zval())
-		return build_php_psr7_response_object(normalized)
+		return build_php_response_object(new_vslim_response_from_psr_response(normalized))
 	}
 	cli_debug_log('middleware.target.invalid method=${method} target_valid=${target.is_valid()} target_type=${target.type_name()} target_class=${target.class_name()}')
 	return error('Middleware must implement Psr\\Http\\Server\\MiddlewareInterface')
@@ -452,6 +484,7 @@ pub fn (handler &VSlimPsr15NextHandler) handle(request vphp.RequestBorrowedZBox)
 		if res == nil {
 			return new_psr7_text_response(500, 'Middleware next handler returned null')
 		}
+		cli_debug_log('next.handle result status=${res.get_status_code()} body_len=${psr7_stream_string(response_body_or_empty(res)).len}')
 		return clone_psr7_response(res, res.get_protocol_version(), clone_header_values(res.headers),
 			clone_header_names(res.header_names), response_body_or_empty(res), res.get_status_code(),
 			res.get_reason_phrase())
