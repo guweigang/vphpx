@@ -189,10 +189,11 @@ TOML);
         $request = new VSlim\Vhttpd\Request('GET', $path, '');
         $request->set_cookies([$sessionCookieName => $sessionValue]);
         $response = $app->dispatch_request($request);
-        echo $path . '|' . $response->status . '|' . (str_contains($response->body, 'u-1') ? 'viewer' : 'miss') . PHP_EOL;
+        echo $path . '|' . $response->status . '|' . $response->header('content-type') . '|'
+            . (str_contains($response->body, 'u-1') ? 'viewer' : 'miss') . PHP_EOL;
     }
 }
 ?>
 --EXPECT--
-/console|200|viewer
-/console/knowledge/documents|200|viewer
+/console|200|text/html; charset=utf-8|viewer
+/console/knowledge/documents|200|text/html; charset=utf-8|viewer
