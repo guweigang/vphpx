@@ -4,7 +4,7 @@ import vphp
 
 @[php_method]
 pub fn VPhpVSlimPsr7Adapter.dispatch(app &VSlimApp, request vphp.RequestBorrowedZBox) &VSlimResponse {
-	return app.dispatch_request(VPhpVSlimPsr7Adapter.to_vslim_request(request))
+	return app.dispatch_request_raw(VPhpVSlimPsr7Adapter.to_vslim_request(request))
 }
 
 @[php_method: 'toVSlimRequest']

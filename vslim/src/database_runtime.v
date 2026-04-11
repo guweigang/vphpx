@@ -321,20 +321,16 @@ fn database_result_box_from_dyn(value vphp.DynValue) vphp.RequestOwnedZBox {
 	})
 }
 
-fn database_row_to_dyn(row map[string]string) vphp.DynValue {
-	mut out := map[string]vphp.DynValue{}
-	for key, value in row {
-		out[key] = vphp.dyn_value_string(value)
-	}
-	return vphp.dyn_value_map(out)
-}
-
 fn database_rows_to_box(rows []map[string]string) vphp.RequestOwnedZBox {
-	mut out := []vphp.DynValue{}
+	mut out := new_array_zval()
 	for row in rows {
-		out << database_row_to_dyn(row)
+		mut item := new_array_zval()
+		for key, value in row {
+			item.add_assoc_string(key, value)
+		}
+		out.add_next_val(item)
 	}
-	return database_result_box_from_dyn(vphp.dyn_value_list(out))
+	return vphp.own_request_zbox(out)
 }
 
 fn database_rows_from_mysql_rows(rows []mysql.Row) []map[string]string {
@@ -350,45 +346,40 @@ fn database_rows_from_mysql_rows(rows []mysql.Row) []map[string]string {
 }
 
 fn database_query_maps_with_params(mut conn mysql.DB, query string, params []string) ![]map[string]string {
-	column_names := database_mysql_stmt_column_names(mut conn, query, params)!
-	mut stmt := conn.prepare(query)!
-	defer {
-		stmt.close()
+	built_query := database_inline_mysql_params(mut conn, query, params)!
+	mut result := conn.query(built_query)!
+	rows := result.maps()
+	unsafe {
+		result.free()
 	}
-	rows := stmt.execute(params)!
-	return database_rows_with_column_names(rows, column_names)
+	return rows
 }
 
-fn database_mysql_stmt_column_names(mut conn mysql.DB, query string, params []string) ![]string {
-	mut stmt := conn.init_stmt(query)
-	defer {
-		stmt.close() or {}
+fn database_inline_mysql_params(mut conn mysql.DB, query string, params []string) !string {
+	if params.len == 0 {
+		return query
 	}
-	stmt.prepare()!
-	for param in params {
-		stmt.bind_text(param)
+	mut out := []u8{}
+	mut param_idx := 0
+	for i := 0; i < query.len; i++ {
+		ch := query[i]
+		if ch == `?` {
+			if param_idx >= params.len {
+				return error('query placeholder count mismatch')
+			}
+			escaped := conn.escape_string(params[param_idx])
+			out << `'`
+			out << escaped.bytes()
+			out << `'`
+			param_idx++
+			continue
+		}
+		out << ch
 	}
-	if params.len > 0 {
-		stmt.bind_params()!
+	if param_idx != params.len {
+		return error('query placeholder count mismatch')
 	}
-	stmt.execute()!
-	metadata := stmt.gen_metadata()
-	if metadata == unsafe { nil } {
-		return []string{}
-	}
-	defer {
-		C.mysql_free_result(metadata)
-	}
-	num_fields := int(C.mysql_num_fields(metadata))
-	if num_fields <= 0 {
-		return []string{}
-	}
-	fields := stmt.fetch_fields(metadata)
-	mut column_names := []string{cap: num_fields}
-	for i in 0 .. num_fields {
-		column_names << unsafe { cstring_to_vstring(&char(fields[i].name)) }
-	}
-	return column_names
+	return out.bytestr()
 }
 
 fn database_rows_with_column_names(rows []mysql.Row, column_names []string) []map[string]string {
