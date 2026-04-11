@@ -5,9 +5,9 @@ pub fn (mut r VSlimResponse) construct(status int, body string, content_type str
 	r.status = status
 	r.body = body.clone()
 	r.content_type = content_type.clone()
-	r.headers = {
-		'content-type': content_type.clone()
-	}
+	mut headers := map[string]string{}
+	headers['content-type'] = r.content_type.clone()
+	apply_response_headers(mut r, headers)
 	return r
 }
 
@@ -114,7 +114,7 @@ pub fn (mut r VSlimResponse) text(body string) &VSlimResponse {
 	r.body = body.clone()
 	r.content_type = 'text/plain; charset=utf-8'
 	mut headers := r.header_values()
-	headers['content-type'] = r.content_type
+	headers['content-type'] = r.content_type.clone()
 	apply_response_headers(mut r, headers)
 	return r
 }
@@ -124,7 +124,7 @@ pub fn (mut r VSlimResponse) json(body string) &VSlimResponse {
 	r.body = body.clone()
 	r.content_type = 'application/json; charset=utf-8'
 	mut headers := r.header_values()
-	headers['content-type'] = r.content_type
+	headers['content-type'] = r.content_type.clone()
 	apply_response_headers(mut r, headers)
 	return r
 }
@@ -134,7 +134,7 @@ pub fn (mut r VSlimResponse) html(body string) &VSlimResponse {
 	r.body = body.clone()
 	r.content_type = 'text/html'
 	mut headers := r.header_values()
-	headers['content-type'] = r.content_type
+	headers['content-type'] = r.content_type.clone()
 	apply_response_headers(mut r, headers)
 	return r
 }
@@ -149,9 +149,9 @@ pub fn (mut r VSlimResponse) redirect_with_status(location string, status int) &
 	r.status = status
 	r.body = ''
 	mut headers := r.header_values()
-	headers['location'] = location
+	headers['location'] = location.clone()
 	if 'content-type' !in headers {
-		headers['content-type'] = r.content_type
+		headers['content-type'] = r.content_type.clone()
 	}
 	apply_response_headers(mut r, headers)
 	return r
@@ -163,7 +163,7 @@ pub fn (r &VSlimResponse) headers_all() map[string]string {
 }
 
 fn (r &VSlimResponse) header_values() map[string]string {
-	return r.headers.clone()
+	return snapshot_string_map(r.headers)
 }
 
 pub fn (r &VSlimResponse) as_array() map[string]string {
@@ -185,17 +185,31 @@ pub fn (r &VSlimResponse) content_length() int {
 }
 
 fn to_vslim_response(res VSlimResponse) &VSlimResponse {
-	return &VSlimResponse{
-		status: res.status
-		body: res.body.clone()
+	return new_vslim_response_snapshot(res)
+}
+
+fn snapshot_vslim_response(res VSlimResponse) VSlimResponse {
+	return VSlimResponse{
+		status:       res.status
+		body:         res.body.clone()
 		content_type: res.content_type.clone()
-		headers: res.headers.clone()
+		headers:      snapshot_string_map(res.headers)
 	}
 }
 
+fn new_vslim_response_snapshot(res VSlimResponse) &VSlimResponse {
+	snapshot := snapshot_vslim_response(res)
+	return &snapshot
+}
+
+fn new_vslim_response_snapshot_ref(res &VSlimResponse) &VSlimResponse {
+	snapshot := snapshot_vslim_response(*res)
+	return &snapshot
+}
+
 fn apply_response_headers(mut r VSlimResponse, headers map[string]string) {
-	r.headers = normalize_header_map(headers)
-	r.content_type = r.headers['content-type'] or { r.content_type }
+	r.headers = snapshot_string_map(normalize_header_map(headers))
+	r.content_type = (r.headers['content-type'] or { r.content_type }).clone()
 }
 
 fn build_set_cookie_header(name string, value string, path string, domain string, max_age int, secure bool, http_only bool, same_site string) string {
@@ -237,25 +251,15 @@ fn build_set_cookie_header(name string, value string, path string, domain string
 }
 
 fn text_response(status int, body string) VSlimResponse {
-	return VSlimResponse{
-		status: status
-		body: body.clone()
-		content_type: 'text/plain; charset=utf-8'
-		headers: {
-			'content-type': 'text/plain; charset=utf-8'
-		}
-	}
+	mut out := VSlimResponse{}
+	out.construct(status, body, 'text/plain; charset=utf-8')
+	return out
 }
 
 fn json_response(status int, json_body string) VSlimResponse {
-	return VSlimResponse{
-		status: status
-		body: json_body.clone()
-		content_type: 'application/json; charset=utf-8'
-		headers: {
-			'content-type': 'application/json; charset=utf-8'
-		}
-	}
+	mut out := VSlimResponse{}
+	out.construct(status, json_body, 'application/json; charset=utf-8')
+	return out
 }
 
 fn not_found_response() VSlimResponse {

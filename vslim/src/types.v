@@ -145,7 +145,7 @@ struct MiddlewareChain {
 	app         &VSlimApp            = unsafe { nil }
 	request_ctx PipelineRequestContext
 mut:
-	middlewares []vphp.RequestOwnedZBox
+	middlewares []vphp.PersistentOwnedZBox
 	plan        RawDispatchPlan
 	index       int
 }
@@ -872,31 +872,9 @@ mut:
 }
 
 fn (req &VSlimRequest) free() {
-	unsafe {
-		req.method.free()
-		req.raw_path.free()
-		req.path.free()
-		req.body.free()
-		req.query_string.free()
-		req.scheme.free()
-		req.host.free()
-		req.port.free()
-		req.protocol_version.free()
-		req.remote_addr.free()
-		req.query.free()
-		req.headers.free()
-		req.cookies.free()
-		req.attributes.free()
-		req.server.free()
-		req.uploaded_files.free()
-		req.params.free()
-	}
+	_ = req
 }
 
 fn (res &VSlimResponse) free() {
-	unsafe {
-		res.body.free()
-		res.content_type.free()
-		res.headers.free()
-	}
+	_ = res
 }

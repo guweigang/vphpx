@@ -372,7 +372,8 @@ pub fn (r &VSlimPsr7Response) has_header(name vphp.RequestBorrowedZBox) bool {
 
 @[php_method: 'getHeader']
 pub fn (r &VSlimPsr7Response) get_header(name vphp.RequestBorrowedZBox) []string {
-	return r.headers[normalize_psr7_header_name(zval_to_log_message(name.to_zval()))] or { []string{} }
+	key := normalize_psr7_header_name(zval_to_log_message(name.to_zval()))
+	return clone_header_list(r.headers[key] or { []string{} })
 }
 
 @[php_method: 'getHeaderLine']
@@ -430,6 +431,7 @@ pub fn (r &VSlimPsr7Response) without_header(name vphp.RequestBorrowedZBox) &VSl
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\StreamInterface']
+@[php_borrowed_return]
 @[php_method: 'getBody']
 pub fn (r &VSlimPsr7Response) get_body() &VSlimPsr7Stream {
 	if r.body_ref == unsafe { nil } {
@@ -516,7 +518,8 @@ pub fn (r &VSlimPsr7Request) has_header(name vphp.RequestBorrowedZBox) bool {
 
 @[php_method: 'getHeader']
 pub fn (r &VSlimPsr7Request) get_header(name vphp.RequestBorrowedZBox) []string {
-	return r.headers[normalize_psr7_header_name(zval_to_log_message(name.to_zval()))] or { []string{} }
+	key := normalize_psr7_header_name(zval_to_log_message(name.to_zval()))
+	return clone_header_list(r.headers[key] or { []string{} })
 }
 
 @[php_method: 'getHeaderLine']
@@ -574,6 +577,7 @@ pub fn (r &VSlimPsr7Request) without_header(name vphp.RequestBorrowedZBox) &VSli
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\StreamInterface']
+@[php_borrowed_return]
 @[php_method: 'getBody']
 pub fn (r &VSlimPsr7Request) get_body() &VSlimPsr7Stream {
 	if r.body_ref == unsafe { nil } {
@@ -625,6 +629,7 @@ pub fn (r &VSlimPsr7Request) with_method(method vphp.RequestBorrowedZBox) &VSlim
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\UriInterface']
+@[php_borrowed_return]
 @[php_method: 'getUri']
 pub fn (r &VSlimPsr7Request) get_uri() &VSlimPsr7Uri {
 	if r.uri_ref == unsafe { nil } {
@@ -717,7 +722,8 @@ pub fn (r &VSlimPsr7ServerRequest) has_header(name vphp.RequestBorrowedZBox) boo
 
 @[php_method: 'getHeader']
 pub fn (r &VSlimPsr7ServerRequest) get_header(name vphp.RequestBorrowedZBox) []string {
-	return r.headers[normalize_psr7_header_name(zval_to_log_message(name.to_zval()))] or { []string{} }
+	key := normalize_psr7_header_name(zval_to_log_message(name.to_zval()))
+	return clone_header_list(r.headers[key] or { []string{} })
 }
 
 @[php_method: 'getHeaderLine']
@@ -775,6 +781,7 @@ pub fn (r &VSlimPsr7ServerRequest) without_header(name vphp.RequestBorrowedZBox)
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\StreamInterface']
+@[php_borrowed_return]
 @[php_method: 'getBody']
 pub fn (r &VSlimPsr7ServerRequest) get_body() &VSlimPsr7Stream {
 	if r.body_ref == unsafe { nil } {
@@ -826,6 +833,7 @@ pub fn (r &VSlimPsr7ServerRequest) with_method(method vphp.RequestBorrowedZBox) 
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\UriInterface']
+@[php_borrowed_return]
 @[php_method: 'getUri']
 pub fn (r &VSlimPsr7ServerRequest) get_uri() &VSlimPsr7Uri {
 	if r.uri_ref == unsafe { nil } {
@@ -938,7 +946,10 @@ pub fn (r &VSlimPsr7ServerRequest) get_attribute(name vphp.RequestBorrowedZBox, 
 pub fn (r &VSlimPsr7ServerRequest) with_attribute(name vphp.RequestBorrowedZBox, value vphp.RequestBorrowedZBox) &VSlimPsr7ServerRequest {
 	key := zval_to_log_message(name.to_zval())
 	next_attrs := persistent_assoc_with_value(r.attributes_ref, key, value.to_zval())
-	return clone_psr7_server_request_owned_attrs(r, r.method, r.request_target, r.protocol_version, r.headers, r.header_names, server_request_body_or_empty(r), server_request_uri_or_default(r), r.server_params_ref, r.cookie_params_ref, r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref, next_attrs)
+	return clone_psr7_server_request_owned_attrs(r, r.method, r.request_target, r.protocol_version,
+		clone_header_values(r.headers), clone_header_names(r.header_names), server_request_body_or_empty(r),
+		server_request_uri_or_default(r), r.server_params_ref, r.cookie_params_ref, r.query_params_ref,
+		r.uploaded_files_ref, r.parsed_body_ref, next_attrs)
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
@@ -946,7 +957,10 @@ pub fn (r &VSlimPsr7ServerRequest) with_attribute(name vphp.RequestBorrowedZBox,
 pub fn (r &VSlimPsr7ServerRequest) without_attribute(name vphp.RequestBorrowedZBox) &VSlimPsr7ServerRequest {
 	key := zval_to_log_message(name.to_zval())
 	next_attrs := persistent_assoc_without_key(r.attributes_ref, key)
-	return clone_psr7_server_request_owned_attrs(r, r.method, r.request_target, r.protocol_version, r.headers, r.header_names, server_request_body_or_empty(r), server_request_uri_or_default(r), r.server_params_ref, r.cookie_params_ref, r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref, next_attrs)
+	return clone_psr7_server_request_owned_attrs(r, r.method, r.request_target, r.protocol_version,
+		clone_header_values(r.headers), clone_header_names(r.header_names), server_request_body_or_empty(r),
+		server_request_uri_or_default(r), r.server_params_ref, r.cookie_params_ref, r.query_params_ref,
+		r.uploaded_files_ref, r.parsed_body_ref, next_attrs)
 }
 
 @[php_method]
@@ -1220,15 +1234,15 @@ fn new_psr7_server_request(method string, uri_input vphp.ZVal, server_params_inp
 	out.method = method
 	out.request_target = ''
 	out.protocol_version = '1.1'
-	out.headers = headers.clone()
-	out.header_names = header_names.clone()
+	out.headers = clone_header_values(headers)
+	out.header_names = clone_header_names(header_names)
 	out.body_ref = new_psr7_stream('')
 	out.uri_ref = uri
 	out.server_params_ref = persistent_array_owned(server_params_input)
 	out.cookie_params_ref = empty_persistent_array()
 	out.query_params_ref = string_map_to_persistent_array(VSlimRequest.parse_query(normalize_psr7_query(uri.query)))
 	out.uploaded_files_ref = empty_persistent_array()
-	out.parsed_body_ref = vphp.PersistentOwnedZBox.new_null()
+	out.parsed_body_ref = vphp.PersistentOwnedZBox.invalid()
 	out.attributes_ref = empty_persistent_array()
 	return out
 }
@@ -1307,7 +1321,7 @@ fn clone_psr7_request(r &VSlimPsr7Request, method string, request_target string,
 }
 
 fn clone_psr7_server_request(r &VSlimPsr7ServerRequest, method string, request_target string, protocol_version string, headers map[string][]string, header_names map[string]string, body &VSlimPsr7Stream, uri &VSlimPsr7Uri, server_params_ref vphp.PersistentOwnedZBox, cookie_params_ref vphp.PersistentOwnedZBox, query_params_ref vphp.PersistentOwnedZBox, uploaded_files_ref vphp.PersistentOwnedZBox, parsed_body_ref vphp.PersistentOwnedZBox, attributes_ref vphp.PersistentOwnedZBox) &VSlimPsr7ServerRequest {
-	return clone_psr7_server_request_owned_attrs(r, method, request_target, protocol_version, headers, header_names, body, uri, server_params_ref, cookie_params_ref, query_params_ref, uploaded_files_ref, parsed_body_ref, attributes_ref.clone_persistent_owned())
+	return clone_psr7_server_request_owned_attrs(r, method, request_target, protocol_version, headers, header_names, body, uri, server_params_ref, cookie_params_ref, query_params_ref, uploaded_files_ref, parsed_body_ref, clone_assoc_payload_ref(attributes_ref))
 }
 
 fn clone_psr7_server_request_owned_attrs(r &VSlimPsr7ServerRequest, method string, request_target string, protocol_version string, headers map[string][]string, header_names map[string]string, body &VSlimPsr7Stream, uri &VSlimPsr7Uri, server_params_ref vphp.PersistentOwnedZBox, cookie_params_ref vphp.PersistentOwnedZBox, query_params_ref vphp.PersistentOwnedZBox, uploaded_files_ref vphp.PersistentOwnedZBox, parsed_body_ref vphp.PersistentOwnedZBox, attributes_ref vphp.PersistentOwnedZBox) &VSlimPsr7ServerRequest {
@@ -1319,13 +1333,27 @@ fn clone_psr7_server_request_owned_attrs(r &VSlimPsr7ServerRequest, method strin
 	out.header_names = clone_header_names(header_names)
 	out.body_ref = clone_psr7_stream(body)
 	out.uri_ref = clone_psr7_uri_or_default(uri)
-	out.server_params_ref = server_params_ref.clone_persistent_owned()
-	out.cookie_params_ref = cookie_params_ref.clone_persistent_owned()
-	out.query_params_ref = query_params_ref.clone_persistent_owned()
-	out.uploaded_files_ref = uploaded_files_ref.clone_persistent_owned()
-	out.parsed_body_ref = parsed_body_ref.clone_persistent_owned()
-	out.attributes_ref = attributes_ref
+	out.server_params_ref = clone_assoc_payload_ref(server_params_ref)
+	out.cookie_params_ref = clone_assoc_payload_ref(cookie_params_ref)
+	out.query_params_ref = clone_assoc_payload_ref(query_params_ref)
+	out.uploaded_files_ref = clone_assoc_payload_ref(uploaded_files_ref)
+	out.parsed_body_ref = clone_parsed_body_ref(parsed_body_ref)
+	out.attributes_ref = clone_assoc_payload_ref(attributes_ref)
 	return out
+}
+
+fn clone_assoc_payload_ref(value vphp.PersistentOwnedZBox) vphp.PersistentOwnedZBox {
+	if !value.is_valid() || value.is_undef() || value.is_null() {
+		return empty_persistent_array()
+	}
+	return value.clone_persistent_owned()
+}
+
+fn clone_parsed_body_ref(value vphp.PersistentOwnedZBox) vphp.PersistentOwnedZBox {
+	if !value.is_valid() || value.is_undef() || value.is_null() {
+		return vphp.PersistentOwnedZBox.new_null()
+	}
+	return value.clone_persistent_owned()
 }
 
 fn clone_psr7_stream(stream &VSlimPsr7Stream) &VSlimPsr7Stream {
@@ -1362,17 +1390,34 @@ fn clone_psr7_uri(u &VSlimPsr7Uri, scheme string, user string, password string, 
 }
 
 fn clone_header_values(headers map[string][]string) map[string][]string {
-	return headers.clone()
+	mut out := map[string][]string{}
+	for key, values in headers {
+		out[key.clone()] = clone_header_list(values)
+	}
+	return out
+}
+
+fn clone_header_list(values []string) []string {
+	mut out := []string{}
+	for value in values {
+		out << value.clone()
+	}
+	return out
 }
 
 fn clone_header_names(header_names map[string]string) map[string]string {
-	return header_names.clone()
+	mut out := map[string]string{}
+	for key, value in header_names {
+		out[key.clone()] = value.clone()
+	}
+	return out
 }
 
 fn materialize_psr7_headers(headers map[string][]string, header_names map[string]string) map[string][]string {
 	mut out := map[string][]string{}
 	for key, values in headers {
-		out[header_names[key] or { key }] = values.clone()
+		resolved_name := (header_names[key] or { key }).clone()
+		out[resolved_name] = clone_header_list(values)
 	}
 	return out
 }
@@ -1531,8 +1576,8 @@ fn persistent_array_owned(value vphp.ZVal) vphp.PersistentOwnedZBox {
 }
 
 fn persistent_owned_or_null(value vphp.ZVal) vphp.PersistentOwnedZBox {
-	if value.is_valid() && !value.is_undef() {
-		return vphp.PersistentOwnedZBox.from_persistent_zval(value)
+	if value.is_valid() && !value.is_undef() && !value.is_null() {
+		return vphp.own_persistent_zbox_raw(value)
 	}
 	return vphp.PersistentOwnedZBox.new_null()
 }
@@ -1563,12 +1608,13 @@ fn persistent_assoc_with_value(value vphp.PersistentOwnedZBox, key string, child
 	if value.is_valid() && !value.is_null() && !value.is_undef() && value.is_array() {
 		value.with_request_zval(fn [mut out] (raw vphp.ZVal) bool {
 			for existing_key in raw.assoc_keys() {
-				add_assoc_zval(out, existing_key, raw.get(existing_key) or { continue })
+				existing := raw.get(existing_key) or { continue }
+				add_assoc_zval(out, existing_key, existing.dup())
 			}
 			return true
 		})
 	}
-	add_assoc_zval(out, key, child)
+	add_assoc_zval(out, key, child.dup())
 	return vphp.PersistentOwnedZBox.from_persistent_zval(out)
 }
 
@@ -1580,7 +1626,8 @@ fn persistent_assoc_without_key(value vphp.PersistentOwnedZBox, key string) vphp
 				if existing_key == key {
 					continue
 				}
-				add_assoc_zval(out, existing_key, raw.get(existing_key) or { continue })
+				existing := raw.get(existing_key) or { continue }
+				add_assoc_zval(out, existing_key, existing.dup())
 			}
 			return true
 		})
@@ -1919,25 +1966,7 @@ fn fallback_psr7_uri(raw string) VSlimPsr7Uri {
 }
 
 fn (r &VSlimPsr7ServerRequest) free() {
-	mut uploaded := r.uploaded_files_ref
-	uploaded.release()
-	mut parsed := r.parsed_body_ref
-	parsed.release()
-	mut attrs := r.attributes_ref
-	attrs.release()
-	mut server_params := r.server_params_ref
-	server_params.release()
-	mut cookie_params := r.cookie_params_ref
-	cookie_params.release()
-	mut query_params := r.query_params_ref
-	query_params.release()
-	unsafe {
-		r.method.free()
-		r.request_target.free()
-		r.protocol_version.free()
-		r.headers.free()
-		r.header_names.free()
-	}
+	_ = r
 }
 
 fn clamp_stream_position(position int, max_len int) int {

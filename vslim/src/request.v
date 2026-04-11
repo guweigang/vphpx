@@ -19,92 +19,92 @@ pub fn (r &VSlimRequest) str() string {
 
 @[php_method]
 pub fn (mut r VSlimRequest) set_query(query vphp.RequestBorrowedZBox) &VSlimRequest {
-	r.query = query.to_string_map()
+	r.query = snapshot_string_map(query.to_string_map())
 	return r
 }
 
 @[php_method]
 pub fn (mut r VSlimRequest) set_method(method string) &VSlimRequest {
-	r.method = method
+	r.method = method.clone()
 	return r
 }
 
 @[php_method]
 pub fn (mut r VSlimRequest) set_target(raw_path string) &VSlimRequest {
-	r.raw_path = raw_path
+	r.raw_path = raw_path.clone()
 	r.path, r.query_string = VSlimRequest.normalize_target(raw_path)
 	return r
 }
 
 @[php_method]
 pub fn (mut r VSlimRequest) set_body(body string) &VSlimRequest {
-	r.body = body
+	r.body = body.clone()
 	return r
 }
 
 @[php_method]
 pub fn (mut r VSlimRequest) set_scheme(scheme string) &VSlimRequest {
-	r.scheme = scheme
+	r.scheme = scheme.clone()
 	return r
 }
 
 @[php_method]
 pub fn (mut r VSlimRequest) set_host(host string) &VSlimRequest {
-	r.host = host
+	r.host = host.clone()
 	return r
 }
 
 @[php_method]
 pub fn (mut r VSlimRequest) set_port(port string) &VSlimRequest {
-	r.port = port
+	r.port = port.clone()
 	return r
 }
 
 @[php_method]
 pub fn (mut r VSlimRequest) set_protocol_version(protocol_version string) &VSlimRequest {
-	r.protocol_version = protocol_version
+	r.protocol_version = protocol_version.clone()
 	return r
 }
 
 @[php_method]
 pub fn (mut r VSlimRequest) set_remote_addr(remote_addr string) &VSlimRequest {
-	r.remote_addr = remote_addr
+	r.remote_addr = remote_addr.clone()
 	return r
 }
 
 @[php_method]
 pub fn (mut r VSlimRequest) set_headers(headers vphp.RequestBorrowedZBox) &VSlimRequest {
-	r.headers = normalize_header_map(headers.to_string_map())
+	r.headers = snapshot_string_map(normalize_header_map(headers.to_string_map()))
 	return r
 }
 
 @[php_method]
 pub fn (mut r VSlimRequest) set_cookies(cookies vphp.RequestBorrowedZBox) &VSlimRequest {
-	r.cookies = cookies.to_string_map()
+	r.cookies = snapshot_string_map(cookies.to_string_map())
 	return r
 }
 
 @[php_method]
 pub fn (mut r VSlimRequest) set_attributes(attributes vphp.RequestBorrowedZBox) &VSlimRequest {
-	r.attributes = attributes.to_string_map()
+	r.attributes = snapshot_string_map(attributes.to_string_map())
 	return r
 }
 
 @[php_method]
 pub fn (mut r VSlimRequest) set_server(server vphp.RequestBorrowedZBox) &VSlimRequest {
-	r.server = server.to_string_map()
+	r.server = snapshot_string_map(server.to_string_map())
 	return r
 }
 
 @[php_method]
 pub fn (mut r VSlimRequest) set_uploaded_files(uploaded_files vphp.RequestBorrowedZBox) &VSlimRequest {
-	r.uploaded_files = uploaded_files.to_string_list()
+	r.uploaded_files = snapshot_string_list(uploaded_files.to_string_list())
 	return r
 }
 
 @[php_method]
 pub fn (mut r VSlimRequest) set_params(params vphp.RequestBorrowedZBox) &VSlimRequest {
-	r.params = params.to_string_map()
+	r.params = snapshot_string_map(params.to_string_map())
 	return r
 }
 
@@ -419,12 +419,12 @@ pub fn (r &VSlimRequest) uploaded_files_all() []string {
 }
 
 fn (r &VSlimRequest) header_values() map[string]string {
-	return r.headers.clone()
+	return snapshot_string_map(r.headers)
 }
 
 fn (r &VSlimRequest) query_values() map[string]string {
 	if r.query.len > 0 {
-		return r.query.clone()
+		return snapshot_string_map(r.query)
 	}
 	return VSlimRequest.parse_query(r.query_string)
 }
@@ -473,23 +473,23 @@ fn (r &VSlimRequest) parsed_body_values() map[string]string {
 }
 
 fn (r &VSlimRequest) cookie_values() map[string]string {
-	return r.cookies.clone()
+	return snapshot_string_map(r.cookies)
 }
 
 fn (r &VSlimRequest) attribute_values() map[string]string {
-	return r.attributes.clone()
+	return snapshot_string_map(r.attributes)
 }
 
 fn (r &VSlimRequest) route_param_values() map[string]string {
-	return r.params.clone()
+	return snapshot_string_map(r.params)
 }
 
 fn (r &VSlimRequest) server_param_values() map[string]string {
-	return r.server.clone()
+	return snapshot_string_map(r.server)
 }
 
 fn (r &VSlimRequest) uploaded_file_values() []string {
-	mut out := r.uploaded_files.clone()
+	mut out := snapshot_string_list(r.uploaded_files)
 	raw_content_type := r.content_type()
 	content_type := raw_content_type.to_lower()
 	if !content_type.contains('multipart/form-data') {
@@ -513,36 +513,72 @@ fn (r &VSlimRequest) uploaded_file_values() []string {
 	return out
 }
 
-pub fn (r &VSlimRequest) to_vslim_request() VSlimRequest {
-	return VSlimRequest{
-		method: r.method
-		raw_path: r.raw_path
-		path: r.path
-		query_string: r.query_string
-		scheme: r.scheme
-		host: r.host
-		port: r.port
-		protocol_version: r.protocol_version
-		remote_addr: r.remote_addr
-		params: r.route_params()
-		query: r.query_params()
-		body: r.body
-		headers: r.headers()
-		cookies: r.cookies()
-		attributes: r.attributes()
-		server: r.server_params()
-		uploaded_files: r.uploaded_files()
+fn snapshot_string_map(input map[string]string) map[string]string {
+	mut out := map[string]string{}
+	for key, value in input {
+		out[key.clone()] = value.clone()
 	}
+	return out
+}
+
+fn snapshot_string_list(input []string) []string {
+	mut out := []string{}
+	for value in input {
+		out << value.clone()
+	}
+	return out
+}
+
+fn snapshot_vslim_request(req &VSlimRequest) VSlimRequest {
+	return VSlimRequest{
+		method:           req.method.clone()
+		raw_path:         req.raw_path.clone()
+		path:             req.path.clone()
+		query_string:     req.query_string.clone()
+		scheme:           req.scheme.clone()
+		host:             req.host.clone()
+		port:             req.port.clone()
+		protocol_version: req.protocol_version.clone()
+		remote_addr:      req.remote_addr.clone()
+		params:           snapshot_string_map(req.params)
+		query:            snapshot_string_map(req.query)
+		body:             req.body.clone()
+		headers:          snapshot_string_map(req.headers)
+		cookies:          snapshot_string_map(req.cookies)
+		attributes:       snapshot_string_map(req.attributes)
+		server:           snapshot_string_map(req.server)
+		uploaded_files:   snapshot_string_list(req.uploaded_files)
+	}
+}
+
+pub fn (r &VSlimRequest) to_vslim_request() VSlimRequest {
+	return snapshot_vslim_request(r)
+}
+
+fn snapshot_vslim_request_with_params(req &VSlimRequest, params map[string]string) VSlimRequest {
+	mut out := snapshot_vslim_request(req)
+	out.params = snapshot_string_map(params)
+	return out
+}
+
+fn new_vslim_request_snapshot(req &VSlimRequest) &VSlimRequest {
+	snapshot := snapshot_vslim_request(req)
+	return &snapshot
+}
+
+fn new_vslim_request_snapshot_with_params(req &VSlimRequest, params map[string]string) &VSlimRequest {
+	snapshot := snapshot_vslim_request_with_params(req, params)
+	return &snapshot
 }
 
 pub fn new_vslim_request(method string, raw_path string, body string) &VSlimRequest {
 	path, query_string := VSlimRequest.normalize_target(raw_path)
 	mut req := &VSlimRequest{
-		method: method
-		raw_path: raw_path
-		path: path
-		query_string: query_string
-		body: body
+		method: method.clone()
+		raw_path: raw_path.clone()
+		path: path.clone()
+		query_string: query_string.clone()
+		body: body.clone()
 	}
 	apply_request_defaults(mut req)
 	return req
@@ -554,11 +590,11 @@ pub fn new_vslim_request_from_zval(envelope vphp.ZVal) &VSlimRequest {
 	body := if part := envelope.get('body') { part.to_string() } else { '' }
 	path, query_string := VSlimRequest.normalize_target(raw_path)
 	mut req := &VSlimRequest{
-		method: method
-		raw_path: raw_path
-		path: path
-		query_string: query_string
-		body: body
+		method: method.clone()
+		raw_path: raw_path.clone()
+		path: path.clone()
+		query_string: query_string.clone()
+		body: body.clone()
 	}
 	apply_request_defaults(mut req)
 	req.scheme = if part := envelope.get('scheme') { part.to_string() } else { req.scheme }
@@ -566,13 +602,13 @@ pub fn new_vslim_request_from_zval(envelope vphp.ZVal) &VSlimRequest {
 	req.port = if part := envelope.get('port') { part.to_string() } else { req.port }
 	req.protocol_version = if part := envelope.get('protocol_version') { part.to_string() } else { req.protocol_version }
 	req.remote_addr = if part := envelope.get('remote_addr') { part.to_string() } else { req.remote_addr }
-	req.query = if part := envelope.get('query') { part.to_string_map() } else { map[string]string{} }
-	req.headers = if part := envelope.get('headers') { normalize_header_map(part.to_string_map()) } else { map[string]string{} }
-	req.cookies = if part := envelope.get('cookies') { part.to_string_map() } else { map[string]string{} }
-	req.attributes = if part := envelope.get('attributes') { part.to_string_map() } else { map[string]string{} }
-	req.server = if part := envelope.get('server') { part.to_string_map() } else { map[string]string{} }
-	req.uploaded_files = if part := envelope.get('uploaded_files') { part.to_string_list() } else { []string{} }
-	req.params = if part := envelope.get('params') { part.to_string_map() } else { map[string]string{} }
+	req.query = if part := envelope.get('query') { snapshot_string_map(part.to_string_map()) } else { map[string]string{} }
+	req.headers = if part := envelope.get('headers') { snapshot_string_map(normalize_header_map(part.to_string_map())) } else { map[string]string{} }
+	req.cookies = if part := envelope.get('cookies') { snapshot_string_map(part.to_string_map()) } else { map[string]string{} }
+	req.attributes = if part := envelope.get('attributes') { snapshot_string_map(part.to_string_map()) } else { map[string]string{} }
+	req.server = if part := envelope.get('server') { snapshot_string_map(part.to_string_map()) } else { map[string]string{} }
+	req.uploaded_files = if part := envelope.get('uploaded_files') { snapshot_string_list(part.to_string_list()) } else { []string{} }
+	req.params = if part := envelope.get('params') { snapshot_string_map(part.to_string_map()) } else { map[string]string{} }
 	return req
 }
 
@@ -603,7 +639,7 @@ fn apply_request_defaults(mut r VSlimRequest) {
 fn normalize_header_map(headers map[string]string) map[string]string {
 	mut out := map[string]string{}
 	for key, value in headers {
-		out[VSlimRequest.normalize_header_name(key)] = value
+		out[VSlimRequest.normalize_header_name(key).clone()] = value.clone()
 	}
 	return out
 }
