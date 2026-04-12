@@ -331,6 +331,13 @@ pub fn (u &VSlimPsr7UploadedFile) str() string {
 	return 'VSlim\\Psr7\\UploadedFile(filename=${u.client_filename}, error=${u.error_code}, moved=${u.moved})'
 }
 
+pub fn (mut u VSlimPsr7UploadedFile) cleanup() {
+	if u.stream_ref != unsafe { nil } {
+		vphp.unregister_vptr_root(u.stream_ref)
+		u.stream_ref = unsafe { nil }
+	}
+}
+
 @[php_method]
 @[php_optional_args: 'default_status,default_reason_phrase']
 pub fn (mut r VSlimPsr7Response) construct(default_status int, default_reason_phrase string) &VSlimPsr7Response {
@@ -473,6 +480,13 @@ pub fn (r &VSlimPsr7Response) get_reason_phrase() string {
 @[php_method]
 pub fn (r &VSlimPsr7Response) str() string {
 	return 'VSlim\\Psr7\\Response(status=${r.get_status_code()}, headers=${r.headers.len})'
+}
+
+pub fn (mut r VSlimPsr7Response) cleanup() {
+	if r.body_ref != unsafe { nil } {
+		vphp.unregister_vptr_root(r.body_ref)
+		r.body_ref = unsafe { nil }
+	}
 }
 
 @[php_method]
@@ -661,6 +675,17 @@ pub fn (r &VSlimPsr7Request) str() string {
 	return 'VSlim\\Psr7\\Request(method=${r.get_method()}, target=${r.get_request_target()})'
 }
 
+pub fn (mut r VSlimPsr7Request) cleanup() {
+	if r.body_ref != unsafe { nil } {
+		vphp.unregister_vptr_root(r.body_ref)
+		r.body_ref = unsafe { nil }
+	}
+	if r.uri_ref != unsafe { nil } {
+		vphp.unregister_vptr_root(r.uri_ref)
+		r.uri_ref = unsafe { nil }
+	}
+}
+
 @[php_method]
 pub fn (mut r VSlimPsr7ServerRequest) construct() &VSlimPsr7ServerRequest {
 	r.method = 'GET'
@@ -797,7 +822,23 @@ pub fn (r &VSlimPsr7ServerRequest) get_body() &VSlimPsr7Stream {
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
 @[php_method: 'withBody']
 pub fn (r &VSlimPsr7ServerRequest) with_body(body vphp.RequestBorrowedZBox) &VSlimPsr7ServerRequest {
-	return clone_psr7_server_request(r, r.method, r.request_target, r.protocol_version, clone_header_values(r.headers), clone_header_names(r.header_names), zval_to_psr7_stream(body.to_zval()), server_request_uri_or_default(r), r.server_params_ref, r.cookie_params_ref, r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref, r.attributes_ref)
+	return clone_psr7_server_request(r, r.method, r.request_target, r.protocol_version,
+		clone_header_values(r.headers), clone_header_names(r.header_names), zval_to_psr7_stream(body.to_zval()),
+		server_request_uri_or_default(r), r.server_params_ref, r.cookie_params_ref, r.query_params_ref,
+		r.uploaded_files_ref, r.parsed_body_ref, r.attributes_ref)
+}
+
+pub fn (mut r VSlimPsr7ServerRequest) cleanup() {
+	if r.body_ref != unsafe { nil } {
+		vphp.unregister_vptr_root(r.body_ref)
+		r.body_ref = unsafe { nil }
+	}
+	if r.uri_ref != unsafe { nil } {
+		vphp.unregister_vptr_root(r.uri_ref)
+		r.uri_ref = unsafe { nil }
+	}
+	// Note: other fields are PersistentOwnedZBox or native V,
+	// generic_free_raw handles the boxes automatically.
 }
 
 @[php_method: 'getRequestTarget']

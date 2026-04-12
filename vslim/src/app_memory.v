@@ -36,15 +36,20 @@ pub fn (mut app VSlimApp) cleanup() {
 		release_hook_table_owned_refs(mut app.php_group_middle)
 		release_hook_table_owned_refs(mut app.php_group_after_middle)
 
-		app.base_path.free()
-		app.routes.free()
-		app.websocket_routes.free()
-		app.websocket_conn_route.free()
-		app.php_group_before_middle.prefixes.free()
-		app.php_group_middle.prefixes.free()
-		app.php_group_after_middle.prefixes.free()
-		app.provider_classes.free()
-		app.module_classes.free()
+		$if nongc ? {
+			app.base_path.free()
+			app.routes.free()
+			app.websocket_routes.free()
+			app.websocket_conn_route.free()
+			app.php_group_before_middle.prefixes.free()
+			app.php_group_before_middle.handlers.free()
+			app.php_group_middle.prefixes.free()
+			app.php_group_middle.handlers.free()
+			app.php_group_after_middle.prefixes.free()
+			app.php_group_after_middle.handlers.free()
+			app.provider_classes.free()
+			app.module_classes.free()
+		}
 	}
 	cli_debug_log('app.cleanup native collections done')
 }

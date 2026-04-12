@@ -65,6 +65,24 @@
     return out;
   }
 
+  function isPreservedNode(node) {
+    return node instanceof Element && node.hasAttribute("data-vphp-preserve");
+  }
+
+  function hasPreservedDescendant(node) {
+    return node instanceof Element && node.querySelector("[data-vphp-preserve]") !== null;
+  }
+
+  function dispatchPatched(ops) {
+    window.dispatchEvent(
+      new CustomEvent("vphp:live:patched", {
+        detail: {
+          ops: Array.isArray(ops) ? ops : [],
+        },
+      })
+    );
+  }
+
   function applyPatch(payload, hooks) {
     const ops = Array.isArray(payload.ops) ? payload.ops : [];
     for (const op of ops) {
@@ -77,14 +95,23 @@
         continue;
       }
       if (op.op === "remove") {
+        if (isPreservedNode(target)) {
+          continue;
+        }
         target.remove();
         continue;
       }
       if (op.op === "append" && typeof op.html === "string") {
+        if (isPreservedNode(target)) {
+          continue;
+        }
         target.insertAdjacentHTML("beforeend", op.html);
         continue;
       }
       if (op.op === "prepend" && typeof op.html === "string") {
+        if (isPreservedNode(target)) {
+          continue;
+        }
         target.insertAdjacentHTML("afterbegin", op.html);
         continue;
       }
@@ -96,10 +123,28 @@
         target.setAttribute(op.name, typeof op.value === "string" ? op.value : "");
         continue;
       }
+      if (op.op === "set_props" && op.props && typeof op.props === "object") {
+        Object.keys(op.props).forEach(function (key) {
+          target[key] = op.props[key];
+        });
+        window.dispatchEvent(
+          new CustomEvent("vphp:live:props", {
+            detail: {
+              id: id,
+              props: op.props,
+            },
+          })
+        );
+        continue;
+      }
       if (op.op === "replace" && typeof op.html === "string") {
+        if (isPreservedNode(target) || hasPreservedDescendant(target)) {
+          continue;
+        }
         target.outerHTML = op.html;
       }
     }
+    dispatchPatched(ops);
     const flashes = Array.isArray(payload.flash) ? payload.flash : [];
     for (const item of flashes) {
       if (!item || typeof item.message !== "string" || !item.message) {
