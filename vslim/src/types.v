@@ -145,7 +145,7 @@ struct MiddlewareChain {
 	app         &VSlimApp            = unsafe { nil }
 	request_ctx PipelineRequestContext
 mut:
-	middlewares []vphp.PersistentOwnedZBox
+	middlewares []vphp.RequestOwnedZBox
 	plan        RawDispatchPlan
 	index       int
 }

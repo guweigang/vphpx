@@ -1,0 +1,76 @@
+{{fill:nav}}{{ nav_label }}{{/fill}}
+{{fill:sidebar}}<p>{{ workspace_name }}</p><p>{{ workspace_slug }}</p><p>{{ sidebar_line | trim }}</p>{{/fill}}
+{{fill:footer}}<small>{{ footer_note | trim }}</small>{{/fill}}
+<section class="ks-section">
+  <p class="ks-eyebrow">{{ eyebrow | trim }}</p>
+  <article class="ks-spotlight">
+    <div class="ks-spotlight-grid">
+      <div class="ks-spotlight-copy">
+        <h1 class="ks-title">{{ title | trim }}</h1>
+        <p class="ks-copy">{{ intro | trim }}</p>
+        <div class="ks-meta">
+          <span class="ks-badge">{{ workspace_name | trim }}</span>
+          <span class="ks-badge">{{ workspace_slug | trim }}</span>
+          <span class="ks-badge">{{ viewer_label | trim }} {{ viewer_name | trim }}</span>
+          <span class="ks-badge">{{ role_hint_label | trim }} {{ viewer_role | trim }}</span>
+        </div>
+      </div>
+      <aside class="ks-spotlight-side">
+        <article class="ks-panel">
+          <h3>{{ context_title | trim }}</h3>
+          <p class="ks-copy">{{ workspace_name | trim }} / {{ workspace_slug | trim }}</p>
+          <p class="ks-copy">{{ viewer_label | trim }} {{ viewer_name | trim }}</p>
+          <p class="ks-copy">{{ role_hint_label | trim }} {{ viewer_role | trim }}</p>
+          <p class="ks-copy">{{ password_hint | trim }}</p>
+        </article>
+      </aside>
+    </div>
+  </article>
+  {{if:write_notice}}<div class="ks-notice success">{{ write_notice | trim }}</div>{{/if}}
+  {{if:write_error}}<div class="ks-notice error">{{ write_error | trim }}</div>{{/if}}
+  <div class="ks-grid two">
+    <article class="ks-card">
+      <h2>{{ create_title | trim }}</h2>
+      <p class="ks-copy">这里控制谁能参与知识供给、谁能发布版本、谁只读查看。它的作用是支撑团队协作，而不是做复杂组织管理。</p>
+      {{if:can_manage_members}}
+      <form class="ks-form" method="post" action="{{ member_action | trim }}">
+        <div class="ks-field">
+          <label>{{ name_label | trim }}</label>
+          <input type="text" name="name" placeholder="Lin Zhou">
+        </div>
+        <div class="ks-field">
+          <label>{{ email_label | trim }}</label>
+          <input type="email" name="email" placeholder="editor@example.com">
+        </div>
+        <div class="ks-field">
+          <label>{{ role_label | trim }}</label>
+          <select name="role">
+            <option value="knowledge_editor">knowledge_editor</option>
+            <option value="tenant_owner">tenant_owner</option>
+            <option value="reviewer">reviewer</option>
+          </select>
+        </div>
+        <button type="submit">{{ submit_label | trim }}</button>
+      </form>
+      {{/if}}
+      {{if:owner_only_hint}}<p class="ks-copy">{{ owner_only_hint | trim }}</p>{{/if}}
+    </article>
+    <article class="ks-card">
+      <h2>{{ table_title | trim }}</h2>
+      <p class="ks-copy">当前成员列表就是这条知识供给链的协作边界。后续如果多人维护内容、审核和发布，都从这里管理。</p>
+      <div class="ks-actions"><a class="ks-btn-secondary" href="{{ member_action | trim }}">{{ submit_label | trim }}</a></div>
+    </article>
+  </div>
+  <article class="ks-card">
+    <h2>{{ table_title | trim }}</h2>
+    <table class="ks-table">
+      <tr>
+        <th>{{ col_name | trim }}</th>
+        <th>{{ col_email | trim }}</th>
+        <th>{{ col_role | trim }}</th>
+        <th>{{ col_created | trim }}</th>
+      </tr>
+{{for:members}}      <tr><td><strong>{{ item.name }}</strong></td><td>{{ item.email }}</td><td>{{ item.role }}</td><td>{{ item.created_at }}</td></tr>{{/for}}
+    </table>
+  </article>
+</section>

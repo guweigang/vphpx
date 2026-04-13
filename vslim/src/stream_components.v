@@ -172,12 +172,15 @@ pub fn (c &VSlimStreamOllamaClient) open_stream(payload vphp.RequestBorrowedZBox
 	raw_payload := payload.to_zval()
 	fixture := c.fixture_path_value()
 	if fixture != '' {
-		fp := vphp.call_php('fopen', [
+		mut fp := vphp.php_call_request_owned_box('fopen', [
 			vphp.RequestOwnedZBox.new_string(fixture).to_zval(),
 			vphp.RequestOwnedZBox.new_string('r').to_zval(),
 		])
-		if fp.is_stream_resource() {
-			return vphp.RequestOwnedZBox.adopt_zval(new_open_stream_result(true, fp, '', 200,
+		defer {
+			fp.release()
+		}
+		if fp.to_zval().is_stream_resource() {
+			return vphp.RequestOwnedZBox.adopt_zval(new_open_stream_result(true, fp.to_zval(), '', 200,
 				'fixture://' + fixture))
 		}
 		return vphp.RequestOwnedZBox.adopt_zval(new_open_stream_result(false,
@@ -211,14 +214,20 @@ pub fn (c &VSlimStreamOllamaClient) open_stream(payload vphp.RequestBorrowedZBox
 	http_options.add_assoc_bool('ignore_errors', true)
 	mut ctx_opts := new_array_zval()
 	add_assoc_zval(ctx_opts, 'http', http_options)
-	ctx := vphp.call_php('stream_context_create', [ctx_opts])
-	fp := vphp.call_php('fopen', [
+	mut ctx := vphp.php_call_request_owned_box('stream_context_create', [ctx_opts])
+	defer {
+		ctx.release()
+	}
+	mut fp := vphp.php_call_request_owned_box('fopen', [
 		vphp.RequestOwnedZBox.new_string(c.chat_url_value()).to_zval(),
 		vphp.RequestOwnedZBox.new_string('r').to_zval(),
 		vphp.RequestOwnedZBox.new_bool(false).to_zval(),
-		ctx,
+		ctx.to_zval(),
 	])
-	if !fp.is_stream_resource() {
+	defer {
+		fp.release()
+	}
+	if !fp.to_zval().is_stream_resource() {
 		return vphp.RequestOwnedZBox.adopt_zval(new_open_stream_result(false,
 			vphp.RequestOwnedZBox.new_null().to_zval(), 'failed to open upstream stream: ' +
 			c.chat_url_value(), 502, c.chat_url_value()))
@@ -226,16 +235,16 @@ pub fn (c &VSlimStreamOllamaClient) open_stream(payload vphp.RequestBorrowedZBox
 
 	status := read_last_http_status()
 	if status < 200 || status >= 300 {
-		err := (fp.stream_get_contents() or { '' }).trim_space()
-		if fp.is_stream_resource() {
-			_ = fp.stream_close()
+		err := (fp.to_zval().stream_get_contents() or { '' }).trim_space()
+		if fp.to_zval().is_stream_resource() {
+			_ = fp.to_zval().stream_close()
 		}
 		return vphp.RequestOwnedZBox.adopt_zval(new_open_stream_result(false,
 			vphp.RequestOwnedZBox.new_null().to_zval(), if err != '' { err } else { 'upstream status ${status}' },
 			status, c.chat_url_value()))
 	}
 
-	return vphp.RequestOwnedZBox.adopt_zval(new_open_stream_result(true, fp, '', status, c.chat_url_value()))
+	return vphp.RequestOwnedZBox.adopt_zval(new_open_stream_result(true, fp.take_zval(), '', status, c.chat_url_value()))
 }
 
 @[php_method]
@@ -533,19 +542,20 @@ fn read_last_http_status() int {
 	if !vphp.function_exists('http_get_last_response_headers') {
 		return 200
 	}
-	headers := vphp.call_php('http_get_last_response_headers', [])
-	if !headers.is_array() || headers.array_count() == 0 {
-		return 200
-	}
-	line := headers.array_get(0).to_string()
-	parts := line.split(' ')
-	for part in parts {
-		clean := part.trim_space()
-		if clean.len == 3 && clean[0].is_digit() && clean[1].is_digit() && clean[2].is_digit() {
-			return clean.int()
+	return vphp.with_php_call_result_zval('http_get_last_response_headers', [], fn (headers vphp.ZVal) int {
+		if !headers.is_array() || headers.array_count() == 0 {
+			return 200
 		}
-	}
-	return 200
+		line := headers.array_get(0).to_string()
+		parts := line.split(' ')
+		for part in parts {
+			clean := part.trim_space()
+			if clean.len == 3 && clean[0].is_digit() && clean[1].is_digit() && clean[2].is_digit() {
+				return clean.int()
+			}
+		}
+		return 200
+	})
 }
 
 fn implode_lines(lines vphp.ZVal) string {

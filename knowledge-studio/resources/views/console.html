@@ -1,42 +1,188 @@
 {{fill:nav}}{{ nav_label }}{{/fill}}
-{{fill:sidebar}}<p>{{ workspace_brand }}</p><p>plan: {{ workspace_plan }}</p>{{/fill}}
+{{fill:sidebar}}<p>{{ workspace_brand }}</p><p>{{ sidebar_line_plan | trim }} {{ workspace_plan }}</p><p>{{ workspace_members }} {{ sidebar_line_collaborators | trim }}</p>{{/fill}}
 {{fill:footer}}<small>{{ footer_note }}</small>{{/fill}}
-<section>
-  <h1>{{ title | trim }}</h1>
-  <p>{{ viewer_name | trim }} ({{ viewer_role | trim }})</p>
-  <p>Workspace: {{ workspace_name | trim }} / {{ workspace_slug | trim }}</p>
-  <p>Brand: {{ workspace_brand | trim }}</p>
-  <p>Plan: {{ workspace_plan | trim }}</p>
-  <p>Workspace members: {{ workspace_members | trim }}</p>
-  <p>Membership records loaded: {{ member_count }}</p>
-  <p>Published documents: {{ published_documents }}</p>
-  <p>Assistant status: {{ assistant_status }}</p>
-  <ul>
-    <li><a href="{{ documents_url | trim }}">Documents</a></li>
-    <li><a href="{{ faqs_url | trim }}">FAQ and topics</a></li>
-    <li><a href="{{ ops_url | trim }}">Ops and audit</a></li>
-  </ul>
-  <h2>Current metrics</h2>
-  <p>Documents: {{ documents_total }}</p>
-  <p>Entries: {{ entries_total }}</p>
-  <p>Jobs: {{ jobs_total }}</p>
-  <h2>Recent documents</h2>
-  <ul>
-{{for:documents}}    <li>{{ item.title }} / {{ item.status }} / chunks={{ item.chunks }}</li>{{/for}}
-  </ul>
-  <h2>Recent entries</h2>
-  <ul>
-{{for:entries}}    <li>{{ item.title }} / {{ item.kind }} / {{ item.status }}</li>{{/for}}
-  </ul>
-  <h2>Recent jobs</h2>
-  <ul>
-{{for:jobs}}    <li>{{ item.name }} / {{ item.status }}</li>{{/for}}
-  </ul>
-  <ul>
-{{for:memberships}}    <li>{{ item.workspace_slug }} / {{ item.role }}</li>{{/for}}
-  </ul>
-  <p><a href="{{ public_url | trim }}">Open public brand page</a></p>
-  <form method="post" action="/logout">
-    <button type="submit">Sign out</button>
+<section class="ks-section">
+  <p class="ks-eyebrow">{{ eyebrow | trim }}</p>
+  <article class="ks-spotlight">
+    <div class="ks-spotlight-grid">
+      <div class="ks-spotlight-copy">
+        <h1 class="ks-title">{{ workspace_name | trim }}</h1>
+        <p class="ks-copy">{{ intro | trim }}</p>
+        <div class="ks-meta">
+          <span class="ks-badge">{{ viewer_name | trim }} / {{ viewer_role | trim }}</span>
+          <span class="ks-badge">{{ brand_label | trim }} {{ workspace_brand | trim }}</span>
+          <span class="ks-badge">{{ plan_label | trim }} {{ workspace_plan | trim }}</span>
+          <span class="ks-badge">{{ assistant_label | trim }} {{ assistant_status }}</span>
+          <span class="ks-badge">{{ published_label | trim }} {{ published_documents }}</span>
+        </div>
+        <div class="ks-spotlight-actions">
+          <a class="ks-btn" href="{{ documents_url | trim }}">{{ documents_cta | trim }}</a>
+          <a class="ks-btn-secondary" href="{{ faqs_url | trim }}">{{ entries_cta | trim }}</a>
+          <a class="ks-btn-secondary" href="{{ releases_url | trim }}">{{ releases_cta | trim }}</a>
+          <a class="ks-btn-secondary" href="{{ public_url | trim }}">{{ brand_cta | trim }}</a>
+        </div>
+      </div>
+      <aside class="ks-spotlight-side">
+        <article class="ks-panel">
+          <h3>{{ today_title | trim }}</h3>
+          <p class="ks-copy">{{ today_body | trim }}</p>
+          <div class="ks-result-meta">
+            <span>{{ documents_metric | trim }} {{ documents_total }}</span>
+            <span>{{ entries_metric | trim }} {{ entries_total }}</span>
+            <span>{{ published_label | trim }} {{ published_documents }}</span>
+          </div>
+        </article>
+        <article class="ks-panel">
+          <h3>{{ brief_title | trim }}</h3>
+          <p class="ks-copy">{{ brief_body | trim }}</p>
+          <ul class="ks-list">
+            <li><strong>{{ brief_one_title | trim }}</strong>{{ brief_one_body | trim }}</li>
+            <li><strong>{{ brief_two_title | trim }}</strong>{{ brief_two_body | trim }}</li>
+            <li><strong>{{ brief_three_title | trim }}</strong>{{ brief_three_body | trim }}</li>
+          </ul>
+        </article>
+      </aside>
+    </div>
+    <div class="ks-kpi-row">
+      <article class="ks-kpi">
+        <p class="ks-kpi-value">{{ documents_total }}</p>
+        <p class="ks-kpi-label">{{ documents_metric | trim }}</p>
+      </article>
+      <article class="ks-kpi">
+        <p class="ks-kpi-value">{{ entries_total }}</p>
+        <p class="ks-kpi-label">{{ entries_metric | trim }}</p>
+      </article>
+      <article class="ks-kpi">
+        <p class="ks-kpi-value">{{ jobs_total }}</p>
+        <p class="ks-kpi-label">{{ jobs_metric | trim }}</p>
+      </article>
+      <article class="ks-kpi">
+        <p class="ks-kpi-value">{{ subscriptions_total }}</p>
+        <p class="ks-kpi-label">{{ subscriptions_metric | trim }}</p>
+      </article>
+    </div>
+  </article>
+  <article class="ks-card">
+    <h2>{{ operating_model_title | default('团队当前最重要的六件事') | trim }}</h2>
+    <p class="ks-copy">{{ operating_model_body | default('一个知识团队真正经营的不是零散后台功能，而是把订阅用户、内容表现、创作发布、协作、品牌和传播连成同一条闭环。') | trim }}</p>
+    <div class="ks-result-meta">
+      <span>1. {{ subscribers_title | default('订阅用户与反馈') | trim }}</span>
+      <span>2. {{ performance_title | default('内容表现') | trim }}</span>
+      <span>3. {{ creation_title | default('创作与发布') | trim }}</span>
+      <span>4. {{ collaboration_title | default('团队协作') | trim }}</span>
+      <span>5. {{ brand_growth_title | default('品牌与传播') | trim }}</span>
+      <span>6. {{ distribution_title | default('分享与扩散') | trim }}</span>
+    </div>
+  </article>
+  <div class="ks-grid two">
+    <article class="ks-card">
+      <h2>{{ subscribers_title | default('订阅用户与反馈') | trim }}</h2>
+      <p class="ks-copy">{{ subscribers_body | default('先看真实线索、真实提问和知识缺口，这些才是下一轮内容供给最值得处理的输入。') | trim }}</p>
+      <h3>{{ recent_subscriptions_title | trim }}</h3>
+      <ul class="ks-list">
+{{for:subscription_recent}}        <li><strong>{{ item.email }}</strong>{{ item.plan }} / {{ item.created_at }}<div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.brand_url }}">回到品牌页承接</a></div></li>{{/for}}
+      </ul>
+      <h3>{{ recent_questions_title | trim }}</h3>
+      <ul class="ks-list">
+{{for:recent_questions}}        <li><strong>{{ item.title }}</strong>{{ item.created_at }}<div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.assistant_url }}">回到助手页复查</a></div></li>{{/for}}
+      </ul>
+      <h3>{{ knowledge_gaps_title | trim }}</h3>
+      <div class="ks-stack">
+{{for:knowledge_gaps}}        <article class="ks-result-card"><strong>{{ item.title }}</strong><p class="ks-copy">{{ item.signal }} / {{ item.created_at }}</p><div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.entry_url }}">新建条目草稿</a><a class="ks-btn-secondary" href="{{ item.document_url }}">新建文档草稿</a></div></article>{{/for}}
+      </div>
+    </article>
+    <article class="ks-card">
+      <h2>{{ performance_title | default('内容表现') | trim }}</h2>
+      <p class="ks-copy">{{ performance_body | default('阅读次数和回复次数后续还要继续补埋点。当前先用已发布内容量、订阅增长和助手提问量作为经营信号。') | trim }}</p>
+      <div class="ks-kpi-row">
+        <article class="ks-kpi">
+          <p class="ks-kpi-value">{{ subscriptions_total }}</p>
+          <p class="ks-kpi-label">{{ signal_metric_label | trim }}</p>
+        </article>
+        <article class="ks-kpi">
+          <p class="ks-kpi-value">{{ published_documents }}</p>
+          <p class="ks-kpi-label">{{ published_metric_label | trim }}</p>
+        </article>
+        <article class="ks-kpi">
+          <p class="ks-kpi-value">{{ jobs_total }}</p>
+          <p class="ks-kpi-label">{{ jobs_metric | trim }}</p>
+        </article>
+      </div>
+      <h3>{{ recent_documents_title | trim }}</h3>
+      <ul class="ks-list">
+{{for:documents}}        <li><strong>{{ item.title }}</strong>{{ item.status }} / chunks={{ item.chunks }}</li>{{/for}}
+      </ul>
+      <h3>{{ recent_entries_title | trim }}</h3>
+      <ul class="ks-list">
+{{for:entries}}        <li><strong>{{ item.title }}</strong>{{ item.kind }} / {{ item.status }}</li>{{/for}}
+      </ul>
+    </article>
+  </div>
+  <div class="ks-grid two">
+    <article class="ks-card">
+      <h2>{{ creation_title | default('创作与发布') | trim }}</h2>
+      <p class="ks-copy">{{ creation_body | default('来源文档和标准答案都应该朝同一个发布关口收敛，再进入公开页和助手页验证。') | trim }}</p>
+      <div class="ks-stack">
+{{for:priority_queue}}        <article class="ks-result-card"><strong>{{ item.priority }} {{ item.title }}</strong><p class="ks-copy">{{ item.body }}</p><div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.target_url }}">{{ item.cta }}</a></div></article>{{/for}}
+      </div>
+      <div class="ks-actions">
+        <a class="ks-btn" href="{{ documents_url | trim }}">{{ documents_cta | trim }}</a>
+        <a class="ks-btn-secondary" href="{{ faqs_url | trim }}">{{ entries_cta | trim }}</a>
+        <a class="ks-btn-secondary" href="{{ releases_url | trim }}">{{ releases_cta | trim }}</a>
+      </div>
+    </article>
+    <article class="ks-card">
+      <h2>{{ collaboration_title | default('团队协作') | trim }}</h2>
+      <p class="ks-copy">{{ collaboration_body | default('工作台要看出谁在贡献、哪些角色在活跃，以及当前供给侧是否有能力继续稳定发布。') | trim }}</p>
+      <h3>{{ members_title | trim }}</h3>
+      <ul class="ks-list">
+{{for:members}}        <li><strong>{{ item.name }}</strong>{{ item.role }} / {{ item.email }}</li>{{/for}}
+      </ul>
+      <p class="ks-copy">{{ members_count_label | trim }}：{{ member_count }}</p>
+      <h3>{{ recent_jobs_title | trim }}</h3>
+      <ul class="ks-list">
+{{for:jobs}}        <li><strong>{{ item.name }}</strong>{{ item.status }}</li>{{/for}}
+      </ul>
+      <div class="ks-actions">
+        <a class="ks-btn-secondary" href="{{ members_url | trim }}">{{ members_cta | trim }}</a>
+        <a class="ks-btn-secondary" href="{{ ops_url | trim }}">{{ ops_cta | trim }}</a>
+      </div>
+    </article>
+  </div>
+  <div class="ks-grid two">
+    <article class="ks-card">
+      <h2>{{ brand_growth_title | default('品牌与传播') | trim }}</h2>
+      <p class="ks-copy">{{ brand_growth_body | default('公开品牌页不是装饰，而是团队对外分享、验证价值和承接线索的传播入口。') | trim }}</p>
+      <ul class="ks-list">
+        <li><strong>{{ brand_story_title | default('公开表达与产品包装') | trim }}</strong>{{ brand_story_body | default('让品牌页、助手入口和订阅方案始终讲同一个服务故事，降低外部理解成本。') | trim }}</li>
+        <li><strong>{{ publish_center_title | trim }}</strong>{{ publish_center_body | trim }}</li>
+        <li><strong>{{ subscription_mix_title | trim }}</strong>{{ settings_body | trim }}</li>
+      </ul>
+      <ul class="ks-list">
+{{for:subscription_plans}}        <li><strong>{{ item.plan }}</strong>{{ item.count }}</li>{{/for}}
+      </ul>
+      <div class="ks-actions">
+        <a class="ks-btn" href="{{ public_url | trim }}"><span>{{ share_brand_cta | default('分享品牌页') | trim }}</span></a>
+        <a class="ks-btn-secondary" href="{{ public_url | trim }}">{{ brand_cta | trim }}</a>
+        <a class="ks-btn-secondary" href="{{ public_plans_url | trim }}">{{ view_plans_cta | default('查看订阅包装') | trim }}</a>
+      </div>
+    </article>
+    <article class="ks-card">
+      <h2>{{ distribution_title | default('分享与扩散') | trim }}</h2>
+      <p class="ks-copy">{{ distribution_body | default('把品牌页和助手页当成销售、交付、研究和客户成功都能使用的对外传播面。') | trim }}</p>
+      <ul class="ks-list">
+        <li><strong>{{ next_one_title | trim }}</strong>{{ next_one_body | trim }}</li>
+        <li><strong>{{ next_two_title | trim }}</strong>{{ next_two_body | trim }}</li>
+        <li><strong>{{ next_three_title | trim }}</strong>{{ next_three_body | trim }}</li>
+      </ul>
+      <div class="ks-actions">
+        <a class="ks-btn-secondary" href="{{ public_url | trim }}">{{ share_brand_cta | default('分享品牌页') | trim }}</a>
+        <a class="ks-btn-secondary" href="{{ public_url | trim }}">{{ brand_cta | trim }}</a>
+        <a class="ks-btn-secondary" href="{{ public_assistant_url | trim }}">{{ assistant_preview_cta | default('打开助手页') | trim }}</a>
+      </div>
+    </article>
+  </div>
+  <form class="ks-inline-form" method="post" action="{{ logout_action | trim }}">
+    <button class="ks-btn" type="submit">{{ logout_label | trim }}</button>
   </form>
 </section>

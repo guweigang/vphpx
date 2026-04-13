@@ -329,10 +329,7 @@ fn psr16_is_iterable(value vphp.ZVal) bool {
 
 fn psr16_iterable_key_list(value vphp.ZVal) ![]string {
 	normalized := psr16_iterable_to_array(value)!
-	values := vphp.php_fn('array_values').call([normalized])
-	if !values.is_array() {
-		return error('keys must be iterable')
-	}
+	values := normalized.values()
 	mut out := []string{}
 	for idx := 0; idx < values.array_count(); idx++ {
 		key_name := psr16_zval_to_key(values.array_get(idx))!
@@ -343,11 +340,8 @@ fn psr16_iterable_key_list(value vphp.ZVal) ![]string {
 
 fn psr16_iterable_assoc_pairs(value vphp.ZVal) !map[string]vphp.PersistentOwnedZBox {
 	normalized := psr16_iterable_to_array(value)!
-	keys := vphp.php_fn('array_keys').call([normalized])
-	values := vphp.php_fn('array_values').call([normalized])
-	if !keys.is_array() || !values.is_array() {
-		return error('values must be iterable')
-	}
+	keys := normalized.keys()
+	values := normalized.values()
 	mut out := map[string]vphp.PersistentOwnedZBox{}
 	for idx := 0; idx < keys.array_count(); idx++ {
 		key_name := psr16_zval_to_key(keys.array_get(idx)) or {
@@ -365,10 +359,7 @@ fn psr16_iterable_assoc_pairs(value vphp.ZVal) !map[string]vphp.PersistentOwnedZ
 
 fn psr16_iterable_assoc_key_list(value vphp.ZVal) ![]string {
 	normalized := psr16_iterable_to_array(value)!
-	keys := vphp.php_fn('array_keys').call([normalized])
-	if !keys.is_array() {
-		return error('values must be iterable')
-	}
+	keys := normalized.keys()
 	mut out := []string{}
 	for idx := 0; idx < keys.array_count(); idx++ {
 		key_name := psr16_zval_to_key(keys.array_get(idx))!

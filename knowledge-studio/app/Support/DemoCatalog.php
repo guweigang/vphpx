@@ -236,6 +236,24 @@ final class DemoCatalog
     /**
      * @return array<int, array<string, mixed>>
      */
+    public function releasesForWorkspace(string $workspaceId): array
+    {
+        $status = ($this->metricsForWorkspace($workspaceId)['assistant_status'] ?? 'draft') === 'published'
+            ? 'published'
+            : 'draft';
+
+        return [[
+            'id' => 'release-' . $workspaceId,
+            'workspace_id' => $workspaceId,
+            'version' => 'v0.1',
+            'status' => (string) $status,
+            'created_at' => '2026-04-08 00:00:00',
+        ]];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     private function documents(): array
     {
         return [
@@ -243,6 +261,9 @@ final class DemoCatalog
                 'id' => 'doc-acme-1',
                 'workspace_id' => 'ws-acme',
                 'title' => 'Refund Operations Handbook',
+                'summary' => 'A tenant-facing handbook that explains refund eligibility, approval sequencing, and customer communication checkpoints.',
+                'body' => 'Refund requests start with intake validation, move through policy checks, then require finance confirmation before funds are released. Teams should document reason codes, reviewer decisions, and customer-visible timelines in one shared workflow.',
+                'language' => 'en',
                 'source_type' => 'markdown',
                 'status' => 'published',
                 'chunks' => 18,
@@ -252,6 +273,9 @@ final class DemoCatalog
                 'id' => 'doc-acme-2',
                 'workspace_id' => 'ws-acme',
                 'title' => 'Chargeback Escalation Playbook',
+                'summary' => 'Escalation guidance for disputes, exception ownership, and settlement communication.',
+                'body' => 'When a chargeback enters escalation, the team should capture transaction context, assign an owner, reconcile settlement milestones, and publish the final resolution path back into the shared knowledge base.',
+                'language' => 'en',
                 'source_type' => 'pdf',
                 'status' => 'processing',
                 'chunks' => 9,
@@ -261,6 +285,9 @@ final class DemoCatalog
                 'id' => 'doc-nova-1',
                 'workspace_id' => 'ws-nova',
                 'title' => 'Policy Research Starter Kit',
+                'summary' => 'A starter guide for policy research teams to normalize memo intake, evidence capture, and recommendation writing.',
+                'body' => 'Policy researchers should retain the issuing body, decision date, regulatory scope, and recommendation summary for every memo so downstream answers stay auditable and easy to cite.',
+                'language' => 'en',
                 'source_type' => 'notion',
                 'status' => 'published',
                 'chunks' => 12,
@@ -280,24 +307,30 @@ final class DemoCatalog
                 'workspace_id' => 'ws-acme',
                 'kind' => 'faq',
                 'title' => 'How do refunds reach final approval?',
+                'body' => 'Refund approvals move from intake review to policy validation, then require finance confirmation before final release to the customer-facing channel.',
                 'status' => 'published',
                 'owner' => 'Mira Chen',
+                'created_at' => '2026-04-08 14:00',
             ],
             [
                 'id' => 'entry-acme-2',
                 'workspace_id' => 'ws-acme',
                 'kind' => 'topic',
                 'title' => 'Settlement exception triage',
+                'body' => 'Capture the exception context, map it to the settlement timeline, assign the responsible owner, and document the decision before publishing a guidance update.',
                 'status' => 'draft',
                 'owner' => 'Noah Lin',
+                'created_at' => '2026-04-08 15:10',
             ],
             [
                 'id' => 'entry-nova-1',
                 'workspace_id' => 'ws-nova',
                 'kind' => 'faq',
                 'title' => 'How to cite policy memos',
+                'body' => 'Policy memos should include the issuing organization, memo date, decision context, and the recommendation summary used in the final answer.',
                 'status' => 'published',
                 'owner' => 'Iris Zhou',
+                'created_at' => '2026-04-08 11:30',
             ],
         ];
     }

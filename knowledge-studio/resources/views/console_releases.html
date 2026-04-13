@@ -1,0 +1,192 @@
+{{fill:nav}}{{ nav_label }}{{/fill}}
+{{fill:sidebar}}<p>{{ workspace_name }}</p><p>{{ workspace_slug }}</p><p>{{ sidebar_line | trim }}</p>{{/fill}}
+{{fill:footer}}<small>{{ footer_note | trim }}</small>{{/fill}}
+<section class="ks-section">
+  <p class="ks-eyebrow">{{ eyebrow | trim }}</p>
+  <article class="ks-spotlight">
+    <div class="ks-spotlight-grid">
+      <div class="ks-spotlight-copy">
+        <h1 class="ks-title">{{ title | trim }}</h1>
+        <p class="ks-copy">{{ intro | trim }}</p>
+        <div class="ks-meta">
+          <span class="ks-badge">{{ workspace_name | trim }}</span>
+          <span class="ks-badge">{{ workspace_slug | trim }}</span>
+          <span class="ks-badge">{{ viewer_label | trim }} {{ viewer_name | trim }}</span>
+          <span class="ks-badge">{{ role_hint_label | trim }} {{ viewer_role | trim }}</span>
+          <span class="ks-badge">{{ ready_label | trim }} {{ snapshot.ready }}</span>
+        </div>
+      </div>
+      <aside class="ks-spotlight-side">
+        <article class="ks-panel">
+          <h3>{{ workflow_title | trim }}</h3>
+          <p class="ks-copy">{{ workflow_body | trim }}</p>
+          <ul class="ks-list">
+            <li><strong>{{ workflow_one_title | trim }}</strong>{{ workflow_one_body | trim }}</li>
+            <li><strong>{{ workflow_two_title | trim }}</strong>{{ workflow_two_body | trim }}</li>
+            <li><strong>{{ workflow_three_title | trim }}</strong>{{ workflow_three_body | trim }}</li>
+          </ul>
+        </article>
+      </aside>
+    </div>
+    <div class="ks-kpi-row">
+      <article class="ks-kpi">
+        <p class="ks-kpi-value">{{ snapshot.published_documents }}</p>
+        <p class="ks-kpi-label">{{ published_documents_label | trim }}</p>
+      </article>
+      <article class="ks-kpi">
+        <p class="ks-kpi-value">{{ snapshot.published_entries }}</p>
+        <p class="ks-kpi-label">{{ published_entries_label | trim }}</p>
+      </article>
+      <article class="ks-kpi">
+        <p class="ks-kpi-value">{{ snapshot.draft_documents }}</p>
+        <p class="ks-kpi-label">{{ draft_documents_label | trim }}</p>
+      </article>
+      <article class="ks-kpi">
+        <p class="ks-kpi-value">{{ snapshot.draft_entries }}</p>
+        <p class="ks-kpi-label">{{ draft_entries_label | trim }}</p>
+      </article>
+    </div>
+  </article>
+  {{if:write_notice}}<div class="ks-notice success">{{ write_notice | trim }}</div>{{/if}}
+  {{if:write_error}}<div class="ks-notice error">{{ write_error | trim }}</div>{{/if}}
+  <div class="ks-grid two">
+    <article class="ks-card">
+      <h2>{{ composer_title | trim }}</h2>
+      <p class="ks-copy">{{ public_preview_body | trim }}</p>
+      {{if:can_manage_releases}}
+      <form class="ks-form" method="post" action="{{ release_action | trim }}">
+        <div class="ks-field">
+          <label>{{ version_label | trim }}</label>
+          <input type="text" name="version" placeholder="v0.2">
+        </div>
+        <div class="ks-field">
+          <label>{{ notes_label | trim }}</label>
+          <textarea name="notes" placeholder="本次发布补了哪些问题、带出了哪些来源材料、对外口径做了什么调整？"></textarea>
+        </div>
+        <p class="ks-copy">{{ selection_hint | trim }}</p>
+        <div class="ks-grid two">
+          <div class="ks-choice-group">
+            <h3 class="ks-subsection-title">{{ candidate_documents_title | trim }}</h3>
+            <div class="ks-choice-grid">
+{{for:snapshot.document_candidates}}              <label class="ks-choice-card"><input class="ks-choice-check" type="checkbox" name="document_ids[]" value="{{ item.id }}" {{ item.checked_attr }}><span class="ks-choice-indicator" aria-hidden="true"></span><span class="ks-choice-content"><span class="ks-choice-title">{{ item.title }}</span><span class="ks-choice-meta"><span>{{ item.source_type }}</span><span>{{ item.status }}</span></span><span class="ks-choice-summary">{{ item.coverage_focus }}</span><span class="ks-choice-summary">{{ item.preview_summary }}</span></span></label>{{/for}}
+            </div>
+          </div>
+          <div class="ks-choice-group">
+            <h3 class="ks-subsection-title">{{ candidate_entries_title | trim }}</h3>
+            <div class="ks-choice-grid">
+{{for:snapshot.entry_candidates}}              <label class="ks-choice-card"><input class="ks-choice-check" type="checkbox" name="entry_ids[]" value="{{ item.id }}" {{ item.checked_attr }}><span class="ks-choice-indicator" aria-hidden="true"></span><span class="ks-choice-content"><span class="ks-choice-title">{{ item.title }}</span><span class="ks-choice-meta"><span>{{ item.kind }}</span><span>{{ item.status }}</span></span><span class="ks-choice-summary">{{ item.coverage_focus }}</span><span class="ks-choice-summary">{{ item.preview_summary }}</span></span></label>{{/for}}
+            </div>
+          </div>
+        </div>
+        <button type="submit">{{ submit_label | trim }}</button>
+      </form>
+      {{/if}}
+      {{if:owner_only_hint}}<p class="ks-copy">{{ owner_only_hint | trim }}</p>{{/if}}
+    </article>
+    <article class="ks-card">
+      <h2>{{ checks_panel_title | trim }}</h2>
+      <p class="ks-copy">{{ latest_release_label | trim }} {{ snapshot.latest_release.version | default('v0.0') }} / {{ snapshot.latest_release.status | default('draft') }}</p>
+      <section class="ks-subsection">
+        <h3>{{ release_checks_title | trim }}</h3>
+        <div class="ks-stack">
+{{for:snapshot.release_checks}}        <article class="ks-result-card"><strong>{{ item.label }}</strong><p class="ks-copy">{{ item.detail }}</p><div class="ks-result-meta"><span>{{ item.status }}</span></div></article>{{/for}}
+        </div>
+      </section>
+      <section class="ks-subsection">
+        <h3>{{ readiness_summary_title | trim }}</h3>
+        <p class="ks-copy">{{ snapshot.readiness_summary }}</p>
+      </section>
+      <section class="ks-subsection">
+        <h3>{{ gap_signals_title | trim }}</h3>
+        <p class="ks-copy">{{ gap_signals_body | trim }}</p>
+{{if:snapshot.gap_signals}}        <div class="ks-stack">
+{{for:snapshot.gap_signals}}        <article class="ks-result-card"><strong>{{ item.title }}</strong><p class="ks-copy">{{ item.signal }} / {{ item.created_at }}</p></article>{{/for}}
+        </div>{{/if}}
+      </section>
+    </article>
+  </div>
+  <article class="ks-card">
+    <h2>{{ public_preview_title | trim }}</h2>
+    <section class="ks-subsection">
+      <h3>{{ change_summary_title | trim }}</h3>
+      <p class="ks-copy">{{ change_summary_body | trim }}</p>
+      <div class="ks-kpi-row">
+{{for:snapshot.change_summary}}        <article class="ks-kpi"><p class="ks-kpi-value">{{ item.value }}</p><p class="ks-kpi-label">{{ item.display_label }}</p></article>{{/for}}
+      </div>
+    </section>
+    <section class="ks-subsection">
+      <h3>{{ version_compare_title | trim }}</h3>
+      <p class="ks-copy">{{ version_compare_body | trim }}</p>
+      <div class="ks-grid two">
+        <article class="ks-result-card">
+          <strong>{{ snapshot.version_compare.current.title }}</strong>
+          <p class="ks-copy">{{ snapshot.version_compare.current.version }}</p>
+          <p class="ks-copy">{{ snapshot.version_compare.current.notes }}</p>
+          <div class="ks-result-meta">
+            <span>{{ published_documents_label | trim }} {{ snapshot.version_compare.current.documents }}</span>
+            <span>{{ published_entries_label | trim }} {{ snapshot.version_compare.current.entries }}</span>
+          </div>
+        </article>
+        <article class="ks-result-card">
+          <strong>{{ snapshot.version_compare.next.title }}</strong>
+          <p class="ks-copy">{{ snapshot.version_compare.next.version }}</p>
+          <p class="ks-copy">{{ snapshot.version_compare.next.notes }}</p>
+          <div class="ks-result-meta">
+            <span>{{ draft_documents_label | trim }} {{ snapshot.version_compare.next.documents }}</span>
+            <span>{{ draft_entries_label | trim }} {{ snapshot.version_compare.next.entries }}</span>
+          </div>
+        </article>
+      </div>
+    </section>
+    <div class="ks-actions ks-actions-spacious">
+      <a class="ks-btn-secondary" href="{{ brand_page_url | trim }}">{{ brand_page_cta | trim }}</a>
+      <a class="ks-btn-secondary" href="{{ assistant_page_url | trim }}">{{ assistant_page_cta | trim }}</a>
+    </div>
+    <div class="ks-grid two">
+      <div>
+        <h3>{{ draft_preview_documents_title | trim }}</h3>
+        <div class="ks-stack">
+{{for:snapshot.draft_preview.documents}}          <article class="ks-result-card"><strong>{{ item.title }}</strong><p class="ks-copy">{{ item.coverage_focus }}</p><p class="ks-copy">{{ item.summary }}</p><div class="ks-result-meta"><span>{{ item.meta }}</span></div></article>{{/for}}
+        </div>
+      </div>
+      <div>
+        <h3>{{ draft_preview_entries_title | trim }}</h3>
+        <div class="ks-stack">
+{{for:snapshot.draft_preview.entries}}          <article class="ks-result-card"><strong>{{ item.title }}</strong><p class="ks-copy">{{ item.coverage_focus }}</p><p class="ks-copy">{{ item.summary }}</p><div class="ks-result-meta"><span>{{ item.meta }}</span></div></article>{{/for}}
+        </div>
+      </div>
+    </div>
+  </article>
+  <article class="ks-card">
+    <h2>{{ current_public_title | trim }}</h2>
+    <div class="ks-grid two">
+      <div>
+        <h3>{{ preview_documents_title | trim }}</h3>
+        <div class="ks-stack">
+{{for:snapshot.public_preview.documents}}          <article class="ks-result-card"><strong>{{ item.title }}</strong><p class="ks-copy">{{ item.coverage_focus }}</p><p class="ks-copy">{{ item.summary }}</p><div class="ks-result-meta"><span>{{ item.meta }}</span></div></article>{{/for}}
+        </div>
+      </div>
+      <div>
+        <h3>{{ preview_entries_title | trim }}</h3>
+        <div class="ks-stack">
+{{for:snapshot.public_preview.entries}}          <article class="ks-result-card"><strong>{{ item.title }}</strong><p class="ks-copy">{{ item.coverage_focus }}</p><p class="ks-copy">{{ item.summary }}</p><div class="ks-result-meta"><span>{{ item.meta }}</span></div></article>{{/for}}
+        </div>
+      </div>
+    </div>
+  </article>
+  <article class="ks-card">
+    <h2>{{ history_title | trim }}</h2>
+    <table class="ks-table">
+      <tr>
+        <th>{{ col_version | trim }}</th>
+        <th>{{ col_status | trim }}</th>
+        <th>{{ col_notes | trim }}</th>
+        <th>{{ col_documents | trim }}</th>
+        <th>{{ col_entries | trim }}</th>
+        <th>{{ col_created | trim }}</th>
+        <th>{{ col_actions | trim }}</th>
+      </tr>
+{{for:releases}}      <tr><td><strong>{{ item.version }}</strong></td><td>{{ item.status }}</td><td>{{ item.notes }}</td><td>{{ item.documents_count }}</td><td>{{ item.entries_count }}</td><td>{{ item.created_at }}</td><td><div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.brand_url }}">{{ history_brand_cta | trim }}</a><a class="ks-btn-secondary" href="{{ item.assistant_url }}">{{ history_assistant_cta | trim }}</a></div></td></tr>{{/for}}
+    </table>
+  </article>
+</section>

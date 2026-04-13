@@ -40,6 +40,9 @@ fn register_app_middleware_kind(mut app VSlimApp, handler vphp.ZVal, kind Middle
 			0)
 		return
 	}
+	if handler.is_object() {
+		bind_cached_target_to_app_if_supported(&app, handler)
+	}
 	entry := vphp.PersistentOwnedZBox.from_callable_zval(handler)
 	if kind == .standard && app.php_middlewares.len == 0 {
 		cli_debug_log('middleware.register kind=${entry.kind_name()} valid=${entry.is_valid()} null=${entry.is_null()} undef=${entry.is_undef()} handler_type=${handler.type_name()} handler_class=${handler.class_name()}')
@@ -61,6 +64,9 @@ fn register_group_middleware_kind(group &RouteGroup, handler vphp.ZVal, kind Mid
 	prefix := group.normalized_prefix()
 	unsafe {
 		mut app := &VSlimApp(group.app)
+		if handler.is_object() {
+			bind_cached_target_to_app_if_supported(app, handler)
+		}
 		match kind {
 			.standard {
 				app.php_group_middle.prefixes << prefix
@@ -75,6 +81,17 @@ fn register_group_middleware_kind(group &RouteGroup, handler vphp.ZVal, kind Mid
 				app.php_group_after_middle.handlers << vphp.PersistentOwnedZBox.from_callable_zval(handler)
 			}
 		}
+	}
+}
+
+fn bind_cached_target_to_app_if_supported(app &VSlimApp, target vphp.ZVal) {
+	if !target.is_valid() || !target.is_object() {
+		return
+	}
+	if target.method_exists('setApp') {
+		vphp.with_method_result_zval(target, 'setApp', [wrap_runtime_app_zval(app)], fn (_ vphp.ZVal) bool {
+			return true
+		})
 	}
 }
 
@@ -143,40 +160,46 @@ fn collect_matching_route_hooks(table HookTable, path string) []vphp.RequestOwne
 	return out
 }
 
-fn collect_standard_middlewares(app &VSlimApp, group_hooks []vphp.RequestOwnedZBox) []vphp.PersistentOwnedZBox {
-	mut out := []vphp.PersistentOwnedZBox{}
+fn persistent_hook_request_owned(hook vphp.PersistentOwnedZBox) vphp.RequestOwnedZBox {
+	return hook.with_request_zval(fn (z vphp.ZVal) vphp.RequestOwnedZBox {
+		return vphp.RequestOwnedZBox.adopt_zval(z.dup())
+	})
+}
+
+fn collect_standard_middlewares(app &VSlimApp, group_hooks []vphp.RequestOwnedZBox) []vphp.RequestOwnedZBox {
+	mut out := []vphp.RequestOwnedZBox{}
 	for idx, hook in app.php_middlewares {
-		cloned := hook.clone()
+		cloned := persistent_hook_request_owned(hook)
 		if idx == 0 {
 			slot_addr := unsafe { usize(&app.php_middlewares[idx]) }
-			cli_debug_log('middleware.collect app idx=${idx} slot=${slot_addr} src_kind=${hook.kind_name()} src_valid=${hook.is_valid()} src_null=${hook.is_null()} src_undef=${hook.is_undef()} clone_kind=${cloned.kind_name()} clone_valid=${cloned.is_valid()} clone_null=${cloned.is_null()} clone_undef=${cloned.is_undef()}')
+			cli_debug_log('middleware.collect app idx=${idx} slot=${slot_addr} src_kind=${hook.kind_name()} src_valid=${hook.is_valid()} src_null=${hook.is_null()} src_undef=${hook.is_undef()} clone_valid=${cloned.is_valid()} clone_null=${cloned.is_null()} clone_undef=${cloned.is_undef()}')
 		}
 		out << cloned
 	}
 	for hook in group_hooks {
-		out << hook.clone()
+		out << hook.clone_request_owned()
 	}
 	return out
 }
 
-fn collect_before_middlewares(app &VSlimApp, group_hooks []vphp.RequestOwnedZBox) []vphp.PersistentOwnedZBox {
-	mut out := []vphp.PersistentOwnedZBox{}
+fn collect_before_middlewares(app &VSlimApp, group_hooks []vphp.RequestOwnedZBox) []vphp.RequestOwnedZBox {
+	mut out := []vphp.RequestOwnedZBox{}
 	for hook in app.php_before_middlewares {
-		out << hook.clone()
+		out << persistent_hook_request_owned(hook)
 	}
 	for hook in group_hooks {
-		out << hook.clone()
+		out << hook.clone_request_owned()
 	}
 	return out
 }
 
-fn collect_after_middlewares(app &VSlimApp, group_hooks []vphp.RequestOwnedZBox) []vphp.PersistentOwnedZBox {
-	mut out := []vphp.PersistentOwnedZBox{}
+fn collect_after_middlewares(app &VSlimApp, group_hooks []vphp.RequestOwnedZBox) []vphp.RequestOwnedZBox {
+	mut out := []vphp.RequestOwnedZBox{}
 	for hook in app.php_after_middlewares {
-		out << hook.clone()
+		out << persistent_hook_request_owned(hook)
 	}
 	for hook in group_hooks {
-		out << hook.clone()
+		out << hook.clone_request_owned()
 	}
 	return out
 }
@@ -281,19 +304,16 @@ fn bind_route_target_to_app_if_supported(app &VSlimApp, target vphp.ZVal) {
 	if !target.is_valid() || !target.is_object() {
 		return
 	}
+	if target.is_instance_of('Psr\\Http\\Server\\MiddlewareInterface') {
+		// Cached middleware instances should be bound once at registration or
+		// first construction, not rebound on every dispatch.
+		return
+	}
 	if target.is_instance_of('VSlim\\Controller') {
-		if target.method_exists('set_app') {
-			vphp.with_method_result_zval(target, 'set_app', [wrap_runtime_app_zval(app)], fn (_ vphp.ZVal) bool {
-				return true
-			})
-			return
-		}
-		if target.method_exists('setApp') {
-			vphp.with_method_result_zval(target, 'setApp', [wrap_runtime_app_zval(app)], fn (_ vphp.ZVal) bool {
-				return true
-			})
-			return
-		}
+		// VSlim\Controller already resolves the effective app from the current
+		// runtime dispatch context. Rebinding the same cached controller object on
+		// every dispatch adds an extra bridge round-trip and has been a crash hot
+		// path in repeated dispatch_request() scenarios.
 		return
 	}
 	if target.method_exists('setApp') {
@@ -337,15 +357,16 @@ fn dispatch_php_middleware_entry(mut chain MiddlewareChain, handler vphp.Request
 		cli_debug_log('middleware.target.resolve.error msg=${err.msg()} handler_valid=${handler.is_valid()} handler_type=${handler.to_zval().type_name()}')
 		return err
 	}
+	bind_route_target_to_app_if_supported(chain.app, target)
 	method := middleware_target_method(target, explicit_method)
 	if method == 'process' && target.is_object()
 		&& target.is_instance_of('Psr\\Http\\Server\\MiddlewareInterface') {
-		mut psr_payload := vphp.RequestOwnedZBox.from_zval(normalize_psr15_server_request_payload(payload,
+		mut psr_payload := vphp.RequestOwnedZBox.adopt_zval(normalize_psr15_server_request_payload(payload,
 			chain.request_ctx.route_params))
 		defer {
 			psr_payload.release()
 		}
-		mut next_handler := vphp.RequestOwnedZBox.from_zval(build_php_psr15_next_handler_object(&chain))
+		mut next_handler := vphp.RequestOwnedZBox.adopt_zval(build_php_psr15_next_handler_object(&chain))
 		defer {
 			next_handler.release()
 		}
@@ -530,6 +551,7 @@ fn resolve_container_service(app &VSlimApp, service_id string) !vphp.ZVal {
 			if !created.is_valid() || !created.is_object() {
 				return error('class "${service_id}" could not be instantiated')
 			}
+			bind_cached_target_to_app_if_supported(app, created)
 			container.set(service_id, vphp.borrow_zbox(created))
 			return created
 		}

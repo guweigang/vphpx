@@ -115,5 +115,9 @@ pub fn (app &VSlimApp) dispatch_envelope_map(envelope vphp.RequestBorrowedZBox) 
 	}
 	app_kernel_prepare(app)
 	req := new_vslim_request_from_zval(envelope.to_zval())
+	prev_app := enter_runtime_dispatch_app(app)
+	defer {
+		leave_runtime_dispatch_app(prev_app)
+	}
 	return app_kernel_dispatch_envelope_map(app, req)
 }

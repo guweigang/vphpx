@@ -43,19 +43,19 @@ final class OpsRepository
     public function auditLogsForWorkspace(string $workspaceId): array
     {
         if ($this->shouldUseDatabase()) {
-            $rows = $this->rows(
+            $rows = $this->normalizeAuditRows($this->rows(
                 $this->db
                     ->table('audit_logs')
                     ->where('workspace_id', $workspaceId)
                     ->orderBy('id', 'asc')
                     ->get()
-            );
+            ));
             if ($rows !== []) {
                 return $rows;
             }
         }
 
-        return $this->catalog->auditLogsForWorkspace($workspaceId);
+        return $this->normalizeAuditRows($this->catalog->auditLogsForWorkspace($workspaceId));
     }
 
     public function writesEnabled(): bool
@@ -94,6 +94,147 @@ final class OpsRepository
         return $row;
     }
 
+    /**
+     * @return array{count:int,recent:array<int, array<string, string>>,plans:array<int, array<string, string>>}
+     */
+    public function subscriptionInsights(string $workspaceId): array
+    {
+        if ($workspaceId === '') {
+            return [
+                'count' => 0,
+                'recent' => [],
+                'plans' => [],
+            ];
+        }
+
+        if ($this->shouldUseDatabase()) {
+            $subscriptions = $this->rows(
+                $this->db
+                    ->table('subscriptions')
+                    ->where('workspace_id', $workspaceId)
+                    ->where('status', 'active')
+                    ->get()
+            );
+            $subscribers = $this->rows(
+                $this->db
+                    ->table('subscriber_accounts')
+                    ->where('workspace_id', $workspaceId)
+                    ->get()
+            );
+
+            $emails = [];
+            foreach ($subscribers as $row) {
+                $emails[(string) ($row['id'] ?? '')] = (string) ($row['email'] ?? '');
+            }
+
+            $planCounts = [];
+            $recent = [];
+            foreach ($subscriptions as $row) {
+                $plan = (string) ($row['plan'] ?? '');
+                $planCounts[$plan] = (int) ($planCounts[$plan] ?? 0) + 1;
+                $recent[] = [
+                    'email' => $emails[(string) ($row['subscriber_id'] ?? '')] ?? '',
+                    'plan' => $plan,
+                    'created_at' => (string) ($row['created_at'] ?? ''),
+                ];
+            }
+
+            usort($recent, static fn (array $left, array $right): int => strcmp((string) ($right['created_at'] ?? ''), (string) ($left['created_at'] ?? '')));
+
+            $plans = [];
+            foreach ($planCounts as $plan => $count) {
+                $plans[] = [
+                    'plan' => (string) $plan,
+                    'count' => (string) $count,
+                ];
+            }
+
+            usort($plans, static fn (array $left, array $right): int => ((int) ($right['count'] ?? 0)) <=> ((int) ($left['count'] ?? 0)));
+
+            return [
+                'count' => count($subscriptions),
+                'recent' => array_slice($recent, 0, 5),
+                'plans' => $plans,
+            ];
+        }
+
+        return [
+            'count' => 0,
+            'recent' => [],
+            'plans' => [],
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    public function recentAssistantQuestions(string $workspaceId): array
+    {
+        if ($workspaceId === '' || !$this->shouldUseDatabase()) {
+            return [];
+        }
+
+        $sessions = $this->rows(
+            $this->db
+                ->table('chat_sessions')
+                ->where('workspace_id', $workspaceId)
+                ->get()
+        );
+
+        usort($sessions, static fn (array $left, array $right): int => strcmp((string) ($right['created_at'] ?? ''), (string) ($left['created_at'] ?? '')));
+
+        return array_map(function (array $row): array {
+            return [
+                'title' => (string) ($row['title'] ?? ''),
+                'created_at' => (string) ($row['created_at'] ?? ''),
+            ];
+        }, array_slice($sessions, 0, 5));
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    public function knowledgeGapInsights(string $workspaceId): array
+    {
+        if ($workspaceId === '' || !$this->shouldUseDatabase()) {
+            return [];
+        }
+
+        $sessions = $this->rows(
+            $this->db
+                ->table('chat_sessions')
+                ->where('workspace_id', $workspaceId)
+                ->get()
+        );
+        $messages = $this->rows($this->db->table('chat_messages')->get());
+
+        $assistantBySession = [];
+        foreach ($messages as $message) {
+            if ((string) ($message['role'] ?? '') !== 'assistant') {
+                continue;
+            }
+            $assistantBySession[(string) ($message['session_id'] ?? '')] = (string) ($message['body'] ?? '');
+        }
+
+        $gaps = [];
+        foreach ($sessions as $session) {
+            $sessionId = (string) ($session['id'] ?? '');
+            $assistantBody = $assistantBySession[$sessionId] ?? '';
+            if (!str_starts_with($assistantBody, '[gap]')) {
+                continue;
+            }
+            $gaps[] = [
+                'title' => (string) ($session['title'] ?? ''),
+                'created_at' => (string) ($session['created_at'] ?? ''),
+                'signal' => 'needs_knowledge',
+            ];
+        }
+
+        usort($gaps, static fn (array $left, array $right): int => strcmp((string) ($right['created_at'] ?? ''), (string) ($left['created_at'] ?? '')));
+
+        return array_slice($gaps, 0, 5);
+    }
+
     private function shouldUseDatabase(): bool
     {
         if ($this->source !== 'db') {
@@ -115,6 +256,32 @@ final class OpsRepository
         return is_array($result) ? array_values(array_filter($result, 'is_array')) : [];
     }
 
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     * @return array<int, array<string, mixed>>
+     */
+    private function normalizeAuditRows(array $rows): array
+    {
+        return array_map(function (array $row): array {
+            $action = (string) ($row['action'] ?? '');
+            $row['action_label'] = match ($action) {
+                'knowledge.document.created' => 'Document created',
+                'knowledge.document.updated' => 'Document updated',
+                'knowledge.document.published' => 'Document published',
+                'knowledge.entry.created' => 'Entry created',
+                'knowledge.entry.updated' => 'Entry updated',
+                'knowledge.entry.published' => 'Entry published',
+                'workspace.member.invited' => 'Collaborator invited',
+                'ops.job.queued' => 'Ops job queued',
+                'publish_release' => 'Release published',
+                default => $action !== '' ? $action : 'unknown',
+            };
+            $row['target_preview'] = $this->snippet((string) ($row['target'] ?? ''), 120);
+
+            return $row;
+        }, $rows);
+    }
+
     private function nextId(string $prefix): string
     {
         return $prefix . '-' . date('YmdHis') . '-' . substr(md5(uniqid($prefix, true)), 0, 8);
@@ -123,5 +290,18 @@ final class OpsRepository
     private function timestamp(): string
     {
         return date('Y-m-d H:i:s');
+    }
+
+    private function snippet(string $text, int $limit): string
+    {
+        $text = trim(preg_replace('/\s+/u', ' ', $text) ?? '');
+        if ($text === '') {
+            return '';
+        }
+        if (mb_strlen($text, 'UTF-8') <= $limit) {
+            return $text;
+        }
+
+        return rtrim(mb_substr($text, 0, $limit, 'UTF-8')) . '...';
     }
 }

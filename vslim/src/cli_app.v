@@ -143,10 +143,9 @@ fn cli_handler_string_is_function_callable(name string) bool {
 	if callable_name == '' {
 		return false
 	}
-	exists := vphp.call_php('function_exists', [
+	return vphp.with_php_call_result_bool('function_exists', [
 		vphp.RequestOwnedZBox.new_string(callable_name).to_zval(),
 	])
-	return exists.is_valid() && exists.to_bool()
 }
 
 fn normalize_cli_command_handler_input(raw vphp.ZVal) !vphp.ZVal {
@@ -197,11 +196,11 @@ fn resolve_cli_command_runtime(mut cli VSlimCliApp, handler_z vphp.ZVal) !vphp.Z
 		if cli_handler_string_is_function_callable(class_name) {
 			return vphp.RequestOwnedZBox.new_string(class_name).to_zval()
 		}
-		exists := vphp.call_php('class_exists', [
+		exists := vphp.with_php_call_result_bool('class_exists', [
 			vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
 			vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 		])
-		if !exists.is_valid() || !exists.to_bool() {
+		if !exists {
 			return error('command class "${class_name}" does not exist')
 		}
 		mut core := ensure_cli_core_app(mut cli)

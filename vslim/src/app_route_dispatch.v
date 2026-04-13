@@ -44,6 +44,10 @@ fn dispatch_app_request_with_params(app &VSlimApp, req &VSlimRequest, trace_on b
 }
 
 fn dispatch_app_request_worker(app &VSlimApp, req &VSlimRequest) vphp.ZVal {
+	prev_app := enter_runtime_dispatch_app(app)
+	defer {
+		leave_runtime_dispatch_app(prev_app)
+	}
 	if app.routes.len > 0 {
 		raw, _, effective_req, ok := dispatch_php_routes_worker_with_params(app, req)
 		if ok {
@@ -89,6 +93,10 @@ fn dispatch_app_request_worker(app &VSlimApp, req &VSlimRequest) vphp.ZVal {
 }
 
 fn dispatch_app_psr15_request(app &VSlimApp, request_payload vphp.ZVal) &VSlimPsr7Response {
+	prev_app := enter_runtime_dispatch_app(app)
+	defer {
+		leave_runtime_dispatch_app(prev_app)
+	}
 	normalized_request := normalize_psr15_server_request_payload(vphp.RequestBorrowedZBox.from_zval(request_payload),
 		map[string]string{})
 	req := new_vslim_request_from_psr_server_request(vphp.RequestBorrowedZBox.from_zval(normalized_request),

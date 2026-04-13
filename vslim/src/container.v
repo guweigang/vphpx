@@ -226,10 +226,4 @@ fn throw_container_exception(msg string) {
 	vphp.throw_exception_class('VSlim\\Container\\ContainerException', msg, 0)
 }
 
-pub fn (c &VSlimContainer) free() {
-	unsafe {
-		c.entries.free()
-		c.factories.free()
-		c.resolved.free()
-	}
-}
+// VSlimContainer fields are automatically managed by the bridge lifecycle.

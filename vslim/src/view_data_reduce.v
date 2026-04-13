@@ -594,8 +594,10 @@ fn normalize_assets_prefix(prefix string) string {
 pub fn (mut view VSlimView) cleanup() {
 	// helpers is a direct bridge-owned field, so generic_free_raw() will
 	// release it after cleanup() returns.
-	unsafe {
-		view.base_path.free()
-		view.assets_prefix.free()
+	$if nongc ? {
+		unsafe {
+			view.base_path.free()
+			view.assets_prefix.free()
+		}
 	}
 }

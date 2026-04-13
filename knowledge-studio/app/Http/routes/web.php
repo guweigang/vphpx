@@ -30,19 +30,60 @@ return function (VSlim\App $app): void {
         '/console/knowledge/documents',
         [\App\Http\Controllers\ConsoleController::class, 'storeDocument'],
     );
+    $app->get(
+        '/console/knowledge/documents/:document',
+        [\App\Http\Controllers\ConsoleController::class, 'editDocument'],
+    );
+    $app->post(
+        '/console/knowledge/documents/:document',
+        [\App\Http\Controllers\ConsoleController::class, 'updateDocument'],
+    );
+    $app->post(
+        '/console/knowledge/documents/:document/publish',
+        [\App\Http\Controllers\ConsoleController::class, 'publishDocument'],
+    );
     $app->get_named(
         'studio.console.faqs',
         '/console/knowledge/faqs',
         [\App\Http\Controllers\ConsoleController::class, 'faqs'],
     );
+    $app->get_named(
+        'studio.console.members',
+        '/console/members',
+        [\App\Http\Controllers\ConsoleController::class, 'members'],
+    );
     $app->post(
         '/console/knowledge/faqs',
         [\App\Http\Controllers\ConsoleController::class, 'storeEntry'],
+    );
+    $app->post(
+        '/console/members',
+        [\App\Http\Controllers\ConsoleController::class, 'storeMember'],
+    );
+    $app->get(
+        '/console/knowledge/faqs/:entry',
+        [\App\Http\Controllers\ConsoleController::class, 'editEntry'],
+    );
+    $app->post(
+        '/console/knowledge/faqs/:entry',
+        [\App\Http\Controllers\ConsoleController::class, 'updateEntry'],
+    );
+    $app->post(
+        '/console/knowledge/faqs/:entry/publish',
+        [\App\Http\Controllers\ConsoleController::class, 'publishEntry'],
     );
     $app->get_named(
         'studio.console.ops',
         '/console/ops',
         [\App\Http\Controllers\ConsoleController::class, 'ops'],
+    );
+    $app->get(
+        '/console/releases',
+        [\App\Http\Controllers\ConsoleController::class, 'releases'],
+    );
+    $app->post(
+        '/console/releases',
+        [\App\Http\Controllers\ConsoleController::class, 'storeRelease'],
     );
     $app->post(
         '/console/ops/jobs',
@@ -58,6 +99,18 @@ return function (VSlim\App $app): void {
         'studio.assistant',
         '/brand/:tenant/assistant',
         [\App\Http\Controllers\PublicController::class, 'assistant'],
+    );
+    $app->get(
+        '/brand/:tenant/documents/:document',
+        [\App\Http\Controllers\PublicController::class, 'document'],
+    );
+    $app->get(
+        '/brand/:tenant/entries/:entry',
+        [\App\Http\Controllers\PublicController::class, 'entry'],
+    );
+    $app->post(
+        '/brand/:tenant/subscribe',
+        [\App\Http\Controllers\PublicController::class, 'subscribe'],
     );
 
     $app->get('/health', function () use ($app): array {

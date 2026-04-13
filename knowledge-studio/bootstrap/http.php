@@ -20,6 +20,56 @@ require_once $root . '/app/Support/PsrStubLoader.php';
 \App\Support\EnvLoader::bootstrap($root);
 \App\Support\PsrStubLoader::load();
 
+function knowledge_studio_worker_log_path(): string
+{
+    $path = getenv('KS_WORKER_LOG');
+    return is_string($path) ? trim($path) : '';
+}
+
+function knowledge_studio_log_worker(string $message): void
+{
+    $path = knowledge_studio_worker_log_path();
+    if ($path === '') {
+        return;
+    }
+    $line = '[' . date('c') . '][pid:' . getmypid() . '] ' . $message . "\n";
+    @file_put_contents($path, $line, FILE_APPEND);
+}
+
+set_exception_handler(static function (\Throwable $e): void {
+    knowledge_studio_log_worker(
+        'uncaught_exception class=' . $e::class .
+        ' message=' . $e->getMessage() .
+        ' file=' . $e->getFile() .
+        ' line=' . $e->getLine()
+    );
+    @file_put_contents(
+        'php://stderr',
+        '[ks-worker] uncaught_exception ' . $e::class . ': ' . $e->getMessage() . "\n"
+    );
+});
+
+register_shutdown_function(static function (): void {
+    $error = error_get_last();
+    if (!is_array($error)) {
+        return;
+    }
+    $fatalTypes = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR];
+    if (!in_array((int) ($error['type'] ?? 0), $fatalTypes, true)) {
+        return;
+    }
+    knowledge_studio_log_worker(
+        'fatal_shutdown type=' . (string) ($error['type'] ?? 0) .
+        ' message=' . (string) ($error['message'] ?? '') .
+        ' file=' . (string) ($error['file'] ?? '') .
+        ' line=' . (string) ($error['line'] ?? 0)
+    );
+    @file_put_contents(
+        'php://stderr',
+        '[ks-worker] fatal_shutdown ' . (string) ($error['message'] ?? '') . "\n"
+    );
+});
+
 function build_knowledge_studio_app(): VSlim\App
 {
     return (new VSlim\App())->bootstrapDir(dirname(__DIR__));

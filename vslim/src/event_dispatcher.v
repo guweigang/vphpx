@@ -186,11 +186,12 @@ fn psr14_parent_class_name(class_name string) string {
 	if class_name.trim_space() == '' {
 		return ''
 	}
-	res := vphp.call_php('get_parent_class', [vphp.RequestOwnedZBox.new_string(class_name).to_zval()])
-	if !res.is_valid() || res.is_null() || res.is_undef() || (res.is_bool() && !res.to_bool()) {
-		return ''
-	}
-	return res.to_string().trim_space()
+	return vphp.with_php_call_result_zval('get_parent_class', [vphp.RequestOwnedZBox.new_string(class_name).to_zval()], fn (res vphp.ZVal) string {
+		if !res.is_valid() || res.is_null() || res.is_undef() || (res.is_bool() && !res.to_bool()) {
+			return ''
+		}
+		return res.to_string().trim_space()
+	})
 }
 
 fn psr14_propagation_stopped(event vphp.ZVal) bool {

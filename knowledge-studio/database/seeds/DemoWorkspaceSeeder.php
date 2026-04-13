@@ -45,6 +45,9 @@ return new class extends VSlim\Database\Seeder {
                 'id' => (string) ($document['id'] ?? ''),
                 'workspace_id' => 'ws-acme',
                 'title' => (string) ($document['title'] ?? ''),
+                'summary' => (string) ($document['summary'] ?? $document['title'] ?? ''),
+                'body' => (string) ($document['body'] ?? $document['summary'] ?? $document['title'] ?? ''),
+                'language' => (string) ($document['language'] ?? 'zh-CN'),
                 'source_type' => (string) ($document['source_type'] ?? ''),
                 'status' => (string) ($document['status'] ?? ''),
                 'chunks' => (int) ($document['chunks'] ?? 0),
@@ -57,6 +60,9 @@ return new class extends VSlim\Database\Seeder {
                 'id' => (string) ($document['id'] ?? ''),
                 'workspace_id' => 'ws-nova',
                 'title' => (string) ($document['title'] ?? ''),
+                'summary' => (string) ($document['summary'] ?? $document['title'] ?? ''),
+                'body' => (string) ($document['body'] ?? $document['summary'] ?? $document['title'] ?? ''),
+                'language' => (string) ($document['language'] ?? 'zh-CN'),
                 'source_type' => (string) ($document['source_type'] ?? ''),
                 'status' => (string) ($document['status'] ?? ''),
                 'chunks' => (int) ($document['chunks'] ?? 0),
@@ -96,6 +102,9 @@ return new class extends VSlim\Database\Seeder {
                 'workspace_id' => $workspaceId,
                 'version' => 'v0.1',
                 'status' => 'published',
+                'notes' => $workspaceId === 'ws-acme'
+                    ? '首个公开版本，聚焦退款准入与高频结算问题。'
+                    : '首个公开版本，聚焦政策研究引用与摘要规范。',
                 'created_at' => '2026-04-08 00:00:00',
             ]);
             $this->insertIfMissing('assistant_profiles', 'assistant-' . $workspaceId, [
@@ -105,6 +114,96 @@ return new class extends VSlim\Database\Seeder {
                 'visibility' => 'public',
                 'created_at' => '2026-04-08 00:00:00',
             ]);
+        }
+
+        $this->insertIfMissing('subscriber_accounts', 'subscriber-acme-1', [
+            'id' => 'subscriber-acme-1',
+            'workspace_id' => 'ws-acme',
+            'email' => 'ops-buyer@finco.test',
+            'status' => 'active',
+            'created_at' => '2026-04-08 09:00:00',
+        ]);
+        $this->insertIfMissing('subscriber_accounts', 'subscriber-acme-2', [
+            'id' => 'subscriber-acme-2',
+            'workspace_id' => 'ws-acme',
+            'email' => 'research-lead@acmeclient.test',
+            'status' => 'active',
+            'created_at' => '2026-04-09 11:20:00',
+        ]);
+        $this->insertIfMissing('subscriptions', 'subscription-acme-1', [
+            'id' => 'subscription-acme-1',
+            'workspace_id' => 'ws-acme',
+            'subscriber_id' => 'subscriber-acme-1',
+            'plan' => 'starter',
+            'status' => 'active',
+            'created_at' => '2026-04-08 09:05:00',
+        ]);
+        $this->insertIfMissing('subscriptions', 'subscription-acme-2', [
+            'id' => 'subscription-acme-2',
+            'workspace_id' => 'ws-acme',
+            'subscriber_id' => 'subscriber-acme-2',
+            'plan' => 'team',
+            'status' => 'active',
+            'created_at' => '2026-04-09 11:25:00',
+        ]);
+
+        foreach ($catalog->releasesForWorkspace('ws-acme') as $release) {
+            $releaseId = (string) ($release['id'] ?? '');
+            foreach ($catalog->documentsForWorkspace('ws-acme') as $document) {
+                if ((string) ($document['status'] ?? '') !== 'published') {
+                    continue;
+                }
+                $this->insertIfMissing('knowledge_release_items', 'rel-item-' . $releaseId . '-' . (string) ($document['id'] ?? ''), [
+                    'id' => 'rel-item-' . $releaseId . '-' . (string) ($document['id'] ?? ''),
+                    'release_id' => $releaseId,
+                    'workspace_id' => 'ws-acme',
+                    'item_type' => 'document',
+                    'item_id' => (string) ($document['id'] ?? ''),
+                    'created_at' => '2026-04-08 00:00:00',
+                ]);
+            }
+            foreach ($catalog->entriesForWorkspace('ws-acme') as $entry) {
+                if ((string) ($entry['status'] ?? '') !== 'published') {
+                    continue;
+                }
+                $this->insertIfMissing('knowledge_release_items', 'rel-item-' . $releaseId . '-' . (string) ($entry['id'] ?? ''), [
+                    'id' => 'rel-item-' . $releaseId . '-' . (string) ($entry['id'] ?? ''),
+                    'release_id' => $releaseId,
+                    'workspace_id' => 'ws-acme',
+                    'item_type' => 'entry',
+                    'item_id' => (string) ($entry['id'] ?? ''),
+                    'created_at' => '2026-04-08 00:00:00',
+                ]);
+            }
+        }
+        foreach ($catalog->releasesForWorkspace('ws-nova') as $release) {
+            $releaseId = (string) ($release['id'] ?? '');
+            foreach ($catalog->documentsForWorkspace('ws-nova') as $document) {
+                if ((string) ($document['status'] ?? '') !== 'published') {
+                    continue;
+                }
+                $this->insertIfMissing('knowledge_release_items', 'rel-item-' . $releaseId . '-' . (string) ($document['id'] ?? ''), [
+                    'id' => 'rel-item-' . $releaseId . '-' . (string) ($document['id'] ?? ''),
+                    'release_id' => $releaseId,
+                    'workspace_id' => 'ws-nova',
+                    'item_type' => 'document',
+                    'item_id' => (string) ($document['id'] ?? ''),
+                    'created_at' => '2026-04-08 00:00:00',
+                ]);
+            }
+            foreach ($catalog->entriesForWorkspace('ws-nova') as $entry) {
+                if ((string) ($entry['status'] ?? '') !== 'published') {
+                    continue;
+                }
+                $this->insertIfMissing('knowledge_release_items', 'rel-item-' . $releaseId . '-' . (string) ($entry['id'] ?? ''), [
+                    'id' => 'rel-item-' . $releaseId . '-' . (string) ($entry['id'] ?? ''),
+                    'release_id' => $releaseId,
+                    'workspace_id' => 'ws-nova',
+                    'item_type' => 'entry',
+                    'item_id' => (string) ($entry['id'] ?? ''),
+                    'created_at' => '2026-04-08 00:00:00',
+                ]);
+            }
         }
 
         foreach ($catalog->jobsForWorkspace('ws-acme') as $job) {

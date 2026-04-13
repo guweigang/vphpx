@@ -1,10 +1,136 @@
 {{fill:nav}}{{ nav_label }}{{/fill}}
-{{fill:sidebar}}<p>Public-facing tenant page</p>{{/fill}}
+{{fill:sidebar}}<p>{{ sidebar_copy | trim }}</p>{{/fill}}
 {{fill:footer}}<small>{{ footer_note }}</small>{{/fill}}
-<section>
-  <h1>{{ title | trim }}</h1>
-  <p>{{ workspace_name | trim }}</p>
-  <p>{{ tagline | trim }}</p>
-  <p>Tenant slug: {{ workspace_slug | trim }}</p>
-  <p><a href="{{ assistant_url | trim }}">Open assistant preview</a></p>
+<section class="ks-section">
+  <p class="ks-eyebrow">{{ eyebrow | trim }}</p>
+  <article class="ks-spotlight">
+    <div class="ks-spotlight-grid">
+      <div class="ks-spotlight-copy">
+        <h1 class="ks-title">{{ title | trim }}</h1>
+        <p class="ks-copy">{{ tagline | trim }}</p>
+        <div class="ks-meta">
+          <span class="ks-badge">{{ tenant_label | trim }} {{ workspace_slug | trim }}</span>
+          <span class="ks-badge">{{ assistant_label | trim }} {{ assistant_name | trim }}</span>
+          <span class="ks-badge">{{ release_label | trim }} {{ release_version | trim }} / {{ release_status | trim }}</span>
+        </div>
+        <div class="ks-spotlight-actions">
+          <a class="ks-btn" href="{{ assistant_url | trim }}">{{ assistant_cta | trim }}</a>
+          <a class="ks-btn-secondary" href="#plans">{{ offers_title | trim }}</a>
+        </div>
+      </div>
+      <aside class="ks-spotlight-side">
+        <article class="ks-panel">
+          <h3>{{ subscribe_title | trim }}</h3>
+          <p class="ks-copy">{{ subscribe_intro | trim }}</p>
+          <form class="ks-form" method="post" action="{{ subscribe_action | trim }}">
+            <div class="ks-field">
+              <label>{{ subscribe_email_label | trim }}</label>
+              <input type="email" name="email" placeholder="team@example.com">
+            </div>
+            <div class="ks-field">
+              <label>{{ subscribe_plan_label | trim }}</label>
+              <select name="plan">
+                <option value="starter" {{ selected_plan_starter }}>Starter</option>
+                <option value="team" {{ selected_plan_team }}>Team</option>
+                <option value="enterprise" {{ selected_plan_enterprise }}>Enterprise</option>
+              </select>
+            </div>
+            <ks-subscribe-intake
+              data-vphp-island="lit"
+              email-selector="input[name='email']"
+              plan-selector="select[name='plan']"
+              empty-label="{{ lit_subscribe_empty_label | trim }}"
+              active-label="{{ lit_subscribe_active_label | trim }}"
+              helper-prefix="{{ lit_subscribe_helper_prefix | trim }}"
+            ></ks-subscribe-intake>
+            <button class="ks-subscribe-btn" type="submit"><span>{{ subscribe_submit_label | trim }}</span></button>
+          </form>
+        </article>
+      </aside>
+    </div>
+    <div class="ks-grid two">
+      <article class="ks-panel">
+        <h3>{{ story_title | trim }}</h3>
+        <p class="ks-copy">{{ story_body | trim }}</p>
+        <ul class="ks-list">
+          <li><strong>{{ journey_one_title | trim }}</strong>{{ journey_one_body | trim }}</li>
+          <li><strong>{{ journey_two_title | trim }}</strong>{{ journey_two_body | trim }}</li>
+          <li><strong>{{ journey_three_title | trim }}</strong>{{ journey_three_body | trim }}</li>
+        </ul>
+      </article>
+      <article class="ks-panel">
+        <h3>{{ conversion_title | trim }}</h3>
+        <p class="ks-copy">{{ conversion_body | trim }}</p>
+        <ul class="ks-list">
+          <li><strong>{{ conversion_one_title | trim }}</strong>{{ conversion_one_body | trim }}</li>
+          <li><strong>{{ conversion_two_title | trim }}</strong>{{ conversion_two_body | trim }}</li>
+          <li><strong>{{ conversion_three_title | trim }}</strong>{{ conversion_three_body | trim }}</li>
+        </ul>
+        <div class="ks-actions">
+          <a class="ks-btn" href="#plans">{{ offers_title | trim }}</a>
+          <a class="ks-btn-secondary" href="{{ assistant_url | trim }}">{{ assistant_cta | trim }}</a>
+        </div>
+      </article>
+    </div>
+    {{if:release_notes}}<article class="ks-panel">
+      <h3>{{ release_notes_title | trim }}</h3>
+      <p class="ks-copy">{{ release_notes | trim }}</p>
+    </article>{{/if}}
+    <div class="ks-kpi-row">
+      <article class="ks-kpi">
+        <p class="ks-kpi-value">{{ documents_total | trim }}</p>
+        <p class="ks-kpi-label">{{ documents_label | trim }}</p>
+      </article>
+      <article class="ks-kpi">
+        <p class="ks-kpi-value">{{ entries_total | trim }}</p>
+        <p class="ks-kpi-label">{{ entries_label | trim }}</p>
+      </article>
+      <article class="ks-kpi">
+        <p class="ks-kpi-value">{{ subscriber_count | trim }}</p>
+        <p class="ks-kpi-label">{{ subscribers_label | trim }}</p>
+      </article>
+    </div>
+  </article>
+  {{if:subscribe_notice}}<div class="ks-notice success">{{ subscribe_notice | trim }}</div>{{/if}}
+  {{if:subscribe_error}}<div class="ks-notice error">{{ subscribe_error | trim }}</div>{{/if}}
+  <article class="ks-card" id="plans">
+    <h2>{{ offers_title | trim }}</h2>
+    <p class="ks-copy">{{ subscription_body | trim }}</p>
+    <p class="ks-copy">{{ offers_intro | trim }}</p>
+    <div class="ks-pricing-grid">
+{{for:offers}}      <article class="ks-card ks-pricing-card">
+        {{if:item.featured_badge}}<span class="ks-badge ks-pricing-badge">{{ item.featured_badge }}</span>{{/if}}
+        <div class="ks-pricing-head">
+          <h3>{{ item.name }}</h3>
+          <p class="ks-copy">{{ item.summary }}</p>
+        </div>
+        <div class="ks-pricing-price">
+          <p class="ks-metric-value">{{ item.price }}</p>
+          <p class="ks-metric-label">{{ item.annual }}</p>
+        </div>
+        <p class="ks-copy ks-pricing-features">{{ item.feature_summary }}</p>
+        <div class="ks-pricing-actions">
+          <a class="ks-btn-secondary" href="{{ item.action_url }}">{{ item.cta_label }}</a>
+        </div>
+      </article>{{/for}}
+    </div>
+  </article>
+  <article class="ks-card">
+    <h2>{{ proof_title | trim }}</h2>
+    <p class="ks-copy">{{ proof_body | trim }}</p>
+    <div class="ks-grid two">
+      <div>
+        <h3>{{ preview_documents_title | trim }}</h3>
+        <div class="ks-stack">
+{{for:public_preview.documents}}          <article class="ks-result-card"><strong><a href="{{ item.detail_url }}">{{ item.title }}</a></strong><p class="ks-copy">{{ item.coverage_focus }}</p><p class="ks-copy">{{ item.summary }}</p><div class="ks-result-meta"><span>{{ item.meta }}</span></div></article>{{/for}}
+        </div>
+      </div>
+      <div>
+        <h3>{{ preview_entries_title | trim }}</h3>
+        <div class="ks-stack">
+{{for:public_preview.entries}}          <article class="ks-result-card"><strong><a href="{{ item.detail_url }}">{{ item.title }}</a></strong><p class="ks-copy">{{ item.coverage_focus }}</p><p class="ks-copy">{{ item.summary }}</p><div class="ks-result-meta"><span>{{ item.meta }}</span></div></article>{{/for}}
+        </div>
+      </div>
+    </div>
+  </article>
 </section>
