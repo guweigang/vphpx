@@ -7,13 +7,11 @@ fn bootstrap_file_return_error(path string) string {
 }
 
 fn php_is_file(path string) bool {
-	exists := vphp.call_php('is_file', [vphp.RequestOwnedZBox.new_string(path).to_zval()])
-	return exists.is_valid() && exists.to_bool()
+	return vphp.with_php_call_result_bool('is_file', [vphp.RequestOwnedZBox.new_string(path).to_zval()])
 }
 
 fn php_is_dir(path string) bool {
-	exists := vphp.call_php('is_dir', [vphp.RequestOwnedZBox.new_string(path).to_zval()])
-	return exists.is_valid() && exists.to_bool()
+	return vphp.with_php_call_result_bool('is_dir', [vphp.RequestOwnedZBox.new_string(path).to_zval()])
 }
 
 fn php_glob_paths(pattern string) []string {
@@ -65,11 +63,10 @@ fn php_class_exists(class_name string) bool {
 	if class_name.trim_space() == '' {
 		return false
 	}
-	exists := vphp.call_php('class_exists', [
+	return vphp.with_php_call_result_bool('class_exists', [
 		vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
 		vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 	])
-	return exists.is_valid() && exists.to_bool()
 }
 
 fn is_windows_drive_root_path(path string) bool {

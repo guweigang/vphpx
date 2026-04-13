@@ -87,11 +87,12 @@ fn vslim_trace_mem_should_log(app &VSlimApp) bool {
 }
 
 fn vslim_mem_usage_bytes() i64 {
-	val := vphp.call_php('memory_get_usage', [vphp.RequestOwnedZBox.new_bool(true).to_zval()])
-	if !val.is_valid() || val.is_null() || val.is_undef() {
-		return -1
-	}
-	return val.to_i64()
+	return vphp.with_php_call_result_zval('memory_get_usage', [vphp.RequestOwnedZBox.new_bool(true).to_zval()], fn (val vphp.ZVal) i64 {
+		if !val.is_valid() || val.is_null() || val.is_undef() {
+			return -1
+		}
+		return val.to_i64()
+	})
 }
 
 fn vslim_trace_mem_log(app &VSlimApp, req &VSlimRequest, stage string, base_bytes i64) {

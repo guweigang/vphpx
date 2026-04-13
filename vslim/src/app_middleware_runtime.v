@@ -2,6 +2,15 @@ module main
 
 import vphp
 
+fn release_request_owned_boxes(mut list []vphp.RequestOwnedZBox) {
+	for i in 0 .. list.len {
+		list[i].release()
+	}
+	unsafe {
+		list.free()
+	}
+}
+
 fn build_php_psr15_next_handler_object(chain &MiddlewareChain) vphp.ZVal {
 	unsafe {
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
@@ -69,13 +78,13 @@ fn dispatch_php_middleware_chain_with_context(app &VSlimApp, ctx PipelineRequest
 		plan:        chain_plan
 	}
 	defer {
-		vphp.release_persistent_boxes(mut chain.middlewares)
+		release_request_owned_boxes(mut chain.middlewares)
 	}
 	raw := chain.dispatch(ctx.payload_ref.borrowed()) or {
 		msg := if err.msg() == '' { 'Route handler is not callable' } else { err.msg() }
 		mut error_payload := ctx.payload_ref.clone_request_owned()
 		if forwarded_request := take_forwarded_request_snapshot(forwarded_request_key(chain)) {
-			error_payload = vphp.RequestOwnedZBox.from_zval(request_with_forwarded_snapshot(ctx.payload_ref.borrowed(),
+			error_payload = vphp.RequestOwnedZBox.adopt_zval(request_with_forwarded_snapshot(ctx.payload_ref.borrowed(),
 				ctx.route_params, forwarded_request))
 		}
 		error_ctx := pipeline_request_context_with_payload(ctx, error_payload)
@@ -84,7 +93,7 @@ fn dispatch_php_middleware_chain_with_context(app &VSlimApp, ctx PipelineRequest
 	}
 	cli_debug_log('middleware.chain.raw type=${raw.type_name()} class=${raw.class_name()} valid=${raw.is_valid()} null=${raw.is_null()} undef=${raw.is_undef()}')
 	if forwarded_request := take_forwarded_request_snapshot(forwarded_request_key(chain)) {
-		return raw, vphp.RequestOwnedZBox.from_zval(request_with_forwarded_snapshot(ctx.payload_ref.borrowed(),
+		return raw, vphp.RequestOwnedZBox.adopt_zval(request_with_forwarded_snapshot(ctx.payload_ref.borrowed(),
 			ctx.route_params, forwarded_request))
 	}
 	return raw, ctx.payload_ref.clone_request_owned()
@@ -103,17 +112,13 @@ fn (mut chain MiddlewareChain) dispatch(payload vphp.RequestBorrowedZBox) !vphp.
 	mw := chain.middlewares[chain.index]
 	chain.index++
 	if !mw.is_valid() || mw.is_null() || mw.is_undef() {
-		cli_debug_log('middleware.invalid idx=${chain.index - 1} kind=${mw.kind_name()} valid=${mw.is_valid()} null=${mw.is_null()} undef=${mw.is_undef()} total=${chain.middlewares.len}')
+		cli_debug_log('middleware.invalid idx=${chain.index - 1} valid=${mw.is_valid()} null=${mw.is_null()} undef=${mw.is_undef()} total=${chain.middlewares.len}')
 		return error('Middleware is not valid')
 	}
-	mut mw_req := mw.clone_request_owned()
-	defer {
-		mw_req.release()
+	if !mw.is_valid() || mw.is_null() || mw.is_undef() {
+		cli_debug_log('middleware.req.invalid idx=${chain.index - 1} valid=${mw.is_valid()} null=${mw.is_null()} undef=${mw.is_undef()}')
 	}
-	if !mw_req.is_valid() || mw_req.is_null() || mw_req.is_undef() {
-		cli_debug_log('middleware.req.invalid idx=${chain.index - 1} valid=${mw_req.is_valid()} null=${mw_req.is_null()} undef=${mw_req.is_undef()} kind=${mw.kind_name()}')
-	}
-	raw := dispatch_php_middleware_entry(mut chain, mw_req.borrowed(), payload)!
+	raw := dispatch_php_middleware_entry(mut chain, mw.borrowed(), payload)!
 	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
 		return error('Middleware must return a response')
 	}
@@ -134,28 +139,20 @@ fn (mut chain MiddlewareChain) dispatch_pre_normalized(payload vphp.RequestBorro
 	if !mw.is_valid() || mw.is_null() || mw.is_undef() {
 		return error('Middleware is not valid')
 	}
-	mut mw_req := mw.clone_request_owned()
-	defer {
-		mw_req.release()
-	}
-	raw := dispatch_php_middleware_entry(mut chain, mw_req.borrowed(), payload)!
+	raw := dispatch_php_middleware_entry(mut chain, mw.borrowed(), payload)!
 	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
 		return error('Middleware must return a response')
 	}
 	return raw
 }
 
-fn dispatch_php_after_phase_middleware_psr(app &VSlimApp, ctx PipelineRequestContext, hook vphp.PersistentOwnedZBox, current &VSlimPsr7Response) !vphp.ZVal {
+fn dispatch_php_after_phase_middleware_psr(app &VSlimApp, ctx PipelineRequestContext, hook vphp.RequestBorrowedZBox, current &VSlimPsr7Response) !vphp.ZVal {
 	next_handler := build_php_psr15_fixed_response_handler_object(current)
-	if !hook.is_valid() || hook.is_null() || hook.is_undef() {
+	if !hook.is_valid() || hook.to_zval().is_null() || hook.to_zval().is_undef() {
 		return error('Middleware is not valid')
 	}
-	mut hook_req := hook.clone_request_owned()
-	defer {
-		hook_req.release()
-	}
 	return dispatch_php_phase_middleware_raw(app, ctx.payload_ref.borrowed(), ctx.route_params,
-		hook_req.borrowed(), next_handler)
+		hook, next_handler)
 }
 
 fn apply_php_after_middlewares(app &VSlimApp, ctx PipelineRequestContext, initial VSlimResponse) VSlimResponse {
@@ -177,16 +174,14 @@ fn apply_php_after_middlewares_psr(app &VSlimApp, ctx PipelineRequestContext, in
 	mut current := unsafe { initial }
 	mut all := collect_after_middlewares(app, group_after)
 	defer {
-		vphp.release_persistent_boxes(mut all)
+		release_request_owned_boxes(mut all)
 	}
 	for hook in all {
 		if !hook.is_valid() || hook.is_null() || hook.is_undef() {
 			return error_response_from_context_psr(app, ctx, 500, 'Middleware is not valid',
 				'handler_not_callable')
 		}
-		mut hook_req := hook.clone_request_owned()
-		resolve_php_phase_middleware_target(app, hook_req.borrowed()) or {
-			hook_req.release()
+		resolve_php_phase_middleware_target(app, hook.borrowed()) or {
 			msg := if err.msg() == '' {
 				'Phase middleware must implement Psr\\Http\\Server\\MiddlewareInterface'
 			} else {
@@ -194,8 +189,7 @@ fn apply_php_after_middlewares_psr(app &VSlimApp, ctx PipelineRequestContext, in
 			}
 			return error_response_from_context_psr(app, ctx, 500, msg, 'handler_not_callable')
 		}
-		hook_req.release()
-		raw := dispatch_php_after_phase_middleware_psr(app, ctx, hook, current) or {
+		raw := dispatch_php_after_phase_middleware_psr(app, ctx, hook.borrowed(), current) or {
 			msg := if err.msg() == '' { 'Middleware is not callable' } else { err.msg() }
 			return error_response_from_context_psr(app, ctx, 500, msg, 'handler_not_callable')
 		}

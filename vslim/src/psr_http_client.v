@@ -195,27 +195,33 @@ fn new_psr18_stream_context(client &VSlimPsr18Client, request Psr18OutboundReque
 	http_options.add_assoc_long('follow_location', 0)
 	mut ctx_opts := new_array_zval()
 	add_assoc_zval(ctx_opts, 'http', http_options)
-	return vphp.call_php('stream_context_create', [ctx_opts])
+	mut ctx := vphp.php_call_request_owned_box('stream_context_create', [ctx_opts])
+	return ctx.take_zval()
 }
 
 fn psr18_open_stream(url string, ctx vphp.ZVal) vphp.ZVal {
 	if vphp.function_exists('set_error_handler') && vphp.function_exists('restore_error_handler') {
-		_ = vphp.call_php('set_error_handler', [psr18_warning_handler()])
-		fp := vphp.call_php('fopen', [
+		_ = vphp.with_php_call_result_zval('set_error_handler', [psr18_warning_handler()], fn (_ vphp.ZVal) bool {
+			return true
+		})
+		mut fp := vphp.php_call_request_owned_box('fopen', [
 			vphp.RequestOwnedZBox.new_string(url).to_zval(),
 			vphp.RequestOwnedZBox.new_string('r').to_zval(),
 			vphp.RequestOwnedZBox.new_bool(false).to_zval(),
 			ctx,
 		])
-		_ = vphp.call_php('restore_error_handler', [])
-		return fp
+		_ = vphp.with_php_call_result_zval('restore_error_handler', [], fn (_ vphp.ZVal) bool {
+			return true
+		})
+		return fp.take_zval()
 	}
-	return vphp.call_php('fopen', [
+	mut fp := vphp.php_call_request_owned_box('fopen', [
 		vphp.RequestOwnedZBox.new_string(url).to_zval(),
 		vphp.RequestOwnedZBox.new_string('r').to_zval(),
 		vphp.RequestOwnedZBox.new_bool(false).to_zval(),
 		ctx,
 	])
+	return fp.take_zval()
 }
 
 fn psr18_warning_handler() vphp.ZVal {
@@ -253,39 +259,40 @@ fn read_last_http_response_head() Psr18ParsedResponseHead {
 			header_names: map[string]string{}
 		}
 	}
-	headers_z := vphp.call_php('http_get_last_response_headers', [])
-	if !headers_z.is_array() {
-		return Psr18ParsedResponseHead{
+	return vphp.with_php_call_result_zval('http_get_last_response_headers', [], fn (headers_z vphp.ZVal) Psr18ParsedResponseHead {
+		if !headers_z.is_array() {
+			return Psr18ParsedResponseHead{
+				headers: map[string][]string{}
+				header_names: map[string]string{}
+			}
+		}
+		mut current := Psr18ParsedResponseHead{
 			headers: map[string][]string{}
 			header_names: map[string]string{}
 		}
-	}
-	mut current := Psr18ParsedResponseHead{
-		headers: map[string][]string{}
-		header_names: map[string]string{}
-	}
-	for line_z in zval_array_items(headers_z) {
-		line := line_z.to_string().trim_space()
-		if line == '' {
-			continue
+		for line_z in zval_array_items(headers_z) {
+			line := line_z.to_string().trim_space()
+			if line == '' {
+				continue
+			}
+			if line.starts_with('HTTP/') {
+				current = parse_psr18_status_line(line)
+				continue
+			}
+			sep := line.index(':') or { continue }
+			name := line[..sep].trim_space()
+			value := line[sep + 1..].trim_space()
+			key := normalize_psr7_header_name(name)
+			if key == '' {
+				continue
+			}
+			mut values := current.headers[key] or { []string{} }
+			values << value
+			current.headers[key] = values
+			current.header_names[key] = name
 		}
-		if line.starts_with('HTTP/') {
-			current = parse_psr18_status_line(line)
-			continue
-		}
-		sep := line.index(':') or { continue }
-		name := line[..sep].trim_space()
-		value := line[sep + 1..].trim_space()
-		key := normalize_psr7_header_name(name)
-		if key == '' {
-			continue
-		}
-		mut values := current.headers[key] or { []string{} }
-		values << value
-		current.headers[key] = values
-		current.header_names[key] = name
-	}
-	return current
+		return current
+	})
 }
 
 fn parse_psr18_status_line(line string) Psr18ParsedResponseHead {
@@ -314,7 +321,9 @@ fn parse_psr18_status_line(line string) Psr18ParsedResponseHead {
 
 fn clear_last_php_error() {
 	if vphp.function_exists('error_clear_last') {
-		_ = vphp.call_php('error_clear_last', [])
+		_ = vphp.with_php_call_result_zval('error_clear_last', [], fn (_ vphp.ZVal) bool {
+			return true
+		})
 	}
 }
 
@@ -322,12 +331,13 @@ fn last_php_error_message(default_message string) string {
 	if !vphp.function_exists('error_get_last') {
 		return default_message
 	}
-	err := vphp.call_php('error_get_last', [])
-	if !err.is_array() {
-		return default_message
-	}
-	message := zval_string_key(err, 'message', '').trim_space()
-	return if message == '' { default_message } else { message }
+	return vphp.with_php_call_result_zval('error_get_last', [], fn [default_message] (err vphp.ZVal) string {
+		if !err.is_array() {
+			return default_message
+		}
+		message := zval_string_key(err, 'message', '').trim_space()
+		return if message == '' { default_message } else { message }
+	})
 }
 
 fn throw_psr18_request_exception(message string, request vphp.ZVal) {

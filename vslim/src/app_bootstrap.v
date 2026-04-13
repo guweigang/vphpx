@@ -38,11 +38,11 @@ fn normalize_service_provider_input(raw vphp.ZVal) !vphp.ZVal {
 		if class_name == '' {
 			return error('provider class name must not be empty')
 		}
-		exists := vphp.call_php('class_exists', [
+		exists := vphp.with_php_call_result_bool('class_exists', [
 			vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
 			vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 		])
-		if !exists.to_bool() {
+		if !exists {
 			return error('provider class "${class_name}" does not exist')
 		}
 		provider := vphp.php_class(class_name).construct([])

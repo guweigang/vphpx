@@ -89,9 +89,9 @@ fn session_new_string_map_zval(values map[string]string) vphp.ZVal {
 }
 
 fn session_base64url_encode(raw string) string {
-	mut encoded := vphp.call_php('base64_encode', [
+	mut encoded := vphp.with_php_call_result_string('base64_encode', [
 		vphp.RequestOwnedZBox.new_string(raw).to_zval(),
-	]).to_string()
+	])
 	encoded = encoded.replace('+', '-').replace('/', '_').replace('=', '')
 	return encoded
 }
@@ -105,33 +105,35 @@ fn session_base64url_decode(raw string) !string {
 	if padding > 0 {
 		normalized += '='.repeat(4 - padding)
 	}
-	decoded := vphp.call_php('base64_decode', [
+	mut decoded := vphp.php_call_request_owned_box('base64_decode', [
 		vphp.RequestOwnedZBox.new_string(normalized).to_zval(),
 		vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 	])
+	defer {
+		decoded.release()
+	}
 	if !decoded.is_valid() || decoded.is_null() || decoded.is_undef() {
 		return error('invalid base64 payload')
 	}
-	if decoded.is_bool() && !decoded.to_bool() {
+	if decoded.to_zval().is_bool() && !decoded.to_bool() {
 		return error('invalid base64 payload')
 	}
 	return decoded.to_string()
 }
 
 fn session_sign(payload string, secret string) string {
-	return vphp.call_php('hash_hmac', [
+	return vphp.with_php_call_result_string('hash_hmac', [
 		vphp.RequestOwnedZBox.new_string('sha256').to_zval(),
 		vphp.RequestOwnedZBox.new_string(payload).to_zval(),
 		vphp.RequestOwnedZBox.new_string(secret).to_zval(),
-	]).to_string()
+	])
 }
 
 fn session_secure_equals(left string, right string) bool {
-	res := vphp.call_php('hash_equals', [
+	return vphp.with_php_call_result_bool('hash_equals', [
 		vphp.RequestOwnedZBox.new_string(left).to_zval(),
 		vphp.RequestOwnedZBox.new_string(right).to_zval(),
 	])
-	return res.is_valid() && res.to_bool()
 }
 
 fn session_encode_values(values map[string]string, secret string) string {

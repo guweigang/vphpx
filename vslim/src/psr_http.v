@@ -484,7 +484,8 @@ pub fn (r &VSlimPsr7Response) str() string {
 
 pub fn (mut r VSlimPsr7Response) cleanup() {
 	if r.body_ref != unsafe { nil } {
-		vphp.unregister_vptr_root(r.body_ref)
+		// `getBody()` is exported as a borrowed return, so nested stream refs are
+		// not owned vptr roots of the parent response object.
 		r.body_ref = unsafe { nil }
 	}
 }
@@ -677,11 +678,12 @@ pub fn (r &VSlimPsr7Request) str() string {
 
 pub fn (mut r VSlimPsr7Request) cleanup() {
 	if r.body_ref != unsafe { nil } {
-		vphp.unregister_vptr_root(r.body_ref)
+		// `getBody()` is exported as a borrowed return; parent cleanup should only
+		// sever the reference, not mutate the global vptr root table.
 		r.body_ref = unsafe { nil }
 	}
 	if r.uri_ref != unsafe { nil } {
-		vphp.unregister_vptr_root(r.uri_ref)
+		// `getUri()` is exported as a borrowed return for PSR-7 requests.
 		r.uri_ref = unsafe { nil }
 	}
 }
@@ -830,11 +832,12 @@ pub fn (r &VSlimPsr7ServerRequest) with_body(body vphp.RequestBorrowedZBox) &VSl
 
 pub fn (mut r VSlimPsr7ServerRequest) cleanup() {
 	if r.body_ref != unsafe { nil } {
-		vphp.unregister_vptr_root(r.body_ref)
+		// `getBody()` is exported as a borrowed return; nested stream refs are not
+		// parent-owned vptr roots and must not be unregistered here.
 		r.body_ref = unsafe { nil }
 	}
 	if r.uri_ref != unsafe { nil } {
-		vphp.unregister_vptr_root(r.uri_ref)
+		// `getUri()` is exported as a borrowed return for server requests.
 		r.uri_ref = unsafe { nil }
 	}
 	// Note: other fields are PersistentOwnedZBox or native V,
@@ -1598,15 +1601,15 @@ fn zval_to_upload_error_or(value vphp.ZVal, default_value int) int {
 	return int(value.to_i64())
 }
 
+fn empty_persistent_array() vphp.PersistentOwnedZBox {
+	return vphp.PersistentOwnedZBox.of(new_array_zval())
+}
+
 fn zval_to_optional_trimmed_string(value vphp.ZVal) ?string {
 	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return none
 	}
 	return value.to_string().trim_space()
-}
-
-fn empty_persistent_array() vphp.PersistentOwnedZBox {
-	return vphp.PersistentOwnedZBox.of(new_array_zval())
 }
 
 fn persistent_array_owned(value vphp.ZVal) vphp.PersistentOwnedZBox {
@@ -1637,7 +1640,9 @@ fn persistent_assoc_zvals(value vphp.PersistentOwnedZBox) map[string]vphp.ZVal {
 		return map[string]vphp.ZVal{}
 	}
 	return value.with_request_zval(fn (z vphp.ZVal) map[string]vphp.ZVal {
-		return z.to_v[map[string]vphp.ZVal]() or { map[string]vphp.ZVal{} }
+		return z.foreach_with_ctx[map[string]vphp.ZVal](map[string]vphp.ZVal{}, fn (key vphp.ZVal, child vphp.ZVal, mut acc map[string]vphp.ZVal) {
+			acc[key.to_string()] = child
+		})
 	})
 }
 
@@ -1648,10 +1653,11 @@ fn persistent_assoc_with_value(value vphp.PersistentOwnedZBox, key string, child
 	}
 	if value.is_valid() && !value.is_null() && !value.is_undef() && value.is_array() {
 		value.with_request_zval(fn [mut out] (raw vphp.ZVal) bool {
-			for existing_key in raw.assoc_keys() {
-				existing := raw.get(existing_key) or { continue }
-				add_assoc_zval(out, existing_key, existing.dup())
-			}
+			raw.foreach(fn [mut out] (key vphp.ZVal, val vphp.ZVal) {
+				if key.is_string() {
+					add_assoc_zval(out, key.get_string(), val.dup())
+				}
+			})
 			return true
 		})
 	}
@@ -1663,13 +1669,11 @@ fn persistent_assoc_without_key(value vphp.PersistentOwnedZBox, key string) vphp
 	mut out := new_array_zval()
 	if value.is_valid() && !value.is_null() && !value.is_undef() && value.is_array() {
 		value.with_request_zval(fn [mut out, key] (raw vphp.ZVal) bool {
-			for existing_key in raw.assoc_keys() {
-				if existing_key == key {
-					continue
+			raw.foreach(fn [mut out, key] (k vphp.ZVal, val vphp.ZVal) {
+				if k.is_string() && k.get_string() != key {
+					add_assoc_zval(out, k.get_string(), val.dup())
 				}
-				existing := raw.get(existing_key) or { continue }
-				add_assoc_zval(out, existing_key, existing.dup())
-			}
+			})
 			return true
 		})
 	}
@@ -1968,18 +1972,47 @@ fn parse_psr7_uri(raw string) VSlimPsr7Uri {
 			port: -1
 		}
 	}
-	parsed := vphp.call_php('parse_url', [vphp.RequestOwnedZBox.new_string(trimmed).to_zval()])
-	if parsed.is_valid() && parsed.is_array() {
-		host := zval_string_key(parsed, 'host', '')
+	// Relative request targets are the hot path for dispatch_request(). Keep URI
+	// normalization inside V instead of bouncing bridge values back through
+	// PHP's `parse_url()`.
+	if trimmed.starts_with('/') || trimmed.starts_with('?') || trimmed.starts_with('#')
+		|| (!trimmed.contains('://') && !trimmed.starts_with('//')) {
+		return fallback_psr7_uri(trimmed)
+	}
+	mut found := false
+	mut scheme := ''
+	mut user := ''
+	mut password := ''
+	mut host := ''
+	mut path := ''
+	mut query := ''
+	mut fragment := ''
+	mut port := -1
+	vphp.with_php_call_result_zval('parse_url', [vphp.RequestOwnedZBox.new_string(trimmed).to_zval()], fn [mut found, mut scheme, mut user, mut password, mut host, mut path, mut query, mut fragment, mut port] (parsed vphp.ZVal) bool {
+		if !(parsed.is_valid() && parsed.is_array()) {
+			return false
+		}
+		host = normalize_psr7_host(zval_string_key(parsed, 'host', ''))
+		scheme = normalize_psr7_scheme(zval_string_key(parsed, 'scheme', ''))
+		user = zval_string_key(parsed, 'user', '')
+		password = zval_string_key(parsed, 'pass', '')
+		port = normalize_psr7_port(zval_int_key(parsed, 'port', -1))
+		path = normalize_psr7_path(zval_string_key(parsed, 'path', ''), host)
+		query = normalize_psr7_query(zval_string_key(parsed, 'query', ''))
+		fragment = normalize_psr7_fragment(zval_string_key(parsed, 'fragment', ''))
+		found = true
+		return true
+	})
+	if found {
 		return VSlimPsr7Uri{
-			scheme: normalize_psr7_scheme(zval_string_key(parsed, 'scheme', ''))
-			user: zval_string_key(parsed, 'user', '')
-			password: zval_string_key(parsed, 'pass', '')
-			host: normalize_psr7_host(host)
-			port: normalize_psr7_port(zval_int_key(parsed, 'port', -1))
-			path: normalize_psr7_path(zval_string_key(parsed, 'path', ''), host)
-			query: normalize_psr7_query(zval_string_key(parsed, 'query', ''))
-			fragment: normalize_psr7_fragment(zval_string_key(parsed, 'fragment', ''))
+			scheme: scheme
+			user: user
+			password: password
+			host: host
+			port: port
+			path: path
+			query: query
+			fragment: fragment
 		}
 	}
 	return fallback_psr7_uri(trimmed)
@@ -2133,17 +2166,26 @@ fn php_stream_metadata(resource vphp.ZVal) ?map[string]string {
 
 fn read_stream_factory_file(filename string, mode string) ?string {
 	if mode.contains('r') {
-		exists := vphp.call_php('is_file', [vphp.RequestOwnedZBox.new_string(filename).to_zval()])
-		if !exists.is_valid() || !exists.is_bool() || !exists.to_bool() {
+		exists := vphp.with_php_call_result_bool('is_file', [vphp.RequestOwnedZBox.new_string(filename).to_zval()])
+		if !exists {
 			vphp.throw_exception_class('RuntimeException', 'failed to open stream from file', 0)
 			return none
 		}
-		res := vphp.call_php('file_get_contents', [vphp.RequestOwnedZBox.new_string(filename).to_zval()])
-		if !res.is_valid() || res.is_null() || res.is_undef() || (res.is_bool() && !res.to_bool()) {
+		mut text := ''
+		mut failed := false
+		vphp.with_php_call_result_zval('file_get_contents', [vphp.RequestOwnedZBox.new_string(filename).to_zval()], fn [mut text, mut failed] (res vphp.ZVal) bool {
+			if !res.is_valid() || res.is_null() || res.is_undef() || (res.is_bool() && !res.to_bool()) {
+				failed = true
+				return false
+			}
+			text = res.to_string()
+			return true
+		})
+		if failed {
 			vphp.throw_exception_class('RuntimeException', 'failed to open stream from file', 0)
 			return none
 		}
-		return res.to_string()
+		return text
 	}
 	return ''
 }

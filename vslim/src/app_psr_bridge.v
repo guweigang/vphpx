@@ -66,12 +66,12 @@ fn snapshot_phase_forwarded_request(payload vphp.RequestBorrowedZBox) ?PhaseForw
 			uri_scheme:         uri.scheme
 			uri_user:           uri.user
 			uri_password:       uri.password
-			uri_host:           uri.host
-			uri_port:           uri.port
-			uri_path:           uri.path
-			uri_query:          uri.query
-			uri_fragment:       uri.fragment
-			header_names:       clone_header_names(internal.header_names)
+			uri_host:     uri.host
+			uri_port:     uri.port
+			uri_path:     uri.path
+			uri_query:    uri.query
+			uri_fragment: uri.fragment
+			header_names: clone_header_names(internal.header_names)
 			server_params_ref:  clone_assoc_payload_ref(internal.server_params_ref)
 			cookie_params_ref:  clone_assoc_payload_ref(internal.cookie_params_ref)
 			query_params_ref:   clone_assoc_payload_ref(internal.query_params_ref)
@@ -144,11 +144,11 @@ fn request_with_forwarded_snapshot(payload vphp.RequestBorrowedZBox, route_param
 fn continued_phase_request_payload(payload vphp.RequestBorrowedZBox, route_params map[string]string, cont &VSlimPsr15ContinueHandler) vphp.RequestOwnedZBox {
 	if cont.state.has_forwarded_request {
 		if forwarded_request := take_forwarded_request_snapshot(forwarded_request_key(cont)) {
-			return vphp.RequestOwnedZBox.from_zval(request_with_forwarded_snapshot(payload,
+			return vphp.RequestOwnedZBox.adopt_zval(request_with_forwarded_snapshot(payload,
 				route_params, forwarded_request))
 		}
 	}
-	return vphp.RequestOwnedZBox.from_zval(normalize_psr15_server_request_payload(payload,
+	return vphp.RequestOwnedZBox.adopt_zval(normalize_psr15_server_request_payload(payload,
 		route_params))
 }
 
@@ -396,10 +396,11 @@ fn persistent_assoc_with_strings(value vphp.PersistentOwnedZBox, extras map[stri
 	mut out := new_array_zval()
 	if value.is_valid() && !value.is_null() && !value.is_undef() && value.is_array() {
 		value.with_request_zval(fn [mut out] (raw vphp.ZVal) bool {
-			for existing_key in raw.assoc_keys() {
-				existing := raw.get(existing_key) or { continue }
-				add_assoc_zval(out, existing_key, existing.dup())
-			}
+			raw.foreach(fn [mut out] (key vphp.ZVal, val vphp.ZVal) {
+				if key.is_string() {
+					add_assoc_zval(out, key.get_string(), val.dup())
+				}
+			})
 			return true
 		})
 	}
@@ -472,9 +473,9 @@ fn new_vslim_request_from_psr_server_request(payload vphp.RequestBorrowedZBox, r
 			query:            snapshot_string_map(query_params)
 			headers:          snapshot_string_map(flatten_psr7_header_map(internal.get_headers()))
 			cookies:          snapshot_string_map(persistent_array_to_string_map(internal.cookie_params_ref))
-			attributes:       snapshot_string_map(zval_map_to_string_map(internal.get_attributes().to_zval().to_v[map[string]vphp.ZVal]() or { map[string]vphp.ZVal{} }))
+			attributes:       snapshot_string_map(zval_assoc_scalar_string_map(internal.get_attributes().to_zval()))
 			server:           snapshot_string_map(persistent_array_to_string_map(internal.server_params_ref))
-			uploaded_files:   snapshot_string_list(uploaded_files_to_filenames(internal.get_uploaded_files().to_zval().to_v[map[string]vphp.ZVal]() or { map[string]vphp.ZVal{} }))
+			uploaded_files:   snapshot_string_list(uploaded_files_to_filenames_zval(internal.get_uploaded_files().to_zval()))
 			params:           snapshot_string_map(route_params)
 		}
 		for key, value in route_params {
@@ -510,18 +511,41 @@ fn uploaded_files_to_filenames(files map[string]vphp.ZVal) []string {
 	return out
 }
 
+fn uploaded_files_to_filenames_zval(files vphp.ZVal) []string {
+	if !files.is_valid() || !files.is_array() {
+		return []string{}
+	}
+	mut out := []string{}
+	files.foreach(fn [mut out] (_ vphp.ZVal, item vphp.ZVal) {
+		if !item.is_valid() || !item.is_object() {
+			return
+		}
+		filename := if item.method_exists('getClientFilename') {
+			vphp.with_method_result_zval(item, 'getClientFilename', []vphp.ZVal{}, fn (result vphp.ZVal) string {
+				return result.to_string()
+			})
+		} else {
+			''
+		}
+		if filename != '' && filename !in out {
+			out << filename
+		}
+	})
+	return out
+}
+
 fn zval_to_psr7_header_state(value vphp.ZVal) (map[string][]string, map[string]string) {
 	mut out := map[string][]string{}
 	mut header_names := map[string]string{}
 	if !value.is_valid() || !value.is_array() {
 		return out, header_names
 	}
-	for key in value.assoc_keys() {
-		child := value.get(key) or { continue }
-		normalized := normalize_psr7_header_name(key)
+	value.foreach(fn [mut out, mut header_names] (key vphp.ZVal, child vphp.ZVal) {
+		name := key.to_string()
+		normalized := normalize_psr7_header_name(name)
 		out[normalized] = zval_to_header_values(child) or { []string{} }
-		header_names[normalized] = key
-	}
+		header_names[normalized] = name
+	})
 	return out, header_names
 }
 
@@ -545,6 +569,25 @@ fn zval_map_to_string_map(values map[string]vphp.ZVal) map[string]string {
 		}
 		out[key] = value.to_string()
 	}
+	return out
+}
+
+fn zval_assoc_scalar_string_map(value vphp.ZVal) map[string]string {
+	if !value.is_valid() || !value.is_array() {
+		return map[string]string{}
+	}
+	mut out := map[string]string{}
+	value.foreach(fn [mut out] (key vphp.ZVal, child vphp.ZVal) {
+		name := key.to_string()
+		if !child.is_valid() || child.is_null() || child.is_undef() {
+			out[name] = ''
+			return
+		}
+		if !child.is_string() && !child.is_bool() && !child.is_long() && !child.is_double() {
+			return
+		}
+		out[name] = child.to_string()
+	})
 	return out
 }
 
