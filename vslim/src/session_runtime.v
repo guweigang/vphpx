@@ -562,6 +562,7 @@ pub fn (guard &VSlimAuthSessionGuard) user_id() string {
 }
 
 @[php_method]
+@[php_borrowed_return]
 pub fn (mut guard VSlimAuthSessionGuard) login(user_id string) &VSlimAuthSessionGuard {
 	if guard.store_ref != unsafe { nil } {
 		guard.store_ref.set(guard.user_key_value(), user_id)
@@ -570,6 +571,7 @@ pub fn (mut guard VSlimAuthSessionGuard) login(user_id string) &VSlimAuthSession
 }
 
 @[php_method]
+@[php_borrowed_return]
 pub fn (mut guard VSlimAuthSessionGuard) logout() &VSlimAuthSessionGuard {
 	if guard.store_ref != unsafe { nil } {
 		guard.store_ref.forget(guard.user_key_value())
@@ -578,11 +580,13 @@ pub fn (mut guard VSlimAuthSessionGuard) logout() &VSlimAuthSessionGuard {
 }
 
 @[php_method]
+@[php_borrowed_return]
 pub fn (mut middleware VSlimSessionStartMiddleware) construct() &VSlimSessionStartMiddleware {
 	return &middleware
 }
 
 @[php_method: 'setApp']
+@[php_borrowed_return]
 pub fn (mut middleware VSlimSessionStartMiddleware) set_app(app &VSlimApp) &VSlimSessionStartMiddleware {
 	middleware.app_ref = app
 	return &middleware
@@ -608,12 +612,14 @@ pub fn (middleware &VSlimSessionStartMiddleware) process(request vphp.RequestBor
 }
 
 @[php_method]
+@[php_borrowed_return]
 pub fn (mut middleware VSlimAuthRequireMiddleware) construct() &VSlimAuthRequireMiddleware {
 	middleware.redirect_path = ''
 	return &middleware
 }
 
 @[php_method: 'setApp']
+@[php_borrowed_return]
 pub fn (mut middleware VSlimAuthRequireMiddleware) set_app(app &VSlimApp) &VSlimAuthRequireMiddleware {
 	middleware.app_ref = app
 	return &middleware
@@ -675,12 +681,14 @@ pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.RequestBorr
 }
 
 @[php_method]
+@[php_borrowed_return]
 pub fn (mut middleware VSlimAuthGuestMiddleware) construct() &VSlimAuthGuestMiddleware {
 	middleware.redirect_path = ''
 	return &middleware
 }
 
 @[php_method: 'setApp']
+@[php_borrowed_return]
 pub fn (mut middleware VSlimAuthGuestMiddleware) set_app(app &VSlimApp) &VSlimAuthGuestMiddleware {
 	middleware.app_ref = app
 	return &middleware
@@ -724,6 +732,7 @@ pub fn (middleware &VSlimAuthGuestMiddleware) process(request vphp.RequestBorrow
 }
 
 @[php_method]
+@[php_borrowed_return]
 pub fn (mut middleware VSlimAuthRequireAbilityMiddleware) construct() &VSlimAuthRequireAbilityMiddleware {
 	middleware.ability = ''
 	middleware.status = 403
@@ -732,6 +741,7 @@ pub fn (mut middleware VSlimAuthRequireAbilityMiddleware) construct() &VSlimAuth
 }
 
 @[php_method: 'setApp']
+@[php_borrowed_return]
 pub fn (mut middleware VSlimAuthRequireAbilityMiddleware) set_app(app &VSlimApp) &VSlimAuthRequireAbilityMiddleware {
 	middleware.app_ref = app
 	return &middleware

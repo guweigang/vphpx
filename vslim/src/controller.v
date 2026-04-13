@@ -11,18 +11,21 @@ fn effective_controller_app(c &VSlimController) &VSlimApp {
 }
 
 @[php_method]
+@[php_borrowed_return]
 pub fn (mut c VSlimController) construct(app &VSlimApp) &VSlimController {
 	c.app_ref = app
 	return &c
 }
 
 @[php_method]
+@[php_borrowed_return]
 pub fn (mut c VSlimController) set_app(app &VSlimApp) &VSlimController {
 	c.app_ref = app
 	return &c
 }
 
 @[php_method]
+@[php_borrowed_return]
 pub fn (mut c VSlimController) set_view(view &VSlimView) &VSlimController {
 	c.view_ref = view
 	return &c
