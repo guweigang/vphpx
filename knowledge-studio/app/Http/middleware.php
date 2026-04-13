@@ -8,9 +8,12 @@ if (!interface_exists(MiddlewareInterface::class)) {
 }
 
 require_once __DIR__ . '/Middleware/TraceMiddleware.php';
+require_once __DIR__ . '/Middleware/LocaleMiddleware.php';
 require_once __DIR__ . '/Middleware/StudioAccessMiddleware.php';
 require_once __DIR__ . '/Middleware/WorkspaceContextMiddleware.php';
 require_once dirname(__DIR__) . '/Support/DemoCatalog.php';
+require_once dirname(__DIR__) . '/Support/LocaleCatalog.php';
+require_once dirname(__DIR__) . '/Support/LocalePreferenceResolver.php';
 
 return function (VSlim\App $app): void {
     if (getenv('KS_DISABLE_MIDDLEWARE') !== false && getenv('KS_DISABLE_MIDDLEWARE') !== '') {
@@ -26,6 +29,10 @@ return function (VSlim\App $app): void {
             $app->middleware(\App\Http\Middleware\TraceMiddleware::class);
         }
     }
+    $app->middleware(new \App\Http\Middleware\LocaleMiddleware(
+        $app->container()->get(\App\Support\LocaleCatalog::class),
+        $app->container()->get(\App\Support\LocalePreferenceResolver::class),
+    ));
     if (getenv('KS_DISABLE_ACCESS_MIDDLEWARE') === false || getenv('KS_DISABLE_ACCESS_MIDDLEWARE') === '') {
         $app->middleware(new \App\Http\Middleware\StudioAccessMiddleware($app));
     }
@@ -34,6 +41,7 @@ return function (VSlim\App $app): void {
             new \App\Http\Middleware\WorkspaceContextMiddleware(
                 $app,
                 $app->container()->get('studio.catalog'),
+                $app->container()->get(\App\Repositories\WorkspaceRepository::class),
             )
         );
     }

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Repositories\WorkspaceRepository;
 use App\Support\DemoCatalog;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -14,6 +15,7 @@ final class WorkspaceContextMiddleware implements MiddlewareInterface
     public function __construct(
         private \VSlim\App $app,
         private DemoCatalog $catalog,
+        private WorkspaceRepository $workspaces,
     ) {
     }
 
@@ -36,11 +38,11 @@ final class WorkspaceContextMiddleware implements MiddlewareInterface
             $tenant = $this->tenantFromPath($request->getUri()->getPath());
         }
         if ($tenant !== '') {
-            $workspace = $this->catalog->findWorkspaceBySlug($tenant);
+            $workspace = $this->workspaces->findBySlug($tenant);
         }
 
         if ($workspace === null && $this->app->authCheck($request)) {
-            $workspace = $this->catalog->defaultWorkspaceForUser(
+            $workspace = $this->workspaces->defaultForUser(
                 $this->app->authId($request),
             );
         }

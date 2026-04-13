@@ -1,22 +1,54 @@
 {{fill:nav}}{{ nav_label }}{{/fill}}
-{{fill:sidebar}}<p>{{ workspace_name }}</p><p>ops</p>{{/fill}}
-{{fill:footer}}<small>{{ footer_note }}</small>{{/fill}}
-<section>
-  <h1>{{ title | trim }}</h1>
-  <p>Viewer: {{ viewer_name | trim }}</p>
-  <p>Workspace: {{ workspace_name | trim }} / {{ workspace_slug | trim }}</p>
-  <p>{{ write_notice | trim }}</p>
-  <p>{{ write_error | trim }}</p>
-  <form method="post" action="/console/ops/jobs">
-    <label>Job Name <input type="text" name="name"></label>
-    <button type="submit">Queue Job</button>
-  </form>
-  <h2>Jobs</h2>
-  <ul>
-{{for:jobs}}    <li>{{ item.name }} / {{ item.status }} / queued={{ item.queued_at }}</li>{{/for}}
-  </ul>
-  <h2>Audit log</h2>
-  <ul>
-{{for:logs}}    <li>{{ item.created_at }} / {{ item.actor }} / {{ item.action }} / {{ item.target }}</li>{{/for}}
-  </ul>
+{{fill:sidebar}}<p>{{ workspace_name }}</p><p>{{ sidebar_line | trim }}</p>{{/fill}}
+{{fill:footer}}<small>{{ footer_note | trim }}</small>{{/fill}}
+<section class="ks-section">
+  <p class="ks-eyebrow">{{ eyebrow | trim }}</p>
+  <article class="ks-spotlight">
+    <div class="ks-spotlight-grid">
+      <div class="ks-spotlight-copy">
+        <h1 class="ks-title">{{ title | trim }}</h1>
+        <p class="ks-copy">{{ intro | trim }}</p>
+      </div>
+      <aside class="ks-spotlight-side">
+        <article class="ks-panel">
+          <h3>{{ context_title | trim }}</h3>
+          <p class="ks-copy">{{ workspace_name | trim }} / {{ workspace_slug | trim }}</p>
+          <p class="ks-copy">{{ viewer_label | trim }} {{ viewer_name | trim }}</p>
+          <p class="ks-copy">{{ role_hint_label | trim }} {{ viewer_role | trim }}</p>
+        </article>
+      </aside>
+    </div>
+  </article>
+  {{if:write_notice}}<div class="ks-notice success">{{ write_notice | trim }}</div>{{/if}}
+  {{if:write_error}}<div class="ks-notice error">{{ write_error | trim }}</div>{{/if}}
+  <div class="ks-grid two">
+    <article class="ks-card">
+      <h2>{{ create_title | trim }}</h2>
+      <p class="ks-copy">这里只保留当前阶段真正必要的运维面：看任务、补一条任务、看审计。更复杂的平台运维能力先不扩张。</p>
+      {{if:can_manage_ops}}
+      <form class="ks-form" method="post" action="{{ job_action | trim }}">
+        <div class="ks-field">
+          <label>{{ name_label | trim }}</label>
+          <input type="text" name="name">
+        </div>
+        <button type="submit">{{ submit_label | trim }}</button>
+      </form>
+      {{/if}}
+      {{if:owner_only_hint}}<p class="ks-copy">{{ owner_only_hint | trim }}</p>{{/if}}
+    </article>
+    <article class="ks-card">
+      <h2>{{ jobs_title | trim }}</h2>
+      <table class="ks-table">
+        <tr><th>{{ col_name | trim }}</th><th>{{ col_status | trim }}</th><th>{{ col_queued | trim }}</th></tr>
+{{for:jobs}}        <tr><td><strong>{{ item.name }}</strong></td><td>{{ item.status }}</td><td>{{ item.queued_at }}</td></tr>{{/for}}
+      </table>
+    </article>
+  </div>
+  <article class="ks-card">
+    <h2>{{ audit_title | trim }}</h2>
+    <table class="ks-table">
+      <tr><th>{{ col_when | trim }}</th><th>{{ col_actor | trim }}</th><th>{{ col_action | trim }}</th><th>{{ col_target | trim }}</th></tr>
+{{for:logs}}      <tr><td>{{ item.created_at }}</td><td>{{ item.actor }}</td><td>{{ item.action_label }}</td><td>{{ item.target_preview }}</td></tr>{{/for}}
+    </table>
+  </article>
 </section>

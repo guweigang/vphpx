@@ -1,0 +1,107 @@
+{{fill:nav}}{{ nav_label }}{{/fill}}
+{{fill:sidebar}}<p>{{ workspace_name }}</p><p>{{ workspace_slug }}</p><p>{{ editor_intro | trim }}</p>{{/fill}}
+{{fill:footer}}<small>{{ footer_note | trim }}</small>{{/fill}}
+<section class="ks-section">
+  <p class="ks-eyebrow">{{ eyebrow | trim }}</p>
+  <article class="ks-spotlight">
+    <div class="ks-spotlight-grid">
+      <div class="ks-spotlight-copy">
+        <h1 class="ks-title">{{ editor_title | trim }}</h1>
+        <p class="ks-copy">{{ editor_intro | trim }}</p>
+        <div class="ks-meta">
+          <span class="ks-badge">{{ viewer_name | trim }}</span>
+          <span class="ks-badge">{{ status_label | trim }} {{ document.status }}</span>
+          <span class="ks-badge">{{ chunks_label | trim }} {{ document.chunks }}</span>
+          <span class="ks-badge">{{ role_hint_label | trim }} {{ viewer_role | trim }}</span>
+        </div>
+      </div>
+      <aside class="ks-spotlight-side">
+        <article class="ks-panel">
+          <h3>{{ page_section | trim }}</h3>
+          <p class="ks-copy">{{ workspace_name | trim }} / {{ workspace_slug | trim }}</p>
+          <p class="ks-copy">{{ status_label | trim }} {{ document.status }}</p>
+          <p class="ks-copy">{{ coverage_focus_label | trim }} {{ document.coverage_focus }}</p>
+          <p class="ks-copy">{{ language_label | trim }} {{ document.language }}</p>
+          <p class="ks-copy">{{ source_label | trim }} {{ document.source_type }}</p>
+          <div class="ks-actions">
+            <a class="ks-btn-secondary" href="{{ back_url | trim }}">{{ back_label | trim }}</a>
+          </div>
+          <p class="ks-copy">文档在这里完成编辑和保存，真正进入公开面统一通过发布中心处理。</p>
+        </article>
+      </aside>
+    </div>
+  </article>
+  <div class="ks-grid two">
+    <article class="ks-card">
+      <h2>这份来源材料负责什么</h2>
+      <p class="ks-copy">文档页编辑的是来源材料，不是最终标准答案。它的职责是给公开助手提供可引用、可追溯、可复查的依据。</p>
+      <ul class="ks-list">
+        <li><strong>先补材料</strong>把规则、流程、制度、手册和背景信息写完整。</li>
+        <li><strong>覆盖问题要明确</strong>让团队知道这份材料主要支撑哪个外部问题。</li>
+        <li><strong>公开前先检查可引用性</strong>确保它能作为公开页或助手页背后的真实来源。</li>
+      </ul>
+    </article>
+    <article class="ks-card">
+      <h2>当前保存版本预览</h2>
+      <p class="ks-copy">这里显示的是已经保存到后端的版本，用来和上面的双模正文编辑区对照；只有保存后这里才会更新。</p>
+      <h3>{{ summary_label | trim }}</h3>
+      <div class="ks-prose ks-markdown-preview">{{raw:document_summary_preview_html}}</div>
+      <h3>{{ body_label | trim }}</h3>
+      <div class="ks-prose ks-markdown-preview">{{raw:document_body_preview_html}}</div>
+    </article>
+  </div>
+  <article class="ks-card">
+    {{if:can_manage_content}}
+    <form class="ks-form" method="post" action="{{ save_action | trim }}">
+      <div class="ks-form-grid">
+        <div class="ks-field">
+          <label>{{ title_label | trim }}</label>
+          <input type="text" name="title" value="{{ document.title }}">
+        </div>
+        <div class="ks-field">
+          <label>{{ coverage_focus_label | trim }}</label>
+          <input type="text" name="coverage_focus" value="{{ document.coverage_focus }}">
+        </div>
+        <div class="ks-field">
+          <label>{{ summary_label | trim }}</label>
+          <textarea name="summary">{{ document.summary }}</textarea>
+        </div>
+      </div>
+      <div class="ks-field">
+        <label>{{ body_label | trim }}</label>
+        <p class="ks-copy">这里优先整理来源内容本身。不要只写一句结论，而要把它写成后续可以被标准答案引用的材料。</p>
+        <textarea name="body">{{ document.body }}</textarea>
+      </div>
+      <ks-document-editor-intake
+        data-vphp-island="lit"
+        title-selector="input[name='title']"
+        summary-selector="textarea[name='summary']"
+        body-selector="textarea[name='body']"
+        empty-label="{{ lit_editor_empty_label | trim }}"
+        active-label="{{ lit_editor_active_label | trim }}"
+        helper-prefix="{{ lit_editor_helper_prefix | trim }}"
+      ></ks-document-editor-intake>
+      <div class="ks-form-grid">
+        <div class="ks-field">
+          <label>{{ language_label | trim }}</label>
+          <input type="text" name="language" value="{{ document.language }}">
+        </div>
+        <div class="ks-field">
+          <label>{{ source_label | trim }}</label>
+          <select name="source_type">
+            <option value="markdown">markdown</option>
+            <option value="pdf">pdf</option>
+            <option value="upload">upload</option>
+            <option value="notion">notion</option>
+          </select>
+        </div>
+      </div>
+      <div class="ks-actions">
+        <button class="ks-btn" type="submit">{{ save_label | trim }}</button>
+        <a class="ks-btn-secondary" href="{{ back_url | trim }}">{{ back_label | trim }}</a>
+      </div>
+    </form>
+    {{/if}}
+    {{if:content_editor_hint}}<p class="ks-copy">{{ content_editor_hint | trim }}</p>{{/if}}
+  </article>
+</section>

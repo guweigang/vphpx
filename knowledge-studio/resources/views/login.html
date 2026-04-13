@@ -1,23 +1,47 @@
 {{fill:nav}}{{ nav_label }}{{/fill}}
-{{fill:sidebar}}<p>Demo tenant access</p>{{/fill}}
+{{fill:sidebar}}<p>{{ sidebar_copy | trim }}</p>{{/fill}}
 {{fill:footer}}<small>{{ footer_note }}</small>{{/fill}}
-<section>
-  <h1>{{ title | trim }}</h1>
-  <p>Use one of the demo workspace accounts to enter the tenant console.</p>
-  {{if:error}}<p>{{ error }}</p>{{/if}}
-  <form method="post" action="/login">
-    <label>
-      Email
-      <input type="email" name="email" value="owner@acme.test">
-    </label>
-    <br>
-    <label>
-      Password
-      <input type="password" name="password" value="{{ password_hint | trim }}">
-    </label>
-    <br>
-    <button type="submit">Sign in</button>
-  </form>
-  <p>Demo accounts: owner@acme.test, editor@acme.test, owner@nova.test</p>
-  <p>Password: {{ password_hint | trim }}</p>
+<section class="ks-section">
+  <p class="ks-eyebrow">{{ eyebrow | trim }}</p>
+  <article class="ks-spotlight">
+    <div class="ks-spotlight-grid">
+      <div class="ks-spotlight-copy">
+        <h1 class="ks-title">{{ title | trim }}</h1>
+        <p class="ks-copy">{{ intro | trim }}</p>
+      </div>
+      <aside class="ks-spotlight-side">
+        <article class="ks-panel">
+          <h3>{{ card_demo_title | trim }}</h3>
+          <p class="ks-copy">{{ password_hint_label | trim }}：<span class="ks-badge">{{ password_hint | trim }}</span></p>
+          <ul class="ks-list">
+            <li><strong>owner@acme.test</strong>{{ demo_owner_acme | trim }}</li>
+            <li><strong>editor@acme.test</strong>{{ demo_editor_acme | trim }}</li>
+            <li><strong>owner@nova.test</strong>{{ demo_owner_nova | trim }}</li>
+          </ul>
+        </article>
+      </aside>
+    </div>
+  </article>
+  {{if:error}}<div class="ks-notice error">{{ error }}</div>{{/if}}
+  <div class="ks-stack">
+    <article class="ks-card">
+      <h2>{{ card_form_title | trim }}</h2>
+      <p class="ks-copy">使用预置账号进入工作台，后续这里会继续扩展成更正式的组织与订阅用户登录入口。</p>
+      <form class="ks-form" method="post" action="{{ login_action | trim }}">
+        <div class="ks-form-grid">
+          <div class="ks-field">
+            <label>{{ email_label | trim }}</label>
+            <input type="email" name="email" value="owner@acme.test">
+          </div>
+          <div class="ks-field">
+            <label>{{ password_label | trim }}</label>
+            <input type="password" name="password" value="{{ password_hint | trim }}">
+          </div>
+        </div>
+        <div class="ks-actions">
+          <button class="ks-btn" type="submit">{{ submit_label | trim }}</button>
+        </div>
+      </form>
+    </article>
+  </div>
 </section>

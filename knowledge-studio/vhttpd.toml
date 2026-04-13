@@ -1,0 +1,45 @@
+[paths]
+root = "/Users/guweigang/Source/vphpx/knowledge-studio"
+php_app = "/Users/guweigang/Source/vphpx/knowledge-studio/public/worker.php"
+php_worker = "/Users/guweigang/Source/vhttpd/php/package/bin/php-worker"
+vslim_ext = "/Users/guweigang/Source/vphpx/vslim/vslim.so"
+public_root = "/Users/guweigang/Source/vphpx/knowledge-studio/public/assets"
+
+[files]
+pid_file = "/Users/guweigang/Source/vphpx/knowledge-studio/tmp/knowledge_studio_vhttpd.pid"
+event_log = "/Users/guweigang/Source/vphpx/knowledge-studio/tmp/knowledge_studio_vhttpd.events.ndjson"
+
+[runtime]
+timezone = "Asia/Shanghai"
+
+[worker.env]
+KS_WORKER_LOG = "/Users/guweigang/Source/vphpx/knowledge-studio/tmp/knowledge_studio_worker.log"
+
+[admin]
+host = "127.0.0.1"
+port = 18094
+token = "knowledge-studio-dev"
+
+[assets]
+enabled = true
+prefix = "/assets"
+root = "${paths.public_root}"
+cache_control = "public, max-age=3600"
+
+[sites.app]
+host = "127.0.0.1"
+port = 8094
+root = "${paths.root}"
+executor = "php"
+worker.entry = "${paths.php_worker}"
+worker.autostart = true
+worker.pool_size = 4
+worker.read_timeout_ms = 5000
+worker.socket_prefix = "/Users/guweigang/Source/vphpx/knowledge-studio/tmp/knowledge_studio_worker"
+worker.max_requests = 5000
+worker.restart_backoff_ms = 500
+worker.restart_backoff_max_ms = 8000
+php.bin = "php"
+app = "${paths.php_app}"
+php.extensions = ["${paths.vslim_ext}"]
+php.args = []

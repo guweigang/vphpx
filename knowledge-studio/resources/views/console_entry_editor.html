@@ -1,0 +1,91 @@
+{{fill:nav}}{{ nav_label }}{{/fill}}
+{{fill:sidebar}}<p>{{ workspace_name }}</p><p>{{ workspace_slug }}</p><p>{{ editor_intro | trim }}</p>{{/fill}}
+{{fill:footer}}<small>{{ footer_note | trim }}</small>{{/fill}}
+<section class="ks-section">
+  <p class="ks-eyebrow">{{ eyebrow | trim }}</p>
+  <article class="ks-spotlight">
+    <div class="ks-spotlight-grid">
+      <div class="ks-spotlight-copy">
+        <h1 class="ks-title">{{ editor_title | trim }}</h1>
+        <p class="ks-copy">{{ editor_intro | trim }}</p>
+        <div class="ks-meta">
+          <span class="ks-badge">{{ viewer_name | trim }}</span>
+          <span class="ks-badge">{{ status_label | trim }} {{ entry.status }}</span>
+          <span class="ks-badge">{{ owner_label | trim }} {{ entry.owner }}</span>
+          <span class="ks-badge">{{ role_hint_label | trim }} {{ viewer_role | trim }}</span>
+        </div>
+      </div>
+      <aside class="ks-spotlight-side">
+        <article class="ks-panel">
+          <h3>{{ page_section | trim }}</h3>
+          <p class="ks-copy">{{ workspace_name | trim }} / {{ workspace_slug | trim }}</p>
+          <p class="ks-copy">{{ status_label | trim }} {{ entry.status }}</p>
+          <p class="ks-copy">{{ coverage_focus_label | trim }} {{ entry.coverage_focus }}</p>
+          <p class="ks-copy">{{ owner_label | trim }} {{ entry.owner }}</p>
+          <div class="ks-actions">
+            <a class="ks-btn-secondary" href="{{ back_url | trim }}">{{ back_label | trim }}</a>
+          </div>
+          <p class="ks-copy">条目在这里完成编辑和保存，真正进入公开面统一通过发布中心处理。</p>
+        </article>
+      </aside>
+    </div>
+  </article>
+  <div class="ks-grid two">
+    <article class="ks-card">
+      <h2>这条标准答案负责什么</h2>
+      <p class="ks-copy">条目页编辑的是公开助手更容易直接命中的标准答案，不是原始来源材料。它应该更接近用户最终会看到的回答。</p>
+      <ul class="ks-list">
+        <li><strong>先写结论</strong>让用户一眼看到明确回答，而不是自己再做推断。</li>
+        <li><strong>再写边界</strong>把适用范围、例外情况和风险提醒写清楚。</li>
+        <li><strong>覆盖问题贴近真实提问</strong>尽量使用外部用户真实会问的语言。</li>
+      </ul>
+    </article>
+    <article class="ks-card">
+      <h2>当前保存版本预览</h2>
+      <p class="ks-copy">这里显示的是当前已保存条目，用来和上面的双模正文编辑区对照；保存后这里才会刷新。</p>
+      <h3>{{ body_label | trim }}</h3>
+      <div class="ks-prose ks-markdown-preview">{{raw:entry_body_preview_html}}</div>
+    </article>
+  </div>
+  <article class="ks-card">
+    {{if:can_manage_content}}
+    <form class="ks-form" method="post" action="{{ save_action | trim }}">
+      <div class="ks-form-grid">
+        <div class="ks-field">
+          <label>{{ kind_label | trim }}</label>
+          <select name="kind">
+            <option value="faq">faq</option>
+            <option value="topic">topic</option>
+          </select>
+        </div>
+        <div class="ks-field">
+          <label>{{ title_label | trim }}</label>
+          <input type="text" name="title" value="{{ entry.title }}">
+        </div>
+        <div class="ks-field">
+          <label>{{ coverage_focus_label | trim }}</label>
+          <input type="text" name="coverage_focus" value="{{ entry.coverage_focus }}">
+        </div>
+      </div>
+      <div class="ks-field">
+        <label>{{ body_label | trim }}</label>
+        <p class="ks-copy">这里优先写标准答案本身。建议按“结论 / 适用条件 / 例外情况 / 下一步动作”来组织，而不是只堆背景信息。</p>
+        <textarea name="body">{{ entry.body }}</textarea>
+      </div>
+      <ks-entry-editor-intake
+        title-input='input[name="title"]'
+        body-input='textarea[name="body"]'
+        kind-input='select[name="kind"]'
+        empty-label='{{ lit_entry_empty_label | trim }}'
+        active-label='{{ lit_entry_active_label | trim }}'
+        helper-prefix='{{ lit_entry_helper_prefix | trim }}'>
+      </ks-entry-editor-intake>
+      <div class="ks-actions">
+        <button class="ks-btn" type="submit">{{ save_label | trim }}</button>
+        <a class="ks-btn-secondary" href="{{ back_url | trim }}">{{ back_label | trim }}</a>
+      </div>
+    </form>
+    {{/if}}
+    {{if:content_editor_hint}}<p class="ks-copy">{{ content_editor_hint | trim }}</p>{{/if}}
+  </article>
+</section>

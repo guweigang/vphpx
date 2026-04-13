@@ -1,14 +1,31 @@
 {{fill:nav}}{{ nav_label }}{{/fill}}
-{{fill:sidebar}}<p>Workspace-first sample</p>{{/fill}}
+{{fill:sidebar}}<p>{{ sidebar_copy | trim }}</p>{{/fill}}
 {{fill:footer}}<small>{{ footer_note }}</small>{{/fill}}
-<section>
-  <h1>{{ title | trim }}</h1>
-  <p>{{ tagline | trim }}</p>
-  <p>trace: {{ trace | default('n/a') }}</p>
-  {{if:viewer_name}}<p>signed in as {{ viewer_name }} ({{ viewer_role }})</p>{{/if}}
-  <ul>
-    <li><a href="{{ login_url | trim }}">Sign in</a></li>
-    <li><a href="{{ console_url | trim }}">Workspace console</a></li>
-    <li><a href="{{ brand_url | trim }}">Public brand demo</a></li>
-  </ul>
+<section class="ks-section">
+  <p class="ks-eyebrow">{{ eyebrow | trim }}</p>
+  <h1 class="ks-title">{{ title | trim }}</h1>
+  <p class="ks-copy">{{ tagline | trim }}</p>
+  <div class="ks-meta">
+    <span class="ks-badge">{{ trace_label | trim }} {{ trace | default('n/a') }}</span>
+    {{if:viewer_name}}<span class="ks-badge">{{ viewer_label | trim }} {{ viewer_name }} / {{ viewer_role }}</span>{{/if}}
+  </div>
+  <div class="ks-grid three">
+    <article class="ks-card">
+      <h2>{{ card_console_title | trim }}</h2>
+      <p>{{ card_console_body | trim }}</p>
+    </article>
+    <article class="ks-card">
+      <h2>{{ card_brand_title | trim }}</h2>
+      <p>{{ card_brand_body | trim }}</p>
+    </article>
+    <article class="ks-card">
+      <h2>{{ card_db_title | trim }}</h2>
+      <p>{{ card_db_body | trim }}</p>
+    </article>
+  </div>
+  <div class="ks-actions">
+    <a class="ks-btn" href="{{ login_url | trim }}">{{ login_cta | trim }}</a>
+    <a class="ks-btn-secondary" href="{{ console_url | trim }}">{{ console_cta | trim }}</a>
+    <a class="ks-btn-secondary" href="{{ brand_url | trim }}">{{ brand_cta | trim }}</a>
+  </div>
 </section>

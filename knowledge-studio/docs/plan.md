@@ -1,233 +1,132 @@
 # Delivery Plan
 
-## 1. Working Assumptions
+## 1. Planning Principle
 
-- 项目目录单独放在 `vphpx/knowledge-studio`
-- 第一阶段以 `VSlim` sample 为目标，不以商业化上线为目标
-- 优先完成真实产品闭环，再逐步替换 mock 能力
-- 订阅能力先做状态和门槛，不接真实支付
+后续开发不再按“功能模块越多越好”推进，而是按一条必须闭环的主业务链推进：
 
-## 2. Milestones
+`用户/订阅反馈 -> 内容供给 -> 发布 -> 公开页承接 -> 助手验证 -> 新问题与新反馈 -> 再补知识`
 
-### Milestone 0: Foundation
+任何任务如果不能加强这条链路，就降级。
 
-目标：把项目跑起来，并把多租户边界定稳。
+这条闭环再拆开，就是供给侧团队每天真正要经营的六件事：
 
-交付：
+1. 看订阅用户、问题和意见
+2. 看内容是否被阅读、被提问、被验证
+3. 做创作、编辑和发布
+4. 看团队协作和贡献
+5. 维护品牌表达
+6. 做公开传播和站点分享
 
-- `VSlim` app skeleton 初始化
-- 基础配置与 bootstrap
-- `users / workspaces / workspace_members` migration
-- 登录、session、workspace resolver
-- console 基础布局
+如果某个页面或功能不能回到这六件事之一，就说明它偏离了主场景。
 
-完成标准：
+## 2. Current Stage
 
-- 用户可以登录
-- 用户可进入自己所属 workspace
-- 基础权限判断成立
+当前项目已经不是从 0 开始的 skeleton，而是处在：
 
-### Milestone 1: Knowledge Console MVP
+`从框架示例走向产品原型的收敛阶段`
 
-目标：让租户团队能维护知识。
+当前已经有的基础：
 
-交付：
-
-- 文档列表、上传、详情页
-- FAQ / knowledge entry CRUD
-- jobs 表与任务列表
-- 审计日志基础记录
-- 品牌设置页
-
-完成标准：
-
-- 编辑者可维护知识资产
-- 后台能看到导入任务和操作日志
-- workspace 间数据隔离正确
-
-### Milestone 2: Publish and Public Assistant
-
-目标：跑通“后台维护 -> 对外服务”闭环。
-
-交付：
-
-- `knowledge_releases`
-- 发布动作
+- 多租户 workspace
+- 登录与角色
+- 内容库（文档 / 条目）
+- 发布中心
 - 公开品牌页
 - 公开助手页
-- 订阅门槛与 subscriber account
+- 中英双语
+- 真实数据库写路径
 
-完成标准：
+当前最大问题不是“缺功能”，而是：
 
-- 公开助手读取已发布版本
-- 外部用户可登录并访问助手
-- 非订阅用户受限
+- 产品叙事还不够收敛
+- 页面职责有时还不够清晰
+- 供给侧与需求侧闭环还需要更顺
 
-### Milestone 3: Streaming and Conversation Persistence
+## 3. Next Milestones
 
-目标：把核心问答体验做出来。
+### Milestone A: Product Narrative Lock
 
-交付：
-
-- 流式回答接口
-- `chat_sessions / chat_messages`
-- 来源引用面板
-- 历史会话页
-
-完成标准：
-
-- 用户提问后可看到流式回答
-- 回答可保存并回放
-- 每次回答可关联知识来源
-
-### Milestone 4: Realtime Ops and Polish
-
-目标：把工作台打磨成可演示旗舰 sample。
+目标：把所有页面都收敛到一个明确的 SaaS 场景。
 
 交付：
 
-- 索引任务实时更新
-- console 指标卡片
-- 工具调用日志
-- 检索调试页
-- demo seed 与 CLI 命令
-- 集成测试第一批
+- 收敛产品定义
+- 收敛信息架构
+- 明确每个页面在主流程中的职责
+- 去掉与主场景无关的表达
 
 完成标准：
 
-- demo 路径 3 到 5 分钟可完整演示
-- 核心权限与主流程有测试覆盖
+- 我们能用一句话讲清楚产品做什么
+- 每个主要页面都能回答“它在闭环里负责什么”
 
-## 3. Suggested Weekly Breakdown
+### Milestone B: Supply-Side Workflow Hardening
 
-### Week 1
+目标：把供给侧工作流做成真正可演示、可回流的主线。
 
-- 初始化项目骨架
-- 建立认证与 workspace 模型
-- 跑通 console layout
+交付：
 
-### Week 2
+- 文档 / FAQ / 条目编辑体验继续打磨
+- 发布中心继续强化“版本载荷 + 发布理由 + 预览”
+- 反馈问题可直接回流成内容草稿
 
-- 完成知识资产管理
-- 完成 jobs 与审计
-- 完成品牌设置
+完成标准：
 
-### Week 3
+- 一个租户团队可以完整演示“看反馈 -> 补内容 -> 发布 -> 对外查看 -> 再回流”
 
-- 完成发布与 public assistant
-- 完成 subscriber 访问门槛
+### Milestone C: Public Conversion and Validation
 
-### Week 4
+目标：把公开页和助手页做成可信的外部产品面。
 
-- 完成流式回答
-- 完成会话持久化
-- 完成来源展示
+交付：
 
-### Week 5
+- 品牌页承接订阅意向
+- 助手页强调提问、引用、答案可信度
+- 公共详情页串起内容证明链
 
-- 完成实时任务状态
-- 完成工具日志与调试页
-- 完成种子数据与测试
+完成标准：
 
-## 4. Workstreams
+- 外部用户能看懂“这是什么服务”
+- 外部用户能自然进入提问或订阅动作
 
-### 4.1 App Skeleton
+### Milestone D: SaaS Readiness Layer
 
-- bootstrap 约定
-- console/public 路由拆分
-- service provider 装配
+目标：给后续 SaaS 化留出清晰接口，但不提前做重。
 
-### 4.2 Identity and Tenanting
+交付：
 
-- auth/session
-- workspace membership
-- role gate
-- tenant resolver
+- 套餐模型继续规范
+- 成员 / 品牌 / 公开面配置继续结构化
+- 测试边界补齐
 
-### 4.3 Knowledge Domain
+完成标准：
 
-- documents
-- entries
-- releases
-- ingest jobs
+- 代码库可继续作为开源项目分享
+- 也可继续往真实 SaaS 演进
 
-### 4.4 Assistant Domain
+## 4. Immediate Backlog
 
-- sessions/messages
-- answer streaming
-- citations
-- tool call surface
+接下来建议只做下面几类任务：
 
-### 4.5 Subscriber Domain
+1. 调整页面职责与信息架构
+2. 打磨内容维护和发布工作流
+3. 强化公开页与助手页的承接关系
+4. 补回归测试，稳住当前基础
 
-- subscriber login
-- plan gate
-- usage limit
+明确暂缓：
 
-### 4.6 Ops
+- 支付
+- 复杂计费
+- 高级 agent
+- 过重的工具平台能力
+- 泛化行业场景扩张
 
-- audit logs
-- analytics seed
-- CLI
-- tests
+## 5. Definition of Done for This Phase
 
-## 5. First Implementation Backlog
+这一阶段完成，不看“功能数量”，只看下面几点：
 
-建议最先开工的任务顺序：
-
-1. 初始化 `knowledge-studio` 为 `VSlim` app skeleton
-2. 建 `users / workspaces / workspace_members`
-3. 跑通登录和 workspace console
-4. 建 `knowledge_documents / knowledge_entries / jobs / audit_logs`
-5. 做知识管理页
-6. 建 `knowledge_releases / assistant_profiles`
-7. 做公开品牌页和公开助手页
-8. 建 `subscriber_accounts / subscriptions`
-9. 接流式回答
-10. 补 CLI、实时更新和测试
-
-## 6. Testing Plan
-
-第一批必须覆盖：
-
-- 登录与 workspace 隔离
-- 角色权限
-- 文档/FAQ CRUD
-- 发布流程
-- 公开助手订阅门槛
-- 流式回答接口
-
-## 7. Risks and Mitigations
-
-### Risk: Product Scope Expands Too Quickly
-
-应对：
-
-- 严格按 milestone 推进
-- 非核心能力全部后置
-
-### Risk: AI Stack Becomes the Critical Path
-
-应对：
-
-- 前期允许 mock answer / mock retrieval
-- 先把平台结构跑通，再替换真实模型
-
-### Risk: Multi-Tenant Permissions Become Messy
-
-应对：
-
-- 早期统一 `workspace_id` 规则
-- 所有 console 查询先经 workspace scope
-- 先用简单角色，不早拆细粒度 ACL
-
-## 8. Definition of Done for MVP
-
-以下条件满足时，MVP 视为完成：
-
-- 租户拥有者可邀请编辑者协作维护知识
-- 可发布一个对外统一品牌助手
-- 外部用户可在订阅门槛下发起问答
-- 回答支持流式输出并展示来源
-- 会话、任务、审计日志可回看
-- 多租户与角色边界可通过测试验证
+- 能清楚讲明白产品定位
+- 能完整演示一个团队如何把知识运营成外部服务
+- 能展示外部访问者如何进入公开页、提问、订阅、留下反馈
+- 能展示问题反馈如何真实反推内容补充和下一次发布
+- 页面结构和叙事不再发散

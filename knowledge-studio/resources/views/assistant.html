@@ -1,10 +1,135 @@
 {{fill:nav}}{{ nav_label }}{{/fill}}
-{{fill:sidebar}}<p>Assistant shell</p>{{/fill}}
-{{fill:footer}}<small>{{ footer_note }}</small>{{/fill}}
-<section>
-  <h1>{{ title | trim }}</h1>
-  <p>{{ workspace_name | trim }}</p>
-  <p>{{ tagline | trim }}</p>
-  <p>This is the public assistant shell. Streaming answers, subscriptions, and source citations will be added in the next milestone.</p>
-  <p>Tenant slug: {{ workspace_slug | trim }}</p>
+{{fill:sidebar}}<p>{{ sidebar_copy | trim }}</p>{{/fill}}
+{{fill:footer}}<small>{{ footer_note | trim }}</small>{{/fill}}
+<section class="ks-section">
+  <p class="ks-eyebrow">{{ eyebrow | trim }}</p>
+  <article class="ks-spotlight">
+    <div class="ks-spotlight-grid">
+      <div class="ks-spotlight-copy">
+        <h1 class="ks-title">{{ title | trim }}</h1>
+        <p class="ks-copy">{{ tagline | trim }}</p>
+        <div class="ks-meta">
+          <span class="ks-badge">{{ assistant_name | trim }} / {{ assistant_visibility | trim }}</span>
+          <span class="ks-badge">{{ release_label | trim }} {{ release_version | trim }} / {{ release_status | trim }}</span>
+          <span class="ks-badge">{{ subscribers_label | trim }} {{ subscriber_count | trim }}</span>
+          {{if:selected_plan_label}}<span class="ks-badge">{{ selected_plan_title | trim }} {{ selected_plan_label | trim }}</span>{{/if}}
+        </div>
+      </div>
+      <aside class="ks-spotlight-side">
+        <article class="ks-panel">
+          <h3>{{ ask_title | trim }}</h3>
+          <form class="ks-form" method="get" action="{{ assistant_form_action | trim }}">
+            <div class="ks-field">
+              <label for="q">{{ question_label | trim }}</label>
+              <textarea id="q" name="q" placeholder="{{ question_placeholder | trim }}">{{ question | trim }}</textarea>
+            </div>
+            <ks-assistant-intake
+              data-vphp-island="lit"
+              textarea-selector="#q"
+              max-length="240"
+              empty-label="{{ lit_empty_label | trim }}"
+              active-label="{{ lit_active_label | trim }}"
+              helper-prefix="{{ lit_helper_prefix | trim }}"
+            ></ks-assistant-intake>
+            <div class="ks-actions">
+              <button type="submit">{{ submit_label | trim }}</button>
+              <a class="ks-btn-secondary" href="{{ brand_url | trim }}">{{ back_brand_label | trim }}</a>
+            </div>
+          </form>
+        </article>
+      </aside>
+    </div>
+    <div class="ks-grid two">
+      <article class="ks-panel">
+        <h3>{{ posture_title | trim }}</h3>
+        <p class="ks-copy">{{ posture_body | trim }}</p>
+        <ul class="ks-list">
+          <li><strong>{{ slug_label | trim }}</strong>{{ workspace_slug | trim }}</li>
+          <li><strong>{{ snapshot_label | trim }}</strong>documents={{ documents_total | trim }} / entries={{ entries_total | trim }}</li>
+          <li><strong>{{ discipline_label | trim }}</strong>{{ discipline_body | trim }}</li>
+        </ul>
+      </article>
+      {{if:release_notes}}<article class="ks-panel">
+        <h3>{{ release_notes_title | trim }}</h3>
+        <p class="ks-copy">{{ release_notes | trim }}</p>
+      </article>{{/if}}
+    </div>
+    <div class="ks-kpi-row">
+      <article class="ks-kpi">
+        <p class="ks-kpi-value">{{ documents_total | trim }}</p>
+        <p class="ks-kpi-label">{{ documents_title | trim }}</p>
+      </article>
+      <article class="ks-kpi">
+        <p class="ks-kpi-value">{{ entries_total | trim }}</p>
+        <p class="ks-kpi-label">{{ entries_title | trim }}</p>
+      </article>
+      <article class="ks-kpi">
+        <p class="ks-kpi-value">{{ subscriber_count | trim }}</p>
+        <p class="ks-kpi-label">{{ subscribers_label | trim }}</p>
+      </article>
+    </div>
+  </article>
+  <article class="ks-card">
+    <h2>{{ answer_title | trim }}</h2>
+    {{if:answer}}<p class="ks-copy">{{ answer | trim }}</p>{{/if}}
+    {{if:answer}}<p class="ks-copy">{{ answer_hint | trim }}</p>{{/if}}
+    {{if:question}}<p class="ks-copy">{{ question_prefix | trim }}：{{ question | trim }}</p>{{/if}}
+    {{if:empty_tip}}<p class="ks-copy">{{ empty_tip | trim }}</p>{{/if}}
+    <div class="ks-result-meta">
+      <span>{{ diagnostics_title | trim }}</span>
+      <span>{{ citation_count_label | trim }} {{ diagnostics.citation_count }}</span>
+      <span>{{ top_score_label | trim }} {{ diagnostics.top_score }}</span>
+      <span>{{ documents_seen_label | trim }} {{ diagnostics.documents_seen }}</span>
+      <span>{{ entries_seen_label | trim }} {{ diagnostics.entries_seen }}</span>
+      <span>{{ documents_ranked_label | trim }} {{ diagnostics.documents_ranked }}</span>
+      <span>{{ entries_ranked_label | trim }} {{ diagnostics.entries_ranked }}</span>
+      <span>{{ published_filter_used_label | trim }} {{ diagnostics.published_filter_used }}</span>
+      <span>{{ fallback_used_label | trim }} {{ diagnostics.fallback_used }}</span>
+    </div>
+  </article>
+  <div class="ks-grid two">
+    <article class="ks-card">
+      <h2>{{ citations_title | trim }}</h2>
+      <p class="ks-copy">{{ answer_hint | trim }}</p>
+      <div class="ks-stack">
+{{for:citations}}        <article class="ks-result-card"><strong>{{ item.title }}</strong>{{if:item.coverage_focus}}<p class="ks-copy">{{ coverage_focus_label | trim }} {{ item.coverage_focus }}</p>{{/if}}<p class="ks-copy">{{ item.excerpt }}</p><div class="ks-result-meta"><span>{{ item.kind }}</span><span>{{ status_label | trim }} {{ item.status }}</span><span>{{ score_label | trim }} {{ item.score }}</span>{{if:item.matched_terms}}<span>{{ matched_terms_label | trim }} {{ item.matched_terms }}</span>{{/if}}{{if:item.source_detail}}<span>{{ source_detail_label | trim }} {{ item.source_detail }}</span>{{/if}}</div></article>{{/for}}
+      </div>
+    </article>
+    <article class="ks-card">
+      <h2>{{ validation_title | trim }}</h2>
+      <p class="ks-copy">{{ validation_body | trim }}</p>
+      <ul class="ks-list">
+        <li><strong>{{ validation_one_title | trim }}</strong>{{ validation_one_body | trim }}</li>
+        <li><strong>{{ validation_two_title | trim }}</strong>{{ validation_two_body | trim }}</li>
+        <li><strong>{{ validation_three_title | trim }}</strong>{{ validation_three_body | trim }}</li>
+      </ul>
+    </article>
+  </div>
+  <div class="ks-grid two">
+    <article class="ks-card">
+      <h2>{{ documents_title | trim }}</h2>
+      <ul class="ks-list">
+{{for:documents}}        <li><strong><a href="{{ item.detail_url }}">{{ item.title }}</a></strong>{{ item.coverage_focus }} / {{ item.summary }} / {{ item.source_type }} / {{ item.status }}</li>{{/for}}
+      </ul>
+    </article>
+    <article class="ks-card">
+      <h2>{{ entries_title | trim }}</h2>
+      <ul class="ks-list">
+{{for:entries}}        <li><strong><a href="{{ item.detail_url }}">{{ item.title }}</a></strong>{{ item.coverage_focus }} / {{ item.kind }} / {{ item.status }}</li>{{/for}}
+      </ul>
+    </article>
+  </div>
+  {{if:selected_plan_label}}<article class="ks-card">
+    <h2>{{ selected_plan_title | trim }}</h2>
+    <p class="ks-copy">{{ selected_plan_body | trim }}</p>
+  </article>{{/if}}
+  <article class="ks-card">
+    <h2>{{ journey_title | trim }}</h2>
+    <p class="ks-copy">{{ journey_body | trim }}</p>
+    <ul class="ks-list">
+      <li><strong>{{ journey_one_title | trim }}</strong>{{ journey_one_body | trim }}</li>
+      <li><strong>{{ journey_two_title | trim }}</strong>{{ journey_two_body | trim }}</li>
+      <li><strong>{{ journey_three_title | trim }}</strong>{{ journey_three_body | trim }}</li>
+    </ul>
+  </article>
 </section>

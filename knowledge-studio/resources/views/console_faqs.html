@@ -1,24 +1,97 @@
 {{fill:nav}}{{ nav_label }}{{/fill}}
-{{fill:sidebar}}<p>{{ workspace_name }}</p><p>entries</p>{{/fill}}
-{{fill:footer}}<small>{{ footer_note }}</small>{{/fill}}
-<section>
-  <h1>{{ title | trim }}</h1>
-  <p>Viewer: {{ viewer_name | trim }}</p>
-  <p>Workspace: {{ workspace_name | trim }} / {{ workspace_slug | trim }}</p>
-  <p>{{ write_notice | trim }}</p>
-  <p>{{ write_error | trim }}</p>
-  <form method="post" action="/console/knowledge/faqs">
-    <label>Kind
-      <select name="kind">
-        <option value="faq">faq</option>
-        <option value="topic">topic</option>
-      </select>
-    </label>
-    <label>Title <input type="text" name="title"></label>
-    <label>Body <textarea name="body"></textarea></label>
-    <button type="submit">Create Entry</button>
-  </form>
-  <ul>
-{{for:entries}}    <li>{{ item.title }} / {{ item.kind }} / {{ item.status }} / owner={{ item.owner }}</li>{{/for}}
-  </ul>
+{{fill:sidebar}}<p>{{ workspace_name }}</p><p>{{ sidebar_line | trim }}</p>{{/fill}}
+{{fill:footer}}<small>{{ footer_note | trim }}</small>{{/fill}}
+<section class="ks-section">
+  <p class="ks-eyebrow">{{ eyebrow | trim }}</p>
+  <article class="ks-spotlight">
+    <div class="ks-spotlight-grid">
+      <div class="ks-spotlight-copy">
+        <h1 class="ks-title">{{ title | trim }}</h1>
+        <p class="ks-copy">{{ intro | trim }}</p>
+        <div class="ks-meta">
+          <span class="ks-badge">{{ workspace_name | trim }}</span>
+          <span class="ks-badge">{{ workspace_slug | trim }}</span>
+          <span class="ks-badge">{{ viewer_label | trim }} {{ viewer_name | trim }}</span>
+          <span class="ks-badge">{{ role_hint_label | trim }} {{ viewer_role | trim }}</span>
+        </div>
+      </div>
+      <aside class="ks-spotlight-side">
+        <article class="ks-panel">
+          <h3>{{ workflow_title | trim }}</h3>
+          <p class="ks-copy">{{ workflow_body | trim }}</p>
+          <ul class="ks-list">
+            <li><strong>{{ workflow_one_title | trim }}</strong>{{ workflow_one_body | trim }}</li>
+            <li><strong>{{ workflow_two_title | trim }}</strong>{{ workflow_two_body | trim }}</li>
+            <li><strong>{{ workflow_three_title | trim }}</strong>{{ workflow_three_body | trim }}</li>
+          </ul>
+        </article>
+      </aside>
+    </div>
+  </article>
+  {{if:write_notice}}<div class="ks-notice success">{{ write_notice | trim }}</div>{{/if}}
+  {{if:write_error}}<div class="ks-notice error">{{ write_error | trim }}</div>{{/if}}
+  <article class="ks-card">
+    <h2>{{ composer_title | trim }}</h2>
+    <p class="ks-copy">{{ editor_intro | trim }}</p>
+    {{if:can_manage_content}}
+    <form class="ks-form" method="post" action="{{ entry_action | trim }}">
+      <div class="ks-form-grid">
+        <div class="ks-field">
+          <label>{{ kind_label | trim }}</label>
+          <select name="kind">
+            <option value="faq" {{ prefill.kind_faq_selected }}>faq</option>
+            <option value="topic" {{ prefill.kind_topic_selected }}>topic</option>
+          </select>
+        </div>
+        <div class="ks-field">
+          <label>{{ title_label | trim }}</label>
+          <input type="text" name="title" value="{{ prefill.title }}">
+        </div>
+      </div>
+      <div class="ks-field">
+        <label>{{ coverage_focus_label | trim }}</label>
+        <input type="text" name="coverage_focus" value="{{ prefill.coverage_focus }}">
+      </div>
+      <div class="ks-field">
+        <label>{{ body_label | trim }}</label>
+        <p class="ks-copy">这里维护的是公开助手最终更容易命中的标准答案。优先写清楚结论、适用范围、例外情况和下一步动作。</p>
+        <textarea name="body">{{ prefill.body }}</textarea>
+      </div>
+      <ks-entry-editor-intake
+        title-input='input[name="title"]'
+        body-input='textarea[name="body"]'
+        kind-input='select[name="kind"]'
+        empty-label='{{ lit_entry_empty_label | trim }}'
+        active-label='{{ lit_entry_active_label | trim }}'
+        helper-prefix='{{ lit_entry_helper_prefix | trim }}'>
+      </ks-entry-editor-intake>
+      <button type="submit">{{ submit_label | trim }}</button>
+    </form>
+    {{/if}}
+    {{if:content_editor_hint}}<p class="ks-copy">{{ content_editor_hint | trim }}</p>{{/if}}
+  </article>
+  <div class="ks-grid two">
+    <article class="ks-card">
+      <h2>{{ inventory_title | trim }}</h2>
+      <table class="ks-table">
+        <tr>
+          <th>{{ col_title | trim }}</th>
+          <th>{{ col_kind | trim }}</th>
+          <th>{{ col_status | trim }}</th>
+          <th>{{ col_owner | trim }}</th>
+        </tr>
+{{for:entries}}        <tr><td><strong>{{ item.title }}</strong><br><span class="ks-copy">{{ item.coverage_focus }}</span><br><a href="{{ item.edit_url }}">{{ entry_edit_label | trim }}</a></td><td>{{ item.kind }}</td><td>{{ item.status }}</td><td>{{ item.owner }}</td></tr>{{/for}}
+      </table>
+    </article>
+    <article class="ks-card">
+      <h2>{{ inventory_title | trim }}</h2>
+      <p class="ks-copy">{{ inventory_body | trim }}</p>
+      <ul class="ks-list">
+        <li><strong>FAQ / 条目</strong>用来沉淀可直接用于问答的标准答案，而不是原始材料。</li>
+        <li><strong>覆盖问题</strong>应该尽量接近用户真实提问方式，方便后续检索和发布判断。</li>
+        <li><strong>进入公开助手前</strong>先确认它已经是一段可以直接被引用的规范回答。</li>
+      </ul>
+      <div class="ks-actions"><a class="ks-btn-secondary" href="{{ entry_action | trim }}">{{ submit_label | trim }}</a></div>
+    </article>
+  </div>
 </section>

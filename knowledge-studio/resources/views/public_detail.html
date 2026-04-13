@@ -1,0 +1,38 @@
+{{fill:nav}}{{ nav_label }}{{/fill}}
+{{fill:sidebar}}<p>{{ sidebar_copy | trim }}</p>{{/fill}}
+{{fill:footer}}<small>{{ footer_note | trim }}</small>{{/fill}}
+<section class="ks-section">
+  <p class="ks-eyebrow">{{ eyebrow | trim }}</p>
+  <article class="ks-spotlight">
+    <div class="ks-spotlight-grid">
+      <div class="ks-spotlight-copy">
+        <h1 class="ks-title">{{ detail_title | trim }}</h1>
+        <div class="ks-meta">
+          <span class="ks-badge">{{ detail_meta | trim }}</span>
+          {{if:detail_coverage_focus}}
+          <span class="ks-badge">{{ coverage_focus_label | trim }} · {{ detail_coverage_focus | trim }}</span>
+          {{/if}}
+        </div>
+        <p class="ks-copy">{{ detail_summary | trim }}</p>
+        <div class="ks-spotlight-actions">
+          <a class="ks-btn-secondary" href="{{ back_url | trim }}">{{ back_label | trim }}</a>
+        </div>
+      </div>
+      <aside class="ks-spotlight-side">
+        <article class="ks-panel">
+          <h3>{{ nav_label | trim }}</h3>
+          <p class="ks-copy">{{ sidebar_copy | trim }}</p>
+          {{if:detail_coverage_focus}}
+          <div class="ks-detail-stack">
+            <span class="ks-eyebrow">{{ coverage_focus_label | trim }}</span>
+            <p class="ks-copy">{{ detail_coverage_focus | trim }}</p>
+          </div>
+          {{/if}}
+        </article>
+      </aside>
+    </div>
+  </article>
+  <article class="ks-card">
+    <div class="ks-prose">{{ detail_body | trim }}</div>
+  </article>
+</section>
