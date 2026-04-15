@@ -58,13 +58,13 @@ enum MiddlewareTerminalKind {
 
 struct MiddlewareTerminalMeta {
 mut:
-	kind             MiddlewareTerminalKind = .none
-	fixed_response_ref &VSlimPsr7Response = unsafe { nil }
-	status           int
-	message          string
-	fallback_message string
-	error_code       string
-	allowed_methods  []string
+	kind               MiddlewareTerminalKind = .none
+	fixed_response_ref &VSlimPsr7Response     = unsafe { nil }
+	status             int
+	message            string
+	fallback_message   string
+	error_code         string
+	allowed_methods    []string
 }
 
 struct RawDispatchPlan {
@@ -100,9 +100,9 @@ mut:
 	php_group_after_middle  HookTable
 	not_found_handler       vphp.PersistentOwnedZBox
 	error_handler           vphp.PersistentOwnedZBox
-	container_ref           &VSlimContainer = unsafe { nil }
-	config_ref              &VSlimConfig    = unsafe { nil }
-	mcp_ref                 &VSlimMcpApp    = unsafe { nil }
+	container_ref           &VSlimContainer          = unsafe { nil }
+	config_ref              &VSlimConfig             = unsafe { nil }
+	mcp_ref                 &VSlimMcpApp             = unsafe { nil }
 	auth_user_resolver      vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 	auth_gate_resolver      vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 	auth_redirect_path      string
@@ -114,9 +114,9 @@ mut:
 	view_cache_enabled      bool
 	view_cache_configured   bool
 	view_helpers            map[string]vphp.PersistentOwnedZBox
-	logger_ref              &VSlimLogger    = unsafe { nil }
-	psr_logger_ref          &VSlimPsrLogger = unsafe { nil }
-	clock_ref               vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	logger_ref              &VSlimLogger                = unsafe { nil }
+	psr_logger_ref          &VSlimPsrLogger             = unsafe { nil }
+	clock_ref               vphp.PersistentOwnedZBox    = vphp.PersistentOwnedZBox.new_null()
 	listener_provider_ref   &VSlimPsr14ListenerProvider = unsafe { nil }
 	dispatcher_ref          &VSlimPsr14EventDispatcher  = unsafe { nil }
 	cache_ref               &VSlimPsr16Cache            = unsafe { nil }
@@ -136,13 +136,13 @@ mut:
 @[heap]
 struct VSlimTestingHarness {
 mut:
-	app_ref  &VSlimApp = unsafe { nil }
+	app_ref &VSlimApp = unsafe { nil }
 	cookies map[string]string
 }
 
 @[heap]
 struct MiddlewareChain {
-	app         &VSlimApp            = unsafe { nil }
+	app         &VSlimApp = unsafe { nil }
 	request_ctx PipelineRequestContext
 mut:
 	middlewares []vphp.RequestOwnedZBox
@@ -277,11 +277,11 @@ struct VSlimSessionStore {
 mut:
 	cookie_name string = 'vslim_session'
 	secret      string
-	ttl_seconds int = 7200
+	ttl_seconds int    = 7200
 	path        string = '/'
 	domain      string
 	secure      bool
-	http_only   bool = true
+	http_only   bool   = true
 	same_site   string = 'lax'
 	values      map[string]string
 	loaded      bool
@@ -328,10 +328,10 @@ mut:
 @[heap]
 struct VSlimAuthRequireAbilityMiddleware {
 mut:
-	app_ref  &VSlimApp = unsafe { nil }
-	ability  string
-	status   int = 403
-	message  string
+	app_ref &VSlimApp = unsafe { nil }
+	ability string
+	status  int = 403
+	message string
 }
 
 @[php_class: 'VSlim\\Vhttpd\\Response']
@@ -680,18 +680,53 @@ mut:
 @[heap]
 struct VSlimDatabaseManager {
 mut:
-	config_ref         &VSlimDatabaseConfig = unsafe { nil }
-	vhttpd_client_ref  &VSlimVhttpdClient   = unsafe { nil }
-	mysql_pool         mysql.ConnectionPool
-	mysql_connected    bool
-	mysql_tx_conn      mysql.DB
-	mysql_tx_active    bool
-	upstream_connected bool
-	upstream_tx_active bool
+	config_ref          &VSlimDatabaseConfig = unsafe { nil }
+	vhttpd_client_ref   &VSlimVhttpdClient   = unsafe { nil }
+	mysql_pool          mysql.ConnectionPool
+	mysql_connected     bool
+	mysql_tx_conn       mysql.DB
+	mysql_tx_active     bool
+	upstream_connected  bool
+	upstream_tx_active  bool
 	upstream_session_id string
-	last_affected_rows u64
-	last_insert_id     i64
-	last_error         string
+	last_affected_rows  u64
+	last_insert_id      i64
+	last_error          string
+}
+
+enum VSlimDatabaseAsyncKind {
+	query
+	execute
+}
+
+struct VSlimDatabaseAsyncJob {
+mut:
+	config VSlimDatabaseConfig
+	kind   VSlimDatabaseAsyncKind
+	query  string
+	params []string
+}
+
+struct VSlimDatabaseAsyncResult {
+	ok             bool
+	rows           []map[string]string
+	affected_rows  u64
+	last_insert_id i64
+	error          string
+}
+
+@[php_class: 'VSlim\\Database\\PendingResult']
+@[heap]
+struct VSlimDatabasePendingResult {
+mut:
+	handle         thread VSlimDatabaseAsyncResult
+	active         bool
+	resolved       bool
+	kind           VSlimDatabaseAsyncKind = .query
+	affected_rows  u64
+	last_insert_id i64
+	last_error     string
+	result_box     vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 }
 
 pub enum VSlimDatabaseQueryKind {
@@ -726,11 +761,11 @@ mut:
 @[heap]
 struct VSlimDatabaseModel {
 mut:
-	manager_ref   &VSlimDatabaseManager = unsafe { nil }
-	table_name    string
-	primary_key   string = 'id'
-	attributes    map[string]string
-	exists_in_db  bool
+	manager_ref  &VSlimDatabaseManager = unsafe { nil }
+	table_name   string
+	primary_key  string = 'id'
+	attributes   map[string]string
+	exists_in_db bool
 }
 
 @[php_class: 'VSlim\\Database\\Migration']
@@ -753,10 +788,10 @@ mut:
 @[heap]
 struct VSlimDatabaseMigrator {
 mut:
-	manager_ref      &VSlimDatabaseManager = unsafe { nil }
-	migrations_path  string = 'database/migrations'
-	seeds_path       string = 'database/seeds'
-	table_name       string = 'vslim_migrations'
+	manager_ref     &VSlimDatabaseManager = unsafe { nil }
+	migrations_path string                = 'database/migrations'
+	seeds_path      string                = 'database/seeds'
+	table_name      string                = 'vslim_migrations'
 }
 
 @[php_implements: 'Psr\\Clock\\ClockInterface']
@@ -855,16 +890,36 @@ mut:
 @[heap]
 struct VSlimValidator {
 mut:
-	input_data      map[string]vphp.DynValue
-	rule_map        map[string][]string
-	error_map       map[string][]string
-	validated_data  map[string]vphp.DynValue
-	validation_ran  bool
+	input_data     map[string]vphp.DynValue
+	rule_map       map[string][]string
+	error_map      map[string][]string
+	validated_data map[string]vphp.DynValue
+	validation_ran bool
 }
 
 @[php_class: 'VSlim\\EnvLoader']
 @[heap]
 struct VSlimEnvLoader {}
+
+@[php_class: 'VSlim\\Task']
+@[heap]
+struct VSlimTask {}
+
+@[php_class: 'VSlim\\TaskHandle']
+@[heap]
+struct VSlimTaskHandle {
+mut:
+	async_ref &vphp.AsyncResult = unsafe { nil }
+	// Task handles are request-scoped PHP objects, but the callable / params /
+	// cached result must outlive the spawn() stack frame and survive until a
+	// later wait() or object cleanup(). We therefore retain them with
+	// PersistentOwnedZBox under explicit handle ownership and release them from
+	// cleanup()/generic_free_raw(), rather than borrowing transient request zvals.
+	callable   vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	params     []vphp.PersistentOwnedZBox
+	resolved   bool
+	result_box vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+}
 
 @[php_class: 'VSlim\\Config']
 @[heap]

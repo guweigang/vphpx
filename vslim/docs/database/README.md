@@ -129,11 +129,15 @@ $users = $db->table('users')
 - `ping()`
 - `table($name)`
 - `query($sql)`
+- `queryAsync($sql)`
 - `queryOne($sql)`
 - `queryParams($sql, array $params)`
+- `queryParamsAsync($sql, array $params)`
 - `queryOneParams($sql, array $params)`
 - `execute($sql)`
+- `executeAsync($sql)`
 - `executeParams($sql, array $params)`
+- `executeParamsAsync($sql, array $params)`
 - `beginTransaction()`
 - `commit()`
 - `rollback()`
@@ -191,6 +195,118 @@ $users = $db->table('users')
 
 这是第一阶段的选择：先把 manager 做稳，再决定要不要加独立 statement / result facade。
 
+## Async Query / Execute
+
+`VSlim` 现在提供了一版最小可用的数据库异步接口：
+
+- `queryAsync($sql)`
+- `queryParamsAsync($sql, array $params)`
+- `executeAsync($sql)`
+- `executeParamsAsync($sql, array $params)`
+
+这些方法都会返回：
+
+- `VSlim\Database\PendingResult`
+
+`PendingResult` 当前支持：
+
+- `wait()`
+- `resolved()`
+- `affectedRows()`
+- `lastInsertId()`
+- `lastError()`
+
+最小例子：
+
+```php
+$db = app()->database();
+
+$pending = $db->queryAsync('SELECT 1 AS ok');
+$rows = $pending->wait();
+
+echo $rows[0]['ok'];
+```
+
+带参数：
+
+```php
+$pending = $db->queryParamsAsync(
+    'SELECT * FROM users WHERE status = ? LIMIT ?',
+    ['active', 10],
+);
+
+$rows = $pending->wait();
+```
+
+写操作：
+
+```php
+$pending = $db->executeParamsAsync(
+    'UPDATE users SET active = ? WHERE id = ?',
+    [1, 7],
+);
+
+$meta = $pending->wait();
+echo $pending->affectedRows();
+echo $pending->lastInsertId();
+```
+
+### 这版 async 的真实语义
+
+这里要特别说明，这不是 mysql client 的原生 nonblocking query。
+
+当前实现是：
+
+- `VSlim` 在后台 V 线程里执行阻塞 mysql 查询
+- 每个 async 任务自己建立一条独立连接
+- 查询完成后把 detached 结果带回主线程
+- `wait()` 时再转成 PHP 值
+- direct 连接池借出连接时会先 `ping()`，尽量剔除 stale connection
+- query / execute 失败时只会在连接级 / 协议级 mysql errno 上 discard 连接
+- 普通 SQL 语法或业务错误不会把连接误判成坏连接
+
+所以它更准确的描述是：
+
+- 线程包装的 async facade
+
+而不是：
+
+- mysql 协议级别的异步 IO
+
+### 当前边界
+
+第一版边界刻意收得很窄：
+
+- 只支持 `database.transport = "direct"`
+- `vhttpd_upstream` 当前不支持 async facade
+- 事务进行中不允许调用 async 方法
+- async 任务不会复用 manager 当前事务连接
+- 每个 async 任务独立 `connect -> query/execute -> close`
+
+如果你在事务里调用，会直接抛异常；这不是 bug，而是当前设计的明确限制。
+
+### 什么时候适合用
+
+适合：
+
+- 当前请求里并发发起多个互不依赖的只读查询
+- 单次写操作想避免阻塞当前业务编排
+- 需要一个轻量 `PendingResult` 句柄统一等待结果
+
+不适合：
+
+- 事务链路
+- 强依赖同一连接 session state 的 SQL
+- 想把它当成持久 job queue
+- 想把它理解成 mysql 原生非阻塞能力
+
+相关源码和测试：
+
+- [database_runtime.v](/Users/guweigang/Source/vphpx/vslim/src/database_runtime.v)
+- [types.v](/Users/guweigang/Source/vphpx/vslim/src/types.v)
+- [test_vslim_database_async.phpt](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_database_async.phpt)
+- [test_vslim_database_async_real_db.phpt](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_database_async_real_db.phpt)
+
 ## 事务语义
 
 这里不是“假的 begin/commit 包装”。
@@ -200,6 +316,9 @@ $users = $db->table('users')
 - manager 会固定持有一条 pool 里的连接
 - 后续 `query()/execute()` 都复用这条连接
 - `commit()/rollback()` 后才把连接放回池子
+- 如果事务连接遇到连接级 / 协议级 mysql errno，会直接 discard 并清理事务态
+- 如果只是普通事务错误，事务态会保留，调用方仍可决定 retry 或 rollback
+- 如果 `commit()/rollback()` 已完成但恢复 `autocommit` 失败，连接不会回池
 
 所以事务边界是按真实连接语义工作的，不是每次 query 都重新 `acquire()`。
 
