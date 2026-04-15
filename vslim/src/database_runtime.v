@@ -7,8 +7,6 @@ import vphp
 
 fn C.mysql_thread_init() bool
 fn C.mysql_thread_end()
-fn C.emalloc(size usize) voidptr
-fn C.efree(ptr voidptr)
 
 const mysql_client_err_connection_error = 2002
 const mysql_client_err_conn_host_error = 2003
@@ -725,14 +723,14 @@ fn database_config_snapshot(db &VSlimDatabaseManager) VSlimDatabaseConfig {
 	}
 }
 
-fn database_async_result_to_box(result VSlimDatabaseAsyncResult, kind VSlimDatabaseAsyncKind) vphp.RequestOwnedZBox {
+fn database_async_result_to_box(result VSlimAsyncResult, kind VSlimDatabaseAsyncKind) vphp.RequestOwnedZBox {
 	return match kind {
 		.query { database_rows_to_box(result.rows) }
 		.execute { database_exec_meta_box(result.affected_rows) }
 	}
 }
 
-fn database_async_run(job VSlimDatabaseAsyncJob) VSlimDatabaseAsyncResult {
+fn database_async_run(job VSlimDatabaseAsyncJob) VSlimAsyncResult {
 	C.mysql_thread_init()
 	defer {
 		C.mysql_thread_end()
@@ -744,7 +742,7 @@ fn database_async_run(job VSlimDatabaseAsyncJob) VSlimDatabaseAsyncResult {
 		password: job.config.password
 		dbname:   job.config.database
 	}
-	mut conn := mysql.connect(config) or { return VSlimDatabaseAsyncResult{
+	mut conn := mysql.connect(config) or { return VSlimAsyncResult{
 		error: err.msg()
 	} }
 	defer {
@@ -755,7 +753,7 @@ fn database_async_run(job VSlimDatabaseAsyncJob) VSlimDatabaseAsyncResult {
 			mut rows := []map[string]string{}
 			if job.params.len == 0 {
 				mut result := conn.query(job.query) or {
-					return VSlimDatabaseAsyncResult{
+					return VSlimAsyncResult{
 						error: err.msg()
 					}
 				}
@@ -765,12 +763,12 @@ fn database_async_run(job VSlimDatabaseAsyncJob) VSlimDatabaseAsyncResult {
 				}
 			} else {
 				rows = database_query_maps_with_params(mut conn, job.query, job.params) or {
-					return VSlimDatabaseAsyncResult{
+					return VSlimAsyncResult{
 						error: err.msg()
 					}
 				}
 			}
-			return VSlimDatabaseAsyncResult{
+			return VSlimAsyncResult{
 				ok:             true
 				rows:           rows
 				affected_rows:  conn.affected_rows()
@@ -780,19 +778,19 @@ fn database_async_run(job VSlimDatabaseAsyncJob) VSlimDatabaseAsyncResult {
 		.execute {
 			if job.params.len == 0 {
 				_ := conn.exec(job.query) or {
-					return VSlimDatabaseAsyncResult{
+					return VSlimAsyncResult{
 						error: err.msg()
 					}
 				}
 			} else {
 				_ := conn.exec_param_many(job.query, job.params) or {
-					return VSlimDatabaseAsyncResult{
+					return VSlimAsyncResult{
 						error: err.msg()
 					}
 				}
 			}
 			affected := conn.affected_rows()
-			return VSlimDatabaseAsyncResult{
+			return VSlimAsyncResult{
 				ok:             true
 				affected_rows:  affected
 				last_insert_id: database_last_insert_id_from_conn(mut conn)
@@ -815,32 +813,18 @@ fn database_async_guard(mut db VSlimDatabaseManager, label string) !VSlimDatabas
 	}
 }
 
-fn database_async_handle_spawn(job VSlimDatabaseAsyncJob) &VSlimDatabaseAsyncHandle {
-	unsafe {
-		mut handle := &VSlimDatabaseAsyncHandle(C.emalloc(usize(sizeof(VSlimDatabaseAsyncHandle))))
-		handle.handle = spawn database_async_run(job)
-		return handle
-	}
-}
-
-fn database_async_handle_release(ptr &VSlimDatabaseAsyncHandle) {
-	if ptr == unsafe { nil } {
-		return
-	}
-	unsafe {
-		C.efree(ptr)
-	}
-}
-
 fn database_pending_result_from_job(job VSlimDatabaseAsyncJob) &VSlimDatabasePendingResult {
 	mut pending := &VSlimDatabasePendingResult{}
-	pending.async_ref = database_async_handle_spawn(job)
+	pending.async_ref = async_spawn(VSlimAsyncJob{
+		kind:     if job.kind == .execute { .database_execute } else { .database_query }
+		database: job
+	})
 	pending.active = true
 	pending.kind = job.kind
 	return pending
 }
 
-fn database_pending_cache(mut pending VSlimDatabasePendingResult, result VSlimDatabaseAsyncResult, kind VSlimDatabaseAsyncKind) vphp.RequestOwnedZBox {
+fn database_pending_cache(mut pending VSlimDatabasePendingResult, result VSlimAsyncResult, kind VSlimDatabaseAsyncKind) vphp.RequestOwnedZBox {
 	if pending.result_box.is_valid() {
 		mut old := pending.result_box
 		old.release()
@@ -862,14 +846,14 @@ fn database_pending_cache(mut pending VSlimDatabasePendingResult, result VSlimDa
 	return pending.result_box.clone_request_owned()
 }
 
-fn database_pending_wait_result(mut pending VSlimDatabasePendingResult) VSlimDatabaseAsyncResult {
+fn database_pending_wait_result(mut pending VSlimDatabasePendingResult) VSlimAsyncResult {
 	if pending.async_ref == unsafe { nil } {
-		return VSlimDatabaseAsyncResult{
+		return VSlimAsyncResult{
 			error: 'database async handle is missing'
 		}
 	}
-	result := pending.async_ref.handle.wait()
-	database_async_handle_release(pending.async_ref)
+	result := async_wait(pending.async_ref)
+	async_release(pending.async_ref)
 	pending.async_ref = unsafe { nil }
 	return result
 }
@@ -1421,7 +1405,7 @@ pub fn (mut pending VSlimDatabasePendingResult) cleanup() {
 		_ = database_pending_cache(mut pending, result, pending.kind)
 	}
 	if pending.async_ref != unsafe { nil } {
-		database_async_handle_release(pending.async_ref)
+		async_release(pending.async_ref)
 		pending.async_ref = unsafe { nil }
 	}
 }

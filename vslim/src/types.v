@@ -707,24 +707,11 @@ mut:
 	params []string
 }
 
-struct VSlimDatabaseAsyncResult {
-	ok             bool
-	rows           []map[string]string
-	affected_rows  u64
-	last_insert_id i64
-	error          string
-}
-
-struct VSlimDatabaseAsyncHandle {
-mut:
-	handle thread VSlimDatabaseAsyncResult
-}
-
 @[php_class: 'VSlim\\Database\\PendingResult']
 @[heap]
 struct VSlimDatabasePendingResult {
 mut:
-	async_ref      &VSlimDatabaseAsyncHandle = unsafe { nil }
+	async_ref      &VSlimAsyncHandle = unsafe { nil }
 	active         bool
 	resolved       bool
 	kind           VSlimDatabaseAsyncKind = .query
