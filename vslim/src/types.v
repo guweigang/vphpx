@@ -715,11 +715,16 @@ struct VSlimDatabaseAsyncResult {
 	error          string
 }
 
+struct VSlimDatabaseAsyncHandle {
+mut:
+	handle thread VSlimDatabaseAsyncResult
+}
+
 @[php_class: 'VSlim\\Database\\PendingResult']
 @[heap]
 struct VSlimDatabasePendingResult {
 mut:
-	handle         thread VSlimDatabaseAsyncResult
+	async_ref      &VSlimDatabaseAsyncHandle = unsafe { nil }
 	active         bool
 	resolved       bool
 	kind           VSlimDatabaseAsyncKind = .query

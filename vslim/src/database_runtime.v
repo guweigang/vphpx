@@ -7,6 +7,8 @@ import vphp
 
 fn C.mysql_thread_init() bool
 fn C.mysql_thread_end()
+fn C.emalloc(size usize) voidptr
+fn C.efree(ptr voidptr)
 
 const mysql_client_err_connection_error = 2002
 const mysql_client_err_conn_host_error = 2003
@@ -813,9 +815,26 @@ fn database_async_guard(mut db VSlimDatabaseManager, label string) !VSlimDatabas
 	}
 }
 
+fn database_async_handle_spawn(job VSlimDatabaseAsyncJob) &VSlimDatabaseAsyncHandle {
+	unsafe {
+		mut handle := &VSlimDatabaseAsyncHandle(C.emalloc(usize(sizeof(VSlimDatabaseAsyncHandle))))
+		handle.handle = spawn database_async_run(job)
+		return handle
+	}
+}
+
+fn database_async_handle_release(ptr &VSlimDatabaseAsyncHandle) {
+	if ptr == unsafe { nil } {
+		return
+	}
+	unsafe {
+		C.efree(ptr)
+	}
+}
+
 fn database_pending_result_from_job(job VSlimDatabaseAsyncJob) &VSlimDatabasePendingResult {
 	mut pending := &VSlimDatabasePendingResult{}
-	pending.handle = spawn database_async_run(job)
+	pending.async_ref = database_async_handle_spawn(job)
 	pending.active = true
 	pending.kind = job.kind
 	return pending
@@ -843,6 +862,18 @@ fn database_pending_cache(mut pending VSlimDatabasePendingResult, result VSlimDa
 	return pending.result_box.clone_request_owned()
 }
 
+fn database_pending_wait_result(mut pending VSlimDatabasePendingResult) VSlimDatabaseAsyncResult {
+	if pending.async_ref == unsafe { nil } {
+		return VSlimDatabaseAsyncResult{
+			error: 'database async handle is missing'
+		}
+	}
+	result := pending.async_ref.handle.wait()
+	database_async_handle_release(pending.async_ref)
+	pending.async_ref = unsafe { nil }
+	return result
+}
+
 fn database_pending_wait(mut pending VSlimDatabasePendingResult, kind VSlimDatabaseAsyncKind, label string) vphp.RequestOwnedZBox {
 	if pending.resolved {
 		if pending.last_error != '' {
@@ -852,7 +883,7 @@ fn database_pending_wait(mut pending VSlimDatabasePendingResult, kind VSlimDatab
 		}
 		return pending.result_box.clone_request_owned()
 	}
-	result := pending.handle.wait()
+	result := database_pending_wait_result(mut pending)
 	mut response := database_pending_cache(mut pending, result, kind)
 	if pending.last_error != '' {
 		response.release()
@@ -1386,8 +1417,12 @@ pub fn (mut pending VSlimDatabasePendingResult) wait() vphp.RequestOwnedZBox {
 
 pub fn (mut pending VSlimDatabasePendingResult) cleanup() {
 	if pending.active {
-		result := pending.handle.wait()
+		result := database_pending_wait_result(mut pending)
 		_ = database_pending_cache(mut pending, result, pending.kind)
+	}
+	if pending.async_ref != unsafe { nil } {
+		database_async_handle_release(pending.async_ref)
+		pending.async_ref = unsafe { nil }
 	}
 }
 
