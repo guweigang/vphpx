@@ -70,7 +70,7 @@ echo $afterError[0]['ok'] . PHP_EOL;
 --EXPECT--
 pending-ok
 resolved
-0
+1
 0
 no-error
 1
