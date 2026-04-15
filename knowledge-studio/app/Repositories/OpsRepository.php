@@ -30,7 +30,7 @@ final class OpsRepository
                     ->get()
             );
             if ($rows !== []) {
-                return $rows;
+                return $this->mergeQueueRuntimeStatuses($workspaceId, $rows);
             }
         }
 
@@ -76,6 +76,91 @@ final class OpsRepository
         $this->db->table('jobs')->insert($row)->run();
 
         return $row;
+    }
+
+    public function updateJobStatus(string $jobId, string $status): void
+    {
+        if (trim($jobId) === '') {
+            return;
+        }
+
+        $this->db
+            ->table('jobs')
+            ->where('id', $jobId)
+            ->update([
+                'status' => $status,
+            ])
+            ->run();
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function retryableJobForWorkspace(string $workspaceId, string $jobId): ?array
+    {
+        $workspaceId = trim($workspaceId);
+        $jobId = trim($jobId);
+        if ($workspaceId === '' || $jobId === '' || !$this->shouldUseDatabase()) {
+            return null;
+        }
+
+        $job = $this->rows(
+            $this->db
+                ->table('jobs')
+                ->where('workspace_id', $workspaceId)
+                ->where('id', $jobId)
+                ->limit(1)
+                ->get()
+        )[0] ?? null;
+        if (!is_array($job)) {
+            return null;
+        }
+
+        $runtimeRows = $this->rows($this->db->queryParams(
+            'SELECT id, queue, status, job_class, payload_json, max_attempts, available_at, updated_at, completed_at, failed_at, last_error
+             FROM vslim_jobs
+             WHERE payload_json LIKE ?
+             ORDER BY id ASC',
+            ['%"ops_job_id":"' . $jobId . '"%']
+        ));
+        if ($runtimeRows === []) {
+            return null;
+        }
+
+        $runtime = null;
+        foreach ($runtimeRows as $candidate) {
+            $payload = json_decode((string) ($candidate['payload_json'] ?? '{}'), true);
+            if (!is_array($payload)) {
+                continue;
+            }
+            if (trim((string) ($payload['workspace_id'] ?? '')) !== $workspaceId) {
+                continue;
+            }
+            if (trim((string) ($payload['ops_job_id'] ?? '')) !== $jobId) {
+                continue;
+            }
+            $runtime = $candidate;
+        }
+
+        if (!is_array($runtime) || (string) ($runtime['status'] ?? '') !== 'failed') {
+            return null;
+        }
+
+        $payload = json_decode((string) ($runtime['payload_json'] ?? '{}'), true);
+        if (!is_array($payload)) {
+            return null;
+        }
+
+        return [
+            'job_id' => $jobId,
+            'workspace_id' => $workspaceId,
+            'name' => (string) ($job['name'] ?? ''),
+            'queue' => (string) ($runtime['queue'] ?? ''),
+            'job_class' => (string) ($runtime['job_class'] ?? ''),
+            'payload' => $payload,
+            'max_attempts' => (int) ($runtime['max_attempts'] ?? 3),
+            'last_error' => (string) ($runtime['last_error'] ?? ''),
+        ];
     }
 
     public function recordAudit(string $workspaceId, string $actor, string $action, string $target): array
@@ -249,6 +334,55 @@ final class OpsRepository
     }
 
     /**
+     * @param array<int, array<string, mixed>> $rows
+     * @return array<int, array<string, mixed>>
+     */
+    private function mergeQueueRuntimeStatuses(string $workspaceId, array $rows): array
+    {
+        if ($workspaceId === '' || $rows === []) {
+            return $rows;
+        }
+
+        $runtimeRows = $this->rows($this->db->queryParams(
+            'SELECT queue, status, job_class, payload_json, available_at, updated_at, completed_at, failed_at, last_error FROM vslim_jobs WHERE payload_json LIKE ? ORDER BY id ASC',
+            ['%"workspace_id":"' . $workspaceId . '"%']
+        ));
+        if ($runtimeRows === []) {
+            return $rows;
+        }
+
+        $indexed = [];
+        foreach ($rows as $row) {
+            $indexed[(string) ($row['id'] ?? '')] = $row;
+        }
+
+        foreach ($runtimeRows as $runtime) {
+            $payload = json_decode((string) ($runtime['payload_json'] ?? '{}'), true);
+            if (!is_array($payload)) {
+                continue;
+            }
+            $opsJobId = trim((string) ($payload['ops_job_id'] ?? ''));
+            if ($opsJobId === '' || !isset($indexed[$opsJobId])) {
+                continue;
+            }
+
+            $indexed[$opsJobId]['status'] = (string) ($runtime['status'] ?? ($indexed[$opsJobId]['status'] ?? 'queued'));
+            $indexed[$opsJobId]['queue'] = (string) ($runtime['queue'] ?? '');
+            $indexed[$opsJobId]['job_class'] = (string) ($runtime['job_class'] ?? '');
+            $indexed[$opsJobId]['last_error'] = (string) ($runtime['last_error'] ?? '');
+            $indexed[$opsJobId]['runtime_at'] = (string) (
+                $runtime['completed_at']
+                ?? $runtime['failed_at']
+                ?? $runtime['updated_at']
+                ?? $runtime['available_at']
+                ?? ''
+            );
+        }
+
+        return array_values($indexed);
+    }
+
+    /**
      * @return array<int, array<string, mixed>>
      */
     private function rows(mixed $result): array
@@ -273,6 +407,7 @@ final class OpsRepository
                 'knowledge.entry.published' => 'Entry published',
                 'workspace.member.invited' => 'Collaborator invited',
                 'ops.job.queued' => 'Ops job queued',
+                'ops.job.retried' => 'Ops job retried',
                 'publish_release' => 'Release published',
                 default => $action !== '' ? $action : 'unknown',
             };

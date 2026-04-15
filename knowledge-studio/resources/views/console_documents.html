@@ -28,6 +28,29 @@
       </aside>
     </div>
   </article>
+  <div class="ks-grid three">
+    <article class="ks-card">
+      <h2>当前文档供给规模</h2>
+      <div class="ks-result-meta">
+        <span><strong>{{ documents_total }}</strong> 篇文档</span>
+        <span><strong>{{ draft_documents_total }}</strong> 篇待发布</span>
+        <span><strong>{{ published_documents_total }}</strong> 篇已公开</span>
+      </div>
+      <p class="ks-copy">先看文档供给面是否足够支撑下一次公开发布，而不是埋头只新增单篇材料。</p>
+    </article>
+    <article class="ks-card">
+      <h2>下一步动作</h2>
+      <p class="ks-copy">文档整理完之后，要么继续补来源，要么进入发布关口，不要停在列表里。</p>
+      <div class="ks-actions">
+        <a class="ks-btn" href="{{ releases_url | trim }}">进入发布版本</a>
+        <a class="ks-btn-secondary" href="{{ public_url | trim }}">查看公开品牌页</a>
+      </div>
+    </article>
+    <article class="ks-card">
+      <h2>这页负责什么</h2>
+      <p class="ks-copy">这里维护来源材料本身，优先补背景、规则、流程、证据，再交给条目和发布链承接。</p>
+    </article>
+  </div>
   {{if:write_notice}}<div class="ks-notice success">{{ write_notice | trim }}</div>{{/if}}
   {{if:write_error}}<div class="ks-notice error">{{ write_error | trim }}</div>{{/if}}
   <article class="ks-card">
@@ -89,6 +112,23 @@
   <div class="ks-grid two">
     <article class="ks-card">
       <h2>{{ inventory_title | trim }}</h2>
+      {{if:show_no_documents}}<div class="ks-empty-state">当前租户还没有文档。先新增一篇来源材料，再通过发布版本把它带到公开面。</div>{{/if}}
+      {{if:has_documents}}
+      <table class="ks-table">
+        <tr>
+          <th>{{ col_title | trim }}</th>
+          <th>{{ col_summary | trim }}</th>
+          <th>{{ col_source | trim }}</th>
+          <th>{{ col_status | trim }}</th>
+          <th>{{ col_chunks | trim }}</th>
+          <th>{{ col_updated | trim }}</th>
+        </tr>
+{{for:documents}}        <tr><td><strong>{{ item.title }}</strong><br><span class="ks-copy">{{ item.coverage_focus }}</span><br><a href="{{ item.edit_url }}">{{ document_edit_label | trim }}</a></td><td>{{ item.summary }}</td><td>{{ item.source_type }} / {{ item.language }}</td><td><span class="{{ item.status_badge_class }}">{{ item.status }}</span></td><td>{{ item.chunks }}</td><td>{{ item.updated_at }}</td></tr>{{/for}}
+      </table>
+      {{/if}}
+    </article>
+    <article class="ks-card">
+      <h2>{{ inventory_title | trim }}</h2>
       <p class="ks-copy">{{ inventory_body | trim }}</p>
       <ul class="ks-list">
         <li><strong>来源材料</strong>用来承接原始规则、说明、手册、流程和背景信息。</li>
@@ -98,18 +138,4 @@
       <div class="ks-actions"><a class="ks-btn-secondary" href="{{ document_action | trim }}">{{ submit_label | trim }}</a></div>
     </article>
   </div>
-  <article class="ks-card">
-    <h2>{{ inventory_title | trim }}</h2>
-    <table class="ks-table">
-      <tr>
-        <th>{{ col_title | trim }}</th>
-        <th>{{ col_summary | trim }}</th>
-        <th>{{ col_source | trim }}</th>
-        <th>{{ col_status | trim }}</th>
-        <th>{{ col_chunks | trim }}</th>
-        <th>{{ col_updated | trim }}</th>
-      </tr>
-{{for:documents}}      <tr><td><strong>{{ item.title }}</strong><br><span class="ks-copy">{{ item.coverage_focus }}</span><br><a href="{{ item.edit_url }}">{{ document_edit_label | trim }}</a></td><td>{{ item.summary }}</td><td>{{ item.source_type }} / {{ item.language }}</td><td>{{ item.status }}</td><td>{{ item.chunks }}</td><td>{{ item.updated_at }}</td></tr>{{/for}}
-    </table>
-  </article>
 </section>

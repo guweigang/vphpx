@@ -74,6 +74,55 @@
       <span>6. {{ distribution_title | default('分享与扩散') | trim }}</span>
     </div>
   </article>
+  <div class="ks-grid three">
+    <article class="ks-card">
+      <h2>今天先处理运维收件箱</h2>
+      <p class="ks-copy">先看失败任务和正在排队的处理链，避免供给链卡住了但首页看不出来。</p>
+      <div class="ks-result-meta">
+        <span><strong>{{ failed_jobs_total }}</strong> 个失败任务</span>
+        <span><strong>{{ active_jobs_total }}</strong> 个活动任务</span>
+      </div>
+      <ul class="ks-list">
+{{for:urgent_jobs}}        <li><strong>{{ item.name }}</strong><span class="{{ item.status_badge_class }}">{{ item.status }}</span><div class="ks-actions">{{if:item.can_retry}}<form method="post" action="{{ item.retry_url }}" class="ks-inline-form"><button class="ks-btn-secondary" type="submit">立即重试</button></form>{{/if}}<a class="ks-btn-secondary" href="{{ item.ops_url }}">查看详情</a></div></li>{{/for}}
+      </ul>
+      <div class="ks-actions">
+        <a class="ks-btn-secondary" href="{{ ops_url | trim }}">查看运维与审计</a>
+      </div>
+    </article>
+    <article class="ks-card">
+      <h2>今天要推进哪些待发布内容</h2>
+      <p class="ks-copy">把草稿积压和公开供给放在一起看，团队会更清楚下一次公开页和助手发布还差什么。</p>
+      <div class="ks-result-meta">
+        <span><strong>{{ draft_documents_total }}</strong> 篇文档待发布</span>
+        <span><strong>{{ draft_entries_total }}</strong> 条条目待发布</span>
+        <span><strong>{{ published_documents }}</strong> 篇文档已公开</span>
+        <span><strong>{{ published_entries_total }}</strong> 条条目已公开</span>
+      </div>
+      <div class="ks-actions">
+        <a class="ks-btn" href="{{ releases_url | trim }}">进入发布版本</a>
+        <a class="ks-btn-secondary" href="{{ documents_url | trim }}">补文档</a>
+        <a class="ks-btn-secondary" href="{{ faqs_url | trim }}">补条目</a>
+      </div>
+    </article>
+    <article class="ks-card">
+      <h2>今天有哪些真实需求值得跟进</h2>
+      <p class="ks-copy">订阅线索、真实提问和知识缺口应该汇成同一个输入面，驱动供给侧判断下一步做什么。</p>
+      <div class="ks-result-meta">
+        <span><strong>{{ subscriptions_total }}</strong> 条订阅线索</span>
+        <span><strong>{{ recent_questions_total }}</strong> 个近期提问</span>
+        <span><strong>{{ knowledge_gaps_total }}</strong> 个待补缺口</span>
+      </div>
+      <ul class="ks-list">
+{{for:quick_subscription_recent}}        <li><strong>{{ item.email }}</strong>{{ item.plan }} / {{ item.created_at }}<div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.brand_url }}">回到品牌页承接</a></div></li>{{/for}}
+{{for:quick_questions}}        <li><strong>{{ item.title }}</strong>{{ item.created_at }}<div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.assistant_url }}">回到助手页复查</a></div></li>{{/for}}
+{{for:quick_gaps}}        <li><strong>{{ item.title }}</strong>{{ item.signal }} / {{ item.created_at }}<div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.entry_url }}">转成条目草稿</a><a class="ks-btn-secondary" href="{{ item.document_url }}">补来源文档</a></div></li>{{/for}}
+      </ul>
+      <div class="ks-actions">
+        <a class="ks-btn-secondary" href="{{ public_url | trim }}">回到品牌页承接</a>
+        <a class="ks-btn-secondary" href="{{ public_assistant_url | trim }}">回到助手页验证</a>
+      </div>
+    </article>
+  </div>
   <div class="ks-grid two">
     <article class="ks-card">
       <h2>{{ subscribers_title | default('订阅用户与反馈') | trim }}</h2>

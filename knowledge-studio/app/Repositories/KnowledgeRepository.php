@@ -6,6 +6,7 @@ namespace App\Repositories;
 use App\Domain\Knowledge\KnowledgeDocument;
 use App\Domain\Knowledge\KnowledgeEntry;
 use App\Domain\Knowledge\KnowledgeRelease;
+use App\Support\DocumentChunkEstimator;
 use App\Support\DemoCatalog;
 use VSlim\Database\Manager;
 
@@ -637,12 +638,6 @@ final class KnowledgeRepository
 
     private function estimateChunks(string $body): int
     {
-        $body = trim($body);
-        if ($body === '') {
-            return 0;
-        }
-
-        $length = mb_strlen($body, 'UTF-8');
-        return max(1, (int) ceil($length / 280));
+        return DocumentChunkEstimator::estimate($body);
     }
 }

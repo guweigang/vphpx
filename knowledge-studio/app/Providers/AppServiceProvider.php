@@ -3,24 +3,6 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-require_once __DIR__ . '/../Support/DemoCatalog.php';
-require_once __DIR__ . '/../Support/LocaleCatalog.php';
-require_once __DIR__ . '/../Support/LocalePreferenceResolver.php';
-require_once __DIR__ . '/../Support/LocalizedUrlBuilder.php';
-require_once __DIR__ . '/../Domain/Knowledge/KnowledgeDocument.php';
-require_once __DIR__ . '/../Domain/Knowledge/KnowledgeEntry.php';
-require_once __DIR__ . '/../Domain/Knowledge/KnowledgeRelease.php';
-require_once __DIR__ . '/../Domain/PublicCatalog/SubscriptionOffer.php';
-require_once __DIR__ . '/../Domain/PublicCatalog/WorkspacePublicSnapshot.php';
-require_once __DIR__ . '/../Repositories/WorkspaceRepository.php';
-require_once __DIR__ . '/../Repositories/KnowledgeRepository.php';
-require_once __DIR__ . '/../Repositories/OpsRepository.php';
-require_once __DIR__ . '/../Services/ConsoleWorkspaceService.php';
-require_once __DIR__ . '/../Services/PublicWorkspaceService.php';
-require_once __DIR__ . '/../Services/AssistantAnswerService.php';
-require_once __DIR__ . '/../Presenters/AssistantAnswerPresenter.php';
-require_once __DIR__ . '/../Presenters/PublicBrandPresenter.php';
-
 use App\Repositories\KnowledgeRepository;
 use App\Repositories\OpsRepository;
 use App\Repositories\WorkspaceRepository;
@@ -33,6 +15,7 @@ use App\Support\DemoCatalog;
 use App\Support\LocaleCatalog;
 use App\Support\LocalePreferenceResolver;
 use App\Support\LocalizedUrlBuilder;
+use VSlim\Job\Dispatcher;
 
 final class AppServiceProvider extends \VSlim\Support\ServiceProvider
 {
@@ -48,10 +31,12 @@ final class AppServiceProvider extends \VSlim\Support\ServiceProvider
         $workspaceRepository = new WorkspaceRepository($catalog, $db, $source);
         $knowledgeRepository = new KnowledgeRepository($catalog, $db, $source);
         $opsRepository = new OpsRepository($catalog, $db, $source);
+        $jobDispatcher = $this->app()->jobDispatcher();
         $consoleService = new ConsoleWorkspaceService(
             $workspaceRepository,
             $knowledgeRepository,
             $opsRepository,
+            $jobDispatcher,
         );
         $answerService = new AssistantAnswerService($knowledgeRepository);
         $answerPresenter = new AssistantAnswerPresenter();
@@ -72,6 +57,7 @@ final class AppServiceProvider extends \VSlim\Support\ServiceProvider
         $container->set(WorkspaceRepository::class, $workspaceRepository);
         $container->set(KnowledgeRepository::class, $knowledgeRepository);
         $container->set(OpsRepository::class, $opsRepository);
+        $container->set(Dispatcher::class, $jobDispatcher);
         $container->set(ConsoleWorkspaceService::class, $consoleService);
         $container->set(AssistantAnswerService::class, $answerService);
         $container->set(AssistantAnswerPresenter::class, $answerPresenter);

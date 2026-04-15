@@ -1,20 +1,6 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/Controllers/HomeController.php';
-require_once __DIR__ . '/Controllers/AuthController.php';
-require_once __DIR__ . '/Controllers/ConsoleController.php';
-require_once __DIR__ . '/Controllers/PublicController.php';
-require_once dirname(__DIR__) . '/Support/DemoCatalog.php';
-require_once dirname(__DIR__) . '/Support/LocaleCatalog.php';
-require_once dirname(__DIR__) . '/Support/LocalizedUrlBuilder.php';
-require_once dirname(__DIR__) . '/Repositories/WorkspaceRepository.php';
-require_once dirname(__DIR__) . '/Services/ConsoleWorkspaceService.php';
-require_once dirname(__DIR__) . '/Services/AssistantAnswerService.php';
-require_once dirname(__DIR__) . '/Services/PublicWorkspaceService.php';
-require_once dirname(__DIR__) . '/Presenters/AssistantAnswerPresenter.php';
-require_once dirname(__DIR__) . '/Presenters/PublicBrandPresenter.php';
-
 return function (VSlim\App $app): void {
     $catalog = $app->container()->get('studio.catalog');
     $locales = $app->container()->get(\App\Support\LocaleCatalog::class);

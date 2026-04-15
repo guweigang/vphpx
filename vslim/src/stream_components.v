@@ -613,6 +613,10 @@ fn zval_raw_string_key(input vphp.ZVal, key string, default_value string) string
 
 fn zval_int_key(input vphp.ZVal, key string, default_value int) int {
 	raw := input.get(key) or { return default_value }
+	if raw.is_string() {
+		text := raw.to_string().trim_space()
+		return if text == '' { default_value } else { text.int() }
+	}
 	return int(raw.to_i64())
 }
 

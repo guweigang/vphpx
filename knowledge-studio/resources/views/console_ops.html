@@ -38,17 +38,23 @@
     </article>
     <article class="ks-card">
       <h2>{{ jobs_title | trim }}</h2>
+      {{if:show_no_jobs}}<div class="ks-empty-state">当前还没有异步任务记录。创建文档或条目后，这里会开始显示索引、重试和运行轨迹。</div>{{/if}}
+      {{if:has_jobs}}
       <table class="ks-table">
-        <tr><th>{{ col_name | trim }}</th><th>{{ col_status | trim }}</th><th>{{ col_queued | trim }}</th></tr>
-{{for:jobs}}        <tr><td><strong>{{ item.name }}</strong></td><td>{{ item.status }}</td><td>{{ item.queued_at }}</td></tr>{{/for}}
+        <tr><th>{{ col_name | trim }}</th><th>{{ col_status | trim }}</th><th>{{ col_queued | trim }}</th><th>{{ col_runtime | trim }}</th></tr>
+{{for:jobs}}        <tr><td><strong>{{ item.name }}</strong>{{if:item.queue}}<br><span class="{{ item.queue_badge_class }}">{{ item.queue }}</span>{{/if}}{{if:item.job_class}}<br><span class="ks-copy">{{ item.job_class }}</span>{{/if}}{{if:item.last_error}}<br><span class="ks-copy"><strong>last_error</strong> {{ item.last_error }}</span>{{/if}}{{if:item.can_retry}}<form method="post" action="{{ item.retry_url }}" class="ks-inline-form"><button class="ks-btn-secondary" type="submit">{{ retry_label | trim }}</button></form>{{/if}}</td><td><span class="{{ item.status_badge_class }}">{{ item.status }}</span></td><td>{{ item.queued_at }}</td><td>{{ item.runtime_at }}</td></tr>{{/for}}
       </table>
+      {{/if}}
     </article>
   </div>
   <article class="ks-card">
     <h2>{{ audit_title | trim }}</h2>
+    {{if:show_no_logs}}<div class="ks-empty-state">当前还没有审计动作。成员邀请、内容编辑、任务重试和发布版本都会逐步沉淀到这里。</div>{{/if}}
+    {{if:has_logs}}
     <table class="ks-table">
       <tr><th>{{ col_when | trim }}</th><th>{{ col_actor | trim }}</th><th>{{ col_action | trim }}</th><th>{{ col_target | trim }}</th></tr>
 {{for:logs}}      <tr><td>{{ item.created_at }}</td><td>{{ item.actor }}</td><td>{{ item.action_label }}</td><td>{{ item.target_preview }}</td></tr>{{/for}}
     </table>
+    {{/if}}
   </article>
 </section>

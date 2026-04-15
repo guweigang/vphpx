@@ -48,6 +48,7 @@ final class ConsoleController extends \VSlim\Controller
         $documents = $dashboard['documents'];
         $entries = $dashboard['entries'];
         $jobs = $dashboard['jobs'];
+        $urgentJobs = is_array($dashboard['urgent_jobs'] ?? null) ? $dashboard['urgent_jobs'] : [];
         $subscriptions = is_array($dashboard['subscriptions'] ?? null) ? $dashboard['subscriptions'] : ['count' => 0, 'recent' => [], 'plans' => []];
         $questions = is_array($dashboard['questions'] ?? null) ? $dashboard['questions'] : [];
         $gaps = is_array($dashboard['gaps'] ?? null) ? $dashboard['gaps'] : [];
@@ -112,6 +113,17 @@ final class ConsoleController extends \VSlim\Controller
                     : $this->urls->console($locale),
             ];
         }, is_array($subscriptions['recent'] ?? null) ? $subscriptions['recent'] : []);
+        $urgentJobs = array_map(function (array $item) use ($locale): array {
+            $status = strtolower(trim((string) ($item['status'] ?? 'queued')));
+            return [
+                ...$item,
+                'status' => $status,
+                'status_badge_class' => $this->jobStatusBadgeClass($status),
+                'ops_url' => $this->urls->consoleOps($locale),
+                'can_retry' => $status === 'failed' ? '1' : '',
+                'retry_url' => $this->urls->consoleJobRetry((string) ($item['id'] ?? ''), $locale),
+            ];
+        }, $urgentJobs);
 
         $this->debug('index.render');
         return $this->render_with_layout('console.html', 'layout.html', [
@@ -130,6 +142,13 @@ final class ConsoleController extends \VSlim\Controller
             'documents_total' => (string) ($metrics['documents'] ?? '0'),
             'entries_total' => (string) ($metrics['entries'] ?? '0'),
             'jobs_total' => (string) ($metrics['jobs'] ?? '0'),
+            'failed_jobs_total' => (string) ($metrics['failed_jobs'] ?? '0'),
+            'active_jobs_total' => (string) ($metrics['active_jobs'] ?? '0'),
+            'draft_documents_total' => (string) ($metrics['draft_documents'] ?? '0'),
+            'draft_entries_total' => (string) ($metrics['draft_entries'] ?? '0'),
+            'published_entries_total' => (string) ($metrics['published_entries'] ?? '0'),
+            'knowledge_gaps_total' => (string) ($metrics['knowledge_gaps'] ?? '0'),
+            'recent_questions_total' => (string) ($metrics['recent_questions'] ?? '0'),
             'subscriptions_total' => (string) ($subscriptions['count'] ?? '0'),
             'published_documents' => (string) ($metrics['published_documents'] ?? '0'),
             'assistant_status' => (string) ($metrics['assistant_status'] ?? 'draft'),
@@ -141,6 +160,10 @@ final class ConsoleController extends \VSlim\Controller
             'documents' => array_slice($documents, 0, 2),
             'entries' => array_slice($entries, 0, 2),
             'jobs' => array_slice($jobs, 0, 2),
+            'urgent_jobs' => $urgentJobs,
+            'quick_subscription_recent' => array_slice($subscriptionRecent, 0, 2),
+            'quick_questions' => array_slice($questions, 0, 2),
+            'quick_gaps' => array_slice($gaps, 0, 2),
             'subscription_recent' => $subscriptionRecent,
             'subscription_plans' => is_array($subscriptions['plans'] ?? null) ? $subscriptions['plans'] : [],
             'recent_questions' => $questions,
@@ -317,9 +340,12 @@ final class ConsoleController extends \VSlim\Controller
             'source_upload_selected' => ($this->queryValue($request, 'prefill_source_type') ?: 'markdown') === 'upload' ? 'selected' : '',
             'source_notion_selected' => ($this->queryValue($request, 'prefill_source_type') ?: 'markdown') === 'notion' ? 'selected' : '',
         ];
+        $draftDocuments = array_values(array_filter($documents, static fn (array $item): bool => (string) ($item['status'] ?? '') !== 'published'));
+        $publishedDocuments = array_values(array_filter($documents, static fn (array $item): bool => (string) ($item['status'] ?? '') === 'published'));
         $documents = array_map(fn (array $item): array => [
             ...$item,
             'edit_url' => $this->urls->consoleDocumentEditor((string) ($item['id'] ?? ''), $locale),
+            'status_badge_class' => $this->contentStatusBadgeClass((string) ($item['status'] ?? 'draft')),
         ], $documents);
 
         if (getenv('KS_PLAIN_DOCUMENTS_RESPONSE') !== false && getenv('KS_PLAIN_DOCUMENTS_RESPONSE') !== '') {
@@ -387,10 +413,19 @@ final class ConsoleController extends \VSlim\Controller
             'workspace_name' => is_array($workspace) ? (string) ($workspace['name'] ?? '') : '',
             'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
             'documents' => $documents,
+            'documents_total' => (string) count($documents),
+            'draft_documents_total' => (string) count($draftDocuments),
+            'published_documents_total' => (string) count($publishedDocuments),
+            'has_documents' => $documents !== [] ? '1' : '',
+            'show_no_documents' => $documents === [] ? '1' : '',
             'document_edit_label' => $copy['document_edit_label'],
             'write_error' => $this->flash($request, 'console.documents.error'),
             'write_notice' => $this->flash($request, 'console.documents.notice'),
             'document_action' => $this->urls->consoleDocuments($locale),
+            'releases_url' => $this->urls->consoleReleases($locale),
+            'public_url' => is_array($workspace)
+                ? $this->urls->brand((string) ($workspace['slug'] ?? ''), $locale)
+                : $this->urls->console($locale),
             'can_manage_content' => $canManageContent ? '1' : '',
             'page_section' => $copy['page_section'],
             'nav_label' => $copy['nav_label'],
@@ -462,11 +497,16 @@ final class ConsoleController extends \VSlim\Controller
             'workspace_name' => is_array($workspace) ? (string) ($workspace['name'] ?? '') : '',
             'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
             'document' => $document->toArray(),
+            'document_status_badge_class' => $this->contentStatusBadgeClass($document->status),
             'document_summary_preview_html' => MarkdownPreview::render($document->summary),
             'document_body_preview_html' => MarkdownPreview::render($document->body),
             'save_action' => $this->urls->consoleDocumentEditor($document->id, $locale),
             'publish_action' => $this->urls->consoleDocumentEditor($document->id, $locale) . '/publish',
             'back_url' => $this->urls->consoleDocuments($locale),
+            'releases_url' => $this->urls->consoleReleases($locale),
+            'public_url' => is_array($workspace)
+                ? $this->urls->brand((string) ($workspace['slug'] ?? ''), $locale)
+                : $this->urls->console($locale),
             'can_manage_content' => $canManageContent ? '1' : '',
             'page_section' => $copy['page_section'],
             'nav_label' => $copy['nav_label'],
@@ -516,9 +556,12 @@ final class ConsoleController extends \VSlim\Controller
             'kind_faq_selected' => ($this->queryValue($request, 'prefill_kind') ?: 'faq') === 'faq' ? 'selected' : '',
             'kind_topic_selected' => ($this->queryValue($request, 'prefill_kind') ?: 'faq') === 'topic' ? 'selected' : '',
         ];
+        $draftEntries = array_values(array_filter($entries, static fn (array $item): bool => (string) ($item['status'] ?? '') !== 'published'));
+        $publishedEntries = array_values(array_filter($entries, static fn (array $item): bool => (string) ($item['status'] ?? '') === 'published'));
         $entries = array_map(fn (array $item): array => [
             ...$item,
             'edit_url' => $this->urls->consoleEntryEditor((string) ($item['id'] ?? ''), $locale),
+            'status_badge_class' => $this->contentStatusBadgeClass((string) ($item['status'] ?? 'draft')),
         ], $entries);
 
         return $this->render_with_layout('console_faqs.html', 'layout.html', [
@@ -528,10 +571,19 @@ final class ConsoleController extends \VSlim\Controller
             'workspace_name' => is_array($workspace) ? (string) ($workspace['name'] ?? '') : '',
             'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
             'entries' => $entries,
+            'entries_total' => (string) count($entries),
+            'draft_entries_total' => (string) count($draftEntries),
+            'published_entries_total' => (string) count($publishedEntries),
+            'has_entries' => $entries !== [] ? '1' : '',
+            'show_no_entries' => $entries === [] ? '1' : '',
             'entry_edit_label' => $copy['entry_edit_label'],
             'write_error' => $this->flash($request, 'console.entries.error'),
             'write_notice' => $this->flash($request, 'console.entries.notice'),
             'entry_action' => $this->urls->consoleFaqs($locale),
+            'releases_url' => $this->urls->consoleReleases($locale),
+            'public_url' => is_array($workspace)
+                ? $this->urls->brand((string) ($workspace['slug'] ?? ''), $locale)
+                : $this->urls->console($locale),
             'can_manage_content' => $canManageContent ? '1' : '',
             'page_section' => $copy['page_section'],
             'nav_label' => $copy['nav_label'],
@@ -599,10 +651,15 @@ final class ConsoleController extends \VSlim\Controller
             'workspace_name' => is_array($workspace) ? (string) ($workspace['name'] ?? '') : '',
             'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
             'entry' => $entry->toArray(),
+            'entry_status_badge_class' => $this->contentStatusBadgeClass($entry->status),
             'entry_body_preview_html' => MarkdownPreview::render($entry->body),
             'save_action' => $this->urls->consoleEntryEditor($entry->id, $locale),
             'publish_action' => $this->urls->consoleEntryEditor($entry->id, $locale) . '/publish',
             'back_url' => $this->urls->consoleFaqs($locale),
+            'releases_url' => $this->urls->consoleReleases($locale),
+            'public_url' => is_array($workspace)
+                ? $this->urls->brand((string) ($workspace['slug'] ?? ''), $locale)
+                : $this->urls->console($locale),
             'can_manage_content' => $canManageContent ? '1' : '',
             'page_section' => $copy['page_section'],
             'nav_label' => $copy['nav_label'],
@@ -638,9 +695,18 @@ final class ConsoleController extends \VSlim\Controller
 
         [$viewer, $workspace] = $this->consoleContext($request);
         $ops = $this->console->ops($workspace);
-        $jobs = $ops['jobs'];
-        $logs = $ops['logs'];
         $locale = $this->locale($request);
+        $jobs = array_map(function (array $item) use ($locale): array {
+            $status = strtolower(trim((string) ($item['status'] ?? 'queued')));
+            $item['status'] = $status;
+            $item['status_badge_class'] = $this->jobStatusBadgeClass($status);
+            $item['queue_badge_class'] = $this->jobQueueBadgeClass($status);
+            $item['can_retry'] = ($status === 'failed') ? '1' : '';
+            $item['retry_url'] = $this->urls->consoleJobRetry((string) ($item['id'] ?? ''), $locale);
+            return $item;
+        }, $ops['jobs']);
+        usort($jobs, fn (array $left, array $right): int => $this->compareOpsJobs($left, $right));
+        $logs = $ops['logs'];
         $copy = $this->locales->consoleOps($locale);
         $shared = $this->shared($locale, '/console/ops', is_array($workspace) ? $workspace : null);
         $canManageOps = $this->console->canManageOps(is_array($viewer) ? $viewer : null);
@@ -653,6 +719,10 @@ final class ConsoleController extends \VSlim\Controller
             'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
             'jobs' => $jobs,
             'logs' => $logs,
+            'has_jobs' => $jobs !== [] ? '1' : '',
+            'show_no_jobs' => $jobs === [] ? '1' : '',
+            'has_logs' => $logs !== [] ? '1' : '',
+            'show_no_logs' => $logs === [] ? '1' : '',
             'write_error' => $this->flash($request, 'console.ops.error'),
             'write_notice' => $this->flash($request, 'console.ops.notice'),
             'job_action' => $this->urls->consoleJobs($locale),
@@ -675,12 +745,103 @@ final class ConsoleController extends \VSlim\Controller
             'col_name' => $copy['col_name'],
             'col_status' => $copy['col_status'],
             'col_queued' => $copy['col_queued'],
+            'col_runtime' => $copy['col_runtime'],
+            'retry_label' => $copy['retry_label'],
             'col_when' => $copy['col_when'],
             'col_actor' => $copy['col_actor'],
             'col_action' => $copy['col_action'],
             'col_target' => $copy['col_target'],
             ...$shared,
         ]);
+    }
+
+    private function compareOpsJobs(array $left, array $right): int
+    {
+        $priority = fn (string $status): int => match ($status) {
+            'failed' => 0,
+            'running', 'reserved', 'pending', 'queued' => 1,
+            'completed' => 2,
+            default => 3,
+        };
+        $leftStatus = strtolower(trim((string) ($left['status'] ?? 'queued')));
+        $rightStatus = strtolower(trim((string) ($right['status'] ?? 'queued')));
+        $leftPriority = $priority($leftStatus);
+        $rightPriority = $priority($rightStatus);
+
+        if ($leftPriority !== $rightPriority) {
+            return $leftPriority <=> $rightPriority;
+        }
+
+        $leftTime = $this->jobSortTimestamp($left);
+        $rightTime = $this->jobSortTimestamp($right);
+        if ($leftTime !== $rightTime) {
+            return $rightTime <=> $leftTime;
+        }
+
+        return strcmp((string) ($right['id'] ?? ''), (string) ($left['id'] ?? ''));
+    }
+
+    private function jobSortTimestamp(array $item): int
+    {
+        $candidates = [
+            (string) ($item['runtime_at'] ?? ''),
+            (string) ($item['queued_at'] ?? ''),
+            (string) ($item['updated_at'] ?? ''),
+            (string) ($item['created_at'] ?? ''),
+        ];
+
+        foreach ($candidates as $candidate) {
+            $candidate = trim($candidate);
+            if ($candidate === '') {
+                continue;
+            }
+            $timestamp = strtotime($candidate);
+            if ($timestamp !== false) {
+                return $timestamp;
+            }
+        }
+
+        return 0;
+    }
+
+    private function jobStatusBadgeClass(string $status): string
+    {
+        return match ($status) {
+            'failed' => 'ks-badge ks-badge-danger',
+            'running', 'reserved' => 'ks-badge ks-badge-info',
+            'pending', 'queued' => 'ks-badge ks-badge-warning',
+            'completed' => 'ks-badge ks-badge-success',
+            default => 'ks-badge',
+        };
+    }
+
+    private function jobQueueBadgeClass(string $status): string
+    {
+        return match ($status) {
+            'failed' => 'ks-badge ks-badge-soft-danger',
+            'running', 'reserved' => 'ks-badge ks-badge-soft-info',
+            default => 'ks-badge ks-badge-soft',
+        };
+    }
+
+    private function contentStatusBadgeClass(string $status): string
+    {
+        return match (strtolower(trim($status))) {
+            'published', 'completed' => 'ks-badge ks-badge-success',
+            'draft', 'queued', 'pending' => 'ks-badge ks-badge-warning',
+            'failed' => 'ks-badge ks-badge-danger',
+            default => 'ks-badge ks-badge-soft',
+        };
+    }
+
+    private function releaseCheckBadgeClass(string $status): string
+    {
+        return match (strtolower(trim($status))) {
+            'pass', 'ok', 'ready' => 'ks-badge ks-badge-success',
+            'warn', 'warning', 'pending' => 'ks-badge ks-badge-warning',
+            'fail', 'failed', 'error' => 'ks-badge ks-badge-danger',
+            default => 'ks-badge ks-badge-soft',
+        };
     }
 
     public function releases(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
@@ -715,16 +876,70 @@ final class ConsoleController extends \VSlim\Controller
             : $copy['version_compare_empty_notes'];
         $compare['next']['notes'] = $copy['version_compare_next_notes'];
         $snapshot['version_compare'] = $compare;
-        $releases = array_map(function (array $item) use ($locale, $workspaceSlug): array {
-            $version = trim((string) ($item['version'] ?? ''));
+        $snapshot['document_candidates'] = array_map(function (array $item) use ($locale): array {
             return [
                 ...$item,
+                'edit_url' => $this->urls->consoleDocumentEditor((string) ($item['id'] ?? ''), $locale),
+                'status_badge_class' => $this->contentStatusBadgeClass((string) ($item['status'] ?? 'draft')),
+            ];
+        }, is_array($snapshot['document_candidates'] ?? null) ? $snapshot['document_candidates'] : []);
+        $snapshot['entry_candidates'] = array_map(function (array $item) use ($locale): array {
+            return [
+                ...$item,
+                'edit_url' => $this->urls->consoleEntryEditor((string) ($item['id'] ?? ''), $locale),
+                'status_badge_class' => $this->contentStatusBadgeClass((string) ($item['status'] ?? 'draft')),
+            ];
+        }, is_array($snapshot['entry_candidates'] ?? null) ? $snapshot['entry_candidates'] : []);
+        $snapshot['draft_preview']['documents'] = array_map(function (array $item) use ($locale): array {
+            return [
+                ...$item,
+                'list_url' => $this->urls->consoleDocuments($locale),
+            ];
+        }, is_array($snapshot['draft_preview']['documents'] ?? null) ? $snapshot['draft_preview']['documents'] : []);
+        $snapshot['draft_preview']['entries'] = array_map(function (array $item) use ($locale): array {
+            return [
+                ...$item,
+                'list_url' => $this->urls->consoleFaqs($locale),
+            ];
+        }, is_array($snapshot['draft_preview']['entries'] ?? null) ? $snapshot['draft_preview']['entries'] : []);
+        $snapshot['release_checks'] = array_map(function (array $item): array {
+            return [
+                ...$item,
+                'status_badge_class' => $this->releaseCheckBadgeClass((string) ($item['status'] ?? 'pending')),
+            ];
+        }, is_array($snapshot['release_checks'] ?? null) ? $snapshot['release_checks'] : []);
+        $snapshot['gap_signals'] = array_map(function (array $item) use ($locale, $workspaceSlug): array {
+            $question = trim((string) ($item['title'] ?? ''));
+            return [
+                ...$item,
+                'assistant_url' => $workspaceSlug !== ''
+                    ? $this->urls->assistantWithQuery($workspaceSlug, $locale, ['q' => $question])
+                    : $this->urls->console($locale),
+                'entry_url' => $this->urls->consoleFaqsWithQuery($locale, [
+                    'prefill_kind' => 'faq',
+                    'prefill_title' => $question !== '' ? $question : 'New FAQ from release gap',
+                    'prefill_coverage_focus' => $question !== '' ? $question : 'Release gap follow-up',
+                    'prefill_body' => $question !== ''
+                        ? "## User question\n\n{$question}\n\n## Working answer\n\n- Add the canonical answer here.\n"
+                        : "## User question\n\n- Capture the missing question here.\n\n## Working answer\n\n- Add the canonical answer here.\n",
+                ]),
+            ];
+        }, is_array($snapshot['gap_signals'] ?? null) ? $snapshot['gap_signals'] : []);
+        $releases = array_map(function (array $item) use ($locale, $workspaceSlug, $copy): array {
+            $version = trim((string) ($item['version'] ?? ''));
+            $status = strtolower(trim((string) ($item['status'] ?? 'draft')));
+            return [
+                ...$item,
+                'status' => $status,
+                'status_badge_class' => $this->contentStatusBadgeClass($status),
                 'brand_url' => $workspaceSlug !== ''
                     ? $this->urls->brandWithQuery($workspaceSlug, $locale, ['release' => $version])
                     : $this->urls->console($locale),
                 'assistant_url' => $workspaceSlug !== ''
                     ? $this->urls->assistantWithQuery($workspaceSlug, $locale, ['release' => $version])
                     : $this->urls->console($locale),
+                'brand_cta' => $copy['history_brand_cta'],
+                'assistant_cta' => $copy['history_assistant_cta'],
             ];
         }, $releases);
 
@@ -736,6 +951,23 @@ final class ConsoleController extends \VSlim\Controller
             'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
             'releases' => $releases,
             'snapshot' => $snapshot,
+            'has_releases' => $releases !== [] ? '1' : '',
+            'show_no_releases' => $releases === [] ? '1' : '',
+            'has_document_candidates' => ((is_array($snapshot['document_candidates'] ?? null) ? $snapshot['document_candidates'] : []) !== []) ? '1' : '',
+            'show_no_document_candidates' => ((is_array($snapshot['document_candidates'] ?? null) ? $snapshot['document_candidates'] : []) === []) ? '1' : '',
+            'has_entry_candidates' => ((is_array($snapshot['entry_candidates'] ?? null) ? $snapshot['entry_candidates'] : []) !== []) ? '1' : '',
+            'show_no_entry_candidates' => ((is_array($snapshot['entry_candidates'] ?? null) ? $snapshot['entry_candidates'] : []) === []) ? '1' : '',
+            'has_gap_signals' => ((is_array($snapshot['gap_signals'] ?? null) ? $snapshot['gap_signals'] : []) !== []) ? '1' : '',
+            'show_no_gap_signals' => ((is_array($snapshot['gap_signals'] ?? null) ? $snapshot['gap_signals'] : []) === []) ? '1' : '',
+            'snapshot_ready' => (string) ($snapshot['ready'] ?? ''),
+            'snapshot_published_documents' => (string) ($snapshot['published_documents'] ?? '0'),
+            'snapshot_published_entries' => (string) ($snapshot['published_entries'] ?? '0'),
+            'snapshot_draft_documents' => (string) ($snapshot['draft_documents'] ?? '0'),
+            'snapshot_draft_entries' => (string) ($snapshot['draft_entries'] ?? '0'),
+            'snapshot_latest_release_version' => (string) (($snapshot['latest_release']['version'] ?? 'v0.0')),
+            'snapshot_latest_release_status' => (string) (($snapshot['latest_release']['status'] ?? 'draft')),
+            'snapshot_latest_release_status_badge_class' => $this->contentStatusBadgeClass((string) (($snapshot['latest_release']['status'] ?? 'draft'))),
+            'snapshot_readiness_summary' => (string) ($snapshot['readiness_summary'] ?? ''),
             'write_error' => $this->flash($request, 'console.releases.error'),
             'write_notice' => $this->flash($request, 'console.releases.notice'),
             'release_action' => $this->urls->consoleReleases($locale),
@@ -966,6 +1198,28 @@ final class ConsoleController extends \VSlim\Controller
             is_array($workspace) ? $workspace : null,
             is_array($viewer) ? $viewer : null,
             $this->requestData($request),
+        );
+
+        return $this->flashRedirect(
+            $request,
+            $this->urls->consoleOps($this->locale($request)),
+            $result['ok'] ? 'console.ops.notice' : 'console.ops.error',
+            $result['message'],
+        );
+    }
+
+    public function retryJob(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    {
+        if (!$this->app()->authCheck($request)) {
+            return $this->redirect('/login', 302);
+        }
+
+        [$viewer, $workspace] = $this->consoleContext($request);
+        $jobId = $this->pathParam($request, 'job');
+        $result = $this->console->retryJob(
+            is_array($workspace) ? $workspace : null,
+            is_array($viewer) ? $viewer : null,
+            $jobId,
         );
 
         return $this->flashRedirect(

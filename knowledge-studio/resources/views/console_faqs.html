@@ -28,6 +28,29 @@
       </aside>
     </div>
   </article>
+  <div class="ks-grid three">
+    <article class="ks-card">
+      <h2>当前条目供给规模</h2>
+      <div class="ks-result-meta">
+        <span><strong>{{ entries_total }}</strong> 条条目</span>
+        <span><strong>{{ draft_entries_total }}</strong> 条待发布</span>
+        <span><strong>{{ published_entries_total }}</strong> 条已公开</span>
+      </div>
+      <p class="ks-copy">先确认标准答案供给是否足够，再决定该补 FAQ、补 topic，还是进入下一次公开发布。</p>
+    </article>
+    <article class="ks-card">
+      <h2>下一步动作</h2>
+      <p class="ks-copy">条目整理完之后，要么继续补答案，要么进入发布关口，不要停在内部草稿状态。</p>
+      <div class="ks-actions">
+        <a class="ks-btn" href="{{ releases_url | trim }}">进入发布版本</a>
+        <a class="ks-btn-secondary" href="{{ public_url | trim }}">查看公开品牌页</a>
+      </div>
+    </article>
+    <article class="ks-card">
+      <h2>这页负责什么</h2>
+      <p class="ks-copy">这里维护公开助手最终更容易命中的标准答案，优先写清楚结论、适用范围、例外和下一步动作。</p>
+    </article>
+  </div>
   {{if:write_notice}}<div class="ks-notice success">{{ write_notice | trim }}</div>{{/if}}
   {{if:write_error}}<div class="ks-notice error">{{ write_error | trim }}</div>{{/if}}
   <article class="ks-card">
@@ -73,6 +96,8 @@
   <div class="ks-grid two">
     <article class="ks-card">
       <h2>{{ inventory_title | trim }}</h2>
+      {{if:show_no_entries}}<div class="ks-empty-state">当前租户还没有条目。先把一个高频问题沉淀成 FAQ 或 topic，再通过发布版本带到公开助手。</div>{{/if}}
+      {{if:has_entries}}
       <table class="ks-table">
         <tr>
           <th>{{ col_title | trim }}</th>
@@ -80,8 +105,9 @@
           <th>{{ col_status | trim }}</th>
           <th>{{ col_owner | trim }}</th>
         </tr>
-{{for:entries}}        <tr><td><strong>{{ item.title }}</strong><br><span class="ks-copy">{{ item.coverage_focus }}</span><br><a href="{{ item.edit_url }}">{{ entry_edit_label | trim }}</a></td><td>{{ item.kind }}</td><td>{{ item.status }}</td><td>{{ item.owner }}</td></tr>{{/for}}
+{{for:entries}}        <tr><td><strong>{{ item.title }}</strong><br><span class="ks-copy">{{ item.coverage_focus }}</span><br><a href="{{ item.edit_url }}">{{ entry_edit_label | trim }}</a></td><td>{{ item.kind }}</td><td><span class="{{ item.status_badge_class }}">{{ item.status }}</span></td><td>{{ item.owner }}</td></tr>{{/for}}
       </table>
+      {{/if}}
     </article>
     <article class="ks-card">
       <h2>{{ inventory_title | trim }}</h2>

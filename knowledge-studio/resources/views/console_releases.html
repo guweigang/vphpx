@@ -13,7 +13,7 @@
           <span class="ks-badge">{{ workspace_slug | trim }}</span>
           <span class="ks-badge">{{ viewer_label | trim }} {{ viewer_name | trim }}</span>
           <span class="ks-badge">{{ role_hint_label | trim }} {{ viewer_role | trim }}</span>
-          <span class="ks-badge">{{ ready_label | trim }} {{ snapshot.ready }}</span>
+          <span class="ks-badge">{{ ready_label | trim }} {{ snapshot_ready }}</span>
         </div>
       </div>
       <aside class="ks-spotlight-side">
@@ -30,19 +30,19 @@
     </div>
     <div class="ks-kpi-row">
       <article class="ks-kpi">
-        <p class="ks-kpi-value">{{ snapshot.published_documents }}</p>
+        <p class="ks-kpi-value">{{ snapshot_published_documents }}</p>
         <p class="ks-kpi-label">{{ published_documents_label | trim }}</p>
       </article>
       <article class="ks-kpi">
-        <p class="ks-kpi-value">{{ snapshot.published_entries }}</p>
+        <p class="ks-kpi-value">{{ snapshot_published_entries }}</p>
         <p class="ks-kpi-label">{{ published_entries_label | trim }}</p>
       </article>
       <article class="ks-kpi">
-        <p class="ks-kpi-value">{{ snapshot.draft_documents }}</p>
+        <p class="ks-kpi-value">{{ snapshot_draft_documents }}</p>
         <p class="ks-kpi-label">{{ draft_documents_label | trim }}</p>
       </article>
       <article class="ks-kpi">
-        <p class="ks-kpi-value">{{ snapshot.draft_entries }}</p>
+        <p class="ks-kpi-value">{{ snapshot_draft_entries }}</p>
         <p class="ks-kpi-label">{{ draft_entries_label | trim }}</p>
       </article>
     </div>
@@ -53,6 +53,12 @@
     <article class="ks-card">
       <h2>{{ composer_title | trim }}</h2>
       <p class="ks-copy">{{ public_preview_body | trim }}</p>
+      <div class="ks-result-meta">
+        <span><strong>{{ snapshot_draft_documents }}</strong> {{ draft_documents_label | trim }}</span>
+        <span><strong>{{ snapshot_draft_entries }}</strong> {{ draft_entries_label | trim }}</span>
+        <span><strong>{{ snapshot_published_documents }}</strong> {{ published_documents_label | trim }}</span>
+        <span><strong>{{ snapshot_published_entries }}</strong> {{ published_entries_label | trim }}</span>
+      </div>
       {{if:can_manage_releases}}
       <form class="ks-form" method="post" action="{{ release_action | trim }}">
         <div class="ks-field">
@@ -67,15 +73,21 @@
         <div class="ks-grid two">
           <div class="ks-choice-group">
             <h3 class="ks-subsection-title">{{ candidate_documents_title | trim }}</h3>
+            {{if:show_no_document_candidates}}<div class="ks-empty-state">当前没有可进入本次发布的草稿文档。先回到文档工作面补充来源材料或完成审核。</div>{{/if}}
+            {{if:has_document_candidates}}
             <div class="ks-choice-grid">
-{{for:snapshot.document_candidates}}              <label class="ks-choice-card"><input class="ks-choice-check" type="checkbox" name="document_ids[]" value="{{ item.id }}" {{ item.checked_attr }}><span class="ks-choice-indicator" aria-hidden="true"></span><span class="ks-choice-content"><span class="ks-choice-title">{{ item.title }}</span><span class="ks-choice-meta"><span>{{ item.source_type }}</span><span>{{ item.status }}</span></span><span class="ks-choice-summary">{{ item.coverage_focus }}</span><span class="ks-choice-summary">{{ item.preview_summary }}</span></span></label>{{/for}}
+{{for:snapshot.document_candidates}}              <label class="ks-choice-card"><input class="ks-choice-check" type="checkbox" name="document_ids[]" value="{{ item.id }}" {{ item.checked_attr }}><span class="ks-choice-indicator" aria-hidden="true"></span><span class="ks-choice-content"><span class="ks-choice-title">{{ item.title }}</span><span class="ks-choice-meta"><span>{{ item.source_type }}</span><span class="{{ item.status_badge_class }}">{{ item.status }}</span></span><span class="ks-choice-summary">{{ item.coverage_focus }}</span><span class="ks-choice-summary">{{ item.preview_summary }}</span><span class="ks-actions"><a class="ks-btn-secondary" href="{{ item.edit_url }}">去编辑文档</a></span></span></label>{{/for}}
             </div>
+            {{/if}}
           </div>
           <div class="ks-choice-group">
             <h3 class="ks-subsection-title">{{ candidate_entries_title | trim }}</h3>
+            {{if:show_no_entry_candidates}}<div class="ks-empty-state">当前没有可进入本次发布的草稿条目。先回到条目工作面补标准答案或完成审核。</div>{{/if}}
+            {{if:has_entry_candidates}}
             <div class="ks-choice-grid">
-{{for:snapshot.entry_candidates}}              <label class="ks-choice-card"><input class="ks-choice-check" type="checkbox" name="entry_ids[]" value="{{ item.id }}" {{ item.checked_attr }}><span class="ks-choice-indicator" aria-hidden="true"></span><span class="ks-choice-content"><span class="ks-choice-title">{{ item.title }}</span><span class="ks-choice-meta"><span>{{ item.kind }}</span><span>{{ item.status }}</span></span><span class="ks-choice-summary">{{ item.coverage_focus }}</span><span class="ks-choice-summary">{{ item.preview_summary }}</span></span></label>{{/for}}
+{{for:snapshot.entry_candidates}}              <label class="ks-choice-card"><input class="ks-choice-check" type="checkbox" name="entry_ids[]" value="{{ item.id }}" {{ item.checked_attr }}><span class="ks-choice-indicator" aria-hidden="true"></span><span class="ks-choice-content"><span class="ks-choice-title">{{ item.title }}</span><span class="ks-choice-meta"><span>{{ item.kind }}</span><span class="{{ item.status_badge_class }}">{{ item.status }}</span></span><span class="ks-choice-summary">{{ item.coverage_focus }}</span><span class="ks-choice-summary">{{ item.preview_summary }}</span><span class="ks-actions"><a class="ks-btn-secondary" href="{{ item.edit_url }}">去编辑条目</a></span></span></label>{{/for}}
             </div>
+            {{/if}}
           </div>
         </div>
         <button type="submit">{{ submit_label | trim }}</button>
@@ -85,22 +97,23 @@
     </article>
     <article class="ks-card">
       <h2>{{ checks_panel_title | trim }}</h2>
-      <p class="ks-copy">{{ latest_release_label | trim }} {{ snapshot.latest_release.version | default('v0.0') }} / {{ snapshot.latest_release.status | default('draft') }}</p>
+      <p class="ks-copy">{{ latest_release_label | trim }} {{ snapshot_latest_release_version }} / <span class="{{ snapshot_latest_release_status_badge_class }}">{{ snapshot_latest_release_status }}</span></p>
       <section class="ks-subsection">
         <h3>{{ release_checks_title | trim }}</h3>
         <div class="ks-stack">
-{{for:snapshot.release_checks}}        <article class="ks-result-card"><strong>{{ item.label }}</strong><p class="ks-copy">{{ item.detail }}</p><div class="ks-result-meta"><span>{{ item.status }}</span></div></article>{{/for}}
+{{for:snapshot.release_checks}}        <article class="ks-result-card"><strong>{{ item.label }}</strong><p class="ks-copy">{{ item.detail }}</p><div class="ks-result-meta"><span class="{{ item.status_badge_class }}">{{ item.status }}</span></div></article>{{/for}}
         </div>
       </section>
       <section class="ks-subsection">
         <h3>{{ readiness_summary_title | trim }}</h3>
-        <p class="ks-copy">{{ snapshot.readiness_summary }}</p>
+        <p class="ks-copy">{{ snapshot_readiness_summary }}</p>
       </section>
       <section class="ks-subsection">
         <h3>{{ gap_signals_title | trim }}</h3>
         <p class="ks-copy">{{ gap_signals_body | trim }}</p>
-{{if:snapshot.gap_signals}}        <div class="ks-stack">
-{{for:snapshot.gap_signals}}        <article class="ks-result-card"><strong>{{ item.title }}</strong><p class="ks-copy">{{ item.signal }} / {{ item.created_at }}</p></article>{{/for}}
+{{if:show_no_gap_signals}}        <div class="ks-empty-state">最近还没有新的公开回答缺口信号。可以继续回到助手页做验证，或者直接推进下一次发布。</div>{{/if}}
+{{if:has_gap_signals}}        <div class="ks-stack">
+{{for:snapshot.gap_signals}}        <article class="ks-result-card"><strong>{{ item.title }}</strong><p class="ks-copy">{{ item.signal }} / {{ item.created_at }}</p><div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.assistant_url }}">去助手验证</a><a class="ks-btn-secondary" href="{{ item.entry_url }}">补 FAQ 条目</a></div></article>{{/for}}
         </div>{{/if}}
       </section>
     </article>
@@ -146,13 +159,13 @@
       <div>
         <h3>{{ draft_preview_documents_title | trim }}</h3>
         <div class="ks-stack">
-{{for:snapshot.draft_preview.documents}}          <article class="ks-result-card"><strong>{{ item.title }}</strong><p class="ks-copy">{{ item.coverage_focus }}</p><p class="ks-copy">{{ item.summary }}</p><div class="ks-result-meta"><span>{{ item.meta }}</span></div></article>{{/for}}
+{{for:snapshot.draft_preview.documents}}          <article class="ks-result-card"><strong>{{ item.title }}</strong><p class="ks-copy">{{ item.coverage_focus }}</p><p class="ks-copy">{{ item.summary }}</p><div class="ks-result-meta"><span>{{ item.meta }}</span></div><div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.list_url }}">回到文档工作面</a></div></article>{{/for}}
         </div>
       </div>
       <div>
         <h3>{{ draft_preview_entries_title | trim }}</h3>
         <div class="ks-stack">
-{{for:snapshot.draft_preview.entries}}          <article class="ks-result-card"><strong>{{ item.title }}</strong><p class="ks-copy">{{ item.coverage_focus }}</p><p class="ks-copy">{{ item.summary }}</p><div class="ks-result-meta"><span>{{ item.meta }}</span></div></article>{{/for}}
+{{for:snapshot.draft_preview.entries}}          <article class="ks-result-card"><strong>{{ item.title }}</strong><p class="ks-copy">{{ item.coverage_focus }}</p><p class="ks-copy">{{ item.summary }}</p><div class="ks-result-meta"><span>{{ item.meta }}</span></div><div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.list_url }}">回到条目工作面</a></div></article>{{/for}}
         </div>
       </div>
     </div>
@@ -176,6 +189,8 @@
   </article>
   <article class="ks-card">
     <h2>{{ history_title | trim }}</h2>
+    {{if:show_no_releases}}<div class="ks-empty-state">当前还没有历史发布。选好本次载荷并填写版本说明后，这里会沉淀公开版本的完整记录。</div>{{/if}}
+    {{if:has_releases}}
     <table class="ks-table">
       <tr>
         <th>{{ col_version | trim }}</th>
@@ -186,7 +201,8 @@
         <th>{{ col_created | trim }}</th>
         <th>{{ col_actions | trim }}</th>
       </tr>
-{{for:releases}}      <tr><td><strong>{{ item.version }}</strong></td><td>{{ item.status }}</td><td>{{ item.notes }}</td><td>{{ item.documents_count }}</td><td>{{ item.entries_count }}</td><td>{{ item.created_at }}</td><td><div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.brand_url }}">{{ history_brand_cta | trim }}</a><a class="ks-btn-secondary" href="{{ item.assistant_url }}">{{ history_assistant_cta | trim }}</a></div></td></tr>{{/for}}
+{{for:releases}}      <tr><td><strong>{{ item.version }}</strong></td><td><span class="{{ item.status_badge_class }}">{{ item.status }}</span></td><td>{{ item.notes }}</td><td>{{ item.documents_count }}</td><td>{{ item.entries_count }}</td><td>{{ item.created_at }}</td><td><div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.brand_url }}">{{ item.brand_cta }}</a><a class="ks-btn-secondary" href="{{ item.assistant_url }}">{{ item.assistant_cta }}</a></div></td></tr>{{/for}}
     </table>
+    {{/if}}
   </article>
 </section>

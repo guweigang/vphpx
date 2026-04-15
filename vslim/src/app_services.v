@@ -1082,6 +1082,28 @@ pub fn (mut app VSlimApp) db() &VSlimDatabaseManager {
 	return app.database()
 }
 
+@[php_method: 'jobDispatcher']
+pub fn (mut app VSlimApp) job_dispatcher() &VSlimJobDispatcher {
+	if app.job_dispatcher_ref == unsafe { nil } {
+		mut created := &VSlimJobDispatcher{}
+		created.construct()
+		created.set_manager(app.database())
+		app.job_dispatcher_ref = created
+	}
+	return app.job_dispatcher_ref
+}
+
+@[php_method: 'jobWorker']
+pub fn (mut app VSlimApp) job_worker() &VSlimJobWorker {
+	if app.job_worker_ref == unsafe { nil } {
+		mut created := &VSlimJobWorker{}
+		created.construct()
+		created.set_manager(app.database())
+		app.job_worker_ref = created
+	}
+	return app.job_worker_ref
+}
+
 @[php_method]
 pub fn (app &VSlimApp) has_migrator() bool {
 	return app.migrator_ref != unsafe { nil }

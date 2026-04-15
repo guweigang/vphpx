@@ -97,6 +97,11 @@ final class LocalizedUrlBuilder
         return $this->path('/console/ops/jobs', $locale);
     }
 
+    public function consoleJobRetry(string $jobId, string $locale): string
+    {
+        return $this->path('/console/ops/jobs/' . trim($jobId) . '/retry', $locale);
+    }
+
     public function logout(string $locale): string
     {
         return $this->path('/logout', $locale);

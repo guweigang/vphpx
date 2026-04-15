@@ -1,20 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../app/Commands/AboutCommand.php';
-require_once __DIR__ . '/../app/Commands/AppDoctorCommand.php';
-require_once __DIR__ . '/../app/Commands/ConfigCheckCommand.php';
-require_once __DIR__ . '/../app/Commands/DbMigrateCommand.php';
-require_once __DIR__ . '/../app/Commands/DbRollbackCommand.php';
-require_once __DIR__ . '/../app/Commands/DbSeedCommand.php';
-require_once __DIR__ . '/../app/Commands/MakeCommandCommand.php';
-require_once __DIR__ . '/../app/Commands/MakeControllerCommand.php';
-require_once __DIR__ . '/../app/Commands/MakeMigrationCommand.php';
-require_once __DIR__ . '/../app/Commands/MakeMiddlewareCommand.php';
-require_once __DIR__ . '/../app/Commands/MakeProviderCommand.php';
-require_once __DIR__ . '/../app/Commands/MakeSeedCommand.php';
-require_once __DIR__ . '/../app/Commands/MakeTestCommand.php';
-require_once __DIR__ . '/../app/Commands/RouteListCommand.php';
+\VSlim\EnvLoader::bootstrap(dirname(__DIR__));
 
 return [
     "commands" => [
