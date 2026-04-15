@@ -89,6 +89,10 @@ return function (VSlim\App $app): void {
         '/console/ops/jobs',
         [\App\Http\Controllers\ConsoleController::class, 'storeJob'],
     );
+    $app->post(
+        '/console/ops/jobs/:job/retry',
+        [\App\Http\Controllers\ConsoleController::class, 'retryJob'],
+    );
 
     $app->get_named(
         'studio.brand',

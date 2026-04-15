@@ -124,6 +124,8 @@ mut:
 	http_client_ref         &VSlimPsr18Client           = unsafe { nil }
 	database_ref            &VSlimDatabaseManager       = unsafe { nil }
 	migrator_ref            &VSlimDatabaseMigrator      = unsafe { nil }
+	job_dispatcher_ref      &VSlimJobDispatcher         = unsafe { nil }
+	job_worker_ref          &VSlimJobWorker             = unsafe { nil }
 	providers               []vphp.RetainedObject
 	provider_classes        map[string]bool
 	modules                 []vphp.RetainedObject
@@ -911,6 +913,23 @@ mut:
 	params     []vphp.PersistentOwnedZBox
 	resolved   bool
 	result_box vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+}
+
+@[php_class: 'VSlim\\Job\\Dispatcher']
+@[heap]
+struct VSlimJobDispatcher {
+mut:
+	manager_ref &VSlimDatabaseManager = unsafe { nil }
+}
+
+@[php_class: 'VSlim\\Job\\Worker']
+@[heap]
+struct VSlimJobWorker {
+mut:
+	manager_ref          &VSlimDatabaseManager = unsafe { nil }
+	worker_id            string                = 'default'
+	retry_delay_seconds  int                   = 60
+	reserve_timeout_secs int                   = 300
 }
 
 @[php_class: 'VSlim\\Config']

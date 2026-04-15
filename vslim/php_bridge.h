@@ -90,6 +90,8 @@ extern zend_class_entry *vslim__validate__validator_ce;
 extern zend_class_entry *vslim__envloader_ce;
 extern zend_class_entry *vslim__task_ce;
 extern zend_class_entry *vslim__taskhandle_ce;
+extern zend_class_entry *vslim__job__dispatcher_ce;
+extern zend_class_entry *vslim__job__worker_ce;
 extern zend_class_entry *vslim__config_ce;
 extern zend_class_entry *vslim__container__containerexception_ce;
 extern zend_class_entry *vslim__container__notfoundexception_ce;

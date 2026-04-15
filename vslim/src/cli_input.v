@@ -191,6 +191,10 @@ fn cli_default_strings(value vphp.ZVal, multiple bool) ![]string {
 	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return []string{}
 	}
+	if value.is_bool() {
+		bool_value := if value.to_bool() { 'true' } else { 'false' }
+		return [bool_value]
+	}
 	if value.is_array() {
 		normalized := psr16_iterable_to_array(value)!
 		mut out := []string{}

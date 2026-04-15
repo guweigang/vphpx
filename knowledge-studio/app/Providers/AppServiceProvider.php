@@ -15,6 +15,7 @@ use App\Support\DemoCatalog;
 use App\Support\LocaleCatalog;
 use App\Support\LocalePreferenceResolver;
 use App\Support\LocalizedUrlBuilder;
+use VSlim\Job\Dispatcher;
 
 final class AppServiceProvider extends \VSlim\Support\ServiceProvider
 {
@@ -30,10 +31,12 @@ final class AppServiceProvider extends \VSlim\Support\ServiceProvider
         $workspaceRepository = new WorkspaceRepository($catalog, $db, $source);
         $knowledgeRepository = new KnowledgeRepository($catalog, $db, $source);
         $opsRepository = new OpsRepository($catalog, $db, $source);
+        $jobDispatcher = $this->app()->jobDispatcher();
         $consoleService = new ConsoleWorkspaceService(
             $workspaceRepository,
             $knowledgeRepository,
             $opsRepository,
+            $jobDispatcher,
         );
         $answerService = new AssistantAnswerService($knowledgeRepository);
         $answerPresenter = new AssistantAnswerPresenter();
@@ -54,6 +57,7 @@ final class AppServiceProvider extends \VSlim\Support\ServiceProvider
         $container->set(WorkspaceRepository::class, $workspaceRepository);
         $container->set(KnowledgeRepository::class, $knowledgeRepository);
         $container->set(OpsRepository::class, $opsRepository);
+        $container->set(Dispatcher::class, $jobDispatcher);
         $container->set(ConsoleWorkspaceService::class, $consoleService);
         $container->set(AssistantAnswerService::class, $answerService);
         $container->set(AssistantAnswerPresenter::class, $answerPresenter);

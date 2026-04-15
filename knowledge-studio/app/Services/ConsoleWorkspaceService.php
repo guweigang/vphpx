@@ -3,12 +3,15 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Jobs\IndexDocumentJob;
+use App\Jobs\IndexEntryJob;
 use App\Domain\Knowledge\KnowledgeDocument;
 use App\Domain\Knowledge\KnowledgeEntry;
 use App\Domain\Knowledge\KnowledgeRelease;
 use App\Repositories\KnowledgeRepository;
 use App\Repositories\OpsRepository;
 use App\Repositories\WorkspaceRepository;
+use VSlim\Job\Dispatcher;
 
 final class ConsoleWorkspaceService
 {
@@ -18,6 +21,7 @@ final class ConsoleWorkspaceService
         private WorkspaceRepository $workspaces,
         private KnowledgeRepository $knowledge,
         private OpsRepository $ops,
+        private Dispatcher $jobs,
     ) {
     }
 
@@ -57,19 +61,35 @@ final class ConsoleWorkspaceService
         $questions = $this->ops->recentAssistantQuestions($workspaceId);
         $gaps = $this->ops->knowledgeGapInsights($workspaceId);
         $failedJobs = 0;
+        $activeJobs = 0;
         foreach ($jobs as $job) {
-            if (($job['status'] ?? '') === 'failed') {
+            $status = (string) ($job['status'] ?? '');
+            if ($status === 'failed') {
                 $failedJobs++;
             }
+            if (in_array($status, ['queued', 'pending', 'running', 'reserved'], true)) {
+                $activeJobs++;
+            }
         }
+        $draftDocuments = array_values(array_filter($documents, static fn (array $row): bool => (string) ($row['status'] ?? '') !== 'published'));
+        $draftEntries = array_values(array_filter($entries, static fn (array $row): bool => (string) ($row['status'] ?? '') !== 'published'));
+        $publishedEntries = array_values(array_filter($entries, static fn (array $row): bool => (string) ($row['status'] ?? '') === 'published'));
+        usort($jobs, fn (array $left, array $right): int => $this->compareDashboardJobs($left, $right));
         $metrics['jobs'] = count($jobs);
         $metrics['failed_jobs'] = $failedJobs;
+        $metrics['active_jobs'] = $activeJobs;
+        $metrics['draft_documents'] = count($draftDocuments);
+        $metrics['draft_entries'] = count($draftEntries);
+        $metrics['published_entries'] = count($publishedEntries);
+        $metrics['knowledge_gaps'] = count($gaps);
+        $metrics['recent_questions'] = count($questions);
 
         return [
             'metrics' => $metrics,
             'documents' => array_slice($documents, 0, 2),
             'entries' => array_slice($entries, 0, 2),
             'jobs' => array_slice($jobs, 0, 2),
+            'urgent_jobs' => array_slice($jobs, 0, 4),
             'subscriptions' => $subscriptions,
             'questions' => $questions,
             'gaps' => $gaps,
@@ -348,7 +368,12 @@ final class ConsoleWorkspaceService
         }
 
         $document = $this->knowledge->createDocument($workspaceId, $title, $coverageFocus, $summary, $body, $language, $sourceType);
-        $this->ops->queueJob($workspaceId, 'Index ' . $title, 'queued');
+        if (!$this->enqueueDocumentIndex($workspaceId, (string) ($document['id'] ?? ''), $title)) {
+            return [
+                'ok' => false,
+                'message' => 'Document was created, but the indexing job could not be queued.',
+            ];
+        }
         $this->ops->recordAudit(
             $workspaceId,
             $this->viewerLabel($viewer),
@@ -397,6 +422,12 @@ final class ConsoleWorkspaceService
         }
 
         $entry = $this->knowledge->createEntry($workspaceId, $kind, $title, $coverageFocus, $body, $this->viewerLabel($viewer));
+        if (!$this->enqueueEntryIndex($workspaceId, (string) ($entry['id'] ?? ''), $title)) {
+            return [
+                'ok' => false,
+                'message' => 'Knowledge entry was created, but the indexing job could not be queued.',
+            ];
+        }
         $this->ops->recordAudit(
             $workspaceId,
             $this->viewerLabel($viewer),
@@ -406,7 +437,7 @@ final class ConsoleWorkspaceService
 
         return [
             'ok' => true,
-            'message' => 'Knowledge entry saved as draft.',
+            'message' => 'Knowledge entry saved and queued for indexing.',
         ];
     }
 
@@ -440,6 +471,14 @@ final class ConsoleWorkspaceService
 
         if ($this->ops->writesEnabled()) {
             $this->ops->recordAudit($workspaceId, $this->viewerLabel($viewer), 'knowledge.document.updated', $document->title);
+        }
+
+        if ($this->knowledge->writesEnabled() && $this->ops->writesEnabled()) {
+            if (!$this->enqueueDocumentIndex($workspaceId, $document->id, $document->title)) {
+                return ['ok' => false, 'message' => 'Document was updated, but the reindex job could not be queued.'];
+            }
+
+            return ['ok' => true, 'message' => 'Document updated and requeued for indexing.'];
         }
 
         return ['ok' => true, 'message' => 'Document updated for the next release cycle.'];
@@ -483,6 +522,14 @@ final class ConsoleWorkspaceService
 
         if ($this->ops->writesEnabled()) {
             $this->ops->recordAudit($workspaceId, $this->viewerLabel($viewer), 'knowledge.entry.updated', $entry->title);
+        }
+
+        if ($this->knowledge->writesEnabled() && $this->ops->writesEnabled()) {
+            if (!$this->enqueueEntryIndex($workspaceId, $entry->id, $entry->title)) {
+                return ['ok' => false, 'message' => 'Knowledge entry was updated, but the reindex job could not be queued.'];
+            }
+
+            return ['ok' => true, 'message' => 'Knowledge entry updated and requeued for indexing.'];
         }
 
         return ['ok' => true, 'message' => 'Knowledge entry updated in the editorial workspace.'];
@@ -540,6 +587,78 @@ final class ConsoleWorkspaceService
         return [
             'ok' => true,
             'message' => 'Job queued for worker execution.',
+        ];
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @param array<string, mixed>|null $viewer
+     * @return array{ok:bool,message:string}
+     */
+    public function retryJob(?array $workspace, ?array $viewer, string $jobId): array
+    {
+        if (!$this->canManageOps($viewer)) {
+            return [
+                'ok' => false,
+                'message' => 'Only tenant owners can retry failed ops jobs.',
+            ];
+        }
+
+        $workspaceId = is_array($workspace) ? trim((string) ($workspace['id'] ?? '')) : '';
+        if ($workspaceId === '' || trim($jobId) === '') {
+            return [
+                'ok' => false,
+                'message' => 'Retry target is required.',
+            ];
+        }
+
+        $job = $this->ops->retryableJobForWorkspace($workspaceId, $jobId);
+        if (!is_array($job)) {
+            return [
+                'ok' => false,
+                'message' => 'Only failed async jobs can be retried from this workspace.',
+            ];
+        }
+
+        $queue = trim((string) ($job['queue'] ?? ''));
+        $jobClass = trim((string) ($job['job_class'] ?? ''));
+        $payload = is_array($job['payload'] ?? null) ? $job['payload'] : [];
+        if ($queue === '' || $jobClass === '' || $payload === []) {
+            return [
+                'ok' => false,
+                'message' => 'Retry metadata is incomplete for this job.',
+            ];
+        }
+
+        $this->ops->updateJobStatus($jobId, 'queued');
+
+        try {
+            $this->jobs->dispatch(
+                $jobClass,
+                $payload,
+                $queue,
+                0,
+                max(1, (int) ($job['max_attempts'] ?? 3)),
+            );
+        } catch (\Throwable) {
+            $this->ops->updateJobStatus($jobId, 'failed');
+
+            return [
+                'ok' => false,
+                'message' => 'Retry dispatch failed for this job.',
+            ];
+        }
+
+        $this->ops->recordAudit(
+            $workspaceId,
+            $this->viewerLabel($viewer),
+            'ops.job.retried',
+            (string) ($job['name'] ?? $jobId),
+        );
+
+        return [
+            'ok' => true,
+            'message' => 'Failed job requeued successfully.',
         ];
     }
 
@@ -699,6 +818,42 @@ final class ConsoleWorkspaceService
         return $items;
     }
 
+    private function enqueueDocumentIndex(string $workspaceId, string $documentId, string $title): bool
+    {
+        $opsJob = $this->ops->queueJob($workspaceId, 'Index ' . $title, 'queued');
+
+        try {
+            $this->jobs->dispatch(IndexDocumentJob::class, [
+                'workspace_id' => $workspaceId,
+                'document_id' => $documentId,
+                'ops_job_id' => (string) ($opsJob['id'] ?? ''),
+            ], 'knowledge-index', 0, 3);
+        } catch (\Throwable) {
+            $this->ops->updateJobStatus((string) ($opsJob['id'] ?? ''), 'failed');
+            return false;
+        }
+
+        return true;
+    }
+
+    private function enqueueEntryIndex(string $workspaceId, string $entryId, string $title): bool
+    {
+        $opsJob = $this->ops->queueJob($workspaceId, 'Index entry ' . $title, 'queued');
+
+        try {
+            $this->jobs->dispatch(IndexEntryJob::class, [
+                'workspace_id' => $workspaceId,
+                'entry_id' => $entryId,
+                'ops_job_id' => (string) ($opsJob['id'] ?? ''),
+            ], 'knowledge-entry', 0, 3);
+        } catch (\Throwable) {
+            $this->ops->updateJobStatus((string) ($opsJob['id'] ?? ''), 'failed');
+            return false;
+        }
+
+        return true;
+    }
+
     /**
      * @param array<int, array<string, mixed>> $publishedDocuments
      * @param array<int, array<string, mixed>> $publishedEntries
@@ -735,6 +890,16 @@ final class ConsoleWorkspaceService
     private function priorityQueue(array $metrics, array $subscriptions, array $gaps): array
     {
         $items = [];
+
+        if ((int) ($metrics['failed_jobs'] ?? 0) > 0) {
+            $items[] = [
+                'priority' => 'P0',
+                'title' => 'Recover failed indexing and delivery jobs',
+                'body' => (string) ($metrics['failed_jobs'] ?? 0) . ' failed jobs need retry or diagnosis before the next publish cycle.',
+                'target' => '/console/ops',
+                'cta' => 'Open Ops',
+            ];
+        }
 
         if ($gaps !== []) {
             $items[] = [
@@ -791,6 +956,55 @@ final class ConsoleWorkspaceService
         });
 
         return array_slice($items, 0, 4);
+    }
+
+    private function compareDashboardJobs(array $left, array $right): int
+    {
+        $priority = fn (string $status): int => match ($status) {
+            'failed' => 0,
+            'running', 'reserved', 'pending', 'queued' => 1,
+            'completed' => 2,
+            default => 3,
+        };
+        $leftStatus = strtolower(trim((string) ($left['status'] ?? 'queued')));
+        $rightStatus = strtolower(trim((string) ($right['status'] ?? 'queued')));
+        $leftPriority = $priority($leftStatus);
+        $rightPriority = $priority($rightStatus);
+
+        if ($leftPriority !== $rightPriority) {
+            return $leftPriority <=> $rightPriority;
+        }
+
+        $leftTime = $this->dashboardJobTimestamp($left);
+        $rightTime = $this->dashboardJobTimestamp($right);
+        if ($leftTime !== $rightTime) {
+            return $rightTime <=> $leftTime;
+        }
+
+        return strcmp((string) ($right['id'] ?? ''), (string) ($left['id'] ?? ''));
+    }
+
+    private function dashboardJobTimestamp(array $item): int
+    {
+        $candidates = [
+            (string) ($item['runtime_at'] ?? ''),
+            (string) ($item['queued_at'] ?? ''),
+            (string) ($item['updated_at'] ?? ''),
+            (string) ($item['created_at'] ?? ''),
+        ];
+
+        foreach ($candidates as $candidate) {
+            $candidate = trim($candidate);
+            if ($candidate === '') {
+                continue;
+            }
+            $timestamp = strtotime($candidate);
+            if ($timestamp !== false) {
+                return $timestamp;
+            }
+        }
+
+        return 0;
     }
 
     /**

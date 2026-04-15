@@ -11,6 +11,7 @@ if (is_file($autoload)) {
     require_once $autoload;
 }
 \App\Support\PsrStubLoader::load();
+\App\Support\StudioTimezone::bootstrap();
 
 if (!extension_loaded('vslim')) {
     fwrite(STDERR, "vslim extension is not loaded\n");

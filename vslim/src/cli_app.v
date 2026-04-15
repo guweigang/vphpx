@@ -597,14 +597,14 @@ pub fn (cli &VSlimCliApp) warnings() []string {
 
 @[php_method]
 pub fn (cli &VSlimCliApp) options() vphp.RequestOwnedZBox {
-	return vphp.RequestOwnedZBox.of(vphp.new_zval_from(vphp.dyn_value_map(cli.last_options.clone())) or {
+	return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(vphp.dyn_value_map(cli.last_options.clone())) or {
 		vphp.ZVal.new_null()
 	})
 }
 
 @[php_method]
 pub fn (cli &VSlimCliApp) arguments() vphp.RequestOwnedZBox {
-	return vphp.RequestOwnedZBox.of(vphp.new_zval_from(vphp.dyn_value_map(cli.last_arguments.clone())) or {
+	return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(vphp.dyn_value_map(cli.last_arguments.clone())) or {
 		vphp.ZVal.new_null()
 	})
 }
@@ -615,7 +615,9 @@ pub fn (cli &VSlimCliApp) option(name string, default_value vphp.RequestBorrowed
 	key := name.trim_space()
 	if key != '' {
 		if value := cli.last_options[key] {
-			return vphp.RequestOwnedZBox.of(vphp.new_zval_from(value) or { vphp.ZVal.new_null() })
+			return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(value) or {
+				vphp.ZVal.new_null()
+			})
 		}
 	}
 	raw_default := default_value.to_zval()
@@ -631,7 +633,9 @@ pub fn (cli &VSlimCliApp) argument(name string, default_value vphp.RequestBorrow
 	key := name.trim_space()
 	if key != '' {
 		if value := cli.last_arguments[key] {
-			return vphp.RequestOwnedZBox.of(vphp.new_zval_from(value) or { vphp.ZVal.new_null() })
+			return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(value) or {
+				vphp.ZVal.new_null()
+			})
 		}
 	}
 	raw_default := default_value.to_zval()
