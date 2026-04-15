@@ -715,7 +715,7 @@ final class ConsoleController extends \VSlim\Controller
             : $copy['version_compare_empty_notes'];
         $compare['next']['notes'] = $copy['version_compare_next_notes'];
         $snapshot['version_compare'] = $compare;
-        $releases = array_map(function (array $item) use ($locale, $workspaceSlug): array {
+        $releases = array_map(function (array $item) use ($locale, $workspaceSlug, $copy): array {
             $version = trim((string) ($item['version'] ?? ''));
             return [
                 ...$item,
@@ -725,6 +725,8 @@ final class ConsoleController extends \VSlim\Controller
                 'assistant_url' => $workspaceSlug !== ''
                     ? $this->urls->assistantWithQuery($workspaceSlug, $locale, ['release' => $version])
                     : $this->urls->console($locale),
+                'brand_cta' => $copy['history_brand_cta'],
+                'assistant_cta' => $copy['history_assistant_cta'],
             ];
         }, $releases);
 
@@ -736,6 +738,14 @@ final class ConsoleController extends \VSlim\Controller
             'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
             'releases' => $releases,
             'snapshot' => $snapshot,
+            'snapshot_ready' => (string) ($snapshot['ready'] ?? ''),
+            'snapshot_published_documents' => (string) ($snapshot['published_documents'] ?? '0'),
+            'snapshot_published_entries' => (string) ($snapshot['published_entries'] ?? '0'),
+            'snapshot_draft_documents' => (string) ($snapshot['draft_documents'] ?? '0'),
+            'snapshot_draft_entries' => (string) ($snapshot['draft_entries'] ?? '0'),
+            'snapshot_latest_release_version' => (string) (($snapshot['latest_release']['version'] ?? 'v0.0')),
+            'snapshot_latest_release_status' => (string) (($snapshot['latest_release']['status'] ?? 'draft')),
+            'snapshot_readiness_summary' => (string) ($snapshot['readiness_summary'] ?? ''),
             'write_error' => $this->flash($request, 'console.releases.error'),
             'write_notice' => $this->flash($request, 'console.releases.notice'),
             'release_action' => $this->urls->consoleReleases($locale),

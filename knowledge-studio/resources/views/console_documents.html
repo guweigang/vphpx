@@ -89,6 +89,20 @@
   <div class="ks-grid two">
     <article class="ks-card">
       <h2>{{ inventory_title | trim }}</h2>
+      <table class="ks-table">
+        <tr>
+          <th>{{ col_title | trim }}</th>
+          <th>{{ col_summary | trim }}</th>
+          <th>{{ col_source | trim }}</th>
+          <th>{{ col_status | trim }}</th>
+          <th>{{ col_chunks | trim }}</th>
+          <th>{{ col_updated | trim }}</th>
+        </tr>
+{{for:documents}}        <tr><td><strong>{{ item.title }}</strong><br><span class="ks-copy">{{ item.coverage_focus }}</span><br><a href="{{ item.edit_url }}">{{ document_edit_label | trim }}</a></td><td>{{ item.summary }}</td><td>{{ item.source_type }} / {{ item.language }}</td><td>{{ item.status }}</td><td>{{ item.chunks }}</td><td>{{ item.updated_at }}</td></tr>{{/for}}
+      </table>
+    </article>
+    <article class="ks-card">
+      <h2>{{ inventory_title | trim }}</h2>
       <p class="ks-copy">{{ inventory_body | trim }}</p>
       <ul class="ks-list">
         <li><strong>来源材料</strong>用来承接原始规则、说明、手册、流程和背景信息。</li>
@@ -98,18 +112,4 @@
       <div class="ks-actions"><a class="ks-btn-secondary" href="{{ document_action | trim }}">{{ submit_label | trim }}</a></div>
     </article>
   </div>
-  <article class="ks-card">
-    <h2>{{ inventory_title | trim }}</h2>
-    <table class="ks-table">
-      <tr>
-        <th>{{ col_title | trim }}</th>
-        <th>{{ col_summary | trim }}</th>
-        <th>{{ col_source | trim }}</th>
-        <th>{{ col_status | trim }}</th>
-        <th>{{ col_chunks | trim }}</th>
-        <th>{{ col_updated | trim }}</th>
-      </tr>
-{{for:documents}}      <tr><td><strong>{{ item.title }}</strong><br><span class="ks-copy">{{ item.coverage_focus }}</span><br><a href="{{ item.edit_url }}">{{ document_edit_label | trim }}</a></td><td>{{ item.summary }}</td><td>{{ item.source_type }} / {{ item.language }}</td><td>{{ item.status }}</td><td>{{ item.chunks }}</td><td>{{ item.updated_at }}</td></tr>{{/for}}
-    </table>
-  </article>
 </section>

@@ -13,7 +13,7 @@
           <span class="ks-badge">{{ workspace_slug | trim }}</span>
           <span class="ks-badge">{{ viewer_label | trim }} {{ viewer_name | trim }}</span>
           <span class="ks-badge">{{ role_hint_label | trim }} {{ viewer_role | trim }}</span>
-          <span class="ks-badge">{{ ready_label | trim }} {{ snapshot.ready }}</span>
+          <span class="ks-badge">{{ ready_label | trim }} {{ snapshot_ready }}</span>
         </div>
       </div>
       <aside class="ks-spotlight-side">
@@ -30,19 +30,19 @@
     </div>
     <div class="ks-kpi-row">
       <article class="ks-kpi">
-        <p class="ks-kpi-value">{{ snapshot.published_documents }}</p>
+        <p class="ks-kpi-value">{{ snapshot_published_documents }}</p>
         <p class="ks-kpi-label">{{ published_documents_label | trim }}</p>
       </article>
       <article class="ks-kpi">
-        <p class="ks-kpi-value">{{ snapshot.published_entries }}</p>
+        <p class="ks-kpi-value">{{ snapshot_published_entries }}</p>
         <p class="ks-kpi-label">{{ published_entries_label | trim }}</p>
       </article>
       <article class="ks-kpi">
-        <p class="ks-kpi-value">{{ snapshot.draft_documents }}</p>
+        <p class="ks-kpi-value">{{ snapshot_draft_documents }}</p>
         <p class="ks-kpi-label">{{ draft_documents_label | trim }}</p>
       </article>
       <article class="ks-kpi">
-        <p class="ks-kpi-value">{{ snapshot.draft_entries }}</p>
+        <p class="ks-kpi-value">{{ snapshot_draft_entries }}</p>
         <p class="ks-kpi-label">{{ draft_entries_label | trim }}</p>
       </article>
     </div>
@@ -85,7 +85,7 @@
     </article>
     <article class="ks-card">
       <h2>{{ checks_panel_title | trim }}</h2>
-      <p class="ks-copy">{{ latest_release_label | trim }} {{ snapshot.latest_release.version | default('v0.0') }} / {{ snapshot.latest_release.status | default('draft') }}</p>
+      <p class="ks-copy">{{ latest_release_label | trim }} {{ snapshot_latest_release_version }} / {{ snapshot_latest_release_status }}</p>
       <section class="ks-subsection">
         <h3>{{ release_checks_title | trim }}</h3>
         <div class="ks-stack">
@@ -94,7 +94,7 @@
       </section>
       <section class="ks-subsection">
         <h3>{{ readiness_summary_title | trim }}</h3>
-        <p class="ks-copy">{{ snapshot.readiness_summary }}</p>
+        <p class="ks-copy">{{ snapshot_readiness_summary }}</p>
       </section>
       <section class="ks-subsection">
         <h3>{{ gap_signals_title | trim }}</h3>
@@ -186,7 +186,7 @@
         <th>{{ col_created | trim }}</th>
         <th>{{ col_actions | trim }}</th>
       </tr>
-{{for:releases}}      <tr><td><strong>{{ item.version }}</strong></td><td>{{ item.status }}</td><td>{{ item.notes }}</td><td>{{ item.documents_count }}</td><td>{{ item.entries_count }}</td><td>{{ item.created_at }}</td><td><div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.brand_url }}">{{ history_brand_cta | trim }}</a><a class="ks-btn-secondary" href="{{ item.assistant_url }}">{{ history_assistant_cta | trim }}</a></div></td></tr>{{/for}}
+{{for:releases}}      <tr><td><strong>{{ item.version }}</strong></td><td>{{ item.status }}</td><td>{{ item.notes }}</td><td>{{ item.documents_count }}</td><td>{{ item.entries_count }}</td><td>{{ item.created_at }}</td><td><div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.brand_url }}">{{ item.brand_cta }}</a><a class="ks-btn-secondary" href="{{ item.assistant_url }}">{{ item.assistant_cta }}</a></div></td></tr>{{/for}}
     </table>
   </article>
 </section>

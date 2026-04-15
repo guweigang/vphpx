@@ -16,5 +16,7 @@ if (!extension_loaded('vslim')) {
     exit(1);
 }
 
+\VSlim\EnvLoader::bootstrap($root);
+
 $cli = (new VSlim\Cli\App())->bootstrapDir($root);
 exit($cli->runArgv($_SERVER['argv'] ?? $argv ?? []));

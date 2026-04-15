@@ -3,24 +3,6 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-require_once __DIR__ . '/../Support/DemoCatalog.php';
-require_once __DIR__ . '/../Support/LocaleCatalog.php';
-require_once __DIR__ . '/../Support/LocalePreferenceResolver.php';
-require_once __DIR__ . '/../Support/LocalizedUrlBuilder.php';
-require_once __DIR__ . '/../Domain/Knowledge/KnowledgeDocument.php';
-require_once __DIR__ . '/../Domain/Knowledge/KnowledgeEntry.php';
-require_once __DIR__ . '/../Domain/Knowledge/KnowledgeRelease.php';
-require_once __DIR__ . '/../Domain/PublicCatalog/SubscriptionOffer.php';
-require_once __DIR__ . '/../Domain/PublicCatalog/WorkspacePublicSnapshot.php';
-require_once __DIR__ . '/../Repositories/WorkspaceRepository.php';
-require_once __DIR__ . '/../Repositories/KnowledgeRepository.php';
-require_once __DIR__ . '/../Repositories/OpsRepository.php';
-require_once __DIR__ . '/../Services/ConsoleWorkspaceService.php';
-require_once __DIR__ . '/../Services/PublicWorkspaceService.php';
-require_once __DIR__ . '/../Services/AssistantAnswerService.php';
-require_once __DIR__ . '/../Presenters/AssistantAnswerPresenter.php';
-require_once __DIR__ . '/../Presenters/PublicBrandPresenter.php';
-
 use App\Repositories\KnowledgeRepository;
 use App\Repositories\OpsRepository;
 use App\Repositories\WorkspaceRepository;

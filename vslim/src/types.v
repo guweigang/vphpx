@@ -862,6 +862,10 @@ mut:
 	validation_ran  bool
 }
 
+@[php_class: 'VSlim\\EnvLoader']
+@[heap]
+struct VSlimEnvLoader {}
+
 @[php_class: 'VSlim\\Config']
 @[heap]
 struct VSlimConfig {

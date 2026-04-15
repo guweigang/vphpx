@@ -1,11 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../app/Support/EnvLoader.php';
-require_once __DIR__ . '/../app/Support/PsrStubLoader.php';
-require_once __DIR__ . '/../app/Providers/AppServiceProvider.php';
-
-\App\Support\EnvLoader::bootstrap(dirname(__DIR__));
+\VSlim\EnvLoader::bootstrap(dirname(__DIR__));
 \App\Support\PsrStubLoader::load();
 
 $errors = require __DIR__ . '/../app/Http/errors.php';

@@ -10,15 +10,14 @@ if (!is_file($autoload)) {
 if (is_file($autoload)) {
     require_once $autoload;
 }
-require_once $root . '/app/Support/EnvLoader.php';
-require_once $root . '/app/Support/PsrStubLoader.php';
-\App\Support\EnvLoader::bootstrap($root);
 \App\Support\PsrStubLoader::load();
 
 if (!extension_loaded('vslim')) {
     fwrite(STDERR, "vslim extension is not loaded\n");
     exit(1);
 }
+
+\VSlim\EnvLoader::bootstrap($root);
 
 $cli = (new VSlim\Cli\App())->bootstrapDir($root);
 exit($cli->runArgv($_SERVER['argv'] ?? $argv ?? []));

@@ -15,9 +15,7 @@ foreach ($autoloadCandidates as $autoload) {
     break;
 }
 
-require_once $root . '/app/Support/EnvLoader.php';
-require_once $root . '/app/Support/PsrStubLoader.php';
-\App\Support\EnvLoader::bootstrap($root);
+\VSlim\EnvLoader::bootstrap($root);
 \App\Support\PsrStubLoader::load();
 
 function knowledge_studio_worker_log_path(): string

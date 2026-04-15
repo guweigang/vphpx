@@ -15,6 +15,8 @@ foreach ($autoloadCandidates as $autoload) {
     break;
 }
 
+\VSlim\EnvLoader::bootstrap($root);
+
 function build_template_app(): VSlim\App
 {
     return (new VSlim\App())->bootstrapDir(dirname(__DIR__));
