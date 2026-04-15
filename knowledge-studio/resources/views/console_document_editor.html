@@ -10,7 +10,7 @@
         <p class="ks-copy">{{ editor_intro | trim }}</p>
         <div class="ks-meta">
           <span class="ks-badge">{{ viewer_name | trim }}</span>
-          <span class="ks-badge">{{ status_label | trim }} {{ document.status }}</span>
+          <span class="{{ document_status_badge_class }}">{{ status_label | trim }} {{ document.status }}</span>
           <span class="ks-badge">{{ chunks_label | trim }} {{ document.chunks }}</span>
           <span class="ks-badge">{{ role_hint_label | trim }} {{ viewer_role | trim }}</span>
         </div>
@@ -31,6 +31,29 @@
       </aside>
     </div>
   </article>
+  <div class="ks-grid three">
+    <article class="ks-card">
+      <h2>当前编辑状态</h2>
+      <div class="ks-result-meta">
+        <span><span class="{{ document_status_badge_class }}">{{ document.status }}</span></span>
+        <span><strong>{{ document.chunks }}</strong> 个分块</span>
+        <span>{{ source_label | trim }} {{ document.source_type }}</span>
+      </div>
+      <p class="ks-copy">这里是来源材料编辑面，保存后会自动重入索引队列，真正公开仍然统一经过发布版本。</p>
+    </article>
+    <article class="ks-card">
+      <h2>下一步动作</h2>
+      <p class="ks-copy">材料整理完之后，不要停在编辑页，应该继续进入发布关口或回看公开品牌面。</p>
+      <div class="ks-actions">
+        <a class="ks-btn" href="{{ releases_url | trim }}">进入发布版本</a>
+        <a class="ks-btn-secondary" href="{{ public_url | trim }}">查看公开品牌页</a>
+      </div>
+    </article>
+    <article class="ks-card">
+      <h2>这页负责什么</h2>
+      <p class="ks-copy">先把规则、流程、制度、背景和证据写完整，让条目和公开助手后续有可引用、可复核的来源依据。</p>
+    </article>
+  </div>
   <div class="ks-grid two">
     <article class="ks-card">
       <h2>这份来源材料负责什么</h2>
@@ -98,6 +121,7 @@
       </div>
       <div class="ks-actions">
         <button class="ks-btn" type="submit">{{ save_label | trim }}</button>
+        <a class="ks-btn-secondary" href="{{ releases_url | trim }}">去发布版本</a>
         <a class="ks-btn-secondary" href="{{ back_url | trim }}">{{ back_label | trim }}</a>
       </div>
     </form>
