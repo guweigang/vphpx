@@ -109,7 +109,8 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 	for candidate in app_candidates {
 		cli_debug_log('app_candidate="${candidate}" is_file=${php_is_file(candidate)}')
 		if php_is_file(candidate) {
-			core.bootstrap_file(candidate)
+			candidate_path := candidate.clone()
+			core.bootstrap_file(candidate_path)
 			shared_applied = true
 			break
 		}

@@ -485,6 +485,9 @@ fn preload_bootstrap_spec_classes(project_root string, raw vphp.ZVal) {
 	if modules := app_bootstrap_lookup(normalized, ['modules']) {
 		preload_bootstrap_spec_class_items(project_root, modules)
 	}
+	for file in php_glob_paths(path_join(project_root, 'app/Http/Controllers/*.php')) {
+		_ = php_include_once(file)
+	}
 }
 
 fn apply_bootstrap_convention_provider_classes(mut app VSlimApp, project_root string) !bool {
@@ -772,7 +775,8 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 	candidates := [clean + '/bootstrap/app.php', clean + '/app.php']
 	for candidate in candidates {
 		if php_is_file(candidate) {
-			return app.bootstrap_file(candidate)
+			candidate_path := candidate.clone()
+			return app.bootstrap_file(candidate_path)
 		}
 	}
 	apply_bootstrap_conventions(mut app, clean) or {
