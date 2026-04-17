@@ -20,6 +20,7 @@ on:
 
 env:
   V_VERSION: '0.5.1'
+  V_COMMIT: '737163c'
 
 jobs:
   package:
@@ -78,17 +79,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          case "${{ matrix.platform }}" in
-            linux-amd64) v_url="https://github.com/vlang/v/releases/download/${V_VERSION}/v_linux.zip" ;;
-            macos-amd64) v_url="https://github.com/vlang/v/releases/download/${V_VERSION}/v_macos_x86_64.zip" ;;
-            macos-arm64) v_url="https://github.com/vlang/v/releases/download/${V_VERSION}/v_macos_arm64.zip" ;;
-            *) echo "unsupported platform: ${{ matrix.platform }}"; exit 1 ;;
-          esac
-          curl -fsSL "$v_url" -o /tmp/v.zip
-          rm -rf /tmp/v
-          unzip -q /tmp/v.zip -d /tmp
-          chmod +x /tmp/v/v
-          mv /tmp/v /tmp/vlang
+          rm -rf /tmp/vlang
+          git clone https://github.com/vlang/v.git /tmp/vlang
+          cd /tmp/vlang
+          git checkout "${V_COMMIT}"
+          make
           echo "/tmp/vlang" >> "$GITHUB_PATH"
           /tmp/vlang/v version
 
@@ -96,19 +91,15 @@ jobs:
         if: matrix.needs_build && runner.os == 'Windows'
         shell: pwsh
         run: |
-          $vUrl = "https://github.com/vlang/v/releases/download/$env:V_VERSION/v_windows.zip"
-          $zipPath = Join-Path $env:RUNNER_TEMP "v.zip"
-          $extractRoot = Join-Path $env:RUNNER_TEMP "v-extract"
           $installRoot = Join-Path $env:RUNNER_TEMP "vlang"
-          Invoke-WebRequest -Uri $vUrl -OutFile $zipPath
-          if (Test-Path $extractRoot) {
-            Remove-Item -Recurse -Force $extractRoot
-          }
           if (Test-Path $installRoot) {
             Remove-Item -Recurse -Force $installRoot
           }
-          Expand-Archive -Path $zipPath -DestinationPath $extractRoot -Force
-          Move-Item -Force (Join-Path $extractRoot "v") $installRoot
+          git clone https://github.com/vlang/v.git $installRoot
+          Push-Location $installRoot
+          git checkout $env:V_COMMIT
+          cmd /c make.bat
+          Pop-Location
           Add-Content -Path $env:GITHUB_PATH -Value $installRoot
           & (Join-Path $installRoot "v.exe") version
 
