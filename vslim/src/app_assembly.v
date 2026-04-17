@@ -443,6 +443,19 @@ fn apply_bootstrap_convention_hooks(path string, app_z vphp.ZVal, label string) 
 	return true
 }
 
+fn preload_bootstrap_project_classes(project_root string) {
+	patterns := [
+		'app/Providers/*.php',
+		'app/Modules/*.php',
+		'app/Http/Controllers/*.php',
+	]
+	for pattern in patterns {
+		for file in php_glob_paths(path_join(project_root, pattern)) {
+			_ = php_include_once(file)
+		}
+	}
+}
+
 fn apply_bootstrap_convention_provider_classes(mut app VSlimApp, project_root string) !bool {
 	mut applied := false
 	for file in php_glob_paths(path_join(project_root, 'app/Providers/*.php')) {
@@ -693,6 +706,14 @@ pub fn (mut app VSlimApp) bootstrap_file(path string) &VSlimApp {
 		vphp.throw_exception_class('InvalidArgumentException', 'bootstrap path must not be empty',
 			0)
 		return &app
+	}
+	lower := clean.to_lower()
+	if (lower.ends_with('/bootstrap/app.php') || lower.ends_with('\\bootstrap\\app.php')
+		|| lower.ends_with('/app.php') || lower.ends_with('\\app.php')) && php_is_file(clean) {
+		project_root := if is_bootstrap_dir_path(path_dirname(clean)) { path_dirname(path_dirname(clean)) } else { path_dirname(clean) }
+		if project_root != '' {
+			preload_bootstrap_project_classes(project_root)
+		}
 	}
 	result := vphp.include(clean)
 	apply_bootstrap_file_result(mut app, clean, result) or {
