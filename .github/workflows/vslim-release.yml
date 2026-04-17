@@ -87,6 +87,12 @@ jobs:
           echo "/tmp/vlang" >> "$GITHUB_PATH"
           /tmp/vlang/v version
 
+      - name: Setup MSVC on Windows
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+
       - name: Setup V on Windows
         if: matrix.needs_build && runner.os == 'Windows'
         shell: pwsh
@@ -95,19 +101,14 @@ jobs:
           if (Test-Path $installRoot) {
             Remove-Item -Recurse -Force $installRoot
           }
-          git clone https://github.com/vlang/v.git $installRoot
+          git clone --depth 1 https://github.com/vlang/v.git $installRoot
           Push-Location $installRoot
+          git fetch --depth 1 origin $env:V_COMMIT
           git checkout $env:V_COMMIT
-          cmd /c make.bat
+          cmd /c make.bat -msvc
           Pop-Location
           Add-Content -Path $env:GITHUB_PATH -Value $installRoot
           & (Join-Path $installRoot "v.exe") version
-
-      - name: Setup MSVC on Windows
-        if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: amd64
 
       - name: Install Windows parser tools
         if: runner.os == 'Windows'
