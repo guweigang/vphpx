@@ -75,9 +75,14 @@ fn cli_bootstrap_file_apply(mut cli VSlimCliApp, path string) ! {
 	if (lower.ends_with('/bootstrap/app.php') || lower.ends_with('\\bootstrap\\app.php')
 		|| lower.ends_with('/app.php') || lower.ends_with('\\app.php')) && php_is_file(clean) {
 		mut core := ensure_cli_core_app(mut cli)
-		app_bootstrap_file_apply(mut core, clean) or {
-			return error(err.msg())
+		result := vphp.include(clean)
+		if php_is_file(clean) {
+			project_root := if is_bootstrap_dir_path(path_dirname(clean)) { path_dirname(path_dirname(clean)) } else { path_dirname(clean) }
+			if project_root != '' {
+				preload_bootstrap_spec_classes(project_root, result)
+			}
 		}
+		apply_bootstrap_file_result(mut core, clean, result)!
 		cli_debug_sync_from_app(core)
 		return
 	}
@@ -111,9 +116,16 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 	for candidate in app_candidates {
 		cli_debug_log('app_candidate="${candidate}" is_file=${php_is_file(candidate)}')
 		if php_is_file(candidate) {
-			app_bootstrap_file_apply(mut core, candidate) or {
-				return error(err.msg())
+			result := vphp.include(candidate)
+			project_root_for_candidate := if is_bootstrap_dir_path(path_dirname(candidate)) {
+				path_dirname(path_dirname(candidate))
+			} else {
+				path_dirname(candidate)
 			}
+			if project_root_for_candidate != '' {
+				preload_bootstrap_spec_classes(project_root_for_candidate, result)
+			}
+			apply_bootstrap_file_result(mut core, candidate, result)!
 			shared_applied = true
 			break
 		}

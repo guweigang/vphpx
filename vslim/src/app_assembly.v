@@ -772,7 +772,17 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 		return &app
 	}
 	if clean.ends_with('.php') && php_is_file(clean) {
-		app_bootstrap_file_apply(mut app, clean) or {
+		result := vphp.include(clean)
+		lower := clean.to_lower()
+		should_preload := lower.ends_with('/bootstrap/app.php') || lower.ends_with('\\bootstrap\\app.php')
+			|| lower.ends_with('/app.php') || lower.ends_with('\\app.php')
+		if should_preload {
+			project_root := if is_bootstrap_dir_path(path_dirname(clean)) { path_dirname(path_dirname(clean)) } else { path_dirname(clean) }
+			if project_root != '' {
+				preload_bootstrap_spec_classes(project_root, result)
+			}
+		}
+		apply_bootstrap_file_result(mut app, clean, result) or {
 			vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
 			return &app
 		}
@@ -781,7 +791,12 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 	candidates := [clean + '/bootstrap/app.php', clean + '/app.php']
 	for candidate in candidates {
 		if php_is_file(candidate) {
-			app_bootstrap_file_apply(mut app, candidate) or {
+			result := vphp.include(candidate)
+			project_root := if is_bootstrap_dir_path(path_dirname(candidate)) { path_dirname(path_dirname(candidate)) } else { path_dirname(candidate) }
+			if project_root != '' {
+				preload_bootstrap_spec_classes(project_root, result)
+			}
+			apply_bootstrap_file_result(mut app, candidate, result) or {
 				vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
 				return &app
 			}
