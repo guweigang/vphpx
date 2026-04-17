@@ -140,10 +140,11 @@ fn cli_bootstrap_has_meta_keys(spec vphp.ZVal) bool {
 	return false
 }
 
-fn apply_cli_bootstrap_spec(mut cli VSlimCliApp, spec vphp.ZVal) ! {
+fn apply_cli_bootstrap_spec(mut cli VSlimCliApp, spec vphp.ZVal, project_root string) ! {
 	normalized := normalize_app_bootstrap_spec(spec)!
 	if cli_bootstrap_has_meta_keys(normalized) {
 		if commands := app_bootstrap_lookup(normalized, ['commands']) {
+			preload_bootstrap_iterable_project_classes(commands, project_root)
 			cli.command_many(vphp.borrow_zbox(commands))
 		}
 		if should_boot := app_bootstrap_bool(normalized, ['boot']) {
@@ -158,6 +159,7 @@ fn apply_cli_bootstrap_spec(mut cli VSlimCliApp, spec vphp.ZVal) ! {
 }
 
 fn apply_cli_bootstrap_file_result(mut cli VSlimCliApp, path string, value vphp.ZVal) ! {
+	project_root := bootstrap_project_root_from_file(path)
 	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return error(cli_bootstrap_file_return_error(path))
 	}
@@ -177,13 +179,13 @@ fn apply_cli_bootstrap_file_result(mut cli VSlimCliApp, path string, value vphp.
 		if result_z.is_object() && result_z.is_instance_of('VSlim\\Cli\\App') {
 			return
 		}
-		apply_cli_bootstrap_spec(mut cli, result_z)!
+		apply_cli_bootstrap_spec(mut cli, result_z, project_root)!
 		return
 	}
 	if value.is_object() && value.is_instance_of('VSlim\\Cli\\App') {
 		return
 	}
-	apply_cli_bootstrap_spec(mut cli, value)!
+	apply_cli_bootstrap_spec(mut cli, value, project_root)!
 }
 
 fn cli_display_path(path string) string {

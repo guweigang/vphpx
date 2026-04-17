@@ -200,7 +200,7 @@ fn apply_php_after_middlewares_psr(app &VSlimApp, ctx PipelineRequestContext, in
 			psr := normalize_to_psr7_response(raw)
 			cli_debug_log('after.raw psr status=${psr.get_status_code()} body_len=${psr7_stream_string(response_body_or_empty(psr)).len}')
 		}
-		res, ok := normalize_php_route_response_psr_borrowed(raw_borrowed)
+		mut res, ok := normalize_php_route_response_psr_borrowed(raw_borrowed)
 		if ok {
 			cli_debug_log('after.normalized psr status=${res.get_status_code()} body_len=${psr7_stream_string(response_body_or_empty(res)).len}')
 			current = res

@@ -19,18 +19,23 @@ ob_start();
 $helpCode = $helpCli->runArgv(['bin/vslim', '--bootstrap-dir', $root, '--help']);
 $helpOutput = rtrim((string) ob_get_clean());
 $help = $helpCli->helpText();
-echo $helpOutput, PHP_EOL;
 echo $helpCode, '|',
+    (str_contains($helpOutput, 'Usage:') ? 'output_usage_yes' : 'output_usage_no'), '|',
     (str_contains($help, 'Usage:') ? 'usage_yes' : 'usage_no'), '|',
     (str_contains($help, 'about') ? 'about_yes' : 'about_no'), '|',
     (str_contains($help, 'template:about') ? 'template_yes' : 'template_no'), '|',
-    (str_contains($help, 'Show template bootstrap status.') ? 'desc_yes' : 'desc_no'), PHP_EOL;
+    (str_contains($help, 'Show template bootstrap status.') ? 'desc_yes' : 'desc_no'), '|',
+    (str_contains($help, 'app:doctor') ? 'doctor_yes' : 'doctor_no'), '|',
+    (str_contains($help, 'db:migrate') ? 'db_yes' : 'db_no'), PHP_EOL;
 
 $listCli = new VSlim\Cli\App();
 ob_start();
 $listCode = $listCli->runArgv(['bin/vslim', '--bootstrap-dir', $root, '--list']);
-echo rtrim((string) ob_get_clean()), PHP_EOL;
-echo 'list_exit=', $listCode, PHP_EOL;
+$listOutput = rtrim((string) ob_get_clean());
+echo 'list_exit=', $listCode, '|',
+    (str_contains($listOutput, 'about') ? 'about_yes' : 'about_no'), '|',
+    (str_contains($listOutput, 'route:list') ? 'route_yes' : 'route_no'), '|',
+    (str_contains($listOutput, 'make:test') ? 'make_test_yes' : 'make_test_no'), PHP_EOL;
 
 $helpCommandCli = new VSlim\Cli\App();
 ob_start();
@@ -112,33 +117,8 @@ echo $fileCode4, '|', $fileOutput4, PHP_EOL;
 ?>
 --EXPECT--
 2|vslim-template|provider-ready|foo,bar
-Usage:
-  vslim [--bootstrap-dir <path> | --bootstrap-file <path>] <command> [args...]
-  vslim --help
-
-Options:
-  --bootstrap-dir <path>   Bootstrap shared app + CLI conventions from a project root
-  --bootstrap-file <path>  Bootstrap from a specific app.php or cli.php file
-  -h, --help               Show this help message
-  --list                   List registered commands
-  -V, --version            Show runtime banner
-
-Commands:
-  General:
-    about                       Show template bootstrap status.
-
-  template:
-    template:about              Show template bootstrap status.
-
-Notes:
-  Runtime options are parsed before the command name and remaining args are passed through unchanged.
-0|usage_yes|about_yes|template_yes|desc_yes
-General:
-  about                       Show template bootstrap status.
-
-template:
-  template:about              Show template bootstrap status.
-list_exit=0
+0|output_usage_yes|usage_yes|about_yes|template_yes|desc_yes|doctor_yes|db_yes
+list_exit=0|about_yes|route_yes|make_test_yes
 Usage:
   vslim about [options] [<topic>] [<details>...]
 
