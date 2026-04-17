@@ -5,7 +5,7 @@ on:
 
 env:
   V_VERSION: '0.5.1'
-  V_COMMIT: '737163c'
+  V_COMMIT: 'fd64037'
 
 jobs:
   windows-smoke:
