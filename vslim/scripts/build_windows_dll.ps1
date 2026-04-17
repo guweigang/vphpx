@@ -273,7 +273,10 @@ Write-Host "Using PHP runtime: $resolvedPhpDir"
 Write-Host "Using PHP version: $resolvedPhpVersion"
 
 $archiveName = Get-DevelArchiveName $resolvedPhpVersion
-$archiveUrl = "https://windows.php.net/downloads/releases/$archiveName"
+$archiveUrls = @(
+    "https://windows.php.net/downloads/releases/$archiveName",
+    "https://windows.php.net/downloads/releases/archives/$archiveName"
+)
 $runnerTemp = if ($env:RUNNER_TEMP) { $env:RUNNER_TEMP } else { [System.IO.Path]::GetTempPath() }
 $develCacheDir = Join-Path $runnerTemp "vslim-php-devel"
 $archivePath = Join-Path $develCacheDir $archiveName
@@ -282,7 +285,21 @@ $extractRoot = Join-Path $develCacheDir "extract"
 New-Item -ItemType Directory -Force -Path $develCacheDir | Out-Null
 
 if (!(Test-Path $archivePath)) {
-    Invoke-WebRequest -Uri $archiveUrl -OutFile $archivePath
+    $downloaded = $false
+    foreach ($archiveUrl in $archiveUrls) {
+        try {
+            Invoke-WebRequest -Uri $archiveUrl -OutFile $archivePath
+            $downloaded = $true
+            break
+        } catch {
+            if (Test-Path $archivePath) {
+                Remove-Item -Force $archivePath
+            }
+        }
+    }
+    if (-not $downloaded) {
+        throw "Unable to download PHP devel pack: $archiveName"
+    }
 }
 
 if (Test-Path $extractRoot) {

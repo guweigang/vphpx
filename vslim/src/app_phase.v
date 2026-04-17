@@ -32,7 +32,11 @@ fn build_before_phase_dispatch_result(payload vphp.RequestBorrowedZBox, route_pa
 }
 
 fn dispatch_php_before_phase_middleware(app &VSlimApp, payload vphp.RequestBorrowedZBox, route_params map[string]string, handler vphp.RequestBorrowedZBox) !PhaseMiddlewareDispatchResult {
-	mut cont := &VSlimPsr15ContinueHandler{}
+	mut cont := &VSlimPsr15ContinueHandler{
+		state: Psr15NextHandlerState{
+			mode: .continue_marker
+		}
+	}
 	next_handler := build_php_psr15_continue_handler_object(cont)
 	raw := dispatch_php_phase_middleware_raw(app, payload, route_params, handler, next_handler)!
 	return build_before_phase_dispatch_result(payload, route_params, cont, raw)
