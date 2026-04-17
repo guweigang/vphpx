@@ -64,8 +64,9 @@ function main(array $argv): void
             fail('Extension binary not found: ' . $extensionPath);
         }
         $extensionFile = basename($extensionPath);
-        $stagedExtensionPath = $stageDir . DIRECTORY_SEPARATOR . 'extension' . DIRECTORY_SEPARATOR . $extensionFile;
-        ensure_dir($stageDir . DIRECTORY_SEPARATOR . 'extension');
+        $stagedExtensionDir = $stageDir . DIRECTORY_SEPARATOR . 'extension' . DIRECTORY_SEPARATOR . 'vslim';
+        $stagedExtensionPath = $stagedExtensionDir . DIRECTORY_SEPARATOR . $extensionFile;
+        ensure_dir($stagedExtensionDir);
         copy_file($extensionPath, $stagedExtensionPath);
         stage_runtime_dependencies($stagedExtensionPath, $extensionPath, $stageDir);
     } else {
@@ -234,16 +235,16 @@ If the bundle contains native runtime libraries, the release packager now rewrit
 - macOS:
   mysql client references are rewritten to `@loader_path/runtime/...`
 - Windows:
-  detected DLLs are copied next to `php_vslim.dll`
+  the canonical runtime directory is `extension/vslim/runtime/`, and required DLLs are also mirrored next to `php_vslim.dll` for the Windows loader
 
 If your environment still needs an explicit loader hint, point it at the bundled runtime directory before loading the extension:
 
 - Linux:
-  `LD_LIBRARY_PATH=/absolute/path/extension/runtime php -d extension=/absolute/path/{$extensionFile} -m`
+  `LD_LIBRARY_PATH=/absolute/path/extension/vslim/runtime php -d extension=/absolute/path/extension/vslim/{$extensionFile} -m`
 - macOS:
-  `DYLD_LIBRARY_PATH=/absolute/path/extension/runtime php -d extension=/absolute/path/{$extensionFile} -m`
+  `DYLD_LIBRARY_PATH=/absolute/path/extension/vslim/runtime php -d extension=/absolute/path/extension/vslim/{$extensionFile} -m`
 - Windows:
-  add `extension` or `extension\\runtime` to `PATH`
+  add `extension\\vslim` or `extension\\vslim\\runtime` to `PATH`
 
 TXT;
     }
@@ -252,19 +253,21 @@ TXT;
         ? <<<TXT
 ## Bundle contents
 
-- `extension/{$extensionFile}`: prebuilt VSlim PHP extension for this platform.
-- `extension/runtime/`: bundled native runtime libraries detected from the extension, when needed.
+- `extension/vslim/{$extensionFile}`: prebuilt VSlim PHP extension for this platform.
+- `extension/vslim/runtime/`: bundled native runtime libraries detected from the extension, when needed.
 - `template/`: starter app template that matches the current PSR-oriented project layout.
 - `docs/`: VSlim framework and template references.
 
 ## Quick start
 
-1. Copy `extension/{$extensionFile}` to a path your PHP runtime can load.
+1. Copy the whole `extension/vslim/` directory into your PHP `extension_dir`.
 2. Validate the extension with:
-   `php -d extension=/absolute/path/{$extensionFile} -m`
+   `php -d extension=/absolute/path/vslim/{$extensionFile} -m`
+   or with `php.ini`:
+   `extension=vslim/{$extensionFile}`
 3. Copy `template/` into a new project directory and run `composer install`.
 4. Start the HTTP entry with:
-   `php -d extension=/absolute/path/{$extensionFile} -S 127.0.0.1:8080 public/index.php`
+   `php -d extension=/absolute/path/vslim/{$extensionFile} -S 127.0.0.1:8080 public/index.php`
 
 TXT
         : <<<TXT
@@ -305,17 +308,16 @@ function stage_runtime_dependencies(string $stagedExtensionPath, string $sourceE
     }
 
     $stagedDeps = [];
-    $runtimeDir = $stageDir . DIRECTORY_SEPARATOR . 'extension' . DIRECTORY_SEPARATOR . 'runtime';
-    if (PHP_OS_FAMILY !== 'Windows') {
-        ensure_dir($runtimeDir);
-    }
+    $extensionDir = $stageDir . DIRECTORY_SEPARATOR . 'extension' . DIRECTORY_SEPARATOR . 'vslim';
+    $runtimeDir = $extensionDir . DIRECTORY_SEPARATOR . 'runtime';
+    ensure_dir($runtimeDir);
     foreach ($deps as $dep) {
-        $targetDir = PHP_OS_FAMILY === 'Windows'
-            ? $stageDir . DIRECTORY_SEPARATOR . 'extension'
-            : $runtimeDir;
-        $stagedPath = $targetDir . DIRECTORY_SEPARATOR . basename($dep);
+        $stagedPath = $runtimeDir . DIRECTORY_SEPARATOR . basename($dep);
         copy_file($dep, $stagedPath);
         $stagedDeps[$dep] = $stagedPath;
+        if (PHP_OS_FAMILY === 'Windows') {
+            copy_file($dep, $extensionDir . DIRECTORY_SEPARATOR . basename($dep));
+        }
     }
 
     relink_bundled_runtime_dependencies($stagedExtensionPath, $stagedDeps);

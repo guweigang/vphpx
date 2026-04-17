@@ -179,9 +179,9 @@ make dist
 
 这会先构建当前平台扩展，再打出一个 release bundle，里面至少包含：
 
-- `extension/`
-  当前平台的预编译扩展二进制
-- `extension/runtime/`
+- `extension/vslim/`
+  当前平台的预编译扩展目录，里面包含 `vslim.so`/`php_vslim.dll`
+- `extension/vslim/runtime/`
   扩展依赖的原生运行库，例如 mysql / mariadb client
 - `template/`
   可直接起项目的 app 模板
@@ -206,11 +206,22 @@ Windows bundle 的原生 DLL 通过 PHP 官方 devel pack + `nmake` 构建，目
 如果你选择 `database.transport = "direct"`，运行时还需要让 PHP 能找到 bundle 里的数据库客户端库：
 
 - macOS
-  - `DYLD_LIBRARY_PATH=./extension/runtime`
+  - `DYLD_LIBRARY_PATH=./extension/vslim/runtime`
 - Linux
-  - `LD_LIBRARY_PATH=./extension/runtime`
+  - `LD_LIBRARY_PATH=./extension/vslim/runtime`
 - Windows
-  - 把 `extension\\runtime` 加到 `PATH`，或者把 DLL 放到 `php.exe` 同级
+  - 把 `extension\\vslim` 或 `extension\\vslim\\runtime` 加到 `PATH`
+
+如果你把 bundle 安装到 PHP 的 `extension_dir`，推荐目录结构是：
+
+- `extension_dir/vslim/vslim.so`
+- `extension_dir/vslim/runtime/...`
+
+然后在 `php.ini` 里写：
+
+```ini
+extension=vslim/vslim.so
+```
 
 如果你不想处理这层原生库发现，优先改用 `database.transport = "vhttpd_upstream"`。
 
