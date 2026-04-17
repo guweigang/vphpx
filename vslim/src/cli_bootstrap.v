@@ -75,7 +75,9 @@ fn cli_bootstrap_file_apply(mut cli VSlimCliApp, path string) ! {
 	if (lower.ends_with('/bootstrap/app.php') || lower.ends_with('\\bootstrap\\app.php')
 		|| lower.ends_with('/app.php') || lower.ends_with('\\app.php')) && php_is_file(clean) {
 		mut core := ensure_cli_core_app(mut cli)
-		core.bootstrap_file(clean)
+		app_bootstrap_file_apply(mut core, clean) or {
+			return error(err.msg())
+		}
 		cli_debug_sync_from_app(core)
 		return
 	}
@@ -109,8 +111,9 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 	for candidate in app_candidates {
 		cli_debug_log('app_candidate="${candidate}" is_file=${php_is_file(candidate)}')
 		if php_is_file(candidate) {
-			candidate_path := candidate.clone()
-			core.bootstrap_file(candidate_path)
+			app_bootstrap_file_apply(mut core, candidate) or {
+				return error(err.msg())
+			}
 			shared_applied = true
 			break
 		}
