@@ -460,9 +460,12 @@ fn preload_bootstrap_spec_class_items(project_root string, raw vphp.ZVal) {
 		return
 	}
 	if raw.is_string() {
-		file := bootstrap_project_class_file(project_root, raw.to_string())
+		class_name := raw.to_string()
+		file := bootstrap_project_class_file(project_root, class_name)
+		cli_debug_log('bootstrap_spec_class class="${class_name}" file="${file}" is_file=${if file == '' { false } else { php_is_file(file) }}')
 		if file != '' && php_is_file(file) {
-			_ = php_include_once(file)
+			loaded := php_include_once(file)
+			cli_debug_log('bootstrap_spec_class include class="${class_name}" file="${file}" loaded_valid=${loaded.is_valid()} loaded_type=${loaded.type_name()} exists=${php_class_exists(class_name)}')
 		}
 		return
 	}
