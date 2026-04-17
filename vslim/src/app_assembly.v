@@ -740,10 +740,14 @@ pub fn (mut app VSlimApp) bootstrap_file(path string) &VSlimApp {
 	}
 	result := vphp.include(clean)
 	lower := clean.to_lower()
-	if (lower.ends_with('/bootstrap/app.php') || lower.ends_with('\\bootstrap\\app.php')
-		|| lower.ends_with('/app.php') || lower.ends_with('\\app.php')) && php_is_file(clean) {
+	should_preload := lower.ends_with('/bootstrap/app.php') || lower.ends_with('\\bootstrap\\app.php')
+		|| lower.ends_with('/app.php') || lower.ends_with('\\app.php')
+	file_exists := php_is_file(clean)
+	cli_debug_log('bootstrap_file clean="${clean}" lower="${lower}" should_preload=${should_preload} is_file=${file_exists}')
+	if should_preload && file_exists {
 		project_root := if is_bootstrap_dir_path(path_dirname(clean)) { path_dirname(path_dirname(clean)) } else { path_dirname(clean) }
 		if project_root != '' {
+			cli_debug_log('bootstrap_file preload project_root="${project_root}"')
 			preload_bootstrap_spec_classes(project_root, result)
 		}
 	}
