@@ -160,6 +160,7 @@ fn apply_cli_bootstrap_spec(mut cli VSlimCliApp, spec vphp.ZVal, project_root st
 
 fn apply_cli_bootstrap_file_result(mut cli VSlimCliApp, path string, value vphp.ZVal) ! {
 	project_root := bootstrap_project_root_from_file(path)
+	preload_bootstrap_project_convention_classes(project_root)
 	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return error(cli_bootstrap_file_return_error(path))
 	}
@@ -194,18 +195,13 @@ fn cli_display_path(path string) string {
 
 fn apply_cli_command_class_conventions(mut cli VSlimCliApp, project_root string) !bool {
 	mut applied := false
-	commands_dir := path_join(project_root, 'app/Commands')
-	entries := php_scandir_names(commands_dir)
-	cli_debug_log('commands_dir="${commands_dir}" entries=${entries}')
-	for entry in entries {
-		if !entry.ends_with('.php') {
-			cli_debug_log('skip_command_entry="${entry}"')
-			continue
-		}
-		entry_name := entry.clone()
-		file := path_join(commands_dir, entry_name).clone()
+	command_files := php_glob_paths(path_join(project_root, 'app/Commands/*.php'))
+	cli_debug_log('commands_glob project_root="${project_root}" files=${command_files}')
+	for file_path in command_files {
+		entry_name := path_file_stem(file_path).clone() + '.php'
+		file := file_path.clone()
 		display_file := cli_display_path(file).clone()
-		class_name := ('App\\Commands\\' + path_file_stem(entry_name)).clone()
+		class_name := ('App\\Commands\\' + path_file_stem(file)).clone()
 		cli_debug_log('command_entry_preinclude="${entry_name}" file="${display_file}" class="${class_name}"')
 		_ = php_include_once(file)
 		class_exists := php_class_exists(class_name)

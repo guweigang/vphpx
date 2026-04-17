@@ -130,6 +130,19 @@ fn preload_bootstrap_http_convention_classes(project_root string) {
 	}
 }
 
+fn preload_bootstrap_project_convention_classes(project_root string) {
+	for file in php_glob_paths(path_join(project_root, 'app/Providers/*.php')) {
+		_ = php_include_once(file)
+	}
+	for file in php_glob_paths(path_join(project_root, 'app/Modules/*.php')) {
+		_ = php_include_once(file)
+	}
+	for file in php_glob_paths(path_join(project_root, 'app/Commands/*.php')) {
+		_ = php_include_once(file)
+	}
+	preload_bootstrap_http_convention_classes(project_root)
+}
+
 fn is_windows_drive_root_path(path string) bool {
 	return path.len == 3 && path[1] == `:` && path[2] == `/`
 }
@@ -231,6 +244,7 @@ fn app_bootstrap_bool(spec vphp.ZVal, keys []string) ?bool {
 
 fn apply_bootstrap_file_result(mut app VSlimApp, path string, value vphp.ZVal) ! {
 	project_root := bootstrap_project_root_from_file(path)
+	preload_bootstrap_project_convention_classes(project_root)
 	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return error(bootstrap_file_return_error(path))
 	}
