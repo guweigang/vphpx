@@ -2,6 +2,8 @@ module main
 
 import vphp
 
+#include "php_bridge.h"
+
 fn release_request_owned_boxes(mut list []vphp.RequestOwnedZBox) {
 	for i in 0 .. list.len {
 		list[i].release()

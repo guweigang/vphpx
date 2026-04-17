@@ -2,6 +2,8 @@ module main
 
 import vphp
 
+#include "php_bridge.h"
+
 fn dispatch_php_phase_middleware_raw(app &VSlimApp, payload vphp.RequestBorrowedZBox, route_params map[string]string, handler vphp.RequestBorrowedZBox, next_handler vphp.ZVal) !vphp.ZVal {
 	target := resolve_php_phase_middleware_target(app, handler)!
 	bind_route_target_to_app_if_supported(app, target)

@@ -2,6 +2,8 @@ module main
 
 import vphp
 
+#include "php_bridge.h"
+
 fn route_params_from_payload(payload vphp.RequestBorrowedZBox) map[string]string {
 	if !payload.is_valid() || !payload.to_zval().is_object() {
 		return map[string]string{}
