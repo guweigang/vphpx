@@ -110,6 +110,7 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 	}
 	cli.project_root = project_root
 	mut core := ensure_cli_core_app(mut cli)
+	preload_bootstrap_project_classes(project_root)
 	mut shared_applied := false
 	app_candidates := [path_join(project_root, 'bootstrap/app.php'),
 		path_join(project_root, 'app.php')]
