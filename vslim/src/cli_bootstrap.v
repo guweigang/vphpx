@@ -239,7 +239,7 @@ fn cli_display_path(path string) string {
 
 fn apply_cli_command_class_conventions(mut cli VSlimCliApp, project_root string) !bool {
 	mut applied := false
-	commands_dir := path_join(project_root, 'app/Commands')
+	commands_dir := project_root + '/app/Commands'
 	entries := php_scandir_names(commands_dir)
 	cli_debug_log('commands_dir="${commands_dir}" entries=${entries}')
 	for entry in entries {
@@ -248,7 +248,7 @@ fn apply_cli_command_class_conventions(mut cli VSlimCliApp, project_root string)
 			continue
 		}
 		entry_name := entry.clone()
-		file := path_join(commands_dir, entry_name).clone()
+		file := (commands_dir + '/' + entry_name).clone()
 		display_file := cli_display_path(file).clone()
 		class_name := ('App\\Commands\\' + path_file_stem(entry_name)).clone()
 		cli_debug_log('command_entry_preinclude="${entry_name}" file="${display_file}" class="${class_name}"')
@@ -274,7 +274,7 @@ fn apply_cli_bootstrap_conventions(mut cli VSlimCliApp, project_root string) !bo
 	if apply_cli_command_class_conventions(mut cli, project_root)! {
 		applied = true
 	}
-	cli_bootstrap_path := path_join(project_root, 'bootstrap/cli.php')
+	cli_bootstrap_path := project_root + '/bootstrap/cli.php'
 	if php_is_file(cli_bootstrap_path) {
 		mut raw := vphp.include(cli_bootstrap_path)
 		defer {
