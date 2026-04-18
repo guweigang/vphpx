@@ -264,16 +264,18 @@ fn apply_cli_command_class_conventions_with_paths(mut cli VSlimCliApp, commands_
 		display_file_for_log := cli_display_path(file_for_log).clone()
 		class_name_for_log := ('App\\Commands\\' + path_file_stem(entry_name_for_log)).clone()
 		cli_debug_log('command_entry_preinclude="${entry_name_for_log}" file="${display_file_for_log}" class="${class_name_for_log}"')
-		_ = php_include_once(commands_dir + '/' + entry)
-		class_name_runtime := 'App\\Commands\\' + path_file_stem(file_for_log)
-		class_exists := php_class_exists(class_name_runtime)
-		cli_debug_log('command_entry="${entry_name_for_log}" file="${display_file_for_log}" class="${class_name_runtime}" class_exists=${class_exists}')
-		if !class_exists {
-			return error('command convention file "${display_file_for_log}" must declare class ${class_name_runtime}')
-		}
-		mut class_name_z := vphp.RequestOwnedZBox.new_string(class_name_runtime).to_zval()
+		mut class_name_z := vphp.RequestOwnedZBox.new_string(class_name_for_log).to_zval()
 		defer {
 			class_name_z.release()
+		}
+		_ = php_include_once(commands_dir + '/' + entry)
+		class_exists := vphp.with_php_call_result_bool('class_exists', [
+			class_name_z,
+			vphp.RequestOwnedZBox.new_bool(true).to_zval(),
+		])
+		cli_debug_log('command_entry="${entry_name_for_log}" file="${display_file_for_log}" class="${class_name_for_log}" class_exists=${class_exists}')
+		if !class_exists {
+			return error('command convention file "${display_file_for_log}" must declare class ${class_name_for_log}')
 		}
 		name := derive_command_name_from_handler(class_name_z)!
 		cli.command(name, vphp.borrow_zbox(class_name_z))
