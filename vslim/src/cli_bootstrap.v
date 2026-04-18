@@ -109,16 +109,22 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 		return error('CLI bootstrap directory has no project root')
 	}
 	cli.project_root = project_root
+	project_root_echo := vphp.with_php_call_result_string('strval', [
+		vphp.RequestOwnedZBox.new_string(project_root).to_zval(),
+	])
+	bootstrap_candidate_probe := vphp.with_php_call_result_string('sprintf', [
+		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
+		vphp.RequestOwnedZBox.new_string(project_root).to_zval(),
+		vphp.RequestOwnedZBox.new_string('bootstrap/app.php').to_zval(),
+	])
+	cli_debug_log('project_root_echo="${project_root_echo}"')
+	cli_debug_log('bootstrap_candidate_probe="${bootstrap_candidate_probe}"')
 	mut core := ensure_cli_core_app(mut cli)
 	preload_bootstrap_project_classes(project_root)
 	mut shared_applied := false
-	trimmed_project_root := vphp.with_php_call_result_string('rtrim', [
-		vphp.RequestOwnedZBox.new_string(project_root).to_zval(),
-		vphp.RequestOwnedZBox.new_string('/\\').to_zval(),
-	])
 	bootstrap_candidate := vphp.with_php_call_result_string('sprintf', [
 		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
-		vphp.RequestOwnedZBox.new_string(trimmed_project_root).to_zval(),
+		vphp.RequestOwnedZBox.new_string(project_root).to_zval(),
 		vphp.RequestOwnedZBox.new_string('bootstrap/app.php').to_zval(),
 	])
 	cli_debug_log('app_candidate="${bootstrap_candidate}" is_file=${php_is_file(bootstrap_candidate)}')
@@ -137,7 +143,7 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 	} else {
 		app_candidate := vphp.with_php_call_result_string('sprintf', [
 			vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
-			vphp.RequestOwnedZBox.new_string(trimmed_project_root).to_zval(),
+			vphp.RequestOwnedZBox.new_string(project_root).to_zval(),
 			vphp.RequestOwnedZBox.new_string('app.php').to_zval(),
 		])
 		cli_debug_log('app_candidate="${app_candidate}" is_file=${php_is_file(app_candidate)}')
