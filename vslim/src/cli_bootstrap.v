@@ -125,11 +125,11 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 		vphp.RequestOwnedZBox.new_string(project_root).to_zval(),
 		vphp.RequestOwnedZBox.new_string('app.php').to_zval(),
 	])
-	mut core := ensure_cli_core_app(mut cli)
-	preload_bootstrap_project_classes(project_root)
 	mut shared_applied := false
 	cli_debug_log('app_candidate="${bootstrap_candidate}" is_file=${php_is_file(bootstrap_candidate)}')
 	if php_is_file(bootstrap_candidate) {
+		mut core := ensure_cli_core_app(mut cli)
+		preload_bootstrap_project_classes(project_root)
 		result := vphp.include(bootstrap_candidate)
 		project_root_for_candidate := if is_bootstrap_dir_path(path_dirname(bootstrap_candidate)) {
 			path_dirname(path_dirname(bootstrap_candidate))
@@ -145,6 +145,8 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 		app_candidate := app_candidate_fallback
 		cli_debug_log('app_candidate="${app_candidate}" is_file=${php_is_file(app_candidate)}')
 		if php_is_file(app_candidate) {
+			mut core := ensure_cli_core_app(mut cli)
+			preload_bootstrap_project_classes(project_root)
 			result := vphp.include(app_candidate)
 			project_root_for_candidate := if is_bootstrap_dir_path(path_dirname(app_candidate)) {
 				path_dirname(path_dirname(app_candidate))
@@ -158,6 +160,7 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 			shared_applied = true
 		}
 	}
+	mut core := ensure_cli_core_app(mut cli)
 	if shared_applied && !core.is_booted() {
 		core.boot()
 	}
