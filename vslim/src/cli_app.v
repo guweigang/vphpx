@@ -124,6 +124,7 @@ fn derive_command_name_from_handler(handler_z vphp.ZVal) !string {
 		}
 		name := command_name_from_short_name(source)
 		if name == '' {
+			cli_debug_log('derive_command_name_from_handler empty source raw="${raw_name}" source="${source}"')
 			return error('command name must not be empty')
 		}
 		return name
@@ -131,6 +132,7 @@ fn derive_command_name_from_handler(handler_z vphp.ZVal) !string {
 	if handler_z.is_valid() && handler_z.is_object() {
 		name := command_name_from_short_name(short_class_name(handler_z.class_name()))
 		if name == '' {
+			cli_debug_log('derive_command_name_from_handler object empty class="${handler_z.class_name()}"')
 			return error('command name must not be empty')
 		}
 		return name
@@ -220,6 +222,7 @@ fn resolve_cli_command_runtime(mut cli VSlimCliApp, handler_z vphp.ZVal) !vphp.Z
 fn lookup_cli_command_handler(cli &VSlimCliApp, name string) !vphp.ZVal {
 	command_name := name.trim_space()
 	if command_name == '' {
+		cli_debug_log('lookup_cli_command_handler empty name raw="${name}"')
 		return error('command name must not be empty')
 	}
 	handler := cli.command_handlers[command_name] or {
@@ -488,6 +491,31 @@ pub fn (cli &VSlimCliApp) project_root_value() string {
 	return cli.project_root
 }
 
+@[php_method: 'debugBridgePath']
+pub fn (cli &VSlimCliApp) debug_bridge_path(path string) vphp.RequestOwnedZBox {
+	echoed := vphp.with_php_call_result_string('strval', [
+		vphp.RequestOwnedZBox.new_string(path).to_zval(),
+	])
+	joined := vphp.with_php_call_result_string('sprintf', [
+		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
+		vphp.RequestOwnedZBox.new_string(path).to_zval(),
+		vphp.RequestOwnedZBox.new_string('bootstrap/app.php').to_zval(),
+	])
+	echoed_joined := vphp.with_php_call_result_string('sprintf', [
+		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
+		vphp.RequestOwnedZBox.new_string(echoed).to_zval(),
+		vphp.RequestOwnedZBox.new_string('bootstrap/app.php').to_zval(),
+	])
+	return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(vphp.dyn_value_map({
+		'original':      vphp.dyn_value_string(path)
+		'strval':        vphp.dyn_value_string(echoed)
+		'sprintf':       vphp.dyn_value_string(joined)
+		'sprintf_echo':  vphp.dyn_value_string(echoed_joined)
+	})) or {
+		vphp.ZVal.new_null()
+	})
+}
+
 @[php_method]
 pub fn (mut cli VSlimCliApp) command(name string, handler vphp.RequestBorrowedZBox) &VSlimCliApp {
 	ensure_cli_registry(mut cli)
@@ -496,6 +524,7 @@ pub fn (mut cli VSlimCliApp) command(name string, handler vphp.RequestBorrowedZB
 	command_name := name.trim_space().clone()
 	cli_debug_log('command normalized cli=${usize(&cli)} command_name="${command_name}" len=${command_name.len}')
 	if command_name == '' {
+		cli_debug_log('command empty raw_name="${name}" raw_len=${name.len}')
 		vphp.throw_exception_class('InvalidArgumentException', 'command name must not be empty',
 			0)
 		return &cli

@@ -99,6 +99,7 @@ fn cli_runtime_version_text() string {
 }
 
 fn cli_help_line(label string, description string) string {
+	cli_debug_log('help_line label="${label}" desc="${description}"')
 	if description.trim_space() == '' {
 		return '  ${label}'
 	}
@@ -406,6 +407,7 @@ fn cli_command_help_text(mut cli VSlimCliApp, program string, command_name strin
 fn cli_command_listing_line(mut cli VSlimCliApp, command_name string) string {
 	name := command_name.trim_space().clone()
 	if name == '' {
+		cli_debug_log('listing_line empty command_name raw="${command_name}"')
 		return ''
 	}
 	mut summary := cli_command_summary_text(mut cli, name) or { '' }
@@ -414,6 +416,7 @@ fn cli_command_listing_line(mut cli VSlimCliApp, command_name string) string {
 		alias_text := 'aliases: ${aliases.join(',')}'
 		summary = if summary != '' { '${summary} [${alias_text}]' } else { '[${alias_text}]' }
 	}
+	cli_debug_log('listing_line name="${name}" summary="${summary}"')
 	return cli_help_line(name, summary)
 }
 
