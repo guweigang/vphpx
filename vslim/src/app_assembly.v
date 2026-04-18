@@ -507,6 +507,7 @@ fn preload_bootstrap_project_classes(project_root string) {
 	patterns := [
 		path_join(project_root, 'app/Providers/*.php'),
 		path_join(project_root, 'app/Modules/*.php'),
+		path_join(project_root, 'app/Http/Controllers/*.php'),
 	]
 	for pattern in patterns {
 		for file in php_glob_paths(pattern) {
