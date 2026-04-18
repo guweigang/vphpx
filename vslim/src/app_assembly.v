@@ -15,6 +15,18 @@ fn php_is_dir(path string) bool {
 	return vphp.with_php_call_result_bool('is_dir', [vphp.RequestOwnedZBox.new_string(path).to_zval()])
 }
 
+fn php_join_path(base string, child string) string {
+	trimmed := vphp.with_php_call_result_string('rtrim', [
+		vphp.RequestOwnedZBox.new_string(base).to_zval(),
+		vphp.RequestOwnedZBox.new_string('/\\').to_zval(),
+	])
+	return vphp.with_php_call_result_string('sprintf', [
+		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
+		vphp.RequestOwnedZBox.new_string(trimmed).to_zval(),
+		vphp.RequestOwnedZBox.new_string(child).to_zval(),
+	])
+}
+
 fn php_glob_paths(pattern string) []string {
 	result := vphp.call_php('glob', [vphp.RequestOwnedZBox.new_string(pattern).to_zval()])
 	if !result.is_valid() || result.is_null() || result.is_undef() || !result.is_array() {
