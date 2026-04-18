@@ -399,7 +399,8 @@ fn (mut cli VSlimCliApp) run_registered_cli_command_with_program(name string, ar
 	args_z.array_init()
 	cli_debug_log('[${trace}] invoke_cli_command args_array_init raw=${usize(args_z.raw)}')
 	for arg in args_copy {
-		args_z.array_next_get_owned_zval(vphp.RequestOwnedZBox.new_string(arg).to_zval())
+		mut arg_z := vphp.RequestOwnedZBox.new_string(arg)
+		args_z.add_next_val(arg_z.take_zval())
 	}
 	defer {
 		cli_debug_log(cli_trace_message(cli, 'invoke_cli_command args_release begin raw=${usize(args_z.raw)}'))
@@ -422,7 +423,8 @@ fn (mut cli VSlimCliApp) run_registered_cli_command_with_program(name string, ar
 		mut result := vphp.ZVal.new_null()
 		cli_debug_log(cli_trace_message(cli, 'invoke_cli_command object_handle enter'))
 		if runtime.method_exists('handle') {
-			result = vphp.method_request_owned_box(runtime, 'handle', []vphp.ZVal{}).take_zval()
+			mut rb := vphp.method_request_owned_box(runtime, 'handle', []vphp.ZVal{})
+			result = rb.take_zval()
 		}
 		defer {
 			if result.is_valid() {
