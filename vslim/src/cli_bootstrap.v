@@ -171,7 +171,20 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 		}
 	}
 	cli_debug_sync_from_app(core)
-	cli_applied := apply_cli_bootstrap_conventions(mut cli, project_root)!
+	mut cli_applied := false
+	commands_dir := project_root + '/app/Commands'
+	if apply_cli_command_class_conventions_with_paths(mut cli, commands_dir)! {
+		cli_applied = true
+	}
+	cli_bootstrap_path := project_root + '/bootstrap/cli.php'
+	if php_is_file(cli_bootstrap_path) {
+		mut raw := vphp.include(cli_bootstrap_path)
+		defer {
+			raw.release()
+		}
+		apply_cli_bootstrap_file_result(mut cli, cli_bootstrap_path, raw)!
+		cli_applied = true
+	}
 	if !shared_applied && !cli_applied {
 		return error('CLI bootstrap directory "${path}" must contain bootstrap/app.php, app.php, shared conventions, or CLI command conventions')
 	}
@@ -237,9 +250,8 @@ fn cli_display_path(path string) string {
 	return normalize_bootstrap_dir_path(path).replace('\\', '/')
 }
 
-fn apply_cli_command_class_conventions(mut cli VSlimCliApp, project_root string) !bool {
+fn apply_cli_command_class_conventions_with_paths(mut cli VSlimCliApp, commands_dir string) !bool {
 	mut applied := false
-	commands_dir := project_root + '/app/Commands'
 	entries := php_scandir_names(commands_dir)
 	cli_debug_log('commands_dir="${commands_dir}" entries=${entries}')
 	for entry in entries {
@@ -269,12 +281,11 @@ fn apply_cli_command_class_conventions(mut cli VSlimCliApp, project_root string)
 	return applied
 }
 
-fn apply_cli_bootstrap_conventions(mut cli VSlimCliApp, project_root string) !bool {
+fn apply_cli_bootstrap_conventions_with_paths(mut cli VSlimCliApp, commands_dir string, cli_bootstrap_path string) !bool {
 	mut applied := false
-	if apply_cli_command_class_conventions(mut cli, project_root)! {
+	if apply_cli_command_class_conventions_with_paths(mut cli, commands_dir)! {
 		applied = true
 	}
-	cli_bootstrap_path := project_root + '/bootstrap/cli.php'
 	if php_is_file(cli_bootstrap_path) {
 		mut raw := vphp.include(cli_bootstrap_path)
 		defer {
