@@ -52,9 +52,9 @@ final class PublicWorkspaceService
      * @param array<string, mixed>|null $workspace
      * @return array<string, mixed>
      */
-    public function landingData(?array $workspace): array
+    public function landingData(?array $workspace, string $releaseVersion = ''): array
     {
-        $snapshot = $this->snapshot($workspace);
+        $snapshot = $this->snapshot($workspace, $releaseVersion);
 
         return [
             'workspace' => $snapshot->workspace,
@@ -70,52 +70,77 @@ final class PublicWorkspaceService
      * @param array<string, mixed>|null $workspace
      * @return array<string, mixed>
      */
-    public function assistantData(?array $workspace): array
+    public function validationData(?array $workspace, string $releaseVersion = ''): array
     {
-        $snapshot = $this->snapshot($workspace);
+        return $this->assistantData($workspace, $releaseVersion);
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @return array<string, mixed>
+     */
+    public function assistantData(?array $workspace, string $releaseVersion = ''): array
+    {
+        $snapshot = $this->snapshot($workspace, $releaseVersion);
         $workspace = $snapshot->workspace;
         $workspaceId = $snapshot->workspaceId();
-        $documents = $this->knowledge->releasedDocumentsForWorkspace($workspaceId);
-        $entries = $this->knowledge->releasedEntriesForWorkspace($workspaceId);
+        $documents = $releaseVersion !== ''
+            ? $this->knowledge->releasedDocumentsForVersion($workspaceId, $releaseVersion)
+            : $this->knowledge->releasedDocumentsForWorkspace($workspaceId);
+        $entries = $releaseVersion !== ''
+            ? $this->knowledge->releasedEntriesForVersion($workspaceId, $releaseVersion)
+            : $this->knowledge->releasedEntriesForWorkspace($workspaceId);
 
         return [
             'workspace' => $workspace,
             'metrics' => $snapshot->metrics,
             'release' => $snapshot->release,
             'profile' => $snapshot->profile,
-            'documents' => array_slice($documents, 0, 3),
-            'entries' => array_slice($entries, 0, 3),
+            'documents' => array_map(function (array $row) use ($releaseVersion): array {
+                $row['release_version'] = $releaseVersion;
+                return $row;
+            }, array_slice($documents, 0, 3)),
+            'entries' => array_map(function (array $row) use ($releaseVersion): array {
+                $row['release_version'] = $releaseVersion;
+                return $row;
+            }, array_slice($entries, 0, 3)),
             'subscription_count' => $snapshot->subscriptionCount,
             'offers' => $snapshot->offers,
         ];
     }
 
-    public function releasedDocumentDetail(?array $workspace, string $documentId): ?array
+    public function releasedDocumentDetail(?array $workspace, string $documentId, string $releaseVersion = ''): ?array
     {
         $workspaceId = is_array($workspace) ? (string) ($workspace['id'] ?? '') : '';
         if ($workspaceId === '' || trim($documentId) === '') {
             return null;
         }
 
-        foreach ($this->knowledge->releasedDocumentsForWorkspace($workspaceId) as $row) {
+        $documents = $releaseVersion !== ''
+            ? $this->knowledge->releasedDocumentsForVersion($workspaceId, $releaseVersion)
+            : $this->knowledge->releasedDocumentsForWorkspace($workspaceId);
+        foreach ($documents as $row) {
             if ((string) ($row['id'] ?? '') === trim($documentId)) {
-                return $row;
+                return $this->decoratePublicDetail($workspaceId, 'document', $row);
             }
         }
 
         return null;
     }
 
-    public function releasedEntryDetail(?array $workspace, string $entryId): ?array
+    public function releasedEntryDetail(?array $workspace, string $entryId, string $releaseVersion = ''): ?array
     {
         $workspaceId = is_array($workspace) ? (string) ($workspace['id'] ?? '') : '';
         if ($workspaceId === '' || trim($entryId) === '') {
             return null;
         }
 
-        foreach ($this->knowledge->releasedEntriesForWorkspace($workspaceId) as $row) {
+        $entries = $releaseVersion !== ''
+            ? $this->knowledge->releasedEntriesForVersion($workspaceId, $releaseVersion)
+            : $this->knowledge->releasedEntriesForWorkspace($workspaceId);
+        foreach ($entries as $row) {
             if ((string) ($row['id'] ?? '') === trim($entryId)) {
-                return $row;
+                return $this->decoratePublicDetail($workspaceId, 'entry', $row);
             }
         }
 
@@ -126,15 +151,25 @@ final class PublicWorkspaceService
      * @param array<string, mixed>|null $workspace
      * @return array{ok:bool,message:string}
      */
-    public function registerSubscriptionInterest(?array $workspace, string $email, string $plan): array
+    public function registerSubscriptionInterest(?array $workspace, array $input): array
     {
         $workspaceId = is_array($workspace) ? trim((string) ($workspace['id'] ?? '')) : '';
-        $email = strtolower(trim($email));
-        $plan = trim($plan);
+        $contactName = trim((string) ($input['contact_name'] ?? ''));
+        $companyName = trim((string) ($input['company_name'] ?? ''));
+        $sourceLabel = trim((string) ($input['source_label'] ?? 'brand_page'));
+        $notes = trim((string) ($input['notes'] ?? ''));
+        $email = strtolower(trim((string) ($input['email'] ?? '')));
+        $plan = trim((string) ($input['plan'] ?? 'team'));
         if ($workspaceId === '' || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return [
                 'ok' => false,
                 'message' => 'Please provide a valid subscriber email.',
+            ];
+        }
+        if ($contactName === '' || $companyName === '') {
+            return [
+                'ok' => false,
+                'message' => 'Please provide a contact name and company.',
             ];
         }
         if (!in_array($plan, ['starter', 'team', 'enterprise'], true)) {
@@ -142,6 +177,9 @@ final class PublicWorkspaceService
                 'ok' => false,
                 'message' => 'Please choose a valid plan.',
             ];
+        }
+        if ($sourceLabel === '') {
+            $sourceLabel = 'brand_page';
         }
 
         if (!$this->canQueryDatabase()) {
@@ -159,16 +197,36 @@ final class PublicWorkspaceService
                 ->limit(1)
                 ->get()
         );
+        $createdLead = !is_array($subscriber);
+        $createdSubscription = false;
 
-        if (!is_array($subscriber)) {
+        if ($createdLead) {
             $subscriber = [
                 'id' => $this->makeId('subscriber', $workspaceId . ':' . $email),
                 'workspace_id' => $workspaceId,
                 'email' => $email,
+                'contact_name' => $contactName,
+                'company_name' => $companyName,
+                'source_label' => $sourceLabel,
+                'notes' => $notes,
                 'status' => 'active',
+                'updated_at' => date('Y-m-d H:i:s'),
                 'created_at' => date('Y-m-d H:i:s'),
             ];
             $this->db->table('subscriber_accounts')->insert($subscriber)->run();
+        } else {
+            $this->db
+                ->table('subscriber_accounts')
+                ->where('workspace_id', $workspaceId)
+                ->where('id', (string) ($subscriber['id'] ?? ''))
+                ->update([
+                    'contact_name' => $contactName,
+                    'company_name' => $companyName,
+                    'source_label' => $sourceLabel,
+                    'notes' => $notes,
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ])
+                ->run();
         }
 
         $subscriberId = (string) ($subscriber['id'] ?? '');
@@ -190,6 +248,7 @@ final class PublicWorkspaceService
                 ->get()
         );
         if (!is_array($existing)) {
+            $createdSubscription = true;
             $this->db->table('subscriptions')->insert([
                 'id' => $this->makeId('subscription', $workspaceId . ':' . $subscriberId . ':' . $plan),
                 'workspace_id' => $workspaceId,
@@ -200,9 +259,18 @@ final class PublicWorkspaceService
             ])->run();
         }
 
+        $message = 'Subscription access requested successfully.';
+        if (!$createdLead && !$createdSubscription) {
+            $message = 'We already had your request on file, and your lead details have been refreshed.';
+        } elseif (!$createdLead && $createdSubscription) {
+            $message = 'Your existing lead has been updated and the new plan request was added.';
+        } elseif ($createdLead) {
+            $message = 'Your subscription request has been captured and our team can follow up from here.';
+        }
+
         return [
             'ok' => true,
-            'message' => 'Subscription access requested successfully.',
+            'message' => $message,
         ];
     }
 
@@ -254,24 +322,31 @@ final class PublicWorkspaceService
         ])->run();
     }
 
-    public function snapshot(?array $workspace): WorkspacePublicSnapshot
+    public function snapshot(?array $workspace, string $releaseVersion = ''): WorkspacePublicSnapshot
     {
         $workspace = $this->mergeWorkspaceDecorators($workspace);
         $workspaceId = is_array($workspace) ? (string) ($workspace['id'] ?? '') : '';
         $metrics = $this->knowledge->metricsForWorkspace($workspaceId);
-        $release = $this->latestRelease($workspaceId);
+        $release = $this->resolveRelease($workspaceId, $releaseVersion);
         $profile = $this->assistantProfile($workspaceId, $workspace);
         $subscriptionCount = $this->activeSubscriptionCount($workspaceId);
-        $releasedDocuments = $this->knowledge->releasedDocumentsForWorkspace($workspaceId);
-        $releasedEntries = $this->knowledge->releasedEntriesForWorkspace($workspaceId);
+        $releasedDocuments = $releaseVersion !== ''
+            ? $this->knowledge->releasedDocumentsForVersion($workspaceId, $releaseVersion)
+            : $this->knowledge->releasedDocumentsForWorkspace($workspaceId);
+        $releasedEntries = $releaseVersion !== ''
+            ? $this->knowledge->releasedEntriesForVersion($workspaceId, $releaseVersion)
+            : $this->knowledge->releasedEntriesForWorkspace($workspaceId);
+        $publicMetrics = $metrics;
+        $publicMetrics['documents'] = count($releasedDocuments);
+        $publicMetrics['entries'] = count($releasedEntries);
 
         return new WorkspacePublicSnapshot(
             $workspace,
-            $metrics,
+            $publicMetrics,
             $release,
             $profile,
             $subscriptionCount,
-            $this->publicPreview($releasedDocuments, $releasedEntries),
+            $this->publicPreview($workspaceId, $releasedDocuments, $releasedEntries, $releaseVersion),
             $this->subscriptionOffers($workspace, $subscriptionCount, (string) ($release['status'] ?? 'draft')),
         );
     }
@@ -332,6 +407,22 @@ final class PublicWorkspaceService
      */
     private function latestRelease(string $workspaceId): ?array
     {
+        $published = $this->knowledge->latestPublishedRelease($workspaceId);
+        if ($published !== null) {
+            $row = $published->toArray();
+            return [
+                'version' => (string) ($row['version'] ?? ''),
+                'status' => (string) ($row['status'] ?? ''),
+                'notes' => $this->publicReleaseNotes(
+                    $workspaceId,
+                    (string) ($row['version'] ?? ''),
+                    (string) ($row['status'] ?? ''),
+                    (string) ($row['notes'] ?? ''),
+                ),
+                'created_at' => (string) ($row['created_at'] ?? ''),
+            ];
+        }
+
         if ($this->source === 'db' && $this->canQueryDatabase() && $workspaceId !== '') {
             $rows = $this->db
                 ->table('knowledge_releases')
@@ -340,10 +431,17 @@ final class PublicWorkspaceService
                 ->limit(1)
                 ->get();
             if (is_array($rows) && is_array($rows[0] ?? null)) {
+                $version = (string) ($rows[0]['version'] ?? '');
+                $status = (string) ($rows[0]['status'] ?? '');
                 return [
-                    'version' => (string) ($rows[0]['version'] ?? ''),
-                    'status' => (string) ($rows[0]['status'] ?? ''),
-                    'notes' => (string) ($rows[0]['notes'] ?? ''),
+                    'version' => $version,
+                    'status' => $status,
+                    'notes' => $this->publicReleaseNotes(
+                        $workspaceId,
+                        $version,
+                        $status,
+                        (string) ($rows[0]['notes'] ?? ''),
+                    ),
                     'created_at' => (string) ($rows[0]['created_at'] ?? ''),
                 ];
             }
@@ -353,9 +451,71 @@ final class PublicWorkspaceService
         return [
             'version' => 'v0.1',
             'status' => (string) ($metrics['assistant_status'] ?? 'draft'),
-            'notes' => '',
+            'notes' => $this->publicReleaseNotes(
+                $workspaceId,
+                'v0.1',
+                (string) ($metrics['assistant_status'] ?? 'draft'),
+                '',
+            ),
             'created_at' => '',
         ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function resolveRelease(string $workspaceId, string $releaseVersion = ''): ?array
+    {
+        $releaseVersion = trim($releaseVersion);
+        if ($releaseVersion === '') {
+            return $this->latestRelease($workspaceId);
+        }
+
+        $release = $this->knowledge->findReleaseByVersion($workspaceId, $releaseVersion);
+        if ($release === null) {
+            return $this->latestRelease($workspaceId);
+        }
+
+        $row = $release->toArray();
+        $row['notes'] = $this->publicReleaseNotes(
+            $workspaceId,
+            (string) ($row['version'] ?? ''),
+            (string) ($row['status'] ?? ''),
+            (string) ($row['notes'] ?? ''),
+        );
+
+        return $row;
+    }
+
+    private function publicReleaseNotes(string $workspaceId, string $version, string $status, string $notes): string
+    {
+        $notes = trim($notes);
+        if ($notes !== '') {
+            return $notes;
+        }
+
+        if ($workspaceId === 'ws-acme' && trim($version) === 'v0.1') {
+            return '2026.Q2 版本，聚焦报销运营、结算异常处理与支持到财务的交接流程。';
+        }
+
+        $documents = $version !== ''
+            ? $this->knowledge->releasedDocumentsForVersion($workspaceId, $version)
+            : $this->knowledge->releasedDocumentsForWorkspace($workspaceId);
+        $entries = $version !== ''
+            ? $this->knowledge->releasedEntriesForVersion($workspaceId, $version)
+            : $this->knowledge->releasedEntriesForWorkspace($workspaceId);
+        $payloadSummary = count($documents) . ' docs / ' . count($entries) . ' entries';
+        $status = strtolower(trim($status));
+
+        if (str_starts_with(trim($version), 'onboarding-')) {
+            return 'Onboarding handoff release scaffold with ' . $payloadSummary . ' prepared for customer provisioning.';
+        }
+
+        if ($status === 'published') {
+            return 'Public knowledge release covering ' . $payloadSummary . '.';
+        }
+
+        return 'Draft knowledge release scaffold covering ' . $payloadSummary . '.';
     }
 
     private function activeSubscriptionCount(string $workspaceId): int
@@ -425,26 +585,128 @@ final class PublicWorkspaceService
      * @param array<int, array<string, mixed>> $entries
      * @return array<string, mixed>
      */
-    private function publicPreview(array $documents, array $entries): array
+    private function publicPreview(string $workspaceId, array $documents, array $entries, string $releaseVersion = ''): array
     {
         return [
-            'documents' => array_map(function (array $row): array {
+            'documents' => array_map(function (array $row) use ($workspaceId, $releaseVersion): array {
                 return [
                     'id' => (string) ($row['id'] ?? ''),
+                    'release_version' => $releaseVersion,
                     'title' => (string) ($row['title'] ?? ''),
-                    'summary' => $this->snippet((string) ($row['summary'] ?? $row['title'] ?? ''), 140),
-                    'meta' => trim((string) ($row['source_type'] ?? '') . ' / ' . (string) ($row['language'] ?? 'zh-CN')),
+                    'coverage_focus' => (string) ($row['coverage_focus'] ?? $row['title'] ?? ''),
+                    'summary' => $this->previewSummary($workspaceId, 'document', $row),
+                    'meta' => $this->previewMeta($workspaceId, 'document', $row),
                 ];
             }, array_slice($documents, 0, 3)),
-            'entries' => array_map(function (array $row): array {
+            'entries' => array_map(function (array $row) use ($workspaceId, $releaseVersion): array {
                 return [
                     'id' => (string) ($row['id'] ?? ''),
+                    'release_version' => $releaseVersion,
                     'title' => (string) ($row['title'] ?? ''),
-                    'summary' => $this->snippet((string) ($row['body'] ?? $row['title'] ?? ''), 140),
-                    'meta' => trim((string) ($row['kind'] ?? 'faq') . ' / ' . (string) ($row['owner'] ?? '')),
+                    'coverage_focus' => (string) ($row['coverage_focus'] ?? $row['title'] ?? ''),
+                    'summary' => $this->previewSummary($workspaceId, 'entry', $row),
+                    'meta' => $this->previewMeta($workspaceId, 'entry', $row),
                 ];
             }, array_slice($entries, 0, 3)),
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private function previewSummary(string $workspaceId, string $itemType, array $row): string
+    {
+        $id = trim((string) ($row['id'] ?? ''));
+        if ($workspaceId === 'ws-acme') {
+            $curated = match ($id) {
+                'doc-acme-1' => 'How reimbursement requests are screened, approved, and communicated before payout goes live.',
+                'doc-acme-2' => 'What to capture, who owns the case, and how settlement milestones are communicated during payout exceptions.',
+                'doc-acme-3' => 'The exact handoff between support and finance once a payout case crosses approval or escalation boundaries.',
+                'entry-acme-1' => 'Shows the approval chain from intake review through policy validation and finance release.',
+                'entry-acme-2' => 'Defines the triage checklist, owner assignment, and decision log for payout exceptions.',
+                'entry-acme-3' => 'Lists the triggers that require finance involvement and the case context that must move with the escalation.',
+                default => '',
+            };
+            if ($curated !== '') {
+                return $curated;
+            }
+        }
+
+        $text = $itemType === 'document'
+            ? (string) ($row['summary'] ?? $row['body'] ?? $row['title'] ?? '')
+            : (string) ($row['body'] ?? $row['summary'] ?? $row['title'] ?? '');
+
+        return $this->snippet($text, 140);
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private function previewMeta(string $workspaceId, string $itemType, array $row): string
+    {
+        if ($itemType === 'document') {
+            $sourceType = strtolower(trim((string) ($row['source_type'] ?? '')));
+            $sourceLabel = match ($sourceType) {
+                'markdown' => 'Markdown playbook',
+                'pdf' => 'Settlement PDF',
+                'notion' => $workspaceId === 'ws-acme' ? 'Notion operating guide' : 'Notion source',
+                default => ucfirst($sourceType !== '' ? $sourceType : 'Source document'),
+            };
+            $language = strtolower(trim((string) ($row['language'] ?? '')));
+            $languageLabel = match ($language) {
+                'en', 'en-us', 'en-gb' => 'English source',
+                'zh', 'zh-cn', 'zh-hans' => 'Chinese source',
+                default => strtoupper($language !== '' ? $language : 'zh-CN') . ' source',
+            };
+
+            return trim($sourceLabel . ' · ' . $languageLabel, ' ·');
+        }
+
+        $kind = strtolower(trim((string) ($row['kind'] ?? 'faq')));
+        $kindLabel = match ($kind) {
+            'faq' => 'FAQ',
+            'topic' => 'Ops topic',
+            default => ucfirst($kind !== '' ? $kind : 'Entry'),
+        };
+        $owner = trim((string) ($row['owner'] ?? ''));
+
+        return $owner !== '' ? $kindLabel . ' · ' . $owner : $kindLabel;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    private function decoratePublicDetail(string $workspaceId, string $itemType, array $row): array
+    {
+        $id = trim((string) ($row['id'] ?? ''));
+        if ($workspaceId === '' || $id === '') {
+            return $row;
+        }
+
+        $catalogItem = $itemType === 'document'
+            ? $this->catalog->findDocumentById($workspaceId, $id)
+            : $this->catalog->findEntryById($workspaceId, $id);
+        if (!is_array($catalogItem)) {
+            return $row;
+        }
+
+        if ($itemType === 'document') {
+            $row['title'] = (string) ($catalogItem['title'] ?? $row['title'] ?? '');
+            $row['coverage_focus'] = (string) ($catalogItem['coverage_focus'] ?? $row['coverage_focus'] ?? '');
+            $row['summary'] = (string) ($catalogItem['summary'] ?? $row['summary'] ?? '');
+            $row['body'] = (string) ($catalogItem['body'] ?? $row['body'] ?? '');
+            $row['meta'] = $this->previewMeta($workspaceId, 'document', array_merge($row, $catalogItem));
+            return $row;
+        }
+
+        $row['title'] = (string) ($catalogItem['title'] ?? $row['title'] ?? '');
+        $row['coverage_focus'] = (string) ($catalogItem['coverage_focus'] ?? $row['coverage_focus'] ?? '');
+        $row['summary'] = $this->previewSummary($workspaceId, 'entry', array_merge($row, $catalogItem));
+        $row['body'] = (string) ($catalogItem['body'] ?? $row['body'] ?? '');
+        $row['meta'] = $this->previewMeta($workspaceId, 'entry', array_merge($row, $catalogItem));
+
+        return $row;
     }
 
     private function snippet(string $text, int $limit): string

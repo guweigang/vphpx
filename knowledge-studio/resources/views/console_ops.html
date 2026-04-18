@@ -48,6 +48,16 @@
     </article>
   </div>
   <article class="ks-card">
+    <h2>{{ provisioning_panel_title | trim }}</h2>
+    {{if:show_no_provisioning}}<div class="ks-empty-state">当前还没有客户交付清单。赢单后推送交付启动，这里会开始显示待完成的开通步骤。</div>{{/if}}
+    {{if:has_provisioning}}
+    <table class="ks-table">
+      <tr><th>{{ col_lead | trim }}</th><th>{{ col_name | trim }}</th><th>{{ col_status | trim }}</th><th>{{ col_queued | trim }}</th></tr>
+{{for:provisioning}}      <tr><td>{{ item.lead_label }}</td><td><strong>{{ item.label }}</strong></td><td><span class="{{ item.status_badge_class }}">{{ item.status }}</span></td><td>{{ item.display_at }}</td></tr>{{/for}}
+    </table>
+    {{/if}}
+  </article>
+  <article class="ks-card">
     <h2>{{ audit_title | trim }}</h2>
     {{if:show_no_logs}}<div class="ks-empty-state">当前还没有审计动作。成员邀请、内容编辑、任务重试和发布版本都会逐步沉淀到这里。</div>{{/if}}
     {{if:has_logs}}

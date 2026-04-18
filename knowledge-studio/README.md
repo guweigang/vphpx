@@ -1,58 +1,76 @@
 # Knowledge Studio
 
-`Knowledge Studio` 是一个面向团队运营的多租户 AI 知识品牌工作台，目标不是做一个“聊天框 sample”，而是沉淀一套能继续演进成开源项目和 SaaS 原型的完整代码基线。
+`Knowledge Studio` 是一个面向专业团队的多租户知识运营、发布与交付平台，目标不是做一个“聊天框 sample”，而是沉淀一套能继续演进成开源项目和 SaaS 原型的完整代码基线。
+
+一句话定位：
+
+`把团队知识从内部协作，一路带到公开发布、线索承接和客户开通准备。`
+
+从哪里开始看：
+
+- 想先理解产品表面：看 `公开知识面`
+- 想先理解内部运营：看 `租户工作台`
+- 想先评估真实链路：用预置账号从 `登录入口` 进入
+
+最适合的人：
+
+- 咨询、研究、顾问类专业服务团队
+- B2B SaaS 的客户成功、解决方案与支持团队
+- 需要持续输出对外标准答案的垂直知识运营团队
 
 它用一个足够真实的业务壳，把 `VSlim` 的核心能力串成完整故事：
 
 - 多租户 workspace 隔离
 - 多位知识工作者协作维护知识
-- 对外统一品牌页与公开助手
+- 对外统一品牌页与公开知识入口
 - 订阅用户访问与付费能力预留
-- `HTTP + View + Session/Auth + Validation + Database + CLI + Stream + WebSocket/LiveView`
+- `HTTP + View + Session/Auth + Validation + Database + CLI + Jobs + Stream + WebSocket/LiveView`
 
 ## 为什么做这个项目
 
 这不是“再做一个 AI 助手首页”，而是为了回答三个更有价值的问题：
 
 - `VSlim` 能不能承载一个结构清楚、体验完整的业务产品
-- 多租户知识协作、公开品牌、订阅式助手能不能放在同一个代码库里自然生长
+- 多租户知识协作、公开品牌、知识门户能不能放在同一个代码库里自然生长
 - 这套代码能不能既当示例，也具备继续开源和 SaaS 化的工程基础
 
-当前的答案已经开始成形：项目里已经同时具备真实数据库读写、public assistant 预览、双语页面能力、Pest 测试骨架，以及相对清晰的 service/presenter/controller/support 分层。
+当前的答案已经开始成形：项目里已经同时具备真实数据库读写、公开知识页、双语页面能力、Pest 测试骨架，以及相对清晰的 service/presenter/controller/support 分层。
 
 ## 产品定位
 
 `Knowledge Studio` 不是泛化的“AI 助手 demo”，而是一个聚焦场景的 SaaS 原型：
 
-`面向专业团队的多租户 AI 知识运营 SaaS`
+`面向专业团队的多租户知识运营与发布 SaaS`
 
 核心价值不是“再做一个聊天框”，而是把团队协作维护的知识，运营成：
 
 - 统一品牌的公开页
-- 可验证的知识助手
+- 可验证的知识门户
 - 可承接订阅意向的外部服务入口
+- 可进入客户开通与交付准备的业务资产
 
 最适合的团队：
 
 - 咨询 / 研究 / 顾问团队
+- B2B SaaS 客户成功 / 解决方案 / 支持团队
 - 金融运营 / 清算 / 风控支持团队
-- 企业共享服务团队
 - 垂直行业知识内容团队
 
 核心闭环：
 
 1. 团队协作维护知识
-2. 发布版本
-3. 对外通过品牌页和助手页提供服务
-4. 根据真实提问继续补知识
+2. 发布版本并对外交付
+3. 通过品牌页承接订阅与商机
+4. 把赢单线索推进到开通与交付准备
 
 ## 已有能力
 
-- 租户工作台、对外品牌页、公开助手页已经成形
+- 租户工作台、公开知识面、公开知识页已经成形
 - 文档、知识条目、任务具备真实数据库读写路径
-- public assistant 已经能基于真实知识语料生成答案预览与 citations
+- 订阅线索、轻量 CRM、交付 checklist 已接进同一租户工作台
+- public validation 已经具备基础答案预览与 citations，但定位为后续增强层能力
 - 页面默认中文，并支持 `?lang=zh-CN` / `?lang=en`
-- locale 解析、语言保持链接、assistant diagnostics 已抽成可测试 userland 结构
+- locale 解析、语言保持链接、validation diagnostics 已抽成可测试 userland 结构
 
 ## 演示入口
 
@@ -79,7 +97,7 @@ make serve EXT=../vslim/vslim.so
 - `http://127.0.0.1:8094/login`
 - `http://127.0.0.1:8094/console`
 - `http://127.0.0.1:8094/brand/acme-research`
-- `http://127.0.0.1:8094/brand/acme-research/assistant?q=发布`
+- `http://127.0.0.1:8094/brand/acme-research/validation?q=发布`
 
 ## 配置与数据源
 
@@ -127,7 +145,7 @@ php -d extension=../vslim/vslim.so bin/vslim studio:seed-demo
 当前代码已经按“可公开分享、可继续演进”的方向开始分层：
 
 - `app/Services`
-  负责业务计算与数据编排，例如知识检索、答案预览、workspace 数据聚合
+  负责业务计算与数据编排，例如知识检索、发布准备、workspace 数据聚合
 - `app/Presenters`
   负责把 service 输出整理成页面或 API 更稳定的展示输入
 - `app/Http/Controllers`
@@ -140,7 +158,7 @@ php -d extension=../vslim/vslim.so bin/vslim studio:seed-demo
 几个关键支点：
 
 - [AssistantAnswerService.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Services/AssistantAnswerService.php)
-  负责检索、排序、答案预览和 diagnostics
+  负责检索、排序、答案预览和 diagnostics，目前定位为增强层能力
 - [AssistantAnswerPresenter.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Presenters/AssistantAnswerPresenter.php)
   负责 citation 和 diagnostics 的展示整形
 - [LocaleCatalog.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Support/LocaleCatalog.php)
@@ -183,6 +201,7 @@ make test-feature
 
 - 产品文档：[docs/product.md](/Users/guweigang/Source/vphpx/knowledge-studio/docs/product.md)
 - 信息架构：[docs/information-architecture.md](/Users/guweigang/Source/vphpx/knowledge-studio/docs/information-architecture.md)
+- 发布清单：[docs/launch-checklist.md](/Users/guweigang/Source/vphpx/knowledge-studio/docs/launch-checklist.md)
 - 产品走查：[docs/product-walkthrough-checklist.md](/Users/guweigang/Source/vphpx/knowledge-studio/docs/product-walkthrough-checklist.md)
 - 走查发现：[docs/walkthrough-findings.md](/Users/guweigang/Source/vphpx/knowledge-studio/docs/walkthrough-findings.md)
 - 架构草案：[docs/architecture.md](/Users/guweigang/Source/vphpx/knowledge-studio/docs/architecture.md)
@@ -193,8 +212,9 @@ make test-feature
 接下来只沿一条主线继续推进：
 
 - 把供给侧工作流做深：内容维护、发布、反馈回流
-- 把公开品牌页和助手页做成可信的对外产品面
+- 把公开品牌页和知识入口做成可信的对外产品面
 - 把订阅和套餐保留在“可承接、可演进”的轻量层
+- 把 AI 问答保持为后续增强层，不抢当前主流程
 - 补齐 Pest 与 PHPT 回归，稳住这套产品原型
 
 ## 目录约定

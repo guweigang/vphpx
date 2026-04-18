@@ -8,6 +8,8 @@ use VSlim\Database\Manager;
 
 final class OpsRepository
 {
+    private ?bool $databaseAvailable = null;
+
     public function __construct(
         private DemoCatalog $catalog,
         private Manager $db,
@@ -47,7 +49,7 @@ final class OpsRepository
                 $this->db
                     ->table('audit_logs')
                     ->where('workspace_id', $workspaceId)
-                    ->orderBy('id', 'asc')
+                    ->orderBy('id', 'desc')
                     ->get()
             ));
             if ($rows !== []) {
@@ -76,6 +78,190 @@ final class OpsRepository
         $this->db->table('jobs')->insert($row)->run();
 
         return $row;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function provisioningJobForSubscriber(string $workspaceId, string $subscriberId): ?array
+    {
+        $workspaceId = trim($workspaceId);
+        $subscriberId = trim($subscriberId);
+        if ($workspaceId === '' || $subscriberId === '' || !$this->shouldUseDatabase()) {
+            return null;
+        }
+
+        $rows = $this->rows(
+            $this->db
+                ->table('jobs')
+                ->where('workspace_id', $workspaceId)
+                ->get()
+        );
+        foreach ($rows as $row) {
+            $name = trim((string) ($row['name'] ?? ''));
+            if (!str_contains($name, '[lead:' . $subscriberId . ']')) {
+                continue;
+            }
+            if (!str_contains($name, 'Provision workspace')) {
+                continue;
+            }
+            return $row;
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    public function provisioningItemsForSubscriber(string $workspaceId, string $subscriberId): array
+    {
+        $workspaceId = trim($workspaceId);
+        $subscriberId = trim($subscriberId);
+        if ($workspaceId === '' || $subscriberId === '' || !$this->shouldUseDatabase()) {
+            return [];
+        }
+
+        $rows = $this->rows(
+            $this->db
+                ->table('subscriber_provisioning_items')
+                ->where('workspace_id', $workspaceId)
+                ->where('subscriber_id', $subscriberId)
+                ->orderBy('created_at', 'asc')
+                ->get()
+        );
+
+        return array_map(static function (array $row): array {
+            return [
+                'id' => (string) ($row['id'] ?? ''),
+                'item_key' => (string) ($row['item_key'] ?? ''),
+                'label' => (string) ($row['label'] ?? ''),
+                'status' => (string) ($row['status'] ?? ''),
+                'created_at' => (string) ($row['created_at'] ?? ''),
+                'completed_at' => (string) ($row['completed_at'] ?? ''),
+            ];
+        }, $rows);
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    public function provisioningItemsForWorkspace(string $workspaceId): array
+    {
+        $workspaceId = trim($workspaceId);
+        if ($workspaceId === '' || !$this->shouldUseDatabase()) {
+            return [];
+        }
+
+        $rows = $this->rows(
+            $this->db
+                ->table('subscriber_provisioning_items')
+                ->where('workspace_id', $workspaceId)
+                ->get()
+        );
+
+        return array_map(static function (array $row): array {
+            return [
+                'id' => (string) ($row['id'] ?? ''),
+                'subscriber_id' => (string) ($row['subscriber_id'] ?? ''),
+                'label' => (string) ($row['label'] ?? ''),
+                'status' => (string) ($row['status'] ?? ''),
+                'completed_at' => (string) ($row['completed_at'] ?? ''),
+                'created_at' => (string) ($row['created_at'] ?? ''),
+            ];
+        }, $rows);
+    }
+
+    /**
+     * @param array<int, array{key:string,label:string}> $items
+     */
+    public function ensureProvisioningItems(string $workspaceId, string $subscriberId, array $items): array
+    {
+        $workspaceId = trim($workspaceId);
+        $subscriberId = trim($subscriberId);
+        if ($workspaceId === '' || $subscriberId === '' || !$this->shouldUseDatabase()) {
+            return [];
+        }
+
+        $existing = $this->provisioningItemsForSubscriber($workspaceId, $subscriberId);
+        if ($existing !== []) {
+            return $existing;
+        }
+
+        $createdAt = $this->timestamp();
+        foreach ($items as $item) {
+            $this->db->table('subscriber_provisioning_items')->insert([
+                'id' => $this->nextId('prov'),
+                'workspace_id' => $workspaceId,
+                'subscriber_id' => $subscriberId,
+                'item_key' => (string) ($item['key'] ?? ''),
+                'label' => (string) ($item['label'] ?? ''),
+                'status' => 'pending',
+                'created_at' => $createdAt,
+            ])->run();
+        }
+
+        return $this->provisioningItemsForSubscriber($workspaceId, $subscriberId);
+    }
+
+    /**
+     * @return array{ok:bool,message:string,item?:array<string,string>}
+     */
+    public function completeProvisioningItem(string $workspaceId, string $subscriberId, string $itemId): array
+    {
+        $workspaceId = trim($workspaceId);
+        $subscriberId = trim($subscriberId);
+        $itemId = trim($itemId);
+        if ($workspaceId === '' || $subscriberId === '' || $itemId === '' || !$this->shouldUseDatabase()) {
+            return [
+                'ok' => false,
+                'message' => 'Provisioning checklist requires database storage mode.',
+            ];
+        }
+
+        $item = $this->firstRow(
+            $this->db
+                ->table('subscriber_provisioning_items')
+                ->where('workspace_id', $workspaceId)
+                ->where('subscriber_id', $subscriberId)
+                ->where('id', $itemId)
+                ->limit(1)
+                ->get()
+        );
+        if (!is_array($item)) {
+            return [
+                'ok' => false,
+                'message' => 'Unable to find the selected provisioning step.',
+            ];
+        }
+
+        if ((string) ($item['status'] ?? '') !== 'done') {
+            $completedAt = $this->timestamp();
+            $this->db
+                ->table('subscriber_provisioning_items')
+                ->where('workspace_id', $workspaceId)
+                ->where('subscriber_id', $subscriberId)
+                ->where('id', $itemId)
+                ->update([
+                    'status' => 'done',
+                    'completed_at' => $completedAt,
+                ])
+                ->run();
+            $item['status'] = 'done';
+            $item['completed_at'] = $completedAt;
+        }
+
+        return [
+            'ok' => true,
+            'message' => 'Provisioning step completed.',
+            'item' => [
+                'id' => (string) ($item['id'] ?? ''),
+                'item_key' => (string) ($item['item_key'] ?? ''),
+                'label' => (string) ($item['label'] ?? ''),
+                'status' => (string) ($item['status'] ?? ''),
+                'completed_at' => (string) ($item['completed_at'] ?? ''),
+            ],
+        ];
     }
 
     public function updateJobStatus(string $jobId, string $status): void
@@ -253,6 +439,274 @@ final class OpsRepository
     /**
      * @return array<int, array<string, string>>
      */
+    public function subscriberLeadsForWorkspace(string $workspaceId): array
+    {
+        if ($workspaceId === '' || !$this->shouldUseDatabase()) {
+            return [];
+        }
+
+        $subscribers = $this->rows(
+            $this->db
+                ->table('subscriber_accounts')
+                ->where('workspace_id', $workspaceId)
+                ->get()
+        );
+        $subscriptions = $this->rows(
+            $this->db
+                ->table('subscriptions')
+                ->where('workspace_id', $workspaceId)
+                ->get()
+        );
+
+        $subscriptionsBySubscriber = [];
+        foreach ($subscriptions as $row) {
+            $subscriberId = (string) ($row['subscriber_id'] ?? '');
+            if ($subscriberId === '') {
+                continue;
+            }
+            $subscriptionsBySubscriber[$subscriberId][] = $row;
+        }
+
+        $leads = [];
+        foreach ($subscribers as $row) {
+            $subscriberId = (string) ($row['id'] ?? '');
+            $subscriberSubs = $subscriptionsBySubscriber[$subscriberId] ?? [];
+            $plans = [];
+            $latestAt = (string) ($row['created_at'] ?? '');
+            $activeCount = 0;
+            foreach ($subscriberSubs as $subscription) {
+                $plan = trim((string) ($subscription['plan'] ?? ''));
+                $status = trim((string) ($subscription['status'] ?? ''));
+                if ($plan !== '' && !in_array($plan, $plans, true)) {
+                    $plans[] = $plan;
+                }
+                if ($status === 'active') {
+                    $activeCount++;
+                }
+                $createdAt = (string) ($subscription['created_at'] ?? '');
+                if ($createdAt !== '' && strcmp($createdAt, $latestAt) > 0) {
+                    $latestAt = $createdAt;
+                }
+            }
+
+            $leads[] = [
+                'id' => $subscriberId,
+                'email' => (string) ($row['email'] ?? ''),
+                'contact_name' => (string) ($row['contact_name'] ?? ''),
+                'company_name' => (string) ($row['company_name'] ?? ''),
+                'source_label' => (string) ($row['source_label'] ?? ''),
+                'notes' => (string) ($row['notes'] ?? ''),
+                'status' => (string) ($row['status'] ?? ''),
+                'stage' => (string) ($row['stage'] ?? 'new'),
+                'closed_reason' => (string) ($row['closed_reason'] ?? ''),
+                'assignee_user_id' => (string) ($row['assignee_user_id'] ?? ''),
+                'next_followup_at' => (string) ($row['next_followup_at'] ?? ''),
+                'plans' => implode(', ', $plans),
+                'subscription_count' => (string) count($subscriberSubs),
+                'active_subscription_count' => (string) $activeCount,
+                'created_at' => (string) ($row['created_at'] ?? ''),
+                'latest_activity_at' => $latestAt,
+            ];
+        }
+
+        usort($leads, static fn (array $left, array $right): int => strcmp(
+            (string) ($right['latest_activity_at'] ?? ''),
+            (string) ($left['latest_activity_at'] ?? ''),
+        ));
+
+        return $leads;
+    }
+
+    /**
+     * @return array{ok:bool,message:string,subscriber?:array<string, string>}
+     */
+    public function updateSubscriberStatus(
+        string $workspaceId,
+        string $subscriberId,
+        string $status,
+        ?string $stage = null,
+        ?string $closedReason = null,
+        ?string $assigneeUserId = null,
+        ?string $nextFollowupAt = null,
+        bool $updateStage = false,
+        bool $updateClosedReason = false,
+        bool $updateAssignee = false,
+        bool $updateNextFollowupAt = false,
+    ): array
+    {
+        if (!$this->shouldUseDatabase()) {
+            return [
+                'ok' => false,
+                'message' => 'Lead updates require database storage mode.',
+            ];
+        }
+
+        $workspaceId = trim($workspaceId);
+        $subscriberId = trim($subscriberId);
+        $status = trim($status);
+        if ($workspaceId === '' || $subscriberId === '' || $status === '') {
+            return [
+                'ok' => false,
+                'message' => 'Lead selection and status are required.',
+            ];
+        }
+
+        if (!in_array($status, ['active', 'contacted', 'qualified', 'inactive'], true)) {
+            return [
+                'ok' => false,
+                'message' => 'Unsupported lead status.',
+            ];
+        }
+        if ($updateStage && $stage !== null && !in_array(trim($stage), ['new', 'discovery', 'proposal', 'won', 'lost'], true)) {
+            return [
+                'ok' => false,
+                'message' => 'Unsupported lead stage.',
+            ];
+        }
+
+        $subscriber = $this->firstRow(
+            $this->db
+                ->table('subscriber_accounts')
+                ->where('workspace_id', $workspaceId)
+                ->where('id', $subscriberId)
+                ->limit(1)
+                ->get()
+        );
+        if (!is_array($subscriber)) {
+            return [
+                'ok' => false,
+                'message' => 'Unable to find the selected lead.',
+            ];
+        }
+
+        $updates = [
+            'status' => $status,
+        ];
+        if ($updateAssignee) {
+            $updates['assignee_user_id'] = $assigneeUserId !== null && trim($assigneeUserId) !== ''
+                ? trim($assigneeUserId)
+                : null;
+        }
+        if ($updateStage) {
+            $updates['stage'] = $stage !== null && trim($stage) !== '' ? trim($stage) : 'new';
+        }
+        if ($updateClosedReason) {
+            $updates['closed_reason'] = $closedReason !== null && trim($closedReason) !== ''
+                ? trim($closedReason)
+                : null;
+        }
+        if ($updateNextFollowupAt) {
+            $updates['next_followup_at'] = $nextFollowupAt !== null && trim($nextFollowupAt) !== ''
+                ? trim($nextFollowupAt)
+                : null;
+        }
+
+        $this->db
+            ->table('subscriber_accounts')
+            ->where('workspace_id', $workspaceId)
+            ->where('id', $subscriberId)
+            ->update($updates)
+            ->run();
+
+        return [
+            'ok' => true,
+            'message' => 'Lead status updated.',
+            'subscriber' => [
+                'id' => (string) ($subscriber['id'] ?? ''),
+                'email' => (string) ($subscriber['email'] ?? ''),
+                'status' => $status,
+                'stage' => $updates['stage'] ?? (string) ($subscriber['stage'] ?? 'new'),
+                'closed_reason' => $updates['closed_reason'] ?? (string) ($subscriber['closed_reason'] ?? ''),
+                'assignee_user_id' => $updates['assignee_user_id'] ?? (string) ($subscriber['assignee_user_id'] ?? ''),
+                'next_followup_at' => $updates['next_followup_at'] ?? (string) ($subscriber['next_followup_at'] ?? ''),
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, string>|null
+     */
+    public function subscriberLeadDetail(string $workspaceId, string $subscriberId): ?array
+    {
+        if ($workspaceId === '' || $subscriberId === '' || !$this->shouldUseDatabase()) {
+            return null;
+        }
+
+        foreach ($this->subscriberLeadsForWorkspace($workspaceId) as $lead) {
+            if (trim((string) ($lead['id'] ?? '')) === trim($subscriberId)) {
+                return $lead;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    public function subscriberFollowups(string $workspaceId, string $subscriberId): array
+    {
+        if ($workspaceId === '' || $subscriberId === '' || !$this->shouldUseDatabase()) {
+            return [];
+        }
+
+        $rows = $this->rows(
+            $this->db
+                ->table('subscriber_followups')
+                ->where('workspace_id', $workspaceId)
+                ->where('subscriber_id', $subscriberId)
+                ->orderBy('created_at', 'desc')
+                ->get()
+        );
+
+        return array_map(static function (array $row): array {
+            return [
+                'id' => (string) ($row['id'] ?? ''),
+                'actor' => (string) ($row['actor'] ?? ''),
+                'body' => (string) ($row['body'] ?? ''),
+                'created_at' => (string) ($row['created_at'] ?? ''),
+            ];
+        }, $rows);
+    }
+
+    /**
+     * @return array{ok:bool,message:string}
+     */
+    public function addSubscriberFollowup(string $workspaceId, string $subscriberId, string $actor, string $body): array
+    {
+        if ($workspaceId === '' || $subscriberId === '' || !$this->shouldUseDatabase()) {
+            return [
+                'ok' => false,
+                'message' => 'Lead followups require database storage mode.',
+            ];
+        }
+
+        $body = trim($body);
+        if ($body === '') {
+            return [
+                'ok' => false,
+                'message' => 'Followup note is required.',
+            ];
+        }
+
+        $this->db->table('subscriber_followups')->insert([
+            'id' => $this->nextId('followup'),
+            'workspace_id' => $workspaceId,
+            'subscriber_id' => $subscriberId,
+            'actor' => trim($actor) !== '' ? trim($actor) : 'system',
+            'body' => $body,
+            'created_at' => $this->timestamp(),
+        ])->run();
+
+        return [
+            'ok' => true,
+            'message' => 'Followup note added.',
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
     public function recentAssistantQuestions(string $workspaceId): array
     {
         if ($workspaceId === '' || !$this->shouldUseDatabase()) {
@@ -326,10 +780,14 @@ final class OpsRepository
             return false;
         }
 
+        if ($this->databaseAvailable !== null) {
+            return $this->databaseAvailable;
+        }
+
         try {
-            return $this->db->connect();
+            return $this->databaseAvailable = $this->db->connect();
         } catch (\Throwable) {
-            return false;
+            return $this->databaseAvailable = false;
         }
     }
 
@@ -391,6 +849,15 @@ final class OpsRepository
     }
 
     /**
+     * @return array<string, mixed>|null
+     */
+    private function firstRow(mixed $result): ?array
+    {
+        $rows = $this->rows($result);
+        return $rows[0] ?? null;
+    }
+
+    /**
      * @param array<int, array<string, mixed>> $rows
      * @return array<int, array<string, mixed>>
      */
@@ -406,6 +873,14 @@ final class OpsRepository
                 'knowledge.entry.updated' => 'Entry updated',
                 'knowledge.entry.published' => 'Entry published',
                 'workspace.member.invited' => 'Collaborator invited',
+                'workspace.member.role_updated' => 'Collaborator role updated',
+                'workspace.member.removed' => 'Collaborator removed',
+                'workspace.subscriber.status_updated' => 'Lead status updated',
+                'workspace.subscriber.followup_added' => 'Lead followup added',
+                'workspace.subscriber.provisioning_queued' => 'Lead provisioning queued',
+                'workspace.subscriber.provisioning_completed' => 'Lead provisioning step completed',
+                'workspace.context.switched' => 'Workspace switched',
+                'account.password.changed' => 'Password updated',
                 'ops.job.queued' => 'Ops job queued',
                 'ops.job.retried' => 'Ops job retried',
                 'publish_release' => 'Release published',

@@ -12,6 +12,8 @@ use VSlim\Database\Manager;
 
 final class KnowledgeRepository
 {
+    private ?bool $databaseAvailable = null;
+
     public function __construct(
         private DemoCatalog $catalog,
         private Manager $db,
@@ -176,7 +178,7 @@ final class KnowledgeRepository
      */
     public function releasedDocumentsForWorkspace(string $workspaceId): array
     {
-        $release = $this->latestRelease($workspaceId);
+        $release = $this->latestPublishedRelease($workspaceId);
         if ($release === null) {
             return $this->documentsForWorkspace($workspaceId);
         }
@@ -194,7 +196,7 @@ final class KnowledgeRepository
      */
     public function releasedEntriesForWorkspace(string $workspaceId): array
     {
-        $release = $this->latestRelease($workspaceId);
+        $release = $this->latestPublishedRelease($workspaceId);
         if ($release === null) {
             return $this->entriesForWorkspace($workspaceId);
         }
@@ -282,7 +284,13 @@ final class KnowledgeRepository
         ];
 
         if ($this->shouldUseDatabase()) {
-            $this->db->table('knowledge_releases')->insert($row)->run();
+            try {
+                $this->db->table('knowledge_releases')->insert($row)->run();
+            } catch (\Throwable) {
+                $fallback = $row;
+                unset($fallback['notes']);
+                $this->db->table('knowledge_releases')->insert($fallback)->run();
+            }
             $this->snapshotReleaseItems($workspaceId, (string) $row['id'], $documentIds, $entryIds);
         }
 
@@ -319,6 +327,71 @@ final class KnowledgeRepository
         }
 
         return KnowledgeRelease::fromArray($rows[0]);
+    }
+
+    public function latestPublishedRelease(string $workspaceId): ?KnowledgeRelease
+    {
+        foreach ($this->releasesForWorkspace($workspaceId) as $row) {
+            if ((string) ($row['status'] ?? '') !== 'published') {
+                continue;
+            }
+
+            return KnowledgeRelease::fromArray($row);
+        }
+
+        return null;
+    }
+
+    public function findReleaseByVersion(string $workspaceId, string $version): ?KnowledgeRelease
+    {
+        $version = trim($version);
+        if ($version === '') {
+            return null;
+        }
+
+        foreach ($this->releasesForWorkspace($workspaceId) as $row) {
+            if ((string) ($row['version'] ?? '') === $version) {
+                return KnowledgeRelease::fromArray($row);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function releasedDocumentsForVersion(string $workspaceId, string $version): array
+    {
+        $release = $this->findReleaseByVersion($workspaceId, $version);
+        if ($release === null) {
+            return $this->releasedDocumentsForWorkspace($workspaceId);
+        }
+
+        return $this->filterReleaseItems(
+            $workspaceId,
+            $release->id,
+            'document',
+            $this->documentsForWorkspace($workspaceId),
+        );
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function releasedEntriesForVersion(string $workspaceId, string $version): array
+    {
+        $release = $this->findReleaseByVersion($workspaceId, $version);
+        if ($release === null) {
+            return $this->releasedEntriesForWorkspace($workspaceId);
+        }
+
+        return $this->filterReleaseItems(
+            $workspaceId,
+            $release->id,
+            'entry',
+            $this->entriesForWorkspace($workspaceId),
+        );
     }
 
     /**
@@ -577,10 +650,14 @@ final class KnowledgeRepository
             return false;
         }
 
+        if ($this->databaseAvailable !== null) {
+            return $this->databaseAvailable;
+        }
+
         try {
-            return $this->db->connect();
+            return $this->databaseAvailable = $this->db->connect();
         } catch (\Throwable) {
-            return false;
+            return $this->databaseAvailable = false;
         }
     }
 

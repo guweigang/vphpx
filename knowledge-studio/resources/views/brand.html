@@ -3,6 +3,9 @@
 {{fill:footer}}<small>{{ footer_note }}</small>{{/fill}}
 <section class="ks-section">
   <p class="ks-eyebrow">{{ eyebrow | trim }}</p>
+  {{if:release_mode_notice}}<div class="ks-notice">{{ release_mode_notice | trim }} <a href="{{ release_mode_reset_url | trim }}">{{ release_mode_reset_label | trim }}</a></div>{{/if}}
+  {{if:subscribe_notice}}<div class="ks-notice success">{{ subscribe_notice | trim }}</div>{{/if}}
+  {{if:subscribe_error}}<div class="ks-notice error">{{ subscribe_error | trim }}</div>{{/if}}
   <article class="ks-spotlight">
     <div class="ks-spotlight-grid">
       <div class="ks-spotlight-copy">
@@ -19,13 +22,21 @@
         </div>
       </div>
       <aside class="ks-spotlight-side">
-        <article class="ks-panel">
+        <article class="ks-panel" id="subscribe-intake">
           <h3>{{ subscribe_title | trim }}</h3>
           <p class="ks-copy">{{ subscribe_intro | trim }}</p>
           <form class="ks-form" method="post" action="{{ subscribe_action | trim }}">
             <div class="ks-field">
+              <label>{{ subscribe_contact_name_label | trim }}</label>
+              <input type="text" name="contact_name" value="{{ subscribe_contact_name_value | trim }}" placeholder="{{ subscribe_contact_name_placeholder | trim }}">
+            </div>
+            <div class="ks-field">
+              <label>{{ subscribe_company_name_label | trim }}</label>
+              <input type="text" name="company_name" value="{{ subscribe_company_name_value | trim }}" placeholder="{{ subscribe_company_name_placeholder | trim }}">
+            </div>
+            <div class="ks-field">
               <label>{{ subscribe_email_label | trim }}</label>
-              <input type="email" name="email" placeholder="team@example.com">
+              <input type="email" name="email" value="{{ subscribe_email_value | trim }}" placeholder="{{ subscribe_email_placeholder | trim }}">
             </div>
             <div class="ks-field">
               <label>{{ subscribe_plan_label | trim }}</label>
@@ -35,6 +46,11 @@
                 <option value="enterprise" {{ selected_plan_enterprise }}>Enterprise</option>
               </select>
             </div>
+            <div class="ks-field">
+              <label>{{ subscribe_notes_label | trim }}</label>
+              <textarea name="notes" rows="3" placeholder="{{ subscribe_notes_placeholder | trim }}">{{ subscribe_notes_value | trim }}</textarea>
+            </div>
+            <input type="hidden" name="source_label" value="brand_page">
             <ks-subscribe-intake
               data-vphp-island="lit"
               email-selector="input[name='email']"
@@ -48,34 +64,6 @@
         </article>
       </aside>
     </div>
-    <div class="ks-grid two">
-      <article class="ks-panel">
-        <h3>{{ story_title | trim }}</h3>
-        <p class="ks-copy">{{ story_body | trim }}</p>
-        <ul class="ks-list">
-          <li><strong>{{ journey_one_title | trim }}</strong>{{ journey_one_body | trim }}</li>
-          <li><strong>{{ journey_two_title | trim }}</strong>{{ journey_two_body | trim }}</li>
-          <li><strong>{{ journey_three_title | trim }}</strong>{{ journey_three_body | trim }}</li>
-        </ul>
-      </article>
-      <article class="ks-panel">
-        <h3>{{ conversion_title | trim }}</h3>
-        <p class="ks-copy">{{ conversion_body | trim }}</p>
-        <ul class="ks-list">
-          <li><strong>{{ conversion_one_title | trim }}</strong>{{ conversion_one_body | trim }}</li>
-          <li><strong>{{ conversion_two_title | trim }}</strong>{{ conversion_two_body | trim }}</li>
-          <li><strong>{{ conversion_three_title | trim }}</strong>{{ conversion_three_body | trim }}</li>
-        </ul>
-        <div class="ks-actions">
-          <a class="ks-btn" href="#plans">{{ offers_title | trim }}</a>
-          <a class="ks-btn-secondary" href="{{ assistant_url | trim }}">{{ assistant_cta | trim }}</a>
-        </div>
-      </article>
-    </div>
-    {{if:release_notes}}<article class="ks-panel">
-      <h3>{{ release_notes_title | trim }}</h3>
-      <p class="ks-copy">{{ release_notes | trim }}</p>
-    </article>{{/if}}
     <div class="ks-kpi-row">
       <article class="ks-kpi">
         <p class="ks-kpi-value">{{ documents_total | trim }}</p>
@@ -90,9 +78,71 @@
         <p class="ks-kpi-label">{{ subscribers_label | trim }}</p>
       </article>
     </div>
+    <article class="ks-panel">
+      <h3>{{ value_title | trim }}</h3>
+      <p class="ks-copy">{{ value_body | trim }}</p>
+      <ul class="ks-list">
+        <li>{{ value_one | trim }}</li>
+        <li>{{ value_two | trim }}</li>
+        <li>{{ value_three | trim }}</li>
+      </ul>
+    </article>
+    <div class="ks-grid three">
+      <article class="ks-panel">
+        <h3>{{ conversion_title | trim }}</h3>
+        <p class="ks-copy">{{ conversion_body | trim }}</p>
+        <ul class="ks-list">
+          <li><strong>{{ conversion_one_title | trim }}</strong>{{ conversion_one_body | trim }}</li>
+          <li><strong>{{ conversion_two_title | trim }}</strong>{{ conversion_two_body | trim }}</li>
+          <li><strong>{{ conversion_three_title | trim }}</strong>{{ conversion_three_body | trim }}</li>
+        </ul>
+        <div class="ks-actions">
+          <a class="ks-btn" href="#plans">{{ offers_title | trim }}</a>
+          <a class="ks-btn-secondary" href="{{ assistant_url | trim }}">{{ assistant_cta | trim }}</a>
+        </div>
+      </article>
+      <article class="ks-panel">
+        <h3>{{ fit_title | trim }}</h3>
+        <p class="ks-copy">{{ fit_body | trim }}</p>
+        <ul class="ks-list">
+          <li>{{ fit_one | trim }}</li>
+          <li>{{ fit_two | trim }}</li>
+          <li>{{ fit_three | trim }}</li>
+        </ul>
+      </article>
+      <article class="ks-panel">
+        <h3>{{ handoff_title | trim }}</h3>
+        <p class="ks-copy">{{ handoff_body | trim }}</p>
+        <ol class="ks-list">
+          <li>{{ handoff_one | trim }}</li>
+          <li>{{ handoff_two | trim }}</li>
+          <li>{{ handoff_three | trim }}</li>
+        </ol>
+      </article>
+    </div>
+    <div class="ks-grid two">
+      <article class="ks-panel">
+        <h3>{{ story_title | trim }}</h3>
+        <p class="ks-copy">{{ story_body | trim }}</p>
+        <ul class="ks-list">
+          <li><strong>{{ journey_one_title | trim }}</strong>{{ journey_one_body | trim }}</li>
+          <li><strong>{{ journey_two_title | trim }}</strong>{{ journey_two_body | trim }}</li>
+          <li><strong>{{ journey_three_title | trim }}</strong>{{ journey_three_body | trim }}</li>
+        </ul>
+      </article>
+      <article class="ks-panel">
+        <h3>{{ subscription_title | trim }}</h3>
+        <p class="ks-copy">{{ subscription_body | trim }}</p>
+        <div class="ks-actions">
+          <a class="ks-btn-secondary" href="#plans">{{ offers_title | trim }}</a>
+        </div>
+      </article>
+    </div>
+    {{if:release_notes}}<article class="ks-panel">
+      <h3>{{ release_notes_title | trim }}</h3>
+      <p class="ks-copy">{{ release_notes | trim }}</p>
+    </article>{{/if}}
   </article>
-  {{if:subscribe_notice}}<div class="ks-notice success">{{ subscribe_notice | trim }}</div>{{/if}}
-  {{if:subscribe_error}}<div class="ks-notice error">{{ subscribe_error | trim }}</div>{{/if}}
   <article class="ks-card" id="plans">
     <h2>{{ offers_title | trim }}</h2>
     <p class="ks-copy">{{ subscription_body | trim }}</p>

@@ -17,21 +17,35 @@ final class PublicBrandPresenter
      * @param array<string, string> $copy
      * @return array<string, mixed>
      */
-    public function present(WorkspacePublicSnapshot $snapshot, array $copy, string $locale): array
+    public function present(WorkspacePublicSnapshot $snapshot, array $copy, string $locale, string $requestedReleaseVersion = ''): array
     {
         $slug = $snapshot->workspaceSlug();
-        $assistantUrl = $slug !== '' ? $this->urls->assistant($slug, $locale) : '#';
+        $releaseVersion = trim($requestedReleaseVersion) !== ''
+            ? trim($requestedReleaseVersion)
+            : trim((string) ($snapshot->release['version'] ?? ''));
+        $assistantUrl = $slug !== ''
+            ? $this->urls->validationWithQuery($slug, $locale, array_filter(['release' => $releaseVersion]))
+            : '#';
+        $brandUrl = $slug !== ''
+            ? $this->urls->brandWithQuery($slug, $locale, array_filter(['release' => $releaseVersion]))
+            : '#';
         $publicPreview = $snapshot->publicPreview;
-        $publicPreview['documents'] = array_map(function (array $item) use ($slug, $locale): array {
+        $publicPreview['documents'] = array_map(function (array $item) use ($slug, $locale, $releaseVersion): array {
             $item['detail_url'] = $slug !== ''
                 ? $this->urls->brandDocument($slug, (string) ($item['id'] ?? ''), $locale)
                 : '#';
+            if ($releaseVersion !== '' && $item['detail_url'] !== '#') {
+                $item['detail_url'] .= '?release=' . urlencode($releaseVersion);
+            }
             return $item;
         }, is_array($publicPreview['documents'] ?? null) ? $publicPreview['documents'] : []);
-        $publicPreview['entries'] = array_map(function (array $item) use ($slug, $locale): array {
+        $publicPreview['entries'] = array_map(function (array $item) use ($slug, $locale, $releaseVersion): array {
             $item['detail_url'] = $slug !== ''
                 ? $this->urls->brandEntry($slug, (string) ($item['id'] ?? ''), $locale)
                 : '#';
+            if ($releaseVersion !== '' && $item['detail_url'] !== '#') {
+                $item['detail_url'] .= '?release=' . urlencode($releaseVersion);
+            }
             return $item;
         }, is_array($publicPreview['entries'] ?? null) ? $publicPreview['entries'] : []);
 
@@ -45,7 +59,7 @@ final class PublicBrandPresenter
             'preview_entries_title' => (string) ($copy['preview_entries_title'] ?? ''),
             'public_preview' => $publicPreview,
             'offers' => array_map(
-                fn (SubscriptionOffer $offer): array => $this->offerCard($offer, $locale, $assistantUrl, $copy),
+                fn (SubscriptionOffer $offer): array => $this->offerCard($offer, $snapshot, $locale, $assistantUrl, $brandUrl, $copy),
                 $snapshot->offers,
             ),
         ];
@@ -55,7 +69,7 @@ final class PublicBrandPresenter
      * @param array<string, string> $copy
      * @return array<string, mixed>
      */
-    private function offerCard(SubscriptionOffer $offer, string $locale, string $assistantUrl, array $copy): array
+    private function offerCard(SubscriptionOffer $offer, WorkspacePublicSnapshot $snapshot, string $locale, string $assistantUrl, string $brandUrl, array $copy): array
     {
         $isEnglish = $locale === 'en';
         $price = $offer->monthlyPrice > 0
@@ -86,15 +100,20 @@ final class PublicBrandPresenter
             $features[] = (string) ($copy[$key] ?? $capability);
         }
 
-        $actionUrl = $assistantUrl;
-        if ($assistantUrl !== '#') {
+        $actionUrl = $brandUrl;
+        if ($brandUrl !== '#') {
+            $separator = str_contains($brandUrl, '?') ? '&' : '?';
+            $actionUrl .= $separator . 'plan=' . urlencode($offer->code) . '#subscribe-intake';
+        } elseif ($assistantUrl !== '#') {
             $separator = str_contains($assistantUrl, '?') ? '&' : '?';
-            $actionUrl .= $separator . 'plan=' . urlencode($offer->code);
+            $actionUrl = $assistantUrl . $separator . 'plan=' . urlencode($offer->code);
         }
+
+        $summary = (string) ($copy['offer_' . $offer->code . '_summary'] ?? '');
 
         return [
             'name' => (string) ($copy['offer_' . $offer->code . '_name'] ?? strtoupper($offer->code)),
-            'summary' => (string) ($copy['offer_' . $offer->code . '_summary'] ?? ''),
+            'summary' => $summary,
             'price' => $price,
             'annual' => $annual,
             'featured' => $offer->featured ? '1' : '0',

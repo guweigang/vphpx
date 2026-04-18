@@ -3,6 +3,7 @@
 {{fill:footer}}<small>{{ footer_note | trim }}</small>{{/fill}}
 <section class="ks-section">
   <p class="ks-eyebrow">{{ eyebrow | trim }}</p>
+  {{if:release_mode_notice}}<div class="ks-notice">{{ release_mode_notice | trim }} <a href="{{ release_mode_reset_url | trim }}">{{ release_mode_reset_label | trim }}</a></div>{{/if}}
   <article class="ks-spotlight">
     <div class="ks-spotlight-grid">
       <div class="ks-spotlight-copy">
@@ -16,6 +17,7 @@
         <p class="ks-copy">{{ detail_summary | trim }}</p>
         <div class="ks-spotlight-actions">
           <a class="ks-btn-secondary" href="{{ back_url | trim }}">{{ back_label | trim }}</a>
+          {{if:validation_url}}<a class="ks-btn-secondary" href="{{ validation_url | trim }}">{{ validation_label | trim }}</a>{{/if}}
         </div>
       </div>
       <aside class="ks-spotlight-side">

@@ -22,6 +22,8 @@ final class AssistantAnswerPresenter
             };
 
             return [
+                'id' => (string) ($citation['id'] ?? ''),
+                'source_kind' => (string) ($citation['source_kind'] ?? ''),
                 'title' => (string) ($citation['title'] ?? ''),
                 'kind' => $kindLabel,
                 'status' => (string) ($citation['status'] ?? ''),

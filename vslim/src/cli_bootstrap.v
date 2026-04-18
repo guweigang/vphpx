@@ -222,14 +222,19 @@ fn apply_cli_bootstrap_file_result(mut cli VSlimCliApp, path string, value vphp.
 		return error(cli_bootstrap_file_return_error(path))
 	}
 	if value.is_callable() {
+		handlers_before := cli.command_handlers.len
+		cli_debug_log('bootstrap_file_result callable path=\"${path}\" handlers_before=${handlers_before}')
 		mut cli_z := cli_self_zval(&cli)
 		defer {
 			cli_z.release()
 		}
+		cli_debug_log('bootstrap_file_result cli_z valid=${cli_z.is_valid()} type=${cli_z.type_name()} raw=${usize(cli_z.raw)}')
 		mut result := vphp.call_request_owned_box(value, [cli_z])
 		defer {
 			result.release()
 		}
+		handlers_after := cli.command_handlers.len
+		cli_debug_log('bootstrap_file_result closure_done handlers_before=${handlers_before} handlers_after=${handlers_after} order=${cli.command_order}')
 		result_z := result.to_zval()
 		if !result_z.is_valid() || result_z.is_null() || result_z.is_undef() {
 			return

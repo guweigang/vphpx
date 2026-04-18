@@ -55,7 +55,7 @@ final class ConsoleController extends \VSlim\Controller
         $priorities = is_array($dashboard['priorities'] ?? null) ? $dashboard['priorities'] : [];
         $locale = $this->locale($request);
         $copy = $this->locales->consoleIndex($locale);
-        $shared = $this->shared($locale, '/console', is_array($workspace) ? $workspace : null);
+        $shared = $this->shared($locale, '/console', is_array($workspace) ? $workspace : null, $memberships);
         $workspaceSlug = is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '';
         $priorities = array_map(function (array $item) use ($locale): array {
             return [
@@ -100,7 +100,7 @@ final class ConsoleController extends \VSlim\Controller
             return [
                 ...$item,
                 'assistant_url' => $workspaceSlug !== ''
-                    ? $this->urls->assistantWithQuery($workspaceSlug, $locale, ['q' => $question])
+                    ? $this->urls->validationWithQuery($workspaceSlug, $locale, ['q' => $question])
                     : $this->urls->console($locale),
             ];
         }, $questions);
@@ -135,6 +135,8 @@ final class ConsoleController extends \VSlim\Controller
             'workspace_brand' => is_array($workspace) ? (string) ($workspace['brand_name'] ?? '') : '',
             'workspace_plan' => is_array($workspace) ? (string) ($workspace['plan'] ?? '') : '',
             'workspace_members' => (string) count($members),
+            'workspace_notice' => $this->flash($request, 'console.workspace.notice'),
+            'workspace_error' => $this->flash($request, 'console.workspace.error'),
             'sidebar_line_plan' => $copy['sidebar_line_plan'],
             'sidebar_line_collaborators' => $copy['sidebar_line_collaborators'],
             'member_count' => count($members),
@@ -157,8 +159,18 @@ final class ConsoleController extends \VSlim\Controller
             'members_url' => $this->urls->consoleMembers($locale),
             'ops_url' => $this->urls->consoleOps($locale),
             'releases_url' => $this->urls->consoleReleases($locale),
-            'documents' => array_slice($documents, 0, 2),
-            'entries' => array_slice($entries, 0, 2),
+            'documents' => array_map(function (array $item) use ($locale): array {
+                return [
+                    ...$item,
+                    'edit_url' => $this->urls->consoleDocumentEditor((string) ($item['id'] ?? ''), $locale),
+                ];
+            }, array_slice($documents, 0, 2)),
+            'entries' => array_map(function (array $item) use ($locale): array {
+                return [
+                    ...$item,
+                    'edit_url' => $this->urls->consoleEntryEditor((string) ($item['id'] ?? ''), $locale),
+                ];
+            }, array_slice($entries, 0, 2)),
             'jobs' => array_slice($jobs, 0, 2),
             'urgent_jobs' => $urgentJobs,
             'quick_subscription_recent' => array_slice($subscriptionRecent, 0, 2),
@@ -174,7 +186,7 @@ final class ConsoleController extends \VSlim\Controller
                 ? $this->urls->brand((string) ($workspace['slug'] ?? ''), $locale)
                 : '',
             'public_assistant_url' => is_array($workspace)
-                ? $this->urls->assistant((string) ($workspace['slug'] ?? ''), $locale)
+                ? $this->urls->validation((string) ($workspace['slug'] ?? ''), $locale)
                 : '',
             'public_plans_url' => is_array($workspace)
                 ? $this->urls->brand((string) ($workspace['slug'] ?? ''), $locale) . '#plans'
@@ -226,6 +238,8 @@ final class ConsoleController extends \VSlim\Controller
             'next_three_body' => $copy['next_three_body'],
             'recent_documents_title' => $copy['recent_documents_title'],
             'recent_entries_title' => $copy['recent_entries_title'],
+            'recent_document_cta' => $copy['recent_document_cta'],
+            'recent_entry_cta' => $copy['recent_entry_cta'],
             'recent_jobs_title' => $copy['recent_jobs_title'],
             'recent_subscriptions_title' => $copy['recent_subscriptions_title'],
             'subscription_mix_title' => $copy['subscription_mix_title'],
@@ -266,12 +280,30 @@ final class ConsoleController extends \VSlim\Controller
             return $this->redirect($this->urls->login($this->locale($request)), 302);
         }
 
-        [$viewer, $workspace] = $this->consoleContext($request);
+        [$viewer, $workspace, $memberships] = $this->consoleContext($request);
         $members = $this->console->members($workspace);
         $locale = $this->locale($request);
         $copy = $this->locales->consoleMembers($locale);
-        $shared = $this->shared($locale, '/console/members', is_array($workspace) ? $workspace : null);
+        $shared = $this->shared($locale, '/console/members', is_array($workspace) ? $workspace : null, $memberships);
         $canManageMembers = $this->console->canManageMembers(is_array($viewer) ? $viewer : null);
+        $viewerUserId = is_array($viewer) ? trim((string) ($viewer['id'] ?? '')) : '';
+        $members = array_map(function (array $member) use ($locale, $canManageMembers, $viewerUserId): array {
+            $memberId = trim((string) ($member['id'] ?? ''));
+            $role = trim((string) ($member['role'] ?? ''));
+            $userId = trim((string) ($member['user_id'] ?? ''));
+            $isSelf = $viewerUserId !== '' && $viewerUserId === $userId;
+            return [
+                ...$member,
+                'role_owner_selected' => $role === 'tenant_owner' ? 'selected' : '',
+                'role_editor_selected' => $role === 'knowledge_editor' ? 'selected' : '',
+                'role_reviewer_selected' => $role === 'reviewer' ? 'selected' : '',
+                'role_action' => $this->urls->consoleMemberRole($memberId, $locale),
+                'remove_action' => $this->urls->consoleMemberRemove($memberId, $locale),
+                'can_manage' => $canManageMembers ? '1' : '',
+                'is_self' => $isSelf ? '1' : '',
+                'show_actions' => $canManageMembers && !$isSelf ? '1' : '',
+            ];
+        }, $members);
 
         return $this->render_with_layout('console_members.html', 'layout.html', [
             'title' => $copy['title'],
@@ -304,7 +336,338 @@ final class ConsoleController extends \VSlim\Controller
             'col_email' => $copy['col_email'],
             'col_role' => $copy['col_role'],
             'col_created' => $copy['col_created'],
+            'col_actions' => $copy['col_actions'],
             'password_hint' => $copy['password_hint'],
+            'role_update_submit' => $copy['role_update_submit'],
+            'remove_submit' => $copy['remove_submit'],
+            'self_protected_hint' => $copy['self_protected_hint'],
+            ...$shared,
+        ]);
+    }
+
+    public function account(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    {
+        if (!$this->app()->authCheck($request)) {
+            return $this->redirect($this->urls->login($this->locale($request)), 302);
+        }
+
+        [$viewer, $workspace, $memberships] = $this->consoleContext($request);
+        $locale = $this->locale($request);
+        $copy = $this->locales->consoleAccount($locale);
+        $shared = $this->shared($locale, '/console/account', is_array($workspace) ? $workspace : null, $memberships);
+        $requiresPasswordReset = $this->console->requiresPasswordReset(is_array($viewer) ? $viewer : null);
+
+        return $this->render_with_layout('console_account.html', 'layout.html', [
+            'title' => $copy['title'],
+            'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
+            'viewer_email' => is_array($viewer) ? (string) ($viewer['email'] ?? '') : '',
+            'viewer_role' => is_array($viewer) ? (string) ($viewer['role'] ?? '') : '',
+            'workspace_name' => is_array($workspace) ? (string) ($workspace['name'] ?? '') : '',
+            'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
+            'write_error' => $this->flash($request, 'console.account.error'),
+            'write_notice' => $this->flash($request, 'console.account.notice'),
+            'account_action' => $this->urls->consoleAccountPassword($locale),
+            'requires_password_reset' => $requiresPasswordReset ? '1' : '',
+            'page_section' => $copy['page_section'],
+            'nav_label' => $copy['nav_label'],
+            'footer_note' => $copy['footer_note'],
+            'sidebar_line' => $copy['sidebar_line'],
+            'eyebrow' => $copy['eyebrow'],
+            'intro' => $copy['intro'],
+            'form_title' => $copy['form_title'],
+            'current_password_label' => $copy['current_password_label'],
+            'new_password_label' => $copy['new_password_label'],
+            'confirm_password_label' => $copy['confirm_password_label'],
+            'submit_label' => $copy['submit_label'],
+            'context_title' => $copy['context_title'],
+            'email_label' => $copy['email_label'],
+            'role_label' => $copy['role_label'],
+            'workspace_label' => $copy['workspace_label'],
+            'security_title' => $copy['security_title'],
+            'security_copy' => $copy['security_copy'],
+            'reset_required_notice' => $copy['reset_required_notice'],
+            'reset_complete_notice' => $copy['reset_complete_notice'],
+            ...$shared,
+        ]);
+    }
+
+    public function subscribers(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    {
+        if (!$this->app()->authCheck($request)) {
+            return $this->redirect($this->urls->login($this->locale($request)), 302);
+        }
+
+        [$viewer, $workspace, $memberships] = $this->consoleContext($request);
+        $locale = $this->locale($request);
+        $copy = $this->locales->consoleSubscribers($locale);
+        $shared = $this->shared($locale, '/console/subscribers', is_array($workspace) ? $workspace : null, $memberships);
+        $canManageOps = $this->console->canManageOps(is_array($viewer) ? $viewer : null);
+        $statusFilter = $this->queryValue($request, 'status');
+        $planFilter = $this->queryValue($request, 'plan');
+        $pendingSubscriberId = $this->queryValue($request, 'subscriber');
+        $pendingStatus = $this->queryValue($request, 'status_value');
+        $pendingNote = $this->queryValue($request, 'status_note');
+        $subscriberRows = $this->console->subscribers($workspace);
+        $subscriberRows = array_values(array_filter($subscriberRows, static function (array $row) use ($statusFilter, $planFilter): bool {
+            if ($statusFilter !== '' && trim((string) ($row['status'] ?? '')) !== $statusFilter) {
+                return false;
+            }
+
+            if ($planFilter !== '') {
+                $plans = array_map('trim', explode(',', (string) ($row['plans'] ?? '')));
+                if (!in_array($planFilter, $plans, true)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }));
+        usort($subscriberRows, fn (array $left, array $right): int => $this->compareSubscriberLeads($left, $right));
+        $subscribers = array_map(function (array $row) use (
+            $locale,
+            $canManageOps,
+            $copy,
+            $pendingSubscriberId,
+            $pendingStatus,
+            $pendingNote,
+        ): array {
+            $subscriberId = trim((string) ($row['id'] ?? ''));
+            $status = trim((string) ($row['status'] ?? 'active'));
+            $priority = $this->subscriberPriorityMeta($row, $copy);
+            return [
+                ...$row,
+                'status_active_selected' => $status === 'active' ? 'selected' : '',
+                'status_contacted_selected' => $status === 'contacted' ? 'selected' : '',
+                'status_qualified_selected' => $status === 'qualified' ? 'selected' : '',
+                'status_inactive_selected' => $status === 'inactive' ? 'selected' : '',
+                'status_active_current' => $pendingSubscriberId === $subscriberId && $pendingStatus !== ''
+                    ? ($pendingStatus === 'active' ? 'selected' : '')
+                    : ($status === 'active' ? 'selected' : ''),
+                'status_contacted_current' => $pendingSubscriberId === $subscriberId && $pendingStatus !== ''
+                    ? ($pendingStatus === 'contacted' ? 'selected' : '')
+                    : ($status === 'contacted' ? 'selected' : ''),
+                'status_qualified_current' => $pendingSubscriberId === $subscriberId && $pendingStatus !== ''
+                    ? ($pendingStatus === 'qualified' ? 'selected' : '')
+                    : ($status === 'qualified' ? 'selected' : ''),
+                'status_inactive_current' => $pendingSubscriberId === $subscriberId && $pendingStatus !== ''
+                    ? ($pendingStatus === 'inactive' ? 'selected' : '')
+                    : ($status === 'inactive' ? 'selected' : ''),
+                'status_note_value' => $pendingSubscriberId === $subscriberId ? $pendingNote : '',
+                'priority_label' => $priority['label'],
+                'priority_badge_class' => $priority['class'],
+                'stage_label' => (string) ($row['stage'] ?? 'new'),
+                'assignee_label' => trim((string) ($row['assignee_name'] ?? '')) !== ''
+                    ? trim((string) ($row['assignee_name'] ?? ''))
+                    : (string) ($copy['unassigned_value'] ?? 'Unassigned'),
+                'next_followup_label' => trim((string) ($row['next_followup_at'] ?? '')) !== ''
+                    ? trim((string) ($row['next_followup_at'] ?? ''))
+                    : (string) ($copy['no_followup_value'] ?? 'Not scheduled'),
+                'detail_url' => $this->urls->consoleSubscriberDetail($subscriberId, $locale),
+                'status_action' => $this->urls->consoleSubscriberStatus($subscriberId, $locale),
+                'can_manage' => $canManageOps ? '1' : '',
+            ];
+        }, $subscriberRows);
+
+        return $this->render_with_layout('console_subscribers.html', 'layout.html', [
+            'title' => $copy['title'],
+            'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
+            'viewer_role' => is_array($viewer) ? (string) ($viewer['role'] ?? '') : '',
+            'workspace_name' => is_array($workspace) ? (string) ($workspace['name'] ?? '') : '',
+            'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
+            'subscribers' => $subscribers,
+            'has_subscribers' => $subscribers !== [] ? '1' : '',
+            'show_no_subscribers' => $subscribers === [] ? '1' : '',
+            'write_error' => $this->flash($request, 'console.subscribers.error'),
+            'write_notice' => $this->flash($request, 'console.subscribers.notice'),
+            'page_section' => $copy['page_section'],
+            'nav_label' => $copy['nav_label'],
+            'footer_note' => $copy['footer_note'],
+            'sidebar_line' => $copy['sidebar_line'],
+            'eyebrow' => $copy['eyebrow'],
+            'intro' => $copy['intro'],
+            'context_title' => $copy['context_title'],
+            'viewer_label' => $copy['viewer_label'],
+            'role_hint_label' => $copy['role_hint_label'],
+            'owner_only_hint' => $copy['owner_only_hint'],
+            'filters_title' => $copy['filters_title'],
+            'filter_status_label' => $copy['filter_status_label'],
+            'filter_plan_label' => $copy['filter_plan_label'],
+            'filter_any_status' => $copy['filter_any_status'],
+            'filter_any_plan' => $copy['filter_any_plan'],
+            'filter_apply_submit' => $copy['filter_apply_submit'],
+            'filter_action' => $this->urls->consoleSubscribers($locale),
+            'filter_status_active_selected' => $statusFilter === 'active' ? 'selected' : '',
+            'filter_status_contacted_selected' => $statusFilter === 'contacted' ? 'selected' : '',
+            'filter_status_qualified_selected' => $statusFilter === 'qualified' ? 'selected' : '',
+            'filter_status_inactive_selected' => $statusFilter === 'inactive' ? 'selected' : '',
+            'filter_plan_starter_selected' => $planFilter === 'starter' ? 'selected' : '',
+            'filter_plan_team_selected' => $planFilter === 'team' ? 'selected' : '',
+            'filter_plan_enterprise_selected' => $planFilter === 'enterprise' ? 'selected' : '',
+            'table_title' => $copy['table_title'],
+            'empty_title' => $copy['empty_title'],
+            'empty_body' => $copy['empty_body'],
+            'detail_cta' => $copy['detail_cta'],
+            'col_priority' => $copy['col_priority'],
+            'col_email' => $copy['col_email'],
+            'col_contact' => $copy['col_contact'],
+            'col_company' => $copy['col_company'],
+            'col_plans' => $copy['col_plans'],
+            'col_source' => $copy['col_source'],
+            'col_notes' => $copy['col_notes'],
+            'col_status' => $copy['col_status'],
+            'col_stage' => $copy['col_stage'],
+            'col_owner' => $copy['col_owner'],
+            'col_followup' => $copy['col_followup'],
+            'col_subscriptions' => $copy['col_subscriptions'],
+            'col_created' => $copy['col_created'],
+            'col_latest' => $copy['col_latest'],
+            'col_actions' => $copy['col_actions'],
+            'status_note_label' => $copy['status_note_label'],
+            'status_note_placeholder' => $copy['status_note_placeholder'],
+            'status_update_submit' => $copy['status_update_submit'],
+            ...$shared,
+        ]);
+    }
+
+    public function subscriberDetail(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    {
+        if (!$this->app()->authCheck($request)) {
+            return $this->redirect($this->urls->login($this->locale($request)), 302);
+        }
+
+        [$viewer, $workspace, $memberships] = $this->consoleContext($request);
+        $subscriberId = $this->pathParam($request, 'subscriber');
+        $locale = $this->locale($request);
+        $copy = $this->locales->consoleSubscriberDetail($locale);
+        $shared = $this->shared($locale, '/console/subscribers', is_array($workspace) ? $workspace : null, $memberships);
+        $lead = $this->console->subscriberDetail($workspace, $subscriberId);
+        if (!is_array($lead)) {
+            return $this->redirect($this->urls->consoleSubscribers($locale), 302);
+        }
+
+        $followups = $this->localizeSubscriberFollowups(
+            is_array($workspace) ? $workspace : null,
+            $locale,
+            $this->console->subscriberFollowups($workspace, $subscriberId),
+        );
+        $provisioningItems = $this->localizeProvisioningItems(
+            is_array($workspace) ? $workspace : null,
+            $locale,
+            $this->console->subscriberProvisioningItems($workspace, $subscriberId),
+        );
+        $members = $this->console->members($workspace);
+        $assigneeUserId = (string) ($lead['assignee_user_id'] ?? '');
+        $memberOptions = array_map(static function (array $member) use ($assigneeUserId): array {
+            $userId = trim((string) ($member['user_id'] ?? ''));
+            $label = trim((string) ($member['name'] ?? '')) !== ''
+                ? trim((string) ($member['name'] ?? ''))
+                : trim((string) ($member['email'] ?? ''));
+            return [
+                'value' => $userId,
+                'label' => $label,
+                'selected' => $userId !== '' && $userId === $assigneeUserId ? 'selected' : '',
+            ];
+        }, $members);
+
+        return $this->render_with_layout('console_subscriber_detail.html', 'layout.html', [
+            'title' => $copy['title'],
+            'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
+            'viewer_role' => is_array($viewer) ? (string) ($viewer['role'] ?? '') : '',
+            'workspace_name' => is_array($workspace) ? (string) ($workspace['name'] ?? '') : '',
+            'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
+            'lead_email' => (string) ($lead['email'] ?? ''),
+            'lead_contact_name' => (string) ($lead['contact_name'] ?? ''),
+            'lead_company_name' => (string) ($lead['company_name'] ?? ''),
+            'lead_plans' => (string) ($lead['plans'] ?? ''),
+            'lead_status' => (string) ($lead['status'] ?? ''),
+            'lead_stage' => (string) ($lead['stage'] ?? 'new'),
+            'lead_closed_reason' => (string) ($lead['closed_reason'] ?? ''),
+            'lead_source_label' => (string) ($lead['source_label'] ?? ''),
+            'lead_notes' => (string) ($lead['notes'] ?? ''),
+            'lead_assignee_name' => trim((string) ($lead['assignee_name'] ?? '')) !== ''
+                ? trim((string) ($lead['assignee_name'] ?? ''))
+                : (string) ($copy['unassigned_value'] ?? ''),
+            'lead_next_followup_at' => trim((string) ($lead['next_followup_at'] ?? '')) !== ''
+                ? trim((string) ($lead['next_followup_at'] ?? ''))
+                : (string) ($copy['no_followup_value'] ?? ''),
+            'lead_next_followup_input' => (string) ($lead['next_followup_input'] ?? ''),
+            'lead_latest_activity_at' => (string) ($lead['latest_activity_at'] ?? ''),
+            'followups' => $followups,
+            'provisioning_items' => array_map(function (array $item) use ($subscriberId, $locale): array {
+                return [
+                    ...$item,
+                    'status_badge_class' => ((string) ($item['status'] ?? '')) === 'done' ? 'ks-badge success' : 'ks-badge warn',
+                    'complete_action' => $this->urls->consoleSubscriberProvisioningComplete($subscriberId, (string) ($item['id'] ?? ''), $locale),
+                    'can_complete' => ((string) ($item['status'] ?? '')) !== 'done' ? '1' : '',
+                ];
+            }, $provisioningItems),
+            'has_provisioning_items' => $provisioningItems !== [] ? '1' : '',
+            'show_no_provisioning_items' => $provisioningItems === [] ? '1' : '',
+            'has_followups' => $followups !== [] ? '1' : '',
+            'show_no_followups' => $followups === [] ? '1' : '',
+            'member_options' => $memberOptions,
+            'has_member_options' => $memberOptions !== [] ? '1' : '',
+            'write_error' => $this->flash($request, 'console.subscriber_detail.error'),
+            'write_notice' => $this->flash($request, 'console.subscriber_detail.notice'),
+            'followup_action' => $this->urls->consoleSubscriberFollowups($subscriberId, $locale),
+            'status_action' => $this->urls->consoleSubscriberStatus($subscriberId, $locale),
+            'provisioning_action' => $this->urls->consoleSubscriberProvisioning($subscriberId, $locale),
+            'back_url' => $this->urls->consoleSubscribers($locale),
+            'can_manage_ops' => $this->console->canManageOps(is_array($viewer) ? $viewer : null) ? '1' : '',
+            'show_provisioning_cta' => ((string) ($lead['stage'] ?? '')) === 'won' ? '1' : '',
+            'status_active_selected' => ((string) ($lead['status'] ?? '')) === 'active' ? 'selected' : '',
+            'status_contacted_selected' => ((string) ($lead['status'] ?? '')) === 'contacted' ? 'selected' : '',
+            'status_qualified_selected' => ((string) ($lead['status'] ?? '')) === 'qualified' ? 'selected' : '',
+            'status_inactive_selected' => ((string) ($lead['status'] ?? '')) === 'inactive' ? 'selected' : '',
+            'stage_new_selected' => ((string) ($lead['stage'] ?? 'new')) === 'new' ? 'selected' : '',
+            'stage_discovery_selected' => ((string) ($lead['stage'] ?? '')) === 'discovery' ? 'selected' : '',
+            'stage_proposal_selected' => ((string) ($lead['stage'] ?? '')) === 'proposal' ? 'selected' : '',
+            'stage_won_selected' => ((string) ($lead['stage'] ?? '')) === 'won' ? 'selected' : '',
+            'stage_lost_selected' => ((string) ($lead['stage'] ?? '')) === 'lost' ? 'selected' : '',
+            'page_section' => $copy['page_section'],
+            'nav_label' => $copy['nav_label'],
+            'footer_note' => $copy['footer_note'],
+            'sidebar_line' => $copy['sidebar_line'],
+            'eyebrow' => $copy['eyebrow'],
+            'intro' => $copy['intro'],
+            'context_title' => $copy['context_title'],
+            'viewer_label' => $copy['viewer_label'],
+            'role_hint_label' => $copy['role_hint_label'],
+            'owner_only_hint' => $copy['owner_only_hint'],
+            'back_label' => $copy['back_label'],
+            'profile_title' => $copy['profile_title'],
+            'status_form_title' => $copy['status_form_title'],
+            'status_note_label' => $copy['status_note_label'],
+            'status_note_placeholder' => $copy['status_note_placeholder'],
+            'status_submit_label' => $copy['status_submit_label'],
+            'stage_label' => $copy['stage_label'],
+            'closed_reason_label' => $copy['closed_reason_label'],
+            'closed_reason_placeholder' => $copy['closed_reason_placeholder'],
+            'provisioning_title' => $copy['provisioning_title'],
+            'provisioning_body' => $copy['provisioning_body'],
+            'provisioning_submit_label' => $copy['provisioning_submit_label'],
+            'checklist_title' => $copy['checklist_title'],
+            'checklist_empty_title' => $copy['checklist_empty_title'],
+            'checklist_empty_body' => $copy['checklist_empty_body'],
+            'checklist_complete_label' => $copy['checklist_complete_label'],
+            'followups_title' => $copy['followups_title'],
+            'followup_empty_title' => $copy['followup_empty_title'],
+            'followup_empty_body' => $copy['followup_empty_body'],
+            'followup_form_title' => $copy['followup_form_title'],
+            'followup_body_label' => $copy['followup_body_label'],
+            'followup_submit_label' => $copy['followup_submit_label'],
+            'email_label' => $copy['email_label'],
+            'contact_label' => $copy['contact_label'],
+            'company_label' => $copy['company_label'],
+            'plan_label' => $copy['plan_label'],
+            'status_label' => $copy['status_label'],
+            'assignee_label' => $copy['assignee_label'],
+            'next_followup_label' => $copy['next_followup_label'],
+            'source_label' => $copy['source_label'],
+            'notes_label' => $copy['notes_label'],
+            'latest_label' => $copy['latest_label'],
+            'owner_select_label' => $copy['owner_select_label'],
+            'owner_empty_label' => $copy['owner_empty_label'],
             ...$shared,
         ]);
     }
@@ -318,13 +681,13 @@ final class ConsoleController extends \VSlim\Controller
         }
 
         $this->debug('documents.auth-ok');
-        [$viewer, $workspace] = $this->consoleContext($request);
+        [$viewer, $workspace, $memberships] = $this->consoleContext($request);
         $this->debug('documents.context-ready');
         $documents = $this->console->documents($workspace);
         $this->debug('documents.data-ready count=' . count($documents));
         $locale = $this->locale($request);
         $copy = $this->locales->consoleDocuments($locale);
-        $shared = $this->shared($locale, '/console/knowledge/documents', is_array($workspace) ? $workspace : null);
+        $shared = $this->shared($locale, '/console/knowledge/documents', is_array($workspace) ? $workspace : null, $memberships);
         $canManageContent = $this->console->canManageContent(is_array($viewer) ? $viewer : null);
         $prefill = [
             'title' => $this->queryValue($request, 'prefill_title'),
@@ -347,6 +710,7 @@ final class ConsoleController extends \VSlim\Controller
             'edit_url' => $this->urls->consoleDocumentEditor((string) ($item['id'] ?? ''), $locale),
             'status_badge_class' => $this->contentStatusBadgeClass((string) ($item['status'] ?? 'draft')),
         ], $documents);
+        $documents = $this->localizeConsoleDocuments(is_array($workspace) ? $workspace : null, $locale, $documents);
 
         if (getenv('KS_PLAIN_DOCUMENTS_RESPONSE') !== false && getenv('KS_PLAIN_DOCUMENTS_RESPONSE') !== '') {
             $this->debug('documents.plain-response');
@@ -481,7 +845,7 @@ final class ConsoleController extends \VSlim\Controller
             return $this->redirect($this->urls->login($this->locale($request)), 302);
         }
 
-        [$viewer, $workspace] = $this->consoleContext($request);
+        [$viewer, $workspace, $memberships] = $this->consoleContext($request);
         $locale = $this->locale($request);
         $copy = $this->locales->consoleDocuments($locale);
         $canManageContent = $this->console->canManageContent(is_array($viewer) ? $viewer : null);
@@ -501,7 +865,6 @@ final class ConsoleController extends \VSlim\Controller
             'document_summary_preview_html' => MarkdownPreview::render($document->summary),
             'document_body_preview_html' => MarkdownPreview::render($document->body),
             'save_action' => $this->urls->consoleDocumentEditor($document->id, $locale),
-            'publish_action' => $this->urls->consoleDocumentEditor($document->id, $locale) . '/publish',
             'back_url' => $this->urls->consoleDocuments($locale),
             'releases_url' => $this->urls->consoleReleases($locale),
             'public_url' => is_array($workspace)
@@ -526,7 +889,6 @@ final class ConsoleController extends \VSlim\Controller
             'role_hint_label' => $copy['role_hint_label'],
             'content_editor_hint' => $copy['content_editor_hint'],
             'save_label' => $copy['save_label'],
-            'publish_label' => $copy['publish_label'],
             'back_label' => $copy['back_label'],
             'frontend_style_url' => FrontendAsset::url('knowledge-studio.css'),
             'frontend_module_url' => FrontendAsset::url('knowledge-studio.js'),
@@ -542,11 +904,11 @@ final class ConsoleController extends \VSlim\Controller
             return $this->redirect($this->urls->login($this->locale($request)), 302);
         }
 
-        [$viewer, $workspace] = $this->consoleContext($request);
+        [$viewer, $workspace, $memberships] = $this->consoleContext($request);
         $entries = $this->console->entries($workspace);
         $locale = $this->locale($request);
         $copy = $this->locales->consoleFaqs($locale);
-        $shared = $this->shared($locale, '/console/knowledge/faqs', is_array($workspace) ? $workspace : null);
+        $shared = $this->shared($locale, '/console/knowledge/faqs', is_array($workspace) ? $workspace : null, $memberships);
         $canManageContent = $this->console->canManageContent(is_array($viewer) ? $viewer : null);
         $prefill = [
             'kind' => $this->queryValue($request, 'prefill_kind') ?: 'faq',
@@ -563,6 +925,7 @@ final class ConsoleController extends \VSlim\Controller
             'edit_url' => $this->urls->consoleEntryEditor((string) ($item['id'] ?? ''), $locale),
             'status_badge_class' => $this->contentStatusBadgeClass((string) ($item['status'] ?? 'draft')),
         ], $entries);
+        $entries = $this->localizeConsoleEntries(is_array($workspace) ? $workspace : null, $locale, $entries);
 
         return $this->render_with_layout('console_faqs.html', 'layout.html', [
             'title' => $copy['title'],
@@ -635,7 +998,7 @@ final class ConsoleController extends \VSlim\Controller
             return $this->redirect($this->urls->login($this->locale($request)), 302);
         }
 
-        [$viewer, $workspace] = $this->consoleContext($request);
+        [$viewer, $workspace, $memberships] = $this->consoleContext($request);
         $locale = $this->locale($request);
         $copy = $this->locales->consoleFaqs($locale);
         $canManageContent = $this->console->canManageContent(is_array($viewer) ? $viewer : null);
@@ -654,7 +1017,6 @@ final class ConsoleController extends \VSlim\Controller
             'entry_status_badge_class' => $this->contentStatusBadgeClass($entry->status),
             'entry_body_preview_html' => MarkdownPreview::render($entry->body),
             'save_action' => $this->urls->consoleEntryEditor($entry->id, $locale),
-            'publish_action' => $this->urls->consoleEntryEditor($entry->id, $locale) . '/publish',
             'back_url' => $this->urls->consoleFaqs($locale),
             'releases_url' => $this->urls->consoleReleases($locale),
             'public_url' => is_array($workspace)
@@ -677,7 +1039,6 @@ final class ConsoleController extends \VSlim\Controller
             'role_hint_label' => $copy['role_hint_label'],
             'content_editor_hint' => $copy['content_editor_hint'],
             'save_label' => $copy['save_label'],
-            'publish_label' => $copy['publish_label'],
             'back_label' => $copy['back_label'],
             'frontend_style_url' => FrontendAsset::url('knowledge-studio.css'),
             'frontend_module_url' => FrontendAsset::url('knowledge-studio.js'),
@@ -693,7 +1054,7 @@ final class ConsoleController extends \VSlim\Controller
             return $this->redirect($this->urls->login($this->locale($request)), 302);
         }
 
-        [$viewer, $workspace] = $this->consoleContext($request);
+        [$viewer, $workspace, $memberships] = $this->consoleContext($request);
         $ops = $this->console->ops($workspace);
         $locale = $this->locale($request);
         $jobs = array_map(function (array $item) use ($locale): array {
@@ -705,10 +1066,28 @@ final class ConsoleController extends \VSlim\Controller
             $item['retry_url'] = $this->urls->consoleJobRetry((string) ($item['id'] ?? ''), $locale);
             return $item;
         }, $ops['jobs']);
+        $jobs = $this->localizeOpsJobs(is_array($workspace) ? $workspace : null, $locale, $jobs);
         usort($jobs, fn (array $left, array $right): int => $this->compareOpsJobs($left, $right));
-        $logs = $ops['logs'];
+        $logs = $this->localizeOpsLogs(
+            is_array($workspace) ? $workspace : null,
+            $locale,
+            is_array($ops['logs'] ?? null) ? $ops['logs'] : [],
+        );
+        $provisioning = array_map(function (array $item): array {
+            return [
+                ...$item,
+                'status_badge_class' => ((string) ($item['status'] ?? '')) === 'done' ? 'ks-badge success' : 'ks-badge warn',
+                'lead_label' => trim((string) ($item['lead_company_name'] ?? '')) !== ''
+                    ? trim((string) ($item['lead_company_name'] ?? ''))
+                    : trim((string) ($item['lead_email'] ?? '')),
+                'display_at' => trim((string) ($item['completed_at'] ?? '')) !== ''
+                    ? trim((string) ($item['completed_at'] ?? ''))
+                    : trim((string) ($item['created_at'] ?? '')),
+            ];
+        }, is_array($ops['provisioning'] ?? null) ? $ops['provisioning'] : []);
+        $provisioning = $this->localizeProvisioningItems(is_array($workspace) ? $workspace : null, $locale, $provisioning);
         $copy = $this->locales->consoleOps($locale);
-        $shared = $this->shared($locale, '/console/ops', is_array($workspace) ? $workspace : null);
+        $shared = $this->shared($locale, '/console/ops', is_array($workspace) ? $workspace : null, $memberships);
         $canManageOps = $this->console->canManageOps(is_array($viewer) ? $viewer : null);
 
         return $this->render_with_layout('console_ops.html', 'layout.html', [
@@ -719,10 +1098,13 @@ final class ConsoleController extends \VSlim\Controller
             'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
             'jobs' => $jobs,
             'logs' => $logs,
+            'provisioning' => $provisioning,
             'has_jobs' => $jobs !== [] ? '1' : '',
             'show_no_jobs' => $jobs === [] ? '1' : '',
             'has_logs' => $logs !== [] ? '1' : '',
             'show_no_logs' => $logs === [] ? '1' : '',
+            'has_provisioning' => $provisioning !== [] ? '1' : '',
+            'show_no_provisioning' => $provisioning === [] ? '1' : '',
             'write_error' => $this->flash($request, 'console.ops.error'),
             'write_notice' => $this->flash($request, 'console.ops.notice'),
             'job_action' => $this->urls->consoleJobs($locale),
@@ -741,11 +1123,13 @@ final class ConsoleController extends \VSlim\Controller
             'role_hint_label' => $copy['role_hint_label'],
             'owner_only_hint' => $copy['owner_only_hint'],
             'jobs_title' => $copy['jobs_title'],
+            'provisioning_panel_title' => $copy['provisioning_panel_title'],
             'audit_title' => $copy['audit_title'],
             'col_name' => $copy['col_name'],
             'col_status' => $copy['col_status'],
             'col_queued' => $copy['col_queued'],
             'col_runtime' => $copy['col_runtime'],
+            'col_lead' => $copy['col_lead'],
             'retry_label' => $copy['retry_label'],
             'col_when' => $copy['col_when'],
             'col_actor' => $copy['col_actor'],
@@ -804,6 +1188,120 @@ final class ConsoleController extends \VSlim\Controller
         return 0;
     }
 
+    private function compareSubscriberLeads(array $left, array $right): int
+    {
+        $leftPriority = $this->subscriberPriorityScore($left);
+        $rightPriority = $this->subscriberPriorityScore($right);
+        if ($leftPriority !== $rightPriority) {
+            return $rightPriority <=> $leftPriority;
+        }
+
+        $leftTime = strtotime((string) ($left['latest_activity_at'] ?? '')) ?: 0;
+        $rightTime = strtotime((string) ($right['latest_activity_at'] ?? '')) ?: 0;
+        if ($leftTime !== $rightTime) {
+            return $rightTime <=> $leftTime;
+        }
+
+        return strcmp((string) ($right['email'] ?? ''), (string) ($left['email'] ?? ''));
+    }
+
+    private function subscriberPriorityScore(array $row): int
+    {
+        $score = 0;
+        $status = trim((string) ($row['status'] ?? ''));
+        $stage = trim((string) ($row['stage'] ?? 'new'));
+        $plans = array_map('trim', explode(',', (string) ($row['plans'] ?? '')));
+        $activeSubscriptions = (int) ($row['active_subscription_count'] ?? 0);
+        $latestActivity = strtotime((string) ($row['latest_activity_at'] ?? '')) ?: 0;
+        $nextFollowup = strtotime((string) ($row['next_followup_at'] ?? '')) ?: 0;
+        $assignee = trim((string) ($row['assignee_user_id'] ?? ''));
+
+        $score += match ($status) {
+            'qualified' => 60,
+            'contacted' => 40,
+            'active' => 25,
+            'inactive' => 0,
+            default => 10,
+        };
+        $score += match ($stage) {
+            'proposal' => 26,
+            'discovery' => 16,
+            'won' => -5,
+            'lost' => -12,
+            default => 8,
+        };
+
+        if (in_array('enterprise', $plans, true)) {
+            $score += 30;
+        } elseif (in_array('team', $plans, true)) {
+            $score += 18;
+        } elseif (in_array('starter', $plans, true)) {
+            $score += 8;
+        }
+
+        $score += min($activeSubscriptions * 5, 15);
+
+        if ($latestActivity > 0) {
+            $ageHours = (int) floor((time() - $latestActivity) / 3600);
+            if ($ageHours <= 24) {
+                $score += 15;
+            } elseif ($ageHours <= 72) {
+                $score += 8;
+            } elseif ($ageHours <= 168) {
+                $score += 3;
+            }
+        }
+
+        if ($assignee === '') {
+            $score += 14;
+        } else {
+            $score += 4;
+        }
+
+        if ($nextFollowup > 0) {
+            if ($nextFollowup <= time()) {
+                $score += 22;
+            } else {
+                $hoursUntilFollowup = (int) floor(($nextFollowup - time()) / 3600);
+                if ($hoursUntilFollowup <= 24) {
+                    $score += 10;
+                } elseif ($hoursUntilFollowup <= 72) {
+                    $score += 5;
+                }
+            }
+        } else {
+            $score += 12;
+        }
+
+        return $score;
+    }
+
+    /**
+     * @param array<string, string> $copy
+     * @return array{label:string,class:string}
+     */
+    private function subscriberPriorityMeta(array $row, array $copy): array
+    {
+        $score = $this->subscriberPriorityScore($row);
+        if ($score >= 70) {
+            return [
+                'label' => (string) ($copy['priority_hot'] ?? 'Hot'),
+                'class' => 'ks-badge danger',
+            ];
+        }
+        if ($score >= 35) {
+            return [
+                'label' => (string) ($copy['priority_warm'] ?? 'Warm'),
+                'class' => 'ks-badge warn',
+            ];
+        }
+
+        return [
+            'label' => (string) ($copy['priority_watch'] ?? 'Watch'),
+            'class' => 'ks-badge',
+        ];
+    }
+
     private function jobStatusBadgeClass(string $status): string
     {
         return match ($status) {
@@ -850,12 +1348,12 @@ final class ConsoleController extends \VSlim\Controller
             return $this->redirect($this->urls->login($this->locale($request)), 302);
         }
 
-        [$viewer, $workspace] = $this->consoleContext($request);
+        [$viewer, $workspace, $memberships] = $this->consoleContext($request);
         $releases = $this->console->releases($workspace);
         $snapshot = $this->console->releaseSnapshot($workspace);
         $locale = $this->locale($request);
         $copy = $this->locales->consoleReleases($locale);
-        $shared = $this->shared($locale, '/console/releases', is_array($workspace) ? $workspace : null);
+        $shared = $this->shared($locale, '/console/releases', is_array($workspace) ? $workspace : null, $memberships);
         $canManageReleases = $this->console->canManageReleases(is_array($viewer) ? $viewer : null);
         $workspaceSlug = is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '';
         $summaryLabels = [
@@ -871,10 +1369,12 @@ final class ConsoleController extends \VSlim\Controller
         $compare = is_array($snapshot['version_compare'] ?? null) ? $snapshot['version_compare'] : ['current' => [], 'next' => []];
         $compare['current']['title'] = $copy['version_compare_current'];
         $compare['next']['title'] = $copy['version_compare_next'];
+        $compare['current']['version'] = $this->displayReleaseVersion((string) ($compare['current']['version'] ?? 'v0.0'), $locale);
+        $compare['next']['version'] = $this->displayReleaseVersion((string) ($compare['next']['version'] ?? 'next'), $locale);
         $compare['current']['notes'] = trim((string) ($compare['current']['notes'] ?? '')) !== ''
-            ? (string) $compare['current']['notes']
+            ? $this->localizeConsoleReleaseNotes(is_array($workspace) ? $workspace : null, $locale, (string) $compare['current']['notes'])
             : $copy['version_compare_empty_notes'];
-        $compare['next']['notes'] = $copy['version_compare_next_notes'];
+        $compare['next']['notes'] = $this->localizeConsoleReleaseNotes(is_array($workspace) ? $workspace : null, $locale, (string) $copy['version_compare_next_notes']);
         $snapshot['version_compare'] = $compare;
         $snapshot['document_candidates'] = array_map(function (array $item) use ($locale): array {
             return [
@@ -883,6 +1383,11 @@ final class ConsoleController extends \VSlim\Controller
                 'status_badge_class' => $this->contentStatusBadgeClass((string) ($item['status'] ?? 'draft')),
             ];
         }, is_array($snapshot['document_candidates'] ?? null) ? $snapshot['document_candidates'] : []);
+        $snapshot['document_candidates'] = $this->localizeConsoleDocuments(
+            is_array($workspace) ? $workspace : null,
+            $locale,
+            is_array($snapshot['document_candidates'] ?? null) ? $snapshot['document_candidates'] : [],
+        );
         $snapshot['entry_candidates'] = array_map(function (array $item) use ($locale): array {
             return [
                 ...$item,
@@ -890,18 +1395,61 @@ final class ConsoleController extends \VSlim\Controller
                 'status_badge_class' => $this->contentStatusBadgeClass((string) ($item['status'] ?? 'draft')),
             ];
         }, is_array($snapshot['entry_candidates'] ?? null) ? $snapshot['entry_candidates'] : []);
+        $snapshot['entry_candidates'] = $this->localizeConsoleEntries(
+            is_array($workspace) ? $workspace : null,
+            $locale,
+            is_array($snapshot['entry_candidates'] ?? null) ? $snapshot['entry_candidates'] : [],
+        );
         $snapshot['draft_preview']['documents'] = array_map(function (array $item) use ($locale): array {
             return [
                 ...$item,
                 'list_url' => $this->urls->consoleDocuments($locale),
+                'detail_url' => $this->urls->consoleDocumentEditor((string) ($item['id'] ?? ''), $locale),
             ];
         }, is_array($snapshot['draft_preview']['documents'] ?? null) ? $snapshot['draft_preview']['documents'] : []);
+        $snapshot['draft_preview']['documents'] = $this->localizeConsoleDocuments(
+            is_array($workspace) ? $workspace : null,
+            $locale,
+            is_array($snapshot['draft_preview']['documents'] ?? null) ? $snapshot['draft_preview']['documents'] : [],
+        );
         $snapshot['draft_preview']['entries'] = array_map(function (array $item) use ($locale): array {
             return [
                 ...$item,
                 'list_url' => $this->urls->consoleFaqs($locale),
+                'detail_url' => $this->urls->consoleEntryEditor((string) ($item['id'] ?? ''), $locale),
             ];
         }, is_array($snapshot['draft_preview']['entries'] ?? null) ? $snapshot['draft_preview']['entries'] : []);
+        $snapshot['draft_preview']['entries'] = $this->localizeConsoleEntries(
+            is_array($workspace) ? $workspace : null,
+            $locale,
+            is_array($snapshot['draft_preview']['entries'] ?? null) ? $snapshot['draft_preview']['entries'] : [],
+        );
+        $snapshot['public_preview']['documents'] = array_map(function (array $item) use ($locale, $workspaceSlug): array {
+            return [
+                ...$item,
+                'detail_url' => $workspaceSlug !== ''
+                    ? $this->urls->brandDocument($workspaceSlug, (string) ($item['id'] ?? ''), $locale)
+                    : $this->urls->console($locale),
+            ];
+        }, is_array($snapshot['public_preview']['documents'] ?? null) ? $snapshot['public_preview']['documents'] : []);
+        $snapshot['public_preview']['documents'] = $this->localizeConsoleDocuments(
+            is_array($workspace) ? $workspace : null,
+            $locale,
+            is_array($snapshot['public_preview']['documents'] ?? null) ? $snapshot['public_preview']['documents'] : [],
+        );
+        $snapshot['public_preview']['entries'] = array_map(function (array $item) use ($locale, $workspaceSlug): array {
+            return [
+                ...$item,
+                'detail_url' => $workspaceSlug !== ''
+                    ? $this->urls->brandEntry($workspaceSlug, (string) ($item['id'] ?? ''), $locale)
+                    : $this->urls->console($locale),
+            ];
+        }, is_array($snapshot['public_preview']['entries'] ?? null) ? $snapshot['public_preview']['entries'] : []);
+        $snapshot['public_preview']['entries'] = $this->localizeConsoleEntries(
+            is_array($workspace) ? $workspace : null,
+            $locale,
+            is_array($snapshot['public_preview']['entries'] ?? null) ? $snapshot['public_preview']['entries'] : [],
+        );
         $snapshot['release_checks'] = array_map(function (array $item): array {
             return [
                 ...$item,
@@ -912,8 +1460,9 @@ final class ConsoleController extends \VSlim\Controller
             $question = trim((string) ($item['title'] ?? ''));
             return [
                 ...$item,
+                'reason_value' => $question !== '' ? $question : trim((string) ($item['signal'] ?? '')),
                 'assistant_url' => $workspaceSlug !== ''
-                    ? $this->urls->assistantWithQuery($workspaceSlug, $locale, ['q' => $question])
+                    ? $this->urls->validationWithQuery($workspaceSlug, $locale, ['q' => $question])
                     : $this->urls->console($locale),
                 'entry_url' => $this->urls->consoleFaqsWithQuery($locale, [
                     'prefill_kind' => 'faq',
@@ -925,18 +1474,20 @@ final class ConsoleController extends \VSlim\Controller
                 ]),
             ];
         }, is_array($snapshot['gap_signals'] ?? null) ? $snapshot['gap_signals'] : []);
-        $releases = array_map(function (array $item) use ($locale, $workspaceSlug, $copy): array {
+        $releases = array_map(function (array $item) use ($locale, $workspaceSlug, $copy, $workspace): array {
             $version = trim((string) ($item['version'] ?? ''));
             $status = strtolower(trim((string) ($item['status'] ?? 'draft')));
             return [
                 ...$item,
+                'display_version' => $this->displayReleaseVersion($version, $locale),
+                'notes' => $this->localizeConsoleReleaseNotes(is_array($workspace) ? $workspace : null, $locale, (string) ($item['notes'] ?? '')),
                 'status' => $status,
                 'status_badge_class' => $this->contentStatusBadgeClass($status),
                 'brand_url' => $workspaceSlug !== ''
                     ? $this->urls->brandWithQuery($workspaceSlug, $locale, ['release' => $version])
                     : $this->urls->console($locale),
                 'assistant_url' => $workspaceSlug !== ''
-                    ? $this->urls->assistantWithQuery($workspaceSlug, $locale, ['release' => $version])
+                    ? $this->urls->validationWithQuery($workspaceSlug, $locale, ['release' => $version])
                     : $this->urls->console($locale),
                 'brand_cta' => $copy['history_brand_cta'],
                 'assistant_cta' => $copy['history_assistant_cta'],
@@ -964,7 +1515,7 @@ final class ConsoleController extends \VSlim\Controller
             'snapshot_published_entries' => (string) ($snapshot['published_entries'] ?? '0'),
             'snapshot_draft_documents' => (string) ($snapshot['draft_documents'] ?? '0'),
             'snapshot_draft_entries' => (string) ($snapshot['draft_entries'] ?? '0'),
-            'snapshot_latest_release_version' => (string) (($snapshot['latest_release']['version'] ?? 'v0.0')),
+            'snapshot_latest_release_version' => $this->displayReleaseVersion((string) (($snapshot['latest_release']['version'] ?? 'v0.0')), $locale),
             'snapshot_latest_release_status' => (string) (($snapshot['latest_release']['status'] ?? 'draft')),
             'snapshot_latest_release_status_badge_class' => $this->contentStatusBadgeClass((string) (($snapshot['latest_release']['status'] ?? 'draft'))),
             'snapshot_readiness_summary' => (string) ($snapshot['readiness_summary'] ?? ''),
@@ -981,6 +1532,9 @@ final class ConsoleController extends \VSlim\Controller
             'create_title' => $copy['create_title'],
             'version_label' => $copy['version_label'],
             'notes_label' => $copy['notes_label'],
+            'release_reason_title' => $copy['release_reason_title'],
+            'release_reason_body' => $copy['release_reason_body'],
+            'release_reason_hint' => $copy['release_reason_hint'],
             'submit_label' => $copy['submit_label'],
             'context_title' => $copy['context_title'],
             'viewer_label' => $copy['viewer_label'],
@@ -1011,13 +1565,15 @@ final class ConsoleController extends \VSlim\Controller
             'draft_preview_entries_title' => $copy['draft_preview_entries_title'],
             'preview_documents_title' => $copy['preview_documents_title'],
             'preview_entries_title' => $copy['preview_entries_title'],
+            'draft_preview_detail_cta' => $copy['draft_preview_detail_cta'],
+            'current_public_detail_cta' => $copy['current_public_detail_cta'],
             'brand_page_cta' => $copy['brand_page_cta'],
             'assistant_page_cta' => $copy['assistant_page_cta'],
             'brand_page_url' => is_array($workspace)
                 ? $this->urls->brand((string) ($workspace['slug'] ?? ''), $locale)
                 : $this->urls->console($locale),
             'assistant_page_url' => is_array($workspace)
-                ? $this->urls->assistant((string) ($workspace['slug'] ?? ''), $locale)
+                ? $this->urls->validation((string) ($workspace['slug'] ?? ''), $locale)
                 : $this->urls->console($locale),
             'workflow_title' => $copy['workflow_title'],
             'workflow_body' => $copy['workflow_body'],
@@ -1034,6 +1590,7 @@ final class ConsoleController extends \VSlim\Controller
             'candidate_documents_title' => $copy['candidate_documents_title'],
             'candidate_entries_title' => $copy['candidate_entries_title'],
             'selection_hint' => $copy['selection_hint'],
+            'recommended_badge' => $copy['recommended_badge'],
             'table_title' => $copy['table_title'],
             'col_version' => $copy['col_version'],
             'col_status' => $copy['col_status'],
@@ -1046,6 +1603,276 @@ final class ConsoleController extends \VSlim\Controller
             'history_assistant_cta' => $copy['history_assistant_cta'],
             ...$shared,
         ]);
+    }
+
+    private function displayReleaseVersion(string $version, string $locale = 'zh-CN'): string
+    {
+        $version = trim($version);
+        if ($version === '') {
+            return '';
+        }
+
+        return match (true) {
+            $version === 'v0.1' => '2026.Q2',
+            $version === 'next' => in_array($locale, ['zh', 'zh-CN', 'zh-Hans'], true) ? '下一发布版本' : 'Next Release',
+            str_starts_with($version, 'onboarding-') => in_array($locale, ['zh', 'zh-CN', 'zh-Hans'], true)
+                ? '客户开通草稿'
+                : 'Customer Onboarding Draft',
+            default => $version,
+        };
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @param array<int, array<string, mixed>> $documents
+     * @return array<int, array<string, mixed>>
+     */
+    private function localizeConsoleDocuments(?array $workspace, string $locale, array $documents): array
+    {
+        if (!in_array($locale, ['zh', 'zh-CN', 'zh-Hans'], true) || !$this->isAcmeWorkspace($workspace)) {
+            return $documents;
+        }
+
+        return array_map(function (array $item): array {
+            $item['title'] = $this->localizeGeneratedTitle((string) ($item['title'] ?? ''));
+            $item['coverage_focus'] = $this->localizeGeneratedFocus((string) ($item['coverage_focus'] ?? ''));
+            $item['summary'] = $this->localizeGeneratedSummary((string) ($item['summary'] ?? ''));
+            if (array_key_exists('preview_summary', $item)) {
+                $item['preview_summary'] = $this->localizeGeneratedSummary((string) ($item['preview_summary'] ?? ''));
+            }
+
+            return $item;
+        }, $documents);
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @param array<int, array<string, mixed>> $entries
+     * @return array<int, array<string, mixed>>
+     */
+    private function localizeConsoleEntries(?array $workspace, string $locale, array $entries): array
+    {
+        if (!in_array($locale, ['zh', 'zh-CN', 'zh-Hans'], true) || !$this->isAcmeWorkspace($workspace)) {
+            return $entries;
+        }
+
+        return array_map(function (array $item): array {
+            $item['title'] = $this->localizeGeneratedTitle((string) ($item['title'] ?? ''));
+            $item['coverage_focus'] = $this->localizeGeneratedFocus((string) ($item['coverage_focus'] ?? ''));
+            if (array_key_exists('preview_summary', $item)) {
+                $item['preview_summary'] = $this->localizeGeneratedSummary((string) ($item['preview_summary'] ?? ''));
+            }
+
+            return $item;
+        }, $entries);
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @param array<int, array<string, mixed>> $followups
+     * @return array<int, array<string, mixed>>
+     */
+    private function localizeSubscriberFollowups(?array $workspace, string $locale, array $followups): array
+    {
+        if (!in_array($locale, ['zh', 'zh-CN', 'zh-Hans'], true) || !$this->isAcmeWorkspace($workspace)) {
+            return $followups;
+        }
+
+        return array_map(function (array $item): array {
+            $item['body'] = $this->localizeConsoleReleaseNotes($workspace, $locale, (string) ($item['body'] ?? ''));
+            return $item;
+        }, $followups);
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     */
+    private function localizeConsoleReleaseNotes(?array $workspace, string $locale, string $notes): string
+    {
+        $notes = trim($notes);
+        if ($notes === '' || !in_array($locale, ['zh', 'zh-CN', 'zh-Hans'], true) || !$this->isAcmeWorkspace($workspace)) {
+            return $notes;
+        }
+
+        if (preg_match('/^Enterprise onboarding release scaffold for (.+), including security review, owner onboarding, and initial executive-facing launch assets\.$/', $notes, $matches) === 1) {
+            return '为 ' . trim((string) ($matches[1] ?? '该客户')) . ' 准备的企业版开通发布草稿，覆盖安全审查、owner 开通与首批面向管理层的启动资产。';
+        }
+        if (preg_match('/^Team onboarding release scaffold for (.+), focused on workspace setup, editor onboarding, and initial shared release content\.$/', $notes, $matches) === 1) {
+            return '为 ' . trim((string) ($matches[1] ?? '该客户')) . ' 准备的团队版开通发布草稿，聚焦 workspace 设置、编辑协作开通与首批共享发布内容。';
+        }
+        if (preg_match('/^Starter onboarding release scaffold for (.+)$/', $notes, $matches) === 1) {
+            return '为 ' . trim((string) ($matches[1] ?? '该客户')) . ' 准备的 Starter 开通发布草稿。';
+        }
+
+        return match ($notes) {
+            'Public knowledge release covering 3 docs / 3 entries.' => '当前公开知识版本覆盖 3 份文档与 3 条知识条目。',
+            default => $notes,
+        };
+    }
+
+    private function localizeGeneratedTitle(string $title): string
+    {
+        $title = trim($title);
+        if ($title === '') {
+            return '';
+        }
+
+        if (preg_match('/^Enterprise Launch Plan for (.+)$/', $title, $matches) === 1) {
+            return trim((string) ($matches[1] ?? '该客户')) . ' 企业版开通方案';
+        }
+        if (preg_match('/^Enterprise FAQ for (.+)$/', $title, $matches) === 1) {
+            return trim((string) ($matches[1] ?? '该客户')) . ' 企业版 FAQ';
+        }
+        if (preg_match('/^Team Launch Plan for (.+)$/', $title, $matches) === 1) {
+            return trim((string) ($matches[1] ?? '该客户')) . ' 团队版开通方案';
+        }
+        if (preg_match('/^Team FAQ for (.+)$/', $title, $matches) === 1) {
+            return trim((string) ($matches[1] ?? '该客户')) . ' 团队版 FAQ';
+        }
+        if (preg_match('/^Starter Launch Plan for (.+)$/', $title, $matches) === 1) {
+            return trim((string) ($matches[1] ?? '该客户')) . ' Starter 开通方案';
+        }
+        if (preg_match('/^Starter FAQ for (.+)$/', $title, $matches) === 1) {
+            return trim((string) ($matches[1] ?? '该客户')) . ' Starter FAQ';
+        }
+
+        return match ($title) {
+            'Settlement exception triage' => '结算异常分诊',
+            'Support-to-Finance Handoff Guide' => '支持到财务交接指南',
+            default => $title,
+        };
+    }
+
+    private function localizeGeneratedFocus(string $focus): string
+    {
+        return match (trim($focus)) {
+            'Enterprise onboarding rollout' => '企业版开通推进',
+            'Enterprise onboarding FAQ' => '企业版开通 FAQ',
+            'Team onboarding rollout' => '团队版开通推进',
+            'Team onboarding FAQ' => '团队版开通 FAQ',
+            'Customer onboarding rollout' => '客户开通推进',
+            'Customer onboarding FAQ' => '客户开通 FAQ',
+            default => trim($focus),
+        };
+    }
+
+    private function localizeGeneratedSummary(string $summary): string
+    {
+        $summary = trim($summary);
+
+        return match ($summary) {
+            'Coordinate enterprise launch owners, security review, SSO milestones, and customer success checkpoints.' => '协调企业版启动 owner、安全审查、SSO 里程碑与客户成功检查点。',
+            'Align workspace setup, editor onboarding, and first shared knowledge release for the team plan.' => '对齐团队版 workspace 设置、编辑协作开通与首批共享知识发布。',
+            'Prepare the starter launch plan for workspace setup, owner handoff, and the first lightweight knowledge release.' => '准备 Starter 方案的 workspace 设置、owner 交接与第一版轻量知识发布。',
+            default => $summary,
+        };
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     */
+    private function isAcmeWorkspace(?array $workspace): bool
+    {
+        return is_array($workspace) && trim((string) ($workspace['slug'] ?? '')) === 'acme-research';
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @param array<int, array<string, mixed>> $logs
+     * @return array<int, array<string, mixed>>
+     */
+    private function localizeOpsLogs(?array $workspace, string $locale, array $logs): array
+    {
+        if (!in_array($locale, ['zh', 'zh-CN', 'zh-Hans'], true)) {
+            return $logs;
+        }
+
+        $slug = is_array($workspace) ? trim((string) ($workspace['slug'] ?? '')) : '';
+        if ($slug !== 'acme-research') {
+            return $logs;
+        }
+
+        return array_map(function (array $item): array {
+            $target = trim((string) ($item['target_preview'] ?? ''));
+            if ($target === '') {
+                return $item;
+            }
+
+            $item['target_preview'] = match ($target) {
+                'Acme Operations Brief 2026.Q2' => 'Acme 运营简报 2026.Q2',
+                'Settlement exception triage' => '结算异常分诊',
+                'Support-to-Finance Handoff Guide' => '支持到财务交接指南',
+                default => $target,
+            };
+
+            return $item;
+        }, $logs);
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @param array<int, array<string, mixed>> $jobs
+     * @return array<int, array<string, mixed>>
+     */
+    private function localizeOpsJobs(?array $workspace, string $locale, array $jobs): array
+    {
+        if (!in_array($locale, ['zh', 'zh-CN', 'zh-Hans'], true)) {
+            return $jobs;
+        }
+
+        $slug = is_array($workspace) ? trim((string) ($workspace['slug'] ?? '')) : '';
+        if ($slug !== 'acme-research') {
+            return $jobs;
+        }
+
+        return array_map(function (array $item): array {
+            $name = trim((string) ($item['name'] ?? ''));
+            if ($name === '') {
+                return $item;
+            }
+
+            $item['name'] = match ($name) {
+                'Index Reimbursement Operations Handbook' => '索引报销运营手册',
+                'Parse Settlement Exception Playbook' => '解析结算异常处置手册',
+                'Sync public validation cache' => '同步公开验证缓存',
+                default => $name,
+            };
+
+            return $item;
+        }, $jobs);
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @param array<int, array<string, mixed>> $items
+     * @return array<int, array<string, mixed>>
+     */
+    private function localizeProvisioningItems(?array $workspace, string $locale, array $items): array
+    {
+        if (!in_array($locale, ['zh', 'zh-CN', 'zh-Hans'], true)) {
+            return $items;
+        }
+
+        $slug = is_array($workspace) ? trim((string) ($workspace['slug'] ?? '')) : '';
+        if ($slug !== 'acme-research') {
+            return $items;
+        }
+
+        return array_map(function (array $item): array {
+            $label = trim((string) ($item['label'] ?? ''));
+            if ($label === '') {
+                return $item;
+            }
+
+            $item['label'] = match ($label) {
+                'Create workspace shell and plan settings' => '创建 workspace 壳与方案设置',
+                'Invite first customer owner and rotate access' => '邀请首位客户 owner 并轮换访问凭据',
+                'Prepare initial brand page, release, and starter knowledge set' => '准备初始品牌页、发布版本与 starter 知识集',
+                default => $label,
+            };
+
+            return $item;
+        }, $items);
     }
 
     public function storeDocument(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
@@ -1111,6 +1938,221 @@ final class ConsoleController extends \VSlim\Controller
         );
     }
 
+    public function updateMemberRole(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    {
+        if (!$this->app()->authCheck($request)) {
+            return $this->redirect('/login', 302);
+        }
+
+        [$viewer, $workspace] = $this->consoleContext($request);
+        $memberId = $this->pathParam($request, 'member');
+        $result = $this->console->updateMemberRole(
+            is_array($workspace) ? $workspace : null,
+            is_array($viewer) ? $viewer : null,
+            $memberId,
+            $this->requestData($request),
+        );
+
+        return $this->flashRedirect(
+            $request,
+            $this->urls->consoleMembers($this->locale($request)),
+            $result['ok'] ? 'console.members.notice' : 'console.members.error',
+            $result['message'],
+        );
+    }
+
+    public function removeMember(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    {
+        if (!$this->app()->authCheck($request)) {
+            return $this->redirect('/login', 302);
+        }
+
+        [$viewer, $workspace] = $this->consoleContext($request);
+        $memberId = $this->pathParam($request, 'member');
+        $result = $this->console->removeMember(
+            is_array($workspace) ? $workspace : null,
+            is_array($viewer) ? $viewer : null,
+            $memberId,
+        );
+
+        return $this->flashRedirect(
+            $request,
+            $this->urls->consoleMembers($this->locale($request)),
+            $result['ok'] ? 'console.members.notice' : 'console.members.error',
+            $result['message'],
+        );
+    }
+
+    public function switchWorkspace(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    {
+        if (!$this->app()->authCheck($request)) {
+            return $this->redirect('/login', 302);
+        }
+
+        [$viewer, $workspace, $memberships] = $this->consoleContext($request);
+        $locale = $this->locale($request);
+        $targetSlug = trim((string) ($this->requestData($request)['workspace_slug'] ?? ''));
+        $session = $this->app()->session($request);
+
+        $allowed = false;
+        foreach ($memberships as $membership) {
+            if (trim((string) ($membership['workspace_slug'] ?? '')) === $targetSlug) {
+                $allowed = true;
+                break;
+            }
+        }
+
+        if (!$allowed || $targetSlug === '') {
+            $session->flash('console.workspace.error', 'Unable to switch workspace for this account.');
+        } else {
+            $session->set('studio.workspace_slug', $targetSlug);
+            $this->console->recordWorkspaceSwitch(
+                is_array($viewer) ? $viewer : null,
+                $memberships,
+                $targetSlug,
+            );
+            $session->flash('console.workspace.notice', 'Workspace switched.');
+        }
+
+        $response = new \VSlim\Vhttpd\Response(302, '', 'text/plain; charset=utf-8');
+        $response->redirect_with_status($this->urls->console($locale), 302);
+        $session->commit($response);
+        return $response;
+    }
+
+    public function updatePassword(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    {
+        if (!$this->app()->authCheck($request)) {
+            return $this->redirect('/login', 302);
+        }
+
+        [$viewer, $workspace] = $this->consoleContext($request);
+        $result = $this->console->changePassword(
+            is_array($workspace) ? $workspace : null,
+            is_array($viewer) ? $viewer : null,
+            $this->requestData($request),
+        );
+        $locale = $this->locale($request);
+
+        return $this->flashRedirect(
+            $request,
+            $this->urls->consoleAccount($locale),
+            $result['ok'] ? 'console.account.notice' : 'console.account.error',
+            $result['ok']
+                ? $this->locales->consoleAccount($locale)['reset_complete_notice']
+                : $result['message'],
+        );
+    }
+
+    public function updateSubscriberStatus(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    {
+        if (!$this->app()->authCheck($request)) {
+            return $this->redirect('/login', 302);
+        }
+
+        [$viewer, $workspace] = $this->consoleContext($request);
+        $subscriberId = $this->pathParam($request, 'subscriber');
+        $result = $this->console->updateSubscriberStatus(
+            is_array($workspace) ? $workspace : null,
+            is_array($viewer) ? $viewer : null,
+            $subscriberId,
+            $this->requestData($request),
+        );
+
+        $locale = $this->locale($request);
+        $redirect = trim((string) ($this->requestData($request)['redirect'] ?? ''));
+        $target = $redirect === 'detail'
+            ? $this->urls->consoleSubscriberDetail($subscriberId, $locale)
+            : $this->urls->consoleSubscribers($locale);
+
+        if (($result['ok'] ?? false) !== true && $redirect !== 'detail') {
+            $query = http_build_query([
+                'subscriber' => $subscriberId,
+                'status_value' => trim((string) ($this->requestData($request)['status'] ?? '')),
+                'status_note' => trim((string) ($this->requestData($request)['note'] ?? '')),
+            ]);
+            if ($query !== '') {
+                $target .= (str_contains($target, '?') ? '&' : '?') . $query;
+            }
+        }
+
+        return $this->flashRedirect(
+            $request,
+            $target,
+            $result['ok'] ? 'console.subscribers.notice' : 'console.subscribers.error',
+            $result['message'],
+        );
+    }
+
+    public function queueSubscriberProvisioning(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    {
+        if (!$this->app()->authCheck($request)) {
+            return $this->redirect('/login', 302);
+        }
+
+        [$viewer, $workspace] = $this->consoleContext($request);
+        $subscriberId = $this->pathParam($request, 'subscriber');
+        $result = $this->console->queueSubscriberProvisioning(
+            is_array($workspace) ? $workspace : null,
+            is_array($viewer) ? $viewer : null,
+            $subscriberId,
+        );
+
+        return $this->flashRedirect(
+            $request,
+            $this->urls->consoleSubscriberDetail($subscriberId, $this->locale($request)),
+            $result['ok'] ? 'console.subscriber_detail.notice' : 'console.subscriber_detail.error',
+            $result['message'],
+        );
+    }
+
+    public function completeSubscriberProvisioningItem(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    {
+        if (!$this->app()->authCheck($request)) {
+            return $this->redirect('/login', 302);
+        }
+
+        [$viewer, $workspace] = $this->consoleContext($request);
+        $subscriberId = $this->pathParam($request, 'subscriber');
+        $itemId = $this->pathParam($request, 'item');
+        $result = $this->console->completeSubscriberProvisioningItem(
+            is_array($workspace) ? $workspace : null,
+            is_array($viewer) ? $viewer : null,
+            $subscriberId,
+            $itemId,
+        );
+
+        return $this->flashRedirect(
+            $request,
+            $this->urls->consoleSubscriberDetail($subscriberId, $this->locale($request)),
+            $result['ok'] ? 'console.subscriber_detail.notice' : 'console.subscriber_detail.error',
+            $result['message'],
+        );
+    }
+
+    public function storeSubscriberFollowup(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    {
+        if (!$this->app()->authCheck($request)) {
+            return $this->redirect('/login', 302);
+        }
+
+        [$viewer, $workspace] = $this->consoleContext($request);
+        $subscriberId = $this->pathParam($request, 'subscriber');
+        $result = $this->console->addSubscriberFollowup(
+            is_array($workspace) ? $workspace : null,
+            is_array($viewer) ? $viewer : null,
+            $subscriberId,
+            $this->requestData($request),
+        );
+
+        return $this->flashRedirect(
+            $request,
+            $this->urls->consoleSubscriberDetail($subscriberId, $this->locale($request)),
+            $result['ok'] ? 'console.subscriber_detail.notice' : 'console.subscriber_detail.error',
+            $result['message'],
+        );
+    }
+
     public function updateDocument(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
     {
         if (!$this->app()->authCheck($request)) {
@@ -1136,16 +2178,19 @@ final class ConsoleController extends \VSlim\Controller
 
     public function publishDocument(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
     {
+        // Legacy compat entry: old links may still post here, but release center is the only real publish gate.
         if (!$this->app()->authCheck($request)) {
             return $this->redirect('/login', 302);
         }
 
-        $documentId = $this->pathParam($request, 'document');
+        $locale = $this->locale($request);
         return $this->flashRedirect(
             $request,
-            $this->urls->consoleDocumentEditor($documentId, $this->locale($request)),
-            'console.documents.error',
-            'Direct publishing is disabled. Save the draft here, then publish from the release center.',
+            $this->urls->consoleReleases($locale),
+            'console.releases.notice',
+            $locale === 'en'
+                ? 'Direct publishing has moved to the release center. Review the draft there and publish as part of a release.'
+                : '直接发布已统一收口到发布中心。请在发布中心确认这份草稿，并作为 release 的一部分上线。',
         );
     }
 
@@ -1174,16 +2219,19 @@ final class ConsoleController extends \VSlim\Controller
 
     public function publishEntry(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
     {
+        // Legacy compat entry: old links may still post here, but release center is the only real publish gate.
         if (!$this->app()->authCheck($request)) {
             return $this->redirect('/login', 302);
         }
 
-        $entryId = $this->pathParam($request, 'entry');
+        $locale = $this->locale($request);
         return $this->flashRedirect(
             $request,
-            $this->urls->consoleEntryEditor($entryId, $this->locale($request)),
-            'console.entries.error',
-            'Direct publishing is disabled. Save the draft here, then publish from the release center.',
+            $this->urls->consoleReleases($locale),
+            'console.releases.notice',
+            $locale === 'en'
+                ? 'Direct publishing has moved to the release center. Review the draft there and publish as part of a release.'
+                : '直接发布已统一收口到发布中心。请在发布中心确认这份草稿，并作为 release 的一部分上线。',
         );
     }
 
@@ -1261,6 +2309,7 @@ final class ConsoleController extends \VSlim\Controller
             is_array($viewer) ? $viewer : null,
             $request->getAttribute('studio.workspace'),
         );
+        $viewer = is_array($resolved['viewer'] ?? null) ? $resolved['viewer'] : $viewer;
         $workspace = $resolved['workspace'];
         $memberships = $resolved['memberships'];
 
@@ -1314,19 +2363,24 @@ final class ConsoleController extends \VSlim\Controller
     /**
      * @return array<string, string>
      */
-    private function shared(string $locale, string $path, ?array $workspace = null): array
+    private function shared(string $locale, string $path, ?array $workspace = null, array $memberships = []): array
     {
         $shared = $this->locales->shared($locale, $path);
         $slug = is_array($workspace) ? trim((string) ($workspace['slug'] ?? '')) : '';
         $publicUrl = $slug !== '' ? $this->urls->brand($slug, $locale) : $this->urls->console($locale);
-        $assistantPreviewUrl = $slug !== '' ? $this->urls->assistant($slug, $locale) : $this->urls->console($locale);
+        $assistantPreviewUrl = $slug !== '' ? $this->urls->validation($slug, $locale) : $this->urls->console($locale);
 
         $active = 'workbench';
         if (str_starts_with($path, '/console/knowledge/')) {
             $active = 'content';
         } elseif (str_starts_with($path, '/console/releases')) {
             $active = 'publish';
-        } elseif (str_starts_with($path, '/console/members') || str_starts_with($path, '/console/ops')) {
+        } elseif (
+            str_starts_with($path, '/console/members')
+            || str_starts_with($path, '/console/subscribers')
+            || str_starts_with($path, '/console/account')
+            || str_starts_with($path, '/console/ops')
+        ) {
             $active = 'settings';
         }
 
@@ -1360,7 +2414,34 @@ final class ConsoleController extends \VSlim\Controller
                 ],
             ],
             'section_nav' => $this->sectionNav($shared, $locale, $active, $path, $publicUrl, $assistantPreviewUrl),
+            'workspace_switch_action' => $this->urls->consoleWorkspaceSwitch($locale),
+            'workspace_switch_label' => $shared['workspace_switch_label'],
+            'workspace_switch_submit' => $shared['workspace_switch_submit'],
+            'workspace_switch_options' => $this->workspaceSwitchOptions($memberships, $slug),
+            'workspace_switch_notice' => '',
         ];
+    }
+
+    /**
+     * @param array<int, array<string, string>> $memberships
+     * @return array<int, array<string, string>>
+     */
+    private function workspaceSwitchOptions(array $memberships, string $currentSlug): array
+    {
+        if (count($memberships) < 2) {
+            return [];
+        }
+
+        return array_values(array_map(static function (array $membership) use ($currentSlug): array {
+            $slug = trim((string) ($membership['workspace_slug'] ?? ''));
+            $name = trim((string) ($membership['workspace_name'] ?? $slug));
+            $role = trim((string) ($membership['role'] ?? ''));
+            return [
+                'value' => $slug,
+                'label' => trim($name . ($role !== '' ? ' / ' . $role : '')),
+                'selected_attr' => $slug === $currentSlug ? 'selected' : '',
+            ];
+        }, $memberships));
     }
 
     /**
@@ -1417,6 +2498,16 @@ final class ConsoleController extends \VSlim\Controller
                     'label' => $shared['subnav_members_label'],
                     'url' => $this->urls->consoleMembers($locale),
                     'class' => str_starts_with($path, '/console/members') ? 'active' : '',
+                ],
+                [
+                    'label' => $shared['subnav_subscribers_label'],
+                    'url' => $this->urls->consoleSubscribers($locale),
+                    'class' => str_starts_with($path, '/console/subscribers') ? 'active' : '',
+                ],
+                [
+                    'label' => $shared['subnav_account_label'],
+                    'url' => $this->urls->consoleAccount($locale),
+                    'class' => str_starts_with($path, '/console/account') ? 'active' : '',
                 ],
                 [
                     'label' => $shared['subnav_ops_label'],

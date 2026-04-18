@@ -39,6 +39,7 @@ return function (VSlim\App $app): void {
         [\App\Http\Controllers\ConsoleController::class, 'updateDocument'],
     );
     $app->post(
+        // Legacy compat path: direct publish is no longer a first-class product action.
         '/console/knowledge/documents/:document/publish',
         [\App\Http\Controllers\ConsoleController::class, 'publishDocument'],
     );
@@ -52,6 +53,28 @@ return function (VSlim\App $app): void {
         '/console/members',
         [\App\Http\Controllers\ConsoleController::class, 'members'],
     );
+    $app->get_named(
+        'studio.console.subscribers',
+        '/console/subscribers',
+        [\App\Http\Controllers\ConsoleController::class, 'subscribers'],
+    );
+    $app->get(
+        '/console/subscribers/:subscriber',
+        [\App\Http\Controllers\ConsoleController::class, 'subscriberDetail'],
+    );
+    $app->get_named(
+        'studio.console.account',
+        '/console/account',
+        [\App\Http\Controllers\ConsoleController::class, 'account'],
+    );
+    $app->post(
+        '/console/workspace',
+        [\App\Http\Controllers\ConsoleController::class, 'switchWorkspace'],
+    );
+    $app->post(
+        '/console/account/password',
+        [\App\Http\Controllers\ConsoleController::class, 'updatePassword'],
+    );
     $app->post(
         '/console/knowledge/faqs',
         [\App\Http\Controllers\ConsoleController::class, 'storeEntry'],
@@ -59,6 +82,30 @@ return function (VSlim\App $app): void {
     $app->post(
         '/console/members',
         [\App\Http\Controllers\ConsoleController::class, 'storeMember'],
+    );
+    $app->post(
+        '/console/members/:member/role',
+        [\App\Http\Controllers\ConsoleController::class, 'updateMemberRole'],
+    );
+    $app->post(
+        '/console/members/:member/remove',
+        [\App\Http\Controllers\ConsoleController::class, 'removeMember'],
+    );
+    $app->post(
+        '/console/subscribers/:subscriber/status',
+        [\App\Http\Controllers\ConsoleController::class, 'updateSubscriberStatus'],
+    );
+    $app->post(
+        '/console/subscribers/:subscriber/followups',
+        [\App\Http\Controllers\ConsoleController::class, 'storeSubscriberFollowup'],
+    );
+    $app->post(
+        '/console/subscribers/:subscriber/provisioning',
+        [\App\Http\Controllers\ConsoleController::class, 'queueSubscriberProvisioning'],
+    );
+    $app->post(
+        '/console/subscribers/:subscriber/provisioning/:item/complete',
+        [\App\Http\Controllers\ConsoleController::class, 'completeSubscriberProvisioningItem'],
     );
     $app->get(
         '/console/knowledge/faqs/:entry',
@@ -69,6 +116,7 @@ return function (VSlim\App $app): void {
         [\App\Http\Controllers\ConsoleController::class, 'updateEntry'],
     );
     $app->post(
+        // Legacy compat path: direct publish is no longer a first-class product action.
         '/console/knowledge/faqs/:entry/publish',
         [\App\Http\Controllers\ConsoleController::class, 'publishEntry'],
     );
@@ -98,6 +146,11 @@ return function (VSlim\App $app): void {
         'studio.brand',
         '/brand/:tenant',
         [\App\Http\Controllers\PublicController::class, 'landing'],
+    );
+    $app->get_named(
+        'studio.validation',
+        '/brand/:tenant/validation',
+        [\App\Http\Controllers\PublicController::class, 'validation'],
     );
     $app->get_named(
         'studio.assistant',

@@ -435,7 +435,14 @@ fn cli_command_group_title(command_name string) string {
 
 fn cli_visible_command_names(cli &VSlimCliApp) []string {
 	mut out := []string{}
-	for name in cli.command_order {
+	source := if cli.command_order.len > 0 {
+		cli.command_order
+	} else {
+		mut keys := cli.command_handlers.keys()
+		keys.sort()
+		keys
+	}
+	for name in source {
 		clean := name.trim_space().clone()
 		if clean == '' || cli_hidden_command(cli, clean) {
 			continue
@@ -770,7 +777,7 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
 		return 0
 	}
 	cli.last_command_name = command_name.trim_space().clone()
-	code := run_registered_current_cli_command_with_program(mut cli, command_args, program) or {
+	code := run_registered_cli_command_with_program(mut cli, command_name, command_args, program) or {
 		cli_runtime_write_stderr(err.msg())
 		return 1
 	}

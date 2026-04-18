@@ -9,6 +9,7 @@ use VSlim\Database\Manager;
 final class WorkspaceRepository
 {
     private const DEMO_PASSWORD = 'demo123';
+    private ?bool $databaseAvailable = null;
 
     public function __construct(
         private DemoCatalog $catalog,
@@ -110,12 +111,42 @@ final class WorkspaceRepository
      */
     public function authenticate(string $email, string $password): ?array
     {
+        $user = $this->findUserByEmail($email);
+        if (!is_array($user)) {
+            return null;
+        }
+
+        if ($this->shouldUseDatabase()) {
+            $hash = trim((string) ($user['password_hash'] ?? ''));
+            if ($hash === '' || !password_verify($password, $hash)) {
+                return null;
+            }
+
+            return $user;
+        }
+
         if (trim($password) !== self::DEMO_PASSWORD) {
             return null;
         }
 
-        $user = $this->findUserByEmail($email);
-        return is_array($user) ? $user : null;
+        return $user;
+    }
+
+    public function loginPasswordHint(): string
+    {
+        return $this->shouldUseDatabase() ? '' : $this->catalog->passwordHint();
+    }
+
+    /**
+     * @param array<string, mixed>|null $user
+     */
+    public function requiresPasswordReset(?array $user): bool
+    {
+        if (!is_array($user)) {
+            return false;
+        }
+
+        return (int) ($user['password_reset_required'] ?? 0) === 1;
     }
 
     /**
@@ -137,6 +168,7 @@ final class WorkspaceRepository
                     $mapped[] = [
                         'workspace_id' => (string) ($row['workspace_id'] ?? ''),
                         'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
+                        'workspace_name' => is_array($workspace) ? (string) ($workspace['name'] ?? '') : '',
                         'role' => (string) ($row['role'] ?? ''),
                     ];
                 }
@@ -216,12 +248,16 @@ final class WorkspaceRepository
         }
 
         $user = $this->findUserByEmail($email);
+        $temporaryPassword = '';
         if ($user === null) {
+            $temporaryPassword = $this->temporaryPassword();
             $userId = $this->makeId('user', $workspaceId . ':' . $email);
             $user = [
                 'id' => $userId,
                 'name' => $name,
                 'email' => $email,
+                'password_hash' => password_hash($temporaryPassword, PASSWORD_DEFAULT),
+                'password_reset_required' => 1,
                 'role' => $role,
                 'created_at' => date('Y-m-d H:i:s'),
             ];
@@ -260,6 +296,185 @@ final class WorkspaceRepository
             'email' => (string) ($user['email'] ?? $email),
             'role' => (string) ($existing['role'] ?? $role),
             'created_at' => (string) ($existing['created_at'] ?? date('Y-m-d H:i:s')),
+            'temporary_password' => $temporaryPassword,
+        ];
+    }
+
+    /**
+     * @return array{ok:bool,message:string,member?:array<string, string>}
+     */
+    public function updateMemberRole(string $workspaceId, string $memberId, string $role, string $actorUserId = ''): array
+    {
+        if (!$this->shouldUseDatabase()) {
+            return [
+                'ok' => false,
+                'message' => 'Member role updates require database storage mode.',
+            ];
+        }
+
+        $workspaceId = trim($workspaceId);
+        $memberId = trim($memberId);
+        $role = trim($role);
+        if ($workspaceId === '' || $memberId === '' || $role === '') {
+            return [
+                'ok' => false,
+                'message' => 'Member and role are required.',
+            ];
+        }
+
+        if (!in_array($role, ['tenant_owner', 'knowledge_editor', 'reviewer'], true)) {
+            return [
+                'ok' => false,
+                'message' => 'Unsupported member role.',
+            ];
+        }
+
+        $member = $this->membershipById($workspaceId, $memberId);
+        if (!is_array($member)) {
+            return [
+                'ok' => false,
+                'message' => 'Unable to find the selected workspace member.',
+            ];
+        }
+
+        $targetUserId = trim((string) ($member['user_id'] ?? ''));
+        if ($actorUserId !== '' && $targetUserId === trim($actorUserId)) {
+            return [
+                'ok' => false,
+                'message' => 'Use another tenant owner account to change your own role.',
+            ];
+        }
+
+        $currentRole = trim((string) ($member['role'] ?? ''));
+        if ($currentRole === 'tenant_owner' && $role !== 'tenant_owner' && $this->ownerCount($workspaceId) <= 1) {
+            return [
+                'ok' => false,
+                'message' => 'This workspace must keep at least one tenant owner.',
+            ];
+        }
+
+        $this->db
+            ->table('workspace_members')
+            ->where('workspace_id', $workspaceId)
+            ->where('id', $memberId)
+            ->update([
+                'role' => $role,
+            ])
+            ->run();
+
+        $updated = $this->membershipById($workspaceId, $memberId);
+        if (!is_array($updated)) {
+            return [
+                'ok' => false,
+                'message' => 'Unable to load the updated workspace member.',
+            ];
+        }
+
+        return [
+            'ok' => true,
+            'message' => 'Workspace member role updated.',
+            'member' => $updated,
+        ];
+    }
+
+    /**
+     * @return array{ok:bool,message:string,member?:array<string, string>}
+     */
+    public function removeMember(string $workspaceId, string $memberId, string $actorUserId = ''): array
+    {
+        if (!$this->shouldUseDatabase()) {
+            return [
+                'ok' => false,
+                'message' => 'Member removal requires database storage mode.',
+            ];
+        }
+
+        $workspaceId = trim($workspaceId);
+        $memberId = trim($memberId);
+        if ($workspaceId === '' || $memberId === '') {
+            return [
+                'ok' => false,
+                'message' => 'Member selection is required.',
+            ];
+        }
+
+        $member = $this->membershipById($workspaceId, $memberId);
+        if (!is_array($member)) {
+            return [
+                'ok' => false,
+                'message' => 'Unable to find the selected workspace member.',
+            ];
+        }
+
+        $targetUserId = trim((string) ($member['user_id'] ?? ''));
+        if ($actorUserId !== '' && $targetUserId === trim($actorUserId)) {
+            return [
+                'ok' => false,
+                'message' => 'Use another tenant owner account to remove your own access.',
+            ];
+        }
+
+        if (trim((string) ($member['role'] ?? '')) === 'tenant_owner' && $this->ownerCount($workspaceId) <= 1) {
+            return [
+                'ok' => false,
+                'message' => 'This workspace must keep at least one tenant owner.',
+            ];
+        }
+
+        $this->db
+            ->table('workspace_members')
+            ->where('workspace_id', $workspaceId)
+            ->where('id', $memberId)
+            ->delete()
+            ->run();
+
+        return [
+            'ok' => true,
+            'message' => 'Workspace member removed.',
+            'member' => $member,
+        ];
+    }
+
+    /**
+     * @return array{ok:bool,message:string}
+     */
+    public function changePassword(string $userId, string $currentPassword, string $newPassword): array
+    {
+        if (!$this->shouldUseDatabase()) {
+            return [
+                'ok' => false,
+                'message' => 'Password changes require database storage mode.',
+            ];
+        }
+
+        $user = $this->findUserById($userId);
+        if (!is_array($user)) {
+            return [
+                'ok' => false,
+                'message' => 'Unable to find the current account.',
+            ];
+        }
+
+        $hash = trim((string) ($user['password_hash'] ?? ''));
+        if ($hash === '' || !password_verify($currentPassword, $hash)) {
+            return [
+                'ok' => false,
+                'message' => 'Current password is incorrect.',
+            ];
+        }
+
+        $this->db
+            ->table('users')
+            ->where('id', trim($userId))
+            ->update([
+                'password_hash' => password_hash($newPassword, PASSWORD_DEFAULT),
+                'password_reset_required' => 0,
+            ])
+            ->run();
+
+        return [
+            'ok' => true,
+            'message' => 'Password updated for this account.',
         ];
     }
 
@@ -269,10 +484,14 @@ final class WorkspaceRepository
             return false;
         }
 
+        if ($this->databaseAvailable !== null) {
+            return $this->databaseAvailable;
+        }
+
         try {
-            return $this->db->connect();
+            return $this->databaseAvailable = $this->db->connect();
         } catch (\Throwable) {
-            return false;
+            return $this->databaseAvailable = false;
         }
     }
 
@@ -314,9 +533,53 @@ final class WorkspaceRepository
         return $workspace;
     }
 
+    /**
+     * @return array<string, string>|null
+     */
+    private function membershipById(string $workspaceId, string $memberId): ?array
+    {
+        $row = $this->firstRow(
+            $this->db
+                ->table('workspace_members')
+                ->where('workspace_id', trim($workspaceId))
+                ->where('id', trim($memberId))
+                ->limit(1)
+                ->get()
+        );
+        if (!is_array($row)) {
+            return null;
+        }
+
+        $user = $this->findUserById((string) ($row['user_id'] ?? ''));
+        return [
+            'id' => (string) ($row['id'] ?? ''),
+            'user_id' => (string) ($row['user_id'] ?? ''),
+            'name' => is_array($user) ? (string) ($user['name'] ?? '') : '',
+            'email' => is_array($user) ? (string) ($user['email'] ?? '') : '',
+            'role' => (string) ($row['role'] ?? ''),
+            'created_at' => (string) ($row['created_at'] ?? ''),
+        ];
+    }
+
+    private function ownerCount(string $workspaceId): int
+    {
+        return count($this->rows(
+            $this->db
+                ->table('workspace_members')
+                ->where('workspace_id', trim($workspaceId))
+                ->where('role', 'tenant_owner')
+                ->get()
+        ));
+    }
+
     private function makeId(string $prefix, string $seed): string
     {
         return $prefix . '-' . substr(sha1($seed), 0, 16);
+    }
+
+    private function temporaryPassword(): string
+    {
+        return 'ks-' . substr(bin2hex(random_bytes(6)), 0, 12);
     }
 
     /**
