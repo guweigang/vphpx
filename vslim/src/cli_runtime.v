@@ -489,7 +489,27 @@ fn cli_append_command_listing_lines(mut lines []string, mut cli VSlimCliApp, gro
 	if groups.len == 1 && groups[0].title == '' {
 		for name in groups[0].commands {
 			command_name := name.trim_space().clone()
-			lines << cli_command_listing_line(mut cli, command_name)
+			if command_name == '' {
+				cli_debug_log('listing_inline empty command_name raw="${name}"')
+				continue
+			}
+			mut summary := cli_command_summary_text(mut cli, command_name) or { '' }
+			aliases := cli_command_aliases_for_listing(&cli, command_name)
+			if aliases.len > 0 {
+				alias_text := 'aliases: ${aliases.join(',')}'
+				summary = if summary != '' { '${summary} [${alias_text}]' } else { '[${alias_text}]' }
+			}
+			cli_debug_log('listing_inline name="${command_name}" summary="${summary}"')
+			mut base_line := command_name.clone()
+			if summary != '' {
+				width := 28
+				base_line = if command_name.len >= width {
+					'${command_name} ${summary}'
+				} else {
+					command_name + ' '.repeat(width - command_name.len) + summary
+				}
+			}
+			lines << '  ${base_line}'
 		}
 		return
 	}
@@ -501,8 +521,27 @@ fn cli_append_command_listing_lines(mut lines []string, mut cli VSlimCliApp, gro
 		lines << if indent { '  ${heading}' } else { heading }
 		for name in group.commands {
 			command_name := name.trim_space().clone()
-			line := cli_command_listing_line(mut cli, command_name).trim_space().clone()
-			lines << if indent { '    ${line}' } else { '  ${line}' }
+			if command_name == '' {
+				cli_debug_log('listing_inline empty grouped command_name raw="${name}"')
+				continue
+			}
+			mut summary := cli_command_summary_text(mut cli, command_name) or { '' }
+			aliases := cli_command_aliases_for_listing(&cli, command_name)
+			if aliases.len > 0 {
+				alias_text := 'aliases: ${aliases.join(',')}'
+				summary = if summary != '' { '${summary} [${alias_text}]' } else { '[${alias_text}]' }
+			}
+			cli_debug_log('listing_inline name="${command_name}" summary="${summary}"')
+			mut base_line := command_name.clone()
+			if summary != '' {
+				width := 28
+				base_line = if command_name.len >= width {
+					'${command_name} ${summary}'
+				} else {
+					command_name + ' '.repeat(width - command_name.len) + summary
+				}
+			}
+			lines << if indent { '    ${base_line}' } else { '  ${base_line}' }
 		}
 	}
 }
@@ -730,7 +769,8 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
 		})
 		return 0
 	}
-	code := run_registered_cli_command_with_program(mut cli, command_name, command_args, program) or {
+	cli.last_command_name = command_name.trim_space().clone()
+	code := run_registered_current_cli_command_with_program(mut cli, command_args, program) or {
 		cli_runtime_write_stderr(err.msg())
 		return 1
 	}
