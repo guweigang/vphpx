@@ -363,7 +363,7 @@ fn apply_cli_command_metadata(mut cli VSlimCliApp, canonical_name string, handle
 	}
 }
 
-fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, args []string, program string) !int {
+fn (mut cli VSlimCliApp) run_registered_cli_command_with_program(name string, args []string, program string) !int {
 	command_name := name.trim_space().clone()
 	cli.current_trace = 'trace=cmd:${command_name} cli=${usize(&cli)} core=${usize(cli.core_app_ref)}'
 	defer {
@@ -468,8 +468,8 @@ fn run_registered_cli_command_with_program(mut cli VSlimCliApp, name string, arg
 
 
 
-fn run_registered_cli_command(mut cli VSlimCliApp, name string, args []string) !int {
-	return run_registered_cli_command_with_program(mut cli, name, args, '')
+fn (mut cli VSlimCliApp) run_registered_cli_command(name string, args []string) !int {
+	return cli.run_registered_cli_command_with_program(name, args, '')
 }
 
 @[php_method]
@@ -691,7 +691,7 @@ pub fn (mut cli VSlimCliApp) run(name string, args vphp.RequestBorrowedZBox) int
 		return 1
 	}
 	cli.last_command_name = name.trim_space().clone()
-	return run_registered_cli_command(mut cli, name, arg_list) or {
+	return cli.run_registered_cli_command(name, arg_list) or {
 		error_class := if name.trim_space() == '' || err.msg().contains('must not be empty') {
 			'InvalidArgumentException'
 		} else {

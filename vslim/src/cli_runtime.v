@@ -784,7 +784,8 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
 		return 0
 	}
 	cli.last_command_name = command_name.trim_space().clone()
-	code := run_registered_cli_command_with_program(mut cli, command_name, command_args, program) or {
+	cli_debug_log('run_argv before run_registered_cli_command_with_program command="${command_name}" program="${program}"')
+	code := cli.run_registered_cli_command_with_program(command_name, command_args, program) or {
 		cli_runtime_write_stderr(err.msg())
 		return 1
 	}
