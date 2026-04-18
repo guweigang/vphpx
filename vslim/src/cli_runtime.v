@@ -46,9 +46,11 @@ fn cli_runtime_effective_args(argv []string, cli &VSlimCliApp) CliRuntimeInvocat
 		if argv.len > 1 {
 			inv.command_args = cli_clone_string_list(argv[1..])
 		}
+		cli_debug_log('effective_args exit argv0=${inv.argv0} strip=true args=${inv.command_args}')
 		return inv
 	}
 	inv.command_args = cli_clone_string_list(argv)
+	cli_debug_log('effective_args exit argv0=${inv.argv0} strip=false args=${inv.command_args}')
 	return inv
 }
 
@@ -615,6 +617,7 @@ fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvo
 	mut args := cli_clone_string_list(inv.command_args)
 	inv.command_args = []string{}
 	mut idx := 0
+	cli_debug_log('parse_invocation start args=${args}')
 	for idx < args.len {
 		arg := args[idx].trim_space()
 		if arg == '' {
@@ -685,6 +688,9 @@ fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvo
 	}
 	if idx < args.len {
 		inv.command_args = cli_clone_string_list(args[idx..])
+		cli_debug_log('parse_invocation found command_args=${inv.command_args} from index ${idx}')
+	} else {
+		cli_debug_log('parse_invocation no command_args found, idx=${idx} len=${args.len}')
 	}
 	if inv.bootstrap_dir != '' && inv.bootstrap_file != '' {
 		return error('CLI options `--bootstrap-dir` and `--bootstrap-file` cannot be used together')
@@ -739,7 +745,7 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
 	show_help := inv.show_help
 	show_list := inv.show_list
 	show_version := inv.show_version
-	cli_debug_log('run_argv parsed argv0="${argv0}" command="${command_name}" show_help=${show_help} show_list=${show_list} show_version=${show_version}')
+	cli_debug_log('run_argv parsed argv0="${argv0}" command="${command_name}" args=${inv.command_args} show_help=${show_help} show_list=${show_list} show_version=${show_version}')
 	cli_runtime_apply_bootstrap(mut cli, bootstrap_file, bootstrap_dir) or {
 		cli_runtime_write_stderr(err.msg())
 		return 1
