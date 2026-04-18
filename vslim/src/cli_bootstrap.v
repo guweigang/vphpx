@@ -224,7 +224,7 @@ fn apply_cli_bootstrap_file_result(mut cli VSlimCliApp, path string, value vphp.
 	if value.is_callable() {
 		handlers_before := cli.command_handlers.len
 		cli_debug_log('bootstrap_file_result callable path=\"${path}\" handlers_before=${handlers_before}')
-		mut cli_z := cli_self_zval(&cli)
+		mut cli_z := cli_self_zval(cli)
 		defer {
 			cli_z.release()
 		}

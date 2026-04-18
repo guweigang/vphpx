@@ -768,7 +768,7 @@ fn bind_cli_runtime_to_command(mut cli VSlimCliApp, runtime vphp.ZVal) {
 	if !runtime.is_valid() || !runtime.is_object() {
 		return
 	}
-	mut cli_z := cli_self_zval(&cli)
+	mut cli_z := cli_self_zval(cli)
 	defer {
 		cli_z.release()
 	}
