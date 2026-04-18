@@ -112,7 +112,7 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 	mut core := ensure_cli_core_app(mut cli)
 	preload_bootstrap_project_classes(project_root)
 	mut shared_applied := false
-	bootstrap_candidate := normalize_bootstrap_dir_path(project_root) + '/bootstrap/app.php'
+	bootstrap_candidate := project_root + '/bootstrap/app.php'
 	cli_debug_log('app_candidate="${bootstrap_candidate}" is_file=${php_is_file(bootstrap_candidate)}')
 	if php_is_file(bootstrap_candidate) {
 		result := vphp.include(bootstrap_candidate)
@@ -127,7 +127,7 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 		apply_bootstrap_file_result(mut core, bootstrap_candidate, result)!
 		shared_applied = true
 	} else {
-		app_candidate := normalize_bootstrap_dir_path(project_root) + '/app.php'
+		app_candidate := project_root + '/app.php'
 		cli_debug_log('app_candidate="${app_candidate}" is_file=${php_is_file(app_candidate)}')
 		if php_is_file(app_candidate) {
 			result := vphp.include(app_candidate)
