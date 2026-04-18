@@ -666,11 +666,14 @@ fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvo
 		if dir_value := cli_runtime_parse_value_option(arg, 'bootstrap-dir') {
 			inv.bootstrap_dir = dir_value.clone()
 			idx++
-			continue
+			matched_option = true
 		}
 		if file_value := cli_runtime_parse_value_option(arg, 'bootstrap-file') {
 			inv.bootstrap_file = file_value.clone()
 			idx++
+			matched_option = true
+		}
+		if matched_option {
 			continue
 		}
 		if arg.starts_with('-') {
