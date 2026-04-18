@@ -506,6 +506,7 @@ fn cli_append_command_listing_lines(mut lines []string, mut cli VSlimCliApp, gro
 
 fn cli_runtime_list_text(mut cli VSlimCliApp) string {
 	cli_debug_log('list_text start')
+	cli_debug_log('list_text order=${cli.command_order}')
 	mut lines := []string{}
 	groups := cli_command_listing_groups(&cli)
 	cli_debug_log('list_text groups=${groups.len}')
@@ -651,6 +652,7 @@ fn cli_runtime_apply_bootstrap(mut cli VSlimCliApp, bootstrap_file string, boots
 @[php_method: 'helpText']
 pub fn (mut cli VSlimCliApp) help_text() string {
 	cli_debug_log('help_text cli=${usize(&cli)} core=${usize(cli.core_app_ref)}')
+	cli_debug_log('help_text order=${cli.command_order}')
 	return cli_runtime_help_text(mut cli, 'vslim')
 }
 
@@ -695,6 +697,7 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
 	}
 	if show_help {
 		cli_debug_log('run_argv branch=help command="${command_name}"')
+		cli_debug_log('run_argv branch=help order=${cli.command_order}')
 		if command_name != '' {
 			vphp.write_output(cli_command_help_text(mut cli, program, command_name) or {
 				cli_runtime_write_stderr(err.msg())
@@ -707,6 +710,7 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
 	}
 	if show_list {
 		cli_debug_log('run_argv branch=list enter')
+		cli_debug_log('run_argv branch=list order=${cli.command_order}')
 		vphp.write_output(cli_runtime_list_text(mut cli))
 		cli_debug_log('run_argv branch=list exit')
 		return 0

@@ -491,7 +491,10 @@ pub fn (cli &VSlimCliApp) project_root_value() string {
 @[php_method]
 pub fn (mut cli VSlimCliApp) command(name string, handler vphp.RequestBorrowedZBox) &VSlimCliApp {
 	ensure_cli_registry(mut cli)
+	handler_view := handler.to_zval()
+	cli_debug_log('command enter cli=${usize(&cli)} raw_name="${name}" raw_len=${name.len} handler_type=${handler_view.type_name()}')
 	command_name := name.trim_space().clone()
+	cli_debug_log('command normalized cli=${usize(&cli)} command_name="${command_name}" len=${command_name.len}')
 	if command_name == '' {
 		vphp.throw_exception_class('InvalidArgumentException', 'command name must not be empty',
 			0)
@@ -510,6 +513,7 @@ pub fn (mut cli VSlimCliApp) command(name string, handler vphp.RequestBorrowedZB
 	if command_name !in cli.command_handlers {
 		cli.command_order << command_name.clone()
 	}
+	cli_debug_log('command register cli=${usize(&cli)} command_name="${command_name}" order_len=${cli.command_order.len} handlers_len=${cli.command_handlers.len}')
 	clear_cli_command_metadata(mut cli, command_name)
 	cli.command_handlers[command_name] = if handler_z.is_callable() || handler_z.is_object() {
 		vphp.PersistentOwnedZBox.from_callable_zval(handler_z)
@@ -521,6 +525,7 @@ pub fn (mut cli VSlimCliApp) command(name string, handler vphp.RequestBorrowedZB
 		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
 		return &cli
 	}
+	cli_debug_log('command exit cli=${usize(&cli)} command_name="${command_name}" order=${cli.command_order}')
 	return &cli
 }
 
