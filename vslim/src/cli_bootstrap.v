@@ -112,7 +112,15 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 	mut core := ensure_cli_core_app(mut cli)
 	preload_bootstrap_project_classes(project_root)
 	mut shared_applied := false
-	bootstrap_candidate := php_join_path(project_root, 'bootstrap/app.php')
+	trimmed_project_root := vphp.with_php_call_result_string('rtrim', [
+		vphp.RequestOwnedZBox.new_string(project_root).to_zval(),
+		vphp.RequestOwnedZBox.new_string('/\\').to_zval(),
+	])
+	bootstrap_candidate := vphp.with_php_call_result_string('sprintf', [
+		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
+		vphp.RequestOwnedZBox.new_string(trimmed_project_root).to_zval(),
+		vphp.RequestOwnedZBox.new_string('bootstrap/app.php').to_zval(),
+	])
 	cli_debug_log('app_candidate="${bootstrap_candidate}" is_file=${php_is_file(bootstrap_candidate)}')
 	if php_is_file(bootstrap_candidate) {
 		result := vphp.include(bootstrap_candidate)
@@ -127,7 +135,11 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 		apply_bootstrap_file_result(mut core, bootstrap_candidate, result)!
 		shared_applied = true
 	} else {
-		app_candidate := php_join_path(project_root, 'app.php')
+		app_candidate := vphp.with_php_call_result_string('sprintf', [
+			vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
+			vphp.RequestOwnedZBox.new_string(trimmed_project_root).to_zval(),
+			vphp.RequestOwnedZBox.new_string('app.php').to_zval(),
+		])
 		cli_debug_log('app_candidate="${app_candidate}" is_file=${php_is_file(app_candidate)}')
 		if php_is_file(app_candidate) {
 			result := vphp.include(app_candidate)
