@@ -259,18 +259,18 @@ fn apply_cli_command_class_conventions_with_paths(mut cli VSlimCliApp, commands_
 			cli_debug_log('skip_command_entry="${entry}"')
 			continue
 		}
-		entry_name := entry.clone()
-		file := (commands_dir + '/' + entry_name).clone()
-		display_file := cli_display_path(file).clone()
-		class_name := ('App\\Commands\\' + path_file_stem(entry_name)).clone()
-		cli_debug_log('command_entry_preinclude="${entry_name}" file="${display_file}" class="${class_name}"')
-		_ = php_include_once(file)
-		class_exists := php_class_exists(class_name)
-		cli_debug_log('command_entry="${entry_name}" file="${display_file}" class="${class_name}" class_exists=${class_exists}')
+		entry_name_for_log := entry.clone()
+		file_for_log := (commands_dir + '/' + entry_name_for_log).clone()
+		display_file_for_log := cli_display_path(file_for_log).clone()
+		class_name_for_log := ('App\\Commands\\' + path_file_stem(entry_name_for_log)).clone()
+		cli_debug_log('command_entry_preinclude="${entry_name_for_log}" file="${display_file_for_log}" class="${class_name_for_log}"')
+		_ = php_include_once(commands_dir + '/' + entry)
+		class_exists := php_class_exists('App\\Commands\\' + path_file_stem(entry))
+		cli_debug_log('command_entry="${entry}" file="${cli_display_path(commands_dir + '/' + entry)}" class="${'App\\Commands\\' + path_file_stem(entry)}" class_exists=${class_exists}')
 		if !class_exists {
-			return error('command convention file "${display_file}" must declare class ${class_name}')
+			return error('command convention file "${cli_display_path(commands_dir + '/' + entry)}" must declare class ${'App\\Commands\\' + path_file_stem(entry)}')
 		}
-		mut class_name_z := vphp.RequestOwnedZBox.new_string(class_name).to_zval()
+		mut class_name_z := vphp.RequestOwnedZBox.new_string('App\\Commands\\' + path_file_stem(entry)).to_zval()
 		defer {
 			class_name_z.release()
 		}
