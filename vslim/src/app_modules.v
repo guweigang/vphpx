@@ -22,6 +22,7 @@ fn normalize_module_input(raw vphp.ZVal) !vphp.ZVal {
 			vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 		])
 		if !exists {
+			log_bootstrap_class_visibility('module', class_name)
 			return error('module class "${class_name}" does not exist')
 		}
 		mod_z := vphp.php_class(class_name).construct([])

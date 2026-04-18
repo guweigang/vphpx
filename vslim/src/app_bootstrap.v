@@ -29,6 +29,44 @@ fn app_self_zval(app &VSlimApp) vphp.ZVal {
 	return wrap_runtime_app_zval(app)
 }
 
+fn bootstrap_debug_included_hits(class_name string) []string {
+	mut hits := []string{}
+	class_stem := class_name.all_after_last('\\').trim_space().to_lower()
+	files := vphp.call_php('get_included_files', []vphp.ZVal{})
+	if !files.is_valid() || !files.is_array() {
+		return hits
+	}
+	for idx := 0; idx < files.array_count(); idx++ {
+		file := files.array_get(idx).to_string().trim_space()
+		if file == '' {
+			continue
+		}
+		lower := file.to_lower()
+		if class_stem != '' && lower.contains(class_stem) {
+			hits << file
+			continue
+		}
+		if lower.contains('/app/providers/') || lower.contains('\\app\\providers\\')
+			|| lower.contains('/app/modules/') || lower.contains('\\app\\modules\\') {
+			hits << file
+		}
+	}
+	return hits
+}
+
+fn log_bootstrap_class_visibility(kind string, class_name string) {
+	exists_no_autoload := vphp.with_php_call_result_bool('class_exists', [
+		vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
+		vphp.RequestOwnedZBox.new_bool(false).to_zval(),
+	])
+	exists_autoload := vphp.with_php_call_result_bool('class_exists', [
+		vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
+		vphp.RequestOwnedZBox.new_bool(true).to_zval(),
+	])
+	included_hits := bootstrap_debug_included_hits(class_name)
+	cli_debug_log('${kind}_class_visibility class="${class_name}" exists_no_autoload=${exists_no_autoload} exists_autoload=${exists_autoload} included_hits=${included_hits}')
+}
+
 fn normalize_service_provider_input(raw vphp.ZVal) !vphp.ZVal {
 	if raw.is_valid() && raw.is_object() {
 		return raw
@@ -43,6 +81,7 @@ fn normalize_service_provider_input(raw vphp.ZVal) !vphp.ZVal {
 			vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 		])
 		if !exists {
+			log_bootstrap_class_visibility('provider', class_name)
 			return error('provider class "${class_name}" does not exist')
 		}
 		provider := vphp.php_class(class_name).construct([])
