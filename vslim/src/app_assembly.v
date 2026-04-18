@@ -1,5 +1,6 @@
 module main
 
+import pathutil
 import vphp
 
 fn bootstrap_file_return_error(path string) string {
@@ -70,51 +71,27 @@ fn php_class_exists(class_name string) bool {
 }
 
 fn is_windows_drive_root_path(path string) bool {
-	return path.len == 3 && path[1] == `:` && path[2] == `/`
+	return pathutil.is_windows_drive_root_path(path)
 }
 
 fn normalize_bootstrap_dir_path(path string) string {
-	mut clean := path.trim_space().replace('\\', '/')
-	for clean.len > 1 && clean.ends_with('/') && !is_windows_drive_root_path(clean) {
-		clean = clean[..clean.len - 1]
-	}
-	return clean
+	return pathutil.normalize_bootstrap_dir_path(path)
 }
 
 fn path_join(base string, child string) string {
-	root := normalize_bootstrap_dir_path(base)
-	if root == '' {
-		return child
-	}
-	return root + '/' + child
+	return pathutil.path_join(base, child)
 }
 
 fn path_dirname(path string) string {
-	clean := normalize_bootstrap_dir_path(path)
-	last_forward := clean.last_index('/') or { -1 }
-	last_back := clean.last_index('\\') or { -1 }
-	last_sep := if last_forward > last_back { last_forward } else { last_back }
-	if last_sep <= 0 {
-		return ''
-	}
-	return clean[..last_sep]
+	return pathutil.path_dirname(path)
 }
 
 fn path_file_stem(path string) string {
-	clean := normalize_bootstrap_dir_path(path)
-	last_forward := clean.last_index('/') or { -1 }
-	last_back := clean.last_index('\\') or { -1 }
-	last_sep := if last_forward > last_back { last_forward } else { last_back }
-	mut base := if last_sep >= 0 { clean[last_sep + 1..] } else { clean }
-	if base.ends_with('.php') && base.len > 4 {
-		base = base[..base.len - 4]
-	}
-	return base
+	return pathutil.path_file_stem(path)
 }
 
 fn is_bootstrap_dir_path(path string) bool {
-	clean := normalize_bootstrap_dir_path(path).to_lower()
-	return clean.ends_with('/bootstrap') || clean.ends_with('\\bootstrap')
+	return pathutil.is_bootstrap_dir_path(path)
 }
 
 fn normalize_app_bootstrap_spec(raw vphp.ZVal) !vphp.ZVal {
@@ -518,8 +495,6 @@ fn preload_bootstrap_project_classes(project_root string) {
 	patterns := [
 		path_join(project_root, 'app/Providers/*.php'),
 		path_join(project_root, 'app/Modules/*.php'),
-		path_join(project_root, 'app/Http/Controllers/*.php'),
-		path_join(project_root, 'app/Http/Middleware/*.php'),
 	]
 	for pattern in patterns {
 		for file in php_glob_paths(pattern) {
@@ -808,20 +783,31 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 		}
 		return &app
 	}
-	candidates := [clean + '/bootstrap/app.php', clean + '/app.php']
-	for candidate in candidates {
-		if php_is_file(candidate) {
-			result := vphp.include(candidate)
-			project_root := if is_bootstrap_dir_path(path_dirname(candidate)) { path_dirname(path_dirname(candidate)) } else { path_dirname(candidate) }
-			if project_root != '' {
-				preload_bootstrap_spec_classes(project_root, result)
-			}
-			apply_bootstrap_file_result(mut app, candidate, result) or {
-				vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
-				return &app
-			}
+	bootstrap_candidate := clean + '/bootstrap/app.php'
+	if php_is_file(bootstrap_candidate) {
+		result := vphp.include(bootstrap_candidate)
+		project_root := if is_bootstrap_dir_path(path_dirname(bootstrap_candidate)) { path_dirname(path_dirname(bootstrap_candidate)) } else { path_dirname(bootstrap_candidate) }
+		if project_root != '' {
+			preload_bootstrap_spec_classes(project_root, result)
+		}
+		apply_bootstrap_file_result(mut app, bootstrap_candidate, result) or {
+			vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
 			return &app
 		}
+		return &app
+	}
+	app_candidate := clean + '/app.php'
+	if php_is_file(app_candidate) {
+		result := vphp.include(app_candidate)
+		project_root := if is_bootstrap_dir_path(path_dirname(app_candidate)) { path_dirname(path_dirname(app_candidate)) } else { path_dirname(app_candidate) }
+		if project_root != '' {
+			preload_bootstrap_spec_classes(project_root, result)
+		}
+		apply_bootstrap_file_result(mut app, app_candidate, result) or {
+			vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+			return &app
+		}
+		return &app
 	}
 	apply_bootstrap_conventions(mut app, clean) or {
 		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)

@@ -112,23 +112,35 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 	mut core := ensure_cli_core_app(mut cli)
 	preload_bootstrap_project_classes(project_root)
 	mut shared_applied := false
-	app_candidates := [path_join(project_root, 'bootstrap/app.php'),
-		path_join(project_root, 'app.php')]
-	for candidate in app_candidates {
-		cli_debug_log('app_candidate="${candidate}" is_file=${php_is_file(candidate)}')
-		if php_is_file(candidate) {
-			result := vphp.include(candidate)
-			project_root_for_candidate := if is_bootstrap_dir_path(path_dirname(candidate)) {
-				path_dirname(path_dirname(candidate))
+	bootstrap_candidate := normalize_bootstrap_dir_path(project_root) + '/bootstrap/app.php'
+	cli_debug_log('app_candidate="${bootstrap_candidate}" is_file=${php_is_file(bootstrap_candidate)}')
+	if php_is_file(bootstrap_candidate) {
+		result := vphp.include(bootstrap_candidate)
+		project_root_for_candidate := if is_bootstrap_dir_path(path_dirname(bootstrap_candidate)) {
+			path_dirname(path_dirname(bootstrap_candidate))
+		} else {
+			path_dirname(bootstrap_candidate)
+		}
+		if project_root_for_candidate != '' {
+			preload_bootstrap_spec_classes(project_root_for_candidate, result)
+		}
+		apply_bootstrap_file_result(mut core, bootstrap_candidate, result)!
+		shared_applied = true
+	} else {
+		app_candidate := normalize_bootstrap_dir_path(project_root) + '/app.php'
+		cli_debug_log('app_candidate="${app_candidate}" is_file=${php_is_file(app_candidate)}')
+		if php_is_file(app_candidate) {
+			result := vphp.include(app_candidate)
+			project_root_for_candidate := if is_bootstrap_dir_path(path_dirname(app_candidate)) {
+				path_dirname(path_dirname(app_candidate))
 			} else {
-				path_dirname(candidate)
+				path_dirname(app_candidate)
 			}
 			if project_root_for_candidate != '' {
 				preload_bootstrap_spec_classes(project_root_for_candidate, result)
 			}
-			apply_bootstrap_file_result(mut core, candidate, result)!
+			apply_bootstrap_file_result(mut core, app_candidate, result)!
 			shared_applied = true
-			break
 		}
 	}
 	if shared_applied && !core.is_booted() {
