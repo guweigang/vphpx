@@ -625,21 +625,22 @@ fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvo
 			idx++
 			break
 		}
+		mut matched_option := false
 		match arg {
 			'-h', '--help' {
 				inv.show_help = true
 				idx++
-				continue
+				matched_option = true
 			}
 			'--list' {
 				inv.show_list = true
 				idx++
-				continue
+				matched_option = true
 			}
 			'-V', '--version' {
 				inv.show_version = true
 				idx++
-				continue
+				matched_option = true
 			}
 			'--bootstrap-dir' {
 				if idx + 1 >= args.len || args[idx + 1].trim_space() == '' {
@@ -647,7 +648,7 @@ fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvo
 				}
 				inv.bootstrap_dir = args[idx + 1].trim_space().clone()
 				idx += 2
-				continue
+				matched_option = true
 			}
 			'--bootstrap-file' {
 				if idx + 1 >= args.len || args[idx + 1].trim_space() == '' {
@@ -655,9 +656,12 @@ fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvo
 				}
 				inv.bootstrap_file = args[idx + 1].trim_space().clone()
 				idx += 2
-				continue
+				matched_option = true
 			}
 			else {}
+		}
+		if matched_option {
+			continue
 		}
 		if dir_value := cli_runtime_parse_value_option(arg, 'bootstrap-dir') {
 			inv.bootstrap_dir = dir_value.clone()
