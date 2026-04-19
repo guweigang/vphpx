@@ -8,6 +8,8 @@ return new class extends VSlim\Database\Migration {
             'id varchar(64) primary key',
             'name varchar(120) not null',
             'email varchar(160) not null',
+            'password_hash varchar(255) not null',
+            'password_reset_required tinyint(1) not null default 0',
             'role varchar(64) not null',
             'created_at datetime not null',
         ]);

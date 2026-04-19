@@ -1,5 +1,6 @@
 module main
 
+import pathutil
 import vphp
 
 fn bootstrap_file_return_error(path string) string {
@@ -12,6 +13,18 @@ fn php_is_file(path string) bool {
 
 fn php_is_dir(path string) bool {
 	return vphp.with_php_call_result_bool('is_dir', [vphp.RequestOwnedZBox.new_string(path).to_zval()])
+}
+
+fn php_join_path(base string, child string) string {
+	trimmed := vphp.with_php_call_result_string('rtrim', [
+		vphp.RequestOwnedZBox.new_string(base).to_zval(),
+		vphp.RequestOwnedZBox.new_string('/\\').to_zval(),
+	])
+	return vphp.with_php_call_result_string('sprintf', [
+		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
+		vphp.RequestOwnedZBox.new_string(trimmed).to_zval(),
+		vphp.RequestOwnedZBox.new_string(child).to_zval(),
+	])
 }
 
 fn php_glob_paths(pattern string) []string {
@@ -70,51 +83,27 @@ fn php_class_exists(class_name string) bool {
 }
 
 fn is_windows_drive_root_path(path string) bool {
-	return path.len == 3 && path[1] == `:` && path[2] == `/`
+	return pathutil.is_windows_drive_root_path(path)
 }
 
 fn normalize_bootstrap_dir_path(path string) string {
-	mut clean := path.trim_space().replace('\\', '/')
-	for clean.len > 1 && clean.ends_with('/') && !is_windows_drive_root_path(clean) {
-		clean = clean[..clean.len - 1]
-	}
-	return clean
+	return pathutil.normalize_bootstrap_dir_path(path)
 }
 
 fn path_join(base string, child string) string {
-	root := normalize_bootstrap_dir_path(base)
-	if root == '' {
-		return child
-	}
-	return root + '/' + child
+	return pathutil.path_join(base, child)
 }
 
 fn path_dirname(path string) string {
-	clean := normalize_bootstrap_dir_path(path)
-	last_forward := clean.last_index('/') or { -1 }
-	last_back := clean.last_index('\\') or { -1 }
-	last_sep := if last_forward > last_back { last_forward } else { last_back }
-	if last_sep <= 0 {
-		return ''
-	}
-	return clean[..last_sep]
+	return pathutil.path_dirname(path)
 }
 
 fn path_file_stem(path string) string {
-	clean := normalize_bootstrap_dir_path(path)
-	last_forward := clean.last_index('/') or { -1 }
-	last_back := clean.last_index('\\') or { -1 }
-	last_sep := if last_forward > last_back { last_forward } else { last_back }
-	mut base := if last_sep >= 0 { clean[last_sep + 1..] } else { clean }
-	if base.ends_with('.php') && base.len > 4 {
-		base = base[..base.len - 4]
-	}
-	return base
+	return pathutil.path_file_stem(path)
 }
 
 fn is_bootstrap_dir_path(path string) bool {
-	clean := normalize_bootstrap_dir_path(path).to_lower()
-	return clean.ends_with('/bootstrap') || clean.ends_with('\\bootstrap')
+	return pathutil.is_bootstrap_dir_path(path)
 }
 
 fn normalize_app_bootstrap_spec(raw vphp.ZVal) !vphp.ZVal {
@@ -191,6 +180,27 @@ fn apply_bootstrap_file_result(mut app VSlimApp, path string, value vphp.ZVal) !
 		return
 	}
 	apply_app_bootstrap_spec(mut app, value)!
+}
+
+fn app_bootstrap_file_apply(mut app VSlimApp, path string) ! {
+	clean := path.trim_space()
+	if clean == '' {
+		return error('bootstrap path must not be empty')
+	}
+	result := vphp.include(clean)
+	lower := clean.to_lower()
+	should_preload := lower.ends_with('/bootstrap/app.php') || lower.ends_with('\\bootstrap\\app.php')
+		|| lower.ends_with('/app.php') || lower.ends_with('\\app.php')
+	file_exists := php_is_file(clean)
+	cli_debug_log('bootstrap_file clean="${clean}" lower="${lower}" should_preload=${should_preload} is_file=${file_exists}')
+	if should_preload && file_exists {
+		project_root := if is_bootstrap_dir_path(path_dirname(clean)) { path_dirname(path_dirname(clean)) } else { path_dirname(clean) }
+		if project_root != '' {
+			cli_debug_log('bootstrap_file preload project_root="${project_root}"')
+			preload_bootstrap_spec_classes(project_root, result)
+		}
+	}
+	apply_bootstrap_file_result(mut app, clean, result)!
 }
 
 fn normalize_app_bootstrap_hook_items(raw vphp.ZVal) ![]vphp.ZVal {
@@ -443,6 +453,69 @@ fn apply_bootstrap_convention_hooks(path string, app_z vphp.ZVal, label string) 
 	return true
 }
 
+fn bootstrap_project_class_file(project_root string, class_name string) string {
+	clean := class_name.trim_space()
+	if !clean.starts_with('App\\') {
+		return ''
+	}
+	relative := clean[4..].replace('\\', '/')
+	if relative == '' {
+		return ''
+	}
+	return path_join(project_root, 'app/' + relative + '.php')
+}
+
+fn preload_bootstrap_spec_class_items(project_root string, raw vphp.ZVal) {
+	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
+		return
+	}
+	if raw.is_string() {
+		class_name := raw.to_string()
+		file := bootstrap_project_class_file(project_root, class_name)
+		cli_debug_log('bootstrap_spec_class class="${class_name}" file="${file}" is_file=${if file == '' { false } else { php_is_file(file) }}')
+		if file != '' && php_is_file(file) {
+			loaded := php_include_once(file)
+			cli_debug_log('bootstrap_spec_class include class="${class_name}" file="${file}" loaded_valid=${loaded.is_valid()} loaded_type=${loaded.type_name()} exists=${php_class_exists(class_name)}')
+		}
+		return
+	}
+	if !raw.is_array() {
+		return
+	}
+	for idx := 0; idx < raw.array_count(); idx++ {
+		preload_bootstrap_spec_class_items(project_root, raw.array_get(idx))
+	}
+}
+
+fn preload_bootstrap_spec_classes(project_root string, raw vphp.ZVal) {
+	normalized := normalize_app_bootstrap_spec(raw) or { return }
+	if providers := app_bootstrap_lookup(normalized, ['providers']) {
+		preload_bootstrap_spec_class_items(project_root, providers)
+	}
+	if modules := app_bootstrap_lookup(normalized, ['modules']) {
+		preload_bootstrap_spec_class_items(project_root, modules)
+	}
+	for file in php_glob_paths(path_join(project_root, 'app/Http/Controllers/*.php')) {
+		_ = php_include_once(file)
+	}
+}
+
+fn preload_bootstrap_project_classes(project_root string) {
+	if project_root.trim_space() == '' {
+		return
+	}
+	patterns := [
+		path_join(project_root, 'app/Providers/*.php'),
+		path_join(project_root, 'app/Modules/*.php'),
+		path_join(project_root, 'app/Http/Controllers/*.php'),
+	]
+	for pattern in patterns {
+		for file in php_glob_paths(pattern) {
+			_ = php_include_once(file)
+		}
+	}
+}
+
 fn apply_bootstrap_convention_provider_classes(mut app VSlimApp, project_root string) !bool {
 	mut applied := false
 	for file in php_glob_paths(path_join(project_root, 'app/Providers/*.php')) {
@@ -688,14 +761,7 @@ pub fn (mut app VSlimApp) bootstrap(spec vphp.RequestBorrowedZBox) &VSlimApp {
 
 @[php_method: 'bootstrapFile']
 pub fn (mut app VSlimApp) bootstrap_file(path string) &VSlimApp {
-	clean := path.trim_space()
-	if clean == '' {
-		vphp.throw_exception_class('InvalidArgumentException', 'bootstrap path must not be empty',
-			0)
-		return &app
-	}
-	result := vphp.include(clean)
-	apply_bootstrap_file_result(mut app, clean, result) or {
+	app_bootstrap_file_apply(mut app, path) or {
 		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
 		return &app
 	}
@@ -710,14 +776,51 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 			0)
 		return &app
 	}
-	if clean.ends_with('.php') && php_is_file(clean) {
-		return app.bootstrap_file(clean)
+	if !clean.ends_with('.php') {
+		preload_bootstrap_project_classes(clean)
 	}
-	candidates := [clean + '/bootstrap/app.php', clean + '/app.php']
-	for candidate in candidates {
-		if php_is_file(candidate) {
-			return app.bootstrap_file(candidate)
+	if clean.ends_with('.php') && php_is_file(clean) {
+		result := vphp.include(clean)
+		lower := clean.to_lower()
+		should_preload := lower.ends_with('/bootstrap/app.php') || lower.ends_with('\\bootstrap\\app.php')
+			|| lower.ends_with('/app.php') || lower.ends_with('\\app.php')
+		if should_preload {
+			project_root := if is_bootstrap_dir_path(path_dirname(clean)) { path_dirname(path_dirname(clean)) } else { path_dirname(clean) }
+			if project_root != '' {
+				preload_bootstrap_spec_classes(project_root, result)
+			}
 		}
+		apply_bootstrap_file_result(mut app, clean, result) or {
+			vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+			return &app
+		}
+		return &app
+	}
+	bootstrap_candidate := clean + '/bootstrap/app.php'
+	if php_is_file(bootstrap_candidate) {
+		result := vphp.include(bootstrap_candidate)
+		project_root := if is_bootstrap_dir_path(path_dirname(bootstrap_candidate)) { path_dirname(path_dirname(bootstrap_candidate)) } else { path_dirname(bootstrap_candidate) }
+		if project_root != '' {
+			preload_bootstrap_spec_classes(project_root, result)
+		}
+		apply_bootstrap_file_result(mut app, bootstrap_candidate, result) or {
+			vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+			return &app
+		}
+		return &app
+	}
+	app_candidate := clean + '/app.php'
+	if php_is_file(app_candidate) {
+		result := vphp.include(app_candidate)
+		project_root := if is_bootstrap_dir_path(path_dirname(app_candidate)) { path_dirname(path_dirname(app_candidate)) } else { path_dirname(app_candidate) }
+		if project_root != '' {
+			preload_bootstrap_spec_classes(project_root, result)
+		}
+		apply_bootstrap_file_result(mut app, app_candidate, result) or {
+			vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+			return &app
+		}
+		return &app
 	}
 	apply_bootstrap_conventions(mut app, clean) or {
 		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)

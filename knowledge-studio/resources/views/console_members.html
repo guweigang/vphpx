@@ -69,8 +69,9 @@
         <th>{{ col_email | trim }}</th>
         <th>{{ col_role | trim }}</th>
         <th>{{ col_created | trim }}</th>
+        <th>{{ col_actions | trim }}</th>
       </tr>
-{{for:members}}      <tr><td><strong>{{ item.name }}</strong></td><td>{{ item.email }}</td><td>{{ item.role }}</td><td>{{ item.created_at }}</td></tr>{{/for}}
+{{for:members}}      <tr><td><strong>{{ item.name }}</strong></td><td>{{ item.email }}</td><td>{{ item.role }}</td><td>{{ item.created_at }}</td><td>{{if:item.can_manage}}{{if:item.is_self}}<span class="ks-copy">{{ self_protected_hint | trim }}</span>{{/if}}{{if:item.show_actions}}<form class="ks-inline-form" method="post" action="{{ item.role_action }}"><select name="role"><option value="tenant_owner" {{ item.role_owner_selected }}>tenant_owner</option><option value="knowledge_editor" {{ item.role_editor_selected }}>knowledge_editor</option><option value="reviewer" {{ item.role_reviewer_selected }}>reviewer</option></select><button class="ks-btn-secondary" type="submit">{{ role_update_submit | trim }}</button></form><form class="ks-inline-form" method="post" action="{{ item.remove_action }}"><button class="ks-btn-secondary" type="submit">{{ remove_submit | trim }}</button></form>{{/if}}{{/if}}</td></tr>{{/for}}
     </table>
   </article>
 </section>

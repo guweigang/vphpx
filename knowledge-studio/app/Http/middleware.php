@@ -26,7 +26,11 @@ return function (VSlim\App $app): void {
         $app->container()->get(\App\Support\LocalePreferenceResolver::class),
     ));
     if (getenv('KS_DISABLE_ACCESS_MIDDLEWARE') === false || getenv('KS_DISABLE_ACCESS_MIDDLEWARE') === '') {
-        $app->middleware(new \App\Http\Middleware\StudioAccessMiddleware($app));
+        $app->middleware(new \App\Http\Middleware\StudioAccessMiddleware(
+            $app,
+            $app->container()->get(\App\Repositories\WorkspaceRepository::class),
+            $app->container()->get(\App\Support\LocalizedUrlBuilder::class),
+        ));
     }
     if (getenv('KS_DISABLE_WORKSPACE_MIDDLEWARE') === false || getenv('KS_DISABLE_WORKSPACE_MIDDLEWARE') === '') {
         $app->middleware(

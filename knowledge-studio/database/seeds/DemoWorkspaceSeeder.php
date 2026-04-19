@@ -14,6 +14,8 @@ return new class extends VSlim\Database\Seeder {
                 'id' => (string) ($user['id'] ?? ''),
                 'name' => (string) ($user['name'] ?? ''),
                 'email' => (string) ($user['email'] ?? ''),
+                'password_hash' => password_hash('demo123', PASSWORD_DEFAULT),
+                'password_reset_required' => 0,
                 'role' => (string) ($user['role'] ?? ''),
                 'created_at' => '2026-04-08 00:00:00',
             ]);
@@ -45,6 +47,7 @@ return new class extends VSlim\Database\Seeder {
                 'id' => (string) ($document['id'] ?? ''),
                 'workspace_id' => 'ws-acme',
                 'title' => (string) ($document['title'] ?? ''),
+                'coverage_focus' => (string) ($document['coverage_focus'] ?? $document['title'] ?? ''),
                 'summary' => (string) ($document['summary'] ?? $document['title'] ?? ''),
                 'body' => (string) ($document['body'] ?? $document['summary'] ?? $document['title'] ?? ''),
                 'language' => (string) ($document['language'] ?? 'zh-CN'),
@@ -60,6 +63,7 @@ return new class extends VSlim\Database\Seeder {
                 'id' => (string) ($document['id'] ?? ''),
                 'workspace_id' => 'ws-nova',
                 'title' => (string) ($document['title'] ?? ''),
+                'coverage_focus' => (string) ($document['coverage_focus'] ?? $document['title'] ?? ''),
                 'summary' => (string) ($document['summary'] ?? $document['title'] ?? ''),
                 'body' => (string) ($document['body'] ?? $document['summary'] ?? $document['title'] ?? ''),
                 'language' => (string) ($document['language'] ?? 'zh-CN'),
@@ -77,6 +81,7 @@ return new class extends VSlim\Database\Seeder {
                 'workspace_id' => 'ws-acme',
                 'kind' => (string) ($entry['kind'] ?? ''),
                 'title' => (string) ($entry['title'] ?? ''),
+                'coverage_focus' => (string) ($entry['coverage_focus'] ?? $entry['title'] ?? ''),
                 'body' => (string) ($entry['body'] ?? $entry['title'] ?? ''),
                 'status' => (string) ($entry['status'] ?? 'draft'),
                 'owner' => (string) ($entry['owner'] ?? ''),
@@ -89,6 +94,7 @@ return new class extends VSlim\Database\Seeder {
                 'workspace_id' => 'ws-nova',
                 'kind' => (string) ($entry['kind'] ?? ''),
                 'title' => (string) ($entry['title'] ?? ''),
+                'coverage_focus' => (string) ($entry['coverage_focus'] ?? $entry['title'] ?? ''),
                 'body' => (string) ($entry['body'] ?? $entry['title'] ?? ''),
                 'status' => (string) ($entry['status'] ?? 'draft'),
                 'owner' => (string) ($entry['owner'] ?? ''),
@@ -100,17 +106,17 @@ return new class extends VSlim\Database\Seeder {
             $this->insertIfMissing('knowledge_releases', 'release-' . $workspaceId, [
                 'id' => 'release-' . $workspaceId,
                 'workspace_id' => $workspaceId,
-                'version' => 'v0.1',
+                'version' => $workspaceId === 'ws-acme' ? '2026.Q2' : '2026.Q2',
                 'status' => 'published',
                 'notes' => $workspaceId === 'ws-acme'
-                    ? '首个公开版本，聚焦退款准入与高频结算问题。'
+                    ? '2026.Q2 版本，聚焦报销运营、结算异常处理与支持到财务的交接流程。'
                     : '首个公开版本，聚焦政策研究引用与摘要规范。',
                 'created_at' => '2026-04-08 00:00:00',
             ]);
             $this->insertIfMissing('assistant_profiles', 'assistant-' . $workspaceId, [
                 'id' => 'assistant-' . $workspaceId,
                 'workspace_id' => $workspaceId,
-                'name' => $workspaceId === 'ws-acme' ? 'Acme Advisor' : 'Nova Desk',
+                'name' => $workspaceId === 'ws-acme' ? 'Acme Operations Brief' : 'Nova Desk',
                 'visibility' => 'public',
                 'created_at' => '2026-04-08 00:00:00',
             ]);
@@ -120,14 +126,32 @@ return new class extends VSlim\Database\Seeder {
             'id' => 'subscriber-acme-1',
             'workspace_id' => 'ws-acme',
             'email' => 'ops-buyer@finco.test',
+            'contact_name' => 'Avery Stone',
+            'company_name' => 'Finco Ops',
+            'source_label' => 'brand_page',
+            'notes' => 'Wants a lightweight starter rollout for reimbursement operations.',
             'status' => 'active',
+            'stage' => 'discovery',
+            'closed_reason' => null,
+            'assignee_user_id' => 'owner-1',
+            'next_followup_at' => '2026-04-17 10:00:00',
+            'updated_at' => '2026-04-08 09:05:00',
             'created_at' => '2026-04-08 09:00:00',
         ]);
         $this->insertIfMissing('subscriber_accounts', 'subscriber-acme-2', [
             'id' => 'subscriber-acme-2',
             'workspace_id' => 'ws-acme',
             'email' => 'research-lead@acmeclient.test',
+            'contact_name' => 'Jamie Xu',
+            'company_name' => 'Acme Client Research',
+            'source_label' => 'brand_page',
+            'notes' => 'Asked for team packaging and export-ready answer packs.',
             'status' => 'active',
+            'stage' => 'proposal',
+            'closed_reason' => null,
+            'assignee_user_id' => 'editor-1',
+            'next_followup_at' => '2026-04-18 14:30:00',
+            'updated_at' => '2026-04-09 11:25:00',
             'created_at' => '2026-04-09 11:20:00',
         ]);
         $this->insertIfMissing('subscriptions', 'subscription-acme-1', [

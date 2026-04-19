@@ -8,7 +8,8 @@
 - 用户登录、session、role-based access
 - 多租户数据隔离
 - 文档导入与异步任务
-- 流式 AI 回答
+- 知识发布与公开消费
+- 可选的流式 AI 回答
 - 实时任务状态更新
 - CLI 辅助运维
 
@@ -115,6 +116,10 @@
 - answer orchestration
 - source citation assembly
 
+备注：
+
+- 这是增强层模块，不应主导当前平台架构和里程碑排序
+
 ### 5.4 Subscription Module
 
 负责：
@@ -143,6 +148,7 @@
 - `knowledge_documents`
 - `knowledge_entries`
 - `knowledge_releases`
+- `release_items`
 - `subscriber_accounts`
 - `subscriptions`
 - `chat_sessions`
@@ -157,11 +163,15 @@
 
 `session auth -> workspace resolver -> role gate -> controller -> view/json`
 
-### 7.2 Public Assistant Request
+### 7.2 Public Knowledge Request
+
+`tenant resolver -> published release resolver -> content lookup -> view render`
+
+### 7.3 Public Assistant Request
 
 `tenant resolver -> subscription gate -> question validation -> answer stream`
 
-### 7.3 Publish Request
+### 7.4 Publish Request
 
 `session auth -> owner/editor role gate -> create release -> enqueue indexing/sync job -> update public assistant target release`
 
@@ -222,4 +232,4 @@
 
 - 可用 mock 或简化检索
 - 可用轻量订阅状态，不接真实支付
-- 优先把多租户、协作、品牌化、流式体验做完整
+- 优先把多租户、协作、品牌化、发布链路做完整

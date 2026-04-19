@@ -3,6 +3,8 @@
 {{fill:footer}}<small>{{ footer_note }}</small>{{/fill}}
 <section class="ks-section">
   <p class="ks-eyebrow">{{ eyebrow | trim }}</p>
+  {{if:workspace_notice}}<div class="ks-notice success">{{ workspace_notice | trim }}</div>{{/if}}
+  {{if:workspace_error}}<div class="ks-notice error">{{ workspace_error | trim }}</div>{{/if}}
   <article class="ks-spotlight">
     <div class="ks-spotlight-grid">
       <div class="ks-spotlight-copy">
@@ -114,12 +116,12 @@
       </div>
       <ul class="ks-list">
 {{for:quick_subscription_recent}}        <li><strong>{{ item.email }}</strong>{{ item.plan }} / {{ item.created_at }}<div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.brand_url }}">回到品牌页承接</a></div></li>{{/for}}
-{{for:quick_questions}}        <li><strong>{{ item.title }}</strong>{{ item.created_at }}<div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.assistant_url }}">回到助手页复查</a></div></li>{{/for}}
+{{for:quick_questions}}        <li><strong>{{ item.title }}</strong>{{ item.created_at }}<div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.assistant_url }}">回到验证页复查</a></div></li>{{/for}}
 {{for:quick_gaps}}        <li><strong>{{ item.title }}</strong>{{ item.signal }} / {{ item.created_at }}<div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.entry_url }}">转成条目草稿</a><a class="ks-btn-secondary" href="{{ item.document_url }}">补来源文档</a></div></li>{{/for}}
       </ul>
       <div class="ks-actions">
         <a class="ks-btn-secondary" href="{{ public_url | trim }}">回到品牌页承接</a>
-        <a class="ks-btn-secondary" href="{{ public_assistant_url | trim }}">回到助手页验证</a>
+        <a class="ks-btn-secondary" href="{{ public_assistant_url | trim }}">回到验证页检查</a>
       </div>
     </article>
   </div>
@@ -133,7 +135,7 @@
       </ul>
       <h3>{{ recent_questions_title | trim }}</h3>
       <ul class="ks-list">
-{{for:recent_questions}}        <li><strong>{{ item.title }}</strong>{{ item.created_at }}<div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.assistant_url }}">回到助手页复查</a></div></li>{{/for}}
+{{for:recent_questions}}        <li><strong>{{ item.title }}</strong>{{ item.created_at }}<div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.assistant_url }}">回到验证页复查</a></div></li>{{/for}}
       </ul>
       <h3>{{ knowledge_gaps_title | trim }}</h3>
       <div class="ks-stack">
@@ -159,18 +161,18 @@
       </div>
       <h3>{{ recent_documents_title | trim }}</h3>
       <ul class="ks-list">
-{{for:documents}}        <li><strong>{{ item.title }}</strong>{{ item.status }} / chunks={{ item.chunks }}</li>{{/for}}
+{{for:documents}}        <li><strong>{{ item.title }}</strong>{{ item.status }} / chunks={{ item.chunks }}<div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.edit_url }}">{{ recent_document_cta | trim }}</a></div></li>{{/for}}
       </ul>
       <h3>{{ recent_entries_title | trim }}</h3>
       <ul class="ks-list">
-{{for:entries}}        <li><strong>{{ item.title }}</strong>{{ item.kind }} / {{ item.status }}</li>{{/for}}
+{{for:entries}}        <li><strong>{{ item.title }}</strong>{{ item.kind }} / {{ item.status }}<div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.edit_url }}">{{ recent_entry_cta | trim }}</a></div></li>{{/for}}
       </ul>
     </article>
   </div>
   <div class="ks-grid two">
     <article class="ks-card">
       <h2>{{ creation_title | default('创作与发布') | trim }}</h2>
-      <p class="ks-copy">{{ creation_body | default('来源文档和标准答案都应该朝同一个发布关口收敛，再进入公开页和助手页验证。') | trim }}</p>
+      <p class="ks-copy">{{ creation_body | default('来源文档和标准答案都应该朝同一个发布关口收敛，再进入公开知识面和验证页检查。') | trim }}</p>
       <div class="ks-stack">
 {{for:priority_queue}}        <article class="ks-result-card"><strong>{{ item.priority }} {{ item.title }}</strong><p class="ks-copy">{{ item.body }}</p><div class="ks-actions"><a class="ks-btn-secondary" href="{{ item.target_url }}">{{ item.cta }}</a></div></article>{{/for}}
       </div>
@@ -203,7 +205,7 @@
       <h2>{{ brand_growth_title | default('品牌与传播') | trim }}</h2>
       <p class="ks-copy">{{ brand_growth_body | default('公开品牌页不是装饰，而是团队对外分享、验证价值和承接线索的传播入口。') | trim }}</p>
       <ul class="ks-list">
-        <li><strong>{{ brand_story_title | default('公开表达与产品包装') | trim }}</strong>{{ brand_story_body | default('让品牌页、助手入口和订阅方案始终讲同一个服务故事，降低外部理解成本。') | trim }}</li>
+        <li><strong>{{ brand_story_title | default('公开表达与产品包装') | trim }}</strong>{{ brand_story_body | default('让公开知识面、验证入口和订阅方案始终讲同一个服务故事，降低外部理解成本。') | trim }}</li>
         <li><strong>{{ publish_center_title | trim }}</strong>{{ publish_center_body | trim }}</li>
         <li><strong>{{ subscription_mix_title | trim }}</strong>{{ settings_body | trim }}</li>
       </ul>
@@ -218,7 +220,7 @@
     </article>
     <article class="ks-card">
       <h2>{{ distribution_title | default('分享与扩散') | trim }}</h2>
-      <p class="ks-copy">{{ distribution_body | default('把品牌页和助手页当成销售、交付、研究和客户成功都能使用的对外传播面。') | trim }}</p>
+      <p class="ks-copy">{{ distribution_body | default('把品牌页和验证页当成销售、交付、研究和客户成功都能使用的对外传播面。') | trim }}</p>
       <ul class="ks-list">
         <li><strong>{{ next_one_title | trim }}</strong>{{ next_one_body | trim }}</li>
         <li><strong>{{ next_two_title | trim }}</strong>{{ next_two_body | trim }}</li>
@@ -227,7 +229,7 @@
       <div class="ks-actions">
         <a class="ks-btn-secondary" href="{{ public_url | trim }}">{{ share_brand_cta | default('分享品牌页') | trim }}</a>
         <a class="ks-btn-secondary" href="{{ public_url | trim }}">{{ brand_cta | trim }}</a>
-        <a class="ks-btn-secondary" href="{{ public_assistant_url | trim }}">{{ assistant_preview_cta | default('打开助手页') | trim }}</a>
+        <a class="ks-btn-secondary" href="{{ public_assistant_url | trim }}">{{ assistant_preview_cta | default('打开验证页') | trim }}</a>
       </div>
     </article>
   </div>

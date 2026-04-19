@@ -92,6 +92,61 @@ final class LocalizedUrlBuilder
         return $this->path('/console/members', $locale);
     }
 
+    public function consoleSubscribers(string $locale): string
+    {
+        return $this->path('/console/subscribers', $locale);
+    }
+
+    public function consoleSubscriberDetail(string $subscriberId, string $locale): string
+    {
+        return $this->path('/console/subscribers/' . trim($subscriberId), $locale);
+    }
+
+    public function consoleSubscriberStatus(string $subscriberId, string $locale): string
+    {
+        return $this->path('/console/subscribers/' . trim($subscriberId) . '/status', $locale);
+    }
+
+    public function consoleSubscriberFollowups(string $subscriberId, string $locale): string
+    {
+        return $this->path('/console/subscribers/' . trim($subscriberId) . '/followups', $locale);
+    }
+
+    public function consoleSubscriberProvisioning(string $subscriberId, string $locale): string
+    {
+        return $this->path('/console/subscribers/' . trim($subscriberId) . '/provisioning', $locale);
+    }
+
+    public function consoleSubscriberProvisioningComplete(string $subscriberId, string $itemId, string $locale): string
+    {
+        return $this->path('/console/subscribers/' . trim($subscriberId) . '/provisioning/' . trim($itemId) . '/complete', $locale);
+    }
+
+    public function consoleMemberRole(string $memberId, string $locale): string
+    {
+        return $this->path('/console/members/' . trim($memberId) . '/role', $locale);
+    }
+
+    public function consoleMemberRemove(string $memberId, string $locale): string
+    {
+        return $this->path('/console/members/' . trim($memberId) . '/remove', $locale);
+    }
+
+    public function consoleAccount(string $locale): string
+    {
+        return $this->path('/console/account', $locale);
+    }
+
+    public function consoleAccountPassword(string $locale): string
+    {
+        return $this->path('/console/account/password', $locale);
+    }
+
+    public function consoleWorkspaceSwitch(string $locale): string
+    {
+        return $this->path('/console/workspace', $locale);
+    }
+
     public function consoleJobs(string $locale): string
     {
         return $this->path('/console/ops/jobs', $locale);
@@ -141,14 +196,33 @@ final class LocalizedUrlBuilder
         return $this->path('/brand/' . trim($slug) . '/entries/' . trim($entryId), $locale);
     }
 
-    public function assistant(string $slug, string $locale, string $question = ''): string
+    public function validation(string $slug, string $locale, string $question = ''): string
     {
         $params = [];
         if ($question !== '') {
             $params['q'] = $question;
         }
 
-        return $this->assistantWithQuery($slug, $locale, $params);
+        return $this->validationWithQuery($slug, $locale, $params);
+    }
+
+    /**
+     * @param array<string, string> $params
+     */
+    public function validationWithQuery(string $slug, string $locale, array $params = []): string
+    {
+        $path = '/brand/' . trim($slug) . '/validation';
+        $query = http_build_query(array_filter($params, static fn (string $value): bool => trim($value) !== ''));
+        if ($query !== '') {
+            $path .= '?' . $query;
+        }
+
+        return $this->path($path, $locale);
+    }
+
+    public function assistant(string $slug, string $locale, string $question = ''): string
+    {
+        return $this->validation($slug, $locale, $question);
     }
 
     /**
@@ -156,12 +230,6 @@ final class LocalizedUrlBuilder
      */
     public function assistantWithQuery(string $slug, string $locale, array $params = []): string
     {
-        $path = '/brand/' . trim($slug) . '/assistant';
-        $query = http_build_query(array_filter($params, static fn (string $value): bool => trim($value) !== ''));
-        if ($query !== '') {
-            $path .= '?' . $query;
-        }
-
-        return $this->path($path, $locale);
+        return $this->validationWithQuery($slug, $locale, $params);
     }
 }

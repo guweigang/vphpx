@@ -1,9 +1,38 @@
 import { LitElement, html } from "lit";
-import { Editor, defaultValueCtx, rootCtx } from "@milkdown/kit/core";
-import { commonmark } from "@milkdown/kit/preset/commonmark";
+import { Editor, commandsCtx, defaultValueCtx, editorViewCtx, rootCtx } from "@milkdown/kit/core";
+import {
+  commonmark,
+  createCodeBlockCommand,
+  toggleEmphasisCommand,
+  toggleLinkCommand,
+  toggleStrongCommand,
+  turnIntoTextCommand,
+  wrapInBlockquoteCommand,
+  wrapInBulletListCommand,
+  wrapInHeadingCommand,
+  wrapInOrderedListCommand
+} from "@milkdown/kit/preset/commonmark";
+import {
+  addColAfterCommand,
+  addRowAfterCommand,
+  deleteSelectedCellsCommand,
+  gfm,
+  insertTableCommand,
+  selectColCommand,
+  selectRowCommand
+} from "@milkdown/kit/preset/gfm";
+import { linkTooltipPlugin } from "@milkdown/kit/component/link-tooltip";
 import { listener, listenerCtx } from "@milkdown/kit/plugin/listener";
+import { SlashProvider, slashFactory } from "@milkdown/kit/plugin/slash";
 import { replaceAll } from "@milkdown/kit/utils";
+import { TextSelection } from "@milkdown/kit/prose/state";
 import "@milkdown/kit/prose/view/style/prosemirror.css";
+import { basicSetup } from "codemirror";
+import { EditorState as CodeMirrorState } from "@codemirror/state";
+import { EditorView as CodeMirrorView } from "@codemirror/view";
+import { markdown as codeMirrorMarkdown } from "@codemirror/lang-markdown";
+
+const documentSlashPlugin = slashFactory("KS_DOC");
 
 class KsDocumentEditorIntake extends LitElement {
   static properties = {
@@ -28,6 +57,18 @@ class KsDocumentEditorIntake extends LitElement {
   #editor: Editor | null = null;
   #editorBoot: Promise<void> | null = null;
   #editorRoot: HTMLDivElement | null = null;
+  #slashProvider: SlashProvider | null = null;
+  #slashMenuItems: HTMLDivElement[] = [];
+  #slashActiveIndex = 0;
+  #sourceEditor: CodeMirrorView | null = null;
+  #sourceSyncing = false;
+  #tableSupport = false;
+  #tableHoverCell: HTMLTableCellElement | null = null;
+  #tableRowButton: HTMLButtonElement | null = null;
+  #tableColButton: HTMLButtonElement | null = null;
+  #tableControlsHover = false;
+  #tableHideTimer: number | null = null;
+  #editorNotice = "";
   #boundListener?: EventListener;
   #lastMarkdown = "";
   #bootstrappedDraft = false;
@@ -50,16 +91,20 @@ class KsDocumentEditorIntake extends LitElement {
     window.removeEventListener("vphp:live:props", this.#handleRuntimeRefresh);
     this.#unbindFields();
     void this.#destroyEditor();
+    this.#destroySourceEditor();
+    this.#destroyTableEdgeControls();
     super.disconnectedCallback();
   }
 
   protected firstUpdated(): void {
     this.#bindFields();
+    this.#ensureSourceEditor();
     void this.#ensureEditor();
   }
 
   protected updated(): void {
     this.#editorRoot = this.querySelector<HTMLDivElement>("[data-milkdown-root]");
+    this.#ensureSourceEditor();
     void this.#ensureEditor();
   }
 
@@ -228,6 +273,22 @@ class KsDocumentEditorIntake extends LitElement {
           border-color: #201a17;
         }
 
+        .ks-form .ks-md-tab:hover,
+        .ks-md-tab:hover {
+          color: #3a2d22;
+          border-color: rgba(69, 53, 35, 0.22);
+          background: rgba(255, 252, 247, 0.96);
+          -webkit-text-fill-color: currentColor;
+        }
+
+        .ks-form .ks-md-tab.active:hover,
+        .ks-md-tab.active:hover {
+          color: #fff8ef;
+          background: #201a17;
+          border-color: #201a17;
+          -webkit-text-fill-color: currentColor;
+        }
+
         .ks-md-panel {
           display: none;
         }
@@ -251,25 +312,74 @@ class KsDocumentEditorIntake extends LitElement {
         }
 
         .ks-md-root {
+          position: relative;
           padding: 1.1rem 1.2rem 1.35rem;
+        }
+
+        .ks-md-table-edge {
+          position: absolute;
+          z-index: 12;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          min-width: 28px;
+          height: 28px;
+          border: 1px solid rgba(69, 53, 35, 0.16);
+          border-radius: 999px;
+          background: rgba(255, 252, 247, 0.98);
+          color: #2f241c;
+          font: 700 0.78rem/1 "IBM Plex Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+          box-shadow: 0 10px 20px rgba(52, 43, 32, 0.12);
+          cursor: pointer;
         }
 
         .ks-md-source-wrap {
           padding: 1rem 1.2rem 1.35rem;
         }
 
-        .ks-md-source {
-          width: 100%;
-          min-height: 600px;
-          resize: vertical;
+        .ks-md-source-editor {
+          height: 520px;
           border: 1px solid rgba(69, 53, 35, 0.14);
           border-radius: 22px;
-          background: rgba(255, 255, 255, 0.94);
-          padding: 1.1rem 1.15rem;
-          color: #241c16;
-          font: 500 15px/1.75 "SFMono-Regular", "Menlo", "Consolas", monospace;
-          outline: none;
+          background: rgba(255, 255, 255, 0.96);
           box-shadow: inset 0 1px 2px rgba(28, 25, 22, 0.04);
+          overflow: hidden;
+        }
+
+        .ks-md-source-editor .cm-editor {
+          height: 100%;
+          background: transparent;
+          color: #241c16;
+        }
+
+        .ks-md-source-editor .cm-scroller {
+          overflow: auto;
+          font: 500 15px/1.75 "SFMono-Regular", "Menlo", "Consolas", monospace;
+        }
+
+        .ks-md-source-editor .cm-content,
+        .ks-md-source-editor .cm-gutterElement {
+          font: inherit;
+        }
+
+        .ks-md-source-editor .cm-content {
+          padding: 1.1rem 1.15rem 2rem;
+          caret-color: #241c16;
+        }
+
+        .ks-md-source-editor .cm-lineNumbers {
+          color: #b6a894;
+          background: rgba(247, 239, 227, 0.72);
+          border-right: 1px solid rgba(69, 53, 35, 0.08);
+        }
+
+        .ks-md-source-editor .cm-activeLine,
+        .ks-md-source-editor .cm-activeLineGutter {
+          background: rgba(15, 118, 110, 0.06);
+        }
+
+        .ks-md-source-editor .cm-cursor {
+          border-left-color: #241c16;
         }
 
         .ks-md-root .milkdown {
@@ -315,13 +425,42 @@ class KsDocumentEditorIntake extends LitElement {
         .ks-md-root .ProseMirror blockquote {
           margin: 1rem 0;
           padding: 0.35rem 0 0.35rem 1rem;
+          background: rgba(247, 239, 227, 0.46);
           border-left: 3px solid rgba(111, 88, 64, 0.28);
+          border-radius: 0 14px 14px 0;
           color: #6c5b49;
+        }
+
+        .ks-md-root .ProseMirror blockquote > :first-child {
+          margin-top: 0;
+        }
+
+        .ks-md-root .ProseMirror blockquote > :last-child {
+          margin-bottom: 0;
         }
 
         .ks-md-root .ProseMirror ul,
         .ks-md-root .ProseMirror ol {
           padding-left: 1.3rem;
+        }
+
+        .ks-md-root .ProseMirror table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 1rem 0 1.2rem;
+          table-layout: fixed;
+        }
+
+        .ks-md-root .ProseMirror th,
+        .ks-md-root .ProseMirror td {
+          border: 1px solid rgba(69, 53, 35, 0.16);
+          padding: 0.72rem 0.8rem;
+          vertical-align: top;
+        }
+
+        .ks-md-root .ProseMirror th {
+          background: rgba(247, 239, 227, 0.88);
+          font-weight: 700;
         }
 
         @media (max-width: 800px) {
@@ -345,15 +484,25 @@ class KsDocumentEditorIntake extends LitElement {
             <span class="ks-md-badge soft">${this.helperPrefix} ${this.#title.trim() || label}</span>
             <span class="ks-md-badge soft">summary ${this.#summary.trim().length}</span>
             <span class="ks-md-badge soft">body ${this.#body.trim().length}</span>
+            ${this.#editorNotice !== "" ? html`<span class="ks-md-badge soft">${this.#editorNotice}</span>` : ""}
           </div>
           <p class="ks-md-hint">正文区现在是全宽主编辑面，可在 Markdown 源码与所见即所得之间切换。</p>
         </div>
         <div class="ks-md-toolbar">
           <button class="ks-md-tool primary" type="button" @click=${() => this.#applyStarterDraft()}>生成 Markdown 草稿</button>
-          <button class="ks-md-tool" type="button" @click=${() => this.#wrapSelection("## ", "")}>H2 标题</button>
-          <button class="ks-md-tool" type="button" @click=${() => this.#wrapSelection("**", "**")}>加粗</button>
-          <button class="ks-md-tool" type="button" @click=${() => this.#insertSnippet("- 要点一\\n- 要点二\\n- 要点三")}>列表</button>
-          <button class="ks-md-tool" type="button" @click=${() => this.#insertSnippet("> 引用一句来自审批手册或客服口径的说明")}>引用</button>
+          <button class="ks-md-tool" type="button" @click=${() => this.#applyHeading(2)}>H2 标题</button>
+          <button class="ks-md-tool" type="button" @click=${() => this.#applyHeading(3)}>H3 标题</button>
+          <button class="ks-md-tool" type="button" @click=${() => this.#toggleStrong()}>加粗</button>
+          <button class="ks-md-tool" type="button" @click=${() => this.#toggleEmphasis()}>斜体</button>
+          <button class="ks-md-tool" type="button" @click=${() => this.#toggleBulletList()}>列表</button>
+          <button class="ks-md-tool" type="button" @click=${() => this.#toggleOrderedList()}>编号</button>
+          <button class="ks-md-tool" type="button" @click=${() => this.#toggleBlockquote()}>引用</button>
+          <button class="ks-md-tool" type="button" @click=${() => this.#insertTable()}>表格</button>
+          <button class="ks-md-tool" type="button" @click=${() => this.#deleteTableRow()}>删行</button>
+          <button class="ks-md-tool" type="button" @click=${() => this.#deleteTableCol()}>删列</button>
+          <button class="ks-md-tool" type="button" @click=${() => this.#toggleHeaderRow()}>表头行</button>
+          <button class="ks-md-tool" type="button" @click=${() => this.#toggleCodeBlock()}>代码块</button>
+          <button class="ks-md-tool" type="button" @click=${() => this.#insertLink()}>链接</button>
         </div>
         <div class="ks-md-stage">
           <div class="ks-md-stage-head">
@@ -369,12 +518,7 @@ class KsDocumentEditorIntake extends LitElement {
           </div>
           <div class=${this.#mode === "source" ? "ks-md-panel active" : "ks-md-panel"}>
             <div class="ks-md-source-wrap">
-              <textarea
-                class="ks-md-source"
-                .value=${this.#body}
-                @input=${this.#handleSourceInput}
-                spellcheck="false"
-              ></textarea>
+              <div class="ks-md-source-editor" data-source-root></div>
             </div>
           </div>
           <div class=${this.#mode === "wysiwyg" ? "ks-md-panel active" : "ks-md-panel"}>
@@ -407,24 +551,22 @@ class KsDocumentEditorIntake extends LitElement {
 
     this.#editorBoot = (async () => {
       try {
-        const editor = Editor.make()
-          .config((ctx) => {
-            ctx.set(rootCtx, this.#editorRoot as HTMLDivElement);
-            ctx.set(defaultValueCtx, bodyField.value || "");
-          })
-          .use(commonmark)
-          .use(listener)
-          .config((ctx) => {
-            ctx.get(listenerCtx).markdownUpdated((_ctx, markdown) => {
-              this.#lastMarkdown = markdown;
-              this.#writeBody(markdown, true);
-            });
-          });
-        this.#editor = await editor.create();
+        try {
+          this.#editor = await this.#buildEditor(bodyField.value || "", "gfm").create();
+          this.#tableSupport = true;
+          this.#editorNotice = "GFM table enabled";
+        } catch (error) {
+          console.warn("milkdown_gfm_boot_failed_fallback", error);
+          this.#editor = await this.#buildEditor(bodyField.value || "", "commonmark").create();
+          this.#tableSupport = false;
+          this.#editorNotice = `GFM fallback: ${error instanceof Error ? error.message : String(error)}`;
+        }
         this.#lastMarkdown = bodyField.value || "";
+        this.#ensureTableEdgeControls();
         this.requestUpdate();
       } catch (error) {
         console.error("milkdown_boot_failed", error);
+        this.#editorNotice = `Editor boot failed: ${error instanceof Error ? error.message : String(error)}`;
         this.#showBodyField(bodyField);
       } finally {
         this.#editorBoot = null;
@@ -439,6 +581,8 @@ class KsDocumentEditorIntake extends LitElement {
     }
     const editor = this.#editor;
     this.#editor = null;
+    this.#slashProvider = null;
+    this.#tableHoverCell = null;
     await editor.destroy();
   }
 
@@ -531,6 +675,7 @@ class KsDocumentEditorIntake extends LitElement {
     }
     this.#lastMarkdown = nextValue;
     this.#editor.action(replaceAll(nextValue, true));
+    this.#syncSourceEditor(nextValue);
     this.requestUpdate();
   }
 
@@ -546,6 +691,7 @@ class KsDocumentEditorIntake extends LitElement {
       }
     }
     this.#syncFields();
+    this.#syncSourceEditor(markdown);
     this.requestUpdate();
   }
 
@@ -579,6 +725,19 @@ class KsDocumentEditorIntake extends LitElement {
   }
 
   #insertSnippet(snippet: string): void {
+    if (this.#mode === "source" && this.#sourceEditor) {
+      const view = this.#sourceEditor;
+      const { from, to } = view.state.selection.main;
+      const selected = view.state.sliceDoc(from, to);
+      const needsPadding = selected === "" && from > 0;
+      const insert = `${needsPadding ? "\n\n" : ""}${snippet}`;
+      view.dispatch({
+        changes: { from, to, insert },
+        selection: { anchor: from + insert.length }
+      });
+      view.focus();
+      return;
+    }
     const current = this.#body ?? "";
     const prefix = current.trim() === "" ? "" : "\n\n";
     this.#writeBody(`${current}${prefix}${snippet}`, true);
@@ -586,24 +745,17 @@ class KsDocumentEditorIntake extends LitElement {
   }
 
   #wrapSelection(prefix: string, suffix: string): void {
-    const source = this.querySelector<HTMLTextAreaElement>(".ks-md-source");
-    if (this.#mode === "source" && source) {
-      const current = source.value ?? "";
-      const start = source.selectionStart ?? current.length;
-      const end = source.selectionEnd ?? current.length;
-      const selected = current.slice(start, end) || "内容";
-      const next = `${current.slice(0, start)}${prefix}${selected}${suffix}${current.slice(end)}`;
-      this.#writeBody(next, true);
-      requestAnimationFrame(() => {
-        const updated = this.querySelector<HTMLTextAreaElement>(".ks-md-source");
-        if (!updated) {
-          return;
-        }
-        const cursor = start + prefix.length + selected.length + suffix.length;
-        updated.focus();
-        updated.setSelectionRange(cursor, cursor);
+    if (this.#mode === "source" && this.#sourceEditor) {
+      const view = this.#sourceEditor;
+      const { from, to } = view.state.selection.main;
+      const selected = view.state.sliceDoc(from, to) || "内容";
+      const insert = `${prefix}${selected}${suffix}`;
+      const cursor = from + insert.length;
+      view.dispatch({
+        changes: { from, to, insert },
+        selection: { anchor: cursor }
       });
-      void this.#syncExternalBodyIntoEditor();
+      view.focus();
       return;
     }
 
@@ -612,6 +764,594 @@ class KsDocumentEditorIntake extends LitElement {
     this.#writeBody(next, true);
     void this.#syncExternalBodyIntoEditor();
   }
+
+  #applyHeading(level: 2 | 3): void {
+    if (this.#mode === "source") {
+      this.#wrapSelection("#".repeat(level) + " ", "");
+      return;
+    }
+    this.#runCommand(wrapInHeadingCommand.key, level);
+  }
+
+  #toggleStrong(): void {
+    if (this.#mode === "source") {
+      this.#wrapSelection("**", "**");
+      return;
+    }
+    this.#runCommand(toggleStrongCommand.key);
+  }
+
+  #toggleEmphasis(): void {
+    if (this.#mode === "source") {
+      this.#wrapSelection("*", "*");
+      return;
+    }
+    this.#runCommand(toggleEmphasisCommand.key);
+  }
+
+  #toggleBulletList(): void {
+    if (this.#mode === "source") {
+      this.#insertSnippet("- 要点一\n- 要点二\n- 要点三");
+      return;
+    }
+    this.#runCommand(wrapInBulletListCommand.key);
+  }
+
+  #toggleOrderedList(): void {
+    if (this.#mode === "source") {
+      this.#insertSnippet("1. 第一步\n2. 第二步\n3. 第三步");
+      return;
+    }
+    this.#runCommand(wrapInOrderedListCommand.key);
+  }
+
+  #toggleBlockquote(): void {
+    if (this.#mode === "source") {
+      this.#insertSnippet("> 引用一句来自审批手册或客服口径的说明");
+      return;
+    }
+    this.#runCommand(wrapInBlockquoteCommand.key);
+  }
+
+  #toggleCodeBlock(): void {
+    if (this.#mode === "source") {
+      this.#insertSnippet("```md\n在这里补充代码块或结构化片段\n```");
+      return;
+    }
+    this.#runCommand(createCodeBlockCommand.key, "md");
+  }
+
+  #insertTable(): void {
+    if (this.#mode === "source") {
+      this.#insertTableSnippet();
+      return;
+    }
+    if (this.#tableSupport) {
+      this.#runCommand(insertTableCommand.key, { row: 3, col: 3 });
+      return;
+    }
+    this.#insertTableSnippet();
+  }
+
+  #deleteTableRow(): void {
+    this.#withActiveTableContext((ctx, _view, table) => {
+      ctx.get(commandsCtx).call(selectRowCommand.key as never, { index: table.rowIndex } as never);
+      ctx.get(commandsCtx).call(deleteSelectedCellsCommand.key as never);
+      this.#editorNotice = "已删除当前行";
+      this.#hideTableEdgeControls();
+    }, "请先把光标放到表格行内");
+  }
+
+  #deleteTableCol(): void {
+    this.#withActiveTableContext((ctx, _view, table) => {
+      ctx.get(commandsCtx).call(selectColCommand.key as never, { index: table.colIndex } as never);
+      ctx.get(commandsCtx).call(deleteSelectedCellsCommand.key as never);
+      this.#editorNotice = "已删除当前列";
+      this.#hideTableEdgeControls();
+    }, "请先把光标放到表格列内");
+  }
+
+  #toggleHeaderRow(): void {
+    this.#withActiveTableContext((_ctx, view, table) => {
+      const { state } = view;
+      const tableNode = state.doc.nodeAt(table.tablePos);
+      if (!tableNode || tableNode.childCount === 0) {
+        this.#editorNotice = "当前表格没有可切换的首行";
+        return;
+      }
+      const firstRow = tableNode.firstChild;
+      const headerRowType = state.schema.nodes.table_header_row;
+      const rowType = state.schema.nodes.table_row;
+      const headerCellType = state.schema.nodes.table_header;
+      const cellType = state.schema.nodes.table_cell;
+      if (!firstRow || !headerRowType || !rowType || !headerCellType || !cellType) {
+        this.#editorNotice = "当前表格 schema 不支持表头切换";
+        return;
+      }
+      const turningOn = firstRow.type !== headerRowType;
+      const nextRowType = turningOn ? headerRowType : rowType;
+      const nextCellType = turningOn ? headerCellType : cellType;
+      const nextCells: Array<unknown> = [];
+      firstRow.forEach((cell) => {
+        nextCells.push(nextCellType.create(cell.attrs, cell.content, cell.marks));
+      });
+      const nextRow = nextRowType.create(firstRow.attrs, nextCells, firstRow.marks);
+      const firstRowPos = table.tablePos + 1;
+      let tr = state.tr.replaceWith(firstRowPos, firstRowPos + firstRow.nodeSize, nextRow);
+      const focusPos = Math.min(firstRowPos + 2, tr.doc.content.size);
+      tr = tr.setSelection(TextSelection.near(tr.doc.resolve(focusPos))).scrollIntoView();
+      view.dispatch(tr);
+      this.#editorNotice = turningOn ? "已启用表头行" : "已切回普通首行";
+    }, "请先把光标放到表格里");
+  }
+
+  #insertLink(): void {
+    const href = window.prompt("输入链接 URL", "https://");
+    if (!href || href.trim() === "") {
+      return;
+    }
+    if (this.#mode === "source") {
+      this.#wrapSelection("[", `](${href.trim()})`);
+      return;
+    }
+    this.#runCommand(toggleLinkCommand.key, { href: href.trim() });
+  }
+
+  #runCommand(commandKey: string | symbol, payload?: unknown): void {
+    if (!this.#editor) {
+      return;
+    }
+    this.#editor.action((ctx) => {
+      ctx.get(commandsCtx).call(commandKey as never, payload as never);
+      ctx.get(editorViewCtx).focus();
+      return true;
+    });
+  }
+
+  #withActiveTableContext(
+    action: (ctx: any, view: any, table: { tablePos: number; rowIndex: number; colIndex: number; cellPos: number }) => void,
+    missingNotice: string
+  ): void {
+    if (this.#mode === "source") {
+      this.#editorNotice = "请在所见即所得表格中操作";
+      this.requestUpdate();
+      return;
+    }
+    if (!this.#editor || !this.#tableSupport) {
+      this.#editorNotice = "当前编辑器还没有启用表格命令";
+      this.requestUpdate();
+      return;
+    }
+    this.#editor.action((ctx) => {
+      const view = ctx.get(editorViewCtx);
+      const table = this.#resolveActiveTableCell(view);
+      if (!table) {
+        this.#editorNotice = missingNotice;
+        this.requestUpdate();
+        return true;
+      }
+      const selection = TextSelection.near(view.state.doc.resolve(Math.min(table.cellPos + 1, view.state.doc.content.size)));
+      view.dispatch(view.state.tr.setSelection(selection));
+      action(ctx, view, table);
+      view.focus();
+      this.requestUpdate();
+      return true;
+    });
+  }
+
+  #resolveActiveTableCell(view: any): { tablePos: number; rowIndex: number; colIndex: number; cellPos: number } | null {
+    const hoveredCell = this.#tableHoverCell;
+    let $pos = view.state.selection.$from;
+    if (hoveredCell) {
+      try {
+        const hoveredPos = view.posAtDOM(hoveredCell, 0);
+        $pos = view.state.doc.resolve(Math.min(hoveredPos + 1, view.state.doc.content.size));
+      } catch {
+        $pos = view.state.selection.$from;
+      }
+    }
+
+    let tableDepth = -1;
+    let rowDepth = -1;
+    let cellDepth = -1;
+    for (let depth = $pos.depth; depth > 0; depth -= 1) {
+      const name = $pos.node(depth).type.name;
+      if (tableDepth === -1 && name === "table") {
+        tableDepth = depth;
+      }
+      if (rowDepth === -1 && (name === "table_row" || name === "table_header_row")) {
+        rowDepth = depth;
+      }
+      if (cellDepth === -1 && (name === "table_cell" || name === "table_header")) {
+        cellDepth = depth;
+      }
+    }
+    if (tableDepth === -1 || rowDepth === -1 || cellDepth === -1) {
+      return null;
+    }
+
+    const tableNode = $pos.node(tableDepth);
+    const rowNode = $pos.node(rowDepth);
+    const tableStart = $pos.start(tableDepth);
+    const rowStart = $pos.start(rowDepth);
+    const rowOffset = $pos.before(rowDepth) - tableStart;
+    const cellOffset = $pos.before(cellDepth) - rowStart;
+    let rowIndex = 0;
+    let colIndex = 0;
+
+    tableNode.forEach((_node, offset, index) => {
+      if (offset === rowOffset) {
+        rowIndex = index;
+      }
+    });
+    rowNode.forEach((_node, offset, index) => {
+      if (offset === cellOffset) {
+        colIndex = index;
+      }
+    });
+
+    return {
+      tablePos: $pos.before(tableDepth),
+      rowIndex,
+      colIndex,
+      cellPos: $pos.before(cellDepth)
+    };
+  }
+
+  #runSlashCommand(commandKey: string | symbol, payload?: unknown): void {
+    if (!this.#editor) {
+      return;
+    }
+    this.#editor.action((ctx) => {
+      const view = ctx.get(editorViewCtx);
+      const { state } = view;
+      const { from, empty } = state.selection;
+      if (empty && from > 1) {
+        const previous = state.doc.textBetween(from - 1, from, undefined, "\ufffc");
+        if (previous === "/") {
+          view.dispatch(state.tr.delete(from - 1, from));
+        }
+      }
+      ctx.get(commandsCtx).call(commandKey as never, payload as never);
+      view.focus();
+      return true;
+    });
+    this.#slashProvider?.hide();
+  }
+
+  #runSlashAction(action: () => void): void {
+    if (this.#editor) {
+      this.#editor.action((ctx) => {
+        const view = ctx.get(editorViewCtx);
+        const { state } = view;
+        const { from, empty } = state.selection;
+        if (empty && from > 1) {
+          const previous = state.doc.textBetween(from - 1, from, undefined, "\ufffc");
+          if (previous === "/") {
+            view.dispatch(state.tr.delete(from - 1, from));
+          }
+        }
+        view.focus();
+        return true;
+      });
+    }
+    action();
+    this.#slashProvider?.hide();
+  }
+
+  #resetParagraph(): void {
+    if (this.#mode === "source") {
+      return;
+    }
+    this.#runCommand(turnIntoTextCommand.key);
+  }
+
+  #buildEditor(initialValue: string, preset: "commonmark" | "gfm"): Editor {
+    return Editor.make()
+      .config((ctx) => {
+        ctx.set(rootCtx, this.#editorRoot as HTMLDivElement);
+        ctx.set(defaultValueCtx, initialValue);
+        ctx.set(documentSlashPlugin.key, {
+          view: () => {
+            const content = this.#createSlashMenu();
+            const provider = new SlashProvider({
+              content,
+              debounce: 0,
+              offset: 12,
+              root: this
+            });
+            provider.onShow = () => {
+              content.style.display = "block";
+              this.#activateSlashItem(0);
+              window.addEventListener("keydown", this.#handleSlashKeydown, true);
+            };
+            provider.onHide = () => {
+              content.style.display = "none";
+              window.removeEventListener("keydown", this.#handleSlashKeydown, true);
+            };
+            this.#slashProvider = provider;
+            return {
+              update: (updatedView, prevState) => provider.update(updatedView, prevState),
+              destroy: () => {
+                provider.destroy();
+                window.removeEventListener("keydown", this.#handleSlashKeydown, true);
+                content.remove();
+                if (this.#slashProvider === provider) {
+                  this.#slashProvider = null;
+                }
+              }
+            };
+          }
+        });
+      })
+      .use(commonmark)
+      .use(preset === "gfm" ? gfm : [])
+      .use(linkTooltipPlugin)
+      .use(documentSlashPlugin)
+      .use(listener)
+      .config((ctx) => {
+        ctx.get(listenerCtx).markdownUpdated((_ctx, markdown) => {
+          this.#lastMarkdown = markdown;
+          this.#writeBody(markdown, true);
+        });
+      });
+  }
+
+  #insertTableSnippet(): void {
+    this.#insertSnippet("| 列 1 | 列 2 | 列 3 |\n| --- | --- | --- |\n| 内容 | 内容 | 内容 |\n| 内容 | 内容 | 内容 |");
+  }
+
+  #ensureTableEdgeControls(): void {
+    if (!this.#editorRoot || this.#tableRowButton || this.#tableColButton) {
+      return;
+    }
+    const rowButton = document.createElement("button");
+    rowButton.type = "button";
+    rowButton.className = "ks-md-table-edge";
+    rowButton.textContent = "+行";
+    rowButton.addEventListener("mousedown", (event) => event.preventDefault());
+    rowButton.addEventListener("click", () => this.#runTableEdgeCommand(addRowAfterCommand.key));
+    rowButton.addEventListener("mouseenter", this.#handleTableControlEnter);
+    rowButton.addEventListener("mouseleave", this.#handleTableControlLeave);
+
+    const colButton = document.createElement("button");
+    colButton.type = "button";
+    colButton.className = "ks-md-table-edge";
+    colButton.textContent = "+列";
+    colButton.addEventListener("mousedown", (event) => event.preventDefault());
+    colButton.addEventListener("click", () => this.#runTableEdgeCommand(addColAfterCommand.key));
+    colButton.addEventListener("mouseenter", this.#handleTableControlEnter);
+    colButton.addEventListener("mouseleave", this.#handleTableControlLeave);
+
+    this.#editorRoot.append(rowButton, colButton);
+    this.#tableRowButton = rowButton;
+    this.#tableColButton = colButton;
+    this.#editorRoot.addEventListener("mousemove", this.#handleTableHover);
+    this.#editorRoot.addEventListener("mouseleave", this.#hideTableEdgeControls);
+  }
+
+  #destroyTableEdgeControls(): void {
+    if (this.#editorRoot) {
+      this.#editorRoot.removeEventListener("mousemove", this.#handleTableHover);
+      this.#editorRoot.removeEventListener("mouseleave", this.#hideTableEdgeControls);
+    }
+    this.#tableRowButton?.remove();
+    this.#tableColButton?.remove();
+    this.#tableRowButton = null;
+    this.#tableColButton = null;
+    if (this.#tableHideTimer !== null) {
+      window.clearTimeout(this.#tableHideTimer);
+      this.#tableHideTimer = null;
+    }
+  }
+
+  #runTableEdgeCommand(commandKey: string | symbol): void {
+    if (!this.#editor || !this.#tableHoverCell) {
+      return;
+    }
+    this.#editor.action((ctx) => {
+      const view = ctx.get(editorViewCtx);
+      const pos = view.posAtDOM(this.#tableHoverCell as HTMLElement, 0);
+      const selection = TextSelection.near(view.state.doc.resolve(pos + 1));
+      view.dispatch(view.state.tr.setSelection(selection));
+      ctx.get(commandsCtx).call(commandKey as never);
+      view.focus();
+      return true;
+    });
+  }
+
+  #handleTableHover = (event: MouseEvent): void => {
+    if (!this.#editorRoot || !this.#tableRowButton || !this.#tableColButton || !this.#tableSupport) {
+      return;
+    }
+    this.#cancelTableHide();
+    const target = event.target;
+    if (!(target instanceof Element)) {
+      this.#scheduleTableHide();
+      return;
+    }
+    if (target === this.#tableRowButton || target === this.#tableColButton) {
+      return;
+    }
+    const cell = target.closest("td, th");
+    if (!(cell instanceof HTMLTableCellElement) || !this.#editorRoot.contains(cell)) {
+      if (!this.#tableControlsHover) {
+        this.#scheduleTableHide();
+      }
+      return;
+    }
+    this.#tableHoverCell = cell;
+    const rootRect = this.#editorRoot.getBoundingClientRect();
+    const cellRect = cell.getBoundingClientRect();
+    this.#tableColButton.style.display = "inline-flex";
+    this.#tableColButton.style.left = `${cellRect.right - rootRect.left - 16}px`;
+    this.#tableColButton.style.top = `${cellRect.top - rootRect.top + cellRect.height / 2 - 14}px`;
+    this.#tableRowButton.style.display = "inline-flex";
+    this.#tableRowButton.style.left = `${cellRect.left - rootRect.left + cellRect.width / 2 - 14}px`;
+    this.#tableRowButton.style.top = `${cellRect.bottom - rootRect.top - 14}px`;
+  };
+
+  #handleTableControlEnter = (): void => {
+    this.#tableControlsHover = true;
+    this.#cancelTableHide();
+  };
+
+  #handleTableControlLeave = (): void => {
+    this.#tableControlsHover = false;
+    this.#scheduleTableHide();
+  };
+
+  #cancelTableHide(): void {
+    if (this.#tableHideTimer !== null) {
+      window.clearTimeout(this.#tableHideTimer);
+      this.#tableHideTimer = null;
+    }
+  }
+
+  #scheduleTableHide(): void {
+    this.#cancelTableHide();
+    this.#tableHideTimer = window.setTimeout(() => {
+      if (!this.#tableControlsHover) {
+        this.#hideTableEdgeControls();
+      }
+    }, 120);
+  }
+
+  #hideTableEdgeControls = (): void => {
+    this.#cancelTableHide();
+    if (this.#tableRowButton) {
+      this.#tableRowButton.style.display = "none";
+    }
+    if (this.#tableColButton) {
+      this.#tableColButton.style.display = "none";
+    }
+    this.#tableHoverCell = null;
+  };
+
+  #createSlashMenu(): HTMLDivElement {
+    const menu = document.createElement("div");
+    menu.className = "ks-md-slash";
+    menu.dataset.show = "false";
+    Object.assign(menu.style, {
+      position: "absolute",
+      zIndex: "30",
+      display: "none",
+      pointerEvents: "auto"
+    });
+
+    const grid = document.createElement("div");
+    Object.assign(grid.style, {
+      display: "grid",
+      gap: "0.4rem",
+      minWidth: "220px",
+      padding: "0.5rem",
+      border: "1px solid rgba(69, 53, 35, 0.14)",
+      borderRadius: "18px",
+      background: "rgba(255, 252, 247, 0.98)",
+      boxShadow: "0 18px 40px rgba(52, 43, 32, 0.12)"
+    });
+    menu.appendChild(grid);
+    this.#slashMenuItems = [];
+    this.#slashActiveIndex = 0;
+
+    const items: Array<{ label: string; hint: string; onClick: () => void }> = [
+      { label: "H2 标题", hint: "/h2", onClick: () => this.#runSlashCommand(wrapInHeadingCommand.key, 2) },
+      { label: "H3 标题", hint: "/h3", onClick: () => this.#runSlashCommand(wrapInHeadingCommand.key, 3) },
+      { label: "无序列表", hint: "/ul", onClick: () => this.#runSlashCommand(wrapInBulletListCommand.key) },
+      { label: "有序列表", hint: "/ol", onClick: () => this.#runSlashCommand(wrapInOrderedListCommand.key) },
+      { label: "引用块", hint: "/quote", onClick: () => this.#runSlashCommand(wrapInBlockquoteCommand.key) },
+      { label: "插入表格", hint: "/table", onClick: () => this.#runSlashAction(() => this.#insertTable()) },
+      { label: "代码块", hint: "/code", onClick: () => this.#runSlashCommand(createCodeBlockCommand.key, "md") },
+      { label: "正文段落", hint: "/text", onClick: () => this.#resetParagraph() }
+    ];
+
+    items.forEach((item, index) => {
+      const button = document.createElement("div");
+      button.setAttribute("role", "button");
+      button.tabIndex = 0;
+
+      const label = document.createElement("span");
+      label.textContent = item.label;
+      Object.assign(label.style, {
+        color: "#2f241c",
+        font: '700 0.88rem/1.2 "IBM Plex Sans", "Helvetica Neue", Helvetica, Arial, sans-serif'
+      });
+
+      const hint = document.createElement("span");
+      hint.textContent = item.hint;
+      Object.assign(hint.style, {
+        color: "#8a735d",
+        font: '600 0.76rem/1 "IBM Plex Sans", "Helvetica Neue", Helvetica, Arial, sans-serif'
+      });
+
+      Object.assign(button.style, {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "0.75rem",
+        width: "100%",
+        border: "1px solid rgba(69, 53, 35, 0.1)",
+        borderRadius: "12px",
+        padding: "0.65rem 0.8rem",
+        background: "rgba(255, 255, 255, 0.92)",
+        cursor: "pointer",
+        userSelect: "none"
+      });
+      button.addEventListener("mousedown", (event) => {
+        event.preventDefault();
+        item.onClick();
+      });
+      button.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          item.onClick();
+        }
+      });
+      button.addEventListener("mouseenter", () => this.#activateSlashItem(index));
+      button.append(label, hint);
+      grid.appendChild(button);
+      this.#slashMenuItems.push(button);
+    });
+
+    return menu;
+  }
+
+  #activateSlashItem(index: number): void {
+    if (this.#slashMenuItems.length === 0) {
+      return;
+    }
+    this.#slashActiveIndex = (index + this.#slashMenuItems.length) % this.#slashMenuItems.length;
+    this.#slashMenuItems.forEach((button, itemIndex) => {
+      const active = itemIndex === this.#slashActiveIndex;
+      button.style.background = active ? "#f6ecdd" : "rgba(255, 255, 255, 0.92)";
+      button.style.borderColor = active ? "rgba(69, 53, 35, 0.18)" : "rgba(69, 53, 35, 0.1)";
+    });
+  }
+
+  #handleSlashKeydown = (event: KeyboardEvent): void => {
+    if (!this.#slashProvider || this.#slashMenuItems.length === 0) {
+      return;
+    }
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      this.#activateSlashItem(this.#slashActiveIndex + 1);
+      return;
+    }
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      this.#activateSlashItem(this.#slashActiveIndex - 1);
+      return;
+    }
+    if (event.key === "Enter") {
+      event.preventDefault();
+      this.#slashMenuItems[this.#slashActiveIndex]?.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+      return;
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      this.#slashProvider.hide();
+    }
+  };
 
   #hideBodyField(field: HTMLTextAreaElement): void {
     field.setAttribute("data-enhanced-editor", "milkdown");
@@ -632,14 +1372,59 @@ class KsDocumentEditorIntake extends LitElement {
     return node instanceof Element ? (node as T) : null;
   }
 
-  #handleSourceInput = (event: Event): void => {
-    const target = event.currentTarget;
-    if (!(target instanceof HTMLTextAreaElement)) {
+  #ensureSourceEditor(): void {
+    if (this.#sourceEditor || !this.isConnected) {
       return;
     }
-    this.#writeBody(target.value, true);
-    void this.#syncExternalBodyIntoEditor();
-  };
+    const root = this.querySelector<HTMLDivElement>("[data-source-root]");
+    if (!root) {
+      return;
+    }
+    this.#sourceEditor = new CodeMirrorView({
+      parent: root,
+      state: CodeMirrorState.create({
+        doc: this.#body,
+        extensions: [
+          basicSetup,
+          codeMirrorMarkdown(),
+          CodeMirrorView.lineWrapping,
+          CodeMirrorView.updateListener.of((update) => {
+            if (!update.docChanged || this.#sourceSyncing) {
+              return;
+            }
+            this.#writeBody(update.state.doc.toString(), true);
+          }),
+          CodeMirrorView.theme({
+            "&": { height: "100%" },
+            ".cm-focused": { outline: "none" }
+          })
+        ]
+      })
+    });
+  }
+
+  #syncSourceEditor(value: string): void {
+    if (!this.#sourceEditor) {
+      return;
+    }
+    const current = this.#sourceEditor.state.doc.toString();
+    if (current === value) {
+      return;
+    }
+    this.#sourceSyncing = true;
+    this.#sourceEditor.dispatch({
+      changes: { from: 0, to: current.length, insert: value }
+    });
+    this.#sourceSyncing = false;
+  }
+
+  #destroySourceEditor(): void {
+    if (!this.#sourceEditor) {
+      return;
+    }
+    this.#sourceEditor.destroy();
+    this.#sourceEditor = null;
+  }
 
   #handleRuntimeRefresh = (): void => {
     this.#syncFields();

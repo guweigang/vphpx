@@ -129,6 +129,25 @@
       justify-content: flex-end;
     }
 
+    .ks-topbar-form {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .ks-topbar-select {
+      min-height: 38px;
+      min-width: 210px;
+      padding: 0 12px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--ink);
+      font: 600 13px/1 "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
     .ks-topbar-chip,
     .ks-topbar-link {
       display: inline-flex;
@@ -1061,7 +1080,7 @@
         <div class="ks-brand-mark">KS</div>
         <div class="ks-topbar-copy">
           <p class="ks-topbar-title">Knowledge Studio</p>
-          <p class="ks-topbar-subtitle">{{ page_section | default('Workspace App') }}</p>
+          <p class="ks-topbar-subtitle">{{ page_section | default('Knowledge Studio') }}{{if:product_chrome_subtitle}} · {{ product_chrome_subtitle | trim }}{{/if}}</p>
         </div>
       </div>
       <div class="ks-topbar-actions">
@@ -1069,6 +1088,15 @@
         <nav class="ks-topbar-nav" aria-label="Primary">
 {{for:top_nav}}          <a class="ks-topbar-navlink {{ item.class }}" href="{{ item.url }}">{{ item.label }}</a>{{/for}}
         </nav>
+        {{/if}}
+        {{if:workspace_switch_options}}
+        <form class="ks-topbar-form" method="post" action="{{ workspace_switch_action | trim }}">
+          <span class="ks-topbar-chip">{{ workspace_switch_label | trim }}</span>
+          <select class="ks-topbar-select" name="workspace_slug" aria-label="{{ workspace_switch_label | trim }}">
+{{for:workspace_switch_options}}            <option value="{{ item.value }}" {{ item.selected_attr }}>{{ item.label }}</option>{{/for}}
+          </select>
+          <button class="ks-topbar-link" type="submit">{{ workspace_switch_submit | trim }}</button>
+        </form>
         {{/if}}
         {{if:lang_toggle_url}}<nav class="ks-topbar-nav" aria-label="Language"><span class="ks-topbar-chip">{{ locale_label | trim }}</span><a class="ks-topbar-navlink" href="{{ lang_toggle_url | trim }}">{{ lang_toggle_text | trim }}</a></nav>{{/if}}
       </div>
@@ -1080,7 +1108,7 @@
     {{/if}}
     <main class="ks-main">{{slot:content}}</main>
     <footer class="ks-footer">
-      <small>一个知识协作平台，由VPHPX/VSlim强力驱动</small>
+      <small>{{ product_footer_note | default('Knowledge Studio') }}</small>
     </footer>
   </div>
   {{if:frontend_style_url}}<link rel="stylesheet" href="{{ frontend_style_url | trim }}">{{/if}}

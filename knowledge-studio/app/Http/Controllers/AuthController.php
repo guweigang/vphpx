@@ -35,7 +35,8 @@ final class AuthController extends \VSlim\Controller
         return $this->render_with_layout('login.html', 'layout.html', [
             'title' => $copy['title'],
             'error' => is_string($flash) ? $flash : '',
-            'password_hint' => $this->catalog->passwordHint(),
+            'password_hint' => $this->workspaces->loginPasswordHint(),
+            'password_value' => '',
             'login_action' => $this->urls->login($locale),
             'page_section' => $copy['page_section'],
             'nav_label' => $copy['nav_label'],
@@ -44,14 +45,21 @@ final class AuthController extends \VSlim\Controller
             'eyebrow' => $copy['eyebrow'],
             'intro' => $copy['intro'],
             'card_form_title' => $copy['card_form_title'],
+            'card_form_body' => $copy['card_form_body'],
             'email_label' => $copy['email_label'],
             'password_label' => $copy['password_label'],
             'submit_label' => $copy['submit_label'],
             'card_demo_title' => $copy['card_demo_title'],
+            'card_demo_body' => $copy['card_demo_body'],
             'demo_owner_acme' => $copy['demo_owner_acme'],
             'demo_editor_acme' => $copy['demo_editor_acme'],
             'demo_owner_nova' => $copy['demo_owner_nova'],
             'password_hint_label' => $copy['password_hint_label'],
+            'password_required_notice' => $copy['password_required_notice'],
+            'path_title' => $copy['path_title'],
+            'path_one' => $copy['path_one'],
+            'path_two' => $copy['path_two'],
+            'path_three' => $copy['path_three'],
             ...$shared,
         ]);
     }
@@ -89,7 +97,10 @@ final class AuthController extends \VSlim\Controller
         }
 
         $response = new \VSlim\Vhttpd\Response(302, '', 'text/plain; charset=utf-8');
-        $response->redirect_with_status($this->urls->console($locale), 302);
+        $redirect = $this->workspaces->requiresPasswordReset($user)
+            ? $this->urls->consoleAccount($locale)
+            : $this->urls->console($locale);
+        $response->redirect_with_status($redirect, 302);
         $this->app()->login($request, $response, (string) $user['id']);
 
         return $response;

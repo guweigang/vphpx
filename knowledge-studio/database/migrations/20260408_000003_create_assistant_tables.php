@@ -16,7 +16,16 @@ return new class extends VSlim\Database\Migration {
             'id varchar(64) primary key',
             'workspace_id varchar(64) not null',
             'email varchar(160) not null',
+            'contact_name varchar(120) not null',
+            'company_name varchar(160) not null',
+            'source_label varchar(120) not null',
+            'notes text not null',
             'status varchar(32) not null',
+            'stage varchar(32) not null',
+            'closed_reason varchar(200) null',
+            'assignee_user_id varchar(64) null',
+            'next_followup_at datetime null',
+            'updated_at datetime not null',
             'created_at datetime not null',
         ]);
 

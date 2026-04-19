@@ -46,9 +46,11 @@ fn cli_runtime_effective_args(argv []string, cli &VSlimCliApp) CliRuntimeInvocat
 		if argv.len > 1 {
 			inv.command_args = cli_clone_string_list(argv[1..])
 		}
+		cli_debug_log('effective_args exit argv0=${inv.argv0} strip=true args=${inv.command_args}')
 		return inv
 	}
 	inv.command_args = cli_clone_string_list(argv)
+	cli_debug_log('effective_args exit argv0=${inv.argv0} strip=false args=${inv.command_args}')
 	return inv
 }
 
@@ -99,6 +101,7 @@ fn cli_runtime_version_text() string {
 }
 
 fn cli_help_line(label string, description string) string {
+	cli_debug_log('help_line label="${label}" desc="${description}"')
 	if description.trim_space() == '' {
 		return '  ${label}'
 	}
@@ -378,7 +381,7 @@ fn cli_command_summary_text_from_runtime(runtime vphp.ZVal) string {
 }
 
 fn cli_command_summary_text(mut cli VSlimCliApp, command_name string) !string {
-	mut handler_z := lookup_cli_command_handler(&cli, command_name)!
+	mut handler_z := lookup_cli_command_handler(cli, command_name)!
 	defer {
 		handler_z.release()
 	}
@@ -391,7 +394,7 @@ fn cli_command_summary_text(mut cli VSlimCliApp, command_name string) !string {
 
 fn cli_command_help_text(mut cli VSlimCliApp, program string, command_name string) !string {
 	cli_debug_log('command_help_text start command="${command_name}" program="${program}"')
-	mut handler_z := lookup_cli_command_handler(&cli, command_name)!
+	mut handler_z := lookup_cli_command_handler(cli, command_name)!
 	defer {
 		handler_z.release()
 	}
@@ -406,14 +409,16 @@ fn cli_command_help_text(mut cli VSlimCliApp, program string, command_name strin
 fn cli_command_listing_line(mut cli VSlimCliApp, command_name string) string {
 	name := command_name.trim_space().clone()
 	if name == '' {
+		cli_debug_log('listing_line empty command_name raw="${command_name}"')
 		return ''
 	}
 	mut summary := cli_command_summary_text(mut cli, name) or { '' }
-	aliases := cli_command_aliases_for_listing(&cli, name)
+	aliases := cli_command_aliases_for_listing(cli, name)
 	if aliases.len > 0 {
 		alias_text := 'aliases: ${aliases.join(',')}'
 		summary = if summary != '' { '${summary} [${alias_text}]' } else { '[${alias_text}]' }
 	}
+	cli_debug_log('listing_line name="${name}" summary="${summary}"')
 	return cli_help_line(name, summary)
 }
 
@@ -432,7 +437,14 @@ fn cli_command_group_title(command_name string) string {
 
 fn cli_visible_command_names(cli &VSlimCliApp) []string {
 	mut out := []string{}
-	for name in cli.command_order {
+	source := if cli.command_order.len > 0 {
+		cli.command_order
+	} else {
+		mut keys := cli.command_handlers.keys()
+		keys.sort()
+		keys
+	}
+	for name in source {
 		clean := name.trim_space().clone()
 		if clean == '' || cli_hidden_command(cli, clean) {
 			continue
@@ -486,7 +498,27 @@ fn cli_append_command_listing_lines(mut lines []string, mut cli VSlimCliApp, gro
 	if groups.len == 1 && groups[0].title == '' {
 		for name in groups[0].commands {
 			command_name := name.trim_space().clone()
-			lines << cli_command_listing_line(mut cli, command_name)
+			if command_name == '' {
+				cli_debug_log('listing_inline empty command_name raw="${name}"')
+				continue
+			}
+			mut summary := cli_command_summary_text(mut cli, command_name) or { '' }
+			aliases := cli_command_aliases_for_listing(&cli, command_name)
+			if aliases.len > 0 {
+				alias_text := 'aliases: ${aliases.join(',')}'
+				summary = if summary != '' { '${summary} [${alias_text}]' } else { '[${alias_text}]' }
+			}
+			cli_debug_log('listing_inline name="${command_name}" summary="${summary}"')
+			mut base_line := command_name.clone()
+			if summary != '' {
+				width := 28
+				base_line = if command_name.len >= width {
+					'${command_name} ${summary}'
+				} else {
+					command_name + ' '.repeat(width - command_name.len) + summary
+				}
+			}
+			lines << '  ${base_line}'
 		}
 		return
 	}
@@ -498,16 +530,36 @@ fn cli_append_command_listing_lines(mut lines []string, mut cli VSlimCliApp, gro
 		lines << if indent { '  ${heading}' } else { heading }
 		for name in group.commands {
 			command_name := name.trim_space().clone()
-			line := cli_command_listing_line(mut cli, command_name).trim_space().clone()
-			lines << if indent { '    ${line}' } else { '  ${line}' }
+			if command_name == '' {
+				cli_debug_log('listing_inline empty grouped command_name raw="${name}"')
+				continue
+			}
+			mut summary := cli_command_summary_text(mut cli, command_name) or { '' }
+			aliases := cli_command_aliases_for_listing(&cli, command_name)
+			if aliases.len > 0 {
+				alias_text := 'aliases: ${aliases.join(',')}'
+				summary = if summary != '' { '${summary} [${alias_text}]' } else { '[${alias_text}]' }
+			}
+			cli_debug_log('listing_inline name="${command_name}" summary="${summary}"')
+			mut base_line := command_name.clone()
+			if summary != '' {
+				width := 28
+				base_line = if command_name.len >= width {
+					'${command_name} ${summary}'
+				} else {
+					command_name + ' '.repeat(width - command_name.len) + summary
+				}
+			}
+			lines << if indent { '    ${base_line}' } else { '  ${base_line}' }
 		}
 	}
 }
 
 fn cli_runtime_list_text(mut cli VSlimCliApp) string {
 	cli_debug_log('list_text start')
+	cli_debug_log('list_text order=${cli.command_order}')
 	mut lines := []string{}
-	groups := cli_command_listing_groups(&cli)
+	groups := cli_command_listing_groups(cli)
 	cli_debug_log('list_text groups=${groups.len}')
 	cli_append_command_listing_lines(mut lines, mut cli, groups, false)
 	cli_debug_log('list_text lines=${lines.len}')
@@ -540,7 +592,7 @@ fn cli_runtime_help_text(mut cli VSlimCliApp, program string) string {
 	lines << '  -V, --version            Show runtime banner'
 	lines << ''
 	lines << 'Commands:'
-	groups := cli_command_listing_groups(&cli)
+	groups := cli_command_listing_groups(cli)
 	cli_append_command_listing_lines(mut lines, mut cli, groups, true)
 	lines << ''
 	lines << 'Notes:'
@@ -565,6 +617,7 @@ fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvo
 	mut args := cli_clone_string_list(inv.command_args)
 	inv.command_args = []string{}
 	mut idx := 0
+	cli_debug_log('parse_invocation start args=${args}')
 	for idx < args.len {
 		arg := args[idx].trim_space()
 		if arg == '' {
@@ -575,21 +628,22 @@ fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvo
 			idx++
 			break
 		}
+		mut matched_option := false
 		match arg {
 			'-h', '--help' {
 				inv.show_help = true
 				idx++
-				continue
+				matched_option = true
 			}
 			'--list' {
 				inv.show_list = true
 				idx++
-				continue
+				matched_option = true
 			}
 			'-V', '--version' {
 				inv.show_version = true
 				idx++
-				continue
+				matched_option = true
 			}
 			'--bootstrap-dir' {
 				if idx + 1 >= args.len || args[idx + 1].trim_space() == '' {
@@ -597,7 +651,7 @@ fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvo
 				}
 				inv.bootstrap_dir = args[idx + 1].trim_space().clone()
 				idx += 2
-				continue
+				matched_option = true
 			}
 			'--bootstrap-file' {
 				if idx + 1 >= args.len || args[idx + 1].trim_space() == '' {
@@ -605,18 +659,24 @@ fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvo
 				}
 				inv.bootstrap_file = args[idx + 1].trim_space().clone()
 				idx += 2
-				continue
+				matched_option = true
 			}
 			else {}
+		}
+		if matched_option {
+			continue
 		}
 		if dir_value := cli_runtime_parse_value_option(arg, 'bootstrap-dir') {
 			inv.bootstrap_dir = dir_value.clone()
 			idx++
-			continue
+			matched_option = true
 		}
 		if file_value := cli_runtime_parse_value_option(arg, 'bootstrap-file') {
 			inv.bootstrap_file = file_value.clone()
 			idx++
+			matched_option = true
+		}
+		if matched_option {
 			continue
 		}
 		if arg.starts_with('-') {
@@ -628,6 +688,9 @@ fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvo
 	}
 	if idx < args.len {
 		inv.command_args = cli_clone_string_list(args[idx..])
+		cli_debug_log('parse_invocation found command_args=${inv.command_args} from index ${idx}')
+	} else {
+		cli_debug_log('parse_invocation no command_args found, idx=${idx} len=${args.len}')
 	}
 	if inv.bootstrap_dir != '' && inv.bootstrap_file != '' {
 		return error('CLI options `--bootstrap-dir` and `--bootstrap-file` cannot be used together')
@@ -650,43 +713,57 @@ fn cli_runtime_apply_bootstrap(mut cli VSlimCliApp, bootstrap_file string, boots
 
 @[php_method: 'helpText']
 pub fn (mut cli VSlimCliApp) help_text() string {
-	cli_debug_log('help_text cli=${usize(&cli)} core=${usize(cli.core_app_ref)}')
+	cli_debug_log('help_text cli=${usize(cli)} core=${usize(cli.core_app_ref)}')
+	cli_debug_log('help_text order=${cli.command_order}')
 	return cli_runtime_help_text(mut cli, 'vslim')
 }
 
 @[php_method: 'commandHelp']
 pub fn (mut cli VSlimCliApp) command_help(command_name string) string {
-	cli_debug_log('command_help cli=${usize(&cli)} core=${usize(cli.core_app_ref)} command="${command_name}"')
+	cli_debug_log('command_help cli=${usize(cli)} core=${usize(cli.core_app_ref)} command="${command_name}"')
 	return cli_command_help_text(mut cli, 'vslim', command_name) or { '' }
 }
 
 @[php_arg_type: 'argv=iterable']
 @[php_method: 'runArgv']
 pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
-	cli_debug_log('run_argv enter cli=${usize(&cli)} core=${usize(cli.core_app_ref)}')
+	cli_debug_log('run_argv enter cli=${usize(cli)} core=${usize(cli.core_app_ref)}')
 	argv_list := cli_args_to_array(argv.to_zval()) or {
 		vphp.throw_exception_class('InvalidArgumentException', 'argv must be iterable',
 			0)
 		return 1
 	}
-	inv := cli_runtime_parse_invocation(argv_list, &cli) or {
+	inv := cli_runtime_parse_invocation(argv_list, cli) or {
 		cli_runtime_write_stderr(err.msg())
 		return 1
 	}
+
+	// ---- Extract invocation into heap-allocated cli fields BEFORE bootstrap ----
+	// On Windows, passing `mut cli` to bootstrap functions corrupts ALL local
+	// string and []string variables on the stack. We persist everything into
+	// cli's heap fields and read them back after the bootstrap call.
+	cli.last_command_name = inv.command_name.clone()
+	cli.last_raw_args = cli_clone_string_list(inv.command_args)
+	cli.last_show_help = inv.show_help
+	cli.last_show_list = inv.show_list
+	cli.last_show_version = inv.show_version
 	argv0 := inv.argv0.clone()
 	bootstrap_dir := inv.bootstrap_dir.clone()
 	bootstrap_file := inv.bootstrap_file.clone()
-	command_name := inv.command_name.clone()
-	command_args := cli_clone_string_list(inv.command_args)
-	show_help := inv.show_help
-	show_list := inv.show_list
-	show_version := inv.show_version
-	cli_debug_log('run_argv parsed argv0="${argv0}" command="${command_name}" show_help=${show_help} show_list=${show_list} show_version=${show_version}')
+
 	cli_runtime_apply_bootstrap(mut cli, bootstrap_file, bootstrap_dir) or {
 		cli_runtime_write_stderr(err.msg())
 		return 1
 	}
+
+	// ---- Read back from heap fields after bootstrap ----
+	mut command_name := cli.last_command_name.clone()
+	mut command_args := cli_clone_string_list(cli.last_raw_args)
+	show_help := cli.last_show_help
+	show_list := cli.last_show_list
+	show_version := cli.last_show_version
 	program := cli_runtime_program_name(argv0)
+
 	if show_version {
 		vphp.write_output_line(cli_runtime_version_text())
 		if command_name == '' && !show_help && !show_list {
@@ -695,6 +772,7 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
 	}
 	if show_help {
 		cli_debug_log('run_argv branch=help command="${command_name}"')
+		cli_debug_log('run_argv branch=help order=${cli.command_order}')
 		if command_name != '' {
 			vphp.write_output(cli_command_help_text(mut cli, program, command_name) or {
 				cli_runtime_write_stderr(err.msg())
@@ -707,6 +785,7 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
 	}
 	if show_list {
 		cli_debug_log('run_argv branch=list enter')
+		cli_debug_log('run_argv branch=list order=${cli.command_order}')
 		vphp.write_output(cli_runtime_list_text(mut cli))
 		cli_debug_log('run_argv branch=list exit')
 		return 0
@@ -723,7 +802,8 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
 		})
 		return 0
 	}
-	code := run_registered_cli_command_with_program(mut cli, command_name, command_args, program) or {
+	cli.last_command_name = command_name.trim_space().clone()
+	code := cli.run_registered_cli_command_with_program(command_name, command_args, program) or {
 		cli_runtime_write_stderr(err.msg())
 		return 1
 	}
@@ -732,6 +812,6 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
 			cli_runtime_write_stderr(warning)
 		}
 	}
-	cli_debug_log('run_argv exit cli=${usize(&cli)} code=${code}')
+	cli_debug_log('run_argv exit cli=${usize(cli)} code=${code}')
 	return code
 }

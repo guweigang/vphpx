@@ -3,30 +3,28 @@
 {{fill:footer}}<small>{{ footer_note }}</small>{{/fill}}
 <section class="ks-section">
   <p class="ks-eyebrow">{{ eyebrow | trim }}</p>
+  {{if:error}}<div class="ks-notice error">{{ error }}</div>{{/if}}
   <article class="ks-spotlight">
     <div class="ks-spotlight-grid">
       <div class="ks-spotlight-copy">
         <h1 class="ks-title">{{ title | trim }}</h1>
         <p class="ks-copy">{{ intro | trim }}</p>
-      </div>
-      <aside class="ks-spotlight-side">
         <article class="ks-panel">
-          <h3>{{ card_demo_title | trim }}</h3>
-          <p class="ks-copy">{{ password_hint_label | trim }}：<span class="ks-badge">{{ password_hint | trim }}</span></p>
+          <h3>{{ path_title | trim }}</h3>
           <ul class="ks-list">
-            <li><strong>owner@acme.test</strong>{{ demo_owner_acme | trim }}</li>
-            <li><strong>editor@acme.test</strong>{{ demo_editor_acme | trim }}</li>
-            <li><strong>owner@nova.test</strong>{{ demo_owner_nova | trim }}</li>
+            <li>{{ path_one | trim }}</li>
+            <li>{{ path_two | trim }}</li>
+            <li>{{ path_three | trim }}</li>
           </ul>
         </article>
-      </aside>
+      </div>
     </div>
   </article>
-  {{if:error}}<div class="ks-notice error">{{ error }}</div>{{/if}}
-  <div class="ks-stack">
+  <div class="ks-grid two">
     <article class="ks-card">
       <h2>{{ card_form_title | trim }}</h2>
-      <p class="ks-copy">使用预置账号进入工作台，后续这里会继续扩展成更正式的组织与订阅用户登录入口。</p>
+      <p class="ks-copy">{{ card_form_body | trim }}</p>
+      <p class="ks-copy">{{ password_required_notice | trim }}</p>
       <form class="ks-form" method="post" action="{{ login_action | trim }}">
         <div class="ks-form-grid">
           <div class="ks-field">
@@ -35,13 +33,25 @@
           </div>
           <div class="ks-field">
             <label>{{ password_label | trim }}</label>
-            <input type="password" name="password" value="{{ password_hint | trim }}">
+            <input type="password" name="password" value="{{ password_value | trim }}">
           </div>
         </div>
         <div class="ks-actions">
           <button class="ks-btn" type="submit">{{ submit_label | trim }}</button>
         </div>
       </form>
+    </article>
+    <article class="ks-card">
+      <h2>{{ card_demo_title | trim }}</h2>
+      <p class="ks-copy">{{ card_demo_body | trim }}</p>
+      {{if:password_hint}}
+      <p class="ks-copy">{{ password_hint_label | trim }}：<span class="ks-badge">{{ password_hint | trim }}</span></p>
+      {{/if}}
+      <ul class="ks-list">
+        <li><strong>owner@acme.test</strong>{{ demo_owner_acme | trim }}</li>
+        <li><strong>editor@acme.test</strong>{{ demo_editor_acme | trim }}</li>
+        <li><strong>owner@nova.test</strong>{{ demo_owner_nova | trim }}</li>
+      </ul>
     </article>
   </div>
 </section>

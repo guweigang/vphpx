@@ -27,7 +27,7 @@ final class ConsoleWorkspaceService
 
     /**
      * @param array<string, mixed>|null $viewer
-     * @return array{workspace:?array, memberships:array<int, array<string, string>>}
+     * @return array{workspace:?array, memberships:array<int, array<string, string>>, viewer:?array}
      */
     public function resolveContext(?array $viewer, mixed $workspaceAttribute): array
     {
@@ -39,10 +39,12 @@ final class ConsoleWorkspaceService
         $memberships = is_array($viewer)
             ? $this->workspaces->membershipsForUser((string) ($viewer['id'] ?? ''))
             : [];
+        $viewer = $this->viewerForWorkspace($viewer, $workspace, $memberships);
 
         return [
             'workspace' => $workspace,
             'memberships' => $memberships,
+            'viewer' => $viewer,
         ];
     }
 
@@ -138,6 +140,52 @@ final class ConsoleWorkspaceService
     }
 
     /**
+     * @param array<string, mixed>|null $workspace
+     * @return array<int, array<string, string>>
+     */
+    public function subscribers(?array $workspace): array
+    {
+        $workspaceId = is_array($workspace) ? (string) ($workspace['id'] ?? '') : '';
+        return $this->decorateSubscribers($workspaceId, $this->ops->subscriberLeadsForWorkspace($workspaceId));
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @return array<string, string>|null
+     */
+    public function subscriberDetail(?array $workspace, string $subscriberId): ?array
+    {
+        $workspaceId = is_array($workspace) ? (string) ($workspace['id'] ?? '') : '';
+        $lead = $this->ops->subscriberLeadDetail($workspaceId, trim($subscriberId));
+        if (!is_array($lead)) {
+            return null;
+        }
+
+        $items = $this->decorateSubscribers($workspaceId, [$lead]);
+        return is_array($items[0] ?? null) ? $items[0] : null;
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @return array<int, array<string, string>>
+     */
+    public function subscriberFollowups(?array $workspace, string $subscriberId): array
+    {
+        $workspaceId = is_array($workspace) ? (string) ($workspace['id'] ?? '') : '';
+        return $this->ops->subscriberFollowups($workspaceId, trim($subscriberId));
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @return array<int, array<string, string>>
+     */
+    public function subscriberProvisioningItems(?array $workspace, string $subscriberId): array
+    {
+        $workspaceId = is_array($workspace) ? (string) ($workspace['id'] ?? '') : '';
+        return $this->ops->provisioningItemsForSubscriber($workspaceId, trim($subscriberId));
+    }
+
+    /**
      * @param array<string, mixed>|null $viewer
      */
     public function canManageMembers(?array $viewer): bool
@@ -190,6 +238,7 @@ final class ConsoleWorkspaceService
         return [
             'jobs' => $this->ops->jobsForWorkspace($workspaceId),
             'logs' => $this->ops->auditLogsForWorkspace($workspaceId),
+            'provisioning' => $this->decorateWorkspaceProvisioning($workspaceId, $this->ops->provisioningItemsForWorkspace($workspaceId)),
         ];
     }
 
@@ -203,10 +252,20 @@ final class ConsoleWorkspaceService
         $rows = $this->knowledge->releasesForWorkspace($workspaceId);
         $counts = $this->knowledge->releaseItemCounts($workspaceId);
 
-        return array_map(static function (array $row) use ($counts): array {
+        return array_map(function (array $row) use ($counts): array {
             $releaseId = (string) ($row['id'] ?? '');
-            $row['documents_count'] = (string) (($counts[$releaseId]['documents'] ?? 0));
-            $row['entries_count'] = (string) (($counts[$releaseId]['entries'] ?? 0));
+            $documentsCount = (int) ($counts[$releaseId]['documents'] ?? 0);
+            $entriesCount = (int) ($counts[$releaseId]['entries'] ?? 0);
+            $row['documents_count'] = (string) $documentsCount;
+            $row['entries_count'] = (string) $entriesCount;
+            $row['notes'] = trim((string) ($row['notes'] ?? '')) !== ''
+                ? trim((string) ($row['notes'] ?? ''))
+                : $this->releaseNotesFallback(
+                    (string) ($row['version'] ?? ''),
+                    (string) ($row['status'] ?? ''),
+                    $documentsCount,
+                    $entriesCount,
+                );
             return $row;
         }, $rows);
     }
@@ -220,7 +279,9 @@ final class ConsoleWorkspaceService
         $workspaceId = is_array($workspace) ? (string) ($workspace['id'] ?? '') : '';
         $documents = $this->knowledge->documentsForWorkspace($workspaceId);
         $entries = $this->knowledge->entriesForWorkspace($workspaceId);
-        $latest = $this->knowledge->latestRelease($workspaceId);
+        $latest = $this->knowledge->latestPublishedRelease($workspaceId) ?? $this->knowledge->latestRelease($workspaceId);
+        $publicDocuments = $this->knowledge->releasedDocumentsForWorkspace($workspaceId);
+        $publicEntries = $this->knowledge->releasedEntriesForWorkspace($workspaceId);
         $gaps = $this->ops->knowledgeGapInsights($workspaceId);
 
         $publishedDocuments = array_values(array_filter($documents, static function (array $row): bool {
@@ -245,9 +306,16 @@ final class ConsoleWorkspaceService
             'version_compare' => [
                 'current' => [
                     'version' => (string) ($latest?->version ?? 'v0.0'),
-                    'notes' => trim((string) ($latest?->notes ?? '')),
-                    'documents' => (string) count($publishedDocuments),
-                    'entries' => (string) count($publishedEntries),
+                    'notes' => trim((string) ($latest?->notes ?? '')) !== ''
+                        ? trim((string) ($latest?->notes ?? ''))
+                        : $this->releaseNotesFallback(
+                            (string) ($latest?->version ?? 'v0.0'),
+                            (string) ($latest?->status ?? 'draft'),
+                            count($publicDocuments),
+                            count($publicEntries),
+                        ),
+                    'documents' => (string) count($publicDocuments),
+                    'entries' => (string) count($publicEntries),
                 ],
                 'next' => [
                     'version' => 'next',
@@ -256,39 +324,32 @@ final class ConsoleWorkspaceService
                     'entries' => (string) count($draftEntries),
                 ],
             ],
-            'document_candidates' => array_map(function (array $row): array {
-                $row['checked_attr'] = 'checked';
-                $row['preview_summary'] = $this->snippet((string) ($row['summary'] ?? $row['title'] ?? ''), 120);
-                $row['coverage_focus'] = (string) ($row['coverage_focus'] ?? $row['title'] ?? '');
-                return $row;
-            }, array_slice($draftDocuments, 0, 6)),
-            'entry_candidates' => array_map(function (array $row): array {
-                $row['checked_attr'] = 'checked';
-                $row['preview_summary'] = $this->snippet((string) ($row['body'] ?? $row['title'] ?? ''), 120);
-                $row['coverage_focus'] = (string) ($row['coverage_focus'] ?? $row['title'] ?? '');
-                return $row;
-            }, array_slice($draftEntries, 0, 6)),
+            'document_candidates' => $this->releaseCandidates($draftDocuments, 'summary', 2),
+            'entry_candidates' => $this->releaseCandidates($draftEntries, 'body', 2),
             'public_preview' => [
                 'documents' => array_map(function (array $row): array {
                     return [
+                        'id' => (string) ($row['id'] ?? ''),
                         'title' => (string) ($row['title'] ?? ''),
                         'summary' => $this->snippet((string) ($row['summary'] ?? $row['title'] ?? ''), 140),
                         'coverage_focus' => (string) ($row['coverage_focus'] ?? $row['title'] ?? ''),
                         'meta' => trim((string) ($row['source_type'] ?? '') . ' / ' . (string) ($row['language'] ?? 'zh-CN')),
                     ];
-                }, array_slice($publishedDocuments, 0, 3)),
+                }, array_slice($publicDocuments, 0, 3)),
                 'entries' => array_map(function (array $row): array {
                     return [
+                        'id' => (string) ($row['id'] ?? ''),
                         'title' => (string) ($row['title'] ?? ''),
                         'summary' => $this->snippet((string) ($row['body'] ?? $row['title'] ?? ''), 140),
                         'coverage_focus' => (string) ($row['coverage_focus'] ?? $row['title'] ?? ''),
                         'meta' => trim((string) ($row['kind'] ?? 'faq') . ' / ' . (string) ($row['owner'] ?? '')),
                     ];
-                }, array_slice($publishedEntries, 0, 3)),
+                }, array_slice($publicEntries, 0, 3)),
             ],
             'draft_preview' => [
                 'documents' => array_map(function (array $row): array {
                     return [
+                        'id' => (string) ($row['id'] ?? ''),
                         'title' => (string) ($row['title'] ?? ''),
                         'summary' => $this->snippet((string) ($row['summary'] ?? $row['title'] ?? ''), 140),
                         'coverage_focus' => (string) ($row['coverage_focus'] ?? $row['title'] ?? ''),
@@ -297,6 +358,7 @@ final class ConsoleWorkspaceService
                 }, array_slice($draftDocuments, 0, 3)),
                 'entries' => array_map(function (array $row): array {
                     return [
+                        'id' => (string) ($row['id'] ?? ''),
                         'title' => (string) ($row['title'] ?? ''),
                         'summary' => $this->snippet((string) ($row['body'] ?? $row['title'] ?? ''), 140),
                         'coverage_focus' => (string) ($row['coverage_focus'] ?? $row['title'] ?? ''),
@@ -329,6 +391,23 @@ final class ConsoleWorkspaceService
             }, array_slice($gaps, 0, 4)),
             'ready' => ($publishedDocuments !== [] || $publishedEntries !== []) ? '1' : '0',
         ];
+    }
+
+    private function releaseNotesFallback(string $version, string $status, int $documentsCount, int $entriesCount): string
+    {
+        $version = trim($version);
+        $status = strtolower(trim($status));
+        $payloadSummary = $documentsCount . ' docs / ' . $entriesCount . ' entries';
+
+        if (str_starts_with($version, 'onboarding-')) {
+            return 'Onboarding handoff release scaffold with ' . $payloadSummary . ' prepared for customer provisioning.';
+        }
+
+        if ($status === 'published') {
+            return 'Public knowledge release covering ' . $payloadSummary . '.';
+        }
+
+        return 'Draft release scaffold covering ' . $payloadSummary . ' pending final review.';
     }
 
     /**
@@ -677,6 +756,11 @@ final class ConsoleWorkspaceService
         $workspaceId = is_array($workspace) ? trim((string) ($workspace['id'] ?? '')) : '';
         $version = trim((string) ($input['version'] ?? ''));
         $notes = trim((string) ($input['notes'] ?? ''));
+        $releaseReasons = $this->stringList($input['release_reasons'] ?? []);
+        if ($releaseReasons !== []) {
+            $reasonPrefix = "Release focus:\n- " . implode("\n- ", $releaseReasons);
+            $notes = $notes !== '' ? $reasonPrefix . "\n\n" . $notes : $reasonPrefix;
+        }
         if ($workspaceId === '' || $version === '') {
             return ['ok' => false, 'message' => 'Release version is required.', 'release' => null];
         }
@@ -716,6 +800,17 @@ final class ConsoleWorkspaceService
             'message' => 'Release published to the public assistant surface.',
             'release' => $release,
         ];
+    }
+
+    /**
+     * @param mixed $value
+     * @return array<int, string>
+     */
+    private function stringList(mixed $value): array
+    {
+        $items = is_array($value) ? $value : [$value];
+        $items = array_map(static fn (mixed $item): string => trim((string) $item), $items);
+        return array_values(array_filter($items, static fn (string $item): bool => $item !== ''));
     }
 
     /**
@@ -759,17 +854,793 @@ final class ConsoleWorkspaceService
             ];
         }
 
+        $temporaryPassword = trim((string) ($member['temporary_password'] ?? ''));
+
         $this->ops->recordAudit(
             $workspaceId,
             $this->viewerLabel($viewer),
             'workspace.member.invited',
-            (string) ($member['email'] ?? $email),
+            trim((string) ($member['email'] ?? $email))
+            . ' | role=' . trim((string) ($member['role'] ?? $role))
+            . ($temporaryPassword !== '' ? ' | temporary-password-issued' : ' | existing-account'),
         );
 
         return [
             'ok' => true,
-            'message' => 'Collaborator invited to the workspace.',
+            'message' => $temporaryPassword !== ''
+                ? 'Collaborator invited. Temporary password: ' . $temporaryPassword
+                : 'Collaborator invited to the workspace.',
         ];
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @param array<string, mixed>|null $viewer
+     * @param array<string, mixed> $input
+     * @return array{ok:bool,message:string}
+     */
+    public function updateMemberRole(?array $workspace, ?array $viewer, string $memberId, array $input): array
+    {
+        if (!$this->canManageMembers($viewer)) {
+            return [
+                'ok' => false,
+                'message' => 'Only tenant owners can change collaborator roles.',
+            ];
+        }
+
+        $workspaceId = is_array($workspace) ? trim((string) ($workspace['id'] ?? '')) : '';
+        if ($workspaceId === '') {
+            return [
+                'ok' => false,
+                'message' => 'Workspace context is required.',
+            ];
+        }
+
+        $result = $this->workspaces->updateMemberRole(
+            $workspaceId,
+            $memberId,
+            trim((string) ($input['role'] ?? '')),
+            trim((string) ($viewer['id'] ?? '')),
+        );
+        if (($result['ok'] ?? false) !== true) {
+            return ['ok' => false, 'message' => (string) ($result['message'] ?? 'Unable to update collaborator role.')];
+        }
+
+        $member = is_array($result['member'] ?? null) ? $result['member'] : [];
+        $this->ops->recordAudit(
+            $workspaceId,
+            $this->viewerLabel($viewer),
+            'workspace.member.role_updated',
+            trim((string) ($member['email'] ?? ''))
+            . ' | role=' . trim((string) ($member['role'] ?? '')),
+        );
+
+        return [
+            'ok' => true,
+            'message' => 'Collaborator role updated.',
+        ];
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @param array<string, mixed>|null $viewer
+     * @return array{ok:bool,message:string}
+     */
+    public function removeMember(?array $workspace, ?array $viewer, string $memberId): array
+    {
+        if (!$this->canManageMembers($viewer)) {
+            return [
+                'ok' => false,
+                'message' => 'Only tenant owners can remove collaborators.',
+            ];
+        }
+
+        $workspaceId = is_array($workspace) ? trim((string) ($workspace['id'] ?? '')) : '';
+        if ($workspaceId === '') {
+            return [
+                'ok' => false,
+                'message' => 'Workspace context is required.',
+            ];
+        }
+
+        $result = $this->workspaces->removeMember(
+            $workspaceId,
+            $memberId,
+            trim((string) ($viewer['id'] ?? '')),
+        );
+        if (($result['ok'] ?? false) !== true) {
+            return ['ok' => false, 'message' => (string) ($result['message'] ?? 'Unable to remove collaborator.')];
+        }
+
+        $member = is_array($result['member'] ?? null) ? $result['member'] : [];
+        $this->ops->recordAudit(
+            $workspaceId,
+            $this->viewerLabel($viewer),
+            'workspace.member.removed',
+            trim((string) ($member['email'] ?? ''))
+            . ' | role=' . trim((string) ($member['role'] ?? '')),
+        );
+
+        return [
+            'ok' => true,
+            'message' => 'Collaborator removed from the workspace.',
+        ];
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @param array<string, mixed>|null $viewer
+     * @param array<string, mixed> $input
+     * @return array{ok:bool,message:string}
+     */
+    public function updateSubscriberStatus(?array $workspace, ?array $viewer, string $subscriberId, array $input): array
+    {
+        if (!$this->canManageOps($viewer)) {
+            return [
+                'ok' => false,
+                'message' => 'Only tenant owners can update lead status.',
+            ];
+        }
+
+        $workspaceId = is_array($workspace) ? trim((string) ($workspace['id'] ?? '')) : '';
+        if ($workspaceId === '') {
+            return [
+                'ok' => false,
+                'message' => 'Workspace context is required.',
+            ];
+        }
+
+        $note = trim((string) ($input['note'] ?? ''));
+        if ($note === '') {
+            return [
+                'ok' => false,
+                'message' => 'A followup note is required when updating lead status.',
+            ];
+        }
+
+        $members = $this->workspaces->membersForWorkspace($workspaceId);
+        $memberIds = array_column($members, 'user_id');
+        $assigneeUserId = trim((string) ($input['assignee_user_id'] ?? ''));
+        $updateAssignee = array_key_exists('assignee_user_id', $input);
+        if ($updateAssignee && $assigneeUserId !== '' && !in_array($assigneeUserId, $memberIds, true)) {
+            return [
+                'ok' => false,
+                'message' => 'The selected lead owner must be a member of this workspace.',
+            ];
+        }
+
+        $stage = trim((string) ($input['stage'] ?? ''));
+        $updateStage = array_key_exists('stage', $input);
+        $closedReason = trim((string) ($input['closed_reason'] ?? ''));
+        $updateClosedReason = array_key_exists('closed_reason', $input);
+        if ($updateStage && $stage === '') {
+            return [
+                'ok' => false,
+                'message' => 'Lead stage is required.',
+            ];
+        }
+        if (($stage === 'lost' || $stage === 'won') && $closedReason === '') {
+            return [
+                'ok' => false,
+                'message' => 'A closing reason is required for won or lost opportunities.',
+            ];
+        }
+        if ($stage !== 'lost' && $stage !== 'won') {
+            $closedReason = '';
+        }
+
+        $nextFollowupAt = trim((string) ($input['next_followup_at'] ?? ''));
+        $updateNextFollowupAt = array_key_exists('next_followup_at', $input);
+        $normalizedNextFollowupAt = null;
+        if ($updateNextFollowupAt) {
+            if ($nextFollowupAt !== '') {
+                $timestamp = strtotime($nextFollowupAt);
+                if ($timestamp === false) {
+                    return [
+                        'ok' => false,
+                        'message' => 'Next followup time must be a valid date and time.',
+                    ];
+                }
+                $normalizedNextFollowupAt = date('Y-m-d H:i:00', $timestamp);
+            } else {
+                $normalizedNextFollowupAt = '';
+            }
+        }
+
+        $result = $this->ops->updateSubscriberStatus(
+            $workspaceId,
+            $subscriberId,
+            trim((string) ($input['status'] ?? '')),
+            $updateStage ? $stage : null,
+            $updateClosedReason || $updateStage ? $closedReason : null,
+            $updateAssignee ? $assigneeUserId : null,
+            $updateNextFollowupAt ? $normalizedNextFollowupAt : null,
+            $updateStage,
+            $updateClosedReason || $updateStage,
+            $updateAssignee,
+            $updateNextFollowupAt,
+        );
+        if (($result['ok'] ?? false) !== true) {
+            return [
+                'ok' => false,
+                'message' => (string) ($result['message'] ?? 'Unable to update lead status.'),
+            ];
+        }
+
+        $subscriber = is_array($result['subscriber'] ?? null) ? $result['subscriber'] : [];
+        $status = trim((string) ($subscriber['status'] ?? ''));
+        $parts = ['Status changed to ' . $status . ': ' . $note];
+        if ($updateStage) {
+            $parts[] = 'Stage: ' . trim((string) ($subscriber['stage'] ?? $stage));
+        }
+        if (($updateClosedReason || $updateStage) && $closedReason !== '') {
+            $parts[] = 'Close reason: ' . $closedReason;
+        }
+        if ($updateAssignee) {
+            $assigneeLabel = 'unassigned';
+            if ($assigneeUserId !== '') {
+                foreach ($members as $member) {
+                    if (trim((string) ($member['user_id'] ?? '')) === $assigneeUserId) {
+                        $assigneeLabel = trim((string) ($member['name'] ?? '')) !== ''
+                            ? trim((string) ($member['name'] ?? ''))
+                            : trim((string) ($member['email'] ?? ''));
+                        break;
+                    }
+                }
+            }
+            $parts[] = 'Owner: ' . $assigneeLabel;
+        }
+        if ($updateNextFollowupAt) {
+            $parts[] = 'Next followup: ' . ($normalizedNextFollowupAt !== '' && $normalizedNextFollowupAt !== null ? $normalizedNextFollowupAt : 'not scheduled');
+        }
+        $noteResult = $this->ops->addSubscriberFollowup(
+            $workspaceId,
+            trim((string) ($subscriber['id'] ?? $subscriberId)),
+            $this->viewerLabel($viewer),
+            implode(' | ', $parts),
+        );
+        if (($noteResult['ok'] ?? false) !== true) {
+            return [
+                'ok' => false,
+                'message' => (string) ($noteResult['message'] ?? 'Lead status changed, but the followup note could not be saved.'),
+            ];
+        }
+
+        $this->ops->recordAudit(
+            $workspaceId,
+            $this->viewerLabel($viewer),
+            'workspace.subscriber.status_updated',
+            trim((string) ($subscriber['email'] ?? ''))
+            . ' | status=' . $status,
+        );
+
+        return [
+            'ok' => true,
+            'message' => 'Lead ownership, status, and followup schedule were updated.',
+        ];
+    }
+
+    /**
+     * @param array<int, array<string, string>> $rows
+     * @return array<int, array<string, string>>
+     */
+    private function decorateSubscribers(string $workspaceId, array $rows): array
+    {
+        if ($workspaceId === '' || $rows === []) {
+            return $rows;
+        }
+
+        $members = $this->workspaces->membersForWorkspace($workspaceId);
+        $memberNames = [];
+        foreach ($members as $member) {
+            $userId = trim((string) ($member['user_id'] ?? ''));
+            if ($userId === '') {
+                continue;
+            }
+            $memberNames[$userId] = trim((string) ($member['name'] ?? '')) !== ''
+                ? trim((string) ($member['name'] ?? ''))
+                : trim((string) ($member['email'] ?? ''));
+        }
+
+        return array_map(static function (array $row) use ($memberNames): array {
+            $assigneeUserId = trim((string) ($row['assignee_user_id'] ?? ''));
+            $nextFollowupAt = trim((string) ($row['next_followup_at'] ?? ''));
+            return [
+                ...$row,
+                'assignee_name' => $assigneeUserId !== '' ? (string) ($memberNames[$assigneeUserId] ?? $assigneeUserId) : '',
+                'stage' => trim((string) ($row['stage'] ?? 'new')) !== '' ? trim((string) ($row['stage'] ?? 'new')) : 'new',
+                'closed_reason' => trim((string) ($row['closed_reason'] ?? '')),
+                'next_followup_at' => $nextFollowupAt,
+                'next_followup_input' => $nextFollowupAt !== ''
+                    ? str_replace(' ', 'T', substr($nextFollowupAt, 0, 16))
+                    : '',
+            ];
+        }, $rows);
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @param array<string, mixed>|null $viewer
+     * @param array<string, mixed> $input
+     * @return array{ok:bool,message:string}
+     */
+    public function addSubscriberFollowup(?array $workspace, ?array $viewer, string $subscriberId, array $input): array
+    {
+        if (!$this->canManageOps($viewer)) {
+            return [
+                'ok' => false,
+                'message' => 'Only tenant owners can add lead followups.',
+            ];
+        }
+
+        $workspaceId = is_array($workspace) ? trim((string) ($workspace['id'] ?? '')) : '';
+        if ($workspaceId === '') {
+            return [
+                'ok' => false,
+                'message' => 'Workspace context is required.',
+            ];
+        }
+
+        $subscriber = $this->ops->subscriberLeadDetail($workspaceId, $subscriberId);
+        if (!is_array($subscriber)) {
+            return [
+                'ok' => false,
+                'message' => 'Unable to find the selected lead.',
+            ];
+        }
+
+        $result = $this->ops->addSubscriberFollowup(
+            $workspaceId,
+            $subscriberId,
+            $this->viewerLabel($viewer),
+            trim((string) ($input['body'] ?? '')),
+        );
+        if (($result['ok'] ?? false) !== true) {
+            return [
+                'ok' => false,
+                'message' => (string) ($result['message'] ?? 'Unable to add lead followup.'),
+            ];
+        }
+
+        $this->ops->recordAudit(
+            $workspaceId,
+            $this->viewerLabel($viewer),
+            'workspace.subscriber.followup_added',
+            trim((string) ($subscriber['email'] ?? '')),
+        );
+
+        return [
+            'ok' => true,
+            'message' => 'Lead followup added.',
+        ];
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @param array<string, mixed>|null $viewer
+     * @return array{ok:bool,message:string}
+     */
+    public function queueSubscriberProvisioning(?array $workspace, ?array $viewer, string $subscriberId): array
+    {
+        if (!$this->canManageOps($viewer)) {
+            return [
+                'ok' => false,
+                'message' => 'Only tenant owners can queue provisioning work.',
+            ];
+        }
+
+        $workspaceId = is_array($workspace) ? trim((string) ($workspace['id'] ?? '')) : '';
+        if ($workspaceId === '') {
+            return [
+                'ok' => false,
+                'message' => 'Workspace context is required.',
+            ];
+        }
+
+        $subscriber = $this->subscriberDetail($workspace, $subscriberId);
+        if (!is_array($subscriber)) {
+            return [
+                'ok' => false,
+                'message' => 'Unable to find the selected lead.',
+            ];
+        }
+
+        if (trim((string) ($subscriber['stage'] ?? '')) !== 'won') {
+            return [
+                'ok' => false,
+                'message' => 'Only won opportunities can be handed off to onboarding.',
+            ];
+        }
+
+        $existing = $this->ops->provisioningJobForSubscriber($workspaceId, trim((string) ($subscriber['id'] ?? '')));
+        $subscriberId = trim((string) ($subscriber['id'] ?? ''));
+        $defaultItems = [
+            ['key' => 'workspace_shell', 'label' => 'Create workspace shell and plan settings'],
+            ['key' => 'invite_owner', 'label' => 'Invite first customer owner and rotate access'],
+            ['key' => 'seed_knowledge', 'label' => 'Prepare initial brand page, release, and starter knowledge set'],
+        ];
+        if (is_array($existing)) {
+            $items = $this->ops->ensureProvisioningItems($workspaceId, $subscriberId, $defaultItems);
+            return [
+                'ok' => true,
+                'message' => $items !== []
+                    ? 'Provisioning handoff was already queued. Checklist has been restored.'
+                    : 'Provisioning is already queued for this customer handoff.',
+            ];
+        }
+
+        $label = trim((string) ($subscriber['email'] ?? ''));
+        if ($label === '') {
+            $label = trim((string) ($subscriber['company_name'] ?? ''));
+        }
+        $jobName = 'Provision workspace for ' . $label . ' [lead:' . $subscriberId . ']';
+        $this->ops->queueJob($workspaceId, $jobName);
+        $this->ops->ensureProvisioningItems($workspaceId, $subscriberId, $defaultItems);
+        $this->ops->addSubscriberFollowup(
+            $workspaceId,
+            $subscriberId,
+            $this->viewerLabel($viewer),
+            'Provisioning queued: ' . $jobName,
+        );
+        $this->ops->recordAudit(
+            $workspaceId,
+            $this->viewerLabel($viewer),
+            'workspace.subscriber.provisioning_queued',
+            trim((string) ($subscriber['email'] ?? '')) . ' | ' . $jobName,
+        );
+
+        return [
+            'ok' => true,
+            'message' => 'Provisioning handoff queued in ops.',
+        ];
+    }
+
+    /**
+     * @param array<string, mixed>|null $workspace
+     * @param array<string, mixed>|null $viewer
+     * @return array{ok:bool,message:string}
+     */
+    public function completeSubscriberProvisioningItem(?array $workspace, ?array $viewer, string $subscriberId, string $itemId): array
+    {
+        if (!$this->canManageOps($viewer)) {
+            return [
+                'ok' => false,
+                'message' => 'Only tenant owners can complete provisioning work.',
+            ];
+        }
+
+        $workspaceId = is_array($workspace) ? trim((string) ($workspace['id'] ?? '')) : '';
+        if ($workspaceId === '') {
+            return [
+                'ok' => false,
+                'message' => 'Workspace context is required.',
+            ];
+        }
+
+        $subscriber = $this->subscriberDetail($workspace, $subscriberId);
+        if (!is_array($subscriber)) {
+            return [
+                'ok' => false,
+                'message' => 'Unable to find the selected lead.',
+            ];
+        }
+
+        $result = $this->ops->completeProvisioningItem($workspaceId, $subscriberId, $itemId);
+        if (($result['ok'] ?? false) !== true) {
+            return [
+                'ok' => false,
+                'message' => (string) ($result['message'] ?? 'Unable to complete provisioning step.'),
+            ];
+        }
+
+        $item = is_array($result['item'] ?? null) ? $result['item'] : [];
+        $label = trim((string) ($item['label'] ?? ''));
+        $this->materializeProvisioningItem($workspaceId, $subscriber, $item);
+        $this->ops->addSubscriberFollowup(
+            $workspaceId,
+            trim((string) ($subscriber['id'] ?? '')),
+            $this->viewerLabel($viewer),
+            'Provisioning step completed: ' . $label,
+        );
+        $this->ops->recordAudit(
+            $workspaceId,
+            $this->viewerLabel($viewer),
+            'workspace.subscriber.provisioning_completed',
+            trim((string) ($subscriber['email'] ?? '')) . ' | ' . $label,
+        );
+
+        return [
+            'ok' => true,
+            'message' => 'Provisioning checklist step completed.',
+        ];
+    }
+
+    /**
+     * @param array<string, string> $subscriber
+     * @param array<string, string> $item
+     */
+    private function materializeProvisioningItem(string $workspaceId, array $subscriber, array $item): void
+    {
+        $itemKey = trim((string) ($item['item_key'] ?? ''));
+        if ($workspaceId === '' || $itemKey === '') {
+            return;
+        }
+
+        if ($itemKey === 'invite_owner') {
+            $this->materializeProvisioningOwnerInvite($workspaceId, $subscriber);
+            return;
+        }
+
+        if ($itemKey === 'seed_knowledge') {
+            $this->materializeProvisioningStarterContent($workspaceId, $subscriber);
+        }
+    }
+
+    /**
+     * @param array<string, string> $subscriber
+     */
+    private function materializeProvisioningOwnerInvite(string $workspaceId, array $subscriber): void
+    {
+        $email = strtolower(trim((string) ($subscriber['email'] ?? '')));
+        if ($workspaceId === '' || $email === '') {
+            return;
+        }
+
+        foreach ($this->workspaces->membersForWorkspace($workspaceId) as $member) {
+            if (strtolower(trim((string) ($member['email'] ?? ''))) === $email) {
+                return;
+            }
+        }
+
+        $name = trim((string) ($subscriber['contact_name'] ?? ''));
+        if ($name === '') {
+            $name = trim((string) ($subscriber['company_name'] ?? ''));
+        }
+        if ($name === '') {
+            $name = 'Customer Owner';
+        }
+
+        $this->workspaces->inviteMember($workspaceId, $name, $email, self::OWNER_ROLE);
+    }
+
+    /**
+     * @param array<string, string> $subscriber
+     */
+    private function materializeProvisioningStarterContent(string $workspaceId, array $subscriber): void
+    {
+        $company = trim((string) ($subscriber['company_name'] ?? ''));
+        $email = trim((string) ($subscriber['email'] ?? ''));
+        $label = $company !== '' ? $company : ($email !== '' ? $email : 'Customer');
+        $plans = array_values(array_filter(array_map('trim', explode(',', (string) ($subscriber['plans'] ?? ''))), static fn (string $plan): bool => $plan !== ''));
+        $primaryPlan = $plans[0] ?? 'starter';
+        $blueprint = $this->starterBlueprint($primaryPlan, $label);
+        $documentTitle = $blueprint['document_title'];
+        $entryTitle = $blueprint['entry_title'];
+        $releaseVersion = 'onboarding-' . trim((string) ($subscriber['id'] ?? ''));
+
+        $documentExists = false;
+        foreach ($this->knowledge->documentsForWorkspace($workspaceId) as $document) {
+            if (trim((string) ($document['title'] ?? '')) === $documentTitle) {
+                $documentExists = true;
+                break;
+            }
+        }
+        if (!$documentExists) {
+            $document = $this->knowledge->createDocument(
+                $workspaceId,
+                $documentTitle,
+                $blueprint['document_focus'],
+                $blueprint['document_summary'],
+                $blueprint['document_body'],
+                'en',
+                'markdown',
+            );
+            $this->enqueueDocumentIndex($workspaceId, (string) ($document['id'] ?? ''), $documentTitle);
+        }
+
+        $entryExists = false;
+        foreach ($this->knowledge->entriesForWorkspace($workspaceId) as $entry) {
+            if (trim((string) ($entry['title'] ?? '')) === $entryTitle) {
+                $entryExists = true;
+                break;
+            }
+        }
+        if (!$entryExists) {
+            $entry = $this->knowledge->createEntry(
+                $workspaceId,
+                'faq',
+                $entryTitle,
+                $blueprint['entry_focus'],
+                $blueprint['entry_body'],
+                'system',
+            );
+            $this->enqueueEntryIndex($workspaceId, (string) ($entry['id'] ?? ''), $entryTitle);
+        }
+
+        foreach ($this->knowledge->releasesForWorkspace($workspaceId) as $release) {
+            if (trim((string) ($release['version'] ?? '')) === $releaseVersion) {
+                return;
+            }
+        }
+
+        $this->knowledge->createRelease(
+            $workspaceId,
+            $releaseVersion,
+            'draft',
+            $blueprint['release_notes'],
+            [],
+            [],
+        );
+    }
+
+    /**
+     * @return array{
+     *   document_title:string,
+     *   document_focus:string,
+     *   document_summary:string,
+     *   document_body:string,
+     *   entry_title:string,
+     *   entry_focus:string,
+     *   entry_body:string,
+     *   release_notes:string
+     * }
+     */
+    private function starterBlueprint(string $plan, string $label): array
+    {
+        return match (trim($plan)) {
+            'enterprise' => [
+                'document_title' => 'Enterprise Launch Plan for ' . $label,
+                'document_focus' => 'Enterprise onboarding rollout',
+                'document_summary' => 'Coordinate enterprise launch owners, security review, SSO milestones, and customer success checkpoints.',
+                'document_body' => 'Capture procurement dependencies, security review tasks, workspace provisioning owners, SSO onboarding steps, and executive launch checkpoints for this enterprise customer.',
+                'entry_title' => 'Enterprise FAQ for ' . $label,
+                'entry_focus' => 'Enterprise onboarding FAQ',
+                'entry_body' => 'Track security review questions, procurement blockers, rollout dependencies, and owner handoff notes for this enterprise customer.',
+                'release_notes' => 'Enterprise onboarding release scaffold for ' . $label . ', including security review, owner onboarding, and initial executive-facing launch assets.',
+            ],
+            'team' => [
+                'document_title' => 'Team Launch Plan for ' . $label,
+                'document_focus' => 'Team onboarding rollout',
+                'document_summary' => 'Align workspace setup, editor onboarding, and first shared knowledge release for the team plan.',
+                'document_body' => 'Capture workspace setup, editor invitation sequence, initial release goals, and team enablement checkpoints for this customer handoff.',
+                'entry_title' => 'Team FAQ for ' . $label,
+                'entry_focus' => 'Team onboarding FAQ',
+                'entry_body' => 'Track kickoff questions, role assignment notes, launch blockers, and first release concerns for the team rollout.',
+                'release_notes' => 'Team onboarding release scaffold for ' . $label . ', focused on workspace setup, editor onboarding, and initial shared release content.',
+            ],
+            default => [
+                'document_title' => 'Starter Launch Plan for ' . $label,
+                'document_focus' => 'Customer onboarding rollout',
+                'document_summary' => 'Prepare the starter launch plan for workspace setup, owner handoff, and the first lightweight knowledge release.',
+                'document_body' => 'Capture launch owners, workspace setup milestones, and first release goals for this starter customer handoff.',
+                'entry_title' => 'Starter FAQ for ' . $label,
+                'entry_focus' => 'Customer onboarding FAQ',
+                'entry_body' => 'Track kickoff questions, owner handoff notes, and launch blockers for this customer.',
+                'release_notes' => 'Starter onboarding release scaffold for ' . $label,
+            ],
+        };
+    }
+
+    /**
+     * @param array<int, array<string, string>> $rows
+     * @return array<int, array<string, string>>
+     */
+    private function decorateWorkspaceProvisioning(string $workspaceId, array $rows): array
+    {
+        if ($workspaceId === '' || $rows === []) {
+            return $rows;
+        }
+
+        $leads = $this->decorateSubscribers($workspaceId, $this->ops->subscriberLeadsForWorkspace($workspaceId));
+        $leadMap = [];
+        foreach ($leads as $lead) {
+            $leadMap[trim((string) ($lead['id'] ?? ''))] = $lead;
+        }
+
+        return array_map(static function (array $row) use ($leadMap): array {
+            $lead = $leadMap[trim((string) ($row['subscriber_id'] ?? ''))] ?? [];
+            return [
+                ...$row,
+                'lead_email' => (string) ($lead['email'] ?? ''),
+                'lead_company_name' => (string) ($lead['company_name'] ?? ''),
+            ];
+        }, $rows);
+    }
+
+    /**
+     * @param array<string, mixed>|null $viewer
+     */
+    public function requiresPasswordReset(?array $viewer): bool
+    {
+        return $this->workspaces->requiresPasswordReset($viewer);
+    }
+
+    /**
+     * @param array<string, mixed>|null $viewer
+     * @param array<string, mixed> $input
+     * @return array{ok:bool,message:string}
+     */
+    public function changePassword(?array $workspace, ?array $viewer, array $input): array
+    {
+        if (!is_array($viewer)) {
+            return [
+                'ok' => false,
+                'message' => 'You must be signed in to update the password.',
+            ];
+        }
+
+        $currentPassword = trim((string) ($input['current_password'] ?? ''));
+        $newPassword = trim((string) ($input['new_password'] ?? ''));
+        $confirmPassword = trim((string) ($input['confirm_password'] ?? ''));
+
+        if ($currentPassword === '' || $newPassword === '' || $confirmPassword === '') {
+            return [
+                'ok' => false,
+                'message' => 'Current password, new password, and confirmation are required.',
+            ];
+        }
+
+        if ($newPassword !== $confirmPassword) {
+            return [
+                'ok' => false,
+                'message' => 'New password confirmation does not match.',
+            ];
+        }
+
+        if (strlen($newPassword) < 8) {
+            return [
+                'ok' => false,
+                'message' => 'New password must be at least 8 characters long.',
+            ];
+        }
+
+        $result = $this->workspaces->changePassword((string) ($viewer['id'] ?? ''), $currentPassword, $newPassword);
+        if (($result['ok'] ?? false) === true) {
+            $workspaceId = is_array($workspace) ? trim((string) ($workspace['id'] ?? '')) : '';
+            if ($workspaceId !== '' && $this->ops->writesEnabled()) {
+                $this->ops->recordAudit(
+                    $workspaceId,
+                    $this->viewerLabel($viewer),
+                    'account.password.changed',
+                    trim((string) ($viewer['email'] ?? $viewer['id'] ?? 'account')),
+                );
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array<string, mixed>|null $viewer
+     * @param array<int, array<string, string>> $memberships
+     */
+    public function recordWorkspaceSwitch(?array $viewer, array $memberships, string $targetSlug): void
+    {
+        if (!$this->ops->writesEnabled() || !is_array($viewer) || trim($targetSlug) === '') {
+            return;
+        }
+
+        foreach ($memberships as $membership) {
+            if (trim((string) ($membership['workspace_slug'] ?? '')) !== trim($targetSlug)) {
+                continue;
+            }
+
+            $workspace = $this->workspaces->findBySlug($targetSlug);
+            $workspaceId = is_array($workspace) ? trim((string) ($workspace['id'] ?? '')) : '';
+            if ($workspaceId === '') {
+                return;
+            }
+
+            $name = trim((string) ($membership['workspace_name'] ?? $targetSlug));
+            $role = trim((string) ($membership['role'] ?? ''));
+            $this->ops->recordAudit(
+                $workspaceId,
+                $this->viewerLabel($viewer),
+                'workspace.context.switched',
+                $name . ' / ' . $targetSlug . ($role !== '' ? ' | role=' . $role : ''),
+            );
+            return;
+        }
     }
 
     /**
@@ -795,6 +1666,36 @@ final class ConsoleWorkspaceService
     private function roleOf(?array $viewer): string
     {
         return is_array($viewer) ? trim((string) ($viewer['role'] ?? '')) : '';
+    }
+
+    /**
+     * @param array<string, mixed>|null $viewer
+     * @param array<string, mixed>|null $workspace
+     * @param array<int, array<string, string>> $memberships
+     * @return array<string, mixed>|null
+     */
+    private function viewerForWorkspace(?array $viewer, ?array $workspace, array $memberships): ?array
+    {
+        if (!is_array($viewer)) {
+            return null;
+        }
+
+        $workspaceId = is_array($workspace) ? trim((string) ($workspace['id'] ?? '')) : '';
+        if ($workspaceId === '') {
+            return $viewer;
+        }
+
+        foreach ($memberships as $membership) {
+            if (trim((string) ($membership['workspace_id'] ?? '')) !== $workspaceId) {
+                continue;
+            }
+
+            $viewer['role'] = trim((string) ($membership['role'] ?? ($viewer['role'] ?? '')));
+            return $viewer;
+        }
+
+        $viewer['role'] = '';
+        return $viewer;
     }
 
     /**
@@ -989,6 +1890,46 @@ final class ConsoleWorkspaceService
         $candidates = [
             (string) ($item['runtime_at'] ?? ''),
             (string) ($item['queued_at'] ?? ''),
+            (string) ($item['updated_at'] ?? ''),
+            (string) ($item['created_at'] ?? ''),
+        ];
+
+        foreach ($candidates as $candidate) {
+            $candidate = trim($candidate);
+            if ($candidate === '') {
+                continue;
+            }
+            $timestamp = strtotime($candidate);
+            if ($timestamp !== false) {
+                return $timestamp;
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     * @return array<int, array<string, mixed>>
+     */
+    private function releaseCandidates(array $rows, string $previewField, int $recommendedLimit = 2): array
+    {
+        usort($rows, fn (array $left, array $right): int => $this->releaseCandidateTimestamp($right) <=> $this->releaseCandidateTimestamp($left));
+        $rows = array_slice($rows, 0, 6);
+
+        return array_map(function (array $row, int $index) use ($previewField, $recommendedLimit): array {
+            $recommended = $index < $recommendedLimit;
+            $row['checked_attr'] = $recommended ? 'checked' : '';
+            $row['selection_badge'] = $recommended ? 'recommended' : '';
+            $row['preview_summary'] = $this->snippet((string) ($row[$previewField] ?? $row['title'] ?? ''), 120);
+            $row['coverage_focus'] = (string) ($row['coverage_focus'] ?? $row['title'] ?? '');
+            return $row;
+        }, $rows, array_keys($rows));
+    }
+
+    private function releaseCandidateTimestamp(array $item): int
+    {
+        $candidates = [
             (string) ($item['updated_at'] ?? ''),
             (string) ($item['created_at'] ?? ''),
         ];

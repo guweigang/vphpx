@@ -42,6 +42,21 @@ final class WorkspaceContextMiddleware implements MiddlewareInterface
         }
 
         if ($workspace === null && $this->app->authCheck($request)) {
+            $userId = $this->app->authId($request);
+            $session = $this->app->session($request);
+            $selectedSlug = trim((string) $session->get('studio.workspace_slug', ''));
+            if ($selectedSlug !== '') {
+                foreach ($this->workspaces->membershipsForUser($userId) as $membership) {
+                    if (trim((string) ($membership['workspace_slug'] ?? '')) !== $selectedSlug) {
+                        continue;
+                    }
+                    $workspace = $this->workspaces->findBySlug($selectedSlug);
+                    break;
+                }
+            }
+        }
+
+        if ($workspace === null && $this->app->authCheck($request)) {
             $workspace = $this->workspaces->defaultForUser(
                 $this->app->authId($request),
             );

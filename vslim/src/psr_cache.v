@@ -2,6 +2,8 @@ module main
 
 import vphp
 
+#include "php_bridge.h"
+
 fn psr6_owned_value(z vphp.ZVal) vphp.RequestOwnedZBox {
 	return vphp.own_request_zbox(z)
 }

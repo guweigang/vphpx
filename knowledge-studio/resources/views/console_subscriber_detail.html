@@ -1,0 +1,124 @@
+{{fill:nav}}{{ nav_label }}{{/fill}}
+{{fill:sidebar}}<p>{{ workspace_name }}</p><p>{{ workspace_slug }}</p><p>{{ sidebar_line | trim }}</p>{{/fill}}
+{{fill:footer}}<small>{{ footer_note | trim }}</small>{{/fill}}
+<section class="ks-section">
+  <p class="ks-eyebrow">{{ eyebrow | trim }}</p>
+  <article class="ks-spotlight">
+    <div class="ks-spotlight-grid">
+      <div class="ks-spotlight-copy">
+        <h1 class="ks-title">{{ title | trim }}</h1>
+        <p class="ks-copy">{{ intro | trim }}</p>
+        <div class="ks-actions"><a class="ks-btn-secondary" href="{{ back_url | trim }}">{{ back_label | trim }}</a></div>
+      </div>
+      <aside class="ks-spotlight-side">
+        <article class="ks-panel">
+          <h3>{{ context_title | trim }}</h3>
+          <p class="ks-copy">{{ viewer_label | trim }} {{ viewer_name | trim }}</p>
+          <p class="ks-copy">{{ role_hint_label | trim }} {{ viewer_role | trim }}</p>
+        </article>
+      </aside>
+    </div>
+  </article>
+  {{if:write_notice}}<div class="ks-notice success">{{ write_notice | trim }}</div>{{/if}}
+  {{if:write_error}}<div class="ks-notice error">{{ write_error | trim }}</div>{{/if}}
+  {{if:owner_only_hint}}<p class="ks-copy">{{ owner_only_hint | trim }}</p>{{/if}}
+  <div class="ks-grid two">
+    <article class="ks-card">
+      <h2>{{ profile_title | trim }}</h2>
+      <p class="ks-copy"><strong>{{ email_label | trim }}</strong> {{ lead_email }}</p>
+      <p class="ks-copy"><strong>{{ contact_label | trim }}</strong> {{ lead_contact_name }}</p>
+      <p class="ks-copy"><strong>{{ company_label | trim }}</strong> {{ lead_company_name }}</p>
+      <p class="ks-copy"><strong>{{ plan_label | trim }}</strong> {{ lead_plans }}</p>
+      <p class="ks-copy"><strong>{{ status_label | trim }}</strong> {{ lead_status }}</p>
+      <p class="ks-copy"><strong>{{ stage_label | trim }}</strong> {{ lead_stage }}</p>
+      <p class="ks-copy"><strong>{{ closed_reason_label | trim }}</strong> {{ lead_closed_reason }}</p>
+      <p class="ks-copy"><strong>{{ assignee_label | trim }}</strong> {{ lead_assignee_name }}</p>
+      <p class="ks-copy"><strong>{{ next_followup_label | trim }}</strong> {{ lead_next_followup_at }}</p>
+      <p class="ks-copy"><strong>{{ source_label | trim }}</strong> {{ lead_source_label }}</p>
+      <p class="ks-copy"><strong>{{ latest_label | trim }}</strong> {{ lead_latest_activity_at }}</p>
+      <p class="ks-copy"><strong>{{ notes_label | trim }}</strong> {{ lead_notes }}</p>
+    </article>
+    <article class="ks-card">
+      <h2>{{ status_form_title | trim }}</h2>
+      {{if:can_manage_ops}}
+      <form class="ks-form" method="post" action="{{ status_action | trim }}">
+        <input type="hidden" name="redirect" value="detail">
+        <div class="ks-field">
+          <label>{{ status_label | trim }}</label>
+          <select name="status">
+            <option value="active" {{ status_active_selected }}>active</option>
+            <option value="contacted" {{ status_contacted_selected }}>contacted</option>
+            <option value="qualified" {{ status_qualified_selected }}>qualified</option>
+            <option value="inactive" {{ status_inactive_selected }}>inactive</option>
+          </select>
+        </div>
+        <div class="ks-field">
+          <label>{{ stage_label | trim }}</label>
+          <select name="stage">
+            <option value="new" {{ stage_new_selected }}>new</option>
+            <option value="discovery" {{ stage_discovery_selected }}>discovery</option>
+            <option value="proposal" {{ stage_proposal_selected }}>proposal</option>
+            <option value="won" {{ stage_won_selected }}>won</option>
+            <option value="lost" {{ stage_lost_selected }}>lost</option>
+          </select>
+        </div>
+        <div class="ks-field">
+          <label>{{ owner_select_label | trim }}</label>
+          <select name="assignee_user_id">
+            <option value="">{{ owner_empty_label | trim }}</option>
+{{for:member_options}}            <option value="{{ item.value }}" {{ item.selected }}>{{ item.label }}</option>{{/for}}
+          </select>
+        </div>
+        <div class="ks-field">
+          <label>{{ next_followup_label | trim }}</label>
+          <input type="datetime-local" name="next_followup_at" value="{{ lead_next_followup_input }}">
+        </div>
+        <div class="ks-field">
+          <label>{{ closed_reason_label | trim }}</label>
+          <input type="text" name="closed_reason" value="{{ lead_closed_reason }}" placeholder="{{ closed_reason_placeholder | trim }}">
+        </div>
+        <div class="ks-field">
+          <label>{{ status_note_label | trim }}</label>
+          <textarea name="note" rows="3" placeholder="{{ status_note_placeholder | trim }}"></textarea>
+        </div>
+        <button type="submit">{{ status_submit_label | trim }}</button>
+      </form>
+      {{/if}}
+    </article>
+    <article class="ks-card">
+      <h2>{{ followup_form_title | trim }}</h2>
+      {{if:can_manage_ops}}
+      <form class="ks-form" method="post" action="{{ followup_action | trim }}">
+        <div class="ks-field">
+          <label>{{ followup_body_label | trim }}</label>
+          <textarea name="body" rows="5"></textarea>
+        </div>
+        <button type="submit">{{ followup_submit_label | trim }}</button>
+      </form>
+      {{/if}}
+    </article>
+    {{if:show_provisioning_cta}}<article class="ks-card">
+      <h2>{{ provisioning_title | trim }}</h2>
+      <p class="ks-copy">{{ provisioning_body | trim }}</p>
+      {{if:can_manage_ops}}<form class="ks-form" method="post" action="{{ provisioning_action | trim }}"><button type="submit">{{ provisioning_submit_label | trim }}</button></form>{{/if}}
+    </article>{{/if}}
+    <article class="ks-card">
+      <h2>{{ checklist_title | trim }}</h2>
+      {{if:has_provisioning_items}}
+      <div class="ks-stack">
+{{for:provisioning_items}}        <article class="ks-panel"><p class="ks-copy"><strong>{{ item.label }}</strong> <span class="{{ item.status_badge_class }}">{{ item.status }}</span></p><p class="ks-copy">{{ item.created_at }}{{if:item.completed_at}} / {{ item.completed_at }}{{/if}}</p>{{if:item.can_complete}}<form class="ks-inline-form" method="post" action="{{ item.complete_action }}"><button class="ks-btn-secondary" type="submit">{{ checklist_complete_label | trim }}</button></form>{{/if}}</article>{{/for}}
+      </div>
+      {{/if}}
+      {{if:show_no_provisioning_items}}<div class="ks-empty-state"><strong>{{ checklist_empty_title | trim }}</strong><br>{{ checklist_empty_body | trim }}</div>{{/if}}
+    </article>
+  </div>
+  <article class="ks-card">
+    <h2>{{ followups_title | trim }}</h2>
+    {{if:show_no_followups}}<div class="ks-empty-state"><strong>{{ followup_empty_title | trim }}</strong><br>{{ followup_empty_body | trim }}</div>{{/if}}
+    {{if:has_followups}}
+    <div class="ks-stack">
+{{for:followups}}      <article class="ks-panel"><p class="ks-copy"><strong>{{ item.actor }}</strong> / {{ item.created_at }}</p><p class="ks-copy">{{ item.body }}</p></article>{{/for}}
+    </div>
+    {{/if}}
+  </article>
+</section>

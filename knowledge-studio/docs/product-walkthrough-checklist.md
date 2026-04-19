@@ -95,13 +95,13 @@
 入口：
 
 - `/brand/{tenant}`
-- `/brand/{tenant}/assistant`
+- `/brand/{tenant}/validation`
 
 检查点：
 
-- owner 是否能从发布页顺畅跳到品牌页和助手页验证
+- owner 是否能从发布页顺畅跳到公开知识面和验证页检查
 - owner 是否能看出公开页是否已经承接了本次发布
-- owner 是否能看出助手页回答和引用是否可信
+- owner 是否能看出验证页回答和引用是否可信
 
 通过标准：
 
@@ -212,11 +212,11 @@
 
 - 方案区和订阅动作属于同一转化路径
 
-### 5.3 Validate Through The Assistant
+### 5.3 Validate Through The Validation Surface
 
 入口：
 
-- `/brand/{tenant}/assistant`
+- `/brand/{tenant}/validation`
 
 检查点：
 
@@ -226,7 +226,7 @@
 
 通过标准：
 
-- 助手页是价值验证页，不是另一个介绍页
+- 验证页是价值验证页，不是另一个介绍页
 
 ### 5.4 Verify The Source
 
@@ -242,8 +242,8 @@
 
 通过标准：
 
-- 公开详情页是内容证明页，能支撑品牌页和助手页的可信度
-- 访问者完成验证后，也能自然回到助手页、品牌页或订阅动作
+- 公开详情页是内容证明页，能支撑公开知识面和验证页的可信度
+- 访问者完成验证后，也能自然回到验证页、公开知识面或订阅动作
 
 ## 6. Cross-Page Checks
 
@@ -329,11 +329,11 @@
 建议每次回归都按下面顺序：
 
 1. `owner@acme.test`
-   从登录到工作台，再到发布中心，再到公开页和助手页
+   从登录到工作台，再到发布中心，再到公开知识面和验证页
 2. `editor@acme.test`
    从工作台反馈进入文档或 FAQ，再到编辑页
 3. 外部访问者
-   从品牌页进入方案，再到助手页提问，再看公开详情页
+   从公开知识面进入方案，再到验证页提问，再看公开详情页
 
 ## 9. Definition Of A Good Walkthrough
 

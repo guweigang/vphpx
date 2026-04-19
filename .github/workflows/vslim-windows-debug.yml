@@ -3,6 +3,9 @@ name: VSlim Windows Debug
 on:
   workflow_dispatch:
 
+env:
+  V_VERSION: '0.5.1'
+
 jobs:
   windows-smoke:
     name: windows smoke debug
@@ -19,18 +22,29 @@ jobs:
           coverage: none
           extensions: zip
 
-      - name: Setup V on Windows
-        shell: pwsh
-        run: |
-          git clone --depth 1 https://github.com/vlang/v.git "$env:RUNNER_TEMP\vlang"
-          cmd /c "$env:RUNNER_TEMP\vlang\make.bat"
-          Add-Content -Path $env:GITHUB_PATH -Value "$env:RUNNER_TEMP\vlang"
-          & "$env:RUNNER_TEMP\vlang\v.exe" version
-
       - name: Setup MSVC on Windows
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: amd64
+
+      - name: Setup V on Windows
+        shell: pwsh
+        run: |
+          $vUrl = "https://github.com/vlang/v/releases/download/$env:V_VERSION/v_windows.zip"
+          $zipPath = Join-Path $env:RUNNER_TEMP "v.zip"
+          $extractRoot = Join-Path $env:RUNNER_TEMP "v-extract"
+          $installRoot = Join-Path $env:RUNNER_TEMP "vlang"
+          Invoke-WebRequest -Uri $vUrl -OutFile $zipPath
+          if (Test-Path $extractRoot) {
+            Remove-Item -Recurse -Force $extractRoot
+          }
+          if (Test-Path $installRoot) {
+            Remove-Item -Recurse -Force $installRoot
+          }
+          Expand-Archive -Path $zipPath -DestinationPath $extractRoot -Force
+          Move-Item -Force (Join-Path $extractRoot "v") $installRoot
+          Add-Content -Path $env:GITHUB_PATH -Value $installRoot
+          & (Join-Path $installRoot "v.exe") version
 
       - name: Install Windows parser tools
         shell: pwsh

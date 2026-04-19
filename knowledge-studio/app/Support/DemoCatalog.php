@@ -93,10 +93,10 @@ final class DemoCatalog
                 'id' => 'ws-acme',
                 'slug' => 'acme-research',
                 'name' => 'Acme Research',
-                'brand_name' => 'Acme Advisor',
-                'tagline' => 'AI guidance for fintech operations teams.',
+                'brand_name' => 'Acme Operations Brief',
+                'tagline' => 'Knowledge operations for fintech support, reimbursement, and settlement teams.',
                 'theme' => 'graphite',
-                'plan' => 'pro',
+                'plan' => 'team',
                 'members' => 2,
             ],
             [
@@ -153,6 +153,7 @@ final class DemoCatalog
         return [[
             'workspace_id' => (string) ($user['workspace_id'] ?? ''),
             'workspace_slug' => (string) ($user['workspace_slug'] ?? ''),
+            'workspace_name' => (string) (($this->findWorkspaceBySlug((string) ($user['workspace_slug'] ?? ''))['name'] ?? '')),
             'role' => (string) ($user['role'] ?? 'subscriber'),
         ]];
     }
@@ -180,6 +181,34 @@ final class DemoCatalog
         return array_values(array_filter($this->entries(), static function (array $entry) use ($workspaceId): bool {
             return (string) ($entry['workspace_id'] ?? '') === $workspaceId;
         }));
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function findDocumentById(string $workspaceId, string $documentId): ?array
+    {
+        foreach ($this->documentsForWorkspace($workspaceId) as $document) {
+            if ((string) ($document['id'] ?? '') === $documentId) {
+                return $document;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function findEntryById(string $workspaceId, string $entryId): ?array
+    {
+        foreach ($this->entriesForWorkspace($workspaceId) as $entry) {
+            if ((string) ($entry['id'] ?? '') === $entryId) {
+                return $entry;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -245,8 +274,11 @@ final class DemoCatalog
         return [[
             'id' => 'release-' . $workspaceId,
             'workspace_id' => $workspaceId,
-            'version' => 'v0.1',
+            'version' => $workspaceId === 'ws-acme' ? '2026.Q2' : '2026.Q2',
             'status' => (string) $status,
+            'notes' => $workspaceId === 'ws-acme'
+                ? '2026.Q2 release focused on reimbursement operations, settlement exceptions, and support-to-finance handoff.'
+                : 'First public advisory release focused on policy references, research summaries, and reusable consulting answers.',
             'created_at' => '2026-04-08 00:00:00',
         ]];
     }
@@ -260,31 +292,47 @@ final class DemoCatalog
             [
                 'id' => 'doc-acme-1',
                 'workspace_id' => 'ws-acme',
-                'title' => 'Refund Operations Handbook',
-                'summary' => 'A tenant-facing handbook that explains refund eligibility, approval sequencing, and customer communication checkpoints.',
-                'body' => 'Refund requests start with intake validation, move through policy checks, then require finance confirmation before funds are released. Teams should document reason codes, reviewer decisions, and customer-visible timelines in one shared workflow.',
+                'title' => 'Reimbursement Operations Handbook',
+                'coverage_focus' => 'Eligibility checks, approval routing, and payout communication',
+                'summary' => 'Core operating guidance for eligibility checks, approval sequencing, exception handling, and customer communication in reimbursement workflows.',
+                'body' => 'Reimbursement requests should move through intake validation, policy checks, and finance confirmation before payout. Teams should capture exception codes, reviewer decisions, and customer-visible timelines in one shared operating workflow so published guidance stays consistent.',
                 'language' => 'en',
                 'source_type' => 'markdown',
                 'status' => 'published',
-                'chunks' => 18,
+                'chunks' => 21,
                 'updated_at' => '2026-04-08 14:00',
             ],
             [
                 'id' => 'doc-acme-2',
                 'workspace_id' => 'ws-acme',
-                'title' => 'Chargeback Escalation Playbook',
-                'summary' => 'Escalation guidance for disputes, exception ownership, and settlement communication.',
-                'body' => 'When a chargeback enters escalation, the team should capture transaction context, assign an owner, reconcile settlement milestones, and publish the final resolution path back into the shared knowledge base.',
+                'title' => 'Settlement Exception Playbook',
+                'coverage_focus' => 'Exception ownership, escalation windows, and settlement milestones',
+                'summary' => 'Escalation guidance for payout exceptions, dispute ownership, and settlement communication across support and finance teams.',
+                'body' => 'When a settlement exception enters escalation, the team should capture transaction context, assign an owner, reconcile settlement milestones, and publish the final resolution path back into the shared knowledge base so agents and operators reference the same answer.',
                 'language' => 'en',
                 'source_type' => 'pdf',
-                'status' => 'processing',
-                'chunks' => 9,
+                'status' => 'published',
+                'chunks' => 14,
                 'updated_at' => '2026-04-08 15:10',
+            ],
+            [
+                'id' => 'doc-acme-3',
+                'workspace_id' => 'ws-acme',
+                'title' => 'Support-to-Finance Handoff Guide',
+                'coverage_focus' => 'Cross-team handoff checkpoints for payout and support cases',
+                'summary' => 'A release-ready guide that defines who owns customer updates, payout approval, and escalation checkpoints once a case crosses team boundaries.',
+                'body' => 'Operational handoff should define the support owner, finance approver, escalation window, and promised customer update cadence. Publishing these checkpoints as one shared guide reduces inconsistent answers during high-volume payout events.',
+                'language' => 'en',
+                'source_type' => 'notion',
+                'status' => 'published',
+                'chunks' => 11,
+                'updated_at' => '2026-04-09 10:30',
             ],
             [
                 'id' => 'doc-nova-1',
                 'workspace_id' => 'ws-nova',
                 'title' => 'Policy Research Starter Kit',
+                'coverage_focus' => 'Evidence capture, memo intake, and citation-ready research output',
                 'summary' => 'A starter guide for policy research teams to normalize memo intake, evidence capture, and recommendation writing.',
                 'body' => 'Policy researchers should retain the issuing body, decision date, regulatory scope, and recommendation summary for every memo so downstream answers stay auditable and easy to cite.',
                 'language' => 'en',
@@ -306,8 +354,9 @@ final class DemoCatalog
                 'id' => 'entry-acme-1',
                 'workspace_id' => 'ws-acme',
                 'kind' => 'faq',
-                'title' => 'How do refunds reach final approval?',
-                'body' => 'Refund approvals move from intake review to policy validation, then require finance confirmation before final release to the customer-facing channel.',
+                'title' => 'How do reimbursement requests reach final approval?',
+                'coverage_focus' => 'Final approval path for reimbursement cases',
+                'body' => 'Reimbursement approvals move from intake review to policy validation, then require finance confirmation before final release to the customer-facing channel.',
                 'status' => 'published',
                 'owner' => 'Mira Chen',
                 'created_at' => '2026-04-08 14:00',
@@ -317,16 +366,29 @@ final class DemoCatalog
                 'workspace_id' => 'ws-acme',
                 'kind' => 'topic',
                 'title' => 'Settlement exception triage',
+                'coverage_focus' => 'Triage flow for payout and settlement exceptions',
                 'body' => 'Capture the exception context, map it to the settlement timeline, assign the responsible owner, and document the decision before publishing a guidance update.',
-                'status' => 'draft',
+                'status' => 'published',
                 'owner' => 'Noah Lin',
                 'created_at' => '2026-04-08 15:10',
+            ],
+            [
+                'id' => 'entry-acme-3',
+                'workspace_id' => 'ws-acme',
+                'kind' => 'faq',
+                'title' => 'When should support escalate a payout case to finance?',
+                'coverage_focus' => 'Escalation triggers from support into finance',
+                'body' => 'Escalate once the payout is blocked by policy review, settlement mismatch, or manual approval thresholds. The case should include the exception reason, promised customer update, and current owner before it moves to finance.',
+                'status' => 'published',
+                'owner' => 'Mira Chen',
+                'created_at' => '2026-04-09 10:35',
             ],
             [
                 'id' => 'entry-nova-1',
                 'workspace_id' => 'ws-nova',
                 'kind' => 'faq',
                 'title' => 'How to cite policy memos',
+                'coverage_focus' => 'Citation rules for policy memo answers',
                 'body' => 'Policy memos should include the issuing organization, memo date, decision context, and the recommendation summary used in the final answer.',
                 'status' => 'published',
                 'owner' => 'Iris Zhou',
@@ -344,22 +406,22 @@ final class DemoCatalog
             [
                 'id' => 'job-acme-1',
                 'workspace_id' => 'ws-acme',
-                'name' => 'Index Refund Operations Handbook',
+                'name' => 'Index Reimbursement Operations Handbook',
                 'status' => 'completed',
                 'queued_at' => '2026-04-08 13:40',
             ],
             [
                 'id' => 'job-acme-2',
                 'workspace_id' => 'ws-acme',
-                'name' => 'Parse Chargeback Escalation Playbook',
-                'status' => 'running',
+                'name' => 'Parse Settlement Exception Playbook',
+                'status' => 'completed',
                 'queued_at' => '2026-04-08 15:02',
             ],
             [
                 'id' => 'job-acme-3',
                 'workspace_id' => 'ws-acme',
-                'name' => 'Sync assistant preview cache',
-                'status' => 'failed',
+                'name' => 'Sync public validation cache',
+                'status' => 'completed',
                 'queued_at' => '2026-04-08 15:16',
             ],
             [
@@ -383,7 +445,7 @@ final class DemoCatalog
                 'workspace_id' => 'ws-acme',
                 'actor' => 'Mira Chen',
                 'action' => 'publish_release',
-                'target' => 'Acme Advisor v0.2',
+                'target' => 'Acme Operations Brief 2026.Q2',
                 'created_at' => '2026-04-08 14:10',
             ],
             [
@@ -393,6 +455,14 @@ final class DemoCatalog
                 'action' => 'update_entry',
                 'target' => 'Settlement exception triage',
                 'created_at' => '2026-04-08 15:12',
+            ],
+            [
+                'id' => 'audit-acme-3',
+                'workspace_id' => 'ws-acme',
+                'actor' => 'Mira Chen',
+                'action' => 'update_document',
+                'target' => 'Support-to-Finance Handoff Guide',
+                'created_at' => '2026-04-09 10:40',
             ],
             [
                 'id' => 'audit-nova-1',

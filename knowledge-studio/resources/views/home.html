@@ -28,4 +28,65 @@
     <a class="ks-btn-secondary" href="{{ console_url | trim }}">{{ console_cta | trim }}</a>
     <a class="ks-btn-secondary" href="{{ brand_url | trim }}">{{ brand_cta | trim }}</a>
   </div>
+  <div class="ks-grid two">
+    <article class="ks-card">
+      <h2>{{ fit_title | trim }}</h2>
+      <p class="ks-copy">{{ fit_body | trim }}</p>
+      <ul class="ks-list">
+        <li>{{ fit_one | trim }}</li>
+        <li>{{ fit_two | trim }}</li>
+        <li>{{ fit_three | trim }}</li>
+      </ul>
+    </article>
+    <article class="ks-card">
+      <h2>{{ workflow_title | trim }}</h2>
+      <p class="ks-copy">{{ workflow_body | trim }}</p>
+      <ol class="ks-list">
+        <li>{{ workflow_one | trim }}</li>
+        <li>{{ workflow_two | trim }}</li>
+        <li>{{ workflow_three | trim }}</li>
+      </ol>
+    </article>
+  </div>
+  <div class="ks-grid two">
+    <article class="ks-card">
+      <h2>{{ why_title | trim }}</h2>
+      <p class="ks-copy">{{ why_body | trim }}</p>
+      <ul class="ks-list">
+        <li>{{ why_one | trim }}</li>
+        <li>{{ why_two | trim }}</li>
+        <li>{{ why_three | trim }}</li>
+      </ul>
+    </article>
+    <article class="ks-card">
+      <h2>{{ replace_title | trim }}</h2>
+      <p class="ks-copy">{{ replace_body | trim }}</p>
+      <ul class="ks-list">
+        <li>{{ replace_one | trim }}</li>
+        <li>{{ replace_two | trim }}</li>
+        <li>{{ replace_three | trim }}</li>
+      </ul>
+    </article>
+  </div>
+  <article class="ks-card">
+    <h2>{{ start_title | trim }}</h2>
+    <p class="ks-copy">{{ start_body | trim }}</p>
+    <div class="ks-grid three">
+      <article class="ks-card">
+        <h3>{{ start_one_title | trim }}</h3>
+        <p class="ks-copy">{{ start_one_body | trim }}</p>
+        <a class="ks-btn-secondary" href="{{ brand_url | trim }}">{{ start_one_cta | trim }}</a>
+      </article>
+      <article class="ks-card">
+        <h3>{{ start_two_title | trim }}</h3>
+        <p class="ks-copy">{{ start_two_body | trim }}</p>
+        <a class="ks-btn-secondary" href="{{ console_url | trim }}">{{ start_two_cta | trim }}</a>
+      </article>
+      <article class="ks-card">
+        <h3>{{ start_three_title | trim }}</h3>
+        <p class="ks-copy">{{ start_three_body | trim }}</p>
+        <a class="ks-btn-secondary" href="{{ login_url | trim }}">{{ start_three_cta | trim }}</a>
+      </article>
+    </div>
+  </article>
 </section>

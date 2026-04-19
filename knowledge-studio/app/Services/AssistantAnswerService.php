@@ -84,6 +84,8 @@ final class AssistantAnswerService
                 continue;
             }
             $citations[] = [
+                'id' => (string) ($entry['id'] ?? ''),
+                'source_kind' => 'entry',
                 'title' => (string) ($entry['title'] ?? ''),
                 'kind' => (string) ($entry['kind'] ?? 'faq'),
                 'status' => (string) ($entry['status'] ?? ''),
@@ -100,6 +102,8 @@ final class AssistantAnswerService
                 continue;
             }
             $citations[] = [
+                'id' => (string) ($document['id'] ?? ''),
+                'source_kind' => 'document',
                 'title' => (string) ($document['title'] ?? ''),
                 'kind' => 'document',
                 'status' => (string) ($document['status'] ?? ''),

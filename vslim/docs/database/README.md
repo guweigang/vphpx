@@ -95,13 +95,24 @@ socket = "${env.DB_UPSTREAM_SOCKET:-tmp/vhttpd-db.sock}"
 
 release bundle 现在会把这些库一并打进：
 
-- `extension/runtime/`
+- `extension/vslim/runtime/`
 
 运行时需要让 PHP loader 能找到它们：
 
-- macOS：`DYLD_LIBRARY_PATH=./extension/runtime`
-- Linux：`LD_LIBRARY_PATH=./extension/runtime`
-- Windows：把 `extension\\runtime` 加到 `PATH`
+- macOS：`DYLD_LIBRARY_PATH=./extension/vslim/runtime`
+- Linux：`LD_LIBRARY_PATH=./extension/vslim/runtime`
+- Windows：把 `extension\\vslim` 或 `extension\\vslim\\runtime` 加到 `PATH`
+
+推荐安装结构是：
+
+- `extension_dir/vslim/vslim.so`
+- `extension_dir/vslim/runtime/...`
+
+然后在 `php.ini` 里加载：
+
+```ini
+extension=vslim/vslim.so
+```
 
 如果你不想在应用进程里处理这层原生依赖，改用 `vhttpd_upstream` 会更省心。
 
