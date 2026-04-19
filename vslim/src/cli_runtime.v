@@ -737,7 +737,13 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
 		cli_runtime_write_stderr(err.msg())
 		return 1
 	}
-	mut command_name := inv.command_name.clone()
+
+	// ---- Extract invocation into heap-allocated cli fields BEFORE bootstrap ----
+	// On Windows, passing `mut cli` to bootstrap functions corrupts ALL local
+	// string and []string variables on the stack. We persist everything into
+	// cli's heap fields and read them back after the bootstrap call.
+	cli.last_command_name = inv.command_name.clone()
+	cli.last_raw_args = cli_clone_string_list(inv.command_args)
 	argv0 := inv.argv0.clone()
 	bootstrap_dir := inv.bootstrap_dir.clone()
 	bootstrap_file := inv.bootstrap_file.clone()
@@ -745,21 +751,20 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
 	show_list := inv.show_list
 	show_version := inv.show_version
 
-	// Store command_args in heap-allocated cli field BEFORE bootstrap.
-	// On Windows, passing `mut cli` to bootstrap functions corrupts
-	// local []string variables on the stack. Using a heap field survives
-	// the stack frame mutation.
-	cli.last_raw_args = cli_clone_string_list(inv.command_args)
-
-	cli_debug_log('run_argv parsed argv0="${argv0}" command="${command_name}" args=${cli.last_raw_args} show_help=${show_help} show_list=${show_list} show_version=${show_version}')
+	cli_debug_log('run_argv parsed argv0="${argv0}" command="${cli.last_command_name}" args=${cli.last_raw_args} show_help=${show_help} show_list=${show_list} show_version=${show_version}')
 
 	cli_runtime_apply_bootstrap(mut cli, bootstrap_file, bootstrap_dir) or {
 		cli_runtime_write_stderr(err.msg())
 		return 1
 	}
-	// Retrieve args from heap field after bootstrap
+
+	// ---- Read back from heap fields after bootstrap ----
+	mut command_name := cli.last_command_name.clone()
 	mut command_args := cli_clone_string_list(cli.last_raw_args)
 	program := cli_runtime_program_name(argv0)
+
+	cli_debug_log('run_argv post_bootstrap command="${command_name}" args=${command_args}')
+
 	if show_version {
 		vphp.write_output_line(cli_runtime_version_text())
 		if command_name == '' && !show_help && !show_list {
