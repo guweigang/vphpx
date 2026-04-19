@@ -415,7 +415,7 @@ fn (mut cli VSlimCliApp) run_registered_cli_command_with_program(name string, ar
 		cli_debug_log(cli_trace_message(cli, 'invoke_cli_command cli_release done'))
 	}
 	cli_debug_log(cli_trace_message(cli, 'invoke_cli_command cli_ready raw=${usize(cli_z.raw)} valid=${cli_z.is_valid()} type=${cli_z.type_name()}'))
-	runtime_is_command_object := runtime.is_object() && runtime.is_instance_of('VSlim\\Cli\\Command')
+	runtime_is_command_object := runtime.is_object() && runtime.method_exists('handle')
 	cli_debug_log(cli_trace_message(cli, 'invoke_cli_command runtime_state raw=${usize(runtime.raw)} valid=${runtime.is_valid()} type=${runtime.type_name()} class=${runtime.class_name()} parsed=${input.parsed} object_path=${runtime_is_command_object}'))
 	mut code := 0
 	if runtime_is_command_object {
