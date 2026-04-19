@@ -1,0 +1,58 @@
+{{fill:nav}}{{ nav_label }}{{/fill}}
+{{fill:sidebar}}<p>{{ workspace_name }}</p><p>{{ workspace_slug }}</p><p>{{ sidebar_line | trim }}</p>{{/fill}}
+{{fill:footer}}<small>{{ footer_note | trim }}</small>{{/fill}}
+<section class="ks-section">
+  <p class="ks-eyebrow">{{ eyebrow | trim }}</p>
+  <article class="ks-spotlight">
+    <div class="ks-spotlight-grid">
+      <div class="ks-spotlight-copy">
+        <h1 class="ks-title">{{ title | trim }}</h1>
+        <p class="ks-copy">{{ intro | trim }}</p>
+        <div class="ks-meta">
+          <span class="ks-badge">{{ viewer_name | trim }}</span>
+          <span class="ks-badge">{{ viewer_email | trim }}</span>
+          <span class="ks-badge">{{ role_label | trim }} {{ viewer_role | trim }}</span>
+        </div>
+      </div>
+      <aside class="ks-spotlight-side">
+        <article class="ks-panel">
+          <h3>{{ context_title | trim }}</h3>
+          <p class="ks-copy">{{ email_label | trim }} {{ viewer_email | trim }}</p>
+          <p class="ks-copy">{{ role_label | trim }} {{ viewer_role | trim }}</p>
+          <p class="ks-copy">{{ workspace_label | trim }} {{ workspace_name | trim }} / {{ workspace_slug | trim }}</p>
+          <p class="ks-copy">{{ security_copy | trim }}</p>
+        </article>
+      </aside>
+    </div>
+  </article>
+  {{if:requires_password_reset}}<div class="ks-notice error">{{ reset_required_notice | trim }}</div>{{/if}}
+  {{if:write_notice}}<div class="ks-notice success">{{ write_notice | trim }}</div>{{/if}}
+  {{if:write_error}}<div class="ks-notice error">{{ write_error | trim }}</div>{{/if}}
+  <div class="ks-grid two">
+    <article class="ks-card">
+      <h2>{{ form_title | trim }}</h2>
+      <p class="ks-copy">这里先补最关键的账号安全动作，让受邀成员从一次性临时密码切到个人长期凭据。</p>
+      <form class="ks-form" method="post" action="{{ account_action | trim }}">
+        <div class="ks-field">
+          <label>{{ current_password_label | trim }}</label>
+          <input type="password" name="current_password" value="">
+        </div>
+        <div class="ks-field">
+          <label>{{ new_password_label | trim }}</label>
+          <input type="password" name="new_password" value="">
+        </div>
+        <div class="ks-field">
+          <label>{{ confirm_password_label | trim }}</label>
+          <input type="password" name="confirm_password" value="">
+        </div>
+        <button type="submit">{{ submit_label | trim }}</button>
+      </form>
+    </article>
+    <article class="ks-card">
+      <h2>{{ security_title | trim }}</h2>
+      <p class="ks-copy">{{ security_copy | trim }}</p>
+      {{if:requires_password_reset}}<p class="ks-copy">{{ reset_required_notice | trim }}</p>{{/if}}
+      {{if:write_notice}}<p class="ks-copy">{{ reset_complete_notice | trim }}</p>{{/if}}
+    </article>
+  </div>
+</section>
