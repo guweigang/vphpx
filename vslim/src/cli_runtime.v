@@ -744,12 +744,12 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
 	// cli's heap fields and read them back after the bootstrap call.
 	cli.last_command_name = inv.command_name.clone()
 	cli.last_raw_args = cli_clone_string_list(inv.command_args)
+	cli.last_show_help = inv.show_help
+	cli.last_show_list = inv.show_list
+	cli.last_show_version = inv.show_version
 	argv0 := inv.argv0.clone()
 	bootstrap_dir := inv.bootstrap_dir.clone()
 	bootstrap_file := inv.bootstrap_file.clone()
-	show_help := inv.show_help
-	show_list := inv.show_list
-	show_version := inv.show_version
 
 	cli_runtime_apply_bootstrap(mut cli, bootstrap_file, bootstrap_dir) or {
 		cli_runtime_write_stderr(err.msg())
@@ -759,6 +759,9 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
 	// ---- Read back from heap fields after bootstrap ----
 	mut command_name := cli.last_command_name.clone()
 	mut command_args := cli_clone_string_list(cli.last_raw_args)
+	show_help := cli.last_show_help
+	show_list := cli.last_show_list
+	show_version := cli.last_show_version
 	program := cli_runtime_program_name(argv0)
 
 	if show_version {
