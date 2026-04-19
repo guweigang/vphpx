@@ -423,7 +423,10 @@ fn (mut cli VSlimCliApp) run_registered_cli_command_with_program(name string, ar
 		mut result := vphp.ZVal.new_null()
 		cli_debug_log(cli_trace_message(cli, 'invoke_cli_command object_handle enter'))
 		if runtime.method_exists('handle') {
-			mut rb := vphp.method_request_owned_box(runtime, 'handle', []vphp.ZVal{})
+			mut rb := vphp.method_request_owned_box(runtime, 'handle', [
+				args_z,
+				cli_z,
+			])
 			result = rb.take_zval()
 		}
 		defer {
