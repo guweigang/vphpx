@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ffa38a57eab371e78de06f280c19ca6c",
+    "content-hash": "f9a0cc11cedb0928f45511e1c1c2bd9d",
     "packages": [
         {
             "name": "psr/cache",
@@ -524,6 +524,53 @@
                 "source": "https://github.com/php-fig/simple-cache/tree/3.0.0"
             },
             "time": "2021-10-29T13:26:27+00:00"
+        },
+        {
+            "name": "vphp/vhttpd",
+            "version": "v0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/guweigang/vphp-package.git",
+                "reference": "53062e7d0b2ac823e1912c267a4a9673abc6a4a8"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/guweigang/vphp-package/zipball/53062e7d0b2ac823e1912c267a4a9673abc6a4a8",
+                "reference": "53062e7d0b2ac823e1912c267a4a9673abc6a4a8",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.1",
+                "psr/container": "^1.1 || ^2.0"
+            },
+            "suggest": {
+                "guzzlehttp/psr7": "PSR-17 factory support",
+                "laminas/laminas-diactoros": "PSR-17 factory support",
+                "nyholm/psr7": "PSR-17 factory support"
+            },
+            "bin": [
+                "bin/php-worker",
+                "bin/php-worker-client"
+            ],
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/legacy_aliases.php"
+                ],
+                "psr-4": {
+                    "VPhp\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "VHttpd PHP runtime package (manager, PSR-7 bridge, VSlim adapter, php-worker)",
+            "support": {
+                "issues": "https://github.com/guweigang/vphp-package/issues",
+                "source": "https://github.com/guweigang/vphp-package/tree/v0.1.0"
+            },
+            "time": "2026-03-20T04:57:19+00:00"
         }
     ],
     "packages-dev": [
