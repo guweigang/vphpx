@@ -14,7 +14,7 @@ if (
     !isset($_SERVER['REQUEST_METHOD'])
 ) {
     echo "Usage:\n";
-    echo "  VHTTPD_APP=$(pwd)/public/worker.php php -d extension=../vslim/vslim.so /path/to/php-worker --socket /tmp/knowledge-studio.sock\n";
+    echo "  VHTTPD_APP=$(pwd)/public/worker.php php -d extension=../vslim/vslim.so vendor/bin/php-worker --socket /tmp/knowledge-studio.sock\n";
     exit(0);
 }
 

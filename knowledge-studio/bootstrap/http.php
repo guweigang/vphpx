@@ -2,18 +2,12 @@
 declare(strict_types=1);
 
 $root = dirname(__DIR__);
-$autoloadCandidates = [
-    $root . '/vendor/autoload.php',
-    $root . '/../../../../vhttpd/php/package/vendor/autoload.php',
-    $root . '/../../../vhttpd/php/package/vendor/autoload.php',
-];
-foreach ($autoloadCandidates as $autoload) {
-    if (!is_file($autoload)) {
-        continue;
-    }
-    require_once $autoload;
-    break;
+$autoload = $root . '/vendor/autoload.php';
+if (!is_file($autoload)) {
+    fwrite(STDERR, "Composer autoload is missing. Run composer install in knowledge-studio.\n");
+    exit(1);
 }
+require_once $autoload;
 
 \VSlim\EnvLoader::bootstrap($root);
 \App\Support\PsrStubLoader::load();

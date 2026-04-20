@@ -5,11 +5,10 @@ declare(strict_types=1);
 $root = dirname(__DIR__);
 $autoload = $root . '/vendor/autoload.php';
 if (!is_file($autoload)) {
-    $autoload = $root . '/../../../vhttpd/php/package/vendor/autoload.php';
+    fwrite(STDERR, "Composer autoload is missing. Run composer install in knowledge-studio.\n");
+    exit(1);
 }
-if (is_file($autoload)) {
-    require_once $autoload;
-}
+require_once $autoload;
 \App\Support\PsrStubLoader::load();
 \App\Support\StudioTimezone::bootstrap();
 
