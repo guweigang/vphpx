@@ -59,6 +59,7 @@ pub fn (probe &VSlimPhpSignatureProbe) accept_callable(cb vphp.RequestBorrowedZB
 }
 
 @[php_method: 'optionalTail']
+@[php_arg_default: 'suffix=""']
 @[php_optional_args: 'suffix']
 pub fn (probe &VSlimPhpSignatureProbe) optional_tail(prefix string, suffix string) string {
 	if suffix == '' {

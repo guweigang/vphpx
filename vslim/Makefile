@@ -1,4 +1,4 @@
-.PHONY: all build emit-only prod build-prod ext dist dist-source vhttpd serve test psr-matrix framework-matrix demo-self-test demo-verify mvp-check runtime-check clean
+.PHONY: all build emit-only prod build-prod ext stubs dist dist-source vhttpd serve test psr-matrix framework-matrix demo-self-test demo-verify mvp-check runtime-check clean
 
 BREW_PATH ?= /opt/homebrew
 VPHP_V_GC ?= auto
@@ -99,6 +99,9 @@ ext:
 		-DcJSON_GetErrorPos=cJSON_GetErrorPtr \
 		$(PHP_INC) $(EXT_C) php_bridge.c ../vphp/v_bridge.c -o vslim.so \
 		-I../vphp $(PHP_LDFLAGS) $(PHP_LIBS) $(GC_LIBS) $(PLATFORM_LDFLAGS) -fvisibility=default
+
+stubs: build
+	php $(ROOT)/scripts/generate_stubs.php
 
 vhttpd:
 	@$(MAKE) -C $(VHTTPD_ROOT) build VHTTPD_BIN="$(VHTTPD_BIN)" VPHP_V_GC="$(VPHP_V_GC)"

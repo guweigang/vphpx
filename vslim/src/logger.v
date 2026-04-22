@@ -385,6 +385,7 @@ pub fn (mut logger VSlimPsrLogger) use_stderr() &VSlimPsrLogger {
 }
 
 @[php_method]
+@[php_arg_default: 'default_context=[]']
 @[php_optional_args: 'default_context']
 pub fn (mut logger VSlimPsrLogger) log(level vphp.RequestBorrowedZBox, message vphp.RequestBorrowedZBox, default_context vphp.RequestBorrowedZBox) {
 	mut inner := logger.logger()
@@ -397,6 +398,7 @@ pub fn (mut logger VSlimPsrLogger) log(level vphp.RequestBorrowedZBox, message v
 }
 
 @[php_method]
+@[php_arg_default: 'default_context=[]']
 @[php_optional_args: 'default_context']
 pub fn (mut logger VSlimPsrLogger) emergency(message vphp.RequestBorrowedZBox, default_context vphp.RequestBorrowedZBox) {
 	mut inner := logger.logger()
@@ -404,6 +406,7 @@ pub fn (mut logger VSlimPsrLogger) emergency(message vphp.RequestBorrowedZBox, d
 }
 
 @[php_method]
+@[php_arg_default: 'default_context=[]']
 @[php_optional_args: 'default_context']
 pub fn (mut logger VSlimPsrLogger) alert(message vphp.RequestBorrowedZBox, default_context vphp.RequestBorrowedZBox) {
 	mut inner := logger.logger()
@@ -411,6 +414,7 @@ pub fn (mut logger VSlimPsrLogger) alert(message vphp.RequestBorrowedZBox, defau
 }
 
 @[php_method]
+@[php_arg_default: 'default_context=[]']
 @[php_optional_args: 'default_context']
 pub fn (mut logger VSlimPsrLogger) critical(message vphp.RequestBorrowedZBox, default_context vphp.RequestBorrowedZBox) {
 	mut inner := logger.logger()
@@ -418,6 +422,7 @@ pub fn (mut logger VSlimPsrLogger) critical(message vphp.RequestBorrowedZBox, de
 }
 
 @[php_method]
+@[php_arg_default: 'default_context=[]']
 @[php_optional_args: 'default_context']
 pub fn (mut logger VSlimPsrLogger) error(message vphp.RequestBorrowedZBox, default_context vphp.RequestBorrowedZBox) {
 	mut inner := logger.logger()
@@ -425,6 +430,7 @@ pub fn (mut logger VSlimPsrLogger) error(message vphp.RequestBorrowedZBox, defau
 }
 
 @[php_method]
+@[php_arg_default: 'default_context=[]']
 @[php_optional_args: 'default_context']
 pub fn (mut logger VSlimPsrLogger) warning(message vphp.RequestBorrowedZBox, default_context vphp.RequestBorrowedZBox) {
 	mut inner := logger.logger()
@@ -432,6 +438,7 @@ pub fn (mut logger VSlimPsrLogger) warning(message vphp.RequestBorrowedZBox, def
 }
 
 @[php_method]
+@[php_arg_default: 'default_context=[]']
 @[php_optional_args: 'default_context']
 pub fn (mut logger VSlimPsrLogger) notice(message vphp.RequestBorrowedZBox, default_context vphp.RequestBorrowedZBox) {
 	mut inner := logger.logger()
@@ -439,6 +446,7 @@ pub fn (mut logger VSlimPsrLogger) notice(message vphp.RequestBorrowedZBox, defa
 }
 
 @[php_method]
+@[php_arg_default: 'default_context=[]']
 @[php_optional_args: 'default_context']
 pub fn (mut logger VSlimPsrLogger) info(message vphp.RequestBorrowedZBox, default_context vphp.RequestBorrowedZBox) {
 	mut inner := logger.logger()
@@ -446,6 +454,7 @@ pub fn (mut logger VSlimPsrLogger) info(message vphp.RequestBorrowedZBox, defaul
 }
 
 @[php_method]
+@[php_arg_default: 'default_context=[]']
 @[php_optional_args: 'default_context']
 pub fn (mut logger VSlimPsrLogger) debug(message vphp.RequestBorrowedZBox, default_context vphp.RequestBorrowedZBox) {
 	mut inner := logger.logger()

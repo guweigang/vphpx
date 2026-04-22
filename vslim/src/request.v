@@ -130,6 +130,7 @@ pub fn (r &VSlimRequest) input(key string) string {
 }
 
 @[php_method]
+@[php_arg_default: 'default_value=""']
 @[php_optional_args: 'default_value']
 pub fn (r &VSlimRequest) input_or(key string, default_value string) string {
 	inputs := r.input_values()

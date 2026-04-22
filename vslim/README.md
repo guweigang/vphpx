@@ -169,6 +169,24 @@ make runtime-check
 
 这条命令会先构建预编译的 [vhttpd](/Users/guweigang/Source/vhttpd/vhttpd)，再运行 `httpd` / `vhttpd` / `worker` 相关测试。
 
+## IDE Stubs
+
+如果你希望 IDE 对 `vslim` 扩展类和全局函数做自动补全，可以直接生成一份只给 IDE / 静态分析器读取的 stub 文件：
+
+```bash
+make stubs
+```
+
+默认会把结果写到 [stubs/vslim.php](/Users/guweigang/Source/vphpx/vslim/stubs/vslim.php)。这份文件是从当前已构建的 `vslim.so` 反射生成的，所以推荐在每次改了导出 API 之后重新跑一次。
+
+如果你想指定输出路径，也可以直接执行：
+
+```bash
+php scripts/generate_stubs.php --output=/absolute/path/to/vslim.php
+```
+
+这份 stub 只用于 IDE / 静态分析，不应该在生产环境里 `require`。
+
 ## Release Bundles
 
 `vslim` 现在有一套统一的 release 打包入口：
@@ -183,6 +201,8 @@ make dist
   当前平台的预编译扩展目录，里面包含 `vslim.so`/`php_vslim.dll`
 - `extension/vslim/runtime/`
   扩展依赖的原生运行库，例如 mysql / mariadb client
+- `extension/vslim/runtime/plugin/`
+  Linux 下随 bundle 一起携带的 mysql / mariadb client auth plugins（如果检测到）
 - `template/`
   可直接起项目的 app 模板
 - `docs/`

@@ -152,6 +152,7 @@ pub fn (c &VSlimConfig) has(key string) bool {
 	return c.value_opt(key) != none
 }
 
+@[php_arg_default: 'default_value=""']
 @[php_optional_args: 'default_value']
 @[php_method]
 pub fn (c &VSlimConfig) get_string(key string, default_value string) string {
@@ -159,6 +160,7 @@ pub fn (c &VSlimConfig) get_string(key string, default_value string) string {
 	return value.string()
 }
 
+@[php_arg_default: 'default_value=0']
 @[php_optional_args: 'default_value']
 @[php_method]
 pub fn (c &VSlimConfig) get_int(key string, default_value int) int {
@@ -166,6 +168,7 @@ pub fn (c &VSlimConfig) get_int(key string, default_value int) int {
 	return value.int()
 }
 
+@[php_arg_default: 'default_value=false']
 @[php_optional_args: 'default_value']
 @[php_method]
 pub fn (c &VSlimConfig) get_bool(key string, default_value bool) bool {
@@ -173,6 +176,7 @@ pub fn (c &VSlimConfig) get_bool(key string, default_value bool) bool {
 	return value.bool()
 }
 
+@[php_arg_default: 'default_value=0.0']
 @[php_optional_args: 'default_value']
 @[php_method]
 pub fn (c &VSlimConfig) get_float(key string, default_value f64) f64 {
@@ -187,6 +191,7 @@ pub fn (c &VSlimConfig) get_string_list(key string) []string {
 	return arr.as_strings()
 }
 
+@[php_arg_default: 'default_json=""']
 @[php_optional_args: 'default_json']
 @[php_method]
 pub fn (c &VSlimConfig) get_json(key string, default_json string) string {
@@ -194,6 +199,7 @@ pub fn (c &VSlimConfig) get_json(key string, default_json string) string {
 	return toml_any_to_json(value)
 }
 
+@[php_arg_default: 'default_value=null']
 @[php_optional_args: 'default_value']
 @[php_method]
 pub fn (c &VSlimConfig) get(key string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
@@ -207,6 +213,7 @@ pub fn (c &VSlimConfig) get(key string, default_value vphp.RequestBorrowedZBox) 
 	return vphp.own_request_zbox(toml_any_to_zval(value))
 }
 
+@[php_arg_default: 'default_value=[]']
 @[php_optional_args: 'default_value']
 @[php_method]
 pub fn (c &VSlimConfig) get_map(key string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
@@ -224,6 +231,7 @@ pub fn (c &VSlimConfig) get_map(key string, default_value vphp.RequestBorrowedZB
 	}
 }
 
+@[php_arg_default: 'default_value=[]']
 @[php_optional_args: 'default_value']
 @[php_method]
 pub fn (c &VSlimConfig) get_list(key string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {

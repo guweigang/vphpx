@@ -5,6 +5,42 @@ import json
 import os
 import vphp
 
+$if linux {
+	#flag -ldl
+	#include <dlfcn.h>
+	#include <limits.h>
+	#include <stdlib.h>
+	#include <string.h>
+
+	char* vslim_mysql_client_plugin_dir(void) {
+		Dl_info info;
+		if (dladdr((void*) mysql_init, &info) == 0 || info.dli_fname == NULL) {
+			return NULL;
+		}
+		size_t len = strlen(info.dli_fname);
+		char* path = (char*) malloc(PATH_MAX);
+		if (path == NULL || len + 1 >= PATH_MAX) {
+			free(path);
+			return NULL;
+		}
+		memcpy(path, info.dli_fname, len + 1);
+		char* slash = strrchr(path, '/');
+		if (slash == NULL) {
+			free(path);
+			return NULL;
+		}
+		*slash = '\0';
+		if (strlen(path) + strlen("/plugin") + 1 >= PATH_MAX) {
+			free(path);
+			return NULL;
+		}
+		strcat(path, "/plugin");
+		return path;
+	}
+	fn C.vslim_mysql_client_plugin_dir() &char
+	fn C.free(voidptr)
+}
+
 fn C.mysql_thread_init() bool
 fn C.mysql_thread_end()
 
@@ -308,6 +344,7 @@ pub fn (mut db VSlimDatabaseManager) connect() bool {
 		password: db.config_ref.password()
 		dbname:   db.config_ref.database()
 	}
+	configure_database_client_plugin_dir()
 	db.mysql_pool = mysql.new_connection_pool(config, db.config_ref.pool_size_value()) or {
 		db.last_error = err.msg()
 		vphp.throw_exception_class('RuntimeException', 'database connect failed: ${err.msg()}',
@@ -319,6 +356,25 @@ pub fn (mut db VSlimDatabaseManager) connect() bool {
 	db.last_insert_id = 0
 	db.last_error = ''
 	return true
+}
+
+fn configure_database_client_plugin_dir() {
+	$if linux {
+		if os.getenv('MARIADB_PLUGIN_DIR').trim_space() != '' || os.getenv('MYSQL_PLUGIN_DIR').trim_space() != '' {
+			return
+		}
+		plugin_dir_ptr := C.vslim_mysql_client_plugin_dir()
+		if plugin_dir_ptr == unsafe { nil } {
+			return
+		}
+		plugin_dir := unsafe { cstring_to_vstring(plugin_dir_ptr) }
+		C.free(plugin_dir_ptr)
+		if plugin_dir.trim_space() == '' || !os.is_dir(plugin_dir) {
+			return
+		}
+		os.setenv('MARIADB_PLUGIN_DIR', plugin_dir, true)
+		os.setenv('MYSQL_PLUGIN_DIR', plugin_dir, true)
+	}
 }
 
 pub fn (mut db VSlimDatabaseManager) ensure_direct_mysql_supported() ! {

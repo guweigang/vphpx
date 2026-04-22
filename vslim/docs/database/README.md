@@ -96,6 +96,8 @@ socket = "${env.DB_UPSTREAM_SOCKET:-tmp/vhttpd-db.sock}"
 release bundle 现在会把这些库一并打进：
 
 - `extension/vslim/runtime/`
+- Linux 下如果探测到 `libmariadb` / `libmysqlclient` 的 client auth plugins，也会一并打进：
+  `extension/vslim/runtime/plugin/`
 
 运行时需要让 PHP loader 能找到它们：
 
@@ -115,6 +117,15 @@ extension=vslim/vslim.so
 ```
 
 如果你不想在应用进程里处理这层原生依赖，改用 `vhttpd_upstream` 会更省心。
+
+补充说明：
+
+- 某些 MariaDB / MySQL 服务端认证方式会要求 client 侧再加载额外 auth plugin，比如 `sha256_password.so`
+- 现在 release bundle 在 Linux 下会把这些 plugin 一起打包，并在 direct 模式连接前自动把
+  `MARIADB_PLUGIN_DIR` / `MYSQL_PLUGIN_DIR` 指到 bundled `runtime/plugin/`
+- 如果你看到
+  `Plugin sha256_password could not be loaded`
+  这通常说明运行时没找到 client plugin 目录，而不只是主库 `libmariadb.so` 缺失
 
 ## 基本用法
 

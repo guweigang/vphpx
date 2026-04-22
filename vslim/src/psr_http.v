@@ -3,6 +3,7 @@ module main
 import vphp
 
 @[php_method]
+@[php_arg_default: 'default_content=""']
 @[php_optional_args: 'default_content']
 pub fn (mut s VSlimPsr7Stream) construct(default_content string) &VSlimPsr7Stream {
 	s.content = default_content
@@ -73,6 +74,7 @@ pub fn (s &VSlimPsr7Stream) is_seekable() bool {
 }
 
 @[php_method]
+@[php_arg_default: 'default_whence=SEEK_SET']
 @[php_optional_args: 'default_whence']
 pub fn (s &VSlimPsr7Stream) seek(offset vphp.RequestBorrowedZBox, default_whence vphp.RequestBorrowedZBox) {
 	if s.detached {
@@ -207,6 +209,7 @@ pub fn (s &VSlimPsr7Stream) get_contents() string {
 }
 
 @[php_method: 'getMetadata']
+@[php_arg_default: 'default_key=null']
 @[php_optional_args: 'default_key']
 pub fn (s &VSlimPsr7Stream) get_metadata(default_key vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	if !default_key.is_valid() || default_key.is_null() || default_key.is_undef() {
@@ -339,6 +342,7 @@ pub fn (mut u VSlimPsr7UploadedFile) cleanup() {
 }
 
 @[php_method]
+@[php_arg_default: 'default_status=200,default_reason_phrase=""']
 @[php_optional_args: 'default_status,default_reason_phrase']
 pub fn (mut r VSlimPsr7Response) construct(default_status int, default_reason_phrase string) &VSlimPsr7Response {
 	r.status = default_psr7_status(default_status)
@@ -464,6 +468,7 @@ pub fn (r &VSlimPsr7Response) get_status_code() int {
 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method: 'withStatus']
+@[php_arg_default: 'default_reason_phrase=""']
 @[php_optional_args: 'default_reason_phrase']
 pub fn (r &VSlimPsr7Response) with_status(code vphp.RequestBorrowedZBox, default_reason_phrase vphp.RequestBorrowedZBox) &VSlimPsr7Response {
 	status := validate_psr7_status_or_throw(int(code.to_i64())) or {
@@ -659,6 +664,7 @@ pub fn (r &VSlimPsr7Request) get_uri() &VSlimPsr7Uri {
 @[php_arg_type: 'uri=Psr\\Http\\Message\\UriInterface']
 @[php_return_type: 'Psr\\Http\\Message\\RequestInterface']
 @[php_method: 'withUri']
+@[php_arg_default: 'default_preserve_host=false']
 @[php_optional_args: 'default_preserve_host']
 pub fn (r &VSlimPsr7Request) with_uri(uri vphp.RequestBorrowedZBox, default_preserve_host vphp.RequestBorrowedZBox) &VSlimPsr7Request {
 	next_uri := zval_to_psr7_uri(uri.to_zval())
@@ -970,6 +976,7 @@ pub fn (r &VSlimPsr7ServerRequest) get_attributes() vphp.RequestOwnedZBox {
 }
 
 @[php_method: 'getAttribute']
+@[php_arg_default: 'default_value=null']
 @[php_optional_args: 'default_value']
 pub fn (r &VSlimPsr7ServerRequest) get_attribute(name vphp.RequestBorrowedZBox, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	key := zval_to_log_message(name.to_zval())
@@ -1013,6 +1020,7 @@ pub fn (r &VSlimPsr7ServerRequest) str() string {
 }
 
 @[php_method]
+@[php_arg_default: 'default_uri=""']
 @[php_optional_args: 'default_uri']
 pub fn (mut u VSlimPsr7Uri) construct(default_uri string) &VSlimPsr7Uri {
 	parsed := parse_psr7_uri(default_uri)
@@ -1096,6 +1104,7 @@ pub fn (u &VSlimPsr7Uri) with_scheme(scheme vphp.RequestBorrowedZBox) &VSlimPsr7
 
 @[php_return_type: 'Psr\\Http\\Message\\UriInterface']
 @[php_method: 'withUserInfo']
+@[php_arg_default: 'default_password=""']
 @[php_optional_args: 'default_password']
 pub fn (u &VSlimPsr7Uri) with_user_info(user vphp.RequestBorrowedZBox, default_password vphp.RequestBorrowedZBox) &VSlimPsr7Uri {
 	return clone_psr7_uri(u, u.scheme, zval_to_log_message(user.to_zval()), zval_or_empty_string(default_password.to_zval()), u.host, u.port, u.path, u.query, u.fragment)
@@ -1155,6 +1164,7 @@ pub fn (f &VSlimPsr17RequestFactory) create_request(method vphp.RequestBorrowedZ
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
 @[php_method: 'createServerRequest']
 @[php_arg_type: 'default_server_params=array']
+@[php_arg_default: 'default_server_params=[]']
 @[php_optional_args: 'default_server_params']
 pub fn (f &VSlimPsr17ServerRequestFactory) create_server_request(method vphp.RequestBorrowedZBox, uri vphp.RequestBorrowedZBox, default_server_params vphp.RequestBorrowedZBox) &VSlimPsr7ServerRequest {
 	return new_psr7_server_request(validate_psr7_method_or_fallback(zval_to_log_message(method.to_zval()), 'GET'), uri.to_zval(), default_server_params.to_zval())
@@ -1162,6 +1172,7 @@ pub fn (f &VSlimPsr17ServerRequestFactory) create_server_request(method vphp.Req
 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method: 'createResponse']
+@[php_arg_default: 'default_status=200,default_reason_phrase=""']
 @[php_optional_args: 'default_status,default_reason_phrase']
 pub fn (f &VSlimPsr17ResponseFactory) create_response(default_status vphp.RequestBorrowedZBox, default_reason_phrase vphp.RequestBorrowedZBox) &VSlimPsr7Response {
 	status := validate_psr17_response_status_or_throw(zval_to_psr17_response_status(default_status.to_zval())) or {
@@ -1194,6 +1205,7 @@ pub fn (mut f VSlimPsr17UploadedFileFactory) construct() &VSlimPsr17UploadedFile
 
 @[php_return_type: 'Psr\\Http\\Message\\StreamInterface']
 @[php_method: 'createStream']
+@[php_arg_default: 'default_content=""']
 @[php_optional_args: 'default_content']
 pub fn (f &VSlimPsr17StreamFactory) create_stream(default_content vphp.RequestBorrowedZBox) &VSlimPsr7Stream {
 	return new_psr7_stream(zval_or_empty_string(default_content.to_zval()))
@@ -1201,6 +1213,7 @@ pub fn (f &VSlimPsr17StreamFactory) create_stream(default_content vphp.RequestBo
 
 @[php_return_type: 'Psr\\Http\\Message\\StreamInterface']
 @[php_method: 'createStreamFromFile']
+@[php_arg_default: 'default_mode="r"']
 @[php_optional_args: 'default_mode']
 pub fn (f &VSlimPsr17StreamFactory) create_stream_from_file(filename vphp.RequestBorrowedZBox, default_mode vphp.RequestBorrowedZBox) &VSlimPsr7Stream {
 	return build_psr7_stream_from_file(zval_to_log_message(filename.to_zval()), zval_or_empty_string(default_mode.to_zval()))
@@ -1220,6 +1233,7 @@ pub fn (mut f VSlimPsr17UriFactory) construct() &VSlimPsr17UriFactory {
 @[php_arg_type: 'stream=Psr\\Http\\Message\\StreamInterface']
 @[php_return_type: 'Psr\\Http\\Message\\UploadedFileInterface']
 @[php_method: 'createUploadedFile']
+@[php_arg_default: 'default_size=null,default_error=0,default_client_filename=null,default_client_media_type=null']
 @[php_optional_args: 'default_size,default_error,default_client_filename,default_client_media_type']
 pub fn (f &VSlimPsr17UploadedFileFactory) create_uploaded_file(stream vphp.RequestBorrowedZBox, default_size vphp.RequestBorrowedZBox, default_error vphp.RequestBorrowedZBox, default_client_filename vphp.RequestBorrowedZBox, default_client_media_type vphp.RequestBorrowedZBox) &VSlimPsr7UploadedFile {
 	return new_psr7_uploaded_file(zval_to_psr7_stream(stream.to_zval()), zval_to_optional_size(default_size.to_zval()), zval_to_upload_error_or(default_error.to_zval(), 0), zval_to_optional_trimmed_string(default_client_filename.to_zval()), zval_to_optional_trimmed_string(default_client_media_type.to_zval()))
@@ -1227,6 +1241,7 @@ pub fn (f &VSlimPsr17UploadedFileFactory) create_uploaded_file(stream vphp.Reque
 
 @[php_return_type: 'Psr\\Http\\Message\\UriInterface']
 @[php_method: 'createUri']
+@[php_arg_default: 'default_uri=""']
 @[php_optional_args: 'default_uri']
 pub fn (f &VSlimPsr17UriFactory) create_uri(default_uri vphp.RequestBorrowedZBox) &VSlimPsr7Uri {
 	return new_psr7_uri(zval_or_empty_string(default_uri.to_zval()))

@@ -397,12 +397,14 @@ pub fn (session &VSlimSessionStore) all() map[string]string {
 }
 
 @[php_method]
+@[php_arg_default: 'default_value=""']
 @[php_optional_args: 'default_value']
 pub fn (session &VSlimSessionStore) get(key string, default_value string) string {
 	return session.values[key] or { default_value }
 }
 
 @[php_method]
+@[php_arg_default: 'default_value=""']
 @[php_optional_args: 'default_value']
 pub fn (mut session VSlimSessionStore) pull(key string, default_value string) string {
 	value := session.values[key] or { default_value }
@@ -427,12 +429,14 @@ pub fn (session &VSlimSessionStore) has_flash(key string) bool {
 }
 
 @[php_method: 'getFlash']
+@[php_arg_default: 'default_value=""']
 @[php_optional_args: 'default_value']
 pub fn (session &VSlimSessionStore) get_flash(key string, default_value string) string {
 	return session.values['${session_flash_prefix}${key}'] or { default_value }
 }
 
 @[php_method: 'pullFlash']
+@[php_arg_default: 'default_value=""']
 @[php_optional_args: 'default_value']
 pub fn (mut session VSlimSessionStore) pull_flash(key string, default_value string) string {
 	flash_key := '${session_flash_prefix}${key}'

@@ -28,6 +28,7 @@ pub fn (c &VSlimVhttpdClient) request(payload vphp.RequestBorrowedZBox) vphp.Req
 
 @[php_method: 'requestFrames']
 @[php_arg_type: 'frames=array']
+@[php_arg_default: 'frames=[]']
 @[php_optional_args: 'frames']
 pub fn (c &VSlimVhttpdClient) request_frames(payload vphp.RequestBorrowedZBox, frames vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	if c.socket_path.trim_space() == '' {

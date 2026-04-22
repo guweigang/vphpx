@@ -79,6 +79,7 @@ pub fn (mut pool VSlimPsr6CacheItemPool) get_item(key string) &VSlimPsr6CacheIte
 @[php_method: 'getItems']
 @[php_arg_type: 'keys=array']
 @[php_return_type: 'iterable']
+@[php_arg_default: 'keys=[]']
 @[php_optional_args: 'keys']
 pub fn (mut pool VSlimPsr6CacheItemPool) get_items(keys vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	ensure_psr6_pool(mut pool)

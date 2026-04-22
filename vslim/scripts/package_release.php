@@ -320,7 +320,29 @@ function stage_runtime_dependencies(string $stagedExtensionPath, string $sourceE
         }
     }
 
+    stage_client_plugin_dependencies($deps, $runtimeDir);
+
     relink_bundled_runtime_dependencies($stagedExtensionPath, $stagedDeps);
+}
+
+function stage_client_plugin_dependencies(array $deps, string $runtimeDir): void
+{
+    if (PHP_OS_FAMILY !== 'Linux') {
+        return;
+    }
+
+    $pluginFiles = detect_linux_client_plugin_dependencies($deps);
+    if ($pluginFiles === []) {
+        return;
+    }
+
+    $pluginDir = $runtimeDir . DIRECTORY_SEPARATOR . 'plugin';
+    ensure_dir($pluginDir);
+    foreach ($pluginFiles as $pluginPath) {
+        $stagedPath = $pluginDir . DIRECTORY_SEPARATOR . basename($pluginPath);
+        copy_file($pluginPath, $stagedPath);
+        relink_linux_plugin_dependency($stagedPath);
+    }
 }
 
 function detect_runtime_dependencies(string $extensionPath): array
@@ -406,6 +428,47 @@ function detect_windows_runtime_dependencies(string $extensionPath): array
     return array_keys($deps);
 }
 
+function detect_linux_client_plugin_dependencies(array $deps): array
+{
+    $plugins = [];
+    foreach ($deps as $dep) {
+        $base = strtolower(basename($dep));
+        if (!str_contains($base, 'mariadb') && !str_contains($base, 'mysql')) {
+            continue;
+        }
+        foreach (candidate_client_plugin_dirs($dep) as $dir) {
+            if (!is_dir($dir)) {
+                continue;
+            }
+            foreach (glob($dir . DIRECTORY_SEPARATOR . '*.so') ?: [] as $pluginPath) {
+                if (is_file($pluginPath)) {
+                    $plugins[$pluginPath] = true;
+                }
+            }
+        }
+    }
+    return array_keys($plugins);
+}
+
+function candidate_client_plugin_dirs(string $libraryPath): array
+{
+    $dir = dirname($libraryPath);
+    $parent = dirname($dir);
+    $grandParent = dirname($parent);
+
+    $candidates = [
+        $dir . DIRECTORY_SEPARATOR . 'plugin',
+        $dir . DIRECTORY_SEPARATOR . 'mariadb' . DIRECTORY_SEPARATOR . 'plugin',
+        $dir . DIRECTORY_SEPARATOR . 'libmariadb3' . DIRECTORY_SEPARATOR . 'plugin',
+        $parent . DIRECTORY_SEPARATOR . 'plugin',
+        $parent . DIRECTORY_SEPARATOR . 'mariadb' . DIRECTORY_SEPARATOR . 'plugin',
+        $parent . DIRECTORY_SEPARATOR . 'libmariadb3' . DIRECTORY_SEPARATOR . 'plugin',
+        $grandParent . DIRECTORY_SEPARATOR . 'libmariadb3' . DIRECTORY_SEPARATOR . 'plugin',
+    ];
+
+    return array_values(array_unique($candidates));
+}
+
 function should_bundle_runtime_dependency(string $path): bool
 {
     $normalized = strtolower(trim($path));
@@ -468,6 +531,23 @@ function relink_linux_runtime_dependencies(string $stagedExtensionPath): void
     exec($cmd, $output, $exitCode);
     if ($exitCode !== 0) {
         fail('Failed to patch linux RPATH for bundled runtime libraries.');
+    }
+}
+
+function relink_linux_plugin_dependency(string $stagedPluginPath): void
+{
+    $patchelf = trim((string) shell_exec('command -v patchelf 2>/dev/null'));
+    if ($patchelf === '') {
+        fail('patchelf is required to bundle linux runtime libraries.');
+    }
+    $cmd = escapeshellarg($patchelf)
+        . ' --set-rpath '
+        . escapeshellarg('$ORIGIN/..')
+        . ' '
+        . escapeshellarg($stagedPluginPath);
+    exec($cmd, $output, $exitCode);
+    if ($exitCode !== 0) {
+        fail('Failed to patch linux RPATH for bundled database client plugin: ' . $stagedPluginPath);
     }
 }
 

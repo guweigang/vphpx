@@ -575,6 +575,7 @@ pub fn (mut migrator VSlimDatabaseMigrator) status() vphp.RequestOwnedZBox {
 	return database_result_box_from_dyn(vphp.dyn_value_list(out))
 }
 
+@[php_arg_default: 'name=""']
 @[php_optional_args: 'name']
 @[php_method]
 pub fn (mut migrator VSlimDatabaseMigrator) seed(name string) int {

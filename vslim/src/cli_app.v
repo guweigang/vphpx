@@ -610,6 +610,7 @@ pub fn (cli &VSlimCliApp) arguments() vphp.RequestOwnedZBox {
 
 @[php_optional_args: 'default_value']
 @[php_method]
+@[php_arg_default: 'default_value=null']
 pub fn (cli &VSlimCliApp) option(name string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	key := name.trim_space()
 	if key != '' {
@@ -628,6 +629,7 @@ pub fn (cli &VSlimCliApp) option(name string, default_value vphp.RequestBorrowed
 
 @[php_optional_args: 'default_value']
 @[php_method]
+@[php_arg_default: 'default_value=null']
 pub fn (cli &VSlimCliApp) argument(name string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	key := name.trim_space()
 	if key != '' {

@@ -3,6 +3,7 @@ module main
 import vphp
 
 @[php_function]
+@[php_arg_default: 'raw_path="",body=""']
 @[php_optional_args: 'raw_path,body']
 fn vslim_handle_request(method_or_envelope vphp.RequestBorrowedZBox, raw_path string, body string) vphp.RequestOwnedZBox {
 	mut res := VSlimResponse{}
@@ -22,6 +23,7 @@ fn vslim_handle_request(method_or_envelope vphp.RequestBorrowedZBox, raw_path st
 }
 
 @[php_function]
+@[php_arg_default: 'raw_path="",body=""']
 @[php_optional_args: 'raw_path,body']
 fn vslim_demo_dispatch(method_or_envelope vphp.RequestBorrowedZBox, raw_path string, body string) vphp.RequestOwnedZBox {
 	return vslim_handle_request(method_or_envelope, raw_path, body)

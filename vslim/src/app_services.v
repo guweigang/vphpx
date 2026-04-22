@@ -475,6 +475,7 @@ pub fn (app &VSlimApp) ability_middleware(ability string) &VSlimAuthRequireAbili
 	}
 }
 
+@[php_arg_default: 'error_code=""']
 @[php_optional_args: 'error_code']
 @[php_method: 'errorResponse']
 pub fn (app &VSlimApp) error_response(status int, message string, error_code string) &VSlimResponse {
@@ -482,6 +483,7 @@ pub fn (app &VSlimApp) error_response(status int, message string, error_code str
 	return to_vslim_response(default_error_response(app, status, message, code))
 }
 
+@[php_arg_default: 'status=422']
 @[php_optional_args: 'status']
 @[php_method: 'validationError']
 pub fn (app &VSlimApp) validation_error(errors vphp.RequestBorrowedZBox, status int) &VSlimResponse {
@@ -490,6 +492,7 @@ pub fn (app &VSlimApp) validation_error(errors vphp.RequestBorrowedZBox, status 
 	return to_vslim_response(json_response(error_status, json_body))
 }
 
+@[php_arg_default: 'message="Unauthorized"']
 @[php_optional_args: 'message']
 @[php_method: 'unauthorized']
 pub fn (app &VSlimApp) unauthorized_response(message string) &VSlimResponse {
@@ -497,6 +500,7 @@ pub fn (app &VSlimApp) unauthorized_response(message string) &VSlimResponse {
 	return to_vslim_response(default_error_response(app, 401, msg, 'unauthorized'))
 }
 
+@[php_arg_default: 'message="Forbidden"']
 @[php_optional_args: 'message']
 @[php_method: 'forbidden']
 pub fn (app &VSlimApp) forbidden_response(message string) &VSlimResponse {
@@ -504,6 +508,7 @@ pub fn (app &VSlimApp) forbidden_response(message string) &VSlimResponse {
 	return to_vslim_response(default_error_response(app, 403, msg, 'forbidden'))
 }
 
+@[php_arg_default: 'message="Bad Request"']
 @[php_optional_args: 'message']
 @[php_method: 'badRequest']
 pub fn (app &VSlimApp) bad_request_response(message string) &VSlimResponse {
@@ -511,6 +516,7 @@ pub fn (app &VSlimApp) bad_request_response(message string) &VSlimResponse {
 	return to_vslim_response(default_error_response(app, 400, msg, 'bad_request'))
 }
 
+@[php_arg_default: 'message="Not Found"']
 @[php_optional_args: 'message']
 @[php_method: 'notFound']
 pub fn (app &VSlimApp) not_found_response_helper(message string) &VSlimResponse {
@@ -518,6 +524,7 @@ pub fn (app &VSlimApp) not_found_response_helper(message string) &VSlimResponse 
 	return to_vslim_response(default_error_response(app, 404, msg, 'not_found'))
 }
 
+@[php_arg_default: 'message="Conflict"']
 @[php_optional_args: 'message']
 @[php_method: 'conflict']
 pub fn (app &VSlimApp) conflict_response(message string) &VSlimResponse {
@@ -525,6 +532,7 @@ pub fn (app &VSlimApp) conflict_response(message string) &VSlimResponse {
 	return to_vslim_response(default_error_response(app, 409, msg, 'conflict'))
 }
 
+@[php_arg_default: 'message="Service Unavailable"']
 @[php_optional_args: 'message']
 @[php_method: 'serviceUnavailable']
 pub fn (app &VSlimApp) service_unavailable_response(message string) &VSlimResponse {
@@ -532,6 +540,7 @@ pub fn (app &VSlimApp) service_unavailable_response(message string) &VSlimRespon
 	return to_vslim_response(default_error_response(app, 503, msg, 'service_unavailable'))
 }
 
+@[php_arg_default: 'fallback_status=500']
 @[php_optional_args: 'fallback_status']
 @[php_method: 'exceptionResponse']
 pub fn (app &VSlimApp) exception_response(exception vphp.RequestBorrowedZBox, fallback_status int) &VSlimResponse {
