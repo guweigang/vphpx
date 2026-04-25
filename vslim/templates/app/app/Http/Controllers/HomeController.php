@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 
 final class HomeController extends \VSlim\Controller
 {
-    public function index(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    public function index(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
     {
         return $this->render("home.html", [
             "title" => "VSlim Template",

@@ -19,12 +19,12 @@ final class RebindController extends \VSlim\Controller
         parent::__construct($app);
     }
 
-    public function first(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    public function first(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
     {
         return $this->text('first|' . ($this->app() instanceof \VSlim\App ? 'app' : 'missing'), 200);
     }
 
-    public function second(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    public function second(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
     {
         return $this->text('second|' . ($this->app() instanceof \VSlim\App ? 'app' : 'missing'), 200);
     }

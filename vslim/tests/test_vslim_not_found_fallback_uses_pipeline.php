@@ -107,7 +107,7 @@ namespace {
         }
     });
     $beforeOnly->setNotFoundHandler(function (ServerRequestInterface $request) {
-        return new VSlim\Vhttpd\Response(
+        return new VSlim\VHttpd\Response(
             404,
             implode('|', [
                 'nf',
@@ -121,7 +121,7 @@ namespace {
     $beforeOnly->get('/ok', new class implements RequestHandlerInterface {
         public function handle(ServerRequestInterface $request): ResponseInterface
         {
-            return new VSlim\Vhttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
+            return new VSlim\VHttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
         }
     });
 
@@ -152,7 +152,7 @@ namespace {
         }
     });
     $noRoutes->setNotFoundHandler(function (ServerRequestInterface $request) {
-        return new VSlim\Vhttpd\Response(
+        return new VSlim\VHttpd\Response(
             404,
             implode('|', [
                 'nf',

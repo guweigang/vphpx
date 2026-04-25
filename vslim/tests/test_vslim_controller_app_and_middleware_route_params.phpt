@@ -122,9 +122,9 @@ TOML);
             parent::__construct($app);
         }
 
-        public function page(ServerRequestInterface $request): VSlim\Vhttpd\Response
+        public function page(ServerRequestInterface $request): VSlim\VHttpd\Response
         {
-            return new VSlim\Vhttpd\Response(
+            return new VSlim\VHttpd\Response(
                 200,
                 implode('|', [
                     $this->app()->config()->get_string('app.name', ''),

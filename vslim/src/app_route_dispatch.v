@@ -53,7 +53,7 @@ fn dispatch_app_request_worker(app &VSlimApp, req &VSlimRequest) vphp.ZVal {
 		if ok {
 			propagate_request_trace_headers_to_object(effective_req, vphp.RequestBorrowedZBox.from_zval(raw))
 			if resolve_effective_method(req) == 'HEAD' && raw.is_object()
-				&& raw.is_instance_of('VSlim\\Vhttpd\\Response') {
+				&& raw.is_instance_of('VSlim\\VHttpd\\Response') {
 				if mut resp := raw.to_object[VSlimResponse]() {
 					resp.body = ''
 				}

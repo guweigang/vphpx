@@ -12,7 +12,7 @@ if (!extension_loaded('vslim')) {
 $responseCtor = new ReflectionMethod(VSlim\Psr7\Response::class, '__construct');
 $createResponse = new ReflectionMethod(VSlim\Psr17\ResponseFactory::class, 'createResponse');
 $appBadRequest = new ReflectionMethod(VSlim\App::class, 'badRequest');
-$requestInputOr = new ReflectionMethod(VSlim\Vhttpd\Request::class, 'input_or');
+$requestInputOr = new ReflectionMethod(VSlim\VHttpd\Request::class, 'input_or');
 $configGetMap = new ReflectionMethod(VSlim\Config::class, 'get_map');
 $seek = new ReflectionMethod(VSlim\Psr7\Stream::class, 'seek');
 

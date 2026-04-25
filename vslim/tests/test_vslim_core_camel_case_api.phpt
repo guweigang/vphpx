@@ -6,8 +6,8 @@ VSlim core PHP API exposes camelCase names for primary userland entrypoints
 <?php
 $app = new VSlim\App();
 $cfg = new VSlim\Config();
-$req = new VSlim\Vhttpd\Request('GET', '/users/42?trace_id=demo', '');
-$res = new VSlim\Vhttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
+$req = new VSlim\VHttpd\Request('GET', '/users/42?trace_id=demo', '');
+$res = new VSlim\VHttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
 $view = new VSlim\View('', '/assets');
 $controller = new VSlim\Controller($app);
 

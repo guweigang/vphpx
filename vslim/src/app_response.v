@@ -50,7 +50,7 @@ fn normalize_php_route_response_psr(result vphp.ZVal) (&VSlimPsr7Response, bool)
 		return normalize_to_psr7_response(result), true
 	}
 	if result.is_object()
-		&& (result.is_instance_of('VSlim\\Vhttpd\\Response') || result.is_instance_of('VSlimResponse')) {
+		&& (result.is_instance_of('VSlim\\VHttpd\\Response') || result.is_instance_of('VSlimResponse')) {
 		if resp := result.to_object[VSlimResponse]() {
 			return new_psr7_response_from_vslim_response(VSlimResponse{
 				status:       resp.status
@@ -122,7 +122,7 @@ fn normalize_php_route_response(result vphp.ZVal) (VSlimResponse, bool) {
 		}, true
 	}
 	if result.is_object()
-		&& (result.is_instance_of('VSlim\\Vhttpd\\Response') || result.is_instance_of('VSlimResponse')) {
+		&& (result.is_instance_of('VSlim\\VHttpd\\Response') || result.is_instance_of('VSlimResponse')) {
 		if resp := result.to_object[VSlimResponse]() {
 			return VSlimResponse{
 				status:       resp.status
@@ -168,7 +168,7 @@ fn normalize_php_route_response_body(result vphp.ZVal) (string, bool) {
 		return psr7_stream_string(response_body_or_empty(normalize_to_psr7_response(result))), true
 	}
 	if result.is_object()
-		&& (result.is_instance_of('VSlim\\Vhttpd\\Response') || result.is_instance_of('VSlimResponse')) {
+		&& (result.is_instance_of('VSlim\\VHttpd\\Response') || result.is_instance_of('VSlimResponse')) {
 		if resp := result.to_object[VSlimResponse]() {
 			return resp.body, true
 		}

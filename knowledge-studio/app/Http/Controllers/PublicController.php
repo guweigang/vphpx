@@ -28,7 +28,7 @@ final class PublicController extends \VSlim\Controller
         parent::__construct($app);
     }
 
-    public function landing(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    public function landing(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
     {
         $viewer = $request->getAttribute('studio.viewer');
         $workspace = $this->public->resolveWorkspace(
@@ -181,7 +181,7 @@ final class PublicController extends \VSlim\Controller
         ]);
     }
 
-    public function subscribe(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    public function subscribe(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
     {
         $viewer = $request->getAttribute('studio.viewer');
         $workspace = $this->public->resolveWorkspace(
@@ -218,7 +218,7 @@ final class PublicController extends \VSlim\Controller
         );
     }
 
-    public function validation(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    public function validation(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
     {
         $viewer = $request->getAttribute('studio.viewer');
         $workspace = $this->public->resolveWorkspace(
@@ -421,7 +421,7 @@ final class PublicController extends \VSlim\Controller
         ]);
     }
 
-    public function assistant(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    public function assistant(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
     {
         $locale = $this->locales->resolve((string) $request->getAttribute('studio.locale', 'zh-CN'));
         $tenant = $this->tenantFromPath($request);
@@ -436,7 +436,7 @@ final class PublicController extends \VSlim\Controller
         return $this->redirect($this->urls->validationWithQuery($tenant, $locale, $query));
     }
 
-    public function document(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    public function document(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
     {
         $viewer = $request->getAttribute('studio.viewer');
         $workspace = $this->public->resolveWorkspace(
@@ -475,7 +475,7 @@ final class PublicController extends \VSlim\Controller
         ]);
     }
 
-    public function entry(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    public function entry(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
     {
         $viewer = $request->getAttribute('studio.viewer');
         $workspace = $this->public->resolveWorkspace(
@@ -597,7 +597,7 @@ final class PublicController extends \VSlim\Controller
      * @param array<string, mixed>|null $workspace
      * @param array<string, string> $detail
      */
-    private function renderPublicDetail(?array $workspace, string $locale, array $detail): \VSlim\Vhttpd\Response
+    private function renderPublicDetail(?array $workspace, string $locale, array $detail): \VSlim\VHttpd\Response
     {
         $shared = $this->locales->shared($locale, is_array($workspace) ? $this->urls->brand((string) ($workspace['slug'] ?? ''), $locale) : '/');
         $detail = $this->localizedPublicRow($workspace, $locale, (string) ($detail['item_type'] ?? ''), $detail);
@@ -930,10 +930,10 @@ final class PublicController extends \VSlim\Controller
         string $location,
         string $key,
         string $message,
-    ): \VSlim\Vhttpd\Response {
+    ): \VSlim\VHttpd\Response {
         $session = $this->app()->session($request);
         $session->flash($key, $message);
-        $response = new \VSlim\Vhttpd\Response(302, '', 'text/plain; charset=utf-8');
+        $response = new \VSlim\VHttpd\Response(302, '', 'text/plain; charset=utf-8');
         $response->redirectWithStatus($location, 302);
         $session->commit($response);
 

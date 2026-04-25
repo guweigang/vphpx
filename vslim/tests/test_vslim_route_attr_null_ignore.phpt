@@ -83,13 +83,13 @@ if (!interface_exists('Psr\\Http\\Message\\MessageInterface')) {
 use Psr\Http\Message\ServerRequestInterface;
 
 $app = new VSlim\App();
-$app->get('/probe', static function (ServerRequestInterface $request): VSlim\Vhttpd\Response {
+$app->get('/probe', static function (ServerRequestInterface $request): VSlim\VHttpd\Response {
     $request->withAttribute('studio.viewer', null);
-    return new VSlim\Vhttpd\Response(200, 'ok', 'text/plain');
+    return new VSlim\VHttpd\Response(200, 'ok', 'text/plain');
 });
 
 for ($i = 0; $i < 500; $i++) {
-    $response = $app->dispatchRequest(new VSlim\Vhttpd\Request('GET', '/probe', ''));
+    $response = $app->dispatchRequest(new VSlim\VHttpd\Request('GET', '/probe', ''));
     if ($response->status !== 200 || $response->body !== 'ok') {
         echo "bad:$i|status={$response->status}|body=" . json_encode($response->body) . "\n";
         exit(1);

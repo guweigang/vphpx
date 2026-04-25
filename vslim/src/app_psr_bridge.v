@@ -9,7 +9,7 @@ fn route_params_from_payload(payload vphp.RequestBorrowedZBox) map[string]string
 		return map[string]string{}
 	}
 	raw := payload.to_zval()
-	if raw.is_instance_of('VSlim\\Vhttpd\\Request') || raw.is_instance_of('VSlimRequest') {
+	if raw.is_instance_of('VSlim\\VHttpd\\Request') || raw.is_instance_of('VSlimRequest') {
 		if req := raw.to_object[VSlimRequest]() {
 			return req.route_params()
 		}
@@ -237,7 +237,7 @@ fn normalize_psr15_server_request_payload(payload vphp.RequestBorrowedZBox, rout
 		}
 	}
 	if payload.is_valid() && payload.to_zval().is_object()
-		&& (payload.to_zval().is_instance_of('VSlim\\Vhttpd\\Request')
+		&& (payload.to_zval().is_instance_of('VSlim\\VHttpd\\Request')
 		|| payload.to_zval().is_instance_of('VSlimRequest')) {
 		if req := payload.to_zval().to_object[VSlimRequest]() {
 			return build_php_psr7_server_request_from_vslim(req, route_params)
@@ -435,7 +435,7 @@ fn vslim_request_uri_string(req &VSlimRequest) string {
 
 fn new_vslim_request_from_psr_server_request(payload vphp.RequestBorrowedZBox, route_params map[string]string) &VSlimRequest {
 	if payload.is_valid() && payload.to_zval().is_object()
-		&& (payload.to_zval().is_instance_of('VSlim\\Vhttpd\\Request')
+		&& (payload.to_zval().is_instance_of('VSlim\\VHttpd\\Request')
 		|| payload.to_zval().is_instance_of('VSlimRequest')) {
 		if req := payload.to_zval().to_object[VSlimRequest]() {
 			mut cloned := req.to_vslim_request()

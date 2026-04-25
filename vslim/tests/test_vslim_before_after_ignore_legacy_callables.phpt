@@ -7,7 +7,7 @@ VSlim before and after reject legacy callable hook registrations
 $app = new VSlim\App();
 
 try {
-    $app->before(function (VSlim\Vhttpd\Request $req) {
+    $app->before(function (VSlim\VHttpd\Request $req) {
         return 'legacy-before';
     });
 } catch (InvalidArgumentException $e) {
@@ -15,7 +15,7 @@ try {
 }
 
 try {
-    $app->after(function (VSlim\Vhttpd\Request $req, VSlim\Vhttpd\Response $res) {
+    $app->after(function (VSlim\VHttpd\Request $req, VSlim\VHttpd\Response $res) {
         $res->setHeader('x-legacy-after', '1');
         return $res;
     });

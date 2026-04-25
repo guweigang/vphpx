@@ -31,7 +31,7 @@ $user = (new VSlim\Database\Model())->setManager($app->db())->setTable('users')-
 
 这条路的第一步不是先做 DB transport，而是先在扩展里提供一个通用协议 client：
 
-- `VSlim\Vhttpd\Client`
+- `VSlim\VHttpd\Client`
 
 它会直接复用 `vhttpd/php-worker` 现有的 unix socket framed JSON 协议，只是实现放在扩展里，而不是直接依赖 PHP 包里的 `VHttpd\PhpWorker\Client`。
 

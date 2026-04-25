@@ -137,7 +137,7 @@ namespace {
             parent::__construct($app);
         }
 
-        public function index(ServerRequestInterface $request): VSlim\Vhttpd\Response
+        public function index(ServerRequestInterface $request): VSlim\VHttpd\Response
         {
             $viewer = $request->getAttribute('studio.viewer');
             $workspace = $request->getAttribute('studio.workspace');
@@ -150,7 +150,7 @@ namespace {
             ]);
         }
 
-        public function documents(ServerRequestInterface $request): VSlim\Vhttpd\Response
+        public function documents(ServerRequestInterface $request): VSlim\VHttpd\Response
         {
             $viewer = $request->getAttribute('studio.viewer');
             $workspace = $request->getAttribute('studio.workspace');
@@ -218,7 +218,7 @@ TOML);
     $sessionValue = (string) ($cookies[$sessionCookieName] ?? '');
 
     foreach (['/console', '/console/knowledge/documents'] as $path) {
-        $request = new VSlim\Vhttpd\Request('GET', $path, '');
+        $request = new VSlim\VHttpd\Request('GET', $path, '');
         $request->setCookies([$sessionCookieName => $sessionValue]);
         $response = $app->dispatchRequest($request);
         echo $path . '|' . $response->status . '|' . (str_contains($response->body, 'u-1') ? 'viewer' : 'miss') . PHP_EOL;

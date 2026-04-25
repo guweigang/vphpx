@@ -138,7 +138,7 @@ namespace {
     $app->after('after.invalid');
 
     $app->setErrorHandler(function (ServerRequestInterface $request, string $message, int $status) {
-        return new VSlim\Vhttpd\Response(
+        return new VSlim\VHttpd\Response(
             $status,
             implode('|', [
                 'err',

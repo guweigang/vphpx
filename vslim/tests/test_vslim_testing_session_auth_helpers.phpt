@@ -10,10 +10,10 @@ $app->get('/session', function (VSlim\Psr7\ServerRequest $request) use ($app): s
     return $app->session($request)->get('name', 'guest');
 });
 
-$app->post('/session', function (VSlim\Psr7\ServerRequest $request) use ($app): VSlim\Vhttpd\Response {
+$app->post('/session', function (VSlim\Psr7\ServerRequest $request) use ($app): VSlim\VHttpd\Response {
     $session = $app->session($request);
     $session->set('name', 'codex');
-    $response = new VSlim\Vhttpd\Response(200, 'saved', 'text/plain; charset=utf-8');
+    $response = new VSlim\VHttpd\Response(200, 'saved', 'text/plain; charset=utf-8');
     $session->commit($response);
     return $response;
 });

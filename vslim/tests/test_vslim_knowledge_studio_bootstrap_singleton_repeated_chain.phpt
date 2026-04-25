@@ -8,7 +8,7 @@ require '/Users/guweigang/Source/vphpx/knowledge-studio/bootstrap/http.php';
 
 $app = build_knowledge_studio_app();
 
-$loginReq = new VSlim\Vhttpd\Request('POST', '/login', 'email=owner%40acme.test&password=demo123');
+$loginReq = new VSlim\VHttpd\Request('POST', '/login', 'email=owner%40acme.test&password=demo123');
 $loginReq->setHeaders(['content-type' => 'application/x-www-form-urlencoded']);
 $loginRes = $app->dispatchRequest($loginReq);
 $cookiePair = explode(';', $loginRes->cookieHeader(), 2)[0] ?? '';
@@ -23,7 +23,7 @@ $checks = [
 
 for ($round = 1; $round <= 3; $round++) {
     foreach ($checks as $path => $needle) {
-        $req = new VSlim\Vhttpd\Request('GET', $path, '');
+        $req = new VSlim\VHttpd\Request('GET', $path, '');
         $req->setCookies(['knowledge_studio_session' => $cookieValue]);
         $res = $app->dispatchRequest($req);
         $marker = str_contains($res->body, $needle) ? 'ok' : 'missing';

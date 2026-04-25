@@ -1,6 +1,6 @@
-# VSlim\Vhttpd\Request
+# VSlim\VHttpd\Request
 
-`VSlim\Vhttpd\Request` 是 VSlim 的轻量请求对象。它不是完整 PSR-7 实现，但足够覆盖 VSlim 自己的 runtime 路由与 worker 集成。
+`VSlim\VHttpd\Request` 是 VSlim 的轻量请求对象。它不是完整 PSR-7 实现，但足够覆盖 VSlim 自己的 runtime 路由与 worker 集成。
 
 真理之源：
 
@@ -27,7 +27,7 @@
 最常见的构造方式：
 
 ```php
-$req = new VSlim\Vhttpd\Request('POST', '/users/7?trace_id=demo', 'name=neo');
+$req = new VSlim\VHttpd\Request('POST', '/users/7?trace_id=demo', 'name=neo');
 ```
 
 默认值：
@@ -59,7 +59,7 @@ $req = new VSlim\Vhttpd\Request('POST', '/users/7?trace_id=demo', 'name=neo');
 示例：
 
 ```php
-$req = new VSlim\Vhttpd\Request('POST', '/submit?from=query', '{"ok":"yes"}');
+$req = new VSlim\VHttpd\Request('POST', '/submit?from=query', '{"ok":"yes"}');
 $req->setHeaders(['content-type' => 'application/json']);
 $req->setCookies(['sid' => 'cookie-1']);
 $req->setAttributes(['trace_id' => 'attr-trace']);
@@ -93,7 +93,7 @@ echo $req->query('trace_id');
 示例：
 
 ```php
-$req = new VSlim\Vhttpd\Request('POST', '/submit?from=query', 'from=body&n=1');
+$req = new VSlim\VHttpd\Request('POST', '/submit?from=query', 'from=body&n=1');
 $req->setHeaders(['content-type' => 'application/x-www-form-urlencoded']);
 
 echo $req->input('from'); // body
@@ -134,7 +134,7 @@ echo $req->has_input('n') ? 'yes' : 'no';
 如果是 JSON body，可以用 `parseError()` 检查错误：
 
 ```php
-$req = new VSlim\Vhttpd\Request('POST', '/x', '{bad');
+$req = new VSlim\VHttpd\Request('POST', '/x', '{bad');
 $req->setHeaders(['content-type' => 'application/json']);
 echo $req->parseError();
 ```

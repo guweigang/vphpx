@@ -75,7 +75,7 @@ $app->get('/stream/sse', function () {
 
 这两个方法会直接：
 
-- 从 `VSlim\Vhttpd\Request` 取 prompt/model/messages
+- 从 `VSlim\VHttpd\Request` 取 prompt/model/messages
 - 对接 Ollama `/api/chat`
 - 把上游 NDJSON 转成 text stream 或 SSE
 
@@ -84,11 +84,11 @@ $app->get('/stream/sse', function () {
 ```php
 <?php
 
-$app->map(['GET', 'POST'], '/ollama/text', function (VSlim\Vhttpd\Request $req) {
+$app->map(['GET', 'POST'], '/ollama/text', function (VSlim\VHttpd\Request $req) {
     return VSlim\Stream\Factory::ollama_text($req);
 });
 
-$app->map(['GET', 'POST'], '/ollama/sse', function (VSlim\Vhttpd\Request $req) {
+$app->map(['GET', 'POST'], '/ollama/sse', function (VSlim\VHttpd\Request $req) {
     return VSlim\Stream\Factory::ollama_sse($req);
 });
 ```
@@ -98,7 +98,7 @@ $app->map(['GET', 'POST'], '/ollama/sse', function (VSlim\Vhttpd\Request $req) {
 ```php
 <?php
 
-$app->map(['GET', 'POST'], '/ollama/text', function (VSlim\Vhttpd\Request $req) {
+$app->map(['GET', 'POST'], '/ollama/text', function (VSlim\VHttpd\Request $req) {
     return VSlim\Stream\Factory::ollama_text_with($req, [
         'chat_url' => 'http://127.0.0.1:11434/api/chat',
         'model' => 'qwen2.5:7b-instruct',

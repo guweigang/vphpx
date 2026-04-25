@@ -150,7 +150,7 @@ TOML);
 
     $app->get('/console', function (ServerRequestInterface $request) {
         $viewer = $request->getAttribute('studio.viewer');
-        return new VSlim\Vhttpd\Response(
+        return new VSlim\VHttpd\Response(
             200,
             'console|' . (is_array($viewer) ? (string) ($viewer['id'] ?? '') : ''),
             'text/plain; charset=utf-8'
@@ -159,7 +159,7 @@ TOML);
     $app->get('/console/knowledge/documents', function (ServerRequestInterface $request) {
         $viewer = $request->getAttribute('studio.viewer');
         $workspace = $request->getAttribute('studio.workspace');
-        return new VSlim\Vhttpd\Response(
+        return new VSlim\VHttpd\Response(
             200,
             'docs|' . (is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '') . '|' . (is_array($viewer) ? (string) ($viewer['id'] ?? '') : ''),
             'text/plain; charset=utf-8'

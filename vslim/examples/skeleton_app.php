@@ -16,9 +16,9 @@ function build_skeleton_app(): VSlim\App
     return (new VSlim\App())->bootstrapDir(__DIR__ . "/skeleton");
 }
 
-function build_skeleton_request_from_globals(): VSlim\Vhttpd\Request
+function build_skeleton_request_from_globals(): VSlim\VHttpd\Request
 {
-    $req = new VSlim\Vhttpd\Request();
+    $req = new VSlim\VHttpd\Request();
     $method = $_SERVER["REQUEST_METHOD"] ?? "GET";
     $uri = $_SERVER["REQUEST_URI"] ?? "/";
     $body = file_get_contents("php://input") ?: "";
@@ -61,7 +61,7 @@ function build_skeleton_request_from_globals(): VSlim\Vhttpd\Request
     return $req;
 }
 
-function emit_skeleton_response(VSlim\Vhttpd\Response $res): void
+function emit_skeleton_response(VSlim\VHttpd\Response $res): void
 {
     http_response_code($res->status);
     foreach ($res->headers() as $name => $value) {
@@ -73,7 +73,7 @@ function emit_skeleton_response(VSlim\Vhttpd\Response $res): void
     echo $res->body;
 }
 
-function normalize_skeleton_worker_response(VSlim\Vhttpd\Response $res): array
+function normalize_skeleton_worker_response(VSlim\VHttpd\Response $res): array
 {
     return [
         "status" => $res->status,

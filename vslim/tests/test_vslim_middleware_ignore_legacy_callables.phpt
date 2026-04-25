@@ -7,8 +7,8 @@ VSlim middleware rejects legacy callable middleware registrations
 $app = new VSlim\App();
 
 try {
-    $app->middleware(function (VSlim\Vhttpd\Request $req, callable $next) {
-        return new VSlim\Vhttpd\Response(200, 'legacy-middleware', 'text/plain; charset=utf-8');
+    $app->middleware(function (VSlim\VHttpd\Request $req, callable $next) {
+        return new VSlim\VHttpd\Response(200, 'legacy-middleware', 'text/plain; charset=utf-8');
     });
     echo "no-error\n";
 } catch (InvalidArgumentException $e) {

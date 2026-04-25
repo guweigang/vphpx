@@ -16,7 +16,7 @@ $app->get('/ids', function ($req) {
     ];
 });
 
-$req = new VSlim\Vhttpd\Request('GET', '/ids?trace_id=q-trace&request_id=q-rid', '');
+$req = new VSlim\VHttpd\Request('GET', '/ids?trace_id=q-trace&request_id=q-rid', '');
 $req->setHeaders([
     'x-request-id' => 'hdr-rid',
     'x-trace-id' => 'hdr-trace',
@@ -25,13 +25,13 @@ $res = $app->dispatchRequest($req);
 echo $res->status . '|' . $res->body . PHP_EOL;
 echo $res->header('x-request-id') . '|' . $res->header('x-trace-id') . '|' . $res->header('x-vhttpd-trace-id') . PHP_EOL;
 
-$req2 = new VSlim\Vhttpd\Request('GET', '/ids', '');
+$req2 = new VSlim\VHttpd\Request('GET', '/ids', '');
 $req2->setHeaders(['x-request-id' => 'only-rid']);
 $res2 = $app->dispatchRequest($req2);
 echo $res2->status . '|' . $res2->body . PHP_EOL;
 echo $res2->header('x-request-id') . '|' . $res2->header('x-trace-id') . '|' . $res2->header('x-vhttpd-trace-id') . PHP_EOL;
 
-$resp = new VSlim\Vhttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
+$resp = new VSlim\VHttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
 $resp->withRequestId('rid-7')->withTraceId('trace-7');
 echo $resp->header('x-request-id') . '|' . $resp->header('x-trace-id') . '|' . $resp->header('x-vhttpd-trace-id') . PHP_EOL;
 ?>

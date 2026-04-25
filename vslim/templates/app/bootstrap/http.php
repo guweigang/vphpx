@@ -22,12 +22,12 @@ function build_template_app(): VSlim\App
     return (new VSlim\App())->bootstrapDir(dirname(__DIR__));
 }
 
-function build_template_request_from_globals(): VSlim\Vhttpd\Request
+function build_template_request_from_globals(): VSlim\VHttpd\Request
 {
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
     $uri = $_SERVER['REQUEST_URI'] ?? '/';
     $body = file_get_contents('php://input') ?: '';
-    $request = new VSlim\Vhttpd\Request($method, $uri, $body);
+    $request = new VSlim\VHttpd\Request($method, $uri, $body);
 
     $headers = [];
     foreach ($_SERVER as $key => $value) {
@@ -61,7 +61,7 @@ function build_template_request_from_globals(): VSlim\Vhttpd\Request
     return $request;
 }
 
-function emit_template_response(VSlim\Vhttpd\Response $response): void
+function emit_template_response(VSlim\VHttpd\Response $response): void
 {
     http_response_code($response->status);
     foreach ($response->headers() as $name => $value) {
@@ -73,7 +73,7 @@ function emit_template_response(VSlim\Vhttpd\Response $response): void
     echo $response->body;
 }
 
-function normalize_template_worker_response(VSlim\Vhttpd\Response $response): array
+function normalize_template_worker_response(VSlim\VHttpd\Response $response): array
 {
     return [
         'status' => $response->status,

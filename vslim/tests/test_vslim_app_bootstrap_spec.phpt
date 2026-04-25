@@ -80,7 +80,7 @@ namespace {
         'clock' => $clock,
         'providers' => [$provider],
         'modules' => [$module],
-        'not_found' => fn () => new VSlim\Vhttpd\Response(404, 'missing-bootstrap', 'text/plain; charset=utf-8'),
+        'not_found' => fn () => new VSlim\VHttpd\Response(404, 'missing-bootstrap', 'text/plain; charset=utf-8'),
         'routes' => [
             function (VSlim\App $app) use (&$assembled): void {
                 $assembled[] = 'routes-a';

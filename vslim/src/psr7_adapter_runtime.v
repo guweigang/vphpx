@@ -2,7 +2,7 @@ module main
 
 import vphp
 
-@[php_return_type: 'VSlim\\Vhttpd\\Response']
+@[php_return_type: 'VSlim\\VHttpd\\Response']
 @[php_arg_type: 'response=Psr\\Http\\Message\\ResponseInterface']
 @[php_method: 'toVSlimResponse']
 pub fn VSlimPsr7Adapter.to_vslim_response(response vphp.RequestBorrowedZBox) &VSlimResponse {

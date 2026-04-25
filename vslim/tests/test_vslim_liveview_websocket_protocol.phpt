@@ -100,7 +100,7 @@ final class CounterLiveWsView extends VSlim\Live\View
         return null;
     }
 
-    public function mount(VSlim\Vhttpd\Request $req, VSlim\Live\Socket $socket): void
+    public function mount(VSlim\VHttpd\Request $req, VSlim\Live\Socket $socket): void
     {
         $socket
             ->set_root_id('counter-root')
@@ -242,7 +242,7 @@ final class CounterLiveWsView extends VSlim\Live\View
         }
     }
 
-    public function render(VSlim\Vhttpd\Request $req, VSlim\Live\Socket $socket): string
+    public function render(VSlim\VHttpd\Request $req, VSlim\Live\Socket $socket): string
     {
         return '<section id="counter-root">' . $socket->get('count') . '</section>';
     }

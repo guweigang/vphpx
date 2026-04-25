@@ -9,7 +9,7 @@ $app->setViewBasePath(__DIR__ . '/fixtures');
 $app->setAssetsPrefix('/assets');
 
 final class DemoRenderLiveView extends VSlim\Live\View {
-    public function mount(VSlim\Vhttpd\Request $req, VSlim\Live\Socket $socket): void
+    public function mount(VSlim\VHttpd\Request $req, VSlim\Live\Socket $socket): void
     {
         $socket
             ->set_root_id('counter-root')
@@ -17,7 +17,7 @@ final class DemoRenderLiveView extends VSlim\Live\View {
             ->assign('count', 12);
     }
 
-    public function render(VSlim\Vhttpd\Request $req, VSlim\Live\Socket $socket): string
+    public function render(VSlim\VHttpd\Request $req, VSlim\Live\Socket $socket): string
     {
         $this->set_app($GLOBALS['demo_app']);
         $this->set_template('live_counter_demo.html');

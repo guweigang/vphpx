@@ -80,7 +80,7 @@ runtime objects.
 This layer can choose one of two paths:
 
 1. If a PSR-7 implementation is available, build a real `ServerRequestInterface`.
-2. Otherwise, adapt the envelope into `VSlim\Vhttpd\Request` and call `dispatchEnvelope(...)`.
+2. Otherwise, adapt the envelope into `VSlim\VHttpd\Request` and call `dispatchEnvelope(...)`.
 
 This means `php-worker` becomes the compatibility seam between:
 
@@ -91,8 +91,8 @@ This means `php-worker` becomes the compatibility seam between:
 
 `vslim` should keep:
 
-- `VSlim\Vhttpd\Request`
-- `VSlim\Vhttpd\Response`
+- `VSlim\VHttpd\Request`
+- `VSlim\VHttpd\Response`
 - `SlimApp`
 - middleware chain
 - route matching
@@ -102,7 +102,7 @@ These remain mutable and compact.
 On top of that, `vslim` can later add adapter entry points:
 
 - `from_psr7(ServerRequestInterface $request)`
-- `to_psr7_response(VSlim\Vhttpd\Response $response)`
+- `to_psr7_response(VSlim\VHttpd\Response $response)`
 - or a PHP-side adapter class that translates between PSR-7 and `dispatchRequest(...)`
 
 This lets `vslim` participate in PSR-7 workflows without forcing the internal model to copy PSR-7.
@@ -139,7 +139,7 @@ Examples of implementations that may be supported by userland:
 
 Deliverables:
 
-- define a `vslim` adapter that can read a PSR-7 request and produce a `VSlim\Vhttpd\Response`
+- define a `vslim` adapter that can read a PSR-7 request and produce a `VSlim\VHttpd\Response`
 - optionally define a PSR-7 response adapter for outgoing responses
 
 This can live either:
@@ -261,7 +261,7 @@ $psrResponse = $app->handle($serverRequest);
 $response = VSlim\Psr7Adapter::toVSlimResponse($psrResponse);
 ```
 
-or, when you want to stay on the `VSlim\Vhttpd\Request` facade side:
+or, when you want to stay on the `VSlim\VHttpd\Request` facade side:
 
 ```php
 $request = VSlim\Psr7Adapter::toVSlimRequest($serverRequest);
@@ -275,7 +275,7 @@ This keeps the adapter focused on translation instead of turning it into another
 The next implementation steps should be:
 
 1. enrich the request envelope in `vhttpd`
-2. mirror those fields into `VSlim\Vhttpd\Request`
+2. mirror those fields into `VSlim\VHttpd\Request`
 3. make `php-worker.php` able to build a PSR-7 request when userland provides a PSR-7 implementation
 4. keep the adapter layer focused on `toVSlimRequest(...)` / `toVSlimResponse(...)`
 

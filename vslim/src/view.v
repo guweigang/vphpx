@@ -157,13 +157,15 @@ fn (mut host VSlimViewHost) html_map(data map[string]string) string {
 }
 
 @[php_method]
-pub fn (app &VSlimApp) view(template string, data vphp.RequestBorrowedZBox) &VSlimResponse {
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (app &VSlimApp) view(template string, data vphp.RequestBorrowedZBox) &VSlimPsr7Response {
 	mut view := app.make_view()
 	return view.render_response(template, data)
 }
 
 @[php_method: 'viewWithLayout']
-pub fn (app &VSlimApp) view_with_layout(template string, layout string, data vphp.RequestBorrowedZBox) &VSlimResponse {
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (app &VSlimApp) view_with_layout(template string, layout string, data vphp.RequestBorrowedZBox) &VSlimPsr7Response {
 	mut view := app.make_view()
 	return view.render_response_with_layout(template, layout, data)
 }

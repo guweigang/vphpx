@@ -876,9 +876,10 @@ pub fn (mut live VSlimLiveView) html(socket &VSlimLiveSocket) string {
 }
 
 @[php_method]
-pub fn (mut live VSlimLiveView) response(socket &VSlimLiveSocket) &VSlimResponse {
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (mut live VSlimLiveView) response(socket &VSlimLiveSocket) &VSlimPsr7Response {
 	body := live.html(socket)
-	return live_html_response(body)
+	return new_psr7_response_from_vslim_response(*live_html_response(body))
 }
 
 @[php_method]

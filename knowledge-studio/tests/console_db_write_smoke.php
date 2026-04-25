@@ -16,10 +16,10 @@ function ks_assert(bool $condition, string $message): void
     }
 }
 
-function ks_form_request(string $method, string $path, array $data = [], string $cookie = ''): VSlim\Vhttpd\Request
+function ks_form_request(string $method, string $path, array $data = [], string $cookie = ''): VSlim\VHttpd\Request
 {
     $body = http_build_query($data);
-    $request = new VSlim\Vhttpd\Request($method, $path, $body);
+    $request = new VSlim\VHttpd\Request($method, $path, $body);
     $request->setHeaders([
         'content-type' => 'application/x-www-form-urlencoded',
     ]);
@@ -31,7 +31,7 @@ function ks_form_request(string $method, string $path, array $data = [], string 
     return $request;
 }
 
-function ks_extract_session_cookie(VSlim\Vhttpd\Response $response): string
+function ks_extract_session_cookie(VSlim\VHttpd\Response $response): string
 {
     $header = $response->cookieHeader();
     $pair = explode(';', $header, 2)[0] ?? '';

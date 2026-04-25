@@ -119,7 +119,7 @@ namespace {
             parent::__construct($app);
         }
 
-        public function assistant(ServerRequestInterface $request): VSlim\Vhttpd\Response
+        public function assistant(ServerRequestInterface $request): VSlim\VHttpd\Response
         {
             $viewer = $request->getAttribute('studio.viewer');
             $locale = (string) $request->getAttribute('studio.locale', '');
@@ -195,7 +195,7 @@ TOML);
     $sessionValue = (string) ($cookies[$sessionCookieName] ?? '');
 
     for ($i = 0; $i < 12; $i++) {
-        $request = new VSlim\Vhttpd\Request('GET', '/brand/acme/assistant?lang=en', '');
+        $request = new VSlim\VHttpd\Request('GET', '/brand/acme/assistant?lang=en', '');
         $request->setCookies([$sessionCookieName => $sessionValue]);
         $response = $app->dispatchRequest($request);
         echo $i . '|' . $response->status . '|' . $response->header('content-language') . '|'

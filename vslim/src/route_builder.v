@@ -570,18 +570,20 @@ fn (app &VSlimApp) url_for_query_abs_borrowed(name string, params vphp.RequestBo
 }
 
 @[php_method: 'redirectTo']
-pub fn (app &VSlimApp) redirect_to(name string, params vphp.RequestBorrowedZBox) &VSlimResponse {
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (app &VSlimApp) redirect_to(name string, params vphp.RequestBorrowedZBox) &VSlimPsr7Response {
 	return app.redirect_to_query_borrowed(name, vphp.RequestBorrowedZBox.from_zval(params.to_zval()), vphp.RequestBorrowedZBox.null())
 }
 
 @[php_method: 'redirectToQuery']
-pub fn (app &VSlimApp) redirect_to_query(name string, params vphp.RequestBorrowedZBox, query vphp.RequestBorrowedZBox) &VSlimResponse {
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (app &VSlimApp) redirect_to_query(name string, params vphp.RequestBorrowedZBox, query vphp.RequestBorrowedZBox) &VSlimPsr7Response {
 	return app.redirect_to_query_borrowed(name, vphp.RequestBorrowedZBox.from_zval(params.to_zval()), vphp.RequestBorrowedZBox.from_zval(query.to_zval()))
 }
 
-fn (app &VSlimApp) redirect_to_query_borrowed(name string, params vphp.RequestBorrowedZBox, query vphp.RequestBorrowedZBox) &VSlimResponse {
+fn (app &VSlimApp) redirect_to_query_borrowed(name string, params vphp.RequestBorrowedZBox, query vphp.RequestBorrowedZBox) &VSlimPsr7Response {
 	location := app.url_for_query_borrowed(name, params, query)
-	mut res := &VSlimResponse{}
+	mut res := VSlimResponse{}
 	res.construct(302, '', 'text/plain; charset=utf-8')
-	return res.redirect(location)
+	return new_psr7_response_from_vslim_response(*res.redirect(location))
 }

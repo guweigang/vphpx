@@ -93,7 +93,7 @@
 
 当前推荐的 HTTP 语义理解是：
 
-- `VSlim\Vhttpd\Request/Response`
+- `VSlim\VHttpd\Request/Response`
   - transport-friendly facade
   - 适合 worker / built-in server / demo 边界
 - `Psr\Http\Message\ServerRequestInterface` / `ResponseInterface`

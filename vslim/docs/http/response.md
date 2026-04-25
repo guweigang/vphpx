@@ -1,6 +1,6 @@
-# VSlim\Vhttpd\Response
+# VSlim\VHttpd\Response
 
-`VSlim\Vhttpd\Response` 是 VSlim 的轻量响应对象，适合在 route、middleware、error handler 里直接返回。
+`VSlim\VHttpd\Response` 是 VSlim 的轻量响应对象，适合在 route、middleware、error handler 里直接返回。
 
 真理之源：
 
@@ -11,7 +11,7 @@
 ## 构造
 
 ```php
-$res = new VSlim\Vhttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
+$res = new VSlim\VHttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
 ```
 
 构造后会自动设置：
@@ -92,7 +92,7 @@ $res->setCookieFull('sid', 'abc', '/', '', 3600, true, true, 'Lax');
 示例：
 
 ```php
-$res = new VSlim\Vhttpd\Response(200, 'ignored', 'text/plain; charset=utf-8');
+$res = new VSlim\VHttpd\Response(200, 'ignored', 'text/plain; charset=utf-8');
 $res->redirectWithStatus('/moved', 307);
 ```
 
@@ -132,14 +132,14 @@ $res->withRequestId('rid-7')->withTraceId('trace-7');
 
 ```php
 $app->get('/hello', function () {
-    return new VSlim\Vhttpd\Response(200, 'hello', 'text/plain; charset=utf-8');
+    return new VSlim\VHttpd\Response(200, 'hello', 'text/plain; charset=utf-8');
 });
 ```
 
 ### 先构造后修改
 
 ```php
-$res = new VSlim\Vhttpd\Response(200, '', 'text/plain; charset=utf-8');
+$res = new VSlim\VHttpd\Response(200, '', 'text/plain; charset=utf-8');
 $res->text('ok')->setHeader('x-demo', 'yes');
 return $res;
 ```

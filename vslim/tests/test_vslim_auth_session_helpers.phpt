@@ -26,7 +26,7 @@ echo ($session->has('notice') ? 'notice_yes' : 'notice_no') . PHP_EOL;
 
 $guard = $app->auth($request);
 $guard->login('99');
-$response = new VSlim\Vhttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
+$response = new VSlim\VHttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
 $guard->store()->commit($response);
 $cookieValue = explode(';', $response->cookieHeader(), 2)[0];
 $cookieValue = explode('=', $cookieValue, 2)[1] ?? '';

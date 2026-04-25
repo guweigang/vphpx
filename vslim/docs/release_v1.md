@@ -92,8 +92,8 @@ flowchart LR
 
 ### Request / response facade
 
-- `VSlim\Vhttpd\Request`
-- `VSlim\Vhttpd\Response`
+- `VSlim\VHttpd\Request`
+- `VSlim\VHttpd\Response`
 - query / header / cookie / param / attribute 访问
 - content type / response headers / cookie helpers
 - request metadata setter：
@@ -131,7 +131,7 @@ flowchart LR
 
 ### 不做完整 PSR-7 内核
 
-- `VSlim\Vhttpd\Request` / `VSlim\Vhttpd\Response` 不追求 immutable core
+- `VSlim\VHttpd\Request` / `VSlim\VHttpd\Response` 不追求 immutable core
 - PSR-7 只放在 worker edge / adapter layer
 
 ### 不让 `vphp` 背 HTTP helper
@@ -179,7 +179,7 @@ flowchart LR
 1. `vhttpd -> php-worker` request envelope
 2. `php-worker -> dispatchEnvelope(...)` request envelope
 3. `VSlim\App` 的 PHP-facing builder API
-4. `VSlim\Vhttpd\Request` / `VSlim\Vhttpd\Response` 的基础 helper 语义
+4. `VSlim\VHttpd\Request` / `VSlim\VHttpd\Response` 的基础 helper 语义
 5. `VSlim\View` 当前已经公开的模板语法分层：
    - 指令：`include / if / for / slot / fill / call: / asset: / raw:`
    - 表达式：变量、函数调用、pipe 链、对象方法调用

@@ -17,7 +17,7 @@ final class HomeController extends \VSlim\Controller
         parent::__construct($app);
     }
 
-    public function index(\VSlim\Psr7\ServerRequest $request): \VSlim\Vhttpd\Response
+    public function index(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
     {
         $user = $this->app()->authUser($request);
         $locale = $this->locales->resolve((string) $request->getAttribute('studio.locale', 'zh-CN'));

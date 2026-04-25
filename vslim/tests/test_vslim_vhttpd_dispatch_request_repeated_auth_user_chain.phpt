@@ -106,11 +106,11 @@ namespace {
             parent::__construct($app);
         }
 
-        public function show(ServerRequestInterface $request): VSlim\Vhttpd\Response
+        public function show(ServerRequestInterface $request): VSlim\VHttpd\Response
         {
             $viewer = $request->getAttribute('studio.viewer');
             $locale = (string) $request->getAttribute('studio.locale', '');
-            return new VSlim\Vhttpd\Response(
+            return new VSlim\VHttpd\Response(
                 200,
                 (is_array($viewer) ? (string) ($viewer['id'] ?? 'miss') : 'miss') . '|' . $locale,
                 'text/plain; charset=utf-8'
@@ -156,7 +156,7 @@ TOML);
     $cookieValue = (string) ($cookies[$cookieName] ?? '');
 
     for ($i = 0; $i < 8; $i++) {
-        $request = new VSlim\Vhttpd\Request('GET', '/x?lang=en', '');
+        $request = new VSlim\VHttpd\Request('GET', '/x?lang=en', '');
         $request->setCookies([$cookieName => $cookieValue]);
         $response = $app->dispatchRequest($request);
         echo $i . '|' . $response->status . '|' . $response->header('content-language') . '|' . $response->body . PHP_EOL;

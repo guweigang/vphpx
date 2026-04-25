@@ -132,7 +132,7 @@ namespace {
         }
     });
 
-    $req = new VSlim\Vhttpd\Request('GET', '/items/7?trace_id=outer-query', 'outer-body');
+    $req = new VSlim\VHttpd\Request('GET', '/items/7?trace_id=outer-query', 'outer-body');
     $req->setHeaders(['x-trace-id' => 'outer-header']);
     $res = $app->dispatchRequest($req);
 

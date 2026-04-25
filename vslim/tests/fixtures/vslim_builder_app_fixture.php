@@ -5,7 +5,7 @@ declare(strict_types=1);
 $app = new VSlim\App();
 
 $app->get('/hello/:name', function ($req) {
-    $res = new VSlim\Vhttpd\Response(200, 'Hello, ' . $req->getAttribute('name'), 'text/plain; charset=utf-8');
+    $res = new VSlim\VHttpd\Response(200, 'Hello, ' . $req->getAttribute('name'), 'text/plain; charset=utf-8');
     return $res->setHeader('x-app', 'builder-object');
 });
 

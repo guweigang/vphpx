@@ -125,7 +125,7 @@ namespace {
     });
 
     $app->set_not_found_handler(function (ServerRequestInterface $request) {
-        return new VSlim\Vhttpd\Response(
+        return new VSlim\VHttpd\Response(
             404,
             implode('|', [
                 'nf',
@@ -138,7 +138,7 @@ namespace {
     });
 
     $app->setErrorHandler(function (ServerRequestInterface $request, string $message, int $status) {
-        return new VSlim\Vhttpd\Response(
+        return new VSlim\VHttpd\Response(
             $status,
             implode('|', [
                 'err',
@@ -154,7 +154,7 @@ namespace {
     $api->get('/items/:id', new class implements RequestHandlerInterface {
         public function handle(ServerRequestInterface $request): \Psr\Http\Message\ResponseInterface
         {
-            return new VSlim\Vhttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
+            return new VSlim\VHttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
         }
     });
 

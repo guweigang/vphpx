@@ -24,7 +24,7 @@ echo $res->status . '|' . $res->body . '|' . $res->content_type . PHP_EOL;
 $meta = vslim_handle_request('GET', '/meta');
 echo $meta['status'] . '|' . $meta['body'] . '|' . $meta['content_type'] . PHP_EOL;
 
-$req = new VSlim\Vhttpd\Request('GET', '/users/7?trace_id=from-php', '');
+$req = new VSlim\VHttpd\Request('GET', '/users/7?trace_id=from-php', '');
 $res = $app->dispatchRequest($req);
 echo $res->status . '|' . $res->body . '|' . $res->content_type . PHP_EOL;
 echo $req->query('trace_id') . '|' . ($req->has_query('trace_id') ? 'yes' : 'no') . PHP_EOL;
@@ -63,7 +63,7 @@ $envelope = vslim_handle_request([
 ]);
 echo $envelope['status'] . '|' . $envelope['body'] . '|' . $envelope['content_type'] . PHP_EOL;
 
-$resp = new VSlim\Vhttpd\Response(201, 'created', 'text/plain; charset=utf-8');
+$resp = new VSlim\VHttpd\Response(201, 'created', 'text/plain; charset=utf-8');
 $resp->set_header('x-demo', 'yes')->set_status(202)->json('{"ok":true}');
 echo $resp->status . '|' . $resp->body . '|' . $resp->content_type . '|' . $resp->header('x-demo') . '|' . ($resp->has_header('content-type') ? 'yes' : 'no') . PHP_EOL;
 $resp->set_cookie('sid', 'cookie-202');

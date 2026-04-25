@@ -7,7 +7,7 @@ use Psr\Http\Message\ServerRequestInterface;
 
 final class HomeController extends \VSlim\Controller
 {
-    public function index(ServerRequestInterface $request): \VSlim\Vhttpd\Response
+    public function index(ServerRequestInterface $request): \VSlim\VHttpd\Response
     {
         return $this->render("home.html", [
             "title" => "VSlim Skeleton Home",

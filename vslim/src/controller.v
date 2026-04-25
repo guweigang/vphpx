@@ -62,21 +62,23 @@ pub fn (mut c VSlimController) view() &VSlimView {
 }
 
 @[php_method]
-pub fn (mut c VSlimController) render(template string, data vphp.RequestBorrowedZBox) &VSlimResponse {
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (mut c VSlimController) render(template string, data vphp.RequestBorrowedZBox) &VSlimPsr7Response {
 	mut view := c.view()
 	body := view.render(template, data)
-	mut res := &VSlimResponse{}
+	mut res := VSlimResponse{}
 	res.construct(200, body, 'text/html; charset=utf-8')
-	return res
+	return new_psr7_response_from_vslim_response(res)
 }
 
 @[php_method: 'renderWithLayout']
-pub fn (mut c VSlimController) render_with_layout(template string, layout string, data vphp.RequestBorrowedZBox) &VSlimResponse {
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (mut c VSlimController) render_with_layout(template string, layout string, data vphp.RequestBorrowedZBox) &VSlimPsr7Response {
 	mut view := c.view()
 	body := view.render_with_layout(template, layout, data)
-	mut res := &VSlimResponse{}
+	mut res := VSlimResponse{}
 	res.construct(200, body, 'text/html; charset=utf-8')
-	return res
+	return new_psr7_response_from_vslim_response(res)
 }
 
 @[php_method: 'urlFor']
@@ -98,21 +100,24 @@ pub fn (c &VSlimController) url_for_query(name string, params vphp.RequestBorrow
 }
 
 @[php_method]
-pub fn (c &VSlimController) text(body string, status int) &VSlimResponse {
-	mut res := &VSlimResponse{}
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (c &VSlimController) text(body string, status int) &VSlimPsr7Response {
+	mut res := VSlimResponse{}
 	res.construct(status, body, 'text/plain; charset=utf-8')
-	return res
+	return new_psr7_response_from_vslim_response(res)
 }
 
 @[php_method]
-pub fn (c &VSlimController) json(body string, status int) &VSlimResponse {
-	mut res := &VSlimResponse{}
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (c &VSlimController) json(body string, status int) &VSlimPsr7Response {
+	mut res := VSlimResponse{}
 	res.construct(status, body, 'application/json; charset=utf-8')
-	return res
+	return new_psr7_response_from_vslim_response(res)
 }
 
 @[php_method]
-pub fn (c &VSlimController) redirect(location string, status int) &VSlimResponse {
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (c &VSlimController) redirect(location string, status int) &VSlimPsr7Response {
 	mut res := VSlimResponse{
 		status:       if status == 0 { 302 } else { status }
 		body:         ''
@@ -122,11 +127,12 @@ pub fn (c &VSlimController) redirect(location string, status int) &VSlimResponse
 		}
 	}
 	res.set_header('location', location)
-	return to_vslim_response(res)
+	return new_psr7_response_from_vslim_response(res)
 }
 
 @[php_method: 'redirectTo']
-pub fn (c &VSlimController) redirect_to(name string, params vphp.RequestBorrowedZBox, status int) &VSlimResponse {
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (c &VSlimController) redirect_to(name string, params vphp.RequestBorrowedZBox, status int) &VSlimPsr7Response {
 	location := c.url_for(name, params)
 	if location == '' {
 		return c.text('route not found', 404)
@@ -135,7 +141,8 @@ pub fn (c &VSlimController) redirect_to(name string, params vphp.RequestBorrowed
 }
 
 @[php_method: 'redirectToQuery']
-pub fn (c &VSlimController) redirect_to_query(name string, params vphp.RequestBorrowedZBox, query vphp.RequestBorrowedZBox, status int) &VSlimResponse {
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (c &VSlimController) redirect_to_query(name string, params vphp.RequestBorrowedZBox, query vphp.RequestBorrowedZBox, status int) &VSlimPsr7Response {
 	location := c.url_for_query(name, params, query)
 	if location == '' {
 		return c.text('route not found', 404)

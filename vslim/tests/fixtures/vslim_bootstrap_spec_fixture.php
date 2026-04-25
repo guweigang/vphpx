@@ -4,6 +4,6 @@ return [
     'routes' => function (VSlim\App $app): void {
         $app->getNamed('fixture.spec', '/spec', fn () => 'spec-fixture');
     },
-    'not_found' => fn () => new VSlim\Vhttpd\Response(404, 'spec-missing', 'text/plain; charset=utf-8'),
+    'not_found' => fn () => new VSlim\VHttpd\Response(404, 'spec-missing', 'text/plain; charset=utf-8'),
     'base_path' => '/fixture',
 ];

@@ -5,7 +5,7 @@ VSlim App exposes camelCase vhttpd facade dispatch aliases
 --FILE--
 <?php
 $app = VSlim\App::demo();
-$req = new VSlim\Vhttpd\Request('GET', '/users/42?trace_id=alias', '');
+$req = new VSlim\VHttpd\Request('GET', '/users/42?trace_id=alias', '');
 
 $requestRes = $app->dispatchRequest($req);
 echo $requestRes->status . '|' . $requestRes->body . PHP_EOL;

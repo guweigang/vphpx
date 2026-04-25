@@ -23,7 +23,7 @@ final class FakeWsConn {
 putenv('OLLAMA_STREAM_FIXTURE=' . __DIR__ . '/fixtures/ollama_stream_fixture.ndjson');
 putenv('OLLAMA_MODEL=qwen-test');
 
-$req = new VSlim\Vhttpd\Request('GET', '/ollama/text?prompt=demo', '');
+$req = new VSlim\VHttpd\Request('GET', '/ollama/text?prompt=demo', '');
 $text = VSlim\Stream\Factory::ollama_text($req);
 echo ($text instanceof VSlim\Stream\Response ? "text_response\n" : "text_not_response\n");
 echo $text->streamType . "\n";

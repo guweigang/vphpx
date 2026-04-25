@@ -166,7 +166,7 @@ TOML);
         $jobCount = is_array($metrics['jobs'] ?? null) ? count($metrics['jobs']) : 0;
         $viewerId = is_array($viewer) ? (string) ($viewer['id'] ?? '') : '';
 
-        return new VSlim\Vhttpd\Response(
+        return new VSlim\VHttpd\Response(
             200,
             implode('|', [$viewerId, (string) $memberCount, (string) $chunkCount, (string) $jobCount]),
             'text/plain; charset=utf-8'

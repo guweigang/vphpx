@@ -14,7 +14,7 @@ This page is the shortest path to a working LiveView.
 ```php
 final class CounterPage extends VSlim\Live\View
 {
-    public function mount(VSlim\Vhttpd\Request $req, VSlim\Live\Socket $socket): void
+    public function mount(VSlim\VHttpd\Request $req, VSlim\Live\Socket $socket): void
     {
         $socket
             ->assign('count', 0)
@@ -175,7 +175,7 @@ Preferred component path:
 ## 5. Add Room Sync
 
 ```php
-public function mount(VSlim\Vhttpd\Request $req, VSlim\Live\Socket $socket): void
+public function mount(VSlim\VHttpd\Request $req, VSlim\Live\Socket $socket): void
 {
     if ($socket->connected()) {
         $socket->join_topic('counter-room');

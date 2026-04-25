@@ -5,7 +5,7 @@ VSlim session store can round-trip through request cookies and response headers
 --FILE--
 <?php
 $app = VSlim\App::demo();
-$app->load_config_text(<<<'TOML'
+$app->loadConfigText(<<<'TOML'
 [app]
 key = "session-secret"
 
@@ -16,12 +16,12 @@ same_site = "strict"
 http_only = true
 TOML);
 
-$request = new VSlim\Vhttpd\Request('GET', '/', '');
+$request = new VSlim\VHttpd\Request('GET', '/', '');
 $session = $app->session($request);
 $session->set('user', 'neo');
 $session->set('scope', 'matrix');
 
-$response = new VSlim\Vhttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
+$response = new VSlim\VHttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
 $session->commit($response);
 $header = $response->cookieHeader();
 echo (str_starts_with($header, 'sid=') ? 'cookie_yes' : 'cookie_no') . PHP_EOL;
@@ -31,7 +31,7 @@ echo (str_contains($header, 'SameSite=Strict') ? 'same_site_yes' : 'same_site_no
 $cookieValue = explode(';', $header, 2)[0];
 $cookieValue = explode('=', $cookieValue, 2)[1] ?? '';
 
-$request2 = new VSlim\Vhttpd\Request('GET', '/', '');
+$request2 = new VSlim\VHttpd\Request('GET', '/', '');
 $request2->setCookies(['sid' => $cookieValue]);
 $session2 = $app->session($request2);
 echo $session2->get('user') . PHP_EOL;

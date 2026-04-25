@@ -90,16 +90,16 @@ HTML;
 
 $app = new VSlim\App();
 
-$app->get('/', static function () use ($html): VSlim\Vhttpd\Response {
-    return (new VSlim\Vhttpd\Response(200, '', 'text/html; charset=utf-8'))->html($html);
+$app->get('/', static function () use ($html): VSlim\VHttpd\Response {
+    return (new VSlim\VHttpd\Response(200, '', 'text/html; charset=utf-8'))->html($html);
 });
 
-$app->get('/health', static function (): VSlim\Vhttpd\Response {
-    return (new VSlim\Vhttpd\Response(200, 'OK', 'text/plain; charset=utf-8'))->text('OK');
+$app->get('/health', static function (): VSlim\VHttpd\Response {
+    return (new VSlim\VHttpd\Response(200, 'OK', 'text/plain; charset=utf-8'))->text('OK');
 });
 
-$app->get('/meta', static function (): VSlim\Vhttpd\Response {
-    return (new VSlim\Vhttpd\Response(200, '', 'application/json; charset=utf-8'))->json((string) json_encode([
+$app->get('/meta', static function (): VSlim\VHttpd\Response {
+    return (new VSlim\VHttpd\Response(200, '', 'application/json; charset=utf-8'))->json((string) json_encode([
         'name' => 'vslim-websocket-room-demo',
         'http' => '/',
         'websocket' => '/ws',

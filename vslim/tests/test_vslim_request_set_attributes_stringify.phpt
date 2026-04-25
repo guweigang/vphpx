@@ -17,7 +17,7 @@ class AttrJsonProbe
     public string $name = 'demo';
 }
 
-$request = new VSlim\Vhttpd\Request('GET', '/', '');
+$request = new VSlim\VHttpd\Request('GET', '/', '');
 $request->setAttributes([
     'plain' => 'x',
     'nested' => ['a' => 1],

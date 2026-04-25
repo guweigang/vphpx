@@ -133,7 +133,7 @@ namespace {
             parent::__construct($app);
         }
 
-        public function console(ServerRequestInterface $request): VSlim\Vhttpd\Response
+        public function console(ServerRequestInterface $request): VSlim\VHttpd\Response
         {
             $viewer = $request->getAttribute('studio.viewer');
             $workspace = $request->getAttribute('studio.workspace');
@@ -145,7 +145,7 @@ namespace {
             ]);
         }
 
-        public function documents(ServerRequestInterface $request): VSlim\Vhttpd\Response
+        public function documents(ServerRequestInterface $request): VSlim\VHttpd\Response
         {
             $viewer = $request->getAttribute('studio.viewer');
             $workspace = $request->getAttribute('studio.workspace');
@@ -202,7 +202,7 @@ TOML);
     });
 
     $app->container()->set(LoginFlowControllerClassString::class, new LoginFlowControllerClassString($app));
-    $app->post('/login', function (ServerRequestInterface $request) use ($app, $catalog): VSlim\Vhttpd\Response {
+    $app->post('/login', function (ServerRequestInterface $request) use ($app, $catalog): VSlim\VHttpd\Response {
         $parsed = $request->getParsedBody();
         if (!is_array($parsed)) {
             parse_str((string) $request->getBody(), $parsed);
@@ -210,7 +210,7 @@ TOML);
         $email = trim((string) ($parsed['email'] ?? ''));
         $password = trim((string) ($parsed['password'] ?? ''));
         $user = $catalog->findUserByEmail($email, $password);
-        $response = new VSlim\Vhttpd\Response(302, '', 'text/plain; charset=utf-8');
+        $response = new VSlim\VHttpd\Response(302, '', 'text/plain; charset=utf-8');
         if (!is_array($user)) {
             $response->redirectWithStatus('/login', 302);
             return $response;
@@ -222,7 +222,7 @@ TOML);
     $app->get('/console', [LoginFlowControllerClassString::class, 'console']);
     $app->get('/console/knowledge/documents', [LoginFlowControllerClassString::class, 'documents']);
 
-    $loginRequest = new VSlim\Vhttpd\Request('POST', '/login', 'email=owner%40example.test&password=demo123');
+    $loginRequest = new VSlim\VHttpd\Request('POST', '/login', 'email=owner%40example.test&password=demo123');
     $loginRequest->setHeaders(['content-type' => 'application/x-www-form-urlencoded']);
     $loginResponse = $app->dispatchRequest($loginRequest);
     $cookiePair = explode(';', $loginResponse->cookieHeader(), 2)[0] ?? '';
@@ -232,7 +232,7 @@ TOML);
     echo ($cookieName !== '' && $cookieValue !== '' ? 'cookie' : 'missing') . PHP_EOL;
 
     foreach (['/console', '/console/knowledge/documents'] as $path) {
-        $request = new VSlim\Vhttpd\Request('GET', $path, '');
+        $request = new VSlim\VHttpd\Request('GET', $path, '');
         $request->setCookies([$cookieName => $cookieValue]);
         $response = $app->dispatchRequest($request);
         echo $path . '|' . $response->status . '|' . (str_contains($response->body, 'u-1') ? 'viewer' : 'miss') . PHP_EOL;

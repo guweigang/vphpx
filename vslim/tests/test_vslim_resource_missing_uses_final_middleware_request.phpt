@@ -134,7 +134,7 @@ namespace {
     $app->resource_opts('/api/users', MissingUsersController::class, [
         'only' => ['show'],
         'missing' => function (ServerRequestInterface $request, string $action, array $params) {
-            return new VSlim\Vhttpd\Response(
+            return new VSlim\VHttpd\Response(
                 404,
                 implode('|', [
                     'missing',

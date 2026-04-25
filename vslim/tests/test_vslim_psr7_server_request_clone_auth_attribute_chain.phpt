@@ -170,7 +170,7 @@ TOML);
         'footer_note' => 'Next milestone wires real documents, entries, jobs, and audit logs',
     ];
 
-    $app->get('/console', function (ServerRequestInterface $request) use ($app, $payload): VSlim\Vhttpd\Response {
+    $app->get('/console', function (ServerRequestInterface $request) use ($app, $payload): VSlim\VHttpd\Response {
         $viewer = $app->authUser($request);
         $controller = new VSlim\Controller($app);
         $data = $payload;
@@ -185,7 +185,7 @@ TOML);
     $sessionValue = (string) ($cookies[$sessionCookieName] ?? '');
 
     foreach ([0, 1] as $i) {
-        $request = new VSlim\Vhttpd\Request('GET', '/console', '');
+        $request = new VSlim\VHttpd\Request('GET', '/console', '');
         $request->setCookies([$sessionCookieName => $sessionValue]);
         $response = $app->dispatchRequest($request);
         echo $i . '|' . $response->status . '|' . (str_contains($response->body, 'Mira Chen') ? 'viewer' : 'miss') . PHP_EOL;

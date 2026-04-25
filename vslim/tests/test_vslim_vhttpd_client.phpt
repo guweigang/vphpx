@@ -1,5 +1,5 @@
 --TEST--
-VSlim\\Vhttpd\\Client speaks the php-worker framed unix socket protocol
+VSlim\\VHttpd\\Client speaks the php-worker framed unix socket protocol
 --SKIPIF--
 <?php
 if (!extension_loaded("vslim")) print "skip";
@@ -142,7 +142,7 @@ $stopServer = static function ($proc) {
 };
 
 $proc = $startServer();
-$client = new VSlim\Vhttpd\Client($sock, 2.0);
+$client = new VSlim\VHttpd\Client($sock, 2.0);
 $res = $client->request([
     'mode' => 'db',
     'op' => 'ping',

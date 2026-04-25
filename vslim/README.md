@@ -10,7 +10,7 @@ Documentation entry:
 
 - `VSlim\App` 负责路由注册、分发、middleware、phase middleware
 - `VSlim\Cli\App` 负责共享 app service graph 上的 command bootstrap / discovery / execution
-- `VSlim\Vhttpd\Request` / `VSlim\Vhttpd\Response` 提供轻量 request/response facade
+- `VSlim\VHttpd\Request` / `VSlim\VHttpd\Response` 提供轻量 request/response facade
 - `VSlim\Stream\Response` 提供扩展原生流式响应类型
 - `VSlim\WebSocket\App` 提供扩展原生 WebSocket handler
 - `VSlim\Mcp\App` 提供扩展原生 MCP handler
@@ -64,19 +64,19 @@ Documentation entry:
 - PHP 内置 server
   - 适合本地开发和最小 demo
   - 通常是 `php -S ... demo_app.php`
-  - 入口一般是 `VSlim\Vhttpd\Request -> $app->dispatchRequest(...) -> VSlim\Vhttpd\Response`
+  - 入口一般是 `VSlim\VHttpd\Request -> $app->dispatchRequest(...) -> VSlim\VHttpd\Response`
 - `vhttpd` + php-worker
   - 适合当前主线 worker/runtime 集成
   - transport 边界可以是 envelope，也可以是 `Psr7Adapter`
-  - 这条链路里 `VSlim\Vhttpd\Request/Response` 更像 worker facade，框架内核正在继续收成 PSR-7 / PSR-15 主通道
+  - 这条链路里 `VSlim\VHttpd\Request/Response` 更像 worker facade，框架内核正在继续收成 PSR-7 / PSR-15 主通道
 - nginx / Apache / Caddy + PHP-FPM
   - 适合传统部署
   - nginx 只做 reverse proxy / static / process boundary
-  - PHP 侧可以自己把全局变量组装成 `VSlim\Vhttpd\Request`，也可以直接走 PSR-7 request adapter
+  - PHP 侧可以自己把全局变量组装成 `VSlim\VHttpd\Request`，也可以直接走 PSR-7 request adapter
 
 一句话：
 
-- `VSlim\Vhttpd\Request/Response` 是 transport-friendly facade
+- `VSlim\VHttpd\Request/Response` 是 transport-friendly facade
 - `Psr\Http\Message\ServerRequestInterface` / `ResponseInterface` 是框架内部更标准的 HTTP 契约
 - `vhttpd`、PHP 内置 server、nginx 只是不同的上游接入方式，不改变 `VSlim` 作为框架层的定位
 - `vhttpd` 是最重要的原生 runtime 集成对象，但不是 `VSlim` 的唯一宿主
@@ -341,7 +341,7 @@ use Psr\Http\Message\ServerRequestInterface;
 $app = new VSlim\App();
 
 $app->get('/hello/:name', function (ServerRequestInterface $req) {
-    return new VSlim\Vhttpd\Response(
+    return new VSlim\VHttpd\Response(
         200,
         'Hello, ' . $req->getAttribute('name'),
         'text/plain; charset=utf-8'
@@ -518,7 +518,7 @@ echo $res->body . PHP_EOL;   // pong
 
 - handler 可以返回 `string`
 - `string` 会被自动归一化成 `200 text/plain`
-- `dispatch()` 直接返回 `VSlim\Vhttpd\Response`
+- `dispatch()` 直接返回 `VSlim\VHttpd\Response`
 
 ### Tutorial 2：读取路径参数、query 和 body
 
@@ -787,16 +787,16 @@ $app->get('/stream/sse', function () {
 ```php
 <?php
 
-$app->map(['GET', 'POST'], '/ollama/text', function (VSlim\Vhttpd\Request $req) {
+$app->map(['GET', 'POST'], '/ollama/text', function (VSlim\VHttpd\Request $req) {
     return VSlim\Stream\Factory::ollama_text($req);
 });
 
-$app->map(['GET', 'POST'], '/ollama/sse', function (VSlim\Vhttpd\Request $req) {
+$app->map(['GET', 'POST'], '/ollama/sse', function (VSlim\VHttpd\Request $req) {
     return VSlim\Stream\Factory::ollama_sse($req);
 });
 ```
 
-这里保留 `VSlim\Vhttpd\Request`，因为当前 `VSlim\Stream\Factory::ollama_*()` 仍然直接接收它。
+这里保留 `VSlim\VHttpd\Request`，因为当前 `VSlim\Stream\Factory::ollama_*()` 仍然直接接收它。
 
 ### Tutorial 9：原生 MCP handler
 
@@ -851,9 +851,9 @@ return $app;
 - [`docs/app/route-group.md`](/Users/guweigang/Source/vphpx/vslim/docs/app/route-group.md)
   `VSlim\RouteGroup`：分组、嵌套 group、组级 middleware / before / after
 - [`docs/http/request.md`](/Users/guweigang/Source/vphpx/vslim/docs/http/request.md)
-  `VSlim\Vhttpd\Request`：query、input、JSON/form/multipart、header/cookie/attribute/server、trace/request id
+  `VSlim\VHttpd\Request`：query、input、JSON/form/multipart、header/cookie/attribute/server、trace/request id
 - [`docs/http/response.md`](/Users/guweigang/Source/vphpx/vslim/docs/http/response.md)
-  `VSlim\Vhttpd\Response`：headers、cookie、content type、redirect、trace/request id 透传
+  `VSlim\VHttpd\Response`：headers、cookie、content type、redirect、trace/request id 透传
 - [`docs/http/psr-http.md`](/Users/guweigang/Source/vphpx/vslim/docs/http/psr-http.md)
   `VSlim\\Psr7\\Stream`、`VSlim\\Psr7\\Response`、`VSlim\\Psr7\\Uri` 与 `VSlim\\Psr17\\*Factory`：当前原生 PSR HTTP 面
 - [`docs/stream/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/stream/README.md)
@@ -883,7 +883,7 @@ return $app;
 - [`docs/integration/worker.md`](/Users/guweigang/Source/vphpx/vslim/docs/integration/worker.md)
   envelope、`dispatchEnvelope()`、`dispatch_envelope_map()`、worker 返回值归一化
 - [`docs/integration/psr7.md`](/Users/guweigang/Source/vphpx/vslim/docs/integration/psr7.md)
-  `VPhp\\VSlim\\Psr7Adapter`、扩展内建的 PSR-7 request -> `VSlim\Vhttpd\Request` 适配器
+  `VPhp\\VSlim\\Psr7Adapter`、扩展内建的 PSR-7 request -> `VSlim\VHttpd\Request` 适配器
 - [`docs/psr-roadmap.md`](/Users/guweigang/Source/vphpx/vslim/docs/psr-roadmap.md)
   `vslim` 的长期 PSR 路线图：全 PSR 目标、推进顺序、以及何时先升级 `vphp`
 
@@ -942,8 +942,8 @@ return $app;
 
 ```mermaid
 flowchart LR
-    A["VSlim\\App"] --> B["VSlim\\Vhttpd\\Request"]
-    A --> C["VSlim\\Vhttpd\\Response"]
+    A["VSlim\\App"] --> B["VSlim\\VHttpd\\Request"]
+    A --> C["VSlim\\VHttpd\\Response"]
     A --> D["VSlim\\RouteGroup"]
     A --> E["VSlim\\Container"]
     A --> F["VSlim\\Config"]

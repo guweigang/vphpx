@@ -39,7 +39,7 @@ namespace VSlim {
         public function authMiddleware(): \Psr\Http\Server\MiddlewareInterface {}
         public function authRedirectTo(): string {}
         public function authUser(mixed $request): mixed {}
-        public function badRequest(string $message = 'Bad Request'): \VSlim\Vhttpd\Response {}
+        public function badRequest(string $message = 'Bad Request'): \Psr\Http\Message\ResponseInterface {}
         public function before(mixed $handler): \VSlim\App {}
         public function boot(): \VSlim\App {}
         public function booted(): bool {}
@@ -53,27 +53,27 @@ namespace VSlim {
         public function clearViewCache(): \VSlim\App {}
         public function clock(): \Psr\Clock\ClockInterface {}
         public function config(): \VSlim\Config {}
-        public function conflict(string $message = 'Conflict'): \VSlim\Vhttpd\Response {}
+        public function conflict(string $message = 'Conflict'): \Psr\Http\Message\ResponseInterface {}
         public function container(): \VSlim\Container {}
         public function database(): \VSlim\Database\Manager {}
         public function db(): \VSlim\Database\Manager {}
         public function delete(string $pattern, mixed $handler): \VSlim\App {}
         public function deleteNamed(string $name, string $pattern, mixed $handler): \VSlim\App {}
         public static function demo(): \VSlim\App {}
-        public function dispatch(string $method, string $rawPath): \VSlim\Vhttpd\Response {}
-        public function dispatchBody(string $method, string $rawPath, string $body): \VSlim\Vhttpd\Response {}
-        public function dispatchEnvelope(mixed $envelope): \VSlim\Vhttpd\Response {}
+        public function dispatch(string $method, string $rawPath): \VSlim\VHttpd\Response {}
+        public function dispatchBody(string $method, string $rawPath, string $body): \VSlim\VHttpd\Response {}
+        public function dispatchEnvelope(mixed $envelope): \VSlim\VHttpd\Response {}
         public function dispatchEnvelopeMap(mixed $envelope): array {}
         public function dispatchEnvelopeWorker(mixed $envelope): mixed {}
-        public function dispatchRequest($req): \VSlim\Vhttpd\Response {}
+        public function dispatchRequest($req): \VSlim\VHttpd\Response {}
         public function dispatcher(): \Psr\EventDispatcher\EventDispatcherInterface {}
         public function doctor(): array {}
         public function error(mixed $handler): \VSlim\App {}
-        public function errorResponse(int $status, string $message, string $errorCode = ''): \VSlim\Vhttpd\Response {}
+        public function errorResponse(int $status, string $message, string $errorCode = ''): \Psr\Http\Message\ResponseInterface {}
         public function errorResponseJsonEnabled(): bool {}
         public function events(): \Psr\EventDispatcher\EventDispatcherInterface {}
-        public function exceptionResponse(mixed $exception, int $fallbackStatus = 500): \VSlim\Vhttpd\Response {}
-        public function forbidden(string $message = 'Forbidden'): \VSlim\Vhttpd\Response {}
+        public function exceptionResponse(mixed $exception, int $fallbackStatus = 500): \Psr\Http\Message\ResponseInterface {}
+        public function forbidden(string $message = 'Forbidden'): \Psr\Http\Message\ResponseInterface {}
         public function get(string $pattern, mixed $handler): \VSlim\App {}
         public function getNamed(string $name, string $pattern, mixed $handler): \VSlim\App {}
         public function group(string $prefix): \VSlim\RouteGroup {}
@@ -89,7 +89,7 @@ namespace VSlim {
         public function hasMcp(): bool {}
         public function hasMigrator(): bool {}
         public function hasModule(string $className): bool {}
-        public function hasProvider(string $class_name): bool {}
+        public function hasProvider(string $className): bool {}
         public function hasRouteName(string $name): bool {}
         public function head(string $pattern, mixed $handler): \VSlim\App {}
         public function headNamed(string $name, string $pattern, mixed $handler): \VSlim\App {}
@@ -116,7 +116,7 @@ namespace VSlim {
         public function module(mixed $modInput): \VSlim\App {}
         public function moduleCount(): int {}
         public function moduleMany(\Traversable|array $modules): \VSlim\App {}
-        public function notFound(string $message = 'Not Found'): \VSlim\Vhttpd\Response {}
+        public function notFound(string $message = 'Not Found'): \Psr\Http\Message\ResponseInterface {}
         public function options(string $pattern, mixed $handler): \VSlim\App {}
         public function optionsNamed(string $name, string $pattern, mixed $handler): \VSlim\App {}
         public function patch(string $pattern, mixed $handler): \VSlim\App {}
@@ -127,8 +127,8 @@ namespace VSlim {
         public function psrLogger(): \Psr\Log\LoggerInterface {}
         public function put(string $pattern, mixed $handler): \VSlim\App {}
         public function putNamed(string $name, string $pattern, mixed $handler): \VSlim\App {}
-        public function redirectTo(string $name, mixed $params): \VSlim\Vhttpd\Response {}
-        public function redirectToQuery(string $name, mixed $params, mixed $query): \VSlim\Vhttpd\Response {}
+        public function redirectTo(string $name, mixed $params): \Psr\Http\Message\ResponseInterface {}
+        public function redirectToQuery(string $name, mixed $params, mixed $query): \Psr\Http\Message\ResponseInterface {}
         public function register(mixed $provider): \VSlim\App {}
         public function registerMany(\Traversable|array $providers): \VSlim\App {}
         public function resolveAuthUser(string $userId): mixed {}
@@ -140,7 +140,7 @@ namespace VSlim {
         public function routeManifest() {}
         public function routeManifestLines(): array {}
         public function routeNames(): array {}
-        public function serviceUnavailable(string $message = 'Service Unavailable'): \VSlim\Vhttpd\Response {}
+        public function serviceUnavailable(string $message = 'Service Unavailable'): \Psr\Http\Message\ResponseInterface {}
         public function session(mixed $request): \VSlim\Session\Store {}
         public function setAssetsPrefix(string $prefix): \VSlim\App {}
         public function setAuthGateResolver(mixed $resolver): \VSlim\App {}
@@ -169,17 +169,17 @@ namespace VSlim {
         public function singletonOpts(string $resourcePath, string $controller, mixed $options): \VSlim\App {}
         public function startSessionMiddleware(): \Psr\Http\Server\MiddlewareInterface {}
         public function testing(): \VSlim\Testing\Harness {}
-        public function unauthorized(string $message = 'Unauthorized'): \VSlim\Vhttpd\Response {}
+        public function unauthorized(string $message = 'Unauthorized'): \Psr\Http\Message\ResponseInterface {}
         public function urlFor(string $name, mixed $params): string {}
         public function urlForAbs(string $name, mixed $params, string $scheme, string $host): string {}
         public function urlForQuery(string $name, mixed $params, mixed $query): string {}
         public function urlForQueryAbs(string $name, mixed $params, mixed $query, string $scheme, string $host): string {}
         public function validate(mixed $data, mixed $rules): \VSlim\Validate\Validator {}
-        public function validationError(mixed $errors, int $status = 422): \VSlim\Vhttpd\Response {}
-        public function view(string $template, mixed $data): \VSlim\Vhttpd\Response {}
+        public function validationError(mixed $errors, int $status = 422): \Psr\Http\Message\ResponseInterface {}
+        public function view(string $template, mixed $data): \Psr\Http\Message\ResponseInterface {}
         public function viewBasePath(): string {}
         public function viewCacheEnabled(): bool {}
-        public function viewWithLayout(string $template, string $layout, mixed $data): \VSlim\Vhttpd\Response {}
+        public function viewWithLayout(string $template, string $layout, mixed $data): \Psr\Http\Message\ResponseInterface {}
         public function websocket(string $pattern, mixed $handler): \VSlim\App {}
         public function websocketNamed(string $name, string $pattern, mixed $handler): \VSlim\App {}
     }
@@ -224,15 +224,15 @@ namespace VSlim {
     {
         public function __construct($app) {}
         public function app(): \VSlim\App {}
-        public function json(string $body, int $status): \VSlim\Vhttpd\Response {}
-        public function redirect(string $location, int $status): \VSlim\Vhttpd\Response {}
-        public function redirectTo(string $name, mixed $params, int $status): \VSlim\Vhttpd\Response {}
-        public function redirectToQuery(string $name, mixed $params, mixed $query, int $status): \VSlim\Vhttpd\Response {}
-        public function render(string $template, mixed $data): \VSlim\Vhttpd\Response {}
-        public function renderWithLayout(string $template, string $layout, mixed $data): \VSlim\Vhttpd\Response {}
+        public function json(string $body, int $status): \Psr\Http\Message\ResponseInterface {}
+        public function redirect(string $location, int $status): \Psr\Http\Message\ResponseInterface {}
+        public function redirectTo(string $name, mixed $params, int $status): \Psr\Http\Message\ResponseInterface {}
+        public function redirectToQuery(string $name, mixed $params, mixed $query, int $status): \Psr\Http\Message\ResponseInterface {}
+        public function render(string $template, mixed $data): \Psr\Http\Message\ResponseInterface {}
+        public function renderWithLayout(string $template, string $layout, mixed $data): \Psr\Http\Message\ResponseInterface {}
         public function setApp($app): \VSlim\Controller {}
         public function setView($view): \VSlim\Controller {}
-        public function text(string $body, int $status): \VSlim\Vhttpd\Response {}
+        public function text(string $body, int $status): \Psr\Http\Message\ResponseInterface {}
         public function urlFor(string $name, mixed $params): string {}
         public function urlForQuery(string $name, mixed $params, mixed $query): string {}
         public function view(): \VSlim\View {}
@@ -248,8 +248,8 @@ namespace VSlim {
     class Psr7Adapter
     {
         public function __construct() {}
-        public static function toVSlimRequest(mixed $request): \VSlim\Vhttpd\Request {}
-        public static function toVSlimResponse(\Psr\Http\Message\ResponseInterface $response): \VSlim\Vhttpd\Response {}
+        public static function toVSlimRequest(mixed $request): \VSlim\VHttpd\Request {}
+        public static function toVSlimResponse(\Psr\Http\Message\ResponseInterface $response): \VSlim\VHttpd\Response {}
         public static function toWorkerEnvelope(mixed $request): mixed {}
     }
 
@@ -322,8 +322,8 @@ namespace VSlim {
         public function clearCache(): \VSlim\View {}
         public function helper(string $name, mixed $handler): \VSlim\View {}
         public function render(string $template, mixed $data): string {}
-        public function renderResponse(string $template, mixed $data): \VSlim\Vhttpd\Response {}
-        public function renderResponseWithLayout(string $template, string $layout, mixed $data): \VSlim\Vhttpd\Response {}
+        public function renderResponse(string $template, mixed $data): \Psr\Http\Message\ResponseInterface {}
+        public function renderResponseWithLayout(string $template, string $layout, mixed $data): \Psr\Http\Message\ResponseInterface {}
         public function renderWithLayout(string $template, string $layout, mixed $data): string {}
         public function setAssetsPrefix(string $prefix): \VSlim\View {}
         public function setBasePath(string $basePath): \VSlim\View {}
@@ -497,7 +497,7 @@ namespace VSlim\Database {
         public function setConfig($config): \VSlim\Database\Manager {}
         public function table(string $name): \VSlim\Database\Query {}
         public function transport(): string {}
-        public function vhttpdClient(): \VSlim\Vhttpd\Client {}
+        public function vhttpdClient(): \VSlim\VHttpd\Client {}
     }
 
     class Migration
@@ -872,7 +872,7 @@ namespace VSlim\Live {
         public function renderSocketWithLayout(string $template, string $layout, $socket): string {}
         public function renderTemplate(string $template, mixed $data): string {}
         public function renderTemplateWithLayout(string $template, string $layout, mixed $data): string {}
-        public function response($socket): \VSlim\Vhttpd\Response {}
+        public function response($socket): \Psr\Http\Message\ResponseInterface {}
         public function rootId(): string {}
         public function runtimeAsset(): string {}
         public function runtimeScriptTag(): string {}
@@ -1174,7 +1174,7 @@ namespace VSlim\Psr6 {
         protected $hit;
         protected $key;
         public function __construct() {}
-        public function expiresAfter(mixed $time_value): static {}
+        public function expiresAfter(mixed $timeValue): static {}
         public function expiresAt(?\DateTimeInterface $expiration): static {}
         public function get(): mixed {}
         public function getKey(): string {}
@@ -1517,22 +1517,22 @@ namespace VSlim\Testing {
         public function clearCookies(): \VSlim\Testing\Harness {}
         public function container(): \VSlim\Container {}
         public function cookies(): array {}
-        public function delete(string $uri, string $body = ''): \VSlim\Vhttpd\Response {}
-        public function deleteJson(string $uri, mixed $payload): \VSlim\Vhttpd\Response {}
-        public function dispatch(string $method, string $uri, string $body = ''): \VSlim\Vhttpd\Response {}
-        public function dispatchJson(string $method, string $uri, mixed $payload): \VSlim\Vhttpd\Response {}
-        public function get(string $uri): \VSlim\Vhttpd\Response {}
-        public function getJson(string $uri): \VSlim\Vhttpd\Response {}
+        public function delete(string $uri, string $body = ''): \VSlim\VHttpd\Response {}
+        public function deleteJson(string $uri, mixed $payload): \VSlim\VHttpd\Response {}
+        public function dispatch(string $method, string $uri, string $body = ''): \VSlim\VHttpd\Response {}
+        public function dispatchJson(string $method, string $uri, mixed $payload): \VSlim\VHttpd\Response {}
+        public function get(string $uri): \VSlim\VHttpd\Response {}
+        public function getJson(string $uri): \VSlim\VHttpd\Response {}
         public function handle(\Psr\Http\Message\ServerRequestInterface $request): \Psr\Http\Message\ResponseInterface {}
         public function handleJson(string $method, string $uri, mixed $payload): \Psr\Http\Message\ResponseInterface {}
         public function handleRequest(string $method, string $uri, string $body = ''): \Psr\Http\Message\ResponseInterface {}
         public function jsonRequest(string $method, string $uri, mixed $payload): \Psr\Http\Message\ServerRequestInterface {}
-        public function patch(string $uri, string $body = ''): \VSlim\Vhttpd\Response {}
-        public function patchJson(string $uri, mixed $payload): \VSlim\Vhttpd\Response {}
-        public function post(string $uri, string $body = ''): \VSlim\Vhttpd\Response {}
-        public function postJson(string $uri, mixed $payload): \VSlim\Vhttpd\Response {}
-        public function put(string $uri, string $body = ''): \VSlim\Vhttpd\Response {}
-        public function putJson(string $uri, mixed $payload): \VSlim\Vhttpd\Response {}
+        public function patch(string $uri, string $body = ''): \VSlim\VHttpd\Response {}
+        public function patchJson(string $uri, mixed $payload): \VSlim\VHttpd\Response {}
+        public function post(string $uri, string $body = ''): \VSlim\VHttpd\Response {}
+        public function postJson(string $uri, mixed $payload): \VSlim\VHttpd\Response {}
+        public function put(string $uri, string $body = ''): \VSlim\VHttpd\Response {}
+        public function putJson(string $uri, mixed $payload): \VSlim\VHttpd\Response {}
         public function request(string $method, string $uri, string $body = ''): \Psr\Http\Message\ServerRequestInterface {}
         public function responseBody(mixed $response): string {}
         public function responseHeader(mixed $response, string $name): string {}
@@ -1549,28 +1549,7 @@ namespace VSlim\Testing {
     }
 }
 
-namespace VSlim\Validate {
-    class Validator
-    {
-        protected $errorMap;
-        protected $inputData;
-        protected $ruleMap;
-        protected $validatedData;
-        protected $validationRan;
-        public function __construct() {}
-        public function data(): mixed {}
-        public function errors(): mixed {}
-        public function fails(): bool {}
-        public static function make(mixed $data, mixed $rules): \VSlim\Validate\Validator {}
-        public function passes(): bool {}
-        public function setData(mixed $data): \VSlim\Validate\Validator {}
-        public function setRules(mixed $rules): \VSlim\Validate\Validator {}
-        public function validate(): \VSlim\Validate\Validator {}
-        public function validated(): mixed {}
-    }
-}
-
-namespace VSlim\Vhttpd {
+namespace VSlim\VHttpd {
     class Client
     {
         protected $connectTimeoutSeconds;
@@ -1644,21 +1623,21 @@ namespace VSlim\Vhttpd {
         public function serverAll(): array {}
         public function serverParams(): array {}
         public function serverValue(string $name): string {}
-        public function setAttributes(mixed $attributes): \VSlim\Vhttpd\Request {}
-        public function setBody(string $body): \VSlim\Vhttpd\Request {}
-        public function setCookies(mixed $cookies): \VSlim\Vhttpd\Request {}
-        public function setHeaders(mixed $headers): \VSlim\Vhttpd\Request {}
-        public function setHost(string $host): \VSlim\Vhttpd\Request {}
-        public function setMethod(string $method): \VSlim\Vhttpd\Request {}
-        public function setParams(mixed $params): \VSlim\Vhttpd\Request {}
-        public function setPort(string $port): \VSlim\Vhttpd\Request {}
-        public function setProtocolVersion(string $protocolVersion): \VSlim\Vhttpd\Request {}
-        public function setQuery(mixed $query): \VSlim\Vhttpd\Request {}
-        public function setRemoteAddr(string $remoteAddr): \VSlim\Vhttpd\Request {}
-        public function setScheme(string $scheme): \VSlim\Vhttpd\Request {}
-        public function setServer(mixed $server): \VSlim\Vhttpd\Request {}
-        public function setTarget(string $rawPath): \VSlim\Vhttpd\Request {}
-        public function setUploadedFiles(mixed $uploadedFiles): \VSlim\Vhttpd\Request {}
+        public function setAttributes(mixed $attributes): \VSlim\VHttpd\Request {}
+        public function setBody(string $body): \VSlim\VHttpd\Request {}
+        public function setCookies(mixed $cookies): \VSlim\VHttpd\Request {}
+        public function setHeaders(mixed $headers): \VSlim\VHttpd\Request {}
+        public function setHost(string $host): \VSlim\VHttpd\Request {}
+        public function setMethod(string $method): \VSlim\VHttpd\Request {}
+        public function setParams(mixed $params): \VSlim\VHttpd\Request {}
+        public function setPort(string $port): \VSlim\VHttpd\Request {}
+        public function setProtocolVersion(string $protocolVersion): \VSlim\VHttpd\Request {}
+        public function setQuery(mixed $query): \VSlim\VHttpd\Request {}
+        public function setRemoteAddr(string $remoteAddr): \VSlim\VHttpd\Request {}
+        public function setScheme(string $scheme): \VSlim\VHttpd\Request {}
+        public function setServer(mixed $server): \VSlim\VHttpd\Request {}
+        public function setTarget(string $rawPath): \VSlim\VHttpd\Request {}
+        public function setUploadedFiles(mixed $uploadedFiles): \VSlim\VHttpd\Request {}
         public function traceId(): string {}
         public function uploadedFileCount(): int {}
         public function uploadedFiles(): array {}
@@ -1675,25 +1654,46 @@ namespace VSlim\Vhttpd {
         public function __toString(): string {}
         public function contentLength(): int {}
         public function cookieHeader(): string {}
-        public function deleteCookie(string $name): \VSlim\Vhttpd\Response {}
+        public function deleteCookie(string $name): \VSlim\VHttpd\Response {}
         public function hasHeader(string $name): bool {}
         public function header(string $name): string {}
         public function headers(): array {}
         public function headersAll(): array {}
-        public function html(string $body): \VSlim\Vhttpd\Response {}
-        public function json(string $body): \VSlim\Vhttpd\Response {}
-        public function redirect(string $location): \VSlim\Vhttpd\Response {}
-        public function redirectWithStatus(string $location, int $status): \VSlim\Vhttpd\Response {}
-        public function setContentType(string $contentType): \VSlim\Vhttpd\Response {}
-        public function setCookie(string $name, string $value): \VSlim\Vhttpd\Response {}
-        public function setCookieFull(string $name, string $value, string $path, string $domain, int $maxAge, bool $secure, bool $httpOnly, string $sameSite): \VSlim\Vhttpd\Response {}
-        public function setCookieOpts(string $name, string $value, string $path): \VSlim\Vhttpd\Response {}
-        public function setHeader(string $name, string $value): \VSlim\Vhttpd\Response {}
-        public function setStatus(int $status): \VSlim\Vhttpd\Response {}
-        public function text(string $body): \VSlim\Vhttpd\Response {}
-        public function withRequestId(string $requestId): \VSlim\Vhttpd\Response {}
-        public function withStatus(int $status): \VSlim\Vhttpd\Response {}
-        public function withTraceId(string $traceId): \VSlim\Vhttpd\Response {}
+        public function html(string $body): \VSlim\VHttpd\Response {}
+        public function json(string $body): \VSlim\VHttpd\Response {}
+        public function redirect(string $location): \VSlim\VHttpd\Response {}
+        public function redirectWithStatus(string $location, int $status): \VSlim\VHttpd\Response {}
+        public function setContentType(string $contentType): \VSlim\VHttpd\Response {}
+        public function setCookie(string $name, string $value): \VSlim\VHttpd\Response {}
+        public function setCookieFull(string $name, string $value, string $path, string $domain, int $maxAge, bool $secure, bool $httpOnly, string $sameSite): \VSlim\VHttpd\Response {}
+        public function setCookieOpts(string $name, string $value, string $path): \VSlim\VHttpd\Response {}
+        public function setHeader(string $name, string $value): \VSlim\VHttpd\Response {}
+        public function setStatus(int $status): \VSlim\VHttpd\Response {}
+        public function text(string $body): \VSlim\VHttpd\Response {}
+        public function withRequestId(string $requestId): \VSlim\VHttpd\Response {}
+        public function withStatus(int $status): \VSlim\VHttpd\Response {}
+        public function withTraceId(string $traceId): \VSlim\VHttpd\Response {}
+    }
+}
+
+namespace VSlim\Validate {
+    class Validator
+    {
+        protected $errorMap;
+        protected $inputData;
+        protected $ruleMap;
+        protected $validatedData;
+        protected $validationRan;
+        public function __construct() {}
+        public function data(): mixed {}
+        public function errors(): mixed {}
+        public function fails(): bool {}
+        public static function make(mixed $data, mixed $rules): \VSlim\Validate\Validator {}
+        public function passes(): bool {}
+        public function setData(mixed $data): \VSlim\Validate\Validator {}
+        public function setRules(mixed $rules): \VSlim\Validate\Validator {}
+        public function validate(): \VSlim\Validate\Validator {}
+        public function validated(): mixed {}
     }
 }
 

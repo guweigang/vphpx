@@ -106,7 +106,7 @@ namespace {
             parent::__construct($app);
         }
 
-        public function page(ServerRequestInterface $request): VSlim\Vhttpd\Response
+        public function page(ServerRequestInterface $request): VSlim\VHttpd\Response
         {
             $viewer = $request->getAttribute('studio.viewer');
             return $this->renderWithLayout('view_home.html', 'view_layout.html', [
@@ -155,7 +155,7 @@ TOML);
     $sessionValue = (string) ($cookies[$sessionCookieName] ?? '');
 
     for ($i = 0; $i < 12; $i++) {
-        $request = new VSlim\Vhttpd\Request('GET', '/console', '');
+        $request = new VSlim\VHttpd\Request('GET', '/console', '');
         $request->setCookies([$sessionCookieName => $sessionValue]);
         $response = $app->dispatchRequest($request);
         echo $i . '|' . $response->status . '|' . (str_contains($response->body, 'u-1') ? 'viewer' : 'miss') . PHP_EOL;

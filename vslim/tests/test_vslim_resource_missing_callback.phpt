@@ -96,7 +96,7 @@ $app->container()->set(MissingModelController::class, new MissingModelController
 $app->resource_opts('/users', MissingModelController::class, [
     'only' => ['show'],
     'missing' => function (ServerRequestInterface $req, string $action, array $params) {
-        return new VSlim\Vhttpd\Response(
+        return new VSlim\VHttpd\Response(
             404,
             'missing:' . $action . ':' . ($params['id'] ?? ''),
             'text/plain; charset=utf-8'

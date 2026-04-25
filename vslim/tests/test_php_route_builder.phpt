@@ -126,10 +126,10 @@ $app->middleware(new class implements MiddlewareInterface {
     }
 });
 $app->get('/hello/:name', function (ServerRequestInterface $req) {
-    return new VSlim\Vhttpd\Response(200, 'Hello, ' . $req->getAttribute('name'), 'text/plain; charset=utf-8');
+    return new VSlim\VHttpd\Response(200, 'Hello, ' . $req->getAttribute('name'), 'text/plain; charset=utf-8');
 });
 $app->get_named('hello.show', '/hello/:name', function (ServerRequestInterface $req) {
-    return new VSlim\Vhttpd\Response(200, 'Named Hello, ' . $req->getAttribute('name'), 'text/plain; charset=utf-8');
+    return new VSlim\VHttpd\Response(200, 'Named Hello, ' . $req->getAttribute('name'), 'text/plain; charset=utf-8');
 });
 $app->post('/submit', function (ServerRequestInterface $req) {
     $query = $req->getQueryParams();
@@ -218,7 +218,7 @@ echo $app->url_for_abs('hello.show', ['name' => 'nova'], 'https', 'demo.local') 
 $app->set_base_path('');
 $redirect = $app->redirect_to('hello.show', ['name' => 'jump']);
 echo $redirect->status . '|' . $redirect->header('location') . '|' . $redirect->body . PHP_EOL;
-$manual = new VSlim\Vhttpd\Response(200, 'ignored', 'text/plain; charset=utf-8');
+$manual = new VSlim\VHttpd\Response(200, 'ignored', 'text/plain; charset=utf-8');
 $manual->redirect_with_status('/moved', 307);
 echo $manual->status . '|' . $manual->header('location') . '|' . $manual->contentType . PHP_EOL;
 $res = $app->dispatch_body('POST', '/submit?trace_id=builder', 'payload');

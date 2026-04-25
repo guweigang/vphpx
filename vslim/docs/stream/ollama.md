@@ -34,7 +34,7 @@ Browser
 
 负责：
 
-- 从 `VSlim\Vhttpd\Request` 提取 `prompt / model / messages`
+- 从 `VSlim\VHttpd\Request` 提取 `prompt / model / messages`
 - 请求 `POST /api/chat`
 - 打开上游流
 
@@ -86,11 +86,11 @@ worker 看到它后，会自动进入 stream 模式。
 ```php
 <?php
 
-$app->map(['GET', 'POST'], '/ollama/text', function (VSlim\Vhttpd\Request $req) {
+$app->map(['GET', 'POST'], '/ollama/text', function (VSlim\VHttpd\Request $req) {
     return VSlim\Stream\Factory::ollama_text($req);
 });
 
-$app->map(['GET', 'POST'], '/ollama/sse', function (VSlim\Vhttpd\Request $req) {
+$app->map(['GET', 'POST'], '/ollama/sse', function (VSlim\VHttpd\Request $req) {
     return VSlim\Stream\Factory::ollama_sse($req);
 });
 ```

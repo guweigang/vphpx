@@ -480,80 +480,89 @@ pub fn (app &VSlimApp) ability_middleware(ability string) &VSlimAuthRequireAbili
 
 @[php_arg_default: 'error_code=""']
 @[php_arg_optional: 'error_code']
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method: 'errorResponse']
 @[php_arg_name: 'error_code=errorCode']
-pub fn (app &VSlimApp) error_response(status int, message string, error_code string) &VSlimResponse {
+pub fn (app &VSlimApp) error_response(status int, message string, error_code string) &VSlimPsr7Response {
 	code := if error_code.trim_space() == '' { 'runtime_error' } else { error_code.trim_space() }
-	return to_vslim_response(default_error_response(app, status, message, code))
+	return new_psr7_response_from_vslim_response(default_error_response(app, status, message, code))
 }
 
 @[php_arg_default: 'status=422']
 @[php_arg_optional: 'status']
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method: 'validationError']
-pub fn (app &VSlimApp) validation_error(errors vphp.RequestBorrowedZBox, status int) &VSlimResponse {
+pub fn (app &VSlimApp) validation_error(errors vphp.RequestBorrowedZBox, status int) &VSlimPsr7Response {
 	error_status := if status <= 0 { 422 } else { status }
 	json_body := '{"ok":false,"code":"validation_error","error":"validation_error","status":${error_status},"message":"Validation failed","errors":${zval_to_json_fragment(errors.to_zval())}}'
-	return to_vslim_response(json_response(error_status, json_body))
+	return new_psr7_response_from_vslim_response(json_response(error_status, json_body))
 }
 
 @[php_arg_default: 'message="Unauthorized"']
 @[php_arg_optional: 'message']
 @[php_method: 'unauthorized']
-pub fn (app &VSlimApp) unauthorized_response(message string) &VSlimResponse {
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (app &VSlimApp) unauthorized_response(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Unauthorized' } else { message }
-	return to_vslim_response(default_error_response(app, 401, msg, 'unauthorized'))
+	return new_psr7_response_from_vslim_response(default_error_response(app, 401, msg, 'unauthorized'))
 }
 
 @[php_arg_default: 'message="Forbidden"']
 @[php_arg_optional: 'message']
 @[php_method: 'forbidden']
-pub fn (app &VSlimApp) forbidden_response(message string) &VSlimResponse {
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (app &VSlimApp) forbidden_response(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Forbidden' } else { message }
-	return to_vslim_response(default_error_response(app, 403, msg, 'forbidden'))
+	return new_psr7_response_from_vslim_response(default_error_response(app, 403, msg, 'forbidden'))
 }
 
 @[php_arg_default: 'message="Bad Request"']
 @[php_arg_optional: 'message']
 @[php_method: 'badRequest']
-pub fn (app &VSlimApp) bad_request_response(message string) &VSlimResponse {
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (app &VSlimApp) bad_request_response(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Bad Request' } else { message }
-	return to_vslim_response(default_error_response(app, 400, msg, 'bad_request'))
+	return new_psr7_response_from_vslim_response(default_error_response(app, 400, msg, 'bad_request'))
 }
 
 @[php_arg_default: 'message="Not Found"']
 @[php_arg_optional: 'message']
 @[php_method: 'notFound']
-pub fn (app &VSlimApp) not_found_response_helper(message string) &VSlimResponse {
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (app &VSlimApp) not_found_response_helper(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Not Found' } else { message }
-	return to_vslim_response(default_error_response(app, 404, msg, 'not_found'))
+	return new_psr7_response_from_vslim_response(default_error_response(app, 404, msg, 'not_found'))
 }
 
 @[php_arg_default: 'message="Conflict"']
 @[php_arg_optional: 'message']
 @[php_method: 'conflict']
-pub fn (app &VSlimApp) conflict_response(message string) &VSlimResponse {
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (app &VSlimApp) conflict_response(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Conflict' } else { message }
-	return to_vslim_response(default_error_response(app, 409, msg, 'conflict'))
+	return new_psr7_response_from_vslim_response(default_error_response(app, 409, msg, 'conflict'))
 }
 
 @[php_arg_default: 'message="Service Unavailable"']
 @[php_arg_optional: 'message']
 @[php_method: 'serviceUnavailable']
-pub fn (app &VSlimApp) service_unavailable_response(message string) &VSlimResponse {
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (app &VSlimApp) service_unavailable_response(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Service Unavailable' } else { message }
-	return to_vslim_response(default_error_response(app, 503, msg, 'service_unavailable'))
+	return new_psr7_response_from_vslim_response(default_error_response(app, 503, msg, 'service_unavailable'))
 }
 
 @[php_arg_default: 'fallback_status=500']
 @[php_arg_optional: 'fallback_status']
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method: 'exceptionResponse']
 @[php_arg_name: 'fallback_status=fallbackStatus']
-pub fn (app &VSlimApp) exception_response(exception vphp.RequestBorrowedZBox, fallback_status int) &VSlimResponse {
+pub fn (app &VSlimApp) exception_response(exception vphp.RequestBorrowedZBox, fallback_status int) &VSlimPsr7Response {
 	status := if fallback_status >= 400 && fallback_status <= 599 { fallback_status } else { 500 }
 	resolved_status := exception_status_code(exception, status)
 	message := exception_message_value(exception, 'Internal Server Error')
 	code := exception_error_code(exception)
-	return to_vslim_response(default_error_response(app, resolved_status, message, code))
+	return new_psr7_response_from_vslim_response(default_error_response(app, resolved_status, message, code))
 }
 
 @[php_method: 'doctor']

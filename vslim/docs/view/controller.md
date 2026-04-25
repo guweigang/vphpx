@@ -46,7 +46,7 @@ use Psr\Http\Message\ServerRequestInterface;
 
 final class PageController extends VSlim\Controller
 {
-    public function home(ServerRequestInterface $req): VSlim\Vhttpd\Response
+    public function home(ServerRequestInterface $req): VSlim\VHttpd\Response
     {
         return $this->render('home.html', [
             'title' => 'Controller Demo',
@@ -66,7 +66,7 @@ final class PageController extends VSlim\Controller
 ```php
 final class PageController extends VSlim\Controller
 {
-    public function page(): VSlim\Vhttpd\Response
+    public function page(): VSlim\VHttpd\Response
     {
         return $this->renderWithLayout('home.html', 'layout.html', [
             'title' => 'Layout Demo',
@@ -80,7 +80,7 @@ final class PageController extends VSlim\Controller
 ```php
 final class PageController extends VSlim\Controller
 {
-    public function jump(string $name): VSlim\Vhttpd\Response
+    public function jump(string $name): VSlim\VHttpd\Response
     {
         return $this->redirectTo('users.show', ['name' => $name], 302);
     }

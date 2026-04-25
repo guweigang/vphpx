@@ -7,7 +7,7 @@
 - `VSlim\App` 是 public facade
 - HTTP kernel 负责一次请求的执行编排
 - route runtime 负责匹配和 route terminal 决策
-- PSR bridge 负责 `VSlim\Vhttpd\*` 和 PSR-7/15 互转
+- PSR bridge 负责 `VSlim\VHttpd\*` 和 PSR-7/15 互转
 - `vhttpd` 只保留 transport 边界
 
 ## Internal Layers
@@ -82,7 +82,7 @@
 
 - PSR-7 request/response object
 - PSR-15 middleware / request handler surface
-- `VSlim\Vhttpd\Request` 和 `ServerRequestInterface` 的互转
+- `VSlim\VHttpd\Request` 和 `ServerRequestInterface` 的互转
 
 ## Request Flow
 
@@ -93,13 +93,13 @@
 3. route runtime 做匹配，产出 route handler 或 terminal meta
 4. phase runtime 依次执行 before / standard middleware / after
 5. terminal 层统一收敛 not found / method not allowed / error / fixed response
-6. kernel finalize response，并把最终 request snapshot 同步回 `VSlim\Vhttpd\Request`
+6. kernel finalize response，并把最终 request snapshot 同步回 `VSlim\VHttpd\Request`
 
 ## Boundary Rule
 
 `VSlim` 目前对 legacy 语义的态度很明确：
 
-- transport 边界保留 `VSlim\Vhttpd\Request` / `VSlim\Vhttpd\Response`
+- transport 边界保留 `VSlim\VHttpd\Request` / `VSlim\VHttpd\Response`
 - 只要进入 PSR 世界，就按 PSR-7 / PSR-15 语义推进
 - 不再为了旧逻辑保留额外 middleware / request 兼容分支
 

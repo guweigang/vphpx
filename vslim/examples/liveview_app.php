@@ -237,7 +237,7 @@ if (!class_exists('ExampleCounterLiveView', false)) {
             }
         }
 
-        public function mount(VSlim\Vhttpd\Request $req, VSlim\Live\Socket $socket): void
+        public function mount(VSlim\VHttpd\Request $req, VSlim\Live\Socket $socket): void
         {
             $this->log('mount', [
                 'path' => $req->path(),
@@ -526,7 +526,7 @@ if (!class_exists('ExampleCounterLiveView', false)) {
             $this->applyLiveOps($socket, 'remote_sync', $payload);
         }
 
-        public function render(VSlim\Vhttpd\Request $req, VSlim\Live\Socket $socket): string
+        public function render(VSlim\VHttpd\Request $req, VSlim\Live\Socket $socket): string
         {
             $socket
                 ->assign('error_label', $socket->get('error_label'))

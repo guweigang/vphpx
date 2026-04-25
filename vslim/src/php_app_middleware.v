@@ -206,7 +206,7 @@ fn collect_after_middlewares(app &VSlimApp, group_hooks []vphp.RequestOwnedZBox)
 
 fn legacy_middleware_payload(payload vphp.RequestBorrowedZBox, route_params map[string]string) vphp.ZVal {
 	if payload.is_valid() && payload.to_zval().is_object()
-		&& (payload.to_zval().is_instance_of('VSlim\\Vhttpd\\Request')
+		&& (payload.to_zval().is_instance_of('VSlim\\VHttpd\\Request')
 		|| payload.to_zval().is_instance_of('VSlimRequest')) {
 		return payload.to_zval()
 	}

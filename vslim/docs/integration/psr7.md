@@ -1,6 +1,6 @@
 # PSR-7 适配
 
-VSlim 本身不是完整 PSR-7 实现，但当前扩展已经内建了一个桥接类，把 PSR-7 风格 request 转成 `VSlim\Vhttpd\Request`。
+VSlim 本身不是完整 PSR-7 实现，但当前扩展已经内建了一个桥接类，把 PSR-7 风格 request 转成 `VSlim\VHttpd\Request`。
 
 这层适配的定位要先说清楚：
 
@@ -35,8 +35,8 @@ VSlim\Psr7Adapter
 
 ## 核心方法
 
-- `toVSlimRequest(object $request): VSlim\Vhttpd\Request`
-- `toVSlimResponse(ResponseInterface $response): VSlim\Vhttpd\Response`
+- `toVSlimRequest(object $request): VSlim\VHttpd\Request`
+- `toVSlimResponse(ResponseInterface $response): VSlim\VHttpd\Response`
 - `toWorkerEnvelope(object $request): array`
 
 ## 最简单示例
@@ -79,7 +79,7 @@ $res = Psr7Adapter::toVSlimResponse($psrResponse);
 
 ## `toVSlimRequest()`
 
-这个方法适合你只想复用 request 适配逻辑，但后续还想继续手动加工 `VSlim\Vhttpd\Request`：
+这个方法适合你只想复用 request 适配逻辑，但后续还想继续手动加工 `VSlim\VHttpd\Request`：
 
 ```php
 $vRequest = Psr7Adapter::toVSlimRequest($psrRequest);
@@ -87,11 +87,11 @@ $vRequest->setAttributes(['extra' => 'demo']);
 $res = $app->dispatchRequest($vRequest);
 ```
 
-如果你需要一条明确的 `VSlim\Vhttpd\Request -> VSlim\Vhttpd\Response` 入口，这条组合就是当前最直接的 facade 路径。
+如果你需要一条明确的 `VSlim\VHttpd\Request -> VSlim\VHttpd\Response` 入口，这条组合就是当前最直接的 facade 路径。
 
 ## `toVSlimResponse()`
 
-这个方法适合在测试、调试或 bridge 层，把 `handle()` 拿到的 PSR response 显式转回 `VSlim\Vhttpd\Response`：
+这个方法适合在测试、调试或 bridge 层，把 `handle()` 拿到的 PSR response 显式转回 `VSlim\VHttpd\Response`：
 
 ```php
 $psrResponse = $app->handle($psrRequest);

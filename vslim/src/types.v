@@ -241,7 +241,7 @@ mut:
 	prefix string
 }
 
-@[php_class: 'VSlim\\Vhttpd\\Request']
+@[php_class: 'VSlim\\VHttpd\\Request']
 @[heap]
 struct VSlimRequest {
 pub mut:
@@ -265,7 +265,7 @@ mut:
 	params         map[string]string
 }
 
-@[php_class: 'VSlim\\Vhttpd\\Client']
+@[php_class: 'VSlim\\VHttpd\\Client']
 @[heap]
 struct VSlimVhttpdClient {
 mut:
@@ -336,7 +336,7 @@ mut:
 	message string
 }
 
-@[php_class: 'VSlim\\Vhttpd\\Response']
+@[php_class: 'VSlim\\VHttpd\\Response']
 @[heap]
 struct VSlimResponse {
 pub mut:

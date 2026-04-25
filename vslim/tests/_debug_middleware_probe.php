@@ -39,7 +39,7 @@ try {
 }
 
 $app->get('/hello', function () {
-    return new VSlim\Vhttpd\Response(200, 'ok');
+    return new VSlim\VHttpd\Response(200, 'ok');
 });
 
 try {

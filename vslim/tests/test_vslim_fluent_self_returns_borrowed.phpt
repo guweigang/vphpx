@@ -10,7 +10,7 @@ $middleware = new VSlim\Session\StartMiddleware();
 $sameMiddleware = $middleware->setApp($app);
 echo (spl_object_id($middleware) === spl_object_id($sameMiddleware) ? 'mw-same' : 'mw-diff') . PHP_EOL;
 
-$request = new VSlim\Vhttpd\Request('GET', '/', '');
+$request = new VSlim\VHttpd\Request('GET', '/', '');
 $guard = $app->auth($request);
 $afterLogin = $guard->login('u-1');
 $afterLogout = $afterLogin->logout();

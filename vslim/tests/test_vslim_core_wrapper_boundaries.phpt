@@ -10,7 +10,7 @@ $app = new VSlim\App();
 $app->setViewBasePath(__DIR__ . '/fixtures');
 $app->setAssetsPrefix('/assets');
 
-$request = new VSlim\Vhttpd\Request('GET', '/hello?foo=bar', '');
+$request = new VSlim\VHttpd\Request('GET', '/hello?foo=bar', '');
 $requestChain = $request
     ->setMethod('POST')
     ->setTarget('/submit?trace_id=t-1')
@@ -20,7 +20,7 @@ $requestChain = $request
 echo (spl_object_id($request) === spl_object_id($requestChain) ? "request-builder-borrowed\n" : "request-builder-fresh\n");
 echo $request->method . '|' . $request->rawPath . '|' . $request->traceId() . "\n";
 
-$response = new VSlim\Vhttpd\Response(200, 'start', 'text/plain; charset=utf-8');
+$response = new VSlim\VHttpd\Response(200, 'start', 'text/plain; charset=utf-8');
 $responseChain = $response
     ->setStatus(201)
     ->text('hello')
@@ -40,8 +40,8 @@ $view2 = $app->view('view_home.html', [
     'trace' => 'trace-b',
 ]);
 echo (spl_object_id($view1) === spl_object_id($view2) ? "app-view-shared\n" : "app-view-fresh\n");
-echo (str_contains($view1->body, 'home-1|neo|trace-a') ? "app-view1-ok\n" : "app-view1-miss\n");
-echo (str_contains($view2->body, 'home-2|trinity|trace-b') ? "app-view2-ok\n" : "app-view2-miss\n");
+echo (str_contains((string) $view1->getBody(), 'home-1|neo|trace-a') ? "app-view1-ok\n" : "app-view1-miss\n");
+echo (str_contains((string) $view2->getBody(), 'home-2|trinity|trace-b') ? "app-view2-ok\n" : "app-view2-miss\n");
 
 $controller = new class($app) extends VSlim\Controller {};
 $controllerView1 = $controller->view();
@@ -59,8 +59,8 @@ $render2 = $controller->render('view_home.html', [
     'trace' => 'trace-d',
 ]);
 echo (spl_object_id($render1) === spl_object_id($render2) ? "controller-render-shared\n" : "controller-render-fresh\n");
-echo (str_contains($render1->body, 'controller-1|ada|trace-c') ? "controller-render1-ok\n" : "controller-render1-miss\n");
-echo (str_contains($render2->body, 'controller-2|linus|trace-d') ? "controller-render2-ok\n" : "controller-render2-miss\n");
+echo (str_contains((string) $render1->getBody(), 'controller-1|ada|trace-c') ? "controller-render1-ok\n" : "controller-render1-miss\n");
+echo (str_contains((string) $render2->getBody(), 'controller-2|linus|trace-d') ? "controller-render2-ok\n" : "controller-render2-miss\n");
 
 $app->get('/ping', fn ($req) => 'pong');
 $dispatch1 = $app->dispatch('GET', '/ping');

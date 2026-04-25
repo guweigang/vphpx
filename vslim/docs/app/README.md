@@ -43,9 +43,9 @@
 - route runtime
   - 路由匹配、参数解析、method semantics、resource terminal
 - PSR bridge
-  - `VSlim\Vhttpd\Request` 和 PSR-7/15 对接
+  - `VSlim\VHttpd\Request` 和 PSR-7/15 对接
 - transport edge
-  - 只在 `vhttpd` 边界保留 `VSlim\Vhttpd\Request/Response`
+  - 只在 `vhttpd` 边界保留 `VSlim\VHttpd\Request/Response`
 
 ## 它和 web server 的边界
 
@@ -65,7 +65,7 @@
 - `dispatch(method, rawPath)`
   - 最轻量的本地 facade
   - 适合 demo / 自测 / 小工具
-- `dispatchRequest(VSlim\Vhttpd\Request $req)`
+- `dispatchRequest(VSlim\VHttpd\Request $req)`
   - 适合 built-in server 或自己拼装 request 的传统入口
 - `dispatchEnvelope(array $envelope)`
   - 适合 worker / transport 集成
@@ -74,7 +74,7 @@
 
 建议理解成：
 
-- `VSlim\Vhttpd\Request/Response` 偏 adapter / facade
+- `VSlim\VHttpd\Request/Response` 偏 adapter / facade
 - `handle()` 对应的 PSR request/response 更接近框架内部 canonical HTTP 通道
 
 对应产品定位也可以这样看：
@@ -139,7 +139,7 @@ $app->map('PUT|PATCH', '/edit/:id', function (ServerRequestInterface $req) {
 
 根据 kernel/terminal 的归一化逻辑，常用返回值有：
 
-- `VSlim\Vhttpd\Response`
+- `VSlim\VHttpd\Response`
 - `string`
 - `array`
 - `null`
@@ -181,12 +181,12 @@ $res = $app->dispatchBody('POST', '/submit?trace_id=demo', 'name=neo');
 
 兼容层里历史的 `dispatchBody(...)` 旧别名仍然保留，但新文档更推荐 `dispatchBody(...)`。
 
-### `dispatchRequest(VSlim\Vhttpd\Request $req)`
+### `dispatchRequest(VSlim\VHttpd\Request $req)`
 
 适合手动构造 request 对象。
 
 ```php
-$req = new VSlim\Vhttpd\Request('POST', '/submit', '{"ok":true}');
+$req = new VSlim\VHttpd\Request('POST', '/submit', '{"ok":true}');
 $req->setHeaders(['content-type' => 'application/json']);
 $res = $app->dispatchRequest($req);
 ```
@@ -674,7 +674,7 @@ $app->resourceOpts('/books', BookController::class, [
 ```php
 $app->resourceOpts('/users', UserController::class, [
     'missing' => function (Psr\Http\Message\ServerRequestInterface $req, string $action, array $params) {
-        return new VSlim\Vhttpd\Response(501, 'missing:' . $action, 'text/plain; charset=utf-8');
+        return new VSlim\VHttpd\Response(501, 'missing:' . $action, 'text/plain; charset=utf-8');
     },
 ]);
 ```

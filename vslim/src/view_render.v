@@ -12,19 +12,21 @@ fn (view &VSlimView) render_template_path_with_slots(path string, scalars map[st
 }
 
 @[php_method: 'renderResponse']
-pub fn (view &VSlimView) render_response(template string, data vphp.RequestBorrowedZBox) &VSlimResponse {
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (view &VSlimView) render_response(template string, data vphp.RequestBorrowedZBox) &VSlimPsr7Response {
 	body := view.render(template, data)
-	mut res := &VSlimResponse{}
+	mut res := VSlimResponse{}
 	res.construct(200, body, 'text/html; charset=utf-8')
-	return res
+	return new_psr7_response_from_vslim_response(res)
 }
 
 @[php_method: 'renderResponseWithLayout']
-pub fn (view &VSlimView) render_response_with_layout(template string, layout string, data vphp.RequestBorrowedZBox) &VSlimResponse {
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+pub fn (view &VSlimView) render_response_with_layout(template string, layout string, data vphp.RequestBorrowedZBox) &VSlimPsr7Response {
 	body := view.render_with_layout(template, layout, data)
-	mut res := &VSlimResponse{}
+	mut res := VSlimResponse{}
 	res.construct(200, body, 'text/html; charset=utf-8')
-	return res
+	return new_psr7_response_from_vslim_response(res)
 }
 
 fn (view &VSlimView) render_source(source string, scalars map[string]string, lists map[string][]string, depth int) string {

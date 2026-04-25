@@ -125,7 +125,7 @@ namespace {
     });
 
     $app->setErrorHandler(function (ServerRequestInterface $request, string $message, int $status) {
-        return new VSlim\Vhttpd\Response(
+        return new VSlim\VHttpd\Response(
             $status,
             implode('|', [
                 'err',
@@ -142,16 +142,16 @@ namespace {
     $api->post('/items/:id', new class implements RequestHandlerInterface {
         public function handle(ServerRequestInterface $request): \Psr\Http\Message\ResponseInterface
         {
-            return new VSlim\Vhttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
+            return new VSlim\VHttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
         }
     });
 
-    $invalid = new VSlim\Vhttpd\Request('POST', '/api/items/7', '{bad');
+    $invalid = new VSlim\VHttpd\Request('POST', '/api/items/7', '{bad');
     $invalid->setHeaders(['content-type' => 'application/json']);
     $bad = $app->dispatchRequest($invalid);
 
     putenv('VSLIM_MAX_BODY_BYTES=4');
-    $oversized = new VSlim\Vhttpd\Request('POST', '/api/items/7', '12345');
+    $oversized = new VSlim\VHttpd\Request('POST', '/api/items/7', '12345');
     $oversized->setHeaders(['content-type' => 'application/x-www-form-urlencoded']);
     $large = $app->dispatchRequest($oversized);
 

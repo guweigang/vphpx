@@ -63,7 +63,7 @@
 当前状态：
 
 - 有 bridge
-- `VSlim\Vhttpd\Request` / `VSlim\Vhttpd\Response` 还不是完整 PSR-7 对象
+- `VSlim\VHttpd\Request` / `VSlim\VHttpd\Response` 还不是完整 PSR-7 对象
 
 后续目标：
 
