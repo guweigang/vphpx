@@ -5,7 +5,7 @@ VSlim database manager recognizes transport config and reserves vhttpd_upstream
 --FILE--
 <?php
 $app = VSlim\App::demo();
-$app->load_config_text(<<<TOML
+$app->loadConfigText(<<<TOML
 [database]
 driver = "mysql"
 transport = "vhttpd_upstream"

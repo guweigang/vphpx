@@ -598,7 +598,7 @@ function process(ServerRequestInterface $request, RequestHandlerInterface $handl
 示例：
 
 ```php
-$app->get_named('users.show', '/users/:id', function (ServerRequestInterface $req) {
+$app->getNamed('users.show', '/users/:id', function (ServerRequestInterface $req) {
     return 'user:' . $req->getAttribute('id');
 });
 

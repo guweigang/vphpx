@@ -7,15 +7,15 @@ VSlim app view and route group factories return fresh wrappers while sharing con
 $app = new VSlim\App();
 $app->setViewBasePath('/tmp/vslim-factory');
 $app->setAssetsPrefix('/static');
-$app->set_view_cache(true);
+$app->setViewCache(true);
 
-$view1 = $app->make_view();
-$view2 = $app->make_view();
+$view1 = $app->makeView();
+$view2 = $app->makeView();
 
 echo (spl_object_id($view1) === spl_object_id($view2) ? 'view-stable' : 'view-distinct') . PHP_EOL;
-echo ($view1->base_path() === $view2->base_path() ? 'view-base-same' : 'view-base-diff') . PHP_EOL;
-echo ($view1->assets_prefix() === $view2->assets_prefix() ? 'view-assets-same' : 'view-assets-diff') . PHP_EOL;
-echo ($view1->cache_enabled() && $view2->cache_enabled() ? 'view-cache-same' : 'view-cache-diff') . PHP_EOL;
+echo ($view1->basePath() === $view2->basePath() ? 'view-base-same' : 'view-base-diff') . PHP_EOL;
+echo ($view1->assetsPrefix() === $view2->assetsPrefix() ? 'view-assets-same' : 'view-assets-diff') . PHP_EOL;
+echo ($view1->cacheEnabled() && $view2->cacheEnabled() ? 'view-cache-same' : 'view-cache-diff') . PHP_EOL;
 
 $group1 = $app->group('/api');
 $group2 = $app->group('/api');

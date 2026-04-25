@@ -10,10 +10,10 @@ if (!extension_loaded('vslim')) {
 --FILE--
 <?php
 $app = new VSlim\App();
-var_dump($app->has_container());
+var_dump($app->hasContainer());
 
 $c1 = $app->container();
-var_dump($app->has_container());
+var_dump($app->hasContainer());
 
 $c1->set('name', 'codex');
 $c2 = $app->container();
@@ -22,7 +22,7 @@ echo ($c1 === $c2 ? 'same' : 'different') . PHP_EOL;
 
 $external = new VSlim\Container();
 $external->set('from_external', 'ok');
-$app->set_container($external);
+$app->setContainer($external);
 echo $app->container()->get('from_external') . PHP_EOL;
 ?>
 --EXPECTF--

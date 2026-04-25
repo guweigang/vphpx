@@ -106,7 +106,7 @@ $app->helper('scalar_types', function (...$args) {
     return implode('|', $parts);
 });
 
-$view = $app->make_view();
+$view = $app->makeView();
 $view->helper('view_only', function (...$args) {
     return 'view:' . implode('|', $args);
 });

@@ -35,7 +35,7 @@ namespace {
     var_dump($app->container()->get(Psr\Clock\ClockInterface::class) === $customClock);
 
     $external = new VSlim\Container();
-    $app->set_container($external);
+    $app->setContainer($external);
     var_dump($external->get('clock') === $customClock);
     var_dump($external->get(Psr\Clock\ClockInterface::class) === $customClock);
 }

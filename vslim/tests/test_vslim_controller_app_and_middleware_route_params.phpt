@@ -99,7 +99,7 @@ namespace {
     use Psr\Http\Server\RequestHandlerInterface;
 
     $app = new VSlim\App();
-    $app->load_config_text(<<<'TOML'
+    $app->loadConfigText(<<<'TOML'
 [app]
 name = "controller-app"
 TOML);
@@ -127,7 +127,7 @@ TOML);
             return new VSlim\VHttpd\Response(
                 200,
                 implode('|', [
-                    $this->app()->config()->get_string('app.name', ''),
+                    $this->app()->config()->getString('app.name', ''),
                     (string) $request->getAttribute('tenant', ''),
                     (string) $request->getAttribute('id', ''),
                     (string) $request->getAttribute('mw_seen_tenant', ''),

@@ -16,8 +16,8 @@
 ```php
 $logger = new VSlim\Log\Logger();
 $logger
-    ->set_channel('app')
-    ->with_context('trace_id', 'req-1')
+    ->setChannel('app')
+    ->withContext('trace_id', 'req-1')
     ->info('boot ok');
 ```
 
@@ -27,7 +27,7 @@ $logger
 
 ```php
 $psr = new VSlim\Log\PsrLogger();
-$psr->set_channel('app');
+$psr->setChannel('app');
 $psr->info('boot ok', ['trace_id' => 'req-1']);
 ```
 
@@ -48,5 +48,5 @@ $psr->info('boot ok', ['trace_id' => 'req-1']);
 
 ```php
 $inner = $psr->logger();
-$inner->set_output_file('/tmp/app.log');
+$inner->setOutputFile('/tmp/app.log');
 ```

@@ -32,8 +32,8 @@ namespace {
     var_dump($psr === $app->psrLogger());
     var_dump($psr->logger() === $native);
 
-    $custom = (new VSlim\Log\Logger())->set_channel('custom-app');
-    var_dump($app->set_logger($custom) === $app);
+    $custom = (new VSlim\Log\Logger())->setChannel('custom-app');
+    var_dump($app->setLogger($custom) === $app);
     var_dump($app->container()->get('logger') === $custom);
 
     $psrAgain = $app->container()->get(Psr\Log\LoggerInterface::class);
@@ -41,7 +41,7 @@ namespace {
     var_dump($psrAgain->logger() === $custom);
 
     $external = new VSlim\Container();
-    $app->set_container($external);
+    $app->setContainer($external);
     var_dump($external->get('logger') === $custom);
     var_dump($external->get(Psr\Log\LoggerInterface::class) === $psrAgain);
 }

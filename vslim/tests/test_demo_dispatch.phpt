@@ -32,7 +32,7 @@ echo $meta->status . '|' . $meta->body . '|' . $meta->contentType . PHP_EOL;
 $req = new VSlim\VHttpd\Request('GET', '/users/7?trace_id=from-php', '');
 $res = $app->dispatchRequest($req);
 echo $res->status . '|' . $res->body . '|' . $res->contentType . PHP_EOL;
-echo $req->query('trace_id') . '|' . ($req->has_query('trace_id') ? 'yes' : 'no') . PHP_EOL;
+echo $req->query('trace_id') . '|' . ($req->hasQuery('trace_id') ? 'yes' : 'no') . PHP_EOL;
 
 $req->setScheme('https');
 $req->setHost('demo.local');
@@ -45,10 +45,10 @@ $req->setServer(['server_name' => 'demo.local']);
 $req->setPort('443');
 $req->setProtocolVersion('1.1');
 echo $req->header('x-trace-id') . '|' . ($req->hasHeader('content-type') ? 'yes' : 'no') . '|' . $req->scheme . '|' . $req->host . '|' . $req->remoteAddr . PHP_EOL;
-echo $req->cookie('sid') . '|' . ($req->has_cookie('sid') ? 'yes' : 'no') . '|' . $req->param('id') . '|' . ($req->has_param('id') ? 'yes' : 'no') . PHP_EOL;
+echo $req->cookie('sid') . '|' . ($req->hasCookie('sid') ? 'yes' : 'no') . '|' . $req->param('id') . '|' . ($req->hasParam('id') ? 'yes' : 'no') . PHP_EOL;
 echo $req->query('trace_id') . '|' . $req->attribute('actor') . '|' . ($req->hasAttribute('actor') ? 'yes' : 'no') . '|' . $req->port . '|' . $req->protocolVersion . PHP_EOL;
-echo $req->contentType() . '|' . $req->serverValue('server_name') . '|' . ($req->has_server('server_name') ? 'yes' : 'no') . '|' . $req->uploaded_file_count() . '|' . ($req->is_secure() ? 'yes' : 'no') . PHP_EOL;
-echo $req->queryParams()['trace_id'] . '|' . $req->headers()['content-type'] . '|' . $req->cookies()['sid'] . '|' . $req->attributes()['actor'] . '|' . $req->server_params()['server_name'] . '|' . ($req->has_uploaded_files() ? 'yes' : 'no') . PHP_EOL;
+echo $req->contentType() . '|' . $req->serverValue('server_name') . '|' . ($req->hasServer('server_name') ? 'yes' : 'no') . '|' . $req->uploadedFileCount() . '|' . ($req->isSecure() ? 'yes' : 'no') . PHP_EOL;
+echo $req->queryParams()['trace_id'] . '|' . $req->headers()['content-type'] . '|' . $req->cookies()['sid'] . '|' . $req->attributes()['actor'] . '|' . $req->serverParams()['server_name'] . '|' . ($req->hasUploadedFiles() ? 'yes' : 'no') . PHP_EOL;
 
 $envelope = $app->dispatchEnvelope([
     'method' => 'GET',

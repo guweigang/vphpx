@@ -32,11 +32,11 @@ TOML);
 $cfg = new VSlim\Config();
 $cfg->load($dir);
 
-echo $cfg->get_string('app.name', 'x') . PHP_EOL;
-echo $cfg->get_string('app.env', 'x') . PHP_EOL;
-echo ($cfg->get_bool('app.debug', false) ? 'debug-on' : 'debug-off') . PHP_EOL;
-echo $cfg->get_string('http.host', 'x') . ':' . $cfg->get_int('http.port', 0) . PHP_EOL;
-echo $cfg->get_string('stream.driver', 'x') . PHP_EOL;
+echo $cfg->getString('app.name', 'x') . PHP_EOL;
+echo $cfg->getString('app.env', 'x') . PHP_EOL;
+echo ($cfg->getBool('app.debug', false) ? 'debug-on' : 'debug-off') . PHP_EOL;
+echo $cfg->getString('http.host', 'x') . ':' . $cfg->getInt('http.port', 0) . PHP_EOL;
+echo $cfg->getString('stream.driver', 'x') . PHP_EOL;
 ?>
 --EXPECT--
 dir-demo

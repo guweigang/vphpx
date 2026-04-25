@@ -25,7 +25,7 @@ putenv('OLLAMA_MODEL=qwen-test');
 
 $app = require __DIR__ . '/../examples/stream_factory_app.php';
 
-$meta = $app->dispatch_envelope([
+$meta = $app->dispatchEnvelope([
     'method' => 'GET',
     'path' => '/meta',
     'query' => [],

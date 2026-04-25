@@ -31,8 +31,8 @@ try {
 $unreachable = (new VSlim\Database\Manager())
     ->setConfig((new VSlim\Database\Config())
         ->set_driver('mysql')
-        ->set_host('127.0.0.1')
-        ->set_port(1)
+        ->setHost('127.0.0.1')
+        ->setPort(1)
         ->set_username('root')
         ->set_password('')
         ->setDatabase('demo'));

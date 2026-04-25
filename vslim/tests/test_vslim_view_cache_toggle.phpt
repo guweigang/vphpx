@@ -10,7 +10,7 @@ $tpl = $tmpDir . '/page.html';
 file_put_contents($tpl, 'first');
 
 $view = new VSlim\View($tmpDir, '/assets');
-echo ($view->cache_enabled() ? 'ctor-cache-on' : 'ctor-cache-off') . PHP_EOL;
+echo ($view->cacheEnabled() ? 'ctor-cache-on' : 'ctor-cache-off') . PHP_EOL;
 $view->set_cache_enabled(false);
 echo ($view->render('page.html', []) === 'first' ? 'nocache-first' : 'nocache-first-miss') . PHP_EOL;
 file_put_contents($tpl, 'second');
@@ -18,9 +18,9 @@ echo ($view->render('page.html', []) === 'second' ? 'nocache-refresh' : 'nocache
 
 $app = new VSlim\App();
 $app->setViewBasePath($tmpDir);
-$app->set_view_cache(true);
-$cached = $app->make_view();
-echo ($cached->cache_enabled() ? 'app-cache-on' : 'app-cache-off') . PHP_EOL;
+$app->setViewCache(true);
+$cached = $app->makeView();
+echo ($cached->cacheEnabled() ? 'app-cache-on' : 'app-cache-off') . PHP_EOL;
 echo ($cached->render('page.html', []) === 'second' ? 'cache-first' : 'cache-first-miss') . PHP_EOL;
 file_put_contents($tpl, 'third');
 echo ($cached->render('page.html', []) === 'second' ? 'cache-hit' : 'cache-miss') . PHP_EOL;

@@ -18,8 +18,8 @@ foreach (['VSLIM_DB_HOST', 'VSLIM_DB_PORT', 'VSLIM_DB_USER', 'VSLIM_DB_NAME'] as
 }
 $cfg = (new VSlim\Database\Config())
     ->set_driver('mysql')
-    ->set_host((string) getenv('VSLIM_DB_HOST'))
-    ->set_port((int) getenv('VSLIM_DB_PORT'))
+    ->setHost((string) getenv('VSLIM_DB_HOST'))
+    ->setPort((int) getenv('VSLIM_DB_PORT'))
     ->set_username((string) getenv('VSLIM_DB_USER'))
     ->set_password((string) (getenv('VSLIM_DB_PASSWORD') ?: ''))
     ->setDatabase((string) getenv('VSLIM_DB_NAME'));
@@ -58,8 +58,8 @@ final class VSlimJobRuntimePhptFailingJob
 
 $cfg = (new VSlim\Database\Config())
     ->set_driver('mysql')
-    ->set_host((string) getenv('VSLIM_DB_HOST'))
-    ->set_port((int) getenv('VSLIM_DB_PORT'))
+    ->setHost((string) getenv('VSLIM_DB_HOST'))
+    ->setPort((int) getenv('VSLIM_DB_PORT'))
     ->set_username((string) getenv('VSLIM_DB_USER'))
     ->set_password((string) (getenv('VSLIM_DB_PASSWORD') ?: ''))
     ->setDatabase((string) getenv('VSLIM_DB_NAME'));

@@ -27,10 +27,10 @@ TOML);
 
 $cfg->merge_file($dir . '/logging.toml');
 
-echo $cfg->get_string('app.name', 'x') . PHP_EOL;
-echo ($cfg->get_bool('app.debug', false) ? 'debug-on' : 'debug-off') . PHP_EOL;
-echo $cfg->get_string('logging.channel', 'x') . PHP_EOL;
-echo $cfg->get_string('logging.target', 'x') . PHP_EOL;
+echo $cfg->getString('app.name', 'x') . PHP_EOL;
+echo ($cfg->getBool('app.debug', false) ? 'debug-on' : 'debug-off') . PHP_EOL;
+echo $cfg->getString('logging.channel', 'x') . PHP_EOL;
+echo $cfg->getString('logging.target', 'x') . PHP_EOL;
 ?>
 --EXPECT--
 base

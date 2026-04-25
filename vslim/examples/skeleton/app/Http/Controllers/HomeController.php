@@ -3,11 +3,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 final class HomeController extends \VSlim\Controller
 {
-    public function index(ServerRequestInterface $request): \VSlim\VHttpd\Response
+    public function index(ServerRequestInterface $request): ResponseInterface
     {
         return $this->render("home.html", [
             "title" => "VSlim Skeleton Home",

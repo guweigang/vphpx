@@ -27,17 +27,17 @@ namespace {
 
     $clock = new FixedClock(new DateTimeImmutable('2024-01-01T00:00:00.123+00:00'));
     $logger = (new VSlim\Log\Logger())
-        ->set_level(VSlim\Log\Level::DEBUG)
+        ->setLevel(VSlim\Log\Level::DEBUG)
         ->setOutputFile($logFile);
 
     $app = new VSlim\App();
-    $app->load_config_text(<<<'TOML'
+    $app->loadConfigText(<<<'TOML'
 [app.trace]
 memory = true
 memory_every = 1
 TOML);
     $app->setClock($clock);
-    $app->set_logger($logger);
+    $app->setLogger($logger);
     $app->get('/ping', fn () => 'pong');
     $res = $app->dispatch('GET', '/ping');
 

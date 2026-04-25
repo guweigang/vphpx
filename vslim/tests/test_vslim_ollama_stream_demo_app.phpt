@@ -25,7 +25,7 @@ putenv('OLLAMA_MODEL=qwen-test');
 
 $app = require __DIR__ . '/../examples/ollama_stream_app.php';
 
-$meta = $app->dispatch_envelope([
+$meta = $app->dispatchEnvelope([
     'method' => 'GET',
     'path' => '/meta?prompt=demo',
     'query' => ['prompt' => 'demo'],
@@ -56,7 +56,7 @@ echo ($events[0]['event'] ?? '') . "\n";
 echo (str_contains((string) ($events[0]['data'] ?? ''), '"token":"Hello"') ? "sse_first_ok\n" : "sse_first_bad\n");
 echo ($events[3]['event'] ?? '') . "\n";
 
-$notFound = $app->dispatch_envelope([
+$notFound = $app->dispatchEnvelope([
     'method' => 'GET',
     'path' => '/missing',
     'query' => [],

@@ -128,7 +128,7 @@ $app->middleware(new class implements MiddlewareInterface {
 $app->get('/hello/:name', function (ServerRequestInterface $req) {
     return new VSlim\VHttpd\Response(200, 'Hello, ' . $req->getAttribute('name'), 'text/plain; charset=utf-8');
 });
-$app->get_named('hello.show', '/hello/:name', function (ServerRequestInterface $req) {
+$app->getNamed('hello.show', '/hello/:name', function (ServerRequestInterface $req) {
     return new VSlim\VHttpd\Response(200, 'Named Hello, ' . $req->getAttribute('name'), 'text/plain; charset=utf-8');
 });
 $app->post('/submit', function (ServerRequestInterface $req) {
@@ -173,13 +173,13 @@ $api->after(new class implements MiddlewareInterface {
         return $response->withBody(new VSlim\Psr7\Stream('after:' . (string) $response->getBody()));
     }
 });
-$api->get_named('api.users.show', '/members/:id', function (ServerRequestInterface $req) {
+$api->getNamed('api.users.show', '/members/:id', function (ServerRequestInterface $req) {
     return 'member:' . $req->getAttribute('id');
 });
 $api->get('/blocked', function (ServerRequestInterface $req) {
     return 'route-blocked';
 });
-$api->put_named('api.users.update', '/users/:id', function (ServerRequestInterface $req) {
+$api->putNamed('api.users.update', '/users/:id', function (ServerRequestInterface $req) {
     return 'put:' . $req->getAttribute('id');
 });
 $api->delete('/users/:id', function (ServerRequestInterface $req) {
@@ -188,7 +188,7 @@ $api->delete('/users/:id', function (ServerRequestInterface $req) {
 $api->patch('/users/:id', function (ServerRequestInterface $req) {
     return 'patch:' . $req->getAttribute('id');
 });
-$api->any_named('api.echo.any', '/echo/:id', function (ServerRequestInterface $req) {
+$api->anyNamed('api.echo.any', '/echo/:id', function (ServerRequestInterface $req) {
     return $req->getMethod() . ':' . $req->getAttribute('id');
 });
 $v1 = $api->group('/v1');
@@ -209,23 +209,23 @@ $v1->get('/ping', function (ServerRequestInterface $req) {
         'body' => json_encode(['pong' => true, 'path' => $req->getUri()->getPath()]),
     ];
 });
-$app->set_base_path('/v1');
+$app->setBasePath('/v1');
 
 echo $app->dispatch('GET', '/hello/codex')->body . '|' . $app->dispatch('GET', '/hello/codex')->header('x-after') . PHP_EOL;
-echo $app->url_for('hello.show', ['name' => 'nova']) . PHP_EOL;
-echo $app->url_for_query('api.users.show', ['id' => '12'], ['tab' => 'profile', 'trace' => '1']) . PHP_EOL;
-echo $app->url_for_abs('hello.show', ['name' => 'nova'], 'https', 'demo.local') . PHP_EOL;
-$app->set_base_path('');
-$redirect = $app->redirect_to('hello.show', ['name' => 'jump']);
-echo $redirect->status . '|' . $redirect->header('location') . '|' . $redirect->body . PHP_EOL;
+echo $app->urlFor('hello.show', ['name' => 'nova']) . PHP_EOL;
+echo $app->urlForQuery('api.users.show', ['id' => '12'], ['tab' => 'profile', 'trace' => '1']) . PHP_EOL;
+echo $app->urlForAbs('hello.show', ['name' => 'nova'], 'https', 'demo.local') . PHP_EOL;
+$app->setBasePath('');
+$redirect = $app->redirectTo('hello.show', ['name' => 'jump']);
+echo $redirect->getStatusCode() . '|' . $redirect->getHeaderLine('location') . '|' . (string) $redirect->getBody() . PHP_EOL;
 $manual = new VSlim\VHttpd\Response(200, 'ignored', 'text/plain; charset=utf-8');
-$manual->redirect_with_status('/moved', 307);
+$manual->redirectWithStatus('/moved', 307);
 echo $manual->status . '|' . $manual->header('location') . '|' . $manual->contentType . PHP_EOL;
-$res = $app->dispatch_body('POST', '/submit?trace_id=builder', 'payload');
+$res = $app->dispatchBody('POST', '/submit?trace_id=builder', 'payload');
 echo $res->status . '|' . $res->body . '|' . $res->header('x-mode') . PHP_EOL;
 echo $app->dispatch('GET', '/api/users/9')->body . PHP_EOL;
 echo $app->dispatch('GET', '/api/members/12')->body . PHP_EOL;
-echo $app->url_for('api.users.update', ['id' => '33']) . PHP_EOL;
+echo $app->urlFor('api.users.update', ['id' => '33']) . PHP_EOL;
 echo $app->dispatch('PUT', '/api/users/33')->body . PHP_EOL;
 echo $app->dispatch('PATCH', '/api/users/34')->body . PHP_EOL;
 echo $app->dispatch('DELETE', '/api/users/35')->body . PHP_EOL;

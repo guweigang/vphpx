@@ -92,7 +92,7 @@ final class ResourceOptsController {
 
 $app = new VSlim\App();
 $app->container()->set(ResourceOptsController::class, new ResourceOptsController());
-$app->resource_opts('/books', ResourceOptsController::class, [
+$app->resourceOpts('/books', ResourceOptsController::class, [
     'only' => ['index', 'show'],
     'name_prefix' => 'library.books',
     'param' => 'book_id',

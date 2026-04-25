@@ -171,7 +171,7 @@ while (microtime(true) < $deadline) {
 }
 
 $app = VSlim\App::demo();
-$app->load_config_text(<<<TOML
+$app->loadConfigText(<<<TOML
 [database]
 driver = "mysql"
 transport = "vhttpd_upstream"

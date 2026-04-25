@@ -59,7 +59,7 @@ $tpl = <<<'HTML'
 HTML;
 file_put_contents($tmpDir . '/view_control_flow.inline.html', $tpl);
 $app->setViewBasePath($tmpDir);
-$view = $app->make_view();
+$view = $app->makeView();
 
 $body = $view->render('view_control_flow.inline.html', [
     'show_title' => '1',

@@ -37,7 +37,7 @@ $health = $app->dispatch('GET', '/health');
 echo $health->status . '|' . $health->body . '|' . $health->header('x-template-app') . PHP_EOL;
 $module = $app->dispatch('GET', '/module/ping');
 echo $module->status . '|' . $module->body . PHP_EOL;
-echo $app->view_base_path() . PHP_EOL;
+echo $app->viewBasePath() . PHP_EOL;
 ?>
 --EXPECTF--
 200|ok|vslim-template|provider-ready|vslim-template

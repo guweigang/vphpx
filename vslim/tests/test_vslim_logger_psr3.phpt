@@ -24,7 +24,7 @@ PHP);
 }
 
 $logger = new VSlim\Log\PsrLogger();
-$logger->set_channel('psr3-test');
+$logger->setChannel('psr3-test');
 $inner = $logger->logger();
 
 echo ($logger instanceof Psr\Log\LoggerInterface ? 'yes' : 'no') . PHP_EOL;

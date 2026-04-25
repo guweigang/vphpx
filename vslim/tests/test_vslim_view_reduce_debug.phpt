@@ -15,7 +15,7 @@ $tpl = <<<'HTML'
 HTML;
 file_put_contents($tmpDir . '/reduce_debug.html', $tpl);
 $app->setViewBasePath($tmpDir);
-$view = $app->make_view();
+$view = $app->makeView();
 
 $body = $view->render('reduce_debug.html', ['scores' => ['1', '2', '3']]);
 echo (str_contains($body, '<p id="ok">6</p>') ? 'ok-reduce' : 'bad-reduce') . PHP_EOL;

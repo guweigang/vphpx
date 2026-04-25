@@ -5,7 +5,7 @@ VSlim session flash helpers and app login/logout helpers support common redirect
 --FILE--
 <?php
 $app = VSlim\App::demo();
-$app->load_config_text(<<<'TOML'
+$app->loadConfigText(<<<'TOML'
 [app]
 key = "auth-secret"
 

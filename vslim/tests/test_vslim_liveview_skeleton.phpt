@@ -62,7 +62,7 @@ echo $patches[4]['op'] . '|' . $patches[4]['id'] . '|' . $patches[4]['name'] . '
 $events = $socket->events();
 echo $events[0]['event'] . '|' . $events[0]['payload'] . PHP_EOL;
 echo $socket->flashes()[0]['kind'] . '|' . $socket->flashes()[0]['message'] . PHP_EOL;
-echo $socket->redirect_to() . PHP_EOL;
+echo $socket->redirectTo() . PHP_EOL;
 
 $helper = new CounterLiveView();
 $helper->set_app($app)->set_template('live_counter.html');

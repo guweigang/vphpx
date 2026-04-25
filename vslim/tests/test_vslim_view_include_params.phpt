@@ -49,7 +49,7 @@ file_put_contents($tmpDir . '/page_map_nested.html', <<<'HTML'
 HTML);
 
 $app->setViewBasePath($tmpDir);
-$view = $app->make_view();
+$view = $app->makeView();
 $body = $view->render('page.html', [
     'page_title' => 'Include Card',
     'tags' => ['go', 'php'],

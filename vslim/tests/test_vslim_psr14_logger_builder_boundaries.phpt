@@ -74,16 +74,16 @@ namespace {
 
     $native = new VSlim\Log\Logger();
     $nativeChain = $native
-        ->set_channel('native')
-        ->set_level('debug')
-        ->with_context('trace_id', 't-1');
+        ->setChannel('native')
+        ->setLevel('debug')
+        ->withContext('trace_id', 't-1');
     echo (spl_object_id($native) === spl_object_id($nativeChain) ? "native-logger-borrowed\n" : "native-logger-fresh\n");
 
     $psr = new VSlim\Log\PsrLogger();
     $psrChain = $psr
-        ->set_logger($native)
-        ->set_channel('psr')
-        ->set_level('info');
+        ->setLogger($native)
+        ->setChannel('psr')
+        ->setLevel('info');
     echo (spl_object_id($psr) === spl_object_id($psrChain) ? "psr-logger-borrowed\n" : "psr-logger-fresh\n");
 
     $inner1 = $psr->logger();

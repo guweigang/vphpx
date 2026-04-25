@@ -84,7 +84,7 @@ namespace {
         'routes' => [
             function (VSlim\App $app) use (&$assembled): void {
                 $assembled[] = 'routes-a';
-                $app->get_named('health.show', '/health', fn () => 'health|' . $app->config()->get_string('app.name', '') . '|' . $app->container()->get('provider.booted'));
+                $app->getNamed('health.show', '/health', fn () => 'health|' . $app->config()->getString('app.name', '') . '|' . $app->container()->get('provider.booted'));
             },
             function (VSlim\App $app) use (&$assembled): void {
                 $assembled[] = 'routes-b';
@@ -104,8 +104,8 @@ namespace {
     echo $app->dispatch('GET', '/ping')->body . PHP_EOL;
     echo $app->dispatch('GET', '/ready')->body . PHP_EOL;
     echo $app->dispatch('GET', '/missing')->body . PHP_EOL;
-    echo $app->url_for('health.show', []) . PHP_EOL;
-    echo $app->view_base_path() . '|' . $app->assets_prefix() . '|' . ($app->view_cache_enabled() ? 'yes' : 'no') . '|' . ($app->error_response_json_enabled() ? 'yes' : 'no') . PHP_EOL;
+    echo $app->urlFor('health.show', []) . PHP_EOL;
+    echo $app->viewBasePath() . '|' . $app->assetsPrefix() . '|' . ($app->viewCacheEnabled() ? 'yes' : 'no') . '|' . ($app->errorResponseJsonEnabled() ? 'yes' : 'no') . PHP_EOL;
     echo $container->get('provider.message') . '|' . $container->get('module.registered') . PHP_EOL;
     var_dump($app->cache()->clock() === $clock);
 }

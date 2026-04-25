@@ -167,7 +167,7 @@ namespace {
     $app = new VSlim\App();
     $app->setViewBasePath(__DIR__ . '/fixtures');
     $app->setAssetsPrefix('/assets');
-    $app->load_config_text(<<<'TOML'
+    $app->loadConfigText(<<<'TOML'
 [session]
 cookie_name = "ks_session"
 secret = "demo-secret"

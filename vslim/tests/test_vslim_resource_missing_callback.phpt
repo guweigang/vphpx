@@ -93,7 +93,7 @@ final class MissingModelController {
 
 $app = new VSlim\App();
 $app->container()->set(MissingModelController::class, new MissingModelController());
-$app->resource_opts('/users', MissingModelController::class, [
+$app->resourceOpts('/users', MissingModelController::class, [
     'only' => ['show'],
     'missing' => function (ServerRequestInterface $req, string $action, array $params) {
         return new VSlim\VHttpd\Response(

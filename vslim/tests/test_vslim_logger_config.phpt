@@ -12,12 +12,12 @@ target = 'stdout'
 TOML;
 
 $app = new VSlim\App();
-$app->load_config_text($cfg);
+$app->loadConfigText($cfg);
 
 $logger = $app->logger();
 echo $logger->channel(), "\n";
 echo $logger->level(), "\n";
-echo $logger->output_target(), "\n";
+echo $logger->outputTarget(), "\n";
 echo ($app->psrLogger()->logger() === $logger ? 'same' : 'diff'), "\n";
 ?>
 --EXPECT--

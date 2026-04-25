@@ -5,7 +5,7 @@ VSlim testing actingAs cookie round-trips through app session loader
 --FILE--
 <?php
 $app = new VSlim\App();
-$app->load_config_text(<<<'TOML'
+$app->loadConfigText(<<<'TOML'
 [session]
 cookie_name = "ks_session"
 secret = "demo-secret"

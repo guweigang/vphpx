@@ -10,7 +10,7 @@ timeout_seconds = 12
 TOML;
 
 $app = new VSlim\App();
-$app->load_config_text($cfg);
+$app->loadConfigText($cfg);
 
 $client = $app->httpClient();
 echo $client->timeout_seconds_value(), "\n";

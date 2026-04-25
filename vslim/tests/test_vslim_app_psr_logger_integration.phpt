@@ -31,8 +31,8 @@ namespace {
     var_dump($psr1 instanceof Psr\Log\LoggerInterface);
     var_dump($psr1->logger() === $app->logger());
 
-    $custom = (new VSlim\Log\Logger())->set_channel('custom-app');
-    var_dump($app->set_logger($custom) === $app);
+    $custom = (new VSlim\Log\Logger())->setChannel('custom-app');
+    var_dump($app->setLogger($custom) === $app);
     var_dump($app->psrLogger() === $psr1);
     var_dump($app->psrLogger()->logger() === $custom);
 }

@@ -33,7 +33,7 @@ namespace Psr\Http\Server {
 }
 namespace {
     $app = VSlim\App::demo();
-    $app->load_config_text(<<<'TOML'
+    $app->loadConfigText(<<<'TOML'
 [app]
 key = "auth-secret"
 

@@ -15,7 +15,7 @@ default_ttl_seconds = 7
 TOML;
 
 $app = new VSlim\App();
-$app->load_config_text($cfg);
+$app->loadConfigText($cfg);
 
 $cache = $app->cache();
 echo $cache->namespace(), "\n";

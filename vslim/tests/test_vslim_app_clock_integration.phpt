@@ -31,14 +31,14 @@ namespace {
 
     $clock = new FixedClock(new DateTimeImmutable('2024-01-01T00:00:00.123+00:00'));
     $logger = (new VSlim\Log\Logger())
-        ->set_level(VSlim\Log\Level::DEBUG)
+        ->setLevel(VSlim\Log\Level::DEBUG)
         ->setOutputFile($logFile);
 
     $app = new VSlim\App();
     var_dump($app->setClock($clock) === $app);
     var_dump($app->clock() === $clock);
 
-    $app->set_logger($logger);
+    $app->setLogger($logger);
     $app->get('/ping', fn () => 'pong');
     $res = $app->dispatch('GET', '/ping');
 

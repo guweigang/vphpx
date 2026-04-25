@@ -143,7 +143,7 @@ namespace {
     var_dump($app->cachePool()->clock() === $clock);
 
     $external = new VSlim\Container();
-    $app->set_container($external);
+    $app->setContainer($external);
     var_dump($external->get('events') === $dispatcher);
     var_dump($external->get('cache') === $cache);
     var_dump($external->get('cache.pool') === $pool);

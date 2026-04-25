@@ -30,10 +30,10 @@ $inner2 = $psr->logger();
 echo (spl_object_id($inner1) === spl_object_id($inner2) ? 'inner-stable' : 'inner-unstable') . PHP_EOL;
 
 $external = (new VSlim\Log\Logger())
-    ->set_channel('external')
-    ->set_level('debug');
+    ->setChannel('external')
+    ->setLevel('debug');
 
-$psr->set_logger($external);
+$psr->setLogger($external);
 $inner3 = $psr->logger();
 $inner4 = $psr->logger();
 

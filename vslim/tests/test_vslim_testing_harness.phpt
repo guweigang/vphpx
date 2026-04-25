@@ -6,7 +6,7 @@ VSlim testing harness provides container overrides and quick dispatch helpers
 <?php
 $app = VSlim\App::demo();
 $app->get('/hello', function () use ($app): string {
-    return (string) $app->config()->get_string('testing.message', (string) $app->container()->get('message'));
+    return (string) $app->config()->getString('testing.message', (string) $app->container()->get('message'));
 });
 $app->post('/echo', function (VSlim\Psr7\ServerRequest $request): string {
     return $request->getBody()->getContents();

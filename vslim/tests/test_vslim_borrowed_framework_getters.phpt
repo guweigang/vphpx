@@ -30,10 +30,10 @@ $userConfig = new VSlim\Config();
 $userLogger = new VSlim\Log\Logger();
 $userMcp = new VSlim\Mcp\App();
 
-$app2->set_container($userContainer);
+$app2->setContainer($userContainer);
 $app2->setClock($userClock);
 $app2->set_config($userConfig);
-$app2->set_logger($userLogger);
+$app2->setLogger($userLogger);
 $app2->set_mcp($userMcp);
 
 echo (spl_object_id($userContainer) === spl_object_id($app2->container()) ? 'container-same' : 'container-diff') . PHP_EOL;

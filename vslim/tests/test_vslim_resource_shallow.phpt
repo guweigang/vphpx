@@ -91,7 +91,7 @@ final class NestedCommentsController {
 
 $app = new VSlim\App();
 $app->container()->set(NestedCommentsController::class, new NestedCommentsController());
-$app->resource_opts('/photos/:photo_id/comments', NestedCommentsController::class, [
+$app->resourceOpts('/photos/:photo_id/comments', NestedCommentsController::class, [
     'only' => ['index', 'show'],
     'param' => 'comment_id',
     'shallow' => true,
@@ -100,7 +100,7 @@ $app->resource_opts('/photos/:photo_id/comments', NestedCommentsController::clas
 echo $app->dispatch('GET', '/photos/7/comments')->body . PHP_EOL;
 echo $app->dispatch('GET', '/photos/7/comments/99')->status . PHP_EOL;
 echo $app->dispatch('GET', '/comments/99')->body . PHP_EOL;
-echo $app->url_for('photos.:photo_id.comments.show', ['comment_id' => '88']) . PHP_EOL;
+echo $app->urlFor('photos.:photo_id.comments.show', ['comment_id' => '88']) . PHP_EOL;
 ?>
 --EXPECT--
 index

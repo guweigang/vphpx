@@ -498,6 +498,9 @@ fn preload_bootstrap_spec_classes(project_root string, raw vphp.ZVal) {
 	for file in php_glob_paths(path_join(project_root, 'app/Http/Controllers/*.php')) {
 		_ = php_include_once(file)
 	}
+	for file in php_glob_paths(path_join(project_root, 'app/Http/Middleware/*.php')) {
+		_ = php_include_once(file)
+	}
 }
 
 fn preload_bootstrap_project_classes(project_root string) {
@@ -508,6 +511,7 @@ fn preload_bootstrap_project_classes(project_root string) {
 		path_join(project_root, 'app/Providers/*.php'),
 		path_join(project_root, 'app/Modules/*.php'),
 		path_join(project_root, 'app/Http/Controllers/*.php'),
+		path_join(project_root, 'app/Http/Middleware/*.php'),
 	]
 	for pattern in patterns {
 		for file in php_glob_paths(pattern) {

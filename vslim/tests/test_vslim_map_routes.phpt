@@ -11,7 +11,7 @@ $app->map(['GET', 'POST'], '/multi/:id', function ($req) {
 $app->map('PUT|PATCH', '/edit/:id', function ($req) {
     return $req->getMethod() . ':' . $req->getAttribute('id');
 });
-$app->map_named(['DELETE', 'OPTIONS'], 'api.remove', '/api/items/:id', function ($req) {
+$app->mapNamed(['DELETE', 'OPTIONS'], 'api.remove', '/api/items/:id', function ($req) {
     return $req->getMethod() . ':' . $req->getAttribute('id');
 });
 $group = $app->group('/v1');
@@ -27,7 +27,7 @@ echo $app->dispatch('DELETE', '/api/items/9')->body . PHP_EOL;
 echo $app->dispatch('OPTIONS', '/api/items/9')->body . PHP_EOL;
 echo $app->dispatch('GET', '/v1/ping')->body . PHP_EOL;
 echo $app->dispatch('HEAD', '/v1/ping')->status . '|' . strlen($app->dispatch('HEAD', '/v1/ping')->body) . PHP_EOL;
-echo $app->url_for('api.remove', ['id' => '99']) . PHP_EOL;
+echo $app->urlFor('api.remove', ['id' => '99']) . PHP_EOL;
 ?>
 --EXPECT--
 GET:7
