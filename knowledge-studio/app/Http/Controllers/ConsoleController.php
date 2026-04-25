@@ -126,7 +126,7 @@ final class ConsoleController extends \VSlim\Controller
         }, $urgentJobs);
 
         $this->debug('index.render');
-        return $this->render_with_layout('console.html', 'layout.html', [
+        return $this->renderWithLayout('console.html', 'layout.html', [
             'title' => $copy['title'],
             'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
             'viewer_role' => is_array($viewer) ? (string) ($viewer['role'] ?? '') : '',
@@ -305,7 +305,7 @@ final class ConsoleController extends \VSlim\Controller
             ];
         }, $members);
 
-        return $this->render_with_layout('console_members.html', 'layout.html', [
+        return $this->renderWithLayout('console_members.html', 'layout.html', [
             'title' => $copy['title'],
             'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
             'viewer_role' => is_array($viewer) ? (string) ($viewer['role'] ?? '') : '',
@@ -357,7 +357,7 @@ final class ConsoleController extends \VSlim\Controller
         $shared = $this->shared($locale, '/console/account', is_array($workspace) ? $workspace : null, $memberships);
         $requiresPasswordReset = $this->console->requiresPasswordReset(is_array($viewer) ? $viewer : null);
 
-        return $this->render_with_layout('console_account.html', 'layout.html', [
+        return $this->renderWithLayout('console_account.html', 'layout.html', [
             'title' => $copy['title'],
             'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
             'viewer_email' => is_array($viewer) ? (string) ($viewer['email'] ?? '') : '',
@@ -468,7 +468,7 @@ final class ConsoleController extends \VSlim\Controller
             ];
         }, $subscriberRows);
 
-        return $this->render_with_layout('console_subscribers.html', 'layout.html', [
+        return $this->renderWithLayout('console_subscribers.html', 'layout.html', [
             'title' => $copy['title'],
             'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
             'viewer_role' => is_array($viewer) ? (string) ($viewer['role'] ?? '') : '',
@@ -569,7 +569,7 @@ final class ConsoleController extends \VSlim\Controller
             ];
         }, $members);
 
-        return $this->render_with_layout('console_subscriber_detail.html', 'layout.html', [
+        return $this->renderWithLayout('console_subscriber_detail.html', 'layout.html', [
             'title' => $copy['title'],
             'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
             'viewer_role' => is_array($viewer) ? (string) ($viewer['role'] ?? '') : '',
@@ -723,7 +723,7 @@ final class ConsoleController extends \VSlim\Controller
 
         if (getenv('KS_RENDERED_STRING_DOCUMENTS_RESPONSE') !== false && getenv('KS_RENDERED_STRING_DOCUMENTS_RESPONSE') !== '') {
             $this->debug('documents.rendered-string-response');
-            $html = $this->view()->render_with_layout('console_documents.html', 'layout.html', [
+            $html = $this->view()->renderWithLayout('console_documents.html', 'layout.html', [
                 'title' => 'Knowledge Documents',
                 'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
                 'workspace_name' => is_array($workspace) ? (string) ($workspace['name'] ?? '') : '',
@@ -755,7 +755,7 @@ final class ConsoleController extends \VSlim\Controller
 
         if (getenv('KS_RAW_STRING_DOCUMENTS_RESPONSE') !== false && getenv('KS_RAW_STRING_DOCUMENTS_RESPONSE') !== '') {
             $this->debug('documents.raw-string-response');
-            return $this->view()->render_with_layout('console_documents.html', 'layout.html', [
+            return $this->view()->renderWithLayout('console_documents.html', 'layout.html', [
                 'title' => 'Knowledge Documents',
                 'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
                 'workspace_name' => is_array($workspace) ? (string) ($workspace['name'] ?? '') : '',
@@ -770,7 +770,7 @@ final class ConsoleController extends \VSlim\Controller
         }
 
         $this->debug('documents.render');
-        return $this->render_with_layout('console_documents.html', 'layout.html', [
+        return $this->renderWithLayout('console_documents.html', 'layout.html', [
             'title' => $copy['title'],
             'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
             'viewer_role' => is_array($viewer) ? (string) ($viewer['role'] ?? '') : '',
@@ -854,7 +854,7 @@ final class ConsoleController extends \VSlim\Controller
             return $this->redirect($this->urls->consoleDocuments($locale), 302);
         }
 
-        return $this->render_with_layout('console_document_editor.html', 'layout.html', [
+        return $this->renderWithLayout('console_document_editor.html', 'layout.html', [
             'title' => $copy['editor_title'],
             'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
             'viewer_role' => is_array($viewer) ? (string) ($viewer['role'] ?? '') : '',
@@ -927,7 +927,7 @@ final class ConsoleController extends \VSlim\Controller
         ], $entries);
         $entries = $this->localizeConsoleEntries(is_array($workspace) ? $workspace : null, $locale, $entries);
 
-        return $this->render_with_layout('console_faqs.html', 'layout.html', [
+        return $this->renderWithLayout('console_faqs.html', 'layout.html', [
             'title' => $copy['title'],
             'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
             'viewer_role' => is_array($viewer) ? (string) ($viewer['role'] ?? '') : '',
@@ -1007,7 +1007,7 @@ final class ConsoleController extends \VSlim\Controller
             return $this->redirect($this->urls->consoleFaqs($locale), 302);
         }
 
-        return $this->render_with_layout('console_entry_editor.html', 'layout.html', [
+        return $this->renderWithLayout('console_entry_editor.html', 'layout.html', [
             'title' => $copy['editor_title'],
             'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
             'viewer_role' => is_array($viewer) ? (string) ($viewer['role'] ?? '') : '',
@@ -1090,7 +1090,7 @@ final class ConsoleController extends \VSlim\Controller
         $shared = $this->shared($locale, '/console/ops', is_array($workspace) ? $workspace : null, $memberships);
         $canManageOps = $this->console->canManageOps(is_array($viewer) ? $viewer : null);
 
-        return $this->render_with_layout('console_ops.html', 'layout.html', [
+        return $this->renderWithLayout('console_ops.html', 'layout.html', [
             'title' => $copy['title'],
             'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
             'viewer_role' => is_array($viewer) ? (string) ($viewer['role'] ?? '') : '',
@@ -1494,7 +1494,7 @@ final class ConsoleController extends \VSlim\Controller
             ];
         }, $releases);
 
-        return $this->render_with_layout('console_releases.html', 'layout.html', [
+        return $this->renderWithLayout('console_releases.html', 'layout.html', [
             'title' => $copy['title'],
             'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
             'viewer_role' => is_array($viewer) ? (string) ($viewer['role'] ?? '') : '',
@@ -2015,7 +2015,7 @@ final class ConsoleController extends \VSlim\Controller
         }
 
         $response = new \VSlim\Vhttpd\Response(302, '', 'text/plain; charset=utf-8');
-        $response->redirect_with_status($this->urls->console($locale), 302);
+        $response->redirectWithStatus($this->urls->console($locale), 302);
         $session->commit($response);
         return $response;
     }
@@ -2538,7 +2538,7 @@ final class ConsoleController extends \VSlim\Controller
             $session->flash($key, $message);
         }
         $response = new \VSlim\Vhttpd\Response(302, '', 'text/plain; charset=utf-8');
-        $response->redirect_with_status($location, 302);
+        $response->redirectWithStatus($location, 302);
         $session->commit($response);
         return $response;
     }

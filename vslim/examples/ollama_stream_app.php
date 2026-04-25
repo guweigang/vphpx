@@ -25,9 +25,9 @@ function vslim_ollama_demo_app(): VSlim\App
     }
 
     $app = new VSlim\App();
-    $app->set_error_response_json(true);
-    $app->set_view_base_path(__DIR__ . '/views');
-    $app->set_assets_prefix('/assets');
+    $app->setErrorResponseJson(true);
+    $app->setViewBasePath(__DIR__ . '/views');
+    $app->setAssetsPrefix('/assets');
     $ollama = VSlim\Stream\OllamaClient::fromApp($app);
 
     $app->get('/', function () use ($app, $ollama) {

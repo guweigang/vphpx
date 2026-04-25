@@ -17,7 +17,7 @@ $app->get('/meta', static fn () => [
 ]);
 
 $app->mcp()
-    ->server_info(['name' => 'vslim-native-mcp-demo', 'version' => '0.1.0'])
+    ->serverInfo(['name' => 'vslim-native-mcp-demo', 'version' => '0.1.0'])
     ->capabilities([
         'logging' => [],
         'sampling' => [],
@@ -107,10 +107,10 @@ $app->mcp()
         );
     })
     ->register('debug/caps', static function (array $request, array $frame): array {
-        $caps = VSlim\Mcp\App::client_capabilities($frame);
+        $caps = VSlim\Mcp\App::clientCapabilities($frame);
         return [
             'client_capabilities_json' => (string) ($frame['client_capabilities_json'] ?? ''),
-            'sampling_supported' => VSlim\Mcp\App::client_supports($frame, 'sampling'),
+            'sampling_supported' => VSlim\Mcp\App::clientSupports($frame, 'sampling'),
             'has_roots' => isset($caps['roots']),
         ];
     });

@@ -15,5 +15,5 @@ if (PHP_SAPI === 'cli' && !isset($_SERVER['REQUEST_METHOD'])) {
 }
 
 $app = build_template_app();
-$response = $app->dispatch_request(build_template_request_from_globals());
+$response = $app->dispatchRequest(build_template_request_from_globals());
 emit_template_response($response);

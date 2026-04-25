@@ -95,10 +95,10 @@
 
 ```php
 $app = new VSlim\App();
-$app->set_view_base_path(__DIR__ . '/views');
-$app->set_assets_prefix('/assets');
+$app->setViewBasePath(__DIR__ . '/views');
+$app->setAssetsPrefix('/assets');
 
-$view = $app->make_view();
+$view = $app->makeView();
 ```
 
 ### 直接创建
@@ -109,26 +109,26 @@ $view = new VSlim\View(__DIR__ . '/views', '/assets');
 
 ### 基本 API
 
-- `set_base_path()`
-- `base_path()`
-- `set_assets_prefix()`
-- `assets_prefix()`
-- `set_cache_enabled()`
-- `cache_enabled()`
-- `clear_cache()`
+- `setBasePath()`
+- `basePath()`
+- `setAssetsPrefix()`
+- `assetsPrefix()`
+- `setCacheEnabled()`
+- `cacheEnabled()`
+- `clearCache()`
 - `asset($path)`
 - `render($template, $data): string`
-- `render_with_layout($template, $layout, $data): string`
-- `render_response($template, $data): VSlim\Vhttpd\Response`
-- `render_response_with_layout($template, $layout, $data): VSlim\Vhttpd\Response`
+- `renderWithLayout($template, $layout, $data): string`
+- `renderResponse($template, $data): VSlim\Vhttpd\Response`
+- `renderResponseWithLayout($template, $layout, $data): VSlim\Vhttpd\Response`
 
 通过 `App` 也可以直接调用：
 
 - `view()`
-- `view_with_layout()`
-- `set_view_cache()`
-- `view_cache_enabled()`
-- `clear_view_cache()`
+- `viewWithLayout()`
+- `setViewCache()`
+- `viewCacheEnabled()`
+- `clearViewCache()`
 - `helper()`
 
 ### 模板缓存
@@ -139,10 +139,10 @@ $view = new VSlim\View(__DIR__ . '/views', '/assets');
 - 生产环境建议开启
 
 ```php
-$app->set_view_cache(true);
+$app->setViewCache(true);
 
-$view = $app->make_view();
-$view->set_cache_enabled(false);
+$view = $app->makeView();
+$view->setCacheEnabled(false);
 ```
 
 ## 最简单模板
@@ -487,7 +487,7 @@ layout：
 
 ## 推荐做法
 
-- 用 `App->set_view_base_path()` 统一配置模板目录
+- 用 `App->setViewBasePath()` 统一配置模板目录
 - 开发环境关闭缓存，生产环境开启缓存
 - 默认使用 `{{ expr }}`，只在明确需要时用 `{{raw:key}}` 或 `{{call_raw:...}}`
 - 复杂业务逻辑优先在 PHP 层准备好数据，模板只做轻量结构和展示

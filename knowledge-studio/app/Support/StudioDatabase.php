@@ -24,11 +24,11 @@ final class StudioDatabase
         $database = trim((string) (getenv('VSLIM_DB_NAME') ?: ''));
 
         $config = (new Config())
-            ->set_driver($driver)
-            ->set_host($host)
-            ->set_port($port)
-            ->set_username($username)
-            ->set_password($password)
+            ->setDriver($driver)
+            ->setHost($host)
+            ->setPort($port)
+            ->setUsername($username)
+            ->setPassword($password)
             ->setDatabase($database);
 
         self::$manager = (new Manager())->setConfig($config);

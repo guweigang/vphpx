@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f9a0cc11cedb0928f45511e1c1c2bd9d",
+    "content-hash": "66eb4a51122f7330716d4fc2e55f5254",
     "packages": [
         {
             "name": "psr/cache",
@@ -526,51 +526,45 @@
             "time": "2021-10-29T13:26:27+00:00"
         },
         {
-            "name": "vphp/vhttpd",
-            "version": "v0.1.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/guweigang/vphp-package.git",
-                "reference": "53062e7d0b2ac823e1912c267a4a9673abc6a4a8"
-            },
+            "name": "vphp/runtime",
+            "version": "dev-main",
             "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/guweigang/vphp-package/zipball/53062e7d0b2ac823e1912c267a4a9673abc6a4a8",
-                "reference": "53062e7d0b2ac823e1912c267a4a9673abc6a4a8",
-                "shasum": ""
+                "type": "path",
+                "url": "../../vhttpd/php/package",
+                "reference": "6e282e9893770826d7f91745c5fa4b44796b83fa"
             },
             "require": {
-                "php": ">=8.1",
-                "psr/container": "^1.1 || ^2.0"
-            },
-            "suggest": {
-                "guzzlehttp/psr7": "PSR-17 factory support",
-                "laminas/laminas-diactoros": "PSR-17 factory support",
-                "nyholm/psr7": "PSR-17 factory support"
+                "php": ">=8.1"
             },
             "bin": [
-                "bin/php-worker",
-                "bin/php-worker-client"
+                "bin/vphp-worker",
+                "bin/vphp-worker-client"
             ],
             "type": "library",
             "autoload": {
+                "psr-4": {
+                    "VHttpd\\": "src/VHttpd/",
+                    "VSlim\\": "src/VSlim/",
+                    "VPhp\\Provider\\": "src/Provider/"
+                },
                 "files": [
                     "src/legacy_aliases.php"
-                ],
-                "psr-4": {
-                    "VPhp\\": "src/"
-                }
+                ]
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
-            "description": "VHttpd PHP runtime package (manager, PSR-7 bridge, VSlim adapter, php-worker)",
-            "support": {
-                "issues": "https://github.com/guweigang/vphp-package/issues",
-                "source": "https://github.com/guweigang/vphp-package/tree/v0.1.0"
-            },
-            "time": "2026-03-20T04:57:19+00:00"
+            "authors": [
+                {
+                    "name": "Gu Weigang",
+                    "email": "guweigang@bullsoft.org"
+                }
+            ],
+            "description": "VPhp Vhttpd PHP Runtime",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         }
     ],
     "packages-dev": [
@@ -1027,23 +1021,23 @@
         },
         {
             "name": "nunomaduro/collision",
-            "version": "v8.9.3",
+            "version": "v8.9.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nunomaduro/collision.git",
-                "reference": "b0d8ab95b29c3189aeeb902d81215231df4c1b64"
+                "reference": "716af8f95a470e9094cfca09ed897b023be191a5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nunomaduro/collision/zipball/b0d8ab95b29c3189aeeb902d81215231df4c1b64",
-                "reference": "b0d8ab95b29c3189aeeb902d81215231df4c1b64",
+                "url": "https://api.github.com/repos/nunomaduro/collision/zipball/716af8f95a470e9094cfca09ed897b023be191a5",
+                "reference": "716af8f95a470e9094cfca09ed897b023be191a5",
                 "shasum": ""
             },
             "require": {
                 "filp/whoops": "^2.18.4",
                 "nunomaduro/termwind": "^2.4.0",
                 "php": "^8.2.0",
-                "symfony/console": "^7.4.8 || ^8.0.4"
+                "symfony/console": "^7.4.8 || ^8.0.8"
             },
             "conflict": {
                 "laravel/framework": "<11.48.0 || >=14.0.0",
@@ -1051,12 +1045,12 @@
             },
             "require-dev": {
                 "brianium/paratest": "^7.8.5",
-                "larastan/larastan": "^3.9.3",
-                "laravel/framework": "^11.48.0 || ^12.56.0 || ^13.2.0",
-                "laravel/pint": "^1.29.0",
-                "orchestra/testbench-core": "^9.12.0 || ^10.12.1 || ^11.0.0",
+                "larastan/larastan": "^3.9.6",
+                "laravel/framework": "^11.48.0 || ^12.56.0 || ^13.5.0",
+                "laravel/pint": "^1.29.1",
+                "orchestra/testbench-core": "^9.12.0 || ^10.12.1 || ^11.2.1",
                 "pestphp/pest": "^3.8.5 || ^4.4.3 || ^5.0.0",
-                "sebastian/environment": "^7.2.1 || ^8.0.4 || ^9.0.0"
+                "sebastian/environment": "^7.2.1 || ^8.0.4 || ^9.3.0"
             },
             "type": "library",
             "extra": {
@@ -1119,7 +1113,7 @@
                     "type": "patreon"
                 }
             ],
-            "time": "2026-04-06T19:25:53+00:00"
+            "time": "2026-04-21T14:04:20+00:00"
         },
         {
             "name": "nunomaduro/termwind",
@@ -3594,7 +3588,7 @@
         },
         {
             "name": "symfony/polyfill-ctype",
-            "version": "v1.34.0",
+            "version": "v1.36.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-ctype.git",
@@ -3653,7 +3647,7 @@
                 "portable"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-ctype/tree/v1.34.0"
+                "source": "https://github.com/symfony/polyfill-ctype/tree/v1.36.0"
             },
             "funding": [
                 {
@@ -3677,7 +3671,7 @@
         },
         {
             "name": "symfony/polyfill-intl-grapheme",
-            "version": "v1.34.0",
+            "version": "v1.36.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-intl-grapheme.git",
@@ -3735,7 +3729,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-intl-grapheme/tree/v1.34.0"
+                "source": "https://github.com/symfony/polyfill-intl-grapheme/tree/v1.36.0"
             },
             "funding": [
                 {
@@ -3759,7 +3753,7 @@
         },
         {
             "name": "symfony/polyfill-intl-normalizer",
-            "version": "v1.34.0",
+            "version": "v1.36.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-intl-normalizer.git",
@@ -3820,7 +3814,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-intl-normalizer/tree/v1.34.0"
+                "source": "https://github.com/symfony/polyfill-intl-normalizer/tree/v1.36.0"
             },
             "funding": [
                 {
@@ -3844,7 +3838,7 @@
         },
         {
             "name": "symfony/polyfill-mbstring",
-            "version": "v1.34.0",
+            "version": "v1.36.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-mbstring.git",
@@ -3905,7 +3899,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-mbstring/tree/v1.34.0"
+                "source": "https://github.com/symfony/polyfill-mbstring/tree/v1.36.0"
             },
             "funding": [
                 {
@@ -4343,7 +4337,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "vphp/runtime": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

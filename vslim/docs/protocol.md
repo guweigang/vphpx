@@ -61,7 +61,7 @@ Normalized worker response shape:
 
 `php-worker` normalizes app return values (`VSlim\Vhttpd\Response`, `array`, PSR-7 response, string) to this shape.
 
-## VSlim `dispatch_envelope_map(...)` shape
+## VSlim `dispatchEnvelopeMap(...)` shape
 
 When using map-style dispatch (`map<string,string>`):
 
@@ -87,8 +87,8 @@ If route/handler does not override them, VSlim propagates:
 
 These headers are available both in:
 
-- `dispatch_request(...)` / `dispatch_envelope(...)` response headers
-- `dispatch_envelope_map(...)` as `headers_*` fields
+- `dispatchRequest(...)` / `dispatchEnvelope(...)` response headers
+- `dispatchEnvelopeMap(...)` as `headers_*` fields
 
 ## Contract tests
 

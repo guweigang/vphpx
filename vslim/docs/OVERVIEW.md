@@ -129,7 +129,7 @@
 - middleware / before / after phase middleware
 - route group
 - resource route
-- dispatch / dispatch_envelope
+- dispatch / dispatchEnvelope
 - URL generation
 - provider / module bootstrap
 - HTTP kernel orchestration

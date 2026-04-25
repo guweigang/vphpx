@@ -18,33 +18,33 @@ $res = new VSlim\Vhttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
 
 - `status`
 - `body`
-- `content_type`
+- `contentType`
 - `content-type` header
 
 ## 常用字段
 
 - `status`
 - `body`
-- `content_type`
+- `contentType`
 
 ## Header API
 
 - `header($name)`
 - `headers()`
-- `headers_all()`
-- `has_header($name)`
-- `set_header($name, $value)`
+- `headersAll()`
+- `hasHeader($name)`
+- `setHeader($name, $value)`
 
 示例：
 
 ```php
-$res->set_header('x-demo', 'yes');
+$res->setHeader('x-demo', 'yes');
 echo $res->header('x-demo');
 ```
 
 ## Content-Type helpers
 
-- `set_content_type($contentType)`
+- `setContentType($contentType)`
 - `text($body)`
 - `json($body)`
 - `html($body)`
@@ -58,13 +58,13 @@ $res->json('{"ok":true}');
 会把：
 
 - `body` 改为你的 JSON 文本
-- `content_type` 改为 `application/json; charset=utf-8`
+- `contentType` 改为 `application/json; charset=utf-8`
 - `content-type` header 同步更新
 
 ## 状态码
 
-- `set_status($status)`
-- `with_status($status)`
+- `setStatus($status)`
+- `withStatus($status)`
 
 两者当前都是可变式 setter。
 
@@ -72,28 +72,28 @@ $res->json('{"ok":true}');
 
 支持：
 
-- `cookie_header()`
-- `set_cookie($name, $value)`
-- `set_cookie_opts($name, $value, $path)`
-- `set_cookie_full($name, $value, $path, $domain, $maxAge, $secure, $httpOnly, $sameSite)`
-- `delete_cookie($name)`
+- `cookieHeader()`
+- `setCookie($name, $value)`
+- `setCookieOpts($name, $value, $path)`
+- `setCookieFull($name, $value, $path, $domain, $maxAge, $secure, $httpOnly, $sameSite)`
+- `deleteCookie($name)`
 
 示例：
 
 ```php
-$res->set_cookie_full('sid', 'abc', '/', '', 3600, true, true, 'Lax');
+$res->setCookieFull('sid', 'abc', '/', '', 3600, true, true, 'Lax');
 ```
 
 ## Redirect
 
 - `redirect($location)`
-- `redirect_with_status($location, $status)`
+- `redirectWithStatus($location, $status)`
 
 示例：
 
 ```php
 $res = new VSlim\Vhttpd\Response(200, 'ignored', 'text/plain; charset=utf-8');
-$res->redirect_with_status('/moved', 307);
+$res->redirectWithStatus('/moved', 307);
 ```
 
 行为：
@@ -104,16 +104,16 @@ $res->redirect_with_status('/moved', 307);
 
 ## trace / request id
 
-- `with_request_id($id)`
-- `with_trace_id($id)`
+- `withRequestId($id)`
+- `withTraceId($id)`
 
 示例：
 
 ```php
-$res->with_request_id('rid-7')->with_trace_id('trace-7');
+$res->withRequestId('rid-7')->withTraceId('trace-7');
 ```
 
-`with_trace_id()` 还会在没有显式设置时自动补：
+`withTraceId()` 还会在没有显式设置时自动补：
 
 - `x-trace-id`
 - `x-vhttpd-trace-id`
@@ -140,7 +140,7 @@ $app->get('/hello', function () {
 
 ```php
 $res = new VSlim\Vhttpd\Response(200, '', 'text/plain; charset=utf-8');
-$res->text('ok')->set_header('x-demo', 'yes');
+$res->text('ok')->setHeader('x-demo', 'yes');
 return $res;
 ```
 

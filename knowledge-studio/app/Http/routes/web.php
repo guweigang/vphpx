@@ -2,13 +2,13 @@
 declare(strict_types=1);
 
 return function (VSlim\App $app): void {
-    $app->get_named(
+    $app->getNamed(
         'studio.home',
         '/',
         [\App\Http\Controllers\HomeController::class, 'index'],
     );
 
-    $app->get_named(
+    $app->getNamed(
         'studio.login',
         '/login',
         [\App\Http\Controllers\AuthController::class, 'show'],
@@ -16,12 +16,12 @@ return function (VSlim\App $app): void {
     $app->post('/login', [\App\Http\Controllers\AuthController::class, 'login']);
     $app->post('/logout', [\App\Http\Controllers\AuthController::class, 'logout']);
 
-    $app->get_named(
+    $app->getNamed(
         'studio.console',
         '/console',
         [\App\Http\Controllers\ConsoleController::class, 'index'],
     );
-    $app->get_named(
+    $app->getNamed(
         'studio.console.documents',
         '/console/knowledge/documents',
         [\App\Http\Controllers\ConsoleController::class, 'documents'],
@@ -43,17 +43,17 @@ return function (VSlim\App $app): void {
         '/console/knowledge/documents/:document/publish',
         [\App\Http\Controllers\ConsoleController::class, 'publishDocument'],
     );
-    $app->get_named(
+    $app->getNamed(
         'studio.console.faqs',
         '/console/knowledge/faqs',
         [\App\Http\Controllers\ConsoleController::class, 'faqs'],
     );
-    $app->get_named(
+    $app->getNamed(
         'studio.console.members',
         '/console/members',
         [\App\Http\Controllers\ConsoleController::class, 'members'],
     );
-    $app->get_named(
+    $app->getNamed(
         'studio.console.subscribers',
         '/console/subscribers',
         [\App\Http\Controllers\ConsoleController::class, 'subscribers'],
@@ -62,7 +62,7 @@ return function (VSlim\App $app): void {
         '/console/subscribers/:subscriber',
         [\App\Http\Controllers\ConsoleController::class, 'subscriberDetail'],
     );
-    $app->get_named(
+    $app->getNamed(
         'studio.console.account',
         '/console/account',
         [\App\Http\Controllers\ConsoleController::class, 'account'],
@@ -120,7 +120,7 @@ return function (VSlim\App $app): void {
         '/console/knowledge/faqs/:entry/publish',
         [\App\Http\Controllers\ConsoleController::class, 'publishEntry'],
     );
-    $app->get_named(
+    $app->getNamed(
         'studio.console.ops',
         '/console/ops',
         [\App\Http\Controllers\ConsoleController::class, 'ops'],
@@ -142,17 +142,17 @@ return function (VSlim\App $app): void {
         [\App\Http\Controllers\ConsoleController::class, 'retryJob'],
     );
 
-    $app->get_named(
+    $app->getNamed(
         'studio.brand',
         '/brand/:tenant',
         [\App\Http\Controllers\PublicController::class, 'landing'],
     );
-    $app->get_named(
+    $app->getNamed(
         'studio.validation',
         '/brand/:tenant/validation',
         [\App\Http\Controllers\PublicController::class, 'validation'],
     );
-    $app->get_named(
+    $app->getNamed(
         'studio.assistant',
         '/brand/:tenant/assistant',
         [\App\Http\Controllers\PublicController::class, 'assistant'],
@@ -177,7 +177,7 @@ return function (VSlim\App $app): void {
             'content_type' => 'application/json; charset=utf-8',
             'body' => json_encode([
                 'ok' => true,
-                'app' => $app->config()->get_string('app.name', ''),
+                'app' => $app->config()->getString('app.name', ''),
                 'phase' => $app->container()->get('studio.phase'),
                 'workspaces' => count($catalog->workspaces()),
                 'users' => count($catalog->users()),

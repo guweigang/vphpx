@@ -67,7 +67,7 @@ final class AboutCommand
 
         if ($format === 'json') {
             echo json_encode([
-                'app' => $app->config()->get_string('app.name', ''),
+                'app' => $app->config()->getString('app.name', ''),
                 'message' => (string) $app->container()->get('template.message'),
                 'topic' => $topic,
                 'details' => is_array($details) ? array_values($details) : [],
@@ -79,7 +79,7 @@ final class AboutCommand
         }
 
         echo implode("|", [
-            $app->config()->get_string("app.name", ""),
+            $app->config()->getString("app.name", ""),
             (string) $app->container()->get("template.message"),
             implode(",", $args),
         ]), PHP_EOL;

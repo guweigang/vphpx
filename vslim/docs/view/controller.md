@@ -35,9 +35,9 @@ $app->container()->set(PageController::class, new PageController($app));
 - `app()`
 - `view()`
 - `render()`
-- `render_with_layout()`
-- `redirect_to()`
-- `redirect_to_query()`
+- `renderWithLayout()`
+- `redirectTo()`
+- `redirectToQuery()`
 
 ## render
 
@@ -58,31 +58,31 @@ final class PageController extends VSlim\Controller
 
 这里会复用 `App` 当前的 view 配置：
 
-- `view_base_path`
-- `assets_prefix`
+- `viewBasePath`
+- `assetsPrefix`
 
-## render_with_layout
+## renderWithLayout
 
 ```php
 final class PageController extends VSlim\Controller
 {
     public function page(): VSlim\Vhttpd\Response
     {
-        return $this->render_with_layout('home.html', 'layout.html', [
+        return $this->renderWithLayout('home.html', 'layout.html', [
             'title' => 'Layout Demo',
         ]);
     }
 }
 ```
 
-## redirect_to
+## redirectTo
 
 ```php
 final class PageController extends VSlim\Controller
 {
     public function jump(string $name): VSlim\Vhttpd\Response
     {
-        return $this->redirect_to('users.show', ['name' => $name], 302);
+        return $this->redirectTo('users.show', ['name' => $name], 302);
     }
 }
 ```
@@ -90,7 +90,7 @@ final class PageController extends VSlim\Controller
 也支持带 query：
 
 ```php
-return $this->redirect_to_query(
+return $this->redirectToQuery(
     'users.show',
     ['name' => $name],
     ['from' => 'controller'],

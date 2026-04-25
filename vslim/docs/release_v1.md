@@ -87,8 +87,8 @@ flowchart LR
 - `VSlim\RouteGroup`
 - `get/post/put/patch/delete/any`
 - named routes
-- `url_for()` / `redirect_to()`
-- `base_path`
+- `urlFor()` / `redirectTo()`
+- `basePath`
 
 ### Request / response facade
 
@@ -97,7 +97,7 @@ flowchart LR
 - query / header / cookie / param / attribute 访问
 - content type / response headers / cookie helpers
 - request metadata setter：
-  - `set_scheme()/set_host()/set_port()/set_protocol_version()/set_remote_addr()`
+  - `setScheme()/setHost()/setPort()/setProtocolVersion()/setRemoteAddr()`
 
 ### Lifecycle middleware
 
@@ -111,8 +111,7 @@ flowchart LR
 - `vhttpd` 基于 `veb`
 - structured array request envelope
 - managed worker mode
-- `vslim_handle_request(...)`
-- `vslim_demo_dispatch(...)`
+- `dispatchEnvelope(...)`
 
 ### PHP worker bridges
 
@@ -178,7 +177,7 @@ flowchart LR
 第一版要尽量稳定的是：
 
 1. `vhttpd -> php-worker` request envelope
-2. `php-worker -> vslim_handle_request(...)` request envelope
+2. `php-worker -> dispatchEnvelope(...)` request envelope
 3. `VSlim\App` 的 PHP-facing builder API
 4. `VSlim\Vhttpd\Request` / `VSlim\Vhttpd\Response` 的基础 helper 语义
 5. `VSlim\View` 当前已经公开的模板语法分层：

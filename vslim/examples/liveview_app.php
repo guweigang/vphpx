@@ -158,7 +158,7 @@ if (!class_exists('ExampleCounterLiveView', false)) {
                 return null;
             }
             $component = new ExampleCounterBadgeComponent();
-            $component->set_app(vslim_liveview_demo_app());
+            $component->setApp(vslim_liveview_demo_app());
             $component->set_template('live_counter_badge.html');
             $component->set_id($badgeId);
             $component->bind_socket($socket);
@@ -183,7 +183,7 @@ if (!class_exists('ExampleCounterLiveView', false)) {
         {
             if ($id === 'profile-state') {
                 $component = new ExampleCounterProfileStateComponent();
-                $component->set_app(vslim_liveview_demo_app());
+                $component->setApp(vslim_liveview_demo_app());
                 $component->set_template('live_counter_profile_state.html');
                 $component->set_id('counter-profile-state');
                 $component->bind_socket($socket);
@@ -194,7 +194,7 @@ if (!class_exists('ExampleCounterLiveView', false)) {
             }
             if ($id === 'summary') {
                 $component = new ExampleCounterSummaryComponent();
-                $component->set_app(vslim_liveview_demo_app());
+                $component->setApp(vslim_liveview_demo_app());
                 $component->set_template('live_counter_summary.html');
                 $component->set_id('counter-summary');
                 $component->bind_socket($socket);
@@ -225,8 +225,8 @@ if (!class_exists('ExampleCounterLiveView', false)) {
             file_put_contents('php://stderr', $line);
             $logFile = '';
             $app = vslim_liveview_demo_app();
-            if ($app->has_config()) {
-                $logFile = (string) $app->config()->get_string('liveview.log_file', '');
+            if ($app->hasConfig()) {
+                $logFile = (string) $app->config()->getString('liveview.log_file', '');
             }
             if ($logFile === '') {
                 $logFile = (string) (getenv('VSLIM_LIVEVIEW_LOG') ?: '');
@@ -240,7 +240,7 @@ if (!class_exists('ExampleCounterLiveView', false)) {
         public function mount(VSlim\Vhttpd\Request $req, VSlim\Live\Socket $socket): void
         {
             $this->log('mount', [
-                'path' => $req->path ?? '',
+                'path' => $req->path(),
                 'target' => $socket->target(),
                 'connected' => $socket->connected(),
                 'root_id' => $socket->root_id(),
@@ -264,8 +264,8 @@ if (!class_exists('ExampleCounterLiveView', false)) {
                 $socket->assign('badge_keys', '');
             }
             $socket
-                ->set_root_id('counter-root')
-                ->set_target('/')
+                ->setRootId('counter-root')
+                ->setTarget('/')
                 ->assign('title', 'VSlim Live Counter')
                 ->assign('description', 'A minimal LiveView-style page powered by server-rendered HTML fragments and a tiny websocket runtime.')
                 ->assign('note', 'Count changes on the server, then the browser applies focused patch ops to the updated fragment.')
@@ -539,7 +539,7 @@ if (!class_exists('ExampleCounterLiveView', false)) {
                 ->assign('live_script', $this->runtime_script_tag())
                 ->assign('live_attrs', $this->bootstrap_attrs($socket, '/live'));
             $this->log('render', [
-                'path' => $req->path ?? '',
+                'path' => $req->path(),
                 'connected' => $socket->connected(),
                 'count' => $socket->get('count'),
                 'label' => $socket->get('label'),
@@ -561,12 +561,12 @@ function vslim_liveview_demo_app(): VSlim\App
     }
 
     $app = new VSlim\App();
-    $app->set_error_response_json(true);
-    $app->set_view_base_path(__DIR__ . '/views');
-    $app->set_assets_prefix('/assets');
+    $app->setErrorResponseJson(true);
+    $app->setViewBasePath(__DIR__ . '/views');
+    $app->setAssetsPrefix('/assets');
 
     $live = new ExampleCounterLiveView();
-    $live->set_app($app)->set_root_id('counter-root')->set_template('live_counter_demo.html');
+    $live->setApp($app)->set_root_id('counter-root')->set_template('live_counter_demo.html');
 
     $app->live('/', $live);
     $app->websocket('/live', $live);

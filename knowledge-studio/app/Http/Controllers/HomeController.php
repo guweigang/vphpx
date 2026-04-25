@@ -24,7 +24,7 @@ final class HomeController extends \VSlim\Controller
         $copy = $this->locales->home($locale);
         $shared = $this->locales->shared($locale, '/');
 
-        return $this->render_with_layout('home.html', 'layout.html', [
+        return $this->renderWithLayout('home.html', 'layout.html', [
             'title' => 'Knowledge Studio',
             'tagline' => $copy['tagline'],
             'login_url' => $this->urls->login($locale),

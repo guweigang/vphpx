@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 return function (VSlim\App $app): void {
     $api = $app->group("/api");
-    $api->get_named("api.users.show", "/users/:id", [
+    $api->getNamed("api.users.show", "/users/:id", [
         DemoUserController::class,
         "show",
     ]);

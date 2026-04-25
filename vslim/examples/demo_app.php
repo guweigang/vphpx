@@ -22,7 +22,7 @@ if (!is_file($autoload)) {
 }
 require_once $autoload;
 
-use VPhp\VSlim\Psr7Adapter;
+use VSlim\Psr7Adapter;
 require_once __DIR__ . "/demo/support.php";
 
 function build_demo_app(): VSlim\App
@@ -62,16 +62,16 @@ function build_request_from_globals(): VSlim\Vhttpd\Request
     }
 
     $req->construct($method, $uri, $body);
-    $req->set_headers($headers);
-    $req->set_cookies($_COOKIE);
-    $req->set_server($serverMap);
-    $req->set_remote_addr((string) ($_SERVER["REMOTE_ADDR"] ?? ""));
-    $req->set_scheme(
+    $req->setHeaders($headers);
+    $req->setCookies($_COOKIE);
+    $req->setServer($serverMap);
+    $req->setRemoteAddr((string) ($_SERVER["REMOTE_ADDR"] ?? ""));
+    $req->setScheme(
         !empty($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] !== "off"
             ? "https"
             : "http",
     );
-    $req->set_host((string) ($_SERVER["HTTP_HOST"] ?? "localhost"));
+    $req->setHost((string) ($_SERVER["HTTP_HOST"] ?? "localhost"));
 
     return $req;
 }
@@ -108,7 +108,7 @@ function run_self_test(): void
         substr($r2b->body, 0, 64) .
         "...\n";
 
-    $r3 = $app->dispatch_body(
+    $r3 = $app->dispatchBody(
         "POST",
         "/forms/echo?token=demo",
         "name=neo&city=shanghai",
@@ -186,9 +186,9 @@ function demo_app_handler(): callable
             ) {
                 return $unauthorized();
             }
-            if (method_exists($app, "dispatch_envelope_map")) {
+            if (method_exists($app, "dispatchEnvelopeMap")) {
                 /** @var array{status:string,body:string,content_type:string} $map */
-                $map = $app->dispatch_envelope_map($envelope);
+                $map = $app->dispatchEnvelopeMap($envelope);
                 $headers = $headersFromEnvelopeMap($map);
                 if (!isset($headers["content-type"])) {
                     $headers["content-type"] =
@@ -205,13 +205,14 @@ function demo_app_handler(): callable
                 ];
             }
             return normalize_worker_response(
-                $app->dispatch_envelope($envelope),
+                $app->dispatchEnvelope($envelope),
             );
         }
 
         if (is_object($request)) {
+            $vRequest = Psr7Adapter::toVSlimRequest($request);
             return normalize_worker_response(
-                Psr7Adapter::dispatch($app, $request),
+                $app->dispatchRequest($vRequest),
             );
         }
 
@@ -223,9 +224,9 @@ function demo_app_handler(): callable
             ) {
                 return $unauthorized();
             }
-            if (method_exists($app, "dispatch_envelope_map")) {
+            if (method_exists($app, "dispatchEnvelopeMap")) {
                 /** @var array{status:string,body:string,content_type:string} $map */
-                $map = $app->dispatch_envelope_map($request);
+                $map = $app->dispatchEnvelopeMap($request);
                 $headers = $headersFromEnvelopeMap($map);
                 if (!isset($headers["content-type"])) {
                     $headers["content-type"] =
@@ -241,7 +242,7 @@ function demo_app_handler(): callable
                     "body" => (string) ($map["body"] ?? ""),
                 ];
             }
-            return normalize_worker_response($app->dispatch_envelope($request));
+            return normalize_worker_response($app->dispatchEnvelope($request));
         }
 
         return [
@@ -256,7 +257,7 @@ function normalize_worker_response(VSlim\Vhttpd\Response $res): array
 {
     return [
         "status" => $res->status,
-        "content_type" => $res->content_type,
+        "content_type" => $res->contentType,
         "headers" => $res->headers(),
         "body" => $res->body,
     ];
@@ -284,5 +285,5 @@ if (PHP_SAPI === "cli" && !isset($_SERVER["REQUEST_METHOD"])) {
 }
 
 $app = build_demo_app();
-$response = $app->dispatch_request(build_request_from_globals());
+$response = $app->dispatchRequest(build_request_from_globals());
 emit_response($response);

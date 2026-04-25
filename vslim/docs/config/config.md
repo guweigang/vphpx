@@ -24,8 +24,8 @@ use VSlim\Config;
 $cfg = new Config();
 $cfg->load(__DIR__ . '/config');
 
-echo $cfg->get_string('app.name', 'n/a') . PHP_EOL;
-echo $cfg->get_int('http.max_body_bytes', 0) . PHP_EOL;
+echo $cfg->getString('app.name', 'n/a') . PHP_EOL;
+echo $cfg->getInt('http.max_body_bytes', 0) . PHP_EOL;
 ```
 
 也支持直接加载单个文件或直接加载文本：
@@ -33,7 +33,7 @@ echo $cfg->get_int('http.max_body_bytes', 0) . PHP_EOL;
 ```php
 $cfg->load(__DIR__ . '/config/app.toml');
 
-$cfg->load_text(<<<TOML
+$cfg->loadText(<<<TOML
 [app]
 name = "demo"
 debug = true
@@ -103,23 +103,23 @@ temperature = "${env.float.OLLAMA_TEMPERATURE:-0.2}"
 
 ## 状态 API
 
-- `is_loaded()`
+- `isLoaded()`
 - `path()`
 - `has($key)`
-- `all_json()`
+- `allJson()`
 
 ## typed getter
 
-- `get_string($key, $default)`
-- `get_int($key, $default)`
-- `get_bool($key, $default)`
-- `get_float($key, $default)`
-- `get_string_list($key)`
+- `getString($key, $default)`
+- `getInt($key, $default)`
+- `getBool($key, $default)`
+- `getFloat($key, $default)`
+- `getStringList($key)`
 
 示例：
 
 ```php
-echo $cfg->get_bool('app.debug', false) ? 'on' : 'off';
+echo $cfg->getBool('app.debug', false) ? 'on' : 'off';
 ```
 
 ## mixed getter
@@ -132,15 +132,15 @@ echo $cfg->get_bool('app.debug', false) ? 'on' : 'off';
 $flags = $cfg->get('feature.flags');
 ```
 
-### `get_map($key, $default = [])`
+### `getMap($key, $default = [])`
 
 只在目标节点真的是 map 时返回 map，否则回退默认值或空数组。
 
-### `get_list($key, $default = [])`
+### `getList($key, $default = [])`
 
 只在目标节点真的是 list 时返回 list，否则回退默认值或空数组。
 
-### `get_json($key, $defaultJson)`
+### `getJson($key, $defaultJson)`
 
 把指定配置节点序列化成 JSON 字符串。
 
@@ -149,8 +149,8 @@ $flags = $cfg->get('feature.flags');
 使用 dot path：
 
 ```php
-$cfg->get_string('app.name', 'x');
-$cfg->get_list('db.hosts');
+$cfg->getString('app.name', 'x');
+$cfg->getList('db.hosts');
 ```
 
 如果 key 为空字符串，内部会把整个根节点视作目标。
@@ -160,18 +160,18 @@ $cfg->get_list('db.hosts');
 `App` 提供：
 
 - `config()`
-- `set_config()`
-- `load_config()`
-- `load_config_text()`
-- `has_config()`
+- `setConfig()`
+- `loadConfig()`
+- `loadConfigText()`
+- `hasConfig()`
 
 示例：
 
 ```php
 $app = new VSlim\App();
-$app->load_config(__DIR__ . '/config');
+$app->loadConfig(__DIR__ . '/config');
 
-echo $app->config()->get_string('app.name', 'x');
+echo $app->config()->getString('app.name', 'x');
 ```
 
 当 `App` 同时持有 container 和 config 时，会自动把 config 同步到容器中的 `config` 条目：

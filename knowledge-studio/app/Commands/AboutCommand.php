@@ -40,7 +40,7 @@ final class AboutCommand
 
         if ($format === 'json') {
             echo json_encode([
-                'app' => $app->config()->get_string('app.name', ''),
+                'app' => $app->config()->getString('app.name', ''),
                 'phase' => (string) $app->container()->get('studio.phase'),
                 'workspaces' => count(is_array($workspaces) ? $workspaces : []),
                 'users' => count(is_array($users) ? $users : []),
@@ -49,7 +49,7 @@ final class AboutCommand
         }
 
         echo implode('|', [
-            $app->config()->get_string('app.name', ''),
+            $app->config()->getString('app.name', ''),
             (string) $app->container()->get('studio.phase'),
             'workspaces=' . count(is_array($workspaces) ? $workspaces : []),
             'users=' . count(is_array($users) ? $users : []),

@@ -2,13 +2,13 @@
 declare(strict_types=1);
 
 return function (VSlim\App $app): void {
-    $app->get_named(
+    $app->getNamed(
         "skeleton.home",
         "/",
         [\App\Http\Controllers\HomeController::class, "index"],
     );
 
-    $app->get_named(
+    $app->getNamed(
         "skeleton.catalog",
         "/catalog/:slug",
         [\App\Http\Controllers\CatalogController::class, "show"],
@@ -17,6 +17,6 @@ return function (VSlim\App $app): void {
     $app->get("/broken", "missing.service");
 
     $app->get("/links", function () use ($app): string {
-        return $app->url_for("skeleton.catalog", ["slug" => "links"]);
+        return $app->urlFor("skeleton.catalog", ["slug" => "links"]);
     });
 };

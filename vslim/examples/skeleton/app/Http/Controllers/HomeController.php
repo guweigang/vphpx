@@ -13,7 +13,7 @@ final class HomeController extends \VSlim\Controller
             "title" => "VSlim Skeleton Home",
             "trace" => (string) $request->getHeaderLine("x-trace-id"),
             "middleware" => (string) $request->getAttribute("skeleton_layer", ""),
-            "catalog_url" => $this->url_for("skeleton.catalog", ["slug" => "books"]),
+            "catalog_url" => $this->urlFor("skeleton.catalog", ["slug" => "books"]),
         ]);
     }
 }

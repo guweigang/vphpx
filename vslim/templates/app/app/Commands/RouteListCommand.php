@@ -26,8 +26,8 @@ final class RouteListCommand
     {
         $app = $cli->app();
         $format = (string) $cli->option('format', 'text');
-        $manifest = $app->route_manifest();
-        $conflicts = $app->route_conflicts();
+        $manifest = $app->routeManifest();
+        $conflicts = $app->routeConflicts();
 
         if ($format === 'json') {
             echo json_encode([

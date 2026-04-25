@@ -32,7 +32,7 @@ final class AuthController extends \VSlim\Controller
         $copy = $this->locales->login($locale);
         $shared = $this->locales->shared($locale, '/login');
 
-        return $this->render_with_layout('login.html', 'layout.html', [
+        return $this->renderWithLayout('login.html', 'layout.html', [
             'title' => $copy['title'],
             'error' => is_string($flash) ? $flash : '',
             'password_hint' => $this->workspaces->loginPasswordHint(),
@@ -91,7 +91,7 @@ final class AuthController extends \VSlim\Controller
             $session = $this->app()->session($request);
             $session->flash('auth.error', $copy['invalid_credentials']);
             $response = new \VSlim\Vhttpd\Response(302, '', 'text/plain; charset=utf-8');
-            $response->redirect_with_status($this->urls->login($locale), 302);
+            $response->redirectWithStatus($this->urls->login($locale), 302);
             $session->commit($response);
             return $response;
         }
@@ -100,7 +100,7 @@ final class AuthController extends \VSlim\Controller
         $redirect = $this->workspaces->requiresPasswordReset($user)
             ? $this->urls->consoleAccount($locale)
             : $this->urls->console($locale);
-        $response->redirect_with_status($redirect, 302);
+        $response->redirectWithStatus($redirect, 302);
         $this->app()->login($request, $response, (string) $user['id']);
 
         return $response;
@@ -110,7 +110,7 @@ final class AuthController extends \VSlim\Controller
     {
         $locale = $this->locales->resolve((string) $request->getAttribute('studio.locale', 'zh-CN'));
         $response = new \VSlim\Vhttpd\Response(302, '', 'text/plain; charset=utf-8');
-        $response->redirect_with_status($this->urls->home($locale), 302);
+        $response->redirectWithStatus($this->urls->home($locale), 302);
         $this->app()->logout($request, $response);
 
         return $response;

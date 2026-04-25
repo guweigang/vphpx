@@ -8,6 +8,7 @@ declare(strict_types=1);
 return [
     'commands' => [
         'studio:about' => \App\Commands\AboutCommand::class,
+        'key:generate' => \App\Commands\GenerateKeyCommand::class,
         'db:migrate' => \App\Commands\DbMigrateCommand::class,
         'db:rollback' => \App\Commands\DbRollbackCommand::class,
         'db:seed' => \App\Commands\DbSeedCommand::class,

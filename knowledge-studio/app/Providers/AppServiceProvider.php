@@ -26,7 +26,7 @@ final class AppServiceProvider extends \VSlim\Support\ServiceProvider
         $locales = new LocaleCatalog();
         $localeResolver = new LocalePreferenceResolver($locales);
         $urls = new LocalizedUrlBuilder($locales);
-        $source = trim((string) $this->app()->config()->get_string('studio.storage.source', 'demo'));
+        $source = trim((string) $this->app()->config()->getString('studio.storage.source', 'demo'));
         $db = $this->app()->database();
         $workspaceRepository = new WorkspaceRepository($catalog, $db, $source);
         $knowledgeRepository = new KnowledgeRepository($catalog, $db, $source);

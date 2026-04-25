@@ -142,7 +142,7 @@ $wsMeta = static function ($conn, array $frame): array {
 $ws = new VSlim\WebSocket\App();
 
 $ws
-    ->on_open(static function ($conn, array $frame) use ($wsMeta, $wsEnvelope): string {
+    ->onOpen(static function ($conn, array $frame) use ($wsMeta, $wsEnvelope): string {
         [$room, $user] = $wsMeta($conn, $frame);
         $conn->setMeta('user', $user);
         $conn->setPresence('online');
@@ -150,7 +150,7 @@ $ws
         $conn->broadcast($room, $wsEnvelope('system', $room, $user, $user . ' joined', false), 'text', $conn->id());
         return $wsEnvelope('system', $room, $user, 'joined ' . $room, true);
     })
-    ->on_message(static function ($conn, string $message, array $frame) use ($wsMeta, $wsEnvelope, $wsWhoText): ?string {
+    ->onMessage(static function ($conn, string $message, array $frame) use ($wsMeta, $wsEnvelope, $wsWhoText): ?string {
         if ($message === 'bye') {
             $conn->close(1000, 'bye');
             return null;
@@ -177,7 +177,7 @@ $ws
         $conn->broadcast($room, $wire, 'text', $conn->id());
         return $wsEnvelope('chat', $room, $user, $text, true);
     })
-    ->on_close(static function ($conn, int $code, string $reason, array $frame) use ($wsEnvelope): void {
+    ->onClose(static function ($conn, int $code, string $reason, array $frame) use ($wsEnvelope): void {
         $rooms = is_array($frame['rooms'] ?? null) ? $frame['rooms'] : [];
         $metadata = is_array($frame['metadata'] ?? null) ? $frame['metadata'] : [];
         $user = (string) ($metadata['user'] ?? 'guest');

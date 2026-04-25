@@ -10,10 +10,10 @@ return function (VSlim\App $app): void {
             "content_type" => "application/json; charset=utf-8",
             "body" => json_encode(
                 [
-                    "count" => $app->route_count(),
-                    "names" => $app->route_names(),
-                    "manifest" => $app->route_manifest(),
-                    "manifest_lines" => $app->route_manifest_lines(),
+                    "count" => $app->routeCount(),
+                    "names" => $app->routeNames(),
+                    "manifest" => $app->routeManifest(),
+                    "manifest_lines" => $app->routeManifestLines(),
                 ],
                 JSON_UNESCAPED_UNICODE,
             ),
@@ -26,8 +26,8 @@ return function (VSlim\App $app): void {
             "content_type" => "application/json; charset=utf-8",
             "body" => json_encode(
                 [
-                    "conflicts" => $app->route_conflicts(),
-                    "conflict_keys" => $app->route_conflict_keys(),
+                    "conflicts" => $app->routeConflicts(),
+                    "conflict_keys" => $app->routeConflictKeys(),
                 ],
                 JSON_UNESCAPED_UNICODE,
             ),

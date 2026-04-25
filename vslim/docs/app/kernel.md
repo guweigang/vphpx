@@ -86,7 +86,7 @@
 
 ## Request Flow
 
-一次 `dispatch_request()` 的大致路径：
+一次 `dispatchRequest()` 的大致路径：
 
 1. public facade 进入 request scope，并确保 app 已 boot
 2. kernel 建立 trace / request context

@@ -26,16 +26,16 @@ final class ConfigCheckCommand
     {
         $config = $cli->app()->config();
         $payload = [
-            'loaded' => $config->is_loaded(),
+            'loaded' => $config->isLoaded(),
             'path' => $config->path(),
-            'app.name' => $config->get_string('app.name', ''),
-            'database.transport' => $config->get_string('database.transport', ''),
-            'database.driver' => $config->get_string('database.driver', ''),
-            'database.upstream.socket' => $config->get_string('database.upstream.socket', ''),
-            'session.cookie' => $config->get_string('session.cookie', ''),
-            'session.secret_configured' => $config->get_string('session.secret', '') !== '' ? 'true' : 'false',
-            'session.secret_placeholder' => trim($config->get_string('session.secret', '')) === 'change-me' ? 'true' : 'false',
-            'auth.redirect_to' => $config->get_string('auth.redirect_to', ''),
+            'app.name' => $config->getString('app.name', ''),
+            'database.transport' => $config->getString('database.transport', ''),
+            'database.driver' => $config->getString('database.driver', ''),
+            'database.upstream.socket' => $config->getString('database.upstream.socket', ''),
+            'session.cookie' => $config->getString('session.cookie', ''),
+            'session.secret_configured' => $config->getString('session.secret', '') !== '' ? 'true' : 'false',
+            'session.secret_placeholder' => trim($config->getString('session.secret', '')) === 'change-me' ? 'true' : 'false',
+            'auth.redirect_to' => $config->getString('auth.redirect_to', ''),
         ];
 
         if ((string) $cli->option('format', 'text') === 'json') {

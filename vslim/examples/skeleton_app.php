@@ -9,7 +9,7 @@ if (is_file($autoload)) {
     require_once $autoload;
 }
 
-use VPhp\VSlim\Psr7Adapter;
+use VSlim\Psr7Adapter;
 
 function build_skeleton_app(): VSlim\App
 {
@@ -47,16 +47,16 @@ function build_skeleton_request_from_globals(): VSlim\Vhttpd\Request
     }
 
     $req->construct($method, $uri, $body);
-    $req->set_headers($headers);
-    $req->set_cookies($_COOKIE);
-    $req->set_server($serverMap);
-    $req->set_remote_addr((string) ($_SERVER["REMOTE_ADDR"] ?? ""));
-    $req->set_scheme(
+    $req->setHeaders($headers);
+    $req->setCookies($_COOKIE);
+    $req->setServer($serverMap);
+    $req->setRemoteAddr((string) ($_SERVER["REMOTE_ADDR"] ?? ""));
+    $req->setScheme(
         !empty($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] !== "off"
             ? "https"
             : "http",
     );
-    $req->set_host((string) ($_SERVER["HTTP_HOST"] ?? "localhost"));
+    $req->setHost((string) ($_SERVER["HTTP_HOST"] ?? "localhost"));
 
     return $req;
 }
@@ -77,7 +77,7 @@ function normalize_skeleton_worker_response(VSlim\Vhttpd\Response $res): array
 {
     return [
         "status" => $res->status,
-        "content_type" => $res->content_type,
+        "content_type" => $res->contentType,
         "headers" => $res->headers(),
         "body" => $res->body,
     ];
@@ -92,8 +92,8 @@ function skeleton_app_handler(): callable
         }
 
         if ($envelope !== []) {
-            if (method_exists($app, "dispatch_envelope_map")) {
-                $map = $app->dispatch_envelope_map($envelope);
+            if (method_exists($app, "dispatchEnvelopeMap")) {
+                $map = $app->dispatchEnvelopeMap($envelope);
                 $headers = [];
                 foreach ($map as $k => $v) {
                     if (!is_string($k) || !str_starts_with($k, "headers_")) {
@@ -111,19 +111,20 @@ function skeleton_app_handler(): callable
                 ];
             }
             return normalize_skeleton_worker_response(
-                $app->dispatch_envelope($envelope),
+                $app->dispatchEnvelope($envelope),
             );
         }
 
         if (is_object($request)) {
+            $vRequest = Psr7Adapter::toVSlimRequest($request);
             return normalize_skeleton_worker_response(
-                Psr7Adapter::dispatch($app, $request),
+                $app->dispatchRequest($vRequest),
             );
         }
 
         if (is_array($request)) {
             return normalize_skeleton_worker_response(
-                $app->dispatch_envelope($request),
+                $app->dispatchEnvelope($request),
             );
         }
 
@@ -185,5 +186,5 @@ if (PHP_SAPI === "cli" && !isset($_SERVER["REQUEST_METHOD"])) {
 }
 
 $app = build_skeleton_app();
-$response = $app->dispatch_request(build_skeleton_request_from_globals());
+$response = $app->dispatchRequest(build_skeleton_request_from_globals());
 emit_skeleton_response($response);

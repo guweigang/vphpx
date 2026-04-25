@@ -67,7 +67,7 @@ final class PublicController extends \VSlim\Controller
         $publicName = $this->publicSurfaceName(is_array($workspace) ? $workspace : null, $profile, $locale);
         $publicTagline = $this->publicSurfaceTagline(is_array($workspace) ? $workspace : null, $locale);
 
-        return $this->render_with_layout('brand.html', 'layout.html', [
+        return $this->renderWithLayout('brand.html', 'layout.html', [
             'title' => $publicName !== '' ? $publicName : 'Brand',
             'workspace_name' => is_array($workspace) ? (string) ($workspace['name'] ?? '') : '',
             'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
@@ -293,7 +293,7 @@ final class PublicController extends \VSlim\Controller
             );
         }
 
-        return $this->render_with_layout('validation.html', 'layout.html', [
+        return $this->renderWithLayout('validation.html', 'layout.html', [
             'title' => $publicName !== '' ? $publicName : 'Validation',
             'workspace_name' => is_array($workspace) ? (string) ($workspace['name'] ?? '') : '',
             'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
@@ -607,7 +607,7 @@ final class PublicController extends \VSlim\Controller
         $publicTagline = $this->publicSurfaceTagline($workspace, $locale);
         $publicName = $this->publicSurfaceName($workspace, [], $locale);
 
-        return $this->render_with_layout('public_detail.html', 'layout.html', [
+        return $this->renderWithLayout('public_detail.html', 'layout.html', [
             'title' => $detail['title'] ?? 'Knowledge Detail',
             'page_section' => $publicName !== '' ? $publicName : 'Knowledge Detail',
             'nav_label' => $publicName !== '' ? $publicName : 'detail',
@@ -934,7 +934,7 @@ final class PublicController extends \VSlim\Controller
         $session = $this->app()->session($request);
         $session->flash($key, $message);
         $response = new \VSlim\Vhttpd\Response(302, '', 'text/plain; charset=utf-8');
-        $response->redirect_with_status($location, 302);
+        $response->redirectWithStatus($location, 302);
         $session->commit($response);
 
         return $response;

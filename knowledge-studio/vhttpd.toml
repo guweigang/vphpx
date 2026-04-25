@@ -2,7 +2,7 @@
 root = "./"
 tmp = "${root}/tmp"
 php_app = "${root}/public/worker.php"
-php_worker = "${root}/vendor/bin/php-worker"
+php_worker = "${root}/vendor/bin/vphp-worker"
 vslim_ext = "${root}/../vslim/vslim.so"
 public_root = "${root}/public/assets"
 

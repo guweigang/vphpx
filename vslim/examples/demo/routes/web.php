@@ -57,10 +57,10 @@ return function (VSlim\App $app): void {
             "content_type" => "application/json; charset=utf-8",
             "body" => json_encode(
                 [
-                    "user_42" => $app->url_for("api.users.show", [
+                    "user_42" => $app->urlFor("api.users.show", [
                         "id" => "42",
                     ]),
-                    "user_42_abs" => $app->url_for_abs(
+                    "user_42_abs" => $app->urlForAbs(
                         "api.users.show",
                         ["id" => "42"],
                         "https",

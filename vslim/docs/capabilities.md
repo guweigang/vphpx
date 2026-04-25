@@ -29,7 +29,7 @@
 | HTTP App | 稳定主路径 | `VSlim\App` | route / middleware / controller / module / provider |
 | CLI App | 稳定主路径 | `VSlim\Cli\App` | 命令注册、发现、模板生成、诊断命令 |
 | PSR HTTP | 稳定主路径 | `Psr\Http\Message\*` / `VSlim\Psr7\*` | 内核响应链已基本 PSR-first |
-| `vhttpd` worker 集成 | 稳定主路径 | `dispatch_envelope*()` / `Psr7Adapter` | worker/runtime 入口已成型 |
+| `vhttpd` worker 集成 | 稳定主路径 | `dispatchEnvelope*()` / `Psr7Adapter` | worker/runtime 入口已成型 |
 | Stream | 稳定主路径 | `VSlim\Stream\*` | SSE / text stream / Ollama helper |
 | WebSocket | 稳定主路径 | `VSlim\WebSocket\App` | room / presence / handler model |
 | MCP | 稳定主路径 | `VSlim\Mcp\App` | tool / resource / prompt / streamable HTTP runtime |

@@ -11,7 +11,7 @@ return function (VSlim\App $app): void {
             "body" => json_encode(
                 [
                     "ok" => true,
-                    "app" => $app->config()->get_string("app.name", ""),
+                    "app" => $app->config()->getString("app.name", ""),
                     "module" => (string) $app->container()->get("skeleton.module.booted"),
                     "mw" => (string) $request->getAttribute("skeleton_layer", ""),
                     "trace" => (string) $request->getHeaderLine("x-trace-id"),

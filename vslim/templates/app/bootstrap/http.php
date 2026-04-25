@@ -49,14 +49,14 @@ function build_template_request_from_globals(): VSlim\Vhttpd\Request
         }
     }
 
-    $request->set_headers($headers);
-    $request->set_cookies($_COOKIE);
-    $request->set_server($server);
-    $request->set_remote_addr((string) ($_SERVER['REMOTE_ADDR'] ?? ''));
-    $request->set_scheme(
+    $request->setHeaders($headers);
+    $request->setCookies($_COOKIE);
+    $request->setServer($server);
+    $request->setRemoteAddr((string) ($_SERVER['REMOTE_ADDR'] ?? ''));
+    $request->setScheme(
         !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http',
     );
-    $request->set_host((string) ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+    $request->setHost((string) ($_SERVER['HTTP_HOST'] ?? 'localhost'));
 
     return $request;
 }
@@ -77,7 +77,7 @@ function normalize_template_worker_response(VSlim\Vhttpd\Response $response): ar
 {
     return [
         'status' => $response->status,
-        'content_type' => $response->content_type,
+        'content_type' => $response->contentType,
         'headers' => $response->headers(),
         'body' => $response->body,
     ];
@@ -101,8 +101,8 @@ function template_headers_from_envelope_map(array $map): array
 
 function dispatch_template_envelope(VSlim\App $app, array $envelope): array
 {
-    if (method_exists($app, 'dispatch_envelope_map')) {
-        $map = $app->dispatch_envelope_map($envelope);
+    if (method_exists($app, 'dispatchEnvelopeMap')) {
+        $map = $app->dispatchEnvelopeMap($envelope);
         $headers = template_headers_from_envelope_map($map);
         $contentType = (string) ($map['content_type'] ?? 'text/plain; charset=utf-8');
         if (!isset($headers['content-type'])) {
@@ -116,7 +116,7 @@ function dispatch_template_envelope(VSlim\App $app, array $envelope): array
         ];
     }
 
-    return normalize_template_worker_response($app->dispatch_envelope($envelope));
+    return normalize_template_worker_response($app->dispatchEnvelope($envelope));
 }
 
 function template_app_handler(): callable
@@ -132,9 +132,10 @@ function template_app_handler(): callable
         }
 
         if (is_object($request)) {
-            if (class_exists(\VPhp\VSlim\Psr7Adapter::class)) {
+            if (class_exists(\VSlim\Psr7Adapter::class)) {
+                $vRequest = \VSlim\Psr7Adapter::toVSlimRequest($request);
                 return normalize_template_worker_response(
-                    \VPhp\VSlim\Psr7Adapter::dispatch($app, $request),
+                    $app->dispatchRequest($vRequest),
                 );
             }
             return [

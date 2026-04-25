@@ -19,7 +19,7 @@ Documentation entry:
 - `VSlim\Database\Config` / `VSlim\Database\Manager` / `VSlim\Database\Query` 提供 mysql-first 的连接池、事务与轻量 query builder
 - `VSlim\Validate\Validator`、`VSlim\Session\StartMiddleware`、`VSlim\Auth\RequireAuthMiddleware` 提供轻量 validation、cookie session、auth/guest middleware
 - `app()->testing()` 提供轻量测试 harness，支持 service/config override、quick dispatch、cookie jar、session/auth helper 和 response 断言
-- `vslim_handle_request(...)` / `dispatch_envelope(...)` 提供和 worker / `vhttpd` 的集成边界
+- `dispatchEnvelope(...)` / `dispatchRequest(...)` 提供和 worker / `vhttpd` 的集成边界
 
 ## VSlim 和 vhttpd 的边界
 
@@ -64,7 +64,7 @@ Documentation entry:
 - PHP 内置 server
   - 适合本地开发和最小 demo
   - 通常是 `php -S ... demo_app.php`
-  - 入口一般是 `VSlim\Vhttpd\Request -> $app->dispatch_request(...) -> VSlim\Vhttpd\Response`
+  - 入口一般是 `VSlim\Vhttpd\Request -> $app->dispatchRequest(...) -> VSlim\Vhttpd\Response`
 - `vhttpd` + php-worker
   - 适合当前主线 worker/runtime 集成
   - transport 边界可以是 envelope，也可以是 `Psr7Adapter`
@@ -543,7 +543,7 @@ $app->post('/users/:id', function (ServerRequestInterface $req) {
     ];
 });
 
-$res = $app->dispatch_body(
+$res = $app->dispatchBody(
     'POST',
     '/users/7?trace_id=demo',
     'name=neo'
@@ -707,7 +707,7 @@ $res = $app->view('home.html', [
     'name' => 'neo',
 ]);
 
-echo $res->content_type . PHP_EOL;
+echo $res->contentType . PHP_EOL;
 echo $res->body . PHP_EOL;
 ```
 
@@ -738,7 +738,7 @@ $app->get('/hello/:name', function (Psr\Http\Message\ServerRequestInterface $req
     return 'hello:' . $req->getAttribute('name');
 });
 
-$res = $app->dispatch_envelope([
+$res = $app->dispatchEnvelope([
     'method' => 'GET',
     'path' => '/hello/codex?trace_id=demo',
     'body' => '',
@@ -881,7 +881,7 @@ return $app;
 ### 集成与运行时
 
 - [`docs/integration/worker.md`](/Users/guweigang/Source/vphpx/vslim/docs/integration/worker.md)
-  envelope、`dispatch_envelope()`、`dispatch_envelope_map()`、worker 返回值归一化
+  envelope、`dispatchEnvelope()`、`dispatch_envelope_map()`、worker 返回值归一化
 - [`docs/integration/psr7.md`](/Users/guweigang/Source/vphpx/vslim/docs/integration/psr7.md)
   `VPhp\\VSlim\\Psr7Adapter`、扩展内建的 PSR-7 request -> `VSlim\Vhttpd\Request` 适配器
 - [`docs/psr-roadmap.md`](/Users/guweigang/Source/vphpx/vslim/docs/psr-roadmap.md)

@@ -20,11 +20,11 @@ function ks_form_request(string $method, string $path, array $data = [], string 
 {
     $body = http_build_query($data);
     $request = new VSlim\Vhttpd\Request($method, $path, $body);
-    $request->set_headers([
+    $request->setHeaders([
         'content-type' => 'application/x-www-form-urlencoded',
     ]);
     if ($cookie !== '') {
-        $request->set_cookies([
+        $request->setCookies([
             'knowledge_studio_session' => $cookie,
         ]);
     }
@@ -33,7 +33,7 @@ function ks_form_request(string $method, string $path, array $data = [], string 
 
 function ks_extract_session_cookie(VSlim\Vhttpd\Response $response): string
 {
-    $header = $response->cookie_header();
+    $header = $response->cookieHeader();
     $pair = explode(';', $header, 2)[0] ?? '';
     $parts = explode('=', $pair, 2);
     return $parts[1] ?? '';
@@ -47,7 +47,7 @@ $login = ks_form_request('POST', '/login', [
     'email' => 'owner@acme.test',
     'password' => 'demo123',
 ]);
-$loginResponse = $app->dispatch_request($login);
+$loginResponse = $app->dispatchRequest($login);
 ks_assert($loginResponse->status === 302, 'login must redirect');
 $cookie = ks_extract_session_cookie($loginResponse);
 ks_assert($cookie !== '', 'login must return session cookie');
@@ -62,7 +62,7 @@ $documentRequest = ks_form_request('POST', '/console/knowledge/documents', [
     'body' => 'Smoke document body ' . $suffix,
     'source_type' => 'upload',
 ], $cookie);
-$documentResponse = $app->dispatch_request($documentRequest);
+$documentResponse = $app->dispatchRequest($documentRequest);
 ks_assert($documentResponse->status === 302, 'document write must redirect');
 
 $entryRequest = ks_form_request('POST', '/console/knowledge/faqs', [
@@ -70,32 +70,32 @@ $entryRequest = ks_form_request('POST', '/console/knowledge/faqs', [
     'title' => $entryTitle,
     'body' => 'Smoke body ' . $suffix,
 ], $cookie);
-$entryResponse = $app->dispatch_request($entryRequest);
+$entryResponse = $app->dispatchRequest($entryRequest);
 ks_assert($entryResponse->status === 302, 'entry write must redirect');
 
 $jobRequest = ks_form_request('POST', '/console/ops/jobs', [
     'name' => $jobName,
 ], $cookie);
-$jobResponse = $app->dispatch_request($jobRequest);
+$jobResponse = $app->dispatchRequest($jobRequest);
 ks_assert($jobResponse->status === 302, 'job write must redirect');
 
 $documentsPage = ks_form_request('GET', '/console/knowledge/documents', [], $cookie);
-$documentsResponse = $app->dispatch_request($documentsPage);
+$documentsResponse = $app->dispatchRequest($documentsPage);
 ks_assert($documentsResponse->status === 200, 'documents page must render');
 ks_assert(str_contains($documentsResponse->body, $documentTitle), 'documents page must include new document');
 
 $entriesPage = ks_form_request('GET', '/console/knowledge/faqs', [], $cookie);
-$entriesResponse = $app->dispatch_request($entriesPage);
+$entriesResponse = $app->dispatchRequest($entriesPage);
 ks_assert($entriesResponse->status === 200, 'entries page must render');
 ks_assert(str_contains($entriesResponse->body, $entryTitle), 'entries page must include new entry');
 
 $opsPage = ks_form_request('GET', '/console/ops', [], $cookie);
-$opsResponse = $app->dispatch_request($opsPage);
+$opsResponse = $app->dispatchRequest($opsPage);
 ks_assert($opsResponse->status === 200, 'ops page must render');
 ks_assert(str_contains($opsResponse->body, $jobName), 'ops page must include new job');
 
 $subscribersPage = ks_form_request('GET', '/console/subscribers', [], $cookie);
-$subscribersResponse = $app->dispatch_request($subscribersPage);
+$subscribersResponse = $app->dispatchRequest($subscribersPage);
 ks_assert($subscribersResponse->status === 200, 'subscribers page must render');
 ks_assert(str_contains($subscribersResponse->body, 'subscriber-acme-1') || str_contains($subscribersResponse->body, 'ops-buyer@finco.test'), 'subscribers page must include seeded lead');
 
@@ -109,11 +109,11 @@ $statusRequest = ks_form_request('POST', '/console/subscribers/subscriber-acme-1
     'next_followup_at' => '2026-04-20T09:30',
     'redirect' => 'detail',
 ], $cookie);
-$statusResponse = $app->dispatch_request($statusRequest);
+$statusResponse = $app->dispatchRequest($statusRequest);
 ks_assert($statusResponse->status === 302, 'subscriber status update must redirect');
 
 $detailPage = ks_form_request('GET', '/console/subscribers/subscriber-acme-1', [], $cookie);
-$detailResponse = $app->dispatch_request($detailPage);
+$detailResponse = $app->dispatchRequest($detailPage);
 ks_assert($detailResponse->status === 200, 'subscriber detail page must render');
 ks_assert(str_contains($detailResponse->body, $statusNote), 'subscriber detail page must include status followup note');
 ks_assert(str_contains($detailResponse->body, 'won'), 'subscriber detail page must include updated opportunity stage');
@@ -122,11 +122,11 @@ ks_assert(str_contains($detailResponse->body, 'Noah Lin'), 'subscriber detail pa
 ks_assert(str_contains($detailResponse->body, '2026-04-20 09:30:00'), 'subscriber detail page must include next followup schedule');
 
 $provisionRequest = ks_form_request('POST', '/console/subscribers/subscriber-acme-1/provisioning', [], $cookie);
-$provisionResponse = $app->dispatch_request($provisionRequest);
+$provisionResponse = $app->dispatchRequest($provisionRequest);
 ks_assert($provisionResponse->status === 302, 'subscriber provisioning queue must redirect');
 
 $detailWithChecklist = ks_form_request('GET', '/console/subscribers/subscriber-acme-1', [], $cookie);
-$detailWithChecklistResponse = $app->dispatch_request($detailWithChecklist);
+$detailWithChecklistResponse = $app->dispatchRequest($detailWithChecklist);
 ks_assert($detailWithChecklistResponse->status === 200, 'subscriber detail page must render after provisioning queue');
 ks_assert(str_contains($detailWithChecklistResponse->body, 'Create workspace shell and plan settings'), 'subscriber detail page must include provisioning checklist');
 
@@ -155,40 +155,40 @@ ks_assert($inviteOwnerItemId !== '', 'invite owner provisioning checklist item m
 ks_assert($seedKnowledgeItemId !== '', 'seed knowledge provisioning checklist item must exist in database');
 
 $completeProvisioningRequest = ks_form_request('POST', '/console/subscribers/subscriber-acme-1/provisioning/' . $firstProvisioningItemId . '/complete', [], $cookie);
-$completeProvisioningResponse = $app->dispatch_request($completeProvisioningRequest);
+$completeProvisioningResponse = $app->dispatchRequest($completeProvisioningRequest);
 ks_assert($completeProvisioningResponse->status === 302, 'provisioning checklist completion must redirect');
 
 $completeInviteOwnerRequest = ks_form_request('POST', '/console/subscribers/subscriber-acme-1/provisioning/' . $inviteOwnerItemId . '/complete', [], $cookie);
-$completeInviteOwnerResponse = $app->dispatch_request($completeInviteOwnerRequest);
+$completeInviteOwnerResponse = $app->dispatchRequest($completeInviteOwnerRequest);
 ks_assert($completeInviteOwnerResponse->status === 302, 'invite owner provisioning completion must redirect');
 
 $completeSeedKnowledgeRequest = ks_form_request('POST', '/console/subscribers/subscriber-acme-1/provisioning/' . $seedKnowledgeItemId . '/complete', [], $cookie);
-$completeSeedKnowledgeResponse = $app->dispatch_request($completeSeedKnowledgeRequest);
+$completeSeedKnowledgeResponse = $app->dispatchRequest($completeSeedKnowledgeRequest);
 ks_assert($completeSeedKnowledgeResponse->status === 302, 'seed knowledge provisioning completion must redirect');
 
 $opsPageAfterProvision = ks_form_request('GET', '/console/ops', [], $cookie);
-$opsResponseAfterProvision = $app->dispatch_request($opsPageAfterProvision);
+$opsResponseAfterProvision = $app->dispatchRequest($opsPageAfterProvision);
 ks_assert($opsResponseAfterProvision->status === 200, 'ops page must render after provisioning queue');
 ks_assert(str_contains($opsResponseAfterProvision->body, 'Provision workspace for ops-buyer@finco.test [lead:subscriber-acme-1]'), 'ops page must include provisioning job');
 ks_assert(str_contains($opsResponseAfterProvision->body, 'Create workspace shell and plan settings'), 'ops page must include provisioning checklist rows');
 
 $membersPage = ks_form_request('GET', '/console/members', [], $cookie);
-$membersResponse = $app->dispatch_request($membersPage);
+$membersResponse = $app->dispatchRequest($membersPage);
 ks_assert($membersResponse->status === 200, 'members page must render after provisioning completion');
 ks_assert(str_contains($membersResponse->body, 'ops-buyer@finco.test'), 'members page must include invited customer owner');
 
 $documentsPageAfterProvision = ks_form_request('GET', '/console/knowledge/documents', [], $cookie);
-$documentsResponseAfterProvision = $app->dispatch_request($documentsPageAfterProvision);
+$documentsResponseAfterProvision = $app->dispatchRequest($documentsPageAfterProvision);
 ks_assert($documentsResponseAfterProvision->status === 200, 'documents page must render after starter content provisioning');
 ks_assert(str_contains($documentsResponseAfterProvision->body, 'Starter Launch Plan for ops-buyer@finco.test'), 'documents page must include starter onboarding document');
 
 $entriesPageAfterProvision = ks_form_request('GET', '/console/knowledge/faqs', [], $cookie);
-$entriesResponseAfterProvision = $app->dispatch_request($entriesPageAfterProvision);
+$entriesResponseAfterProvision = $app->dispatchRequest($entriesPageAfterProvision);
 ks_assert($entriesResponseAfterProvision->status === 200, 'entries page must render after starter content provisioning');
 ks_assert(str_contains($entriesResponseAfterProvision->body, 'Starter FAQ for ops-buyer@finco.test'), 'entries page must include starter onboarding faq');
 
 $releasesPageAfterProvision = ks_form_request('GET', '/console/releases', [], $cookie);
-$releasesResponseAfterProvision = $app->dispatch_request($releasesPageAfterProvision);
+$releasesResponseAfterProvision = $app->dispatchRequest($releasesPageAfterProvision);
 ks_assert($releasesResponseAfterProvision->status === 200, 'releases page must render after starter content provisioning');
 ks_assert(str_contains($releasesResponseAfterProvision->body, 'onboarding-subscriber-acme-1'), 'releases page must include onboarding release scaffold');
 

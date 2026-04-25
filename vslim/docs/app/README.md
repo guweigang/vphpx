@@ -21,14 +21,14 @@
 ## 它负责什么
 
 - 注册路由：`get/post/put/patch/delete/head/options/any/map`
-- 注册命名路由：`get_named()`、`map_named()` 等
+- 注册命名路由：`getNamed()`、`mapNamed()` 等
 - 创建分组：`group()`
 - 运行 middleware：`before()`、`middleware()`、`after()`
-- 资源路由：`resource()`、`api_resource()`、`singleton()`、`api_singleton()`
-- 分发请求：`dispatch()`、`dispatch_request()`、`dispatch_envelope()`
-- 生成 URL：`url_for()`、`url_for_abs()`、`redirect_to()`
-- 错误处理：`set_not_found_handler()`、`set_error_handler()`
-- 暴露 metadata：`route_manifest()`、`allowed_methods_for()` 等
+- 资源路由：`resource()`、`apiResource()`、`singleton()`、`apiSingleton()`
+- 分发请求：`dispatch()`、`dispatchRequest()`、`dispatchEnvelope()`
+- 生成 URL：`urlFor()`、`urlForAbs()`、`redirectTo()`
+- 错误处理：`setNotFoundHandler()`、`setErrorHandler()`
+- 暴露 metadata：`routeManifest()`、`allowedMethodsFor()` 等
 - 组织框架骨架：`register()`、`boot()`、标准 PSR service graph
 - `VSlim\Cli\App` 会直接复用这层 shared service graph，并在此之上挂命令系统
 
@@ -65,9 +65,9 @@
 - `dispatch(method, rawPath)`
   - 最轻量的本地 facade
   - 适合 demo / 自测 / 小工具
-- `dispatch_request(VSlim\Vhttpd\Request $req)`
+- `dispatchRequest(VSlim\Vhttpd\Request $req)`
   - 适合 built-in server 或自己拼装 request 的传统入口
-- `dispatch_envelope(array $envelope)`
+- `dispatchEnvelope(array $envelope)`
   - 适合 worker / transport 集成
 - `handle(ServerRequestInterface $request)`
   - 适合 PSR-7 / PSR-15 主通道
@@ -171,37 +171,43 @@ $app->map('PUT|PATCH', '/edit/:id', function (ServerRequestInterface $req) {
 $res = $app->dispatch('GET', '/health');
 ```
 
-### `dispatch_body(method, rawPath, body)`
+### `dispatchBody(method, rawPath, body)`
 
 适合 form / JSON body 测试。
 
 ```php
-$res = $app->dispatch_body('POST', '/submit?trace_id=demo', 'name=neo');
+$res = $app->dispatchBody('POST', '/submit?trace_id=demo', 'name=neo');
 ```
 
-### `dispatch_request(VSlim\Vhttpd\Request $req)`
+兼容层里历史的 `dispatchBody(...)` 旧别名仍然保留，但新文档更推荐 `dispatchBody(...)`。
+
+### `dispatchRequest(VSlim\Vhttpd\Request $req)`
 
 适合手动构造 request 对象。
 
 ```php
 $req = new VSlim\Vhttpd\Request('POST', '/submit', '{"ok":true}');
-$req->set_headers(['content-type' => 'application/json']);
-$res = $app->dispatch_request($req);
+$req->setHeaders(['content-type' => 'application/json']);
+$res = $app->dispatchRequest($req);
 ```
 
-### `dispatch_envelope(array $envelope)`
+兼容层里历史的 `dispatchRequest(...)` 旧别名仍然保留，但新文档更推荐 `dispatchRequest(...)`。
+
+### `dispatchEnvelope(array $envelope)`
 
 用于 worker / transport 集成。
 
 ```php
-$res = $app->dispatch_envelope([
+$res = $app->dispatchEnvelope([
     'method' => 'GET',
     'path' => '/hello/codex',
     'headers' => ['x-request-id' => 'req-1'],
 ]);
 ```
 
-### `dispatch_envelope_map(array $envelope)`
+兼容层里历史的 `dispatchEnvelope(...)` 旧别名仍然保留，但新文档更推荐 `dispatchEnvelope(...)`。
+
+### `dispatchEnvelopeMap(array $envelope)`
 
 返回 `map<string,string>` 风格结果，适合 worker 边界：
 
@@ -367,11 +373,11 @@ $app = (new VSlim\App())->bootstrap([
 
 - `providers` / `modules` 复用原有生命周期，不是另一套机制
 - `before` / `middleware` / `after` 直接对应 app 的三层 middleware 注册，可传单个 registration，也可传 registration 列表
-- `middleware_setup` / `routes` 可以是单个 callable，也可以是 callable 列表，适合 bootstrap 文件最后收口
-- `not_found` / `error` 直接复用现有 terminal handler 入口
+- `middlewareSetup` / `routes` 可以是单个 callable，也可以是 callable 列表，适合 bootstrap 文件最后收口
+- `notFound` / `error` 直接复用现有 terminal handler 入口
 - `helpers` 是一个 `name => callable` 的 map，会直接注册成 view helper
 - `mcp` 既可以直接给 `VSlim\Mcp\App` 对象，也可以给一个 callable 来装配 `$app->mcp()`
-- `base_path` 只影响 `url_for()` / `url_for_abs()`，不改变真实匹配路径
+- `basePath` 只影响 `urlFor()` / `urlForAbs()`，不改变真实匹配路径
 
 ## 3.4 bootstrap file
 
@@ -596,24 +602,24 @@ $app->get_named('users.show', '/users/:id', function (ServerRequestInterface $re
     return 'user:' . $req->getAttribute('id');
 });
 
-echo $app->url_for('users.show', ['id' => '42']) . PHP_EOL;
-echo $app->url_for_query('users.show', ['id' => '42'], ['tab' => 'profile']) . PHP_EOL;
-echo $app->url_for_abs('users.show', ['id' => '42'], 'https', 'example.local') . PHP_EOL;
+echo $app->urlFor('users.show', ['id' => '42']) . PHP_EOL;
+echo $app->urlForQuery('users.show', ['id' => '42'], ['tab' => 'profile']) . PHP_EOL;
+echo $app->urlForAbs('users.show', ['id' => '42'], 'https', 'example.local') . PHP_EOL;
 ```
 
 还支持：
 
-- `url_for_query_abs()`
-- `redirect_to()`
-- `redirect_to_query()`
+- `urlForQueryAbs()`
+- `redirectTo()`
+- `redirectToQuery()`
 
-## 6. `base_path`
+## 6. `basePath`
 
-`set_base_path()` 只影响 URL 生成，不改变实际匹配路径。
+`setBasePath()` 只影响 URL 生成，不改变实际匹配路径。
 
 ```php
-$app->set_base_path('/demo');
-echo $app->url_for('users.show', ['id' => '42']); // /demo/users/42
+$app->setBasePath('/demo');
+echo $app->urlFor('users.show', ['id' => '42']); // /demo/users/42
 ```
 
 ## 7. 资源路由
@@ -630,15 +636,15 @@ echo $app->url_for('users.show', ['id' => '42']); // /demo/users/42
 - `PUT/PATCH /items/:id` -> `update`
 - `DELETE /items/:id` -> `destroy`
 
-### `api_resource()`
+### `apiResource()`
 
 不包含页面路由 `create/edit`。
 
-### `singleton()` / `api_singleton()`
+### `singleton()` / `apiSingleton()`
 
 和 `resource` 类似，但没有 `:id`，用于单例资源，例如 `/profile`。
 
-### `resource_opts()` / `singleton_opts()`
+### `resourceOpts()` / `singletonOpts()`
 
 当前支持这些选项：
 
@@ -654,7 +660,7 @@ echo $app->url_for('users.show', ['id' => '42']); // /demo/users/42
 示例：
 
 ```php
-$app->resource_opts('/books', BookController::class, [
+$app->resourceOpts('/books', BookController::class, [
     'only' => ['index', 'show'],
     'name_prefix' => 'library.books',
     'param' => 'book_id',
@@ -666,7 +672,7 @@ $app->resource_opts('/books', BookController::class, [
 如果某个资源 action 没实现，但你提供了 `missing` 回调，那么 action 缺失时不会直接 404，而会交给这个回调：
 
 ```php
-$app->resource_opts('/users', UserController::class, [
+$app->resourceOpts('/users', UserController::class, [
     'missing' => function (Psr\Http\Message\ServerRequestInterface $req, string $action, array $params) {
         return new VSlim\Vhttpd\Response(501, 'missing:' . $action, 'text/plain; charset=utf-8');
     },
@@ -675,7 +681,7 @@ $app->resource_opts('/users', UserController::class, [
 
 ## 8. 错误处理
 
-### `set_not_found_handler()`
+### `setNotFoundHandler()`
 
 签名：
 
@@ -683,7 +689,7 @@ $app->resource_opts('/users', UserController::class, [
 function (Psr\Http\Message\ServerRequestInterface $req) { ... }
 ```
 
-### `set_error_handler()`
+### `setErrorHandler()`
 
 签名：
 
@@ -691,12 +697,12 @@ function (Psr\Http\Message\ServerRequestInterface $req) { ... }
 function (Psr\Http\Message\ServerRequestInterface $req, string $message, int $status) { ... }
 ```
 
-### `set_error_response_json(true)`
+### `setErrorResponseJson(true)`
 
 当没有自定义 handler 时，默认错误响应可以切换成 JSON：
 
 ```php
-$app->set_error_response_json(true);
+$app->setErrorResponseJson(true);
 ```
 
 ## 9. HTTP 语义
@@ -714,30 +720,30 @@ $app->set_error_response_json(true);
 
 可用于调试和生成文档：
 
-- `route_count()`
-- `route_names()`
-- `has_route_name()`
-- `route_manifest_lines()`
-- `route_conflict_keys()`
-- `route_manifest()`
-- `route_conflicts()`
-- `allowed_methods_for()`
+- `routeCount()`
+- `routeNames()`
+- `hasRouteName()`
+- `routeManifestLines()`
+- `routeConflictKeys()`
+- `routeManifest()`
+- `routeConflicts()`
+- `allowedMethodsFor()`
 
 示例：
 
 ```php
-print_r($app->route_manifest());
-print_r($app->allowed_methods_for('/users/7'));
+print_r($app->routeManifest());
+print_r($app->allowedMethodsFor('/users/7'));
 ```
 
 ## 11. 和 Container / Config / View 的关系
 
 `VSlim\App` 还负责这些协作入口：
 
-- `container()` / `set_container()`
-- `config()` / `set_config()` / `load_config()` / `load_config_text()`
-- `set_view_base_path()` / `set_assets_prefix()`
-- `make_view()` / `view()` / `view_with_layout()`
+- `container()` / `setContainer()`
+- `config()` / `setConfig()` / `loadConfig()` / `loadConfigText()`
+- `setViewBasePath()` / `setAssetsPrefix()`
+- `makeView()` / `view()` / `viewWithLayout()`
 
 这里的 View 已经不只是简单模板替换。当前建议把它理解成：
 

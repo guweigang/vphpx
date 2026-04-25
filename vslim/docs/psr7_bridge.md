@@ -80,7 +80,7 @@ runtime objects.
 This layer can choose one of two paths:
 
 1. If a PSR-7 implementation is available, build a real `ServerRequestInterface`.
-2. Otherwise, keep using the native `vslim_handle_request($envelope)` path.
+2. Otherwise, adapt the envelope into `VSlim\Vhttpd\Request` and call `dispatchEnvelope(...)`.
 
 This means `php-worker` becomes the compatibility seam between:
 
@@ -103,7 +103,7 @@ On top of that, `vslim` can later add adapter entry points:
 
 - `from_psr7(ServerRequestInterface $request)`
 - `to_psr7_response(VSlim\Vhttpd\Response $response)`
-- or a PHP-side adapter class that translates between PSR-7 and `vslim_handle_request(...)`
+- or a PHP-side adapter class that translates between PSR-7 and `dispatchRequest(...)`
 
 This lets `vslim` participate in PSR-7 workflows without forcing the internal model to copy PSR-7.
 
@@ -114,7 +114,7 @@ This lets `vslim` participate in PSR-7 workflows without forcing the internal mo
 Deliverables:
 
 - `vhttpd` emits a richer request envelope
-- `php-worker` keeps forwarding to `vslim_handle_request(...)`
+- `php-worker` keeps forwarding to `dispatchEnvelope(...)`
 - `vslim` continues to consume the envelope directly
 
 At this stage, `vslim` gains better request fidelity without taking on PSR-7 complexity.
@@ -232,9 +232,8 @@ Notes:
 Pseudo-flow:
 
 ```php
-if (function_exists('vslim_handle_request')) {
-    // native fast path
-    return vslim_handle_request($envelope);
+if (class_exists(VSlim\App::class)) {
+    return $app->dispatchEnvelope($envelope);
 }
 
 if ($psr7FactoryIsAvailable) {
@@ -255,23 +254,21 @@ This lets the worker support both:
 
 Native core should stay close to what we already have.
 
-Later adapters may look like:
+Current guidance is to keep entrypoints and adapters separate:
 
 ```php
-$adapter = new VPhp\VSlim\Psr7Adapter($app);
-$response = $adapter->handle($serverRequest);
+$psrResponse = $app->handle($serverRequest);
+$response = VSlim\Psr7Adapter::toVSlimResponse($psrResponse);
 ```
 
-or:
+or, when you want to stay on the `VSlim\Vhttpd\Request` facade side:
 
 ```php
-$envelope = VPhp\VSlim\Psr7Adapter::toEnvelope($serverRequest);
-$raw = vslim_handle_request($envelope);
-$response = VPhp\VSlim\Psr7Adapter::toResponse($raw, $responseFactory, $streamFactory);
+$request = VSlim\Psr7Adapter::toVSlimRequest($serverRequest);
+$response = $app->dispatchRequest($request);
 ```
 
-The second version is especially attractive because it does not require the extension to own
-full PSR-7 semantics.
+This keeps the adapter focused on translation instead of turning it into another app entrypoint.
 
 ## Current recommendation
 
@@ -280,7 +277,7 @@ The next implementation steps should be:
 1. enrich the request envelope in `vhttpd`
 2. mirror those fields into `VSlim\Vhttpd\Request`
 3. make `php-worker.php` able to build a PSR-7 request when userland provides a PSR-7 implementation
-4. add a small adapter layer around `vslim_handle_request(...)`
+4. keep the adapter layer focused on `toVSlimRequest(...)` / `toVSlimResponse(...)`
 
 This keeps the system incremental and avoids prematurely forcing `vslim` to become a full
 PSR-7 library.

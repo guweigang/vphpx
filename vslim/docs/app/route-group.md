@@ -103,12 +103,12 @@ $api->after(new class implements MiddlewareInterface {
 
 ## group 中的命名路由
 
-命名路由仍然注册在全局 `App` 上，所以 `url_for()` 依然从 `App` 调：
+命名路由仍然注册在全局 `App` 上，所以 `urlFor()` 依然从 `App` 调：
 
 ```php
-$api->get_named('api.users.show', '/users/:id', fn (ServerRequestInterface $req) => 'ok');
+$api->getNamed('api.users.show', '/users/:id', fn (ServerRequestInterface $req) => 'ok');
 
-echo $app->url_for('api.users.show', ['id' => '42']);
+echo $app->urlFor('api.users.show', ['id' => '42']);
 ```
 
 ## group 中的 resource

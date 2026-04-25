@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 return function (VSlim\App $app): void {
-    $app->get_named(
+    $app->getNamed(
         "template.home",
         "/",
         [\App\Http\Controllers\HomeController::class, "index"],
@@ -11,7 +11,7 @@ return function (VSlim\App $app): void {
     $app->get("/health", function () use ($app): string {
         return implode("|", [
             "ok",
-            $app->config()->get_string("app.name", ""),
+            $app->config()->getString("app.name", ""),
             (string) $app->container()->get("template.message"),
         ]);
     });

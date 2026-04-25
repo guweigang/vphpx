@@ -15,5 +15,5 @@ if (PHP_SAPI === 'cli' && !isset($_SERVER['REQUEST_METHOD'])) {
 }
 
 $app = build_knowledge_studio_app();
-$response = $app->dispatch_request(build_knowledge_studio_request_from_globals());
+$response = $app->dispatchRequest(build_knowledge_studio_request_from_globals());
 emit_knowledge_studio_response($response);

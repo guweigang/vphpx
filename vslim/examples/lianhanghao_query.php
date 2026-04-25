@@ -59,7 +59,7 @@ $database = envv('DB_NAME', 'kaikuhang');
 
 /** @var VSlim\App $app */
 $app = VSlim\App::demo();
-$app->load_config_text(<<<TOML
+$app->loadConfigText(<<<TOML
 [database]
 driver = "mysql"
 transport = "{$transport}"
