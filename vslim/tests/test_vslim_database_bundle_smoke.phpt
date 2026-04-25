@@ -5,7 +5,7 @@ VSlim binary bundle can load direct mysql database surface
 --FILE--
 <?php
 $app = VSlim\App::demo();
-$app->load_config_text(<<<TOML
+$app->loadConfigText(<<<TOML
 [database]
 driver = "mysql"
 pool_size = 3
@@ -23,7 +23,7 @@ $cfg = $db->config();
 
 echo $db->driver() . PHP_EOL;
 echo $db->poolSize() . PHP_EOL;
-echo ($db->is_connected() ? 'connected' : 'not-connected') . PHP_EOL;
+echo ($db->isConnected() ? 'connected' : 'not-connected') . PHP_EOL;
 echo $cfg->host() . ':' . $cfg->port() . PHP_EOL;
 echo $cfg->username() . '|' . $cfg->database() . PHP_EOL;
 echo $db->transport() . PHP_EOL;

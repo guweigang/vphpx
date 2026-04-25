@@ -19,19 +19,19 @@ TOML);
 $cfg = new VSlim\Config();
 $cfg->load($path);
 
-echo ($cfg->is_loaded() ? 'loaded' : 'not-loaded') . PHP_EOL;
+echo ($cfg->isLoaded() ? 'loaded' : 'not-loaded') . PHP_EOL;
 echo ($cfg->path() === $path ? 'path-ok' : 'path-bad') . PHP_EOL;
 echo ($cfg->has('app.name') ? 'has-name' : 'no-name') . PHP_EOL;
-echo $cfg->get_string('app.name', 'x') . PHP_EOL;
-echo $cfg->get_int('app.port', 0) . PHP_EOL;
-echo ($cfg->get_bool('app.debug', false) ? 'debug-on' : 'debug-off') . PHP_EOL;
-echo $cfg->get_float('app.ratio', 0.0) . PHP_EOL;
-echo $cfg->get_json('missing.key', '"fallback"') . PHP_EOL;
+echo $cfg->getString('app.name', 'x') . PHP_EOL;
+echo $cfg->getInt('app.port', 0) . PHP_EOL;
+echo ($cfg->getBool('app.debug', false) ? 'debug-on' : 'debug-off') . PHP_EOL;
+echo $cfg->getFloat('app.ratio', 0.0) . PHP_EOL;
+echo $cfg->getJson('missing.key', '"fallback"') . PHP_EOL;
 
-$hosts = json_decode($cfg->get_json('db.hosts', '[]'), true);
+$hosts = json_decode($cfg->getJson('db.hosts', '[]'), true);
 echo count($hosts) . ':' . $hosts[0] . ':' . $hosts[1] . PHP_EOL;
 
-$all = json_decode($cfg->all_json(), true);
+$all = json_decode($cfg->allJson(), true);
 echo $all['app']['name'] . ':' . $all['app']['port'] . PHP_EOL;
 
 $name = $cfg->get('app.name');
@@ -43,22 +43,22 @@ echo (is_null($missing) ? 'null' : 'not-null') . PHP_EOL;
 $fallback = $cfg->get('missing.key', ['x' => 1]);
 echo ($fallback['x'] ?? -1) . PHP_EOL;
 
-$app = $cfg->get_map('app');
+$app = $cfg->getMap('app');
 echo $app['name'] . ':' . $app['port'] . ':' . ($app['debug'] ? '1' : '0') . PHP_EOL;
 
-$hostList = $cfg->get_list('db.hosts');
+$hostList = $cfg->getList('db.hosts');
 echo count($hostList) . ':' . $hostList[0] . ':' . $hostList[1] . PHP_EOL;
 
-$fallbackMap = $cfg->get_map('missing.map', ['d' => 9]);
+$fallbackMap = $cfg->getMap('missing.map', ['d' => 9]);
 echo ($fallbackMap['d'] ?? -1) . PHP_EOL;
 
-$fallbackList = $cfg->get_list('missing.list', ['x', 'y']);
+$fallbackList = $cfg->getList('missing.list', ['x', 'y']);
 echo count($fallbackList) . ':' . $fallbackList[0] . ':' . $fallbackList[1] . PHP_EOL;
 
-$wrongTypeMap = $cfg->get_map('app.name', ['z' => 7]);
+$wrongTypeMap = $cfg->getMap('app.name', ['z' => 7]);
 echo ($wrongTypeMap['z'] ?? -1) . PHP_EOL;
 
-$wrongTypeList = $cfg->get_list('app.name', ['m']);
+$wrongTypeList = $cfg->getList('app.name', ['m']);
 echo count($wrongTypeList) . ':' . $wrongTypeList[0] . PHP_EOL;
 
 unlink($path);
