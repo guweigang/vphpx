@@ -23,15 +23,15 @@ final class ProbeWsHandler
         if (($frame['event'] ?? '') !== 'message') {
             return null;
         }
-        $this->seen = vslim_probe_object($conn, ProbeConnSink::class, 'setMeta');
+        $this->seen = VSlim\Debug\ObjectProbe::probe($conn, ProbeConnSink::class, 'setMeta');
         return json_encode($this->seen, JSON_UNESCAPED_UNICODE);
     }
 }
 
 $app = new VSlim\App();
 $handler = new ProbeWsHandler();
-$handlerProbe = vslim_probe_object($handler, ProbeWsHandler::class, 'handle_websocket');
-$connProbe = vslim_probe_object(new ProbeConnSink(), ProbeConnSink::class, 'setMeta');
+$handlerProbe = VSlim\Debug\ObjectProbe::probe($handler, ProbeWsHandler::class, 'handle_websocket');
+$connProbe = VSlim\Debug\ObjectProbe::probe(new ProbeConnSink(), ProbeConnSink::class, 'setMeta');
 echo 'handler.method_exists=', $handlerProbe['method_exists'] ?? 'missing', PHP_EOL;
 echo 'handler.is_instance_of=', $handlerProbe['is_instance_of'] ?? 'missing', PHP_EOL;
 echo 'conn.method_exists=', $connProbe['method_exists'] ?? 'missing', PHP_EOL;

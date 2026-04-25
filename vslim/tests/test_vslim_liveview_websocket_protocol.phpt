@@ -6,7 +6,7 @@ VSlim LiveView websocket protocol accepts, joins, preserves state, and emits JSO
 <?php
 
 $app = new VSlim\App();
-$app->set_view_base_path(__DIR__ . '/fixtures');
+$app->setViewBasePath(__DIR__ . '/fixtures');
 $GLOBALS['ws_app'] = $app;
 
 function find_live_op(array $ops, string $op, string $id): ?array

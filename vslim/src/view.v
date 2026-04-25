@@ -2,24 +2,25 @@ module main
 
 import vphp
 
-@[php_method]
+@[php_method: 'setViewBasePath']
+@[php_arg_name: 'base_path=basePath']
 pub fn (mut app VSlimApp) set_view_base_path(base_path string) &VSlimApp {
 	app.view_base_path = base_path.trim_space()
 	return app
 }
 
-@[php_method]
+@[php_method: 'viewBasePath']
 pub fn (app &VSlimApp) view_base_path() string {
 	return app.view_base_path
 }
 
-@[php_method]
+@[php_method: 'setAssetsPrefix']
 pub fn (mut app VSlimApp) set_assets_prefix(prefix string) &VSlimApp {
 	app.assets_prefix = normalize_assets_prefix(prefix)
 	return app
 }
 
-@[php_method]
+@[php_method: 'assetsPrefix']
 pub fn (app &VSlimApp) assets_prefix() string {
 	if app.assets_prefix == '' {
 		return '/assets'
@@ -27,14 +28,14 @@ pub fn (app &VSlimApp) assets_prefix() string {
 	return app.assets_prefix
 }
 
-@[php_method]
+@[php_method: 'setViewCache']
 pub fn (mut app VSlimApp) set_view_cache(enabled bool) &VSlimApp {
 	app.view_cache_enabled = enabled
 	app.view_cache_configured = true
 	return app
 }
 
-@[php_method]
+@[php_method: 'viewCacheEnabled']
 pub fn (app &VSlimApp) view_cache_enabled() bool {
 	if app.view_cache_configured {
 		return app.view_cache_enabled
@@ -45,7 +46,7 @@ pub fn (app &VSlimApp) view_cache_enabled() bool {
 	return default_view_cache_enabled()
 }
 
-@[php_method]
+@[php_method: 'clearViewCache']
 pub fn (mut app VSlimApp) clear_view_cache() &VSlimApp {
 	clear_template_source_cache()
 	return app
@@ -67,7 +68,7 @@ pub fn (mut app VSlimApp) helper(name string, handler vphp.RequestBorrowedZBox) 
 	return &app
 }
 
-@[php_method]
+@[php_method: 'makeView']
 pub fn (app &VSlimApp) make_view() &VSlimView {
 	return &VSlimView{
 		base_path: app.view_base_path.clone()
@@ -161,13 +162,14 @@ pub fn (app &VSlimApp) view(template string, data vphp.RequestBorrowedZBox) &VSl
 	return view.render_response(template, data)
 }
 
-@[php_method]
+@[php_method: 'viewWithLayout']
 pub fn (app &VSlimApp) view_with_layout(template string, layout string, data vphp.RequestBorrowedZBox) &VSlimResponse {
 	mut view := app.make_view()
 	return view.render_response_with_layout(template, layout, data)
 }
 
 @[php_method]
+@[php_arg_name: 'base_path=basePath,assets_prefix=assetsPrefix']
 pub fn (mut view VSlimView) construct(base_path string, assets_prefix string) &VSlimView {
 	view.base_path = base_path.trim_space()
 	view.assets_prefix = normalize_assets_prefix(assets_prefix)
@@ -176,24 +178,25 @@ pub fn (mut view VSlimView) construct(base_path string, assets_prefix string) &V
 	return &view
 }
 
-@[php_method]
+@[php_method: 'setBasePath']
+@[php_arg_name: 'base_path=basePath']
 pub fn (mut view VSlimView) set_base_path(base_path string) &VSlimView {
 	view.base_path = base_path.trim_space()
 	return &view
 }
 
-@[php_method]
+@[php_method: 'basePath']
 pub fn (view &VSlimView) base_path() string {
 	return view.base_path
 }
 
-@[php_method]
+@[php_method: 'setAssetsPrefix']
 pub fn (mut view VSlimView) set_assets_prefix(prefix string) &VSlimView {
 	view.assets_prefix = normalize_assets_prefix(prefix)
 	return &view
 }
 
-@[php_method]
+@[php_method: 'assetsPrefix']
 pub fn (view &VSlimView) assets_prefix() string {
 	if view.assets_prefix == '' {
 		return '/assets'
@@ -201,18 +204,18 @@ pub fn (view &VSlimView) assets_prefix() string {
 	return view.assets_prefix
 }
 
-@[php_method]
+@[php_method: 'setCacheEnabled']
 pub fn (mut view VSlimView) set_cache_enabled(enabled bool) &VSlimView {
 	view.cache_enabled = enabled
 	return &view
 }
 
-@[php_method]
+@[php_method: 'cacheEnabled']
 pub fn (view &VSlimView) cache_enabled() bool {
 	return view.cache_enabled
 }
 
-@[php_method]
+@[php_method: 'clearCache']
 pub fn (mut view VSlimView) clear_cache() &VSlimView {
 	clear_template_source_cache()
 	return &view
@@ -267,7 +270,7 @@ fn (view &VSlimView) render_map_with_depth(template string, scalars map[string]s
 	}
 }
 
-@[php_method]
+@[php_method: 'renderWithLayout']
 pub fn (view &VSlimView) render_with_layout(template string, layout string, data vphp.RequestBorrowedZBox) string {
 	scalars, lists, objects := extract_template_data(data.to_zval())
 	return view.render_maps_with_layout(template, layout, scalars, lists, objects)

@@ -6,10 +6,10 @@ import vphp
 @[heap]
 struct VSlimView {
 mut:
-	base_path     string
-	assets_prefix string
-	cache_enabled bool
-	helpers       map[string]vphp.PersistentOwnedZBox
+	base_path     string @[php_prop: basePath]
+	assets_prefix string @[php_prop: assetsPrefix]
+	cache_enabled bool   @[php_prop: cacheEnabled]
+	helpers       map[string]vphp.PersistentOwnedZBox @[php_ignore]
 }
 
 struct VSlimViewHost {
@@ -24,6 +24,6 @@ mut:
 @[heap]
 struct VSlimController {
 mut:
-	app_ref  &VSlimApp  = unsafe { nil }
-	view_ref &VSlimView = unsafe { nil }
+	app_ref  &VSlimApp  = unsafe { nil } @[php_ignore]
+	view_ref &VSlimView = unsafe { nil } @[php_ignore]
 }

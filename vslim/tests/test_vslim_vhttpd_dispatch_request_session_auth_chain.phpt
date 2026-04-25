@@ -171,8 +171,8 @@ TOML);
 
     foreach (['/console', '/console/knowledge/documents'] as $path) {
         $request = new VSlim\Vhttpd\Request('GET', $path, '');
-        $request->set_cookies([$sessionCookieName => $sessionValue]);
-        $response = $app->dispatch_request($request);
+        $request->setCookies([$sessionCookieName => $sessionValue]);
+        $response = $app->dispatchRequest($request);
         echo $path . '|' . $response->status . '|' . $response->body . PHP_EOL;
     }
 }

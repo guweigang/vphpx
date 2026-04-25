@@ -12,7 +12,7 @@ final class PageController extends \VSlim\Controller
         return implode("|", [
             "controller",
             (string) $request->getAttribute("dir_mw", ""),
-            $this->url_for("appdir.home", []),
+            $this->urlFor("appdir.home", []),
         ]);
     }
 }

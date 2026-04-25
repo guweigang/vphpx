@@ -23,7 +23,7 @@ $app->get('/stream/text', function (VSlim\Vhttpd\Request $req) {
     return VSlim\Stream\Response::text((function () use ($req): iterable {
         yield "hello:";
         yield $req->param('name') ?: 'world';
-    })())->set_header('x-app', 'vslim-stream');
+    })())->setHeader('x-app', 'vslim-stream');
 });
 
 $raw = $app->dispatch_envelope_worker([
@@ -33,7 +33,7 @@ $raw = $app->dispatch_envelope_worker([
 ]);
 
 echo (is_object($raw) && $raw instanceof VSlim\Stream\Response ? "raw_stream\n" : "raw_not_stream\n");
-echo $raw->stream_type . "\n";
+echo $raw->streamType . "\n";
 echo $raw->header('x-app') . "\n";
 echo $raw->header('x-request-id') . "\n";
 

@@ -254,41 +254,49 @@ pub fn (migration &VSlimDatabaseMigration) down() bool {
 }
 
 @[php_method: 'createTableSql']
+@[php_arg_name: 'table_name=tableName']
 pub fn (migration &VSlimDatabaseMigration) create_table_sql(table_name string, columns []string) string {
 	return migration_create_table_sql(table_name, columns)
 }
 
 @[php_method: 'dropTableSql']
+@[php_arg_name: 'table_name=tableName']
 pub fn (migration &VSlimDatabaseMigration) drop_table_sql(table_name string) string {
 	return migration_drop_table_sql(table_name)
 }
 
 @[php_method: 'addColumnSql']
+@[php_arg_name: 'table_name=tableName,column_def=columnDef']
 pub fn (migration &VSlimDatabaseMigration) add_column_sql(table_name string, column_def string) string {
 	return migration_add_column_sql(table_name, column_def)
 }
 
 @[php_method: 'dropColumnSql']
+@[php_arg_name: 'table_name=tableName,column_name=columnName']
 pub fn (migration &VSlimDatabaseMigration) drop_column_sql(table_name string, column_name string) string {
 	return migration_drop_column_sql(table_name, column_name)
 }
 
 @[php_method: 'createTable']
+@[php_arg_name: 'table_name=tableName']
 pub fn (mut migration VSlimDatabaseMigration) create_table(table_name string, columns []string) vphp.RequestOwnedZBox {
 	return migration.execute(migration_create_table_sql(table_name, columns))
 }
 
 @[php_method: 'dropTable']
+@[php_arg_name: 'table_name=tableName']
 pub fn (mut migration VSlimDatabaseMigration) drop_table(table_name string) vphp.RequestOwnedZBox {
 	return migration.execute(migration_drop_table_sql(table_name))
 }
 
 @[php_method: 'addColumn']
+@[php_arg_name: 'table_name=tableName,column_def=columnDef']
 pub fn (mut migration VSlimDatabaseMigration) add_column(table_name string, column_def string) vphp.RequestOwnedZBox {
 	return migration.execute(migration_add_column_sql(table_name, column_def))
 }
 
 @[php_method: 'dropColumn']
+@[php_arg_name: 'table_name=tableName,column_name=columnName']
 pub fn (mut migration VSlimDatabaseMigration) drop_column(table_name string, column_name string) vphp.RequestOwnedZBox {
 	return migration.execute(migration_drop_column_sql(table_name, column_name))
 }
@@ -426,6 +434,7 @@ pub fn (migrator &VSlimDatabaseMigrator) seeds_path_value() string {
 }
 
 @[php_method: 'setTable']
+@[php_arg_name: 'table_name=tableName']
 pub fn (mut migrator VSlimDatabaseMigrator) set_table(table_name string) &VSlimDatabaseMigrator {
 	migrator.table_name = table_name.trim_space()
 	return &migrator
@@ -576,7 +585,7 @@ pub fn (mut migrator VSlimDatabaseMigrator) status() vphp.RequestOwnedZBox {
 }
 
 @[php_arg_default: 'name=""']
-@[php_optional_args: 'name']
+@[php_arg_optional: 'name']
 @[php_method]
 pub fn (mut migrator VSlimDatabaseMigrator) seed(name string) int {
 	target := name.trim_space()

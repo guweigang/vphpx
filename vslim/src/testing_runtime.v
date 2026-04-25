@@ -277,6 +277,7 @@ pub fn (mut h VSlimTestingHarness) with_session(values vphp.RequestBorrowedZBox)
 }
 
 @[php_method: 'actingAs']
+@[php_arg_name: 'user_id=userId']
 pub fn (mut h VSlimTestingHarness) acting_as(user_id string) &VSlimTestingHarness {
 	if h.app_ref == unsafe { nil } {
 		vphp.throw_exception_class('RuntimeException', 'testing harness app is not configured', 0)
@@ -295,7 +296,7 @@ pub fn (mut h VSlimTestingHarness) acting_as(user_id string) &VSlimTestingHarnes
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
 @[php_method]
 @[php_arg_default: 'body=""']
-@[php_optional_args: 'body']
+@[php_arg_optional: 'body']
 pub fn (h &VSlimTestingHarness) request(method string, uri string, body string) &VSlimPsr7ServerRequest {
 	return testing_apply_cookies(testing_new_request(method, uri, body), h.cookies)
 }
@@ -329,7 +330,7 @@ pub fn (h &VSlimTestingHarness) handle(request vphp.RequestBorrowedZBox) &VSlimP
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method: 'handleRequest']
 @[php_arg_default: 'body=""']
-@[php_optional_args: 'body']
+@[php_arg_optional: 'body']
 pub fn (h &VSlimTestingHarness) handle_request(method string, uri string, body string) &VSlimPsr7Response {
 	if h.app_ref == unsafe { nil } {
 		return new_psr7_text_response(500, 'testing harness app is not configured')
@@ -420,7 +421,7 @@ pub fn (h &VSlimTestingHarness) assert_body_contains(response vphp.RequestBorrow
 
 @[php_method]
 @[php_arg_default: 'body=""']
-@[php_optional_args: 'body']
+@[php_arg_optional: 'body']
 pub fn (h &VSlimTestingHarness) dispatch(method string, uri string, body string) &VSlimResponse {
 	if h.app_ref == unsafe { nil } {
 		return to_vslim_response(VSlimResponse{
@@ -457,7 +458,7 @@ pub fn (h &VSlimTestingHarness) get_json(uri string) &VSlimResponse {
 
 @[php_method]
 @[php_arg_default: 'body=""']
-@[php_optional_args: 'body']
+@[php_arg_optional: 'body']
 pub fn (h &VSlimTestingHarness) post(uri string, body string) &VSlimResponse {
 	return h.dispatch('POST', uri, body)
 }
@@ -469,7 +470,7 @@ pub fn (h &VSlimTestingHarness) post_json(uri string, payload vphp.RequestBorrow
 
 @[php_method]
 @[php_arg_default: 'body=""']
-@[php_optional_args: 'body']
+@[php_arg_optional: 'body']
 pub fn (h &VSlimTestingHarness) put(uri string, body string) &VSlimResponse {
 	return h.dispatch('PUT', uri, body)
 }
@@ -481,7 +482,7 @@ pub fn (h &VSlimTestingHarness) put_json(uri string, payload vphp.RequestBorrowe
 
 @[php_method]
 @[php_arg_default: 'body=""']
-@[php_optional_args: 'body']
+@[php_arg_optional: 'body']
 pub fn (h &VSlimTestingHarness) patch(uri string, body string) &VSlimResponse {
 	return h.dispatch('PATCH', uri, body)
 }
@@ -493,7 +494,7 @@ pub fn (h &VSlimTestingHarness) patch_json(uri string, payload vphp.RequestBorro
 
 @[php_method]
 @[php_arg_default: 'body=""']
-@[php_optional_args: 'body']
+@[php_arg_optional: 'body']
 pub fn (h &VSlimTestingHarness) delete(uri string, body string) &VSlimResponse {
 	return h.dispatch('DELETE', uri, body)
 }

@@ -157,8 +157,8 @@ TOML);
 
     for ($i = 0; $i < 8; $i++) {
         $request = new VSlim\Vhttpd\Request('GET', '/x?lang=en', '');
-        $request->set_cookies([$cookieName => $cookieValue]);
-        $response = $app->dispatch_request($request);
+        $request->setCookies([$cookieName => $cookieValue]);
+        $response = $app->dispatchRequest($request);
         echo $i . '|' . $response->status . '|' . $response->header('content-language') . '|' . $response->body . PHP_EOL;
     }
 }

@@ -16,27 +16,27 @@ $app->head('/explicit-head', function ($req) {
 });
 
 $head = new VSlim\Vhttpd\Request('HEAD', '/hello', '');
-$headRes = $app->dispatch_request($head);
+$headRes = $app->dispatchRequest($head);
 echo $headRes->status . '|' . strlen($headRes->body) . PHP_EOL;
 
 $explicitHead = new VSlim\Vhttpd\Request('HEAD', '/explicit-head', '');
-$explicitHeadRes = $app->dispatch_request($explicitHead);
+$explicitHeadRes = $app->dispatchRequest($explicitHead);
 echo $explicitHeadRes->status . '|' . strlen($explicitHeadRes->body) . PHP_EOL;
 
 $opt = new VSlim\Vhttpd\Request('OPTIONS', '/items/9', '');
-$optRes = $app->dispatch_request($opt);
+$optRes = $app->dispatchRequest($opt);
 echo $optRes->status . '|' . $optRes->header('allow') . PHP_EOL;
 
 $overrideHeader = new VSlim\Vhttpd\Request('POST', '/items/7', '');
-$overrideHeader->set_headers(['x-http-method-override' => 'DELETE']);
-$overrideHeaderRes = $app->dispatch_request($overrideHeader);
+$overrideHeader->setHeaders(['x-http-method-override' => 'DELETE']);
+$overrideHeaderRes = $app->dispatchRequest($overrideHeader);
 echo $overrideHeaderRes->status . '|' . $overrideHeaderRes->body . PHP_EOL;
 
 $overrideQueryRes = $app->dispatch('POST', '/items/8?_method=DELETE');
 echo $overrideQueryRes->status . '|' . $overrideQueryRes->body . PHP_EOL;
 
 $overrideBody = new VSlim\Vhttpd\Request('POST', '/items/10', '_method=DELETE');
-$overrideBodyRes = $app->dispatch_request($overrideBody);
+$overrideBodyRes = $app->dispatchRequest($overrideBody);
 echo $overrideBodyRes->status . '|' . $overrideBodyRes->body . PHP_EOL;
 ?>
 --EXPECT--

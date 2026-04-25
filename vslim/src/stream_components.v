@@ -10,7 +10,8 @@ pub fn VSlimStreamFactory.text(chunks vphp.RequestBorrowedZBox) vphp.RequestOwne
 	]))
 }
 
-@[php_method]
+@[php_method: 'textWith']
+@[php_arg_name: 'content_type=contentType']
 pub fn VSlimStreamFactory.text_with(chunks vphp.RequestBorrowedZBox, status int, content_type string, headers vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	return vphp.RequestOwnedZBox.adopt_zval(vphp.php_class('VSlim\\Stream\\Response').static_method_owned_request('text_with', [
 		chunks.to_zval(),
@@ -27,7 +28,7 @@ pub fn VSlimStreamFactory.sse(events vphp.RequestBorrowedZBox) vphp.RequestOwned
 	]))
 }
 
-@[php_method]
+@[php_method: 'sseWith']
 pub fn VSlimStreamFactory.sse_with(events vphp.RequestBorrowedZBox, status int, headers vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	return vphp.RequestOwnedZBox.adopt_zval(vphp.php_class('VSlim\\Stream\\Response').static_method_owned_request('sse_with', [
 		events.to_zval(),
@@ -36,22 +37,26 @@ pub fn VSlimStreamFactory.sse_with(events vphp.RequestBorrowedZBox, status int, 
 	]))
 }
 
-@[php_method]
+@[php_method: 'ollamaText']
+@[php_arg_name: 'request_payload=requestPayload']
 pub fn VSlimStreamFactory.ollama_text(request_payload vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	return VSlimStreamOllamaClient.from_env().text_response_from_request(request_payload)
 }
 
-@[php_method]
+@[php_method: 'ollamaTextWith']
+@[php_arg_name: 'request_payload=requestPayload']
 pub fn VSlimStreamFactory.ollama_text_with(request_payload vphp.RequestBorrowedZBox, options vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	return VSlimStreamOllamaClient.from_options(options).text_response_from_request(request_payload)
 }
 
-@[php_method]
+@[php_method: 'ollamaSse']
+@[php_arg_name: 'request_payload=requestPayload']
 pub fn VSlimStreamFactory.ollama_sse(request_payload vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	return VSlimStreamOllamaClient.from_env().sse_response_from_request(request_payload)
 }
 
-@[php_method]
+@[php_method: 'ollamaSseWith']
+@[php_arg_name: 'request_payload=requestPayload']
 pub fn VSlimStreamFactory.ollama_sse_with(request_payload vphp.RequestBorrowedZBox, options vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	return VSlimStreamOllamaClient.from_options(options).sse_response_from_request(request_payload)
 }
@@ -61,12 +66,13 @@ pub fn VSlimStreamNdjsonDecoder.decode(stream vphp.RequestBorrowedZBox) vphp.Req
 	return vphp.RequestOwnedZBox.adopt_zval(decode_ndjson_rows(stream.to_zval()))
 }
 
-@[php_method]
+@[php_method: 'fromOllama']
 pub fn VSlimStreamSseEncoder.from_ollama(rows vphp.RequestBorrowedZBox, model string) vphp.RequestOwnedZBox {
 	return vphp.RequestOwnedZBox.adopt_zval(encode_ollama_sse_events(rows.to_zval(), model))
 }
 
 @[php_method]
+@[php_arg_name: 'chat_url=chatUrl,default_model=defaultModel,api_key=apiKey,fixture_path=fixturePath']
 pub fn (mut c VSlimStreamOllamaClient) construct(chat_url string, default_model string, api_key string, fixture_path string) &VSlimStreamOllamaClient {
 	c.chat_url = normalize_ollama_chat_url(chat_url)
 	c.default_model = normalize_ollama_model(default_model)
@@ -75,7 +81,7 @@ pub fn (mut c VSlimStreamOllamaClient) construct(chat_url string, default_model 
 	return &c
 }
 
-@[php_method]
+@[php_method: 'fromEnv']
 pub fn VSlimStreamOllamaClient.from_env() &VSlimStreamOllamaClient {
 	mut out := &VSlimStreamOllamaClient{}
 	out.construct(
@@ -87,7 +93,7 @@ pub fn VSlimStreamOllamaClient.from_env() &VSlimStreamOllamaClient {
 	return out
 }
 
-@[php_method]
+@[php_method: 'fromConfig']
 pub fn VSlimStreamOllamaClient.from_config(config &VSlimConfig) &VSlimStreamOllamaClient {
 	mut out := &VSlimStreamOllamaClient{}
 	out.construct(
@@ -99,7 +105,7 @@ pub fn VSlimStreamOllamaClient.from_config(config &VSlimConfig) &VSlimStreamOlla
 	return out
 }
 
-@[php_method]
+@[php_method: 'fromApp']
 pub fn VSlimStreamOllamaClient.from_app(app &VSlimApp) &VSlimStreamOllamaClient {
 	if app.config_ref != unsafe { nil } {
 		return VSlimStreamOllamaClient.from_config(app.config_ref)
@@ -107,7 +113,7 @@ pub fn VSlimStreamOllamaClient.from_app(app &VSlimApp) &VSlimStreamOllamaClient 
 	return VSlimStreamOllamaClient.from_env()
 }
 
-@[php_method]
+@[php_method: 'fromOptions']
 pub fn VSlimStreamOllamaClient.from_options(options vphp.RequestBorrowedZBox) &VSlimStreamOllamaClient {
 	base := VSlimStreamOllamaClient.from_env()
 	mut out := &VSlimStreamOllamaClient{}
@@ -121,22 +127,22 @@ pub fn VSlimStreamOllamaClient.from_options(options vphp.RequestBorrowedZBox) &V
 	return out
 }
 
-@[php_method]
+@[php_method: 'chatUrl']
 pub fn (c &VSlimStreamOllamaClient) chat_url() string {
 	return c.chat_url_value()
 }
 
-@[php_method]
+@[php_method: 'defaultModel']
 pub fn (c &VSlimStreamOllamaClient) default_model() string {
 	return c.default_model_value()
 }
 
-@[php_method]
+@[php_method: 'apiKey']
 pub fn (c &VSlimStreamOllamaClient) api_key() string {
 	return c.api_key_value()
 }
 
-@[php_method]
+@[php_method: 'fixturePath']
 pub fn (c &VSlimStreamOllamaClient) fixture_path() string {
 	return c.fixture_path_value()
 }
@@ -161,13 +167,14 @@ pub fn (c &VSlimStreamOllamaClient) payload(input vphp.RequestBorrowedZBox) vphp
 	return vphp.RequestOwnedZBox.adopt_zval(new_ollama_payload(prompt, model, messages))
 }
 
-@[php_method]
+@[php_method: 'payloadFromRequest']
+@[php_arg_name: 'request_payload=requestPayload']
 pub fn (c &VSlimStreamOllamaClient) payload_from_request(request_payload vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	req := normalize_ollama_source_request(request_payload)
 	return c.payload_from_vslim_request(req)
 }
 
-@[php_method]
+@[php_method: 'openStream']
 pub fn (c &VSlimStreamOllamaClient) open_stream(payload vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	raw_payload := payload.to_zval()
 	fixture := c.fixture_path_value()
@@ -247,7 +254,8 @@ pub fn (c &VSlimStreamOllamaClient) open_stream(payload vphp.RequestBorrowedZBox
 	return vphp.RequestOwnedZBox.adopt_zval(new_open_stream_result(true, fp.take_zval(), '', status, c.chat_url_value()))
 }
 
-@[php_method]
+@[php_method: 'textResponseFromRequest']
+@[php_arg_name: 'request_payload=requestPayload']
 pub fn (c &VSlimStreamOllamaClient) text_response_from_request(request_payload vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	req := normalize_ollama_source_request(request_payload)
 	payload := c.payload_from_vslim_request(req)
@@ -269,7 +277,8 @@ pub fn (c &VSlimStreamOllamaClient) text_response_from_request(request_payload v
 	return response
 }
 
-@[php_method]
+@[php_method: 'sseResponseFromRequest']
+@[php_arg_name: 'request_payload=requestPayload']
 pub fn (c &VSlimStreamOllamaClient) sse_response_from_request(request_payload vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	req := normalize_ollama_source_request(request_payload)
 	payload := c.payload_from_vslim_request(req)

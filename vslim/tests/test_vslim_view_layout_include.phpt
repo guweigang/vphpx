@@ -5,11 +5,11 @@ VSlim View supports include partials and layout slots
 --FILE--
 <?php
 $app = new VSlim\App();
-$app->set_view_base_path(__DIR__ . '/fixtures');
-$app->set_assets_prefix('/assets');
+$app->setViewBasePath(__DIR__ . '/fixtures');
+$app->setAssetsPrefix('/assets');
 
-$view = $app->make_view();
-$body = $view->render_with_layout('view_home.html', 'view_layout.html', [
+$view = $app->makeView();
+$body = $view->renderWithLayout('view_home.html', 'view_layout.html', [
     'title' => 'Layout Demo',
     'subtitle' => 'Header-OK',
     'name' => 'neo',
@@ -23,7 +23,7 @@ echo (str_contains($body, '<nav>NAV-DEFAULT</nav>') ? 'slot-default-ok' : 'slot-
 echo (str_contains($body, '<aside>SIDE|neo|NAV</aside>') ? 'sidebar-slot-ok' : 'sidebar-slot-miss') . PHP_EOL;
 echo (str_contains($body, '<footer>FOOT|trace-l1</footer>') ? 'footer-slot-ok' : 'footer-slot-miss') . PHP_EOL;
 
-$res = $app->view_with_layout('view_home.html', 'view_layout.html', [
+$res = $app->viewWithLayout('view_home.html', 'view_layout.html', [
     'title' => 'Layout Demo 2',
     'subtitle' => 'Header-2',
     'name' => 'ada',
@@ -33,7 +33,7 @@ echo $res->status . '|' . (str_contains($res->body, 'Header-2') ? 'res-ok' : 're
 
 final class LayoutController extends VSlim\Controller {
     public function page(): VSlim\Vhttpd\Response {
-        return $this->render_with_layout('view_home.html', 'view_layout.html', [
+        return $this->renderWithLayout('view_home.html', 'view_layout.html', [
             'title' => 'Controller Layout',
             'subtitle' => 'Header-C',
             'name' => 'mia',

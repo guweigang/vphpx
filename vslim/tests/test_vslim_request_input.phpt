@@ -5,19 +5,19 @@ VSlim Request input helpers merge query and parsed body values
 --FILE--
 <?php
 $req = new VSlim\Vhttpd\Request('POST', '/submit?from=query&same=qv', 'from=body&same=bv&n=1');
-$req->set_headers(['content-type' => 'application/x-www-form-urlencoded']);
+$req->setHeaders(['content-type' => 'application/x-www-form-urlencoded']);
 echo $req->input('from') . PHP_EOL;
 echo $req->input('same') . PHP_EOL;
 echo ($req->has_input('n') ? 'yes' : 'no') . PHP_EOL;
-echo $req->input_or('none', 'fallback') . PHP_EOL;
-echo $req->parsed_body()['from'] . PHP_EOL;
-echo $req->all_inputs()['from'] . '|' . $req->all_inputs()['same'] . PHP_EOL;
+echo $req->inputOr('none', 'fallback') . PHP_EOL;
+echo $req->parsedBody()['from'] . PHP_EOL;
+echo $req->allInputs()['from'] . '|' . $req->allInputs()['same'] . PHP_EOL;
 
 $jsonReq = new VSlim\Vhttpd\Request('POST', '/json?trace=query', '{"trace":"body","ok":"yes"}');
-$jsonReq->set_headers(['content-type' => 'application/json']);
+$jsonReq->setHeaders(['content-type' => 'application/json']);
 echo $jsonReq->input('trace') . PHP_EOL;
 echo $jsonReq->input('ok') . PHP_EOL;
-echo $jsonReq->parsed_body()['ok'] . PHP_EOL;
+echo $jsonReq->parsedBody()['ok'] . PHP_EOL;
 ?>
 --EXPECT--
 body

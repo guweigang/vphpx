@@ -6,7 +6,7 @@ $app = new VSlim\App();
 
 $app->get('/hello/:name', function ($req) {
     $res = new VSlim\Vhttpd\Response(200, 'Hello, ' . $req->getAttribute('name'), 'text/plain; charset=utf-8');
-    return $res->set_header('x-app', 'builder-object');
+    return $res->setHeader('x-app', 'builder-object');
 });
 
 $app->post('/submit', function ($req) {

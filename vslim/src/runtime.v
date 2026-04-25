@@ -87,7 +87,7 @@ fn (app VSlimRuntime) run_middleware(index int, req VSlimRequest) VSlimResponse 
 
 fn (app VSlimRuntime) dispatch_route(req VSlimRequest) VSlimResponse {
 	method := req.method.to_upper()
-	path := RoutePath.normalize(req.path)
+	path := RoutePath.normalize(req.path_value())
 	mut method_not_allowed := false
 
 	for route in app.routes {
@@ -119,7 +119,7 @@ fn with_trace_id(req VSlimRequest, next VSlimNext) VSlimResponse {
 }
 
 fn auth_guard(req VSlimRequest, next VSlimNext) VSlimResponse {
-	if req.path == '/private' {
+	if req.path_value() == '/private' {
 		token := req.query['token'] or { '' }
 		if token != 'ok' {
 			return text_response(401, 'Unauthorized')
@@ -174,7 +174,7 @@ fn dispatch_demo_request(req VSlimRequest) VSlimResponse {
 fn dispatch_demo_request_with_params(req VSlimRequest) (VSlimResponse, map[string]string) {
 	mut app := new_slim_demo_app()
 	method := req.method.to_upper()
-	path := RoutePath.normalize(req.path)
+	path := RoutePath.normalize(req.path_value())
 	mut method_not_allowed := false
 	for route in app.routes {
 		ok, params := route.matches(path)

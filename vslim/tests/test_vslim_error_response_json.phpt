@@ -5,17 +5,17 @@ VSlim App can switch default error responses to JSON
 --FILE--
 <?php
 $app = new VSlim\App();
-$app->set_error_response_json(true);
-var_dump($app->error_response_json_enabled());
+$app->setErrorResponseJson(true);
+var_dump($app->errorResponseJsonEnabled());
 
 $res1 = $app->dispatch('GET', '/missing');
-echo $res1->status . '|' . $res1->content_type . '|' . $res1->body . PHP_EOL;
+echo $res1->status . '|' . $res1->contentType . '|' . $res1->body . PHP_EOL;
 
 $app->get('/broken', function () {
     return fopen('php://memory', 'r');
 });
 $res2 = $app->dispatch('GET', '/broken');
-echo $res2->status . '|' . $res2->content_type . '|' . $res2->body . PHP_EOL;
+echo $res2->status . '|' . $res2->contentType . '|' . $res2->body . PHP_EOL;
 ?>
 --EXPECT--
 bool(true)

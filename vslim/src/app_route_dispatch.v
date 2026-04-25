@@ -23,7 +23,7 @@ fn dispatch_app_request_with_params(app &VSlimApp, req &VSlimRequest, trace_on b
 			return snapshot_vslim_response(res), snapshot_string_map(params), new_vslim_request_snapshot(effective_req)
 		}
 	}
-	path := RoutePath.normalize(req.path)
+	path := RoutePath.normalize(req.path_value())
 	if has_php_not_found_pipeline(app, path) {
 		raw, not_found_payload := dispatch_php_not_found_terminal_raw(app, req)
 		ctx := new_pipeline_request_context(path, not_found_payload, map[string]string{})
@@ -61,7 +61,7 @@ fn dispatch_app_request_worker(app &VSlimApp, req &VSlimRequest) vphp.ZVal {
 			return raw
 		}
 	}
-	path := RoutePath.normalize(req.path)
+	path := RoutePath.normalize(req.path_value())
 	if has_php_not_found_pipeline(app, path) {
 		raw, not_found_payload := dispatch_php_not_found_terminal_raw(app, req)
 		ctx := new_pipeline_request_context(path, not_found_payload, map[string]string{})
@@ -107,7 +107,7 @@ fn dispatch_app_psr15_request(app &VSlimApp, request_payload vphp.ZVal) &VSlimPs
 			return res
 		}
 	}
-	path := RoutePath.normalize(req.path)
+	path := RoutePath.normalize(req.path_value())
 	if has_php_not_found_pipeline(app, path) {
 		raw, not_found_payload := dispatch_php_not_found_terminal_raw(app, req)
 		ctx := new_pipeline_request_context(path, not_found_payload, map[string]string{})
@@ -150,7 +150,7 @@ fn unresolved_raw_route_dispatch_resolution() RawRouteDispatchResolution {
 
 fn resolve_php_route_dispatch_raw(app &VSlimApp, req &VSlimRequest, source_payload vphp.RequestBorrowedZBox, trace_on bool, trace_base i64) RawRouteDispatchResolution {
 	method := resolve_effective_method(req)
-	path := RoutePath.normalize(req.path)
+	path := RoutePath.normalize(req.path_value())
 	mut method_not_allowed := false
 	mut allowed_methods := []string{}
 	dispatch_req := request_with_method(req, method)
@@ -217,7 +217,7 @@ fn dispatch_php_route_match_raw(app &VSlimApp, path string, initial_payload vphp
 }
 
 fn dispatch_php_routes_psr15(app &VSlimApp, req &VSlimRequest, request_payload vphp.ZVal) (&VSlimPsr7Response, bool) {
-	path := RoutePath.normalize(req.path)
+	path := RoutePath.normalize(req.path_value())
 	resolved := resolve_php_route_dispatch_raw(app, req, vphp.RequestBorrowedZBox.from_zval(request_payload),
 		false, 0)
 	if resolved.handled {
@@ -228,7 +228,7 @@ fn dispatch_php_routes_psr15(app &VSlimApp, req &VSlimRequest, request_payload v
 }
 
 fn dispatch_php_routes_with_params(app &VSlimApp, req &VSlimRequest, trace_on bool, trace_base i64) (VSlimResponse, map[string]string, &VSlimRequest, bool) {
-	path := RoutePath.normalize(req.path)
+	path := RoutePath.normalize(req.path_value())
 	resolved := resolve_php_route_dispatch_raw(app, req, vphp.RequestBorrowedZBox.null(), trace_on,
 		trace_base)
 	if resolved.handled {
@@ -243,7 +243,7 @@ fn dispatch_php_routes_with_params(app &VSlimApp, req &VSlimRequest, trace_on bo
 }
 
 fn dispatch_php_routes_worker_with_params(app &VSlimApp, req &VSlimRequest) (vphp.ZVal, map[string]string, &VSlimRequest, bool) {
-	path := RoutePath.normalize(req.path)
+	path := RoutePath.normalize(req.path_value())
 	resolved := resolve_php_route_dispatch_raw(app, req, vphp.RequestBorrowedZBox.null(), false, 0)
 	if resolved.handled {
 		ctx := new_pipeline_request_context(path, resolved.payload_ref, resolved.route_params)

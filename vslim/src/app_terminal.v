@@ -171,7 +171,7 @@ fn build_method_not_allowed_response_with_context_psr(app &VSlimApp, ctx Pipelin
 
 fn run_not_found(app &VSlimApp, req &VSlimRequest) VSlimResponse {
 	payload := build_php_request_object(req, map[string]string{})
-	path := RoutePath.normalize(req.path)
+	path := RoutePath.normalize(req.path_value())
 	ctx := new_pipeline_request_context(path, vphp.RequestOwnedZBox.from_zval(payload),
 		map[string]string{})
 	res := run_not_found_core_with_context(app, ctx)

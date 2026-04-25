@@ -5,16 +5,16 @@ VSlim Request body format helpers support json/form/multipart
 --FILE--
 <?php
 $formReq = new VSlim\Vhttpd\Request('POST', '/forms/echo?token=demo', 'name=neo&city=shanghai');
-$formReq->set_headers(['content-type' => 'application/x-www-form-urlencoded']);
-echo $formReq->body_format() . PHP_EOL;
-echo ($formReq->is_form_body() ? 'yes' : 'no') . PHP_EOL;
-echo $formReq->form_body()['name'] . PHP_EOL;
+$formReq->setHeaders(['content-type' => 'application/x-www-form-urlencoded']);
+echo $formReq->bodyFormat() . PHP_EOL;
+echo ($formReq->isFormBody() ? 'yes' : 'no') . PHP_EOL;
+echo $formReq->formBody()['name'] . PHP_EOL;
 
 $jsonReq = new VSlim\Vhttpd\Request('POST', '/json', '{"ok":"yes","trace":"demo"}');
-$jsonReq->set_headers(['content-type' => 'application/json']);
-echo $jsonReq->body_format() . PHP_EOL;
-echo ($jsonReq->is_json_body() ? 'yes' : 'no') . PHP_EOL;
-echo $jsonReq->json_body()['ok'] . PHP_EOL;
+$jsonReq->setHeaders(['content-type' => 'application/json']);
+echo $jsonReq->bodyFormat() . PHP_EOL;
+echo ($jsonReq->isJsonBody() ? 'yes' : 'no') . PHP_EOL;
+echo $jsonReq->jsonBody()['ok'] . PHP_EOL;
 
 $boundary = '----vslimBoundary';
 $multipartBody = ''
@@ -27,10 +27,10 @@ $multipartBody = ''
     . "hello from body\r\n"
     . '--' . $boundary . "--\r\n";
 $multipartReq = new VSlim\Vhttpd\Request('POST', '/forms/echo', $multipartBody);
-$multipartReq->set_headers(['content-type' => 'multipart/form-data; boundary=' . $boundary]);
-echo $multipartReq->body_format() . PHP_EOL;
-echo ($multipartReq->is_multipart_body() ? 'yes' : 'no') . PHP_EOL;
-echo $multipartReq->multipart_body()['name'] . PHP_EOL;
+$multipartReq->setHeaders(['content-type' => 'multipart/form-data; boundary=' . $boundary]);
+echo $multipartReq->bodyFormat() . PHP_EOL;
+echo ($multipartReq->isMultipartBody() ? 'yes' : 'no') . PHP_EOL;
+echo $multipartReq->multipartBody()['name'] . PHP_EOL;
 echo implode(',', $multipartReq->uploaded_files()) . PHP_EOL;
 ?>
 --EXPECT--

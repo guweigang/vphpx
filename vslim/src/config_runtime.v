@@ -34,7 +34,7 @@ pub fn (mut c VSlimConfig) load(path string) &VSlimConfig {
 	return &c
 }
 
-@[php_method]
+@[php_method: 'loadDir']
 pub fn (mut c VSlimConfig) load_dir(path string) &VSlimConfig {
 	files := config_dir_files(path) or {
 		vphp.throw_exception_class('InvalidArgumentException', 'config load failed: ${err.msg()}',
@@ -61,7 +61,7 @@ pub fn (mut c VSlimConfig) load_dir(path string) &VSlimConfig {
 	return &c
 }
 
-@[php_method]
+@[php_method: 'loadText']
 pub fn (mut c VSlimConfig) load_text(text string) &VSlimConfig {
 	doc := toml.parse_text(text) or {
 		vphp.throw_exception_class('InvalidArgumentException', 'config parse failed: ${err.msg()}',
@@ -79,7 +79,7 @@ pub fn (mut c VSlimConfig) load_text(text string) &VSlimConfig {
 	return &c
 }
 
-@[php_method]
+@[php_method: 'mergeFile']
 pub fn (mut c VSlimConfig) merge_file(path string) &VSlimConfig {
 	if os.is_dir(path) {
 		return c.merge_dir(path)
@@ -98,7 +98,7 @@ pub fn (mut c VSlimConfig) merge_file(path string) &VSlimConfig {
 	return &c
 }
 
-@[php_method]
+@[php_method: 'mergeDir']
 pub fn (mut c VSlimConfig) merge_dir(path string) &VSlimConfig {
 	files := config_dir_files(path) or {
 		vphp.throw_exception_class('InvalidArgumentException', 'config load failed: ${err.msg()}',
@@ -121,7 +121,7 @@ pub fn (mut c VSlimConfig) merge_dir(path string) &VSlimConfig {
 	return &c
 }
 
-@[php_method]
+@[php_method: 'mergeText']
 pub fn (mut c VSlimConfig) merge_text(text string) &VSlimConfig {
 	doc := toml.parse_text(text) or {
 		vphp.throw_exception_class('InvalidArgumentException', 'config parse failed: ${err.msg()}',
@@ -137,7 +137,7 @@ pub fn (mut c VSlimConfig) merge_text(text string) &VSlimConfig {
 	return &c
 }
 
-@[php_method]
+@[php_method: 'isLoaded']
 pub fn (c &VSlimConfig) is_loaded() bool {
 	return c.loaded
 }
@@ -152,55 +152,61 @@ pub fn (c &VSlimConfig) has(key string) bool {
 	return c.value_opt(key) != none
 }
 
+@[php_arg_name: 'default_value=defaultValue']
 @[php_arg_default: 'default_value=""']
-@[php_optional_args: 'default_value']
-@[php_method]
+@[php_arg_optional: 'default_value']
+@[php_method: 'getString']
 pub fn (c &VSlimConfig) get_string(key string, default_value string) string {
 	value := c.value_opt(key) or { return default_value }
 	return value.string()
 }
 
+@[php_arg_name: 'default_value=defaultValue']
 @[php_arg_default: 'default_value=0']
-@[php_optional_args: 'default_value']
-@[php_method]
+@[php_arg_optional: 'default_value']
+@[php_method: 'getInt']
 pub fn (c &VSlimConfig) get_int(key string, default_value int) int {
 	value := c.value_opt(key) or { return default_value }
 	return value.int()
 }
 
+@[php_arg_name: 'default_value=defaultValue']
 @[php_arg_default: 'default_value=false']
-@[php_optional_args: 'default_value']
-@[php_method]
+@[php_arg_optional: 'default_value']
+@[php_method: 'getBool']
 pub fn (c &VSlimConfig) get_bool(key string, default_value bool) bool {
 	value := c.value_opt(key) or { return default_value }
 	return value.bool()
 }
 
+@[php_arg_name: 'default_value=defaultValue']
 @[php_arg_default: 'default_value=0.0']
-@[php_optional_args: 'default_value']
-@[php_method]
+@[php_arg_optional: 'default_value']
+@[php_method: 'getFloat']
 pub fn (c &VSlimConfig) get_float(key string, default_value f64) f64 {
 	value := c.value_opt(key) or { return default_value }
 	return value.f64()
 }
 
-@[php_method]
+@[php_method: 'getStringList']
 pub fn (c &VSlimConfig) get_string_list(key string) []string {
 	value := c.value_opt(key) or { return []string{} }
 	arr := value.array()
 	return arr.as_strings()
 }
 
+@[php_arg_name: 'default_json=defaultJson']
 @[php_arg_default: 'default_json=""']
-@[php_optional_args: 'default_json']
-@[php_method]
+@[php_arg_optional: 'default_json']
+@[php_method: 'getJson']
 pub fn (c &VSlimConfig) get_json(key string, default_json string) string {
 	value := c.value_opt(key) or { return default_json }
 	return toml_any_to_json(value)
 }
 
+@[php_arg_name: 'default_value=defaultValue']
 @[php_arg_default: 'default_value=null']
-@[php_optional_args: 'default_value']
+@[php_arg_optional: 'default_value']
 @[php_method]
 pub fn (c &VSlimConfig) get(key string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	raw_default := default_value.to_zval()
@@ -213,9 +219,10 @@ pub fn (c &VSlimConfig) get(key string, default_value vphp.RequestBorrowedZBox) 
 	return vphp.own_request_zbox(toml_any_to_zval(value))
 }
 
+@[php_arg_name: 'default_value=defaultValue']
 @[php_arg_default: 'default_value=[]']
-@[php_optional_args: 'default_value']
-@[php_method]
+@[php_arg_optional: 'default_value']
+@[php_method: 'getMap']
 pub fn (c &VSlimConfig) get_map(key string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	raw_default := default_value.to_zval()
 	value := c.value_opt(key) or {
@@ -231,9 +238,10 @@ pub fn (c &VSlimConfig) get_map(key string, default_value vphp.RequestBorrowedZB
 	}
 }
 
+@[php_arg_name: 'default_value=defaultValue']
 @[php_arg_default: 'default_value=[]']
-@[php_optional_args: 'default_value']
-@[php_method]
+@[php_arg_optional: 'default_value']
+@[php_method: 'getList']
 pub fn (c &VSlimConfig) get_list(key string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	raw_default := default_value.to_zval()
 	value := c.value_opt(key) or {
@@ -249,7 +257,7 @@ pub fn (c &VSlimConfig) get_list(key string, default_value vphp.RequestBorrowedZ
 	}
 }
 
-@[php_method]
+@[php_method: 'allJson']
 pub fn (c &VSlimConfig) all_json() string {
 	if !c.loaded {
 		return '{}'

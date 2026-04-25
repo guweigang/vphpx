@@ -106,7 +106,7 @@ fn vslim_trace_mem_log(app &VSlimApp, req &VSlimRequest, stage string, base_byte
 	context['ts'] = psr20_now_unix_milli_string_or_throw(resolve_app_clock_zval(app)) or { '' }
 	context['stage'] = stage
 	context['method'] = req.method
-	context['path'] = req.path
+	context['path'] = req.path_value()
 	context['bytes'] = '${bytes}'
 	context['delta'] = '${delta}'
 	context['ar_len'] = '${counters.autorelease_len}'
@@ -133,8 +133,7 @@ fn resolve_app_clock_zval(app &VSlimApp) vphp.ZVal {
 	}
 }
 
-@[php_function]
-fn vslim_probe_object(obj vphp.RequestBorrowedZBox, class_name string, method_name string) vphp.RequestOwnedZBox {
+fn probe_object_info(obj vphp.RequestBorrowedZBox, class_name string, method_name string) vphp.RequestOwnedZBox {
 	raw := obj.to_zval()
 	if !raw.is_object() {
 		return vphp.own_request_zbox(vphp.new_zval_from[map[string]string]({
@@ -161,6 +160,12 @@ fn vslim_probe_object(obj vphp.RequestBorrowedZBox, class_name string, method_na
 	}) or {
 		vphp.ZVal.new_null()
 	})
+}
+
+@[php_method]
+@[php_arg_name: 'class_name=className,method_name=methodName']
+pub fn VSlimDebugObjectProbe.probe(obj vphp.RequestBorrowedZBox, class_name string, method_name string) vphp.RequestOwnedZBox {
+	return probe_object_info(obj, class_name, method_name)
 }
 
 @[php_method]

@@ -98,8 +98,8 @@ namespace {
     use Psr\Http\Server\RequestHandlerInterface;
 
     $app = new VSlim\App();
-    $app->set_view_base_path(dirname(__DIR__, 2) . '/knowledge-studio/resources/views');
-    $app->load_config_text(<<<'TOML'
+    $app->setViewBasePath(dirname(__DIR__, 2) . '/knowledge-studio/resources/views');
+    $app->loadConfigText(<<<'TOML'
 [session]
 cookie_name = "ks_session"
 secret = "demo-secret"
@@ -176,7 +176,7 @@ TOML);
         $data = $payload;
         $data['viewer_name'] = is_array($viewer) ? (string) ($viewer['name'] ?? '') : '';
         $data['viewer_role'] = is_array($viewer) ? (string) ($viewer['role'] ?? '') : '';
-        return $controller->render_with_layout('console.html', 'layout.html', $data);
+        return $controller->renderWithLayout('console.html', 'layout.html', $data);
     });
 
     $test = $app->testing()->clearCookies()->actingAs('u-1');
@@ -186,8 +186,8 @@ TOML);
 
     foreach ([0, 1] as $i) {
         $request = new VSlim\Vhttpd\Request('GET', '/console', '');
-        $request->set_cookies([$sessionCookieName => $sessionValue]);
-        $response = $app->dispatch_request($request);
+        $request->setCookies([$sessionCookieName => $sessionValue]);
+        $response = $app->dispatchRequest($request);
         echo $i . '|' . $response->status . '|' . (str_contains($response->body, 'Mira Chen') ? 'viewer' : 'miss') . PHP_EOL;
     }
 }

@@ -421,12 +421,12 @@ fn vslim_request_uri_string(req &VSlimRequest) string {
 			uri += ':${req.port.trim_space()}'
 		}
 	}
-	mut path := req.path.trim_space()
+	mut path := req.path_value().trim_space()
 	if path == '' {
 		path = '/'
 	}
 	uri += path
-	query := req.query_string.trim_space()
+	query := req.query_string_value().trim_space()
 	if query != '' {
 		uri += '?${query}'
 	}
@@ -475,7 +475,7 @@ fn new_vslim_request_from_psr_server_request(payload vphp.RequestBorrowedZBox, r
 			query:            snapshot_string_map(query_params)
 			headers:          snapshot_string_map(flatten_psr7_header_map(internal.get_headers()))
 			cookies:          snapshot_string_map(persistent_array_to_string_map(internal.cookie_params_ref))
-			attributes:       snapshot_string_map(zval_assoc_scalar_string_map(internal.get_attributes().to_zval()))
+			attributes:       snapshot_string_map(persistent_array_to_scalar_string_map(internal.attributes_ref))
 			server:           snapshot_string_map(persistent_array_to_string_map(internal.server_params_ref))
 			uploaded_files:   snapshot_string_list(uploaded_files_to_filenames_zval(internal.get_uploaded_files().to_zval()))
 			params:           snapshot_string_map(route_params)
@@ -578,19 +578,18 @@ fn zval_assoc_scalar_string_map(value vphp.ZVal) map[string]string {
 	if !value.is_valid() || !value.is_array() {
 		return map[string]string{}
 	}
-	mut out := map[string]string{}
-	value.foreach(fn [mut out] (key vphp.ZVal, child vphp.ZVal) {
-		name := key.to_string()
-		if !child.is_valid() || child.is_null() || child.is_undef() {
-			out[name] = ''
-			return
-		}
-		if !child.is_string() && !child.is_bool() && !child.is_long() && !child.is_double() {
-			return
-		}
-		out[name] = child.to_string()
+	return value.foreach_with_ctx[map[string]string](map[string]string{}, fn (key vphp.ZVal, child vphp.ZVal, mut acc map[string]string) {
+		acc[key.to_string()] = vphp.stringify_value(child)
 	})
-	return out
+}
+
+fn persistent_array_to_scalar_string_map(value vphp.PersistentOwnedZBox) map[string]string {
+	if !value.is_valid() || value.is_null() || value.is_undef() {
+		return map[string]string{}
+	}
+	return value.with_request_zval(fn (z vphp.ZVal) map[string]string {
+		return zval_assoc_scalar_string_map(z)
+	})
 }
 
 fn psr7_stream_string(stream &VSlimPsr7Stream) string {

@@ -65,7 +65,7 @@ pub fn (mut cfg VSlimDatabaseConfig) construct() &VSlimDatabaseConfig {
 	return &cfg
 }
 
-@[php_method]
+@[php_method: 'setDriver']
 pub fn (mut cfg VSlimDatabaseConfig) set_driver(driver string) &VSlimDatabaseConfig {
 	clean := driver.trim_space().to_lower()
 	cfg.driver = if clean == '' { 'mysql' } else { clean }
@@ -95,7 +95,7 @@ pub fn (cfg &VSlimDatabaseConfig) transport() string {
 	return cfg.transport
 }
 
-@[php_method]
+@[php_method: 'setHost']
 pub fn (mut cfg VSlimDatabaseConfig) set_host(host string) &VSlimDatabaseConfig {
 	cfg.host = if host.trim_space() == '' { '127.0.0.1' } else { host.trim_space() }
 	return &cfg
@@ -109,7 +109,7 @@ pub fn (cfg &VSlimDatabaseConfig) host() string {
 	return cfg.host
 }
 
-@[php_method]
+@[php_method: 'setPort']
 pub fn (mut cfg VSlimDatabaseConfig) set_port(port int) &VSlimDatabaseConfig {
 	cfg.port = if port <= 0 { 3306 } else { port }
 	return &cfg
@@ -123,7 +123,7 @@ pub fn (cfg &VSlimDatabaseConfig) port() int {
 	return cfg.port
 }
 
-@[php_method]
+@[php_method: 'setUsername']
 pub fn (mut cfg VSlimDatabaseConfig) set_username(username string) &VSlimDatabaseConfig {
 	cfg.username = username
 	return &cfg
@@ -134,7 +134,7 @@ pub fn (cfg &VSlimDatabaseConfig) username() string {
 	return cfg.username
 }
 
-@[php_method]
+@[php_method: 'setPassword']
 pub fn (mut cfg VSlimDatabaseConfig) set_password(password string) &VSlimDatabaseConfig {
 	cfg.password = password
 	return &cfg
@@ -185,6 +185,7 @@ pub fn (cfg &VSlimDatabaseConfig) pool_name_value() string {
 }
 
 @[php_method: 'setTimeoutMs']
+@[php_arg_name: 'timeout_ms=timeoutMs']
 pub fn (mut cfg VSlimDatabaseConfig) set_timeout_ms(timeout_ms int) &VSlimDatabaseConfig {
 	cfg.timeout_ms = if timeout_ms <= 0 { 1000 } else { timeout_ms }
 	return &cfg
@@ -199,6 +200,7 @@ pub fn (cfg &VSlimDatabaseConfig) timeout_ms_value() int {
 }
 
 @[php_method: 'setUpstreamSocket']
+@[php_arg_name: 'socket_path=socketPath']
 pub fn (mut cfg VSlimDatabaseConfig) set_upstream_socket(socket_path string) &VSlimDatabaseConfig {
 	cfg.upstream_socket = socket_path.trim_space()
 	return &cfg
@@ -209,7 +211,7 @@ pub fn (cfg &VSlimDatabaseConfig) upstream_socket_value() string {
 	return cfg.upstream_socket.trim_space()
 }
 
-@[php_method]
+@[php_method: 'toJson']
 pub fn (cfg &VSlimDatabaseConfig) to_json() string {
 	mut payload := map[string]string{}
 	payload['driver'] = cfg.driver()
@@ -283,7 +285,7 @@ pub fn (db &VSlimDatabaseManager) pool_size_value() int {
 	return db.config_ref.pool_size_value()
 }
 
-@[php_method]
+@[php_method: 'isConnected']
 pub fn (db &VSlimDatabaseManager) is_connected() bool {
 	return db.mysql_connected || db.upstream_connected
 }
@@ -1720,6 +1722,7 @@ pub fn (model &VSlimDatabaseModel) attributes() vphp.RequestOwnedZBox {
 }
 
 @[php_method]
+@[php_arg_name: 'default_value=defaultValue']
 pub fn (model &VSlimDatabaseModel) get(key string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	if value := model.attributes[key] {
 		return vphp.RequestOwnedZBox.new_string(value)

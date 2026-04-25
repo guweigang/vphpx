@@ -40,8 +40,8 @@ $home = $app->dispatch("GET", "/");
 echo $home->status . "|" . (str_contains($home->body, "VSlim Template") ? "home-ok" : "home-miss") . PHP_EOL;
 
 $homeReq = new VSlim\Vhttpd\Request("GET", "/", "");
-$homeReq->set_headers(["x-trace-id" => "template-home"]);
-$homeTrace = $app->dispatch_request($homeReq);
+$homeReq->setHeaders(["x-trace-id" => "template-home"]);
+$homeTrace = $app->dispatchRequest($homeReq);
 echo $homeTrace->status . "|" . (str_contains($homeTrace->body, "trace: template-home") ? "trace-ok" : "trace-miss") . PHP_EOL;
 
 $module = $app->dispatch("GET", "/module/ping");

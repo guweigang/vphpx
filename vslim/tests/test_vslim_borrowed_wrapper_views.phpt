@@ -5,8 +5,8 @@ VSlim borrowed wrapper view access reuses host-owned view objects
 --FILE--
 <?php
 $app = new VSlim\App();
-$app->set_view_base_path(__DIR__ . '/fixtures');
-$app->set_assets_prefix('/assets');
+$app->setViewBasePath(__DIR__ . '/fixtures');
+$app->setAssetsPrefix('/assets');
 
 $controller = new class($app) extends VSlim\Controller {};
 $controllerView1 = $controller->view();

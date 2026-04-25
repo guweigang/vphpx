@@ -67,7 +67,7 @@ TOML);
     $guard->login('42');
     $seedResponse = new VSlim\Vhttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
     $guard->store()->commit($seedResponse);
-    $cookieValue = explode(';', $seedResponse->cookie_header(), 2)[0];
+    $cookieValue = explode(';', $seedResponse->cookieHeader(), 2)[0];
     $cookieValue = explode('=', $cookieValue, 2)[1] ?? '';
 
     $app->setAuthUserResolver(function (string $id): array {

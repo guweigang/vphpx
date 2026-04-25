@@ -89,7 +89,7 @@ $app->get('/probe', static function (ServerRequestInterface $request): VSlim\Vht
 });
 
 for ($i = 0; $i < 500; $i++) {
-    $response = $app->dispatch_request(new VSlim\Vhttpd\Request('GET', '/probe', ''));
+    $response = $app->dispatchRequest(new VSlim\Vhttpd\Request('GET', '/probe', ''));
     if ($response->status !== 200 || $response->body !== 'ok') {
         echo "bad:$i|status={$response->status}|body=" . json_encode($response->body) . "\n";
         exit(1);

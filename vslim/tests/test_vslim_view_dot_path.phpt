@@ -5,8 +5,8 @@ VSlim View supports dot-path lookup for nested map/object values
 --FILE--
 <?php
 $app = new VSlim\App();
-$app->set_view_base_path(__DIR__ . '/fixtures');
-$view = $app->make_view();
+$app->setViewBasePath(__DIR__ . '/fixtures');
+$view = $app->makeView();
 
 $meta = new stdClass();
 $meta->enabled = true;

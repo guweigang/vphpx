@@ -9,7 +9,7 @@ return function (VSlim\App $app): void {
     $app->get("/hello", function (ServerRequestInterface $request) use ($app): string {
         return implode("|", [
             "hello",
-            $app->config()->get_string("app.name", ""),
+            $app->config()->getString("app.name", ""),
             (string) $app->container()->get("provider.message"),
             (string) $app->container()->get("provider.booted"),
             (string) $request->getAttribute("mw", ""),

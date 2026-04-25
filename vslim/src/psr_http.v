@@ -3,8 +3,9 @@ module main
 import vphp
 
 @[php_method]
+@[php_arg_name: 'default_content=defaultContent']
 @[php_arg_default: 'default_content=""']
-@[php_optional_args: 'default_content']
+@[php_arg_optional: 'default_content']
 pub fn (mut s VSlimPsr7Stream) construct(default_content string) &VSlimPsr7Stream {
 	s.content = default_content
 	s.position = 0
@@ -74,8 +75,9 @@ pub fn (s &VSlimPsr7Stream) is_seekable() bool {
 }
 
 @[php_method]
+@[php_arg_name: 'default_whence=defaultWhence']
 @[php_arg_default: 'default_whence=SEEK_SET']
-@[php_optional_args: 'default_whence']
+@[php_arg_optional: 'default_whence']
 pub fn (s &VSlimPsr7Stream) seek(offset vphp.RequestBorrowedZBox, default_whence vphp.RequestBorrowedZBox) {
 	if s.detached {
 		vphp.throw_exception_class('RuntimeException', 'cannot seek a detached stream', 0)
@@ -209,8 +211,9 @@ pub fn (s &VSlimPsr7Stream) get_contents() string {
 }
 
 @[php_method: 'getMetadata']
+@[php_arg_name: 'default_key=defaultKey']
 @[php_arg_default: 'default_key=null']
-@[php_optional_args: 'default_key']
+@[php_arg_optional: 'default_key']
 pub fn (s &VSlimPsr7Stream) get_metadata(default_key vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	if !default_key.is_valid() || default_key.is_null() || default_key.is_undef() {
 		return vphp.own_request_zbox(vphp.new_zval_from[map[string]string](s.metadata.clone()) or {
@@ -230,6 +233,7 @@ pub fn (s &VSlimPsr7Stream) get_metadata(default_key vphp.RequestBorrowedZBox) v
 }
 
 @[php_method]
+@[php_arg_name: 'default_stream=defaultStream,default_size=defaultSize,default_error=defaultError,default_client_filename=defaultClientFilename,default_client_media_type=defaultClientMediaType']
 pub fn (mut u VSlimPsr7UploadedFile) construct(default_stream vphp.RequestBorrowedZBox, default_size ?int, default_error int, default_client_filename ?string, default_client_media_type ?string) &VSlimPsr7UploadedFile {
 	u.stream_ref = zval_to_psr7_stream(default_stream.to_zval())
 	u.size_hint = uploaded_file_size_hint(default_size, u.stream_ref)
@@ -262,6 +266,7 @@ pub fn (u &VSlimPsr7UploadedFile) get_stream() &VSlimPsr7Stream {
 }
 
 @[php_method: 'moveTo']
+@[php_arg_name: 'target_path=targetPath']
 pub fn (u &VSlimPsr7UploadedFile) move_to(target_path vphp.RequestBorrowedZBox) {
 	path := zval_to_log_message(target_path.to_zval()).trim_space()
 	if path == '' {
@@ -342,8 +347,9 @@ pub fn (mut u VSlimPsr7UploadedFile) cleanup() {
 }
 
 @[php_method]
+@[php_arg_name: 'default_status=defaultStatus,default_reason_phrase=defaultReasonPhrase']
 @[php_arg_default: 'default_status=200,default_reason_phrase=""']
-@[php_optional_args: 'default_status,default_reason_phrase']
+@[php_arg_optional: 'default_status,default_reason_phrase']
 pub fn (mut r VSlimPsr7Response) construct(default_status int, default_reason_phrase string) &VSlimPsr7Response {
 	r.status = default_psr7_status(default_status)
 	r.reason_phrase = normalize_reason_phrase(r.status, default_reason_phrase)
@@ -468,8 +474,9 @@ pub fn (r &VSlimPsr7Response) get_status_code() int {
 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method: 'withStatus']
+@[php_arg_name: 'default_reason_phrase=defaultReasonPhrase']
 @[php_arg_default: 'default_reason_phrase=""']
-@[php_optional_args: 'default_reason_phrase']
+@[php_arg_optional: 'default_reason_phrase']
 pub fn (r &VSlimPsr7Response) with_status(code vphp.RequestBorrowedZBox, default_reason_phrase vphp.RequestBorrowedZBox) &VSlimPsr7Response {
 	status := validate_psr7_status_or_throw(int(code.to_i64())) or {
 		return clone_psr7_response(r, r.protocol_version, clone_header_values(r.headers), clone_header_names(r.header_names), response_body_or_empty(r), r.status, r.reason_phrase)
@@ -627,6 +634,7 @@ pub fn (r &VSlimPsr7Request) get_request_target() string {
 
 @[php_return_type: 'Psr\\Http\\Message\\RequestInterface']
 @[php_method: 'withRequestTarget']
+@[php_arg_name: 'request_target=requestTarget']
 pub fn (r &VSlimPsr7Request) with_request_target(request_target vphp.RequestBorrowedZBox) &VSlimPsr7Request {
 	target := validate_psr7_request_target_or_throw(zval_to_log_message(request_target.to_zval())) or {
 		return clone_psr7_request(r, r.method, r.request_target, r.protocol_version, clone_header_values(r.headers), clone_header_names(r.header_names), request_body_or_empty(r), request_uri_or_default(r))
@@ -662,16 +670,17 @@ pub fn (r &VSlimPsr7Request) get_uri() &VSlimPsr7Uri {
 }
 
 @[php_arg_type: 'uri=Psr\\Http\\Message\\UriInterface']
+@[php_arg_name: 'preserve_host=preserveHost']
 @[php_return_type: 'Psr\\Http\\Message\\RequestInterface']
 @[php_method: 'withUri']
-@[php_arg_default: 'default_preserve_host=false']
-@[php_optional_args: 'default_preserve_host']
-pub fn (r &VSlimPsr7Request) with_uri(uri vphp.RequestBorrowedZBox, default_preserve_host vphp.RequestBorrowedZBox) &VSlimPsr7Request {
+@[php_arg_default: 'preserve_host=false']
+@[php_arg_optional: 'preserve_host']
+pub fn (r &VSlimPsr7Request) with_uri(uri vphp.RequestBorrowedZBox, preserve_host bool) &VSlimPsr7Request {
 	next_uri := zval_to_psr7_uri(uri.to_zval())
 	mut headers := clone_header_values(r.headers)
 	mut header_names := clone_header_names(r.header_names)
 	current_host := headers[normalize_psr7_header_name('Host')] or { []string{} }
-	if !zval_to_bool_or(default_preserve_host.to_zval(), false) || current_host.len == 0 || current_host[0].trim_space() == '' {
+	if !preserve_host || current_host.len == 0 || current_host[0].trim_space() == '' {
 		apply_psr7_host_header(mut headers, mut header_names, next_uri)
 	}
 	return clone_psr7_request(r, r.method, r.request_target, r.protocol_version, headers, header_names, request_body_or_empty(r), next_uri)
@@ -861,6 +870,7 @@ pub fn (r &VSlimPsr7ServerRequest) get_request_target() string {
 
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
 @[php_method: 'withRequestTarget']
+@[php_arg_name: 'request_target=requestTarget']
 pub fn (r &VSlimPsr7ServerRequest) with_request_target(request_target vphp.RequestBorrowedZBox) &VSlimPsr7ServerRequest {
 	target := validate_psr7_request_target_or_throw(zval_to_log_message(request_target.to_zval())) or {
 		return clone_psr7_server_request(r, r.method, r.request_target, r.protocol_version, clone_header_values(r.headers), clone_header_names(r.header_names), server_request_body_or_empty(r), server_request_uri_or_default(r), r.server_params_ref, r.cookie_params_ref, r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref, r.attributes_ref)
@@ -896,15 +906,17 @@ pub fn (r &VSlimPsr7ServerRequest) get_uri() &VSlimPsr7Uri {
 }
 
 @[php_arg_type: 'uri=Psr\\Http\\Message\\UriInterface']
+@[php_arg_name: 'preserve_host=preserveHost']
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
 @[php_method: 'withUri']
-@[php_optional_args: 'default_preserve_host']
-pub fn (r &VSlimPsr7ServerRequest) with_uri(uri vphp.RequestBorrowedZBox, default_preserve_host vphp.RequestBorrowedZBox) &VSlimPsr7ServerRequest {
+@[php_arg_default: 'preserve_host=false']
+@[php_arg_optional: 'preserve_host']
+pub fn (r &VSlimPsr7ServerRequest) with_uri(uri vphp.RequestBorrowedZBox, preserve_host bool) &VSlimPsr7ServerRequest {
 	next_uri := zval_to_psr7_uri(uri.to_zval())
 	mut headers := clone_header_values(r.headers)
 	mut header_names := clone_header_names(r.header_names)
 	current_host := headers[normalize_psr7_header_name('Host')] or { []string{} }
-	if !zval_to_bool_or(default_preserve_host.to_zval(), false) || current_host.len == 0 || current_host[0].trim_space() == '' {
+	if !preserve_host || current_host.len == 0 || current_host[0].trim_space() == '' {
 		apply_psr7_host_header(mut headers, mut header_names, next_uri)
 	}
 	return clone_psr7_server_request(r, r.method, r.request_target, r.protocol_version, headers, header_names, server_request_body_or_empty(r), next_uri, r.server_params_ref, r.cookie_params_ref, r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref, r.attributes_ref)
@@ -950,6 +962,7 @@ pub fn (r &VSlimPsr7ServerRequest) get_uploaded_files() vphp.RequestOwnedZBox {
 
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
 @[php_method: 'withUploadedFiles']
+@[php_arg_name: 'uploaded_files=uploadedFiles']
 pub fn (r &VSlimPsr7ServerRequest) with_uploaded_files(uploaded_files vphp.RequestBorrowedZBox) &VSlimPsr7ServerRequest {
 	return clone_psr7_server_request(r, r.method, r.request_target, r.protocol_version, clone_header_values(r.headers), clone_header_names(r.header_names), server_request_body_or_empty(r), server_request_uri_or_default(r), r.server_params_ref, r.cookie_params_ref, r.query_params_ref, normalize_uploaded_files_tree(uploaded_files.to_zval()), r.parsed_body_ref, r.attributes_ref)
 }
@@ -961,6 +974,7 @@ pub fn (r &VSlimPsr7ServerRequest) get_parsed_body() vphp.RequestOwnedZBox {
 
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
 @[php_method: 'withParsedBody']
+@[php_arg_name: 'parsed_body=parsedBody']
 pub fn (r &VSlimPsr7ServerRequest) with_parsed_body(parsed_body vphp.RequestBorrowedZBox) &VSlimPsr7ServerRequest {
 	if !is_valid_psr7_parsed_body(parsed_body.to_zval()) {
 		vphp.throw_exception_class('InvalidArgumentException', 'parsed body must be null, an array, or an object', 0)
@@ -976,8 +990,9 @@ pub fn (r &VSlimPsr7ServerRequest) get_attributes() vphp.RequestOwnedZBox {
 }
 
 @[php_method: 'getAttribute']
+@[php_arg_name: 'default_value=defaultValue']
 @[php_arg_default: 'default_value=null']
-@[php_optional_args: 'default_value']
+@[php_arg_optional: 'default_value']
 pub fn (r &VSlimPsr7ServerRequest) get_attribute(name vphp.RequestBorrowedZBox, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	key := zval_to_log_message(name.to_zval())
 	if key == '' {
@@ -1020,8 +1035,9 @@ pub fn (r &VSlimPsr7ServerRequest) str() string {
 }
 
 @[php_method]
+@[php_arg_name: 'default_uri=defaultUri']
 @[php_arg_default: 'default_uri=""']
-@[php_optional_args: 'default_uri']
+@[php_arg_optional: 'default_uri']
 pub fn (mut u VSlimPsr7Uri) construct(default_uri string) &VSlimPsr7Uri {
 	parsed := parse_psr7_uri(default_uri)
 	u.scheme = parsed.scheme
@@ -1104,8 +1120,9 @@ pub fn (u &VSlimPsr7Uri) with_scheme(scheme vphp.RequestBorrowedZBox) &VSlimPsr7
 
 @[php_return_type: 'Psr\\Http\\Message\\UriInterface']
 @[php_method: 'withUserInfo']
+@[php_arg_name: 'default_password=defaultPassword']
 @[php_arg_default: 'default_password=""']
-@[php_optional_args: 'default_password']
+@[php_arg_optional: 'default_password']
 pub fn (u &VSlimPsr7Uri) with_user_info(user vphp.RequestBorrowedZBox, default_password vphp.RequestBorrowedZBox) &VSlimPsr7Uri {
 	return clone_psr7_uri(u, u.scheme, zval_to_log_message(user.to_zval()), zval_or_empty_string(default_password.to_zval()), u.host, u.port, u.path, u.query, u.fragment)
 }
@@ -1164,16 +1181,18 @@ pub fn (f &VSlimPsr17RequestFactory) create_request(method vphp.RequestBorrowedZ
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
 @[php_method: 'createServerRequest']
 @[php_arg_type: 'default_server_params=array']
+@[php_arg_name: 'default_server_params=defaultServerParams']
 @[php_arg_default: 'default_server_params=[]']
-@[php_optional_args: 'default_server_params']
+@[php_arg_optional: 'default_server_params']
 pub fn (f &VSlimPsr17ServerRequestFactory) create_server_request(method vphp.RequestBorrowedZBox, uri vphp.RequestBorrowedZBox, default_server_params vphp.RequestBorrowedZBox) &VSlimPsr7ServerRequest {
 	return new_psr7_server_request(validate_psr7_method_or_fallback(zval_to_log_message(method.to_zval()), 'GET'), uri.to_zval(), default_server_params.to_zval())
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method: 'createResponse']
+@[php_arg_name: 'default_status=defaultStatus,default_reason_phrase=defaultReasonPhrase']
 @[php_arg_default: 'default_status=200,default_reason_phrase=""']
-@[php_optional_args: 'default_status,default_reason_phrase']
+@[php_arg_optional: 'default_status,default_reason_phrase']
 pub fn (f &VSlimPsr17ResponseFactory) create_response(default_status vphp.RequestBorrowedZBox, default_reason_phrase vphp.RequestBorrowedZBox) &VSlimPsr7Response {
 	status := validate_psr17_response_status_or_throw(zval_to_psr17_response_status(default_status.to_zval())) or {
 		return &VSlimPsr7Response{
@@ -1205,16 +1224,18 @@ pub fn (mut f VSlimPsr17UploadedFileFactory) construct() &VSlimPsr17UploadedFile
 
 @[php_return_type: 'Psr\\Http\\Message\\StreamInterface']
 @[php_method: 'createStream']
+@[php_arg_name: 'default_content=defaultContent']
 @[php_arg_default: 'default_content=""']
-@[php_optional_args: 'default_content']
+@[php_arg_optional: 'default_content']
 pub fn (f &VSlimPsr17StreamFactory) create_stream(default_content vphp.RequestBorrowedZBox) &VSlimPsr7Stream {
 	return new_psr7_stream(zval_or_empty_string(default_content.to_zval()))
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\StreamInterface']
 @[php_method: 'createStreamFromFile']
+@[php_arg_name: 'default_mode=defaultMode']
 @[php_arg_default: 'default_mode="r"']
-@[php_optional_args: 'default_mode']
+@[php_arg_optional: 'default_mode']
 pub fn (f &VSlimPsr17StreamFactory) create_stream_from_file(filename vphp.RequestBorrowedZBox, default_mode vphp.RequestBorrowedZBox) &VSlimPsr7Stream {
 	return build_psr7_stream_from_file(zval_to_log_message(filename.to_zval()), zval_or_empty_string(default_mode.to_zval()))
 }
@@ -1233,16 +1254,18 @@ pub fn (mut f VSlimPsr17UriFactory) construct() &VSlimPsr17UriFactory {
 @[php_arg_type: 'stream=Psr\\Http\\Message\\StreamInterface']
 @[php_return_type: 'Psr\\Http\\Message\\UploadedFileInterface']
 @[php_method: 'createUploadedFile']
+@[php_arg_name: 'default_size=defaultSize,default_error=defaultError,default_client_filename=defaultClientFilename,default_client_media_type=defaultClientMediaType']
 @[php_arg_default: 'default_size=null,default_error=0,default_client_filename=null,default_client_media_type=null']
-@[php_optional_args: 'default_size,default_error,default_client_filename,default_client_media_type']
+@[php_arg_optional: 'default_size,default_error,default_client_filename,default_client_media_type']
 pub fn (f &VSlimPsr17UploadedFileFactory) create_uploaded_file(stream vphp.RequestBorrowedZBox, default_size vphp.RequestBorrowedZBox, default_error vphp.RequestBorrowedZBox, default_client_filename vphp.RequestBorrowedZBox, default_client_media_type vphp.RequestBorrowedZBox) &VSlimPsr7UploadedFile {
 	return new_psr7_uploaded_file(zval_to_psr7_stream(stream.to_zval()), zval_to_optional_size(default_size.to_zval()), zval_to_upload_error_or(default_error.to_zval(), 0), zval_to_optional_trimmed_string(default_client_filename.to_zval()), zval_to_optional_trimmed_string(default_client_media_type.to_zval()))
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\UriInterface']
 @[php_method: 'createUri']
+@[php_arg_name: 'default_uri=defaultUri']
 @[php_arg_default: 'default_uri=""']
-@[php_optional_args: 'default_uri']
+@[php_arg_optional: 'default_uri']
 pub fn (f &VSlimPsr17UriFactory) create_uri(default_uri vphp.RequestBorrowedZBox) &VSlimPsr7Uri {
 	return new_psr7_uri(zval_or_empty_string(default_uri.to_zval()))
 }
@@ -1994,43 +2017,7 @@ fn parse_psr7_uri(raw string) VSlimPsr7Uri {
 		|| (!trimmed.contains('://') && !trimmed.starts_with('//')) {
 		return fallback_psr7_uri(trimmed)
 	}
-	mut found := false
-	mut scheme := ''
-	mut user := ''
-	mut password := ''
-	mut host := ''
-	mut path := ''
-	mut query := ''
-	mut fragment := ''
-	mut port := -1
-	vphp.with_php_call_result_zval('parse_url', [vphp.RequestOwnedZBox.new_string(trimmed).to_zval()], fn [mut found, mut scheme, mut user, mut password, mut host, mut path, mut query, mut fragment, mut port] (parsed vphp.ZVal) bool {
-		if !(parsed.is_valid() && parsed.is_array()) {
-			return false
-		}
-		host = normalize_psr7_host(zval_string_key(parsed, 'host', ''))
-		scheme = normalize_psr7_scheme(zval_string_key(parsed, 'scheme', ''))
-		user = zval_string_key(parsed, 'user', '')
-		password = zval_string_key(parsed, 'pass', '')
-		port = normalize_psr7_port(zval_int_key(parsed, 'port', -1))
-		path = normalize_psr7_path(zval_string_key(parsed, 'path', ''), host)
-		query = normalize_psr7_query(zval_string_key(parsed, 'query', ''))
-		fragment = normalize_psr7_fragment(zval_string_key(parsed, 'fragment', ''))
-		found = true
-		return true
-	})
-	if found {
-		return VSlimPsr7Uri{
-			scheme: scheme
-			user: user
-			password: password
-			host: host
-			port: port
-			path: path
-			query: query
-			fragment: fragment
-		}
-	}
-	return fallback_psr7_uri(trimmed)
+	return absolute_psr7_uri(trimmed) or { fallback_psr7_uri(trimmed) }
 }
 
 fn fallback_psr7_uri(raw string) VSlimPsr7Uri {
@@ -2051,6 +2038,71 @@ fn fallback_psr7_uri(raw string) VSlimPsr7Uri {
 		path: normalize_psr7_path(path, '')
 		query: normalize_psr7_query(query)
 		fragment: normalize_psr7_fragment(fragment)
+	}
+}
+
+fn absolute_psr7_uri(raw string) ?VSlimPsr7Uri {
+	scheme_sep := raw.index('://') or { return none }
+	scheme := normalize_psr7_scheme(raw[..scheme_sep])
+	if scheme == '' {
+		return none
+	}
+	mut rest := raw[scheme_sep + 3..]
+	mut fragment := ''
+	if idx := rest.index('#') {
+		fragment = normalize_psr7_fragment(rest[idx + 1..])
+		rest = rest[..idx]
+	}
+	mut query := ''
+	if idx := rest.index('?') {
+		query = normalize_psr7_query(rest[idx + 1..])
+		rest = rest[..idx]
+	}
+	mut authority := rest
+	mut path := ''
+	if idx := rest.index('/') {
+		authority = rest[..idx]
+		path = rest[idx..]
+	}
+	mut user := ''
+	mut password := ''
+	mut host_port := authority
+	if at := authority.last_index('@') {
+		user_info := authority[..at]
+		host_port = authority[at + 1..]
+		if colon := user_info.index(':') {
+			user = user_info[..colon]
+			password = user_info[colon + 1..]
+		} else {
+			user = user_info
+		}
+	}
+	mut host := host_port
+	mut port := -1
+	if host_port.starts_with('[') {
+		end := host_port.index(']') or { -1 }
+		if end > 0 {
+			host = host_port[..end + 1]
+			if end + 1 < host_port.len && host_port[end + 1] == `:` {
+				port = normalize_psr7_port(host_port[end + 2..].int())
+			}
+		}
+	} else if colon := host_port.last_index(':') {
+		port_candidate := host_port[colon + 1..]
+		if port_candidate != '' && port_candidate.bytes().all(it >= `0` && it <= `9`) {
+			host = host_port[..colon]
+			port = normalize_psr7_port(port_candidate.int())
+		}
+	}
+	return VSlimPsr7Uri{
+		scheme: scheme
+		user: user
+		password: password
+		host: normalize_psr7_host(host)
+		port: port
+		path: normalize_psr7_path(path, normalize_psr7_host(host))
+		query: query
+		fragment: fragment
 	}
 }
 

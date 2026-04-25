@@ -90,55 +90,55 @@ mut:
 struct VSlimApp {
 mut:
 	routes                  []VSlimRoute
-	websocket_routes        []VSlimRoute
-	websocket_conn_route    map[string]int
-	php_before_middlewares  []vphp.PersistentOwnedZBox
-	php_middlewares         []vphp.PersistentOwnedZBox
-	php_after_middlewares   []vphp.PersistentOwnedZBox
-	php_group_before_middle HookTable
-	php_group_middle        HookTable
-	php_group_after_middle  HookTable
-	not_found_handler       vphp.PersistentOwnedZBox
-	error_handler           vphp.PersistentOwnedZBox
-	container_ref           &VSlimContainer          = unsafe { nil }
-	config_ref              &VSlimConfig             = unsafe { nil }
-	mcp_ref                 &VSlimMcpApp             = unsafe { nil }
-	auth_user_resolver      vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
-	auth_gate_resolver      vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
-	auth_redirect_path      string
-	base_path               string
-	use_demo                bool
-	error_response_json     bool
-	view_base_path          string
-	assets_prefix           string
-	view_cache_enabled      bool
-	view_cache_configured   bool
-	view_helpers            map[string]vphp.PersistentOwnedZBox
-	logger_ref              &VSlimLogger                = unsafe { nil }
-	psr_logger_ref          &VSlimPsrLogger             = unsafe { nil }
-	clock_ref               vphp.PersistentOwnedZBox    = vphp.PersistentOwnedZBox.new_null()
-	listener_provider_ref   &VSlimPsr14ListenerProvider = unsafe { nil }
-	dispatcher_ref          &VSlimPsr14EventDispatcher  = unsafe { nil }
-	cache_ref               &VSlimPsr16Cache            = unsafe { nil }
-	cache_pool_ref          &VSlimPsr6CacheItemPool     = unsafe { nil }
-	http_client_ref         &VSlimPsr18Client           = unsafe { nil }
-	database_ref            &VSlimDatabaseManager       = unsafe { nil }
-	migrator_ref            &VSlimDatabaseMigrator      = unsafe { nil }
-	job_dispatcher_ref      &VSlimJobDispatcher         = unsafe { nil }
-	job_worker_ref          &VSlimJobWorker             = unsafe { nil }
-	providers               []vphp.RetainedObject
-	provider_classes        map[string]bool
-	modules                 []vphp.RetainedObject
-	module_classes          map[string]bool
+	websocket_routes        []VSlimRoute             @[php_ignore]
+	websocket_conn_route    map[string]int           @[php_ignore]
+	php_before_middlewares  []vphp.PersistentOwnedZBox @[php_ignore]
+	php_middlewares         []vphp.PersistentOwnedZBox @[php_ignore]
+	php_after_middlewares   []vphp.PersistentOwnedZBox @[php_ignore]
+	php_group_before_middle HookTable               @[php_ignore]
+	php_group_middle        HookTable               @[php_ignore]
+	php_group_after_middle  HookTable               @[php_ignore]
+	not_found_handler       vphp.PersistentOwnedZBox @[php_ignore]
+	error_handler           vphp.PersistentOwnedZBox @[php_ignore]
+	container_ref           &VSlimContainer          = unsafe { nil } @[php_ignore]
+	config_ref              &VSlimConfig             = unsafe { nil } @[php_ignore]
+	mcp_ref                 &VSlimMcpApp             = unsafe { nil } @[php_ignore]
+	auth_user_resolver      vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
+	auth_gate_resolver      vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
+	auth_redirect_path      string @[php_prop: authRedirectPath]
+	base_path               string @[php_prop: basePath]
+	use_demo                bool   @[php_prop: useDemo]
+	error_response_json     bool   @[php_prop: errorResponseJson]
+	view_base_path          string @[php_prop: viewBasePath]
+	assets_prefix           string @[php_prop: assetsPrefix]
+	view_cache_enabled      bool   @[php_prop: viewCacheEnabled]
+	view_cache_configured   bool   @[php_prop: viewCacheConfigured]
+	view_helpers            map[string]vphp.PersistentOwnedZBox @[php_ignore]
+	logger_ref              &VSlimLogger                = unsafe { nil } @[php_ignore]
+	psr_logger_ref          &VSlimPsrLogger             = unsafe { nil } @[php_ignore]
+	clock_ref               vphp.PersistentOwnedZBox    = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
+	listener_provider_ref   &VSlimPsr14ListenerProvider = unsafe { nil } @[php_ignore]
+	dispatcher_ref          &VSlimPsr14EventDispatcher  = unsafe { nil } @[php_ignore]
+	cache_ref               &VSlimPsr16Cache            = unsafe { nil } @[php_ignore]
+	cache_pool_ref          &VSlimPsr6CacheItemPool     = unsafe { nil } @[php_ignore]
+	http_client_ref         &VSlimPsr18Client           = unsafe { nil } @[php_ignore]
+	database_ref            &VSlimDatabaseManager       = unsafe { nil } @[php_ignore]
+	migrator_ref            &VSlimDatabaseMigrator      = unsafe { nil } @[php_ignore]
+	job_dispatcher_ref      &VSlimJobDispatcher         = unsafe { nil } @[php_ignore]
+	job_worker_ref          &VSlimJobWorker             = unsafe { nil } @[php_ignore]
+	providers               []vphp.RetainedObject      @[php_ignore]
+	provider_classes        map[string]bool            @[php_ignore]
+	modules                 []vphp.RetainedObject      @[php_ignore]
+	module_classes          map[string]bool            @[php_ignore]
 	booted                  bool
-	live_ws_sockets         map[string]vphp.PersistentOwnedZBox
+	live_ws_sockets         map[string]vphp.PersistentOwnedZBox @[php_ignore]
 }
 
 @[php_class: 'VSlim\\Testing\\Harness']
 @[heap]
 struct VSlimTestingHarness {
 mut:
-	app_ref &VSlimApp = unsafe { nil }
+	app_ref &VSlimApp = unsafe { nil } @[php_ignore]
 	cookies map[string]string
 }
 
@@ -223,14 +223,14 @@ struct PhaseMiddlewareDispatchResult {
 @[heap]
 struct VSlimServiceProvider {
 mut:
-	app_ref &VSlimApp = unsafe { nil }
+	app_ref &VSlimApp = unsafe { nil } @[php_ignore]
 }
 
 @[php_class: 'VSlim\\Support\\Module']
 @[heap]
 struct VSlimModule {
 mut:
-	app_ref &VSlimApp = unsafe { nil }
+	app_ref &VSlimApp = unsafe { nil } @[php_ignore]
 }
 
 @[php_class: 'VSlim\\RouteGroup']
@@ -246,22 +246,22 @@ mut:
 struct VSlimRequest {
 pub mut:
 	method           string
-	raw_path         string
-	path             string
+	raw_path         string @[php_prop: rawPath]
 	body             string
-	query_string     string
 	scheme           string
 	host             string
 	port             string
-	protocol_version string
-	remote_addr      string
+	protocol_version string @[php_prop: protocolVersion]
+	remote_addr      string @[php_prop: remoteAddr]
 mut:
+	path           string @[php_ignore]
+	query_string   string @[php_ignore]
 	query          map[string]string
 	headers        map[string]string
 	cookies        map[string]string
 	attributes     map[string]string
 	server         map[string]string
-	uploaded_files []string
+	uploaded_files []string @[php_prop: uploadedFiles]
 	params         map[string]string
 }
 
@@ -269,34 +269,34 @@ mut:
 @[heap]
 struct VSlimVhttpdClient {
 mut:
-	socket_path             string
-	connect_timeout_seconds f64 = 2.0
+	socket_path             string @[php_prop: socketPath]
+	connect_timeout_seconds f64    = 2.0 @[php_prop: connectTimeoutSeconds]
 }
 
 @[php_class: 'VSlim\\Session\\Store']
 @[heap]
 struct VSlimSessionStore {
 mut:
-	cookie_name string = 'vslim_session'
+	cookie_name string = 'vslim_session' @[php_prop: cookieName]
 	secret      string
-	ttl_seconds int    = 7200
+	ttl_seconds int    = 7200 @[php_prop: ttlSeconds]
 	path        string = '/'
 	domain      string
 	secure      bool
-	http_only   bool   = true
-	same_site   string = 'lax'
-	values      map[string]string
+	http_only   bool   = true @[php_prop: httpOnly]
+	same_site   string = 'lax' @[php_prop: sameSite]
+	values      map[string]string @[php_ignore]
 	loaded      bool
-	dirty       bool
-	destroyed   bool
+	dirty       bool @[php_ignore]
+	destroyed   bool @[php_ignore]
 }
 
 @[php_class: 'VSlim\\Auth\\SessionGuard']
 @[heap]
 struct VSlimAuthSessionGuard {
 mut:
-	store_ref &VSlimSessionStore = unsafe { nil }
-	user_key  string             = 'auth.user_id'
+	store_ref &VSlimSessionStore = unsafe { nil } @[php_ignore]
+	user_key  string             = 'auth.user_id' @[php_prop: userKey]
 }
 
 @[php_implements: 'Psr\\Http\\Server\\MiddlewareInterface']
@@ -304,7 +304,7 @@ mut:
 @[heap]
 struct VSlimSessionStartMiddleware {
 mut:
-	app_ref &VSlimApp = unsafe { nil }
+	app_ref &VSlimApp = unsafe { nil } @[php_ignore]
 }
 
 @[php_implements: 'Psr\\Http\\Server\\MiddlewareInterface']
@@ -312,8 +312,8 @@ mut:
 @[heap]
 struct VSlimAuthRequireMiddleware {
 mut:
-	app_ref       &VSlimApp = unsafe { nil }
-	redirect_path string
+	app_ref       &VSlimApp = unsafe { nil } @[php_ignore]
+	redirect_path string    @[php_prop: redirectPath]
 }
 
 @[php_implements: 'Psr\\Http\\Server\\MiddlewareInterface']
@@ -321,8 +321,8 @@ mut:
 @[heap]
 struct VSlimAuthGuestMiddleware {
 mut:
-	app_ref       &VSlimApp = unsafe { nil }
-	redirect_path string
+	app_ref       &VSlimApp = unsafe { nil } @[php_ignore]
+	redirect_path string    @[php_prop: redirectPath]
 }
 
 @[php_implements: 'Psr\\Http\\Server\\MiddlewareInterface']
@@ -330,7 +330,7 @@ mut:
 @[heap]
 struct VSlimAuthRequireAbilityMiddleware {
 mut:
-	app_ref &VSlimApp = unsafe { nil }
+	app_ref &VSlimApp = unsafe { nil } @[php_ignore]
 	ability string
 	status  int = 403
 	message string
@@ -342,25 +342,29 @@ struct VSlimResponse {
 pub mut:
 	status       int
 	body         string
-	content_type string
+	content_type string @[php_prop: contentType]
 mut:
 	headers map[string]string
 }
 
-@[php_class: 'VPhp\\VSlim\\Psr7Adapter']
+@[php_class: 'VSlim\\Psr7Adapter']
 @[heap]
-struct VPhpVSlimPsr7Adapter {}
+struct VSlimPsr7Adapter {}
+
+@[php_class: 'VSlim\\Debug\\ObjectProbe']
+@[heap]
+struct VSlimDebugObjectProbe {}
 
 @[php_class: 'VSlim\\Stream\\Response']
 @[heap]
 struct VSlimStreamResponse {
 pub mut:
-	stream_type  string
+	stream_type  string @[php_prop: streamType]
 	status       int
-	content_type string
+	content_type string @[php_prop: contentType]
 mut:
 	headers    map[string]string
-	chunks_ref vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	chunks_ref vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
 }
 
 @[php_class: 'VSlim\\Stream\\NdjsonDecoder']
@@ -375,10 +379,10 @@ struct VSlimStreamSseEncoder {}
 @[heap]
 struct VSlimStreamOllamaClient {
 mut:
-	chat_url      string
-	default_model string
-	api_key       string
-	fixture_path  string
+	chat_url      string @[php_prop: chatUrl]
+	default_model string @[php_prop: defaultModel]
+	api_key       string @[php_prop: apiKey]
+	fixture_path  string @[php_prop: fixturePath]
 }
 
 @[php_class: 'VSlim\\Stream\\Factory']
@@ -390,9 +394,9 @@ struct VSlimStreamFactory {}
 @[heap]
 struct VSlimWebSocketApp {
 mut:
-	on_open_handler    vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
-	on_message_handler vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
-	on_close_handler   vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	on_open_handler    vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
+	on_message_handler vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
+	on_close_handler   vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
 	connections        map[string]vphp.PersistentOwnedZBox
 	rooms              map[string][]string
 }
@@ -402,33 +406,33 @@ mut:
 @[heap]
 struct VSlimMcpApp {
 mut:
-	method_handlers       map[string]vphp.PersistentOwnedZBox
-	tool_handlers         map[string]vphp.PersistentOwnedZBox
-	tool_descriptions     map[string]string
-	tool_schemas          map[string]vphp.PersistentOwnedZBox
-	resource_handlers     map[string]vphp.PersistentOwnedZBox
-	resource_names        map[string]string
-	resource_descriptions map[string]string
-	resource_mime_types   map[string]string
-	prompt_handlers       map[string]vphp.PersistentOwnedZBox
-	prompt_descriptions   map[string]string
-	prompt_arguments      map[string]vphp.PersistentOwnedZBox
-	server_info           map[string]string
-	server_capabilities   map[string]vphp.PersistentOwnedZBox
+	method_handlers       map[string]vphp.PersistentOwnedZBox @[php_ignore]
+	tool_handlers         map[string]vphp.PersistentOwnedZBox @[php_ignore]
+	tool_descriptions     map[string]string @[php_ignore]
+	tool_schemas          map[string]vphp.PersistentOwnedZBox @[php_ignore]
+	resource_handlers     map[string]vphp.PersistentOwnedZBox @[php_ignore]
+	resource_names        map[string]string @[php_ignore]
+	resource_descriptions map[string]string @[php_ignore]
+	resource_mime_types   map[string]string @[php_ignore]
+	prompt_handlers       map[string]vphp.PersistentOwnedZBox @[php_ignore]
+	prompt_descriptions   map[string]string @[php_ignore]
+	prompt_arguments      map[string]vphp.PersistentOwnedZBox @[php_ignore]
+	server_info           map[string]string @[php_ignore]
+	server_capabilities   map[string]vphp.PersistentOwnedZBox @[php_ignore]
 }
 
 @[php_class: 'VSlim\\Log\\Logger']
 @[heap]
 struct VSlimLogger {
 mut:
-	engine_ref         &log.Log = unsafe { nil }
+	engine_ref         &log.Log = unsafe { nil } @[php_ignore]
 	channel            string
 	context            map[string]string
-	level_name         string
-	output_file        string
-	console_target     string
-	local_time_enabled bool = true
-	short_tag_enabled  bool
+	level_name         string @[php_prop: levelName]
+	output_file        string @[php_prop: outputFile]
+	console_target     string @[php_prop: consoleTarget]
+	local_time_enabled bool   = true @[php_prop: localTimeEnabled]
+	short_tag_enabled  bool   @[php_prop: shortTagEnabled]
 }
 
 @[php_implements: 'Psr\\Log\\LoggerInterface']
@@ -436,7 +440,7 @@ mut:
 @[heap]
 struct VSlimPsrLogger {
 mut:
-	logger_ref &VSlimLogger = unsafe { nil }
+	logger_ref &VSlimLogger = unsafe { nil } @[php_ignore]
 }
 
 @[php_const: 'vslim_log_level_consts']
@@ -460,13 +464,13 @@ mut:
 @[heap]
 struct VSlimPsr7UploadedFile {
 mut:
-	stream_ref        &VSlimPsr7Stream = unsafe { nil }
-	size_hint         int              = -1
-	error_code        int
-	client_filename   string
-	client_media_type string
+	stream_ref        &VSlimPsr7Stream = unsafe { nil } @[php_ignore]
+	size_hint         int              = -1 @[php_ignore]
+	error_code        int              @[php_ignore]
+	client_filename   string           @[php_ignore]
+	client_media_type string           @[php_ignore]
 	moved             bool
-	target_path       string
+	target_path       string @[php_ignore]
 }
 
 @[php_implements: 'Psr\\Http\\Message\\ResponseInterface']
@@ -475,11 +479,11 @@ mut:
 struct VSlimPsr7Response {
 mut:
 	status           int = 200
-	reason_phrase    string
-	protocol_version string = '1.1'
-	headers          map[string][]string
-	header_names     map[string]string
-	body_ref         &VSlimPsr7Stream = unsafe { nil }
+	reason_phrase    string @[php_ignore]
+	protocol_version string = '1.1' @[php_ignore]
+	headers          map[string][]string @[php_ignore]
+	header_names     map[string]string @[php_ignore]
+	body_ref         &VSlimPsr7Stream = unsafe { nil } @[php_ignore]
 }
 
 @[php_implements: 'Psr\\Http\\Message\\UriInterface']
@@ -503,12 +507,12 @@ mut:
 struct VSlimPsr7Request {
 mut:
 	method           string = 'GET'
-	request_target   string
-	protocol_version string = '1.1'
-	headers          map[string][]string
-	header_names     map[string]string
-	body_ref         &VSlimPsr7Stream = unsafe { nil }
-	uri_ref          &VSlimPsr7Uri    = unsafe { nil }
+	request_target   string @[php_ignore]
+	protocol_version string = '1.1' @[php_ignore]
+	headers          map[string][]string @[php_ignore]
+	header_names     map[string]string @[php_ignore]
+	body_ref         &VSlimPsr7Stream = unsafe { nil } @[php_ignore]
+	uri_ref          &VSlimPsr7Uri    = unsafe { nil } @[php_ignore]
 }
 
 @[php_implements: 'Psr\\Http\\Message\\ServerRequestInterface']
@@ -517,18 +521,18 @@ mut:
 struct VSlimPsr7ServerRequest {
 mut:
 	method             string = 'GET'
-	request_target     string
-	protocol_version   string = '1.1'
-	headers            map[string][]string
-	header_names       map[string]string
-	body_ref           &VSlimPsr7Stream         = unsafe { nil }
-	uri_ref            &VSlimPsr7Uri            = unsafe { nil }
-	server_params_ref  vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
-	cookie_params_ref  vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
-	query_params_ref   vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
-	uploaded_files_ref vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
-	parsed_body_ref    vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
-	attributes_ref     vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	request_target     string @[php_ignore]
+	protocol_version   string = '1.1' @[php_ignore]
+	headers            map[string][]string @[php_ignore]
+	header_names       map[string]string @[php_ignore]
+	body_ref           &VSlimPsr7Stream         = unsafe { nil } @[php_ignore]
+	uri_ref            &VSlimPsr7Uri            = unsafe { nil } @[php_ignore]
+	server_params_ref  vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
+	cookie_params_ref  vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
+	query_params_ref   vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
+	uploaded_files_ref vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
+	parsed_body_ref    vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
+	attributes_ref     vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
 }
 
 @[php_implements: 'Psr\\Http\\Message\\ResponseFactoryInterface']
@@ -592,9 +596,9 @@ struct VSlimPsr16InvalidArgumentException {}
 struct VSlimPsr16Cache {
 mut:
 	entries             map[string]PsrCacheEntry
-	clock_ref           vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
-	namespace_prefix    string
-	default_ttl_seconds int
+	clock_ref           vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
+	namespace_prefix    string @[php_prop: namespacePrefix]
+	default_ttl_seconds int    @[php_prop: defaultTtlSeconds]
 }
 
 @[php_class: 'VSlim\\Psr6\\CacheException']
@@ -615,11 +619,11 @@ struct VSlimPsr6InvalidArgumentException {}
 struct VSlimPsr6CacheItem {
 mut:
 	key             string
-	value_ref       vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
-	clock_ref       vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	value_ref       vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
+	clock_ref       vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
 	hit             bool
-	has_value       bool
-	expires_at_unix i64
+	has_value       bool @[php_prop: hasValue]
+	expires_at_unix i64  @[php_prop: expiresAtUnix]
 }
 
 @[php_implements: 'Psr\\Cache\\CacheItemPoolInterface']
@@ -629,9 +633,9 @@ struct VSlimPsr6CacheItemPool {
 mut:
 	entries             map[string]PsrCacheEntry
 	deferred            map[string]Psr6DeferredEntry
-	clock_ref           vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
-	namespace_prefix    string
-	default_ttl_seconds int
+	clock_ref           vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
+	namespace_prefix    string @[php_prop: namespacePrefix]
+	default_ttl_seconds int    @[php_prop: defaultTtlSeconds]
 }
 
 @[php_implements: 'Psr\\Http\\Client\\ClientExceptionInterface']
@@ -643,7 +647,7 @@ struct VSlimPsr18ClientException {}
 @[php_implements: 'Psr\\Http\\Client\\RequestExceptionInterface']
 @[php_class: 'VSlim\\Psr18\\RequestException']
 @[php_extends: 'VSlim\\Psr18\\ClientException']
-@[php_prop: 'request_ref']
+@[php_prop: 'requestRef']
 @[heap]
 struct VSlimPsr18RequestException {}
 
@@ -658,7 +662,7 @@ struct VSlimPsr18NetworkException {}
 @[heap]
 struct VSlimPsr18Client {
 mut:
-	timeout_seconds int = 30
+	timeout_seconds int = 30 @[php_prop: timeoutSeconds]
 }
 
 @[php_class: 'VSlim\\Database\\Config']
@@ -672,28 +676,28 @@ mut:
 	username        string
 	password        string
 	database        string
-	pool_size       int    = 5
-	pool_name       string = 'default'
-	timeout_ms      int    = 1000
-	upstream_socket string
+	pool_size       int    = 5 @[php_prop: poolSize]
+	pool_name       string = 'default' @[php_prop: poolName]
+	timeout_ms      int    = 1000 @[php_prop: timeoutMs]
+	upstream_socket string @[php_prop: upstreamSocket]
 }
 
 @[php_class: 'VSlim\\Database\\Manager']
 @[heap]
 struct VSlimDatabaseManager {
 mut:
-	config_ref          &VSlimDatabaseConfig = unsafe { nil }
-	vhttpd_client_ref   &VSlimVhttpdClient   = unsafe { nil }
-	mysql_pool          mysql.ConnectionPool
-	mysql_connected     bool
-	mysql_tx_conn       mysql.DB
-	mysql_tx_active     bool
-	upstream_connected  bool
-	upstream_tx_active  bool
-	upstream_session_id string
-	last_affected_rows  u64
-	last_insert_id      i64
-	last_error          string
+	config_ref          &VSlimDatabaseConfig = unsafe { nil } @[php_ignore]
+	vhttpd_client_ref   &VSlimVhttpdClient   = unsafe { nil } @[php_ignore]
+	mysql_pool          mysql.ConnectionPool @[php_ignore]
+	mysql_connected     bool @[php_ignore]
+	mysql_tx_conn       mysql.DB @[php_ignore]
+	mysql_tx_active     bool @[php_ignore]
+	upstream_connected  bool @[php_ignore]
+	upstream_tx_active  bool @[php_ignore]
+	upstream_session_id string @[php_ignore]
+	last_affected_rows  u64 @[php_prop: lastAffectedRows]
+	last_insert_id      i64 @[php_prop: lastInsertId]
+	last_error          string @[php_prop: lastError]
 }
 
 enum VSlimDatabaseAsyncKind {
@@ -713,14 +717,14 @@ mut:
 @[heap]
 struct VSlimDatabasePendingResult {
 mut:
-	async_ref      &VSlimAsyncHandle = unsafe { nil }
+	async_ref      &VSlimAsyncHandle = unsafe { nil } @[php_ignore]
 	active         bool
 	resolved       bool
 	kind           VSlimDatabaseAsyncKind = .query
-	affected_rows  u64
-	last_insert_id i64
-	last_error     string
-	result_box     vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	affected_rows  u64 @[php_prop: affectedRows]
+	last_insert_id i64 @[php_prop: lastInsertId]
+	last_error     string @[php_prop: lastError]
+	result_box     vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
 }
 
 pub enum VSlimDatabaseQueryKind {
@@ -740,33 +744,33 @@ struct VSlimDatabaseWhereClause {
 @[heap]
 struct VSlimDatabaseQuery {
 mut:
-	manager_ref     &VSlimDatabaseManager = unsafe { nil }
-	table_name      string
+	manager_ref     &VSlimDatabaseManager = unsafe { nil } @[php_ignore]
+	table_name      string @[php_prop: tableName]
 	kind            VSlimDatabaseQueryKind = .select_
-	select_columns  []string
-	where_clauses   []VSlimDatabaseWhereClause
-	order_clauses   []string
-	limit_count     int = -1
-	offset_count    int = -1
-	mutation_values map[string]string
+	select_columns  []string @[php_ignore]
+	where_clauses   []VSlimDatabaseWhereClause @[php_ignore]
+	order_clauses   []string @[php_ignore]
+	limit_count     int = -1 @[php_prop: limitCount]
+	offset_count    int = -1 @[php_prop: offsetCount]
+	mutation_values map[string]string @[php_ignore]
 }
 
 @[php_class: 'VSlim\\Database\\Model']
 @[heap]
 struct VSlimDatabaseModel {
 mut:
-	manager_ref  &VSlimDatabaseManager = unsafe { nil }
-	table_name   string
-	primary_key  string = 'id'
-	attributes   map[string]string
-	exists_in_db bool
+	manager_ref  &VSlimDatabaseManager = unsafe { nil } @[php_ignore]
+	table_name   string @[php_prop: tableName]
+	primary_key  string = 'id' @[php_prop: primaryKey]
+	attributes   map[string]string @[php_ignore]
+	exists_in_db bool @[php_prop: existsInDb]
 }
 
 @[php_class: 'VSlim\\Database\\Migration']
 @[heap]
 struct VSlimDatabaseMigration {
 mut:
-	manager_ref &VSlimDatabaseManager = unsafe { nil }
+	manager_ref &VSlimDatabaseManager = unsafe { nil } @[php_ignore]
 	name        string
 }
 
@@ -774,7 +778,7 @@ mut:
 @[heap]
 struct VSlimDatabaseSeeder {
 mut:
-	manager_ref &VSlimDatabaseManager = unsafe { nil }
+	manager_ref &VSlimDatabaseManager = unsafe { nil } @[php_ignore]
 	name        string
 }
 
@@ -782,10 +786,10 @@ mut:
 @[heap]
 struct VSlimDatabaseMigrator {
 mut:
-	manager_ref     &VSlimDatabaseManager = unsafe { nil }
-	migrations_path string                = 'database/migrations'
-	seeds_path      string                = 'database/seeds'
-	table_name      string                = 'vslim_migrations'
+	manager_ref     &VSlimDatabaseManager = unsafe { nil } @[php_ignore]
+	migrations_path string                = 'database/migrations' @[php_prop: migrationsPath]
+	seeds_path      string                = 'database/seeds' @[php_prop: seedsPath]
+	table_name      string                = 'vslim_migrations' @[php_prop: tableName]
 }
 
 @[php_implements: 'Psr\\Clock\\ClockInterface']
@@ -806,14 +810,14 @@ mut:
 @[heap]
 struct VSlimPsr14EventDispatcher {
 mut:
-	provider_ref &VSlimPsr14ListenerProvider = unsafe { nil }
+	provider_ref &VSlimPsr14ListenerProvider = unsafe { nil } @[php_ignore]
 }
 
 @[php_class: 'VSlim\\Dev\\PhpSignatureProbe']
 @[heap]
 struct VSlimPhpSignatureProbe {
 mut:
-	provider_ref &VSlimPsr14ListenerProvider = unsafe { nil }
+	provider_ref &VSlimPsr14ListenerProvider = unsafe { nil } @[php_ignore]
 }
 
 struct VSlimLogLevelConsts {
@@ -831,10 +835,10 @@ struct VSlimLiveSocket {
 mut:
 	id          string
 	connected   bool
-	redirect_to string
-	navigate_to string
-	raw_path    string
-	root_id     string
+	redirect_to string @[php_prop: redirectTo]
+	navigate_to string @[php_prop: navigateTo]
+	raw_path    string @[php_prop: rawPath]
+	root_id     string @[php_prop: rootId]
 	assigns     map[string]string
 	patches     []map[string]string
 	events      []map[string]string
@@ -847,9 +851,9 @@ mut:
 struct VSlimLiveForm {
 mut:
 	name             string
-	socket_ref       &VSlimLiveSocket = unsafe { nil }
+	socket_ref       &VSlimLiveSocket = unsafe { nil } @[php_ignore]
 	fields           []string
-	last_error_count int
+	last_error_count int @[php_prop: lastErrorCount]
 	validated        bool
 }
 
@@ -858,7 +862,7 @@ mut:
 struct VSlimLiveView {
 mut:
 	host    VSlimViewHost
-	root_id string
+	root_id string @[php_prop: rootId]
 	sockets map[string]&VSlimLiveSocket
 }
 
@@ -869,26 +873,26 @@ mut:
 	host       VSlimViewHost
 	id         string
 	assigns    map[string]string
-	socket_ref &VSlimLiveSocket = unsafe { nil }
+	socket_ref &VSlimLiveSocket = unsafe { nil } @[php_ignore]
 }
 
 @[php_class: 'VSlim\\Live\\ComponentState']
 @[heap]
 struct VSlimLiveComponentState {
 mut:
-	component_id string
-	socket_ref   &VSlimLiveSocket = unsafe { nil }
+	component_id string           @[php_prop: componentId]
+	socket_ref   &VSlimLiveSocket = unsafe { nil } @[php_ignore]
 }
 
 @[php_class: 'VSlim\\Validate\\Validator']
 @[heap]
 struct VSlimValidator {
 mut:
-	input_data     map[string]vphp.DynValue
-	rule_map       map[string][]string
-	error_map      map[string][]string
-	validated_data map[string]vphp.DynValue
-	validation_ran bool
+	input_data     map[string]vphp.DynValue  @[php_prop: inputData]
+	rule_map       map[string][]string       @[php_prop: ruleMap]
+	error_map      map[string][]string       @[php_prop: errorMap]
+	validated_data map[string]vphp.DynValue  @[php_prop: validatedData]
+	validation_ran bool                      @[php_prop: validationRan]
 }
 
 @[php_class: 'VSlim\\EnvLoader']
@@ -903,7 +907,7 @@ struct VSlimTask {}
 @[heap]
 struct VSlimTaskHandle {
 mut:
-	async_ref &vphp.AsyncResult = unsafe { nil }
+	async_ref &vphp.AsyncResult = unsafe { nil } @[php_ignore]
 	// Task handles are request-scoped PHP objects, but the callable / params /
 	// cached result must outlive the spawn() stack frame and survive until a
 	// later wait() or object cleanup(). We therefore retain them with
@@ -912,24 +916,24 @@ mut:
 	callable   vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 	params     []vphp.PersistentOwnedZBox
 	resolved   bool
-	result_box vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	result_box vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
 }
 
 @[php_class: 'VSlim\\Job\\Dispatcher']
 @[heap]
 struct VSlimJobDispatcher {
 mut:
-	manager_ref &VSlimDatabaseManager = unsafe { nil }
+	manager_ref &VSlimDatabaseManager = unsafe { nil } @[php_ignore]
 }
 
 @[php_class: 'VSlim\\Job\\Worker']
 @[heap]
 struct VSlimJobWorker {
 mut:
-	manager_ref          &VSlimDatabaseManager = unsafe { nil }
-	worker_id            string                = 'default'
-	retry_delay_seconds  int                   = 60
-	reserve_timeout_secs int                   = 300
+	manager_ref          &VSlimDatabaseManager = unsafe { nil } @[php_ignore]
+	worker_id            string                = 'default' @[php_prop: workerId]
+	retry_delay_seconds  int                   = 60 @[php_prop: retryDelaySeconds]
+	reserve_timeout_secs int                   = 300 @[php_prop: reserveTimeoutSeconds]
 }
 
 @[php_class: 'VSlim\\Config']

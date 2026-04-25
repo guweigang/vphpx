@@ -39,7 +39,7 @@ $text = $app->dispatch_envelope_worker([
     'query' => ['prompt' => 'demo'],
 ]);
 echo ($text instanceof \VSlim\Stream\Response ? "text_stream\n" : "text_not_stream\n");
-echo $text->stream_type . "\n";
+echo $text->streamType . "\n";
 echo $text->header('x-ollama-model') . "\n";
 echo implode('', iterator_to_array($text->chunks(), false)) . "\n";
 
@@ -50,7 +50,7 @@ $sse = $app->dispatch_envelope_worker([
     'body' => json_encode(['prompt' => 'demo'], JSON_UNESCAPED_UNICODE),
 ]);
 echo ($sse instanceof \VSlim\Stream\Response ? "sse_stream\n" : "sse_not_stream\n");
-echo $sse->stream_type . "\n";
+echo $sse->streamType . "\n";
 $events = iterator_to_array($sse->chunks(), false);
 echo ($events[0]['event'] ?? '') . "\n";
 echo (str_contains((string) ($events[0]['data'] ?? ''), '"token":"Hello"') ? "sse_first_ok\n" : "sse_first_bad\n");

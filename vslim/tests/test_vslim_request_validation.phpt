@@ -8,15 +8,15 @@ $app = new VSlim\App();
 $app->post('/x', fn ($req) => 'ok');
 
 $invalid = new VSlim\Vhttpd\Request('POST', '/x', '{bad');
-$invalid->set_headers(['content-type' => 'application/json']);
-$r1 = $app->dispatch_request($invalid);
+$invalid->setHeaders(['content-type' => 'application/json']);
+$r1 = $app->dispatchRequest($invalid);
 echo $r1->status, PHP_EOL;
 echo $r1->body, PHP_EOL;
 
 putenv('VSLIM_MAX_BODY_BYTES=4');
 $oversized = new VSlim\Vhttpd\Request('POST', '/x', '12345');
-$oversized->set_headers(['content-type' => 'application/x-www-form-urlencoded']);
-$r2 = $app->dispatch_request($oversized);
+$oversized->setHeaders(['content-type' => 'application/x-www-form-urlencoded']);
+$r2 = $app->dispatchRequest($oversized);
 echo $r2->status, PHP_EOL;
 echo $r2->body, PHP_EOL;
 ?>

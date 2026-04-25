@@ -11,7 +11,7 @@ $app1 = new VSlim\App();
 $app1->bootstrapFile($specPath);
 echo $app1->dispatch('GET', '/spec')->body . PHP_EOL;
 echo $app1->dispatch('GET', '/missing')->body . PHP_EOL;
-echo $app1->url_for('fixture.spec', []) . PHP_EOL;
+echo $app1->urlFor('fixture.spec', []) . PHP_EOL;
 
 $app2 = new VSlim\App();
 $app2->bootstrapFile($specPath);

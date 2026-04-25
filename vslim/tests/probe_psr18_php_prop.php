@@ -18,7 +18,7 @@ namespace {
     $f = new VSlim\Psr17\RequestFactory();
     $r = $f->createRequest('GET', 'https://example.com/x');
     $ex = new VSlim\Psr18\RequestException('t', 0);
-    $ex->request_ref = $r;
+    $ex->requestRef = $r;
     unset($ex);
     unset($r);
     echo "ok\n";

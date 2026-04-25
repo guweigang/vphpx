@@ -225,6 +225,15 @@ fn session_commit_cookie(mut session VSlimSessionStore, response vphp.RequestBor
 		return false
 	}
 	if session.destroyed {
+		if raw_response.method_exists('deleteCookie') {
+			vphp.with_method_result_zval(raw_response, 'deleteCookie', [
+				vphp.RequestOwnedZBox.new_string(session.cookie_name_value()).to_zval(),
+			], fn (_ vphp.ZVal) bool {
+				return true
+			})
+			session.dirty = false
+			return true
+		}
 		if raw_response.method_exists('delete_cookie') {
 			vphp.with_method_result_zval(raw_response, 'delete_cookie', [
 				vphp.RequestOwnedZBox.new_string(session.cookie_name_value()).to_zval(),
@@ -238,6 +247,22 @@ fn session_commit_cookie(mut session VSlimSessionStore, response vphp.RequestBor
 		return false
 	}
 	if !session.dirty {
+		return true
+	}
+	if raw_response.method_exists('setCookieFull') {
+		vphp.with_method_result_zval(raw_response, 'setCookieFull', [
+			vphp.RequestOwnedZBox.new_string(session.cookie_name_value()).to_zval(),
+			vphp.RequestOwnedZBox.new_string(session_encode_values(session.values, session.secret_value())).to_zval(),
+			vphp.RequestOwnedZBox.new_string(session.path_value()).to_zval(),
+			vphp.RequestOwnedZBox.new_string(session.domain_value()).to_zval(),
+			vphp.RequestOwnedZBox.new_int(session.ttl_seconds_value()).to_zval(),
+			vphp.RequestOwnedZBox.new_bool(session.secure_value()).to_zval(),
+			vphp.RequestOwnedZBox.new_bool(session.http_only_value()).to_zval(),
+			vphp.RequestOwnedZBox.new_string(session.same_site_value()).to_zval(),
+		], fn (_ vphp.ZVal) bool {
+			return true
+		})
+		session.dirty = false
 		return true
 	}
 	if raw_response.method_exists('set_cookie_full') {
@@ -306,6 +331,7 @@ pub fn (session &VSlimSessionStore) secret_value() string {
 }
 
 @[php_method: 'setTtlSeconds']
+@[php_arg_name: 'ttl_seconds=ttlSeconds']
 pub fn (mut session VSlimSessionStore) set_ttl_seconds(ttl_seconds int) &VSlimSessionStore {
 	if ttl_seconds >= 0 {
 		session.ttl_seconds = ttl_seconds
@@ -358,6 +384,7 @@ pub fn (session &VSlimSessionStore) secure_value() bool {
 }
 
 @[php_method: 'setHttpOnly']
+@[php_arg_name: 'http_only=httpOnly']
 pub fn (mut session VSlimSessionStore) set_http_only(http_only bool) &VSlimSessionStore {
 	session.http_only = http_only
 	return &session
@@ -369,6 +396,7 @@ pub fn (session &VSlimSessionStore) http_only_value() bool {
 }
 
 @[php_method: 'setSameSite']
+@[php_arg_name: 'same_site=sameSite']
 pub fn (mut session VSlimSessionStore) set_same_site(same_site string) &VSlimSessionStore {
 	session.same_site = same_site.trim_space().to_lower()
 	return &session
@@ -397,15 +425,17 @@ pub fn (session &VSlimSessionStore) all() map[string]string {
 }
 
 @[php_method]
+@[php_arg_name: 'default_value=defaultValue']
 @[php_arg_default: 'default_value=""']
-@[php_optional_args: 'default_value']
+@[php_arg_optional: 'default_value']
 pub fn (session &VSlimSessionStore) get(key string, default_value string) string {
 	return session.values[key] or { default_value }
 }
 
 @[php_method]
+@[php_arg_name: 'default_value=defaultValue']
 @[php_arg_default: 'default_value=""']
-@[php_optional_args: 'default_value']
+@[php_arg_optional: 'default_value']
 pub fn (mut session VSlimSessionStore) pull(key string, default_value string) string {
 	value := session.values[key] or { default_value }
 	if key in session.values {
@@ -429,15 +459,17 @@ pub fn (session &VSlimSessionStore) has_flash(key string) bool {
 }
 
 @[php_method: 'getFlash']
+@[php_arg_name: 'default_value=defaultValue']
 @[php_arg_default: 'default_value=""']
-@[php_optional_args: 'default_value']
+@[php_arg_optional: 'default_value']
 pub fn (session &VSlimSessionStore) get_flash(key string, default_value string) string {
 	return session.values['${session_flash_prefix}${key}'] or { default_value }
 }
 
 @[php_method: 'pullFlash']
+@[php_arg_name: 'default_value=defaultValue']
 @[php_arg_default: 'default_value=""']
-@[php_optional_args: 'default_value']
+@[php_arg_optional: 'default_value']
 pub fn (mut session VSlimSessionStore) pull_flash(key string, default_value string) string {
 	flash_key := '${session_flash_prefix}${key}'
 	value := session.values[flash_key] or { default_value }
@@ -504,7 +536,7 @@ pub fn (mut session VSlimSessionStore) commit(response vphp.RequestBorrowedZBox)
 	return session_commit_cookie(mut session, response)
 }
 
-@[php_method]
+@[php_method: 'isLoaded']
 pub fn (session &VSlimSessionStore) is_loaded() bool {
 	return session.loaded
 }
@@ -527,6 +559,7 @@ pub fn (guard &VSlimAuthSessionGuard) store() &VSlimSessionStore {
 }
 
 @[php_method: 'setUserKey']
+@[php_arg_name: 'key=userKey']
 pub fn (mut guard VSlimAuthSessionGuard) set_user_key(key string) &VSlimAuthSessionGuard {
 	if key.trim_space() != '' {
 		guard.user_key = key.trim_space()
@@ -560,13 +593,14 @@ pub fn (guard &VSlimAuthSessionGuard) id() string {
 	return guard.store_ref.get(guard.user_key_value(), '')
 }
 
-@[php_method]
+@[php_method: 'userId']
 pub fn (guard &VSlimAuthSessionGuard) user_id() string {
 	return guard.id()
 }
 
 @[php_method]
 @[php_borrowed_return]
+@[php_arg_name: 'user_id=userId']
 pub fn (mut guard VSlimAuthSessionGuard) login(user_id string) &VSlimAuthSessionGuard {
 	if guard.store_ref != unsafe { nil } {
 		guard.store_ref.set(guard.user_key_value(), user_id)
@@ -630,6 +664,7 @@ pub fn (mut middleware VSlimAuthRequireMiddleware) set_app(app &VSlimApp) &VSlim
 }
 
 @[php_method: 'setRedirectTo']
+@[php_arg_name: 'path=redirectPath']
 pub fn (mut middleware VSlimAuthRequireMiddleware) set_redirect_path(path string) &VSlimAuthRequireMiddleware {
 	middleware.redirect_path = path.trim_space()
 	return &middleware
@@ -699,6 +734,7 @@ pub fn (mut middleware VSlimAuthGuestMiddleware) set_app(app &VSlimApp) &VSlimAu
 }
 
 @[php_method: 'setRedirectTo']
+@[php_arg_name: 'path=redirectPath']
 pub fn (mut middleware VSlimAuthGuestMiddleware) set_redirect_path(path string) &VSlimAuthGuestMiddleware {
 	middleware.redirect_path = path.trim_space()
 	return &middleware

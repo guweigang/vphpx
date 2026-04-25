@@ -118,7 +118,7 @@ namespace {
                 (string) ($parts['query'] ?? ''),
             );
         }
-        public function withUri(\Psr\Http\Message\UriInterface $uri, $preserveHost = false) { $clone = clone $this; $clone->uri = (string) $uri; return $clone; }
+        public function withUri(\Psr\Http\Message\UriInterface $uri, bool $preserveHost = false) { $clone = clone $this; $clone->uri = (string) $uri; return $clone; }
         public function getProtocolVersion() { return $this->protocolVersion; }
         public function withProtocolVersion($version): self {
             $clone = clone $this;

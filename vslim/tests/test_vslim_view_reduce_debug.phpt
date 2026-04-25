@@ -14,7 +14,7 @@ $tpl = <<<'HTML'
 <p id="bad">{{ scores | reduce("acc+*item", 0) }}</p>
 HTML;
 file_put_contents($tmpDir . '/reduce_debug.html', $tpl);
-$app->set_view_base_path($tmpDir);
+$app->setViewBasePath($tmpDir);
 $view = $app->make_view();
 
 $body = $view->render('reduce_debug.html', ['scores' => ['1', '2', '3']]);

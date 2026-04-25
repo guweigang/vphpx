@@ -16,7 +16,7 @@ try {
 
 try {
     $app->after(function (VSlim\Vhttpd\Request $req, VSlim\Vhttpd\Response $res) {
-        $res->set_header('x-legacy-after', '1');
+        $res->setHeader('x-legacy-after', '1');
         return $res;
     });
 } catch (InvalidArgumentException $e) {

@@ -5,8 +5,8 @@ VSlim View escapes template values by default and supports raw output token
 --FILE--
 <?php
 $app = new VSlim\App();
-$app->set_view_base_path(__DIR__ . '/fixtures');
-$view = $app->make_view();
+$app->setViewBasePath(__DIR__ . '/fixtures');
+$view = $app->makeView();
 
 $payload = '<b>"x"&\'y\'</b>';
 $body = $view->render('view_escape.html', ['payload' => $payload]);

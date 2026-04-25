@@ -58,7 +58,7 @@ $tpl = <<<'HTML'
 </section>
 HTML;
 file_put_contents($tmpDir . '/view_control_flow.inline.html', $tpl);
-$app->set_view_base_path($tmpDir);
+$app->setViewBasePath($tmpDir);
 $view = $app->make_view();
 
 $body = $view->render('view_control_flow.inline.html', [

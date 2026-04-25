@@ -147,7 +147,7 @@ $container->set('legacy.callable', function ($req) {
     return 'legacy:' . $req->getAttribute('id');
 });
 
-$app->set_error_handler(function ($req, string $message, int $status) {
+$app->setErrorHandler(function ($req, string $message, int $status) {
     return [
         'status' => $status,
         'content_type' => 'text/plain; charset=utf-8',

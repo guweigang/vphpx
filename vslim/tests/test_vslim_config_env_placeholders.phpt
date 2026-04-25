@@ -13,7 +13,7 @@ putenv('VSLIM_CFG_HOST1=db-a');
 putenv('VSLIM_CFG_HOST2=db-b');
 
 $cfg = new VSlim\Config();
-$cfg->load_text(<<<'TOML'
+$cfg->loadText(<<<'TOML'
 [app]
 name = "${env.VSLIM_CFG_APP_NAME:-VSlim}"
 debug = "${env.bool.VSLIM_CFG_APP_DEBUG:-false}"
@@ -26,14 +26,14 @@ missing = "${env.VSLIM_CFG_MISSING}"
 hosts = ["${env.VSLIM_CFG_HOST1:-127.0.0.1}", "${env.VSLIM_CFG_HOST2:-127.0.0.2}"]
 TOML);
 
-echo $cfg->get_string('app.name', 'x') . PHP_EOL;
-echo ($cfg->get_bool('app.debug', false) ? 'debug-on' : 'debug-off') . PHP_EOL;
-echo $cfg->get_int('app.port', 0) . PHP_EOL;
-echo $cfg->get_float('app.ratio', 0.0) . PHP_EOL;
-echo $cfg->get_string('app.fallback', 'x') . PHP_EOL;
+echo $cfg->getString('app.name', 'x') . PHP_EOL;
+echo ($cfg->getBool('app.debug', false) ? 'debug-on' : 'debug-off') . PHP_EOL;
+echo $cfg->getInt('app.port', 0) . PHP_EOL;
+echo $cfg->getFloat('app.ratio', 0.0) . PHP_EOL;
+echo $cfg->getString('app.fallback', 'x') . PHP_EOL;
 echo ($cfg->has('app.missing') ? 'has' : 'no') . PHP_EOL;
-echo $cfg->get_string('app.missing', 'n/a') . PHP_EOL;
-$hosts = $cfg->get_list('db.hosts');
+echo $cfg->getString('app.missing', 'n/a') . PHP_EOL;
+$hosts = $cfg->getList('db.hosts');
 echo count($hosts) . ':' . $hosts[0] . ':' . $hosts[1] . PHP_EOL;
 ?>
 --EXPECT--

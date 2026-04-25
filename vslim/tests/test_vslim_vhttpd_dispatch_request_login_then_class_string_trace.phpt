@@ -137,7 +137,7 @@ namespace {
         {
             $viewer = $request->getAttribute('studio.viewer');
             $workspace = $request->getAttribute('studio.workspace');
-            return $this->render_with_layout('view_home.html', 'view_layout.html', [
+            return $this->renderWithLayout('view_home.html', 'view_layout.html', [
                 'title' => 'Console',
                 'subtitle' => 'Console Header',
                 'name' => is_array($viewer) ? (string) ($viewer['id'] ?? '') : 'guest',
@@ -149,7 +149,7 @@ namespace {
         {
             $viewer = $request->getAttribute('studio.viewer');
             $workspace = $request->getAttribute('studio.workspace');
-            return $this->render_with_layout('view_home.html', 'view_layout.html', [
+            return $this->renderWithLayout('view_home.html', 'view_layout.html', [
                 'title' => 'Docs',
                 'subtitle' => 'Docs Header',
                 'name' => is_array($viewer) ? (string) ($viewer['id'] ?? '') : 'guest',
@@ -159,7 +159,7 @@ namespace {
     }
 
     $app = new VSlim\App();
-    $app->set_view_base_path(__DIR__ . '/fixtures');
+    $app->setViewBasePath(__DIR__ . '/fixtures');
     $app->load_config_text(<<<'TOML'
 [session]
 cookie_name = "ks_session"
@@ -212,10 +212,10 @@ TOML);
         $user = $catalog->findUserByEmail($email, $password);
         $response = new VSlim\Vhttpd\Response(302, '', 'text/plain; charset=utf-8');
         if (!is_array($user)) {
-            $response->redirect_with_status('/login', 302);
+            $response->redirectWithStatus('/login', 302);
             return $response;
         }
-        $response->redirect_with_status('/console', 302);
+        $response->redirectWithStatus('/console', 302);
         $app->login($request, $response, (string) $user['id']);
         return $response;
     });
@@ -223,9 +223,9 @@ TOML);
     $app->get('/console/knowledge/documents', [LoginFlowControllerClassString::class, 'documents']);
 
     $loginRequest = new VSlim\Vhttpd\Request('POST', '/login', 'email=owner%40example.test&password=demo123');
-    $loginRequest->set_headers(['content-type' => 'application/x-www-form-urlencoded']);
-    $loginResponse = $app->dispatch_request($loginRequest);
-    $cookiePair = explode(';', $loginResponse->cookie_header(), 2)[0] ?? '';
+    $loginRequest->setHeaders(['content-type' => 'application/x-www-form-urlencoded']);
+    $loginResponse = $app->dispatchRequest($loginRequest);
+    $cookiePair = explode(';', $loginResponse->cookieHeader(), 2)[0] ?? '';
     [$cookieName, $cookieValue] = array_pad(explode('=', $cookiePair, 2), 2, '');
     $cookieName = trim((string) $cookieName);
     $cookieValue = trim((string) $cookieValue);
@@ -233,8 +233,8 @@ TOML);
 
     foreach (['/console', '/console/knowledge/documents'] as $path) {
         $request = new VSlim\Vhttpd\Request('GET', $path, '');
-        $request->set_cookies([$cookieName => $cookieValue]);
-        $response = $app->dispatch_request($request);
+        $request->setCookies([$cookieName => $cookieValue]);
+        $response = $app->dispatchRequest($request);
         echo $path . '|' . $response->status . '|' . (str_contains($response->body, 'u-1') ? 'viewer' : 'miss') . PHP_EOL;
     }
 }

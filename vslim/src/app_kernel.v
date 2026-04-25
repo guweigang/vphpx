@@ -90,6 +90,9 @@ fn app_kernel_response_map(res VSlimResponse) map[string]string {
 
 fn app_kernel_sync_dispatch_request(mut target VSlimRequest, result AppKernelDispatchResult) {
 	target.params = snapshot_string_map(result.route_params)
+	if result.effective_request_ref != unsafe { nil } {
+		sync_vslim_request_from_snapshot(mut target, *result.effective_request_ref)
+	}
 }
 
 fn propagate_request_trace_headers(req &VSlimRequest, mut res VSlimResponse) {
@@ -114,7 +117,17 @@ fn request_snapshot_from_payload(payload vphp.RequestBorrowedZBox, route_params 
 
 fn sync_vslim_request_from_snapshot(mut target VSlimRequest, snapshot VSlimRequest) {
 	target.method = snapshot.method.clone()
-	target.raw_path = snapshot.raw_path.clone()
+	target.raw_path = if snapshot.raw_path.trim_space() == '' {
+		if snapshot.path == '/' && snapshot.query_string == '' {
+			'/'
+		} else if snapshot.query_string == '' {
+			snapshot.path.clone()
+		} else {
+			'${snapshot.path}?${snapshot.query_string}'
+		}
+	} else {
+		snapshot.raw_path.clone()
+	}
 	target.path = snapshot.path.clone()
 	target.body = snapshot.body.clone()
 	target.query_string = snapshot.query_string.clone()
@@ -123,4 +136,11 @@ fn sync_vslim_request_from_snapshot(mut target VSlimRequest, snapshot VSlimReque
 	target.port = snapshot.port.clone()
 	target.protocol_version = snapshot.protocol_version.clone()
 	target.remote_addr = snapshot.remote_addr.clone()
+	target.query = snapshot_string_map(snapshot.query)
+	target.headers = snapshot_string_map(snapshot.headers)
+	target.cookies = snapshot_string_map(snapshot.cookies)
+	target.attributes = snapshot_string_map(snapshot.attributes)
+	target.server = snapshot_string_map(snapshot.server)
+	target.uploaded_files = snapshot_string_list(snapshot.uploaded_files)
+	target.params = snapshot_string_map(snapshot.params)
 }

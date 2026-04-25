@@ -3,6 +3,7 @@ module main
 import vphp
 
 @[php_method]
+@[php_arg_name: 'stream_type=streamType,content_type=contentType']
 pub fn (mut r VSlimStreamResponse) construct(stream_type string, chunks vphp.RequestBorrowedZBox, status int, content_type string, headers vphp.RequestBorrowedZBox) &VSlimStreamResponse {
 	r.stream_type = normalize_stream_type(stream_type)
 	r.status = if status <= 0 { 200 } else { status }
@@ -20,7 +21,8 @@ pub fn VSlimStreamResponse.text(chunks vphp.RequestBorrowedZBox) &VSlimStreamRes
 	return VSlimStreamResponse.text_with(chunks, 200, 'text/plain; charset=utf-8', vphp.borrow_zbox(vphp.RequestOwnedZBox.new_null().to_zval()))
 }
 
-@[php_method]
+@[php_method: 'textWith']
+@[php_arg_name: 'content_type=contentType']
 pub fn VSlimStreamResponse.text_with(chunks vphp.RequestBorrowedZBox, status int, content_type string, headers vphp.RequestBorrowedZBox) &VSlimStreamResponse {
 	mut out := &VSlimStreamResponse{}
 	out.construct('text', chunks, status, content_type, headers)
@@ -32,7 +34,7 @@ pub fn VSlimStreamResponse.sse(events vphp.RequestBorrowedZBox) &VSlimStreamResp
 	return VSlimStreamResponse.sse_with(events, 200, vphp.borrow_zbox(vphp.RequestOwnedZBox.new_null().to_zval()))
 }
 
-@[php_method]
+@[php_method: 'sseWith']
 pub fn VSlimStreamResponse.sse_with(events vphp.RequestBorrowedZBox, status int, headers vphp.RequestBorrowedZBox) &VSlimStreamResponse {
 	mut out := &VSlimStreamResponse{}
 	out.construct('sse', events, status, 'text/event-stream', headers)
@@ -50,13 +52,13 @@ pub fn (r &VSlimStreamResponse) headers() map[string]string {
 	return r.header_values()
 }
 
-@[php_method]
+@[php_method: 'hasHeader']
 pub fn (r &VSlimStreamResponse) has_header(name string) bool {
 	headers := r.header_values()
 	return VSlimRequest.normalize_header_name(name) in headers
 }
 
-@[php_method]
+@[php_method: 'setHeader']
 pub fn (mut r VSlimStreamResponse) set_header(name string, value string) &VSlimStreamResponse {
 	mut headers := r.header_values()
 	headers[VSlimRequest.normalize_header_name(name)] = value.clone()
@@ -64,13 +66,14 @@ pub fn (mut r VSlimStreamResponse) set_header(name string, value string) &VSlimS
 	return &r
 }
 
-@[php_method]
+@[php_method: 'setStatus']
 pub fn (mut r VSlimStreamResponse) set_status(status int) &VSlimStreamResponse {
 	r.status = if status <= 0 { 200 } else { status }
 	return &r
 }
 
-@[php_method]
+@[php_method: 'setContentType']
+@[php_arg_name: 'content_type=contentType']
 pub fn (mut r VSlimStreamResponse) set_content_type(content_type string) &VSlimStreamResponse {
 	r.content_type = default_stream_content_type(r.stream_type, content_type).clone()
 	mut headers := r.header_values()
@@ -79,7 +82,7 @@ pub fn (mut r VSlimStreamResponse) set_content_type(content_type string) &VSlimS
 	return &r
 }
 
-@[php_method]
+@[php_method: 'setChunks']
 pub fn (mut r VSlimStreamResponse) set_chunks(chunks vphp.RequestBorrowedZBox) &VSlimStreamResponse {
 	if r.chunks_ref.is_valid() {
 		unsafe {

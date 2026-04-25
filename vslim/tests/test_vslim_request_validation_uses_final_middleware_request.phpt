@@ -124,7 +124,7 @@ namespace {
         }
     });
 
-    $app->set_error_handler(function (ServerRequestInterface $request, string $message, int $status) {
+    $app->setErrorHandler(function (ServerRequestInterface $request, string $message, int $status) {
         return new VSlim\Vhttpd\Response(
             $status,
             implode('|', [
@@ -147,13 +147,13 @@ namespace {
     });
 
     $invalid = new VSlim\Vhttpd\Request('POST', '/api/items/7', '{bad');
-    $invalid->set_headers(['content-type' => 'application/json']);
-    $bad = $app->dispatch_request($invalid);
+    $invalid->setHeaders(['content-type' => 'application/json']);
+    $bad = $app->dispatchRequest($invalid);
 
     putenv('VSLIM_MAX_BODY_BYTES=4');
     $oversized = new VSlim\Vhttpd\Request('POST', '/api/items/7', '12345');
-    $oversized->set_headers(['content-type' => 'application/x-www-form-urlencoded']);
-    $large = $app->dispatch_request($oversized);
+    $oversized->setHeaders(['content-type' => 'application/x-www-form-urlencoded']);
+    $large = $app->dispatchRequest($oversized);
 
     echo $bad->status . '|' . $bad->body . PHP_EOL;
     echo $large->status . '|' . $large->body . PHP_EOL;

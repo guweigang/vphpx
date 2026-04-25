@@ -20,7 +20,7 @@ pub fn (mut app VSlimApp) after(handler vphp.RequestBorrowedZBox) &VSlimApp {
 	return app
 }
 
-@[php_method]
+@[php_method: 'setNotFoundHandler']
 pub fn (mut app VSlimApp) set_not_found_handler(handler vphp.RequestBorrowedZBox) &VSlimApp {
 	if !handler.is_valid() || !handler.is_callable() {
 		vphp.throw_exception_class('InvalidArgumentException', 'not_found handler must be callable',
@@ -31,12 +31,11 @@ pub fn (mut app VSlimApp) set_not_found_handler(handler vphp.RequestBorrowedZBox
 	return app
 }
 
-@[php_method]
 pub fn (mut app VSlimApp) not_found(handler vphp.RequestBorrowedZBox) &VSlimApp {
 	return app.set_not_found_handler(handler)
 }
 
-@[php_method]
+@[php_method: 'setErrorHandler']
 pub fn (mut app VSlimApp) set_error_handler(handler vphp.RequestBorrowedZBox) &VSlimApp {
 	if !handler.is_valid() || !handler.is_callable() {
 		vphp.throw_exception_class('InvalidArgumentException', 'error handler must be callable',
@@ -52,13 +51,13 @@ pub fn (mut app VSlimApp) error(handler vphp.RequestBorrowedZBox) &VSlimApp {
 	return app.set_error_handler(handler)
 }
 
-@[php_method]
+@[php_method: 'setErrorResponseJson']
 pub fn (mut app VSlimApp) set_error_response_json(enabled bool) &VSlimApp {
 	app.error_response_json = enabled
 	return app
 }
 
-@[php_method]
+@[php_method: 'errorResponseJsonEnabled']
 pub fn (app &VSlimApp) error_response_json_enabled() bool {
 	return app.error_response_json
 }

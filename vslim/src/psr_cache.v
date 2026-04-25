@@ -80,7 +80,7 @@ pub fn (mut pool VSlimPsr6CacheItemPool) get_item(key string) &VSlimPsr6CacheIte
 @[php_arg_type: 'keys=array']
 @[php_return_type: 'iterable']
 @[php_arg_default: 'keys=[]']
-@[php_optional_args: 'keys']
+@[php_arg_optional: 'keys']
 pub fn (mut pool VSlimPsr6CacheItemPool) get_items(keys vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	ensure_psr6_pool(mut pool)
 	mut out := new_array_zval()
@@ -266,6 +266,7 @@ pub fn (mut item VSlimPsr6CacheItem) expires_at(expiration vphp.RequestBorrowedZ
 @[php_method: 'expiresAfter']
 @[php_arg_type: 'time=mixed']
 @[php_return_type: 'static']
+@[php_arg_name: 'time_value=timeValue']
 pub fn (mut item VSlimPsr6CacheItem) expires_after(time_value vphp.RequestBorrowedZBox) &VSlimPsr6CacheItem {
 	ensure_psr6_item_clock(mut item)
 	item.expires_at_unix = psr6_resolve_relative_expiration_or_throw(item.clock_ref.to_zval(), time_value.to_zval()) or {

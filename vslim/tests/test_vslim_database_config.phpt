@@ -5,7 +5,7 @@ VSlim app database manager uses config defaults
 --FILE--
 <?php
 $app = VSlim\App::demo();
-$app->load_config_text(<<<TOML
+$app->loadConfigText(<<<TOML
 [database]
 driver = "mysql"
 pool_size = 9
@@ -25,7 +25,7 @@ $fromContainer = $app->container()->get('database');
 
 echo $db->driver() . PHP_EOL;
 echo $db->poolSize() . PHP_EOL;
-echo ($db->is_connected() ? 'connected' : 'not-connected') . PHP_EOL;
+echo ($db->isConnected() ? 'connected' : 'not-connected') . PHP_EOL;
 echo $cfg->host() . ':' . $cfg->port() . PHP_EOL;
 echo $cfg->username() . '|' . $cfg->database() . PHP_EOL;
 echo ($fromContainer === $db ? 'same' : 'diff') . PHP_EOL;
@@ -34,7 +34,7 @@ echo $db->affectedRows() . PHP_EOL;
 echo $db->lastInsertId() . PHP_EOL;
 
 $bad = (new VSlim\Database\Manager())
-    ->setConfig((new VSlim\Database\Config())->set_driver('sqlite'));
+    ->setConfig((new VSlim\Database\Config())->setDriver('sqlite'));
 
 foreach (['query', 'execute', 'queryParams', 'executeParams', 'beginTransaction'] as $method) {
     try {

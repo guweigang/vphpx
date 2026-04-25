@@ -5,7 +5,7 @@ VSlim View supports registered template helpers and raw helper output
 --FILE--
 <?php
 $app = new VSlim\App();
-$app->set_assets_prefix('/static');
+$app->setAssetsPrefix('/static');
 final class ViewUserProfile {
     public function __construct(
         public array $skills = [],
@@ -59,7 +59,7 @@ $tpl = <<<'HTML'
 HTML;
 file_put_contents($tmpDir . '/helpers.html', $tpl);
 
-$app->set_view_base_path($tmpDir);
+$app->setViewBasePath($tmpDir);
 $app->helper('wrap', function (...$args) {
     return '<b>' . implode('|', $args) . '</b>';
 });

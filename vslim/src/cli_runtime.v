@@ -719,6 +719,7 @@ pub fn (mut cli VSlimCliApp) help_text() string {
 }
 
 @[php_method: 'commandHelp']
+@[php_arg_name: 'command_name=commandName']
 pub fn (mut cli VSlimCliApp) command_help(command_name string) string {
 	cli_debug_log('command_help cli=${usize(cli)} core=${usize(cli.core_app_ref)} command="${command_name}"')
 	return cli_command_help_text(mut cli, 'vslim', command_name) or { '' }

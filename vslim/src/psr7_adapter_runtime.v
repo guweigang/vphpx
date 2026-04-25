@@ -2,13 +2,15 @@ module main
 
 import vphp
 
-@[php_method]
-pub fn VPhpVSlimPsr7Adapter.dispatch(app &VSlimApp, request vphp.RequestBorrowedZBox) &VSlimResponse {
-	return app.dispatch_request_raw(VPhpVSlimPsr7Adapter.to_vslim_request(request))
+@[php_return_type: 'VSlim\\Vhttpd\\Response']
+@[php_arg_type: 'response=Psr\\Http\\Message\\ResponseInterface']
+@[php_method: 'toVSlimResponse']
+pub fn VSlimPsr7Adapter.to_vslim_response(response vphp.RequestBorrowedZBox) &VSlimResponse {
+	return to_vslim_response(new_vslim_response_from_psr_response(normalize_to_psr7_response(response.to_zval())))
 }
 
 @[php_method: 'toVSlimRequest']
-pub fn VPhpVSlimPsr7Adapter.to_vslim_request(request vphp.RequestBorrowedZBox) &VSlimRequest {
+pub fn VSlimPsr7Adapter.to_vslim_request(request vphp.RequestBorrowedZBox) &VSlimRequest {
 	raw_request := request.to_zval()
 	method := adapter_read_string(raw_request, 'getMethod', 'method', 'GET')
 	target := adapter_read_request_target(raw_request)
@@ -55,9 +57,9 @@ pub fn VPhpVSlimPsr7Adapter.to_vslim_request(request vphp.RequestBorrowedZBox) &
 }
 
 @[php_method: 'toWorkerEnvelope']
-pub fn VPhpVSlimPsr7Adapter.to_worker_envelope(request vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
+pub fn VSlimPsr7Adapter.to_worker_envelope(request vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	raw_request := request.to_zval()
-	vreq := VPhpVSlimPsr7Adapter.to_vslim_request(request)
+	vreq := VSlimPsr7Adapter.to_vslim_request(request)
 	mut out := new_array_zval()
 	out.add_assoc_string('method', vreq.method)
 	out.add_assoc_string('path', vreq.raw_path)

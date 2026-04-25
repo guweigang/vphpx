@@ -115,7 +115,7 @@ $app->set_not_found_handler(function ($req) {
     ];
 });
 
-$app->set_error_handler(function ($req, string $message, int $status) {
+$app->setErrorHandler(function ($req, string $message, int $status) {
     return [
         'status' => $status,
         'body' => 'err:' . $message,

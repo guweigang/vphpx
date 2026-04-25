@@ -138,7 +138,7 @@ namespace {
             $viewer = $request->getAttribute('studio.viewer');
             $workspace = $request->getAttribute('studio.workspace');
             $resolved = $this->console->resolve(is_array($viewer) ? $viewer : $this->catalog->viewer('guest'), $workspace);
-            return $this->render_with_layout('view_home.html', 'view_layout.html', [
+            return $this->renderWithLayout('view_home.html', 'view_layout.html', [
                 'title' => 'Index',
                 'subtitle' => 'Index Header',
                 'name' => (string) (($resolved['viewer']['id'] ?? '')),
@@ -148,9 +148,9 @@ namespace {
     }
 
     $app = new VSlim\App();
-    $app->set_view_base_path(__DIR__ . '/fixtures');
-    $app->set_assets_prefix('/assets');
-    $app->load_config_text(<<<'TOML'
+    $app->setViewBasePath(__DIR__ . '/fixtures');
+    $app->setAssetsPrefix('/assets');
+    $app->loadConfigText(<<<'TOML'
 [session]
 cookie_name = "ks_session"
 secret = "demo-secret"
@@ -201,8 +201,8 @@ TOML);
 
     foreach (['/console', '/console'] as $path) {
         $request = new VSlim\Vhttpd\Request('GET', $path, '');
-        $request->set_cookies([$sessionCookieName => $sessionValue]);
-        $response = $app->dispatch_request($request);
+        $request->setCookies([$sessionCookieName => $sessionValue]);
+        $response = $app->dispatchRequest($request);
         echo $path . '|' . $response->status . '|' . (str_contains($response->body, 'u-1') ? 'viewer' : 'miss') . PHP_EOL;
     }
 }

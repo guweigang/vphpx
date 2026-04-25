@@ -17,14 +17,14 @@ pub fn (mut c VSlimController) construct(app &VSlimApp) &VSlimController {
 	return &c
 }
 
-@[php_method]
+@[php_method: 'setApp']
 @[php_borrowed_return]
 pub fn (mut c VSlimController) set_app(app &VSlimApp) &VSlimController {
 	c.app_ref = app
 	return &c
 }
 
-@[php_method]
+@[php_method: 'setView']
 @[php_borrowed_return]
 pub fn (mut c VSlimController) set_view(view &VSlimView) &VSlimController {
 	c.view_ref = view
@@ -70,7 +70,7 @@ pub fn (mut c VSlimController) render(template string, data vphp.RequestBorrowed
 	return res
 }
 
-@[php_method]
+@[php_method: 'renderWithLayout']
 pub fn (mut c VSlimController) render_with_layout(template string, layout string, data vphp.RequestBorrowedZBox) &VSlimResponse {
 	mut view := c.view()
 	body := view.render_with_layout(template, layout, data)
@@ -79,7 +79,7 @@ pub fn (mut c VSlimController) render_with_layout(template string, layout string
 	return res
 }
 
-@[php_method]
+@[php_method: 'urlFor']
 pub fn (c &VSlimController) url_for(name string, params vphp.RequestBorrowedZBox) string {
 	app := effective_controller_app(c)
 	if app == unsafe { nil } {
@@ -88,7 +88,7 @@ pub fn (c &VSlimController) url_for(name string, params vphp.RequestBorrowedZBox
 	return app.url_for(name, params)
 }
 
-@[php_method]
+@[php_method: 'urlForQuery']
 pub fn (c &VSlimController) url_for_query(name string, params vphp.RequestBorrowedZBox, query vphp.RequestBorrowedZBox) string {
 	app := effective_controller_app(c)
 	if app == unsafe { nil } {
@@ -125,7 +125,7 @@ pub fn (c &VSlimController) redirect(location string, status int) &VSlimResponse
 	return to_vslim_response(res)
 }
 
-@[php_method]
+@[php_method: 'redirectTo']
 pub fn (c &VSlimController) redirect_to(name string, params vphp.RequestBorrowedZBox, status int) &VSlimResponse {
 	location := c.url_for(name, params)
 	if location == '' {
@@ -134,7 +134,7 @@ pub fn (c &VSlimController) redirect_to(name string, params vphp.RequestBorrowed
 	return c.redirect(location, status)
 }
 
-@[php_method]
+@[php_method: 'redirectToQuery']
 pub fn (c &VSlimController) redirect_to_query(name string, params vphp.RequestBorrowedZBox, query vphp.RequestBorrowedZBox, status int) &VSlimResponse {
 	location := c.url_for_query(name, params, query)
 	if location == '' {

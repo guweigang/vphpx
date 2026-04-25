@@ -25,13 +25,13 @@ $tpl = <<<'HTML'
 HTML;
 file_put_contents($tmpDir . '/debug.html', $tpl);
 
-$app->set_view_base_path($tmpDir);
-$view = $app->make_view();
+$app->setViewBasePath($tmpDir);
+$view = $app->makeView();
 $body = $view->render('debug.html', [
     'name' => 'neo',
     'user' => new DebugUser('Neo'),
 ]);
-$layoutBody = $view->render_with_layout('debug.html', 'missing_layout.html', [
+$layoutBody = $view->renderWithLayout('debug.html', 'missing_layout.html', [
     'name' => 'neo',
     'user' => new DebugUser('Neo'),
 ]);

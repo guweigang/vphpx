@@ -37,6 +37,7 @@ pub fn (mut client VSlimPsr18Client) timeout(seconds int) &VSlimPsr18Client {
 }
 
 @[php_method: 'ignorePhpWarning']
+@[php_arg_name: 'err_no=errNo,err_str=errStr,err_file=errFile,err_line=errLine']
 pub fn VSlimPsr18Client.ignore_php_warning(err_no int, err_str string, err_file string, err_line int) bool {
 	_ = err_no
 	_ = err_str
@@ -45,7 +46,7 @@ pub fn VSlimPsr18Client.ignore_php_warning(err_no int, err_str string, err_file 
 	return true
 }
 
-@[php_method]
+@[php_method: 'timeoutSecondsValue']
 pub fn (client &VSlimPsr18Client) timeout_seconds_value() int {
 	return if client.timeout_seconds <= 0 { 30 } else { client.timeout_seconds }
 }

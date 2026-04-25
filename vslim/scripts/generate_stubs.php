@@ -17,16 +17,16 @@ function main(array $argv): void
     $outputPath = $options['output'] ?? ($root . '/stubs/vslim.php');
     $stdout = $options['stdout'];
 
-    if (!extension_loaded('vslim')) {
-        if (!is_file($extensionPath)) {
-            fail("vslim extension not found: {$extensionPath}");
-        }
+    if (!is_file($extensionPath)) {
+        fail("vslim extension not found: {$extensionPath}");
+    }
 
-        if ($options['no_reexec']) {
-            fail("vslim extension is not loaded; tried {$extensionPath}");
-        }
-
+    if (!$options['no_reexec']) {
         exit(reexec_with_extension($argv, $extensionPath));
+    }
+
+    if (!extension_loaded('vslim')) {
+        fail("vslim extension is not loaded; tried {$extensionPath}");
     }
 
     $stub = generate_stub(new ReflectionExtension('vslim'));
@@ -116,6 +116,7 @@ function reexec_with_extension(array $argv, string $extensionPath): int
 {
     $command = [
         PHP_BINARY,
+        '-n',
         '-d',
         'extension=' . $extensionPath,
         __FILE__,

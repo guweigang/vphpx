@@ -5,8 +5,8 @@ VSlim LiveView demo helpers can render bootstrap attrs and runtime script into a
 --FILE--
 <?php
 $app = new VSlim\App();
-$app->set_view_base_path(__DIR__ . '/fixtures');
-$app->set_assets_prefix('/assets');
+$app->setViewBasePath(__DIR__ . '/fixtures');
+$app->setAssetsPrefix('/assets');
 
 final class DemoRenderLiveView extends VSlim\Live\View {
     public function mount(VSlim\Vhttpd\Request $req, VSlim\Live\Socket $socket): void
@@ -33,7 +33,7 @@ $live = new DemoRenderLiveView();
 $app->live('/', $live);
 
 $res = $app->dispatch('GET', '/');
-echo $res->status . '|' . $res->content_type . PHP_EOL;
+echo $res->status . '|' . $res->contentType . PHP_EOL;
 echo (str_contains($res->body, 'data-vphp-live="1"') ? "attrs-ok\n" : "attrs-miss\n");
 echo (str_contains($res->body, '/assets/vphp_live.js') ? "script-ok\n" : "script-miss\n");
 echo (str_contains($res->body, 'vphp-click="inc"') ? "click-ok\n" : "click-miss\n");

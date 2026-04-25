@@ -5,8 +5,8 @@ VSlim app view and route group factories return fresh wrappers while sharing con
 --FILE--
 <?php
 $app = new VSlim\App();
-$app->set_view_base_path('/tmp/vslim-factory');
-$app->set_assets_prefix('/static');
+$app->setViewBasePath('/tmp/vslim-factory');
+$app->setAssetsPrefix('/static');
 $app->set_view_cache(true);
 
 $view1 = $app->make_view();

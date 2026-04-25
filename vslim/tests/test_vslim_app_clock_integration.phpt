@@ -32,7 +32,7 @@ namespace {
     $clock = new FixedClock(new DateTimeImmutable('2024-01-01T00:00:00.123+00:00'));
     $logger = (new VSlim\Log\Logger())
         ->set_level(VSlim\Log\Level::DEBUG)
-        ->set_output_file($logFile);
+        ->setOutputFile($logFile);
 
     $app = new VSlim\App();
     var_dump($app->setClock($clock) === $app);

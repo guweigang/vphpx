@@ -5,6 +5,7 @@ import time
 import vphp
 
 @[php_method]
+@[php_arg_name: 'socket_path=socketPath,connect_timeout_seconds=connectTimeoutSeconds']
 pub fn (mut c VSlimVhttpdClient) construct(socket_path string, connect_timeout_seconds f64) &VSlimVhttpdClient {
 	c.socket_path = socket_path.trim_space()
 	c.connect_timeout_seconds = normalize_vhttpd_client_timeout(connect_timeout_seconds)
@@ -29,7 +30,7 @@ pub fn (c &VSlimVhttpdClient) request(payload vphp.RequestBorrowedZBox) vphp.Req
 @[php_method: 'requestFrames']
 @[php_arg_type: 'frames=array']
 @[php_arg_default: 'frames=[]']
-@[php_optional_args: 'frames']
+@[php_arg_optional: 'frames']
 pub fn (c &VSlimVhttpdClient) request_frames(payload vphp.RequestBorrowedZBox, frames vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	if c.socket_path.trim_space() == '' {
 		vphp.throw_exception_class('RuntimeException', 'socket path must not be empty', 0)

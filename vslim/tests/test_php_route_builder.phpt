@@ -220,7 +220,7 @@ $redirect = $app->redirect_to('hello.show', ['name' => 'jump']);
 echo $redirect->status . '|' . $redirect->header('location') . '|' . $redirect->body . PHP_EOL;
 $manual = new VSlim\Vhttpd\Response(200, 'ignored', 'text/plain; charset=utf-8');
 $manual->redirect_with_status('/moved', 307);
-echo $manual->status . '|' . $manual->header('location') . '|' . $manual->content_type . PHP_EOL;
+echo $manual->status . '|' . $manual->header('location') . '|' . $manual->contentType . PHP_EOL;
 $res = $app->dispatch_body('POST', '/submit?trace_id=builder', 'payload');
 echo $res->status . '|' . $res->body . '|' . $res->header('x-mode') . PHP_EOL;
 echo $app->dispatch('GET', '/api/users/9')->body . PHP_EOL;

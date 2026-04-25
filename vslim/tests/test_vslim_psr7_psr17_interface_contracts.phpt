@@ -30,7 +30,7 @@ interface RequestInterface extends MessageInterface
     public function getMethod();
     public function withMethod($method);
     public function getUri();
-    public function withUri(UriInterface $uri, $preserveHost = false);
+    public function withUri(UriInterface $uri, bool $preserveHost = false);
 }
 
 interface ServerRequestInterface extends RequestInterface

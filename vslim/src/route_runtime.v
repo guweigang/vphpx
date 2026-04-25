@@ -2,7 +2,7 @@ module main
 
 import vphp
 
-@[php_method]
+@[php_method: 'handleWebSocket']
 pub fn (mut app VSlimApp) handle_websocket(frame vphp.RequestBorrowedZBox, conn vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	raw_frame := frame.to_zval()
 	raw_conn := conn.to_zval()
@@ -52,12 +52,12 @@ pub fn (mut app VSlimApp) handle_websocket(frame vphp.RequestBorrowedZBox, conn 
 	return vphp.RequestOwnedZBox.adopt_zval(result)
 }
 
-@[php_method]
+@[php_method: 'routeCount']
 pub fn (app &VSlimApp) route_count() int {
 	return app.routes.len
 }
 
-@[php_method]
+@[php_method: 'routeNames']
 pub fn (app &VSlimApp) route_names() []string {
 	mut out := []string{}
 	for route in app.routes {
@@ -71,7 +71,7 @@ pub fn (app &VSlimApp) route_names() []string {
 	return out
 }
 
-@[php_method]
+@[php_method: 'hasRouteName']
 pub fn (app &VSlimApp) has_route_name(name string) bool {
 	for route in app.routes {
 		if route.name == name {
@@ -81,7 +81,7 @@ pub fn (app &VSlimApp) has_route_name(name string) bool {
 	return false
 }
 
-@[php_method]
+@[php_method: 'routeManifestLines']
 pub fn (app &VSlimApp) route_manifest_lines() []string {
 	mut out := []string{cap: app.routes.len}
 	for route in app.routes {
@@ -94,7 +94,7 @@ pub fn (app &VSlimApp) route_manifest_lines() []string {
 	return out
 }
 
-@[php_method]
+@[php_method: 'routeConflictKeys']
 pub fn (app &VSlimApp) route_conflict_keys() []string {
 	mut grouped := map[string]int{}
 	for route in app.routes {
@@ -111,7 +111,7 @@ pub fn (app &VSlimApp) route_conflict_keys() []string {
 	return out
 }
 
-@[php_method]
+@[php_method: 'routeManifest']
 pub fn (app &VSlimApp) route_manifest() []map[string]string {
 	mut out := []map[string]string{cap: app.routes.len}
 	for route in app.routes {
@@ -125,7 +125,7 @@ pub fn (app &VSlimApp) route_manifest() []map[string]string {
 	return out
 }
 
-@[php_method]
+@[php_method: 'routeConflicts']
 pub fn (app &VSlimApp) route_conflicts() []map[string]string {
 	mut grouped := map[string][]VSlimRoute{}
 	for route in app.routes {
@@ -156,7 +156,8 @@ pub fn (app &VSlimApp) route_conflicts() []map[string]string {
 	return out
 }
 
-@[php_method]
+@[php_method: 'allowedMethodsFor']
+@[php_arg_name: 'raw_path=rawPath']
 pub fn (app &VSlimApp) allowed_methods_for(raw_path string) []string {
 	path := RoutePath.normalize(raw_path)
 	mut allowed := []string{}

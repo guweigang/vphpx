@@ -7,23 +7,23 @@ VSlim route metadata helpers expose route names and allowed methods
 $app = new VSlim\App();
 $app->get('/health', function ($req) { return 'ok'; });
 $app->post('/users', function ($req) { return 'create'; });
-$app->put_named('users.update', '/users/:id', function ($req) { return 'u'; });
-$app->delete_named('users.delete', '/users/:id', function ($req) { return 'd'; });
-$app->any_named('echo.any', '/echo/:id', function ($req) { return 'e'; });
-$app->get_named('health.dup', '/health', function ($req) { return 'dup'; });
+$app->putNamed('users.update', '/users/:id', function ($req) { return 'u'; });
+$app->deleteNamed('users.delete', '/users/:id', function ($req) { return 'd'; });
+$app->anyNamed('echo.any', '/echo/:id', function ($req) { return 'e'; });
+$app->getNamed('health.dup', '/health', function ($req) { return 'dup'; });
 
-echo $app->route_count() . PHP_EOL;
-echo implode(',', $app->route_names()) . PHP_EOL;
-var_dump($app->has_route_name('users.update'));
-var_dump($app->has_route_name('missing'));
-echo implode(',', $app->allowed_methods_for('/users/7')) . PHP_EOL;
-echo implode(',', $app->allowed_methods_for('/echo/9')) . PHP_EOL;
-echo implode(',', $app->allowed_methods_for('/none')) . PHP_EOL;
-echo $app->route_manifest_lines()[0] . PHP_EOL;
-echo $app->route_conflict_keys()[0] . PHP_EOL;
-$manifest = $app->route_manifest();
+echo $app->routeCount() . PHP_EOL;
+echo implode(',', $app->routeNames()) . PHP_EOL;
+var_dump($app->hasRouteName('users.update'));
+var_dump($app->hasRouteName('missing'));
+echo implode(',', $app->allowedMethodsFor('/users/7')) . PHP_EOL;
+echo implode(',', $app->allowedMethodsFor('/echo/9')) . PHP_EOL;
+echo implode(',', $app->allowedMethodsFor('/none')) . PHP_EOL;
+echo $app->routeManifestLines()[0] . PHP_EOL;
+echo $app->routeConflictKeys()[0] . PHP_EOL;
+$manifest = $app->routeManifest();
 echo $manifest[0]['method'] . ' ' . $manifest[0]['pattern'] . PHP_EOL;
-$conflicts = $app->route_conflicts();
+$conflicts = $app->routeConflicts();
 echo count($conflicts) . '|' . $conflicts[0]['method'] . '|' . $conflicts[0]['pattern'] . '|' . $conflicts[0]['count'] . PHP_EOL;
 ?>
 --EXPECT--

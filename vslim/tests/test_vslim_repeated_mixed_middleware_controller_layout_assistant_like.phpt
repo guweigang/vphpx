@@ -123,7 +123,7 @@ namespace {
         {
             $viewer = $request->getAttribute('studio.viewer');
             $locale = (string) $request->getAttribute('studio.locale', '');
-            return $this->render_with_layout('view_home.html', 'view_layout.html', [
+            return $this->renderWithLayout('view_home.html', 'view_layout.html', [
                 'title' => 'Assistant',
                 'subtitle' => 'Assistant Header',
                 'name' => is_array($viewer) ? (string) ($viewer['id'] ?? '') : 'guest',
@@ -133,8 +133,8 @@ namespace {
     }
 
     $app = new VSlim\App();
-    $app->set_view_base_path(__DIR__ . '/fixtures');
-    $app->set_assets_prefix('/assets');
+    $app->setViewBasePath(__DIR__ . '/fixtures');
+    $app->setAssetsPrefix('/assets');
     $app->load_config_text(<<<'TOML'
 [session]
 cookie_name = "ks_session"
@@ -196,8 +196,8 @@ TOML);
 
     for ($i = 0; $i < 12; $i++) {
         $request = new VSlim\Vhttpd\Request('GET', '/brand/acme/assistant?lang=en', '');
-        $request->set_cookies([$sessionCookieName => $sessionValue]);
-        $response = $app->dispatch_request($request);
+        $request->setCookies([$sessionCookieName => $sessionValue]);
+        $response = $app->dispatchRequest($request);
         echo $i . '|' . $response->status . '|' . $response->header('content-language') . '|'
             . (str_contains($response->body, 'u-1') ? 'viewer' : 'miss') . PHP_EOL;
     }

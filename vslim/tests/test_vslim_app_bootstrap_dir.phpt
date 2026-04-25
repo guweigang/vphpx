@@ -11,7 +11,7 @@ $file = $bootstrap . '/app.php';
 $app1 = new VSlim\App();
 $app1->bootstrapDir($root);
 echo $app1->dispatch('GET', '/project')->body . PHP_EOL;
-echo $app1->url_for('fixture.project', []) . PHP_EOL;
+echo $app1->urlFor('fixture.project', []) . PHP_EOL;
 
 $app2 = new VSlim\App();
 $app2->bootstrapDir($bootstrap);

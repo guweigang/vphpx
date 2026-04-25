@@ -10,34 +10,34 @@ $logFile = sys_get_temp_dir() . '/vslim_logger_' . getmypid() . '.log';
 $logger = new VSlim\Log\Logger();
 echo get_class($logger) . PHP_EOL;
 echo $logger->level() . PHP_EOL;
-echo VSlim\Log\Logger::debug_level() . PHP_EOL;
+echo VSlim\Log\Logger::debugLevel() . PHP_EOL;
 echo VSlim\Log\Level::DEBUG . PHP_EOL;
 echo VSlim\Log\Level::debug() . PHP_EOL;
-echo $logger->output_target() . PHP_EOL;
+echo $logger->outputTarget() . PHP_EOL;
 
 $logger
-    ->set_level(VSlim\Log\Level::DEBUG)
-    ->set_channel('diag')
-    ->with_context('worker', 'php')
-    ->set_output_file($logFile);
+    ->setLevel(VSlim\Log\Level::DEBUG)
+    ->setChannel('diag')
+    ->withContext('worker', 'php')
+    ->setOutputFile($logFile);
 
 echo $logger->level() . '|' . $logger->channel() . PHP_EOL;
-echo $logger->output_target() . PHP_EOL;
+echo $logger->outputTarget() . PHP_EOL;
 
-$logger->debug_context('hello log', [
+$logger->debugContext('hello log', [
     'trace' => 't-1',
     'path' => '/ping',
 ]);
 
 $stdoutLogger = (new VSlim\Log\Logger())
-    ->use_stdout()
-    ->set_output_file($logFile);
-echo $stdoutLogger->output_target() . PHP_EOL;
+    ->useStdout()
+    ->setOutputFile($logFile);
+echo $stdoutLogger->outputTarget() . PHP_EOL;
 
 $app = new VSlim\App();
-echo ($app->has_logger() ? 'has' : 'no') . PHP_EOL;
-$app->set_logger($logger);
-echo ($app->has_logger() ? 'has' : 'no') . PHP_EOL;
+echo ($app->hasLogger() ? 'has' : 'no') . PHP_EOL;
+$app->setLogger($logger);
+echo ($app->hasLogger() ? 'has' : 'no') . PHP_EOL;
 echo $app->logger()->channel() . PHP_EOL;
 
 clearstatcache();

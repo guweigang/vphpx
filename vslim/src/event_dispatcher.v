@@ -11,6 +11,7 @@ pub fn (mut provider VSlimPsr14ListenerProvider) construct() &VSlimPsr14Listener
 }
 
 @[php_method]
+@[php_arg_name: 'event_class=eventClass']
 pub fn (mut provider VSlimPsr14ListenerProvider) listen(event_class string, listener vphp.RequestBorrowedZBox) &VSlimPsr14ListenerProvider {
 	ensure_psr14_listener_provider(mut provider)
 	key := normalize_psr14_event_key(event_class)
@@ -81,6 +82,7 @@ pub fn (mut dispatcher VSlimPsr14EventDispatcher) provider() &VSlimPsr14Listener
 }
 
 @[php_method]
+@[php_arg_name: 'event_class=eventClass']
 pub fn (mut dispatcher VSlimPsr14EventDispatcher) listen(event_class string, listener vphp.RequestBorrowedZBox) &VSlimPsr14EventDispatcher {
 	mut provider := dispatcher.provider()
 	provider.listen(event_class, listener)

@@ -1,5 +1,5 @@
 --TEST--
-VSlim PSR-7 adapter converts requests into VSlim\Vhttpd\Request and dispatches them
+VSlim PSR-7 adapter converts requests and responses at the bridge boundary
 --SKIPIF--
 <?php if (!extension_loaded("vslim")) print "skip"; ?>
 --FILE--
@@ -47,7 +47,6 @@ final class TestServerRequest {
     public function getBody(): TestBody { return $this->body; }
 }
 
-$app = VSlim\App::demo();
 $req = new TestServerRequest(
     'GET',
     new TestUri('https', 'demo.local', 443, '/users/55', 'trace_id=psr-bridge'),
@@ -59,15 +58,19 @@ $req = new TestServerRequest(
     new TestBody(''),
 );
 
-$vreq = VPhp\VSlim\Psr7Adapter::toVSlimRequest($req);
-echo $vreq->method . '|' . $vreq->raw_path . '|' . $vreq->scheme . '|' . $vreq->host . '|' . $vreq->port . '|' . $vreq->protocol_version . PHP_EOL;
+$vreq = VSlim\Psr7Adapter::toVSlimRequest($req);
+echo $vreq->method . '|' . $vreq->rawPath . '|' . $vreq->scheme . '|' . $vreq->host . '|' . $vreq->port . '|' . $vreq->protocolVersion . PHP_EOL;
 echo $vreq->query('trace_id') . '|' . $vreq->cookie('sid') . '|' . $vreq->attribute('actor') . '|' . $vreq->header('x-trace-id') . PHP_EOL;
 
-$env = VPhp\VSlim\Psr7Adapter::toWorkerEnvelope($req);
+$env = VSlim\Psr7Adapter::toWorkerEnvelope($req);
 echo $env['method'] . '|' . $env['path'] . '|' . $env['headers']['x-trace-id'] . '|' . $env['cookies']['sid'] . '|' . $env['query']['trace_id'] . PHP_EOL;
 
-$res = VPhp\VSlim\Psr7Adapter::dispatch($app, $req);
-echo $res->status . '|' . $res->body . '|' . $res->content_type . PHP_EOL;
+$psr = (new VSlim\Psr7\Response())
+    ->withStatus(200)
+    ->withHeader('content-type', 'application/json; charset=utf-8')
+    ->withBody(new VSlim\Psr7\Stream('{"user":"55","trace":"psr-bridge"}'));
+$res = VSlim\Psr7Adapter::toVSlimResponse($psr);
+echo $res->status . '|' . $res->body . '|' . $res->contentType . PHP_EOL;
 ?>
 --EXPECT--
 GET|/users/55?trace_id=psr-bridge|https|demo.local|443|2

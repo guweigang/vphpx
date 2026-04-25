@@ -5,15 +5,15 @@ VSlim MVC View and Controller helpers render templates and asset URLs
 --FILE--
 <?php
 $app = new VSlim\App();
-$app->set_view_base_path(__DIR__ . '/fixtures');
-$app->set_assets_prefix('/assets');
+$app->setViewBasePath(__DIR__ . '/fixtures');
+$app->setAssetsPrefix('/assets');
 
 $res = $app->view('view_home.html', [
     'title' => 'VSlim MVC Demo',
     'name' => 'neo',
     'trace' => 'trace-1',
 ]);
-echo $res->status . '|' . $res->content_type . '|' . (str_contains($res->body, '/assets/app.js') ? 'asset-ok' : 'asset-miss') . PHP_EOL;
+echo $res->status . '|' . $res->contentType . '|' . (str_contains($res->body, '/assets/app.js') ? 'asset-ok' : 'asset-miss') . PHP_EOL;
 echo (str_contains($res->body, 'VSlim MVC Demo|neo|trace-1') ? 'body-ok' : 'body-miss') . PHP_EOL;
 
 $view = new VSlim\View(__DIR__ . '/fixtures', '/assets');
@@ -29,15 +29,15 @@ final class TestPageController extends VSlim\Controller {
     }
 
     public function jump(string $name): VSlim\Vhttpd\Response {
-        return $this->redirect_to('mvc.home', ['name' => $name], 302);
+        return $this->redirectTo('mvc.home', ['name' => $name], 302);
     }
 
     public function jumpWithQuery(string $name): VSlim\Vhttpd\Response {
-        return $this->redirect_to_query('mvc.home', ['name' => $name], ['from' => 'controller'], 302);
+        return $this->redirectToQuery('mvc.home', ['name' => $name], ['from' => 'controller'], 302);
     }
 }
 
-$app->get_named('mvc.home', '/mvc/home/:name', function ($req) {
+$app->getNamed('mvc.home', '/mvc/home/:name', function ($req) {
     return "home:" . $req->getAttribute('name');
 });
 $controller = new TestPageController($app);

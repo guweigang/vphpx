@@ -236,6 +236,7 @@ pub fn (app &VSlimApp) provider_count() int {
 }
 
 @[php_method: 'hasProvider']
+@[php_arg_name: 'class_name=className']
 pub fn (app &VSlimApp) has_provider(class_name string) bool {
 	return class_name.trim_space() in app.provider_classes
 }

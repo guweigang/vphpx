@@ -1,6 +1,7 @@
 module main
 
 @[php_method]
+@[php_arg_name: 'content_type=contentType']
 pub fn (mut r VSlimResponse) construct(status int, body string, content_type string) &VSlimResponse {
 	r.status = status
 	r.body = body
@@ -22,13 +23,13 @@ pub fn (r &VSlimResponse) headers() map[string]string {
 	return r.header_values()
 }
 
-@[php_method]
+@[php_method: 'hasHeader']
 pub fn (r &VSlimResponse) has_header(name string) bool {
 	headers := r.header_values()
 	return VSlimRequest.normalize_header_name(name) in headers
 }
 
-@[php_method]
+@[php_method: 'setHeader']
 pub fn (mut r VSlimResponse) set_header(name string, value string) &VSlimResponse {
 	mut headers := r.header_values()
 	headers[VSlimRequest.normalize_header_name(name)] = value
@@ -36,7 +37,8 @@ pub fn (mut r VSlimResponse) set_header(name string, value string) &VSlimRespons
 	return r
 }
 
-@[php_method]
+@[php_method: 'withRequestId']
+@[php_arg_name: 'request_id=requestId']
 pub fn (mut r VSlimResponse) with_request_id(request_id string) &VSlimResponse {
 	if request_id == '' {
 		return r
@@ -44,7 +46,8 @@ pub fn (mut r VSlimResponse) with_request_id(request_id string) &VSlimResponse {
 	return r.set_header('x-request-id', request_id)
 }
 
-@[php_method]
+@[php_method: 'withTraceId']
+@[php_arg_name: 'trace_id=traceId']
 pub fn (mut r VSlimResponse) with_trace_id(trace_id string) &VSlimResponse {
 	if trace_id == '' {
 		return r
@@ -56,7 +59,8 @@ pub fn (mut r VSlimResponse) with_trace_id(trace_id string) &VSlimResponse {
 	return r
 }
 
-@[php_method]
+@[php_method: 'setContentType']
+@[php_arg_name: 'content_type=contentType']
 pub fn (mut r VSlimResponse) set_content_type(content_type string) &VSlimResponse {
 	r.content_type = content_type
 	mut headers := r.header_values()
@@ -65,22 +69,23 @@ pub fn (mut r VSlimResponse) set_content_type(content_type string) &VSlimRespons
 	return r
 }
 
-@[php_method]
+@[php_method: 'cookieHeader']
 pub fn (r &VSlimResponse) cookie_header() string {
 	return r.header('set-cookie')
 }
 
-@[php_method]
+@[php_method: 'setCookie']
 pub fn (mut r VSlimResponse) set_cookie(name string, value string) &VSlimResponse {
 	return r.set_cookie_opts(name, value, '/')
 }
 
-@[php_method]
+@[php_method: 'setCookieOpts']
 pub fn (mut r VSlimResponse) set_cookie_opts(name string, value string, path string) &VSlimResponse {
 	return r.set_cookie_full(name, value, path, '', 0, false, false, '')
 }
 
-@[php_method]
+@[php_method: 'setCookieFull']
+@[php_arg_name: 'max_age=maxAge,http_only=httpOnly,same_site=sameSite']
 pub fn (mut r VSlimResponse) set_cookie_full(name string, value string, path string, domain string, max_age int, secure bool, http_only bool, same_site string) &VSlimResponse {
 	header_value := build_set_cookie_header(name, value, path, domain, max_age, secure, http_only, same_site)
 	mut headers := r.header_values()
@@ -89,7 +94,7 @@ pub fn (mut r VSlimResponse) set_cookie_full(name string, value string, path str
 	return r
 }
 
-@[php_method]
+@[php_method: 'deleteCookie']
 pub fn (mut r VSlimResponse) delete_cookie(name string) &VSlimResponse {
 	header_value := '${name}=; Path=/; Max-Age=0'
 	mut headers := r.header_values()
@@ -98,13 +103,13 @@ pub fn (mut r VSlimResponse) delete_cookie(name string) &VSlimResponse {
 	return r
 }
 
-@[php_method]
+@[php_method: 'setStatus']
 pub fn (mut r VSlimResponse) set_status(status int) &VSlimResponse {
 	r.status = status
 	return r
 }
 
-@[php_method]
+@[php_method: 'withStatus']
 pub fn (mut r VSlimResponse) with_status(status int) &VSlimResponse {
 	return r.set_status(status)
 }
@@ -144,7 +149,7 @@ pub fn (mut r VSlimResponse) redirect(location string) &VSlimResponse {
 	return r.redirect_with_status(location, 302)
 }
 
-@[php_method]
+@[php_method: 'redirectWithStatus']
 pub fn (mut r VSlimResponse) redirect_with_status(location string, status int) &VSlimResponse {
 	r.status = status
 	r.body = ''
@@ -157,7 +162,7 @@ pub fn (mut r VSlimResponse) redirect_with_status(location string, status int) &
 	return r
 }
 
-@[php_method]
+@[php_method: 'headersAll']
 pub fn (r &VSlimResponse) headers_all() map[string]string {
 	return r.headers()
 }
@@ -179,7 +184,7 @@ pub fn (r &VSlimResponse) str() string {
 	return '${r.status} ${r.content_type} ${r.body}'
 }
 
-@[php_method]
+@[php_method: 'contentLength']
 pub fn (r &VSlimResponse) content_length() int {
 	return r.body.len
 }

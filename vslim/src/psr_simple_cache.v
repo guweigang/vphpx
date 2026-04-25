@@ -58,8 +58,9 @@ pub fn (mut cache VSlimPsr16Cache) clock() vphp.RequestOwnedZBox {
 }
 
 @[php_method]
+@[php_arg_name: 'default_value=defaultValue']
 @[php_arg_default: 'default_value=null']
-@[php_optional_args: 'default_value']
+@[php_arg_optional: 'default_value']
 pub fn (mut cache VSlimPsr16Cache) get(key string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	ensure_psr16_cache(mut cache)
 	normalized := psr_cache_validate_key_or_throw(key) or {
@@ -76,7 +77,7 @@ pub fn (mut cache VSlimPsr16Cache) get(key string, default_value vphp.RequestBor
 
 @[php_method]
 @[php_arg_default: 'ttl=null']
-@[php_optional_args: 'ttl']
+@[php_arg_optional: 'ttl']
 pub fn (mut cache VSlimPsr16Cache) set(key string, value vphp.RequestBorrowedZBox, ttl vphp.RequestBorrowedZBox) bool {
 	ensure_psr16_cache(mut cache)
 	normalized := psr_cache_validate_key_or_throw(key) or {
@@ -118,8 +119,9 @@ pub fn (mut cache VSlimPsr16Cache) clear() bool {
 @[php_method: 'getMultiple']
 @[php_arg_type: 'keys=iterable']
 @[php_return_type: 'iterable']
+@[php_arg_name: 'default_value=defaultValue']
 @[php_arg_default: 'default_value=null']
-@[php_optional_args: 'default_value']
+@[php_arg_optional: 'default_value']
 pub fn (mut cache VSlimPsr16Cache) get_multiple(keys vphp.RequestBorrowedZBox, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	ensure_psr16_cache(mut cache)
 	mut out := new_array_zval()
@@ -141,7 +143,7 @@ pub fn (mut cache VSlimPsr16Cache) get_multiple(keys vphp.RequestBorrowedZBox, d
 @[php_method: 'setMultiple']
 @[php_arg_type: 'values=iterable']
 @[php_arg_default: 'ttl=null']
-@[php_optional_args: 'ttl']
+@[php_arg_optional: 'ttl']
 pub fn (mut cache VSlimPsr16Cache) set_multiple(values vphp.RequestBorrowedZBox, ttl vphp.RequestBorrowedZBox) bool {
 	ensure_psr16_cache(mut cache)
 	if !psr16_is_iterable(values.to_zval()) {

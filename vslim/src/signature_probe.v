@@ -60,7 +60,7 @@ pub fn (probe &VSlimPhpSignatureProbe) accept_callable(cb vphp.RequestBorrowedZB
 
 @[php_method: 'optionalTail']
 @[php_arg_default: 'suffix=""']
-@[php_optional_args: 'suffix']
+@[php_arg_optional: 'suffix']
 pub fn (probe &VSlimPhpSignatureProbe) optional_tail(prefix string, suffix string) string {
 	if suffix == '' {
 		return prefix
@@ -146,6 +146,7 @@ pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_guard() &VSlimPsr1
 
 @[php_method: 'borrowedProviderFromIfExpr']
 @[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
+@[php_arg_name: 'use_alias=useAlias']
 pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_if_expr(use_alias bool) &VSlimPsr14ListenerProvider {
 	return if use_alias {
 		provider := probe.borrowed_provider()
@@ -157,6 +158,7 @@ pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_if_expr(use_alias 
 
 @[php_method: 'borrowedProviderFromIfExprAlias']
 @[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
+@[php_arg_name: 'use_alias=useAlias']
 pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_if_expr_alias(use_alias bool) &VSlimPsr14ListenerProvider {
 	provider := if use_alias {
 		probe.borrowed_provider()
@@ -168,6 +170,7 @@ pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_if_expr_alias(use_
 
 @[php_method: 'borrowedProviderFromMatchExpr']
 @[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
+@[php_arg_name: 'use_alias=useAlias']
 pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_match_expr(use_alias bool) &VSlimPsr14ListenerProvider {
 	return match use_alias {
 		true {
@@ -182,6 +185,7 @@ pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_match_expr(use_ali
 
 @[php_method: 'borrowedProviderFromMatchExprAlias']
 @[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
+@[php_arg_name: 'use_alias=useAlias']
 pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_match_expr_alias(use_alias bool) &VSlimPsr14ListenerProvider {
 	provider := match use_alias {
 		true {
@@ -235,6 +239,7 @@ pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_alias() &VSlimPsr14Listene
 
 @[php_method: 'freshProviderFromIfExpr']
 @[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
+@[php_arg_name: 'use_alias=useAlias']
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_if_expr(use_alias bool) &VSlimPsr14ListenerProvider {
 	return if use_alias {
 		provider := new_probe_listener_provider()
@@ -246,6 +251,7 @@ pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_if_expr(use_alias boo
 
 @[php_method: 'freshProviderFromIfExprAlias']
 @[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
+@[php_arg_name: 'use_alias=useAlias']
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_if_expr_alias(use_alias bool) &VSlimPsr14ListenerProvider {
 	provider := if use_alias {
 		new_probe_listener_provider()
@@ -257,6 +263,7 @@ pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_if_expr_alias(use_ali
 
 @[php_method: 'freshProviderFromMatchExpr']
 @[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
+@[php_arg_name: 'use_alias=useAlias']
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_match_expr(use_alias bool) &VSlimPsr14ListenerProvider {
 	return match use_alias {
 		true {
@@ -271,6 +278,7 @@ pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_match_expr(use_alias 
 
 @[php_method: 'freshProviderFromMatchExprAlias']
 @[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
+@[php_arg_name: 'use_alias=useAlias']
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_match_expr_alias(use_alias bool) &VSlimPsr14ListenerProvider {
 	provider := match use_alias {
 		true {

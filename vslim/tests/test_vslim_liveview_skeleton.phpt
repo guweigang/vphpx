@@ -5,7 +5,7 @@ VSlim LiveView skeleton mounts assigns and produces patches with minimal runtime
 --FILE--
 <?php
 $app = new VSlim\App();
-$app->set_view_base_path(__DIR__ . '/fixtures');
+$app->setViewBasePath(__DIR__ . '/fixtures');
 
 final class CounterLiveView extends VSlim\Live\View {
     public function mount(VSlim\Vhttpd\Request $req, VSlim\Live\Socket $socket): void
@@ -27,7 +27,7 @@ final class CounterLiveView extends VSlim\Live\View {
 $GLOBALS['app'] = $app;
 $app->live('/counter', new CounterLiveView());
 $res = $app->dispatch('GET', '/counter');
-echo $res->status . '|' . $res->content_type . PHP_EOL;
+echo $res->status . '|' . $res->contentType . PHP_EOL;
 echo trim($res->body) . PHP_EOL;
 
 $socket = new VSlim\Live\Socket();

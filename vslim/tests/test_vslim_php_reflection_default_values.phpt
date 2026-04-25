@@ -15,7 +15,6 @@ $appBadRequest = new ReflectionMethod(VSlim\App::class, 'badRequest');
 $requestInputOr = new ReflectionMethod(VSlim\Vhttpd\Request::class, 'input_or');
 $configGetMap = new ReflectionMethod(VSlim\Config::class, 'get_map');
 $seek = new ReflectionMethod(VSlim\Psr7\Stream::class, 'seek');
-$dispatch = new ReflectionFunction('vslim_handle_request');
 
 var_dump($responseCtor->getParameters()[0]->isDefaultValueAvailable());
 var_dump($responseCtor->getParameters()[0]->getDefaultValue());
@@ -32,9 +31,6 @@ var_dump($configGetMap->getParameters()[1]->getDefaultValue());
 var_dump($seek->getParameters()[1]->isDefaultValueConstant());
 var_dump($seek->getParameters()[1]->getDefaultValueConstantName());
 var_dump($seek->getParameters()[1]->getDefaultValue());
-
-var_dump($dispatch->getParameters()[1]->getDefaultValue());
-var_dump($dispatch->getParameters()[2]->getDefaultValue());
 ?>
 --EXPECT--
 bool(true)
@@ -50,5 +46,3 @@ array(0) {
 bool(true)
 string(8) "SEEK_SET"
 int(0)
-string(0) ""
-string(0) ""

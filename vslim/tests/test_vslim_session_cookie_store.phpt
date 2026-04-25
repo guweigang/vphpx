@@ -23,7 +23,7 @@ $session->set('scope', 'matrix');
 
 $response = new VSlim\Vhttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
 $session->commit($response);
-$header = $response->cookie_header();
+$header = $response->cookieHeader();
 echo (str_starts_with($header, 'sid=') ? 'cookie_yes' : 'cookie_no') . PHP_EOL;
 echo (str_contains($header, 'HttpOnly') ? 'http_only_yes' : 'http_only_no') . PHP_EOL;
 echo (str_contains($header, 'SameSite=Strict') ? 'same_site_yes' : 'same_site_no') . PHP_EOL;
@@ -32,7 +32,7 @@ $cookieValue = explode(';', $header, 2)[0];
 $cookieValue = explode('=', $cookieValue, 2)[1] ?? '';
 
 $request2 = new VSlim\Vhttpd\Request('GET', '/', '');
-$request2->set_cookies(['sid' => $cookieValue]);
+$request2->setCookies(['sid' => $cookieValue]);
 $session2 = $app->session($request2);
 echo $session2->get('user') . PHP_EOL;
 echo $session2->get('scope') . PHP_EOL;

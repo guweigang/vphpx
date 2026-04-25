@@ -141,6 +141,7 @@ fn register_module_zval(mut app VSlimApp, module_z vphp.ZVal) ! {
 }
 
 @[php_method: 'module']
+@[php_arg_name: 'mod_input=modInput']
 pub fn (mut app VSlimApp) mount_module(mod_input vphp.RequestBorrowedZBox) &VSlimApp {
 	module_z := normalize_module_input(mod_input.to_zval()) or {
 		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
@@ -180,6 +181,7 @@ pub fn (app &VSlimApp) module_count() int {
 }
 
 @[php_method: 'hasModule']
+@[php_arg_name: 'class_name=className']
 pub fn (app &VSlimApp) has_module(class_name string) bool {
 	return class_name.trim_space() in app.module_classes
 }

@@ -608,7 +608,8 @@ pub fn (cli &VSlimCliApp) arguments() vphp.RequestOwnedZBox {
 	})
 }
 
-@[php_optional_args: 'default_value']
+@[php_arg_name: 'default_value=defaultValue']
+@[php_arg_optional: 'default_value']
 @[php_method]
 @[php_arg_default: 'default_value=null']
 pub fn (cli &VSlimCliApp) option(name string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
@@ -627,7 +628,8 @@ pub fn (cli &VSlimCliApp) option(name string, default_value vphp.RequestBorrowed
 	return vphp.RequestOwnedZBox.new_null()
 }
 
-@[php_optional_args: 'default_value']
+@[php_arg_name: 'default_value=defaultValue']
+@[php_arg_optional: 'default_value']
 @[php_method]
 @[php_arg_default: 'default_value=null']
 pub fn (cli &VSlimCliApp) argument(name string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {

@@ -18,7 +18,7 @@ pub fn (mut socket VSlimLiveSocket) construct() &VSlimLiveSocket {
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'setId']
 pub fn (mut socket VSlimLiveSocket) set_id(id string) &VSlimLiveSocket {
 	socket.id = id.trim_space()
 	return &socket
@@ -29,7 +29,7 @@ pub fn (socket &VSlimLiveSocket) id() string {
 	return socket.id
 }
 
-@[php_method]
+@[php_method: 'setConnected']
 pub fn (mut socket VSlimLiveSocket) set_connected(connected bool) &VSlimLiveSocket {
 	socket.connected = connected
 	return &socket
@@ -40,7 +40,8 @@ pub fn (socket &VSlimLiveSocket) connected() bool {
 	return socket.connected
 }
 
-@[php_method]
+@[php_method: 'setTarget']
+@[php_arg_name: 'raw_path=rawPath']
 pub fn (mut socket VSlimLiveSocket) set_target(raw_path string) &VSlimLiveSocket {
 	socket.raw_path = live_normalize_target(raw_path)
 	return &socket
@@ -51,13 +52,14 @@ pub fn (socket &VSlimLiveSocket) target() string {
 	return socket.raw_path
 }
 
-@[php_method]
+@[php_method: 'setRootId']
+@[php_arg_name: 'root_id=rootId']
 pub fn (mut socket VSlimLiveSocket) set_root_id(root_id string) &VSlimLiveSocket {
 	socket.root_id = root_id.trim_space()
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'rootId']
 pub fn (socket &VSlimLiveSocket) root_id() string {
 	return socket.root_id
 }
@@ -72,7 +74,7 @@ pub fn (mut socket VSlimLiveSocket) assign(key string, value vphp.RequestBorrowe
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'assignMany']
 pub fn (mut socket VSlimLiveSocket) assign_many(values vphp.RequestBorrowedZBox) &VSlimLiveSocket {
 	if !values.is_valid() || values.is_null() || values.is_undef() || !values.is_array() {
 		return &socket
@@ -84,7 +86,7 @@ pub fn (mut socket VSlimLiveSocket) assign_many(values vphp.RequestBorrowedZBox)
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'assignForm']
 pub fn (mut socket VSlimLiveSocket) assign_form(values vphp.RequestBorrowedZBox) &VSlimLiveSocket {
 	if !values.is_valid() || values.is_null() || values.is_undef() || !values.is_array() {
 		return &socket
@@ -105,7 +107,7 @@ pub fn (mut socket VSlimLiveSocket) assign_form(values vphp.RequestBorrowedZBox)
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'resetForm']
 pub fn (mut socket VSlimLiveSocket) reset_form(values vphp.RequestBorrowedZBox) &VSlimLiveSocket {
 	socket.clear_errors()
 	return socket.assign_form(values)
@@ -121,12 +123,12 @@ pub fn (mut socket VSlimLiveSocket) forget(key string) &VSlimLiveSocket {
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'forgetInput']
 pub fn (mut socket VSlimLiveSocket) forget_input(field string) &VSlimLiveSocket {
 	return socket.forget(field)
 }
 
-@[php_method]
+@[php_method: 'forgetInputs']
 pub fn (mut socket VSlimLiveSocket) forget_inputs(fields vphp.RequestBorrowedZBox) &VSlimLiveSocket {
 	for field in live_field_names(fields.to_zval()) {
 		socket.forget(field)
@@ -134,7 +136,7 @@ pub fn (mut socket VSlimLiveSocket) forget_inputs(fields vphp.RequestBorrowedZBo
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'clearAssigns']
 pub fn (mut socket VSlimLiveSocket) clear_assigns() &VSlimLiveSocket {
 	socket.assigns = map[string]string{}
 	return &socket
@@ -149,7 +151,8 @@ fn live_component_state_key(component_id string, field string) string {
 	return '_component_${id}_${name}'
 }
 
-@[php_method]
+@[php_method: 'assignComponentState']
+@[php_arg_name: 'component_id=componentId']
 pub fn (mut socket VSlimLiveSocket) assign_component_state(component_id string, field string, value vphp.RequestBorrowedZBox) &VSlimLiveSocket {
 	key := live_component_state_key(component_id, field)
 	if key == '' {
@@ -159,19 +162,22 @@ pub fn (mut socket VSlimLiveSocket) assign_component_state(component_id string, 
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'componentState']
+@[php_arg_name: 'component_id=componentId']
 pub fn (socket &VSlimLiveSocket) component_state(component_id string, field string) string {
 	key := live_component_state_key(component_id, field)
 	return if key == '' { '' } else { socket.get(key) }
 }
 
-@[php_method]
+@[php_method: 'componentStateOr']
+@[php_arg_name: 'component_id=componentId']
 pub fn (socket &VSlimLiveSocket) component_state_or(component_id string, field string, fallback string) string {
 	value := socket.component_state(component_id, field)
 	return if value == '' { fallback } else { value }
 }
 
-@[php_method]
+@[php_method: 'clearComponentState']
+@[php_arg_name: 'component_id=componentId']
 pub fn (mut socket VSlimLiveSocket) clear_component_state(component_id string, field string) &VSlimLiveSocket {
 	key := live_component_state_key(component_id, field)
 	if key == '' {
@@ -183,7 +189,7 @@ pub fn (mut socket VSlimLiveSocket) clear_component_state(component_id string, f
 
 // Low-level error helpers remain available for direct socket manipulation,
 // but new code should usually prefer socket.form(...)->validate(...).
-@[php_method]
+@[php_method: 'assignError']
 pub fn (mut socket VSlimLiveSocket) assign_error(field string, message string) &VSlimLiveSocket {
 	key := live_error_key(field)
 	if key == '' {
@@ -193,7 +199,7 @@ pub fn (mut socket VSlimLiveSocket) assign_error(field string, message string) &
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'assignErrors']
 pub fn (mut socket VSlimLiveSocket) assign_errors(values vphp.RequestBorrowedZBox) &VSlimLiveSocket {
 	if !values.is_valid() || values.is_null() || values.is_undef() || !values.is_array() {
 		return &socket
@@ -209,7 +215,7 @@ pub fn (mut socket VSlimLiveSocket) assign_errors(values vphp.RequestBorrowedZBo
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'clearError']
 pub fn (mut socket VSlimLiveSocket) clear_error(field string) &VSlimLiveSocket {
 	key := live_error_key(field)
 	if key == '' {
@@ -219,7 +225,7 @@ pub fn (mut socket VSlimLiveSocket) clear_error(field string) &VSlimLiveSocket {
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'clearErrors']
 pub fn (mut socket VSlimLiveSocket) clear_errors() &VSlimLiveSocket {
 	for key in socket.assigns.keys() {
 		if key.starts_with('error_') {
@@ -234,7 +240,7 @@ pub fn (socket &VSlimLiveSocket) input(field string) string {
 	return socket.get(field)
 }
 
-@[php_method]
+@[php_method: 'inputOr']
 pub fn (socket &VSlimLiveSocket) input_or(field string, fallback string) string {
 	value := socket.input(field)
 	return if value == '' { fallback } else { value }
@@ -247,7 +253,7 @@ pub fn (socket &VSlimLiveSocket) old(field string) string {
 	return socket.input(field)
 }
 
-@[php_method]
+@[php_method: 'oldOr']
 pub fn (socket &VSlimLiveSocket) old_or(field string, fallback string) string {
 	return socket.input_or(field, fallback)
 }
@@ -258,7 +264,7 @@ pub fn (socket &VSlimLiveSocket) error(field string) string {
 	return if key == '' { '' } else { socket.get(key) }
 }
 
-@[php_method]
+@[php_method: 'hasError']
 pub fn (socket &VSlimLiveSocket) has_error(field string) bool {
 	key := live_error_key(field)
 	return key != '' && socket.has(key)
@@ -363,7 +369,7 @@ pub fn (mut form VSlimLiveForm) errors(values vphp.RequestBorrowedZBox) &VSlimLi
 	return &form
 }
 
-@[php_method]
+@[php_method: 'clearErrors']
 pub fn (mut form VSlimLiveForm) clear_errors() &VSlimLiveForm {
 	if isnil(form.socket_ref) {
 		return &form
@@ -376,7 +382,7 @@ pub fn (mut form VSlimLiveForm) clear_errors() &VSlimLiveForm {
 	return &form
 }
 
-@[php_method]
+@[php_method: 'clearError']
 pub fn (mut form VSlimLiveForm) clear_error(field string) &VSlimLiveForm {
 	if isnil(form.socket_ref) {
 		return &form
@@ -400,7 +406,7 @@ pub fn (mut form VSlimLiveForm) forget(field string) &VSlimLiveForm {
 	return &form
 }
 
-@[php_method]
+@[php_method: 'forgetMany']
 pub fn (mut form VSlimLiveForm) forget_many(fields vphp.RequestBorrowedZBox) &VSlimLiveForm {
 	if isnil(form.socket_ref) {
 		return &form
@@ -420,7 +426,7 @@ pub fn (form &VSlimLiveForm) input(field string) string {
 	return form.socket_ref.input(field)
 }
 
-@[php_method]
+@[php_method: 'inputOr']
 pub fn (form &VSlimLiveForm) input_or(field string, fallback string) string {
 	value := form.input(field)
 	return if value == '' { fallback } else { value }
@@ -434,7 +440,7 @@ pub fn (form &VSlimLiveForm) error(field string) string {
 	return form.socket_ref.error(field)
 }
 
-@[php_method]
+@[php_method: 'hasError']
 pub fn (form &VSlimLiveForm) has_error(field string) bool {
 	return !isnil(form.socket_ref) && form.socket_ref.has_error(field)
 }
@@ -449,7 +455,7 @@ pub fn (form &VSlimLiveForm) invalid() bool {
 	return form.last_error_count > 0
 }
 
-@[php_method]
+@[php_method: 'errorCount']
 pub fn (form &VSlimLiveForm) error_count() int {
 	return form.last_error_count
 }
@@ -500,6 +506,7 @@ pub fn (socket &VSlimLiveSocket) assigns() map[string]string {
 }
 
 @[php_method]
+@[php_arg_name: 'target_id=targetId']
 pub fn (mut socket VSlimLiveSocket) patch(target_id string, html string) &VSlimLiveSocket {
 	id := target_id.trim_space()
 	if id == '' {
@@ -514,6 +521,7 @@ pub fn (mut socket VSlimLiveSocket) patch(target_id string, html string) &VSlimL
 }
 
 @[php_method]
+@[php_arg_name: 'target_id=targetId']
 pub fn (mut socket VSlimLiveSocket) append(target_id string, html string) &VSlimLiveSocket {
 	id := target_id.trim_space()
 	if id == '' {
@@ -528,6 +536,7 @@ pub fn (mut socket VSlimLiveSocket) append(target_id string, html string) &VSlim
 }
 
 @[php_method]
+@[php_arg_name: 'target_id=targetId']
 pub fn (mut socket VSlimLiveSocket) prepend(target_id string, html string) &VSlimLiveSocket {
 	id := target_id.trim_space()
 	if id == '' {
@@ -541,7 +550,8 @@ pub fn (mut socket VSlimLiveSocket) prepend(target_id string, html string) &VSli
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'setText']
+@[php_arg_name: 'target_id=targetId']
 pub fn (mut socket VSlimLiveSocket) set_text(target_id string, text string) &VSlimLiveSocket {
 	id := target_id.trim_space()
 	if id == '' {
@@ -555,7 +565,8 @@ pub fn (mut socket VSlimLiveSocket) set_text(target_id string, text string) &VSl
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'setAttr']
+@[php_arg_name: 'target_id=targetId']
 pub fn (mut socket VSlimLiveSocket) set_attr(target_id string, name string, value string) &VSlimLiveSocket {
 	id := target_id.trim_space()
 	attr_name := name.trim_space()
@@ -572,6 +583,7 @@ pub fn (mut socket VSlimLiveSocket) set_attr(target_id string, name string, valu
 }
 
 @[php_method]
+@[php_arg_name: 'target_id=targetId']
 pub fn (mut socket VSlimLiveSocket) remove(target_id string) &VSlimLiveSocket {
 	id := target_id.trim_space()
 	if id == '' {
@@ -589,13 +601,13 @@ pub fn (socket &VSlimLiveSocket) patches() []map[string]string {
 	return clone_live_entries(socket.patches)
 }
 
-@[php_method]
+@[php_method: 'clearPatches']
 pub fn (mut socket VSlimLiveSocket) clear_patches() &VSlimLiveSocket {
 	socket.patches = []map[string]string{}
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'pushEvent']
 pub fn (mut socket VSlimLiveSocket) push_event(event string, payload string) &VSlimLiveSocket {
 	name := event.trim_space()
 	if name == '' {
@@ -613,7 +625,7 @@ pub fn (socket &VSlimLiveSocket) events() []map[string]string {
 	return clone_live_entries(socket.events)
 }
 
-@[php_method]
+@[php_method: 'clearEvents']
 pub fn (mut socket VSlimLiveSocket) clear_events() &VSlimLiveSocket {
 	socket.events = []map[string]string{}
 	return &socket
@@ -638,13 +650,13 @@ pub fn (socket &VSlimLiveSocket) flashes() []map[string]string {
 	return clone_live_entries(socket.flashes)
 }
 
-@[php_method]
+@[php_method: 'clearFlashes']
 pub fn (mut socket VSlimLiveSocket) clear_flashes() &VSlimLiveSocket {
 	socket.flashes = []map[string]string{}
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'joinTopic']
 pub fn (mut socket VSlimLiveSocket) join_topic(room string) &VSlimLiveSocket {
 	topic := room.trim_space()
 	if topic == '' {
@@ -657,7 +669,7 @@ pub fn (mut socket VSlimLiveSocket) join_topic(room string) &VSlimLiveSocket {
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'leaveTopic']
 pub fn (mut socket VSlimLiveSocket) leave_topic(room string) &VSlimLiveSocket {
 	topic := room.trim_space()
 	if topic == '' {
@@ -670,7 +682,8 @@ pub fn (mut socket VSlimLiveSocket) leave_topic(room string) &VSlimLiveSocket {
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'broadcastInfo']
+@[php_arg_name: 'include_self=includeSelf']
 pub fn (mut socket VSlimLiveSocket) broadcast_info(room string, event string, payload vphp.RequestBorrowedZBox, include_self bool) &VSlimLiveSocket {
 	topic := room.trim_space()
 	name := event.trim_space()
@@ -687,12 +700,12 @@ pub fn (mut socket VSlimLiveSocket) broadcast_info(room string, event string, pa
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'pubsubCommands']
 pub fn (socket &VSlimLiveSocket) pubsub_commands() []map[string]string {
 	return clone_live_entries(socket.pubsub)
 }
 
-@[php_method]
+@[php_method: 'clearPubsub']
 pub fn (mut socket VSlimLiveSocket) clear_pubsub() &VSlimLiveSocket {
 	socket.pubsub = []map[string]string{}
 	return &socket
@@ -705,12 +718,12 @@ pub fn (mut socket VSlimLiveSocket) redirect(location string) &VSlimLiveSocket {
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'redirectTo']
 pub fn (socket &VSlimLiveSocket) redirect_to() string {
 	return socket.redirect_to
 }
 
-@[php_method]
+@[php_method: 'clearRedirect']
 pub fn (mut socket VSlimLiveSocket) clear_redirect() &VSlimLiveSocket {
 	socket.redirect_to = ''
 	return &socket
@@ -723,12 +736,12 @@ pub fn (mut socket VSlimLiveSocket) navigate(location string) &VSlimLiveSocket {
 	return &socket
 }
 
-@[php_method]
+@[php_method: 'navigateTo']
 pub fn (socket &VSlimLiveSocket) navigate_to() string {
 	return socket.navigate_to
 }
 
-@[php_method]
+@[php_method: 'clearNavigate']
 pub fn (mut socket VSlimLiveSocket) clear_navigate() &VSlimLiveSocket {
 	socket.navigate_to = ''
 	return &socket
@@ -740,13 +753,13 @@ pub fn (mut live VSlimLiveView) construct() &VSlimLiveView {
 	return &live
 }
 
-@[php_method]
+@[php_method: 'setApp']
 pub fn (mut live VSlimLiveView) set_app(app &VSlimApp) &VSlimLiveView {
 	live.host.set_app_ref(app)
 	return &live
 }
 
-@[php_method]
+@[php_method: 'setView']
 pub fn (mut live VSlimLiveView) set_view(view &VSlimView) &VSlimLiveView {
 	live.host.set_view_ref(view)
 	return &live
@@ -757,7 +770,7 @@ pub fn (mut live VSlimLiveView) view() &VSlimView {
 	return live.host.view()
 }
 
-@[php_method]
+@[php_method: 'setTemplate']
 pub fn (mut live VSlimLiveView) set_template(template string) &VSlimLiveView {
 	live.host.set_template_name(template)
 	return &live
@@ -768,7 +781,7 @@ pub fn (live &VSlimLiveView) template() string {
 	return live.host.template_name()
 }
 
-@[php_method]
+@[php_method: 'setLayout']
 pub fn (mut live VSlimLiveView) set_layout(layout string) &VSlimLiveView {
 	live.host.set_layout_name(layout)
 	return &live
@@ -779,28 +792,29 @@ pub fn (live &VSlimLiveView) layout() string {
 	return live.host.layout_name()
 }
 
-@[php_method]
+@[php_method: 'setRootId']
+@[php_arg_name: 'root_id=rootId']
 pub fn (mut live VSlimLiveView) set_root_id(root_id string) &VSlimLiveView {
 	live.root_id = root_id.trim_space()
 	return &live
 }
 
-@[php_method]
+@[php_method: 'rootId']
 pub fn (live &VSlimLiveView) root_id() string {
 	return live.root_id
 }
 
-@[php_method]
+@[php_method: 'liveMarker']
 pub fn (live &VSlimLiveView) live_marker() bool {
 	return true
 }
 
-@[php_method]
+@[php_method: 'attrPrefix']
 pub fn (live &VSlimLiveView) attr_prefix() string {
 	return 'vphp'
 }
 
-@[php_method]
+@[php_method: 'attrName']
 pub fn (live &VSlimLiveView) attr_name(name string) string {
 	suffix := name.trim_space().trim('-')
 	if suffix == '' {
@@ -809,18 +823,18 @@ pub fn (live &VSlimLiveView) attr_name(name string) string {
 	return 'vphp-${suffix}'
 }
 
-@[php_method]
+@[php_method: 'runtimeAsset']
 pub fn (mut live VSlimLiveView) runtime_asset() string {
 	mut view := live.view()
 	return view.asset('vphp_live.js')
 }
 
-@[php_method]
+@[php_method: 'runtimeScriptTag']
 pub fn (mut live VSlimLiveView) runtime_script_tag() string {
 	return '<script defer src="' + escape_html_text(live.runtime_asset()) + '"></script>'
 }
 
-@[php_method]
+@[php_method: 'bootstrapAttrs']
 pub fn (live &VSlimLiveView) bootstrap_attrs(socket &VSlimLiveSocket, endpoint string) string {
 	ws_path := live_normalize_target(endpoint)
 	target := socket.target()
@@ -836,22 +850,22 @@ pub fn (live &VSlimLiveView) bootstrap_attrs(socket &VSlimLiveSocket, endpoint s
 		escape_html_text(root_id) + '"'
 }
 
-@[php_method]
+@[php_method: 'renderTemplate']
 pub fn (mut live VSlimLiveView) render_template(template string, data vphp.RequestBorrowedZBox) string {
 	return live.host.render_template_data(template, data)
 }
 
-@[php_method]
+@[php_method: 'renderTemplateWithLayout']
 pub fn (mut live VSlimLiveView) render_template_with_layout(template string, layout string, data vphp.RequestBorrowedZBox) string {
 	return live.host.render_template_with_layout_data(template, layout, data)
 }
 
-@[php_method]
+@[php_method: 'renderSocket']
 pub fn (mut live VSlimLiveView) render_socket(template string, socket &VSlimLiveSocket) string {
 	return live.host.render_map_template(template, socket.assigns.clone())
 }
 
-@[php_method]
+@[php_method: 'renderSocketWithLayout']
 pub fn (mut live VSlimLiveView) render_socket_with_layout(template string, layout string, socket &VSlimLiveSocket) string {
 	return live.host.render_map_template_with_layout(template, layout, socket.assigns.clone())
 }
@@ -868,6 +882,7 @@ pub fn (mut live VSlimLiveView) response(socket &VSlimLiveSocket) &VSlimResponse
 }
 
 @[php_method]
+@[php_arg_name: 'target_id=targetId']
 pub fn (mut live VSlimLiveView) patch(socket &VSlimLiveSocket, target_id string) &VSlimLiveSocket {
 	body := live.html(socket)
 	unsafe {
@@ -876,7 +891,8 @@ pub fn (mut live VSlimLiveView) patch(socket &VSlimLiveSocket, target_id string)
 	}
 }
 
-@[php_method]
+@[php_method: 'patchTemplate']
+@[php_arg_name: 'target_id=targetId']
 pub fn (mut live VSlimLiveView) patch_template(socket &VSlimLiveSocket, target_id string, template string) &VSlimLiveSocket {
 	body := live.render_socket(template, socket)
 	unsafe {
@@ -892,13 +908,13 @@ pub fn (mut component VSlimLiveComponent) construct() &VSlimLiveComponent {
 	return &component
 }
 
-@[php_method]
+@[php_method: 'setApp']
 pub fn (mut component VSlimLiveComponent) set_app(app &VSlimApp) &VSlimLiveComponent {
 	component.host.set_app_ref(app)
 	return &component
 }
 
-@[php_method]
+@[php_method: 'setView']
 pub fn (mut component VSlimLiveComponent) set_view(view &VSlimView) &VSlimLiveComponent {
 	component.host.set_view_ref(view)
 	return &component
@@ -909,7 +925,7 @@ pub fn (mut component VSlimLiveComponent) view() &VSlimView {
 	return component.host.view()
 }
 
-@[php_method]
+@[php_method: 'setTemplate']
 pub fn (mut component VSlimLiveComponent) set_template(template string) &VSlimLiveComponent {
 	component.host.set_template_name(template)
 	return &component
@@ -920,7 +936,7 @@ pub fn (component &VSlimLiveComponent) template() string {
 	return component.host.template_name()
 }
 
-@[php_method]
+@[php_method: 'setLayout']
 pub fn (mut component VSlimLiveComponent) set_layout(layout string) &VSlimLiveComponent {
 	component.host.set_layout_name(layout)
 	return &component
@@ -931,7 +947,7 @@ pub fn (component &VSlimLiveComponent) layout() string {
 	return component.host.layout_name()
 }
 
-@[php_method]
+@[php_method: 'setId']
 pub fn (mut component VSlimLiveComponent) set_id(id string) &VSlimLiveComponent {
 	component.id = id.trim_space()
 	return &component
@@ -942,13 +958,13 @@ pub fn (component &VSlimLiveComponent) id() string {
 	return component.id
 }
 
-@[php_method]
+@[php_method: 'bindSocket']
 pub fn (mut component VSlimLiveComponent) bind_socket(socket &VSlimLiveSocket) &VSlimLiveComponent {
 	component.socket_ref = socket
 	return &component
 }
 
-@[php_method]
+@[php_method: 'hasSocket']
 pub fn (component &VSlimLiveComponent) has_socket() bool {
 	return !isnil(component.socket_ref)
 }
@@ -978,7 +994,7 @@ pub fn (mut component VSlimLiveComponent) assign(key string, value vphp.RequestB
 	return &component
 }
 
-@[php_method]
+@[php_method: 'assignMany']
 pub fn (mut component VSlimLiveComponent) assign_many(values vphp.RequestBorrowedZBox) &VSlimLiveComponent {
 	if !values.is_valid() || values.is_null() || values.is_undef() || !values.is_array() {
 		return &component
@@ -995,13 +1011,13 @@ pub fn (component &VSlimLiveComponent) assigns() map[string]string {
 	return component.assigns.clone()
 }
 
-@[php_method]
+@[php_method: 'clearAssigns']
 pub fn (mut component VSlimLiveComponent) clear_assigns() &VSlimLiveComponent {
 	component.assigns = map[string]string{}
 	return &component
 }
 
-@[php_method]
+@[php_method: 'renderTemplate']
 pub fn (mut component VSlimLiveComponent) render_template(template string, data vphp.RequestBorrowedZBox) string {
 	return component.host.render_template_data(template, data)
 }
@@ -1024,7 +1040,7 @@ pub fn (mut component VSlimLiveComponent) patch(socket &VSlimLiveSocket) &VSlimL
 	}
 }
 
-@[php_method]
+@[php_method: 'patchBound']
 pub fn (mut component VSlimLiveComponent) patch_bound() &VSlimLiveSocket {
 	if socket := component.bound_socket() {
 		return component.patch(socket)
@@ -1032,12 +1048,13 @@ pub fn (mut component VSlimLiveComponent) patch_bound() &VSlimLiveSocket {
 	return new_live_socket_bound_result()
 }
 
-@[php_method]
+@[php_method: 'componentMarker']
 pub fn (mut component VSlimLiveComponent) component_marker() bool {
 	return true
 }
 
-@[php_method]
+@[php_method: 'appendTo']
+@[php_arg_name: 'target_id=targetId']
 pub fn (mut component VSlimLiveComponent) append_to(socket &VSlimLiveSocket, target_id string) &VSlimLiveSocket {
 	body := component.html()
 	id := target_id.trim_space()
@@ -1050,7 +1067,8 @@ pub fn (mut component VSlimLiveComponent) append_to(socket &VSlimLiveSocket, tar
 	}
 }
 
-@[php_method]
+@[php_method: 'appendToBound']
+@[php_arg_name: 'target_id=targetId']
 pub fn (mut component VSlimLiveComponent) append_to_bound(target_id string) &VSlimLiveSocket {
 	if socket := component.bound_socket() {
 		return component.append_to(socket, target_id)
@@ -1058,7 +1076,8 @@ pub fn (mut component VSlimLiveComponent) append_to_bound(target_id string) &VSl
 	return new_live_socket_bound_result()
 }
 
-@[php_method]
+@[php_method: 'prependTo']
+@[php_arg_name: 'target_id=targetId']
 pub fn (mut component VSlimLiveComponent) prepend_to(socket &VSlimLiveSocket, target_id string) &VSlimLiveSocket {
 	body := component.html()
 	id := target_id.trim_space()
@@ -1071,7 +1090,8 @@ pub fn (mut component VSlimLiveComponent) prepend_to(socket &VSlimLiveSocket, ta
 	}
 }
 
-@[php_method]
+@[php_method: 'prependToBound']
+@[php_arg_name: 'target_id=targetId']
 pub fn (mut component VSlimLiveComponent) prepend_to_bound(target_id string) &VSlimLiveSocket {
 	if socket := component.bound_socket() {
 		return component.prepend_to(socket, target_id)
@@ -1091,7 +1111,7 @@ pub fn (mut component VSlimLiveComponent) remove(socket &VSlimLiveSocket) &VSlim
 	}
 }
 
-@[php_method]
+@[php_method: 'removeBound']
 pub fn (mut component VSlimLiveComponent) remove_bound() &VSlimLiveSocket {
 	if socket := component.bound_socket() {
 		return component.remove(socket)
@@ -1119,7 +1139,7 @@ pub fn (state &VSlimLiveComponentState) get(field string) string {
 	return state.socket_ref.component_state(state.component_id, field)
 }
 
-@[php_method]
+@[php_method: 'getOr']
 pub fn (state &VSlimLiveComponentState) get_or(field string, fallback string) string {
 	value := state.get(field)
 	return if value == '' { fallback } else { value }

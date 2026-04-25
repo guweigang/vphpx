@@ -13,7 +13,7 @@ fn has_php_not_found_pipeline(app &VSlimApp, path string) bool {
 }
 
 fn dispatch_php_terminal_raw(app &VSlimApp, req &VSlimRequest, terminal_meta MiddlewareTerminalMeta) (vphp.ZVal, vphp.RequestOwnedZBox) {
-	path := RoutePath.normalize(req.path)
+	path := RoutePath.normalize(req.path_value())
 	payload := build_php_request_object(req, map[string]string{})
 	return dispatch_php_pipeline_raw(app, path, vphp.RequestBorrowedZBox.from_zval(payload),
 		RawDispatchPlan{

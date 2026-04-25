@@ -5,7 +5,7 @@ VSlim app auth helpers and session pull reduce common auth and session boilerpla
 --FILE--
 <?php
 $app = VSlim\App::demo();
-$app->load_config_text(<<<'TOML'
+$app->loadConfigText(<<<'TOML'
 [app]
 key = "auth-secret"
 
@@ -28,7 +28,7 @@ $guard = $app->auth($request);
 $guard->login('99');
 $response = new VSlim\Vhttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
 $guard->store()->commit($response);
-$cookieValue = explode(';', $response->cookie_header(), 2)[0];
+$cookieValue = explode(';', $response->cookieHeader(), 2)[0];
 $cookieValue = explode('=', $cookieValue, 2)[1] ?? '';
 
 $next = $requestFactory

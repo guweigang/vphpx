@@ -5,12 +5,12 @@ VSlim app error helpers produce framework-friendly responses
 --FILE--
 <?php
 $app = VSlim\App::demo();
-$app->set_error_response_json(true);
+$app->setErrorResponseJson(true);
 
 $errors = ['email' => ['The email field is required.']];
 $validation = $app->validationError($errors, 422);
 echo $validation->status . PHP_EOL;
-echo $validation->content_type . PHP_EOL;
+echo $validation->contentType . PHP_EOL;
 echo (str_contains($validation->body, '"validation_error"') ? 'validation_yes' : 'validation_no') . PHP_EOL;
 echo (str_contains($validation->body, '"email"') ? 'field_yes' : 'field_no') . PHP_EOL;
 

@@ -78,7 +78,7 @@ interface RequestInterface extends MessageInterface
     public function getMethod();
     public function withMethod($method);
     public function getUri();
-    public function withUri(UriInterface $uri, $preserveHost = false);
+    public function withUri(UriInterface $uri, bool $preserveHost = false);
 }
 
 interface ResponseInterface extends MessageInterface
@@ -125,6 +125,8 @@ $acceptDateTimeInterface = new ReflectionMethod(VSlim\Dev\PhpSignatureProbe::cla
 $optionalTail = new ReflectionMethod(VSlim\Dev\PhpSignatureProbe::class, 'optionalTail');
 $responseCtor = new ReflectionMethod(VSlim\Psr7\Response::class, '__construct');
 $createResponse = new ReflectionMethod(VSlim\Psr17\ResponseFactory::class, 'createResponse');
+$requestWithUri = new ReflectionMethod(VSlim\Psr7\Request::class, 'withUri');
+$serverRequestWithUri = new ReflectionMethod(VSlim\Psr7\ServerRequest::class, 'withUri');
 
 var_dump($describeType($alwaysTrue->getReturnType()));
 var_dump($describeType($alwaysFalse->getReturnType()));
@@ -138,6 +140,12 @@ var_dump($describeType($makePsrResponse->getReturnType()));
 var_dump($describeType($makeStaticPsrResponse->getReturnType()));
 var_dump($describeType($acceptPsrRequest->getParameters()[0]->getType()));
 var_dump($describeType($acceptDateTimeInterface->getParameters()[0]->getType()));
+var_dump($describeType($requestWithUri->getParameters()[1]->getType()));
+var_dump($requestWithUri->getParameters()[1]->getName());
+var_dump($requestWithUri->getParameters()[1]->getDefaultValue());
+var_dump($describeType($serverRequestWithUri->getParameters()[1]->getType()));
+var_dump($serverRequestWithUri->getParameters()[1]->getName());
+var_dump($serverRequestWithUri->getParameters()[1]->getDefaultValue());
 var_dump($optionalTail->getNumberOfRequiredParameters());
 var_dump($responseCtor->getNumberOfRequiredParameters());
 var_dump($createResponse->getNumberOfRequiredParameters());
@@ -218,6 +226,12 @@ string(34) "Psr\Http\Message\ResponseInterface"
 string(34) "Psr\Http\Message\ResponseInterface"
 string(33) "Psr\Http\Message\RequestInterface"
 string(17) "DateTimeInterface"
+string(4) "bool"
+string(12) "preserveHost"
+bool(false)
+string(4) "bool"
+string(12) "preserveHost"
+bool(false)
 int(1)
 int(0)
 int(0)

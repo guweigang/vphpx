@@ -133,14 +133,14 @@ namespace {
     });
 
     $req = new VSlim\Vhttpd\Request('GET', '/items/7?trace_id=outer-query', 'outer-body');
-    $req->set_headers(['x-trace-id' => 'outer-header']);
-    $res = $app->dispatch_request($req);
+    $req->setHeaders(['x-trace-id' => 'outer-header']);
+    $res = $app->dispatchRequest($req);
 
     echo $res->status . '|' . $res->body . PHP_EOL;
     echo $res->header('x-trace-id') . '|' . $res->header('x-vhttpd-trace-id') . PHP_EOL;
     echo implode('|', [
         $req->method,
-        $req->raw_path,
+        $req->rawPath,
         $req->query('trace_id'),
         $req->header('x-trace-id'),
         $req->body,

@@ -111,7 +111,7 @@ namespace {
             );
         }
     });
-    $beforeOnly->set_not_found_handler(function (ServerRequestInterface $request) {
+    $beforeOnly->setNotFoundHandler(function (ServerRequestInterface $request) {
         return new VSlim\Vhttpd\Response(
             404,
             implode('|', [
@@ -156,7 +156,7 @@ namespace {
             );
         }
     });
-    $noRoutes->set_not_found_handler(function (ServerRequestInterface $request) {
+    $noRoutes->setNotFoundHandler(function (ServerRequestInterface $request) {
         return new VSlim\Vhttpd\Response(
             404,
             implode('|', [

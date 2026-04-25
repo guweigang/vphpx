@@ -7,25 +7,25 @@ VSlim core request response view and controller wrappers keep borrowed and fresh
 declare(strict_types=1);
 
 $app = new VSlim\App();
-$app->set_view_base_path(__DIR__ . '/fixtures');
-$app->set_assets_prefix('/assets');
+$app->setViewBasePath(__DIR__ . '/fixtures');
+$app->setAssetsPrefix('/assets');
 
 $request = new VSlim\Vhttpd\Request('GET', '/hello?foo=bar', '');
 $requestChain = $request
-    ->set_method('POST')
-    ->set_target('/submit?trace_id=t-1')
-    ->set_body('name=neo')
-    ->set_headers(['content-type' => 'application/x-www-form-urlencoded'])
-    ->set_attributes(['trace_id' => 'attr-trace']);
+    ->setMethod('POST')
+    ->setTarget('/submit?trace_id=t-1')
+    ->setBody('name=neo')
+    ->setHeaders(['content-type' => 'application/x-www-form-urlencoded'])
+    ->setAttributes(['trace_id' => 'attr-trace']);
 echo (spl_object_id($request) === spl_object_id($requestChain) ? "request-builder-borrowed\n" : "request-builder-fresh\n");
-echo $request->method . '|' . $request->raw_path . '|' . $request->trace_id() . "\n";
+echo $request->method . '|' . $request->rawPath . '|' . $request->traceId() . "\n";
 
 $response = new VSlim\Vhttpd\Response(200, 'start', 'text/plain; charset=utf-8');
 $responseChain = $response
-    ->set_status(201)
+    ->setStatus(201)
     ->text('hello')
-    ->with_trace_id('trace-99')
-    ->set_cookie('sid', 'cookie-1');
+    ->withTraceId('trace-99')
+    ->setCookie('sid', 'cookie-1');
 echo (spl_object_id($response) === spl_object_id($responseChain) ? "response-builder-borrowed\n" : "response-builder-fresh\n");
 echo $response->status . '|' . $response->body . '|' . $response->header('x-trace-id') . '|' . $response->header('set-cookie') . "\n";
 
@@ -76,7 +76,7 @@ response-builder-borrowed
 app-view-fresh
 app-view1-ok
 app-view2-ok
-controller-view-borrowed
+controller-view-fresh
 controller-render-fresh
 controller-render1-ok
 controller-render2-ok

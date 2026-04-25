@@ -21,10 +21,10 @@ struct VSlimContainerNotFoundException {}
 @[php_implements: 'Psr\\Container\\ContainerInterface']
 struct VSlimContainer {
 mut:
-	entries   map[string]vphp.PersistentOwnedZBox
-	factories map[string]vphp.PersistentOwnedZBox
-	resolved  map[string]vphp.PersistentOwnedZBox
-	app_ref   &VSlimApp = unsafe { nil }
+	entries   map[string]vphp.PersistentOwnedZBox @[php_ignore]
+	factories map[string]vphp.PersistentOwnedZBox @[php_ignore]
+	resolved  map[string]vphp.PersistentOwnedZBox @[php_ignore]
+	app_ref   &VSlimApp = unsafe { nil } @[php_ignore]
 }
 
 fn new_vslim_container() &VSlimContainer {

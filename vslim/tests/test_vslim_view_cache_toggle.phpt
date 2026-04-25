@@ -17,7 +17,7 @@ file_put_contents($tpl, 'second');
 echo ($view->render('page.html', []) === 'second' ? 'nocache-refresh' : 'nocache-stale') . PHP_EOL;
 
 $app = new VSlim\App();
-$app->set_view_base_path($tmpDir);
+$app->setViewBasePath($tmpDir);
 $app->set_view_cache(true);
 $cached = $app->make_view();
 echo ($cached->cache_enabled() ? 'app-cache-on' : 'app-cache-off') . PHP_EOL;

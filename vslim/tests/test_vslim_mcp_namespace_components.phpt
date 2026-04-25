@@ -11,7 +11,7 @@ if (!extension_loaded('vslim')) {
 declare(strict_types=1);
 
 $mcp = (new VSlim\Mcp\App())
-    ->server_info(['name' => 'vslim-mcp-demo', 'version' => '0.1.0'])
+    ->serverInfo(['name' => 'vslim-mcp-demo', 'version' => '0.1.0'])
     ->capabilities([
         'logging' => [],
         'sampling' => [],
@@ -75,7 +75,7 @@ $mcp = (new VSlim\Mcp\App())
         );
     })
     ->register('debug/sample', static function (array $request, array $frame): array {
-        return VSlim\Mcp\App::queue_sampling(
+        return VSlim\Mcp\App::queueSampling(
             $request['id'] ?? null,
             'sample-' . (string) ($request['id'] ?? '1'),
             [[
@@ -92,15 +92,15 @@ $mcp = (new VSlim\Mcp\App())
         );
     })
     ->register('debug/caps', static function (array $request, array $frame): array {
-        $caps = VSlim\Mcp\App::client_capabilities($frame);
+        $caps = VSlim\Mcp\App::clientCapabilities($frame);
         return [
             'client_capabilities_json' => (string) ($frame['client_capabilities_json'] ?? ''),
-            'sampling_supported' => VSlim\Mcp\App::client_supports($frame, 'sampling'),
+            'sampling_supported' => VSlim\Mcp\App::clientSupports($frame, 'sampling'),
             'has_roots' => isset($caps['roots']),
         ];
     });
 
-$init = $mcp->handle_mcp_dispatch([
+$init = $mcp->handleMcpDispatch([
     'protocol_version' => '2025-11-05',
     'jsonrpc_raw' => json_encode([
         'jsonrpc' => '2.0',
@@ -119,7 +119,7 @@ echo (isset($initBody['result']['capabilities']['tools']) ? "tools\n" : "tools_m
 echo (isset($initBody['result']['capabilities']['resources']) ? "resources\n" : "resources_missing\n");
 echo (isset($initBody['result']['capabilities']['prompts']) ? "prompts\n" : "prompts_missing\n");
 
-$tools = $mcp->handle_mcp_dispatch([
+$tools = $mcp->handleMcpDispatch([
     'protocol_version' => '2025-11-05',
     'jsonrpc_raw' => json_encode([
         'jsonrpc' => '2.0',
@@ -130,7 +130,7 @@ $tools = $mcp->handle_mcp_dispatch([
 $toolsBody = json_decode($tools['body'], true);
 echo $toolsBody['result']['tools'][0]['name'] . "\n";
 
-$toolCall = $mcp->handle_mcp_dispatch([
+$toolCall = $mcp->handleMcpDispatch([
     'protocol_version' => '2025-11-05',
     'jsonrpc_raw' => json_encode([
         'jsonrpc' => '2.0',
@@ -145,7 +145,7 @@ $toolCall = $mcp->handle_mcp_dispatch([
 $toolBody = json_decode($toolCall['body'], true);
 echo $toolBody['result']['content'][0]['text'] . "\n";
 
-$resourceRead = $mcp->handle_mcp_dispatch([
+$resourceRead = $mcp->handleMcpDispatch([
     'protocol_version' => '2025-11-05',
     'jsonrpc_raw' => json_encode([
         'jsonrpc' => '2.0',
@@ -159,7 +159,7 @@ $resourceRead = $mcp->handle_mcp_dispatch([
 $resourceBody = json_decode($resourceRead['body'], true);
 echo trim($resourceBody['result']['contents'][0]['text']) . "\n";
 
-$promptGet = $mcp->handle_mcp_dispatch([
+$promptGet = $mcp->handleMcpDispatch([
     'protocol_version' => '2025-11-05',
     'jsonrpc_raw' => json_encode([
         'jsonrpc' => '2.0',
@@ -174,7 +174,7 @@ $promptGet = $mcp->handle_mcp_dispatch([
 $promptBody = json_decode($promptGet['body'], true);
 echo $promptBody['result']['messages'][0]['content'][0]['text'] . "\n";
 
-$notify = $mcp->handle_mcp_dispatch([
+$notify = $mcp->handleMcpDispatch([
     'protocol_version' => '2025-11-05',
     'session_id' => 'mcp-test-1',
     'jsonrpc_raw' => json_encode([
@@ -189,7 +189,7 @@ echo $notifyBody['result']['queued'] ? "queued\n" : "not_queued\n";
 echo $notify['session_id'] . "\n";
 echo (($notifyMsg['method'] ?? '') === 'notifications/message') ? "notify_msg\n" : "notify_missing\n";
 
-$sample = $mcp->handle_mcp_dispatch([
+$sample = $mcp->handleMcpDispatch([
     'protocol_version' => '2025-11-05',
     'session_id' => 'mcp-test-1',
     'jsonrpc_raw' => json_encode([
@@ -201,7 +201,7 @@ $sample = $mcp->handle_mcp_dispatch([
 $sampleMsg = json_decode($sample['messages'][0] ?? 'null', true);
 echo (($sampleMsg['method'] ?? '') === 'sampling/createMessage') ? "sampling_msg\n" : "sampling_missing\n";
 
-$caps = $mcp->handle_mcp_dispatch([
+$caps = $mcp->handleMcpDispatch([
     'protocol_version' => '2025-11-05',
     'session_id' => 'mcp-test-1',
     'client_capabilities_json' => '{"sampling":{},"roots":{"listChanged":true}}',
@@ -218,10 +218,10 @@ echo (($capsBody['result']['has_roots'] ?? false) ? "has_roots\n" : "missing_roo
 
 $gated = (new VSlim\Mcp\App())
     ->register('debug/sample', static function (array $request, array $frame): array {
-        if ($resp = VSlim\Mcp\App::require_capability($frame, 'sampling', 'Sampling capability required by app', 409)) {
+        if ($resp = VSlim\Mcp\App::requireCapability($frame, 'sampling', 'Sampling capability required by app', 409)) {
             return $resp;
         }
-        return VSlim\Mcp\App::queue_sampling(
+        return VSlim\Mcp\App::queueSampling(
             $request['id'] ?? null,
             'sample-' . (string) ($request['id'] ?? '1'),
             [[
@@ -237,7 +237,7 @@ $gated = (new VSlim\Mcp\App())
             64,
         );
     });
-$gatedMissing = $gated->handle_mcp_dispatch([
+$gatedMissing = $gated->handleMcpDispatch([
     'protocol_version' => '2025-11-05',
     'session_id' => 'mcp-test-1',
     'client_capabilities_json' => '{"roots":{"listChanged":true}}',
@@ -250,7 +250,7 @@ $gatedMissing = $gated->handle_mcp_dispatch([
 echo ($gatedMissing['status'] ?? 0) . "\n";
 echo (string) ($gatedMissing['body'] ?? '') . "\n";
 
-$requireNoCaps = VSlim\Mcp\App::require_capability([
+$requireNoCaps = VSlim\Mcp\App::requireCapability([
     'protocol_version' => '2025-11-05',
 ], 'sampling', 'Sampling capability required by app', 409);
 echo ($requireNoCaps === null ? "require_skipped\n" : "require_unexpected\n");
@@ -258,7 +258,7 @@ echo ($requireNoCaps === null ? "require_skipped\n" : "require_unexpected\n");
 $app = new VSlim\App();
 $app->get('/', static fn () => ['ok' => true]);
 $app->mcp()
-    ->server_info(['name' => 'attached-mcp', 'version' => '0.1.0'])
+    ->serverInfo(['name' => 'attached-mcp', 'version' => '0.1.0'])
     ->tool(
         'echo',
         'Echo text',
@@ -272,8 +272,8 @@ $app->mcp()
             ];
         }
     );
-echo ($app->has_mcp() ? "app_has_mcp\n" : "app_missing_mcp\n");
-$attached = $app->handle_mcp_dispatch([
+echo ($app->hasMcp() ? "app_has_mcp\n" : "app_missing_mcp\n");
+$attached = $app->handleMcpDispatch([
     'protocol_version' => '2025-11-05',
     'jsonrpc_raw' => json_encode([
         'jsonrpc' => '2.0',

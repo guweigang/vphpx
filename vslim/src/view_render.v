@@ -11,7 +11,7 @@ fn (view &VSlimView) render_template_path_with_slots(path string, scalars map[st
 	return view.render_nodes(program.nodes, scalars, lists, objects, depth, slots, path)
 }
 
-@[php_method]
+@[php_method: 'renderResponse']
 pub fn (view &VSlimView) render_response(template string, data vphp.RequestBorrowedZBox) &VSlimResponse {
 	body := view.render(template, data)
 	mut res := &VSlimResponse{}
@@ -19,7 +19,7 @@ pub fn (view &VSlimView) render_response(template string, data vphp.RequestBorro
 	return res
 }
 
-@[php_method]
+@[php_method: 'renderResponseWithLayout']
 pub fn (view &VSlimView) render_response_with_layout(template string, layout string, data vphp.RequestBorrowedZBox) &VSlimResponse {
 	body := view.render_with_layout(template, layout, data)
 	mut res := &VSlimResponse{}

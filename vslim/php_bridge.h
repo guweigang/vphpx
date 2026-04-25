@@ -12,10 +12,6 @@ extern zend_module_entry vslim_module_entry;
 
 extern void* vphp_get_active_globals();
 
-PHP_FUNCTION(vslim_handle_request);
-PHP_FUNCTION(vslim_demo_dispatch);
-PHP_FUNCTION(vslim_response_headers);
-PHP_FUNCTION(vslim_probe_object);
 extern zend_class_entry *vslim__cli__app_ce;
 extern zend_class_entry *vslim__view_ce;
 extern zend_class_entry *vslim__controller_ce;
@@ -35,7 +31,8 @@ extern zend_class_entry *vslim__auth__requireauthmiddleware_ce;
 extern zend_class_entry *vslim__auth__guestmiddleware_ce;
 extern zend_class_entry *vslim__auth__requireabilitymiddleware_ce;
 extern zend_class_entry *vslim__vhttpd__response_ce;
-extern zend_class_entry *vphp__vslim__psr7adapter_ce;
+extern zend_class_entry *vslim__psr7adapter_ce;
+extern zend_class_entry *vslim__debug__objectprobe_ce;
 extern zend_class_entry *vslim__stream__response_ce;
 extern zend_class_entry *vslim__stream__ndjsondecoder_ce;
 extern zend_class_entry *vslim__stream__sseencoder_ce;

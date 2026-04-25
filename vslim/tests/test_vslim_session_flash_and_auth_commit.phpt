@@ -25,7 +25,7 @@ echo ($session->hasFlash('notice') ? 'flash_yes' : 'flash_no') . PHP_EOL;
 
 $loginResponse = new VSlim\Vhttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
 echo ($app->login($request, $loginResponse, '501') ? 'login_ok' : 'login_fail') . PHP_EOL;
-$cookieValue = explode(';', $loginResponse->cookie_header(), 2)[0];
+$cookieValue = explode(';', $loginResponse->cookieHeader(), 2)[0];
 $cookieValue = explode('=', $cookieValue, 2)[1] ?? '';
 
 $authedRequest = $requestFactory
@@ -36,7 +36,7 @@ echo $app->authId($authedRequest) . PHP_EOL;
 
 $logoutResponse = new VSlim\Vhttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
 echo ($app->logout($authedRequest, $logoutResponse) ? 'logout_ok' : 'logout_fail') . PHP_EOL;
-$clearedCookie = $logoutResponse->cookie_header();
+$clearedCookie = $logoutResponse->cookieHeader();
 echo (str_contains($clearedCookie, 'Max-Age=0') ? 'cleared_yes' : 'cleared_no') . PHP_EOL;
 ?>
 --EXPECT--

@@ -15,7 +15,7 @@ $app->get('/bad', function ($req) {
     return 123;
 });
 
-$app->set_not_found_handler(function ($req) {
+$app->setNotFoundHandler(function ($req) {
     return [
         'status' => 404,
         'content_type' => 'application/json; charset=utf-8',
@@ -23,7 +23,7 @@ $app->set_not_found_handler(function ($req) {
     ];
 });
 
-$app->set_error_handler(function ($req, string $message, int $status) {
+$app->setErrorHandler(function ($req, string $message, int $status) {
     return [
         'status' => $status,
         'content_type' => 'application/json; charset=utf-8',
@@ -40,14 +40,14 @@ echo $app->dispatch('GET', '/bad')->status . '|' . $app->dispatch('GET', '/bad')
 echo $app->dispatch('GET', '/write')->status . '|' . $app->dispatch('GET', '/write')->body . PHP_EOL;
 
 try {
-    $app->set_not_found_handler(123);
+    $app->setNotFoundHandler(123);
     echo "not_found_invalid_not_thrown\n";
 } catch (InvalidArgumentException $e) {
     echo "not_found_invalid_thrown\n";
 }
 
 try {
-    $app->set_error_handler(123);
+    $app->setErrorHandler(123);
     echo "error_invalid_not_thrown\n";
 } catch (InvalidArgumentException $e) {
     echo "error_invalid_thrown\n";

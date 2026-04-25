@@ -127,18 +127,19 @@ fn exception_error_code(exception vphp.RequestBorrowedZBox) string {
 	}
 }
 
-@[php_method]
+@[php_method: 'setBasePath']
+@[php_arg_name: 'base_path=basePath']
 pub fn (mut app VSlimApp) set_base_path(base_path string) &VSlimApp {
 	app.base_path = RoutePath.normalize_base_path(base_path)
 	return app
 }
 
-@[php_method]
+@[php_method: 'hasContainer']
 pub fn (app &VSlimApp) has_container() bool {
 	return app.container_ref != unsafe { nil }
 }
 
-@[php_method]
+@[php_method: 'setContainer']
 pub fn (mut app VSlimApp) set_container(container &VSlimContainer) &VSlimApp {
 	app.container_ref = container
 	app.container_ref.app_ref = &app
@@ -156,12 +157,12 @@ pub fn (mut app VSlimApp) container() &VSlimContainer {
 	return app.container_ref
 }
 
-@[php_method]
+@[php_method: 'hasConfig']
 pub fn (app &VSlimApp) has_config() bool {
 	return app.config_ref != unsafe { nil }
 }
 
-@[php_method]
+@[php_method: 'setConfig']
 pub fn (mut app VSlimApp) set_config(config &VSlimConfig) &VSlimApp {
 	app.config_ref = config
 	configure_default_auth_settings(mut app, app.config_ref)
@@ -181,7 +182,7 @@ pub fn (mut app VSlimApp) config() &VSlimConfig {
 	return app.config_ref
 }
 
-@[php_method]
+@[php_method: 'loadConfig']
 pub fn (mut app VSlimApp) load_config(path string) &VSlimApp {
 	mut cfg := app.config()
 	cfg.load(path)
@@ -190,7 +191,7 @@ pub fn (mut app VSlimApp) load_config(path string) &VSlimApp {
 	return app
 }
 
-@[php_method]
+@[php_method: 'loadConfigText']
 pub fn (mut app VSlimApp) load_config_text(text string) &VSlimApp {
 	mut cfg := app.config()
 	cfg.load_text(text)
@@ -199,7 +200,7 @@ pub fn (mut app VSlimApp) load_config_text(text string) &VSlimApp {
 	return app
 }
 
-@[php_method]
+@[php_method: 'mergeConfig']
 pub fn (mut app VSlimApp) merge_config(path string) &VSlimApp {
 	mut cfg := app.config()
 	cfg.merge_file(path)
@@ -208,7 +209,7 @@ pub fn (mut app VSlimApp) merge_config(path string) &VSlimApp {
 	return app
 }
 
-@[php_method]
+@[php_method: 'mergeConfigText']
 pub fn (mut app VSlimApp) merge_config_text(text string) &VSlimApp {
 	mut cfg := app.config()
 	cfg.merge_text(text)
@@ -323,6 +324,7 @@ pub fn (app &VSlimApp) auth_redirect_to() string {
 }
 
 @[php_method: 'resolveAuthUser']
+@[php_arg_name: 'user_id=userId']
 pub fn (app &VSlimApp) resolve_auth_user(user_id string) vphp.RequestOwnedZBox {
 	normalized_id := user_id.trim_space()
 	if normalized_id == '' {
@@ -392,6 +394,7 @@ pub fn (app &VSlimApp) auth_id(request vphp.RequestBorrowedZBox) string {
 }
 
 @[php_method]
+@[php_arg_name: 'user_id=userId']
 pub fn (app &VSlimApp) login(request vphp.RequestBorrowedZBox, response vphp.RequestBorrowedZBox, user_id string) bool {
 	mut guard := app.auth(request)
 	guard.login(user_id)
@@ -476,15 +479,16 @@ pub fn (app &VSlimApp) ability_middleware(ability string) &VSlimAuthRequireAbili
 }
 
 @[php_arg_default: 'error_code=""']
-@[php_optional_args: 'error_code']
+@[php_arg_optional: 'error_code']
 @[php_method: 'errorResponse']
+@[php_arg_name: 'error_code=errorCode']
 pub fn (app &VSlimApp) error_response(status int, message string, error_code string) &VSlimResponse {
 	code := if error_code.trim_space() == '' { 'runtime_error' } else { error_code.trim_space() }
 	return to_vslim_response(default_error_response(app, status, message, code))
 }
 
 @[php_arg_default: 'status=422']
-@[php_optional_args: 'status']
+@[php_arg_optional: 'status']
 @[php_method: 'validationError']
 pub fn (app &VSlimApp) validation_error(errors vphp.RequestBorrowedZBox, status int) &VSlimResponse {
 	error_status := if status <= 0 { 422 } else { status }
@@ -493,7 +497,7 @@ pub fn (app &VSlimApp) validation_error(errors vphp.RequestBorrowedZBox, status 
 }
 
 @[php_arg_default: 'message="Unauthorized"']
-@[php_optional_args: 'message']
+@[php_arg_optional: 'message']
 @[php_method: 'unauthorized']
 pub fn (app &VSlimApp) unauthorized_response(message string) &VSlimResponse {
 	msg := if message.trim_space() == '' { 'Unauthorized' } else { message }
@@ -501,7 +505,7 @@ pub fn (app &VSlimApp) unauthorized_response(message string) &VSlimResponse {
 }
 
 @[php_arg_default: 'message="Forbidden"']
-@[php_optional_args: 'message']
+@[php_arg_optional: 'message']
 @[php_method: 'forbidden']
 pub fn (app &VSlimApp) forbidden_response(message string) &VSlimResponse {
 	msg := if message.trim_space() == '' { 'Forbidden' } else { message }
@@ -509,7 +513,7 @@ pub fn (app &VSlimApp) forbidden_response(message string) &VSlimResponse {
 }
 
 @[php_arg_default: 'message="Bad Request"']
-@[php_optional_args: 'message']
+@[php_arg_optional: 'message']
 @[php_method: 'badRequest']
 pub fn (app &VSlimApp) bad_request_response(message string) &VSlimResponse {
 	msg := if message.trim_space() == '' { 'Bad Request' } else { message }
@@ -517,7 +521,7 @@ pub fn (app &VSlimApp) bad_request_response(message string) &VSlimResponse {
 }
 
 @[php_arg_default: 'message="Not Found"']
-@[php_optional_args: 'message']
+@[php_arg_optional: 'message']
 @[php_method: 'notFound']
 pub fn (app &VSlimApp) not_found_response_helper(message string) &VSlimResponse {
 	msg := if message.trim_space() == '' { 'Not Found' } else { message }
@@ -525,7 +529,7 @@ pub fn (app &VSlimApp) not_found_response_helper(message string) &VSlimResponse 
 }
 
 @[php_arg_default: 'message="Conflict"']
-@[php_optional_args: 'message']
+@[php_arg_optional: 'message']
 @[php_method: 'conflict']
 pub fn (app &VSlimApp) conflict_response(message string) &VSlimResponse {
 	msg := if message.trim_space() == '' { 'Conflict' } else { message }
@@ -533,7 +537,7 @@ pub fn (app &VSlimApp) conflict_response(message string) &VSlimResponse {
 }
 
 @[php_arg_default: 'message="Service Unavailable"']
-@[php_optional_args: 'message']
+@[php_arg_optional: 'message']
 @[php_method: 'serviceUnavailable']
 pub fn (app &VSlimApp) service_unavailable_response(message string) &VSlimResponse {
 	msg := if message.trim_space() == '' { 'Service Unavailable' } else { message }
@@ -541,8 +545,9 @@ pub fn (app &VSlimApp) service_unavailable_response(message string) &VSlimRespon
 }
 
 @[php_arg_default: 'fallback_status=500']
-@[php_optional_args: 'fallback_status']
+@[php_arg_optional: 'fallback_status']
 @[php_method: 'exceptionResponse']
+@[php_arg_name: 'fallback_status=fallbackStatus']
 pub fn (app &VSlimApp) exception_response(exception vphp.RequestBorrowedZBox, fallback_status int) &VSlimResponse {
 	status := if fallback_status >= 400 && fallback_status <= 599 { fallback_status } else { 500 }
 	resolved_status := exception_status_code(exception, status)
@@ -838,12 +843,12 @@ fn (mut app VSlimApp) sync_clock_dependent_services() {
 	}
 }
 
-@[php_method]
+@[php_method: 'hasMcp']
 pub fn (app &VSlimApp) has_mcp() bool {
 	return app.mcp_ref != unsafe { nil }
 }
 
-@[php_method]
+@[php_method: 'setMcp']
 pub fn (mut app VSlimApp) set_mcp(mcp &VSlimMcpApp) &VSlimApp {
 	app.mcp_ref = mcp
 	return app
@@ -859,7 +864,7 @@ pub fn (mut app VSlimApp) mcp() &VSlimMcpApp {
 	return app.mcp_ref
 }
 
-@[php_method]
+@[php_method: 'handleMcpDispatch']
 pub fn (app &VSlimApp) handle_mcp_dispatch(frame vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	if app.mcp_ref == unsafe { nil } {
 		return vphp.RequestOwnedZBox.new_null()
@@ -867,7 +872,7 @@ pub fn (app &VSlimApp) handle_mcp_dispatch(frame vphp.RequestBorrowedZBox) vphp.
 	return app.mcp_ref.handle_mcp_dispatch(frame)
 }
 
-@[php_method]
+@[php_method: 'hasLogger']
 pub fn (app &VSlimApp) has_logger() bool {
 	return app.logger_ref != unsafe { nil }
 }
@@ -900,7 +905,7 @@ pub fn (mut app VSlimApp) clock() vphp.RequestOwnedZBox {
 	return app.clock_ref.clone_request_owned()
 }
 
-@[php_method]
+@[php_method: 'setLogger']
 pub fn (mut app VSlimApp) set_logger(logger &VSlimLogger) &VSlimApp {
 	app.logger_ref = logger
 	if app.psr_logger_ref != unsafe { nil } {
@@ -1113,7 +1118,7 @@ pub fn (mut app VSlimApp) job_worker() &VSlimJobWorker {
 	return app.job_worker_ref
 }
 
-@[php_method]
+@[php_method: 'hasMigrator']
 pub fn (app &VSlimApp) has_migrator() bool {
 	return app.migrator_ref != unsafe { nil }
 }

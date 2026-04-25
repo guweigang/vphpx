@@ -48,7 +48,7 @@ file_put_contents($tmpDir . '/page_map_nested.html', <<<'HTML'
 {{include:profile_alias.html|profile=map(user.profile)}}
 HTML);
 
-$app->set_view_base_path($tmpDir);
+$app->setViewBasePath($tmpDir);
 $view = $app->make_view();
 $body = $view->render('page.html', [
     'page_title' => 'Include Card',

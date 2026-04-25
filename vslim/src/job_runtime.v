@@ -94,6 +94,7 @@ pub fn (dispatcher &VSlimJobDispatcher) manager() &VSlimDatabaseManager {
 }
 
 @[php_method]
+@[php_arg_name: 'job_class=jobClass,delay_seconds=delaySeconds,max_attempts=maxAttempts']
 pub fn (mut dispatcher VSlimJobDispatcher) dispatch(job_class string, payload vphp.RequestBorrowedZBox, queue string, delay_seconds int, max_attempts int) i64 {
 	clean_class := job_class.trim_space()
 	if clean_class == '' {
@@ -132,6 +133,7 @@ pub fn (mut worker VSlimJobWorker) set_manager(manager &VSlimDatabaseManager) &V
 }
 
 @[php_method: 'setWorkerId']
+@[php_arg_name: 'worker_id=workerId']
 pub fn (mut worker VSlimJobWorker) set_worker_id(worker_id string) &VSlimJobWorker {
 	clean := worker_id.trim_space()
 	worker.worker_id = if clean == '' { job_now_worker_id() } else { clean }
@@ -240,6 +242,7 @@ pub fn (mut worker VSlimJobWorker) run_once(queue string) int {
 }
 
 @[php_method]
+@[php_arg_name: 'max_jobs=maxJobs,sleep_ms=sleepMs,stop_when_empty=stopWhenEmpty']
 pub fn (mut worker VSlimJobWorker) run(queue string, max_jobs int, sleep_ms int, stop_when_empty bool) int {
 	mut processed := 0
 	delay := if sleep_ms < 0 { 0 } else { sleep_ms }

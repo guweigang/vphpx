@@ -124,7 +124,7 @@ namespace {
         }
     });
 
-    $app->set_error_handler(function (ServerRequestInterface $request, string $message, int $status) {
+    $app->setErrorHandler(function (ServerRequestInterface $request, string $message, int $status) {
         return new VSlim\Vhttpd\Response(
             $status,
             implode('|', [
