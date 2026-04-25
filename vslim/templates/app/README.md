@@ -23,6 +23,7 @@
 - `bootstrap/cli.php`
 - `app/Providers/AppServiceProvider.php`
 - `app/Commands/AboutCommand.php`
+- `app/Commands/GenerateKeyCommand.php`
 - `app/Http/errors.php`
 - `app/Http/controllers.php`
 - `app/Http/middleware.php`
@@ -207,6 +208,7 @@ CLI 侧的最小样板包括：
 - `db:migrate`
 - `db:rollback`
 - `db:seed`
+- `key:generate`
 - `make:command`
 - `make:migration`
 - `make:provider`
@@ -219,6 +221,8 @@ CLI 侧的最小样板包括：
 
 - `config/session.toml`
   默认 `session.secret` 给了 `change-me` 占位值，初始化项目后应尽快换成真实随机密钥
+- `bin/vslim key:generate --name=APP_KEY`
+  可以直接生成一条可写进 `.env` 的随机密钥
 - `app()->startSessionMiddleware()`
   先挂上 session middleware
 - `app()->setAuthUserProvider($provider)`

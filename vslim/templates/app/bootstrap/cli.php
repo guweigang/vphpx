@@ -11,6 +11,7 @@ return [
         "db:migrate" => \App\Commands\DbMigrateCommand::class,
         "db:rollback" => \App\Commands\DbRollbackCommand::class,
         "db:seed" => \App\Commands\DbSeedCommand::class,
+        "key:generate" => \App\Commands\GenerateKeyCommand::class,
         "make:command" => \App\Commands\MakeCommandCommand::class,
         "make:controller" => \App\Commands\MakeControllerCommand::class,
         "make:migration" => \App\Commands\MakeMigrationCommand::class,
