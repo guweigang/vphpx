@@ -97,7 +97,8 @@ fn testing_response_header(response vphp.RequestBorrowedZBox, name string) strin
 	}
 	props := testing_response_object_vars(raw)
 	if 'headers' in props {
-		headers := props['headers'].to_string_map()
+		headers_z := props['headers'] or { return '' }
+		headers := headers_z.to_string_map()
 		return headers[VSlimRequest.normalize_header_name(name)] or { '' }
 	}
 	if raw.method_exists('getHeaderLine') {
@@ -120,7 +121,8 @@ fn testing_response_body(response vphp.RequestBorrowedZBox) string {
 	}
 	props := testing_response_object_vars(raw)
 	if 'body' in props {
-		return props['body'].to_string()
+		body_z := props['body'] or { return '' }
+		return body_z.to_string()
 	}
 	if raw.method_exists('getBody') {
 		return vphp.with_method_result_zval(raw, 'getBody', []vphp.ZVal{}, fn (body_z vphp.ZVal) string {

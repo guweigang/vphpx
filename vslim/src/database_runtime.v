@@ -7,7 +7,7 @@ import vphp
 
 $if linux {
 	#flag -ldl
-	#insert "@VMODROOT/database_runtime_linux_helper.h"
+	#include "src/database_runtime_linux_helper.h"
 	fn C.vslim_mysql_client_plugin_dir() &char
 	fn C.free(voidptr)
 }
