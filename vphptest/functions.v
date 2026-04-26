@@ -131,9 +131,18 @@ fn nested_payload_summary(box vphp.PersistentOwnedZBox) string {
 		metrics := z.get('metrics') or { vphp.ZVal.new_null() }
 
 		viewer_id := if viewer.is_array() { viewer.get_or('id', '') } else { '' }
-		members := if workspace.is_array() { workspace.get('members') or { vphp.ZVal.new_null() } } else { vphp.ZVal.new_null() }
-		collections := if workspace.is_array() { workspace.get('collections') or { vphp.ZVal.new_null() } } else { vphp.ZVal.new_null() }
-		jobs := if metrics.is_array() { metrics.get('jobs') or { vphp.ZVal.new_null() } } else { vphp.ZVal.new_null() }
+		members := if workspace.is_array() {
+			workspace.get('members') or { vphp.ZVal.new_null() }
+		} else {
+			vphp.ZVal.new_null()
+		}
+		collections := if workspace.is_array() { workspace.get('collections') or {
+				vphp.ZVal.new_null()} } else { vphp.ZVal.new_null() }
+		jobs := if metrics.is_array() {
+			metrics.get('jobs') or { vphp.ZVal.new_null() }
+		} else {
+			vphp.ZVal.new_null()
+		}
 
 		member_count := if members.is_array() { members.array_count() } else { 0 }
 		job_count := if jobs.is_array() { jobs.array_count() } else { 0 }
@@ -271,7 +280,9 @@ fn v_construct_php_object(ctx vphp.Context) {
 
 @[php_function]
 fn v_call_php_static_method(ctx vphp.Context) {
-	res := vphp.php_class('PhpMath').static_method('triple', [vphp.ZVal.new_int(7)])
+	res := vphp.php_class('PhpMath').static_method('triple', [
+		vphp.ZVal.new_int(7),
+	])
 	ctx.return_string('static=' + res.to_int().str())
 }
 
@@ -385,6 +396,33 @@ fn v_zval_conversion_api() string {
 }
 
 @[php_function]
+fn v_persistent_fallback_counter_probe(raw vphp.ZVal) string {
+	before := vphp.runtime_counters().persistent_fallback_zval_len
+	mut boxed := vphp.PersistentOwnedZBox.of_mixed(raw)
+	during := vphp.runtime_counters().persistent_fallback_zval_len
+	kind := boxed.kind_name()
+	boxed.release()
+	after := vphp.runtime_counters().persistent_fallback_zval_len
+
+	return 'kind=${kind};during_delta=${during - before};after_delta=${after - before}'
+}
+
+@[php_function]
+fn v_request_scope_counter_probe(rounds int) string {
+	before := vphp.runtime_counters()
+	mark := vphp.request_scope_enter()
+	mut checksum := 0
+	for i in 0 .. rounds {
+		box := vphp.RequestOwnedZBox.new_string('scope-${i}')
+		checksum += box.to_string().len
+	}
+	vphp.request_scope_leave(mark)
+	after := vphp.runtime_counters()
+
+	return 'ar_delta=${after.autorelease_len - before.autorelease_len};owned_delta=${after.owned_len - before.owned_len};fallback_delta=${after.persistent_fallback_zval_len - before.persistent_fallback_zval_len};checksum=${checksum > 0}'
+}
+
+@[php_function]
 fn v_unified_object_interop(ctx vphp.Context) {
 	cls := vphp.php_class('PhpUnifiedBox')
 	name_z := vphp.ZVal.from[string]('neo') or {
@@ -441,7 +479,9 @@ fn v_unified_ownership_interop(ctx vphp.Context) {
 		return
 	}
 
-	mut up_call := vphp.php_fn('strtoupper').call_owned_persistent([vphp.ZVal.new_string('persist')])
+	mut up_call := vphp.php_fn('strtoupper').call_owned_persistent([
+		vphp.ZVal.new_string('persist'),
+	])
 	if !up_call.is_valid() {
 		vphp.throw_exception('call_owned_persistent failed', 0)
 		return
@@ -474,16 +514,16 @@ fn v_read_php_global_const(ctx vphp.Context) {
 @[php_function]
 fn v_php_symbol_exists(ctx vphp.Context) {
 	ctx.return_map({
-		'function_strlen':     vphp.function_exists('strlen').str()
-		'function_missing':    vphp.function_exists('definitely_missing_fn').str()
-		'class_datetime':      vphp.class_exists('DateTimeImmutable').str()
-		'class_missing':       vphp.class_exists('Nope\\MissingClass').str()
-		'interface_json':      vphp.interface_exists('JsonSerializable').str()
-		'interface_missing':   vphp.interface_exists('Nope\\MissingInterface').str()
-		'trait_user':          vphp.trait_exists('Demo\\Interop\\HelperTrait').str()
-		'trait_missing':       vphp.trait_exists('Nope\\MissingTrait').str()
-		'const_php_version':   vphp.global_const_exists('PHP_VERSION').str()
-		'const_missing':       vphp.global_const_exists('NOPE_MISSING_CONST').str()
+		'function_strlen':   vphp.function_exists('strlen').str()
+		'function_missing':  vphp.function_exists('definitely_missing_fn').str()
+		'class_datetime':    vphp.class_exists('DateTimeImmutable').str()
+		'class_missing':     vphp.class_exists('Nope\\MissingClass').str()
+		'interface_json':    vphp.interface_exists('JsonSerializable').str()
+		'interface_missing': vphp.interface_exists('Nope\\MissingInterface').str()
+		'trait_user':        vphp.trait_exists('Demo\\Interop\\HelperTrait').str()
+		'trait_missing':     vphp.trait_exists('Nope\\MissingTrait').str()
+		'const_php_version': vphp.global_const_exists('PHP_VERSION').str()
+		'const_missing':     vphp.global_const_exists('NOPE_MISSING_CONST').str()
 	})
 }
 
@@ -541,7 +581,7 @@ fn v_include_php_module_demo(ctx vphp.Context) {
 		acc << '${key.to_string()}=${val.to_string()}'
 	})
 
-	ctx.return_string('count=${config.array_count()}|class=${class_name}|short=${short_name}|desc=${desc}|items=${entries.join(",")}')
+	ctx.return_string('count=${config.array_count()}|class=${class_name}|short=${short_name}|desc=${desc}|items=${entries.join(',')}')
 }
 
 @[php_function]
@@ -572,20 +612,20 @@ fn v_php_object_introspection(ctx vphp.Context) {
 	}
 
 	ctx.return_map({
-		'is_box':              obj.is_instance_of('Demo\\Inspect\\GreeterBox').str()
-		'is_datetime':         obj.is_instance_of('DateTimeImmutable').str()
-		'is_subclass_parent':  obj.is_subclass_of('Demo\\Inspect\\BaseBox').str()
-		'is_subclass_self':    obj.is_subclass_of('Demo\\Inspect\\GreeterBox').str()
-		'implements_string':   obj.implements_interface('Stringable').str()
-		'implements_json':     obj.implements_interface('JsonSerializable').str()
-		'has_method_greet':     obj.method_exists('greet').str()
-		'has_method_missing':   obj.method_exists('missingMethod').str()
-		'method_names':         obj.method_names().join(',')
-		'has_prop_name':        obj.property_exists('name').str()
-		'has_prop_missing':     obj.property_exists('missingProp').str()
-		'property_names':       obj.property_names().join(',')
-		'class_consts':         obj.const_names().join(',')
-		'datetime_has_atom':    vphp.php_class('DateTimeImmutable').const_exists('ATOM').str()
+		'is_box':             obj.is_instance_of('Demo\\Inspect\\GreeterBox').str()
+		'is_datetime':        obj.is_instance_of('DateTimeImmutable').str()
+		'is_subclass_parent': obj.is_subclass_of('Demo\\Inspect\\BaseBox').str()
+		'is_subclass_self':   obj.is_subclass_of('Demo\\Inspect\\GreeterBox').str()
+		'implements_string':  obj.implements_interface('Stringable').str()
+		'implements_json':    obj.implements_interface('JsonSerializable').str()
+		'has_method_greet':   obj.method_exists('greet').str()
+		'has_method_missing': obj.method_exists('missingMethod').str()
+		'method_names':       obj.method_names().join(',')
+		'has_prop_name':      obj.property_exists('name').str()
+		'has_prop_missing':   obj.property_exists('missingProp').str()
+		'property_names':     obj.property_names().join(',')
+		'class_consts':       obj.const_names().join(',')
+		'datetime_has_atom':  vphp.php_class('DateTimeImmutable').const_exists('ATOM').str()
 	})
 }
 
@@ -725,29 +765,29 @@ fn v_test_globals(ctx vphp.Context) {
 // 测试 V 侧原生闭包自动转换。
 @[php_function]
 fn v_get_v_closure(ctx vphp.Context) {
-    // Use a universal ZVal-based closure to avoid generating many
-    // monomorphized wrap_closure[T] instantiations in generated C.
-    // The universal closure accepts/returns ZVal and is wrapped via
-    // wrap_closure_universal with an explicit alias.
-    v_cb_int_univ := fn (a vphp.ZVal) vphp.ZVal {
-        n := a.to_int()
-        return vphp.ZVal.new_int(n * 10)
-    }
-    ctx.wrap_closure_universal_1(v_cb_int_univ)
+	// Use a universal ZVal-based closure to avoid generating many
+	// monomorphized wrap_closure[T] instantiations in generated C.
+	// The universal closure accepts/returns ZVal and is wrapped via
+	// wrap_closure_universal with an explicit alias.
+	v_cb_int_univ := fn (a vphp.ZVal) vphp.ZVal {
+		n := a.to_int()
+		return vphp.ZVal.new_int(n * 10)
+	}
+	ctx.wrap_closure_universal_1(v_cb_int_univ)
 }
 
 // 测试 V 侧原生闭包自动转换。
 @[php_function]
 fn v_get_v_closure_auto(ctx vphp.Context) {
-    // To keep the example simple and avoid capture-specific monomorphization,
-    // use a universal ZVal-based closure instead. This keeps the emitted C
-    // glue stable and relies on the runtime universal bridges.
-    v_cb_name_count_univ := fn (a vphp.ZVal, b vphp.ZVal) vphp.ZVal {
-        name := a.to_string()
-        count := b.to_int()
-        return vphp.ZVal.new_string('V-Power: Hello ${name}, count is ${count}')
-    }
-    ctx.wrap_closure_universal_2(v_cb_name_count_univ)
+	// To keep the example simple and avoid capture-specific monomorphization,
+	// use a universal ZVal-based closure instead. This keeps the emitted C
+	// glue stable and relies on the runtime universal bridges.
+	v_cb_name_count_univ := fn (a vphp.ZVal, b vphp.ZVal) vphp.ZVal {
+		name := a.to_string()
+		count := b.to_int()
+		return vphp.ZVal.new_string('V-Power: Hello ${name}, count is ${count}')
+	}
+	ctx.wrap_closure_universal_2(v_cb_name_count_univ)
 }
 
 @[php_function]
@@ -780,7 +820,7 @@ fn v_iter_helpers_demo(ctx vphp.Context) {
 	})
 	reduced := reduced_parts.join('|')
 
-	ctx.return_string('each=${each_state.buf};fold=${fold_items.join(",")};values=${values.join(",")};reduce=${reduced}')
+	ctx.return_string('each=${each_state.buf};fold=${fold_items.join(',')};values=${values.join(',')};reduce=${reduced}')
 }
 
 @[php_function]
@@ -799,5 +839,5 @@ fn v_iterable_object_demo(input vphp.ZVal) string {
 	fold_items := input.fold[[]string]([]string{}, fn (key vphp.ZVal, val vphp.ZVal, mut acc []string) {
 		acc << '${key.to_string()}=${val.to_string()}'
 	})
-	return 'each=${each_state.buf};fold=${fold_items.join(",")};count=${fold_items.len}'
+	return 'each=${each_state.buf};fold=${fold_items.join(',')};count=${fold_items.len}'
 }

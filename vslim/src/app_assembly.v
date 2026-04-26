@@ -28,44 +28,50 @@ fn php_join_path(base string, child string) string {
 }
 
 fn php_glob_paths(pattern string) []string {
-	result := vphp.call_php('glob', [vphp.RequestOwnedZBox.new_string(pattern).to_zval()])
-	if !result.is_valid() || result.is_null() || result.is_undef() || !result.is_array() {
-		return []string{}
-	}
-	mut out := []string{}
-	for idx := 0; idx < result.array_count(); idx++ {
-		item := result.array_get(idx)
-		if !item.is_valid() || item.is_null() || item.is_undef() {
-			continue
+	return vphp.with_php_call_result_zval('glob', [
+		vphp.RequestOwnedZBox.new_string(pattern).to_zval(),
+	], fn (result vphp.ZVal) []string {
+		if !result.is_valid() || result.is_null() || result.is_undef() || !result.is_array() {
+			return []string{}
 		}
-		path := item.to_string().trim_space()
-		if path != '' {
-			out << path
+		mut out := []string{}
+		for idx := 0; idx < result.array_count(); idx++ {
+			item := result.array_get(idx)
+			if !item.is_valid() || item.is_null() || item.is_undef() {
+				continue
+			}
+			path := item.to_string().trim_space()
+			if path != '' {
+				out << path
+			}
 		}
-	}
-	out.sort()
-	return out
+		out.sort()
+		return out
+	})
 }
 
 fn php_scandir_names(path string) []string {
-	result := vphp.call_php('scandir', [vphp.RequestOwnedZBox.new_string(path).to_zval()])
-	if !result.is_valid() || result.is_null() || result.is_undef() || !result.is_array() {
-		return []string{}
-	}
-	mut out := []string{}
-	for idx := 0; idx < result.array_count(); idx++ {
-		item := result.array_get(idx)
-		if !item.is_valid() || item.is_null() || item.is_undef() {
-			continue
+	return vphp.with_php_call_result_zval('scandir', [
+		vphp.RequestOwnedZBox.new_string(path).to_zval(),
+	], fn (result vphp.ZVal) []string {
+		if !result.is_valid() || result.is_null() || result.is_undef() || !result.is_array() {
+			return []string{}
 		}
-		name := item.to_string().trim_space()
-		if name == '' || name == '.' || name == '..' {
-			continue
+		mut out := []string{}
+		for idx := 0; idx < result.array_count(); idx++ {
+			item := result.array_get(idx)
+			if !item.is_valid() || item.is_null() || item.is_undef() {
+				continue
+			}
+			name := item.to_string().trim_space()
+			if name == '' || name == '.' || name == '..' {
+				continue
+			}
+			out << name
 		}
-		out << name
-	}
-	out.sort()
-	return out
+		out.sort()
+		return out
+	})
 }
 
 fn php_include_once(path string) vphp.ZVal {
@@ -189,12 +195,17 @@ fn app_bootstrap_file_apply(mut app VSlimApp, path string) ! {
 	}
 	result := vphp.include(clean)
 	lower := clean.to_lower()
-	should_preload := lower.ends_with('/bootstrap/app.php') || lower.ends_with('\\bootstrap\\app.php')
-		|| lower.ends_with('/app.php') || lower.ends_with('\\app.php')
+	should_preload := lower.ends_with('/bootstrap/app.php')
+		|| lower.ends_with('\\bootstrap\\app.php') || lower.ends_with('/app.php')
+		|| lower.ends_with('\\app.php')
 	file_exists := php_is_file(clean)
 	cli_debug_log('bootstrap_file clean="${clean}" lower="${lower}" should_preload=${should_preload} is_file=${file_exists}')
 	if should_preload && file_exists {
-		project_root := if is_bootstrap_dir_path(path_dirname(clean)) { path_dirname(path_dirname(clean)) } else { path_dirname(clean) }
+		project_root := if is_bootstrap_dir_path(path_dirname(clean)) {
+			path_dirname(path_dirname(clean))
+		} else {
+			path_dirname(clean)
+		}
 		if project_root != '' {
 			cli_debug_log('bootstrap_file preload project_root="${project_root}"')
 			preload_bootstrap_spec_classes(project_root, result)
@@ -472,7 +483,11 @@ fn preload_bootstrap_spec_class_items(project_root string, raw vphp.ZVal) {
 	if raw.is_string() {
 		class_name := raw.to_string()
 		file := bootstrap_project_class_file(project_root, class_name)
-		cli_debug_log('bootstrap_spec_class class="${class_name}" file="${file}" is_file=${if file == '' { false } else { php_is_file(file) }}')
+		cli_debug_log('bootstrap_spec_class class="${class_name}" file="${file}" is_file=${if file == '' {
+			false
+		} else {
+			php_is_file(file)
+		}}')
 		if file != '' && php_is_file(file) {
 			loaded := php_include_once(file)
 			cli_debug_log('bootstrap_spec_class include class="${class_name}" file="${file}" loaded_valid=${loaded.is_valid()} loaded_type=${loaded.type_name()} exists=${php_class_exists(class_name)}')
@@ -506,6 +521,10 @@ fn preload_bootstrap_spec_classes(project_root string, raw vphp.ZVal) {
 fn preload_bootstrap_project_classes(project_root string) {
 	if project_root.trim_space() == '' {
 		return
+	}
+	support_file := path_join(project_root, 'support.php')
+	if php_is_file(support_file) {
+		_ = php_include_once(support_file)
 	}
 	patterns := [
 		path_join(project_root, 'app/Providers/*.php'),
@@ -622,8 +641,7 @@ fn apply_bootstrap_convention_spec(mut app VSlimApp, path string, label string) 
 fn apply_bootstrap_shared_conventions(mut app VSlimApp, project_root string) !bool {
 	mut applied := false
 	config_candidates := [path_join(project_root, 'config'),
-		path_join(project_root, 'config/app.toml'),
-		path_join(project_root, 'app.toml')]
+		path_join(project_root, 'config/app.toml'), path_join(project_root, 'app.toml')]
 	for candidate in config_candidates {
 		if php_is_file(candidate) || php_is_dir(candidate) {
 			app.load_config(candidate)
@@ -786,10 +804,15 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 	if clean.ends_with('.php') && php_is_file(clean) {
 		result := vphp.include(clean)
 		lower := clean.to_lower()
-		should_preload := lower.ends_with('/bootstrap/app.php') || lower.ends_with('\\bootstrap\\app.php')
-			|| lower.ends_with('/app.php') || lower.ends_with('\\app.php')
+		should_preload := lower.ends_with('/bootstrap/app.php')
+			|| lower.ends_with('\\bootstrap\\app.php') || lower.ends_with('/app.php')
+			|| lower.ends_with('\\app.php')
 		if should_preload {
-			project_root := if is_bootstrap_dir_path(path_dirname(clean)) { path_dirname(path_dirname(clean)) } else { path_dirname(clean) }
+			project_root := if is_bootstrap_dir_path(path_dirname(clean)) {
+				path_dirname(path_dirname(clean))
+			} else {
+				path_dirname(clean)
+			}
 			if project_root != '' {
 				preload_bootstrap_spec_classes(project_root, result)
 			}
@@ -803,7 +826,11 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 	bootstrap_candidate := clean + '/bootstrap/app.php'
 	if php_is_file(bootstrap_candidate) {
 		result := vphp.include(bootstrap_candidate)
-		project_root := if is_bootstrap_dir_path(path_dirname(bootstrap_candidate)) { path_dirname(path_dirname(bootstrap_candidate)) } else { path_dirname(bootstrap_candidate) }
+		project_root := if is_bootstrap_dir_path(path_dirname(bootstrap_candidate)) {
+			path_dirname(path_dirname(bootstrap_candidate))
+		} else {
+			path_dirname(bootstrap_candidate)
+		}
 		if project_root != '' {
 			preload_bootstrap_spec_classes(project_root, result)
 		}
@@ -816,7 +843,11 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 	app_candidate := clean + '/app.php'
 	if php_is_file(app_candidate) {
 		result := vphp.include(app_candidate)
-		project_root := if is_bootstrap_dir_path(path_dirname(app_candidate)) { path_dirname(path_dirname(app_candidate)) } else { path_dirname(app_candidate) }
+		project_root := if is_bootstrap_dir_path(path_dirname(app_candidate)) {
+			path_dirname(path_dirname(app_candidate))
+		} else {
+			path_dirname(app_candidate)
+		}
 		if project_root != '' {
 			preload_bootstrap_spec_classes(project_root, result)
 		}

@@ -30,28 +30,29 @@ fn app_self_zval(app &VSlimApp) vphp.ZVal {
 }
 
 fn bootstrap_debug_included_hits(class_name string) []string {
-	mut hits := []string{}
 	class_stem := class_name.all_after_last('\\').trim_space().to_lower()
-	files := vphp.call_php('get_included_files', []vphp.ZVal{})
-	if !files.is_valid() || !files.is_array() {
+	return vphp.with_php_call_result_zval('get_included_files', []vphp.ZVal{}, fn [class_stem] (files vphp.ZVal) []string {
+		mut hits := []string{}
+		if !files.is_valid() || !files.is_array() {
+			return hits
+		}
+		for idx := 0; idx < files.array_count(); idx++ {
+			file := files.array_get(idx).to_string().trim_space()
+			if file == '' {
+				continue
+			}
+			lower := file.to_lower()
+			if class_stem != '' && lower.contains(class_stem) {
+				hits << file
+				continue
+			}
+			if lower.contains('/app/providers/') || lower.contains('\\app\\providers\\')
+				|| lower.contains('/app/modules/') || lower.contains('\\app\\modules\\') {
+				hits << file
+			}
+		}
 		return hits
-	}
-	for idx := 0; idx < files.array_count(); idx++ {
-		file := files.array_get(idx).to_string().trim_space()
-		if file == '' {
-			continue
-		}
-		lower := file.to_lower()
-		if class_stem != '' && lower.contains(class_stem) {
-			hits << file
-			continue
-		}
-		if lower.contains('/app/providers/') || lower.contains('\\app\\providers\\')
-			|| lower.contains('/app/modules/') || lower.contains('\\app\\modules\\') {
-			hits << file
-		}
-	}
-	return hits
+	})
 }
 
 fn log_bootstrap_class_visibility(kind string, class_name string) {
@@ -235,8 +236,8 @@ pub fn (app &VSlimApp) provider_count() int {
 	return app.providers.len
 }
 
-@[php_method: 'hasProvider']
 @[php_arg_name: 'class_name=className']
+@[php_method: 'hasProvider']
 pub fn (app &VSlimApp) has_provider(class_name string) bool {
 	return class_name.trim_space() in app.provider_classes
 }

@@ -14,7 +14,8 @@ pub fn VSlimEnvLoader.load(path string) map[string]string {
 		return map[string]string{}
 	}
 	lines := os.read_lines(path) or {
-		vphp.throw_exception_class('InvalidArgumentException', 'env load failed: ${err.msg()}', 0)
+		vphp.throw_exception_class('InvalidArgumentException', 'env load failed: ${err.msg()}',
+			0)
 		return map[string]string{}
 	}
 	mut loaded := map[string]string{}
@@ -32,13 +33,21 @@ pub fn VSlimEnvLoader.load(path string) map[string]string {
 		if name == '' {
 			continue
 		}
-		current := vphp.call_php('getenv', [vphp.ZVal.new_string(name)])
-		if current.is_valid() && (!current.is_bool() || current.to_bool()) {
+		has_current := vphp.with_php_call_result_zval('getenv', [
+			vphp.RequestOwnedZBox.new_string(name).to_zval(),
+		], fn (current vphp.ZVal) bool {
+			return current.is_valid() && (!current.is_bool() || current.to_bool())
+		})
+		if has_current {
 			continue
 		}
 		value := vslim_env_loader_normalize_value(raw[idx + 1..])
 		os.setenv(name, value, true)
-		_ = vphp.call_php('putenv', [vphp.ZVal.new_string('${name}=${value}')])
+		vphp.with_php_call_result_zval('putenv', [
+			vphp.RequestOwnedZBox.new_string('${name}=${value}').to_zval(),
+		], fn (_ vphp.ZVal) bool {
+			return true
+		})
 		C.vphp_superglobal_set_env_string(&char(name.str), &char(value.str))
 		C.vphp_superglobal_set_server_string(&char(name.str), &char(value.str))
 		loaded[name] = value

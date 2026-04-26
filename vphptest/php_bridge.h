@@ -36,6 +36,8 @@ PHP_FUNCTION(v_read_php_class_constant);
 PHP_FUNCTION(v_typed_php_interop);
 PHP_FUNCTION(v_typed_object_restore);
 PHP_FUNCTION(v_zval_conversion_api);
+PHP_FUNCTION(v_persistent_fallback_counter_probe);
+PHP_FUNCTION(v_request_scope_counter_probe);
 PHP_FUNCTION(v_unified_object_interop);
 PHP_FUNCTION(v_unified_ownership_interop);
 PHP_FUNCTION(v_read_php_global_const);

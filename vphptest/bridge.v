@@ -1771,6 +1771,24 @@ fn vphp_wrap_v_zval_conversion_api(ctx vphp.Context) {
     ctx.return_val[string](res)
 }
 
+@[export: 'vphp_wrap_v_persistent_fallback_counter_probe']
+fn vphp_wrap_v_persistent_fallback_counter_probe(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_raw(0)
+    res := v_persistent_fallback_counter_probe(arg_0)
+    ctx.return_val[string](res)
+}
+
+@[export: 'vphp_wrap_v_request_scope_counter_probe']
+fn vphp_wrap_v_request_scope_counter_probe(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg[int](0)
+    res := v_request_scope_counter_probe(arg_0)
+    ctx.return_val[string](res)
+}
+
 @[export: 'vphp_wrap_v_unified_object_interop']
 fn vphp_wrap_v_unified_object_interop(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
@@ -2141,10 +2159,10 @@ fn vphp_wrap_v_get_alerts(ctx vphp.Context) {
 fn vphp_ext_auto_startup() {
     vphp.register_auto_interface_binding('AliasWorker', 'RuntimeContracts\\Greeter')
 
-    vphp.ITask.register('AnalyzeTask', fn (ctx vphp.Context) vphp.ITask {
+    vphp.ITask.register('AnalyzeTask', fn (args []vphp.ZVal) vphp.ITask {
         return AnalyzeTask{
-            symbol: ctx.arg[string](1)
-            count: ctx.arg[int](2)
+            symbol: args[0].to_v[string]() or { '' }
+            count: args[1].to_v[int]() or { 0 }
         }
     })
 }
