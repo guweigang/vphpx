@@ -14,7 +14,8 @@ fn effective_auth_middleware_app(app_ref &VSlimApp) &VSlimApp {
 
 fn auth_request_with_attribute(request vphp.RequestBorrowedZBox, name string, value vphp.ZVal) vphp.RequestOwnedZBox {
 	raw_request := request.to_zval()
-	if raw_request.is_valid() && raw_request.is_object() && raw_request.method_exists('withAttribute') {
+	if raw_request.is_valid() && raw_request.is_object()
+		&& raw_request.method_exists('withAttribute') {
 		mut out := vphp.method_request_owned_box(raw_request, 'withAttribute', [
 			vphp.RequestOwnedZBox.new_string(name).to_zval(),
 			value,
@@ -27,10 +28,10 @@ fn auth_request_with_attribute(request vphp.RequestBorrowedZBox, name string, va
 fn auth_unauthorized_psr_response(app &VSlimApp, redirect_path string) &VSlimPsr7Response {
 	if redirect_path.trim_space() != '' {
 		mut redirect := VSlimResponse{
-			status: 302
-			body: ''
+			status:       302
+			body:         ''
 			content_type: 'text/plain; charset=utf-8'
-			headers: {
+			headers:      {
 				'content-type': 'text/plain; charset=utf-8'
 			}
 		}
@@ -43,10 +44,10 @@ fn auth_unauthorized_psr_response(app &VSlimApp, redirect_path string) &VSlimPsr
 fn auth_guest_redirect_psr_response(redirect_path string) &VSlimPsr7Response {
 	target := if redirect_path.trim_space() == '' { '/' } else { redirect_path.trim_space() }
 	mut redirect := VSlimResponse{
-		status: 302
-		body: ''
+		status:       302
+		body:         ''
 		content_type: 'text/plain; charset=utf-8'
-		headers: {
+		headers:      {
 			'content-type': 'text/plain; charset=utf-8'
 		}
 	}
@@ -60,10 +61,9 @@ fn session_cookie_header_value(session &VSlimSessionStore) string {
 			session.domain_value(), -1, session.secure_value(), session.http_only_value(),
 			session.same_site_value())
 	}
-	return build_set_cookie_header(session.cookie_name_value(),
-		session_encode_values(session.values, session.secret_value()), session.path_value(),
-		session.domain_value(), session.ttl_seconds_value(), session.secure_value(),
-		session.http_only_value(), session.same_site_value())
+	return build_set_cookie_header(session.cookie_name_value(), session_encode_values(session.values,
+		session.secret_value()), session.path_value(), session.domain_value(), session.ttl_seconds_value(),
+		session.secure_value(), session.http_only_value(), session.same_site_value())
 }
 
 fn session_commit_psr_response(mut session VSlimSessionStore, response &VSlimPsr7Response) &VSlimPsr7Response {
@@ -89,7 +89,7 @@ fn session_new_string_map_zval(values map[string]string) vphp.ZVal {
 }
 
 fn session_base64url_encode(raw string) string {
-	mut encoded := vphp.with_php_call_result_string('base64_encode', [
+	mut encoded := vphp.php_call_string('base64_encode', [
 		vphp.RequestOwnedZBox.new_string(raw).to_zval(),
 	])
 	encoded = encoded.replace('+', '-').replace('/', '_').replace('=', '')
@@ -122,7 +122,7 @@ fn session_base64url_decode(raw string) !string {
 }
 
 fn session_sign(payload string, secret string) string {
-	return vphp.with_php_call_result_string('hash_hmac', [
+	return vphp.php_call_string('hash_hmac', [
 		vphp.RequestOwnedZBox.new_string('sha256').to_zval(),
 		vphp.RequestOwnedZBox.new_string(payload).to_zval(),
 		vphp.RequestOwnedZBox.new_string(secret).to_zval(),
@@ -130,7 +130,7 @@ fn session_sign(payload string, secret string) string {
 }
 
 fn session_secure_equals(left string, right string) bool {
-	return vphp.with_php_call_result_bool('hash_equals', [
+	return vphp.php_call_bool('hash_equals', [
 		vphp.RequestOwnedZBox.new_string(left).to_zval(),
 		vphp.RequestOwnedZBox.new_string(right).to_zval(),
 	])
@@ -243,7 +243,8 @@ fn session_commit_cookie(mut session VSlimSessionStore, response vphp.RequestBor
 			session.dirty = false
 			return true
 		}
-		vphp.throw_exception_class('RuntimeException', 'response does not support delete_cookie()', 0)
+		vphp.throw_exception_class('RuntimeException', 'response does not support delete_cookie()',
+			0)
 		return false
 	}
 	if !session.dirty {
@@ -281,7 +282,8 @@ fn session_commit_cookie(mut session VSlimSessionStore, response vphp.RequestBor
 		session.dirty = false
 		return true
 	}
-	vphp.throw_exception_class('RuntimeException', 'response does not support set_cookie_full()', 0)
+	vphp.throw_exception_class('RuntimeException', 'response does not support set_cookie_full()',
+		0)
 	return false
 }
 
@@ -330,8 +332,8 @@ pub fn (session &VSlimSessionStore) secret_value() string {
 	return session.secret.trim_space()
 }
 
-@[php_method: 'setTtlSeconds']
 @[php_arg_name: 'ttl_seconds=ttlSeconds']
+@[php_method: 'setTtlSeconds']
 pub fn (mut session VSlimSessionStore) set_ttl_seconds(ttl_seconds int) &VSlimSessionStore {
 	if ttl_seconds >= 0 {
 		session.ttl_seconds = ttl_seconds
@@ -383,8 +385,8 @@ pub fn (session &VSlimSessionStore) secure_value() bool {
 	return session.secure
 }
 
-@[php_method: 'setHttpOnly']
 @[php_arg_name: 'http_only=httpOnly']
+@[php_method: 'setHttpOnly']
 pub fn (mut session VSlimSessionStore) set_http_only(http_only bool) &VSlimSessionStore {
 	session.http_only = http_only
 	return &session
@@ -395,8 +397,8 @@ pub fn (session &VSlimSessionStore) http_only_value() bool {
 	return session.http_only
 }
 
-@[php_method: 'setSameSite']
 @[php_arg_name: 'same_site=sameSite']
+@[php_method: 'setSameSite']
 pub fn (mut session VSlimSessionStore) set_same_site(same_site string) &VSlimSessionStore {
 	session.same_site = same_site.trim_space().to_lower()
 	return &session
@@ -424,18 +426,18 @@ pub fn (session &VSlimSessionStore) all() map[string]string {
 	return session.values.clone()
 }
 
-@[php_method]
 @[php_arg_name: 'default_value=defaultValue']
 @[php_arg_default: 'default_value=""']
 @[php_arg_optional: 'default_value']
+@[php_method]
 pub fn (session &VSlimSessionStore) get(key string, default_value string) string {
 	return session.values[key] or { default_value }
 }
 
-@[php_method]
 @[php_arg_name: 'default_value=defaultValue']
 @[php_arg_default: 'default_value=""']
 @[php_arg_optional: 'default_value']
+@[php_method]
 pub fn (mut session VSlimSessionStore) pull(key string, default_value string) string {
 	value := session.values[key] or { default_value }
 	if key in session.values {
@@ -458,18 +460,18 @@ pub fn (session &VSlimSessionStore) has_flash(key string) bool {
 	return '${session_flash_prefix}${key}' in session.values
 }
 
-@[php_method: 'getFlash']
 @[php_arg_name: 'default_value=defaultValue']
 @[php_arg_default: 'default_value=""']
 @[php_arg_optional: 'default_value']
+@[php_method: 'getFlash']
 pub fn (session &VSlimSessionStore) get_flash(key string, default_value string) string {
 	return session.values['${session_flash_prefix}${key}'] or { default_value }
 }
 
-@[php_method: 'pullFlash']
 @[php_arg_name: 'default_value=defaultValue']
 @[php_arg_default: 'default_value=""']
 @[php_arg_optional: 'default_value']
+@[php_method: 'pullFlash']
 pub fn (mut session VSlimSessionStore) pull_flash(key string, default_value string) string {
 	flash_key := '${session_flash_prefix}${key}'
 	value := session.values[flash_key] or { default_value }
@@ -558,8 +560,8 @@ pub fn (guard &VSlimAuthSessionGuard) store() &VSlimSessionStore {
 	return guard.store_ref
 }
 
-@[php_method: 'setUserKey']
 @[php_arg_name: 'key=userKey']
+@[php_method: 'setUserKey']
 pub fn (mut guard VSlimAuthSessionGuard) set_user_key(key string) &VSlimAuthSessionGuard {
 	if key.trim_space() != '' {
 		guard.user_key = key.trim_space()
@@ -598,9 +600,8 @@ pub fn (guard &VSlimAuthSessionGuard) user_id() string {
 	return guard.id()
 }
 
-@[php_method]
-@[php_borrowed_return]
 @[php_arg_name: 'user_id=userId']
+@[php_borrowed_return; php_method]
 pub fn (mut guard VSlimAuthSessionGuard) login(user_id string) &VSlimAuthSessionGuard {
 	if guard.store_ref != unsafe { nil } {
 		guard.store_ref.set(guard.user_key_value(), user_id)
@@ -608,8 +609,7 @@ pub fn (mut guard VSlimAuthSessionGuard) login(user_id string) &VSlimAuthSession
 	return &guard
 }
 
-@[php_method]
-@[php_borrowed_return]
+@[php_borrowed_return; php_method]
 pub fn (mut guard VSlimAuthSessionGuard) logout() &VSlimAuthSessionGuard {
 	if guard.store_ref != unsafe { nil } {
 		guard.store_ref.forget(guard.user_key_value())
@@ -617,8 +617,7 @@ pub fn (mut guard VSlimAuthSessionGuard) logout() &VSlimAuthSessionGuard {
 	return &guard
 }
 
-@[php_method]
-@[php_borrowed_return]
+@[php_borrowed_return; php_method]
 pub fn (mut middleware VSlimSessionStartMiddleware) construct() &VSlimSessionStartMiddleware {
 	return &middleware
 }
@@ -630,9 +629,9 @@ pub fn (mut middleware VSlimSessionStartMiddleware) set_app(app &VSlimApp) &VSli
 	return &middleware
 }
 
-@[php_method]
 @[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+@[php_method]
 pub fn (middleware &VSlimSessionStartMiddleware) process(request vphp.RequestBorrowedZBox, handler vphp.RequestBorrowedZBox) &VSlimPsr7Response {
 	app := effective_auth_middleware_app(middleware.app_ref)
 	if app == unsafe { nil } {
@@ -649,8 +648,7 @@ pub fn (middleware &VSlimSessionStartMiddleware) process(request vphp.RequestBor
 	return session_commit_psr_response(mut session, response)
 }
 
-@[php_method]
-@[php_borrowed_return]
+@[php_borrowed_return; php_method]
 pub fn (mut middleware VSlimAuthRequireMiddleware) construct() &VSlimAuthRequireMiddleware {
 	middleware.redirect_path = ''
 	return &middleware
@@ -663,8 +661,8 @@ pub fn (mut middleware VSlimAuthRequireMiddleware) set_app(app &VSlimApp) &VSlim
 	return &middleware
 }
 
-@[php_method: 'setRedirectTo']
 @[php_arg_name: 'path=redirectPath']
+@[php_method: 'setRedirectTo']
 pub fn (mut middleware VSlimAuthRequireMiddleware) set_redirect_path(path string) &VSlimAuthRequireMiddleware {
 	middleware.redirect_path = path.trim_space()
 	return &middleware
@@ -675,9 +673,9 @@ pub fn (middleware &VSlimAuthRequireMiddleware) redirect_path_value() string {
 	return middleware.redirect_path.trim_space()
 }
 
-@[php_method]
 @[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+@[php_method]
 pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.RequestBorrowedZBox, handler vphp.RequestBorrowedZBox) &VSlimPsr7Response {
 	app := effective_auth_middleware_app(middleware.app_ref)
 	if app == unsafe { nil } {
@@ -693,8 +691,7 @@ pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.RequestBorr
 		return auth_unauthorized_psr_response(app, redirect_path)
 	}
 	user_id := guard.id()
-	mut next_request := auth_request_with_attribute(request, 'auth.user_id',
-		vphp.RequestOwnedZBox.new_string(user_id).to_zval())
+	mut next_request := auth_request_with_attribute(request, 'auth.user_id', vphp.RequestOwnedZBox.new_string(user_id).to_zval())
 	defer {
 		next_request.release()
 	}
@@ -719,8 +716,7 @@ pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.RequestBorr
 	return normalize_to_psr7_response(result.to_zval())
 }
 
-@[php_method]
-@[php_borrowed_return]
+@[php_borrowed_return; php_method]
 pub fn (mut middleware VSlimAuthGuestMiddleware) construct() &VSlimAuthGuestMiddleware {
 	middleware.redirect_path = ''
 	return &middleware
@@ -733,8 +729,8 @@ pub fn (mut middleware VSlimAuthGuestMiddleware) set_app(app &VSlimApp) &VSlimAu
 	return &middleware
 }
 
-@[php_method: 'setRedirectTo']
 @[php_arg_name: 'path=redirectPath']
+@[php_method: 'setRedirectTo']
 pub fn (mut middleware VSlimAuthGuestMiddleware) set_redirect_path(path string) &VSlimAuthGuestMiddleware {
 	middleware.redirect_path = path.trim_space()
 	return &middleware
@@ -745,9 +741,9 @@ pub fn (middleware &VSlimAuthGuestMiddleware) redirect_path_value() string {
 	return middleware.redirect_path.trim_space()
 }
 
-@[php_method]
 @[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+@[php_method]
 pub fn (middleware &VSlimAuthGuestMiddleware) process(request vphp.RequestBorrowedZBox, handler vphp.RequestBorrowedZBox) &VSlimPsr7Response {
 	app := effective_auth_middleware_app(middleware.app_ref)
 	if app == unsafe { nil } {
@@ -771,8 +767,7 @@ pub fn (middleware &VSlimAuthGuestMiddleware) process(request vphp.RequestBorrow
 	return normalize_to_psr7_response(result.to_zval())
 }
 
-@[php_method]
-@[php_borrowed_return]
+@[php_borrowed_return; php_method]
 pub fn (mut middleware VSlimAuthRequireAbilityMiddleware) construct() &VSlimAuthRequireAbilityMiddleware {
 	middleware.ability = ''
 	middleware.status = 403
@@ -828,9 +823,9 @@ pub fn (middleware &VSlimAuthRequireAbilityMiddleware) message() string {
 	return middleware.message.trim_space()
 }
 
-@[php_method]
 @[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+@[php_method]
 pub fn (middleware &VSlimAuthRequireAbilityMiddleware) process(request vphp.RequestBorrowedZBox, handler vphp.RequestBorrowedZBox) &VSlimPsr7Response {
 	app := effective_auth_middleware_app(middleware.app_ref)
 	if app == unsafe { nil } {

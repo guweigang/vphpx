@@ -2370,8 +2370,9 @@ fn php_stream_metadata(resource vphp.ZVal) ?map[string]string {
 
 fn read_stream_factory_file(filename string, mode string) ?string {
 	if mode.contains('r') {
-		exists := vphp.with_php_call_result_bool('is_file', [
-			vphp.RequestOwnedZBox.new_string(filename).to_zval()])
+		exists := vphp.php_call_bool('is_file', [
+			vphp.RequestOwnedZBox.new_string(filename).to_zval(),
+		])
 		if !exists {
 			vphp.throw_exception_class('RuntimeException', 'failed to open stream from file',
 				0)
@@ -2380,7 +2381,8 @@ fn read_stream_factory_file(filename string, mode string) ?string {
 		mut text := ''
 		mut failed := false
 		vphp.with_php_call_result_zval('file_get_contents', [
-			vphp.RequestOwnedZBox.new_string(filename).to_zval()], fn [mut text, mut failed] (res vphp.ZVal) bool {
+			vphp.RequestOwnedZBox.new_string(filename).to_zval(),
+		], fn [mut text, mut failed] (res vphp.ZVal) bool {
 			if !res.is_valid() || res.is_null() || res.is_undef()
 				|| (res.is_bool() && !res.to_bool()) {
 				failed = true

@@ -145,7 +145,7 @@ fn cli_handler_string_is_function_callable(name string) bool {
 	if callable_name == '' {
 		return false
 	}
-	return vphp.with_php_call_result_bool('function_exists', [
+	return vphp.php_call_bool('function_exists', [
 		vphp.RequestOwnedZBox.new_string(callable_name).to_zval(),
 	])
 }
@@ -198,7 +198,7 @@ fn resolve_cli_command_runtime(mut cli VSlimCliApp, handler_z vphp.ZVal) !vphp.Z
 		if cli_handler_string_is_function_callable(class_name) {
 			return vphp.RequestOwnedZBox.new_string(class_name).to_zval()
 		}
-		exists := vphp.with_php_call_result_bool('class_exists', [
+		exists := vphp.php_call_bool('class_exists', [
 			vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
 			vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 		])
@@ -458,27 +458,25 @@ pub fn (cli &VSlimCliApp) project_root_value() string {
 
 @[php_method: 'debugBridgePath']
 pub fn (cli &VSlimCliApp) debug_bridge_path(path string) vphp.RequestOwnedZBox {
-	echoed := vphp.with_php_call_result_string('strval', [
+	echoed := vphp.php_call_string('strval', [
 		vphp.RequestOwnedZBox.new_string(path).to_zval(),
 	])
-	joined := vphp.with_php_call_result_string('sprintf', [
+	joined := vphp.php_call_string('sprintf', [
 		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
 		vphp.RequestOwnedZBox.new_string(path).to_zval(),
 		vphp.RequestOwnedZBox.new_string('bootstrap/app.php').to_zval(),
 	])
-	echoed_joined := vphp.with_php_call_result_string('sprintf', [
+	echoed_joined := vphp.php_call_string('sprintf', [
 		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
 		vphp.RequestOwnedZBox.new_string(echoed).to_zval(),
 		vphp.RequestOwnedZBox.new_string('bootstrap/app.php').to_zval(),
 	])
 	return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(vphp.dyn_value_map({
-		'original':      vphp.dyn_value_string(path)
-		'strval':        vphp.dyn_value_string(echoed)
-		'sprintf':       vphp.dyn_value_string(joined)
-		'sprintf_echo':  vphp.dyn_value_string(echoed_joined)
-	})) or {
-		vphp.ZVal.new_null()
-	})
+		'original':     vphp.dyn_value_string(path)
+		'strval':       vphp.dyn_value_string(echoed)
+		'sprintf':      vphp.dyn_value_string(joined)
+		'sprintf_echo': vphp.dyn_value_string(echoed_joined)
+	})) or { vphp.ZVal.new_null() })
 }
 
 @[php_method]
@@ -609,9 +607,9 @@ pub fn (cli &VSlimCliApp) arguments() vphp.RequestOwnedZBox {
 }
 
 @[php_arg_name: 'default_value=defaultValue']
+@[php_arg_default: 'default_value=null']
 @[php_arg_optional: 'default_value']
 @[php_method]
-@[php_arg_default: 'default_value=null']
 pub fn (cli &VSlimCliApp) option(name string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	key := name.trim_space()
 	if key != '' {
@@ -629,9 +627,9 @@ pub fn (cli &VSlimCliApp) option(name string, default_value vphp.RequestBorrowed
 }
 
 @[php_arg_name: 'default_value=defaultValue']
+@[php_arg_default: 'default_value=null']
 @[php_arg_optional: 'default_value']
 @[php_method]
-@[php_arg_default: 'default_value=null']
 pub fn (cli &VSlimCliApp) argument(name string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	key := name.trim_space()
 	if key != '' {

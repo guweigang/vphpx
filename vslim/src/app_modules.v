@@ -17,7 +17,7 @@ fn normalize_module_input(raw vphp.ZVal) !vphp.ZVal {
 		if class_name == '' {
 			return error('module class name must not be empty')
 		}
-		exists := vphp.with_php_call_result_bool('class_exists', [
+		exists := vphp.php_call_bool('class_exists', [
 			vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
 			vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 		])
@@ -140,8 +140,8 @@ fn register_module_zval(mut app VSlimApp, module_z vphp.ZVal) ! {
 	}
 }
 
-@[php_method: 'module']
 @[php_arg_name: 'mod_input=modInput']
+@[php_method: 'module']
 pub fn (mut app VSlimApp) mount_module(mod_input vphp.RequestBorrowedZBox) &VSlimApp {
 	module_z := normalize_module_input(mod_input.to_zval()) or {
 		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
@@ -180,8 +180,8 @@ pub fn (app &VSlimApp) module_count() int {
 	return app.modules.len
 }
 
-@[php_method: 'hasModule']
 @[php_arg_name: 'class_name=className']
+@[php_method: 'hasModule']
 pub fn (app &VSlimApp) has_module(class_name string) bool {
 	return class_name.trim_space() in app.module_classes
 }
