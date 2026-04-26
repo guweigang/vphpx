@@ -1805,6 +1805,23 @@ fn vphp_wrap_v_php_class_named_api(ctx vphp.Context) {
     v_php_class_named_api(arg_0)
 }
 
+@[export: 'vphp_wrap_v_php_function_named_api']
+fn vphp_wrap_v_php_function_named_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx
+    v_php_function_named_api(arg_0)
+}
+
+@[export: 'vphp_wrap_v_php_closure_api']
+fn vphp_wrap_v_php_closure_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_raw(0)
+    res := v_php_closure_api(arg_0)
+    ctx.return_val[string](res)
+}
+
 @[export: 'vphp_wrap_v_unified_ownership_interop']
 fn vphp_wrap_v_unified_ownership_interop(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()

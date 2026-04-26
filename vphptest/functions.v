@@ -509,6 +509,50 @@ fn v_php_class_named_api(ctx vphp.Context) {
 }
 
 @[php_function]
+fn v_php_function_named_api(ctx vphp.Context) {
+	fn_ref := vphp.PhpFunction.named('strtoupper')
+	if !fn_ref.exists() {
+		vphp.throw_exception('strtoupper should exist', 0)
+		return
+	}
+	missing := vphp.PhpFunction.find('definitely_missing_fn') or {
+		vphp.PhpFunction.named('missing')
+	}
+	if missing.name() != 'missing' {
+		vphp.throw_exception('PhpFunction.find should return none for missing function',
+			0)
+		return
+	}
+
+	upper := fn_ref.call_v[string]([vphp.ZVal.new_string('func')]) or {
+		vphp.throw_exception('PhpFunction call failed: ${err.msg()}', 0)
+		return
+	}
+	len := vphp.PhpFunction.named('strlen').invoke_v[int]([vphp.ZVal.new_string(upper)]) or {
+		vphp.throw_exception('PhpFunction invoke failed: ${err.msg()}', 0)
+		return
+	}
+
+	ctx.return_string('function=${fn_ref.name()};exists=${fn_ref.exists()};value=${upper}:${len};missing=${missing.name()}')
+}
+
+@[php_function]
+fn v_php_closure_api(callback vphp.Callable) string {
+	closure := vphp.PhpClosure.from_zval(callback) or {
+		vphp.throw_exception('callback should be callable', 0)
+		return ''
+	}
+	result := closure.call_v[string]([
+		vphp.ZVal.new_string('closure'),
+		vphp.ZVal.new_int(3),
+	]) or {
+		vphp.throw_exception('PhpClosure call failed: ${err.msg()}', 0)
+		return ''
+	}
+	return 'closure=${closure.is_callable()}:${result}'
+}
+
+@[php_function]
 fn v_unified_ownership_interop(ctx vphp.Context) {
 	cls := vphp.php_class('PhpUnifiedBox')
 	obj_req := cls.construct_owned_request([

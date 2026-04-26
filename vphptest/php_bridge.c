@@ -295,6 +295,28 @@ PHP_FUNCTION(v_php_class_named_api) {
     vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     vphp_wrap_v_php_class_named_api(ctx);
 }
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_php_function_named_api, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_function_named_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_function_named_api) {
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_function_named_api(ctx);
+}
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_closure_api, 0, 1, IS_STRING, 0)
+ZEND_ARG_CALLABLE_INFO(0, callback, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_closure_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_closure_api) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_closure_api(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
 ZEND_BEGIN_ARG_INFO_EX(arginfo_v_unified_ownership_interop, 0, 0, 0)
 ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
@@ -2603,6 +2625,8 @@ static const zend_function_entry vphptest_functions[] = {
     PHP_FE(v_request_scope_counter_probe, arginfo_v_request_scope_counter_probe)
     PHP_FE(v_unified_object_interop, arginfo_v_unified_object_interop)
     PHP_FE(v_php_class_named_api, arginfo_v_php_class_named_api)
+    PHP_FE(v_php_function_named_api, arginfo_v_php_function_named_api)
+    PHP_FE(v_php_closure_api, arginfo_v_php_closure_api)
     PHP_FE(v_unified_ownership_interop, arginfo_v_unified_ownership_interop)
     PHP_FE(v_read_php_global_const, arginfo_v_read_php_global_const)
     PHP_FE(v_php_symbol_exists, arginfo_v_php_symbol_exists)
