@@ -553,6 +553,40 @@ fn v_php_closure_api(callback vphp.Callable) string {
 }
 
 @[php_function]
+fn v_php_closure_persistent_api(callback vphp.Callable) string {
+	before := vphp.runtime_counters()
+	closure := vphp.PhpClosure.from_zval(callback) or {
+		vphp.throw_exception('callback should be callable', 0)
+		return ''
+	}
+	mut persistent := closure.to_persistent()
+	during := vphp.runtime_counters()
+
+	first := persistent.call_v[string]([
+		vphp.ZVal.new_string('keep'),
+		vphp.ZVal.new_int(2),
+	]) or {
+		persistent.release()
+		vphp.throw_exception('PersistentPhpClosure call failed: ${err.msg()}', 0)
+		return ''
+	}
+	second := persistent.with_call_result([
+		vphp.ZVal.new_string('life'),
+		vphp.ZVal.new_int(4),
+	], fn (z vphp.ZVal) string {
+		return z.to_string()
+	})
+	kind := persistent.kind_name()
+	is_callable := persistent.is_callable()
+	retained := during.obj_registry_len >= before.obj_registry_len
+	persistent.release()
+	after := vphp.runtime_counters()
+	released := after.obj_registry_len == before.obj_registry_len
+
+	return 'persistent=${kind}:${is_callable}:${first}:${second}:retained=${retained}:released=${released}'
+}
+
+@[php_function]
 fn v_unified_ownership_interop(ctx vphp.Context) {
 	cls := vphp.php_class('PhpUnifiedBox')
 	obj_req := cls.construct_owned_request([
