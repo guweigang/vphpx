@@ -752,9 +752,11 @@ fn v_call_php_closure_helper(raw vphp.ZVal) string {
 
 @[php_function]
 fn v_test_globals(ctx vphp.Context) {
-	mut g := vphp.get_globals[ExtGlobals]()
-	g.request_count++
-	g.last_user = 'VPHP_USER'
+	vphp.with_globals[ExtGlobals](fn (mut g ExtGlobals) {
+		g.request_count++
+		g.last_user = 'VPHP_USER'
+	})
+	g := vphp.get_globals[ExtGlobals]()
 
 	ctx.return_map({
 		'count': g.request_count.str()
