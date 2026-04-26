@@ -48,8 +48,8 @@ pub fn VSlimEnvLoader.load(path string) map[string]string {
 		], fn (_ vphp.ZVal) bool {
 			return true
 		})
-		C.vphp_superglobal_set_env_string(&char(name.str), &char(value.str))
-		C.vphp_superglobal_set_server_string(&char(name.str), &char(value.str))
+		vphp.set_env_superglobal(name, value)
+		vphp.set_server_superglobal(name, value)
 		loaded[name] = value
 	}
 	return loaded
