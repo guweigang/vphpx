@@ -143,13 +143,8 @@ pub fn (mut pool VSlimPsr6CacheItemPool) delete_item(key string) bool {
 }
 
 @[php_method: 'deleteItems']
-@[php_arg_type: 'keys=array']
-pub fn (mut pool VSlimPsr6CacheItemPool) delete_items(keys vphp.RequestBorrowedZBox) bool {
+pub fn (mut pool VSlimPsr6CacheItemPool) delete_items(keys vphp.PhpArray) bool {
 	ensure_psr6_pool(mut pool)
-	if !keys.is_array() {
-		throw_psr6_invalid_argument('keys must be an array of cache keys')
-		return false
-	}
 	for key_name in psr6_key_list_from_array(keys.to_zval()) or {
 		throw_psr6_invalid_argument(err.msg())
 		return false
@@ -264,7 +259,6 @@ pub fn (mut item VSlimPsr6CacheItem) expires_at(expiration vphp.RequestBorrowedZ
 }
 
 @[php_method: 'expiresAfter']
-@[php_arg_type: 'time=mixed']
 @[php_return_type: 'static']
 @[php_arg_name: 'time_value=timeValue']
 pub fn (mut item VSlimPsr6CacheItem) expires_after(time_value vphp.RequestBorrowedZBox) &VSlimPsr6CacheItem {

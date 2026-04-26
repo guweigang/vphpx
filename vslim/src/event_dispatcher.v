@@ -43,14 +43,9 @@ pub fn (provider &VSlimPsr14ListenerProvider) listener_count() int {
 	return count
 }
 
-@[php_arg_type: 'event=object']
 @[php_return_type: 'iterable']
 @[php_method: 'getListenersForEvent']
-pub fn (provider &VSlimPsr14ListenerProvider) get_listeners_for_event(event vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
-	if !event.is_valid() || !event.is_object() {
-		vphp.throw_exception_class('InvalidArgumentException', 'event must be an object', 0)
-		return vphp.own_request_zbox(new_psr14_listener_array())
-	}
+pub fn (provider &VSlimPsr14ListenerProvider) get_listeners_for_event(event vphp.PhpObject) vphp.RequestOwnedZBox {
 	mut out := new_psr14_listener_array()
 	for listener in provider.listeners_for_event(event.to_zval()) {
 		listener.with_request_zval(fn [mut out] (z vphp.ZVal) bool {
@@ -96,16 +91,11 @@ pub fn (mut dispatcher VSlimPsr14EventDispatcher) listen_any(listener vphp.Reque
 	return &dispatcher
 }
 
-@[php_arg_type: 'event=object']
 @[php_return_type: 'object']
 @[php_method: 'dispatch']
-pub fn (mut dispatcher VSlimPsr14EventDispatcher) dispatch(event vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
-	if !event.is_valid() || !event.is_object() {
-		vphp.throw_exception_class('InvalidArgumentException', 'event must be an object', 0)
-		return vphp.RequestOwnedZBox.new_null()
-	}
+pub fn (mut dispatcher VSlimPsr14EventDispatcher) dispatch(event vphp.PhpObject) vphp.RequestOwnedZBox {
 	if psr14_propagation_stopped(event.to_zval()) {
-		return event.clone_request_owned()
+		return vphp.own_request_zbox(event.to_zval())
 	}
 	provider := dispatcher.provider()
 	for listener in provider.listeners_for_event(event.to_zval()) {
@@ -116,7 +106,7 @@ pub fn (mut dispatcher VSlimPsr14EventDispatcher) dispatch(event vphp.RequestBor
 			return result.is_valid()
 		})
 	}
-	return event.clone_request_owned()
+	return vphp.own_request_zbox(event.to_zval())
 }
 
 fn ensure_psr14_listener_provider(mut provider VSlimPsr14ListenerProvider) {

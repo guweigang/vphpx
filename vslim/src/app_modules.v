@@ -154,9 +154,8 @@ pub fn (mut app VSlimApp) mount_module(mod_input vphp.RequestBorrowedZBox) &VSli
 	return &app
 }
 
-@[php_arg_type: 'modules=iterable']
 @[php_method: 'moduleMany']
-pub fn (mut app VSlimApp) module_many(modules vphp.RequestBorrowedZBox) &VSlimApp {
+pub fn (mut app VSlimApp) module_many(modules vphp.PhpIterable) &VSlimApp {
 	items := bootstrap_module_values(modules.to_zval()) or {
 		vphp.throw_exception_class('InvalidArgumentException', 'modules must be iterable',
 			0)

@@ -173,9 +173,8 @@ pub fn (mut app VSlimApp) register(provider vphp.RequestBorrowedZBox) &VSlimApp 
 	return &app
 }
 
-@[php_arg_type: 'providers=iterable']
 @[php_method: 'registerMany']
-pub fn (mut app VSlimApp) register_many(providers vphp.RequestBorrowedZBox) &VSlimApp {
+pub fn (mut app VSlimApp) register_many(providers vphp.PhpIterable) &VSlimApp {
 	items := bootstrap_provider_values(providers.to_zval()) or {
 		vphp.throw_exception_class('InvalidArgumentException', 'providers must be iterable',
 			0)

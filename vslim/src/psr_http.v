@@ -225,23 +225,30 @@ pub fn (s &VSlimPsr7Stream) get_contents() string {
 }
 
 @[php_arg_name: 'default_key=defaultKey']
-@[php_arg_default: 'default_key=null']
 @[php_method: 'getMetadata']
-@[php_arg_optional: 'default_key']
-pub fn (s &VSlimPsr7Stream) get_metadata(default_key vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
-	if !default_key.is_valid() || default_key.is_null() || default_key.is_undef() {
-		return vphp.own_request_zbox(vphp.new_zval_from[map[string]string](s.metadata.clone()) or {
-			vphp.ZVal.new_null()
-		})
+pub fn (s &VSlimPsr7Stream) get_metadata(default_key ?vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
+	if actual_key := default_key {
+		key := actual_key.to_zval().to_string()
+		if key == '' {
+			return psr7_stream_metadata_map(s)
+		}
+		value := s.metadata[key] or { return vphp.RequestOwnedZBox.new_null() }
+		return vphp.RequestOwnedZBox.new_string(value)
 	}
-	key := default_key.to_string()
-	if key == '' {
-		return vphp.own_request_zbox(vphp.new_zval_from[map[string]string](s.metadata.clone()) or {
-			vphp.ZVal.new_null()
-		})
+	return psr7_stream_metadata_map(s)
+}
+
+fn psr7_stream_metadata_map(s &VSlimPsr7Stream) vphp.RequestOwnedZBox {
+	return vphp.own_request_zbox(vphp.new_zval_from[map[string]string](s.metadata.clone()) or {
+		vphp.ZVal.new_null()
+	})
+}
+
+fn psr7_default_value_or_null(default_value ?vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
+	if actual_default := default_value {
+		return actual_default.clone_request_owned()
 	}
-	value := s.metadata[key] or { return vphp.RequestOwnedZBox.new_null() }
-	return vphp.RequestOwnedZBox.new_string(value)
+	return vphp.RequestOwnedZBox.new_null()
 }
 
 @[php_arg_name: 'default_stream=defaultStream,default_size=defaultSize,default_error=defaultError,default_client_filename=defaultClientFilename,default_client_media_type=defaultClientMediaType']
@@ -1028,8 +1035,7 @@ pub fn (r &VSlimPsr7ServerRequest) get_cookie_params() vphp.RequestOwnedZBox {
 
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
 @[php_method: 'withCookieParams']
-@[php_arg_type: 'cookies=array']
-pub fn (r &VSlimPsr7ServerRequest) with_cookie_params(cookies vphp.RequestBorrowedZBox) &VSlimPsr7ServerRequest {
+pub fn (r &VSlimPsr7ServerRequest) with_cookie_params(cookies vphp.PhpArray) &VSlimPsr7ServerRequest {
 	return clone_psr7_server_request(r, r.method, r.request_target, r.protocol_version,
 		clone_header_values(r.headers), clone_header_names(r.header_names), server_request_body_or_empty(r),
 		server_request_uri_or_default(r), r.server_params_ref, persistent_array_owned(cookies.to_zval()),
@@ -1044,8 +1050,7 @@ pub fn (r &VSlimPsr7ServerRequest) get_query_params() vphp.RequestOwnedZBox {
 
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
 @[php_method: 'withQueryParams']
-@[php_arg_type: 'query=array']
-pub fn (r &VSlimPsr7ServerRequest) with_query_params(query vphp.RequestBorrowedZBox) &VSlimPsr7ServerRequest {
+pub fn (r &VSlimPsr7ServerRequest) with_query_params(query vphp.PhpArray) &VSlimPsr7ServerRequest {
 	return clone_psr7_server_request(r, r.method, r.request_target, r.protocol_version,
 		clone_header_values(r.headers), clone_header_names(r.header_names), server_request_body_or_empty(r),
 		server_request_uri_or_default(r), r.server_params_ref, r.cookie_params_ref, persistent_array_owned(query.to_zval()),
@@ -1098,19 +1103,17 @@ pub fn (r &VSlimPsr7ServerRequest) get_attributes() vphp.RequestOwnedZBox {
 }
 
 @[php_arg_name: 'default_value=defaultValue']
-@[php_arg_default: 'default_value=null']
-@[php_arg_optional: 'default_value']
 @[php_method: 'getAttribute']
-pub fn (r &VSlimPsr7ServerRequest) get_attribute(name vphp.RequestBorrowedZBox, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
+pub fn (r &VSlimPsr7ServerRequest) get_attribute(name vphp.RequestBorrowedZBox, default_value ?vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	key := zval_to_log_message(name.to_zval())
 	if key == '' {
-		return default_value.clone_request_owned()
+		return psr7_default_value_or_null(default_value)
 	}
 	return r.attributes_ref.with_request_zval(fn [key, default_value] (attrs vphp.ZVal) vphp.RequestOwnedZBox {
 		if !attrs.is_array() {
-			return default_value.clone_request_owned()
+			return psr7_default_value_or_null(default_value)
 		}
-		value := attrs.get(key) or { return default_value.clone_request_owned() }
+		value := attrs.get(key) or { return psr7_default_value_or_null(default_value) }
 		return vphp.RequestOwnedZBox.adopt_zval(value.dup())
 	})
 }

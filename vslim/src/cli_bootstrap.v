@@ -209,7 +209,10 @@ fn apply_cli_bootstrap_spec(mut cli VSlimCliApp, spec vphp.ZVal) ! {
 	normalized := normalize_app_bootstrap_spec(spec)!
 	if cli_bootstrap_has_meta_keys(normalized) {
 		if commands := app_bootstrap_lookup(normalized, ['commands']) {
-			cli.command_many(vphp.borrow_zbox(commands))
+			command_iter := vphp.PhpIterable.from_zval(commands) or {
+				return error('bootstrap commands must be iterable')
+			}
+			cli.command_many(command_iter)
 		}
 		if should_boot := app_bootstrap_bool(normalized, ['boot']) {
 			if should_boot {
@@ -219,7 +222,10 @@ fn apply_cli_bootstrap_spec(mut cli VSlimCliApp, spec vphp.ZVal) ! {
 		}
 		return
 	}
-	cli.command_many(vphp.borrow_zbox(normalized))
+	command_iter := vphp.PhpIterable.from_zval(normalized) or {
+		return error('bootstrap commands must be iterable')
+	}
+	cli.command_many(command_iter)
 }
 
 fn apply_cli_bootstrap_file_result(mut cli VSlimCliApp, path string, value vphp.ZVal) ! {

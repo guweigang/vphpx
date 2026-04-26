@@ -57,34 +57,45 @@ pub fn (mut cache VSlimPsr16Cache) clock() vphp.RequestOwnedZBox {
 	return cache.clock_ref.clone_request_owned()
 }
 
+fn psr16_default_value_or_null(default_value ?vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
+	if actual_default := default_value {
+		return actual_default.clone_request_owned()
+	}
+	return vphp.RequestOwnedZBox.new_null()
+}
+
+fn psr16_ttl_zval_or_null(ttl ?vphp.RequestBorrowedZBox) vphp.ZVal {
+	if actual_ttl := ttl {
+		return actual_ttl.to_zval()
+	}
+	return vphp.ZVal.new_null()
+}
+
 @[php_method]
 @[php_arg_name: 'default_value=defaultValue']
-@[php_arg_default: 'default_value=null']
-@[php_arg_optional: 'default_value']
-pub fn (mut cache VSlimPsr16Cache) get(key string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
+pub fn (mut cache VSlimPsr16Cache) get(key string, default_value ?vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	ensure_psr16_cache(mut cache)
 	normalized := psr_cache_validate_key_or_throw(key) or {
 		throw_psr16_invalid_argument(err.msg())
-		return default_value.clone_request_owned()
+		return psr16_default_value_or_null(default_value)
 	}
 	storage_key := psr16_storage_key(cache, normalized)
 	cache.prune_expired_entry(storage_key)
 	entry := cache.entries[storage_key] or {
-		return default_value.clone_request_owned()
+		return psr16_default_value_or_null(default_value)
 	}
 	return entry.value.clone_request_owned()
 }
 
 @[php_method]
-@[php_arg_default: 'ttl=null']
-@[php_arg_optional: 'ttl']
-pub fn (mut cache VSlimPsr16Cache) set(key string, value vphp.RequestBorrowedZBox, ttl vphp.RequestBorrowedZBox) bool {
+pub fn (mut cache VSlimPsr16Cache) set(key string, value vphp.RequestBorrowedZBox, ttl ?vphp.RequestBorrowedZBox) bool {
 	ensure_psr16_cache(mut cache)
 	normalized := psr_cache_validate_key_or_throw(key) or {
 		throw_psr16_invalid_argument(err.msg())
 		return false
 	}
-	expires_at := psr_cache_resolve_relative_ttl_or_throw(cache.clock_ref.to_zval(), ttl.to_zval()) or {
+	expires_at := psr_cache_resolve_relative_ttl_or_throw(cache.clock_ref.to_zval(),
+		psr16_ttl_zval_or_null(ttl)) or {
 		throw_psr16_invalid_argument(err.msg())
 		return false
 	}
@@ -117,12 +128,9 @@ pub fn (mut cache VSlimPsr16Cache) clear() bool {
 }
 
 @[php_method: 'getMultiple']
-@[php_arg_type: 'keys=iterable']
 @[php_return_type: 'iterable']
 @[php_arg_name: 'default_value=defaultValue']
-@[php_arg_default: 'default_value=null']
-@[php_arg_optional: 'default_value']
-pub fn (mut cache VSlimPsr16Cache) get_multiple(keys vphp.RequestBorrowedZBox, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
+pub fn (mut cache VSlimPsr16Cache) get_multiple(keys vphp.PhpIterable, default_value ?vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	ensure_psr16_cache(mut cache)
 	mut out := new_array_zval()
 	if !psr16_is_iterable(keys.to_zval()) {
@@ -141,16 +149,14 @@ pub fn (mut cache VSlimPsr16Cache) get_multiple(keys vphp.RequestBorrowedZBox, d
 }
 
 @[php_method: 'setMultiple']
-@[php_arg_type: 'values=iterable']
-@[php_arg_default: 'ttl=null']
-@[php_arg_optional: 'ttl']
-pub fn (mut cache VSlimPsr16Cache) set_multiple(values vphp.RequestBorrowedZBox, ttl vphp.RequestBorrowedZBox) bool {
+pub fn (mut cache VSlimPsr16Cache) set_multiple(values vphp.PhpIterable, ttl ?vphp.RequestBorrowedZBox) bool {
 	ensure_psr16_cache(mut cache)
 	if !psr16_is_iterable(values.to_zval()) {
 		throw_psr16_invalid_argument('values must be iterable')
 		return false
 	}
-	expires_at := psr_cache_resolve_relative_ttl_or_throw(cache.clock_ref.to_zval(), ttl.to_zval()) or {
+	expires_at := psr_cache_resolve_relative_ttl_or_throw(cache.clock_ref.to_zval(),
+		psr16_ttl_zval_or_null(ttl)) or {
 		throw_psr16_invalid_argument(err.msg())
 		return false
 	}
@@ -175,8 +181,7 @@ pub fn (mut cache VSlimPsr16Cache) set_multiple(values vphp.RequestBorrowedZBox,
 }
 
 @[php_method: 'deleteMultiple']
-@[php_arg_type: 'keys=iterable']
-pub fn (mut cache VSlimPsr16Cache) delete_multiple(keys vphp.RequestBorrowedZBox) bool {
+pub fn (mut cache VSlimPsr16Cache) delete_multiple(keys vphp.PhpIterable) bool {
 	ensure_psr16_cache(mut cache)
 	if !psr16_is_iterable(keys.to_zval()) {
 		throw_psr16_invalid_argument('keys must be iterable')

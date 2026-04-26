@@ -436,7 +436,10 @@ fn apply_bootstrap_convention_providers(mut app VSlimApp, path string) !bool {
 	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
 		return error('bootstrap providers file "${path}" must return iterable providers')
 	}
-	app.register_many(vphp.borrow_zbox(raw))
+	providers := vphp.PhpIterable.from_zval(raw) or {
+		return error('bootstrap providers file "${path}" must return iterable providers')
+	}
+	app.register_many(providers)
 	return true
 }
 
@@ -448,7 +451,10 @@ fn apply_bootstrap_convention_modules(mut app VSlimApp, path string) !bool {
 	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
 		return error('bootstrap modules file "${path}" must return iterable modules')
 	}
-	app.module_many(vphp.borrow_zbox(raw))
+	modules := vphp.PhpIterable.from_zval(raw) or {
+		return error('bootstrap modules file "${path}" must return iterable modules')
+	}
+	app.module_many(modules)
 	return true
 }
 
@@ -755,10 +761,16 @@ fn apply_app_bootstrap_spec(mut app VSlimApp, spec vphp.ZVal) ! {
 		.standard, 'middleware')!
 	apply_app_bootstrap_middleware_stack(mut app, normalized, ['after'], .after, 'after')!
 	if providers := app_bootstrap_lookup(normalized, ['providers']) {
-		app.register_many(vphp.borrow_zbox(providers))
+		provider_iter := vphp.PhpIterable.from_zval(providers) or {
+			return error('bootstrap providers must be iterable')
+		}
+		app.register_many(provider_iter)
 	}
 	if modules := app_bootstrap_lookup(normalized, ['modules']) {
-		app.module_many(vphp.borrow_zbox(modules))
+		module_iter := vphp.PhpIterable.from_zval(modules) or {
+			return error('bootstrap modules must be iterable')
+		}
+		app.module_many(module_iter)
 	}
 	app_z := app_self_zval(&app)
 	call_app_bootstrap_hooks(normalized, ['middleware_setup', 'middlewareSetup'], app_z,
@@ -771,9 +783,8 @@ fn apply_app_bootstrap_spec(mut app VSlimApp, spec vphp.ZVal) ! {
 	}
 }
 
-@[php_arg_type: 'spec=iterable']
 @[php_method]
-pub fn (mut app VSlimApp) bootstrap(spec vphp.RequestBorrowedZBox) &VSlimApp {
+pub fn (mut app VSlimApp) bootstrap(spec vphp.PhpIterable) &VSlimApp {
 	apply_app_bootstrap_spec(mut app, spec.to_zval()) or {
 		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
 		return &app
