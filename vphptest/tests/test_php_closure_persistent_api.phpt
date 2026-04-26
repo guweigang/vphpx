@@ -9,4 +9,4 @@ echo v_php_closure_persistent_api(function (string $name, int $count): string {
 }) . PHP_EOL;
 ?>
 --EXPECT--
-persistent=retained_callable:true:KEEP:2:LIFE:4:retained=true:released=true
+persistent=dyn_data:true:KEEP:2:LIFE:4:retained=true:released=true

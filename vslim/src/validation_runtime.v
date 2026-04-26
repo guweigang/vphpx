@@ -453,6 +453,9 @@ fn validator_string_value(value vphp.DynValue) string {
 		.object_ref {
 			'[object]'
 		}
+		.callable_ref {
+			'[callable]'
+		}
 		.resource_ref {
 			'[resource]'
 		}

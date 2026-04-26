@@ -51,6 +51,8 @@ PHP_FUNCTION(v_php_value_api);
 PHP_FUNCTION(v_php_scalar_api);
 PHP_FUNCTION(v_php_scalar_strict_api);
 PHP_FUNCTION(v_php_resource_api);
+PHP_FUNCTION(v_php_wrapper_param_api);
+PHP_FUNCTION(v_dyn_value_runtime_refs);
 PHP_FUNCTION(v_php_reference_api);
 PHP_FUNCTION(v_php_iterable_api);
 PHP_FUNCTION(v_php_superglobals_api);

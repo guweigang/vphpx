@@ -436,6 +436,41 @@ PHP_FUNCTION(v_php_resource_api) {
         return;
     }
 }
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_wrapper_param_api, 0, 6, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, value, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, obj, IS_OBJECT, 0)
+ZEND_ARG_TYPE_INFO(0, arr, IS_ARRAY, 0)
+ZEND_ARG_CALLABLE_INFO(0, callable, 0)
+ZEND_ARG_TYPE_INFO(0, null_value, IS_NULL, 0)
+ZEND_ARG_TYPE_INFO(0, maybe_obj, IS_OBJECT, 1)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_wrapper_param_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_wrapper_param_api) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_wrapper_param_api(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_dyn_value_runtime_refs, 0, 3, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, raw_obj, IS_MIXED, 0)
+ZEND_ARG_CALLABLE_INFO(0, callback, 0)
+ZEND_ARG_TYPE_INFO(0, raw_res, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_dyn_value_runtime_refs(vphp_context_internal ctx);
+PHP_FUNCTION(v_dyn_value_runtime_refs) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_dyn_value_runtime_refs(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_reference_api, 0, 1, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, raw, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
@@ -2824,6 +2859,8 @@ static const zend_function_entry vphptest_functions[] = {
     PHP_FE(v_php_scalar_api, arginfo_v_php_scalar_api)
     PHP_FE(v_php_scalar_strict_api, arginfo_v_php_scalar_strict_api)
     PHP_FE(v_php_resource_api, arginfo_v_php_resource_api)
+    PHP_FE(v_php_wrapper_param_api, arginfo_v_php_wrapper_param_api)
+    PHP_FE(v_dyn_value_runtime_refs, arginfo_v_dyn_value_runtime_refs)
     PHP_FE(v_php_reference_api, arginfo_v_php_reference_api)
     PHP_FE(v_php_iterable_api, arginfo_v_php_iterable_api)
     PHP_FE(v_php_superglobals_api, arginfo_v_php_superglobals_api)

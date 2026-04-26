@@ -15,4 +15,4 @@ class PhpObjectApiBox {
 echo v_php_object_api(new PhpObjectApiBox()) . PHP_EOL;
 ?>
 --EXPECT--
-object=PhpObjectApiBox:true:codex:hi:codex:retained_object:hi:codex
+object=PhpObjectApiBox:true:codex:hi:codex:dyn_data:hi:codex

@@ -62,8 +62,11 @@ fn v_test_map(ctx vphp.Context) {
 
 @[php_function]
 fn v_get_config(ctx vphp.Context) {
-	input := ctx.arg_raw(0)
-
+	input := ctx.arg_array(0) or {
+		vphp.report_error(vphp.e_warning, 'config should be array, using default')
+		ctx.return_string('bullsoft_db')
+		return
+	}
 	db_val := input.get('db_name') or {
 		vphp.report_error(vphp.e_warning, 'db_name is missing, using default')
 		ctx.return_string('bullsoft_db')
@@ -75,8 +78,8 @@ fn v_get_config(ctx vphp.Context) {
 
 @[php_function]
 fn v_get_user(ctx vphp.Context) {
-	raw_id := ctx.arg_raw(0)
-	println('DEBUG: PHP ID Type: ${raw_id.type_id()}')
+	value := ctx.arg_value(0)
+	println('DEBUG: PHP ID Type: ${value.type_id()}')
 
 	user_id := ctx.arg[i64](0)
 
@@ -207,15 +210,15 @@ fn v_persistent_multi_nested_stress(ctx vphp.Context) {
 
 @[php_function]
 fn v_analyze_user_object(ctx vphp.Context) {
-	user_obj := ctx.arg_raw(0)
-
-	if !user_obj.is_object() {
-		vphp.throw_exception('Expected object, got ${user_obj.type_name()}', 0)
+	user_obj := ctx.arg_object(0) or {
+		value := ctx.arg_value(0)
+		vphp.throw_exception('Expected object, got ${value.type_name()}', 0)
 		return
 	}
 
-	name := user_obj.get_prop_string('name')
-	age := user_obj.get_prop_int('age')
+	raw := user_obj.to_zval()
+	name := raw.get_prop_string('name')
+	age := raw.get_prop_int('age')
 
 	if ctx.has_exception() {
 		return
@@ -227,8 +230,7 @@ fn v_analyze_user_object(ctx vphp.Context) {
 
 @[php_function]
 fn v_mutate_user_object(ctx vphp.Context) {
-	user_obj := ctx.arg_raw(0)
-	if !user_obj.is_object() {
+	user_obj := ctx.arg_object(0) or {
 		vphp.throw_exception('需要 User 对象', 0)
 		return
 	}
@@ -243,8 +245,7 @@ fn v_mutate_user_object(ctx vphp.Context) {
 
 @[php_function]
 fn v_check_user_object_props(ctx vphp.Context) {
-	user_obj := ctx.arg_raw(0)
-	if !user_obj.is_object() {
+	user_obj := ctx.arg_object(0) or {
 		vphp.throw_exception('需要 User 对象', 0)
 		return
 	}
@@ -714,8 +715,15 @@ fn v_php_scalar_strict_api() string {
 	strict_i := i.as_int() or { return 'strict_error=int' }
 	strict_d := d.as_double() or { return 'strict_error=double' }
 	strict_b := b.as_bool() or { return 'strict_error=bool' }
+	null_value := n.as_null() or { return 'strict_error=null' }
+	mut persistent_null := null_value.to_persistent()
+	null_kind := persistent_null.kind_name()
+	null_restored := persistent_null.with_value(fn (value vphp.PhpValue) bool {
+		return value.is_null()
+	})
+	persistent_null.release()
 	i_is_string := i.as_string() != none
-	return 'strict=${strict_s.value()}:${strict_i.value()}:${strict_d.value()}:${strict_b.value()}:${n.as_null() != none}:${i_is_string}'
+	return 'strict=${strict_s.value()}:${strict_i.value()}:${strict_d.value()}:${strict_b.value()}:${null_restored}:${null_kind}:${i_is_string}'
 }
 
 @[php_function]
@@ -731,6 +739,146 @@ fn v_php_resource_api(raw vphp.ZVal) string {
 		return ''
 	}
 	return 'resource=${res.type_name()}:${res.is_stream()}:${meta.seekable}:${contents}'
+}
+
+@[php_function]
+fn v_php_wrapper_param_api(value vphp.PhpValue, obj vphp.PhpObject, arr vphp.PhpArray, callable vphp.PhpCallable, null_value vphp.PhpNull, maybe_obj ?vphp.PhpObject) string {
+	name := obj.prop_v[string]('name') or {
+		vphp.throw_exception('object prop failed: ${err.msg()}', 0)
+		return ''
+	}
+	call_result := callable.call_v[string]([vphp.ZVal.new_string('wrapped')]) or {
+		vphp.throw_exception('callable call failed: ${err.msg()}', 0)
+		return ''
+	}
+	return 'wrap=${value.type_name()}:${name}:${arr.count()}:${call_result}:${null_value.to_dyn().type.str()}:${maybe_obj == none}'
+}
+
+@[php_function]
+fn v_dyn_value_runtime_refs(raw_obj vphp.ZVal, callback vphp.Callable, raw_res vphp.ZVal) string {
+	obj := vphp.PhpObject.from_zval(raw_obj) or {
+		vphp.throw_exception('raw_obj should be object', 0)
+		return ''
+	}
+	callable_src := vphp.PhpCallable.from_zval(callback) or {
+		vphp.throw_exception('callback should be callable', 0)
+		return ''
+	}
+	res_src := vphp.PhpResource.from_zval(raw_res) or {
+		vphp.throw_exception('raw_res should be resource', 0)
+		return ''
+	}
+	obj_dyn := vphp.DynValue.object_ref(obj)
+	call_dyn := vphp.DynValue.callable_ref(callable_src)
+	res_dyn := vphp.DynValue.resource_ref(res_src)
+	string_dyn := vphp.DynValue.from_zval(vphp.ZVal.new_string('strlen')) or {
+		vphp.throw_exception('string DynValue decode failed: ${err.msg()}', 0)
+		return ''
+	}
+
+	obj_from_dyn := obj_dyn.as_object() or {
+		vphp.throw_exception('DynValue should expose PhpObject', 0)
+		return ''
+	}
+	name := obj_from_dyn.prop_v[string]('name') or {
+		vphp.throw_exception('DynValue object prop failed: ${err.msg()}', 0)
+		return ''
+	}
+	greet := obj_from_dyn.method_v[string]('greet', []) or {
+		vphp.throw_exception('DynValue object method failed: ${err.msg()}', 0)
+		return ''
+	}
+
+	callable := call_dyn.as_callable() or {
+		vphp.throw_exception('DynValue should expose PhpCallable', 0)
+		return ''
+	}
+	call_result := callable.call_v[string]([vphp.ZVal.new_string('dyn')]) or {
+		vphp.throw_exception('DynValue callable call failed: ${err.msg()}', 0)
+		return ''
+	}
+	closure := call_dyn.as_closure() or {
+		vphp.throw_exception('DynValue should expose PhpClosure', 0)
+		return ''
+	}
+	closure_result := closure.call_v[string]([vphp.ZVal.new_string('closure')]) or {
+		vphp.throw_exception('DynValue closure call failed: ${err.msg()}', 0)
+		return ''
+	}
+
+	res := res_dyn.as_resource() or {
+		vphp.throw_exception('DynValue should expose PhpResource', 0)
+		return ''
+	}
+	res_type := res.type_name()
+
+	mut persistent_obj := obj.to_persistent()
+	mut persistent_obj_dyn := vphp.DynValue.persistent_object_ref(persistent_obj)
+	persistent_name := persistent_obj_dyn.with_object[string](fn (o vphp.PhpObject) string {
+		return o.prop_v[string]('name') or { '' }
+	}) or { '' }
+	mut persistent_obj_box := persistent_obj_dyn.to_persistent() or {
+		vphp.throw_exception('persistent object DynValue to_persistent failed: ${err.msg()}',
+			0)
+		persistent_obj_dyn.release()
+		persistent_obj.release()
+		return ''
+	}
+	persistent_obj_kind := persistent_obj_box.kind_name()
+	persistent_obj_box.release()
+	persistent_obj_dyn.release()
+	persistent_obj.release()
+
+	mut persistent_closure := callable.to_persistent()
+	mut persistent_call_dyn := vphp.DynValue.persistent_closure_ref(persistent_closure)
+	persistent_call := persistent_call_dyn.with_closure[string](fn (c vphp.PhpClosure) string {
+		return c.call_v[string]([vphp.ZVal.new_string('stored')]) or { '' }
+	}) or { '' }
+	mut persistent_call_box := persistent_call_dyn.to_persistent() or {
+		vphp.throw_exception('persistent callable DynValue to_persistent failed: ${err.msg()}',
+			0)
+		persistent_call_dyn.release()
+		persistent_closure.release()
+		return ''
+	}
+	persistent_call_kind := persistent_call_box.kind_name()
+	persistent_call_box.release()
+	persistent_call_dyn.release()
+	persistent_closure.release()
+
+	mut copied := vphp.ZVal.new_null()
+	obj_dyn.to_zval(mut copied) or {
+		vphp.throw_exception('DynValue runtime ref to_zval failed: ${err.msg()}', 0)
+		return ''
+	}
+	copy_is_object := copied.is_object()
+	mut obj_new_fails := false
+	_ := obj_dyn.new_zval() or {
+		obj_new_fails = true
+		vphp.ZVal.new_null()
+	}
+	mut obj_persistent := obj_dyn.to_persistent() or {
+		vphp.throw_exception('DynValue object to_persistent failed: ${err.msg()}', 0)
+		return ''
+	}
+	obj_kind := obj_persistent.kind_name()
+	obj_persistent.release()
+	mut call_persistent := call_dyn.to_persistent() or {
+		vphp.throw_exception('DynValue callable to_persistent failed: ${err.msg()}', 0)
+		return ''
+	}
+	call_kind := call_persistent.kind_name()
+	call_persistent.release()
+	mut res_persistent_fails := false
+	mut res_persistent := res_dyn.to_persistent() or {
+		res_persistent_fails = true
+		vphp.PersistentOwnedZBox.invalid()
+	}
+	if !res_persistent_fails {
+		res_persistent.release()
+	}
+
+	return 'dyn=${obj_dyn.type.str()}:${call_dyn.type.str()}:${res_dyn.type.str()};refs=${obj_dyn.has_runtime_refs()}:${call_dyn.can_new_zval()}:${res_dyn.has_runtime_refs()};object=${name}:${greet}:${copy_is_object}:${obj_new_fails}:${obj_kind};call=${call_result}:${closure_result}:${call_kind};persistent=${persistent_name}:${persistent_obj_kind}:${persistent_call}:${persistent_call_kind};resource=${res_type}:${res_persistent_fails};string=${string_dyn.type.str()}:${string_dyn.string_value()}'
 }
 
 @[php_function]

@@ -1901,6 +1901,43 @@ fn vphp_wrap_v_php_resource_api(ctx vphp.Context) {
     ctx.return_val[string](res)
 }
 
+@[export: 'vphp_wrap_v_php_wrapper_param_api']
+fn vphp_wrap_v_php_wrapper_param_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_value(0)
+    arg_1 := ctx.arg_object(1) or {
+        vphp.throw_exception('argument 1 must be object', 0)
+        return
+    }
+    arg_2 := ctx.arg_array(2) or {
+        vphp.throw_exception('argument 2 must be array', 0)
+        return
+    }
+    arg_3 := ctx.arg_callable(3) or {
+        vphp.throw_exception('argument 3 must be callable', 0)
+        return
+    }
+    arg_4 := ctx.arg_null(4) or {
+        vphp.throw_exception('argument 4 must be null', 0)
+        return
+    }
+    arg_5 := ctx.arg_object(5)
+    res := v_php_wrapper_param_api(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5)
+    ctx.return_val[string](res)
+}
+
+@[export: 'vphp_wrap_v_dyn_value_runtime_refs']
+fn vphp_wrap_v_dyn_value_runtime_refs(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_raw(0)
+    arg_1 := ctx.arg_raw(1)
+    arg_2 := ctx.arg_raw(2)
+    res := v_dyn_value_runtime_refs(arg_0, arg_1, arg_2)
+    ctx.return_val[string](res)
+}
+
 @[export: 'vphp_wrap_v_php_reference_api']
 fn vphp_wrap_v_php_reference_api(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
