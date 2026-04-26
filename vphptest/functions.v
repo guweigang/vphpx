@@ -587,6 +587,85 @@ fn v_php_closure_persistent_api(callback vphp.Callable) string {
 }
 
 @[php_function]
+fn v_php_class_meta_api(ctx vphp.Context) {
+	cls := vphp.PhpClass.named('PhpUnifiedBox')
+	meta := cls.meta()
+	ctx.return_string('meta=${meta.name}:${meta.short_name}:${meta.parent_name}:${meta.is_user}:${meta.is_internal}:${meta.interfaces.len}')
+}
+
+@[php_function]
+fn v_php_object_api(raw vphp.ZVal) string {
+	obj := vphp.PhpObject.from_zval(raw) or {
+		vphp.throw_exception('raw should be object', 0)
+		return ''
+	}
+	name := obj.prop_v[string]('name') or {
+		vphp.throw_exception('PhpObject prop failed: ${err.msg()}', 0)
+		return ''
+	}
+	greet := obj.method_v[string]('greet', []) or {
+		vphp.throw_exception('PhpObject method failed: ${err.msg()}', 0)
+		return ''
+	}
+	mut persistent := obj.to_persistent()
+	again := persistent.method_v[string]('greet', []) or {
+		persistent.release()
+		vphp.throw_exception('PersistentPhpObject method failed: ${err.msg()}', 0)
+		return ''
+	}
+	kind := persistent.kind_name()
+	persistent.release()
+	has_name := obj.has_prop('name')
+	return 'object=${obj.short_name()}:${has_name}:${name}:${greet}:${kind}:${again}'
+}
+
+@[php_function]
+fn v_php_array_api(raw vphp.ZVal) string {
+	arr := vphp.PhpArray.from_zval(raw) or {
+		vphp.throw_exception('raw should be array', 0)
+		return ''
+	}
+	name := arr.get_v[string]('name') or {
+		vphp.throw_exception('PhpArray get failed: ${err.msg()}', 0)
+		return ''
+	}
+	dyn := arr.to_dyn() or {
+		vphp.throw_exception('PhpArray to_dyn failed: ${err.msg()}', 0)
+		return ''
+	}
+	mut persistent := arr.to_persistent()
+	pdyn := persistent.to_dyn() or {
+		persistent.release()
+		vphp.throw_exception('PersistentPhpArray to_dyn failed: ${err.msg()}', 0)
+		return ''
+	}
+	kind := persistent.kind_name()
+	persistent.release()
+	return 'array=${arr.count()}:${arr.assoc_keys().join(',')}:${name}:${dyn.type.str()}:${pdyn.type.str()}:${kind}'
+}
+
+@[php_function]
+fn v_php_callable_api(callback vphp.Callable) string {
+	callable := vphp.PhpCallable.from_zval(callback) or {
+		vphp.throw_exception('callback should be callable', 0)
+		return ''
+	}
+	result := callable.call_v[string]([vphp.ZVal.new_string('callable')]) or {
+		vphp.throw_exception('PhpCallable call failed: ${err.msg()}', 0)
+		return ''
+	}
+	mut persistent := callable.to_persistent()
+	again := persistent.call_v[string]([vphp.ZVal.new_string('again')]) or {
+		persistent.release()
+		vphp.throw_exception('Persistent callable call failed: ${err.msg()}', 0)
+		return ''
+	}
+	kind := persistent.kind_name()
+	persistent.release()
+	return 'callable=${callable.is_callable()}:${result}:${kind}:${again}'
+}
+
+@[php_function]
 fn v_unified_ownership_interop(ctx vphp.Context) {
 	cls := vphp.php_class('PhpUnifiedBox')
 	obj_req := cls.construct_owned_request([

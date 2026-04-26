@@ -1831,6 +1831,41 @@ fn vphp_wrap_v_php_closure_persistent_api(ctx vphp.Context) {
     ctx.return_val[string](res)
 }
 
+@[export: 'vphp_wrap_v_php_class_meta_api']
+fn vphp_wrap_v_php_class_meta_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx
+    v_php_class_meta_api(arg_0)
+}
+
+@[export: 'vphp_wrap_v_php_object_api']
+fn vphp_wrap_v_php_object_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_raw(0)
+    res := v_php_object_api(arg_0)
+    ctx.return_val[string](res)
+}
+
+@[export: 'vphp_wrap_v_php_array_api']
+fn vphp_wrap_v_php_array_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_raw(0)
+    res := v_php_array_api(arg_0)
+    ctx.return_val[string](res)
+}
+
+@[export: 'vphp_wrap_v_php_callable_api']
+fn vphp_wrap_v_php_callable_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_raw(0)
+    res := v_php_callable_api(arg_0)
+    ctx.return_val[string](res)
+}
+
 @[export: 'vphp_wrap_v_unified_ownership_interop']
 fn vphp_wrap_v_unified_ownership_interop(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
