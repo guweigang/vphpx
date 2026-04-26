@@ -1,5 +1,5 @@
 --TEST--
-PhpClass reference API wraps class-string interop without replacing php_class
+PhpClass named API wraps class-string interop without replacing php_class
 --SKIPIF--
 <?php if (!extension_loaded("vphptest")) print "skip"; ?>
 --FILE--
@@ -23,7 +23,7 @@ class PhpUnifiedBox {
     }
 }
 
-echo v_php_class_ref_api() . PHP_EOL;
+echo v_php_class_named_api() . PHP_EOL;
 ?>
 --EXPECT--
 class=PhpUnifiedBox;exists=true;method=true;prop=true;const=true;value=ref:18:9:UNIFIED;missing=missing

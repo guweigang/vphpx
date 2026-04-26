@@ -464,15 +464,15 @@ fn v_unified_object_interop(ctx vphp.Context) {
 }
 
 @[php_function]
-fn v_php_class_ref_api(ctx vphp.Context) {
-	cls := vphp.php_class_ref('PhpUnifiedBox')
+fn v_php_class_named_api(ctx vphp.Context) {
+	cls := vphp.PhpClass.named('PhpUnifiedBox')
 	if !cls.exists() {
 		vphp.throw_exception('PhpUnifiedBox should exist', 0)
 		return
 	}
-	missing := vphp.find_php_class('Nope\\MissingClass') or { vphp.php_class_ref('missing') }
+	missing := vphp.PhpClass.find('Nope\\MissingClass') or { vphp.PhpClass.named('missing') }
 	if missing.name() != 'missing' {
-		vphp.throw_exception('find_php_class should return none for missing class', 0)
+		vphp.throw_exception('PhpClass.find should return none for missing class', 0)
 		return
 	}
 
