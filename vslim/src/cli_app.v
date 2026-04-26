@@ -642,9 +642,8 @@ pub fn (cli &VSlimCliApp) argument(name string, default_value vphp.RequestBorrow
 	return vphp.RequestOwnedZBox.new_null()
 }
 
-@[php_arg_type: 'args=iterable']
 @[php_method]
-pub fn (mut cli VSlimCliApp) run(name string, args vphp.RequestBorrowedZBox) int {
+pub fn (mut cli VSlimCliApp) run(name string, args vphp.PhpIterable) int {
 	arg_list := cli_args_to_array(args.to_zval()) or {
 		vphp.throw_exception_class('InvalidArgumentException', 'command args must be iterable',
 			0)

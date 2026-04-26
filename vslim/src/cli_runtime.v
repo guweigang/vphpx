@@ -725,9 +725,8 @@ pub fn (mut cli VSlimCliApp) command_help(command_name string) string {
 	return cli_command_help_text(mut cli, 'vslim', command_name) or { '' }
 }
 
-@[php_arg_type: 'argv=iterable']
 @[php_method: 'runArgv']
-pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
+pub fn (mut cli VSlimCliApp) run_argv(argv vphp.PhpIterable) int {
 	cli_debug_log('run_argv enter cli=${usize(cli)} core=${usize(cli.core_app_ref)}')
 	argv_list := cli_args_to_array(argv.to_zval()) or {
 		vphp.throw_exception_class('InvalidArgumentException', 'argv must be iterable',
