@@ -395,6 +395,33 @@ PHP_FUNCTION(v_php_value_api) {
         return;
     }
 }
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_scalar_api, 0, 1, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, raw, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_scalar_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_scalar_api) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_scalar_api(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_scalar_strict_api, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_scalar_strict_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_scalar_strict_api) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_scalar_strict_api(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_resource_api, 0, 1, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, raw, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
@@ -2794,6 +2821,8 @@ static const zend_function_entry vphptest_functions[] = {
     PHP_FE(v_php_array_api, arginfo_v_php_array_api)
     PHP_FE(v_php_callable_api, arginfo_v_php_callable_api)
     PHP_FE(v_php_value_api, arginfo_v_php_value_api)
+    PHP_FE(v_php_scalar_api, arginfo_v_php_scalar_api)
+    PHP_FE(v_php_scalar_strict_api, arginfo_v_php_scalar_strict_api)
     PHP_FE(v_php_resource_api, arginfo_v_php_resource_api)
     PHP_FE(v_php_reference_api, arginfo_v_php_reference_api)
     PHP_FE(v_php_iterable_api, arginfo_v_php_iterable_api)

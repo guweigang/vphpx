@@ -690,6 +690,35 @@ fn v_php_value_api(raw vphp.ZVal) string {
 }
 
 @[php_function]
+fn v_php_scalar_api(raw vphp.ZVal) string {
+	value := vphp.PhpValue.of(raw)
+	scalar := value.as_scalar() or {
+		vphp.throw_exception('raw should be scalar', 0)
+		return ''
+	}
+	strict_string := value.as_string() or { vphp.PhpString.coerce(raw) }
+	as_int := vphp.PhpInt.coerce(raw)
+	as_double := vphp.PhpDouble.coerce(raw)
+	as_bool := vphp.PhpBool.coerce(raw)
+	return 'scalar=${scalar.type_name()}:${value.is_scalar()}:${strict_string.value()}:${as_int.value()}:${as_double.value()}:${as_bool.value()}:${scalar.to_dyn().type.str()}'
+}
+
+@[php_function]
+fn v_php_scalar_strict_api() string {
+	s := vphp.PhpValue.of(vphp.ZVal.new_string('42'))
+	i := vphp.PhpValue.of(vphp.ZVal.new_int(42))
+	d := vphp.PhpValue.of(vphp.ZVal.new_float(4.5))
+	b := vphp.PhpValue.of(vphp.ZVal.new_bool(true))
+	n := vphp.PhpValue.of(vphp.ZVal.new_null())
+	strict_s := s.as_string() or { return 'strict_error=string' }
+	strict_i := i.as_int() or { return 'strict_error=int' }
+	strict_d := d.as_double() or { return 'strict_error=double' }
+	strict_b := b.as_bool() or { return 'strict_error=bool' }
+	i_is_string := i.as_string() != none
+	return 'strict=${strict_s.value()}:${strict_i.value()}:${strict_d.value()}:${strict_b.value()}:${n.as_null() != none}:${i_is_string}'
+}
+
+@[php_function]
 fn v_php_resource_api(raw vphp.ZVal) string {
 	res := vphp.PhpResource.from_zval(raw) or {
 		vphp.throw_exception('raw should be resource', 0)

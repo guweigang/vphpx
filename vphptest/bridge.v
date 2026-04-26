@@ -1875,6 +1875,23 @@ fn vphp_wrap_v_php_value_api(ctx vphp.Context) {
     ctx.return_val[string](res)
 }
 
+@[export: 'vphp_wrap_v_php_scalar_api']
+fn vphp_wrap_v_php_scalar_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_raw(0)
+    res := v_php_scalar_api(arg_0)
+    ctx.return_val[string](res)
+}
+
+@[export: 'vphp_wrap_v_php_scalar_strict_api']
+fn vphp_wrap_v_php_scalar_strict_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := v_php_scalar_strict_api()
+    ctx.return_val[string](res)
+}
+
 @[export: 'vphp_wrap_v_php_resource_api']
 fn vphp_wrap_v_php_resource_api(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()

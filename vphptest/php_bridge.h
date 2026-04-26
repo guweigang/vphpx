@@ -48,6 +48,8 @@ PHP_FUNCTION(v_php_object_api);
 PHP_FUNCTION(v_php_array_api);
 PHP_FUNCTION(v_php_callable_api);
 PHP_FUNCTION(v_php_value_api);
+PHP_FUNCTION(v_php_scalar_api);
+PHP_FUNCTION(v_php_scalar_strict_api);
 PHP_FUNCTION(v_php_resource_api);
 PHP_FUNCTION(v_php_reference_api);
 PHP_FUNCTION(v_php_iterable_api);
