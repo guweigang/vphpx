@@ -625,19 +625,19 @@ pub fn (cli &VSlimCliApp) option(name string, default_value vphp.RequestBorrowed
 }
 
 @[php_arg_name: 'default_value=defaultValue']
-@[php_arg_default: 'default_value=null']
-@[php_arg_optional: 'default_value']
 @[php_method]
-pub fn (cli &VSlimCliApp) argument(name string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
+pub fn (cli &VSlimCliApp) argument(name string, default_value ?vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	key := name.trim_space()
 	if key != '' {
 		if value := cli.last_arguments[key] {
 			return vphp.RequestOwnedZBox.adopt_zval(value.new_zval() or { vphp.ZVal.new_null() })
 		}
 	}
-	raw_default := default_value.to_zval()
-	if raw_default.is_valid() {
-		return vphp.own_request_zbox(raw_default)
+	if actual_default := default_value {
+		raw_default := actual_default.to_zval()
+		if raw_default.is_valid() {
+			return vphp.own_request_zbox(raw_default)
+		}
 	}
 	return vphp.RequestOwnedZBox.new_null()
 }

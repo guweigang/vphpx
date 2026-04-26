@@ -436,13 +436,13 @@ PHP_FUNCTION(v_php_resource_api) {
         return;
     }
 }
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_wrapper_param_api, 0, 6, IS_STRING, 0)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_wrapper_param_api, 0, 5, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, value, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, obj, IS_OBJECT, 0)
 ZEND_ARG_TYPE_INFO(0, arr, IS_ARRAY, 0)
 ZEND_ARG_CALLABLE_INFO(0, callable, 0)
 ZEND_ARG_TYPE_INFO(0, null_value, IS_NULL, 0)
-ZEND_ARG_TYPE_INFO(0, maybe_obj, IS_OBJECT, 1)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, maybe_obj, IS_OBJECT, 1, "null")
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_php_wrapper_param_api(vphp_context_internal ctx);
 PHP_FUNCTION(v_php_wrapper_param_api) {
