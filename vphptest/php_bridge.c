@@ -381,6 +381,103 @@ PHP_FUNCTION(v_php_callable_api) {
         return;
     }
 }
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_value_api, 0, 1, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, raw, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_value_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_value_api) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_value_api(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_resource_api, 0, 1, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, raw, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_resource_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_resource_api) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_resource_api(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_reference_api, 0, 1, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, raw, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_reference_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_reference_api) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_reference_api(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_iterable_api, 0, 1, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, raw, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_iterable_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_iterable_api) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_iterable_api(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_superglobals_api, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_superglobals_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_superglobals_api) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_superglobals_api(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_throwable_api, 0, 1, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, raw, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_throwable_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_throwable_api) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_throwable_api(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_enum_api, 0, 1, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, raw, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_enum_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_enum_api) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_enum_api(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
 ZEND_BEGIN_ARG_INFO_EX(arginfo_v_unified_ownership_interop, 0, 0, 0)
 ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
@@ -2696,6 +2793,13 @@ static const zend_function_entry vphptest_functions[] = {
     PHP_FE(v_php_object_api, arginfo_v_php_object_api)
     PHP_FE(v_php_array_api, arginfo_v_php_array_api)
     PHP_FE(v_php_callable_api, arginfo_v_php_callable_api)
+    PHP_FE(v_php_value_api, arginfo_v_php_value_api)
+    PHP_FE(v_php_resource_api, arginfo_v_php_resource_api)
+    PHP_FE(v_php_reference_api, arginfo_v_php_reference_api)
+    PHP_FE(v_php_iterable_api, arginfo_v_php_iterable_api)
+    PHP_FE(v_php_superglobals_api, arginfo_v_php_superglobals_api)
+    PHP_FE(v_php_throwable_api, arginfo_v_php_throwable_api)
+    PHP_FE(v_php_enum_api, arginfo_v_php_enum_api)
     PHP_FE(v_unified_ownership_interop, arginfo_v_unified_ownership_interop)
     PHP_FE(v_read_php_global_const, arginfo_v_read_php_global_const)
     PHP_FE(v_php_symbol_exists, arginfo_v_php_symbol_exists)

@@ -666,6 +666,98 @@ fn v_php_callable_api(callback vphp.Callable) string {
 }
 
 @[php_function]
+fn v_php_value_api(raw vphp.ZVal) string {
+	value := vphp.PhpValue.of(raw)
+	arr := value.as_array() or {
+		vphp.throw_exception('raw should be array', 0)
+		return ''
+	}
+	name := arr.get_v[string]('name') or {
+		vphp.throw_exception('PhpValue array get failed: ${err.msg()}', 0)
+		return ''
+	}
+	mut persistent := value.to_persistent()
+	pcount := persistent.with_array(fn (a vphp.PhpArray) int {
+		return a.count()
+	}) or {
+		persistent.release()
+		vphp.throw_exception('PersistentPhpValue should restore array', 0)
+		return ''
+	}
+	kind := persistent.kind_name()
+	persistent.release()
+	return 'value=${value.type_name()}:${value.is_array()}:${name}:${pcount}:${kind}'
+}
+
+@[php_function]
+fn v_php_resource_api(raw vphp.ZVal) string {
+	res := vphp.PhpResource.from_zval(raw) or {
+		vphp.throw_exception('raw should be resource', 0)
+		return ''
+	}
+	res.rewind()
+	contents := res.contents() or { '' }
+	meta := res.stream_metadata() or {
+		vphp.throw_exception('resource should be stream', 0)
+		return ''
+	}
+	return 'resource=${res.type_name()}:${res.is_stream()}:${meta.seekable}:${contents}'
+}
+
+@[php_function]
+fn v_php_reference_api(raw vphp.ZVal) string {
+	value := vphp.PhpValue.of(raw)
+	ref := value.as_reference() or { return 'reference=false:${value.to_string()}' }
+	before := ref.deref().to_string()
+	ref.set(vphp.ZVal.new_string('changed-from-v'))
+	after := ref.deref().to_string()
+	return 'reference=true:${before}:${after}'
+}
+
+@[php_function]
+fn v_php_iterable_api(raw vphp.ZVal) string {
+	iter := vphp.PhpIterable.from_zval(raw) or {
+		vphp.throw_exception('raw should be iterable', 0)
+		return ''
+	}
+	items := iter.fold[[]string]([]string{}, fn (key vphp.ZVal, val vphp.ZVal, mut acc []string) {
+		acc << '${key.to_string()}=${val.to_string()}'
+	})
+	return 'iterable=${iter.is_array()}:${iter.is_traversable()}:${iter.count()}:${items.join(',')}'
+}
+
+@[php_function]
+fn v_php_superglobals_api() string {
+	get := vphp.get_superglobal()
+	post := vphp.post_superglobal()
+	env := vphp.env_superglobal()
+	server := vphp.server_superglobal()
+	q := get.get_v[string]('q') or { '' }
+	name := post.get_v[string]('name') or { '' }
+	return 'super=${q}:${name}:${env.count() >= 0}:${server.count() >= 0}'
+}
+
+@[php_function]
+fn v_php_throwable_api(raw vphp.ZVal) string {
+	t := vphp.PhpThrowable.from_zval(raw) or {
+		vphp.throw_exception('raw should be Throwable', 0)
+		return ''
+	}
+	return 'throwable=${t.class_name()}:${t.message()}:${t.code()}:${t.file() != ''}:${t.line() > 0}'
+}
+
+@[php_function]
+fn v_php_enum_api(raw vphp.ZVal) string {
+	case := vphp.PhpEnumCase.from_zval(raw) or {
+		vphp.throw_exception('raw should be enum case', 0)
+		return ''
+	}
+	en := vphp.PhpEnum.named(case.enum_name())
+	value := case.value() or { vphp.PhpValue.of(vphp.ZVal.new_null()) }
+	return 'enum=${en.exists()}:${en.is_backed()}:${en.cases().count()}:${case.name()}:${value.to_string()}'
+}
+
+@[php_function]
 fn v_unified_ownership_interop(ctx vphp.Context) {
 	cls := vphp.php_class('PhpUnifiedBox')
 	obj_req := cls.construct_owned_request([

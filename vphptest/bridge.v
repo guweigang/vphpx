@@ -1866,6 +1866,68 @@ fn vphp_wrap_v_php_callable_api(ctx vphp.Context) {
     ctx.return_val[string](res)
 }
 
+@[export: 'vphp_wrap_v_php_value_api']
+fn vphp_wrap_v_php_value_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_raw(0)
+    res := v_php_value_api(arg_0)
+    ctx.return_val[string](res)
+}
+
+@[export: 'vphp_wrap_v_php_resource_api']
+fn vphp_wrap_v_php_resource_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_raw(0)
+    res := v_php_resource_api(arg_0)
+    ctx.return_val[string](res)
+}
+
+@[export: 'vphp_wrap_v_php_reference_api']
+fn vphp_wrap_v_php_reference_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_raw(0)
+    res := v_php_reference_api(arg_0)
+    ctx.return_val[string](res)
+}
+
+@[export: 'vphp_wrap_v_php_iterable_api']
+fn vphp_wrap_v_php_iterable_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_raw(0)
+    res := v_php_iterable_api(arg_0)
+    ctx.return_val[string](res)
+}
+
+@[export: 'vphp_wrap_v_php_superglobals_api']
+fn vphp_wrap_v_php_superglobals_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := v_php_superglobals_api()
+    ctx.return_val[string](res)
+}
+
+@[export: 'vphp_wrap_v_php_throwable_api']
+fn vphp_wrap_v_php_throwable_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_raw(0)
+    res := v_php_throwable_api(arg_0)
+    ctx.return_val[string](res)
+}
+
+@[export: 'vphp_wrap_v_php_enum_api']
+fn vphp_wrap_v_php_enum_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx.arg_raw(0)
+    res := v_php_enum_api(arg_0)
+    ctx.return_val[string](res)
+}
+
 @[export: 'vphp_wrap_v_unified_ownership_interop']
 fn vphp_wrap_v_unified_ownership_interop(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
