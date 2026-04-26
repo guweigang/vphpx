@@ -464,6 +464,51 @@ fn v_unified_object_interop(ctx vphp.Context) {
 }
 
 @[php_function]
+fn v_php_class_ref_api(ctx vphp.Context) {
+	cls := vphp.php_class_ref('PhpUnifiedBox')
+	if !cls.exists() {
+		vphp.throw_exception('PhpUnifiedBox should exist', 0)
+		return
+	}
+	missing := vphp.find_php_class('Nope\\MissingClass') or { vphp.php_class_ref('missing') }
+	if missing.name() != 'missing' {
+		vphp.throw_exception('find_php_class should return none for missing class', 0)
+		return
+	}
+
+	obj := cls.construct([
+		vphp.ZVal.new_string('ref'),
+		vphp.ZVal.new_int(9),
+	])
+	if !obj.is_object() {
+		vphp.throw_exception('PhpClass construct failed', 0)
+		return
+	}
+
+	name := obj.prop_v[string]('name') or {
+		vphp.throw_exception('PhpClass prop read failed: ${err.msg()}', 0)
+		return
+	}
+	double_score := obj.method_v[int]('doubleScore', []) or {
+		vphp.throw_exception('PhpClass instance method failed: ${err.msg()}', 0)
+		return
+	}
+	triple := cls.static_method_v[int]('triple', [vphp.ZVal.new_int(3)]) or {
+		vphp.throw_exception('PhpClass static method failed: ${err.msg()}', 0)
+		return
+	}
+	label := cls.const_v[string]('LABEL') or {
+		vphp.throw_exception('PhpClass const read failed: ${err.msg()}', 0)
+		return
+	}
+	has_method := cls.method_exists('doubleScore')
+	has_prop := cls.property_exists('name')
+	has_const := cls.const_exists('LABEL')
+
+	ctx.return_string('class=${cls.short_name()};exists=${cls.exists()};method=${has_method};prop=${has_prop};const=${has_const};value=${name}:${double_score}:${triple}:${label};missing=${missing.name()}')
+}
+
+@[php_function]
 fn v_unified_ownership_interop(ctx vphp.Context) {
 	cls := vphp.php_class('PhpUnifiedBox')
 	obj_req := cls.construct_owned_request([

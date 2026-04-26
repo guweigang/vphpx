@@ -1797,6 +1797,14 @@ fn vphp_wrap_v_unified_object_interop(ctx vphp.Context) {
     v_unified_object_interop(arg_0)
 }
 
+@[export: 'vphp_wrap_v_php_class_ref_api']
+fn vphp_wrap_v_php_class_ref_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx
+    v_php_class_ref_api(arg_0)
+}
+
 @[export: 'vphp_wrap_v_unified_ownership_interop']
 fn vphp_wrap_v_unified_ownership_interop(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
