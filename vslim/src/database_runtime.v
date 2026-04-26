@@ -8,6 +8,7 @@ import vphp
 $if linux {
 	#flag -ldl
 	#insert "@VMODROOT/src/database_runtime_linux_helper.h"
+
 	fn C.vslim_mysql_client_plugin_dir() &char
 	fn C.free(voidptr)
 }
@@ -155,8 +156,8 @@ pub fn (cfg &VSlimDatabaseConfig) pool_name_value() string {
 	return cfg.pool_name
 }
 
-@[php_method: 'setTimeoutMs']
 @[php_arg_name: 'timeout_ms=timeoutMs']
+@[php_method: 'setTimeoutMs']
 pub fn (mut cfg VSlimDatabaseConfig) set_timeout_ms(timeout_ms int) &VSlimDatabaseConfig {
 	cfg.timeout_ms = if timeout_ms <= 0 { 1000 } else { timeout_ms }
 	return &cfg
@@ -170,8 +171,8 @@ pub fn (cfg &VSlimDatabaseConfig) timeout_ms_value() int {
 	return cfg.timeout_ms
 }
 
-@[php_method: 'setUpstreamSocket']
 @[php_arg_name: 'socket_path=socketPath']
+@[php_method: 'setUpstreamSocket']
 pub fn (mut cfg VSlimDatabaseConfig) set_upstream_socket(socket_path string) &VSlimDatabaseConfig {
 	cfg.upstream_socket = socket_path.trim_space()
 	return &cfg
@@ -333,7 +334,8 @@ pub fn (mut db VSlimDatabaseManager) connect() bool {
 
 fn configure_database_client_plugin_dir() {
 	$if linux {
-		if os.getenv('MARIADB_PLUGIN_DIR').trim_space() != '' || os.getenv('MYSQL_PLUGIN_DIR').trim_space() != '' {
+		if os.getenv('MARIADB_PLUGIN_DIR').trim_space() != ''
+			|| os.getenv('MYSQL_PLUGIN_DIR').trim_space() != '' {
 			return
 		}
 		plugin_dir_ptr := C.vslim_mysql_client_plugin_dir()
@@ -362,9 +364,7 @@ pub fn (mut db VSlimDatabaseManager) ensure_direct_mysql_supported() ! {
 }
 
 fn database_result_box_from_dyn(value vphp.DynValue) vphp.RequestOwnedZBox {
-	return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(value) or {
-		vphp.ZVal.new_null()
-	})
+	return vphp.RequestOwnedZBox.adopt_zval(value.new_zval() or { vphp.ZVal.new_null() })
 }
 
 fn database_rows_to_box(rows []map[string]string) vphp.RequestOwnedZBox {
@@ -1692,8 +1692,8 @@ pub fn (model &VSlimDatabaseModel) attributes() vphp.RequestOwnedZBox {
 	return database_result_box_from_dyn(vphp.dyn_value_map(database_dyn_map_from_string_map(model.attributes)))
 }
 
-@[php_method]
 @[php_arg_name: 'default_value=defaultValue']
+@[php_method]
 pub fn (model &VSlimDatabaseModel) get(key string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	if value := model.attributes[key] {
 		return vphp.RequestOwnedZBox.new_string(value)

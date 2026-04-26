@@ -471,12 +471,12 @@ pub fn (cli &VSlimCliApp) debug_bridge_path(path string) vphp.RequestOwnedZBox {
 		vphp.RequestOwnedZBox.new_string(echoed).to_zval(),
 		vphp.RequestOwnedZBox.new_string('bootstrap/app.php').to_zval(),
 	])
-	return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(vphp.dyn_value_map({
+	return vphp.RequestOwnedZBox.adopt_zval(vphp.dyn_value_map({
 		'original':     vphp.dyn_value_string(path)
 		'strval':       vphp.dyn_value_string(echoed)
 		'sprintf':      vphp.dyn_value_string(joined)
 		'sprintf_echo': vphp.dyn_value_string(echoed_joined)
-	})) or { vphp.ZVal.new_null() })
+	}).new_zval() or { vphp.ZVal.new_null() })
 }
 
 @[php_method]
@@ -594,14 +594,14 @@ pub fn (cli &VSlimCliApp) warnings() []string {
 
 @[php_method]
 pub fn (cli &VSlimCliApp) options() vphp.RequestOwnedZBox {
-	return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(vphp.dyn_value_map(cli.last_options.clone())) or {
+	return vphp.RequestOwnedZBox.adopt_zval(vphp.dyn_value_map(cli.last_options.clone()).new_zval() or {
 		vphp.ZVal.new_null()
 	})
 }
 
 @[php_method]
 pub fn (cli &VSlimCliApp) arguments() vphp.RequestOwnedZBox {
-	return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(vphp.dyn_value_map(cli.last_arguments.clone())) or {
+	return vphp.RequestOwnedZBox.adopt_zval(vphp.dyn_value_map(cli.last_arguments.clone()).new_zval() or {
 		vphp.ZVal.new_null()
 	})
 }
@@ -614,9 +614,7 @@ pub fn (cli &VSlimCliApp) option(name string, default_value vphp.RequestBorrowed
 	key := name.trim_space()
 	if key != '' {
 		if value := cli.last_options[key] {
-			return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(value) or {
-				vphp.ZVal.new_null()
-			})
+			return vphp.RequestOwnedZBox.adopt_zval(value.new_zval() or { vphp.ZVal.new_null() })
 		}
 	}
 	raw_default := default_value.to_zval()
@@ -634,9 +632,7 @@ pub fn (cli &VSlimCliApp) argument(name string, default_value vphp.RequestBorrow
 	key := name.trim_space()
 	if key != '' {
 		if value := cli.last_arguments[key] {
-			return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(value) or {
-				vphp.ZVal.new_null()
-			})
+			return vphp.RequestOwnedZBox.adopt_zval(value.new_zval() or { vphp.ZVal.new_null() })
 		}
 	}
 	raw_default := default_value.to_zval()

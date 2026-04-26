@@ -96,9 +96,7 @@ fn set_cli_command_input(mut cli VSlimCliApp, command_name string, input CliComm
 }
 
 fn cli_dyn_value_to_zbox(value vphp.DynValue) vphp.RequestOwnedZBox {
-	return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(value) or {
-		vphp.ZVal.new_null()
-	})
+	return vphp.RequestOwnedZBox.adopt_zval(value.new_zval() or { vphp.ZVal.new_null() })
 }
 
 fn cli_definition_string_item(item vphp.ZVal) ?string {
@@ -748,9 +746,7 @@ fn cli_runtime_string_list_method(runtime vphp.ZVal, method_name string) []strin
 	defer {
 		value_z.release()
 	}
-	return cli_string_list_from_value(value_z.to_zval()) or {
-		[]string{}
-	}
+	return cli_string_list_from_value(value_z.to_zval()) or { []string{} }
 }
 
 fn cli_runtime_bool_method(runtime vphp.ZVal, method_name string, fallback bool) bool {
