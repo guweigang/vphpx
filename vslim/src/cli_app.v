@@ -145,7 +145,7 @@ fn cli_handler_string_is_function_callable(name string) bool {
 	if callable_name == '' {
 		return false
 	}
-	return vphp.php_call_bool('function_exists', [
+	return vphp.php_call_result_bool('function_exists', [
 		vphp.RequestOwnedZBox.new_string(callable_name).to_zval(),
 	])
 }
@@ -198,7 +198,7 @@ fn resolve_cli_command_runtime(mut cli VSlimCliApp, handler_z vphp.ZVal) !vphp.Z
 		if cli_handler_string_is_function_callable(class_name) {
 			return vphp.RequestOwnedZBox.new_string(class_name).to_zval()
 		}
-		exists := vphp.php_call_bool('class_exists', [
+		exists := vphp.php_call_result_bool('class_exists', [
 			vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
 			vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 		])
@@ -458,15 +458,15 @@ pub fn (cli &VSlimCliApp) project_root_value() string {
 
 @[php_method: 'debugBridgePath']
 pub fn (cli &VSlimCliApp) debug_bridge_path(path string) vphp.RequestOwnedZBox {
-	echoed := vphp.php_call_string('strval', [
+	echoed := vphp.php_call_result_string('strval', [
 		vphp.RequestOwnedZBox.new_string(path).to_zval(),
 	])
-	joined := vphp.php_call_string('sprintf', [
+	joined := vphp.php_call_result_string('sprintf', [
 		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
 		vphp.RequestOwnedZBox.new_string(path).to_zval(),
 		vphp.RequestOwnedZBox.new_string('bootstrap/app.php').to_zval(),
 	])
-	echoed_joined := vphp.php_call_string('sprintf', [
+	echoed_joined := vphp.php_call_result_string('sprintf', [
 		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
 		vphp.RequestOwnedZBox.new_string(echoed).to_zval(),
 		vphp.RequestOwnedZBox.new_string('bootstrap/app.php').to_zval(),

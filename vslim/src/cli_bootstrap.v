@@ -114,10 +114,10 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 		return error('CLI bootstrap directory has no project root')
 	}
 	cli.project_root = project_root
-	project_root_echo := vphp.php_call_string('strval', [
+	project_root_echo := vphp.php_call_result_string('strval', [
 		vphp.RequestOwnedZBox.new_string(project_root).to_zval(),
 	])
-	bootstrap_candidate_probe := vphp.php_call_string('sprintf', [
+	bootstrap_candidate_probe := vphp.php_call_result_string('sprintf', [
 		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
 		vphp.RequestOwnedZBox.new_string(project_root).to_zval(),
 		vphp.RequestOwnedZBox.new_string('bootstrap/app.php').to_zval(),
@@ -125,7 +125,7 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 	cli_debug_log('project_root_echo="${project_root_echo}"')
 	cli_debug_log('bootstrap_candidate_probe="${bootstrap_candidate_probe}"')
 	bootstrap_candidate := bootstrap_candidate_probe
-	app_candidate_fallback := vphp.php_call_string('sprintf', [
+	app_candidate_fallback := vphp.php_call_result_string('sprintf', [
 		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
 		vphp.RequestOwnedZBox.new_string(project_root).to_zval(),
 		vphp.RequestOwnedZBox.new_string('app.php').to_zval(),
@@ -279,7 +279,7 @@ fn apply_cli_command_class_conventions_with_paths(mut cli VSlimCliApp, commands_
 			class_name_z.release()
 		}
 		_ = php_include_once(commands_dir + '/' + entry)
-		class_exists := vphp.php_call_bool('class_exists', [
+		class_exists := vphp.php_call_result_bool('class_exists', [
 			class_name_z,
 			vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 		])

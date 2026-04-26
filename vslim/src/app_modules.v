@@ -17,7 +17,7 @@ fn normalize_module_input(raw vphp.ZVal) !vphp.ZVal {
 		if class_name == '' {
 			return error('module class name must not be empty')
 		}
-		exists := vphp.php_call_bool('class_exists', [
+		exists := vphp.php_call_result_bool('class_exists', [
 			vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
 			vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 		])

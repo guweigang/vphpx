@@ -2370,7 +2370,7 @@ fn php_stream_metadata(resource vphp.ZVal) ?map[string]string {
 
 fn read_stream_factory_file(filename string, mode string) ?string {
 	if mode.contains('r') {
-		exists := vphp.php_call_bool('is_file', [
+		exists := vphp.php_call_result_bool('is_file', [
 			vphp.RequestOwnedZBox.new_string(filename).to_zval(),
 		])
 		if !exists {

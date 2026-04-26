@@ -89,7 +89,7 @@ fn session_new_string_map_zval(values map[string]string) vphp.ZVal {
 }
 
 fn session_base64url_encode(raw string) string {
-	mut encoded := vphp.php_call_string('base64_encode', [
+	mut encoded := vphp.php_call_result_string('base64_encode', [
 		vphp.RequestOwnedZBox.new_string(raw).to_zval(),
 	])
 	encoded = encoded.replace('+', '-').replace('/', '_').replace('=', '')
@@ -122,7 +122,7 @@ fn session_base64url_decode(raw string) !string {
 }
 
 fn session_sign(payload string, secret string) string {
-	return vphp.php_call_string('hash_hmac', [
+	return vphp.php_call_result_string('hash_hmac', [
 		vphp.RequestOwnedZBox.new_string('sha256').to_zval(),
 		vphp.RequestOwnedZBox.new_string(payload).to_zval(),
 		vphp.RequestOwnedZBox.new_string(secret).to_zval(),
@@ -130,7 +130,7 @@ fn session_sign(payload string, secret string) string {
 }
 
 fn session_secure_equals(left string, right string) bool {
-	return vphp.php_call_bool('hash_equals', [
+	return vphp.php_call_result_bool('hash_equals', [
 		vphp.RequestOwnedZBox.new_string(left).to_zval(),
 		vphp.RequestOwnedZBox.new_string(right).to_zval(),
 	])

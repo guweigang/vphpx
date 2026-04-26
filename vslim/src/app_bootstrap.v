@@ -56,11 +56,11 @@ fn bootstrap_debug_included_hits(class_name string) []string {
 }
 
 fn log_bootstrap_class_visibility(kind string, class_name string) {
-	exists_no_autoload := vphp.php_call_bool('class_exists', [
+	exists_no_autoload := vphp.php_call_result_bool('class_exists', [
 		vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
 		vphp.RequestOwnedZBox.new_bool(false).to_zval(),
 	])
-	exists_autoload := vphp.php_call_bool('class_exists', [
+	exists_autoload := vphp.php_call_result_bool('class_exists', [
 		vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
 		vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 	])
@@ -77,7 +77,7 @@ fn normalize_service_provider_input(raw vphp.ZVal) !vphp.ZVal {
 		if class_name == '' {
 			return error('provider class name must not be empty')
 		}
-		exists := vphp.php_call_bool('class_exists', [
+		exists := vphp.php_call_result_bool('class_exists', [
 			vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
 			vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 		])

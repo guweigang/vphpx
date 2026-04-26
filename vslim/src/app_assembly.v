@@ -8,19 +8,19 @@ fn bootstrap_file_return_error(path string) string {
 }
 
 fn php_is_file(path string) bool {
-	return vphp.php_call_bool('is_file', [vphp.RequestOwnedZBox.new_string(path).to_zval()])
+	return vphp.php_call_result_bool('is_file', [vphp.RequestOwnedZBox.new_string(path).to_zval()])
 }
 
 fn php_is_dir(path string) bool {
-	return vphp.php_call_bool('is_dir', [vphp.RequestOwnedZBox.new_string(path).to_zval()])
+	return vphp.php_call_result_bool('is_dir', [vphp.RequestOwnedZBox.new_string(path).to_zval()])
 }
 
 fn php_join_path(base string, child string) string {
-	trimmed := vphp.php_call_string('rtrim', [
+	trimmed := vphp.php_call_result_string('rtrim', [
 		vphp.RequestOwnedZBox.new_string(base).to_zval(),
 		vphp.RequestOwnedZBox.new_string('/\\').to_zval(),
 	])
-	return vphp.php_call_string('sprintf', [
+	return vphp.php_call_result_string('sprintf', [
 		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
 		vphp.RequestOwnedZBox.new_string(trimmed).to_zval(),
 		vphp.RequestOwnedZBox.new_string(child).to_zval(),
@@ -82,7 +82,7 @@ fn php_class_exists(class_name string) bool {
 	if class_name.trim_space() == '' {
 		return false
 	}
-	return vphp.php_call_bool('class_exists', [
+	return vphp.php_call_result_bool('class_exists', [
 		vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
 		vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 	])
