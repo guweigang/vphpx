@@ -33,21 +33,21 @@ pub fn (c &VSlimVhttpdClient) request(payload vphp.RequestBorrowedZBox) vphp.Req
 @[php_arg_optional: 'frames']
 pub fn (c &VSlimVhttpdClient) request_frames(payload vphp.RequestBorrowedZBox, frames vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	if c.socket_path.trim_space() == '' {
-		vphp.throw_exception_class('RuntimeException', 'socket path must not be empty', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'socket path must not be empty', 0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	if !payload.is_array() {
-		vphp.throw_exception_class('InvalidArgumentException', 'request payload must be an array', 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'request payload must be an array', 0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	if frames.is_valid() && !frames.is_null() && !frames.is_undef() && !frames.is_array() {
-		vphp.throw_exception_class('InvalidArgumentException', 'frames must be an array of strings', 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'frames must be an array of strings', 0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	raw_payload := payload.to_zval()
-	json_payload := vphp.json_encode_with_flags(raw_payload, 256)
+	json_payload := vphp.PhpJson.encode_with_flags(raw_payload, 256)
 	if json_payload == '' {
-		vphp.throw_exception_class('RuntimeException', 'json_encode_failed', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'json_encode_failed', 0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	frame_list := if frames.is_valid() && frames.is_array() {
@@ -56,7 +56,7 @@ pub fn (c &VSlimVhttpdClient) request_frames(payload vphp.RequestBorrowedZBox, f
 		[]string{}
 	}
 	mut conn := unix.connect_stream(c.socket_path) or {
-		vphp.throw_exception_class('RuntimeException', 'connect_failed: ${err.msg()}', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'connect_failed: ${err.msg()}', 0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	defer {
@@ -66,26 +66,26 @@ pub fn (c &VSlimVhttpdClient) request_frames(payload vphp.RequestBorrowedZBox, f
 	conn.set_read_timeout(timeout)
 	conn.set_write_timeout(timeout)
 	vhttpd_client_write_frame(mut conn, json_payload) or {
-		vphp.throw_exception_class('RuntimeException', 'write_failed: ${err.msg()}', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'write_failed: ${err.msg()}', 0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	for frame in frame_list {
 		vhttpd_client_write_frame(mut conn, frame) or {
-			vphp.throw_exception_class('RuntimeException', 'write_failed: ${err.msg()}', 0)
+			vphp.PhpException.raise_class('RuntimeException', 'write_failed: ${err.msg()}', 0)
 			return vphp.RequestOwnedZBox.new_null()
 		}
 	}
 	raw_response := vhttpd_client_read_frame(mut conn) or {
-		vphp.throw_exception_class('RuntimeException', 'read_failed: ${err.msg()}', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'read_failed: ${err.msg()}', 0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	if raw_response.trim_space() == '' {
-		vphp.throw_exception_class('RuntimeException', 'empty_response', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'empty_response', 0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
-	decoded := vphp.json_decode_assoc(raw_response)
+	decoded := vphp.PhpJson.decode_assoc(raw_response)
 	if !decoded.is_valid() || !decoded.is_array() {
-		vphp.throw_exception_class('RuntimeException', 'invalid_response_json', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'invalid_response_json', 0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	return vphp.RequestOwnedZBox.adopt_zval(decoded)

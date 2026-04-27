@@ -16,11 +16,11 @@ pub fn (mut provider VSlimPsr14ListenerProvider) listen(event_class string, list
 	ensure_psr14_listener_provider(mut provider)
 	key := normalize_psr14_event_key(event_class)
 	if key == '' {
-		vphp.throw_exception_class('InvalidArgumentException', 'event class must not be empty', 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'event class must not be empty', 0)
 		return &provider
 	}
 	if !listener.is_valid() || !listener.is_callable() {
-		vphp.throw_exception_class('InvalidArgumentException', 'listener must be callable', 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'listener must be callable', 0)
 		return &provider
 	}
 	mut listeners := provider.listeners[key] or { []vphp.PersistentOwnedZBox{} }
@@ -53,7 +53,7 @@ pub fn (provider &VSlimPsr14ListenerProvider) get_listeners_for_event(event vphp
 			return true
 		})
 	}
-	return vphp.own_request_zbox(out)
+	return vphp.RequestOwnedZBox.of(out)
 }
 
 @[php_method]
@@ -95,7 +95,7 @@ pub fn (mut dispatcher VSlimPsr14EventDispatcher) listen_any(listener vphp.Reque
 @[php_method: 'dispatch']
 pub fn (mut dispatcher VSlimPsr14EventDispatcher) dispatch(event vphp.PhpObject) vphp.RequestOwnedZBox {
 	if psr14_propagation_stopped(event.to_zval()) {
-		return vphp.own_request_zbox(event.to_zval())
+		return vphp.RequestOwnedZBox.of(event.to_zval())
 	}
 	provider := dispatcher.provider()
 	for listener in provider.listeners_for_event(event.to_zval()) {
@@ -106,7 +106,7 @@ pub fn (mut dispatcher VSlimPsr14EventDispatcher) dispatch(event vphp.PhpObject)
 			return result.is_valid()
 		})
 	}
-	return vphp.own_request_zbox(event.to_zval())
+	return vphp.RequestOwnedZBox.of(event.to_zval())
 }
 
 fn ensure_psr14_listener_provider(mut provider VSlimPsr14ListenerProvider) {
@@ -178,7 +178,7 @@ fn psr14_parent_class_name(class_name string) string {
 	if class_name.trim_space() == '' {
 		return ''
 	}
-	return vphp.with_php_call_result_zval('get_parent_class', [vphp.RequestOwnedZBox.new_string(class_name).to_zval()], fn (res vphp.ZVal) string {
+	return vphp.PhpFunction.named('get_parent_class').with_result_zval([vphp.RequestOwnedZBox.new_string(class_name).to_zval()], fn (res vphp.ZVal) string {
 		if !res.is_valid() || res.is_null() || res.is_undef() || (res.is_bool() && !res.to_bool()) {
 			return ''
 		}
@@ -194,7 +194,7 @@ fn psr14_propagation_stopped(event vphp.ZVal) bool {
 		&& !event.method_exists('isPropagationStopped') {
 		return false
 	}
-	return vphp.with_method_result_zval(event, 'isPropagationStopped', []vphp.ZVal{}, fn (res vphp.ZVal) bool {
+	return vphp.PhpObject.borrowed(event).with_method_result_zval('isPropagationStopped', []vphp.ZVal{}, fn (res vphp.ZVal) bool {
 		return res.is_valid() && res.to_bool()
 	})
 }

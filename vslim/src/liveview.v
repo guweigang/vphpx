@@ -81,7 +81,7 @@ pub fn (mut socket VSlimLiveSocket) assign_many(values vphp.RequestBorrowedZBox)
 	}
 	raw := values.to_zval()
 	for key in raw.assoc_keys() {
-		socket.assign(key, vphp.borrow_zbox(zval_key(raw, key)))
+		socket.assign(key, vphp.RequestBorrowedZBox.of(zval_key(raw, key)))
 	}
 	return &socket
 }
@@ -102,7 +102,7 @@ pub fn (mut socket VSlimLiveSocket) assign_form(values vphp.RequestBorrowedZBox)
 			socket.assigns[name] = live_form_value_string(value)
 			continue
 		}
-		socket.assign(name, vphp.borrow_zbox(value))
+		socket.assign(name, vphp.RequestBorrowedZBox.of(value))
 	}
 	return &socket
 }
@@ -333,7 +333,7 @@ pub fn (mut form VSlimLiveForm) validate(validator vphp.RequestBorrowedZBox) &VS
 		mut errors_owned := false
 		if validator.is_valid() && !validator.is_null() && !validator.is_undef() {
 			if validator.is_callable() {
-				mut result := vphp.call_request_owned_box(validator.to_zval(), [
+				mut result := vphp.PhpCallable.borrowed(validator.to_zval()).request_owned_box([
 					form.data().to_zval(),
 				])
 				errors_z = result.take_zval()
@@ -348,7 +348,7 @@ pub fn (mut form VSlimLiveForm) validate(validator vphp.RequestBorrowedZBox) &VS
 			}
 		}
 		if errors_z.is_valid() && !errors_z.is_null() && !errors_z.is_undef() && errors_z.is_array() {
-			socket.assign_errors(vphp.borrow_zbox(errors_z))
+			socket.assign_errors(vphp.RequestBorrowedZBox.of(errors_z))
 			form.last_error_count = errors_z.assoc_keys().len
 		}
 	}
@@ -464,12 +464,12 @@ pub fn (form &VSlimLiveForm) error_count() int {
 pub fn (form &VSlimLiveForm) data() vphp.RequestOwnedZBox {
 	mut out := new_array_zval()
 	if isnil(form.socket_ref) {
-		return vphp.own_request_zbox(out)
+		return vphp.RequestOwnedZBox.of(out)
 	}
 	for field in form.field_names() {
 		out.add_assoc_string(field, form.socket_ref.input(field))
 	}
-	return vphp.own_request_zbox(out)
+	return vphp.RequestOwnedZBox.of(out)
 }
 
 fn (mut form VSlimLiveForm) track_fields(values vphp.ZVal) {
@@ -1002,7 +1002,7 @@ pub fn (mut component VSlimLiveComponent) assign_many(values vphp.RequestBorrowe
 	}
 	raw := values.to_zval()
 	for key in raw.assoc_keys() {
-		component.assign(key, vphp.borrow_zbox(zval_key(raw, key)))
+		component.assign(key, vphp.RequestBorrowedZBox.of(zval_key(raw, key)))
 	}
 	return &component
 }

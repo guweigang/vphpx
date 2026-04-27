@@ -533,8 +533,9 @@ fn v_php_function_named_api(ctx vphp.Context) {
 		vphp.throw_exception('PhpFunction invoke failed: ${err.msg()}', 0)
 		return
 	}
+	result_upper := fn_ref.result_string([vphp.ZVal.new_string('result')])
 
-	ctx.return_string('function=${fn_ref.name()};exists=${fn_ref.exists()};value=${upper}:${len};missing=${missing.name()}')
+	ctx.return_string('function=${fn_ref.name()};exists=${fn_ref.exists()};value=${upper}:${len}:${result_upper};missing=${missing.name()}')
 }
 
 @[php_function]
@@ -543,13 +544,12 @@ fn v_php_closure_api(callback vphp.Callable) string {
 		vphp.throw_exception('callback should be callable', 0)
 		return ''
 	}
-	result := closure.call_v[string]([
+	result := closure.with_result_zval([
 		vphp.ZVal.new_string('closure'),
 		vphp.ZVal.new_int(3),
-	]) or {
-		vphp.throw_exception('PhpClosure call failed: ${err.msg()}', 0)
-		return ''
-	}
+	], fn (z vphp.ZVal) string {
+		return z.to_string()
+	})
 	return 'closure=${closure.is_callable()}:${result}'
 }
 
@@ -604,10 +604,9 @@ fn v_php_object_api(raw vphp.ZVal) string {
 		vphp.throw_exception('PhpObject prop failed: ${err.msg()}', 0)
 		return ''
 	}
-	greet := obj.method_v[string]('greet', []) or {
-		vphp.throw_exception('PhpObject method failed: ${err.msg()}', 0)
-		return ''
-	}
+	greet := obj.with_method_result_zval('greet', [], fn (z vphp.ZVal) string {
+		return z.to_string()
+	})
 	mut persistent := obj.to_persistent()
 	again := persistent.method_v[string]('greet', []) or {
 		persistent.release()
@@ -651,10 +650,9 @@ fn v_php_callable_api(callback vphp.Callable) string {
 		vphp.throw_exception('callback should be callable', 0)
 		return ''
 	}
-	result := callable.call_v[string]([vphp.ZVal.new_string('callable')]) or {
-		vphp.throw_exception('PhpCallable call failed: ${err.msg()}', 0)
-		return ''
-	}
+	result := callable.with_result_zval([vphp.ZVal.new_string('callable')], fn (z vphp.ZVal) string {
+		return z.to_string()
+	})
 	mut persistent := callable.to_persistent()
 	again := persistent.call_v[string]([vphp.ZVal.new_string('again')]) or {
 		persistent.release()
@@ -766,7 +764,10 @@ fn v_php_semantic_params_struct_api(params VPhpSemanticParamsStructDemo) string 
 fn v_php_args_api(ctx vphp.Context) string {
 	args := ctx.args([
 		vphp.PhpArgMeta{ index: 0, name: 'first' },
-		vphp.PhpArgMeta{ index: 1, name: 'second' },
+		vphp.PhpArgMeta{
+			index: 1
+			name:  'second'
+		},
 	])
 	first := args.at(0)
 	second := args.named('second') or { return 'missing-second' }
@@ -989,10 +990,10 @@ fn v_php_iterable_api(raw vphp.ZVal) string {
 
 @[php_function]
 fn v_php_superglobals_api() string {
-	get := vphp.get_superglobal()
-	post := vphp.post_superglobal()
-	env := vphp.env_superglobal()
-	server := vphp.server_superglobal()
+	get := vphp.PhpSuperglobals.get()
+	post := vphp.PhpSuperglobals.post()
+	env := vphp.PhpSuperglobals.env()
+	server := vphp.PhpSuperglobals.server()
 	q := get.get_v[string]('q') or { '' }
 	name := post.get_v[string]('name') or { '' }
 	return 'super=${q}:${name}:${env.count() >= 0}:${server.count() >= 0}'
@@ -1058,7 +1059,7 @@ fn v_unified_ownership_interop(ctx vphp.Context) {
 @[php_function]
 fn v_read_php_global_const(ctx vphp.Context) {
 	const_name := ctx.arg[string](0)
-	value := vphp.php_const(const_name)
+	value := vphp.PhpConst.named(const_name).value()
 	if !value.is_valid() {
 		vphp.throw_exception('读取常量失败: ${const_name}', 0)
 		return
@@ -1069,23 +1070,23 @@ fn v_read_php_global_const(ctx vphp.Context) {
 @[php_function]
 fn v_php_symbol_exists(ctx vphp.Context) {
 	ctx.return_map({
-		'function_strlen':   vphp.function_exists('strlen').str()
-		'function_missing':  vphp.function_exists('definitely_missing_fn').str()
-		'class_datetime':    vphp.class_exists('DateTimeImmutable').str()
-		'class_missing':     vphp.class_exists('Nope\\MissingClass').str()
+		'function_strlen':   vphp.PhpFunction.named('strlen').exists().str()
+		'function_missing':  (vphp.PhpFunction.find('definitely_missing_fn') != none).str()
+		'class_datetime':    vphp.PhpClass.named('DateTimeImmutable').exists().str()
+		'class_missing':     (vphp.PhpClass.find('Nope\\MissingClass') != none).str()
 		'interface_json':    vphp.interface_exists('JsonSerializable').str()
 		'interface_missing': vphp.interface_exists('Nope\\MissingInterface').str()
 		'trait_user':        vphp.trait_exists('Demo\\Interop\\HelperTrait').str()
 		'trait_missing':     vphp.trait_exists('Nope\\MissingTrait').str()
-		'const_php_version': vphp.global_const_exists('PHP_VERSION').str()
-		'const_missing':     vphp.global_const_exists('NOPE_MISSING_CONST').str()
+		'const_php_version': vphp.PhpConst.named('PHP_VERSION').exists().str()
+		'const_missing':     (vphp.PhpConst.find('NOPE_MISSING_CONST') != none).str()
 	})
 }
 
 @[php_function]
 fn v_include_php_file(ctx vphp.Context) {
 	path := ctx.arg[string](0)
-	result := vphp.include(path)
+	result := vphp.PhpIncludeFile.at(path).load()
 	if !result.is_valid() {
 		vphp.throw_exception('include 失败: ${path}', 0)
 		return
@@ -1096,7 +1097,7 @@ fn v_include_php_file(ctx vphp.Context) {
 @[php_function]
 fn v_include_php_file_once(ctx vphp.Context) {
 	path := ctx.arg[string](0)
-	result := vphp.include_once(path)
+	result := vphp.PhpIncludeFile.at(path).load_once()
 	if !result.is_valid() {
 		vphp.throw_exception('include_once 失败: ${path}', 0)
 		return
@@ -1107,7 +1108,7 @@ fn v_include_php_file_once(ctx vphp.Context) {
 @[php_function]
 fn v_include_php_module_demo(ctx vphp.Context) {
 	path := ctx.arg[string](0)
-	config := vphp.include_once(path)
+	config := vphp.PhpIncludeFile.at(path).load_once()
 	if !config.is_valid() {
 		vphp.throw_exception('include_once 失败: ${path}', 0)
 		return

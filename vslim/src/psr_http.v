@@ -55,7 +55,7 @@ pub fn (s &VSlimPsr7Stream) get_size() ?int {
 @[php_method]
 pub fn (s &VSlimPsr7Stream) tell() int {
 	if s.detached {
-		vphp.throw_exception_class('RuntimeException', 'unable to determine stream position for a detached stream',
+		vphp.PhpException.raise_class('RuntimeException', 'unable to determine stream position for a detached stream',
 			0)
 		return 0
 	}
@@ -81,18 +81,18 @@ pub fn (s &VSlimPsr7Stream) is_seekable() bool {
 @[php_method]
 pub fn (s &VSlimPsr7Stream) seek(offset vphp.RequestBorrowedZBox, default_whence vphp.RequestBorrowedZBox) {
 	if s.detached {
-		vphp.throw_exception_class('RuntimeException', 'cannot seek a detached stream',
+		vphp.PhpException.raise_class('RuntimeException', 'cannot seek a detached stream',
 			0)
 		return
 	}
 	if !stream_is_seekable(s) {
-		vphp.throw_exception_class('RuntimeException', 'stream is not seekable', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'stream is not seekable', 0)
 		return
 	}
 	offset_value := int(offset.to_i64())
 	whence := zval_to_psr7_seek_whence(default_whence.to_zval())
 	if whence !in [0, 1, 2] {
-		vphp.throw_exception_class('RuntimeException', 'invalid whence for stream seek',
+		vphp.PhpException.raise_class('RuntimeException', 'invalid whence for stream seek',
 			0)
 		return
 	}
@@ -117,12 +117,12 @@ pub fn (s &VSlimPsr7Stream) seek(offset vphp.RequestBorrowedZBox, default_whence
 @[php_method]
 pub fn (s &VSlimPsr7Stream) rewind() {
 	if s.detached {
-		vphp.throw_exception_class('RuntimeException', 'cannot rewind a detached stream',
+		vphp.PhpException.raise_class('RuntimeException', 'cannot rewind a detached stream',
 			0)
 		return
 	}
 	if !stream_is_seekable(s) {
-		vphp.throw_exception_class('RuntimeException', 'stream is not seekable', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'stream is not seekable', 0)
 		return
 	}
 	unsafe {
@@ -139,12 +139,12 @@ pub fn (s &VSlimPsr7Stream) is_writable() bool {
 @[php_method]
 pub fn (s &VSlimPsr7Stream) write(chunk vphp.RequestBorrowedZBox) int {
 	if s.detached {
-		vphp.throw_exception_class('RuntimeException', 'cannot write to a detached stream',
+		vphp.PhpException.raise_class('RuntimeException', 'cannot write to a detached stream',
 			0)
 		return 0
 	}
 	if !stream_is_writable(s) {
-		vphp.throw_exception_class('RuntimeException', 'stream is not writable', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'stream is not writable', 0)
 		return 0
 	}
 	text := zval_or_empty_string(chunk.to_zval())
@@ -176,17 +176,17 @@ pub fn (s &VSlimPsr7Stream) is_readable() bool {
 @[php_method]
 pub fn (s &VSlimPsr7Stream) read(length vphp.RequestBorrowedZBox) string {
 	if s.detached {
-		vphp.throw_exception_class('RuntimeException', 'cannot read from a detached stream',
+		vphp.PhpException.raise_class('RuntimeException', 'cannot read from a detached stream',
 			0)
 		return ''
 	}
 	if !stream_is_readable(s) {
-		vphp.throw_exception_class('RuntimeException', 'stream is not readable', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'stream is not readable', 0)
 		return ''
 	}
 	length_value := int(length.to_i64())
 	if length_value < 0 {
-		vphp.throw_exception_class('RuntimeException', 'length must be greater than or equal to zero',
+		vphp.PhpException.raise_class('RuntimeException', 'length must be greater than or equal to zero',
 			0)
 		return ''
 	}
@@ -205,12 +205,12 @@ pub fn (s &VSlimPsr7Stream) read(length vphp.RequestBorrowedZBox) string {
 @[php_method: 'getContents']
 pub fn (s &VSlimPsr7Stream) get_contents() string {
 	if s.detached {
-		vphp.throw_exception_class('RuntimeException', 'cannot read from a detached stream',
+		vphp.PhpException.raise_class('RuntimeException', 'cannot read from a detached stream',
 			0)
 		return ''
 	}
 	if !stream_is_readable(s) {
-		vphp.throw_exception_class('RuntimeException', 'stream is not readable', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'stream is not readable', 0)
 		return ''
 	}
 	if s.position >= s.content.len {
@@ -239,7 +239,7 @@ pub fn (s &VSlimPsr7Stream) get_metadata(default_key ?vphp.RequestBorrowedZBox) 
 }
 
 fn psr7_stream_metadata_map(s &VSlimPsr7Stream) vphp.RequestOwnedZBox {
-	return vphp.own_request_zbox(vphp.new_zval_from[map[string]string](s.metadata.clone()) or {
+	return vphp.RequestOwnedZBox.of(vphp.new_zval_from[map[string]string](s.metadata.clone()) or {
 		vphp.ZVal.new_null()
 	})
 }
@@ -268,12 +268,12 @@ pub fn (mut u VSlimPsr7UploadedFile) construct(default_stream vphp.RequestBorrow
 @[php_method: 'getStream']
 pub fn (u &VSlimPsr7UploadedFile) get_stream() &VSlimPsr7Stream {
 	if u.moved {
-		vphp.throw_exception_class('RuntimeException', 'uploaded file stream is no longer available after moveTo',
+		vphp.PhpException.raise_class('RuntimeException', 'uploaded file stream is no longer available after moveTo',
 			0)
 		return u.stream_ref
 	}
 	if u.error_code != 0 {
-		vphp.throw_exception_class('RuntimeException', 'cannot retrieve stream for errored upload',
+		vphp.PhpException.raise_class('RuntimeException', 'cannot retrieve stream for errored upload',
 			0)
 		return u.stream_ref
 	}
@@ -291,24 +291,24 @@ pub fn (u &VSlimPsr7UploadedFile) get_stream() &VSlimPsr7Stream {
 pub fn (u &VSlimPsr7UploadedFile) move_to(target_path vphp.RequestBorrowedZBox) {
 	path := zval_to_log_message(target_path.to_zval()).trim_space()
 	if path == '' {
-		vphp.throw_exception_class('InvalidArgumentException', 'target path must not be empty',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'target path must not be empty',
 			0)
 		return
 	}
 	if u.moved {
-		vphp.throw_exception_class('RuntimeException', 'uploaded file has already been moved',
+		vphp.PhpException.raise_class('RuntimeException', 'uploaded file has already been moved',
 			0)
 		return
 	}
 	if u.error_code != 0 {
-		vphp.throw_exception_class('RuntimeException', 'cannot move uploaded file with upload error',
+		vphp.PhpException.raise_class('RuntimeException', 'cannot move uploaded file with upload error',
 			0)
 		return
 	}
 	stream := if u.stream_ref == unsafe { nil } { new_psr7_stream('') } else { u.stream_ref }
 	content := stream.stream_string()
 	size := if u.size_hint >= 0 { u.size_hint } else { content.len }
-	moved := vphp.with_php_call_result_zval('file_put_contents', [
+	moved := vphp.PhpFunction.named('file_put_contents').with_result_zval([
 		vphp.RequestOwnedZBox.new_string(path).to_zval(),
 		vphp.RequestOwnedZBox.new_string(content).to_zval(),
 	], fn (result vphp.ZVal) bool {
@@ -316,7 +316,7 @@ pub fn (u &VSlimPsr7UploadedFile) move_to(target_path vphp.RequestBorrowedZBox) 
 			&& (!result.is_bool() || result.to_bool())
 	})
 	if !moved {
-		vphp.throw_exception_class('RuntimeException', 'failed to move uploaded file to target path',
+		vphp.PhpException.raise_class('RuntimeException', 'failed to move uploaded file to target path',
 			0)
 		return
 	}
@@ -1083,7 +1083,7 @@ pub fn (r &VSlimPsr7ServerRequest) get_parsed_body() vphp.RequestOwnedZBox {
 @[php_method: 'withParsedBody']
 pub fn (r &VSlimPsr7ServerRequest) with_parsed_body(parsed_body vphp.RequestBorrowedZBox) &VSlimPsr7ServerRequest {
 	if !is_valid_psr7_parsed_body(parsed_body.to_zval()) {
-		vphp.throw_exception_class('InvalidArgumentException', 'parsed body must be null, an array, or an object',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'parsed body must be null, an array, or an object',
 			0)
 		return clone_psr7_server_request(r, r.method, r.request_target, r.protocol_version,
 			clone_header_values(r.headers), clone_header_names(r.header_names), server_request_body_or_empty(r),
@@ -1639,7 +1639,7 @@ fn zval_to_header_values(value vphp.ZVal) ?[]string {
 		mut out := []string{}
 		for entry in value.to_string_list() {
 			if !is_valid_psr7_header_value(entry) {
-				vphp.throw_exception_class('InvalidArgumentException', 'header values must not contain CR or LF characters',
+				vphp.PhpException.raise_class('InvalidArgumentException', 'header values must not contain CR or LF characters',
 					0)
 				return none
 			}
@@ -1649,7 +1649,7 @@ fn zval_to_header_values(value vphp.ZVal) ?[]string {
 	}
 	entry := value.to_string()
 	if !is_valid_psr7_header_value(entry) {
-		vphp.throw_exception_class('InvalidArgumentException', 'header values must not contain CR or LF characters',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'header values must not contain CR or LF characters',
 			0)
 		return none
 	}
@@ -1662,7 +1662,7 @@ fn zval_to_psr7_port(value vphp.ZVal) int {
 	}
 	port := int(value.to_i64())
 	if port < 1 || port > 65535 {
-		vphp.throw_exception_class('InvalidArgumentException', 'port must be null or an integer between 1 and 65535',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'port must be null or an integer between 1 and 65535',
 			0)
 		return -1
 	}
@@ -1675,7 +1675,7 @@ fn zval_to_psr7_uri(value vphp.ZVal) &VSlimPsr7Uri {
 		return unsafe { &VSlimPsr7Uri(C.vphp_get_v_ptr_from_zval(value.raw)) }
 	}
 	if value.is_valid() && value.is_object() && value.method_exists('__toString') {
-		return vphp.with_method_result_zval(value, '__toString', []vphp.ZVal{}, fn (raw vphp.ZVal) &VSlimPsr7Uri {
+		return vphp.PhpObject.borrowed(value).with_method_result_zval('__toString', []vphp.ZVal{}, fn (raw vphp.ZVal) &VSlimPsr7Uri {
 			return new_psr7_uri(raw.to_string())
 		})
 	}
@@ -1721,7 +1721,7 @@ fn zval_to_psr7_stream(value vphp.ZVal) &VSlimPsr7Stream {
 		return unsafe { &VSlimPsr7Stream(C.vphp_get_v_ptr_from_zval(value.raw)) }
 	}
 	if value.is_valid() && value.is_object() && value.method_exists('__toString') {
-		return vphp.with_method_result_zval(value, '__toString', []vphp.ZVal{}, fn (raw vphp.ZVal) &VSlimPsr7Stream {
+		return vphp.PhpObject.borrowed(value).with_method_result_zval('__toString', []vphp.ZVal{}, fn (raw vphp.ZVal) &VSlimPsr7Stream {
 			return new_psr7_stream(raw.to_string())
 		})
 	}
@@ -1899,7 +1899,7 @@ fn normalize_uploaded_files_tree(value vphp.ZVal) vphp.PersistentOwnedZBox {
 		return empty_persistent_array()
 	}
 	if !uploaded_files_tree_is_valid(value) {
-		vphp.throw_exception_class('InvalidArgumentException', 'uploaded files must be an array tree of UploadedFileInterface instances',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'uploaded files must be an array tree of UploadedFileInterface instances',
 			0)
 		return empty_persistent_array()
 	}
@@ -1913,7 +1913,7 @@ fn normalize_psr7_header_name(name string) string {
 fn validate_psr7_header_name_or_throw(name string) ?string {
 	key := normalize_psr7_header_name(name)
 	if key == '' || !is_valid_psr7_header_name(key) {
-		vphp.throw_exception_class('InvalidArgumentException', 'header name must be a non-empty RFC 7230 token',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'header name must be a non-empty RFC 7230 token',
 			0)
 		return none
 	}
@@ -1928,13 +1928,13 @@ fn normalize_psr7_method(method string) string {
 fn validate_psr7_method_or_throw(method string) ?string {
 	trimmed := method.trim_space()
 	if trimmed == '' {
-		vphp.throw_exception_class('InvalidArgumentException', 'HTTP method must be a non-empty token',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'HTTP method must be a non-empty token',
 			0)
 		return none
 	}
 	for ch in trimmed.bytes() {
 		if ch <= 32 || ch == 127 {
-			vphp.throw_exception_class('InvalidArgumentException', 'HTTP method must be a non-empty token',
+			vphp.PhpException.raise_class('InvalidArgumentException', 'HTTP method must be a non-empty token',
 				0)
 			return none
 		}
@@ -1985,13 +1985,13 @@ fn normalize_protocol_version(version string) string {
 fn validate_psr7_request_target_or_throw(request_target string) ?string {
 	trimmed := request_target.trim_space()
 	if trimmed == '' {
-		vphp.throw_exception_class('InvalidArgumentException', 'request target must be a non-empty string without whitespace',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'request target must be a non-empty string without whitespace',
 			0)
 		return none
 	}
 	for ch in request_target.bytes() {
 		if ch == ` ` || ch == `\t` || ch == `\r` || ch == `\n` {
-			vphp.throw_exception_class('InvalidArgumentException', 'request target must be a non-empty string without whitespace',
+			vphp.PhpException.raise_class('InvalidArgumentException', 'request target must be a non-empty string without whitespace',
 				0)
 			return none
 		}
@@ -2016,7 +2016,7 @@ fn validate_psr17_response_status_or_throw(status int) ?int {
 
 fn validate_psr7_status_or_throw(status int) ?int {
 	if status < 100 || status > 599 {
-		vphp.throw_exception_class('InvalidArgumentException', 'status code must be an integer between 100 and 599',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'status code must be an integer between 100 and 599',
 			0)
 		return none
 	}
@@ -2262,7 +2262,7 @@ fn clamp_stream_position(position int, max_len int) int {
 fn build_psr7_stream_from_file(filename string, default_mode string) &VSlimPsr7Stream {
 	path := filename.trim_space()
 	if path == '' {
-		vphp.throw_exception_class('InvalidArgumentException', 'filename must not be empty',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'filename must not be empty',
 			0)
 		return new_psr7_stream('')
 	}
@@ -2278,12 +2278,12 @@ fn build_psr7_stream_from_file(filename string, default_mode string) &VSlimPsr7S
 
 fn build_psr7_stream_from_resource(resource vphp.ZVal) &VSlimPsr7Stream {
 	if !resource.is_resource() {
-		vphp.throw_exception_class('InvalidArgumentException', 'resource must be a valid PHP stream resource',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'resource must be a valid PHP stream resource',
 			0)
 		return new_psr7_stream('')
 	}
 	meta := php_stream_metadata(resource) or {
-		vphp.throw_exception_class('InvalidArgumentException', 'resource must be a PHP stream resource',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'resource must be a PHP stream resource',
 			0)
 		return new_psr7_stream('')
 	}
@@ -2376,15 +2376,15 @@ fn php_stream_metadata(resource vphp.ZVal) ?map[string]string {
 
 fn read_stream_factory_file(filename string, mode string) ?string {
 	if mode.contains('r') {
-		exists := vphp.php_call_result_bool('is_file', [
+		exists := vphp.PhpFunction.named('is_file').result_bool([
 			vphp.RequestOwnedZBox.new_string(filename).to_zval(),
 		])
 		if !exists {
-			vphp.throw_exception_class('RuntimeException', 'failed to open stream from file',
+			vphp.PhpException.raise_class('RuntimeException', 'failed to open stream from file',
 				0)
 			return none
 		}
-		return vphp.php_call_result_string('file_get_contents', [
+		return vphp.PhpFunction.named('file_get_contents').result_string([
 			vphp.RequestOwnedZBox.new_string(filename).to_zval(),
 		])
 	}
@@ -2393,12 +2393,12 @@ fn read_stream_factory_file(filename string, mode string) ?string {
 
 fn read_stream_resource(resource vphp.ZVal) ?string {
 	if !resource.is_resource() {
-		vphp.throw_exception_class('InvalidArgumentException', 'resource must be a valid PHP stream resource',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'resource must be a valid PHP stream resource',
 			0)
 		return none
 	}
 	meta := php_stream_metadata(resource) or {
-		vphp.throw_exception_class('InvalidArgumentException', 'resource must be a PHP stream resource',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'resource must be a PHP stream resource',
 			0)
 		return none
 	}
@@ -2406,7 +2406,7 @@ fn read_stream_resource(resource vphp.ZVal) ?string {
 		_ = resource.stream_rewind()
 	}
 	content := resource.stream_get_contents() or {
-		vphp.throw_exception_class('RuntimeException', 'failed to read from stream resource',
+		vphp.PhpException.raise_class('RuntimeException', 'failed to read from stream resource',
 			0)
 		return none
 	}

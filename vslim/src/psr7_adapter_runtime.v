@@ -81,7 +81,7 @@ pub fn VSlimPsr7Adapter.to_worker_envelope(request vphp.RequestBorrowedZBox) vph
 	add_assoc_zval(out, 'server', server.take_zval())
 	mut uploaded := adapter_read_uploaded_files(raw_request)
 	add_assoc_zval(out, 'uploaded_files', uploaded.take_zval())
-	return vphp.own_request_zbox(out)
+	return vphp.RequestOwnedZBox.of(out)
 }
 
 fn adapter_read_request_target(request vphp.ZVal) string {
@@ -142,7 +142,7 @@ fn adapter_read_headers(request vphp.ZVal) vphp.RequestOwnedZBox {
 	}
 	mut out := new_array_zval()
 	if !raw.is_valid() || !raw.is_array() {
-		return vphp.own_request_zbox(out)
+		return vphp.RequestOwnedZBox.of(out)
 	}
 	for key in raw.to_zval().assoc_keys() {
 		value := zval_key(raw.to_zval(), key)
@@ -152,7 +152,7 @@ fn adapter_read_headers(request vphp.ZVal) vphp.RequestOwnedZBox {
 		}
 		out.add_assoc_string(key.to_lower(), value.to_string())
 	}
-	return vphp.own_request_zbox(out)
+	return vphp.RequestOwnedZBox.of(out)
 }
 
 fn adapter_read_attributes(request vphp.ZVal) vphp.RequestOwnedZBox {
@@ -170,7 +170,7 @@ fn adapter_read_map(request vphp.ZVal, getter string, property string) vphp.Requ
 	}
 	mut out := new_array_zval()
 	if !raw.is_valid() || !raw.is_array() {
-		return vphp.own_request_zbox(out)
+		return vphp.RequestOwnedZBox.of(out)
 	}
 	for key in raw.to_zval().assoc_keys() {
 		value := zval_key(raw.to_zval(), key)
@@ -180,7 +180,7 @@ fn adapter_read_map(request vphp.ZVal, getter string, property string) vphp.Requ
 			out.add_assoc_string(key, value.to_string())
 		}
 	}
-	return vphp.own_request_zbox(out)
+	return vphp.RequestOwnedZBox.of(out)
 }
 
 fn adapter_read_uploaded_files(request vphp.ZVal) vphp.RequestOwnedZBox {
@@ -189,9 +189,9 @@ fn adapter_read_uploaded_files(request vphp.ZVal) vphp.RequestOwnedZBox {
 		raw.release()
 	}
 	if !raw.is_valid() || !raw.is_array() {
-		return vphp.own_request_zbox(new_array_zval())
+		return vphp.RequestOwnedZBox.of(new_array_zval())
 	}
-	return vphp.RequestOwnedZBox.adopt_zval(vphp.php_fn('array_values').call_owned_request([
+	return vphp.RequestOwnedZBox.adopt_zval(vphp.PhpFunction.named('array_values').call_owned_request([
 		raw.to_zval(),
 	]))
 }
@@ -269,7 +269,7 @@ fn adapter_read_method_or_prop(request vphp.ZVal, getter string, property string
 }
 
 fn target_from_uri_string(uri string) string {
-	mut parts := vphp.php_fn('parse_url').call([vphp.ZVal.new_string(uri)])
+	mut parts := vphp.PhpFunction.named('parse_url').call([vphp.ZVal.new_string(uri)])
 	defer {
 		parts.release()
 	}
@@ -283,7 +283,7 @@ fn target_from_uri_string(uri string) string {
 }
 
 fn uri_part_from_string(uri string, property string, default_value string) string {
-	mut parts := vphp.php_fn('parse_url').call([vphp.ZVal.new_string(uri)])
+	mut parts := vphp.PhpFunction.named('parse_url').call([vphp.ZVal.new_string(uri)])
 	defer {
 		parts.release()
 	}

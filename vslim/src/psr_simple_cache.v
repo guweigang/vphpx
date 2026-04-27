@@ -3,7 +3,7 @@ module main
 import vphp
 
 fn psr16_owned_value(z vphp.ZVal) vphp.RequestOwnedZBox {
-	return vphp.own_request_zbox(z)
+	return vphp.RequestOwnedZBox.of(z)
 }
 
 const psr_cache_reserved_key_chars = ['{', '}', '(', ')', '/', '\\', '@', ':']
@@ -41,7 +41,7 @@ pub fn (cache &VSlimPsr16Cache) default_ttl_seconds_value() int {
 pub fn (mut cache VSlimPsr16Cache) set_clock(clock vphp.RequestBorrowedZBox) &VSlimPsr16Cache {
 	ensure_psr16_cache(mut cache)
 	if !psr20_is_clock(clock.to_zval()) {
-		vphp.throw_exception_class('InvalidArgumentException', 'clock must implement Psr\\Clock\\ClockInterface', 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'clock must implement Psr\\Clock\\ClockInterface', 0)
 		return &cache
 	}
 	mut old := cache.clock_ref
@@ -135,7 +135,7 @@ pub fn (mut cache VSlimPsr16Cache) get_multiple(keys vphp.PhpIterable, default_v
 	mut out := new_array_zval()
 	if !psr16_is_iterable(keys.to_zval()) {
 		throw_psr16_invalid_argument('keys must be iterable')
-		return vphp.own_request_zbox(out)
+		return vphp.RequestOwnedZBox.of(out)
 	}
 	for key_name in psr16_iterable_key_list(keys.to_zval()) or {
 		msg := err.msg()
@@ -145,7 +145,7 @@ pub fn (mut cache VSlimPsr16Cache) get_multiple(keys vphp.PhpIterable, default_v
 		value := cache.get(key_name, default_value)
 		add_assoc_zval(out, key_name, value.to_zval())
 	}
-	return vphp.own_request_zbox(out)
+	return vphp.RequestOwnedZBox.of(out)
 }
 
 @[php_method: 'setMultiple']
@@ -318,11 +318,11 @@ fn psr_cache_resolve_relative_ttl_or_throw(clock vphp.ZVal, ttl vphp.ZVal) !i64 
 		now_dt := psr20_now_datetime_or_throw(clock) or {
 			return error('failed to resolve clock time for TTL resolution')
 		}
-		expires_at := vphp.with_method_result_zval(now_dt, 'add', [ttl], fn (added vphp.ZVal) i64 {
+		expires_at := vphp.PhpObject.borrowed(now_dt).with_method_result_zval('add', [ttl], fn (added vphp.ZVal) i64 {
 			if !added.is_valid() || !added.is_object() {
 				return i64(-1)
 			}
-			return vphp.with_method_result_zval(added, 'getTimestamp', []vphp.ZVal{}, fn (ts vphp.ZVal) i64 {
+			return vphp.PhpObject.borrowed(added).with_method_result_zval('getTimestamp', []vphp.ZVal{}, fn (ts vphp.ZVal) i64 {
 				return ts.to_i64()
 			})
 		})
@@ -384,7 +384,7 @@ fn psr16_iterable_to_array(value vphp.ZVal) !vphp.ZVal {
 		return value
 	}
 	if value.is_object() && value.is_instance_of('Traversable') {
-		normalized := vphp.php_fn('iterator_to_array').call([value, vphp.ZVal.new_bool(true)])
+		normalized := vphp.PhpFunction.named('iterator_to_array').call([value, vphp.ZVal.new_bool(true)])
 		if normalized.is_array() {
 			return normalized
 		}
@@ -407,7 +407,7 @@ fn psr16_zval_to_key(value vphp.ZVal) !string {
 }
 
 fn throw_psr16_invalid_argument(message string) {
-	vphp.throw_exception_class('VSlim\\Psr16\\InvalidArgumentException', message, 0)
+	vphp.PhpException.raise_class('VSlim\\Psr16\\InvalidArgumentException', message, 0)
 }
 
 pub fn (cache &VSlimPsr16Cache) free() {

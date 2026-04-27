@@ -62,25 +62,25 @@ fn task_wait_callable(mut handle VSlimTaskHandle) vphp.RequestOwnedZBox {
 }
 
 fn task_wait_native(mut handle VSlimTaskHandle) vphp.RequestOwnedZBox {
-	mut result := vphp.task_wait_box(handle.async_ref)
+	mut result := handle.async_ref.wait_box()
 	defer {
 		result.release()
 	}
 	task_cache_result(mut handle, result)
-	vphp.task_release_handle(handle.async_ref)
-	handle.async_ref = unsafe { nil }
+	handle.async_ref.release()
+	handle.async_ref = vphp.PhpTaskHandle.null()
 	return handle.result_box.clone_request_owned()
 }
 
 @[php_method]
 pub fn VSlimTask.list() []string {
-	return vphp.task_names()
+	return vphp.PhpTask.names()
 }
 
 @[php_method]
 pub fn VSlimTask.spawn(target vphp.RequestBorrowedZBox, params []vphp.ZVal) &VSlimTaskHandle {
 	if !target.is_valid() || target.is_null() || target.is_undef() {
-		vphp.throw_exception_class('InvalidArgumentException', 'task target must be a callable or registered task name',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'task target must be a callable or registered task name',
 			0)
 		return &VSlimTaskHandle{}
 	}
@@ -88,9 +88,10 @@ pub fn VSlimTask.spawn(target vphp.RequestBorrowedZBox, params []vphp.ZVal) &VSl
 	mut handle := &VSlimTaskHandle{}
 	if target.is_string() {
 		task_name := target.to_string()
-		if vphp.task_exists(task_name) || !target.is_callable() {
-			async_ref := vphp.task_spawn_handle(task_name, params) or {
-				vphp.throw_exception(err.msg(), 0)
+		task := vphp.PhpTask.named(task_name)
+		if task.exists() || !target.is_callable() {
+			async_ref := task.spawn(params) or {
+				vphp.PhpException.raise(err.msg(), 0)
 				return &VSlimTaskHandle{}
 			}
 			handle.async_ref = async_ref
@@ -108,7 +109,7 @@ pub fn VSlimTask.spawn(target vphp.RequestBorrowedZBox, params []vphp.ZVal) &VSl
 		return handle
 	}
 
-	vphp.throw_exception_class('InvalidArgumentException', 'task target must be a callable or registered task name',
+	vphp.PhpException.raise_class('InvalidArgumentException', 'task target must be a callable or registered task name',
 		0)
 	return &VSlimTaskHandle{}
 }
@@ -118,7 +119,7 @@ pub fn (mut handle VSlimTaskHandle) wait() vphp.RequestOwnedZBox {
 	if handle.resolved {
 		return handle.result_box.clone_request_owned()
 	}
-	if handle.async_ref != unsafe { nil } {
+	if handle.async_ref.is_valid() {
 		return task_wait_native(mut handle)
 	}
 	if handle.callable.is_valid() && handle.callable.is_callable() {
@@ -128,8 +129,8 @@ pub fn (mut handle VSlimTaskHandle) wait() vphp.RequestOwnedZBox {
 }
 
 pub fn (mut handle VSlimTaskHandle) cleanup() {
-	if handle.async_ref != unsafe { nil } {
-		vphp.task_release_handle(handle.async_ref)
-		handle.async_ref = unsafe { nil }
+	if handle.async_ref.is_valid() {
+		handle.async_ref.release()
+		handle.async_ref = vphp.PhpTaskHandle.null()
 	}
 }

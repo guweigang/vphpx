@@ -295,7 +295,7 @@ pub fn (mut db VSlimDatabaseManager) connect() bool {
 		}
 		ok := db.database_upstream_ping() or {
 			db.last_error = err.msg()
-			vphp.throw_exception_class('RuntimeException', 'database connect failed: ${err.msg()}',
+			vphp.PhpException.raise_class('RuntimeException', 'database connect failed: ${err.msg()}',
 				0)
 			return false
 		}
@@ -308,7 +308,7 @@ pub fn (mut db VSlimDatabaseManager) connect() bool {
 	}
 	if db.config_ref.driver() != 'mysql' {
 		db.last_error = 'database driver ${db.config_ref.driver()} is not supported yet'
-		vphp.throw_exception_class('RuntimeException', db.last_error, 0)
+		vphp.PhpException.raise_class('RuntimeException', db.last_error, 0)
 		return false
 	}
 	config := mysql.Config{
@@ -321,7 +321,7 @@ pub fn (mut db VSlimDatabaseManager) connect() bool {
 	configure_database_client_plugin_dir()
 	db.mysql_pool = mysql.new_connection_pool(config, db.config_ref.pool_size_value()) or {
 		db.last_error = err.msg()
-		vphp.throw_exception_class('RuntimeException', 'database connect failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database connect failed: ${err.msg()}',
 			0)
 		return false
 	}
@@ -376,7 +376,7 @@ fn database_rows_to_box(rows []map[string]string) vphp.RequestOwnedZBox {
 		}
 		out.add_next_val(item)
 	}
-	return vphp.own_request_zbox(out)
+	return vphp.RequestOwnedZBox.of(out)
 }
 
 fn database_rows_from_mysql_rows(rows []mysql.Row) []map[string]string {
@@ -445,15 +445,15 @@ fn database_rows_with_column_names(rows []mysql.Row, column_names []string) []ma
 }
 
 fn database_exec_meta_box(affected_rows u64) vphp.RequestOwnedZBox {
-	return database_result_box_from_dyn(vphp.dyn_value_map({
-		'affected_rows': vphp.dyn_value_int(i64(affected_rows))
+	return database_result_box_from_dyn(vphp.DynValue.of_map({
+		'affected_rows': vphp.DynValue.of_int(i64(affected_rows))
 	}))
 }
 
 fn database_dyn_map_from_string_map(values map[string]string) map[string]vphp.DynValue {
 	mut out := map[string]vphp.DynValue{}
 	for key, value in values {
-		out[key] = vphp.dyn_value_string(value)
+		out[key] = vphp.DynValue.of_string(value)
 	}
 	return out
 }
@@ -461,21 +461,21 @@ fn database_dyn_map_from_string_map(values map[string]string) map[string]vphp.Dy
 fn database_params_box(params []string) vphp.RequestOwnedZBox {
 	mut values := []vphp.DynValue{}
 	for item in params {
-		values << vphp.dyn_value_string(item)
+		values << vphp.DynValue.of_string(item)
 	}
-	return database_result_box_from_dyn(vphp.dyn_value_list(values))
+	return database_result_box_from_dyn(vphp.DynValue.of_list(values))
 }
 
 fn database_params_box_from_map(values map[string]string) vphp.RequestOwnedZBox {
-	return database_result_box_from_dyn(vphp.dyn_value_map(database_dyn_map_from_string_map(values)))
+	return database_result_box_from_dyn(vphp.DynValue.of_map(database_dyn_map_from_string_map(values)))
 }
 
 fn database_string_params_box(params []string) vphp.RequestOwnedZBox {
 	mut values := []vphp.DynValue{}
 	for item in params {
-		values << vphp.dyn_value_string(item)
+		values << vphp.DynValue.of_string(item)
 	}
-	return database_result_box_from_dyn(vphp.dyn_value_list(values))
+	return database_result_box_from_dyn(vphp.DynValue.of_list(values))
 }
 
 fn database_param_from_box(value vphp.RequestBorrowedZBox) string {
@@ -528,7 +528,7 @@ pub fn (mut db VSlimDatabaseManager) database_upstream_request(op string, statem
 		mut params_box := database_string_params_box(params)
 		add_assoc_zval(payload, 'params', params_box.take_zval())
 	}
-	mut request_box := vphp.own_request_zbox(payload)
+	mut request_box := vphp.RequestOwnedZBox.of(payload)
 	defer {
 		request_box.release()
 	}
@@ -890,7 +890,7 @@ fn database_pending_wait_result(mut pending VSlimDatabasePendingResult) VSlimAsy
 fn database_pending_wait(mut pending VSlimDatabasePendingResult, kind VSlimDatabaseAsyncKind, label string) vphp.RequestOwnedZBox {
 	if pending.resolved {
 		if pending.last_error != '' {
-			vphp.throw_exception_class('RuntimeException', 'database async ${label} failed: ${pending.last_error}',
+			vphp.PhpException.raise_class('RuntimeException', 'database async ${label} failed: ${pending.last_error}',
 				0)
 			return vphp.RequestOwnedZBox.new_null()
 		}
@@ -900,7 +900,7 @@ fn database_pending_wait(mut pending VSlimDatabasePendingResult, kind VSlimDatab
 	mut response := database_pending_cache(mut pending, result, kind)
 	if pending.last_error != '' {
 		response.release()
-		vphp.throw_exception_class('RuntimeException', 'database async ${label} failed: ${pending.last_error}',
+		vphp.PhpException.raise_class('RuntimeException', 'database async ${label} failed: ${pending.last_error}',
 			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
@@ -1025,7 +1025,7 @@ pub fn (mut db VSlimDatabaseManager) execute(query string) vphp.RequestOwnedZBox
 	if db.database_uses_upstream() {
 		result := db.database_upstream_execute(query, []string{}) or {
 			db.last_error = err.msg()
-			vphp.throw_exception_class('RuntimeException', 'database execute failed: ${err.msg()}',
+			vphp.PhpException.raise_class('RuntimeException', 'database execute failed: ${err.msg()}',
 				0)
 			return vphp.RequestOwnedZBox.new_null()
 		}
@@ -1034,13 +1034,13 @@ pub fn (mut db VSlimDatabaseManager) execute(query string) vphp.RequestOwnedZBox
 	}
 	db.ensure_direct_mysql_supported() or {
 		db.last_error = err.msg()
-		vphp.throw_exception_class('RuntimeException', 'database execute failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database execute failed: ${err.msg()}',
 			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	mut conn := db.acquire_mysql_conn() or {
 		db.last_error = err.msg()
-		vphp.throw_exception_class('RuntimeException', 'database execute failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database execute failed: ${err.msg()}',
 			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
@@ -1048,7 +1048,7 @@ pub fn (mut db VSlimDatabaseManager) execute(query string) vphp.RequestOwnedZBox
 		db.last_error = err.msg()
 		reusable := !database_mysql_error_requires_discard(err.code())
 		database_finish_mysql_conn(mut db, mut conn, reusable)
-		vphp.throw_exception_class('RuntimeException', 'database execute failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database execute failed: ${err.msg()}',
 			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
@@ -1064,7 +1064,7 @@ pub fn (mut db VSlimDatabaseManager) execute(query string) vphp.RequestOwnedZBox
 pub fn (mut db VSlimDatabaseManager) execute_async(query string) &VSlimDatabasePendingResult {
 	mut job := database_async_guard(mut db, 'execute') or {
 		db.last_error = err.msg()
-		vphp.throw_exception_class('RuntimeException', db.last_error, 0)
+		vphp.PhpException.raise_class('RuntimeException', db.last_error, 0)
 		return &VSlimDatabasePendingResult{}
 	}
 	job.kind = .execute
@@ -1080,7 +1080,7 @@ pub fn (mut db VSlimDatabaseManager) execute_params(query string, params vphp.Re
 	if db.database_uses_upstream() {
 		result := db.database_upstream_execute(query, values) or {
 			db.last_error = err.msg()
-			vphp.throw_exception_class('RuntimeException', 'database execute failed: ${err.msg()}',
+			vphp.PhpException.raise_class('RuntimeException', 'database execute failed: ${err.msg()}',
 				0)
 			return vphp.RequestOwnedZBox.new_null()
 		}
@@ -1089,13 +1089,13 @@ pub fn (mut db VSlimDatabaseManager) execute_params(query string, params vphp.Re
 	}
 	db.ensure_direct_mysql_supported() or {
 		db.last_error = err.msg()
-		vphp.throw_exception_class('RuntimeException', 'database execute failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database execute failed: ${err.msg()}',
 			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	mut conn := db.acquire_mysql_conn() or {
 		db.last_error = err.msg()
-		vphp.throw_exception_class('RuntimeException', 'database execute failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database execute failed: ${err.msg()}',
 			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
@@ -1103,7 +1103,7 @@ pub fn (mut db VSlimDatabaseManager) execute_params(query string, params vphp.Re
 		db.last_error = err.msg()
 		reusable := !database_mysql_error_requires_discard(err.code())
 		database_finish_mysql_conn(mut db, mut conn, reusable)
-		vphp.throw_exception_class('RuntimeException', 'database execute failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database execute failed: ${err.msg()}',
 			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
@@ -1119,7 +1119,7 @@ pub fn (mut db VSlimDatabaseManager) execute_params(query string, params vphp.Re
 pub fn (mut db VSlimDatabaseManager) execute_params_async(query string, params vphp.RequestBorrowedZBox) &VSlimDatabasePendingResult {
 	mut job := database_async_guard(mut db, 'execute') or {
 		db.last_error = err.msg()
-		vphp.throw_exception_class('RuntimeException', db.last_error, 0)
+		vphp.PhpException.raise_class('RuntimeException', db.last_error, 0)
 		return &VSlimDatabasePendingResult{}
 	}
 	job.kind = .execute
@@ -1134,7 +1134,7 @@ pub fn (mut db VSlimDatabaseManager) query(query string) vphp.RequestOwnedZBox {
 	if db.database_uses_upstream() {
 		rows := db.database_upstream_query(query, []string{}) or {
 			db.last_error = err.msg()
-			vphp.throw_exception_class('RuntimeException', 'database query failed: ${err.msg()}',
+			vphp.PhpException.raise_class('RuntimeException', 'database query failed: ${err.msg()}',
 				0)
 			return vphp.RequestOwnedZBox.new_null()
 		}
@@ -1143,13 +1143,13 @@ pub fn (mut db VSlimDatabaseManager) query(query string) vphp.RequestOwnedZBox {
 	}
 	db.ensure_direct_mysql_supported() or {
 		db.last_error = err.msg()
-		vphp.throw_exception_class('RuntimeException', 'database query failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database query failed: ${err.msg()}',
 			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	mut conn := db.acquire_mysql_conn() or {
 		db.last_error = err.msg()
-		vphp.throw_exception_class('RuntimeException', 'database query failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database query failed: ${err.msg()}',
 			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
@@ -1157,7 +1157,7 @@ pub fn (mut db VSlimDatabaseManager) query(query string) vphp.RequestOwnedZBox {
 		db.last_error = err.msg()
 		reusable := !database_mysql_error_requires_discard(err.code())
 		database_finish_mysql_conn(mut db, mut conn, reusable)
-		vphp.throw_exception_class('RuntimeException', 'database query failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database query failed: ${err.msg()}',
 			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
@@ -1174,7 +1174,7 @@ pub fn (mut db VSlimDatabaseManager) query(query string) vphp.RequestOwnedZBox {
 pub fn (mut db VSlimDatabaseManager) query_async(query string) &VSlimDatabasePendingResult {
 	mut job := database_async_guard(mut db, 'query') or {
 		db.last_error = err.msg()
-		vphp.throw_exception_class('RuntimeException', db.last_error, 0)
+		vphp.PhpException.raise_class('RuntimeException', db.last_error, 0)
 		return &VSlimDatabasePendingResult{}
 	}
 	job.kind = .query
@@ -1190,7 +1190,7 @@ pub fn (mut db VSlimDatabaseManager) query_params(query string, params vphp.Requ
 	if db.database_uses_upstream() {
 		rows := db.database_upstream_query(query, values) or {
 			db.last_error = err.msg()
-			vphp.throw_exception_class('RuntimeException', 'database query failed: ${err.msg()}',
+			vphp.PhpException.raise_class('RuntimeException', 'database query failed: ${err.msg()}',
 				0)
 			return vphp.RequestOwnedZBox.new_null()
 		}
@@ -1199,13 +1199,13 @@ pub fn (mut db VSlimDatabaseManager) query_params(query string, params vphp.Requ
 	}
 	db.ensure_direct_mysql_supported() or {
 		db.last_error = err.msg()
-		vphp.throw_exception_class('RuntimeException', 'database query failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database query failed: ${err.msg()}',
 			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	mut conn := db.acquire_mysql_conn() or {
 		db.last_error = err.msg()
-		vphp.throw_exception_class('RuntimeException', 'database query failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database query failed: ${err.msg()}',
 			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
@@ -1213,7 +1213,7 @@ pub fn (mut db VSlimDatabaseManager) query_params(query string, params vphp.Requ
 		db.last_error = err.msg()
 		reusable := !database_mysql_error_requires_discard(err.code())
 		database_finish_mysql_conn(mut db, mut conn, reusable)
-		vphp.throw_exception_class('RuntimeException', 'database query failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database query failed: ${err.msg()}',
 			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
@@ -1228,7 +1228,7 @@ pub fn (mut db VSlimDatabaseManager) query_params(query string, params vphp.Requ
 pub fn (mut db VSlimDatabaseManager) query_params_async(query string, params vphp.RequestBorrowedZBox) &VSlimDatabasePendingResult {
 	mut job := database_async_guard(mut db, 'query') or {
 		db.last_error = err.msg()
-		vphp.throw_exception_class('RuntimeException', db.last_error, 0)
+		vphp.PhpException.raise_class('RuntimeException', db.last_error, 0)
 		return &VSlimDatabasePendingResult{}
 	}
 	job.kind = .query
@@ -1248,7 +1248,7 @@ pub fn (mut db VSlimDatabaseManager) query_one(query string) vphp.RequestOwnedZB
 	if !raw.is_array() || raw.array_count() == 0 {
 		return vphp.RequestOwnedZBox.new_null()
 	}
-	return vphp.own_request_zbox(raw.array_get(0))
+	return vphp.RequestOwnedZBox.of(raw.array_get(0))
 }
 
 @[php_method: 'queryOneParams']
@@ -1261,7 +1261,7 @@ pub fn (mut db VSlimDatabaseManager) query_one_params(query string, params vphp.
 	if !raw.is_array() || raw.array_count() == 0 {
 		return vphp.RequestOwnedZBox.new_null()
 	}
-	return vphp.own_request_zbox(raw.array_get(0))
+	return vphp.RequestOwnedZBox.of(raw.array_get(0))
 }
 
 @[php_method: 'beginTransaction']
@@ -1269,7 +1269,7 @@ pub fn (mut db VSlimDatabaseManager) begin_transaction() bool {
 	if db.database_uses_upstream() {
 		ok := db.database_upstream_begin_transaction() or {
 			db.last_error = err.msg()
-			vphp.throw_exception_class('RuntimeException', 'database begin transaction failed: ${err.msg()}',
+			vphp.PhpException.raise_class('RuntimeException', 'database begin transaction failed: ${err.msg()}',
 				0)
 			return false
 		}
@@ -1282,7 +1282,7 @@ pub fn (mut db VSlimDatabaseManager) begin_transaction() bool {
 	}
 	db.ensure_direct_mysql_supported() or {
 		db.last_error = err.msg()
-		vphp.throw_exception_class('RuntimeException', 'database begin transaction failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database begin transaction failed: ${err.msg()}',
 			0)
 		return false
 	}
@@ -1291,7 +1291,7 @@ pub fn (mut db VSlimDatabaseManager) begin_transaction() bool {
 	}
 	db.mysql_tx_conn = db.mysql_pool.acquire() or {
 		db.last_error = err.msg()
-		vphp.throw_exception_class('RuntimeException', 'database begin transaction failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database begin transaction failed: ${err.msg()}',
 			0)
 		return false
 	}
@@ -1299,7 +1299,7 @@ pub fn (mut db VSlimDatabaseManager) begin_transaction() bool {
 		database_discard_mysql_conn(mut db.mysql_tx_conn)
 		db.mysql_tx_conn = database_replace_mysql_conn(mut db) or {
 			db.last_error = 'database begin transaction failed: pooled connection is stale and reconnect failed: ${err.msg()}'
-			vphp.throw_exception_class('RuntimeException', db.last_error, 0)
+			vphp.PhpException.raise_class('RuntimeException', db.last_error, 0)
 			return false
 		}
 	}
@@ -1307,7 +1307,7 @@ pub fn (mut db VSlimDatabaseManager) begin_transaction() bool {
 		db.last_error = err.msg()
 		reusable := !database_mysql_error_requires_discard(err.code())
 		database_finish_mysql_tx_conn(mut db, reusable)
-		vphp.throw_exception_class('RuntimeException', 'database begin transaction failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database begin transaction failed: ${err.msg()}',
 			0)
 		return false
 	}
@@ -1316,12 +1316,12 @@ pub fn (mut db VSlimDatabaseManager) begin_transaction() bool {
 		reusable := !database_mysql_error_requires_discard(err.code())
 		db.mysql_tx_conn.autocommit(true) or {
 			database_finish_mysql_tx_conn(mut db, false)
-			vphp.throw_exception_class('RuntimeException', 'database begin transaction failed: ${err.msg()}',
+			vphp.PhpException.raise_class('RuntimeException', 'database begin transaction failed: ${err.msg()}',
 				0)
 			return false
 		}
 		database_finish_mysql_tx_conn(mut db, reusable)
-		vphp.throw_exception_class('RuntimeException', 'database begin transaction failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database begin transaction failed: ${err.msg()}',
 			0)
 		return false
 	}
@@ -1335,7 +1335,7 @@ pub fn (mut db VSlimDatabaseManager) commit() bool {
 	if db.database_uses_upstream() {
 		ok := db.database_upstream_commit() or {
 			db.last_error = err.msg()
-			vphp.throw_exception_class('RuntimeException', 'database commit failed: ${err.msg()}',
+			vphp.PhpException.raise_class('RuntimeException', 'database commit failed: ${err.msg()}',
 				0)
 			return false
 		}
@@ -1350,14 +1350,14 @@ pub fn (mut db VSlimDatabaseManager) commit() bool {
 		if database_mysql_error_requires_discard(err.code()) {
 			database_finish_mysql_tx_conn(mut db, false)
 		}
-		vphp.throw_exception_class('RuntimeException', 'database commit failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database commit failed: ${err.msg()}',
 			0)
 		return false
 	}
 	db.mysql_tx_conn.autocommit(true) or {
 		db.last_error = err.msg()
 		database_finish_mysql_tx_conn(mut db, false)
-		vphp.throw_exception_class('RuntimeException', 'database commit failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database commit failed: ${err.msg()}',
 			0)
 		return false
 	}
@@ -1371,7 +1371,7 @@ pub fn (mut db VSlimDatabaseManager) rollback() bool {
 	if db.database_uses_upstream() {
 		ok := db.database_upstream_rollback() or {
 			db.last_error = err.msg()
-			vphp.throw_exception_class('RuntimeException', 'database rollback failed: ${err.msg()}',
+			vphp.PhpException.raise_class('RuntimeException', 'database rollback failed: ${err.msg()}',
 				0)
 			return false
 		}
@@ -1386,14 +1386,14 @@ pub fn (mut db VSlimDatabaseManager) rollback() bool {
 		if database_mysql_error_requires_discard(err.code()) {
 			database_finish_mysql_tx_conn(mut db, false)
 		}
-		vphp.throw_exception_class('RuntimeException', 'database rollback failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database rollback failed: ${err.msg()}',
 			0)
 		return false
 	}
 	db.mysql_tx_conn.autocommit(true) or {
 		db.last_error = err.msg()
 		database_finish_mysql_tx_conn(mut db, false)
-		vphp.throw_exception_class('RuntimeException', 'database rollback failed: ${err.msg()}',
+		vphp.PhpException.raise_class('RuntimeException', 'database rollback failed: ${err.msg()}',
 			0)
 		return false
 	}
@@ -1554,7 +1554,7 @@ pub fn (query &VSlimDatabaseQuery) params() vphp.RequestOwnedZBox {
 pub fn (mut query VSlimDatabaseQuery) get() vphp.RequestOwnedZBox {
 	mut manager := query.manager_ref
 	if manager == unsafe { nil } {
-		vphp.throw_exception_class('RuntimeException', 'database query manager is not configured',
+		vphp.PhpException.raise_class('RuntimeException', 'database query manager is not configured',
 			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
@@ -1577,7 +1577,7 @@ pub fn (mut query VSlimDatabaseQuery) first() vphp.RequestOwnedZBox {
 	}
 	mut manager := first_query.manager_ref
 	if manager == unsafe { nil } {
-		vphp.throw_exception_class('RuntimeException', 'database query manager is not configured',
+		vphp.PhpException.raise_class('RuntimeException', 'database query manager is not configured',
 			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
@@ -1596,7 +1596,7 @@ pub fn (mut query VSlimDatabaseQuery) first() vphp.RequestOwnedZBox {
 pub fn (mut query VSlimDatabaseQuery) run() vphp.RequestOwnedZBox {
 	mut manager := query.manager_ref
 	if manager == unsafe { nil } {
-		vphp.throw_exception_class('RuntimeException', 'database query manager is not configured',
+		vphp.PhpException.raise_class('RuntimeException', 'database query manager is not configured',
 			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
@@ -1614,13 +1614,13 @@ pub fn (mut query VSlimDatabaseQuery) run() vphp.RequestOwnedZBox {
 @[php_method: 'insertGetId']
 pub fn (mut query VSlimDatabaseQuery) insert_get_id() i64 {
 	if query.kind != .insert {
-		vphp.throw_exception_class('InvalidArgumentException', 'insertGetId() requires an insert query',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'insertGetId() requires an insert query',
 			0)
 		return 0
 	}
 	mut manager := query.manager_ref
 	if manager == unsafe { nil } {
-		vphp.throw_exception_class('RuntimeException', 'database query manager is not configured',
+		vphp.PhpException.raise_class('RuntimeException', 'database query manager is not configured',
 			0)
 		return 0
 	}
@@ -1689,7 +1689,7 @@ pub fn (mut model VSlimDatabaseModel) fill(values vphp.RequestBorrowedZBox) &VSl
 
 @[php_method]
 pub fn (model &VSlimDatabaseModel) attributes() vphp.RequestOwnedZBox {
-	return database_result_box_from_dyn(vphp.dyn_value_map(database_dyn_map_from_string_map(model.attributes)))
+	return database_result_box_from_dyn(vphp.DynValue.of_map(database_dyn_map_from_string_map(model.attributes)))
 }
 
 @[php_arg_name: 'default_value=defaultValue']
@@ -1716,13 +1716,13 @@ pub fn (model &VSlimDatabaseModel) exists_in_database() bool {
 @[php_method: 'newQuery']
 pub fn (mut model VSlimDatabaseModel) new_query() &VSlimDatabaseQuery {
 	mut manager := model.require_manager() or {
-		vphp.throw_exception_class('RuntimeException', err.msg(), 0)
+		vphp.PhpException.raise_class('RuntimeException', err.msg(), 0)
 		mut query := &VSlimDatabaseQuery{}
 		query.construct()
 		return query
 	}
 	table := model.require_table() or {
-		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 		mut query := &VSlimDatabaseQuery{}
 		query.construct()
 		query.set_manager(manager)
@@ -1746,13 +1746,13 @@ pub fn (mut model VSlimDatabaseModel) find_query(id vphp.RequestBorrowedZBox) &V
 @[php_method: 'saveQuery']
 pub fn (mut model VSlimDatabaseModel) save_query() &VSlimDatabaseQuery {
 	mut manager := model.require_manager() or {
-		vphp.throw_exception_class('RuntimeException', err.msg(), 0)
+		vphp.PhpException.raise_class('RuntimeException', err.msg(), 0)
 		mut query := &VSlimDatabaseQuery{}
 		query.construct()
 		return query
 	}
 	table := model.require_table() or {
-		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 		mut query := &VSlimDatabaseQuery{}
 		query.construct()
 		query.set_manager(manager)
@@ -1763,7 +1763,7 @@ pub fn (mut model VSlimDatabaseModel) save_query() &VSlimDatabaseQuery {
 		mut values := model.attributes.clone()
 		primary_key := model.primary_key_name()
 		id := values[primary_key] or {
-			vphp.throw_exception_class('InvalidArgumentException', 'database model primary key `${primary_key}` is required for update',
+			vphp.PhpException.raise_class('InvalidArgumentException', 'database model primary key `${primary_key}` is required for update',
 				0)
 			return query
 		}
@@ -1791,13 +1791,13 @@ pub fn (mut model VSlimDatabaseModel) save_query() &VSlimDatabaseQuery {
 @[php_method: 'deleteQuery']
 pub fn (mut model VSlimDatabaseModel) delete_query() &VSlimDatabaseQuery {
 	mut manager := model.require_manager() or {
-		vphp.throw_exception_class('RuntimeException', err.msg(), 0)
+		vphp.PhpException.raise_class('RuntimeException', err.msg(), 0)
 		mut query := &VSlimDatabaseQuery{}
 		query.construct()
 		return query
 	}
 	table := model.require_table() or {
-		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 		mut query := &VSlimDatabaseQuery{}
 		query.construct()
 		query.set_manager(manager)
@@ -1806,7 +1806,7 @@ pub fn (mut model VSlimDatabaseModel) delete_query() &VSlimDatabaseQuery {
 	mut query := manager.table_query(table)
 	primary_key := model.primary_key_name()
 	id := model.attributes[primary_key] or {
-		vphp.throw_exception_class('InvalidArgumentException', 'database model primary key `${primary_key}` is required for delete',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'database model primary key `${primary_key}` is required for delete',
 			0)
 		return query
 	}
@@ -1889,7 +1889,7 @@ pub fn (query &VSlimDatabaseQuery) clone() VSlimDatabaseQuery {
 
 pub fn (query &VSlimDatabaseQuery) build() (string, []string) {
 	if query.table_name == '' {
-		vphp.throw_exception_class('InvalidArgumentException', 'database query table is required',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'database query table is required',
 			0)
 		return '', []string{}
 	}
@@ -1913,7 +1913,7 @@ pub fn (query &VSlimDatabaseQuery) build_select() (string, []string) {
 
 pub fn (query &VSlimDatabaseQuery) build_insert() (string, []string) {
 	if query.mutation_values.len == 0 {
-		vphp.throw_exception_class('InvalidArgumentException', 'database insert values are required',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'database insert values are required',
 			0)
 		return '', []string{}
 	}
@@ -1933,7 +1933,7 @@ pub fn (query &VSlimDatabaseQuery) build_insert() (string, []string) {
 
 pub fn (query &VSlimDatabaseQuery) build_update() (string, []string) {
 	if query.mutation_values.len == 0 {
-		vphp.throw_exception_class('InvalidArgumentException', 'database update values are required',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'database update values are required',
 			0)
 		return '', []string{}
 	}

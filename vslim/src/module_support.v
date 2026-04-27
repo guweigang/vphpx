@@ -21,7 +21,7 @@ pub fn (mod &VSlimModule) has_app() bool {
 @[php_method]
 pub fn (mod &VSlimModule) app() &VSlimApp {
 	if mod.app_ref == unsafe { nil } {
-		vphp.throw_exception_class('RuntimeException', 'module is not bound to an app', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'module is not bound to an app', 0)
 		return unsafe { nil }
 	}
 	return mod.app_ref

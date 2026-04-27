@@ -148,7 +148,7 @@ fn container_borrowed_object_value(v_ptr voidptr, ce voidptr, handlers voidptr) 
 			return none
 		}
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
-		vphp.return_borrowed_object_raw(payload.raw, v_ptr, ce, handlers)
+		vphp.PhpReturn.new(payload.raw).borrowed_object(v_ptr, ce, handlers)
 		return vphp.RequestOwnedZBox.adopt_zval(payload)
 	}
 }
@@ -218,12 +218,12 @@ pub fn (mut c VSlimContainer) get_entry_or_throw(id string) vphp.RequestOwnedZBo
 }
 
 fn throw_not_found(id string) {
-	vphp.throw_exception_class('VSlim\\Container\\NotFoundException',
+	vphp.PhpException.raise_class('VSlim\\Container\\NotFoundException',
 		'Container entry "${id}" not found', 0)
 }
 
 fn throw_container_exception(msg string) {
-	vphp.throw_exception_class('VSlim\\Container\\ContainerException', msg, 0)
+	vphp.PhpException.raise_class('VSlim\\Container\\ContainerException', msg, 0)
 }
 
 // VSlimContainer fields are automatically managed by the bridge lifecycle.

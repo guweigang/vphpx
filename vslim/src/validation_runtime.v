@@ -45,7 +45,7 @@ pub fn (mut validator VSlimValidator) validate() &VSlimValidator {
 	validator.error_map = map[string][]string{}
 	validator.validated_data = map[string]vphp.DynValue{}
 	for field, rules in validator.rule_map {
-		value := validator.input_data[field] or { vphp.dyn_value_null() }
+		value := validator.input_data[field] or { vphp.DynValue.null() }
 		present := field in validator.input_data
 		mut field_errors := []string{}
 		mut nullable := false
@@ -463,7 +463,7 @@ fn validator_string_value(value vphp.DynValue) string {
 }
 
 fn validator_dyn_map_zbox(values map[string]vphp.DynValue) vphp.RequestOwnedZBox {
-	return database_result_box_from_dyn(vphp.dyn_value_map(values))
+	return database_result_box_from_dyn(vphp.DynValue.of_map(values))
 }
 
 fn validator_errors_zbox(errors map[string][]string) vphp.RequestOwnedZBox {
@@ -471,9 +471,9 @@ fn validator_errors_zbox(errors map[string][]string) vphp.RequestOwnedZBox {
 	for key, values in errors {
 		mut items := []vphp.DynValue{}
 		for value in values {
-			items << vphp.dyn_value_string(value)
+			items << vphp.DynValue.of_string(value)
 		}
-		out[key] = vphp.dyn_value_list(items)
+		out[key] = vphp.DynValue.of_list(items)
 	}
-	return database_result_box_from_dyn(vphp.dyn_value_map(out))
+	return database_result_box_from_dyn(vphp.DynValue.of_map(out))
 }

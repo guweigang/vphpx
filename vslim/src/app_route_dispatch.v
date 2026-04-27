@@ -266,7 +266,7 @@ fn dispatch_resource_missing_meta(action string, handler vphp.RequestBorrowedZBo
 	}
 	action_z := vphp.RequestOwnedZBox.new_string(action).to_zval()
 	psr_payload := normalize_psr15_server_request_payload(request_payload, params)
-	mut result := vphp.call_request_owned_box(handler.to_zval(), [psr_payload, action_z, params_z])
+	mut result := vphp.PhpCallable.borrowed(handler.to_zval()).request_owned_box([psr_payload, action_z, params_z])
 	return result.take_zval()
 }
 

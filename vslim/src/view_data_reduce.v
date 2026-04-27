@@ -349,7 +349,7 @@ fn template_object_value(path string, objects map[string]vphp.RequestOwnedZBox) 
 }
 
 fn template_object_children(value vphp.ZVal) map[string]vphp.ZVal {
-	props := vphp.php_fn('get_object_vars').call([value])
+	props := vphp.PhpFunction.named('get_object_vars').call([value])
 	if props.is_array() {
 		mut out := map[string]vphp.ZVal{}
 		for key in props.assoc_keys() {

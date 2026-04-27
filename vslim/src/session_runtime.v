@@ -16,7 +16,7 @@ fn auth_request_with_attribute(request vphp.RequestBorrowedZBox, name string, va
 	raw_request := request.to_zval()
 	if raw_request.is_valid() && raw_request.is_object()
 		&& raw_request.method_exists('withAttribute') {
-		mut out := vphp.method_request_owned_box(raw_request, 'withAttribute', [
+		mut out := vphp.PhpObject.borrowed(raw_request).method_request_owned_box('withAttribute', [
 			vphp.RequestOwnedZBox.new_string(name).to_zval(),
 			value,
 		])
@@ -89,7 +89,7 @@ fn session_new_string_map_zval(values map[string]string) vphp.ZVal {
 }
 
 fn session_base64url_encode(raw string) string {
-	mut encoded := vphp.php_call_result_string('base64_encode', [
+	mut encoded := vphp.PhpFunction.named('base64_encode').result_string([
 		vphp.RequestOwnedZBox.new_string(raw).to_zval(),
 	])
 	encoded = encoded.replace('+', '-').replace('/', '_').replace('=', '')
@@ -105,7 +105,7 @@ fn session_base64url_decode(raw string) !string {
 	if padding > 0 {
 		normalized += '='.repeat(4 - padding)
 	}
-	mut decoded := vphp.php_call_request_owned_box('base64_decode', [
+	mut decoded := vphp.PhpFunction.named('base64_decode').request_owned_box([
 		vphp.RequestOwnedZBox.new_string(normalized).to_zval(),
 		vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 	])
@@ -122,7 +122,7 @@ fn session_base64url_decode(raw string) !string {
 }
 
 fn session_sign(payload string, secret string) string {
-	return vphp.php_call_result_string('hash_hmac', [
+	return vphp.PhpFunction.named('hash_hmac').result_string([
 		vphp.RequestOwnedZBox.new_string('sha256').to_zval(),
 		vphp.RequestOwnedZBox.new_string(payload).to_zval(),
 		vphp.RequestOwnedZBox.new_string(secret).to_zval(),
@@ -130,7 +130,7 @@ fn session_sign(payload string, secret string) string {
 }
 
 fn session_secure_equals(left string, right string) bool {
-	return vphp.php_call_result_bool('hash_equals', [
+	return vphp.PhpFunction.named('hash_equals').result_bool([
 		vphp.RequestOwnedZBox.new_string(left).to_zval(),
 		vphp.RequestOwnedZBox.new_string(right).to_zval(),
 	])
@@ -138,7 +138,7 @@ fn session_secure_equals(left string, right string) bool {
 
 fn session_encode_values(values map[string]string, secret string) string {
 	mut payload_z := session_new_string_map_zval(values)
-	payload_json := vphp.json_encode(payload_z)
+	payload_json := vphp.PhpJson.encode(payload_z)
 	payload_z.release()
 	payload_b64 := session_base64url_encode(payload_json)
 	if secret.trim_space() == '' {
@@ -168,7 +168,7 @@ fn session_decode_values(raw string, secret string) map[string]string {
 		}
 	}
 	payload_json := session_base64url_decode(payload_b64) or { return map[string]string{} }
-	mut decoded := vphp.json_decode_assoc(payload_json)
+	mut decoded := vphp.PhpJson.decode_assoc(payload_json)
 	defer {
 		decoded.release()
 	}
@@ -185,7 +185,7 @@ fn session_request_cookie(request vphp.RequestBorrowedZBox, cookie_name string) 
 	}
 	if raw_request.is_object() {
 		if raw_request.method_exists('cookie') {
-			mut out := vphp.method_request_owned_box(raw_request, 'cookie', [
+			mut out := vphp.PhpObject.borrowed(raw_request).method_request_owned_box('cookie', [
 				vphp.RequestOwnedZBox.new_string(cookie_name).to_zval(),
 			])
 			defer {
@@ -194,14 +194,14 @@ fn session_request_cookie(request vphp.RequestBorrowedZBox, cookie_name string) 
 			return out.to_zval().to_string()
 		}
 		if raw_request.method_exists('getCookieParams') {
-			mut out := vphp.method_request_owned_box(raw_request, 'getCookieParams', []vphp.ZVal{})
+			mut out := vphp.PhpObject.borrowed(raw_request).method_request_owned_box('getCookieParams', []vphp.ZVal{})
 			defer {
 				out.release()
 			}
 			return out.to_zval().to_string_map()[cookie_name] or { '' }
 		}
 		if raw_request.method_exists('cookies') {
-			mut out := vphp.method_request_owned_box(raw_request, 'cookies', []vphp.ZVal{})
+			mut out := vphp.PhpObject.borrowed(raw_request).method_request_owned_box('cookies', []vphp.ZVal{})
 			defer {
 				out.release()
 			}
@@ -220,13 +220,13 @@ fn session_request_cookie(request vphp.RequestBorrowedZBox, cookie_name string) 
 fn session_commit_cookie(mut session VSlimSessionStore, response vphp.RequestBorrowedZBox) bool {
 	raw_response := response.to_zval()
 	if !raw_response.is_valid() || !raw_response.is_object() {
-		vphp.throw_exception_class('InvalidArgumentException', 'session response must be an object',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'session response must be an object',
 			0)
 		return false
 	}
 	if session.destroyed {
 		if raw_response.method_exists('deleteCookie') {
-			vphp.with_method_result_zval(raw_response, 'deleteCookie', [
+			vphp.PhpObject.borrowed(raw_response).with_method_result_zval('deleteCookie', [
 				vphp.RequestOwnedZBox.new_string(session.cookie_name_value()).to_zval(),
 			], fn (_ vphp.ZVal) bool {
 				return true
@@ -235,7 +235,7 @@ fn session_commit_cookie(mut session VSlimSessionStore, response vphp.RequestBor
 			return true
 		}
 		if raw_response.method_exists('delete_cookie') {
-			vphp.with_method_result_zval(raw_response, 'delete_cookie', [
+			vphp.PhpObject.borrowed(raw_response).with_method_result_zval('delete_cookie', [
 				vphp.RequestOwnedZBox.new_string(session.cookie_name_value()).to_zval(),
 			], fn (_ vphp.ZVal) bool {
 				return true
@@ -243,7 +243,7 @@ fn session_commit_cookie(mut session VSlimSessionStore, response vphp.RequestBor
 			session.dirty = false
 			return true
 		}
-		vphp.throw_exception_class('RuntimeException', 'response does not support delete_cookie()',
+		vphp.PhpException.raise_class('RuntimeException', 'response does not support delete_cookie()',
 			0)
 		return false
 	}
@@ -251,7 +251,7 @@ fn session_commit_cookie(mut session VSlimSessionStore, response vphp.RequestBor
 		return true
 	}
 	if raw_response.method_exists('setCookieFull') {
-		vphp.with_method_result_zval(raw_response, 'setCookieFull', [
+		vphp.PhpObject.borrowed(raw_response).with_method_result_zval('setCookieFull', [
 			vphp.RequestOwnedZBox.new_string(session.cookie_name_value()).to_zval(),
 			vphp.RequestOwnedZBox.new_string(session_encode_values(session.values, session.secret_value())).to_zval(),
 			vphp.RequestOwnedZBox.new_string(session.path_value()).to_zval(),
@@ -267,7 +267,7 @@ fn session_commit_cookie(mut session VSlimSessionStore, response vphp.RequestBor
 		return true
 	}
 	if raw_response.method_exists('set_cookie_full') {
-		vphp.with_method_result_zval(raw_response, 'set_cookie_full', [
+		vphp.PhpObject.borrowed(raw_response).with_method_result_zval('set_cookie_full', [
 			vphp.RequestOwnedZBox.new_string(session.cookie_name_value()).to_zval(),
 			vphp.RequestOwnedZBox.new_string(session_encode_values(session.values, session.secret_value())).to_zval(),
 			vphp.RequestOwnedZBox.new_string(session.path_value()).to_zval(),
@@ -282,7 +282,7 @@ fn session_commit_cookie(mut session VSlimSessionStore, response vphp.RequestBor
 		session.dirty = false
 		return true
 	}
-	vphp.throw_exception_class('RuntimeException', 'response does not support set_cookie_full()',
+	vphp.PhpException.raise_class('RuntimeException', 'response does not support set_cookie_full()',
 		0)
 	return false
 }
@@ -638,7 +638,7 @@ pub fn (middleware &VSlimSessionStartMiddleware) process(request vphp.RequestBor
 		return new_psr7_text_response(500, 'Session middleware app is not configured')
 	}
 	mut session := app.session(request)
-	mut result := vphp.method_request_owned_box(handler.to_zval(), 'handle', [
+	mut result := vphp.PhpObject.borrowed(handler.to_zval()).method_request_owned_box('handle', [
 		request.to_zval(),
 	])
 	defer {
@@ -701,13 +701,13 @@ pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.RequestBorr
 			user.release()
 		}
 		if user.is_valid() && !user.to_zval().is_null() && !user.to_zval().is_undef() {
-			mut enriched := auth_request_with_attribute(vphp.borrow_zbox(next_request.to_zval()),
+			mut enriched := auth_request_with_attribute(vphp.RequestBorrowedZBox.of(next_request.to_zval()),
 				'auth.user', user.to_zval())
 			next_request.release()
 			next_request = enriched
 		}
 	}
-	mut result := vphp.method_request_owned_box(handler.to_zval(), 'handle', [
+	mut result := vphp.PhpObject.borrowed(handler.to_zval()).method_request_owned_box('handle', [
 		next_request.to_zval(),
 	])
 	defer {
@@ -758,7 +758,7 @@ pub fn (middleware &VSlimAuthGuestMiddleware) process(request vphp.RequestBorrow
 		}
 		return auth_guest_redirect_psr_response(redirect_path)
 	}
-	mut result := vphp.method_request_owned_box(handler.to_zval(), 'handle', [
+	mut result := vphp.PhpObject.borrowed(handler.to_zval()).method_request_owned_box('handle', [
 		request.to_zval(),
 	])
 	defer {
@@ -838,7 +838,7 @@ pub fn (middleware &VSlimAuthRequireAbilityMiddleware) process(request vphp.Requ
 		return default_error_response_psr(app, middleware.status(), middleware.message(),
 			'forbidden')
 	}
-	mut result := vphp.method_request_owned_box(handler.to_zval(), 'handle', [
+	mut result := vphp.PhpObject.borrowed(handler.to_zval()).method_request_owned_box('handle', [
 		request.to_zval(),
 	])
 	defer {

@@ -8,19 +8,19 @@ fn bootstrap_file_return_error(path string) string {
 }
 
 fn php_is_file(path string) bool {
-	return vphp.php_call_result_bool('is_file', [vphp.RequestOwnedZBox.new_string(path).to_zval()])
+	return vphp.PhpFunction.named('is_file').result_bool([vphp.RequestOwnedZBox.new_string(path).to_zval()])
 }
 
 fn php_is_dir(path string) bool {
-	return vphp.php_call_result_bool('is_dir', [vphp.RequestOwnedZBox.new_string(path).to_zval()])
+	return vphp.PhpFunction.named('is_dir').result_bool([vphp.RequestOwnedZBox.new_string(path).to_zval()])
 }
 
 fn php_join_path(base string, child string) string {
-	trimmed := vphp.php_call_result_string('rtrim', [
+	trimmed := vphp.PhpFunction.named('rtrim').result_string([
 		vphp.RequestOwnedZBox.new_string(base).to_zval(),
 		vphp.RequestOwnedZBox.new_string('/\\').to_zval(),
 	])
-	return vphp.php_call_result_string('sprintf', [
+	return vphp.PhpFunction.named('sprintf').result_string([
 		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
 		vphp.RequestOwnedZBox.new_string(trimmed).to_zval(),
 		vphp.RequestOwnedZBox.new_string(child).to_zval(),
@@ -28,7 +28,7 @@ fn php_join_path(base string, child string) string {
 }
 
 fn php_glob_paths(pattern string) []string {
-	return vphp.with_php_call_result_zval('glob', [
+	return vphp.PhpFunction.named('glob').with_result_zval([
 		vphp.RequestOwnedZBox.new_string(pattern).to_zval(),
 	], fn (result vphp.ZVal) []string {
 		if !result.is_valid() || result.is_null() || result.is_undef() || !result.is_array() {
@@ -51,7 +51,7 @@ fn php_glob_paths(pattern string) []string {
 }
 
 fn php_scandir_names(path string) []string {
-	return vphp.with_php_call_result_zval('scandir', [
+	return vphp.PhpFunction.named('scandir').with_result_zval([
 		vphp.RequestOwnedZBox.new_string(path).to_zval(),
 	], fn (result vphp.ZVal) []string {
 		if !result.is_valid() || result.is_null() || result.is_undef() || !result.is_array() {
@@ -75,14 +75,14 @@ fn php_scandir_names(path string) []string {
 }
 
 fn php_include_once(path string) vphp.ZVal {
-	return vphp.include_once(path)
+	return vphp.PhpIncludeFile.at(path).load_once()
 }
 
 fn php_class_exists(class_name string) bool {
 	if class_name.trim_space() == '' {
 		return false
 	}
-	return vphp.php_call_result_bool('class_exists', [
+	return vphp.PhpFunction.named('class_exists').result_bool([
 		vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
 		vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 	])
@@ -168,7 +168,7 @@ fn apply_bootstrap_file_result(mut app VSlimApp, path string, value vphp.ZVal) !
 		return error(bootstrap_file_return_error(path))
 	}
 	if value.is_callable() {
-		mut result := vphp.call_request_owned_box(value, [app_self_zval(&app)])
+		mut result := vphp.PhpCallable.borrowed(value).request_owned_box([app_self_zval(&app)])
 		defer {
 			result.release()
 		}
@@ -193,7 +193,7 @@ fn app_bootstrap_file_apply(mut app VSlimApp, path string) ! {
 	if clean == '' {
 		return error('bootstrap path must not be empty')
 	}
-	result := vphp.include(clean)
+	result := vphp.PhpIncludeFile.at(clean).load()
 	lower := clean.to_lower()
 	should_preload := lower.ends_with('/bootstrap/app.php')
 		|| lower.ends_with('\\bootstrap\\app.php') || lower.ends_with('/app.php')
@@ -312,7 +312,7 @@ fn apply_app_bootstrap_services(mut app VSlimApp, spec vphp.ZVal) ! {
 		if !psr20_is_clock(value) {
 			return error('bootstrap clock must implement Psr\\Clock\\ClockInterface')
 		}
-		app.set_clock(vphp.borrow_zbox(value))
+		app.set_clock(vphp.RequestBorrowedZBox.of(value))
 	}
 	if value := app_bootstrap_lookup(spec, ['logger']) {
 		logger := require_native_bootstrap_object[VSlimLogger](value, 'VSlim\\Log\\Logger',
@@ -350,8 +350,9 @@ fn apply_app_bootstrap_services(mut app VSlimApp, spec vphp.ZVal) ! {
 			defer {
 				app_z.release()
 			}
-			vphp.with_method_result_zval(app_z, 'mcp', []vphp.ZVal{}, fn [value] (mcp vphp.ZVal) bool {
-				vphp.with_call_result_zval(value, [mcp], fn (result vphp.ZVal) bool {
+			vphp.PhpObject.borrowed(app_z).with_method_result_zval('mcp', []vphp.ZVal{}, fn [value] (mcp vphp.ZVal) bool {
+				callable := vphp.PhpCallable.from_zval(value) or { return false }
+				callable.with_result_zval([mcp], fn (result vphp.ZVal) bool {
 					return result.is_valid()
 				})
 				return true
@@ -369,13 +370,13 @@ fn apply_app_bootstrap_handlers(mut app VSlimApp, spec vphp.ZVal) ! {
 		if !value.is_valid() || !value.is_callable() {
 			return error('bootstrap not_found must be callable')
 		}
-		app.set_not_found_handler(vphp.borrow_zbox(value))
+		app.set_not_found_handler(vphp.RequestBorrowedZBox.of(value))
 	}
 	if value := app_bootstrap_lookup(spec, ['error', 'error_handler', 'errorHandler']) {
 		if !value.is_valid() || !value.is_callable() {
 			return error('bootstrap error handler must be callable')
 		}
-		app.set_error_handler(vphp.borrow_zbox(value))
+		app.set_error_handler(vphp.RequestBorrowedZBox.of(value))
 	}
 }
 
@@ -387,7 +388,7 @@ fn apply_app_bootstrap_helpers(mut app VSlimApp, spec vphp.ZVal) ! {
 		if !handler.is_valid() || !handler.is_callable() {
 			return error('bootstrap helper "${key}" must be callable')
 		}
-		app.helper(key, vphp.borrow_zbox(handler))
+		app.helper(key, vphp.RequestBorrowedZBox.of(handler))
 	}
 }
 
@@ -396,9 +397,9 @@ fn apply_app_bootstrap_middleware_stack(mut app VSlimApp, spec vphp.ZVal, keys [
 	items := normalize_app_bootstrap_middleware_items(value, kind, label)!
 	for item in items {
 		match kind {
-			.standard { app.middleware(vphp.borrow_zbox(item)) }
-			.before { app.before(vphp.borrow_zbox(item)) }
-			.after { app.after(vphp.borrow_zbox(item)) }
+			.standard { app.middleware(vphp.RequestBorrowedZBox.of(item)) }
+			.before { app.before(vphp.RequestBorrowedZBox.of(item)) }
+			.after { app.after(vphp.RequestBorrowedZBox.of(item)) }
 		}
 	}
 }
@@ -410,7 +411,10 @@ fn call_app_bootstrap_hooks(spec vphp.ZVal, keys []string, app_z vphp.ZVal, labe
 		if !item.is_valid() || !item.is_callable() {
 			return error('bootstrap ${label} entries must be callable')
 		}
-		vphp.with_call_result_zval(item, [app_z], fn (result vphp.ZVal) bool {
+		callable := vphp.PhpCallable.from_zval(item) or {
+			return error('bootstrap ${label} entries must be callable')
+		}
+		callable.with_result_zval([app_z], fn (result vphp.ZVal) bool {
 			return result.is_valid()
 		})
 	}
@@ -422,7 +426,10 @@ fn call_app_bootstrap_hook_result(raw vphp.ZVal, app_z vphp.ZVal, label string) 
 		if !item.is_valid() || !item.is_callable() {
 			return error('bootstrap ${label} entries must be callable')
 		}
-		vphp.with_call_result_zval(item, [app_z], fn (result vphp.ZVal) bool {
+		callable := vphp.PhpCallable.from_zval(item) or {
+			return error('bootstrap ${label} entries must be callable')
+		}
+		callable.with_result_zval([app_z], fn (result vphp.ZVal) bool {
 			return result.is_valid()
 		})
 	}
@@ -432,7 +439,7 @@ fn apply_bootstrap_convention_providers(mut app VSlimApp, path string) !bool {
 	if !php_is_file(path) {
 		return false
 	}
-	raw := vphp.include(path)
+	raw := vphp.PhpIncludeFile.at(path).load()
 	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
 		return error('bootstrap providers file "${path}" must return iterable providers')
 	}
@@ -447,7 +454,7 @@ fn apply_bootstrap_convention_modules(mut app VSlimApp, path string) !bool {
 	if !php_is_file(path) {
 		return false
 	}
-	raw := vphp.include(path)
+	raw := vphp.PhpIncludeFile.at(path).load()
 	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
 		return error('bootstrap modules file "${path}" must return iterable modules')
 	}
@@ -462,7 +469,7 @@ fn apply_bootstrap_convention_hooks(path string, app_z vphp.ZVal, label string) 
 	if !php_is_file(path) {
 		return false
 	}
-	raw := vphp.include(path)
+	raw := vphp.PhpIncludeFile.at(path).load()
 	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
 		return error('bootstrap ${label} file "${path}" must return callable or callable list')
 	}
@@ -553,7 +560,7 @@ fn apply_bootstrap_convention_provider_classes(mut app VSlimApp, project_root st
 		if !php_class_exists(class_name) {
 			return error('provider convention file "${file}" must declare class ${class_name}')
 		}
-		app.register(vphp.borrow_zbox(vphp.RequestOwnedZBox.new_string(class_name).to_zval()))
+		app.register(vphp.RequestBorrowedZBox.of(vphp.RequestOwnedZBox.new_string(class_name).to_zval()))
 		applied = true
 	}
 	return applied
@@ -567,7 +574,7 @@ fn apply_bootstrap_convention_module_classes(mut app VSlimApp, project_root stri
 		if !php_class_exists(class_name) {
 			return error('module convention file "${file}" must declare class ${class_name}')
 		}
-		app.mount_module(vphp.borrow_zbox(vphp.RequestOwnedZBox.new_string(class_name).to_zval()))
+		app.mount_module(vphp.RequestBorrowedZBox.of(vphp.RequestOwnedZBox.new_string(class_name).to_zval()))
 		applied = true
 	}
 	return applied
@@ -577,7 +584,7 @@ fn bootstrap_controller_declares_own_constructor(class_name string) bool {
 	if class_name.trim_space() == '' || !php_class_exists(class_name) {
 		return false
 	}
-	ref := vphp.php_class('ReflectionClass').construct([
+	ref := vphp.PhpClass.named('ReflectionClass').construct([
 		vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
 	])
 	if !ref.is_valid() || !ref.is_object() {
@@ -605,13 +612,13 @@ fn apply_bootstrap_convention_http_classes(mut app VSlimApp, project_root string
 			return error('controller convention file "${file}" must declare class ${class_name}')
 		}
 		if !container.has(class_name)
-			&& vphp.php_class(class_name).is_subclass_of('VSlim\\Controller')
+			&& vphp.PhpClass.named(class_name).is_subclass_of('VSlim\\Controller')
 			&& !bootstrap_controller_declares_own_constructor(class_name) {
-			controller := vphp.php_class(class_name).construct([app_z])
+			controller := vphp.PhpClass.named(class_name).construct([app_z])
 			if !controller.is_valid() || !controller.is_object() {
 				return error('controller class "${class_name}" could not be instantiated')
 			}
-			container.set(class_name, vphp.borrow_zbox(controller))
+			container.set(class_name, vphp.RequestBorrowedZBox.of(controller))
 		}
 		applied = true
 	}
@@ -630,12 +637,15 @@ fn apply_bootstrap_convention_spec(mut app VSlimApp, path string, label string) 
 	if !php_is_file(path) {
 		return false
 	}
-	raw := vphp.include(path)
+	raw := vphp.PhpIncludeFile.at(path).load()
 	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
 		return error('bootstrap ${label} file "${path}" must return iterable spec or callable')
 	}
 	if raw.is_callable() {
-		vphp.with_call_result_zval(raw, [app_self_zval(&app)], fn (result vphp.ZVal) bool {
+		callable := vphp.PhpCallable.from_zval(raw) or {
+			return error('bootstrap ${label} file "${path}" must return callable')
+		}
+		callable.with_result_zval([app_self_zval(&app)], fn (result vphp.ZVal) bool {
 			return result.is_valid()
 		})
 		return true
@@ -786,7 +796,7 @@ fn apply_app_bootstrap_spec(mut app VSlimApp, spec vphp.ZVal) ! {
 @[php_method]
 pub fn (mut app VSlimApp) bootstrap(spec vphp.PhpIterable) &VSlimApp {
 	apply_app_bootstrap_spec(mut app, spec.to_zval()) or {
-		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 		return &app
 	}
 	return &app
@@ -795,7 +805,7 @@ pub fn (mut app VSlimApp) bootstrap(spec vphp.PhpIterable) &VSlimApp {
 @[php_method: 'bootstrapFile']
 pub fn (mut app VSlimApp) bootstrap_file(path string) &VSlimApp {
 	app_bootstrap_file_apply(mut app, path) or {
-		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 		return &app
 	}
 	return &app
@@ -805,7 +815,7 @@ pub fn (mut app VSlimApp) bootstrap_file(path string) &VSlimApp {
 pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 	clean := normalize_bootstrap_dir_path(path)
 	if clean == '' {
-		vphp.throw_exception_class('InvalidArgumentException', 'bootstrap directory must not be empty',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'bootstrap directory must not be empty',
 			0)
 		return &app
 	}
@@ -813,7 +823,7 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 		preload_bootstrap_project_classes(clean)
 	}
 	if clean.ends_with('.php') && php_is_file(clean) {
-		result := vphp.include(clean)
+		result := vphp.PhpIncludeFile.at(clean).load()
 		lower := clean.to_lower()
 		should_preload := lower.ends_with('/bootstrap/app.php')
 			|| lower.ends_with('\\bootstrap\\app.php') || lower.ends_with('/app.php')
@@ -829,14 +839,14 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 			}
 		}
 		apply_bootstrap_file_result(mut app, clean, result) or {
-			vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+			vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 			return &app
 		}
 		return &app
 	}
 	bootstrap_candidate := clean + '/bootstrap/app.php'
 	if php_is_file(bootstrap_candidate) {
-		result := vphp.include(bootstrap_candidate)
+		result := vphp.PhpIncludeFile.at(bootstrap_candidate).load()
 		project_root := if is_bootstrap_dir_path(path_dirname(bootstrap_candidate)) {
 			path_dirname(path_dirname(bootstrap_candidate))
 		} else {
@@ -846,14 +856,14 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 			preload_bootstrap_spec_classes(project_root, result)
 		}
 		apply_bootstrap_file_result(mut app, bootstrap_candidate, result) or {
-			vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+			vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 			return &app
 		}
 		return &app
 	}
 	app_candidate := clean + '/app.php'
 	if php_is_file(app_candidate) {
-		result := vphp.include(app_candidate)
+		result := vphp.PhpIncludeFile.at(app_candidate).load()
 		project_root := if is_bootstrap_dir_path(path_dirname(app_candidate)) {
 			path_dirname(path_dirname(app_candidate))
 		} else {
@@ -863,13 +873,13 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 			preload_bootstrap_spec_classes(project_root, result)
 		}
 		apply_bootstrap_file_result(mut app, app_candidate, result) or {
-			vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+			vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 			return &app
 		}
 		return &app
 	}
 	apply_bootstrap_conventions(mut app, clean) or {
-		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 		return &app
 	}
 	return &app

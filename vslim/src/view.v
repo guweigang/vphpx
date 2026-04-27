@@ -56,7 +56,7 @@ pub fn (mut app VSlimApp) clear_view_cache() &VSlimApp {
 pub fn (mut app VSlimApp) helper(name string, handler vphp.RequestBorrowedZBox) &VSlimApp {
 	key := name.trim_space()
 	if key == '' || !handler.is_valid() || !handler.is_callable() {
-		vphp.throw_exception_class('InvalidArgumentException', 'view helper must be callable', 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'view helper must be callable', 0)
 		return &app
 	}
 	ensure_view_helper_map(mut app.view_helpers)
@@ -227,7 +227,7 @@ pub fn (mut view VSlimView) clear_cache() &VSlimView {
 pub fn (mut view VSlimView) helper(name string, handler vphp.RequestBorrowedZBox) &VSlimView {
 	key := name.trim_space()
 	if key == '' || !handler.is_valid() || !handler.is_callable() {
-		vphp.throw_exception_class('InvalidArgumentException', 'view helper must be callable', 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'view helper must be callable', 0)
 		return &view
 	}
 	ensure_view_helper_map(mut view.helpers)

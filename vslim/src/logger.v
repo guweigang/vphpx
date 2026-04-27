@@ -392,7 +392,7 @@ pub fn (mut logger VSlimPsrLogger) log(level vphp.RequestBorrowedZBox, message v
 	mut inner := logger.logger()
 	level_name := zval_to_log_message(level.to_zval())
 	if !is_valid_psr3_level(level_name) {
-		vphp.throw_exception_class('InvalidArgumentException', 'invalid PSR-3 log level: ' + level_name, 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'invalid PSR-3 log level: ' + level_name, 0)
 		return
 	}
 	inner.log_context(level_name, zval_to_log_message(message.to_zval()), default_context)

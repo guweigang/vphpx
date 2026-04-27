@@ -241,12 +241,12 @@ pub fn (r &VSlimRequest) parse_error() string {
 	if body == '' {
 		return ''
 	}
-		_ = vphp.json_decode_assoc(body)
-		err_code := vphp.json_last_error_code()
+		_ = vphp.PhpJson.decode_assoc(body)
+		err_code := vphp.PhpJson.last_error_code()
 		if err_code == 0 {
 			return ''
 		}
-		err_msg := vphp.json_last_error_message()
+		err_msg := vphp.PhpJson.last_error_message()
 		if err_msg == '' {
 			return 'invalid JSON body'
 		}
@@ -466,7 +466,7 @@ fn (r &VSlimRequest) parsed_body_values() map[string]string {
 		content_type := raw_content_type.to_lower()
 		is_json := content_type.contains('application/json') || body.starts_with('{') || body.starts_with('[')
 		if is_json {
-			decoded := vphp.json_decode_assoc(body)
+			decoded := vphp.PhpJson.decode_assoc(body)
 			if decoded.is_array() {
 				return decoded.to_string_map()
 			}

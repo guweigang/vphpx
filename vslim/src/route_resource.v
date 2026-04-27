@@ -127,8 +127,8 @@ fn make_resource_handler(controller string, action string) vphp.ZVal {
 	if controller.trim_space() == '' || action.trim_space() == '' {
 		return vphp.ZVal.new_null()
 	}
-	if vphp.class_exists(controller) {
-		exists := vphp.php_call_result_bool('method_exists', [
+	if vphp.PhpClass.named(controller).exists() {
+		exists := vphp.PhpFunction.named('method_exists').result_bool([
 			vphp.RequestOwnedZBox.new_string(controller).to_zval(),
 			vphp.RequestOwnedZBox.new_string(action).to_zval(),
 		])

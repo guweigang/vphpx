@@ -87,7 +87,7 @@ fn vslim_trace_mem_should_log(app &VSlimApp) bool {
 }
 
 fn vslim_mem_usage_bytes() i64 {
-	return vphp.with_php_call_result_zval('memory_get_usage', [vphp.RequestOwnedZBox.new_bool(true).to_zval()], fn (val vphp.ZVal) i64 {
+	return vphp.PhpFunction.named('memory_get_usage').with_result_zval([vphp.RequestOwnedZBox.new_bool(true).to_zval()], fn (val vphp.ZVal) i64 {
 		if !val.is_valid() || val.is_null() || val.is_undef() {
 			return -1
 		}
@@ -114,7 +114,7 @@ fn vslim_trace_mem_log(app &VSlimApp, req &VSlimRequest, stage string, base_byte
 	context['obj_reg'] = '${counters.obj_registry_len}'
 	context['rev_reg'] = '${counters.rev_registry_len}'
 	mut logger := resolve_app_logger(app)
-	logger.debug_context('memory trace', vphp.borrow_zbox(vphp.new_zval_from[map[string]string](context) or {
+	logger.debug_context('memory trace', vphp.RequestBorrowedZBox.of(vphp.new_zval_from[map[string]string](context) or {
 		vphp.ZVal.new_null()
 	}))
 }
@@ -136,24 +136,24 @@ fn resolve_app_clock_zval(app &VSlimApp) vphp.ZVal {
 fn probe_object_info(obj vphp.RequestBorrowedZBox, class_name string, method_name string) vphp.RequestOwnedZBox {
 	raw := obj.to_zval()
 	if !raw.is_object() {
-		return vphp.own_request_zbox(vphp.new_zval_from[map[string]string]({
+		return vphp.RequestOwnedZBox.of(vphp.new_zval_from[map[string]string]({
 			'is_object': 'false'
 		}) or {
 			vphp.ZVal.new_null()
 		})
 	}
-	return vphp.own_request_zbox(vphp.new_zval_from[map[string]string]({
+	return vphp.RequestOwnedZBox.of(vphp.new_zval_from[map[string]string]({
 		'is_object': raw.is_object().str()
 		'class': raw.class_name()
 		'is_instance_of': raw.is_instance_of(class_name).str()
 		'is_subclass_of': raw.is_subclass_of(class_name).str()
 		'method_exists': raw.method_exists(method_name).str()
-		'php_is_a': vphp.php_fn('is_a').call([
+		'php_is_a': vphp.PhpFunction.named('is_a').call([
 			raw,
 			vphp.ZVal.new_string(class_name),
 			vphp.ZVal.new_bool(true),
 		]).to_bool().str()
-		'php_method_exists': vphp.php_fn('method_exists').call([
+		'php_method_exists': vphp.PhpFunction.named('method_exists').call([
 			raw,
 			vphp.ZVal.new_string(method_name),
 		]).to_bool().str()

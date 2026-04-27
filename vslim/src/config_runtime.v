@@ -19,12 +19,12 @@ pub fn (mut c VSlimConfig) load(path string) &VSlimConfig {
 		return c.load_dir(path)
 	}
 	doc := toml.parse_file(path) or {
-		vphp.throw_exception_class('InvalidArgumentException', 'config load failed: ${err.msg()}',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'config load failed: ${err.msg()}',
 			0)
 		return &c
 	}
 	root := resolve_config_env_any(doc.to_any()) or {
-		vphp.throw_exception_class('InvalidArgumentException',
+		vphp.PhpException.raise_class('InvalidArgumentException',
 			'config env resolve failed: ${err.msg()}', 0)
 		return &c
 	}
@@ -37,19 +37,19 @@ pub fn (mut c VSlimConfig) load(path string) &VSlimConfig {
 @[php_method: 'loadDir']
 pub fn (mut c VSlimConfig) load_dir(path string) &VSlimConfig {
 	files := config_dir_files(path) or {
-		vphp.throw_exception_class('InvalidArgumentException', 'config load failed: ${err.msg()}',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'config load failed: ${err.msg()}',
 			0)
 		return &c
 	}
 	mut root := toml.Any(toml.null)
 	for file in files {
 		doc := toml.parse_file(file) or {
-			vphp.throw_exception_class('InvalidArgumentException',
+			vphp.PhpException.raise_class('InvalidArgumentException',
 				'config load failed: ${err.msg()}', 0)
 			return &c
 		}
 		resolved := resolve_config_env_any(doc.to_any()) or {
-			vphp.throw_exception_class('InvalidArgumentException',
+			vphp.PhpException.raise_class('InvalidArgumentException',
 				'config env resolve failed: ${err.msg()}', 0)
 			return &c
 		}
@@ -64,12 +64,12 @@ pub fn (mut c VSlimConfig) load_dir(path string) &VSlimConfig {
 @[php_method: 'loadText']
 pub fn (mut c VSlimConfig) load_text(text string) &VSlimConfig {
 	doc := toml.parse_text(text) or {
-		vphp.throw_exception_class('InvalidArgumentException', 'config parse failed: ${err.msg()}',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'config parse failed: ${err.msg()}',
 			0)
 		return &c
 	}
 	root := resolve_config_env_any(doc.to_any()) or {
-		vphp.throw_exception_class('InvalidArgumentException',
+		vphp.PhpException.raise_class('InvalidArgumentException',
 			'config env resolve failed: ${err.msg()}', 0)
 		return &c
 	}
@@ -85,12 +85,12 @@ pub fn (mut c VSlimConfig) merge_file(path string) &VSlimConfig {
 		return c.merge_dir(path)
 	}
 	doc := toml.parse_file(path) or {
-		vphp.throw_exception_class('InvalidArgumentException', 'config load failed: ${err.msg()}',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'config load failed: ${err.msg()}',
 			0)
 		return &c
 	}
 	resolved := resolve_config_env_any(doc.to_any()) or {
-		vphp.throw_exception_class('InvalidArgumentException',
+		vphp.PhpException.raise_class('InvalidArgumentException',
 			'config env resolve failed: ${err.msg()}', 0)
 		return &c
 	}
@@ -101,18 +101,18 @@ pub fn (mut c VSlimConfig) merge_file(path string) &VSlimConfig {
 @[php_method: 'mergeDir']
 pub fn (mut c VSlimConfig) merge_dir(path string) &VSlimConfig {
 	files := config_dir_files(path) or {
-		vphp.throw_exception_class('InvalidArgumentException', 'config load failed: ${err.msg()}',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'config load failed: ${err.msg()}',
 			0)
 		return &c
 	}
 	for file in files {
 		doc := toml.parse_file(file) or {
-			vphp.throw_exception_class('InvalidArgumentException',
+			vphp.PhpException.raise_class('InvalidArgumentException',
 				'config load failed: ${err.msg()}', 0)
 			return &c
 		}
 		resolved := resolve_config_env_any(doc.to_any()) or {
-			vphp.throw_exception_class('InvalidArgumentException',
+			vphp.PhpException.raise_class('InvalidArgumentException',
 				'config env resolve failed: ${err.msg()}', 0)
 			return &c
 		}
@@ -124,12 +124,12 @@ pub fn (mut c VSlimConfig) merge_dir(path string) &VSlimConfig {
 @[php_method: 'mergeText']
 pub fn (mut c VSlimConfig) merge_text(text string) &VSlimConfig {
 	doc := toml.parse_text(text) or {
-		vphp.throw_exception_class('InvalidArgumentException', 'config parse failed: ${err.msg()}',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'config parse failed: ${err.msg()}',
 			0)
 		return &c
 	}
 	resolved := resolve_config_env_any(doc.to_any()) or {
-		vphp.throw_exception_class('InvalidArgumentException',
+		vphp.PhpException.raise_class('InvalidArgumentException',
 			'config env resolve failed: ${err.msg()}', 0)
 		return &c
 	}
@@ -212,11 +212,11 @@ pub fn (c &VSlimConfig) get(key string, default_value vphp.RequestBorrowedZBox) 
 	raw_default := default_value.to_zval()
 	value := c.value_opt(key) or {
 		if raw_default.is_valid() {
-			return vphp.own_request_zbox(raw_default)
+			return vphp.RequestOwnedZBox.of(raw_default)
 		}
 		return vphp.RequestOwnedZBox.new_null()
 	}
-	return vphp.own_request_zbox(toml_any_to_zval(value))
+	return vphp.RequestOwnedZBox.of(toml_any_to_zval(value))
 }
 
 @[php_arg_name: 'default_value=defaultValue']
@@ -226,14 +226,14 @@ pub fn (c &VSlimConfig) get(key string, default_value vphp.RequestBorrowedZBox) 
 pub fn (c &VSlimConfig) get_map(key string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	raw_default := default_value.to_zval()
 	value := c.value_opt(key) or {
-		return vphp.own_request_zbox(default_or_empty(raw_default))
+		return vphp.RequestOwnedZBox.of(default_or_empty(raw_default))
 	}
 	match value {
 		map[string]toml.Any {
-			return vphp.own_request_zbox(toml_map_to_zval(value))
+			return vphp.RequestOwnedZBox.of(toml_map_to_zval(value))
 		}
 		else {
-			return vphp.own_request_zbox(default_or_empty(raw_default))
+			return vphp.RequestOwnedZBox.of(default_or_empty(raw_default))
 		}
 	}
 }
@@ -245,14 +245,14 @@ pub fn (c &VSlimConfig) get_map(key string, default_value vphp.RequestBorrowedZB
 pub fn (c &VSlimConfig) get_list(key string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	raw_default := default_value.to_zval()
 	value := c.value_opt(key) or {
-		return vphp.own_request_zbox(default_or_empty(raw_default))
+		return vphp.RequestOwnedZBox.of(default_or_empty(raw_default))
 	}
 	match value {
 		[]toml.Any {
-			return vphp.own_request_zbox(toml_list_to_zval(value))
+			return vphp.RequestOwnedZBox.of(toml_list_to_zval(value))
 		}
 		else {
-			return vphp.own_request_zbox(default_or_empty(raw_default))
+			return vphp.RequestOwnedZBox.of(default_or_empty(raw_default))
 		}
 	}
 }
@@ -320,16 +320,16 @@ fn toml_any_to_json(value toml.Any) string {
 			return '${value}'
 		}
 		string {
-			return vphp.json_encode(vphp.RequestOwnedZBox.new_string(value).to_zval())
+			return vphp.PhpJson.encode(vphp.RequestOwnedZBox.new_string(value).to_zval())
 		}
 		toml.Date {
-			return vphp.json_encode(vphp.RequestOwnedZBox.new_string(value.str()).to_zval())
+			return vphp.PhpJson.encode(vphp.RequestOwnedZBox.new_string(value.str()).to_zval())
 		}
 		toml.Time {
-			return vphp.json_encode(vphp.RequestOwnedZBox.new_string(value.str()).to_zval())
+			return vphp.PhpJson.encode(vphp.RequestOwnedZBox.new_string(value.str()).to_zval())
 		}
 		toml.DateTime {
-			return vphp.json_encode(vphp.RequestOwnedZBox.new_string(value.str()).to_zval())
+			return vphp.PhpJson.encode(vphp.RequestOwnedZBox.new_string(value.str()).to_zval())
 		}
 		map[string]toml.Any {
 			return toml_map_to_json(value)
@@ -342,7 +342,7 @@ fn toml_any_to_json(value toml.Any) string {
 }
 
 fn toml_json_string(value string) string {
-	return vphp.json_encode(vphp.RequestOwnedZBox.new_string(value).to_zval())
+	return vphp.PhpJson.encode(vphp.RequestOwnedZBox.new_string(value).to_zval())
 }
 
 fn toml_map_to_json(input map[string]toml.Any) string {

@@ -72,7 +72,7 @@ pub fn (mut app VSlimApp) live_ws(handler vphp.RequestBorrowedZBox, frame vphp.R
 	if event == '' {
 		return vphp.RequestOwnedZBox.new_null()
 	}
-	return vphp.own_request_zbox(dispatch_live_websocket_handler(mut app, handler.to_zval(),
+	return vphp.RequestOwnedZBox.of(dispatch_live_websocket_handler(mut app, handler.to_zval(),
 		event, frame.to_zval(), conn.to_zval()))
 }
 

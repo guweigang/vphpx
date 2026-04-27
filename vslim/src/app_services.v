@@ -9,7 +9,7 @@ fn zval_to_json_fragment(value vphp.ZVal) string {
 	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return 'null'
 	}
-	return vphp.json_encode(value)
+	return vphp.PhpJson.encode(value)
 }
 
 fn exception_class_name(exception vphp.RequestBorrowedZBox) string {
@@ -25,7 +25,7 @@ fn exception_message_value(exception vphp.RequestBorrowedZBox, fallback string) 
 	if !raw.is_valid() || !raw.is_object() || !raw.method_exists('getMessage') {
 		return fallback
 	}
-	mut out := vphp.method_request_owned_box(raw, 'getMessage', []vphp.ZVal{})
+	mut out := vphp.PhpObject.borrowed(raw).method_request_owned_box('getMessage', []vphp.ZVal{})
 	defer {
 		out.release()
 	}
@@ -40,7 +40,7 @@ fn exception_status_code(exception vphp.RequestBorrowedZBox, fallback_status int
 	message := exception_message_value(exception, '').to_lower()
 	raw := exception.to_zval()
 	if raw.is_valid() && raw.is_object() && raw.method_exists('getCode') {
-		mut out := vphp.method_request_owned_box(raw, 'getCode', []vphp.ZVal{})
+		mut out := vphp.PhpObject.borrowed(raw).method_request_owned_box('getCode', []vphp.ZVal{})
 		defer {
 			out.release()
 		}
@@ -255,7 +255,7 @@ pub fn (app &VSlimApp) auth(request vphp.RequestBorrowedZBox) &VSlimAuthSessionG
 @[php_method: 'setAuthUserResolver']
 pub fn (mut app VSlimApp) set_auth_user_resolver(resolver vphp.RequestBorrowedZBox) &VSlimApp {
 	if !resolver.is_valid() || !resolver.is_callable() {
-		vphp.throw_exception_class('InvalidArgumentException', 'auth user resolver must be callable',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'auth user resolver must be callable',
 			0)
 		return &app
 	}
@@ -277,7 +277,7 @@ pub fn (mut app VSlimApp) set_auth_user_provider(provider vphp.RequestBorrowedZB
 		app.auth_user_resolver = vphp.PersistentOwnedZBox.from_object_zval(raw)
 		return &app
 	}
-	vphp.throw_exception_class('InvalidArgumentException',
+	vphp.PhpException.raise_class('InvalidArgumentException',
 		'auth user provider must be callable or an object with findById()/resolve()', 0)
 	return &app
 }
@@ -285,7 +285,7 @@ pub fn (mut app VSlimApp) set_auth_user_provider(provider vphp.RequestBorrowedZB
 @[php_method: 'setAuthGateResolver']
 pub fn (mut app VSlimApp) set_auth_gate_resolver(resolver vphp.RequestBorrowedZBox) &VSlimApp {
 	if !resolver.is_valid() || !resolver.is_callable() {
-		vphp.throw_exception_class('InvalidArgumentException', 'auth gate resolver must be callable',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'auth gate resolver must be callable',
 			0)
 		return &app
 	}
@@ -346,12 +346,12 @@ pub fn (app &VSlimApp) resolve_auth_user(user_id string) vphp.RequestOwnedZBox {
 	value := provider.to_zval()
 	if value.is_valid() && value.is_object() {
 		if value.method_exists('findById') {
-			return vphp.method_request_owned_box(value, 'findById', [
+			return vphp.PhpObject.borrowed(value).method_request_owned_box('findById', [
 				vphp.RequestOwnedZBox.new_string(normalized_id).to_zval(),
 			])
 		}
 		if value.method_exists('resolve') {
-			return vphp.method_request_owned_box(value, 'resolve', [
+			return vphp.PhpObject.borrowed(value).method_request_owned_box('resolve', [
 				vphp.RequestOwnedZBox.new_string(normalized_id).to_zval(),
 			])
 		}
@@ -843,7 +843,7 @@ fn configure_default_auth_settings(mut app VSlimApp, config &VSlimConfig) {
 }
 
 fn (mut app VSlimApp) sync_clock_dependent_services() {
-	clock_value := vphp.borrow_zbox(app.clock().to_zval())
+	clock_value := vphp.RequestBorrowedZBox.of(app.clock().to_zval())
 	if app.cache_ref != unsafe { nil } {
 		app.cache_ref.set_clock(clock_value)
 	}
@@ -890,7 +890,7 @@ pub fn (app &VSlimApp) has_logger() bool {
 @[php_method: 'setClock']
 pub fn (mut app VSlimApp) set_clock(clock vphp.RequestBorrowedZBox) &VSlimApp {
 	if !psr20_is_clock(clock.to_zval()) {
-		vphp.throw_exception_class('InvalidArgumentException', 'clock must implement Psr\\Clock\\ClockInterface',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'clock must implement Psr\\Clock\\ClockInterface',
 			0)
 		return app
 	}
@@ -1012,7 +1012,7 @@ pub fn (mut app VSlimApp) events() &VSlimPsr14EventDispatcher {
 pub fn (mut app VSlimApp) set_cache(cache &VSlimPsr16Cache) &VSlimApp {
 	unsafe {
 		mut writable := &VSlimPsr16Cache(cache)
-		writable.set_clock(vphp.borrow_zbox(app.clock().to_zval()))
+		writable.set_clock(vphp.RequestBorrowedZBox.of(app.clock().to_zval()))
 	}
 	app.cache_ref = cache
 	app.sync_cache_services_to_container()
@@ -1025,7 +1025,7 @@ pub fn (mut app VSlimApp) cache() &VSlimPsr16Cache {
 	if app.cache_ref == unsafe { nil } {
 		mut created := &VSlimPsr16Cache{}
 		created.construct()
-		created.set_clock(vphp.borrow_zbox(app.clock().to_zval()))
+		created.set_clock(vphp.RequestBorrowedZBox.of(app.clock().to_zval()))
 		configure_default_simple_cache(mut created, app.config_ref)
 		app.cache_ref = created
 	}
@@ -1037,7 +1037,7 @@ pub fn (mut app VSlimApp) cache() &VSlimPsr16Cache {
 pub fn (mut app VSlimApp) set_cache_pool(pool &VSlimPsr6CacheItemPool) &VSlimApp {
 	unsafe {
 		mut writable := &VSlimPsr6CacheItemPool(pool)
-		writable.set_clock(vphp.borrow_zbox(app.clock().to_zval()))
+		writable.set_clock(vphp.RequestBorrowedZBox.of(app.clock().to_zval()))
 	}
 	app.cache_pool_ref = pool
 	app.sync_cache_services_to_container()
@@ -1050,7 +1050,7 @@ pub fn (mut app VSlimApp) cache_pool() &VSlimPsr6CacheItemPool {
 	if app.cache_pool_ref == unsafe { nil } {
 		mut created := &VSlimPsr6CacheItemPool{}
 		created.construct()
-		created.set_clock(vphp.borrow_zbox(app.clock().to_zval()))
+		created.set_clock(vphp.RequestBorrowedZBox.of(app.clock().to_zval()))
 		configure_default_cache_pool(mut created, app.config_ref)
 		app.cache_pool_ref = created
 	}

@@ -907,7 +907,7 @@ struct VSlimTask {}
 @[heap]
 struct VSlimTaskHandle {
 mut:
-	async_ref &vphp.AsyncResult = unsafe { nil } @[php_ignore]
+	async_ref vphp.PhpTaskHandle = vphp.PhpTaskHandle.null() @[php_ignore]
 	// Task handles are request-scoped PHP objects, but the callable / params /
 	// cached result must outlive the spawn() stack frame and survive until a
 	// later wait() or object cleanup(). We therefore retain them with

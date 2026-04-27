@@ -23,7 +23,7 @@ pub fn (mut app VSlimApp) after(handler vphp.RequestBorrowedZBox) &VSlimApp {
 @[php_method: 'setNotFoundHandler']
 pub fn (mut app VSlimApp) set_not_found_handler(handler vphp.RequestBorrowedZBox) &VSlimApp {
 	if !handler.is_valid() || !handler.is_callable() {
-		vphp.throw_exception_class('InvalidArgumentException', 'not_found handler must be callable',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'not_found handler must be callable',
 			0)
 		return app
 	}
@@ -38,7 +38,7 @@ pub fn (mut app VSlimApp) not_found(handler vphp.RequestBorrowedZBox) &VSlimApp 
 @[php_method: 'setErrorHandler']
 pub fn (mut app VSlimApp) set_error_handler(handler vphp.RequestBorrowedZBox) &VSlimApp {
 	if !handler.is_valid() || !handler.is_callable() {
-		vphp.throw_exception_class('InvalidArgumentException', 'error handler must be callable',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'error handler must be callable',
 			0)
 		return app
 	}
