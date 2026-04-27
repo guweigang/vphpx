@@ -1308,13 +1308,16 @@ pub fn (f &VSlimPsr17ServerRequestFactory) create_server_request(method vphp.Req
 		'GET'), uri.to_zval(), default_server_params.to_zval())
 }
 
-@[php_arg_name: 'default_status=defaultStatus,default_reason_phrase=defaultReasonPhrase']
-@[php_arg_default: 'default_status=200,default_reason_phrase=""']
+@[params]
+struct VSlimPsr17CreateResponseParams {
+	status        int    = 200
+	reason_phrase string = ''
+}
+
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_arg_optional: 'default_status,default_reason_phrase']
 @[php_method: 'createResponse']
-pub fn (f &VSlimPsr17ResponseFactory) create_response(default_status vphp.RequestBorrowedZBox, default_reason_phrase vphp.RequestBorrowedZBox) &VSlimPsr7Response {
-	status := validate_psr17_response_status_or_throw(zval_to_psr17_response_status(default_status.to_zval())) or {
+pub fn (f &VSlimPsr17ResponseFactory) create_response(params VSlimPsr17CreateResponseParams) &VSlimPsr7Response {
+	status := validate_psr17_response_status_or_throw(params.status) or {
 		return &VSlimPsr7Response{
 			status:           200
 			reason_phrase:    'OK'
@@ -1325,7 +1328,7 @@ pub fn (f &VSlimPsr17ResponseFactory) create_response(default_status vphp.Reques
 	}
 	return &VSlimPsr7Response{
 		status:           status
-		reason_phrase:    normalize_reason_phrase(status, zval_or_empty_string(default_reason_phrase.to_zval()))
+		reason_phrase:    normalize_reason_phrase(status, params.reason_phrase)
 		protocol_version: '1.1'
 		headers:          map[string][]string{}
 		body_ref:         new_psr7_stream('')
@@ -2381,25 +2384,9 @@ fn read_stream_factory_file(filename string, mode string) ?string {
 				0)
 			return none
 		}
-		mut text := ''
-		mut failed := false
-		vphp.with_php_call_result_zval('file_get_contents', [
+		return vphp.php_call_result_string('file_get_contents', [
 			vphp.RequestOwnedZBox.new_string(filename).to_zval(),
-		], fn [mut text, mut failed] (res vphp.ZVal) bool {
-			if !res.is_valid() || res.is_null() || res.is_undef()
-				|| (res.is_bool() && !res.to_bool()) {
-				failed = true
-				return false
-			}
-			text = res.to_string()
-			return true
-		})
-		if failed {
-			vphp.throw_exception_class('RuntimeException', 'failed to open stream from file',
-				0)
-			return none
-		}
-		return text
+		])
 	}
 	return ''
 }

@@ -133,8 +133,12 @@ pub fn vphp_wrap_dailyreport_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &DailyReport(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[string](1)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'title' },
+        vphp.PhpArgMeta{ index: 1, name: 'summary' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'title').as_v[string]()
+    arg_1 := php_args.at_named_or_index(1, 'summary').as_v[string]()
     res := recv.construct(arg_0, arg_1)
     return voidptr(res)
 }
@@ -210,7 +214,10 @@ pub fn author_sync_props(ptr voidptr, zv &C.zval) {
 pub fn vphp_wrap_author_create(ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
     res := Author.create(arg_0)
     return voidptr(res)
 }
@@ -287,7 +294,10 @@ pub fn vphp_wrap_post_set_author(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Post(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := unsafe { &Author(ctx.arg_raw_obj(0)) }
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'author' },
+    ])
+    arg_0 := unsafe { &Author(php_args.at_named_or_index(0, 'author').raw_obj()) }
     recv.set_author(arg_0)
 }
 @[export: 'vphp_wrap_Post_get_author']
@@ -403,8 +413,12 @@ pub fn vphp_wrap_article_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &Article(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[int](1)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'title' },
+        vphp.PhpArgMeta{ index: 1, name: 'id' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'title').as_v[string]()
+    arg_1 := php_args.at_named_or_index(1, 'id').as_v[int]()
     Article.sync_statics_from_php(ctx)
     res := recv.construct(arg_0, arg_1)
     Article.sync_statics_to_php(ctx)
@@ -424,7 +438,10 @@ pub fn vphp_wrap_article_internal_format(ptr voidptr, ctx vphp.Context)  {
 pub fn vphp_wrap_article_create(ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'title' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'title').as_v[string]()
     Article.sync_statics_from_php(ctx)
     res := Article.create(arg_0)
     Article.sync_statics_to_php(ctx)
@@ -455,7 +472,10 @@ pub fn vphp_wrap_article_dump_properties(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Article(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'data' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'data').raw()
     Article.sync_statics_from_php(ctx)
     recv.dump_properties(arg_0)
     Article.sync_statics_to_php(ctx)
@@ -465,7 +485,10 @@ pub fn vphp_wrap_article_process_with_callback(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Article(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'callback' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'callback').raw()
     Article.sync_statics_from_php(ctx)
     res := recv.process_with_callback(arg_0)
     Article.sync_statics_to_php(ctx)
@@ -475,7 +498,10 @@ pub fn vphp_wrap_article_process_with_callback(ptr voidptr, ctx vphp.Context)  {
 pub fn vphp_wrap_article_restore_author(ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'author_val' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'author_val').raw()
     Article.sync_statics_from_php(ctx)
     res := Article.restore_author(arg_0)
     Article.sync_statics_to_php(ctx)
@@ -545,8 +571,12 @@ pub fn story_sync_props(ptr voidptr, zv &C.zval) {
 pub fn vphp_wrap_story_create(ctx vphp.Context) voidptr {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := unsafe { &Author(ctx.arg_raw_obj(0)) }
-    arg_1 := ctx.arg[int](1)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'author' },
+        vphp.PhpArgMeta{ index: 1, name: 'chapters' },
+    ])
+    arg_0 := unsafe { &Author(php_args.at_named_or_index(0, 'author').raw_obj()) }
+    arg_1 := php_args.at_named_or_index(1, 'chapters').as_v[int]()
     res := Story.create(arg_0, arg_1)
     return voidptr(res)
 }
@@ -623,7 +653,10 @@ pub fn vphp_wrap_aliasbase_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &AliasBase(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'label' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'label').as_v[string]()
     res := recv.construct(arg_0)
     return voidptr(res)
 }
@@ -692,8 +725,12 @@ pub fn vphp_wrap_aliasworker_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &AliasWorker(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[string](1)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'label' },
+        vphp.PhpArgMeta{ index: 1, name: 'title' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'label').as_v[string]()
+    arg_1 := php_args.at_named_or_index(1, 'title').as_v[string]()
     res := recv.construct(arg_0, arg_1)
     return voidptr(res)
 }
@@ -906,7 +943,10 @@ pub fn vphp_wrap_callableprocessor_construct(ptr voidptr, ctx vphp.Context) void
     mut recv := unsafe { &CallableProcessor(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'prefix' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'prefix').as_v[string]()
     recv.construct(arg_0)
     return ptr
 }
@@ -915,7 +955,10 @@ pub fn vphp_wrap_callableprocessor_process(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &CallableProcessor(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'callback' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'callback').raw()
     res := recv.process(arg_0)
     ctx.return_val[string](res)
 }
@@ -924,8 +967,12 @@ pub fn vphp_wrap_callableprocessor_transform(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &CallableProcessor(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
-    arg_1 := ctx.arg[string](1)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'callback' },
+        vphp.PhpArgMeta{ index: 1, name: 'input' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'callback').raw()
+    arg_1 := php_args.at_named_or_index(1, 'input').as_v[string]()
     res := recv.transform(arg_0, arg_1)
     ctx.return_val[string](res)
 }
@@ -933,8 +980,12 @@ pub fn vphp_wrap_callableprocessor_transform(ptr voidptr, ctx vphp.Context)  {
 pub fn vphp_wrap_callableprocessor_apply(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
-    arg_1 := ctx.arg[string](1)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'callback' },
+        vphp.PhpArgMeta{ index: 1, name: 'data' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'callback').raw()
+    arg_1 := php_args.at_named_or_index(1, 'data').as_v[string]()
     res := CallableProcessor.apply(arg_0, arg_1)
     ctx.return_val[string](res)
 }
@@ -1000,7 +1051,10 @@ pub fn vphp_wrap_finder_find(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Finder(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'keyword' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'keyword').as_v[string]()
     vphp.call_or_null_val[string](fn [arg_0, recv] () ?string {
         return recv.find(arg_0)
     }, ctx)
@@ -1010,7 +1064,10 @@ pub fn vphp_wrap_finder_index_of(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Finder(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'keyword' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'keyword').as_v[string]()
     vphp.call_or_null_val[int](fn [arg_0, recv] () ?int {
         return recv.index_of(arg_0)
     }, ctx)
@@ -1020,7 +1077,10 @@ pub fn vphp_wrap_finder_has_match(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Finder(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'keyword' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'keyword').as_v[string]()
     vphp.call_or_null_val[bool](fn [arg_0, recv] () ?bool {
         return recv.has_match(arg_0)
     }, ctx)
@@ -1029,7 +1089,10 @@ pub fn vphp_wrap_finder_has_match(ptr voidptr, ctx vphp.Context)  {
 pub fn vphp_wrap_finder_try_parse_int(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 's' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 's').as_v[string]()
     vphp.call_or_null_val[int](fn [arg_0] () ?int {
         return Finder.try_parse_int(arg_0)
     }, ctx)
@@ -1104,7 +1167,10 @@ pub fn vphp_wrap_readonlyrecord_construct(ptr voidptr, ctx vphp.Context) voidptr
     mut recv := unsafe { &ReadonlyRecord(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'title' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'title').as_v[string]()
     res := recv.construct(arg_0)
     return voidptr(res)
 }
@@ -1199,7 +1265,10 @@ pub fn vphp_wrap_traitpost_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &TraitPost(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'title' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'title').as_v[string]()
     res := recv.construct(arg_0)
     return voidptr(res)
 }
@@ -1300,7 +1369,10 @@ pub fn vphp_wrap_validator_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &Validator(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[bool](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'strict' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'strict').as_v[bool]()
     recv.construct(arg_0)
     return ptr
 }
@@ -1309,7 +1381,10 @@ pub fn vphp_wrap_validator_check(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Validator(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'input' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'input').as_v[string]()
     vphp.call_or_throw_val[bool](fn [arg_0, recv] () !bool {
         return recv.check(arg_0)!
     }, ctx)
@@ -1319,7 +1394,10 @@ pub fn vphp_wrap_validator_sanitize(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Validator(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'input' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'input').as_v[string]()
     vphp.call_or_throw_val[string](fn [arg_0, recv] () !string {
         return recv.sanitize(arg_0)!
     }, ctx)
@@ -1329,7 +1407,10 @@ pub fn vphp_wrap_validator_assert_valid(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Validator(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'input' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'input').as_v[string]()
     vphp.call_or_throw(fn [arg_0, recv] () ! {
         recv.assert_valid(arg_0)!
     })
@@ -1338,7 +1419,10 @@ pub fn vphp_wrap_validator_assert_valid(ptr voidptr, ctx vphp.Context)  {
 pub fn vphp_wrap_validator_parse_int(ctx vphp.Context)  {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 's' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 's').as_v[string]()
     vphp.call_or_throw_val[int](fn [arg_0] () !int {
         return Validator.parse_int(arg_0)!
     }, ctx)
@@ -1408,7 +1492,10 @@ pub fn vphp_wrap_dispatchablesample_construct(ptr voidptr, ctx vphp.Context) voi
     mut recv := unsafe { &DispatchableSample(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
     res := recv.construct(arg_0)
     return voidptr(res)
 }
@@ -1546,7 +1633,10 @@ pub fn vphp_wrap_stringablebox_construct(ptr voidptr, ctx vphp.Context) voidptr 
     mut recv := unsafe { &StringableBox(ptr) }
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
     res := recv.construct(arg_0)
     return voidptr(res)
 }
@@ -1574,8 +1664,12 @@ pub fn stringablebox_handlers() voidptr {
 fn vphp_wrap_v_add(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[i64](0)
-    arg_1 := ctx.arg[i64](1)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'a' },
+        vphp.PhpArgMeta{ index: 1, name: 'b' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'a').as_v[i64]()
+    arg_1 := php_args.at_named_or_index(1, 'b').as_v[i64]()
     res := v_add(arg_0, arg_1)
     ctx.return_val[i64](res)
 }
@@ -1584,7 +1678,10 @@ fn vphp_wrap_v_add(ctx vphp.Context) {
 fn vphp_wrap_v_greet(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
     res := v_greet(arg_0)
     ctx.return_val[string](res)
 }
@@ -1601,7 +1698,10 @@ fn vphp_wrap_v_float_const(ctx vphp.Context) {
 fn vphp_wrap_v_float_id(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[f64](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'x' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'x').as_v[f64]()
     res := v_float_id(arg_0)
     ctx.return_val[f64](res)
 }
@@ -1610,8 +1710,12 @@ fn vphp_wrap_v_float_id(ctx vphp.Context) {
 fn vphp_wrap_v_pure_map_test(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[string](1)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'k' },
+        vphp.PhpArgMeta{ index: 1, name: 'v' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'k').as_v[string]()
+    arg_1 := php_args.at_named_or_index(1, 'v').as_v[string]()
     res := v_pure_map_test(arg_0, arg_1)
     ctx.return_val[map[string]string](res)
 }
@@ -1660,8 +1764,12 @@ fn vphp_wrap_v_call_back(ctx vphp.Context) {
 fn vphp_wrap_v_bind_class_interface(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[string](1)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'class_name' },
+        vphp.PhpArgMeta{ index: 1, name: 'iface_name' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'class_name').as_v[string]()
+    arg_1 := php_args.at_named_or_index(1, 'iface_name').as_v[string]()
     res := v_bind_class_interface(arg_0, arg_1)
     ctx.return_val[bool](res)
 }
@@ -1750,7 +1858,10 @@ fn vphp_wrap_v_read_php_class_constant(ctx vphp.Context) {
 fn vphp_wrap_v_typed_php_interop(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'obj' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'obj').raw()
     res := v_typed_php_interop(arg_0)
     ctx.return_val[string](res)
 }
@@ -1775,7 +1886,10 @@ fn vphp_wrap_v_zval_conversion_api(ctx vphp.Context) {
 fn vphp_wrap_v_persistent_fallback_counter_probe(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'raw').raw()
     res := v_persistent_fallback_counter_probe(arg_0)
     ctx.return_val[string](res)
 }
@@ -1784,7 +1898,10 @@ fn vphp_wrap_v_persistent_fallback_counter_probe(ctx vphp.Context) {
 fn vphp_wrap_v_request_scope_counter_probe(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[int](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'rounds' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'rounds').as_v[int]()
     res := v_request_scope_counter_probe(arg_0)
     ctx.return_val[string](res)
 }
@@ -1817,7 +1934,10 @@ fn vphp_wrap_v_php_function_named_api(ctx vphp.Context) {
 fn vphp_wrap_v_php_closure_api(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'callback' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'callback').raw()
     res := v_php_closure_api(arg_0)
     ctx.return_val[string](res)
 }
@@ -1826,7 +1946,10 @@ fn vphp_wrap_v_php_closure_api(ctx vphp.Context) {
 fn vphp_wrap_v_php_closure_persistent_api(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'callback' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'callback').raw()
     res := v_php_closure_persistent_api(arg_0)
     ctx.return_val[string](res)
 }
@@ -1843,7 +1966,10 @@ fn vphp_wrap_v_php_class_meta_api(ctx vphp.Context) {
 fn vphp_wrap_v_php_object_api(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'raw').raw()
     res := v_php_object_api(arg_0)
     ctx.return_val[string](res)
 }
@@ -1852,7 +1978,10 @@ fn vphp_wrap_v_php_object_api(ctx vphp.Context) {
 fn vphp_wrap_v_php_array_api(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'raw').raw()
     res := v_php_array_api(arg_0)
     ctx.return_val[string](res)
 }
@@ -1861,7 +1990,10 @@ fn vphp_wrap_v_php_array_api(ctx vphp.Context) {
 fn vphp_wrap_v_php_callable_api(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'callback' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'callback').raw()
     res := v_php_callable_api(arg_0)
     ctx.return_val[string](res)
 }
@@ -1870,7 +2002,10 @@ fn vphp_wrap_v_php_callable_api(ctx vphp.Context) {
 fn vphp_wrap_v_php_value_api(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'raw').raw()
     res := v_php_value_api(arg_0)
     ctx.return_val[string](res)
 }
@@ -1879,7 +2014,10 @@ fn vphp_wrap_v_php_value_api(ctx vphp.Context) {
 fn vphp_wrap_v_php_scalar_api(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'raw').raw()
     res := v_php_scalar_api(arg_0)
     ctx.return_val[string](res)
 }
@@ -1892,11 +2030,97 @@ fn vphp_wrap_v_php_scalar_strict_api(ctx vphp.Context) {
     ctx.return_val[string](res)
 }
 
+@[export: 'vphp_wrap_v_php_semantic_empty_api']
+fn vphp_wrap_v_php_semantic_empty_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    res := v_php_semantic_empty_api()
+    ctx.return_val[string](res)
+}
+
+@[export: 'vphp_wrap_v_php_params_struct_api']
+fn vphp_wrap_v_php_params_struct_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'status' },
+        vphp.PhpArgMeta{ index: 1, name: 'reasonPhrase' },
+        vphp.PhpArgMeta{ index: 2, name: 'secure' },
+        vphp.PhpArgMeta{ index: 3, name: 'ratio' },
+    ])
+    arg_0_params_status := if php_args.has_named_or_index(0, 'status') { php_args.at_named_or_index(0, 'status').as_v[int]() } else { 200 }
+    arg_0_params_reason_phrase := if php_args.has_named_or_index(1, 'reasonPhrase') { php_args.at_named_or_index(1, 'reasonPhrase').as_v[string]() } else { '' }
+    arg_0_params_secure := if php_args.has_named_or_index(2, 'secure') { php_args.at_named_or_index(2, 'secure').as_v[bool]() } else { false }
+    arg_0_params_ratio := if php_args.has_named_or_index(3, 'ratio') { php_args.at_named_or_index(3, 'ratio').as_v[f64]() } else { 1.5 }
+    arg_0_params := VPhpParamsStructDemo{
+        status: arg_0_params_status
+        reason_phrase: arg_0_params_reason_phrase
+        secure: arg_0_params_secure
+        ratio: arg_0_params_ratio
+    }
+    res := v_php_params_struct_api(arg_0_params)
+    ctx.return_val[string](res)
+}
+
+@[export: 'vphp_wrap_v_php_semantic_params_struct_api']
+fn vphp_wrap_v_php_semantic_params_struct_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'label' },
+        vphp.PhpArgMeta{ index: 1, name: 'flag' },
+        vphp.PhpArgMeta{ index: 2, name: 'items' },
+    ])
+    arg_0_params_label := if php_args.has_named_or_index(0, 'label') {
+        php_args.at_named_or_index(0, 'label').string_value() or {
+            vphp.throw_exception('argument 0 must be string', 0)
+            return
+        }
+    } else {
+        vphp.PhpString.empty()
+    }
+    arg_0_params_flag := if php_args.has_named_or_index(1, 'flag') {
+        php_args.at_named_or_index(1, 'flag').bool_value() or {
+            vphp.throw_exception('argument 1 must be bool', 0)
+            return
+        }
+    } else {
+        vphp.PhpBool.false_value()
+    }
+    arg_0_params_items := if php_args.has_named_or_index(2, 'items') {
+        php_args.at_named_or_index(2, 'items').array() or {
+            vphp.throw_exception('argument 2 must be array', 0)
+            return
+        }
+    } else {
+        vphp.PhpArray.empty()
+    }
+    arg_0_params := VPhpSemanticParamsStructDemo{
+        label: arg_0_params_label
+        flag: arg_0_params_flag
+        items: arg_0_params_items
+    }
+    res := v_php_semantic_params_struct_api(arg_0_params)
+    ctx.return_val[string](res)
+}
+
+@[export: 'vphp_wrap_v_php_args_api']
+fn vphp_wrap_v_php_args_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    arg_0 := ctx
+    res := v_php_args_api(arg_0)
+    ctx.return_val[string](res)
+}
+
 @[export: 'vphp_wrap_v_php_resource_api']
 fn vphp_wrap_v_php_resource_api(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'raw').raw()
     res := v_php_resource_api(arg_0)
     ctx.return_val[string](res)
 }
@@ -1905,35 +2129,147 @@ fn vphp_wrap_v_php_resource_api(ctx vphp.Context) {
 fn vphp_wrap_v_php_wrapper_param_api(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_value(0)
-    arg_1 := ctx.arg_object(1) or {
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'value' },
+        vphp.PhpArgMeta{ index: 1, name: 'obj' },
+        vphp.PhpArgMeta{ index: 2, name: 'arr' },
+        vphp.PhpArgMeta{ index: 3, name: 'callable' },
+        vphp.PhpArgMeta{ index: 4, name: 'null_value' },
+        vphp.PhpArgMeta{ index: 5, name: 'maybe_obj' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'value').value
+    arg_1 := php_args.at_named_or_index(1, 'obj').object() or {
         vphp.throw_exception('argument 1 must be object', 0)
         return
     }
-    arg_2 := ctx.arg_array(2) or {
+    arg_2 := php_args.at_named_or_index(2, 'arr').array() or {
         vphp.throw_exception('argument 2 must be array', 0)
         return
     }
-    arg_3 := ctx.arg_callable(3) or {
+    arg_3 := php_args.at_named_or_index(3, 'callable').callable() or {
         vphp.throw_exception('argument 3 must be callable', 0)
         return
     }
-    arg_4 := ctx.arg_null(4) or {
+    arg_4 := php_args.at_named_or_index(4, 'null_value').null_value() or {
         vphp.throw_exception('argument 4 must be null', 0)
         return
     }
-    arg_5 := ctx.arg_object(5)
+    arg_5 := php_args.at_named_or_index(5, 'maybe_obj').object()
     res := v_php_wrapper_param_api(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5)
     ctx.return_val[string](res)
+}
+
+@[export: 'vphp_wrap_v_php_optional_value_api']
+fn vphp_wrap_v_php_optional_value_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'value' },
+    ])
+    arg_0 := if php_args.has_named_or_index(0, 'value') { ?vphp.PhpValue(php_args.at_named_or_index(0, 'value').value) } else { none }
+    res := v_php_optional_value_api(arg_0)
+    ctx.return_val[string](res)
+}
+
+@[export: 'vphp_wrap_v_php_return_value_api']
+fn vphp_wrap_v_php_return_value_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'value' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'value').value
+    res := v_php_return_value_api(arg_0)
+    ctx.return_val[vphp.PhpValue](res)
+}
+
+@[export: 'vphp_wrap_v_php_return_array_api']
+fn vphp_wrap_v_php_return_array_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'arr' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'arr').array() or {
+        vphp.throw_exception('argument 0 must be array', 0)
+        return
+    }
+    res := v_php_return_array_api(arg_0)
+    ctx.return_val[vphp.PhpArray](res)
+}
+
+@[export: 'vphp_wrap_v_php_return_object_api']
+fn vphp_wrap_v_php_return_object_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'obj' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'obj').object() or {
+        vphp.throw_exception('argument 0 must be object', 0)
+        return
+    }
+    res := v_php_return_object_api(arg_0)
+    ctx.return_val[vphp.PhpObject](res)
+}
+
+@[export: 'vphp_wrap_v_php_return_callable_api']
+fn vphp_wrap_v_php_return_callable_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'callable' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'callable').callable() or {
+        vphp.throw_exception('argument 0 must be callable', 0)
+        return
+    }
+    res := v_php_return_callable_api(arg_0)
+    ctx.return_val[vphp.PhpCallable](res)
+}
+
+@[export: 'vphp_wrap_v_php_return_string_wrapper_api']
+fn vphp_wrap_v_php_return_string_wrapper_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'value' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'value').string_value() or {
+        vphp.throw_exception('argument 0 must be string', 0)
+        return
+    }
+    res := v_php_return_string_wrapper_api(arg_0)
+    ctx.return_val[vphp.PhpString](res)
+}
+
+@[export: 'vphp_wrap_v_php_return_persistent_array_api']
+fn vphp_wrap_v_php_return_persistent_array_api(ctx vphp.Context) {
+    vphp_ar_mark := vphp.autorelease_mark()
+    defer { vphp.autorelease_drain(vphp_ar_mark) }
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'arr' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'arr').array() or {
+        vphp.throw_exception('argument 0 must be array', 0)
+        return
+    }
+    res := v_php_return_persistent_array_api(arg_0)
+    ctx.return_val[vphp.PersistentPhpArray](res)
 }
 
 @[export: 'vphp_wrap_v_dyn_value_runtime_refs']
 fn vphp_wrap_v_dyn_value_runtime_refs(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
-    arg_1 := ctx.arg_raw(1)
-    arg_2 := ctx.arg_raw(2)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'raw_obj' },
+        vphp.PhpArgMeta{ index: 1, name: 'callback' },
+        vphp.PhpArgMeta{ index: 2, name: 'raw_res' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'raw_obj').raw()
+    arg_1 := php_args.at_named_or_index(1, 'callback').raw()
+    arg_2 := php_args.at_named_or_index(2, 'raw_res').raw()
     res := v_dyn_value_runtime_refs(arg_0, arg_1, arg_2)
     ctx.return_val[string](res)
 }
@@ -1942,7 +2278,10 @@ fn vphp_wrap_v_dyn_value_runtime_refs(ctx vphp.Context) {
 fn vphp_wrap_v_php_reference_api(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'raw').raw()
     res := v_php_reference_api(arg_0)
     ctx.return_val[string](res)
 }
@@ -1951,7 +2290,10 @@ fn vphp_wrap_v_php_reference_api(ctx vphp.Context) {
 fn vphp_wrap_v_php_iterable_api(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'raw').raw()
     res := v_php_iterable_api(arg_0)
     ctx.return_val[string](res)
 }
@@ -1968,7 +2310,10 @@ fn vphp_wrap_v_php_superglobals_api(ctx vphp.Context) {
 fn vphp_wrap_v_php_throwable_api(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'raw').raw()
     res := v_php_throwable_api(arg_0)
     ctx.return_val[string](res)
 }
@@ -1977,7 +2322,10 @@ fn vphp_wrap_v_php_throwable_api(ctx vphp.Context) {
 fn vphp_wrap_v_php_enum_api(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'raw').raw()
     res := v_php_enum_api(arg_0)
     ctx.return_val[string](res)
 }
@@ -2082,7 +2430,10 @@ fn vphp_wrap_v_call_php_closure(ctx vphp.Context) {
 fn vphp_wrap_v_call_php_closure_helper(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'raw').raw()
     res := v_call_php_closure_helper(arg_0)
     ctx.return_val[string](res)
 }
@@ -2123,7 +2474,10 @@ fn vphp_wrap_v_iter_helpers_demo(ctx vphp.Context) {
 fn vphp_wrap_v_iterable_object_demo(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'input' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'input').raw()
     res := v_iterable_object_demo(arg_0)
     ctx.return_val[string](res)
 }
@@ -2148,7 +2502,10 @@ fn vphp_wrap_v_logic_main(ctx vphp.Context) {
 fn vphp_wrap_v_invoke_callable(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'callback' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'callback').raw()
     res := v_invoke_callable(arg_0)
     ctx.return_val[string](res)
 }
@@ -2157,8 +2514,12 @@ fn vphp_wrap_v_invoke_callable(ctx vphp.Context) {
 fn vphp_wrap_v_invoke_with_arg(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg_raw(0)
-    arg_1 := ctx.arg[string](1)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'callback' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'callback').raw()
+    arg_1 := php_args.at_named_or_index(1, 'value').as_v[string]()
     res := v_invoke_with_arg(arg_0, arg_1)
     ctx.return_val[string](res)
 }
@@ -2238,8 +2599,12 @@ fn vphp_wrap_v_lifecycle_hook_state(ctx vphp.Context) {
 fn vphp_wrap_v_find_after(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[string](1)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'haystack' },
+        vphp.PhpArgMeta{ index: 1, name: 'needle' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'haystack').as_v[string]()
+    arg_1 := php_args.at_named_or_index(1, 'needle').as_v[string]()
     vphp.call_or_null_val[string](fn [arg_0, arg_1] () ?string {
         return v_find_after(arg_0, arg_1)
     }, ctx)
@@ -2249,8 +2614,12 @@ fn vphp_wrap_v_find_after(ctx vphp.Context) {
 fn vphp_wrap_v_try_divide(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[int](0)
-    arg_1 := ctx.arg[int](1)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'a' },
+        vphp.PhpArgMeta{ index: 1, name: 'b' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'a').as_v[int]()
+    arg_1 := php_args.at_named_or_index(1, 'b').as_v[int]()
     vphp.call_or_null_val[int](fn [arg_0, arg_1] () ?int {
         return v_try_divide(arg_0, arg_1)
     }, ctx)
@@ -2260,9 +2629,14 @@ fn vphp_wrap_v_try_divide(ctx vphp.Context) {
 fn vphp_wrap_v_record_match(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[string](1)
-    arg_2 := ctx.arg[string](2)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'path' },
+        vphp.PhpArgMeta{ index: 1, name: 'haystack' },
+        vphp.PhpArgMeta{ index: 2, name: 'needle' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
+    arg_1 := php_args.at_named_or_index(1, 'haystack').as_v[string]()
+    arg_2 := php_args.at_named_or_index(2, 'needle').as_v[string]()
     vphp.call_or_null(fn [arg_0, arg_1, arg_2] () ? {
         v_record_match(arg_0, arg_1, arg_2)
     }, ctx)
@@ -2296,8 +2670,12 @@ fn vphp_wrap_v_check_res(ctx vphp.Context) {
 fn vphp_wrap_v_safe_divide(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[int](0)
-    arg_1 := ctx.arg[int](1)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'a' },
+        vphp.PhpArgMeta{ index: 1, name: 'b' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'a').as_v[int]()
+    arg_1 := php_args.at_named_or_index(1, 'b').as_v[int]()
     vphp.call_or_throw_val[int](fn [arg_0, arg_1] () !int {
         return v_safe_divide(arg_0, arg_1)!
     }, ctx)
@@ -2307,7 +2685,10 @@ fn vphp_wrap_v_safe_divide(ctx vphp.Context) {
 fn vphp_wrap_v_capitalize(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'input' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'input').as_v[string]()
     vphp.call_or_throw_val[string](fn [arg_0] () !string {
         return v_capitalize(arg_0)!
     }, ctx)
@@ -2317,8 +2698,12 @@ fn vphp_wrap_v_capitalize(ctx vphp.Context) {
 fn vphp_wrap_v_record_success(ctx vphp.Context) {
     vphp_ar_mark := vphp.autorelease_mark()
     defer { vphp.autorelease_drain(vphp_ar_mark) }
-    arg_0 := ctx.arg[string](0)
-    arg_1 := ctx.arg[string](1)
+    php_args := ctx.args([
+        vphp.PhpArgMeta{ index: 0, name: 'path' },
+        vphp.PhpArgMeta{ index: 1, name: 'label' },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
+    arg_1 := php_args.at_named_or_index(1, 'label').as_v[string]()
     vphp.call_or_throw(fn [arg_0, arg_1] () ! {
         v_record_success(arg_0, arg_1)!
     })

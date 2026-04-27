@@ -727,6 +727,54 @@ fn v_php_scalar_strict_api() string {
 }
 
 @[php_function]
+fn v_php_semantic_empty_api() string {
+	arr := vphp.PhpArray.empty()
+	mut persistent_arr := vphp.PersistentPhpArray.empty()
+	persistent_count := persistent_arr.with_array(fn (a vphp.PhpArray) int {
+		return a.count()
+	})
+	persistent_arr.release()
+	return 'empty=${vphp.PhpString.empty().value()}:${vphp.PhpInt.zero().value()}:${vphp.PhpDouble.zero().value()}:${vphp.PhpBool.false_value().value()}:${vphp.PhpBool.true_value().value()}:${arr.count()}:${persistent_count}'
+}
+
+@[params]
+struct VPhpParamsStructDemo {
+	status        int    = 200
+	reason_phrase string = ''
+	secure        bool
+	ratio         f64 = 1.5
+}
+
+@[php_function]
+fn v_php_params_struct_api(params VPhpParamsStructDemo) string {
+	return 'params=${params.status}:${params.reason_phrase}:${params.secure}:${params.ratio}'
+}
+
+@[params]
+struct VPhpSemanticParamsStructDemo {
+	label vphp.PhpString
+	flag  vphp.PhpBool
+	items vphp.PhpArray
+}
+
+@[php_function]
+fn v_php_semantic_params_struct_api(params VPhpSemanticParamsStructDemo) string {
+	return 'semantic_params=${params.label.value()}:${params.flag.value()}:${params.items.count()}'
+}
+
+@[php_function]
+fn v_php_args_api(ctx vphp.Context) string {
+	args := ctx.args([
+		vphp.PhpArgMeta{ index: 0, name: 'first' },
+		vphp.PhpArgMeta{ index: 1, name: 'second' },
+	])
+	first := args.at(0)
+	second := args.named('second') or { return 'missing-second' }
+	missing := args.at(2)
+	return 'args=${args.len()}:${first.index}:${first.name}:${first.as_v[string]()}|${second.index}:${second.name}:${second.as_v[int]()}|missing=${args.has(2)}:${missing.value.is_null()}'
+}
+
+@[php_function]
 fn v_php_resource_api(raw vphp.ZVal) string {
 	res := vphp.PhpResource.from_zval(raw) or {
 		vphp.throw_exception('raw should be resource', 0)
@@ -752,6 +800,42 @@ fn v_php_wrapper_param_api(value vphp.PhpValue, obj vphp.PhpObject, arr vphp.Php
 		return ''
 	}
 	return 'wrap=${value.type_name()}:${name}:${arr.count()}:${call_result}:${null_value.to_dyn().type.str()}:${maybe_obj == none}'
+}
+
+@[php_function]
+fn v_php_optional_value_api(value ?vphp.PhpValue) string {
+	actual := value or { return 'optional_value=none' }
+	return 'optional_value=some:${actual.type_name()}:${actual.is_null()}'
+}
+
+@[php_function]
+fn v_php_return_value_api(value vphp.PhpValue) vphp.PhpValue {
+	return value
+}
+
+@[php_function]
+fn v_php_return_array_api(arr vphp.PhpArray) vphp.PhpArray {
+	return arr
+}
+
+@[php_function]
+fn v_php_return_object_api(obj vphp.PhpObject) vphp.PhpObject {
+	return obj
+}
+
+@[php_function]
+fn v_php_return_callable_api(callable vphp.PhpCallable) vphp.PhpCallable {
+	return callable
+}
+
+@[php_function]
+fn v_php_return_string_wrapper_api(value vphp.PhpString) vphp.PhpString {
+	return value
+}
+
+@[php_function]
+fn v_php_return_persistent_array_api(arr vphp.PhpArray) vphp.PersistentPhpArray {
+	return arr.to_persistent()
 }
 
 @[php_function]
