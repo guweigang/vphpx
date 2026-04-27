@@ -17,7 +17,7 @@ fn normalize_module_input(raw vphp.ZVal) !vphp.ZVal {
 		if class_name == '' {
 			return error('module class name must not be empty')
 		}
-		exists := vphp.with_php_call_result_bool('class_exists', [
+		exists := vphp.PhpFunction.named('class_exists').result_bool([
 			vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
 			vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 		])
@@ -25,7 +25,7 @@ fn normalize_module_input(raw vphp.ZVal) !vphp.ZVal {
 			log_bootstrap_class_visibility('module', class_name)
 			return error('module class "${class_name}" does not exist')
 		}
-		mod_z := vphp.php_class(class_name).construct([])
+		mod_z := vphp.PhpClass.named(class_name).construct([])
 		if !mod_z.is_valid() || !mod_z.is_object() {
 			return error('module class "${class_name}" could not be constructed')
 		}
@@ -43,7 +43,7 @@ fn bind_module_to_app(mod_z vphp.ZVal, app_z vphp.ZVal) {
 		return
 	}
 	if mod_z.method_exists('setApp') {
-		vphp.with_method_result_zval(mod_z, 'setApp', [app_z], fn (_ vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(mod_z).with_method_result_zval('setApp', [app_z], fn (_ vphp.ZVal) bool {
 			return true
 		})
 	}
@@ -54,12 +54,12 @@ fn call_module_lifecycle(mod_z vphp.ZVal, method_name string, app_z vphp.ZVal) !
 		return
 	}
 	if app_z.is_valid() && app_z.is_object() {
-		vphp.with_method_result_zval(mod_z, method_name, [app_z], fn (_ vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(mod_z).with_method_result_zval(method_name, [app_z], fn (_ vphp.ZVal) bool {
 			return true
 		})
 		return
 	}
-	vphp.with_method_result_zval(mod_z, method_name, []vphp.ZVal{}, fn (_ vphp.ZVal) bool {
+	vphp.PhpObject.borrowed(mod_z).with_method_result_zval(method_name, []vphp.ZVal{}, fn (_ vphp.ZVal) bool {
 		return true
 	})
 }
@@ -86,7 +86,7 @@ fn register_module_providers(mut app VSlimApp, mod_z vphp.ZVal, app_z vphp.ZVal)
 		return
 	}
 	ok := if app_z.is_valid() && app_z.is_object() {
-		vphp.with_method_result_zval(mod_z, 'providers', [app_z], fn [mut app] (providers_raw vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(mod_z).with_method_result_zval('providers', [app_z], fn [mut app] (providers_raw vphp.ZVal) bool {
 			items := bootstrap_provider_values(providers_raw) or { return false }
 			for item in items {
 				provider_z := normalize_service_provider_input(item) or { return false }
@@ -95,7 +95,7 @@ fn register_module_providers(mut app VSlimApp, mod_z vphp.ZVal, app_z vphp.ZVal)
 			return true
 		})
 	} else {
-		vphp.with_method_result_zval(mod_z, 'providers', []vphp.ZVal{}, fn [mut app] (providers_raw vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(mod_z).with_method_result_zval('providers', []vphp.ZVal{}, fn [mut app] (providers_raw vphp.ZVal) bool {
 			items := bootstrap_provider_values(providers_raw) or { return false }
 			for item in items {
 				provider_z := normalize_service_provider_input(item) or { return false }
@@ -140,35 +140,34 @@ fn register_module_zval(mut app VSlimApp, module_z vphp.ZVal) ! {
 	}
 }
 
-@[php_method: 'module']
 @[php_arg_name: 'mod_input=modInput']
+@[php_method: 'module']
 pub fn (mut app VSlimApp) mount_module(mod_input vphp.RequestBorrowedZBox) &VSlimApp {
 	module_z := normalize_module_input(mod_input.to_zval()) or {
-		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 		return &app
 	}
 	register_module_zval(mut app, module_z) or {
-		vphp.throw_exception_class('RuntimeException', err.msg(), 0)
+		vphp.PhpException.raise_class('RuntimeException', err.msg(), 0)
 		return &app
 	}
 	return &app
 }
 
-@[php_arg_type: 'modules=iterable']
 @[php_method: 'moduleMany']
-pub fn (mut app VSlimApp) module_many(modules vphp.RequestBorrowedZBox) &VSlimApp {
+pub fn (mut app VSlimApp) module_many(modules vphp.PhpIterable) &VSlimApp {
 	items := bootstrap_module_values(modules.to_zval()) or {
-		vphp.throw_exception_class('InvalidArgumentException', 'modules must be iterable',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'modules must be iterable',
 			0)
 		return &app
 	}
 	for item in items {
 		module_z := normalize_module_input(item) or {
-			vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+			vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 			return &app
 		}
 		register_module_zval(mut app, module_z) or {
-			vphp.throw_exception_class('RuntimeException', err.msg(), 0)
+			vphp.PhpException.raise_class('RuntimeException', err.msg(), 0)
 			return &app
 		}
 	}
@@ -180,8 +179,8 @@ pub fn (app &VSlimApp) module_count() int {
 	return app.modules.len
 }
 
-@[php_method: 'hasModule']
 @[php_arg_name: 'class_name=className']
+@[php_method: 'hasModule']
 pub fn (app &VSlimApp) has_module(class_name string) bool {
 	return class_name.trim_space() in app.module_classes
 }

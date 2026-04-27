@@ -74,7 +74,7 @@ fn wrap_runtime_cli_zval(cli &VSlimCliApp) vphp.ZVal {
 		}
 		cli_debug_log(cli_trace_message(cli, 'wrap_runtime_cli_zval enter cli=${usize(cli)} ce=${usize(C.vslim__cli__app_ce)}'))
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
-		vphp.return_borrowed_object_raw(payload.raw, cli, C.vslim__cli__app_ce, &C.vphp_class_handlers(vslimcliapp_handlers()))
+		vphp.PhpReturn.new(payload.raw).borrowed_object(cli, C.vslim__cli__app_ce, &C.vphp_class_handlers(vslimcliapp_handlers()))
 		cli_debug_log(cli_trace_message(cli, 'wrap_runtime_cli_zval exit cli=${usize(cli)} payload=${usize(payload.raw)} valid=${payload.is_valid()} type=${payload.type_name()}'))
 		return payload
 	}
@@ -145,7 +145,7 @@ fn cli_handler_string_is_function_callable(name string) bool {
 	if callable_name == '' {
 		return false
 	}
-	return vphp.with_php_call_result_bool('function_exists', [
+	return vphp.PhpFunction.named('function_exists').result_bool([
 		vphp.RequestOwnedZBox.new_string(callable_name).to_zval(),
 	])
 }
@@ -198,7 +198,7 @@ fn resolve_cli_command_runtime(mut cli VSlimCliApp, handler_z vphp.ZVal) !vphp.Z
 		if cli_handler_string_is_function_callable(class_name) {
 			return vphp.RequestOwnedZBox.new_string(class_name).to_zval()
 		}
-		exists := vphp.with_php_call_result_bool('class_exists', [
+		exists := vphp.PhpFunction.named('class_exists').result_bool([
 			vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
 			vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 		])
@@ -210,7 +210,7 @@ fn resolve_cli_command_runtime(mut cli VSlimCliApp, handler_z vphp.ZVal) !vphp.Z
 		if container.has(class_name) {
 			return container.get(class_name).to_zval()
 		}
-		command := vphp.php_class(class_name).construct([])
+		command := vphp.PhpClass.named(class_name).construct([])
 		if !command.is_valid() || !command.is_object() {
 			return error('command class "${class_name}" could not be constructed')
 		}
@@ -404,7 +404,7 @@ fn (mut cli VSlimCliApp) run_registered_cli_command_with_program(name string, ar
 	if runtime_is_command_object {
 		mut result := vphp.ZVal.new_null()
 		if runtime.method_exists('handle') {
-			mut rb := vphp.method_request_owned_box(runtime, 'handle', [
+			mut rb := vphp.PhpObject.borrowed(runtime).method_request_owned_box('handle', [
 				args_z,
 				cli_z,
 			])
@@ -418,7 +418,7 @@ fn (mut cli VSlimCliApp) run_registered_cli_command_with_program(name string, ar
 		mut code_z := result
 		code = cli_command_exit_code(mut code_z)
 	} else {
-		mut result := vphp.call_request_owned_box(runtime, [args_z, cli_z])
+		mut result := vphp.PhpCallable.borrowed(runtime).request_owned_box([args_z, cli_z])
 		defer {
 			result.release()
 		}
@@ -458,27 +458,25 @@ pub fn (cli &VSlimCliApp) project_root_value() string {
 
 @[php_method: 'debugBridgePath']
 pub fn (cli &VSlimCliApp) debug_bridge_path(path string) vphp.RequestOwnedZBox {
-	echoed := vphp.with_php_call_result_string('strval', [
+	echoed := vphp.PhpFunction.named('strval').result_string([
 		vphp.RequestOwnedZBox.new_string(path).to_zval(),
 	])
-	joined := vphp.with_php_call_result_string('sprintf', [
+	joined := vphp.PhpFunction.named('sprintf').result_string([
 		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
 		vphp.RequestOwnedZBox.new_string(path).to_zval(),
 		vphp.RequestOwnedZBox.new_string('bootstrap/app.php').to_zval(),
 	])
-	echoed_joined := vphp.with_php_call_result_string('sprintf', [
+	echoed_joined := vphp.PhpFunction.named('sprintf').result_string([
 		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
 		vphp.RequestOwnedZBox.new_string(echoed).to_zval(),
 		vphp.RequestOwnedZBox.new_string('bootstrap/app.php').to_zval(),
 	])
-	return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(vphp.dyn_value_map({
-		'original':      vphp.dyn_value_string(path)
-		'strval':        vphp.dyn_value_string(echoed)
-		'sprintf':       vphp.dyn_value_string(joined)
-		'sprintf_echo':  vphp.dyn_value_string(echoed_joined)
-	})) or {
-		vphp.ZVal.new_null()
-	})
+	return vphp.RequestOwnedZBox.adopt_zval(vphp.DynValue.of_map({
+		'original':     vphp.DynValue.of_string(path)
+		'strval':       vphp.DynValue.of_string(echoed)
+		'sprintf':      vphp.DynValue.of_string(joined)
+		'sprintf_echo': vphp.DynValue.of_string(echoed_joined)
+	}).new_zval() or { vphp.ZVal.new_null() })
 }
 
 @[php_method]
@@ -490,17 +488,17 @@ pub fn (mut cli VSlimCliApp) command(name string, handler vphp.RequestBorrowedZB
 	cli_debug_log('command normalized cli=${usize(&cli)} command_name="${command_name}" len=${command_name.len}')
 	if command_name == '' {
 		cli_debug_log('command empty raw_name="${name}" raw_len=${name.len}')
-		vphp.throw_exception_class('InvalidArgumentException', 'command name must not be empty',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'command name must not be empty',
 			0)
 		return &cli
 	}
 	handler_z := normalize_cli_command_handler_input(handler.to_zval()) or {
-		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 		return &cli
 	}
 	existing_canonical := cli.command_canonical[command_name] or { command_name }
 	if command_name in cli.command_handlers && existing_canonical != command_name {
-		vphp.throw_exception_class('InvalidArgumentException', 'command name "${command_name}" is already registered as an alias for "${existing_canonical}"',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'command name "${command_name}" is already registered as an alias for "${existing_canonical}"',
 			0)
 		return &cli
 	}
@@ -516,25 +514,24 @@ pub fn (mut cli VSlimCliApp) command(name string, handler vphp.RequestBorrowedZB
 	}
 	cli.command_canonical[command_name] = command_name.clone()
 	apply_cli_command_metadata(mut cli, command_name, handler_z) or {
-		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 		return &cli
 	}
 	cli_debug_log('command exit cli=${usize(&cli)} command_name="${command_name}" order=${cli.command_order}')
 	return &cli
 }
 
-@[php_arg_type: 'commands=iterable']
 @[php_method: 'commandMany']
-pub fn (mut cli VSlimCliApp) command_many(commands vphp.RequestBorrowedZBox) &VSlimCliApp {
+pub fn (mut cli VSlimCliApp) command_many(commands vphp.PhpIterable) &VSlimCliApp {
 	ensure_cli_registry(mut cli)
 	normalized := psr16_iterable_to_array(commands.to_zval()) or {
-		vphp.throw_exception_class('InvalidArgumentException', 'commands must be iterable',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'commands must be iterable',
 			0)
 		return &cli
 	}
 	for key in normalized.assoc_keys() {
 		handler := normalized.get(key) or { continue }
-		cli.command(key, vphp.borrow_zbox(handler))
+		cli.command(key, vphp.RequestBorrowedZBox.of(handler))
 	}
 	if normalized.is_list() {
 		for idx := 0; idx < normalized.array_count(); idx++ {
@@ -543,10 +540,10 @@ pub fn (mut cli VSlimCliApp) command_many(commands vphp.RequestBorrowedZBox) &VS
 				continue
 			}
 			name := derive_command_name_from_handler(handler) or {
-				vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+				vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 				return &cli
 			}.clone()
-			cli.command(name, vphp.borrow_zbox(handler))
+			cli.command(name, vphp.RequestBorrowedZBox.of(handler))
 		}
 	}
 	return &cli
@@ -596,63 +593,58 @@ pub fn (cli &VSlimCliApp) warnings() []string {
 
 @[php_method]
 pub fn (cli &VSlimCliApp) options() vphp.RequestOwnedZBox {
-	return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(vphp.dyn_value_map(cli.last_options.clone())) or {
+	return vphp.RequestOwnedZBox.adopt_zval(vphp.DynValue.of_map(cli.last_options.clone()).new_zval() or {
 		vphp.ZVal.new_null()
 	})
 }
 
 @[php_method]
 pub fn (cli &VSlimCliApp) arguments() vphp.RequestOwnedZBox {
-	return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(vphp.dyn_value_map(cli.last_arguments.clone())) or {
+	return vphp.RequestOwnedZBox.adopt_zval(vphp.DynValue.of_map(cli.last_arguments.clone()).new_zval() or {
 		vphp.ZVal.new_null()
 	})
 }
 
 @[php_arg_name: 'default_value=defaultValue']
-@[php_arg_optional: 'default_value']
 @[php_method]
-@[php_arg_default: 'default_value=null']
-pub fn (cli &VSlimCliApp) option(name string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
+pub fn (cli &VSlimCliApp) option(name string, default_value ?vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	key := name.trim_space()
 	if key != '' {
 		if value := cli.last_options[key] {
-			return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(value) or {
-				vphp.ZVal.new_null()
-			})
+			return vphp.RequestOwnedZBox.adopt_zval(value.new_zval() or { vphp.ZVal.new_null() })
 		}
 	}
-	raw_default := default_value.to_zval()
-	if raw_default.is_valid() {
-		return vphp.own_request_zbox(raw_default)
+	if actual_default := default_value {
+		raw_default := actual_default.to_zval()
+		if raw_default.is_valid() {
+			return vphp.RequestOwnedZBox.of(raw_default)
+		}
 	}
 	return vphp.RequestOwnedZBox.new_null()
 }
 
 @[php_arg_name: 'default_value=defaultValue']
-@[php_arg_optional: 'default_value']
 @[php_method]
-@[php_arg_default: 'default_value=null']
-pub fn (cli &VSlimCliApp) argument(name string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
+pub fn (cli &VSlimCliApp) argument(name string, default_value ?vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	key := name.trim_space()
 	if key != '' {
 		if value := cli.last_arguments[key] {
-			return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(value) or {
-				vphp.ZVal.new_null()
-			})
+			return vphp.RequestOwnedZBox.adopt_zval(value.new_zval() or { vphp.ZVal.new_null() })
 		}
 	}
-	raw_default := default_value.to_zval()
-	if raw_default.is_valid() {
-		return vphp.own_request_zbox(raw_default)
+	if actual_default := default_value {
+		raw_default := actual_default.to_zval()
+		if raw_default.is_valid() {
+			return vphp.RequestOwnedZBox.of(raw_default)
+		}
 	}
 	return vphp.RequestOwnedZBox.new_null()
 }
 
-@[php_arg_type: 'args=iterable']
 @[php_method]
-pub fn (mut cli VSlimCliApp) run(name string, args vphp.RequestBorrowedZBox) int {
+pub fn (mut cli VSlimCliApp) run(name string, args vphp.PhpIterable) int {
 	arg_list := cli_args_to_array(args.to_zval()) or {
-		vphp.throw_exception_class('InvalidArgumentException', 'command args must be iterable',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'command args must be iterable',
 			0)
 		return 1
 	}
@@ -663,7 +655,7 @@ pub fn (mut cli VSlimCliApp) run(name string, args vphp.RequestBorrowedZBox) int
 		} else {
 			'RuntimeException'
 		}
-		vphp.throw_exception_class(error_class, err.msg(), 0)
+		vphp.PhpException.raise_class(error_class, err.msg(), 0)
 		return 1
 	}
 }

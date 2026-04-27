@@ -22,7 +22,7 @@ fn build_php_psr15_next_handler_object(chain &MiddlewareChain) vphp.ZVal {
 				chain_ref: chain
 			}
 		}
-		vphp.return_owned_object_raw(payload.raw, bound, C.vslim__psr15__nexthandler_ce,
+		vphp.PhpReturn.new(payload.raw).owned_object(bound, C.vslim__psr15__nexthandler_ce,
 			&C.vphp_class_handlers(vslimpsr15nexthandler_handlers()))
 		return payload
 	}
@@ -37,7 +37,7 @@ fn build_php_psr15_fixed_response_handler_object(res &VSlimPsr7Response) vphp.ZV
 				fixed_response_ref: res
 			}
 		}
-		vphp.return_owned_object_raw(payload.raw, bound, C.vslim__psr15__nexthandler_ce,
+		vphp.PhpReturn.new(payload.raw).owned_object(bound, C.vslim__psr15__nexthandler_ce,
 			&C.vphp_class_handlers(vslimpsr15nexthandler_handlers()))
 		return payload
 	}

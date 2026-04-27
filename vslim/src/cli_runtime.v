@@ -601,7 +601,7 @@ fn cli_runtime_help_text(mut cli VSlimCliApp, program string) string {
 }
 
 fn cli_runtime_print_help(mut cli VSlimCliApp, program string) {
-	vphp.write_output(cli_runtime_help_text(mut cli, program))
+	vphp.PhpOutput.write(cli_runtime_help_text(mut cli, program))
 }
 
 fn cli_runtime_write_stderr(message string) {
@@ -725,12 +725,11 @@ pub fn (mut cli VSlimCliApp) command_help(command_name string) string {
 	return cli_command_help_text(mut cli, 'vslim', command_name) or { '' }
 }
 
-@[php_arg_type: 'argv=iterable']
 @[php_method: 'runArgv']
-pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
+pub fn (mut cli VSlimCliApp) run_argv(argv vphp.PhpIterable) int {
 	cli_debug_log('run_argv enter cli=${usize(cli)} core=${usize(cli.core_app_ref)}')
 	argv_list := cli_args_to_array(argv.to_zval()) or {
-		vphp.throw_exception_class('InvalidArgumentException', 'argv must be iterable',
+		vphp.PhpException.raise_class('InvalidArgumentException', 'argv must be iterable',
 			0)
 		return 1
 	}
@@ -766,7 +765,7 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
 	program := cli_runtime_program_name(argv0)
 
 	if show_version {
-		vphp.write_output_line(cli_runtime_version_text())
+		vphp.PhpOutput.line(cli_runtime_version_text())
 		if command_name == '' && !show_help && !show_list {
 			return 0
 		}
@@ -775,7 +774,7 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
 		cli_debug_log('run_argv branch=help command="${command_name}"')
 		cli_debug_log('run_argv branch=help order=${cli.command_order}')
 		if command_name != '' {
-			vphp.write_output(cli_command_help_text(mut cli, program, command_name) or {
+			vphp.PhpOutput.write(cli_command_help_text(mut cli, program, command_name) or {
 				cli_runtime_write_stderr(err.msg())
 				return 1
 			})
@@ -787,7 +786,7 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
 	if show_list {
 		cli_debug_log('run_argv branch=list enter')
 		cli_debug_log('run_argv branch=list order=${cli.command_order}')
-		vphp.write_output(cli_runtime_list_text(mut cli))
+		vphp.PhpOutput.write(cli_runtime_list_text(mut cli))
 		cli_debug_log('run_argv branch=list exit')
 		return 0
 	}
@@ -797,7 +796,7 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.RequestBorrowedZBox) int {
 	}
 	if cli_args_request_command_help(command_args) {
 		cli_debug_log('run_argv branch=command_help command="${command_name}"')
-		vphp.write_output(cli_command_help_text(mut cli, program, command_name) or {
+		vphp.PhpOutput.write(cli_command_help_text(mut cli, program, command_name) or {
 			cli_runtime_write_stderr(err.msg())
 			return 1
 		})

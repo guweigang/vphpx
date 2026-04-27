@@ -170,13 +170,36 @@ length := vphp.php_fn('strlen').call_v[int]([
 ])!
 ```
 
-兼容入口仍然保留：
+如果只想按名字直接调用 PHP 函数，也可以用 `call_php_fn(...)`：
 
 ```v
-res := vphp.call_php('phpversion', [])
+res := vphp.call_php_fn('phpversion', [])
 ```
 
-但推荐统一用：
+新代码如果只需要在当前作用域读取返回值，推荐用 ownership-aware
+callback，把 PHP 返回值限制在一个小作用域里：
+
+```v
+version := vphp.PhpFunction.named('phpversion').with_result_zval([]vphp.ZVal{}, fn (res vphp.ZVal) string {
+	return res.to_string()
+})
+```
+
+如果结果要交给后续逻辑继续持有，推荐接收 request-owned box：
+
+```v
+mut version := vphp.PhpFunction.named('phpversion').request_owned_box([]vphp.ZVal{})
+defer { version.release() }
+```
+
+如果只要标量结果，可以用更直接的命名：
+
+```v
+version := vphp.php_call_result_string('phpversion', []vphp.ZVal{})
+exists := vphp.php_call_result_bool('function_exists', [vphp.ZVal.new_string('strlen')])
+```
+
+`php_fn(...)` 仍适合表达 callable 风格的 PHP 函数引用：
 
 ```v
 res := vphp.php_fn('phpversion').call([])
@@ -187,7 +210,15 @@ res := vphp.php_fn('phpversion').call([])
 | API | 说明 |
 | --- | --- |
 | `php_fn(name)` | 获取一个可调用的 PHP 函数引用 |
+| `call_php_fn(name, args)` | 按名字直接调用 PHP 函数 |
+| `PhpFunction.named(name)` | 获取语义化 PHP 函数 wrapper |
 | `function_exists(name)` | 判断 PHP 全局函数是否存在 |
+| `PhpFunction.named(name).with_result_zval(args, run)` | 调用 PHP 全局函数，并在 callback 内借用返回值 |
+| `php_call_result_string(name, args)` | 调用 PHP 全局函数，并返回 string |
+| `php_call_result_bool(name, args)` | 调用 PHP 全局函数，并返回 bool |
+| `php_call_result_i64(name, args)` | 调用 PHP 全局函数，并返回 i64 |
+| `php_call_result_double(name, args)` | 调用 PHP 全局函数，并返回 f64 |
+| `PhpFunction.named(name).request_owned_box(args)` | 调用 PHP 全局函数，并接收 request-owned 返回值 |
 | `z.call(args)` | 调用 callable（request-owned） |
 | `z.call_owned_request(args)` | 显式 request-owned |
 | `z.call_owned_persistent(args)` | 显式 persistent-owned |
@@ -402,6 +433,20 @@ dt.to_object[Article]() or { /* none */ }
 - `DateTimeImmutable` 没有
 
 ## 参数构造建议
+
+导出给 PHP 的函数参数目前分成五类：`vphp.Context`、V 原生值、
+PHP 语义 wrapper、生命周期/裸 `ZVal` escape hatch、以及 `@[params]`
+struct。完整规则见 [../compiler/README.md](../compiler/README.md) 的
+“Exported Function Parameter Forms”。
+
+导出函数的返回值也分成五类：`ctx.return()` 手动返回、V 原生值、V
+容器/struct 序列化、PHP 语义 wrapper、生命周期/裸 `ZVal` 返回。完整
+规则见 [../compiler/README.md](../compiler/README.md) 的
+“Exported Function Return Forms”。
+
+其中最容易踩坑的是 PHP 语义 wrapper：`vphp.PhpObject`、
+`vphp.PhpArray`、`vphp.PhpCallable`、`vphp.PhpValue` 等返回时保留原
+PHP 值语义，不会被当成 V struct 展开成数组。
 
 手动组装参数时，推荐统一使用：
 

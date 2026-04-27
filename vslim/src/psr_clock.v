@@ -11,16 +11,16 @@ pub fn (mut clock VSlimPsr20Clock) construct() &VSlimPsr20Clock {
 @[php_return_type: 'DateTimeImmutable']
 pub fn (clock &VSlimPsr20Clock) now() vphp.RequestOwnedZBox {
 	_ = clock
-	now := vphp.php_class('DateTimeImmutable').construct([])
+	now := vphp.PhpClass.named('DateTimeImmutable').construct([])
 	if !now.is_valid() || !now.is_object() {
-		vphp.throw_exception_class('RuntimeException', 'failed to create DateTimeImmutable instance', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'failed to create DateTimeImmutable instance', 0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
-	return vphp.own_request_zbox(now)
+	return vphp.RequestOwnedZBox.of(now)
 }
 
 fn new_psr20_system_clock_ref() vphp.PersistentOwnedZBox {
-	clock := vphp.php_class('VSlim\\Psr20\\Clock').construct([])
+	clock := vphp.PhpClass.named('VSlim\\Psr20\\Clock').construct([])
 	if !clock.is_valid() || !clock.is_object() {
 		return vphp.PersistentOwnedZBox.new_null()
 	}
@@ -36,7 +36,7 @@ fn psr20_now_datetime_or_throw(clock vphp.ZVal) !vphp.ZVal {
 	if !psr20_is_clock(clock) {
 		return error('clock must implement Psr\\Clock\\ClockInterface')
 	}
-	mut now := vphp.method_request_owned_box(clock, 'now', []vphp.ZVal{})
+	mut now := vphp.PhpObject.borrowed(clock).method_request_owned_box('now', []vphp.ZVal{})
 	if !now.is_valid() || !now.is_object() || !now.to_zval().is_instance_of('DateTimeImmutable') {
 		now.release()
 		return error('clock::now() must return DateTimeImmutable')
@@ -46,14 +46,14 @@ fn psr20_now_datetime_or_throw(clock vphp.ZVal) !vphp.ZVal {
 
 fn psr20_now_unix_or_throw(clock vphp.ZVal) !i64 {
 	now := psr20_now_datetime_or_throw(clock)!
-	return vphp.with_method_result_zval(now, 'getTimestamp', []vphp.ZVal{}, fn (ts vphp.ZVal) i64 {
+	return vphp.PhpObject.borrowed(now).with_method_result_zval('getTimestamp', []vphp.ZVal{}, fn (ts vphp.ZVal) i64 {
 		return ts.to_i64()
 	})
 }
 
 fn psr20_now_unix_milli_string_or_throw(clock vphp.ZVal) !string {
 	now := psr20_now_datetime_or_throw(clock)!
-	formatted := vphp.with_method_result_zval(now, 'format', [vphp.RequestOwnedZBox.new_string('Uv').to_zval()], fn (out vphp.ZVal) string {
+	formatted := vphp.PhpObject.borrowed(now).with_method_result_zval('format', [vphp.RequestOwnedZBox.new_string('Uv').to_zval()], fn (out vphp.ZVal) string {
 		return out.to_string().trim_space()
 	})
 	if formatted != '' {

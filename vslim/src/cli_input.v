@@ -96,9 +96,7 @@ fn set_cli_command_input(mut cli VSlimCliApp, command_name string, input CliComm
 }
 
 fn cli_dyn_value_to_zbox(value vphp.DynValue) vphp.RequestOwnedZBox {
-	return vphp.RequestOwnedZBox.adopt_zval(vphp.new_zval_from_dyn_value(value) or {
-		vphp.ZVal.new_null()
-	})
+	return vphp.RequestOwnedZBox.adopt_zval(value.new_zval() or { vphp.ZVal.new_null() })
 }
 
 fn cli_definition_string_item(item vphp.ZVal) ?string {
@@ -400,18 +398,18 @@ fn cli_parse_scalar_value(raw string, value_type CliInputValueType, label string
 	cli_validate_choice(raw, choices, label)!
 	return match value_type {
 		.string_ {
-			vphp.dyn_value_string(raw)
+			vphp.DynValue.of_string(raw)
 		}
 		.bool_ {
-			vphp.dyn_value_bool(cli_parse_bool_string(raw)!)
+			vphp.DynValue.of_bool(cli_parse_bool_string(raw)!)
 		}
 		.int_ {
-			vphp.dyn_value_int(strconv.atoi64(raw.trim_space()) or {
+			vphp.DynValue.of_int(strconv.atoi64(raw.trim_space()) or {
 				return error('${cli_label_message(label)} expects an integer value')
 			})
 		}
 		.float_ {
-			vphp.dyn_value_float(strconv.atof64(raw.trim_space(), strconv.AtoF64Param{}) or {
+			vphp.DynValue.of_float(strconv.atof64(raw.trim_space(), strconv.AtoF64Param{}) or {
 				return error('${cli_label_message(label)} expects a float value')
 			})
 		}
@@ -424,10 +422,10 @@ fn cli_value_from_defaults(values []string, value_type CliInputValueType, multip
 		for item in values {
 			out << cli_parse_scalar_value(item, value_type, label, choices)!
 		}
-		return vphp.dyn_value_list(out)
+		return vphp.DynValue.of_list(out)
 	}
 	if values.len == 0 {
-		return vphp.dyn_value_null()
+		return vphp.DynValue.null()
 	}
 	return cli_parse_scalar_value(values[0], value_type, label, choices)!
 }
@@ -598,14 +596,14 @@ fn cli_finalize_options(def CliCommandDefinition, raw_values map[string][]string
 				return error('CLI option `--${spec.name}` is required')
 			}
 			if spec.multiple {
-				out[spec.name] = vphp.dyn_value_list([]vphp.DynValue{})
+				out[spec.name] = vphp.DynValue.of_list([]vphp.DynValue{})
 				continue
 			}
 			if spec.value_type == .bool_ {
-				out[spec.name] = vphp.dyn_value_bool(false)
+				out[spec.name] = vphp.DynValue.of_bool(false)
 				continue
 			}
-			out[spec.name] = vphp.dyn_value_null()
+			out[spec.name] = vphp.DynValue.null()
 			continue
 		}
 		out[spec.name] = cli_value_from_defaults(values, spec.value_type, spec.multiple,
@@ -613,7 +611,7 @@ fn cli_finalize_options(def CliCommandDefinition, raw_values map[string][]string
 	}
 	for name, _ in option_seen {
 		if name !in out {
-			out[name] = vphp.dyn_value_null()
+			out[name] = vphp.DynValue.null()
 		}
 	}
 	return out
@@ -634,7 +632,7 @@ fn cli_finalize_arguments(def CliCommandDefinition, positionals []string) !(map[
 				if spec.required {
 					return error('CLI ${label} is required')
 				}
-				out[spec.name] = vphp.dyn_value_list([]vphp.DynValue{})
+				out[spec.name] = vphp.DynValue.of_list([]vphp.DynValue{})
 				continue
 			}
 			mut parsed := []vphp.DynValue{}
@@ -642,7 +640,7 @@ fn cli_finalize_arguments(def CliCommandDefinition, positionals []string) !(map[
 				parsed << cli_parse_scalar_value(value, spec.value_type, label, spec.choices)!
 				handle_args << value
 			}
-			out[spec.name] = vphp.dyn_value_list(parsed)
+			out[spec.name] = vphp.DynValue.of_list(parsed)
 			idx = positionals.len
 			continue
 		}
@@ -663,7 +661,7 @@ fn cli_finalize_arguments(def CliCommandDefinition, positionals []string) !(map[
 			if spec.required {
 				return error('CLI ${label} is required')
 			}
-			out[spec.name] = vphp.dyn_value_null()
+			out[spec.name] = vphp.DynValue.null()
 			continue
 		}
 		value := positionals[idx]
@@ -722,7 +720,7 @@ fn cli_command_definition(runtime vphp.ZVal) !CliCommandDefinition {
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists('definition') {
 		return error('command has no CLI definition')
 	}
-	mut definition_z := vphp.method_request_owned_box(runtime, 'definition', []vphp.ZVal{})
+	mut definition_z := vphp.PhpObject.borrowed(runtime).method_request_owned_box('definition', []vphp.ZVal{})
 	defer {
 		definition_z.release()
 	}
@@ -733,7 +731,7 @@ fn cli_runtime_text_method(runtime vphp.ZVal, method_name string) string {
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists(method_name) {
 		return ''
 	}
-	mut value_z := vphp.method_request_owned_box(runtime, method_name, []vphp.ZVal{})
+	mut value_z := vphp.PhpObject.borrowed(runtime).method_request_owned_box(method_name, []vphp.ZVal{})
 	defer {
 		value_z.release()
 	}
@@ -744,20 +742,18 @@ fn cli_runtime_string_list_method(runtime vphp.ZVal, method_name string) []strin
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists(method_name) {
 		return []string{}
 	}
-	mut value_z := vphp.method_request_owned_box(runtime, method_name, []vphp.ZVal{})
+	mut value_z := vphp.PhpObject.borrowed(runtime).method_request_owned_box(method_name, []vphp.ZVal{})
 	defer {
 		value_z.release()
 	}
-	return cli_string_list_from_value(value_z.to_zval()) or {
-		[]string{}
-	}
+	return cli_string_list_from_value(value_z.to_zval()) or { []string{} }
 }
 
 fn cli_runtime_bool_method(runtime vphp.ZVal, method_name string, fallback bool) bool {
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists(method_name) {
 		return fallback
 	}
-	mut value_z := vphp.method_request_owned_box(runtime, method_name, []vphp.ZVal{})
+	mut value_z := vphp.PhpObject.borrowed(runtime).method_request_owned_box(method_name, []vphp.ZVal{})
 	defer {
 		value_z.release()
 	}
@@ -773,7 +769,7 @@ fn bind_cli_runtime_to_command(mut cli VSlimCliApp, runtime vphp.ZVal) {
 		cli_z.release()
 	}
 	if runtime.method_exists('setCli') {
-		mut set_cli_result := vphp.method_request_owned_box(runtime, 'setCli', [cli_z])
+		mut set_cli_result := vphp.PhpObject.borrowed(runtime).method_request_owned_box('setCli', [cli_z])
 		set_cli_result.release()
 	}
 	if runtime.method_exists('setApp') {
@@ -781,7 +777,7 @@ fn bind_cli_runtime_to_command(mut cli VSlimCliApp, runtime vphp.ZVal) {
 		defer {
 			app_z.release()
 		}
-		mut set_app_result := vphp.method_request_owned_box(runtime, 'setApp', [app_z])
+		mut set_app_result := vphp.PhpObject.borrowed(runtime).method_request_owned_box('setApp', [app_z])
 		set_app_result.release()
 	}
 }

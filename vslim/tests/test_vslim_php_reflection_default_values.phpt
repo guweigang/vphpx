@@ -12,8 +12,8 @@ if (!extension_loaded('vslim')) {
 $responseCtor = new ReflectionMethod(VSlim\Psr7\Response::class, '__construct');
 $createResponse = new ReflectionMethod(VSlim\Psr17\ResponseFactory::class, 'createResponse');
 $appBadRequest = new ReflectionMethod(VSlim\App::class, 'badRequest');
-$requestInputOr = new ReflectionMethod(VSlim\VHttpd\Request::class, 'input_or');
-$configGetMap = new ReflectionMethod(VSlim\Config::class, 'get_map');
+$requestInputOr = new ReflectionMethod(VSlim\VHttpd\Request::class, 'inputOr');
+$configGetMap = new ReflectionMethod(VSlim\Config::class, 'getMap');
 $seek = new ReflectionMethod(VSlim\Psr7\Stream::class, 'seek');
 
 var_dump($responseCtor->getParameters()[0]->isDefaultValueAvailable());

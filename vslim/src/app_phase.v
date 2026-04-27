@@ -7,7 +7,7 @@ import vphp
 fn dispatch_php_phase_middleware_raw(app &VSlimApp, payload vphp.RequestBorrowedZBox, route_params map[string]string, handler vphp.RequestBorrowedZBox, next_handler vphp.ZVal) !vphp.ZVal {
 	target := resolve_php_phase_middleware_target(app, handler)!
 	bind_route_target_to_app_if_supported(app, target)
-	mut result := vphp.method_request_owned_box(target, 'process', [
+	mut result := vphp.PhpObject.borrowed(target).method_request_owned_box('process', [
 		normalize_psr15_server_request_payload(payload, route_params),
 		next_handler,
 	])
@@ -103,7 +103,7 @@ fn build_php_psr15_continue_handler_object(handler &VSlimPsr15ContinueHandler) v
 			mode: .continue_marker
 		}
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
-		vphp.return_owned_object_raw(payload.raw, handler, C.vslim__psr15__continuehandler_ce,
+		vphp.PhpReturn.new(payload.raw).owned_object(handler, C.vslim__psr15__continuehandler_ce,
 			&C.vphp_class_handlers(vslimpsr15continuehandler_handlers()))
 		return payload
 	}

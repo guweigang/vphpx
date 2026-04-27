@@ -36,7 +36,7 @@ fn is_supported_registration_kind(kind MiddlewareRegistrationKind, handler vphp.
 fn register_app_middleware_kind(mut app VSlimApp, handler vphp.ZVal, kind MiddlewareRegistrationKind) {
 	borrowed := vphp.RequestBorrowedZBox.from_zval(handler)
 	if !is_supported_registration_kind(kind, borrowed) {
-		vphp.throw_exception_class('InvalidArgumentException', middleware_registration_error(kind),
+		vphp.PhpException.raise_class('InvalidArgumentException', middleware_registration_error(kind),
 			0)
 		return
 	}
@@ -57,7 +57,7 @@ fn register_app_middleware_kind(mut app VSlimApp, handler vphp.ZVal, kind Middle
 fn register_group_middleware_kind(group &RouteGroup, handler vphp.ZVal, kind MiddlewareRegistrationKind) {
 	borrowed := vphp.RequestBorrowedZBox.from_zval(handler)
 	if !is_supported_registration_kind(kind, borrowed) {
-		vphp.throw_exception_class('InvalidArgumentException', middleware_registration_error(kind),
+		vphp.PhpException.raise_class('InvalidArgumentException', middleware_registration_error(kind),
 			0)
 		return
 	}
@@ -89,7 +89,7 @@ fn bind_cached_target_to_app_if_supported(app &VSlimApp, target vphp.ZVal) {
 		return
 	}
 	if target.method_exists('setApp') {
-		vphp.with_method_result_zval(target, 'setApp', [wrap_runtime_app_zval(app)], fn (_ vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(target).with_method_result_zval('setApp', [wrap_runtime_app_zval(app)], fn (_ vphp.ZVal) bool {
 			return true
 		})
 	}
@@ -317,7 +317,7 @@ fn bind_route_target_to_app_if_supported(app &VSlimApp, target vphp.ZVal) {
 		return
 	}
 	if target.method_exists('setApp') {
-		vphp.with_method_result_zval(target, 'setApp', [wrap_runtime_app_zval(app)], fn (_ vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(target).with_method_result_zval('setApp', [wrap_runtime_app_zval(app)], fn (_ vphp.ZVal) bool {
 			return true
 		})
 	}
@@ -328,7 +328,7 @@ fn call_route_target_method(target vphp.ZVal, method string, args []vphp.ZVal) v
 	callable.to_zval().array_init()
 	callable.to_zval().add_next_val(target)
 	callable.to_zval().add_next_val(vphp.ZVal.new_string(method))
-	mut result := vphp.call_request_owned_box(callable.to_zval(), args)
+	mut result := vphp.PhpCallable.borrowed(callable.to_zval()).request_owned_box(args)
 	callable.release()
 	return result
 }
@@ -370,7 +370,7 @@ fn dispatch_php_middleware_entry(mut chain MiddlewareChain, handler vphp.Request
 		defer {
 			next_handler.release()
 		}
-		mut result := vphp.method_request_owned_box(target, method, [psr_payload.to_zval(), next_handler.to_zval()])
+		mut result := vphp.PhpObject.borrowed(target).method_request_owned_box(method, [psr_payload.to_zval(), next_handler.to_zval()])
 		defer {
 			result.release()
 		}
@@ -411,12 +411,12 @@ fn dispatch_route_handler(app &VSlimApp, handler vphp.RequestBorrowedZBox, paylo
 	}
 	if is_psr15_request_handler(handler) {
 		psr_payload := normalize_psr15_server_request_payload(payload, route_params)
-		mut result := vphp.method_request_owned_box(handler.to_zval(), 'handle', [psr_payload])
+		mut result := vphp.PhpObject.borrowed(handler.to_zval()).method_request_owned_box('handle', [psr_payload])
 		return detach_route_handler_result(mut result)
 	}
 	psr_payload := normalize_psr15_server_request_payload(payload, route_params)
 	if handler.is_callable() {
-		mut result := vphp.call_request_owned_box(handler.to_zval(), [psr_payload])
+		mut result := vphp.PhpCallable.borrowed(handler.to_zval()).request_owned_box([psr_payload])
 		return detach_route_handler_result(mut result)
 	}
 	raw := handler.to_zval()
@@ -544,15 +544,15 @@ fn resolve_container_service(app &VSlimApp, service_id string) !vphp.ZVal {
 		}
 		mut container := mutable_app.container_ref
 		mut resolved := container.get_entry(service_id) or {
-			if !vphp.class_exists(service_id) {
+			if !vphp.PhpClass.named(service_id).exists() {
 				return error('container service not found')
 			}
-			created := vphp.php_class(service_id).construct([])
+			created := vphp.PhpClass.named(service_id).construct([])
 			if !created.is_valid() || !created.is_object() {
 				return error('class "${service_id}" could not be instantiated')
 			}
 			bind_cached_target_to_app_if_supported(app, created)
-			container.set(service_id, vphp.borrow_zbox(created))
+			container.set(service_id, vphp.RequestBorrowedZBox.of(created))
 			return created
 		}
 		return resolved.take_zval()

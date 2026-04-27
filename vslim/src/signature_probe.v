@@ -28,7 +28,7 @@ pub fn (probe &VSlimPhpSignatureProbe) always_null() vphp.RequestOwnedZBox {
 @[php_method: 'alwaysThrow']
 @[php_return_type: 'never']
 pub fn (probe &VSlimPhpSignatureProbe) always_throw() vphp.RequestOwnedZBox {
-	vphp.throw_exception_class('RuntimeException', 'probe never return', 0)
+	vphp.PhpException.raise_class('RuntimeException', 'probe never return', 0)
 	return vphp.RequestOwnedZBox.new_null()
 }
 

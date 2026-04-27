@@ -5,7 +5,7 @@ import vphp
 #include "php_bridge.h"
 
 fn psr6_owned_value(z vphp.ZVal) vphp.RequestOwnedZBox {
-	return vphp.own_request_zbox(z)
+	return vphp.RequestOwnedZBox.of(z)
 }
 
 struct Psr6ItemSnapshot {
@@ -49,7 +49,7 @@ pub fn (pool &VSlimPsr6CacheItemPool) default_ttl_seconds_value() int {
 pub fn (mut pool VSlimPsr6CacheItemPool) set_clock(clock vphp.RequestBorrowedZBox) &VSlimPsr6CacheItemPool {
 	ensure_psr6_pool(mut pool)
 	if !psr20_is_clock(clock.to_zval()) {
-		vphp.throw_exception_class('InvalidArgumentException', 'clock must implement Psr\\Clock\\ClockInterface', 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'clock must implement Psr\\Clock\\ClockInterface', 0)
 		return &pool
 	}
 	mut old := pool.clock_ref
@@ -85,11 +85,11 @@ pub fn (mut pool VSlimPsr6CacheItemPool) get_items(keys vphp.RequestBorrowedZBox
 	ensure_psr6_pool(mut pool)
 	mut out := new_array_zval()
 	if !keys.is_valid() || keys.is_null() || keys.is_undef() {
-		return vphp.own_request_zbox(out)
+		return vphp.RequestOwnedZBox.of(out)
 	}
 	if !keys.is_array() {
 		throw_psr6_invalid_argument('keys must be an array of cache keys')
-		return vphp.own_request_zbox(out)
+		return vphp.RequestOwnedZBox.of(out)
 	}
 	for key_name in psr6_key_list_from_array(keys.to_zval()) or {
 		msg := err.msg()
@@ -98,7 +98,7 @@ pub fn (mut pool VSlimPsr6CacheItemPool) get_items(keys vphp.RequestBorrowedZBox
 	} {
 		add_assoc_zval(out, key_name, build_php_psr6_cache_item_object(pool.item_for_key(key_name)))
 	}
-	return vphp.own_request_zbox(out)
+	return vphp.RequestOwnedZBox.of(out)
 }
 
 @[php_method: 'hasItem']
@@ -143,13 +143,8 @@ pub fn (mut pool VSlimPsr6CacheItemPool) delete_item(key string) bool {
 }
 
 @[php_method: 'deleteItems']
-@[php_arg_type: 'keys=array']
-pub fn (mut pool VSlimPsr6CacheItemPool) delete_items(keys vphp.RequestBorrowedZBox) bool {
+pub fn (mut pool VSlimPsr6CacheItemPool) delete_items(keys vphp.PhpArray) bool {
 	ensure_psr6_pool(mut pool)
-	if !keys.is_array() {
-		throw_psr6_invalid_argument('keys must be an array of cache keys')
-		return false
-	}
 	for key_name in psr6_key_list_from_array(keys.to_zval()) or {
 		throw_psr6_invalid_argument(err.msg())
 		return false
@@ -264,7 +259,6 @@ pub fn (mut item VSlimPsr6CacheItem) expires_at(expiration vphp.RequestBorrowedZ
 }
 
 @[php_method: 'expiresAfter']
-@[php_arg_type: 'time=mixed']
 @[php_return_type: 'static']
 @[php_arg_name: 'time_value=timeValue']
 pub fn (mut item VSlimPsr6CacheItem) expires_after(time_value vphp.RequestBorrowedZBox) &VSlimPsr6CacheItem {
@@ -428,7 +422,7 @@ fn psr6_new_hit_item_with_clock(key string, value vphp.PersistentOwnedZBox, expi
 fn build_php_psr6_cache_item_object(item &VSlimPsr6CacheItem) vphp.ZVal {
 	unsafe {
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
-		vphp.return_owned_object_raw(payload.raw, item, C.vslim__psr6__cacheitem_ce,
+		vphp.PhpReturn.new(payload.raw).owned_object(item, C.vslim__psr6__cacheitem_ce,
 			&C.vphp_class_handlers(vslimpsr6cacheitem_handlers()))
 		return payload
 	}
@@ -451,7 +445,7 @@ fn psr6_snapshot_from_item(item vphp.ZVal) !Psr6ItemSnapshot {
 }
 
 fn psr6_key_list_from_array(keys vphp.ZVal) ![]string {
-	values := vphp.php_fn('array_values').call([keys])
+	values := vphp.PhpFunction.named('array_values').call([keys])
 	if !values.is_array() {
 		return error('keys must be an array of cache keys')
 	}
@@ -475,7 +469,7 @@ fn psr6_resolve_absolute_expiration_or_throw(expiration vphp.ZVal) !i64 {
 		return 0
 	}
 	if expiration.is_object() && expiration.is_instance_of('DateTimeInterface') {
-		return vphp.with_method_result_zval(expiration, 'getTimestamp', []vphp.ZVal{}, fn (ts vphp.ZVal) i64 {
+		return vphp.PhpObject.borrowed(expiration).with_method_result_zval('getTimestamp', []vphp.ZVal{}, fn (ts vphp.ZVal) i64 {
 			return ts.to_i64()
 		})
 	}
@@ -498,11 +492,11 @@ fn psr6_resolve_relative_expiration_or_throw(clock vphp.ZVal, time_value vphp.ZV
 		now_dt := psr20_now_datetime_or_throw(clock) or {
 			return error('failed to resolve clock time for expiration resolution')
 		}
-		expires_at := vphp.with_method_result_zval(now_dt, 'add', [time_value], fn (added vphp.ZVal) i64 {
+		expires_at := vphp.PhpObject.borrowed(now_dt).with_method_result_zval('add', [time_value], fn (added vphp.ZVal) i64 {
 			if !added.is_valid() || !added.is_object() {
 				return i64(-1)
 			}
-			return vphp.with_method_result_zval(added, 'getTimestamp', []vphp.ZVal{}, fn (ts vphp.ZVal) i64 {
+			return vphp.PhpObject.borrowed(added).with_method_result_zval('getTimestamp', []vphp.ZVal{}, fn (ts vphp.ZVal) i64 {
 				return ts.to_i64()
 			})
 		})
@@ -526,11 +520,11 @@ pub fn (mut item VSlimPsr6CacheItem) replace_value(value vphp.ZVal) {
 }
 
 fn throw_psr6_invalid_argument(message string) {
-	vphp.throw_exception_class('VSlim\\Psr6\\InvalidArgumentException', message, 0)
+	vphp.PhpException.raise_class('VSlim\\Psr6\\InvalidArgumentException', message, 0)
 }
 
 fn throw_psr6_cache_exception(message string) {
-	vphp.throw_exception_class('VSlim\\Psr6\\CacheException', message, 0)
+	vphp.PhpException.raise_class('VSlim\\Psr6\\CacheException', message, 0)
 }
 
 pub fn (item &VSlimPsr6CacheItem) free() {

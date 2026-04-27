@@ -1,0 +1,77 @@
+name: VPHP CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'vphp/**'
+      - 'vphptest/**'
+      - '.github/workflows/vphp-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'vphp/**'
+      - 'vphptest/**'
+      - '.github/workflows/vphp-ci.yml'
+
+env:
+  V_VERSION: '0.5.1'
+  VPHP_V_GC: none
+
+jobs:
+  vphptest:
+    name: vphptest ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.5
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+
+      - name: Setup V
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${{ runner.os }}" in
+            Linux) v_url="https://github.com/vlang/v/releases/download/${V_VERSION}/v_linux.zip" ;;
+            macOS) v_url="https://github.com/vlang/v/releases/download/${V_VERSION}/v_macos_arm64.zip" ;;
+            *) echo "unsupported runner: ${{ runner.os }}"; exit 1 ;;
+          esac
+          curl -fsSL "$v_url" -o /tmp/v.zip
+          rm -rf /tmp/v /tmp/vlang
+          unzip -q /tmp/v.zip -d /tmp
+          chmod +x /tmp/v/v
+          mv /tmp/v /tmp/vlang
+          echo "/tmp/vlang" >> "$GITHUB_PATH"
+          /tmp/vlang/v version
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc pkg-config libcjson-dev
+
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          brew update
+          brew install pkg-config cjson
+
+      - name: Build and test vphptest
+        shell: bash
+        run: |
+          make -C vphptest test

@@ -50,7 +50,7 @@ pub fn (mut app VSlimMcpApp) capability(name string, definition vphp.RequestBorr
 pub fn (mut app VSlimMcpApp) capabilities(definitions vphp.RequestBorrowedZBox) &VSlimMcpApp {
 	raw_definitions := definitions.to_zval()
 	for key in raw_definitions.assoc_keys() {
-		app.capability(key, vphp.borrow_zbox(zval_key(raw_definitions, key)))
+		app.capability(key, vphp.RequestBorrowedZBox.of(zval_key(raw_definitions, key)))
 	}
 	return &app
 }
@@ -60,7 +60,7 @@ pub fn (mut app VSlimMcpApp) register(method string, handler vphp.RequestBorrowe
 	key := method.trim_space()
 	raw_handler := handler.to_zval()
 	if key == '' || !raw_handler.is_valid() || !raw_handler.is_callable() {
-		vphp.throw_exception_class('InvalidArgumentException', 'register handler must be callable', 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'register handler must be callable', 0)
 		return &app
 	}
 	if key in app.method_handlers {
@@ -78,7 +78,7 @@ pub fn (mut app VSlimMcpApp) tool(name string, description string, input_schema 
 	raw_handler := handler.to_zval()
 	raw_schema := input_schema.to_zval()
 	if key == '' || !raw_handler.is_valid() || !raw_handler.is_callable() {
-		vphp.throw_exception_class('InvalidArgumentException', 'tool handler must be callable', 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'tool handler must be callable', 0)
 		return &app
 	}
 	if key in app.tool_handlers {
@@ -101,7 +101,7 @@ pub fn (mut app VSlimMcpApp) resource(uri string, name string, description strin
 	key := uri.trim_space()
 	raw_handler := handler.to_zval()
 	if key == '' || !raw_handler.is_valid() || !raw_handler.is_callable() {
-		vphp.throw_exception_class('InvalidArgumentException', 'resource handler must be callable', 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'resource handler must be callable', 0)
 		return &app
 	}
 	if key in app.resource_handlers {
@@ -121,7 +121,7 @@ pub fn (mut app VSlimMcpApp) prompt(name string, description string, arguments v
 	raw_handler := handler.to_zval()
 	raw_arguments := arguments.to_zval()
 	if key == '' || !raw_handler.is_valid() || !raw_handler.is_callable() {
-		vphp.throw_exception_class('InvalidArgumentException', 'prompt handler must be callable', 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'prompt handler must be callable', 0)
 		return &app
 	}
 	if key in app.prompt_handlers {
@@ -210,7 +210,7 @@ pub fn VSlimMcpApp.queue_progress(id vphp.RequestBorrowedZBox, progress_token vp
 	if message.trim_space() != '' {
 		params.add_assoc_string('message', message)
 	}
-	return VSlimMcpApp.notify(id, 'notifications/progress', vphp.borrow_zbox(params), session_id, protocol_version)
+	return VSlimMcpApp.notify(id, 'notifications/progress', vphp.RequestBorrowedZBox.of(params), session_id, protocol_version)
 }
 
 @[php_method: 'queueLog']
@@ -232,7 +232,7 @@ pub fn VSlimMcpApp.queue_log(id vphp.RequestBorrowedZBox, level string, message 
 	if logger.trim_space() != '' {
 		params.add_assoc_string('logger', logger)
 	}
-	return VSlimMcpApp.notify(id, 'notifications/message', vphp.borrow_zbox(params), session_id, protocol_version)
+	return VSlimMcpApp.notify(id, 'notifications/message', vphp.RequestBorrowedZBox.of(params), session_id, protocol_version)
 }
 
 @[php_method: 'queueSampling']
@@ -241,8 +241,8 @@ pub fn VSlimMcpApp.queue_sampling(response_id vphp.RequestBorrowedZBox, sampling
 	mut queue := new_array_zval()
 	queue.add_next_val(vphp.RequestOwnedZBox.new_string(VSlimMcpApp.sampling_request(sampling_id,
 		messages, model_preferences, system_prompt, max_tokens,
-		vphp.borrow_zbox(vphp.RequestOwnedZBox.new_null().to_zval()), vphp.borrow_zbox(vphp.RequestOwnedZBox.new_null().to_zval()),
-		vphp.borrow_zbox(vphp.RequestOwnedZBox.new_null().to_zval()))).to_zval())
+		vphp.RequestBorrowedZBox.of(vphp.RequestOwnedZBox.new_null().to_zval()), vphp.RequestBorrowedZBox.of(vphp.RequestOwnedZBox.new_null().to_zval()),
+		vphp.RequestBorrowedZBox.of(vphp.RequestOwnedZBox.new_null().to_zval()))).to_zval())
 	return vphp.RequestOwnedZBox.adopt_zval(new_queued_result(response_id.to_zval(),
 		default_mcp_queued_result(), queue, 200, protocol_version, session_id, default_mcp_headers()))
 }
@@ -252,13 +252,13 @@ pub fn VSlimMcpApp.client_capabilities(frame vphp.RequestBorrowedZBox) vphp.Requ
 	raw_frame := frame.to_zval()
 	caps_raw := zval_raw_string_key(raw_frame, 'client_capabilities_json', '')
 	if caps_raw.trim_space() == '' {
-		return vphp.own_request_zbox(new_array_zval())
+		return vphp.RequestOwnedZBox.of(new_array_zval())
 	}
-	caps := vphp.json_decode_assoc(caps_raw)
+	caps := vphp.PhpJson.decode_assoc(caps_raw)
 	if !caps.is_array() {
-		return vphp.own_request_zbox(new_array_zval())
+		return vphp.RequestOwnedZBox.of(new_array_zval())
 	}
-	return vphp.own_request_zbox(caps)
+	return vphp.RequestOwnedZBox.of(caps)
 }
 
 @[php_method: 'clientSupports']
@@ -285,7 +285,7 @@ pub fn VSlimMcpApp.capability_error(frame vphp.RequestBorrowedZBox, message stri
 		'2025-11-05'))
 	out.add_assoc_string('session_id', zval_string_key(raw_frame, 'session_id', ''))
 	add_assoc_zval(out, 'messages', new_array_zval())
-	return vphp.own_request_zbox(out)
+	return vphp.RequestOwnedZBox.of(out)
 }
 
 @[php_method: 'requireCapability']
@@ -310,7 +310,7 @@ pub fn (app &VSlimMcpApp) handle_mcp_dispatch(frame vphp.RequestBorrowedZBox) vp
 		return vphp.RequestOwnedZBox.adopt_zval(new_mcp_error_response(vphp.RequestOwnedZBox.new_null().to_zval(),
 			-32700, 'Missing JSON-RPC body', 400, protocol_version))
 	}
-	message := vphp.json_decode_assoc(raw)
+	message := vphp.PhpJson.decode_assoc(raw)
 	if !message.is_array() {
 		return vphp.RequestOwnedZBox.adopt_zval(new_mcp_error_response(vphp.RequestOwnedZBox.new_null().to_zval(),
 			-32700, 'Invalid JSON', 400, protocol_version))
@@ -428,7 +428,7 @@ pub fn (app &VSlimMcpApp) tool_definitions() vphp.ZVal {
 		mut row := new_array_zval()
 		row.add_assoc_string('name', key)
 		row.add_assoc_string('description', app.tool_descriptions[key] or { '' })
-		schema := app.tool_schemas[key] or { vphp.PersistentOwnedZBox.from_dyn(vphp.dyn_value_map(map[string]vphp.DynValue{})) }
+		schema := app.tool_schemas[key] or { vphp.PersistentOwnedZBox.from_dyn(vphp.DynValue.of_map(map[string]vphp.DynValue{})) }
 		schema.with_request_zval(fn [mut row] (z vphp.ZVal) bool {
 			add_assoc_zval(row, 'inputSchema', z)
 			return true
@@ -461,7 +461,7 @@ pub fn (app &VSlimMcpApp) prompt_definitions() vphp.ZVal {
 		mut row := new_array_zval()
 		row.add_assoc_string('name', key)
 		row.add_assoc_string('description', app.prompt_descriptions[key] or { '' })
-		args := app.prompt_arguments[key] or { vphp.PersistentOwnedZBox.from_dyn(vphp.dyn_value_list([]vphp.DynValue{})) }
+		args := app.prompt_arguments[key] or { vphp.PersistentOwnedZBox.from_dyn(vphp.DynValue.of_list([]vphp.DynValue{})) }
 		args.with_request_zval(fn [mut row] (z vphp.ZVal) bool {
 			add_assoc_zval(row, 'arguments', z)
 			return true
@@ -687,7 +687,7 @@ fn persistent_array_or_empty(input vphp.ZVal) vphp.PersistentOwnedZBox {
 	if input.is_array() {
 		return vphp.PersistentOwnedZBox.from_mixed_zval(input)
 	}
-	return vphp.PersistentOwnedZBox.from_dyn(vphp.dyn_value_map(map[string]vphp.DynValue{}))
+	return vphp.PersistentOwnedZBox.from_dyn(vphp.DynValue.of_map(map[string]vphp.DynValue{}))
 }
 
 fn invoke_mcp_handler(handler vphp.PersistentOwnedZBox, args []vphp.ZVal) vphp.ZVal {

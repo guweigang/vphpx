@@ -62,8 +62,11 @@ fn v_test_map(ctx vphp.Context) {
 
 @[php_function]
 fn v_get_config(ctx vphp.Context) {
-	input := ctx.arg_raw(0)
-
+	input := ctx.arg_array(0) or {
+		vphp.report_error(vphp.e_warning, 'config should be array, using default')
+		ctx.return_string('bullsoft_db')
+		return
+	}
 	db_val := input.get('db_name') or {
 		vphp.report_error(vphp.e_warning, 'db_name is missing, using default')
 		ctx.return_string('bullsoft_db')
@@ -75,8 +78,8 @@ fn v_get_config(ctx vphp.Context) {
 
 @[php_function]
 fn v_get_user(ctx vphp.Context) {
-	raw_id := ctx.arg_raw(0)
-	println('DEBUG: PHP ID Type: ${raw_id.type_id()}')
+	value := ctx.arg_value(0)
+	println('DEBUG: PHP ID Type: ${value.type_id()}')
 
 	user_id := ctx.arg[i64](0)
 
@@ -131,9 +134,18 @@ fn nested_payload_summary(box vphp.PersistentOwnedZBox) string {
 		metrics := z.get('metrics') or { vphp.ZVal.new_null() }
 
 		viewer_id := if viewer.is_array() { viewer.get_or('id', '') } else { '' }
-		members := if workspace.is_array() { workspace.get('members') or { vphp.ZVal.new_null() } } else { vphp.ZVal.new_null() }
-		collections := if workspace.is_array() { workspace.get('collections') or { vphp.ZVal.new_null() } } else { vphp.ZVal.new_null() }
-		jobs := if metrics.is_array() { metrics.get('jobs') or { vphp.ZVal.new_null() } } else { vphp.ZVal.new_null() }
+		members := if workspace.is_array() {
+			workspace.get('members') or { vphp.ZVal.new_null() }
+		} else {
+			vphp.ZVal.new_null()
+		}
+		collections := if workspace.is_array() { workspace.get('collections') or {
+				vphp.ZVal.new_null()} } else { vphp.ZVal.new_null() }
+		jobs := if metrics.is_array() {
+			metrics.get('jobs') or { vphp.ZVal.new_null() }
+		} else {
+			vphp.ZVal.new_null()
+		}
 
 		member_count := if members.is_array() { members.array_count() } else { 0 }
 		job_count := if jobs.is_array() { jobs.array_count() } else { 0 }
@@ -198,15 +210,15 @@ fn v_persistent_multi_nested_stress(ctx vphp.Context) {
 
 @[php_function]
 fn v_analyze_user_object(ctx vphp.Context) {
-	user_obj := ctx.arg_raw(0)
-
-	if !user_obj.is_object() {
-		vphp.throw_exception('Expected object, got ${user_obj.type_name()}', 0)
+	user_obj := ctx.arg_object(0) or {
+		value := ctx.arg_value(0)
+		vphp.throw_exception('Expected object, got ${value.type_name()}', 0)
 		return
 	}
 
-	name := user_obj.get_prop_string('name')
-	age := user_obj.get_prop_int('age')
+	raw := user_obj.to_zval()
+	name := raw.get_prop_string('name')
+	age := raw.get_prop_int('age')
 
 	if ctx.has_exception() {
 		return
@@ -218,8 +230,7 @@ fn v_analyze_user_object(ctx vphp.Context) {
 
 @[php_function]
 fn v_mutate_user_object(ctx vphp.Context) {
-	user_obj := ctx.arg_raw(0)
-	if !user_obj.is_object() {
+	user_obj := ctx.arg_object(0) or {
 		vphp.throw_exception('需要 User 对象', 0)
 		return
 	}
@@ -234,8 +245,7 @@ fn v_mutate_user_object(ctx vphp.Context) {
 
 @[php_function]
 fn v_check_user_object_props(ctx vphp.Context) {
-	user_obj := ctx.arg_raw(0)
-	if !user_obj.is_object() {
+	user_obj := ctx.arg_object(0) or {
 		vphp.throw_exception('需要 User 对象', 0)
 		return
 	}
@@ -271,7 +281,9 @@ fn v_construct_php_object(ctx vphp.Context) {
 
 @[php_function]
 fn v_call_php_static_method(ctx vphp.Context) {
-	res := vphp.php_class('PhpMath').static_method('triple', [vphp.ZVal.new_int(7)])
+	res := vphp.php_class('PhpMath').static_method('triple', [
+		vphp.ZVal.new_int(7),
+	])
 	ctx.return_string('static=' + res.to_int().str())
 }
 
@@ -385,6 +397,33 @@ fn v_zval_conversion_api() string {
 }
 
 @[php_function]
+fn v_persistent_fallback_counter_probe(raw vphp.ZVal) string {
+	before := vphp.runtime_counters().persistent_fallback_zval_len
+	mut boxed := vphp.PersistentOwnedZBox.of_mixed(raw)
+	during := vphp.runtime_counters().persistent_fallback_zval_len
+	kind := boxed.kind_name()
+	boxed.release()
+	after := vphp.runtime_counters().persistent_fallback_zval_len
+
+	return 'kind=${kind};during_delta=${during - before};after_delta=${after - before}'
+}
+
+@[php_function]
+fn v_request_scope_counter_probe(rounds int) string {
+	before := vphp.runtime_counters()
+	mark := vphp.request_scope_enter()
+	mut checksum := 0
+	for i in 0 .. rounds {
+		box := vphp.RequestOwnedZBox.new_string('scope-${i}')
+		checksum += box.to_string().len
+	}
+	vphp.request_scope_leave(mark)
+	after := vphp.runtime_counters()
+
+	return 'ar_delta=${after.autorelease_len - before.autorelease_len};owned_delta=${after.owned_len - before.owned_len};fallback_delta=${after.persistent_fallback_zval_len - before.persistent_fallback_zval_len};checksum=${checksum > 0}'
+}
+
+@[php_function]
 fn v_unified_object_interop(ctx vphp.Context) {
 	cls := vphp.php_class('PhpUnifiedBox')
 	name_z := vphp.ZVal.from[string]('neo') or {
@@ -426,6 +465,561 @@ fn v_unified_object_interop(ctx vphp.Context) {
 }
 
 @[php_function]
+fn v_php_class_named_api(ctx vphp.Context) {
+	cls := vphp.PhpClass.named('PhpUnifiedBox')
+	if !cls.exists() {
+		vphp.throw_exception('PhpUnifiedBox should exist', 0)
+		return
+	}
+	missing := vphp.PhpClass.find('Nope\\MissingClass') or { vphp.PhpClass.named('missing') }
+	if missing.name() != 'missing' {
+		vphp.throw_exception('PhpClass.find should return none for missing class', 0)
+		return
+	}
+
+	obj := cls.construct([
+		vphp.ZVal.new_string('ref'),
+		vphp.ZVal.new_int(9),
+	])
+	if !obj.is_object() {
+		vphp.throw_exception('PhpClass construct failed', 0)
+		return
+	}
+
+	name := obj.prop_v[string]('name') or {
+		vphp.throw_exception('PhpClass prop read failed: ${err.msg()}', 0)
+		return
+	}
+	double_score := obj.method_v[int]('doubleScore', []) or {
+		vphp.throw_exception('PhpClass instance method failed: ${err.msg()}', 0)
+		return
+	}
+	triple := cls.static_method_v[int]('triple', [vphp.ZVal.new_int(3)]) or {
+		vphp.throw_exception('PhpClass static method failed: ${err.msg()}', 0)
+		return
+	}
+	label := cls.const_v[string]('LABEL') or {
+		vphp.throw_exception('PhpClass const read failed: ${err.msg()}', 0)
+		return
+	}
+	has_method := cls.method_exists('doubleScore')
+	has_prop := cls.property_exists('name')
+	has_const := cls.const_exists('LABEL')
+
+	ctx.return_string('class=${cls.short_name()};exists=${cls.exists()};method=${has_method};prop=${has_prop};const=${has_const};value=${name}:${double_score}:${triple}:${label};missing=${missing.name()}')
+}
+
+@[php_function]
+fn v_php_function_named_api(ctx vphp.Context) {
+	fn_ref := vphp.PhpFunction.named('strtoupper')
+	if !fn_ref.exists() {
+		vphp.throw_exception('strtoupper should exist', 0)
+		return
+	}
+	missing := vphp.PhpFunction.find('definitely_missing_fn') or {
+		vphp.PhpFunction.named('missing')
+	}
+	if missing.name() != 'missing' {
+		vphp.throw_exception('PhpFunction.find should return none for missing function',
+			0)
+		return
+	}
+
+	upper := fn_ref.call_v[string]([vphp.ZVal.new_string('func')]) or {
+		vphp.throw_exception('PhpFunction call failed: ${err.msg()}', 0)
+		return
+	}
+	len := vphp.PhpFunction.named('strlen').invoke_v[int]([vphp.ZVal.new_string(upper)]) or {
+		vphp.throw_exception('PhpFunction invoke failed: ${err.msg()}', 0)
+		return
+	}
+	result_upper := fn_ref.result_string([vphp.ZVal.new_string('result')])
+
+	ctx.return_string('function=${fn_ref.name()};exists=${fn_ref.exists()};value=${upper}:${len}:${result_upper};missing=${missing.name()}')
+}
+
+@[php_function]
+fn v_php_closure_api(callback vphp.Callable) string {
+	closure := vphp.PhpClosure.from_zval(callback) or {
+		vphp.throw_exception('callback should be callable', 0)
+		return ''
+	}
+	result := closure.with_result_zval([
+		vphp.ZVal.new_string('closure'),
+		vphp.ZVal.new_int(3),
+	], fn (z vphp.ZVal) string {
+		return z.to_string()
+	})
+	return 'closure=${closure.is_callable()}:${result}'
+}
+
+@[php_function]
+fn v_php_closure_persistent_api(callback vphp.Callable) string {
+	before := vphp.runtime_counters()
+	closure := vphp.PhpClosure.from_zval(callback) or {
+		vphp.throw_exception('callback should be callable', 0)
+		return ''
+	}
+	mut persistent := closure.to_persistent()
+	during := vphp.runtime_counters()
+
+	first := persistent.call_v[string]([
+		vphp.ZVal.new_string('keep'),
+		vphp.ZVal.new_int(2),
+	]) or {
+		persistent.release()
+		vphp.throw_exception('PersistentPhpClosure call failed: ${err.msg()}', 0)
+		return ''
+	}
+	second := persistent.with_call_result([
+		vphp.ZVal.new_string('life'),
+		vphp.ZVal.new_int(4),
+	], fn (z vphp.ZVal) string {
+		return z.to_string()
+	})
+	kind := persistent.kind_name()
+	is_callable := persistent.is_callable()
+	retained := during.obj_registry_len >= before.obj_registry_len
+	persistent.release()
+	after := vphp.runtime_counters()
+	released := after.obj_registry_len == before.obj_registry_len
+
+	return 'persistent=${kind}:${is_callable}:${first}:${second}:retained=${retained}:released=${released}'
+}
+
+@[php_function]
+fn v_php_class_meta_api(ctx vphp.Context) {
+	cls := vphp.PhpClass.named('PhpUnifiedBox')
+	meta := cls.meta()
+	ctx.return_string('meta=${meta.name}:${meta.short_name}:${meta.parent_name}:${meta.is_user}:${meta.is_internal}:${meta.interfaces.len}')
+}
+
+@[php_function]
+fn v_php_object_api(raw vphp.ZVal) string {
+	obj := vphp.PhpObject.from_zval(raw) or {
+		vphp.throw_exception('raw should be object', 0)
+		return ''
+	}
+	name := obj.prop_v[string]('name') or {
+		vphp.throw_exception('PhpObject prop failed: ${err.msg()}', 0)
+		return ''
+	}
+	greet := obj.with_method_result_zval('greet', [], fn (z vphp.ZVal) string {
+		return z.to_string()
+	})
+	mut persistent := obj.to_persistent()
+	again := persistent.method_v[string]('greet', []) or {
+		persistent.release()
+		vphp.throw_exception('PersistentPhpObject method failed: ${err.msg()}', 0)
+		return ''
+	}
+	kind := persistent.kind_name()
+	persistent.release()
+	has_name := obj.has_prop('name')
+	return 'object=${obj.short_name()}:${has_name}:${name}:${greet}:${kind}:${again}'
+}
+
+@[php_function]
+fn v_php_array_api(raw vphp.ZVal) string {
+	arr := vphp.PhpArray.from_zval(raw) or {
+		vphp.throw_exception('raw should be array', 0)
+		return ''
+	}
+	name := arr.get_v[string]('name') or {
+		vphp.throw_exception('PhpArray get failed: ${err.msg()}', 0)
+		return ''
+	}
+	dyn := arr.to_dyn() or {
+		vphp.throw_exception('PhpArray to_dyn failed: ${err.msg()}', 0)
+		return ''
+	}
+	mut persistent := arr.to_persistent()
+	pdyn := persistent.to_dyn() or {
+		persistent.release()
+		vphp.throw_exception('PersistentPhpArray to_dyn failed: ${err.msg()}', 0)
+		return ''
+	}
+	kind := persistent.kind_name()
+	persistent.release()
+	return 'array=${arr.count()}:${arr.assoc_keys().join(',')}:${name}:${dyn.type.str()}:${pdyn.type.str()}:${kind}'
+}
+
+@[php_function]
+fn v_php_callable_api(callback vphp.Callable) string {
+	callable := vphp.PhpCallable.from_zval(callback) or {
+		vphp.throw_exception('callback should be callable', 0)
+		return ''
+	}
+	result := callable.with_result_zval([vphp.ZVal.new_string('callable')], fn (z vphp.ZVal) string {
+		return z.to_string()
+	})
+	mut persistent := callable.to_persistent()
+	again := persistent.call_v[string]([vphp.ZVal.new_string('again')]) or {
+		persistent.release()
+		vphp.throw_exception('Persistent callable call failed: ${err.msg()}', 0)
+		return ''
+	}
+	kind := persistent.kind_name()
+	persistent.release()
+	return 'callable=${callable.is_callable()}:${result}:${kind}:${again}'
+}
+
+@[php_function]
+fn v_php_value_api(raw vphp.ZVal) string {
+	value := vphp.PhpValue.of(raw)
+	arr := value.as_array() or {
+		vphp.throw_exception('raw should be array', 0)
+		return ''
+	}
+	name := arr.get_v[string]('name') or {
+		vphp.throw_exception('PhpValue array get failed: ${err.msg()}', 0)
+		return ''
+	}
+	mut persistent := value.to_persistent()
+	pcount := persistent.with_array(fn (a vphp.PhpArray) int {
+		return a.count()
+	}) or {
+		persistent.release()
+		vphp.throw_exception('PersistentPhpValue should restore array', 0)
+		return ''
+	}
+	kind := persistent.kind_name()
+	persistent.release()
+	return 'value=${value.type_name()}:${value.is_array()}:${name}:${pcount}:${kind}'
+}
+
+@[php_function]
+fn v_php_scalar_api(raw vphp.ZVal) string {
+	value := vphp.PhpValue.of(raw)
+	scalar := value.as_scalar() or {
+		vphp.throw_exception('raw should be scalar', 0)
+		return ''
+	}
+	strict_string := value.as_string() or { vphp.PhpString.coerce(raw) }
+	as_int := vphp.PhpInt.coerce(raw)
+	as_double := vphp.PhpDouble.coerce(raw)
+	as_bool := vphp.PhpBool.coerce(raw)
+	return 'scalar=${scalar.type_name()}:${value.is_scalar()}:${strict_string.value()}:${as_int.value()}:${as_double.value()}:${as_bool.value()}:${scalar.to_dyn().type.str()}'
+}
+
+@[php_function]
+fn v_php_scalar_strict_api() string {
+	s := vphp.PhpValue.of(vphp.ZVal.new_string('42'))
+	i := vphp.PhpValue.of(vphp.ZVal.new_int(42))
+	d := vphp.PhpValue.of(vphp.ZVal.new_float(4.5))
+	b := vphp.PhpValue.of(vphp.ZVal.new_bool(true))
+	n := vphp.PhpValue.of(vphp.ZVal.new_null())
+	strict_s := s.as_string() or { return 'strict_error=string' }
+	strict_i := i.as_int() or { return 'strict_error=int' }
+	strict_d := d.as_double() or { return 'strict_error=double' }
+	strict_b := b.as_bool() or { return 'strict_error=bool' }
+	null_value := n.as_null() or { return 'strict_error=null' }
+	mut persistent_null := null_value.to_persistent()
+	null_kind := persistent_null.kind_name()
+	null_restored := persistent_null.with_value(fn (value vphp.PhpValue) bool {
+		return value.is_null()
+	})
+	persistent_null.release()
+	i_is_string := i.as_string() != none
+	return 'strict=${strict_s.value()}:${strict_i.value()}:${strict_d.value()}:${strict_b.value()}:${null_restored}:${null_kind}:${i_is_string}'
+}
+
+@[php_function]
+fn v_php_semantic_empty_api() string {
+	arr := vphp.PhpArray.empty()
+	mut persistent_arr := vphp.PersistentPhpArray.empty()
+	persistent_count := persistent_arr.with_array(fn (a vphp.PhpArray) int {
+		return a.count()
+	})
+	persistent_arr.release()
+	return 'empty=${vphp.PhpString.empty().value()}:${vphp.PhpInt.zero().value()}:${vphp.PhpDouble.zero().value()}:${vphp.PhpBool.false_value().value()}:${vphp.PhpBool.true_value().value()}:${arr.count()}:${persistent_count}'
+}
+
+@[params]
+struct VPhpParamsStructDemo {
+	status        int    = 200
+	reason_phrase string = ''
+	secure        bool
+	ratio         f64 = 1.5
+}
+
+@[php_function]
+fn v_php_params_struct_api(params VPhpParamsStructDemo) string {
+	return 'params=${params.status}:${params.reason_phrase}:${params.secure}:${params.ratio}'
+}
+
+@[params]
+struct VPhpSemanticParamsStructDemo {
+	label vphp.PhpString
+	flag  vphp.PhpBool
+	items vphp.PhpArray
+}
+
+@[php_function]
+fn v_php_semantic_params_struct_api(params VPhpSemanticParamsStructDemo) string {
+	return 'semantic_params=${params.label.value()}:${params.flag.value()}:${params.items.count()}'
+}
+
+@[php_function]
+fn v_php_args_api(ctx vphp.Context) string {
+	args := ctx.args([
+		vphp.PhpArgMeta{ index: 0, name: 'first' },
+		vphp.PhpArgMeta{
+			index: 1
+			name:  'second'
+		},
+	])
+	first := args.at(0)
+	second := args.named('second') or { return 'missing-second' }
+	missing := args.at(2)
+	return 'args=${args.len()}:${first.index}:${first.name}:${first.as_v[string]()}|${second.index}:${second.name}:${second.as_v[int]()}|missing=${args.has(2)}:${missing.value.is_null()}'
+}
+
+@[php_function]
+fn v_php_resource_api(raw vphp.ZVal) string {
+	res := vphp.PhpResource.from_zval(raw) or {
+		vphp.throw_exception('raw should be resource', 0)
+		return ''
+	}
+	res.rewind()
+	contents := res.contents() or { '' }
+	meta := res.stream_metadata() or {
+		vphp.throw_exception('resource should be stream', 0)
+		return ''
+	}
+	return 'resource=${res.type_name()}:${res.is_stream()}:${meta.seekable}:${contents}'
+}
+
+@[php_function]
+fn v_php_wrapper_param_api(value vphp.PhpValue, obj vphp.PhpObject, arr vphp.PhpArray, callable vphp.PhpCallable, null_value vphp.PhpNull, maybe_obj ?vphp.PhpObject) string {
+	name := obj.prop_v[string]('name') or {
+		vphp.throw_exception('object prop failed: ${err.msg()}', 0)
+		return ''
+	}
+	call_result := callable.call_v[string]([vphp.ZVal.new_string('wrapped')]) or {
+		vphp.throw_exception('callable call failed: ${err.msg()}', 0)
+		return ''
+	}
+	return 'wrap=${value.type_name()}:${name}:${arr.count()}:${call_result}:${null_value.to_dyn().type.str()}:${maybe_obj == none}'
+}
+
+@[php_function]
+fn v_php_optional_value_api(value ?vphp.PhpValue) string {
+	actual := value or { return 'optional_value=none' }
+	return 'optional_value=some:${actual.type_name()}:${actual.is_null()}'
+}
+
+@[php_function]
+fn v_php_return_value_api(value vphp.PhpValue) vphp.PhpValue {
+	return value
+}
+
+@[php_function]
+fn v_php_return_array_api(arr vphp.PhpArray) vphp.PhpArray {
+	return arr
+}
+
+@[php_function]
+fn v_php_return_object_api(obj vphp.PhpObject) vphp.PhpObject {
+	return obj
+}
+
+@[php_function]
+fn v_php_return_callable_api(callable vphp.PhpCallable) vphp.PhpCallable {
+	return callable
+}
+
+@[php_function]
+fn v_php_return_string_wrapper_api(value vphp.PhpString) vphp.PhpString {
+	return value
+}
+
+@[php_function]
+fn v_php_return_persistent_array_api(arr vphp.PhpArray) vphp.PersistentPhpArray {
+	return arr.to_persistent()
+}
+
+@[php_function]
+fn v_dyn_value_runtime_refs(raw_obj vphp.ZVal, callback vphp.Callable, raw_res vphp.ZVal) string {
+	obj := vphp.PhpObject.from_zval(raw_obj) or {
+		vphp.throw_exception('raw_obj should be object', 0)
+		return ''
+	}
+	callable_src := vphp.PhpCallable.from_zval(callback) or {
+		vphp.throw_exception('callback should be callable', 0)
+		return ''
+	}
+	res_src := vphp.PhpResource.from_zval(raw_res) or {
+		vphp.throw_exception('raw_res should be resource', 0)
+		return ''
+	}
+	obj_dyn := vphp.DynValue.object_ref(obj)
+	call_dyn := vphp.DynValue.callable_ref(callable_src)
+	res_dyn := vphp.DynValue.resource_ref(res_src)
+	string_dyn := vphp.DynValue.from_zval(vphp.ZVal.new_string('strlen')) or {
+		vphp.throw_exception('string DynValue decode failed: ${err.msg()}', 0)
+		return ''
+	}
+
+	obj_from_dyn := obj_dyn.as_object() or {
+		vphp.throw_exception('DynValue should expose PhpObject', 0)
+		return ''
+	}
+	name := obj_from_dyn.prop_v[string]('name') or {
+		vphp.throw_exception('DynValue object prop failed: ${err.msg()}', 0)
+		return ''
+	}
+	greet := obj_from_dyn.method_v[string]('greet', []) or {
+		vphp.throw_exception('DynValue object method failed: ${err.msg()}', 0)
+		return ''
+	}
+
+	callable := call_dyn.as_callable() or {
+		vphp.throw_exception('DynValue should expose PhpCallable', 0)
+		return ''
+	}
+	call_result := callable.call_v[string]([vphp.ZVal.new_string('dyn')]) or {
+		vphp.throw_exception('DynValue callable call failed: ${err.msg()}', 0)
+		return ''
+	}
+	closure := call_dyn.as_closure() or {
+		vphp.throw_exception('DynValue should expose PhpClosure', 0)
+		return ''
+	}
+	closure_result := closure.call_v[string]([vphp.ZVal.new_string('closure')]) or {
+		vphp.throw_exception('DynValue closure call failed: ${err.msg()}', 0)
+		return ''
+	}
+
+	res := res_dyn.as_resource() or {
+		vphp.throw_exception('DynValue should expose PhpResource', 0)
+		return ''
+	}
+	res_type := res.type_name()
+
+	mut persistent_obj := obj.to_persistent()
+	mut persistent_obj_dyn := vphp.DynValue.persistent_object_ref(persistent_obj)
+	persistent_name := persistent_obj_dyn.with_object[string](fn (o vphp.PhpObject) string {
+		return o.prop_v[string]('name') or { '' }
+	}) or { '' }
+	mut persistent_obj_box := persistent_obj_dyn.to_persistent() or {
+		vphp.throw_exception('persistent object DynValue to_persistent failed: ${err.msg()}',
+			0)
+		persistent_obj_dyn.release()
+		persistent_obj.release()
+		return ''
+	}
+	persistent_obj_kind := persistent_obj_box.kind_name()
+	persistent_obj_box.release()
+	persistent_obj_dyn.release()
+	persistent_obj.release()
+
+	mut persistent_closure := callable.to_persistent()
+	mut persistent_call_dyn := vphp.DynValue.persistent_closure_ref(persistent_closure)
+	persistent_call := persistent_call_dyn.with_closure[string](fn (c vphp.PhpClosure) string {
+		return c.call_v[string]([vphp.ZVal.new_string('stored')]) or { '' }
+	}) or { '' }
+	mut persistent_call_box := persistent_call_dyn.to_persistent() or {
+		vphp.throw_exception('persistent callable DynValue to_persistent failed: ${err.msg()}',
+			0)
+		persistent_call_dyn.release()
+		persistent_closure.release()
+		return ''
+	}
+	persistent_call_kind := persistent_call_box.kind_name()
+	persistent_call_box.release()
+	persistent_call_dyn.release()
+	persistent_closure.release()
+
+	mut copied := vphp.ZVal.new_null()
+	obj_dyn.to_zval(mut copied) or {
+		vphp.throw_exception('DynValue runtime ref to_zval failed: ${err.msg()}', 0)
+		return ''
+	}
+	copy_is_object := copied.is_object()
+	mut obj_new_fails := false
+	_ := obj_dyn.new_zval() or {
+		obj_new_fails = true
+		vphp.ZVal.new_null()
+	}
+	mut obj_persistent := obj_dyn.to_persistent() or {
+		vphp.throw_exception('DynValue object to_persistent failed: ${err.msg()}', 0)
+		return ''
+	}
+	obj_kind := obj_persistent.kind_name()
+	obj_persistent.release()
+	mut call_persistent := call_dyn.to_persistent() or {
+		vphp.throw_exception('DynValue callable to_persistent failed: ${err.msg()}', 0)
+		return ''
+	}
+	call_kind := call_persistent.kind_name()
+	call_persistent.release()
+	mut res_persistent_fails := false
+	mut res_persistent := res_dyn.to_persistent() or {
+		res_persistent_fails = true
+		vphp.PersistentOwnedZBox.invalid()
+	}
+	if !res_persistent_fails {
+		res_persistent.release()
+	}
+
+	return 'dyn=${obj_dyn.type.str()}:${call_dyn.type.str()}:${res_dyn.type.str()};refs=${obj_dyn.has_runtime_refs()}:${call_dyn.can_new_zval()}:${res_dyn.has_runtime_refs()};object=${name}:${greet}:${copy_is_object}:${obj_new_fails}:${obj_kind};call=${call_result}:${closure_result}:${call_kind};persistent=${persistent_name}:${persistent_obj_kind}:${persistent_call}:${persistent_call_kind};resource=${res_type}:${res_persistent_fails};string=${string_dyn.type.str()}:${string_dyn.string_value()}'
+}
+
+@[php_function]
+fn v_php_reference_api(raw vphp.ZVal) string {
+	value := vphp.PhpValue.of(raw)
+	ref := value.as_reference() or { return 'reference=false:${value.to_string()}' }
+	before := ref.deref().to_string()
+	ref.set(vphp.ZVal.new_string('changed-from-v'))
+	after := ref.deref().to_string()
+	return 'reference=true:${before}:${after}'
+}
+
+@[php_function]
+fn v_php_iterable_api(raw vphp.ZVal) string {
+	iter := vphp.PhpIterable.from_zval(raw) or {
+		vphp.throw_exception('raw should be iterable', 0)
+		return ''
+	}
+	items := iter.fold[[]string]([]string{}, fn (key vphp.ZVal, val vphp.ZVal, mut acc []string) {
+		acc << '${key.to_string()}=${val.to_string()}'
+	})
+	return 'iterable=${iter.is_array()}:${iter.is_traversable()}:${iter.count()}:${items.join(',')}'
+}
+
+@[php_function]
+fn v_php_superglobals_api() string {
+	get := vphp.PhpSuperglobals.get()
+	post := vphp.PhpSuperglobals.post()
+	env := vphp.PhpSuperglobals.env()
+	server := vphp.PhpSuperglobals.server()
+	q := get.get_v[string]('q') or { '' }
+	name := post.get_v[string]('name') or { '' }
+	return 'super=${q}:${name}:${env.count() >= 0}:${server.count() >= 0}'
+}
+
+@[php_function]
+fn v_php_throwable_api(raw vphp.ZVal) string {
+	t := vphp.PhpThrowable.from_zval(raw) or {
+		vphp.throw_exception('raw should be Throwable', 0)
+		return ''
+	}
+	return 'throwable=${t.class_name()}:${t.message()}:${t.code()}:${t.file() != ''}:${t.line() > 0}'
+}
+
+@[php_function]
+fn v_php_enum_api(raw vphp.ZVal) string {
+	case := vphp.PhpEnumCase.from_zval(raw) or {
+		vphp.throw_exception('raw should be enum case', 0)
+		return ''
+	}
+	en := vphp.PhpEnum.named(case.enum_name())
+	value := case.value() or { vphp.PhpValue.of(vphp.ZVal.new_null()) }
+	return 'enum=${en.exists()}:${en.is_backed()}:${en.cases().count()}:${case.name()}:${value.to_string()}'
+}
+
+@[php_function]
 fn v_unified_ownership_interop(ctx vphp.Context) {
 	cls := vphp.php_class('PhpUnifiedBox')
 	obj_req := cls.construct_owned_request([
@@ -441,7 +1035,9 @@ fn v_unified_ownership_interop(ctx vphp.Context) {
 		return
 	}
 
-	mut up_call := vphp.php_fn('strtoupper').call_owned_persistent([vphp.ZVal.new_string('persist')])
+	mut up_call := vphp.php_fn('strtoupper').call_owned_persistent([
+		vphp.ZVal.new_string('persist'),
+	])
 	if !up_call.is_valid() {
 		vphp.throw_exception('call_owned_persistent failed', 0)
 		return
@@ -463,7 +1059,7 @@ fn v_unified_ownership_interop(ctx vphp.Context) {
 @[php_function]
 fn v_read_php_global_const(ctx vphp.Context) {
 	const_name := ctx.arg[string](0)
-	value := vphp.php_const(const_name)
+	value := vphp.PhpConst.named(const_name).value()
 	if !value.is_valid() {
 		vphp.throw_exception('读取常量失败: ${const_name}', 0)
 		return
@@ -474,23 +1070,23 @@ fn v_read_php_global_const(ctx vphp.Context) {
 @[php_function]
 fn v_php_symbol_exists(ctx vphp.Context) {
 	ctx.return_map({
-		'function_strlen':     vphp.function_exists('strlen').str()
-		'function_missing':    vphp.function_exists('definitely_missing_fn').str()
-		'class_datetime':      vphp.class_exists('DateTimeImmutable').str()
-		'class_missing':       vphp.class_exists('Nope\\MissingClass').str()
-		'interface_json':      vphp.interface_exists('JsonSerializable').str()
-		'interface_missing':   vphp.interface_exists('Nope\\MissingInterface').str()
-		'trait_user':          vphp.trait_exists('Demo\\Interop\\HelperTrait').str()
-		'trait_missing':       vphp.trait_exists('Nope\\MissingTrait').str()
-		'const_php_version':   vphp.global_const_exists('PHP_VERSION').str()
-		'const_missing':       vphp.global_const_exists('NOPE_MISSING_CONST').str()
+		'function_strlen':   vphp.PhpFunction.named('strlen').exists().str()
+		'function_missing':  (vphp.PhpFunction.find('definitely_missing_fn') != none).str()
+		'class_datetime':    vphp.PhpClass.named('DateTimeImmutable').exists().str()
+		'class_missing':     (vphp.PhpClass.find('Nope\\MissingClass') != none).str()
+		'interface_json':    vphp.interface_exists('JsonSerializable').str()
+		'interface_missing': vphp.interface_exists('Nope\\MissingInterface').str()
+		'trait_user':        vphp.trait_exists('Demo\\Interop\\HelperTrait').str()
+		'trait_missing':     vphp.trait_exists('Nope\\MissingTrait').str()
+		'const_php_version': vphp.PhpConst.named('PHP_VERSION').exists().str()
+		'const_missing':     (vphp.PhpConst.find('NOPE_MISSING_CONST') != none).str()
 	})
 }
 
 @[php_function]
 fn v_include_php_file(ctx vphp.Context) {
 	path := ctx.arg[string](0)
-	result := vphp.include(path)
+	result := vphp.PhpIncludeFile.at(path).load()
 	if !result.is_valid() {
 		vphp.throw_exception('include 失败: ${path}', 0)
 		return
@@ -501,7 +1097,7 @@ fn v_include_php_file(ctx vphp.Context) {
 @[php_function]
 fn v_include_php_file_once(ctx vphp.Context) {
 	path := ctx.arg[string](0)
-	result := vphp.include_once(path)
+	result := vphp.PhpIncludeFile.at(path).load_once()
 	if !result.is_valid() {
 		vphp.throw_exception('include_once 失败: ${path}', 0)
 		return
@@ -512,7 +1108,7 @@ fn v_include_php_file_once(ctx vphp.Context) {
 @[php_function]
 fn v_include_php_module_demo(ctx vphp.Context) {
 	path := ctx.arg[string](0)
-	config := vphp.include_once(path)
+	config := vphp.PhpIncludeFile.at(path).load_once()
 	if !config.is_valid() {
 		vphp.throw_exception('include_once 失败: ${path}', 0)
 		return
@@ -541,7 +1137,7 @@ fn v_include_php_module_demo(ctx vphp.Context) {
 		acc << '${key.to_string()}=${val.to_string()}'
 	})
 
-	ctx.return_string('count=${config.array_count()}|class=${class_name}|short=${short_name}|desc=${desc}|items=${entries.join(",")}')
+	ctx.return_string('count=${config.array_count()}|class=${class_name}|short=${short_name}|desc=${desc}|items=${entries.join(',')}')
 }
 
 @[php_function]
@@ -572,20 +1168,20 @@ fn v_php_object_introspection(ctx vphp.Context) {
 	}
 
 	ctx.return_map({
-		'is_box':              obj.is_instance_of('Demo\\Inspect\\GreeterBox').str()
-		'is_datetime':         obj.is_instance_of('DateTimeImmutable').str()
-		'is_subclass_parent':  obj.is_subclass_of('Demo\\Inspect\\BaseBox').str()
-		'is_subclass_self':    obj.is_subclass_of('Demo\\Inspect\\GreeterBox').str()
-		'implements_string':   obj.implements_interface('Stringable').str()
-		'implements_json':     obj.implements_interface('JsonSerializable').str()
-		'has_method_greet':     obj.method_exists('greet').str()
-		'has_method_missing':   obj.method_exists('missingMethod').str()
-		'method_names':         obj.method_names().join(',')
-		'has_prop_name':        obj.property_exists('name').str()
-		'has_prop_missing':     obj.property_exists('missingProp').str()
-		'property_names':       obj.property_names().join(',')
-		'class_consts':         obj.const_names().join(',')
-		'datetime_has_atom':    vphp.php_class('DateTimeImmutable').const_exists('ATOM').str()
+		'is_box':             obj.is_instance_of('Demo\\Inspect\\GreeterBox').str()
+		'is_datetime':        obj.is_instance_of('DateTimeImmutable').str()
+		'is_subclass_parent': obj.is_subclass_of('Demo\\Inspect\\BaseBox').str()
+		'is_subclass_self':   obj.is_subclass_of('Demo\\Inspect\\GreeterBox').str()
+		'implements_string':  obj.implements_interface('Stringable').str()
+		'implements_json':    obj.implements_interface('JsonSerializable').str()
+		'has_method_greet':   obj.method_exists('greet').str()
+		'has_method_missing': obj.method_exists('missingMethod').str()
+		'method_names':       obj.method_names().join(',')
+		'has_prop_name':      obj.property_exists('name').str()
+		'has_prop_missing':   obj.property_exists('missingProp').str()
+		'property_names':     obj.property_names().join(',')
+		'class_consts':       obj.const_names().join(',')
+		'datetime_has_atom':  vphp.php_class('DateTimeImmutable').const_exists('ATOM').str()
 	})
 }
 
@@ -712,9 +1308,11 @@ fn v_call_php_closure_helper(raw vphp.ZVal) string {
 
 @[php_function]
 fn v_test_globals(ctx vphp.Context) {
-	mut g := vphp.get_globals[ExtGlobals]()
-	g.request_count++
-	g.last_user = 'VPHP_USER'
+	vphp.with_globals[ExtGlobals](fn (mut g ExtGlobals) {
+		g.request_count++
+		g.last_user = 'VPHP_USER'
+	})
+	g := vphp.get_globals[ExtGlobals]()
 
 	ctx.return_map({
 		'count': g.request_count.str()
@@ -725,29 +1323,29 @@ fn v_test_globals(ctx vphp.Context) {
 // 测试 V 侧原生闭包自动转换。
 @[php_function]
 fn v_get_v_closure(ctx vphp.Context) {
-    // Use a universal ZVal-based closure to avoid generating many
-    // monomorphized wrap_closure[T] instantiations in generated C.
-    // The universal closure accepts/returns ZVal and is wrapped via
-    // wrap_closure_universal with an explicit alias.
-    v_cb_int_univ := fn (a vphp.ZVal) vphp.ZVal {
-        n := a.to_int()
-        return vphp.ZVal.new_int(n * 10)
-    }
-    ctx.wrap_closure_universal_1(v_cb_int_univ)
+	// Use a universal ZVal-based closure to avoid generating many
+	// monomorphized wrap_closure[T] instantiations in generated C.
+	// The universal closure accepts/returns ZVal and is wrapped via
+	// wrap_closure_universal with an explicit alias.
+	v_cb_int_univ := fn (a vphp.ZVal) vphp.ZVal {
+		n := a.to_int()
+		return vphp.ZVal.new_int(n * 10)
+	}
+	ctx.wrap_closure_universal_1(v_cb_int_univ)
 }
 
 // 测试 V 侧原生闭包自动转换。
 @[php_function]
 fn v_get_v_closure_auto(ctx vphp.Context) {
-    // To keep the example simple and avoid capture-specific monomorphization,
-    // use a universal ZVal-based closure instead. This keeps the emitted C
-    // glue stable and relies on the runtime universal bridges.
-    v_cb_name_count_univ := fn (a vphp.ZVal, b vphp.ZVal) vphp.ZVal {
-        name := a.to_string()
-        count := b.to_int()
-        return vphp.ZVal.new_string('V-Power: Hello ${name}, count is ${count}')
-    }
-    ctx.wrap_closure_universal_2(v_cb_name_count_univ)
+	// To keep the example simple and avoid capture-specific monomorphization,
+	// use a universal ZVal-based closure instead. This keeps the emitted C
+	// glue stable and relies on the runtime universal bridges.
+	v_cb_name_count_univ := fn (a vphp.ZVal, b vphp.ZVal) vphp.ZVal {
+		name := a.to_string()
+		count := b.to_int()
+		return vphp.ZVal.new_string('V-Power: Hello ${name}, count is ${count}')
+	}
+	ctx.wrap_closure_universal_2(v_cb_name_count_univ)
 }
 
 @[php_function]
@@ -780,7 +1378,7 @@ fn v_iter_helpers_demo(ctx vphp.Context) {
 	})
 	reduced := reduced_parts.join('|')
 
-	ctx.return_string('each=${each_state.buf};fold=${fold_items.join(",")};values=${values.join(",")};reduce=${reduced}')
+	ctx.return_string('each=${each_state.buf};fold=${fold_items.join(',')};values=${values.join(',')};reduce=${reduced}')
 }
 
 @[php_function]
@@ -799,5 +1397,5 @@ fn v_iterable_object_demo(input vphp.ZVal) string {
 	fold_items := input.fold[[]string]([]string{}, fn (key vphp.ZVal, val vphp.ZVal, mut acc []string) {
 		acc << '${key.to_string()}=${val.to_string()}'
 	})
-	return 'each=${each_state.buf};fold=${fold_items.join(",")};count=${fold_items.len}'
+	return 'each=${each_state.buf};fold=${fold_items.join(',')};count=${fold_items.len}'
 }

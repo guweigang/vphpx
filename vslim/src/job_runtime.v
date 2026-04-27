@@ -61,7 +61,7 @@ fn job_reserved_from_row(row vphp.ZVal) ?VSlimReservedJob {
 
 fn job_dispatcher_manager_or_throw(dispatcher &VSlimJobDispatcher) ?&VSlimDatabaseManager {
 	if dispatcher.manager_ref == unsafe { nil } {
-		vphp.throw_exception_class('RuntimeException', 'job dispatcher database manager is not configured',
+		vphp.PhpException.raise_class('RuntimeException', 'job dispatcher database manager is not configured',
 			0)
 		return none
 	}
@@ -70,7 +70,7 @@ fn job_dispatcher_manager_or_throw(dispatcher &VSlimJobDispatcher) ?&VSlimDataba
 
 fn job_worker_manager_or_throw(worker &VSlimJobWorker) ?&VSlimDatabaseManager {
 	if worker.manager_ref == unsafe { nil } {
-		vphp.throw_exception_class('RuntimeException', 'job worker database manager is not configured',
+		vphp.PhpException.raise_class('RuntimeException', 'job worker database manager is not configured',
 			0)
 		return none
 	}
@@ -98,11 +98,11 @@ pub fn (dispatcher &VSlimJobDispatcher) manager() &VSlimDatabaseManager {
 pub fn (mut dispatcher VSlimJobDispatcher) dispatch(job_class string, payload vphp.RequestBorrowedZBox, queue string, delay_seconds int, max_attempts int) i64 {
 	clean_class := job_class.trim_space()
 	if clean_class == '' {
-		vphp.throw_exception_class('InvalidArgumentException', 'job class must not be empty', 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'job class must not be empty', 0)
 		return 0
 	}
-	if !vphp.class_exists(clean_class) {
-		vphp.throw_exception_class('InvalidArgumentException', 'job class does not exist: ${clean_class}',
+	if !vphp.PhpClass.named(clean_class).exists() {
+		vphp.PhpException.raise_class('InvalidArgumentException', 'job class does not exist: ${clean_class}',
 			0)
 		return 0
 	}
@@ -110,7 +110,7 @@ pub fn (mut dispatcher VSlimJobDispatcher) dispatch(job_class string, payload vp
 	clean_queue := if queue.trim_space() == '' { 'default' } else { queue.trim_space() }
 	attempt_limit := if max_attempts <= 0 { 3 } else { max_attempts }
 	delay := if delay_seconds < 0 { 0 } else { delay_seconds }
-	payload_json := vphp.json_encode(payload.to_zval())
+	payload_json := vphp.PhpJson.encode(payload.to_zval())
 	stored_payload := if payload_json == '' { 'null' } else { payload_json }
 	ok := job_exec_params(mut db, 'INSERT INTO vslim_jobs (queue, job_class, payload_json, status, attempts, max_attempts, available_at, created_at, updated_at) VALUES (?, ?, ?, \'pending\', 0, ?, DATE_ADD(NOW(), INTERVAL ? SECOND), NOW(), NOW())',
 		[clean_queue, clean_class, stored_payload, attempt_limit.str(), delay.str()])
@@ -206,30 +206,30 @@ fn (mut worker VSlimJobWorker) fail_or_release(job VSlimReservedJob, message str
 }
 
 fn (mut worker VSlimJobWorker) perform(job VSlimReservedJob) bool {
-	if !vphp.class_exists(job.job_class) {
+	if !vphp.PhpClass.named(job.job_class).exists() {
 		return worker.fail_or_release(job, 'job class does not exist: ${job.job_class}')
 	}
-	mut instance := vphp.php_class(job.job_class).construct([])
+	mut instance := vphp.PhpClass.named(job.job_class).construct([])
 	if !instance.is_valid() || !instance.is_object() {
 		return worker.fail_or_release(job, 'job class could not be instantiated: ${job.job_class}')
 	}
 	if !instance.method_exists('handle') {
 		return worker.fail_or_release(job, 'job class must define handle(array payload): ${job.job_class}')
 	}
-	payload := vphp.json_decode_assoc(job.payload_json)
-	if !payload.is_valid() || vphp.json_last_error_code() != 0 {
-		return worker.fail_or_release(job, 'job payload is not valid JSON: ${vphp.json_last_error_message()}')
+	payload := vphp.PhpJson.decode_assoc(job.payload_json)
+	if !payload.is_valid() || vphp.PhpJson.last_error_code() != 0 {
+		return worker.fail_or_release(job, 'job payload is not valid JSON: ${vphp.PhpJson.last_error_message()}')
 	}
 	// The job table stores pure JSON data. We decode it only for this request
 	// and pass the transient value directly into userland; no request zval is
 	// retained across requests or worker iterations.
-	mut result := vphp.method_request_owned_box(instance, 'handle', [payload])
+	mut result := vphp.PhpObject.borrowed(instance).method_request_owned_box('handle', [payload])
 	defer {
 		result.release()
 	}
-	if vphp.has_exception() {
-		message := vphp.current_exception_message()
-		vphp.clear_exception()
+	if vphp.PhpException.has_current() {
+		message := vphp.PhpException.current_message()
+		vphp.PhpException.clear()
 		return worker.fail_or_release(job, if message == '' { 'job handle threw an exception' } else { message })
 	}
 	return worker.complete(job)

@@ -4,25 +4,16 @@ import vphp
 
 @[php_function]
 fn v_reverse_string(ctx vphp.Context) {
-    unsafe {
-        in_val := ctx.arg_raw(0)
-        if !in_val.is_valid() { return }
-
-        if !in_val.is_string() {
-            vphp.throw_exception('Expected string input', 401)
-            return
-        }
-
-        s := in_val.to_string()
-
-        if s == '' {
-            vphp.throw_exception('String is empty!', 400)
-            return
-        }
-
-        mut out := vphp.ZVal{ raw: ctx.ret }
-        out.set_string(s.reverse())
-    }
+	in_val := ctx.arg_string(0) or {
+		vphp.throw_exception('Expected string input', 401)
+		return
+	}
+	s := in_val.value()
+	if s == '' {
+		vphp.throw_exception('String is empty!', 400)
+		return
+	}
+	ctx.return_string(s.reverse())
 }
 
 @[php_function]
@@ -44,7 +35,9 @@ fn v_logic_main(ctx vphp.Context) {
 
 		res := main_str.repeat(repeat_count).reverse()
 
-		out := vphp.ZVal{ raw: ctx.ret }
+		out := vphp.ZVal{
+			raw: ctx.ret
+		}
 		out.set_string(res)
 	}
 }

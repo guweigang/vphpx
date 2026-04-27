@@ -45,7 +45,7 @@ pub fn (mut validator VSlimValidator) validate() &VSlimValidator {
 	validator.error_map = map[string][]string{}
 	validator.validated_data = map[string]vphp.DynValue{}
 	for field, rules in validator.rule_map {
-		value := validator.input_data[field] or { vphp.dyn_value_null() }
+		value := validator.input_data[field] or { vphp.DynValue.null() }
 		present := field in validator.input_data
 		mut field_errors := []string{}
 		mut nullable := false
@@ -136,7 +136,8 @@ fn validator_extract_input(data vphp.RequestBorrowedZBox) map[string]vphp.DynVal
 	if raw.is_array() {
 		return validator_map_from_zval(raw)
 	}
-	if raw.is_object() && (raw.method_exists('getQueryParams') || raw.method_exists('getParsedBody')) {
+	if raw.is_object()
+		&& (raw.method_exists('getQueryParams') || raw.method_exists('getParsedBody')) {
 		return validator_request_input_map(raw)
 	}
 	return map[string]vphp.DynValue{}
@@ -173,7 +174,7 @@ fn validator_map_from_zval(raw vphp.ZVal) map[string]vphp.DynValue {
 	if !raw.is_valid() || raw.is_null() || raw.is_undef() || !raw.is_array() {
 		return map[string]vphp.DynValue{}
 	}
-	decoded := vphp.decode_dyn_value(raw) or { return map[string]vphp.DynValue{} }
+	decoded := vphp.DynValue.from_zval(raw) or { return map[string]vphp.DynValue{} }
 	return validator_map_from_dyn(decoded)
 }
 
@@ -277,7 +278,7 @@ fn validator_rule_error(field string, value vphp.DynValue, name string, arg stri
 		'in' {
 			choices := arg.split(',').map(it.trim_space()).filter(it != '')
 			if choices.len > 0 && validator_string_value(value) !in choices {
-				return 'The ${field} field must be one of: ${choices.join(", ")}.'
+				return 'The ${field} field must be one of: ${choices.join(', ')}.'
 			}
 		}
 		else {}
@@ -305,7 +306,9 @@ fn validator_is_nullish(value vphp.DynValue) bool {
 
 fn validator_is_int_like(value vphp.DynValue) bool {
 	return match value.type {
-		.int_ { true }
+		.int_ {
+			true
+		}
 		.string_ {
 			raw := value.string_value().trim_space()
 			if raw == '' {
@@ -314,13 +317,17 @@ fn validator_is_int_like(value vphp.DynValue) bool {
 			_ := strconv.atoi64(raw) or { return false }
 			return true
 		}
-		else { false }
+		else {
+			false
+		}
 	}
 }
 
 fn validator_is_numeric_like(value vphp.DynValue) bool {
 	return match value.type {
-		.int_, .float_ { true }
+		.int_, .float_ {
+			true
+		}
 		.string_ {
 			raw := value.string_value().trim_space()
 			if raw == '' {
@@ -329,19 +336,27 @@ fn validator_is_numeric_like(value vphp.DynValue) bool {
 			_ := strconv.atof64(raw, strconv.AtoF64Param{}) or { return false }
 			return true
 		}
-		else { false }
+		else {
+			false
+		}
 	}
 }
 
 fn validator_is_bool_like(value vphp.DynValue) bool {
 	return match value.type {
-		.bool_ { true }
-		.int_ { value.int_value() in [i64(0), i64(1)] }
+		.bool_ {
+			true
+		}
+		.int_ {
+			value.int_value() in [i64(0), i64(1)]
+		}
 		.string_ {
 			raw := value.string_value().trim_space().to_lower()
 			raw in ['1', '0', 'true', 'false', 'yes', 'no', 'on', 'off']
 		}
-		else { false }
+		else {
+			false
+		}
 	}
 }
 
@@ -364,8 +379,12 @@ fn validator_is_email_like(value vphp.DynValue) bool {
 
 fn validator_numeric_value(value vphp.DynValue) ?f64 {
 	return match value.type {
-		.int_ { f64(value.int_value()) }
-		.float_ { value.float_value() }
+		.int_ {
+			f64(value.int_value())
+		}
+		.float_ {
+			value.float_value()
+		}
 		.string_ {
 			raw := value.string_value().trim_space()
 			if raw == '' {
@@ -373,7 +392,9 @@ fn validator_numeric_value(value vphp.DynValue) ?f64 {
 			}
 			strconv.atof64(raw, strconv.AtoF64Param{}) or { return none }
 		}
-		else { none }
+		else {
+			none
+		}
 	}
 }
 
@@ -404,20 +425,45 @@ fn validator_meets_max(value vphp.DynValue, maximum f64) bool {
 
 fn validator_string_value(value vphp.DynValue) string {
 	return match value.type {
-		.null_ { '' }
-		.bool_ { if value.bool_value() { 'true' } else { 'false' } }
-		.int_ { '${value.int_value()}' }
-		.float_ { '${value.float_value()}' }
-		.string_ { value.string_value() }
-		.list_ { '[list]' }
-		.map_ { '[map]' }
-		.object_ref { '[object]' }
-		.resource_ref { '[resource]' }
+		.null_ {
+			''
+		}
+		.bool_ {
+			if value.bool_value() {
+				'true'
+			} else {
+				'false'
+			}
+		}
+		.int_ {
+			'${value.int_value()}'
+		}
+		.float_ {
+			'${value.float_value()}'
+		}
+		.string_ {
+			value.string_value()
+		}
+		.list_ {
+			'[list]'
+		}
+		.map_ {
+			'[map]'
+		}
+		.object_ref {
+			'[object]'
+		}
+		.callable_ref {
+			'[callable]'
+		}
+		.resource_ref {
+			'[resource]'
+		}
 	}
 }
 
 fn validator_dyn_map_zbox(values map[string]vphp.DynValue) vphp.RequestOwnedZBox {
-	return database_result_box_from_dyn(vphp.dyn_value_map(values))
+	return database_result_box_from_dyn(vphp.DynValue.of_map(values))
 }
 
 fn validator_errors_zbox(errors map[string][]string) vphp.RequestOwnedZBox {
@@ -425,9 +471,9 @@ fn validator_errors_zbox(errors map[string][]string) vphp.RequestOwnedZBox {
 	for key, values in errors {
 		mut items := []vphp.DynValue{}
 		for value in values {
-			items << vphp.dyn_value_string(value)
+			items << vphp.DynValue.of_string(value)
 		}
-		out[key] = vphp.dyn_value_list(items)
+		out[key] = vphp.DynValue.of_list(items)
 	}
-	return database_result_box_from_dyn(vphp.dyn_value_map(out))
+	return database_result_box_from_dyn(vphp.DynValue.of_map(out))
 }

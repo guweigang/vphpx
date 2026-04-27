@@ -23,7 +23,8 @@ fn cli_debug_sync_from_app(app &VSlimApp) {
 			vslim_cli_debug_override_inited = true
 		}
 		if app.config_ref.has('cli.debug_file') {
-			vslim_cli_debug_file_override = app.config_ref.get_string('cli.debug_file', '').trim_space()
+			vslim_cli_debug_file_override = app.config_ref.get_string('cli.debug_file',
+				'').trim_space()
 			vslim_cli_debug_override_inited = true
 		}
 	}
@@ -75,9 +76,13 @@ fn cli_bootstrap_file_apply(mut cli VSlimCliApp, path string) ! {
 	if (lower.ends_with('/bootstrap/app.php') || lower.ends_with('\\bootstrap\\app.php')
 		|| lower.ends_with('/app.php') || lower.ends_with('\\app.php')) && php_is_file(clean) {
 		mut core := ensure_cli_core_app(mut cli)
-		result := vphp.include(clean)
+		result := vphp.PhpIncludeFile.at(clean).load()
 		if php_is_file(clean) {
-			project_root := if is_bootstrap_dir_path(path_dirname(clean)) { path_dirname(path_dirname(clean)) } else { path_dirname(clean) }
+			project_root := if is_bootstrap_dir_path(path_dirname(clean)) {
+				path_dirname(path_dirname(clean))
+			} else {
+				path_dirname(clean)
+			}
 			if project_root != '' {
 				preload_bootstrap_spec_classes(project_root, result)
 			}
@@ -86,7 +91,7 @@ fn cli_bootstrap_file_apply(mut cli VSlimCliApp, path string) ! {
 		cli_debug_sync_from_app(core)
 		return
 	}
-	mut result := vphp.include(clean)
+	mut result := vphp.PhpIncludeFile.at(clean).load()
 	defer {
 		result.release()
 	}
@@ -109,10 +114,10 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 		return error('CLI bootstrap directory has no project root')
 	}
 	cli.project_root = project_root
-	project_root_echo := vphp.with_php_call_result_string('strval', [
+	project_root_echo := vphp.PhpFunction.named('strval').result_string([
 		vphp.RequestOwnedZBox.new_string(project_root).to_zval(),
 	])
-	bootstrap_candidate_probe := vphp.with_php_call_result_string('sprintf', [
+	bootstrap_candidate_probe := vphp.PhpFunction.named('sprintf').result_string([
 		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
 		vphp.RequestOwnedZBox.new_string(project_root).to_zval(),
 		vphp.RequestOwnedZBox.new_string('bootstrap/app.php').to_zval(),
@@ -120,7 +125,7 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 	cli_debug_log('project_root_echo="${project_root_echo}"')
 	cli_debug_log('bootstrap_candidate_probe="${bootstrap_candidate_probe}"')
 	bootstrap_candidate := bootstrap_candidate_probe
-	app_candidate_fallback := vphp.with_php_call_result_string('sprintf', [
+	app_candidate_fallback := vphp.PhpFunction.named('sprintf').result_string([
 		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
 		vphp.RequestOwnedZBox.new_string(project_root).to_zval(),
 		vphp.RequestOwnedZBox.new_string('app.php').to_zval(),
@@ -130,7 +135,7 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 	if php_is_file(bootstrap_candidate) {
 		mut core := ensure_cli_core_app(mut cli)
 		preload_bootstrap_project_classes(project_root)
-		result := vphp.include(bootstrap_candidate)
+		result := vphp.PhpIncludeFile.at(bootstrap_candidate).load()
 		project_root_for_candidate := if is_bootstrap_dir_path(path_dirname(bootstrap_candidate)) {
 			path_dirname(path_dirname(bootstrap_candidate))
 		} else {
@@ -147,7 +152,7 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 		if php_is_file(app_candidate) {
 			mut core := ensure_cli_core_app(mut cli)
 			preload_bootstrap_project_classes(project_root)
-			result := vphp.include(app_candidate)
+			result := vphp.PhpIncludeFile.at(app_candidate).load()
 			project_root_for_candidate := if is_bootstrap_dir_path(path_dirname(app_candidate)) {
 				path_dirname(path_dirname(app_candidate))
 			} else {
@@ -178,7 +183,7 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 	}
 	cli_bootstrap_path := project_root + '/bootstrap/cli.php'
 	if php_is_file(cli_bootstrap_path) {
-		mut raw := vphp.include(cli_bootstrap_path)
+		mut raw := vphp.PhpIncludeFile.at(cli_bootstrap_path).load()
 		defer {
 			raw.release()
 		}
@@ -204,7 +209,10 @@ fn apply_cli_bootstrap_spec(mut cli VSlimCliApp, spec vphp.ZVal) ! {
 	normalized := normalize_app_bootstrap_spec(spec)!
 	if cli_bootstrap_has_meta_keys(normalized) {
 		if commands := app_bootstrap_lookup(normalized, ['commands']) {
-			cli.command_many(vphp.borrow_zbox(commands))
+			command_iter := vphp.PhpIterable.from_zval(commands) or {
+				return error('bootstrap commands must be iterable')
+			}
+			cli.command_many(command_iter)
 		}
 		if should_boot := app_bootstrap_bool(normalized, ['boot']) {
 			if should_boot {
@@ -214,7 +222,10 @@ fn apply_cli_bootstrap_spec(mut cli VSlimCliApp, spec vphp.ZVal) ! {
 		}
 		return
 	}
-	cli.command_many(vphp.borrow_zbox(normalized))
+	command_iter := vphp.PhpIterable.from_zval(normalized) or {
+		return error('bootstrap commands must be iterable')
+	}
+	cli.command_many(command_iter)
 }
 
 fn apply_cli_bootstrap_file_result(mut cli VSlimCliApp, path string, value vphp.ZVal) ! {
@@ -223,13 +234,13 @@ fn apply_cli_bootstrap_file_result(mut cli VSlimCliApp, path string, value vphp.
 	}
 	if value.is_callable() {
 		handlers_before := cli.command_handlers.len
-		cli_debug_log('bootstrap_file_result callable path=\"${path}\" handlers_before=${handlers_before}')
+		cli_debug_log("bootstrap_file_result callable path=\"${path}\" handlers_before=${handlers_before}")
 		mut cli_z := cli_self_zval(cli)
 		defer {
 			cli_z.release()
 		}
 		cli_debug_log('bootstrap_file_result cli_z valid=${cli_z.is_valid()} type=${cli_z.type_name()} raw=${usize(cli_z.raw)}')
-		mut result := vphp.call_request_owned_box(value, [cli_z])
+		mut result := vphp.PhpCallable.borrowed(value).request_owned_box([cli_z])
 		defer {
 			result.release()
 		}
@@ -274,7 +285,7 @@ fn apply_cli_command_class_conventions_with_paths(mut cli VSlimCliApp, commands_
 			class_name_z.release()
 		}
 		_ = php_include_once(commands_dir + '/' + entry)
-		class_exists := vphp.with_php_call_result_bool('class_exists', [
+		class_exists := vphp.PhpFunction.named('class_exists').result_bool([
 			class_name_z,
 			vphp.RequestOwnedZBox.new_bool(true).to_zval(),
 		])
@@ -283,7 +294,7 @@ fn apply_cli_command_class_conventions_with_paths(mut cli VSlimCliApp, commands_
 			return error('command convention file "${display_file_for_log}" must declare class ${class_name_for_log}')
 		}
 		name := derive_command_name_from_handler(class_name_z)!
-		cli.command(name, vphp.borrow_zbox(class_name_z))
+		cli.command(name, vphp.RequestBorrowedZBox.of(class_name_z))
 		applied = true
 	}
 	return applied
@@ -295,7 +306,7 @@ fn apply_cli_bootstrap_conventions_with_paths(mut cli VSlimCliApp, commands_dir 
 		applied = true
 	}
 	if php_is_file(cli_bootstrap_path) {
-		mut raw := vphp.include(cli_bootstrap_path)
+		mut raw := vphp.PhpIncludeFile.at(cli_bootstrap_path).load()
 		defer {
 			raw.release()
 		}
@@ -308,7 +319,7 @@ fn apply_cli_bootstrap_conventions_with_paths(mut cli VSlimCliApp, commands_dir 
 @[php_method: 'bootstrapFile']
 pub fn (mut cli VSlimCliApp) bootstrap_file(path string) &VSlimCliApp {
 	cli_bootstrap_file_apply(mut cli, path) or {
-		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 	}
 	return &cli
 }
@@ -316,7 +327,7 @@ pub fn (mut cli VSlimCliApp) bootstrap_file(path string) &VSlimCliApp {
 @[php_method: 'bootstrapDir']
 pub fn (mut cli VSlimCliApp) bootstrap_dir(path string) &VSlimCliApp {
 	cli_bootstrap_dir_apply(mut cli, path) or {
-		vphp.throw_exception_class('InvalidArgumentException', err.msg(), 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 	}
 	return &cli
 }

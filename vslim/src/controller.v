@@ -36,7 +36,7 @@ pub fn (mut c VSlimController) set_view(view &VSlimView) &VSlimController {
 pub fn (c &VSlimController) app() &VSlimApp {
 	app := effective_controller_app(c)
 	if app == unsafe { nil } {
-		vphp.throw_exception_class('RuntimeException', 'controller is not bound to an app', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'controller is not bound to an app', 0)
 		return unsafe { nil }
 	}
 	return app
