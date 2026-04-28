@@ -116,7 +116,7 @@ interface UploadedFileInterface
     public function getClientMediaType();
 }
 
-interface ResponseFactoryInterface { public function createResponse($code = 200, $reasonPhrase = ''); }
+interface ResponseFactoryInterface { public function createResponse(int $code = 200, string $reasonPhrase = ''): ResponseInterface; }
 interface RequestFactoryInterface { public function createRequest($method, $uri); }
 interface ServerRequestFactoryInterface { public function createServerRequest($method, $uri, array $serverParams = []); }
 interface StreamFactoryInterface { public function createStream($content = ''); public function createStreamFromFile($filename, $mode = 'r'); public function createStreamFromResource($resource); }
