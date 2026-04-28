@@ -9,7 +9,6 @@ if (!is_file($autoload)) {
     exit(1);
 }
 require_once $autoload;
-\App\Support\PsrStubLoader::load();
 \App\Support\StudioTimezone::bootstrap();
 
 if (!extension_loaded('vslim')) {

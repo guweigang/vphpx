@@ -2,7 +2,6 @@
 declare(strict_types=1);
 
 \VSlim\EnvLoader::bootstrap(dirname(__DIR__));
-\App\Support\PsrStubLoader::load();
 \App\Support\StudioTimezone::bootstrap();
 
 $errors = require __DIR__ . '/../app/Http/errors.php';

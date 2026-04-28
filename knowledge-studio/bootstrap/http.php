@@ -10,7 +10,6 @@ if (!is_file($autoload)) {
 require_once $autoload;
 
 \VSlim\EnvLoader::bootstrap($root);
-\App\Support\PsrStubLoader::load();
 \App\Support\StudioTimezone::bootstrap();
 
 function knowledge_studio_worker_log_path(): string
