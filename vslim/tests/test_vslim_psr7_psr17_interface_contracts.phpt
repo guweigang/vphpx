@@ -108,7 +108,7 @@ interface UploadedFileInterface
 
 interface ResponseFactoryInterface
 {
-    public function createResponse($code = 200, $reasonPhrase = '');
+    public function createResponse(int $code = 200, string $reasonPhrase = ''): ResponseInterface;
 }
 
 interface RequestFactoryInterface
