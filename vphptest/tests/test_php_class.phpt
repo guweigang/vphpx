@@ -22,4 +22,4 @@ class PhpGreeter
 echo v_construct_php_object() . "\n";
 ?>
 --EXPECT--
-constructed=Codex:Hello Codex
+constructed=Codex:Hello Codex:Hello Codex

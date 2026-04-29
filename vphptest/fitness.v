@@ -17,7 +17,7 @@ fn v_analyze_fitness_data(ctx vphp.Context) {
 	name := ctx.arg[string](0)
 	hr_data := ctx.arg[[]f64](1)
 	config := ctx.arg[map[string]string](2)
-	if ctx.has_exception() {
+	if vphp.has_exception() {
 		return
 	}
 
