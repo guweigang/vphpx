@@ -17,19 +17,16 @@ fn normalize_module_input(raw vphp.ZVal) !vphp.ZVal {
 		if class_name == '' {
 			return error('module class name must not be empty')
 		}
-		exists := vphp.PhpFunction.named('class_exists').result_bool([
-			vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
-			vphp.RequestOwnedZBox.new_bool(true).to_zval(),
-		])
+		exists := vphp.PhpFunction.named('class_exists').result_bool(vphp.PhpString.of(class_name),
+			vphp.PhpBool.of(true))
 		if !exists {
 			log_bootstrap_class_visibility('module', class_name)
 			return error('module class "${class_name}" does not exist')
 		}
-		mod_z := vphp.PhpClass.named(class_name).construct([])
-		if !mod_z.is_valid() || !mod_z.is_object() {
+		mod_obj := vphp.PhpClass.named(class_name).construct() or {
 			return error('module class "${class_name}" could not be constructed')
 		}
-		return mod_z
+		return mod_obj.to_zval()
 	}
 	return error('module must be an object or class-string')
 }
@@ -43,9 +40,9 @@ fn bind_module_to_app(mod_z vphp.ZVal, app_z vphp.ZVal) {
 		return
 	}
 	if mod_z.method_exists('setApp') {
-		vphp.PhpObject.borrowed(mod_z).with_method_result_zval('setApp', [app_z], fn (_ vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(mod_z).with_method_result_zval('setApp', fn (_ vphp.ZVal) bool {
 			return true
-		})
+		}, app_z)
 	}
 }
 
@@ -54,12 +51,12 @@ fn call_module_lifecycle(mod_z vphp.ZVal, method_name string, app_z vphp.ZVal) !
 		return
 	}
 	if app_z.is_valid() && app_z.is_object() {
-		vphp.PhpObject.borrowed(mod_z).with_method_result_zval(method_name, [app_z], fn (_ vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(mod_z).with_method_result_zval(method_name, fn (_ vphp.ZVal) bool {
 			return true
-		})
+		}, app_z)
 		return
 	}
-	vphp.PhpObject.borrowed(mod_z).with_method_result_zval(method_name, []vphp.ZVal{}, fn (_ vphp.ZVal) bool {
+	vphp.PhpObject.borrowed(mod_z).with_method_result_zval(method_name, fn (_ vphp.ZVal) bool {
 		return true
 	})
 }
@@ -86,16 +83,16 @@ fn register_module_providers(mut app VSlimApp, mod_z vphp.ZVal, app_z vphp.ZVal)
 		return
 	}
 	ok := if app_z.is_valid() && app_z.is_object() {
-		vphp.PhpObject.borrowed(mod_z).with_method_result_zval('providers', [app_z], fn [mut app] (providers_raw vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(mod_z).with_method_result_zval('providers', fn [mut app] (providers_raw vphp.ZVal) bool {
 			items := bootstrap_provider_values(providers_raw) or { return false }
 			for item in items {
 				provider_z := normalize_service_provider_input(item) or { return false }
 				register_service_provider_zval(mut app, provider_z) or { return false }
 			}
 			return true
-		})
+		}, app_z)
 	} else {
-		vphp.PhpObject.borrowed(mod_z).with_method_result_zval('providers', []vphp.ZVal{}, fn [mut app] (providers_raw vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(mod_z).with_method_result_zval('providers', fn [mut app] (providers_raw vphp.ZVal) bool {
 			items := bootstrap_provider_values(providers_raw) or { return false }
 			for item in items {
 				provider_z := normalize_service_provider_input(item) or { return false }

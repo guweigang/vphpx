@@ -53,7 +53,7 @@ fn task_wait_callable(mut handle VSlimTaskHandle) vphp.RequestOwnedZBox {
 	defer {
 		args.release()
 	}
-	mut result := handle.callable.call_request_owned(args.args)
+	mut result := handle.callable.fn_request_owned_zval(args.args)
 	defer {
 		result.release()
 	}

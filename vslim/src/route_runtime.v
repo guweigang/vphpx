@@ -18,8 +18,8 @@ pub fn (mut app VSlimApp) handle_websocket(frame vphp.RequestBorrowedZBox, conn 
 			return vphp.RequestOwnedZBox.new_bool(false)
 		}
 		app.websocket_conn_route[conn_id] = idx
-		return vphp.RequestOwnedZBox.adopt_zval(dispatch_websocket_route_handler(app, app.websocket_routes[idx],
-			event, raw_frame, raw_conn))
+		return vphp.RequestOwnedZBox.adopt_zval(dispatch_websocket_route_handler(app,
+			app.websocket_routes[idx], event, raw_frame, raw_conn))
 	}
 	idx := app.websocket_conn_route[conn_id] or {
 		fallback_idx, matched := app.websocket_route_index(path)
@@ -239,36 +239,32 @@ fn dispatch_websocket_route_handler(app &VSlimApp, route VSlimRoute, event strin
 			}
 		}
 		if obj.method_exists('handle_websocket') {
-			mut result := vphp.PhpObject.borrowed(obj).method_request_owned_box('handle_websocket', [frame, conn])
+			mut result := vphp.PhpObject.borrowed(obj).method_request_owned('handle_websocket',
+				vphp.PhpValue.from_zval(frame), vphp.PhpValue.from_zval(conn))
 			return result.take_zval()
 		}
 		match event {
 			'open' {
 				if obj.method_exists('on_open') {
-					mut result := vphp.PhpObject.borrowed(obj).method_request_owned_box('on_open', [conn, frame])
+					mut result := vphp.PhpObject.borrowed(obj).method_request_owned('on_open',
+						vphp.PhpValue.from_zval(conn), vphp.PhpValue.from_zval(frame))
 					return result.take_zval()
 				}
 			}
 			'message' {
 				if obj.method_exists('on_message') {
-					mut result := vphp.PhpObject.borrowed(obj).method_request_owned_box('on_message', [
-						conn,
-						vphp.RequestOwnedZBox.new_string(zval_string_key(frame, 'data',
-							'')).to_zval(),
-						frame,
-					])
+					mut result := vphp.PhpObject.borrowed(obj).method_request_owned('on_message',
+						vphp.PhpValue.from_zval(conn), vphp.PhpString.of(zval_string_key(frame,
+						'data', '')), vphp.PhpValue.from_zval(frame))
 					return result.take_zval()
 				}
 			}
 			'close' {
 				if obj.method_exists('on_close') {
-					mut result := vphp.PhpObject.borrowed(obj).method_request_owned_box('on_close', [
-						conn,
-						vphp.RequestOwnedZBox.new_int(zval_int_key(frame, 'code', 1000)).to_zval(),
-						vphp.RequestOwnedZBox.new_string(zval_string_key(frame, 'reason',
-							'')).to_zval(),
-						frame,
-					])
+					mut result := vphp.PhpObject.borrowed(obj).method_request_owned('on_close',
+						vphp.PhpValue.from_zval(conn), vphp.PhpInt.of(zval_int_key(frame,
+						'code', 1000)), vphp.PhpString.of(zval_string_key(frame, 'reason',
+						'')), vphp.PhpValue.from_zval(frame))
 					return result.take_zval()
 				}
 			}
@@ -278,25 +274,19 @@ fn dispatch_websocket_route_handler(app &VSlimApp, route VSlimRoute, event strin
 	if handler.is_callable() {
 		match event {
 			'open' {
-				mut result := vphp.PhpCallable.borrowed(handler.to_zval()).request_owned_box([conn, frame])
+				mut result := vphp.PhpCallable.borrowed(handler.to_zval()).fn_request_owned(vphp.PhpValue.from_zval(conn),
+					vphp.PhpValue.from_zval(frame))
 				return result.take_zval()
 			}
 			'message' {
-				mut result := vphp.PhpCallable.borrowed(handler.to_zval()).request_owned_box([
-					conn,
-					vphp.RequestOwnedZBox.new_string(zval_string_key(frame, 'data', '')).to_zval(),
-					frame,
-				])
+				mut result := vphp.PhpCallable.borrowed(handler.to_zval()).fn_request_owned(vphp.PhpValue.from_zval(conn),
+					vphp.PhpString.of(zval_string_key(frame, 'data', '')), vphp.PhpValue.from_zval(frame))
 				return result.take_zval()
 			}
 			'close' {
-				mut result := vphp.PhpCallable.borrowed(handler.to_zval()).request_owned_box([
-					conn,
-					vphp.RequestOwnedZBox.new_int(zval_int_key(frame, 'code', 1000)).to_zval(),
-					vphp.RequestOwnedZBox.new_string(zval_string_key(frame, 'reason',
-						'')).to_zval(),
-					frame,
-				])
+				mut result := vphp.PhpCallable.borrowed(handler.to_zval()).fn_request_owned(vphp.PhpValue.from_zval(conn),
+					vphp.PhpInt.of(zval_int_key(frame, 'code', 1000)), vphp.PhpString.of(zval_string_key(frame,
+					'reason', '')), vphp.PhpValue.from_zval(frame))
 				return result.take_zval()
 			}
 			else {
@@ -318,8 +308,8 @@ fn dispatch_websocket_route_handler(app &VSlimApp, route VSlimRoute, event strin
 			}
 			if parts.len == 2 && parts[1] != '' && service.is_object()
 				&& service.method_exists(parts[1]) {
-				mut result := vphp.PhpObject.borrowed(service).method_request_owned_box(parts[1], websocket_handler_args(event,
-					frame, conn))
+				mut result := vphp.PhpObject.borrowed(service).method_request_owned_zval(parts[1],
+					websocket_handler_args(event, frame, conn))
 				return result.take_zval()
 			}
 			return dispatch_websocket_container_service(service, event, frame, conn)
@@ -337,34 +327,37 @@ fn dispatch_websocket_container_service(service vphp.ZVal, event string, frame v
 		return vphp.RequestOwnedZBox.new_null().to_zval()
 	}
 	if service.is_object() && service.method_exists('handle_websocket') {
-		mut result := vphp.PhpObject.borrowed(service).method_request_owned_box('handle_websocket', [frame, conn])
+		mut result := vphp.PhpObject.borrowed(service).method_request_owned('handle_websocket',
+			vphp.PhpValue.from_zval(frame), vphp.PhpValue.from_zval(conn))
 		return result.take_zval()
 	}
 	match event {
 		'open' {
 			if service.is_object() && service.method_exists('on_open') {
-				mut result := vphp.PhpObject.borrowed(service).method_request_owned_box('on_open', [conn, frame])
+				mut result := vphp.PhpObject.borrowed(service).method_request_owned('on_open',
+					vphp.PhpValue.from_zval(conn), vphp.PhpValue.from_zval(frame))
 				return result.take_zval()
 			}
 		}
 		'message' {
 			if service.is_object() && service.method_exists('on_message') {
-				mut result := vphp.PhpObject.borrowed(service).method_request_owned_box('on_message', websocket_handler_args(event,
-					frame, conn))
+				mut result := vphp.PhpObject.borrowed(service).method_request_owned_zval('on_message',
+					websocket_handler_args(event, frame, conn))
 				return result.take_zval()
 			}
 		}
 		'close' {
 			if service.is_object() && service.method_exists('on_close') {
-				mut result := vphp.PhpObject.borrowed(service).method_request_owned_box('on_close', websocket_handler_args(event,
-					frame, conn))
+				mut result := vphp.PhpObject.borrowed(service).method_request_owned_zval('on_close',
+					websocket_handler_args(event, frame, conn))
 				return result.take_zval()
 			}
 		}
 		else {}
 	}
 	if service.is_callable() {
-		mut result := vphp.PhpCallable.borrowed(service).request_owned_box(websocket_handler_args(event, frame, conn))
+		mut result := vphp.PhpCallable.borrowed(service).fn_request_owned_zval(websocket_handler_args(event,
+			frame, conn))
 		return result.take_zval()
 	}
 	return vphp.RequestOwnedZBox.new_null().to_zval()

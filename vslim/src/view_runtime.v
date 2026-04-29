@@ -51,9 +51,9 @@ fn (view &VSlimView) invoke_template_helper_zargs(name string, zargs []vphp.ZVal
 	if !handler.is_valid() || !handler.is_callable() {
 		return debug_template_error('helper.invalid', template_path, key, line, col)
 	}
-	return handler.with_call_result(zargs, fn (result vphp.ZVal) string {
+	return handler.with_fn_result_zval(fn (result vphp.ZVal) string {
 		return result.to_string()
-	})
+	}, ...zargs)
 }
 
 fn new_template_list_zval(items []string) vphp.ZVal {

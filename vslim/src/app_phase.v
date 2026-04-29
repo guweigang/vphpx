@@ -7,10 +7,8 @@ import vphp
 fn dispatch_php_phase_middleware_raw(app &VSlimApp, payload vphp.RequestBorrowedZBox, route_params map[string]string, handler vphp.RequestBorrowedZBox, next_handler vphp.ZVal) !vphp.ZVal {
 	target := resolve_php_phase_middleware_target(app, handler)!
 	bind_route_target_to_app_if_supported(app, target)
-	mut result := vphp.PhpObject.borrowed(target).method_request_owned_box('process', [
-		normalize_psr15_server_request_payload(payload, route_params),
-		next_handler,
-	])
+	mut result := vphp.PhpObject.borrowed(target).method_request_owned('process', vphp.PhpValue.from_zval(normalize_psr15_server_request_payload(payload,
+		route_params)), vphp.PhpValue.from_zval(next_handler))
 	return result.take_zval()
 }
 
@@ -53,7 +51,7 @@ fn apply_php_before_middlewares(app &VSlimApp, path string, payload vphp.Request
 	mut current_payload := payload.clone_request_owned()
 	mut all := collect_before_middlewares(app, group_before)
 	defer {
-		release_request_owned_boxes(mut all)
+		release_collected_middlewares(mut all)
 	}
 	for hook in all {
 		current_borrowed := current_payload.borrowed()

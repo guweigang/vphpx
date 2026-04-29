@@ -19,15 +19,15 @@ fn (view &VSlimView) resolve_template_path(template string) string {
 
 fn new_template_expr_scalar(value string) TemplateExprValue {
 	return TemplateExprValue{
-		kind: .scalar
+		kind:   .scalar
 		scalar: value
 	}
 }
 
 fn new_template_expr_scalar_typed(value string, explicit_type string) TemplateExprValue {
 	return TemplateExprValue{
-		kind: .scalar
-		scalar: value
+		kind:          .scalar
+		scalar:        value
 		explicit_type: explicit_type
 	}
 }
@@ -41,14 +41,14 @@ fn new_template_expr_list(items []string) TemplateExprValue {
 
 fn new_template_expr_map(path string) TemplateExprValue {
 	return TemplateExprValue{
-		kind: .map
+		kind:     .map
 		map_path: path.trim_space()
 	}
 }
 
 fn new_template_expr_object(value vphp.RequestOwnedZBox) TemplateExprValue {
 	return TemplateExprValue{
-		kind: .object
+		kind:   .object
 		object: value.clone_request_owned()
 	}
 }
@@ -102,7 +102,9 @@ fn template_expr_value_to_zval(value TemplateExprValue) vphp.ZVal {
 			return vphp.RequestOwnedZBox.new_null().to_zval()
 		}
 		'bool' {
-			return vphp.RequestOwnedZBox.new_bool(parse_template_boolish_value(value.scalar) or { false }).to_zval()
+			return vphp.RequestOwnedZBox.new_bool(parse_template_boolish_value(value.scalar) or {
+				false
+			}).to_zval()
 		}
 		'int' {
 			return vphp.RequestOwnedZBox.new_int(value.scalar.trim_space().i64()).to_zval()
@@ -129,9 +131,11 @@ fn (view &VSlimView) eval_template_expression(raw string, scalars map[string]str
 		return new_template_expr_scalar('')
 	}
 	node := parse_template_expr_node(trimmed, line, col) or {
-		return new_template_expr_scalar(debug_template_error('expr.pipe', template_path, raw, line, col))
+		return new_template_expr_scalar(debug_template_error('expr.pipe', template_path,
+			raw, line, col))
 	}
-	return view.eval_template_expr_node(node, scalars, lists, objects, template_path, line, col)
+	return view.eval_template_expr_node(node, scalars, lists, objects, template_path,
+		line, col)
 }
 
 fn (view &VSlimView) eval_template_expr_node(node TemplateExprNode, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZBox, template_path string, line int, col int) TemplateExprValue {
@@ -141,18 +145,21 @@ fn (view &VSlimView) eval_template_expr_node(node TemplateExprNode, scalars map[
 		}
 		.path {
 			if template_has_list_key(node.name, lists) {
-				return new_template_expr_list(template_list_values(node.name, scalars, lists))
+				return new_template_expr_list(template_list_values(node.name, scalars,
+					lists))
 			}
 			if object := template_object_value(node.name, objects) {
 				return new_template_expr_object(object)
 			}
-			return new_template_expr_scalar(template_scalar_value_with_lists(node.name, scalars, lists))
+			return new_template_expr_scalar(template_scalar_value_with_lists(node.name,
+				scalars, lists))
 		}
 		.cast {
 			if node.args.len == 0 {
 				return new_template_expr_scalar_typed('', node.explicit_type)
 			}
-			value := view.eval_template_expr_node(node.args[0], scalars, lists, objects, template_path, line, col)
+			value := view.eval_template_expr_node(node.args[0], scalars, lists, objects,
+				template_path, line, col)
 			return template_expr_value_cast(value, node.explicit_type)
 		}
 		.map_path {
@@ -161,18 +168,23 @@ fn (view &VSlimView) eval_template_expr_node(node TemplateExprNode, scalars map[
 		.call {
 			mut args := []TemplateExprValue{cap: node.args.len}
 			for arg in node.args {
-				args << view.eval_template_expr_node(arg, scalars, lists, objects, template_path, line, col)
+				args << view.eval_template_expr_node(arg, scalars, lists, objects, template_path,
+					line, col)
 			}
-			return view.eval_template_expr_callable(node.name, args, scalars, lists, objects, template_path, node.line, node.col)
+			return view.eval_template_expr_callable(node.name, args, scalars, lists, objects,
+				template_path, node.line, node.col)
 		}
 		.method_call {
 			mut args := []TemplateExprValue{cap: node.args.len}
 			for arg in node.args {
-				args << view.eval_template_expr_node(arg, scalars, lists, objects, template_path, line, col)
+				args << view.eval_template_expr_node(arg, scalars, lists, objects, template_path,
+					line, col)
 			}
 			raw := if node.raw != '' { node.raw } else { template_expr_node_string(node) }
-			return view.invoke_template_expr_method(node.name, args, template_path, raw, node.line, node.col) or {
-				new_template_expr_scalar(debug_template_error('method.missing', template_path, raw, node.line, node.col))
+			return view.invoke_template_expr_method(node.name, args, template_path, raw,
+				node.line, node.col) or {
+				new_template_expr_scalar(debug_template_error('method.missing', template_path,
+					raw, node.line, node.col))
 			}
 		}
 	}
@@ -241,7 +253,11 @@ fn (view &VSlimView) eval_template_expr_callable(name string, args []TemplateExp
 			if args.len == 0 {
 				return new_template_expr_scalar_typed('true', 'bool')
 			}
-			return new_template_expr_scalar_typed(if template_expr_value_string(args[0]).trim_space() == '' { 'true' } else { 'false' }, 'bool')
+			return new_template_expr_scalar_typed(if template_expr_value_string(args[0]).trim_space() == '' {
+				'true'
+			} else {
+				'false'
+			}, 'bool')
 		}
 		'contains' {
 			if args.len < 2 {
@@ -260,7 +276,8 @@ fn (view &VSlimView) eval_template_expr_callable(name string, args []TemplateExp
 			} else {
 				found = template_expr_value_string(left).contains(template_expr_value_string(right))
 			}
-			return new_template_expr_scalar_typed(if found { 'true' } else { 'false' }, 'bool')
+			return new_template_expr_scalar_typed(if found { 'true' } else { 'false' },
+				'bool')
 		}
 		'in' {
 			if args.len < 2 {
@@ -275,7 +292,8 @@ fn (view &VSlimView) eval_template_expr_callable(name string, args []TemplateExp
 					break
 				}
 			}
-			return new_template_expr_scalar_typed(if found { 'true' } else { 'false' }, 'bool')
+			return new_template_expr_scalar_typed(if found { 'true' } else { 'false' },
+				'bool')
 		}
 		'reduce' {
 			if args.len == 0 {
@@ -307,10 +325,13 @@ fn (view &VSlimView) eval_template_expr_callable(name string, args []TemplateExp
 			return new_template_expr_scalar(template_expr_value_string(args[0]).to_lower())
 		}
 		else {
-			if method_value := view.invoke_template_expr_method(name, args, template_path, name, line, col) {
+			if method_value := view.invoke_template_expr_method(name, args, template_path,
+				name, line, col)
+			{
 				return method_value
 			}
-			return new_template_expr_scalar(view.invoke_template_helper_values(name, args, scalars, lists, template_path, line, col))
+			return new_template_expr_scalar(view.invoke_template_helper_values(name, args,
+				scalars, lists, template_path, line, col))
 		}
 	}
 }
@@ -345,7 +366,9 @@ fn parse_template_expr_node(raw string, line int, col int) !TemplateExprNode {
 			name, arg_exprs := parse_template_expr_pipe_stage(segment.text)!
 			mut args := []TemplateExprNode{cap: arg_exprs.len + 1}
 			args << current
-			arg_segments := split_template_expr_args_with_pos(extract_template_call_args(segment.text) or { '' }, segment.col)
+			arg_segments := split_template_expr_args_with_pos(extract_template_call_args(segment.text) or {
+				''
+			}, segment.col)
 			for i, arg_expr in arg_exprs {
 				arg_col := if i < arg_segments.len { arg_segments[i].col } else { segment.col }
 				args << parse_template_expr_node(arg_expr, line, arg_col)!
@@ -365,7 +388,9 @@ fn parse_template_expr_node(raw string, line int, col int) !TemplateExprNode {
 		mut args := []TemplateExprNode{cap: method_call.args.len + 1}
 		target_col := node_col
 		args << parse_template_expr_node(method_call.target, line, target_col)!
-		arg_segments := split_template_expr_args_with_pos(extract_template_call_args(trimmed) or { '' }, node_col + (trimmed.index('(') or { trimmed.len }))
+		arg_segments := split_template_expr_args_with_pos(extract_template_call_args(trimmed) or {
+			''
+		}, node_col + (trimmed.index('(') or { trimmed.len }))
 		for i, arg_expr in method_call.args {
 			arg_col := if i < arg_segments.len { arg_segments[i].col } else { node_col }
 			args << parse_template_expr_node(arg_expr, line, arg_col)!
@@ -386,7 +411,9 @@ fn parse_template_expr_node(raw string, line int, col int) !TemplateExprNode {
 			return TemplateExprNode{
 				kind:          .cast
 				explicit_type: lower_name
-				args:          [parse_template_expr_node(call.args[0], line, node_col + lower_name.len + 1)!]
+				args:          [
+					parse_template_expr_node(call.args[0], line, node_col + lower_name.len + 1)!,
+				]
 				raw:           trimmed
 				line:          line
 				col:           node_col
@@ -405,7 +432,9 @@ fn parse_template_expr_node(raw string, line int, col int) !TemplateExprNode {
 			return parse_template_expr_node(call.args[0], line, node_col + 5)
 		}
 		mut args := []TemplateExprNode{cap: call.args.len}
-		arg_segments := split_template_expr_args_with_pos(extract_template_call_args(trimmed) or { '' }, node_col + (trimmed.index('(') or { trimmed.len }))
+		arg_segments := split_template_expr_args_with_pos(extract_template_call_args(trimmed) or {
+			''
+		}, node_col + (trimmed.index('(') or { trimmed.len }))
 		for i, arg_expr in call.args {
 			arg_col := if i < arg_segments.len { arg_segments[i].col } else { node_col }
 			args << parse_template_expr_node(arg_expr, line, arg_col)!
@@ -504,7 +533,7 @@ fn template_expr_node_string(node TemplateExprNode) string {
 			for arg in node.args {
 				parts << template_expr_node_string(arg)
 			}
-			return '${node.name}(${parts.join(", ")})'
+			return '${node.name}(${parts.join(', ')})'
 		}
 		.method_call {
 			if node.args.len == 0 {
@@ -514,7 +543,7 @@ fn template_expr_node_string(node TemplateExprNode) string {
 			for arg in node.args[1..] {
 				parts << template_expr_node_string(arg)
 			}
-			return '${template_expr_node_string(node.args[0])}.${node.name}(${parts.join(", ")})'
+			return '${template_expr_node_string(node.args[0])}.${node.name}(${parts.join(', ')})'
 		}
 	}
 }
@@ -525,13 +554,14 @@ fn (view &VSlimView) invoke_template_expr_method(name string, args []TemplateExp
 	}
 	method := name.trim_space()
 	if method == '' || !args[0].object.method_exists(method) {
-		return new_template_expr_scalar(debug_template_error('method.missing', template_path, raw, line, col))
+		return new_template_expr_scalar(debug_template_error('method.missing', template_path,
+			raw, line, col))
 	}
 	mut zargs := []vphp.ZVal{cap: if args.len > 1 { args.len - 1 } else { 0 }}
 	for arg in args[1..] {
 		zargs << template_expr_value_to_zval(arg)
 	}
-	mut result := vphp.PhpObject.borrowed(args[0].object.to_zval()).method_request_owned_box(method,
+	mut result := vphp.PhpObject.borrowed(args[0].object.to_zval()).method_request_owned_zval(method,
 		zargs)
 	defer {
 		result.release()
@@ -585,8 +615,8 @@ fn parse_template_expr_method_call(raw string) ?TemplateExprMethodCall {
 	args_raw := trimmed[open_idx + 1..trimmed.len - 1]
 	return TemplateExprMethodCall{
 		target: target
-		name: method
-		args: split_template_expr_args(args_raw)
+		name:   method
+		args:   split_template_expr_args(args_raw)
 	}
 }
 

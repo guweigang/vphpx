@@ -128,10 +128,8 @@ fn make_resource_handler(controller string, action string) vphp.ZVal {
 		return vphp.ZVal.new_null()
 	}
 	if vphp.PhpClass.named(controller).exists() {
-		exists := vphp.PhpFunction.named('method_exists').result_bool([
-			vphp.RequestOwnedZBox.new_string(controller).to_zval(),
-			vphp.RequestOwnedZBox.new_string(action).to_zval(),
-		])
+		exists := vphp.PhpFunction.named('method_exists').result_bool(vphp.PhpString.of(controller),
+			vphp.PhpString.of(action))
 		if !exists {
 			return vphp.ZVal.new_null()
 		}

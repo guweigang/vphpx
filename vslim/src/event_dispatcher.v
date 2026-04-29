@@ -102,9 +102,9 @@ pub fn (mut dispatcher VSlimPsr14EventDispatcher) dispatch(event vphp.PhpObject)
 		if psr14_propagation_stopped(event.to_zval()) {
 			break
 		}
-		listener.with_call_result([event.to_zval()], fn (result vphp.ZVal) bool {
+		listener.with_fn_result_zval(fn (result vphp.ZVal) bool {
 			return result.is_valid()
-		})
+		}, event.to_zval())
 	}
 	return vphp.RequestOwnedZBox.of(event.to_zval())
 }
@@ -178,12 +178,12 @@ fn psr14_parent_class_name(class_name string) string {
 	if class_name.trim_space() == '' {
 		return ''
 	}
-	return vphp.PhpFunction.named('get_parent_class').with_result_zval([vphp.RequestOwnedZBox.new_string(class_name).to_zval()], fn (res vphp.ZVal) string {
+	return vphp.PhpFunction.named('get_parent_class').with_result_zval(fn (res vphp.ZVal) string {
 		if !res.is_valid() || res.is_null() || res.is_undef() || (res.is_bool() && !res.to_bool()) {
 			return ''
 		}
 		return res.to_string().trim_space()
-	})
+	}, vphp.RequestOwnedZBox.new_string(class_name).to_zval())
 }
 
 fn psr14_propagation_stopped(event vphp.ZVal) bool {
@@ -194,7 +194,7 @@ fn psr14_propagation_stopped(event vphp.ZVal) bool {
 		&& !event.method_exists('isPropagationStopped') {
 		return false
 	}
-	return vphp.PhpObject.borrowed(event).with_method_result_zval('isPropagationStopped', []vphp.ZVal{}, fn (res vphp.ZVal) bool {
+	return vphp.PhpObject.borrowed(event).with_method_result_zval('isPropagationStopped', fn (res vphp.ZVal) bool {
 		return res.is_valid() && res.to_bool()
 	})
 }

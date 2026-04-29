@@ -308,13 +308,10 @@ pub fn (u &VSlimPsr7UploadedFile) move_to(target_path vphp.RequestBorrowedZBox) 
 	stream := if u.stream_ref == unsafe { nil } { new_psr7_stream('') } else { u.stream_ref }
 	content := stream.stream_string()
 	size := if u.size_hint >= 0 { u.size_hint } else { content.len }
-	moved := vphp.PhpFunction.named('file_put_contents').with_result_zval([
-		vphp.RequestOwnedZBox.new_string(path).to_zval(),
-		vphp.RequestOwnedZBox.new_string(content).to_zval(),
-	], fn (result vphp.ZVal) bool {
+	moved := vphp.PhpFunction.named('file_put_contents').with_result_zval(fn (result vphp.ZVal) bool {
 		return result.is_valid() && !result.is_null() && !result.is_undef()
 			&& (!result.is_bool() || result.to_bool())
-	})
+	}, vphp.RequestOwnedZBox.new_string(path).to_zval(), vphp.RequestOwnedZBox.new_string(content).to_zval())
 	if !moved {
 		vphp.PhpException.raise_class('RuntimeException', 'failed to move uploaded file to target path',
 			0)
@@ -1675,7 +1672,7 @@ fn zval_to_psr7_uri(value vphp.ZVal) &VSlimPsr7Uri {
 		return unsafe { &VSlimPsr7Uri(C.vphp_get_v_ptr_from_zval(value.raw)) }
 	}
 	if value.is_valid() && value.is_object() && value.method_exists('__toString') {
-		return vphp.PhpObject.borrowed(value).with_method_result_zval('__toString', []vphp.ZVal{}, fn (raw vphp.ZVal) &VSlimPsr7Uri {
+		return vphp.PhpObject.borrowed(value).with_method_result_zval('__toString', fn (raw vphp.ZVal) &VSlimPsr7Uri {
 			return new_psr7_uri(raw.to_string())
 		})
 	}
@@ -1721,7 +1718,7 @@ fn zval_to_psr7_stream(value vphp.ZVal) &VSlimPsr7Stream {
 		return unsafe { &VSlimPsr7Stream(C.vphp_get_v_ptr_from_zval(value.raw)) }
 	}
 	if value.is_valid() && value.is_object() && value.method_exists('__toString') {
-		return vphp.PhpObject.borrowed(value).with_method_result_zval('__toString', []vphp.ZVal{}, fn (raw vphp.ZVal) &VSlimPsr7Stream {
+		return vphp.PhpObject.borrowed(value).with_method_result_zval('__toString', fn (raw vphp.ZVal) &VSlimPsr7Stream {
 			return new_psr7_stream(raw.to_string())
 		})
 	}
@@ -2376,17 +2373,13 @@ fn php_stream_metadata(resource vphp.ZVal) ?map[string]string {
 
 fn read_stream_factory_file(filename string, mode string) ?string {
 	if mode.contains('r') {
-		exists := vphp.PhpFunction.named('is_file').result_bool([
-			vphp.RequestOwnedZBox.new_string(filename).to_zval(),
-		])
+		exists := vphp.PhpFunction.named('is_file').result_bool(vphp.PhpString.of(filename))
 		if !exists {
 			vphp.PhpException.raise_class('RuntimeException', 'failed to open stream from file',
 				0)
 			return none
 		}
-		return vphp.PhpFunction.named('file_get_contents').result_string([
-			vphp.RequestOwnedZBox.new_string(filename).to_zval(),
-		])
+		return vphp.PhpFunction.named('file_get_contents').result_string(vphp.PhpString.of(filename))
 	}
 	return ''
 }

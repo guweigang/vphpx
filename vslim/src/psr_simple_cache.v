@@ -36,12 +36,13 @@ pub fn (cache &VSlimPsr16Cache) default_ttl_seconds_value() int {
 	return if cache.default_ttl_seconds <= 0 { 0 } else { cache.default_ttl_seconds }
 }
 
-@[php_method: 'setClock']
 @[php_arg_type: 'clock=Psr\\Clock\\ClockInterface']
+@[php_method: 'setClock']
 pub fn (mut cache VSlimPsr16Cache) set_clock(clock vphp.RequestBorrowedZBox) &VSlimPsr16Cache {
 	ensure_psr16_cache(mut cache)
 	if !psr20_is_clock(clock.to_zval()) {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'clock must implement Psr\\Clock\\ClockInterface', 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'clock must implement Psr\\Clock\\ClockInterface',
+			0)
 		return &cache
 	}
 	mut old := cache.clock_ref
@@ -50,8 +51,8 @@ pub fn (mut cache VSlimPsr16Cache) set_clock(clock vphp.RequestBorrowedZBox) &VS
 	return &cache
 }
 
-@[php_method]
 @[php_return_type: 'Psr\\Clock\\ClockInterface']
+@[php_method]
 pub fn (mut cache VSlimPsr16Cache) clock() vphp.RequestOwnedZBox {
 	ensure_psr16_cache(mut cache)
 	return cache.clock_ref.clone_request_owned()
@@ -71,8 +72,8 @@ fn psr16_ttl_zval_or_null(ttl ?vphp.RequestBorrowedZBox) vphp.ZVal {
 	return vphp.ZVal.new_null()
 }
 
-@[php_method]
 @[php_arg_name: 'default_value=defaultValue']
+@[php_method]
 pub fn (mut cache VSlimPsr16Cache) get(key string, default_value ?vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	ensure_psr16_cache(mut cache)
 	normalized := psr_cache_validate_key_or_throw(key) or {
@@ -81,9 +82,7 @@ pub fn (mut cache VSlimPsr16Cache) get(key string, default_value ?vphp.RequestBo
 	}
 	storage_key := psr16_storage_key(cache, normalized)
 	cache.prune_expired_entry(storage_key)
-	entry := cache.entries[storage_key] or {
-		return psr16_default_value_or_null(default_value)
-	}
+	entry := cache.entries[storage_key] or { return psr16_default_value_or_null(default_value) }
 	return entry.value.clone_request_owned()
 }
 
@@ -94,18 +93,15 @@ pub fn (mut cache VSlimPsr16Cache) set(key string, value vphp.RequestBorrowedZBo
 		throw_psr16_invalid_argument(err.msg())
 		return false
 	}
-	expires_at := psr_cache_resolve_relative_ttl_or_throw(cache.clock_ref.to_zval(),
-		psr16_ttl_zval_or_null(ttl)) or {
+	expires_at := psr_cache_resolve_relative_ttl_or_throw(cache.clock_ref.to_zval(), psr16_ttl_zval_or_null(ttl)) or {
 		throw_psr16_invalid_argument(err.msg())
 		return false
 	}
 	if expires_at < 0 {
 		return cache.delete(normalized)
 	}
-	cache.replace_entry(psr16_storage_key(cache, normalized),
-		vphp.PersistentOwnedZBox.from_mixed_zval(value.to_zval()),
-		psr_cache_apply_default_ttl(cache.clock_ref.to_zval(), expires_at,
-		cache.default_ttl_seconds))
+	cache.replace_entry(psr16_storage_key(cache, normalized), vphp.PersistentOwnedZBox.from_mixed_zval(value.to_zval()),
+		psr_cache_apply_default_ttl(cache.clock_ref.to_zval(), expires_at, cache.default_ttl_seconds))
 	return true
 }
 
@@ -127,9 +123,9 @@ pub fn (mut cache VSlimPsr16Cache) clear() bool {
 	return true
 }
 
+@[php_arg_name: 'default_value=defaultValue']
 @[php_method: 'getMultiple']
 @[php_return_type: 'iterable']
-@[php_arg_name: 'default_value=defaultValue']
 pub fn (mut cache VSlimPsr16Cache) get_multiple(keys vphp.PhpIterable, default_value ?vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	ensure_psr16_cache(mut cache)
 	mut out := new_array_zval()
@@ -155,8 +151,7 @@ pub fn (mut cache VSlimPsr16Cache) set_multiple(values vphp.PhpIterable, ttl ?vp
 		throw_psr16_invalid_argument('values must be iterable')
 		return false
 	}
-	expires_at := psr_cache_resolve_relative_ttl_or_throw(cache.clock_ref.to_zval(),
-		psr16_ttl_zval_or_null(ttl)) or {
+	expires_at := psr_cache_resolve_relative_ttl_or_throw(cache.clock_ref.to_zval(), psr16_ttl_zval_or_null(ttl)) or {
 		throw_psr16_invalid_argument(err.msg())
 		return false
 	}
@@ -173,9 +168,8 @@ pub fn (mut cache VSlimPsr16Cache) set_multiple(values vphp.PhpIterable, ttl ?vp
 		throw_psr16_invalid_argument(err.msg())
 		return false
 	} {
-		cache.replace_entry(psr16_storage_key(cache, key_name), value,
-			psr_cache_apply_default_ttl(cache.clock_ref.to_zval(), expires_at,
-			cache.default_ttl_seconds))
+		cache.replace_entry(psr16_storage_key(cache, key_name), value, psr_cache_apply_default_ttl(cache.clock_ref.to_zval(),
+			expires_at, cache.default_ttl_seconds))
 	}
 	return true
 }
@@ -227,7 +221,7 @@ pub fn (mut cache VSlimPsr16Cache) replace_entry(key string, value vphp.Persiste
 		old.value.release()
 	}
 	cache.entries[key] = PsrCacheEntry{
-		value: value
+		value:           value
 		expires_at_unix: expires_at_unix
 	}
 }
@@ -318,14 +312,15 @@ fn psr_cache_resolve_relative_ttl_or_throw(clock vphp.ZVal, ttl vphp.ZVal) !i64 
 		now_dt := psr20_now_datetime_or_throw(clock) or {
 			return error('failed to resolve clock time for TTL resolution')
 		}
-		expires_at := vphp.PhpObject.borrowed(now_dt).with_method_result_zval('add', [ttl], fn (added vphp.ZVal) i64 {
+		expires_at := vphp.PhpObject.borrowed(now_dt).with_method_result_zval('add', fn (added vphp.ZVal) i64 {
 			if !added.is_valid() || !added.is_object() {
 				return i64(-1)
 			}
-			return vphp.PhpObject.borrowed(added).with_method_result_zval('getTimestamp', []vphp.ZVal{}, fn (ts vphp.ZVal) i64 {
+			return vphp.PhpObject.borrowed(added).with_method_result_zval('getTimestamp',
+				fn (ts vphp.ZVal) i64 {
 				return ts.to_i64()
 			})
-		})
+		}, ttl)
 		if expires_at <= now_unix {
 			return i64(-1)
 		}
@@ -384,10 +379,13 @@ fn psr16_iterable_to_array(value vphp.ZVal) !vphp.ZVal {
 		return value
 	}
 	if value.is_object() && value.is_instance_of('Traversable') {
-		normalized := vphp.PhpFunction.named('iterator_to_array').call([value, vphp.ZVal.new_bool(true)])
+		mut normalized_box := vphp.PhpFunction.named('iterator_to_array').request_owned(vphp.PhpValue.from_zval(value),
+			vphp.PhpBool.of(true))
+		mut normalized := normalized_box.take_zval()
 		if normalized.is_array() {
 			return normalized
 		}
+		normalized.release()
 	}
 	return error('value must be iterable')
 }

@@ -31,7 +31,7 @@ fn app_self_zval(app &VSlimApp) vphp.ZVal {
 
 fn bootstrap_debug_included_hits(class_name string) []string {
 	class_stem := class_name.all_after_last('\\').trim_space().to_lower()
-	return vphp.PhpFunction.named('get_included_files').with_result_zval([]vphp.ZVal{}, fn [class_stem] (files vphp.ZVal) []string {
+	return vphp.PhpFunction.named('get_included_files').with_result_zval(fn [class_stem] (files vphp.ZVal) []string {
 		mut hits := []string{}
 		if !files.is_valid() || !files.is_array() {
 			return hits
@@ -56,14 +56,10 @@ fn bootstrap_debug_included_hits(class_name string) []string {
 }
 
 fn log_bootstrap_class_visibility(kind string, class_name string) {
-	exists_no_autoload := vphp.PhpFunction.named('class_exists').result_bool([
-		vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
-		vphp.RequestOwnedZBox.new_bool(false).to_zval(),
-	])
-	exists_autoload := vphp.PhpFunction.named('class_exists').result_bool([
-		vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
-		vphp.RequestOwnedZBox.new_bool(true).to_zval(),
-	])
+	exists_no_autoload := vphp.PhpFunction.named('class_exists').result_bool(vphp.PhpString.of(class_name),
+		vphp.PhpBool.of(false))
+	exists_autoload := vphp.PhpFunction.named('class_exists').result_bool(vphp.PhpString.of(class_name),
+		vphp.PhpBool.of(true))
 	included_hits := bootstrap_debug_included_hits(class_name)
 	cli_debug_log('${kind}_class_visibility class="${class_name}" exists_no_autoload=${exists_no_autoload} exists_autoload=${exists_autoload} included_hits=${included_hits}')
 }
@@ -77,19 +73,16 @@ fn normalize_service_provider_input(raw vphp.ZVal) !vphp.ZVal {
 		if class_name == '' {
 			return error('provider class name must not be empty')
 		}
-		exists := vphp.PhpFunction.named('class_exists').result_bool([
-			vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
-			vphp.RequestOwnedZBox.new_bool(true).to_zval(),
-		])
+		exists := vphp.PhpFunction.named('class_exists').result_bool(vphp.PhpString.of(class_name),
+			vphp.PhpBool.of(true))
 		if !exists {
 			log_bootstrap_class_visibility('provider', class_name)
 			return error('provider class "${class_name}" does not exist')
 		}
-		provider := vphp.PhpClass.named(class_name).construct([])
-		if !provider.is_valid() || !provider.is_object() {
+		provider := vphp.PhpClass.named(class_name).construct() or {
 			return error('provider class "${class_name}" could not be constructed')
 		}
-		return provider
+		return provider.to_zval()
 	}
 	return error('provider must be an object or class-string')
 }
@@ -103,9 +96,9 @@ fn bind_provider_to_app(provider vphp.ZVal, app_z vphp.ZVal) {
 		return
 	}
 	if provider.method_exists('setApp') {
-		vphp.PhpObject.borrowed(provider).with_method_result_zval('setApp', [app_z], fn (_ vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(provider).with_method_result_zval('setApp', fn (_ vphp.ZVal) bool {
 			return true
-		})
+		}, app_z)
 	}
 }
 
@@ -114,12 +107,12 @@ fn call_provider_lifecycle(provider vphp.ZVal, method_name string, app_z vphp.ZV
 		return
 	}
 	if app_z.is_valid() && app_z.is_object() {
-		vphp.PhpObject.borrowed(provider).with_method_result_zval(method_name, [app_z], fn (_ vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(provider).with_method_result_zval(method_name, fn (_ vphp.ZVal) bool {
 			return true
-		})
+		}, app_z)
 		return
 	}
-	vphp.PhpObject.borrowed(provider).with_method_result_zval(method_name, []vphp.ZVal{}, fn (_ vphp.ZVal) bool {
+	vphp.PhpObject.borrowed(provider).with_method_result_zval(method_name, fn (_ vphp.ZVal) bool {
 		return true
 	})
 }

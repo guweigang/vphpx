@@ -100,14 +100,14 @@ fn migration_drop_column_sql(table_name string, column_name string) string {
 fn migration_apply_manager(instance vphp.ZVal, manager &VSlimDatabaseManager, name string) {
 	manager_z := database_manager_self_zval(manager)
 	if instance.method_exists('setManager') && manager_z.is_valid() && manager_z.is_object() {
-		vphp.PhpObject.borrowed(instance).with_method_result_zval('setManager', [manager_z], fn (_ vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(instance).with_method_result_zval('setManager', fn (_ vphp.ZVal) bool {
 			return true
-		})
+		}, manager_z)
 	}
 	if instance.method_exists('setName') {
-		vphp.PhpObject.borrowed(instance).with_method_result_zval('setName', [vphp.RequestOwnedZBox.new_string(name).to_zval()], fn (_ vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(instance).with_method_result_zval('setName', fn (_ vphp.ZVal) bool {
 			return true
-		})
+		}, vphp.RequestOwnedZBox.new_string(name).to_zval())
 	}
 }
 
@@ -205,7 +205,7 @@ fn (mut migrator VSlimDatabaseMigrator) run_migration_file(file string, method_n
 		vphp.PhpException.raise_class('RuntimeException', 'migration "${name}" does not implement ${method_name}()', 0)
 		return
 	}
-	vphp.PhpObject.borrowed(migration.to_zval()).with_method_result_zval(method_name, []vphp.ZVal{}, fn (_ vphp.ZVal) bool {
+	vphp.PhpObject.borrowed(migration.to_zval()).with_method_result_zval(method_name, fn (_ vphp.ZVal) bool {
 		return true
 	})
 }
@@ -496,7 +496,7 @@ pub fn (mut migrator VSlimDatabaseMigrator) migrate() int {
 	mut count := 0
 	for file in pending {
 		migrator.run_migration_file(file, 'up')
-		if C.vphp_has_exception() {
+		if vphp.has_exception() {
 			return count
 		}
 		migrator.insert_applied_migration(migration_entry_name(file), batch)
@@ -537,7 +537,7 @@ pub fn (mut migrator VSlimDatabaseMigrator) rollback() int {
 	for file in targets {
 		name := migration_entry_name(file)
 		migrator.run_migration_file(file, 'down')
-		if C.vphp_has_exception() {
+		if vphp.has_exception() {
 			return count
 		}
 		migrator.delete_applied_migration(name)
@@ -604,10 +604,10 @@ pub fn (mut migrator VSlimDatabaseMigrator) seed(name string) int {
 			vphp.PhpException.raise_class('RuntimeException', 'seeder "${entry}" does not implement run()', 0)
 			return count
 		}
-		vphp.PhpObject.borrowed(seeder.to_zval()).with_method_result_zval('run', []vphp.ZVal{}, fn (_ vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(seeder.to_zval()).with_method_result_zval('run', fn (_ vphp.ZVal) bool {
 			return true
 		})
-		if C.vphp_has_exception() {
+		if vphp.has_exception() {
 			return count
 		}
 		count++

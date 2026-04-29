@@ -140,43 +140,37 @@ fn propagate_request_trace_headers_to_object(req &VSlimRequest, raw vphp.Request
 	}
 	rid := req.request_id()
 	if rid != '' {
-		missing := vphp.PhpObject.borrowed(obj).with_method_result_zval('has_header', [vphp.RequestOwnedZBox.new_string('x-request-id').to_zval()], fn (has vphp.ZVal) bool {
+		missing := vphp.PhpObject.borrowed(obj).with_method_result_zval('has_header', fn (has vphp.ZVal) bool {
 			return !has.is_valid() || !has.to_bool()
-		})
+		}, vphp.RequestOwnedZBox.new_string('x-request-id').to_zval())
 		if missing {
-			vphp.PhpObject.borrowed(obj).with_method_result_zval('set_header', [
-				vphp.RequestOwnedZBox.new_string('x-request-id').to_zval(),
-				vphp.RequestOwnedZBox.new_string(rid).to_zval(),
-			], fn (_ vphp.ZVal) bool {
+			vphp.PhpObject.borrowed(obj).with_method_result_zval('set_header', fn (_ vphp.ZVal) bool {
 				return true
-			})
+			}, vphp.RequestOwnedZBox.new_string('x-request-id').to_zval(),
+				vphp.RequestOwnedZBox.new_string(rid).to_zval(),)
 		}
 	}
 	tid := req.trace_id()
 	if tid == '' {
 		return
 	}
-	missing_trace := vphp.PhpObject.borrowed(obj).with_method_result_zval('has_header', [vphp.RequestOwnedZBox.new_string('x-trace-id').to_zval()], fn (has vphp.ZVal) bool {
+	missing_trace := vphp.PhpObject.borrowed(obj).with_method_result_zval('has_header', fn (has vphp.ZVal) bool {
 		return !has.is_valid() || !has.to_bool()
-	})
+	}, vphp.RequestOwnedZBox.new_string('x-trace-id').to_zval())
 	if missing_trace {
-		vphp.PhpObject.borrowed(obj).with_method_result_zval('set_header', [
-			vphp.RequestOwnedZBox.new_string('x-trace-id').to_zval(),
-			vphp.RequestOwnedZBox.new_string(tid).to_zval(),
-		], fn (_ vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(obj).with_method_result_zval('set_header', fn (_ vphp.ZVal) bool {
 			return true
-		})
+		}, vphp.RequestOwnedZBox.new_string('x-trace-id').to_zval(),
+			vphp.RequestOwnedZBox.new_string(tid).to_zval(),)
 	}
-	missing_vhttpd := vphp.PhpObject.borrowed(obj).with_method_result_zval('has_header', [vphp.RequestOwnedZBox.new_string('x-vhttpd-trace-id').to_zval()], fn (has vphp.ZVal) bool {
+	missing_vhttpd := vphp.PhpObject.borrowed(obj).with_method_result_zval('has_header', fn (has vphp.ZVal) bool {
 		return !has.is_valid() || !has.to_bool()
-	})
+	}, vphp.RequestOwnedZBox.new_string('x-vhttpd-trace-id').to_zval())
 	if missing_vhttpd {
-		vphp.PhpObject.borrowed(obj).with_method_result_zval('set_header', [
-			vphp.RequestOwnedZBox.new_string('x-vhttpd-trace-id').to_zval(),
-			vphp.RequestOwnedZBox.new_string(tid).to_zval(),
-		], fn (_ vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(obj).with_method_result_zval('set_header', fn (_ vphp.ZVal) bool {
 			return true
-		})
+		}, vphp.RequestOwnedZBox.new_string('x-vhttpd-trace-id').to_zval(),
+			vphp.RequestOwnedZBox.new_string(tid).to_zval(),)
 	}
 }
 

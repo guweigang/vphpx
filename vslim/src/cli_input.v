@@ -720,7 +720,7 @@ fn cli_command_definition(runtime vphp.ZVal) !CliCommandDefinition {
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists('definition') {
 		return error('command has no CLI definition')
 	}
-	mut definition_z := vphp.PhpObject.borrowed(runtime).method_request_owned_box('definition', []vphp.ZVal{})
+	mut definition_z := vphp.PhpObject.borrowed(runtime).method_request_owned('definition')
 	defer {
 		definition_z.release()
 	}
@@ -731,7 +731,7 @@ fn cli_runtime_text_method(runtime vphp.ZVal, method_name string) string {
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists(method_name) {
 		return ''
 	}
-	mut value_z := vphp.PhpObject.borrowed(runtime).method_request_owned_box(method_name, []vphp.ZVal{})
+	mut value_z := vphp.PhpObject.borrowed(runtime).method_request_owned(method_name)
 	defer {
 		value_z.release()
 	}
@@ -742,7 +742,7 @@ fn cli_runtime_string_list_method(runtime vphp.ZVal, method_name string) []strin
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists(method_name) {
 		return []string{}
 	}
-	mut value_z := vphp.PhpObject.borrowed(runtime).method_request_owned_box(method_name, []vphp.ZVal{})
+	mut value_z := vphp.PhpObject.borrowed(runtime).method_request_owned(method_name)
 	defer {
 		value_z.release()
 	}
@@ -753,7 +753,7 @@ fn cli_runtime_bool_method(runtime vphp.ZVal, method_name string, fallback bool)
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists(method_name) {
 		return fallback
 	}
-	mut value_z := vphp.PhpObject.borrowed(runtime).method_request_owned_box(method_name, []vphp.ZVal{})
+	mut value_z := vphp.PhpObject.borrowed(runtime).method_request_owned(method_name)
 	defer {
 		value_z.release()
 	}
@@ -769,7 +769,8 @@ fn bind_cli_runtime_to_command(mut cli VSlimCliApp, runtime vphp.ZVal) {
 		cli_z.release()
 	}
 	if runtime.method_exists('setCli') {
-		mut set_cli_result := vphp.PhpObject.borrowed(runtime).method_request_owned_box('setCli', [cli_z])
+		mut set_cli_result := vphp.PhpObject.borrowed(runtime).method_request_owned('setCli',
+			vphp.PhpValue.from_zval(cli_z))
 		set_cli_result.release()
 	}
 	if runtime.method_exists('setApp') {
@@ -777,7 +778,8 @@ fn bind_cli_runtime_to_command(mut cli VSlimCliApp, runtime vphp.ZVal) {
 		defer {
 			app_z.release()
 		}
-		mut set_app_result := vphp.PhpObject.borrowed(runtime).method_request_owned_box('setApp', [app_z])
+		mut set_app_result := vphp.PhpObject.borrowed(runtime).method_request_owned('setApp',
+			vphp.PhpValue.from_zval(app_z))
 		set_app_result.release()
 	}
 }

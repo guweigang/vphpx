@@ -333,9 +333,7 @@ pub fn (mut form VSlimLiveForm) validate(validator vphp.RequestBorrowedZBox) &VS
 		mut errors_owned := false
 		if validator.is_valid() && !validator.is_null() && !validator.is_undef() {
 			if validator.is_callable() {
-				mut result := vphp.PhpCallable.borrowed(validator.to_zval()).request_owned_box([
-					form.data().to_zval(),
-				])
+				mut result := vphp.PhpCallable.borrowed(validator.to_zval()).fn_request_owned(vphp.PhpValue.from_zval(form.data().to_zval()))
 				errors_z = result.take_zval()
 				errors_owned = true
 			} else if validator.is_array() {

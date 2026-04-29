@@ -2,8 +2,8 @@ module main
 
 import vphp
 
-@[php_return_type: 'VSlim\\VHttpd\\Response']
 @[php_arg_type: 'response=Psr\\Http\\Message\\ResponseInterface']
+@[php_return_type: 'VSlim\\VHttpd\\Response']
 @[php_method: 'toVSlimResponse']
 pub fn VSlimPsr7Adapter.to_vslim_response(response vphp.RequestBorrowedZBox) &VSlimResponse {
 	return to_vslim_response(new_vslim_response_from_psr_response(normalize_to_psr7_response(response.to_zval())))
@@ -108,7 +108,11 @@ fn adapter_read_request_target(request vphp.ZVal) string {
 		}
 		if uri.to_zval().property_exists('path') {
 			path := uri.to_zval().get_prop_string('path')
-			query := if uri.to_zval().property_exists('query') { uri.to_zval().get_prop_string('query') } else { '' }
+			query := if uri.to_zval().property_exists('query') {
+				uri.to_zval().get_prop_string('query')
+			} else {
+				''
+			}
 			return if query != '' { '${path}?${query}' } else { path }
 		}
 	}
@@ -123,7 +127,8 @@ fn adapter_read_request_target(request vphp.ZVal) string {
 
 fn adapter_read_body(request vphp.ZVal) string {
 	if request.method_exists('getBody') {
-		mut body := vphp.RequestOwnedZBox.adopt_zval(request.method_owned_request('getBody', []vphp.ZVal{}))
+		mut body := vphp.RequestOwnedZBox.adopt_zval(request.method_owned_request('getBody',
+			[]vphp.ZVal{}))
 		defer {
 			body.release()
 		}
@@ -191,7 +196,7 @@ fn adapter_read_uploaded_files(request vphp.ZVal) vphp.RequestOwnedZBox {
 	if !raw.is_valid() || !raw.is_array() {
 		return vphp.RequestOwnedZBox.of(new_array_zval())
 	}
-	return vphp.RequestOwnedZBox.adopt_zval(vphp.PhpFunction.named('array_values').call_owned_request([
+	return vphp.RequestOwnedZBox.adopt_zval(vphp.PhpFunction.named('array_values').call_owned_request_zval([
 		raw.to_zval(),
 	]))
 }
@@ -211,7 +216,8 @@ fn adapter_read_uri_part(request vphp.ZVal, getter string, property string, defa
 	}
 	if uri.is_valid() && uri.is_object() {
 		if uri.to_zval().method_exists(getter) {
-			mut value := vphp.RequestOwnedZBox.adopt_zval(uri.to_zval().method_owned_request(getter, []vphp.ZVal{}))
+			mut value := vphp.RequestOwnedZBox.adopt_zval(uri.to_zval().method_owned_request(getter,
+				[]vphp.ZVal{}))
 			defer {
 				value.release()
 			}
@@ -239,7 +245,8 @@ fn adapter_read_uri_part(request vphp.ZVal, getter string, property string, defa
 
 fn adapter_read_uri_object(request vphp.ZVal) vphp.RequestOwnedZBox {
 	if request.method_exists('getUri') {
-		return vphp.RequestOwnedZBox.adopt_zval(request.method_owned_request('getUri', []vphp.ZVal{}))
+		return vphp.RequestOwnedZBox.adopt_zval(request.method_owned_request('getUri',
+			[]vphp.ZVal{}))
 	}
 	if request.property_exists('uri') {
 		return vphp.RequestOwnedZBox.of(request.get_prop('uri'))
@@ -269,10 +276,11 @@ fn adapter_read_method_or_prop(request vphp.ZVal, getter string, property string
 }
 
 fn target_from_uri_string(uri string) string {
-	mut parts := vphp.PhpFunction.named('parse_url').call([vphp.ZVal.new_string(uri)])
+	mut parts_box := vphp.PhpFunction.named('parse_url').request_owned(vphp.PhpString.of(uri))
 	defer {
-		parts.release()
+		parts_box.release()
 	}
+	parts := parts_box.to_zval()
 	if !parts.is_valid() || !parts.is_array() {
 		return '/'
 	}
@@ -283,10 +291,11 @@ fn target_from_uri_string(uri string) string {
 }
 
 fn uri_part_from_string(uri string, property string, default_value string) string {
-	mut parts := vphp.PhpFunction.named('parse_url').call([vphp.ZVal.new_string(uri)])
+	mut parts_box := vphp.PhpFunction.named('parse_url').request_owned(vphp.PhpString.of(uri))
 	defer {
-		parts.release()
+		parts_box.release()
 	}
+	parts := parts_box.to_zval()
 	if !parts.is_valid() || !parts.is_array() {
 		return default_value
 	}

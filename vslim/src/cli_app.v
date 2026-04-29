@@ -145,9 +145,7 @@ fn cli_handler_string_is_function_callable(name string) bool {
 	if callable_name == '' {
 		return false
 	}
-	return vphp.PhpFunction.named('function_exists').result_bool([
-		vphp.RequestOwnedZBox.new_string(callable_name).to_zval(),
-	])
+	return vphp.PhpFunction.named('function_exists').result_bool(vphp.PhpString.of(callable_name))
 }
 
 fn normalize_cli_command_handler_input(raw vphp.ZVal) !vphp.ZVal {
@@ -198,10 +196,8 @@ fn resolve_cli_command_runtime(mut cli VSlimCliApp, handler_z vphp.ZVal) !vphp.Z
 		if cli_handler_string_is_function_callable(class_name) {
 			return vphp.RequestOwnedZBox.new_string(class_name).to_zval()
 		}
-		exists := vphp.PhpFunction.named('class_exists').result_bool([
-			vphp.RequestOwnedZBox.new_string(class_name).to_zval(),
-			vphp.RequestOwnedZBox.new_bool(true).to_zval(),
-		])
+		exists := vphp.PhpFunction.named('class_exists').result_bool(vphp.PhpString.of(class_name),
+			vphp.PhpBool.of(true))
 		if !exists {
 			return error('command class "${class_name}" does not exist')
 		}
@@ -210,11 +206,10 @@ fn resolve_cli_command_runtime(mut cli VSlimCliApp, handler_z vphp.ZVal) !vphp.Z
 		if container.has(class_name) {
 			return container.get(class_name).to_zval()
 		}
-		command := vphp.PhpClass.named(class_name).construct([])
-		if !command.is_valid() || !command.is_object() {
+		command := vphp.PhpClass.named(class_name).construct() or {
 			return error('command class "${class_name}" could not be constructed')
 		}
-		return command
+		return command.to_zval()
 	}
 	return vphp.RequestOwnedZBox.from_zval(handler_z).to_zval()
 }
@@ -404,10 +399,8 @@ fn (mut cli VSlimCliApp) run_registered_cli_command_with_program(name string, ar
 	if runtime_is_command_object {
 		mut result := vphp.ZVal.new_null()
 		if runtime.method_exists('handle') {
-			mut rb := vphp.PhpObject.borrowed(runtime).method_request_owned_box('handle', [
-				args_z,
-				cli_z,
-			])
+			mut rb := vphp.PhpObject.borrowed(runtime).method_request_owned('handle',
+				vphp.PhpValue.from_zval(args_z), vphp.PhpValue.from_zval(cli_z))
 			result = rb.take_zval()
 		}
 		defer {
@@ -418,7 +411,8 @@ fn (mut cli VSlimCliApp) run_registered_cli_command_with_program(name string, ar
 		mut code_z := result
 		code = cli_command_exit_code(mut code_z)
 	} else {
-		mut result := vphp.PhpCallable.borrowed(runtime).request_owned_box([args_z, cli_z])
+		mut result := vphp.PhpCallable.borrowed(runtime).fn_request_owned(vphp.PhpValue.from_zval(args_z),
+			vphp.PhpValue.from_zval(cli_z))
 		defer {
 			result.release()
 		}
@@ -458,19 +452,11 @@ pub fn (cli &VSlimCliApp) project_root_value() string {
 
 @[php_method: 'debugBridgePath']
 pub fn (cli &VSlimCliApp) debug_bridge_path(path string) vphp.RequestOwnedZBox {
-	echoed := vphp.PhpFunction.named('strval').result_string([
-		vphp.RequestOwnedZBox.new_string(path).to_zval(),
-	])
-	joined := vphp.PhpFunction.named('sprintf').result_string([
-		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
-		vphp.RequestOwnedZBox.new_string(path).to_zval(),
-		vphp.RequestOwnedZBox.new_string('bootstrap/app.php').to_zval(),
-	])
-	echoed_joined := vphp.PhpFunction.named('sprintf').result_string([
-		vphp.RequestOwnedZBox.new_string('%s/%s').to_zval(),
-		vphp.RequestOwnedZBox.new_string(echoed).to_zval(),
-		vphp.RequestOwnedZBox.new_string('bootstrap/app.php').to_zval(),
-	])
+	echoed := vphp.PhpFunction.named('strval').result_string(vphp.PhpString.of(path))
+	joined := vphp.PhpFunction.named('sprintf').result_string(vphp.PhpString.of('%s/%s'),
+		vphp.PhpString.of(path), vphp.PhpString.of('bootstrap/app.php'))
+	echoed_joined := vphp.PhpFunction.named('sprintf').result_string(vphp.PhpString.of('%s/%s'),
+		vphp.PhpString.of(echoed), vphp.PhpString.of('bootstrap/app.php'))
 	return vphp.RequestOwnedZBox.adopt_zval(vphp.DynValue.of_map({
 		'original':     vphp.DynValue.of_string(path)
 		'strval':       vphp.DynValue.of_string(echoed)
