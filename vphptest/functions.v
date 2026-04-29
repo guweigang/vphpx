@@ -781,8 +781,8 @@ fn v_php_semantic_params_struct_api(params VPhpSemanticParamsStructDemo) string 
 @[php_function]
 fn v_php_args_api(ctx vphp.Context) string {
 	args := ctx.args([
-		vphp.PhpArgMeta{ index: 0, name: 'first' },
-		vphp.PhpArgMeta{
+		vphp.PhpInArgMeta{ index: 0, name: 'first' },
+		vphp.PhpInArgMeta{
 			index: 1
 			name:  'second'
 		},
@@ -790,7 +790,7 @@ fn v_php_args_api(ctx vphp.Context) string {
 	first := args.at(0)
 	second := args.named('second') or { return 'missing-second' }
 	missing := args.at(2)
-	return 'args=${args.len()}:${first.index}:${first.name}:${first.as_v[string]()}|${second.index}:${second.name}:${second.as_v[int]()}|missing=${args.has(2)}:${missing.value.is_null()}'
+	return 'args=${args.len()}:${first.index()}:${first.name()}:${first.as_v[string]()}|${second.index()}:${second.name()}:${second.as_v[int]()}|missing=${args.has(2)}:${missing.value.is_null()}'
 }
 
 @[php_function]

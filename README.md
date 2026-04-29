@@ -65,7 +65,7 @@
 
 - [vphp/README.md](/Users/guweigang/Source/vphpx/vphp/README.md)
 - [vphp/docs/OVERVIEW.md](/Users/guweigang/Source/vphpx/vphp/docs/OVERVIEW.md)
-- [vphp/ownership.md](/Users/guweigang/Source/vphpx/vphp/ownership.md)
+- [vphp/docs/ownership.md](/Users/guweigang/Source/vphpx/vphp/docs/ownership.md)
 
 ### `vphptest/`
 
@@ -163,7 +163,7 @@
 
 1. 先看这份 README，建立整体地图
 2. 看 [vphp/README.md](/Users/guweigang/Source/vphpx/vphp/README.md)
-3. 看 [vphp/ownership.md](/Users/guweigang/Source/vphpx/vphp/ownership.md)
+3. 看 [vphp/docs/ownership.md](/Users/guweigang/Source/vphpx/vphp/docs/ownership.md)
 4. 看 [vphptest/tests](/Users/guweigang/Source/vphpx/vphptest/tests)
 5. 再看 [vslim/README.md](/Users/guweigang/Source/vphpx/vslim/README.md)
 
