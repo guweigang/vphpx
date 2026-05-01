@@ -56,6 +56,52 @@ jobs:
         run: |
           git subtree split --prefix=vphp --branch vphp-split
 
+      - name: Add mirror repository notice
+        shell: bash
+        run: |
+          worktree="$(mktemp -d)"
+          git worktree add "$worktree" vphp-split
+          cd "$worktree"
+
+          notice="$(mktemp)"
+          cat > "$notice" <<'EOF'
+          > [!IMPORTANT]
+          > This repository is synchronized from
+          > [guweigang/vphpx](https://github.com/guweigang/vphpx).
+          >
+          > Please do not open pull requests against this repository directly.
+          > Open issues and pull requests in
+          > [guweigang/vphpx](https://github.com/guweigang/vphpx) instead.
+
+          EOF
+          cat README.md >> "$notice"
+          mv "$notice" README.md
+
+          cat > CONTRIBUTING.md <<'EOF'
+          # Contributing
+
+          This repository is synchronized from
+          [guweigang/vphpx](https://github.com/guweigang/vphpx).
+
+          Please do not open pull requests against this repository directly.
+          Open issues and pull requests in
+          [guweigang/vphpx](https://github.com/guweigang/vphpx) instead.
+          EOF
+
+          mkdir -p .github
+          cat > .github/pull_request_template.md <<'EOF'
+          This repository is synchronized from https://github.com/guweigang/vphpx.
+
+          Please do not open pull requests here. Open the pull request against vphpx instead:
+
+          https://github.com/guweigang/vphpx
+          EOF
+
+          git add README.md CONTRIBUTING.md .github/pull_request_template.md
+          git commit -m "Add vphp mirror repository notice"
+          cd -
+          git worktree remove "$worktree"
+
       - name: Push split branch to guweigang/vphp
         shell: bash
         env:
