@@ -26,7 +26,7 @@ $metrics = [
     ],
 ];
 
-for ($i = 0; $i < 500; $i++) {
+for ($i = 0; $i < 1000; $i++) {
     $next = $base
         ->withAttribute('studio.workspace', $workspace)
         ->withAttribute('studio.viewer', $viewer)
@@ -39,7 +39,7 @@ for ($i = 0; $i < 500; $i++) {
     unset($next);
 }
 
-echo "ok\n";
+echo "attr-loop-ok\n";
 ?>
 --EXPECT--
-ok
+attr-loop-ok

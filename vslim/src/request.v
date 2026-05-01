@@ -6,10 +6,10 @@ import vphp
 @[php_method]
 @[php_arg_name: 'raw_path=rawPath']
 pub fn (mut r VSlimRequest) construct(method string, raw_path string, body string) &VSlimRequest {
+	apply_request_defaults(mut r)
 	r.set_method(method)
 	r.set_target(raw_path)
 	r.set_body(body)
-	apply_request_defaults(mut r)
 	return r
 }
 
@@ -35,6 +35,7 @@ pub fn (mut r VSlimRequest) set_method(method string) &VSlimRequest {
 pub fn (mut r VSlimRequest) set_target(raw_path string) &VSlimRequest {
 	r.raw_path = raw_path.clone()
 	r.path, r.query_string = VSlimRequest.normalize_target(raw_path)
+	r.query = VSlimRequest.parse_query(r.query_string)
 	return r
 }
 
@@ -599,6 +600,7 @@ pub fn new_vslim_request(method string, raw_path string, body string) &VSlimRequ
 		body: body.clone()
 	}
 	apply_request_defaults(mut req)
+	req.query = VSlimRequest.parse_query(query_string)
 	return req
 }
 
@@ -620,7 +622,11 @@ pub fn new_vslim_request_from_zval(envelope vphp.ZVal) &VSlimRequest {
 	req.port = if part := envelope.get('port') { part.to_string() } else { req.port }
 	req.protocol_version = if part := envelope.get('protocol_version') { part.to_string() } else { req.protocol_version }
 	req.remote_addr = if part := envelope.get('remote_addr') { part.to_string() } else { req.remote_addr }
-	req.query = if part := envelope.get('query') { snapshot_string_map(part.to_string_map()) } else { map[string]string{} }
+	req.query = if part := envelope.get('query') {
+		snapshot_string_map(part.to_string_map())
+	} else {
+		VSlimRequest.parse_query(query_string)
+	}
 	req.headers = if part := envelope.get('headers') { snapshot_string_map(normalize_header_map(part.to_string_map())) } else { map[string]string{} }
 	req.cookies = if part := envelope.get('cookies') { snapshot_string_map(part.to_string_map()) } else { map[string]string{} }
 	req.attributes = if part := envelope.get('attributes') { snapshot_string_map(zval_assoc_scalar_string_map(part)) } else { map[string]string{} }

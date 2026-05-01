@@ -2,31 +2,6 @@ module main
 
 import vphp
 
-struct VSlimTaskRequestArgs {
-mut:
-	boxes []vphp.RequestOwnedZBox
-	args  []vphp.ZVal
-}
-
-fn build_task_request_args(params []vphp.PersistentOwnedZBox) VSlimTaskRequestArgs {
-	mut out := VSlimTaskRequestArgs{
-		boxes: []vphp.RequestOwnedZBox{cap: params.len}
-		args:  []vphp.ZVal{cap: params.len}
-	}
-	for param in params {
-		mut temp := param.clone_request_owned()
-		out.args << temp.to_zval()
-		out.boxes << temp
-	}
-	return out
-}
-
-fn (mut args VSlimTaskRequestArgs) release() {
-	for mut box in args.boxes {
-		box.release()
-	}
-}
-
 fn task_params_to_persistent(params []vphp.ZVal) []vphp.PersistentOwnedZBox {
 	mut out := []vphp.PersistentOwnedZBox{cap: params.len}
 	for param in params {
@@ -49,11 +24,12 @@ fn task_cache_result(mut handle VSlimTaskHandle, result vphp.RequestOwnedZBox) {
 }
 
 fn task_wait_callable(mut handle VSlimTaskHandle) vphp.RequestOwnedZBox {
-	mut args := build_task_request_args(handle.params)
+	mut frame := vphp.PhpScope.frame()
 	defer {
-		args.release()
+		frame.release()
 	}
-	mut result := handle.callable.call_request_owned(args.args)
+	args := frame.args_from_persistent_owned(handle.params)
+	mut result := handle.callable.fn_request_owned(...args)
 	defer {
 		result.release()
 	}

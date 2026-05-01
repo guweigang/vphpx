@@ -13,4 +13,4 @@ scalar=string:true:42:42:42.0:true:string_
 scalar=integer:true:7:7:7.0:true:int_
 scalar=float:true:3.5:3:3.5:true:float_
 scalar=boolean:true:1:1:1.0:true:bool_
-strict=42:42:4.5:true:true:dyn_data:false
+strict=42:42:4.5:true:true:persistent_owned:false

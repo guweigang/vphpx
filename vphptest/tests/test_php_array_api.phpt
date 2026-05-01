@@ -10,4 +10,4 @@ echo v_php_array_api([
 ]) . PHP_EOL;
 ?>
 --EXPECT--
-array=2:name,score:codex:map_:map_:dyn_data
+array=2:name,score:codex:map_:map_:persistent_owned

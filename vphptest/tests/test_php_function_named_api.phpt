@@ -7,4 +7,4 @@ PhpFunction named API wraps PHP function callable strings
 echo v_php_function_named_api() . PHP_EOL;
 ?>
 --EXPECT--
-function=strtoupper;exists=true;value=FUNC:4:RESULT;missing=missing
+function=strtoupper;exists=true;value=FUNC:4:RESULT:SEMANTIC:8;missing=missing

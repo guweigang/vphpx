@@ -1,5 +1,5 @@
 --TEST--
-PersistentPhpClosure retains callable lifecycle and releases it explicitly
+PhpClosure retains persistent-owned callable lifecycle and releases it explicitly
 --SKIPIF--
 <?php if (!extension_loaded("vphptest")) print "skip"; ?>
 --FILE--
@@ -9,4 +9,4 @@ echo v_php_closure_persistent_api(function (string $name, int $count): string {
 }) . PHP_EOL;
 ?>
 --EXPECT--
-persistent=dyn_data:true:KEEP:2:LIFE:4:retained=true:released=true
+persistent=persistent_owned:true:KEEP:2:LIFE:4:retained=true:released=true

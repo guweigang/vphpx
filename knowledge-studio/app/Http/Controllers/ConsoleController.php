@@ -31,7 +31,7 @@ final class ConsoleController extends \VSlim\Controller
         parent::__construct($app);
     }
 
-    public function index(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function index(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         $this->debug('index.enter');
         if (!$this->app()->authCheck($request)) {
@@ -274,7 +274,7 @@ final class ConsoleController extends \VSlim\Controller
         ]);
     }
 
-    public function members(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function members(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect($this->urls->login($this->locale($request)), 302);
@@ -345,7 +345,7 @@ final class ConsoleController extends \VSlim\Controller
         ]);
     }
 
-    public function account(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function account(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect($this->urls->login($this->locale($request)), 302);
@@ -391,7 +391,7 @@ final class ConsoleController extends \VSlim\Controller
         ]);
     }
 
-    public function subscribers(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function subscribers(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect($this->urls->login($this->locale($request)), 302);
@@ -529,7 +529,7 @@ final class ConsoleController extends \VSlim\Controller
         ]);
     }
 
-    public function subscriberDetail(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function subscriberDetail(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect($this->urls->login($this->locale($request)), 302);
@@ -672,7 +672,7 @@ final class ConsoleController extends \VSlim\Controller
         ]);
     }
 
-    public function documents(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function documents(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         $this->debug('documents.enter');
         if (!$this->app()->authCheck($request)) {
@@ -714,10 +714,9 @@ final class ConsoleController extends \VSlim\Controller
 
         if (getenv('KS_PLAIN_DOCUMENTS_RESPONSE') !== false && getenv('KS_PLAIN_DOCUMENTS_RESPONSE') !== '') {
             $this->debug('documents.plain-response');
-            return new \VSlim\VHttpd\Response(
-                200,
+            return $this->text(
                 'documents|' . count($documents) . '|' . (is_array($viewer) ? (string) ($viewer['id'] ?? '') : ''),
-                'text/plain; charset=utf-8'
+                200
             );
         }
 
@@ -734,7 +733,16 @@ final class ConsoleController extends \VSlim\Controller
                 'footer_note' => 'Document ingest will move from demo arrays to database-backed records next',
             ]);
             $this->debug('documents.rendered-string-len=' . strlen($html) . ' md5=' . md5($html) . ' head=' . substr($html, 0, 160) . ' tail=' . substr($html, -160));
-            return new \VSlim\VHttpd\Response(200, $html, 'text/html; charset=utf-8');
+            return $this->renderWithLayout('console_documents.html', 'layout.html', [
+                'title' => 'Knowledge Documents',
+                'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
+                'workspace_name' => is_array($workspace) ? (string) ($workspace['name'] ?? '') : '',
+                'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
+                'documents' => $documents,
+                'page_section' => 'Knowledge Documents',
+                'nav_label' => 'documents',
+                'footer_note' => 'Document ingest will move from demo arrays to database-backed records next',
+            ]);
         }
 
         if (getenv('KS_RENDERED_TEMPLATE_ONLY_DOCUMENTS_RESPONSE') !== false && getenv('KS_RENDERED_TEMPLATE_ONLY_DOCUMENTS_RESPONSE') !== '') {
@@ -750,7 +758,16 @@ final class ConsoleController extends \VSlim\Controller
                 'footer_note' => 'Document ingest will move from demo arrays to database-backed records next',
             ]);
             $this->debug('documents.rendered-template-only-len=' . strlen($html) . ' md5=' . md5($html));
-            return new \VSlim\VHttpd\Response(200, $html, 'text/html; charset=utf-8');
+            return $this->view()->renderResponse('console_documents.html', [
+                'title' => 'Knowledge Documents',
+                'viewer_name' => is_array($viewer) ? (string) ($viewer['name'] ?? '') : '',
+                'workspace_name' => is_array($workspace) ? (string) ($workspace['name'] ?? '') : '',
+                'workspace_slug' => is_array($workspace) ? (string) ($workspace['slug'] ?? '') : '',
+                'documents' => $documents,
+                'page_section' => 'Knowledge Documents',
+                'nav_label' => 'documents',
+                'footer_note' => 'Document ingest will move from demo arrays to database-backed records next',
+            ]);
         }
 
         if (getenv('KS_RAW_STRING_DOCUMENTS_RESPONSE') !== false && getenv('KS_RAW_STRING_DOCUMENTS_RESPONSE') !== '') {
@@ -839,7 +856,7 @@ final class ConsoleController extends \VSlim\Controller
         ]);
     }
 
-    public function editDocument(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function editDocument(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect($this->urls->login($this->locale($request)), 302);
@@ -898,7 +915,7 @@ final class ConsoleController extends \VSlim\Controller
         ]);
     }
 
-    public function faqs(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function faqs(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect($this->urls->login($this->locale($request)), 302);
@@ -992,7 +1009,7 @@ final class ConsoleController extends \VSlim\Controller
         ]);
     }
 
-    public function editEntry(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function editEntry(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect($this->urls->login($this->locale($request)), 302);
@@ -1048,7 +1065,7 @@ final class ConsoleController extends \VSlim\Controller
         ]);
     }
 
-    public function ops(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function ops(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect($this->urls->login($this->locale($request)), 302);
@@ -1342,7 +1359,7 @@ final class ConsoleController extends \VSlim\Controller
         };
     }
 
-    public function releases(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function releases(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect($this->urls->login($this->locale($request)), 302);
@@ -1875,7 +1892,7 @@ final class ConsoleController extends \VSlim\Controller
         }, $items);
     }
 
-    public function storeDocument(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function storeDocument(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect('/login', 302);
@@ -1896,7 +1913,7 @@ final class ConsoleController extends \VSlim\Controller
         );
     }
 
-    public function storeEntry(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function storeEntry(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect('/login', 302);
@@ -1917,7 +1934,7 @@ final class ConsoleController extends \VSlim\Controller
         );
     }
 
-    public function storeMember(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function storeMember(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect('/login', 302);
@@ -1938,7 +1955,7 @@ final class ConsoleController extends \VSlim\Controller
         );
     }
 
-    public function updateMemberRole(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function updateMemberRole(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect('/login', 302);
@@ -1961,7 +1978,7 @@ final class ConsoleController extends \VSlim\Controller
         );
     }
 
-    public function removeMember(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function removeMember(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect('/login', 302);
@@ -1983,7 +2000,7 @@ final class ConsoleController extends \VSlim\Controller
         );
     }
 
-    public function switchWorkspace(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function switchWorkspace(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect('/login', 302);
@@ -2014,13 +2031,12 @@ final class ConsoleController extends \VSlim\Controller
             $session->flash('console.workspace.notice', 'Workspace switched.');
         }
 
-        $response = new \VSlim\VHttpd\Response(302, '', 'text/plain; charset=utf-8');
-        $response->redirectWithStatus($this->urls->console($locale), 302);
+        $response = $this->redirect($this->urls->console($locale), 302);
         $session->commit($response);
         return $response;
     }
 
-    public function updatePassword(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function updatePassword(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect('/login', 302);
@@ -2044,7 +2060,7 @@ final class ConsoleController extends \VSlim\Controller
         );
     }
 
-    public function updateSubscriberStatus(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function updateSubscriberStatus(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect('/login', 302);
@@ -2084,7 +2100,7 @@ final class ConsoleController extends \VSlim\Controller
         );
     }
 
-    public function queueSubscriberProvisioning(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function queueSubscriberProvisioning(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect('/login', 302);
@@ -2106,7 +2122,7 @@ final class ConsoleController extends \VSlim\Controller
         );
     }
 
-    public function completeSubscriberProvisioningItem(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function completeSubscriberProvisioningItem(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect('/login', 302);
@@ -2130,7 +2146,7 @@ final class ConsoleController extends \VSlim\Controller
         );
     }
 
-    public function storeSubscriberFollowup(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function storeSubscriberFollowup(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect('/login', 302);
@@ -2153,7 +2169,7 @@ final class ConsoleController extends \VSlim\Controller
         );
     }
 
-    public function updateDocument(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function updateDocument(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect('/login', 302);
@@ -2176,7 +2192,7 @@ final class ConsoleController extends \VSlim\Controller
         );
     }
 
-    public function publishDocument(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function publishDocument(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         // Legacy compat entry: old links may still post here, but release center is the only real publish gate.
         if (!$this->app()->authCheck($request)) {
@@ -2194,7 +2210,7 @@ final class ConsoleController extends \VSlim\Controller
         );
     }
 
-    public function updateEntry(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function updateEntry(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect('/login', 302);
@@ -2217,7 +2233,7 @@ final class ConsoleController extends \VSlim\Controller
         );
     }
 
-    public function publishEntry(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function publishEntry(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         // Legacy compat entry: old links may still post here, but release center is the only real publish gate.
         if (!$this->app()->authCheck($request)) {
@@ -2235,7 +2251,7 @@ final class ConsoleController extends \VSlim\Controller
         );
     }
 
-    public function storeJob(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function storeJob(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect('/login', 302);
@@ -2256,7 +2272,7 @@ final class ConsoleController extends \VSlim\Controller
         );
     }
 
-    public function retryJob(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function retryJob(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect('/login', 302);
@@ -2278,7 +2294,7 @@ final class ConsoleController extends \VSlim\Controller
         );
     }
 
-    public function storeRelease(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function storeRelease(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if (!$this->app()->authCheck($request)) {
             return $this->redirect('/login', 302);
@@ -2531,14 +2547,13 @@ final class ConsoleController extends \VSlim\Controller
         return $this->locales->resolve((string) $request->getAttribute('studio.locale', 'zh-CN'));
     }
 
-    private function flashRedirect(\VSlim\Psr7\ServerRequest $request, string $location, string $key, string $message): \VSlim\VHttpd\Response
+    private function flashRedirect(\VSlim\Psr7\ServerRequest $request, string $location, string $key, string $message): \Psr\Http\Message\ResponseInterface
     {
         $session = $this->app()->session($request);
         if ($message !== '') {
             $session->flash($key, $message);
         }
-        $response = new \VSlim\VHttpd\Response(302, '', 'text/plain; charset=utf-8');
-        $response->redirectWithStatus($location, 302);
+        $response = $this->redirect($location, 302);
         $session->commit($response);
         return $response;
     }

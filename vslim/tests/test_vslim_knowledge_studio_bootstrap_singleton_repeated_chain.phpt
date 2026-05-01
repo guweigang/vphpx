@@ -4,6 +4,8 @@ VSlim knowledge studio bootstrap survives repeated singleton controller dispatch
 <?php if (!extension_loaded("vslim")) print "skip"; ?>
 --FILE--
 <?php
+putenv('STUDIO_DATA_SOURCE=demo');
+
 require '/Users/guweigang/Source/vphpx/knowledge-studio/bootstrap/http.php';
 
 $app = build_knowledge_studio_app();
@@ -16,9 +18,9 @@ $cookieValue = explode('=', $cookiePair, 2)[1] ?? '';
 
 $checks = [
     '/console' => 'Acme Research',
-    '/console/knowledge/documents' => 'Seeded Doc',
-    '/console/knowledge/faqs' => 'How do refunds reach final approval?',
-    '/console/ops' => 'Reindex Seeded Doc',
+    '/console/knowledge/documents' => 'Reimbursement Operations Handbook',
+    '/console/knowledge/faqs' => 'How do reimbursement requests reach final approval?',
+    '/console/ops' => '索引报销运营手册',
 ];
 
 for ($round = 1; $round <= 3; $round++) {

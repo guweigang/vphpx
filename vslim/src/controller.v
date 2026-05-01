@@ -44,12 +44,12 @@ pub fn (c &VSlimController) app() &VSlimApp {
 
 @[php_method]
 pub fn (mut c VSlimController) view() &VSlimView {
+	if c.view_ref != unsafe { nil } {
+		return c.view_ref
+	}
 	app := effective_controller_app(c)
 	if app != unsafe { nil } {
 		c.view_ref = app.make_view()
-		return c.view_ref
-	}
-	if c.view_ref != unsafe { nil } {
 		return c.view_ref
 	}
 	c.view_ref = &VSlimView{

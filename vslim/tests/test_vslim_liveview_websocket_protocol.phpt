@@ -72,27 +72,27 @@ final class CounterLiveWsView extends VSlim\Live\View
             ->assign('profile_tone', $tone)
             ->assign('profile_detail', $detail)
             ->assign('profile_saved_at', $nextSavedAt)
-            ->set_text('counter-profile-status', $status)
-            ->set_text('counter-profile-tone', $tone)
-            ->set_text('counter-profile-detail', $detail)
-            ->set_text('counter-profile-saved-at', $nextSavedAt)
-            ->set_attr('counter-profile-pill', 'data-state', $tone)
-            ->set_attr('counter-profile-state', 'data-state', $tone);
+            ->setText('counter-profile-status', $status)
+            ->setText('counter-profile-tone', $tone)
+            ->setText('counter-profile-detail', $detail)
+            ->setText('counter-profile-saved-at', $nextSavedAt)
+            ->setAttr('counter-profile-pill', 'data-state', $tone)
+            ->setAttr('counter-profile-state', 'data-state', $tone);
     }
 
     public function component(string $id, VSlim\Live\Socket $socket): ?VSlim\Live\Component
     {
         if ($id === 'summary') {
             $component = new CounterSummaryComponent();
-            $component->set_id('summary-root');
-            $component->bind_socket($socket);
+            $component->setId('summary-root');
+            $component->bindSocket($socket);
             return $component;
         }
         if (str_starts_with($id, 'badge-') && $socket->has('badge_label_' . $id)) {
             $component = new CounterBadgeComponent();
-            $component->set_app($GLOBALS['ws_app']);
-            $component->set_template('live_counter_badge_test.html');
-            $component->set_id($id);
+            $component->setApp($GLOBALS['ws_app']);
+            $component->setTemplate('live_counter_badge_test.html');
+            $component->setId($id);
             $component->assign('badge_id', $id);
             $component->assign('label', $socket->get('badge_label_' . $id));
             return $component;
@@ -103,7 +103,7 @@ final class CounterLiveWsView extends VSlim\Live\View
     public function mount(VSlim\VHttpd\Request $req, VSlim\Live\Socket $socket): void
     {
         $socket
-            ->set_root_id('counter-root')
+            ->setRootId('counter-root')
             ->assign('count', 1)
             ->assign('label', 'server-owned counter')
             ->assign('notify_email', 'ops@example.com')
@@ -123,17 +123,17 @@ final class CounterLiveWsView extends VSlim\Live\View
             $next = (int) $socket->get('count') + (int) ($payload['step'] ?? 1);
             $socket
                 ->assign('count', $next)
-                ->push_event('saved', '{"ok":true,"count":' . $next . '}');
+                ->pushEvent('saved', '{"ok":true,"count":' . $next . '}');
             return;
         }
 
         if ($event === 'subscribe') {
-            $socket->join_topic('counter-room');
+            $socket->joinTopic('counter-room');
             return;
         }
 
         if ($event === 'notify') {
-            $socket->broadcast_info('counter-room', 'inc_remote', [
+            $socket->broadcastInfo('counter-room', 'inc_remote', [
                 'step' => (int) ($payload['step'] ?? 1),
             ], false);
             return;
@@ -155,10 +155,10 @@ final class CounterLiveWsView extends VSlim\Live\View
                 ->assign('badge_seq', $next)
                 ->assign('badge_keys', implode(',', $keys))
                 ->assign('badge_label_' . $badgeId, 'Badge ' . $next)
-                ->set_text('badge-count', (string) count($keys));
+                ->setText('badge-count', (string) count($keys));
             $badge = $this->component($badgeId, $socket);
             if ($badge instanceof VSlim\Live\Component) {
-                $badge->append_to($socket, 'badge-list');
+                $badge->appendTo($socket, 'badge-list');
             }
             return;
         }
@@ -187,20 +187,20 @@ final class CounterLiveWsView extends VSlim\Live\View
             $email = trim((string) $form->input('notify_email'));
             if ($form->invalid()) {
                 $socket
-                    ->set_text('profile-label-error', $form->error('label'))
-                    ->set_text('profile-email-error', $form->error('notify_email'));
+                    ->setText('profile-label-error', $form->error('label'))
+                    ->setText('profile-email-error', $form->error('notify_email'));
                 $this->setProfileState($socket, 'Invalid', 'invalid', 'Fix the highlighted fields before saving.');
                 return;
             }
             $savedAt = '09:30:00';
             $socket
-                ->clear_errors()
-                ->set_text('profile-label-error', '')
-                ->set_text('profile-email-error', '')
-                ->set_text('profile-label-value', $label)
-                ->set_text('profile-email-value', $email)
-                ->set_text('profile-status', 'Saved')
-                ->set_text('profile-saved-at', $savedAt)
+                ->clearErrors()
+                ->setText('profile-label-error', '')
+                ->setText('profile-email-error', '')
+                ->setText('profile-label-value', $label)
+                ->setText('profile-email-value', $email)
+                ->setText('profile-status', 'Saved')
+                ->setText('profile-saved-at', $savedAt)
                 ->flash('info', 'Profile saved for ' . $email . ' at ' . $savedAt);
             $this->setProfileState($socket, 'Saved', 'saved', 'Server accepted the latest profile values.', $savedAt);
             return;
@@ -212,12 +212,12 @@ final class CounterLiveWsView extends VSlim\Live\View
                 'notify_email' => '',
             ]);
             $socket
-                ->set_text('profile-label-error', '')
-                ->set_text('profile-email-error', '')
-                ->set_text('profile-label-value', '')
-                ->set_text('profile-email-value', '')
-                ->set_text('profile-status', 'Draft')
-                ->set_text('profile-saved-at', 'Not saved yet')
+                ->setText('profile-label-error', '')
+                ->setText('profile-email-error', '')
+                ->setText('profile-label-value', '')
+                ->setText('profile-email-value', '')
+                ->setText('profile-status', 'Draft')
+                ->setText('profile-saved-at', 'Not saved yet')
                 ->flash('info', 'Cleared form inputs from the server.');
             $this->setProfileState($socket, 'Draft', 'draft', 'Inputs were cleared on the server.', 'Not saved yet');
         }
@@ -267,7 +267,7 @@ final class CounterSummaryComponent extends VSlim\Live\Component
                 ->set('mode', 'info')
                 ->set('last_source', 'room');
             $socket
-                ->set_text('summary-root', '<aside>component info</aside>')
+                ->setText('summary-root', '<aside>component info</aside>')
                 ->flash('info', 'Component info pong');
         }
     }
@@ -288,7 +288,7 @@ final class CounterBadgeComponent extends VSlim\Live\Component
         $socket
             ->assign('badge_keys', implode(',', $keys))
             ->forget('badge_label_' . $badgeId)
-            ->set_text('badge-count', (string) count($keys));
+            ->setText('badge-count', (string) count($keys));
         $this->remove($socket);
     }
 }
@@ -296,7 +296,7 @@ final class CounterBadgeComponent extends VSlim\Live\Component
 $app->websocket('/live', new CounterLiveWsView());
 $conn = new CounterLiveSocketSink();
 
-$open = $app->handle_websocket([
+$open = $app->handleWebSocket([
     'event' => 'open',
     'id' => 'lv-1',
     'path' => '/live',
@@ -305,7 +305,7 @@ $open = $app->handle_websocket([
 echo ($open === null ? "open-null\n" : "open-value\n");
 echo $conn->accepted . "\n";
 
-$join = $app->handle_websocket([
+$join = $app->handleWebSocket([
     'event' => 'message',
     'id' => 'lv-1',
     'path' => '/live',
@@ -322,7 +322,7 @@ echo ($joinPayload['ops'][0]['id'] ?? '') . '|' . ($joinPayload['ops'][0]['html'
 echo count($joinPayload['events'] ?? []) . "\n";
 echo (str_contains(($joinPayload['ops'][0]['html'] ?? ''), '<!doctype html>') ? "join-doc\n" : "join-fragment\n");
 
-$event = $app->handle_websocket([
+$event = $app->handleWebSocket([
     'event' => 'message',
     'id' => 'lv-1',
     'path' => '/live',
@@ -341,7 +341,7 @@ echo ($eventPayload['events'][0]['event'] ?? '') . "\n";
 echo json_encode($eventPayload['events'][0]['payload'] ?? null) . "\n";
 
 $live = new CounterLiveWsView();
-$live->set_root_id('counter-root');
+$live->setRootId('counter-root');
 $conn2 = new CounterLiveSocketSink();
 $frame2 = [
     'event' => 'message',
@@ -353,11 +353,11 @@ $frame2 = [
         'root_id' => 'counter-root',
     ]),
 ];
-$direct = $app->live_ws($live, $frame2, $conn2);
+$direct = $app->liveWs($live, $frame2, $conn2);
 $directPayload = json_decode($direct, true);
 echo ($directPayload['ops'][0]['id'] ?? '') . "\n";
 
-$heartbeat = $app->handle_websocket([
+$heartbeat = $app->handleWebSocket([
     'event' => 'message',
     'id' => 'lv-1',
     'path' => '/live',
@@ -371,7 +371,7 @@ echo ($heartbeatPayload['type'] ?? '') . '|' . (($heartbeatPayload['ok'] ?? fals
 $dispatchJoinConn = new CounterLiveSocketSink();
 $dispatchApp = new VSlim\App();
 $dispatchApp->websocket('/live', new CounterLiveWsView());
-$dispatchJoin = $dispatchApp->handle_websocket([
+$dispatchJoin = $dispatchApp->handleWebSocket([
     'mode' => 'websocket_dispatch',
     'event' => 'message',
     'id' => 'lv-dispatch-1',
@@ -392,7 +392,7 @@ echo (($dispatchSession['view'] ?? '') === CounterLiveWsView::class ? 'meta-view
 $dispatchEventConn = new CounterLiveSocketSink();
 $dispatchEventApp = new VSlim\App();
 $dispatchEventApp->websocket('/live', new CounterLiveWsView());
-$dispatchEvent = $dispatchEventApp->handle_websocket([
+$dispatchEvent = $dispatchEventApp->handleWebSocket([
     'mode' => 'websocket_dispatch',
     'event' => 'message',
     'id' => 'lv-dispatch-1',
@@ -414,7 +414,7 @@ echo ((($dispatchEventSession['assigns']['count'] ?? '') === '5') ? 'meta-restor
 $topicConn = new CounterLiveSocketSink();
 $topicApp = new VSlim\App();
 $topicApp->websocket('/live', new CounterLiveWsView());
-$topicJoin = $topicApp->handle_websocket([
+$topicJoin = $topicApp->handleWebSocket([
     'event' => 'message',
     'id' => 'lv-topic-1',
     'path' => '/live',
@@ -424,7 +424,7 @@ $topicJoin = $topicApp->handle_websocket([
         'root_id' => 'counter-root',
     ]),
 ], $topicConn);
-$topicSubscribe = $topicApp->handle_websocket([
+$topicSubscribe = $topicApp->handleWebSocket([
     'event' => 'message',
     'id' => 'lv-topic-1',
     'path' => '/live',
@@ -436,7 +436,7 @@ $topicSubscribe = $topicApp->handle_websocket([
 ], $topicConn);
 echo (($topicConn->joined[0] ?? '') === 'counter-room' ? 'topic-joined' : 'topic-missing') . "\n";
 
-$topicNotify = $topicApp->handle_websocket([
+$topicNotify = $topicApp->handleWebSocket([
     'event' => 'message',
     'id' => 'lv-topic-1',
     'path' => '/live',
@@ -453,7 +453,7 @@ echo (($topicConn->dispatches[0]['room'] ?? '') === 'counter-room' ? 'topic-broa
 echo (($topicConn->dispatches[0]['except_id'] ?? '') === 'lv-topic-1' ? 'topic-self-skipped' : 'topic-self-bad') . "\n";
 echo (($dispatchWire['event'] ?? '') === 'inc_remote' ? 'topic-info' : 'topic-no-info') . "\n";
 
-$componentEvent = $topicApp->handle_websocket([
+$componentEvent = $topicApp->handleWebSocket([
     'event' => 'message',
     'id' => 'lv-topic-1',
     'path' => '/live',
@@ -468,7 +468,7 @@ $componentEvent = $topicApp->handle_websocket([
 $componentPayload = json_decode($componentEvent, true);
 echo (($componentPayload['flash'][0]['message'] ?? '') === 'Component pong' ? 'component-routed' : 'component-miss') . "\n";
 
-$componentInfo = $topicApp->handle_websocket([
+$componentInfo = $topicApp->handleWebSocket([
     'event' => 'info',
     'id' => 'lv-topic-1',
     'path' => '/live',
@@ -485,7 +485,7 @@ $componentInfoPayload = json_decode($componentInfo, true);
 echo (($componentInfoPayload['ops'][0]['id'] ?? '') === 'summary-root' ? 'component-info-routed' : 'component-info-miss') . "\n";
 echo (($componentInfoPayload['flash'][0]['message'] ?? '') === 'Component info pong' ? 'component-info-flash' : 'component-info-flash-miss') . "\n";
 
-$badgeAddEvent = $topicApp->handle_websocket([
+$badgeAddEvent = $topicApp->handleWebSocket([
     'event' => 'message',
     'id' => 'lv-topic-1',
     'path' => '/live',
@@ -500,7 +500,7 @@ echo (($badgeAddPayload['ops'][0]['op'] ?? '') === 'set_text' ? 'badge-count-upd
 echo (($badgeAddPayload['ops'][1]['op'] ?? '') === 'append' ? 'badge-appended' : 'badge-append-miss') . "\n";
 echo ((str_contains($badgeAddPayload['ops'][1]['html'] ?? '', 'badge_remove') && str_contains($badgeAddPayload['ops'][1]['id'] ?? '', 'badge-list')) ? 'badge-html-ok' : 'badge-html-miss') . "\n";
 
-$badgeRemoveEvent = $topicApp->handle_websocket([
+$badgeRemoveEvent = $topicApp->handleWebSocket([
     'event' => 'message',
     'id' => 'lv-topic-1',
     'path' => '/live',
@@ -516,7 +516,7 @@ $badgeRemovePayload = json_decode($badgeRemoveEvent, true);
 echo (($badgeRemovePayload['ops'][0]['op'] ?? '') === 'set_text' ? 'badge-count-down' : 'badge-count-down-miss') . "\n";
 echo ((($badgeRemovePayload['ops'][1]['op'] ?? '') === 'remove') && (($badgeRemovePayload['ops'][1]['id'] ?? '') === 'badge-1') ? 'badge-removed' : 'badge-remove-miss') . "\n";
 
-$uiEvent = $topicApp->handle_websocket([
+$uiEvent = $topicApp->handleWebSocket([
     'event' => 'message',
     'id' => 'lv-topic-1',
     'path' => '/live',
@@ -531,7 +531,7 @@ echo (($uiPayload['flash'][0]['kind'] ?? '') === 'info' ? 'flash-kind' : 'flash-
 echo (($uiPayload['flash'][0]['message'] ?? '') === 'Saved from protocol' ? 'flash-message' : 'flash-bad') . "\n";
 echo (($uiPayload['navigate_to'] ?? '') === '/counter?tab=history' ? 'navigate-ok' : 'navigate-bad') . "\n";
 
-$profileInvalidEvent = $topicApp->handle_websocket([
+$profileInvalidEvent = $topicApp->handleWebSocket([
     'event' => 'message',
     'id' => 'lv-topic-1',
     'path' => '/live',
@@ -555,7 +555,7 @@ echo (($invalidStatus['text'] ?? '') === 'Invalid' ? 'profile-invalid-state' : '
 echo ((($invalidTone['name'] ?? '') === 'data-state') && (($invalidTone['value'] ?? '') === 'invalid') ? 'profile-invalid-tone' : 'profile-invalid-tone-miss') . "\n";
 echo (count($profileInvalidPayload['flash'] ?? []) === 0 ? 'profile-no-flash' : 'profile-flash-bad') . "\n";
 
-$profileSaveEvent = $topicApp->handle_websocket([
+$profileSaveEvent = $topicApp->handleWebSocket([
     'event' => 'message',
     'id' => 'lv-topic-1',
     'path' => '/live',
@@ -581,7 +581,7 @@ echo (($savedAt['text'] ?? '') === '09:30:00' ? 'profile-time-saved' : 'profile-
 echo ((($savedTone['name'] ?? '') === 'data-state') && (($savedTone['value'] ?? '') === 'saved') ? 'profile-tone-saved' : 'profile-tone-saved-miss') . "\n";
 echo (($profileSavePayload['flash'][0]['message'] ?? '') === 'Profile saved for alice@example.com at 09:30:00' ? 'profile-flash-saved' : 'profile-flash-saved-miss') . "\n";
 
-$profileClearEvent = $topicApp->handle_websocket([
+$profileClearEvent = $topicApp->handleWebSocket([
     'event' => 'message',
     'id' => 'lv-topic-1',
     'path' => '/live',
@@ -602,7 +602,7 @@ echo (($clearedStatus['text'] ?? '') === 'Draft' ? 'profile-status-cleared' : 'p
 echo ((($clearedTone['name'] ?? '') === 'data-state') && (($clearedTone['value'] ?? '') === 'draft') ? 'profile-tone-cleared' : 'profile-tone-cleared-miss') . "\n";
 echo (($profileClearPayload['flash'][0]['message'] ?? '') === 'Cleared form inputs from the server.' ? 'profile-flash-cleared' : 'profile-flash-cleared-miss') . "\n";
 
-$topicInfo = $topicApp->handle_websocket([
+$topicInfo = $topicApp->handleWebSocket([
     'event' => 'info',
     'id' => 'lv-topic-1',
     'path' => '/live',
@@ -618,7 +618,7 @@ $topicInfo = $topicApp->handle_websocket([
 $topicInfoPayload = json_decode($topicInfo, true);
 echo ($topicInfoPayload['ops'][0]['html'] ?? '') . "\n";
 
-$topicListInfo = $topicApp->handle_websocket([
+$topicListInfo = $topicApp->handleWebSocket([
     'event' => 'info',
     'id' => 'lv-topic-1',
     'path' => '/live',

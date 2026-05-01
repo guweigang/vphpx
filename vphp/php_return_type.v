@@ -83,11 +83,11 @@ pub fn (ret PhpReturn) null_value(value PhpNull) {
 }
 
 pub fn (ret PhpReturn) dyn_value(value DynValue) {
-	mut box := value.request_owned_box()
+	mut owned := value.request_owned()
 	defer {
-		box.release()
+		owned.release()
 	}
-	ret.zval(box.to_zval())
+	ret.zval(owned.to_zval())
 }
 
 pub fn (ret PhpReturn) request_owned(value RequestOwnedZBox) {
@@ -113,9 +113,6 @@ pub fn (ret PhpReturn) v[T](val T) {
 	$if T is PhpValue {
 		ret.value(val)
 		return
-	} $else $if T is PersistentPhpValue {
-		ret.persistent_owned(val.value)
-		return
 	} $else $if T is PhpNull {
 		ret.zval(val.to_zval())
 		return
@@ -137,23 +134,14 @@ pub fn (ret PhpReturn) v[T](val T) {
 	} $else $if T is PhpArray {
 		ret.zval(val.to_zval())
 		return
-	} $else $if T is PersistentPhpArray {
-		ret.persistent_owned(val.value)
-		return
 	} $else $if T is PhpObject {
 		ret.zval(val.to_zval())
-		return
-	} $else $if T is PersistentPhpObject {
-		ret.persistent_owned(val.value)
 		return
 	} $else $if T is PhpCallable {
 		ret.zval(val.to_zval())
 		return
 	} $else $if T is PhpClosure {
 		ret.zval(val.to_zval())
-		return
-	} $else $if T is PersistentPhpClosure {
-		ret.persistent_owned(val.value)
 		return
 	} $else $if T is PhpResource {
 		ret.zval(val.to_zval())

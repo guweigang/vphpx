@@ -12,18 +12,18 @@ final class DemoRenderLiveView extends VSlim\Live\View {
     public function mount(VSlim\VHttpd\Request $req, VSlim\Live\Socket $socket): void
     {
         $socket
-            ->set_root_id('counter-root')
-            ->set_target('/')
+            ->setRootId('counter-root')
+            ->setTarget('/')
             ->assign('count', 12);
     }
 
     public function render(VSlim\VHttpd\Request $req, VSlim\Live\Socket $socket): string
     {
-        $this->set_app($GLOBALS['demo_app']);
-        $this->set_template('live_counter_demo.html');
+        $this->setApp($GLOBALS['demo_app']);
+        $this->setTemplate('live_counter_demo.html');
         $socket
-            ->assign('live_script', $this->runtime_script_tag())
-            ->assign('live_attrs', $this->bootstrap_attrs($socket, '/live'));
+            ->assign('live_script', $this->runtimeScriptTag())
+            ->assign('live_attrs', $this->bootstrapAttrs($socket, '/live'));
         return $this->html($socket);
     }
 }

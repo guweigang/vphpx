@@ -25,7 +25,7 @@ fn exception_message_value(exception vphp.RequestBorrowedZBox, fallback string) 
 	if !raw.is_valid() || !raw.is_object() || !raw.method_exists('getMessage') {
 		return fallback
 	}
-	mut out := vphp.PhpObject.borrowed(raw).method_request_owned_box('getMessage', []vphp.ZVal{})
+	mut out := vphp.PhpObject.borrowed(raw).method_request_owned('getMessage')
 	defer {
 		out.release()
 	}
@@ -40,7 +40,7 @@ fn exception_status_code(exception vphp.RequestBorrowedZBox, fallback_status int
 	message := exception_message_value(exception, '').to_lower()
 	raw := exception.to_zval()
 	if raw.is_valid() && raw.is_object() && raw.method_exists('getCode') {
-		mut out := vphp.PhpObject.borrowed(raw).method_request_owned_box('getCode', []vphp.ZVal{})
+		mut out := vphp.PhpObject.borrowed(raw).method_request_owned('getCode')
 		defer {
 			out.release()
 		}
@@ -79,10 +79,8 @@ fn exception_status_code(exception vphp.RequestBorrowedZBox, fallback_status int
 		return 500
 	}
 	if message.starts_with('query_failed:') || message.starts_with('execute_failed:')
-		|| message.starts_with('begin_transaction_failed:')
-		|| message.starts_with('commit_failed:')
-		|| message.starts_with('rollback_failed:')
-		|| message.starts_with('database query failed:')
+		|| message.starts_with('begin_transaction_failed:') || message.starts_with('commit_failed:')
+		|| message.starts_with('rollback_failed:') || message.starts_with('database query failed:')
 		|| message.starts_with('database execute failed:')
 		|| message.starts_with('database begin transaction failed:')
 		|| message.starts_with('database commit failed:')
@@ -105,10 +103,8 @@ fn exception_error_code(exception vphp.RequestBorrowedZBox) string {
 		return 'database_unavailable'
 	}
 	if message.starts_with('query_failed:') || message.starts_with('execute_failed:')
-		|| message.starts_with('begin_transaction_failed:')
-		|| message.starts_with('commit_failed:')
-		|| message.starts_with('rollback_failed:')
-		|| message.starts_with('database query failed:')
+		|| message.starts_with('begin_transaction_failed:') || message.starts_with('commit_failed:')
+		|| message.starts_with('rollback_failed:') || message.starts_with('database query failed:')
 		|| message.starts_with('database execute failed:')
 		|| message.starts_with('database begin transaction failed:')
 		|| message.starts_with('database commit failed:')
@@ -118,17 +114,29 @@ fn exception_error_code(exception vphp.RequestBorrowedZBox) string {
 	}
 	return match class_name {
 		'InvalidArgumentException', 'DomainException', 'VSlim\\Psr16\\InvalidArgumentException',
-		'VSlim\\Psr6\\InvalidArgumentException' { 'invalid_argument' }
-		'VSlim\\Container\\NotFoundException' { 'not_found' }
-		'VSlim\\Auth\\UnauthorizedException' { 'unauthorized' }
-		'VSlim\\Auth\\ForbiddenException' { 'forbidden' }
-		'VSlim\\ValidationException', 'ValidationException' { 'validation_error' }
-		else { 'runtime_error' }
+		'VSlim\\Psr6\\InvalidArgumentException' {
+			'invalid_argument'
+		}
+		'VSlim\\Container\\NotFoundException' {
+			'not_found'
+		}
+		'VSlim\\Auth\\UnauthorizedException' {
+			'unauthorized'
+		}
+		'VSlim\\Auth\\ForbiddenException' {
+			'forbidden'
+		}
+		'VSlim\\ValidationException', 'ValidationException' {
+			'validation_error'
+		}
+		else {
+			'runtime_error'
+		}
 	}
 }
 
-@[php_method: 'setBasePath']
 @[php_arg_name: 'base_path=basePath']
+@[php_method: 'setBasePath']
 pub fn (mut app VSlimApp) set_base_path(base_path string) &VSlimApp {
 	app.base_path = RoutePath.normalize_base_path(base_path)
 	return app
@@ -228,7 +236,7 @@ pub fn (mut app VSlimApp) validate(data vphp.RequestBorrowedZBox, rules vphp.Req
 @[php_method]
 pub fn (app &VSlimApp) testing() &VSlimTestingHarness {
 	return &VSlimTestingHarness{
-		app_ref:  app
+		app_ref: app
 		cookies: map[string]string{}
 	}
 }
@@ -271,14 +279,15 @@ pub fn (mut app VSlimApp) set_auth_user_provider(provider vphp.RequestBorrowedZB
 	if provider.is_valid() && provider.is_callable() {
 		return app.set_auth_user_resolver(provider)
 	}
-	if raw.is_valid() && raw.is_object() && (raw.method_exists('findById') || raw.method_exists('resolve')) {
+	if raw.is_valid() && raw.is_object()
+		&& (raw.method_exists('findById') || raw.method_exists('resolve')) {
 		mut old := app.auth_user_resolver
 		old.release()
 		app.auth_user_resolver = vphp.PersistentOwnedZBox.from_object_zval(raw)
 		return &app
 	}
-	vphp.PhpException.raise_class('InvalidArgumentException',
-		'auth user provider must be callable or an object with findById()/resolve()', 0)
+	vphp.PhpException.raise_class('InvalidArgumentException', 'auth user provider must be callable or an object with findById()/resolve()',
+		0)
 	return &app
 }
 
@@ -314,8 +323,8 @@ pub fn (app &VSlimApp) has_auth_user_provider() bool {
 		raw.release()
 	}
 	value := raw.to_zval()
-	return value.is_valid() && value.is_object() && (value.method_exists('findById')
-		|| value.method_exists('resolve'))
+	return value.is_valid() && value.is_object()
+		&& (value.method_exists('findById') || value.method_exists('resolve'))
 }
 
 @[php_method: 'authRedirectTo']
@@ -333,10 +342,12 @@ pub fn (app &VSlimApp) resolve_auth_user(user_id string) vphp.RequestOwnedZBox {
 	if !app.auth_user_resolver.is_valid() {
 		return vphp.RequestOwnedZBox.new_string(normalized_id)
 	}
+	mut normalized_id_arg := vphp.PhpString.of(normalized_id)
+	defer {
+		normalized_id_arg.release()
+	}
 	if app.auth_user_resolver.is_callable() {
-		mut result := app.auth_user_resolver.call_request_owned([
-			vphp.RequestOwnedZBox.new_string(normalized_id).to_zval(),
-		])
+		mut result := app.auth_user_resolver.fn_request_owned(normalized_id_arg)
 		return result
 	}
 	mut provider := app.auth_user_resolver.clone_request_owned()
@@ -346,14 +357,10 @@ pub fn (app &VSlimApp) resolve_auth_user(user_id string) vphp.RequestOwnedZBox {
 	value := provider.to_zval()
 	if value.is_valid() && value.is_object() {
 		if value.method_exists('findById') {
-			return vphp.PhpObject.borrowed(value).method_request_owned_box('findById', [
-				vphp.RequestOwnedZBox.new_string(normalized_id).to_zval(),
-			])
+			return vphp.PhpObject.borrowed(value).method_request_owned('findById', normalized_id_arg)
 		}
 		if value.method_exists('resolve') {
-			return vphp.PhpObject.borrowed(value).method_request_owned_box('resolve', [
-				vphp.RequestOwnedZBox.new_string(normalized_id).to_zval(),
-			])
+			return vphp.PhpObject.borrowed(value).method_request_owned('resolve', normalized_id_arg)
 		}
 	}
 	return vphp.RequestOwnedZBox.new_string(normalized_id)
@@ -393,8 +400,8 @@ pub fn (app &VSlimApp) auth_id(request vphp.RequestBorrowedZBox) string {
 	return guard.id()
 }
 
-@[php_method]
 @[php_arg_name: 'user_id=userId']
+@[php_method]
 pub fn (app &VSlimApp) login(request vphp.RequestBorrowedZBox, response vphp.RequestBorrowedZBox, user_id string) bool {
 	mut guard := app.auth(request)
 	guard.login(user_id)
@@ -425,11 +432,12 @@ pub fn (app &VSlimApp) can(ability string, request vphp.RequestBorrowedZBox) boo
 	defer {
 		user.release()
 	}
-	mut result := app.auth_gate_resolver.call_request_owned([
-		vphp.RequestOwnedZBox.new_string(ability).to_zval(),
-		user.to_zval(),
-		request.to_zval(),
-	])
+	mut ability_arg := vphp.PhpString.of(ability)
+	defer {
+		ability_arg.release()
+	}
+	mut result := app.auth_gate_resolver.fn_request_owned(ability_arg,
+		vphp.PhpValue.from_zval(user.to_zval()), vphp.PhpValue.from_zval(request.to_zval()))
 	defer {
 		result.release()
 	}
@@ -478,91 +486,99 @@ pub fn (app &VSlimApp) ability_middleware(ability string) &VSlimAuthRequireAbili
 	}
 }
 
-@[php_arg_default: 'error_code=""']
-@[php_arg_optional: 'error_code']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method: 'errorResponse']
 @[php_arg_name: 'error_code=errorCode']
+@[php_arg_default: 'error_code=""']
+@[php_method: 'errorResponse']
+@[php_arg_optional: 'error_code']
 pub fn (app &VSlimApp) error_response(status int, message string, error_code string) &VSlimPsr7Response {
 	code := if error_code.trim_space() == '' { 'runtime_error' } else { error_code.trim_space() }
-	return new_psr7_response_from_vslim_response(default_error_response(app, status, message, code))
+	return new_psr7_response_from_vslim_response(default_error_response(app, status, message,
+		code))
 }
 
-@[php_arg_default: 'status=422']
-@[php_arg_optional: 'status']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method: 'validationError']
+@[php_arg_default: 'status=422']
+@[php_arg_optional: 'status']
 pub fn (app &VSlimApp) validation_error(errors vphp.RequestBorrowedZBox, status int) &VSlimPsr7Response {
 	error_status := if status <= 0 { 422 } else { status }
 	json_body := '{"ok":false,"code":"validation_error","error":"validation_error","status":${error_status},"message":"Validation failed","errors":${zval_to_json_fragment(errors.to_zval())}}'
 	return new_psr7_response_from_vslim_response(json_response(error_status, json_body))
 }
 
-@[php_arg_default: 'message="Unauthorized"']
-@[php_arg_optional: 'message']
-@[php_method: 'unauthorized']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+@[php_arg_default: 'message="Unauthorized"']
+@[php_method: 'unauthorized']
+@[php_arg_optional: 'message']
 pub fn (app &VSlimApp) unauthorized_response(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Unauthorized' } else { message }
-	return new_psr7_response_from_vslim_response(default_error_response(app, 401, msg, 'unauthorized'))
+	return new_psr7_response_from_vslim_response(default_error_response(app, 401, msg,
+		'unauthorized'))
 }
 
-@[php_arg_default: 'message="Forbidden"']
-@[php_arg_optional: 'message']
-@[php_method: 'forbidden']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+@[php_arg_default: 'message="Forbidden"']
+@[php_method: 'forbidden']
+@[php_arg_optional: 'message']
 pub fn (app &VSlimApp) forbidden_response(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Forbidden' } else { message }
-	return new_psr7_response_from_vslim_response(default_error_response(app, 403, msg, 'forbidden'))
+	return new_psr7_response_from_vslim_response(default_error_response(app, 403, msg,
+		'forbidden'))
 }
 
-@[php_arg_default: 'message="Bad Request"']
-@[php_arg_optional: 'message']
-@[php_method: 'badRequest']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+@[php_arg_default: 'message="Bad Request"']
+@[php_method: 'badRequest']
+@[php_arg_optional: 'message']
 pub fn (app &VSlimApp) bad_request_response(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Bad Request' } else { message }
-	return new_psr7_response_from_vslim_response(default_error_response(app, 400, msg, 'bad_request'))
+	return new_psr7_response_from_vslim_response(default_error_response(app, 400, msg,
+		'bad_request'))
 }
 
-@[php_arg_default: 'message="Not Found"']
-@[php_arg_optional: 'message']
-@[php_method: 'notFound']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+@[php_arg_default: 'message="Not Found"']
+@[php_method: 'notFound']
+@[php_arg_optional: 'message']
 pub fn (app &VSlimApp) not_found_response_helper(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Not Found' } else { message }
-	return new_psr7_response_from_vslim_response(default_error_response(app, 404, msg, 'not_found'))
+	return new_psr7_response_from_vslim_response(default_error_response(app, 404, msg,
+		'not_found'))
 }
 
-@[php_arg_default: 'message="Conflict"']
-@[php_arg_optional: 'message']
-@[php_method: 'conflict']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+@[php_arg_default: 'message="Conflict"']
+@[php_method: 'conflict']
+@[php_arg_optional: 'message']
 pub fn (app &VSlimApp) conflict_response(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Conflict' } else { message }
-	return new_psr7_response_from_vslim_response(default_error_response(app, 409, msg, 'conflict'))
+	return new_psr7_response_from_vslim_response(default_error_response(app, 409, msg,
+		'conflict'))
 }
 
-@[php_arg_default: 'message="Service Unavailable"']
-@[php_arg_optional: 'message']
-@[php_method: 'serviceUnavailable']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+@[php_arg_default: 'message="Service Unavailable"']
+@[php_method: 'serviceUnavailable']
+@[php_arg_optional: 'message']
 pub fn (app &VSlimApp) service_unavailable_response(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Service Unavailable' } else { message }
-	return new_psr7_response_from_vslim_response(default_error_response(app, 503, msg, 'service_unavailable'))
+	return new_psr7_response_from_vslim_response(default_error_response(app, 503, msg,
+		'service_unavailable'))
 }
 
-@[php_arg_default: 'fallback_status=500']
-@[php_arg_optional: 'fallback_status']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method: 'exceptionResponse']
 @[php_arg_name: 'fallback_status=fallbackStatus']
+@[php_arg_default: 'fallback_status=500']
+@[php_method: 'exceptionResponse']
+@[php_arg_optional: 'fallback_status']
 pub fn (app &VSlimApp) exception_response(exception vphp.RequestBorrowedZBox, fallback_status int) &VSlimPsr7Response {
 	status := if fallback_status >= 400 && fallback_status <= 599 { fallback_status } else { 500 }
 	resolved_status := exception_status_code(exception, status)
 	message := exception_message_value(exception, 'Internal Server Error')
 	code := exception_error_code(exception)
-	return new_psr7_response_from_vslim_response(default_error_response(app, resolved_status, message, code))
+	return new_psr7_response_from_vslim_response(default_error_response(app, resolved_status,
+		message, code))
 }
 
 @[php_method: 'doctor']
@@ -634,25 +650,38 @@ pub fn (mut app VSlimApp) doctor_report() map[string]string {
 	}
 	auth_provider_defined := if app.has_auth_user_provider() { 'true' } else { 'false' }
 	return {
-		'config_loaded':         if config_loaded { 'true' } else { 'false' }
-		'config_path':           config_path
-		'config_mode':           config_mode
-		'route_count':           app.route_count().str()
-		'provider_count':        app.provider_count().str()
-		'module_count':          app.module_count().str()
-		'database_transport':    transport
-		'database_driver':       driver
-		'database_pool_name':    pool_name
-		'database_upstream_socket': upstream_socket
+		'config_loaded':                   if config_loaded {
+			'true'
+		} else {
+			'false'
+		}
+		'config_path':                     config_path
+		'config_mode':                     config_mode
+		'route_count':                     app.route_count().str()
+		'provider_count':                  app.provider_count().str()
+		'module_count':                    app.module_count().str()
+		'database_transport':              transport
+		'database_driver':                 driver
+		'database_pool_name':              pool_name
+		'database_upstream_socket':        upstream_socket
 		'database_upstream_socket_source': upstream_socket_source
-		'error_response_json':   if app.error_response_json_enabled() { 'true' } else { 'false' }
-		'auth_redirect_to':      app.auth_redirect_to()
-		'session_cookie':        session_cookie
-		'session_secret_configured': session_secret_configured
-		'session_secret_placeholder': session_secret_placeholder
-		'session_configured':    session_configured
-		'auth_user_provider_defined': auth_provider_defined
-		'auth_resolver_defined': if app.auth_user_resolver.is_valid() && app.auth_user_resolver.is_callable() { 'true' } else { 'false' }
+		'error_response_json':             if app.error_response_json_enabled() {
+			'true'
+		} else {
+			'false'
+		}
+		'auth_redirect_to':                app.auth_redirect_to()
+		'session_cookie':                  session_cookie
+		'session_secret_configured':       session_secret_configured
+		'session_secret_placeholder':      session_secret_placeholder
+		'session_configured':              session_configured
+		'auth_user_provider_defined':      auth_provider_defined
+		'auth_resolver_defined':           if app.auth_user_resolver.is_valid()
+			&& app.auth_user_resolver.is_callable() {
+			'true'
+		} else {
+			'false'
+		}
 	}
 }
 
@@ -765,8 +794,7 @@ fn configure_default_simple_cache(mut cache VSlimPsr16Cache, config &VSlimConfig
 		cache.set_namespace(config.get_string('cache.prefix', cache.namespace()))
 	}
 	if config.has('cache.default_ttl_seconds') {
-		cache.set_default_ttl_seconds(config.get_int('cache.default_ttl_seconds',
-			cache.default_ttl_seconds_value()))
+		cache.set_default_ttl_seconds(config.get_int('cache.default_ttl_seconds', cache.default_ttl_seconds_value()))
 	}
 }
 
@@ -783,8 +811,7 @@ fn configure_default_cache_pool(mut pool VSlimPsr6CacheItemPool, config &VSlimCo
 		pool.set_default_ttl_seconds(config.get_int('cache.pool.default_ttl_seconds',
 			pool.default_ttl_seconds_value()))
 	} else if config.has('cache.default_ttl_seconds') {
-		pool.set_default_ttl_seconds(config.get_int('cache.default_ttl_seconds',
-			pool.default_ttl_seconds_value()))
+		pool.set_default_ttl_seconds(config.get_int('cache.default_ttl_seconds', pool.default_ttl_seconds_value()))
 	}
 }
 

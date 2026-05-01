@@ -106,7 +106,7 @@ namespace {
             parent::__construct($app);
         }
 
-        public function page(ServerRequestInterface $request): VSlim\VHttpd\Response
+        public function page(ServerRequestInterface $request): ResponseInterface
         {
             $viewer = $request->getAttribute('studio.viewer');
             return $this->renderWithLayout('view_home.html', 'view_layout.html', [

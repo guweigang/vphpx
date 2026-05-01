@@ -89,10 +89,10 @@ fn app_kernel_response_map(res VSlimResponse) map[string]string {
 }
 
 fn app_kernel_sync_dispatch_request(mut target VSlimRequest, result AppKernelDispatchResult) {
-	target.params = snapshot_string_map(result.route_params)
 	if result.effective_request_ref != unsafe { nil } {
 		sync_vslim_request_from_snapshot(mut target, *result.effective_request_ref)
 	}
+	target.params = snapshot_string_map(result.route_params)
 }
 
 fn propagate_request_trace_headers(req &VSlimRequest, mut res VSlimResponse) {

@@ -333,9 +333,7 @@ pub fn (mut form VSlimLiveForm) validate(validator vphp.RequestBorrowedZBox) &VS
 		mut errors_owned := false
 		if validator.is_valid() && !validator.is_null() && !validator.is_undef() {
 			if validator.is_callable() {
-				mut result := vphp.PhpCallable.borrowed(validator.to_zval()).request_owned_box([
-					form.data().to_zval(),
-				])
+				mut result := vphp.PhpCallable.borrowed(validator.to_zval()).fn_request_owned(vphp.PhpValue.from_zval(form.data().to_zval()))
 				errors_z = result.take_zval()
 				errors_owned = true
 			} else if validator.is_array() {
@@ -462,14 +460,14 @@ pub fn (form &VSlimLiveForm) error_count() int {
 
 @[php_method]
 pub fn (form &VSlimLiveForm) data() vphp.RequestOwnedZBox {
-	mut out := new_array_zval()
+	mut out := new_array()
 	if isnil(form.socket_ref) {
-		return vphp.RequestOwnedZBox.of(out)
+		return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
 	}
 	for field in form.field_names() {
-		out.add_assoc_string(field, form.socket_ref.input(field))
+		out.string(field, form.socket_ref.input(field))
 	}
-	return vphp.RequestOwnedZBox.of(out)
+	return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
 }
 
 fn (mut form VSlimLiveForm) track_fields(values vphp.ZVal) {
@@ -1231,11 +1229,12 @@ fn live_error_key(field string) string {
 }
 
 fn live_json_payload(value vphp.ZVal) string {
-	if !value.is_valid() || value.is_null() || value.is_undef() {
+	payload := vphp.PhpValue.from_zval(value)
+	if !payload.is_valid() || payload.is_null() || payload.is_undef() {
 		return '{}'
 	}
-	if value.is_string() {
-		raw := value.to_string().trim_space()
+	if payload.is_string() {
+		raw := payload.to_string().trim_space()
 		if raw == '' {
 			return '{}'
 		}
@@ -1243,17 +1242,17 @@ fn live_json_payload(value vphp.ZVal) string {
 		if decoded.is_valid() && !decoded.is_null() && !decoded.is_undef() {
 			return raw
 		}
-		mut out := new_array_zval()
-		out.add_assoc_string('value', raw)
-		return json_encode_zval(out)
+		mut out := new_array()
+		out.string('value', raw)
+		return out.to_json_with_flags(256)
 	}
-	if value.is_array() || value.is_object() || value.is_bool() || value.is_long()
-		|| value.is_double() {
-		return json_encode_zval(value)
+	if payload.is_array() || payload.is_object() || payload.is_bool() || payload.is_long()
+		|| payload.is_double() {
+		return payload.to_json_with_flags(256)
 	}
-	mut out := new_array_zval()
-	out.add_assoc_string('value', value.to_string())
-	return json_encode_zval(out)
+	mut out := new_array()
+	out.string('value', payload.to_string())
+	return out.to_json_with_flags(256)
 }
 
 fn clone_live_entries(entries []map[string]string) []map[string]string {

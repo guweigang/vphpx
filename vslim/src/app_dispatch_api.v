@@ -29,7 +29,7 @@ pub fn (app &VSlimApp) dispatch_body_raw(method string, raw_path string, body st
 }
 
 pub fn (app &VSlimApp) dispatch_request_raw(req &VSlimRequest) &VSlimResponse {
-	mut scope := vphp.request_scope()
+	mut scope := vphp.PhpScope.request()
 	defer {
 		scope.close()
 	}
@@ -38,20 +38,20 @@ pub fn (app &VSlimApp) dispatch_request_raw(req &VSlimRequest) &VSlimResponse {
 }
 
 fn dispatch_php_response_box(app &VSlimApp, req &VSlimRequest) vphp.RequestOwnedZBox {
-	mark := vphp.request_scope_enter()
+	mut scope := vphp.PhpScope.request()
 	app_kernel_prepare(app)
 	response := dispatch_request_facade(app, req)
 	cli_debug_log('dispatch.box before_leave status=${response.status} body_len=${response.body.len}')
-	vphp.request_scope_leave(mark)
+	scope.close()
 	cli_debug_log('dispatch.box after_leave status=${response.status} body_len=${response.body.len}')
 	return vphp.RequestOwnedZBox.adopt_zval(build_php_response_object_ref(response))
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface']
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method: 'handle']
 pub fn (app &VSlimApp) handle(request vphp.RequestBorrowedZBox) &VSlimPsr7Response {
-	mut scope := vphp.request_scope()
+	mut scope := vphp.PhpScope.request()
 	defer {
 		scope.close()
 	}
@@ -60,7 +60,7 @@ pub fn (app &VSlimApp) handle(request vphp.RequestBorrowedZBox) &VSlimPsr7Respon
 }
 
 pub fn (app &VSlimApp) dispatch_envelope_raw(envelope vphp.RequestBorrowedZBox) &VSlimResponse {
-	mut scope := vphp.request_scope()
+	mut scope := vphp.PhpScope.request()
 	defer {
 		scope.close()
 	}
@@ -70,16 +70,16 @@ pub fn (app &VSlimApp) dispatch_envelope_raw(envelope vphp.RequestBorrowedZBox) 
 }
 
 @[php_return_type: 'VSlim\\VHttpd\\Response']
-@[php_method]
 @[php_arg_name: 'raw_path=rawPath']
+@[php_method]
 pub fn (app &VSlimApp) dispatch(method string, raw_path string) vphp.RequestOwnedZBox {
 	req := new_vslim_request(method, raw_path, '')
 	return dispatch_php_response_box(app, req)
 }
 
 @[php_return_type: 'VSlim\\VHttpd\\Response']
-@[php_method: 'dispatchBody']
 @[php_arg_name: 'raw_path=rawPath']
+@[php_method: 'dispatchBody']
 pub fn (app &VSlimApp) dispatch_body(method string, raw_path string, body string) vphp.RequestOwnedZBox {
 	req := new_vslim_request(method, raw_path, body)
 	return dispatch_php_response_box(app, req)
@@ -100,7 +100,7 @@ pub fn (app &VSlimApp) dispatch_envelope(envelope vphp.RequestBorrowedZBox) vphp
 
 @[php_method: 'dispatchEnvelopeWorker']
 pub fn (app &VSlimApp) dispatch_envelope_worker(envelope vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
-	mut scope := vphp.request_scope()
+	mut scope := vphp.PhpScope.request()
 	defer {
 		scope.close()
 	}
@@ -111,7 +111,7 @@ pub fn (app &VSlimApp) dispatch_envelope_worker(envelope vphp.RequestBorrowedZBo
 
 @[php_method: 'dispatchEnvelopeMap']
 pub fn (app &VSlimApp) dispatch_envelope_map(envelope vphp.RequestBorrowedZBox) map[string]string {
-	mut scope := vphp.request_scope()
+	mut scope := vphp.PhpScope.request()
 	defer {
 		scope.close()
 	}

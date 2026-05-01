@@ -100,14 +100,20 @@ fn migration_drop_column_sql(table_name string, column_name string) string {
 fn migration_apply_manager(instance vphp.ZVal, manager &VSlimDatabaseManager, name string) {
 	manager_z := database_manager_self_zval(manager)
 	if instance.method_exists('setManager') && manager_z.is_valid() && manager_z.is_object() {
-		vphp.PhpObject.borrowed(instance).with_method_result_zval('setManager', [manager_z], fn (_ vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(instance).with_method_result[vphp.PhpValue, bool]('setManager',
+			fn (_ vphp.PhpValue) bool {
 			return true
-		})
+		}, vphp.PhpValue.from_zval(manager_z)) or { false }
 	}
 	if instance.method_exists('setName') {
-		vphp.PhpObject.borrowed(instance).with_method_result_zval('setName', [vphp.RequestOwnedZBox.new_string(name).to_zval()], fn (_ vphp.ZVal) bool {
+		mut name_arg := vphp.PhpString.of(name)
+		defer {
+			name_arg.release()
+		}
+		vphp.PhpObject.borrowed(instance).with_method_result[vphp.PhpValue, bool]('setName',
+			fn (_ vphp.PhpValue) bool {
 			return true
-		})
+		}, name_arg) or { false }
 	}
 }
 
@@ -175,10 +181,8 @@ fn (mut migrator VSlimDatabaseMigrator) insert_applied_migration(name string, ba
 	defer {
 		params.release()
 	}
-	mut result := manager.execute_params(
-		'INSERT INTO ${database_quote_identifier(migrator.table_name_value())} (`migration`, `batch`, `applied_at_unix`) VALUES (?, ?, ?)',
-		params.borrowed(),
-	)
+	mut result := manager.execute_params('INSERT INTO ${database_quote_identifier(migrator.table_name_value())} (`migration`, `batch`, `applied_at_unix`) VALUES (?, ?, ?)',
+		params.borrowed())
 	result.release()
 }
 
@@ -188,10 +192,8 @@ fn (mut migrator VSlimDatabaseMigrator) delete_applied_migration(name string) {
 	defer {
 		params.release()
 	}
-	mut result := manager.execute_params(
-		'DELETE FROM ${database_quote_identifier(migrator.table_name_value())} WHERE `migration` = ?',
-		params.borrowed(),
-	)
+	mut result := manager.execute_params('DELETE FROM ${database_quote_identifier(migrator.table_name_value())} WHERE `migration` = ?',
+		params.borrowed())
 	result.release()
 }
 
@@ -202,12 +204,14 @@ fn (mut migrator VSlimDatabaseMigrator) run_migration_file(file string, method_n
 		migration.release()
 	}
 	if !migration.to_zval().method_exists(method_name) {
-		vphp.PhpException.raise_class('RuntimeException', 'migration "${name}" does not implement ${method_name}()', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'migration "${name}" does not implement ${method_name}()',
+			0)
 		return
 	}
-	vphp.PhpObject.borrowed(migration.to_zval()).with_method_result_zval(method_name, []vphp.ZVal{}, fn (_ vphp.ZVal) bool {
+	vphp.PhpObject.borrowed(migration.to_zval()).with_method_result[vphp.PhpValue, bool](method_name,
+		fn (_ vphp.PhpValue) bool {
 		return true
-	})
+	}) or { false }
 }
 
 @[php_method]
@@ -253,50 +257,50 @@ pub fn (migration &VSlimDatabaseMigration) down() bool {
 	return true
 }
 
-@[php_method: 'createTableSql']
 @[php_arg_name: 'table_name=tableName']
+@[php_method: 'createTableSql']
 pub fn (migration &VSlimDatabaseMigration) create_table_sql(table_name string, columns []string) string {
 	return migration_create_table_sql(table_name, columns)
 }
 
-@[php_method: 'dropTableSql']
 @[php_arg_name: 'table_name=tableName']
+@[php_method: 'dropTableSql']
 pub fn (migration &VSlimDatabaseMigration) drop_table_sql(table_name string) string {
 	return migration_drop_table_sql(table_name)
 }
 
-@[php_method: 'addColumnSql']
 @[php_arg_name: 'table_name=tableName,column_def=columnDef']
+@[php_method: 'addColumnSql']
 pub fn (migration &VSlimDatabaseMigration) add_column_sql(table_name string, column_def string) string {
 	return migration_add_column_sql(table_name, column_def)
 }
 
-@[php_method: 'dropColumnSql']
 @[php_arg_name: 'table_name=tableName,column_name=columnName']
+@[php_method: 'dropColumnSql']
 pub fn (migration &VSlimDatabaseMigration) drop_column_sql(table_name string, column_name string) string {
 	return migration_drop_column_sql(table_name, column_name)
 }
 
-@[php_method: 'createTable']
 @[php_arg_name: 'table_name=tableName']
+@[php_method: 'createTable']
 pub fn (mut migration VSlimDatabaseMigration) create_table(table_name string, columns []string) vphp.RequestOwnedZBox {
 	return migration.execute(migration_create_table_sql(table_name, columns))
 }
 
-@[php_method: 'dropTable']
 @[php_arg_name: 'table_name=tableName']
+@[php_method: 'dropTable']
 pub fn (mut migration VSlimDatabaseMigration) drop_table(table_name string) vphp.RequestOwnedZBox {
 	return migration.execute(migration_drop_table_sql(table_name))
 }
 
-@[php_method: 'addColumn']
 @[php_arg_name: 'table_name=tableName,column_def=columnDef']
+@[php_method: 'addColumn']
 pub fn (mut migration VSlimDatabaseMigration) add_column(table_name string, column_def string) vphp.RequestOwnedZBox {
 	return migration.execute(migration_add_column_sql(table_name, column_def))
 }
 
-@[php_method: 'dropColumn']
 @[php_arg_name: 'table_name=tableName,column_name=columnName']
+@[php_method: 'dropColumn']
 pub fn (mut migration VSlimDatabaseMigration) drop_column(table_name string, column_name string) vphp.RequestOwnedZBox {
 	return migration.execute(migration_drop_column_sql(table_name, column_name))
 }
@@ -304,7 +308,8 @@ pub fn (mut migration VSlimDatabaseMigration) drop_column(table_name string, col
 @[php_method]
 pub fn (mut migration VSlimDatabaseMigration) execute(statement string) vphp.RequestOwnedZBox {
 	if migration.manager_ref == unsafe { nil } {
-		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set',
+			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	return migration.manager_ref.execute(statement)
@@ -313,7 +318,8 @@ pub fn (mut migration VSlimDatabaseMigration) execute(statement string) vphp.Req
 @[php_method: 'executeParams']
 pub fn (mut migration VSlimDatabaseMigration) execute_params(statement string, params vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	if migration.manager_ref == unsafe { nil } {
-		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set',
+			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	return migration.manager_ref.execute_params(statement, params)
@@ -322,7 +328,8 @@ pub fn (mut migration VSlimDatabaseMigration) execute_params(statement string, p
 @[php_method]
 pub fn (mut migration VSlimDatabaseMigration) query(statement string) vphp.RequestOwnedZBox {
 	if migration.manager_ref == unsafe { nil } {
-		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set',
+			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	return migration.manager_ref.query(statement)
@@ -331,7 +338,8 @@ pub fn (mut migration VSlimDatabaseMigration) query(statement string) vphp.Reque
 @[php_method: 'queryParams']
 pub fn (mut migration VSlimDatabaseMigration) query_params(statement string, params vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	if migration.manager_ref == unsafe { nil } {
-		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set', 0)
+		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set',
+			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	return migration.manager_ref.query_params(statement, params)
@@ -433,8 +441,8 @@ pub fn (migrator &VSlimDatabaseMigrator) seeds_path_value() string {
 	return migrator.seeds_path.trim_space()
 }
 
-@[php_method: 'setTable']
 @[php_arg_name: 'table_name=tableName']
+@[php_method: 'setTable']
 pub fn (mut migrator VSlimDatabaseMigrator) set_table(table_name string) &VSlimDatabaseMigrator {
 	migrator.table_name = table_name.trim_space()
 	return &migrator
@@ -496,7 +504,7 @@ pub fn (mut migrator VSlimDatabaseMigrator) migrate() int {
 	mut count := 0
 	for file in pending {
 		migrator.run_migration_file(file, 'up')
-		if C.vphp_has_exception() {
+		if vphp.has_exception() {
 			return count
 		}
 		migrator.insert_applied_migration(migration_entry_name(file), batch)
@@ -537,7 +545,7 @@ pub fn (mut migrator VSlimDatabaseMigrator) rollback() int {
 	for file in targets {
 		name := migration_entry_name(file)
 		migrator.run_migration_file(file, 'down')
-		if C.vphp_has_exception() {
+		if vphp.has_exception() {
 			return count
 		}
 		migrator.delete_applied_migration(name)
@@ -562,10 +570,10 @@ pub fn (mut migrator VSlimDatabaseMigrator) status() vphp.RequestOwnedZBox {
 		seen[name] = true
 		batch := applied[name] or { 0 }
 		out << vphp.DynValue.of_map({
-			'migration': vphp.DynValue.of_string(name)
-			'file': vphp.DynValue.of_string(file)
-			'applied': vphp.DynValue.of_bool(name in applied)
-			'batch': vphp.DynValue.of_int(batch)
+			'migration':       vphp.DynValue.of_string(name)
+			'file':            vphp.DynValue.of_string(file)
+			'applied':         vphp.DynValue.of_bool(name in applied)
+			'batch':           vphp.DynValue.of_int(batch)
 			'applied_at_unix': vphp.DynValue.of_string(applied_at[name] or { '' })
 		})
 	}
@@ -574,10 +582,10 @@ pub fn (mut migrator VSlimDatabaseMigrator) status() vphp.RequestOwnedZBox {
 			continue
 		}
 		out << vphp.DynValue.of_map({
-			'migration': vphp.DynValue.of_string(name)
-			'file': vphp.DynValue.of_string('')
-			'applied': vphp.DynValue.of_bool(true)
-			'batch': vphp.DynValue.of_int(batch)
+			'migration':       vphp.DynValue.of_string(name)
+			'file':            vphp.DynValue.of_string('')
+			'applied':         vphp.DynValue.of_bool(true)
+			'batch':           vphp.DynValue.of_int(batch)
 			'applied_at_unix': vphp.DynValue.of_string(applied_at[name] or { '' })
 		})
 	}
@@ -601,13 +609,15 @@ pub fn (mut migrator VSlimDatabaseMigrator) seed(name string) int {
 			seeder.release()
 		}
 		if !seeder.to_zval().method_exists('run') {
-			vphp.PhpException.raise_class('RuntimeException', 'seeder "${entry}" does not implement run()', 0)
+			vphp.PhpException.raise_class('RuntimeException', 'seeder "${entry}" does not implement run()',
+				0)
 			return count
 		}
-		vphp.PhpObject.borrowed(seeder.to_zval()).with_method_result_zval('run', []vphp.ZVal{}, fn (_ vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(seeder.to_zval()).with_method_result[vphp.PhpValue, bool]('run',
+			fn (_ vphp.PhpValue) bool {
 			return true
-		})
-		if C.vphp_has_exception() {
+		}) or { false }
+		if vphp.has_exception() {
 			return count
 		}
 		count++

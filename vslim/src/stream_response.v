@@ -2,8 +2,8 @@ module main
 
 import vphp
 
-@[php_method]
 @[php_arg_name: 'stream_type=streamType,content_type=contentType']
+@[php_method]
 pub fn (mut r VSlimStreamResponse) construct(stream_type string, chunks vphp.RequestBorrowedZBox, status int, content_type string, headers vphp.RequestBorrowedZBox) &VSlimStreamResponse {
 	r.stream_type = normalize_stream_type(stream_type)
 	r.status = if status <= 0 { 200 } else { status }
@@ -18,11 +18,12 @@ pub fn (mut r VSlimStreamResponse) construct(stream_type string, chunks vphp.Req
 
 @[php_method]
 pub fn VSlimStreamResponse.text(chunks vphp.RequestBorrowedZBox) &VSlimStreamResponse {
-	return VSlimStreamResponse.text_with(chunks, 200, 'text/plain; charset=utf-8', vphp.RequestBorrowedZBox.of(vphp.RequestOwnedZBox.new_null().to_zval()))
+	return VSlimStreamResponse.text_with(chunks, 200, 'text/plain; charset=utf-8',
+		vphp.RequestBorrowedZBox.null())
 }
 
-@[php_method: 'textWith']
 @[php_arg_name: 'content_type=contentType']
+@[php_method: 'textWith']
 pub fn VSlimStreamResponse.text_with(chunks vphp.RequestBorrowedZBox, status int, content_type string, headers vphp.RequestBorrowedZBox) &VSlimStreamResponse {
 	mut out := &VSlimStreamResponse{}
 	out.construct('text', chunks, status, content_type, headers)
@@ -31,7 +32,7 @@ pub fn VSlimStreamResponse.text_with(chunks vphp.RequestBorrowedZBox, status int
 
 @[php_method]
 pub fn VSlimStreamResponse.sse(events vphp.RequestBorrowedZBox) &VSlimStreamResponse {
-	return VSlimStreamResponse.sse_with(events, 200, vphp.RequestBorrowedZBox.of(vphp.RequestOwnedZBox.new_null().to_zval()))
+	return VSlimStreamResponse.sse_with(events, 200, vphp.RequestBorrowedZBox.null())
 }
 
 @[php_method: 'sseWith']
@@ -72,8 +73,8 @@ pub fn (mut r VSlimStreamResponse) set_status(status int) &VSlimStreamResponse {
 	return &r
 }
 
-@[php_method: 'setContentType']
 @[php_arg_name: 'content_type=contentType']
+@[php_method: 'setContentType']
 pub fn (mut r VSlimStreamResponse) set_content_type(content_type string) &VSlimStreamResponse {
 	r.content_type = default_stream_content_type(r.stream_type, content_type).clone()
 	mut headers := r.header_values()
@@ -108,7 +109,9 @@ pub fn (r &VSlimStreamResponse) header_values() map[string]string {
 
 fn apply_stream_headers(mut r VSlimStreamResponse, headers map[string]string) {
 	r.headers = snapshot_string_map(normalize_header_map(headers))
-	r.content_type = (r.headers['content-type'] or { default_stream_content_type(r.stream_type, r.content_type) }).clone()
+	r.content_type = (r.headers['content-type'] or {
+		default_stream_content_type(r.stream_type, r.content_type)
+	}).clone()
 }
 
 fn default_stream_content_type(stream_type string, content_type string) string {
@@ -127,56 +130,79 @@ fn normalize_stream_type(stream_type string) string {
 
 fn is_worker_stream_response_borrowed(result vphp.RequestBorrowedZBox) bool {
 	raw := result.to_zval()
-	return raw.is_object()
-		&& (raw.is_instance_of('VSlim\\Stream\\Response')
+	return raw.is_object() && (raw.is_instance_of('VSlim\\Stream\\Response')
 		|| raw.is_instance_of('VPhp\\VSlim\\Stream\\Response')
 		|| raw.is_instance_of('VPhp\\VHttpd\\PhpWorker\\StreamResponse'))
 }
 
 fn propagate_request_trace_headers_to_object(req &VSlimRequest, raw vphp.RequestBorrowedZBox) {
 	obj := raw.to_zval()
-	if !obj.is_object() || !obj.method_exists('has_header') || !obj.method_exists('set_header') {
+	if !obj.is_object() || !obj.method_exists('hasHeader') || !obj.method_exists('setHeader') {
 		return
 	}
 	rid := req.request_id()
 	if rid != '' {
-		missing := vphp.PhpObject.borrowed(obj).with_method_result_zval('has_header', [vphp.RequestOwnedZBox.new_string('x-request-id').to_zval()], fn (has vphp.ZVal) bool {
-			return !has.is_valid() || !has.to_bool()
-		})
+		mut request_id_name_arg := vphp.PhpString.of('x-request-id')
+		defer {
+			request_id_name_arg.release()
+		}
+		missing := vphp.PhpObject.borrowed(obj).with_method_result[vphp.PhpValue, bool]('hasHeader',
+			fn (has vphp.PhpValue) bool {
+			raw := has.to_zval()
+			return !raw.is_valid() || !raw.to_bool()
+		}, request_id_name_arg) or { true }
 		if missing {
-			vphp.PhpObject.borrowed(obj).with_method_result_zval('set_header', [
-				vphp.RequestOwnedZBox.new_string('x-request-id').to_zval(),
-				vphp.RequestOwnedZBox.new_string(rid).to_zval(),
-			], fn (_ vphp.ZVal) bool {
+			mut rid_arg := vphp.PhpString.of(rid)
+			defer {
+				rid_arg.release()
+			}
+			vphp.PhpObject.borrowed(obj).with_method_result[vphp.PhpValue, bool]('setHeader',
+				fn (_ vphp.PhpValue) bool {
 				return true
-			})
+			}, request_id_name_arg, rid_arg) or { false }
 		}
 	}
 	tid := req.trace_id()
 	if tid == '' {
 		return
 	}
-	missing_trace := vphp.PhpObject.borrowed(obj).with_method_result_zval('has_header', [vphp.RequestOwnedZBox.new_string('x-trace-id').to_zval()], fn (has vphp.ZVal) bool {
-		return !has.is_valid() || !has.to_bool()
-	})
-	if missing_trace {
-		vphp.PhpObject.borrowed(obj).with_method_result_zval('set_header', [
-			vphp.RequestOwnedZBox.new_string('x-trace-id').to_zval(),
-			vphp.RequestOwnedZBox.new_string(tid).to_zval(),
-		], fn (_ vphp.ZVal) bool {
-			return true
-		})
+	mut trace_id_name_arg := vphp.PhpString.of('x-trace-id')
+	defer {
+		trace_id_name_arg.release()
 	}
-	missing_vhttpd := vphp.PhpObject.borrowed(obj).with_method_result_zval('has_header', [vphp.RequestOwnedZBox.new_string('x-vhttpd-trace-id').to_zval()], fn (has vphp.ZVal) bool {
-		return !has.is_valid() || !has.to_bool()
-	})
-	if missing_vhttpd {
-		vphp.PhpObject.borrowed(obj).with_method_result_zval('set_header', [
-			vphp.RequestOwnedZBox.new_string('x-vhttpd-trace-id').to_zval(),
-			vphp.RequestOwnedZBox.new_string(tid).to_zval(),
-		], fn (_ vphp.ZVal) bool {
+	missing_trace := vphp.PhpObject.borrowed(obj).with_method_result[vphp.PhpValue, bool]('hasHeader',
+		fn (has vphp.PhpValue) bool {
+		raw := has.to_zval()
+		return !raw.is_valid() || !raw.to_bool()
+	}, trace_id_name_arg) or { true }
+	if missing_trace {
+		mut tid_arg := vphp.PhpString.of(tid)
+		defer {
+			tid_arg.release()
+		}
+		vphp.PhpObject.borrowed(obj).with_method_result[vphp.PhpValue, bool]('setHeader',
+			fn (_ vphp.PhpValue) bool {
 			return true
-		})
+		}, trace_id_name_arg, tid_arg) or { false }
+	}
+	mut vhttpd_trace_id_name_arg := vphp.PhpString.of('x-vhttpd-trace-id')
+	defer {
+		vhttpd_trace_id_name_arg.release()
+	}
+	missing_vhttpd := vphp.PhpObject.borrowed(obj).with_method_result[vphp.PhpValue, bool]('hasHeader',
+		fn (has vphp.PhpValue) bool {
+		raw := has.to_zval()
+		return !raw.is_valid() || !raw.to_bool()
+	}, vhttpd_trace_id_name_arg) or { true }
+	if missing_vhttpd {
+		mut tid_arg := vphp.PhpString.of(tid)
+		defer {
+			tid_arg.release()
+		}
+		vphp.PhpObject.borrowed(obj).with_method_result[vphp.PhpValue, bool]('setHeader',
+			fn (_ vphp.PhpValue) bool {
+			return true
+		}, vhttpd_trace_id_name_arg, tid_arg) or { false }
 	}
 }
 

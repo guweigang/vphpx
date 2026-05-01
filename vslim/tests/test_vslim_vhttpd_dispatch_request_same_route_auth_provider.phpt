@@ -133,7 +133,7 @@ namespace {
             parent::__construct($app);
         }
 
-        public function index(ServerRequestInterface $request): VSlim\VHttpd\Response
+        public function index(ServerRequestInterface $request): ResponseInterface
         {
             $viewer = $this->app()->authUser($request);
             $workspace = $request->getAttribute('studio.workspace');

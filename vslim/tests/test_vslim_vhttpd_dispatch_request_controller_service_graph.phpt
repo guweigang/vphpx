@@ -137,7 +137,7 @@ namespace {
             parent::__construct($app);
         }
 
-        public function index(ServerRequestInterface $request): VSlim\VHttpd\Response
+        public function index(ServerRequestInterface $request): ResponseInterface
         {
             $viewer = $request->getAttribute('studio.viewer');
             $workspace = $request->getAttribute('studio.workspace');
@@ -150,7 +150,7 @@ namespace {
             ]);
         }
 
-        public function documents(ServerRequestInterface $request): VSlim\VHttpd\Response
+        public function documents(ServerRequestInterface $request): ResponseInterface
         {
             $viewer = $request->getAttribute('studio.viewer');
             $workspace = $request->getAttribute('studio.workspace');

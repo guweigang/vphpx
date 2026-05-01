@@ -79,7 +79,7 @@ fn apply_named_reducer(name string, acc f64, item f64) ?f64 {
 }
 
 struct ReduceExprParser {
-	src  string
+	src string
 mut:
 	pos  int
 	acc  f64
@@ -88,8 +88,8 @@ mut:
 
 fn eval_reduce_expr(expr string, acc f64, item f64) !f64 {
 	mut p := ReduceExprParser{
-		src: expr
-		acc: acc
+		src:  expr
+		acc:  acc
 		item: item
 	}
 	value := p.parse_expr()!
@@ -349,7 +349,8 @@ fn template_object_value(path string, objects map[string]vphp.RequestOwnedZBox) 
 }
 
 fn template_object_children(value vphp.ZVal) map[string]vphp.ZVal {
-	props := vphp.PhpFunction.named('get_object_vars').call([value])
+	mut props_box := vphp.PhpFunction.named('get_object_vars').request_owned(vphp.PhpValue.from_zval(value))
+	props := props_box.take_zval()
 	if props.is_array() {
 		mut out := map[string]vphp.ZVal{}
 		for key in props.assoc_keys() {
@@ -419,7 +420,8 @@ fn collect_template_values(prefix string, value vphp.ZVal, mut scalars map[strin
 				for i in 0 .. value.array_count() {
 					child := value.array_get(i)
 					next_prefix := if prefix == '' { '${i}' } else { '${prefix}.${i}' }
-					collect_template_values(next_prefix, child, mut scalars, mut lists, mut objects, depth + 1)
+					collect_template_values(next_prefix, child, mut scalars, mut lists, mut
+						objects, depth + 1)
 				}
 			} else {
 				items := extract_template_list_items(value)
@@ -448,7 +450,8 @@ fn collect_template_values(prefix string, value vphp.ZVal, mut scalars map[strin
 		})
 		for key_name, child in children {
 			next_prefix := if prefix == '' { key_name } else { '${prefix}.${key_name}' }
-			collect_template_values(next_prefix, child, mut scalars, mut lists, mut objects, depth + 1)
+			collect_template_values(next_prefix, child, mut scalars, mut lists, mut objects,
+				depth + 1)
 		}
 		return
 	}
@@ -463,7 +466,8 @@ fn collect_template_values(prefix string, value vphp.ZVal, mut scalars map[strin
 		children := template_object_children(value)
 		for key_name, child in children {
 			next_prefix := if prefix == '' { key_name } else { '${prefix}.${key_name}' }
-			collect_template_values(next_prefix, child, mut scalars, mut lists, mut objects, depth + 1)
+			collect_template_values(next_prefix, child, mut scalars, mut lists, mut objects,
+				depth + 1)
 		}
 		return
 	}

@@ -7,24 +7,23 @@ pub fn (mut clock VSlimPsr20Clock) construct() &VSlimPsr20Clock {
 	return &clock
 }
 
-@[php_method]
 @[php_return_type: 'DateTimeImmutable']
+@[php_method]
 pub fn (clock &VSlimPsr20Clock) now() vphp.RequestOwnedZBox {
 	_ = clock
-	now := vphp.PhpClass.named('DateTimeImmutable').construct([])
-	if !now.is_valid() || !now.is_object() {
-		vphp.PhpException.raise_class('RuntimeException', 'failed to create DateTimeImmutable instance', 0)
+	now := vphp.PhpClass.named('DateTimeImmutable').construct() or {
+		vphp.PhpException.raise_class('RuntimeException', 'failed to create DateTimeImmutable instance',
+			0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
-	return vphp.RequestOwnedZBox.of(now)
+	return vphp.RequestOwnedZBox.of(now.to_zval())
 }
 
 fn new_psr20_system_clock_ref() vphp.PersistentOwnedZBox {
-	clock := vphp.PhpClass.named('VSlim\\Psr20\\Clock').construct([])
-	if !clock.is_valid() || !clock.is_object() {
+	clock := vphp.PhpClass.named('VSlim\\Psr20\\Clock').construct() or {
 		return vphp.PersistentOwnedZBox.new_null()
 	}
-	return vphp.PersistentOwnedZBox.from_object_zval(clock)
+	return vphp.PersistentOwnedZBox.from_object_zval(clock.to_zval())
 }
 
 fn psr20_is_clock(value vphp.ZVal) bool {
@@ -36,7 +35,7 @@ fn psr20_now_datetime_or_throw(clock vphp.ZVal) !vphp.ZVal {
 	if !psr20_is_clock(clock) {
 		return error('clock must implement Psr\\Clock\\ClockInterface')
 	}
-	mut now := vphp.PhpObject.borrowed(clock).method_request_owned_box('now', []vphp.ZVal{})
+	mut now := vphp.PhpObject.borrowed(clock).method_request_owned('now')
 	if !now.is_valid() || !now.is_object() || !now.to_zval().is_instance_of('DateTimeImmutable') {
 		now.release()
 		return error('clock::now() must return DateTimeImmutable')
@@ -46,16 +45,22 @@ fn psr20_now_datetime_or_throw(clock vphp.ZVal) !vphp.ZVal {
 
 fn psr20_now_unix_or_throw(clock vphp.ZVal) !i64 {
 	now := psr20_now_datetime_or_throw(clock)!
-	return vphp.PhpObject.borrowed(now).with_method_result_zval('getTimestamp', []vphp.ZVal{}, fn (ts vphp.ZVal) i64 {
-		return ts.to_i64()
-	})
+	return vphp.PhpObject.borrowed(now).with_method_result[vphp.PhpInt, i64]('getTimestamp',
+		fn (ts vphp.PhpInt) i64 {
+		return ts.value()
+	})!
 }
 
 fn psr20_now_unix_milli_string_or_throw(clock vphp.ZVal) !string {
 	now := psr20_now_datetime_or_throw(clock)!
-	formatted := vphp.PhpObject.borrowed(now).with_method_result_zval('format', [vphp.RequestOwnedZBox.new_string('Uv').to_zval()], fn (out vphp.ZVal) string {
-		return out.to_string().trim_space()
-	})
+	mut format_arg := vphp.PhpString.of('Uv')
+	defer {
+		format_arg.release()
+	}
+	formatted := vphp.PhpObject.borrowed(now).with_method_result[vphp.PhpString, string]('format',
+		fn (out vphp.PhpString) string {
+		return out.value().trim_space()
+	}, format_arg)!
 	if formatted != '' {
 		return formatted
 	}

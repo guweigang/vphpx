@@ -4,15 +4,6 @@ import vphp
 
 #include "php_bridge.h"
 
-fn release_request_owned_boxes(mut list []vphp.RequestOwnedZBox) {
-	for i in 0 .. list.len {
-		list[i].release()
-	}
-	unsafe {
-		list.free()
-	}
-}
-
 fn build_php_psr15_next_handler_object(chain &MiddlewareChain) vphp.ZVal {
 	unsafe {
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
@@ -61,13 +52,13 @@ fn dispatch_php_middleware_chain_terminal(app &VSlimApp, path string, payload vp
 
 fn dispatch_php_middleware_chain_with_plan(app &VSlimApp, path string, payload vphp.RequestBorrowedZBox, route_middle []vphp.RequestOwnedZBox, plan RawDispatchPlan) !(vphp.ZVal, vphp.RequestOwnedZBox) {
 	request_ctx := new_pipeline_request_context(path, payload.clone_request_owned(), plan.route_params)
-	return dispatch_php_middleware_chain_with_context(app, request_ctx, route_middle, plan)
+	return dispatch_php_middleware_chain_with_context(app, request_ctx, route_middle,
+		plan)
 }
 
 fn dispatch_php_middleware_chain_with_context(app &VSlimApp, ctx PipelineRequestContext, route_middle []vphp.RequestOwnedZBox, plan RawDispatchPlan) !(vphp.ZVal, vphp.RequestOwnedZBox) {
 	if app.php_middlewares.len == 0 && route_middle.len == 0 {
-		return execute_raw_dispatch_plan(app, ctx, plan)!,
-			ctx.payload_ref.clone_request_owned()
+		return execute_raw_dispatch_plan(app, ctx, plan)!, ctx.payload_ref.clone_request_owned()
 	}
 	mut chain_plan := clone_raw_dispatch_plan(plan)
 	defer {
@@ -80,7 +71,7 @@ fn dispatch_php_middleware_chain_with_context(app &VSlimApp, ctx PipelineRequest
 		plan:        chain_plan
 	}
 	defer {
-		release_request_owned_boxes(mut chain.middlewares)
+		release_collected_middlewares(mut chain.middlewares)
 	}
 	raw := chain.dispatch(ctx.payload_ref.borrowed()) or {
 		msg := if err.msg() == '' { 'Route handler is not callable' } else { err.msg() }
@@ -106,8 +97,7 @@ fn (mut chain MiddlewareChain) dispatch(payload vphp.RequestBorrowedZBox) !vphp.
 	if snapshot := snapshot_phase_forwarded_request(vphp.RequestBorrowedZBox.from_zval(normalized)) {
 		store_forwarded_request_snapshot(forwarded_request_key(chain), snapshot)
 	}
-	effective_ctx := pipeline_request_context_with_payload(chain.request_ctx,
-		payload.clone_request_owned())
+	effective_ctx := pipeline_request_context_with_payload(chain.request_ctx, payload.clone_request_owned())
 	if chain.index >= chain.middlewares.len {
 		return execute_raw_dispatch_plan(chain.app, effective_ctx, chain.plan)!
 	}
@@ -131,8 +121,7 @@ fn (mut chain MiddlewareChain) dispatch_pre_normalized(payload vphp.RequestBorro
 	if snapshot := snapshot_phase_forwarded_request(payload) {
 		store_forwarded_request_snapshot(forwarded_request_key(chain), snapshot)
 	}
-	effective_ctx := pipeline_request_context_with_payload(chain.request_ctx,
-		payload.clone_request_owned())
+	effective_ctx := pipeline_request_context_with_payload(chain.request_ctx, payload.clone_request_owned())
 	if chain.index >= chain.middlewares.len {
 		return execute_raw_dispatch_plan(chain.app, effective_ctx, chain.plan)!
 	}
@@ -176,7 +165,7 @@ fn apply_php_after_middlewares_psr(app &VSlimApp, ctx PipelineRequestContext, in
 	mut current := unsafe { initial }
 	mut all := collect_after_middlewares(app, group_after)
 	defer {
-		release_request_owned_boxes(mut all)
+		release_collected_middlewares(mut all)
 	}
 	for hook in all {
 		if !hook.is_valid() || hook.is_null() || hook.is_undef() {

@@ -5,18 +5,18 @@ VSlim live bound socket helpers reuse bound sockets but allocate fresh fallback 
 --FILE--
 <?php
 $socket = (new VSlim\Live\Socket())
-    ->set_id('sock-1')
-    ->set_target('/live');
+    ->setId('sock-1')
+    ->setTarget('/live');
 
 $bound = (new VSlim\Live\Component())
-    ->set_id('counter')
-    ->bind_socket($socket)
+    ->setId('counter')
+    ->bindSocket($socket)
     ->assign('count', '7');
 
-$boundPatch = $bound->patch_bound();
-$boundAppend = $bound->append_to_bound('list');
-$boundPrepend = $bound->prepend_to_bound('list');
-$boundRemove = $bound->remove_bound();
+$boundPatch = $bound->patchBound();
+$boundAppend = $bound->appendToBound('list');
+$boundPrepend = $bound->prependToBound('list');
+$boundRemove = $bound->removeBound();
 
 echo (spl_object_id($socket) === spl_object_id($boundPatch) ? 'patch-same' : 'patch-diff') . PHP_EOL;
 echo (spl_object_id($socket) === spl_object_id($boundAppend) ? 'append-same' : 'append-diff') . PHP_EOL;
@@ -25,12 +25,12 @@ echo (spl_object_id($socket) === spl_object_id($boundRemove) ? 'remove-same' : '
 echo count($socket->patches()) . PHP_EOL;
 
 $unbound = (new VSlim\Live\Component())
-    ->set_id('counter')
+    ->setId('counter')
     ->assign('count', '7');
 
-$fallbackPatch1 = $unbound->patch_bound();
-$fallbackPatch2 = $unbound->patch_bound();
-$fallbackRemove = $unbound->remove_bound();
+$fallbackPatch1 = $unbound->patchBound();
+$fallbackPatch2 = $unbound->patchBound();
+$fallbackRemove = $unbound->removeBound();
 
 echo (spl_object_id($fallbackPatch1) === spl_object_id($fallbackPatch2) ? 'fallback-patch-stable' : 'fallback-patch-distinct') . PHP_EOL;
 echo (spl_object_id($fallbackPatch1) === spl_object_id($fallbackRemove) ? 'fallback-shared' : 'fallback-fresh') . PHP_EOL;

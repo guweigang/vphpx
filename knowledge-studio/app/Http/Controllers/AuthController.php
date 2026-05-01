@@ -21,7 +21,7 @@ final class AuthController extends \VSlim\Controller
         parent::__construct($app);
     }
 
-    public function show(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function show(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if ($this->app()->authCheck($request)) {
             return $this->redirect($this->urls->console((string) $request->getAttribute('studio.locale', 'zh-CN')), 302);
@@ -64,7 +64,7 @@ final class AuthController extends \VSlim\Controller
         ]);
     }
 
-    public function login(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function login(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         if ($this->app()->authCheck($request)) {
             return $this->redirect($this->urls->console((string) $request->getAttribute('studio.locale', 'zh-CN')), 302);
@@ -90,27 +90,24 @@ final class AuthController extends \VSlim\Controller
             $copy = $this->locales->login($locale);
             $session = $this->app()->session($request);
             $session->flash('auth.error', $copy['invalid_credentials']);
-            $response = new \VSlim\VHttpd\Response(302, '', 'text/plain; charset=utf-8');
-            $response->redirectWithStatus($this->urls->login($locale), 302);
+            $response = $this->redirect($this->urls->login($locale), 302);
             $session->commit($response);
             return $response;
         }
 
-        $response = new \VSlim\VHttpd\Response(302, '', 'text/plain; charset=utf-8');
         $redirect = $this->workspaces->requiresPasswordReset($user)
             ? $this->urls->consoleAccount($locale)
             : $this->urls->console($locale);
-        $response->redirectWithStatus($redirect, 302);
+        $response = $this->redirect($redirect, 302);
         $this->app()->login($request, $response, (string) $user['id']);
 
         return $response;
     }
 
-    public function logout(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function logout(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         $locale = $this->locales->resolve((string) $request->getAttribute('studio.locale', 'zh-CN'));
-        $response = new \VSlim\VHttpd\Response(302, '', 'text/plain; charset=utf-8');
-        $response->redirectWithStatus($this->urls->home($locale), 302);
+        $response = $this->redirect($this->urls->home($locale), 302);
         $this->app()->logout($request, $response);
 
         return $response;

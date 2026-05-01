@@ -20,10 +20,9 @@ fn normalize_or_handle_error_with_context_psr(app &VSlimApp, ctx PipelineRequest
 }
 
 fn normalize_or_handle_error(app &VSlimApp, request_payload vphp.RequestBorrowedZBox, result vphp.RequestBorrowedZBox, fallback_status int, fallback_message string) VSlimResponse {
-	ctx := new_pipeline_request_context(RoutePath.normalize('/'),
-		request_payload.clone_request_owned(), route_params_from_payload(request_payload))
-	return normalize_or_handle_error_with_context(app, ctx, result, fallback_status,
-		fallback_message)
+	ctx := new_pipeline_request_context(RoutePath.normalize('/'), request_payload.clone_request_owned(),
+		route_params_from_payload(request_payload))
+	return normalize_or_handle_error_with_context(app, ctx, result, fallback_status, fallback_message)
 }
 
 fn fixed_terminal_meta(res VSlimResponse) MiddlewareTerminalMeta {
@@ -99,8 +98,8 @@ fn build_terminal_response_psr(app &VSlimApp, ctx PipelineRequestContext, meta M
 			} else {
 				res := meta.fixed_response_ref
 				clone_psr7_response(res, res.protocol_version, clone_header_values(res.headers),
-					clone_header_names(res.header_names), response_body_or_empty(res), res.status,
-					res.reason_phrase)
+					clone_header_names(res.header_names), response_body_or_empty(res),
+					res.status, res.reason_phrase)
 			}
 		}
 		.not_found {
@@ -165,8 +164,8 @@ fn build_method_not_allowed_response_with_context_psr(app &VSlimApp, ctx Pipelin
 		headers['allow'] = [allowed_methods.join(', ')]
 		header_names['allow'] = 'Allow'
 	}
-	return clone_psr7_response(res, res.protocol_version, headers, header_names,
-		response_body_or_empty(res), res.status, res.reason_phrase)
+	return clone_psr7_response(res, res.protocol_version, headers, header_names, response_body_or_empty(res),
+		res.status, res.reason_phrase)
 }
 
 fn run_not_found(app &VSlimApp, req &VSlimRequest) VSlimResponse {
@@ -183,9 +182,8 @@ fn run_not_found_core_with_context(app &VSlimApp, ctx PipelineRequestContext) VS
 	if nf.is_valid() && nf.is_callable() {
 		psr_payload := normalize_psr15_server_request_payload(ctx.payload_ref.borrowed(),
 			ctx.route_params)
-		mut raw := nf.call_request_owned([psr_payload])
-		return normalize_or_handle_error_with_context(app, ctx, raw.borrowed(),
-			404, 'Not Found')
+		mut raw := nf.fn_request_owned(vphp.PhpValue.from_zval(psr_payload))
+		return normalize_or_handle_error_with_context(app, ctx, raw.borrowed(), 404, 'Not Found')
 	}
 	return default_error_response(app, 404, 'Not Found', 'not_found')
 }
@@ -195,7 +193,7 @@ fn run_not_found_core_with_context_psr(app &VSlimApp, ctx PipelineRequestContext
 	if nf.is_valid() && nf.is_callable() {
 		psr_payload := normalize_psr15_server_request_payload(ctx.payload_ref.borrowed(),
 			ctx.route_params)
-		mut raw := nf.call_request_owned([psr_payload])
+		mut raw := nf.fn_request_owned(vphp.PhpValue.from_zval(psr_payload))
 		return normalize_or_handle_error_with_context_psr(app, ctx, raw.borrowed(), 404,
 			'Not Found')
 	}
@@ -215,11 +213,16 @@ fn run_error_handler_with_context(app &VSlimApp, ctx PipelineRequestContext, sta
 	}
 	psr_payload := normalize_psr15_server_request_payload(ctx.payload_ref.borrowed(),
 		ctx.route_params)
-	mut raw := eh.call_request_owned([
-		psr_payload,
-		vphp.RequestOwnedZBox.new_string(message).to_zval(),
-		vphp.RequestOwnedZBox.new_int(status).to_zval(),
-	])
+	mut message_arg := vphp.PhpString.of(message)
+	mut status_arg := vphp.PhpInt.of(status)
+	defer {
+		message_arg.release()
+		status_arg.release()
+	}
+	mut raw := eh.fn_request_owned(vphp.PhpValue.from_zval(psr_payload), message_arg, status_arg)
+	defer {
+		raw.release()
+	}
 	res, ok := normalize_php_route_response_borrowed(raw.borrowed())
 	if !ok {
 		return none
@@ -234,11 +237,16 @@ fn run_error_handler_with_context_psr(app &VSlimApp, ctx PipelineRequestContext,
 	}
 	psr_payload := normalize_psr15_server_request_payload(ctx.payload_ref.borrowed(),
 		ctx.route_params)
-	mut raw := eh.call_request_owned([
-		psr_payload,
-		vphp.RequestOwnedZBox.new_string(message).to_zval(),
-		vphp.RequestOwnedZBox.new_int(status).to_zval(),
-	])
+	mut message_arg := vphp.PhpString.of(message)
+	mut status_arg := vphp.PhpInt.of(status)
+	defer {
+		message_arg.release()
+		status_arg.release()
+	}
+	mut raw := eh.fn_request_owned(vphp.PhpValue.from_zval(psr_payload), message_arg, status_arg)
+	defer {
+		raw.release()
+	}
 	res, ok := normalize_php_route_response_psr_borrowed(raw.borrowed())
 	if !ok {
 		return none
@@ -247,8 +255,8 @@ fn run_error_handler_with_context_psr(app &VSlimApp, ctx PipelineRequestContext,
 }
 
 fn run_error_handler(app &VSlimApp, request_payload vphp.RequestBorrowedZBox, status int, message string) ?VSlimResponse {
-	ctx := new_pipeline_request_context(RoutePath.normalize('/'),
-		request_payload.clone_request_owned(), route_params_from_payload(request_payload))
+	ctx := new_pipeline_request_context(RoutePath.normalize('/'), request_payload.clone_request_owned(),
+		route_params_from_payload(request_payload))
 	return run_error_handler_with_context(app, ctx, status, message)
 }
 

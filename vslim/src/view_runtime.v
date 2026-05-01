@@ -4,11 +4,16 @@ import math
 import vphp
 
 fn (view &VSlimView) invoke_template_helper_values(name string, args []TemplateExprValue, scalars map[string]string, lists map[string][]string, template_path string, line int, col int) string {
-	mut zargs := []vphp.ZVal{cap: args.len}
-	for arg in args {
-		zargs << template_expr_value_to_zval_with_context(arg, scalars, lists)
+	mut frame := vphp.PhpScope.frame()
+	defer {
+		frame.release()
 	}
-	return view.invoke_template_helper_zargs(name, zargs, template_path, line, col)
+	mut raw_args := []vphp.ZVal{cap: args.len}
+	for arg in args {
+		raw_args << template_expr_value_to_zval_with_context(arg, scalars, lists)
+	}
+	call_args := frame.args_from_zvals(raw_args)
+	return view.invoke_template_helper_args(name, call_args, template_path, line, col)
 }
 
 fn parse_template_helper_arg_nodes(raw_args string, line int, col int) ([]TemplateExprNode, bool) {
@@ -39,7 +44,7 @@ fn parse_template_helper_arg_node(raw string, line int, col int) !TemplateExprNo
 	return parse_template_expr_node(raw, line, col)
 }
 
-fn (view &VSlimView) invoke_template_helper_zargs(name string, zargs []vphp.ZVal, template_path string, line int, col int) string {
+fn (view &VSlimView) invoke_template_helper_args(name string, args []vphp.PhpFnArg, template_path string, line int, col int) string {
 	key := name.trim_space()
 	if key == '' {
 		return debug_template_error('helper.invalid', template_path, name, line, col)
@@ -47,13 +52,15 @@ fn (view &VSlimView) invoke_template_helper_zargs(name string, zargs []vphp.ZVal
 	if key !in view.helpers {
 		return debug_template_error('helper.missing', template_path, key, line, col)
 	}
-	handler := view.helpers[key] or { return debug_template_error('helper.missing', template_path, key, line, col) }
+	handler := view.helpers[key] or {
+		return debug_template_error('helper.missing', template_path, key, line, col)
+	}
 	if !handler.is_valid() || !handler.is_callable() {
 		return debug_template_error('helper.invalid', template_path, key, line, col)
 	}
-	return handler.with_call_result(zargs, fn (result vphp.ZVal) string {
-		return result.to_string()
-	})
+	return handler.with_fn_result[vphp.PhpValue, string](fn (result vphp.PhpValue) string {
+		return result.to_zval().to_string()
+	}, ...args) or { '' }
 }
 
 fn new_template_list_zval(items []string) vphp.ZVal {
@@ -78,7 +85,8 @@ fn build_template_tree_zval(prefix string, scalars map[string]string, lists map[
 		return new_template_list_zval(template_list_values(prefix, scalars, lists))
 	}
 	if !template_has_child_keys(prefix, scalars, lists) {
-		return infer_template_scalar_zval(template_scalar_value_with_lists(prefix, scalars, lists))
+		return infer_template_scalar_zval(template_scalar_value_with_lists(prefix, scalars,
+			lists))
 	}
 	return new_template_assoc_zval(prefix, scalars, lists)
 }
@@ -145,7 +153,8 @@ fn new_template_assoc_zval(prefix string, scalars map[string]string, lists map[s
 	out.array_init()
 	for child in template_child_keys(prefix, scalars, lists) {
 		child_prefix := if prefix == '' { child } else { '${prefix}.${child}' }
-		add_assoc_zval_template(out, child, build_template_tree_zval(child_prefix, scalars, lists))
+		add_assoc_zval_template(out, child, build_template_tree_zval(child_prefix, scalars,
+			lists))
 	}
 	return out
 }
@@ -362,7 +371,6 @@ fn template_quoted_literal(raw string) ?string {
 	}
 	return none
 }
-
 
 fn template_compare_equal_values(left string, right string) bool {
 	left_trimmed := left.trim_space()

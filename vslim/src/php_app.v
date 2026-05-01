@@ -87,12 +87,13 @@ fn vslim_trace_mem_should_log(app &VSlimApp) bool {
 }
 
 fn vslim_mem_usage_bytes() i64 {
-	return vphp.PhpFunction.named('memory_get_usage').with_result_zval([vphp.RequestOwnedZBox.new_bool(true).to_zval()], fn (val vphp.ZVal) i64 {
-		if !val.is_valid() || val.is_null() || val.is_undef() {
-			return -1
-		}
-		return val.to_i64()
-	})
+	mut real_usage_arg := vphp.PhpBool.of(true)
+	defer {
+		real_usage_arg.release()
+	}
+	return vphp.PhpFunction.named('memory_get_usage').with_result[vphp.PhpInt, i64](fn (val vphp.PhpInt) i64 {
+		return val.value()
+	}, real_usage_arg) or { -1 }
 }
 
 fn vslim_trace_mem_log(app &VSlimApp, req &VSlimRequest, stage string, base_bytes i64) {
@@ -138,32 +139,31 @@ fn probe_object_info(obj vphp.RequestBorrowedZBox, class_name string, method_nam
 	if !raw.is_object() {
 		return vphp.RequestOwnedZBox.of(vphp.new_zval_from[map[string]string]({
 			'is_object': 'false'
-		}) or {
-			vphp.ZVal.new_null()
-		})
+		}) or { vphp.ZVal.new_null() })
+	}
+	mut class_arg := vphp.PhpString.of(class_name)
+	mut autoload_arg := vphp.PhpBool.of(true)
+	mut method_arg := vphp.PhpString.of(method_name)
+	defer {
+		class_arg.release()
+		autoload_arg.release()
+		method_arg.release()
 	}
 	return vphp.RequestOwnedZBox.of(vphp.new_zval_from[map[string]string]({
-		'is_object': raw.is_object().str()
-		'class': raw.class_name()
-		'is_instance_of': raw.is_instance_of(class_name).str()
-		'is_subclass_of': raw.is_subclass_of(class_name).str()
-		'method_exists': raw.method_exists(method_name).str()
-		'php_is_a': vphp.PhpFunction.named('is_a').call([
-			raw,
-			vphp.ZVal.new_string(class_name),
-			vphp.ZVal.new_bool(true),
-		]).to_bool().str()
-		'php_method_exists': vphp.PhpFunction.named('method_exists').call([
-			raw,
-			vphp.ZVal.new_string(method_name),
-		]).to_bool().str()
-	}) or {
-		vphp.ZVal.new_null()
-	})
+		'is_object':         raw.is_object().str()
+		'class':             raw.class_name()
+		'is_instance_of':    raw.is_instance_of(class_name).str()
+		'is_subclass_of':    raw.is_subclass_of(class_name).str()
+		'method_exists':     raw.method_exists(method_name).str()
+		'php_is_a':          vphp.PhpFunction.named('is_a').result_bool(vphp.PhpValue.from_zval(raw),
+			class_arg, autoload_arg).str()
+		'php_method_exists': vphp.PhpFunction.named('method_exists').result_bool(vphp.PhpValue.from_zval(raw),
+			method_arg).str()
+	}) or { vphp.ZVal.new_null() })
 }
 
-@[php_method]
 @[php_arg_name: 'class_name=className,method_name=methodName']
+@[php_method]
 pub fn VSlimDebugObjectProbe.probe(obj vphp.RequestBorrowedZBox, class_name string, method_name string) vphp.RequestOwnedZBox {
 	return probe_object_info(obj, class_name, method_name)
 }

@@ -10,11 +10,11 @@ Project overview:
 
 If you are new to the compiler, read these in order:
 
-1. [architecture.md](architecture.md)
-2. [repr.md](repr.md)
-3. [class_shadows.md](class_shadows.md)
-4. [builder.md](builder.md)
-5. [emission_pipeline.md](emission_pipeline.md)
+1. [docs/architecture.md](docs/architecture.md)
+2. [docs/repr.md](docs/repr.md)
+3. [docs/class_shadows.md](docs/class_shadows.md)
+4. [docs/builder.md](docs/builder.md)
+5. [docs/emission_pipeline.md](docs/emission_pipeline.md)
 
 ## Implementation Layout
 
@@ -60,22 +60,22 @@ vphp/compiler/
 
 Read:
 
-1. [architecture.md](architecture.md)
-2. [emission_pipeline.md](emission_pipeline.md)
+1. [docs/architecture.md](docs/architecture.md)
+2. [docs/emission_pipeline.md](docs/emission_pipeline.md)
 
 ### I want to add a new parsed feature
 
 Read:
 
-1. [repr.md](repr.md)
+1. [docs/repr.md](docs/repr.md)
 2. `parser/`
-3. [architecture.md](architecture.md)
+3. [docs/architecture.md](docs/architecture.md)
 
 ### I want to change class static/class const shadow behavior
 
 Read:
 
-1. [class_shadows.md](class_shadows.md)
+1. [docs/class_shadows.md](docs/class_shadows.md)
 2. [v_glue.v](v_glue.v)
 3. [c_emitter.v](c_emitter.v)
 
@@ -83,12 +83,12 @@ Read:
 
 Read:
 
-1. [builder.md](builder.md)
-2. [emission_pipeline.md](emission_pipeline.md)
+1. [docs/builder.md](docs/builder.md)
+2. [docs/emission_pipeline.md](docs/emission_pipeline.md)
 
 Important:
 
-- `emission_pipeline.md` now documents return-shape classification for
+- `docs/emission_pipeline.md` now documents return-shape classification for
   `@[php_method]`, including container returns like `map[string]string` and
   `[]string`
 
@@ -121,7 +121,7 @@ Use `Context` when the implementation needs the full PHP call frame:
 @[php_function]
 fn handle(ctx vphp.Context) {
 	args := ctx.args([
-		vphp.PhpArgMeta{ index: 0, name: 'payload' },
+		vphp.PhpInArgMeta{ index: 0, name: 'payload' },
 	])
 	value := args.at(0).value
 	ctx.return().string(value.type_name())
@@ -131,7 +131,7 @@ fn handle(ctx vphp.Context) {
 `Context` is hidden from PHP arginfo. It is the escape hatch for dynamic
 argument handling, manual return writes, or direct access to request state.
 
-Do not combine `Context` with `PhpArgs`; `PhpArgs` is derived from `Context`.
+Do not combine `Context` with `PhpInArgs`; `PhpInArgs` is derived from `Context`.
 
 ### 2. V Native Values
 
@@ -228,7 +228,7 @@ fn create_response(params CreateResponseParams) string {
 ```
 
 The compiler expands the final `@[params]` struct into PHP-visible arguments,
-builds `PhpArgs` in glue, applies V defaults when arguments are omitted, and
+builds `PhpInArgs` in glue, applies V defaults when arguments are omitted, and
 then calls the V function with the constructed params struct.
 
 Generated params struct bindings read arguments by PHP parameter name first and
@@ -243,7 +243,7 @@ Params struct fields may use plain V scalar types or semantic PHP wrappers such
 as `vphp.PhpString`, `vphp.PhpBool`, and `vphp.PhpArray`. Wrapper fields get
 semantic empty defaults and still validate the PHP value when it is supplied.
 
-Do not expose `vphp.PhpArgs` directly as a function parameter. `PhpArgs` is a
+Do not expose `vphp.PhpInArgs` directly as a function parameter. `PhpInArgs` is a
 glue/runtime model and is available from `Context` via `ctx.args(...)` when a
 function intentionally enters the low-level `Context` mode.
 
@@ -261,7 +261,7 @@ needs to write the PHP return slot manually:
 @[php_function]
 fn dynamic(ctx vphp.Context) {
 	args := ctx.args([
-		vphp.PhpArgMeta{ index: 0, name: 'payload' },
+		vphp.PhpInArgMeta{ index: 0, name: 'payload' },
 	])
 	ctx.return().string_value(args.at(0).value.type_name())
 }
@@ -326,8 +326,8 @@ fn same_array(arr vphp.PhpArray) vphp.PhpArray {
 
 Supported wrapper returns include the parameter wrappers listed above, plus
 `vphp.PhpClass`, `vphp.PhpFunction`, `vphp.PhpClosure`, and persistent wrapper
-forms such as `vphp.PersistentPhpValue`, `vphp.PersistentPhpArray`,
-`vphp.PersistentPhpObject`, and `vphp.PersistentPhpClosure`.
+forms such as `vphp.PhpValue`, `vphp.PhpArray` with persistent-owned storage,
+`vphp.PhpObject`, and `vphp.PhpClosure` with persistent-owned storage.
 
 Semantic wrapper returns preserve the wrapped PHP value. They are not serialized
 as V structs.

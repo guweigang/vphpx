@@ -15,7 +15,8 @@ fn dispatch_app_request_with_params(app &VSlimApp, req &VSlimRequest, trace_on b
 		if trace_on {
 			vslim_trace_mem_log(app, req, 'dispatch.routes.begin', trace_base)
 		}
-		res, params, effective_req, ok := dispatch_php_routes_with_params(app, req, trace_on, trace_base)
+		res, params, effective_req, ok := dispatch_php_routes_with_params(app, req, trace_on,
+			trace_base)
 		if trace_on {
 			vslim_trace_mem_log(app, req, 'dispatch.routes.end', trace_base)
 		}
@@ -164,14 +165,16 @@ fn resolve_php_route_dispatch_raw(app &VSlimApp, req &VSlimRequest, source_paylo
 			continue
 		}
 		allowed_methods = collect_allowed_methods(allowed_methods, route.method)
-		if route.method != '*' && route.method != method && !(method == 'HEAD' && route.method == 'GET') {
+		if route.method != '*' && route.method != method && !(method == 'HEAD'
+			&& route.method == 'GET') {
 			method_not_allowed = true
 			continue
 		}
 		if trace_on {
 			vslim_trace_mem_log(app, req, 'route.matched', trace_base)
 		}
-		payload, validation_req := build_route_dispatch_payload(&dispatch_req, source_payload, params)
+		payload, validation_req := build_route_dispatch_payload(&dispatch_req, source_payload,
+			params)
 		if trace_on {
 			vslim_trace_mem_log(app, req, 'route.after_build_payload', trace_base)
 		}
@@ -229,8 +232,8 @@ fn dispatch_php_routes_psr15(app &VSlimApp, req &VSlimRequest, request_payload v
 
 fn dispatch_php_routes_with_params(app &VSlimApp, req &VSlimRequest, trace_on bool, trace_base i64) (VSlimResponse, map[string]string, &VSlimRequest, bool) {
 	path := RoutePath.normalize(req.path_value())
-	resolved := resolve_php_route_dispatch_raw(app, req, vphp.RequestBorrowedZBox.null(), trace_on,
-		trace_base)
+	resolved := resolve_php_route_dispatch_raw(app, req, vphp.RequestBorrowedZBox.null(),
+		trace_on, trace_base)
 	if resolved.handled {
 		if trace_on {
 			vslim_trace_mem_log(app, req, 'route.after_normalize', trace_base)
@@ -244,7 +247,8 @@ fn dispatch_php_routes_with_params(app &VSlimApp, req &VSlimRequest, trace_on bo
 
 fn dispatch_php_routes_worker_with_params(app &VSlimApp, req &VSlimRequest) (vphp.ZVal, map[string]string, &VSlimRequest, bool) {
 	path := RoutePath.normalize(req.path_value())
-	resolved := resolve_php_route_dispatch_raw(app, req, vphp.RequestBorrowedZBox.null(), false, 0)
+	resolved := resolve_php_route_dispatch_raw(app, req, vphp.RequestBorrowedZBox.null(),
+		false, 0)
 	if resolved.handled {
 		ctx := new_pipeline_request_context(path, resolved.payload_ref, resolved.route_params)
 		if is_worker_stream_response_borrowed(resolved.raw_response_ref.borrowed()) {
@@ -266,7 +270,8 @@ fn dispatch_resource_missing_meta(action string, handler vphp.RequestBorrowedZBo
 	}
 	action_z := vphp.RequestOwnedZBox.new_string(action).to_zval()
 	psr_payload := normalize_psr15_server_request_payload(request_payload, params)
-	mut result := vphp.PhpCallable.borrowed(handler.to_zval()).request_owned_box([psr_payload, action_z, params_z])
+	mut result := vphp.PhpCallable.borrowed(handler.to_zval()).fn_request_owned(vphp.PhpValue.from_zval(psr_payload),
+		vphp.PhpValue.from_zval(action_z), vphp.PhpValue.from_zval(params_z))
 	return result.take_zval()
 }
 
@@ -292,8 +297,7 @@ fn vslim_max_body_bytes(app &VSlimApp) int {
 fn request_validation_terminal_meta(app &VSlimApp, req &VSlimRequest) (MiddlewareTerminalMeta, bool) {
 	max_bytes := vslim_max_body_bytes(app)
 	if max_bytes > 0 && req.body.len > max_bytes {
-		return error_terminal_meta(413, 'Payload too large', 'Payload Too Large', 'payload_too_large'),
-			true
+		return error_terminal_meta(413, 'Payload too large', 'Payload Too Large', 'payload_too_large'), true
 	}
 	parse_msg := req.parse_error()
 	if parse_msg != '' {

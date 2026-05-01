@@ -14,8 +14,7 @@ fn is_supported_route_handler(handler vphp.RequestBorrowedZBox) bool {
 		return false
 	}
 	return raw.is_instance_of('Psr\\Http\\Server\\RequestHandlerInterface')
-		|| raw.method_exists('mount')
-		|| raw.method_exists('render')
+		|| raw.method_exists('mount') || raw.method_exists('render')
 }
 
 fn middleware_registration_error(kind MiddlewareRegistrationKind) string {
@@ -89,9 +88,10 @@ fn bind_cached_target_to_app_if_supported(app &VSlimApp, target vphp.ZVal) {
 		return
 	}
 	if target.method_exists('setApp') {
-		vphp.PhpObject.borrowed(target).with_method_result_zval('setApp', [wrap_runtime_app_zval(app)], fn (_ vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(target).with_method_result[vphp.PhpValue, bool]('setApp',
+			fn (_ vphp.PhpValue) bool {
 			return true
-		})
+		}, vphp.PhpValue.from_zval(wrap_runtime_app_zval(app))) or { false }
 	}
 }
 
@@ -160,10 +160,17 @@ fn collect_matching_route_hooks(table HookTable, path string) []vphp.RequestOwne
 	return out
 }
 
+fn release_collected_middlewares(mut hooks []vphp.RequestOwnedZBox) {
+	for i in 0 .. hooks.len {
+		hooks[i].release()
+	}
+	unsafe {
+		hooks.free()
+	}
+}
+
 fn persistent_hook_request_owned(hook vphp.PersistentOwnedZBox) vphp.RequestOwnedZBox {
-	return hook.with_request_zval(fn (z vphp.ZVal) vphp.RequestOwnedZBox {
-		return vphp.RequestOwnedZBox.adopt_zval(z.dup())
-	})
+	return hook.clone_request_owned()
 }
 
 fn collect_standard_middlewares(app &VSlimApp, group_hooks []vphp.RequestOwnedZBox) []vphp.RequestOwnedZBox {
@@ -317,18 +324,19 @@ fn bind_route_target_to_app_if_supported(app &VSlimApp, target vphp.ZVal) {
 		return
 	}
 	if target.method_exists('setApp') {
-		vphp.PhpObject.borrowed(target).with_method_result_zval('setApp', [wrap_runtime_app_zval(app)], fn (_ vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(target).with_method_result[vphp.PhpValue, bool]('setApp',
+			fn (_ vphp.PhpValue) bool {
 			return true
-		})
+		}, vphp.PhpValue.from_zval(wrap_runtime_app_zval(app))) or { false }
 	}
 }
 
-fn call_route_target_method(target vphp.ZVal, method string, args []vphp.ZVal) vphp.RequestOwnedZBox {
+fn call_route_target_method(target vphp.ZVal, method string, args []vphp.PhpFnArg) vphp.RequestOwnedZBox {
 	mut callable := vphp.RequestOwnedZBox.new_null()
 	callable.to_zval().array_init()
 	callable.to_zval().add_next_val(target)
 	callable.to_zval().add_next_val(vphp.ZVal.new_string(method))
-	mut result := vphp.PhpCallable.borrowed(callable.to_zval()).request_owned_box(args)
+	mut result := vphp.PhpCallable.borrowed(callable.to_zval()).fn_request_owned(...args)
 	callable.release()
 	return result
 }
@@ -370,7 +378,8 @@ fn dispatch_php_middleware_entry(mut chain MiddlewareChain, handler vphp.Request
 		defer {
 			next_handler.release()
 		}
-		mut result := vphp.PhpObject.borrowed(target).method_request_owned_box(method, [psr_payload.to_zval(), next_handler.to_zval()])
+		mut result := vphp.PhpObject.borrowed(target).method_request_owned(method, vphp.PhpValue.from_zval(psr_payload.to_zval()),
+			vphp.PhpValue.from_zval(next_handler.to_zval()))
 		defer {
 			result.release()
 		}
@@ -392,10 +401,10 @@ fn is_supported_websocket_handler(handler vphp.RequestBorrowedZBox) bool {
 	if !raw.is_object() {
 		return false
 	}
-	return raw.method_exists('handle_websocket') || raw.method_exists('on_open')
-		|| raw.method_exists('on_message') || raw.method_exists('on_close')
+	return raw.method_exists('handleWebSocket') || raw.method_exists('onOpen')
+		|| raw.method_exists('onMessage') || raw.method_exists('onClose')
 		|| raw.method_exists('mount') || raw.method_exists('render')
-		|| raw.method_exists('live_marker')
+		|| raw.method_exists('liveMarker')
 }
 
 fn dispatch_route_handler(app &VSlimApp, handler vphp.RequestBorrowedZBox, payload vphp.RequestBorrowedZBox, route_params map[string]string) !vphp.ZVal {
@@ -406,17 +415,20 @@ fn dispatch_route_handler(app &VSlimApp, handler vphp.RequestBorrowedZBox, paylo
 		target, method := resolve_php_route_target(app, handler)!
 		bind_route_target_to_app_if_supported(app, target)
 		psr_payload := normalize_psr15_server_request_payload(payload, route_params)
-		mut result := call_route_target_method(target, method, [psr_payload])
+		mut route_args := []vphp.PhpFnArg{}
+		route_args << vphp.PhpValue.from_zval(psr_payload)
+		mut result := call_route_target_method(target, method, route_args)
 		return detach_route_handler_result(mut result)
 	}
 	if is_psr15_request_handler(handler) {
 		psr_payload := normalize_psr15_server_request_payload(payload, route_params)
-		mut result := vphp.PhpObject.borrowed(handler.to_zval()).method_request_owned_box('handle', [psr_payload])
+		mut result := vphp.PhpObject.borrowed(handler.to_zval()).method_request_owned('handle',
+			vphp.PhpValue.from_zval(psr_payload))
 		return detach_route_handler_result(mut result)
 	}
 	psr_payload := normalize_psr15_server_request_payload(payload, route_params)
 	if handler.is_callable() {
-		mut result := vphp.PhpCallable.borrowed(handler.to_zval()).request_owned_box([psr_payload])
+		mut result := vphp.PhpCallable.borrowed(handler.to_zval()).fn_request_owned(vphp.PhpValue.from_zval(psr_payload))
 		return detach_route_handler_result(mut result)
 	}
 	raw := handler.to_zval()
@@ -426,7 +438,8 @@ fn dispatch_route_handler(app &VSlimApp, handler vphp.RequestBorrowedZBox, paylo
 		}
 		if raw.method_exists('mount') || raw.method_exists('render') {
 			effective_payload := if is_psr_server_request_payload(payload) {
-				vphp.RequestBorrowedZBox.from_zval(legacy_middleware_payload(payload, route_params))
+				vphp.RequestBorrowedZBox.from_zval(legacy_middleware_payload(payload,
+					route_params))
 			} else {
 				payload
 			}
@@ -448,16 +461,26 @@ fn dispatch_psr15_next_handler(mut state Psr15NextHandlerState, key u64, request
 					&& chain.request_ctx.route_params.len == 0
 				mut raw := if use_pre_normalized {
 					chain.dispatch_pre_normalized(request_borrowed) or {
-						msg := if err.msg() == '' { 'Route handler is not callable' } else { err.msg() }
-						res := run_error_handler_with_context_psr(chain.app, chain.request_ctx, 500, msg) or {
+						msg := if err.msg() == '' {
+							'Route handler is not callable'
+						} else {
+							err.msg()
+						}
+						res := run_error_handler_with_context_psr(chain.app, chain.request_ctx,
+							500, msg) or {
 							default_error_response_psr(chain.app, 500, msg, 'handler_not_callable')
 						}
 						return res
 					}
 				} else {
 					chain.dispatch(request_borrowed) or {
-						msg := if err.msg() == '' { 'Route handler is not callable' } else { err.msg() }
-						res := run_error_handler_with_context_psr(chain.app, chain.request_ctx, 500, msg) or {
+						msg := if err.msg() == '' {
+							'Route handler is not callable'
+						} else {
+							err.msg()
+						}
+						res := run_error_handler_with_context_psr(chain.app, chain.request_ctx,
+							500, msg) or {
 							default_error_response_psr(chain.app, 500, msg, 'handler_not_callable')
 						}
 						return res
@@ -475,8 +498,8 @@ fn dispatch_psr15_next_handler(mut state Psr15NextHandlerState, key u64, request
 			} else {
 				res := state.fixed_response_ref
 				clone_psr7_response(res, res.get_protocol_version(), clone_header_values(res.headers),
-					clone_header_names(res.header_names), response_body_or_empty(res), res.get_status_code(),
-					res.get_reason_phrase())
+					clone_header_names(res.header_names), response_body_or_empty(res),
+					res.get_status_code(), res.get_reason_phrase())
 			}
 		}
 		.continue_marker {
@@ -490,8 +513,8 @@ fn dispatch_psr15_next_handler(mut state Psr15NextHandlerState, key u64, request
 	}
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface']
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method: 'handle']
 pub fn (handler &VSlimPsr15NextHandler) handle(request vphp.RequestBorrowedZBox) &VSlimPsr7Response {
 	unsafe {
@@ -512,8 +535,8 @@ pub fn (handler &VSlimPsr15NextHandler) handle(request vphp.RequestBorrowedZBox)
 	}
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface']
+@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method: 'handle']
 pub fn (handler &VSlimPsr15ContinueHandler) handle(request vphp.RequestBorrowedZBox) &VSlimPsr7Response {
 	unsafe {
@@ -547,10 +570,10 @@ fn resolve_container_service(app &VSlimApp, service_id string) !vphp.ZVal {
 			if !vphp.PhpClass.named(service_id).exists() {
 				return error('container service not found')
 			}
-			created := vphp.PhpClass.named(service_id).construct([])
-			if !created.is_valid() || !created.is_object() {
+			created_obj := vphp.PhpClass.named(service_id).construct() or {
 				return error('class "${service_id}" could not be instantiated')
 			}
+			created := created_obj.to_zval()
 			bind_cached_target_to_app_if_supported(app, created)
 			container.set(service_id, vphp.RequestBorrowedZBox.of(created))
 			return created
