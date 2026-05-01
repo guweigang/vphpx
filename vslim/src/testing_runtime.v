@@ -83,10 +83,10 @@ fn testing_response_status(response vphp.RequestBorrowedZBox) int {
 		return props['status'].to_int()
 	}
 	if raw.method_exists('getStatusCode') {
-		return int(vphp.PhpObject.borrowed(raw).with_method_result_zval('getStatusCode',
-			fn (z vphp.ZVal) i64 {
-			return z.to_int()
-		}))
+		return int(vphp.PhpObject.borrowed(raw).with_method_result[vphp.PhpInt, i64]('getStatusCode',
+			fn (z vphp.PhpInt) i64 {
+			return z.value()
+		}) or { 0 })
 	}
 	return 0
 }
@@ -103,14 +103,24 @@ fn testing_response_header(response vphp.RequestBorrowedZBox, name string) strin
 		return headers[VSlimRequest.normalize_header_name(name)] or { '' }
 	}
 	if raw.method_exists('getHeaderLine') {
-		return vphp.PhpObject.borrowed(raw).with_method_result_zval('getHeaderLine', fn (z vphp.ZVal) string {
-			return z.to_string()
-		}, vphp.RequestOwnedZBox.new_string(name).to_zval())
+		mut name_arg := vphp.PhpString.of(name)
+		defer {
+			name_arg.release()
+		}
+		return vphp.PhpObject.borrowed(raw).with_method_result[vphp.PhpString, string]('getHeaderLine',
+			fn (z vphp.PhpString) string {
+			return z.value()
+		}, name_arg) or { '' }
 	}
 	if raw.method_exists('header') {
-		return vphp.PhpObject.borrowed(raw).with_method_result_zval('header', fn (z vphp.ZVal) string {
-			return z.to_string()
-		}, vphp.RequestOwnedZBox.new_string(name).to_zval())
+		mut name_arg := vphp.PhpString.of(name)
+		defer {
+			name_arg.release()
+		}
+		return vphp.PhpObject.borrowed(raw).with_method_result[vphp.PhpString, string]('header',
+			fn (z vphp.PhpString) string {
+			return z.value()
+		}, name_arg) or { '' }
 	}
 	return ''
 }
@@ -126,22 +136,31 @@ fn testing_response_body(response vphp.RequestBorrowedZBox) string {
 		return body_z.to_string()
 	}
 	if raw.method_exists('getBody') {
-		return vphp.PhpObject.borrowed(raw).with_method_result_zval('getBody', fn (body_z vphp.ZVal) string {
-			if body_z.is_valid() && body_z.is_object() && body_z.method_exists('getContents') {
-				return vphp.PhpObject.borrowed(body_z).with_method_result_zval('getContents',
-					fn (contents vphp.ZVal) string {
-					return contents.to_string()
-				})
+		return vphp.PhpObject.borrowed(raw).with_method_result[vphp.PhpValue, string]('getBody',
+			fn (body_z vphp.PhpValue) string {
+			raw_body := body_z.to_zval()
+			if raw_body.is_valid() && raw_body.is_object() && raw_body.method_exists('getContents') {
+				return vphp.PhpObject.borrowed(raw_body).with_method_result[vphp.PhpString, string]('getContents',
+					fn (contents vphp.PhpString) string {
+					return contents.value()
+				}) or { '' }
 			}
-			return body_z.to_string()
-		})
+			return raw_body.to_string()
+		}) or { '' }
 	}
 	return ''
 }
 
 fn testing_new_request(method string, uri string, body string) &VSlimPsr7ServerRequest {
-	mut req := new_psr7_server_request(method, vphp.RequestOwnedZBox.new_string(uri).to_zval(),
-		vphp.RequestOwnedZBox.new_null().to_zval())
+	mut uri_arg := vphp.PhpString.of(uri)
+	defer {
+		uri_arg.release()
+	}
+	mut server_params_arg := vphp.PhpNull.value()
+	defer {
+		server_params_arg.release()
+	}
+	mut req := new_psr7_server_request(method, uri_arg.to_zval(), server_params_arg.to_zval())
 	if body == '' {
 		return req
 	}

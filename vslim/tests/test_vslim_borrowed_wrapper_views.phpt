@@ -14,13 +14,13 @@ $controllerView2 = $controller->view();
 echo (spl_object_id($controllerView1) === spl_object_id($controllerView2) ? 'controller-same' : 'controller-diff') . PHP_EOL;
 echo $controllerView2->asset('app.js') . PHP_EOL;
 
-$live = (new VSlim\Live\View())->set_app($app);
+$live = (new VSlim\Live\View())->setApp($app);
 $liveView1 = $live->view();
 $liveView2 = $live->view();
 echo (spl_object_id($liveView1) === spl_object_id($liveView2) ? 'live-same' : 'live-diff') . PHP_EOL;
 echo $liveView2->asset('app.js') . PHP_EOL;
 
-$component = (new VSlim\Live\Component())->set_app($app);
+$component = (new VSlim\Live\Component())->setApp($app);
 $componentView1 = $component->view();
 $componentView2 = $component->view();
 echo (spl_object_id($componentView1) === spl_object_id($componentView2) ? 'component-same' : 'component-diff') . PHP_EOL;
@@ -31,13 +31,13 @@ $socketPatch = $live->patch($socket, 'root');
 echo (spl_object_id($socket) === spl_object_id($socketPatch) ? 'live-patch-same' : 'live-patch-diff') . PHP_EOL;
 
 $boundSocket = new VSlim\Live\Socket();
-$component->set_id('counter-root')->bind_socket($boundSocket);
+$component->setId('counter-root')->bindSocket($boundSocket);
 $componentPatch = $component->patch($boundSocket);
-$componentBoundPatch = $component->patch_bound();
-$componentAppend = $component->append_to($boundSocket, 'items');
-$componentAppendBound = $component->append_to_bound('items');
+$componentBoundPatch = $component->patchBound();
+$componentAppend = $component->appendTo($boundSocket, 'items');
+$componentAppendBound = $component->appendToBound('items');
 $componentRemove = $component->remove($boundSocket);
-$componentRemoveBound = $component->remove_bound();
+$componentRemoveBound = $component->removeBound();
 echo (spl_object_id($boundSocket) === spl_object_id($componentPatch) ? 'component-patch-same' : 'component-patch-diff') . PHP_EOL;
 echo (spl_object_id($boundSocket) === spl_object_id($componentBoundPatch) ? 'component-patch-bound-same' : 'component-patch-bound-diff') . PHP_EOL;
 echo (spl_object_id($boundSocket) === spl_object_id($componentAppend) ? 'component-append-same' : 'component-append-diff') . PHP_EOL;

@@ -119,7 +119,7 @@ namespace {
             parent::__construct($app);
         }
 
-        public function assistant(ServerRequestInterface $request): VSlim\VHttpd\Response
+        public function assistant(ServerRequestInterface $request): ResponseInterface
         {
             $viewer = $request->getAttribute('studio.viewer');
             $locale = (string) $request->getAttribute('studio.locale', '');

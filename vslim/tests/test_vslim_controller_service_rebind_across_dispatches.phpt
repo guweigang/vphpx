@@ -4,6 +4,13 @@ VSlim rebinds controller services to the current app across repeated dispatches
 <?php if (!extension_loaded('vslim')) print 'skip'; ?>
 --FILE--
 <?php
+if (!interface_exists(\Psr\Http\Message\ResponseInterface::class)) {
+    eval('namespace Psr\Http\Message {
+        interface MessageInterface {}
+        interface ResponseInterface extends MessageInterface {}
+    }');
+}
+
 $root = sys_get_temp_dir() . '/vslim_controller_rebind_' . uniqid();
 @mkdir($root . '/app/Http/Controllers', 0777, true);
 @mkdir($root . '/app/Http/routes', 0777, true);
@@ -19,12 +26,12 @@ final class RebindController extends \VSlim\Controller
         parent::__construct($app);
     }
 
-    public function first(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function first(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         return $this->text('first|' . ($this->app() instanceof \VSlim\App ? 'app' : 'missing'), 200);
     }
 
-    public function second(\VSlim\Psr7\ServerRequest $request): \VSlim\VHttpd\Response
+    public function second(\VSlim\Psr7\ServerRequest $request): \Psr\Http\Message\ResponseInterface
     {
         return $this->text('second|' . ($this->app() instanceof \VSlim\App ? 'app' : 'missing'), 200);
     }

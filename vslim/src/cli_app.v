@@ -145,7 +145,11 @@ fn cli_handler_string_is_function_callable(name string) bool {
 	if callable_name == '' {
 		return false
 	}
-	return vphp.PhpFunction.named('function_exists').result_bool(vphp.PhpString.of(callable_name))
+	mut callable_arg := vphp.PhpString.of(callable_name)
+	defer {
+		callable_arg.release()
+	}
+	return vphp.PhpFunction.named('function_exists').result_bool(callable_arg)
 }
 
 fn normalize_cli_command_handler_input(raw vphp.ZVal) !vphp.ZVal {
@@ -196,8 +200,13 @@ fn resolve_cli_command_runtime(mut cli VSlimCliApp, handler_z vphp.ZVal) !vphp.Z
 		if cli_handler_string_is_function_callable(class_name) {
 			return vphp.RequestOwnedZBox.new_string(class_name).to_zval()
 		}
-		exists := vphp.PhpFunction.named('class_exists').result_bool(vphp.PhpString.of(class_name),
-			vphp.PhpBool.of(true))
+		mut class_arg := vphp.PhpString.of(class_name)
+		mut autoload_arg := vphp.PhpBool.of(true)
+		defer {
+			class_arg.release()
+			autoload_arg.release()
+		}
+		exists := vphp.PhpFunction.named('class_exists').result_bool(class_arg, autoload_arg)
 		if !exists {
 			return error('command class "${class_name}" does not exist')
 		}
@@ -452,11 +461,23 @@ pub fn (cli &VSlimCliApp) project_root_value() string {
 
 @[php_method: 'debugBridgePath']
 pub fn (cli &VSlimCliApp) debug_bridge_path(path string) vphp.RequestOwnedZBox {
-	echoed := vphp.PhpFunction.named('strval').result_string(vphp.PhpString.of(path))
-	joined := vphp.PhpFunction.named('sprintf').result_string(vphp.PhpString.of('%s/%s'),
-		vphp.PhpString.of(path), vphp.PhpString.of('bootstrap/app.php'))
-	echoed_joined := vphp.PhpFunction.named('sprintf').result_string(vphp.PhpString.of('%s/%s'),
-		vphp.PhpString.of(echoed), vphp.PhpString.of('bootstrap/app.php'))
+	mut path_arg := vphp.PhpString.of(path)
+	defer {
+		path_arg.release()
+	}
+	echoed := vphp.PhpFunction.named('strval').result_string(path_arg)
+	mut format_arg := vphp.PhpString.of('%s/%s')
+	mut bootstrap_arg := vphp.PhpString.of('bootstrap/app.php')
+	defer {
+		format_arg.release()
+		bootstrap_arg.release()
+	}
+	joined := vphp.PhpFunction.named('sprintf').result_string(format_arg, path_arg, bootstrap_arg)
+	mut echoed_arg := vphp.PhpString.of(echoed)
+	defer {
+		echoed_arg.release()
+	}
+	echoed_joined := vphp.PhpFunction.named('sprintf').result_string(format_arg, echoed_arg, bootstrap_arg)
 	return vphp.RequestOwnedZBox.adopt_zval(vphp.DynValue.of_map({
 		'original':     vphp.DynValue.of_string(path)
 		'strval':       vphp.DynValue.of_string(echoed)

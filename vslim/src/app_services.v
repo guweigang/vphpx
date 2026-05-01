@@ -342,8 +342,12 @@ pub fn (app &VSlimApp) resolve_auth_user(user_id string) vphp.RequestOwnedZBox {
 	if !app.auth_user_resolver.is_valid() {
 		return vphp.RequestOwnedZBox.new_string(normalized_id)
 	}
+	mut normalized_id_arg := vphp.PhpString.of(normalized_id)
+	defer {
+		normalized_id_arg.release()
+	}
 	if app.auth_user_resolver.is_callable() {
-		mut result := app.auth_user_resolver.fn_request_owned(vphp.PhpString.of(normalized_id))
+		mut result := app.auth_user_resolver.fn_request_owned(normalized_id_arg)
 		return result
 	}
 	mut provider := app.auth_user_resolver.clone_request_owned()
@@ -353,10 +357,10 @@ pub fn (app &VSlimApp) resolve_auth_user(user_id string) vphp.RequestOwnedZBox {
 	value := provider.to_zval()
 	if value.is_valid() && value.is_object() {
 		if value.method_exists('findById') {
-			return vphp.PhpObject.borrowed(value).method_request_owned('findById', vphp.PhpString.of(normalized_id))
+			return vphp.PhpObject.borrowed(value).method_request_owned('findById', normalized_id_arg)
 		}
 		if value.method_exists('resolve') {
-			return vphp.PhpObject.borrowed(value).method_request_owned('resolve', vphp.PhpString.of(normalized_id))
+			return vphp.PhpObject.borrowed(value).method_request_owned('resolve', normalized_id_arg)
 		}
 	}
 	return vphp.RequestOwnedZBox.new_string(normalized_id)
@@ -428,7 +432,11 @@ pub fn (app &VSlimApp) can(ability string, request vphp.RequestBorrowedZBox) boo
 	defer {
 		user.release()
 	}
-	mut result := app.auth_gate_resolver.fn_request_owned(vphp.PhpString.of(ability),
+	mut ability_arg := vphp.PhpString.of(ability)
+	defer {
+		ability_arg.release()
+	}
+	mut result := app.auth_gate_resolver.fn_request_owned(ability_arg,
 		vphp.PhpValue.from_zval(user.to_zval()), vphp.PhpValue.from_zval(request.to_zval()))
 	defer {
 		result.release()

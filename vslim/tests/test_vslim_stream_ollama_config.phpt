@@ -18,7 +18,7 @@ api_key = "cfg-key"
 fixture = "tests/fixtures/ollama_stream_fixture.ndjson"
 TOML);
 
-$client = VSlim\Stream\OllamaClient::from_app($app);
+$client = VSlim\Stream\OllamaClient::fromApp($app);
 echo $client->chatUrl() . PHP_EOL;
 echo $client->defaultModel() . PHP_EOL;
 echo $client->apiKey() . PHP_EOL;

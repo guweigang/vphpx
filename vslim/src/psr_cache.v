@@ -84,22 +84,22 @@ pub fn (mut pool VSlimPsr6CacheItemPool) get_item(key string) &VSlimPsr6CacheIte
 @[php_arg_optional: 'keys']
 pub fn (mut pool VSlimPsr6CacheItemPool) get_items(keys vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	ensure_psr6_pool(mut pool)
-	mut out := new_array_zval()
+	mut out := new_array()
 	if !keys.is_valid() || keys.is_null() || keys.is_undef() {
-		return vphp.RequestOwnedZBox.of(out)
+		return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
 	}
 	if !keys.is_array() {
 		throw_psr6_invalid_argument('keys must be an array of cache keys')
-		return vphp.RequestOwnedZBox.of(out)
+		return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
 	}
 	for key_name in psr6_key_list_from_array(keys.to_zval()) or {
 		msg := err.msg()
 		throw_psr6_invalid_argument(msg)
-		return psr6_owned_value(out)
+		return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
 	} {
-		add_assoc_zval(out, key_name, build_php_psr6_cache_item_object(pool.item_for_key(key_name)))
+		out.set_zval(key_name, build_php_psr6_cache_item_object(pool.item_for_key(key_name)))
 	}
-	return vphp.RequestOwnedZBox.of(out)
+	return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
 }
 
 @[php_method: 'hasItem']
@@ -478,10 +478,10 @@ fn psr6_resolve_absolute_expiration_or_throw(expiration vphp.ZVal) !i64 {
 		return 0
 	}
 	if expiration.is_object() && expiration.is_instance_of('DateTimeInterface') {
-		return vphp.PhpObject.borrowed(expiration).with_method_result_zval('getTimestamp',
-			fn (ts vphp.ZVal) i64 {
-			return ts.to_i64()
-		})
+		return vphp.PhpObject.borrowed(expiration).with_method_result[vphp.PhpInt, i64]('getTimestamp',
+			fn (ts vphp.PhpInt) i64 {
+			return ts.value()
+		})!
 	}
 	return error('expiration must be null or DateTimeInterface')
 }
@@ -502,15 +502,15 @@ fn psr6_resolve_relative_expiration_or_throw(clock vphp.ZVal, time_value vphp.ZV
 		now_dt := psr20_now_datetime_or_throw(clock) or {
 			return error('failed to resolve clock time for expiration resolution')
 		}
-		expires_at := vphp.PhpObject.borrowed(now_dt).with_method_result_zval('add', fn (added vphp.ZVal) i64 {
-			if !added.is_valid() || !added.is_object() {
+		expires_at := vphp.PhpObject.borrowed(now_dt).with_method_result[vphp.PhpObject, i64]('add',
+			fn (added vphp.PhpObject) i64 {
+			if !added.is_valid() {
 				return i64(-1)
 			}
-			return vphp.PhpObject.borrowed(added).with_method_result_zval('getTimestamp',
-				fn (ts vphp.ZVal) i64 {
-				return ts.to_i64()
-			})
-		}, time_value)
+			return added.with_method_result[vphp.PhpInt, i64]('getTimestamp', fn (ts vphp.PhpInt) i64 {
+				return ts.value()
+			}) or { i64(-1) }
+		}, vphp.PhpValue.from_zval(time_value)) or { i64(-1) }
 		if expires_at < 0 {
 			return error('failed to apply DateInterval expiration')
 		}

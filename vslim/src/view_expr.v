@@ -557,12 +557,17 @@ fn (view &VSlimView) invoke_template_expr_method(name string, args []TemplateExp
 		return new_template_expr_scalar(debug_template_error('method.missing', template_path,
 			raw, line, col))
 	}
-	mut zargs := []vphp.ZVal{cap: if args.len > 1 { args.len - 1 } else { 0 }}
-	for arg in args[1..] {
-		zargs << template_expr_value_to_zval(arg)
+	mut frame := vphp.PhpScope.frame()
+	defer {
+		frame.release()
 	}
-	mut result := vphp.PhpObject.borrowed(args[0].object.to_zval()).method_request_owned_zval(method,
-		zargs)
+	mut raw_args := []vphp.ZVal{cap: if args.len > 1 { args.len - 1 } else { 0 }}
+	for arg in args[1..] {
+		raw_args << template_expr_value_to_zval(arg)
+	}
+	call_args := frame.args_from_zvals(raw_args)
+	mut result := vphp.PhpObject.borrowed(args[0].object.to_zval()).method_request_owned(method,
+		...call_args)
 	defer {
 		result.release()
 	}

@@ -4,6 +4,13 @@ VSlim View supports include partials and layout slots
 <?php if (!extension_loaded("vslim")) print "skip"; ?>
 --FILE--
 <?php
+if (!interface_exists('Psr\\Http\\Message\\ResponseInterface', false)) {
+    eval('namespace Psr\\Http\\Message {
+        interface MessageInterface {}
+        interface ResponseInterface extends MessageInterface {}
+    }');
+}
+
 $app = new VSlim\App();
 $app->setViewBasePath(__DIR__ . '/fixtures');
 $app->setAssetsPrefix('/assets');
@@ -29,10 +36,11 @@ $res = $app->viewWithLayout('view_home.html', 'view_layout.html', [
     'name' => 'ada',
     'trace' => 'trace-l2',
 ]);
+$res = VSlim\Psr7Adapter::toVSlimResponse($res);
 echo $res->status . '|' . (str_contains($res->body, 'Header-2') ? 'res-ok' : 'res-miss') . PHP_EOL;
 
 final class LayoutController extends VSlim\Controller {
-    public function page(): VSlim\VHttpd\Response {
+    public function page(): Psr\Http\Message\ResponseInterface {
         return $this->renderWithLayout('view_home.html', 'view_layout.html', [
             'title' => 'Controller Layout',
             'subtitle' => 'Header-C',
@@ -42,7 +50,7 @@ final class LayoutController extends VSlim\Controller {
     }
 }
 $controller = new LayoutController($app);
-$res2 = $controller->page();
+$res2 = VSlim\Psr7Adapter::toVSlimResponse($controller->page());
 echo $res2->status . '|' . (str_contains($res2->body, 'Header-C') ? 'controller-ok' : 'controller-miss') . PHP_EOL;
 ?>
 --EXPECT--

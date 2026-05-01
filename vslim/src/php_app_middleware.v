@@ -88,9 +88,10 @@ fn bind_cached_target_to_app_if_supported(app &VSlimApp, target vphp.ZVal) {
 		return
 	}
 	if target.method_exists('setApp') {
-		vphp.PhpObject.borrowed(target).with_method_result_zval('setApp', fn (_ vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(target).with_method_result[vphp.PhpValue, bool]('setApp',
+			fn (_ vphp.PhpValue) bool {
 			return true
-		}, wrap_runtime_app_zval(app))
+		}, vphp.PhpValue.from_zval(wrap_runtime_app_zval(app))) or { false }
 	}
 }
 
@@ -169,9 +170,7 @@ fn release_collected_middlewares(mut hooks []vphp.RequestOwnedZBox) {
 }
 
 fn persistent_hook_request_owned(hook vphp.PersistentOwnedZBox) vphp.RequestOwnedZBox {
-	return hook.with_request_zval(fn (z vphp.ZVal) vphp.RequestOwnedZBox {
-		return vphp.RequestOwnedZBox.adopt_zval(z.dup())
-	})
+	return hook.clone_request_owned()
 }
 
 fn collect_standard_middlewares(app &VSlimApp, group_hooks []vphp.RequestOwnedZBox) []vphp.RequestOwnedZBox {
@@ -325,18 +324,19 @@ fn bind_route_target_to_app_if_supported(app &VSlimApp, target vphp.ZVal) {
 		return
 	}
 	if target.method_exists('setApp') {
-		vphp.PhpObject.borrowed(target).with_method_result_zval('setApp', fn (_ vphp.ZVal) bool {
+		vphp.PhpObject.borrowed(target).with_method_result[vphp.PhpValue, bool]('setApp',
+			fn (_ vphp.PhpValue) bool {
 			return true
-		}, wrap_runtime_app_zval(app))
+		}, vphp.PhpValue.from_zval(wrap_runtime_app_zval(app))) or { false }
 	}
 }
 
-fn call_route_target_method(target vphp.ZVal, method string, args []vphp.ZVal) vphp.RequestOwnedZBox {
+fn call_route_target_method(target vphp.ZVal, method string, args []vphp.PhpFnArg) vphp.RequestOwnedZBox {
 	mut callable := vphp.RequestOwnedZBox.new_null()
 	callable.to_zval().array_init()
 	callable.to_zval().add_next_val(target)
 	callable.to_zval().add_next_val(vphp.ZVal.new_string(method))
-	mut result := vphp.PhpCallable.borrowed(callable.to_zval()).fn_request_owned_zval(args)
+	mut result := vphp.PhpCallable.borrowed(callable.to_zval()).fn_request_owned(...args)
 	callable.release()
 	return result
 }
@@ -401,10 +401,10 @@ fn is_supported_websocket_handler(handler vphp.RequestBorrowedZBox) bool {
 	if !raw.is_object() {
 		return false
 	}
-	return raw.method_exists('handle_websocket') || raw.method_exists('on_open')
-		|| raw.method_exists('on_message') || raw.method_exists('on_close')
+	return raw.method_exists('handleWebSocket') || raw.method_exists('onOpen')
+		|| raw.method_exists('onMessage') || raw.method_exists('onClose')
 		|| raw.method_exists('mount') || raw.method_exists('render')
-		|| raw.method_exists('live_marker')
+		|| raw.method_exists('liveMarker')
 }
 
 fn dispatch_route_handler(app &VSlimApp, handler vphp.RequestBorrowedZBox, payload vphp.RequestBorrowedZBox, route_params map[string]string) !vphp.ZVal {
@@ -415,7 +415,9 @@ fn dispatch_route_handler(app &VSlimApp, handler vphp.RequestBorrowedZBox, paylo
 		target, method := resolve_php_route_target(app, handler)!
 		bind_route_target_to_app_if_supported(app, target)
 		psr_payload := normalize_psr15_server_request_payload(payload, route_params)
-		mut result := call_route_target_method(target, method, [psr_payload])
+		mut route_args := []vphp.PhpFnArg{}
+		route_args << vphp.PhpValue.from_zval(psr_payload)
+		mut result := call_route_target_method(target, method, route_args)
 		return detach_route_handler_result(mut result)
 	}
 	if is_psr15_request_handler(handler) {

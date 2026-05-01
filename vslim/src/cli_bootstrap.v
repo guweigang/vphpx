@@ -114,14 +114,28 @@ fn cli_bootstrap_dir_apply(mut cli VSlimCliApp, path string) ! {
 		return error('CLI bootstrap directory has no project root')
 	}
 	cli.project_root = project_root
-	project_root_echo := vphp.PhpFunction.named('strval').result_string(vphp.PhpString.of(project_root))
-	bootstrap_candidate_probe := vphp.PhpFunction.named('sprintf').result_string(vphp.PhpString.of('%s/%s'),
-		vphp.PhpString.of(project_root), vphp.PhpString.of('bootstrap/app.php'))
+	mut project_root_arg := vphp.PhpString.of(project_root)
+	defer {
+		project_root_arg.release()
+	}
+	project_root_echo := vphp.PhpFunction.named('strval').result_string(project_root_arg)
+	mut format_arg := vphp.PhpString.of('%s/%s')
+	mut bootstrap_arg := vphp.PhpString.of('bootstrap/app.php')
+	defer {
+		format_arg.release()
+		bootstrap_arg.release()
+	}
+	bootstrap_candidate_probe := vphp.PhpFunction.named('sprintf').result_string(format_arg,
+		project_root_arg, bootstrap_arg)
 	cli_debug_log('project_root_echo="${project_root_echo}"')
 	cli_debug_log('bootstrap_candidate_probe="${bootstrap_candidate_probe}"')
 	bootstrap_candidate := bootstrap_candidate_probe
-	app_candidate_fallback := vphp.PhpFunction.named('sprintf').result_string(vphp.PhpString.of('%s/%s'),
-		vphp.PhpString.of(project_root), vphp.PhpString.of('app.php'))
+	mut app_arg := vphp.PhpString.of('app.php')
+	defer {
+		app_arg.release()
+	}
+	app_candidate_fallback := vphp.PhpFunction.named('sprintf').result_string(format_arg,
+		project_root_arg, app_arg)
 	mut shared_applied := false
 	cli_debug_log('app_candidate="${bootstrap_candidate}" is_file=${php_is_file(bootstrap_candidate)}')
 	if php_is_file(bootstrap_candidate) {
@@ -277,8 +291,12 @@ fn apply_cli_command_class_conventions_with_paths(mut cli VSlimCliApp, commands_
 			class_name_z.release()
 		}
 		_ = php_include_once(commands_dir + '/' + entry)
+		mut autoload_arg := vphp.PhpBool.of(true)
+		defer {
+			autoload_arg.release()
+		}
 		class_exists := vphp.PhpFunction.named('class_exists').result_bool(vphp.PhpValue.from_zval(class_name_z),
-			vphp.PhpBool.of(true))
+			autoload_arg)
 		cli_debug_log('command_entry="${entry_name_for_log}" file="${display_file_for_log}" class="${class_name_for_log}" class_exists=${class_exists}')
 		if !class_exists {
 			return error('command convention file "${display_file_for_log}" must declare class ${class_name_for_log}')

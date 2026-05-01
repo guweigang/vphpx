@@ -308,10 +308,17 @@ pub fn (u &VSlimPsr7UploadedFile) move_to(target_path vphp.RequestBorrowedZBox) 
 	stream := if u.stream_ref == unsafe { nil } { new_psr7_stream('') } else { u.stream_ref }
 	content := stream.stream_string()
 	size := if u.size_hint >= 0 { u.size_hint } else { content.len }
-	moved := vphp.PhpFunction.named('file_put_contents').with_result_zval(fn (result vphp.ZVal) bool {
-		return result.is_valid() && !result.is_null() && !result.is_undef()
-			&& (!result.is_bool() || result.to_bool())
-	}, vphp.RequestOwnedZBox.new_string(path).to_zval(), vphp.RequestOwnedZBox.new_string(content).to_zval())
+	mut path_arg := vphp.PhpString.of(path)
+	mut content_arg := vphp.PhpString.of(content)
+	defer {
+		path_arg.release()
+		content_arg.release()
+	}
+	moved := vphp.PhpFunction.named('file_put_contents').with_result[vphp.PhpValue, bool](fn (result vphp.PhpValue) bool {
+		raw := result.to_zval()
+		return raw.is_valid() && !raw.is_null() && !raw.is_undef()
+			&& (!raw.is_bool() || raw.to_bool())
+	}, path_arg, content_arg) or { false }
 	if !moved {
 		vphp.PhpException.raise_class('RuntimeException', 'failed to move uploaded file to target path',
 			0)
@@ -525,6 +532,23 @@ pub fn (r &VSlimPsr7Response) with_status(code vphp.RequestBorrowedZBox, default
 @[php_method: 'getReasonPhrase']
 pub fn (r &VSlimPsr7Response) get_reason_phrase() string {
 	return normalize_reason_phrase(r.status, r.reason_phrase)
+}
+
+@[php_arg_name: 'max_age=maxAge,http_only=httpOnly,same_site=sameSite']
+@[php_method: 'setCookieFull']
+pub fn (mut r VSlimPsr7Response) set_cookie_full(name string, value string, path string, domain string, max_age int, secure bool, http_only bool, same_site string) &VSlimPsr7Response {
+	header_value := build_set_cookie_header(name, value, path, domain, max_age, secure,
+		http_only, same_site)
+	r.headers['set-cookie'] = [header_value]
+	r.header_names['set-cookie'] = 'Set-Cookie'
+	return &r
+}
+
+@[php_method: 'deleteCookie']
+pub fn (mut r VSlimPsr7Response) delete_cookie(name string) &VSlimPsr7Response {
+	r.headers['set-cookie'] = ['${name}=; Path=/; Max-Age=0']
+	r.header_names['set-cookie'] = 'Set-Cookie'
+	return &r
 }
 
 @[php_method]
@@ -790,7 +814,7 @@ pub fn (mut r VSlimPsr7ServerRequest) construct() &VSlimPsr7ServerRequest {
 		r.uploaded_files_ref = empty_persistent_array()
 	}
 	if !r.attributes_ref.is_valid() || r.attributes_ref.is_null() || r.attributes_ref.is_undef() {
-		r.attributes_ref = empty_persistent_array()
+		r.attributes_ref = empty_persistent_array_value()
 	}
 	if !r.parsed_body_ref.is_valid() {
 		r.parsed_body_ref = vphp.PersistentOwnedZBox.new_null()
@@ -1096,7 +1120,7 @@ pub fn (r &VSlimPsr7ServerRequest) with_parsed_body(parsed_body vphp.RequestBorr
 @[php_method: 'getAttributes']
 @[php_return_type: 'array']
 pub fn (r &VSlimPsr7ServerRequest) get_attributes() vphp.RequestOwnedZBox {
-	return vphp.RequestOwnedZBox.from_zval(persistent_array_or_empty_zval(r.attributes_ref))
+	return vphp.RequestOwnedZBox.from_zval(persistent_array_value_or_empty_zval(r.attributes_ref))
 }
 
 @[php_arg_name: 'default_value=defaultValue']
@@ -1106,11 +1130,12 @@ pub fn (r &VSlimPsr7ServerRequest) get_attribute(name vphp.RequestBorrowedZBox, 
 	if key == '' {
 		return psr7_default_value_or_null(default_value)
 	}
-	return r.attributes_ref.with_request_zval(fn [key, default_value] (attrs vphp.ZVal) vphp.RequestOwnedZBox {
-		if !attrs.is_array() {
+	return r.attributes_ref.with_value(fn [key, default_value] (attrs vphp.PhpValue) vphp.RequestOwnedZBox {
+		raw := attrs.to_zval()
+		if !raw.is_array() {
 			return psr7_default_value_or_null(default_value)
 		}
-		value := attrs.get(key) or { return psr7_default_value_or_null(default_value) }
+		value := raw.get(key) or { return psr7_default_value_or_null(default_value) }
 		return vphp.RequestOwnedZBox.adopt_zval(value.dup())
 	})
 }
@@ -1119,7 +1144,7 @@ pub fn (r &VSlimPsr7ServerRequest) get_attribute(name vphp.RequestBorrowedZBox, 
 @[php_method: 'withAttribute']
 pub fn (r &VSlimPsr7ServerRequest) with_attribute(name vphp.RequestBorrowedZBox, value vphp.RequestBorrowedZBox) &VSlimPsr7ServerRequest {
 	key := zval_to_log_message(name.to_zval())
-	next_attrs := persistent_assoc_with_value(r.attributes_ref, key, value.to_zval())
+	next_attrs := persistent_value_assoc_with_value(r.attributes_ref, key, value.to_zval())
 	return clone_psr7_server_request_owned_attrs(r, r.method, r.request_target, r.protocol_version,
 		clone_header_values(r.headers), clone_header_names(r.header_names), server_request_body_or_empty(r),
 		server_request_uri_or_default(r), r.server_params_ref, r.cookie_params_ref, r.query_params_ref,
@@ -1130,7 +1155,7 @@ pub fn (r &VSlimPsr7ServerRequest) with_attribute(name vphp.RequestBorrowedZBox,
 @[php_method: 'withoutAttribute']
 pub fn (r &VSlimPsr7ServerRequest) without_attribute(name vphp.RequestBorrowedZBox) &VSlimPsr7ServerRequest {
 	key := zval_to_log_message(name.to_zval())
-	next_attrs := persistent_assoc_without_key(r.attributes_ref, key)
+	next_attrs := persistent_value_assoc_without_key(r.attributes_ref, key)
 	return clone_psr7_server_request_owned_attrs(r, r.method, r.request_target, r.protocol_version,
 		clone_header_values(r.headers), clone_header_names(r.header_names), server_request_body_or_empty(r),
 		server_request_uri_or_default(r), r.server_params_ref, r.cookie_params_ref, r.query_params_ref,
@@ -1447,7 +1472,7 @@ fn new_psr7_server_request(method string, uri_input vphp.ZVal, server_params_inp
 	out.query_params_ref = string_map_to_persistent_array(VSlimRequest.parse_query(normalize_psr7_query(uri.query)))
 	out.uploaded_files_ref = empty_persistent_array()
 	out.parsed_body_ref = vphp.PersistentOwnedZBox.invalid()
-	out.attributes_ref = empty_persistent_array()
+	out.attributes_ref = empty_persistent_array_value()
 	return out
 }
 
@@ -1524,13 +1549,13 @@ fn clone_psr7_request(r &VSlimPsr7Request, method string, request_target string,
 	}
 }
 
-fn clone_psr7_server_request(r &VSlimPsr7ServerRequest, method string, request_target string, protocol_version string, headers map[string][]string, header_names map[string]string, body &VSlimPsr7Stream, uri &VSlimPsr7Uri, server_params_ref vphp.PersistentOwnedZBox, cookie_params_ref vphp.PersistentOwnedZBox, query_params_ref vphp.PersistentOwnedZBox, uploaded_files_ref vphp.PersistentOwnedZBox, parsed_body_ref vphp.PersistentOwnedZBox, attributes_ref vphp.PersistentOwnedZBox) &VSlimPsr7ServerRequest {
+fn clone_psr7_server_request(r &VSlimPsr7ServerRequest, method string, request_target string, protocol_version string, headers map[string][]string, header_names map[string]string, body &VSlimPsr7Stream, uri &VSlimPsr7Uri, server_params_ref vphp.PersistentOwnedZBox, cookie_params_ref vphp.PersistentOwnedZBox, query_params_ref vphp.PersistentOwnedZBox, uploaded_files_ref vphp.PersistentOwnedZBox, parsed_body_ref vphp.PersistentOwnedZBox, attributes_ref vphp.PhpValue) &VSlimPsr7ServerRequest {
 	return clone_psr7_server_request_owned_attrs(r, method, request_target, protocol_version,
 		headers, header_names, body, uri, server_params_ref, cookie_params_ref, query_params_ref,
-		uploaded_files_ref, parsed_body_ref, clone_assoc_payload_ref(attributes_ref))
+		uploaded_files_ref, parsed_body_ref, clone_assoc_payload_value(attributes_ref))
 }
 
-fn clone_psr7_server_request_owned_attrs(r &VSlimPsr7ServerRequest, method string, request_target string, protocol_version string, headers map[string][]string, header_names map[string]string, body &VSlimPsr7Stream, uri &VSlimPsr7Uri, server_params_ref vphp.PersistentOwnedZBox, cookie_params_ref vphp.PersistentOwnedZBox, query_params_ref vphp.PersistentOwnedZBox, uploaded_files_ref vphp.PersistentOwnedZBox, parsed_body_ref vphp.PersistentOwnedZBox, attributes_ref vphp.PersistentOwnedZBox) &VSlimPsr7ServerRequest {
+fn clone_psr7_server_request_owned_attrs(r &VSlimPsr7ServerRequest, method string, request_target string, protocol_version string, headers map[string][]string, header_names map[string]string, body &VSlimPsr7Stream, uri &VSlimPsr7Uri, server_params_ref vphp.PersistentOwnedZBox, cookie_params_ref vphp.PersistentOwnedZBox, query_params_ref vphp.PersistentOwnedZBox, uploaded_files_ref vphp.PersistentOwnedZBox, parsed_body_ref vphp.PersistentOwnedZBox, attributes_ref vphp.PhpValue) &VSlimPsr7ServerRequest {
 	mut out := &VSlimPsr7ServerRequest{}
 	out.method = method.clone()
 	out.request_target = request_target.clone()
@@ -1544,7 +1569,7 @@ fn clone_psr7_server_request_owned_attrs(r &VSlimPsr7ServerRequest, method strin
 	out.query_params_ref = clone_assoc_payload_ref(query_params_ref)
 	out.uploaded_files_ref = clone_assoc_payload_ref(uploaded_files_ref)
 	out.parsed_body_ref = clone_parsed_body_ref(parsed_body_ref)
-	out.attributes_ref = clone_assoc_payload_ref(attributes_ref)
+	out.attributes_ref = attributes_ref
 	return out
 }
 
@@ -1553,6 +1578,13 @@ fn clone_assoc_payload_ref(value vphp.PersistentOwnedZBox) vphp.PersistentOwnedZ
 		return empty_persistent_array()
 	}
 	return value.clone()
+}
+
+fn clone_assoc_payload_value(value vphp.PhpValue) vphp.PhpValue {
+	if !value.is_valid() || value.is_undef() || value.is_null() {
+		return empty_persistent_array_value()
+	}
+	return vphp.PhpValue.from_persistent_owned_zbox(value.to_persistent_owned_zbox())
 }
 
 fn clone_parsed_body_ref(value vphp.PersistentOwnedZBox) vphp.PersistentOwnedZBox {
@@ -1672,9 +1704,10 @@ fn zval_to_psr7_uri(value vphp.ZVal) &VSlimPsr7Uri {
 		return unsafe { &VSlimPsr7Uri(C.vphp_get_v_ptr_from_zval(value.raw)) }
 	}
 	if value.is_valid() && value.is_object() && value.method_exists('__toString') {
-		return vphp.PhpObject.borrowed(value).with_method_result_zval('__toString', fn (raw vphp.ZVal) &VSlimPsr7Uri {
-			return new_psr7_uri(raw.to_string())
-		})
+		return vphp.PhpObject.borrowed(value).with_method_result[vphp.PhpString, &VSlimPsr7Uri]('__toString',
+			fn (raw vphp.PhpString) &VSlimPsr7Uri {
+			return new_psr7_uri(raw.value())
+		}) or { new_psr7_uri(zval_to_log_message(value)) }
 	}
 	return new_psr7_uri(zval_to_log_message(value))
 }
@@ -1687,29 +1720,42 @@ fn zval_to_string_map(value vphp.ZVal) map[string]string {
 }
 
 fn string_map_to_persistent_array(values map[string]string) vphp.PersistentOwnedZBox {
-	mut out := new_array_zval()
+	mut out := vphp.PhpArray.empty()
 	for key, value in values {
-		add_assoc_zval(out, key, vphp.RequestOwnedZBox.new_string(value).to_zval())
+		out.string(key, value)
 	}
-	return vphp.PersistentOwnedZBox.of(out)
+	persistent := out.to_persistent_owned_zbox()
+	out.release()
+	return persistent
 }
 
 fn persistent_array_or_empty_zval(value vphp.PersistentOwnedZBox) vphp.ZVal {
 	if !value.is_valid() || value.is_null() || value.is_undef() || !value.is_array() {
-		return new_array_zval()
+		mut out := new_array()
+		return out.take_zval()
 	}
-	return value.with_request_zval(fn (z vphp.ZVal) vphp.ZVal {
-		return z.dup()
-	})
+	mut out := value.clone_request_owned()
+	return out.take_zval()
+}
+
+fn persistent_array_value_or_empty_zval(value vphp.PhpValue) vphp.ZVal {
+	if !value.is_valid() || value.is_null() || value.is_undef() || !value.is_array() {
+		mut out := new_array()
+		return out.take_zval()
+	}
+	mut out := value.to_request_owned_zbox()
+	return out.take_zval()
 }
 
 fn persistent_array_to_string_map(value vphp.PersistentOwnedZBox) map[string]string {
 	if !value.is_valid() || value.is_null() || value.is_undef() || !value.is_array() {
 		return map[string]string{}
 	}
-	return value.with_request_zval(fn (z vphp.ZVal) map[string]string {
-		return zval_to_string_map(z)
-	})
+	return value.with_request_array(fn (arr vphp.PhpArray) map[string]string {
+		return zval_to_string_map(arr.to_zval())
+	}) or {
+		map[string]string{}
+	}
 }
 
 fn zval_to_psr7_stream(value vphp.ZVal) &VSlimPsr7Stream {
@@ -1718,9 +1764,10 @@ fn zval_to_psr7_stream(value vphp.ZVal) &VSlimPsr7Stream {
 		return unsafe { &VSlimPsr7Stream(C.vphp_get_v_ptr_from_zval(value.raw)) }
 	}
 	if value.is_valid() && value.is_object() && value.method_exists('__toString') {
-		return vphp.PhpObject.borrowed(value).with_method_result_zval('__toString', fn (raw vphp.ZVal) &VSlimPsr7Stream {
-			return new_psr7_stream(raw.to_string())
-		})
+		return vphp.PhpObject.borrowed(value).with_method_result[vphp.PhpString, &VSlimPsr7Stream]('__toString',
+			fn (raw vphp.PhpString) &VSlimPsr7Stream {
+			return new_psr7_stream(raw.value())
+		}) or { new_psr7_stream(zval_to_log_message(value)) }
 	}
 	return new_psr7_stream(zval_to_log_message(value))
 }
@@ -1769,7 +1816,15 @@ fn zval_to_upload_error_or(value vphp.ZVal, default_value int) int {
 }
 
 fn empty_persistent_array() vphp.PersistentOwnedZBox {
-	return vphp.PersistentOwnedZBox.of(new_array_zval())
+	mut out := vphp.PhpArray.empty()
+	persistent := out.to_persistent_owned_zbox()
+	out.release()
+	return persistent
+}
+
+fn empty_persistent_array_value() vphp.PhpValue {
+	mut out := new_array()
+	return vphp.PhpValue.from_persistent_zval(out.take_zval())
 }
 
 fn zval_to_optional_trimmed_string(value vphp.ZVal) ?string {
@@ -1797,9 +1852,8 @@ fn persistent_or_null(value vphp.PersistentOwnedZBox) vphp.ZVal {
 	if !value.is_valid() || value.is_undef() {
 		return vphp.ZVal.new_null()
 	}
-	return value.with_request_zval(fn (z vphp.ZVal) vphp.ZVal {
-		return z.dup()
-	})
+	mut out := value.clone_request_owned()
+	return out.take_zval()
 }
 
 fn persistent_assoc_zvals(value vphp.PersistentOwnedZBox) map[string]vphp.ZVal {
@@ -1808,43 +1862,79 @@ fn persistent_assoc_zvals(value vphp.PersistentOwnedZBox) map[string]vphp.ZVal {
 	}
 	return value.with_request_zval(fn (z vphp.ZVal) map[string]vphp.ZVal {
 		return z.foreach_with_ctx[map[string]vphp.ZVal](map[string]vphp.ZVal{}, fn (key vphp.ZVal, child vphp.ZVal, mut acc map[string]vphp.ZVal) {
-			acc[key.to_string()] = child
+			acc[key.to_string()] = child.dup()
 		})
 	})
 }
 
 fn persistent_assoc_with_value(value vphp.PersistentOwnedZBox, key string, child vphp.ZVal) vphp.PersistentOwnedZBox {
-	mut out := new_array_zval()
+	mut out := new_array()
 	if key == '' {
-		return vphp.PersistentOwnedZBox.of(out)
+		return vphp.PersistentOwnedZBox.from_persistent_zval(out.take_zval())
 	}
 	if value.is_valid() && !value.is_null() && !value.is_undef() && value.is_array() {
 		value.with_request_zval(fn [mut out] (raw vphp.ZVal) bool {
 			raw.foreach(fn [mut out] (key vphp.ZVal, val vphp.ZVal) {
 				if key.is_string() {
-					add_assoc_zval(out, key.get_string(), val.dup())
+					out.set_zval(key.get_string(), val.dup())
 				}
 			})
 			return true
 		})
 	}
-	add_assoc_zval(out, key, child.dup())
-	return vphp.PersistentOwnedZBox.of(out)
+	out.set_zval(key, child.dup())
+	return vphp.PersistentOwnedZBox.from_persistent_zval(out.take_zval())
+}
+
+fn persistent_value_assoc_with_value(value vphp.PhpValue, key string, child vphp.ZVal) vphp.PhpValue {
+	mut out := new_array()
+	if key == '' {
+		return vphp.PhpValue.from_persistent_zval(out.take_zval())
+	}
+	value.with_value(fn [mut out] (raw_value vphp.PhpValue) bool {
+		raw := raw_value.to_zval()
+		if raw.is_array() {
+			raw.foreach(fn [mut out] (key vphp.ZVal, val vphp.ZVal) {
+				if key.is_string() {
+					out.set_zval(key.get_string(), val.dup())
+				}
+			})
+		}
+		return true
+	})
+	out.set_zval(key, child.dup())
+	return vphp.PhpValue.from_persistent_zval(out.take_zval())
 }
 
 fn persistent_assoc_without_key(value vphp.PersistentOwnedZBox, key string) vphp.PersistentOwnedZBox {
-	mut out := new_array_zval()
+	mut out := new_array()
 	if value.is_valid() && !value.is_null() && !value.is_undef() && value.is_array() {
 		value.with_request_zval(fn [mut out, key] (raw vphp.ZVal) bool {
 			raw.foreach(fn [mut out, key] (k vphp.ZVal, val vphp.ZVal) {
 				if k.is_string() && k.get_string() != key {
-					add_assoc_zval(out, k.get_string(), val.dup())
+					out.set_zval(k.get_string(), val.dup())
 				}
 			})
 			return true
 		})
 	}
-	return vphp.PersistentOwnedZBox.of(out)
+	return vphp.PersistentOwnedZBox.from_persistent_zval(out.take_zval())
+}
+
+fn persistent_value_assoc_without_key(value vphp.PhpValue, key string) vphp.PhpValue {
+	mut out := new_array()
+	value.with_value(fn [mut out, key] (raw_value vphp.PhpValue) bool {
+		raw := raw_value.to_zval()
+		if raw.is_array() {
+			raw.foreach(fn [mut out, key] (k vphp.ZVal, val vphp.ZVal) {
+				if k.is_string() && k.get_string() != key {
+					out.set_zval(k.get_string(), val.dup())
+				}
+			})
+		}
+		return true
+	})
+	return vphp.PhpValue.from_persistent_zval(out.take_zval())
 }
 
 fn normalize_uploaded_file_error(code int) int {
@@ -2373,13 +2463,17 @@ fn php_stream_metadata(resource vphp.ZVal) ?map[string]string {
 
 fn read_stream_factory_file(filename string, mode string) ?string {
 	if mode.contains('r') {
-		exists := vphp.PhpFunction.named('is_file').result_bool(vphp.PhpString.of(filename))
+		mut filename_arg := vphp.PhpString.of(filename)
+		defer {
+			filename_arg.release()
+		}
+		exists := vphp.PhpFunction.named('is_file').result_bool(filename_arg)
 		if !exists {
 			vphp.PhpException.raise_class('RuntimeException', 'failed to open stream from file',
 				0)
 			return none
 		}
-		return vphp.PhpFunction.named('file_get_contents').result_string(vphp.PhpString.of(filename))
+		return vphp.PhpFunction.named('file_get_contents').result_string(filename_arg)
 	}
 	return ''
 }

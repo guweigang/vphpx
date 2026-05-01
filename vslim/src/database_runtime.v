@@ -368,15 +368,16 @@ fn database_result_box_from_dyn(value vphp.DynValue) vphp.RequestOwnedZBox {
 }
 
 fn database_rows_to_box(rows []map[string]string) vphp.RequestOwnedZBox {
-	mut out := new_array_zval()
+	mut out := new_array()
 	for row in rows {
-		mut item := new_array_zval()
+		mut item := new_array()
 		for key, value in row {
-			item.add_assoc_string(key, value)
+			item.string(key, value)
 		}
-		out.add_next_val(item)
+		out.push(item)
+		item.release()
 	}
-	return vphp.RequestOwnedZBox.of(out)
+	return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
 }
 
 fn database_rows_from_mysql_rows(rows []mysql.Row) []map[string]string {
@@ -512,23 +513,23 @@ fn database_response_error_message(raw vphp.ZVal) string {
 }
 
 pub fn (mut db VSlimDatabaseManager) database_upstream_request(op string, statement string, params []string) !vphp.RequestOwnedZBox {
-	mut payload := new_array_zval()
-	payload.add_assoc_string('mode', 'db')
-	payload.add_assoc_long('version', 1)
-	payload.add_assoc_string('pool', db.config_ref.pool_name_value())
-	payload.add_assoc_string('op', op)
-	payload.add_assoc_long('timeout_ms', db.config_ref.timeout_ms_value())
+	mut payload := new_array()
+	payload.string('mode', 'db')
+	payload.int('version', 1)
+	payload.string('pool', db.config_ref.pool_name_value())
+	payload.string('op', op)
+	payload.int('timeout_ms', db.config_ref.timeout_ms_value())
 	if statement.trim_space() != '' {
-		payload.add_assoc_string('sql', statement)
+		payload.string('sql', statement)
 	}
 	if db.upstream_session_id != '' {
-		payload.add_assoc_string('session_id', db.upstream_session_id)
+		payload.string('session_id', db.upstream_session_id)
 	}
 	if params.len > 0 {
 		mut params_box := database_string_params_box(params)
-		add_assoc_zval(payload, 'params', params_box.take_zval())
+		payload.set_request_owned_zbox('params', params_box)
 	}
-	mut request_box := vphp.RequestOwnedZBox.of(payload)
+	mut request_box := vphp.RequestOwnedZBox.adopt_zval(payload.take_zval())
 	defer {
 		request_box.release()
 	}

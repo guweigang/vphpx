@@ -213,8 +213,16 @@ fn run_error_handler_with_context(app &VSlimApp, ctx PipelineRequestContext, sta
 	}
 	psr_payload := normalize_psr15_server_request_payload(ctx.payload_ref.borrowed(),
 		ctx.route_params)
-	mut raw := eh.fn_request_owned(vphp.PhpValue.from_zval(psr_payload), vphp.PhpString.of(message),
-		vphp.PhpInt.of(status))
+	mut message_arg := vphp.PhpString.of(message)
+	mut status_arg := vphp.PhpInt.of(status)
+	defer {
+		message_arg.release()
+		status_arg.release()
+	}
+	mut raw := eh.fn_request_owned(vphp.PhpValue.from_zval(psr_payload), message_arg, status_arg)
+	defer {
+		raw.release()
+	}
 	res, ok := normalize_php_route_response_borrowed(raw.borrowed())
 	if !ok {
 		return none
@@ -229,8 +237,16 @@ fn run_error_handler_with_context_psr(app &VSlimApp, ctx PipelineRequestContext,
 	}
 	psr_payload := normalize_psr15_server_request_payload(ctx.payload_ref.borrowed(),
 		ctx.route_params)
-	mut raw := eh.fn_request_owned(vphp.PhpValue.from_zval(psr_payload), vphp.PhpString.of(message),
-		vphp.PhpInt.of(status))
+	mut message_arg := vphp.PhpString.of(message)
+	mut status_arg := vphp.PhpInt.of(status)
+	defer {
+		message_arg.release()
+		status_arg.release()
+	}
+	mut raw := eh.fn_request_owned(vphp.PhpValue.from_zval(psr_payload), message_arg, status_arg)
+	defer {
+		raw.release()
+	}
 	res, ok := normalize_php_route_response_psr_borrowed(raw.borrowed())
 	if !ok {
 		return none

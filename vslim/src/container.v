@@ -35,8 +35,49 @@ fn new_vslim_container() &VSlimContainer {
 	}
 }
 
+fn container_release_entry(mut entry vphp.PersistentOwnedZBox) {
+	if entry.is_valid() {
+		entry.release()
+	}
+}
+
+fn container_release_map(mut values map[string]vphp.PersistentOwnedZBox) {
+	for _, entry in values {
+		mut owned := entry
+		container_release_entry(mut owned)
+	}
+	values.clear()
+}
+
+fn (mut c VSlimContainer) release_entry_key(id string) {
+	if id in c.entries {
+		mut entry := c.entries[id] or { vphp.PersistentOwnedZBox.new_null() }
+		container_release_entry(mut entry)
+		c.entries.delete(id)
+	}
+}
+
+fn (mut c VSlimContainer) release_factory_key(id string) {
+	if id in c.factories {
+		mut factory := c.factories[id] or { vphp.PersistentOwnedZBox.new_null() }
+		container_release_entry(mut factory)
+		c.factories.delete(id)
+	}
+}
+
+fn (mut c VSlimContainer) release_resolved_key(id string) {
+	if id in c.resolved {
+		mut resolved := c.resolved[id] or { vphp.PersistentOwnedZBox.new_null() }
+		container_release_entry(mut resolved)
+		c.resolved.delete(id)
+	}
+}
+
 @[php_method]
 pub fn (mut c VSlimContainer) construct() &VSlimContainer {
+	container_release_map(mut c.entries)
+	container_release_map(mut c.factories)
+	container_release_map(mut c.resolved)
 	c.entries = map[string]vphp.PersistentOwnedZBox{}
 	c.factories = map[string]vphp.PersistentOwnedZBox{}
 	c.resolved = map[string]vphp.PersistentOwnedZBox{}
@@ -46,13 +87,14 @@ pub fn (mut c VSlimContainer) construct() &VSlimContainer {
 @[php_method]
 pub fn (mut c VSlimContainer) set(id string, value vphp.RequestBorrowedZBox) &VSlimContainer {
 	raw := value.to_zval()
+	c.release_entry_key(id)
 	c.entries[id] = if raw.is_object() && !raw.is_callable() {
 		vphp.PersistentOwnedZBox.from_object_zval(raw)
 	} else {
 		vphp.PersistentOwnedZBox.from_mixed_zval(raw)
 	}
-	c.factories.delete(id)
-	c.resolved.delete(id)
+	c.release_factory_key(id)
+	c.release_resolved_key(id)
 	return &c
 }
 
@@ -62,9 +104,10 @@ pub fn (mut c VSlimContainer) factory(id string, callable vphp.RequestBorrowedZB
 		throw_container_exception('factory for "${id}" must be callable')
 		return &c
 	}
+	c.release_factory_key(id)
 	c.factories[id] = vphp.PersistentOwnedZBox.from_callable_zval(callable.to_zval())
-	c.entries.delete(id)
-	c.resolved.delete(id)
+	c.release_entry_key(id)
+	c.release_resolved_key(id)
 	return &c
 }
 
@@ -100,6 +143,7 @@ pub fn (mut c VSlimContainer) get_entry(id string) !vphp.RequestOwnedZBox {
 			return error('factory "${id}" returned invalid value')
 		}
 		raw := res.to_zval()
+		c.release_resolved_key(id)
 		c.resolved[id] = if raw.is_object() && !raw.is_callable() {
 			vphp.PersistentOwnedZBox.from_object_zval(raw)
 		} else {

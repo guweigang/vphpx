@@ -114,10 +114,14 @@ fn normalize_php_route_response(result vphp.ZVal) (VSlimResponse, bool) {
 		psr := normalize_to_psr7_response(result)
 		body := psr7_stream_string(response_body_or_empty(psr))
 		cli_debug_log('normalize.response.psr status=${psr.get_status_code()} body_len=${body.len}')
+		mut content_type_name := vphp.PhpString.of('content-type')
+		defer {
+			content_type_name.release()
+		}
 		return VSlimResponse{
 			status:       psr.get_status_code()
 			body:         body
-			content_type: psr.get_header_line(vphp.RequestBorrowedZBox.of(vphp.RequestOwnedZBox.new_string('content-type').to_zval()))
+			content_type: psr.get_header_line(vphp.RequestBorrowedZBox.from_zval(content_type_name.to_zval()))
 			headers:      snapshot_string_map(flatten_psr7_header_map(psr.get_headers()))
 		}, true
 	}

@@ -128,20 +128,20 @@ pub fn (mut cache VSlimPsr16Cache) clear() bool {
 @[php_return_type: 'iterable']
 pub fn (mut cache VSlimPsr16Cache) get_multiple(keys vphp.PhpIterable, default_value ?vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	ensure_psr16_cache(mut cache)
-	mut out := new_array_zval()
+	mut out := new_array()
 	if !psr16_is_iterable(keys.to_zval()) {
 		throw_psr16_invalid_argument('keys must be iterable')
-		return vphp.RequestOwnedZBox.of(out)
+		return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
 	}
 	for key_name in psr16_iterable_key_list(keys.to_zval()) or {
 		msg := err.msg()
 		throw_psr16_invalid_argument(msg)
-		return psr16_owned_value(out)
+		return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
 	} {
 		value := cache.get(key_name, default_value)
-		add_assoc_zval(out, key_name, value.to_zval())
+		out.set_zval(key_name, value.to_zval())
 	}
-	return vphp.RequestOwnedZBox.of(out)
+	return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
 }
 
 @[php_method: 'setMultiple']
@@ -312,15 +312,15 @@ fn psr_cache_resolve_relative_ttl_or_throw(clock vphp.ZVal, ttl vphp.ZVal) !i64 
 		now_dt := psr20_now_datetime_or_throw(clock) or {
 			return error('failed to resolve clock time for TTL resolution')
 		}
-		expires_at := vphp.PhpObject.borrowed(now_dt).with_method_result_zval('add', fn (added vphp.ZVal) i64 {
-			if !added.is_valid() || !added.is_object() {
+		expires_at := vphp.PhpObject.borrowed(now_dt).with_method_result[vphp.PhpObject, i64]('add',
+			fn (added vphp.PhpObject) i64 {
+			if !added.is_valid() {
 				return i64(-1)
 			}
-			return vphp.PhpObject.borrowed(added).with_method_result_zval('getTimestamp',
-				fn (ts vphp.ZVal) i64 {
-				return ts.to_i64()
-			})
-		}, ttl)
+			return added.with_method_result[vphp.PhpInt, i64]('getTimestamp', fn (ts vphp.PhpInt) i64 {
+				return ts.value()
+			}) or { i64(-1) }
+		}, vphp.PhpValue.from_zval(ttl)) or { i64(-1) }
 		if expires_at <= now_unix {
 			return i64(-1)
 		}
@@ -379,8 +379,12 @@ fn psr16_iterable_to_array(value vphp.ZVal) !vphp.ZVal {
 		return value
 	}
 	if value.is_object() && value.is_instance_of('Traversable') {
+		mut preserve_keys_arg := vphp.PhpBool.of(true)
+		defer {
+			preserve_keys_arg.release()
+		}
 		mut normalized_box := vphp.PhpFunction.named('iterator_to_array').request_owned(vphp.PhpValue.from_zval(value),
-			vphp.PhpBool.of(true))
+			preserve_keys_arg)
 		mut normalized := normalized_box.take_zval()
 		if normalized.is_array() {
 			return normalized

@@ -90,46 +90,46 @@ mut:
 struct VSlimApp {
 mut:
 	routes                  []VSlimRoute
-	websocket_routes        []VSlimRoute             @[php_ignore]
-	websocket_conn_route    map[string]int           @[php_ignore]
-	php_before_middlewares  []vphp.PersistentOwnedZBox @[php_ignore]
-	php_middlewares         []vphp.PersistentOwnedZBox @[php_ignore]
-	php_after_middlewares   []vphp.PersistentOwnedZBox @[php_ignore]
-	php_group_before_middle HookTable               @[php_ignore]
-	php_group_middle        HookTable               @[php_ignore]
-	php_group_after_middle  HookTable               @[php_ignore]
-	not_found_handler       vphp.PersistentOwnedZBox @[php_ignore]
-	error_handler           vphp.PersistentOwnedZBox @[php_ignore]
-	container_ref           &VSlimContainer          = unsafe { nil } @[php_ignore]
-	config_ref              &VSlimConfig             = unsafe { nil } @[php_ignore]
-	mcp_ref                 &VSlimMcpApp             = unsafe { nil } @[php_ignore]
-	auth_user_resolver      vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
-	auth_gate_resolver      vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
-	auth_redirect_path      string @[php_prop: authRedirectPath]
-	base_path               string @[php_prop: basePath]
-	use_demo                bool   @[php_prop: useDemo]
-	error_response_json     bool   @[php_prop: errorResponseJson]
-	view_base_path          string @[php_prop: viewBasePath]
-	assets_prefix           string @[php_prop: assetsPrefix]
-	view_cache_enabled      bool   @[php_prop: viewCacheEnabled]
-	view_cache_configured   bool   @[php_prop: viewCacheConfigured]
+	websocket_routes        []VSlimRoute                        @[php_ignore]
+	websocket_conn_route    map[string]int                      @[php_ignore]
+	php_before_middlewares  []vphp.PersistentOwnedZBox          @[php_ignore]
+	php_middlewares         []vphp.PersistentOwnedZBox          @[php_ignore]
+	php_after_middlewares   []vphp.PersistentOwnedZBox          @[php_ignore]
+	php_group_before_middle HookTable                           @[php_ignore]
+	php_group_middle        HookTable                           @[php_ignore]
+	php_group_after_middle  HookTable                           @[php_ignore]
+	not_found_handler       vphp.PersistentOwnedZBox            @[php_ignore]
+	error_handler           vphp.PersistentOwnedZBox            @[php_ignore]
+	container_ref           &VSlimContainer          = unsafe { nil }                     @[php_ignore]
+	config_ref              &VSlimConfig             = unsafe { nil }                        @[php_ignore]
+	mcp_ref                 &VSlimMcpApp             = unsafe { nil }                        @[php_ignore]
+	auth_user_resolver      vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()            @[php_ignore]
+	auth_gate_resolver      vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()            @[php_ignore]
+	auth_redirect_path      string                              @[php_prop: authRedirectPath]
+	base_path               string                              @[php_prop: basePath]
+	use_demo                bool                                @[php_prop: useDemo]
+	error_response_json     bool                                @[php_prop: errorResponseJson]
+	view_base_path          string                              @[php_prop: viewBasePath]
+	assets_prefix           string                              @[php_prop: assetsPrefix]
+	view_cache_enabled      bool                                @[php_prop: viewCacheEnabled]
+	view_cache_configured   bool                                @[php_prop: viewCacheConfigured]
 	view_helpers            map[string]vphp.PersistentOwnedZBox @[php_ignore]
-	logger_ref              &VSlimLogger                = unsafe { nil } @[php_ignore]
-	psr_logger_ref          &VSlimPsrLogger             = unsafe { nil } @[php_ignore]
-	clock_ref               vphp.PersistentOwnedZBox    = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
-	listener_provider_ref   &VSlimPsr14ListenerProvider = unsafe { nil } @[php_ignore]
-	dispatcher_ref          &VSlimPsr14EventDispatcher  = unsafe { nil } @[php_ignore]
-	cache_ref               &VSlimPsr16Cache            = unsafe { nil } @[php_ignore]
-	cache_pool_ref          &VSlimPsr6CacheItemPool     = unsafe { nil } @[php_ignore]
-	http_client_ref         &VSlimPsr18Client           = unsafe { nil } @[php_ignore]
-	database_ref            &VSlimDatabaseManager       = unsafe { nil } @[php_ignore]
-	migrator_ref            &VSlimDatabaseMigrator      = unsafe { nil } @[php_ignore]
-	job_dispatcher_ref      &VSlimJobDispatcher         = unsafe { nil } @[php_ignore]
-	job_worker_ref          &VSlimJobWorker             = unsafe { nil } @[php_ignore]
-	providers               []vphp.RetainedObject      @[php_ignore]
-	provider_classes        map[string]bool            @[php_ignore]
-	modules                 []vphp.RetainedObject      @[php_ignore]
-	module_classes          map[string]bool            @[php_ignore]
+	logger_ref              &VSlimLogger                = unsafe { nil }                        @[php_ignore]
+	psr_logger_ref          &VSlimPsrLogger             = unsafe { nil }                     @[php_ignore]
+	clock_ref               vphp.PersistentOwnedZBox    = vphp.PersistentOwnedZBox.new_null()            @[php_ignore]
+	listener_provider_ref   &VSlimPsr14ListenerProvider = unsafe { nil }         @[php_ignore]
+	dispatcher_ref          &VSlimPsr14EventDispatcher  = unsafe { nil }          @[php_ignore]
+	cache_ref               &VSlimPsr16Cache            = unsafe { nil }                    @[php_ignore]
+	cache_pool_ref          &VSlimPsr6CacheItemPool     = unsafe { nil }             @[php_ignore]
+	http_client_ref         &VSlimPsr18Client           = unsafe { nil }                   @[php_ignore]
+	database_ref            &VSlimDatabaseManager       = unsafe { nil }               @[php_ignore]
+	migrator_ref            &VSlimDatabaseMigrator      = unsafe { nil }              @[php_ignore]
+	job_dispatcher_ref      &VSlimJobDispatcher         = unsafe { nil }                 @[php_ignore]
+	job_worker_ref          &VSlimJobWorker             = unsafe { nil }                     @[php_ignore]
+	providers               []vphp.RetainedObject               @[php_ignore]
+	provider_classes        map[string]bool                     @[php_ignore]
+	modules                 []vphp.RetainedObject               @[php_ignore]
+	module_classes          map[string]bool                     @[php_ignore]
 	booted                  bool
 	live_ws_sockets         map[string]vphp.PersistentOwnedZBox @[php_ignore]
 }
@@ -205,7 +205,7 @@ struct PhaseForwardedServerRequestSnapshot {
 	query_params_ref   vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 	uploaded_files_ref vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
 	parsed_body_ref    vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
-	attributes_ref     vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	attributes_ref     vphp.PhpValue
 }
 
 struct VSlimBeforeMiddlewareResult {
@@ -270,7 +270,7 @@ mut:
 struct VSlimVhttpdClient {
 mut:
 	socket_path             string @[php_prop: socketPath]
-	connect_timeout_seconds f64    = 2.0 @[php_prop: connectTimeoutSeconds]
+	connect_timeout_seconds f64 = 2.0    @[php_prop: connectTimeoutSeconds]
 }
 
 @[php_class: 'VSlim\\Session\\Store']
@@ -283,8 +283,8 @@ mut:
 	path        string = '/'
 	domain      string
 	secure      bool
-	http_only   bool   = true @[php_prop: httpOnly]
-	same_site   string = 'lax' @[php_prop: sameSite]
+	http_only   bool   = true              @[php_prop: httpOnly]
+	same_site   string = 'lax'            @[php_prop: sameSite]
 	values      map[string]string @[php_ignore]
 	loaded      bool
 	dirty       bool @[php_ignore]
@@ -296,7 +296,7 @@ mut:
 struct VSlimAuthSessionGuard {
 mut:
 	store_ref &VSlimSessionStore = unsafe { nil } @[php_ignore]
-	user_key  string             = 'auth.user_id' @[php_prop: userKey]
+	user_key  string             = 'auth.user_id'             @[php_prop: userKey]
 }
 
 @[php_implements: 'Psr\\Http\\Server\\MiddlewareInterface']
@@ -408,16 +408,16 @@ struct VSlimMcpApp {
 mut:
 	method_handlers       map[string]vphp.PersistentOwnedZBox @[php_ignore]
 	tool_handlers         map[string]vphp.PersistentOwnedZBox @[php_ignore]
-	tool_descriptions     map[string]string @[php_ignore]
+	tool_descriptions     map[string]string                   @[php_ignore]
 	tool_schemas          map[string]vphp.PersistentOwnedZBox @[php_ignore]
 	resource_handlers     map[string]vphp.PersistentOwnedZBox @[php_ignore]
-	resource_names        map[string]string @[php_ignore]
-	resource_descriptions map[string]string @[php_ignore]
-	resource_mime_types   map[string]string @[php_ignore]
+	resource_names        map[string]string                   @[php_ignore]
+	resource_descriptions map[string]string                   @[php_ignore]
+	resource_mime_types   map[string]string                   @[php_ignore]
 	prompt_handlers       map[string]vphp.PersistentOwnedZBox @[php_ignore]
-	prompt_descriptions   map[string]string @[php_ignore]
+	prompt_descriptions   map[string]string                   @[php_ignore]
 	prompt_arguments      map[string]vphp.PersistentOwnedZBox @[php_ignore]
-	server_info           map[string]string @[php_ignore]
+	server_info           map[string]string                   @[php_ignore]
 	server_capabilities   map[string]vphp.PersistentOwnedZBox @[php_ignore]
 }
 
@@ -431,7 +431,7 @@ mut:
 	level_name         string @[php_prop: levelName]
 	output_file        string @[php_prop: outputFile]
 	console_target     string @[php_prop: consoleTarget]
-	local_time_enabled bool   = true @[php_prop: localTimeEnabled]
+	local_time_enabled bool = true   @[php_prop: localTimeEnabled]
 	short_tag_enabled  bool   @[php_prop: shortTagEnabled]
 }
 
@@ -465,7 +465,7 @@ mut:
 struct VSlimPsr7UploadedFile {
 mut:
 	stream_ref        &VSlimPsr7Stream = unsafe { nil } @[php_ignore]
-	size_hint         int              = -1 @[php_ignore]
+	size_hint         int              = -1              @[php_ignore]
 	error_code        int              @[php_ignore]
 	client_filename   string           @[php_ignore]
 	client_media_type string           @[php_ignore]
@@ -479,11 +479,11 @@ mut:
 struct VSlimPsr7Response {
 mut:
 	status           int = 200
-	reason_phrase    string @[php_ignore]
-	protocol_version string = '1.1' @[php_ignore]
+	reason_phrase    string              @[php_ignore]
+	protocol_version string = '1.1'              @[php_ignore]
 	headers          map[string][]string @[php_ignore]
-	header_names     map[string]string @[php_ignore]
-	body_ref         &VSlimPsr7Stream = unsafe { nil } @[php_ignore]
+	header_names     map[string]string   @[php_ignore]
+	body_ref         &VSlimPsr7Stream = unsafe { nil }    @[php_ignore]
 }
 
 @[php_implements: 'Psr\\Http\\Message\\UriInterface']
@@ -507,12 +507,12 @@ mut:
 struct VSlimPsr7Request {
 mut:
 	method           string = 'GET'
-	request_target   string @[php_ignore]
-	protocol_version string = '1.1' @[php_ignore]
+	request_target   string              @[php_ignore]
+	protocol_version string = '1.1'              @[php_ignore]
 	headers          map[string][]string @[php_ignore]
-	header_names     map[string]string @[php_ignore]
-	body_ref         &VSlimPsr7Stream = unsafe { nil } @[php_ignore]
-	uri_ref          &VSlimPsr7Uri    = unsafe { nil } @[php_ignore]
+	header_names     map[string]string   @[php_ignore]
+	body_ref         &VSlimPsr7Stream = unsafe { nil }    @[php_ignore]
+	uri_ref          &VSlimPsr7Uri    = unsafe { nil }       @[php_ignore]
 }
 
 @[php_implements: 'Psr\\Http\\Message\\ServerRequestInterface']
@@ -521,18 +521,18 @@ mut:
 struct VSlimPsr7ServerRequest {
 mut:
 	method             string = 'GET'
-	request_target     string @[php_ignore]
-	protocol_version   string = '1.1' @[php_ignore]
-	headers            map[string][]string @[php_ignore]
-	header_names       map[string]string @[php_ignore]
-	body_ref           &VSlimPsr7Stream         = unsafe { nil } @[php_ignore]
-	uri_ref            &VSlimPsr7Uri            = unsafe { nil } @[php_ignore]
+	request_target     string                   @[php_ignore]
+	protocol_version   string = '1.1'                   @[php_ignore]
+	headers            map[string][]string      @[php_ignore]
+	header_names       map[string]string        @[php_ignore]
+	body_ref           &VSlimPsr7Stream         = unsafe { nil }         @[php_ignore]
+	uri_ref            &VSlimPsr7Uri            = unsafe { nil }            @[php_ignore]
 	server_params_ref  vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
 	cookie_params_ref  vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
 	query_params_ref   vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
 	uploaded_files_ref vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
 	parsed_body_ref    vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
-	attributes_ref     vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
+	attributes_ref     vphp.PhpValue            @[php_ignore]
 }
 
 @[php_implements: 'Psr\\Http\\Message\\ResponseFactoryInterface']
@@ -597,8 +597,8 @@ struct VSlimPsr16Cache {
 mut:
 	entries             map[string]PsrCacheEntry
 	clock_ref           vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
-	namespace_prefix    string @[php_prop: namespacePrefix]
-	default_ttl_seconds int    @[php_prop: defaultTtlSeconds]
+	namespace_prefix    string                   @[php_prop: namespacePrefix]
+	default_ttl_seconds int                      @[php_prop: defaultTtlSeconds]
 }
 
 @[php_class: 'VSlim\\Psr6\\CacheException']
@@ -634,8 +634,8 @@ mut:
 	entries             map[string]PsrCacheEntry
 	deferred            map[string]Psr6DeferredEntry
 	clock_ref           vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
-	namespace_prefix    string @[php_prop: namespacePrefix]
-	default_ttl_seconds int    @[php_prop: defaultTtlSeconds]
+	namespace_prefix    string                   @[php_prop: namespacePrefix]
+	default_ttl_seconds int                      @[php_prop: defaultTtlSeconds]
 }
 
 @[php_implements: 'Psr\\Http\\Client\\ClientExceptionInterface']
@@ -676,9 +676,9 @@ mut:
 	username        string
 	password        string
 	database        string
-	pool_size       int    = 5 @[php_prop: poolSize]
+	pool_size       int    = 5    @[php_prop: poolSize]
 	pool_name       string = 'default' @[php_prop: poolName]
-	timeout_ms      int    = 1000 @[php_prop: timeoutMs]
+	timeout_ms      int    = 1000    @[php_prop: timeoutMs]
 	upstream_socket string @[php_prop: upstreamSocket]
 }
 
@@ -687,17 +687,17 @@ mut:
 struct VSlimDatabaseManager {
 mut:
 	config_ref          &VSlimDatabaseConfig = unsafe { nil } @[php_ignore]
-	vhttpd_client_ref   &VSlimVhttpdClient   = unsafe { nil } @[php_ignore]
+	vhttpd_client_ref   &VSlimVhttpdClient   = unsafe { nil }   @[php_ignore]
 	mysql_pool          mysql.ConnectionPool @[php_ignore]
-	mysql_connected     bool @[php_ignore]
-	mysql_tx_conn       mysql.DB @[php_ignore]
-	mysql_tx_active     bool @[php_ignore]
-	upstream_connected  bool @[php_ignore]
-	upstream_tx_active  bool @[php_ignore]
-	upstream_session_id string @[php_ignore]
-	last_affected_rows  u64 @[php_prop: lastAffectedRows]
-	last_insert_id      i64 @[php_prop: lastInsertId]
-	last_error          string @[php_prop: lastError]
+	mysql_connected     bool                 @[php_ignore]
+	mysql_tx_conn       mysql.DB             @[php_ignore]
+	mysql_tx_active     bool                 @[php_ignore]
+	upstream_connected  bool                 @[php_ignore]
+	upstream_tx_active  bool                 @[php_ignore]
+	upstream_session_id string               @[php_ignore]
+	last_affected_rows  u64                  @[php_prop: lastAffectedRows]
+	last_insert_id      i64                  @[php_prop: lastInsertId]
+	last_error          string               @[php_prop: lastError]
 }
 
 enum VSlimDatabaseAsyncKind {
@@ -721,9 +721,9 @@ mut:
 	active         bool
 	resolved       bool
 	kind           VSlimDatabaseAsyncKind = .query
-	affected_rows  u64 @[php_prop: affectedRows]
-	last_insert_id i64 @[php_prop: lastInsertId]
-	last_error     string @[php_prop: lastError]
+	affected_rows  u64                      @[php_prop: affectedRows]
+	last_insert_id i64                      @[php_prop: lastInsertId]
+	last_error     string                   @[php_prop: lastError]
 	result_box     vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
 }
 
@@ -745,14 +745,14 @@ struct VSlimDatabaseWhereClause {
 struct VSlimDatabaseQuery {
 mut:
 	manager_ref     &VSlimDatabaseManager = unsafe { nil } @[php_ignore]
-	table_name      string @[php_prop: tableName]
+	table_name      string                @[php_prop: tableName]
 	kind            VSlimDatabaseQueryKind = .select_
-	select_columns  []string @[php_ignore]
+	select_columns  []string                   @[php_ignore]
 	where_clauses   []VSlimDatabaseWhereClause @[php_ignore]
-	order_clauses   []string @[php_ignore]
-	limit_count     int = -1 @[php_prop: limitCount]
-	offset_count    int = -1 @[php_prop: offsetCount]
-	mutation_values map[string]string @[php_ignore]
+	order_clauses   []string                   @[php_ignore]
+	limit_count     int = -1                        @[php_prop: limitCount]
+	offset_count    int = -1                        @[php_prop: offsetCount]
+	mutation_values map[string]string          @[php_ignore]
 }
 
 @[php_class: 'VSlim\\Database\\Model']
@@ -760,10 +760,10 @@ mut:
 struct VSlimDatabaseModel {
 mut:
 	manager_ref  &VSlimDatabaseManager = unsafe { nil } @[php_ignore]
-	table_name   string @[php_prop: tableName]
-	primary_key  string = 'id' @[php_prop: primaryKey]
-	attributes   map[string]string @[php_ignore]
-	exists_in_db bool @[php_prop: existsInDb]
+	table_name   string                @[php_prop: tableName]
+	primary_key  string = 'id'                @[php_prop: primaryKey]
+	attributes   map[string]string     @[php_ignore]
+	exists_in_db bool                  @[php_prop: existsInDb]
 }
 
 @[php_class: 'VSlim\\Database\\Migration']
@@ -787,9 +787,9 @@ mut:
 struct VSlimDatabaseMigrator {
 mut:
 	manager_ref     &VSlimDatabaseManager = unsafe { nil } @[php_ignore]
-	migrations_path string                = 'database/migrations' @[php_prop: migrationsPath]
-	seeds_path      string                = 'database/seeds' @[php_prop: seedsPath]
-	table_name      string                = 'vslim_migrations' @[php_prop: tableName]
+	migrations_path string                = 'database/migrations'                @[php_prop: migrationsPath]
+	seeds_path      string                = 'database/seeds'                @[php_prop: seedsPath]
+	table_name      string                = 'vslim_migrations'                @[php_prop: tableName]
 }
 
 @[php_implements: 'Psr\\Clock\\ClockInterface']
@@ -888,11 +888,11 @@ mut:
 @[heap]
 struct VSlimValidator {
 mut:
-	input_data     map[string]vphp.DynValue  @[php_prop: inputData]
-	rule_map       map[string][]string       @[php_prop: ruleMap]
-	error_map      map[string][]string       @[php_prop: errorMap]
-	validated_data map[string]vphp.DynValue  @[php_prop: validatedData]
-	validation_ran bool                      @[php_prop: validationRan]
+	input_data     map[string]vphp.DynValue @[php_prop: inputData]
+	rule_map       map[string][]string      @[php_prop: ruleMap]
+	error_map      map[string][]string      @[php_prop: errorMap]
+	validated_data map[string]vphp.DynValue @[php_prop: validatedData]
+	validation_ran bool                     @[php_prop: validationRan]
 }
 
 @[php_class: 'VSlim\\EnvLoader']
@@ -931,9 +931,9 @@ mut:
 struct VSlimJobWorker {
 mut:
 	manager_ref          &VSlimDatabaseManager = unsafe { nil } @[php_ignore]
-	worker_id            string                = 'default' @[php_prop: workerId]
-	retry_delay_seconds  int                   = 60 @[php_prop: retryDelaySeconds]
-	reserve_timeout_secs int                   = 300 @[php_prop: reserveTimeoutSeconds]
+	worker_id            string                = 'default'                @[php_prop: workerId]
+	retry_delay_seconds  int                   = 60                   @[php_prop: retryDelaySeconds]
+	reserve_timeout_secs int                   = 300                   @[php_prop: reserveTimeoutSeconds]
 }
 
 @[php_class: 'VSlim\\Config']

@@ -45,16 +45,22 @@ fn psr20_now_datetime_or_throw(clock vphp.ZVal) !vphp.ZVal {
 
 fn psr20_now_unix_or_throw(clock vphp.ZVal) !i64 {
 	now := psr20_now_datetime_or_throw(clock)!
-	return vphp.PhpObject.borrowed(now).with_method_result_zval('getTimestamp', fn (ts vphp.ZVal) i64 {
-		return ts.to_i64()
-	})
+	return vphp.PhpObject.borrowed(now).with_method_result[vphp.PhpInt, i64]('getTimestamp',
+		fn (ts vphp.PhpInt) i64 {
+		return ts.value()
+	})!
 }
 
 fn psr20_now_unix_milli_string_or_throw(clock vphp.ZVal) !string {
 	now := psr20_now_datetime_or_throw(clock)!
-	formatted := vphp.PhpObject.borrowed(now).with_method_result_zval('format', fn (out vphp.ZVal) string {
-		return out.to_string().trim_space()
-	}, vphp.RequestOwnedZBox.new_string('Uv').to_zval())
+	mut format_arg := vphp.PhpString.of('Uv')
+	defer {
+		format_arg.release()
+	}
+	formatted := vphp.PhpObject.borrowed(now).with_method_result[vphp.PhpString, string]('format',
+		fn (out vphp.PhpString) string {
+		return out.value().trim_space()
+	}, format_arg)!
 	if formatted != '' {
 		return formatted
 	}

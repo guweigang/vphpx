@@ -33,17 +33,23 @@ pub fn VSlimEnvLoader.load(path string) map[string]string {
 		if name == '' {
 			continue
 		}
-		has_current := vphp.PhpFunction.named('getenv').with_result_zval(fn (current vphp.ZVal) bool {
-			return current.is_valid() && (!current.is_bool() || current.to_bool())
-		}, vphp.RequestOwnedZBox.new_string(name).to_zval(),)
+		mut name_arg := vphp.PhpString.of(name)
+		defer {
+			name_arg.release()
+		}
+		has_current := vphp.PhpFunction.named('getenv').with_result[vphp.PhpValue, bool](fn (current vphp.PhpValue) bool {
+			return current.is_valid() && (!current.is_bool() || current.to_zval().to_bool())
+		}, name_arg) or { false }
 		if has_current {
 			continue
 		}
 		value := vslim_env_loader_normalize_value(raw[idx + 1..])
 		os.setenv(name, value, true)
-		vphp.PhpFunction.named('putenv').with_result_zval(fn (_ vphp.ZVal) bool {
-			return true
-		}, vphp.RequestOwnedZBox.new_string('${name}=${value}').to_zval(),)
+		mut putenv_arg := vphp.PhpString.of('${name}=${value}')
+		defer {
+			putenv_arg.release()
+		}
+		_ = vphp.PhpFunction.named('putenv').result_bool(putenv_arg)
 		vphp.PhpSuperglobals.set_env(name, value)
 		vphp.PhpSuperglobals.set_server(name, value)
 		loaded[name] = value

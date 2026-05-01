@@ -320,16 +320,16 @@ fn toml_any_to_json(value toml.Any) string {
 			return '${value}'
 		}
 		string {
-			return vphp.PhpJson.encode(vphp.RequestOwnedZBox.new_string(value).to_zval())
+			return toml_json_string(value)
 		}
 		toml.Date {
-			return vphp.PhpJson.encode(vphp.RequestOwnedZBox.new_string(value.str()).to_zval())
+			return toml_json_string(value.str())
 		}
 		toml.Time {
-			return vphp.PhpJson.encode(vphp.RequestOwnedZBox.new_string(value.str()).to_zval())
+			return toml_json_string(value.str())
 		}
 		toml.DateTime {
-			return vphp.PhpJson.encode(vphp.RequestOwnedZBox.new_string(value.str()).to_zval())
+			return toml_json_string(value.str())
 		}
 		map[string]toml.Any {
 			return toml_map_to_json(value)
@@ -342,7 +342,11 @@ fn toml_any_to_json(value toml.Any) string {
 }
 
 fn toml_json_string(value string) string {
-	return vphp.PhpJson.encode(vphp.RequestOwnedZBox.new_string(value).to_zval())
+	mut value_arg := vphp.PhpString.of(value)
+	defer {
+		value_arg.release()
+	}
+	return vphp.PhpJson.encode(value_arg.to_zval())
 }
 
 fn toml_map_to_json(input map[string]toml.Any) string {

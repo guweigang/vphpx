@@ -10,17 +10,19 @@ pub fn (mut provider VSlimPsr14ListenerProvider) construct() &VSlimPsr14Listener
 	return &provider
 }
 
-@[php_method]
 @[php_arg_name: 'event_class=eventClass']
+@[php_method]
 pub fn (mut provider VSlimPsr14ListenerProvider) listen(event_class string, listener vphp.RequestBorrowedZBox) &VSlimPsr14ListenerProvider {
 	ensure_psr14_listener_provider(mut provider)
 	key := normalize_psr14_event_key(event_class)
 	if key == '' {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'event class must not be empty', 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'event class must not be empty',
+			0)
 		return &provider
 	}
 	if !listener.is_valid() || !listener.is_callable() {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'listener must be callable', 0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'listener must be callable',
+			0)
 		return &provider
 	}
 	mut listeners := provider.listeners[key] or { []vphp.PersistentOwnedZBox{} }
@@ -43,15 +45,14 @@ pub fn (provider &VSlimPsr14ListenerProvider) listener_count() int {
 	return count
 }
 
-@[php_return_type: 'iterable']
 @[php_method: 'getListenersForEvent']
+@[php_return_type: 'iterable']
 pub fn (provider &VSlimPsr14ListenerProvider) get_listeners_for_event(event vphp.PhpObject) vphp.RequestOwnedZBox {
 	mut out := new_psr14_listener_array()
 	for listener in provider.listeners_for_event(event.to_zval()) {
-		listener.with_request_zval(fn [mut out] (z vphp.ZVal) bool {
-			out.add_next_val(z)
-			return true
-		})
+		mut listener_arg := listener.clone_request_owned()
+		out.add_next_val(listener_arg.to_zval())
+		listener_arg.release()
 	}
 	return vphp.RequestOwnedZBox.of(out)
 }
@@ -62,22 +63,22 @@ pub fn (mut dispatcher VSlimPsr14EventDispatcher) construct() &VSlimPsr14EventDi
 	return &dispatcher
 }
 
-@[php_method: 'setProvider']
 @[php_arg_type: 'provider=Psr\\EventDispatcher\\ListenerProviderInterface']
+@[php_method: 'setProvider']
 pub fn (mut dispatcher VSlimPsr14EventDispatcher) set_provider(provider &VSlimPsr14ListenerProvider) &VSlimPsr14EventDispatcher {
 	dispatcher.provider_ref = provider
 	return &dispatcher
 }
 
-@[php_method]
 @[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
+@[php_method]
 pub fn (mut dispatcher VSlimPsr14EventDispatcher) provider() &VSlimPsr14ListenerProvider {
 	ensure_psr14_dispatcher(mut dispatcher)
 	return dispatcher.provider_ref
 }
 
-@[php_method]
 @[php_arg_name: 'event_class=eventClass']
+@[php_method]
 pub fn (mut dispatcher VSlimPsr14EventDispatcher) listen(event_class string, listener vphp.RequestBorrowedZBox) &VSlimPsr14EventDispatcher {
 	mut provider := dispatcher.provider()
 	provider.listen(event_class, listener)
@@ -91,8 +92,8 @@ pub fn (mut dispatcher VSlimPsr14EventDispatcher) listen_any(listener vphp.Reque
 	return &dispatcher
 }
 
-@[php_return_type: 'object']
 @[php_method: 'dispatch']
+@[php_return_type: 'object']
 pub fn (mut dispatcher VSlimPsr14EventDispatcher) dispatch(event vphp.PhpObject) vphp.RequestOwnedZBox {
 	if psr14_propagation_stopped(event.to_zval()) {
 		return vphp.RequestOwnedZBox.of(event.to_zval())
@@ -102,9 +103,9 @@ pub fn (mut dispatcher VSlimPsr14EventDispatcher) dispatch(event vphp.PhpObject)
 		if psr14_propagation_stopped(event.to_zval()) {
 			break
 		}
-		listener.with_fn_result_zval(fn (result vphp.ZVal) bool {
-			return result.is_valid()
-		}, event.to_zval())
+		listener.with_fn_result[vphp.PhpValue, bool](fn (result vphp.PhpValue) bool {
+			return result.to_zval().is_valid()
+		}, vphp.PhpValue.from_zval(event.to_zval())) or { false }
 	}
 	return vphp.RequestOwnedZBox.of(event.to_zval())
 }
@@ -178,12 +179,17 @@ fn psr14_parent_class_name(class_name string) string {
 	if class_name.trim_space() == '' {
 		return ''
 	}
-	return vphp.PhpFunction.named('get_parent_class').with_result_zval(fn (res vphp.ZVal) string {
-		if !res.is_valid() || res.is_null() || res.is_undef() || (res.is_bool() && !res.to_bool()) {
+	mut class_arg := vphp.PhpString.of(class_name)
+	defer {
+		class_arg.release()
+	}
+	return vphp.PhpFunction.named('get_parent_class').with_result[vphp.PhpValue, string](fn (res vphp.PhpValue) string {
+		raw := res.to_zval()
+		if !raw.is_valid() || raw.is_null() || raw.is_undef() || (raw.is_bool() && !raw.to_bool()) {
 			return ''
 		}
-		return res.to_string().trim_space()
-	}, vphp.RequestOwnedZBox.new_string(class_name).to_zval())
+		return raw.to_string().trim_space()
+	}, class_arg) or { '' }
 }
 
 fn psr14_propagation_stopped(event vphp.ZVal) bool {
@@ -194,9 +200,10 @@ fn psr14_propagation_stopped(event vphp.ZVal) bool {
 		&& !event.method_exists('isPropagationStopped') {
 		return false
 	}
-	return vphp.PhpObject.borrowed(event).with_method_result_zval('isPropagationStopped', fn (res vphp.ZVal) bool {
-		return res.is_valid() && res.to_bool()
-	})
+	return vphp.PhpObject.borrowed(event).with_method_result[vphp.PhpBool, bool]('isPropagationStopped',
+		fn (res vphp.PhpBool) bool {
+		return res.value()
+	}) or { false }
 }
 
 fn new_psr14_listener_array() vphp.ZVal {

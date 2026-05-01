@@ -32,9 +32,9 @@ $userMcp = new VSlim\Mcp\App();
 
 $app2->setContainer($userContainer);
 $app2->setClock($userClock);
-$app2->set_config($userConfig);
+$app2->setConfig($userConfig);
 $app2->setLogger($userLogger);
-$app2->set_mcp($userMcp);
+$app2->setMcp($userMcp);
 
 echo (spl_object_id($userContainer) === spl_object_id($app2->container()) ? 'container-same' : 'container-diff') . PHP_EOL;
 echo (spl_object_id($userClock) === spl_object_id($app2->clock()) ? 'clock-same' : 'clock-diff') . PHP_EOL;
