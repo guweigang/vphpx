@@ -989,6 +989,36 @@ pub fn vphp_wrap_callableprocessor_apply(ctx vphp.Context)  {
     res := CallableProcessor.apply(arg_0, arg_1)
     ctx.return_val[string](res)
 }
+pub type VPhpStructClosureCallableProcessorStructClosure = fn (StructClosureArgs) string
+
+fn vphp_struct_closure_bridge_callableprocessor_struct_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    unsafe {
+        ctx := vphp.Context{
+            ex:  vphp.ZExData.new(ex)
+            ret: vphp.PhpReturn.new(ret)
+        }
+        cb := *(&VPhpStructClosureCallableProcessorStructClosure(v_ptr))
+        args := StructClosureArgs{
+            name: ctx.arg[string](0)
+            count: ctx.arg[int](1)
+        }
+        res := cb(args)
+        ctx.return_val[string](res)
+    }
+}
+
+fn vphp_wrap_struct_closure_callableprocessor_struct_closure(ctx vphp.Context, cb VPhpStructClosureCallableProcessorStructClosure) {
+    ctx.create_saved_closure[VPhpStructClosureCallableProcessorStructClosure](cb, voidptr(vphp_struct_closure_bridge_callableprocessor_struct_closure), 2)
+}
+
+@[export: 'vphp_wrap_CallableProcessor_struct_closure']
+pub fn vphp_wrap_callableprocessor_struct_closure(ctx vphp.Context)  {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := CallableProcessor.struct_closure()
+    // Returned value is a struct-param closure: wrap using generated bridge
+    vphp_wrap_struct_closure_callableprocessor_struct_closure(ctx, res)
+}
 @[export: 'CallableProcessor_handlers']
 pub fn callableprocessor_handlers() voidptr {
     return unsafe { &C.vphp_class_handlers{
@@ -2446,20 +2476,64 @@ fn vphp_wrap_v_test_globals(ctx vphp.Context) {
     v_test_globals(arg_0)
 }
 
+pub type VPhpVariadicClosureVGetVClosure = fn (...vphp.ZVal) vphp.ZVal
+
+fn vphp_variadic_closure_bridge_v_get_v_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    unsafe {
+        ctx := vphp.Context{
+            ex:  vphp.ZExData.new(ex)
+            ret: vphp.PhpReturn.new(ret)
+        }
+        cb := *(&VPhpVariadicClosureVGetVClosure(v_ptr))
+        mut args := []vphp.ZVal{cap: ctx.num_args()}
+        for i in 0 .. ctx.num_args() {
+            args << ctx.arg_val(i)
+        }
+        res := cb(...args)
+        ctx.return_val[vphp.ZVal](res)
+    }
+}
+
+fn vphp_wrap_variadic_closure_v_get_v_closure(ctx vphp.Context, cb VPhpVariadicClosureVGetVClosure) {
+    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetVClosure](cb, voidptr(vphp_variadic_closure_bridge_v_get_v_closure))
+}
+
 @[export: 'vphp_wrap_v_get_v_closure']
 fn vphp_wrap_v_get_v_closure(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    arg_0 := ctx
-    v_get_v_closure(arg_0)
+    res := v_get_v_closure()
+    vphp_wrap_variadic_closure_v_get_v_closure(ctx, res)
+}
+
+pub type VPhpVariadicClosureVGetVClosureAuto = fn (...vphp.ZVal) vphp.ZVal
+
+fn vphp_variadic_closure_bridge_v_get_v_closure_auto(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    unsafe {
+        ctx := vphp.Context{
+            ex:  vphp.ZExData.new(ex)
+            ret: vphp.PhpReturn.new(ret)
+        }
+        cb := *(&VPhpVariadicClosureVGetVClosureAuto(v_ptr))
+        mut args := []vphp.ZVal{cap: ctx.num_args()}
+        for i in 0 .. ctx.num_args() {
+            args << ctx.arg_val(i)
+        }
+        res := cb(...args)
+        ctx.return_val[vphp.ZVal](res)
+    }
+}
+
+fn vphp_wrap_variadic_closure_v_get_v_closure_auto(ctx vphp.Context, cb VPhpVariadicClosureVGetVClosureAuto) {
+    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetVClosureAuto](cb, voidptr(vphp_variadic_closure_bridge_v_get_v_closure_auto))
 }
 
 @[export: 'vphp_wrap_v_get_v_closure_auto']
 fn vphp_wrap_v_get_v_closure_auto(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    arg_0 := ctx
-    v_get_v_closure_auto(arg_0)
+    res := v_get_v_closure_auto()
+    vphp_wrap_variadic_closure_v_get_v_closure_auto(ctx, res)
 }
 
 @[export: 'vphp_wrap_v_iter_helpers_demo']
@@ -2524,13 +2598,56 @@ fn vphp_wrap_v_invoke_with_arg(ctx vphp.Context) {
     ctx.return_val[string](res)
 }
 
+pub type VPhpVariadicClosureVGetClosure0 = fn (...vphp.ZVal) vphp.ZVal
+
+fn vphp_variadic_closure_bridge_v_get_closure_0(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    unsafe {
+        ctx := vphp.Context{
+            ex:  vphp.ZExData.new(ex)
+            ret: vphp.PhpReturn.new(ret)
+        }
+        cb := *(&VPhpVariadicClosureVGetClosure0(v_ptr))
+        mut args := []vphp.ZVal{cap: ctx.num_args()}
+        for i in 0 .. ctx.num_args() {
+            args << ctx.arg_val(i)
+        }
+        res := cb(...args)
+        ctx.return_val[vphp.ZVal](res)
+    }
+}
+
+fn vphp_wrap_variadic_closure_v_get_closure_0(ctx vphp.Context, cb VPhpVariadicClosureVGetClosure0) {
+    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetClosure0](cb, voidptr(vphp_variadic_closure_bridge_v_get_closure_0))
+}
+
 @[export: 'vphp_wrap_v_get_closure_0']
 fn vphp_wrap_v_get_closure_0(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := v_get_closure_0()
-    // Wrap returned V closure using explicit helper: wrap_closure_universal_0
-    ctx.wrap_closure_universal_0(res)
+    vphp_wrap_variadic_closure_v_get_closure_0(ctx, res)
+}
+
+pub type VPhpVariadicClosureVGetClosure1 = fn (...vphp.ZVal) vphp.ZVal
+
+fn vphp_variadic_closure_bridge_v_get_closure_1(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    unsafe {
+        ctx := vphp.Context{
+            ex:  vphp.ZExData.new(ex)
+            ret: vphp.PhpReturn.new(ret)
+        }
+        cb := *(&VPhpVariadicClosureVGetClosure1(v_ptr))
+        mut args := []vphp.ZVal{cap: ctx.num_args()}
+        for i in 0 .. ctx.num_args() {
+            args << ctx.arg_val(i)
+        }
+        res := cb(...args)
+        ctx.return_val[vphp.ZVal](res)
+    }
+}
+
+fn vphp_wrap_variadic_closure_v_get_closure_1(ctx vphp.Context, cb VPhpVariadicClosureVGetClosure1) {
+    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetClosure1](cb, voidptr(vphp_variadic_closure_bridge_v_get_closure_1))
 }
 
 @[export: 'vphp_wrap_v_get_closure_1']
@@ -2538,8 +2655,29 @@ fn vphp_wrap_v_get_closure_1(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := v_get_closure_1()
-    // Wrap returned V closure using explicit helper: wrap_closure_universal_1
-    ctx.wrap_closure_universal_1(res)
+    vphp_wrap_variadic_closure_v_get_closure_1(ctx, res)
+}
+
+pub type VPhpVariadicClosureVGetClosure2 = fn (...vphp.ZVal) vphp.ZVal
+
+fn vphp_variadic_closure_bridge_v_get_closure_2(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    unsafe {
+        ctx := vphp.Context{
+            ex:  vphp.ZExData.new(ex)
+            ret: vphp.PhpReturn.new(ret)
+        }
+        cb := *(&VPhpVariadicClosureVGetClosure2(v_ptr))
+        mut args := []vphp.ZVal{cap: ctx.num_args()}
+        for i in 0 .. ctx.num_args() {
+            args << ctx.arg_val(i)
+        }
+        res := cb(...args)
+        ctx.return_val[vphp.ZVal](res)
+    }
+}
+
+fn vphp_wrap_variadic_closure_v_get_closure_2(ctx vphp.Context, cb VPhpVariadicClosureVGetClosure2) {
+    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetClosure2](cb, voidptr(vphp_variadic_closure_bridge_v_get_closure_2))
 }
 
 @[export: 'vphp_wrap_v_get_closure_2']
@@ -2547,8 +2685,29 @@ fn vphp_wrap_v_get_closure_2(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := v_get_closure_2()
-    // Wrap returned V closure using explicit helper: wrap_closure_universal_2
-    ctx.wrap_closure_universal_2(res)
+    vphp_wrap_variadic_closure_v_get_closure_2(ctx, res)
+}
+
+pub type VPhpVariadicClosureVGetClosure3 = fn (...vphp.ZVal) vphp.ZVal
+
+fn vphp_variadic_closure_bridge_v_get_closure_3(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    unsafe {
+        ctx := vphp.Context{
+            ex:  vphp.ZExData.new(ex)
+            ret: vphp.PhpReturn.new(ret)
+        }
+        cb := *(&VPhpVariadicClosureVGetClosure3(v_ptr))
+        mut args := []vphp.ZVal{cap: ctx.num_args()}
+        for i in 0 .. ctx.num_args() {
+            args << ctx.arg_val(i)
+        }
+        res := cb(...args)
+        ctx.return_val[vphp.ZVal](res)
+    }
+}
+
+fn vphp_wrap_variadic_closure_v_get_closure_3(ctx vphp.Context, cb VPhpVariadicClosureVGetClosure3) {
+    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetClosure3](cb, voidptr(vphp_variadic_closure_bridge_v_get_closure_3))
 }
 
 @[export: 'vphp_wrap_v_get_closure_3']
@@ -2556,8 +2715,29 @@ fn vphp_wrap_v_get_closure_3(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := v_get_closure_3()
-    // Wrap returned V closure using explicit helper: wrap_closure_universal_3
-    ctx.wrap_closure_universal_3(res)
+    vphp_wrap_variadic_closure_v_get_closure_3(ctx, res)
+}
+
+pub type VPhpVariadicClosureVGetClosure4 = fn (...vphp.ZVal) vphp.ZVal
+
+fn vphp_variadic_closure_bridge_v_get_closure_4(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    unsafe {
+        ctx := vphp.Context{
+            ex:  vphp.ZExData.new(ex)
+            ret: vphp.PhpReturn.new(ret)
+        }
+        cb := *(&VPhpVariadicClosureVGetClosure4(v_ptr))
+        mut args := []vphp.ZVal{cap: ctx.num_args()}
+        for i in 0 .. ctx.num_args() {
+            args << ctx.arg_val(i)
+        }
+        res := cb(...args)
+        ctx.return_val[vphp.ZVal](res)
+    }
+}
+
+fn vphp_wrap_variadic_closure_v_get_closure_4(ctx vphp.Context, cb VPhpVariadicClosureVGetClosure4) {
+    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetClosure4](cb, voidptr(vphp_variadic_closure_bridge_v_get_closure_4))
 }
 
 @[export: 'vphp_wrap_v_get_closure_4']
@@ -2565,8 +2745,29 @@ fn vphp_wrap_v_get_closure_4(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := v_get_closure_4()
-    // Wrap returned V closure using explicit helper: wrap_closure_universal_4
-    ctx.wrap_closure_universal_4(res)
+    vphp_wrap_variadic_closure_v_get_closure_4(ctx, res)
+}
+
+pub type VPhpVariadicClosureVGetClosure3Void = fn (...vphp.ZVal)
+
+fn vphp_variadic_closure_bridge_v_get_closure_3_void(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    unsafe {
+        ctx := vphp.Context{
+            ex:  vphp.ZExData.new(ex)
+            ret: vphp.PhpReturn.new(ret)
+        }
+        cb := *(&VPhpVariadicClosureVGetClosure3Void(v_ptr))
+        mut args := []vphp.ZVal{cap: ctx.num_args()}
+        for i in 0 .. ctx.num_args() {
+            args << ctx.arg_val(i)
+        }
+        cb(...args)
+        ctx.return_null()
+    }
+}
+
+fn vphp_wrap_variadic_closure_v_get_closure_3_void(ctx vphp.Context, cb VPhpVariadicClosureVGetClosure3Void) {
+    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetClosure3Void](cb, voidptr(vphp_variadic_closure_bridge_v_get_closure_3_void))
 }
 
 @[export: 'vphp_wrap_v_get_closure_3_void']
@@ -2574,8 +2775,29 @@ fn vphp_wrap_v_get_closure_3_void(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := v_get_closure_3_void()
-    // Wrap returned V closure using explicit helper: wrap_closure_universal_3_void
-    ctx.wrap_closure_universal_3_void(res)
+    vphp_wrap_variadic_closure_v_get_closure_3_void(ctx, res)
+}
+
+pub type VPhpVariadicClosureVGetClosure4Void = fn (...vphp.ZVal)
+
+fn vphp_variadic_closure_bridge_v_get_closure_4_void(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    unsafe {
+        ctx := vphp.Context{
+            ex:  vphp.ZExData.new(ex)
+            ret: vphp.PhpReturn.new(ret)
+        }
+        cb := *(&VPhpVariadicClosureVGetClosure4Void(v_ptr))
+        mut args := []vphp.ZVal{cap: ctx.num_args()}
+        for i in 0 .. ctx.num_args() {
+            args << ctx.arg_val(i)
+        }
+        cb(...args)
+        ctx.return_null()
+    }
+}
+
+fn vphp_wrap_variadic_closure_v_get_closure_4_void(ctx vphp.Context, cb VPhpVariadicClosureVGetClosure4Void) {
+    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetClosure4Void](cb, voidptr(vphp_variadic_closure_bridge_v_get_closure_4_void))
 }
 
 @[export: 'vphp_wrap_v_get_closure_4_void']
@@ -2583,8 +2805,217 @@ fn vphp_wrap_v_get_closure_4_void(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := v_get_closure_4_void()
-    // Wrap returned V closure using explicit helper: wrap_closure_universal_4_void
-    ctx.wrap_closure_universal_4_void(res)
+    vphp_wrap_variadic_closure_v_get_closure_4_void(ctx, res)
+}
+
+pub type VPhpStructClosureVGetStructParamClosure = fn (StructClosureArgs) string
+
+fn vphp_struct_closure_bridge_v_get_struct_param_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    unsafe {
+        ctx := vphp.Context{
+            ex:  vphp.ZExData.new(ex)
+            ret: vphp.PhpReturn.new(ret)
+        }
+        cb := *(&VPhpStructClosureVGetStructParamClosure(v_ptr))
+        args := StructClosureArgs{
+            name: ctx.arg[string](0)
+            count: ctx.arg[int](1)
+        }
+        res := cb(args)
+        ctx.return_val[string](res)
+    }
+}
+
+fn vphp_wrap_struct_closure_v_get_struct_param_closure(ctx vphp.Context, cb VPhpStructClosureVGetStructParamClosure) {
+    ctx.create_saved_closure[VPhpStructClosureVGetStructParamClosure](cb, voidptr(vphp_struct_closure_bridge_v_get_struct_param_closure), 2)
+}
+
+@[export: 'vphp_wrap_v_get_struct_param_closure']
+fn vphp_wrap_v_get_struct_param_closure(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := v_get_struct_param_closure()
+    vphp_wrap_struct_closure_v_get_struct_param_closure(ctx, res)
+}
+
+pub type VPhpVariadicClosureVGetVariadicValueClosure = fn (...vphp.PhpValue) string
+
+fn vphp_variadic_closure_bridge_v_get_variadic_value_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    unsafe {
+        ctx := vphp.Context{
+            ex:  vphp.ZExData.new(ex)
+            ret: vphp.PhpReturn.new(ret)
+        }
+        cb := *(&VPhpVariadicClosureVGetVariadicValueClosure(v_ptr))
+        mut args := []vphp.PhpValue{cap: ctx.num_args()}
+        for i in 0 .. ctx.num_args() {
+            args << ctx.arg_value(i)
+        }
+        res := cb(...args)
+        ctx.return_val[string](res)
+    }
+}
+
+fn vphp_wrap_variadic_closure_v_get_variadic_value_closure(ctx vphp.Context, cb VPhpVariadicClosureVGetVariadicValueClosure) {
+    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetVariadicValueClosure](cb, voidptr(vphp_variadic_closure_bridge_v_get_variadic_value_closure))
+}
+
+@[export: 'vphp_wrap_v_get_variadic_value_closure']
+fn vphp_wrap_v_get_variadic_value_closure(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := v_get_variadic_value_closure()
+    vphp_wrap_variadic_closure_v_get_variadic_value_closure(ctx, res)
+}
+
+pub type VPhpVariadicClosureVGetVariadicZvalClosure = fn (...vphp.ZVal) vphp.ZVal
+
+fn vphp_variadic_closure_bridge_v_get_variadic_zval_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    unsafe {
+        ctx := vphp.Context{
+            ex:  vphp.ZExData.new(ex)
+            ret: vphp.PhpReturn.new(ret)
+        }
+        cb := *(&VPhpVariadicClosureVGetVariadicZvalClosure(v_ptr))
+        mut args := []vphp.ZVal{cap: ctx.num_args()}
+        for i in 0 .. ctx.num_args() {
+            args << ctx.arg_val(i)
+        }
+        res := cb(...args)
+        ctx.return_val[vphp.ZVal](res)
+    }
+}
+
+fn vphp_wrap_variadic_closure_v_get_variadic_zval_closure(ctx vphp.Context, cb VPhpVariadicClosureVGetVariadicZvalClosure) {
+    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetVariadicZvalClosure](cb, voidptr(vphp_variadic_closure_bridge_v_get_variadic_zval_closure))
+}
+
+@[export: 'vphp_wrap_v_get_variadic_zval_closure']
+fn vphp_wrap_v_get_variadic_zval_closure(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := v_get_variadic_zval_closure()
+    vphp_wrap_variadic_closure_v_get_variadic_zval_closure(ctx, res)
+}
+
+pub type VPhpVariadicClosureVGetVariadicZvalVoid = fn (...vphp.ZVal)
+
+fn vphp_variadic_closure_bridge_v_get_variadic_zval_void(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    unsafe {
+        ctx := vphp.Context{
+            ex:  vphp.ZExData.new(ex)
+            ret: vphp.PhpReturn.new(ret)
+        }
+        cb := *(&VPhpVariadicClosureVGetVariadicZvalVoid(v_ptr))
+        mut args := []vphp.ZVal{cap: ctx.num_args()}
+        for i in 0 .. ctx.num_args() {
+            args << ctx.arg_val(i)
+        }
+        cb(...args)
+        ctx.return_null()
+    }
+}
+
+fn vphp_wrap_variadic_closure_v_get_variadic_zval_void(ctx vphp.Context, cb VPhpVariadicClosureVGetVariadicZvalVoid) {
+    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetVariadicZvalVoid](cb, voidptr(vphp_variadic_closure_bridge_v_get_variadic_zval_void))
+}
+
+@[export: 'vphp_wrap_v_get_variadic_zval_void']
+fn vphp_wrap_v_get_variadic_zval_void(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := v_get_variadic_zval_void()
+    vphp_wrap_variadic_closure_v_get_variadic_zval_void(ctx, res)
+}
+
+pub type VPhpVariadicClosureVGetVariadicScalarString = fn (...vphp.VScalarValue) string
+
+fn vphp_variadic_closure_bridge_v_get_variadic_scalar_string(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    unsafe {
+        ctx := vphp.Context{
+            ex:  vphp.ZExData.new(ex)
+            ret: vphp.PhpReturn.new(ret)
+        }
+        cb := *(&VPhpVariadicClosureVGetVariadicScalarString(v_ptr))
+        mut args := []vphp.VScalarValue{cap: ctx.num_args()}
+        for i in 0 .. ctx.num_args() {
+            args << ctx.arg_v_scalar(i) or { vphp.throw_exception(err.msg(), 0); return }
+        }
+        res := cb(...args)
+        ctx.return_val[string](res)
+    }
+}
+
+fn vphp_wrap_variadic_closure_v_get_variadic_scalar_string(ctx vphp.Context, cb VPhpVariadicClosureVGetVariadicScalarString) {
+    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetVariadicScalarString](cb, voidptr(vphp_variadic_closure_bridge_v_get_variadic_scalar_string))
+}
+
+@[export: 'vphp_wrap_v_get_variadic_scalar_string']
+fn vphp_wrap_v_get_variadic_scalar_string(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := v_get_variadic_scalar_string()
+    vphp_wrap_variadic_closure_v_get_variadic_scalar_string(ctx, res)
+}
+
+pub type VPhpVariadicClosureVGetVariadicScalarI64 = fn (...vphp.VScalarValue) i64
+
+fn vphp_variadic_closure_bridge_v_get_variadic_scalar_i64(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    unsafe {
+        ctx := vphp.Context{
+            ex:  vphp.ZExData.new(ex)
+            ret: vphp.PhpReturn.new(ret)
+        }
+        cb := *(&VPhpVariadicClosureVGetVariadicScalarI64(v_ptr))
+        mut args := []vphp.VScalarValue{cap: ctx.num_args()}
+        for i in 0 .. ctx.num_args() {
+            args << ctx.arg_v_scalar(i) or { vphp.throw_exception(err.msg(), 0); return }
+        }
+        res := cb(...args)
+        ctx.return_val[i64](res)
+    }
+}
+
+fn vphp_wrap_variadic_closure_v_get_variadic_scalar_i64(ctx vphp.Context, cb VPhpVariadicClosureVGetVariadicScalarI64) {
+    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetVariadicScalarI64](cb, voidptr(vphp_variadic_closure_bridge_v_get_variadic_scalar_i64))
+}
+
+@[export: 'vphp_wrap_v_get_variadic_scalar_i64']
+fn vphp_wrap_v_get_variadic_scalar_i64(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := v_get_variadic_scalar_i64()
+    vphp_wrap_variadic_closure_v_get_variadic_scalar_i64(ctx, res)
+}
+
+pub type VPhpVariadicClosureVGetVariadicScalarValue = fn (...vphp.VScalarValue) vphp.VScalarValue
+
+fn vphp_variadic_closure_bridge_v_get_variadic_scalar_value(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    unsafe {
+        ctx := vphp.Context{
+            ex:  vphp.ZExData.new(ex)
+            ret: vphp.PhpReturn.new(ret)
+        }
+        cb := *(&VPhpVariadicClosureVGetVariadicScalarValue(v_ptr))
+        mut args := []vphp.VScalarValue{cap: ctx.num_args()}
+        for i in 0 .. ctx.num_args() {
+            args << ctx.arg_v_scalar(i) or { vphp.throw_exception(err.msg(), 0); return }
+        }
+        res := cb(...args)
+        ctx.return_val[vphp.VScalarValue](res)
+    }
+}
+
+fn vphp_wrap_variadic_closure_v_get_variadic_scalar_value(ctx vphp.Context, cb VPhpVariadicClosureVGetVariadicScalarValue) {
+    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetVariadicScalarValue](cb, voidptr(vphp_variadic_closure_bridge_v_get_variadic_scalar_value))
+}
+
+@[export: 'vphp_wrap_v_get_variadic_scalar_value']
+fn vphp_wrap_v_get_variadic_scalar_value(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := v_get_variadic_scalar_value()
+    vphp_wrap_variadic_closure_v_get_variadic_scalar_value(ctx, res)
 }
 
 @[export: 'vphp_wrap_v_lifecycle_hook_state']

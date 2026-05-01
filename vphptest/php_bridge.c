@@ -811,20 +811,30 @@ PHP_FUNCTION(v_test_globals) {
     vphp_wrap_v_test_globals(ctx);
 }
 ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_v_closure, 0, 0, 0)
-ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_get_v_closure(vphp_context_internal ctx);
 PHP_FUNCTION(v_get_v_closure) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
     vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     vphp_wrap_v_get_v_closure(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
 }
 ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_v_closure_auto, 0, 0, 0)
-ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_get_v_closure_auto(vphp_context_internal ctx);
 PHP_FUNCTION(v_get_v_closure_auto) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
     vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     vphp_wrap_v_get_v_closure_auto(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
 }
 ZEND_BEGIN_ARG_INFO_EX(arginfo_v_iter_helpers_demo, 0, 0, 0)
 ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
@@ -980,6 +990,97 @@ PHP_FUNCTION(v_get_closure_4_void) {
     }
     vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     vphp_wrap_v_get_closure_4_void(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_struct_param_closure, 0, 0, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_get_struct_param_closure(vphp_context_internal ctx);
+PHP_FUNCTION(v_get_struct_param_closure) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_get_struct_param_closure(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_variadic_value_closure, 0, 0, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_get_variadic_value_closure(vphp_context_internal ctx);
+PHP_FUNCTION(v_get_variadic_value_closure) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_get_variadic_value_closure(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_variadic_zval_closure, 0, 0, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_get_variadic_zval_closure(vphp_context_internal ctx);
+PHP_FUNCTION(v_get_variadic_zval_closure) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_get_variadic_zval_closure(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_variadic_zval_void, 0, 0, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_get_variadic_zval_void(vphp_context_internal ctx);
+PHP_FUNCTION(v_get_variadic_zval_void) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_get_variadic_zval_void(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_variadic_scalar_string, 0, 0, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_get_variadic_scalar_string(vphp_context_internal ctx);
+PHP_FUNCTION(v_get_variadic_scalar_string) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_get_variadic_scalar_string(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_variadic_scalar_i64, 0, 0, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_get_variadic_scalar_i64(vphp_context_internal ctx);
+PHP_FUNCTION(v_get_variadic_scalar_i64) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_get_variadic_scalar_i64(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_variadic_scalar_value, 0, 0, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_get_variadic_scalar_value(vphp_context_internal ctx);
+PHP_FUNCTION(v_get_variadic_scalar_value) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_get_variadic_scalar_value(ctx);
     if (!vphp_validate_internal_return(execute_data, return_value)) {
         return;
     }
@@ -2111,6 +2212,8 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_callableprocessor_apply, 0, 2, I
 ZEND_ARG_CALLABLE_INFO(0, callback, 0)
 ZEND_ARG_TYPE_INFO(0, data, IS_STRING, 0)
 ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_INFO_EX(arginfo_callableprocessor_struct_closure, 0, 0, 0)
+ZEND_END_ARG_INFO()
 PHP_METHOD(CallableProcessor, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -2192,11 +2295,26 @@ PHP_METHOD(CallableProcessor, apply) {
         return;
     }
 }
+PHP_METHOD(CallableProcessor, structClosure) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_CallableProcessor_struct_closure(vphp_context_internal ctx);
+    vphp_wrap_CallableProcessor_struct_closure(ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
 static const zend_function_entry callableprocessor_methods[] = {
     PHP_ME(CallableProcessor, __construct, arginfo_callableprocessor_construct, ZEND_ACC_PUBLIC)
     PHP_ME(CallableProcessor, process, arginfo_callableprocessor_process, ZEND_ACC_PUBLIC)
     PHP_ME(CallableProcessor, transform, arginfo_callableprocessor_transform, ZEND_ACC_PUBLIC)
     PHP_ME(CallableProcessor, apply, arginfo_callableprocessor_apply, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(CallableProcessor, structClosure, arginfo_callableprocessor_struct_closure, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_FE_END
 };
 
@@ -3058,6 +3176,13 @@ static const zend_function_entry vphptest_functions[] = {
     PHP_FE(v_get_closure_4, arginfo_v_get_closure_4)
     PHP_FE(v_get_closure_3_void, arginfo_v_get_closure_3_void)
     PHP_FE(v_get_closure_4_void, arginfo_v_get_closure_4_void)
+    PHP_FE(v_get_struct_param_closure, arginfo_v_get_struct_param_closure)
+    PHP_FE(v_get_variadic_value_closure, arginfo_v_get_variadic_value_closure)
+    PHP_FE(v_get_variadic_zval_closure, arginfo_v_get_variadic_zval_closure)
+    PHP_FE(v_get_variadic_zval_void, arginfo_v_get_variadic_zval_void)
+    PHP_FE(v_get_variadic_scalar_string, arginfo_v_get_variadic_scalar_string)
+    PHP_FE(v_get_variadic_scalar_i64, arginfo_v_get_variadic_scalar_i64)
+    PHP_FE(v_get_variadic_scalar_value, arginfo_v_get_variadic_scalar_value)
     PHP_FE(v_lifecycle_hook_state, arginfo_v_lifecycle_hook_state)
     PHP_FE(v_find_after, arginfo_v_find_after)
     PHP_FE(v_try_divide, arginfo_v_try_divide)

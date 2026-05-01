@@ -31,8 +31,7 @@ fn v_invoke_with_arg(callback vphp.Callable, value string) string {
 }
 
 // Class with callable method parameter
-@[heap]
-@[php_class]
+@[heap; php_class]
 struct CallableProcessor {
 pub mut:
 	prefix string
@@ -75,71 +74,185 @@ pub fn CallableProcessor.apply(callback vphp.Callable, data string) string {
 	return callback.call(args).to_string()
 }
 
-// ============================================
-// Universal Closure Export Tests (Sub-goal 2b)
-// ============================================
-
-fn my_universal_0() vphp.ZVal {
-	return vphp.ZVal.new_string('universal-0-result')
+@[php_method: 'structClosure']
+pub fn CallableProcessor.struct_closure() fn (StructClosureArgs) string {
+	return my_struct_closure
 }
 
-fn my_universal_1(a vphp.ZVal) vphp.ZVal {
+fn my_zval_0(args ...vphp.ZVal) vphp.ZVal {
+	_ = args.len
+	return vphp.ZVal.new_string('variadic-0-result')
+}
+
+fn my_zval_1(args ...vphp.ZVal) vphp.ZVal {
+	a := if args.len > 0 { args[0] } else { vphp.ZVal.new_null() }
 	return vphp.ZVal.new_string('got:' + a.to_string())
 }
 
-fn my_universal_2(a vphp.ZVal, b vphp.ZVal) vphp.ZVal {
+fn my_zval_2(args ...vphp.ZVal) vphp.ZVal {
+	a := if args.len > 0 { args[0] } else { vphp.ZVal.new_null() }
+	b := if args.len > 1 { args[1] } else { vphp.ZVal.new_null() }
 	return vphp.ZVal.new_string(a.to_string() + '+' + b.to_string())
 }
 
-fn my_universal_3(a vphp.ZVal, b vphp.ZVal, c vphp.ZVal) vphp.ZVal {
+fn my_zval_3(args ...vphp.ZVal) vphp.ZVal {
+	a := if args.len > 0 { args[0] } else { vphp.ZVal.new_null() }
+	b := if args.len > 1 { args[1] } else { vphp.ZVal.new_null() }
+	c := if args.len > 2 { args[2] } else { vphp.ZVal.new_null() }
 	return vphp.ZVal.new_string(a.to_string() + '+' + b.to_string() + '+' + c.to_string())
 }
 
-fn my_universal_4(a vphp.ZVal, b vphp.ZVal, c vphp.ZVal, d vphp.ZVal) vphp.ZVal {
-	return vphp.ZVal.new_string(a.to_string() + '+' + b.to_string() + '+' + c.to_string() + '+' + d.to_string())
+fn my_zval_4(args ...vphp.ZVal) vphp.ZVal {
+	a := if args.len > 0 { args[0] } else { vphp.ZVal.new_null() }
+	b := if args.len > 1 { args[1] } else { vphp.ZVal.new_null() }
+	c := if args.len > 2 { args[2] } else { vphp.ZVal.new_null() }
+	d := if args.len > 3 { args[3] } else { vphp.ZVal.new_null() }
+	return vphp.ZVal.new_string(a.to_string() + '+' + b.to_string() + '+' + c.to_string() + '+' +
+		d.to_string())
 }
 
-fn my_universal_3_void(a vphp.ZVal, b vphp.ZVal, c vphp.ZVal) {
-	// Side-effect only - would log or store in real usage
-	_ = a.to_string() + b.to_string() + c.to_string()
+fn my_zval_void(args ...vphp.ZVal) {
+	mut text := ''
+	for arg in args {
+		text += arg.to_string()
+	}
+	_ = text
 }
 
-fn my_universal_4_void(a vphp.ZVal, b vphp.ZVal, c vphp.ZVal, d vphp.ZVal) {
-	// Side-effect only - would log or store in real usage
-	_ = a.to_string() + b.to_string() + c.to_string() + d.to_string()
+@[params]
+struct StructClosureArgs {
+	name  string
+	count int
+}
+
+fn my_struct_closure(args StructClosureArgs) string {
+	return '${args.name}:${args.count}'
+}
+
+fn my_variadic_value_closure(args ...vphp.PhpValue) string {
+	mut parts := []string{}
+	for arg in args {
+		parts << arg.to_string()
+	}
+	return '${args.len}:' + parts.join('|')
+}
+
+fn my_variadic_zval_closure(args ...vphp.ZVal) vphp.ZVal {
+	mut parts := []string{}
+	for arg in args {
+		parts << arg.to_string()
+	}
+	return vphp.ZVal.new_string('${args.len}:' + parts.join('|'))
+}
+
+fn my_variadic_zval_void(args ...vphp.ZVal) {
+	_ = args.len
+}
+
+fn my_variadic_scalar_string(args ...vphp.VScalarValue) string {
+	mut parts := []string{}
+	for arg in args {
+		parts << arg.to_string()
+	}
+	return '${args.len}:' + parts.join('|')
+}
+
+fn my_variadic_scalar_i64(args ...vphp.VScalarValue) i64 {
+	mut total := i64(0)
+	for arg in args {
+		match arg {
+			i64 {
+				total += arg
+			}
+			f64 {
+				total += i64(arg)
+			}
+			bool {
+				if arg {
+					total++
+				}
+			}
+			string {
+				total += arg.i64()
+			}
+		}
+	}
+	return total
+}
+
+fn my_variadic_scalar_value(args ...vphp.VScalarValue) vphp.VScalarValue {
+	if args.len == 0 {
+		return vphp.VScalarValue(i64(0))
+	}
+	return args[0]
 }
 
 @[php_function]
-fn v_get_closure_0() vphp.ClosureUniversal0 {
-	return my_universal_0
+fn v_get_closure_0() fn (...vphp.ZVal) vphp.ZVal {
+	return my_zval_0
 }
 
 @[php_function]
-fn v_get_closure_1() vphp.ClosureUniversal1 {
-	return my_universal_1
+fn v_get_closure_1() fn (...vphp.ZVal) vphp.ZVal {
+	return my_zval_1
 }
 
 @[php_function]
-fn v_get_closure_2() vphp.ClosureUniversal2 {
-	return my_universal_2
+fn v_get_closure_2() fn (...vphp.ZVal) vphp.ZVal {
+	return my_zval_2
 }
 
 @[php_function]
-fn v_get_closure_3() vphp.ClosureUniversal3 {
-	return my_universal_3
+fn v_get_closure_3() fn (...vphp.ZVal) vphp.ZVal {
+	return my_zval_3
 }
 
 @[php_function]
-fn v_get_closure_4() vphp.ClosureUniversal4 {
-	return my_universal_4
+fn v_get_closure_4() fn (...vphp.ZVal) vphp.ZVal {
+	return my_zval_4
 }
 
 @[php_function]
-fn v_get_closure_3_void() vphp.ClosureUniversal3Void {
-	return my_universal_3_void
+fn v_get_closure_3_void() fn (...vphp.ZVal) {
+	return my_zval_void
 }
 
 @[php_function]
-fn v_get_closure_4_void() vphp.ClosureUniversal4Void {
-	return my_universal_4_void
+fn v_get_closure_4_void() fn (...vphp.ZVal) {
+	return my_zval_void
+}
+
+@[php_function]
+fn v_get_struct_param_closure() fn (StructClosureArgs) string {
+	return my_struct_closure
+}
+
+@[php_function]
+fn v_get_variadic_value_closure() fn (...vphp.PhpValue) string {
+	return my_variadic_value_closure
+}
+
+@[php_function]
+fn v_get_variadic_zval_closure() fn (...vphp.ZVal) vphp.ZVal {
+	return my_variadic_zval_closure
+}
+
+@[php_function]
+fn v_get_variadic_zval_void() fn (...vphp.ZVal) {
+	return my_variadic_zval_void
+}
+
+@[php_function]
+fn v_get_variadic_scalar_string() fn (...vphp.VScalarValue) string {
+	return my_variadic_scalar_string
+}
+
+@[php_function]
+fn v_get_variadic_scalar_i64() fn (...vphp.VScalarValue) i64 {
+	return my_variadic_scalar_i64
+}
+
+@[php_function]
+fn v_get_variadic_scalar_value() fn (...vphp.VScalarValue) vphp.VScalarValue {
+	return my_variadic_scalar_value
 }

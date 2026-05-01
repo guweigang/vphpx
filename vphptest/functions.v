@@ -953,11 +953,7 @@ fn v_dyn_value_runtime_refs(raw_obj vphp.ZVal, callback vphp.Callable, raw_res v
 		return ''
 	}
 	copy_is_object := copied.is_object()
-	mut obj_new_fails := false
-	_ := obj_dyn.new_zval() or {
-		obj_new_fails = true
-		vphp.ZVal.new_null()
-	}
+	obj_new_fails := !obj_dyn.can_new_zval()
 	mut obj_persistent := obj_dyn.to_persistent_owned_zbox() or {
 		vphp.throw_exception('DynValue object to_persistent failed: ${err.msg()}', 0)
 		return ''
@@ -1338,32 +1334,24 @@ fn v_test_globals(ctx vphp.Context) {
 	})
 }
 
-// 测试 V 侧原生闭包自动转换。
 @[php_function]
-fn v_get_v_closure(ctx vphp.Context) {
-	// Use a universal ZVal-based closure to avoid generating many
-	// monomorphized wrap_closure[T] instantiations in generated C.
-	// The universal closure accepts/returns ZVal and is wrapped via
-	// wrap_closure_universal with an explicit alias.
-	v_cb_int_univ := fn (a vphp.ZVal) vphp.ZVal {
+fn v_get_v_closure() fn (...vphp.ZVal) vphp.ZVal {
+	return fn (args ...vphp.ZVal) vphp.ZVal {
+		a := if args.len > 0 { args[0] } else { vphp.ZVal.new_null() }
 		n := a.to_int()
 		return vphp.ZVal.new_int(n * 10)
 	}
-	ctx.wrap_closure_universal_1(v_cb_int_univ)
 }
 
-// 测试 V 侧原生闭包自动转换。
 @[php_function]
-fn v_get_v_closure_auto(ctx vphp.Context) {
-	// To keep the example simple and avoid capture-specific monomorphization,
-	// use a universal ZVal-based closure instead. This keeps the emitted C
-	// glue stable and relies on the runtime universal bridges.
-	v_cb_name_count_univ := fn (a vphp.ZVal, b vphp.ZVal) vphp.ZVal {
+fn v_get_v_closure_auto() fn (...vphp.ZVal) vphp.ZVal {
+	return fn (args ...vphp.ZVal) vphp.ZVal {
+		a := if args.len > 0 { args[0] } else { vphp.ZVal.new_null() }
+		b := if args.len > 1 { args[1] } else { vphp.ZVal.new_null() }
 		name := a.to_string()
 		count := b.to_int()
 		return vphp.ZVal.new_string('V-Power: Hello ${name}, count is ${count}')
 	}
-	ctx.wrap_closure_universal_2(v_cb_name_count_univ)
 }
 
 @[php_function]
