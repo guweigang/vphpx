@@ -593,7 +593,7 @@ PHP_FUNCTION(v_php_return_string_wrapper_api) {
         return;
     }
 }
-ZEND_BEGIN_ARG_INFO_EX(arginfo_v_php_return_persistent_array_api, 0, 0, 1)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_return_persistent_array_api, 0, 1, IS_ARRAY, 0)
 ZEND_ARG_TYPE_INFO(0, arr, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_php_return_persistent_array_api(vphp_context_internal ctx);

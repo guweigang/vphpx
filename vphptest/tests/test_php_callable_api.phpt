@@ -9,4 +9,4 @@ echo v_php_callable_api(function (string $value): string {
 }) . PHP_EOL;
 ?>
 --EXPECT--
-callable=true:CALLABLE:dyn_data:AGAIN
+callable=true:CALLABLE:persistent_owned:AGAIN

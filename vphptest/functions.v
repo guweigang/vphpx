@@ -125,10 +125,8 @@ fn v_complex_test(ctx vphp.Context) {
 }
 
 fn nested_payload_summary(box vphp.PersistentOwnedZBox) string {
-	return box.with_request_zval(fn (z vphp.ZVal) string {
-		if !z.is_array() {
-			return 'not-array'
-		}
+	return box.with_request_array(fn (arr vphp.PhpArray) string {
+		z := arr.to_zval()
 		viewer := z.get('viewer') or { vphp.ZVal.new_null() }
 		workspace := z.get('workspace') or { vphp.ZVal.new_null() }
 		metrics := z.get('metrics') or { vphp.ZVal.new_null() }
@@ -163,7 +161,7 @@ fn nested_payload_summary(box vphp.PersistentOwnedZBox) string {
 			}
 		}
 		return '${viewer_id}|${member_count}|${chunk_count}|${job_count}'
-	})
+	}) or { 'not-array' }
 }
 
 @[php_function]
@@ -427,13 +425,13 @@ fn v_persistent_fallback_counter_probe(raw vphp.ZVal) string {
 @[php_function]
 fn v_request_scope_counter_probe(rounds int) string {
 	before := vphp.runtime_counters()
-	mark := vphp.request_scope_enter()
+	mut scope := vphp.PhpScope.request()
 	mut checksum := 0
 	for i in 0 .. rounds {
 		box := vphp.RequestOwnedZBox.new_string('scope-${i}')
 		checksum += box.to_string().len
 	}
-	vphp.request_scope_leave(mark)
+	scope.close()
 	after := vphp.runtime_counters()
 
 	return 'ar_delta=${after.autorelease_len - before.autorelease_len};owned_delta=${after.owned_len - before.owned_len};fallback_delta=${after.persistent_fallback_zval_len - before.persistent_fallback_zval_len};checksum=${checksum > 0}'
@@ -584,12 +582,12 @@ fn v_php_closure_persistent_api(callback vphp.Callable) string {
 		vphp.throw_exception('callback should be callable', 0)
 		return ''
 	}
-	mut persistent := closure.to_persistent()
+	mut persistent := closure.to_persistent_owned()
 	during := vphp.runtime_counters()
 
 	first := persistent.call[vphp.PhpString](vphp.PhpString.of('keep'), vphp.PhpInt.of(2)) or {
 		persistent.release()
-		vphp.throw_exception('PersistentPhpClosure call failed: ${err.msg()}', 0)
+		vphp.throw_exception('PhpClosure persistent call failed: ${err.msg()}', 0)
 		return ''
 	}
 	second := persistent.with_fn_result_zval(fn (z vphp.ZVal) string {
@@ -625,10 +623,10 @@ fn v_php_object_api(raw vphp.ZVal) string {
 	greet := obj.with_method_result_zval('greet', fn (z vphp.ZVal) string {
 		return z.to_string()
 	})
-	mut persistent := obj.to_persistent()
+	mut persistent := obj.to_persistent_owned()
 	again := persistent.method[vphp.PhpString]('greet') or {
 		persistent.release()
-		vphp.throw_exception('PersistentPhpObject method failed: ${err.msg()}', 0)
+		vphp.throw_exception('PhpObject persistent method failed: ${err.msg()}', 0)
 		return ''
 	}
 	kind := persistent.kind_name()
@@ -647,14 +645,14 @@ fn v_php_array_api(raw vphp.ZVal) string {
 		vphp.throw_exception('PhpArray get failed: ${err.msg()}', 0)
 		return ''
 	}
-	dyn := arr.to_dyn() or {
+	dyn := arr.to_dyn_value() or {
 		vphp.throw_exception('PhpArray to_dyn failed: ${err.msg()}', 0)
 		return ''
 	}
-	mut persistent := arr.to_persistent()
-	pdyn := persistent.to_dyn() or {
+	mut persistent := arr.to_persistent_owned()
+	pdyn := persistent.to_dyn_value() or {
 		persistent.release()
-		vphp.throw_exception('PersistentPhpArray to_dyn failed: ${err.msg()}', 0)
+		vphp.throw_exception('PhpArray persistent to_dyn failed: ${err.msg()}', 0)
 		return ''
 	}
 	kind := persistent.kind_name()
@@ -671,7 +669,7 @@ fn v_php_callable_api(callback vphp.Callable) string {
 	result := callable.with_result_zval(fn (z vphp.ZVal) string {
 		return z.to_string()
 	}, vphp.ZVal.new_string('callable'))
-	mut persistent := callable.to_persistent()
+	mut persistent := callable.to_persistent_owned()
 	again := persistent.call[vphp.PhpString](vphp.PhpString.of('again')) or {
 		persistent.release()
 		vphp.throw_exception('Persistent callable call failed: ${err.msg()}', 0)
@@ -684,7 +682,7 @@ fn v_php_callable_api(callback vphp.Callable) string {
 
 @[php_function]
 fn v_php_value_api(raw vphp.ZVal) string {
-	value := vphp.PhpValue.of(raw)
+	value := vphp.PhpValue.from_zval(raw)
 	arr := value.as_array() or {
 		vphp.throw_exception('raw should be array', 0)
 		return ''
@@ -693,12 +691,12 @@ fn v_php_value_api(raw vphp.ZVal) string {
 		vphp.throw_exception('PhpValue array get failed: ${err.msg()}', 0)
 		return ''
 	}
-	mut persistent := value.to_persistent()
+	mut persistent := value.to_persistent_owned()
 	pcount := persistent.with_array(fn (a vphp.PhpArray) int {
 		return a.count()
 	}) or {
 		persistent.release()
-		vphp.throw_exception('PersistentPhpValue should restore array', 0)
+		vphp.throw_exception('PhpValue persistent should restore array', 0)
 		return ''
 	}
 	kind := persistent.kind_name()
@@ -708,7 +706,7 @@ fn v_php_value_api(raw vphp.ZVal) string {
 
 @[php_function]
 fn v_php_scalar_api(raw vphp.ZVal) string {
-	value := vphp.PhpValue.of(raw)
+	value := vphp.PhpValue.from_zval(raw)
 	scalar := value.as_scalar() or {
 		vphp.throw_exception('raw should be scalar', 0)
 		return ''
@@ -717,7 +715,7 @@ fn v_php_scalar_api(raw vphp.ZVal) string {
 	as_int := vphp.PhpInt.coerce(raw)
 	as_double := vphp.PhpDouble.coerce(raw)
 	as_bool := vphp.PhpBool.coerce(raw)
-	return 'scalar=${scalar.type_name()}:${value.is_scalar()}:${strict_string.value()}:${as_int.value()}:${as_double.value()}:${as_bool.value()}:${scalar.to_dyn().type.str()}'
+	return 'scalar=${scalar.type_name()}:${value.is_scalar()}:${strict_string.value()}:${as_int.value()}:${as_double.value()}:${as_bool.value()}:${scalar.to_dyn_value().type.str()}'
 }
 
 @[php_function]
@@ -732,7 +730,7 @@ fn v_php_scalar_strict_api() string {
 	strict_d := d.as_double() or { return 'strict_error=double' }
 	strict_b := b.as_bool() or { return 'strict_error=bool' }
 	null_value := n.as_null() or { return 'strict_error=null' }
-	mut persistent_null := null_value.to_persistent()
+	mut persistent_null := null_value.to_persistent_owned()
 	null_kind := persistent_null.kind_name()
 	null_restored := persistent_null.with_value(fn (value vphp.PhpValue) bool {
 		return value.is_null()
@@ -745,7 +743,7 @@ fn v_php_scalar_strict_api() string {
 @[php_function]
 fn v_php_semantic_empty_api() string {
 	arr := vphp.PhpArray.empty()
-	mut persistent_arr := vphp.PersistentPhpArray.empty()
+	mut persistent_arr := vphp.PhpArray.empty().to_persistent_owned()
 	persistent_count := persistent_arr.with_array(fn (a vphp.PhpArray) int {
 		return a.count()
 	})
@@ -818,7 +816,7 @@ fn v_php_wrapper_param_api(value vphp.PhpValue, obj vphp.PhpObject, arr vphp.Php
 		vphp.throw_exception('callable call failed: ${err.msg()}', 0)
 		return ''
 	}
-	return 'wrap=${value.type_name()}:${name}:${arr.count()}:${call_result.value()}:${null_value.to_dyn().type.str()}:${maybe_obj == none}'
+	return 'wrap=${value.type_name()}:${name}:${arr.count()}:${call_result.value()}:${null_value.to_dyn_value().type.str()}:${maybe_obj == none}'
 }
 
 @[php_function]
@@ -853,8 +851,8 @@ fn v_php_return_string_wrapper_api(value vphp.PhpString) vphp.PhpString {
 }
 
 @[php_function]
-fn v_php_return_persistent_array_api(arr vphp.PhpArray) vphp.PersistentPhpArray {
-	return arr.to_persistent()
+fn v_php_return_persistent_array_api(arr vphp.PhpArray) vphp.PhpArray {
+	return arr.to_persistent_owned()
 }
 
 @[php_function]
@@ -915,12 +913,12 @@ fn v_dyn_value_runtime_refs(raw_obj vphp.ZVal, callback vphp.Callable, raw_res v
 	}
 	res_type := res.type_name()
 
-	mut persistent_obj := obj.to_persistent()
+	mut persistent_obj := obj.to_persistent_owned()
 	mut persistent_obj_dyn := vphp.DynValue.persistent_object_ref(persistent_obj)
 	persistent_name := persistent_obj_dyn.with_object[string](fn (o vphp.PhpObject) string {
 		return o.prop_v[string]('name') or { '' }
 	}) or { '' }
-	mut persistent_obj_box := persistent_obj_dyn.to_persistent() or {
+	mut persistent_obj_box := persistent_obj_dyn.to_persistent_owned_zbox() or {
 		vphp.throw_exception('persistent object DynValue to_persistent failed: ${err.msg()}',
 			0)
 		persistent_obj_dyn.release()
@@ -932,12 +930,12 @@ fn v_dyn_value_runtime_refs(raw_obj vphp.ZVal, callback vphp.Callable, raw_res v
 	persistent_obj_dyn.release()
 	persistent_obj.release()
 
-	mut persistent_closure := callable.to_persistent()
+	mut persistent_closure := callable.to_persistent_closure()
 	mut persistent_call_dyn := vphp.DynValue.persistent_closure_ref(persistent_closure)
 	persistent_call := persistent_call_dyn.with_closure[string](fn (c vphp.PhpClosure) string {
 		return c.call[vphp.PhpString](vphp.PhpString.of('stored')) or { vphp.PhpString.empty() }.value()
 	}) or { '' }
-	mut persistent_call_box := persistent_call_dyn.to_persistent() or {
+	mut persistent_call_box := persistent_call_dyn.to_persistent_owned_zbox() or {
 		vphp.throw_exception('persistent callable DynValue to_persistent failed: ${err.msg()}',
 			0)
 		persistent_call_dyn.release()
@@ -960,20 +958,20 @@ fn v_dyn_value_runtime_refs(raw_obj vphp.ZVal, callback vphp.Callable, raw_res v
 		obj_new_fails = true
 		vphp.ZVal.new_null()
 	}
-	mut obj_persistent := obj_dyn.to_persistent() or {
+	mut obj_persistent := obj_dyn.to_persistent_owned_zbox() or {
 		vphp.throw_exception('DynValue object to_persistent failed: ${err.msg()}', 0)
 		return ''
 	}
 	obj_kind := obj_persistent.kind_name()
 	obj_persistent.release()
-	mut call_persistent := call_dyn.to_persistent() or {
+	mut call_persistent := call_dyn.to_persistent_owned_zbox() or {
 		vphp.throw_exception('DynValue callable to_persistent failed: ${err.msg()}', 0)
 		return ''
 	}
 	call_kind := call_persistent.kind_name()
 	call_persistent.release()
 	mut res_persistent_fails := false
-	mut res_persistent := res_dyn.to_persistent() or {
+	mut res_persistent := res_dyn.to_persistent_owned_zbox() or {
 		res_persistent_fails = true
 		vphp.PersistentOwnedZBox.invalid()
 	}
@@ -986,7 +984,7 @@ fn v_dyn_value_runtime_refs(raw_obj vphp.ZVal, callback vphp.Callable, raw_res v
 
 @[php_function]
 fn v_php_reference_api(raw vphp.ZVal) string {
-	value := vphp.PhpValue.of(raw)
+	value := vphp.PhpValue.from_zval(raw)
 	ref := value.as_reference() or { return 'reference=false:${value.to_string()}' }
 	before := ref.deref().to_string()
 	ref.set(vphp.ZVal.new_string('changed-from-v'))
