@@ -395,7 +395,7 @@ fn patch_windows_generated_fixed_array_consts(path string) ! {
 
 fn detect_gc_compile_flags(gc_mode string) string {
 	return match gc_mode {
-		'boehm' { pkg_config_flags('--cflags bdw-gc') }
+		'boehm' { '${pkg_config_flags('--cflags bdw-gc')} -DGC_THREADS=1 -include gc/gc.h' }
 		else { '' }
 	}
 }

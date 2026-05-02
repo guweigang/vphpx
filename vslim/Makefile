@@ -16,7 +16,7 @@ EXT_C := $(firstword $(wildcard *_generated.c))
 GC_CFLAGS :=
 GC_LIBS :=
 ifeq ($(RESOLVED_VPHP_V_GC),boehm)
-GC_CFLAGS := $(shell pkg-config --cflags bdw-gc)
+GC_CFLAGS := $(shell pkg-config --cflags bdw-gc) -DGC_THREADS=1 -include gc/gc.h
 GC_LIBS := $(shell pkg-config --libs bdw-gc)
 endif
 UNAME_S := $(shell uname -s)

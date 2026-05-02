@@ -51,7 +51,7 @@ fn detect_v_gc_mode() string {
 }
 
 fn pkg_config_flags(args string) string {
-	cmd := "pkg-config ${args}"
+	cmd := 'pkg-config ${args}'
 	res := os.execute(cmd)
 	if res.exit_code != 0 {
 		eprintln('❌ 执行 `${cmd}` 失败: ${res.output.trim_space()}')
@@ -62,7 +62,7 @@ fn pkg_config_flags(args string) string {
 
 fn detect_gc_compile_flags(gc_mode string) string {
 	return match gc_mode {
-		'boehm' { pkg_config_flags('--cflags bdw-gc') }
+		'boehm' { '${pkg_config_flags('--cflags bdw-gc')} -DGC_THREADS=1 -include gc/gc.h' }
 		else { '' }
 	}
 }
@@ -127,7 +127,8 @@ fn main() {
 	os.rm(output_so) or {}
 	os.rm(legacy_transpiled_c) or {}
 
-	v_res := os.execute('v -nocache -enable-globals -gc ${gc_mode} -path ".:..:@vlib" -shared -o ${transpiled_c} ${project_root}')
+	v_res :=
+		os.execute('v -nocache -enable-globals -gc ${gc_mode} -path ".:..:@vlib" -shared -o ${transpiled_c} ${project_root}')
 	if v_res.exit_code != 0 {
 		println('❌ V 编译失败: ${v_res.output}')
 		exit(1)
