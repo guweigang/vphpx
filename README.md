@@ -1,6 +1,6 @@
 # vphpx
 
-![vphp brand](assets/vphp_brand.png)
+![vphp brand](vphp/assets/vphp_brand.png)
 
 `vphpx` 是一套用 V 构建 PHP 扩展、PHP 运行时桥接和上层框架的工程栈。
 
