@@ -395,8 +395,8 @@ fn dispatch_websocket_container_service(service vphp.ZVal, event string, frame v
 	return vphp.RequestOwnedZBox.new_null().to_zval()
 }
 
-fn websocket_handler_args(mut frame_scope vphp.FrameScope, event string, frame vphp.ZVal, conn vphp.ZVal) []vphp.PhpFnArg {
-	mut out := []vphp.PhpFnArg{}
+fn websocket_handler_args(mut frame_scope vphp.FrameScope, event string, frame vphp.ZVal, conn vphp.ZVal) []vphp.PhpArgInput {
+	mut out := []vphp.PhpArgInput{}
 	match event {
 		'open' {
 			out << vphp.PhpValue.from_zval(conn)

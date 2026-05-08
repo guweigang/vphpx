@@ -233,7 +233,7 @@ pub fn (mut app VSlimWebSocketApp) handle_websocket(frame vphp.RequestBorrowedZB
 	match event {
 		'open' {
 			app.remember(conn)
-			mut args := []vphp.PhpFnArg{}
+			mut args := []vphp.PhpArgInput{}
 			args << vphp.PhpValue.from_zval(raw_conn)
 			args << vphp.PhpValue.from_zval(raw_frame)
 			return vphp.RequestOwnedZBox.adopt_zval(invoke_ws_handler(app.on_open_handler,
@@ -244,7 +244,7 @@ pub fn (mut app VSlimWebSocketApp) handle_websocket(frame vphp.RequestBorrowedZB
 			defer {
 				frame_scope.release()
 			}
-			mut args := []vphp.PhpFnArg{}
+			mut args := []vphp.PhpArgInput{}
 			args << vphp.PhpValue.from_zval(raw_conn)
 			args << frame_scope.string(zval_string_key(raw_frame, 'data', ''))
 			args << vphp.PhpValue.from_zval(raw_frame)
@@ -256,7 +256,7 @@ pub fn (mut app VSlimWebSocketApp) handle_websocket(frame vphp.RequestBorrowedZB
 			defer {
 				frame_scope.release()
 			}
-			mut args := []vphp.PhpFnArg{}
+			mut args := []vphp.PhpArgInput{}
 			args << vphp.PhpValue.from_zval(raw_conn)
 			args << frame_scope.int(zval_int_key(raw_frame, 'code', 1000))
 			args << frame_scope.string(zval_string_key(raw_frame, 'reason', ''))
@@ -275,7 +275,7 @@ fn is_ws_handler_valid(handler vphp.PersistentOwnedZBox) bool {
 	return handler.is_valid() && !handler.is_null() && !handler.is_undef() && handler.is_callable()
 }
 
-fn invoke_ws_handler(handler vphp.PersistentOwnedZBox, args []vphp.PhpFnArg) vphp.ZVal {
+fn invoke_ws_handler(handler vphp.PersistentOwnedZBox, args []vphp.PhpArgInput) vphp.ZVal {
 	if !is_ws_handler_valid(handler) {
 		return vphp.RequestOwnedZBox.new_null().to_zval()
 	}

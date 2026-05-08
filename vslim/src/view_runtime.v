@@ -44,7 +44,7 @@ fn parse_template_helper_arg_node(raw string, line int, col int) !TemplateExprNo
 	return parse_template_expr_node(raw, line, col)
 }
 
-fn (view &VSlimView) invoke_template_helper_args(name string, args []vphp.PhpFnArg, template_path string, line int, col int) string {
+fn (view &VSlimView) invoke_template_helper_args(name string, args []vphp.PhpArgInput, template_path string, line int, col int) string {
 	key := name.trim_space()
 	if key == '' {
 		return debug_template_error('helper.invalid', template_path, name, line, col)

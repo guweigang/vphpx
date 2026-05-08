@@ -122,8 +122,8 @@ PHP_FUNCTION(v_call_back) {
     vphp_wrap_v_call_back(ctx);
 }
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_bind_class_interface, 0, 2, _IS_BOOL, 0)
-ZEND_ARG_TYPE_INFO(0, class_name, IS_STRING, 0)
-ZEND_ARG_TYPE_INFO(0, iface_name, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, className, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, ifaceName, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_bind_class_interface(vphp_context_internal ctx);
 PHP_FUNCTION(v_bind_class_interface) {
@@ -452,6 +452,36 @@ PHP_FUNCTION(v_php_params_struct_api) {
         return;
     }
 }
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_direct_arg_camel_api, 0, 2, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, firstName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, defaultValue, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_direct_arg_camel_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_direct_arg_camel_api) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_direct_arg_camel_api(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_call_style_arg_attrs_api, 0, 1, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, valueAlias, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, optionalCount, IS_LONG, 0, "7")
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_call_style_arg_attrs_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_call_style_arg_attrs_api) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_call_style_arg_attrs_api(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_semantic_params_struct_api, 0, 0, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, label, IS_STRING, 0, "''")
 ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, flag, _IS_BOOL, 0, "false")
@@ -495,8 +525,8 @@ ZEND_ARG_TYPE_INFO(0, value, IS_MIXED, 0)
 ZEND_ARG_TYPE_INFO(0, obj, IS_OBJECT, 0)
 ZEND_ARG_TYPE_INFO(0, arr, IS_ARRAY, 0)
 ZEND_ARG_CALLABLE_INFO(0, callable, 0)
-ZEND_ARG_TYPE_INFO(0, null_value, IS_NULL, 0)
-ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, maybe_obj, IS_OBJECT, 1, "null")
+ZEND_ARG_TYPE_INFO(0, nullValue, IS_NULL, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, maybeObj, IS_OBJECT, 1, "null")
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_php_wrapper_param_api(vphp_context_internal ctx);
 PHP_FUNCTION(v_php_wrapper_param_api) {
@@ -608,9 +638,9 @@ PHP_FUNCTION(v_php_return_persistent_array_api) {
     }
 }
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_dyn_value_runtime_refs, 0, 3, IS_STRING, 0)
-ZEND_ARG_TYPE_INFO(0, raw_obj, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, rawObj, IS_MIXED, 0)
 ZEND_ARG_CALLABLE_INFO(0, callback, 0)
-ZEND_ARG_TYPE_INFO(0, raw_res, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, rawRes, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_dyn_value_runtime_refs(vphp_context_internal ctx);
 PHP_FUNCTION(v_dyn_value_runtime_refs) {
@@ -1212,6 +1242,29 @@ PHP_FUNCTION(v_record_success) {
         return;
     }
 }
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_param_attr_api, 0, 2, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, query, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, page, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_param_attr_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_param_attr_api) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_param_attr_api(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_php_arg_attr_runtime_api, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_arg_attr_runtime_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_arg_attr_runtime_api) {
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_arg_attr_runtime_api(ctx);
+}
 ZEND_BEGIN_ARG_INFO_EX(arginfo_v_analyze_fitness_data, 0, 0, 0)
 ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
@@ -1651,7 +1704,7 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_article_process_with_callback, 0
 ZEND_ARG_TYPE_INFO(0, callback, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_article_restore_author, 0, 1, Author, 0)
-ZEND_ARG_TYPE_INFO(0, author_val, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, authorVal, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 PHP_METHOD(Article, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
@@ -2855,6 +2908,9 @@ zend_class_entry *dispatchablesample_ce = NULL;
 ZEND_BEGIN_ARG_INFO_EX(arginfo_dispatchablesample_construct, 0, 0, 1)
 ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
 ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_dispatchablesample_tagged, 0, 1, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_END_ARG_INFO()
 PHP_METHOD(DispatchableSample, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -2874,8 +2930,33 @@ PHP_METHOD(DispatchableSample, __construct) {
         return;
     }
 }
+PHP_METHOD(DispatchableSample, tagged) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_DispatchableSample_tagged(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* DispatchableSample_handlers();
+    zend_object *vphp_this_obj = Z_OBJ_P(getThis());
+    vphp_object_addref(vphp_this_obj);
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(vphp_this_obj, DispatchableSample_handlers());
+    if (!wrapper->v_ptr) {
+        vphp_object_release(vphp_this_obj);
+        RETURN_FALSE;
+    }
+    vphp_wrap_DispatchableSample_tagged(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        vphp_object_release(vphp_this_obj);
+        return;
+    }
+    vphp_object_release(vphp_this_obj);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
 static const zend_function_entry dispatchablesample_methods[] = {
     PHP_ME(DispatchableSample, __construct, arginfo_dispatchablesample_construct, ZEND_ACC_PUBLIC)
+    PHP_ME(DispatchableSample, tagged, arginfo_dispatchablesample_tagged, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 
@@ -2896,6 +2977,16 @@ static int dispatchablesample_register_class(void) {
         zend_attribute *attribute_dispatchablesample_0 = zend_add_class_attribute(dispatchablesample_ce, attribute_dispatchablesample_0_name, 1);
         zend_string_release(attribute_dispatchablesample_0_name);
         ZVAL_STR(&attribute_dispatchablesample_0->args[0].value, zend_string_init_interned("worker", sizeof("worker")-1, 1));
+        zend_function *method_dispatchablesample_1 = zend_hash_str_find_ptr(&dispatchablesample_ce->function_table, "tagged", sizeof("tagged")-1);
+        if (method_dispatchablesample_1 != NULL) {
+        zend_string *attribute_dispatchablesample_1_0_0_name = zend_string_init_interned("FromQuery", sizeof("FromQuery")-1, 1);
+        zend_attribute *attribute_dispatchablesample_1_0_0 = zend_add_parameter_attribute(method_dispatchablesample_1, 0, attribute_dispatchablesample_1_0_0_name, 1);
+        zend_string_release(attribute_dispatchablesample_1_0_0_name);
+        ZVAL_STR(&attribute_dispatchablesample_1_0_0->args[0].value, zend_string_init_interned("name", sizeof("name")-1, 1));
+        zend_string *attribute_dispatchablesample_1_0_1_name = zend_string_init_interned("MustBeString", sizeof("MustBeString")-1, 1);
+        zend_attribute *attribute_dispatchablesample_1_0_1 = zend_add_parameter_attribute(method_dispatchablesample_1, 0, attribute_dispatchablesample_1_0_1_name, 0);
+        zend_string_release(attribute_dispatchablesample_1_0_1_name);
+        }
     }
     return SUCCESS;
 }
@@ -3130,6 +3221,8 @@ static const zend_function_entry vphptest_functions[] = {
     PHP_FE(v_php_scalar_strict_api, arginfo_v_php_scalar_strict_api)
     PHP_FE(v_php_semantic_empty_api, arginfo_v_php_semantic_empty_api)
     PHP_FE(v_php_params_struct_api, arginfo_v_php_params_struct_api)
+    PHP_FE(v_php_direct_arg_camel_api, arginfo_v_php_direct_arg_camel_api)
+    PHP_FE(v_php_call_style_arg_attrs_api, arginfo_v_php_call_style_arg_attrs_api)
     PHP_FE(v_php_semantic_params_struct_api, arginfo_v_php_semantic_params_struct_api)
     PHP_FE(v_php_args_api, arginfo_v_php_args_api)
     PHP_FE(v_php_resource_api, arginfo_v_php_resource_api)
@@ -3193,6 +3286,8 @@ static const zend_function_entry vphptest_functions[] = {
     PHP_FE(v_safe_divide, arginfo_v_safe_divide)
     PHP_FE(v_capitalize, arginfo_v_capitalize)
     PHP_FE(v_record_success, arginfo_v_record_success)
+    PHP_FE(v_php_param_attr_api, arginfo_v_php_param_attr_api)
+    PHP_FE(v_php_arg_attr_runtime_api, arginfo_v_php_arg_attr_runtime_api)
     PHP_FE(v_analyze_fitness_data, arginfo_v_analyze_fitness_data)
     PHP_FE(v_get_alerts, arginfo_v_get_alerts)
     PHP_FE_END
@@ -3206,6 +3301,25 @@ PHP_MINIT_FUNCTION(vphptest) {
         REGISTER_LONG_CONSTANT("MAX_RETRY", 3, CONST_CS | CONST_PERSISTENT);
         REGISTER_DOUBLE_CONSTANT("PI_VALUE", 3.14159, CONST_CS | CONST_PERSISTENT);
         REGISTER_BOOL_CONSTANT("DEBUG_MODE", 0, CONST_CS | CONST_PERSISTENT);
+    {
+        zend_function *func_v_php_param_attr_api = zend_hash_str_find_ptr(CG(function_table), "v_php_param_attr_api", sizeof("v_php_param_attr_api")-1);
+        if (func_v_php_param_attr_api != NULL) {
+            zend_string *attribute_v_php_param_attr_api_0_0_name = zend_string_init_interned("FromQuery", sizeof("FromQuery")-1, 1);
+            zend_attribute *attribute_v_php_param_attr_api_0_0 = zend_add_parameter_attribute(func_v_php_param_attr_api, 0, attribute_v_php_param_attr_api_0_0_name, 1);
+            zend_string_release(attribute_v_php_param_attr_api_0_0_name);
+            ZVAL_STR(&attribute_v_php_param_attr_api_0_0->args[0].value, zend_string_init_interned("q", sizeof("q")-1, 1));
+            zend_string *attribute_v_php_param_attr_api_0_1_name = zend_string_init_interned("MustBeString", sizeof("MustBeString")-1, 1);
+            zend_attribute *attribute_v_php_param_attr_api_0_1 = zend_add_parameter_attribute(func_v_php_param_attr_api, 0, attribute_v_php_param_attr_api_0_1_name, 0);
+            zend_string_release(attribute_v_php_param_attr_api_0_1_name);
+            zend_string *attribute_v_php_param_attr_api_1_0_name = zend_string_init_interned("FromQuery", sizeof("FromQuery")-1, 1);
+            zend_attribute *attribute_v_php_param_attr_api_1_0 = zend_add_parameter_attribute(func_v_php_param_attr_api, 1, attribute_v_php_param_attr_api_1_0_name, 1);
+            zend_string_release(attribute_v_php_param_attr_api_1_0_name);
+            ZVAL_STR(&attribute_v_php_param_attr_api_1_0->args[0].value, zend_string_init_interned("page", sizeof("page")-1, 1));
+            zend_string *attribute_v_php_param_attr_api_1_1_name = zend_string_init_interned("MustBeInt", sizeof("MustBeInt")-1, 1);
+            zend_attribute *attribute_v_php_param_attr_api_1_1 = zend_add_parameter_attribute(func_v_php_param_attr_api, 1, attribute_v_php_param_attr_api_1_1_name, 0);
+            zend_string_release(attribute_v_php_param_attr_api_1_1_name);
+        }
+    }
     if (contentcontract_register_class() != SUCCESS) { return FAILURE; }
     if (demo__contracts__namedcontract_register_class() != SUCCESS) { return FAILURE; }
     if (demo__contracts__aliascontract_register_class() != SUCCESS) { return FAILURE; }

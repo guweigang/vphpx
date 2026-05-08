@@ -411,7 +411,7 @@ pub fn (app &VSlimMcpApp) handle_mcp_dispatch(frame vphp.RequestBorrowedZBox) vp
 		return vphp.RequestOwnedZBox.adopt_zval(new_mcp_error_response(id, -32601, 'Method not found',
 			200, protocol_version))
 	}
-	mut handler_args := []vphp.PhpFnArg{}
+	mut handler_args := []vphp.PhpArgInput{}
 	handler_args << vphp.PhpValue.from_zval(message)
 	handler_args << vphp.PhpValue.from_zval(raw_frame)
 	result := invoke_mcp_handler(handler, handler_args)
@@ -538,7 +538,7 @@ pub fn (app &VSlimMcpApp) handle_builtin_tool_call(message vphp.ZVal, frame vphp
 		fallback.bool('isError', true)
 		return new_mcp_result_response(id, fallback.take_zval(), 200, protocol_version)
 	}
-	mut handler_args := []vphp.PhpFnArg{}
+	mut handler_args := []vphp.PhpArgInput{}
 	handler_args << vphp.PhpValue.from_zval(arguments)
 	handler_args << vphp.PhpValue.from_zval(message)
 	handler_args << vphp.PhpValue.from_zval(frame)
@@ -556,7 +556,7 @@ pub fn (app &VSlimMcpApp) handle_builtin_resource_read(message vphp.ZVal, frame 
 	handler := app.resource_handlers[uri] or {
 		return new_mcp_error_response(id, -32002, 'Resource not found', 200, protocol_version)
 	}
-	mut handler_args := []vphp.PhpFnArg{}
+	mut handler_args := []vphp.PhpArgInput{}
 	handler_args << vphp.PhpValue.from_zval(params)
 	handler_args << vphp.PhpValue.from_zval(message)
 	handler_args << vphp.PhpValue.from_zval(frame)
@@ -588,7 +588,7 @@ pub fn (app &VSlimMcpApp) handle_builtin_prompt_get(message vphp.ZVal, frame vph
 	handler := app.prompt_handlers[name] or {
 		return new_mcp_error_response(id, -32003, 'Prompt not found', 200, protocol_version)
 	}
-	mut handler_args := []vphp.PhpFnArg{}
+	mut handler_args := []vphp.PhpArgInput{}
 	handler_args << vphp.PhpValue.from_zval(arguments)
 	handler_args << vphp.PhpValue.from_zval(message)
 	handler_args << vphp.PhpValue.from_zval(frame)
@@ -746,7 +746,7 @@ fn persistent_array_or_empty(input vphp.ZVal) vphp.PersistentOwnedZBox {
 	return vphp.PersistentOwnedZBox.from_dyn(vphp.DynValue.of_map(map[string]vphp.DynValue{}))
 }
 
-fn invoke_mcp_handler(handler vphp.PersistentOwnedZBox, args []vphp.PhpFnArg) vphp.ZVal {
+fn invoke_mcp_handler(handler vphp.PersistentOwnedZBox, args []vphp.PhpArgInput) vphp.ZVal {
 	if !handler.is_valid() || handler.is_null() || handler.is_undef() || !handler.is_callable() {
 		return vphp.RequestOwnedZBox.new_null().to_zval()
 	}

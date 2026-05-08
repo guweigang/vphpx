@@ -2,7 +2,7 @@ module main
 
 import vphp
 
-fn live_call_method(obj vphp.ZVal, method string, args ...vphp.PhpFnArg) bool {
+fn live_call_method(obj vphp.ZVal, method string, args ...vphp.PhpArgInput) bool {
 	if !obj.is_object() || !obj.method_exists(method) {
 		return false
 	}

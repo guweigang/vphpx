@@ -534,8 +534,7 @@ fn v_php_function_named_api(ctx vphp.Context) {
 		vphp.PhpFunction.named('missing')
 	}
 	if missing.name() != 'missing' {
-		vphp.throw_exception('PhpFunction.find should return none for missing function',
-			0)
+		vphp.throw_exception('PhpFunction.find should return none for missing function', 0)
 		return
 	}
 
@@ -555,8 +554,7 @@ fn v_php_function_named_api(ctx vphp.Context) {
 	semantic_len := vphp.PhpFunction.named('strlen').with_result[vphp.PhpInt, string](fn (n vphp.PhpInt) string {
 		return n.value().str()
 	}, semantic_upper) or {
-		vphp.throw_exception('PhpFunction semantic with_result failed: ${err.msg()}',
-			0)
+		vphp.throw_exception('PhpFunction semantic with_result failed: ${err.msg()}', 0)
 		return
 	}
 
@@ -764,6 +762,20 @@ fn v_php_params_struct_api(params VPhpParamsStructDemo) string {
 	return 'params=${params.status}:${params.reason_phrase}:${params.secure}:${params.ratio}'
 }
 
+@[php_function]
+fn v_php_direct_arg_camel_api(first_name string, default_value string) string {
+	return 'direct=${first_name}:${default_value}'
+}
+
+@[php_arg_name(custom_value: 'valueAlias')]
+@[php_arg_type(optional_count: 'int')]
+@[php_arg_default(optional_count: '7')]
+@[php_arg_optional(optional_count: true)]
+@[php_function]
+fn v_php_call_style_arg_attrs_api(custom_value string, optional_count int) string {
+	return 'call_style=${custom_value}:${optional_count}'
+}
+
 @[params]
 struct VPhpSemanticParamsStructDemo {
 	label vphp.PhpString
@@ -778,9 +790,9 @@ fn v_php_semantic_params_struct_api(params VPhpSemanticParamsStructDemo) string 
 
 @[php_function]
 fn v_php_args_api(ctx vphp.Context) string {
-	args := ctx.args([
-		vphp.PhpInArgMeta{ index: 0, name: 'first' },
-		vphp.PhpInArgMeta{
+	args := ctx.args_with_meta([
+		vphp.PhpArgMeta{ index: 0, name: 'first' },
+		vphp.PhpArgMeta{
 			index: 1
 			name:  'second'
 		},
@@ -919,8 +931,7 @@ fn v_dyn_value_runtime_refs(raw_obj vphp.ZVal, callback vphp.Callable, raw_res v
 		return o.prop_v[string]('name') or { '' }
 	}) or { '' }
 	mut persistent_obj_box := persistent_obj_dyn.to_persistent_owned_zbox() or {
-		vphp.throw_exception('persistent object DynValue to_persistent failed: ${err.msg()}',
-			0)
+		vphp.throw_exception('persistent object DynValue to_persistent failed: ${err.msg()}', 0)
 		persistent_obj_dyn.release()
 		persistent_obj.release()
 		return ''
@@ -936,8 +947,7 @@ fn v_dyn_value_runtime_refs(raw_obj vphp.ZVal, callback vphp.Callable, raw_res v
 		return c.call[vphp.PhpString](vphp.PhpString.of('stored')) or { vphp.PhpString.empty() }.value()
 	}) or { '' }
 	mut persistent_call_box := persistent_call_dyn.to_persistent_owned_zbox() or {
-		vphp.throw_exception('persistent callable DynValue to_persistent failed: ${err.msg()}',
-			0)
+		vphp.throw_exception('persistent callable DynValue to_persistent failed: ${err.msg()}', 0)
 		persistent_call_dyn.release()
 		persistent_closure.release()
 		return ''

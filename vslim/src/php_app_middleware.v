@@ -331,7 +331,7 @@ fn bind_route_target_to_app_if_supported(app &VSlimApp, target vphp.ZVal) {
 	}
 }
 
-fn call_route_target_method(target vphp.ZVal, method string, args []vphp.PhpFnArg) vphp.RequestOwnedZBox {
+fn call_route_target_method(target vphp.ZVal, method string, args []vphp.PhpArgInput) vphp.RequestOwnedZBox {
 	mut callable := vphp.RequestOwnedZBox.new_null()
 	callable.to_zval().array_init()
 	callable.to_zval().add_next_val(target)
@@ -415,7 +415,7 @@ fn dispatch_route_handler(app &VSlimApp, handler vphp.RequestBorrowedZBox, paylo
 		target, method := resolve_php_route_target(app, handler)!
 		bind_route_target_to_app_if_supported(app, target)
 		psr_payload := normalize_psr15_server_request_payload(payload, route_params)
-		mut route_args := []vphp.PhpFnArg{}
+		mut route_args := []vphp.PhpArgInput{}
 		route_args << vphp.PhpValue.from_zval(psr_payload)
 		mut result := call_route_target_method(target, method, route_args)
 		return detach_route_handler_result(mut result)
