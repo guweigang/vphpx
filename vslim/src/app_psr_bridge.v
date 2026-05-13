@@ -582,19 +582,26 @@ fn uploaded_files_to_filenames_zval(files vphp.ZVal) []string {
 	return out
 }
 
+struct Psr7HeaderState {
+mut:
+	headers      map[string][]string
+	header_names map[string]string
+}
+
 fn zval_to_psr7_header_state(value vphp.ZVal) (map[string][]string, map[string]string) {
-	mut out := map[string][]string{}
-	mut header_names := map[string]string{}
 	if !value.is_valid() || !value.is_array() {
-		return out, header_names
+		return map[string][]string{}, map[string]string{}
 	}
-	value.foreach(fn [mut out, mut header_names] (key vphp.ZVal, child vphp.ZVal) {
+	state := value.foreach_with_ctx[Psr7HeaderState](Psr7HeaderState{
+		headers:      map[string][]string{}
+		header_names: map[string]string{}
+	}, fn (key vphp.ZVal, child vphp.ZVal, mut state Psr7HeaderState) {
 		name := key.to_string()
 		normalized := normalize_psr7_header_name(name)
-		out[normalized] = zval_to_header_values(child) or { []string{} }
-		header_names[normalized] = name
+		state.headers[normalized] = zval_to_header_values(child) or { []string{} }
+		state.header_names[normalized] = name
 	})
-	return out, header_names
+	return state.headers, state.header_names
 }
 
 fn flatten_psr7_header_map(headers map[string][]string) map[string]string {
