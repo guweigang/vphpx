@@ -381,29 +381,21 @@ fn throw_psr18_exception_object(class_name string, message string, request vphp.
 }
 
 fn psr18_exception_store_request(request vphp.ZVal) {
-	obj_raw := C.vphp_get_current_this_object()
-	if obj_raw == 0 || !request.is_valid() {
+	obj := vphp.ZendObject.current()
+	if !obj.is_valid() || !request.is_valid() {
 		return
 	}
-	obj := unsafe { &C.zend_object(obj_raw) }
-	C.vphp_write_property_compat(obj, c'request_ref', 'request_ref'.len, request.raw)
+	obj.set_prop('requestRef', request)
 }
 
 fn psr18_exception_load_request() vphp.ZVal {
-	obj_raw := C.vphp_get_current_this_object()
-	if obj_raw != 0 {
-		obj := unsafe { &C.zend_object(obj_raw) }
-		mut rv := C.zval{}
-		res := C.vphp_read_property_compat(obj, c'request_ref', 'request_ref'.len, &rv)
-		if res != 0 {
-			value := vphp.ZVal{
-				raw: res
-			}
-			if value.is_valid() && !value.is_null() && !value.is_undef() {
-				// Return without dup — the caller (own_request_zbox) already
-				// does its own dup when wrapping into RequestOwnedZBox.
-				return value
-			}
+	obj := vphp.ZendObject.current()
+	if obj.is_valid() {
+		value := obj.prop_borrowed('requestRef')
+		if value.is_valid() && !value.is_null() && !value.is_undef() {
+			// Return without dup — the caller (own_request_zbox) already
+			// does its own dup when wrapping into RequestOwnedZBox.
+			return value
 		}
 	}
 	request := vphp.PhpClass.named('VSlim\\Psr7\\Request').construct() or {
