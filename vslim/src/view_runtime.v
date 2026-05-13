@@ -85,8 +85,7 @@ fn build_template_tree_zval(prefix string, scalars map[string]string, lists map[
 		return new_template_list_zval(template_list_values(prefix, scalars, lists))
 	}
 	if !template_has_child_keys(prefix, scalars, lists) {
-		return infer_template_scalar_zval(template_scalar_value_with_lists(prefix, scalars,
-			lists))
+		return infer_template_scalar_zval(template_scalar_value_with_lists(prefix, scalars, lists))
 	}
 	return new_template_assoc_zval(prefix, scalars, lists)
 }
@@ -153,8 +152,7 @@ fn new_template_assoc_zval(prefix string, scalars map[string]string, lists map[s
 	out.array_init()
 	for child in template_child_keys(prefix, scalars, lists) {
 		child_prefix := if prefix == '' { child } else { '${prefix}.${child}' }
-		add_assoc_zval_template(out, child, build_template_tree_zval(child_prefix, scalars,
-			lists))
+		add_assoc_zval_template(out, child, build_template_tree_zval(child_prefix, scalars, lists))
 	}
 	return out
 }
@@ -223,9 +221,7 @@ fn template_child_keys(prefix string, scalars map[string]string, lists map[strin
 }
 
 fn add_assoc_zval_template(target vphp.ZVal, key string, child vphp.ZVal) {
-	unsafe {
-		C.vphp_array_add_assoc_zval(target.raw, &char(key.str), child.raw)
-	}
+	target.add_assoc_zval(key, child)
 }
 
 fn split_template_top_level_segments(raw string, seps []u8) []string {

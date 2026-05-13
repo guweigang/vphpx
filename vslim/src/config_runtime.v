@@ -19,8 +19,8 @@ pub fn (mut c VSlimConfig) load(path string) &VSlimConfig {
 		return c.load_dir(path)
 	}
 	doc := toml.parse_file(path) or {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'config load failed: ${err.msg()}',
-			0)
+		vphp.PhpException.raise_class('InvalidArgumentException',
+			'config load failed: ${err.msg()}', 0)
 		return &c
 	}
 	root := resolve_config_env_any(doc.to_any()) or {
@@ -37,8 +37,8 @@ pub fn (mut c VSlimConfig) load(path string) &VSlimConfig {
 @[php_method: 'loadDir']
 pub fn (mut c VSlimConfig) load_dir(path string) &VSlimConfig {
 	files := config_dir_files(path) or {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'config load failed: ${err.msg()}',
-			0)
+		vphp.PhpException.raise_class('InvalidArgumentException',
+			'config load failed: ${err.msg()}', 0)
 		return &c
 	}
 	mut root := toml.Any(toml.null)
@@ -64,8 +64,8 @@ pub fn (mut c VSlimConfig) load_dir(path string) &VSlimConfig {
 @[php_method: 'loadText']
 pub fn (mut c VSlimConfig) load_text(text string) &VSlimConfig {
 	doc := toml.parse_text(text) or {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'config parse failed: ${err.msg()}',
-			0)
+		vphp.PhpException.raise_class('InvalidArgumentException',
+			'config parse failed: ${err.msg()}', 0)
 		return &c
 	}
 	root := resolve_config_env_any(doc.to_any()) or {
@@ -85,8 +85,8 @@ pub fn (mut c VSlimConfig) merge_file(path string) &VSlimConfig {
 		return c.merge_dir(path)
 	}
 	doc := toml.parse_file(path) or {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'config load failed: ${err.msg()}',
-			0)
+		vphp.PhpException.raise_class('InvalidArgumentException',
+			'config load failed: ${err.msg()}', 0)
 		return &c
 	}
 	resolved := resolve_config_env_any(doc.to_any()) or {
@@ -101,8 +101,8 @@ pub fn (mut c VSlimConfig) merge_file(path string) &VSlimConfig {
 @[php_method: 'mergeDir']
 pub fn (mut c VSlimConfig) merge_dir(path string) &VSlimConfig {
 	files := config_dir_files(path) or {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'config load failed: ${err.msg()}',
-			0)
+		vphp.PhpException.raise_class('InvalidArgumentException',
+			'config load failed: ${err.msg()}', 0)
 		return &c
 	}
 	for file in files {
@@ -124,8 +124,8 @@ pub fn (mut c VSlimConfig) merge_dir(path string) &VSlimConfig {
 @[php_method: 'mergeText']
 pub fn (mut c VSlimConfig) merge_text(text string) &VSlimConfig {
 	doc := toml.parse_text(text) or {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'config parse failed: ${err.msg()}',
-			0)
+		vphp.PhpException.raise_class('InvalidArgumentException',
+			'config parse failed: ${err.msg()}', 0)
 		return &c
 	}
 	resolved := resolve_config_env_any(doc.to_any()) or {
@@ -225,9 +225,7 @@ pub fn (c &VSlimConfig) get(key string, default_value vphp.RequestBorrowedZBox) 
 @[php_method: 'getMap']
 pub fn (c &VSlimConfig) get_map(key string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	raw_default := default_value.to_zval()
-	value := c.value_opt(key) or {
-		return vphp.RequestOwnedZBox.of(default_or_empty(raw_default))
-	}
+	value := c.value_opt(key) or { return vphp.RequestOwnedZBox.of(default_or_empty(raw_default)) }
 	match value {
 		map[string]toml.Any {
 			return vphp.RequestOwnedZBox.of(toml_map_to_zval(value))
@@ -244,9 +242,7 @@ pub fn (c &VSlimConfig) get_map(key string, default_value vphp.RequestBorrowedZB
 @[php_method: 'getList']
 pub fn (c &VSlimConfig) get_list(key string, default_value vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	raw_default := default_value.to_zval()
-	value := c.value_opt(key) or {
-		return vphp.RequestOwnedZBox.of(default_or_empty(raw_default))
-	}
+	value := c.value_opt(key) or { return vphp.RequestOwnedZBox.of(default_or_empty(raw_default)) }
 	match value {
 		[]toml.Any {
 			return vphp.RequestOwnedZBox.of(toml_list_to_zval(value))
@@ -338,6 +334,7 @@ fn toml_any_to_json(value toml.Any) string {
 			return toml_list_to_json(value)
 		}
 	}
+
 	return 'null'
 }
 
@@ -618,6 +615,7 @@ fn toml_any_to_zval(value toml.Any) vphp.ZVal {
 			return toml_list_to_zval(value)
 		}
 	}
+
 	return vphp.RequestOwnedZBox.new_null().to_zval()
 }
 
@@ -626,7 +624,7 @@ fn toml_map_to_zval(input map[string]toml.Any) vphp.ZVal {
 	out.array_init()
 	for key, item in input {
 		child := toml_any_to_zval(item)
-		unsafe { C.vphp_array_add_assoc_zval(out.raw, &char(key.str), child.raw) }
+		out.add_assoc_zval(key, child)
 	}
 	return out
 }
