@@ -421,15 +421,15 @@ pub fn Article.statics() &ArticleStatics {
     return &article_statics
 }
 pub fn Article.sync_statics_to_php(ctx vphp.Context) {
-    ce := ctx.get_ce()
-    if ce == voidptr(0) { return }
-    vphp.set_static_prop(ce, "total_count", article_statics.total_count)
+    ce := ctx.active_class_entry()
+    if !ce.is_valid() { return }
+    ce.set_static_prop("total_count", article_statics.total_count)
 }
 pub fn Article.sync_statics_from_php(ctx vphp.Context) {
-    ce := ctx.get_ce()
-    if ce == voidptr(0) { return }
+    ce := ctx.active_class_entry()
+    if !ce.is_valid() { return }
     mut s := Article.statics()
-    s.total_count = vphp.get_static_prop[int](ce, "total_count")
+    s.total_count = ce.static_prop[int]("total_count")
 }
 @[export: 'vphp_wrap_Article_construct']
 pub fn vphp_wrap_article_construct(ptr voidptr, ctx vphp.Context) voidptr {
