@@ -39,13 +39,10 @@ fn v_pure_map_test(k string, v string) map[string]string {
 fn v_process_list(ctx vphp.Context) {
 	input_list := ctx.arg[[]string](0)
 
-	unsafe {
-		C.vphp_array_init(ctx.ret.raw_zval())
-
-		for i := input_list.len - 1; i >= 0; i-- {
-			val := input_list[i]
-			C.vphp_array_push_string(ctx.ret.raw_zval(), &char(val.str))
-		}
+	out := vphp.ZVal.from_raw(ctx.ret.raw_zval())
+	out.array_init()
+	for i := input_list.len - 1; i >= 0; i-- {
+		out.push_string(input_list[i])
 	}
 }
 
@@ -1278,10 +1275,7 @@ fn v_trigger_user_action(ctx vphp.Context) {
 		return
 	}
 
-	mut score_val := vphp.ZVal{
-		raw: C.vphp_new_zval()
-	}
-	score_val.set_int(100)
+	score_val := vphp.ZVal.new_int(100)
 
 	res := user_obj.method('updateScore', [score_val])
 
@@ -1296,10 +1290,7 @@ fn v_trigger_user_action(ctx vphp.Context) {
 fn v_call_php_closure(ctx vphp.Context) {
 	cb := ctx.arg_raw(0)
 
-	mut msg := vphp.ZVal{
-		raw: C.vphp_new_zval()
-	}
-	msg.set_string('Message from V Engine')
+	msg := vphp.ZVal.new_string('Message from V Engine')
 
 	res := cb.call([msg])
 
@@ -1317,10 +1308,7 @@ fn v_call_php_closure_helper(raw vphp.ZVal) string {
 		return ''
 	}
 
-	mut msg := vphp.ZVal{
-		raw: C.vphp_new_zval()
-	}
-	msg.set_string('Message from helper')
+	msg := vphp.ZVal.new_string('Message from helper')
 
 	res := callable.must_call([msg]) or {
 		vphp.throw_exception(err.msg(), 0)
