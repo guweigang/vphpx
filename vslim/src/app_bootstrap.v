@@ -16,7 +16,7 @@ fn wrap_runtime_app_zval(app &VSlimApp) vphp.ZVal {
 			return vphp.ZVal.new_null()
 		}
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
-		vphp.PhpReturn.new(payload.raw).borrowed_object(app, C.vslim__app_ce, &C.vphp_class_handlers(vslimapp_handlers()))
+		vphp.PhpReturn.new(payload.raw).borrowed_object(app, C.vslim__app_ce, vslimapp_handlers())
 		return payload
 	}
 }

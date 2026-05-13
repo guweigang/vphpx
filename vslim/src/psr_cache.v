@@ -428,7 +428,7 @@ fn build_php_psr6_cache_item_object(item &VSlimPsr6CacheItem) vphp.ZVal {
 	unsafe {
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
 		vphp.PhpReturn.new(payload.raw).owned_object(item, C.vslim__psr6__cacheitem_ce,
-			&C.vphp_class_handlers(vslimpsr6cacheitem_handlers()))
+			vslimpsr6cacheitem_handlers())
 		return payload
 	}
 }

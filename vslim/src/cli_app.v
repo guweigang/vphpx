@@ -74,7 +74,7 @@ fn wrap_runtime_cli_zval(cli &VSlimCliApp) vphp.ZVal {
 		}
 		cli_debug_log(cli_trace_message(cli, 'wrap_runtime_cli_zval enter cli=${usize(cli)} ce=${usize(C.vslim__cli__app_ce)}'))
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
-		vphp.PhpReturn.new(payload.raw).borrowed_object(cli, C.vslim__cli__app_ce, &C.vphp_class_handlers(vslimcliapp_handlers()))
+		vphp.PhpReturn.new(payload.raw).borrowed_object(cli, C.vslim__cli__app_ce, vslimcliapp_handlers())
 		cli_debug_log(cli_trace_message(cli, 'wrap_runtime_cli_zval exit cli=${usize(cli)} payload=${usize(payload.raw)} valid=${payload.is_valid()} type=${payload.type_name()}'))
 		return payload
 	}

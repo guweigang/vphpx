@@ -159,7 +159,7 @@ fn build_php_request_object(req &VSlimRequest, params map[string]string) vphp.ZV
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
 		mut bound := new_vslim_request_snapshot_with_params(req, params)
 		vphp.PhpReturn.new(payload.raw).owned_object(bound, C.vslim__vhttpd__request_ce,
-			&C.vphp_class_handlers(vslimrequest_handlers()))
+			vslimrequest_handlers())
 		return payload
 	}
 }
@@ -169,7 +169,7 @@ fn build_php_response_object(res VSlimResponse) vphp.ZVal {
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
 		bound := new_vslim_response_snapshot(res)
 		vphp.PhpReturn.new(payload.raw).owned_object(bound, C.vslim__vhttpd__response_ce,
-			&C.vphp_class_handlers(vslimresponse_handlers()))
+			vslimresponse_handlers())
 		return payload
 	}
 }
@@ -179,7 +179,7 @@ fn build_php_response_object_ref(res &VSlimResponse) vphp.ZVal {
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
 		bound := new_vslim_response_snapshot_ref(res)
 		vphp.PhpReturn.new(payload.raw).owned_object(bound, C.vslim__vhttpd__response_ce,
-			&C.vphp_class_handlers(vslimresponse_handlers()))
+			vslimresponse_handlers())
 		return payload
 	}
 }
@@ -191,7 +191,7 @@ fn build_php_psr7_response_object(res &VSlimPsr7Response) vphp.ZVal {
 			clone_header_names(res.header_names), response_body_or_empty(res), res.get_status_code(),
 			res.get_reason_phrase())
 		vphp.PhpReturn.new(payload.raw).owned_object(bound, C.vslim__psr7__response_ce,
-			&C.vphp_class_handlers(vslimpsr7response_handlers()))
+			vslimpsr7response_handlers())
 		return payload
 	}
 }
@@ -204,7 +204,7 @@ fn build_php_psr7_server_request_object(req &VSlimPsr7ServerRequest) vphp.ZVal {
 			server_request_uri_or_default(req), req.server_params_ref, req.cookie_params_ref,
 			req.query_params_ref, req.uploaded_files_ref, req.parsed_body_ref, req.attributes_ref)
 		vphp.PhpReturn.new(payload.raw).owned_object(bound, C.vslim__psr7__serverrequest_ce,
-			&C.vphp_class_handlers(vslimpsr7serverrequest_handlers()))
+			vslimpsr7serverrequest_handlers())
 		return payload
 	}
 }
