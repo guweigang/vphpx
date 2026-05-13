@@ -39,11 +39,11 @@ fn v_pure_map_test(k string, v string) map[string]string {
 fn v_process_list(ctx vphp.Context) {
 	input_list := ctx.arg[[]string](0)
 
-	out := vphp.ZVal.from_raw(ctx.ret.raw_zval())
-	out.array_init()
+	mut out := []string{cap: input_list.len}
 	for i := input_list.len - 1; i >= 0; i-- {
-		out.push_string(input_list[i])
+		out << input_list[i]
 	}
+	ctx.return().list(out)
 }
 
 @[php_function]

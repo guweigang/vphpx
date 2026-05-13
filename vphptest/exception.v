@@ -35,9 +35,6 @@ fn v_logic_main(ctx vphp.Context) {
 
 		res := main_str.repeat(repeat_count).reverse()
 
-		out := vphp.ZVal{
-			raw: ctx.ret.raw_zval()
-		}
-		out.set_string(res)
+		ctx.return().string_value(res)
 	}
 }
