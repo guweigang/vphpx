@@ -1701,7 +1701,7 @@ fn zval_to_psr7_port(value vphp.ZVal) int {
 fn zval_to_psr7_uri(value vphp.ZVal) &VSlimPsr7Uri {
 	if value.is_valid() && value.is_object()
 		&& (value.is_instance_of('VSlim\\Psr7\\Uri') || value.is_instance_of('VSlimPsr7Uri')) {
-		return unsafe { &VSlimPsr7Uri(C.vphp_get_v_ptr_from_zval(value.raw)) }
+		return value.to_object[VSlimPsr7Uri]() or { new_psr7_uri(zval_to_log_message(value)) }
 	}
 	if value.is_valid() && value.is_object() && value.method_exists('__toString') {
 		return vphp.PhpObject.borrowed(value).with_method_result[vphp.PhpString, &VSlimPsr7Uri]('__toString',
@@ -1761,7 +1761,7 @@ fn persistent_array_to_string_map(value vphp.PersistentOwnedZBox) map[string]str
 fn zval_to_psr7_stream(value vphp.ZVal) &VSlimPsr7Stream {
 	if value.is_valid() && value.is_object()
 		&& (value.is_instance_of('VSlim\\Psr7\\Stream') || value.is_instance_of('VSlimPsr7Stream')) {
-		return unsafe { &VSlimPsr7Stream(C.vphp_get_v_ptr_from_zval(value.raw)) }
+		return value.to_object[VSlimPsr7Stream]() or { new_psr7_stream(zval_to_log_message(value)) }
 	}
 	if value.is_valid() && value.is_object() && value.method_exists('__toString') {
 		return vphp.PhpObject.borrowed(value).with_method_result[vphp.PhpString, &VSlimPsr7Stream]('__toString',
