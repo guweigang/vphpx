@@ -20,8 +20,8 @@ pub fn VSlimPsr7Adapter.to_vslim_request(request vphp.RequestBorrowedZBox) &VSli
 	out.set_scheme(adapter_read_uri_part(raw_request, 'getScheme', 'scheme', 'http'))
 	out.set_host(adapter_read_uri_part(raw_request, 'getHost', 'host', ''))
 	out.set_port(adapter_read_uri_part(raw_request, 'getPort', 'port', ''))
-	out.set_protocol_version(adapter_read_string(raw_request, 'getProtocolVersion', 'protocolVersion',
-		'1.1'))
+	out.set_protocol_version(adapter_read_string(raw_request, 'getProtocolVersion',
+		'protocolVersion', '1.1'))
 	out.set_remote_addr(adapter_read_server_value(raw_request, 'REMOTE_ADDR'))
 	mut headers := adapter_read_headers(raw_request)
 	defer {
@@ -86,8 +86,7 @@ pub fn VSlimPsr7Adapter.to_worker_envelope(request vphp.RequestBorrowedZBox) vph
 
 fn adapter_read_request_target(request vphp.ZVal) string {
 	if request.method_exists('getRequestTarget') {
-		mut target := vphp.RequestOwnedZBox.adopt_zval(request.method_owned_request('getRequestTarget',
-			[]vphp.ZVal{}))
+		mut target := vphp.PhpObject.borrowed(request).method_request_owned('getRequestTarget')
 		defer {
 			target.release()
 		}
@@ -127,8 +126,7 @@ fn adapter_read_request_target(request vphp.ZVal) string {
 
 fn adapter_read_body(request vphp.ZVal) string {
 	if request.method_exists('getBody') {
-		mut body := vphp.RequestOwnedZBox.adopt_zval(request.method_owned_request('getBody',
-			[]vphp.ZVal{}))
+		mut body := vphp.PhpObject.borrowed(request).method_request_owned('getBody')
 		defer {
 			body.release()
 		}
@@ -197,9 +195,7 @@ fn adapter_read_uploaded_files(request vphp.ZVal) vphp.RequestOwnedZBox {
 		mut out := new_array()
 		return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
 	}
-	return vphp.RequestOwnedZBox.adopt_zval(vphp.PhpFunction.named('array_values').call_owned_request_zval([
-		raw.to_zval(),
-	]))
+	return vphp.PhpFunction.named('array_values').request_owned(vphp.PhpValue.from_zval(raw.to_zval()))
 }
 
 fn adapter_read_server_value(request vphp.ZVal, key string) string {
@@ -217,8 +213,7 @@ fn adapter_read_uri_part(request vphp.ZVal, getter string, property string, defa
 	}
 	if uri.is_valid() && uri.is_object() {
 		if uri.to_zval().method_exists(getter) {
-			mut value := vphp.RequestOwnedZBox.adopt_zval(uri.to_zval().method_owned_request(getter,
-				[]vphp.ZVal{}))
+			mut value := vphp.PhpObject.borrowed(uri.to_zval()).method_request_owned(getter)
 			defer {
 				value.release()
 			}
@@ -246,8 +241,7 @@ fn adapter_read_uri_part(request vphp.ZVal, getter string, property string, defa
 
 fn adapter_read_uri_object(request vphp.ZVal) vphp.RequestOwnedZBox {
 	if request.method_exists('getUri') {
-		return vphp.RequestOwnedZBox.adopt_zval(request.method_owned_request('getUri',
-			[]vphp.ZVal{}))
+		return vphp.PhpObject.borrowed(request).method_request_owned('getUri')
 	}
 	if request.property_exists('uri') {
 		return vphp.RequestOwnedZBox.of(request.get_prop('uri'))
@@ -268,7 +262,7 @@ fn adapter_read_string(request vphp.ZVal, getter string, property string, defaul
 
 fn adapter_read_method_or_prop(request vphp.ZVal, getter string, property string) vphp.RequestOwnedZBox {
 	if request.method_exists(getter) {
-		return vphp.RequestOwnedZBox.adopt_zval(request.method_owned_request(getter, []vphp.ZVal{}))
+		return vphp.PhpObject.borrowed(request).method_request_owned(getter)
 	}
 	if request.property_exists(property) {
 		return vphp.RequestOwnedZBox.of(request.get_prop(property))
