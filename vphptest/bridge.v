@@ -50,7 +50,7 @@ pub fn abstractreport_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &AbstractReport(ptr)
         if name == 'title' {
-            vphp.PhpReturn.new(rv).v[string](obj.title)
+            vphp.PhpReturn.from_ptr(rv).v[string](obj.title)
             return
         }
     }
@@ -126,7 +126,7 @@ pub fn dailyreport_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zva
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &DailyReport(ptr)
         if name == 'summary' {
-            vphp.PhpReturn.new(rv).v[string](obj.summary)
+            vphp.PhpReturn.from_ptr(rv).v[string](obj.summary)
             return
         }
     }
@@ -208,7 +208,7 @@ pub fn author_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &Author(ptr)
         if name == 'name' {
-            vphp.PhpReturn.new(rv).v[string](obj.name)
+            vphp.PhpReturn.from_ptr(rv).v[string](obj.name)
             return
         }
     }
@@ -287,7 +287,7 @@ pub fn post_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &Post(ptr)
         if name == 'post_id' {
-            vphp.PhpReturn.new(rv).v[i64](i64(obj.post_id))
+            vphp.PhpReturn.from_ptr(rv).v[i64](i64(obj.post_id))
             return
         }
     }
@@ -366,19 +366,19 @@ pub fn article_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &Article(ptr)
         if name == 'created_at' {
-            vphp.PhpReturn.new(rv).v[i64](i64(obj.created_at))
+            vphp.PhpReturn.from_ptr(rv).v[i64](i64(obj.created_at))
             return
         }
         if name == 'id' {
-            vphp.PhpReturn.new(rv).v[i64](i64(obj.id))
+            vphp.PhpReturn.from_ptr(rv).v[i64](i64(obj.id))
             return
         }
         if name == 'title' {
-            vphp.PhpReturn.new(rv).v[string](obj.title)
+            vphp.PhpReturn.from_ptr(rv).v[string](obj.title)
             return
         }
         if name == 'is_top' {
-            vphp.PhpReturn.new(rv).v[bool](obj.is_top)
+            vphp.PhpReturn.from_ptr(rv).v[bool](obj.is_top)
             return
         }
     }
@@ -565,7 +565,7 @@ pub fn story_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &Story(ptr)
         if name == 'chapter_count' {
-            vphp.PhpReturn.new(rv).v[i64](i64(obj.chapter_count))
+            vphp.PhpReturn.from_ptr(rv).v[i64](i64(obj.chapter_count))
             return
         }
     }
@@ -646,7 +646,7 @@ pub fn aliasbase_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval)
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &AliasBase(ptr)
         if name == 'label' {
-            vphp.PhpReturn.new(rv).v[string](obj.label)
+            vphp.PhpReturn.from_ptr(rv).v[string](obj.label)
             return
         }
     }
@@ -718,7 +718,7 @@ pub fn aliasworker_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zva
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &AliasWorker(ptr)
         if name == 'title' {
-            vphp.PhpReturn.new(rv).v[string](obj.title)
+            vphp.PhpReturn.from_ptr(rv).v[string](obj.title)
             return
         }
     }
@@ -936,7 +936,7 @@ pub fn callableprocessor_get_prop(ptr voidptr, name_ptr &char, name_len int, rv 
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &CallableProcessor(ptr)
         if name == 'prefix' {
-            vphp.PhpReturn.new(rv).v[string](obj.prefix)
+            vphp.PhpReturn.from_ptr(rv).v[string](obj.prefix)
             return
         }
     }
@@ -1016,7 +1016,7 @@ pub type VPhpStructClosureCallableProcessorStructClosure = fn (StructClosureArgs
 
 fn vphp_struct_closure_bridge_callableprocessor_struct_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_entry(ex, ret)
+        ctx := vphp.Context.from_raw(ex, ret)
         cb := *(&VPhpStructClosureCallableProcessorStructClosure(v_ptr))
         args := StructClosureArgs{
             name: ctx.arg[string](0)
@@ -1182,11 +1182,11 @@ pub fn readonlyrecord_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &ReadonlyRecord(ptr)
         if name == 'created_at' {
-            vphp.PhpReturn.new(rv).v[i64](i64(obj.created_at))
+            vphp.PhpReturn.from_ptr(rv).v[i64](i64(obj.created_at))
             return
         }
         if name == 'title' {
-            vphp.PhpReturn.new(rv).v[string](obj.title)
+            vphp.PhpReturn.from_ptr(rv).v[string](obj.title)
             return
         }
     }
@@ -1267,15 +1267,15 @@ pub fn traitpost_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval)
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &TraitPost(ptr)
         if name == 'title' {
-            vphp.PhpReturn.new(rv).v[string](obj.title)
+            vphp.PhpReturn.from_ptr(rv).v[string](obj.title)
             return
         }
         if name == 'slug' {
-            vphp.PhpReturn.new(rv).v[string](obj.slug)
+            vphp.PhpReturn.from_ptr(rv).v[string](obj.slug)
             return
         }
         if name == 'visits' {
-            vphp.PhpReturn.new(rv).v[i64](i64(obj.visits))
+            vphp.PhpReturn.from_ptr(rv).v[i64](i64(obj.visits))
             return
         }
     }
@@ -1389,7 +1389,7 @@ pub fn validator_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval)
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &Validator(ptr)
         if name == 'strict' {
-            vphp.PhpReturn.new(rv).v[bool](obj.strict)
+            vphp.PhpReturn.from_ptr(rv).v[bool](obj.strict)
             return
         }
     }
@@ -1512,7 +1512,7 @@ pub fn dispatchablesample_get_prop(ptr voidptr, name_ptr &char, name_len int, rv
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &DispatchableSample(ptr)
         if name == 'name' {
-            vphp.PhpReturn.new(rv).v[string](obj.name)
+            vphp.PhpReturn.from_ptr(rv).v[string](obj.name)
             return
         }
     }
@@ -1665,7 +1665,7 @@ pub fn stringablebox_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.z
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &StringableBox(ptr)
         if name == 'name' {
-            vphp.PhpReturn.new(rv).v[string](obj.name)
+            vphp.PhpReturn.from_ptr(rv).v[string](obj.name)
             return
         }
     }
@@ -2540,7 +2540,7 @@ pub type VPhpVariadicClosureVGetVClosure = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_v_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_entry(ex, ret)
+        ctx := vphp.Context.from_raw(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVClosure(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVClosure, vphp.ZVal](cb)
     }
@@ -2562,7 +2562,7 @@ pub type VPhpVariadicClosureVGetVClosureAuto = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_v_closure_auto(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_entry(ex, ret)
+        ctx := vphp.Context.from_raw(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVClosureAuto(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVClosureAuto, vphp.ZVal](cb)
     }
@@ -2646,7 +2646,7 @@ pub type VPhpVariadicClosureVGetClosure0 = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_closure_0(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_entry(ex, ret)
+        ctx := vphp.Context.from_raw(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure0(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure0, vphp.ZVal](cb)
     }
@@ -2668,7 +2668,7 @@ pub type VPhpVariadicClosureVGetClosure1 = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_closure_1(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_entry(ex, ret)
+        ctx := vphp.Context.from_raw(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure1(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure1, vphp.ZVal](cb)
     }
@@ -2690,7 +2690,7 @@ pub type VPhpVariadicClosureVGetClosure2 = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_closure_2(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_entry(ex, ret)
+        ctx := vphp.Context.from_raw(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure2(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure2, vphp.ZVal](cb)
     }
@@ -2712,7 +2712,7 @@ pub type VPhpVariadicClosureVGetClosure3 = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_closure_3(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_entry(ex, ret)
+        ctx := vphp.Context.from_raw(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure3(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure3, vphp.ZVal](cb)
     }
@@ -2734,7 +2734,7 @@ pub type VPhpVariadicClosureVGetClosure4 = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_closure_4(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_entry(ex, ret)
+        ctx := vphp.Context.from_raw(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure4(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure4, vphp.ZVal](cb)
     }
@@ -2756,7 +2756,7 @@ pub type VPhpVariadicClosureVGetClosure3Void = fn (...vphp.ZVal)
 
 fn vphp_variadic_closure_bridge_v_get_closure_3_void(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_entry(ex, ret)
+        ctx := vphp.Context.from_raw(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure3Void(v_ptr))
         ctx.invoke_variadic_closure_void[VPhpVariadicClosureVGetClosure3Void](cb)
     }
@@ -2778,7 +2778,7 @@ pub type VPhpVariadicClosureVGetClosure4Void = fn (...vphp.ZVal)
 
 fn vphp_variadic_closure_bridge_v_get_closure_4_void(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_entry(ex, ret)
+        ctx := vphp.Context.from_raw(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure4Void(v_ptr))
         ctx.invoke_variadic_closure_void[VPhpVariadicClosureVGetClosure4Void](cb)
     }
@@ -2800,7 +2800,7 @@ pub type VPhpStructClosureVGetStructParamClosure = fn (StructClosureArgs) string
 
 fn vphp_struct_closure_bridge_v_get_struct_param_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_entry(ex, ret)
+        ctx := vphp.Context.from_raw(ex, ret)
         cb := *(&VPhpStructClosureVGetStructParamClosure(v_ptr))
         args := StructClosureArgs{
             name: ctx.arg[string](0)
@@ -2827,7 +2827,7 @@ pub type VPhpVariadicClosureVGetVariadicValueClosure = fn (...vphp.PhpValue) str
 
 fn vphp_variadic_closure_bridge_v_get_variadic_value_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_entry(ex, ret)
+        ctx := vphp.Context.from_raw(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicValueClosure(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicValueClosure, string](cb)
     }
@@ -2849,7 +2849,7 @@ pub type VPhpVariadicClosureVGetVariadicZvalClosure = fn (...vphp.ZVal) vphp.ZVa
 
 fn vphp_variadic_closure_bridge_v_get_variadic_zval_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_entry(ex, ret)
+        ctx := vphp.Context.from_raw(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicZvalClosure(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicZvalClosure, vphp.ZVal](cb)
     }
@@ -2871,7 +2871,7 @@ pub type VPhpVariadicClosureVGetVariadicZvalVoid = fn (...vphp.ZVal)
 
 fn vphp_variadic_closure_bridge_v_get_variadic_zval_void(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_entry(ex, ret)
+        ctx := vphp.Context.from_raw(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicZvalVoid(v_ptr))
         ctx.invoke_variadic_closure_void[VPhpVariadicClosureVGetVariadicZvalVoid](cb)
     }
@@ -2893,7 +2893,7 @@ pub type VPhpVariadicClosureVGetVariadicScalarString = fn (...vphp.VScalarValue)
 
 fn vphp_variadic_closure_bridge_v_get_variadic_scalar_string(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_entry(ex, ret)
+        ctx := vphp.Context.from_raw(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicScalarString(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicScalarString, string](cb)
     }
@@ -2915,7 +2915,7 @@ pub type VPhpVariadicClosureVGetVariadicScalarI64 = fn (...vphp.VScalarValue) i6
 
 fn vphp_variadic_closure_bridge_v_get_variadic_scalar_i64(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_entry(ex, ret)
+        ctx := vphp.Context.from_raw(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicScalarI64(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicScalarI64, i64](cb)
     }
@@ -2937,7 +2937,7 @@ pub type VPhpVariadicClosureVGetVariadicScalarValue = fn (...vphp.VScalarValue) 
 
 fn vphp_variadic_closure_bridge_v_get_variadic_scalar_value(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_entry(ex, ret)
+        ctx := vphp.Context.from_raw(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicScalarValue(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicScalarValue, vphp.VScalarValue](cb)
     }
