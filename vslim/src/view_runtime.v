@@ -8,11 +8,11 @@ fn (view &VSlimView) invoke_template_helper_values(name string, args []TemplateE
 	defer {
 		frame.release()
 	}
-	mut raw_args := []vphp.ZVal{cap: args.len}
+	mut call_args := []vphp.PhpArgInput{cap: args.len}
 	for arg in args {
-		raw_args << template_expr_value_to_zval_with_context(arg, scalars, lists)
+		call_args << frame.adopt_zval(template_expr_value_to_zval_with_context(arg, scalars,
+			lists))
 	}
-	call_args := frame.args_from_zvals(raw_args)
 	return view.invoke_template_helper_args(name, call_args, template_path, line, col)
 }
 

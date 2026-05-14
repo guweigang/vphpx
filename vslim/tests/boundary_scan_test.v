@@ -25,6 +25,7 @@ fn test_vslim_handwritten_sources_do_not_use_stale_vphp_raw_entries() {
 		'C.vphp_',
 		'C.ZVAL_',
 		'C.zval{}',
+		'args_from_zvals(',
 		'call_owned_request_zval(',
 		'method_owned_request(',
 	]
