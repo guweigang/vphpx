@@ -30,7 +30,7 @@ fn v_logic_main(ctx vphp.Context) {
 
 		mut repeat_count := 1
 		if args.len >= 2 {
-			repeat_count = int(args[1].as_int())
+			repeat_count = int(args[1].to_i64())
 		}
 
 		res := main_str.repeat(repeat_count).reverse()
