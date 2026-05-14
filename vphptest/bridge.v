@@ -1982,6 +1982,18 @@ fn vphp_wrap_v_request_scope_counter_probe(ctx vphp.Context) {
     ctx.return().v[string](res)
 }
 
+@[export: 'vphp_wrap_v_php_value_zbox_lifecycle_probe']
+fn vphp_wrap_v_php_value_zbox_lifecycle_probe(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'raw').zval()
+    res := v_php_value_zbox_lifecycle_probe(arg_0)
+    ctx.return().v[string](res)
+}
+
 @[export: 'vphp_wrap_v_unified_object_interop']
 fn vphp_wrap_v_unified_object_interop(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()

@@ -435,6 +435,43 @@ fn v_request_scope_counter_probe(rounds int) string {
 }
 
 @[php_function]
+fn v_php_value_zbox_lifecycle_probe(raw vphp.ZVal) string {
+	before := vphp.runtime_counters()
+	mut scope := vphp.PhpScope.request()
+
+	mut owned_value := vphp.PhpValue.from_request_owned_zbox(vphp.RequestOwnedZBox.new_string('request-owned'))
+	owned_kind := owned_value.kind_name()
+	mut owned_clone := owned_value.to_request_owned_zbox()
+	owned_clone_value := owned_clone.to_string()
+	owned_clone.release()
+
+	mut persistent_from_owned := owned_value.to_persistent_owned_zbox()
+	persistent_from_owned_kind := persistent_from_owned.kind_name()
+	persistent_from_owned.release()
+
+	mut taken := owned_value.take_zval()
+	taken_value := taken.to_string()
+	owned_after_take_valid := owned_value.to_zval().is_valid()
+	taken.release()
+	owned_value.release()
+
+	borrowed_value := vphp.PhpValue.from_zval(raw)
+	borrowed_kind := borrowed_value.kind_name()
+	mut persistent_raw_value := borrowed_value.to_persistent_owned()
+	persistent_raw_kind := persistent_raw_value.kind_name()
+	persistent_raw_json := persistent_raw_value.to_json_with_flags(256)
+	mut request_roundtrip := persistent_raw_value.to_request_owned_zbox()
+	request_roundtrip_json := vphp.PhpValue.from_zval(request_roundtrip.to_zval()).to_json_with_flags(256)
+	request_roundtrip.release()
+	persistent_raw_value.release()
+
+	scope.close()
+	after := vphp.runtime_counters()
+
+	return 'owned=${owned_kind}:${owned_clone_value}:${persistent_from_owned_kind}:${taken_value}:${owned_after_take_valid};raw=${borrowed_kind}:${persistent_raw_kind}:${persistent_raw_json}:${request_roundtrip_json};ar_delta=${after.autorelease_len - before.autorelease_len};owned_delta=${after.owned_len - before.owned_len};fallback_delta=${after.persistent_fallback_zval_len - before.persistent_fallback_zval_len}'
+}
+
+@[php_function]
 fn v_unified_object_interop(ctx vphp.Context) {
 	cls := vphp.php_class('PhpUnifiedBox')
 	name_z := vphp.ZVal.from[string]('neo') or {
