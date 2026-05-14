@@ -12,7 +12,8 @@ fn wrap_runtime_database_manager_zval(db &VSlimDatabaseManager) vphp.ZVal {
 			return vphp.ZVal.new_null()
 		}
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
-		vphp.PhpReturn.from_zval(payload).borrowed_object(db, C.vslim__database__manager_ce,
+		vphp.PhpReturn.from_zval(payload).borrowed_object(db,
+			vphp.ZendClassEntry.from_ptr(C.vslim__database__manager_ce),
 			vslimdatabasemanager_handlers())
 		return payload
 	}

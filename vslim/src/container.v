@@ -168,9 +168,9 @@ fn container_effective_app(c &VSlimContainer) &VSlimApp {
 	return c.app_ref
 }
 
-fn container_borrowed_object_value(v_ptr voidptr, ce voidptr, handlers voidptr) ?vphp.RequestOwnedZBox {
+fn container_borrowed_object_value(v_ptr voidptr, ce vphp.ZendClassEntry, handlers voidptr) ?vphp.RequestOwnedZBox {
 	unsafe {
-		if v_ptr == 0 || ce == 0 {
+		if v_ptr == 0 || !ce.is_valid() {
 			return none
 		}
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
@@ -186,42 +186,47 @@ pub fn (mut c VSlimContainer) get_native_service(id string) ?vphp.RequestOwnedZB
 	}
 	match id.trim_space() {
 		'config' {
-			return container_borrowed_object_value(app.config(), C.vslim__config_ce,
-				vslimconfig_handlers())
+			return container_borrowed_object_value(app.config(),
+				vphp.ZendClassEntry.from_ptr(C.vslim__config_ce), vslimconfig_handlers())
 		}
 		'clock', 'Psr\\Clock\\ClockInterface' {
 			return app.clock()
 		}
 		'logger' {
-			return container_borrowed_object_value(app.logger(), C.vslim__log__logger_ce,
-				vslimlogger_handlers())
+			return container_borrowed_object_value(app.logger(),
+				vphp.ZendClassEntry.from_ptr(C.vslim__log__logger_ce), vslimlogger_handlers())
 		}
 		'Psr\\Log\\LoggerInterface' {
-			return container_borrowed_object_value(app.psr_logger(), C.vslim__log__psrlogger_ce,
-				vslimpsrlogger_handlers())
+			return container_borrowed_object_value(app.psr_logger(),
+				vphp.ZendClassEntry.from_ptr(C.vslim__log__psrlogger_ce), vslimpsrlogger_handlers())
 		}
 		'listener_provider', 'events.provider', 'Psr\\EventDispatcher\\ListenerProviderInterface' {
 			return container_borrowed_object_value(app.listener_provider(),
-				C.vslim__psr14__listenerprovider_ce, vslimpsr14listenerprovider_handlers())
+				vphp.ZendClassEntry.from_ptr(C.vslim__psr14__listenerprovider_ce),
+				vslimpsr14listenerprovider_handlers())
 		}
 		'events', 'dispatcher', 'Psr\\EventDispatcher\\EventDispatcherInterface' {
 			return container_borrowed_object_value(app.dispatcher(),
-				C.vslim__psr14__eventdispatcher_ce, vslimpsr14eventdispatcher_handlers())
+				vphp.ZendClassEntry.from_ptr(C.vslim__psr14__eventdispatcher_ce),
+				vslimpsr14eventdispatcher_handlers())
 		}
 		'cache', 'Psr\\SimpleCache\\CacheInterface' {
-			return container_borrowed_object_value(app.cache(), C.vslim__psr16__cache_ce,
-				vslimpsr16cache_handlers())
+			return container_borrowed_object_value(app.cache(),
+				vphp.ZendClassEntry.from_ptr(C.vslim__psr16__cache_ce), vslimpsr16cache_handlers())
 		}
 		'cache.pool', 'Psr\\Cache\\CacheItemPoolInterface' {
 			return container_borrowed_object_value(app.cache_pool(),
-				C.vslim__psr6__cacheitempool_ce, vslimpsr6cacheitempool_handlers())
+				vphp.ZendClassEntry.from_ptr(C.vslim__psr6__cacheitempool_ce),
+				vslimpsr6cacheitempool_handlers())
 		}
 		'http', 'http_client', 'Psr\\Http\\Client\\ClientInterface' {
-			return container_borrowed_object_value(app.http_client(), C.vslim__psr18__client_ce,
+			return container_borrowed_object_value(app.http_client(),
+				vphp.ZendClassEntry.from_ptr(C.vslim__psr18__client_ce),
 				vslimpsr18client_handlers())
 		}
 		'database', 'db', 'VSlim\\Database\\Manager' {
-			return container_borrowed_object_value(app.database(), C.vslim__database__manager_ce,
+			return container_borrowed_object_value(app.database(),
+				vphp.ZendClassEntry.from_ptr(C.vslim__database__manager_ce),
 				vslimdatabasemanager_handlers())
 		}
 		else {}

@@ -427,7 +427,8 @@ fn psr6_new_hit_item_with_clock(key string, value vphp.PersistentOwnedZBox, expi
 fn build_php_psr6_cache_item_object(item &VSlimPsr6CacheItem) vphp.ZVal {
 	unsafe {
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
-		vphp.PhpReturn.from_zval(payload).owned_object(item, C.vslim__psr6__cacheitem_ce,
+		vphp.PhpReturn.from_zval(payload).owned_object(item,
+			vphp.ZendClassEntry.from_ptr(C.vslim__psr6__cacheitem_ce),
 			vslimpsr6cacheitem_handlers())
 		return payload
 	}
