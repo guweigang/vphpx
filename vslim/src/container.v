@@ -174,7 +174,7 @@ fn container_borrowed_object_value(v_ptr voidptr, ce voidptr, handlers voidptr) 
 			return none
 		}
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
-		vphp.PhpReturn.new(payload.raw).borrowed_object(v_ptr, ce, handlers)
+		vphp.PhpReturn.from_ptr(payload.raw).borrowed_object(v_ptr, ce, handlers)
 		return vphp.RequestOwnedZBox.adopt_zval(payload)
 	}
 }
@@ -186,7 +186,8 @@ pub fn (mut c VSlimContainer) get_native_service(id string) ?vphp.RequestOwnedZB
 	}
 	match id.trim_space() {
 		'config' {
-			return container_borrowed_object_value(app.config(), C.vslim__config_ce, vslimconfig_handlers())
+			return container_borrowed_object_value(app.config(), C.vslim__config_ce,
+				vslimconfig_handlers())
 		}
 		'clock', 'Psr\\Clock\\ClockInterface' {
 			return app.clock()
@@ -200,20 +201,20 @@ pub fn (mut c VSlimContainer) get_native_service(id string) ?vphp.RequestOwnedZB
 				vslimpsrlogger_handlers())
 		}
 		'listener_provider', 'events.provider', 'Psr\\EventDispatcher\\ListenerProviderInterface' {
-			return container_borrowed_object_value(app.listener_provider(), C.vslim__psr14__listenerprovider_ce,
-				vslimpsr14listenerprovider_handlers())
+			return container_borrowed_object_value(app.listener_provider(),
+				C.vslim__psr14__listenerprovider_ce, vslimpsr14listenerprovider_handlers())
 		}
 		'events', 'dispatcher', 'Psr\\EventDispatcher\\EventDispatcherInterface' {
-			return container_borrowed_object_value(app.dispatcher(), C.vslim__psr14__eventdispatcher_ce,
-				vslimpsr14eventdispatcher_handlers())
+			return container_borrowed_object_value(app.dispatcher(),
+				C.vslim__psr14__eventdispatcher_ce, vslimpsr14eventdispatcher_handlers())
 		}
 		'cache', 'Psr\\SimpleCache\\CacheInterface' {
 			return container_borrowed_object_value(app.cache(), C.vslim__psr16__cache_ce,
 				vslimpsr16cache_handlers())
 		}
 		'cache.pool', 'Psr\\Cache\\CacheItemPoolInterface' {
-			return container_borrowed_object_value(app.cache_pool(), C.vslim__psr6__cacheitempool_ce,
-				vslimpsr6cacheitempool_handlers())
+			return container_borrowed_object_value(app.cache_pool(),
+				C.vslim__psr6__cacheitempool_ce, vslimpsr6cacheitempool_handlers())
 		}
 		'http', 'http_client', 'Psr\\Http\\Client\\ClientInterface' {
 			return container_borrowed_object_value(app.http_client(), C.vslim__psr18__client_ce,
@@ -225,6 +226,7 @@ pub fn (mut c VSlimContainer) get_native_service(id string) ?vphp.RequestOwnedZB
 		}
 		else {}
 	}
+
 	return none
 }
 
@@ -240,8 +242,8 @@ pub fn (mut c VSlimContainer) get_entry_or_throw(id string) vphp.RequestOwnedZBo
 }
 
 fn throw_not_found(id string) {
-	vphp.PhpException.raise_class('VSlim\\Container\\NotFoundException', 'Container entry "${id}" not found',
-		0)
+	vphp.PhpException.raise_class('VSlim\\Container\\NotFoundException',
+		'Container entry "${id}" not found', 0)
 }
 
 fn throw_container_exception(msg string) {

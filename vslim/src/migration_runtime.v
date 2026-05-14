@@ -12,7 +12,7 @@ fn wrap_runtime_database_manager_zval(db &VSlimDatabaseManager) vphp.ZVal {
 			return vphp.ZVal.new_null()
 		}
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
-		vphp.PhpReturn.new(payload.raw).borrowed_object(db, C.vslim__database__manager_ce,
+		vphp.PhpReturn.from_ptr(payload.raw).borrowed_object(db, C.vslim__database__manager_ce,
 			vslimdatabasemanager_handlers())
 		return payload
 	}
@@ -100,8 +100,7 @@ fn migration_drop_column_sql(table_name string, column_name string) string {
 fn migration_apply_manager(instance vphp.ZVal, manager &VSlimDatabaseManager, name string) {
 	manager_z := database_manager_self_zval(manager)
 	if instance.method_exists('setManager') && manager_z.is_valid() && manager_z.is_object() {
-		vphp.PhpObject.borrowed(instance).with_method_result[vphp.PhpValue, bool]('setManager',
-			fn (_ vphp.PhpValue) bool {
+		vphp.PhpObject.borrowed(instance).with_method_result[vphp.PhpValue, bool]('setManager', fn (_ vphp.PhpValue) bool {
 			return true
 		}, vphp.PhpValue.from_zval(manager_z)) or { false }
 	}
@@ -110,8 +109,7 @@ fn migration_apply_manager(instance vphp.ZVal, manager &VSlimDatabaseManager, na
 		defer {
 			name_arg.release()
 		}
-		vphp.PhpObject.borrowed(instance).with_method_result[vphp.PhpValue, bool]('setName',
-			fn (_ vphp.PhpValue) bool {
+		vphp.PhpObject.borrowed(instance).with_method_result[vphp.PhpValue, bool]('setName', fn (_ vphp.PhpValue) bool {
 			return true
 		}, name_arg) or { false }
 	}
@@ -204,12 +202,11 @@ fn (mut migrator VSlimDatabaseMigrator) run_migration_file(file string, method_n
 		migration.release()
 	}
 	if !migration.to_zval().method_exists(method_name) {
-		vphp.PhpException.raise_class('RuntimeException', 'migration "${name}" does not implement ${method_name}()',
-			0)
+		vphp.PhpException.raise_class('RuntimeException',
+			'migration "${name}" does not implement ${method_name}()', 0)
 		return
 	}
-	vphp.PhpObject.borrowed(migration.to_zval()).with_method_result[vphp.PhpValue, bool](method_name,
-		fn (_ vphp.PhpValue) bool {
+	vphp.PhpObject.borrowed(migration.to_zval()).with_method_result[vphp.PhpValue, bool](method_name, fn (_ vphp.PhpValue) bool {
 		return true
 	}) or { false }
 }
@@ -308,8 +305,7 @@ pub fn (mut migration VSlimDatabaseMigration) drop_column(table_name string, col
 @[php_method]
 pub fn (mut migration VSlimDatabaseMigration) execute(statement string) vphp.RequestOwnedZBox {
 	if migration.manager_ref == unsafe { nil } {
-		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set',
-			0)
+		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set', 0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	return migration.manager_ref.execute(statement)
@@ -318,8 +314,7 @@ pub fn (mut migration VSlimDatabaseMigration) execute(statement string) vphp.Req
 @[php_method: 'executeParams']
 pub fn (mut migration VSlimDatabaseMigration) execute_params(statement string, params vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	if migration.manager_ref == unsafe { nil } {
-		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set',
-			0)
+		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set', 0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	return migration.manager_ref.execute_params(statement, params)
@@ -328,8 +323,7 @@ pub fn (mut migration VSlimDatabaseMigration) execute_params(statement string, p
 @[php_method]
 pub fn (mut migration VSlimDatabaseMigration) query(statement string) vphp.RequestOwnedZBox {
 	if migration.manager_ref == unsafe { nil } {
-		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set',
-			0)
+		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set', 0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	return migration.manager_ref.query(statement)
@@ -338,8 +332,7 @@ pub fn (mut migration VSlimDatabaseMigration) query(statement string) vphp.Reque
 @[php_method: 'queryParams']
 pub fn (mut migration VSlimDatabaseMigration) query_params(statement string, params vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	if migration.manager_ref == unsafe { nil } {
-		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set',
-			0)
+		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set', 0)
 		return vphp.RequestOwnedZBox.new_null()
 	}
 	return migration.manager_ref.query_params(statement, params)
@@ -609,12 +602,11 @@ pub fn (mut migrator VSlimDatabaseMigrator) seed(name string) int {
 			seeder.release()
 		}
 		if !seeder.to_zval().method_exists('run') {
-			vphp.PhpException.raise_class('RuntimeException', 'seeder "${entry}" does not implement run()',
-				0)
+			vphp.PhpException.raise_class('RuntimeException',
+				'seeder "${entry}" does not implement run()', 0)
 			return count
 		}
-		vphp.PhpObject.borrowed(seeder.to_zval()).with_method_result[vphp.PhpValue, bool]('run',
-			fn (_ vphp.PhpValue) bool {
+		vphp.PhpObject.borrowed(seeder.to_zval()).with_method_result[vphp.PhpValue, bool]('run', fn (_ vphp.PhpValue) bool {
 			return true
 		}) or { false }
 		if vphp.has_exception() {

@@ -13,7 +13,7 @@ fn build_php_psr15_next_handler_object(chain &MiddlewareChain) vphp.ZVal {
 				chain_ref: chain
 			}
 		}
-		vphp.PhpReturn.new(payload.raw).owned_object(bound, C.vslim__psr15__nexthandler_ce,
+		vphp.PhpReturn.from_ptr(payload.raw).owned_object(bound, C.vslim__psr15__nexthandler_ce,
 			vslimpsr15nexthandler_handlers())
 		return payload
 	}
@@ -28,7 +28,7 @@ fn build_php_psr15_fixed_response_handler_object(res &VSlimPsr7Response) vphp.ZV
 				fixed_response_ref: res
 			}
 		}
-		vphp.PhpReturn.new(payload.raw).owned_object(bound, C.vslim__psr15__nexthandler_ce,
+		vphp.PhpReturn.from_ptr(payload.raw).owned_object(bound, C.vslim__psr15__nexthandler_ce,
 			vslimpsr15nexthandler_handlers())
 		return payload
 	}
@@ -51,9 +51,9 @@ fn dispatch_php_middleware_chain_terminal(app &VSlimApp, path string, payload vp
 }
 
 fn dispatch_php_middleware_chain_with_plan(app &VSlimApp, path string, payload vphp.RequestBorrowedZBox, route_middle []vphp.RequestOwnedZBox, plan RawDispatchPlan) !(vphp.ZVal, vphp.RequestOwnedZBox) {
-	request_ctx := new_pipeline_request_context(path, payload.clone_request_owned(), plan.route_params)
-	return dispatch_php_middleware_chain_with_context(app, request_ctx, route_middle,
-		plan)
+	request_ctx := new_pipeline_request_context(path, payload.clone_request_owned(),
+		plan.route_params)
+	return dispatch_php_middleware_chain_with_context(app, request_ctx, route_middle, plan)
 }
 
 fn dispatch_php_middleware_chain_with_context(app &VSlimApp, ctx PipelineRequestContext, route_middle []vphp.RequestOwnedZBox, plan RawDispatchPlan) !(vphp.ZVal, vphp.RequestOwnedZBox) {
@@ -97,7 +97,8 @@ fn (mut chain MiddlewareChain) dispatch(payload vphp.RequestBorrowedZBox) !vphp.
 	if snapshot := snapshot_phase_forwarded_request(vphp.RequestBorrowedZBox.from_zval(normalized)) {
 		store_forwarded_request_snapshot(forwarded_request_key(chain), snapshot)
 	}
-	effective_ctx := pipeline_request_context_with_payload(chain.request_ctx, payload.clone_request_owned())
+	effective_ctx := pipeline_request_context_with_payload(chain.request_ctx,
+		payload.clone_request_owned())
 	if chain.index >= chain.middlewares.len {
 		return execute_raw_dispatch_plan(chain.app, effective_ctx, chain.plan)!
 	}
@@ -121,7 +122,8 @@ fn (mut chain MiddlewareChain) dispatch_pre_normalized(payload vphp.RequestBorro
 	if snapshot := snapshot_phase_forwarded_request(payload) {
 		store_forwarded_request_snapshot(forwarded_request_key(chain), snapshot)
 	}
-	effective_ctx := pipeline_request_context_with_payload(chain.request_ctx, payload.clone_request_owned())
+	effective_ctx := pipeline_request_context_with_payload(chain.request_ctx,
+		payload.clone_request_owned())
 	if chain.index >= chain.middlewares.len {
 		return execute_raw_dispatch_plan(chain.app, effective_ctx, chain.plan)!
 	}

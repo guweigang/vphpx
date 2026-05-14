@@ -101,8 +101,8 @@ fn build_php_psr15_continue_handler_object(handler &VSlimPsr15ContinueHandler) v
 			mode: .continue_marker
 		}
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
-		vphp.PhpReturn.new(payload.raw).owned_object(handler, C.vslim__psr15__continuehandler_ce,
-			vslimpsr15continuehandler_handlers())
+		vphp.PhpReturn.from_ptr(payload.raw).owned_object(handler,
+			C.vslim__psr15__continuehandler_ce, vslimpsr15continuehandler_handlers())
 		return payload
 	}
 }
