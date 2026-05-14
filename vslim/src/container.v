@@ -174,7 +174,7 @@ fn container_borrowed_object_value(v_ptr voidptr, ce voidptr, handlers voidptr) 
 			return none
 		}
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
-		vphp.PhpReturn.from_ptr(payload.raw).borrowed_object(v_ptr, ce, handlers)
+		vphp.PhpReturn.from_zval(payload).borrowed_object(v_ptr, ce, handlers)
 		return vphp.RequestOwnedZBox.adopt_zval(payload)
 	}
 }

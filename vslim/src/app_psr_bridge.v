@@ -158,7 +158,7 @@ fn build_php_request_object(req &VSlimRequest, params map[string]string) vphp.ZV
 	unsafe {
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
 		mut bound := new_vslim_request_snapshot_with_params(req, params)
-		vphp.PhpReturn.from_ptr(payload.raw).owned_object(bound, C.vslim__vhttpd__request_ce,
+		vphp.PhpReturn.from_zval(payload).owned_object(bound, C.vslim__vhttpd__request_ce,
 			vslimrequest_handlers())
 		return payload
 	}
@@ -168,7 +168,7 @@ fn build_php_response_object(res VSlimResponse) vphp.ZVal {
 	unsafe {
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
 		bound := new_vslim_response_snapshot(res)
-		vphp.PhpReturn.from_ptr(payload.raw).owned_object(bound, C.vslim__vhttpd__response_ce,
+		vphp.PhpReturn.from_zval(payload).owned_object(bound, C.vslim__vhttpd__response_ce,
 			vslimresponse_handlers())
 		return payload
 	}
@@ -178,7 +178,7 @@ fn build_php_response_object_ref(res &VSlimResponse) vphp.ZVal {
 	unsafe {
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
 		bound := new_vslim_response_snapshot_ref(res)
-		vphp.PhpReturn.from_ptr(payload.raw).owned_object(bound, C.vslim__vhttpd__response_ce,
+		vphp.PhpReturn.from_zval(payload).owned_object(bound, C.vslim__vhttpd__response_ce,
 			vslimresponse_handlers())
 		return payload
 	}
@@ -190,7 +190,7 @@ fn build_php_psr7_response_object(res &VSlimPsr7Response) vphp.ZVal {
 		bound := clone_psr7_response(res, res.get_protocol_version(),
 			clone_header_values(res.headers), clone_header_names(res.header_names),
 			response_body_or_empty(res), res.get_status_code(), res.get_reason_phrase())
-		vphp.PhpReturn.from_ptr(payload.raw).owned_object(bound, C.vslim__psr7__response_ce,
+		vphp.PhpReturn.from_zval(payload).owned_object(bound, C.vslim__psr7__response_ce,
 			vslimpsr7response_handlers())
 		return payload
 	}
@@ -204,7 +204,7 @@ fn build_php_psr7_server_request_object(req &VSlimPsr7ServerRequest) vphp.ZVal {
 			clone_header_names(req.header_names), server_request_body_or_empty(req),
 			server_request_uri_or_default(req), req.server_params_ref, req.cookie_params_ref,
 			req.query_params_ref, req.uploaded_files_ref, req.parsed_body_ref, req.attributes_ref)
-		vphp.PhpReturn.from_ptr(payload.raw).owned_object(bound, C.vslim__psr7__serverrequest_ce,
+		vphp.PhpReturn.from_zval(payload).owned_object(bound, C.vslim__psr7__serverrequest_ce,
 			vslimpsr7serverrequest_handlers())
 		return payload
 	}
