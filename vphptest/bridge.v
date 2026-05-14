@@ -1016,7 +1016,7 @@ pub type VPhpStructClosureCallableProcessorStructClosure = fn (StructClosureArgs
 
 fn vphp_struct_closure_bridge_callableprocessor_struct_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_raw(ex, ret)
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpStructClosureCallableProcessorStructClosure(v_ptr))
         args := StructClosureArgs{
             name: ctx.arg[string](0)
@@ -2540,7 +2540,7 @@ pub type VPhpVariadicClosureVGetVClosure = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_v_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_raw(ex, ret)
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVClosure(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVClosure, vphp.ZVal](cb)
     }
@@ -2562,7 +2562,7 @@ pub type VPhpVariadicClosureVGetVClosureAuto = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_v_closure_auto(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_raw(ex, ret)
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVClosureAuto(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVClosureAuto, vphp.ZVal](cb)
     }
@@ -2646,7 +2646,7 @@ pub type VPhpVariadicClosureVGetClosure0 = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_closure_0(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_raw(ex, ret)
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure0(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure0, vphp.ZVal](cb)
     }
@@ -2668,7 +2668,7 @@ pub type VPhpVariadicClosureVGetClosure1 = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_closure_1(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_raw(ex, ret)
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure1(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure1, vphp.ZVal](cb)
     }
@@ -2690,7 +2690,7 @@ pub type VPhpVariadicClosureVGetClosure2 = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_closure_2(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_raw(ex, ret)
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure2(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure2, vphp.ZVal](cb)
     }
@@ -2712,7 +2712,7 @@ pub type VPhpVariadicClosureVGetClosure3 = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_closure_3(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_raw(ex, ret)
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure3(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure3, vphp.ZVal](cb)
     }
@@ -2734,7 +2734,7 @@ pub type VPhpVariadicClosureVGetClosure4 = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_closure_4(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_raw(ex, ret)
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure4(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure4, vphp.ZVal](cb)
     }
@@ -2756,7 +2756,7 @@ pub type VPhpVariadicClosureVGetClosure3Void = fn (...vphp.ZVal)
 
 fn vphp_variadic_closure_bridge_v_get_closure_3_void(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_raw(ex, ret)
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure3Void(v_ptr))
         ctx.invoke_variadic_closure_void[VPhpVariadicClosureVGetClosure3Void](cb)
     }
@@ -2778,7 +2778,7 @@ pub type VPhpVariadicClosureVGetClosure4Void = fn (...vphp.ZVal)
 
 fn vphp_variadic_closure_bridge_v_get_closure_4_void(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_raw(ex, ret)
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure4Void(v_ptr))
         ctx.invoke_variadic_closure_void[VPhpVariadicClosureVGetClosure4Void](cb)
     }
@@ -2800,7 +2800,7 @@ pub type VPhpStructClosureVGetStructParamClosure = fn (StructClosureArgs) string
 
 fn vphp_struct_closure_bridge_v_get_struct_param_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_raw(ex, ret)
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpStructClosureVGetStructParamClosure(v_ptr))
         args := StructClosureArgs{
             name: ctx.arg[string](0)
@@ -2827,7 +2827,7 @@ pub type VPhpVariadicClosureVGetVariadicValueClosure = fn (...vphp.PhpValue) str
 
 fn vphp_variadic_closure_bridge_v_get_variadic_value_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_raw(ex, ret)
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicValueClosure(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicValueClosure, string](cb)
     }
@@ -2849,7 +2849,7 @@ pub type VPhpVariadicClosureVGetVariadicZvalClosure = fn (...vphp.ZVal) vphp.ZVa
 
 fn vphp_variadic_closure_bridge_v_get_variadic_zval_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_raw(ex, ret)
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicZvalClosure(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicZvalClosure, vphp.ZVal](cb)
     }
@@ -2871,7 +2871,7 @@ pub type VPhpVariadicClosureVGetVariadicZvalVoid = fn (...vphp.ZVal)
 
 fn vphp_variadic_closure_bridge_v_get_variadic_zval_void(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_raw(ex, ret)
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicZvalVoid(v_ptr))
         ctx.invoke_variadic_closure_void[VPhpVariadicClosureVGetVariadicZvalVoid](cb)
     }
@@ -2893,7 +2893,7 @@ pub type VPhpVariadicClosureVGetVariadicScalarString = fn (...vphp.VScalarValue)
 
 fn vphp_variadic_closure_bridge_v_get_variadic_scalar_string(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_raw(ex, ret)
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicScalarString(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicScalarString, string](cb)
     }
@@ -2915,7 +2915,7 @@ pub type VPhpVariadicClosureVGetVariadicScalarI64 = fn (...vphp.VScalarValue) i6
 
 fn vphp_variadic_closure_bridge_v_get_variadic_scalar_i64(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_raw(ex, ret)
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicScalarI64(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicScalarI64, i64](cb)
     }
@@ -2937,7 +2937,7 @@ pub type VPhpVariadicClosureVGetVariadicScalarValue = fn (...vphp.VScalarValue) 
 
 fn vphp_variadic_closure_bridge_v_get_variadic_scalar_value(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context.from_raw(ex, ret)
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicScalarValue(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicScalarValue, vphp.VScalarValue](cb)
     }
