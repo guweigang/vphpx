@@ -60,7 +60,7 @@ pub fn abstractreport_set_prop(ptr voidptr, name_ptr &char, name_len int, value 
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &AbstractReport(ptr)
-        arg := vphp.ZVal.from_raw(value)
+        arg := vphp.ZVal.from_ptr(value)
         if name == 'title' {
             obj.title = arg.get_string()
             return
@@ -71,7 +71,7 @@ pub fn abstractreport_set_prop(ptr voidptr, name_ptr &char, name_len int, value 
 pub fn abstractreport_sync_props(ptr voidptr, zv &C.zval) {
     unsafe {
         obj := &AbstractReport(ptr)
-        out := vphp.ZVal.from_raw(zv)
+        out := vphp.ZVal.from_ptr(zv)
         out.add_property_string('title', obj.title)
     }
 }
@@ -136,7 +136,7 @@ pub fn dailyreport_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &DailyReport(ptr)
-        arg := vphp.ZVal.from_raw(value)
+        arg := vphp.ZVal.from_ptr(value)
         if name == 'summary' {
             obj.summary = arg.get_string()
             return
@@ -147,7 +147,7 @@ pub fn dailyreport_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.
 pub fn dailyreport_sync_props(ptr voidptr, zv &C.zval) {
     unsafe {
         obj := &DailyReport(ptr)
-        out := vphp.ZVal.from_raw(zv)
+        out := vphp.ZVal.from_ptr(zv)
         out.add_property_string('summary', obj.summary)
     }
 }
@@ -218,7 +218,7 @@ pub fn author_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &Author(ptr)
-        arg := vphp.ZVal.from_raw(value)
+        arg := vphp.ZVal.from_ptr(value)
         if name == 'name' {
             obj.name = arg.get_string()
             return
@@ -229,7 +229,7 @@ pub fn author_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval)
 pub fn author_sync_props(ptr voidptr, zv &C.zval) {
     unsafe {
         obj := &Author(ptr)
-        out := vphp.ZVal.from_raw(zv)
+        out := vphp.ZVal.from_ptr(zv)
         out.add_property_string('name', obj.name)
     }
 }
@@ -297,7 +297,7 @@ pub fn post_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &Post(ptr)
-        arg := vphp.ZVal.from_raw(value)
+        arg := vphp.ZVal.from_ptr(value)
         if name == 'post_id' {
             obj.post_id = int(arg.get_int())
             return
@@ -308,7 +308,7 @@ pub fn post_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
 pub fn post_sync_props(ptr voidptr, zv &C.zval) {
     unsafe {
         obj := &Post(ptr)
-        out := vphp.ZVal.from_raw(zv)
+        out := vphp.ZVal.from_ptr(zv)
         out.add_property_long('post_id', i64(obj.post_id))
     }
 }
@@ -388,7 +388,7 @@ pub fn article_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &Article(ptr)
-        arg := vphp.ZVal.from_raw(value)
+        arg := vphp.ZVal.from_ptr(value)
         if name == 'id' {
             obj.id = int(arg.get_int())
             return
@@ -407,7 +407,7 @@ pub fn article_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval
 pub fn article_sync_props(ptr voidptr, zv &C.zval) {
     unsafe {
         obj := &Article(ptr)
-        out := vphp.ZVal.from_raw(zv)
+        out := vphp.ZVal.from_ptr(zv)
         out.add_property_long('created_at', i64(obj.created_at))
         out.add_property_long('id', i64(obj.id))
         out.add_property_string('title', obj.title)
@@ -575,7 +575,7 @@ pub fn story_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) 
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &Story(ptr)
-        arg := vphp.ZVal.from_raw(value)
+        arg := vphp.ZVal.from_ptr(value)
         if name == 'chapter_count' {
             obj.chapter_count = int(arg.get_int())
             return
@@ -586,7 +586,7 @@ pub fn story_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) 
 pub fn story_sync_props(ptr voidptr, zv &C.zval) {
     unsafe {
         obj := &Story(ptr)
-        out := vphp.ZVal.from_raw(zv)
+        out := vphp.ZVal.from_ptr(zv)
         out.add_property_long('chapter_count', i64(obj.chapter_count))
     }
 }
@@ -656,7 +656,7 @@ pub fn aliasbase_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zv
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &AliasBase(ptr)
-        arg := vphp.ZVal.from_raw(value)
+        arg := vphp.ZVal.from_ptr(value)
         if name == 'label' {
             obj.label = arg.get_string()
             return
@@ -667,7 +667,7 @@ pub fn aliasbase_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zv
 pub fn aliasbase_sync_props(ptr voidptr, zv &C.zval) {
     unsafe {
         obj := &AliasBase(ptr)
-        out := vphp.ZVal.from_raw(zv)
+        out := vphp.ZVal.from_ptr(zv)
         out.add_property_string('label', obj.label)
     }
 }
@@ -728,7 +728,7 @@ pub fn aliasworker_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &AliasWorker(ptr)
-        arg := vphp.ZVal.from_raw(value)
+        arg := vphp.ZVal.from_ptr(value)
         if name == 'title' {
             obj.title = arg.get_string()
             return
@@ -739,7 +739,7 @@ pub fn aliasworker_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.
 pub fn aliasworker_sync_props(ptr voidptr, zv &C.zval) {
     unsafe {
         obj := &AliasWorker(ptr)
-        out := vphp.ZVal.from_raw(zv)
+        out := vphp.ZVal.from_ptr(zv)
         out.add_property_string('title', obj.title)
     }
 }
@@ -946,7 +946,7 @@ pub fn callableprocessor_set_prop(ptr voidptr, name_ptr &char, name_len int, val
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &CallableProcessor(ptr)
-        arg := vphp.ZVal.from_raw(value)
+        arg := vphp.ZVal.from_ptr(value)
         if name == 'prefix' {
             obj.prefix = arg.get_string()
             return
@@ -957,7 +957,7 @@ pub fn callableprocessor_set_prop(ptr voidptr, name_ptr &char, name_len int, val
 pub fn callableprocessor_sync_props(ptr voidptr, zv &C.zval) {
     unsafe {
         obj := &CallableProcessor(ptr)
-        out := vphp.ZVal.from_raw(zv)
+        out := vphp.ZVal.from_ptr(zv)
         out.add_property_string('prefix', obj.prefix)
     }
 }
@@ -1196,7 +1196,7 @@ pub fn readonlyrecord_set_prop(ptr voidptr, name_ptr &char, name_len int, value 
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &ReadonlyRecord(ptr)
-        arg := vphp.ZVal.from_raw(value)
+        arg := vphp.ZVal.from_ptr(value)
         if name == 'title' {
             obj.title = arg.get_string()
             return
@@ -1207,7 +1207,7 @@ pub fn readonlyrecord_set_prop(ptr voidptr, name_ptr &char, name_len int, value 
 pub fn readonlyrecord_sync_props(ptr voidptr, zv &C.zval) {
     unsafe {
         obj := &ReadonlyRecord(ptr)
-        out := vphp.ZVal.from_raw(zv)
+        out := vphp.ZVal.from_ptr(zv)
         out.add_property_long('created_at', i64(obj.created_at))
         out.add_property_string('title', obj.title)
     }
@@ -1285,7 +1285,7 @@ pub fn traitpost_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zv
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &TraitPost(ptr)
-        arg := vphp.ZVal.from_raw(value)
+        arg := vphp.ZVal.from_ptr(value)
         if name == 'title' {
             obj.title = arg.get_string()
             return
@@ -1304,7 +1304,7 @@ pub fn traitpost_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zv
 pub fn traitpost_sync_props(ptr voidptr, zv &C.zval) {
     unsafe {
         obj := &TraitPost(ptr)
-        out := vphp.ZVal.from_raw(zv)
+        out := vphp.ZVal.from_ptr(zv)
         out.add_property_string('title', obj.title)
         out.add_property_string('slug', obj.slug)
         out.add_property_long('visits', i64(obj.visits))
@@ -1399,7 +1399,7 @@ pub fn validator_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zv
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &Validator(ptr)
-        arg := vphp.ZVal.from_raw(value)
+        arg := vphp.ZVal.from_ptr(value)
         if name == 'strict' {
             obj.strict = arg.get_bool()
             return
@@ -1410,7 +1410,7 @@ pub fn validator_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zv
 pub fn validator_sync_props(ptr voidptr, zv &C.zval) {
     unsafe {
         obj := &Validator(ptr)
-        out := vphp.ZVal.from_raw(zv)
+        out := vphp.ZVal.from_ptr(zv)
         out.add_property_bool('strict', obj.strict)
     }
 }
@@ -1522,7 +1522,7 @@ pub fn dispatchablesample_set_prop(ptr voidptr, name_ptr &char, name_len int, va
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &DispatchableSample(ptr)
-        arg := vphp.ZVal.from_raw(value)
+        arg := vphp.ZVal.from_ptr(value)
         if name == 'name' {
             obj.name = arg.get_string()
             return
@@ -1533,7 +1533,7 @@ pub fn dispatchablesample_set_prop(ptr voidptr, name_ptr &char, name_len int, va
 pub fn dispatchablesample_sync_props(ptr voidptr, zv &C.zval) {
     unsafe {
         obj := &DispatchableSample(ptr)
-        out := vphp.ZVal.from_raw(zv)
+        out := vphp.ZVal.from_ptr(zv)
         out.add_property_string('name', obj.name)
     }
 }
@@ -1675,7 +1675,7 @@ pub fn stringablebox_set_prop(ptr voidptr, name_ptr &char, name_len int, value &
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &StringableBox(ptr)
-        arg := vphp.ZVal.from_raw(value)
+        arg := vphp.ZVal.from_ptr(value)
         if name == 'name' {
             obj.name = arg.get_string()
             return
@@ -1686,7 +1686,7 @@ pub fn stringablebox_set_prop(ptr voidptr, name_ptr &char, name_len int, value &
 pub fn stringablebox_sync_props(ptr voidptr, zv &C.zval) {
     unsafe {
         obj := &StringableBox(ptr)
-        out := vphp.ZVal.from_raw(zv)
+        out := vphp.ZVal.from_ptr(zv)
         out.add_property_string('name', obj.name)
     }
 }
