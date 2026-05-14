@@ -1238,7 +1238,7 @@ fn v_php_object_introspection(ctx vphp.Context) {
 		'has_prop_missing':   obj.property_exists('missingProp').str()
 		'property_names':     obj.property_names().join(',')
 		'class_consts':       obj.const_names().join(',')
-		'datetime_has_atom':  vphp.php_class('DateTimeImmutable').const_exists('ATOM').str()
+		'datetime_has_atom':  vphp.PhpClass.named('DateTimeImmutable').const_exists('ATOM').str()
 	})
 }
 
@@ -1291,15 +1291,10 @@ fn v_php_object_probe(ctx vphp.Context) {
 		'is_instance_of':    obj.is_instance_of(class_name).str()
 		'is_subclass_of':    obj.is_subclass_of(class_name).str()
 		'method_exists':     obj.method_exists(method_name).str()
-		'php_is_a':          vphp.php_fn('is_a').call([
-			obj,
-			vphp.ZVal.new_string(class_name),
-			vphp.ZVal.new_bool(true),
-		]).to_bool().str()
-		'php_method_exists': vphp.php_fn('method_exists').call([
-			obj,
-			vphp.ZVal.new_string(method_name),
-		]).to_bool().str()
+		'php_is_a':          vphp.PhpFunction.named('is_a').result_bool(vphp.PhpValue.from_zval(obj),
+			vphp.PhpString.of(class_name), vphp.PhpBool.of(true)).str()
+		'php_method_exists': vphp.PhpFunction.named('method_exists').result_bool(vphp.PhpValue.from_zval(obj),
+			vphp.PhpString.of(method_name)).str()
 	})
 }
 
