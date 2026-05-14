@@ -401,29 +401,9 @@ fn persistent_attrs_from_request(req &VSlimRequest, route_params map[string]stri
 	return next_attrs
 }
 
-fn persistent_assoc_with_strings(value vphp.PersistentOwnedZBox, extras map[string]string) vphp.PersistentOwnedZBox {
-	mut out := vphp.PhpArray.empty()
-	if value.is_valid() && !value.is_null() && !value.is_undef() && value.is_array() {
-		value.with_request_array(fn [out] (arr vphp.PhpArray) bool {
-			arr.to_zval().foreach(fn [out] (key vphp.ZVal, val vphp.ZVal) {
-				if key.is_string() {
-					out.assoc_zval(key.get_string(), val.dup())
-				}
-			})
-			return true
-		}) or {}
-	}
-	for key, item in extras {
-		out.string(key, item)
-	}
-	persistent := out.to_persistent_owned_zbox()
-	out.release()
-	return persistent
-}
-
 fn persistent_array_value_owned(value vphp.ZVal) vphp.PhpValue {
 	if value.is_valid() && !value.is_null() && !value.is_undef() && value.is_array() {
-		return vphp.PhpValue.from_persistent_zval(value)
+		return vphp.PhpValue.from_persistent_owned_zbox(vphp.PersistentOwnedZBox.of_mixed(value))
 	}
 	return empty_persistent_array_value()
 }
@@ -444,7 +424,9 @@ fn persistent_value_assoc_with_strings(value vphp.PhpValue, extras map[string]st
 	for key, item in extras {
 		out.string(key, item)
 	}
-	return vphp.PhpValue.from_persistent_zval(out.take_zval())
+	persistent := out.to_persistent_owned_zbox()
+	out.release()
+	return vphp.PhpValue.from_persistent_owned_zbox(persistent)
 }
 
 fn vslim_request_uri_string(req &VSlimRequest) string {
