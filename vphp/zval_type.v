@@ -1,18 +1,28 @@
 module vphp
 
+import vphp.zval
+
 // ======== 空值检查 ========
 
+fn zend_zval_type(v ZVal) int {
+	return zval.type_raw(v.handle())
+}
+
+fn zend_zval_is_callable(v ZVal) bool {
+	return zval.is_callable(v.handle())
+}
+
 pub fn (v ZVal) is_valid() bool {
-	return v.raw != 0
+	return v.raw_ptr() != 0
 }
 
 // ======== 类型判断 ========
 
 pub fn (v ZVal) type_raw() int {
-	if v.raw == 0 {
+	if !v.is_valid() {
 		return int(PHPType.undef)
 	}
-	return C.vphp_get_type(v.raw)
+	return zend_zval_type(v)
 }
 
 pub fn (v ZVal) type_id() PHPType {
@@ -87,7 +97,7 @@ pub fn (v ZVal) is_resource() bool {
 }
 
 pub fn (v ZVal) is_callable() bool {
-	return C.vphp_is_callable(v.raw) == 1
+	return zend_zval_is_callable(v)
 }
 
 pub fn (v ZVal) to_callable() ?Callable {

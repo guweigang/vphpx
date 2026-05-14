@@ -45,4 +45,4 @@ query_source=q
 box:needle
 method:name=FromQuery,MustBeString
 method_source=name
-runtime=query:true:q:page:2:100
+runtime=query:true:q:page:2:100:true

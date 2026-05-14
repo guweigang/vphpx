@@ -1,5 +1,7 @@
 module vphp
 
+import vphp.zval
+
 // ============================================
 // ZVal — low-level bridge wrapper around Zend zval
 // NOTE:
@@ -16,6 +18,29 @@ pub mut:
 	is_persistent bool
 }
 
+pub fn ZVal.from_ptr(raw voidptr) ZVal {
+	return unsafe {
+		ZVal{
+			raw: &C.zval(raw)
+		}
+	}
+}
+
+pub fn ZVal.from_handle(handle zval.Handle) ZVal {
+	if !handle.is_valid() {
+		return invalid_zval()
+	}
+	return ZVal.from_ptr(handle.raw_ptr())
+}
+
+pub fn (v ZVal) handle() zval.Handle {
+	return zval.Handle.from_ptr(v.raw)
+}
+
+pub fn (v ZVal) raw_ptr() voidptr {
+	return v.handle().raw_ptr()
+}
+
 // Callable — semantic alias for ZVal used as a PHP callable parameter.
 // When used as a method parameter type, the compiler emits ZEND_ARG_CALLABLE_INFO
 // so PHP reflection sees the parameter as 'callable' typed.
@@ -30,9 +55,29 @@ pub:
 	persistent_fallback_zval_len int
 }
 
-fn C.vphp_release_zval(z &C.zval)
-fn C.vphp_release_zval_persistent(z &C.zval)
-fn C.vphp_disown_zval(z &C.zval)
+fn zend_new_zval() &C.zval {
+	return ZVal.from_handle(zval.new_request()).raw
+}
+
+fn zend_new_persistent_zval() &C.zval {
+	return ZVal.from_handle(zval.new_persistent()).raw
+}
+
+fn zend_release_zval(z &C.zval) {
+	zval.release_request(zval.Handle.from_ptr(z))
+}
+
+fn zend_release_persistent_zval(z &C.zval) {
+	zval.release_persistent(zval.Handle.from_ptr(z))
+}
+
+fn zend_disown_zval(z &C.zval) {
+	zval.disown(zval.Handle.from_ptr(z))
+}
+
+fn zend_copy_zval(dst &C.zval, src &C.zval) {
+	zval.copy(zval.Handle.from_ptr(dst), zval.Handle.from_ptr(src))
+}
 
 fn invalid_zval() ZVal {
 	return unsafe {
@@ -57,12 +102,19 @@ fn adopt_raw_with_ownership(raw &C.zval, ownership OwnershipKind) ZVal {
 		}
 	}
 	if ownership == .owned_request {
-		RequestScope.autorelease_add(out.raw)
+		RequestScope.autorelease_add_handle(out.handle())
 		if out.is_object() {
-			RequestScope.autorelease_forget(out.raw)
+			RequestScope.autorelease_forget_handle(out.handle())
 		}
 	}
 	return out
+}
+
+fn adopt_handle_with_ownership(handle zval.Handle, ownership OwnershipKind) ZVal {
+	if !handle.is_valid() {
+		return invalid_zval()
+	}
+	return adopt_raw_with_ownership(ZVal.from_handle(handle).raw, ownership)
 }
 
 fn clone_raw_with_ownership(src &C.zval, ownership OwnershipKind) ZVal {
@@ -71,18 +123,18 @@ fn clone_raw_with_ownership(src &C.zval, ownership OwnershipKind) ZVal {
 	}
 	mut out := ZVal{
 		raw:           if ownership == .owned_persistent {
-			C.vphp_new_persistent_zval()
+			zend_new_persistent_zval()
 		} else {
-			C.vphp_new_zval()
+			zend_new_zval()
 		}
 		owned:         true
 		is_persistent: ownership == .owned_persistent
 	}
-	C.ZVAL_COPY(out.raw, src)
+	zend_copy_zval(out.raw, src)
 	if ownership == .owned_request {
-		RequestScope.autorelease_add(out.raw)
+		RequestScope.autorelease_add_handle(out.handle())
 		if out.is_object() {
-			RequestScope.autorelease_forget(out.raw)
+			RequestScope.autorelease_forget_handle(out.handle())
 		}
 	}
 	return out
@@ -93,13 +145,13 @@ fn adopt_read_result(rv &C.zval, res &C.zval, ownership OwnershipKind) ZVal {
 		return invalid_zval()
 	}
 	if res == 0 {
-		C.vphp_release_zval(rv)
+		zend_release_zval(rv)
 		return invalid_zval()
 	}
 	if usize(res) == usize(rv) {
 		return adopt_raw_with_ownership(rv, ownership)
 	}
-	C.vphp_release_zval(rv)
+	zend_release_zval(rv)
 	if ownership == .borrowed {
 		return unsafe {
 			ZVal{
@@ -110,17 +162,21 @@ fn adopt_read_result(rv &C.zval, res &C.zval, ownership OwnershipKind) ZVal {
 	return clone_raw_with_ownership(res, ownership)
 }
 
+fn adopt_read_result_handles(result zval.ReadResult, ownership OwnershipKind) ZVal {
+	if !result.rv.is_valid() {
+		return invalid_zval()
+	}
+	return adopt_read_result(ZVal.from_handle(result.rv).raw, ZVal.from_handle(result.res).raw,
+		ownership)
+}
+
 pub fn runtime_counters() RuntimeCounters {
-	mut ar := 0
-	mut owned := 0
-	mut obj_reg := u32(0)
-	mut rev_reg := u32(0)
-	C.vphp_runtime_counters(&ar, &owned, &obj_reg, &rev_reg)
+	state := zval.runtime_state()
 	return RuntimeCounters{
-		autorelease_len:              ar
-		owned_len:                    owned
-		obj_registry_len:             obj_reg
-		rev_registry_len:             rev_reg
+		autorelease_len:              state.autorelease_len
+		owned_len:                    state.owned_len
+		obj_registry_len:             state.obj_registry_len
+		rev_registry_len:             state.rev_registry_len
 		persistent_fallback_zval_len: persistent_fallback_zval_count()
 	}
 }

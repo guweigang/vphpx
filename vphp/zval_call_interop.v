@@ -1,127 +1,82 @@
 module vphp
 
-pub fn (v ZVal) method_owned_request(method string, args []ZVal) ZVal {
-	if v.raw == 0 || !v.is_object() {
-		return invalid_zval()
+import vphp.zval as zvalmod
+
+fn call_zval_target(target ZendCallTarget, args []vphp.ZVal, ownership OwnershipKind) ZVal {
+	mut handles := []zvalmod.Handle{cap: args.len}
+	for arg in args {
+		handles << arg.handle()
 	}
-
-	unsafe {
-		mut retval := C.vphp_new_zval()
-		mut argv := []&C.zval{cap: args.len}
-		for arg in args {
-			argv << arg.raw
-		}
-		mut p_args := &&C.zval(nil)
-		if argv.len > 0 {
-			p_args = &argv[0]
-		}
-
-		res := C.vphp_call_method(v.raw, &char(method.str), method.len, retval, args.len,
-			p_args)
+	return zvalmod.with_call_args[ZVal](handles, fn [target, ownership] (count int, params voidptr) ZVal {
+		retval := zend_new_zval()
+		res := zend_invoke_call_target(target, retval, count, params)
 		if res == -1 {
-			C.vphp_release_zval(retval)
+			zend_release_zval(retval)
 			return invalid_zval()
 		}
-		mut result := adopt_raw_with_ownership(retval, .owned_request)
-		if result.is_object() {
-			RequestScope.autorelease_forget(result.raw)
-		}
-		return result
-	}
+		return adopt_raw_with_ownership(retval, ownership)
+	})
 }
 
-pub fn (v ZVal) method_owned_persistent(method string, args []ZVal) ZVal {
-	if v.raw == 0 || !v.is_object() {
+fn call_method_zval(receiver ZVal, method string, args []vphp.ZVal, ownership OwnershipKind) ZVal {
+	if !receiver.is_valid() || !receiver.is_object() {
 		return invalid_zval()
 	}
-	unsafe {
-		mut retval := C.vphp_new_zval()
-		mut argv := []&C.zval{cap: args.len}
-		for arg in args {
-			argv << arg.raw
-		}
-		mut p_args := &&C.zval(nil)
-		if argv.len > 0 {
-			p_args = &argv[0]
-		}
-		res := C.vphp_call_method(v.raw, &char(method.str), method.len, retval, args.len,
-			p_args)
-		if res == -1 {
-			C.vphp_release_zval(retval)
-			return invalid_zval()
-		}
-		return adopt_raw_with_ownership(retval, .owned_persistent)
-	}
+	return call_zval_target(ZendMethodCall{
+		receiver: receiver
+		method:   method
+	}, args, ownership)
 }
 
-pub fn (v ZVal) method(method string, args []ZVal) ZVal {
+fn call_callable_zval(callable ZVal, args []vphp.ZVal, ownership OwnershipKind) ZVal {
+	if !callable.is_valid() {
+		return invalid_zval()
+	}
+	return call_zval_target(ZendCallableCall{
+		callable: callable
+	}, args, ownership)
+}
+
+pub fn (v ZVal) method_owned_request(method string, args []vphp.ZVal) ZVal {
+	return call_method_zval(v, method, args, .owned_request)
+}
+
+pub fn (v ZVal) method_owned_persistent(method string, args []vphp.ZVal) ZVal {
+	return call_method_zval(v, method, args, .owned_persistent)
+}
+
+pub fn (v ZVal) method(method string, args []vphp.ZVal) ZVal {
 	return v.method_owned_request(method, args)
 }
 
-pub fn (v ZVal) call_owned_request(args []ZVal) ZVal {
-	if v.raw == 0 {
+pub fn (v ZVal) call_owned_request(args []vphp.ZVal) ZVal {
+	if !v.is_valid() {
 		framework_debug_log('zval.call_owned_request skip raw=0 args=${args.len}')
 		return invalid_zval()
 	}
-	framework_debug_log('zval.call_owned_request enter raw=${usize(v.raw)} valid=${v.is_valid()} type=${v.type_name()} class=${v.class_name()} args=${args.len}')
+	framework_debug_log('zval.call_owned_request enter raw=${usize(v.raw_ptr())} valid=${v.is_valid()} type=${v.type_name()} class=${v.class_name()} args=${args.len}')
 	for idx, arg in args {
-		framework_debug_log('zval.call_owned_request arg idx=${idx} raw=${usize(arg.raw)} valid=${arg.is_valid()} type=${arg.type_name()} class=${arg.class_name()}')
+		framework_debug_log('zval.call_owned_request arg idx=${idx} raw=${usize(arg.raw_ptr())} valid=${arg.is_valid()} type=${arg.type_name()} class=${arg.class_name()}')
 	}
 
-	unsafe {
-		mut retval := C.vphp_new_zval()
-		mut argv := []&C.zval{cap: args.len}
-		for arg in args {
-			argv << arg.raw
-		}
-		mut p_args := &&C.zval(nil)
-		if argv.len > 0 {
-			p_args = &argv[0]
-		}
-
-		res := C.vphp_call_callable(v.raw, retval, args.len, p_args)
-		if res == -1 {
-			framework_debug_log('zval.call_owned_request failure raw=${usize(v.raw)} retval=${usize(retval)}')
-			C.vphp_release_zval(retval)
-			return invalid_zval()
-		}
-		mut result := adopt_raw_with_ownership(retval, .owned_request)
-		if result.is_object() {
-			RequestScope.autorelease_forget(result.raw)
-		}
-		framework_debug_log('zval.call_owned_request exit raw=${usize(v.raw)} retval=${usize(result.raw)} valid=${result.is_valid()} type=${result.type_name()} class=${result.class_name()}')
-		return result
-	}
-}
-
-pub fn (v ZVal) call_owned_persistent(args []ZVal) ZVal {
-	if v.raw == 0 {
+	result := call_callable_zval(v, args, .owned_request)
+	if !result.is_valid() {
+		framework_debug_log('zval.call_owned_request failure raw=${usize(v.raw_ptr())}')
 		return invalid_zval()
 	}
-	unsafe {
-		mut retval := C.vphp_new_zval()
-		mut argv := []&C.zval{cap: args.len}
-		for arg in args {
-			argv << arg.raw
-		}
-		mut p_args := &&C.zval(nil)
-		if argv.len > 0 {
-			p_args = &argv[0]
-		}
-		res := C.vphp_call_callable(v.raw, retval, args.len, p_args)
-		if res == -1 {
-			C.vphp_release_zval(retval)
-			return invalid_zval()
-		}
-		return adopt_raw_with_ownership(retval, .owned_persistent)
-	}
+	framework_debug_log('zval.call_owned_request exit raw=${usize(v.raw_ptr())} retval=${usize(result.raw_ptr())} valid=${result.is_valid()} type=${result.type_name()} class=${result.class_name()}')
+	return result
 }
 
-pub fn (v ZVal) call(args []ZVal) ZVal {
+pub fn (v ZVal) call_owned_persistent(args []vphp.ZVal) ZVal {
+	return call_callable_zval(v, args, .owned_persistent)
+}
+
+pub fn (v ZVal) call(args []vphp.ZVal) ZVal {
 	return v.call_owned_request(args)
 }
 
-pub fn (v ZVal) must_call(args []ZVal) !ZVal {
+pub fn (v ZVal) must_call(args []vphp.ZVal) !ZVal {
 	callable := v.must_callable()!
 	res := callable.call(args)
 	if !res.is_valid() {

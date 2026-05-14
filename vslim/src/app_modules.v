@@ -81,9 +81,7 @@ fn call_module_first_supported_lifecycle(mod_z vphp.ZVal, method_names []string,
 
 fn bootstrap_module_values(value vphp.ZVal) ![]vphp.ZVal {
 	normalized := psr16_iterable_to_array(value)!
-	return normalized.fold[[]vphp.ZVal]([]vphp.ZVal{}, fn (_ vphp.ZVal, item vphp.ZVal, mut acc []vphp.ZVal) {
-		acc << item
-	})
+	return vphp.PhpArray.must_from_zval(normalized)!.items()
 }
 
 fn register_module_providers(mut app VSlimApp, mod_z vphp.ZVal, app_z vphp.ZVal) ! {

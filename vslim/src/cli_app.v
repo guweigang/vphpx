@@ -72,10 +72,13 @@ fn wrap_runtime_cli_zval(cli &VSlimCliApp) vphp.ZVal {
 		if isnil(cli) || C.vslim__cli__app_ce == 0 {
 			return vphp.ZVal.new_null()
 		}
-		cli_debug_log(cli_trace_message(cli, 'wrap_runtime_cli_zval enter cli=${usize(cli)} ce=${usize(C.vslim__cli__app_ce)}'))
+		cli_debug_log(cli_trace_message(cli,
+			'wrap_runtime_cli_zval enter cli=${usize(cli)} ce=${usize(C.vslim__cli__app_ce)}'))
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
-		vphp.PhpReturn.new(payload.raw).borrowed_object(cli, C.vslim__cli__app_ce, &C.vphp_class_handlers(vslimcliapp_handlers()))
-		cli_debug_log(cli_trace_message(cli, 'wrap_runtime_cli_zval exit cli=${usize(cli)} payload=${usize(payload.raw)} valid=${payload.is_valid()} type=${payload.type_name()}'))
+		vphp.PhpReturn.from_zval(payload).borrowed_object(cli,
+			vphp.ZendClassEntry.from_ptr(C.vslim__cli__app_ce), vslimcliapp_handlers())
+		cli_debug_log(cli_trace_message(cli,
+			'wrap_runtime_cli_zval exit cli=${usize(cli)} payload=${usize(payload.raw_ptr())} valid=${payload.is_valid()} type=${payload.type_name()}'))
 		return payload
 	}
 }
@@ -373,7 +376,8 @@ fn (mut cli VSlimCliApp) run_registered_cli_command_with_program(name string, ar
 	defer {
 		cli.current_trace = ''
 	}
-	cli_debug_log(cli_trace_message(cli, 'run_registered_cli_command start name="${command_name}" args=${args.len}'))
+	cli_debug_log(cli_trace_message(cli,
+		'run_registered_cli_command start name="${command_name}" args=${args.len}'))
 	mut handler_z := lookup_cli_command_handler(cli, command_name)!
 	defer {
 		handler_z.release()
@@ -429,7 +433,8 @@ fn (mut cli VSlimCliApp) run_registered_cli_command_with_program(name string, ar
 		mut result_z_copy := result_z
 		code = cli_command_exit_code(mut result_z_copy)
 	}
-	cli_debug_log(cli_trace_message(cli, 'run_registered_cli_command exit name="${command_name}" code=${code}'))
+	cli_debug_log(cli_trace_message(cli,
+		'run_registered_cli_command exit name="${command_name}" code=${code}'))
 	return code
 }
 
@@ -477,7 +482,8 @@ pub fn (cli &VSlimCliApp) debug_bridge_path(path string) vphp.RequestOwnedZBox {
 	defer {
 		echoed_arg.release()
 	}
-	echoed_joined := vphp.PhpFunction.named('sprintf').result_string(format_arg, echoed_arg, bootstrap_arg)
+	echoed_joined := vphp.PhpFunction.named('sprintf').result_string(format_arg, echoed_arg,
+		bootstrap_arg)
 	return vphp.RequestOwnedZBox.adopt_zval(vphp.DynValue.of_map({
 		'original':     vphp.DynValue.of_string(path)
 		'strval':       vphp.DynValue.of_string(echoed)
@@ -505,7 +511,8 @@ pub fn (mut cli VSlimCliApp) command(name string, handler vphp.RequestBorrowedZB
 	}
 	existing_canonical := cli.command_canonical[command_name] or { command_name }
 	if command_name in cli.command_handlers && existing_canonical != command_name {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'command name "${command_name}" is already registered as an alias for "${existing_canonical}"',
+		vphp.PhpException.raise_class('InvalidArgumentException',
+			'command name "${command_name}" is already registered as an alias for "${existing_canonical}"',
 			0)
 		return &cli
 	}
@@ -532,8 +539,7 @@ pub fn (mut cli VSlimCliApp) command(name string, handler vphp.RequestBorrowedZB
 pub fn (mut cli VSlimCliApp) command_many(commands vphp.PhpIterable) &VSlimCliApp {
 	ensure_cli_registry(mut cli)
 	normalized := psr16_iterable_to_array(commands.to_zval()) or {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'commands must be iterable',
-			0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'commands must be iterable', 0)
 		return &cli
 	}
 	for key in normalized.assoc_keys() {
@@ -651,8 +657,7 @@ pub fn (cli &VSlimCliApp) argument(name string, default_value ?vphp.RequestBorro
 @[php_method]
 pub fn (mut cli VSlimCliApp) run(name string, args vphp.PhpIterable) int {
 	arg_list := cli_args_to_array(args.to_zval()) or {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'command args must be iterable',
-			0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'command args must be iterable', 0)
 		return 1
 	}
 	cli.last_command_name = name.trim_space().clone()

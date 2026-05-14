@@ -231,9 +231,7 @@ fn normalize_app_bootstrap_hook_items(raw vphp.ZVal) ![]vphp.ZVal {
 		return [raw]
 	}
 	normalized := psr16_iterable_to_array(raw)!
-	return normalized.fold[[]vphp.ZVal]([]vphp.ZVal{}, fn (_ vphp.ZVal, item vphp.ZVal, mut acc []vphp.ZVal) {
-		acc << item
-	})
+	return vphp.PhpArray.must_from_zval(normalized)!.items()
 }
 
 fn normalize_app_bootstrap_middleware_items(raw vphp.ZVal, kind MiddlewareRegistrationKind, label string) ![]vphp.ZVal {
@@ -255,9 +253,9 @@ fn normalize_app_bootstrap_middleware_items(raw vphp.ZVal, kind MiddlewareRegist
 			}
 			return [raw]
 		}
-		mut items := []vphp.ZVal{}
-		for idx := 0; idx < raw.array_count(); idx++ {
-			item := raw.array_get(idx)
+		mut items := []vphp.ZVal{cap: raw.array_count()}
+		arr := vphp.PhpArray.must_from_zval(raw)!
+		for item in arr.items() {
 			if !is_supported_registration_kind(kind, vphp.RequestBorrowedZBox.from_zval(item)) {
 				return error('bootstrap ${label} entries must be middleware registrations')
 			}

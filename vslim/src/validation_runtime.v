@@ -146,18 +146,18 @@ fn validator_extract_input(data vphp.RequestBorrowedZBox) map[string]vphp.DynVal
 fn validator_request_input_map(request vphp.ZVal) map[string]vphp.DynValue {
 	mut out := map[string]vphp.DynValue{}
 	if request.method_exists('getQueryParams') {
-		mut query := request.method_owned_request('getQueryParams', []vphp.ZVal{})
+		mut query := vphp.PhpObject.borrowed(request).method_request_owned('getQueryParams')
 		defer {
 			query.release()
 		}
-		out = validator_merge_input_maps(out, validator_map_from_zval(query))
+		out = validator_merge_input_maps(out, validator_map_from_zval(query.to_zval()))
 	}
 	if request.method_exists('getParsedBody') {
-		mut parsed := request.method_owned_request('getParsedBody', []vphp.ZVal{})
+		mut parsed := vphp.PhpObject.borrowed(request).method_request_owned('getParsedBody')
 		defer {
 			parsed.release()
 		}
-		out = validator_merge_input_maps(out, validator_map_from_zval(parsed))
+		out = validator_merge_input_maps(out, validator_map_from_zval(parsed.to_zval()))
 	}
 	return out
 }
@@ -283,6 +283,7 @@ fn validator_rule_error(field string, value vphp.DynValue, name string, arg stri
 		}
 		else {}
 	}
+
 	return none
 }
 

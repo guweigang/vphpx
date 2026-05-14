@@ -332,13 +332,17 @@ fn bind_route_target_to_app_if_supported(app &VSlimApp, target vphp.ZVal) {
 }
 
 fn call_route_target_method(target vphp.ZVal, method string, args []vphp.PhpArgInput) vphp.RequestOwnedZBox {
-	mut callable := vphp.RequestOwnedZBox.new_null()
-	callable.to_zval().array_init()
-	callable.to_zval().add_next_val(target)
-	callable.to_zval().add_next_val(vphp.ZVal.new_string(method))
-	mut result := vphp.PhpCallable.borrowed(callable.to_zval()).fn_request_owned(...args)
-	callable.release()
-	return result
+	mut callable := vphp.PhpArray.empty()
+	defer {
+		callable.release()
+	}
+	mut method_arg := vphp.PhpString.of(method)
+	defer {
+		method_arg.release()
+	}
+	callable.push_zval(target)
+	callable.push(method_arg)
+	return vphp.PhpCallable.borrowed(callable.to_zval()).fn_request_owned(...args)
 }
 
 fn detach_route_handler_result(mut result vphp.RequestOwnedZBox) vphp.ZVal {

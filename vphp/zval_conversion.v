@@ -1,42 +1,36 @@
 module vphp
 
+import vphp.zval
+
 // ======== V -> Zend Value 转换 API ========
 //
 // Ownership-aware code should prefer `RequestBorrowedZBox`,
 // `RequestOwnedZBox`, and `PersistentOwnedZBox`.
 
+pub fn (v ZVal) copy_from(value ZVal) {
+	if !value.is_valid() {
+		v.set_null()
+		return
+	}
+	zval.copy(v.handle(), value.handle())
+}
+
 // 将 V 类型写入 Zend Value
 pub fn (v ZVal) from_v[T](value T) ! {
 	$if T is ZVal {
-		if !value.is_valid() {
-			v.set_null()
-			return
-		}
-		unsafe { C.ZVAL_COPY(v.raw, value.raw) }
+		v.copy_from(value)
 		return
 	}
 	$if T is RequestBorrowedZBox {
-		if !value.is_valid() {
-			v.set_null()
-			return
-		}
-		unsafe { C.ZVAL_COPY(v.raw, value.to_zval().raw) }
+		v.copy_from(value.to_zval())
 		return
 	}
 	$if T is RequestOwnedZBox {
-		if !value.is_valid() {
-			v.set_null()
-			return
-		}
-		unsafe { C.ZVAL_COPY(v.raw, value.to_zval().raw) }
+		v.copy_from(value.to_zval())
 		return
 	}
 	$if T is PersistentOwnedZBox {
-		if !value.is_valid() {
-			v.set_null()
-			return
-		}
-		unsafe { C.ZVAL_COPY(v.raw, value.to_zval().raw) }
+		v.copy_from(value.to_zval())
 		return
 	}
 	$if T is bool {
@@ -110,7 +104,7 @@ pub fn (v ZVal) from_v[T](value T) ! {
 			for entry in item {
 				sub.push_string(entry)
 			}
-			C.vphp_array_add_assoc_zval(v.raw, &char(key.str), sub.raw)
+			v.add_assoc_zval(key, sub)
 		}
 		return
 	}
@@ -145,29 +139,46 @@ pub fn (v ZVal) from_v[T](value T) ! {
 	$if T is map[string]ZVal {
 		v.array_init()
 		for key, item in value {
-			C.vphp_array_add_assoc_zval(v.raw, &char(key.str), item.raw)
+			v.add_assoc_zval(key, item)
 		}
 		return
 	}
 	return error('unsupported from_v conversion for source type')
 }
 
+fn (v ZVal) push_struct[T](item T) {
+	mut temp := RequestOwnedZBox.new_null()
+	defer {
+		temp.release()
+	}
+	mut sub := temp.to_zval()
+	sub.array_init()
+	$for field in T.fields {
+		key := field.name
+		$if field.typ is string {
+			sub.add_assoc_string(key, item.$(field.name))
+		} $else $if field.typ is f64 {
+			sub.add_assoc_double(key, item.$(field.name))
+		} $else $if field.typ is int || field.typ is i64 {
+			sub.add_assoc_long(key, i64(item.$(field.name)))
+		} $else $if field.typ is bool {
+			sub.add_assoc_bool(key, item.$(field.name))
+		}
+	}
+	v.add_next_val(sub)
+}
+
 // 便捷工厂：从 V 类型直接创建 Zend Value 包装
 pub fn new_zval_from[T](value T) !ZVal {
 	mut out := ZVal{
-		raw:   C.vphp_new_zval()
+		raw:   zend_new_zval()
 		owned: true
 	}
-	RequestScope.autorelease_add(out.raw)
+	RequestScope.autorelease_add_handle(out.handle())
 	out.from_v[T](value)!
 	return out
 }
 
 pub fn ZVal.from[T](value T) !ZVal {
 	return new_zval_from[T](value)!
-}
-
-// 兼容旧命名：建议改用 new_zval_from[T]
-pub fn new_val_from[T](value T) !ZVal {
-	return new_zval_from[T](value)
 }

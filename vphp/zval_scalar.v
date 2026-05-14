@@ -1,6 +1,44 @@
 module vphp
 
+import vphp.zval
+
 // ======== 读取 — 标量类型 ========
+
+fn zend_zval_get_long(v ZVal) i64 {
+	return zval.get_long(v.handle())
+}
+
+fn zend_zval_get_int(v ZVal) i64 {
+	return zval.get_int(v.handle())
+}
+
+fn zend_zval_get_lval(v ZVal) i64 {
+	return zval.get_lval(v.handle())
+}
+
+fn zend_zval_get_double(v ZVal) f64 {
+	return zval.get_double(v.handle())
+}
+
+fn zend_zval_set_null(v ZVal) {
+	zval.set_null(v.handle())
+}
+
+fn zend_zval_set_bool(v ZVal, b bool) {
+	zval.set_bool(v.handle(), b)
+}
+
+fn zend_zval_set_lval(v ZVal, val i64) {
+	zval.set_lval(v.handle(), val)
+}
+
+fn zend_zval_set_double(v ZVal, val f64) {
+	zval.set_double(v.handle(), val)
+}
+
+fn zend_zval_set_string(v ZVal, s string) {
+	zval.set_string(v.handle(), s)
+}
 
 // bool
 pub fn (v ZVal) to_bool() bool {
@@ -8,34 +46,29 @@ pub fn (v ZVal) to_bool() bool {
 }
 
 pub fn (v ZVal) get_bool() bool {
-	return unsafe { C.zval_get_long(v.raw) != 0 }
+	return zend_zval_get_long(v) != 0
 }
 
 // int / i64
 pub fn (v ZVal) to_int() int {
-	return int(C.vphp_get_int(v.raw))
+	return int(zend_zval_get_int(v))
 }
 
 pub fn (v ZVal) to_i64() i64 {
-	return i64(C.vphp_get_int(v.raw))
-}
-
-// 兼容旧 API
-pub fn (v ZVal) as_int() i64 {
-	return C.vphp_get_lval(v.raw)
+	return i64(zend_zval_get_int(v))
 }
 
 pub fn (v ZVal) get_int() i64 {
-	return unsafe { C.zval_get_long(v.raw) }
+	return zend_zval_get_long(v)
 }
 
 // float / f64
 pub fn (v ZVal) to_f64() f64 {
-	return C.vphp_get_double(v.raw)
+	return zend_zval_get_double(v)
 }
 
 pub fn (v ZVal) to_float() f64 {
-	return C.vphp_get_double(v.raw)
+	return zend_zval_get_double(v)
 }
 
 // string
@@ -63,38 +96,34 @@ pub fn (v ZVal) to_string() string {
 }
 
 pub fn (v ZVal) get_string() string {
-	unsafe {
-		ptr := C.VPHP_Z_STRVAL(v.raw)
-		len := C.VPHP_Z_STRLEN(v.raw)
-		if ptr == 0 {
-			return ''
-		}
-		return ptr.vstring_with_len(len).clone()
+	if !v.is_valid() {
+		return ''
 	}
+	return zval.string_value(v.handle())
 }
 
 // ======== 写入 — 标量类型 ========
 
 pub fn (v ZVal) set_null() {
-	unsafe { C.vphp_set_null(v.raw) }
+	zend_zval_set_null(v)
 }
 
 pub fn (v ZVal) set_bool(b bool) {
-	unsafe { C.vphp_set_bool(v.raw, b) }
+	zend_zval_set_bool(v, b)
 }
 
 pub fn (v ZVal) set_int(val i64) {
-	unsafe { C.vphp_set_lval(v.raw, val) }
+	zend_zval_set_lval(v, val)
 }
 
 pub fn (v ZVal) set_double(val f64) {
-	unsafe { C.vphp_set_double(v.raw, val) }
+	zend_zval_set_double(v, val)
 }
 
 pub fn (v ZVal) set_float(val f64) {
-	unsafe { C.vphp_set_double(v.raw, val) }
+	zend_zval_set_double(v, val)
 }
 
 pub fn (v ZVal) set_string(s string) {
-	unsafe { C.vphp_set_strval(v.raw, &char(s.str), s.len) }
+	zend_zval_set_string(v, s)
 }

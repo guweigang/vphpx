@@ -561,11 +561,10 @@ fn (view &VSlimView) invoke_template_expr_method(name string, args []TemplateExp
 	defer {
 		frame.release()
 	}
-	mut raw_args := []vphp.ZVal{cap: if args.len > 1 { args.len - 1 } else { 0 }}
+	mut call_args := []vphp.PhpArgInput{cap: if args.len > 1 { args.len - 1 } else { 0 }}
 	for arg in args[1..] {
-		raw_args << template_expr_value_to_zval(arg)
+		call_args << frame.adopt_zval(template_expr_value_to_zval(arg))
 	}
-	call_args := frame.args_from_zvals(raw_args)
 	mut result := vphp.PhpObject.borrowed(args[0].object.to_zval()).method_request_owned(method,
 		...call_args)
 	defer {

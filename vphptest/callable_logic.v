@@ -4,30 +4,30 @@ import vphp
 
 // ============================================
 // Callable type bridging test - Sub-goal 1
-// Tests that vphp.Callable params emit ZEND_ARG_CALLABLE_INFO
+// Tests that vphp.PhpCallable params emit ZEND_ARG_CALLABLE_INFO
 // so PHP reflection sees them as callable-typed.
 // ============================================
 
 // Global function with callable parameter
 @[php_function]
-fn v_invoke_callable(callback vphp.Callable) string {
+fn v_invoke_callable(callback vphp.PhpCallable) string {
 	if !callback.is_callable() {
 		return 'Error: not callable'
 	}
-	// Call with no args
-	result := callback.call([])
-	return 'Result: ' + result.to_string()
+	result := callback.call[vphp.PhpString]() or { return 'Error: ${err.msg()}' }
+	return 'Result: ' + result.value()
 }
 
 // Global function with callable + other params
 @[php_function]
-fn v_invoke_with_arg(callback vphp.Callable, value string) string {
+fn v_invoke_with_arg(callback vphp.PhpCallable, value string) string {
 	if !callback.is_callable() {
 		return 'Error: not callable'
 	}
-	args := [vphp.ZVal.new_string(value)]
-	result := callback.call(args)
-	return result.to_string()
+	result := callback.call[vphp.PhpString](vphp.PhpString.of(value)) or {
+		return 'Error: ${err.msg()}'
+	}
+	return result.value()
 }
 
 // Class with callable method parameter
@@ -46,32 +46,35 @@ pub fn (p &CallableProcessor) construct(prefix string) {
 }
 
 @[php_method]
-pub fn (p &CallableProcessor) process(callback vphp.Callable) string {
+pub fn (p &CallableProcessor) process(callback vphp.PhpCallable) string {
 	if !callback.is_callable() {
 		return 'Error: not callable'
 	}
-	result := callback.call([])
-	return p.prefix + result.to_string()
+	result := callback.call[vphp.PhpString]() or { return 'Error: ${err.msg()}' }
+	return p.prefix + result.value()
 }
 
 @[php_method]
-pub fn (p &CallableProcessor) transform(callback vphp.Callable, input string) string {
+pub fn (p &CallableProcessor) transform(callback vphp.PhpCallable, input string) string {
 	if !callback.is_callable() {
 		return 'Error: not callable'
 	}
-	args := [vphp.ZVal.new_string(input)]
-	result := callback.call(args)
-	return p.prefix + result.to_string()
+	result := callback.call[vphp.PhpString](vphp.PhpString.of(input)) or {
+		return 'Error: ${err.msg()}'
+	}
+	return p.prefix + result.value()
 }
 
 // Static method with callable
 @[php_method]
-pub fn CallableProcessor.apply(callback vphp.Callable, data string) string {
+pub fn CallableProcessor.apply(callback vphp.PhpCallable, data string) string {
 	if !callback.is_callable() {
 		return 'Error: not callable'
 	}
-	args := [vphp.ZVal.new_string(data)]
-	return callback.call(args).to_string()
+	result := callback.call[vphp.PhpString](vphp.PhpString.of(data)) or {
+		return 'Error: ${err.msg()}'
+	}
+	return result.value()
 }
 
 @[php_method: 'structClosure']

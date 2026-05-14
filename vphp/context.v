@@ -14,17 +14,11 @@ pub:
 
 // ======== 构造与基础状态 ========
 
-// 创建 Context 实例
-pub fn Context.new(ex voidptr, ret &C.zval) Context {
+pub fn Context.from_ptr(ex voidptr, ret voidptr) Context {
 	return Context{
-		ex:  ZExData.from_voidptr(ex)
-		ret: PhpReturn.new(ret)
+		ex:  ZExData.from_ptr(ex)
+		ret: PhpReturn.from_ptr(ret)
 	}
-}
-
-pub fn new_context(ex voidptr, ret &C.zval) Context {
-	// Backward-compat alias; prefer Context.new(...)
-	return Context.new(ex, ret)
 }
 
 pub fn (ctx Context) arg_at(index int) PhpArg {
@@ -32,11 +26,11 @@ pub fn (ctx Context) arg_at(index int) PhpArg {
 }
 
 pub fn (ctx Context) arg_named(index int, name string) PhpArg {
-	return PhpArg.from_zval(index, name, ctx.arg_raw(index))
+	return ctx.ex.php_arg(index, name)
 }
 
 pub fn (ctx Context) arg_meta(meta PhpArgMeta) PhpArg {
-	return PhpArg.from_meta_zval(meta, ctx.arg_raw(meta.index))
+	return ctx.ex.php_arg_meta(meta)
 }
 
 pub fn (ctx Context) args() PhpArgs {
@@ -52,7 +46,7 @@ pub fn (ctx Context) args_with_meta(metas []PhpArgMeta) PhpArgs {
 		}
 		for meta in metas {
 			if meta.index == index {
-				arg_meta = meta
+				arg_meta = meta.with_attribute_target(.parameter)
 				break
 			}
 		}
@@ -69,6 +63,6 @@ pub fn (ctx Context) num_args() int {
 	return ctx.ex.num_args()
 }
 
-pub fn (ctx Context) get_ce() voidptr {
-	return ctx.ex.active_ce()
+pub fn (ctx Context) active_class_entry() ZendClassEntry {
+	return ctx.ex.active_class_entry()
 }

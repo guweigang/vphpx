@@ -646,14 +646,11 @@ fn zval_bool_key(input vphp.ZVal, key string) bool {
 }
 
 fn zval_array_items(input vphp.ZVal) []vphp.ZVal {
-	mut out := []vphp.ZVal{}
 	if !input.is_array() {
-		return out
+		return []vphp.ZVal{}
 	}
-	for idx := 0; idx < input.array_count(); idx++ {
-		out << input.array_get(idx)
-	}
-	return out
+	arr := vphp.PhpArray.must_from_zval(input) or { return []vphp.ZVal{} }
+	return arr.items()
 }
 
 pub fn (c &VSlimStreamOllamaClient) free() {

@@ -110,28 +110,28 @@ pub fn (c PhpClosure) fn_request_owned(args ...PhpArgInput) RequestOwnedZBox {
 }
 
 pub fn (c PhpClosure) call[T](args ...PhpArgInput) !T {
-	mut result := c.call_owned_request_zval(php_arg_inputs_to_zvals(args))
+	mut result := c.fn_request_owned(args)
 	defer {
 		result.release()
 	}
-	return php_call_copied_result_as[T](result)
+	return php_call_copied_result_as[T](result.to_zval())
 }
 
 pub fn (c PhpClosure) with_result[T, R](run fn (T) R, args ...PhpArgInput) !R {
-	mut result := c.call_owned_request_zval(php_arg_inputs_to_zvals(args))
+	mut result := c.fn_request_owned(args)
 	defer {
 		result.release()
 	}
-	value := php_call_result_as[T](result)!
+	value := php_call_result_as[T](result.to_zval())!
 	return run(value)
 }
 
 pub fn (c PhpClosure) with_result_zval[T](run fn (ZVal) T, args ...ZVal) T {
-	mut result := c.call_owned_request_zval(args)
+	mut result := c.fn_request_owned_zval(args)
 	defer {
 		result.release()
 	}
-	return run(result)
+	return run(result.to_zval())
 }
 
 pub fn (c PhpClosure) kind_name() string {
@@ -149,11 +149,11 @@ pub fn (c PhpClosure) clone_request_owned() RequestOwnedZBox {
 }
 
 pub fn (c PhpClosure) with_fn_result_zval[T](run fn (ZVal) T, args ...ZVal) T {
-	mut result := c.call_owned_request_zval(args)
+	mut result := c.fn_request_owned_zval(args)
 	defer {
 		result.release()
 	}
-	return run(result)
+	return run(result.to_zval())
 }
 
 pub fn (mut c PhpClosure) release() {

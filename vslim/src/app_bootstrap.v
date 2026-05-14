@@ -16,7 +16,8 @@ fn wrap_runtime_app_zval(app &VSlimApp) vphp.ZVal {
 			return vphp.ZVal.new_null()
 		}
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
-		vphp.PhpReturn.new(payload.raw).borrowed_object(app, C.vslim__app_ce, &C.vphp_class_handlers(vslimapp_handlers()))
+		vphp.PhpReturn.from_zval(payload).borrowed_object(app,
+			vphp.ZendClassEntry.from_ptr(C.vslim__app_ce), vslimapp_handlers())
 		return payload
 	}
 }
@@ -61,7 +62,8 @@ fn log_bootstrap_class_visibility(kind string, class_name string) {
 		no_autoload_arg.release()
 		autoload_arg.release()
 	}
-	exists_no_autoload := vphp.PhpFunction.named('class_exists').result_bool(class_arg, no_autoload_arg)
+	exists_no_autoload := vphp.PhpFunction.named('class_exists').result_bool(class_arg,
+		no_autoload_arg)
 	exists_autoload := vphp.PhpFunction.named('class_exists').result_bool(class_arg, autoload_arg)
 	included_hits := bootstrap_debug_included_hits(class_name)
 	cli_debug_log('${kind}_class_visibility class="${class_name}" exists_no_autoload=${exists_no_autoload} exists_autoload=${exists_autoload} included_hits=${included_hits}')
@@ -104,8 +106,7 @@ fn bind_provider_to_app(provider vphp.ZVal, app_z vphp.ZVal) {
 		return
 	}
 	if provider.method_exists('setApp') {
-		vphp.PhpObject.borrowed(provider).with_method_result[vphp.PhpValue, bool]('setApp',
-			fn (_ vphp.PhpValue) bool {
+		vphp.PhpObject.borrowed(provider).with_method_result[vphp.PhpValue, bool]('setApp', fn (_ vphp.PhpValue) bool {
 			return true
 		}, vphp.PhpValue.from_zval(app_z)) or { false }
 	}
@@ -116,14 +117,12 @@ fn call_provider_lifecycle(provider vphp.ZVal, method_name string, app_z vphp.ZV
 		return
 	}
 	if app_z.is_valid() && app_z.is_object() {
-		vphp.PhpObject.borrowed(provider).with_method_result[vphp.PhpValue, bool](method_name,
-			fn (_ vphp.PhpValue) bool {
+		vphp.PhpObject.borrowed(provider).with_method_result[vphp.PhpValue, bool](method_name, fn (_ vphp.PhpValue) bool {
 			return true
 		}, vphp.PhpValue.from_zval(app_z)) or { false }
 		return
 	}
-	vphp.PhpObject.borrowed(provider).with_method_result[vphp.PhpValue, bool](method_name,
-		fn (_ vphp.PhpValue) bool {
+	vphp.PhpObject.borrowed(provider).with_method_result[vphp.PhpValue, bool](method_name, fn (_ vphp.PhpValue) bool {
 		return true
 	}) or { false }
 }
@@ -159,9 +158,7 @@ fn ensure_app_booted(mut app VSlimApp) {
 
 fn bootstrap_provider_values(value vphp.ZVal) ![]vphp.ZVal {
 	normalized := psr16_iterable_to_array(value)!
-	return normalized.fold[[]vphp.ZVal]([]vphp.ZVal{}, fn (_ vphp.ZVal, item vphp.ZVal, mut acc []vphp.ZVal) {
-		acc << item
-	})
+	return vphp.PhpArray.must_from_zval(normalized)!.items()
 }
 
 @[php_method]
@@ -180,8 +177,7 @@ pub fn (mut app VSlimApp) register(provider vphp.RequestBorrowedZBox) &VSlimApp 
 @[php_method: 'registerMany']
 pub fn (mut app VSlimApp) register_many(providers vphp.PhpIterable) &VSlimApp {
 	items := bootstrap_provider_values(providers.to_zval()) or {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'providers must be iterable',
-			0)
+		vphp.PhpException.raise_class('InvalidArgumentException', 'providers must be iterable', 0)
 		return &app
 	}
 	for item in items {

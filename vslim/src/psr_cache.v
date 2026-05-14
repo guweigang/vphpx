@@ -49,8 +49,8 @@ pub fn (pool &VSlimPsr6CacheItemPool) default_ttl_seconds_value() int {
 pub fn (mut pool VSlimPsr6CacheItemPool) set_clock(clock vphp.RequestBorrowedZBox) &VSlimPsr6CacheItemPool {
 	ensure_psr6_pool(mut pool)
 	if !psr20_is_clock(clock.to_zval()) {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'clock must implement Psr\\Clock\\ClockInterface',
-			0)
+		vphp.PhpException.raise_class('InvalidArgumentException',
+			'clock must implement Psr\\Clock\\ClockInterface', 0)
 		return &pool
 	}
 	mut old := pool.clock_ref
@@ -427,8 +427,9 @@ fn psr6_new_hit_item_with_clock(key string, value vphp.PersistentOwnedZBox, expi
 fn build_php_psr6_cache_item_object(item &VSlimPsr6CacheItem) vphp.ZVal {
 	unsafe {
 		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
-		vphp.PhpReturn.new(payload.raw).owned_object(item, C.vslim__psr6__cacheitem_ce,
-			&C.vphp_class_handlers(vslimpsr6cacheitem_handlers()))
+		vphp.PhpReturn.from_zval(payload).owned_object(item,
+			vphp.ZendClassEntry.from_ptr(C.vslim__psr6__cacheitem_ce),
+			vslimpsr6cacheitem_handlers())
 		return payload
 	}
 }
@@ -450,7 +451,8 @@ fn psr6_snapshot_from_item(item vphp.ZVal) !Psr6ItemSnapshot {
 }
 
 fn psr6_key_list_from_array(keys vphp.ZVal) ![]string {
-	mut values_box := vphp.PhpFunction.named('array_values').request_owned(vphp.PhpValue.from_zval(keys))
+	mut values_box :=
+		vphp.PhpFunction.named('array_values').request_owned(vphp.PhpValue.from_zval(keys))
 	defer {
 		values_box.release()
 	}
@@ -478,8 +480,7 @@ fn psr6_resolve_absolute_expiration_or_throw(expiration vphp.ZVal) !i64 {
 		return 0
 	}
 	if expiration.is_object() && expiration.is_instance_of('DateTimeInterface') {
-		return vphp.PhpObject.borrowed(expiration).with_method_result[vphp.PhpInt, i64]('getTimestamp',
-			fn (ts vphp.PhpInt) i64 {
+		return vphp.PhpObject.borrowed(expiration).with_method_result[vphp.PhpInt, i64]('getTimestamp', fn (ts vphp.PhpInt) i64 {
 			return ts.value()
 		})!
 	}
@@ -502,8 +503,7 @@ fn psr6_resolve_relative_expiration_or_throw(clock vphp.ZVal, time_value vphp.ZV
 		now_dt := psr20_now_datetime_or_throw(clock) or {
 			return error('failed to resolve clock time for expiration resolution')
 		}
-		expires_at := vphp.PhpObject.borrowed(now_dt).with_method_result[vphp.PhpObject, i64]('add',
-			fn (added vphp.PhpObject) i64 {
+		expires_at := vphp.PhpObject.borrowed(now_dt).with_method_result[vphp.PhpObject, i64]('add', fn (added vphp.PhpObject) i64 {
 			if !added.is_valid() {
 				return i64(-1)
 			}

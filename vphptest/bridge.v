@@ -46,21 +46,22 @@ pub fn abstractreport_cleanup_raw(ptr voidptr) {
 }
 @[export: 'AbstractReport_get_prop']
 pub fn abstractreport_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpReturn.from_ptr(rv)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &AbstractReport(ptr)
         if name == 'title' {
-            vphp.return_val_raw(rv, obj.title)
+            ret.v[string](obj.title)
             return
         }
     }
 }
 @[export: 'AbstractReport_set_prop']
 pub fn abstractreport_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.ZVal.from_ptr(value)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &AbstractReport(ptr)
-        arg := vphp.ZVal{ raw: value }
         if name == 'title' {
             obj.title = arg.get_string()
             return
@@ -69,9 +70,9 @@ pub fn abstractreport_set_prop(ptr voidptr, name_ptr &char, name_len int, value 
 }
 @[export: 'AbstractReport_sync_props']
 pub fn abstractreport_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.ZVal.from_ptr(zv)
     unsafe {
         obj := &AbstractReport(ptr)
-        out := vphp.ZVal{ raw: zv }
         out.add_property_string('title', obj.title)
     }
 }
@@ -81,7 +82,7 @@ pub fn vphp_wrap_abstractreport_label(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.label()
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 @[export: 'vphp_wrap_AbstractReport_summarize']
 pub fn vphp_wrap_abstractreport_summarize(ptr voidptr, ctx vphp.Context)  {
@@ -89,18 +90,18 @@ pub fn vphp_wrap_abstractreport_summarize(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.summarize()
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 @[export: 'AbstractReport_handlers']
 pub fn abstractreport_handlers() voidptr {
-    return unsafe { &C.vphp_class_handlers{
-        prop_handler:  voidptr(abstractreport_get_prop)
-        write_handler: voidptr(abstractreport_set_prop)
-        sync_handler:  voidptr(abstractreport_sync_props)
-        new_raw:       voidptr(abstractreport_new_raw)
-        cleanup_raw:   voidptr(abstractreport_cleanup_raw)
-        free_raw:      voidptr(abstractreport_free_raw)
-    } }
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(abstractreport_get_prop),
+        write_handler: voidptr(abstractreport_set_prop),
+        sync_handler: voidptr(abstractreport_sync_props),
+        new_raw: voidptr(abstractreport_new_raw),
+        cleanup_raw: voidptr(abstractreport_cleanup_raw),
+        free_raw: voidptr(abstractreport_free_raw)
+    )
 }
 
 @[export: 'DailyReport_new_raw']
@@ -122,21 +123,22 @@ pub fn dailyreport_cleanup_raw(ptr voidptr) {
 }
 @[export: 'DailyReport_get_prop']
 pub fn dailyreport_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpReturn.from_ptr(rv)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &DailyReport(ptr)
         if name == 'summary' {
-            vphp.return_val_raw(rv, obj.summary)
+            ret.v[string](obj.summary)
             return
         }
     }
 }
 @[export: 'DailyReport_set_prop']
 pub fn dailyreport_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.ZVal.from_ptr(value)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &DailyReport(ptr)
-        arg := vphp.ZVal{ raw: value }
         if name == 'summary' {
             obj.summary = arg.get_string()
             return
@@ -145,9 +147,9 @@ pub fn dailyreport_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.
 }
 @[export: 'DailyReport_sync_props']
 pub fn dailyreport_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.ZVal.from_ptr(zv)
     unsafe {
         obj := &DailyReport(ptr)
-        out := vphp.ZVal{ raw: zv }
         out.add_property_string('summary', obj.summary)
     }
 }
@@ -157,8 +159,8 @@ pub fn vphp_wrap_dailyreport_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'title', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'summary', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'title', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'summary', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'title').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'summary').as_v[string]()
@@ -171,18 +173,18 @@ pub fn vphp_wrap_dailyreport_summarize(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.summarize()
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 @[export: 'DailyReport_handlers']
 pub fn dailyreport_handlers() voidptr {
-    return unsafe { &C.vphp_class_handlers{
-        prop_handler:  voidptr(dailyreport_get_prop)
-        write_handler: voidptr(dailyreport_set_prop)
-        sync_handler:  voidptr(dailyreport_sync_props)
-        new_raw:       voidptr(dailyreport_new_raw)
-        cleanup_raw:   voidptr(dailyreport_cleanup_raw)
-        free_raw:      voidptr(dailyreport_free_raw)
-    } }
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(dailyreport_get_prop),
+        write_handler: voidptr(dailyreport_set_prop),
+        sync_handler: voidptr(dailyreport_sync_props),
+        new_raw: voidptr(dailyreport_new_raw),
+        cleanup_raw: voidptr(dailyreport_cleanup_raw),
+        free_raw: voidptr(dailyreport_free_raw)
+    )
 }
 
 @[export: 'Author_new_raw']
@@ -204,21 +206,22 @@ pub fn author_cleanup_raw(ptr voidptr) {
 }
 @[export: 'Author_get_prop']
 pub fn author_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpReturn.from_ptr(rv)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &Author(ptr)
         if name == 'name' {
-            vphp.return_val_raw(rv, obj.name)
+            ret.v[string](obj.name)
             return
         }
     }
 }
 @[export: 'Author_set_prop']
 pub fn author_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.ZVal.from_ptr(value)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &Author(ptr)
-        arg := vphp.ZVal{ raw: value }
         if name == 'name' {
             obj.name = arg.get_string()
             return
@@ -227,9 +230,9 @@ pub fn author_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval)
 }
 @[export: 'Author_sync_props']
 pub fn author_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.ZVal.from_ptr(zv)
     unsafe {
         obj := &Author(ptr)
-        out := vphp.ZVal{ raw: zv }
         out.add_property_string('name', obj.name)
     }
 }
@@ -238,7 +241,7 @@ pub fn vphp_wrap_author_create(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
     res := Author.create(arg_0)
@@ -250,18 +253,18 @@ pub fn vphp_wrap_author_get_name(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_name()
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 @[export: 'Author_handlers']
 pub fn author_handlers() voidptr {
-    return unsafe { &C.vphp_class_handlers{
-        prop_handler:  voidptr(author_get_prop)
-        write_handler: voidptr(author_set_prop)
-        sync_handler:  voidptr(author_sync_props)
-        new_raw:       voidptr(author_new_raw)
-        cleanup_raw:   voidptr(author_cleanup_raw)
-        free_raw:      voidptr(author_free_raw)
-    } }
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(author_get_prop),
+        write_handler: voidptr(author_set_prop),
+        sync_handler: voidptr(author_sync_props),
+        new_raw: voidptr(author_new_raw),
+        cleanup_raw: voidptr(author_cleanup_raw),
+        free_raw: voidptr(author_free_raw)
+    )
 }
 
 @[export: 'Post_new_raw']
@@ -283,21 +286,22 @@ pub fn post_cleanup_raw(ptr voidptr) {
 }
 @[export: 'Post_get_prop']
 pub fn post_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpReturn.from_ptr(rv)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &Post(ptr)
         if name == 'post_id' {
-            vphp.return_val_raw(rv, i64(obj.post_id))
+            ret.v[i64](i64(obj.post_id))
             return
         }
     }
 }
 @[export: 'Post_set_prop']
 pub fn post_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.ZVal.from_ptr(value)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &Post(ptr)
-        arg := vphp.ZVal{ raw: value }
         if name == 'post_id' {
             obj.post_id = int(arg.get_int())
             return
@@ -306,9 +310,9 @@ pub fn post_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
 }
 @[export: 'Post_sync_props']
 pub fn post_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.ZVal.from_ptr(zv)
     unsafe {
         obj := &Post(ptr)
-        out := vphp.ZVal{ raw: zv }
         out.add_property_long('post_id', i64(obj.post_id))
     }
 }
@@ -318,7 +322,7 @@ pub fn vphp_wrap_post_set_author(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'author', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'author', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := unsafe { &Author(php_args.at_named_or_index(0, 'author').raw_obj()) }
     recv.set_author(arg_0)
@@ -333,14 +337,14 @@ pub fn vphp_wrap_post_get_author(ptr voidptr, ctx vphp.Context) voidptr {
 }
 @[export: 'Post_handlers']
 pub fn post_handlers() voidptr {
-    return unsafe { &C.vphp_class_handlers{
-        prop_handler:  voidptr(post_get_prop)
-        write_handler: voidptr(post_set_prop)
-        sync_handler:  voidptr(post_sync_props)
-        new_raw:       voidptr(post_new_raw)
-        cleanup_raw:   voidptr(post_cleanup_raw)
-        free_raw:      voidptr(post_free_raw)
-    } }
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(post_get_prop),
+        write_handler: voidptr(post_set_prop),
+        sync_handler: voidptr(post_sync_props),
+        new_raw: voidptr(post_new_raw),
+        cleanup_raw: voidptr(post_cleanup_raw),
+        free_raw: voidptr(post_free_raw)
+    )
 }
 
 @[export: 'Article_new_raw']
@@ -362,33 +366,34 @@ pub fn article_cleanup_raw(ptr voidptr) {
 }
 @[export: 'Article_get_prop']
 pub fn article_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpReturn.from_ptr(rv)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &Article(ptr)
         if name == 'created_at' {
-            vphp.return_val_raw(rv, i64(obj.created_at))
+            ret.v[i64](i64(obj.created_at))
             return
         }
         if name == 'id' {
-            vphp.return_val_raw(rv, i64(obj.id))
+            ret.v[i64](i64(obj.id))
             return
         }
         if name == 'title' {
-            vphp.return_val_raw(rv, obj.title)
+            ret.v[string](obj.title)
             return
         }
         if name == 'is_top' {
-            vphp.return_val_raw(rv, obj.is_top)
+            ret.v[bool](obj.is_top)
             return
         }
     }
 }
 @[export: 'Article_set_prop']
 pub fn article_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.ZVal.from_ptr(value)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &Article(ptr)
-        arg := vphp.ZVal{ raw: value }
         if name == 'id' {
             obj.id = int(arg.get_int())
             return
@@ -405,9 +410,9 @@ pub fn article_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval
 }
 @[export: 'Article_sync_props']
 pub fn article_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.ZVal.from_ptr(zv)
     unsafe {
         obj := &Article(ptr)
-        out := vphp.ZVal{ raw: zv }
         out.add_property_long('created_at', i64(obj.created_at))
         out.add_property_long('id', i64(obj.id))
         out.add_property_string('title', obj.title)
@@ -421,15 +426,15 @@ pub fn Article.statics() &ArticleStatics {
     return &article_statics
 }
 pub fn Article.sync_statics_to_php(ctx vphp.Context) {
-    ce := ctx.get_ce()
-    if ce == voidptr(0) { return }
-    vphp.set_static_prop(ce, "total_count", article_statics.total_count)
+    ce := ctx.active_class_entry()
+    if !ce.is_valid() { return }
+    ce.set_static_prop("total_count", article_statics.total_count)
 }
 pub fn Article.sync_statics_from_php(ctx vphp.Context) {
-    ce := ctx.get_ce()
-    if ce == voidptr(0) { return }
+    ce := ctx.active_class_entry()
+    if !ce.is_valid() { return }
     mut s := Article.statics()
-    s.total_count = vphp.get_static_prop[int](ce, "total_count")
+    s.total_count = ce.static_prop[int]("total_count")
 }
 @[export: 'vphp_wrap_Article_construct']
 pub fn vphp_wrap_article_construct(ptr voidptr, ctx vphp.Context) voidptr {
@@ -437,8 +442,8 @@ pub fn vphp_wrap_article_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'title', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'id', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'title', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'id', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'title').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'id').as_v[int]()
@@ -455,14 +460,14 @@ pub fn vphp_wrap_article_internal_format(ptr voidptr, ctx vphp.Context)  {
     Article.sync_statics_from_php(ctx)
     res := recv.internal_format()
     Article.sync_statics_to_php(ctx)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 @[export: 'vphp_wrap_Article_create']
 pub fn vphp_wrap_article_create(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'title', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'title', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'title').as_v[string]()
     Article.sync_statics_from_php(ctx)
@@ -478,7 +483,7 @@ pub fn vphp_wrap_article_get_formatted_title(ptr voidptr, ctx vphp.Context)  {
     Article.sync_statics_from_php(ctx)
     res := recv.get_formatted_title()
     Article.sync_statics_to_php(ctx)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 @[export: 'vphp_wrap_Article_save']
 pub fn vphp_wrap_article_save(ptr voidptr, ctx vphp.Context)  {
@@ -488,7 +493,7 @@ pub fn vphp_wrap_article_save(ptr voidptr, ctx vphp.Context)  {
     Article.sync_statics_from_php(ctx)
     res := recv.save()
     Article.sync_statics_to_php(ctx)
-    ctx.return_val[bool](res)
+    ctx.return().v[bool](res)
 }
 @[export: 'vphp_wrap_Article_dump_properties']
 pub fn vphp_wrap_article_dump_properties(ptr voidptr, ctx vphp.Context)  {
@@ -496,7 +501,7 @@ pub fn vphp_wrap_article_dump_properties(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'data', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'data', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'data').zval()
     Article.sync_statics_from_php(ctx)
@@ -509,20 +514,20 @@ pub fn vphp_wrap_article_process_with_callback(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'callback').zval()
     Article.sync_statics_from_php(ctx)
     res := recv.process_with_callback(arg_0)
     Article.sync_statics_to_php(ctx)
-    ctx.return_val[bool](res)
+    ctx.return().v[bool](res)
 }
 @[export: 'vphp_wrap_Article_restore_author']
 pub fn vphp_wrap_article_restore_author(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'authorVal', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'authorVal', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'authorVal').zval()
     Article.sync_statics_from_php(ctx)
@@ -532,14 +537,14 @@ pub fn vphp_wrap_article_restore_author(ctx vphp.Context) voidptr {
 }
 @[export: 'Article_handlers']
 pub fn article_handlers() voidptr {
-    return unsafe { &C.vphp_class_handlers{
-        prop_handler:  voidptr(article_get_prop)
-        write_handler: voidptr(article_set_prop)
-        sync_handler:  voidptr(article_sync_props)
-        new_raw:       voidptr(article_new_raw)
-        cleanup_raw:   voidptr(article_cleanup_raw)
-        free_raw:      voidptr(article_free_raw)
-    } }
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(article_get_prop),
+        write_handler: voidptr(article_set_prop),
+        sync_handler: voidptr(article_sync_props),
+        new_raw: voidptr(article_new_raw),
+        cleanup_raw: voidptr(article_cleanup_raw),
+        free_raw: voidptr(article_free_raw)
+    )
 }
 
 @[export: 'Story_new_raw']
@@ -561,21 +566,22 @@ pub fn story_cleanup_raw(ptr voidptr) {
 }
 @[export: 'Story_get_prop']
 pub fn story_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpReturn.from_ptr(rv)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &Story(ptr)
         if name == 'chapter_count' {
-            vphp.return_val_raw(rv, i64(obj.chapter_count))
+            ret.v[i64](i64(obj.chapter_count))
             return
         }
     }
 }
 @[export: 'Story_set_prop']
 pub fn story_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.ZVal.from_ptr(value)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &Story(ptr)
-        arg := vphp.ZVal{ raw: value }
         if name == 'chapter_count' {
             obj.chapter_count = int(arg.get_int())
             return
@@ -584,9 +590,9 @@ pub fn story_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) 
 }
 @[export: 'Story_sync_props']
 pub fn story_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.ZVal.from_ptr(zv)
     unsafe {
         obj := &Story(ptr)
-        out := vphp.ZVal{ raw: zv }
         out.add_property_long('chapter_count', i64(obj.chapter_count))
     }
 }
@@ -595,8 +601,8 @@ pub fn vphp_wrap_story_create(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'author', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'chapters', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'author', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'chapters', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := unsafe { &Author(php_args.at_named_or_index(0, 'author').raw_obj()) }
     arg_1 := php_args.at_named_or_index(1, 'chapters').as_v[int]()
@@ -609,18 +615,18 @@ pub fn vphp_wrap_story_tell(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.tell()
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 @[export: 'Story_handlers']
 pub fn story_handlers() voidptr {
-    return unsafe { &C.vphp_class_handlers{
-        prop_handler:  voidptr(story_get_prop)
-        write_handler: voidptr(story_set_prop)
-        sync_handler:  voidptr(story_sync_props)
-        new_raw:       voidptr(story_new_raw)
-        cleanup_raw:   voidptr(story_cleanup_raw)
-        free_raw:      voidptr(story_free_raw)
-    } }
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(story_get_prop),
+        write_handler: voidptr(story_set_prop),
+        sync_handler: voidptr(story_sync_props),
+        new_raw: voidptr(story_new_raw),
+        cleanup_raw: voidptr(story_cleanup_raw),
+        free_raw: voidptr(story_free_raw)
+    )
 }
 
 @[export: 'AliasBase_new_raw']
@@ -642,21 +648,22 @@ pub fn aliasbase_cleanup_raw(ptr voidptr) {
 }
 @[export: 'AliasBase_get_prop']
 pub fn aliasbase_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpReturn.from_ptr(rv)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &AliasBase(ptr)
         if name == 'label' {
-            vphp.return_val_raw(rv, obj.label)
+            ret.v[string](obj.label)
             return
         }
     }
 }
 @[export: 'AliasBase_set_prop']
 pub fn aliasbase_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.ZVal.from_ptr(value)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &AliasBase(ptr)
-        arg := vphp.ZVal{ raw: value }
         if name == 'label' {
             obj.label = arg.get_string()
             return
@@ -665,9 +672,9 @@ pub fn aliasbase_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zv
 }
 @[export: 'AliasBase_sync_props']
 pub fn aliasbase_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.ZVal.from_ptr(zv)
     unsafe {
         obj := &AliasBase(ptr)
-        out := vphp.ZVal{ raw: zv }
         out.add_property_string('label', obj.label)
     }
 }
@@ -677,7 +684,7 @@ pub fn vphp_wrap_aliasbase_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'label', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'label', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'label').as_v[string]()
     res := recv.construct(arg_0)
@@ -685,14 +692,14 @@ pub fn vphp_wrap_aliasbase_construct(ptr voidptr, ctx vphp.Context) voidptr {
 }
 @[export: 'AliasBase_handlers']
 pub fn aliasbase_handlers() voidptr {
-    return unsafe { &C.vphp_class_handlers{
-        prop_handler:  voidptr(aliasbase_get_prop)
-        write_handler: voidptr(aliasbase_set_prop)
-        sync_handler:  voidptr(aliasbase_sync_props)
-        new_raw:       voidptr(aliasbase_new_raw)
-        cleanup_raw:   voidptr(aliasbase_cleanup_raw)
-        free_raw:      voidptr(aliasbase_free_raw)
-    } }
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(aliasbase_get_prop),
+        write_handler: voidptr(aliasbase_set_prop),
+        sync_handler: voidptr(aliasbase_sync_props),
+        new_raw: voidptr(aliasbase_new_raw),
+        cleanup_raw: voidptr(aliasbase_cleanup_raw),
+        free_raw: voidptr(aliasbase_free_raw)
+    )
 }
 
 @[export: 'AliasWorker_new_raw']
@@ -714,21 +721,22 @@ pub fn aliasworker_cleanup_raw(ptr voidptr) {
 }
 @[export: 'AliasWorker_get_prop']
 pub fn aliasworker_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpReturn.from_ptr(rv)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &AliasWorker(ptr)
         if name == 'title' {
-            vphp.return_val_raw(rv, obj.title)
+            ret.v[string](obj.title)
             return
         }
     }
 }
 @[export: 'AliasWorker_set_prop']
 pub fn aliasworker_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.ZVal.from_ptr(value)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &AliasWorker(ptr)
-        arg := vphp.ZVal{ raw: value }
         if name == 'title' {
             obj.title = arg.get_string()
             return
@@ -737,9 +745,9 @@ pub fn aliasworker_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.
 }
 @[export: 'AliasWorker_sync_props']
 pub fn aliasworker_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.ZVal.from_ptr(zv)
     unsafe {
         obj := &AliasWorker(ptr)
-        out := vphp.ZVal{ raw: zv }
         out.add_property_string('title', obj.title)
     }
 }
@@ -749,8 +757,8 @@ pub fn vphp_wrap_aliasworker_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'label', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'title', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'label', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'title', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'label').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'title').as_v[string]()
@@ -763,7 +771,7 @@ pub fn vphp_wrap_aliasworker_save(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.save()
-    ctx.return_val[bool](res)
+    ctx.return().v[bool](res)
 }
 @[export: 'vphp_wrap_AliasWorker_get_formatted_title']
 pub fn vphp_wrap_aliasworker_get_formatted_title(ptr voidptr, ctx vphp.Context)  {
@@ -771,7 +779,7 @@ pub fn vphp_wrap_aliasworker_get_formatted_title(ptr voidptr, ctx vphp.Context) 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_formatted_title()
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 @[export: 'vphp_wrap_AliasWorker_ping']
 pub fn vphp_wrap_aliasworker_ping(ptr voidptr, ctx vphp.Context)  {
@@ -779,18 +787,18 @@ pub fn vphp_wrap_aliasworker_ping(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.ping()
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 @[export: 'AliasWorker_handlers']
 pub fn aliasworker_handlers() voidptr {
-    return unsafe { &C.vphp_class_handlers{
-        prop_handler:  voidptr(aliasworker_get_prop)
-        write_handler: voidptr(aliasworker_set_prop)
-        sync_handler:  voidptr(aliasworker_sync_props)
-        new_raw:       voidptr(aliasworker_new_raw)
-        cleanup_raw:   voidptr(aliasworker_cleanup_raw)
-        free_raw:      voidptr(aliasworker_free_raw)
-    } }
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(aliasworker_get_prop),
+        write_handler: voidptr(aliasworker_set_prop),
+        sync_handler: voidptr(aliasworker_sync_props),
+        new_raw: voidptr(aliasworker_new_raw),
+        cleanup_raw: voidptr(aliasworker_cleanup_raw),
+        free_raw: voidptr(aliasworker_free_raw)
+    )
 }
 
 @[export: 'RuntimeDemoBaseException_new_raw']
@@ -810,15 +818,15 @@ pub fn runtimedemobaseexception_cleanup_raw(ptr voidptr) {
         return
     }
 }
-fn runtimedemobaseexception_load_from_php(obj &C.zend_object) RuntimeDemoBaseException {
+fn runtimedemobaseexception_load_from_php(php_obj vphp.ZendObject) RuntimeDemoBaseException {
     mut recv := RuntimeDemoBaseException{}
-    if obj == 0 {
+    if !php_obj.is_valid() {
         return recv
     }
     return recv
 }
-fn runtimedemobaseexception_sync_to_php(obj &C.zend_object, recv RuntimeDemoBaseException) {
-    if obj == 0 {
+fn runtimedemobaseexception_sync_to_php(php_obj vphp.ZendObject, recv RuntimeDemoBaseException) {
+    if !php_obj.is_valid() {
         return
     }
 }
@@ -843,14 +851,14 @@ pub fn runtimedemobaseexception_sync_props(ptr voidptr, zv &C.zval) {
 }
 @[export: 'RuntimeDemoBaseException_handlers']
 pub fn runtimedemobaseexception_handlers() voidptr {
-    return unsafe { &C.vphp_class_handlers{
-        prop_handler:  voidptr(runtimedemobaseexception_get_prop)
-        write_handler: voidptr(runtimedemobaseexception_set_prop)
-        sync_handler:  voidptr(runtimedemobaseexception_sync_props)
-        new_raw:       voidptr(runtimedemobaseexception_new_raw)
-        cleanup_raw:   voidptr(runtimedemobaseexception_cleanup_raw)
-        free_raw:      voidptr(runtimedemobaseexception_free_raw)
-    } }
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(runtimedemobaseexception_get_prop),
+        write_handler: voidptr(runtimedemobaseexception_set_prop),
+        sync_handler: voidptr(runtimedemobaseexception_sync_props),
+        new_raw: voidptr(runtimedemobaseexception_new_raw),
+        cleanup_raw: voidptr(runtimedemobaseexception_cleanup_raw),
+        free_raw: voidptr(runtimedemobaseexception_free_raw)
+    )
 }
 
 @[export: 'RuntimeDemoChildException_new_raw']
@@ -870,15 +878,15 @@ pub fn runtimedemochildexception_cleanup_raw(ptr voidptr) {
         return
     }
 }
-fn runtimedemochildexception_load_from_php(obj &C.zend_object) RuntimeDemoChildException {
+fn runtimedemochildexception_load_from_php(php_obj vphp.ZendObject) RuntimeDemoChildException {
     mut recv := RuntimeDemoChildException{}
-    if obj == 0 {
+    if !php_obj.is_valid() {
         return recv
     }
     return recv
 }
-fn runtimedemochildexception_sync_to_php(obj &C.zend_object, recv RuntimeDemoChildException) {
-    if obj == 0 {
+fn runtimedemochildexception_sync_to_php(php_obj vphp.ZendObject, recv RuntimeDemoChildException) {
+    if !php_obj.is_valid() {
         return
     }
 }
@@ -903,14 +911,14 @@ pub fn runtimedemochildexception_sync_props(ptr voidptr, zv &C.zval) {
 }
 @[export: 'RuntimeDemoChildException_handlers']
 pub fn runtimedemochildexception_handlers() voidptr {
-    return unsafe { &C.vphp_class_handlers{
-        prop_handler:  voidptr(runtimedemochildexception_get_prop)
-        write_handler: voidptr(runtimedemochildexception_set_prop)
-        sync_handler:  voidptr(runtimedemochildexception_sync_props)
-        new_raw:       voidptr(runtimedemochildexception_new_raw)
-        cleanup_raw:   voidptr(runtimedemochildexception_cleanup_raw)
-        free_raw:      voidptr(runtimedemochildexception_free_raw)
-    } }
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(runtimedemochildexception_get_prop),
+        write_handler: voidptr(runtimedemochildexception_set_prop),
+        sync_handler: voidptr(runtimedemochildexception_sync_props),
+        new_raw: voidptr(runtimedemochildexception_new_raw),
+        cleanup_raw: voidptr(runtimedemochildexception_cleanup_raw),
+        free_raw: voidptr(runtimedemochildexception_free_raw)
+    )
 }
 
 @[export: 'CallableProcessor_new_raw']
@@ -932,21 +940,22 @@ pub fn callableprocessor_cleanup_raw(ptr voidptr) {
 }
 @[export: 'CallableProcessor_get_prop']
 pub fn callableprocessor_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpReturn.from_ptr(rv)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &CallableProcessor(ptr)
         if name == 'prefix' {
-            vphp.return_val_raw(rv, obj.prefix)
+            ret.v[string](obj.prefix)
             return
         }
     }
 }
 @[export: 'CallableProcessor_set_prop']
 pub fn callableprocessor_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.ZVal.from_ptr(value)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &CallableProcessor(ptr)
-        arg := vphp.ZVal{ raw: value }
         if name == 'prefix' {
             obj.prefix = arg.get_string()
             return
@@ -955,9 +964,9 @@ pub fn callableprocessor_set_prop(ptr voidptr, name_ptr &char, name_len int, val
 }
 @[export: 'CallableProcessor_sync_props']
 pub fn callableprocessor_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.ZVal.from_ptr(zv)
     unsafe {
         obj := &CallableProcessor(ptr)
-        out := vphp.ZVal{ raw: zv }
         out.add_property_string('prefix', obj.prefix)
     }
 }
@@ -967,7 +976,7 @@ pub fn vphp_wrap_callableprocessor_construct(ptr voidptr, ctx vphp.Context) void
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'prefix', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'prefix', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'prefix').as_v[string]()
     recv.construct(arg_0)
@@ -979,11 +988,11 @@ pub fn vphp_wrap_callableprocessor_process(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'callback').zval()
     res := recv.process(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 @[export: 'vphp_wrap_CallableProcessor_transform']
 pub fn vphp_wrap_callableprocessor_transform(ptr voidptr, ctx vphp.Context)  {
@@ -991,42 +1000,39 @@ pub fn vphp_wrap_callableprocessor_transform(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'input', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'input', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'callback').zval()
     arg_1 := php_args.at_named_or_index(1, 'input').as_v[string]()
     res := recv.transform(arg_0, arg_1)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 @[export: 'vphp_wrap_CallableProcessor_apply']
 pub fn vphp_wrap_callableprocessor_apply(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'data', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'data', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'callback').zval()
     arg_1 := php_args.at_named_or_index(1, 'data').as_v[string]()
     res := CallableProcessor.apply(arg_0, arg_1)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 pub type VPhpStructClosureCallableProcessorStructClosure = fn (StructClosureArgs) string
 
 fn vphp_struct_closure_bridge_callableprocessor_struct_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context{
-            ex:  vphp.ZExData.new(ex)
-            ret: vphp.PhpReturn.new(ret)
-        }
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpStructClosureCallableProcessorStructClosure(v_ptr))
         args := StructClosureArgs{
             name: ctx.arg[string](0)
             count: ctx.arg[int](1)
         }
         res := cb(args)
-        ctx.return_val[string](res)
+        ctx.return().v[string](res)
     }
 }
 
@@ -1044,14 +1050,14 @@ pub fn vphp_wrap_callableprocessor_struct_closure(ctx vphp.Context)  {
 }
 @[export: 'CallableProcessor_handlers']
 pub fn callableprocessor_handlers() voidptr {
-    return unsafe { &C.vphp_class_handlers{
-        prop_handler:  voidptr(callableprocessor_get_prop)
-        write_handler: voidptr(callableprocessor_set_prop)
-        sync_handler:  voidptr(callableprocessor_sync_props)
-        new_raw:       voidptr(callableprocessor_new_raw)
-        cleanup_raw:   voidptr(callableprocessor_cleanup_raw)
-        free_raw:      voidptr(callableprocessor_free_raw)
-    } }
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(callableprocessor_get_prop),
+        write_handler: voidptr(callableprocessor_set_prop),
+        sync_handler: voidptr(callableprocessor_sync_props),
+        new_raw: voidptr(callableprocessor_new_raw),
+        cleanup_raw: voidptr(callableprocessor_cleanup_raw),
+        free_raw: voidptr(callableprocessor_free_raw)
+    )
 }
 
 @[export: 'Finder_new_raw']
@@ -1105,7 +1111,7 @@ pub fn vphp_wrap_finder_find(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'keyword', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'keyword', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'keyword').as_v[string]()
     vphp.call_or_null_val[string](fn [arg_0, recv] () ?string {
@@ -1118,7 +1124,7 @@ pub fn vphp_wrap_finder_index_of(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'keyword', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'keyword', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'keyword').as_v[string]()
     vphp.call_or_null_val[int](fn [arg_0, recv] () ?int {
@@ -1131,7 +1137,7 @@ pub fn vphp_wrap_finder_has_match(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'keyword', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'keyword', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'keyword').as_v[string]()
     vphp.call_or_null_val[bool](fn [arg_0, recv] () ?bool {
@@ -1143,7 +1149,7 @@ pub fn vphp_wrap_finder_try_parse_int(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 's', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 's', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 's').as_v[string]()
     vphp.call_or_null_val[int](fn [arg_0] () ?int {
@@ -1152,14 +1158,14 @@ pub fn vphp_wrap_finder_try_parse_int(ctx vphp.Context)  {
 }
 @[export: 'Finder_handlers']
 pub fn finder_handlers() voidptr {
-    return unsafe { &C.vphp_class_handlers{
-        prop_handler:  voidptr(finder_get_prop)
-        write_handler: voidptr(finder_set_prop)
-        sync_handler:  voidptr(finder_sync_props)
-        new_raw:       voidptr(finder_new_raw)
-        cleanup_raw:   voidptr(finder_cleanup_raw)
-        free_raw:      voidptr(finder_free_raw)
-    } }
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(finder_get_prop),
+        write_handler: voidptr(finder_set_prop),
+        sync_handler: voidptr(finder_sync_props),
+        new_raw: voidptr(finder_new_raw),
+        cleanup_raw: voidptr(finder_cleanup_raw),
+        free_raw: voidptr(finder_free_raw)
+    )
 }
 
 @[export: 'ReadonlyRecord_new_raw']
@@ -1181,25 +1187,26 @@ pub fn readonlyrecord_cleanup_raw(ptr voidptr) {
 }
 @[export: 'ReadonlyRecord_get_prop']
 pub fn readonlyrecord_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpReturn.from_ptr(rv)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &ReadonlyRecord(ptr)
         if name == 'created_at' {
-            vphp.return_val_raw(rv, i64(obj.created_at))
+            ret.v[i64](i64(obj.created_at))
             return
         }
         if name == 'title' {
-            vphp.return_val_raw(rv, obj.title)
+            ret.v[string](obj.title)
             return
         }
     }
 }
 @[export: 'ReadonlyRecord_set_prop']
 pub fn readonlyrecord_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.ZVal.from_ptr(value)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &ReadonlyRecord(ptr)
-        arg := vphp.ZVal{ raw: value }
         if name == 'title' {
             obj.title = arg.get_string()
             return
@@ -1208,9 +1215,9 @@ pub fn readonlyrecord_set_prop(ptr voidptr, name_ptr &char, name_len int, value 
 }
 @[export: 'ReadonlyRecord_sync_props']
 pub fn readonlyrecord_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.ZVal.from_ptr(zv)
     unsafe {
         obj := &ReadonlyRecord(ptr)
-        out := vphp.ZVal{ raw: zv }
         out.add_property_long('created_at', i64(obj.created_at))
         out.add_property_string('title', obj.title)
     }
@@ -1221,7 +1228,7 @@ pub fn vphp_wrap_readonlyrecord_construct(ptr voidptr, ctx vphp.Context) voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'title', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'title', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'title').as_v[string]()
     res := recv.construct(arg_0)
@@ -1233,18 +1240,18 @@ pub fn vphp_wrap_readonlyrecord_reveal(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.reveal()
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 @[export: 'ReadonlyRecord_handlers']
 pub fn readonlyrecord_handlers() voidptr {
-    return unsafe { &C.vphp_class_handlers{
-        prop_handler:  voidptr(readonlyrecord_get_prop)
-        write_handler: voidptr(readonlyrecord_set_prop)
-        sync_handler:  voidptr(readonlyrecord_sync_props)
-        new_raw:       voidptr(readonlyrecord_new_raw)
-        cleanup_raw:   voidptr(readonlyrecord_cleanup_raw)
-        free_raw:      voidptr(readonlyrecord_free_raw)
-    } }
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(readonlyrecord_get_prop),
+        write_handler: voidptr(readonlyrecord_set_prop),
+        sync_handler: voidptr(readonlyrecord_sync_props),
+        new_raw: voidptr(readonlyrecord_new_raw),
+        cleanup_raw: voidptr(readonlyrecord_cleanup_raw),
+        free_raw: voidptr(readonlyrecord_free_raw)
+    )
 }
 
 @[export: 'TraitPost_new_raw']
@@ -1266,29 +1273,30 @@ pub fn traitpost_cleanup_raw(ptr voidptr) {
 }
 @[export: 'TraitPost_get_prop']
 pub fn traitpost_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpReturn.from_ptr(rv)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &TraitPost(ptr)
         if name == 'title' {
-            vphp.return_val_raw(rv, obj.title)
+            ret.v[string](obj.title)
             return
         }
         if name == 'slug' {
-            vphp.return_val_raw(rv, obj.slug)
+            ret.v[string](obj.slug)
             return
         }
         if name == 'visits' {
-            vphp.return_val_raw(rv, i64(obj.visits))
+            ret.v[i64](i64(obj.visits))
             return
         }
     }
 }
 @[export: 'TraitPost_set_prop']
 pub fn traitpost_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.ZVal.from_ptr(value)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &TraitPost(ptr)
-        arg := vphp.ZVal{ raw: value }
         if name == 'title' {
             obj.title = arg.get_string()
             return
@@ -1305,9 +1313,9 @@ pub fn traitpost_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zv
 }
 @[export: 'TraitPost_sync_props']
 pub fn traitpost_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.ZVal.from_ptr(zv)
     unsafe {
         obj := &TraitPost(ptr)
-        out := vphp.ZVal{ raw: zv }
         out.add_property_string('title', obj.title)
         out.add_property_string('slug', obj.slug)
         out.add_property_long('visits', i64(obj.visits))
@@ -1319,7 +1327,7 @@ pub fn vphp_wrap_traitpost_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'title', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'title', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'title').as_v[string]()
     res := recv.construct(arg_0)
@@ -1331,7 +1339,7 @@ pub fn vphp_wrap_traitpost_summary(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.summary()
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 @[export: 'vphp_wrap_TraitPost_bump']
 pub fn vphp_wrap_traitpost_bump(ptr voidptr, ctx vphp.Context)  {
@@ -1339,7 +1347,7 @@ pub fn vphp_wrap_traitpost_bump(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.bump()
-    ctx.return_val[int](res)
+    ctx.return().v[int](res)
 }
 @[export: 'vphp_wrap_TraitPost_trait_only']
 pub fn vphp_wrap_traitpost_trait_only(ptr voidptr, ctx vphp.Context)  {
@@ -1347,7 +1355,7 @@ pub fn vphp_wrap_traitpost_trait_only(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.trait_only()
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 @[export: 'vphp_wrap_TraitPost_internal_trait']
 pub fn vphp_wrap_traitpost_internal_trait(ptr voidptr, ctx vphp.Context)  {
@@ -1355,18 +1363,18 @@ pub fn vphp_wrap_traitpost_internal_trait(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.internal_trait()
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 @[export: 'TraitPost_handlers']
 pub fn traitpost_handlers() voidptr {
-    return unsafe { &C.vphp_class_handlers{
-        prop_handler:  voidptr(traitpost_get_prop)
-        write_handler: voidptr(traitpost_set_prop)
-        sync_handler:  voidptr(traitpost_sync_props)
-        new_raw:       voidptr(traitpost_new_raw)
-        cleanup_raw:   voidptr(traitpost_cleanup_raw)
-        free_raw:      voidptr(traitpost_free_raw)
-    } }
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(traitpost_get_prop),
+        write_handler: voidptr(traitpost_set_prop),
+        sync_handler: voidptr(traitpost_sync_props),
+        new_raw: voidptr(traitpost_new_raw),
+        cleanup_raw: voidptr(traitpost_cleanup_raw),
+        free_raw: voidptr(traitpost_free_raw)
+    )
 }
 
 @[export: 'Validator_new_raw']
@@ -1388,21 +1396,22 @@ pub fn validator_cleanup_raw(ptr voidptr) {
 }
 @[export: 'Validator_get_prop']
 pub fn validator_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpReturn.from_ptr(rv)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &Validator(ptr)
         if name == 'strict' {
-            vphp.return_val_raw(rv, obj.strict)
+            ret.v[bool](obj.strict)
             return
         }
     }
 }
 @[export: 'Validator_set_prop']
 pub fn validator_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.ZVal.from_ptr(value)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &Validator(ptr)
-        arg := vphp.ZVal{ raw: value }
         if name == 'strict' {
             obj.strict = arg.get_bool()
             return
@@ -1411,9 +1420,9 @@ pub fn validator_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zv
 }
 @[export: 'Validator_sync_props']
 pub fn validator_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.ZVal.from_ptr(zv)
     unsafe {
         obj := &Validator(ptr)
-        out := vphp.ZVal{ raw: zv }
         out.add_property_bool('strict', obj.strict)
     }
 }
@@ -1423,7 +1432,7 @@ pub fn vphp_wrap_validator_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'strict', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'strict', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'strict').as_v[bool]()
     recv.construct(arg_0)
@@ -1435,7 +1444,7 @@ pub fn vphp_wrap_validator_check(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'input').as_v[string]()
     vphp.call_or_throw_val[bool](fn [arg_0, recv] () !bool {
@@ -1448,7 +1457,7 @@ pub fn vphp_wrap_validator_sanitize(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'input').as_v[string]()
     vphp.call_or_throw_val[string](fn [arg_0, recv] () !string {
@@ -1461,7 +1470,7 @@ pub fn vphp_wrap_validator_assert_valid(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'input').as_v[string]()
     vphp.call_or_throw(fn [arg_0, recv] () ! {
@@ -1473,7 +1482,7 @@ pub fn vphp_wrap_validator_parse_int(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 's', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 's', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 's').as_v[string]()
     vphp.call_or_throw_val[int](fn [arg_0] () !int {
@@ -1482,14 +1491,14 @@ pub fn vphp_wrap_validator_parse_int(ctx vphp.Context)  {
 }
 @[export: 'Validator_handlers']
 pub fn validator_handlers() voidptr {
-    return unsafe { &C.vphp_class_handlers{
-        prop_handler:  voidptr(validator_get_prop)
-        write_handler: voidptr(validator_set_prop)
-        sync_handler:  voidptr(validator_sync_props)
-        new_raw:       voidptr(validator_new_raw)
-        cleanup_raw:   voidptr(validator_cleanup_raw)
-        free_raw:      voidptr(validator_free_raw)
-    } }
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(validator_get_prop),
+        write_handler: voidptr(validator_set_prop),
+        sync_handler: voidptr(validator_sync_props),
+        new_raw: voidptr(validator_new_raw),
+        cleanup_raw: voidptr(validator_cleanup_raw),
+        free_raw: voidptr(validator_free_raw)
+    )
 }
 
 @[export: 'DispatchableSample_new_raw']
@@ -1511,21 +1520,22 @@ pub fn dispatchablesample_cleanup_raw(ptr voidptr) {
 }
 @[export: 'DispatchableSample_get_prop']
 pub fn dispatchablesample_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpReturn.from_ptr(rv)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &DispatchableSample(ptr)
         if name == 'name' {
-            vphp.return_val_raw(rv, obj.name)
+            ret.v[string](obj.name)
             return
         }
     }
 }
 @[export: 'DispatchableSample_set_prop']
 pub fn dispatchablesample_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.ZVal.from_ptr(value)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &DispatchableSample(ptr)
-        arg := vphp.ZVal{ raw: value }
         if name == 'name' {
             obj.name = arg.get_string()
             return
@@ -1534,9 +1544,9 @@ pub fn dispatchablesample_set_prop(ptr voidptr, name_ptr &char, name_len int, va
 }
 @[export: 'DispatchableSample_sync_props']
 pub fn dispatchablesample_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.ZVal.from_ptr(zv)
     unsafe {
         obj := &DispatchableSample(ptr)
-        out := vphp.ZVal{ raw: zv }
         out.add_property_string('name', obj.name)
     }
 }
@@ -1546,7 +1556,7 @@ pub fn vphp_wrap_dispatchablesample_construct(ptr voidptr, ctx vphp.Context) voi
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
     res := recv.construct(arg_0)
@@ -1558,22 +1568,22 @@ pub fn vphp_wrap_dispatchablesample_tagged(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: [vphp.PhpArgAttribute.named('FromQuery').string('name'), vphp.PhpArgAttribute.named('MustBeString')] },
+        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: [vphp.PhpAttribute.named('FromQuery').for_parameter().string('name'), vphp.PhpAttribute.named('MustBeString').for_parameter()] },
     ])
     arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
     res := recv.tagged(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 @[export: 'DispatchableSample_handlers']
 pub fn dispatchablesample_handlers() voidptr {
-    return unsafe { &C.vphp_class_handlers{
-        prop_handler:  voidptr(dispatchablesample_get_prop)
-        write_handler: voidptr(dispatchablesample_set_prop)
-        sync_handler:  voidptr(dispatchablesample_sync_props)
-        new_raw:       voidptr(dispatchablesample_new_raw)
-        cleanup_raw:   voidptr(dispatchablesample_cleanup_raw)
-        free_raw:      voidptr(dispatchablesample_free_raw)
-    } }
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(dispatchablesample_get_prop),
+        write_handler: voidptr(dispatchablesample_set_prop),
+        sync_handler: voidptr(dispatchablesample_sync_props),
+        new_raw: voidptr(dispatchablesample_new_raw),
+        cleanup_raw: voidptr(dispatchablesample_cleanup_raw),
+        free_raw: voidptr(dispatchablesample_free_raw)
+    )
 }
 
 @[export: 'VPhpTask_new_raw']
@@ -1635,14 +1645,14 @@ pub fn vphp_wrap_vphptask_list(ctx vphp.Context)  {
 }
 @[export: 'VPhpTask_handlers']
 pub fn vphptask_handlers() voidptr {
-    return unsafe { &C.vphp_class_handlers{
-        prop_handler:  voidptr(vphptask_get_prop)
-        write_handler: voidptr(vphptask_set_prop)
-        sync_handler:  voidptr(vphptask_sync_props)
-        new_raw:       voidptr(vphptask_new_raw)
-        cleanup_raw:   voidptr(vphptask_cleanup_raw)
-        free_raw:      voidptr(vphptask_free_raw)
-    } }
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(vphptask_get_prop),
+        write_handler: voidptr(vphptask_set_prop),
+        sync_handler: voidptr(vphptask_sync_props),
+        new_raw: voidptr(vphptask_new_raw),
+        cleanup_raw: voidptr(vphptask_cleanup_raw),
+        free_raw: voidptr(vphptask_free_raw)
+    )
 }
 
 @[export: 'StringableBox_new_raw']
@@ -1664,21 +1674,22 @@ pub fn stringablebox_cleanup_raw(ptr voidptr) {
 }
 @[export: 'StringableBox_get_prop']
 pub fn stringablebox_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpReturn.from_ptr(rv)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         obj := &StringableBox(ptr)
         if name == 'name' {
-            vphp.return_val_raw(rv, obj.name)
+            ret.v[string](obj.name)
             return
         }
     }
 }
 @[export: 'StringableBox_set_prop']
 pub fn stringablebox_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.ZVal.from_ptr(value)
     unsafe {
         name := name_ptr.vstring_with_len(name_len).clone()
         mut obj := &StringableBox(ptr)
-        arg := vphp.ZVal{ raw: value }
         if name == 'name' {
             obj.name = arg.get_string()
             return
@@ -1687,9 +1698,9 @@ pub fn stringablebox_set_prop(ptr voidptr, name_ptr &char, name_len int, value &
 }
 @[export: 'StringableBox_sync_props']
 pub fn stringablebox_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.ZVal.from_ptr(zv)
     unsafe {
         obj := &StringableBox(ptr)
-        out := vphp.ZVal{ raw: zv }
         out.add_property_string('name', obj.name)
     }
 }
@@ -1699,7 +1710,7 @@ pub fn vphp_wrap_stringablebox_construct(ptr voidptr, ctx vphp.Context) voidptr 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
     res := recv.construct(arg_0)
@@ -1711,18 +1722,18 @@ pub fn vphp_wrap_stringablebox_str(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.str()
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 @[export: 'StringableBox_handlers']
 pub fn stringablebox_handlers() voidptr {
-    return unsafe { &C.vphp_class_handlers{
-        prop_handler:  voidptr(stringablebox_get_prop)
-        write_handler: voidptr(stringablebox_set_prop)
-        sync_handler:  voidptr(stringablebox_sync_props)
-        new_raw:       voidptr(stringablebox_new_raw)
-        cleanup_raw:   voidptr(stringablebox_cleanup_raw)
-        free_raw:      voidptr(stringablebox_free_raw)
-    } }
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(stringablebox_get_prop),
+        write_handler: voidptr(stringablebox_set_prop),
+        sync_handler: voidptr(stringablebox_sync_props),
+        new_raw: voidptr(stringablebox_new_raw),
+        cleanup_raw: voidptr(stringablebox_cleanup_raw),
+        free_raw: voidptr(stringablebox_free_raw)
+    )
 }
 
 @[export: 'vphp_wrap_v_add']
@@ -1730,13 +1741,13 @@ fn vphp_wrap_v_add(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'a', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'b', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'a', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'b', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'a').as_v[i64]()
     arg_1 := php_args.at_named_or_index(1, 'b').as_v[i64]()
     res := v_add(arg_0, arg_1)
-    ctx.return_val[i64](res)
+    ctx.return().v[i64](res)
 }
 
 @[export: 'vphp_wrap_v_greet']
@@ -1744,11 +1755,11 @@ fn vphp_wrap_v_greet(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
     res := v_greet(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_float_const']
@@ -1756,7 +1767,7 @@ fn vphp_wrap_v_float_const(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := v_float_const()
-    ctx.return_val[f64](res)
+    ctx.return().v[f64](res)
 }
 
 @[export: 'vphp_wrap_v_float_id']
@@ -1764,11 +1775,11 @@ fn vphp_wrap_v_float_id(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'x', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'x', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'x').as_v[f64]()
     res := v_float_id(arg_0)
-    ctx.return_val[f64](res)
+    ctx.return().v[f64](res)
 }
 
 @[export: 'vphp_wrap_v_pure_map_test']
@@ -1776,13 +1787,13 @@ fn vphp_wrap_v_pure_map_test(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'k', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'v', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'k', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'v', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'k').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'v').as_v[string]()
     res := v_pure_map_test(arg_0, arg_1)
-    ctx.return_val[map[string]string](res)
+    ctx.return().v[map[string]string](res)
 }
 
 @[export: 'vphp_wrap_v_process_list']
@@ -1830,13 +1841,13 @@ fn vphp_wrap_v_bind_class_interface(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'className', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'ifaceName', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'className', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'ifaceName', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'className').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'ifaceName').as_v[string]()
     res := v_bind_class_interface(arg_0, arg_1)
-    ctx.return_val[bool](res)
+    ctx.return().v[bool](res)
 }
 
 @[export: 'vphp_wrap_v_complex_test']
@@ -1924,11 +1935,11 @@ fn vphp_wrap_v_typed_php_interop(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'obj', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'obj', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'obj').zval()
     res := v_typed_php_interop(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_typed_object_restore']
@@ -1944,7 +1955,7 @@ fn vphp_wrap_v_zval_conversion_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := v_zval_conversion_api()
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_persistent_fallback_counter_probe']
@@ -1952,11 +1963,11 @@ fn vphp_wrap_v_persistent_fallback_counter_probe(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'raw').zval()
     res := v_persistent_fallback_counter_probe(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_request_scope_counter_probe']
@@ -1964,11 +1975,23 @@ fn vphp_wrap_v_request_scope_counter_probe(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'rounds', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'rounds', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'rounds').as_v[int]()
     res := v_request_scope_counter_probe(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
+}
+
+@[export: 'vphp_wrap_v_php_value_zbox_lifecycle_probe']
+fn vphp_wrap_v_php_value_zbox_lifecycle_probe(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'raw').zval()
+    res := v_php_value_zbox_lifecycle_probe(arg_0)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_unified_object_interop']
@@ -2000,11 +2023,11 @@ fn vphp_wrap_v_php_closure_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'callback').zval()
     res := v_php_closure_api(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_closure_persistent_api']
@@ -2012,11 +2035,11 @@ fn vphp_wrap_v_php_closure_persistent_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'callback').zval()
     res := v_php_closure_persistent_api(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_class_meta_api']
@@ -2032,11 +2055,11 @@ fn vphp_wrap_v_php_object_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'raw').zval()
     res := v_php_object_api(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_array_api']
@@ -2044,11 +2067,11 @@ fn vphp_wrap_v_php_array_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'raw').zval()
     res := v_php_array_api(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_callable_api']
@@ -2056,11 +2079,11 @@ fn vphp_wrap_v_php_callable_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'callback').zval()
     res := v_php_callable_api(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_value_api']
@@ -2068,11 +2091,11 @@ fn vphp_wrap_v_php_value_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'raw').zval()
     res := v_php_value_api(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_scalar_api']
@@ -2080,11 +2103,11 @@ fn vphp_wrap_v_php_scalar_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'raw').zval()
     res := v_php_scalar_api(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_scalar_strict_api']
@@ -2092,7 +2115,7 @@ fn vphp_wrap_v_php_scalar_strict_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := v_php_scalar_strict_api()
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_semantic_empty_api']
@@ -2100,7 +2123,7 @@ fn vphp_wrap_v_php_semantic_empty_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := v_php_semantic_empty_api()
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_params_struct_api']
@@ -2108,10 +2131,10 @@ fn vphp_wrap_v_php_params_struct_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'status', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'reasonPhrase', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'secure', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'ratio', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'status', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'reasonPhrase', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 2, name: 'secure', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 3, name: 'ratio', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0_params_status := if php_args.has_named_or_index(0, 'status') { php_args.at_named_or_index(0, 'status').as_v[int]() } else { 200 }
     arg_0_params_reason_phrase := if php_args.has_named_or_index(1, 'reasonPhrase') { php_args.at_named_or_index(1, 'reasonPhrase').as_v[string]() } else { '' }
@@ -2124,7 +2147,7 @@ fn vphp_wrap_v_php_params_struct_api(ctx vphp.Context) {
         ratio: arg_0_params_ratio
     }
     res := v_php_params_struct_api(arg_0_params)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_direct_arg_camel_api']
@@ -2132,13 +2155,13 @@ fn vphp_wrap_v_php_direct_arg_camel_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'firstName', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'firstName', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'firstName').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'defaultValue').as_v[string]()
     res := v_php_direct_arg_camel_api(arg_0, arg_1)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_call_style_arg_attrs_api']
@@ -2146,13 +2169,13 @@ fn vphp_wrap_v_php_call_style_arg_attrs_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'valueAlias', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'optionalCount', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'valueAlias', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'optionalCount', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'valueAlias').as_v[string]()
     arg_1 := if php_args.has_named_or_index(1, 'optionalCount') { php_args.at_named_or_index(1, 'optionalCount').as_v[int]() } else { 7 }
     res := v_php_call_style_arg_attrs_api(arg_0, arg_1)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_semantic_params_struct_api']
@@ -2160,9 +2183,9 @@ fn vphp_wrap_v_php_semantic_params_struct_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'label', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'flag', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'items', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'label', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'flag', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 2, name: 'items', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0_params_label := if php_args.has_named_or_index(0, 'label') {
         php_args.at_named_or_index(0, 'label').string_value() or {
@@ -2194,7 +2217,7 @@ fn vphp_wrap_v_php_semantic_params_struct_api(ctx vphp.Context) {
         items: arg_0_params_items
     }
     res := v_php_semantic_params_struct_api(arg_0_params)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_args_api']
@@ -2203,7 +2226,7 @@ fn vphp_wrap_v_php_args_api(ctx vphp.Context) {
     defer { vphp_scope.close() }
     arg_0 := ctx
     res := v_php_args_api(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_resource_api']
@@ -2211,11 +2234,11 @@ fn vphp_wrap_v_php_resource_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'raw').zval()
     res := v_php_resource_api(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_wrapper_param_api']
@@ -2223,12 +2246,12 @@ fn vphp_wrap_v_php_wrapper_param_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'value', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'obj', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'arr', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'callable', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'nullValue', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 5, name: 'maybeObj', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'obj', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 2, name: 'arr', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 3, name: 'callable', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 4, name: 'nullValue', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 5, name: 'maybeObj', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'value').value
     arg_1 := php_args.at_named_or_index(1, 'obj').object() or {
@@ -2249,7 +2272,7 @@ fn vphp_wrap_v_php_wrapper_param_api(ctx vphp.Context) {
     }
     arg_5 := php_args.at_named_or_index(5, 'maybeObj').object()
     res := v_php_wrapper_param_api(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_optional_value_api']
@@ -2257,11 +2280,11 @@ fn vphp_wrap_v_php_optional_value_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'value', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'value', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := if php_args.has_named_or_index(0, 'value') { ?vphp.PhpValue(php_args.at_named_or_index(0, 'value').value) } else { none }
     res := v_php_optional_value_api(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_return_value_api']
@@ -2269,11 +2292,11 @@ fn vphp_wrap_v_php_return_value_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'value', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'value', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'value').value
     res := v_php_return_value_api(arg_0)
-    ctx.return_val[vphp.PhpValue](res)
+    ctx.return().v[vphp.PhpValue](res)
 }
 
 @[export: 'vphp_wrap_v_php_return_array_api']
@@ -2281,14 +2304,14 @@ fn vphp_wrap_v_php_return_array_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'arr', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'arr', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'arr').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return
     }
     res := v_php_return_array_api(arg_0)
-    ctx.return_val[vphp.PhpArray](res)
+    ctx.return().v[vphp.PhpArray](res)
 }
 
 @[export: 'vphp_wrap_v_php_return_object_api']
@@ -2296,14 +2319,14 @@ fn vphp_wrap_v_php_return_object_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'obj', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'obj', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'obj').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return
     }
     res := v_php_return_object_api(arg_0)
-    ctx.return_val[vphp.PhpObject](res)
+    ctx.return().v[vphp.PhpObject](res)
 }
 
 @[export: 'vphp_wrap_v_php_return_callable_api']
@@ -2311,14 +2334,14 @@ fn vphp_wrap_v_php_return_callable_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callable', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callable', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'callable').callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
         return
     }
     res := v_php_return_callable_api(arg_0)
-    ctx.return_val[vphp.PhpCallable](res)
+    ctx.return().v[vphp.PhpCallable](res)
 }
 
 @[export: 'vphp_wrap_v_php_return_string_wrapper_api']
@@ -2326,14 +2349,14 @@ fn vphp_wrap_v_php_return_string_wrapper_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'value', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'value', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'value').string_value() or {
         vphp.throw_exception('argument 0 must be string', 0)
         return
     }
     res := v_php_return_string_wrapper_api(arg_0)
-    ctx.return_val[vphp.PhpString](res)
+    ctx.return().v[vphp.PhpString](res)
 }
 
 @[export: 'vphp_wrap_v_php_return_persistent_array_api']
@@ -2341,14 +2364,14 @@ fn vphp_wrap_v_php_return_persistent_array_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'arr', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'arr', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'arr').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return
     }
     res := v_php_return_persistent_array_api(arg_0)
-    ctx.return_val[vphp.PhpArray](res)
+    ctx.return().v[vphp.PhpArray](res)
 }
 
 @[export: 'vphp_wrap_v_dyn_value_runtime_refs']
@@ -2356,15 +2379,15 @@ fn vphp_wrap_v_dyn_value_runtime_refs(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'rawObj', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'callback', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'rawRes', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'rawObj', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'callback', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 2, name: 'rawRes', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'rawObj').zval()
     arg_1 := php_args.at_named_or_index(1, 'callback').zval()
     arg_2 := php_args.at_named_or_index(2, 'rawRes').zval()
     res := v_dyn_value_runtime_refs(arg_0, arg_1, arg_2)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_reference_api']
@@ -2372,11 +2395,11 @@ fn vphp_wrap_v_php_reference_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'raw').zval()
     res := v_php_reference_api(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_iterable_api']
@@ -2384,11 +2407,11 @@ fn vphp_wrap_v_php_iterable_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'raw').zval()
     res := v_php_iterable_api(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_superglobals_api']
@@ -2396,7 +2419,7 @@ fn vphp_wrap_v_php_superglobals_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := v_php_superglobals_api()
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_throwable_api']
@@ -2404,11 +2427,11 @@ fn vphp_wrap_v_php_throwable_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'raw').zval()
     res := v_php_throwable_api(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_enum_api']
@@ -2416,11 +2439,11 @@ fn vphp_wrap_v_php_enum_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'raw').zval()
     res := v_php_enum_api(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_unified_ownership_interop']
@@ -2524,11 +2547,11 @@ fn vphp_wrap_v_call_php_closure_helper(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'raw').zval()
     res := v_call_php_closure_helper(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_test_globals']
@@ -2543,10 +2566,7 @@ pub type VPhpVariadicClosureVGetVClosure = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_v_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context{
-            ex:  vphp.ZExData.new(ex)
-            ret: vphp.PhpReturn.new(ret)
-        }
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVClosure(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVClosure, vphp.ZVal](cb)
     }
@@ -2568,10 +2588,7 @@ pub type VPhpVariadicClosureVGetVClosureAuto = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_v_closure_auto(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context{
-            ex:  vphp.ZExData.new(ex)
-            ret: vphp.PhpReturn.new(ret)
-        }
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVClosureAuto(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVClosureAuto, vphp.ZVal](cb)
     }
@@ -2602,11 +2619,11 @@ fn vphp_wrap_v_iterable_object_demo(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'input').zval()
     res := v_iterable_object_demo(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_reverse_string']
@@ -2630,11 +2647,11 @@ fn vphp_wrap_v_invoke_callable(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'callback').zval()
     res := v_invoke_callable(arg_0)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_invoke_with_arg']
@@ -2642,23 +2659,20 @@ fn vphp_wrap_v_invoke_with_arg(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'callback').zval()
     arg_1 := php_args.at_named_or_index(1, 'value').as_v[string]()
     res := v_invoke_with_arg(arg_0, arg_1)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 pub type VPhpVariadicClosureVGetClosure0 = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_closure_0(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context{
-            ex:  vphp.ZExData.new(ex)
-            ret: vphp.PhpReturn.new(ret)
-        }
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure0(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure0, vphp.ZVal](cb)
     }
@@ -2680,10 +2694,7 @@ pub type VPhpVariadicClosureVGetClosure1 = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_closure_1(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context{
-            ex:  vphp.ZExData.new(ex)
-            ret: vphp.PhpReturn.new(ret)
-        }
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure1(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure1, vphp.ZVal](cb)
     }
@@ -2705,10 +2716,7 @@ pub type VPhpVariadicClosureVGetClosure2 = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_closure_2(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context{
-            ex:  vphp.ZExData.new(ex)
-            ret: vphp.PhpReturn.new(ret)
-        }
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure2(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure2, vphp.ZVal](cb)
     }
@@ -2730,10 +2738,7 @@ pub type VPhpVariadicClosureVGetClosure3 = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_closure_3(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context{
-            ex:  vphp.ZExData.new(ex)
-            ret: vphp.PhpReturn.new(ret)
-        }
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure3(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure3, vphp.ZVal](cb)
     }
@@ -2755,10 +2760,7 @@ pub type VPhpVariadicClosureVGetClosure4 = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_closure_4(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context{
-            ex:  vphp.ZExData.new(ex)
-            ret: vphp.PhpReturn.new(ret)
-        }
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure4(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure4, vphp.ZVal](cb)
     }
@@ -2780,10 +2782,7 @@ pub type VPhpVariadicClosureVGetClosure3Void = fn (...vphp.ZVal)
 
 fn vphp_variadic_closure_bridge_v_get_closure_3_void(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context{
-            ex:  vphp.ZExData.new(ex)
-            ret: vphp.PhpReturn.new(ret)
-        }
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure3Void(v_ptr))
         ctx.invoke_variadic_closure_void[VPhpVariadicClosureVGetClosure3Void](cb)
     }
@@ -2805,10 +2804,7 @@ pub type VPhpVariadicClosureVGetClosure4Void = fn (...vphp.ZVal)
 
 fn vphp_variadic_closure_bridge_v_get_closure_4_void(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context{
-            ex:  vphp.ZExData.new(ex)
-            ret: vphp.PhpReturn.new(ret)
-        }
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure4Void(v_ptr))
         ctx.invoke_variadic_closure_void[VPhpVariadicClosureVGetClosure4Void](cb)
     }
@@ -2830,17 +2826,14 @@ pub type VPhpStructClosureVGetStructParamClosure = fn (StructClosureArgs) string
 
 fn vphp_struct_closure_bridge_v_get_struct_param_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context{
-            ex:  vphp.ZExData.new(ex)
-            ret: vphp.PhpReturn.new(ret)
-        }
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpStructClosureVGetStructParamClosure(v_ptr))
         args := StructClosureArgs{
             name: ctx.arg[string](0)
             count: ctx.arg[int](1)
         }
         res := cb(args)
-        ctx.return_val[string](res)
+        ctx.return().v[string](res)
     }
 }
 
@@ -2860,10 +2853,7 @@ pub type VPhpVariadicClosureVGetVariadicValueClosure = fn (...vphp.PhpValue) str
 
 fn vphp_variadic_closure_bridge_v_get_variadic_value_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context{
-            ex:  vphp.ZExData.new(ex)
-            ret: vphp.PhpReturn.new(ret)
-        }
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicValueClosure(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicValueClosure, string](cb)
     }
@@ -2885,10 +2875,7 @@ pub type VPhpVariadicClosureVGetVariadicZvalClosure = fn (...vphp.ZVal) vphp.ZVa
 
 fn vphp_variadic_closure_bridge_v_get_variadic_zval_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context{
-            ex:  vphp.ZExData.new(ex)
-            ret: vphp.PhpReturn.new(ret)
-        }
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicZvalClosure(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicZvalClosure, vphp.ZVal](cb)
     }
@@ -2910,10 +2897,7 @@ pub type VPhpVariadicClosureVGetVariadicZvalVoid = fn (...vphp.ZVal)
 
 fn vphp_variadic_closure_bridge_v_get_variadic_zval_void(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context{
-            ex:  vphp.ZExData.new(ex)
-            ret: vphp.PhpReturn.new(ret)
-        }
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicZvalVoid(v_ptr))
         ctx.invoke_variadic_closure_void[VPhpVariadicClosureVGetVariadicZvalVoid](cb)
     }
@@ -2935,10 +2919,7 @@ pub type VPhpVariadicClosureVGetVariadicScalarString = fn (...vphp.VScalarValue)
 
 fn vphp_variadic_closure_bridge_v_get_variadic_scalar_string(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context{
-            ex:  vphp.ZExData.new(ex)
-            ret: vphp.PhpReturn.new(ret)
-        }
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicScalarString(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicScalarString, string](cb)
     }
@@ -2960,10 +2941,7 @@ pub type VPhpVariadicClosureVGetVariadicScalarI64 = fn (...vphp.VScalarValue) i6
 
 fn vphp_variadic_closure_bridge_v_get_variadic_scalar_i64(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context{
-            ex:  vphp.ZExData.new(ex)
-            ret: vphp.PhpReturn.new(ret)
-        }
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicScalarI64(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicScalarI64, i64](cb)
     }
@@ -2985,10 +2963,7 @@ pub type VPhpVariadicClosureVGetVariadicScalarValue = fn (...vphp.VScalarValue) 
 
 fn vphp_variadic_closure_bridge_v_get_variadic_scalar_value(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
-        ctx := vphp.Context{
-            ex:  vphp.ZExData.new(ex)
-            ret: vphp.PhpReturn.new(ret)
-        }
+        ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicScalarValue(v_ptr))
         ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicScalarValue, vphp.VScalarValue](cb)
     }
@@ -3011,7 +2986,7 @@ fn vphp_wrap_v_lifecycle_hook_state(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := v_lifecycle_hook_state()
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_find_after']
@@ -3019,8 +2994,8 @@ fn vphp_wrap_v_find_after(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'haystack', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'needle', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'haystack', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'needle', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'haystack').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'needle').as_v[string]()
@@ -3034,8 +3009,8 @@ fn vphp_wrap_v_try_divide(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'a', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'b', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'a', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'b', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'a').as_v[int]()
     arg_1 := php_args.at_named_or_index(1, 'b').as_v[int]()
@@ -3049,9 +3024,9 @@ fn vphp_wrap_v_record_match(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'haystack', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'needle', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'haystack', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 2, name: 'needle', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'haystack').as_v[string]()
@@ -3090,8 +3065,8 @@ fn vphp_wrap_v_safe_divide(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'a', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'b', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'a', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'b', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'a').as_v[int]()
     arg_1 := php_args.at_named_or_index(1, 'b').as_v[int]()
@@ -3105,7 +3080,7 @@ fn vphp_wrap_v_capitalize(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'input').as_v[string]()
     vphp.call_or_throw_val[string](fn [arg_0] () !string {
@@ -3118,8 +3093,8 @@ fn vphp_wrap_v_record_success(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpArgAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'label', attributes: []vphp.PhpArgAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'label', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'label').as_v[string]()
@@ -3133,13 +3108,13 @@ fn vphp_wrap_v_php_param_attr_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'query', attributes: [vphp.PhpArgAttribute.named('FromQuery').string('q'), vphp.PhpArgAttribute.named('MustBeString')] },
-        vphp.PhpArgMeta{ index: 1, name: 'page', attributes: [vphp.PhpArgAttribute.named('FromQuery').string('page'), vphp.PhpArgAttribute.named('MustBeInt')] },
+        vphp.PhpArgMeta{ index: 0, name: 'query', attributes: [vphp.PhpAttribute.named('FromQuery').for_parameter().string('q'), vphp.PhpAttribute.named('MustBeString').for_parameter()] },
+        vphp.PhpArgMeta{ index: 1, name: 'page', attributes: [vphp.PhpAttribute.named('FromQuery').for_parameter().string('page'), vphp.PhpAttribute.named('MustBeInt').for_parameter()] },
     ])
     arg_0 := php_args.at_named_or_index(0, 'query').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'page').as_v[int]()
     res := v_php_param_attr_api(arg_0, arg_1)
-    ctx.return_val[string](res)
+    ctx.return().v[string](res)
 }
 
 @[export: 'vphp_wrap_v_php_arg_attr_runtime_api']

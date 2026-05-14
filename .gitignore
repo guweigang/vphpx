@@ -7,3 +7,4 @@ vslim/tests/*.diff
 vslim/tests/*.exp
 vslim/tests/*.log
 vslim/tests/*.out
+.idea/

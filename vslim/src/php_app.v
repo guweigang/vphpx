@@ -168,6 +168,48 @@ pub fn VSlimDebugObjectProbe.probe(obj vphp.RequestBorrowedZBox, class_name stri
 	return probe_object_info(obj, class_name, method_name)
 }
 
+@[php_method: 'psr7LifecycleCounters']
+pub fn VSlimDebugObjectProbe.psr7_lifecycle_counters(rounds int) string {
+	total_rounds := if rounds <= 0 { 1 } else { rounds }
+	before := vphp.runtime_counters()
+	mut scope := vphp.PhpScope.request()
+	mut uri := vphp.PhpString.of('/debug/lifecycle?probe=1')
+	mut server_params := vphp.PhpArray.empty()
+	server_params.string('REQUEST_METHOD', 'POST')
+	mut req := new_psr7_server_request('POST', uri.to_zval(), server_params.to_zval())
+	uri.release()
+	server_params.release()
+	mut checksum := 0
+	for i in 0 .. total_rounds {
+		mut parsed := vphp.PhpArray.empty()
+		parsed.string('message', 'hello-${i}')
+		parsed.int('round', i)
+		mut tags := vphp.PhpArray.empty()
+		tags.push_string('alpha')
+		tags.push_string('beta')
+		parsed.set('tags', tags)
+		tags.release()
+		req = req.with_parsed_body(parsed.to_borrowed_zbox())
+
+		mut attr_name := vphp.PhpString.of('studio.payload')
+		req = req.with_attribute(attr_name.to_borrowed_zbox(), parsed.to_borrowed_zbox())
+		attr_name.release()
+		parsed.release()
+
+		mut attrs := req.get_attributes()
+		checksum += attrs.to_zval().array_count()
+		attrs.release()
+		mut parsed_copy := req.get_parsed_body()
+		if parsed_copy.to_zval().is_array() {
+			checksum += parsed_copy.to_zval().array_count()
+		}
+		parsed_copy.release()
+	}
+	scope.close()
+	after := vphp.runtime_counters()
+	return 'rounds=${total_rounds};checksum=${checksum};autorelease_delta=${after.autorelease_len - before.autorelease_len};owned_delta=${after.owned_len - before.owned_len};fallback_delta=${after.persistent_fallback_zval_len - before.persistent_fallback_zval_len}'
+}
+
 @[php_method]
 pub fn VSlimApp.demo() &VSlimApp {
 	return &VSlimApp{

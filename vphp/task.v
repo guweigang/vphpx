@@ -91,7 +91,7 @@ pub fn (task PhpTask) spawn(args []ZVal) !PhpTaskHandle {
 	t := spawn task_inst.run()
 
 	unsafe {
-		mut res := &AsyncResult(C.emalloc(usize(sizeof(AsyncResult))))
+		mut res := &AsyncResult(zend_emalloc(usize(sizeof(AsyncResult))))
 		res.handle = t
 		return PhpTaskHandle{
 			ptr: res
@@ -103,7 +103,7 @@ pub fn PhpTaskHandle.null() PhpTaskHandle {
 	return PhpTaskHandle{}
 }
 
-pub fn (handle PhpTaskHandle) raw() voidptr {
+pub fn (handle PhpTaskHandle) ptr() voidptr {
 	return handle.ptr
 }
 
@@ -126,9 +126,7 @@ pub fn (handle PhpTaskHandle) release() {
 	if handle.ptr == 0 {
 		return
 	}
-	unsafe {
-		C.efree(handle.ptr)
-	}
+	zend_efree(handle.ptr)
 }
 
 pub fn (handle PhpTaskHandle) wait_box() RequestOwnedZBox {
@@ -194,7 +192,7 @@ pub fn task_names() []string {
 }
 
 pub fn task_spawn_handle(task_name string, args []ZVal) !&AsyncResult {
-	return unsafe { &AsyncResult(PhpTask.named(task_name).spawn(args)!.raw()) }
+	return unsafe { &AsyncResult(PhpTask.named(task_name).spawn(args)!.ptr()) }
 }
 
 pub fn task_wait_result(ptr voidptr) !TaskResult {
@@ -217,7 +215,7 @@ pub fn task_wait_box(ptr voidptr) RequestOwnedZBox {
 
 // 暴露给 PHP：获取所有已注册的任务名称
 pub fn task_list(ctx Context) {
-	ctx.return_val(task_names())
+	ctx.return().v[[]string](task_names())
 }
 
 // 内部实现：Spawn 逻辑
@@ -232,7 +230,7 @@ pub fn task_spawn(ctx Context) {
 	}
 
 	unsafe {
-		ctx.return_res(task_ref, 'v_task')
+		ctx.return().resource(task_ref, 'v_task')
 	}
 }
 
@@ -241,13 +239,10 @@ pub fn task_wait(ctx Context) {
 	res_val := ctx.arg_raw(0)
 
 	unsafe {
-		ptr := res_val.to_res()
+		ptr := res_val.resource_ptr()
 		if ptr == nil {
 			return
 		}
-		ctx.return_zval(task_wait_box(ptr).to_zval())
+		ctx.return().request_owned(task_wait_box(ptr))
 	}
 }
-
-fn C.emalloc(size usize) voidptr
-fn C.efree(ptr voidptr)

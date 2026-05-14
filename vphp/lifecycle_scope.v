@@ -1,5 +1,8 @@
 module vphp
 
+import vphp.scope
+import vphp.zval as zvalmod
+
 pub struct PhpScope {}
 
 // RequestScope gives a structured, nestable request arena on top of
@@ -17,33 +20,27 @@ mut:
 }
 
 fn RequestScope.autorelease_mark() int {
-	return C.vphp_autorelease_mark()
+	return scope.request_mark()
 }
 
-fn RequestScope.autorelease_add(z &C.zval) {
-	if z == 0 {
-		return
-	}
-	C.vphp_autorelease_add(z)
+fn RequestScope.autorelease_add_handle(handle zvalmod.Handle) {
+	scope.autorelease_add_ptr(handle.raw_ptr())
 }
 
-fn RequestScope.autorelease_forget(z &C.zval) {
-	if z == 0 {
-		return
-	}
-	C.vphp_autorelease_forget(z)
+fn RequestScope.autorelease_forget_handle(handle zvalmod.Handle) {
+	scope.autorelease_forget_ptr(handle.raw_ptr())
 }
 
 fn RequestScope.autorelease_drain(mark int) {
-	C.vphp_autorelease_drain(mark)
+	scope.autorelease_drain(mark)
 }
 
 pub fn RequestScope.enter() int {
-	return RequestScope.autorelease_mark()
+	return scope.request_enter()
 }
 
 pub fn RequestScope.leave(mark int) {
-	RequestScope.autorelease_drain(mark)
+	scope.request_leave(mark)
 }
 
 pub fn RequestScope.open() RequestScope {
@@ -118,14 +115,6 @@ pub fn (mut s FrameScope) request_owned(value RequestOwnedZBox) PhpValue {
 
 pub fn (mut s FrameScope) adopt_zval(value ZVal) PhpValue {
 	return PhpValue.from_zval(s.push_box(RequestOwnedZBox.adopt_zval(value)))
-}
-
-pub fn (mut s FrameScope) args_from_zvals(values []ZVal) []PhpArgInput {
-	mut out := []PhpArgInput{cap: values.len}
-	for value in values {
-		out << s.adopt_zval(value)
-	}
-	return out
 }
 
 pub fn (mut s FrameScope) args_from_persistent_owned(values []PersistentOwnedZBox) []PhpArgInput {

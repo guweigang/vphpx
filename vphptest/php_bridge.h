@@ -38,6 +38,7 @@ PHP_FUNCTION(v_typed_object_restore);
 PHP_FUNCTION(v_zval_conversion_api);
 PHP_FUNCTION(v_persistent_fallback_counter_probe);
 PHP_FUNCTION(v_request_scope_counter_probe);
+PHP_FUNCTION(v_php_value_zbox_lifecycle_probe);
 PHP_FUNCTION(v_unified_object_interop);
 PHP_FUNCTION(v_php_class_named_api);
 PHP_FUNCTION(v_php_function_named_api);

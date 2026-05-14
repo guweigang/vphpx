@@ -39,14 +39,11 @@ fn v_pure_map_test(k string, v string) map[string]string {
 fn v_process_list(ctx vphp.Context) {
 	input_list := ctx.arg[[]string](0)
 
-	unsafe {
-		C.vphp_array_init(ctx.ret.raw_zval())
-
-		for i := input_list.len - 1; i >= 0; i-- {
-			val := input_list[i]
-			C.vphp_array_push_string(ctx.ret.raw_zval(), &char(val.str))
-		}
+	mut out := []string{cap: input_list.len}
+	for i := input_list.len - 1; i >= 0; i-- {
+		out << input_list[i]
 	}
+	ctx.return().list(out)
 }
 
 @[php_function]
@@ -94,9 +91,8 @@ fn v_get_user(ctx vphp.Context) {
 
 @[php_function]
 fn v_call_back(ctx vphp.Context) {
-	php_version := vphp.php_fn('phpversion').call([])
-
-	ctx.return_string('V knows PHP version is: ' + php_version.to_string())
+	php_version := vphp.PhpFunction.named('phpversion').result_string()
+	ctx.return_string('V knows PHP version is: ' + php_version)
 }
 
 @[php_function]
@@ -435,6 +431,43 @@ fn v_request_scope_counter_probe(rounds int) string {
 	after := vphp.runtime_counters()
 
 	return 'ar_delta=${after.autorelease_len - before.autorelease_len};owned_delta=${after.owned_len - before.owned_len};fallback_delta=${after.persistent_fallback_zval_len - before.persistent_fallback_zval_len};checksum=${checksum > 0}'
+}
+
+@[php_function]
+fn v_php_value_zbox_lifecycle_probe(raw vphp.ZVal) string {
+	before := vphp.runtime_counters()
+	mut scope := vphp.PhpScope.request()
+
+	mut owned_value := vphp.PhpValue.from_request_owned_zbox(vphp.RequestOwnedZBox.new_string('request-owned'))
+	owned_kind := owned_value.kind_name()
+	mut owned_clone := owned_value.to_request_owned_zbox()
+	owned_clone_value := owned_clone.to_string()
+	owned_clone.release()
+
+	mut persistent_from_owned := owned_value.to_persistent_owned_zbox()
+	persistent_from_owned_kind := persistent_from_owned.kind_name()
+	persistent_from_owned.release()
+
+	mut taken := owned_value.take_zval()
+	taken_value := taken.to_string()
+	owned_after_take_valid := owned_value.to_zval().is_valid()
+	taken.release()
+	owned_value.release()
+
+	borrowed_value := vphp.PhpValue.from_zval(raw)
+	borrowed_kind := borrowed_value.kind_name()
+	mut persistent_raw_value := borrowed_value.to_persistent_owned()
+	persistent_raw_kind := persistent_raw_value.kind_name()
+	persistent_raw_json := persistent_raw_value.to_json_with_flags(256)
+	mut request_roundtrip := persistent_raw_value.to_request_owned_zbox()
+	request_roundtrip_json := vphp.PhpValue.from_zval(request_roundtrip.to_zval()).to_json_with_flags(256)
+	request_roundtrip.release()
+	persistent_raw_value.release()
+
+	scope.close()
+	after := vphp.runtime_counters()
+
+	return 'owned=${owned_kind}:${owned_clone_value}:${persistent_from_owned_kind}:${taken_value}:${owned_after_take_valid};raw=${borrowed_kind}:${persistent_raw_kind}:${persistent_raw_json}:${request_roundtrip_json};ar_delta=${after.autorelease_len - before.autorelease_len};owned_delta=${after.owned_len - before.owned_len};fallback_delta=${after.persistent_fallback_zval_len - before.persistent_fallback_zval_len}'
 }
 
 @[php_function]
@@ -1205,7 +1238,7 @@ fn v_php_object_introspection(ctx vphp.Context) {
 		'has_prop_missing':   obj.property_exists('missingProp').str()
 		'property_names':     obj.property_names().join(',')
 		'class_consts':       obj.const_names().join(',')
-		'datetime_has_atom':  vphp.php_class('DateTimeImmutable').const_exists('ATOM').str()
+		'datetime_has_atom':  vphp.PhpClass.named('DateTimeImmutable').const_exists('ATOM').str()
 	})
 }
 
@@ -1258,15 +1291,10 @@ fn v_php_object_probe(ctx vphp.Context) {
 		'is_instance_of':    obj.is_instance_of(class_name).str()
 		'is_subclass_of':    obj.is_subclass_of(class_name).str()
 		'method_exists':     obj.method_exists(method_name).str()
-		'php_is_a':          vphp.php_fn('is_a').call([
-			obj,
-			vphp.ZVal.new_string(class_name),
-			vphp.ZVal.new_bool(true),
-		]).to_bool().str()
-		'php_method_exists': vphp.php_fn('method_exists').call([
-			obj,
-			vphp.ZVal.new_string(method_name),
-		]).to_bool().str()
+		'php_is_a':          vphp.PhpFunction.named('is_a').result_bool(vphp.PhpValue.from_zval(obj),
+			vphp.PhpString.of(class_name), vphp.PhpBool.of(true)).str()
+		'php_method_exists': vphp.PhpFunction.named('method_exists').result_bool(vphp.PhpValue.from_zval(obj),
+			vphp.PhpString.of(method_name)).str()
 	})
 }
 
@@ -1278,10 +1306,7 @@ fn v_trigger_user_action(ctx vphp.Context) {
 		return
 	}
 
-	mut score_val := vphp.ZVal{
-		raw: C.vphp_new_zval()
-	}
-	score_val.set_int(100)
+	score_val := vphp.ZVal.new_int(100)
 
 	res := user_obj.method('updateScore', [score_val])
 
@@ -1296,10 +1321,7 @@ fn v_trigger_user_action(ctx vphp.Context) {
 fn v_call_php_closure(ctx vphp.Context) {
 	cb := ctx.arg_raw(0)
 
-	mut msg := vphp.ZVal{
-		raw: C.vphp_new_zval()
-	}
-	msg.set_string('Message from V Engine')
+	msg := vphp.ZVal.new_string('Message from V Engine')
 
 	res := cb.call([msg])
 
@@ -1317,10 +1339,7 @@ fn v_call_php_closure_helper(raw vphp.ZVal) string {
 		return ''
 	}
 
-	mut msg := vphp.ZVal{
-		raw: C.vphp_new_zval()
-	}
-	msg.set_string('Message from helper')
+	msg := vphp.ZVal.new_string('Message from helper')
 
 	res := callable.must_call([msg]) or {
 		vphp.throw_exception(err.msg(), 0)

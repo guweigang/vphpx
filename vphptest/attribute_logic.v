@@ -34,23 +34,24 @@ fn v_php_arg_attr_runtime_api(ctx vphp.Context) {
 			index:      0
 			name:       'query'
 			attributes: [
-				vphp.PhpArgAttribute.named('FromQuery').string('q'),
-				vphp.PhpArgAttribute.named('MustBeString'),
+				vphp.PhpAttribute.named('FromQuery').string('q'),
+				vphp.PhpAttribute.named('MustBeString'),
 			]
 		},
 		vphp.PhpArgMeta{
 			index:      1
 			name:       'page'
 			attributes: [
-				vphp.PhpArgAttribute.named('FromQuery').string('page'),
-				vphp.PhpArgAttribute.named('Range').int(1).int(100),
+				vphp.PhpAttribute.named('FromQuery').string('page'),
+				vphp.PhpAttribute.named('Range').int(1).int(100),
 			]
 		},
 	])
 	query := args.at(0)
 	page := args.at(1)
-	source := query.attr('FromQuery') or { vphp.PhpArgAttribute.named('') }
-	range := page.attr('Range') or { vphp.PhpArgAttribute.named('') }
+	source := query.attr('FromQuery') or { vphp.PhpAttribute.named('') }
+	range := page.attr('Range') or { vphp.PhpAttribute.named('') }
 	has_string := query.has_attr('MustBeString')
-	ctx.return().string_value('runtime=${query.name()}:${has_string}:${source.args[0].value}:${page.name()}:${range.args.len}:${range.args[1].value}')
+	is_parameter := source.target == .parameter && range.target == .parameter
+	ctx.return().string_value('runtime=${query.name()}:${has_string}:${source.items[0].value}:${page.name()}:${range.items.len}:${range.items[1].value}:${is_parameter}')
 }
