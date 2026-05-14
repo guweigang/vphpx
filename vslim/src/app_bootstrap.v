@@ -158,9 +158,7 @@ fn ensure_app_booted(mut app VSlimApp) {
 
 fn bootstrap_provider_values(value vphp.ZVal) ![]vphp.ZVal {
 	normalized := psr16_iterable_to_array(value)!
-	return normalized.fold[[]vphp.ZVal]([]vphp.ZVal{}, fn (_ vphp.ZVal, item vphp.ZVal, mut acc []vphp.ZVal) {
-		acc << item
-	})
+	return vphp.PhpArray.must_from_zval(normalized)!.items()
 }
 
 @[php_method]
