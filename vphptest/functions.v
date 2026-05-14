@@ -91,9 +91,8 @@ fn v_get_user(ctx vphp.Context) {
 
 @[php_function]
 fn v_call_back(ctx vphp.Context) {
-	php_version := vphp.php_fn('phpversion').call([])
-
-	ctx.return_string('V knows PHP version is: ' + php_version.to_string())
+	php_version := vphp.PhpFunction.named('phpversion').result_string()
+	ctx.return_string('V knows PHP version is: ' + php_version)
 }
 
 @[php_function]

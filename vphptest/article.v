@@ -136,21 +136,14 @@ pub fn (a &Article) dump_properties(data vphp.ZVal) {
 }
 
 @[php_method]
-pub fn (a &Article) process_with_callback(callback vphp.ZVal) bool {
+pub fn (a &Article) process_with_callback(callback vphp.PhpCallable) bool {
     if !callback.is_callable() {
         println('V process_with_callback -> Argument is not callable!')
         return false
     }
 
-    // Call the PHP closure with a parameter
-    mut args := []vphp.ZVal{}
-    args << vphp.ZVal.new_string('Calling from V')
-
-    res := callback.call(args)
-    if res.raw == 0 {
-        return false
-    }
-    return res.type_id() == .true_ || (res.is_numeric() && res.to_int() != 0)
+    res := callback.call[vphp.PhpBool](vphp.PhpString.of('Calling from V')) or { return false }
+    return res.value()
 }
 
 @[php_method]
