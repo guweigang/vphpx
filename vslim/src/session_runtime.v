@@ -657,7 +657,7 @@ pub fn (middleware &VSlimSessionStartMiddleware) process(request vphp.RequestBor
 		return new_psr7_text_response(500, 'Session middleware app is not configured')
 	}
 	mut session := app.session(request)
-	mut result := vphp.PhpObject.borrowed(handler.to_zval()).method_request_owned('handle',
+	mut result := vphp.PhpObject.borrowed_zbox(handler).method_request_owned('handle',
 		vphp.PhpValue.from_request_borrowed_zbox(request))
 	defer {
 		result.release()
@@ -729,7 +729,7 @@ pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.RequestBorr
 			next_request = enriched
 		}
 	}
-	mut result := vphp.PhpObject.borrowed(handler.to_zval()).method_request_owned('handle',
+	mut result := vphp.PhpObject.borrowed_zbox(handler).method_request_owned('handle',
 		vphp.PhpValue.from_request_borrowed_zbox(next_request.borrowed()))
 	defer {
 		result.release()
@@ -779,7 +779,7 @@ pub fn (middleware &VSlimAuthGuestMiddleware) process(request vphp.RequestBorrow
 		}
 		return auth_guest_redirect_psr_response(redirect_path)
 	}
-	mut result := vphp.PhpObject.borrowed(handler.to_zval()).method_request_owned('handle',
+	mut result := vphp.PhpObject.borrowed_zbox(handler).method_request_owned('handle',
 		vphp.PhpValue.from_request_borrowed_zbox(request))
 	defer {
 		result.release()
@@ -858,7 +858,7 @@ pub fn (middleware &VSlimAuthRequireAbilityMiddleware) process(request vphp.Requ
 		return default_error_response_psr(app, middleware.status(), middleware.message(),
 			'forbidden')
 	}
-	mut result := vphp.PhpObject.borrowed(handler.to_zval()).method_request_owned('handle',
+	mut result := vphp.PhpObject.borrowed_zbox(handler).method_request_owned('handle',
 		vphp.PhpValue.from_request_borrowed_zbox(request))
 	defer {
 		result.release()

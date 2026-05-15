@@ -207,7 +207,7 @@ fn (mut migrator VSlimDatabaseMigrator) run_migration_file(file string, method_n
 			'migration "${name}" does not implement ${method_name}()', 0)
 		return
 	}
-	vphp.PhpObject.borrowed(migration.to_zval()).with_method_result[vphp.PhpValue, bool](method_name, fn (_ vphp.PhpValue) bool {
+	vphp.PhpObject.borrowed_zbox(migration.borrowed()).with_method_result[vphp.PhpValue, bool](method_name, fn (_ vphp.PhpValue) bool {
 		return true
 	}) or { false }
 }
@@ -607,7 +607,7 @@ pub fn (mut migrator VSlimDatabaseMigrator) seed(name string) int {
 				'seeder "${entry}" does not implement run()', 0)
 			return count
 		}
-		vphp.PhpObject.borrowed(seeder.to_zval()).with_method_result[vphp.PhpValue, bool]('run', fn (_ vphp.PhpValue) bool {
+		vphp.PhpObject.borrowed_zbox(seeder.borrowed()).with_method_result[vphp.PhpValue, bool]('run', fn (_ vphp.PhpValue) bool {
 			return true
 		}) or { false }
 		if vphp.has_exception() {

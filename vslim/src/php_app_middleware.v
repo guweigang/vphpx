@@ -342,7 +342,7 @@ fn call_route_target_method(target vphp.ZVal, method string, args []vphp.PhpArgI
 	}
 	callable.push_zval(target)
 	callable.push(method_arg)
-	return vphp.PhpCallable.borrowed(callable.to_zval()).fn_request_owned(...args)
+	return vphp.PhpCallable.borrowed_zbox(callable.to_borrowed_zbox()).fn_request_owned(...args)
 }
 
 fn detach_route_handler_result(mut result vphp.RequestOwnedZBox) vphp.ZVal {
@@ -427,13 +427,13 @@ fn dispatch_route_handler(app &VSlimApp, handler vphp.RequestBorrowedZBox, paylo
 	}
 	if is_psr15_request_handler(handler) {
 		psr_payload := normalize_psr15_server_request_payload(payload, route_params)
-		mut result := vphp.PhpObject.borrowed(handler.to_zval()).method_request_owned('handle',
+		mut result := vphp.PhpObject.borrowed_zbox(handler).method_request_owned('handle',
 			vphp.PhpValue.from_zval(psr_payload))
 		return detach_route_handler_result(mut result)
 	}
 	psr_payload := normalize_psr15_server_request_payload(payload, route_params)
 	if handler.is_callable() {
-		mut result := vphp.PhpCallable.borrowed(handler.to_zval()).fn_request_owned(vphp.PhpValue.from_zval(psr_payload))
+		mut result := vphp.PhpCallable.borrowed_zbox(handler).fn_request_owned(vphp.PhpValue.from_zval(psr_payload))
 		return detach_route_handler_result(mut result)
 	}
 	raw := handler.to_zval()

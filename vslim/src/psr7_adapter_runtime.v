@@ -213,7 +213,7 @@ fn adapter_read_uri_part(request vphp.ZVal, getter string, property string, defa
 	}
 	if uri.is_valid() && uri.is_object() {
 		if uri.to_zval().method_exists(getter) {
-			mut value := vphp.PhpObject.borrowed(uri.to_zval()).method_request_owned(getter)
+			mut value := vphp.PhpObject.borrowed_zbox(uri.borrowed()).method_request_owned(getter)
 			defer {
 				value.release()
 			}
