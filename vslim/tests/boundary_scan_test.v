@@ -34,5 +34,17 @@ fn test_vslim_handwritten_sources_do_not_use_stale_vphp_raw_entries() {
 		for pattern in banned {
 			assert !source.contains(pattern), '${file} should not contain ${pattern}'
 		}
+		for line in source.split_into_lines() {
+			trimmed := line.trim_space()
+			assert !(trimmed.contains('PhpValue.from_zval(') && trimmed.contains('.to_zval())')),
+				'${file} should not roundtrip semantic values through ${trimmed}'
+			assert !(trimmed.contains('RequestBorrowedZBox.from_zval(')
+				&& trimmed.contains('.to_zval())')),
+				'${file} should not roundtrip borrowed boxes through ${trimmed}'
+			assert !(trimmed.contains('PhpObject.borrowed(') && trimmed.contains('.to_zval())')),
+				'${file} should use PhpObject.borrowed_zbox(...) for ${trimmed}'
+			assert !(trimmed.contains('PhpCallable.borrowed(') && trimmed.contains('.to_zval())')),
+				'${file} should use PhpCallable.borrowed_zbox(...) for ${trimmed}'
+		}
 	}
 }
