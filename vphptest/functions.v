@@ -350,7 +350,7 @@ fn v_typed_php_interop(obj vphp.ZVal) string {
 
 @[php_function]
 fn v_typed_object_restore(ctx vphp.Context) {
-	author_z := vphp.php_class('Author').static_method('create', [
+	author_z := vphp.PhpClass.named('Author').static_method('create', [
 		vphp.ZVal.new_string('Typed Author'),
 	])
 	mut author := author_z.to_object[Author]() or {
@@ -358,7 +358,7 @@ fn v_typed_object_restore(ctx vphp.Context) {
 		return
 	}
 
-	article_z := vphp.php_class('Article').construct([
+	article_z := vphp.PhpClass.named('Article').construct([
 		vphp.ZVal.new_string('Typed Article'),
 		vphp.ZVal.new_int(77),
 	])
@@ -472,7 +472,7 @@ fn v_php_value_zbox_lifecycle_probe(raw vphp.ZVal) string {
 
 @[php_function]
 fn v_unified_object_interop(ctx vphp.Context) {
-	cls := vphp.php_class('PhpUnifiedBox')
+	cls := vphp.PhpClass.named('PhpUnifiedBox')
 	name_z := vphp.ZVal.from[string]('neo') or {
 		vphp.throw_exception('build name arg failed: ${err.msg()}', 0)
 		return
@@ -1076,7 +1076,7 @@ fn v_php_enum_api(raw vphp.ZVal) string {
 
 @[php_function]
 fn v_unified_ownership_interop(ctx vphp.Context) {
-	cls := vphp.php_class('PhpUnifiedBox')
+	cls := vphp.PhpClass.named('PhpUnifiedBox')
 	obj_req := cls.construct_owned_request([
 		vphp.ZVal.new_string('req'),
 		vphp.ZVal.new_int(5),
@@ -1090,7 +1090,7 @@ fn v_unified_ownership_interop(ctx vphp.Context) {
 		return
 	}
 
-	mut up_call := vphp.php_fn('strtoupper').call_owned_persistent([
+	mut up_call := vphp.PhpFunction.named('strtoupper').call_owned_persistent([
 		vphp.ZVal.new_string('persist'),
 	])
 	if !up_call.is_valid() {
