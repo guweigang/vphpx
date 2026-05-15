@@ -281,7 +281,7 @@ fn dispatch_websocket_route_handler(app &VSlimApp, route VSlimRoute, event strin
 	if handler.is_callable() {
 		match event {
 			'open' {
-				mut result := vphp.PhpCallable.borrowed(handler.to_zval()).fn_request_owned(vphp.PhpValue.from_zval(conn),
+				mut result := vphp.PhpCallable.borrowed_zbox(handler).fn_request_owned(vphp.PhpValue.from_zval(conn),
 					vphp.PhpValue.from_zval(frame))
 				return result.take_zval()
 			}
@@ -290,7 +290,7 @@ fn dispatch_websocket_route_handler(app &VSlimApp, route VSlimRoute, event strin
 				defer {
 					data_arg.release()
 				}
-				mut result := vphp.PhpCallable.borrowed(handler.to_zval()).fn_request_owned(vphp.PhpValue.from_zval(conn),
+				mut result := vphp.PhpCallable.borrowed_zbox(handler).fn_request_owned(vphp.PhpValue.from_zval(conn),
 					data_arg, vphp.PhpValue.from_zval(frame))
 				return result.take_zval()
 			}
@@ -301,7 +301,7 @@ fn dispatch_websocket_route_handler(app &VSlimApp, route VSlimRoute, event strin
 					code_arg.release()
 					reason_arg.release()
 				}
-				mut result := vphp.PhpCallable.borrowed(handler.to_zval()).fn_request_owned(vphp.PhpValue.from_zval(conn),
+				mut result := vphp.PhpCallable.borrowed_zbox(handler).fn_request_owned(vphp.PhpValue.from_zval(conn),
 					code_arg, reason_arg, vphp.PhpValue.from_zval(frame))
 				return result.take_zval()
 			}

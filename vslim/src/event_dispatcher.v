@@ -105,7 +105,7 @@ pub fn (mut dispatcher VSlimPsr14EventDispatcher) dispatch(event vphp.PhpObject)
 		}
 		listener.with_fn_result[vphp.PhpValue, bool](fn (result vphp.PhpValue) bool {
 			return result.to_zval().is_valid()
-		}, vphp.PhpValue.from_zval(event.to_zval())) or { false }
+		}, event.to_borrowed()) or { false }
 	}
 	return vphp.RequestOwnedZBox.of(event.to_zval())
 }

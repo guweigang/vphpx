@@ -195,7 +195,7 @@ fn adapter_read_uploaded_files(request vphp.ZVal) vphp.RequestOwnedZBox {
 		mut out := new_array()
 		return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
 	}
-	return vphp.PhpFunction.named('array_values').request_owned(vphp.PhpValue.from_zval(raw.to_zval()))
+	return vphp.PhpFunction.named('array_values').request_owned(vphp.PhpValue.from_request_borrowed_zbox(raw.borrowed()))
 }
 
 fn adapter_read_server_value(request vphp.ZVal, key string) string {
@@ -213,7 +213,7 @@ fn adapter_read_uri_part(request vphp.ZVal, getter string, property string, defa
 	}
 	if uri.is_valid() && uri.is_object() {
 		if uri.to_zval().method_exists(getter) {
-			mut value := vphp.PhpObject.borrowed(uri.to_zval()).method_request_owned(getter)
+			mut value := vphp.PhpObject.borrowed_zbox(uri.borrowed()).method_request_owned(getter)
 			defer {
 				value.release()
 			}

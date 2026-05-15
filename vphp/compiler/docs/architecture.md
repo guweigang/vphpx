@@ -17,12 +17,23 @@ vphp/compiler/
   entry.v        # Compiler entry and compile pipeline
   export.v       # export assembly and final file emission
   c_emitter.v    # C-side wrapper and glue emission
+  c_builder_binding.v # repr -> C builder mapping
+  c_function_glue.v # global PHP_FUNCTION wrapper emission
+  c_class_glue.v # class PHP_METHOD wrapper emission
+  c_type_glue.v  # interface/enum C implementation emission
+  c_name_binding.v # C symbol / PHP name lookup helpers
+  c_template.v   # small C template helpers
   v_glue.v       # V-side bridge/glue emission
+  function_binding.v # function wrapper glue planning
   arg_binding.v  # PhpArgRepr -> V glue argument bindings
   params_struct_binding.v # @[params] struct argument construction
   return_binding.v # PhpReturnRepr -> V glue return handling
+  class_lifecycle_binding.v # class raw allocation / cleanup glue
+  class_shadow_binding.v # class shadow const/static accessors
   class_method_binding.v # class method call / sync / return composition
   class_property_binding.v # class property get / set / sync glue
+  class_handlers_binding.v # class handler table glue
+  inherited_receiver_binding.v # inherited receiver load / sync glue
   php_types/     # shared PHP-facing type/spec mapping
   repr/          # compiler representations
   parser/        # AST -> repr
@@ -182,6 +193,76 @@ Typical examples:
 - object construction wrappers
 - instance/static method bridge templates
 
+### 6.5. `c_builder_binding`
+
+File: `vphp/compiler/c_builder_binding.v`
+
+Purpose:
+
+- Convert `repr` objects into `builder` objects used for arginfo, type
+  declarations, method tables, constants, interfaces, enums, and class metadata
+- Keep `repr -> builder` mapping out of concrete C wrapper body emission
+
+Key responsibilities:
+
+- `build_func(...)`
+- `build_class_type(...)`
+- `build_interface_type(...)`
+- `build_enum_type(...)`
+- shared visibility, argument, attribute, and return-spec mapping helpers
+
+This layer answers "what builder model should represent this compiler repr?"
+`c_emitter.v` still owns concrete C wrapper bodies and template selection.
+
+### 6.6. `c_function_glue`
+
+File: `vphp/compiler/c_function_glue.v`
+
+Purpose:
+
+- Emit concrete global `PHP_FUNCTION(...)` wrapper bodies
+- Keep function entry forwarding separate from class method template selection
+- Reuse `build_func(...)` for arginfo while owning the C-side call/return checks
+
+This layer is intentionally small because global function glue has a much
+smaller decision surface than class method glue.
+
+### 6.7. `c_class_glue`
+
+File: `vphp/compiler/c_class_glue.v`
+
+Purpose:
+
+- Emit concrete class `PHP_METHOD(...)` wrapper bodies
+- Own class method template selection for constructors, static methods,
+  instance methods, inherited receivers, context-aware methods, and object
+  returns
+- Keep the large class wrapper decision tree out of the top-level C emitter
+
+### 6.8. `c_type_glue`
+
+File: `vphp/compiler/c_type_glue.v`
+
+Purpose:
+
+- Emit concrete C implementation fragments for PHP interfaces and native enums
+- Keep simple type implementation bodies separate from the top-level C export
+  assembly
+
+### 6.9. C Helper Files
+
+Files:
+
+- `vphp/compiler/c_name_binding.v`
+- `vphp/compiler/c_template.v`
+
+Purpose:
+
+- Keep C symbol/PHP name lookup helpers and small template helpers out of the
+  top-level C export assembly
+- Share these helpers between function/class/type C glue files without making
+  `c_emitter.v` grow again
+
 ### 7. `v_glue`
 
 File: `vphp/compiler/v_glue.v`
@@ -210,8 +291,9 @@ Zend boundary rule:
 - generated Zend ABI signatures may contain raw C pointer shapes such as
   `ex &C.zend_execute_data`, `ret &C.zval`, `rv &C.zval`, or `value &C.zval`
 - the generated function body should wrap those values at the top of the
-  function with `vphp.Context.from_ptr(...)`, `vphp.PhpReturn.from_ptr(...)`,
-  `vphp.ZVal.from_ptr(...)`, or `vphp.ZendObject.from_ptr(...)`
+  function with `vphp.Context.from_ptr(...)`,
+  `vphp.PhpObjectPropertyHandler`, `vphp.ZVal.from_ptr(...)`, or
+  `vphp.ZendObject.from_ptr(...)`
 - after that entry wrapping, generated V glue should use runtime wrappers
   instead of spelling direct `C.vphp_*`, old `from_raw(...)`, `raw_zval()`, or
   manual `C.zval{}` patterns
@@ -231,17 +313,51 @@ Key types:
 
 - `PhpArgBinding`
 - `PhpArgBindingKind`
+- `PhpArgRead`
 - `PhpArgSetup`
 
 This layer answers "how does this exported parameter become a V call argument?"
 The caller-facing glue files should consume `PhpArgSetup` instead of
 reimplementing argument indexing or wrapper decoding.
 
+`PhpArgRead` is the shared internal read expression for both ordinary
+parameters and flattened `@[params]` struct fields. It owns the generated
+`php_args.at_named_or_index(...)`, `php_args.has_named_or_index(...)`, default
+fallback, and semantic wrapper decoding expressions so those rules do not drift
+between the two binding paths.
+
+Implementation files:
+
+- `arg_binding.v`: top-level parameter binding plan
+- `arg_read.v`: read / presence / semantic wrapper expressions
+- `arg_default.v`: optional default literal conversion
+
+`arg_read.v` also contains the positional `Context` argument expression helper
+used by generated struct closure bridges, so closure bridge fields and ordinary
+argument glue do not maintain separate type-to-read switch tables.
+
 PHP-facing argument names are resolved before this layer. Direct V parameters
 and `@[params]` struct fields both default from `snake_case` to `camelCase`,
 unless `@[php_arg_name]` provides an explicit override.
 
-### 7.6. `params_struct_binding`
+### 7.6. `function_binding`
+
+File: `vphp/compiler/function_binding.v`
+
+Purpose:
+
+- Build and render plain function wrapper glue from `repr.PhpFuncRepr`
+- Keep struct-closure helper emission, argument setup, keyword-safe call names,
+  request frame scope, and `ReturnBinding` behavior out of `v_glue_func.v`
+
+Key types:
+
+- `FunctionGlue`
+
+This layer answers "how does an exported V function become a generated
+`vphp_wrap_*` function?"
+
+### 7.7. `params_struct_binding`
 
 File: `vphp/compiler/params_struct_binding.v`
 
@@ -258,7 +374,7 @@ Key types:
 This layer answers "how do these PHP arguments become this V `@[params]`
 struct literal?"
 
-### 7.7. `return_binding`
+### 7.8. `return_binding`
 
 File: `vphp/compiler/return_binding.v`
 
@@ -277,24 +393,47 @@ This layer answers "how does this V call result get written back to PHP?" Glue
 files should consume `ReturnBinding` instead of reimplementing result / option /
 closure branches.
 
-### 7.8. `class_method_binding`
+### 7.9. `class_method_binding`
 
 File: `vphp/compiler/class_method_binding.v`
 
 Purpose:
 
 - Compose class method call results with class-specific side effects
-- Keep inherited receiver sync, static-property sync, object returns, and
-  `ReturnBinding` behavior out of the main class glue loop
+- Keep wrapper signature, inherited receiver loading, request frame scope,
+  static-property sync, object returns, and `ReturnBinding` behavior out of the
+  main class glue loop
 
 Key types:
 
+- `ClassMethodGlue`
 - `ClassMethodGlueContext`
 
 This layer answers "after a generated class method call runs, what extra PHP
 runtime state must be written back, and how is the result returned?"
 
-### 7.9. `class_property_binding`
+`ClassMethodGlue` builds the method wrapper plan from `PhpMethodRepr`, including
+the glue name, struct-closure helper, argument setup, call expression, and return
+context. `ClassMethodGlueContext` owns the wrapper body details once that plan is
+known.
+
+### 7.10. `class_lifecycle_binding`
+
+File: `vphp/compiler/class_lifecycle_binding.v`
+
+Purpose:
+
+- Generate raw V object allocation, cleanup, and free glue for PHP class handlers
+- Keep generated lifecycle helper shape out of the main class glue loop
+
+Key types:
+
+- `ClassLifecycleGlue`
+
+This layer answers "which raw lifecycle helper functions must be emitted for a
+class, and how do optional `cleanup()` / `free()` hooks run?"
+
+### 7.11. `class_property_binding`
 
 File: `vphp/compiler/class_property_binding.v`
 
@@ -307,9 +446,66 @@ Purpose:
 Key types:
 
 - `ClassPropertyGlue`
+- `ClassPropertyFieldBinding`
 
 This layer answers "how are V struct fields exposed and synchronized as PHP
 object properties?"
+
+`ClassPropertyFieldBinding` owns the per-field filter and scalar read/write/sync
+emission. The class-level glue only decides which handler function is being
+rendered.
+
+### 7.12. `class_shadow_binding`
+
+File: `vphp/compiler/class_shadow_binding.v`
+
+Purpose:
+
+- Generate class shadow const/static accessors
+- Keep PHP static-property synchronization helpers out of the main class glue
+  loop
+
+Key types:
+
+- `ClassShadowGlue`
+
+This layer answers "how does generated V code access and synchronize a class'
+shadow const/static state?"
+
+### 7.13. `class_handlers_binding`
+
+File: `vphp/compiler/class_handlers_binding.v`
+
+Purpose:
+
+- Generate the class handler table factory used by the C bridge
+- Keep handler pointer wiring out of the main class glue loop
+
+Key types:
+
+- `ClassHandlersGlue`
+
+This layer answers "which generated V functions are wired into
+`ZendClassHandlers` for this class?"
+
+### 7.14. `inherited_receiver_binding`
+
+File: `vphp/compiler/inherited_receiver_binding.v`
+
+Purpose:
+
+- Generate inherited receiver load/sync helpers for V classes backed by PHP
+  parent objects
+- Keep per-field scalar / ZVal load and scalar write-back expressions out of the
+  main class glue loop
+
+Key types:
+
+- `InheritedReceiverGlue`
+- `InheritedReceiverFieldBinding`
+
+This layer answers "when a V receiver is reconstructed from a PHP object, which
+fields are read from the object and which scalar fields are synchronized back?"
 
 ## Compile Pipeline
 

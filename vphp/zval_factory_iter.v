@@ -4,32 +4,12 @@ import vphp.zval
 
 // ======== 工厂方法 ========
 
-fn zend_new_null_zval() zval.Handle {
-	return zval.new_null()
-}
-
-fn zend_new_int_zval(n i64) zval.Handle {
-	return zval.new_int(n)
-}
-
-fn zend_new_float_zval(f f64) zval.Handle {
-	return zval.new_float(f)
-}
-
-fn zend_new_bool_zval(b bool) zval.Handle {
-	return zval.new_bool(b)
-}
-
-fn zend_new_string_zval(s string) zval.Handle {
-	return zval.new_string(s)
-}
-
-fn zend_foreach_zval(v ZVal, ctx voidptr, wrapper voidptr) {
-	zval.foreach(v.handle(), ctx, wrapper)
+fn request_autoreleased_zval_from_handle(handle zval.Handle) ZVal {
+	RequestScope.autorelease_add_handle(handle)
+	return request_owned_zval_from_handle(handle)
 }
 
 fn request_owned_zval_from_handle(handle zval.Handle) ZVal {
-	RequestScope.autorelease_add_handle(handle)
 	return unsafe {
 		ZVal{
 			raw:   ZVal.from_handle(handle).raw
@@ -38,29 +18,39 @@ fn request_owned_zval_from_handle(handle zval.Handle) ZVal {
 	}
 }
 
+fn persistent_owned_zval_from_handle(handle zval.Handle) ZVal {
+	return unsafe {
+		ZVal{
+			raw:           ZVal.from_handle(handle).raw
+			owned:         true
+			is_persistent: true
+		}
+	}
+}
+
 // 创建一个 null ZVal
 pub fn ZVal.new_null() ZVal {
-	return request_owned_zval_from_handle(zend_new_null_zval())
+	return request_autoreleased_zval_from_handle(zval.new_null())
 }
 
 // 创建一个 int ZVal
 pub fn ZVal.new_int(n i64) ZVal {
-	return request_owned_zval_from_handle(zend_new_int_zval(n))
+	return request_autoreleased_zval_from_handle(zval.new_int(n))
 }
 
 // 创建一个 float ZVal
 pub fn ZVal.new_float(f f64) ZVal {
-	return request_owned_zval_from_handle(zend_new_float_zval(f))
+	return request_autoreleased_zval_from_handle(zval.new_float(f))
 }
 
 // 创建一个 bool ZVal
 pub fn ZVal.new_bool(b bool) ZVal {
-	return request_owned_zval_from_handle(zend_new_bool_zval(b))
+	return request_autoreleased_zval_from_handle(zval.new_bool(b))
 }
 
 // 创建一个 string ZVal
 pub fn ZVal.new_string(s string) ZVal {
-	return request_owned_zval_from_handle(zend_new_string_zval(s))
+	return request_autoreleased_zval_from_handle(zval.new_string(s))
 }
 
 // ======== 高级：对象转换 ========
@@ -96,7 +86,7 @@ pub fn (v ZVal) foreach(cb ForeachCb) {
 	if !v.is_array() && !v.is_object() {
 		return
 	}
-	zend_foreach_zval(v, &cb, vphp_foreach_wrapper)
+	zval.foreach(v.handle(), &cb, vphp_foreach_wrapper)
 }
 
 // 语义化别名：更贴近日常遍历语义
@@ -130,7 +120,7 @@ pub fn (v ZVal) foreach_with_ctx[T](ctx T, cb ForeachWithCtxCb[T]) T {
 		cb:  cb
 		ctx: ctx
 	}
-	zend_foreach_zval(v, &pack, vphp_foreach_with_ctx_wrapper[T])
+	zval.foreach(v.handle(), &pack, vphp_foreach_with_ctx_wrapper[T])
 	return pack.ctx
 }
 

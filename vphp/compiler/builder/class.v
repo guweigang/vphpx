@@ -329,7 +329,7 @@ fn (b &ClassBuilder) render_registration_function() string {
 			attr_var := 'attribute_${lower_name}_${i}'
 			attr_name_var := '${attr_var}_name'
 			res << '        zend_string *${attr_name_var} = zend_string_init_interned("${c_string_escape(attr.name)}", sizeof("${c_string_escape(attr.name)}")-1, 1);'
-			res << '        zend_attribute *${attr_var} = zend_add_class_attribute(${ce_ptr}, ${attr_name_var}, ${attr.args.len});'
+			res << '        zend_attribute *${attr_var} = vphp_zend_add_class_attribute(${ce_ptr}, ${attr_name_var}, ${attr.args.len});'
 			res << '        zend_string_release(${attr_name_var});'
 			res << render_attribute_arg_value_lines(attr_var, attr.args)
 		}
@@ -474,7 +474,7 @@ fn render_add_parameter_attribute_lines(func_var string, arg_index int, attr Cla
 	mut res := []string{}
 	attr_name_var := '${attr_var}_name'
 	res << '        zend_string *${attr_name_var} = zend_string_init_interned("${c_string_escape(attr.name)}", sizeof("${c_string_escape(attr.name)}")-1, 1);'
-	res << '        zend_attribute *${attr_var} = zend_add_parameter_attribute(${func_var}, ${arg_index}, ${attr_name_var}, ${attr.args.len});'
+	res << '        zend_attribute *${attr_var} = vphp_zend_add_parameter_attribute(${func_var}, ${arg_index}, ${attr_name_var}, ${attr.args.len});'
 	res << '        zend_string_release(${attr_name_var});'
 	res << render_attribute_arg_value_lines(attr_var, attr.args)
 	return res
@@ -513,7 +513,7 @@ pub fn (b &ClassBuilder) render_methods_array() string {
 	res << 'static const zend_function_entry ${lower_name}_methods[] = {'
 	for m in b.methods {
 		if m.is_abstract {
-			res << '    ZEND_RAW_FENTRY("${m.php_name}", NULL, arginfo_${m.c_func}, ${m.flags}, NULL, NULL)'
+			res << '    VPHP_ZEND_RAW_FENTRY("${m.php_name}", NULL, arginfo_${m.c_func}, ${m.flags})'
 		} else {
 			res << '    PHP_ME(${b.c_name}, ${m.php_name}, arginfo_${m.c_func}, ${m.flags})'
 		}

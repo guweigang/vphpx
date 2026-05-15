@@ -1,7 +1,6 @@
 module vphp
 
 import vphp.zend
-import vphp.zval
 
 struct ZendMethodCall {
 	receiver ZVal
@@ -26,7 +25,7 @@ type ZendCallTarget = ZendCallableCall
 	| ZendMethodCall
 	| ZendStaticMethodCall
 
-fn zend_invoke_call_target(target ZendCallTarget, retval voidptr, count int, params voidptr) int {
+fn invoke_zval_call_target(target ZendCallTarget, retval voidptr, count int, params voidptr) int {
 	return match target {
 		ZendMethodCall {
 			zend.call_method_ptr(target.receiver.raw_ptr(), target.method, retval, count, params)
@@ -43,19 +42,4 @@ fn zend_invoke_call_target(target ZendCallTarget, retval voidptr, count int, par
 			zend.call_static_method_named(class_name, target.method, retval, count, params)
 		}
 	}
-}
-
-fn zend_read_static_property(class_name ZVal, name string) zval.ReadResult {
-	class_name_text := class_name.get_string()
-	return zval.read_static_property(class_name_text, name)
-}
-
-fn zend_read_class_constant(class_name ZVal, name string) zval.ReadResult {
-	class_name_text := class_name.get_string()
-	return zval.read_class_constant(class_name_text, name)
-}
-
-fn zend_write_static_property(class_name ZVal, name string, value ZVal) {
-	class_name_text := class_name.get_string()
-	zval.write_static_property(class_name_text, name, value.handle())
 }

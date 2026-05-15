@@ -437,7 +437,8 @@ pub fn (app &VSlimApp) can(ability string, request vphp.RequestBorrowedZBox) boo
 		ability_arg.release()
 	}
 	mut result := app.auth_gate_resolver.fn_request_owned(ability_arg,
-		vphp.PhpValue.from_zval(user.to_zval()), vphp.PhpValue.from_zval(request.to_zval()))
+		vphp.PhpValue.from_request_borrowed_zbox(user.borrowed()),
+		vphp.PhpValue.from_request_borrowed_zbox(request))
 	defer {
 		result.release()
 	}

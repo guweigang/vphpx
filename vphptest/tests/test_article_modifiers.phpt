@@ -9,9 +9,21 @@ echo "1. Reflection checks:\n";
 
 $rc = new ReflectionClass(Article::class);
 
+function version_expected_modifier_names(string $property, int $modifiers): string {
+    $actual = implode(' ', Reflection::getModifierNames($modifiers));
+    $expected = match ($property) {
+        'post_id', 'author', 'id', 'title', 'is_top' => 'public',
+        'created_at' => PHP_VERSION_ID >= 80500 ? 'public protected(set) readonly' : 'public readonly',
+        'content' => 'protected',
+        'total_count' => 'public static',
+        default => $actual,
+    };
+    return $actual === $expected ? 'matches' : 'unexpected:' . $actual;
+}
+
 $props = $rc->getProperties();
 foreach ($props as $p) {
-    $modifiers = implode(' ', Reflection::getModifierNames($p->getModifiers()));
+    $modifiers = version_expected_modifier_names($p->getName(), $p->getModifiers());
     echo "Property: " . $p->getName() . " - " . $modifiers . "\n";
 }
 
@@ -51,14 +63,14 @@ try {
 ?>
 --EXPECT--
 1. Reflection checks:
-Property: post_id - public
-Property: author - public
-Property: created_at - public protected(set) readonly
-Property: id - public
-Property: title - public
-Property: is_top - public
-Property: content - protected
-Property: total_count - public static
+Property: post_id - matches
+Property: author - matches
+Property: created_at - matches
+Property: id - matches
+Property: title - matches
+Property: is_top - matches
+Property: content - matches
+Property: total_count - matches
 Method: __construct - public
 Method: internal_format - protected
 Method: create - public static

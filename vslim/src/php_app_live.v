@@ -17,9 +17,11 @@ fn dispatch_live_route_handler(handler vphp.ZVal, payload vphp.RequestBorrowedZB
 		return error('Live socket bootstrap failed')
 	}
 	socket := socket_obj.to_zval()
+	payload_arg := vphp.PhpValue.from_request_borrowed_zbox(payload)
+	socket_arg := vphp.PhpValue.from_zval(socket)
 	if handler.method_exists('mount') {
 		mut mount_res := vphp.PhpObject.borrowed(handler).method_request_owned('mount',
-			vphp.PhpValue.from_zval(payload.to_zval()), vphp.PhpValue.from_zval(socket))
+			payload_arg, socket_arg)
 		if mount_res.is_valid() && !mount_res.is_null() && !mount_res.is_undef() {
 			return mount_res.take_zval()
 		}
@@ -27,7 +29,7 @@ fn dispatch_live_route_handler(handler vphp.ZVal, payload vphp.RequestBorrowedZB
 	}
 	if handler.method_exists('render') {
 		mut res := vphp.PhpObject.borrowed(handler).method_request_owned('render',
-			vphp.PhpValue.from_zval(payload.to_zval()), vphp.PhpValue.from_zval(socket))
+			payload_arg, socket_arg)
 		if res.is_string() {
 			return build_php_response_object(VSlimResponse{
 				status:       200
@@ -42,7 +44,7 @@ fn dispatch_live_route_handler(handler vphp.ZVal, payload vphp.RequestBorrowedZB
 	}
 	if handler.method_exists('__invoke') {
 		mut result := vphp.PhpObject.borrowed(handler).method_request_owned('__invoke',
-			vphp.PhpValue.from_zval(payload.to_zval()), vphp.PhpValue.from_zval(socket))
+			payload_arg, socket_arg)
 		return result.take_zval()
 	}
 	return error('Live handler must define render() or __invoke()')
@@ -414,7 +416,7 @@ fn live_socket_from_frame_metadata(handler vphp.ZVal, frame vphp.ZVal, message v
 	}
 	for key, value in decode_live_assigns_metadata(metadata) {
 		mut value_arg := vphp.PhpString.of(value)
-		created.assign(key, vphp.RequestBorrowedZBox.from_zval(value_arg.to_zval()))
+		created.assign(key, value_arg.to_borrowed_zbox())
 		value_arg.release()
 	}
 	return socket_z, created

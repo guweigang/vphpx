@@ -350,7 +350,7 @@ fn v_typed_php_interop(obj vphp.ZVal) string {
 
 @[php_function]
 fn v_typed_object_restore(ctx vphp.Context) {
-	author_z := vphp.php_class('Author').static_method('create', [
+	author_z := vphp.PhpClass.named('Author').static_method_owned_request_zval('create', [
 		vphp.ZVal.new_string('Typed Author'),
 	])
 	mut author := author_z.to_object[Author]() or {
@@ -358,7 +358,7 @@ fn v_typed_object_restore(ctx vphp.Context) {
 		return
 	}
 
-	article_z := vphp.php_class('Article').construct([
+	article_z := vphp.PhpClass.named('Article').construct_owned_request_zval([
 		vphp.ZVal.new_string('Typed Article'),
 		vphp.ZVal.new_int(77),
 	])
@@ -472,7 +472,7 @@ fn v_php_value_zbox_lifecycle_probe(raw vphp.ZVal) string {
 
 @[php_function]
 fn v_unified_object_interop(ctx vphp.Context) {
-	cls := vphp.php_class('PhpUnifiedBox')
+	cls := vphp.PhpClass.named('PhpUnifiedBox')
 	name_z := vphp.ZVal.from[string]('neo') or {
 		vphp.throw_exception('build name arg failed: ${err.msg()}', 0)
 		return
@@ -481,7 +481,7 @@ fn v_unified_object_interop(ctx vphp.Context) {
 		vphp.throw_exception('build score arg failed: ${err.msg()}', 0)
 		return
 	}
-	obj := cls.construct_owned_request([name_z, score_z])
+	obj := cls.construct_owned_request_zval([name_z, score_z])
 	if !obj.is_object() {
 		vphp.throw_exception('construct PhpUnifiedBox failed', 0)
 		return
@@ -495,7 +495,7 @@ fn v_unified_object_interop(ctx vphp.Context) {
 		vphp.throw_exception('method_v(doubleScore) failed: ${err.msg()}', 0)
 		return
 	}
-	triple := cls.static_method_owned_request('triple', [vphp.ZVal.new_int(4)]).to_v[int]() or {
+	triple := cls.static_method_owned_request_zval('triple', [vphp.ZVal.new_int(4)]).to_v[int]() or {
 		vphp.throw_exception('static_method(triple) failed: ${err.msg()}', 0)
 		return
 	}
@@ -795,6 +795,13 @@ fn v_php_params_struct_api(params VPhpParamsStructDemo) string {
 	return 'params=${params.status}:${params.reason_phrase}:${params.secure}:${params.ratio}'
 }
 
+@[php_arg_default(count: '7', label: '"fallback"')]
+@[php_arg_optional(count: true, label: true)]
+@[php_function]
+fn v_php_arg_binding_optional_scalar_api(count int, label string) string {
+	return 'optional_scalar=${count}:${label}'
+}
+
 @[php_function]
 fn v_php_direct_arg_camel_api(first_name string, default_value string) string {
 	return 'direct=${first_name}:${default_value}'
@@ -868,6 +875,13 @@ fn v_php_wrapper_param_api(value vphp.PhpValue, obj vphp.PhpObject, arr vphp.Php
 fn v_php_optional_value_api(value ?vphp.PhpValue) string {
 	actual := value or { return 'optional_value=none' }
 	return 'optional_value=some:${actual.type_name()}:${actual.is_null()}'
+}
+
+@[php_function]
+fn v_php_optional_object_api(obj ?vphp.PhpObject) string {
+	actual := obj or { return 'optional_object=none' }
+	name := actual.prop_v[string]('name') or { '' }
+	return 'optional_object=some:${actual.kind_name()}:${name}'
 }
 
 @[php_function]
@@ -1076,8 +1090,8 @@ fn v_php_enum_api(raw vphp.ZVal) string {
 
 @[php_function]
 fn v_unified_ownership_interop(ctx vphp.Context) {
-	cls := vphp.php_class('PhpUnifiedBox')
-	obj_req := cls.construct_owned_request([
+	cls := vphp.PhpClass.named('PhpUnifiedBox')
+	obj_req := cls.construct_owned_request_zval([
 		vphp.ZVal.new_string('req'),
 		vphp.ZVal.new_int(5),
 	])
@@ -1090,7 +1104,7 @@ fn v_unified_ownership_interop(ctx vphp.Context) {
 		return
 	}
 
-	mut up_call := vphp.php_fn('strtoupper').call_owned_persistent([
+	mut up_call := vphp.PhpFunction.named('strtoupper').call_owned_persistent_zval([
 		vphp.ZVal.new_string('persist'),
 	])
 	if !up_call.is_valid() {

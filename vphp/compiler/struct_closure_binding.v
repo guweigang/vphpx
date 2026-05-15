@@ -114,7 +114,7 @@ fn (binding StructClosureBinding) render_helper_lines() []string {
 	}
 	lines << 'pub type ${binding.alias} = ${struct_signature}'
 	lines << ''
-	lines << 'fn ${binding.bridge}(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {'
+	lines << binding.bridge_signature()
 	lines << '    unsafe {'
 	lines << '        ctx := vphp.Context.from_ptr(ex, ret)'
 	lines << '        cb := *(&${binding.alias}(v_ptr))'
@@ -124,11 +124,9 @@ fn (binding StructClosureBinding) render_helper_lines() []string {
 	}
 	lines << '        }'
 	if binding.ret_type == 'void' {
-		lines << '        cb(args)'
-		lines << '        ctx.return().null()'
+		lines << '        ctx.invoke_struct_closure_void[${binding.alias}, ${binding.arg_type}](cb, args)'
 	} else {
-		lines << '        res := cb(args)'
-		lines << '        ctx.return().v[${binding.ret_type}](res)'
+		lines << '        ctx.invoke_struct_closure[${binding.alias}, ${binding.arg_type}, ${binding.ret_type}](cb, args)'
 	}
 	lines << '    }'
 	lines << '}'
@@ -149,7 +147,7 @@ fn (binding StructClosureBinding) render_variadic_helper_lines() []string {
 	}
 	lines << 'pub type ${binding.alias} = ${variadic_signature}'
 	lines << ''
-	lines << 'fn ${binding.bridge}(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {'
+	lines << binding.bridge_signature()
 	lines << '    unsafe {'
 	lines << '        ctx := vphp.Context.from_ptr(ex, ret)'
 	lines << '        cb := *(&${binding.alias}(v_ptr))'
@@ -168,34 +166,10 @@ fn (binding StructClosureBinding) render_variadic_helper_lines() []string {
 	return lines
 }
 
+fn (binding StructClosureBinding) bridge_signature() string {
+	return 'fn ${binding.bridge}(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {'
+}
+
 fn (binding StructClosureBinding) field_arg_expr(field repr.PhpParamsField, index int) string {
-	match field.v_type {
-		'string' {
-			return 'ctx.arg[string](${index})'
-		}
-		'int' {
-			return 'ctx.arg[int](${index})'
-		}
-		'i64' {
-			return 'ctx.arg[i64](${index})'
-		}
-		'bool' {
-			return 'ctx.arg[bool](${index})'
-		}
-		'f64' {
-			return 'ctx.arg[f64](${index})'
-		}
-		'ZVal', 'vphp.ZVal' {
-			return 'ctx.arg_val(${index})'
-		}
-		'RequestBorrowedZBox', 'vphp.RequestBorrowedZBox' {
-			return 'ctx.arg_borrowed_zbox(${index})'
-		}
-		'PhpValue', 'vphp.PhpValue' {
-			return 'ctx.arg_value(${index})'
-		}
-		else {
-			return 'ctx.arg[${field.v_type}](${index})'
-		}
-	}
+	return php_context_arg_expr(field.v_type, index)
 }

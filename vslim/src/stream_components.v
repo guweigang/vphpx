@@ -6,7 +6,7 @@ import vphp
 @[php_method]
 pub fn VSlimStreamFactory.text(chunks vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	return vphp.PhpClass.named('VSlim\\Stream\\Response').static_method_request_owned('text',
-		vphp.PhpValue.from_zval(chunks.to_zval()))
+		vphp.PhpValue.from_request_borrowed_zbox(chunks))
 }
 
 @[php_arg_name: 'content_type=contentType']
@@ -21,14 +21,14 @@ pub fn VSlimStreamFactory.text_with(chunks vphp.RequestBorrowedZBox, status int,
 		content_type_arg.release()
 	}
 	return vphp.PhpClass.named('VSlim\\Stream\\Response').static_method_request_owned('textWith',
-		vphp.PhpValue.from_zval(chunks.to_zval()), status_arg, content_type_arg,
-		vphp.PhpValue.from_zval(headers.to_zval()))
+		vphp.PhpValue.from_request_borrowed_zbox(chunks), status_arg, content_type_arg,
+		vphp.PhpValue.from_request_borrowed_zbox(headers))
 }
 
 @[php_method]
 pub fn VSlimStreamFactory.sse(events vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	return vphp.PhpClass.named('VSlim\\Stream\\Response').static_method_request_owned('sse',
-		vphp.PhpValue.from_zval(events.to_zval()))
+		vphp.PhpValue.from_request_borrowed_zbox(events))
 }
 
 @[php_method: 'sseWith']
@@ -38,7 +38,8 @@ pub fn VSlimStreamFactory.sse_with(events vphp.RequestBorrowedZBox, status int, 
 		status_arg.release()
 	}
 	return vphp.PhpClass.named('VSlim\\Stream\\Response').static_method_request_owned('sseWith',
-		vphp.PhpValue.from_zval(events.to_zval()), status_arg, vphp.PhpValue.from_zval(headers.to_zval()))
+		vphp.PhpValue.from_request_borrowed_zbox(events), status_arg,
+		vphp.PhpValue.from_request_borrowed_zbox(headers))
 }
 
 @[php_arg_name: 'request_payload=requestPayload']
@@ -232,7 +233,7 @@ pub fn (c &VSlimStreamOllamaClient) open_stream(payload vphp.RequestBorrowedZBox
 		use_include_path_arg.release()
 	}
 	mut fp := vphp.PhpFunction.named('fopen').request_owned(url_arg, mode_arg, use_include_path_arg,
-		vphp.PhpValue.from_zval(ctx.to_zval()))
+		vphp.PhpValue.from_request_owned_zbox(ctx))
 	defer {
 		fp.release()
 	}
@@ -279,7 +280,7 @@ pub fn (c &VSlimStreamOllamaClient) text_response_from_request(request_payload v
 	mut response := vphp.PhpClass.named('VSlim\\Stream\\Response').static_method_request_owned('textWith',
 		vphp.PhpValue.from_zval(chunks), status_arg, content_type_arg,
 		vphp.PhpValue.from_zval(headers))
-	propagate_request_trace_headers_to_object(req, vphp.RequestBorrowedZBox.from_zval(response.to_zval()))
+	propagate_request_trace_headers_to_object(req, response.borrowed())
 	return response
 }
 
@@ -303,7 +304,7 @@ pub fn (c &VSlimStreamOllamaClient) sse_response_from_request(request_payload vp
 	}
 	mut response := vphp.PhpClass.named('VSlim\\Stream\\Response').static_method_request_owned('sseWith',
 		vphp.PhpValue.from_zval(events), status_arg, vphp.PhpValue.from_zval(headers))
-	propagate_request_trace_headers_to_object(req, vphp.RequestBorrowedZBox.from_zval(response.to_zval()))
+	propagate_request_trace_headers_to_object(req, response.borrowed())
 	return response
 }
 

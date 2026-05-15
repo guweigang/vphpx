@@ -121,7 +121,7 @@ fn normalize_php_route_response(result vphp.ZVal) (VSlimResponse, bool) {
 		return VSlimResponse{
 			status:       psr.get_status_code()
 			body:         body
-			content_type: psr.get_header_line(vphp.RequestBorrowedZBox.from_zval(content_type_name.to_zval()))
+			content_type: psr.get_header_line(content_type_name.to_borrowed_zbox())
 			headers:      snapshot_string_map(flatten_psr7_header_map(psr.get_headers()))
 		}, true
 	}

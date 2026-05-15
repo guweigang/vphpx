@@ -31,10 +31,7 @@ fn (v DynValue) is_persistent_safe() bool {
 }
 
 fn (v DynValue) request_owned() RequestOwnedZBox {
-	mut out := ZVal{
-		raw:   zend_new_zval()
-		owned: true
-	}
+	mut out := ZVal.new_request()
 	v.to_zval(mut out) or {
 		out.release()
 		return RequestOwnedZBox.new_null()

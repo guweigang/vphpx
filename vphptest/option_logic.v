@@ -7,7 +7,7 @@ import vphp
 // Option 桥接测试用例
 // ============================================
 // 本文件用于测试 V Option (?) → PHP null 自动桥接。
-// 所有带 ? 返回类型的方法/函数由编译器自动生成 call_or_null / call_or_null_val 调用。
+// 所有带 ? 返回类型的方法/函数由编译器自动生成 PhpReturn.from_option* 调用。
 
 // --- Finder 类：测试实例方法 ---
 

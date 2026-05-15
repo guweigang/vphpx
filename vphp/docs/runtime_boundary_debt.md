@@ -14,6 +14,8 @@ The old raw runtime API surface is now guarded by tests:
 - `vphp/compiler/boundary_scan_test.v`
   - checks generated `vphptest/bridge.v`
   - checks compiler files that emit V glue
+  - checks that `Context` stores `ZExData` and `PhpReturn`, not raw Zend
+    pointers
   - blocks stale entries such as `Context.from_raw(...)`, `raw_zval()`,
     `ZVal.from_raw(...)`, direct generated `C.vphp_*`, and manual `C.zval{}`
 - `vslim/tests/boundary_scan_test.v`
@@ -37,8 +39,9 @@ The current rough scan shape is:
   - generated-code emitters / boundary scan tests
   - generic Zend callback boundaries such as `object_generic_props.v` and
     `zval_factory_iter.v`
-  - a few root-level lifecycle adapters that still need `ZVal` or
-    `OwnershipKind`
+  - root-level runtime/lifecycle adapters that still intentionally bridge
+    `ZVal`, `ZendObject`, `OwnershipKind`, superglobal enum conversion, and
+    Zend request/runtime hooks
 - `vslim/src`: handwritten sources still use:
   - `ZVal` in data decoding, PSR bridge, routing, view/template, stream,
     task/job, and bootstrap internals
@@ -97,7 +100,8 @@ fn generated_bridge(ex &C.zend_execute_data, ret &C.zval) {
 }
 
 fn generated_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
-    ret := vphp.PhpReturn.from_ptr(rv)
+    ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
+    name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
     ...
 }
 ```
@@ -105,8 +109,9 @@ fn generated_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
 Rule:
 
 Raw C pointer shapes are allowed at exported Zend callback signatures. The
-generated body should immediately wrap them into `Context`, `PhpReturn`,
-`ZVal`, `ZendObject`, or `ZendClassEntry`.
+generated body should immediately wrap them into `Context`,
+`PhpObjectPropertyHandler`, `PhpReturn`, `ZVal`, `ZendObject`, or
+`ZendClassEntry`.
 
 ### VSlim Handwritten Runtime
 
@@ -173,6 +178,140 @@ These are relatively good next steps:
    `vphptest` suite now includes a `PhpValueZBox` conversion counter probe.
 5. Keep generated `bridge.v` style aligned with
    `vphp/compiler/boundary_scan_test.v`.
+
+## Execution Plan
+
+Status: **incremental / small batches only**.
+
+The next work should be split into five small phases. Each phase should be
+individually reviewable and verifiable before moving on.
+
+### Phase 1: Boundary Inventory
+
+Goal:
+
+- classify the remaining `C.xxx`, `&C.zval`, `php_fn`, `php_class`, and
+  `[]ZVal` usages
+- separate true ABI/lower-layer boundaries from places that should be
+  semantic wrappers
+
+Scope:
+
+- docs
+- boundary scan rules
+
+Risk: low.
+
+### Phase 2: Low-Risk Semantic Call Sites
+
+Goal:
+
+- keep migrating day-to-day VSlim and vphptest call sites to semantic wrappers
+- prefer `PhpFunction`, `PhpClass`, `PhpObject`, `PhpCallable`, `PhpReturn`,
+  and `PhpArgInput` where the call site does not need raw low-level arrays
+
+Scope:
+
+- handwritten `vslim/src/*.v`
+- selected `vphptest/*.v`
+
+Risk: low to medium.
+
+Do not force low-level test fixtures or internal interop probes into this phase.
+
+### Phase 3: Layer 3 Helper Cleanup
+
+Goal:
+
+- keep `zval_stream.v`, `zval_scalar.v`, and similar Layer 3 helpers tidy
+- make internal helper names and call paths more object-like without changing
+  ownership semantics
+- avoid adding root-level `zend_*` forwarding helpers when the call can go
+  straight to `vphp.zval`, `vphp.object`, `vphp.execute`, or `vphp.zend`
+
+Scope:
+
+- `vphp/zval/**`
+- small private helper refactors
+
+Risk: medium.
+
+Progress:
+
+- removed stale forwarding helpers from scalar, array, type, reference,
+  resource, factory, execute-data, class-entry, interface-binding,
+  superglobal, and object-zval paths
+- renamed root-level private `ZVal` allocation/release/copy helpers away from
+  `zend_*` so they read as raw `ZVal` lifecycle internals instead of Zend
+  boundary wrappers
+- removed root-level private `zend_object_*` forwarding helpers; `ZendObject`
+  receiver methods now call the object handle layer directly
+- removed the root-level `zend_runtime.v` forwarding layer; semantic facades
+  such as `PhpException`, `PhpOutput`, extension lifecycle hooks, task storage,
+  and closure storage now call the `vphp.zend` boundary module directly
+- added VSlim boundary scan checks to block common semantic-to-zval roundtrip
+  regressions in handwritten VSlim code
+- root-level `fn zend_*` helpers are now blocked; direct Zend calls should live
+  in `vphp/zend/**` or be made explicitly from a semantic facade when crossing
+  that boundary is the point
+
+### Phase 4: Compiler Glue Refinement
+
+Goal:
+
+- reduce repeated low-level patterns in generated glue
+- keep ABI signatures raw, but move generated bodies toward `Context`,
+  `PhpReturn`, `ZendObject`, and `php_types`
+
+Scope:
+
+- compiler emitters
+- generated `bridge.v` shape
+
+Risk: medium to high.
+
+Progress:
+
+- generated object property glue now wraps handler callback inputs through
+  `PhpObjectPropertyHandler` instead of spelling `PhpReturn.from_ptr(rv)`,
+  `ZVal.from_ptr(value)`, or `name_ptr.vstring_with_len(name_len)` directly
+- compiler property callback raw ABI signatures are centralized in
+  `class_property_binding.v` helper functions and guarded by
+  `boundary_scan_test.v`
+- compiler closure bridge raw ABI signatures are centralized in
+  `struct_closure_binding.v` and guarded by `boundary_scan_test.v`
+- generated struct-param closure bridges now delegate callback invocation and
+  return writing through `Context.invoke_struct_closure*`
+- `ReturnBinding` owns value-return write emission for function and class method
+  glue
+- `arg_binding` and `params_struct_binding` share argument presence/read
+  expression helpers while preserving their separate default-value semantics
+- boundary scan guards now block the old property-handler wrapping shape and
+  struct closure bridges that hand-write `res := cb(args)`
+
+### Phase 5: Ownership Deep Water
+
+Goal:
+
+- touch lifecycle-sensitive code only with probes and focused tests
+- treat `PhpValueZBox`, `DynValue`, `PersistentOwnedZBox`, `RetainedObject`,
+  `RetainedCallable`, closure binding, and PSR state storage as separate
+  mini-projects
+
+Scope:
+
+- one concern at a time
+- one probe/test batch at a time
+
+Risk: high.
+
+### Priority Order
+
+1. Phase 1 inventory and guardrails
+2. Phase 2 semantic call-site cleanup
+3. Phase 3 Layer 3 helper cleanup
+4. Phase 4 compiler glue refinement
+5. Phase 5 ownership deep water
 
 ## Non-Goals For The Next Pass
 

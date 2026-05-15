@@ -466,6 +466,21 @@ PHP_FUNCTION(v_php_params_struct_api) {
         return;
     }
 }
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_arg_binding_optional_scalar_api, 0, 0, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, count, IS_LONG, 0, "7")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, label, IS_STRING, 0, "\"fallback\"")
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_arg_binding_optional_scalar_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_arg_binding_optional_scalar_api) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_arg_binding_optional_scalar_api(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_direct_arg_camel_api, 0, 2, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, firstName, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, defaultValue, IS_STRING, 0)
@@ -563,6 +578,20 @@ PHP_FUNCTION(v_php_optional_value_api) {
     }
     vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     vphp_wrap_v_php_optional_value_api(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_optional_object_api, 0, 0, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, obj, IS_OBJECT, 1, "null")
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_optional_object_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_optional_object_api) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_optional_object_api(ctx);
     if (!vphp_validate_internal_return(execute_data, return_value)) {
         return;
     }
@@ -1301,8 +1330,8 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_contentcontract_get_formatted_title, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 static const zend_function_entry contentcontract_methods[] = {
-    ZEND_RAW_FENTRY("save", NULL, arginfo_contentcontract_save, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT, NULL, NULL)
-    ZEND_RAW_FENTRY("get_formatted_title", NULL, arginfo_contentcontract_get_formatted_title, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT, NULL, NULL)
+    VPHP_ZEND_RAW_FENTRY("save", NULL, arginfo_contentcontract_save, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
+    VPHP_ZEND_RAW_FENTRY("get_formatted_title", NULL, arginfo_contentcontract_get_formatted_title, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
     PHP_FE_END
 };
 
@@ -1344,7 +1373,7 @@ zend_class_entry *demo__contracts__aliascontract_ce = NULL;
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_demo__contracts__aliascontract_ping, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 static const zend_function_entry demo__contracts__aliascontract_methods[] = {
-    ZEND_RAW_FENTRY("ping", NULL, arginfo_demo__contracts__aliascontract_ping, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT, NULL, NULL)
+    VPHP_ZEND_RAW_FENTRY("ping", NULL, arginfo_demo__contracts__aliascontract_ping, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
     PHP_FE_END
 };
 
@@ -1416,7 +1445,7 @@ PHP_METHOD(AbstractReport, __construct) {
 static const zend_function_entry abstractreport_methods[] = {
     PHP_ME(AbstractReport, __construct, arginfo_abstractreport___construct, ZEND_ACC_PUBLIC)
     PHP_ME(AbstractReport, label, arginfo_abstractreport_label, ZEND_ACC_PUBLIC)
-    ZEND_RAW_FENTRY("summarize", NULL, arginfo_abstractreport_summarize, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT, NULL, NULL)
+    VPHP_ZEND_RAW_FENTRY("summarize", NULL, arginfo_abstractreport_summarize, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
     PHP_FE_END
 };
 
@@ -1715,7 +1744,7 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_article_dump_properties, 0, 1, I
 ZEND_ARG_TYPE_INFO(0, data, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_article_process_with_callback, 0, 1, _IS_BOOL, 0)
-ZEND_ARG_TYPE_INFO(0, callback, IS_MIXED, 0)
+ZEND_ARG_CALLABLE_INFO(0, callback, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_article_restore_author, 0, 1, Author, 0)
 ZEND_ARG_TYPE_INFO(0, authorVal, IS_MIXED, 0)
@@ -2988,17 +3017,17 @@ static int dispatchablesample_register_class(void) {
         dispatchablesample_ce->create_object = vphp_create_object_handler;
         zend_declare_property_string(dispatchablesample_ce, "name", sizeof("name")-1, "", ZEND_ACC_PUBLIC);
         zend_string *attribute_dispatchablesample_0_name = zend_string_init_interned("PhpDispatchable", sizeof("PhpDispatchable")-1, 1);
-        zend_attribute *attribute_dispatchablesample_0 = zend_add_class_attribute(dispatchablesample_ce, attribute_dispatchablesample_0_name, 1);
+        zend_attribute *attribute_dispatchablesample_0 = vphp_zend_add_class_attribute(dispatchablesample_ce, attribute_dispatchablesample_0_name, 1);
         zend_string_release(attribute_dispatchablesample_0_name);
         ZVAL_STR(&attribute_dispatchablesample_0->args[0].value, zend_string_init_interned("worker", sizeof("worker")-1, 1));
         zend_function *method_dispatchablesample_1 = zend_hash_str_find_ptr(&dispatchablesample_ce->function_table, "tagged", sizeof("tagged")-1);
         if (method_dispatchablesample_1 != NULL) {
         zend_string *attribute_dispatchablesample_1_0_0_name = zend_string_init_interned("FromQuery", sizeof("FromQuery")-1, 1);
-        zend_attribute *attribute_dispatchablesample_1_0_0 = zend_add_parameter_attribute(method_dispatchablesample_1, 0, attribute_dispatchablesample_1_0_0_name, 1);
+        zend_attribute *attribute_dispatchablesample_1_0_0 = vphp_zend_add_parameter_attribute(method_dispatchablesample_1, 0, attribute_dispatchablesample_1_0_0_name, 1);
         zend_string_release(attribute_dispatchablesample_1_0_0_name);
         ZVAL_STR(&attribute_dispatchablesample_1_0_0->args[0].value, zend_string_init_interned("name", sizeof("name")-1, 1));
         zend_string *attribute_dispatchablesample_1_0_1_name = zend_string_init_interned("MustBeString", sizeof("MustBeString")-1, 1);
-        zend_attribute *attribute_dispatchablesample_1_0_1 = zend_add_parameter_attribute(method_dispatchablesample_1, 0, attribute_dispatchablesample_1_0_1_name, 0);
+        zend_attribute *attribute_dispatchablesample_1_0_1 = vphp_zend_add_parameter_attribute(method_dispatchablesample_1, 0, attribute_dispatchablesample_1_0_1_name, 0);
         zend_string_release(attribute_dispatchablesample_1_0_1_name);
         }
     }
@@ -3236,6 +3265,7 @@ static const zend_function_entry vphptest_functions[] = {
     PHP_FE(v_php_scalar_strict_api, arginfo_v_php_scalar_strict_api)
     PHP_FE(v_php_semantic_empty_api, arginfo_v_php_semantic_empty_api)
     PHP_FE(v_php_params_struct_api, arginfo_v_php_params_struct_api)
+    PHP_FE(v_php_arg_binding_optional_scalar_api, arginfo_v_php_arg_binding_optional_scalar_api)
     PHP_FE(v_php_direct_arg_camel_api, arginfo_v_php_direct_arg_camel_api)
     PHP_FE(v_php_call_style_arg_attrs_api, arginfo_v_php_call_style_arg_attrs_api)
     PHP_FE(v_php_semantic_params_struct_api, arginfo_v_php_semantic_params_struct_api)
@@ -3243,6 +3273,7 @@ static const zend_function_entry vphptest_functions[] = {
     PHP_FE(v_php_resource_api, arginfo_v_php_resource_api)
     PHP_FE(v_php_wrapper_param_api, arginfo_v_php_wrapper_param_api)
     PHP_FE(v_php_optional_value_api, arginfo_v_php_optional_value_api)
+    PHP_FE(v_php_optional_object_api, arginfo_v_php_optional_object_api)
     PHP_FE(v_php_return_value_api, arginfo_v_php_return_value_api)
     PHP_FE(v_php_return_array_api, arginfo_v_php_return_array_api)
     PHP_FE(v_php_return_object_api, arginfo_v_php_return_object_api)
@@ -3320,18 +3351,18 @@ PHP_MINIT_FUNCTION(vphptest) {
         zend_function *func_v_php_param_attr_api = zend_hash_str_find_ptr(CG(function_table), "v_php_param_attr_api", sizeof("v_php_param_attr_api")-1);
         if (func_v_php_param_attr_api != NULL) {
             zend_string *attribute_v_php_param_attr_api_0_0_name = zend_string_init_interned("FromQuery", sizeof("FromQuery")-1, 1);
-            zend_attribute *attribute_v_php_param_attr_api_0_0 = zend_add_parameter_attribute(func_v_php_param_attr_api, 0, attribute_v_php_param_attr_api_0_0_name, 1);
+            zend_attribute *attribute_v_php_param_attr_api_0_0 = vphp_zend_add_parameter_attribute(func_v_php_param_attr_api, 0, attribute_v_php_param_attr_api_0_0_name, 1);
             zend_string_release(attribute_v_php_param_attr_api_0_0_name);
             ZVAL_STR(&attribute_v_php_param_attr_api_0_0->args[0].value, zend_string_init_interned("q", sizeof("q")-1, 1));
             zend_string *attribute_v_php_param_attr_api_0_1_name = zend_string_init_interned("MustBeString", sizeof("MustBeString")-1, 1);
-            zend_attribute *attribute_v_php_param_attr_api_0_1 = zend_add_parameter_attribute(func_v_php_param_attr_api, 0, attribute_v_php_param_attr_api_0_1_name, 0);
+            zend_attribute *attribute_v_php_param_attr_api_0_1 = vphp_zend_add_parameter_attribute(func_v_php_param_attr_api, 0, attribute_v_php_param_attr_api_0_1_name, 0);
             zend_string_release(attribute_v_php_param_attr_api_0_1_name);
             zend_string *attribute_v_php_param_attr_api_1_0_name = zend_string_init_interned("FromQuery", sizeof("FromQuery")-1, 1);
-            zend_attribute *attribute_v_php_param_attr_api_1_0 = zend_add_parameter_attribute(func_v_php_param_attr_api, 1, attribute_v_php_param_attr_api_1_0_name, 1);
+            zend_attribute *attribute_v_php_param_attr_api_1_0 = vphp_zend_add_parameter_attribute(func_v_php_param_attr_api, 1, attribute_v_php_param_attr_api_1_0_name, 1);
             zend_string_release(attribute_v_php_param_attr_api_1_0_name);
             ZVAL_STR(&attribute_v_php_param_attr_api_1_0->args[0].value, zend_string_init_interned("page", sizeof("page")-1, 1));
             zend_string *attribute_v_php_param_attr_api_1_1_name = zend_string_init_interned("MustBeInt", sizeof("MustBeInt")-1, 1);
-            zend_attribute *attribute_v_php_param_attr_api_1_1 = zend_add_parameter_attribute(func_v_php_param_attr_api, 1, attribute_v_php_param_attr_api_1_1_name, 0);
+            zend_attribute *attribute_v_php_param_attr_api_1_1 = vphp_zend_add_parameter_attribute(func_v_php_param_attr_api, 1, attribute_v_php_param_attr_api_1_1_name, 0);
             zend_string_release(attribute_v_php_param_attr_api_1_1_name);
         }
     }

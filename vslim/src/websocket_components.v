@@ -201,8 +201,7 @@ pub fn (app &VSlimWebSocketApp) broadcast(data string, room string, except_id st
 				continue
 			}
 			mut id_arg := vphp.PhpString.of(id)
-			sent_to_id := app.send_to(vphp.RequestBorrowedZBox.from_zval(id_arg.to_zval()),
-				data)
+			sent_to_id := app.send_to(id_arg.to_borrowed_zbox(), data)
 			id_arg.release()
 			if sent_to_id {
 				sent++
@@ -215,8 +214,7 @@ pub fn (app &VSlimWebSocketApp) broadcast(data string, room string, except_id st
 			continue
 		}
 		mut id_arg := vphp.PhpString.of(id)
-		sent_to_id := app.send_to(vphp.RequestBorrowedZBox.from_zval(id_arg.to_zval()),
-			data)
+		sent_to_id := app.send_to(id_arg.to_borrowed_zbox(), data)
 		id_arg.release()
 		if sent_to_id {
 			sent++
