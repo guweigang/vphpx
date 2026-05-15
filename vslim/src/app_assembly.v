@@ -572,7 +572,7 @@ fn apply_bootstrap_convention_provider_classes(mut app VSlimApp, project_root st
 			return error('provider convention file "${file}" must declare class ${class_name}')
 		}
 		mut class_arg := vphp.PhpString.of(class_name)
-		app.register(vphp.RequestBorrowedZBox.from_zval(class_arg.to_zval()))
+		app.register(class_arg.to_borrowed_zbox())
 		class_arg.release()
 		applied = true
 	}
@@ -588,7 +588,7 @@ fn apply_bootstrap_convention_module_classes(mut app VSlimApp, project_root stri
 			return error('module convention file "${file}" must declare class ${class_name}')
 		}
 		mut class_arg := vphp.PhpString.of(class_name)
-		app.mount_module(vphp.RequestBorrowedZBox.from_zval(class_arg.to_zval()))
+		app.mount_module(class_arg.to_borrowed_zbox())
 		class_arg.release()
 		applied = true
 	}

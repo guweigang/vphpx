@@ -280,7 +280,7 @@ pub fn (c &VSlimStreamOllamaClient) text_response_from_request(request_payload v
 	mut response := vphp.PhpClass.named('VSlim\\Stream\\Response').static_method_request_owned('textWith',
 		vphp.PhpValue.from_zval(chunks), status_arg, content_type_arg,
 		vphp.PhpValue.from_zval(headers))
-	propagate_request_trace_headers_to_object(req, vphp.RequestBorrowedZBox.from_zval(response.to_zval()))
+	propagate_request_trace_headers_to_object(req, response.borrowed())
 	return response
 }
 
@@ -304,7 +304,7 @@ pub fn (c &VSlimStreamOllamaClient) sse_response_from_request(request_payload vp
 	}
 	mut response := vphp.PhpClass.named('VSlim\\Stream\\Response').static_method_request_owned('sseWith',
 		vphp.PhpValue.from_zval(events), status_arg, vphp.PhpValue.from_zval(headers))
-	propagate_request_trace_headers_to_object(req, vphp.RequestBorrowedZBox.from_zval(response.to_zval()))
+	propagate_request_trace_headers_to_object(req, response.borrowed())
 	return response
 }
 

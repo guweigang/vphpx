@@ -195,7 +195,7 @@ fn adapter_read_uploaded_files(request vphp.ZVal) vphp.RequestOwnedZBox {
 		mut out := new_array()
 		return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
 	}
-	return vphp.PhpFunction.named('array_values').request_owned(vphp.PhpValue.from_zval(raw.to_zval()))
+	return vphp.PhpFunction.named('array_values').request_owned(vphp.PhpValue.from_request_borrowed_zbox(raw.borrowed()))
 }
 
 fn adapter_read_server_value(request vphp.ZVal, key string) string {
