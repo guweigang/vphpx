@@ -8,8 +8,9 @@ Article OOP Modifiers Test
 echo "1. Reflection checks:\n";
 
 $rc = new ReflectionClass(Article::class);
+$vphpSupportsProtectedSet = false;
 
-function normalized_modifier_names(int $modifiers): string {
+function stable_modifier_names(int $modifiers): string {
     $names = Reflection::getModifierNames($modifiers);
     $names = array_values(array_filter($names, static fn ($name) => $name !== 'protected(set)'));
     return implode(' ', $names);
@@ -17,14 +18,21 @@ function normalized_modifier_names(int $modifiers): string {
 
 $props = $rc->getProperties();
 foreach ($props as $p) {
-    $modifiers = normalized_modifier_names($p->getModifiers());
+    $modifiers = stable_modifier_names($p->getModifiers());
     echo "Property: " . $p->getName() . " - " . $modifiers . "\n";
+    if ($p->getName() === 'created_at') {
+        $rawModifiers = Reflection::getModifierNames($p->getModifiers());
+        $hasProtectedSet = in_array('protected(set)', $rawModifiers, true);
+        echo "Property: created_at protected_set - " .
+            ($vphpSupportsProtectedSet && PHP_VERSION_ID >= 80500 && $hasProtectedSet ? 'supported' : 'not-supported') .
+            "\n";
+    }
 }
 
 $methods = $rc->getMethods();
 foreach ($methods as $m) {
     // Only check methods we defined, ignore standard ones if any
-    $modifiers = normalized_modifier_names($m->getModifiers());
+    $modifiers = stable_modifier_names($m->getModifiers());
     echo "Method: " . $m->getName() . " - " . $modifiers . "\n";
 }
 
@@ -60,6 +68,7 @@ try {
 Property: post_id - public
 Property: author - public
 Property: created_at - public readonly
+Property: created_at protected_set - not-supported
 Property: id - public
 Property: title - public
 Property: is_top - public
