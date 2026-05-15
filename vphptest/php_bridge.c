@@ -1715,7 +1715,7 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_article_dump_properties, 0, 1, I
 ZEND_ARG_TYPE_INFO(0, data, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_article_process_with_callback, 0, 1, _IS_BOOL, 0)
-ZEND_ARG_TYPE_INFO(0, callback, IS_MIXED, 0)
+ZEND_ARG_CALLABLE_INFO(0, callback, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_article_restore_author, 0, 1, Author, 0)
 ZEND_ARG_TYPE_INFO(0, authorVal, IS_MIXED, 0)
