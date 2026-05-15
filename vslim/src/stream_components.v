@@ -232,7 +232,7 @@ pub fn (c &VSlimStreamOllamaClient) open_stream(payload vphp.RequestBorrowedZBox
 		use_include_path_arg.release()
 	}
 	mut fp := vphp.PhpFunction.named('fopen').request_owned(url_arg, mode_arg, use_include_path_arg,
-		vphp.PhpValue.from_zval(ctx.to_zval()))
+		vphp.PhpValue.from_request_owned_zbox(ctx))
 	defer {
 		fp.release()
 	}
