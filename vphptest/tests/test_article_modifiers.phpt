@@ -9,16 +9,22 @@ echo "1. Reflection checks:\n";
 
 $rc = new ReflectionClass(Article::class);
 
+function normalized_modifier_names(int $modifiers): string {
+    $names = Reflection::getModifierNames($modifiers);
+    $names = array_values(array_filter($names, static fn ($name) => $name !== 'protected(set)'));
+    return implode(' ', $names);
+}
+
 $props = $rc->getProperties();
 foreach ($props as $p) {
-    $modifiers = implode(' ', Reflection::getModifierNames($p->getModifiers()));
+    $modifiers = normalized_modifier_names($p->getModifiers());
     echo "Property: " . $p->getName() . " - " . $modifiers . "\n";
 }
 
 $methods = $rc->getMethods();
 foreach ($methods as $m) {
     // Only check methods we defined, ignore standard ones if any
-    $modifiers = implode(' ', Reflection::getModifierNames($m->getModifiers()));
+    $modifiers = normalized_modifier_names($m->getModifiers());
     echo "Method: " . $m->getName() . " - " . $modifiers . "\n";
 }
 
@@ -53,7 +59,7 @@ try {
 1. Reflection checks:
 Property: post_id - public
 Property: author - public
-Property: created_at - public protected(set) readonly
+Property: created_at - public readonly
 Property: id - public
 Property: title - public
 Property: is_top - public

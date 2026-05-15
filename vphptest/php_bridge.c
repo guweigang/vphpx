@@ -1330,8 +1330,8 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_contentcontract_get_formatted_title, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 static const zend_function_entry contentcontract_methods[] = {
-    ZEND_RAW_FENTRY("save", NULL, arginfo_contentcontract_save, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT, NULL, NULL)
-    ZEND_RAW_FENTRY("get_formatted_title", NULL, arginfo_contentcontract_get_formatted_title, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT, NULL, NULL)
+    VPHP_ZEND_RAW_FENTRY("save", NULL, arginfo_contentcontract_save, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
+    VPHP_ZEND_RAW_FENTRY("get_formatted_title", NULL, arginfo_contentcontract_get_formatted_title, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
     PHP_FE_END
 };
 
@@ -1373,7 +1373,7 @@ zend_class_entry *demo__contracts__aliascontract_ce = NULL;
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_demo__contracts__aliascontract_ping, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 static const zend_function_entry demo__contracts__aliascontract_methods[] = {
-    ZEND_RAW_FENTRY("ping", NULL, arginfo_demo__contracts__aliascontract_ping, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT, NULL, NULL)
+    VPHP_ZEND_RAW_FENTRY("ping", NULL, arginfo_demo__contracts__aliascontract_ping, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
     PHP_FE_END
 };
 
@@ -1445,7 +1445,7 @@ PHP_METHOD(AbstractReport, __construct) {
 static const zend_function_entry abstractreport_methods[] = {
     PHP_ME(AbstractReport, __construct, arginfo_abstractreport___construct, ZEND_ACC_PUBLIC)
     PHP_ME(AbstractReport, label, arginfo_abstractreport_label, ZEND_ACC_PUBLIC)
-    ZEND_RAW_FENTRY("summarize", NULL, arginfo_abstractreport_summarize, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT, NULL, NULL)
+    VPHP_ZEND_RAW_FENTRY("summarize", NULL, arginfo_abstractreport_summarize, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
     PHP_FE_END
 };
 
