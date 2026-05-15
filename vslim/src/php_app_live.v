@@ -416,7 +416,7 @@ fn live_socket_from_frame_metadata(handler vphp.ZVal, frame vphp.ZVal, message v
 	}
 	for key, value in decode_live_assigns_metadata(metadata) {
 		mut value_arg := vphp.PhpString.of(value)
-		created.assign(key, vphp.RequestBorrowedZBox.from_zval(value_arg.to_zval()))
+		created.assign(key, value_arg.to_borrowed_zbox())
 		value_arg.release()
 	}
 	return socket_z, created

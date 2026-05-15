@@ -658,7 +658,7 @@ pub fn (middleware &VSlimSessionStartMiddleware) process(request vphp.RequestBor
 	}
 	mut session := app.session(request)
 	mut result := vphp.PhpObject.borrowed(handler.to_zval()).method_request_owned('handle',
-		vphp.PhpValue.from_zval(request.to_zval()))
+		vphp.PhpValue.from_request_borrowed_zbox(request))
 	defer {
 		result.release()
 	}
@@ -730,7 +730,7 @@ pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.RequestBorr
 		}
 	}
 	mut result := vphp.PhpObject.borrowed(handler.to_zval()).method_request_owned('handle',
-		vphp.PhpValue.from_zval(next_request.to_zval()))
+		vphp.PhpValue.from_request_borrowed_zbox(next_request.borrowed()))
 	defer {
 		result.release()
 	}
@@ -780,7 +780,7 @@ pub fn (middleware &VSlimAuthGuestMiddleware) process(request vphp.RequestBorrow
 		return auth_guest_redirect_psr_response(redirect_path)
 	}
 	mut result := vphp.PhpObject.borrowed(handler.to_zval()).method_request_owned('handle',
-		vphp.PhpValue.from_zval(request.to_zval()))
+		vphp.PhpValue.from_request_borrowed_zbox(request))
 	defer {
 		result.release()
 	}
@@ -859,7 +859,7 @@ pub fn (middleware &VSlimAuthRequireAbilityMiddleware) process(request vphp.Requ
 			'forbidden')
 	}
 	mut result := vphp.PhpObject.borrowed(handler.to_zval()).method_request_owned('handle',
-		vphp.PhpValue.from_zval(request.to_zval()))
+		vphp.PhpValue.from_request_borrowed_zbox(request))
 	defer {
 		result.release()
 	}

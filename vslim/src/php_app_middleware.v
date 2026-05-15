@@ -382,8 +382,9 @@ fn dispatch_php_middleware_entry(mut chain MiddlewareChain, handler vphp.Request
 		defer {
 			next_handler.release()
 		}
-		mut result := vphp.PhpObject.borrowed(target).method_request_owned(method, vphp.PhpValue.from_zval(psr_payload.to_zval()),
-			vphp.PhpValue.from_zval(next_handler.to_zval()))
+		mut result := vphp.PhpObject.borrowed(target).method_request_owned(method,
+			vphp.PhpValue.from_request_borrowed_zbox(psr_payload.borrowed()),
+			vphp.PhpValue.from_request_borrowed_zbox(next_handler.borrowed()))
 		defer {
 			result.release()
 		}
