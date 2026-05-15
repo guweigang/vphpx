@@ -466,6 +466,21 @@ PHP_FUNCTION(v_php_params_struct_api) {
         return;
     }
 }
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_arg_binding_optional_scalar_api, 0, 0, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, count, IS_LONG, 0, "7")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, label, IS_STRING, 0, "\"fallback\"")
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_arg_binding_optional_scalar_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_arg_binding_optional_scalar_api) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_arg_binding_optional_scalar_api(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_direct_arg_camel_api, 0, 2, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, firstName, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, defaultValue, IS_STRING, 0)
@@ -563,6 +578,20 @@ PHP_FUNCTION(v_php_optional_value_api) {
     }
     vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     vphp_wrap_v_php_optional_value_api(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_optional_object_api, 0, 0, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, obj, IS_OBJECT, 1, "null")
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_optional_object_api(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_optional_object_api) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_optional_object_api(ctx);
     if (!vphp_validate_internal_return(execute_data, return_value)) {
         return;
     }
@@ -3236,6 +3265,7 @@ static const zend_function_entry vphptest_functions[] = {
     PHP_FE(v_php_scalar_strict_api, arginfo_v_php_scalar_strict_api)
     PHP_FE(v_php_semantic_empty_api, arginfo_v_php_semantic_empty_api)
     PHP_FE(v_php_params_struct_api, arginfo_v_php_params_struct_api)
+    PHP_FE(v_php_arg_binding_optional_scalar_api, arginfo_v_php_arg_binding_optional_scalar_api)
     PHP_FE(v_php_direct_arg_camel_api, arginfo_v_php_direct_arg_camel_api)
     PHP_FE(v_php_call_style_arg_attrs_api, arginfo_v_php_call_style_arg_attrs_api)
     PHP_FE(v_php_semantic_params_struct_api, arginfo_v_php_semantic_params_struct_api)
@@ -3243,6 +3273,7 @@ static const zend_function_entry vphptest_functions[] = {
     PHP_FE(v_php_resource_api, arginfo_v_php_resource_api)
     PHP_FE(v_php_wrapper_param_api, arginfo_v_php_wrapper_param_api)
     PHP_FE(v_php_optional_value_api, arginfo_v_php_optional_value_api)
+    PHP_FE(v_php_optional_object_api, arginfo_v_php_optional_object_api)
     PHP_FE(v_php_return_value_api, arginfo_v_php_return_value_api)
     PHP_FE(v_php_return_array_api, arginfo_v_php_return_array_api)
     PHP_FE(v_php_return_object_api, arginfo_v_php_return_object_api)

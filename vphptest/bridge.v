@@ -2161,6 +2161,20 @@ fn vphp_wrap_v_php_params_struct_api(ctx vphp.Context) {
     ctx.return().v[string](res)
 }
 
+@[export: 'vphp_wrap_v_php_arg_binding_optional_scalar_api']
+fn vphp_wrap_v_php_arg_binding_optional_scalar_api(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'count', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'label', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := if php_args.has_named_or_index(0, 'count') { php_args.at_named_or_index(0, 'count').as_v[int]() } else { 7 }
+    arg_1 := if php_args.has_named_or_index(1, 'label') { php_args.at_named_or_index(1, 'label').as_v[string]() } else { 'fallback' }
+    res := v_php_arg_binding_optional_scalar_api(arg_0, arg_1)
+    ctx.return().v[string](res)
+}
+
 @[export: 'vphp_wrap_v_php_direct_arg_camel_api']
 fn vphp_wrap_v_php_direct_arg_camel_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
@@ -2295,6 +2309,18 @@ fn vphp_wrap_v_php_optional_value_api(ctx vphp.Context) {
     ])
     arg_0 := if php_args.has_named_or_index(0, 'value') { ?vphp.PhpValue(php_args.at_named_or_index(0, 'value').value) } else { none }
     res := v_php_optional_value_api(arg_0)
+    ctx.return().v[string](res)
+}
+
+@[export: 'vphp_wrap_v_php_optional_object_api']
+fn vphp_wrap_v_php_optional_object_api(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'obj', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'obj').object()
+    res := v_php_optional_object_api(arg_0)
     ctx.return().v[string](res)
 }
 

@@ -795,6 +795,13 @@ fn v_php_params_struct_api(params VPhpParamsStructDemo) string {
 	return 'params=${params.status}:${params.reason_phrase}:${params.secure}:${params.ratio}'
 }
 
+@[php_arg_default(count: '7', label: '"fallback"')]
+@[php_arg_optional(count: true, label: true)]
+@[php_function]
+fn v_php_arg_binding_optional_scalar_api(count int, label string) string {
+	return 'optional_scalar=${count}:${label}'
+}
+
 @[php_function]
 fn v_php_direct_arg_camel_api(first_name string, default_value string) string {
 	return 'direct=${first_name}:${default_value}'
@@ -868,6 +875,13 @@ fn v_php_wrapper_param_api(value vphp.PhpValue, obj vphp.PhpObject, arr vphp.Php
 fn v_php_optional_value_api(value ?vphp.PhpValue) string {
 	actual := value or { return 'optional_value=none' }
 	return 'optional_value=some:${actual.type_name()}:${actual.is_null()}'
+}
+
+@[php_function]
+fn v_php_optional_object_api(obj ?vphp.PhpObject) string {
+	actual := obj or { return 'optional_object=none' }
+	name := actual.prop_v[string]('name') or { '' }
+	return 'optional_object=some:${actual.kind_name()}:${name}'
 }
 
 @[php_function]
