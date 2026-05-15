@@ -226,7 +226,8 @@ fn (mut worker VSlimJobWorker) perform(job VSlimReservedJob) bool {
 	// The job table stores pure JSON data. We decode it only for this request
 	// and pass the transient value directly into userland; no request zval is
 	// retained across requests or worker iterations.
-	mut result := vphp.PhpObject.borrowed(instance).method_request_owned('handle', vphp.PhpValue.from_zval(payload))
+	payload_arg := vphp.PhpValue.from_zval(payload)
+	mut result := vphp.PhpObject.borrowed(instance).method_request_owned('handle', payload_arg)
 	defer {
 		result.release()
 	}
