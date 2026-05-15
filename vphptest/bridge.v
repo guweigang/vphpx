@@ -1043,8 +1043,7 @@ fn vphp_struct_closure_bridge_callableprocessor_struct_closure(v_ptr voidptr, ex
             name: ctx.arg[string](0)
             count: ctx.arg[int](1)
         }
-        res := cb(args)
-        ctx.return().v[string](res)
+        ctx.invoke_struct_closure[VPhpStructClosureCallableProcessorStructClosure, StructClosureArgs, string](cb, args)
     }
 }
 
@@ -2850,8 +2849,7 @@ fn vphp_struct_closure_bridge_v_get_struct_param_closure(v_ptr voidptr, ex &C.ze
             name: ctx.arg[string](0)
             count: ctx.arg[int](1)
         }
-        res := cb(args)
-        ctx.return().v[string](res)
+        ctx.invoke_struct_closure[VPhpStructClosureVGetStructParamClosure, StructClosureArgs, string](cb, args)
     }
 }
 
