@@ -1125,9 +1125,9 @@ pub fn vphp_wrap_finder_find(ptr voidptr, ctx vphp.Context)  {
         vphp.PhpArgMeta{ index: 0, name: 'keyword', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'keyword').as_v[string]()
-    vphp.call_or_null_val[string](fn [arg_0, recv] () ?string {
+    ctx.return().from_option[string](fn [arg_0, recv] () ?string {
         return recv.find(arg_0)
-    }, ctx)
+    })
 }
 @[export: 'vphp_wrap_Finder_index_of']
 pub fn vphp_wrap_finder_index_of(ptr voidptr, ctx vphp.Context)  {
@@ -1138,9 +1138,9 @@ pub fn vphp_wrap_finder_index_of(ptr voidptr, ctx vphp.Context)  {
         vphp.PhpArgMeta{ index: 0, name: 'keyword', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'keyword').as_v[string]()
-    vphp.call_or_null_val[int](fn [arg_0, recv] () ?int {
+    ctx.return().from_option[int](fn [arg_0, recv] () ?int {
         return recv.index_of(arg_0)
-    }, ctx)
+    })
 }
 @[export: 'vphp_wrap_Finder_has_match']
 pub fn vphp_wrap_finder_has_match(ptr voidptr, ctx vphp.Context)  {
@@ -1151,9 +1151,9 @@ pub fn vphp_wrap_finder_has_match(ptr voidptr, ctx vphp.Context)  {
         vphp.PhpArgMeta{ index: 0, name: 'keyword', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'keyword').as_v[string]()
-    vphp.call_or_null_val[bool](fn [arg_0, recv] () ?bool {
+    ctx.return().from_option[bool](fn [arg_0, recv] () ?bool {
         return recv.has_match(arg_0)
-    }, ctx)
+    })
 }
 @[export: 'vphp_wrap_Finder_try_parse_int']
 pub fn vphp_wrap_finder_try_parse_int(ctx vphp.Context)  {
@@ -1163,9 +1163,9 @@ pub fn vphp_wrap_finder_try_parse_int(ctx vphp.Context)  {
         vphp.PhpArgMeta{ index: 0, name: 's', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 's').as_v[string]()
-    vphp.call_or_null_val[int](fn [arg_0] () ?int {
+    ctx.return().from_option[int](fn [arg_0] () ?int {
         return Finder.try_parse_int(arg_0)
-    }, ctx)
+    })
 }
 @[export: 'Finder_handlers']
 pub fn finder_handlers() voidptr {
@@ -1458,9 +1458,9 @@ pub fn vphp_wrap_validator_check(ptr voidptr, ctx vphp.Context)  {
         vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'input').as_v[string]()
-    vphp.call_or_throw_val[bool](fn [arg_0, recv] () !bool {
+    ctx.return().from_result[bool](fn [arg_0, recv] () !bool {
         return recv.check(arg_0)!
-    }, ctx)
+    })
 }
 @[export: 'vphp_wrap_Validator_sanitize']
 pub fn vphp_wrap_validator_sanitize(ptr voidptr, ctx vphp.Context)  {
@@ -1471,9 +1471,9 @@ pub fn vphp_wrap_validator_sanitize(ptr voidptr, ctx vphp.Context)  {
         vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'input').as_v[string]()
-    vphp.call_or_throw_val[string](fn [arg_0, recv] () !string {
+    ctx.return().from_result[string](fn [arg_0, recv] () !string {
         return recv.sanitize(arg_0)!
-    }, ctx)
+    })
 }
 @[export: 'vphp_wrap_Validator_assert_valid']
 pub fn vphp_wrap_validator_assert_valid(ptr voidptr, ctx vphp.Context)  {
@@ -1484,7 +1484,7 @@ pub fn vphp_wrap_validator_assert_valid(ptr voidptr, ctx vphp.Context)  {
         vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'input').as_v[string]()
-    vphp.call_or_throw(fn [arg_0, recv] () ! {
+    ctx.return().from_result_void(fn [arg_0, recv] () ! {
         recv.assert_valid(arg_0)!
     })
 }
@@ -1496,9 +1496,9 @@ pub fn vphp_wrap_validator_parse_int(ctx vphp.Context)  {
         vphp.PhpArgMeta{ index: 0, name: 's', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 's').as_v[string]()
-    vphp.call_or_throw_val[int](fn [arg_0] () !int {
+    ctx.return().from_result[int](fn [arg_0] () !int {
         return Validator.parse_int(arg_0)!
-    }, ctx)
+    })
 }
 @[export: 'Validator_handlers']
 pub fn validator_handlers() voidptr {
@@ -3041,9 +3041,9 @@ fn vphp_wrap_v_find_after(ctx vphp.Context) {
     ])
     arg_0 := php_args.at_named_or_index(0, 'haystack').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'needle').as_v[string]()
-    vphp.call_or_null_val[string](fn [arg_0, arg_1] () ?string {
+    ctx.return().from_option[string](fn [arg_0, arg_1] () ?string {
         return v_find_after(arg_0, arg_1)
-    }, ctx)
+    })
 }
 
 @[export: 'vphp_wrap_v_try_divide']
@@ -3056,9 +3056,9 @@ fn vphp_wrap_v_try_divide(ctx vphp.Context) {
     ])
     arg_0 := php_args.at_named_or_index(0, 'a').as_v[int]()
     arg_1 := php_args.at_named_or_index(1, 'b').as_v[int]()
-    vphp.call_or_null_val[int](fn [arg_0, arg_1] () ?int {
+    ctx.return().from_option[int](fn [arg_0, arg_1] () ?int {
         return v_try_divide(arg_0, arg_1)
-    }, ctx)
+    })
 }
 
 @[export: 'vphp_wrap_v_record_match']
@@ -3073,9 +3073,9 @@ fn vphp_wrap_v_record_match(ctx vphp.Context) {
     arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'haystack').as_v[string]()
     arg_2 := php_args.at_named_or_index(2, 'needle').as_v[string]()
-    vphp.call_or_null(fn [arg_0, arg_1, arg_2] () ? {
+    ctx.return().from_option_void(fn [arg_0, arg_1, arg_2] () ? {
         v_record_match(arg_0, arg_1, arg_2)
-    }, ctx)
+    })
 }
 
 @[export: 'vphp_wrap_v_new_coach']
@@ -3112,9 +3112,9 @@ fn vphp_wrap_v_safe_divide(ctx vphp.Context) {
     ])
     arg_0 := php_args.at_named_or_index(0, 'a').as_v[int]()
     arg_1 := php_args.at_named_or_index(1, 'b').as_v[int]()
-    vphp.call_or_throw_val[int](fn [arg_0, arg_1] () !int {
+    ctx.return().from_result[int](fn [arg_0, arg_1] () !int {
         return v_safe_divide(arg_0, arg_1)!
-    }, ctx)
+    })
 }
 
 @[export: 'vphp_wrap_v_capitalize']
@@ -3125,9 +3125,9 @@ fn vphp_wrap_v_capitalize(ctx vphp.Context) {
         vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'input').as_v[string]()
-    vphp.call_or_throw_val[string](fn [arg_0] () !string {
+    ctx.return().from_result[string](fn [arg_0] () !string {
         return v_capitalize(arg_0)!
-    }, ctx)
+    })
 }
 
 @[export: 'vphp_wrap_v_record_success']
@@ -3140,7 +3140,7 @@ fn vphp_wrap_v_record_success(ctx vphp.Context) {
     ])
     arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'label').as_v[string]()
-    vphp.call_or_throw(fn [arg_0, arg_1] () ! {
+    ctx.return().from_result_void(fn [arg_0, arg_1] () ! {
         v_record_success(arg_0, arg_1)!
     })
 }

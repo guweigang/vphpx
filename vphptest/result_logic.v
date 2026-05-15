@@ -4,7 +4,7 @@ import os
 // Result 桥接测试用例
 // ============================================
 // 本文件用于测试 V Result (!) → PHP Exception 自动桥接。
-// 所有带 ! 返回类型的方法/函数由编译器自动生成 call_or_throw / call_or_throw_val 调用。
+// 所有带 ! 返回类型的方法/函数由编译器自动生成 PhpReturn.from_result* 调用。
 
 // --- Validator 类：测试实例方法 ---
 
