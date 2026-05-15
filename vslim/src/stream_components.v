@@ -6,7 +6,7 @@ import vphp
 @[php_method]
 pub fn VSlimStreamFactory.text(chunks vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	return vphp.PhpClass.named('VSlim\\Stream\\Response').static_method_request_owned('text',
-		vphp.PhpValue.from_zval(chunks.to_zval()))
+		vphp.PhpValue.from_request_borrowed_zbox(chunks))
 }
 
 @[php_arg_name: 'content_type=contentType']
@@ -21,14 +21,14 @@ pub fn VSlimStreamFactory.text_with(chunks vphp.RequestBorrowedZBox, status int,
 		content_type_arg.release()
 	}
 	return vphp.PhpClass.named('VSlim\\Stream\\Response').static_method_request_owned('textWith',
-		vphp.PhpValue.from_zval(chunks.to_zval()), status_arg, content_type_arg,
-		vphp.PhpValue.from_zval(headers.to_zval()))
+		vphp.PhpValue.from_request_borrowed_zbox(chunks), status_arg, content_type_arg,
+		vphp.PhpValue.from_request_borrowed_zbox(headers))
 }
 
 @[php_method]
 pub fn VSlimStreamFactory.sse(events vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
 	return vphp.PhpClass.named('VSlim\\Stream\\Response').static_method_request_owned('sse',
-		vphp.PhpValue.from_zval(events.to_zval()))
+		vphp.PhpValue.from_request_borrowed_zbox(events))
 }
 
 @[php_method: 'sseWith']
@@ -38,7 +38,8 @@ pub fn VSlimStreamFactory.sse_with(events vphp.RequestBorrowedZBox, status int, 
 		status_arg.release()
 	}
 	return vphp.PhpClass.named('VSlim\\Stream\\Response').static_method_request_owned('sseWith',
-		vphp.PhpValue.from_zval(events.to_zval()), status_arg, vphp.PhpValue.from_zval(headers.to_zval()))
+		vphp.PhpValue.from_request_borrowed_zbox(events), status_arg,
+		vphp.PhpValue.from_request_borrowed_zbox(headers))
 }
 
 @[php_arg_name: 'request_payload=requestPayload']

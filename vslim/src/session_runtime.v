@@ -20,8 +20,9 @@ fn auth_request_with_attribute(request vphp.RequestBorrowedZBox, name string, va
 		defer {
 			name_arg.release()
 		}
+		value_arg := vphp.PhpValue.from_zval(value)
 		mut out := vphp.PhpObject.borrowed(raw_request).method_request_owned('withAttribute',
-			name_arg, vphp.PhpValue.from_zval(value))
+			name_arg, value_arg)
 		return out
 	}
 	return request.clone_request_owned()
