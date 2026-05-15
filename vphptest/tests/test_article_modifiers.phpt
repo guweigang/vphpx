@@ -8,31 +8,29 @@ Article OOP Modifiers Test
 echo "1. Reflection checks:\n";
 
 $rc = new ReflectionClass(Article::class);
-$vphpSupportsProtectedSet = false;
 
-function stable_modifier_names(int $modifiers): string {
-    $names = Reflection::getModifierNames($modifiers);
-    $names = array_values(array_filter($names, static fn ($name) => $name !== 'protected(set)'));
-    return implode(' ', $names);
+function version_expected_modifier_names(string $property, int $modifiers): string {
+    $actual = implode(' ', Reflection::getModifierNames($modifiers));
+    $expected = match ($property) {
+        'post_id', 'author', 'id', 'title', 'is_top' => 'public',
+        'created_at' => PHP_VERSION_ID >= 80500 ? 'public protected(set) readonly' : 'public readonly',
+        'content' => 'protected',
+        'total_count' => 'public static',
+        default => $actual,
+    };
+    return $actual === $expected ? 'matches' : 'unexpected:' . $actual;
 }
 
 $props = $rc->getProperties();
 foreach ($props as $p) {
-    $modifiers = stable_modifier_names($p->getModifiers());
+    $modifiers = version_expected_modifier_names($p->getName(), $p->getModifiers());
     echo "Property: " . $p->getName() . " - " . $modifiers . "\n";
-    if ($p->getName() === 'created_at') {
-        $rawModifiers = Reflection::getModifierNames($p->getModifiers());
-        $hasProtectedSet = in_array('protected(set)', $rawModifiers, true);
-        echo "Property: created_at protected_set - " .
-            ($vphpSupportsProtectedSet && PHP_VERSION_ID >= 80500 && $hasProtectedSet ? 'supported' : 'not-supported') .
-            "\n";
-    }
 }
 
 $methods = $rc->getMethods();
 foreach ($methods as $m) {
     // Only check methods we defined, ignore standard ones if any
-    $modifiers = stable_modifier_names($m->getModifiers());
+    $modifiers = implode(' ', Reflection::getModifierNames($m->getModifiers()));
     echo "Method: " . $m->getName() . " - " . $modifiers . "\n";
 }
 
@@ -65,15 +63,14 @@ try {
 ?>
 --EXPECT--
 1. Reflection checks:
-Property: post_id - public
-Property: author - public
-Property: created_at - public readonly
-Property: created_at protected_set - not-supported
-Property: id - public
-Property: title - public
-Property: is_top - public
-Property: content - protected
-Property: total_count - public static
+Property: post_id - matches
+Property: author - matches
+Property: created_at - matches
+Property: id - matches
+Property: title - matches
+Property: is_top - matches
+Property: content - matches
+Property: total_count - matches
 Method: __construct - public
 Method: internal_format - protected
 Method: create - public static
