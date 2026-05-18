@@ -12,7 +12,7 @@ VHTTPD_PID_FILE ?= /tmp/vslim_template_vhttpd.pid
 VHTTPD_EVENT_LOG ?= /tmp/vslim_template_vhttpd.events.ndjson
 VHTTPD_SOCKET ?= /tmp/vslim_template_worker.sock
 WORKER_APP ?= $(ROOT)/public/worker.php
-WORKER_CMD = $(PHP) -d extension=$(EXT) $(VHTTPD_ROOT)/php/package/bin/php-worker
+WORKER_CMD = $(PHP) -d extension=$(EXT) $(VHTTPD_ROOT)/php/package/bin/vphp-worker
 
 .PHONY: help serve vhttpd smoke-vhttpd cli cli-help health home module
 

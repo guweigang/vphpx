@@ -172,8 +172,8 @@
         })
       );
     }
-    if (typeof payload.redirect_to === "string" && payload.redirect_to) {
-      window.location.assign(payload.redirect_to);
+    if (typeof payload.redirectTo === "string" && payload.redirectTo) {
+      window.location.assign(payload.redirectTo);
       return;
     }
     if (typeof payload.navigate_to === "string" && payload.navigate_to && hooks && typeof hooks.navigate === "function") {

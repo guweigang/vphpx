@@ -1,11 +1,12 @@
 {
   "name": "vphpext/vslim-examples",
-  "description": "Composer root for VSlim examples using vphpext/vhttpd package",
+  "description": "Composer root for VSlim examples using vphp/runtime package",
   "type": "project",
   "license": "MIT",
   "require": {
     "php": ">=8.1",
-    "vphpext/vhttpd": "dev-main"
+    "psr/container": "^2.0",
+    "vphp/runtime": "dev-main"
   },
   "repositories": [
     {

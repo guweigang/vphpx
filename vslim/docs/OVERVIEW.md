@@ -46,6 +46,21 @@
 - `vslim` 解决“应用怎么写”
 - `vhttpd` 解决“应用怎么跑”
 
+## vphp Boundary Principle
+
+`VSlim` 运行在 `vphp` 之上，因此它应该消费 `vphp` 的能力，而不是在框架层重新实现一套 PHP runtime。
+
+判断原则：
+
+- 如果代码在表达 PSR、route、middleware、container、controller、stream、MCP 等框架语义，它属于 `VSlim`。
+- 如果代码在处理 PHP 值、参数、返回值、对象调用、函数调用、scope、attribute、lifecycle 或 Zend 边界，应优先判断是不是 `vphp` 的能力缺口。
+- 如果某个 helper 可以被普通扩展复用，例如语义化参数、`PhpArray` 操作、`PhpFunction` / `PhpObject` 调用、PHP attribute 表达、返回值写入或生命周期转换，应补齐到 `vphp`，再让 `VSlim` 调用它。
+- 如果某段逻辑只有 `VSlim` 自己知道业务含义，例如 `VSlimPsr7Response`、route handler、middleware pipeline 或 container binding，它应该留在 `VSlim`。
+
+实践上，`VSlim` 的公开扩展入口应优先使用 V 标量、`@[params]` struct，以及 `vphp.PhpValue`、`vphp.PhpObject`、`vphp.PhpArray`、`vphp.PhpString` 等语义 wrapper。`ZVal`、`RequestBorrowedZBox`、`RequestOwnedZBox`、`PersistentOwnedZBox` 仍然可以出现在框架内部的 Zend/lifecycle 边界，但不应成为普通扩展作者面对的默认 API。
+
+当 `VSlim` 需要把 PHP 值放进 route、middleware、container、connection 或 handler 等长生命周期结构时，应优先调用语义 wrapper 的 `.retain()`。`to_persistent_owned()` 和 `PersistentOwnedZBox.*` 表达的是生命周期实现细节，只适合留在 `vphp` 或非常靠近 storage/lifecycle 的内部边界。
+
 这还可以再分成两条更容易理解的产品线：
 
 - `vhttpd`
@@ -114,10 +129,10 @@
 
 如果不装扩展、只走 Composer package，对应 pure PHP 入口是：
 
-- `VPhp\VSlim\App`
-- `VPhp\VSlim\Stream\*`
-- `VPhp\VSlim\WebSocket\App`
-- `VPhp\VSlim\Mcp\App`
+- `VSlim\App`
+- `VSlim\Stream\*`
+- `VSlim\WebSocket\App`
+- `VSlim\Mcp\App`
 
 ## Main Capabilities
 
