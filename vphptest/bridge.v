@@ -103,6 +103,39 @@ pub fn abstractreport_handlers() voidptr {
         free_raw: voidptr(abstractreport_free_raw)
     )
 }
+pub fn AbstractReport.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.abstractreport_ce)
+}
+
+pub fn AbstractReport.php_object_handlers() voidptr {
+    return abstractreport_handlers()
+}
+
+pub fn AbstractReport.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    mut value := vphp.PhpValue.null()
+    binding := vphp.PhpObjectBinding.new[AbstractReport]()
+    if v_ptr == 0 || !binding.is_valid() {
+        return value.take_zval()
+    }
+    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
+    return value.take_zval()
+}
+
+pub fn (obj &AbstractReport) bind_php_object() vphp.ZVal {
+    return AbstractReport.php_object_zval(obj, .borrowed)
+}
+
+pub fn (obj &AbstractReport) bind_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+}
+
+pub fn (obj &AbstractReport) bind_owned_php_object() vphp.ZVal {
+    return AbstractReport.php_object_zval(obj, .owned_request)
+}
+
+pub fn (obj &AbstractReport) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+}
 
 @[export: 'DailyReport_new_raw']
 pub fn dailyreport_new_raw() voidptr {
@@ -186,6 +219,39 @@ pub fn dailyreport_handlers() voidptr {
         free_raw: voidptr(dailyreport_free_raw)
     )
 }
+pub fn DailyReport.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.dailyreport_ce)
+}
+
+pub fn DailyReport.php_object_handlers() voidptr {
+    return dailyreport_handlers()
+}
+
+pub fn DailyReport.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    mut value := vphp.PhpValue.null()
+    binding := vphp.PhpObjectBinding.new[DailyReport]()
+    if v_ptr == 0 || !binding.is_valid() {
+        return value.take_zval()
+    }
+    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
+    return value.take_zval()
+}
+
+pub fn (obj &DailyReport) bind_php_object() vphp.ZVal {
+    return DailyReport.php_object_zval(obj, .borrowed)
+}
+
+pub fn (obj &DailyReport) bind_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+}
+
+pub fn (obj &DailyReport) bind_owned_php_object() vphp.ZVal {
+    return DailyReport.php_object_zval(obj, .owned_request)
+}
+
+pub fn (obj &DailyReport) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+}
 
 @[export: 'Author_new_raw']
 pub fn author_new_raw() voidptr {
@@ -266,6 +332,39 @@ pub fn author_handlers() voidptr {
         free_raw: voidptr(author_free_raw)
     )
 }
+pub fn Author.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.author_ce)
+}
+
+pub fn Author.php_object_handlers() voidptr {
+    return author_handlers()
+}
+
+pub fn Author.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    mut value := vphp.PhpValue.null()
+    binding := vphp.PhpObjectBinding.new[Author]()
+    if v_ptr == 0 || !binding.is_valid() {
+        return value.take_zval()
+    }
+    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
+    return value.take_zval()
+}
+
+pub fn (obj &Author) bind_php_object() vphp.ZVal {
+    return Author.php_object_zval(obj, .borrowed)
+}
+
+pub fn (obj &Author) bind_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+}
+
+pub fn (obj &Author) bind_owned_php_object() vphp.ZVal {
+    return Author.php_object_zval(obj, .owned_request)
+}
+
+pub fn (obj &Author) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+}
 
 @[export: 'Post_new_raw']
 pub fn post_new_raw() voidptr {
@@ -345,6 +444,39 @@ pub fn post_handlers() voidptr {
         cleanup_raw: voidptr(post_cleanup_raw),
         free_raw: voidptr(post_free_raw)
     )
+}
+pub fn Post.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.post_ce)
+}
+
+pub fn Post.php_object_handlers() voidptr {
+    return post_handlers()
+}
+
+pub fn Post.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    mut value := vphp.PhpValue.null()
+    binding := vphp.PhpObjectBinding.new[Post]()
+    if v_ptr == 0 || !binding.is_valid() {
+        return value.take_zval()
+    }
+    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
+    return value.take_zval()
+}
+
+pub fn (obj &Post) bind_php_object() vphp.ZVal {
+    return Post.php_object_zval(obj, .borrowed)
+}
+
+pub fn (obj &Post) bind_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+}
+
+pub fn (obj &Post) bind_owned_php_object() vphp.ZVal {
+    return Post.php_object_zval(obj, .owned_request)
+}
+
+pub fn (obj &Post) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
 }
 
 @[export: 'Article_new_raw']
@@ -549,6 +681,39 @@ pub fn article_handlers() voidptr {
         free_raw: voidptr(article_free_raw)
     )
 }
+pub fn Article.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.article_ce)
+}
+
+pub fn Article.php_object_handlers() voidptr {
+    return article_handlers()
+}
+
+pub fn Article.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    mut value := vphp.PhpValue.null()
+    binding := vphp.PhpObjectBinding.new[Article]()
+    if v_ptr == 0 || !binding.is_valid() {
+        return value.take_zval()
+    }
+    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
+    return value.take_zval()
+}
+
+pub fn (obj &Article) bind_php_object() vphp.ZVal {
+    return Article.php_object_zval(obj, .borrowed)
+}
+
+pub fn (obj &Article) bind_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+}
+
+pub fn (obj &Article) bind_owned_php_object() vphp.ZVal {
+    return Article.php_object_zval(obj, .owned_request)
+}
+
+pub fn (obj &Article) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+}
 
 @[export: 'Story_new_raw']
 pub fn story_new_raw() voidptr {
@@ -631,6 +796,39 @@ pub fn story_handlers() voidptr {
         free_raw: voidptr(story_free_raw)
     )
 }
+pub fn Story.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.story_ce)
+}
+
+pub fn Story.php_object_handlers() voidptr {
+    return story_handlers()
+}
+
+pub fn Story.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    mut value := vphp.PhpValue.null()
+    binding := vphp.PhpObjectBinding.new[Story]()
+    if v_ptr == 0 || !binding.is_valid() {
+        return value.take_zval()
+    }
+    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
+    return value.take_zval()
+}
+
+pub fn (obj &Story) bind_php_object() vphp.ZVal {
+    return Story.php_object_zval(obj, .borrowed)
+}
+
+pub fn (obj &Story) bind_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+}
+
+pub fn (obj &Story) bind_owned_php_object() vphp.ZVal {
+    return Story.php_object_zval(obj, .owned_request)
+}
+
+pub fn (obj &Story) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+}
 
 @[export: 'AliasBase_new_raw']
 pub fn aliasbase_new_raw() voidptr {
@@ -703,6 +901,39 @@ pub fn aliasbase_handlers() voidptr {
         cleanup_raw: voidptr(aliasbase_cleanup_raw),
         free_raw: voidptr(aliasbase_free_raw)
     )
+}
+pub fn AliasBase.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.demo__contracts__aliasbase_ce)
+}
+
+pub fn AliasBase.php_object_handlers() voidptr {
+    return aliasbase_handlers()
+}
+
+pub fn AliasBase.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    mut value := vphp.PhpValue.null()
+    binding := vphp.PhpObjectBinding.new[AliasBase]()
+    if v_ptr == 0 || !binding.is_valid() {
+        return value.take_zval()
+    }
+    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
+    return value.take_zval()
+}
+
+pub fn (obj &AliasBase) bind_php_object() vphp.ZVal {
+    return AliasBase.php_object_zval(obj, .borrowed)
+}
+
+pub fn (obj &AliasBase) bind_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+}
+
+pub fn (obj &AliasBase) bind_owned_php_object() vphp.ZVal {
+    return AliasBase.php_object_zval(obj, .owned_request)
+}
+
+pub fn (obj &AliasBase) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
 }
 
 @[export: 'AliasWorker_new_raw']
@@ -803,6 +1034,39 @@ pub fn aliasworker_handlers() voidptr {
         free_raw: voidptr(aliasworker_free_raw)
     )
 }
+pub fn AliasWorker.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.aliasworker_ce)
+}
+
+pub fn AliasWorker.php_object_handlers() voidptr {
+    return aliasworker_handlers()
+}
+
+pub fn AliasWorker.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    mut value := vphp.PhpValue.null()
+    binding := vphp.PhpObjectBinding.new[AliasWorker]()
+    if v_ptr == 0 || !binding.is_valid() {
+        return value.take_zval()
+    }
+    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
+    return value.take_zval()
+}
+
+pub fn (obj &AliasWorker) bind_php_object() vphp.ZVal {
+    return AliasWorker.php_object_zval(obj, .borrowed)
+}
+
+pub fn (obj &AliasWorker) bind_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+}
+
+pub fn (obj &AliasWorker) bind_owned_php_object() vphp.ZVal {
+    return AliasWorker.php_object_zval(obj, .owned_request)
+}
+
+pub fn (obj &AliasWorker) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+}
 
 @[export: 'RuntimeDemoBaseException_new_raw']
 pub fn runtimedemobaseexception_new_raw() voidptr {
@@ -863,6 +1127,39 @@ pub fn runtimedemobaseexception_handlers() voidptr {
         free_raw: voidptr(runtimedemobaseexception_free_raw)
     )
 }
+pub fn RuntimeDemoBaseException.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.runtimedemo__baseexception_ce)
+}
+
+pub fn RuntimeDemoBaseException.php_object_handlers() voidptr {
+    return runtimedemobaseexception_handlers()
+}
+
+pub fn RuntimeDemoBaseException.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    mut value := vphp.PhpValue.null()
+    binding := vphp.PhpObjectBinding.new[RuntimeDemoBaseException]()
+    if v_ptr == 0 || !binding.is_valid() {
+        return value.take_zval()
+    }
+    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
+    return value.take_zval()
+}
+
+pub fn (obj &RuntimeDemoBaseException) bind_php_object() vphp.ZVal {
+    return RuntimeDemoBaseException.php_object_zval(obj, .borrowed)
+}
+
+pub fn (obj &RuntimeDemoBaseException) bind_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+}
+
+pub fn (obj &RuntimeDemoBaseException) bind_owned_php_object() vphp.ZVal {
+    return RuntimeDemoBaseException.php_object_zval(obj, .owned_request)
+}
+
+pub fn (obj &RuntimeDemoBaseException) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+}
 
 @[export: 'RuntimeDemoChildException_new_raw']
 pub fn runtimedemochildexception_new_raw() voidptr {
@@ -922,6 +1219,39 @@ pub fn runtimedemochildexception_handlers() voidptr {
         cleanup_raw: voidptr(runtimedemochildexception_cleanup_raw),
         free_raw: voidptr(runtimedemochildexception_free_raw)
     )
+}
+pub fn RuntimeDemoChildException.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.runtimedemo__childexception_ce)
+}
+
+pub fn RuntimeDemoChildException.php_object_handlers() voidptr {
+    return runtimedemochildexception_handlers()
+}
+
+pub fn RuntimeDemoChildException.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    mut value := vphp.PhpValue.null()
+    binding := vphp.PhpObjectBinding.new[RuntimeDemoChildException]()
+    if v_ptr == 0 || !binding.is_valid() {
+        return value.take_zval()
+    }
+    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
+    return value.take_zval()
+}
+
+pub fn (obj &RuntimeDemoChildException) bind_php_object() vphp.ZVal {
+    return RuntimeDemoChildException.php_object_zval(obj, .borrowed)
+}
+
+pub fn (obj &RuntimeDemoChildException) bind_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+}
+
+pub fn (obj &RuntimeDemoChildException) bind_owned_php_object() vphp.ZVal {
+    return RuntimeDemoChildException.php_object_zval(obj, .owned_request)
+}
+
+pub fn (obj &RuntimeDemoChildException) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
 }
 
 @[export: 'CallableProcessor_new_raw']
@@ -1070,6 +1400,39 @@ pub fn callableprocessor_handlers() voidptr {
         free_raw: voidptr(callableprocessor_free_raw)
     )
 }
+pub fn CallableProcessor.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.callableprocessor_ce)
+}
+
+pub fn CallableProcessor.php_object_handlers() voidptr {
+    return callableprocessor_handlers()
+}
+
+pub fn CallableProcessor.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    mut value := vphp.PhpValue.null()
+    binding := vphp.PhpObjectBinding.new[CallableProcessor]()
+    if v_ptr == 0 || !binding.is_valid() {
+        return value.take_zval()
+    }
+    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
+    return value.take_zval()
+}
+
+pub fn (obj &CallableProcessor) bind_php_object() vphp.ZVal {
+    return CallableProcessor.php_object_zval(obj, .borrowed)
+}
+
+pub fn (obj &CallableProcessor) bind_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+}
+
+pub fn (obj &CallableProcessor) bind_owned_php_object() vphp.ZVal {
+    return CallableProcessor.php_object_zval(obj, .owned_request)
+}
+
+pub fn (obj &CallableProcessor) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+}
 
 @[export: 'Finder_new_raw']
 pub fn finder_new_raw() voidptr {
@@ -1178,6 +1541,39 @@ pub fn finder_handlers() voidptr {
         free_raw: voidptr(finder_free_raw)
     )
 }
+pub fn Finder.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.finder_ce)
+}
+
+pub fn Finder.php_object_handlers() voidptr {
+    return finder_handlers()
+}
+
+pub fn Finder.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    mut value := vphp.PhpValue.null()
+    binding := vphp.PhpObjectBinding.new[Finder]()
+    if v_ptr == 0 || !binding.is_valid() {
+        return value.take_zval()
+    }
+    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
+    return value.take_zval()
+}
+
+pub fn (obj &Finder) bind_php_object() vphp.ZVal {
+    return Finder.php_object_zval(obj, .borrowed)
+}
+
+pub fn (obj &Finder) bind_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+}
+
+pub fn (obj &Finder) bind_owned_php_object() vphp.ZVal {
+    return Finder.php_object_zval(obj, .owned_request)
+}
+
+pub fn (obj &Finder) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+}
 
 @[export: 'ReadonlyRecord_new_raw']
 pub fn readonlyrecord_new_raw() voidptr {
@@ -1263,6 +1659,39 @@ pub fn readonlyrecord_handlers() voidptr {
         cleanup_raw: voidptr(readonlyrecord_cleanup_raw),
         free_raw: voidptr(readonlyrecord_free_raw)
     )
+}
+pub fn ReadonlyRecord.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.readonlyrecord_ce)
+}
+
+pub fn ReadonlyRecord.php_object_handlers() voidptr {
+    return readonlyrecord_handlers()
+}
+
+pub fn ReadonlyRecord.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    mut value := vphp.PhpValue.null()
+    binding := vphp.PhpObjectBinding.new[ReadonlyRecord]()
+    if v_ptr == 0 || !binding.is_valid() {
+        return value.take_zval()
+    }
+    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
+    return value.take_zval()
+}
+
+pub fn (obj &ReadonlyRecord) bind_php_object() vphp.ZVal {
+    return ReadonlyRecord.php_object_zval(obj, .borrowed)
+}
+
+pub fn (obj &ReadonlyRecord) bind_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+}
+
+pub fn (obj &ReadonlyRecord) bind_owned_php_object() vphp.ZVal {
+    return ReadonlyRecord.php_object_zval(obj, .owned_request)
+}
+
+pub fn (obj &ReadonlyRecord) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
 }
 
 @[export: 'TraitPost_new_raw']
@@ -1386,6 +1815,39 @@ pub fn traitpost_handlers() voidptr {
         cleanup_raw: voidptr(traitpost_cleanup_raw),
         free_raw: voidptr(traitpost_free_raw)
     )
+}
+pub fn TraitPost.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.traitpost_ce)
+}
+
+pub fn TraitPost.php_object_handlers() voidptr {
+    return traitpost_handlers()
+}
+
+pub fn TraitPost.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    mut value := vphp.PhpValue.null()
+    binding := vphp.PhpObjectBinding.new[TraitPost]()
+    if v_ptr == 0 || !binding.is_valid() {
+        return value.take_zval()
+    }
+    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
+    return value.take_zval()
+}
+
+pub fn (obj &TraitPost) bind_php_object() vphp.ZVal {
+    return TraitPost.php_object_zval(obj, .borrowed)
+}
+
+pub fn (obj &TraitPost) bind_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+}
+
+pub fn (obj &TraitPost) bind_owned_php_object() vphp.ZVal {
+    return TraitPost.php_object_zval(obj, .owned_request)
+}
+
+pub fn (obj &TraitPost) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
 }
 
 @[export: 'Validator_new_raw']
@@ -1511,6 +1973,39 @@ pub fn validator_handlers() voidptr {
         free_raw: voidptr(validator_free_raw)
     )
 }
+pub fn Validator.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.validator_ce)
+}
+
+pub fn Validator.php_object_handlers() voidptr {
+    return validator_handlers()
+}
+
+pub fn Validator.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    mut value := vphp.PhpValue.null()
+    binding := vphp.PhpObjectBinding.new[Validator]()
+    if v_ptr == 0 || !binding.is_valid() {
+        return value.take_zval()
+    }
+    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
+    return value.take_zval()
+}
+
+pub fn (obj &Validator) bind_php_object() vphp.ZVal {
+    return Validator.php_object_zval(obj, .borrowed)
+}
+
+pub fn (obj &Validator) bind_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+}
+
+pub fn (obj &Validator) bind_owned_php_object() vphp.ZVal {
+    return Validator.php_object_zval(obj, .owned_request)
+}
+
+pub fn (obj &Validator) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+}
 
 @[export: 'DispatchableSample_new_raw']
 pub fn dispatchablesample_new_raw() voidptr {
@@ -1596,6 +2091,39 @@ pub fn dispatchablesample_handlers() voidptr {
         free_raw: voidptr(dispatchablesample_free_raw)
     )
 }
+pub fn DispatchableSample.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.dispatchablesample_ce)
+}
+
+pub fn DispatchableSample.php_object_handlers() voidptr {
+    return dispatchablesample_handlers()
+}
+
+pub fn DispatchableSample.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    mut value := vphp.PhpValue.null()
+    binding := vphp.PhpObjectBinding.new[DispatchableSample]()
+    if v_ptr == 0 || !binding.is_valid() {
+        return value.take_zval()
+    }
+    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
+    return value.take_zval()
+}
+
+pub fn (obj &DispatchableSample) bind_php_object() vphp.ZVal {
+    return DispatchableSample.php_object_zval(obj, .borrowed)
+}
+
+pub fn (obj &DispatchableSample) bind_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+}
+
+pub fn (obj &DispatchableSample) bind_owned_php_object() vphp.ZVal {
+    return DispatchableSample.php_object_zval(obj, .owned_request)
+}
+
+pub fn (obj &DispatchableSample) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+}
 
 @[export: 'VPhpTask_new_raw']
 pub fn vphptask_new_raw() voidptr {
@@ -1664,6 +2192,39 @@ pub fn vphptask_handlers() voidptr {
         cleanup_raw: voidptr(vphptask_cleanup_raw),
         free_raw: voidptr(vphptask_free_raw)
     )
+}
+pub fn VPhpTask.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.vphp__task_ce)
+}
+
+pub fn VPhpTask.php_object_handlers() voidptr {
+    return vphptask_handlers()
+}
+
+pub fn VPhpTask.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    mut value := vphp.PhpValue.null()
+    binding := vphp.PhpObjectBinding.new[VPhpTask]()
+    if v_ptr == 0 || !binding.is_valid() {
+        return value.take_zval()
+    }
+    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
+    return value.take_zval()
+}
+
+pub fn (obj &VPhpTask) bind_php_object() vphp.ZVal {
+    return VPhpTask.php_object_zval(obj, .borrowed)
+}
+
+pub fn (obj &VPhpTask) bind_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+}
+
+pub fn (obj &VPhpTask) bind_owned_php_object() vphp.ZVal {
+    return VPhpTask.php_object_zval(obj, .owned_request)
+}
+
+pub fn (obj &VPhpTask) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
 }
 
 @[export: 'StringableBox_new_raw']
@@ -1745,6 +2306,39 @@ pub fn stringablebox_handlers() voidptr {
         cleanup_raw: voidptr(stringablebox_cleanup_raw),
         free_raw: voidptr(stringablebox_free_raw)
     )
+}
+pub fn StringableBox.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.stringablebox_ce)
+}
+
+pub fn StringableBox.php_object_handlers() voidptr {
+    return stringablebox_handlers()
+}
+
+pub fn StringableBox.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    mut value := vphp.PhpValue.null()
+    binding := vphp.PhpObjectBinding.new[StringableBox]()
+    if v_ptr == 0 || !binding.is_valid() {
+        return value.take_zval()
+    }
+    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
+    return value.take_zval()
+}
+
+pub fn (obj &StringableBox) bind_php_object() vphp.ZVal {
+    return StringableBox.php_object_zval(obj, .borrowed)
+}
+
+pub fn (obj &StringableBox) bind_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+}
+
+pub fn (obj &StringableBox) bind_owned_php_object() vphp.ZVal {
+    return StringableBox.php_object_zval(obj, .owned_request)
+}
+
+pub fn (obj &StringableBox) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
 }
 
 @[export: 'vphp_wrap_v_add']

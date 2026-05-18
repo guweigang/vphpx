@@ -1160,7 +1160,7 @@ fn v_include_php_file(ctx vphp.Context) {
 		vphp.throw_exception('include 失败: ${path}', 0)
 		return
 	}
-	ctx.return_zval(result)
+	ctx.return_value(result)
 }
 
 @[php_function]
@@ -1171,7 +1171,7 @@ fn v_include_php_file_once(ctx vphp.Context) {
 		vphp.throw_exception('include_once 失败: ${path}', 0)
 		return
 	}
-	ctx.return_zval(result)
+	ctx.return_value(result)
 }
 
 @[php_function]
@@ -1183,6 +1183,10 @@ fn v_include_php_module_demo(ctx vphp.Context) {
 		return
 	}
 	if !config.is_array() {
+		vphp.throw_exception('fixture 必须返回 array', 0)
+		return
+	}
+	config_array := config.require_array() or {
 		vphp.throw_exception('fixture 必须返回 array', 0)
 		return
 	}
@@ -1204,11 +1208,11 @@ fn v_include_php_module_demo(ctx vphp.Context) {
 	}
 
 	mut entries := []string{}
-	entries = config.foreach_with_ctx[[]string](entries, fn (key vphp.ZVal, val vphp.ZVal, mut acc []string) {
+	entries = config_array.fold[[]string](entries, fn (key vphp.ZVal, val vphp.ZVal, mut acc []string) {
 		acc << '${key.to_string()}=${val.to_string()}'
 	})
 
-	ctx.return_string('count=${config.array_count()}|class=${class_name}|short=${short_name}|desc=${desc}|items=${entries.join(',')}')
+	ctx.return_string('count=${config_array.count()}|class=${class_name}|short=${short_name}|desc=${desc}|items=${entries.join(',')}')
 }
 
 @[php_function]
