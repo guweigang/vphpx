@@ -3,7 +3,7 @@ module main
 import strings
 import vphp
 
-fn (view &VSlimView) render_template_path_with_slots(path string, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZBox, depth int, slots map[string]string) !string {
+fn (view &VSlimView) render_template_path_with_slots(path string, scalars map[string]string, lists map[string][]string, objects map[string]vphp.PhpValue, depth int, slots map[string]string) !string {
 	if depth > 8 {
 		return ''
 	}
@@ -13,7 +13,7 @@ fn (view &VSlimView) render_template_path_with_slots(path string, scalars map[st
 
 @[php_method: 'renderResponse']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-pub fn (view &VSlimView) render_response(template string, data vphp.RequestBorrowedZBox) &VSlimPsr7Response {
+pub fn (view &VSlimView) render_response(template string, data vphp.PhpValue) &VSlimPsr7Response {
 	body := view.render(template, data)
 	mut res := VSlimResponse{}
 	res.construct(200, body, 'text/html; charset=utf-8')
@@ -22,7 +22,7 @@ pub fn (view &VSlimView) render_response(template string, data vphp.RequestBorro
 
 @[php_method: 'renderResponseWithLayout']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-pub fn (view &VSlimView) render_response_with_layout(template string, layout string, data vphp.RequestBorrowedZBox) &VSlimPsr7Response {
+pub fn (view &VSlimView) render_response_with_layout(template string, layout string, data vphp.PhpValue) &VSlimPsr7Response {
 	body := view.render_with_layout(template, layout, data)
 	mut res := VSlimResponse{}
 	res.construct(200, body, 'text/html; charset=utf-8')
@@ -31,10 +31,10 @@ pub fn (view &VSlimView) render_response_with_layout(template string, layout str
 
 fn (view &VSlimView) render_source(source string, scalars map[string]string, lists map[string][]string, depth int) string {
 	program := compile_template_program(source)
-	return view.render_nodes(program.nodes, scalars, lists, map[string]vphp.RequestOwnedZBox{}, depth, map[string]string{}, '<inline>')
+	return view.render_nodes(program.nodes, scalars, lists, map[string]vphp.PhpValue{}, depth, map[string]string{}, '<inline>')
 }
 
-fn (view &VSlimView) render_nodes(nodes []TemplateNode, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZBox, depth int, slots map[string]string, template_path string) string {
+fn (view &VSlimView) render_nodes(nodes []TemplateNode, scalars map[string]string, lists map[string][]string, objects map[string]vphp.PhpValue, depth int, slots map[string]string, template_path string) string {
 	mut out := strings.new_builder(nodes.len * 16)
 	for node in nodes {
 		match node.kind {
@@ -105,7 +105,7 @@ fn (view &VSlimView) render_nodes(nodes []TemplateNode, scalars map[string]strin
 	return out.str()
 }
 
-fn (view &VSlimView) render_template_content_and_slots(nodes []TemplateNode, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZBox, depth int, template_path string) (string, map[string]string) {
+fn (view &VSlimView) render_template_content_and_slots(nodes []TemplateNode, scalars map[string]string, lists map[string][]string, objects map[string]vphp.PhpValue, depth int, template_path string) (string, map[string]string) {
 	mut content_nodes := []TemplateNode{}
 	mut slots := map[string]string{}
 	for node in nodes {
@@ -127,7 +127,7 @@ fn (view &VSlimView) render_template_content_and_slots(nodes []TemplateNode, sca
 	return view.render_nodes(content_nodes, scalars, lists, objects, depth, slots, template_path), slots
 }
 
-fn (view &VSlimView) render_include_node(node TemplateNode, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZBox, depth int, slots map[string]string, template_path string) string {
+fn (view &VSlimView) render_include_node(node TemplateNode, scalars map[string]string, lists map[string][]string, objects map[string]vphp.PhpValue, depth int, slots map[string]string, template_path string) string {
 	mut merged_scalars := scalars.clone()
 	mut merged_lists := clone_template_lists(lists)
 	mut merged_objects := clone_template_objects(objects)
@@ -137,7 +137,7 @@ fn (view &VSlimView) render_include_node(node TemplateNode, scalars map[string]s
 	}
 }
 
-fn apply_include_arg_nodes(view &VSlimView, args []TemplateIncludeArg, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZBox, template_path string, mut out_scalars map[string]string, mut out_lists map[string][]string, mut out_objects map[string]vphp.RequestOwnedZBox) {
+fn apply_include_arg_nodes(view &VSlimView, args []TemplateIncludeArg, scalars map[string]string, lists map[string][]string, objects map[string]vphp.PhpValue, template_path string, mut out_scalars map[string]string, mut out_lists map[string][]string, mut out_objects map[string]vphp.PhpValue) {
 	for arg in args {
 		key := arg.name.trim_space()
 		if key == '' {
@@ -153,7 +153,7 @@ fn apply_include_arg_nodes(view &VSlimView, args []TemplateIncludeArg, scalars m
 				copy_template_branch(value.map_path, key, scalars, lists, objects, mut out_scalars, mut out_lists, mut out_objects)
 			}
 			.object {
-				out_objects[key] = value.object.clone_request_owned()
+				out_objects[key] = value.object.owned()
 				out_scalars[key] = value.object.to_string()
 			}
 			.scalar {
@@ -163,7 +163,7 @@ fn apply_include_arg_nodes(view &VSlimView, args []TemplateIncludeArg, scalars m
 	}
 }
 
-fn (view &VSlimView) render_for_node(node TemplateNode, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZBox, depth int, slots map[string]string, template_path string) string {
+fn (view &VSlimView) render_for_node(node TemplateNode, scalars map[string]string, lists map[string][]string, objects map[string]vphp.PhpValue, depth int, slots map[string]string, template_path string) string {
 	mut out := strings.new_builder(64)
 	items := if node.name in lists {
 		unsafe { lists[node.name].clone() }

@@ -7,8 +7,7 @@ import vphp
 struct VSlimCliApp {
 mut:
 	core_app_ref      &VSlimApp = unsafe { nil } @[php_ignore]
-	core_app_zref     vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null() @[php_ignore]
-	command_handlers  map[string]vphp.PersistentOwnedZBox @[php_ignore]
+	command_handlers  map[string]vphp.PhpValue @[php_ignore]
 	command_order     []string @[php_ignore]
 	command_aliases   map[string][]string @[php_ignore]
 	command_hidden    map[string]bool @[php_ignore]

@@ -120,9 +120,9 @@ pub fn (logger &VSlimLogger) channel() string {
 }
 
 @[php_method: 'setContext']
-pub fn (mut logger VSlimLogger) set_context(context vphp.RequestBorrowedZBox) &VSlimLogger {
+pub fn (mut logger VSlimLogger) set_context(context vphp.PhpArray) &VSlimLogger {
 	ensure_vslim_logger(mut logger)
-	logger.context = normalize_log_context(context.to_zval())
+	logger.context = normalize_log_context(context)
 	return logger
 }
 
@@ -214,9 +214,9 @@ pub fn (mut logger VSlimLogger) log(level string, message string) &VSlimLogger {
 }
 
 @[php_method: 'logContext']
-pub fn (mut logger VSlimLogger) log_context(level string, message string, context vphp.RequestBorrowedZBox) &VSlimLogger {
+pub fn (mut logger VSlimLogger) log_context(level string, message string, context vphp.PhpArray) &VSlimLogger {
 	ensure_vslim_logger(mut logger)
-	vslim_logger_write(mut logger, level, message, normalize_log_context(context.to_zval()))
+	vslim_logger_write(mut logger, level, message, normalize_log_context(context))
 	return logger
 }
 
@@ -226,7 +226,7 @@ pub fn (mut logger VSlimLogger) debug(message string) &VSlimLogger {
 }
 
 @[php_method: 'debugContext']
-pub fn (mut logger VSlimLogger) debug_context(message string, context vphp.RequestBorrowedZBox) &VSlimLogger {
+pub fn (mut logger VSlimLogger) debug_context(message string, context vphp.PhpArray) &VSlimLogger {
 	return logger.log_context('debug', message, context)
 }
 
@@ -236,7 +236,7 @@ pub fn (mut logger VSlimLogger) info(message string) &VSlimLogger {
 }
 
 @[php_method: 'infoContext']
-pub fn (mut logger VSlimLogger) info_context(message string, context vphp.RequestBorrowedZBox) &VSlimLogger {
+pub fn (mut logger VSlimLogger) info_context(message string, context vphp.PhpArray) &VSlimLogger {
 	return logger.log_context('info', message, context)
 }
 
@@ -246,7 +246,7 @@ pub fn (mut logger VSlimLogger) warn(message string) &VSlimLogger {
 }
 
 @[php_method: 'warnContext']
-pub fn (mut logger VSlimLogger) warn_context(message string, context vphp.RequestBorrowedZBox) &VSlimLogger {
+pub fn (mut logger VSlimLogger) warn_context(message string, context vphp.PhpArray) &VSlimLogger {
 	return logger.log_context('warn', message, context)
 }
 
@@ -256,7 +256,7 @@ pub fn (mut logger VSlimLogger) error(message string) &VSlimLogger {
 }
 
 @[php_method: 'errorContext']
-pub fn (mut logger VSlimLogger) error_context(message string, context vphp.RequestBorrowedZBox) &VSlimLogger {
+pub fn (mut logger VSlimLogger) error_context(message string, context vphp.PhpArray) &VSlimLogger {
 	return logger.log_context('error', message, context)
 }
 
@@ -266,7 +266,7 @@ pub fn (mut logger VSlimLogger) warning(message string) &VSlimLogger {
 }
 
 @[php_method: 'warningContext']
-pub fn (mut logger VSlimLogger) warning_context(message string, context vphp.RequestBorrowedZBox) &VSlimLogger {
+pub fn (mut logger VSlimLogger) warning_context(message string, context vphp.PhpArray) &VSlimLogger {
 	return logger.warn_context(message, context)
 }
 
@@ -276,7 +276,7 @@ pub fn (mut logger VSlimLogger) notice(message string) &VSlimLogger {
 }
 
 @[php_method: 'noticeContext']
-pub fn (mut logger VSlimLogger) notice_context(message string, context vphp.RequestBorrowedZBox) &VSlimLogger {
+pub fn (mut logger VSlimLogger) notice_context(message string, context vphp.PhpArray) &VSlimLogger {
 	return logger.log_context('notice', message, context)
 }
 
@@ -286,7 +286,7 @@ pub fn (mut logger VSlimLogger) critical(message string) &VSlimLogger {
 }
 
 @[php_method: 'criticalContext']
-pub fn (mut logger VSlimLogger) critical_context(message string, context vphp.RequestBorrowedZBox) &VSlimLogger {
+pub fn (mut logger VSlimLogger) critical_context(message string, context vphp.PhpArray) &VSlimLogger {
 	return logger.log_context('critical', message, context)
 }
 
@@ -296,7 +296,7 @@ pub fn (mut logger VSlimLogger) alert(message string) &VSlimLogger {
 }
 
 @[php_method: 'alertContext']
-pub fn (mut logger VSlimLogger) alert_context(message string, context vphp.RequestBorrowedZBox) &VSlimLogger {
+pub fn (mut logger VSlimLogger) alert_context(message string, context vphp.PhpArray) &VSlimLogger {
 	return logger.log_context('alert', message, context)
 }
 
@@ -306,7 +306,7 @@ pub fn (mut logger VSlimLogger) emergency(message string) &VSlimLogger {
 }
 
 @[php_method: 'emergencyContext']
-pub fn (mut logger VSlimLogger) emergency_context(message string, context vphp.RequestBorrowedZBox) &VSlimLogger {
+pub fn (mut logger VSlimLogger) emergency_context(message string, context vphp.PhpArray) &VSlimLogger {
 	return logger.log_context('emergency', message, context)
 }
 
@@ -343,7 +343,7 @@ pub fn (mut logger VSlimPsrLogger) set_channel(channel string) &VSlimPsrLogger {
 }
 
 @[php_method: 'setContext']
-pub fn (mut logger VSlimPsrLogger) set_context(context vphp.RequestBorrowedZBox) &VSlimPsrLogger {
+pub fn (mut logger VSlimPsrLogger) set_context(context vphp.PhpArray) &VSlimPsrLogger {
 	mut inner := logger.logger()
 	inner.set_context(context)
 	return logger
@@ -384,90 +384,68 @@ pub fn (mut logger VSlimPsrLogger) use_stderr() &VSlimPsrLogger {
 	return logger
 }
 
+@[params]
+struct VSlimPsrLoggerContextParams {
+	context vphp.PhpArray
+}
+
 @[php_method]
-@[php_arg_name: 'default_context=defaultContext']
-@[php_arg_default: 'default_context=[]']
-@[php_arg_optional: 'default_context']
-pub fn (mut logger VSlimPsrLogger) log(level vphp.RequestBorrowedZBox, message vphp.RequestBorrowedZBox, default_context vphp.RequestBorrowedZBox) {
+pub fn (mut logger VSlimPsrLogger) log(level vphp.PhpValue, message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := logger.logger()
-	level_name := zval_to_log_message(level.to_zval())
+	level_name := php_value_to_log_message(level)
 	if !is_valid_psr3_level(level_name) {
 		vphp.PhpException.raise_class('InvalidArgumentException', 'invalid PSR-3 log level: ' + level_name, 0)
 		return
 	}
-	inner.log_context(level_name, zval_to_log_message(message.to_zval()), default_context)
+	inner.log_context(level_name, php_value_to_log_message(message), params.context)
 }
 
 @[php_method]
-@[php_arg_name: 'default_context=defaultContext']
-@[php_arg_default: 'default_context=[]']
-@[php_arg_optional: 'default_context']
-pub fn (mut logger VSlimPsrLogger) emergency(message vphp.RequestBorrowedZBox, default_context vphp.RequestBorrowedZBox) {
+pub fn (mut logger VSlimPsrLogger) emergency(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := logger.logger()
-	inner.log_context('emergency', zval_to_log_message(message.to_zval()), default_context)
+	inner.log_context('emergency', php_value_to_log_message(message), params.context)
 }
 
 @[php_method]
-@[php_arg_name: 'default_context=defaultContext']
-@[php_arg_default: 'default_context=[]']
-@[php_arg_optional: 'default_context']
-pub fn (mut logger VSlimPsrLogger) alert(message vphp.RequestBorrowedZBox, default_context vphp.RequestBorrowedZBox) {
+pub fn (mut logger VSlimPsrLogger) alert(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := logger.logger()
-	inner.log_context('alert', zval_to_log_message(message.to_zval()), default_context)
+	inner.log_context('alert', php_value_to_log_message(message), params.context)
 }
 
 @[php_method]
-@[php_arg_name: 'default_context=defaultContext']
-@[php_arg_default: 'default_context=[]']
-@[php_arg_optional: 'default_context']
-pub fn (mut logger VSlimPsrLogger) critical(message vphp.RequestBorrowedZBox, default_context vphp.RequestBorrowedZBox) {
+pub fn (mut logger VSlimPsrLogger) critical(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := logger.logger()
-	inner.log_context('critical', zval_to_log_message(message.to_zval()), default_context)
+	inner.log_context('critical', php_value_to_log_message(message), params.context)
 }
 
 @[php_method]
-@[php_arg_name: 'default_context=defaultContext']
-@[php_arg_default: 'default_context=[]']
-@[php_arg_optional: 'default_context']
-pub fn (mut logger VSlimPsrLogger) error(message vphp.RequestBorrowedZBox, default_context vphp.RequestBorrowedZBox) {
+pub fn (mut logger VSlimPsrLogger) error(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := logger.logger()
-	inner.log_context('error', zval_to_log_message(message.to_zval()), default_context)
+	inner.log_context('error', php_value_to_log_message(message), params.context)
 }
 
 @[php_method]
-@[php_arg_name: 'default_context=defaultContext']
-@[php_arg_default: 'default_context=[]']
-@[php_arg_optional: 'default_context']
-pub fn (mut logger VSlimPsrLogger) warning(message vphp.RequestBorrowedZBox, default_context vphp.RequestBorrowedZBox) {
+pub fn (mut logger VSlimPsrLogger) warning(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := logger.logger()
-	inner.log_context('warning', zval_to_log_message(message.to_zval()), default_context)
+	inner.log_context('warning', php_value_to_log_message(message), params.context)
 }
 
 @[php_method]
-@[php_arg_name: 'default_context=defaultContext']
-@[php_arg_default: 'default_context=[]']
-@[php_arg_optional: 'default_context']
-pub fn (mut logger VSlimPsrLogger) notice(message vphp.RequestBorrowedZBox, default_context vphp.RequestBorrowedZBox) {
+pub fn (mut logger VSlimPsrLogger) notice(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := logger.logger()
-	inner.log_context('notice', zval_to_log_message(message.to_zval()), default_context)
+	inner.log_context('notice', php_value_to_log_message(message), params.context)
 }
 
 @[php_method]
-@[php_arg_name: 'default_context=defaultContext']
-@[php_arg_default: 'default_context=[]']
-@[php_arg_optional: 'default_context']
-pub fn (mut logger VSlimPsrLogger) info(message vphp.RequestBorrowedZBox, default_context vphp.RequestBorrowedZBox) {
+pub fn (mut logger VSlimPsrLogger) info(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := logger.logger()
-	inner.log_context('info', zval_to_log_message(message.to_zval()), default_context)
+	inner.log_context('info', php_value_to_log_message(message), params.context)
 }
 
 @[php_method]
-@[php_arg_name: 'default_context=defaultContext']
-@[php_arg_default: 'default_context=[]']
-@[php_arg_optional: 'default_context']
-pub fn (mut logger VSlimPsrLogger) debug(message vphp.RequestBorrowedZBox, default_context vphp.RequestBorrowedZBox) {
+pub fn (mut logger VSlimPsrLogger) debug(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := logger.logger()
-	inner.log_context('debug', zval_to_log_message(message.to_zval()), default_context)
+	inner.log_context('debug', php_value_to_log_message(message), params.context)
 }
 
 @[php_method]
@@ -599,26 +577,20 @@ fn normalize_logger_channel(channel string) string {
 	return if trimmed == '' { 'vslim' } else { trimmed }
 }
 
-fn zval_to_log_message(raw vphp.ZVal) string {
-	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
+fn php_value_to_log_message(value vphp.PhpValue) string {
+	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return ''
 	}
-	return raw.to_string()
+	return value.to_string()
 }
 
-fn normalize_log_context(raw vphp.ZVal) map[string]string {
-	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
+fn normalize_log_context(context vphp.PhpArray) map[string]string {
+	if !context.is_valid() {
 		return map[string]string{}
 	}
-	if !raw.is_array() {
-		return map[string]string{}
-	}
-	mut out := map[string]string{}
-	for key in raw.assoc_keys() {
-		value := raw.get(key) or { continue }
-		out[key] = stringify_log_context_value(value)
-	}
-	return out
+	return context.fold_values[map[string]string](map[string]string{}, fn (key vphp.PhpValue, value vphp.PhpValue, mut out map[string]string) {
+		out[key.to_string()] = stringify_log_context_value(value)
+	})
 }
 
 fn vslim_logger_write(mut logger VSlimLogger, level string, message string, context map[string]string) {
@@ -677,28 +649,28 @@ fn is_valid_psr3_level(level string) bool {
 	]
 }
 
-fn stringify_log_context_value(raw vphp.ZVal) string {
-	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
+fn stringify_log_context_value(value vphp.PhpValue) string {
+	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return ''
 	}
-	if raw.is_string() || raw.is_bool() || raw.is_long() || raw.is_double() {
-		return raw.to_string()
+	if value.is_string() || value.is_bool() || value.is_long() || value.is_double() {
+		return value.to_string()
 	}
-	if raw.is_resource() {
-		kind := raw.resource_type() or { 'resource' }
+	if value.is_resource() {
+		kind := value.resource_type() or { 'resource' }
 		return 'resource(${kind})'
 	}
-	if raw.is_object() {
-		if raw.method_exists('__toString') {
-			return raw.to_string()
+	if value.is_object() {
+		if value.method_exists('__toString') {
+			return value.to_string()
 		}
-		class_name := raw.class_name()
+		class_name := value.class_name()
 		return if class_name == '' { '[object]' } else { '[object ${class_name}]' }
 	}
-	if raw.is_array() {
+	if value.is_array() {
 		return '[array]'
 	}
-	return '[' + raw.type_name() + ']'
+	return '[' + value.type_name() + ']'
 }
 
 fn format_log_context_pairs(context map[string]string) string {

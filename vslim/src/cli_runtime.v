@@ -173,7 +173,7 @@ fn cli_command_usage_text_from_definition(def CliCommandDefinition, program stri
 	return 'Usage:\n  ${prefix} ${suffix}\n'
 }
 
-fn cli_command_usage_text_from_runtime(runtime vphp.ZVal, program string, command_name string) string {
+fn cli_command_usage_text_from_runtime(runtime vphp.PhpValue, program string, command_name string) string {
 	def := cli_command_definition(runtime) or {
 		prefix := if program.trim_space() != '' {
 			'${program} ${command_name}'
@@ -214,8 +214,8 @@ fn cli_option_label(spec CliCommandOptionSpec) string {
 
 fn cli_option_description(spec CliCommandOptionSpec) string {
 	mut desc := spec.description
-	mut meta := cli_meta_suffix(spec.required, spec.multiple, spec.has_default, spec.default_values,
-		spec.choices)
+	mut meta := cli_meta_suffix(spec.required, spec.multiple, spec.has_default,
+		spec.default_values, spec.choices)
 	if spec.env_name.trim_space() != '' {
 		meta = if meta != '' {
 			'${meta} [env: ${spec.env_name.trim_space()}]'
@@ -246,8 +246,8 @@ fn cli_option_description(spec CliCommandOptionSpec) string {
 
 fn cli_argument_description(spec CliCommandArgumentSpec) string {
 	mut desc := spec.description
-	mut meta := cli_meta_suffix(spec.required, spec.multiple, spec.has_default, spec.default_values,
-		spec.choices)
+	mut meta := cli_meta_suffix(spec.required, spec.multiple, spec.has_default,
+		spec.default_values, spec.choices)
 	if spec.env_name.trim_space() != '' {
 		meta = if meta != '' {
 			'${meta} [env: ${spec.env_name.trim_space()}]'
@@ -299,7 +299,7 @@ fn cli_append_indented_text_lines(mut lines []string, text string) {
 	}
 }
 
-fn cli_command_examples_text_from_runtime(runtime vphp.ZVal) []string {
+fn cli_command_examples_text_from_runtime(runtime vphp.PhpValue) []string {
 	def := cli_command_definition(runtime) or {
 		return cli_runtime_string_list_method(runtime, 'examples')
 	}
@@ -309,7 +309,7 @@ fn cli_command_examples_text_from_runtime(runtime vphp.ZVal) []string {
 	return cli_runtime_string_list_method(runtime, 'examples')
 }
 
-fn cli_command_epilog_text_from_runtime(runtime vphp.ZVal) string {
+fn cli_command_epilog_text_from_runtime(runtime vphp.PhpValue) string {
 	def := cli_command_definition(runtime) or { return cli_runtime_text_method(runtime, 'epilog') }
 	if def.epilog != '' {
 		return def.epilog
@@ -317,7 +317,7 @@ fn cli_command_epilog_text_from_runtime(runtime vphp.ZVal) string {
 	return cli_runtime_text_method(runtime, 'epilog')
 }
 
-fn cli_command_help_text_from_runtime(runtime vphp.ZVal, program string, command_name string) string {
+fn cli_command_help_text_from_runtime(runtime vphp.PhpValue, program string, command_name string) string {
 	def := cli_command_definition(runtime) or {
 		return cli_command_usage_text_from_runtime(runtime, program, command_name)
 	}
@@ -370,7 +370,7 @@ fn cli_command_help_text_from_runtime(runtime vphp.ZVal, program string, command
 	return lines.join('\n') + '\n'
 }
 
-fn cli_command_summary_text_from_runtime(runtime vphp.ZVal) string {
+fn cli_command_summary_text_from_runtime(runtime vphp.PhpValue) string {
 	def := cli_command_definition(runtime) or {
 		return cli_runtime_text_method(runtime, 'description')
 	}
@@ -506,7 +506,11 @@ fn cli_append_command_listing_lines(mut lines []string, mut cli VSlimCliApp, gro
 			aliases := cli_command_aliases_for_listing(&cli, command_name)
 			if aliases.len > 0 {
 				alias_text := 'aliases: ${aliases.join(',')}'
-				summary = if summary != '' { '${summary} [${alias_text}]' } else { '[${alias_text}]' }
+				summary = if summary != '' {
+					'${summary} [${alias_text}]'
+				} else {
+					'[${alias_text}]'
+				}
 			}
 			cli_debug_log('listing_inline name="${command_name}" summary="${summary}"')
 			mut base_line := command_name.clone()
@@ -538,7 +542,11 @@ fn cli_append_command_listing_lines(mut lines []string, mut cli VSlimCliApp, gro
 			aliases := cli_command_aliases_for_listing(&cli, command_name)
 			if aliases.len > 0 {
 				alias_text := 'aliases: ${aliases.join(',')}'
-				summary = if summary != '' { '${summary} [${alias_text}]' } else { '[${alias_text}]' }
+				summary = if summary != '' {
+					'${summary} [${alias_text}]'
+				} else {
+					'[${alias_text}]'
+				}
 			}
 			cli_debug_log('listing_inline name="${command_name}" summary="${summary}"')
 			mut base_line := command_name.clone()
@@ -663,6 +671,7 @@ fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvo
 			}
 			else {}
 		}
+
 		if matched_option {
 			continue
 		}
@@ -718,8 +727,8 @@ pub fn (mut cli VSlimCliApp) help_text() string {
 	return cli_runtime_help_text(mut cli, 'vslim')
 }
 
-@[php_method: 'commandHelp']
 @[php_arg_name: 'command_name=commandName']
+@[php_method: 'commandHelp']
 pub fn (mut cli VSlimCliApp) command_help(command_name string) string {
 	cli_debug_log('command_help cli=${usize(cli)} core=${usize(cli.core_app_ref)} command="${command_name}"')
 	return cli_command_help_text(mut cli, 'vslim', command_name) or { '' }
@@ -728,9 +737,8 @@ pub fn (mut cli VSlimCliApp) command_help(command_name string) string {
 @[php_method: 'runArgv']
 pub fn (mut cli VSlimCliApp) run_argv(argv vphp.PhpIterable) int {
 	cli_debug_log('run_argv enter cli=${usize(cli)} core=${usize(cli.core_app_ref)}')
-	argv_list := cli_args_to_array(argv.to_zval()) or {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'argv must be iterable',
-			0)
+	argv_list := cli_args_to_array(argv) or {
+		vphp.PhpException.raise_class('InvalidArgumentException', 'argv must be iterable', 0)
 		return 1
 	}
 	inv := cli_runtime_parse_invocation(argv_list, cli) or {

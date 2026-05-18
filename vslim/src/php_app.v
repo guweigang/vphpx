@@ -104,7 +104,11 @@ fn vslim_trace_mem_log(app &VSlimApp, req &VSlimRequest, stage string, base_byte
 	delta := bytes - base_bytes
 	counters := vphp.runtime_counters()
 	mut context := map[string]string{}
-	context['ts'] = psr20_now_unix_milli_string_or_throw(resolve_app_clock_zval(app)) or { '' }
+	mut clock := resolve_app_clock(app)
+	defer {
+		clock.release()
+	}
+	context['ts'] = psr20_clock_now_unix_milli_string_or_throw(clock) or { '' }
 	context['stage'] = stage
 	context['method'] = req.method
 	context['path'] = req.path_value()
@@ -115,9 +119,15 @@ fn vslim_trace_mem_log(app &VSlimApp, req &VSlimRequest, stage string, base_byte
 	context['obj_reg'] = '${counters.obj_registry_len}'
 	context['rev_reg'] = '${counters.rev_registry_len}'
 	mut logger := resolve_app_logger(app)
-	logger.debug_context('memory trace', vphp.RequestBorrowedZBox.of(vphp.new_zval_from[map[string]string](context) or {
-		vphp.ZVal.new_null()
-	}))
+	mut context_value := vphp.PhpValue.from_v[map[string]string](context) or {
+		vphp.PhpValue.null()
+	}
+	mut context_arr := context_value.as_array() or { vphp.PhpArray.empty() }
+	defer {
+		context_value.release()
+		context_arr.release()
+	}
+	logger.debug_context('memory trace', context_arr)
 }
 
 fn resolve_app_logger(app &VSlimApp) &VSlimLogger {
@@ -127,19 +137,18 @@ fn resolve_app_logger(app &VSlimApp) &VSlimLogger {
 	}
 }
 
-fn resolve_app_clock_zval(app &VSlimApp) vphp.ZVal {
+fn resolve_app_clock(app &VSlimApp) vphp.PhpObject {
 	unsafe {
 		mut writable := &VSlimApp(app)
-		return writable.clock().to_zval()
+		return writable.clock()
 	}
 }
 
-fn probe_object_info(obj vphp.RequestBorrowedZBox, class_name string, method_name string) vphp.RequestOwnedZBox {
-	raw := obj.to_zval()
-	if !raw.is_object() {
-		return vphp.RequestOwnedZBox.of(vphp.new_zval_from[map[string]string]({
-			'is_object': 'false'
-		}) or { vphp.ZVal.new_null() })
+fn probe_object_info(obj vphp.PhpObject, class_name string, method_name string) vphp.PhpValue {
+	mut out := vphp.PhpArray.empty()
+	if !obj.is_valid() {
+		out.string('is_object', 'false')
+		return out.take_value()
 	}
 	mut class_arg := vphp.PhpString.of(class_name)
 	mut autoload_arg := vphp.PhpBool.of(true)
@@ -149,22 +158,21 @@ fn probe_object_info(obj vphp.RequestBorrowedZBox, class_name string, method_nam
 		autoload_arg.release()
 		method_arg.release()
 	}
-	return vphp.RequestOwnedZBox.of(vphp.new_zval_from[map[string]string]({
-		'is_object':         raw.is_object().str()
-		'class':             raw.class_name()
-		'is_instance_of':    raw.is_instance_of(class_name).str()
-		'is_subclass_of':    raw.is_subclass_of(class_name).str()
-		'method_exists':     raw.method_exists(method_name).str()
-		'php_is_a':          vphp.PhpFunction.named('is_a').result_bool(vphp.PhpValue.from_zval(raw),
-			class_arg, autoload_arg).str()
-		'php_method_exists': vphp.PhpFunction.named('method_exists').result_bool(vphp.PhpValue.from_zval(raw),
-			method_arg).str()
-	}) or { vphp.ZVal.new_null() })
+	out.string('is_object', 'true')
+	out.string('class', obj.class_name())
+	out.string('is_instance_of', obj.is_instance_of(class_name).str())
+	out.string('is_subclass_of', obj.is_subclass_of(class_name).str())
+	out.string('method_exists', obj.method_exists(method_name).str())
+	out.string('php_is_a', vphp.PhpFunction.named('is_a').result_bool(obj, class_arg,
+		autoload_arg).str())
+	out.string('php_method_exists', vphp.PhpFunction.named('method_exists').result_bool(obj,
+		method_arg).str())
+	return out.take_value()
 }
 
 @[php_arg_name: 'class_name=className,method_name=methodName']
 @[php_method]
-pub fn VSlimDebugObjectProbe.probe(obj vphp.RequestBorrowedZBox, class_name string, method_name string) vphp.RequestOwnedZBox {
+pub fn VSlimDebugObjectProbe.probe(obj vphp.PhpObject, class_name string, method_name string) vphp.PhpValue {
 	return probe_object_info(obj, class_name, method_name)
 }
 
@@ -173,11 +181,9 @@ pub fn VSlimDebugObjectProbe.psr7_lifecycle_counters(rounds int) string {
 	total_rounds := if rounds <= 0 { 1 } else { rounds }
 	before := vphp.runtime_counters()
 	mut scope := vphp.PhpScope.request()
-	mut uri := vphp.PhpString.of('/debug/lifecycle?probe=1')
 	mut server_params := vphp.PhpArray.empty()
 	server_params.string('REQUEST_METHOD', 'POST')
-	mut req := new_psr7_server_request('POST', uri.to_zval(), server_params.to_zval())
-	uri.release()
+	mut req := new_psr7_server_request_string('POST', '/debug/lifecycle?probe=1', server_params)
 	server_params.release()
 	mut checksum := 0
 	for i in 0 .. total_rounds {
@@ -189,19 +195,21 @@ pub fn VSlimDebugObjectProbe.psr7_lifecycle_counters(rounds int) string {
 		tags.push_string('beta')
 		parsed.set('tags', tags)
 		tags.release()
-		req = req.with_parsed_body(parsed.to_borrowed_zbox())
+		req = req.with_parsed_body(parsed.to_borrowed().to_value())
 
 		mut attr_name := vphp.PhpString.of('studio.payload')
-		req = req.with_attribute(attr_name.to_borrowed_zbox(), parsed.to_borrowed_zbox())
+		req = req.with_attribute(attr_name.to_borrowed().to_value(),
+			parsed.to_borrowed().to_value())
 		attr_name.release()
 		parsed.release()
 
 		mut attrs := req.get_attributes()
-		checksum += attrs.to_zval().array_count()
+		checksum += attrs.count()
 		attrs.release()
 		mut parsed_copy := req.get_parsed_body()
-		if parsed_copy.to_zval().is_array() {
-			checksum += parsed_copy.to_zval().array_count()
+		if parsed_array := parsed_copy.as_array() {
+			checksum += parsed_array.count()
+			parsed_array.release()
 		}
 		parsed_copy.release()
 	}
@@ -213,8 +221,8 @@ pub fn VSlimDebugObjectProbe.psr7_lifecycle_counters(rounds int) string {
 @[php_method]
 pub fn VSlimApp.demo() &VSlimApp {
 	return &VSlimApp{
-		not_found_handler: vphp.PersistentOwnedZBox.new_null()
-		error_handler:     vphp.PersistentOwnedZBox.new_null()
+		not_found_handler: vphp.PhpCallable.invalid()
+		error_handler:     vphp.PhpCallable.invalid()
 		use_demo:          true
 	}
 }

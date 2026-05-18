@@ -4,13 +4,10 @@ import vphp
 
 #include "php_bridge.h"
 
-fn route_params_from_payload(payload vphp.RequestBorrowedZBox) map[string]string {
-	if !payload.is_valid() || !payload.to_zval().is_object() {
-		return map[string]string{}
-	}
-	raw := payload.to_zval()
-	if raw.is_instance_of('VSlim\\VHttpd\\Request') || raw.is_instance_of('VSlimRequest') {
-		if req := raw.to_object[VSlimRequest]() {
+fn route_params_from_payload(payload vphp.PhpValue) map[string]string {
+	object := payload.as_object() or { return map[string]string{} }
+	if object.is_instance_of('VSlim\\VHttpd\\Request') || object.is_instance_of('VSlimRequest') {
+		if req := object.to_v_object[VSlimRequest]() {
 			return req.route_params()
 		}
 	}
@@ -49,11 +46,11 @@ fn clone_phase_forwarded_request_snapshot(snapshot PhaseForwardedServerRequestSn
 	}
 }
 
-fn snapshot_phase_forwarded_request(payload vphp.RequestBorrowedZBox) ?PhaseForwardedServerRequestSnapshot {
-	if !payload.is_valid() || !payload.to_zval().is_object() {
+fn snapshot_phase_forwarded_request(payload vphp.PhpObject) ?PhaseForwardedServerRequestSnapshot {
+	if !payload.is_valid() {
 		return none
 	}
-	if internal := payload.to_zval().to_object[VSlimPsr7ServerRequest]() {
+	if internal := payload.to_v_object[VSlimPsr7ServerRequest]() {
 		body := server_request_body_or_empty(internal)
 		uri := server_request_uri_or_default(internal)
 		return PhaseForwardedServerRequestSnapshot{
@@ -102,15 +99,16 @@ fn take_forwarded_request_snapshot(key u64) ?PhaseForwardedServerRequestSnapshot
 	}
 }
 
-fn request_with_forwarded_snapshot(payload vphp.RequestBorrowedZBox, route_params map[string]string, snapshot PhaseForwardedServerRequestSnapshot) vphp.ZVal {
-	normalized := normalize_psr15_server_request_payload(payload, route_params)
-	if _ := normalized.to_object[VSlimPsr7ServerRequest]() {
+fn request_with_forwarded_snapshot(payload vphp.PhpValue, route_params map[string]string, snapshot PhaseForwardedServerRequestSnapshot) vphp.PhpObject {
+	mut normalized := normalize_psr15_server_request(payload, route_params)
+	if _ := normalized.to_v_object[VSlimPsr7ServerRequest]() {
+		normalized.release()
 		attrs_owned := if route_params.len == 0 {
 			clone_assoc_payload_value(snapshot.attributes_ref)
 		} else {
 			persistent_value_assoc_with_strings(snapshot.attributes_ref, route_params)
 		}
-		return build_php_psr7_server_request_object(&VSlimPsr7ServerRequest{
+		mut forwarded := build_php_psr7_server_request_value(&VSlimPsr7ServerRequest{
 			method:             snapshot.method
 			request_target:     snapshot.request_target
 			protocol_version:   snapshot.protocol_version
@@ -139,84 +137,81 @@ fn request_with_forwarded_snapshot(payload vphp.RequestBorrowedZBox, route_param
 			parsed_body_ref:    clone_parsed_body_ref(snapshot.parsed_body_ref)
 			attributes_ref:     attrs_owned
 		})
+		return php_object_from_owned_value(mut forwarded)
 	}
 	return normalized
 }
 
-fn continued_phase_request_payload(payload vphp.RequestBorrowedZBox, route_params map[string]string, cont &VSlimPsr15ContinueHandler) vphp.RequestOwnedZBox {
+fn continued_phase_request_value(payload vphp.PhpValue, route_params map[string]string, cont &VSlimPsr15ContinueHandler) vphp.PhpValue {
 	if cont.state.has_forwarded_request {
 		if forwarded_request := take_forwarded_request_snapshot(forwarded_request_key(cont)) {
-			return vphp.RequestOwnedZBox.adopt_zval(request_with_forwarded_snapshot(payload,
-				route_params, forwarded_request))
+			mut request := request_with_forwarded_snapshot(payload, route_params, forwarded_request)
+			out := request.owned().to_value()
+			request.release()
+			return out
 		}
 	}
-	return vphp.RequestOwnedZBox.adopt_zval(normalize_psr15_server_request_payload(payload,
-		route_params))
+	mut request := normalize_psr15_server_request(payload, route_params)
+	out := request.owned().to_value()
+	request.release()
+	return out
 }
 
-fn build_php_request_object(req &VSlimRequest, params map[string]string) vphp.ZVal {
+fn build_php_request_value(req &VSlimRequest, params map[string]string) vphp.PhpValue {
 	unsafe {
-		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
 		mut bound := new_vslim_request_snapshot_with_params(req, params)
-		vphp.PhpReturn.from_zval(payload).owned_object(bound,
-			vphp.ZendClassEntry.from_ptr(C.vslim__vhttpd__request_ce), vslimrequest_handlers())
-		return payload
+		return bound.bind_owned_php_object_value()
 	}
 }
 
-fn build_php_response_object(res VSlimResponse) vphp.ZVal {
+fn build_php_response_value(res VSlimResponse) vphp.PhpValue {
 	unsafe {
-		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
 		bound := new_vslim_response_snapshot(res)
-		vphp.PhpReturn.from_zval(payload).owned_object(bound,
-			vphp.ZendClassEntry.from_ptr(C.vslim__vhttpd__response_ce), vslimresponse_handlers())
-		return payload
+		return bound.bind_owned_php_object_value()
 	}
 }
 
-fn build_php_response_object_ref(res &VSlimResponse) vphp.ZVal {
+fn build_php_response_value_ref(res &VSlimResponse) vphp.PhpValue {
 	unsafe {
-		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
 		bound := new_vslim_response_snapshot_ref(res)
-		vphp.PhpReturn.from_zval(payload).owned_object(bound,
-			vphp.ZendClassEntry.from_ptr(C.vslim__vhttpd__response_ce), vslimresponse_handlers())
-		return payload
+		return bound.bind_owned_php_object_value()
 	}
 }
 
-fn build_php_psr7_response_object(res &VSlimPsr7Response) vphp.ZVal {
+fn build_php_psr7_response_value(res &VSlimPsr7Response) vphp.PhpValue {
 	unsafe {
-		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
 		bound := clone_psr7_response(res, res.get_protocol_version(),
 			clone_header_values(res.headers), clone_header_names(res.header_names),
 			response_body_or_empty(res), res.get_status_code(), res.get_reason_phrase())
-		vphp.PhpReturn.from_zval(payload).owned_object(bound,
-			vphp.ZendClassEntry.from_ptr(C.vslim__psr7__response_ce), vslimpsr7response_handlers())
-		return payload
+		return bound.bind_owned_php_object_value()
 	}
 }
 
-fn build_php_psr7_server_request_object(req &VSlimPsr7ServerRequest) vphp.ZVal {
+fn build_php_psr7_server_request_value(req &VSlimPsr7ServerRequest) vphp.PhpValue {
 	unsafe {
-		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
 		bound := clone_psr7_server_request(req, req.method, req.request_target,
 			req.protocol_version, clone_header_values(req.headers),
 			clone_header_names(req.header_names), server_request_body_or_empty(req),
 			server_request_uri_or_default(req), req.server_params_ref, req.cookie_params_ref,
 			req.query_params_ref, req.uploaded_files_ref, req.parsed_body_ref, req.attributes_ref)
-		vphp.PhpReturn.from_zval(payload).owned_object(bound,
-			vphp.ZendClassEntry.from_ptr(C.vslim__psr7__serverrequest_ce),
-			vslimpsr7serverrequest_handlers())
-		return payload
+		return bound.bind_owned_php_object_value()
 	}
 }
 
-fn normalize_psr15_server_request_payload(payload vphp.RequestBorrowedZBox, route_params map[string]string) vphp.ZVal {
-	if payload.is_valid() && payload.to_zval().is_object()
-		&& (payload.to_zval().is_instance_of('VSlim\\Psr7\\ServerRequest')
-		|| payload.to_zval().is_instance_of('VSlimPsr7ServerRequest')) {
-		if internal := payload.to_zval().to_object[VSlimPsr7ServerRequest]() {
-			return build_php_psr7_server_request_object(&VSlimPsr7ServerRequest{
+fn php_object_from_owned_value(mut value vphp.PhpValue) vphp.PhpObject {
+	object := value.as_object() or {
+		value.release()
+		return vphp.PhpObject.invalid()
+	}
+	value.release()
+	return object
+}
+
+fn normalize_psr15_server_request_object(request vphp.PhpObject, route_params map[string]string) vphp.PhpObject {
+	if (request.is_instance_of('VSlim\\Psr7\\ServerRequest')
+		|| request.is_instance_of('VSlimPsr7ServerRequest')) && request.is_valid() {
+		if internal := request.to_v_object[VSlimPsr7ServerRequest]() {
+			mut cloned := build_php_psr7_server_request_value(&VSlimPsr7ServerRequest{
 				method:             internal.method
 				request_target:     internal.get_request_target()
 				protocol_version:   internal.get_protocol_version()
@@ -235,102 +230,109 @@ fn normalize_psr15_server_request_payload(payload vphp.RequestBorrowedZBox, rout
 					persistent_value_assoc_with_strings(internal.attributes_ref, route_params)
 				}
 			})
+			return php_object_from_owned_value(mut cloned)
 		}
 	}
-	if payload.is_valid() && payload.to_zval().is_object()
-		&& (payload.to_zval().is_instance_of('VSlim\\VHttpd\\Request')
-		|| payload.to_zval().is_instance_of('VSlimRequest')) {
-		if req := payload.to_zval().to_object[VSlimRequest]() {
-			return build_php_psr7_server_request_from_vslim(req, route_params)
+	if request.is_instance_of('VSlim\\VHttpd\\Request') || request.is_instance_of('VSlimRequest') {
+		if req := request.to_v_object[VSlimRequest]() {
+			mut cloned := build_php_psr7_server_request_value_from_vslim(req, route_params)
+			return php_object_from_owned_value(mut cloned)
 		}
 	}
-	if !is_psr_server_request_payload(payload) {
-		return build_php_psr7_server_request_from_vslim(new_vslim_request('GET', '/', ''),
-			route_params)
-	}
-	request := payload.to_zval()
 	method := if request.method_exists('getMethod') {
-		vphp.PhpObject.borrowed(request).with_method_result[vphp.PhpString, string]('getMethod', fn (z vphp.PhpString) string {
+		request.with_method_result[vphp.PhpString, string]('getMethod', fn (z vphp.PhpString) string {
 			return z.value()
 		}) or { 'GET' }
 	} else {
 		'GET'
 	}
 	request_target := if request.method_exists('getRequestTarget') {
-		vphp.PhpObject.borrowed(request).with_method_result[vphp.PhpString, string]('getRequestTarget', fn (z vphp.PhpString) string {
+		request.with_method_result[vphp.PhpString, string]('getRequestTarget', fn (z vphp.PhpString) string {
 			return z.value()
 		}) or { '' }
 	} else {
 		''
 	}
 	protocol_version := if request.method_exists('getProtocolVersion') {
-		vphp.PhpObject.borrowed(request).with_method_result[vphp.PhpString, string]('getProtocolVersion', fn (z vphp.PhpString) string {
+		request.with_method_result[vphp.PhpString, string]('getProtocolVersion', fn (z vphp.PhpString) string {
 			return z.value()
 		}) or { '1.1' }
 	} else {
 		'1.1'
 	}
 	header_map, header_names := if request.method_exists('getHeaders') {
-		mut headers_z := vphp.PhpObject.borrowed(request).method_request_owned('getHeaders')
+		mut headers := request.call_method('getHeaders')
 		defer {
-			headers_z.release()
+			headers.release()
 		}
-		zval_to_psr7_header_state(headers_z.to_zval())
+		php_value_psr7_header_state(headers)
 	} else {
 		map[string][]string{}, map[string]string{}
 	}
 	body_ref := if request.method_exists('getBody') {
-		vphp.PhpObject.borrowed(request).with_method_result[vphp.PhpValue, &VSlimPsr7Stream]('getBody', fn (z vphp.PhpValue) &VSlimPsr7Stream {
-			return zval_to_psr7_stream(z.to_zval())
+		request.with_method_result[vphp.PhpValue, &VSlimPsr7Stream]('getBody', fn (z vphp.PhpValue) &VSlimPsr7Stream {
+			return php_value_psr7_stream(z)
 		}) or { new_psr7_stream('') }
 	} else {
 		new_psr7_stream('')
 	}
 	uri_ref := if request.method_exists('getUri') {
-		vphp.PhpObject.borrowed(request).with_method_result[vphp.PhpValue, &VSlimPsr7Uri]('getUri', fn (z vphp.PhpValue) &VSlimPsr7Uri {
-			return zval_to_psr7_uri(z.to_zval())
+		request.with_method_result[vphp.PhpValue, &VSlimPsr7Uri]('getUri', fn (z vphp.PhpValue) &VSlimPsr7Uri {
+			return php_value_psr7_uri(z)
 		}) or { new_psr7_uri('/') }
 	} else {
 		new_psr7_uri('/')
 	}
 	server_params_ref := if request.method_exists('getServerParams') {
-		vphp.PhpObject.borrowed(request).with_method_result[vphp.PhpValue, vphp.PersistentOwnedZBox]('getServerParams', fn (z vphp.PhpValue) vphp.PersistentOwnedZBox {
-			return persistent_array_owned(z.to_zval())
+		request.with_method_result[vphp.PhpValue, vphp.PhpArray]('getServerParams', fn (z vphp.PhpValue) vphp.PhpArray {
+			if arr := z.as_array() {
+				return arr.retain()
+			}
+			return empty_persistent_array()
 		}) or { empty_persistent_array() }
 	} else {
 		empty_persistent_array()
 	}
 	cookie_params_ref := if request.method_exists('getCookieParams') {
-		vphp.PhpObject.borrowed(request).with_method_result[vphp.PhpValue, vphp.PersistentOwnedZBox]('getCookieParams', fn (z vphp.PhpValue) vphp.PersistentOwnedZBox {
-			return persistent_array_owned(z.to_zval())
+		request.with_method_result[vphp.PhpValue, vphp.PhpArray]('getCookieParams', fn (z vphp.PhpValue) vphp.PhpArray {
+			if arr := z.as_array() {
+				return arr.retain()
+			}
+			return empty_persistent_array()
 		}) or { empty_persistent_array() }
 	} else {
 		empty_persistent_array()
 	}
 	query_params_ref := if request.method_exists('getQueryParams') {
-		vphp.PhpObject.borrowed(request).with_method_result[vphp.PhpValue, vphp.PersistentOwnedZBox]('getQueryParams', fn (z vphp.PhpValue) vphp.PersistentOwnedZBox {
-			return persistent_array_owned(z.to_zval())
+		request.with_method_result[vphp.PhpValue, vphp.PhpArray]('getQueryParams', fn (z vphp.PhpValue) vphp.PhpArray {
+			if arr := z.as_array() {
+				return arr.retain()
+			}
+			return empty_persistent_array()
 		}) or { empty_persistent_array() }
 	} else {
 		empty_persistent_array()
 	}
 	uploaded_files_ref := if request.method_exists('getUploadedFiles') {
-		vphp.PhpObject.borrowed(request).with_method_result[vphp.PhpValue, vphp.PersistentOwnedZBox]('getUploadedFiles', fn (z vphp.PhpValue) vphp.PersistentOwnedZBox {
-			return normalize_uploaded_files_tree(z.to_zval())
+		request.with_method_result[vphp.PhpValue, vphp.PhpArray]('getUploadedFiles', fn (z vphp.PhpValue) vphp.PhpArray {
+			return normalize_uploaded_files_tree_value(z)
 		}) or { empty_persistent_array() }
 	} else {
 		empty_persistent_array()
 	}
 	parsed_body_ref := if request.method_exists('getParsedBody') {
-		vphp.PhpObject.borrowed(request).with_method_result[vphp.PhpValue, vphp.PersistentOwnedZBox]('getParsedBody', fn (z vphp.PhpValue) vphp.PersistentOwnedZBox {
-			return persistent_owned_or_null(z.to_zval())
-		}) or { vphp.PersistentOwnedZBox.new_null() }
+		request.with_method_result[vphp.PhpValue, vphp.PhpValue]('getParsedBody', fn (z vphp.PhpValue) vphp.PhpValue {
+			if z.is_valid() && !z.is_null() && !z.is_undef() {
+				return z.retain()
+			}
+			return persistent_null_value()
+		}) or { persistent_null_value() }
 	} else {
-		vphp.PersistentOwnedZBox.new_null()
+		persistent_null_value()
 	}
 	attributes_ref := if request.method_exists('getAttributes') {
-		vphp.PhpObject.borrowed(request).with_method_result[vphp.PhpValue, vphp.PhpValue]('getAttributes', fn [route_params] (z vphp.PhpValue) vphp.PhpValue {
-			base := persistent_array_value_owned(z.to_zval())
+		request.with_method_result[vphp.PhpValue, vphp.PhpValue]('getAttributes', fn [route_params] (z vphp.PhpValue) vphp.PhpValue {
+			base := persistent_array_value(z)
 			if route_params.len == 0 {
 				return clone_assoc_payload_value(base)
 			}
@@ -339,7 +341,7 @@ fn normalize_psr15_server_request_payload(payload vphp.RequestBorrowedZBox, rout
 	} else {
 		persistent_value_assoc_with_strings(empty_persistent_array_value(), route_params)
 	}
-	return build_php_psr7_server_request_object(&VSlimPsr7ServerRequest{
+	mut normalized := build_php_psr7_server_request_value(&VSlimPsr7ServerRequest{
 		method:             normalize_psr7_method(method)
 		request_target:     request_target
 		protocol_version:   normalize_protocol_version(protocol_version)
@@ -354,9 +356,23 @@ fn normalize_psr15_server_request_payload(payload vphp.RequestBorrowedZBox, rout
 		parsed_body_ref:    parsed_body_ref
 		attributes_ref:     attributes_ref
 	})
+	return php_object_from_owned_value(mut normalized)
 }
 
-fn build_php_psr7_server_request_from_vslim(req &VSlimRequest, route_params map[string]string) vphp.ZVal {
+fn normalize_psr15_server_request_value(payload_value vphp.PhpValue, route_params map[string]string) vphp.PhpObject {
+	payload_object := payload_value.as_object() or {
+		mut cloned := build_php_psr7_server_request_value_from_vslim(new_vslim_request('GET', '/', ''),
+			route_params)
+		return php_object_from_owned_value(mut cloned)
+	}
+	return normalize_psr15_server_request_object(payload_object, route_params)
+}
+
+fn normalize_psr15_server_request(payload vphp.PhpValue, route_params map[string]string) vphp.PhpObject {
+	return normalize_psr15_server_request_value(payload, route_params)
+}
+
+fn build_php_psr7_server_request_value_from_vslim(req &VSlimRequest, route_params map[string]string) vphp.PhpValue {
 	mut headers := map[string][]string{}
 	for key, value in req.headers() {
 		headers[key] = [value]
@@ -370,7 +386,7 @@ fn build_php_psr7_server_request_from_vslim(req &VSlimRequest, route_params map[
 		headers['host'] = [host_line]
 		header_names['host'] = 'Host'
 	}
-	return build_php_psr7_server_request_object(&VSlimPsr7ServerRequest{
+	return build_php_psr7_server_request_value(&VSlimPsr7ServerRequest{
 		method:             normalize_psr7_method(req.method)
 		request_target:     req.raw_path
 		protocol_version:   normalize_protocol_version(req.protocol_version)
@@ -382,7 +398,7 @@ fn build_php_psr7_server_request_from_vslim(req &VSlimRequest, route_params map[
 		cookie_params_ref:  string_map_to_persistent_array(req.cookies())
 		query_params_ref:   string_map_to_persistent_array(req.query_params())
 		uploaded_files_ref: empty_persistent_array()
-		parsed_body_ref:    vphp.PersistentOwnedZBox.invalid()
+		parsed_body_ref:    persistent_null_value()
 		attributes_ref:     persistent_attrs_from_request(req, route_params)
 	})
 }
@@ -390,9 +406,9 @@ fn build_php_psr7_server_request_from_vslim(req &VSlimRequest, route_params map[
 fn persistent_attrs_from_request(req &VSlimRequest, route_params map[string]string) vphp.PhpValue {
 	mut attrs := empty_persistent_array_value()
 	for key, value in req.attributes() {
-		mut value_box := vphp.RequestOwnedZBox.new_string(value)
-		mut next_attrs := persistent_value_assoc_with_value(attrs, key, value_box.to_zval())
-		value_box.release()
+		mut value_arg := vphp.PhpString.of(value)
+		mut next_attrs := persistent_value_assoc_with_value(attrs, key, value_arg)
+		value_arg.release()
 		attrs.release()
 		attrs = next_attrs
 	}
@@ -401,32 +417,27 @@ fn persistent_attrs_from_request(req &VSlimRequest, route_params map[string]stri
 	return next_attrs
 }
 
-fn persistent_array_value_owned(value vphp.ZVal) vphp.PhpValue {
+fn persistent_array_value(value vphp.PhpValue) vphp.PhpValue {
 	if value.is_valid() && !value.is_null() && !value.is_undef() && value.is_array() {
-		return vphp.PhpValue.from_persistent_owned_zbox(vphp.PersistentOwnedZBox.of_mixed(value))
+		return value.retain()
 	}
 	return empty_persistent_array_value()
 }
 
 fn persistent_value_assoc_with_strings(value vphp.PhpValue, extras map[string]string) vphp.PhpValue {
-	mut out := new_array()
-	value.with_value(fn [mut out] (raw_value vphp.PhpValue) bool {
-		raw := raw_value.to_zval()
-		if raw.is_array() {
-			raw.foreach(fn [mut out] (key vphp.ZVal, val vphp.ZVal) {
-				if key.is_string() {
-					out.set_zval(key.get_string(), val.dup())
-				}
-			})
+	mut out := vphp.PhpArray.new()
+	value.with_array(fn [mut out] (arr vphp.PhpArray) bool {
+		for name in arr.assoc_keys() {
+			out.set_value(name, arr[name])
 		}
 		return true
 	})
 	for key, item in extras {
 		out.string(key, item)
 	}
-	persistent := out.to_persistent_owned_zbox()
+	persistent := out.retain().to_value()
 	out.release()
-	return vphp.PhpValue.from_persistent_owned_zbox(persistent)
+	return persistent
 }
 
 fn vslim_request_uri_string(req &VSlimRequest) string {
@@ -450,18 +461,33 @@ fn vslim_request_uri_string(req &VSlimRequest) string {
 	return uri
 }
 
-fn new_vslim_request_from_psr_server_request(payload vphp.RequestBorrowedZBox, route_params map[string]string) &VSlimRequest {
-	if payload.is_valid() && payload.to_zval().is_object()
-		&& (payload.to_zval().is_instance_of('VSlim\\VHttpd\\Request')
-		|| payload.to_zval().is_instance_of('VSlimRequest')) {
-		if req := payload.to_zval().to_object[VSlimRequest]() {
+fn new_vslim_request_from_psr_server_request(payload vphp.PhpValue, route_params map[string]string) &VSlimRequest {
+	if payload_object := payload.as_object() {
+		if (payload_object.is_instance_of('VSlim\\VHttpd\\Request')
+			|| payload_object.is_instance_of('VSlimRequest')) && payload_object.is_valid() {
+			if req := payload_object.to_v_object[VSlimRequest]() {
+				mut cloned := req.to_vslim_request()
+				cloned.params = snapshot_string_map(route_params)
+				return &cloned
+			}
+		}
+	}
+	mut request := normalize_psr15_server_request(payload, route_params)
+	defer {
+		request.release()
+	}
+	return new_vslim_request_from_psr_server_request_object(request, route_params)
+}
+
+fn new_vslim_request_from_psr_server_request_object(payload vphp.PhpObject, route_params map[string]string) &VSlimRequest {
+	if payload.is_instance_of('VSlim\\VHttpd\\Request') || payload.is_instance_of('VSlimRequest') {
+		if req := payload.to_v_object[VSlimRequest]() {
 			mut cloned := req.to_vslim_request()
 			cloned.params = snapshot_string_map(route_params)
 			return &cloned
 		}
 	}
-	request := normalize_psr15_server_request_payload(payload, route_params)
-	if internal := request.to_object[VSlimPsr7ServerRequest]() {
+	if internal := payload.to_v_object[VSlimPsr7ServerRequest]() {
 		uri := server_request_uri_or_default(internal)
 		built_target := build_psr7_request_target(uri)
 		mut raw_path := internal.get_request_target()
@@ -494,7 +520,7 @@ fn new_vslim_request_from_psr_server_request(payload vphp.RequestBorrowedZBox, r
 			cookies:          snapshot_string_map(persistent_array_to_string_map(internal.cookie_params_ref))
 			attributes:       snapshot_string_map(persistent_array_value_to_scalar_string_map(internal.attributes_ref))
 			server:           snapshot_string_map(persistent_array_to_string_map(internal.server_params_ref))
-			uploaded_files:   snapshot_string_list(uploaded_files_to_filenames_zval(internal.get_uploaded_files().to_zval()))
+			uploaded_files:   snapshot_string_list(uploaded_files_to_filenames_array(internal.get_uploaded_files()))
 			params:           snapshot_string_map(route_params)
 		}
 		for key, value in route_params {
@@ -510,14 +536,12 @@ fn new_vslim_request_from_psr_server_request(payload vphp.RequestBorrowedZBox, r
 	return new_vslim_request('GET', '/', '')
 }
 
-fn uploaded_files_to_filenames(files map[string]vphp.ZVal) []string {
+fn uploaded_files_to_filenames_array(files vphp.PhpArray) []string {
 	mut out := []string{}
-	for _, item in files {
-		if !item.is_valid() || !item.is_object() {
-			continue
-		}
-		filename := if item.method_exists('getClientFilename') {
-			vphp.PhpObject.borrowed(item).with_method_result[vphp.PhpString, string]('getClientFilename', fn (result vphp.PhpString) string {
+	for item in files.value_items() {
+		object := item.as_object() or { continue }
+		filename := if object.method_exists('getClientFilename') {
+			object.with_method_result[vphp.PhpString, string]('getClientFilename', fn (result vphp.PhpString) string {
 				return result.value()
 			}) or { '' }
 		} else {
@@ -527,29 +551,6 @@ fn uploaded_files_to_filenames(files map[string]vphp.ZVal) []string {
 			out << filename
 		}
 	}
-	return out
-}
-
-fn uploaded_files_to_filenames_zval(files vphp.ZVal) []string {
-	if !files.is_valid() || !files.is_array() {
-		return []string{}
-	}
-	mut out := []string{}
-	files.foreach(fn [mut out] (_ vphp.ZVal, item vphp.ZVal) {
-		if !item.is_valid() || !item.is_object() {
-			return
-		}
-		filename := if item.method_exists('getClientFilename') {
-			vphp.PhpObject.borrowed(item).with_method_result[vphp.PhpString, string]('getClientFilename', fn (result vphp.PhpString) string {
-				return result.value()
-			}) or { '' }
-		} else {
-			''
-		}
-		if filename != '' && filename !in out {
-			out << filename
-		}
-	})
 	return out
 }
 
@@ -559,17 +560,18 @@ mut:
 	header_names map[string]string
 }
 
-fn zval_to_psr7_header_state(value vphp.ZVal) (map[string][]string, map[string]string) {
-	if !value.is_valid() || !value.is_array() {
-		return map[string][]string{}, map[string]string{}
+fn php_value_psr7_header_state(value vphp.PhpValue) (map[string][]string, map[string]string) {
+	mut arr := value.as_array() or { return map[string][]string{}, map[string]string{} }
+	defer {
+		arr.release()
 	}
-	state := value.foreach_with_ctx[Psr7HeaderState](Psr7HeaderState{
+	state := arr.fold_values[Psr7HeaderState](Psr7HeaderState{
 		headers:      map[string][]string{}
 		header_names: map[string]string{}
-	}, fn (key vphp.ZVal, child vphp.ZVal, mut state Psr7HeaderState) {
+	}, fn (key vphp.PhpValue, child vphp.PhpValue, mut state Psr7HeaderState) {
 		name := key.to_string()
 		normalized := normalize_psr7_header_name(name)
-		state.headers[normalized] = zval_to_header_values(child) or { []string{} }
+		state.headers[normalized] = php_value_header_values(child) or { []string{} }
 		state.header_names[normalized] = name
 	})
 	return state.headers, state.header_names
@@ -583,39 +585,11 @@ fn flatten_psr7_header_map(headers map[string][]string) map[string]string {
 	return out
 }
 
-fn zval_map_to_string_map(values map[string]vphp.ZVal) map[string]string {
-	mut out := map[string]string{}
-	for key, value in values {
-		if !value.is_valid() || value.is_null() || value.is_undef() {
-			out[key] = ''
-			continue
-		}
-		if !value.is_string() && !value.is_bool() && !value.is_long() && !value.is_double() {
-			continue
-		}
-		out[key] = value.to_string()
-	}
-	return out
-}
-
-fn zval_assoc_scalar_string_map(value vphp.ZVal) map[string]string {
-	if !value.is_valid() || !value.is_array() {
+fn persistent_array_to_scalar_string_map(value vphp.PhpArray) map[string]string {
+	if !value.is_valid() {
 		return map[string]string{}
 	}
-	return value.foreach_with_ctx[map[string]string](map[string]string{}, fn (key vphp.ZVal, child vphp.ZVal, mut acc map[string]string) {
-		acc[key.to_string()] = child.stringify()
-	})
-}
-
-fn persistent_array_to_scalar_string_map(value vphp.PersistentOwnedZBox) map[string]string {
-	if !value.is_valid() || value.is_null() || value.is_undef() {
-		return map[string]string{}
-	}
-	return value.with_request_array(fn (arr vphp.PhpArray) map[string]string {
-		return zval_assoc_scalar_string_map(arr.to_zval())
-	}) or {
-		map[string]string{}
-	}
+	return value.to_scalar_string_map()
 }
 
 fn persistent_array_value_to_scalar_string_map(value vphp.PhpValue) map[string]string {
@@ -623,10 +597,24 @@ fn persistent_array_value_to_scalar_string_map(value vphp.PhpValue) map[string]s
 		return map[string]string{}
 	}
 	return value.with_array(fn (arr vphp.PhpArray) map[string]string {
-		return zval_assoc_scalar_string_map(arr.to_zval())
+		return arr.to_scalar_string_map()
 	}) or {
 		map[string]string{}
 	}
+}
+
+fn php_value_assoc_scalar_string_map(value vphp.PhpValue) map[string]string {
+	if arr := value.as_array() {
+		return arr.to_scalar_string_map()
+	}
+	return map[string]string{}
+}
+
+fn new_vslim_request_from_psr_server_request_value(payload vphp.PhpValue, route_params map[string]string) &VSlimRequest {
+	if object := payload.as_object() {
+		return new_vslim_request_from_psr_server_request_object(object, route_params)
+	}
+	return new_vslim_request('GET', '/', '')
 }
 
 fn psr7_stream_string(stream &VSlimPsr7Stream) string {
@@ -675,66 +663,68 @@ fn new_psr7_json_response(status int, json_body string) &VSlimPsr7Response {
 	return new_psr7_response_from_vslim_response(json_response(status, json_body))
 }
 
-fn normalize_to_psr7_response(result vphp.ZVal) &VSlimPsr7Response {
+fn normalize_to_psr7_response_value(result vphp.PhpValue) &VSlimPsr7Response {
 	if !result.is_valid() || result.is_null() || result.is_undef() {
 		return new_psr7_response_from_vslim_response(text_response(200, ''))
 	}
-	if result.is_object() && (result.is_instance_of('VSlim\\Psr7\\Response')
-		|| result.is_instance_of('VSlimPsr7Response')) {
-		if resp := result.to_object[VSlimPsr7Response]() {
-			return clone_psr7_response(resp, resp.get_protocol_version(),
-				clone_header_values(resp.headers), clone_header_names(resp.header_names),
-				response_body_or_empty(resp), resp.get_status_code(), resp.get_reason_phrase())
-		}
-	}
-	if result.is_object() && result.is_instance_of('Psr\\Http\\Message\\ResponseInterface') {
-		status := if result.method_exists('getStatusCode') {
-			int(vphp.PhpObject.borrowed(result).with_method_result[vphp.PhpInt, i64]('getStatusCode', fn (z vphp.PhpInt) i64 {
-				return z.value()
-			}) or { 200 })
-		} else {
-			200
-		}
-		reason := if result.method_exists('getReasonPhrase') {
-			vphp.PhpObject.borrowed(result).with_method_result[vphp.PhpString, string]('getReasonPhrase', fn (z vphp.PhpString) string {
-				return z.value()
-			}) or { '' }
-		} else {
-			''
-		}
-		protocol := if result.method_exists('getProtocolVersion') {
-			vphp.PhpObject.borrowed(result).with_method_result[vphp.PhpString, string]('getProtocolVersion', fn (z vphp.PhpString) string {
-				return z.value()
-			}) or { '1.1' }
-		} else {
-			'1.1'
-		}
-		headers, header_names := if result.method_exists('getHeaders') {
-			mut headers_z := vphp.PhpObject.borrowed(result).method_request_owned('getHeaders')
-			defer {
-				headers_z.release()
+	if object := result.as_object() {
+		if object.is_instance_of('VSlim\\Psr7\\Response')
+			|| object.is_instance_of('VSlimPsr7Response') {
+			if resp := object.to_v_object[VSlimPsr7Response]() {
+				return clone_psr7_response(resp, resp.get_protocol_version(),
+					clone_header_values(resp.headers), clone_header_names(resp.header_names),
+					response_body_or_empty(resp), resp.get_status_code(), resp.get_reason_phrase())
 			}
-			zval_to_psr7_header_state(headers_z.to_zval())
-		} else {
-			map[string][]string{}, map[string]string{}
 		}
-		body_ref := if result.method_exists('getBody') {
-			vphp.PhpObject.borrowed(result).with_method_result[vphp.PhpValue, &VSlimPsr7Stream]('getBody', fn (z vphp.PhpValue) &VSlimPsr7Stream {
-				return clone_psr7_stream(zval_to_psr7_stream(z.to_zval()))
-			}) or { new_psr7_stream('') }
-		} else {
-			new_psr7_stream('')
-		}
-		return &VSlimPsr7Response{
-			status:           normalize_psr7_status(status)
-			reason_phrase:    normalize_reason_phrase(status, reason)
-			protocol_version: normalize_protocol_version(protocol)
-			headers:          headers
-			header_names:     header_names
-			body_ref:         body_ref
+		if object.is_instance_of('Psr\\Http\\Message\\ResponseInterface') {
+			status := if object.method_exists('getStatusCode') {
+				int(object.with_method_result[vphp.PhpInt, i64]('getStatusCode', fn (z vphp.PhpInt) i64 {
+					return z.value()
+				}) or { 200 })
+			} else {
+				200
+			}
+			reason := if object.method_exists('getReasonPhrase') {
+				object.with_method_result[vphp.PhpString, string]('getReasonPhrase', fn (z vphp.PhpString) string {
+					return z.value()
+				}) or { '' }
+			} else {
+				''
+			}
+			protocol := if object.method_exists('getProtocolVersion') {
+				object.with_method_result[vphp.PhpString, string]('getProtocolVersion', fn (z vphp.PhpString) string {
+					return z.value()
+				}) or { '1.1' }
+			} else {
+				'1.1'
+			}
+			headers, header_names := if object.method_exists('getHeaders') {
+				mut headers_value := object.call_method('getHeaders')
+				defer {
+					headers_value.release()
+				}
+				php_value_psr7_header_state(headers_value)
+			} else {
+				map[string][]string{}, map[string]string{}
+			}
+			body_ref := if object.method_exists('getBody') {
+				object.with_method_result[vphp.PhpValue, &VSlimPsr7Stream]('getBody', fn (z vphp.PhpValue) &VSlimPsr7Stream {
+					return clone_psr7_stream(php_value_psr7_stream(z))
+				}) or { new_psr7_stream('') }
+			} else {
+				new_psr7_stream('')
+			}
+			return &VSlimPsr7Response{
+				status:           normalize_psr7_status(status)
+				reason_phrase:    normalize_reason_phrase(status, reason)
+				protocol_version: normalize_protocol_version(protocol)
+				headers:          headers
+				header_names:     header_names
+				body_ref:         body_ref
+			}
 		}
 	}
-	res, ok := normalize_php_route_response_psr(result)
+	res, ok := normalize_php_route_response_psr_value(result)
 	if ok {
 		return res
 	}

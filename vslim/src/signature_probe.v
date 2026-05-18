@@ -21,41 +21,39 @@ pub fn (probe &VSlimPhpSignatureProbe) always_false() bool {
 
 @[php_method: 'alwaysNull']
 @[php_return_type: 'null']
-pub fn (probe &VSlimPhpSignatureProbe) always_null() vphp.RequestOwnedZBox {
-	return vphp.RequestOwnedZBox.new_null()
+pub fn (probe &VSlimPhpSignatureProbe) always_null() vphp.PhpNull {
+	return vphp.PhpNull.value()
 }
 
 @[php_method: 'alwaysThrow']
 @[php_return_type: 'never']
-pub fn (probe &VSlimPhpSignatureProbe) always_throw() vphp.RequestOwnedZBox {
+pub fn (probe &VSlimPhpSignatureProbe) always_throw() vphp.PhpNull {
 	vphp.PhpException.raise_class('RuntimeException', 'probe never return', 0)
-	return vphp.RequestOwnedZBox.new_null()
+	return vphp.PhpNull.value()
 }
 
 @[php_method: 'acceptTrue']
 @[php_arg_type: 'flag=true']
-pub fn (probe &VSlimPhpSignatureProbe) accept_true(flag vphp.RequestBorrowedZBox) bool {
-	raw := flag.to_zval()
-	return raw.is_bool() && raw.to_bool()
+pub fn (probe &VSlimPhpSignatureProbe) accept_true(flag vphp.PhpBool) bool {
+	return flag.value()
 }
 
 @[php_method: 'acceptFalse']
 @[php_arg_type: 'flag=false']
-pub fn (probe &VSlimPhpSignatureProbe) accept_false(flag vphp.RequestBorrowedZBox) bool {
-	raw := flag.to_zval()
-	return raw.is_bool() && !raw.to_bool()
+pub fn (probe &VSlimPhpSignatureProbe) accept_false(flag vphp.PhpBool) bool {
+	return !flag.value()
 }
 
 @[php_arg_type: 'value=null']
 @[php_method: 'acceptNull']
-pub fn (probe &VSlimPhpSignatureProbe) accept_null(value vphp.RequestBorrowedZBox) bool {
-	return value.to_zval().is_null()
+pub fn (probe &VSlimPhpSignatureProbe) accept_null(value vphp.PhpNull) bool {
+	return value.is_null()
 }
 
 @[php_method: 'acceptCallable']
 @[php_arg_type: 'cb=callable']
-pub fn (probe &VSlimPhpSignatureProbe) accept_callable(cb vphp.RequestBorrowedZBox) bool {
-	return cb.to_zval().is_callable()
+pub fn (probe &VSlimPhpSignatureProbe) accept_callable(cb vphp.PhpCallable) bool {
+	return cb.is_callable()
 }
 
 @[php_method: 'optionalTail']
@@ -96,16 +94,14 @@ pub fn VSlimPhpSignatureProbe.make_static_psr_response() &VSlimPsr7Response {
 
 @[php_arg_type: 'request=Psr\\Http\\Message\\RequestInterface']
 @[php_method: 'acceptPsrRequest']
-pub fn (probe &VSlimPhpSignatureProbe) accept_psr_request(request vphp.RequestBorrowedZBox) bool {
-	raw := request.to_zval()
-	return raw.is_object() && raw.is_instance_of('Psr\\Http\\Message\\RequestInterface')
+pub fn (probe &VSlimPhpSignatureProbe) accept_psr_request(request vphp.PhpObject) bool {
+	return request.is_instance_of('Psr\\Http\\Message\\RequestInterface')
 }
 
 @[php_arg_type: 'expiration=?DateTimeInterface']
 @[php_method: 'acceptDateTimeInterface']
-pub fn (probe &VSlimPhpSignatureProbe) accept_datetime_interface(expiration vphp.RequestBorrowedZBox) bool {
-	raw := expiration.to_zval()
-	return raw.is_null() || (raw.is_object() && raw.is_instance_of('DateTimeInterface'))
+pub fn (probe &VSlimPhpSignatureProbe) accept_datetime_interface(expiration vphp.PhpValue) bool {
+	return expiration.is_null() || expiration.is_instance_of('DateTimeInterface')
 }
 
 @[php_method: 'setProvider']

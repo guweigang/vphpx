@@ -38,7 +38,7 @@ pub fn VSlimEnvLoader.load(path string) map[string]string {
 			name_arg.release()
 		}
 		has_current := vphp.PhpFunction.named('getenv').with_result[vphp.PhpValue, bool](fn (current vphp.PhpValue) bool {
-			return current.is_valid() && (!current.is_bool() || current.to_zval().to_bool())
+			return current.is_valid() && (!current.is_bool() || current.to_bool())
 		}, name_arg) or { false }
 		if has_current {
 			continue

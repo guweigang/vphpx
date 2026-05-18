@@ -10,8 +10,8 @@ fn (view &VSlimView) invoke_template_helper_values(name string, args []TemplateE
 	}
 	mut call_args := []vphp.PhpArgInput{cap: args.len}
 	for arg in args {
-		call_args << frame.adopt_zval(template_expr_value_to_zval_with_context(arg, scalars,
-			lists))
+		mut value := template_expr_value_to_value_with_context(arg, scalars, lists)
+		call_args << frame.adopt_value(mut value)
 	}
 	return view.invoke_template_helper_args(name, call_args, template_path, line, col)
 }
@@ -58,66 +58,73 @@ fn (view &VSlimView) invoke_template_helper_args(name string, args []vphp.PhpArg
 	if !handler.is_valid() || !handler.is_callable() {
 		return debug_template_error('helper.invalid', template_path, key, line, col)
 	}
-	return handler.with_fn_result[vphp.PhpValue, string](fn (result vphp.PhpValue) string {
-		return result.to_zval().to_string()
+	return handler.with_result[vphp.PhpValue, string](fn (result vphp.PhpValue) string {
+		return result.to_string()
 	}, ...args) or { '' }
 }
 
-fn new_template_list_zval(items []string) vphp.ZVal {
-	mut out := vphp.RequestOwnedZBox.new_null().to_zval()
-	out.array_init()
+fn new_template_list_value(items []string) vphp.PhpValue {
+	mut arr := vphp.PhpArray.new()
 	for item in items {
-		out.add_next_val(infer_template_scalar_zval(item))
+		mut value := infer_template_scalar_value(item)
+		arr.push_value(value)
+		value.release()
 	}
-	return out
+	return arr.take_value()
 }
 
-fn new_template_map_zval(path string, scalars map[string]string, lists map[string][]string) vphp.ZVal {
+fn new_template_map_value(path string, scalars map[string]string, lists map[string][]string) vphp.PhpValue {
 	key := alias_template_key(path.trim_space())
-	return build_template_tree_zval(key, scalars, lists)
+	return build_template_tree_value(key, scalars, lists)
 }
 
-fn build_template_tree_zval(prefix string, scalars map[string]string, lists map[string][]string) vphp.ZVal {
+fn build_template_tree_value(prefix string, scalars map[string]string, lists map[string][]string) vphp.PhpValue {
 	if prefix == '' {
-		return new_template_assoc_zval(prefix, scalars, lists)
+		return new_template_assoc_value(prefix, scalars, lists)
 	}
 	if template_has_list_key(prefix, lists) && !template_has_child_keys(prefix, scalars, lists) {
-		return new_template_list_zval(template_list_values(prefix, scalars, lists))
+		return new_template_list_value(template_list_values(prefix, scalars, lists))
 	}
 	if !template_has_child_keys(prefix, scalars, lists) {
-		return infer_template_scalar_zval(template_scalar_value_with_lists(prefix, scalars, lists))
+		return infer_template_scalar_value(template_scalar_value_with_lists(prefix, scalars, lists))
 	}
-	return new_template_assoc_zval(prefix, scalars, lists)
+	return new_template_assoc_value(prefix, scalars, lists)
 }
 
-fn infer_template_scalar_zval(raw string) vphp.ZVal {
+fn infer_template_scalar_value(raw string) vphp.PhpValue {
 	trimmed := raw.trim_space()
-	if typed := parse_template_scalar_literal_zval(trimmed) {
+	if typed := parse_template_scalar_literal_value(trimmed) {
 		return typed
 	}
-	return vphp.RequestOwnedZBox.new_string(raw).to_zval()
+	mut out := vphp.PhpString.of(raw)
+	return out.take_value()
 }
 
-fn parse_template_scalar_literal_zval(raw string) ?vphp.ZVal {
+fn parse_template_scalar_literal_value(raw string) ?vphp.PhpValue {
 	trimmed := raw.trim_space()
 	if trimmed == '' {
 		return none
 	}
 	lower := trimmed.to_lower()
 	if lower == 'null' {
-		return vphp.RequestOwnedZBox.new_null().to_zval()
+		mut out := vphp.PhpNull.value()
+		return out.take_value()
 	}
 	if lower == 'true' {
-		return vphp.RequestOwnedZBox.new_bool(true).to_zval()
+		mut out := vphp.PhpBool.true_value()
+		return out.take_value()
 	}
 	if lower == 'false' {
-		return vphp.RequestOwnedZBox.new_bool(false).to_zval()
+		mut out := vphp.PhpBool.false_value()
+		return out.take_value()
 	}
 	if is_template_int_literal(trimmed) {
-		return vphp.RequestOwnedZBox.new_int(trimmed.i64()).to_zval()
+		mut out := vphp.PhpInt.of(trimmed.i64())
+		return out.take_value()
 	}
 	if is_template_float_literal(trimmed) {
-		return vphp.RequestOwnedZBox.new_float(trimmed.f64()).to_zval()
+		mut out := vphp.PhpDouble.of(trimmed.f64())
+		return out.take_value()
 	}
 	return none
 }
@@ -147,14 +154,15 @@ fn is_template_float_literal(raw string) bool {
 	return true
 }
 
-fn new_template_assoc_zval(prefix string, scalars map[string]string, lists map[string][]string) vphp.ZVal {
-	mut out := vphp.RequestOwnedZBox.new_null().to_zval()
-	out.array_init()
+fn new_template_assoc_value(prefix string, scalars map[string]string, lists map[string][]string) vphp.PhpValue {
+	mut arr := vphp.PhpArray.new()
 	for child in template_child_keys(prefix, scalars, lists) {
 		child_prefix := if prefix == '' { child } else { '${prefix}.${child}' }
-		add_assoc_zval_template(out, child, build_template_tree_zval(child_prefix, scalars, lists))
+		mut value := build_template_tree_value(child_prefix, scalars, lists)
+		arr.set_value(child, value)
+		value.release()
 	}
-	return out
+	return arr.take_value()
 }
 
 fn template_has_child_keys(prefix string, scalars map[string]string, lists map[string][]string) bool {
@@ -220,10 +228,6 @@ fn template_child_keys(prefix string, scalars map[string]string, lists map[strin
 	return out
 }
 
-fn add_assoc_zval_template(target vphp.ZVal, key string, child vphp.ZVal) {
-	target.add_assoc_zval(key, child)
-}
-
 fn split_template_top_level_segments(raw string, seps []u8) []string {
 	if raw.trim_space() == '' {
 		return []string{}
@@ -258,7 +262,7 @@ fn split_template_top_level_segments(raw string, seps []u8) []string {
 	return out.filter(it != '')
 }
 
-fn copy_template_branch(source_path string, target_path string, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZBox, mut out_scalars map[string]string, mut out_lists map[string][]string, mut out_objects map[string]vphp.RequestOwnedZBox) {
+fn copy_template_branch(source_path string, target_path string, scalars map[string]string, lists map[string][]string, objects map[string]vphp.PhpValue, mut out_scalars map[string]string, mut out_lists map[string][]string, mut out_objects map[string]vphp.PhpValue) {
 	source_prefix := alias_template_key(source_path.trim_space())
 	target_prefix := alias_template_key(target_path.trim_space())
 	if source_prefix == '' || target_prefix == '' {
@@ -306,7 +310,7 @@ fn copy_template_branch(source_path string, target_path string, scalars map[stri
 	for key, value in objects {
 		normalized := alias_template_key(key)
 		if normalized == source_prefix {
-			out_objects[target_prefix] = value.clone_request_owned()
+			out_objects[target_prefix] = value.owned()
 			copied = true
 			continue
 		}
@@ -317,7 +321,7 @@ fn copy_template_branch(source_path string, target_path string, scalars map[stri
 		if suffix == '' {
 			continue
 		}
-		out_objects['${target_prefix}.${suffix}'] = value.clone_request_owned()
+		out_objects['${target_prefix}.${suffix}'] = value.owned()
 		copied = true
 	}
 	if copied {
@@ -347,10 +351,10 @@ fn clone_template_lists(src map[string][]string) map[string][]string {
 	return out
 }
 
-fn clone_template_objects(src map[string]vphp.RequestOwnedZBox) map[string]vphp.RequestOwnedZBox {
-	mut out := map[string]vphp.RequestOwnedZBox{}
+fn clone_template_objects(src map[string]vphp.PhpValue) map[string]vphp.PhpValue {
+	mut out := map[string]vphp.PhpValue{}
 	for key, value in src {
-		out[key] = value.clone_request_owned()
+		out[key] = value.owned()
 	}
 	return out
 }

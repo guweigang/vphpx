@@ -21,7 +21,7 @@ namespace VSlim {
         protected $viewBasePath;
         protected $viewCacheConfigured;
         protected $viewCacheEnabled;
-        public function __construct() {}
+        public function __construct(?callable $onOpen = null, ?callable $onMessage = null, ?callable $onClose = null) {}
         public function abilityMiddleware(string $ability): \Psr\Http\Server\MiddlewareInterface {}
         public function after(mixed $handler): \VSlim\App {}
         public function allowedMethodsFor(string $rawPath): array {}
@@ -250,7 +250,7 @@ namespace VSlim {
         public function __construct() {}
         public static function toVSlimRequest(mixed $request): \VSlim\VHttpd\Request {}
         public static function toVSlimResponse(\Psr\Http\Message\ResponseInterface $response): \VSlim\VHttpd\Response {}
-        public static function toWorkerEnvelope(mixed $request): mixed {}
+        public static function toWorkerEnvelope(mixed $request): array {}
     }
 
     class RouteGroup
@@ -638,7 +638,8 @@ namespace VSlim\Debug {
     class ObjectProbe
     {
         public function __construct() {}
-        public static function probe(mixed $obj, string $className, string $methodName): mixed {}
+        public static function probe(object $obj, string $className, string $methodName): mixed {}
+        public static function psr7LifecycleCounters(int $rounds): string {}
     }
 }
 
@@ -917,34 +918,34 @@ namespace VSlim\Log {
         public function __construct() {}
         public function __toString(): string {}
         public function alert(string $message): \VSlim\Log\Logger {}
-        public function alertContext(string $message, mixed $context): \VSlim\Log\Logger {}
+        public function alertContext(string $message, array $context): \VSlim\Log\Logger {}
         public function channel(): string {}
         public function clearContext(): \VSlim\Log\Logger {}
         public function context(): array {}
         public function critical(string $message): \VSlim\Log\Logger {}
-        public function criticalContext(string $message, mixed $context): \VSlim\Log\Logger {}
+        public function criticalContext(string $message, array $context): \VSlim\Log\Logger {}
         public function debug(string $message): \VSlim\Log\Logger {}
-        public function debugContext(string $message, mixed $context): \VSlim\Log\Logger {}
+        public function debugContext(string $message, array $context): \VSlim\Log\Logger {}
         public static function debugLevel(): string {}
         public static function disabledLevel(): string {}
         public function emergency(string $message): \VSlim\Log\Logger {}
-        public function emergencyContext(string $message, mixed $context): \VSlim\Log\Logger {}
+        public function emergencyContext(string $message, array $context): \VSlim\Log\Logger {}
         public function error(string $message): \VSlim\Log\Logger {}
-        public function errorContext(string $message, mixed $context): \VSlim\Log\Logger {}
+        public function errorContext(string $message, array $context): \VSlim\Log\Logger {}
         public static function errorLevel(): string {}
         public static function fatalLevel(): string {}
         public function info(string $message): \VSlim\Log\Logger {}
-        public function infoContext(string $message, mixed $context): \VSlim\Log\Logger {}
+        public function infoContext(string $message, array $context): \VSlim\Log\Logger {}
         public static function infoLevel(): string {}
         public function level(): string {}
         public function log(string $level, string $message): \VSlim\Log\Logger {}
-        public function logContext(string $level, string $message, mixed $context): \VSlim\Log\Logger {}
+        public function logContext(string $level, string $message, array $context): \VSlim\Log\Logger {}
         public function notice(string $message): \VSlim\Log\Logger {}
-        public function noticeContext(string $message, mixed $context): \VSlim\Log\Logger {}
+        public function noticeContext(string $message, array $context): \VSlim\Log\Logger {}
         public function outputFile(): string {}
         public function outputTarget(): string {}
         public function setChannel(string $channel): \VSlim\Log\Logger {}
-        public function setContext(mixed $context): \VSlim\Log\Logger {}
+        public function setContext(array $context): \VSlim\Log\Logger {}
         public function setLevel(string $level): \VSlim\Log\Logger {}
         public function setLocalTime(bool $enabled): \VSlim\Log\Logger {}
         public function setOutputFile(string $path): \VSlim\Log\Logger {}
@@ -952,10 +953,10 @@ namespace VSlim\Log {
         public function useStderr(): \VSlim\Log\Logger {}
         public function useStdout(): \VSlim\Log\Logger {}
         public function warn(string $message): \VSlim\Log\Logger {}
-        public function warnContext(string $message, mixed $context): \VSlim\Log\Logger {}
+        public function warnContext(string $message, array $context): \VSlim\Log\Logger {}
         public static function warnLevel(): string {}
         public function warning(string $message): \VSlim\Log\Logger {}
-        public function warningContext(string $message, mixed $context): \VSlim\Log\Logger {}
+        public function warningContext(string $message, array $context): \VSlim\Log\Logger {}
         public function withContext(string $key, string $value): \VSlim\Log\Logger {}
     }
 
@@ -963,24 +964,24 @@ namespace VSlim\Log {
     {
         public function __construct() {}
         public function __toString(): string {}
-        public function alert(mixed $message, mixed $defaultContext = []): void {}
+        public function alert(mixed $message, array $context = []): void {}
         public function clearContext(): \VSlim\Log\PsrLogger {}
-        public function critical(mixed $message, mixed $defaultContext = []): void {}
-        public function debug(mixed $message, mixed $defaultContext = []): void {}
-        public function emergency(mixed $message, mixed $defaultContext = []): void {}
-        public function error(mixed $message, mixed $defaultContext = []): void {}
-        public function info(mixed $message, mixed $defaultContext = []): void {}
-        public function log(mixed $level, mixed $message, mixed $defaultContext = []): void {}
+        public function critical(mixed $message, array $context = []): void {}
+        public function debug(mixed $message, array $context = []): void {}
+        public function emergency(mixed $message, array $context = []): void {}
+        public function error(mixed $message, array $context = []): void {}
+        public function info(mixed $message, array $context = []): void {}
+        public function log(mixed $level, mixed $message, array $context = []): void {}
         public function logger(): \VSlim\Log\Logger {}
-        public function notice(mixed $message, mixed $defaultContext = []): void {}
+        public function notice(mixed $message, array $context = []): void {}
         public function setChannel(string $channel): \VSlim\Log\PsrLogger {}
-        public function setContext(mixed $context): \VSlim\Log\PsrLogger {}
+        public function setContext(array $context): \VSlim\Log\PsrLogger {}
         public function setLevel(string $level): \VSlim\Log\PsrLogger {}
         public function setLogger($inner): \VSlim\Log\PsrLogger {}
         public function setOutputFile(string $path): \VSlim\Log\PsrLogger {}
         public function useStderr(): \VSlim\Log\PsrLogger {}
         public function useStdout(): \VSlim\Log\PsrLogger {}
-        public function warning(mixed $message, mixed $defaultContext = []): void {}
+        public function warning(mixed $message, array $context = []): void {}
         public function withContext(string $key, string $value): \VSlim\Log\PsrLogger {}
     }
 }
@@ -1089,39 +1090,39 @@ namespace VSlim\Psr17 {
     class RequestFactory
     {
         public function __construct() {}
-        public function createRequest(mixed $method, mixed $uri): \Psr\Http\Message\RequestInterface {}
+        public function createRequest(string $method, $uri): \Psr\Http\Message\RequestInterface {}
     }
 
     class ResponseFactory
     {
         public function __construct() {}
-        public function createResponse(mixed $defaultStatus = 200, mixed $defaultReasonPhrase = ''): \Psr\Http\Message\ResponseInterface {}
+        public function createResponse(int $status = 200, string $reasonPhrase = ''): \Psr\Http\Message\ResponseInterface {}
     }
 
     class ServerRequestFactory
     {
         public function __construct() {}
-        public function createServerRequest(mixed $method, mixed $uri, array $defaultServerParams = []): \Psr\Http\Message\ServerRequestInterface {}
+        public function createServerRequest(string $method, $uri, array $serverParams = []): \Psr\Http\Message\ServerRequestInterface {}
     }
 
     class StreamFactory
     {
         public function __construct() {}
-        public function createStream(mixed $defaultContent = ''): \Psr\Http\Message\StreamInterface {}
-        public function createStreamFromFile(mixed $filename, mixed $defaultMode = 'r'): \Psr\Http\Message\StreamInterface {}
+        public function createStream(string $content = ''): \Psr\Http\Message\StreamInterface {}
+        public function createStreamFromFile(string $filename, string $mode = 'r'): \Psr\Http\Message\StreamInterface {}
         public function createStreamFromResource(mixed $resource): \Psr\Http\Message\StreamInterface {}
     }
 
     class UploadedFileFactory
     {
         public function __construct() {}
-        public function createUploadedFile(\Psr\Http\Message\StreamInterface $stream, mixed $defaultSize = null, mixed $defaultError = 0, mixed $defaultClientFilename = null, mixed $defaultClientMediaType = null): \Psr\Http\Message\UploadedFileInterface {}
+        public function createUploadedFile(\Psr\Http\Message\StreamInterface $stream, ?int $size = null, int $error = UPLOAD_ERR_OK, ?string $clientFilename = null, ?string $clientMediaType = null): \Psr\Http\Message\UploadedFileInterface {}
     }
 
     class UriFactory
     {
         public function __construct() {}
-        public function createUri(mixed $defaultUri = ''): \Psr\Http\Message\UriInterface {}
+        public function createUri(string $uri = ''): \Psr\Http\Message\UriInterface {}
     }
 }
 
@@ -1241,6 +1242,7 @@ namespace VSlim\Psr7 {
         protected $status;
         public function __construct(int $defaultStatus = 200, string $defaultReasonPhrase = '') {}
         public function __toString(): string {}
+        public function deleteCookie(string $name): \VSlim\Psr7\Response {}
         public function getBody(): \Psr\Http\Message\StreamInterface {}
         public function getHeader(mixed $name): array {}
         public function getHeaderLine(mixed $name): string {}
@@ -1249,6 +1251,7 @@ namespace VSlim\Psr7 {
         public function getReasonPhrase(): string {}
         public function getStatusCode(): int {}
         public function hasHeader(mixed $name): bool {}
+        public function setCookieFull(string $name, string $value, string $path, string $domain, int $maxAge, bool $secure, bool $httpOnly, string $sameSite): \VSlim\Psr7\Response {}
         public function withAddedHeader(mixed $name, mixed $value): \Psr\Http\Message\ResponseInterface {}
         public function withBody(\Psr\Http\Message\StreamInterface $body): \Psr\Http\Message\ResponseInterface {}
         public function withHeader(mixed $name, mixed $value): \Psr\Http\Message\ResponseInterface {}
@@ -1321,7 +1324,7 @@ namespace VSlim\Psr7 {
     class UploadedFile implements \Stringable
     {
         protected $moved;
-        public function __construct(mixed $defaultStream, ?int $defaultSize, int $defaultError, ?string $defaultClientFilename, ?string $defaultClientMediaType) {}
+        public function __construct(mixed $defaultStream, ?int $defaultSize, int $defaultError, ?string $defaultClientFilename = null, ?string $defaultClientMediaType = null) {}
         public function __toString(): string {}
         public function getClientFilename(): ?string {}
         public function getClientMediaType(): ?string {}
@@ -1623,21 +1626,21 @@ namespace VSlim\VHttpd {
         public function serverAll(): array {}
         public function serverParams(): array {}
         public function serverValue(string $name): string {}
-        public function setAttributes(mixed $attributes): \VSlim\VHttpd\Request {}
+        public function setAttributes(array $attributes): \VSlim\VHttpd\Request {}
         public function setBody(string $body): \VSlim\VHttpd\Request {}
-        public function setCookies(mixed $cookies): \VSlim\VHttpd\Request {}
-        public function setHeaders(mixed $headers): \VSlim\VHttpd\Request {}
+        public function setCookies(array $cookies): \VSlim\VHttpd\Request {}
+        public function setHeaders(array $headers): \VSlim\VHttpd\Request {}
         public function setHost(string $host): \VSlim\VHttpd\Request {}
         public function setMethod(string $method): \VSlim\VHttpd\Request {}
-        public function setParams(mixed $params): \VSlim\VHttpd\Request {}
+        public function setParams(array $params): \VSlim\VHttpd\Request {}
         public function setPort(string $port): \VSlim\VHttpd\Request {}
         public function setProtocolVersion(string $protocolVersion): \VSlim\VHttpd\Request {}
-        public function setQuery(mixed $query): \VSlim\VHttpd\Request {}
+        public function setQuery(array $query): \VSlim\VHttpd\Request {}
         public function setRemoteAddr(string $remoteAddr): \VSlim\VHttpd\Request {}
         public function setScheme(string $scheme): \VSlim\VHttpd\Request {}
-        public function setServer(mixed $server): \VSlim\VHttpd\Request {}
+        public function setServer(array $server): \VSlim\VHttpd\Request {}
         public function setTarget(string $rawPath): \VSlim\VHttpd\Request {}
-        public function setUploadedFiles(mixed $uploadedFiles): \VSlim\VHttpd\Request {}
+        public function setUploadedFiles(array $uploadedFiles): \VSlim\VHttpd\Request {}
         public function traceId(): string {}
         public function uploadedFileCount(): int {}
         public function uploadedFiles(): array {}
@@ -1706,6 +1709,7 @@ namespace VSlim\WebSocket {
         public function broadcast(string $data, string $room, string $exceptId): int {}
         public function connectionIds(): array {}
         public function forget(mixed $connOrId): \VSlim\WebSocket\App {}
+        public function handle(array $frame, mixed $conn): mixed {}
         public function handleWebSocket(mixed $frame, mixed $conn): mixed {}
         public function hasConnection(mixed $connOrId): bool {}
         public function hasOnClose(): bool {}

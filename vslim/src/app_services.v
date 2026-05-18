@@ -5,46 +5,43 @@ import vphp
 
 #include "php_bridge.h"
 
-fn zval_to_json_fragment(value vphp.ZVal) string {
+fn php_value_json_fragment(value vphp.PhpValue) string {
 	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return 'null'
 	}
-	return vphp.PhpJson.encode(value)
+	return value.to_json()
 }
 
-fn exception_class_name(exception vphp.RequestBorrowedZBox) string {
-	raw := exception.to_zval()
-	if !raw.is_valid() || !raw.is_object() {
+fn exception_class_name(exception vphp.PhpObject) string {
+	if !exception.is_valid() {
 		return ''
 	}
-	return raw.class_name().trim_space()
+	return exception.class_name().trim_space()
 }
 
-fn exception_message_value(exception vphp.RequestBorrowedZBox, fallback string) string {
-	raw := exception.to_zval()
-	if !raw.is_valid() || !raw.is_object() || !raw.method_exists('getMessage') {
+fn exception_message_value(exception vphp.PhpObject, fallback string) string {
+	if !exception.is_valid() || !exception.method_exists('getMessage') {
 		return fallback
 	}
-	mut out := vphp.PhpObject.borrowed(raw).method_request_owned('getMessage')
+	mut out := exception.call_method('getMessage')
 	defer {
 		out.release()
 	}
-	message := out.to_zval().to_string().trim_space()
+	message := out.to_string().trim_space()
 	if message == '' {
 		return fallback
 	}
 	return message
 }
 
-fn exception_status_code(exception vphp.RequestBorrowedZBox, fallback_status int) int {
+fn exception_status_code(exception vphp.PhpObject, fallback_status int) int {
 	message := exception_message_value(exception, '').to_lower()
-	raw := exception.to_zval()
-	if raw.is_valid() && raw.is_object() && raw.method_exists('getCode') {
-		mut out := vphp.PhpObject.borrowed(raw).method_request_owned('getCode')
+	if exception.is_valid() && exception.method_exists('getCode') {
+		mut out := exception.call_method('getCode')
 		defer {
 			out.release()
 		}
-		code := out.to_zval().to_int()
+		code := out.to_int()
 		if code >= 400 && code <= 599 {
 			return code
 		}
@@ -91,7 +88,7 @@ fn exception_status_code(exception vphp.RequestBorrowedZBox, fallback_status int
 	return fallback_status
 }
 
-fn exception_error_code(exception vphp.RequestBorrowedZBox) string {
+fn exception_error_code(exception vphp.PhpObject) string {
 	class_name := exception_class_name(exception)
 	message := exception_message_value(exception, '').to_lower()
 	if message.starts_with('config load failed:') || message.starts_with('config parse failed:')
@@ -227,7 +224,7 @@ pub fn (mut app VSlimApp) merge_config_text(text string) &VSlimApp {
 }
 
 @[php_method]
-pub fn (mut app VSlimApp) validate(data vphp.RequestBorrowedZBox, rules vphp.RequestBorrowedZBox) &VSlimValidator {
+pub fn (mut app VSlimApp) validate(data vphp.PhpValue, rules vphp.PhpArray) &VSlimValidator {
 	mut validator := VSlimValidator.make(data, rules)
 	validator.validate()
 	return validator
@@ -242,7 +239,7 @@ pub fn (app &VSlimApp) testing() &VSlimTestingHarness {
 }
 
 @[php_method]
-pub fn (app &VSlimApp) session(request vphp.RequestBorrowedZBox) &VSlimSessionStore {
+pub fn (app &VSlimApp) session(request vphp.PhpObject) &VSlimSessionStore {
 	mut session := &VSlimSessionStore{}
 	session.construct()
 	configure_default_session_store(mut session, app.config_ref)
@@ -251,7 +248,7 @@ pub fn (app &VSlimApp) session(request vphp.RequestBorrowedZBox) &VSlimSessionSt
 }
 
 @[php_method]
-pub fn (app &VSlimApp) auth(request vphp.RequestBorrowedZBox) &VSlimAuthSessionGuard {
+pub fn (app &VSlimApp) auth(request vphp.PhpObject) &VSlimAuthSessionGuard {
 	mut session := app.session(request)
 	mut guard := &VSlimAuthSessionGuard{}
 	guard.construct()
@@ -261,46 +258,39 @@ pub fn (app &VSlimApp) auth(request vphp.RequestBorrowedZBox) &VSlimAuthSessionG
 }
 
 @[php_method: 'setAuthUserResolver']
-pub fn (mut app VSlimApp) set_auth_user_resolver(resolver vphp.RequestBorrowedZBox) &VSlimApp {
-	if !resolver.is_valid() || !resolver.is_callable() {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'auth user resolver must be callable',
-			0)
-		return &app
-	}
-	mut old := app.auth_user_resolver
-	old.release()
-	app.auth_user_resolver = vphp.PersistentOwnedZBox.from_callable_zval(resolver.to_zval())
+pub fn (mut app VSlimApp) set_auth_user_resolver(resolver vphp.PhpCallable) &VSlimApp {
+	app.auth_user_resolver.release()
+	app.auth_user_resolver = resolver.retain().to_value()
 	return &app
 }
 
 @[php_method: 'setAuthUserProvider']
-pub fn (mut app VSlimApp) set_auth_user_provider(provider vphp.RequestBorrowedZBox) &VSlimApp {
-	raw := provider.to_zval()
+pub fn (mut app VSlimApp) set_auth_user_provider(provider vphp.PhpValue) &VSlimApp {
 	if provider.is_valid() && provider.is_callable() {
-		return app.set_auth_user_resolver(provider)
-	}
-	if raw.is_valid() && raw.is_object()
-		&& (raw.method_exists('findById') || raw.method_exists('resolve')) {
-		mut old := app.auth_user_resolver
-		old.release()
-		app.auth_user_resolver = vphp.PersistentOwnedZBox.from_object_zval(raw)
+		app.auth_user_resolver.release()
+		app.auth_user_resolver = provider.retain()
 		return &app
 	}
-	vphp.PhpException.raise_class('InvalidArgumentException', 'auth user provider must be callable or an object with findById()/resolve()',
-		0)
+	if provider.is_valid() && provider.is_object() {
+		if ok := provider.with_object[bool](fn (object vphp.PhpObject) bool {
+			return object.method_exists('findById') || object.method_exists('resolve')
+		}) {
+			if ok {
+				app.auth_user_resolver.release()
+				app.auth_user_resolver = provider.retain()
+				return &app
+			}
+		}
+	}
+	vphp.PhpException.raise_class('InvalidArgumentException',
+		'auth user provider must be callable or an object with findById()/resolve()', 0)
 	return &app
 }
 
 @[php_method: 'setAuthGateResolver']
-pub fn (mut app VSlimApp) set_auth_gate_resolver(resolver vphp.RequestBorrowedZBox) &VSlimApp {
-	if !resolver.is_valid() || !resolver.is_callable() {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'auth gate resolver must be callable',
-			0)
-		return &app
-	}
-	mut old := app.auth_gate_resolver
-	old.release()
-	app.auth_gate_resolver = vphp.PersistentOwnedZBox.from_callable_zval(resolver.to_zval())
+pub fn (mut app VSlimApp) set_auth_gate_resolver(resolver vphp.PhpCallable) &VSlimApp {
+	app.auth_gate_resolver.release()
+	app.auth_gate_resolver = resolver.retain()
 	return &app
 }
 
@@ -318,13 +308,9 @@ pub fn (app &VSlimApp) has_auth_user_provider() bool {
 	if app.auth_user_resolver.is_callable() {
 		return true
 	}
-	mut raw := app.auth_user_resolver.clone_request_owned()
-	defer {
-		raw.release()
-	}
-	value := raw.to_zval()
-	return value.is_valid() && value.is_object()
-		&& (value.method_exists('findById') || value.method_exists('resolve'))
+	return app.auth_user_resolver.with_object[bool](fn (object vphp.PhpObject) bool {
+		return object.method_exists('findById') || object.method_exists('resolve')
+	}) or { false }
 }
 
 @[php_method: 'authRedirectTo']
@@ -334,75 +320,76 @@ pub fn (app &VSlimApp) auth_redirect_to() string {
 
 @[php_method: 'resolveAuthUser']
 @[php_arg_name: 'user_id=userId']
-pub fn (app &VSlimApp) resolve_auth_user(user_id string) vphp.RequestOwnedZBox {
+pub fn (app &VSlimApp) resolve_auth_user(user_id string) vphp.PhpValue {
 	normalized_id := user_id.trim_space()
 	if normalized_id == '' {
-		return vphp.RequestOwnedZBox.new_null()
+		return vphp.PhpValue.null()
 	}
 	if !app.auth_user_resolver.is_valid() {
-		return vphp.RequestOwnedZBox.new_string(normalized_id)
+		return vphp.PhpString.of(normalized_id).take_value()
 	}
 	mut normalized_id_arg := vphp.PhpString.of(normalized_id)
 	defer {
 		normalized_id_arg.release()
 	}
-	if app.auth_user_resolver.is_callable() {
-		mut result := app.auth_user_resolver.fn_request_owned(normalized_id_arg)
+	if result := app.auth_user_resolver.with_callable[vphp.PhpValue](fn [normalized_id_arg] (callable vphp.PhpCallable) vphp.PhpValue {
+		return callable.invoke(normalized_id_arg)
+	}) {
 		return result
 	}
-	mut provider := app.auth_user_resolver.clone_request_owned()
-	defer {
-		provider.release()
+	if result := app.auth_user_resolver.with_object[vphp.PhpValue](fn [normalized_id_arg, normalized_id] (provider vphp.PhpObject) vphp.PhpValue {
+		return resolve_auth_user_from_provider(provider, normalized_id_arg, normalized_id)
+	}) {
+		return result
 	}
-	value := provider.to_zval()
-	if value.is_valid() && value.is_object() {
-		if value.method_exists('findById') {
-			return vphp.PhpObject.borrowed(value).method_request_owned('findById', normalized_id_arg)
-		}
-		if value.method_exists('resolve') {
-			return vphp.PhpObject.borrowed(value).method_request_owned('resolve', normalized_id_arg)
-		}
+	return vphp.PhpString.of(normalized_id).take_value()
+}
+
+fn resolve_auth_user_from_provider(provider vphp.PhpObject, normalized_id_arg vphp.PhpString, normalized_id string) vphp.PhpValue {
+	if provider.method_exists('findById') {
+		return provider.call_method('findById', normalized_id_arg)
 	}
-	return vphp.RequestOwnedZBox.new_string(normalized_id)
+	if provider.method_exists('resolve') {
+		return provider.call_method('resolve', normalized_id_arg)
+	}
+	return vphp.PhpString.of(normalized_id).take_value()
 }
 
 @[php_method: 'authUser']
-pub fn (app &VSlimApp) auth_user(request vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
+pub fn (app &VSlimApp) auth_user(request vphp.PhpObject) vphp.PhpValue {
 	mut guard := app.auth(request)
 	if !guard.check() {
-		return vphp.RequestOwnedZBox.new_null()
+		return vphp.PhpValue.null()
 	}
 	user_id := guard.id()
 	mut user := app.resolve_auth_user(user_id)
-	if !user.is_valid() || user.to_zval().is_null() || user.to_zval().is_undef() {
+	if !user.is_valid() || user.is_null() || user.is_undef() {
 		return user
 	}
-	detached := vphp.RequestOwnedZBox.from_zval(user.to_zval())
-	user.release()
-	return detached
+	return user.to_request_owned()
 }
 
 @[php_method: 'authCheck']
-pub fn (app &VSlimApp) auth_check(request vphp.RequestBorrowedZBox) bool {
+pub fn (app &VSlimApp) auth_check(request vphp.PhpObject) bool {
 	mut guard := app.auth(request)
 	return guard.check()
 }
 
 @[php_method: 'authGuest']
-pub fn (app &VSlimApp) auth_guest(request vphp.RequestBorrowedZBox) bool {
+pub fn (app &VSlimApp) auth_guest(request vphp.PhpObject) bool {
 	mut guard := app.auth(request)
 	return guard.guest()
 }
 
 @[php_method: 'authId']
-pub fn (app &VSlimApp) auth_id(request vphp.RequestBorrowedZBox) string {
+pub fn (app &VSlimApp) auth_id(request vphp.PhpObject) string {
 	mut guard := app.auth(request)
 	return guard.id()
 }
 
 @[php_arg_name: 'user_id=userId']
 @[php_method]
-pub fn (app &VSlimApp) login(request vphp.RequestBorrowedZBox, response vphp.RequestBorrowedZBox, user_id string) bool {
+pub fn (app &VSlimApp) login(request vphp.PhpObject, response vphp.PhpObject, user_id string) bool {
 	mut guard := app.auth(request)
 	guard.login(user_id)
 	mut store := guard.store()
@@ -410,7 +397,7 @@ pub fn (app &VSlimApp) login(request vphp.RequestBorrowedZBox, response vphp.Req
 }
 
 @[php_method]
-pub fn (app &VSlimApp) logout(request vphp.RequestBorrowedZBox, response vphp.RequestBorrowedZBox) bool {
+pub fn (app &VSlimApp) logout(request vphp.PhpObject, response vphp.PhpObject) bool {
 	mut guard := app.auth(request)
 	guard.logout()
 	mut store := guard.store()
@@ -418,7 +405,7 @@ pub fn (app &VSlimApp) logout(request vphp.RequestBorrowedZBox, response vphp.Re
 }
 
 @[php_method]
-pub fn (app &VSlimApp) can(ability string, request vphp.RequestBorrowedZBox) bool {
+pub fn (app &VSlimApp) can(ability string, request vphp.PhpObject) bool {
 	normalized := ability.trim_space().to_lower()
 	mut guard := app.auth(request)
 	if !app.auth_gate_resolver.is_valid() || !app.auth_gate_resolver.is_callable() {
@@ -436,17 +423,15 @@ pub fn (app &VSlimApp) can(ability string, request vphp.RequestBorrowedZBox) boo
 	defer {
 		ability_arg.release()
 	}
-	mut result := app.auth_gate_resolver.fn_request_owned(ability_arg,
-		vphp.PhpValue.from_request_borrowed_zbox(user.borrowed()),
-		vphp.PhpValue.from_request_borrowed_zbox(request))
+	mut result := app.auth_gate_resolver.invoke(ability_arg, user, request)
 	defer {
 		result.release()
 	}
-	return result.to_zval().to_bool()
+	return result.to_bool()
 }
 
 @[php_method]
-pub fn (app &VSlimApp) cannot(ability string, request vphp.RequestBorrowedZBox) bool {
+pub fn (app &VSlimApp) cannot(ability string, request vphp.PhpObject) bool {
 	return !app.can(ability, request)
 }
 
@@ -494,17 +479,16 @@ pub fn (app &VSlimApp) ability_middleware(ability string) &VSlimAuthRequireAbili
 @[php_arg_optional: 'error_code']
 pub fn (app &VSlimApp) error_response(status int, message string, error_code string) &VSlimPsr7Response {
 	code := if error_code.trim_space() == '' { 'runtime_error' } else { error_code.trim_space() }
-	return new_psr7_response_from_vslim_response(default_error_response(app, status, message,
-		code))
+	return new_psr7_response_from_vslim_response(default_error_response(app, status, message, code))
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method: 'validationError']
 @[php_arg_default: 'status=422']
 @[php_arg_optional: 'status']
-pub fn (app &VSlimApp) validation_error(errors vphp.RequestBorrowedZBox, status int) &VSlimPsr7Response {
+pub fn (app &VSlimApp) validation_error(errors vphp.PhpValue, status int) &VSlimPsr7Response {
 	error_status := if status <= 0 { 422 } else { status }
-	json_body := '{"ok":false,"code":"validation_error","error":"validation_error","status":${error_status},"message":"Validation failed","errors":${zval_to_json_fragment(errors.to_zval())}}'
+	json_body := '{"ok":false,"code":"validation_error","error":"validation_error","status":${error_status},"message":"Validation failed","errors":${php_value_json_fragment(errors)}}'
 	return new_psr7_response_from_vslim_response(json_response(error_status, json_body))
 }
 
@@ -524,8 +508,7 @@ pub fn (app &VSlimApp) unauthorized_response(message string) &VSlimPsr7Response 
 @[php_arg_optional: 'message']
 pub fn (app &VSlimApp) forbidden_response(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Forbidden' } else { message }
-	return new_psr7_response_from_vslim_response(default_error_response(app, 403, msg,
-		'forbidden'))
+	return new_psr7_response_from_vslim_response(default_error_response(app, 403, msg, 'forbidden'))
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
@@ -544,8 +527,7 @@ pub fn (app &VSlimApp) bad_request_response(message string) &VSlimPsr7Response {
 @[php_arg_optional: 'message']
 pub fn (app &VSlimApp) not_found_response_helper(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Not Found' } else { message }
-	return new_psr7_response_from_vslim_response(default_error_response(app, 404, msg,
-		'not_found'))
+	return new_psr7_response_from_vslim_response(default_error_response(app, 404, msg, 'not_found'))
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
@@ -554,8 +536,7 @@ pub fn (app &VSlimApp) not_found_response_helper(message string) &VSlimPsr7Respo
 @[php_arg_optional: 'message']
 pub fn (app &VSlimApp) conflict_response(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Conflict' } else { message }
-	return new_psr7_response_from_vslim_response(default_error_response(app, 409, msg,
-		'conflict'))
+	return new_psr7_response_from_vslim_response(default_error_response(app, 409, msg, 'conflict'))
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
@@ -573,7 +554,7 @@ pub fn (app &VSlimApp) service_unavailable_response(message string) &VSlimPsr7Re
 @[php_arg_default: 'fallback_status=500']
 @[php_method: 'exceptionResponse']
 @[php_arg_optional: 'fallback_status']
-pub fn (app &VSlimApp) exception_response(exception vphp.RequestBorrowedZBox, fallback_status int) &VSlimPsr7Response {
+pub fn (app &VSlimApp) exception_response(exception vphp.PhpObject, fallback_status int) &VSlimPsr7Response {
 	status := if fallback_status >= 400 && fallback_status <= 599 { fallback_status } else { 500 }
 	resolved_status := exception_status_code(exception, status)
 	message := exception_message_value(exception, 'Internal Server Error')
@@ -795,7 +776,8 @@ fn configure_default_simple_cache(mut cache VSlimPsr16Cache, config &VSlimConfig
 		cache.set_namespace(config.get_string('cache.prefix', cache.namespace()))
 	}
 	if config.has('cache.default_ttl_seconds') {
-		cache.set_default_ttl_seconds(config.get_int('cache.default_ttl_seconds', cache.default_ttl_seconds_value()))
+		cache.set_default_ttl_seconds(config.get_int('cache.default_ttl_seconds',
+			cache.default_ttl_seconds_value()))
 	}
 }
 
@@ -812,7 +794,8 @@ fn configure_default_cache_pool(mut pool VSlimPsr6CacheItemPool, config &VSlimCo
 		pool.set_default_ttl_seconds(config.get_int('cache.pool.default_ttl_seconds',
 			pool.default_ttl_seconds_value()))
 	} else if config.has('cache.default_ttl_seconds') {
-		pool.set_default_ttl_seconds(config.get_int('cache.default_ttl_seconds', pool.default_ttl_seconds_value()))
+		pool.set_default_ttl_seconds(config.get_int('cache.default_ttl_seconds',
+			pool.default_ttl_seconds_value()))
 	}
 }
 
@@ -866,12 +849,20 @@ fn configure_default_auth_settings(mut app VSlimApp, config &VSlimConfig) {
 		return
 	}
 	if config.has('auth.redirect_to') {
-		app.auth_redirect_path = config.get_string('auth.redirect_to', app.auth_redirect_to()).trim_space()
+		app.auth_redirect_path =
+			config.get_string('auth.redirect_to', app.auth_redirect_to()).trim_space()
+	} else if config.has('auth.redirectTo') {
+		app.auth_redirect_path =
+			config.get_string('auth.redirectTo', app.auth_redirect_to()).trim_space()
 	}
 }
 
 fn (mut app VSlimApp) sync_clock_dependent_services() {
-	clock_value := vphp.RequestBorrowedZBox.of(app.clock().to_zval())
+	mut clock := app.clock()
+	defer {
+		clock.release()
+	}
+	clock_value := clock.to_borrowed()
 	if app.cache_ref != unsafe { nil } {
 		app.cache_ref.set_clock(clock_value)
 	}
@@ -895,16 +886,16 @@ pub fn (mut app VSlimApp) set_mcp(mcp &VSlimMcpApp) &VSlimApp {
 pub fn (mut app VSlimApp) mcp() &VSlimMcpApp {
 	if app.mcp_ref == unsafe { nil } {
 		mut created := &VSlimMcpApp{}
-		created.construct()
+		created.construct(none, none)
 		app.mcp_ref = created
 	}
 	return app.mcp_ref
 }
 
 @[php_method: 'handleMcpDispatch']
-pub fn (app &VSlimApp) handle_mcp_dispatch(frame vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
+pub fn (app &VSlimApp) handle_mcp_dispatch(frame vphp.PhpArray) vphp.PhpArray {
 	if app.mcp_ref == unsafe { nil } {
-		return vphp.RequestOwnedZBox.new_null()
+		return vphp.PhpArray.new()
 	}
 	return app.mcp_ref.handle_mcp_dispatch(frame)
 }
@@ -916,15 +907,15 @@ pub fn (app &VSlimApp) has_logger() bool {
 
 @[php_arg_type: 'clock=Psr\\Clock\\ClockInterface']
 @[php_method: 'setClock']
-pub fn (mut app VSlimApp) set_clock(clock vphp.RequestBorrowedZBox) &VSlimApp {
-	if !psr20_is_clock(clock.to_zval()) {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'clock must implement Psr\\Clock\\ClockInterface',
-			0)
+pub fn (mut app VSlimApp) set_clock(clock vphp.PhpObject) &VSlimApp {
+	if !psr20_clock_is_valid(clock) {
+		vphp.PhpException.raise_class('InvalidArgumentException',
+			'clock must implement Psr\\Clock\\ClockInterface', 0)
 		return app
 	}
 	mut old := app.clock_ref
 	old.release()
-	app.clock_ref = vphp.PersistentOwnedZBox.from_object_zval(clock.to_zval())
+	app.clock_ref = clock.retain()
 	app.sync_clock_dependent_services()
 	app.sync_clock_service_to_container()
 	return app
@@ -932,14 +923,14 @@ pub fn (mut app VSlimApp) set_clock(clock vphp.RequestBorrowedZBox) &VSlimApp {
 
 @[php_return_type: 'Psr\\Clock\\ClockInterface']
 @[php_method]
-pub fn (mut app VSlimApp) clock() vphp.RequestOwnedZBox {
-	if !psr20_is_clock(app.clock_ref.to_zval()) {
+pub fn (mut app VSlimApp) clock() vphp.PhpObject {
+	if !psr20_clock_is_valid(app.clock_ref) {
 		mut old := app.clock_ref
 		old.release()
 		app.clock_ref = new_psr20_system_clock_ref()
 		app.sync_clock_service_to_container()
 	}
-	return app.clock_ref.clone_request_owned()
+	return app.clock_ref.to_request_owned()
 }
 
 @[php_method: 'setLogger']
@@ -1038,9 +1029,13 @@ pub fn (mut app VSlimApp) events() &VSlimPsr14EventDispatcher {
 @[php_arg_type: 'cache=Psr\\SimpleCache\\CacheInterface']
 @[php_method: 'setCache']
 pub fn (mut app VSlimApp) set_cache(cache &VSlimPsr16Cache) &VSlimApp {
+	mut clock := app.clock()
+	defer {
+		clock.release()
+	}
 	unsafe {
 		mut writable := &VSlimPsr16Cache(cache)
-		writable.set_clock(vphp.RequestBorrowedZBox.of(app.clock().to_zval()))
+		writable.set_clock(clock.to_borrowed())
 	}
 	app.cache_ref = cache
 	app.sync_cache_services_to_container()
@@ -1051,9 +1046,13 @@ pub fn (mut app VSlimApp) set_cache(cache &VSlimPsr16Cache) &VSlimApp {
 @[php_method]
 pub fn (mut app VSlimApp) cache() &VSlimPsr16Cache {
 	if app.cache_ref == unsafe { nil } {
+		mut clock := app.clock()
+		defer {
+			clock.release()
+		}
 		mut created := &VSlimPsr16Cache{}
 		created.construct()
-		created.set_clock(vphp.RequestBorrowedZBox.of(app.clock().to_zval()))
+		created.set_clock(clock.to_borrowed())
 		configure_default_simple_cache(mut created, app.config_ref)
 		app.cache_ref = created
 	}
@@ -1063,9 +1062,13 @@ pub fn (mut app VSlimApp) cache() &VSlimPsr16Cache {
 @[php_arg_type: 'pool=Psr\\Cache\\CacheItemPoolInterface']
 @[php_method: 'setCachePool']
 pub fn (mut app VSlimApp) set_cache_pool(pool &VSlimPsr6CacheItemPool) &VSlimApp {
+	mut clock := app.clock()
+	defer {
+		clock.release()
+	}
 	unsafe {
 		mut writable := &VSlimPsr6CacheItemPool(pool)
-		writable.set_clock(vphp.RequestBorrowedZBox.of(app.clock().to_zval()))
+		writable.set_clock(clock.to_borrowed())
 	}
 	app.cache_pool_ref = pool
 	app.sync_cache_services_to_container()
@@ -1076,9 +1079,13 @@ pub fn (mut app VSlimApp) set_cache_pool(pool &VSlimPsr6CacheItemPool) &VSlimApp
 @[php_method: 'cachePool']
 pub fn (mut app VSlimApp) cache_pool() &VSlimPsr6CacheItemPool {
 	if app.cache_pool_ref == unsafe { nil } {
+		mut clock := app.clock()
+		defer {
+			clock.release()
+		}
 		mut created := &VSlimPsr6CacheItemPool{}
 		created.construct()
-		created.set_clock(vphp.RequestBorrowedZBox.of(app.clock().to_zval()))
+		created.set_clock(clock.to_borrowed())
 		configure_default_cache_pool(mut created, app.config_ref)
 		app.cache_pool_ref = created
 	}

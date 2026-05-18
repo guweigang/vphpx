@@ -4,7 +4,7 @@ import strconv
 import vphp
 
 @[php_method]
-pub fn VSlimValidator.make(data vphp.RequestBorrowedZBox, rules vphp.RequestBorrowedZBox) &VSlimValidator {
+pub fn VSlimValidator.make(data vphp.PhpValue, rules vphp.PhpArray) &VSlimValidator {
 	mut validator := &VSlimValidator{}
 	validator.construct()
 	validator.set_data(data)
@@ -23,7 +23,7 @@ pub fn (mut validator VSlimValidator) construct() &VSlimValidator {
 }
 
 @[php_method: 'setData']
-pub fn (mut validator VSlimValidator) set_data(data vphp.RequestBorrowedZBox) &VSlimValidator {
+pub fn (mut validator VSlimValidator) set_data(data vphp.PhpValue) &VSlimValidator {
 	validator.input_data = validator_extract_input(data)
 	validator.validation_ran = false
 	validator.error_map = map[string][]string{}
@@ -32,7 +32,7 @@ pub fn (mut validator VSlimValidator) set_data(data vphp.RequestBorrowedZBox) &V
 }
 
 @[php_method: 'setRules']
-pub fn (mut validator VSlimValidator) set_rules(rules vphp.RequestBorrowedZBox) &VSlimValidator {
+pub fn (mut validator VSlimValidator) set_rules(rules vphp.PhpArray) &VSlimValidator {
 	validator.rule_map = validator_extract_rules(rules)
 	validator.validation_ran = false
 	validator.error_map = map[string][]string{}
@@ -105,20 +105,20 @@ pub fn (mut validator VSlimValidator) fails() bool {
 }
 
 @[php_method]
-pub fn (mut validator VSlimValidator) errors() vphp.RequestOwnedZBox {
+pub fn (mut validator VSlimValidator) errors() vphp.PhpValue {
 	validator.ensure_validated()
-	return validator_errors_zbox(validator.error_map)
+	return validator_errors_value(validator.error_map)
 }
 
 @[php_method]
-pub fn (mut validator VSlimValidator) validated() vphp.RequestOwnedZBox {
+pub fn (mut validator VSlimValidator) validated() vphp.PhpValue {
 	validator.ensure_validated()
-	return validator_dyn_map_zbox(validator.validated_data)
+	return validator_dyn_map_value(validator.validated_data)
 }
 
 @[php_method]
-pub fn (mut validator VSlimValidator) data() vphp.RequestOwnedZBox {
-	return validator_dyn_map_zbox(validator.input_data)
+pub fn (mut validator VSlimValidator) data() vphp.PhpValue {
+	return validator_dyn_map_value(validator.input_data)
 }
 
 fn (mut validator VSlimValidator) ensure_validated() {
@@ -128,36 +128,39 @@ fn (mut validator VSlimValidator) ensure_validated() {
 	validator.validate()
 }
 
-fn validator_extract_input(data vphp.RequestBorrowedZBox) map[string]vphp.DynValue {
-	raw := data.to_zval()
-	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
+fn validator_extract_input(data vphp.PhpValue) map[string]vphp.DynValue {
+	if !data.is_valid() || data.is_null() || data.is_undef() {
 		return map[string]vphp.DynValue{}
 	}
-	if raw.is_array() {
-		return validator_map_from_zval(raw)
+	if data.is_array() {
+		return validator_map_from_value(data)
 	}
-	if raw.is_object()
-		&& (raw.method_exists('getQueryParams') || raw.method_exists('getParsedBody')) {
-		return validator_request_input_map(raw)
+	if request := data.as_object() {
+		defer {
+			request.release()
+		}
+		if request.method_exists('getQueryParams') || request.method_exists('getParsedBody') {
+			return validator_request_input_map(request)
+		}
 	}
 	return map[string]vphp.DynValue{}
 }
 
-fn validator_request_input_map(request vphp.ZVal) map[string]vphp.DynValue {
+fn validator_request_input_map(request vphp.PhpObject) map[string]vphp.DynValue {
 	mut out := map[string]vphp.DynValue{}
 	if request.method_exists('getQueryParams') {
-		mut query := vphp.PhpObject.borrowed(request).method_request_owned('getQueryParams')
+		mut query := request.call_method('getQueryParams')
 		defer {
 			query.release()
 		}
-		out = validator_merge_input_maps(out, validator_map_from_zval(query.to_zval()))
+		out = validator_merge_input_maps(out, validator_map_from_value(query))
 	}
 	if request.method_exists('getParsedBody') {
-		mut parsed := vphp.PhpObject.borrowed(request).method_request_owned('getParsedBody')
+		mut parsed := request.call_method('getParsedBody')
 		defer {
 			parsed.release()
 		}
-		out = validator_merge_input_maps(out, validator_map_from_zval(parsed.to_zval()))
+		out = validator_merge_input_maps(out, validator_map_from_value(parsed))
 	}
 	return out
 }
@@ -170,11 +173,11 @@ fn validator_merge_input_maps(left map[string]vphp.DynValue, right map[string]vp
 	return out
 }
 
-fn validator_map_from_zval(raw vphp.ZVal) map[string]vphp.DynValue {
-	if !raw.is_valid() || raw.is_null() || raw.is_undef() || !raw.is_array() {
+fn validator_map_from_value(value vphp.PhpValue) map[string]vphp.DynValue {
+	if !value.is_valid() || value.is_null() || value.is_undef() || !value.is_array() {
 		return map[string]vphp.DynValue{}
 	}
-	decoded := vphp.DynValue.from_zval(raw) or { return map[string]vphp.DynValue{} }
+	decoded := value.to_dyn_value() or { return map[string]vphp.DynValue{} }
 	return validator_map_from_dyn(decoded)
 }
 
@@ -185,14 +188,10 @@ fn validator_map_from_dyn(value vphp.DynValue) map[string]vphp.DynValue {
 	return map[string]vphp.DynValue{}
 }
 
-fn validator_extract_rules(rules vphp.RequestBorrowedZBox) map[string][]string {
-	raw := rules.to_zval()
-	if !raw.is_valid() || raw.is_null() || raw.is_undef() || !raw.is_array() {
-		return map[string][]string{}
-	}
+fn validator_extract_rules(rules vphp.PhpArray) map[string][]string {
 	mut out := map[string][]string{}
-	for key in raw.assoc_keys() {
-		value := raw.get(key) or { continue }
+	for key in rules.assoc_keys() {
+		value := rules.value(key) or { continue }
 		parsed := validator_rule_list(value)
 		if parsed.len > 0 {
 			out[key] = parsed
@@ -201,14 +200,17 @@ fn validator_extract_rules(rules vphp.RequestBorrowedZBox) map[string][]string {
 	return out
 }
 
-fn validator_rule_list(value vphp.ZVal) []string {
+fn validator_rule_list(value vphp.PhpValue) []string {
 	if value.is_string() {
 		return validator_split_rule_list(value.to_string())
 	}
-	if value.is_array() {
+	if arr := value.as_array() {
+		defer {
+			arr.release()
+		}
 		mut out := []string{}
-		for idx := 0; idx < value.array_count(); idx++ {
-			item := value.array_get(idx).to_string().trim_space()
+		for item_value in arr.value_items() {
+			item := item_value.to_string().trim_space()
 			if item != '' {
 				out << item
 			}
@@ -463,11 +465,11 @@ fn validator_string_value(value vphp.DynValue) string {
 	}
 }
 
-fn validator_dyn_map_zbox(values map[string]vphp.DynValue) vphp.RequestOwnedZBox {
-	return database_result_box_from_dyn(vphp.DynValue.of_map(values))
+fn validator_dyn_map_value(values map[string]vphp.DynValue) vphp.PhpValue {
+	return vphp.DynValue.of_map(values).to_value() or { vphp.PhpValue.null() }
 }
 
-fn validator_errors_zbox(errors map[string][]string) vphp.RequestOwnedZBox {
+fn validator_errors_value(errors map[string][]string) vphp.PhpValue {
 	mut out := map[string]vphp.DynValue{}
 	for key, values in errors {
 		mut items := []vphp.DynValue{}
@@ -476,5 +478,5 @@ fn validator_errors_zbox(errors map[string][]string) vphp.RequestOwnedZBox {
 		}
 		out[key] = vphp.DynValue.of_list(items)
 	}
-	return database_result_box_from_dyn(vphp.DynValue.of_map(out))
+	return validator_dyn_map_value(out)
 }

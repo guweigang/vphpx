@@ -5,62 +5,60 @@ import vphp
 @[php_arg_type: 'response=Psr\\Http\\Message\\ResponseInterface']
 @[php_return_type: 'VSlim\\VHttpd\\Response']
 @[php_method: 'toVSlimResponse']
-pub fn VSlimPsr7Adapter.to_vslim_response(response vphp.RequestBorrowedZBox) &VSlimResponse {
-	return to_vslim_response(new_vslim_response_from_psr_response(normalize_to_psr7_response(response.to_zval())))
+pub fn VSlimPsr7Adapter.to_vslim_response(response vphp.PhpValue) &VSlimResponse {
+	return to_vslim_response(new_vslim_response_from_psr_response(normalize_to_psr7_response_value(response)))
 }
 
 @[php_method: 'toVSlimRequest']
-pub fn VSlimPsr7Adapter.to_vslim_request(request vphp.RequestBorrowedZBox) &VSlimRequest {
-	raw_request := request.to_zval()
-	method := adapter_read_string(raw_request, 'getMethod', 'method', 'GET')
-	target := adapter_read_request_target(raw_request)
-	body := adapter_read_body(raw_request)
+pub fn VSlimPsr7Adapter.to_vslim_request(request vphp.PhpValue) &VSlimRequest {
+	method := adapter_read_string(request, 'getMethod', 'method', 'GET')
+	target := adapter_read_request_target(request)
+	body := adapter_read_body(request)
 
 	mut out := new_vslim_request(method, target, body)
-	out.set_scheme(adapter_read_uri_part(raw_request, 'getScheme', 'scheme', 'http'))
-	out.set_host(adapter_read_uri_part(raw_request, 'getHost', 'host', ''))
-	out.set_port(adapter_read_uri_part(raw_request, 'getPort', 'port', ''))
-	out.set_protocol_version(adapter_read_string(raw_request, 'getProtocolVersion',
-		'protocolVersion', '1.1'))
-	out.set_remote_addr(adapter_read_server_value(raw_request, 'REMOTE_ADDR'))
-	mut headers := adapter_read_headers(raw_request)
+	out.set_scheme(adapter_read_uri_part(request, 'getScheme', 'scheme', 'http'))
+	out.set_host(adapter_read_uri_part(request, 'getHost', 'host', ''))
+	out.set_port(adapter_read_uri_part(request, 'getPort', 'port', ''))
+	out.set_protocol_version(adapter_read_string(request, 'getProtocolVersion', 'protocolVersion',
+		'1.1'))
+	out.set_remote_addr(adapter_read_server_value(request, 'REMOTE_ADDR'))
+	mut headers := adapter_read_headers(request)
 	defer {
 		headers.release()
 	}
-	out.set_headers(headers.borrowed())
-	mut cookies := adapter_read_map(raw_request, 'getCookieParams', 'cookies')
+	out.set_headers(headers)
+	mut cookies := adapter_read_map(request, 'getCookieParams', 'cookies')
 	defer {
 		cookies.release()
 	}
-	out.set_cookies(cookies.borrowed())
-	mut query := adapter_read_map(raw_request, 'getQueryParams', 'query')
+	out.set_cookies(cookies)
+	mut query := adapter_read_map(request, 'getQueryParams', 'query')
 	defer {
 		query.release()
 	}
-	out.set_query(query.borrowed())
-	mut attributes := adapter_read_attributes(raw_request)
+	out.set_query(query)
+	mut attributes := adapter_read_attributes(request)
 	defer {
 		attributes.release()
 	}
-	out.set_attributes(attributes.borrowed())
-	mut server := adapter_read_server_params(raw_request)
+	out.set_attributes(attributes)
+	mut server := adapter_read_server_params(request)
 	defer {
 		server.release()
 	}
-	out.set_server(server.borrowed())
-	mut uploaded := adapter_read_uploaded_files(raw_request)
+	out.set_server(server)
+	mut uploaded := adapter_read_uploaded_files(request)
 	defer {
 		uploaded.release()
 	}
-	out.set_uploaded_files(uploaded.borrowed())
+	out.set_uploaded_files(uploaded)
 	return out
 }
 
 @[php_method: 'toWorkerEnvelope']
-pub fn VSlimPsr7Adapter.to_worker_envelope(request vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
-	raw_request := request.to_zval()
+pub fn VSlimPsr7Adapter.to_worker_envelope(request vphp.PhpValue) vphp.PhpArray {
 	vreq := VSlimPsr7Adapter.to_vslim_request(request)
-	mut out := new_array()
+	mut out := vphp.PhpArray.new()
 	out.string('method', vreq.method)
 	out.string('path', vreq.raw_path)
 	out.string('body', vreq.body)
@@ -69,24 +67,42 @@ pub fn VSlimPsr7Adapter.to_worker_envelope(request vphp.RequestBorrowedZBox) vph
 	out.string('port', vreq.port)
 	out.string('protocol_version', vreq.protocol_version)
 	out.string('remote_addr', vreq.remote_addr)
-	mut headers := adapter_read_headers(raw_request)
-	out.set_request_owned_zbox('headers', headers)
-	mut cookies := adapter_read_map(raw_request, 'getCookieParams', 'cookies')
-	out.set_request_owned_zbox('cookies', cookies)
-	mut query := adapter_read_map(raw_request, 'getQueryParams', 'query')
-	out.set_request_owned_zbox('query', query)
-	mut attributes := adapter_read_attributes(raw_request)
-	out.set_request_owned_zbox('attributes', attributes)
-	mut server := adapter_read_server_params(raw_request)
-	out.set_request_owned_zbox('server', server)
-	mut uploaded := adapter_read_uploaded_files(raw_request)
-	out.set_request_owned_zbox('uploaded_files', uploaded)
-	return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
+	mut headers := adapter_read_headers(request)
+	defer {
+		headers.release()
+	}
+	out.set('headers', headers)
+	mut cookies := adapter_read_map(request, 'getCookieParams', 'cookies')
+	defer {
+		cookies.release()
+	}
+	out.set('cookies', cookies)
+	mut query := adapter_read_map(request, 'getQueryParams', 'query')
+	defer {
+		query.release()
+	}
+	out.set('query', query)
+	mut attributes := adapter_read_attributes(request)
+	defer {
+		attributes.release()
+	}
+	out.set('attributes', attributes)
+	mut server := adapter_read_server_params(request)
+	defer {
+		server.release()
+	}
+	out.set('server', server)
+	mut uploaded := adapter_read_uploaded_files(request)
+	defer {
+		uploaded.release()
+	}
+	out.set('uploaded_files', uploaded)
+	return out
 }
 
-fn adapter_read_request_target(request vphp.ZVal) string {
+fn adapter_read_request_target(request vphp.PhpValue) string {
 	if request.method_exists('getRequestTarget') {
-		mut target := vphp.PhpObject.borrowed(request).method_request_owned('getRequestTarget')
+		mut target := request.call_method('getRequestTarget')
 		defer {
 			target.release()
 		}
@@ -101,14 +117,14 @@ fn adapter_read_request_target(request vphp.ZVal) string {
 	}
 	if uri.is_valid() && uri.is_object() {
 		if uri.method_exists('getPath') {
-			path := adapter_read_string(uri.to_zval(), 'getPath', 'path', '/')
-			query := adapter_read_string(uri.to_zval(), 'getQuery', 'query', '')
+			path := adapter_read_string(uri, 'getPath', 'path', '/')
+			query := adapter_read_string(uri, 'getQuery', 'query', '')
 			return if query != '' { '${path}?${query}' } else { path }
 		}
-		if uri.to_zval().property_exists('path') {
-			path := uri.to_zval().get_prop_string('path')
-			query := if uri.to_zval().property_exists('query') {
-				uri.to_zval().get_prop_string('query')
+		if uri.property_exists('path') {
+			path := uri.prop_value('path').to_string()
+			query := if uri.property_exists('query') {
+				uri.prop_value('query').to_string()
 			} else {
 				''
 			}
@@ -116,7 +132,7 @@ fn adapter_read_request_target(request vphp.ZVal) string {
 		}
 	}
 	if request.property_exists('uri') {
-		uri_value := request.get_prop('uri')
+		uri_value := request.prop_value('uri')
 		if uri_value.is_string() {
 			return target_from_uri_string(uri_value.to_string())
 		}
@@ -124,96 +140,104 @@ fn adapter_read_request_target(request vphp.ZVal) string {
 	return '/'
 }
 
-fn adapter_read_body(request vphp.ZVal) string {
+fn adapter_read_body(request vphp.PhpValue) string {
 	if request.method_exists('getBody') {
-		mut body := vphp.PhpObject.borrowed(request).method_request_owned('getBody')
+		mut body := request.call_method('getBody')
 		defer {
 			body.release()
 		}
 		return body.to_string()
 	}
 	if request.property_exists('body') {
-		return request.get_prop('body').to_string()
+		return request.prop_value('body').to_string()
 	}
 	return ''
 }
 
-fn adapter_read_headers(request vphp.ZVal) vphp.RequestOwnedZBox {
+fn adapter_read_headers(request vphp.PhpValue) vphp.PhpArray {
 	mut raw := adapter_read_method_or_prop(request, 'getHeaders', 'headers')
 	defer {
 		raw.release()
 	}
-	mut out := new_array()
+	mut out := vphp.PhpArray.new()
 	if !raw.is_valid() || !raw.is_array() {
-		return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
+		return out
 	}
-	for key in raw.to_zval().assoc_keys() {
-		value := zval_key(raw.to_zval(), key)
+	raw_headers := raw.as_array() or { return out }
+	for key in raw_headers.assoc_keys() {
+		value := raw_headers.value_at(key)
 		if value.is_array() {
 			out.string(key.to_lower(), value.to_string_list().join(', '))
 			continue
 		}
 		out.string(key.to_lower(), value.to_string())
 	}
-	return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
+	return out
 }
 
-fn adapter_read_attributes(request vphp.ZVal) vphp.RequestOwnedZBox {
+fn adapter_read_attributes(request vphp.PhpValue) vphp.PhpArray {
 	return adapter_read_map(request, 'getAttributes', 'attributes')
 }
 
-fn adapter_read_server_params(request vphp.ZVal) vphp.RequestOwnedZBox {
+fn adapter_read_server_params(request vphp.PhpValue) vphp.PhpArray {
 	return adapter_read_map(request, 'getServerParams', 'server')
 }
 
-fn adapter_read_map(request vphp.ZVal, getter string, property string) vphp.RequestOwnedZBox {
+fn adapter_read_map(request vphp.PhpValue, getter string, property string) vphp.PhpArray {
 	mut raw := adapter_read_method_or_prop(request, getter, property)
 	defer {
 		raw.release()
 	}
-	mut out := new_array()
+	mut out := vphp.PhpArray.new()
 	if !raw.is_valid() || !raw.is_array() {
-		return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
+		return out
 	}
-	for key in raw.to_zval().assoc_keys() {
-		value := zval_key(raw.to_zval(), key)
+	raw_map := raw.as_array() or { return out }
+	for key in raw_map.assoc_keys() {
+		value := raw_map.value_at(key)
 		if value.is_array() {
 			out.string(key, value.to_string_list().join(', '))
 		} else {
 			out.string(key, value.to_string())
 		}
 	}
-	return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
+	return out
 }
 
-fn adapter_read_uploaded_files(request vphp.ZVal) vphp.RequestOwnedZBox {
+fn adapter_read_uploaded_files(request vphp.PhpValue) vphp.PhpArray {
 	mut raw := adapter_read_method_or_prop(request, 'getUploadedFiles', 'uploadedFiles')
 	defer {
 		raw.release()
 	}
 	if !raw.is_valid() || !raw.is_array() {
-		mut out := new_array()
-		return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
+		return vphp.PhpArray.new()
 	}
-	return vphp.PhpFunction.named('array_values').request_owned(vphp.PhpValue.from_request_borrowed_zbox(raw.borrowed()))
+	mut values := vphp.PhpFunction.named('array_values').invoke(raw)
+	arr := values.as_array() or {
+		values.release()
+		return vphp.PhpArray.new()
+	}
+	values.release()
+	return arr
 }
 
-fn adapter_read_server_value(request vphp.ZVal, key string) string {
+fn adapter_read_server_value(request vphp.PhpValue, key string) string {
 	mut server := adapter_read_server_params(request)
 	defer {
 		server.release()
 	}
-	return zval_key(server.to_zval(), key).to_string()
+	return server.value_at(key).to_string()
 }
 
-fn adapter_read_uri_part(request vphp.ZVal, getter string, property string, default_value string) string {
+fn adapter_read_uri_part(request vphp.PhpValue, getter string, property string, default_value string) string {
 	mut uri := adapter_read_uri_object(request)
 	defer {
 		uri.release()
 	}
 	if uri.is_valid() && uri.is_object() {
-		if uri.to_zval().method_exists(getter) {
-			mut value := vphp.PhpObject.borrowed_zbox(uri.borrowed()).method_request_owned(getter)
+		if uri.method_exists(getter) {
+			uri_obj := uri.as_object() or { return default_value }
+			mut value := uri_obj.call_method(getter)
 			defer {
 				value.release()
 			}
@@ -222,8 +246,8 @@ fn adapter_read_uri_part(request vphp.ZVal, getter string, property string, defa
 			}
 			return value.to_string()
 		}
-		if uri.to_zval().property_exists(property) {
-			prop := uri.to_zval().get_prop(property)
+		if uri.property_exists(property) {
+			prop := uri.prop_value(property)
 			if prop.is_null() || prop.is_undef() {
 				return default_value
 			}
@@ -231,7 +255,7 @@ fn adapter_read_uri_part(request vphp.ZVal, getter string, property string, defa
 		}
 	}
 	if request.property_exists('uri') {
-		uri_value := request.get_prop('uri')
+		uri_value := request.prop_value('uri')
 		if uri_value.is_string() {
 			return uri_part_from_string(uri_value.to_string(), property, default_value)
 		}
@@ -239,17 +263,17 @@ fn adapter_read_uri_part(request vphp.ZVal, getter string, property string, defa
 	return default_value
 }
 
-fn adapter_read_uri_object(request vphp.ZVal) vphp.RequestOwnedZBox {
+fn adapter_read_uri_object(request vphp.PhpValue) vphp.PhpValue {
 	if request.method_exists('getUri') {
-		return vphp.PhpObject.borrowed(request).method_request_owned('getUri')
+		return request.call_method('getUri').owned()
 	}
 	if request.property_exists('uri') {
-		return vphp.RequestOwnedZBox.of(request.get_prop('uri'))
+		return request.prop_value('uri').owned()
 	}
-	return vphp.RequestOwnedZBox.new_null()
+	return vphp.PhpValue.null()
 }
 
-fn adapter_read_string(request vphp.ZVal, getter string, property string, default_value string) string {
+fn adapter_read_string(request vphp.PhpValue, getter string, property string, default_value string) string {
 	mut value := adapter_read_method_or_prop(request, getter, property)
 	defer {
 		value.release()
@@ -260,14 +284,14 @@ fn adapter_read_string(request vphp.ZVal, getter string, property string, defaul
 	return value.to_string()
 }
 
-fn adapter_read_method_or_prop(request vphp.ZVal, getter string, property string) vphp.RequestOwnedZBox {
+fn adapter_read_method_or_prop(request vphp.PhpValue, getter string, property string) vphp.PhpValue {
 	if request.method_exists(getter) {
-		return vphp.PhpObject.borrowed(request).method_request_owned(getter)
+		return request.call_method(getter).owned()
 	}
 	if request.property_exists(property) {
-		return vphp.RequestOwnedZBox.of(request.get_prop(property))
+		return request.prop_value(property).owned()
 	}
-	return vphp.RequestOwnedZBox.new_null()
+	return vphp.PhpValue.null()
 }
 
 fn target_from_uri_string(uri string) string {
@@ -275,16 +299,15 @@ fn target_from_uri_string(uri string) string {
 	defer {
 		uri_arg.release()
 	}
-	mut parts_box := vphp.PhpFunction.named('parse_url').request_owned(uri_arg)
+	mut parts_value := vphp.PhpFunction.named('parse_url').invoke(uri_arg)
 	defer {
-		parts_box.release()
+		parts_value.release()
 	}
-	parts := parts_box.to_zval()
-	if !parts.is_valid() || !parts.is_array() {
+	if !parts_value.is_valid() || !parts_value.is_array() {
 		return '/'
 	}
-	path := zval_key(parts, 'path').to_string()
-	query := zval_key(parts, 'query').to_string()
+	path := parts_value.value_at('path').to_string()
+	query := parts_value.value_at('query').to_string()
 	base := if path == '' { '/' } else { path }
 	return if query != '' { '${base}?${query}' } else { base }
 }
@@ -294,18 +317,17 @@ fn uri_part_from_string(uri string, property string, default_value string) strin
 	defer {
 		uri_arg.release()
 	}
-	mut parts_box := vphp.PhpFunction.named('parse_url').request_owned(uri_arg)
+	mut parts_value := vphp.PhpFunction.named('parse_url').invoke(uri_arg)
 	defer {
-		parts_box.release()
+		parts_value.release()
 	}
-	parts := parts_box.to_zval()
-	if !parts.is_valid() || !parts.is_array() {
+	if !parts_value.is_valid() || !parts_value.is_array() {
 		return default_value
 	}
 	match property {
-		'scheme' { return zval_string_key(parts, 'scheme', default_value) }
-		'host' { return zval_string_key(parts, 'host', default_value) }
-		'port' { return zval_string_key(parts, 'port', default_value) }
+		'scheme' { return parts_value.string_at('scheme', default_value) }
+		'host' { return parts_value.string_at('host', default_value) }
+		'port' { return parts_value.string_at('port', default_value) }
 		else { return default_value }
 	}
 }

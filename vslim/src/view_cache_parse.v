@@ -32,28 +32,25 @@ fn clear_template_source_cache() {
 	}
 }
 
-fn ensure_view_helper_map(mut helpers map[string]vphp.PersistentOwnedZBox) {
+fn ensure_view_helper_map(mut helpers map[string]vphp.PhpCallable) {
 	if helpers.len == 0 {
-		helpers = map[string]vphp.PersistentOwnedZBox{}
+		helpers = map[string]vphp.PhpCallable{}
 	}
 }
 
-fn clone_view_helper_map(src map[string]vphp.PersistentOwnedZBox) map[string]vphp.PersistentOwnedZBox {
-	mut out := map[string]vphp.PersistentOwnedZBox{}
+fn clone_view_helper_map(src map[string]vphp.PhpCallable) map[string]vphp.PhpCallable {
+	mut out := map[string]vphp.PhpCallable{}
 	for key, handler in src {
 		out[key] = handler.clone()
 	}
 	return out
 }
 
-fn release_view_helper(mut handler vphp.PersistentOwnedZBox) {
+fn release_view_helper(mut handler vphp.PhpCallable) {
 	if !handler.is_valid() {
 		return
 	}
-	unsafe {
-		mut owned := handler
-		owned.release()
-	}
+	handler.release()
 }
 
 fn (view &VSlimView) read_template_source(path string) !string {
