@@ -19,7 +19,7 @@ if (!is_file($autoload)) { echo "autoload_missing\n"; exit; }
 require_once $autoload;
 
 putenv('VHTTPD_APP=' . __DIR__ . '/fixtures/type_error_app_fixture.php');
-$worker = new \VPhp\VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
+$worker = new \VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
 $res = $worker->dispatchRequest([
     'id' => 'req-type-error',
     'method' => 'GET',

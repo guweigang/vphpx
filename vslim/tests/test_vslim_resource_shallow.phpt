@@ -1,5 +1,5 @@
 --TEST--
-VSlim resource_opts supports shallow member routes for nested resources
+VSlim resourceOpts supports shallow member routes for nested resources
 --SKIPIF--
 <?php if (!extension_loaded("vslim")) print "skip"; ?>
 --FILE--

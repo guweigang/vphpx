@@ -1,5 +1,5 @@
 --TEST--
-VSlim resource and api_resource register RESTful routes
+VSlim resource and apiResource register RESTful routes
 --SKIPIF--
 <?php if (!extension_loaded("vslim")) print "skip"; ?>
 --FILE--
@@ -95,7 +95,7 @@ final class ResourceDemoController {
 $app = new VSlim\App();
 $app->container()->set(ResourceDemoController::class, new ResourceDemoController());
 $app->resource('/items', ResourceDemoController::class);
-$app->api_resource('/api/items', ResourceDemoController::class);
+$app->apiResource('/api/items', ResourceDemoController::class);
 
 echo $app->dispatch('GET', '/items')->body . PHP_EOL;
 echo $app->dispatch('GET', '/items/create')->body . PHP_EOL;

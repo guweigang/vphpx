@@ -1,5 +1,5 @@
 --TEST--
-VSlim dispatch_envelope_map returns propagated trace/request headers
+VSlim dispatchEnvelopeMap returns propagated trace/request headers
 --SKIPIF--
 <?php if (!extension_loaded("vslim")) print "skip"; ?>
 --FILE--
@@ -123,7 +123,7 @@ namespace {
         }
     });
 
-    $map = $app->dispatch_envelope_map([
+    $map = $app->dispatchEnvelopeMap([
         'method' => 'GET',
         'path' => '/hello/codex',
         'query' => [],

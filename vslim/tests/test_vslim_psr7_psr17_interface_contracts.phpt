@@ -113,29 +113,29 @@ interface ResponseFactoryInterface
 
 interface RequestFactoryInterface
 {
-    public function createRequest($method, $uri);
+    public function createRequest(string $method, $uri);
 }
 
 interface ServerRequestFactoryInterface
 {
-    public function createServerRequest($method, $uri, array $serverParams = []);
+    public function createServerRequest(string $method, $uri, array $serverParams = []);
 }
 
 interface StreamFactoryInterface
 {
-    public function createStream($content = '');
-    public function createStreamFromFile($filename, $mode = 'r');
+    public function createStream(string $content = '');
+    public function createStreamFromFile(string $filename, string $mode = 'r');
     public function createStreamFromResource($resource);
 }
 
 interface UploadedFileFactoryInterface
 {
-    public function createUploadedFile(StreamInterface $stream, $size = null, $error = \UPLOAD_ERR_OK, $clientFilename = null, $clientMediaType = null);
+    public function createUploadedFile(StreamInterface $stream, ?int $size = null, int $error = \UPLOAD_ERR_OK, ?string $clientFilename = null, ?string $clientMediaType = null);
 }
 
 interface UriFactoryInterface
 {
-    public function createUri($uri = '');
+    public function createUri(string $uri = '');
 }
 PHP);
 }

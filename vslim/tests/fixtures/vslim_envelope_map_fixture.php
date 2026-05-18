@@ -128,7 +128,7 @@ return static function (mixed $request, array $envelope = []): array {
         ];
     }
 
-    $map = $app->dispatch_envelope_map($payload);
+    $map = $app->dispatchEnvelopeMap($payload);
     $headers = [];
     foreach ($map as $k => $v) {
         if (is_string($k) && str_starts_with($k, 'headers_')) {

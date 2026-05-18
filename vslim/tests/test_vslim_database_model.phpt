@@ -5,7 +5,7 @@ VSlim database model builds queries and tracks record state
 --FILE--
 <?php
 $db = (new VSlim\Database\Manager())->setConfig(
-    (new VSlim\Database\Config())->set_driver('mysql')
+    (new VSlim\Database\Config())->setDriver('mysql')
 );
 
 $model = (new VSlim\Database\Model())
@@ -33,7 +33,7 @@ echo $model->deleteQuery()->toSql() . PHP_EOL;
 echo json_encode($model->deleteQuery()->params(), JSON_UNESCAPED_SLASHES) . PHP_EOL;
 
 $bad = (new VSlim\Database\Model())->setManager(
-    (new VSlim\Database\Manager())->setConfig((new VSlim\Database\Config())->set_driver('sqlite'))
+    (new VSlim\Database\Manager())->setConfig((new VSlim\Database\Config())->setDriver('sqlite'))
 )->setTable('users');
 try {
     $bad->find(1);

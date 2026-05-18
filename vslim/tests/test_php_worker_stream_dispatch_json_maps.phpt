@@ -4,10 +4,10 @@ php-worker stream dispatch keeps empty headers/state as JSON objects
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 3) . '/vhttpd/php/package/src/legacy_aliases.php';
+require_once __DIR__ . '/php_worker_package_bootstrap.php';
 
 $fixture = __DIR__ . '/fixtures/stream_dispatch_fixture.php';
-$server = new VPhp\VHttpd\PhpWorker\Server('/tmp/vhttpd_stream_strategy_dispatch_test.sock', $fixture);
+$server = new VHttpd\PhpWorker\Server('/tmp/vhttpd_stream_strategy_dispatch_test.sock', $fixture);
 $ref = new ReflectionClass($server);
 $method = $ref->getMethod('handleStream');
 

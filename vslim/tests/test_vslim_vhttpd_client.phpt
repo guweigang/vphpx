@@ -18,6 +18,32 @@ if (is_resource($server)) {
 if (is_file($probe)) {
     @unlink($probe);
 }
+$childProbe = '/tmp/vslim_vhttpd_client_child_probe_' . getmypid() . '.sock';
+@unlink($childProbe);
+$cmd = sprintf(
+    'php -r %s',
+    escapeshellarg('$sock=$argv[1]; @unlink($sock); $errno=0; $errstr=""; $server=@stream_socket_server("unix://".$sock,$errno,$errstr); if(!is_resource($server)){fwrite(STDERR,"bind_failed:$errstr:$errno\n"); exit(2);} fclose($server); @unlink($sock);'),
+);
+$spec = [
+    0 => ['pipe', 'r'],
+    1 => ['pipe', 'w'],
+    2 => ['pipe', 'w'],
+];
+$proc = proc_open($cmd . ' ' . escapeshellarg($childProbe), $spec, $pipes);
+if (!is_resource($proc)) {
+    print 'skip';
+    return;
+}
+foreach ($pipes as $pipe) {
+    if (is_resource($pipe)) {
+        fclose($pipe);
+    }
+}
+$code = proc_close($proc);
+@unlink($childProbe);
+if ($code !== 0) {
+    print 'skip child unix socket unavailable';
+}
 ?>
 --FILE--
 <?php
@@ -125,7 +151,7 @@ $startServer = static function () use ($serverScript, $sock, $stdoutLog, $stderr
     $deadline = microtime(true) + 3.0;
     while (microtime(true) < $deadline) {
         clearstatcache(true, $sock);
-        if (is_file($sock)) {
+        if (file_exists($sock)) {
             return $proc;
         }
         usleep(20000);

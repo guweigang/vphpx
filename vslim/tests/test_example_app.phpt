@@ -19,7 +19,7 @@ $autoload = dirname(__DIR__) . '/examples/vendor/autoload.php';
 if (!is_file($autoload)) { echo "autoload_missing\n"; exit; }
 require_once $autoload;
 
-$worker = new \VPhp\VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
+$worker = new \VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
 
 $hello = $worker->dispatchRequest([
     'id' => 'hello',

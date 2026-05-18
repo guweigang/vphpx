@@ -23,7 +23,7 @@ require_once $autoload;
 putenv('VHTTPD_APP=' . dirname(__DIR__) . '/examples/ollama_stream_app.php');
 putenv('OLLAMA_MODEL=qwen-test');
 
-$worker = new \VPhp\VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
+$worker = new \VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
 
 $meta = $worker->dispatchRequest([
     'method' => 'GET',

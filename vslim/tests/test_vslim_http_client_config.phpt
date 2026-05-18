@@ -13,7 +13,7 @@ $app = new VSlim\App();
 $app->loadConfigText($cfg);
 
 $client = $app->httpClient();
-echo $client->timeout_seconds_value(), "\n";
+echo $client->timeoutSecondsValue(), "\n";
 echo ($app->container()->get('http_client') === $client ? 'same' : 'diff'), "\n";
 ?>
 --EXPECT--

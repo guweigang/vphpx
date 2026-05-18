@@ -4,11 +4,9 @@ php-worker stream dispatch helpers can build replayable phase-2 streams
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 3) . '/vhttpd/php/package/src/VHttpd/PhpWorker/StreamApp.php';
-require_once dirname(__DIR__, 3) . '/vhttpd/php/package/src/VSlim/Stream/Response.php';
-require_once dirname(__DIR__, 3) . '/vhttpd/php/package/src/VSlim/Stream/Factory.php';
+require_once __DIR__ . '/php_worker_package_bootstrap.php';
 
-$sequence = VPhp\VSlim\Stream\Factory::dispatchSse(
+$sequence = VSlim\Stream\Factory::dispatchSse(
     [
         ['event' => 'tick', 'data' => '0'],
         ['event' => 'done', 'data' => 'complete'],
@@ -32,11 +30,11 @@ $next = $sequence->handle([
     'state' => ['cursor' => '1', 'total' => '2'],
 ]);
 
-$response = VPhp\VSlim\Stream\Response::sse([
+$response = VSlim\Stream\Response::sse([
     ['event' => 'token', 'data' => 'A'],
     ['event' => 'done', 'data' => 'B'],
 ]);
-$dispatch = VPhp\VSlim\Stream\Factory::dispatchResponse($response, 1);
+$dispatch = VSlim\Stream\Factory::dispatchResponse($response, 1);
 $dispatchOpen = $dispatch->handle([
     'mode' => 'stream',
     'strategy' => 'dispatch',

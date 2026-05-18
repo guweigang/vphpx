@@ -1,5 +1,5 @@
 --TEST--
-VSlim middleware rejects legacy callable middleware registrations
+VSlim middleware rejects legacy callable middleware registrations but accepts process objects
 --SKIPIF--
 <?php if (!extension_loaded("vslim")) print "skip"; ?>
 --FILE--
@@ -29,4 +29,4 @@ try {
 ?>
 --EXPECT--
 middleware must be a PSR-15 middleware registration
-middleware must be a PSR-15 middleware registration
+no-object-error

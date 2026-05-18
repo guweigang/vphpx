@@ -33,7 +33,7 @@ $meta = $app->dispatchEnvelope([
 echo $meta->status . "\n";
 echo (str_contains($meta->body, '"name":"vslim-stream-factory-demo"') ? "meta_ok\n" : "meta_bad\n");
 
-$plainText = $app->dispatch_envelope_worker([
+$plainText = $app->dispatchEnvelopeWorker([
     'method' => 'GET',
     'path' => '/stream/text?topic=demo',
     'query' => ['topic' => 'demo'],
@@ -41,7 +41,7 @@ $plainText = $app->dispatch_envelope_worker([
 echo ($plainText instanceof \VSlim\Stream\Response ? "plain_text_stream\n" : "plain_text_not_stream\n");
 echo implode('', iterator_to_array($plainText->chunks(), false));
 
-$plainSse = $app->dispatch_envelope_worker([
+$plainSse = $app->dispatchEnvelopeWorker([
     'method' => 'GET',
     'path' => '/stream/sse?topic=demo',
     'query' => ['topic' => 'demo'],
@@ -51,7 +51,7 @@ echo ($plainSse instanceof \VSlim\Stream\Response ? "plain_sse_stream\n" : "plai
 echo ($plainEvents[0]['event'] ?? '') . "\n";
 echo ($plainEvents[2]['event'] ?? '') . "\n";
 
-$ollamaText = $app->dispatch_envelope_worker([
+$ollamaText = $app->dispatchEnvelopeWorker([
     'method' => 'GET',
     'path' => '/ollama/text?prompt=demo',
     'query' => ['prompt' => 'demo'],
@@ -59,7 +59,7 @@ $ollamaText = $app->dispatch_envelope_worker([
 echo ($ollamaText instanceof \VSlim\Stream\Response ? "ollama_text_stream\n" : "ollama_text_not_stream\n");
 echo implode('', iterator_to_array($ollamaText->chunks(), false)) . "\n";
 
-$ollamaSse = $app->dispatch_envelope_worker([
+$ollamaSse = $app->dispatchEnvelopeWorker([
     'method' => 'GET',
     'path' => '/ollama/sse?prompt=demo',
     'query' => ['prompt' => 'demo'],

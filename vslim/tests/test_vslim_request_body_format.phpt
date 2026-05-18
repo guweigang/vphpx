@@ -31,7 +31,7 @@ $multipartReq->setHeaders(['content-type' => 'multipart/form-data; boundary=' . 
 echo $multipartReq->bodyFormat() . PHP_EOL;
 echo ($multipartReq->isMultipartBody() ? 'yes' : 'no') . PHP_EOL;
 echo $multipartReq->multipartBody()['name'] . PHP_EOL;
-echo implode(',', $multipartReq->uploaded_files()) . PHP_EOL;
+echo implode(',', $multipartReq->uploadedFiles()) . PHP_EOL;
 ?>
 --EXPECT--
 form

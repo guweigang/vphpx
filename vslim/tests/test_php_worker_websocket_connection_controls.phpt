@@ -4,10 +4,10 @@ PhpWorker Connection emits local hub control frames
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/../../vhttpd/php/package/src/legacy_aliases.php';
+require_once dirname(__DIR__, 3) . '/vhttpd/php/package/vendor/autoload.php';
 
 $stream = fopen('php://temp', 'w+');
-$conn = new VPhp\VHttpd\PhpWorker\WebSocket\Connection($stream, 'ws-1');
+$conn = new VHttpd\PhpWorker\WebSocket\Connection($stream, 'ws-1');
 $conn->join('lobby');
 $conn->setMeta('user', 'alice');
 $conn->setPresence('online');
@@ -19,7 +19,7 @@ $conn->done();
 
 rewind($stream);
 while (true) {
-    $raw = VPhp\VHttpd\PhpWorker\Client::readFrame($stream);
+    $raw = VHttpd\PhpWorker\Client::readFrame($stream);
     if (!is_string($raw) || $raw === '') {
         break;
     }

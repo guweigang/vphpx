@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use VPhp\VHttpd\Upstream\Plan;
+use VHttpd\Upstream\Plan;
 
 return static function (mixed $request, array $envelope = []): array|Plan {
     $src = is_array($request) ? $request : $envelope;

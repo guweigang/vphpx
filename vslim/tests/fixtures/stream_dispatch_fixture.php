@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use VPhp\VHttpd\PhpWorker\StreamApp;
+use VHttpd\PhpWorker\StreamApp;
 
 return [
     'stream' => (new StreamApp())

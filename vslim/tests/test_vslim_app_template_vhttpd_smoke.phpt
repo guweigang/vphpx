@@ -64,7 +64,7 @@ $root = dirname(__DIR__);
 $repoRoot = dirname($root);
 $bin = $repoRoot . '/vhttpd/vhttpd';
 $templateRoot = $root . '/templates/app';
-$workerPhp = $repoRoot . '/vhttpd/php/package/bin/php-worker';
+$workerPhp = $repoRoot . '/vhttpd/php/package/bin/vphp-worker';
 
 $port = free_port();
 $tmp = sys_get_temp_dir() . '/vslim_template_vhttpd_' . getmypid() . '_' . $port;

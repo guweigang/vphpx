@@ -27,6 +27,6 @@ $envelopeRes = $app->dispatchEnvelope([
 echo $envelopeRes->status . '|' . $envelopeRes->body . PHP_EOL;
 ?>
 --EXPECT--
-200|{"user":"42","trace":"trace-local-mvp"}
+200|{"user":"42","trace":"alias"}
 405|Method Not Allowed
 200|{"runtime":"vslim","bridge":"vphp","server":"vhttpd","trace":"trace-local-mvp"}

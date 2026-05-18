@@ -113,7 +113,7 @@ interface UploadedFileInterface
 
 interface UploadedFileFactoryInterface
 {
-    public function createUploadedFile(StreamInterface $stream, $size = null, $error = \UPLOAD_ERR_OK, $clientFilename = null, $clientMediaType = null);
+    public function createUploadedFile(StreamInterface $stream, ?int $size = null, int $error = \UPLOAD_ERR_OK, ?string $clientFilename = null, ?string $clientMediaType = null);
 }
 PHP);
 }

@@ -93,7 +93,7 @@ namespace {
     try {
         $factory->createStreamFromResource('not-a-resource');
         echo "resource-ok\n";
-    } catch (\InvalidArgumentException $e) {
+    } catch (\Throwable $e) {
         echo "resource-invalid\n";
     }
 

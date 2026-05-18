@@ -76,7 +76,7 @@ response-builder-borrowed
 app-view-fresh
 app-view1-ok
 app-view2-ok
-controller-view-fresh
+controller-view-borrowed
 controller-render-fresh
 controller-render1-ok
 controller-render2-ok

@@ -43,7 +43,7 @@ $pidFile = $tmp . '/vhttpd.pid';
 $eventLog = $tmp . '/events.ndjson';
 $stdoutLog = $tmp . '/stdout.log';
 $workerSock = $tmp . '/worker.sock';
-$workerPhp = $root . '/../../vhttpd/php/package/bin/php-worker';
+$workerPhp = $root . '/../../vhttpd/php/package/bin/vphp-worker';
 $extSo = $root . '/vslim.so';
 $streamApp = $root . '/tests/fixtures/streaming_app_fixture.php';
 

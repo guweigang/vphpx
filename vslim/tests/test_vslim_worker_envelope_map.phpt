@@ -16,7 +16,7 @@ if (!is_file($autoload)) {
 if (!is_file($autoload)) { echo "autoload_missing\n"; exit; }
 require_once $autoload;
 
-$worker = new \VPhp\VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
+$worker = new \VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
 $res = $worker->dispatchRequest([
     'id' => 'map-req-1',
     'method' => 'GET',

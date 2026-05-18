@@ -108,7 +108,7 @@ $app->middleware(new class implements MiddlewareInterface {
     }
 });
 
-$app->set_not_found_handler(function ($req) {
+$app->setNotFoundHandler(function ($req) {
     return [
         'status' => 404,
         'body' => 'nf:' . $req->getUri()->getPath(),

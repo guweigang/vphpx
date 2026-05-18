@@ -22,10 +22,10 @@ fclose($server);
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/../../vhttpd/php/package/src/legacy_aliases.php';
+require_once dirname(__DIR__, 3) . '/vhttpd/php/package/vendor/autoload.php';
 
 $root = dirname(__DIR__);
-$workerBin = $root . '/../../vhttpd/php/package/bin/php-worker';
+$workerBin = $root . '/../../vhttpd/php/package/bin/vphp-worker';
 $app = __DIR__ . '/fixtures/vslim_websocket_app_fixture.php';
 $sock = sys_get_temp_dir() . '/vslim_ws_worker_' . getmypid() . '.sock';
 $log = sys_get_temp_dir() . '/vslim_ws_worker_' . getmypid() . '.log';
@@ -47,7 +47,7 @@ $pid = isset($out[0]) ? (int) trim((string) $out[0]) : 0;
 $ready = false;
 $deadline = microtime(true) + 5.0;
 while (microtime(true) < $deadline) {
-    if (is_file($sock)) {
+    if (file_exists($sock)) {
         $ready = true;
         break;
     }
@@ -72,13 +72,13 @@ if (!is_resource($conn)) {
 stream_set_blocking($conn, true);
 
 $send = static function ($conn, array $frame): array {
-    \VPhp\VHttpd\PhpWorker\Client::writeFrame(
+    \VHttpd\PhpWorker\Client::writeFrame(
         $conn,
         (string) json_encode($frame, JSON_UNESCAPED_UNICODE),
     );
     $frames = [];
     while (true) {
-        $raw = \VPhp\VHttpd\PhpWorker\Client::readFrame($conn);
+        $raw = \VHttpd\PhpWorker\Client::readFrame($conn);
         if (!is_string($raw) || $raw === '') {
             break;
         }

@@ -41,7 +41,7 @@ key = "auth-secret"
 cookie = "sid"
 
 [auth]
-redirect_to = "/login"
+redirectTo = "/login"
 TOML);
 
     $requestFactory = new VSlim\Psr17\ServerRequestFactory();

@@ -11,7 +11,7 @@ file_put_contents($tpl, 'first');
 
 $view = new VSlim\View($tmpDir, '/assets');
 echo ($view->cacheEnabled() ? 'ctor-cache-on' : 'ctor-cache-off') . PHP_EOL;
-$view->set_cache_enabled(false);
+$view->setCacheEnabled(false);
 echo ($view->render('page.html', []) === 'first' ? 'nocache-first' : 'nocache-first-miss') . PHP_EOL;
 file_put_contents($tpl, 'second');
 echo ($view->render('page.html', []) === 'second' ? 'nocache-refresh' : 'nocache-stale') . PHP_EOL;
@@ -24,7 +24,7 @@ echo ($cached->cacheEnabled() ? 'app-cache-on' : 'app-cache-off') . PHP_EOL;
 echo ($cached->render('page.html', []) === 'second' ? 'cache-first' : 'cache-first-miss') . PHP_EOL;
 file_put_contents($tpl, 'third');
 echo ($cached->render('page.html', []) === 'second' ? 'cache-hit' : 'cache-miss') . PHP_EOL;
-$cached->clear_cache();
+$cached->clearCache();
 echo ($cached->render('page.html', []) === 'third' ? 'cache-cleared' : 'cache-clear-miss') . PHP_EOL;
 ?>
 --EXPECT--

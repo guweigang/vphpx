@@ -164,7 +164,7 @@ foreach ($pipes as $pipe) {
 $deadline = microtime(true) + 3.0;
 while (microtime(true) < $deadline) {
     clearstatcache(true, $sock);
-    if (is_file($sock)) {
+    if (file_exists($sock)) {
         break;
     }
     usleep(20000);

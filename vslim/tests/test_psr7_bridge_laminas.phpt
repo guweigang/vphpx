@@ -86,7 +86,7 @@ namespace {
     }
     require_once $autoload;
 
-    $req = VPhp\VHttpd\Psr7Adapter::buildServerRequest([
+    $req = VHttpd\Psr7Adapter::buildServerRequest([
         'method' => 'PUT',
         'path' => '/items/8?trace_id=laminas',
         'body' => '{"name":"Laminas"}',

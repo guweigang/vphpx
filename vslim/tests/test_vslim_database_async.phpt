@@ -7,7 +7,7 @@ VSlim database async query guards and pending results
 echo class_exists('VSlim\\Database\\PendingResult') ? "pending-class\n" : "pending-miss\n";
 
 $bad = (new VSlim\Database\Manager())
-    ->setConfig((new VSlim\Database\Config())->set_driver('sqlite'));
+    ->setConfig((new VSlim\Database\Config())->setDriver('sqlite'));
 
 try {
     $bad->queryAsync('select 1');
@@ -18,7 +18,7 @@ try {
 
 $upstream = (new VSlim\Database\Manager())
     ->setConfig((new VSlim\Database\Config())
-        ->set_driver('mysql')
+        ->setDriver('mysql')
         ->setTransport('vhttpd_upstream'));
 
 try {
@@ -30,11 +30,11 @@ try {
 
 $unreachable = (new VSlim\Database\Manager())
     ->setConfig((new VSlim\Database\Config())
-        ->set_driver('mysql')
+        ->setDriver('mysql')
         ->setHost('127.0.0.1')
         ->setPort(1)
-        ->set_username('root')
-        ->set_password('')
+        ->setUsername('root')
+        ->setPassword('')
         ->setDatabase('demo'));
 
 $pending = $unreachable->queryAsync('select 1');

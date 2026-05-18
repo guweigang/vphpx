@@ -1,5 +1,5 @@
 --TEST--
-VSlim singleton and api_singleton register singleton REST routes
+VSlim singleton and apiSingleton register singleton REST routes
 --SKIPIF--
 <?php if (!extension_loaded("vslim")) print "skip"; ?>
 --FILE--
@@ -94,7 +94,7 @@ final class ProfileController {
 $app = new VSlim\App();
 $app->container()->set(ProfileController::class, new ProfileController());
 $app->singleton('/profile', ProfileController::class);
-$app->api_singleton('/api/profile', ProfileController::class);
+$app->apiSingleton('/api/profile', ProfileController::class);
 
 echo $app->dispatch('GET', '/profile')->body . PHP_EOL;
 echo $app->dispatch('GET', '/profile/create')->body . PHP_EOL;

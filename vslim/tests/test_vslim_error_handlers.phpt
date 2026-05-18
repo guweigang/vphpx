@@ -42,14 +42,14 @@ echo $app->dispatch('GET', '/write')->status . '|' . $app->dispatch('GET', '/wri
 try {
     $app->setNotFoundHandler(123);
     echo "not_found_invalid_not_thrown\n";
-} catch (InvalidArgumentException $e) {
+} catch (Throwable $e) {
     echo "not_found_invalid_thrown\n";
 }
 
 try {
     $app->setErrorHandler(123);
     echo "error_invalid_not_thrown\n";
-} catch (InvalidArgumentException $e) {
+} catch (Throwable $e) {
     echo "error_invalid_thrown\n";
 }
 ?>

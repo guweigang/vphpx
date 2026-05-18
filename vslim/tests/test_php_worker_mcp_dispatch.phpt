@@ -6,18 +6,10 @@ if (!extension_loaded("vslim")) print "skip";
 ?>
 --FILE--
 <?php
-$autoload = dirname(__DIR__, 3) . '/vhttpd/php/package/vendor/autoload.php';
-if (!is_file($autoload)) {
-    $autoload = dirname(__DIR__) . '/vendor/autoload.php';
-}
-if (!is_file($autoload)) {
-    echo "autoload_missing\n";
-    exit;
-}
-require_once $autoload;
+require_once __DIR__ . '/php_worker_package_bootstrap.php';
 
 $fixture = dirname(__DIR__, 3) . '/vhttpd/examples/mcp-app.php';
-$server = new VPhp\VHttpd\PhpWorker\Server('/tmp/vhttpd_mcp_test.sock', $fixture);
+$server = new VHttpd\PhpWorker\Server('/tmp/vhttpd_mcp_test.sock', $fixture);
 
 $initialize = $server->dispatchRequest([
     'id' => 'req-init',
@@ -172,7 +164,7 @@ $inlineFixture = sys_get_temp_dir() . '/vhttpd_mcp_caps_fixture.php';
 file_put_contents($inlineFixture, <<<'PHP'
 <?php
 declare(strict_types=1);
-use VPhp\VSlim\Mcp\App;
+use VSlim\Mcp\App;
 return (new App(['name' => 'caps-fixture', 'version' => '0.1.0'], []))
     ->register('debug/caps', static function (array $request, array $frame): array {
         return [
@@ -182,7 +174,7 @@ return (new App(['name' => 'caps-fixture', 'version' => '0.1.0'], []))
 PHP);
 $previousAppBootstrap = getenv('VHTTPD_APP');
 putenv('VHTTPD_APP');
-$capsServer = new VPhp\VHttpd\PhpWorker\Server('/tmp/vhttpd_mcp_caps_test.sock', $inlineFixture);
+$capsServer = new VHttpd\PhpWorker\Server('/tmp/vhttpd_mcp_caps_test.sock', $inlineFixture);
 $capsResult = $capsServer->dispatchRequest([
     'id' => 'req-caps',
     'mode' => 'mcp',
