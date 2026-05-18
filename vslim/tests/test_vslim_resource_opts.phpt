@@ -1,5 +1,5 @@
 --TEST--
-VSlim resource_opts supports only/except and custom route names
+VSlim resourceOpts supports only/except and custom route names
 --SKIPIF--
 <?php if (!extension_loaded("vslim")) print "skip"; ?>
 --FILE--
@@ -97,7 +97,7 @@ $app->resourceOpts('/books', ResourceOptsController::class, [
     'name_prefix' => 'library.books',
     'param' => 'book_id',
 ]);
-$app->api_resource_opts('/api/books', ResourceOptsController::class, [
+$app->apiResourceOpts('/api/books', ResourceOptsController::class, [
     'except' => 'destroy',
     'name_show' => 'api.books.fetch',
 ]);
@@ -105,13 +105,13 @@ $app->api_resource_opts('/api/books', ResourceOptsController::class, [
 echo $app->dispatch('GET', '/books')->body . PHP_EOL;
 echo $app->dispatch('POST', '/books')->status . PHP_EOL;
 echo $app->dispatch('GET', '/books/9')->body . PHP_EOL;
-echo $app->has_route_name('library.books.index') ? 'yes' : 'no';
-echo '|' . ($app->has_route_name('library.books.show') ? 'yes' : 'no');
-echo '|' . ($app->has_route_name('library.books.store') ? 'yes' : 'no') . PHP_EOL;
+echo $app->hasRouteName('library.books.index') ? 'yes' : 'no';
+echo '|' . ($app->hasRouteName('library.books.show') ? 'yes' : 'no');
+echo '|' . ($app->hasRouteName('library.books.store') ? 'yes' : 'no') . PHP_EOL;
 
 echo $app->dispatch('DELETE', '/api/books/9')->status . PHP_EOL;
-echo $app->has_route_name('api.books.fetch') ? 'yes' : 'no';
-echo '|' . ($app->has_route_name('api.books.destroy') ? 'yes' : 'no') . PHP_EOL;
+echo $app->hasRouteName('api.books.fetch') ? 'yes' : 'no';
+echo '|' . ($app->hasRouteName('api.books.destroy') ? 'yes' : 'no') . PHP_EOL;
 ?>
 --EXPECT--
 index

@@ -43,16 +43,16 @@ require_once dirname(__DIR__, 3) . '/vhttpd/php/package/src/VHttpd/Upstream/WebS
 require_once dirname(__DIR__, 3) . '/vhttpd/php/package/src/VHttpd/Upstream/WebSocket/Feishu/Message/MediaMessage.php';
 require_once dirname(__DIR__, 3) . '/vhttpd/php/package/src/VHttpd/Upstream/WebSocket/Feishu/Message/StickerMessage.php';
 
-use VPhp\VHttpd\Upstream\WebSocket\Feishu\Command;
-use VPhp\VHttpd\Upstream\WebSocket\Feishu\Content\CardActionValue;
-use VPhp\VHttpd\Upstream\WebSocket\Feishu\Content\CardButton;
-use VPhp\VHttpd\Upstream\WebSocket\Feishu\Content\CardActionBlock;
-use VPhp\VHttpd\Upstream\WebSocket\Feishu\Content\CardMarkdown;
-use VPhp\VHttpd\Upstream\WebSocket\Feishu\Content\CardHeader;
-use VPhp\VHttpd\Upstream\WebSocket\Feishu\Content\InteractiveCard;
-use VPhp\VHttpd\Upstream\WebSocket\Feishu\Content\PlainText;
-use VPhp\VHttpd\Upstream\WebSocket\Feishu\Content\PostContent;
-use VPhp\VSlim\App\Feishu\BotAdapter;
+use VHttpd\Upstream\WebSocket\Feishu\Command;
+use VHttpd\Upstream\WebSocket\Feishu\Content\CardActionValue;
+use VHttpd\Upstream\WebSocket\Feishu\Content\CardButton;
+use VHttpd\Upstream\WebSocket\Feishu\Content\CardActionBlock;
+use VHttpd\Upstream\WebSocket\Feishu\Content\CardMarkdown;
+use VHttpd\Upstream\WebSocket\Feishu\Content\CardHeader;
+use VHttpd\Upstream\WebSocket\Feishu\Content\InteractiveCard;
+use VHttpd\Upstream\WebSocket\Feishu\Content\PlainText;
+use VHttpd\Upstream\WebSocket\Feishu\Content\PostContent;
+use VSlim\App\Feishu\BotAdapter;
 
 $text = BotAdapter::parseMessage([
     'event' => 'message',
@@ -599,22 +599,22 @@ $typedStickerObject = BotAdapter::parseStickerMessageObject([
     ], JSON_UNESCAPED_UNICODE),
 ]);
 
-$replyObjectCommand = $textObject instanceof \VPhp\VHttpd\Upstream\WebSocket\Feishu\Message
+$replyObjectCommand = $textObject instanceof \VHttpd\Upstream\WebSocket\Feishu\Message
     ? Command::replyText($textObject, 'object pong')->toArray()
     : [];
 
-$updateObjectCommand = $actionObject instanceof \VPhp\VHttpd\Upstream\WebSocket\Feishu\Event
+$updateObjectCommand = $actionObject instanceof \VHttpd\Upstream\WebSocket\Feishu\Event
     ? Command::updateInteractive($actionObject, [
         'type' => 'template',
         'data' => ['template_id' => 'ctp_object'],
     ])->toArray()
     : [];
 
-$sendImageObjectCommand = $textObject instanceof \VPhp\VHttpd\Upstream\WebSocket\Feishu\Message
+$sendImageObjectCommand = $textObject instanceof \VHttpd\Upstream\WebSocket\Feishu\Message
     ? Command::sendImage($textObject, 'img_obj_1', 'uuid-img-1')->toArray()
     : [];
 
-$sendPostObjectCommand = $textObject instanceof \VPhp\VHttpd\Upstream\WebSocket\Feishu\Message
+$sendPostObjectCommand = $textObject instanceof \VHttpd\Upstream\WebSocket\Feishu\Message
     ? Command::sendPost($textObject, [
         'zh_cn' => [
             'title' => 'object post',
@@ -627,7 +627,7 @@ $sendPostObjectCommand = $textObject instanceof \VPhp\VHttpd\Upstream\WebSocket\
     ], 'uuid-post-2')->toArray()
     : [];
 
-$updateTextObjectCommand = $actionObject instanceof \VPhp\VHttpd\Upstream\WebSocket\Feishu\Event
+$updateTextObjectCommand = $actionObject instanceof \VHttpd\Upstream\WebSocket\Feishu\Event
     ? Command::updateText($actionObject, 'updated text')->toArray()
     : [];
 $cardActionValueObject = CardActionValue::action('approve', ['ticket_id' => 't_value']);
@@ -643,13 +643,13 @@ $interactiveCardObject = InteractiveCard::create('object card')
     ->element($cardActionBlockObject);
 $postContentObject = PostContent::create('object post builder')
     ->textLine('builder body');
-$sendInteractiveValueObjectCommand = $textObject instanceof \VPhp\VHttpd\Upstream\WebSocket\Feishu\Message
+$sendInteractiveValueObjectCommand = $textObject instanceof \VHttpd\Upstream\WebSocket\Feishu\Message
     ? Command::sendInteractive($textObject, $interactiveCardObject, 'uuid-card-object')->toArray()
     : [];
-$sendPostValueObjectCommand = $textObject instanceof \VPhp\VHttpd\Upstream\WebSocket\Feishu\Message
+$sendPostValueObjectCommand = $textObject instanceof \VHttpd\Upstream\WebSocket\Feishu\Message
     ? Command::sendPost($textObject, $postContentObject, 'uuid-post-object')->toArray()
     : [];
-$updateInteractiveValueObjectCommand = $actionObject instanceof \VPhp\VHttpd\Upstream\WebSocket\Feishu\Event
+$updateInteractiveValueObjectCommand = $actionObject instanceof \VHttpd\Upstream\WebSocket\Feishu\Event
     ? Command::updateInteractive($actionObject, $interactiveCardObject)->toArray()
     : [];
 
@@ -673,13 +673,13 @@ $updateCommandView = Command::fromArray([
     'message_type' => 'text',
     'text' => 'updated command',
 ])->asUpdate();
-$messageFactoryView = $textObject instanceof \VPhp\VHttpd\Upstream\WebSocket\Feishu\Message
-    ? \VPhp\VHttpd\Upstream\WebSocket\Feishu\Message\Factory::fromMessage($textObject)
+$messageFactoryView = $textObject instanceof \VHttpd\Upstream\WebSocket\Feishu\Message
+    ? \VHttpd\Upstream\WebSocket\Feishu\Message\Factory::fromMessage($textObject)
     : null;
-$eventFactoryView = $actionObject instanceof \VPhp\VHttpd\Upstream\WebSocket\Feishu\Event
-    ? \VPhp\VHttpd\Upstream\WebSocket\Feishu\Event\Factory::fromEvent($actionObject)
+$eventFactoryView = $actionObject instanceof \VHttpd\Upstream\WebSocket\Feishu\Event
+    ? \VHttpd\Upstream\WebSocket\Feishu\Event\Factory::fromEvent($actionObject)
     : null;
-$commandFactoryView = \VPhp\VHttpd\Upstream\WebSocket\Feishu\Command\Factory::fromCommand($commandObject);
+$commandFactoryView = \VHttpd\Upstream\WebSocket\Feishu\Command\Factory::fromCommand($commandObject);
 $jsonMessage = $textObject instanceof \JsonSerializable ? json_encode($textObject, JSON_UNESCAPED_UNICODE) : '';
 $jsonEvent = $actionObject instanceof \JsonSerializable ? json_encode($actionObject, JSON_UNESCAPED_UNICODE) : '';
 $jsonCommand = $commandObject instanceof \JsonSerializable ? json_encode($commandObject, JSON_UNESCAPED_UNICODE) : '';
@@ -695,7 +695,7 @@ $debugTypedCommand = method_exists($commandFactoryView, 'toDebugArray') ? $comma
 
 $invalidEventError = '';
 try {
-    \VPhp\VHttpd\Upstream\WebSocket\Feishu\Event::fromArray([]);
+    \VHttpd\Upstream\WebSocket\Feishu\Event::fromArray([]);
 } catch (\InvalidArgumentException $e) {
     $invalidEventError = $e->getMessage();
 }
@@ -780,8 +780,8 @@ echo (str_contains((string) ($sendPostValueObjectCommand['content'] ?? ''), 'obj
 echo ($updateInteractiveValueObjectCommand['event'] ?? ''), "\n";
 echo ($updateInteractiveValueObjectCommand['target_type'] ?? ''), "\n";
 echo (str_contains((string) ($updateInteractiveValueObjectCommand['content'] ?? ''), 'card body') ? 'update-object-body' : 'update-object-missing'), "\n";
-echo ($imageObjectKey = $image ? \VPhp\VHttpd\Upstream\WebSocket\Feishu\Message::fromArray($image)->imageKey() : ''), "\n";
-echo ($postObjectTitle = $post ? ((\VPhp\VHttpd\Upstream\WebSocket\Feishu\Message::fromArray($post)->postContent()['zh_cn']['title'] ?? '')) : ''), "\n";
+echo ($imageObjectKey = $image ? \VHttpd\Upstream\WebSocket\Feishu\Message::fromArray($image)->imageKey() : ''), "\n";
+echo ($postObjectTitle = $post ? ((\VHttpd\Upstream\WebSocket\Feishu\Message::fromArray($post)->postContent()['zh_cn']['title'] ?? '')) : ''), "\n";
 echo $commandObject->eventName(), "\n";
 echo $commandObject->messageType(), "\n";
 echo $commandObject->target(), "\n";
@@ -793,9 +793,9 @@ echo ($updateCommandView?->eventName() ?? ''), "\n";
 echo ($updateCommandView?->target() ?? ''), "\n";
 echo ($updateCommandView?->text() ?? ''), "\n";
 echo (($updateCommandView?->isMessageIdTarget() ?? false) ? 'update-message-id' : 'update-target-miss'), "\n";
-echo ($messageFactoryView instanceof \VPhp\VHttpd\Upstream\WebSocket\Feishu\Message\TextMessage ? 'message-factory-text' : 'message-factory-miss'), "\n";
-echo ($eventFactoryView instanceof \VPhp\VHttpd\Upstream\WebSocket\Feishu\Event\CardActionEvent ? 'event-factory-card' : 'event-factory-miss'), "\n";
-echo ($commandFactoryView instanceof \VPhp\VHttpd\Upstream\WebSocket\Feishu\Command\SendCommand ? 'command-factory-send' : 'command-factory-miss'), "\n";
+echo ($messageFactoryView instanceof \VHttpd\Upstream\WebSocket\Feishu\Message\TextMessage ? 'message-factory-text' : 'message-factory-miss'), "\n";
+echo ($eventFactoryView instanceof \VHttpd\Upstream\WebSocket\Feishu\Event\CardActionEvent ? 'event-factory-card' : 'event-factory-miss'), "\n";
+echo ($commandFactoryView instanceof \VHttpd\Upstream\WebSocket\Feishu\Command\SendCommand ? 'command-factory-send' : 'command-factory-miss'), "\n";
 echo (str_contains((string) $jsonMessage, '"message_type":"text"') ? 'json-message-ok' : 'json-message-bad'), "\n";
 echo (str_contains((string) $jsonEvent, '"event_kind":"action"') ? 'json-event-ok' : 'json-event-bad'), "\n";
 echo (str_contains((string) $jsonCommand, '"event":"send"') ? 'json-command-ok' : 'json-command-bad'), "\n";

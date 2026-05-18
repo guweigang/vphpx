@@ -124,7 +124,7 @@ namespace {
         }
     });
 
-    $app->set_not_found_handler(function (ServerRequestInterface $request) {
+    $app->setNotFoundHandler(function (ServerRequestInterface $request) {
         return new VSlim\VHttpd\Response(
             404,
             implode('|', [

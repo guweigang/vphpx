@@ -129,9 +129,9 @@ Rule:
 Prefer semantic wrappers for PHP function/object interaction:
 
 ```v
-vphp.PhpFunction.named('array_values').request_owned(value)
-vphp.PhpObject.borrowed(obj).method_request_owned('getBody')
-vphp.PhpCallable.borrowed(callable).fn_request_owned(args...)
+vphp.PhpFunction.named('array_values').invoke(value)
+vphp.PhpObject.borrowed(obj).call_method('getBody')
+vphp.PhpCallable.borrowed(callable).invoke(args...)
 ```
 
 Avoid handwritten VSlim code that falls back to:
@@ -178,6 +178,74 @@ These are relatively good next steps:
    `vphptest` suite now includes a `PhpValueZBox` conversion counter probe.
 5. Keep generated `bridge.v` style aligned with
    `vphp/compiler/boundary_scan_test.v`.
+
+## Old API Surface Inventory
+
+Status: **classified / not all are bugs**.
+
+This section separates old-looking APIs into three buckets. The goal is to keep
+the low-level layer available while making day-to-day extension code prefer
+semantic wrappers.
+
+### Keep As Low-Level Boundary APIs
+
+These APIs are still legitimate because they sit at Layer 3 or below, or expose
+ownership explicitly:
+
+| API shape | Owner layer | Why it stays |
+| --- | --- | --- |
+| `ZVal` receiver methods in `zval_*.v` and `vphp/zval/**` | Layer 3 no-C value wrapper | This is the low-level facade over Zend values. |
+| `RequestBorrowedZBox`, `RequestOwnedZBox`, `PersistentOwnedZBox` | lifecycle layer | They express ownership and request/persistent boundaries. |
+| `with_request_zval`, `with_borrowed_zval`, `with_owned_zval` on `PhpValueZBox` | lifecycle bridge | These are scoped exits from semantic values back to request-safe zvals. |
+| `Context.arg_raw`, `Context.get_args`, `Context.arg_*_zbox` | generated/runtime argument boundary | Needed when a function explicitly opts into context/manual decoding. |
+| `php_arg_inputs_to_zvals` | semantic call adapter | Converts variadic semantic call inputs once before entering Layer 3. |
+| `PhpReturn.request_owned/request_borrowed/persistent_owned` | return boundary | Return writes must preserve exact ownership semantics. |
+
+### Migration Candidates
+
+These are public or semi-public APIs that still expose `ZVal` in semantic files.
+They are not wrong, but new user-facing examples should prefer the semantic
+entrypoints in the right column.
+
+| Current API | Prefer | Notes |
+| --- | --- | --- |
+| `PhpFunction.call_zval(args []ZVal)` | `PhpFunction.invoke(args ...PhpArgInput)` or `with_result*` | Keep `call_zval` for low-level callers; do not use it in normal examples. |
+| `PhpCallable.call_zval(args []ZVal)` | `PhpCallable.invoke(args ...PhpArgInput)` | Callable results should surface as `PhpValue`. |
+| `PhpClosure.call_zval(args []ZVal)` | `PhpClosure.invoke(args ...PhpArgInput)` | Same policy as `PhpCallable`. |
+| `PhpObject.method_zval(method, args []ZVal)` | `PhpObject.call_method(method, args ...PhpArgInput)` | Keep direct zval method calls for special interop and probes. |
+| `PhpClass.construct_zval(args []ZVal)` | `PhpClass.construct(args ...PhpArgInput)` | No-arg calls should use the variadic overload, not `[]ZVal{}`. |
+| `PhpClass.static_method_zval(...)` | `PhpClass.call_static(...)` | Static method results should surface as `PhpValue`. |
+| `PhpClass.static_prop_*` / `const_*` returning `ZVal` | typed semantic accessors where available | Property/constant reads are still a likely next API polish target. |
+| `PhpArray.items() []ZVal` | future `items_value()` / iterator wrapper | Useful today, but it leaks raw item representation into semantic array code. |
+| `PhpObject.prop*` returning `ZVal` | future `prop_value()` / typed prop helpers | High-value cleanup target because object properties are common in app code. |
+
+### Deep-Water APIs
+
+Do not migrate these without a focused test/probe. They are old-looking because
+they sit on difficult ownership boundaries:
+
+| Area | Risk |
+| --- | --- |
+| `PhpValueZBox.take_zval()` and request/persistent conversion | Can silently change ownership or release timing. |
+| `PersistentOwnedZBox.from_*`, `of_*`, `from_detached_zval`, `from_mixed_zval` | Controls cross-request storage semantics. |
+| `DynValue.persistent_owned_zbox(...)` and retained object/callable conversion | Bridges V-owned detached data and PHP runtime refs. |
+| `RetainedObject` / `RetainedCallable` | Zend refcount and request teardown sensitive. |
+| Closure binding/invocation helpers | ABI, captured V closure lifetime, and zval argument lifetime meet here. |
+| PSR-7 request/response state in VSlim | Mixes persistent app state with request-owned Zend values. |
+
+### Guardrail Status
+
+`vphp/compiler/boundary_scan_test.v` now additionally checks:
+
+- compiler sources must not emit raw `ZEND_RAW_FENTRY(...)`; generated C should
+  go through `VPHP_ZEND_RAW_FENTRY(...)` in `compat.h`
+- semantic `php_*` wrapper files must not directly use `C.`, `&C.*`,
+  `ZEND_*`, or `zend_*`; they should cross into `vphp.zend`, `vphp.zval`, or
+  lifecycle wrappers instead
+
+These guardrails intentionally do **not** ban `ZVal` or `*ZBox` in semantic
+files, because conversion methods and low-level escape hatches are part of the
+public runtime contract.
 
 ## Execution Plan
 
@@ -288,6 +356,38 @@ Progress:
   expression helpers while preserving their separate default-value semantics
 - boundary scan guards now block the old property-handler wrapping shape and
   struct closure bridges that hand-write `res := cb(args)`
+- VSlim PSR-17 `ResponseFactory::createResponse` is now tracked as the first
+  end-to-end Phase 4 scenario: `@[params]` struct fields become generated
+  `bridge.v` argument reads, C arginfo exposes the semantic PHP signature, and
+  generated stubs/tests assert `int $status = 200, string $reasonPhrase = ''`
+  instead of stale low-level `mixed/default*` names
+- VSlim PSR-17 `StreamFactory::createStream` now uses a real params struct and
+  native V `string` input instead of `RequestBorrowedZBox` plus manual
+  `php_arg_*` attributes; generated PHP reflection/stubs expose
+  `string $content = ''`
+- VSlim PSR-17 `UploadedFileFactory::createUploadedFile` now covers a more
+  complex Phase 4 shape: required semantic `PhpObject` stream argument plus a
+  trailing `@[params]` struct for nullable/defaulted `size`, `error`,
+  `clientFilename`, and `clientMediaType`
+- VSlim PSR-17 `RequestFactory::createRequest`,
+  `ServerRequestFactory::createServerRequest`,
+  `StreamFactory::createStreamFromFile`, and `UriFactory::createUri` now keep
+  public signatures on V scalars, `PhpValue`, `PhpArray`, and params structs
+  while leaving zval conversion at the PSR object construction boundary
+- VSlim migration rule: VSlim should consume vphp runtime abstractions, not
+  reimplement them. When handwritten VSlim helpers manipulate PHP values,
+  arguments, returns, object/function calls, attributes, or lifecycle in a way
+  that would be useful to extensions generally, add the capability to vphp
+  first, then simplify VSlim.
+- VSlim logger APIs now use semantic public signatures for context/message
+  handling: native logger context parameters are `PhpArray`, PSR-3 logger
+  context is a params struct-backed `array $context = []`, and PSR messages use
+  `PhpValue` instead of borrowed zboxes. The old low-level `ZVal -> string`
+  helper remains available for PSR HTTP internals.
+- `PhpArray` now exposes `to_string_map()`, `to_scalar_string_map()`, and
+  `to_string_list()` so VSlim request setters can consume semantic arrays
+  directly. `VSlim\\VHttpd\\Request` array-shaped setters now expose `array`
+  signatures instead of `mixed`/borrowed zbox internals.
 
 ### Phase 5: Ownership Deep Water
 

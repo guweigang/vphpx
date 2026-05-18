@@ -17,17 +17,17 @@ $app->get('/meta', static function (): VSlim\VHttpd\Response {
 });
 
 $ws = (new VSlim\WebSocket\App())
-    ->on_open(static function ($conn, array $frame): string {
+    ->onOpen(static function ($conn, array $frame): string {
         return 'vslim:connected';
     })
-    ->on_message(static function ($conn, string $message, array $frame): ?string {
+    ->onMessage(static function ($conn, string $message, array $frame): ?string {
         if ($message === 'bye') {
             $conn->close(1000, 'bye');
             return null;
         }
         return 'vslim:' . $message;
     })
-    ->on_close(static function ($conn, int $code, string $reason, array $frame): void {
+    ->onClose(static function ($conn, int $code, string $reason, array $frame): void {
     });
 
 $app->websocket('/ws', $ws);

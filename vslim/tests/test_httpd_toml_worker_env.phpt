@@ -69,7 +69,7 @@ event_log = "{$eventLog}"
 autostart = true
 read_timeout_ms = 3000
 socket = "{$socket}"
-cmd = "php -d extension={$root}/vslim.so {$root}/../../vhttpd/php/package/bin/php-worker --socket {$socket}"
+cmd = "php -d extension={$root}/vslim.so {$root}/../../vhttpd/php/package/bin/vphp-worker --socket {$socket}"
 
 [worker.env]
 VHTTPD_APP = "{$appPath}"

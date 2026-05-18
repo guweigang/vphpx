@@ -4,19 +4,19 @@ php-worker accepts custom HTTP dispatchables marked with VHttpd Dispatchable
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 3) . '/vhttpd/php/package/src/legacy_aliases.php';
+require_once dirname(__DIR__, 3) . '/vhttpd/php/package/vendor/autoload.php';
 
 $fixture = sys_get_temp_dir() . '/vhttpd_dispatchable_http_fixture.php';
 file_put_contents($fixture, <<<'PHP'
 <?php
 declare(strict_types=1);
 
-use VPhp\VHttpd\Attribute\Dispatchable;
+use VHttpd\Attribute\Dispatchable;
 
 #[Dispatchable('http')]
 final class DispatchableHttpFixture
 {
-    public function dispatch_envelope_worker(array $envelope): array
+    public function dispatchEnvelopeWorker(array $envelope): array
     {
         return [
             'status' => 200,
@@ -32,7 +32,7 @@ final class DispatchableHttpFixture
 return new DispatchableHttpFixture();
 PHP);
 
-$server = new VPhp\VHttpd\PhpWorker\Server('/tmp/vhttpd_dispatchable_http.sock', $fixture);
+$server = new VHttpd\PhpWorker\Server('/tmp/vhttpd_dispatchable_http.sock', $fixture);
 $res = $server->dispatchRequest([
     'id' => 'req-http-dispatchable',
     'method' => 'GET',

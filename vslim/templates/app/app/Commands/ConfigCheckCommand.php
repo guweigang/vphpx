@@ -35,7 +35,7 @@ final class ConfigCheckCommand
             'session.cookie' => $config->getString('session.cookie', ''),
             'session.secret_configured' => $config->getString('session.secret', '') !== '' ? 'true' : 'false',
             'session.secret_placeholder' => trim($config->getString('session.secret', '')) === 'change-me' ? 'true' : 'false',
-            'auth.redirect_to' => $config->getString('auth.redirect_to', ''),
+            'auth.redirectTo' => $config->getString('auth.redirectTo', ''),
         ];
 
         if ((string) $cli->option('format', 'text') === 'json') {

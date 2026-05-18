@@ -1,8 +1,9 @@
 <?php
 declare(strict_types=1);
 
-return static function (mixed $request, array $envelope = []): array|\VPhp\VHttpd\PhpWorker\StreamResponse {
-    $path = (string) ($envelope['path'] ?? '/');
+return static function (mixed $request, array $envelope = []): array|\VHttpd\PhpWorker\StreamResponse {
+    $payload = is_array($request) ? $request : $envelope;
+    $path = (string) ($payload['path'] ?? '/');
 
     if ($path === '/helper/text') {
         $chunks = (function (): iterable {

@@ -16,7 +16,7 @@ pub fn (mut app VSlimRuntime) get(pattern string, handler VSlimHandler) {
 		pattern: pattern
 		handler_type: .v_native
 		v_handler: handler
-		php_handler: vphp.PersistentOwnedZBox.new_null()
+		php_handler: vphp.PhpValue.invalid()
 	}
 }
 
@@ -26,7 +26,7 @@ pub fn (mut app VSlimRuntime) post(pattern string, handler VSlimHandler) {
 		pattern: pattern
 		handler_type: .v_native
 		v_handler: handler
-		php_handler: vphp.PersistentOwnedZBox.new_null()
+		php_handler: vphp.PhpValue.invalid()
 	}
 }
 
@@ -36,7 +36,7 @@ pub fn (mut app VSlimRuntime) put(pattern string, handler VSlimHandler) {
 		pattern: pattern
 		handler_type: .v_native
 		v_handler: handler
-		php_handler: vphp.PersistentOwnedZBox.new_null()
+		php_handler: vphp.PhpValue.invalid()
 	}
 }
 
@@ -46,7 +46,7 @@ pub fn (mut app VSlimRuntime) patch(pattern string, handler VSlimHandler) {
 		pattern: pattern
 		handler_type: .v_native
 		v_handler: handler
-		php_handler: vphp.PersistentOwnedZBox.new_null()
+		php_handler: vphp.PhpValue.invalid()
 	}
 }
 
@@ -56,7 +56,7 @@ pub fn (mut app VSlimRuntime) delete(pattern string, handler VSlimHandler) {
 		pattern: pattern
 		handler_type: .v_native
 		v_handler: handler
-		php_handler: vphp.PersistentOwnedZBox.new_null()
+		php_handler: vphp.PhpValue.invalid()
 	}
 }
 
@@ -66,7 +66,7 @@ pub fn (mut app VSlimRuntime) any(pattern string, handler VSlimHandler) {
 		pattern: pattern
 		handler_type: .v_native
 		v_handler: handler
-		php_handler: vphp.PersistentOwnedZBox.new_null()
+		php_handler: vphp.PhpValue.invalid()
 	}
 }
 

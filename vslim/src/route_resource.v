@@ -20,7 +20,7 @@ mut:
 	name_prefix     string
 	param_name      string = 'id'
 	shallow         bool
-	missing_handler vphp.PersistentOwnedZBox = vphp.PersistentOwnedZBox.new_null()
+	missing_handler vphp.PhpCallable = vphp.PhpCallable.invalid()
 }
 
 fn register_resource_routes_with_options(mut app VSlimApp, raw_resource_path string, controller string, include_page_routes bool, options ResourceRouteOptions) {
@@ -123,9 +123,9 @@ fn register_singleton_routes_with_options(mut app VSlimApp, raw_resource_path st
 	}
 }
 
-fn make_resource_handler(controller string, action string) vphp.ZVal {
+fn make_resource_handler(controller string, action string) vphp.PhpValue {
 	if controller.trim_space() == '' || action.trim_space() == '' {
-		return vphp.ZVal.new_null()
+		return vphp.PhpValue.null()
 	}
 	if vphp.PhpClass.named(controller).exists() {
 		mut controller_arg := vphp.PhpString.of(controller)
@@ -136,11 +136,13 @@ fn make_resource_handler(controller string, action string) vphp.ZVal {
 		}
 		exists := vphp.PhpFunction.named('method_exists').result_bool(controller_arg, action_arg)
 		if !exists {
-			return vphp.ZVal.new_null()
+			return vphp.PhpValue.null()
 		}
 	}
-	handler := vphp.new_zval_from[[]string]([controller, action]) or { return vphp.ZVal.new_null() }
-	return handler
+	mut handler := vphp.PhpArray.new()
+	handler.push_string(controller)
+	handler.push_string(action)
+	return handler.take_value()
 }
 
 fn normalize_resource_path(path string) string {
@@ -169,7 +171,7 @@ fn resource_name_from_path(path string) string {
 	return clean.replace('/', '.')
 }
 
-fn parse_resource_options(options vphp.RequestBorrowedZBox) ResourceRouteOptions {
+fn parse_resource_options(options vphp.PhpArray) ResourceRouteOptions {
 	mut out := ResourceRouteOptions{
 		only:            map[string]bool{}
 		except:          map[string]bool{}
@@ -177,47 +179,47 @@ fn parse_resource_options(options vphp.RequestBorrowedZBox) ResourceRouteOptions
 		name_prefix:     ''
 		param_name:      'id'
 		shallow:         false
-		missing_handler: vphp.PersistentOwnedZBox.new_null()
+		missing_handler: vphp.PhpCallable.invalid()
 	}
-	if !options.is_valid() || !options.is_array() {
+	if !options.is_valid() {
 		return out
 	}
-	only_raw := options.to_zval().get('only') or { vphp.ZVal.new_null() }
-	except_raw := options.to_zval().get('except') or { vphp.ZVal.new_null() }
-	name_prefix_raw := options.to_zval().get('name_prefix') or { vphp.ZVal.new_null() }
-	if name_prefix_raw.is_valid() && !name_prefix_raw.is_null() && !name_prefix_raw.is_undef() {
-		out.name_prefix = name_prefix_raw.to_string().trim_space()
+	only_value := options['only']
+	except_value := options['except']
+	name_prefix := options['name_prefix']
+	if is_present_resource_option(name_prefix) {
+		out.name_prefix = name_prefix.to_string().trim_space()
 	}
-	param_raw := options.to_zval().get('param') or { vphp.ZVal.new_null() }
-	if param_raw.is_valid() && !param_raw.is_null() && !param_raw.is_undef() {
-		out.param_name = normalize_resource_param_name(param_raw.to_string())
+	param := options['param']
+	if is_present_resource_option(param) {
+		out.param_name = normalize_resource_param_name(param.to_string())
 	}
-	shallow_raw := options.to_zval().get('shallow') or { vphp.ZVal.new_null() }
-	if shallow_raw.is_valid() && !shallow_raw.is_null() && !shallow_raw.is_undef() {
-		out.shallow = parse_resource_bool_option(shallow_raw)
+	shallow := options['shallow']
+	if is_present_resource_option(shallow) {
+		out.shallow = parse_resource_bool_option(shallow)
 	}
-	missing_raw := options.to_zval().get('missing') or { vphp.ZVal.new_null() }
-	if missing_raw.is_valid() && missing_raw.is_callable() {
-		out.missing_handler = vphp.PersistentOwnedZBox.from_callable_zval(missing_raw)
+	missing := options['missing']
+	if handler := missing.as_callable() {
+		out.missing_handler = handler.retain()
 	}
-	for action in parse_action_list(only_raw) {
+	for action in parse_action_list(only_value) {
 		out.only[action] = true
 	}
-	for action in parse_action_list(except_raw) {
+	for action in parse_action_list(except_value) {
 		out.except[action] = true
 	}
 
-	names_raw := options.to_zval().get('names') or { vphp.ZVal.new_null() }
-	if names_raw.is_valid() && names_raw.is_array() {
-		for key, value in names_raw.to_string_map() {
+	names := options['names'].as_array() or { vphp.PhpArray.empty() }
+	if names.is_valid() {
+		for key, value in names.to_string_map() {
 			if key.trim_space() != '' && value.trim_space() != '' {
 				out.names[key.trim_space()] = value.trim_space()
 			}
 		}
 	}
 	for action in ['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'] {
-		alt := options.to_zval().get('name_${action}') or { vphp.ZVal.new_null() }
-		if alt.is_valid() && !alt.is_null() && !alt.is_undef() && alt.to_string().trim_space() != '' {
+		alt := options['name_${action}']
+		if is_present_resource_option(alt) && alt.to_string().trim_space() != '' {
 			out.names[action] = alt.to_string().trim_space()
 		}
 	}
@@ -232,16 +234,20 @@ fn normalize_resource_param_name(param_name string) string {
 	return clean
 }
 
-fn parse_resource_bool_option(raw vphp.ZVal) bool {
-	if raw.is_bool() {
-		return raw.to_bool()
+fn is_present_resource_option(value vphp.PhpValue) bool {
+	return value.is_valid() && !value.is_null() && !value.is_undef()
+}
+
+fn parse_resource_bool_option(value vphp.PhpValue) bool {
+	if value.is_bool() {
+		return value.to_bool()
 	}
-	if raw.is_long() {
-		return raw.to_i64() != 0
+	if value.is_long() {
+		return value.to_i64() != 0
 	}
-	if raw.is_string() {
-		value := raw.to_string().trim_space().to_lower()
-		return value in ['1', 'true', 'yes', 'on']
+	if value.is_string() {
+		text := value.to_string().trim_space().to_lower()
+		return text in ['1', 'true', 'yes', 'on']
 	}
 	return false
 }
@@ -259,13 +265,13 @@ fn shallow_member_base_path(path string) string {
 	return '/${last_segment}'
 }
 
-fn parse_action_list(raw vphp.ZVal) []string {
-	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
+fn parse_action_list(value vphp.PhpValue) []string {
+	if !is_present_resource_option(value) {
 		return []string{}
 	}
-	if raw.is_array() {
+	if actions := value.as_array() {
 		mut out := []string{}
-		for item in raw.to_string_list() {
+		for item in actions.to_string_list() {
 			clean := item.trim_space().to_lower()
 			if clean != '' && clean !in out {
 				out << clean
@@ -274,7 +280,7 @@ fn parse_action_list(raw vphp.ZVal) []string {
 		return out
 	}
 	mut out := []string{}
-	for part in raw.to_string().split(',') {
+	for part in value.to_string().split(',') {
 		clean := part.trim_space().to_lower()
 		if clean != '' && clean !in out {
 			out << clean

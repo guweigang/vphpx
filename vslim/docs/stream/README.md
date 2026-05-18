@@ -84,11 +84,11 @@ $app->map(['GET', 'POST'], '/ollama/sse', function (VSlim\VHttpd\Request $req) {
 
 如果是不装扩展、只走 PHP package 的场景，再使用：
 
-- `VPhp\VSlim\Stream\Response`
-- `VPhp\VSlim\Stream\Factory`
-- `VPhp\VSlim\Stream\OllamaClient`
-- `VPhp\VSlim\Stream\NdjsonDecoder`
-- `VPhp\VSlim\Stream\SseEncoder`
+- `VSlim\Stream\Response`
+- `VSlim\Stream\Factory`
+- `VSlim\Stream\OllamaClient`
+- `VSlim\Stream\NdjsonDecoder`
+- `VSlim\Stream\SseEncoder`
 
 也就是说：
 

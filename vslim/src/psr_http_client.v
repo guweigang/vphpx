@@ -3,7 +3,6 @@ module main
 import vphp
 
 struct Psr18OutboundRequest {
-	request          vphp.ZVal
 	method           string
 	url              string
 	request_target   string
@@ -54,22 +53,34 @@ pub fn (client &VSlimPsr18Client) timeout_seconds_value() int {
 @[php_arg_type: 'request=Psr\\Http\\Message\\RequestInterface']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method: 'sendRequest']
-pub fn (client &VSlimPsr18Client) send_request(request vphp.RequestBorrowedZBox) &VSlimPsr7Response {
-	outbound := normalize_psr18_request(request.to_zval()) or {
-		throw_psr18_request_exception(err.msg(), request.to_zval())
+pub fn (client &VSlimPsr18Client) send_request(request vphp.PhpObject) &VSlimPsr7Response {
+	outbound := normalize_psr18_request(request) or {
+		throw_psr18_request_exception(err.msg(), request)
 		return unsafe { nil }
 	}
 	clear_last_php_error()
-	ctx := new_psr18_stream_context(client, outbound)
-	fp := psr18_open_stream(outbound.url, ctx)
-	if !fp.is_stream_resource() {
-		throw_psr18_network_exception(last_php_error_message('failed to open upstream stream'),
-			request.to_zval())
+	mut ctx := new_psr18_stream_context(client, outbound)
+	defer {
+		ctx.release()
+	}
+	mut fp := psr18_open_stream(outbound.url, ctx)
+	defer {
+		fp.release()
+	}
+	mut stream := fp.as_resource() or {
+		throw_psr18_network_exception(last_php_error_message('failed to open upstream stream'), request)
+		return unsafe { nil }
+	}
+	defer {
+		stream.release()
+	}
+	if !stream.is_stream() {
+		throw_psr18_network_exception(last_php_error_message('failed to open upstream stream'), request)
 		return unsafe { nil }
 	}
 	head := read_last_http_response_head()
-	body := fp.stream_get_contents() or { '' }
-	_ = fp.stream_close()
+	body := stream.contents() or { '' }
+	_ = stream.close()
 	return &VSlimPsr7Response{
 		status:           default_psr7_status(head.status)
 		reason_phrase:    normalize_reason_phrase(head.status, head.reason_phrase)
@@ -82,48 +93,49 @@ pub fn (client &VSlimPsr18Client) send_request(request vphp.RequestBorrowedZBox)
 
 @[php_arg_type: 'request=Psr\\Http\\Message\\RequestInterface']
 @[php_method: 'attachRequest']
-pub fn (mut e VSlimPsr18RequestException) attach_request(request vphp.RequestBorrowedZBox) {
+pub fn (mut e VSlimPsr18RequestException) attach_request(request vphp.PhpObject) {
 	_ = e
-	psr18_exception_store_request(request.to_zval())
+	psr18_exception_store_request(request)
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\RequestInterface']
 @[php_method: 'getRequest']
-pub fn (e &VSlimPsr18RequestException) get_request() vphp.RequestBorrowedZBox {
+pub fn (e &VSlimPsr18RequestException) get_request() vphp.PhpObject {
 	_ = e
-	return vphp.RequestBorrowedZBox.of(psr18_exception_load_request())
+	return psr18_exception_load_request()
 }
 
 @[php_arg_type: 'request=Psr\\Http\\Message\\RequestInterface']
 @[php_method: 'attachRequest']
-pub fn (mut e VSlimPsr18NetworkException) attach_request(request vphp.RequestBorrowedZBox) {
+pub fn (mut e VSlimPsr18NetworkException) attach_request(request vphp.PhpObject) {
 	_ = e
-	psr18_exception_store_request(request.to_zval())
+	psr18_exception_store_request(request)
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\RequestInterface']
 @[php_method: 'getRequest']
-pub fn (e &VSlimPsr18NetworkException) get_request() vphp.RequestBorrowedZBox {
+pub fn (e &VSlimPsr18NetworkException) get_request() vphp.PhpObject {
 	_ = e
-	return vphp.RequestBorrowedZBox.of(psr18_exception_load_request())
+	return psr18_exception_load_request()
 }
 
-fn normalize_psr18_request(request vphp.ZVal) !Psr18OutboundRequest {
-	if !request.is_valid() || !request.is_object() {
+fn normalize_psr18_request(request vphp.PhpObject) !Psr18OutboundRequest {
+	if !request.is_valid() {
 		return error('request must be a valid RequestInterface object')
 	}
-	method_raw := vphp.PhpObject.borrowed(request).with_method_result[vphp.PhpString, string]('getMethod',
-		fn (z vphp.PhpString) string {
+	method_raw := request.with_method_result[vphp.PhpString, string]('getMethod', fn (z vphp.PhpString) string {
 		return z.value()
 	}) or { return error('request method must be a non-empty token') }
-	method := validate_psr7_method_or_throw(method_raw) or { return error('request method must be a non-empty token') }
-	mut uri_z := vphp.PhpObject.borrowed(request).method_request_owned('getUri')
-	if !uri_z.is_valid() || !uri_z.is_object() {
-		uri_z.release()
+	method := validate_psr7_method_or_throw(method_raw) or {
+		return error('request method must be a non-empty token')
+	}
+	mut uri_value := request.call_method('getUri')
+	if !uri_value.is_valid() || !uri_value.is_object() {
+		uri_value.release()
 		return error('request URI must be a valid UriInterface object')
 	}
-	uri_text := uri_z.to_zval().to_string().trim_space()
-	uri_z.release()
+	uri_text := uri_value.to_string().trim_space()
+	uri_value.release()
 	if uri_text == '' {
 		return error('request URI must not be empty')
 	}
@@ -139,8 +151,7 @@ fn normalize_psr18_request(request vphp.ZVal) !Psr18OutboundRequest {
 	if url.trim_space() == '' {
 		return error('request URI could not be normalized into an absolute URL')
 	}
-	target_raw := vphp.PhpObject.borrowed(request).with_method_result[vphp.PhpString, string]('getRequestTarget',
-		fn (z vphp.PhpString) string {
+	target_raw := request.with_method_result[vphp.PhpString, string]('getRequestTarget', fn (z vphp.PhpString) string {
 		return z.value()
 	}) or { '' }
 	request_target := if target_raw.trim_space() == '' { build_psr7_request_target(&uri) } else { validate_psr7_request_target_or_throw(target_raw) or {
@@ -154,25 +165,22 @@ fn normalize_psr18_request(request vphp.ZVal) !Psr18OutboundRequest {
 	if !request_target.starts_with('/') && !request_target.contains('://') {
 		return error('request target must be origin-form or absolute-form for the stream transport')
 	}
-	mut headers_z := vphp.PhpObject.borrowed(request).method_request_owned('getHeaders')
+	mut headers_value := request.call_method('getHeaders')
 	defer {
-		headers_z.release()
+		headers_value.release()
 	}
-	mut headers, mut header_names := zval_to_psr7_header_state(headers_z.to_zval())
+	mut headers, mut header_names := php_value_psr7_header_state(headers_value)
 	if normalize_psr7_header_name('Host') !in headers {
 		apply_psr7_host_header(mut headers, mut header_names, &uri)
 	}
-	body := vphp.PhpObject.borrowed(request).with_method_result[vphp.PhpValue, string]('getBody',
-		fn (z vphp.PhpValue) string {
-		return zval_to_psr7_stream(z.to_zval()).stream_string()
+	body := request.with_method_result[vphp.PhpValue, string]('getBody', fn (z vphp.PhpValue) string {
+		return php_value_psr7_stream(z).stream_string()
 	}) or { '' }
 	return Psr18OutboundRequest{
-		request:          request
 		method:           method
 		url:              url
 		request_target:   request_target
-		protocol_version: normalize_protocol_version(vphp.PhpObject.borrowed(request).with_method_result[vphp.PhpString, string]('getProtocolVersion',
-			fn (z vphp.PhpString) string {
+		protocol_version: normalize_protocol_version(request.with_method_result[vphp.PhpString, string]('getProtocolVersion', fn (z vphp.PhpString) string {
 			return z.value()
 		}) or { '1.1' })
 		body:             body
@@ -181,8 +189,8 @@ fn normalize_psr18_request(request vphp.ZVal) !Psr18OutboundRequest {
 	}
 }
 
-fn new_psr18_stream_context(client &VSlimPsr18Client, request Psr18OutboundRequest) vphp.ZVal {
-	mut http_options := new_array()
+fn new_psr18_stream_context(client &VSlimPsr18Client, request Psr18OutboundRequest) vphp.PhpValue {
+	mut http_options := vphp.PhpArray.new()
 	http_options.string('method', request.method)
 	headers := implode_lines(new_psr18_header_lines(request.headers, request.header_names))
 	if headers != '' {
@@ -198,19 +206,23 @@ fn new_psr18_stream_context(client &VSlimPsr18Client, request Psr18OutboundReque
 	http_options.int('timeout', client.timeout_seconds_value())
 	http_options.bool('ignore_errors', true)
 	http_options.int('follow_location', 0)
-	mut ctx_opts := new_array()
+	mut ctx_opts := vphp.PhpArray.new()
 	ctx_opts.set('http', http_options)
 	http_options.release()
-	mut ctx := vphp.PhpFunction.named('stream_context_create').request_owned(ctx_opts)
-	return ctx.take_zval()
+	mut ctx := vphp.PhpFunction.named('stream_context_create').invoke(ctx_opts)
+	return ctx
 }
 
-fn psr18_open_stream(url string, ctx vphp.ZVal) vphp.ZVal {
+fn psr18_open_stream(url string, ctx vphp.PhpValue) vphp.PhpValue {
 	if vphp.PhpFunction.named('set_error_handler').exists()
 		&& vphp.PhpFunction.named('restore_error_handler').exists() {
+		mut handler := psr18_warning_handler()
+		defer {
+			handler.release()
+		}
 		_ = vphp.PhpFunction.named('set_error_handler').with_result[vphp.PhpValue, bool](fn (_ vphp.PhpValue) bool {
 			return true
-		}, vphp.PhpValue.from_zval(psr18_warning_handler())) or { false }
+		}, handler) or { false }
 		mut url_arg := vphp.PhpString.of(url)
 		mut mode_arg := vphp.PhpString.of('r')
 		mut use_include_path_arg := vphp.PhpBool.of(false)
@@ -219,10 +231,10 @@ fn psr18_open_stream(url string, ctx vphp.ZVal) vphp.ZVal {
 			mode_arg.release()
 			use_include_path_arg.release()
 		}
-		mut fp := vphp.PhpFunction.named('fopen').request_owned(url_arg, mode_arg,
-			use_include_path_arg, vphp.PhpValue.from_zval(ctx))
+		mut fp := vphp.PhpFunction.named('fopen').invoke(url_arg, mode_arg,
+			use_include_path_arg, ctx)
 		_ = vphp.PhpFunction.named('restore_error_handler').result_bool()
-		return fp.take_zval()
+		return fp
 	}
 	mut url_arg := vphp.PhpString.of(url)
 	mut mode_arg := vphp.PhpString.of('r')
@@ -232,27 +244,27 @@ fn psr18_open_stream(url string, ctx vphp.ZVal) vphp.ZVal {
 		mode_arg.release()
 		use_include_path_arg.release()
 	}
-	mut fp := vphp.PhpFunction.named('fopen').request_owned(url_arg, mode_arg,
-		use_include_path_arg, vphp.PhpValue.from_zval(ctx))
-	return fp.take_zval()
+	mut fp := vphp.PhpFunction.named('fopen').invoke(url_arg, mode_arg,
+		use_include_path_arg, ctx)
+	return fp
 }
 
-fn psr18_warning_handler() vphp.ZVal {
-	mut handler := new_array()
+fn psr18_warning_handler() vphp.PhpArray {
+	mut handler := vphp.PhpArray.new()
 	handler.push_string('VSlim\\Psr18\\Client')
 	handler.push_string('ignorePhpWarning')
-	return handler.take_zval()
+	return handler
 }
 
-fn new_psr18_header_lines(headers map[string][]string, header_names map[string]string) vphp.ZVal {
-	mut out := new_array()
+fn new_psr18_header_lines(headers map[string][]string, header_names map[string]string) vphp.PhpArray {
+	mut out := vphp.PhpArray.new()
 	for key, values in headers {
 		name := header_names[key] or { key }
 		for value in values {
 			out.push_string('${name}: ${value}')
 		}
 	}
-	return out.take_zval()
+	return out
 }
 
 fn normalize_psr18_protocol_version(version string) f64 {
@@ -273,13 +285,12 @@ fn read_last_http_response_head() Psr18ParsedResponseHead {
 		}
 	}
 	return vphp.PhpFunction.named('http_get_last_response_headers').with_result[vphp.PhpArray, Psr18ParsedResponseHead](fn (headers vphp.PhpArray) Psr18ParsedResponseHead {
-		headers_z := headers.to_zval()
 		mut current := Psr18ParsedResponseHead{
 			headers:      map[string][]string{}
 			header_names: map[string]string{}
 		}
-		for line_z in zval_array_items(headers_z) {
-			line := line_z.to_string().trim_space()
+		for line_value in headers.value_items() {
+			line := line_value.to_string().trim_space()
 			if line == '' {
 				continue
 			}
@@ -343,24 +354,23 @@ fn last_php_error_message(default_message string) string {
 		return default_message
 	}
 	return vphp.PhpFunction.named('error_get_last').with_result[vphp.PhpValue, string](fn [default_message] (err vphp.PhpValue) string {
-		raw := err.to_zval()
-		if !raw.is_array() {
+		if !err.is_array() {
 			return default_message
 		}
-		message := zval_string_key(raw, 'message', '').trim_space()
+		message := err.string_at('message', '').trim_space()
 		return if message == '' { default_message } else { message }
 	}) or { default_message }
 }
 
-fn throw_psr18_request_exception(message string, request vphp.ZVal) {
+fn throw_psr18_request_exception(message string, request vphp.PhpObject) {
 	throw_psr18_exception_object('VSlim\\Psr18\\RequestException', message, request)
 }
 
-fn throw_psr18_network_exception(message string, request vphp.ZVal) {
+fn throw_psr18_network_exception(message string, request vphp.PhpObject) {
 	throw_psr18_exception_object('VSlim\\Psr18\\NetworkException', message, request)
 }
 
-fn throw_psr18_exception_object(class_name string, message string, request vphp.ZVal) {
+fn throw_psr18_exception_object(class_name string, message string, request vphp.PhpObject) {
 	mut message_arg := vphp.PhpString.of(message)
 	mut code_arg := vphp.PhpInt.of(0)
 	defer {
@@ -368,38 +378,35 @@ fn throw_psr18_exception_object(class_name string, message string, request vphp.
 		code_arg.release()
 	}
 	exception_obj := vphp.PhpClass.named(class_name).construct(message_arg, code_arg) or { return }
-	mut exception := exception_obj.to_zval()
-	if exception.is_valid() && exception.is_object() {
+	mut exception := exception_obj
+	if exception.is_valid() {
 		// attachRequest → store_request will dup the zval to anchor
 		// its own refcount in the exception's property table.
-		vphp.PhpObject.borrowed(exception).with_method_result[vphp.PhpValue, bool]('attachRequest',
-			fn (result vphp.PhpValue) bool {
-			return result.to_zval().is_valid()
-		}, vphp.PhpValue.from_zval(request)) or { false }
+		exception.with_method_result[vphp.PhpValue, bool]('attachRequest', fn (result vphp.PhpValue) bool {
+			return result.is_valid()
+		}, request) or { false }
 	}
-	vphp.PhpException.raise_object(mut exception)
+	vphp.PhpException.raise_php_object(mut exception)
 }
 
-fn psr18_exception_store_request(request vphp.ZVal) {
+fn psr18_exception_store_request(request vphp.PhpObject) {
 	obj := vphp.ZendObject.current()
 	if !obj.is_valid() || !request.is_valid() {
 		return
 	}
-	obj.set_prop('requestRef', request)
+	obj.set_prop_input('requestRef', request)
 }
 
-fn psr18_exception_load_request() vphp.ZVal {
+fn psr18_exception_load_request() vphp.PhpObject {
 	obj := vphp.ZendObject.current()
 	if obj.is_valid() {
 		value := obj.prop_borrowed('requestRef')
 		if value.is_valid() && !value.is_null() && !value.is_undef() {
-			// Return without dup — the caller (own_request_zbox) already
-			// does its own dup when wrapping into RequestOwnedZBox.
-			return value
+			return vphp.PhpObject.borrowed(value)
 		}
 	}
 	request := vphp.PhpClass.named('VSlim\\Psr7\\Request').construct() or {
-		return vphp.RequestOwnedZBox.new_null().to_zval()
+		return vphp.PhpObject.invalid()
 	}
-	return request.to_zval()
+	return request
 }

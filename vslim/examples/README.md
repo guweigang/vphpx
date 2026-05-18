@@ -307,7 +307,7 @@ php -d extension=/Users/guweigang/Source/vphpx/vslim/vslim.so /Users/guweigang/S
 - `ollama_stream_app.php` 只做入口和路由注册
 - `VSlim\Stream\OllamaClient` / `VSlim\Stream\NdjsonDecoder` / `VSlim\Stream\SseEncoder` 是正式的扩展侧流式组件
 - `ollama_stream_app.php` 里的 route 现在优先走 `VSlim\Stream\Factory`
-- `ollama.toml` 现在继续使用通用 `vhttpd/php/package/bin/php-worker`
+- `ollama.toml` 现在继续使用通用 `vhttpd/php/package/bin/vphp-worker`
 - `PhpWorker\\Server` 已修复对 `\\VSlim\\App` bootstrap 的识别，不再 fallback 到内置 demo app
 - `/health`、`/meta`、`/` 页面都走 `VSlim\App`
 - `/ollama/text` 和 `/ollama/sse` 由 VSlim route 直接返回 `VSlim\Stream\Response`
@@ -392,7 +392,7 @@ http://127.0.0.1:19890/
 - worker 只处理短生命周期的 `open / next / close`
 - `worker.pool_size = 1` 也能完整跑完一个 SSE 流
 - 当前示例是 synthetic SSE counter，适合先验证 transport 和 state 循环
-- 示例现在直接使用 `VPhp\VSlim\Stream\Factory::dispatchSse(...)`
+- 示例现在直接使用 `VSlim\Stream\Factory::dispatchSse(...)`
 
 启动：
 

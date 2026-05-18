@@ -73,17 +73,9 @@ namespace {
         }
     }
 
-    $autoload = dirname(__DIR__, 3) . '/vhttpd/php/package/vendor/autoload.php';
-    if (!is_file($autoload)) {
-        $autoload = dirname(__DIR__) . '/vendor/autoload.php';
-    }
-    if (!is_file($autoload)) {
-        echo "autoload_missing\n";
-        exit;
-    }
-    require_once $autoload;
+    require_once __DIR__ . '/php_worker_package_bootstrap.php';
 
-    $req = VPhp\VHttpd\Psr7Adapter::buildServerRequest([
+    $req = VHttpd\Psr7Adapter::buildServerRequest([
         'method' => 'POST',
         'path' => '/users/9?trace_id=psr',
         'body' => '{"name":"Codex"}',
@@ -107,7 +99,7 @@ namespace {
     echo $req->cookies['sid'] . '|' . $req->query['trace_id'] . '|' . $req->attributes['route'] . PHP_EOL;
     echo $req->server['HTTP_HOST'] . '|' . $req->server['REMOTE_ADDR'] . '|' . $req->server['SERVER_PROTOCOL'] . PHP_EOL;
 
-    $req2 = VPhp\VHttpd\Psr7Adapter::buildServerRequest([
+    $req2 = VHttpd\Psr7Adapter::buildServerRequest([
         'method' => 'GET',
         'path' => '/hello/world?trace_id=array-shape',
         'scheme' => 'http',

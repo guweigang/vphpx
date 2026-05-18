@@ -8,7 +8,7 @@ $req = new VSlim\VHttpd\Request('POST', '/submit?from=query&same=qv', 'from=body
 $req->setHeaders(['content-type' => 'application/x-www-form-urlencoded']);
 echo $req->input('from') . PHP_EOL;
 echo $req->input('same') . PHP_EOL;
-echo ($req->has_input('n') ? 'yes' : 'no') . PHP_EOL;
+echo ($req->hasInput('n') ? 'yes' : 'no') . PHP_EOL;
 echo $req->inputOr('none', 'fallback') . PHP_EOL;
 echo $req->parsedBody()['from'] . PHP_EOL;
 echo $req->allInputs()['from'] . '|' . $req->allInputs()['same'] . PHP_EOL;

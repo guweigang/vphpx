@@ -329,44 +329,23 @@ fn template_indexed_list_item_value(path string, lists map[string][]string) ?str
 	return items[idx]
 }
 
-fn template_object_value(path string, objects map[string]vphp.RequestOwnedZBox) ?vphp.RequestOwnedZBox {
+fn template_object_value(path string, objects map[string]vphp.PhpValue) ?vphp.PhpValue {
 	key := path.trim_space()
 	if key == '' {
 		return none
 	}
 	if key in objects {
 		if obj := objects[key] {
-			return obj.clone_request_owned()
+			return obj.owned()
 		}
 	}
 	alias := alias_template_key(key)
 	if alias in objects {
 		if obj := objects[alias] {
-			return obj.clone_request_owned()
+			return obj.owned()
 		}
 	}
 	return none
-}
-
-fn template_object_children(value vphp.ZVal) map[string]vphp.ZVal {
-	mut props_box := vphp.PhpFunction.named('get_object_vars').request_owned(vphp.PhpValue.from_zval(value))
-	props := props_box.take_zval()
-	if props.is_array() {
-		mut out := map[string]vphp.ZVal{}
-		for key in props.assoc_keys() {
-			out[key] = props.get(key) or { continue }
-		}
-		if out.len > 0 {
-			return out
-		}
-	}
-	return value.fold[map[string]vphp.ZVal](map[string]vphp.ZVal{}, fn (key vphp.ZVal, val vphp.ZVal, mut acc map[string]vphp.ZVal) {
-		key_name := key.to_string().trim_space()
-		if key_name == '' {
-			return
-		}
-		acc[key_name] = val
-	})
 }
 
 fn populate_indexed_item_fields(loop_key string, idx string, scalars map[string]string, mut local map[string]string) {
@@ -389,10 +368,10 @@ fn populate_indexed_item_fields(loop_key string, idx string, scalars map[string]
 	}
 }
 
-fn extract_template_data(data vphp.ZVal) (map[string]string, map[string][]string, map[string]vphp.RequestOwnedZBox) {
+fn extract_template_data(data vphp.PhpValue) (map[string]string, map[string][]string, map[string]vphp.PhpValue) {
 	mut scalars := map[string]string{}
 	mut lists := map[string][]string{}
-	mut objects := map[string]vphp.RequestOwnedZBox{}
+	mut objects := map[string]vphp.PhpValue{}
 	if !data.is_valid() || (!data.is_array() && !data.is_object()) {
 		return scalars, lists, objects
 	}
@@ -400,7 +379,7 @@ fn extract_template_data(data vphp.ZVal) (map[string]string, map[string][]string
 	return scalars, lists, objects
 }
 
-fn collect_template_values(prefix string, value vphp.ZVal, mut scalars map[string]string, mut lists map[string][]string, mut objects map[string]vphp.RequestOwnedZBox, depth int) {
+fn collect_template_values(prefix string, value vphp.PhpValue, mut scalars map[string]string, mut lists map[string][]string, mut objects map[string]vphp.PhpValue, depth int) {
 	if depth > 8 || !value.is_valid() || value.is_null() || value.is_undef() {
 		if prefix != '' && prefix !in scalars {
 			scalars[prefix] = ''
@@ -408,17 +387,21 @@ fn collect_template_values(prefix string, value vphp.ZVal, mut scalars map[strin
 		return
 	}
 	if value.is_array() {
+		arr := value.as_array() or { return }
+		defer {
+			arr.release()
+		}
 		if is_template_list(value) {
 			if template_list_has_complex_items(value) {
 				if prefix != '' {
 					mut idx_items := []string{}
-					for i in 0 .. value.array_count() {
+					for i in 0 .. arr.count() {
 						idx_items << '${i}'
 					}
 					lists[prefix] = idx_items
 				}
-				for i in 0 .. value.array_count() {
-					child := value.array_get(i)
+				for i in 0 .. arr.count() {
+					child := arr.index_value(i)
 					next_prefix := if prefix == '' { '${i}' } else { '${prefix}.${i}' }
 					collect_template_values(next_prefix, child, mut scalars, mut lists, mut
 						objects, depth + 1)
@@ -441,14 +424,8 @@ fn collect_template_values(prefix string, value vphp.ZVal, mut scalars map[strin
 			}
 			return
 		}
-		children := value.fold[map[string]vphp.ZVal](map[string]vphp.ZVal{}, fn (key vphp.ZVal, val vphp.ZVal, mut acc map[string]vphp.ZVal) {
-			key_name := key.to_string().trim_space()
-			if key_name == '' {
-				return
-			}
-			acc[key_name] = val
-		})
-		for key_name, child in children {
+		for key_name in arr.assoc_keys() {
+			child := arr.value_at(key_name)
 			next_prefix := if prefix == '' { key_name } else { '${prefix}.${key_name}' }
 			collect_template_values(next_prefix, child, mut scalars, mut lists, mut objects,
 				depth + 1)
@@ -457,17 +434,26 @@ fn collect_template_values(prefix string, value vphp.ZVal, mut scalars map[strin
 	}
 	if value.is_object() {
 		if prefix != '' {
-			objects[prefix] = vphp.RequestOwnedZBox.from_zval(value)
+			objects[prefix] = value.owned()
 			alias := alias_template_key(prefix)
 			if alias != '' && alias != prefix {
-				objects[alias] = vphp.RequestOwnedZBox.from_zval(value)
+				objects[alias] = value.owned()
 			}
 		}
-		children := template_object_children(value)
-		for key_name, child in children {
-			next_prefix := if prefix == '' { key_name } else { '${prefix}.${key_name}' }
-			collect_template_values(next_prefix, child, mut scalars, mut lists, mut objects,
-				depth + 1)
+		mut props_value := vphp.PhpFunction.named('get_object_vars').invoke(value)
+		defer {
+			props_value.release()
+		}
+		if props := props_value.as_array() {
+			defer {
+				props.release()
+			}
+			for key_name in props.assoc_keys() {
+				child := props.value_at(key_name)
+				next_prefix := if prefix == '' { key_name } else { '${prefix}.${key_name}' }
+				collect_template_values(next_prefix, child, mut scalars, mut lists, mut objects,
+					depth + 1)
+			}
 		}
 		return
 	}
@@ -520,21 +506,32 @@ fn is_numeric_path_segment(part string) bool {
 	return true
 }
 
-fn is_template_list(value vphp.ZVal) bool {
-	return value.is_list()
+fn is_template_list(value vphp.PhpValue) bool {
+	arr := value.as_array() or { return false }
+	defer {
+		arr.release()
+	}
+	return arr.is_list()
 }
 
-fn extract_template_list_items(value vphp.ZVal) []string {
+fn extract_template_list_items(value vphp.PhpValue) []string {
 	mut items := []string{}
-	for i in 0 .. value.array_count() {
-		items << to_template_scalar(value.array_get(i))
+	arr := value.as_array() or { return items }
+	defer {
+		arr.release()
+	}
+	for item in arr.value_items() {
+		items << to_template_scalar(item)
 	}
 	return items
 }
 
-fn template_list_has_complex_items(value vphp.ZVal) bool {
-	for i in 0 .. value.array_count() {
-		item := value.array_get(i)
+fn template_list_has_complex_items(value vphp.PhpValue) bool {
+	arr := value.as_array() or { return false }
+	defer {
+		arr.release()
+	}
+	for item in arr.value_items() {
 		if item.is_array() || item.is_object() {
 			return true
 		}
@@ -542,7 +539,7 @@ fn template_list_has_complex_items(value vphp.ZVal) bool {
 	return false
 }
 
-fn to_template_scalar(value vphp.ZVal) string {
+fn to_template_scalar(value vphp.PhpValue) string {
 	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return ''
 	}

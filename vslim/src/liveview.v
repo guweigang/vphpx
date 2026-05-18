@@ -40,8 +40,8 @@ pub fn (socket &VSlimLiveSocket) connected() bool {
 	return socket.connected
 }
 
-@[php_method: 'setTarget']
 @[php_arg_name: 'raw_path=rawPath']
+@[php_method: 'setTarget']
 pub fn (mut socket VSlimLiveSocket) set_target(raw_path string) &VSlimLiveSocket {
 	socket.raw_path = live_normalize_target(raw_path)
 	return &socket
@@ -52,8 +52,8 @@ pub fn (socket &VSlimLiveSocket) target() string {
 	return socket.raw_path
 }
 
-@[php_method: 'setRootId']
 @[php_arg_name: 'root_id=rootId']
+@[php_method: 'setRootId']
 pub fn (mut socket VSlimLiveSocket) set_root_id(root_id string) &VSlimLiveSocket {
 	socket.root_id = root_id.trim_space()
 	return &socket
@@ -65,50 +65,51 @@ pub fn (socket &VSlimLiveSocket) root_id() string {
 }
 
 @[php_method]
-pub fn (mut socket VSlimLiveSocket) assign(key string, value vphp.RequestBorrowedZBox) &VSlimLiveSocket {
+pub fn (mut socket VSlimLiveSocket) assign(key string, value vphp.PhpValue) &VSlimLiveSocket {
 	name := key.trim_space()
 	if name == '' {
 		return &socket
 	}
-	socket.assigns[name] = live_value_string(value.to_zval())
+	socket.assigns[name] = live_value_string(value)
+	return &socket
+}
+
+fn (mut socket VSlimLiveSocket) assign_string(key string, value vphp.PhpString) &VSlimLiveSocket {
+	name := key.trim_space()
+	if name == '' {
+		return &socket
+	}
+	socket.assigns[name] = value.value()
 	return &socket
 }
 
 @[php_method: 'assignMany']
-pub fn (mut socket VSlimLiveSocket) assign_many(values vphp.RequestBorrowedZBox) &VSlimLiveSocket {
-	if !values.is_valid() || values.is_null() || values.is_undef() || !values.is_array() {
-		return &socket
-	}
-	raw := values.to_zval()
-	for key in raw.assoc_keys() {
-		socket.assign(key, vphp.RequestBorrowedZBox.of(zval_key(raw, key)))
+pub fn (mut socket VSlimLiveSocket) assign_many(values vphp.PhpArray) &VSlimLiveSocket {
+	for key in values.assoc_keys() {
+		socket.assign(key, values.value_at(key))
 	}
 	return &socket
 }
 
 @[php_method: 'assignForm']
-pub fn (mut socket VSlimLiveSocket) assign_form(values vphp.RequestBorrowedZBox) &VSlimLiveSocket {
-	if !values.is_valid() || values.is_null() || values.is_undef() || !values.is_array() {
-		return &socket
-	}
-	raw := values.to_zval()
-	for key in raw.assoc_keys() {
+pub fn (mut socket VSlimLiveSocket) assign_form(values vphp.PhpArray) &VSlimLiveSocket {
+	for key in values.assoc_keys() {
 		name := key.trim_space()
 		if name == '' {
 			continue
 		}
-		value := zval_key(raw, key)
+		value := values.value_at(key)
 		if value.is_array() {
 			socket.assigns[name] = live_form_value_string(value)
 			continue
 		}
-		socket.assign(name, vphp.RequestBorrowedZBox.of(value))
+		socket.assign(name, value)
 	}
 	return &socket
 }
 
 @[php_method: 'resetForm']
-pub fn (mut socket VSlimLiveSocket) reset_form(values vphp.RequestBorrowedZBox) &VSlimLiveSocket {
+pub fn (mut socket VSlimLiveSocket) reset_form(values vphp.PhpArray) &VSlimLiveSocket {
 	socket.clear_errors()
 	return socket.assign_form(values)
 }
@@ -129,8 +130,8 @@ pub fn (mut socket VSlimLiveSocket) forget_input(field string) &VSlimLiveSocket 
 }
 
 @[php_method: 'forgetInputs']
-pub fn (mut socket VSlimLiveSocket) forget_inputs(fields vphp.RequestBorrowedZBox) &VSlimLiveSocket {
-	for field in live_field_names(fields.to_zval()) {
+pub fn (mut socket VSlimLiveSocket) forget_inputs(fields vphp.PhpArray) &VSlimLiveSocket {
+	for field in live_field_names(fields) {
 		socket.forget(field)
 	}
 	return &socket
@@ -151,33 +152,33 @@ fn live_component_state_key(component_id string, field string) string {
 	return '_component_${id}_${name}'
 }
 
-@[php_method: 'assignComponentState']
 @[php_arg_name: 'component_id=componentId']
-pub fn (mut socket VSlimLiveSocket) assign_component_state(component_id string, field string, value vphp.RequestBorrowedZBox) &VSlimLiveSocket {
+@[php_method: 'assignComponentState']
+pub fn (mut socket VSlimLiveSocket) assign_component_state(component_id string, field string, value vphp.PhpValue) &VSlimLiveSocket {
 	key := live_component_state_key(component_id, field)
 	if key == '' {
 		return &socket
 	}
-	socket.assigns[key] = live_value_string(value.to_zval())
+	socket.assigns[key] = live_value_string(value)
 	return &socket
 }
 
-@[php_method: 'componentState']
 @[php_arg_name: 'component_id=componentId']
+@[php_method: 'componentState']
 pub fn (socket &VSlimLiveSocket) component_state(component_id string, field string) string {
 	key := live_component_state_key(component_id, field)
 	return if key == '' { '' } else { socket.get(key) }
 }
 
-@[php_method: 'componentStateOr']
 @[php_arg_name: 'component_id=componentId']
+@[php_method: 'componentStateOr']
 pub fn (socket &VSlimLiveSocket) component_state_or(component_id string, field string, fallback string) string {
 	value := socket.component_state(component_id, field)
 	return if value == '' { fallback } else { value }
 }
 
-@[php_method: 'clearComponentState']
 @[php_arg_name: 'component_id=componentId']
+@[php_method: 'clearComponentState']
 pub fn (mut socket VSlimLiveSocket) clear_component_state(component_id string, field string) &VSlimLiveSocket {
 	key := live_component_state_key(component_id, field)
 	if key == '' {
@@ -200,17 +201,13 @@ pub fn (mut socket VSlimLiveSocket) assign_error(field string, message string) &
 }
 
 @[php_method: 'assignErrors']
-pub fn (mut socket VSlimLiveSocket) assign_errors(values vphp.RequestBorrowedZBox) &VSlimLiveSocket {
-	if !values.is_valid() || values.is_null() || values.is_undef() || !values.is_array() {
-		return &socket
-	}
-	raw := values.to_zval()
-	for key in raw.assoc_keys() {
+pub fn (mut socket VSlimLiveSocket) assign_errors(values vphp.PhpArray) &VSlimLiveSocket {
+	for key in values.assoc_keys() {
 		field := key.trim_space()
 		if field == '' {
 			continue
 		}
-		socket.assign_error(field, live_value_string(zval_key(raw, key)))
+		socket.assign_error(field, live_value_string(values[key]))
 	}
 	return &socket
 }
@@ -292,11 +289,11 @@ pub fn (form &VSlimLiveForm) available() bool {
 }
 
 @[php_method]
-pub fn (mut form VSlimLiveForm) fill(values vphp.RequestBorrowedZBox) &VSlimLiveForm {
+pub fn (mut form VSlimLiveForm) fill(values vphp.PhpArray) &VSlimLiveForm {
 	if isnil(form.socket_ref) {
 		return &form
 	}
-	form.track_fields(values.to_zval())
+	form.track_fields(values)
 	unsafe {
 		mut socket := &VSlimLiveSocket(form.socket_ref)
 		socket.assign_form(values)
@@ -305,11 +302,11 @@ pub fn (mut form VSlimLiveForm) fill(values vphp.RequestBorrowedZBox) &VSlimLive
 }
 
 @[php_method]
-pub fn (mut form VSlimLiveForm) reset(values vphp.RequestBorrowedZBox) &VSlimLiveForm {
+pub fn (mut form VSlimLiveForm) reset(values vphp.PhpArray) &VSlimLiveForm {
 	if isnil(form.socket_ref) {
 		return &form
 	}
-	form.track_fields(values.to_zval())
+	form.track_fields(values)
 	unsafe {
 		mut socket := &VSlimLiveSocket(form.socket_ref)
 		socket.reset_form(values)
@@ -320,7 +317,7 @@ pub fn (mut form VSlimLiveForm) reset(values vphp.RequestBorrowedZBox) &VSlimLiv
 }
 
 @[php_method]
-pub fn (mut form VSlimLiveForm) validate(validator vphp.RequestBorrowedZBox) &VSlimLiveForm {
+pub fn (mut form VSlimLiveForm) validate(validator vphp.PhpValue) &VSlimLiveForm {
 	form.validated = true
 	form.last_error_count = 0
 	if isnil(form.socket_ref) {
@@ -329,32 +326,29 @@ pub fn (mut form VSlimLiveForm) validate(validator vphp.RequestBorrowedZBox) &VS
 	unsafe {
 		mut socket := &VSlimLiveSocket(form.socket_ref)
 		socket.clear_errors()
-		mut errors_z := vphp.RequestOwnedZBox.new_null().to_zval()
-		mut errors_owned := false
+		mut errors := vphp.PhpValue.null()
 		if validator.is_valid() && !validator.is_null() && !validator.is_undef() {
-			if validator.is_callable() {
-				mut result := vphp.PhpCallable.borrowed_zbox(validator).fn_request_owned(vphp.PhpValue.from_request_owned_zbox(form.data()))
-				errors_z = result.take_zval()
-				errors_owned = true
+			if callable := validator.as_callable() {
+				mut result := callable.invoke(form.data())
+				errors = result.owned()
 			} else if validator.is_array() {
-				errors_z = validator.to_zval()
+				errors = validator.owned()
 			}
 		}
 		defer {
-			if errors_owned {
-				errors_z.release()
-			}
+			errors.release()
 		}
-		if errors_z.is_valid() && !errors_z.is_null() && !errors_z.is_undef() && errors_z.is_array() {
-			socket.assign_errors(vphp.RequestBorrowedZBox.of(errors_z))
-			form.last_error_count = errors_z.assoc_keys().len
+		if errors.is_valid() && !errors.is_null() && !errors.is_undef() && errors.is_array() {
+			errors_arr := errors.as_array() or { vphp.PhpArray.empty() }
+			socket.assign_errors(errors_arr)
+			form.last_error_count = errors_arr.assoc_keys().len
 		}
 	}
 	return &form
 }
 
 @[php_method]
-pub fn (mut form VSlimLiveForm) errors(values vphp.RequestBorrowedZBox) &VSlimLiveForm {
+pub fn (mut form VSlimLiveForm) errors(values vphp.PhpArray) &VSlimLiveForm {
 	if isnil(form.socket_ref) {
 		return &form
 	}
@@ -362,7 +356,7 @@ pub fn (mut form VSlimLiveForm) errors(values vphp.RequestBorrowedZBox) &VSlimLi
 		mut socket := &VSlimLiveSocket(form.socket_ref)
 		socket.assign_errors(values)
 	}
-	form.last_error_count = if values.is_array() { values.to_zval().assoc_keys().len } else { 0 }
+	form.last_error_count = values.assoc_keys().len
 	form.validated = true
 	return &form
 }
@@ -405,7 +399,7 @@ pub fn (mut form VSlimLiveForm) forget(field string) &VSlimLiveForm {
 }
 
 @[php_method: 'forgetMany']
-pub fn (mut form VSlimLiveForm) forget_many(fields vphp.RequestBorrowedZBox) &VSlimLiveForm {
+pub fn (mut form VSlimLiveForm) forget_many(fields vphp.PhpArray) &VSlimLiveForm {
 	if isnil(form.socket_ref) {
 		return &form
 	}
@@ -459,19 +453,19 @@ pub fn (form &VSlimLiveForm) error_count() int {
 }
 
 @[php_method]
-pub fn (form &VSlimLiveForm) data() vphp.RequestOwnedZBox {
-	mut out := new_array()
+pub fn (form &VSlimLiveForm) data() vphp.PhpArray {
+	mut out := vphp.PhpArray.new()
 	if isnil(form.socket_ref) {
-		return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
+		return out
 	}
 	for field in form.field_names() {
 		out.string(field, form.socket_ref.input(field))
 	}
-	return vphp.RequestOwnedZBox.adopt_zval(out.take_zval())
+	return out
 }
 
-fn (mut form VSlimLiveForm) track_fields(values vphp.ZVal) {
-	if !values.is_valid() || values.is_null() || values.is_undef() || !values.is_array() {
+fn (mut form VSlimLiveForm) track_fields(values vphp.PhpArray) {
+	if !values.is_valid() {
 		return
 	}
 	for key in values.assoc_keys() {
@@ -503,8 +497,8 @@ pub fn (socket &VSlimLiveSocket) assigns() map[string]string {
 	return socket.assigns.clone()
 }
 
-@[php_method]
 @[php_arg_name: 'target_id=targetId']
+@[php_method]
 pub fn (mut socket VSlimLiveSocket) patch(target_id string, html string) &VSlimLiveSocket {
 	id := target_id.trim_space()
 	if id == '' {
@@ -518,8 +512,8 @@ pub fn (mut socket VSlimLiveSocket) patch(target_id string, html string) &VSlimL
 	return &socket
 }
 
-@[php_method]
 @[php_arg_name: 'target_id=targetId']
+@[php_method]
 pub fn (mut socket VSlimLiveSocket) append(target_id string, html string) &VSlimLiveSocket {
 	id := target_id.trim_space()
 	if id == '' {
@@ -533,8 +527,8 @@ pub fn (mut socket VSlimLiveSocket) append(target_id string, html string) &VSlim
 	return &socket
 }
 
-@[php_method]
 @[php_arg_name: 'target_id=targetId']
+@[php_method]
 pub fn (mut socket VSlimLiveSocket) prepend(target_id string, html string) &VSlimLiveSocket {
 	id := target_id.trim_space()
 	if id == '' {
@@ -548,8 +542,8 @@ pub fn (mut socket VSlimLiveSocket) prepend(target_id string, html string) &VSli
 	return &socket
 }
 
-@[php_method: 'setText']
 @[php_arg_name: 'target_id=targetId']
+@[php_method: 'setText']
 pub fn (mut socket VSlimLiveSocket) set_text(target_id string, text string) &VSlimLiveSocket {
 	id := target_id.trim_space()
 	if id == '' {
@@ -563,8 +557,8 @@ pub fn (mut socket VSlimLiveSocket) set_text(target_id string, text string) &VSl
 	return &socket
 }
 
-@[php_method: 'setAttr']
 @[php_arg_name: 'target_id=targetId']
+@[php_method: 'setAttr']
 pub fn (mut socket VSlimLiveSocket) set_attr(target_id string, name string, value string) &VSlimLiveSocket {
 	id := target_id.trim_space()
 	attr_name := name.trim_space()
@@ -580,8 +574,8 @@ pub fn (mut socket VSlimLiveSocket) set_attr(target_id string, name string, valu
 	return &socket
 }
 
-@[php_method]
 @[php_arg_name: 'target_id=targetId']
+@[php_method]
 pub fn (mut socket VSlimLiveSocket) remove(target_id string) &VSlimLiveSocket {
 	id := target_id.trim_space()
 	if id == '' {
@@ -680,9 +674,9 @@ pub fn (mut socket VSlimLiveSocket) leave_topic(room string) &VSlimLiveSocket {
 	return &socket
 }
 
-@[php_method: 'broadcastInfo']
 @[php_arg_name: 'include_self=includeSelf']
-pub fn (mut socket VSlimLiveSocket) broadcast_info(room string, event string, payload vphp.RequestBorrowedZBox, include_self bool) &VSlimLiveSocket {
+@[php_method: 'broadcastInfo']
+pub fn (mut socket VSlimLiveSocket) broadcast_info(room string, event string, payload vphp.PhpValue, include_self bool) &VSlimLiveSocket {
 	topic := room.trim_space()
 	name := event.trim_space()
 	if topic == '' || name == '' {
@@ -692,7 +686,7 @@ pub fn (mut socket VSlimLiveSocket) broadcast_info(room string, event string, pa
 		'op':           'broadcast_info'
 		'room':         topic
 		'event':        name
-		'payload':      live_json_payload(payload.to_zval())
+		'payload':      live_json_payload(payload)
 		'include_self': if include_self { 'true' } else { 'false' }
 	}
 	return &socket
@@ -790,8 +784,8 @@ pub fn (live &VSlimLiveView) layout() string {
 	return live.host.layout_name()
 }
 
-@[php_method: 'setRootId']
 @[php_arg_name: 'root_id=rootId']
+@[php_method: 'setRootId']
 pub fn (mut live VSlimLiveView) set_root_id(root_id string) &VSlimLiveView {
 	live.root_id = root_id.trim_space()
 	return &live
@@ -849,12 +843,12 @@ pub fn (live &VSlimLiveView) bootstrap_attrs(socket &VSlimLiveSocket, endpoint s
 }
 
 @[php_method: 'renderTemplate']
-pub fn (mut live VSlimLiveView) render_template(template string, data vphp.RequestBorrowedZBox) string {
+pub fn (mut live VSlimLiveView) render_template(template string, data vphp.PhpValue) string {
 	return live.host.render_template_data(template, data)
 }
 
 @[php_method: 'renderTemplateWithLayout']
-pub fn (mut live VSlimLiveView) render_template_with_layout(template string, layout string, data vphp.RequestBorrowedZBox) string {
+pub fn (mut live VSlimLiveView) render_template_with_layout(template string, layout string, data vphp.PhpValue) string {
 	return live.host.render_template_with_layout_data(template, layout, data)
 }
 
@@ -873,15 +867,15 @@ pub fn (mut live VSlimLiveView) html(socket &VSlimLiveSocket) string {
 	return live.host.html_map(socket.assigns.clone())
 }
 
-@[php_method]
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
+@[php_method]
 pub fn (mut live VSlimLiveView) response(socket &VSlimLiveSocket) &VSlimPsr7Response {
 	body := live.html(socket)
 	return new_psr7_response_from_vslim_response(*live_html_response(body))
 }
 
-@[php_method]
 @[php_arg_name: 'target_id=targetId']
+@[php_method]
 pub fn (mut live VSlimLiveView) patch(socket &VSlimLiveSocket, target_id string) &VSlimLiveSocket {
 	body := live.html(socket)
 	unsafe {
@@ -890,8 +884,8 @@ pub fn (mut live VSlimLiveView) patch(socket &VSlimLiveSocket, target_id string)
 	}
 }
 
-@[php_method: 'patchTemplate']
 @[php_arg_name: 'target_id=targetId']
+@[php_method: 'patchTemplate']
 pub fn (mut live VSlimLiveView) patch_template(socket &VSlimLiveSocket, target_id string, template string) &VSlimLiveSocket {
 	body := live.render_socket(template, socket)
 	unsafe {
@@ -984,23 +978,28 @@ pub fn (component &VSlimLiveComponent) state() &VSlimLiveComponentState {
 }
 
 @[php_method]
-pub fn (mut component VSlimLiveComponent) assign(key string, value vphp.RequestBorrowedZBox) &VSlimLiveComponent {
+pub fn (mut component VSlimLiveComponent) assign(key string, value vphp.PhpValue) &VSlimLiveComponent {
 	name := key.trim_space()
 	if name == '' {
 		return &component
 	}
-	component.assigns[name] = live_value_string(value.to_zval())
+	component.assigns[name] = live_value_string(value)
+	return &component
+}
+
+fn (mut component VSlimLiveComponent) assign_string(key string, value vphp.PhpString) &VSlimLiveComponent {
+	name := key.trim_space()
+	if name == '' {
+		return &component
+	}
+	component.assigns[name] = value.value()
 	return &component
 }
 
 @[php_method: 'assignMany']
-pub fn (mut component VSlimLiveComponent) assign_many(values vphp.RequestBorrowedZBox) &VSlimLiveComponent {
-	if !values.is_valid() || values.is_null() || values.is_undef() || !values.is_array() {
-		return &component
-	}
-	raw := values.to_zval()
-	for key in raw.assoc_keys() {
-		component.assign(key, vphp.RequestBorrowedZBox.of(zval_key(raw, key)))
+pub fn (mut component VSlimLiveComponent) assign_many(values vphp.PhpArray) &VSlimLiveComponent {
+	for key in values.assoc_keys() {
+		component.assign(key, values.value_at(key))
 	}
 	return &component
 }
@@ -1017,7 +1016,7 @@ pub fn (mut component VSlimLiveComponent) clear_assigns() &VSlimLiveComponent {
 }
 
 @[php_method: 'renderTemplate']
-pub fn (mut component VSlimLiveComponent) render_template(template string, data vphp.RequestBorrowedZBox) string {
+pub fn (mut component VSlimLiveComponent) render_template(template string, data vphp.PhpValue) string {
 	return component.host.render_template_data(template, data)
 }
 
@@ -1052,8 +1051,8 @@ pub fn (mut component VSlimLiveComponent) component_marker() bool {
 	return true
 }
 
-@[php_method: 'appendTo']
 @[php_arg_name: 'target_id=targetId']
+@[php_method: 'appendTo']
 pub fn (mut component VSlimLiveComponent) append_to(socket &VSlimLiveSocket, target_id string) &VSlimLiveSocket {
 	body := component.html()
 	id := target_id.trim_space()
@@ -1066,8 +1065,8 @@ pub fn (mut component VSlimLiveComponent) append_to(socket &VSlimLiveSocket, tar
 	}
 }
 
-@[php_method: 'appendToBound']
 @[php_arg_name: 'target_id=targetId']
+@[php_method: 'appendToBound']
 pub fn (mut component VSlimLiveComponent) append_to_bound(target_id string) &VSlimLiveSocket {
 	if socket := component.bound_socket() {
 		return component.append_to(socket, target_id)
@@ -1075,8 +1074,8 @@ pub fn (mut component VSlimLiveComponent) append_to_bound(target_id string) &VSl
 	return new_live_socket_bound_result()
 }
 
-@[php_method: 'prependTo']
 @[php_arg_name: 'target_id=targetId']
+@[php_method: 'prependTo']
 pub fn (mut component VSlimLiveComponent) prepend_to(socket &VSlimLiveSocket, target_id string) &VSlimLiveSocket {
 	body := component.html()
 	id := target_id.trim_space()
@@ -1089,8 +1088,8 @@ pub fn (mut component VSlimLiveComponent) prepend_to(socket &VSlimLiveSocket, ta
 	}
 }
 
-@[php_method: 'prependToBound']
 @[php_arg_name: 'target_id=targetId']
+@[php_method: 'prependToBound']
 pub fn (mut component VSlimLiveComponent) prepend_to_bound(target_id string) &VSlimLiveSocket {
 	if socket := component.bound_socket() {
 		return component.prepend_to(socket, target_id)
@@ -1119,7 +1118,7 @@ pub fn (mut component VSlimLiveComponent) remove_bound() &VSlimLiveSocket {
 }
 
 @[php_method]
-pub fn (mut state VSlimLiveComponentState) set(field string, value vphp.RequestBorrowedZBox) &VSlimLiveComponentState {
+pub fn (mut state VSlimLiveComponentState) set(field string, value vphp.PhpValue) &VSlimLiveComponentState {
 	if isnil(state.socket_ref) {
 		return &state
 	}
@@ -1167,7 +1166,7 @@ fn new_live_socket_bound_result() &VSlimLiveSocket {
 	return socket
 }
 
-fn live_value_string(value vphp.ZVal) string {
+fn live_value_string(value vphp.PhpValue) string {
 	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return ''
 	}
@@ -1175,7 +1174,7 @@ fn live_value_string(value vphp.ZVal) string {
 		return value.to_string()
 	}
 	if value.is_bool() {
-		return if value.get_bool() { '1' } else { '0' }
+		return if value.to_bool() { '1' } else { '0' }
 	}
 	if value.is_long() {
 		return value.to_i64().str()
@@ -1186,27 +1185,28 @@ fn live_value_string(value vphp.ZVal) string {
 	return value.to_string()
 }
 
-fn live_form_value_string(value vphp.ZVal) string {
+fn live_form_value_string(value vphp.PhpValue) string {
 	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return ''
 	}
 	if !value.is_array() {
 		return live_value_string(value)
 	}
+	arr := value.as_array() or { return '' }
 	mut parts := []string{}
-	for idx := 0; idx < value.array_count(); idx++ {
-		parts << live_value_string(value.array_get(idx))
+	for item in arr.value_items() {
+		parts << live_value_string(item)
 	}
 	return parts.join(', ')
 }
 
-fn live_field_names(value vphp.ZVal) []string {
-	if !value.is_valid() || value.is_null() || value.is_undef() || !value.is_array() {
+fn live_field_names(value vphp.PhpArray) []string {
+	if !value.is_valid() {
 		return []string{}
 	}
 	mut out := []string{}
-	for idx := 0; idx < value.array_count(); idx++ {
-		name := value.array_get(idx).to_string().trim_space()
+	for item in value.value_items() {
+		name := item.to_string().trim_space()
 		if name != '' {
 			out << name
 		}
@@ -1228,8 +1228,7 @@ fn live_error_key(field string) string {
 	return if name == '' { '' } else { 'error_${name}' }
 }
 
-fn live_json_payload(value vphp.ZVal) string {
-	payload := vphp.PhpValue.from_zval(value)
+fn live_json_payload(payload vphp.PhpValue) string {
 	if !payload.is_valid() || payload.is_null() || payload.is_undef() {
 		return '{}'
 	}
@@ -1238,11 +1237,11 @@ fn live_json_payload(value vphp.ZVal) string {
 		if raw == '' {
 			return '{}'
 		}
-		decoded := decode_live_message(raw) or { vphp.RequestOwnedZBox.new_null().to_zval() }
+		decoded := decode_live_message(raw) or { vphp.PhpValue.null() }
 		if decoded.is_valid() && !decoded.is_null() && !decoded.is_undef() {
 			return raw
 		}
-		mut out := new_array()
+		mut out := vphp.PhpArray.new()
 		out.string('value', raw)
 		return out.to_json_with_flags(256)
 	}
@@ -1250,7 +1249,7 @@ fn live_json_payload(value vphp.ZVal) string {
 		|| payload.is_double() {
 		return payload.to_json_with_flags(256)
 	}
-	mut out := new_array()
+	mut out := vphp.PhpArray.new()
 	out.string('value', payload.to_string())
 	return out.to_json_with_flags(256)
 }

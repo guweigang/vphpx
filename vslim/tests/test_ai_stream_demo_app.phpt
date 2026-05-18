@@ -19,7 +19,7 @@ $text = $app([
     'path' => '/ai/stream?prompt=demo',
     'query' => ['prompt' => 'demo'],
 ]);
-echo ($text instanceof \VPhp\VHttpd\PhpWorker\StreamResponse ? "text_stream\n" : "text_not_stream\n");
+echo ($text instanceof \VHttpd\PhpWorker\StreamResponse ? "text_stream\n" : "text_not_stream\n");
 echo $text->streamType . "\n";
 echo implode('', iterator_to_array($text->chunks, false));
 
@@ -28,7 +28,7 @@ $sse = $app([
     'path' => '/ai/sse?prompt=demo',
     'query' => ['prompt' => 'demo'],
 ]);
-echo ($sse instanceof \VPhp\VHttpd\PhpWorker\StreamResponse ? "sse_stream\n" : "sse_not_stream\n");
+echo ($sse instanceof \VHttpd\PhpWorker\StreamResponse ? "sse_stream\n" : "sse_not_stream\n");
 echo $sse->streamType . "\n";
 $events = iterator_to_array($sse->chunks, false);
 echo ($events[0]['event'] ?? '') . '|' . ($events[0]['data'] ?? '') . "\n";

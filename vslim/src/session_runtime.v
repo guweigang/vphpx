@@ -12,22 +12,6 @@ fn effective_auth_middleware_app(app_ref &VSlimApp) &VSlimApp {
 	return app_ref
 }
 
-fn auth_request_with_attribute(request vphp.RequestBorrowedZBox, name string, value vphp.ZVal) vphp.RequestOwnedZBox {
-	raw_request := request.to_zval()
-	if raw_request.is_valid() && raw_request.is_object()
-		&& raw_request.method_exists('withAttribute') {
-		mut name_arg := vphp.PhpString.of(name)
-		defer {
-			name_arg.release()
-		}
-		value_arg := vphp.PhpValue.from_zval(value)
-		mut out := vphp.PhpObject.borrowed(raw_request).method_request_owned('withAttribute',
-			name_arg, value_arg)
-		return out
-	}
-	return request.clone_request_owned()
-}
-
 fn auth_unauthorized_psr_response(app &VSlimApp, redirect_path string) &VSlimPsr7Response {
 	if redirect_path.trim_space() != '' {
 		mut redirect := VSlimResponse{
@@ -65,8 +49,9 @@ fn session_cookie_header_value(session &VSlimSessionStore) string {
 			session.same_site_value())
 	}
 	return build_set_cookie_header(session.cookie_name_value(), session_encode_values(session.values,
-		session.secret_value()), session.path_value(), session.domain_value(), session.ttl_seconds_value(),
-		session.secure_value(), session.http_only_value(), session.same_site_value())
+		session.secret_value()), session.path_value(), session.domain_value(),
+		session.ttl_seconds_value(), session.secure_value(), session.http_only_value(),
+		session.same_site_value())
 }
 
 fn session_commit_psr_response(mut session VSlimSessionStore, response &VSlimPsr7Response) &VSlimPsr7Response {
@@ -82,12 +67,12 @@ fn session_commit_psr_response(mut session VSlimSessionStore, response &VSlimPsr
 		response_body_or_empty(response), response.status, response.reason_phrase)
 }
 
-fn session_new_string_map_zval(values map[string]string) vphp.ZVal {
-	mut out := new_array()
+fn session_new_string_map(values map[string]string) vphp.PhpArray {
+	mut out := vphp.PhpArray.new()
 	for key, value in values {
 		out.string(key, value)
 	}
-	return out.take_zval()
+	return out
 }
 
 fn session_base64url_encode(raw string) string {
@@ -115,14 +100,14 @@ fn session_base64url_decode(raw string) !string {
 		normalized_arg.release()
 		strict_arg.release()
 	}
-	mut decoded := vphp.PhpFunction.named('base64_decode').request_owned(normalized_arg, strict_arg)
+	mut decoded := vphp.PhpFunction.named('base64_decode').invoke(normalized_arg, strict_arg)
 	defer {
 		decoded.release()
 	}
 	if !decoded.is_valid() || decoded.is_null() || decoded.is_undef() {
 		return error('invalid base64 payload')
 	}
-	if decoded.to_zval().is_bool() && !decoded.to_bool() {
+	if decoded.is_bool() && !decoded.to_bool() {
 		return error('invalid base64 payload')
 	}
 	return decoded.to_string()
@@ -151,9 +136,9 @@ fn session_secure_equals(left string, right string) bool {
 }
 
 fn session_encode_values(values map[string]string, secret string) string {
-	mut payload_z := session_new_string_map_zval(values)
-	payload_json := vphp.PhpJson.encode(payload_z)
-	payload_z.release()
+	mut payload := session_new_string_map(values)
+	payload_json := payload.to_json()
+	payload.release()
 	payload_b64 := session_base64url_encode(payload_json)
 	if secret.trim_space() == '' {
 		return payload_b64
@@ -192,80 +177,70 @@ fn session_decode_values(raw string, secret string) map[string]string {
 	return decoded.to_string_map()
 }
 
-fn session_request_cookie(request vphp.RequestBorrowedZBox, cookie_name string) string {
-	raw_request := request.to_zval()
-	if !raw_request.is_valid() {
+fn session_request_cookie(request vphp.PhpObject, cookie_name string) string {
+	if !request.is_valid() {
 		return ''
 	}
-	if raw_request.is_object() {
-		if raw_request.method_exists('cookie') {
-			mut cookie_name_arg := vphp.PhpString.of(cookie_name)
-			defer {
-				cookie_name_arg.release()
-			}
-			mut out := vphp.PhpObject.borrowed(raw_request).method_request_owned('cookie', cookie_name_arg)
-			defer {
-				out.release()
-			}
-			return out.to_zval().to_string()
+	if request.method_exists('cookie') {
+		mut cookie_name_arg := vphp.PhpString.of(cookie_name)
+		defer {
+			cookie_name_arg.release()
 		}
-		if raw_request.method_exists('getCookieParams') {
-			mut out := vphp.PhpObject.borrowed(raw_request).method_request_owned('getCookieParams')
-			defer {
-				out.release()
-			}
-			return out.to_zval().to_string_map()[cookie_name] or { '' }
+		mut out := request.call_method('cookie', cookie_name_arg)
+		defer {
+			out.release()
 		}
-		if raw_request.method_exists('cookies') {
-			mut out := vphp.PhpObject.borrowed(raw_request).method_request_owned('cookies')
-			defer {
-				out.release()
-			}
-			return out.to_zval().to_string_map()[cookie_name] or { '' }
-		}
+		return out.to_string()
 	}
-	if raw_request.is_array() {
-		cookies_z := raw_request.get('cookies') or { return '' }
-		if cookies_z.is_valid() && cookies_z.is_array() {
-			return cookies_z.to_string_map()[cookie_name] or { '' }
+	if request.method_exists('getCookieParams') {
+		mut out := request.call_method('getCookieParams')
+		defer {
+			out.release()
 		}
+		return out.to_string_map()[cookie_name] or { '' }
+	}
+	if request.method_exists('cookies') {
+		mut out := request.call_method('cookies')
+		defer {
+			out.release()
+		}
+		return out.to_string_map()[cookie_name] or { '' }
 	}
 	return ''
 }
 
-fn session_commit_cookie(mut session VSlimSessionStore, response vphp.RequestBorrowedZBox) bool {
-	raw_response := response.to_zval()
-	if !raw_response.is_valid() || !raw_response.is_object() {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'session response must be an object',
-			0)
+fn session_commit_cookie(mut session VSlimSessionStore, response vphp.PhpObject) bool {
+	if !response.is_valid() {
+		vphp.PhpException.raise_class('InvalidArgumentException',
+			'session response must be an object', 0)
 		return false
 	}
 	if session.destroyed {
-		if raw_response.method_exists('deleteCookie') {
+		if response.method_exists('deleteCookie') {
 			mut cookie_name_arg := vphp.PhpString.of(session.cookie_name_value())
 			defer {
 				cookie_name_arg.release()
 			}
-			vphp.PhpObject.borrowed(raw_response).with_method_result[vphp.PhpValue, bool]('deleteCookie',
-				fn (_ vphp.PhpValue) bool {
+			response.with_method_result[vphp.PhpValue, bool]('deleteCookie', fn (_ vphp.PhpValue) bool {
 				return true
 			}, cookie_name_arg) or { return false }
 			session.dirty = false
 			return true
 		}
-		vphp.PhpException.raise_class('RuntimeException', 'response does not support deleteCookie()',
-			0)
+		vphp.PhpException.raise_class('RuntimeException',
+			'response does not support deleteCookie()', 0)
 		return false
 	}
 	if !session.dirty {
 		return true
 	}
-	if raw_response.method_exists('setCookieFull') {
+	if response.method_exists('setCookieFull') {
 		mut cookie_name_arg := vphp.PhpString.of(session.cookie_name_value())
 		defer {
 			cookie_name_arg.release()
 		}
-		mut encoded_arg := vphp.PhpString.of(session_encode_values(session.values, session.secret_value()))
+		mut encoded_arg := vphp.PhpString.of(session_encode_values(session.values,
+			session.secret_value()))
 		defer {
 			encoded_arg.release()
 		}
@@ -293,8 +268,7 @@ fn session_commit_cookie(mut session VSlimSessionStore, response vphp.RequestBor
 		defer {
 			same_site_arg.release()
 		}
-		vphp.PhpObject.borrowed(raw_response).with_method_result[vphp.PhpValue, bool]('setCookieFull',
-			fn (_ vphp.PhpValue) bool {
+		response.with_method_result[vphp.PhpValue, bool]('setCookieFull', fn (_ vphp.PhpValue) bool {
 			return true
 		}, cookie_name_arg, encoded_arg, path_arg, domain_arg, ttl_arg, secure_arg, http_only_arg,
 			same_site_arg) or { return false }
@@ -432,9 +406,9 @@ pub fn (session &VSlimSessionStore) same_site_value() string {
 }
 
 @[php_method]
-pub fn (mut session VSlimSessionStore) load(request vphp.RequestBorrowedZBox) &VSlimSessionStore {
-	session.values = session_decode_values(session_request_cookie(request, session.cookie_name_value()),
-		session.secret_value())
+pub fn (mut session VSlimSessionStore) load(request vphp.PhpObject) &VSlimSessionStore {
+	session.values = session_decode_values(session_request_cookie(request,
+		session.cookie_name_value()), session.secret_value())
 	session.loaded = true
 	session.destroyed = false
 	return &session
@@ -545,7 +519,7 @@ pub fn (mut session VSlimSessionStore) clear() &VSlimSessionStore {
 }
 
 @[php_method]
-pub fn (mut session VSlimSessionStore) destroy(response vphp.RequestBorrowedZBox) bool {
+pub fn (mut session VSlimSessionStore) destroy(response vphp.PhpObject) bool {
 	session.values = map[string]string{}
 	session.dirty = false
 	session.destroyed = true
@@ -553,7 +527,7 @@ pub fn (mut session VSlimSessionStore) destroy(response vphp.RequestBorrowedZBox
 }
 
 @[php_method]
-pub fn (mut session VSlimSessionStore) commit(response vphp.RequestBorrowedZBox) bool {
+pub fn (mut session VSlimSessionStore) commit(response vphp.PhpObject) bool {
 	return session_commit_cookie(mut session, response)
 }
 
@@ -651,18 +625,20 @@ pub fn (mut middleware VSlimSessionStartMiddleware) set_app(app &VSlimApp) &VSli
 @[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method]
-pub fn (middleware &VSlimSessionStartMiddleware) process(request vphp.RequestBorrowedZBox, handler vphp.RequestBorrowedZBox) &VSlimPsr7Response {
+pub fn (middleware &VSlimSessionStartMiddleware) process(request vphp.PhpObject, handler vphp.PhpObject) &VSlimPsr7Response {
 	app := effective_auth_middleware_app(middleware.app_ref)
 	if app == unsafe { nil } {
 		return new_psr7_text_response(500, 'Session middleware app is not configured')
 	}
+	if !request.is_valid() {
+		return new_psr7_text_response(500, 'Session middleware request is not an object')
+	}
 	mut session := app.session(request)
-	mut result := vphp.PhpObject.borrowed_zbox(handler).method_request_owned('handle',
-		vphp.PhpValue.from_request_borrowed_zbox(request))
+	mut result := handler.call_method('handle', request)
 	defer {
 		result.release()
 	}
-	response := normalize_to_psr7_response(result.to_zval())
+	response := normalize_to_psr7_response_value(result)
 	return session_commit_psr_response(mut session, response)
 }
 
@@ -694,10 +670,13 @@ pub fn (middleware &VSlimAuthRequireMiddleware) redirect_path_value() string {
 @[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method]
-pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.RequestBorrowedZBox, handler vphp.RequestBorrowedZBox) &VSlimPsr7Response {
+pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.PhpObject, handler vphp.PhpObject) &VSlimPsr7Response {
 	app := effective_auth_middleware_app(middleware.app_ref)
 	if app == unsafe { nil } {
 		return new_psr7_text_response(500, 'Auth middleware app is not configured')
+	}
+	if !request.is_valid() {
+		return new_psr7_text_response(500, 'Auth middleware request is not an object')
 	}
 	mut guard := app.auth(request)
 	if !guard.check() {
@@ -713,28 +692,26 @@ pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.RequestBorr
 	defer {
 		user_id_arg.release()
 	}
-	mut next_request := auth_request_with_attribute(request, 'auth.user_id', user_id_arg.to_zval())
+	mut next_request := request.with_attribute('auth.user_id', user_id_arg)
 	defer {
 		next_request.release()
 	}
-	if app.auth_user_resolver.is_valid() && app.auth_user_resolver.is_callable() {
+	if app.has_auth_user_provider() {
 		mut user := app.auth_user(request)
 		defer {
 			user.release()
 		}
-		if user.is_valid() && !user.to_zval().is_null() && !user.to_zval().is_undef() {
-			mut enriched := auth_request_with_attribute(vphp.RequestBorrowedZBox.of(next_request.to_zval()),
-				'auth.user', user.to_zval())
+		if user.is_valid() && !user.is_null() && !user.is_undef() {
+			mut enriched := next_request.with_attribute('auth.user', user)
 			next_request.release()
 			next_request = enriched
 		}
 	}
-	mut result := vphp.PhpObject.borrowed_zbox(handler).method_request_owned('handle',
-		vphp.PhpValue.from_request_borrowed_zbox(next_request.borrowed()))
+	mut result := handler.call_method('handle', next_request)
 	defer {
 		result.release()
 	}
-	return normalize_to_psr7_response(result.to_zval())
+	return normalize_to_psr7_response_value(result)
 }
 
 @[php_borrowed_return; php_method]
@@ -765,10 +742,13 @@ pub fn (middleware &VSlimAuthGuestMiddleware) redirect_path_value() string {
 @[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method]
-pub fn (middleware &VSlimAuthGuestMiddleware) process(request vphp.RequestBorrowedZBox, handler vphp.RequestBorrowedZBox) &VSlimPsr7Response {
+pub fn (middleware &VSlimAuthGuestMiddleware) process(request vphp.PhpObject, handler vphp.PhpObject) &VSlimPsr7Response {
 	app := effective_auth_middleware_app(middleware.app_ref)
 	if app == unsafe { nil } {
 		return new_psr7_text_response(500, 'Guest middleware app is not configured')
+	}
+	if !request.is_valid() {
+		return new_psr7_text_response(500, 'Guest middleware request is not an object')
 	}
 	mut guard := app.auth(request)
 	if !guard.guest() {
@@ -779,12 +759,11 @@ pub fn (middleware &VSlimAuthGuestMiddleware) process(request vphp.RequestBorrow
 		}
 		return auth_guest_redirect_psr_response(redirect_path)
 	}
-	mut result := vphp.PhpObject.borrowed_zbox(handler).method_request_owned('handle',
-		vphp.PhpValue.from_request_borrowed_zbox(request))
+	mut result := handler.call_method('handle', request)
 	defer {
 		result.release()
 	}
-	return normalize_to_psr7_response(result.to_zval())
+	return normalize_to_psr7_response_value(result)
 }
 
 @[php_borrowed_return; php_method]
@@ -846,7 +825,7 @@ pub fn (middleware &VSlimAuthRequireAbilityMiddleware) message() string {
 @[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method]
-pub fn (middleware &VSlimAuthRequireAbilityMiddleware) process(request vphp.RequestBorrowedZBox, handler vphp.RequestBorrowedZBox) &VSlimPsr7Response {
+pub fn (middleware &VSlimAuthRequireAbilityMiddleware) process(request vphp.PhpObject, handler vphp.PhpObject) &VSlimPsr7Response {
 	app := effective_auth_middleware_app(middleware.app_ref)
 	if app == unsafe { nil } {
 		return new_psr7_text_response(500, 'Ability middleware app is not configured')
@@ -854,14 +833,16 @@ pub fn (middleware &VSlimAuthRequireAbilityMiddleware) process(request vphp.Requ
 	if middleware.ability() == '' {
 		return new_psr7_text_response(500, 'Ability middleware ability is not configured')
 	}
+	if !request.is_valid() {
+		return new_psr7_text_response(500, 'Ability middleware request is not an object')
+	}
 	if !app.can(middleware.ability(), request) {
 		return default_error_response_psr(app, middleware.status(), middleware.message(),
 			'forbidden')
 	}
-	mut result := vphp.PhpObject.borrowed_zbox(handler).method_request_owned('handle',
-		vphp.PhpValue.from_request_borrowed_zbox(request))
+	mut result := handler.call_method('handle', request)
 	defer {
 		result.release()
 	}
-	return normalize_to_psr7_response(result.to_zval())
+	return normalize_to_psr7_response_value(result)
 }

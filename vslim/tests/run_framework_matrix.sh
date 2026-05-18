@@ -9,7 +9,7 @@ HOST="${VHTTPD_HOST:-127.0.0.1}"
 START_PORT="${FRAMEWORK_MATRIX_START_PORT:-19910}"
 HTTPD_BIN="${ROOT}/../../vhttpd/vhttpd"
 EXT_SO="${ROOT}/vslim.so"
-WORKER_ENTRY="${ROOT}/../../vhttpd/php/package/bin/php-worker"
+WORKER_ENTRY="${ROOT}/../../vhttpd/php/package/bin/vphp-worker"
 
 if ! command -v php >/dev/null 2>&1; then
   echo "php not found"

@@ -14,18 +14,18 @@ target = "stdout"
 TOML);
 
 $cfg = new VSlim\Config();
-$cfg->load_text(<<<TOML
+$cfg->loadText(<<<TOML
 [app]
 name = "base"
 debug = false
 TOML);
 
-$cfg->merge_text(<<<TOML
+$cfg->mergeText(<<<TOML
 [app]
 debug = true
 TOML);
 
-$cfg->merge_file($dir . '/logging.toml');
+$cfg->mergeFile($dir . '/logging.toml');
 
 echo $cfg->getString('app.name', 'x') . PHP_EOL;
 echo ($cfg->getBool('app.debug', false) ? 'debug-on' : 'debug-off') . PHP_EOL;

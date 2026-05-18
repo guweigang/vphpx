@@ -4,15 +4,13 @@ VSlim Ollama upstream plan builders expose generic phase-3 transport metadata
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 3) . '/vhttpd/php/package/src/VHttpd/Upstream/Plan.php';
-require_once dirname(__DIR__, 3) . '/vhttpd/php/package/src/VSlim/Stream/OllamaClient.php';
-require_once dirname(__DIR__, 3) . '/vhttpd/php/package/src/VSlim/Stream/Factory.php';
+require_once __DIR__ . '/php_worker_package_bootstrap.php';
 
 putenv('OLLAMA_CHAT_URL=http://127.0.0.1:11434/api/chat');
 putenv('OLLAMA_MODEL=qwen2.5:7b-instruct');
 putenv('OLLAMA_API_KEY=test-key');
 
-$client = VPhp\VSlim\Stream\OllamaClient::fromEnv();
+$client = VSlim\Stream\OllamaClient::fromEnv();
 $payload = $client->payload([
     'query' => [
         'prompt' => 'hello',

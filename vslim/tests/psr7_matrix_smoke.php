@@ -16,7 +16,7 @@ if ($case === '') {
 
 require_once $autoload;
 
-$req = VPhp\VHttpd\Psr7Adapter::buildServerRequest([
+$req = VHttpd\Psr7Adapter::buildServerRequest([
     'method' => 'PATCH',
     'path' => '/matrix/check?trace_id=' . $case,
     'body' => '{"ok":true}',

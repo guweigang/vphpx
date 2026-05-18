@@ -115,7 +115,7 @@ namespace {
         ]);
     });
 
-    $raw = $app->dispatch_envelope_worker([
+    $raw = $app->dispatchEnvelopeWorker([
         'method' => 'GET',
         'path' => '/stream/codex?trace_id=outer-worker',
         'query' => ['trace_id' => 'outer-worker'],

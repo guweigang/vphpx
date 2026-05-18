@@ -17,11 +17,11 @@ foreach (['VSLIM_DB_HOST', 'VSLIM_DB_PORT', 'VSLIM_DB_USER', 'VSLIM_DB_NAME'] as
     }
 }
 $cfg = (new VSlim\Database\Config())
-    ->set_driver('mysql')
+    ->setDriver('mysql')
     ->setHost((string) getenv('VSLIM_DB_HOST'))
     ->setPort((int) getenv('VSLIM_DB_PORT'))
-    ->set_username((string) getenv('VSLIM_DB_USER'))
-    ->set_password((string) (getenv('VSLIM_DB_PASSWORD') ?: ''))
+    ->setUsername((string) getenv('VSLIM_DB_USER'))
+    ->setPassword((string) (getenv('VSLIM_DB_PASSWORD') ?: ''))
     ->setDatabase((string) getenv('VSLIM_DB_NAME'));
 $db = (new VSlim\Database\Manager())->setConfig($cfg);
 try {
@@ -39,11 +39,11 @@ try {
 VSlim\EnvLoader::bootstrap('/Users/guweigang/Source/vphpx/knowledge-studio');
 
 $cfg = (new VSlim\Database\Config())
-    ->set_driver('mysql')
+    ->setDriver('mysql')
     ->setHost((string) getenv('VSLIM_DB_HOST'))
     ->setPort((int) getenv('VSLIM_DB_PORT'))
-    ->set_username((string) getenv('VSLIM_DB_USER'))
-    ->set_password((string) (getenv('VSLIM_DB_PASSWORD') ?: ''))
+    ->setUsername((string) getenv('VSLIM_DB_USER'))
+    ->setPassword((string) (getenv('VSLIM_DB_PASSWORD') ?: ''))
     ->setDatabase((string) getenv('VSLIM_DB_NAME'));
 
 $db = (new VSlim\Database\Manager())->setConfig($cfg);

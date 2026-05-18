@@ -12,7 +12,7 @@ mkdir($root . '/database/seeds', 0777, true);
 file_put_contents($configDir . '/app.toml', "[app]\nname = 'MigratorApp'\n");
 
 $app = VSlim\App::demo();
-$app->load_config($configDir);
+$app->loadConfig($configDir);
 $migrator = $app->migrator();
 
 echo ($migrator->manager() instanceof VSlim\Database\Manager ? 'manager' : 'no-manager') . PHP_EOL;

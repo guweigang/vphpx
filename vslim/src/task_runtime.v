@@ -2,50 +2,54 @@ module main
 
 import vphp
 
-fn task_params_to_persistent(params []vphp.ZVal) []vphp.PersistentOwnedZBox {
-	mut out := []vphp.PersistentOwnedZBox{cap: params.len}
-	for param in params {
-		out << vphp.PersistentOwnedZBox.from_mixed_zval(param)
+fn task_params_to_persistent(params vphp.PhpArray) []vphp.PhpValue {
+	mut out := []vphp.PhpValue{cap: params.count()}
+	for param in params.value_items() {
+		out << param.retain()
 	}
 	return out
 }
 
-fn task_cache_result(mut handle VSlimTaskHandle, result vphp.RequestOwnedZBox) {
+fn task_cache_value(mut handle VSlimTaskHandle, result vphp.PhpValue) {
 	if handle.result_box.is_valid() {
 		mut old := handle.result_box
 		old.release()
 	}
 	handle.result_box = if result.is_valid() {
-		vphp.PersistentOwnedZBox.from_mixed_zval(result.to_zval())
+		result.retain()
 	} else {
-		vphp.PersistentOwnedZBox.new_null()
+		vphp.PhpValue.null().retain()
 	}
 	handle.resolved = true
 }
 
-fn task_wait_callable(mut handle VSlimTaskHandle) vphp.RequestOwnedZBox {
-	mut frame := vphp.PhpScope.frame()
-	defer {
-		frame.release()
+fn task_arg_inputs(params []vphp.PhpValue) []vphp.PhpArgInput {
+	mut out := []vphp.PhpArgInput{cap: params.len}
+	for param in params {
+		out << param
 	}
-	args := frame.args_from_persistent_owned(handle.params)
-	mut result := handle.callable.fn_request_owned(...args)
-	defer {
-		result.release()
-	}
-	task_cache_result(mut handle, result)
-	return handle.result_box.clone_request_owned()
+	return out
 }
 
-fn task_wait_native(mut handle VSlimTaskHandle) vphp.RequestOwnedZBox {
-	mut result := handle.async_ref.wait_box()
+fn task_wait_callable(mut handle VSlimTaskHandle) vphp.PhpValue {
+	args := task_arg_inputs(handle.params)
+	mut result := handle.callable.invoke(...args)
 	defer {
 		result.release()
 	}
-	task_cache_result(mut handle, result)
+	task_cache_value(mut handle, result)
+	return handle.result_box.owned()
+}
+
+fn task_wait_native(mut handle VSlimTaskHandle) vphp.PhpValue {
+	mut result := handle.async_ref.wait_value()
+	defer {
+		result.release()
+	}
+	task_cache_value(mut handle, result)
 	handle.async_ref.release()
 	handle.async_ref = vphp.PhpTaskHandle.null()
-	return handle.result_box.clone_request_owned()
+	return handle.result_box.owned()
 }
 
 @[php_method]
@@ -54,10 +58,10 @@ pub fn VSlimTask.list() []string {
 }
 
 @[php_method]
-pub fn VSlimTask.spawn(target vphp.RequestBorrowedZBox, params []vphp.ZVal) &VSlimTaskHandle {
+pub fn VSlimTask.spawn(target vphp.PhpValue, params vphp.PhpArray) &VSlimTaskHandle {
 	if !target.is_valid() || target.is_null() || target.is_undef() {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'task target must be a callable or registered task name',
-			0)
+		vphp.PhpException.raise_class('InvalidArgumentException',
+			'task target must be a callable or registered task name', 0)
 		return &VSlimTaskHandle{}
 	}
 
@@ -66,7 +70,7 @@ pub fn VSlimTask.spawn(target vphp.RequestBorrowedZBox, params []vphp.ZVal) &VSl
 		task_name := target.to_string()
 		task := vphp.PhpTask.named(task_name)
 		if task.exists() || !target.is_callable() {
-			async_ref := task.spawn(params) or {
+			async_ref := task.spawn(params.items()) or {
 				vphp.PhpException.raise(err.msg(), 0)
 				return &VSlimTaskHandle{}
 			}
@@ -75,25 +79,25 @@ pub fn VSlimTask.spawn(target vphp.RequestBorrowedZBox, params []vphp.ZVal) &VSl
 		}
 	}
 
-	if target.is_callable() {
+	if callable := target.as_callable() {
 		// Request-scoped callable tasks keep a retained callable + detached
 		// parameter copies on the handle. The handle itself still only lives for
 		// the current request; "persistent" here means explicit ownership by the
 		// handle, not a cross-request execution contract.
-		handle.callable = vphp.PersistentOwnedZBox.from_callable_zval(target.to_zval())
+		handle.callable = callable.retain()
 		handle.params = task_params_to_persistent(params)
 		return handle
 	}
 
-	vphp.PhpException.raise_class('InvalidArgumentException', 'task target must be a callable or registered task name',
-		0)
+	vphp.PhpException.raise_class('InvalidArgumentException',
+		'task target must be a callable or registered task name', 0)
 	return &VSlimTaskHandle{}
 }
 
 @[php_method]
-pub fn (mut handle VSlimTaskHandle) wait() vphp.RequestOwnedZBox {
+pub fn (mut handle VSlimTaskHandle) wait() vphp.PhpValue {
 	if handle.resolved {
-		return handle.result_box.clone_request_owned()
+		return handle.result_box.to_request_owned()
 	}
 	if handle.async_ref.is_valid() {
 		return task_wait_native(mut handle)
@@ -101,7 +105,7 @@ pub fn (mut handle VSlimTaskHandle) wait() vphp.RequestOwnedZBox {
 	if handle.callable.is_valid() && handle.callable.is_callable() {
 		return task_wait_callable(mut handle)
 	}
-	return vphp.RequestOwnedZBox.new_null()
+	return vphp.PhpValue.null()
 }
 
 pub fn (mut handle VSlimTaskHandle) cleanup() {

@@ -36,10 +36,10 @@ $api->get('/users/:id', function (ServerRequestInterface $req) {
 - `before()`
 - `after()`
 - `get/post/put/patch/delete/head/options/any/map`
-- `resource/api_resource`
-- `singleton/api_singleton`
-- `resource_opts/api_resource_opts`
-- `singleton_opts/api_singleton_opts`
+- `resource/apiResource`
+- `singleton/apiSingleton`
+- `resourceOpts/apiResourceOpts`
+- `singletonOpts/apiSingletonOpts`
 - `get_named/.../map_named`
 
 ## 嵌套 group

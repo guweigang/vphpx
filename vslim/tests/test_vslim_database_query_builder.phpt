@@ -5,7 +5,7 @@ VSlim database query builder generates SQL and params
 --FILE--
 <?php
 $db = (new VSlim\Database\Manager())->setConfig(
-    (new VSlim\Database\Config())->set_driver('mysql')
+    (new VSlim\Database\Config())->setDriver('mysql')
 );
 
 $select = $db->table('users')
@@ -37,7 +37,7 @@ echo $delete->toSql() . PHP_EOL;
 echo json_encode($delete->params(), JSON_UNESCAPED_SLASHES) . PHP_EOL;
 
 $bad = (new VSlim\Database\Manager())
-    ->setConfig((new VSlim\Database\Config())->set_driver('sqlite'));
+    ->setConfig((new VSlim\Database\Config())->setDriver('sqlite'));
 try {
     $bad->table('users')->where('id', 1)->first();
     echo "no-exception\n";

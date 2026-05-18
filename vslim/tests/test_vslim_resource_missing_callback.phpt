@@ -1,5 +1,5 @@
 --TEST--
-VSlim resource_opts missing callback handles null action results
+VSlim resourceOpts missing callback handles null action results
 --SKIPIF--
 <?php if (!extension_loaded("vslim")) print "skip"; ?>
 --FILE--

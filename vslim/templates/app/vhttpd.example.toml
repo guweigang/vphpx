@@ -1,7 +1,7 @@
 [paths]
 root = "__PROJECT_ROOT__"
 php_app = "public/worker.php"
-php_worker = "__VHTTPD_ROOT__/php/package/bin/php-worker"
+php_worker = "__VHTTPD_ROOT__/php/package/bin/vphp-worker"
 vslim_ext = "vslim.so"
 
 [files]

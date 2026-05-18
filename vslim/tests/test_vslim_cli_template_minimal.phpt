@@ -74,7 +74,7 @@ echo (str_contains($help, 'Usage:') ? 'usage_yes' : 'usage_no'), '|',
     (str_contains($help, 'Examples:') ? 'examples_yes' : 'examples_no'), PHP_EOL;
 ?>
 --EXPECT--
-about,app-doctor,app:doctor,config-check,config:check,db-migrate,db-rollback,db-seed,db:migrate,db:rollback,db:seed,make-command,make-controller,make-middleware,make-migration,make-provider,make-seed,make-test,make:command,make:controller,make:middleware,make:migration,make:provider,make:seed,make:test,route-list,route:list,template:about
+about,app-doctor,app:doctor,config-check,config:check,db-migrate,db-rollback,db-seed,db:migrate,db:rollback,db:seed,generate-key,key:generate,make-command,make-controller,make-middleware,make-migration,make-provider,make-seed,make-test,make:command,make:controller,make:middleware,make:migration,make:provider,make:seed,make:test,route-list,route:list,template:about
 doctor_yes
 about_yes
 config_yes

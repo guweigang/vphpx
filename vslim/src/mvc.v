@@ -9,7 +9,7 @@ mut:
 	base_path     string @[php_prop: basePath]
 	assets_prefix string @[php_prop: assetsPrefix]
 	cache_enabled bool   @[php_prop: cacheEnabled]
-	helpers       map[string]vphp.PersistentOwnedZBox @[php_ignore]
+	helpers       map[string]vphp.PhpCallable @[php_ignore]
 }
 
 struct VSlimViewHost {

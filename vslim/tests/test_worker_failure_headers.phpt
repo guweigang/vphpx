@@ -19,7 +19,7 @@ if (!is_file($autoload)) { echo "autoload_missing\n"; exit; }
 require_once $autoload;
 
 putenv('VHTTPD_APP=' . __DIR__ . '/fixtures/throwing_app_fixture.php');
-$worker = new \VPhp\VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
+$worker = new \VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
 $panic = $worker->dispatchRequest([
     'id' => 'req-panic',
     'method' => 'GET',
@@ -40,7 +40,7 @@ $panic = $worker->dispatchRequest([
 echo $panic['status'] . '|' . $panic['headers']['x-worker-error-class'] . PHP_EOL;
 
 putenv('VHTTPD_APP=' . __DIR__ . '/fixtures/invalid_app_fixture.php');
-$worker2 = new \VPhp\VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
+$worker2 = new \VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
 $bad = $worker2->dispatchRequest([
     'id' => 'req-contract',
     'method' => 'GET',

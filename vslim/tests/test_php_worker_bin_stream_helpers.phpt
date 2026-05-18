@@ -28,7 +28,7 @@ if (!is_file($autoload)) { echo "autoload_missing\n"; exit; }
 require_once $autoload;
 
 $root = dirname(__DIR__);
-$workerBin = $root . '/../../vhttpd/php/package/bin/php-worker';
+$workerBin = $root . '/../../vhttpd/php/package/bin/vphp-worker';
 $extSo = $root . '/vslim.so';
 $app = $root . '/tests/fixtures/worker_helper_stream_app_fixture.php';
 $sock = sys_get_temp_dir() . '/vslim_php_worker_bin_stream_' . getmypid() . '.sock';
@@ -51,7 +51,7 @@ $pid = isset($out[0]) ? (int) trim((string) $out[0]) : 0;
 $ready = false;
 $deadline = microtime(true) + 5.0;
 while (microtime(true) < $deadline) {
-    if (is_file($sock)) {
+    if (file_exists($sock)) {
         $ready = true;
         break;
     }
@@ -77,13 +77,13 @@ $connect = static function (string $sockPath) {
 };
 
 $readStreamFrames = static function ($conn, array $request): array {
-    \VPhp\VHttpd\PhpWorker\Client::writeFrame(
+    \VHttpd\PhpWorker\Client::writeFrame(
         $conn,
         (string) json_encode($request, JSON_UNESCAPED_UNICODE),
     );
     $frames = [];
     while (true) {
-        $raw = \VPhp\VHttpd\PhpWorker\Client::readFrame($conn);
+        $raw = \VHttpd\PhpWorker\Client::readFrame($conn);
         if (!is_string($raw) || $raw === '') {
             break;
         }

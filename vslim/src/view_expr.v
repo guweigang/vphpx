@@ -46,10 +46,10 @@ fn new_template_expr_map(path string) TemplateExprValue {
 	}
 }
 
-fn new_template_expr_object(value vphp.RequestOwnedZBox) TemplateExprValue {
+fn new_template_expr_object(value vphp.PhpValue) TemplateExprValue {
 	return TemplateExprValue{
 		kind:   .object
-		object: value.clone_request_owned()
+		object: value.owned()
 	}
 }
 
@@ -83,76 +83,75 @@ fn template_expr_value_as_list(value TemplateExprValue) []string {
 	return parse_for_items(value.scalar)
 }
 
-fn template_expr_value_to_zval(value TemplateExprValue) vphp.ZVal {
+fn template_expr_value_to_value(value TemplateExprValue) vphp.PhpValue {
 	if value.kind == .map {
-		return new_template_map_zval(value.map_path, map[string]string{}, map[string][]string{})
+		return new_template_map_value(value.map_path, map[string]string{}, map[string][]string{})
 	}
 	if value.kind == .list {
-		return new_template_list_zval(value.list)
+		return new_template_list_value(value.list)
 	}
 	if value.kind == .object {
-		mut out := value.object.clone_request_owned()
-		return out.take_zval()
+		return value.object.owned()
 	}
 	match value.explicit_type {
 		'string' {
-			return vphp.RequestOwnedZBox.new_string(value.scalar).to_zval()
+			mut out := vphp.PhpString.of(value.scalar)
+			return out.take_value()
 		}
 		'null' {
-			return vphp.RequestOwnedZBox.new_null().to_zval()
+			mut out := vphp.PhpNull.value()
+			return out.take_value()
 		}
 		'bool' {
-			return vphp.RequestOwnedZBox.new_bool(parse_template_boolish_value(value.scalar) or {
-				false
-			}).to_zval()
+			mut out := vphp.PhpBool.of(parse_template_boolish_value(value.scalar) or { false })
+			return out.take_value()
 		}
 		'int' {
-			return vphp.RequestOwnedZBox.new_int(value.scalar.trim_space().i64()).to_zval()
+			mut out := vphp.PhpInt.of(value.scalar.trim_space().i64())
+			return out.take_value()
 		}
 		'float' {
-			return vphp.RequestOwnedZBox.new_float(value.scalar.trim_space().f64()).to_zval()
+			mut out := vphp.PhpDouble.of(value.scalar.trim_space().f64())
+			return out.take_value()
 		}
 		else {
-			return infer_template_scalar_zval(value.scalar)
+			return infer_template_scalar_value(value.scalar)
 		}
 	}
 }
 
-fn template_expr_value_to_zval_with_context(value TemplateExprValue, scalars map[string]string, lists map[string][]string) vphp.ZVal {
+fn template_expr_value_to_value_with_context(value TemplateExprValue, scalars map[string]string, lists map[string][]string) vphp.PhpValue {
 	if value.kind == .map {
-		return new_template_map_zval(value.map_path, scalars, lists)
+		return new_template_map_value(value.map_path, scalars, lists)
 	}
-	return template_expr_value_to_zval(value)
+	return template_expr_value_to_value(value)
 }
 
-fn (view &VSlimView) eval_template_expression(raw string, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZBox, template_path string, line int, col int) TemplateExprValue {
+fn (view &VSlimView) eval_template_expression(raw string, scalars map[string]string, lists map[string][]string, objects map[string]vphp.PhpValue, template_path string, line int, col int) TemplateExprValue {
 	trimmed := raw.trim_space()
 	if trimmed == '' {
 		return new_template_expr_scalar('')
 	}
 	node := parse_template_expr_node(trimmed, line, col) or {
-		return new_template_expr_scalar(debug_template_error('expr.pipe', template_path,
-			raw, line, col))
+		return new_template_expr_scalar(debug_template_error('expr.pipe', template_path, raw, line, col))
 	}
-	return view.eval_template_expr_node(node, scalars, lists, objects, template_path,
-		line, col)
+	return view.eval_template_expr_node(node, scalars, lists, objects, template_path, line, col)
 }
 
-fn (view &VSlimView) eval_template_expr_node(node TemplateExprNode, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZBox, template_path string, line int, col int) TemplateExprValue {
+fn (view &VSlimView) eval_template_expr_node(node TemplateExprNode, scalars map[string]string, lists map[string][]string, objects map[string]vphp.PhpValue, template_path string, line int, col int) TemplateExprValue {
 	match node.kind {
 		.literal {
 			return new_template_expr_scalar_typed(node.value, node.explicit_type)
 		}
 		.path {
 			if template_has_list_key(node.name, lists) {
-				return new_template_expr_list(template_list_values(node.name, scalars,
-					lists))
+				return new_template_expr_list(template_list_values(node.name, scalars, lists))
 			}
 			if object := template_object_value(node.name, objects) {
 				return new_template_expr_object(object)
 			}
-			return new_template_expr_scalar(template_scalar_value_with_lists(node.name,
-				scalars, lists))
+			return new_template_expr_scalar(template_scalar_value_with_lists(node.name, scalars,
+				lists))
 		}
 		.cast {
 			if node.args.len == 0 {
@@ -181,16 +180,16 @@ fn (view &VSlimView) eval_template_expr_node(node TemplateExprNode, scalars map[
 					line, col)
 			}
 			raw := if node.raw != '' { node.raw } else { template_expr_node_string(node) }
-			return view.invoke_template_expr_method(node.name, args, template_path, raw,
-				node.line, node.col) or {
-				new_template_expr_scalar(debug_template_error('method.missing', template_path,
-					raw, node.line, node.col))
+			return view.invoke_template_expr_method(node.name, args, template_path, raw, node.line,
+				node.col) or {
+				new_template_expr_scalar(debug_template_error('method.missing', template_path, raw,
+					node.line, node.col))
 			}
 		}
 	}
 }
 
-fn (view &VSlimView) eval_template_expr_callable(name string, args []TemplateExprValue, scalars map[string]string, lists map[string][]string, objects map[string]vphp.RequestOwnedZBox, template_path string, line int, col int) TemplateExprValue {
+fn (view &VSlimView) eval_template_expr_callable(name string, args []TemplateExprValue, scalars map[string]string, lists map[string][]string, objects map[string]vphp.PhpValue, template_path string, line int, col int) TemplateExprValue {
 	key := name.trim_space().to_lower()
 	if key == '' {
 		return new_template_expr_scalar('')
@@ -276,8 +275,7 @@ fn (view &VSlimView) eval_template_expr_callable(name string, args []TemplateExp
 			} else {
 				found = template_expr_value_string(left).contains(template_expr_value_string(right))
 			}
-			return new_template_expr_scalar_typed(if found { 'true' } else { 'false' },
-				'bool')
+			return new_template_expr_scalar_typed(if found { 'true' } else { 'false' }, 'bool')
 		}
 		'in' {
 			if args.len < 2 {
@@ -292,8 +290,7 @@ fn (view &VSlimView) eval_template_expr_callable(name string, args []TemplateExp
 					break
 				}
 			}
-			return new_template_expr_scalar_typed(if found { 'true' } else { 'false' },
-				'bool')
+			return new_template_expr_scalar_typed(if found { 'true' } else { 'false' }, 'bool')
 		}
 		'reduce' {
 			if args.len == 0 {
@@ -325,13 +322,13 @@ fn (view &VSlimView) eval_template_expr_callable(name string, args []TemplateExp
 			return new_template_expr_scalar(template_expr_value_string(args[0]).to_lower())
 		}
 		else {
-			if method_value := view.invoke_template_expr_method(name, args, template_path,
-				name, line, col)
+			if method_value := view.invoke_template_expr_method(name, args, template_path, name,
+				line, col)
 			{
 				return method_value
 			}
-			return new_template_expr_scalar(view.invoke_template_helper_values(name, args,
-				scalars, lists, template_path, line, col))
+			return new_template_expr_scalar(view.invoke_template_helper_values(name, args, scalars,
+				lists, template_path, line, col))
 		}
 	}
 }
@@ -554,8 +551,8 @@ fn (view &VSlimView) invoke_template_expr_method(name string, args []TemplateExp
 	}
 	method := name.trim_space()
 	if method == '' || !args[0].object.method_exists(method) {
-		return new_template_expr_scalar(debug_template_error('method.missing', template_path,
-			raw, line, col))
+		return new_template_expr_scalar(debug_template_error('method.missing', template_path, raw,
+			line, col))
 	}
 	mut frame := vphp.PhpScope.frame()
 	defer {
@@ -563,24 +560,24 @@ fn (view &VSlimView) invoke_template_expr_method(name string, args []TemplateExp
 	}
 	mut call_args := []vphp.PhpArgInput{cap: if args.len > 1 { args.len - 1 } else { 0 }}
 	for arg in args[1..] {
-		call_args << frame.adopt_zval(template_expr_value_to_zval(arg))
+		mut value := template_expr_value_to_value(arg)
+		call_args << frame.adopt_value(mut value)
 	}
-	mut result := vphp.PhpObject.borrowed_zbox(args[0].object.borrowed()).method_request_owned(method,
-		...call_args)
+	object := args[0].object.as_object() or { return none }
+	mut result := object.call_method(method, ...call_args)
 	defer {
 		result.release()
 	}
-	result_z := result.to_zval()
-	if !result_z.is_valid() || result_z.is_undef() || result_z.is_null() {
+	if !result.is_valid() || result.is_undef() || result.is_null() {
 		return new_template_expr_scalar_typed('null', 'null')
 	}
-	if result_z.is_array() && result_z.is_list() {
-		return new_template_expr_list(result_z.to_string_list())
+	if result.is_array() && result.is_list() {
+		return new_template_expr_list(result.to_string_list())
 	}
-	if result_z.is_object() {
-		return new_template_expr_object(result.clone_request_owned())
+	if result.is_object() {
+		return new_template_expr_object(result)
 	}
-	return new_template_expr_scalar(result_z.to_string())
+	return new_template_expr_scalar(result.to_string())
 }
 
 fn parse_template_expr_pipe_stage(raw string) !(string, []string) {

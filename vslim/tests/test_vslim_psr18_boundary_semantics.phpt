@@ -162,7 +162,7 @@ namespace {
     $client = new VSlim\Psr18\Client();
     $clientChain = $client->timeout(5);
     echo (spl_object_id($client) === spl_object_id($clientChain) ? "client-builder-borrowed\n" : "client-builder-fresh\n");
-    echo $client->timeout_seconds_value() . "\n";
+    echo $client->timeoutSecondsValue() . "\n";
 
     $requestFactory = new VSlim\Psr17\RequestFactory();
     $request = $requestFactory

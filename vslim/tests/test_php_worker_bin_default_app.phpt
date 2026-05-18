@@ -28,7 +28,7 @@ if (!is_file($autoload)) { echo "autoload_missing\n"; exit; }
 require_once $autoload;
 
 $root = dirname(__DIR__);
-$workerBin = $root . '/../../vhttpd/php/package/bin/php-worker';
+$workerBin = $root . '/../../vhttpd/php/package/bin/vphp-worker';
 $extSo = $root . '/vslim.so';
 $sock = sys_get_temp_dir() . '/vslim_php_worker_bin_default_' . getmypid() . '.sock';
 $log = sys_get_temp_dir() . '/vslim_php_worker_bin_default_' . getmypid() . '.log';
@@ -49,7 +49,7 @@ $pid = isset($out[0]) ? (int) trim((string) $out[0]) : 0;
 $ready = false;
 $deadline = microtime(true) + 5.0;
 while (microtime(true) < $deadline) {
-    if (is_file($sock)) {
+    if (file_exists($sock)) {
         $ready = true;
         break;
     }
@@ -63,7 +63,7 @@ if (!$ready) {
     exit;
 }
 
-$client = new \VPhp\VHttpd\PhpWorker\Client($sock);
+$client = new \VHttpd\PhpWorker\Client($sock);
 $health = $client->request([
     'id' => 'health',
     'method' => 'GET',

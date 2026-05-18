@@ -33,7 +33,7 @@ $meta = $app->dispatchEnvelope([
 echo $meta->status . "\n";
 echo (str_contains($meta->body, '"name":"vslim-ollama-stream-demo"') ? "meta_ok\n" : "meta_bad\n");
 
-$text = $app->dispatch_envelope_worker([
+$text = $app->dispatchEnvelopeWorker([
     'method' => 'GET',
     'path' => '/ollama/text?prompt=demo',
     'query' => ['prompt' => 'demo'],
@@ -43,7 +43,7 @@ echo $text->streamType . "\n";
 echo $text->header('x-ollama-model') . "\n";
 echo implode('', iterator_to_array($text->chunks(), false)) . "\n";
 
-$sse = $app->dispatch_envelope_worker([
+$sse = $app->dispatchEnvelopeWorker([
     'method' => 'POST',
     'path' => '/ollama/sse',
     'query' => [],

@@ -18,7 +18,7 @@ final class ProbeWsHandler
 {
     public array $seen = [];
 
-    public function handle_websocket(array $frame, $conn): ?string
+    public function handleWebSocket(array $frame, $conn): ?string
     {
         if (($frame['event'] ?? '') !== 'message') {
             return null;
@@ -30,7 +30,7 @@ final class ProbeWsHandler
 
 $app = new VSlim\App();
 $handler = new ProbeWsHandler();
-$handlerProbe = VSlim\Debug\ObjectProbe::probe($handler, ProbeWsHandler::class, 'handle_websocket');
+$handlerProbe = VSlim\Debug\ObjectProbe::probe($handler, ProbeWsHandler::class, 'handleWebSocket');
 $connProbe = VSlim\Debug\ObjectProbe::probe(new ProbeConnSink(), ProbeConnSink::class, 'setMeta');
 echo 'handler.method_exists=', $handlerProbe['method_exists'] ?? 'missing', PHP_EOL;
 echo 'handler.is_instance_of=', $handlerProbe['is_instance_of'] ?? 'missing', PHP_EOL;
@@ -39,7 +39,7 @@ echo 'conn.is_instance_of=', $connProbe['is_instance_of'] ?? 'missing', PHP_EOL;
 $app->websocket('/ws', $handler);
 
 $conn = new ProbeConnSink();
-$raw = $app->handle_websocket([
+$raw = $app->handleWebSocket([
     'event' => 'message',
     'id' => 'probe-1',
     'path' => '/ws',

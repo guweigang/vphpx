@@ -55,7 +55,7 @@ var_dump(method_exists($view, 'renderWithLayout'));
 var_dump(method_exists($view, 'render_with_layout'));
 
 var_dump(method_exists($controller, 'redirectToQuery'));
-var_dump(method_exists($controller, 'redirect_to_query'));
+var_dump(method_exists($controller, 'redirectTo_query'));
 ?>
 --EXPECT--
 bool(true)

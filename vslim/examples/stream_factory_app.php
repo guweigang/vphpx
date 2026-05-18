@@ -83,12 +83,12 @@ function vslim_stream_factory_demo_app(): VSlim\App
         })());
     });
 
-    $app->map(['GET', 'POST'], '/ollama/text', function (VSlim\VHttpd\Request $req) {
-        return VSlim\Stream\Factory::ollama_text($req);
+    $app->map(['GET', 'POST'], '/ollama/text', function (mixed $req) {
+        return VSlim\Stream\Factory::ollamaText($req);
     });
 
-    $app->map(['GET', 'POST'], '/ollama/sse', function (VSlim\VHttpd\Request $req) {
-        return VSlim\Stream\Factory::ollama_sse($req);
+    $app->map(['GET', 'POST'], '/ollama/sse', function (mixed $req) {
+        return VSlim\Stream\Factory::ollamaSse($req);
     });
 
     return $app;

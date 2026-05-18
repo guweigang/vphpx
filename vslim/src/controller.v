@@ -56,14 +56,14 @@ pub fn (mut c VSlimController) view() &VSlimView {
 		base_path: ''
 		assets_prefix: '/assets'
 		cache_enabled: default_view_cache_enabled()
-		helpers: map[string]vphp.PersistentOwnedZBox{}
+		helpers: map[string]vphp.PhpCallable{}
 	}
 	return c.view_ref
 }
 
 @[php_method]
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-pub fn (mut c VSlimController) render(template string, data vphp.RequestBorrowedZBox) &VSlimPsr7Response {
+pub fn (mut c VSlimController) render(template string, data vphp.PhpValue) &VSlimPsr7Response {
 	mut view := c.view()
 	body := view.render(template, data)
 	mut res := VSlimResponse{}
@@ -73,7 +73,7 @@ pub fn (mut c VSlimController) render(template string, data vphp.RequestBorrowed
 
 @[php_method: 'renderWithLayout']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-pub fn (mut c VSlimController) render_with_layout(template string, layout string, data vphp.RequestBorrowedZBox) &VSlimPsr7Response {
+pub fn (mut c VSlimController) render_with_layout(template string, layout string, data vphp.PhpValue) &VSlimPsr7Response {
 	mut view := c.view()
 	body := view.render_with_layout(template, layout, data)
 	mut res := VSlimResponse{}
@@ -82,7 +82,7 @@ pub fn (mut c VSlimController) render_with_layout(template string, layout string
 }
 
 @[php_method: 'urlFor']
-pub fn (c &VSlimController) url_for(name string, params vphp.RequestBorrowedZBox) string {
+pub fn (c &VSlimController) url_for(name string, params vphp.PhpValue) string {
 	app := effective_controller_app(c)
 	if app == unsafe { nil } {
 		return ''
@@ -91,7 +91,7 @@ pub fn (c &VSlimController) url_for(name string, params vphp.RequestBorrowedZBox
 }
 
 @[php_method: 'urlForQuery']
-pub fn (c &VSlimController) url_for_query(name string, params vphp.RequestBorrowedZBox, query vphp.RequestBorrowedZBox) string {
+pub fn (c &VSlimController) url_for_query(name string, params vphp.PhpValue, query vphp.PhpValue) string {
 	app := effective_controller_app(c)
 	if app == unsafe { nil } {
 		return ''
@@ -132,7 +132,7 @@ pub fn (c &VSlimController) redirect(location string, status int) &VSlimPsr7Resp
 
 @[php_method: 'redirectTo']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-pub fn (c &VSlimController) redirect_to(name string, params vphp.RequestBorrowedZBox, status int) &VSlimPsr7Response {
+pub fn (c &VSlimController) redirect_to(name string, params vphp.PhpValue, status int) &VSlimPsr7Response {
 	location := c.url_for(name, params)
 	if location == '' {
 		return c.text('route not found', 404)
@@ -142,7 +142,7 @@ pub fn (c &VSlimController) redirect_to(name string, params vphp.RequestBorrowed
 
 @[php_method: 'redirectToQuery']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-pub fn (c &VSlimController) redirect_to_query(name string, params vphp.RequestBorrowedZBox, query vphp.RequestBorrowedZBox, status int) &VSlimPsr7Response {
+pub fn (c &VSlimController) redirect_to_query(name string, params vphp.PhpValue, query vphp.PhpValue, status int) &VSlimPsr7Response {
 	location := c.url_for_query(name, params, query)
 	if location == '' {
 		return c.text('route not found', 404)

@@ -3,8 +3,8 @@ module main
 import net.http
 import vphp
 
-@[php_method]
 @[php_arg_name: 'raw_path=rawPath']
+@[php_method]
 pub fn (mut r VSlimRequest) construct(method string, raw_path string, body string) &VSlimRequest {
 	apply_request_defaults(mut r)
 	r.set_method(method)
@@ -19,8 +19,9 @@ pub fn (r &VSlimRequest) str() string {
 }
 
 @[php_method: 'setQuery']
-pub fn (mut r VSlimRequest) set_query(query vphp.RequestBorrowedZBox) &VSlimRequest {
+pub fn (mut r VSlimRequest) set_query(query vphp.PhpArray) &VSlimRequest {
 	r.query = snapshot_string_map(query.to_string_map())
+	r.query_string = r.raw_query_string()
 	return r
 }
 
@@ -30,8 +31,8 @@ pub fn (mut r VSlimRequest) set_method(method string) &VSlimRequest {
 	return r
 }
 
-@[php_method: 'setTarget']
 @[php_arg_name: 'raw_path=rawPath']
+@[php_method: 'setTarget']
 pub fn (mut r VSlimRequest) set_target(raw_path string) &VSlimRequest {
 	r.raw_path = raw_path.clone()
 	r.path, r.query_string = VSlimRequest.normalize_target(raw_path)
@@ -74,53 +75,53 @@ pub fn (mut r VSlimRequest) set_port(port string) &VSlimRequest {
 	return r
 }
 
-@[php_method: 'setProtocolVersion']
 @[php_arg_name: 'protocol_version=protocolVersion']
+@[php_method: 'setProtocolVersion']
 pub fn (mut r VSlimRequest) set_protocol_version(protocol_version string) &VSlimRequest {
 	r.protocol_version = protocol_version.clone()
 	return r
 }
 
-@[php_method: 'setRemoteAddr']
 @[php_arg_name: 'remote_addr=remoteAddr']
+@[php_method: 'setRemoteAddr']
 pub fn (mut r VSlimRequest) set_remote_addr(remote_addr string) &VSlimRequest {
 	r.remote_addr = remote_addr.clone()
 	return r
 }
 
 @[php_method: 'setHeaders']
-pub fn (mut r VSlimRequest) set_headers(headers vphp.RequestBorrowedZBox) &VSlimRequest {
+pub fn (mut r VSlimRequest) set_headers(headers vphp.PhpArray) &VSlimRequest {
 	r.headers = snapshot_string_map(normalize_header_map(headers.to_string_map()))
 	return r
 }
 
 @[php_method: 'setCookies']
-pub fn (mut r VSlimRequest) set_cookies(cookies vphp.RequestBorrowedZBox) &VSlimRequest {
+pub fn (mut r VSlimRequest) set_cookies(cookies vphp.PhpArray) &VSlimRequest {
 	r.cookies = snapshot_string_map(cookies.to_string_map())
 	return r
 }
 
 @[php_method: 'setAttributes']
-pub fn (mut r VSlimRequest) set_attributes(attributes vphp.RequestBorrowedZBox) &VSlimRequest {
-	r.attributes = snapshot_string_map(zval_assoc_scalar_string_map(attributes.to_zval()))
+pub fn (mut r VSlimRequest) set_attributes(attributes vphp.PhpArray) &VSlimRequest {
+	r.attributes = snapshot_string_map(attributes.to_scalar_string_map())
 	return r
 }
 
 @[php_method: 'setServer']
-pub fn (mut r VSlimRequest) set_server(server vphp.RequestBorrowedZBox) &VSlimRequest {
+pub fn (mut r VSlimRequest) set_server(server vphp.PhpArray) &VSlimRequest {
 	r.server = snapshot_string_map(server.to_string_map())
 	return r
 }
 
-@[php_method: 'setUploadedFiles']
 @[php_arg_name: 'uploaded_files=uploadedFiles']
-pub fn (mut r VSlimRequest) set_uploaded_files(uploaded_files vphp.RequestBorrowedZBox) &VSlimRequest {
+@[php_method: 'setUploadedFiles']
+pub fn (mut r VSlimRequest) set_uploaded_files(uploaded_files vphp.PhpArray) &VSlimRequest {
 	r.uploaded_files = snapshot_string_list(uploaded_files.to_string_list())
 	return r
 }
 
 @[php_method: 'setParams']
-pub fn (mut r VSlimRequest) set_params(params vphp.RequestBorrowedZBox) &VSlimRequest {
+pub fn (mut r VSlimRequest) set_params(params vphp.PhpArray) &VSlimRequest {
 	r.params = snapshot_string_map(params.to_string_map())
 	return r
 }
@@ -146,10 +147,10 @@ pub fn (r &VSlimRequest) input(key string) string {
 	return inputs[key] or { '' }
 }
 
-@[php_method: 'inputOr']
 @[php_arg_name: 'default_value=defaultValue']
 @[php_arg_default: 'default_value=""']
 @[php_arg_optional: 'default_value']
+@[php_method: 'inputOr']
 pub fn (r &VSlimRequest) input_or(key string, default_value string) string {
 	inputs := r.input_values()
 	return inputs[key] or { default_value }
@@ -242,16 +243,16 @@ pub fn (r &VSlimRequest) parse_error() string {
 	if body == '' {
 		return ''
 	}
-		_ = vphp.PhpJson.decode_assoc(body)
-		err_code := vphp.PhpJson.last_error_code()
-		if err_code == 0 {
-			return ''
-		}
-		err_msg := vphp.PhpJson.last_error_message()
-		if err_msg == '' {
-			return 'invalid JSON body'
-		}
-		return err_msg
+	_ = vphp.PhpJson.decode_assoc(body)
+	err_code := vphp.PhpJson.last_error_code()
+	if err_code == 0 {
+		return ''
+	}
+	err_msg := vphp.PhpJson.last_error_message()
+	if err_msg == '' {
+		return 'invalid JSON body'
+	}
+	return err_msg
 }
 
 @[php_method: 'queryAll']
@@ -442,10 +443,14 @@ fn (r &VSlimRequest) header_values() map[string]string {
 }
 
 fn (r &VSlimRequest) query_values() map[string]string {
+	raw_query_string := r.raw_query_string()
+	if raw_query_string != r.query_string {
+		return VSlimRequest.parse_query(raw_query_string)
+	}
 	if r.query.len > 0 {
 		return snapshot_string_map(r.query)
 	}
-	return VSlimRequest.parse_query(r.effective_query_string())
+	return VSlimRequest.parse_query(raw_query_string)
 }
 
 fn (r &VSlimRequest) input_values() map[string]string {
@@ -464,13 +469,14 @@ fn (r &VSlimRequest) parsed_body_values() map[string]string {
 		return out
 	}
 	raw_content_type := r.content_type()
-		content_type := raw_content_type.to_lower()
-		is_json := content_type.contains('application/json') || body.starts_with('{') || body.starts_with('[')
-		if is_json {
-			decoded := vphp.PhpJson.decode_assoc(body)
-			if decoded.is_array() {
-				return decoded.to_string_map()
-			}
+	content_type := raw_content_type.to_lower()
+	is_json := content_type.contains('application/json') || body.starts_with('{')
+		|| body.starts_with('[')
+	if is_json {
+		decoded := vphp.PhpJson.decode_assoc(body)
+		if decoded.is_array() {
+			return decoded.to_string_map()
+		}
 		return out
 	}
 	if content_type.contains('multipart/form-data') {
@@ -593,51 +599,71 @@ fn new_vslim_request_snapshot_with_params(req &VSlimRequest, params map[string]s
 pub fn new_vslim_request(method string, raw_path string, body string) &VSlimRequest {
 	path, query_string := VSlimRequest.normalize_target(raw_path)
 	mut req := &VSlimRequest{
-		method: method.clone()
-		raw_path: raw_path.clone()
-		path: path.clone()
+		method:       method.clone()
+		raw_path:     raw_path.clone()
+		path:         path.clone()
 		query_string: query_string.clone()
-		body: body.clone()
+		body:         body.clone()
 	}
 	apply_request_defaults(mut req)
 	req.query = VSlimRequest.parse_query(query_string)
 	return req
 }
 
-pub fn new_vslim_request_from_zval(envelope vphp.ZVal) &VSlimRequest {
-	method := if part := envelope.get('method') { part.to_string() } else { 'GET' }
-	raw_path := if part := envelope.get('path') { part.to_string() } else { '/' }
-	body := if part := envelope.get('body') { part.to_string() } else { '' }
+pub fn new_vslim_request_from_value(envelope vphp.PhpValue) &VSlimRequest {
+	method := envelope.string_at('method', 'GET')
+	raw_path := envelope.string_at('path', '/')
+	body := envelope.string_at('body', '')
 	path, query_string := VSlimRequest.normalize_target(raw_path)
 	mut req := &VSlimRequest{
-		method: method.clone()
-		raw_path: raw_path.clone()
-		path: path.clone()
+		method:       method.clone()
+		raw_path:     raw_path.clone()
+		path:         path.clone()
 		query_string: query_string.clone()
-		body: body.clone()
+		body:         body.clone()
 	}
 	apply_request_defaults(mut req)
-	req.scheme = if part := envelope.get('scheme') { part.to_string() } else { req.scheme }
-	req.host = if part := envelope.get('host') { part.to_string() } else { req.host }
-	req.port = if part := envelope.get('port') { part.to_string() } else { req.port }
-	req.protocol_version = if part := envelope.get('protocol_version') { part.to_string() } else { req.protocol_version }
-	req.remote_addr = if part := envelope.get('remote_addr') { part.to_string() } else { req.remote_addr }
-	req.query = if part := envelope.get('query') {
+	req.scheme = envelope.string_at('scheme', req.scheme)
+	req.host = envelope.string_at('host', req.host)
+	req.port = envelope.string_at('port', req.port)
+	req.protocol_version = envelope.string_at('protocol_version', req.protocol_version)
+	req.remote_addr = envelope.string_at('remote_addr', req.remote_addr)
+	req.query = if part := envelope.value('query') {
 		snapshot_string_map(part.to_string_map())
 	} else {
 		VSlimRequest.parse_query(query_string)
 	}
-	req.headers = if part := envelope.get('headers') { snapshot_string_map(normalize_header_map(part.to_string_map())) } else { map[string]string{} }
-	req.cookies = if part := envelope.get('cookies') { snapshot_string_map(part.to_string_map()) } else { map[string]string{} }
-	req.attributes = if part := envelope.get('attributes') { snapshot_string_map(zval_assoc_scalar_string_map(part)) } else { map[string]string{} }
-	req.server = if part := envelope.get('server') { snapshot_string_map(part.to_string_map()) } else { map[string]string{} }
-	req.uploaded_files = if part := envelope.get('uploaded_files') { snapshot_string_list(part.to_string_list()) } else { []string{} }
-	req.params = if part := envelope.get('params') { snapshot_string_map(part.to_string_map()) } else { map[string]string{} }
+	req.headers = if part := envelope.value('headers') {
+		snapshot_string_map(normalize_header_map(part.to_string_map()))
+	} else {
+		map[string]string{}
+	}
+	req.cookies = if part := envelope.value('cookies') {
+		snapshot_string_map(part.to_string_map())
+	} else {
+		map[string]string{}
+	}
+	req.attributes = if part := envelope.value('attributes') {
+		snapshot_string_map(php_value_assoc_scalar_string_map(part))
+	} else {
+		map[string]string{}
+	}
+	req.server = if part := envelope.value('server') {
+		snapshot_string_map(part.to_string_map())
+	} else {
+		map[string]string{}
+	}
+	req.uploaded_files = if part := envelope.value('uploaded_files') {
+		snapshot_string_list(part.to_string_list())
+	} else {
+		[]string{}
+	}
+	req.params = if part := envelope.value('params') {
+		snapshot_string_map(part.to_string_map())
+	} else {
+		map[string]string{}
+	}
 	return req
-}
-
-fn request_from_envelope(envelope vphp.ZVal) VSlimRequest {
-	return new_vslim_request_from_zval(envelope).to_vslim_request()
 }
 
 fn split_path_and_query(raw_path string) (string, map[string]string) {
@@ -646,9 +672,17 @@ fn split_path_and_query(raw_path string) (string, map[string]string) {
 }
 
 fn (r &VSlimRequest) effective_query_string() string {
+	raw_query_string := r.raw_query_string()
+	if raw_query_string != r.query_string {
+		return raw_query_string
+	}
 	if r.query.len > 0 {
 		return encode_query_map(r.query)
 	}
+	return raw_query_string
+}
+
+fn (r &VSlimRequest) raw_query_string() string {
 	_, query_string := VSlimRequest.normalize_target(r.raw_path)
 	return query_string
 }

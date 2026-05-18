@@ -16,14 +16,14 @@ $form1->fill(['email' => 'a@example.com']);
 echo $form2->input('email') . PHP_EOL;
 
 $form2->errors(['email' => 'bad']);
-echo ($form1->has_error('email') ? 'form-error-visible' : 'form-error-missing') . PHP_EOL;
+echo ($form1->hasError('email') ? 'form-error-visible' : 'form-error-missing') . PHP_EOL;
 
-$form1->clear_error('email');
-echo ($form2->has_error('email') ? 'form-error-still-there' : 'form-error-cleared') . PHP_EOL;
+$form1->clearError('email');
+echo ($form2->hasError('email') ? 'form-error-still-there' : 'form-error-cleared') . PHP_EOL;
 
 $view = new VSlim\View('/tmp/live', '/assets');
-$live = (new VSlim\Live\View())->set_view($view);
-$component = (new VSlim\Live\Component())->set_view($view);
+$live = (new VSlim\Live\View())->setView($view);
+$component = (new VSlim\Live\Component())->setView($view);
 
 $liveView1 = $live->view();
 $liveView2 = $live->view();

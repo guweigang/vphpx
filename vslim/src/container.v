@@ -21,54 +21,56 @@ struct VSlimContainerNotFoundException {}
 @[heap]
 struct VSlimContainer {
 mut:
-	entries   map[string]vphp.PersistentOwnedZBox @[php_ignore]
-	factories map[string]vphp.PersistentOwnedZBox @[php_ignore]
-	resolved  map[string]vphp.PersistentOwnedZBox @[php_ignore]
-	app_ref   &VSlimApp = unsafe { nil } @[php_ignore]
+	entries   map[string]vphp.PhpValue    @[php_ignore]
+	factories map[string]vphp.PhpCallable @[php_ignore]
+	resolved  map[string]vphp.PhpValue    @[php_ignore]
+	app_ref   &VSlimApp = unsafe { nil }                   @[php_ignore]
 }
 
 fn new_vslim_container() &VSlimContainer {
 	return &VSlimContainer{
-		entries:   map[string]vphp.PersistentOwnedZBox{}
-		factories: map[string]vphp.PersistentOwnedZBox{}
-		resolved:  map[string]vphp.PersistentOwnedZBox{}
+		entries:   map[string]vphp.PhpValue{}
+		factories: map[string]vphp.PhpCallable{}
+		resolved:  map[string]vphp.PhpValue{}
 	}
 }
 
-fn container_release_entry(mut entry vphp.PersistentOwnedZBox) {
-	if entry.is_valid() {
-		entry.release()
+fn container_release_map(mut values map[string]vphp.PhpValue) {
+	for _, entry in values {
+		mut value := entry
+		value.release()
 	}
+	values.clear()
 }
 
-fn container_release_map(mut values map[string]vphp.PersistentOwnedZBox) {
+fn container_release_factory_map(mut values map[string]vphp.PhpCallable) {
 	for _, entry in values {
 		mut owned := entry
-		container_release_entry(mut owned)
+		owned.release()
 	}
 	values.clear()
 }
 
 fn (mut c VSlimContainer) release_entry_key(id string) {
 	if id in c.entries {
-		mut entry := c.entries[id] or { vphp.PersistentOwnedZBox.new_null() }
-		container_release_entry(mut entry)
+		mut entry := c.entries[id] or { vphp.PhpValue.invalid() }
+		entry.release()
 		c.entries.delete(id)
 	}
 }
 
 fn (mut c VSlimContainer) release_factory_key(id string) {
 	if id in c.factories {
-		mut factory := c.factories[id] or { vphp.PersistentOwnedZBox.new_null() }
-		container_release_entry(mut factory)
+		mut factory := c.factories[id] or { vphp.PhpCallable.invalid() }
+		factory.release()
 		c.factories.delete(id)
 	}
 }
 
 fn (mut c VSlimContainer) release_resolved_key(id string) {
 	if id in c.resolved {
-		mut resolved := c.resolved[id] or { vphp.PersistentOwnedZBox.new_null() }
-		container_release_entry(mut resolved)
+		mut resolved := c.resolved[id] or { vphp.PhpValue.invalid() }
+		resolved.release()
 		c.resolved.delete(id)
 	}
 }
@@ -76,36 +78,37 @@ fn (mut c VSlimContainer) release_resolved_key(id string) {
 @[php_method]
 pub fn (mut c VSlimContainer) construct() &VSlimContainer {
 	container_release_map(mut c.entries)
-	container_release_map(mut c.factories)
+	container_release_factory_map(mut c.factories)
 	container_release_map(mut c.resolved)
-	c.entries = map[string]vphp.PersistentOwnedZBox{}
-	c.factories = map[string]vphp.PersistentOwnedZBox{}
-	c.resolved = map[string]vphp.PersistentOwnedZBox{}
+	c.entries = map[string]vphp.PhpValue{}
+	c.factories = map[string]vphp.PhpCallable{}
+	c.resolved = map[string]vphp.PhpValue{}
 	return &c
 }
 
 @[php_method]
-pub fn (mut c VSlimContainer) set(id string, value vphp.RequestBorrowedZBox) &VSlimContainer {
-	raw := value.to_zval()
+pub fn (mut c VSlimContainer) set(id string, value vphp.PhpValue) &VSlimContainer {
 	c.release_entry_key(id)
-	c.entries[id] = if raw.is_object() && !raw.is_callable() {
-		vphp.PersistentOwnedZBox.from_object_zval(raw)
-	} else {
-		vphp.PersistentOwnedZBox.from_mixed_zval(raw)
-	}
+	c.entries[id] = value.retain()
+	c.release_factory_key(id)
+	c.release_resolved_key(id)
+	return &c
+}
+
+fn (mut c VSlimContainer) set_object(id string, value vphp.PhpObject) &VSlimContainer {
+	c.release_entry_key(id)
+	mut retained := value.retain()
+	c.entries[id] = retained.to_value()
+	retained.release()
 	c.release_factory_key(id)
 	c.release_resolved_key(id)
 	return &c
 }
 
 @[php_method]
-pub fn (mut c VSlimContainer) factory(id string, callable vphp.RequestBorrowedZBox) &VSlimContainer {
-	if !callable.is_valid() || !callable.is_callable() {
-		throw_container_exception('factory for "${id}" must be callable')
-		return &c
-	}
+pub fn (mut c VSlimContainer) factory(id string, callable vphp.PhpCallable) &VSlimContainer {
 	c.release_factory_key(id)
-	c.factories[id] = vphp.PersistentOwnedZBox.from_callable_zval(callable.to_zval())
+	c.factories[id] = callable.retain()
 	c.release_entry_key(id)
 	c.release_resolved_key(id)
 	return &c
@@ -120,38 +123,44 @@ pub fn (c &VSlimContainer) has(id string) bool {
 }
 
 @[php_method]
-pub fn (mut c VSlimContainer) get(id string) vphp.RequestOwnedZBox {
-	return c.get_entry_or_throw(id)
+pub fn (mut c VSlimContainer) get(id string) vphp.PhpValue {
+	return c.get_value_or_throw(id)
 }
 
-pub fn (mut c VSlimContainer) get_entry(id string) !vphp.RequestOwnedZBox {
+pub fn (mut c VSlimContainer) get_value(id string) !vphp.PhpValue {
 	if native := c.get_native_service(id) {
 		return native
 	}
 	if id in c.resolved {
 		resolved := c.resolved[id] or { return error('entry "${id}" not found') }
-		return resolved.clone_request_owned()
+		return resolved.owned()
 	}
 	if id in c.entries {
 		entry := c.entries[id] or { return error('entry "${id}" not found') }
-		return entry.clone_request_owned()
+		return entry.owned()
 	}
 	if id in c.factories {
 		factory_owned := c.factories[id] or { return error('entry "${id}" not found') }
-		mut res := factory_owned.fn_request_owned()
+		mut res := factory_owned.invoke()
 		if !res.is_valid() {
 			return error('factory "${id}" returned invalid value')
 		}
-		raw := res.to_zval()
 		c.release_resolved_key(id)
-		c.resolved[id] = if raw.is_object() && !raw.is_callable() {
-			vphp.PersistentOwnedZBox.from_object_zval(raw)
-		} else {
-			vphp.PersistentOwnedZBox.from_mixed_zval(raw)
-		}
-		return res
+		c.resolved[id] = res.retain()
+		return res.owned()
 	}
 	return error('entry "${id}" not found')
+}
+
+pub fn (mut c VSlimContainer) get_value_or_throw(id string) vphp.PhpValue {
+	return c.get_value(id) or {
+		if err.msg().contains('not found') {
+			throw_not_found(id)
+		} else {
+			throw_container_exception(err.msg())
+		}
+		vphp.PhpValue.null()
+	}
 }
 
 pub fn (c &VSlimContainer) has_native_service(id string) bool {
@@ -168,82 +177,47 @@ fn container_effective_app(c &VSlimContainer) &VSlimApp {
 	return c.app_ref
 }
 
-fn container_borrowed_object_value(v_ptr voidptr, ce vphp.ZendClassEntry, handlers voidptr) ?vphp.RequestOwnedZBox {
-	unsafe {
-		if v_ptr == 0 || !ce.is_valid() {
-			return none
-		}
-		mut payload := vphp.RequestOwnedZBox.new_null().to_zval()
-		vphp.PhpReturn.from_zval(payload).borrowed_object(v_ptr, ce, handlers)
-		return vphp.RequestOwnedZBox.adopt_zval(payload)
-	}
-}
-
-pub fn (mut c VSlimContainer) get_native_service(id string) ?vphp.RequestOwnedZBox {
+pub fn (mut c VSlimContainer) get_native_service(id string) ?vphp.PhpValue {
 	mut app := container_effective_app(c)
 	if app == unsafe { nil } {
 		return none
 	}
 	match id.trim_space() {
 		'config' {
-			return container_borrowed_object_value(app.config(),
-				vphp.ZendClassEntry.from_ptr(C.vslim__config_ce), vslimconfig_handlers())
+			return app.config().bind_php_object_value()
 		}
 		'clock', 'Psr\\Clock\\ClockInterface' {
-			return app.clock()
+			mut clock := app.clock().owned()
+			return clock.take_value()
 		}
 		'logger' {
-			return container_borrowed_object_value(app.logger(),
-				vphp.ZendClassEntry.from_ptr(C.vslim__log__logger_ce), vslimlogger_handlers())
+			return app.logger().bind_php_object_value()
 		}
 		'Psr\\Log\\LoggerInterface' {
-			return container_borrowed_object_value(app.psr_logger(),
-				vphp.ZendClassEntry.from_ptr(C.vslim__log__psrlogger_ce), vslimpsrlogger_handlers())
+			return app.psr_logger().bind_php_object_value()
 		}
 		'listener_provider', 'events.provider', 'Psr\\EventDispatcher\\ListenerProviderInterface' {
-			return container_borrowed_object_value(app.listener_provider(),
-				vphp.ZendClassEntry.from_ptr(C.vslim__psr14__listenerprovider_ce),
-				vslimpsr14listenerprovider_handlers())
+			return app.listener_provider().bind_php_object_value()
 		}
 		'events', 'dispatcher', 'Psr\\EventDispatcher\\EventDispatcherInterface' {
-			return container_borrowed_object_value(app.dispatcher(),
-				vphp.ZendClassEntry.from_ptr(C.vslim__psr14__eventdispatcher_ce),
-				vslimpsr14eventdispatcher_handlers())
+			return app.dispatcher().bind_php_object_value()
 		}
 		'cache', 'Psr\\SimpleCache\\CacheInterface' {
-			return container_borrowed_object_value(app.cache(),
-				vphp.ZendClassEntry.from_ptr(C.vslim__psr16__cache_ce), vslimpsr16cache_handlers())
+			return app.cache().bind_php_object_value()
 		}
 		'cache.pool', 'Psr\\Cache\\CacheItemPoolInterface' {
-			return container_borrowed_object_value(app.cache_pool(),
-				vphp.ZendClassEntry.from_ptr(C.vslim__psr6__cacheitempool_ce),
-				vslimpsr6cacheitempool_handlers())
+			return app.cache_pool().bind_php_object_value()
 		}
 		'http', 'http_client', 'Psr\\Http\\Client\\ClientInterface' {
-			return container_borrowed_object_value(app.http_client(),
-				vphp.ZendClassEntry.from_ptr(C.vslim__psr18__client_ce),
-				vslimpsr18client_handlers())
+			return app.http_client().bind_php_object_value()
 		}
 		'database', 'db', 'VSlim\\Database\\Manager' {
-			return container_borrowed_object_value(app.database(),
-				vphp.ZendClassEntry.from_ptr(C.vslim__database__manager_ce),
-				vslimdatabasemanager_handlers())
+			return app.database().bind_php_object_value()
 		}
 		else {}
 	}
 
 	return none
-}
-
-pub fn (mut c VSlimContainer) get_entry_or_throw(id string) vphp.RequestOwnedZBox {
-	return c.get_entry(id) or {
-		if err.msg().contains('not found') {
-			throw_not_found(id)
-		} else {
-			throw_container_exception(err.msg())
-		}
-		return vphp.RequestOwnedZBox.new_null()
-	}
 }
 
 fn throw_not_found(id string) {

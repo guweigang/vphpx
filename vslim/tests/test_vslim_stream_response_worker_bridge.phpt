@@ -6,27 +6,24 @@ if (!extension_loaded('vslim')) {
     echo "skip vslim extension missing";
     return;
 }
-if (!is_file(dirname(__DIR__) . '/examples/vendor/autoload.php')) {
-    echo "skip vendor autoload missing";
-    return;
-}
 ?>
 --FILE--
 <?php
 declare(strict_types=1);
 
 define('VSLIM_HTTPD_WORKER_NOAUTO', true);
-require_once dirname(__DIR__) . '/examples/vendor/autoload.php';
+require_once __DIR__ . '/php_worker_package_bootstrap.php';
 
 $app = new VSlim\App();
-$app->get('/stream/text', function (VSlim\VHttpd\Request $req) {
-    return VSlim\Stream\Response::text((function () use ($req): iterable {
+$app->get('/stream/text', function (mixed $req) {
+    $query = method_exists($req, 'getQueryParams') ? $req->getQueryParams() : [];
+    return VSlim\Stream\Response::text((function () use ($query): iterable {
         yield "hello:";
-        yield $req->param('name') ?: 'world';
+        yield $query['name'] ?? 'world';
     })())->setHeader('x-app', 'vslim-stream');
 });
 
-$raw = $app->dispatch_envelope_worker([
+$raw = $app->dispatchEnvelopeWorker([
     'method' => 'GET',
     'path' => '/stream/text?request_id=req-7',
     'query' => ['request_id' => 'req-7'],
@@ -37,11 +34,11 @@ echo $raw->streamType . "\n";
 echo $raw->header('x-app') . "\n";
 echo $raw->header('x-request-id') . "\n";
 
-$server = new \VPhp\VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
-$ref = new ReflectionMethod(\VPhp\VHttpd\PhpWorker\Server::class, 'normalizeStreamResponseObject');
+$server = new \VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
+$ref = new ReflectionMethod(\VHttpd\PhpWorker\Server::class, 'normalizeStreamResponseObject');
 $normalized = $ref->invoke($server, $raw);
 
-echo ($normalized instanceof \VPhp\VHttpd\PhpWorker\StreamResponse ? "normalized\n" : "not_normalized\n");
+echo ($normalized instanceof \VHttpd\PhpWorker\StreamResponse ? "normalized\n" : "not_normalized\n");
 echo $normalized->streamType . "\n";
 echo $normalized->headers['x-app'] . '|' . $normalized->headers['x-request-id'] . "\n";
 echo implode('', iterator_to_array($normalized->chunks, false)) . "\n";

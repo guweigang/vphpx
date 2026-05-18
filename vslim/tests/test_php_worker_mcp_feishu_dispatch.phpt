@@ -34,7 +34,7 @@ $fixture = dirname(__DIR__, 3) . '/vhttpd/examples/mcp-feishu-app.php';
 $adminSocket = '/tmp/vhttpd_mcp_feishu_admin_' . getmypid() . '.sock';
 @unlink($adminSocket);
 putenv('VHTTPD_INTERNAL_ADMIN_SOCKET=' . $adminSocket);
-$server = new VPhp\VHttpd\PhpWorker\Server('/tmp/vhttpd_mcp_feishu_dispatch_test.sock', $fixture);
+$server = new VHttpd\PhpWorker\Server('/tmp/vhttpd_mcp_feishu_dispatch_test.sock', $fixture);
 $responder = static function (string $path): void {
     @unlink($path);
     $server = stream_socket_server('unix://' . $path, $errno, $errstr);
@@ -130,7 +130,7 @@ if (function_exists('pcntl_fork')) {
 $deadline = microtime(true) + 2.0;
 while (microtime(true) < $deadline) {
     clearstatcache(true, $adminSocket);
-    if (is_file($adminSocket)) {
+    if (file_exists($adminSocket)) {
         break;
     }
     usleep(10_000);

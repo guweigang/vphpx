@@ -23,13 +23,14 @@ fn testing_apply_cookies(request &VSlimPsr7ServerRequest, cookies map[string]str
 		merged[key] = value
 	}
 	return clone_psr7_server_request(request, request.method, request.request_target,
-		request.protocol_version, clone_header_values(request.headers), clone_header_names(request.header_names),
-		server_request_body_or_empty(request), server_request_uri_or_default(request),
-		request.server_params_ref, string_map_to_persistent_array(merged), request.query_params_ref,
+		request.protocol_version, clone_header_values(request.headers),
+		clone_header_names(request.header_names), server_request_body_or_empty(request),
+		server_request_uri_or_default(request), request.server_params_ref,
+		string_map_to_persistent_array(merged), request.query_params_ref,
 		request.uploaded_files_ref, request.parsed_body_ref, request.attributes_ref)
 }
 
-fn testing_capture_response_cookie(mut h VSlimTestingHarness, response vphp.RequestBorrowedZBox) {
+fn testing_capture_response_cookie(mut h VSlimTestingHarness, response vphp.PhpValue) {
 	header := testing_response_header(response, 'set-cookie').trim_space()
 	if header == '' {
 		return
@@ -57,134 +58,127 @@ fn testing_build_session_store(app &VSlimApp, cookies map[string]string) VSlimSe
 }
 
 fn testing_store_session_cookie(mut h VSlimTestingHarness, session VSlimSessionStore) {
-	h.cookies[session.cookie_name_value()] = session_encode_values(session.values, session.secret_value())
+	h.cookies[session.cookie_name_value()] = session_encode_values(session.values,
+		session.secret_value())
 }
 
-fn testing_response_object_vars(raw vphp.ZVal) map[string]vphp.ZVal {
-	mut props_box := vphp.PhpFunction.named('get_object_vars').request_owned(vphp.PhpValue.from_zval(raw))
-	props := props_box.take_zval()
-	if !props.is_array() {
+fn testing_response_object_vars(response vphp.PhpValue) map[string]vphp.PhpValue {
+	mut props_value := vphp.PhpFunction.named('get_object_vars').invoke(response)
+	defer {
+		props_value.release()
+	}
+	props := props_value.as_array() or {
 		return {}
 	}
-	mut out := map[string]vphp.ZVal{}
+	mut out := map[string]vphp.PhpValue{}
 	for key in props.assoc_keys() {
-		out[key] = props.get(key) or { continue }
+		out[key] = props.value_at(key).owned()
 	}
 	return out
 }
 
-fn testing_response_status(response vphp.RequestBorrowedZBox) int {
-	raw := response.to_zval()
-	if !raw.is_valid() || !raw.is_object() {
+fn testing_response_status(response vphp.PhpValue) int {
+	if !response.is_valid() || !response.is_object() {
 		return 0
 	}
-	props := testing_response_object_vars(raw)
+	props := testing_response_object_vars(response)
 	if 'status' in props {
 		return props['status'].to_int()
 	}
-	if raw.method_exists('getStatusCode') {
-		return int(vphp.PhpObject.borrowed(raw).with_method_result[vphp.PhpInt, i64]('getStatusCode',
-			fn (z vphp.PhpInt) i64 {
+	obj := response.as_object() or { return 0 }
+	if obj.method_exists('getStatusCode') {
+		return int(obj.with_method_result[vphp.PhpInt, i64]('getStatusCode', fn (z vphp.PhpInt) i64 {
 			return z.value()
 		}) or { 0 })
 	}
 	return 0
 }
 
-fn testing_response_header(response vphp.RequestBorrowedZBox, name string) string {
-	raw := response.to_zval()
-	if !raw.is_valid() || !raw.is_object() {
+fn testing_response_header(response vphp.PhpValue, name string) string {
+	if !response.is_valid() || !response.is_object() {
 		return ''
 	}
-	props := testing_response_object_vars(raw)
+	props := testing_response_object_vars(response)
 	if 'headers' in props {
 		headers_z := props['headers'] or { return '' }
 		headers := headers_z.to_string_map()
 		return headers[VSlimRequest.normalize_header_name(name)] or { '' }
 	}
-	if raw.method_exists('getHeaderLine') {
+	obj := response.as_object() or { return '' }
+	if obj.method_exists('getHeaderLine') {
 		mut name_arg := vphp.PhpString.of(name)
 		defer {
 			name_arg.release()
 		}
-		return vphp.PhpObject.borrowed(raw).with_method_result[vphp.PhpString, string]('getHeaderLine',
-			fn (z vphp.PhpString) string {
+		return obj.with_method_result[vphp.PhpString, string]('getHeaderLine', fn (z vphp.PhpString) string {
 			return z.value()
 		}, name_arg) or { '' }
 	}
-	if raw.method_exists('header') {
+	if obj.method_exists('header') {
 		mut name_arg := vphp.PhpString.of(name)
 		defer {
 			name_arg.release()
 		}
-		return vphp.PhpObject.borrowed(raw).with_method_result[vphp.PhpString, string]('header',
-			fn (z vphp.PhpString) string {
+		return obj.with_method_result[vphp.PhpString, string]('header', fn (z vphp.PhpString) string {
 			return z.value()
 		}, name_arg) or { '' }
 	}
 	return ''
 }
 
-fn testing_response_body(response vphp.RequestBorrowedZBox) string {
-	raw := response.to_zval()
-	if !raw.is_valid() || !raw.is_object() {
+fn testing_response_body(response vphp.PhpValue) string {
+	if !response.is_valid() || !response.is_object() {
 		return ''
 	}
-	props := testing_response_object_vars(raw)
+	props := testing_response_object_vars(response)
 	if 'body' in props {
 		body_z := props['body'] or { return '' }
 		return body_z.to_string()
 	}
-	if raw.method_exists('getBody') {
-		return vphp.PhpObject.borrowed(raw).with_method_result[vphp.PhpValue, string]('getBody',
-			fn (body_z vphp.PhpValue) string {
-			raw_body := body_z.to_zval()
-			if raw_body.is_valid() && raw_body.is_object() && raw_body.method_exists('getContents') {
-				return vphp.PhpObject.borrowed(raw_body).with_method_result[vphp.PhpString, string]('getContents',
-					fn (contents vphp.PhpString) string {
-					return contents.value()
-				}) or { '' }
+	obj := response.as_object() or { return '' }
+	if obj.method_exists('getBody') {
+		return obj.with_method_result[vphp.PhpValue, string]('getBody', fn (body vphp.PhpValue) string {
+			if body.is_valid() && body.is_object() && body.method_exists('getContents') {
+				mut contents := body.call_method('getContents')
+				defer {
+					contents.release()
+				}
+				return contents.to_string()
 			}
-			return raw_body.to_string()
+			return body.to_string()
 		}) or { '' }
 	}
 	return ''
 }
 
 fn testing_new_request(method string, uri string, body string) &VSlimPsr7ServerRequest {
-	mut uri_arg := vphp.PhpString.of(uri)
-	defer {
-		uri_arg.release()
-	}
-	mut server_params_arg := vphp.PhpNull.value()
+	mut server_params_arg := vphp.PhpArray.new()
 	defer {
 		server_params_arg.release()
 	}
-	mut req := new_psr7_server_request(method, uri_arg.to_zval(), server_params_arg.to_zval())
+	mut req := new_psr7_server_request_string(method, uri, server_params_arg)
 	if body == '' {
 		return req
 	}
 	return clone_psr7_server_request(req, req.method, req.request_target, req.protocol_version,
-		clone_header_values(req.headers), clone_header_names(req.header_names), new_psr7_stream(body),
-		server_request_uri_or_default(req), req.server_params_ref, req.cookie_params_ref,
-		req.query_params_ref, req.uploaded_files_ref, req.parsed_body_ref, req.attributes_ref)
+		clone_header_values(req.headers), clone_header_names(req.header_names),
+		new_psr7_stream(body), server_request_uri_or_default(req), req.server_params_ref,
+		req.cookie_params_ref, req.query_params_ref, req.uploaded_files_ref, req.parsed_body_ref,
+		req.attributes_ref)
 }
 
-fn testing_new_json_request(method string, uri string, payload vphp.ZVal) &VSlimPsr7ServerRequest {
-	mut payload_box := vphp.RequestOwnedZBox.adopt_zval(payload)
-	defer {
-		payload_box.release()
-	}
-	payload_json := vphp.PhpJson.encode(payload)
+fn testing_new_json_request(method string, uri string, payload vphp.PhpValue) &VSlimPsr7ServerRequest {
+	payload_json := payload.to_json()
 	mut req := testing_new_request(method, uri, payload_json)
 	mut headers := clone_header_values(req.headers)
 	mut header_names := clone_header_names(req.header_names)
 	headers['content-type'] = ['application/json']
 	header_names['content-type'] = 'Content-Type'
 	return clone_psr7_server_request(req, req.method, req.request_target, req.protocol_version,
-		headers, header_names, server_request_body_or_empty(req), server_request_uri_or_default(req),
-		req.server_params_ref, req.cookie_params_ref, req.query_params_ref, req.uploaded_files_ref,
-		persistent_owned_or_null(payload_box.to_zval()), req.attributes_ref)
+		headers, header_names, server_request_body_or_empty(req),
+		server_request_uri_or_default(req), req.server_params_ref, req.cookie_params_ref,
+		req.query_params_ref, req.uploaded_files_ref, payload.retain(),
+		req.attributes_ref)
 }
 
 @[php_method]
@@ -213,7 +207,7 @@ pub fn (mut h VSlimTestingHarness) container() &VSlimContainer {
 }
 
 @[php_method: 'withService']
-pub fn (mut h VSlimTestingHarness) with_service(id string, value vphp.RequestBorrowedZBox) &VSlimTestingHarness {
+pub fn (mut h VSlimTestingHarness) with_service(id string, value vphp.PhpValue) &VSlimTestingHarness {
 	if h.app_ref == unsafe { nil } {
 		vphp.PhpException.raise_class('RuntimeException', 'testing harness app is not configured',
 			0)
@@ -225,7 +219,7 @@ pub fn (mut h VSlimTestingHarness) with_service(id string, value vphp.RequestBor
 }
 
 @[php_method: 'withFactory']
-pub fn (mut h VSlimTestingHarness) with_factory(id string, callable vphp.RequestBorrowedZBox) &VSlimTestingHarness {
+pub fn (mut h VSlimTestingHarness) with_factory(id string, callable vphp.PhpCallable) &VSlimTestingHarness {
 	if h.app_ref == unsafe { nil } {
 		vphp.PhpException.raise_class('RuntimeException', 'testing harness app is not configured',
 			0)
@@ -290,14 +284,14 @@ pub fn (h &VSlimTestingHarness) cookies() map[string]string {
 }
 
 @[php_method: 'withSession']
-pub fn (mut h VSlimTestingHarness) with_session(values vphp.RequestBorrowedZBox) &VSlimTestingHarness {
+pub fn (mut h VSlimTestingHarness) with_session(values vphp.PhpValue) &VSlimTestingHarness {
 	if h.app_ref == unsafe { nil } {
 		vphp.PhpException.raise_class('RuntimeException', 'testing harness app is not configured',
 			0)
 		return h
 	}
 	mut session := testing_build_session_store(h.app_ref, h.cookies)
-	for key, value in values.to_zval().to_string_map() {
+	for key, value in values.to_string_map() {
 		session.values[key] = value
 	}
 	testing_store_session_cookie(mut h, session)
@@ -332,26 +326,25 @@ pub fn (h &VSlimTestingHarness) request(method string, uri string, body string) 
 
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
 @[php_method: 'jsonRequest']
-pub fn (h &VSlimTestingHarness) json_request(method string, uri string, payload vphp.RequestBorrowedZBox) &VSlimPsr7ServerRequest {
-	return testing_apply_cookies(testing_new_json_request(method, uri, payload.to_zval()),
-		h.cookies)
+pub fn (h &VSlimTestingHarness) json_request(method string, uri string, payload vphp.PhpValue) &VSlimPsr7ServerRequest {
+	return testing_apply_cookies(testing_new_json_request(method, uri, payload), h.cookies)
 }
 
 @[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface']
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method]
-pub fn (h &VSlimTestingHarness) handle(request vphp.RequestBorrowedZBox) &VSlimPsr7Response {
+pub fn (h &VSlimTestingHarness) handle(request vphp.PhpObject) &VSlimPsr7Response {
 	if h.app_ref == unsafe { nil } {
 		return new_psr7_text_response(500, 'testing harness app is not configured')
 	}
-	response := h.app_ref.handle(request)
+	response := h.app_ref.handle_object(request)
 	unsafe {
 		mut writable := &VSlimTestingHarness(h)
-		mut response_z := build_php_psr7_response_object(response)
+		mut response_value := build_php_psr7_response_value(response)
 		defer {
-			response_z.release()
+			response_value.release()
 		}
-		testing_capture_response_cookie(mut writable, vphp.RequestBorrowedZBox.of(response_z))
+		testing_capture_response_cookie(mut writable, response_value)
 	}
 	return response
 }
@@ -364,89 +357,95 @@ pub fn (h &VSlimTestingHarness) handle_request(method string, uri string, body s
 	if h.app_ref == unsafe { nil } {
 		return new_psr7_text_response(500, 'testing harness app is not configured')
 	}
-	mut req_z := build_php_psr7_server_request_object(testing_apply_cookies(testing_new_request(method,
+	mut req_value := build_php_psr7_server_request_value(testing_apply_cookies(testing_new_request(method,
 		uri, body), h.cookies))
 	defer {
-		req_z.release()
+		req_value.release()
 	}
-	return h.app_ref.handle(vphp.RequestBorrowedZBox.of(req_z))
+	request := req_value.as_object() or {
+		return new_psr7_text_response(500, 'testing request could not be wrapped')
+	}
+	return h.app_ref.handle(request)
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method: 'handleJson']
-pub fn (h &VSlimTestingHarness) handle_json(method string, uri string, payload vphp.RequestBorrowedZBox) &VSlimPsr7Response {
+pub fn (h &VSlimTestingHarness) handle_json(method string, uri string, payload vphp.PhpValue) &VSlimPsr7Response {
 	if h.app_ref == unsafe { nil } {
 		return new_psr7_text_response(500, 'testing harness app is not configured')
 	}
-	mut req_z := build_php_psr7_server_request_object(testing_apply_cookies(testing_new_json_request(method,
-		uri, payload.to_zval()), h.cookies))
+	mut req_value := build_php_psr7_server_request_value(testing_apply_cookies(testing_new_json_request(method,
+		uri, payload), h.cookies))
 	defer {
-		req_z.release()
+		req_value.release()
 	}
-	return h.app_ref.handle(vphp.RequestBorrowedZBox.of(req_z))
+	request := req_value.as_object() or {
+		return new_psr7_text_response(500, 'testing request could not be wrapped')
+	}
+	return h.app_ref.handle(request)
 }
 
 @[php_method: 'dispatchJson']
-pub fn (h &VSlimTestingHarness) dispatch_json(method string, uri string, payload vphp.RequestBorrowedZBox) &VSlimResponse {
-	response := to_vslim_response(new_vslim_response_from_psr_response(h.handle_json(method,
-		uri, payload)))
+pub fn (h &VSlimTestingHarness) dispatch_json(method string, uri string, payload vphp.PhpValue) &VSlimResponse {
+	response := to_vslim_response(new_vslim_response_from_psr_response(h.handle_json(method, uri,
+		payload)))
 	unsafe {
 		mut writable := &VSlimTestingHarness(h)
-		mut response_z := build_php_response_object(*response)
+		mut response_value := build_php_response_value(*response)
 		defer {
-			response_z.release()
+			response_value.release()
 		}
-		testing_capture_response_cookie(mut writable, vphp.RequestBorrowedZBox.of(response_z))
+		testing_capture_response_cookie(mut writable, response_value)
 	}
 	return response
 }
 
 @[php_method: 'responseStatus']
-pub fn (h &VSlimTestingHarness) response_status(response vphp.RequestBorrowedZBox) int {
+pub fn (h &VSlimTestingHarness) response_status(response vphp.PhpValue) int {
 	return testing_response_status(response)
 }
 
 @[php_method: 'responseHeader']
-pub fn (h &VSlimTestingHarness) response_header(response vphp.RequestBorrowedZBox, name string) string {
+pub fn (h &VSlimTestingHarness) response_header(response vphp.PhpValue, name string) string {
 	return testing_response_header(response, name)
 }
 
 @[php_method: 'responseBody']
-pub fn (h &VSlimTestingHarness) response_body(response vphp.RequestBorrowedZBox) string {
+pub fn (h &VSlimTestingHarness) response_body(response vphp.PhpValue) string {
 	return testing_response_body(response)
 }
 
 @[php_method: 'responseJson']
-pub fn (h &VSlimTestingHarness) response_json(response vphp.RequestBorrowedZBox) vphp.RequestOwnedZBox {
-	return vphp.RequestOwnedZBox.adopt_zval(vphp.PhpJson.decode_assoc(testing_response_body(response)))
+pub fn (h &VSlimTestingHarness) response_json(response vphp.PhpValue) vphp.PhpValue {
+	return vphp.PhpJson.decode_assoc_value(testing_response_body(response))
 }
 
 @[php_method: 'assertStatus']
-pub fn (h &VSlimTestingHarness) assert_status(response vphp.RequestBorrowedZBox, expected int) &VSlimTestingHarness {
+pub fn (h &VSlimTestingHarness) assert_status(response vphp.PhpValue, expected int) &VSlimTestingHarness {
 	actual := testing_response_status(response)
 	if actual != expected {
-		vphp.PhpException.raise_class('RuntimeException', 'expected response status ${expected}, got ${actual}',
-			0)
+		vphp.PhpException.raise_class('RuntimeException',
+			'expected response status ${expected}, got ${actual}', 0)
 	}
 	return h
 }
 
 @[php_method: 'assertHeader']
-pub fn (h &VSlimTestingHarness) assert_header(response vphp.RequestBorrowedZBox, name string, expected string) &VSlimTestingHarness {
+pub fn (h &VSlimTestingHarness) assert_header(response vphp.PhpValue, name string, expected string) &VSlimTestingHarness {
 	actual := testing_response_header(response, name)
 	if actual != expected {
-		vphp.PhpException.raise_class('RuntimeException', 'expected header ${name}=${expected}, got ${actual}',
-			0)
+		vphp.PhpException.raise_class('RuntimeException',
+			'expected header ${name}=${expected}, got ${actual}', 0)
 	}
 	return h
 }
 
 @[php_method: 'assertBodyContains']
-pub fn (h &VSlimTestingHarness) assert_body_contains(response vphp.RequestBorrowedZBox, needle string) &VSlimTestingHarness {
+pub fn (h &VSlimTestingHarness) assert_body_contains(response vphp.PhpValue, needle string) &VSlimTestingHarness {
 	body := testing_response_body(response)
 	if !body.contains(needle) {
-		vphp.PhpException.raise_class('RuntimeException', 'expected response body to contain ${needle}',
-			0)
+		vphp.PhpException.raise_class('RuntimeException',
+			'expected response body to contain ${needle}', 0)
 	}
 	return h
 }
@@ -469,11 +468,11 @@ pub fn (h &VSlimTestingHarness) dispatch(method string, uri string, body string)
 		uri, body)))
 	unsafe {
 		mut writable := &VSlimTestingHarness(h)
-		mut response_z := build_php_response_object(*response)
+		mut response_value := build_php_response_value(*response)
 		defer {
-			response_z.release()
+			response_value.release()
 		}
-		testing_capture_response_cookie(mut writable, vphp.RequestBorrowedZBox.of(response_z))
+		testing_capture_response_cookie(mut writable, response_value)
 	}
 	return response
 }
@@ -485,7 +484,7 @@ pub fn (h &VSlimTestingHarness) get(uri string) &VSlimResponse {
 
 @[php_method: 'getJson']
 pub fn (h &VSlimTestingHarness) get_json(uri string) &VSlimResponse {
-	return h.dispatch_json('GET', uri, vphp.RequestBorrowedZBox.null())
+	return h.dispatch_json('GET', uri, vphp.PhpValue.null())
 }
 
 @[php_arg_default: 'body=""']
@@ -496,7 +495,7 @@ pub fn (h &VSlimTestingHarness) post(uri string, body string) &VSlimResponse {
 }
 
 @[php_method: 'postJson']
-pub fn (h &VSlimTestingHarness) post_json(uri string, payload vphp.RequestBorrowedZBox) &VSlimResponse {
+pub fn (h &VSlimTestingHarness) post_json(uri string, payload vphp.PhpValue) &VSlimResponse {
 	return h.dispatch_json('POST', uri, payload)
 }
 
@@ -508,7 +507,7 @@ pub fn (h &VSlimTestingHarness) put(uri string, body string) &VSlimResponse {
 }
 
 @[php_method: 'putJson']
-pub fn (h &VSlimTestingHarness) put_json(uri string, payload vphp.RequestBorrowedZBox) &VSlimResponse {
+pub fn (h &VSlimTestingHarness) put_json(uri string, payload vphp.PhpValue) &VSlimResponse {
 	return h.dispatch_json('PUT', uri, payload)
 }
 
@@ -520,7 +519,7 @@ pub fn (h &VSlimTestingHarness) patch(uri string, body string) &VSlimResponse {
 }
 
 @[php_method: 'patchJson']
-pub fn (h &VSlimTestingHarness) patch_json(uri string, payload vphp.RequestBorrowedZBox) &VSlimResponse {
+pub fn (h &VSlimTestingHarness) patch_json(uri string, payload vphp.PhpValue) &VSlimResponse {
 	return h.dispatch_json('PATCH', uri, payload)
 }
 
@@ -532,6 +531,6 @@ pub fn (h &VSlimTestingHarness) delete(uri string, body string) &VSlimResponse {
 }
 
 @[php_method: 'deleteJson']
-pub fn (h &VSlimTestingHarness) delete_json(uri string, payload vphp.RequestBorrowedZBox) &VSlimResponse {
+pub fn (h &VSlimTestingHarness) delete_json(uri string, payload vphp.PhpValue) &VSlimResponse {
 	return h.dispatch_json('DELETE', uri, payload)
 }

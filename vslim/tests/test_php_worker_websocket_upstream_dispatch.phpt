@@ -27,7 +27,7 @@ $fixture = sys_get_temp_dir() . '/vhttpd_websocket_upstream_fixture_' . getmypid
 file_put_contents($fixture, <<<'PHP'
 <?php
 declare(strict_types=1);
-use VPhp\VSlim\App\Feishu\BotAdapter;
+use VSlim\App\Feishu\BotAdapter;
 return [
     'websocket_upstream' => static function (array $frame): array {
         $message = BotAdapter::parseTextMessage($frame);
@@ -143,7 +143,7 @@ return [
     },
 ];
 PHP);
-$server = new VPhp\VHttpd\PhpWorker\Server('/tmp/vhttpd_websocket_upstream_test.sock', $fixture);
+$server = new VHttpd\PhpWorker\Server('/tmp/vhttpd_websocket_upstream_test.sock', $fixture);
 
 $ping = $server->dispatchRequest([
     'id' => 'upstream-1',

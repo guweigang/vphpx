@@ -2,114 +2,120 @@ module main
 
 import vphp
 
-fn live_call_method(obj vphp.ZVal, method string, args ...vphp.PhpArgInput) bool {
-	if !obj.is_object() || !obj.method_exists(method) {
+fn live_call_method(obj vphp.PhpObject, method string, args ...vphp.PhpArgInput) bool {
+	if !obj.is_valid() || !obj.method_exists(method) {
 		return false
 	}
-	return vphp.PhpObject.borrowed(obj).with_method_result[vphp.PhpValue, bool](method,
-		fn (_ vphp.PhpValue) bool {
-		return true
-	}, ...args) or { false }
+	mut result := obj.call_method(method, ...args)
+	defer {
+		result.release()
+	}
+	return result.is_valid()
 }
 
-fn dispatch_live_route_handler(handler vphp.ZVal, payload vphp.RequestBorrowedZBox) !vphp.ZVal {
+fn dispatch_live_route_handler(handler vphp.PhpObject, payload vphp.PhpValue) !vphp.PhpValue {
 	socket_obj := vphp.PhpClass.named('VSlim\\Live\\Socket').construct() or {
 		return error('Live socket bootstrap failed')
 	}
-	socket := socket_obj.to_zval()
-	payload_arg := vphp.PhpValue.from_request_borrowed_zbox(payload)
-	socket_arg := vphp.PhpValue.from_zval(socket)
+	payload_arg := payload.owned()
+	defer {
+		payload_arg.release()
+		socket_obj.release()
+	}
 	if handler.method_exists('mount') {
-		mut mount_res := vphp.PhpObject.borrowed(handler).method_request_owned('mount',
-			payload_arg, socket_arg)
+		mut mount_res := handler.call_method('mount', payload_arg, socket_obj)
 		if mount_res.is_valid() && !mount_res.is_null() && !mount_res.is_undef() {
-			return mount_res.take_zval()
+			return mount_res.owned()
 		}
 		mount_res.release()
 	}
 	if handler.method_exists('render') {
-		mut res := vphp.PhpObject.borrowed(handler).method_request_owned('render',
-			payload_arg, socket_arg)
+		mut res := handler.call_method('render', payload_arg, socket_obj)
 		if res.is_string() {
-			return build_php_response_object(VSlimResponse{
+			return build_php_response_value(VSlimResponse{
 				status:       200
-				body:         res.to_zval().get_string()
+				body:         res.to_string()
 				content_type: 'text/html; charset=utf-8'
 				headers:      {
 					'content-type': 'text/html; charset=utf-8'
 				}
 			})
 		}
-		return res.take_zval()
+		return res.owned()
 	}
 	if handler.method_exists('__invoke') {
-		mut result := vphp.PhpObject.borrowed(handler).method_request_owned('__invoke',
-			payload_arg, socket_arg)
-		return result.take_zval()
+		mut result := handler.call_method('__invoke', payload_arg, socket_obj)
+		return result.owned()
 	}
 	return error('Live handler must define render() or __invoke()')
 }
 
-fn dispatch_live_websocket_handler(mut app VSlimApp, handler vphp.ZVal, event string, frame vphp.ZVal, conn vphp.ZVal) vphp.ZVal {
+fn dispatch_live_websocket_handler(mut app VSlimApp, handler vphp.PhpValue, event string, frame vphp.PhpArray, conn vphp.PhpObject) vphp.PhpValue {
 	if !handler.is_object() {
-		return vphp.RequestOwnedZBox.new_null().to_zval()
+		return vphp.PhpValue.null()
 	}
 	match event {
 		'open' {
-			if conn.is_object() && conn.method_exists('accept') {
+			if conn.is_valid() && conn.method_exists('accept') {
 				live_call_method(conn, 'accept')
 			}
-			return vphp.RequestOwnedZBox.new_null().to_zval()
+			return vphp.PhpValue.null()
 		}
 		'message' {
-			data := zval_string_key(frame, 'data', '')
+			data := frame.string_at('data', '')
 			message := decode_live_message(data) or {
-				return vphp.RequestOwnedZBox.new_string(live_protocol_error('invalid_json',
-					'Invalid JSON message')).to_zval()
+				return vphp.PhpValue.string(live_protocol_error('invalid_json', 'Invalid JSON message'))
 			}
-			match zval_string_key(message, 'type', '') {
+			match message.string_at('type', '') {
 				'join' {
-					return vphp.RequestOwnedZBox.new_string(dispatch_live_join(mut app,
-						handler, frame, conn, message)).to_zval()
+					return handler.with_object[vphp.PhpValue](fn [mut app, frame, conn, message] (handler_obj vphp.PhpObject) vphp.PhpValue {
+						return vphp.PhpValue.string(dispatch_live_join(mut app, handler_obj, frame,
+							conn, message))
+					}) or { vphp.PhpValue.null() }
 				}
 				'event' {
-					return vphp.RequestOwnedZBox.new_string(dispatch_live_event(mut app,
-						handler, frame, conn, message)).to_zval()
+					return handler.with_object[vphp.PhpValue](fn [mut app, frame, conn, message] (handler_obj vphp.PhpObject) vphp.PhpValue {
+						return vphp.PhpValue.string(dispatch_live_event(mut app, handler_obj, frame,
+							conn, message))
+					}) or { vphp.PhpValue.null() }
 				}
 				'heartbeat' {
-					return vphp.RequestOwnedZBox.new_string(live_heartbeat_response()).to_zval()
+					return vphp.PhpValue.string(live_heartbeat_response())
 				}
 				else {
-					return vphp.RequestOwnedZBox.new_string(live_protocol_error('unsupported_type',
-						'Unsupported live message type')).to_zval()
+					return vphp.PhpValue.string(live_protocol_error('unsupported_type',
+						'Unsupported live message type'))
 				}
 			}
 		}
 		'info' {
-			data := zval_string_key(frame, 'data', '')
+			data := frame.string_at('data', '')
 			message := decode_live_message(data) or {
-				return vphp.RequestOwnedZBox.new_string(live_protocol_error('invalid_info',
-					'Invalid info message')).to_zval()
+				return vphp.PhpValue.string(live_protocol_error('invalid_info', 'Invalid info message'))
 			}
-			return vphp.RequestOwnedZBox.new_string(dispatch_live_info(mut app, handler,
-				frame, conn, message)).to_zval()
+			return handler.with_object[vphp.PhpValue](fn [mut app, frame, conn, message] (handler_obj vphp.PhpObject) vphp.PhpValue {
+				return vphp.PhpValue.string(dispatch_live_info(mut app, handler_obj, frame, conn,
+					message))
+			}) or { vphp.PhpValue.null() }
 		}
 		'close' {
-			conn_id := zval_string_key(frame, 'id', '').trim_space()
+			conn_id := frame.string_at('id', '').trim_space()
 			clear_live_socket_state(conn)
 			if conn_id != '' && conn_id in app.live_ws_sockets {
+				mut socket_owned := app.live_ws_sockets[conn_id] or { vphp.PhpObject.invalid() }
+				socket_owned.release()
 				app.live_ws_sockets.delete(conn_id)
 			}
-			return vphp.RequestOwnedZBox.new_null().to_zval()
+			return vphp.PhpValue.null()
 		}
 		else {
-			return vphp.RequestOwnedZBox.new_null().to_zval()
+			return vphp.PhpValue.null()
 		}
 	}
 }
 
-fn dispatch_live_join(mut app VSlimApp, handler vphp.ZVal, frame vphp.ZVal, conn vphp.ZVal, message vphp.ZVal) string {
-	socket_z, mut socket := live_socket_for_message(mut app, handler, frame, message)
+fn dispatch_live_join(mut app VSlimApp, handler vphp.PhpObject, frame vphp.PhpArray, conn vphp.PhpObject, message vphp.PhpValue) string {
+	socket_obj, mut socket := live_socket_for_message(mut app, handler, frame, message)
 	socket.clear_patches()
 	socket.clear_events()
 	socket.clear_flashes()
@@ -117,18 +123,18 @@ fn dispatch_live_join(mut app VSlimApp, handler vphp.ZVal, frame vphp.ZVal, conn
 	socket.clear_redirect()
 	socket.clear_navigate()
 	req := build_live_request(frame, message, socket)
-	req_z := build_php_request_object(req, map[string]string{})
+	req_value := build_php_request_value(req, map[string]string{})
 	if handler.method_exists('mount') {
-		live_call_method(handler, 'mount', vphp.PhpValue.from_zval(req_z), vphp.PhpValue.from_zval(socket_z))
+		live_call_method(handler, 'mount', req_value, socket_obj)
 	}
 	persist_live_socket_state(handler, conn, socket)
 	execute_live_socket_pubsub(conn, socket)
-	html := render_live_html(handler, req_z, socket_z, socket)
+	html := render_live_html(handler, req_value, socket_obj, socket)
 	return live_patch_response(socket, html, live_default_root_id(handler, socket))
 }
 
-fn dispatch_live_event(mut app VSlimApp, handler vphp.ZVal, frame vphp.ZVal, conn vphp.ZVal, message vphp.ZVal) string {
-	socket_z, mut socket := live_socket_for_event(mut app, handler, frame)
+fn dispatch_live_event(mut app VSlimApp, handler vphp.PhpObject, frame vphp.PhpArray, conn vphp.PhpObject, message vphp.PhpValue) string {
+	socket_obj, mut socket := live_socket_for_event(mut app, handler, frame)
 	socket.clear_patches()
 	socket.clear_events()
 	socket.clear_flashes()
@@ -136,23 +142,25 @@ fn dispatch_live_event(mut app VSlimApp, handler vphp.ZVal, frame vphp.ZVal, con
 	socket.clear_redirect()
 	socket.clear_navigate()
 	req := build_live_request(frame, message, socket)
-	req_z := build_php_request_object(req, map[string]string{})
-	name_z := vphp.RequestOwnedZBox.new_string(zval_string_key(message, 'event', '')).to_zval()
-	payload := zval_key(message, 'payload')
-	if dispatch_live_component_event(handler, payload, name_z, socket_z) {
+	req_value := build_php_request_value(req, map[string]string{})
+	mut name_arg := vphp.PhpString.of(message.string_at('event', ''))
+	defer {
+		name_arg.release()
+	}
+	payload := message.value_at('payload')
+	if dispatch_live_component_event(handler, payload, name_arg, socket_obj) {
 		// handled by target component
 	} else if handler.method_exists('handleEvent') {
-		live_call_method(handler, 'handleEvent', vphp.PhpValue.from_zval(name_z),
-			vphp.PhpValue.from_zval(payload), vphp.PhpValue.from_zval(socket_z))
+		live_call_method(handler, 'handleEvent', name_arg, payload, socket_obj)
 	}
 	persist_live_socket_state(handler, conn, socket)
 	execute_live_socket_pubsub(conn, socket)
-	html := render_live_html(handler, req_z, socket_z, socket)
+	html := render_live_html(handler, req_value, socket_obj, socket)
 	return live_patch_response(socket, html, live_default_root_id(handler, socket))
 }
 
-fn dispatch_live_info(mut app VSlimApp, handler vphp.ZVal, frame vphp.ZVal, conn vphp.ZVal, message vphp.ZVal) string {
-	socket_z, mut socket := live_socket_for_event(mut app, handler, frame)
+fn dispatch_live_info(mut app VSlimApp, handler vphp.PhpObject, frame vphp.PhpArray, conn vphp.PhpObject, message vphp.PhpValue) string {
+	socket_obj, mut socket := live_socket_for_event(mut app, handler, frame)
 	socket.clear_patches()
 	socket.clear_events()
 	socket.clear_flashes()
@@ -160,244 +168,236 @@ fn dispatch_live_info(mut app VSlimApp, handler vphp.ZVal, frame vphp.ZVal, conn
 	socket.clear_redirect()
 	socket.clear_navigate()
 	req := build_live_request(frame, message, socket)
-	req_z := build_php_request_object(req, map[string]string{})
-	mut payload := zval_key(message, 'payload')
-	room := zval_string_key(frame, 'room', '').trim_space()
+	req_value := build_php_request_value(req, map[string]string{})
+	mut payload := message.value_at('payload')
+	room := frame.string_at('room', '').trim_space()
 	if room != '' {
 		payload = live_info_payload_with_topic(payload, room)
 	}
-	name_z := vphp.RequestOwnedZBox.new_string(zval_string_key(message, 'event', '')).to_zval()
-	if dispatch_live_component_info(handler, payload, name_z, socket_z) {
+	mut name_arg := vphp.PhpString.of(message.string_at('event', ''))
+	defer {
+		name_arg.release()
+	}
+	if dispatch_live_component_info(handler, payload, name_arg, socket_obj) {
 		// handled by target component
 	} else if handler.method_exists('handleInfo') {
-		live_call_method(handler, 'handleInfo', vphp.PhpValue.from_zval(name_z),
-			vphp.PhpValue.from_zval(payload), vphp.PhpValue.from_zval(socket_z))
+		live_call_method(handler, 'handleInfo', name_arg, payload, socket_obj)
 	}
 	persist_live_socket_state(handler, conn, socket)
 	execute_live_socket_pubsub(conn, socket)
-	html := render_live_html(handler, req_z, socket_z, socket)
+	html := render_live_html(handler, req_value, socket_obj, socket)
 	return live_patch_response(socket, html, live_default_root_id(handler, socket))
 }
 
-fn render_live_html(handler vphp.ZVal, req_z vphp.ZVal, socket_z vphp.ZVal, socket &VSlimLiveSocket) string {
+fn render_live_html(handler vphp.PhpObject, request vphp.PhpValue, socket_obj vphp.PhpObject, socket &VSlimLiveSocket) string {
 	if handler.method_exists('render') {
-		mut rendered := vphp.PhpObject.borrowed(handler).method_request_owned('render',
-			vphp.PhpValue.from_zval(req_z), vphp.PhpValue.from_zval(socket_z))
+		mut rendered := handler.call_method('render', request, socket_obj)
 		if rendered.is_string() {
-			return rendered.to_zval().to_string()
+			return rendered.to_string()
 		}
-		body, ok := normalize_php_route_response_body(rendered.to_zval())
+		body, ok := normalize_php_route_response_body_value(rendered)
 		if ok {
 			return body
 		}
 	}
-	if is_live_view_object(handler) {
-		mut live := handler.to_object[VSlimLiveView]() or { return '' }
+	if is_live_view_value(handler.to_value()) {
+		mut live := handler.to_v_object[VSlimLiveView]() or { return '' }
 		return live.html(socket)
 	}
 	return ''
 }
 
-fn dispatch_live_component_event(handler vphp.ZVal, payload vphp.ZVal, event_name vphp.ZVal, socket_z vphp.ZVal) bool {
+fn dispatch_live_component_event(handler vphp.PhpObject, payload vphp.PhpValue, event_name vphp.PhpString, socket_obj vphp.PhpObject) bool {
 	target := live_component_target(payload)
 	if target == '' {
 		return false
 	}
-	target_z := vphp.RequestOwnedZBox.new_string(target).to_zval()
+	mut target_arg := vphp.PhpString.of(target)
+	defer {
+		target_arg.release()
+	}
 	if handler.method_exists('component') {
-		mut component := vphp.PhpObject.borrowed(handler).method_request_owned('component',
-			vphp.PhpValue.from_zval(target_z), vphp.PhpValue.from_zval(socket_z))
-		if component.is_object() {
-			bind_live_component_socket(component.to_zval(), socket_z)
+		mut component := handler.call_method('component', target_arg, socket_obj)
+		defer {
+			component.release()
 		}
-		if component.is_object() && live_component_handles_event(component.to_zval()) {
-			if component.method_exists('handleEvent') {
-				live_call_method(component.to_zval(), 'handleEvent', vphp.PhpValue.from_zval(event_name),
-					vphp.PhpValue.from_zval(payload), vphp.PhpValue.from_zval(socket_z))
+		if component_obj := component.as_object() {
+			bind_live_component_socket(component_obj, socket_obj)
+			if live_component_handles_event(component_obj)
+				&& component_obj.method_exists('handleEvent') {
+				live_call_method(component_obj, 'handleEvent', event_name,
+					payload, socket_obj)
+				return true
 			}
-			return true
 		}
 	}
 	if handler.method_exists('handleComponentEvent') {
-		live_call_method(handler, 'handleComponentEvent', vphp.PhpValue.from_zval(target_z),
-			vphp.PhpValue.from_zval(event_name), vphp.PhpValue.from_zval(payload),
-			vphp.PhpValue.from_zval(socket_z))
+		live_call_method(handler, 'handleComponentEvent', target_arg, event_name,
+			payload, socket_obj)
 		return true
 	}
 	return false
 }
 
-fn dispatch_live_component_info(handler vphp.ZVal, payload vphp.ZVal, event_name vphp.ZVal, socket_z vphp.ZVal) bool {
+fn dispatch_live_component_info(handler vphp.PhpObject, payload vphp.PhpValue, event_name vphp.PhpString, socket_obj vphp.PhpObject) bool {
 	target := live_component_target(payload)
 	if target == '' {
 		return false
 	}
-	target_z := vphp.RequestOwnedZBox.new_string(target).to_zval()
+	mut target_arg := vphp.PhpString.of(target)
+	defer {
+		target_arg.release()
+	}
 	if handler.method_exists('component') {
-		mut component := vphp.PhpObject.borrowed(handler).method_request_owned('component',
-			vphp.PhpValue.from_zval(target_z), vphp.PhpValue.from_zval(socket_z))
-		if component.is_object() {
-			bind_live_component_socket(component.to_zval(), socket_z)
+		mut component := handler.call_method('component', target_arg, socket_obj)
+		defer {
+			component.release()
 		}
-		if component.is_object() && live_component_handles_info(component.to_zval()) {
-			if component.method_exists('handleInfo') {
-				live_call_method(component.to_zval(), 'handleInfo', vphp.PhpValue.from_zval(event_name),
-					vphp.PhpValue.from_zval(payload), vphp.PhpValue.from_zval(socket_z))
+		if component_obj := component.as_object() {
+			bind_live_component_socket(component_obj, socket_obj)
+			if live_component_handles_info(component_obj)
+				&& component_obj.method_exists('handleInfo') {
+				live_call_method(component_obj, 'handleInfo', event_name,
+					payload, socket_obj)
+				return true
 			}
-			return true
 		}
 	}
 	if handler.method_exists('handleComponentInfo') {
-		live_call_method(handler, 'handleComponentInfo', vphp.PhpValue.from_zval(target_z),
-			vphp.PhpValue.from_zval(event_name), vphp.PhpValue.from_zval(payload),
-			vphp.PhpValue.from_zval(socket_z))
+		live_call_method(handler, 'handleComponentInfo', target_arg, event_name,
+			payload, socket_obj)
 		return true
 	}
 	return false
 }
 
-fn bind_live_component_socket(component vphp.ZVal, socket_z vphp.ZVal) {
-	if !component.is_object() {
-		return
-	}
+fn bind_live_component_socket(component vphp.PhpObject, socket_obj vphp.PhpObject) {
 	if component.method_exists('bindSocket') {
-		live_call_method(component, 'bindSocket', vphp.PhpValue.from_zval(socket_z))
+		live_call_method(component, 'bindSocket', socket_obj)
 	}
 }
 
-fn live_component_target(payload vphp.ZVal) string {
+fn live_component_target(payload vphp.PhpValue) string {
 	if !payload.is_valid() || payload.is_null() || payload.is_undef() || !payload.is_array() {
 		return ''
 	}
-	target := zval_string_key(payload, 'target', '').trim_space()
+	target := payload.string_at('target', '').trim_space()
 	if !target.starts_with('component:') {
 		return ''
 	}
 	return target.all_after('component:').trim_space()
 }
 
-fn live_component_handles_event(component vphp.ZVal) bool {
-	if !component.is_object() {
-		return false
-	}
+fn live_component_handles_event(component vphp.PhpObject) bool {
 	return component.method_exists('handleEvent')
 }
 
-fn live_component_handles_info(component vphp.ZVal) bool {
-	if !component.is_object() {
-		return false
-	}
+fn live_component_handles_info(component vphp.PhpObject) bool {
 	return component.method_exists('handleInfo')
 }
 
-fn build_live_request(frame vphp.ZVal, message vphp.ZVal, socket &VSlimLiveSocket) &VSlimRequest {
-	raw_path := zval_string_key(message, 'path', socket.raw_path)
+fn build_live_request(frame vphp.PhpArray, message vphp.PhpValue, socket &VSlimLiveSocket) &VSlimRequest {
+	raw_path := message.string_at('path', socket.raw_path)
 	mut req := new_vslim_request('GET', raw_path, '')
-	req.set_headers(vphp.RequestBorrowedZBox.of(zval_key(frame, 'headers')))
-	req.set_remote_addr(zval_string_key(frame, 'remote_addr', ''))
-	req.set_scheme(zval_string_key(frame, 'scheme', ''))
-	req.set_host(zval_string_key(frame, 'host', ''))
-	req.set_port(zval_string_key(frame, 'port', ''))
+	req.set_headers(frame.value_at('headers').as_array() or { vphp.PhpArray.empty() })
+	req.set_remote_addr(frame.string_at('remote_addr', ''))
+	req.set_scheme(frame.string_at('scheme', ''))
+	req.set_host(frame.string_at('host', ''))
+	req.set_port(frame.string_at('port', ''))
 	return req
 }
 
-fn live_socket_for_message(mut app VSlimApp, handler vphp.ZVal, frame vphp.ZVal, message vphp.ZVal) (vphp.ZVal, &VSlimLiveSocket) {
+fn live_socket_for_message(mut app VSlimApp, handler vphp.PhpObject, frame vphp.PhpArray, message vphp.PhpValue) (vphp.PhpObject, &VSlimLiveSocket) {
 	if live_uses_dispatch(frame) {
 		return live_socket_from_frame_metadata(handler, frame, message)
 	}
-	conn_id := zval_string_key(frame, 'id', '').trim_space()
+	conn_id := frame.string_at('id', '').trim_space()
 	if conn_id != '' && conn_id in app.live_ws_sockets {
-		socket_owned := app.live_ws_sockets[conn_id] or { vphp.PersistentOwnedZBox.new_null() }
-		mut socket_request := socket_owned.clone_request_owned()
-		socket_z := socket_request.take_zval()
-		mut existing := socket_z.to_object[VSlimLiveSocket]() or { unsafe { nil } }
+		socket_owned := app.live_ws_sockets[conn_id] or { vphp.PhpObject.invalid() }
+		socket_obj := socket_owned.owned()
+		mut existing := socket_obj.to_v_object[VSlimLiveSocket]() or { unsafe { nil } }
 		if existing != unsafe { nil } {
 			existing.connected = true
-			existing.raw_path = live_normalize_target(zval_string_key(message, 'path',
-				existing.raw_path))
-			root_id := zval_string_key(message, 'root_id', existing.root_id)
+			existing.raw_path = live_normalize_target(message.string_at('path', existing.raw_path))
+			root_id := message.string_at('root_id', existing.root_id)
 			if root_id != '' {
 				existing.root_id = root_id
 			}
-			return socket_z, existing
+			return socket_obj, existing
 		}
 	}
 	socket_obj := vphp.PhpClass.named('VSlim\\Live\\Socket').construct() or {
-		return vphp.RequestOwnedZBox.new_null().to_zval(), unsafe { nil }
+		return vphp.PhpObject.invalid(), unsafe { nil }
 	}
-	socket_z := socket_obj.to_zval()
-	mut created := socket_z.to_object[VSlimLiveSocket]() or { unsafe { nil } }
+	mut created := socket_obj.to_v_object[VSlimLiveSocket]() or { unsafe { nil } }
 	if created == unsafe { nil } {
-		return vphp.RequestOwnedZBox.new_null().to_zval(), unsafe { nil }
+		return vphp.PhpObject.invalid(), unsafe { nil }
 	}
 	created.id = conn_id
 	created.connected = true
-	created.raw_path = live_normalize_target(zval_string_key(message, 'path', zval_string_key(frame,
-		'path', '/')))
-	mut root_id := zval_string_key(message, 'root_id', '')
+	created.raw_path =
+		live_normalize_target(message.string_at('path', frame.string_at('path', '/')))
+	mut root_id := message.string_at('root_id', '')
 	if root_id == '' {
 		root_id = live_view_root_id(handler)
 	}
 	created.root_id = root_id
 	if conn_id != '' {
-		app.live_ws_sockets[conn_id] = vphp.PersistentOwnedZBox.from_object_zval(socket_z)
+		app.live_ws_sockets[conn_id] = socket_obj.retain()
 	}
-	return socket_z, created
+	return socket_obj, created
 }
 
-fn live_socket_for_event(mut app VSlimApp, handler vphp.ZVal, frame vphp.ZVal) (vphp.ZVal, &VSlimLiveSocket) {
+fn live_socket_for_event(mut app VSlimApp, handler vphp.PhpObject, frame vphp.PhpArray) (vphp.PhpObject, &VSlimLiveSocket) {
 	if live_uses_dispatch(frame) {
-		return live_socket_from_frame_metadata(handler, frame, zval_key(frame, 'metadata'))
+		return live_socket_from_frame_metadata(handler, frame, frame.value_at('metadata'))
 	}
-	conn_id := zval_string_key(frame, 'id', '').trim_space()
+	conn_id := frame.string_at('id', '').trim_space()
 	if conn_id != '' && conn_id in app.live_ws_sockets {
-		socket_owned := app.live_ws_sockets[conn_id] or { vphp.PersistentOwnedZBox.new_null() }
-		mut socket_request := socket_owned.clone_request_owned()
-		socket_z := socket_request.take_zval()
-		mut existing := socket_z.to_object[VSlimLiveSocket]() or { unsafe { nil } }
+		socket_owned := app.live_ws_sockets[conn_id] or { vphp.PhpObject.invalid() }
+		socket_obj := socket_owned.owned()
+		mut existing := socket_obj.to_v_object[VSlimLiveSocket]() or { unsafe { nil } }
 		if existing != unsafe { nil } {
 			existing.connected = true
-			return socket_z, existing
+			return socket_obj, existing
 		}
 	}
 	socket_obj := vphp.PhpClass.named('VSlim\\Live\\Socket').construct() or {
-		return vphp.RequestOwnedZBox.new_null().to_zval(), unsafe { nil }
+		return vphp.PhpObject.invalid(), unsafe { nil }
 	}
-	socket_z := socket_obj.to_zval()
-	mut created := socket_z.to_object[VSlimLiveSocket]() or { unsafe { nil } }
+	mut created := socket_obj.to_v_object[VSlimLiveSocket]() or { unsafe { nil } }
 	if created == unsafe { nil } {
-		return vphp.RequestOwnedZBox.new_null().to_zval(), unsafe { nil }
+		return vphp.PhpObject.invalid(), unsafe { nil }
 	}
 	created.id = conn_id
 	created.connected = true
-	created.raw_path = live_normalize_target(zval_string_key(frame, 'path', '/'))
+	created.raw_path = live_normalize_target(frame.string_at('path', '/'))
 	created.root_id = live_view_root_id(handler)
 	if conn_id != '' {
-		app.live_ws_sockets[conn_id] = vphp.PersistentOwnedZBox.from_object_zval(socket_z)
+		app.live_ws_sockets[conn_id] = socket_obj.retain()
 	}
-	return socket_z, created
+	return socket_obj, created
 }
 
-fn live_uses_dispatch(frame vphp.ZVal) bool {
-	return zval_string_key(frame, 'mode', '').trim_space().to_lower() == 'websocket_dispatch'
+fn live_uses_dispatch(frame vphp.PhpArray) bool {
+	return frame.string_at('mode', '').trim_space().to_lower() == 'websocket_dispatch'
 }
 
-fn live_socket_from_frame_metadata(handler vphp.ZVal, frame vphp.ZVal, message vphp.ZVal) (vphp.ZVal, &VSlimLiveSocket) {
+fn live_socket_from_frame_metadata(handler vphp.PhpObject, frame vphp.PhpArray, message vphp.PhpValue) (vphp.PhpObject, &VSlimLiveSocket) {
 	socket_obj := vphp.PhpClass.named('VSlim\\Live\\Socket').construct() or {
-		return vphp.RequestOwnedZBox.new_null().to_zval(), unsafe { nil }
+		return vphp.PhpObject.invalid(), unsafe { nil }
 	}
-	socket_z := socket_obj.to_zval()
-	mut created := socket_z.to_object[VSlimLiveSocket]() or { unsafe { nil } }
+	mut created := socket_obj.to_v_object[VSlimLiveSocket]() or { unsafe { nil } }
 	if created == unsafe { nil } {
-		return vphp.RequestOwnedZBox.new_null().to_zval(), unsafe { nil }
+		return vphp.PhpObject.invalid(), unsafe { nil }
 	}
-	created.id = zval_string_key(frame, 'id', '').trim_space()
+	created.id = frame.string_at('id', '').trim_space()
 	created.connected = true
-	metadata := zval_key(frame, 'metadata')
+	metadata := frame.value_at('metadata')
 	session_meta := decode_live_session_metadata(metadata)
-	path_from_message := live_normalize_target(zval_string_key(message, 'path', ''))
+	path_from_message := live_normalize_target(message.string_at('path', ''))
 	path_from_meta := live_normalize_target(session_meta['target'] or { '' })
-	path_from_frame := live_normalize_target(zval_string_key(frame, 'path', '/'))
+	path_from_frame := live_normalize_target(frame.string_at('path', '/'))
 	if path_from_message != '' && path_from_message != '/' {
 		created.raw_path = path_from_message
 	} else if path_from_meta != '' && path_from_meta != '/' {
@@ -405,7 +405,7 @@ fn live_socket_from_frame_metadata(handler vphp.ZVal, frame vphp.ZVal, message v
 	} else {
 		created.raw_path = path_from_frame
 	}
-	root_from_message := zval_string_key(message, 'root_id', '').trim_space()
+	root_from_message := message.string_at('root_id', '').trim_space()
 	root_from_meta := (session_meta['root_id'] or { '' }).trim_space()
 	if root_from_message != '' {
 		created.root_id = root_from_message
@@ -416,10 +416,10 @@ fn live_socket_from_frame_metadata(handler vphp.ZVal, frame vphp.ZVal, message v
 	}
 	for key, value in decode_live_assigns_metadata(metadata) {
 		mut value_arg := vphp.PhpString.of(value)
-		created.assign(key, value_arg.to_borrowed_zbox())
+		created.assign_string(key, value_arg)
 		value_arg.release()
 	}
-	return socket_z, created
+	return socket_obj, created
 }
 
 const live_meta_session_key = '_vslim_live_session'
@@ -427,8 +427,8 @@ const live_meta_assigns_key = '_vslim_live_assigns'
 const live_meta_root_key = '_vslim_live_root'
 const live_meta_path_key = '_vslim_live_path'
 
-fn persist_live_socket_state(handler vphp.ZVal, conn vphp.ZVal, socket &VSlimLiveSocket) {
-	if !conn.is_object() {
+fn persist_live_socket_state(handler vphp.PhpObject, conn vphp.PhpObject, socket &VSlimLiveSocket) {
+	if !conn.is_valid() {
 		return
 	}
 	session_json := encode_live_session(handler, socket)
@@ -440,70 +440,69 @@ fn persist_live_socket_state(handler vphp.ZVal, conn vphp.ZVal, socket &VSlimLiv
 	defer {
 		session_arg.release()
 	}
-	vphp.PhpObject.borrowed(conn).with_method_result[vphp.PhpValue, bool]('setMeta',
-		fn (result vphp.PhpValue) bool {
-		return result.to_zval().is_valid()
+	conn.with_method_result[vphp.PhpValue, bool]('setMeta', fn (result vphp.PhpValue) bool {
+		return result.is_valid()
 	}, key_arg, session_arg) or {}
 }
 
-fn clear_live_socket_state(conn vphp.ZVal) {
-	if !conn.is_object() {
+fn clear_live_socket_state(conn vphp.PhpObject) {
+	if !conn.is_valid() {
 		return
 	}
 	for key in [live_meta_session_key, live_meta_assigns_key, live_meta_root_key, live_meta_path_key] {
 		mut key_arg := vphp.PhpString.of(key)
-		vphp.PhpObject.borrowed(conn).with_method_result[vphp.PhpValue, bool]('clearMeta',
-			fn (result vphp.PhpValue) bool {
-			return result.to_zval().is_valid()
+		conn.with_method_result[vphp.PhpValue, bool]('clearMeta', fn (result vphp.PhpValue) bool {
+			return result.is_valid()
 		}, key_arg) or {}
 		key_arg.release()
 	}
 }
 
-fn decode_live_session_metadata(metadata vphp.ZVal) map[string]string {
-	session_json := zval_string_key(metadata, live_meta_session_key, '').trim_space()
+fn decode_live_session_metadata(metadata vphp.PhpValue) map[string]string {
+	session_json := metadata.string_at(live_meta_session_key, '').trim_space()
 	if session_json == '' {
 		return map[string]string{}
 	}
-	session_z := decode_live_message(session_json) or { vphp.RequestOwnedZBox.new_null().to_zval() }
+	session_z := decode_live_message(session_json) or { vphp.PhpValue.null() }
 	if !session_z.is_valid() || session_z.is_null() || session_z.is_undef() || !session_z.is_array() {
 		return map[string]string{}
 	}
 	mut out := map[string]string{}
-	for key in session_z.assoc_keys() {
+	session_arr := session_z.as_array() or { vphp.PhpArray.empty() }
+	for key in session_arr.assoc_keys() {
 		if key == 'assigns' {
 			continue
 		}
-		out[key] = zval_key(session_z, key).to_string()
+		out[key] = session_z.value_at(key).to_string()
 	}
 	return out
 }
 
-fn decode_live_assigns_metadata(metadata vphp.ZVal) map[string]string {
-	session_json := zval_string_key(metadata, live_meta_session_key, '').trim_space()
+fn decode_live_assigns_metadata(metadata vphp.PhpValue) map[string]string {
+	session_json := metadata.string_at(live_meta_session_key, '').trim_space()
 	if session_json != '' {
 		session_z := decode_live_message(session_json) or {
-			vphp.RequestOwnedZBox.new_null().to_zval()
+			vphp.PhpValue.null()
 		}
-		assigns_z := zval_key(session_z, 'assigns')
+		assigns_z := session_z.value_at('assigns')
 		if assigns_z.is_valid() && !assigns_z.is_null() && !assigns_z.is_undef()
 			&& assigns_z.is_array() {
-			return zval_string_map(assigns_z)
+			return php_value_string_map(assigns_z)
 		}
 	}
-	assigns_json := zval_string_key(metadata, live_meta_assigns_key, '')
+	assigns_json := metadata.string_at(live_meta_assigns_key, '')
 	if assigns_json.trim_space() == '' {
 		return map[string]string{}
 	}
-	assigns_z := decode_live_message(assigns_json) or { vphp.RequestOwnedZBox.new_null().to_zval() }
+	assigns_z := decode_live_message(assigns_json) or { vphp.PhpValue.null() }
 	if assigns_z.is_valid() && !assigns_z.is_null() && !assigns_z.is_undef() && assigns_z.is_array() {
-		return zval_string_map(assigns_z)
+		return php_value_string_map(assigns_z)
 	}
 	return map[string]string{}
 }
 
-fn encode_live_session(handler vphp.ZVal, socket &VSlimLiveSocket) string {
-	mut out := new_array()
+fn encode_live_session(handler vphp.PhpObject, socket &VSlimLiveSocket) string {
+	mut out := vphp.PhpArray.new()
 	out.string('version', '1')
 	out.string('view', handler.class_name().trim_space())
 	out.string('root_id', socket.root_id.trim_space())
@@ -521,31 +520,27 @@ fn encode_live_assigns(socket &VSlimLiveSocket) string {
 	return json
 }
 
-fn encode_live_assigns_zval(socket &VSlimLiveSocket) vphp.ZVal {
-	mut out := encode_live_assigns_array(socket)
-	return out.take_zval()
-}
-
 fn encode_live_assigns_array(socket &VSlimLiveSocket) vphp.PhpArray {
-	mut out := new_array()
+	mut out := vphp.PhpArray.new()
 	for key, value in socket.assigns {
 		out.string(key, value)
 	}
 	return out
 }
 
-fn zval_string_map(value vphp.ZVal) map[string]string {
+fn php_value_string_map(value vphp.PhpValue) map[string]string {
 	mut out := map[string]string{}
 	if !value.is_valid() || value.is_null() || value.is_undef() || !value.is_array() {
 		return out
 	}
-	for key in value.assoc_keys() {
-		out[key] = zval_key(value, key).to_string()
+	arr := value.as_array() or { return out }
+	for key in arr.assoc_keys() {
+		out[key] = value.value_at(key).to_string()
 	}
 	return out
 }
 
-fn live_default_root_id(handler vphp.ZVal, socket &VSlimLiveSocket) string {
+fn live_default_root_id(handler vphp.PhpObject, socket &VSlimLiveSocket) string {
 	if socket.root_id.trim_space() != '' {
 		return socket.root_id.trim_space()
 	}
@@ -556,19 +551,17 @@ fn live_default_root_id(handler vphp.ZVal, socket &VSlimLiveSocket) string {
 	return 'live-root'
 }
 
-fn live_view_root_id(handler vphp.ZVal) string {
-	if !is_live_view_object(handler) {
+fn live_view_root_id(handler vphp.PhpObject) string {
+	if !is_live_view_value(handler.to_value()) {
 		return ''
 	}
-	if live := handler.to_object[VSlimLiveView]() {
+	if live := handler.to_v_object[VSlimLiveView]() {
 		return live.root_id.trim_space()
 	}
 	if handler.method_exists('rootId') {
-		return vphp.PhpObject.borrowed(handler).with_method_result[vphp.PhpValue, string]('rootId',
-			fn (root vphp.PhpValue) string {
-			raw := root.to_zval()
-			if raw.is_valid() && !raw.is_null() && !raw.is_undef() {
-				return raw.to_string().trim_space()
+		return handler.with_method_result[vphp.PhpValue, string]('rootId', fn (root vphp.PhpValue) string {
+			if root.is_valid() && !root.is_null() && !root.is_undef() {
+				return root.to_string().trim_space()
 			}
 			return ''
 		}) or { '' }
@@ -585,11 +578,11 @@ fn live_patch_response(socket &VSlimLiveSocket, html string, root_id string) str
 			'html': html
 		}
 	}
-	mut out := new_array()
+	mut out := vphp.PhpArray.new()
 	out.string('type', 'patch')
-	mut ops_z := new_array()
+	mut ops_z := vphp.PhpArray.new()
 	for op in ops {
-		mut row := new_array()
+		mut row := vphp.PhpArray.new()
 		row.string('op', op['op'] or { '' })
 		row.string('id', op['id'] or { '' })
 		if 'html' in op {
@@ -609,9 +602,9 @@ fn live_patch_response(socket &VSlimLiveSocket, html string, root_id string) str
 	}
 	out.set('ops', ops_z)
 	ops_z.release()
-	mut events_z := new_array()
+	mut events_z := vphp.PhpArray.new()
 	for event in socket.events {
-		mut row := new_array()
+		mut row := vphp.PhpArray.new()
 		row.string('event', event['event'] or { '' })
 		payload := event['payload'] or { '' }
 		if payload.trim_space() == '' {
@@ -623,7 +616,7 @@ fn live_patch_response(socket &VSlimLiveSocket, html string, root_id string) str
 				row.release()
 				continue
 			}
-			row.set_zval('payload', decoded_payload)
+			row.set_value('payload', decoded_payload)
 		}
 		events_z.push(row)
 		row.release()
@@ -636,9 +629,9 @@ fn live_patch_response(socket &VSlimLiveSocket, html string, root_id string) str
 	if socket.navigate_to.trim_space() != '' {
 		out.string('navigate_to', socket.navigate_to)
 	}
-	mut flash_z := new_array()
+	mut flash_z := vphp.PhpArray.new()
 	for item in socket.flashes {
-		mut row := new_array()
+		mut row := vphp.PhpArray.new()
 		row.string('kind', item['kind'] or { '' })
 		row.string('message', item['message'] or { '' })
 		flash_z.push(row)
@@ -650,25 +643,24 @@ fn live_patch_response(socket &VSlimLiveSocket, html string, root_id string) str
 }
 
 fn live_protocol_error(code string, message string) string {
-	mut out := new_array()
+	mut out := vphp.PhpArray.new()
 	out.string('type', 'error')
 	out.string('error', code)
 	out.string('message', message)
 	return out.to_json_with_flags(256)
 }
 
-fn execute_live_socket_pubsub(conn vphp.ZVal, socket &VSlimLiveSocket) {
-	if !conn.is_object() {
+fn execute_live_socket_pubsub(conn vphp.PhpObject, socket &VSlimLiveSocket) {
+	if !conn.is_valid() {
 		return
 	}
 	for cmd in socket.pubsub {
-		match cmd['op'] or { '' } {
+		match cmd['op'] {
 			'join' {
 				if conn.method_exists('join') {
 					mut room_arg := vphp.PhpString.of(cmd['room'] or { '' })
-					vphp.PhpObject.borrowed(conn).with_method_result[vphp.PhpValue, bool]('join',
-						fn (result vphp.PhpValue) bool {
-						return result.to_zval().is_valid()
+					conn.with_method_result[vphp.PhpValue, bool]('join', fn (result vphp.PhpValue) bool {
+						return result.is_valid()
 					}, room_arg) or {}
 					room_arg.release()
 				}
@@ -676,9 +668,8 @@ fn execute_live_socket_pubsub(conn vphp.ZVal, socket &VSlimLiveSocket) {
 			'leave' {
 				if conn.method_exists('leave') {
 					mut room_arg := vphp.PhpString.of(cmd['room'] or { '' })
-					vphp.PhpObject.borrowed(conn).with_method_result[vphp.PhpValue, bool]('leave',
-						fn (result vphp.PhpValue) bool {
-						return result.to_zval().is_valid()
+					conn.with_method_result[vphp.PhpValue, bool]('leave', fn (result vphp.PhpValue) bool {
+						return result.is_valid()
 					}, room_arg) or {}
 					room_arg.release()
 				}
@@ -691,12 +682,12 @@ fn execute_live_socket_pubsub(conn vphp.ZVal, socket &VSlimLiveSocket) {
 						socket.id
 					}
 					mut room_arg := vphp.PhpString.of(cmd['room'] or { '' })
-					mut payload_arg := vphp.PhpString.of(live_info_payload(cmd['event'] or { '' },
-						cmd['payload'] or { '{}' }))
+					mut payload_arg := vphp.PhpString.of(live_info_payload(cmd['event'] or { '' }, cmd['payload'] or {
+						'{}'
+					}))
 					mut except_arg := vphp.PhpString.of(except_id)
-					vphp.PhpObject.borrowed(conn).with_method_result[vphp.PhpValue, bool]('broadcastDispatch',
-						fn (result vphp.PhpValue) bool {
-						return result.to_zval().is_valid()
+					conn.with_method_result[vphp.PhpValue, bool]('broadcastDispatch', fn (result vphp.PhpValue) bool {
+						return result.is_valid()
 					}, room_arg, payload_arg, except_arg) or {}
 					room_arg.release()
 					payload_arg.release()
@@ -704,21 +695,21 @@ fn execute_live_socket_pubsub(conn vphp.ZVal, socket &VSlimLiveSocket) {
 				}
 			}
 			else {}
-		}
+		} or { '' }
 	}
 }
 
 fn live_info_payload(event string, payload_json string) string {
-	mut out := new_array()
+	mut out := vphp.PhpArray.new()
 	out.string('type', 'info')
 	out.string('event', event.trim_space())
 	decoded_payload := decode_live_message(payload_json) or {
-		vphp.RequestOwnedZBox.new_null().to_zval()
+		vphp.PhpValue.null()
 	}
 	if decoded_payload.is_valid() && !decoded_payload.is_null() && !decoded_payload.is_undef() {
-		out.set_zval('payload', decoded_payload)
+		out.set_value('payload', decoded_payload)
 	} else {
-		mut fallback := new_array()
+		mut fallback := vphp.PhpArray.new()
 		fallback.string('value', payload_json)
 		out.set('payload', fallback)
 		fallback.release()
@@ -726,48 +717,49 @@ fn live_info_payload(event string, payload_json string) string {
 	return out.to_json_with_flags(256)
 }
 
-fn live_info_payload_with_topic(payload vphp.ZVal, room string) vphp.ZVal {
+fn live_info_payload_with_topic(payload vphp.PhpValue, room string) vphp.PhpValue {
 	topic := room.trim_space()
 	if topic == '' {
-		return payload
+		return payload.owned()
 	}
-	mut out := new_array()
+	mut out := vphp.PhpArray.new()
 	if payload.is_valid() && !payload.is_null() && !payload.is_undef() && payload.is_array() {
-		if payload.is_list() {
-			for idx := 0; idx < payload.array_count(); idx++ {
-				out.push(vphp.PhpValue.from_zval(payload.array_get(idx)))
+		arr := payload.as_array() or { vphp.PhpArray.empty() }
+		if arr.is_list() {
+			for item in arr.value_items() {
+				out.push_value(item)
 			}
 		} else {
-			for key in payload.assoc_keys() {
-				out.set_zval(key, zval_key(payload, key))
+			for key in arr.assoc_keys() {
+				out.set_value(key, payload.value_at(key))
 			}
 		}
 	} else if payload.is_valid() && !payload.is_null() && !payload.is_undef() {
-		out.set_zval('value', payload)
+		out.set_value('value', payload)
 	}
 	out.string('topic', topic)
-	return out.take_zval()
+	return out.to_value()
 }
 
 fn live_heartbeat_response() string {
-	mut out := new_array()
+	mut out := vphp.PhpArray.new()
 	out.string('type', 'heartbeat')
 	out.bool('ok', true)
 	return out.to_json_with_flags(256)
 }
 
-fn decode_live_message(raw string) ?vphp.ZVal {
+fn decode_live_message(raw string) ?vphp.PhpValue {
 	if raw.trim_space() == '' {
 		return none
 	}
-	decoded := vphp.PhpJson.decode_assoc(raw)
+	decoded := vphp.PhpJson.decode_assoc_value(raw)
 	if !decoded.is_array() {
 		return none
 	}
 	return decoded
 }
 
-fn is_live_view_object(handler vphp.ZVal) bool {
+fn is_live_view_value(handler vphp.PhpValue) bool {
 	if !handler.is_object() {
 		return false
 	}
@@ -778,10 +770,11 @@ fn is_live_view_object(handler vphp.ZVal) bool {
 	return class_name == 'VSlim\\Live\\View' || class_name == 'VSlimLiveView'
 }
 
-fn bind_live_view_to_app(mut app VSlimApp, handler vphp.ZVal) {
-	if !is_live_view_object(handler) {
+fn bind_live_view_to_app(mut app VSlimApp, handler vphp.PhpValue) {
+	if !is_live_view_value(handler) {
 		return
 	}
-	mut live := handler.to_object[VSlimLiveView]() or { return }
+	handler_obj := handler.as_object() or { return }
+	mut live := handler_obj.to_v_object[VSlimLiveView]() or { return }
 	live.set_app(app)
 }

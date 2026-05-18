@@ -1,7 +1,7 @@
 [paths]
 root = ".."
 php_app = "vslim/examples/websocket_app.php"
-php_worker = "../vhttpd/php/package/bin/php-worker"
+php_worker = "../vhttpd/php/package/bin/vphp-worker"
 vslim_ext = "vslim/vslim.so"
 public_root = "vslim/examples/public"
 
