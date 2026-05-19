@@ -4,7 +4,7 @@
 
 入口：
 
-- [`skeleton_app.php`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton_app.php)
+- [`skeleton_app.php`](vslim/examples/skeleton_app.php)
 
 ## 3 分钟上手
 
@@ -13,7 +13,7 @@
 1. 先跑一遍 self-test，确认示例能完整启动
 2. 从 `app/Http/routes/web.php`、`app/Http/controllers.php`、`app/Http/middleware.php` 开始看 HTTP 装配
 3. 再看 `app/Providers/AppServiceProvider.php`、`app/Modules/StatusModule.php` 理解 provider / module 分工
-4. 最后回到 [`templates/app/README.md`](/Users/guweigang/Source/vphpx/vslim/templates/app/README.md)，把这套目录换成自己的项目模板
+4. 最后回到 [`templates/app/README.md`](vslim/templates/app/README.md)，把这套目录换成自己的项目模板
 
 ```bash
 php -d extension=./vslim.so vslim/examples/skeleton_app.php --self-test
@@ -57,9 +57,9 @@ php -d extension=./vslim.so vslim/examples/skeleton_app.php --self-test
 
 如果你下一步是要复制真实项目起点，优先看：
 
-- [`templates/app/README.md`](/Users/guweigang/Source/vphpx/vslim/templates/app/README.md)
+- [`templates/app/README.md`](vslim/templates/app/README.md)
 
 如果你想继续理解目录职责和骨架分层，再看：
 
-- [docs/app/skeleton.md](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
-- [docs/app/README.md](/Users/guweigang/Source/vphpx/vslim/docs/app/README.md)
+- [docs/app/skeleton.md](vslim/docs/app/skeleton.md)
+- [docs/app/README.md](vslim/docs/app/README.md)

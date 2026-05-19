@@ -87,7 +87,7 @@
 本地启动：
 
 ```bash
-cd /Users/guweigang/Source/vphpx/knowledge-studio
+cd knowledge-studio
 make serve EXT=../vslim/vslim.so
 ```
 
@@ -103,12 +103,12 @@ make serve EXT=../vslim/vslim.so
 
 项目会自动读取根目录下的 `.env`：
 
-- [`.env.example`](/Users/guweigang/Source/vphpx/knowledge-studio/.env.example)
-- [`.env`](/Users/guweigang/Source/vphpx/knowledge-studio/.env)
+- [`.env.example`](knowledge-studio/.env.example)
+- [`.env`](knowledge-studio/.env)
 
 常见切换方式：
 
-1. 先把数据库配置写进 [`.env`](/Users/guweigang/Source/vphpx/knowledge-studio/.env)
+1. 先把数据库配置写进 [`.env`](knowledge-studio/.env)
 2. 初期保持 `STUDIO_DATA_SOURCE=demo`
 3. 数据库准备好后执行 migration / seed
 4. 再切到 `STUDIO_DATA_SOURCE=db`
@@ -127,7 +127,7 @@ VSLIM_DB_NAME=knowledge_studio
 CLI 自检：
 
 ```bash
-cd /Users/guweigang/Source/vphpx/knowledge-studio
+cd knowledge-studio
 make cli EXT=../vslim/vslim.so
 php -d extension=../vslim/vslim.so bin/vslim workspace:catalog
 ```
@@ -135,7 +135,7 @@ php -d extension=../vslim/vslim.so bin/vslim workspace:catalog
 数据库初始化：
 
 ```bash
-cd /Users/guweigang/Source/vphpx/knowledge-studio
+cd knowledge-studio
 php -d extension=../vslim/vslim.so bin/vslim db:migrate
 php -d extension=../vslim/vslim.so bin/vslim studio:seed-demo
 ```
@@ -157,15 +157,15 @@ php -d extension=../vslim/vslim.so bin/vslim studio:seed-demo
 
 几个关键支点：
 
-- [AssistantAnswerService.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Services/AssistantAnswerService.php)
+- [AssistantAnswerService.php](knowledge-studio/app/Services/AssistantAnswerService.php)
   负责检索、排序、答案预览和 diagnostics，目前定位为增强层能力
-- [AssistantAnswerPresenter.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Presenters/AssistantAnswerPresenter.php)
+- [AssistantAnswerPresenter.php](knowledge-studio/app/Presenters/AssistantAnswerPresenter.php)
   负责 citation 和 diagnostics 的展示整形
-- [LocaleCatalog.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Support/LocaleCatalog.php)
+- [LocaleCatalog.php](knowledge-studio/app/Support/LocaleCatalog.php)
   负责 locale 规范化、文案目录和语言切换元数据
-- [LocalePreferenceResolver.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Support/LocalePreferenceResolver.php)
+- [LocalePreferenceResolver.php](knowledge-studio/app/Support/LocalePreferenceResolver.php)
   负责从 query / raw query / header 决定最终 locale
-- [LocalizedUrlBuilder.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Support/LocalizedUrlBuilder.php)
+- [LocalizedUrlBuilder.php](knowledge-studio/app/Support/LocalizedUrlBuilder.php)
   负责 controller 中常见页面链接的 locale 保持
 
 ## 测试边界
@@ -177,15 +177,15 @@ php -d extension=../vslim/vslim.so bin/vslim studio:seed-demo
 
 当前 userland 测试骨架：
 
-- [phpunit.xml](/Users/guweigang/Source/vphpx/knowledge-studio/phpunit.xml)
-- [tests/Pest.php](/Users/guweigang/Source/vphpx/knowledge-studio/tests/Pest.php)
-- [tests/Feature](/Users/guweigang/Source/vphpx/knowledge-studio/tests/Feature)
-- [tests/Unit](/Users/guweigang/Source/vphpx/knowledge-studio/tests/Unit)
+- [phpunit.xml](knowledge-studio/phpunit.xml)
+- [tests/Pest.php](knowledge-studio/tests/Pest.php)
+- [tests/Feature](knowledge-studio/tests/Feature)
+- [tests/Unit](knowledge-studio/tests/Unit)
 
 命令入口：
 
 ```bash
-cd /Users/guweigang/Source/vphpx/knowledge-studio
+cd knowledge-studio
 make test-assistant
 make test-unit
 make test-feature
@@ -199,13 +199,13 @@ make test-feature
 
 ## 文档入口
 
-- 产品文档：[docs/product.md](/Users/guweigang/Source/vphpx/knowledge-studio/docs/product.md)
-- 信息架构：[docs/information-architecture.md](/Users/guweigang/Source/vphpx/knowledge-studio/docs/information-architecture.md)
-- 发布清单：[docs/launch-checklist.md](/Users/guweigang/Source/vphpx/knowledge-studio/docs/launch-checklist.md)
-- 产品走查：[docs/product-walkthrough-checklist.md](/Users/guweigang/Source/vphpx/knowledge-studio/docs/product-walkthrough-checklist.md)
-- 走查发现：[docs/walkthrough-findings.md](/Users/guweigang/Source/vphpx/knowledge-studio/docs/walkthrough-findings.md)
-- 架构草案：[docs/architecture.md](/Users/guweigang/Source/vphpx/knowledge-studio/docs/architecture.md)
-- 开发计划：[docs/plan.md](/Users/guweigang/Source/vphpx/knowledge-studio/docs/plan.md)
+- 产品文档：[docs/product.md](knowledge-studio/docs/product.md)
+- 信息架构：[docs/information-architecture.md](knowledge-studio/docs/information-architecture.md)
+- 发布清单：[docs/launch-checklist.md](knowledge-studio/docs/launch-checklist.md)
+- 产品走查：[docs/product-walkthrough-checklist.md](knowledge-studio/docs/product-walkthrough-checklist.md)
+- 走查发现：[docs/walkthrough-findings.md](knowledge-studio/docs/walkthrough-findings.md)
+- 架构草案：[docs/architecture.md](knowledge-studio/docs/architecture.md)
+- 开发计划：[docs/plan.md](knowledge-studio/docs/plan.md)
 
 ## 路线图
 

@@ -4,7 +4,7 @@ vhttpd php package exposes Feishu app and provider classes under the new namespa
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 3) . '/vhttpd/php/package/vendor/autoload.php';
+require_once (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/php/package/vendor/autoload.php';
 
 echo class_exists(\VSlim\App\Feishu\BotApp::class) ? "bot_app\n" : "missing_bot_app\n";
 echo interface_exists(\VSlim\App\Feishu\BotHandler::class) ? "bot_handler\n" : "missing_bot_handler\n";

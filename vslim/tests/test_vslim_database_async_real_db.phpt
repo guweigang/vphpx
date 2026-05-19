@@ -3,8 +3,9 @@ VSlim database async query succeeds against a real MySQL server
 --SKIPIF--
 <?php
 if (!extension_loaded("vslim")) print "skip";
-if (!is_file('/Users/guweigang/Source/vphpx/knowledge-studio/.env')) print "skip";
-VSlim\EnvLoader::bootstrap('/Users/guweigang/Source/vphpx/knowledge-studio');
+$knowledgeStudioRoot = dirname(__DIR__, 2) . '/knowledge-studio';
+if (!is_file($knowledgeStudioRoot . '/.env')) print "skip";
+VSlim\EnvLoader::bootstrap($knowledgeStudioRoot);
 if ((getenv('VSLIM_DB_TRANSPORT') ?: 'direct') !== 'direct') {
     print "skip";
     return;
@@ -36,7 +37,8 @@ try {
 ?>
 --FILE--
 <?php
-VSlim\EnvLoader::bootstrap('/Users/guweigang/Source/vphpx/knowledge-studio');
+$knowledgeStudioRoot = dirname(__DIR__, 2) . '/knowledge-studio';
+VSlim\EnvLoader::bootstrap($knowledgeStudioRoot);
 
 $cfg = (new VSlim\Database\Config())
     ->setDriver('mysql')

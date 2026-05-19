@@ -2,9 +2,9 @@
 
 Documentation entry:
 
-- overview: [docs/OVERVIEW.md](/Users/guweigang/Source/vphpx/vslim/docs/OVERVIEW.md)
-- capability map: [docs/capabilities.md](/Users/guweigang/Source/vphpx/vslim/docs/capabilities.md)
-- maturity roadmap: [docs/maturity-roadmap.md](/Users/guweigang/Source/vphpx/vslim/docs/maturity-roadmap.md)
+- overview: [docs/OVERVIEW.md](docs/OVERVIEW.md)
+- capability map: [docs/capabilities.md](docs/capabilities.md)
+- maturity roadmap: [docs/maturity-roadmap.md](docs/maturity-roadmap.md)
 
 `VSlim` 是一个运行在 `vphp` 之上的 PHP 微框架扩展，核心目标是给 PHP 用户提供熟悉的 runtime builder 体验：
 
@@ -93,18 +93,18 @@ Documentation entry:
 如果你的目标是“起一个新项目，同时带 HTTP 和 CLI 入口”，推荐按这个顺序读：
 
 1. 项目模板入口：
-   [`templates/app/README.md`](/Users/guweigang/Source/vphpx/vslim/templates/app/README.md)
+   [`templates/app/README.md`](templates/app/README.md)
 2. 更接近真实目录布局的骨架示例：
-   [`examples/skeleton/README.md`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton/README.md)
+   [`examples/skeleton/README.md`](examples/skeleton/README.md)
 3. 骨架分层和 `bootstrapDir()` 设计说明：
-   [`docs/app/skeleton.md`](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
+   [`docs/app/skeleton.md`](docs/app/skeleton.md)
 4. 数据库与测试：
-   [`docs/database/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
-   [`docs/testing/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/testing/README.md)
+   [`docs/database/README.md`](docs/database/README.md)
+   [`docs/testing/README.md`](docs/testing/README.md)
 5. 从初始化到上线的操作清单：
-   [`docs/operations/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/operations/README.md)
+   [`docs/operations/README.md`](docs/operations/README.md)
 6. 当前能力总表：
-   [`docs/capabilities.md`](/Users/guweigang/Source/vphpx/vslim/docs/capabilities.md)
+   [`docs/capabilities.md`](docs/capabilities.md)
 
 如果你只是想先理解 API 和 builder，再继续往下读这份 README 即可。
 
@@ -120,10 +120,10 @@ Documentation entry:
 
 对应文档：
 
-- [`docs/config/config.md`](/Users/guweigang/Source/vphpx/vslim/docs/config/config.md)
-- [`docs/database/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
-- [`docs/testing/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/testing/README.md)
-- [`docs/operations/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/operations/README.md)
+- [`docs/config/config.md`](docs/config/config.md)
+- [`docs/database/README.md`](docs/database/README.md)
+- [`docs/testing/README.md`](docs/testing/README.md)
+- [`docs/operations/README.md`](docs/operations/README.md)
 
 ## 数据库 transport 怎么选
 
@@ -149,9 +149,19 @@ Documentation entry:
 
 如果你要直接走 `vhttpd` 托管数据库，继续看：
 
-- [`docs/database/vhttpd-upstream.md`](/Users/guweigang/Source/vphpx/vslim/docs/database/vhttpd-upstream.md)
+- [`docs/database/vhttpd-upstream.md`](docs/database/vhttpd-upstream.md)
 
 ## 测试分层
+
+VSlim 的 runtime 集成测试需要 `vhttpd` checkout。默认目录布局是：
+
+```text
+<workspace>/
+  vphpx/
+  vhttpd/
+```
+
+如果你的 `vhttpd` 不在 `vphpx` 同级，给命令显式传 `VHTTPD_ROOT=/path/to/vhttpd`。
 
 日常开发默认跑：
 
@@ -167,7 +177,7 @@ make test
 make runtime-check
 ```
 
-这条命令会先构建预编译的 [vhttpd](/Users/guweigang/Source/vhttpd/vhttpd)，再运行 `httpd` / `vhttpd` / `worker` 相关测试。
+这条命令会先构建预编译的 [vhttpd](../vhttpd/vhttpd)，再运行 `httpd` / `vhttpd` / `worker` 相关测试。
 
 ## IDE Stubs
 
@@ -177,7 +187,7 @@ make runtime-check
 make stubs
 ```
 
-默认会把结果写到 [stubs/vslim.php](/Users/guweigang/Source/vphpx/vslim/stubs/vslim.php)。这份文件是从当前已构建的 `vslim.so` 反射生成的，所以推荐在每次改了导出 API 之后重新跑一次。
+默认会把结果写到 [stubs/vslim.php](stubs/vslim.php)。这份文件是从当前已构建的 `vslim.so` 反射生成的，所以推荐在每次改了导出 API 之后重新跑一次。
 
 如果你想指定输出路径，也可以直接执行：
 
@@ -327,7 +337,7 @@ extension=vslim/vslim.so
 - `tests/test_psr15_worker_app.phpt`
 - `tests/test_psr15_worker_stack.phpt`
 
-如果你想看长期目标、推进顺序和哪些能力应该先升级 `vphp` 再下放，继续看 [`docs/psr-roadmap.md`](/Users/guweigang/Source/vphpx/vslim/docs/psr-roadmap.md)。
+如果你想看长期目标、推进顺序和哪些能力应该先升级 `vphp` 再下放，继续看 [`docs/psr-roadmap.md`](docs/psr-roadmap.md)。
 
 ## 1 分钟认识 VSlim
 
@@ -387,13 +397,13 @@ $exitCode = $cli->runArgv([
 - 为 `--help` / `commandHelp()` 自动生成 usage、options、examples、notes
 - 在解析失败时输出错误信息并附带对应 command usage
 
-模板里自带的 [`AboutCommand.php`](/Users/guweigang/Source/vphpx/vslim/templates/app/app/Commands/AboutCommand.php) 就是最小参考；更具体的模板说明见 [`templates/app/README.md`](/Users/guweigang/Source/vphpx/vslim/templates/app/README.md)。
+模板里自带的 [`AboutCommand.php`](templates/app/app/Commands/AboutCommand.php) 就是最小参考；更具体的模板说明见 [`templates/app/README.md`](templates/app/README.md)。
 
 如果你想直接看“HTTP 入口 + CLI 入口 + provider/module/middleware/controller”怎样一起落到一个项目目录里，继续按这个顺序看最顺手：
 
-1. [`templates/app/README.md`](/Users/guweigang/Source/vphpx/vslim/templates/app/README.md)
-2. [`examples/skeleton/README.md`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton/README.md)
-3. [`examples/README.md`](/Users/guweigang/Source/vphpx/vslim/examples/README.md)
+1. [`templates/app/README.md`](templates/app/README.md)
+2. [`examples/skeleton/README.md`](examples/skeleton/README.md)
+3. [`examples/README.md`](examples/README.md)
 
 ## 性能
 在MacBook Air M2 + 4 个 PHP 进程的条件下，用 K6 压测，详情如下
@@ -846,45 +856,45 @@ return $app;
 
 ### 核心组件
 
-- [`docs/app/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/app/README.md)
+- [`docs/app/README.md`](docs/app/README.md)
   `VSlim\App`：路由注册、dispatch、named routes、resource routes、phase middleware、错误处理、route metadata
-- [`docs/app/route-group.md`](/Users/guweigang/Source/vphpx/vslim/docs/app/route-group.md)
+- [`docs/app/route-group.md`](docs/app/route-group.md)
   `VSlim\RouteGroup`：分组、嵌套 group、组级 middleware / before / after
-- [`docs/http/request.md`](/Users/guweigang/Source/vphpx/vslim/docs/http/request.md)
+- [`docs/http/request.md`](docs/http/request.md)
   `VSlim\VHttpd\Request`：query、input、JSON/form/multipart、header/cookie/attribute/server、trace/request id
-- [`docs/http/response.md`](/Users/guweigang/Source/vphpx/vslim/docs/http/response.md)
+- [`docs/http/response.md`](docs/http/response.md)
   `VSlim\VHttpd\Response`：headers、cookie、content type、redirect、trace/request id 透传
-- [`docs/http/psr-http.md`](/Users/guweigang/Source/vphpx/vslim/docs/http/psr-http.md)
+- [`docs/http/psr-http.md`](docs/http/psr-http.md)
   `VSlim\\Psr7\\Stream`、`VSlim\\Psr7\\Response`、`VSlim\\Psr7\\Uri` 与 `VSlim\\Psr17\\*Factory`：当前原生 PSR HTTP 面
-- [`docs/stream/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/stream/README.md)
+- [`docs/stream/README.md`](docs/stream/README.md)
   `VSlim\Stream\Response`、`VSlim\Stream\Factory` 以及 VSlim + Ollama 的流式集成示例
-- [`docs/stream/factory.md`](/Users/guweigang/Source/vphpx/vslim/docs/stream/factory.md)
+- [`docs/stream/factory.md`](docs/stream/factory.md)
   `VSlim\Stream\Factory`：text、sse、ollama 快捷入口
-- [`docs/stream/ollama.md`](/Users/guweigang/Source/vphpx/vslim/docs/stream/ollama.md)
+- [`docs/stream/ollama.md`](docs/stream/ollama.md)
   `/ollama/text`、`/ollama/sse`、`vhttpd -> VSlim -> Ollama` 链路说明
-- [`docs/websocket/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/websocket/README.md)
+- [`docs/websocket/README.md`](docs/websocket/README.md)
   `VSlim\WebSocket\App`：on_open / on_message / on_close 与 vhttpd worker websocket 集成
-- [`docs/mcp/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/mcp/README.md)
+- [`docs/mcp/README.md`](docs/mcp/README.md)
   `VSlim\Mcp\App`：原生 MCP handler、builtin tools/resources/prompts、queue helper
-- [`docs/view/view.md`](/Users/guweigang/Source/vphpx/vslim/docs/view/view.md)
+- [`docs/view/view.md`](docs/view/view.md)
   `VSlim\View`：模板路径、layout、include、if/for、helper、轻量表达式、对象方法调用
-- [`docs/view/controller.md`](/Users/guweigang/Source/vphpx/vslim/docs/view/controller.md)
+- [`docs/view/controller.md`](docs/view/controller.md)
   `VSlim\Controller`：render、layout、redirect_to、和 `App` / `View` 的协作
-- [`docs/container/container.md`](/Users/guweigang/Source/vphpx/vslim/docs/container/container.md)
+- [`docs/container/container.md`](docs/container/container.md)
   `VSlim\Container`：PSR-11、`set()`、`factory()`、handler 自动解析
-- [`docs/config/config.md`](/Users/guweigang/Source/vphpx/vslim/docs/config/config.md)
+- [`docs/config/config.md`](docs/config/config.md)
   `VSlim\Config`：TOML 加载、typed getter、JSON bridge、和 `App` 的整合
-- [`docs/logger/logger.md`](/Users/guweigang/Source/vphpx/vslim/docs/logger/logger.md)
-- [`docs/database/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
+- [`docs/logger/logger.md`](docs/logger/logger.md)
+- [`docs/database/README.md`](docs/database/README.md)
   `VSlim\\Log\\Logger` 与 `VSlim\\Log\\PsrLogger`：原生日志与 PSR-3 包装层
 
 ### 集成与运行时
 
-- [`docs/integration/worker.md`](/Users/guweigang/Source/vphpx/vslim/docs/integration/worker.md)
+- [`docs/integration/worker.md`](docs/integration/worker.md)
   envelope、`dispatchEnvelope()`、`dispatch_envelope_map()`、worker 返回值归一化
-- [`docs/integration/psr7.md`](/Users/guweigang/Source/vphpx/vslim/docs/integration/psr7.md)
+- [`docs/integration/psr7.md`](docs/integration/psr7.md)
   `VPhp\\VSlim\\Psr7Adapter`、扩展内建的 PSR-7 request -> `VSlim\VHttpd\Request` 适配器
-- [`docs/psr-roadmap.md`](/Users/guweigang/Source/vphpx/vslim/docs/psr-roadmap.md)
+- [`docs/psr-roadmap.md`](docs/psr-roadmap.md)
   `vslim` 的长期 PSR 路线图：全 PSR 目标、推进顺序、以及何时先升级 `vphp`
 
 ## 框架骨架
@@ -924,18 +934,18 @@ return $app;
 
 ### 现成示例
 
-- [`examples/demo_app.php`](/Users/guweigang/Source/vphpx/vslim/examples/demo_app.php)
+- [`examples/demo_app.php`](examples/demo_app.php)
   综合示例：现在按 `bootstrapDir()` skeleton 启动，覆盖路由、provider、resource、view、error handler、worker 兼容
-- [`examples/skeleton_app.php`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton_app.php)
+- [`examples/skeleton_app.php`](examples/skeleton_app.php)
   更贴近真实项目目录的 app skeleton：`app/Providers`、`app/Modules`、`app/Http/controllers.php`、
   `app/Http/Controllers`、`app/Http/middleware.php`、`resources/views`
-- [`templates/app/README.md`](/Users/guweigang/Source/vphpx/vslim/templates/app/README.md)
+- [`templates/app/README.md`](templates/app/README.md)
   最小可复制的项目模板，现已同时带 `VSlim\App` 和 `VSlim\Cli\App` 入口约定
-- [`docs/app/skeleton.md`](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
+- [`docs/app/skeleton.md`](docs/app/skeleton.md)
   `VSlim\App` 作为项目骨架入口时的推荐目录、职责边界和分工
-- [`examples/config_usage.php`](/Users/guweigang/Source/vphpx/vslim/examples/config_usage.php)
+- [`examples/config_usage.php`](examples/config_usage.php)
   `Config` 示例
-- [`tests/test_php_route_builder.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_php_route_builder.phpt)
+- [`tests/test_php_route_builder.phpt`](tests/test_php_route_builder.phpt)
   最完整的 builder 行为样例
 
 ## 组件总览
@@ -958,10 +968,10 @@ flowchart LR
 
 如果文档和实现不一致，以这些文件为准：
 
-- [`src/php_app.v`](/Users/guweigang/Source/vphpx/vslim/src/php_app.v)
-- [`src/request.v`](/Users/guweigang/Source/vphpx/vslim/src/request.v)
-- [`src/response.v`](/Users/guweigang/Source/vphpx/vslim/src/response.v)
-- [`src/mvc.v`](/Users/guweigang/Source/vphpx/vslim/src/mvc.v)
-- [`src/container.v`](/Users/guweigang/Source/vphpx/vslim/src/container.v)
-- [`src/config_runtime.v`](/Users/guweigang/Source/vphpx/vslim/src/config_runtime.v)
-- [`tests/`](/Users/guweigang/Source/vphpx/vslim/tests)
+- [`src/php_app.v`](src/php_app.v)
+- [`src/request.v`](src/request.v)
+- [`src/response.v`](src/response.v)
+- [`src/mvc.v`](src/mvc.v)
+- [`src/container.v`](src/container.v)
+- [`src/config_runtime.v`](src/config_runtime.v)
+- [`tests/`](tests)

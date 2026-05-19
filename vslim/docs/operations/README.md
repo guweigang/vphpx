@@ -21,7 +21,15 @@
 5. 跑 HTTP 最小链路
    - `make serve EXT=./vslim.so`
 6. 跑 worker 最小链路
-   - `make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd`
+   - `make runtime-check VHTTPD_ROOT=/path/to/vhttpd`
+
+`VHTTPD_ROOT` 默认指向 `vphpx` 同级的 `vhttpd` checkout。推荐最小布局是：
+
+```text
+<workspace>/
+  vphpx/
+  vhttpd/
+```
 
 ## 数据库上线前
 
@@ -78,7 +86,7 @@ bin/vslim app:doctor
 bin/vslim db:migrate
 bin/vslim db:seed
 make test
-make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd
+make runtime-check VHTTPD_ROOT=/path/to/vhttpd
 ```
 
 如果 `app:doctor` 仍然报这些问题，不建议直接上线：

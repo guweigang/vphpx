@@ -2,10 +2,10 @@
 declare(strict_types=1);
 
 $root = dirname(__DIR__);
+$vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname($root, 3) . '/vhttpd';
 $autoloadCandidates = [
     $root . '/vendor/autoload.php',
-    $root . '/../../../../vhttpd/php/package/vendor/autoload.php',
-    $root . '/../../../vhttpd/php/package/vendor/autoload.php',
+    $vhttpdRoot . '/php/package/vendor/autoload.php',
 ];
 foreach ($autoloadCandidates as $autoload) {
     if (!is_file($autoload)) {

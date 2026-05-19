@@ -3,7 +3,8 @@ declare(strict_types=1);
 
 $autoload = __DIR__ . "/vendor/autoload.php";
 if (!is_file($autoload)) {
-    $autoload = __DIR__ . "/../../../vhttpd/php/package/vendor/autoload.php";
+    $vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd';
+    $autoload = $vhttpdRoot . "/php/package/vendor/autoload.php";
 }
 if (is_file($autoload)) {
     require_once $autoload;

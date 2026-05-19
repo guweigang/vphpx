@@ -59,12 +59,12 @@
 
 对应文档：
 
-- [README.md](/Users/guweigang/Source/vphpx/vslim/README.md)
-- [docs/OVERVIEW.md](/Users/guweigang/Source/vphpx/vslim/docs/OVERVIEW.md)
-- [docs/config/config.md](/Users/guweigang/Source/vphpx/vslim/docs/config/config.md)
-- [docs/database/README.md](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
-- [docs/testing/README.md](/Users/guweigang/Source/vphpx/vslim/docs/testing/README.md)
-- [docs/operations/README.md](/Users/guweigang/Source/vphpx/vslim/docs/operations/README.md)
+- [README.md](vslim/README.md)
+- [docs/OVERVIEW.md](vslim/docs/OVERVIEW.md)
+- [docs/config/config.md](vslim/docs/config/config.md)
+- [docs/database/README.md](vslim/docs/database/README.md)
+- [docs/testing/README.md](vslim/docs/testing/README.md)
+- [docs/operations/README.md](vslim/docs/operations/README.md)
 
 ## 数据库两条主路径
 
@@ -109,4 +109,4 @@
 
 更完整的成熟度视角见：
 
-- [maturity-roadmap.md](/Users/guweigang/Source/vphpx/vslim/docs/maturity-roadmap.md)
+- [maturity-roadmap.md](vslim/docs/maturity-roadmap.md)

@@ -2,11 +2,11 @@
 
 这一页描述 VSlim 和 worker / transport 的稳定边界。这里的“真理之源”不是旧设计文档，而是当前代码和测试：
 
-- [`src/php_app.v`](/Users/guweigang/Source/vphpx/vslim/src/php_app.v)
-- [`src/request.v`](/Users/guweigang/Source/vphpx/vslim/src/request.v)
-- [`tests/test_demo_dispatch.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_demo_dispatch.phpt)
-- [`tests/test_vslim_dispatch_envelope_map_headers.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_dispatch_envelope_map_headers.phpt)
-- [`examples/demo_app.php`](/Users/guweigang/Source/vphpx/vslim/examples/demo_app.php)
+- [`src/php_app.v`](vslim/src/php_app.v)
+- [`src/request.v`](vslim/src/request.v)
+- [`tests/test_demo_dispatch.phpt`](vslim/tests/test_demo_dispatch.phpt)
+- [`tests/test_vslim_dispatch_envelope_map_headers.phpt`](vslim/tests/test_vslim_dispatch_envelope_map_headers.phpt)
+- [`examples/demo_app.php`](vslim/examples/demo_app.php)
 
 ## 先说清楚边界
 

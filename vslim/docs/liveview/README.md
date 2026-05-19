@@ -2,9 +2,9 @@
 
 VSlim LiveView uses the `vphp-*` attribute namespace for declarative browser events.
 
-If you want the shortest possible path first, start with [GETTING_STARTED.md](/Users/guweigang/Source/vphpx/vslim/docs/liveview/GETTING_STARTED.md).
-If you want the release-time verification list, use [RELEASE_CHECKLIST.md](/Users/guweigang/Source/vphpx/vslim/docs/liveview/RELEASE_CHECKLIST.md).
-If you want the milestone summary, use [MILESTONE_NOTES.md](/Users/guweigang/Source/vphpx/vslim/docs/liveview/MILESTONE_NOTES.md).
+If you want the shortest possible path first, start with [GETTING_STARTED.md](vslim/docs/liveview/GETTING_STARTED.md).
+If you want the release-time verification list, use [RELEASE_CHECKLIST.md](vslim/docs/liveview/RELEASE_CHECKLIST.md).
+If you want the milestone summary, use [MILESTONE_NOTES.md](vslim/docs/liveview/MILESTONE_NOTES.md).
 
 Recommended first path:
 

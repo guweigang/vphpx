@@ -86,7 +86,7 @@ dispatch -> pending -> reserved -> failed
 
 `knowledge-studio` 已经提供第一版通用表 migration：
 
-- `/Users/guweigang/Source/vphpx/knowledge-studio/database/migrations/20260415_000001_create_vslim_job_tables.php`
+- `knowledge-studio/database/migrations/20260415_000001_create_vslim_job_tables.php`
 
 后续框架层会继续补：
 

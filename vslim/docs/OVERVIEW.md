@@ -14,8 +14,8 @@
 
 如果你想快速看“现在有什么、什么已成熟、什么还在第一版”，继续看：
 
-- [capabilities.md](/Users/guweigang/Source/vphpx/vslim/docs/capabilities.md)
-- [maturity-roadmap.md](/Users/guweigang/Source/vphpx/vslim/docs/maturity-roadmap.md)
+- [capabilities.md](capabilities.md)
+- [maturity-roadmap.md](maturity-roadmap.md)
 
 ## Product Definition
 
@@ -152,9 +152,9 @@
 
 入口文档：
 
-- [app/README.md](/Users/guweigang/Source/vphpx/vslim/docs/app/README.md)
-- [app/kernel.md](/Users/guweigang/Source/vphpx/vslim/docs/app/kernel.md)
-- [app/skeleton.md](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
+- [app/README.md](app/README.md)
+- [app/kernel.md](app/kernel.md)
+- [app/skeleton.md](app/skeleton.md)
 
 ### Stream
 
@@ -167,9 +167,9 @@
 
 入口文档：
 
-- [stream/README.md](/Users/guweigang/Source/vphpx/vslim/docs/stream/README.md)
-- [stream/factory.md](/Users/guweigang/Source/vphpx/vslim/docs/stream/factory.md)
-- [stream/ollama.md](/Users/guweigang/Source/vphpx/vslim/docs/stream/ollama.md)
+- [stream/README.md](stream/README.md)
+- [stream/factory.md](stream/factory.md)
+- [stream/ollama.md](stream/ollama.md)
 
 ### WebSocket
 
@@ -183,7 +183,7 @@
 
 入口文档：
 
-- [websocket/README.md](/Users/guweigang/Source/vphpx/vslim/docs/websocket/README.md)
+- [websocket/README.md](websocket/README.md)
 
 ### MCP
 
@@ -198,8 +198,8 @@
 
 入口文档：
 
-- [mcp/README.md](/Users/guweigang/Source/vphpx/vslim/docs/mcp/README.md)
-- [mcp/runbook.md](/Users/guweigang/Source/vphpx/vslim/docs/mcp/runbook.md)
+- [mcp/README.md](mcp/README.md)
+- [mcp/runbook.md](mcp/runbook.md)
 
 ## Integration Boundary
 
@@ -219,69 +219,69 @@
 
 对应 worker / envelope 说明：
 
-- [protocol.md](/Users/guweigang/Source/vphpx/vslim/docs/protocol.md)
-- [integration/worker.md](/Users/guweigang/Source/vphpx/vslim/docs/integration/worker.md)
+- [protocol.md](protocol.md)
+- [integration/worker.md](integration/worker.md)
 
 ## Other Built-in Areas
 
 除了主 app shape，`VSlim` 当前还有这些补充能力：
 
 - request / response facade
-  - [http/request.md](/Users/guweigang/Source/vphpx/vslim/docs/http/request.md)
-  - [http/response.md](/Users/guweigang/Source/vphpx/vslim/docs/http/response.md)
+  - [http/request.md](http/request.md)
+  - [http/response.md](http/response.md)
 - native PSR HTTP objects / factories
-  - [http/psr-http.md](/Users/guweigang/Source/vphpx/vslim/docs/http/psr-http.md)
+  - [http/psr-http.md](http/psr-http.md)
 - config
-  - [config/config.md](/Users/guweigang/Source/vphpx/vslim/docs/config/config.md)
+  - [config/config.md](config/config.md)
 - database
-  - [database/README.md](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
-  - [database/vhttpd-upstream.md](/Users/guweigang/Source/vphpx/vslim/docs/database/vhttpd-upstream.md)
+  - [database/README.md](database/README.md)
+  - [database/vhttpd-upstream.md](database/vhttpd-upstream.md)
 - validation / session / auth
   - 轻量输入校验、cookie session、auth user provider、auth/guest/ability middleware、app-level gate helper
 - testing
   - `app()->testing()` 轻量测试 harness，支持 service/config override、quick dispatch、JSON 请求、response 断言、cookie jar、session/auth helper 和 PSR handle
 - operations
-  - [`operations/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/operations/README.md)
+  - [`operations/README.md`](operations/README.md)
     从模板初始化、数据库 transport 选择到上线前检查的一页清单
-  - [testing/README.md](/Users/guweigang/Source/vphpx/vslim/docs/testing/README.md)
+  - [testing/README.md](testing/README.md)
 - logger
-  - [logger/logger.md](/Users/guweigang/Source/vphpx/vslim/docs/logger/logger.md)
+  - [logger/logger.md](logger/logger.md)
 - container
-  - [container/container.md](/Users/guweigang/Source/vphpx/vslim/docs/container/container.md)
+  - [container/container.md](container/container.md)
 - PSR-7 bridge / worker integration
-  - [psr7_bridge.md](/Users/guweigang/Source/vphpx/vslim/docs/psr7_bridge.md)
-  - [integration/psr7.md](/Users/guweigang/Source/vphpx/vslim/docs/integration/psr7.md)
+  - [psr7_bridge.md](psr7_bridge.md)
+  - [integration/psr7.md](integration/psr7.md)
 - PSR long-term roadmap
-  - [psr-roadmap.md](/Users/guweigang/Source/vphpx/vslim/docs/psr-roadmap.md)
+  - [psr-roadmap.md](psr-roadmap.md)
 - ORM / View / Controller
-  - [orm.md](/Users/guweigang/Source/vphpx/vslim/docs/orm.md)
-  - [view/view.md](/Users/guweigang/Source/vphpx/vslim/docs/view/view.md)
+  - [orm.md](orm.md)
+  - [view/view.md](view/view.md)
     指令、表达式、变量路径三层语法；layout/include/helper/debug
-  - [view/controller.md](/Users/guweigang/Source/vphpx/vslim/docs/view/controller.md)
+  - [view/controller.md](view/controller.md)
 
 ## Recommended Reading Order
 
 第一次接触 `VSlim`：
 
 1. 先看这页
-2. 再看 [capabilities.md](/Users/guweigang/Source/vphpx/vslim/docs/capabilities.md)
-3. 再看 [README.md](/Users/guweigang/Source/vphpx/vslim/README.md)
-4. 再看 [app/README.md](/Users/guweigang/Source/vphpx/vslim/docs/app/README.md)
-5. 如果你想直接搭项目骨架，再看 [app/skeleton.md](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
+2. 再看 [capabilities.md](capabilities.md)
+3. 再看 [README.md](../README.md)
+4. 再看 [app/README.md](app/README.md)
+5. 如果你想直接搭项目骨架，再看 [app/skeleton.md](app/skeleton.md)
 
 如果你关注 AI / stream：
 
-1. [stream/README.md](/Users/guweigang/Source/vphpx/vslim/docs/stream/README.md)
-2. [mcp/README.md](/Users/guweigang/Source/vphpx/vslim/docs/mcp/README.md)
-3. [websocket/README.md](/Users/guweigang/Source/vphpx/vslim/docs/websocket/README.md)
+1. [stream/README.md](stream/README.md)
+2. [mcp/README.md](mcp/README.md)
+3. [websocket/README.md](websocket/README.md)
 
 如果你关注 `vhttpd` 集成：
 
-1. [protocol.md](/Users/guweigang/Source/vphpx/vslim/docs/protocol.md)
-2. [integration/worker.md](/Users/guweigang/Source/vphpx/vslim/docs/integration/worker.md)
+1. [protocol.md](protocol.md)
+2. [integration/worker.md](integration/worker.md)
 
 如果你准备开始写业务：
 
-1. [config/config.md](/Users/guweigang/Source/vphpx/vslim/docs/config/config.md)
-2. [database/README.md](/Users/guweigang/Source/vphpx/vslim/docs/database/README.md)
-3. [testing/README.md](/Users/guweigang/Source/vphpx/vslim/docs/testing/README.md)
+1. [config/config.md](config/config.md)
+2. [database/README.md](database/README.md)
+3. [testing/README.md](testing/README.md)

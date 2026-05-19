@@ -4,9 +4,9 @@
 
 真理之源：
 
-- [`src/php_app.v`](/Users/guweigang/Source/vphpx/vslim/src/php_app.v)
-- [`src/route.v`](/Users/guweigang/Source/vphpx/vslim/src/route.v)
-- [`tests/test_php_route_builder.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_php_route_builder.phpt)
+- [`src/php_app.v`](vslim/src/php_app.v)
+- [`src/route.v`](vslim/src/route.v)
+- [`tests/test_php_route_builder.phpt`](vslim/tests/test_php_route_builder.phpt)
 
 ## 创建分组
 

@@ -4,10 +4,10 @@
 
 真理之源：
 
-- [`src/request.v`](/Users/guweigang/Source/vphpx/vslim/src/request.v)
-- [`tests/test_vslim_request_input.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_request_input.phpt)
-- [`tests/test_vslim_request_body_format.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_request_body_format.phpt)
-- [`tests/test_vslim_request_trace_ids.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_request_trace_ids.phpt)
+- [`src/request.v`](vslim/src/request.v)
+- [`tests/test_vslim_request_input.phpt`](vslim/tests/test_vslim_request_input.phpt)
+- [`tests/test_vslim_request_body_format.phpt`](vslim/tests/test_vslim_request_body_format.phpt)
+- [`tests/test_vslim_request_trace_ids.phpt`](vslim/tests/test_vslim_request_trace_ids.phpt)
 
 ## 基本字段
 

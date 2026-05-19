@@ -3,8 +3,9 @@ VSlim job dispatcher and worker run a PHP userland job against a real MySQL queu
 --SKIPIF--
 <?php
 if (!extension_loaded('vslim')) print 'skip';
-if (!is_file('/Users/guweigang/Source/vphpx/knowledge-studio/.env')) print 'skip';
-VSlim\EnvLoader::bootstrap('/Users/guweigang/Source/vphpx/knowledge-studio');
+$knowledgeStudioRoot = dirname(__DIR__, 2) . '/knowledge-studio';
+if (!is_file($knowledgeStudioRoot . '/.env')) print 'skip';
+VSlim\EnvLoader::bootstrap($knowledgeStudioRoot);
 if ((getenv('VSLIM_DB_TRANSPORT') ?: 'direct') !== 'direct') {
     print 'skip';
     return;
@@ -38,7 +39,8 @@ try {
 ?>
 --FILE--
 <?php
-VSlim\EnvLoader::bootstrap('/Users/guweigang/Source/vphpx/knowledge-studio');
+$knowledgeStudioRoot = dirname(__DIR__, 2) . '/knowledge-studio';
+VSlim\EnvLoader::bootstrap($knowledgeStudioRoot);
 
 final class VSlimJobRuntimePhptJob
 {

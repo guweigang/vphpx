@@ -22,10 +22,10 @@ fclose($server);
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 3) . '/vhttpd/php/package/vendor/autoload.php';
-
 $root = dirname(__DIR__);
-$workerBin = $root . '/../../vhttpd/php/package/bin/vphp-worker';
+$vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname($root, 2) . '/vhttpd';
+require_once $vhttpdRoot . '/php/package/vendor/autoload.php';
+$workerBin = $vhttpdRoot . '/php/package/bin/vphp-worker';
 $app = __DIR__ . '/fixtures/vslim_websocket_app_fixture.php';
 $sock = sys_get_temp_dir() . '/vslim_ws_worker_' . getmypid() . '.sock';
 $log = sys_get_temp_dir() . '/vslim_ws_worker_' . getmypid() . '.log';

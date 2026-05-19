@@ -4,7 +4,7 @@ PhpWorker Connection emits local hub control frames
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 3) . '/vhttpd/php/package/vendor/autoload.php';
+require_once (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/php/package/vendor/autoload.php';
 
 $stream = fopen('php://temp', 'w+');
 $conn = new VHttpd\PhpWorker\WebSocket\Connection($stream, 'ws-1');

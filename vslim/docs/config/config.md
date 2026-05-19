@@ -11,10 +11,10 @@
 
 真理之源：
 
-- [`src/config_runtime.v`](/Users/guweigang/Source/vphpx/vslim/src/config_runtime.v)
-- [`tests/test_vslim_config_toml.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_config_toml.phpt)
-- [`tests/test_vslim_app_config.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_app_config.phpt)
-- [`examples/config_usage.php`](/Users/guweigang/Source/vphpx/vslim/examples/config_usage.php)
+- [`src/config_runtime.v`](vslim/src/config_runtime.v)
+- [`tests/test_vslim_config_toml.phpt`](vslim/tests/test_vslim_config_toml.phpt)
+- [`tests/test_vslim_app_config.phpt`](vslim/tests/test_vslim_app_config.phpt)
+- [`examples/config_usage.php`](vslim/examples/config_usage.php)
 
 ## 基本用法
 

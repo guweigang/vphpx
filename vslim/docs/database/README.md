@@ -12,12 +12,12 @@
 
 真理之源：
 
-- [types.v](/Users/guweigang/Source/vphpx/vslim/src/types.v)
-- [database_runtime.v](/Users/guweigang/Source/vphpx/vslim/src/database_runtime.v)
-- [app_services.v](/Users/guweigang/Source/vphpx/vslim/src/app_services.v)
-- [container.v](/Users/guweigang/Source/vphpx/vslim/src/container.v)
-- [test_vslim_database_config.phpt](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_database_config.phpt)
-- [vhttpd-upstream.md](/Users/guweigang/Source/vphpx/vslim/docs/database/vhttpd-upstream.md)
+- [types.v](vslim/src/types.v)
+- [database_runtime.v](vslim/src/database_runtime.v)
+- [app_services.v](vslim/src/app_services.v)
+- [container.v](vslim/src/container.v)
+- [test_vslim_database_config.phpt](vslim/tests/test_vslim_database_config.phpt)
+- [vhttpd-upstream.md](vslim/docs/database/vhttpd-upstream.md)
 
 ## 当前提供的对象
 
@@ -324,10 +324,10 @@ echo $pending->lastInsertId();
 
 相关源码和测试：
 
-- [database_runtime.v](/Users/guweigang/Source/vphpx/vslim/src/database_runtime.v)
-- [types.v](/Users/guweigang/Source/vphpx/vslim/src/types.v)
-- [test_vslim_database_async.phpt](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_database_async.phpt)
-- [test_vslim_database_async_real_db.phpt](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_database_async_real_db.phpt)
+- [database_runtime.v](vslim/src/database_runtime.v)
+- [types.v](vslim/src/types.v)
+- [test_vslim_database_async.phpt](vslim/tests/test_vslim_database_async.phpt)
+- [test_vslim_database_async_real_db.phpt](vslim/tests/test_vslim_database_async_real_db.phpt)
 
 ## 事务语义
 
@@ -402,4 +402,4 @@ echo $pending->lastInsertId();
 
 如果要把数据库连接池进一步交给 `vhttpd` 托管，而不是留在 PHP worker 进程内，设计见：
 
-- [VSlim Database over vhttpd Upstream](/Users/guweigang/Source/vphpx/vslim/docs/database/vhttpd-upstream.md)
+- [VSlim Database over vhttpd Upstream](vslim/docs/database/vhttpd-upstream.md)

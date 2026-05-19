@@ -20,7 +20,7 @@ if (is_file($probe)) {
 ?>
 --FILE--
 <?php
-$autoload = dirname(__DIR__, 3) . '/vhttpd/php/package/vendor/autoload.php';
+$autoload = (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/php/package/vendor/autoload.php';
 if (!is_file($autoload)) {
     $autoload = dirname(__DIR__) . '/vendor/autoload.php';
 }
@@ -30,7 +30,7 @@ if (!is_file($autoload)) {
 }
 require_once $autoload;
 
-$fixture = dirname(__DIR__, 3) . '/vhttpd/examples/mcp-feishu-app.php';
+$fixture = (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/examples/mcp-feishu-app.php';
 $adminSocket = '/tmp/vhttpd_mcp_feishu_admin_' . getmypid() . '.sock';
 @unlink($adminSocket);
 putenv('VHTTPD_INTERNAL_ADMIN_SOCKET=' . $adminSocket);

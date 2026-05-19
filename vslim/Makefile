@@ -25,10 +25,11 @@ ifeq ($(UNAME_S),Darwin)
 PLATFORM_LDFLAGS += -undefined dynamic_lookup
 endif
 ROOT := $(CURDIR)
+REPO_ROOT := $(abspath $(ROOT)/..)
 ARTIFACT_VERSION ?= $(shell git -C $(ROOT)/.. describe --tags --always --dirty)
 ARTIFACT_PLATFORM ?= $(shell php -r '$$os = strtolower(PHP_OS_FAMILY); if ($$os === "darwin") $$os = "macos"; $$arch = strtolower(php_uname("m")); if (in_array($$arch, ["amd64", "x64", "x86_64"], true)) $$arch = "amd64"; if (in_array($$arch, ["aarch64", "arm64"], true)) $$arch = "arm64"; echo $$os . "-" . $$arch;')
 PACKAGE_FORMAT ?= zip
-VHTTPD_ROOT ?= $(abspath $(ROOT)/../../vhttpd)
+VHTTPD_ROOT ?= $(abspath $(REPO_ROOT)/../vhttpd)
 SRC_DIR := $(VHTTPD_ROOT)/src
 VHTTPD_BIN := $(VHTTPD_ROOT)/vhttpd
 VHTTPD_PORT ?= 19881
@@ -104,6 +105,11 @@ stubs: build
 	php $(ROOT)/scripts/generate_stubs.php
 
 vhttpd:
+	@if [ ! -d "$(VHTTPD_ROOT)" ]; then \
+		echo "Error: VHTTPD_ROOT does not exist: $(VHTTPD_ROOT)"; \
+		echo "Expected the split-repo sibling layout: <workspace>/vphpx and <workspace>/vhttpd."; \
+		exit 1; \
+	fi
 	@$(MAKE) -C $(VHTTPD_ROOT) build VHTTPD_BIN="$(VHTTPD_BIN)" VPHP_V_GC="$(VPHP_V_GC)"
 
 serve: build vhttpd
