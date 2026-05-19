@@ -1,8 +1,8 @@
 module main
 
-fn release_route_owned_refs(mut route VSlimRoute) {
-	if route.php_handler.is_valid() {
-		mut handler := route.php_handler
+fn (mut route VSlimRoute) release_owned_refs() {
+	if route.handler_ref.is_valid() {
+		mut handler := route.handler_ref
 		handler.release()
 	}
 	if route.resource_missing_handler.is_valid() {
@@ -11,7 +11,7 @@ fn release_route_owned_refs(mut route VSlimRoute) {
 	}
 }
 
-fn release_hook_table_owned_refs(mut table HookTable) {
+fn (mut table HookTable) release_owned_refs() {
 	for mut handler in table.handlers {
 		if handler.is_valid() {
 			handler.release()
@@ -27,26 +27,26 @@ pub fn (mut app VSlimApp) cleanup() {
 	// current reflection pass does not recurse into those containers.
 	unsafe {
 		for mut route in app.routes {
-			release_route_owned_refs(mut route)
+			route.release_owned_refs()
 		}
 		for mut route in app.websocket_routes {
-			release_route_owned_refs(mut route)
+			route.release_owned_refs()
 		}
-		release_hook_table_owned_refs(mut app.php_group_before_middle)
-		release_hook_table_owned_refs(mut app.php_group_middle)
-		release_hook_table_owned_refs(mut app.php_group_after_middle)
+		app.group_before_middle.release_owned_refs()
+		app.group_middle.release_owned_refs()
+		app.group_after_middle.release_owned_refs()
 
 		$if nongc ? {
 			app.base_path.free()
 			app.routes.free()
 			app.websocket_routes.free()
 			app.websocket_conn_route.free()
-			app.php_group_before_middle.prefixes.free()
-			app.php_group_before_middle.handlers.free()
-			app.php_group_middle.prefixes.free()
-			app.php_group_middle.handlers.free()
-			app.php_group_after_middle.prefixes.free()
-			app.php_group_after_middle.handlers.free()
+			app.group_before_middle.prefixes.free()
+			app.group_before_middle.handlers.free()
+			app.group_middle.prefixes.free()
+			app.group_middle.handlers.free()
+			app.group_after_middle.prefixes.free()
+			app.group_after_middle.handlers.free()
 			app.provider_classes.free()
 			app.module_classes.free()
 		}

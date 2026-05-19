@@ -6,7 +6,7 @@ import vphp
 @[php_arg_name: 'raw_path=rawPath']
 @[php_method]
 pub fn (mut r VSlimRequest) construct(method string, raw_path string, body string) &VSlimRequest {
-	apply_request_defaults(mut r)
+	r.apply_defaults()
 	r.set_method(method)
 	r.set_target(raw_path)
 	r.set_body(body)
@@ -554,7 +554,7 @@ fn snapshot_string_list(input []string) []string {
 	return out
 }
 
-fn snapshot_vslim_request(req &VSlimRequest) VSlimRequest {
+fn (req &VSlimRequest) snapshot() VSlimRequest {
 	return VSlimRequest{
 		method:           req.method.clone()
 		raw_path:         req.raw_path.clone()
@@ -577,26 +577,26 @@ fn snapshot_vslim_request(req &VSlimRequest) VSlimRequest {
 }
 
 pub fn (r &VSlimRequest) to_vslim_request() VSlimRequest {
-	return snapshot_vslim_request(r)
+	return r.snapshot()
 }
 
-fn snapshot_vslim_request_with_params(req &VSlimRequest, params map[string]string) VSlimRequest {
-	mut out := snapshot_vslim_request(req)
+fn (req &VSlimRequest) snapshot_with_params(params map[string]string) VSlimRequest {
+	mut out := req.snapshot()
 	out.params = snapshot_string_map(params)
 	return out
 }
 
-fn new_vslim_request_snapshot(req &VSlimRequest) &VSlimRequest {
-	snapshot := snapshot_vslim_request(req)
+fn (req &VSlimRequest) boxed_snapshot() &VSlimRequest {
+	snapshot := req.snapshot()
 	return &snapshot
 }
 
-fn new_vslim_request_snapshot_with_params(req &VSlimRequest, params map[string]string) &VSlimRequest {
-	snapshot := snapshot_vslim_request_with_params(req, params)
+fn (req &VSlimRequest) boxed_snapshot_with_params(params map[string]string) &VSlimRequest {
+	snapshot := req.snapshot_with_params(params)
 	return &snapshot
 }
 
-pub fn new_vslim_request(method string, raw_path string, body string) &VSlimRequest {
+pub fn VSlimRequest.new(method string, raw_path string, body string) &VSlimRequest {
 	path, query_string := VSlimRequest.normalize_target(raw_path)
 	mut req := &VSlimRequest{
 		method:       method.clone()
@@ -605,12 +605,12 @@ pub fn new_vslim_request(method string, raw_path string, body string) &VSlimRequ
 		query_string: query_string.clone()
 		body:         body.clone()
 	}
-	apply_request_defaults(mut req)
+	req.apply_defaults()
 	req.query = VSlimRequest.parse_query(query_string)
 	return req
 }
 
-pub fn new_vslim_request_from_value(envelope vphp.PhpValue) &VSlimRequest {
+pub fn VSlimRequest.from_value(envelope vphp.PhpValue) &VSlimRequest {
 	method := envelope.string_at('method', 'GET')
 	raw_path := envelope.string_at('path', '/')
 	body := envelope.string_at('body', '')
@@ -622,7 +622,7 @@ pub fn new_vslim_request_from_value(envelope vphp.PhpValue) &VSlimRequest {
 		query_string: query_string.clone()
 		body:         body.clone()
 	}
-	apply_request_defaults(mut req)
+	req.apply_defaults()
 	req.scheme = envelope.string_at('scheme', req.scheme)
 	req.host = envelope.string_at('host', req.host)
 	req.port = envelope.string_at('port', req.port)
@@ -644,7 +644,7 @@ pub fn new_vslim_request_from_value(envelope vphp.PhpValue) &VSlimRequest {
 		map[string]string{}
 	}
 	req.attributes = if part := envelope.value('attributes') {
-		snapshot_string_map(php_value_assoc_scalar_string_map(part))
+		snapshot_string_map(value_subject(part).assoc_scalar_string_map())
 	} else {
 		map[string]string{}
 	}
@@ -699,7 +699,7 @@ fn encode_query_map(query map[string]string) string {
 	return parts.join('&')
 }
 
-fn apply_request_defaults(mut r VSlimRequest) {
+fn (mut r VSlimRequest) apply_defaults() {
 	r.scheme = 'http'
 	r.host = ''
 	r.port = ''

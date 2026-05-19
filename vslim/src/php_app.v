@@ -14,7 +14,7 @@ __global (
 	vslim_current_dispatch_app    &VSlimApp
 )
 
-fn enter_runtime_dispatch_app(app &VSlimApp) &VSlimApp {
+fn (app &VSlimApp) enter_runtime_dispatch() &VSlimApp {
 	unsafe {
 		prev := vslim_current_dispatch_app
 		vslim_current_dispatch_app = app
@@ -34,7 +34,7 @@ fn current_runtime_dispatch_app() &VSlimApp {
 	}
 }
 
-fn vslim_trace_mem_enabled(app &VSlimApp) bool {
+fn (app &VSlimApp) trace_mem_enabled() bool {
 	if app.config_ref != unsafe { nil } && app.config_ref.has('app.trace.memory') {
 		return app.config_ref.get_bool('app.trace.memory', false)
 	}
@@ -61,7 +61,7 @@ fn vslim_trace_mem_enabled(app &VSlimApp) bool {
 	}
 }
 
-fn vslim_trace_mem_every(app &VSlimApp) int {
+fn (app &VSlimApp) trace_mem_every() int {
 	if app.config_ref != unsafe { nil } && app.config_ref.has('app.trace.memory_every') {
 		every := app.config_ref.get_int('app.trace.memory_every', 1)
 		if every <= 0 {
@@ -70,18 +70,18 @@ fn vslim_trace_mem_every(app &VSlimApp) int {
 		return every
 	}
 	unsafe {
-		_ = vslim_trace_mem_enabled(app)
+		_ = app.trace_mem_enabled()
 		return vslim_trace_mem_every_cache
 	}
 }
 
-fn vslim_trace_mem_should_log(app &VSlimApp) bool {
-	if !vslim_trace_mem_enabled(app) {
+fn (app &VSlimApp) trace_mem_should_log() bool {
+	if !app.trace_mem_enabled() {
 		return false
 	}
 	unsafe {
 		vslim_trace_mem_counter++
-		every := u64(vslim_trace_mem_every(app))
+		every := u64(app.trace_mem_every())
 		return every > 0 && vslim_trace_mem_counter % every == 0
 	}
 }
@@ -96,7 +96,7 @@ fn vslim_mem_usage_bytes() i64 {
 	}, real_usage_arg) or { -1 }
 }
 
-fn vslim_trace_mem_log(app &VSlimApp, req &VSlimRequest, stage string, base_bytes i64) {
+fn (app &VSlimApp) trace_mem_log(req &VSlimRequest, stage string, base_bytes i64) {
 	bytes := vslim_mem_usage_bytes()
 	if bytes < 0 {
 		return
@@ -104,7 +104,7 @@ fn vslim_trace_mem_log(app &VSlimApp, req &VSlimRequest, stage string, base_byte
 	delta := bytes - base_bytes
 	counters := vphp.runtime_counters()
 	mut context := map[string]string{}
-	mut clock := resolve_app_clock(app)
+	mut clock := app.resolve_clock()
 	defer {
 		clock.release()
 	}
@@ -118,7 +118,7 @@ fn vslim_trace_mem_log(app &VSlimApp, req &VSlimRequest, stage string, base_byte
 	context['owned_len'] = '${counters.owned_len}'
 	context['obj_reg'] = '${counters.obj_registry_len}'
 	context['rev_reg'] = '${counters.rev_registry_len}'
-	mut logger := resolve_app_logger(app)
+	mut logger := app.resolve_logger()
 	mut context_value := vphp.PhpValue.from_v[map[string]string](context) or {
 		vphp.PhpValue.null()
 	}
@@ -130,14 +130,14 @@ fn vslim_trace_mem_log(app &VSlimApp, req &VSlimRequest, stage string, base_byte
 	logger.debug_context('memory trace', context_arr)
 }
 
-fn resolve_app_logger(app &VSlimApp) &VSlimLogger {
+fn (app &VSlimApp) resolve_logger() &VSlimLogger {
 	unsafe {
 		mut writable := &VSlimApp(app)
 		return writable.logger()
 	}
 }
 
-fn resolve_app_clock(app &VSlimApp) vphp.PhpObject {
+fn (app &VSlimApp) resolve_clock() vphp.PhpObject {
 	unsafe {
 		mut writable := &VSlimApp(app)
 		return writable.clock()
@@ -183,7 +183,7 @@ pub fn VSlimDebugObjectProbe.psr7_lifecycle_counters(rounds int) string {
 	mut scope := vphp.PhpScope.request()
 	mut server_params := vphp.PhpArray.empty()
 	server_params.string('REQUEST_METHOD', 'POST')
-	mut req := new_psr7_server_request_string('POST', '/debug/lifecycle?probe=1', server_params)
+	mut req := VSlimPsr7ServerRequest.from_string('POST', '/debug/lifecycle?probe=1', server_params)
 	server_params.release()
 	mut checksum := 0
 	for i in 0 .. total_rounds {

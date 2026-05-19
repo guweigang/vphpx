@@ -12,7 +12,7 @@ pub type VSlimNext = fn (VSlimRequest) VSlimResponse
 pub type VSlimMiddleware = fn (VSlimRequest, VSlimNext) VSlimResponse
 
 pub enum VSlimRouteHandlerType {
-	v_native
+	native
 	php_callable
 }
 
@@ -23,7 +23,7 @@ pub mut:
 	pattern                  string
 	handler_type             VSlimRouteHandlerType
 	v_handler                VSlimHandler  = unsafe { nil }
-	php_handler              vphp.PhpValue = vphp.PhpValue.invalid()
+	handler_ref              vphp.PhpValue = vphp.PhpValue.invalid()
 	resource_action          string
 	resource_missing_handler vphp.PhpCallable = vphp.PhpCallable.invalid()
 }
@@ -97,12 +97,12 @@ mut:
 	routes                  []VSlimRoute
 	websocket_routes        []VSlimRoute                @[php_ignore]
 	websocket_conn_route    map[string]int              @[php_ignore]
-	php_before_middlewares  []vphp.PhpValue             @[php_ignore]
-	php_middlewares         []vphp.PhpValue             @[php_ignore]
-	php_after_middlewares   []vphp.PhpValue             @[php_ignore]
-	php_group_before_middle HookTable                   @[php_ignore]
-	php_group_middle        HookTable                   @[php_ignore]
-	php_group_after_middle  HookTable                   @[php_ignore]
+	before_middlewares  []vphp.PhpValue             @[php_ignore]
+	middlewares         []vphp.PhpValue             @[php_ignore]
+	after_middlewares   []vphp.PhpValue             @[php_ignore]
+	group_before_middle HookTable                   @[php_ignore]
+	group_middle        HookTable                   @[php_ignore]
+	group_after_middle  HookTable                   @[php_ignore]
 	not_found_handler       vphp.PhpCallable            @[php_ignore]
 	error_handler           vphp.PhpCallable            @[php_ignore]
 	container_ref           &VSlimContainer  = unsafe { nil }             @[php_ignore]

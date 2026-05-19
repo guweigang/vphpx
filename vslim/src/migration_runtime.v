@@ -6,7 +6,7 @@ import vphp
 
 #include "php_bridge.h"
 
-fn wrap_runtime_database_manager_value(db &VSlimDatabaseManager) vphp.PhpValue {
+fn (db &VSlimDatabaseManager) wrap_runtime_value() vphp.PhpValue {
 	unsafe {
 		if isnil(db) {
 			return vphp.PhpValue.null()
@@ -15,13 +15,13 @@ fn wrap_runtime_database_manager_value(db &VSlimDatabaseManager) vphp.PhpValue {
 	}
 }
 
-fn database_manager_self_value(db &VSlimDatabaseManager) vphp.PhpValue {
+fn (db &VSlimDatabaseManager) self_value() vphp.PhpValue {
 	if self := vphp.PhpObject.current() {
 		if self.is_valid() && self.is_instance_of('VSlim\\Database\\Manager') {
 			return self.owned().to_value()
 		}
 	}
-	return wrap_runtime_database_manager_value(db)
+	return db.wrap_runtime_value()
 }
 
 fn migration_entry_name(path string) string {
@@ -32,25 +32,26 @@ fn migration_entry_name(path string) string {
 	return name
 }
 
-fn migration_sorted_php_files(path string) []string {
+fn migration_sorted_files(path string) []string {
 	clean := path.trim_space()
-	if clean == '' || !php_is_dir(clean) {
+	if clean == '' || !path_is_dir(clean) {
 		return []string{}
 	}
-	mut files := php_glob_paths(path_join(clean, '*.php'))
+	mut files := glob_paths(path_join(clean, '*.php'))
 	files.sort()
 	return files
 }
 
-fn database_rows_from_value(rows vphp.PhpValue) []map[string]string {
+fn (subject PhpValueSubject) database_rows() []map[string]string {
 	mut out := []map[string]string{}
+	rows := subject.value
 	arr := rows.as_array() or { return out }
 	for idx := 0; idx < arr.count(); idx++ {
 		item := arr.index_value(idx)
 		if !item.is_array() {
 			continue
 		}
-		out << database_string_map_from_value(item)
+		out << value_subject(item).database_string_map()
 	}
 	return out
 }
@@ -93,7 +94,7 @@ fn migration_drop_column_sql(table_name string, column_name string) string {
 }
 
 fn migration_apply_manager(instance vphp.PhpValue, manager &VSlimDatabaseManager, name string) {
-	mut manager_value := database_manager_self_value(manager)
+	mut manager_value := manager.self_value()
 	defer {
 		manager_value.release()
 	}
@@ -118,7 +119,7 @@ fn migration_apply_manager(instance vphp.PhpValue, manager &VSlimDatabaseManager
 }
 
 fn migrator_load_object(file string, expected_class string) !vphp.PhpValue {
-	if !php_is_file(file) {
+	if !path_is_file(file) {
 		return error('migration file "${file}" does not exist')
 	}
 	mut loaded := vphp.PhpIncludeFile.at(file).load()
@@ -150,7 +151,7 @@ fn (mut migrator VSlimDatabaseMigrator) applied_migration_rows() []map[string]st
 	defer {
 		rows.release()
 	}
-	return database_rows_from_value(rows)
+	return value_subject(rows).database_rows()
 }
 
 fn (mut migrator VSlimDatabaseMigrator) applied_migration_batches() map[string]int {
@@ -455,12 +456,12 @@ pub fn (migrator &VSlimDatabaseMigrator) table_name_value() string {
 
 @[php_method: 'migrationFiles']
 pub fn (migrator &VSlimDatabaseMigrator) migration_files() []string {
-	return migration_sorted_php_files(migrator.migrations_path_value())
+	return migration_sorted_files(migrator.migrations_path_value())
 }
 
 @[php_method: 'seedFiles']
 pub fn (migrator &VSlimDatabaseMigrator) seed_files() []string {
-	return migration_sorted_php_files(migrator.seeds_path_value())
+	return migration_sorted_files(migrator.seeds_path_value())
 }
 
 @[php_method: 'loadMigration']

@@ -17,7 +17,7 @@ pub fn (view &VSlimView) render_response(template string, data vphp.PhpValue) &V
 	body := view.render(template, data)
 	mut res := VSlimResponse{}
 	res.construct(200, body, 'text/html; charset=utf-8')
-	return new_psr7_response_from_vslim_response(res)
+	return res.to_psr7_response()
 }
 
 @[php_method: 'renderResponseWithLayout']
@@ -26,11 +26,11 @@ pub fn (view &VSlimView) render_response_with_layout(template string, layout str
 	body := view.render_with_layout(template, layout, data)
 	mut res := VSlimResponse{}
 	res.construct(200, body, 'text/html; charset=utf-8')
-	return new_psr7_response_from_vslim_response(res)
+	return res.to_psr7_response()
 }
 
 fn (view &VSlimView) render_source(source string, scalars map[string]string, lists map[string][]string, depth int) string {
-	program := compile_template_program(source)
+	program := TemplateProgram.compile(source)
 	return view.render_nodes(program.nodes, scalars, lists, map[string]vphp.PhpValue{}, depth, map[string]string{}, '<inline>')
 }
 
@@ -50,7 +50,7 @@ fn (view &VSlimView) render_nodes(nodes []TemplateNode, scalars map[string]strin
 				} else {
 					view.eval_template_expression(node.value, scalars, lists, objects, template_path, node.line, node.col)
 				}
-				out.write_string(escape_html_text(template_expr_value_string(value)))
+				out.write_string(escape_html_text(value.string()))
 			}
 			.raw_value {
 				out.write_string(template_scalar_value_with_lists(node.name, scalars, lists))
@@ -61,9 +61,9 @@ fn (view &VSlimView) render_nodes(nodes []TemplateNode, scalars map[string]strin
 			}
 			.asset {
 				value := view.eval_template_expr_callable('asset', [
-					new_template_expr_scalar(node.name),
+					TemplateExprValue.scalar(node.name),
 				], scalars, lists, objects, template_path, node.line, node.col)
-				out.write_string(template_expr_value_string(value))
+				out.write_string(value.string())
 			}
 			.slot {
 				if node.name in slots {
@@ -157,7 +157,7 @@ fn apply_include_arg_nodes(view &VSlimView, args []TemplateIncludeArg, scalars m
 				out_scalars[key] = value.object.to_string()
 			}
 			.scalar {
-				out_scalars[key] = template_expr_value_string(value)
+				out_scalars[key] = value.string()
 			}
 		}
 	}

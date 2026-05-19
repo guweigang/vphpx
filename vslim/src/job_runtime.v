@@ -12,7 +12,7 @@ struct VSlimReservedJob {
 	max_attempts int
 }
 
-fn job_exec_params(mut db VSlimDatabaseManager, statement string, params []string) bool {
+fn (mut db VSlimDatabaseManager) job_exec_params(statement string, params []string) bool {
 	mut values := database_params_value(params)
 	defer {
 		values.release()
@@ -24,7 +24,7 @@ fn job_exec_params(mut db VSlimDatabaseManager, statement string, params []strin
 	return db.last_error_message() == ''
 }
 
-fn job_query_one_params(mut db VSlimDatabaseManager, statement string, params []string) vphp.PhpValue {
+fn (mut db VSlimDatabaseManager) job_query_one_params(statement string, params []string) vphp.PhpValue {
 	mut values := database_params_value(params)
 	defer {
 		values.release()
@@ -108,7 +108,7 @@ pub fn (mut dispatcher VSlimJobDispatcher) dispatch(job_class string, payload vp
 	delay := if delay_seconds < 0 { 0 } else { delay_seconds }
 	payload_json := payload.to_json()
 	stored_payload := if payload_json == '' { 'null' } else { payload_json }
-	ok := job_exec_params(mut db,
+	ok := db.job_exec_params(
 		"INSERT INTO vslim_jobs (queue, job_class, payload_json, status, attempts, max_attempts, available_at, created_at, updated_at) VALUES (?, ?, ?, 'pending', 0, ?, DATE_ADD(NOW(), INTERVAL ? SECOND), NOW(), NOW())", [
 		clean_queue,
 		clean_class,
@@ -162,7 +162,7 @@ pub fn (mut worker VSlimJobWorker) set_reserve_timeout_seconds(seconds int) &VSl
 fn (mut worker VSlimJobWorker) release_stale_reserved(queue string) {
 	mut db := job_worker_manager_or_throw(worker) or { return }
 	clean_queue := if queue.trim_space() == '' { 'default' } else { queue.trim_space() }
-	_ = job_exec_params(mut db,
+	_ = db.job_exec_params(
 		"UPDATE vslim_jobs SET status = 'pending', reserved_at = NULL, reserved_by = NULL, updated_at = NOW() WHERE queue = ? AND status = 'reserved' AND reserved_at IS NOT NULL AND reserved_at < DATE_SUB(NOW(), INTERVAL ? SECOND)", [
 		clean_queue,
 		worker.reserve_timeout_secs.str(),
@@ -173,7 +173,7 @@ fn (mut worker VSlimJobWorker) reserve(queue string) ?VSlimReservedJob {
 	mut db := job_worker_manager_or_throw(worker) or { return none }
 	clean_queue := if queue.trim_space() == '' { 'default' } else { queue.trim_space() }
 	worker.release_stale_reserved(clean_queue)
-	mut row_box := job_query_one_params(mut db,
+	mut row_box := db.job_query_one_params(
 		"SELECT id, queue, job_class, payload_json, attempts, max_attempts FROM vslim_jobs WHERE queue = ? AND status = 'pending' AND available_at <= NOW() ORDER BY available_at ASC, id ASC LIMIT 1", [
 		clean_queue,
 	])
@@ -181,7 +181,7 @@ fn (mut worker VSlimJobWorker) reserve(queue string) ?VSlimReservedJob {
 		row_box.release()
 	}
 	job := job_reserved_from_row(row_box) or { return none }
-	ok := job_exec_params(mut db,
+	ok := db.job_exec_params(
 		"UPDATE vslim_jobs SET status = 'reserved', attempts = attempts + 1, reserved_at = NOW(), reserved_by = ?, updated_at = NOW() WHERE id = ? AND status = 'pending' AND available_at <= NOW()", [
 		worker.worker_id,
 		job.id.str(),
@@ -197,7 +197,7 @@ fn (mut worker VSlimJobWorker) reserve(queue string) ?VSlimReservedJob {
 
 fn (mut worker VSlimJobWorker) complete(job VSlimReservedJob) bool {
 	mut db := job_worker_manager_or_throw(worker) or { return false }
-	return job_exec_params(mut db,
+	return db.job_exec_params(
 		"UPDATE vslim_jobs SET status = 'completed', completed_at = NOW(), reserved_at = NULL, reserved_by = NULL, last_error = NULL, updated_at = NOW() WHERE id = ?", [
 		job.id.str(),
 	])
@@ -207,12 +207,12 @@ fn (mut worker VSlimJobWorker) fail_or_release(job VSlimReservedJob, message str
 	mut db := job_worker_manager_or_throw(worker) or { return false }
 	error_message := if message.trim_space() == '' { 'job failed' } else { message.trim_space() }
 	if job.attempts >= job.max_attempts {
-		ok := job_exec_params(mut db,
+		ok := db.job_exec_params(
 			"UPDATE vslim_jobs SET status = 'failed', failed_at = NOW(), reserved_at = NULL, reserved_by = NULL, last_error = ?, updated_at = NOW() WHERE id = ?", [
 			error_message,
 			job.id.str(),
 		])
-		_ = job_exec_params(mut db,
+		_ = db.job_exec_params(
 			'INSERT INTO vslim_failed_jobs (job_id, queue, job_class, payload_json, attempts, error_message, error_trace, failed_at, created_at) VALUES (?, ?, ?, ?, ?, ?, NULL, NOW(), NOW())', [
 			job.id.str(),
 			job.queue,
@@ -223,7 +223,7 @@ fn (mut worker VSlimJobWorker) fail_or_release(job VSlimReservedJob, message str
 		])
 		return ok
 	}
-	return job_exec_params(mut db,
+	return db.job_exec_params(
 		"UPDATE vslim_jobs SET status = 'pending', reserved_at = NULL, reserved_by = NULL, available_at = DATE_ADD(NOW(), INTERVAL ? SECOND), last_error = ?, updated_at = NOW() WHERE id = ?", [
 		worker.retry_delay_seconds.str(),
 		error_message,

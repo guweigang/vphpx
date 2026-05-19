@@ -656,7 +656,7 @@ fn new_mcp_result_response(id vphp.PhpArgInput, result vphp.PhpArgInput, status 
 	mut messages := vphp.PhpArray.new()
 	out.set('messages', messages)
 	messages.release()
-	out.set('commands', php_array_or_empty(result.value_at('commands')))
+	out.set('commands', array_or_empty(result.value_at('commands')))
 	return out
 }
 
@@ -732,7 +732,7 @@ fn string_array_or_empty(input vphp.PhpValue) vphp.PhpArray {
 	return out
 }
 
-fn php_array_or_empty(input vphp.PhpValue) vphp.PhpArray {
+fn array_or_empty(input vphp.PhpValue) vphp.PhpArray {
 	if arr := input.as_array() {
 		return arr.owned()
 	}

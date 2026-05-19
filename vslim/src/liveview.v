@@ -871,7 +871,7 @@ pub fn (mut live VSlimLiveView) html(socket &VSlimLiveSocket) string {
 @[php_method]
 pub fn (mut live VSlimLiveView) response(socket &VSlimLiveSocket) &VSlimPsr7Response {
 	body := live.html(socket)
-	return new_psr7_response_from_vslim_response(*live_html_response(body))
+	return (*VSlimResponse.live_html(body)).to_psr7_response()
 }
 
 @[php_arg_name: 'target_id=targetId']
@@ -1043,7 +1043,7 @@ pub fn (mut component VSlimLiveComponent) patch_bound() &VSlimLiveSocket {
 	if socket := component.bound_socket() {
 		return component.patch(socket)
 	}
-	return new_live_socket_bound_result()
+	return VSlimLiveSocket.bound_result()
 }
 
 @[php_method: 'componentMarker']
@@ -1071,7 +1071,7 @@ pub fn (mut component VSlimLiveComponent) append_to_bound(target_id string) &VSl
 	if socket := component.bound_socket() {
 		return component.append_to(socket, target_id)
 	}
-	return new_live_socket_bound_result()
+	return VSlimLiveSocket.bound_result()
 }
 
 @[php_arg_name: 'target_id=targetId']
@@ -1094,7 +1094,7 @@ pub fn (mut component VSlimLiveComponent) prepend_to_bound(target_id string) &VS
 	if socket := component.bound_socket() {
 		return component.prepend_to(socket, target_id)
 	}
-	return new_live_socket_bound_result()
+	return VSlimLiveSocket.bound_result()
 }
 
 @[php_method]
@@ -1114,7 +1114,7 @@ pub fn (mut component VSlimLiveComponent) remove_bound() &VSlimLiveSocket {
 	if socket := component.bound_socket() {
 		return component.remove(socket)
 	}
-	return new_live_socket_bound_result()
+	return VSlimLiveSocket.bound_result()
 }
 
 @[php_method]
@@ -1160,7 +1160,7 @@ pub fn (state &VSlimLiveComponentState) available() bool {
 	return !isnil(state.socket_ref) && state.component_id != ''
 }
 
-fn new_live_socket_bound_result() &VSlimLiveSocket {
+fn VSlimLiveSocket.bound_result() &VSlimLiveSocket {
 	mut socket := &VSlimLiveSocket{}
 	socket.construct()
 	return socket
@@ -1267,7 +1267,7 @@ fn live_normalize_target(raw_path string) string {
 	return if clean == '' { '/' } else { clean }
 }
 
-fn live_html_response(body string) &VSlimResponse {
+fn VSlimResponse.live_html(body string) &VSlimResponse {
 	return &VSlimResponse{
 		status:       200
 		body:         body

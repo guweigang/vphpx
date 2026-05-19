@@ -10,7 +10,7 @@ fn (view &VSlimView) invoke_template_helper_values(name string, args []TemplateE
 	}
 	mut call_args := []vphp.PhpArgInput{cap: args.len}
 	for arg in args {
-		mut value := template_expr_value_to_value_with_context(arg, scalars, lists)
+		mut value := arg.to_value_with_context(scalars, lists)
 		call_args << frame.adopt_value(mut value)
 	}
 	return view.invoke_template_helper_args(name, call_args, template_path, line, col)

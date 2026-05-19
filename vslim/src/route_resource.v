@@ -2,13 +2,13 @@ module main
 
 import vphp
 
-fn register_resource_routes(mut app VSlimApp, raw_resource_path string, controller string, include_page_routes bool) {
-	register_resource_routes_with_options(mut app, raw_resource_path, controller, include_page_routes,
+fn (mut app VSlimApp) register_resource_routes(raw_resource_path string, controller string, include_page_routes bool) {
+	app.register_resource_routes_with_options(raw_resource_path, controller, include_page_routes,
 		ResourceRouteOptions{})
 }
 
-fn register_singleton_routes(mut app VSlimApp, raw_resource_path string, controller string, include_page_routes bool) {
-	register_singleton_routes_with_options(mut app, raw_resource_path, controller, include_page_routes,
+fn (mut app VSlimApp) register_singleton_routes(raw_resource_path string, controller string, include_page_routes bool) {
+	app.register_singleton_routes_with_options(raw_resource_path, controller, include_page_routes,
 		ResourceRouteOptions{})
 }
 
@@ -23,7 +23,7 @@ mut:
 	missing_handler vphp.PhpCallable = vphp.PhpCallable.invalid()
 }
 
-fn register_resource_routes_with_options(mut app VSlimApp, raw_resource_path string, controller string, include_page_routes bool, options ResourceRouteOptions) {
+fn (mut app VSlimApp) register_resource_routes_with_options(raw_resource_path string, controller string, include_page_routes bool, options ResourceRouteOptions) {
 	clean_controller := controller.trim_space()
 	path := normalize_resource_path(raw_resource_path)
 	if clean_controller == '' || path == '' {
@@ -42,42 +42,42 @@ fn register_resource_routes_with_options(mut app VSlimApp, raw_resource_path str
 	id_param := normalize_resource_param_name(opts.param_name)
 	member_base_path := if opts.shallow { shallow_member_base_path(path) } else { path }
 	id_path := '${member_base_path}/:${id_param}'
-	if handler_index.is_valid() && should_include_resource_action(opts, 'index', actions) {
-		app.add_php_route_with_resource_meta('GET', resource_route_name(opts, base_name,
+	if handler_index.is_valid() && opts.should_include_action('index', actions) {
+		app.add_route_with_resource_meta('GET', opts.route_name(base_name,
 			'index'), path, handler_index, 'index', opts.missing_handler)
 	}
 	if include_page_routes && handler_create.is_valid()
-		&& should_include_resource_action(opts, 'create', actions) {
-		app.add_php_route_with_resource_meta('GET', resource_route_name(opts, base_name,
+		&& opts.should_include_action('create', actions) {
+		app.add_route_with_resource_meta('GET', opts.route_name(base_name,
 			'create'), '${path}/create', handler_create, 'create', opts.missing_handler)
 	}
-	if handler_store.is_valid() && should_include_resource_action(opts, 'store', actions) {
-		app.add_php_route_with_resource_meta('POST', resource_route_name(opts, base_name,
+	if handler_store.is_valid() && opts.should_include_action('store', actions) {
+		app.add_route_with_resource_meta('POST', opts.route_name(base_name,
 			'store'), path, handler_store, 'store', opts.missing_handler)
 	}
-	if handler_show.is_valid() && should_include_resource_action(opts, 'show', actions) {
-		app.add_php_route_with_resource_meta('GET', resource_route_name(opts, base_name,
+	if handler_show.is_valid() && opts.should_include_action('show', actions) {
+		app.add_route_with_resource_meta('GET', opts.route_name(base_name,
 			'show'), id_path, handler_show, 'show', opts.missing_handler)
 	}
 	if include_page_routes && handler_edit.is_valid()
-		&& should_include_resource_action(opts, 'edit', actions) {
-		app.add_php_route_with_resource_meta('GET', resource_route_name(opts, base_name,
+		&& opts.should_include_action('edit', actions) {
+		app.add_route_with_resource_meta('GET', opts.route_name(base_name,
 			'edit'), '${id_path}/edit', handler_edit, 'edit', opts.missing_handler)
 	}
-	if handler_update.is_valid() && should_include_resource_action(opts, 'update', actions) {
-		name := resource_route_name(opts, base_name, 'update')
-		app.add_php_route_with_resource_meta('PUT', name, id_path, handler_update, 'update',
+	if handler_update.is_valid() && opts.should_include_action('update', actions) {
+		name := opts.route_name(base_name, 'update')
+		app.add_route_with_resource_meta('PUT', name, id_path, handler_update, 'update',
 			opts.missing_handler)
-		app.add_php_route_with_resource_meta('PATCH', name, id_path, handler_update, 'update',
+		app.add_route_with_resource_meta('PATCH', name, id_path, handler_update, 'update',
 			opts.missing_handler)
 	}
-	if handler_destroy.is_valid() && should_include_resource_action(opts, 'destroy', actions) {
-		app.add_php_route_with_resource_meta('DELETE', resource_route_name(opts, base_name,
+	if handler_destroy.is_valid() && opts.should_include_action('destroy', actions) {
+		app.add_route_with_resource_meta('DELETE', opts.route_name(base_name,
 			'destroy'), id_path, handler_destroy, 'destroy', opts.missing_handler)
 	}
 }
 
-fn register_singleton_routes_with_options(mut app VSlimApp, raw_resource_path string, controller string, include_page_routes bool, options ResourceRouteOptions) {
+fn (mut app VSlimApp) register_singleton_routes_with_options(raw_resource_path string, controller string, include_page_routes bool, options ResourceRouteOptions) {
 	clean_controller := controller.trim_space()
 	path := normalize_resource_path(raw_resource_path)
 	if clean_controller == '' || path == '' {
@@ -92,33 +92,33 @@ fn register_singleton_routes_with_options(mut app VSlimApp, raw_resource_path st
 	handler_destroy := make_resource_handler(clean_controller, 'destroy')
 	handler_create := make_resource_handler(clean_controller, 'create')
 	handler_edit := make_resource_handler(clean_controller, 'edit')
-	if handler_show.is_valid() && should_include_resource_action(opts, 'show', actions) {
-		app.add_php_route_with_resource_meta('GET', resource_route_name(opts, base_name,
+	if handler_show.is_valid() && opts.should_include_action('show', actions) {
+		app.add_route_with_resource_meta('GET', opts.route_name(base_name,
 			'show'), path, handler_show, 'show', opts.missing_handler)
 	}
 	if include_page_routes && handler_create.is_valid()
-		&& should_include_resource_action(opts, 'create', actions) {
-		app.add_php_route_with_resource_meta('GET', resource_route_name(opts, base_name,
+		&& opts.should_include_action('create', actions) {
+		app.add_route_with_resource_meta('GET', opts.route_name(base_name,
 			'create'), '${path}/create', handler_create, 'create', opts.missing_handler)
 	}
-	if handler_store.is_valid() && should_include_resource_action(opts, 'store', actions) {
-		app.add_php_route_with_resource_meta('POST', resource_route_name(opts, base_name,
+	if handler_store.is_valid() && opts.should_include_action('store', actions) {
+		app.add_route_with_resource_meta('POST', opts.route_name(base_name,
 			'store'), path, handler_store, 'store', opts.missing_handler)
 	}
 	if include_page_routes && handler_edit.is_valid()
-		&& should_include_resource_action(opts, 'edit', actions) {
-		app.add_php_route_with_resource_meta('GET', resource_route_name(opts, base_name,
+		&& opts.should_include_action('edit', actions) {
+		app.add_route_with_resource_meta('GET', opts.route_name(base_name,
 			'edit'), '${path}/edit', handler_edit, 'edit', opts.missing_handler)
 	}
-	if handler_update.is_valid() && should_include_resource_action(opts, 'update', actions) {
-		name := resource_route_name(opts, base_name, 'update')
-		app.add_php_route_with_resource_meta('PUT', name, path, handler_update, 'update',
+	if handler_update.is_valid() && opts.should_include_action('update', actions) {
+		name := opts.route_name(base_name, 'update')
+		app.add_route_with_resource_meta('PUT', name, path, handler_update, 'update',
 			opts.missing_handler)
-		app.add_php_route_with_resource_meta('PATCH', name, path, handler_update, 'update',
+		app.add_route_with_resource_meta('PATCH', name, path, handler_update, 'update',
 			opts.missing_handler)
 	}
-	if handler_destroy.is_valid() && should_include_resource_action(opts, 'destroy', actions) {
-		app.add_php_route_with_resource_meta('DELETE', resource_route_name(opts, base_name,
+	if handler_destroy.is_valid() && opts.should_include_action('destroy', actions) {
+		app.add_route_with_resource_meta('DELETE', opts.route_name(base_name,
 			'destroy'), path, handler_destroy, 'destroy', opts.missing_handler)
 	}
 }
@@ -171,7 +171,7 @@ fn resource_name_from_path(path string) string {
 	return clean.replace('/', '.')
 }
 
-fn parse_resource_options(options vphp.PhpArray) ResourceRouteOptions {
+fn ResourceRouteOptions.from_options(options vphp.PhpArray) ResourceRouteOptions {
 	mut out := ResourceRouteOptions{
 		only:            map[string]bool{}
 		except:          map[string]bool{}
@@ -196,16 +196,16 @@ fn parse_resource_options(options vphp.PhpArray) ResourceRouteOptions {
 	}
 	shallow := options['shallow']
 	if is_present_resource_option(shallow) {
-		out.shallow = parse_resource_bool_option(shallow)
+		out.shallow = value_subject(shallow).resource_bool_option()
 	}
 	missing := options['missing']
 	if handler := missing.as_callable() {
 		out.missing_handler = handler.retain()
 	}
-	for action in parse_action_list(only_value) {
+	for action in value_subject(only_value).resource_action_list() {
 		out.only[action] = true
 	}
-	for action in parse_action_list(except_value) {
+	for action in value_subject(except_value).resource_action_list() {
 		out.except[action] = true
 	}
 
@@ -238,7 +238,8 @@ fn is_present_resource_option(value vphp.PhpValue) bool {
 	return value.is_valid() && !value.is_null() && !value.is_undef()
 }
 
-fn parse_resource_bool_option(value vphp.PhpValue) bool {
+fn (subject PhpValueSubject) resource_bool_option() bool {
+	value := subject.value
 	if value.is_bool() {
 		return value.to_bool()
 	}
@@ -265,7 +266,8 @@ fn shallow_member_base_path(path string) string {
 	return '/${last_segment}'
 }
 
-fn parse_action_list(value vphp.PhpValue) []string {
+fn (subject PhpValueSubject) resource_action_list() []string {
+	value := subject.value
 	if !is_present_resource_option(value) {
 		return []string{}
 	}
@@ -289,7 +291,7 @@ fn parse_action_list(value vphp.PhpValue) []string {
 	return out
 }
 
-fn should_include_resource_action(opts ResourceRouteOptions, action string, all_actions []string) bool {
+fn (opts ResourceRouteOptions) should_include_action(action string, all_actions []string) bool {
 	if opts.only.len > 0 {
 		return action in opts.only
 	}
@@ -299,7 +301,7 @@ fn should_include_resource_action(opts ResourceRouteOptions, action string, all_
 	return action in all_actions
 }
 
-fn resource_route_name(opts ResourceRouteOptions, base_name string, action string) string {
+fn (opts ResourceRouteOptions) route_name(base_name string, action string) string {
 	if action in opts.names {
 		return opts.names[action]
 	}

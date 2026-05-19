@@ -37,7 +37,7 @@ pub fn (mut client VSlimPsr18Client) timeout(seconds int) &VSlimPsr18Client {
 
 @[php_arg_name: 'err_no=errNo,err_str=errStr,err_file=errFile,err_line=errLine']
 @[php_method: 'ignorePhpWarning']
-pub fn VSlimPsr18Client.ignore_php_warning(err_no int, err_str string, err_file string, err_line int) bool {
+pub fn VSlimPsr18Client.ignore_warning(err_no int, err_str string, err_file string, err_line int) bool {
 	_ = err_no
 	_ = err_str
 	_ = err_file
@@ -58,7 +58,7 @@ pub fn (client &VSlimPsr18Client) send_request(request vphp.PhpObject) &VSlimPsr
 		throw_psr18_request_exception(err.msg(), request)
 		return unsafe { nil }
 	}
-	clear_last_php_error()
+	clear_last_error()
 	mut ctx := new_psr18_stream_context(client, outbound)
 	defer {
 		ctx.release()
@@ -68,17 +68,17 @@ pub fn (client &VSlimPsr18Client) send_request(request vphp.PhpObject) &VSlimPsr
 		fp.release()
 	}
 	mut stream := fp.as_resource() or {
-		throw_psr18_network_exception(last_php_error_message('failed to open upstream stream'), request)
+		throw_psr18_network_exception(last_error_message('failed to open upstream stream'), request)
 		return unsafe { nil }
 	}
 	defer {
 		stream.release()
 	}
 	if !stream.is_stream() {
-		throw_psr18_network_exception(last_php_error_message('failed to open upstream stream'), request)
+		throw_psr18_network_exception(last_error_message('failed to open upstream stream'), request)
 		return unsafe { nil }
 	}
-	head := read_last_http_response_head()
+	head := Psr18ParsedResponseHead.read_last_http_response()
 	body := stream.contents() or { '' }
 	_ = stream.close()
 	return &VSlimPsr7Response{
@@ -87,7 +87,7 @@ pub fn (client &VSlimPsr18Client) send_request(request vphp.PhpObject) &VSlimPsr
 		protocol_version: normalize_protocol_version(head.protocol_version)
 		headers:          clone_header_values(head.headers)
 		header_names:     clone_header_names(head.header_names)
-		body_ref:         new_psr7_stream(body)
+		body_ref:         VSlimPsr7Stream.from_content(body)
 	}
 }
 
@@ -139,7 +139,7 @@ fn normalize_psr18_request(request vphp.PhpObject) !Psr18OutboundRequest {
 	if uri_text == '' {
 		return error('request URI must not be empty')
 	}
-	uri := parse_psr7_uri(uri_text)
+	uri := VSlimPsr7Uri.parse(uri_text)
 	scheme := normalize_psr7_scheme(uri.scheme)
 	if scheme !in ['http', 'https'] {
 		return error('request URI scheme must be http or https')
@@ -169,12 +169,12 @@ fn normalize_psr18_request(request vphp.PhpObject) !Psr18OutboundRequest {
 	defer {
 		headers_value.release()
 	}
-	mut headers, mut header_names := php_value_psr7_header_state(headers_value)
+	mut headers, mut header_names := value_subject(headers_value).psr7_header_state()
 	if normalize_psr7_header_name('Host') !in headers {
 		apply_psr7_host_header(mut headers, mut header_names, &uri)
 	}
 	body := request.with_method_result[vphp.PhpValue, string]('getBody', fn (z vphp.PhpValue) string {
-		return php_value_psr7_stream(z).stream_string()
+		return VSlimPsr7Stream.from_value(z).stream_string()
 	}) or { '' }
 	return Psr18OutboundRequest{
 		method:           method
@@ -277,7 +277,7 @@ fn normalize_psr18_protocol_version(version string) f64 {
 	}
 }
 
-fn read_last_http_response_head() Psr18ParsedResponseHead {
+fn Psr18ParsedResponseHead.read_last_http_response() Psr18ParsedResponseHead {
 	if !vphp.PhpFunction.named('http_get_last_response_headers').exists() {
 		return Psr18ParsedResponseHead{
 			headers:      map[string][]string{}
@@ -295,7 +295,7 @@ fn read_last_http_response_head() Psr18ParsedResponseHead {
 				continue
 			}
 			if line.starts_with('HTTP/') {
-				current = parse_psr18_status_line(line)
+				current = Psr18ParsedResponseHead.from_status_line(line)
 				continue
 			}
 			sep := line.index(':') or { continue }
@@ -319,7 +319,7 @@ fn read_last_http_response_head() Psr18ParsedResponseHead {
 	}
 }
 
-fn parse_psr18_status_line(line string) Psr18ParsedResponseHead {
+fn Psr18ParsedResponseHead.from_status_line(line string) Psr18ParsedResponseHead {
 	parts := line.split_nth(' ', 3)
 	if parts.len < 2 {
 		return Psr18ParsedResponseHead{
@@ -343,13 +343,13 @@ fn parse_psr18_status_line(line string) Psr18ParsedResponseHead {
 	}
 }
 
-fn clear_last_php_error() {
+fn clear_last_error() {
 	if vphp.PhpFunction.named('error_clear_last').exists() {
 		_ = vphp.PhpFunction.named('error_clear_last').result_bool()
 	}
 }
 
-fn last_php_error_message(default_message string) string {
+fn last_error_message(default_message string) string {
 	if !vphp.PhpFunction.named('error_get_last').exists() {
 		return default_message
 	}

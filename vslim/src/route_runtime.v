@@ -16,7 +16,7 @@ pub fn (mut app VSlimApp) handle_websocket(frame vphp.PhpArray, conn vphp.PhpObj
 			return vphp.PhpBool.of(false).take_value()
 		}
 		app.websocket_conn_route[conn_id] = idx
-		return dispatch_websocket_route_handler(app, app.websocket_routes[idx], event, frame, conn)
+		return app.dispatch_websocket_route_handler(app.websocket_routes[idx], event, frame, conn)
 	}
 	idx := app.websocket_conn_route[conn_id] or {
 		fallback_idx, matched := app.websocket_route_index(path)
@@ -24,7 +24,7 @@ pub fn (mut app VSlimApp) handle_websocket(frame vphp.PhpArray, conn vphp.PhpObj
 			return vphp.PhpValue.null()
 		}
 		app.websocket_conn_route[conn_id] = fallback_idx
-		return dispatch_websocket_route_handler(app, app.websocket_routes[fallback_idx], event,
+		return app.dispatch_websocket_route_handler(app.websocket_routes[fallback_idx], event,
 			frame, conn)
 	}
 	if idx < 0 || idx >= app.websocket_routes.len {
@@ -34,14 +34,14 @@ pub fn (mut app VSlimApp) handle_websocket(frame vphp.PhpArray, conn vphp.PhpObj
 			return vphp.PhpValue.null()
 		}
 		app.websocket_conn_route[conn_id] = fallback_idx
-		result := dispatch_websocket_route_handler(app, app.websocket_routes[fallback_idx], event,
+		result := app.dispatch_websocket_route_handler(app.websocket_routes[fallback_idx], event,
 			frame, conn)
 		if event == 'close' {
 			app.websocket_conn_route.delete(conn_id)
 		}
 		return result
 	}
-	result := dispatch_websocket_route_handler(app, app.websocket_routes[idx], event, frame, conn)
+	result := app.dispatch_websocket_route_handler(app.websocket_routes[idx], event, frame, conn)
 	if event == 'close' {
 		app.websocket_conn_route.delete(conn_id)
 	}
@@ -170,16 +170,16 @@ pub fn (app &VSlimApp) allowed_methods_for(raw_path string) []string {
 	return allowed
 }
 
-fn (mut app VSlimApp) add_php_route(method string, name string, pattern string, handler vphp.PhpValue) {
+fn (mut app VSlimApp) add_route(method string, name string, pattern string, handler vphp.PhpValue) {
 	if !handler.is_valid() || handler.is_null() || handler.is_undef() {
 		return
 	}
-	app.add_php_route_with_resource_meta(method, name, pattern, handler, '',
+	app.add_route_with_resource_meta(method, name, pattern, handler, '',
 		vphp.PhpCallable.invalid())
 }
 
-fn (mut app VSlimApp) add_php_websocket_route(name string, pattern string, handler vphp.PhpValue) {
-	if !is_supported_websocket_handler(handler) {
+fn (mut app VSlimApp) add_websocket_route(name string, pattern string, handler vphp.PhpValue) {
+	if !value_subject(handler).is_supported_websocket_handler() {
 		return
 	}
 	app.websocket_routes << VSlimRoute{
@@ -187,11 +187,11 @@ fn (mut app VSlimApp) add_php_websocket_route(name string, pattern string, handl
 		name:         name
 		pattern:      pattern
 		handler_type: .php_callable
-		php_handler:  handler.retain()
+		handler_ref:  handler.retain()
 	}
 }
 
-fn (mut app VSlimApp) add_php_route_with_resource_meta(method string, name string, pattern string, handler vphp.PhpValue, resource_action string, resource_missing_handler vphp.PhpCallable) {
+fn (mut app VSlimApp) add_route_with_resource_meta(method string, name string, pattern string, handler vphp.PhpValue, resource_action string, resource_missing_handler vphp.PhpCallable) {
 	if !handler.is_valid() || handler.is_null() || handler.is_undef() {
 		return
 	}
@@ -200,7 +200,7 @@ fn (mut app VSlimApp) add_php_route_with_resource_meta(method string, name strin
 		name:                     name
 		pattern:                  pattern
 		handler_type:             .php_callable
-		php_handler:              handler.retain()
+		handler_ref:              handler.retain()
 		resource_action:          resource_action
 		resource_missing_handler: resource_missing_handler.clone()
 	}
@@ -216,8 +216,8 @@ fn (app &VSlimApp) websocket_route_index(path string) (int, bool) {
 	return -1, false
 }
 
-fn dispatch_websocket_route_handler(app &VSlimApp, route VSlimRoute, event string, frame vphp.PhpArray, conn vphp.PhpObject) vphp.PhpValue {
-	mut handler_value := route.php_handler.owned()
+fn (app &VSlimApp) dispatch_websocket_route_handler(route VSlimRoute, event string, frame vphp.PhpArray, conn vphp.PhpObject) vphp.PhpValue {
+	mut handler_value := route.handler_ref.owned()
 	defer {
 		handler_value.release()
 	}
@@ -229,7 +229,7 @@ fn dispatch_websocket_route_handler(app &VSlimApp, route VSlimRoute, event strin
 			|| handler_value.method_exists('liveMarker') {
 			unsafe {
 				mut mutable_app := &VSlimApp(app)
-				return dispatch_live_websocket_handler(mut mutable_app, handler_value, event,
+				return mutable_app.dispatch_live_websocket_handler(handler_value, event,
 					frame, conn)
 			}
 		}
@@ -292,10 +292,10 @@ fn dispatch_websocket_route_handler(app &VSlimApp, route VSlimRoute, event strin
 		}
 	}
 	if handler_value.is_string() && app.has_container() {
-		service := resolve_container_service(app, handler_value.to_string()) or {
+		service := app.resolve_container_service(handler_value.to_string()) or {
 			return vphp.PhpValue.null()
 		}
-		return dispatch_websocket_container_service(service, event, frame, conn)
+		return value_subject(service).dispatch_websocket_container_service(event, frame, conn)
 	}
 	if handler_array := handler_value.as_array() {
 		if !app.has_container() {
@@ -303,7 +303,7 @@ fn dispatch_websocket_route_handler(app &VSlimApp, route VSlimRoute, event strin
 		}
 		parts := handler_array.to_string_list()
 		if parts.len >= 1 && parts[0] != '' {
-			service := resolve_container_service(app, parts[0]) or { return vphp.PhpValue.null() }
+			service := app.resolve_container_service(parts[0]) or { return vphp.PhpValue.null() }
 			if parts.len == 2 && parts[1] != '' && service.is_object()
 				&& service.method_exists(parts[1]) {
 				mut frame_scope := vphp.PhpScope.frame()
@@ -314,13 +314,15 @@ fn dispatch_websocket_route_handler(app &VSlimApp, route VSlimRoute, event strin
 				return service_obj.call_method(parts[1], ...websocket_handler_args(mut frame_scope,
 					event, frame, conn))
 			}
-			return dispatch_websocket_container_service(service, event, frame, conn)
+			return value_subject(service).dispatch_websocket_container_service(event, frame,
+				conn)
 		}
 	}
 	return vphp.PhpValue.null()
 }
 
-fn dispatch_websocket_container_service(service vphp.PhpValue, event string, frame vphp.PhpArray, conn vphp.PhpObject) vphp.PhpValue {
+fn (subject PhpValueSubject) dispatch_websocket_container_service(event string, frame vphp.PhpArray, conn vphp.PhpObject) vphp.PhpValue {
+	service := subject.value
 	if !service.is_valid() {
 		return vphp.PhpValue.null()
 	}
@@ -425,7 +427,8 @@ fn collect_allowed_methods(existing []string, route_method string) []string {
 	return out
 }
 
-fn normalize_methods(methods vphp.PhpValue) []string {
+fn (subject PhpValueSubject) normalized_methods() []string {
+	methods := subject.value
 	mut out := []string{}
 	if methods.is_string() {
 		raw := methods.to_string().replace('|', ',')

@@ -6,7 +6,7 @@ const psr_cache_reserved_key_chars = ['{', '}', '(', ')', '/', '\\', '@', ':']
 
 @[php_method]
 pub fn (mut cache VSlimPsr16Cache) construct() &VSlimPsr16Cache {
-	ensure_psr16_cache(mut cache)
+	cache.ensure()
 	return &cache
 }
 
@@ -35,7 +35,7 @@ pub fn (cache &VSlimPsr16Cache) default_ttl_seconds_value() int {
 @[php_arg_type: 'clock=Psr\\Clock\\ClockInterface']
 @[php_method: 'setClock']
 pub fn (mut cache VSlimPsr16Cache) set_clock(clock vphp.PhpObject) &VSlimPsr16Cache {
-	ensure_psr16_cache(mut cache)
+	cache.ensure()
 	if !psr20_clock_is_valid(clock) {
 		vphp.PhpException.raise_class('InvalidArgumentException',
 			'clock must implement Psr\\Clock\\ClockInterface', 0)
@@ -50,7 +50,7 @@ pub fn (mut cache VSlimPsr16Cache) set_clock(clock vphp.PhpObject) &VSlimPsr16Ca
 @[php_return_type: 'Psr\\Clock\\ClockInterface']
 @[php_method]
 pub fn (mut cache VSlimPsr16Cache) clock() vphp.PhpObject {
-	ensure_psr16_cache(mut cache)
+	cache.ensure()
 	return cache.clock_ref.to_request_owned()
 }
 
@@ -71,12 +71,12 @@ fn psr16_ttl_value_or_null(ttl ?vphp.PhpValue) vphp.PhpValue {
 @[php_arg_name: 'default_value=defaultValue']
 @[php_method]
 pub fn (mut cache VSlimPsr16Cache) get(key string, default_value ?vphp.PhpValue) vphp.PhpValue {
-	ensure_psr16_cache(mut cache)
+	cache.ensure()
 	normalized := psr_cache_validate_key_or_throw(key) or {
 		throw_psr16_invalid_argument(err.msg())
 		return psr16_default_value_or_null(default_value)
 	}
-	storage_key := psr16_storage_key(cache, normalized)
+	storage_key := cache.storage_key(normalized)
 	cache.prune_expired_entry(storage_key)
 	entry := cache.entries[storage_key] or { return psr16_default_value_or_null(default_value) }
 	return entry.value.to_request_owned()
@@ -84,7 +84,7 @@ pub fn (mut cache VSlimPsr16Cache) get(key string, default_value ?vphp.PhpValue)
 
 @[php_method]
 pub fn (mut cache VSlimPsr16Cache) set(key string, value vphp.PhpValue, ttl ?vphp.PhpValue) bool {
-	ensure_psr16_cache(mut cache)
+	cache.ensure()
 	normalized := psr_cache_validate_key_or_throw(key) or {
 		throw_psr16_invalid_argument(err.msg())
 		return false
@@ -97,25 +97,25 @@ pub fn (mut cache VSlimPsr16Cache) set(key string, value vphp.PhpValue, ttl ?vph
 	if expires_at < 0 {
 		return cache.delete(normalized)
 	}
-	cache.replace_entry(psr16_storage_key(cache, normalized), value.retain(), psr_cache_apply_default_ttl(cache.clock_ref,
+	cache.replace_entry(cache.storage_key(normalized), value.retain(), psr_cache_apply_default_ttl(cache.clock_ref,
 		expires_at, cache.default_ttl_seconds))
 	return true
 }
 
 @[php_method]
 pub fn (mut cache VSlimPsr16Cache) delete(key string) bool {
-	ensure_psr16_cache(mut cache)
+	cache.ensure()
 	normalized := psr_cache_validate_key_or_throw(key) or {
 		throw_psr16_invalid_argument(err.msg())
 		return false
 	}
-	cache.remove_entry(psr16_storage_key(cache, normalized))
+	cache.remove_entry(cache.storage_key(normalized))
 	return true
 }
 
 @[php_method]
 pub fn (mut cache VSlimPsr16Cache) clear() bool {
-	ensure_psr16_cache(mut cache)
+	cache.ensure()
 	cache.clear_entries()
 	return true
 }
@@ -124,7 +124,7 @@ pub fn (mut cache VSlimPsr16Cache) clear() bool {
 @[php_method: 'getMultiple']
 @[php_return_type: 'iterable']
 pub fn (mut cache VSlimPsr16Cache) get_multiple(keys vphp.PhpIterable, default_value ?vphp.PhpValue) vphp.PhpArray {
-	ensure_psr16_cache(mut cache)
+	cache.ensure()
 	mut out := vphp.PhpArray.new()
 	for key_name in psr16_iterable_key_list(keys) or {
 		msg := err.msg()
@@ -139,7 +139,7 @@ pub fn (mut cache VSlimPsr16Cache) get_multiple(keys vphp.PhpIterable, default_v
 
 @[php_method: 'setMultiple']
 pub fn (mut cache VSlimPsr16Cache) set_multiple(values vphp.PhpIterable, ttl ?vphp.PhpValue) bool {
-	ensure_psr16_cache(mut cache)
+	cache.ensure()
 	expires_at := psr_cache_resolve_relative_ttl_or_throw(cache.clock_ref,
 		psr16_ttl_value_or_null(ttl)) or {
 		throw_psr16_invalid_argument(err.msg())
@@ -150,7 +150,7 @@ pub fn (mut cache VSlimPsr16Cache) set_multiple(values vphp.PhpIterable, ttl ?vp
 			throw_psr16_invalid_argument(err.msg())
 			return false
 		} {
-			cache.remove_entry(psr16_storage_key(cache, key_name))
+			cache.remove_entry(cache.storage_key(key_name))
 		}
 		return true
 	}
@@ -158,7 +158,7 @@ pub fn (mut cache VSlimPsr16Cache) set_multiple(values vphp.PhpIterable, ttl ?vp
 		throw_psr16_invalid_argument(err.msg())
 		return false
 	} {
-		cache.replace_entry(psr16_storage_key(cache, key_name), value, psr_cache_apply_default_ttl(cache.clock_ref,
+		cache.replace_entry(cache.storage_key(key_name), value, psr_cache_apply_default_ttl(cache.clock_ref,
 			expires_at, cache.default_ttl_seconds))
 	}
 	return true
@@ -166,29 +166,29 @@ pub fn (mut cache VSlimPsr16Cache) set_multiple(values vphp.PhpIterable, ttl ?vp
 
 @[php_method: 'deleteMultiple']
 pub fn (mut cache VSlimPsr16Cache) delete_multiple(keys vphp.PhpIterable) bool {
-	ensure_psr16_cache(mut cache)
+	cache.ensure()
 	for key_name in psr16_iterable_key_list(keys) or {
 		throw_psr16_invalid_argument(err.msg())
 		return false
 	} {
-		cache.remove_entry(psr16_storage_key(cache, key_name))
+		cache.remove_entry(cache.storage_key(key_name))
 	}
 	return true
 }
 
 @[php_method]
 pub fn (mut cache VSlimPsr16Cache) has(key string) bool {
-	ensure_psr16_cache(mut cache)
+	cache.ensure()
 	normalized := psr_cache_validate_key_or_throw(key) or {
 		throw_psr16_invalid_argument(err.msg())
 		return false
 	}
-	storage_key := psr16_storage_key(cache, normalized)
+	storage_key := cache.storage_key(normalized)
 	cache.prune_expired_entry(storage_key)
 	return storage_key in cache.entries
 }
 
-fn ensure_psr16_cache(mut cache VSlimPsr16Cache) {
+fn (mut cache VSlimPsr16Cache) ensure() {
 	if cache.entries.len == 0 {
 		cache.entries = map[string]PsrCacheEntry{}
 	}
@@ -260,7 +260,7 @@ fn psr_cache_normalize_namespace(prefix string) string {
 	return prefix.trim_space()
 }
 
-fn psr16_storage_key(cache VSlimPsr16Cache, key string) string {
+fn (cache VSlimPsr16Cache) storage_key(key string) string {
 	if cache.namespace_prefix == '' {
 		return key
 	}

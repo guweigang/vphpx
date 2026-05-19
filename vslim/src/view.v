@@ -250,7 +250,7 @@ pub fn (view &VSlimView) asset(path string) string {
 
 @[php_method]
 pub fn (view &VSlimView) render(template string, data vphp.PhpValue) string {
-	scalars, lists, objects := extract_template_data(data)
+	scalars, lists, objects := value_subject(data).template_data()
 	return view.render_maps(template, scalars, lists, objects)
 }
 
@@ -274,7 +274,7 @@ fn (view &VSlimView) render_map_with_depth(template string, scalars map[string]s
 
 @[php_method: 'renderWithLayout']
 pub fn (view &VSlimView) render_with_layout(template string, layout string, data vphp.PhpValue) string {
-	scalars, lists, objects := extract_template_data(data)
+	scalars, lists, objects := value_subject(data).template_data()
 	return view.render_maps_with_layout(template, layout, scalars, lists, objects)
 }
 

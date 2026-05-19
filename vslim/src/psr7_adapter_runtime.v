@@ -6,7 +6,7 @@ import vphp
 @[php_return_type: 'VSlim\\VHttpd\\Response']
 @[php_method: 'toVSlimResponse']
 pub fn VSlimPsr7Adapter.to_vslim_response(response vphp.PhpValue) &VSlimResponse {
-	return to_vslim_response(new_vslim_response_from_psr_response(normalize_to_psr7_response_value(response)))
+	return VSlimPsr7Response.from_value(response).to_vslim_response().boxed_snapshot()
 }
 
 @[php_method: 'toVSlimRequest']
@@ -15,7 +15,7 @@ pub fn VSlimPsr7Adapter.to_vslim_request(request vphp.PhpValue) &VSlimRequest {
 	target := adapter_read_request_target(request)
 	body := adapter_read_body(request)
 
-	mut out := new_vslim_request(method, target, body)
+	mut out := VSlimRequest.new(method, target, body)
 	out.set_scheme(adapter_read_uri_part(request, 'getScheme', 'scheme', 'http'))
 	out.set_host(adapter_read_uri_part(request, 'getHost', 'host', ''))
 	out.set_port(adapter_read_uri_part(request, 'getPort', 'port', ''))
@@ -111,7 +111,7 @@ fn adapter_read_request_target(request vphp.PhpValue) string {
 			return value
 		}
 	}
-	mut uri := adapter_read_uri_object(request)
+	mut uri := value_subject(request).adapter_read_uri_object()
 	defer {
 		uri.release()
 	}
@@ -155,7 +155,7 @@ fn adapter_read_body(request vphp.PhpValue) string {
 }
 
 fn adapter_read_headers(request vphp.PhpValue) vphp.PhpArray {
-	mut raw := adapter_read_method_or_prop(request, 'getHeaders', 'headers')
+	mut raw := value_subject(request).adapter_read_method_or_prop('getHeaders', 'headers')
 	defer {
 		raw.release()
 	}
@@ -184,7 +184,7 @@ fn adapter_read_server_params(request vphp.PhpValue) vphp.PhpArray {
 }
 
 fn adapter_read_map(request vphp.PhpValue, getter string, property string) vphp.PhpArray {
-	mut raw := adapter_read_method_or_prop(request, getter, property)
+	mut raw := value_subject(request).adapter_read_method_or_prop(getter, property)
 	defer {
 		raw.release()
 	}
@@ -205,7 +205,8 @@ fn adapter_read_map(request vphp.PhpValue, getter string, property string) vphp.
 }
 
 fn adapter_read_uploaded_files(request vphp.PhpValue) vphp.PhpArray {
-	mut raw := adapter_read_method_or_prop(request, 'getUploadedFiles', 'uploadedFiles')
+	mut raw := value_subject(request).adapter_read_method_or_prop('getUploadedFiles',
+		'uploadedFiles')
 	defer {
 		raw.release()
 	}
@@ -230,7 +231,7 @@ fn adapter_read_server_value(request vphp.PhpValue, key string) string {
 }
 
 fn adapter_read_uri_part(request vphp.PhpValue, getter string, property string, default_value string) string {
-	mut uri := adapter_read_uri_object(request)
+	mut uri := value_subject(request).adapter_read_uri_object()
 	defer {
 		uri.release()
 	}
@@ -263,7 +264,8 @@ fn adapter_read_uri_part(request vphp.PhpValue, getter string, property string, 
 	return default_value
 }
 
-fn adapter_read_uri_object(request vphp.PhpValue) vphp.PhpValue {
+fn (subject PhpValueSubject) adapter_read_uri_object() vphp.PhpValue {
+	request := subject.value
 	if request.method_exists('getUri') {
 		return request.call_method('getUri').owned()
 	}
@@ -274,7 +276,7 @@ fn adapter_read_uri_object(request vphp.PhpValue) vphp.PhpValue {
 }
 
 fn adapter_read_string(request vphp.PhpValue, getter string, property string, default_value string) string {
-	mut value := adapter_read_method_or_prop(request, getter, property)
+	mut value := value_subject(request).adapter_read_method_or_prop(getter, property)
 	defer {
 		value.release()
 	}
@@ -284,7 +286,8 @@ fn adapter_read_string(request vphp.PhpValue, getter string, property string, de
 	return value.to_string()
 }
 
-fn adapter_read_method_or_prop(request vphp.PhpValue, getter string, property string) vphp.PhpValue {
+fn (subject PhpValueSubject) adapter_read_method_or_prop(getter string, property string) vphp.PhpValue {
+	request := subject.value
 	if request.method_exists(getter) {
 		return request.call_method(getter).owned()
 	}

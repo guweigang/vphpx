@@ -100,7 +100,7 @@ pub fn VSlimStreamFactory.ollama_sse_with(request_payload vphp.PhpValue, options
 
 @[php_method]
 pub fn VSlimStreamNdjsonDecoder.decode(stream vphp.PhpValue) vphp.PhpArray {
-	return decode_ndjson_rows(stream)
+	return value_subject(stream).ndjson_rows()
 }
 
 @[php_method: 'fromOllama']
@@ -178,7 +178,7 @@ pub fn (c &VSlimStreamOllamaClient) fixture_path() string {
 pub fn (c &VSlimStreamOllamaClient) payload(input vphp.PhpArray) vphp.PhpArray {
 	query := input['query']
 	body_input := input['body']
-	body := decode_ollama_body_payload(body_input)
+	body := value_subject(body_input).ollama_body_payload()
 	prompt := first_non_empty([
 		query.string_at('prompt', ''),
 		body.string_at('prompt', ''),
@@ -197,7 +197,7 @@ pub fn (c &VSlimStreamOllamaClient) payload(input vphp.PhpArray) vphp.PhpArray {
 @[php_arg_name(request_payload: 'requestPayload')]
 @[php_method: 'payloadFromRequest']
 pub fn (c &VSlimStreamOllamaClient) payload_from_request(request_payload vphp.PhpValue) vphp.PhpArray {
-	req := normalize_ollama_source_request(request_payload)
+	req := VSlimRequest.from_ollama_source(request_payload)
 	return c.payload_from_vslim_request(req)
 }
 
@@ -383,7 +383,7 @@ pub fn (c &VSlimStreamOllamaClient) upstream_plan_from_request(request_payload v
 @[php_arg_name(request_payload: 'requestPayload')]
 @[php_method: 'textResponseFromRequest']
 pub fn (c &VSlimStreamOllamaClient) text_response_from_request(request_payload vphp.PhpValue) vphp.PhpValue {
-	req := normalize_ollama_source_request(request_payload)
+	req := VSlimRequest.from_ollama_source(request_payload)
 	mut payload := c.payload_from_vslim_request(req)
 	defer {
 		payload.release()
@@ -395,7 +395,7 @@ pub fn (c &VSlimStreamOllamaClient) text_response_from_request(request_payload v
 	if !upstream.bool_at('ok', false) {
 		return upstream_error_response(upstream).take_value()
 	}
-	rows := decode_ndjson_rows(upstream.value_at('stream'))
+	rows := value_subject(upstream.value_at('stream')).ndjson_rows()
 	chunks := ollama_text_chunks(rows)
 	headers := new_ollama_response_headers(payload, upstream)
 	mut status_arg := vphp.PhpInt.of(200)
@@ -413,7 +413,7 @@ pub fn (c &VSlimStreamOllamaClient) text_response_from_request(request_payload v
 @[php_arg_name(request_payload: 'requestPayload')]
 @[php_method: 'sseResponseFromRequest']
 pub fn (c &VSlimStreamOllamaClient) sse_response_from_request(request_payload vphp.PhpValue) vphp.PhpValue {
-	req := normalize_ollama_source_request(request_payload)
+	req := VSlimRequest.from_ollama_source(request_payload)
 	mut payload := c.payload_from_vslim_request(req)
 	defer {
 		payload.release()
@@ -425,7 +425,7 @@ pub fn (c &VSlimStreamOllamaClient) sse_response_from_request(request_payload vp
 	if !upstream.bool_at('ok', false) {
 		return upstream_error_response(upstream).take_value()
 	}
-	rows := decode_ndjson_rows(upstream.value_at('stream'))
+	rows := value_subject(upstream.value_at('stream')).ndjson_rows()
 	events := encode_ollama_sse_events(rows, payload.string_at('model', c.default_model_value()))
 	headers := new_ollama_response_headers(payload, upstream)
 	mut status_arg := vphp.PhpInt.of(200)
@@ -438,8 +438,8 @@ pub fn (c &VSlimStreamOllamaClient) sse_response_from_request(request_payload vp
 	return response
 }
 
-fn normalize_ollama_source_request(payload vphp.PhpValue) &VSlimRequest {
-	return new_vslim_request_from_psr_server_request_value(payload, route_params_from_payload(payload))
+fn VSlimRequest.from_ollama_source(payload vphp.PhpValue) &VSlimRequest {
+	return VSlimRequest.from_psr_server_request_value(payload, route_params_from_payload(payload))
 }
 
 pub fn (c &VSlimStreamOllamaClient) payload_from_vslim_request(req &VSlimRequest) vphp.PhpArray {
@@ -447,7 +447,7 @@ pub fn (c &VSlimStreamOllamaClient) payload_from_vslim_request(req &VSlimRequest
 	mut query := new_string_map(req.query_params())
 	input.set('query', query)
 	query.release()
-	mut body := decode_request_body_to_payload(req)
+	mut body := req.decode_body_payload()
 	input.set('body', body)
 	body.release()
 	return c.payload(input)
@@ -494,7 +494,7 @@ fn first_non_empty(values []string) string {
 	return ''
 }
 
-fn decode_request_body_to_payload(req &VSlimRequest) vphp.PhpArray {
+fn (req &VSlimRequest) decode_body_payload() vphp.PhpArray {
 	body := req.body.trim_space()
 	if body == '' {
 		return vphp.PhpArray.new()
@@ -509,7 +509,8 @@ fn decode_request_body_to_payload(req &VSlimRequest) vphp.PhpArray {
 	return new_string_map(req.parsed_body())
 }
 
-fn decode_ollama_body_payload(input vphp.PhpValue) vphp.PhpArray {
+fn (subject PhpValueSubject) ollama_body_payload() vphp.PhpArray {
+	input := subject.value
 	if arr := input.as_array() {
 		return arr
 	}
@@ -611,8 +612,9 @@ fn upstream_error_response(upstream vphp.PhpArray) vphp.PhpArray {
 	return out
 }
 
-fn decode_ndjson_rows(stream_value vphp.PhpValue) vphp.PhpArray {
+fn (subject PhpValueSubject) ndjson_rows() vphp.PhpArray {
 	mut rows := vphp.PhpArray.new()
+	stream_value := subject.value
 	stream := stream_value.as_resource() or { return rows }
 	defer {
 		stream.release()

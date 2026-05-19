@@ -4,19 +4,19 @@ import vphp
 
 @[php_method]
 pub fn (mut app VSlimApp) middleware(handler vphp.PhpValue) &VSlimApp {
-	register_app_middleware_kind(mut app, handler, .standard)
+	app.register_middleware_kind(handler, .standard)
 	return app
 }
 
 @[php_method]
 pub fn (mut app VSlimApp) before(handler vphp.PhpValue) &VSlimApp {
-	register_app_middleware_kind(mut app, handler, .before)
+	app.register_middleware_kind(handler, .before)
 	return app
 }
 
 @[php_method]
 pub fn (mut app VSlimApp) after(handler vphp.PhpValue) &VSlimApp {
-	register_app_middleware_kind(mut app, handler, .after)
+	app.register_middleware_kind(handler, .after)
 	return app
 }
 

@@ -5,7 +5,8 @@ import vphp
 
 #include "php_bridge.h"
 
-fn php_value_json_fragment(value vphp.PhpValue) string {
+fn (subject PhpValueSubject) json_fragment() string {
+	value := subject.value
 	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return 'null'
 	}
@@ -155,7 +156,7 @@ pub fn (mut app VSlimApp) set_container(container &VSlimContainer) &VSlimApp {
 @[php_method]
 pub fn (mut app VSlimApp) container() &VSlimContainer {
 	if app.container_ref == unsafe { nil } {
-		app.container_ref = new_vslim_container()
+		app.container_ref = VSlimContainer.new()
 	}
 	app.container_ref.app_ref = &app
 	app.sync_standard_services_to_container()
@@ -170,7 +171,7 @@ pub fn (app &VSlimApp) has_config() bool {
 @[php_method: 'setConfig']
 pub fn (mut app VSlimApp) set_config(config &VSlimConfig) &VSlimApp {
 	app.config_ref = config
-	configure_default_auth_settings(mut app, app.config_ref)
+	app.configure_default_auth_settings(app.config_ref)
 	app.sync_standard_services_to_container()
 	return app
 }
@@ -181,7 +182,7 @@ pub fn (mut app VSlimApp) config() &VSlimConfig {
 		mut created := &VSlimConfig{}
 		created.construct()
 		app.config_ref = created
-		configure_default_auth_settings(mut app, app.config_ref)
+		app.configure_default_auth_settings(app.config_ref)
 		app.sync_standard_services_to_container()
 	}
 	return app.config_ref
@@ -191,7 +192,7 @@ pub fn (mut app VSlimApp) config() &VSlimConfig {
 pub fn (mut app VSlimApp) load_config(path string) &VSlimApp {
 	mut cfg := app.config()
 	cfg.load(path)
-	configure_default_auth_settings(mut app, app.config_ref)
+	app.configure_default_auth_settings(app.config_ref)
 	app.sync_standard_services_to_container()
 	return app
 }
@@ -200,7 +201,7 @@ pub fn (mut app VSlimApp) load_config(path string) &VSlimApp {
 pub fn (mut app VSlimApp) load_config_text(text string) &VSlimApp {
 	mut cfg := app.config()
 	cfg.load_text(text)
-	configure_default_auth_settings(mut app, app.config_ref)
+	app.configure_default_auth_settings(app.config_ref)
 	app.sync_standard_services_to_container()
 	return app
 }
@@ -209,7 +210,7 @@ pub fn (mut app VSlimApp) load_config_text(text string) &VSlimApp {
 pub fn (mut app VSlimApp) merge_config(path string) &VSlimApp {
 	mut cfg := app.config()
 	cfg.merge_file(path)
-	configure_default_auth_settings(mut app, app.config_ref)
+	app.configure_default_auth_settings(app.config_ref)
 	app.sync_standard_services_to_container()
 	return app
 }
@@ -218,7 +219,7 @@ pub fn (mut app VSlimApp) merge_config(path string) &VSlimApp {
 pub fn (mut app VSlimApp) merge_config_text(text string) &VSlimApp {
 	mut cfg := app.config()
 	cfg.merge_text(text)
-	configure_default_auth_settings(mut app, app.config_ref)
+	app.configure_default_auth_settings(app.config_ref)
 	app.sync_standard_services_to_container()
 	return app
 }
@@ -242,7 +243,7 @@ pub fn (app &VSlimApp) testing() &VSlimTestingHarness {
 pub fn (app &VSlimApp) session(request vphp.PhpObject) &VSlimSessionStore {
 	mut session := &VSlimSessionStore{}
 	session.construct()
-	configure_default_session_store(mut session, app.config_ref)
+	session.configure_defaults(app.config_ref)
 	session.load(request)
 	return session
 }
@@ -253,7 +254,7 @@ pub fn (app &VSlimApp) auth(request vphp.PhpObject) &VSlimAuthSessionGuard {
 	mut guard := &VSlimAuthSessionGuard{}
 	guard.construct()
 	guard.set_store(session)
-	configure_default_auth_guard(mut guard, app.config_ref)
+	guard.configure_defaults(app.config_ref)
 	return guard
 }
 
@@ -338,14 +339,15 @@ pub fn (app &VSlimApp) resolve_auth_user(user_id string) vphp.PhpValue {
 		return result
 	}
 	if result := app.auth_user_resolver.with_object[vphp.PhpValue](fn [normalized_id_arg, normalized_id] (provider vphp.PhpObject) vphp.PhpValue {
-		return resolve_auth_user_from_provider(provider, normalized_id_arg, normalized_id)
+		return object_subject(provider).resolve_auth_user(normalized_id_arg, normalized_id)
 	}) {
 		return result
 	}
 	return vphp.PhpString.of(normalized_id).take_value()
 }
 
-fn resolve_auth_user_from_provider(provider vphp.PhpObject, normalized_id_arg vphp.PhpString, normalized_id string) vphp.PhpValue {
+fn (subject PhpObjectSubject) resolve_auth_user(normalized_id_arg vphp.PhpString, normalized_id string) vphp.PhpValue {
+	provider := subject.object
 	if provider.method_exists('findById') {
 		return provider.call_method('findById', normalized_id_arg)
 	}
@@ -479,7 +481,7 @@ pub fn (app &VSlimApp) ability_middleware(ability string) &VSlimAuthRequireAbili
 @[php_arg_optional: 'error_code']
 pub fn (app &VSlimApp) error_response(status int, message string, error_code string) &VSlimPsr7Response {
 	code := if error_code.trim_space() == '' { 'runtime_error' } else { error_code.trim_space() }
-	return new_psr7_response_from_vslim_response(default_error_response(app, status, message, code))
+	return app.default_error_response(status, message, code).to_psr7_response()
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
@@ -488,8 +490,8 @@ pub fn (app &VSlimApp) error_response(status int, message string, error_code str
 @[php_arg_optional: 'status']
 pub fn (app &VSlimApp) validation_error(errors vphp.PhpValue, status int) &VSlimPsr7Response {
 	error_status := if status <= 0 { 422 } else { status }
-	json_body := '{"ok":false,"code":"validation_error","error":"validation_error","status":${error_status},"message":"Validation failed","errors":${php_value_json_fragment(errors)}}'
-	return new_psr7_response_from_vslim_response(json_response(error_status, json_body))
+	json_body := '{"ok":false,"code":"validation_error","error":"validation_error","status":${error_status},"message":"Validation failed","errors":${value_subject(errors).json_fragment()}}'
+	return VSlimResponse.json(error_status, json_body).to_psr7_response()
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
@@ -498,8 +500,7 @@ pub fn (app &VSlimApp) validation_error(errors vphp.PhpValue, status int) &VSlim
 @[php_arg_optional: 'message']
 pub fn (app &VSlimApp) unauthorized_response(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Unauthorized' } else { message }
-	return new_psr7_response_from_vslim_response(default_error_response(app, 401, msg,
-		'unauthorized'))
+	return app.default_error_response(401, msg, 'unauthorized').to_psr7_response()
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
@@ -508,7 +509,7 @@ pub fn (app &VSlimApp) unauthorized_response(message string) &VSlimPsr7Response 
 @[php_arg_optional: 'message']
 pub fn (app &VSlimApp) forbidden_response(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Forbidden' } else { message }
-	return new_psr7_response_from_vslim_response(default_error_response(app, 403, msg, 'forbidden'))
+	return app.default_error_response(403, msg, 'forbidden').to_psr7_response()
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
@@ -517,8 +518,7 @@ pub fn (app &VSlimApp) forbidden_response(message string) &VSlimPsr7Response {
 @[php_arg_optional: 'message']
 pub fn (app &VSlimApp) bad_request_response(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Bad Request' } else { message }
-	return new_psr7_response_from_vslim_response(default_error_response(app, 400, msg,
-		'bad_request'))
+	return app.default_error_response(400, msg, 'bad_request').to_psr7_response()
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
@@ -527,7 +527,7 @@ pub fn (app &VSlimApp) bad_request_response(message string) &VSlimPsr7Response {
 @[php_arg_optional: 'message']
 pub fn (app &VSlimApp) not_found_response_helper(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Not Found' } else { message }
-	return new_psr7_response_from_vslim_response(default_error_response(app, 404, msg, 'not_found'))
+	return app.default_error_response(404, msg, 'not_found').to_psr7_response()
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
@@ -536,7 +536,7 @@ pub fn (app &VSlimApp) not_found_response_helper(message string) &VSlimPsr7Respo
 @[php_arg_optional: 'message']
 pub fn (app &VSlimApp) conflict_response(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Conflict' } else { message }
-	return new_psr7_response_from_vslim_response(default_error_response(app, 409, msg, 'conflict'))
+	return app.default_error_response(409, msg, 'conflict').to_psr7_response()
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
@@ -545,8 +545,7 @@ pub fn (app &VSlimApp) conflict_response(message string) &VSlimPsr7Response {
 @[php_arg_optional: 'message']
 pub fn (app &VSlimApp) service_unavailable_response(message string) &VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Service Unavailable' } else { message }
-	return new_psr7_response_from_vslim_response(default_error_response(app, 503, msg,
-		'service_unavailable'))
+	return app.default_error_response(503, msg, 'service_unavailable').to_psr7_response()
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
@@ -559,8 +558,7 @@ pub fn (app &VSlimApp) exception_response(exception vphp.PhpObject, fallback_sta
 	resolved_status := exception_status_code(exception, status)
 	message := exception_message_value(exception, 'Internal Server Error')
 	code := exception_error_code(exception)
-	return new_psr7_response_from_vslim_response(default_error_response(app, resolved_status,
-		message, code))
+	return app.default_error_response(resolved_status, message, code).to_psr7_response()
 }
 
 @[php_method: 'doctor']
@@ -573,7 +571,7 @@ pub fn (mut app VSlimApp) doctor_report() map[string]string {
 	config_path := if cfg_ref != unsafe { nil } { cfg_ref.path() } else { '' }
 	config_mode := if config_path.trim_space() == '' {
 		'none'
-	} else if php_is_dir(config_path) {
+	} else if path_is_dir(config_path) {
 		'dir'
 	} else {
 		'file'
@@ -672,7 +670,7 @@ fn (app &VSlimApp) migrator_project_root() string {
 		mut config_path := app.config_ref.path().trim_space()
 		if config_path != '' {
 			config_path = config_path.trim_right('/\\')
-			if php_is_dir(config_path) {
+			if path_is_dir(config_path) {
 				if config_path.ends_with('/config') || config_path.ends_with('\\config') {
 					return os.dir(config_path)
 				}
@@ -723,7 +721,7 @@ fn (mut app VSlimApp) sync_database_service_to_container() {
 	app.sync_standard_services_to_container()
 }
 
-fn configure_default_app_logger(mut logger VSlimLogger, config &VSlimConfig) {
+fn (mut logger VSlimLogger) configure_defaults(config &VSlimConfig) {
 	if config == unsafe { nil } {
 		return
 	}
@@ -744,22 +742,22 @@ fn configure_default_app_logger(mut logger VSlimLogger, config &VSlimConfig) {
 		match target {
 			'stdout' {
 				logger.console_target = 'stdout'
-				reconfigure_vslim_logger(mut logger)
+				logger.reconfigure()
 			}
 			'stderr' {
 				logger.console_target = 'stderr'
-				reconfigure_vslim_logger(mut logger)
+				logger.reconfigure()
 			}
 			'file' {
 				logger.console_target = ''
-				reconfigure_vslim_logger(mut logger)
+				logger.reconfigure()
 			}
 			else {}
 		}
 	}
 }
 
-fn configure_default_http_client(mut client VSlimPsr18Client, config &VSlimConfig) {
+fn (mut client VSlimPsr18Client) configure_defaults(config &VSlimConfig) {
 	if config == unsafe { nil } {
 		return
 	}
@@ -768,7 +766,7 @@ fn configure_default_http_client(mut client VSlimPsr18Client, config &VSlimConfi
 	}
 }
 
-fn configure_default_simple_cache(mut cache VSlimPsr16Cache, config &VSlimConfig) {
+fn (mut cache VSlimPsr16Cache) configure_defaults(config &VSlimConfig) {
 	if config == unsafe { nil } {
 		return
 	}
@@ -781,7 +779,7 @@ fn configure_default_simple_cache(mut cache VSlimPsr16Cache, config &VSlimConfig
 	}
 }
 
-fn configure_default_cache_pool(mut pool VSlimPsr6CacheItemPool, config &VSlimConfig) {
+fn (mut pool VSlimPsr6CacheItemPool) configure_defaults(config &VSlimConfig) {
 	if config == unsafe { nil } {
 		return
 	}
@@ -799,11 +797,11 @@ fn configure_default_cache_pool(mut pool VSlimPsr6CacheItemPool, config &VSlimCo
 	}
 }
 
-fn configure_default_database_service(mut db VSlimDatabaseManager, config &VSlimConfig) {
-	configure_default_database_manager(mut db, config)
+fn (mut db VSlimDatabaseManager) configure_default_service(config &VSlimConfig) {
+	db.configure_defaults(config)
 }
 
-fn configure_default_session_store(mut session VSlimSessionStore, config &VSlimConfig) {
+fn (mut session VSlimSessionStore) configure_defaults(config &VSlimConfig) {
 	if config == unsafe { nil } {
 		return
 	}
@@ -835,7 +833,7 @@ fn configure_default_session_store(mut session VSlimSessionStore, config &VSlimC
 	}
 }
 
-fn configure_default_auth_guard(mut guard VSlimAuthSessionGuard, config &VSlimConfig) {
+fn (mut guard VSlimAuthSessionGuard) configure_defaults(config &VSlimConfig) {
 	if config == unsafe { nil } {
 		return
 	}
@@ -844,7 +842,7 @@ fn configure_default_auth_guard(mut guard VSlimAuthSessionGuard, config &VSlimCo
 	}
 }
 
-fn configure_default_auth_settings(mut app VSlimApp, config &VSlimConfig) {
+fn (mut app VSlimApp) configure_default_auth_settings(config &VSlimConfig) {
 	if config == unsafe { nil } {
 		return
 	}
@@ -949,7 +947,7 @@ pub fn (mut app VSlimApp) logger() &VSlimLogger {
 		mut created := &VSlimLogger{}
 		created.construct()
 		created.set_channel('vslim.app')
-		configure_default_app_logger(mut created, app.config_ref)
+		created.configure_defaults(app.config_ref)
 		app.logger_ref = created
 	}
 	return app.logger_ref
@@ -1053,7 +1051,7 @@ pub fn (mut app VSlimApp) cache() &VSlimPsr16Cache {
 		mut created := &VSlimPsr16Cache{}
 		created.construct()
 		created.set_clock(clock.to_borrowed())
-		configure_default_simple_cache(mut created, app.config_ref)
+		created.configure_defaults(app.config_ref)
 		app.cache_ref = created
 	}
 	return app.cache_ref
@@ -1086,7 +1084,7 @@ pub fn (mut app VSlimApp) cache_pool() &VSlimPsr6CacheItemPool {
 		mut created := &VSlimPsr6CacheItemPool{}
 		created.construct()
 		created.set_clock(clock.to_borrowed())
-		configure_default_cache_pool(mut created, app.config_ref)
+		created.configure_defaults(app.config_ref)
 		app.cache_pool_ref = created
 	}
 	return app.cache_pool_ref
@@ -1106,7 +1104,7 @@ pub fn (mut app VSlimApp) http_client() &VSlimPsr18Client {
 	if app.http_client_ref == unsafe { nil } {
 		mut created := &VSlimPsr18Client{}
 		created.construct()
-		configure_default_http_client(mut created, app.config_ref)
+		created.configure_defaults(app.config_ref)
 		app.http_client_ref = created
 	}
 	return app.http_client_ref
@@ -1129,7 +1127,7 @@ pub fn (mut app VSlimApp) database() &VSlimDatabaseManager {
 	if app.database_ref == unsafe { nil } {
 		mut created := &VSlimDatabaseManager{}
 		created.construct()
-		configure_default_database_service(mut created, app.config_ref)
+		created.configure_default_service(app.config_ref)
 		app.database_ref = created
 	}
 	return app.database_ref

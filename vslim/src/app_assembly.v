@@ -7,7 +7,7 @@ fn bootstrap_file_return_error(path string) string {
 	return 'bootstrap file "${path}" must return iterable spec, callable, or VSlim\\App'
 }
 
-fn php_is_file(path string) bool {
+fn path_is_file(path string) bool {
 	mut path_arg := vphp.PhpString.of(path)
 	defer {
 		path_arg.release()
@@ -15,7 +15,7 @@ fn php_is_file(path string) bool {
 	return vphp.PhpFunction.named('is_file').result_bool(path_arg)
 }
 
-fn php_is_dir(path string) bool {
+fn path_is_dir(path string) bool {
 	mut path_arg := vphp.PhpString.of(path)
 	defer {
 		path_arg.release()
@@ -23,7 +23,7 @@ fn php_is_dir(path string) bool {
 	return vphp.PhpFunction.named('is_dir').result_bool(path_arg)
 }
 
-fn php_join_path(base string, child string) string {
+fn join_path(base string, child string) string {
 	mut frame := vphp.PhpScope.frame()
 	defer {
 		frame.release()
@@ -34,7 +34,7 @@ fn php_join_path(base string, child string) string {
 		frame.string(trimmed), frame.string(child))
 }
 
-fn php_glob_paths(pattern string) []string {
+fn glob_paths(pattern string) []string {
 	mut frame := vphp.PhpScope.frame()
 	defer {
 		frame.release()
@@ -52,7 +52,7 @@ fn php_glob_paths(pattern string) []string {
 	}, frame.string(pattern)) or { []string{} }
 }
 
-fn php_scandir_names(path string) []string {
+fn scandir_names(path string) []string {
 	mut path_arg := vphp.PhpString.of(path)
 	defer {
 		path_arg.release()
@@ -71,11 +71,11 @@ fn php_scandir_names(path string) []string {
 	}, path_arg) or { []string{} }
 }
 
-fn php_include_once(path string) vphp.PhpValue {
+fn include_once_file(path string) vphp.PhpValue {
 	return vphp.PhpIncludeFile.at(path).load_once()
 }
 
-fn php_class_exists(class_name string) bool {
+fn class_exists_name(class_name string) bool {
 	if class_name.trim_space() == '' {
 		return false
 	}
@@ -112,7 +112,7 @@ fn is_bootstrap_dir_path(path string) bool {
 	return pathutil.is_bootstrap_dir_path(path)
 }
 
-fn php_iterable_array(raw vphp.PhpValue) !vphp.PhpArray {
+fn iterable_array(raw vphp.PhpValue) !vphp.PhpArray {
 	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
 		return error('value must be iterable')
 	}
@@ -121,19 +121,29 @@ fn php_iterable_array(raw vphp.PhpValue) !vphp.PhpArray {
 }
 
 fn normalize_app_bootstrap_spec(raw vphp.PhpValue) !vphp.PhpArray {
-	return php_iterable_array(raw) or { return error('bootstrap spec must be iterable') }
+	return iterable_array(raw) or { return error('bootstrap spec must be iterable') }
 }
 
 fn normalize_app_bootstrap_iterable(raw vphp.PhpIterable) !vphp.PhpArray {
 	return raw.to_array() or { return error('bootstrap spec must be iterable') }
 }
 
-fn app_bootstrap_lookup(spec vphp.PhpArray, keys []string) ?vphp.PhpValue {
+struct AppBootstrapSpec {
+	spec vphp.PhpArray
+}
+
+fn app_bootstrap_spec(spec vphp.PhpArray) AppBootstrapSpec {
+	return AppBootstrapSpec{
+		spec: spec
+	}
+}
+
+fn (subject AppBootstrapSpec) lookup(keys []string) ?vphp.PhpValue {
 	for key in keys {
 		if key.trim_space() == '' {
 			continue
 		}
-		value := spec.value(key) or { continue }
+		value := subject.spec.value(key) or { continue }
 		if !value.is_valid() || value.is_undef() {
 			continue
 		}
@@ -142,8 +152,8 @@ fn app_bootstrap_lookup(spec vphp.PhpArray, keys []string) ?vphp.PhpValue {
 	return none
 }
 
-fn app_bootstrap_string(spec vphp.PhpArray, keys []string) ?string {
-	value := app_bootstrap_lookup(spec, keys) or { return none }
+fn (subject AppBootstrapSpec) string(keys []string) ?string {
+	value := subject.lookup(keys) or { return none }
 	if value.is_null() || value.is_undef() {
 		return none
 	}
@@ -154,8 +164,8 @@ fn app_bootstrap_string(spec vphp.PhpArray, keys []string) ?string {
 	return text
 }
 
-fn app_bootstrap_bool(spec vphp.PhpArray, keys []string) ?bool {
-	value := app_bootstrap_lookup(spec, keys) or { return none }
+fn (subject AppBootstrapSpec) bool(keys []string) ?bool {
+	value := subject.lookup(keys) or { return none }
 	if value.is_null() || value.is_undef() {
 		return none
 	}
@@ -172,12 +182,12 @@ fn app_bootstrap_bool(spec vphp.PhpArray, keys []string) ?bool {
 	return raw in ['1', 'true', 'yes', 'on']
 }
 
-fn apply_bootstrap_file_result(mut app VSlimApp, path string, value vphp.PhpValue) ! {
+fn (mut app VSlimApp) apply_bootstrap_file_result(path string, value vphp.PhpValue) ! {
 	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return error(bootstrap_file_return_error(path))
 	}
 	if value.is_callable() {
-		mut app_value := app_self_value(&app)
+		mut app_value := (&app).self_value()
 		defer {
 			app_value.release()
 		}
@@ -192,16 +202,16 @@ fn apply_bootstrap_file_result(mut app VSlimApp, path string, value vphp.PhpValu
 		if result.is_object() && result.is_instance_of('VSlim\\App') {
 			return
 		}
-		apply_app_bootstrap_spec(mut app, result)!
+		app.apply_bootstrap_spec(result)!
 		return
 	}
 	if value.is_object() && value.is_instance_of('VSlim\\App') {
 		return
 	}
-	apply_app_bootstrap_spec(mut app, value)!
+	app.apply_bootstrap_spec(value)!
 }
 
-fn app_bootstrap_file_apply(mut app VSlimApp, path string) ! {
+fn (mut app VSlimApp) bootstrap_file_apply(path string) ! {
 	clean := path.trim_space()
 	if clean == '' {
 		return error('bootstrap path must not be empty')
@@ -214,7 +224,7 @@ fn app_bootstrap_file_apply(mut app VSlimApp, path string) ! {
 	should_preload := lower.ends_with('/bootstrap/app.php')
 		|| lower.ends_with('\\bootstrap\\app.php') || lower.ends_with('/app.php')
 		|| lower.ends_with('\\app.php')
-	file_exists := php_is_file(clean)
+	file_exists := path_is_file(clean)
 	cli_debug_log('bootstrap_file clean="${clean}" lower="${lower}" should_preload=${should_preload} is_file=${file_exists}')
 	if should_preload && file_exists {
 		project_root := if is_bootstrap_dir_path(path_dirname(clean)) {
@@ -227,11 +237,11 @@ fn app_bootstrap_file_apply(mut app VSlimApp, path string) ! {
 			preload_bootstrap_spec_classes(project_root, result)
 		}
 	}
-	apply_bootstrap_file_result(mut app, clean, result)!
+	app.apply_bootstrap_file_result(clean, result)!
 }
 
-fn call_bootstrap_callable_item(item vphp.PhpValue, app_value vphp.PhpValue, label string) ! {
-	callable := vphp.PhpCallable.from_value(item) or {
+fn (subject PhpValueSubject) call_bootstrap_callable_item(app_value vphp.PhpValue, label string) ! {
+	callable := vphp.PhpCallable.from_value(subject.value) or {
 		return error('bootstrap ${label} entries must be callable')
 	}
 	callable.with_result[vphp.PhpValue, bool](fn (result vphp.PhpValue) bool {
@@ -239,9 +249,10 @@ fn call_bootstrap_callable_item(item vphp.PhpValue, app_value vphp.PhpValue, lab
 	}, app_value) or { false }
 }
 
-fn call_bootstrap_callable_items(raw vphp.PhpValue, app_value vphp.PhpValue, label string) ! {
+fn (subject PhpValueSubject) call_bootstrap_callable_items(app_value vphp.PhpValue, label string) ! {
+	raw := subject.value
 	if raw.is_valid() && raw.is_callable() {
-		call_bootstrap_callable_item(raw, app_value, label)!
+		subject.call_bootstrap_callable_item(app_value, label)!
 		return
 	}
 	iter := raw.as_iterable() or {
@@ -252,7 +263,7 @@ fn call_bootstrap_callable_items(raw vphp.PhpValue, app_value vphp.PhpValue, lab
 		normalized.release()
 	}
 	for item in normalized.value_items() {
-		call_bootstrap_callable_item(item, app_value, label)!
+		value_subject(item).call_bootstrap_callable_item(app_value, label)!
 	}
 }
 
@@ -266,87 +277,87 @@ fn require_native_bootstrap_object[T](value vphp.PhpValue, class_name string, la
 	return obj
 }
 
-fn apply_app_bootstrap_container(mut app VSlimApp, spec vphp.PhpArray) ! {
-	value := app_bootstrap_lookup(spec, ['container']) or { return }
+fn (mut app VSlimApp) apply_bootstrap_container(spec vphp.PhpArray) ! {
+	value := app_bootstrap_spec(spec).lookup(['container']) or { return }
 	container := require_native_bootstrap_object[VSlimContainer](value, 'VSlim\\Container',
 		'container')!
 	app.set_container(container)
 }
 
-fn apply_app_bootstrap_config(mut app VSlimApp, spec vphp.PhpArray) ! {
-	if value := app_bootstrap_lookup(spec, ['config']) {
+fn (mut app VSlimApp) apply_bootstrap_config(spec vphp.PhpArray) ! {
+	if value := app_bootstrap_spec(spec).lookup(['config']) {
 		config := require_native_bootstrap_object[VSlimConfig](value, 'VSlim\\Config', 'config')!
 		app.set_config(config)
 	}
-	if config_path := app_bootstrap_string(spec, ['config_path', 'configPath', 'config_file',
+	if config_path := app_bootstrap_spec(spec).string(['config_path', 'configPath', 'config_file',
 		'configFile'])
 	{
 		app.load_config(config_path)
 	}
-	if config_text := app_bootstrap_string(spec, ['config_text', 'configText']) {
+	if config_text := app_bootstrap_spec(spec).string(['config_text', 'configText']) {
 		app.load_config_text(config_text)
 	}
 }
 
-fn apply_app_bootstrap_runtime_flags(mut app VSlimApp, spec vphp.PhpArray) {
-	if base_path := app_bootstrap_string(spec, ['base_path', 'basePath']) {
+fn (mut app VSlimApp) apply_bootstrap_runtime_flags(spec vphp.PhpArray) {
+	if base_path := app_bootstrap_spec(spec).string(['base_path', 'basePath']) {
 		app.set_base_path(base_path)
 	}
-	if view_base_path := app_bootstrap_string(spec, ['view_base_path', 'viewBasePath']) {
+	if view_base_path := app_bootstrap_spec(spec).string(['view_base_path', 'viewBasePath']) {
 		app.set_view_base_path(view_base_path)
 	}
-	if assets_prefix := app_bootstrap_string(spec, ['assets_prefix', 'assetsPrefix']) {
+	if assets_prefix := app_bootstrap_spec(spec).string(['assets_prefix', 'assetsPrefix']) {
 		app.set_assets_prefix(assets_prefix)
 	}
-	if enabled := app_bootstrap_bool(spec, ['view_cache', 'viewCache']) {
+	if enabled := app_bootstrap_spec(spec).bool(['view_cache', 'viewCache']) {
 		app.set_view_cache(enabled)
 	}
-	if enabled := app_bootstrap_bool(spec, ['error_response_json', 'errorResponseJson']) {
+	if enabled := app_bootstrap_spec(spec).bool(['error_response_json', 'errorResponseJson']) {
 		app.set_error_response_json(enabled)
 	}
 }
 
-fn apply_app_bootstrap_services(mut app VSlimApp, spec vphp.PhpArray) ! {
-	if value := app_bootstrap_lookup(spec, ['clock']) {
+fn (mut app VSlimApp) apply_bootstrap_services(spec vphp.PhpArray) ! {
+	if value := app_bootstrap_spec(spec).lookup(['clock']) {
 		if !psr20_is_clock(value) {
 			return error('bootstrap clock must implement Psr\\Clock\\ClockInterface')
 		}
 		clock := value.as_object() or { return error('bootstrap clock must be an object') }
 		app.set_clock(clock)
 	}
-	if value := app_bootstrap_lookup(spec, ['logger']) {
+	if value := app_bootstrap_spec(spec).lookup(['logger']) {
 		logger := require_native_bootstrap_object[VSlimLogger](value, 'VSlim\\Log\\Logger',
 			'logger')!
 		app.set_logger(logger)
 	}
-	if value := app_bootstrap_lookup(spec, ['listener_provider', 'listenerProvider']) {
+	if value := app_bootstrap_spec(spec).lookup(['listener_provider', 'listenerProvider']) {
 		provider := require_native_bootstrap_object[VSlimPsr14ListenerProvider](value,
 			'VSlim\\Psr14\\ListenerProvider', 'listener_provider')!
 		app.set_listener_provider(provider)
 	}
-	if value := app_bootstrap_lookup(spec, ['dispatcher']) {
+	if value := app_bootstrap_spec(spec).lookup(['dispatcher']) {
 		dispatcher := require_native_bootstrap_object[VSlimPsr14EventDispatcher](value,
 			'VSlim\\Psr14\\EventDispatcher', 'dispatcher')!
 		app.set_dispatcher(dispatcher)
 	}
-	if value := app_bootstrap_lookup(spec, ['cache']) {
+	if value := app_bootstrap_spec(spec).lookup(['cache']) {
 		cache := require_native_bootstrap_object[VSlimPsr16Cache](value, 'VSlim\\Psr16\\Cache',
 			'cache')!
 		app.set_cache(cache)
 	}
-	if value := app_bootstrap_lookup(spec, ['cache_pool', 'cachePool']) {
+	if value := app_bootstrap_spec(spec).lookup(['cache_pool', 'cachePool']) {
 		pool := require_native_bootstrap_object[VSlimPsr6CacheItemPool](value,
 			'VSlim\\Psr6\\CacheItemPool', 'cache_pool')!
 		app.set_cache_pool(pool)
 	}
-	if value := app_bootstrap_lookup(spec, ['http_client', 'httpClient']) {
+	if value := app_bootstrap_spec(spec).lookup(['http_client', 'httpClient']) {
 		client := require_native_bootstrap_object[VSlimPsr18Client](value, 'VSlim\\Psr18\\Client',
 			'http_client')!
 		app.set_http_client(client)
 	}
-	if value := app_bootstrap_lookup(spec, ['mcp']) {
+	if value := app_bootstrap_spec(spec).lookup(['mcp']) {
 		if value.is_callable() {
-			mut app_value := app_self_value(&app)
+			mut app_value := (&app).self_value()
 			defer {
 				app_value.release()
 			}
@@ -366,14 +377,14 @@ fn apply_app_bootstrap_services(mut app VSlimApp, spec vphp.PhpArray) ! {
 	}
 }
 
-fn apply_app_bootstrap_handlers(mut app VSlimApp, spec vphp.PhpArray) ! {
-	if value := app_bootstrap_lookup(spec, ['not_found', 'notFound']) {
+fn (mut app VSlimApp) apply_bootstrap_handlers(spec vphp.PhpArray) ! {
+	if value := app_bootstrap_spec(spec).lookup(['not_found', 'notFound']) {
 		callable := vphp.PhpCallable.from_value(value) or {
 			return error('bootstrap not_found must be callable')
 		}
 		app.set_not_found_handler(callable)
 	}
-	if value := app_bootstrap_lookup(spec, ['error', 'error_handler', 'errorHandler']) {
+	if value := app_bootstrap_spec(spec).lookup(['error', 'error_handler', 'errorHandler']) {
 		callable := vphp.PhpCallable.from_value(value) or {
 			return error('bootstrap error handler must be callable')
 		}
@@ -381,8 +392,8 @@ fn apply_app_bootstrap_handlers(mut app VSlimApp, spec vphp.PhpArray) ! {
 	}
 }
 
-fn apply_app_bootstrap_helpers(mut app VSlimApp, spec vphp.PhpArray) ! {
-	helpers := app_bootstrap_lookup(spec, ['helpers', 'view_helpers', 'viewHelpers']) or { return }
+fn (mut app VSlimApp) apply_bootstrap_helpers(spec vphp.PhpArray) ! {
+	helpers := app_bootstrap_spec(spec).lookup(['helpers', 'view_helpers', 'viewHelpers']) or { return }
 	iter := helpers.as_iterable() or { return error('bootstrap helpers must be iterable') }
 	mut normalized := iter.to_array()!
 	defer {
@@ -397,14 +408,14 @@ fn apply_app_bootstrap_helpers(mut app VSlimApp, spec vphp.PhpArray) ! {
 	}
 }
 
-fn apply_app_bootstrap_middleware_stack(mut app VSlimApp, spec vphp.PhpArray, keys []string, kind MiddlewareRegistrationKind, label string) ! {
-	value := app_bootstrap_lookup(spec, keys) or { return }
+fn (mut app VSlimApp) apply_bootstrap_middleware_stack(spec vphp.PhpArray, keys []string, kind MiddlewareRegistrationKind, label string) ! {
+	value := app_bootstrap_spec(spec).lookup(keys) or { return }
 	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return error('bootstrap ${label} must not be null')
 	}
-	if value.is_string() || is_supported_php_middleware_handler(value)
+	if value.is_string() || value_subject(value).is_supported_middleware_handler()
 		|| is_bootstrap_callable_pair(value) {
-		apply_app_bootstrap_middleware_item(mut app, kind, label, value)!
+		app.apply_bootstrap_middleware_item(kind, label, value)!
 		return
 	}
 	iter := value.as_iterable() or {
@@ -415,10 +426,10 @@ fn apply_app_bootstrap_middleware_stack(mut app VSlimApp, spec vphp.PhpArray, ke
 		normalized.release()
 	}
 	for item in normalized.value_items() {
-		if !is_supported_registration_kind(kind, item) {
+		if !kind.supports_registration(item) {
 			return error('bootstrap ${label} entries must be middleware registrations')
 		}
-		apply_app_bootstrap_middleware_item(mut app, kind, label, item)!
+		app.apply_bootstrap_middleware_item(kind, label, item)!
 	}
 }
 
@@ -428,8 +439,8 @@ fn is_bootstrap_callable_pair(value vphp.PhpValue) bool {
 		&& arr.index_value(1).is_string()
 }
 
-fn apply_app_bootstrap_middleware_item(mut app VSlimApp, kind MiddlewareRegistrationKind, label string, handler vphp.PhpValue) ! {
-	if !is_supported_registration_kind(kind, handler) {
+fn (mut app VSlimApp) apply_bootstrap_middleware_item(kind MiddlewareRegistrationKind, label string, handler vphp.PhpValue) ! {
+	if !kind.supports_registration(handler) {
 		return error('bootstrap ${label} must contain valid middleware registrations')
 	}
 	match kind {
@@ -439,17 +450,17 @@ fn apply_app_bootstrap_middleware_item(mut app VSlimApp, kind MiddlewareRegistra
 	}
 }
 
-fn call_app_bootstrap_hooks(spec vphp.PhpArray, keys []string, app_value vphp.PhpValue, label string) ! {
-	raw := app_bootstrap_lookup(spec, keys) or { return }
-	call_bootstrap_callable_items(raw, app_value, label)!
+fn (subject AppBootstrapSpec) call_hooks(keys []string, app_value vphp.PhpValue, label string) ! {
+	raw := subject.lookup(keys) or { return }
+	value_subject(raw).call_bootstrap_callable_items(app_value, label)!
 }
 
-fn call_app_bootstrap_hook_result(raw vphp.PhpValue, app_value vphp.PhpValue, label string) ! {
-	call_bootstrap_callable_items(raw, app_value, label)!
+fn (subject PhpValueSubject) call_bootstrap_hook_result(app_value vphp.PhpValue, label string) ! {
+	subject.call_bootstrap_callable_items(app_value, label)!
 }
 
-fn apply_bootstrap_convention_providers(mut app VSlimApp, path string) !bool {
-	if !php_is_file(path) {
+fn (mut app VSlimApp) apply_bootstrap_convention_providers(path string) !bool {
+	if !path_is_file(path) {
 		return false
 	}
 	mut raw := vphp.PhpIncludeFile.at(path).load()
@@ -466,8 +477,8 @@ fn apply_bootstrap_convention_providers(mut app VSlimApp, path string) !bool {
 	return true
 }
 
-fn apply_bootstrap_convention_modules(mut app VSlimApp, path string) !bool {
-	if !php_is_file(path) {
+fn (mut app VSlimApp) apply_bootstrap_convention_modules(path string) !bool {
+	if !path_is_file(path) {
 		return false
 	}
 	mut raw := vphp.PhpIncludeFile.at(path).load()
@@ -484,18 +495,28 @@ fn apply_bootstrap_convention_modules(mut app VSlimApp, path string) !bool {
 	return true
 }
 
-fn apply_bootstrap_convention_hooks(path string, app_value vphp.PhpValue, label string) !bool {
-	if !php_is_file(path) {
+struct BootstrapConventionHookFile {
+	path string
+}
+
+fn bootstrap_convention_hook_file(path string) BootstrapConventionHookFile {
+	return BootstrapConventionHookFile{
+		path: path
+	}
+}
+
+fn (file BootstrapConventionHookFile) apply(app_value vphp.PhpValue, label string) !bool {
+	if !path_is_file(file.path) {
 		return false
 	}
-	mut raw := vphp.PhpIncludeFile.at(path).load()
+	mut raw := vphp.PhpIncludeFile.at(file.path).load()
 	defer {
 		raw.release()
 	}
 	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
-		return error('bootstrap ${label} file "${path}" must return callable or callable list')
+		return error('bootstrap ${label} file "${file.path}" must return callable or callable list')
 	}
-	call_app_bootstrap_hook_result(raw, app_value, label)!
+	value_subject(raw).call_bootstrap_hook_result(app_value, label)!
 	return true
 }
 
@@ -521,11 +542,11 @@ fn preload_bootstrap_spec_class_items(project_root string, raw vphp.PhpValue) {
 		cli_debug_log('bootstrap_spec_class class="${class_name}" file="${file}" is_file=${if file == '' {
 			false
 		} else {
-			php_is_file(file)
+			path_is_file(file)
 		}}')
-		if file != '' && php_is_file(file) {
-			loaded := php_include_once(file)
-			cli_debug_log('bootstrap_spec_class include class="${class_name}" file="${file}" loaded_valid=${loaded.is_valid()} loaded_type=${loaded.kind_name()} exists=${php_class_exists(class_name)}')
+		if file != '' && path_is_file(file) {
+			loaded := include_once_file(file)
+			cli_debug_log('bootstrap_spec_class include class="${class_name}" file="${file}" loaded_valid=${loaded.is_valid()} loaded_type=${loaded.kind_name()} exists=${class_exists_name(class_name)}')
 		}
 		return
 	}
@@ -539,17 +560,17 @@ fn preload_bootstrap_spec_class_items(project_root string, raw vphp.PhpValue) {
 
 fn preload_bootstrap_spec_classes(project_root string, raw vphp.PhpValue) {
 	normalized := normalize_app_bootstrap_spec(raw) or { return }
-	if providers := app_bootstrap_lookup(normalized, ['providers']) {
+	if providers := app_bootstrap_spec(normalized).lookup(['providers']) {
 		preload_bootstrap_spec_class_items(project_root, providers)
 	}
-	if modules := app_bootstrap_lookup(normalized, ['modules']) {
+	if modules := app_bootstrap_spec(normalized).lookup(['modules']) {
 		preload_bootstrap_spec_class_items(project_root, modules)
 	}
-	for file in php_glob_paths(path_join(project_root, 'app/Http/Controllers/*.php')) {
-		_ = php_include_once(file)
+	for file in glob_paths(path_join(project_root, 'app/Http/Controllers/*.php')) {
+		_ = include_once_file(file)
 	}
-	for file in php_glob_paths(path_join(project_root, 'app/Http/Middleware/*.php')) {
-		_ = php_include_once(file)
+	for file in glob_paths(path_join(project_root, 'app/Http/Middleware/*.php')) {
+		_ = include_once_file(file)
 	}
 }
 
@@ -558,8 +579,8 @@ fn preload_bootstrap_project_classes(project_root string) {
 		return
 	}
 	support_file := path_join(project_root, 'support.php')
-	if php_is_file(support_file) {
-		_ = php_include_once(support_file)
+	if path_is_file(support_file) {
+		_ = include_once_file(support_file)
 	}
 	patterns := [
 		path_join(project_root, 'app/Providers/*.php'),
@@ -568,42 +589,42 @@ fn preload_bootstrap_project_classes(project_root string) {
 		path_join(project_root, 'app/Http/Middleware/*.php'),
 	]
 	for pattern in patterns {
-		for file in php_glob_paths(pattern) {
-			_ = php_include_once(file)
+		for file in glob_paths(pattern) {
+			_ = include_once_file(file)
 		}
 	}
 }
 
-fn apply_bootstrap_convention_provider_classes(mut app VSlimApp, project_root string) !bool {
+fn (mut app VSlimApp) apply_bootstrap_convention_provider_classes(project_root string) !bool {
 	mut applied := false
-	for file in php_glob_paths(path_join(project_root, 'app/Providers/*.php')) {
-		_ = php_include_once(file)
+	for file in glob_paths(path_join(project_root, 'app/Providers/*.php')) {
+		_ = include_once_file(file)
 		class_name := 'App\\Providers\\' + path_file_stem(file)
-		if !php_class_exists(class_name) {
+		if !class_exists_name(class_name) {
 			return error('provider convention file "${file}" must declare class ${class_name}')
 		}
-		register_service_provider_class(mut app, class_name)!
+		app.register_service_provider_class(class_name)!
 		applied = true
 	}
 	return applied
 }
 
-fn apply_bootstrap_convention_module_classes(mut app VSlimApp, project_root string) !bool {
+fn (mut app VSlimApp) apply_bootstrap_convention_module_classes(project_root string) !bool {
 	mut applied := false
-	for file in php_glob_paths(path_join(project_root, 'app/Modules/*.php')) {
-		_ = php_include_once(file)
+	for file in glob_paths(path_join(project_root, 'app/Modules/*.php')) {
+		_ = include_once_file(file)
 		class_name := 'App\\Modules\\' + path_file_stem(file)
-		if !php_class_exists(class_name) {
+		if !class_exists_name(class_name) {
 			return error('module convention file "${file}" must declare class ${class_name}')
 		}
-		register_module_class(mut app, class_name)!
+		app.register_module_class(class_name)!
 		applied = true
 	}
 	return applied
 }
 
 fn bootstrap_controller_declares_own_constructor(class_name string) bool {
-	if class_name.trim_space() == '' || !php_class_exists(class_name) {
+	if class_name.trim_space() == '' || !class_exists_name(class_name) {
 		return false
 	}
 	mut class_arg := vphp.PhpString.of(class_name)
@@ -628,17 +649,17 @@ fn bootstrap_controller_declares_own_constructor(class_name string) bool {
 	return declaring.method[string]('getName') or { '' }.trim_space() == class_name
 }
 
-fn apply_bootstrap_convention_http_classes(mut app VSlimApp, project_root string) !bool {
+fn (mut app VSlimApp) apply_bootstrap_convention_http_classes(project_root string) !bool {
 	mut applied := false
 	mut container := app.container()
-	mut app_value := app_self_value(&app)
+	mut app_value := (&app).self_value()
 	defer {
 		app_value.release()
 	}
-	for file in php_glob_paths(path_join(project_root, 'app/Http/Controllers/*.php')) {
-		_ = php_include_once(file)
+	for file in glob_paths(path_join(project_root, 'app/Http/Controllers/*.php')) {
+		_ = include_once_file(file)
 		class_name := 'App\\Http\\Controllers\\' + path_file_stem(file)
-		if !php_class_exists(class_name) {
+		if !class_exists_name(class_name) {
 			return error('controller convention file "${file}" must declare class ${class_name}')
 		}
 		if !container.has(class_name)
@@ -651,10 +672,10 @@ fn apply_bootstrap_convention_http_classes(mut app VSlimApp, project_root string
 		}
 		applied = true
 	}
-	for file in php_glob_paths(path_join(project_root, 'app/Http/Middleware/*.php')) {
-		_ = php_include_once(file)
+	for file in glob_paths(path_join(project_root, 'app/Http/Middleware/*.php')) {
+		_ = include_once_file(file)
 		class_name := 'App\\Http\\Middleware\\' + path_file_stem(file)
-		if !php_class_exists(class_name) {
+		if !class_exists_name(class_name) {
 			return error('middleware convention file "${file}" must declare class ${class_name}')
 		}
 		applied = true
@@ -662,8 +683,8 @@ fn apply_bootstrap_convention_http_classes(mut app VSlimApp, project_root string
 	return applied
 }
 
-fn apply_bootstrap_convention_spec(mut app VSlimApp, path string, label string) !bool {
-	if !php_is_file(path) {
+fn (mut app VSlimApp) apply_bootstrap_convention_spec(path string, label string) !bool {
+	if !path_is_file(path) {
 		return false
 	}
 	mut raw := vphp.PhpIncludeFile.at(path).load()
@@ -677,7 +698,7 @@ fn apply_bootstrap_convention_spec(mut app VSlimApp, path string, label string) 
 		callable := raw.as_callable() or {
 			return error('bootstrap ${label} file "${path}" must return callable')
 		}
-		mut app_value := app_self_value(&app)
+		mut app_value := (&app).self_value()
 		defer {
 			app_value.release()
 		}
@@ -686,32 +707,32 @@ fn apply_bootstrap_convention_spec(mut app VSlimApp, path string, label string) 
 		}, app_value) or { false }
 		return true
 	}
-	apply_app_bootstrap_spec(mut app, raw)!
+	app.apply_bootstrap_spec(raw)!
 	return true
 }
 
-fn apply_bootstrap_shared_conventions(mut app VSlimApp, project_root string) !bool {
+fn (mut app VSlimApp) apply_bootstrap_shared_conventions(project_root string) !bool {
 	mut applied := false
 	config_candidates := [path_join(project_root, 'config'),
 		path_join(project_root, 'config/app.toml'), path_join(project_root, 'app.toml')]
 	for candidate in config_candidates {
-		if php_is_file(candidate) || php_is_dir(candidate) {
+		if path_is_file(candidate) || path_is_dir(candidate) {
 			app.load_config(candidate)
 			applied = true
 			break
 		}
 	}
-	if apply_bootstrap_convention_spec(mut app, path_join(project_root, 'bootstrap/runtime.php'),
+	if app.apply_bootstrap_convention_spec(path_join(project_root, 'bootstrap/runtime.php'),
 		'runtime')!
 	{
 		applied = true
 	}
-	if apply_bootstrap_convention_spec(mut app, path_join(project_root, 'bootstrap/services.php'),
+	if app.apply_bootstrap_convention_spec(path_join(project_root, 'bootstrap/services.php'),
 		'services')!
 	{
 		applied = true
 	}
-	if apply_bootstrap_convention_spec(mut app, path_join(project_root, 'bootstrap/errors.php'),
+	if app.apply_bootstrap_convention_spec(path_join(project_root, 'bootstrap/errors.php'),
 		'errors')!
 	{
 		applied = true
@@ -720,7 +741,7 @@ fn apply_bootstrap_shared_conventions(mut app VSlimApp, project_root string) !bo
 		view_candidates := [path_join(project_root, 'views'),
 			path_join(project_root, 'resources/views')]
 		for view_dir in view_candidates {
-			if !php_is_dir(view_dir) {
+			if !path_is_dir(view_dir) {
 				continue
 			}
 			app.set_view_base_path(view_dir)
@@ -728,70 +749,70 @@ fn apply_bootstrap_shared_conventions(mut app VSlimApp, project_root string) !bo
 			break
 		}
 	}
-	if apply_bootstrap_convention_providers(mut app, path_join(project_root,
+	if app.apply_bootstrap_convention_providers(path_join(project_root,
 		'bootstrap/providers.php'))!
 	{
 		applied = true
 	}
-	if apply_bootstrap_convention_provider_classes(mut app, project_root)! {
+	if app.apply_bootstrap_convention_provider_classes(project_root)! {
 		applied = true
 	}
-	if apply_bootstrap_convention_modules(mut app, path_join(project_root, 'bootstrap/modules.php'))! {
+	if app.apply_bootstrap_convention_modules(path_join(project_root, 'bootstrap/modules.php'))! {
 		applied = true
 	}
-	if apply_bootstrap_convention_module_classes(mut app, project_root)! {
+	if app.apply_bootstrap_convention_module_classes(project_root)! {
 		applied = true
 	}
 	return applied
 }
 
-fn apply_bootstrap_http_conventions(mut app VSlimApp, project_root string) !bool {
+fn (mut app VSlimApp) apply_bootstrap_http_conventions(project_root string) !bool {
 	mut applied := false
-	if apply_bootstrap_convention_http_classes(mut app, project_root)! {
+	if app.apply_bootstrap_convention_http_classes(project_root)! {
 		applied = true
 	}
-	mut app_value := app_self_value(&app)
+	mut app_value := (&app).self_value()
 	defer {
 		app_value.release()
 	}
-	if apply_bootstrap_convention_spec(mut app, path_join(project_root, 'app/Http/errors.php'),
+	if app.apply_bootstrap_convention_spec(path_join(project_root, 'app/Http/errors.php'),
 		'errors')!
 	{
 		applied = true
 	}
-	if apply_bootstrap_convention_hooks(path_join(project_root, 'app/Http/controllers.php'), app_value,
+	if bootstrap_convention_hook_file(path_join(project_root, 'app/Http/controllers.php')).apply(app_value,
 		'controllers')!
 	{
 		applied = true
 	}
-	if apply_bootstrap_convention_hooks(path_join(project_root, 'bootstrap/middleware.php'), app_value,
+	if bootstrap_convention_hook_file(path_join(project_root, 'bootstrap/middleware.php')).apply(app_value,
 		'middleware')!
 	{
 		applied = true
 	}
-	if apply_bootstrap_convention_hooks(path_join(project_root, 'app/Http/middleware.php'), app_value,
+	if bootstrap_convention_hook_file(path_join(project_root, 'app/Http/middleware.php')).apply(app_value,
 		'middleware')!
 	{
 		applied = true
 	}
-	for route_file in php_glob_paths(path_join(project_root, 'routes/*.php')) {
-		_ = apply_bootstrap_convention_hooks(route_file, app_value, 'routes')!
+	for route_file in glob_paths(path_join(project_root, 'routes/*.php')) {
+		_ = bootstrap_convention_hook_file(route_file).apply(app_value, 'routes')!
 		applied = true
 	}
-	for route_file in php_glob_paths(path_join(project_root, 'app/Http/routes/*.php')) {
-		_ = apply_bootstrap_convention_hooks(route_file, app_value, 'routes')!
+	for route_file in glob_paths(path_join(project_root, 'app/Http/routes/*.php')) {
+		_ = bootstrap_convention_hook_file(route_file).apply(app_value, 'routes')!
 		applied = true
 	}
 	return applied
 }
 
-fn apply_bootstrap_conventions(mut app VSlimApp, path string) ! {
+fn (mut app VSlimApp) apply_bootstrap_conventions(path string) ! {
 	project_root := if is_bootstrap_dir_path(path) { path_dirname(path) } else { path }
 	if project_root == '' {
 		return error('bootstrap directory "${path}" has no project root')
 	}
-	shared_applied := apply_bootstrap_shared_conventions(mut app, project_root)!
-	http_applied := apply_bootstrap_http_conventions(mut app, project_root)!
+	shared_applied := app.apply_bootstrap_shared_conventions(project_root)!
+	http_applied := app.apply_bootstrap_http_conventions(project_root)!
 	applied := shared_applied || http_applied
 	if !applied {
 		return error('bootstrap directory "${path}" must contain bootstrap/app.php, app.php, or convention files')
@@ -799,49 +820,49 @@ fn apply_bootstrap_conventions(mut app VSlimApp, path string) ! {
 	app.boot()
 }
 
-fn apply_app_bootstrap_spec(mut app VSlimApp, spec vphp.PhpValue) ! {
+fn (mut app VSlimApp) apply_bootstrap_spec(spec vphp.PhpValue) ! {
 	normalized := normalize_app_bootstrap_spec(spec)!
 	defer {
 		normalized.release()
 	}
-	apply_app_bootstrap_array(mut app, normalized)!
+	app.apply_bootstrap_array(normalized)!
 }
 
-fn apply_app_bootstrap_iterable(mut app VSlimApp, spec vphp.PhpIterable) ! {
+fn (mut app VSlimApp) apply_bootstrap_iterable(spec vphp.PhpIterable) ! {
 	normalized := normalize_app_bootstrap_iterable(spec)!
 	defer {
 		normalized.release()
 	}
-	apply_app_bootstrap_array(mut app, normalized)!
+	app.apply_bootstrap_array(normalized)!
 }
 
-fn apply_app_bootstrap_array(mut app VSlimApp, normalized vphp.PhpArray) ! {
-	apply_app_bootstrap_container(mut app, normalized)!
-	apply_app_bootstrap_config(mut app, normalized)!
-	apply_app_bootstrap_runtime_flags(mut app, normalized)
-	apply_app_bootstrap_services(mut app, normalized)!
-	apply_app_bootstrap_handlers(mut app, normalized)!
-	apply_app_bootstrap_helpers(mut app, normalized)!
-	apply_app_bootstrap_middleware_stack(mut app, normalized, ['before'], .before, 'before')!
-	apply_app_bootstrap_middleware_stack(mut app, normalized, ['middleware', 'middlewares'],
+fn (mut app VSlimApp) apply_bootstrap_array(normalized vphp.PhpArray) ! {
+	app.apply_bootstrap_container(normalized)!
+	app.apply_bootstrap_config(normalized)!
+	app.apply_bootstrap_runtime_flags(normalized)
+	app.apply_bootstrap_services(normalized)!
+	app.apply_bootstrap_handlers(normalized)!
+	app.apply_bootstrap_helpers(normalized)!
+	app.apply_bootstrap_middleware_stack(normalized, ['before'], .before, 'before')!
+	app.apply_bootstrap_middleware_stack(normalized, ['middleware', 'middlewares'],
 		.standard, 'middleware')!
-	apply_app_bootstrap_middleware_stack(mut app, normalized, ['after'], .after, 'after')!
-	if providers := app_bootstrap_lookup(normalized, ['providers']) {
+	app.apply_bootstrap_middleware_stack(normalized, ['after'], .after, 'after')!
+	if providers := app_bootstrap_spec(normalized).lookup(['providers']) {
 		provider_iter := providers.as_iterable() or { return error('bootstrap providers must be iterable') }
 		app.register_many(provider_iter)
 	}
-	if modules := app_bootstrap_lookup(normalized, ['modules']) {
+	if modules := app_bootstrap_spec(normalized).lookup(['modules']) {
 		module_iter := modules.as_iterable() or { return error('bootstrap modules must be iterable') }
 		app.module_many(module_iter)
 	}
-	mut app_value := app_self_value(&app)
+	mut app_value := (&app).self_value()
 	defer {
 		app_value.release()
 	}
-	call_app_bootstrap_hooks(normalized, ['middleware_setup', 'middlewareSetup'], app_value,
+	app_bootstrap_spec(normalized).call_hooks(['middleware_setup', 'middlewareSetup'], app_value,
 		'middleware_setup')!
-	call_app_bootstrap_hooks(normalized, ['routes'], app_value, 'routes')!
-	if should_boot := app_bootstrap_bool(normalized, ['boot']) {
+	app_bootstrap_spec(normalized).call_hooks(['routes'], app_value, 'routes')!
+	if should_boot := app_bootstrap_spec(normalized).bool(['boot']) {
 		if should_boot {
 			app.boot()
 		}
@@ -850,7 +871,7 @@ fn apply_app_bootstrap_array(mut app VSlimApp, normalized vphp.PhpArray) ! {
 
 @[php_method]
 pub fn (mut app VSlimApp) bootstrap(spec vphp.PhpIterable) &VSlimApp {
-	apply_app_bootstrap_iterable(mut app, spec) or {
+	app.apply_bootstrap_iterable(spec) or {
 		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 		return &app
 	}
@@ -859,7 +880,7 @@ pub fn (mut app VSlimApp) bootstrap(spec vphp.PhpIterable) &VSlimApp {
 
 @[php_method: 'bootstrapFile']
 pub fn (mut app VSlimApp) bootstrap_file(path string) &VSlimApp {
-	app_bootstrap_file_apply(mut app, path) or {
+	app.bootstrap_file_apply(path) or {
 		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 		return &app
 	}
@@ -877,7 +898,7 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 	if !clean.ends_with('.php') {
 		preload_bootstrap_project_classes(clean)
 	}
-	if clean.ends_with('.php') && php_is_file(clean) {
+	if clean.ends_with('.php') && path_is_file(clean) {
 		mut result := vphp.PhpIncludeFile.at(clean).load()
 		defer {
 			result.release()
@@ -896,14 +917,14 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 				preload_bootstrap_spec_classes(project_root, result)
 			}
 		}
-		apply_bootstrap_file_result(mut app, clean, result) or {
+		app.apply_bootstrap_file_result(clean, result) or {
 			vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 			return &app
 		}
 		return &app
 	}
 	bootstrap_candidate := clean + '/bootstrap/app.php'
-	if php_is_file(bootstrap_candidate) {
+	if path_is_file(bootstrap_candidate) {
 		mut result := vphp.PhpIncludeFile.at(bootstrap_candidate).load()
 		defer {
 			result.release()
@@ -916,14 +937,14 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 		if project_root != '' {
 			preload_bootstrap_spec_classes(project_root, result)
 		}
-		apply_bootstrap_file_result(mut app, bootstrap_candidate, result) or {
+		app.apply_bootstrap_file_result(bootstrap_candidate, result) or {
 			vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 			return &app
 		}
 		return &app
 	}
 	app_candidate := clean + '/app.php'
-	if php_is_file(app_candidate) {
+	if path_is_file(app_candidate) {
 		mut result := vphp.PhpIncludeFile.at(app_candidate).load()
 		defer {
 			result.release()
@@ -936,13 +957,13 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 		if project_root != '' {
 			preload_bootstrap_spec_classes(project_root, result)
 		}
-		apply_bootstrap_file_result(mut app, app_candidate, result) or {
+		app.apply_bootstrap_file_result(app_candidate, result) or {
 			vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 			return &app
 		}
 		return &app
 	}
-	apply_bootstrap_conventions(mut app, clean) or {
+	app.apply_bootstrap_conventions(clean) or {
 		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 		return &app
 	}

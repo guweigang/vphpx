@@ -2,7 +2,7 @@ module main
 
 import vphp
 
-fn resolve_effective_method(req &VSlimRequest) string {
+fn (req &VSlimRequest) effective_method() string {
 	method := req.method.to_upper()
 	if method != 'POST' {
 		return method
@@ -12,7 +12,7 @@ fn resolve_effective_method(req &VSlimRequest) string {
 		override = req.query('_method').trim_space().to_upper()
 	}
 	if override == '' {
-		override = parse_body_method_override(req.body)
+		override = VSlimRequest.body_method_override(req.body)
 	}
 	allowed := ['PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']
 	if override in allowed {
@@ -21,7 +21,7 @@ fn resolve_effective_method(req &VSlimRequest) string {
 	return method
 }
 
-fn parse_body_method_override(body string) string {
+fn VSlimRequest.body_method_override(body string) string {
 	if body == '' {
 		return ''
 	}
@@ -34,21 +34,21 @@ fn parse_body_method_override(body string) string {
 	return ''
 }
 
-fn normalize_php_route_response_value(result vphp.PhpValue) (VSlimResponse, bool) {
+fn VSlimResponse.from_route_result(result vphp.PhpValue) (VSlimResponse, bool) {
 	if !result.is_valid() || result.is_null() || result.is_undef() {
-		return text_response(200, ''), true
+		return VSlimResponse.text(200, ''), true
 	}
 	if object := result.as_object() {
 		if object.is_instance_of('VSlim\\Psr7\\Response')
 			|| object.is_instance_of('VSlimPsr7Response') {
 			if psr := object.to_v_object[VSlimPsr7Response]() {
-				cli_debug_log('normalize.response.vslim_psr status=${psr.get_status_code()} body_len=${psr7_stream_string(response_body_or_empty(psr)).len}')
-				return new_vslim_response_from_psr_response(psr), true
+				cli_debug_log('normalize.response.vslim_psr status=${psr.get_status_code()} body_len=${psr7_stream_string(psr.body_or_empty()).len}')
+				return psr.to_vslim_response(), true
 			}
 		}
 		if object.is_instance_of('Psr\\Http\\Message\\ResponseInterface') {
-			psr := normalize_to_psr7_response_value(result)
-			body := psr7_stream_string(response_body_or_empty(psr))
+			psr := VSlimPsr7Response.from_value(result)
+			body := psr7_stream_string(psr.body_or_empty())
 			cli_debug_log('normalize.response.psr status=${psr.get_status_code()} body_len=${body.len}')
 			return VSlimResponse{
 				status:       psr.get_status_code()
@@ -70,7 +70,7 @@ fn normalize_php_route_response_value(result vphp.PhpValue) (VSlimResponse, bool
 		}
 	}
 	if result.is_string() {
-		return text_response(200, result.to_string()), true
+		return VSlimResponse.text(200, result.to_string()), true
 	}
 	if arr := result.as_array() {
 		mut headers := map[string]string{}
@@ -99,28 +99,28 @@ fn normalize_php_route_response_value(result vphp.PhpValue) (VSlimResponse, bool
 	return VSlimResponse{}, false
 }
 
-fn normalize_php_route_response_psr_value(result vphp.PhpValue) (&VSlimPsr7Response, bool) {
+fn VSlimResponse.psr7_from_route_result(result vphp.PhpValue) (&VSlimPsr7Response, bool) {
 	if !result.is_valid() || result.is_null() || result.is_undef() {
-		return new_psr7_text_response(200, ''), true
+		return VSlimPsr7Response.text(200, ''), true
 	}
 	if object := result.as_object() {
 		if object.is_instance_of('Psr\\Http\\Message\\ResponseInterface') {
-			return normalize_to_psr7_response_value(result), true
+			return VSlimPsr7Response.from_value(result), true
 		}
 		if object.is_instance_of('VSlim\\VHttpd\\Response')
 			|| object.is_instance_of('VSlimResponse') {
 			if resp := object.to_v_object[VSlimResponse]() {
-				return new_psr7_response_from_vslim_response(VSlimResponse{
+				return (VSlimResponse{
 					status:       resp.status
 					body:         resp.body
 					content_type: resp.content_type
 					headers:      resp.headers()
-				}), true
+				}).to_psr7_response(), true
 			}
 		}
 	}
 	if result.is_string() {
-		return new_psr7_text_response(200, result.to_string()), true
+		return VSlimPsr7Response.text(200, result.to_string()), true
 	}
 	if arr := result.as_array() {
 		mut headers := map[string][]string{}
@@ -151,19 +151,20 @@ fn normalize_php_route_response_psr_value(result vphp.PhpValue) (&VSlimPsr7Respo
 			protocol_version: '1.1'
 			headers:          clone_header_values(headers)
 			header_names:     header_names
-			body_ref:         new_psr7_stream(body)
+			body_ref:         VSlimPsr7Stream.from_content(body)
 		}, true
 	}
 	return unsafe { nil }, false
 }
 
-fn normalize_php_route_response_body_value(result vphp.PhpValue) (string, bool) {
+fn VSlimResponse.body_from_route_result(result vphp.PhpValue) (string, bool) {
 	if !result.is_valid() || result.is_null() || result.is_undef() {
 		return '', true
 	}
 	if object := result.as_object() {
 		if object.is_instance_of('Psr\\Http\\Message\\ResponseInterface') {
-			return psr7_stream_string(response_body_or_empty(normalize_to_psr7_response_value(result))), true
+			psr := VSlimPsr7Response.from_value(result)
+			return psr7_stream_string(psr.body_or_empty()), true
 		}
 		if object.is_instance_of('VSlim\\VHttpd\\Response')
 			|| object.is_instance_of('VSlimResponse') {

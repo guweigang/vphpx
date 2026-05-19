@@ -13,7 +13,7 @@ pub fn (mut provider VSlimPsr14ListenerProvider) construct() &VSlimPsr14Listener
 @[php_arg_name: 'event_class=eventClass']
 @[php_method]
 pub fn (mut provider VSlimPsr14ListenerProvider) listen(event_class string, listener vphp.PhpCallable) &VSlimPsr14ListenerProvider {
-	ensure_psr14_listener_provider(mut provider)
+	provider.ensure()
 	key := normalize_psr14_event_key(event_class)
 	if key == '' {
 		vphp.PhpException.raise_class('InvalidArgumentException', 'event class must not be empty',
@@ -54,7 +54,7 @@ pub fn (provider &VSlimPsr14ListenerProvider) get_listeners_for_event(event vphp
 
 @[php_method]
 pub fn (mut dispatcher VSlimPsr14EventDispatcher) construct() &VSlimPsr14EventDispatcher {
-	ensure_psr14_dispatcher(mut dispatcher)
+	dispatcher.ensure()
 	return &dispatcher
 }
 
@@ -68,7 +68,7 @@ pub fn (mut dispatcher VSlimPsr14EventDispatcher) set_provider(provider &VSlimPs
 @[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
 @[php_method]
 pub fn (mut dispatcher VSlimPsr14EventDispatcher) provider() &VSlimPsr14ListenerProvider {
-	ensure_psr14_dispatcher(mut dispatcher)
+	dispatcher.ensure()
 	return dispatcher.provider_ref
 }
 
@@ -105,13 +105,13 @@ pub fn (mut dispatcher VSlimPsr14EventDispatcher) dispatch(event vphp.PhpObject)
 	return event.to_request_owned()
 }
 
-fn ensure_psr14_listener_provider(mut provider VSlimPsr14ListenerProvider) {
+fn (mut provider VSlimPsr14ListenerProvider) ensure() {
 	if provider.listeners.len == 0 {
 		provider.listeners = map[string][]vphp.PhpCallable{}
 	}
 }
 
-fn ensure_psr14_dispatcher(mut dispatcher VSlimPsr14EventDispatcher) {
+fn (mut dispatcher VSlimPsr14EventDispatcher) ensure() {
 	if dispatcher.provider_ref != unsafe { nil } {
 		return
 	}

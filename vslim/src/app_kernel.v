@@ -13,19 +13,19 @@ struct AppKernelDispatchResult {
 	effective_request_ref &VSlimRequest = unsafe { nil }
 }
 
-fn app_kernel_prepare(app &VSlimApp) {
+fn (app &VSlimApp) prepare_kernel() {
 	unsafe {
 		mut writable := &VSlimApp(app)
-		ensure_app_booted(mut writable)
+		writable.ensure_booted()
 	}
 }
 
-fn new_app_kernel_trace(app &VSlimApp, req &VSlimRequest, enter_stage string) AppKernelTraceState {
-	enabled := vslim_trace_mem_should_log(app)
+fn (app &VSlimApp) new_kernel_trace(req &VSlimRequest, enter_stage string) AppKernelTraceState {
+	enabled := app.trace_mem_should_log()
 	mut base_bytes := i64(0)
 	if enabled {
 		base_bytes = vslim_mem_usage_bytes()
-		vslim_trace_mem_log(app, req, enter_stage, base_bytes)
+		app.trace_mem_log(req, enter_stage, base_bytes)
 	}
 	return AppKernelTraceState{
 		enabled:    enabled
@@ -33,47 +33,47 @@ fn new_app_kernel_trace(app &VSlimApp, req &VSlimRequest, enter_stage string) Ap
 	}
 }
 
-fn app_kernel_trace_log(trace AppKernelTraceState, app &VSlimApp, req &VSlimRequest, stage string) {
+fn (trace AppKernelTraceState) log(app &VSlimApp, req &VSlimRequest, stage string) {
 	if trace.enabled {
-		vslim_trace_mem_log(app, req, stage, trace.base_bytes)
+		app.trace_mem_log(req, stage, trace.base_bytes)
 	}
 }
 
-fn app_kernel_dispatch_request_with_trace_labels(app &VSlimApp, req &VSlimRequest, enter_stage string, after_core_stage string, before_return_stage string) AppKernelDispatchResult {
-	trace := new_app_kernel_trace(app, req, enter_stage)
-	mut res, params, effective_req := dispatch_app_request_with_params(app, req, trace.enabled,
+fn (app &VSlimApp) dispatch_request_with_trace_labels(req &VSlimRequest, enter_stage string, after_core_stage string, before_return_stage string) AppKernelDispatchResult {
+	trace := app.new_kernel_trace(req, enter_stage)
+	mut res, params, effective_req := app.dispatch_request_with_params(req, trace.enabled,
 		trace.base_bytes)
 	cli_debug_log('kernel.after_dispatch status=${res.status} body_len=${res.body.len}')
-	app_kernel_trace_log(trace, app, req, after_core_stage)
-	propagate_request_trace_headers(effective_req, mut res)
+	trace.log(app, req, after_core_stage)
+	res.propagate_request_trace_headers(effective_req)
 	cli_debug_log('kernel.after_propagate status=${res.status} body_len=${res.body.len}')
-	if resolve_effective_method(req) == 'HEAD' {
+	if req.effective_method() == 'HEAD' {
 		res.body = ''
 	}
 	cli_debug_log('kernel.before_snapshot status=${res.status} body_len=${res.body.len}')
-	app_kernel_trace_log(trace, app, req, before_return_stage)
+	trace.log(app, req, before_return_stage)
 	return AppKernelDispatchResult{
-		response_ref:          new_vslim_response_snapshot_ref(&res)
+		response_ref:          res.boxed_snapshot()
 		route_params:          snapshot_string_map(params)
-		effective_request_ref: new_vslim_request_snapshot(effective_req)
+		effective_request_ref: effective_req.boxed_snapshot()
 	}
 }
 
-fn app_kernel_dispatch_request(app &VSlimApp, req &VSlimRequest) AppKernelDispatchResult {
-	return app_kernel_dispatch_request_with_trace_labels(app, req, 'dispatch.enter',
+fn (app &VSlimApp) dispatch_kernel_request(req &VSlimRequest) AppKernelDispatchResult {
+	return app.dispatch_request_with_trace_labels(req, 'dispatch.enter',
 		'dispatch.after_core', 'dispatch.before_return')
 }
 
-fn app_kernel_dispatch_envelope_map(app &VSlimApp, req &VSlimRequest) map[string]string {
-	result := app_kernel_dispatch_request_with_trace_labels(app, req, 'dispatch_map.enter',
+fn (app &VSlimApp) dispatch_kernel_envelope_map(req &VSlimRequest) map[string]string {
+	result := app.dispatch_request_with_trace_labels(req, 'dispatch_map.enter',
 		'dispatch_map.after_core', 'dispatch_map.before_return')
 	if result.response_ref == unsafe { nil } {
-		return app_kernel_response_map(VSlimResponse{})
+		return VSlimResponse{}.as_dispatch_map()
 	}
-	return app_kernel_response_map(*result.response_ref)
+	return result.response_ref.as_dispatch_map()
 }
 
-fn app_kernel_response_map(res VSlimResponse) map[string]string {
+fn (res &VSlimResponse) as_dispatch_map() map[string]string {
 	mut out := {
 		'status':       '${res.status}'
 		'body':         res.body
@@ -88,14 +88,14 @@ fn app_kernel_response_map(res VSlimResponse) map[string]string {
 	return out
 }
 
-fn app_kernel_sync_dispatch_request(mut target VSlimRequest, result AppKernelDispatchResult) {
+fn (result AppKernelDispatchResult) sync_request(mut target VSlimRequest) {
 	if result.effective_request_ref != unsafe { nil } {
-		sync_vslim_request_from_snapshot(mut target, *result.effective_request_ref)
+		target.sync_from_snapshot(*result.effective_request_ref)
 	}
 	target.params = snapshot_string_map(result.route_params)
 }
 
-fn propagate_request_trace_headers(req &VSlimRequest, mut res VSlimResponse) {
+fn (mut res VSlimResponse) propagate_request_trace_headers(req &VSlimRequest) {
 	rid := req.request_id()
 	if rid != '' && !res.has_header('x-request-id') {
 		res.set_header('x-request-id', rid)
@@ -111,11 +111,11 @@ fn propagate_request_trace_headers(req &VSlimRequest, mut res VSlimResponse) {
 	}
 }
 
-fn request_snapshot_from_payload(payload vphp.PhpValue, route_params map[string]string) &VSlimRequest {
-	return new_vslim_request_from_psr_server_request(payload, route_params)
+fn VSlimRequest.from_payload(payload vphp.PhpValue, route_params map[string]string) &VSlimRequest {
+	return VSlimRequest.from_psr_server_request(payload, route_params)
 }
 
-fn sync_vslim_request_from_snapshot(mut target VSlimRequest, snapshot VSlimRequest) {
+fn (mut target VSlimRequest) sync_from_snapshot(snapshot VSlimRequest) {
 	target.method = snapshot.method.clone()
 	target.raw_path = if snapshot.raw_path.trim_space() == '' {
 		if snapshot.path == '/' && snapshot.query_string == '' {

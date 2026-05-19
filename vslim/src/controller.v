@@ -2,7 +2,7 @@ module main
 
 import vphp
 
-fn effective_controller_app(c &VSlimController) &VSlimApp {
+fn (c &VSlimController) effective_app() &VSlimApp {
 	runtime := current_runtime_dispatch_app()
 	if runtime != unsafe { nil } {
 		return runtime
@@ -34,7 +34,7 @@ pub fn (mut c VSlimController) set_view(view &VSlimView) &VSlimController {
 @[php_method]
 @[php_borrowed_return]
 pub fn (c &VSlimController) app() &VSlimApp {
-	app := effective_controller_app(c)
+	app := c.effective_app()
 	if app == unsafe { nil } {
 		vphp.PhpException.raise_class('RuntimeException', 'controller is not bound to an app', 0)
 		return unsafe { nil }
@@ -47,7 +47,7 @@ pub fn (mut c VSlimController) view() &VSlimView {
 	if c.view_ref != unsafe { nil } {
 		return c.view_ref
 	}
-	app := effective_controller_app(c)
+	app := c.effective_app()
 	if app != unsafe { nil } {
 		c.view_ref = app.make_view()
 		return c.view_ref
@@ -68,7 +68,7 @@ pub fn (mut c VSlimController) render(template string, data vphp.PhpValue) &VSli
 	body := view.render(template, data)
 	mut res := VSlimResponse{}
 	res.construct(200, body, 'text/html; charset=utf-8')
-	return new_psr7_response_from_vslim_response(res)
+	return res.to_psr7_response()
 }
 
 @[php_method: 'renderWithLayout']
@@ -78,12 +78,12 @@ pub fn (mut c VSlimController) render_with_layout(template string, layout string
 	body := view.render_with_layout(template, layout, data)
 	mut res := VSlimResponse{}
 	res.construct(200, body, 'text/html; charset=utf-8')
-	return new_psr7_response_from_vslim_response(res)
+	return res.to_psr7_response()
 }
 
 @[php_method: 'urlFor']
 pub fn (c &VSlimController) url_for(name string, params vphp.PhpValue) string {
-	app := effective_controller_app(c)
+	app := c.effective_app()
 	if app == unsafe { nil } {
 		return ''
 	}
@@ -92,7 +92,7 @@ pub fn (c &VSlimController) url_for(name string, params vphp.PhpValue) string {
 
 @[php_method: 'urlForQuery']
 pub fn (c &VSlimController) url_for_query(name string, params vphp.PhpValue, query vphp.PhpValue) string {
-	app := effective_controller_app(c)
+	app := c.effective_app()
 	if app == unsafe { nil } {
 		return ''
 	}
@@ -104,7 +104,7 @@ pub fn (c &VSlimController) url_for_query(name string, params vphp.PhpValue, que
 pub fn (c &VSlimController) text(body string, status int) &VSlimPsr7Response {
 	mut res := VSlimResponse{}
 	res.construct(status, body, 'text/plain; charset=utf-8')
-	return new_psr7_response_from_vslim_response(res)
+	return res.to_psr7_response()
 }
 
 @[php_method]
@@ -112,7 +112,7 @@ pub fn (c &VSlimController) text(body string, status int) &VSlimPsr7Response {
 pub fn (c &VSlimController) json(body string, status int) &VSlimPsr7Response {
 	mut res := VSlimResponse{}
 	res.construct(status, body, 'application/json; charset=utf-8')
-	return new_psr7_response_from_vslim_response(res)
+	return res.to_psr7_response()
 }
 
 @[php_method]
@@ -127,7 +127,7 @@ pub fn (c &VSlimController) redirect(location string, status int) &VSlimPsr7Resp
 		}
 	}
 	res.set_header('location', location)
-	return new_psr7_response_from_vslim_response(res)
+	return res.to_psr7_response()
 }
 
 @[php_method: 'redirectTo']

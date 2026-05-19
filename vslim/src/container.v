@@ -27,7 +27,7 @@ mut:
 	app_ref   &VSlimApp = unsafe { nil }                   @[php_ignore]
 }
 
-fn new_vslim_container() &VSlimContainer {
+fn VSlimContainer.new() &VSlimContainer {
 	return &VSlimContainer{
 		entries:   map[string]vphp.PhpValue{}
 		factories: map[string]vphp.PhpCallable{}
@@ -164,12 +164,12 @@ pub fn (mut c VSlimContainer) get_value_or_throw(id string) vphp.PhpValue {
 }
 
 pub fn (c &VSlimContainer) has_native_service(id string) bool {
-	app := container_effective_app(c)
+	app := c.effective_app()
 	return app != unsafe { nil }
 		&& id.trim_space() in ['config', 'clock', 'Psr\\Clock\\ClockInterface', 'logger', 'Psr\\Log\\LoggerInterface', 'listener_provider', 'events.provider', 'Psr\\EventDispatcher\\ListenerProviderInterface', 'events', 'dispatcher', 'Psr\\EventDispatcher\\EventDispatcherInterface', 'cache', 'Psr\\SimpleCache\\CacheInterface', 'cache.pool', 'Psr\\Cache\\CacheItemPoolInterface', 'http', 'http_client', 'Psr\\Http\\Client\\ClientInterface']
 }
 
-fn container_effective_app(c &VSlimContainer) &VSlimApp {
+fn (c &VSlimContainer) effective_app() &VSlimApp {
 	runtime := current_runtime_dispatch_app()
 	if runtime != unsafe { nil } {
 		return runtime
@@ -178,7 +178,7 @@ fn container_effective_app(c &VSlimContainer) &VSlimApp {
 }
 
 pub fn (mut c VSlimContainer) get_native_service(id string) ?vphp.PhpValue {
-	mut app := container_effective_app(c)
+	mut app := c.effective_app()
 	if app == unsafe { nil } {
 		return none
 	}

@@ -16,7 +16,7 @@ const vslim_log_level_consts = VSlimLogLevelConsts{
 
 @[php_method]
 pub fn (mut logger VSlimLogger) construct() &VSlimLogger {
-	ensure_vslim_logger(mut logger)
+	logger.ensure()
 	return logger
 }
 
@@ -94,10 +94,10 @@ pub fn VSlimLogLevel.all() map[string]string {
 
 @[php_method: 'setLevel']
 pub fn (mut logger VSlimLogger) set_level(level string) &VSlimLogger {
-	ensure_vslim_logger(mut logger)
+	logger.ensure()
 	parsed := vslim_log_level_from_name(level) or { log.Level.info }
 	logger.level_name = vslim_log_level_name(parsed)
-	reconfigure_vslim_logger(mut logger)
+	logger.reconfigure()
 	return logger
 }
 
@@ -108,9 +108,9 @@ pub fn (logger &VSlimLogger) level() string {
 
 @[php_method: 'setChannel']
 pub fn (mut logger VSlimLogger) set_channel(channel string) &VSlimLogger {
-	ensure_vslim_logger(mut logger)
+	logger.ensure()
 	logger.channel = normalize_logger_channel(channel)
-	reconfigure_vslim_logger(mut logger)
+	logger.reconfigure()
 	return logger
 }
 
@@ -121,7 +121,7 @@ pub fn (logger &VSlimLogger) channel() string {
 
 @[php_method: 'setContext']
 pub fn (mut logger VSlimLogger) set_context(context vphp.PhpArray) &VSlimLogger {
-	ensure_vslim_logger(mut logger)
+	logger.ensure()
 	logger.context = normalize_log_context(context)
 	return logger
 }
@@ -133,7 +133,7 @@ pub fn (logger &VSlimLogger) context() map[string]string {
 
 @[php_method: 'withContext']
 pub fn (mut logger VSlimLogger) with_context(key string, value string) &VSlimLogger {
-	ensure_vslim_logger(mut logger)
+	logger.ensure()
 	if key.trim_space() != '' {
 		logger.context[key] = value
 	}
@@ -142,35 +142,35 @@ pub fn (mut logger VSlimLogger) with_context(key string, value string) &VSlimLog
 
 @[php_method: 'clearContext']
 pub fn (mut logger VSlimLogger) clear_context() &VSlimLogger {
-	ensure_vslim_logger(mut logger)
+	logger.ensure()
 	logger.context = map[string]string{}
 	return logger
 }
 
 @[php_method: 'setLocalTime']
 pub fn (mut logger VSlimLogger) set_local_time(enabled bool) &VSlimLogger {
-	ensure_vslim_logger(mut logger)
+	logger.ensure()
 	logger.local_time_enabled = enabled
-	reconfigure_vslim_logger(mut logger)
+	logger.reconfigure()
 	return logger
 }
 
 @[php_method: 'setShortTag']
 pub fn (mut logger VSlimLogger) set_short_tag(enabled bool) &VSlimLogger {
-	ensure_vslim_logger(mut logger)
+	logger.ensure()
 	logger.short_tag_enabled = enabled
-	reconfigure_vslim_logger(mut logger)
+	logger.reconfigure()
 	return logger
 }
 
 @[php_method: 'setOutputFile']
 pub fn (mut logger VSlimLogger) set_output_file(path string) &VSlimLogger {
-	ensure_vslim_logger(mut logger)
+	logger.ensure()
 	if path.trim_space() == '' {
 		return logger
 	}
 	logger.output_file = path
-	reconfigure_vslim_logger(mut logger)
+	logger.reconfigure()
 	return logger
 }
 
@@ -181,17 +181,17 @@ pub fn (logger &VSlimLogger) output_file() string {
 
 @[php_method: 'useStdout']
 pub fn (mut logger VSlimLogger) use_stdout() &VSlimLogger {
-	ensure_vslim_logger(mut logger)
+	logger.ensure()
 	logger.console_target = 'stdout'
-	reconfigure_vslim_logger(mut logger)
+	logger.reconfigure()
 	return logger
 }
 
 @[php_method: 'useStderr']
 pub fn (mut logger VSlimLogger) use_stderr() &VSlimLogger {
-	ensure_vslim_logger(mut logger)
+	logger.ensure()
 	logger.console_target = 'stderr'
-	reconfigure_vslim_logger(mut logger)
+	logger.reconfigure()
 	return logger
 }
 
@@ -208,15 +208,15 @@ pub fn (logger &VSlimLogger) output_target() string {
 
 @[php_method]
 pub fn (mut logger VSlimLogger) log(level string, message string) &VSlimLogger {
-	ensure_vslim_logger(mut logger)
-	vslim_logger_write(mut logger, level, message, map[string]string{})
+	logger.ensure()
+	logger.write_log(level, message, map[string]string{})
 	return logger
 }
 
 @[php_method: 'logContext']
 pub fn (mut logger VSlimLogger) log_context(level string, message string, context vphp.PhpArray) &VSlimLogger {
-	ensure_vslim_logger(mut logger)
-	vslim_logger_write(mut logger, level, message, normalize_log_context(context))
+	logger.ensure()
+	logger.write_log(level, message, normalize_log_context(context))
 	return logger
 }
 
@@ -312,7 +312,7 @@ pub fn (mut logger VSlimLogger) emergency_context(message string, context vphp.P
 
 @[php_method]
 pub fn (mut logger VSlimPsrLogger) construct() &VSlimPsrLogger {
-	ensure_vslim_psr_logger(mut logger)
+	logger.ensure()
 	return logger
 }
 
@@ -324,7 +324,7 @@ pub fn (mut logger VSlimPsrLogger) set_logger(inner &VSlimLogger) &VSlimPsrLogge
 
 @[php_method]
 pub fn (mut logger VSlimPsrLogger) logger() &VSlimLogger {
-	ensure_vslim_psr_logger(mut logger)
+	logger.ensure()
 	return logger.logger_ref
 }
 
@@ -392,60 +392,60 @@ struct VSlimPsrLoggerContextParams {
 @[php_method]
 pub fn (mut logger VSlimPsrLogger) log(level vphp.PhpValue, message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := logger.logger()
-	level_name := php_value_to_log_message(level)
+	level_name := value_subject(level).log_message()
 	if !is_valid_psr3_level(level_name) {
 		vphp.PhpException.raise_class('InvalidArgumentException', 'invalid PSR-3 log level: ' + level_name, 0)
 		return
 	}
-	inner.log_context(level_name, php_value_to_log_message(message), params.context)
+	inner.log_context(level_name, value_subject(message).log_message(), params.context)
 }
 
 @[php_method]
 pub fn (mut logger VSlimPsrLogger) emergency(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := logger.logger()
-	inner.log_context('emergency', php_value_to_log_message(message), params.context)
+	inner.log_context('emergency', value_subject(message).log_message(), params.context)
 }
 
 @[php_method]
 pub fn (mut logger VSlimPsrLogger) alert(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := logger.logger()
-	inner.log_context('alert', php_value_to_log_message(message), params.context)
+	inner.log_context('alert', value_subject(message).log_message(), params.context)
 }
 
 @[php_method]
 pub fn (mut logger VSlimPsrLogger) critical(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := logger.logger()
-	inner.log_context('critical', php_value_to_log_message(message), params.context)
+	inner.log_context('critical', value_subject(message).log_message(), params.context)
 }
 
 @[php_method]
 pub fn (mut logger VSlimPsrLogger) error(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := logger.logger()
-	inner.log_context('error', php_value_to_log_message(message), params.context)
+	inner.log_context('error', value_subject(message).log_message(), params.context)
 }
 
 @[php_method]
 pub fn (mut logger VSlimPsrLogger) warning(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := logger.logger()
-	inner.log_context('warning', php_value_to_log_message(message), params.context)
+	inner.log_context('warning', value_subject(message).log_message(), params.context)
 }
 
 @[php_method]
 pub fn (mut logger VSlimPsrLogger) notice(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := logger.logger()
-	inner.log_context('notice', php_value_to_log_message(message), params.context)
+	inner.log_context('notice', value_subject(message).log_message(), params.context)
 }
 
 @[php_method]
 pub fn (mut logger VSlimPsrLogger) info(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := logger.logger()
-	inner.log_context('info', php_value_to_log_message(message), params.context)
+	inner.log_context('info', value_subject(message).log_message(), params.context)
 }
 
 @[php_method]
 pub fn (mut logger VSlimPsrLogger) debug(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := logger.logger()
-	inner.log_context('debug', php_value_to_log_message(message), params.context)
+	inner.log_context('debug', value_subject(message).log_message(), params.context)
 }
 
 @[php_method]
@@ -461,7 +461,7 @@ pub fn (logger &VSlimLogger) str() string {
 	return 'VSlim\\Log\\Logger(channel=${logger.channel()}, level=${logger.level()})'
 }
 
-fn ensure_vslim_psr_logger(mut logger VSlimPsrLogger) {
+fn (mut logger VSlimPsrLogger) ensure() {
 	if logger.logger_ref != unsafe { nil } {
 		return
 	}
@@ -471,7 +471,7 @@ fn ensure_vslim_psr_logger(mut logger VSlimPsrLogger) {
 	logger.logger_ref = inner
 }
 
-fn ensure_vslim_logger(mut logger VSlimLogger) {
+fn (mut logger VSlimLogger) ensure() {
 	if logger.engine_ref != unsafe { nil } {
 		return
 	}
@@ -487,11 +487,11 @@ fn ensure_vslim_logger(mut logger VSlimLogger) {
 	if logger.console_target == '' {
 		logger.console_target = 'stderr'
 	}
-	reconfigure_vslim_logger(mut logger)
+	logger.reconfigure()
 }
 
-fn reconfigure_vslim_logger(mut logger VSlimLogger) {
-	close_vslim_logger_engine(mut logger)
+fn (mut logger VSlimLogger) reconfigure() {
+	logger.close_engine()
 	mut engine := &log.Log{}
 	engine.set_level(vslim_log_level_from_name(logger.level_name) or { log.Level.info })
 	engine.set_local_time(logger.local_time_enabled)
@@ -526,7 +526,7 @@ fn reconfigure_vslim_logger(mut logger VSlimLogger) {
 	}
 }
 
-fn close_vslim_logger_engine(mut logger VSlimLogger) {
+fn (mut logger VSlimLogger) close_engine() {
 	if logger.engine_ref == unsafe { nil } {
 		return
 	}
@@ -577,7 +577,8 @@ fn normalize_logger_channel(channel string) string {
 	return if trimmed == '' { 'vslim' } else { trimmed }
 }
 
-fn php_value_to_log_message(value vphp.PhpValue) string {
+fn (subject PhpValueSubject) log_message() string {
+	value := subject.value
 	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return ''
 	}
@@ -593,7 +594,7 @@ fn normalize_log_context(context vphp.PhpArray) map[string]string {
 	})
 }
 
-fn vslim_logger_write(mut logger VSlimLogger, level string, message string, context map[string]string) {
+fn (mut logger VSlimLogger) write_log(level string, message string, context map[string]string) {
 	parsed := vslim_log_level_from_name(level) or { log.Level.info }
 	payload := format_vslim_log_message(logger.channel(), message, logger.context, context)
 	unsafe {

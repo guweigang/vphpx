@@ -4,7 +4,7 @@ import vphp
 
 #include "php_bridge.h"
 
-fn new_cli_core_app() &VSlimApp {
+fn VSlimCliApp.new_core_app() &VSlimApp {
 	return &VSlimApp{
 		not_found_handler: vphp.PhpCallable.invalid()
 		error_handler:     vphp.PhpCallable.invalid()
@@ -26,15 +26,15 @@ fn cli_debug_reset_overrides() {
 	}
 }
 
-fn ensure_cli_core_app(mut cli VSlimCliApp) &VSlimApp {
+fn (mut cli VSlimCliApp) ensure_core_app() &VSlimApp {
 	if cli.core_app_ref == unsafe { nil } {
-		cli.core_app_ref = new_cli_core_app()
+		cli.core_app_ref = VSlimCliApp.new_core_app()
 		cli_debug_log('ensure_cli_core_app new cli=${usize(cli)} core=${usize(cli.core_app_ref)}')
 	}
 	return cli.core_app_ref
 }
 
-fn ensure_cli_registry(mut cli VSlimCliApp) {
+fn (mut cli VSlimCliApp) ensure_registry() {
 	if cli.command_handlers.len == 0 {
 		cli.command_handlers = map[string]vphp.PhpValue{}
 	}
@@ -52,7 +52,7 @@ fn ensure_cli_registry(mut cli VSlimCliApp) {
 	}
 }
 
-fn cli_trace_label(cli &VSlimCliApp) string {
+fn (cli &VSlimCliApp) trace_label() string {
 	if unsafe { isnil(cli) } {
 		return 'trace=nil'
 	}
@@ -63,25 +63,25 @@ fn cli_trace_label(cli &VSlimCliApp) string {
 	return trace
 }
 
-fn cli_trace_message(cli &VSlimCliApp, message string) string {
-	return '[${cli_trace_label(cli)}] ${message}'
+fn (cli &VSlimCliApp) trace_message(message string) string {
+	return '[${cli.trace_label()}] ${message}'
 }
 
-fn wrap_runtime_cli_value(cli &VSlimCliApp) vphp.PhpValue {
+fn (cli &VSlimCliApp) wrap_runtime_value() vphp.PhpValue {
 	unsafe {
 		if isnil(cli) {
 			return vphp.PhpValue.null()
 		}
-		cli_debug_log(cli_trace_message(cli, 'wrap_runtime_cli_value enter cli=${usize(cli)}'))
+		cli_debug_log(cli.trace_message('wrap_runtime_cli_value enter cli=${usize(cli)}'))
 		payload := cli.bind_php_object_value()
-		cli_debug_log(cli_trace_message(cli,
+		cli_debug_log(cli.trace_message(
 			'wrap_runtime_cli_value exit cli=${usize(cli)} valid=${payload.is_valid()} type=${payload.type_name()}'))
 		return payload
 	}
 }
 
-fn cli_self_value(cli &VSlimCliApp) vphp.PhpValue {
-	return wrap_runtime_cli_value(cli)
+fn (cli &VSlimCliApp) self_value() vphp.PhpValue {
+	return cli.wrap_runtime_value()
 }
 
 fn short_class_name(class_name string) string {
@@ -156,7 +156,8 @@ fn cli_handler_string_is_function_callable(name string) bool {
 	return vphp.PhpFunction.named('function_exists').result_bool(callable_arg)
 }
 
-fn normalize_cli_command_handler_input(raw vphp.PhpValue) !vphp.PhpValue {
+fn (subject PhpValueSubject) cli_command_handler_input() !vphp.PhpValue {
+	raw := subject.value
 	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
 		return error('command handler must not be null')
 	}
@@ -199,7 +200,7 @@ fn cli_args_to_array(raw vphp.PhpIterable) ![]string {
 	return out
 }
 
-fn resolve_cli_command_runtime(mut cli VSlimCliApp, handler vphp.PhpValue) !vphp.PhpValue {
+fn (mut cli VSlimCliApp) resolve_command_runtime(handler vphp.PhpValue) !vphp.PhpValue {
 	if handler.is_valid() && handler.is_string() {
 		class_name := handler.to_string().trim_space()
 		if class_name == '' {
@@ -219,7 +220,7 @@ fn resolve_cli_command_runtime(mut cli VSlimCliApp, handler vphp.PhpValue) !vphp
 		if !exists {
 			return error('command class "${class_name}" does not exist')
 		}
-		mut core := ensure_cli_core_app(mut cli)
+		mut core := cli.ensure_core_app()
 		mut container := core.container()
 		if container.has(class_name) {
 			return container.get(class_name).owned()
@@ -232,7 +233,7 @@ fn resolve_cli_command_runtime(mut cli VSlimCliApp, handler vphp.PhpValue) !vphp
 	return handler.owned()
 }
 
-fn lookup_cli_command_handler(cli &VSlimCliApp, name string) !vphp.PhpValue {
+fn (cli &VSlimCliApp) lookup_command_handler(name string) !vphp.PhpValue {
 	command_name := name.trim_space()
 	if command_name == '' {
 		cli_debug_log('lookup_cli_command_handler empty name raw="${name}"')
@@ -251,7 +252,7 @@ fn cli_release_command_handler(mut handler vphp.PhpValue) {
 	handler.release()
 }
 
-fn cli_canonical_command_name(cli &VSlimCliApp, name string) string {
+fn (cli &VSlimCliApp) canonical_command_name(name string) string {
 	command_name := name.trim_space().clone()
 	if command_name == '' {
 		return ''
@@ -259,16 +260,16 @@ fn cli_canonical_command_name(cli &VSlimCliApp, name string) string {
 	return (cli.command_canonical[command_name] or { command_name }).clone()
 }
 
-fn cli_hidden_command(cli &VSlimCliApp, name string) bool {
-	canonical := cli_canonical_command_name(cli, name)
+fn (cli &VSlimCliApp) hidden_command(name string) bool {
+	canonical := cli.canonical_command_name(name)
 	if canonical == '' {
 		return false
 	}
 	return cli.command_hidden[canonical] or { false }
 }
 
-fn cli_command_aliases_for_listing(cli &VSlimCliApp, name string) []string {
-	canonical := cli_canonical_command_name(cli, name)
+fn (cli &VSlimCliApp) command_aliases_for_listing(name string) []string {
+	canonical := cli.canonical_command_name(name)
 	if canonical == '' {
 		return []string{}
 	}
@@ -283,7 +284,7 @@ fn cli_command_aliases_for_listing(cli &VSlimCliApp, name string) []string {
 	return out
 }
 
-fn clear_cli_command_metadata(mut cli VSlimCliApp, canonical_name string) {
+fn (mut cli VSlimCliApp) clear_command_metadata(canonical_name string) {
 	aliases := cli.command_aliases[canonical_name] or { []string{} }
 	for alias in aliases {
 		existing_canonical := cli.command_canonical[alias] or { '' }
@@ -332,15 +333,15 @@ fn cli_command_metadata_hidden(runtime vphp.PhpValue) bool {
 	return cli_runtime_bool_method(runtime, 'hidden', false)
 }
 
-fn apply_cli_command_metadata(mut cli VSlimCliApp, canonical_name string, handler vphp.PhpValue) ! {
+fn (mut cli VSlimCliApp) apply_command_metadata(canonical_name string, handler vphp.PhpValue) ! {
 	canonical := canonical_name.trim_space().clone()
-	clear_cli_command_metadata(mut cli, canonical)
+	cli.clear_command_metadata(canonical)
 	cli.command_canonical[canonical] = canonical.clone()
 	if handler.is_valid() && handler.is_object() && handler.class_name() == 'Closure' {
 		cli.command_hidden[canonical] = false
 		return
 	}
-	mut runtime := resolve_cli_command_runtime(mut cli, handler)!
+	mut runtime := cli.resolve_command_runtime(handler)!
 	defer {
 		runtime.release()
 	}
@@ -377,24 +378,24 @@ fn (mut cli VSlimCliApp) run_registered_cli_command_with_program(name string, ar
 	defer {
 		cli.current_trace = ''
 	}
-	cli_debug_log(cli_trace_message(cli,
+	cli_debug_log(cli.trace_message(
 		'run_registered_cli_command start name="${command_name}" args=${args.len}'))
-	mut handler := lookup_cli_command_handler(cli, command_name)!
+	mut handler := cli.lookup_command_handler(command_name)!
 	defer {
 		handler.release()
 	}
-	reset_cli_command_input(mut cli)
+	cli.reset_command_input()
 	cli.last_command_name = command_name.clone()
-	mut runtime := resolve_cli_command_runtime(mut cli, handler)!
+	mut runtime := cli.resolve_command_runtime(handler)!
 	defer {
 		runtime.release()
 	}
-	input := resolve_cli_command_input(mut cli, runtime, args) or {
+	input := cli.resolve_command_input(runtime, args) or {
 		return cli_command_input_error(runtime, program, command_name, err.msg())
 	}
 	args_copy := clone_cli_string_slice(input.positional_args)
-	set_cli_command_input(mut cli, command_name, input)
-	trace := cli_trace_label(cli)
+	cli.set_command_input(command_name, input)
+	trace := cli.trace_label()
 	mut args_arr := vphp.PhpArray.new()
 	for arg in args_copy {
 		args_arr.push_string(arg)
@@ -402,7 +403,7 @@ fn (mut cli VSlimCliApp) run_registered_cli_command_with_program(name string, ar
 	defer {
 		args_arr.release()
 	}
-	mut cli_value := cli_self_value(cli)
+	mut cli_value := cli.self_value()
 	defer {
 		cli_value.release()
 	}
@@ -423,7 +424,7 @@ fn (mut cli VSlimCliApp) run_registered_cli_command_with_program(name string, ar
 		}
 		code = cli_command_exit_code(result)
 	}
-	cli_debug_log(cli_trace_message(cli,
+	cli_debug_log(cli.trace_message(
 		'run_registered_cli_command exit name="${command_name}" code=${code}'))
 	return code
 }
@@ -435,10 +436,10 @@ fn (mut cli VSlimCliApp) run_registered_cli_command(name string, args []string) 
 @[php_method]
 pub fn (mut cli VSlimCliApp) construct() &VSlimCliApp {
 	cli_debug_reset_overrides()
-	ensure_cli_core_app(mut cli)
-	ensure_cli_registry(mut cli)
+	cli.ensure_core_app()
+	cli.ensure_registry()
 	cli.project_root = ''
-	reset_cli_command_input(mut cli)
+	cli.reset_command_input()
 	cli_debug_log('cli.construct cli=${usize(&cli)} core=${usize(cli.core_app_ref)}')
 	return &cli
 }
@@ -446,7 +447,7 @@ pub fn (mut cli VSlimCliApp) construct() &VSlimCliApp {
 @[php_return_type: 'VSlim\\App']
 @[php_method]
 pub fn (mut cli VSlimCliApp) app() vphp.PhpValue {
-	return app_self_value(ensure_cli_core_app(mut cli))
+	return cli.ensure_core_app().self_value()
 }
 
 @[php_method: 'projectRoot']
@@ -484,7 +485,7 @@ pub fn (cli &VSlimCliApp) debug_bridge_path(path string) vphp.PhpValue {
 
 @[php_method]
 pub fn (mut cli VSlimCliApp) command(name string, handler vphp.PhpValue) &VSlimCliApp {
-	ensure_cli_registry(mut cli)
+	cli.ensure_registry()
 	cli_debug_log('command enter cli=${usize(&cli)} raw_name="${name}" raw_len=${name.len} handler_type=${handler.kind_name()}')
 	command_name := name.trim_space().clone()
 	cli_debug_log('command normalized cli=${usize(&cli)} command_name="${command_name}" len=${command_name.len}')
@@ -494,7 +495,7 @@ pub fn (mut cli VSlimCliApp) command(name string, handler vphp.PhpValue) &VSlimC
 			0)
 		return &cli
 	}
-	mut handler_value := normalize_cli_command_handler_input(handler) or {
+	mut handler_value := value_subject(handler).cli_command_handler_input() or {
 		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 		return &cli
 	}
@@ -512,10 +513,10 @@ pub fn (mut cli VSlimCliApp) command(name string, handler vphp.PhpValue) &VSlimC
 		cli.command_order << command_name.clone()
 	}
 	cli_debug_log('command register cli=${usize(&cli)} command_name="${command_name}" order_len=${cli.command_order.len} handlers_len=${cli.command_handlers.len}')
-	clear_cli_command_metadata(mut cli, command_name)
+	cli.clear_command_metadata(command_name)
 	cli.command_handlers[command_name] = handler_value.retain()
 	cli.command_canonical[command_name] = command_name.clone()
-	apply_cli_command_metadata(mut cli, command_name, handler_value) or {
+	cli.apply_command_metadata(command_name, handler_value) or {
 		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 		return &cli
 	}
@@ -534,7 +535,7 @@ fn (mut cli VSlimCliApp) command_class(name string, class_name string) &VSlimCli
 
 @[php_method: 'commandMany']
 pub fn (mut cli VSlimCliApp) command_many(commands vphp.PhpIterable) &VSlimCliApp {
-	ensure_cli_registry(mut cli)
+	cli.ensure_registry()
 	mut normalized := commands.to_array() or {
 		vphp.PhpException.raise_class('InvalidArgumentException', 'commands must be iterable', 0)
 		return &cli

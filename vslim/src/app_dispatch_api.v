@@ -2,21 +2,21 @@ module main
 
 import vphp
 
-fn dispatch_request_facade(app &VSlimApp, req &VSlimRequest) &VSlimResponse {
-	prev_app := enter_runtime_dispatch_app(app)
+fn (app &VSlimApp) dispatch_request_facade(req &VSlimRequest) &VSlimResponse {
+	prev_app := app.enter_runtime_dispatch()
 	defer {
 		leave_runtime_dispatch_app(prev_app)
 	}
-	result := app_kernel_dispatch_request(app, req)
+	result := app.dispatch_kernel_request(req)
 	unsafe {
 		mut writable := &VSlimRequest(req)
-		app_kernel_sync_dispatch_request(mut writable, result)
+		result.sync_request(mut writable)
 	}
 	if result.response_ref == unsafe { nil } {
-		return new_vslim_response_snapshot(VSlimResponse{})
+		return (VSlimResponse{}).boxed_snapshot()
 	}
 	cli_debug_log('dispatch.facade result status=${result.response_ref.status} body_len=${result.response_ref.body.len}')
-	return new_vslim_response_snapshot_ref(result.response_ref)
+	return result.response_ref.boxed_snapshot_ref()
 }
 
 pub fn (app &VSlimApp) dispatch_raw(method string, raw_path string) &VSlimResponse {
@@ -24,7 +24,7 @@ pub fn (app &VSlimApp) dispatch_raw(method string, raw_path string) &VSlimRespon
 }
 
 pub fn (app &VSlimApp) dispatch_body_raw(method string, raw_path string, body string) &VSlimResponse {
-	req := new_vslim_request(method, raw_path, body)
+	req := VSlimRequest.new(method, raw_path, body)
 	return app.dispatch_request_raw(req)
 }
 
@@ -33,18 +33,18 @@ pub fn (app &VSlimApp) dispatch_request_raw(req &VSlimRequest) &VSlimResponse {
 	defer {
 		scope.close()
 	}
-	app_kernel_prepare(app)
-	return dispatch_request_facade(app, req)
+	app.prepare_kernel()
+	return app.dispatch_request_facade(req)
 }
 
-fn dispatch_php_response_value(app &VSlimApp, req &VSlimRequest) vphp.PhpValue {
+fn (app &VSlimApp) dispatch_response_value(req &VSlimRequest) vphp.PhpValue {
 	mut scope := vphp.PhpScope.request()
-	app_kernel_prepare(app)
-	response := dispatch_request_facade(app, req)
+	app.prepare_kernel()
+	response := app.dispatch_request_facade(req)
 	cli_debug_log('dispatch.box before_leave status=${response.status} body_len=${response.body.len}')
 	scope.close()
 	cli_debug_log('dispatch.box after_leave status=${response.status} body_len=${response.body.len}')
-	return build_php_response_value_ref(response)
+	return response.build_response_value_ref()
 }
 
 @[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface']
@@ -55,8 +55,8 @@ pub fn (app &VSlimApp) handle(request vphp.PhpObject) &VSlimPsr7Response {
 	defer {
 		scope.close()
 	}
-	app_kernel_prepare(app)
-	return dispatch_app_psr15_request_object(app, request)
+	app.prepare_kernel()
+	return app.dispatch_psr15_request_object(request)
 }
 
 pub fn (app &VSlimApp) handle_object(request vphp.PhpObject) &VSlimPsr7Response {
@@ -68,38 +68,38 @@ pub fn (app &VSlimApp) dispatch_envelope_raw(envelope vphp.PhpValue) &VSlimRespo
 	defer {
 		scope.close()
 	}
-	app_kernel_prepare(app)
-	req := new_vslim_request_from_value(envelope)
-	return dispatch_request_facade(app, req)
+	app.prepare_kernel()
+	req := VSlimRequest.from_value(envelope)
+	return app.dispatch_request_facade(req)
 }
 
 @[php_return_type: 'VSlim\\VHttpd\\Response']
 @[php_arg_name: 'raw_path=rawPath']
 @[php_method]
 pub fn (app &VSlimApp) dispatch(method string, raw_path string) vphp.PhpValue {
-	req := new_vslim_request(method, raw_path, '')
-	return dispatch_php_response_value(app, req)
+	req := VSlimRequest.new(method, raw_path, '')
+	return app.dispatch_response_value(req)
 }
 
 @[php_return_type: 'VSlim\\VHttpd\\Response']
 @[php_arg_name: 'raw_path=rawPath']
 @[php_method: 'dispatchBody']
 pub fn (app &VSlimApp) dispatch_body(method string, raw_path string, body string) vphp.PhpValue {
-	req := new_vslim_request(method, raw_path, body)
-	return dispatch_php_response_value(app, req)
+	req := VSlimRequest.new(method, raw_path, body)
+	return app.dispatch_response_value(req)
 }
 
 @[php_return_type: 'VSlim\\VHttpd\\Response']
 @[php_method: 'dispatchRequest']
 pub fn (app &VSlimApp) dispatch_request(req &VSlimRequest) vphp.PhpValue {
-	return dispatch_php_response_value(app, req)
+	return app.dispatch_response_value(req)
 }
 
 @[php_return_type: 'VSlim\\VHttpd\\Response']
 @[php_method: 'dispatchEnvelope']
 pub fn (app &VSlimApp) dispatch_envelope(envelope vphp.PhpValue) vphp.PhpValue {
-	req := new_vslim_request_from_value(envelope)
-	return dispatch_php_response_value(app, req)
+	req := VSlimRequest.from_value(envelope)
+	return app.dispatch_response_value(req)
 }
 
 @[php_method: 'dispatchEnvelopeWorker']
@@ -108,9 +108,9 @@ pub fn (app &VSlimApp) dispatch_envelope_worker(envelope vphp.PhpValue) vphp.Php
 	defer {
 		scope.close()
 	}
-	app_kernel_prepare(app)
-	req := new_vslim_request_from_value(envelope)
-	return dispatch_app_request_worker_value(app, req)
+	app.prepare_kernel()
+	req := VSlimRequest.from_value(envelope)
+	return app.dispatch_request_worker_value(req)
 }
 
 @[php_method: 'dispatchEnvelopeMap']
@@ -119,11 +119,11 @@ pub fn (app &VSlimApp) dispatch_envelope_map(envelope vphp.PhpValue) map[string]
 	defer {
 		scope.close()
 	}
-	app_kernel_prepare(app)
-	req := new_vslim_request_from_value(envelope)
-	prev_app := enter_runtime_dispatch_app(app)
+	app.prepare_kernel()
+	req := VSlimRequest.from_value(envelope)
+	prev_app := app.enter_runtime_dispatch()
 	defer {
 		leave_runtime_dispatch_app(prev_app)
 	}
-	return app_kernel_dispatch_envelope_map(app, req)
+	return app.dispatch_kernel_envelope_map(req)
 }

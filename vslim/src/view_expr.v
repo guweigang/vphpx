@@ -17,14 +17,14 @@ fn (view &VSlimView) resolve_template_path(template string) string {
 	return os.join_path(view.base_path, clean)
 }
 
-fn new_template_expr_scalar(value string) TemplateExprValue {
+fn TemplateExprValue.scalar(value string) TemplateExprValue {
 	return TemplateExprValue{
 		kind:   .scalar
 		scalar: value
 	}
 }
 
-fn new_template_expr_scalar_typed(value string, explicit_type string) TemplateExprValue {
+fn TemplateExprValue.scalar_typed(value string, explicit_type string) TemplateExprValue {
 	return TemplateExprValue{
 		kind:          .scalar
 		scalar:        value
@@ -32,28 +32,28 @@ fn new_template_expr_scalar_typed(value string, explicit_type string) TemplateEx
 	}
 }
 
-fn new_template_expr_list(items []string) TemplateExprValue {
+fn TemplateExprValue.list(items []string) TemplateExprValue {
 	return TemplateExprValue{
 		kind: .list
 		list: items.clone()
 	}
 }
 
-fn new_template_expr_map(path string) TemplateExprValue {
+fn TemplateExprValue.map(path string) TemplateExprValue {
 	return TemplateExprValue{
 		kind:     .map
 		map_path: path.trim_space()
 	}
 }
 
-fn new_template_expr_object(value vphp.PhpValue) TemplateExprValue {
+fn TemplateExprValue.object(value vphp.PhpValue) TemplateExprValue {
 	return TemplateExprValue{
 		kind:   .object
 		object: value.owned()
 	}
 }
 
-fn template_expr_value_string(value TemplateExprValue) string {
+fn (value TemplateExprValue) string() string {
 	if value.kind == .object {
 		return value.object.to_string()
 	}
@@ -66,7 +66,7 @@ fn template_expr_value_string(value TemplateExprValue) string {
 	return value.scalar
 }
 
-fn template_expr_value_as_list(value TemplateExprValue) []string {
+fn (value TemplateExprValue) as_list() []string {
 	if value.kind == .list {
 		return value.list.clone()
 	}
@@ -83,7 +83,7 @@ fn template_expr_value_as_list(value TemplateExprValue) []string {
 	return parse_for_items(value.scalar)
 }
 
-fn template_expr_value_to_value(value TemplateExprValue) vphp.PhpValue {
+fn (value TemplateExprValue) to_value() vphp.PhpValue {
 	if value.kind == .map {
 		return new_template_map_value(value.map_path, map[string]string{}, map[string][]string{})
 	}
@@ -120,20 +120,20 @@ fn template_expr_value_to_value(value TemplateExprValue) vphp.PhpValue {
 	}
 }
 
-fn template_expr_value_to_value_with_context(value TemplateExprValue, scalars map[string]string, lists map[string][]string) vphp.PhpValue {
+fn (value TemplateExprValue) to_value_with_context(scalars map[string]string, lists map[string][]string) vphp.PhpValue {
 	if value.kind == .map {
 		return new_template_map_value(value.map_path, scalars, lists)
 	}
-	return template_expr_value_to_value(value)
+	return value.to_value()
 }
 
 fn (view &VSlimView) eval_template_expression(raw string, scalars map[string]string, lists map[string][]string, objects map[string]vphp.PhpValue, template_path string, line int, col int) TemplateExprValue {
 	trimmed := raw.trim_space()
 	if trimmed == '' {
-		return new_template_expr_scalar('')
+		return TemplateExprValue.scalar('')
 	}
 	node := parse_template_expr_node(trimmed, line, col) or {
-		return new_template_expr_scalar(debug_template_error('expr.pipe', template_path, raw, line, col))
+		return TemplateExprValue.scalar(debug_template_error('expr.pipe', template_path, raw, line, col))
 	}
 	return view.eval_template_expr_node(node, scalars, lists, objects, template_path, line, col)
 }
@@ -141,28 +141,28 @@ fn (view &VSlimView) eval_template_expression(raw string, scalars map[string]str
 fn (view &VSlimView) eval_template_expr_node(node TemplateExprNode, scalars map[string]string, lists map[string][]string, objects map[string]vphp.PhpValue, template_path string, line int, col int) TemplateExprValue {
 	match node.kind {
 		.literal {
-			return new_template_expr_scalar_typed(node.value, node.explicit_type)
+			return TemplateExprValue.scalar_typed(node.value, node.explicit_type)
 		}
 		.path {
 			if template_has_list_key(node.name, lists) {
-				return new_template_expr_list(template_list_values(node.name, scalars, lists))
+				return TemplateExprValue.list(template_list_values(node.name, scalars, lists))
 			}
 			if object := template_object_value(node.name, objects) {
-				return new_template_expr_object(object)
+				return TemplateExprValue.object(object)
 			}
-			return new_template_expr_scalar(template_scalar_value_with_lists(node.name, scalars,
+			return TemplateExprValue.scalar(template_scalar_value_with_lists(node.name, scalars,
 				lists))
 		}
 		.cast {
 			if node.args.len == 0 {
-				return new_template_expr_scalar_typed('', node.explicit_type)
+				return TemplateExprValue.scalar_typed('', node.explicit_type)
 			}
 			value := view.eval_template_expr_node(node.args[0], scalars, lists, objects,
 				template_path, line, col)
-			return template_expr_value_cast(value, node.explicit_type)
+			return value.cast(node.explicit_type)
 		}
 		.map_path {
-			return new_template_expr_map(node.name)
+			return TemplateExprValue.map(node.name)
 		}
 		.call {
 			mut args := []TemplateExprValue{cap: node.args.len}
@@ -179,10 +179,10 @@ fn (view &VSlimView) eval_template_expr_node(node TemplateExprNode, scalars map[
 				args << view.eval_template_expr_node(arg, scalars, lists, objects, template_path,
 					line, col)
 			}
-			raw := if node.raw != '' { node.raw } else { template_expr_node_string(node) }
+			raw := if node.raw != '' { node.raw } else { node.string() }
 			return view.invoke_template_expr_method(node.name, args, template_path, raw, node.line,
 				node.col) or {
-				new_template_expr_scalar(debug_template_error('method.missing', template_path, raw,
+				TemplateExprValue.scalar(debug_template_error('method.missing', template_path, raw,
 					node.line, node.col))
 			}
 		}
@@ -192,67 +192,67 @@ fn (view &VSlimView) eval_template_expr_node(node TemplateExprNode, scalars map[
 fn (view &VSlimView) eval_template_expr_callable(name string, args []TemplateExprValue, scalars map[string]string, lists map[string][]string, objects map[string]vphp.PhpValue, template_path string, line int, col int) TemplateExprValue {
 	key := name.trim_space().to_lower()
 	if key == '' {
-		return new_template_expr_scalar('')
+		return TemplateExprValue.scalar('')
 	}
 	match key {
 		'trim' {
 			if args.len == 0 {
-				return new_template_expr_scalar('')
+				return TemplateExprValue.scalar('')
 			}
-			return new_template_expr_scalar(template_expr_value_string(args[0]).trim_space())
+			return TemplateExprValue.scalar(args[0].string().trim_space())
 		}
 		'first' {
 			if args.len == 0 {
-				return new_template_expr_scalar('')
+				return TemplateExprValue.scalar('')
 			}
-			items := template_expr_value_as_list(args[0])
+			items := args[0].as_list()
 			if items.len == 0 {
-				return new_template_expr_scalar('')
+				return TemplateExprValue.scalar('')
 			}
-			return new_template_expr_scalar(items[0])
+			return TemplateExprValue.scalar(items[0])
 		}
 		'last' {
 			if args.len == 0 {
-				return new_template_expr_scalar('')
+				return TemplateExprValue.scalar('')
 			}
-			items := template_expr_value_as_list(args[0])
+			items := args[0].as_list()
 			if items.len == 0 {
-				return new_template_expr_scalar('')
+				return TemplateExprValue.scalar('')
 			}
-			return new_template_expr_scalar(items[items.len - 1])
+			return TemplateExprValue.scalar(items[items.len - 1])
 		}
 		'join' {
 			if args.len == 0 {
-				return new_template_expr_scalar('')
+				return TemplateExprValue.scalar('')
 			}
-			items := template_expr_value_as_list(args[0])
-			sep := if args.len >= 2 { template_expr_value_string(args[1]) } else { ',' }
-			return new_template_expr_scalar(items.join(sep))
+			items := args[0].as_list()
+			sep := if args.len >= 2 { args[1].string() } else { ',' }
+			return TemplateExprValue.scalar(items.join(sep))
 		}
 		'asset' {
 			if args.len == 0 {
-				return new_template_expr_scalar(view.asset(''))
+				return TemplateExprValue.scalar(view.asset(''))
 			}
-			return new_template_expr_scalar(view.asset(template_expr_value_string(args[0])))
+			return TemplateExprValue.scalar(view.asset(args[0].string()))
 		}
 		'default' {
 			if args.len == 0 {
-				return new_template_expr_scalar('')
+				return TemplateExprValue.scalar('')
 			}
-			value := template_expr_value_string(args[0])
+			value := args[0].string()
 			if value != '' {
-				return new_template_expr_scalar(value)
+				return TemplateExprValue.scalar(value)
 			}
 			if args.len >= 2 {
-				return new_template_expr_scalar(template_expr_value_string(args[1]))
+				return TemplateExprValue.scalar(args[1].string())
 			}
-			return new_template_expr_scalar('')
+			return TemplateExprValue.scalar('')
 		}
 		'empty' {
 			if args.len == 0 {
-				return new_template_expr_scalar_typed('true', 'bool')
+				return TemplateExprValue.scalar_typed('true', 'bool')
 			}
-			return new_template_expr_scalar_typed(if template_expr_value_string(args[0]).trim_space() == '' {
+			return TemplateExprValue.scalar_typed(if args[0].string().trim_space() == '' {
 				'true'
 			} else {
 				'false'
@@ -260,66 +260,66 @@ fn (view &VSlimView) eval_template_expr_callable(name string, args []TemplateExp
 		}
 		'contains' {
 			if args.len < 2 {
-				return new_template_expr_scalar_typed('false', 'bool')
+				return TemplateExprValue.scalar_typed('false', 'bool')
 			}
 			left := args[0]
 			right := args[1]
 			mut found := false
 			if left.kind == .list {
 				for item in left.list {
-					if template_compare_equal_values(item, template_expr_value_string(right)) {
+					if template_compare_equal_values(item, right.string()) {
 						found = true
 						break
 					}
 				}
 			} else {
-				found = template_expr_value_string(left).contains(template_expr_value_string(right))
+				found = left.string().contains(right.string())
 			}
-			return new_template_expr_scalar_typed(if found { 'true' } else { 'false' }, 'bool')
+			return TemplateExprValue.scalar_typed(if found { 'true' } else { 'false' }, 'bool')
 		}
 		'in' {
 			if args.len < 2 {
-				return new_template_expr_scalar_typed('false', 'bool')
+				return TemplateExprValue.scalar_typed('false', 'bool')
 			}
-			value := template_expr_value_string(args[0])
+			value := args[0].string()
 			mut found := false
-			items := template_expr_value_as_list(args[1])
+			items := args[1].as_list()
 			for item in items {
 				if template_compare_equal_values(item, value) {
 					found = true
 					break
 				}
 			}
-			return new_template_expr_scalar_typed(if found { 'true' } else { 'false' }, 'bool')
+			return TemplateExprValue.scalar_typed(if found { 'true' } else { 'false' }, 'bool')
 		}
 		'reduce' {
 			if args.len == 0 {
-				return new_template_expr_scalar('')
+				return TemplateExprValue.scalar('')
 			}
-			items := template_expr_value_as_list(args[0])
+			items := args[0].as_list()
 			reducer := if args.len >= 2 {
-				template_expr_value_string(args[1]).trim_space()
+				args[1].string().trim_space()
 			} else {
 				'acc+item'
 			}
-			seed := if args.len >= 3 { template_expr_value_string(args[2]) } else { '' }
+			seed := if args.len >= 3 { args[2].string() } else { '' }
 			value, err_msg := reduce_template_values(items, reducer, seed)
 			if err_msg != '' && is_view_debug_enabled() {
-				return new_template_expr_scalar('[vslim.reduce.error reducer=${reducer} seed=${seed} reason=${err_msg}]')
+				return TemplateExprValue.scalar('[vslim.reduce.error reducer=${reducer} seed=${seed} reason=${err_msg}]')
 			}
-			return new_template_expr_scalar(value)
+			return TemplateExprValue.scalar(value)
 		}
 		'upper' {
 			if args.len == 0 {
-				return new_template_expr_scalar('')
+				return TemplateExprValue.scalar('')
 			}
-			return new_template_expr_scalar(template_expr_value_string(args[0]).to_upper())
+			return TemplateExprValue.scalar(args[0].string().to_upper())
 		}
 		'lower' {
 			if args.len == 0 {
-				return new_template_expr_scalar('')
+				return TemplateExprValue.scalar('')
 			}
-			return new_template_expr_scalar(template_expr_value_string(args[0]).to_lower())
+			return TemplateExprValue.scalar(args[0].string().to_lower())
 		}
 		else {
 			if method_value := view.invoke_template_expr_method(name, args, template_path, name,
@@ -327,7 +327,7 @@ fn (view &VSlimView) eval_template_expr_callable(name string, args []TemplateExp
 			{
 				return method_value
 			}
-			return new_template_expr_scalar(view.invoke_template_helper_values(name, args, scalars,
+			return TemplateExprValue.scalar(view.invoke_template_helper_values(name, args, scalars,
 				lists, template_path, line, col))
 		}
 	}
@@ -505,7 +505,7 @@ fn parse_template_expr_node(raw string, line int, col int) !TemplateExprNode {
 	}
 }
 
-fn template_expr_node_string(node TemplateExprNode) string {
+fn (node TemplateExprNode) string() string {
 	match node.kind {
 		.literal {
 			if node.explicit_type == 'string' {
@@ -520,7 +520,7 @@ fn template_expr_node_string(node TemplateExprNode) string {
 			if node.args.len == 0 {
 				return '${node.explicit_type}:'
 			}
-			return '${node.explicit_type}:${template_expr_node_string(node.args[0])}'
+			return '${node.explicit_type}:${node.args[0].string()}'
 		}
 		.map_path {
 			return 'map:${node.name}'
@@ -528,7 +528,7 @@ fn template_expr_node_string(node TemplateExprNode) string {
 		.call {
 			mut parts := []string{cap: node.args.len}
 			for arg in node.args {
-				parts << template_expr_node_string(arg)
+				parts << arg.string()
 			}
 			return '${node.name}(${parts.join(', ')})'
 		}
@@ -538,9 +538,9 @@ fn template_expr_node_string(node TemplateExprNode) string {
 			}
 			mut parts := []string{}
 			for arg in node.args[1..] {
-				parts << template_expr_node_string(arg)
+				parts << arg.string()
 			}
-			return '${template_expr_node_string(node.args[0])}.${node.name}(${parts.join(', ')})'
+			return '${node.args[0].string()}.${node.name}(${parts.join(', ')})'
 		}
 	}
 }
@@ -551,7 +551,7 @@ fn (view &VSlimView) invoke_template_expr_method(name string, args []TemplateExp
 	}
 	method := name.trim_space()
 	if method == '' || !args[0].object.method_exists(method) {
-		return new_template_expr_scalar(debug_template_error('method.missing', template_path, raw,
+		return TemplateExprValue.scalar(debug_template_error('method.missing', template_path, raw,
 			line, col))
 	}
 	mut frame := vphp.PhpScope.frame()
@@ -560,7 +560,7 @@ fn (view &VSlimView) invoke_template_expr_method(name string, args []TemplateExp
 	}
 	mut call_args := []vphp.PhpArgInput{cap: if args.len > 1 { args.len - 1 } else { 0 }}
 	for arg in args[1..] {
-		mut value := template_expr_value_to_value(arg)
+		mut value := arg.to_value()
 		call_args << frame.adopt_value(mut value)
 	}
 	object := args[0].object.as_object() or { return none }
@@ -569,15 +569,15 @@ fn (view &VSlimView) invoke_template_expr_method(name string, args []TemplateExp
 		result.release()
 	}
 	if !result.is_valid() || result.is_undef() || result.is_null() {
-		return new_template_expr_scalar_typed('null', 'null')
+		return TemplateExprValue.scalar_typed('null', 'null')
 	}
 	if result.is_array() && result.is_list() {
-		return new_template_expr_list(result.to_string_list())
+		return TemplateExprValue.list(result.to_string_list())
 	}
 	if result.is_object() {
-		return new_template_expr_object(result)
+		return TemplateExprValue.object(result)
 	}
-	return new_template_expr_scalar(result.to_string())
+	return TemplateExprValue.scalar(result.to_string())
 }
 
 fn parse_template_expr_pipe_stage(raw string) !(string, []string) {

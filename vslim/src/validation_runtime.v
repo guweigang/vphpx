@@ -133,7 +133,7 @@ fn validator_extract_input(data vphp.PhpValue) map[string]vphp.DynValue {
 		return map[string]vphp.DynValue{}
 	}
 	if data.is_array() {
-		return validator_map_from_value(data)
+		return value_subject(data).validator_map()
 	}
 	if request := data.as_object() {
 		defer {
@@ -153,14 +153,14 @@ fn validator_request_input_map(request vphp.PhpObject) map[string]vphp.DynValue 
 		defer {
 			query.release()
 		}
-		out = validator_merge_input_maps(out, validator_map_from_value(query))
+		out = validator_merge_input_maps(out, value_subject(query).validator_map())
 	}
 	if request.method_exists('getParsedBody') {
 		mut parsed := request.call_method('getParsedBody')
 		defer {
 			parsed.release()
 		}
-		out = validator_merge_input_maps(out, validator_map_from_value(parsed))
+		out = validator_merge_input_maps(out, value_subject(parsed).validator_map())
 	}
 	return out
 }
@@ -173,7 +173,8 @@ fn validator_merge_input_maps(left map[string]vphp.DynValue, right map[string]vp
 	return out
 }
 
-fn validator_map_from_value(value vphp.PhpValue) map[string]vphp.DynValue {
+fn (subject PhpValueSubject) validator_map() map[string]vphp.DynValue {
+	value := subject.value
 	if !value.is_valid() || value.is_null() || value.is_undef() || !value.is_array() {
 		return map[string]vphp.DynValue{}
 	}

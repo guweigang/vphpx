@@ -2,13 +2,14 @@ module main
 
 import vphp
 
-fn ensure_module_registry(mut app VSlimApp) {
+fn (mut app VSlimApp) ensure_module_registry() {
 	if app.module_classes.len == 0 {
 		app.module_classes = map[string]bool{}
 	}
 }
 
-fn normalize_module_input(raw vphp.PhpValue) !vphp.PhpValue {
+fn (subject PhpValueSubject) module_input() !vphp.PhpValue {
+	raw := subject.value
 	if raw.is_valid() && raw.is_object() {
 		return raw.owned()
 	}
@@ -40,11 +41,13 @@ fn normalize_module_class(raw_class_name string) !vphp.PhpValue {
 	return mod_obj.take_value()
 }
 
-fn module_class_key(mod_value vphp.PhpValue) string {
+fn (subject PhpValueSubject) module_class_key() string {
+	mod_value := subject.value
 	return mod_value.class_name().trim_space()
 }
 
-fn bind_module_to_app(mod_value vphp.PhpValue, app_value vphp.PhpValue) {
+fn (subject PhpValueSubject) bind_module_to_app(app_value vphp.PhpValue) {
+	mod_value := subject.value
 	if !mod_value.is_valid() || !mod_value.is_object() || !app_value.is_valid()
 		|| !app_value.is_object() {
 		return
@@ -56,7 +59,7 @@ fn bind_module_to_app(mod_value vphp.PhpValue, app_value vphp.PhpValue) {
 	}
 }
 
-fn php_object_method_required_params(obj vphp.PhpObject, method_name string) int {
+fn object_method_required_params(obj vphp.PhpObject, method_name string) int {
 	mut method_arg := vphp.PhpString.of(method_name)
 	defer {
 		method_arg.release()
@@ -68,12 +71,13 @@ fn php_object_method_required_params(obj vphp.PhpObject, method_name string) int
 	return count.to_int()
 }
 
-fn call_module_lifecycle(mod_value vphp.PhpValue, method_name string, app_value vphp.PhpValue) ! {
+fn (subject PhpValueSubject) call_module_lifecycle(method_name string, app_value vphp.PhpValue) ! {
+	mod_value := subject.value
 	if !mod_value.is_valid() || !mod_value.is_object() || !mod_value.method_exists(method_name) {
 		return
 	}
 	obj := mod_value.require_object() or { return }
-	if php_object_method_required_params(obj, method_name) > 0 && app_value.is_valid()
+	if object_method_required_params(obj, method_name) > 0 && app_value.is_valid()
 		&& app_value.is_object() {
 		obj.with_method_result[vphp.PhpValue, bool](method_name, fn (_ vphp.PhpValue) bool {
 			return true
@@ -85,31 +89,32 @@ fn call_module_lifecycle(mod_value vphp.PhpValue, method_name string, app_value 
 	}) or { false }
 }
 
-fn call_module_first_supported_lifecycle(mod_value vphp.PhpValue, method_names []string, app_value vphp.PhpValue) ! {
+fn (subject PhpValueSubject) call_first_supported_module_lifecycle(method_names []string, app_value vphp.PhpValue) ! {
+	mod_value := subject.value
 	for method_name in method_names {
 		if !mod_value.method_exists(method_name) {
 			continue
 		}
-		call_module_lifecycle(mod_value, method_name, app_value)!
+		subject.call_module_lifecycle(method_name, app_value)!
 		return
 	}
 }
 
-fn register_module_values(mut app VSlimApp, modules vphp.PhpIterable) ! {
+fn (mut app VSlimApp) register_module_values(modules vphp.PhpIterable) ! {
 	mut normalized := modules.to_array()!
 	defer {
 		normalized.release()
 	}
 	for item in normalized.value_items() {
-		mut module_value := normalize_module_input(item)!
+		mut module_value := value_subject(item).module_input()!
 		defer {
 			module_value.release()
 		}
-		register_module_value(mut app, module_value)!
+		app.register_module_value(module_value)!
 	}
 }
 
-fn register_module_providers(mut app VSlimApp, mod_value vphp.PhpValue, app_value vphp.PhpValue) ! {
+fn (mut app VSlimApp) register_module_providers(mod_value vphp.PhpValue, app_value vphp.PhpValue) ! {
 	if !mod_value.is_valid() || !mod_value.is_object() || !mod_value.method_exists('providers') {
 		return
 	}
@@ -117,13 +122,13 @@ fn register_module_providers(mut app VSlimApp, mod_value vphp.PhpValue, app_valu
 	ok := if app_value.is_valid() && app_value.is_object() {
 		mod_obj.with_method_result[vphp.PhpValue, bool]('providers', fn [mut app] (providers_raw vphp.PhpValue) bool {
 			providers := providers_raw.as_iterable() or { return false }
-			register_service_provider_values(mut app, providers) or { return false }
+			app.register_service_provider_values(providers) or { return false }
 			return true
 		}, app_value) or { false }
 	} else {
 		mod_obj.with_method_result[vphp.PhpValue, bool]('providers', fn [mut app] (providers_raw vphp.PhpValue) bool {
 			providers := providers_raw.as_iterable() or { return false }
-			register_service_provider_values(mut app, providers) or { return false }
+			app.register_service_provider_values(providers) or { return false }
 			return true
 		}) or { false }
 	}
@@ -132,56 +137,58 @@ fn register_module_providers(mut app VSlimApp, mod_value vphp.PhpValue, app_valu
 	}
 }
 
-fn boot_module_value(mut app VSlimApp, mod_value vphp.PhpValue) ! {
-	mut app_value := app_self_value(&app)
-	bind_module_to_app(mod_value, app_value)
-	call_module_first_supported_lifecycle(mod_value, ['middleware', 'middlewares'], app_value)!
-	call_module_first_supported_lifecycle(mod_value, ['routes'], app_value)!
-	call_module_lifecycle(mod_value, 'boot', app_value)!
+fn (mut app VSlimApp) boot_module_value(mod_value vphp.PhpValue) ! {
+	mut app_value := (&app).self_value()
+	mod_subject := value_subject(mod_value)
+	mod_subject.bind_module_to_app(app_value)
+	mod_subject.call_first_supported_module_lifecycle(['middleware', 'middlewares'], app_value)!
+	mod_subject.call_first_supported_module_lifecycle(['routes'], app_value)!
+	mod_subject.call_module_lifecycle('boot', app_value)!
 }
 
-fn register_module_value(mut app VSlimApp, module_value vphp.PhpValue) ! {
-	ensure_module_registry(mut app)
-	mut app_value := app_self_value(&app)
-	class_key := module_class_key(module_value)
+fn (mut app VSlimApp) register_module_value(module_value vphp.PhpValue) ! {
+	app.ensure_module_registry()
+	mut app_value := (&app).self_value()
+	module_subject := value_subject(module_value)
+	class_key := module_subject.module_class_key()
 	if class_key == '' {
 		return error('module class name must not be empty')
 	}
 	if class_key in app.module_classes {
 		return
 	}
-	bind_module_to_app(module_value, app_value)
-	call_module_lifecycle(module_value, 'register', app_value)!
-	register_module_providers(mut app, module_value, app_value)!
+	module_subject.bind_module_to_app(app_value)
+	module_subject.call_module_lifecycle('register', app_value)!
+	app.register_module_providers(module_value, app_value)!
 	mod_obj := module_value.as_object() or {
 		return error('module "${class_key}" could not be retained')
 	}
 	app.modules << mod_obj.retain()
 	app.module_classes[class_key] = true
 	if app.booted {
-		boot_module_value(mut app, module_value)!
+		app.boot_module_value(module_value)!
 	}
 }
 
-fn register_module_class(mut app VSlimApp, class_name string) ! {
+fn (mut app VSlimApp) register_module_class(class_name string) ! {
 	mut module_value := normalize_module_class(class_name)!
 	defer {
 		module_value.release()
 	}
-	register_module_value(mut app, module_value)!
+	app.register_module_value(module_value)!
 }
 
 @[php_arg_name: 'mod_input=modInput']
 @[php_method: 'module']
 pub fn (mut app VSlimApp) mount_module(mod_input vphp.PhpValue) &VSlimApp {
-	mut module_value := normalize_module_input(mod_input) or {
+	mut module_value := value_subject(mod_input).module_input() or {
 		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 		return &app
 	}
 	defer {
 		module_value.release()
 	}
-	register_module_value(mut app, module_value) or {
+	app.register_module_value(module_value) or {
 		vphp.PhpException.raise_class('RuntimeException', err.msg(), 0)
 		return &app
 	}
@@ -190,7 +197,7 @@ pub fn (mut app VSlimApp) mount_module(mod_input vphp.PhpValue) &VSlimApp {
 
 @[php_method: 'moduleMany']
 pub fn (mut app VSlimApp) module_many(modules vphp.PhpIterable) &VSlimApp {
-	register_module_values(mut app, modules) or {
+	app.register_module_values(modules) or {
 		vphp.PhpException.raise_class('InvalidArgumentException', 'modules must be iterable', 0)
 		return &app
 	}

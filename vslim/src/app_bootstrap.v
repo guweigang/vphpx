@@ -4,13 +4,13 @@ import vphp
 
 #include "php_bridge.h"
 
-fn ensure_provider_registry(mut app VSlimApp) {
+fn (mut app VSlimApp) ensure_provider_registry() {
 	if app.provider_classes.len == 0 {
 		app.provider_classes = map[string]bool{}
 	}
 }
 
-fn wrap_runtime_app_value(app &VSlimApp) vphp.PhpValue {
+fn (app &VSlimApp) wrap_runtime_value() vphp.PhpValue {
 	unsafe {
 		if isnil(app) {
 			return vphp.PhpValue.null()
@@ -19,13 +19,13 @@ fn wrap_runtime_app_value(app &VSlimApp) vphp.PhpValue {
 	}
 }
 
-fn app_self_value(app &VSlimApp) vphp.PhpValue {
+fn (app &VSlimApp) self_value() vphp.PhpValue {
 	if self := vphp.PhpObject.current() {
 		if self.is_valid() && self.is_instance_of('VSlim\\App') {
 			return self.owned().to_value()
 		}
 	}
-	return wrap_runtime_app_value(app)
+	return app.wrap_runtime_value()
 }
 
 fn bootstrap_debug_included_hits(class_name string) []string {
@@ -67,7 +67,8 @@ fn log_bootstrap_class_visibility(kind string, class_name string) {
 	cli_debug_log('${kind}_class_visibility class="${class_name}" exists_no_autoload=${exists_no_autoload} exists_autoload=${exists_autoload} included_hits=${included_hits}')
 }
 
-fn normalize_service_provider_input(raw vphp.PhpValue) !vphp.PhpValue {
+fn (subject PhpValueSubject) service_provider_input() !vphp.PhpValue {
+	raw := subject.value
 	if raw.is_valid() && raw.is_object() {
 		return raw.owned()
 	}
@@ -99,11 +100,13 @@ fn normalize_service_provider_class(raw_class_name string) !vphp.PhpValue {
 	return provider.take_value()
 }
 
-fn provider_class_key(provider vphp.PhpValue) string {
+fn (subject PhpValueSubject) provider_class_key() string {
+	provider := subject.value
 	return provider.class_name().trim_space()
 }
 
-fn bind_provider_to_app(provider vphp.PhpValue, app_value vphp.PhpValue) {
+fn (subject PhpValueSubject) bind_provider_to_app(app_value vphp.PhpValue) {
+	provider := subject.value
 	if !provider.is_valid() || !provider.is_object() || !app_value.is_valid()
 		|| !app_value.is_object() {
 		return
@@ -115,12 +118,13 @@ fn bind_provider_to_app(provider vphp.PhpValue, app_value vphp.PhpValue) {
 	}
 }
 
-fn call_provider_lifecycle(provider vphp.PhpValue, method_name string, app_value vphp.PhpValue) ! {
+fn (subject PhpValueSubject) call_provider_lifecycle(method_name string, app_value vphp.PhpValue) ! {
+	provider := subject.value
 	if !provider.is_valid() || !provider.is_object() || !provider.method_exists(method_name) {
 		return
 	}
 	obj := provider.require_object() or { return }
-	if php_object_method_required_params(obj, method_name) > 0 && app_value.is_valid()
+	if object_method_required_params(obj, method_name) > 0 && app_value.is_valid()
 		&& app_value.is_object() {
 		obj.with_method_result[vphp.PhpValue, bool](method_name, fn (_ vphp.PhpValue) bool {
 			return true
@@ -132,67 +136,68 @@ fn call_provider_lifecycle(provider vphp.PhpValue, method_name string, app_value
 	}) or { false }
 }
 
-fn register_service_provider_value(mut app VSlimApp, provider vphp.PhpValue) ! {
-	ensure_provider_registry(mut app)
-	mut app_value := app_self_value(&app)
-	class_key := provider_class_key(provider)
+fn (mut app VSlimApp) register_service_provider_value(provider vphp.PhpValue) ! {
+	app.ensure_provider_registry()
+	mut app_value := (&app).self_value()
+	provider_subject := value_subject(provider)
+	class_key := provider_subject.provider_class_key()
 	if class_key == '' {
 		return error('provider class name must not be empty')
 	}
 	if class_key in app.provider_classes {
 		return
 	}
-	bind_provider_to_app(provider, app_value)
-	call_provider_lifecycle(provider, 'register', app_value)!
+	provider_subject.bind_provider_to_app(app_value)
+	provider_subject.call_provider_lifecycle('register', app_value)!
 	provider_obj := provider.as_object() or {
 		return error('provider "${class_key}" could not be retained')
 	}
 	app.providers << provider_obj.retain()
 	app.provider_classes[class_key] = true
 	if app.booted {
-		call_provider_lifecycle(provider, 'boot', app_value)!
+		provider_subject.call_provider_lifecycle('boot', app_value)!
 	}
 }
 
-fn register_service_provider_class(mut app VSlimApp, class_name string) ! {
+fn (mut app VSlimApp) register_service_provider_class(class_name string) ! {
 	mut provider := normalize_service_provider_class(class_name)!
 	defer {
 		provider.release()
 	}
-	register_service_provider_value(mut app, provider)!
+	app.register_service_provider_value(provider)!
 }
 
-fn ensure_app_booted(mut app VSlimApp) {
+fn (mut app VSlimApp) ensure_booted() {
 	if app.booted {
 		return
 	}
 	app.boot()
 }
 
-fn register_service_provider_values(mut app VSlimApp, providers vphp.PhpIterable) ! {
+fn (mut app VSlimApp) register_service_provider_values(providers vphp.PhpIterable) ! {
 	mut normalized := providers.to_array()!
 	defer {
 		normalized.release()
 	}
 	for item in normalized.value_items() {
-		mut provider := normalize_service_provider_input(item)!
+		mut provider := value_subject(item).service_provider_input()!
 		defer {
 			provider.release()
 		}
-		register_service_provider_value(mut app, provider)!
+		app.register_service_provider_value(provider)!
 	}
 }
 
 @[php_method]
 pub fn (mut app VSlimApp) register(provider vphp.PhpValue) &VSlimApp {
-	mut provider_value := normalize_service_provider_input(provider) or {
+	mut provider_value := value_subject(provider).service_provider_input() or {
 		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 		return &app
 	}
 	defer {
 		provider_value.release()
 	}
-	register_service_provider_value(mut app, provider_value) or {
+	app.register_service_provider_value(provider_value) or {
 		vphp.PhpException.raise_class('RuntimeException', err.msg(), 0)
 		return &app
 	}
@@ -201,7 +206,7 @@ pub fn (mut app VSlimApp) register(provider vphp.PhpValue) &VSlimApp {
 
 @[php_method: 'registerMany']
 pub fn (mut app VSlimApp) register_many(providers vphp.PhpIterable) &VSlimApp {
-	register_service_provider_values(mut app, providers) or {
+	app.register_service_provider_values(providers) or {
 		vphp.PhpException.raise_class('InvalidArgumentException', 'providers must be iterable', 0)
 		return &app
 	}
@@ -213,14 +218,15 @@ pub fn (mut app VSlimApp) boot() &VSlimApp {
 	if app.booted {
 		return &app
 	}
-	ensure_provider_registry(mut app)
-	ensure_module_registry(mut app)
-	mut app_value := app_self_value(&app)
+	app.ensure_provider_registry()
+	app.ensure_module_registry()
+	mut app_value := (&app).self_value()
 	for provider in app.providers {
 		ok := provider.with_object(fn [app_value] (provider vphp.PhpObject) bool {
 			provider_value := provider.to_value()
-			bind_provider_to_app(provider_value, app_value)
-			call_provider_lifecycle(provider_value, 'boot', app_value) or {
+			provider_subject := value_subject(provider_value)
+			provider_subject.bind_provider_to_app(app_value)
+			provider_subject.call_provider_lifecycle('boot', app_value) or {
 				vphp.PhpException.raise_class('RuntimeException', err.msg(), 0)
 				return false
 			}
@@ -234,7 +240,7 @@ pub fn (mut app VSlimApp) boot() &VSlimApp {
 	for mod_ref in app.modules {
 		ok := mod_ref.with_object(fn [mut app] (mod_obj vphp.PhpObject) bool {
 			module_value := mod_obj.to_value()
-			boot_module_value(mut app, module_value) or {
+			app.boot_module_value(module_value) or {
 				vphp.PhpException.raise_class('RuntimeException', err.msg(), 0)
 				return false
 			}

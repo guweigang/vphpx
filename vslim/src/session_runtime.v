@@ -4,7 +4,7 @@ import vphp
 
 const session_flash_prefix = '__flash__.'
 
-fn effective_auth_middleware_app(app_ref &VSlimApp) &VSlimApp {
+fn (app_ref &VSlimApp) effective_auth_middleware_app() &VSlimApp {
 	runtime := current_runtime_dispatch_app()
 	if runtime != unsafe { nil } {
 		return runtime
@@ -12,7 +12,7 @@ fn effective_auth_middleware_app(app_ref &VSlimApp) &VSlimApp {
 	return app_ref
 }
 
-fn auth_unauthorized_psr_response(app &VSlimApp, redirect_path string) &VSlimPsr7Response {
+fn (app &VSlimApp) auth_unauthorized_psr_response(redirect_path string) &VSlimPsr7Response {
 	if redirect_path.trim_space() != '' {
 		mut redirect := VSlimResponse{
 			status:       302
@@ -23,12 +23,12 @@ fn auth_unauthorized_psr_response(app &VSlimApp, redirect_path string) &VSlimPsr
 			}
 		}
 		redirect.redirect(redirect_path.trim_space())
-		return new_psr7_response_from_vslim_response(redirect)
+		return redirect.to_psr7_response()
 	}
-	return default_error_response_psr(app, 401, 'Unauthorized', 'unauthorized')
+	return app.default_error_response_psr(401, 'Unauthorized', 'unauthorized')
 }
 
-fn auth_guest_redirect_psr_response(redirect_path string) &VSlimPsr7Response {
+fn VSlimPsr7Response.auth_guest_redirect(redirect_path string) &VSlimPsr7Response {
 	target := if redirect_path.trim_space() == '' { '/' } else { redirect_path.trim_space() }
 	mut redirect := VSlimResponse{
 		status:       302
@@ -39,10 +39,10 @@ fn auth_guest_redirect_psr_response(redirect_path string) &VSlimPsr7Response {
 		}
 	}
 	redirect.redirect(target)
-	return new_psr7_response_from_vslim_response(redirect)
+	return redirect.to_psr7_response()
 }
 
-fn session_cookie_header_value(session &VSlimSessionStore) string {
+fn (session &VSlimSessionStore) cookie_header_value() string {
 	if session.destroyed {
 		return build_set_cookie_header(session.cookie_name_value(), '', session.path_value(),
 			session.domain_value(), -1, session.secure_value(), session.http_only_value(),
@@ -54,17 +54,17 @@ fn session_cookie_header_value(session &VSlimSessionStore) string {
 		session.same_site_value())
 }
 
-fn session_commit_psr_response(mut session VSlimSessionStore, response &VSlimPsr7Response) &VSlimPsr7Response {
+fn (mut session VSlimSessionStore) commit_psr_response(response &VSlimPsr7Response) &VSlimPsr7Response {
 	if !session.dirty && !session.destroyed {
 		return response
 	}
 	mut headers := clone_header_values(response.headers)
 	mut header_names := clone_header_names(response.header_names)
-	headers['set-cookie'] = [session_cookie_header_value(session)]
+	headers['set-cookie'] = [session.cookie_header_value()]
 	header_names['set-cookie'] = 'Set-Cookie'
 	session.dirty = false
-	return clone_psr7_response(response, response.protocol_version, headers, header_names,
-		response_body_or_empty(response), response.status, response.reason_phrase)
+	return response.clone_with(response.protocol_version, headers, header_names,
+		response.body_or_empty(), response.status, response.reason_phrase)
 }
 
 fn session_new_string_map(values map[string]string) vphp.PhpArray {
@@ -209,7 +209,7 @@ fn session_request_cookie(request vphp.PhpObject, cookie_name string) string {
 	return ''
 }
 
-fn session_commit_cookie(mut session VSlimSessionStore, response vphp.PhpObject) bool {
+fn (mut session VSlimSessionStore) commit_cookie(response vphp.PhpObject) bool {
 	if !response.is_valid() {
 		vphp.PhpException.raise_class('InvalidArgumentException',
 			'session response must be an object', 0)
@@ -523,12 +523,12 @@ pub fn (mut session VSlimSessionStore) destroy(response vphp.PhpObject) bool {
 	session.values = map[string]string{}
 	session.dirty = false
 	session.destroyed = true
-	return session_commit_cookie(mut session, response)
+	return session.commit_cookie(response)
 }
 
 @[php_method]
 pub fn (mut session VSlimSessionStore) commit(response vphp.PhpObject) bool {
-	return session_commit_cookie(mut session, response)
+	return session.commit_cookie(response)
 }
 
 @[php_method: 'isLoaded']
@@ -626,20 +626,20 @@ pub fn (mut middleware VSlimSessionStartMiddleware) set_app(app &VSlimApp) &VSli
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method]
 pub fn (middleware &VSlimSessionStartMiddleware) process(request vphp.PhpObject, handler vphp.PhpObject) &VSlimPsr7Response {
-	app := effective_auth_middleware_app(middleware.app_ref)
+	app := middleware.app_ref.effective_auth_middleware_app()
 	if app == unsafe { nil } {
-		return new_psr7_text_response(500, 'Session middleware app is not configured')
+		return VSlimPsr7Response.text(500, 'Session middleware app is not configured')
 	}
 	if !request.is_valid() {
-		return new_psr7_text_response(500, 'Session middleware request is not an object')
+		return VSlimPsr7Response.text(500, 'Session middleware request is not an object')
 	}
 	mut session := app.session(request)
 	mut result := handler.call_method('handle', request)
 	defer {
 		result.release()
 	}
-	response := normalize_to_psr7_response_value(result)
-	return session_commit_psr_response(mut session, response)
+	response := VSlimPsr7Response.from_value(result)
+	return session.commit_psr_response(response)
 }
 
 @[php_borrowed_return; php_method]
@@ -671,12 +671,12 @@ pub fn (middleware &VSlimAuthRequireMiddleware) redirect_path_value() string {
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method]
 pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.PhpObject, handler vphp.PhpObject) &VSlimPsr7Response {
-	app := effective_auth_middleware_app(middleware.app_ref)
+	app := middleware.app_ref.effective_auth_middleware_app()
 	if app == unsafe { nil } {
-		return new_psr7_text_response(500, 'Auth middleware app is not configured')
+		return VSlimPsr7Response.text(500, 'Auth middleware app is not configured')
 	}
 	if !request.is_valid() {
-		return new_psr7_text_response(500, 'Auth middleware request is not an object')
+		return VSlimPsr7Response.text(500, 'Auth middleware request is not an object')
 	}
 	mut guard := app.auth(request)
 	if !guard.check() {
@@ -685,7 +685,7 @@ pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.PhpObject, 
 		} else {
 			app.auth_redirect_to()
 		}
-		return auth_unauthorized_psr_response(app, redirect_path)
+		return app.auth_unauthorized_psr_response(redirect_path)
 	}
 	user_id := guard.id()
 	mut user_id_arg := vphp.PhpString.of(user_id)
@@ -711,7 +711,7 @@ pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.PhpObject, 
 	defer {
 		result.release()
 	}
-	return normalize_to_psr7_response_value(result)
+	return VSlimPsr7Response.from_value(result)
 }
 
 @[php_borrowed_return; php_method]
@@ -743,12 +743,12 @@ pub fn (middleware &VSlimAuthGuestMiddleware) redirect_path_value() string {
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method]
 pub fn (middleware &VSlimAuthGuestMiddleware) process(request vphp.PhpObject, handler vphp.PhpObject) &VSlimPsr7Response {
-	app := effective_auth_middleware_app(middleware.app_ref)
+	app := middleware.app_ref.effective_auth_middleware_app()
 	if app == unsafe { nil } {
-		return new_psr7_text_response(500, 'Guest middleware app is not configured')
+		return VSlimPsr7Response.text(500, 'Guest middleware app is not configured')
 	}
 	if !request.is_valid() {
-		return new_psr7_text_response(500, 'Guest middleware request is not an object')
+		return VSlimPsr7Response.text(500, 'Guest middleware request is not an object')
 	}
 	mut guard := app.auth(request)
 	if !guard.guest() {
@@ -757,13 +757,13 @@ pub fn (middleware &VSlimAuthGuestMiddleware) process(request vphp.PhpObject, ha
 		} else {
 			app.auth_redirect_to()
 		}
-		return auth_guest_redirect_psr_response(redirect_path)
+		return VSlimPsr7Response.auth_guest_redirect(redirect_path)
 	}
 	mut result := handler.call_method('handle', request)
 	defer {
 		result.release()
 	}
-	return normalize_to_psr7_response_value(result)
+	return VSlimPsr7Response.from_value(result)
 }
 
 @[php_borrowed_return; php_method]
@@ -826,23 +826,23 @@ pub fn (middleware &VSlimAuthRequireAbilityMiddleware) message() string {
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method]
 pub fn (middleware &VSlimAuthRequireAbilityMiddleware) process(request vphp.PhpObject, handler vphp.PhpObject) &VSlimPsr7Response {
-	app := effective_auth_middleware_app(middleware.app_ref)
+	app := middleware.app_ref.effective_auth_middleware_app()
 	if app == unsafe { nil } {
-		return new_psr7_text_response(500, 'Ability middleware app is not configured')
+		return VSlimPsr7Response.text(500, 'Ability middleware app is not configured')
 	}
 	if middleware.ability() == '' {
-		return new_psr7_text_response(500, 'Ability middleware ability is not configured')
+		return VSlimPsr7Response.text(500, 'Ability middleware ability is not configured')
 	}
 	if !request.is_valid() {
-		return new_psr7_text_response(500, 'Ability middleware request is not an object')
+		return VSlimPsr7Response.text(500, 'Ability middleware request is not an object')
 	}
 	if !app.can(middleware.ability(), request) {
-		return default_error_response_psr(app, middleware.status(), middleware.message(),
+		return app.default_error_response_psr(middleware.status(), middleware.message(),
 			'forbidden')
 	}
 	mut result := handler.call_method('handle', request)
 	defer {
 		result.release()
 	}
-	return normalize_to_psr7_response_value(result)
+	return VSlimPsr7Response.from_value(result)
 }

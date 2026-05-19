@@ -32,14 +32,14 @@ fn dispatch_live_route_handler(handler vphp.PhpObject, payload vphp.PhpValue) !v
 	if handler.method_exists('render') {
 		mut res := handler.call_method('render', payload_arg, socket_obj)
 		if res.is_string() {
-			return build_php_response_value(VSlimResponse{
+			return (VSlimResponse{
 				status:       200
 				body:         res.to_string()
 				content_type: 'text/html; charset=utf-8'
 				headers:      {
 					'content-type': 'text/html; charset=utf-8'
 				}
-			})
+			}).to_value()
 		}
 		return res.owned()
 	}
@@ -50,7 +50,7 @@ fn dispatch_live_route_handler(handler vphp.PhpObject, payload vphp.PhpValue) !v
 	return error('Live handler must define render() or __invoke()')
 }
 
-fn dispatch_live_websocket_handler(mut app VSlimApp, handler vphp.PhpValue, event string, frame vphp.PhpArray, conn vphp.PhpObject) vphp.PhpValue {
+fn (mut app VSlimApp) dispatch_live_websocket_handler(handler vphp.PhpValue, event string, frame vphp.PhpArray, conn vphp.PhpObject) vphp.PhpValue {
 	if !handler.is_object() {
 		return vphp.PhpValue.null()
 	}
@@ -69,13 +69,13 @@ fn dispatch_live_websocket_handler(mut app VSlimApp, handler vphp.PhpValue, even
 			match message.string_at('type', '') {
 				'join' {
 					return handler.with_object[vphp.PhpValue](fn [mut app, frame, conn, message] (handler_obj vphp.PhpObject) vphp.PhpValue {
-						return vphp.PhpValue.string(dispatch_live_join(mut app, handler_obj, frame,
+						return vphp.PhpValue.string(app.dispatch_live_join(handler_obj, frame,
 							conn, message))
 					}) or { vphp.PhpValue.null() }
 				}
 				'event' {
 					return handler.with_object[vphp.PhpValue](fn [mut app, frame, conn, message] (handler_obj vphp.PhpObject) vphp.PhpValue {
-						return vphp.PhpValue.string(dispatch_live_event(mut app, handler_obj, frame,
+						return vphp.PhpValue.string(app.dispatch_live_event(handler_obj, frame,
 							conn, message))
 					}) or { vphp.PhpValue.null() }
 				}
@@ -94,7 +94,7 @@ fn dispatch_live_websocket_handler(mut app VSlimApp, handler vphp.PhpValue, even
 				return vphp.PhpValue.string(live_protocol_error('invalid_info', 'Invalid info message'))
 			}
 			return handler.with_object[vphp.PhpValue](fn [mut app, frame, conn, message] (handler_obj vphp.PhpObject) vphp.PhpValue {
-				return vphp.PhpValue.string(dispatch_live_info(mut app, handler_obj, frame, conn,
+				return vphp.PhpValue.string(app.dispatch_live_info(handler_obj, frame, conn,
 					message))
 			}) or { vphp.PhpValue.null() }
 		}
@@ -114,16 +114,16 @@ fn dispatch_live_websocket_handler(mut app VSlimApp, handler vphp.PhpValue, even
 	}
 }
 
-fn dispatch_live_join(mut app VSlimApp, handler vphp.PhpObject, frame vphp.PhpArray, conn vphp.PhpObject, message vphp.PhpValue) string {
-	socket_obj, mut socket := live_socket_for_message(mut app, handler, frame, message)
+fn (mut app VSlimApp) dispatch_live_join(handler vphp.PhpObject, frame vphp.PhpArray, conn vphp.PhpObject, message vphp.PhpValue) string {
+	socket_obj, mut socket := app.live_socket_for_message(handler, frame, message)
 	socket.clear_patches()
 	socket.clear_events()
 	socket.clear_flashes()
 	socket.clear_pubsub()
 	socket.clear_redirect()
 	socket.clear_navigate()
-	req := build_live_request(frame, message, socket)
-	req_value := build_php_request_value(req, map[string]string{})
+	req := socket.build_request(frame, message)
+	req_value := req.build_request_value(map[string]string{})
 	if handler.method_exists('mount') {
 		live_call_method(handler, 'mount', req_value, socket_obj)
 	}
@@ -133,16 +133,16 @@ fn dispatch_live_join(mut app VSlimApp, handler vphp.PhpObject, frame vphp.PhpAr
 	return live_patch_response(socket, html, live_default_root_id(handler, socket))
 }
 
-fn dispatch_live_event(mut app VSlimApp, handler vphp.PhpObject, frame vphp.PhpArray, conn vphp.PhpObject, message vphp.PhpValue) string {
-	socket_obj, mut socket := live_socket_for_event(mut app, handler, frame)
+fn (mut app VSlimApp) dispatch_live_event(handler vphp.PhpObject, frame vphp.PhpArray, conn vphp.PhpObject, message vphp.PhpValue) string {
+	socket_obj, mut socket := app.live_socket_for_event(handler, frame)
 	socket.clear_patches()
 	socket.clear_events()
 	socket.clear_flashes()
 	socket.clear_pubsub()
 	socket.clear_redirect()
 	socket.clear_navigate()
-	req := build_live_request(frame, message, socket)
-	req_value := build_php_request_value(req, map[string]string{})
+	req := socket.build_request(frame, message)
+	req_value := req.build_request_value(map[string]string{})
 	mut name_arg := vphp.PhpString.of(message.string_at('event', ''))
 	defer {
 		name_arg.release()
@@ -159,20 +159,20 @@ fn dispatch_live_event(mut app VSlimApp, handler vphp.PhpObject, frame vphp.PhpA
 	return live_patch_response(socket, html, live_default_root_id(handler, socket))
 }
 
-fn dispatch_live_info(mut app VSlimApp, handler vphp.PhpObject, frame vphp.PhpArray, conn vphp.PhpObject, message vphp.PhpValue) string {
-	socket_obj, mut socket := live_socket_for_event(mut app, handler, frame)
+fn (mut app VSlimApp) dispatch_live_info(handler vphp.PhpObject, frame vphp.PhpArray, conn vphp.PhpObject, message vphp.PhpValue) string {
+	socket_obj, mut socket := app.live_socket_for_event(handler, frame)
 	socket.clear_patches()
 	socket.clear_events()
 	socket.clear_flashes()
 	socket.clear_pubsub()
 	socket.clear_redirect()
 	socket.clear_navigate()
-	req := build_live_request(frame, message, socket)
-	req_value := build_php_request_value(req, map[string]string{})
+	req := socket.build_request(frame, message)
+	req_value := req.build_request_value(map[string]string{})
 	mut payload := message.value_at('payload')
 	room := frame.string_at('room', '').trim_space()
 	if room != '' {
-		payload = live_info_payload_with_topic(payload, room)
+		payload = value_subject(payload).live_info_payload_with_topic(room)
 	}
 	mut name_arg := vphp.PhpString.of(message.string_at('event', ''))
 	defer {
@@ -195,7 +195,7 @@ fn render_live_html(handler vphp.PhpObject, request vphp.PhpValue, socket_obj vp
 		if rendered.is_string() {
 			return rendered.to_string()
 		}
-		body, ok := normalize_php_route_response_body_value(rendered)
+		body, ok := VSlimResponse.body_from_route_result(rendered)
 		if ok {
 			return body
 		}
@@ -208,7 +208,7 @@ fn render_live_html(handler vphp.PhpObject, request vphp.PhpValue, socket_obj vp
 }
 
 fn dispatch_live_component_event(handler vphp.PhpObject, payload vphp.PhpValue, event_name vphp.PhpString, socket_obj vphp.PhpObject) bool {
-	target := live_component_target(payload)
+	target := value_subject(payload).live_component_target()
 	if target == '' {
 		return false
 	}
@@ -222,8 +222,9 @@ fn dispatch_live_component_event(handler vphp.PhpObject, payload vphp.PhpValue, 
 			component.release()
 		}
 		if component_obj := component.as_object() {
-			bind_live_component_socket(component_obj, socket_obj)
-			if live_component_handles_event(component_obj)
+			component_subject := object_subject(component_obj)
+			component_subject.bind_live_component_socket(socket_obj)
+			if component_subject.live_component_handles_event()
 				&& component_obj.method_exists('handleEvent') {
 				live_call_method(component_obj, 'handleEvent', event_name,
 					payload, socket_obj)
@@ -240,7 +241,7 @@ fn dispatch_live_component_event(handler vphp.PhpObject, payload vphp.PhpValue, 
 }
 
 fn dispatch_live_component_info(handler vphp.PhpObject, payload vphp.PhpValue, event_name vphp.PhpString, socket_obj vphp.PhpObject) bool {
-	target := live_component_target(payload)
+	target := value_subject(payload).live_component_target()
 	if target == '' {
 		return false
 	}
@@ -254,8 +255,9 @@ fn dispatch_live_component_info(handler vphp.PhpObject, payload vphp.PhpValue, e
 			component.release()
 		}
 		if component_obj := component.as_object() {
-			bind_live_component_socket(component_obj, socket_obj)
-			if live_component_handles_info(component_obj)
+			component_subject := object_subject(component_obj)
+			component_subject.bind_live_component_socket(socket_obj)
+			if component_subject.live_component_handles_info()
 				&& component_obj.method_exists('handleInfo') {
 				live_call_method(component_obj, 'handleInfo', event_name,
 					payload, socket_obj)
@@ -271,13 +273,15 @@ fn dispatch_live_component_info(handler vphp.PhpObject, payload vphp.PhpValue, e
 	return false
 }
 
-fn bind_live_component_socket(component vphp.PhpObject, socket_obj vphp.PhpObject) {
+fn (subject PhpObjectSubject) bind_live_component_socket(socket_obj vphp.PhpObject) {
+	component := subject.object
 	if component.method_exists('bindSocket') {
 		live_call_method(component, 'bindSocket', socket_obj)
 	}
 }
 
-fn live_component_target(payload vphp.PhpValue) string {
+fn (subject PhpValueSubject) live_component_target() string {
+	payload := subject.value
 	if !payload.is_valid() || payload.is_null() || payload.is_undef() || !payload.is_array() {
 		return ''
 	}
@@ -288,17 +292,19 @@ fn live_component_target(payload vphp.PhpValue) string {
 	return target.all_after('component:').trim_space()
 }
 
-fn live_component_handles_event(component vphp.PhpObject) bool {
+fn (subject PhpObjectSubject) live_component_handles_event() bool {
+	component := subject.object
 	return component.method_exists('handleEvent')
 }
 
-fn live_component_handles_info(component vphp.PhpObject) bool {
+fn (subject PhpObjectSubject) live_component_handles_info() bool {
+	component := subject.object
 	return component.method_exists('handleInfo')
 }
 
-fn build_live_request(frame vphp.PhpArray, message vphp.PhpValue, socket &VSlimLiveSocket) &VSlimRequest {
+fn (socket &VSlimLiveSocket) build_request(frame vphp.PhpArray, message vphp.PhpValue) &VSlimRequest {
 	raw_path := message.string_at('path', socket.raw_path)
-	mut req := new_vslim_request('GET', raw_path, '')
+	mut req := VSlimRequest.new('GET', raw_path, '')
 	req.set_headers(frame.value_at('headers').as_array() or { vphp.PhpArray.empty() })
 	req.set_remote_addr(frame.string_at('remote_addr', ''))
 	req.set_scheme(frame.string_at('scheme', ''))
@@ -307,7 +313,7 @@ fn build_live_request(frame vphp.PhpArray, message vphp.PhpValue, socket &VSlimL
 	return req
 }
 
-fn live_socket_for_message(mut app VSlimApp, handler vphp.PhpObject, frame vphp.PhpArray, message vphp.PhpValue) (vphp.PhpObject, &VSlimLiveSocket) {
+fn (mut app VSlimApp) live_socket_for_message(handler vphp.PhpObject, frame vphp.PhpArray, message vphp.PhpValue) (vphp.PhpObject, &VSlimLiveSocket) {
 	if live_uses_dispatch(frame) {
 		return live_socket_from_frame_metadata(handler, frame, message)
 	}
@@ -348,7 +354,7 @@ fn live_socket_for_message(mut app VSlimApp, handler vphp.PhpObject, frame vphp.
 	return socket_obj, created
 }
 
-fn live_socket_for_event(mut app VSlimApp, handler vphp.PhpObject, frame vphp.PhpArray) (vphp.PhpObject, &VSlimLiveSocket) {
+fn (mut app VSlimApp) live_socket_for_event(handler vphp.PhpObject, frame vphp.PhpArray) (vphp.PhpObject, &VSlimLiveSocket) {
 	if live_uses_dispatch(frame) {
 		return live_socket_from_frame_metadata(handler, frame, frame.value_at('metadata'))
 	}
@@ -394,7 +400,7 @@ fn live_socket_from_frame_metadata(handler vphp.PhpObject, frame vphp.PhpArray, 
 	created.id = frame.string_at('id', '').trim_space()
 	created.connected = true
 	metadata := frame.value_at('metadata')
-	session_meta := decode_live_session_metadata(metadata)
+	session_meta := value_subject(metadata).live_session_metadata()
 	path_from_message := live_normalize_target(message.string_at('path', ''))
 	path_from_meta := live_normalize_target(session_meta['target'] or { '' })
 	path_from_frame := live_normalize_target(frame.string_at('path', '/'))
@@ -414,7 +420,7 @@ fn live_socket_from_frame_metadata(handler vphp.PhpObject, frame vphp.PhpArray, 
 	} else {
 		created.root_id = live_view_root_id(handler)
 	}
-	for key, value in decode_live_assigns_metadata(metadata) {
+	for key, value in value_subject(metadata).live_assigns_metadata() {
 		mut value_arg := vphp.PhpString.of(value)
 		created.assign_string(key, value_arg)
 		value_arg.release()
@@ -431,7 +437,7 @@ fn persist_live_socket_state(handler vphp.PhpObject, conn vphp.PhpObject, socket
 	if !conn.is_valid() {
 		return
 	}
-	session_json := encode_live_session(handler, socket)
+	session_json := object_subject(handler).encode_live_session(socket)
 	mut key_arg := vphp.PhpString.of(live_meta_session_key)
 	defer {
 		key_arg.release()
@@ -458,7 +464,8 @@ fn clear_live_socket_state(conn vphp.PhpObject) {
 	}
 }
 
-fn decode_live_session_metadata(metadata vphp.PhpValue) map[string]string {
+fn (subject PhpValueSubject) live_session_metadata() map[string]string {
+	metadata := subject.value
 	session_json := metadata.string_at(live_meta_session_key, '').trim_space()
 	if session_json == '' {
 		return map[string]string{}
@@ -478,7 +485,8 @@ fn decode_live_session_metadata(metadata vphp.PhpValue) map[string]string {
 	return out
 }
 
-fn decode_live_assigns_metadata(metadata vphp.PhpValue) map[string]string {
+fn (subject PhpValueSubject) live_assigns_metadata() map[string]string {
+	metadata := subject.value
 	session_json := metadata.string_at(live_meta_session_key, '').trim_space()
 	if session_json != '' {
 		session_z := decode_live_message(session_json) or {
@@ -487,7 +495,7 @@ fn decode_live_assigns_metadata(metadata vphp.PhpValue) map[string]string {
 		assigns_z := session_z.value_at('assigns')
 		if assigns_z.is_valid() && !assigns_z.is_null() && !assigns_z.is_undef()
 			&& assigns_z.is_array() {
-			return php_value_string_map(assigns_z)
+			return value_subject(assigns_z).string_map()
 		}
 	}
 	assigns_json := metadata.string_at(live_meta_assigns_key, '')
@@ -496,31 +504,32 @@ fn decode_live_assigns_metadata(metadata vphp.PhpValue) map[string]string {
 	}
 	assigns_z := decode_live_message(assigns_json) or { vphp.PhpValue.null() }
 	if assigns_z.is_valid() && !assigns_z.is_null() && !assigns_z.is_undef() && assigns_z.is_array() {
-		return php_value_string_map(assigns_z)
+		return value_subject(assigns_z).string_map()
 	}
 	return map[string]string{}
 }
 
-fn encode_live_session(handler vphp.PhpObject, socket &VSlimLiveSocket) string {
+fn (subject PhpObjectSubject) encode_live_session(socket &VSlimLiveSocket) string {
+	handler := subject.object
 	mut out := vphp.PhpArray.new()
 	out.string('version', '1')
 	out.string('view', handler.class_name().trim_space())
 	out.string('root_id', socket.root_id.trim_space())
 	out.string('target', socket.raw_path.trim_space())
-	mut assigns := encode_live_assigns_array(socket)
+	mut assigns := socket.encode_live_assigns_array()
 	out.set('assigns', assigns)
 	assigns.release()
 	return out.to_json_with_flags(256)
 }
 
-fn encode_live_assigns(socket &VSlimLiveSocket) string {
-	mut assigns := encode_live_assigns_array(socket)
+fn (socket &VSlimLiveSocket) encode_live_assigns() string {
+	mut assigns := socket.encode_live_assigns_array()
 	json := assigns.to_json_with_flags(256)
 	assigns.release()
 	return json
 }
 
-fn encode_live_assigns_array(socket &VSlimLiveSocket) vphp.PhpArray {
+fn (socket &VSlimLiveSocket) encode_live_assigns_array() vphp.PhpArray {
 	mut out := vphp.PhpArray.new()
 	for key, value in socket.assigns {
 		out.string(key, value)
@@ -528,7 +537,8 @@ fn encode_live_assigns_array(socket &VSlimLiveSocket) vphp.PhpArray {
 	return out
 }
 
-fn php_value_string_map(value vphp.PhpValue) map[string]string {
+fn (subject PhpValueSubject) string_map() map[string]string {
+	value := subject.value
 	mut out := map[string]string{}
 	if !value.is_valid() || value.is_null() || value.is_undef() || !value.is_array() {
 		return out
@@ -717,7 +727,8 @@ fn live_info_payload(event string, payload_json string) string {
 	return out.to_json_with_flags(256)
 }
 
-fn live_info_payload_with_topic(payload vphp.PhpValue, room string) vphp.PhpValue {
+fn (subject PhpValueSubject) live_info_payload_with_topic(room string) vphp.PhpValue {
+	payload := subject.value
 	topic := room.trim_space()
 	if topic == '' {
 		return payload.owned()
@@ -770,7 +781,7 @@ fn is_live_view_value(handler vphp.PhpValue) bool {
 	return class_name == 'VSlim\\Live\\View' || class_name == 'VSlimLiveView'
 }
 
-fn bind_live_view_to_app(mut app VSlimApp, handler vphp.PhpValue) {
+fn (mut app VSlimApp) bind_live_view(handler vphp.PhpValue) {
 	if !is_live_view_value(handler) {
 		return
 	}

@@ -10,7 +10,7 @@ fn task_params_to_persistent(params vphp.PhpArray) []vphp.PhpValue {
 	return out
 }
 
-fn task_cache_value(mut handle VSlimTaskHandle, result vphp.PhpValue) {
+fn (mut handle VSlimTaskHandle) cache_value(result vphp.PhpValue) {
 	if handle.result_box.is_valid() {
 		mut old := handle.result_box
 		old.release()
@@ -31,22 +31,22 @@ fn task_arg_inputs(params []vphp.PhpValue) []vphp.PhpArgInput {
 	return out
 }
 
-fn task_wait_callable(mut handle VSlimTaskHandle) vphp.PhpValue {
+fn (mut handle VSlimTaskHandle) wait_callable() vphp.PhpValue {
 	args := task_arg_inputs(handle.params)
 	mut result := handle.callable.invoke(...args)
 	defer {
 		result.release()
 	}
-	task_cache_value(mut handle, result)
+	handle.cache_value(result)
 	return handle.result_box.owned()
 }
 
-fn task_wait_native(mut handle VSlimTaskHandle) vphp.PhpValue {
+fn (mut handle VSlimTaskHandle) wait_native() vphp.PhpValue {
 	mut result := handle.async_ref.wait_value()
 	defer {
 		result.release()
 	}
-	task_cache_value(mut handle, result)
+	handle.cache_value(result)
 	handle.async_ref.release()
 	handle.async_ref = vphp.PhpTaskHandle.null()
 	return handle.result_box.owned()
@@ -100,10 +100,10 @@ pub fn (mut handle VSlimTaskHandle) wait() vphp.PhpValue {
 		return handle.result_box.to_request_owned()
 	}
 	if handle.async_ref.is_valid() {
-		return task_wait_native(mut handle)
+		return handle.wait_native()
 	}
 	if handle.callable.is_valid() && handle.callable.is_callable() {
-		return task_wait_callable(mut handle)
+		return handle.wait_callable()
 	}
 	return vphp.PhpValue.null()
 }

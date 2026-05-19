@@ -14,7 +14,7 @@ mut:
 
 @[php_method]
 pub fn (mut pool VSlimPsr6CacheItemPool) construct() &VSlimPsr6CacheItemPool {
-	ensure_psr6_pool(mut pool)
+	pool.ensure()
 	return &pool
 }
 
@@ -43,7 +43,7 @@ pub fn (pool &VSlimPsr6CacheItemPool) default_ttl_seconds_value() int {
 @[php_arg_type: 'clock=Psr\\Clock\\ClockInterface']
 @[php_method: 'setClock']
 pub fn (mut pool VSlimPsr6CacheItemPool) set_clock(clock vphp.PhpObject) &VSlimPsr6CacheItemPool {
-	ensure_psr6_pool(mut pool)
+	pool.ensure()
 	if !psr20_clock_is_valid(clock) {
 		vphp.PhpException.raise_class('InvalidArgumentException',
 			'clock must implement Psr\\Clock\\ClockInterface', 0)
@@ -58,7 +58,7 @@ pub fn (mut pool VSlimPsr6CacheItemPool) set_clock(clock vphp.PhpObject) &VSlimP
 @[php_return_type: 'Psr\\Clock\\ClockInterface']
 @[php_method]
 pub fn (mut pool VSlimPsr6CacheItemPool) clock() vphp.PhpObject {
-	ensure_psr6_pool(mut pool)
+	pool.ensure()
 	return pool.clock_ref.to_request_owned()
 }
 
@@ -67,9 +67,9 @@ pub fn (mut pool VSlimPsr6CacheItemPool) clock() vphp.PhpObject {
 pub fn (mut pool VSlimPsr6CacheItemPool) get_item(key string) &VSlimPsr6CacheItem {
 	normalized := psr_cache_validate_key_or_throw(key) or {
 		throw_psr6_invalid_argument(err.msg())
-		return psr6_new_missing_item_with_clock('', pool.clock_ref)
+		return VSlimPsr6CacheItem.missing_with_clock('', pool.clock_ref)
 	}
-	ensure_psr6_pool(mut pool)
+	pool.ensure()
 	return pool.item_for_key(normalized)
 }
 
@@ -79,7 +79,7 @@ pub fn (mut pool VSlimPsr6CacheItemPool) get_item(key string) &VSlimPsr6CacheIte
 @[php_arg_default: 'keys=[]']
 @[php_arg_optional: 'keys']
 pub fn (mut pool VSlimPsr6CacheItemPool) get_items(keys vphp.PhpValue) vphp.PhpArray {
-	ensure_psr6_pool(mut pool)
+	pool.ensure()
 	mut out := vphp.PhpArray.new()
 	if !keys.is_valid() || keys.is_null() || keys.is_undef() {
 		return out
@@ -96,7 +96,7 @@ pub fn (mut pool VSlimPsr6CacheItemPool) get_items(keys vphp.PhpValue) vphp.PhpA
 		throw_psr6_invalid_argument(msg)
 		return out
 	} {
-		mut item_value := build_php_psr6_cache_item_value(pool.item_for_key(key_name))
+		mut item_value := pool.item_for_key(key_name).to_value()
 		out.set_value(key_name, item_value)
 		item_value.release()
 	}
@@ -109,8 +109,8 @@ pub fn (mut pool VSlimPsr6CacheItemPool) has_item(key string) bool {
 		throw_psr6_invalid_argument(err.msg())
 		return false
 	}
-	ensure_psr6_pool(mut pool)
-	storage_key := psr6_storage_key(pool, normalized)
+	pool.ensure()
+	storage_key := pool.storage_key(normalized)
 	if storage_key in pool.deferred {
 		entry := pool.deferred[storage_key] or { Psr6DeferredEntry{} }
 		if psr6_deferred_entry_expired(pool.clock_ref, entry) || !entry.has_value {
@@ -125,7 +125,7 @@ pub fn (mut pool VSlimPsr6CacheItemPool) has_item(key string) bool {
 
 @[php_method]
 pub fn (mut pool VSlimPsr6CacheItemPool) clear() bool {
-	ensure_psr6_pool(mut pool)
+	pool.ensure()
 	pool.clear_entries()
 	pool.clear_deferred_entries()
 	return true
@@ -137,8 +137,8 @@ pub fn (mut pool VSlimPsr6CacheItemPool) delete_item(key string) bool {
 		throw_psr6_invalid_argument(err.msg())
 		return false
 	}
-	ensure_psr6_pool(mut pool)
-	storage_key := psr6_storage_key(pool, normalized)
+	pool.ensure()
+	storage_key := pool.storage_key(normalized)
 	pool.remove_entry(storage_key)
 	pool.remove_deferred_entry(storage_key)
 	return true
@@ -146,12 +146,12 @@ pub fn (mut pool VSlimPsr6CacheItemPool) delete_item(key string) bool {
 
 @[php_method: 'deleteItems']
 pub fn (mut pool VSlimPsr6CacheItemPool) delete_items(keys vphp.PhpArray) bool {
-	ensure_psr6_pool(mut pool)
+	pool.ensure()
 	for key_name in psr6_key_list_from_array(keys) or {
 		throw_psr6_invalid_argument(err.msg())
 		return false
 	} {
-		storage_key := psr6_storage_key(pool, key_name)
+		storage_key := pool.storage_key(key_name)
 		pool.remove_entry(storage_key)
 		pool.remove_deferred_entry(storage_key)
 	}
@@ -161,7 +161,7 @@ pub fn (mut pool VSlimPsr6CacheItemPool) delete_items(keys vphp.PhpArray) bool {
 @[php_arg_type: 'item=Psr\\Cache\\CacheItemInterface']
 @[php_method]
 pub fn (mut pool VSlimPsr6CacheItemPool) save(item vphp.PhpObject) bool {
-	ensure_psr6_pool(mut pool)
+	pool.ensure()
 	snapshot := psr6_snapshot_from_item(item) or {
 		throw_psr6_cache_exception(err.msg())
 		return false
@@ -176,12 +176,12 @@ pub fn (mut pool VSlimPsr6CacheItemPool) save(item vphp.PhpObject) bool {
 @[php_arg_type: 'item=Psr\\Cache\\CacheItemInterface']
 @[php_method: 'saveDeferred']
 pub fn (mut pool VSlimPsr6CacheItemPool) save_deferred(item vphp.PhpObject) bool {
-	ensure_psr6_pool(mut pool)
+	pool.ensure()
 	snapshot := psr6_snapshot_from_item(item) or {
 		throw_psr6_cache_exception(err.msg())
 		return false
 	}
-	pool.replace_deferred_entry(psr6_storage_key(pool, snapshot.key), snapshot)
+	pool.replace_deferred_entry(pool.storage_key(snapshot.key), snapshot)
 	mut owned := snapshot.value
 	owned.release()
 	return true
@@ -189,7 +189,7 @@ pub fn (mut pool VSlimPsr6CacheItemPool) save_deferred(item vphp.PhpObject) bool
 
 @[php_method]
 pub fn (mut pool VSlimPsr6CacheItemPool) commit() bool {
-	ensure_psr6_pool(mut pool)
+	pool.ensure()
 	keys := pool.deferred.keys()
 	for key in keys {
 		entry := pool.deferred[key] or { continue }
@@ -253,7 +253,7 @@ pub fn (mut item VSlimPsr6CacheItem) set(value vphp.PhpValue) &VSlimPsr6CacheIte
 @[php_method: 'expiresAt']
 @[php_return_type: 'static']
 pub fn (mut item VSlimPsr6CacheItem) expires_at(expiration vphp.PhpValue) &VSlimPsr6CacheItem {
-	ensure_psr6_item_clock(mut item)
+	item.ensure_clock()
 	item.expires_at_unix = psr6_resolve_absolute_expiration_or_throw(expiration) or {
 		throw_psr6_invalid_argument(err.msg())
 		return &item
@@ -265,7 +265,7 @@ pub fn (mut item VSlimPsr6CacheItem) expires_at(expiration vphp.PhpValue) &VSlim
 @[php_method: 'expiresAfter']
 @[php_return_type: 'static']
 pub fn (mut item VSlimPsr6CacheItem) expires_after(time_value vphp.PhpValue) &VSlimPsr6CacheItem {
-	ensure_psr6_item_clock(mut item)
+	item.ensure_clock()
 	item.expires_at_unix = psr6_resolve_relative_expiration_or_throw(item.clock_ref, time_value) or {
 		throw_psr6_invalid_argument(err.msg())
 		return &item
@@ -273,7 +273,7 @@ pub fn (mut item VSlimPsr6CacheItem) expires_after(time_value vphp.PhpValue) &VS
 	return &item
 }
 
-fn ensure_psr6_pool(mut pool VSlimPsr6CacheItemPool) {
+fn (mut pool VSlimPsr6CacheItemPool) ensure() {
 	if pool.entries.len == 0 {
 		pool.entries = map[string]PsrCacheEntry{}
 	}
@@ -288,39 +288,39 @@ fn ensure_psr6_pool(mut pool VSlimPsr6CacheItemPool) {
 	}
 }
 
-fn ensure_psr6_item_clock(mut item VSlimPsr6CacheItem) {
+fn (mut item VSlimPsr6CacheItem) ensure_clock() {
 	if !psr20_clock_is_valid(item.clock_ref) {
 		item.clock_ref = new_psr20_system_clock_ref()
 	}
 }
 
 pub fn (mut pool VSlimPsr6CacheItemPool) item_for_key(key string) &VSlimPsr6CacheItem {
-	storage_key := psr6_storage_key(pool, key)
+	storage_key := pool.storage_key(key)
 	if storage_key in pool.deferred {
 		entry := pool.deferred[storage_key] or { Psr6DeferredEntry{} }
 		if psr6_deferred_entry_expired(pool.clock_ref, entry) || !entry.has_value {
 			pool.remove_deferred_entry(storage_key)
-			return psr6_new_missing_item_with_clock(key, pool.clock_ref)
+			return VSlimPsr6CacheItem.missing_with_clock(key, pool.clock_ref)
 		}
-		return psr6_new_hit_item_with_clock(key, entry.value, entry.expires_at_unix, pool.clock_ref)
+		return VSlimPsr6CacheItem.hit_with_clock(key, entry.value, entry.expires_at_unix, pool.clock_ref)
 	}
 	pool.prune_expired_entry(storage_key)
 	entry := pool.entries[storage_key] or {
-		return psr6_new_missing_item_with_clock(key, pool.clock_ref)
+		return VSlimPsr6CacheItem.missing_with_clock(key, pool.clock_ref)
 	}
-	return psr6_new_hit_item_with_clock(key, entry.value, entry.expires_at_unix, pool.clock_ref)
+	return VSlimPsr6CacheItem.hit_with_clock(key, entry.value, entry.expires_at_unix, pool.clock_ref)
 }
 
 pub fn (mut pool VSlimPsr6CacheItemPool) persist_snapshot(snapshot Psr6ItemSnapshot) bool {
 	now_unix := psr20_clock_now_unix_or_throw(pool.clock_ref) or { return false }
 	if !snapshot.has_value || snapshot.expires_at_unix < 0
 		|| (snapshot.expires_at_unix > 0 && snapshot.expires_at_unix <= now_unix) {
-		pool.remove_entry(psr6_storage_key(pool, snapshot.key))
+		pool.remove_entry(pool.storage_key(snapshot.key))
 		return true
 	}
 	expires_at := psr_cache_apply_default_ttl(pool.clock_ref, snapshot.expires_at_unix,
 		pool.default_ttl_seconds)
-	pool.replace_entry(psr6_storage_key(pool, snapshot.key), snapshot.value.clone(), expires_at)
+	pool.replace_entry(pool.storage_key(snapshot.key), snapshot.value.clone(), expires_at)
 	return true
 }
 
@@ -374,7 +374,7 @@ pub fn (mut pool VSlimPsr6CacheItemPool) replace_deferred_entry(key string, snap
 	}
 }
 
-fn psr6_storage_key(pool VSlimPsr6CacheItemPool, key string) string {
+fn (pool VSlimPsr6CacheItemPool) storage_key(key string) string {
 	if pool.namespace_prefix == '' {
 		return key
 	}
@@ -402,7 +402,7 @@ fn psr6_deferred_entry_expired(clock vphp.PhpObject, entry Psr6DeferredEntry) bo
 	return entry.expires_at_unix > 0 && entry.expires_at_unix <= now_unix
 }
 
-fn psr6_new_missing_item_with_clock(key string, clock_ref vphp.PhpObject) &VSlimPsr6CacheItem {
+fn VSlimPsr6CacheItem.missing_with_clock(key string, clock_ref vphp.PhpObject) &VSlimPsr6CacheItem {
 	return &VSlimPsr6CacheItem{
 		key:       key
 		value_ref: vphp.PhpValue.invalid()
@@ -412,7 +412,7 @@ fn psr6_new_missing_item_with_clock(key string, clock_ref vphp.PhpObject) &VSlim
 	}
 }
 
-fn psr6_new_hit_item_with_clock(key string, value vphp.PhpValue, expires_at_unix i64, clock_ref vphp.PhpObject) &VSlimPsr6CacheItem {
+fn VSlimPsr6CacheItem.hit_with_clock(key string, value vphp.PhpValue, expires_at_unix i64, clock_ref vphp.PhpObject) &VSlimPsr6CacheItem {
 	return &VSlimPsr6CacheItem{
 		key:             key
 		value_ref:       value.clone()
@@ -423,7 +423,7 @@ fn psr6_new_hit_item_with_clock(key string, value vphp.PhpValue, expires_at_unix
 	}
 }
 
-fn build_php_psr6_cache_item_value(item &VSlimPsr6CacheItem) vphp.PhpValue {
+fn (item &VSlimPsr6CacheItem) to_value() vphp.PhpValue {
 	unsafe {
 		return item.bind_owned_php_object_value()
 	}

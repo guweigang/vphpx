@@ -12,86 +12,86 @@ pub fn (app &VSlimApp) group(prefix string) &RouteGroup {
 
 @[php_method]
 pub fn (mut app VSlimApp) get(pattern string, handler vphp.PhpValue) &VSlimApp {
-	app.add_php_route('GET', '', pattern, handler)
+	app.add_route('GET', '', pattern, handler)
 	return app
 }
 
 @[php_method]
 pub fn (mut app VSlimApp) post(pattern string, handler vphp.PhpValue) &VSlimApp {
-	app.add_php_route('POST', '', pattern, handler)
+	app.add_route('POST', '', pattern, handler)
 	return app
 }
 
 @[php_method]
 pub fn (mut app VSlimApp) put(pattern string, handler vphp.PhpValue) &VSlimApp {
-	app.add_php_route('PUT', '', pattern, handler)
+	app.add_route('PUT', '', pattern, handler)
 	return app
 }
 
 @[php_method]
 pub fn (mut app VSlimApp) head(pattern string, handler vphp.PhpValue) &VSlimApp {
-	app.add_php_route('HEAD', '', pattern, handler)
+	app.add_route('HEAD', '', pattern, handler)
 	return app
 }
 
 @[php_method]
 pub fn (mut app VSlimApp) options(pattern string, handler vphp.PhpValue) &VSlimApp {
-	app.add_php_route('OPTIONS', '', pattern, handler)
+	app.add_route('OPTIONS', '', pattern, handler)
 	return app
 }
 
 @[php_method]
 pub fn (mut app VSlimApp) patch(pattern string, handler vphp.PhpValue) &VSlimApp {
-	app.add_php_route('PATCH', '', pattern, handler)
+	app.add_route('PATCH', '', pattern, handler)
 	return app
 }
 
 @[php_method]
 pub fn (mut app VSlimApp) delete(pattern string, handler vphp.PhpValue) &VSlimApp {
-	app.add_php_route('DELETE', '', pattern, handler)
+	app.add_route('DELETE', '', pattern, handler)
 	return app
 }
 
 @[php_method]
 pub fn (mut app VSlimApp) any(pattern string, handler vphp.PhpValue) &VSlimApp {
-	app.add_php_route('*', '', pattern, handler)
+	app.add_route('*', '', pattern, handler)
 	return app
 }
 
 @[php_method]
 pub fn (mut app VSlimApp) live(pattern string, handler vphp.PhpValue) &VSlimApp {
-	bind_live_view_to_app(mut app, handler)
-	app.add_php_route('GET', '', pattern, handler)
+	app.bind_live_view(handler)
+	app.add_route('GET', '', pattern, handler)
 	return app
 }
 
 @[php_method: 'liveWs']
 pub fn (mut app VSlimApp) live_ws(handler vphp.PhpValue, frame vphp.PhpArray, conn vphp.PhpObject) vphp.PhpValue {
-	bind_live_view_to_app(mut app, handler)
+	app.bind_live_view(handler)
 	event := frame.string_at('event', '').trim_space().to_lower()
 	if event == '' {
 		return vphp.PhpValue.null()
 	}
-	return dispatch_live_websocket_handler(mut app, handler, event, frame, conn)
+	return app.dispatch_live_websocket_handler(handler, event, frame, conn)
 }
 
 @[php_method]
 pub fn (mut app VSlimApp) websocket(pattern string, handler vphp.PhpValue) &VSlimApp {
-	bind_live_view_to_app(mut app, handler)
-	app.add_php_websocket_route('', pattern, handler)
+	app.bind_live_view(handler)
+	app.add_websocket_route('', pattern, handler)
 	return app
 }
 
 @[php_method: 'websocketNamed']
 pub fn (mut app VSlimApp) websocket_named(name string, pattern string, handler vphp.PhpValue) &VSlimApp {
-	app.add_php_websocket_route(name, pattern, handler)
+	app.add_websocket_route(name, pattern, handler)
 	return app
 }
 
 @[php_method]
 pub fn (mut app VSlimApp) map(methods vphp.PhpValue, pattern string, handler vphp.PhpValue) &VSlimApp {
-	for method in normalize_methods(methods) {
-		app.add_php_route(method, '', pattern, handler)
+	for method in value_subject(methods).normalized_methods() {
+		app.add_route(method, '', pattern, handler)
 	}
 	return app
 }
@@ -99,115 +99,115 @@ pub fn (mut app VSlimApp) map(methods vphp.PhpValue, pattern string, handler vph
 @[php_arg_name(resource_path: 'resourcePath')]
 @[php_method]
 pub fn (mut app VSlimApp) resource(resource_path string, controller string) &VSlimApp {
-	register_resource_routes(mut app, resource_path, controller, true)
+	app.register_resource_routes(resource_path, controller, true)
 	return app
 }
 
 @[php_arg_name(resource_path: 'resourcePath')]
 @[php_method: 'apiResource']
 pub fn (mut app VSlimApp) api_resource(resource_path string, controller string) &VSlimApp {
-	register_resource_routes(mut app, resource_path, controller, false)
+	app.register_resource_routes(resource_path, controller, false)
 	return app
 }
 
 @[php_arg_name(resource_path: 'resourcePath')]
 @[php_method]
 pub fn (mut app VSlimApp) singleton(resource_path string, controller string) &VSlimApp {
-	register_singleton_routes(mut app, resource_path, controller, true)
+	app.register_singleton_routes(resource_path, controller, true)
 	return app
 }
 
 @[php_arg_name(resource_path: 'resourcePath')]
 @[php_method: 'apiSingleton']
 pub fn (mut app VSlimApp) api_singleton(resource_path string, controller string) &VSlimApp {
-	register_singleton_routes(mut app, resource_path, controller, false)
+	app.register_singleton_routes(resource_path, controller, false)
 	return app
 }
 
 @[php_arg_name(resource_path: 'resourcePath')]
 @[php_method: 'resourceOpts']
 pub fn (mut app VSlimApp) resource_opts(resource_path string, controller string, options vphp.PhpArray) &VSlimApp {
-	opts := parse_resource_options(options)
-	register_resource_routes_with_options(mut app, resource_path, controller, true, opts)
+	opts := ResourceRouteOptions.from_options(options)
+	app.register_resource_routes_with_options(resource_path, controller, true, opts)
 	return app
 }
 
 @[php_arg_name(resource_path: 'resourcePath')]
 @[php_method: 'apiResourceOpts']
 pub fn (mut app VSlimApp) api_resource_opts(resource_path string, controller string, options vphp.PhpArray) &VSlimApp {
-	opts := parse_resource_options(options)
-	register_resource_routes_with_options(mut app, resource_path, controller, false, opts)
+	opts := ResourceRouteOptions.from_options(options)
+	app.register_resource_routes_with_options(resource_path, controller, false, opts)
 	return app
 }
 
 @[php_arg_name(resource_path: 'resourcePath')]
 @[php_method: 'singletonOpts']
 pub fn (mut app VSlimApp) singleton_opts(resource_path string, controller string, options vphp.PhpArray) &VSlimApp {
-	opts := parse_resource_options(options)
-	register_singleton_routes_with_options(mut app, resource_path, controller, true, opts)
+	opts := ResourceRouteOptions.from_options(options)
+	app.register_singleton_routes_with_options(resource_path, controller, true, opts)
 	return app
 }
 
 @[php_arg_name(resource_path: 'resourcePath')]
 @[php_method: 'apiSingletonOpts']
 pub fn (mut app VSlimApp) api_singleton_opts(resource_path string, controller string, options vphp.PhpArray) &VSlimApp {
-	opts := parse_resource_options(options)
-	register_singleton_routes_with_options(mut app, resource_path, controller, false, opts)
+	opts := ResourceRouteOptions.from_options(options)
+	app.register_singleton_routes_with_options(resource_path, controller, false, opts)
 	return app
 }
 
 @[php_method: 'getNamed']
 pub fn (mut app VSlimApp) get_named(name string, pattern string, handler vphp.PhpValue) &VSlimApp {
-	app.add_php_route('GET', name, pattern, handler)
+	app.add_route('GET', name, pattern, handler)
 	return app
 }
 
 @[php_method: 'postNamed']
 pub fn (mut app VSlimApp) post_named(name string, pattern string, handler vphp.PhpValue) &VSlimApp {
-	app.add_php_route('POST', name, pattern, handler)
+	app.add_route('POST', name, pattern, handler)
 	return app
 }
 
 @[php_method: 'putNamed']
 pub fn (mut app VSlimApp) put_named(name string, pattern string, handler vphp.PhpValue) &VSlimApp {
-	app.add_php_route('PUT', name, pattern, handler)
+	app.add_route('PUT', name, pattern, handler)
 	return app
 }
 
 @[php_method: 'headNamed']
 pub fn (mut app VSlimApp) head_named(name string, pattern string, handler vphp.PhpValue) &VSlimApp {
-	app.add_php_route('HEAD', name, pattern, handler)
+	app.add_route('HEAD', name, pattern, handler)
 	return app
 }
 
 @[php_method: 'optionsNamed']
 pub fn (mut app VSlimApp) options_named(name string, pattern string, handler vphp.PhpValue) &VSlimApp {
-	app.add_php_route('OPTIONS', name, pattern, handler)
+	app.add_route('OPTIONS', name, pattern, handler)
 	return app
 }
 
 @[php_method: 'patchNamed']
 pub fn (mut app VSlimApp) patch_named(name string, pattern string, handler vphp.PhpValue) &VSlimApp {
-	app.add_php_route('PATCH', name, pattern, handler)
+	app.add_route('PATCH', name, pattern, handler)
 	return app
 }
 
 @[php_method: 'deleteNamed']
 pub fn (mut app VSlimApp) delete_named(name string, pattern string, handler vphp.PhpValue) &VSlimApp {
-	app.add_php_route('DELETE', name, pattern, handler)
+	app.add_route('DELETE', name, pattern, handler)
 	return app
 }
 
 @[php_method: 'anyNamed']
 pub fn (mut app VSlimApp) any_named(name string, pattern string, handler vphp.PhpValue) &VSlimApp {
-	app.add_php_route('*', name, pattern, handler)
+	app.add_route('*', name, pattern, handler)
 	return app
 }
 
 @[php_method: 'mapNamed']
 pub fn (mut app VSlimApp) map_named(methods vphp.PhpValue, name string, pattern string, handler vphp.PhpValue) &VSlimApp {
-	for method in normalize_methods(methods) {
-		app.add_php_route(method, name, pattern, handler)
+	for method in value_subject(methods).normalized_methods() {
+		app.add_route(method, name, pattern, handler)
 	}
 	return app
 }
@@ -222,19 +222,19 @@ pub fn (group &RouteGroup) group(prefix string) &RouteGroup {
 
 @[php_method]
 pub fn (group &RouteGroup) middleware(handler vphp.PhpValue) &RouteGroup {
-	register_group_middleware_kind(group, handler, .standard)
+	group.register_middleware_kind(handler, .standard)
 	return group
 }
 
 @[php_method]
 pub fn (group &RouteGroup) before(handler vphp.PhpValue) &RouteGroup {
-	register_group_middleware_kind(group, handler, .before)
+	group.register_middleware_kind(handler, .before)
 	return group
 }
 
 @[php_method]
 pub fn (group &RouteGroup) after(handler vphp.PhpValue) &RouteGroup {
-	register_group_middleware_kind(group, handler, .after)
+	group.register_middleware_kind(handler, .after)
 	return group
 }
 
@@ -242,7 +242,7 @@ pub fn (group &RouteGroup) after(handler vphp.PhpValue) &RouteGroup {
 pub fn (group &RouteGroup) get(pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		app.add_php_route('GET', '', group.prefixed_pattern(pattern), handler)
+		app.add_route('GET', '', group.prefixed_pattern(pattern), handler)
 	}
 	return group
 }
@@ -251,7 +251,7 @@ pub fn (group &RouteGroup) get(pattern string, handler vphp.PhpValue) &RouteGrou
 pub fn (group &RouteGroup) post(pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		app.add_php_route('POST', '', group.prefixed_pattern(pattern), handler)
+		app.add_route('POST', '', group.prefixed_pattern(pattern), handler)
 	}
 	return group
 }
@@ -260,7 +260,7 @@ pub fn (group &RouteGroup) post(pattern string, handler vphp.PhpValue) &RouteGro
 pub fn (group &RouteGroup) put(pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		app.add_php_route('PUT', '', group.prefixed_pattern(pattern), handler)
+		app.add_route('PUT', '', group.prefixed_pattern(pattern), handler)
 	}
 	return group
 }
@@ -269,7 +269,7 @@ pub fn (group &RouteGroup) put(pattern string, handler vphp.PhpValue) &RouteGrou
 pub fn (group &RouteGroup) head(pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		app.add_php_route('HEAD', '', group.prefixed_pattern(pattern), handler)
+		app.add_route('HEAD', '', group.prefixed_pattern(pattern), handler)
 	}
 	return group
 }
@@ -278,7 +278,7 @@ pub fn (group &RouteGroup) head(pattern string, handler vphp.PhpValue) &RouteGro
 pub fn (group &RouteGroup) options(pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		app.add_php_route('OPTIONS', '', group.prefixed_pattern(pattern), handler)
+		app.add_route('OPTIONS', '', group.prefixed_pattern(pattern), handler)
 	}
 	return group
 }
@@ -287,7 +287,7 @@ pub fn (group &RouteGroup) options(pattern string, handler vphp.PhpValue) &Route
 pub fn (group &RouteGroup) patch(pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		app.add_php_route('PATCH', '', group.prefixed_pattern(pattern), handler)
+		app.add_route('PATCH', '', group.prefixed_pattern(pattern), handler)
 	}
 	return group
 }
@@ -296,7 +296,7 @@ pub fn (group &RouteGroup) patch(pattern string, handler vphp.PhpValue) &RouteGr
 pub fn (group &RouteGroup) delete(pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		app.add_php_route('DELETE', '', group.prefixed_pattern(pattern), handler)
+		app.add_route('DELETE', '', group.prefixed_pattern(pattern), handler)
 	}
 	return group
 }
@@ -305,7 +305,7 @@ pub fn (group &RouteGroup) delete(pattern string, handler vphp.PhpValue) &RouteG
 pub fn (group &RouteGroup) any(pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		app.add_php_route('*', '', group.prefixed_pattern(pattern), handler)
+		app.add_route('*', '', group.prefixed_pattern(pattern), handler)
 	}
 	return group
 }
@@ -314,8 +314,8 @@ pub fn (group &RouteGroup) any(pattern string, handler vphp.PhpValue) &RouteGrou
 pub fn (group &RouteGroup) live(pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		bind_live_view_to_app(mut app, handler)
-		app.add_php_route('GET', '', group.prefixed_pattern(pattern), handler)
+		app.bind_live_view(handler)
+		app.add_route('GET', '', group.prefixed_pattern(pattern), handler)
 	}
 	return group
 }
@@ -324,8 +324,8 @@ pub fn (group &RouteGroup) live(pattern string, handler vphp.PhpValue) &RouteGro
 pub fn (group &RouteGroup) websocket(pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		bind_live_view_to_app(mut app, handler)
-		app.add_php_websocket_route('', group.prefixed_pattern(pattern), handler)
+		app.bind_live_view(handler)
+		app.add_websocket_route('', group.prefixed_pattern(pattern), handler)
 	}
 	return group
 }
@@ -334,8 +334,8 @@ pub fn (group &RouteGroup) websocket(pattern string, handler vphp.PhpValue) &Rou
 pub fn (group &RouteGroup) map(methods vphp.PhpValue, pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		for method in normalize_methods(methods) {
-			app.add_php_route(method, '', group.prefixed_pattern(pattern), handler)
+		for method in value_subject(methods).normalized_methods() {
+			app.add_route(method, '', group.prefixed_pattern(pattern), handler)
 		}
 	}
 	return group
@@ -346,7 +346,7 @@ pub fn (group &RouteGroup) map(methods vphp.PhpValue, pattern string, handler vp
 pub fn (group &RouteGroup) resource(resource_path string, controller string) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		register_resource_routes(mut app, group.prefixed_pattern(resource_path), controller, true)
+		app.register_resource_routes(group.prefixed_pattern(resource_path), controller, true)
 	}
 	return group
 }
@@ -356,7 +356,7 @@ pub fn (group &RouteGroup) resource(resource_path string, controller string) &Ro
 pub fn (group &RouteGroup) api_resource(resource_path string, controller string) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		register_resource_routes(mut app, group.prefixed_pattern(resource_path), controller, false)
+		app.register_resource_routes(group.prefixed_pattern(resource_path), controller, false)
 	}
 	return group
 }
@@ -366,7 +366,7 @@ pub fn (group &RouteGroup) api_resource(resource_path string, controller string)
 pub fn (group &RouteGroup) singleton(resource_path string, controller string) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		register_singleton_routes(mut app, group.prefixed_pattern(resource_path), controller, true)
+		app.register_singleton_routes(group.prefixed_pattern(resource_path), controller, true)
 	}
 	return group
 }
@@ -376,7 +376,7 @@ pub fn (group &RouteGroup) singleton(resource_path string, controller string) &R
 pub fn (group &RouteGroup) api_singleton(resource_path string, controller string) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		register_singleton_routes(mut app, group.prefixed_pattern(resource_path), controller, false)
+		app.register_singleton_routes(group.prefixed_pattern(resource_path), controller, false)
 	}
 	return group
 }
@@ -386,8 +386,8 @@ pub fn (group &RouteGroup) api_singleton(resource_path string, controller string
 pub fn (group &RouteGroup) resource_opts(resource_path string, controller string, options vphp.PhpArray) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		opts := parse_resource_options(options)
-		register_resource_routes_with_options(mut app, group.prefixed_pattern(resource_path),
+		opts := ResourceRouteOptions.from_options(options)
+		app.register_resource_routes_with_options(group.prefixed_pattern(resource_path),
 			controller, true, opts)
 	}
 	return group
@@ -398,8 +398,8 @@ pub fn (group &RouteGroup) resource_opts(resource_path string, controller string
 pub fn (group &RouteGroup) api_resource_opts(resource_path string, controller string, options vphp.PhpArray) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		opts := parse_resource_options(options)
-		register_resource_routes_with_options(mut app, group.prefixed_pattern(resource_path),
+		opts := ResourceRouteOptions.from_options(options)
+		app.register_resource_routes_with_options(group.prefixed_pattern(resource_path),
 			controller, false, opts)
 	}
 	return group
@@ -410,8 +410,8 @@ pub fn (group &RouteGroup) api_resource_opts(resource_path string, controller st
 pub fn (group &RouteGroup) singleton_opts(resource_path string, controller string, options vphp.PhpArray) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		opts := parse_resource_options(options)
-		register_singleton_routes_with_options(mut app, group.prefixed_pattern(resource_path),
+		opts := ResourceRouteOptions.from_options(options)
+		app.register_singleton_routes_with_options(group.prefixed_pattern(resource_path),
 			controller, true, opts)
 	}
 	return group
@@ -422,8 +422,8 @@ pub fn (group &RouteGroup) singleton_opts(resource_path string, controller strin
 pub fn (group &RouteGroup) api_singleton_opts(resource_path string, controller string, options vphp.PhpArray) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		opts := parse_resource_options(options)
-		register_singleton_routes_with_options(mut app, group.prefixed_pattern(resource_path),
+		opts := ResourceRouteOptions.from_options(options)
+		app.register_singleton_routes_with_options(group.prefixed_pattern(resource_path),
 			controller, false, opts)
 	}
 	return group
@@ -433,7 +433,7 @@ pub fn (group &RouteGroup) api_singleton_opts(resource_path string, controller s
 pub fn (group &RouteGroup) get_named(name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		app.add_php_route('GET', name, group.prefixed_pattern(pattern), handler)
+		app.add_route('GET', name, group.prefixed_pattern(pattern), handler)
 	}
 	return group
 }
@@ -442,7 +442,7 @@ pub fn (group &RouteGroup) get_named(name string, pattern string, handler vphp.P
 pub fn (group &RouteGroup) post_named(name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		app.add_php_route('POST', name, group.prefixed_pattern(pattern), handler)
+		app.add_route('POST', name, group.prefixed_pattern(pattern), handler)
 	}
 	return group
 }
@@ -451,7 +451,7 @@ pub fn (group &RouteGroup) post_named(name string, pattern string, handler vphp.
 pub fn (group &RouteGroup) put_named(name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		app.add_php_route('PUT', name, group.prefixed_pattern(pattern), handler)
+		app.add_route('PUT', name, group.prefixed_pattern(pattern), handler)
 	}
 	return group
 }
@@ -460,7 +460,7 @@ pub fn (group &RouteGroup) put_named(name string, pattern string, handler vphp.P
 pub fn (group &RouteGroup) head_named(name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		app.add_php_route('HEAD', name, group.prefixed_pattern(pattern), handler)
+		app.add_route('HEAD', name, group.prefixed_pattern(pattern), handler)
 	}
 	return group
 }
@@ -469,7 +469,7 @@ pub fn (group &RouteGroup) head_named(name string, pattern string, handler vphp.
 pub fn (group &RouteGroup) options_named(name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		app.add_php_route('OPTIONS', name, group.prefixed_pattern(pattern), handler)
+		app.add_route('OPTIONS', name, group.prefixed_pattern(pattern), handler)
 	}
 	return group
 }
@@ -478,7 +478,7 @@ pub fn (group &RouteGroup) options_named(name string, pattern string, handler vp
 pub fn (group &RouteGroup) patch_named(name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		app.add_php_route('PATCH', name, group.prefixed_pattern(pattern), handler)
+		app.add_route('PATCH', name, group.prefixed_pattern(pattern), handler)
 	}
 	return group
 }
@@ -487,7 +487,7 @@ pub fn (group &RouteGroup) patch_named(name string, pattern string, handler vphp
 pub fn (group &RouteGroup) delete_named(name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		app.add_php_route('DELETE', name, group.prefixed_pattern(pattern), handler)
+		app.add_route('DELETE', name, group.prefixed_pattern(pattern), handler)
 	}
 	return group
 }
@@ -496,7 +496,7 @@ pub fn (group &RouteGroup) delete_named(name string, pattern string, handler vph
 pub fn (group &RouteGroup) any_named(name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		app.add_php_route('*', name, group.prefixed_pattern(pattern), handler)
+		app.add_route('*', name, group.prefixed_pattern(pattern), handler)
 	}
 	return group
 }
@@ -505,7 +505,7 @@ pub fn (group &RouteGroup) any_named(name string, pattern string, handler vphp.P
 pub fn (group &RouteGroup) websocket_named(name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		app.add_php_websocket_route(name, group.prefixed_pattern(pattern), handler)
+		app.add_websocket_route(name, group.prefixed_pattern(pattern), handler)
 	}
 	return group
 }
@@ -514,8 +514,8 @@ pub fn (group &RouteGroup) websocket_named(name string, pattern string, handler 
 pub fn (group &RouteGroup) map_named(methods vphp.PhpValue, name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	unsafe {
 		mut app := &VSlimApp(group.app)
-		for method in normalize_methods(methods) {
-			app.add_php_route(method, name, group.prefixed_pattern(pattern), handler)
+		for method in value_subject(methods).normalized_methods() {
+			app.add_route(method, name, group.prefixed_pattern(pattern), handler)
 		}
 	}
 	return group
@@ -577,5 +577,5 @@ fn (app &VSlimApp) redirect_to_query_value(name string, params vphp.PhpValue, qu
 	location := app.url_for_query_value(name, params, query)
 	mut res := VSlimResponse{}
 	res.construct(302, '', 'text/plain; charset=utf-8')
-	return new_psr7_response_from_vslim_response(*res.redirect(location))
+	return (*res.redirect(location)).to_psr7_response()
 }

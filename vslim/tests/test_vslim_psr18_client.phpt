@@ -10,6 +10,12 @@ if (!function_exists('proc_open')) {
     print 'skip proc_open unavailable';
     return;
 }
+$probe = @stream_socket_server('tcp://127.0.0.1:0', $errno, $errstr);
+if (!$probe) {
+    print 'skip local tcp bind unavailable';
+    return;
+}
+fclose($probe);
 ?>
 --FILE--
 <?php

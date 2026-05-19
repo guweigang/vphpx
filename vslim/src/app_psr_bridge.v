@@ -18,7 +18,7 @@ fn forwarded_request_key(ptr voidptr) u64 {
 	return u64(ptr)
 }
 
-fn clone_phase_forwarded_request_snapshot(snapshot PhaseForwardedServerRequestSnapshot) PhaseForwardedServerRequestSnapshot {
+fn (snapshot PhaseForwardedServerRequestSnapshot) clone() PhaseForwardedServerRequestSnapshot {
 	return PhaseForwardedServerRequestSnapshot{
 		method:             snapshot.method
 		request_target:     snapshot.request_target
@@ -51,8 +51,8 @@ fn snapshot_phase_forwarded_request(payload vphp.PhpObject) ?PhaseForwardedServe
 		return none
 	}
 	if internal := payload.to_v_object[VSlimPsr7ServerRequest]() {
-		body := server_request_body_or_empty(internal)
-		uri := server_request_uri_or_default(internal)
+		body := internal.body_or_empty()
+		uri := internal.uri_or_default()
 		return PhaseForwardedServerRequestSnapshot{
 			method:             internal.method
 			request_target:     internal.get_request_target()
@@ -84,7 +84,7 @@ fn snapshot_phase_forwarded_request(payload vphp.PhpObject) ?PhaseForwardedServe
 
 fn store_forwarded_request_snapshot(key u64, snapshot PhaseForwardedServerRequestSnapshot) {
 	unsafe {
-		forwarded_requests[key] = clone_phase_forwarded_request_snapshot(snapshot)
+		forwarded_requests[key] = snapshot.clone()
 	}
 }
 
@@ -95,7 +95,7 @@ fn take_forwarded_request_snapshot(key u64) ?PhaseForwardedServerRequestSnapshot
 		}
 		out := forwarded_requests[key] or { return none }
 		forwarded_requests.delete(key)
-		return clone_phase_forwarded_request_snapshot(out)
+		return out.clone()
 	}
 }
 
@@ -108,7 +108,7 @@ fn request_with_forwarded_snapshot(payload vphp.PhpValue, route_params map[strin
 		} else {
 			persistent_value_assoc_with_strings(snapshot.attributes_ref, route_params)
 		}
-		mut forwarded := build_php_psr7_server_request_value(&VSlimPsr7ServerRequest{
+		mut forwarded := (&VSlimPsr7ServerRequest{
 			method:             snapshot.method
 			request_target:     snapshot.request_target
 			protocol_version:   snapshot.protocol_version
@@ -136,8 +136,8 @@ fn request_with_forwarded_snapshot(payload vphp.PhpValue, route_params map[strin
 			uploaded_files_ref: clone_assoc_payload_ref(snapshot.uploaded_files_ref)
 			parsed_body_ref:    clone_parsed_body_ref(snapshot.parsed_body_ref)
 			attributes_ref:     attrs_owned
-		})
-		return php_object_from_owned_value(mut forwarded)
+		}).build_psr7_server_request_value()
+		return object_from_owned_value(mut forwarded)
 	}
 	return normalized
 }
@@ -157,48 +157,48 @@ fn continued_phase_request_value(payload vphp.PhpValue, route_params map[string]
 	return out
 }
 
-fn build_php_request_value(req &VSlimRequest, params map[string]string) vphp.PhpValue {
+fn (req &VSlimRequest) build_request_value(params map[string]string) vphp.PhpValue {
 	unsafe {
-		mut bound := new_vslim_request_snapshot_with_params(req, params)
+		mut bound := req.boxed_snapshot_with_params(params)
 		return bound.bind_owned_php_object_value()
 	}
 }
 
-fn build_php_response_value(res VSlimResponse) vphp.PhpValue {
+fn (res VSlimResponse) to_value() vphp.PhpValue {
 	unsafe {
-		bound := new_vslim_response_snapshot(res)
+		bound := (res).boxed_snapshot()
 		return bound.bind_owned_php_object_value()
 	}
 }
 
-fn build_php_response_value_ref(res &VSlimResponse) vphp.PhpValue {
+fn (res &VSlimResponse) build_response_value_ref() vphp.PhpValue {
 	unsafe {
-		bound := new_vslim_response_snapshot_ref(res)
+		bound := res.boxed_snapshot_ref()
 		return bound.bind_owned_php_object_value()
 	}
 }
 
-fn build_php_psr7_response_value(res &VSlimPsr7Response) vphp.PhpValue {
+fn (res &VSlimPsr7Response) build_psr7_response_value() vphp.PhpValue {
 	unsafe {
-		bound := clone_psr7_response(res, res.get_protocol_version(),
+		bound := res.clone_with(res.get_protocol_version(),
 			clone_header_values(res.headers), clone_header_names(res.header_names),
-			response_body_or_empty(res), res.get_status_code(), res.get_reason_phrase())
+			res.body_or_empty(), res.get_status_code(), res.get_reason_phrase())
 		return bound.bind_owned_php_object_value()
 	}
 }
 
-fn build_php_psr7_server_request_value(req &VSlimPsr7ServerRequest) vphp.PhpValue {
+fn (req &VSlimPsr7ServerRequest) build_psr7_server_request_value() vphp.PhpValue {
 	unsafe {
-		bound := clone_psr7_server_request(req, req.method, req.request_target,
+		bound := req.clone_with(req.method, req.request_target,
 			req.protocol_version, clone_header_values(req.headers),
-			clone_header_names(req.header_names), server_request_body_or_empty(req),
-			server_request_uri_or_default(req), req.server_params_ref, req.cookie_params_ref,
+			clone_header_names(req.header_names), req.body_or_empty(),
+			req.uri_or_default(), req.server_params_ref, req.cookie_params_ref,
 			req.query_params_ref, req.uploaded_files_ref, req.parsed_body_ref, req.attributes_ref)
 		return bound.bind_owned_php_object_value()
 	}
 }
 
-fn php_object_from_owned_value(mut value vphp.PhpValue) vphp.PhpObject {
+fn object_from_owned_value(mut value vphp.PhpValue) vphp.PhpObject {
 	object := value.as_object() or {
 		value.release()
 		return vphp.PhpObject.invalid()
@@ -211,14 +211,14 @@ fn normalize_psr15_server_request_object(request vphp.PhpObject, route_params ma
 	if (request.is_instance_of('VSlim\\Psr7\\ServerRequest')
 		|| request.is_instance_of('VSlimPsr7ServerRequest')) && request.is_valid() {
 		if internal := request.to_v_object[VSlimPsr7ServerRequest]() {
-			mut cloned := build_php_psr7_server_request_value(&VSlimPsr7ServerRequest{
+			mut cloned := (&VSlimPsr7ServerRequest{
 				method:             internal.method
 				request_target:     internal.get_request_target()
 				protocol_version:   internal.get_protocol_version()
 				headers:            clone_header_values(internal.headers)
 				header_names:       clone_header_names(internal.header_names)
-				body_ref:           clone_psr7_stream(server_request_body_or_empty(internal))
-				uri_ref:            clone_psr7_uri_or_default(server_request_uri_or_default(internal))
+				body_ref:           internal.body_or_empty().clone_or_empty()
+				uri_ref:            internal.uri_or_default().clone_or_default()
 				server_params_ref:  clone_assoc_payload_ref(internal.server_params_ref)
 				cookie_params_ref:  clone_assoc_payload_ref(internal.cookie_params_ref)
 				query_params_ref:   clone_assoc_payload_ref(internal.query_params_ref)
@@ -229,14 +229,14 @@ fn normalize_psr15_server_request_object(request vphp.PhpObject, route_params ma
 				} else {
 					persistent_value_assoc_with_strings(internal.attributes_ref, route_params)
 				}
-			})
-			return php_object_from_owned_value(mut cloned)
+			}).build_psr7_server_request_value()
+			return object_from_owned_value(mut cloned)
 		}
 	}
 	if request.is_instance_of('VSlim\\VHttpd\\Request') || request.is_instance_of('VSlimRequest') {
 		if req := request.to_v_object[VSlimRequest]() {
-			mut cloned := build_php_psr7_server_request_value_from_vslim(req, route_params)
-			return php_object_from_owned_value(mut cloned)
+			mut cloned := req.build_psr7_server_request_value_from_vslim(route_params)
+			return object_from_owned_value(mut cloned)
 		}
 	}
 	method := if request.method_exists('getMethod') {
@@ -265,23 +265,23 @@ fn normalize_psr15_server_request_object(request vphp.PhpObject, route_params ma
 		defer {
 			headers.release()
 		}
-		php_value_psr7_header_state(headers)
+		value_subject(headers).psr7_header_state()
 	} else {
 		map[string][]string{}, map[string]string{}
 	}
 	body_ref := if request.method_exists('getBody') {
 		request.with_method_result[vphp.PhpValue, &VSlimPsr7Stream]('getBody', fn (z vphp.PhpValue) &VSlimPsr7Stream {
-			return php_value_psr7_stream(z)
-		}) or { new_psr7_stream('') }
+			return VSlimPsr7Stream.from_value(z)
+		}) or { VSlimPsr7Stream.from_content('') }
 	} else {
-		new_psr7_stream('')
+		VSlimPsr7Stream.from_content('')
 	}
 	uri_ref := if request.method_exists('getUri') {
 		request.with_method_result[vphp.PhpValue, &VSlimPsr7Uri]('getUri', fn (z vphp.PhpValue) &VSlimPsr7Uri {
-			return php_value_psr7_uri(z)
-		}) or { new_psr7_uri('/') }
+			return VSlimPsr7Uri.from_value(z)
+		}) or { VSlimPsr7Uri.from_string('/') }
 	} else {
-		new_psr7_uri('/')
+		VSlimPsr7Uri.from_string('/')
 	}
 	server_params_ref := if request.method_exists('getServerParams') {
 		request.with_method_result[vphp.PhpValue, vphp.PhpArray]('getServerParams', fn (z vphp.PhpValue) vphp.PhpArray {
@@ -341,7 +341,7 @@ fn normalize_psr15_server_request_object(request vphp.PhpObject, route_params ma
 	} else {
 		persistent_value_assoc_with_strings(empty_persistent_array_value(), route_params)
 	}
-	mut normalized := build_php_psr7_server_request_value(&VSlimPsr7ServerRequest{
+	mut normalized := (&VSlimPsr7ServerRequest{
 		method:             normalize_psr7_method(method)
 		request_target:     request_target
 		protocol_version:   normalize_protocol_version(protocol_version)
@@ -355,15 +355,14 @@ fn normalize_psr15_server_request_object(request vphp.PhpObject, route_params ma
 		uploaded_files_ref: uploaded_files_ref
 		parsed_body_ref:    parsed_body_ref
 		attributes_ref:     attributes_ref
-	})
-	return php_object_from_owned_value(mut normalized)
+	}).build_psr7_server_request_value()
+	return object_from_owned_value(mut normalized)
 }
 
 fn normalize_psr15_server_request_value(payload_value vphp.PhpValue, route_params map[string]string) vphp.PhpObject {
 	payload_object := payload_value.as_object() or {
-		mut cloned := build_php_psr7_server_request_value_from_vslim(new_vslim_request('GET', '/', ''),
-			route_params)
-		return php_object_from_owned_value(mut cloned)
+		mut cloned := VSlimRequest.new('GET', '/', '').build_psr7_server_request_value_from_vslim(route_params)
+		return object_from_owned_value(mut cloned)
 	}
 	return normalize_psr15_server_request_object(payload_object, route_params)
 }
@@ -372,7 +371,7 @@ fn normalize_psr15_server_request(payload vphp.PhpValue, route_params map[string
 	return normalize_psr15_server_request_value(payload, route_params)
 }
 
-fn build_php_psr7_server_request_value_from_vslim(req &VSlimRequest, route_params map[string]string) vphp.PhpValue {
+fn (req &VSlimRequest) build_psr7_server_request_value_from_vslim(route_params map[string]string) vphp.PhpValue {
 	mut headers := map[string][]string{}
 	for key, value in req.headers() {
 		headers[key] = [value]
@@ -386,24 +385,24 @@ fn build_php_psr7_server_request_value_from_vslim(req &VSlimRequest, route_param
 		headers['host'] = [host_line]
 		header_names['host'] = 'Host'
 	}
-	return build_php_psr7_server_request_value(&VSlimPsr7ServerRequest{
+	return (&VSlimPsr7ServerRequest{
 		method:             normalize_psr7_method(req.method)
 		request_target:     req.raw_path
 		protocol_version:   normalize_protocol_version(req.protocol_version)
 		headers:            headers
 		header_names:       header_names
-		body_ref:           new_psr7_stream(req.body)
-		uri_ref:            new_psr7_uri(vslim_request_uri_string(req))
+		body_ref:           VSlimPsr7Stream.from_content(req.body)
+		uri_ref:            VSlimPsr7Uri.from_string(vslim_request_uri_string(req))
 		server_params_ref:  string_map_to_persistent_array(req.server_params())
 		cookie_params_ref:  string_map_to_persistent_array(req.cookies())
 		query_params_ref:   string_map_to_persistent_array(req.query_params())
 		uploaded_files_ref: empty_persistent_array()
 		parsed_body_ref:    persistent_null_value()
-		attributes_ref:     persistent_attrs_from_request(req, route_params)
-	})
+		attributes_ref:     req.persistent_attrs_from_request(route_params)
+	}).build_psr7_server_request_value()
 }
 
-fn persistent_attrs_from_request(req &VSlimRequest, route_params map[string]string) vphp.PhpValue {
+fn (req &VSlimRequest) persistent_attrs_from_request(route_params map[string]string) vphp.PhpValue {
 	mut attrs := empty_persistent_array_value()
 	for key, value in req.attributes() {
 		mut value_arg := vphp.PhpString.of(value)
@@ -461,7 +460,7 @@ fn vslim_request_uri_string(req &VSlimRequest) string {
 	return uri
 }
 
-fn new_vslim_request_from_psr_server_request(payload vphp.PhpValue, route_params map[string]string) &VSlimRequest {
+fn VSlimRequest.from_psr_server_request(payload vphp.PhpValue, route_params map[string]string) &VSlimRequest {
 	if payload_object := payload.as_object() {
 		if (payload_object.is_instance_of('VSlim\\VHttpd\\Request')
 			|| payload_object.is_instance_of('VSlimRequest')) && payload_object.is_valid() {
@@ -476,10 +475,10 @@ fn new_vslim_request_from_psr_server_request(payload vphp.PhpValue, route_params
 	defer {
 		request.release()
 	}
-	return new_vslim_request_from_psr_server_request_object(request, route_params)
+	return VSlimRequest.from_psr_server_request_object(request, route_params)
 }
 
-fn new_vslim_request_from_psr_server_request_object(payload vphp.PhpObject, route_params map[string]string) &VSlimRequest {
+fn VSlimRequest.from_psr_server_request_object(payload vphp.PhpObject, route_params map[string]string) &VSlimRequest {
 	if payload.is_instance_of('VSlim\\VHttpd\\Request') || payload.is_instance_of('VSlimRequest') {
 		if req := payload.to_v_object[VSlimRequest]() {
 			mut cloned := req.to_vslim_request()
@@ -488,7 +487,7 @@ fn new_vslim_request_from_psr_server_request_object(payload vphp.PhpObject, rout
 		}
 	}
 	if internal := payload.to_v_object[VSlimPsr7ServerRequest]() {
-		uri := server_request_uri_or_default(internal)
+		uri := internal.uri_or_default()
 		built_target := build_psr7_request_target(uri)
 		mut raw_path := internal.get_request_target()
 		if built_target.trim_space() != '' && built_target != '*' {
@@ -506,7 +505,7 @@ fn new_vslim_request_from_psr_server_request_object(payload vphp.PhpObject, rout
 			method:           internal.get_method()
 			raw_path:         raw_path
 			path:             RoutePath.normalize(uri.get_path())
-			body:             psr7_stream_string(server_request_body_or_empty(internal))
+			body:             psr7_stream_string(internal.body_or_empty())
 			query_string:     uri.get_query()
 			scheme:           uri.get_scheme()
 			host:             uri.get_host()
@@ -533,7 +532,7 @@ fn new_vslim_request_from_psr_server_request_object(payload vphp.PhpObject, rout
 		}
 		return out
 	}
-	return new_vslim_request('GET', '/', '')
+	return VSlimRequest.new('GET', '/', '')
 }
 
 fn uploaded_files_to_filenames_array(files vphp.PhpArray) []string {
@@ -560,7 +559,8 @@ mut:
 	header_names map[string]string
 }
 
-fn php_value_psr7_header_state(value vphp.PhpValue) (map[string][]string, map[string]string) {
+fn (subject PhpValueSubject) psr7_header_state() (map[string][]string, map[string]string) {
+	value := subject.value
 	mut arr := value.as_array() or { return map[string][]string{}, map[string]string{} }
 	defer {
 		arr.release()
@@ -571,7 +571,7 @@ fn php_value_psr7_header_state(value vphp.PhpValue) (map[string][]string, map[st
 	}, fn (key vphp.PhpValue, child vphp.PhpValue, mut state Psr7HeaderState) {
 		name := key.to_string()
 		normalized := normalize_psr7_header_name(name)
-		state.headers[normalized] = php_value_header_values(child) or { []string{} }
+		state.headers[normalized] = value_subject(child).header_values() or { []string{} }
 		state.header_names[normalized] = name
 	})
 	return state.headers, state.header_names
@@ -603,18 +603,19 @@ fn persistent_array_value_to_scalar_string_map(value vphp.PhpValue) map[string]s
 	}
 }
 
-fn php_value_assoc_scalar_string_map(value vphp.PhpValue) map[string]string {
+fn (subject PhpValueSubject) assoc_scalar_string_map() map[string]string {
+	value := subject.value
 	if arr := value.as_array() {
 		return arr.to_scalar_string_map()
 	}
 	return map[string]string{}
 }
 
-fn new_vslim_request_from_psr_server_request_value(payload vphp.PhpValue, route_params map[string]string) &VSlimRequest {
+fn VSlimRequest.from_psr_server_request_value(payload vphp.PhpValue, route_params map[string]string) &VSlimRequest {
 	if object := payload.as_object() {
-		return new_vslim_request_from_psr_server_request_object(object, route_params)
+		return VSlimRequest.from_psr_server_request_object(object, route_params)
 	}
-	return new_vslim_request('GET', '/', '')
+	return VSlimRequest.new('GET', '/', '')
 }
 
 fn psr7_stream_string(stream &VSlimPsr7Stream) string {
@@ -624,7 +625,7 @@ fn psr7_stream_string(stream &VSlimPsr7Stream) string {
 	return stream.stream_string()
 }
 
-fn new_psr7_response_from_vslim_response(res VSlimResponse) &VSlimPsr7Response {
+fn (res VSlimResponse) to_psr7_response() &VSlimPsr7Response {
 	mut headers := map[string][]string{}
 	for key, value in res.headers() {
 		headers[normalize_psr7_header_name(key)] = [value]
@@ -634,11 +635,11 @@ fn new_psr7_response_from_vslim_response(res VSlimResponse) &VSlimPsr7Response {
 		reason_phrase:    normalize_reason_phrase(res.status, '').clone()
 		protocol_version: '1.1'
 		headers:          clone_header_values(headers)
-		body_ref:         new_psr7_stream(res.body.clone())
+		body_ref:         VSlimPsr7Stream.from_content(res.body.clone())
 	}
 }
 
-fn new_vslim_response_from_psr_response(res &VSlimPsr7Response) VSlimResponse {
+fn (res &VSlimPsr7Response) to_vslim_response() VSlimResponse {
 	mut headers := map[string]string{}
 	for key, values in res.headers {
 		if values.len == 0 {
@@ -649,31 +650,31 @@ fn new_vslim_response_from_psr_response(res &VSlimPsr7Response) VSlimResponse {
 	content_type := headers['content-type'] or { 'text/plain; charset=utf-8' }
 	return VSlimResponse{
 		status:       res.status
-		body:         psr7_stream_string(response_body_or_empty(res)).clone()
+		body:         psr7_stream_string(res.body_or_empty()).clone()
 		content_type: content_type.clone()
 		headers:      snapshot_string_map(headers)
 	}
 }
 
-fn new_psr7_text_response(status int, body string) &VSlimPsr7Response {
-	return new_psr7_response_from_vslim_response(text_response(status, body))
+fn VSlimPsr7Response.text(status int, body string) &VSlimPsr7Response {
+	return VSlimResponse.text(status, body).to_psr7_response()
 }
 
-fn new_psr7_json_response(status int, json_body string) &VSlimPsr7Response {
-	return new_psr7_response_from_vslim_response(json_response(status, json_body))
+fn VSlimPsr7Response.json(status int, json_body string) &VSlimPsr7Response {
+	return VSlimResponse.json(status, json_body).to_psr7_response()
 }
 
-fn normalize_to_psr7_response_value(result vphp.PhpValue) &VSlimPsr7Response {
+fn VSlimPsr7Response.from_value(result vphp.PhpValue) &VSlimPsr7Response {
 	if !result.is_valid() || result.is_null() || result.is_undef() {
-		return new_psr7_response_from_vslim_response(text_response(200, ''))
+		return VSlimResponse.text(200, '').to_psr7_response()
 	}
 	if object := result.as_object() {
 		if object.is_instance_of('VSlim\\Psr7\\Response')
 			|| object.is_instance_of('VSlimPsr7Response') {
 			if resp := object.to_v_object[VSlimPsr7Response]() {
-				return clone_psr7_response(resp, resp.get_protocol_version(),
+				return resp.clone_with(resp.get_protocol_version(),
 					clone_header_values(resp.headers), clone_header_names(resp.header_names),
-					response_body_or_empty(resp), resp.get_status_code(), resp.get_reason_phrase())
+					resp.body_or_empty(), resp.get_status_code(), resp.get_reason_phrase())
 			}
 		}
 		if object.is_instance_of('Psr\\Http\\Message\\ResponseInterface') {
@@ -703,16 +704,16 @@ fn normalize_to_psr7_response_value(result vphp.PhpValue) &VSlimPsr7Response {
 				defer {
 					headers_value.release()
 				}
-				php_value_psr7_header_state(headers_value)
+				value_subject(headers_value).psr7_header_state()
 			} else {
 				map[string][]string{}, map[string]string{}
 			}
 			body_ref := if object.method_exists('getBody') {
 				object.with_method_result[vphp.PhpValue, &VSlimPsr7Stream]('getBody', fn (z vphp.PhpValue) &VSlimPsr7Stream {
-					return clone_psr7_stream(php_value_psr7_stream(z))
-				}) or { new_psr7_stream('') }
+					return VSlimPsr7Stream.from_value(z).clone_or_empty()
+				}) or { VSlimPsr7Stream.from_content('') }
 			} else {
-				new_psr7_stream('')
+				VSlimPsr7Stream.from_content('')
 			}
 			return &VSlimPsr7Response{
 				status:           normalize_psr7_status(status)
@@ -724,9 +725,9 @@ fn normalize_to_psr7_response_value(result vphp.PhpValue) &VSlimPsr7Response {
 			}
 		}
 	}
-	res, ok := normalize_php_route_response_psr_value(result)
+	res, ok := VSlimResponse.psr7_from_route_result(result)
 	if ok {
 		return res
 	}
-	return new_psr7_response_from_vslim_response(text_response(500, 'Invalid route response'))
+	return VSlimResponse.text(500, 'Invalid route response').to_psr7_response()
 }

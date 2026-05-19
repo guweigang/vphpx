@@ -75,7 +75,7 @@ fn clone_cli_string_slice(items []string) []string {
 	return out
 }
 
-fn reset_cli_command_input(mut cli VSlimCliApp) {
+fn (mut cli VSlimCliApp) reset_command_input() {
 	cli.last_command_name = ''
 	cli.last_raw_args = []string{}
 	cli.last_arguments = map[string]vphp.DynValue{}
@@ -85,7 +85,7 @@ fn reset_cli_command_input(mut cli VSlimCliApp) {
 	cli.last_input_parsed = false
 }
 
-fn set_cli_command_input(mut cli VSlimCliApp, command_name string, input CliCommandInput) {
+fn (mut cli VSlimCliApp) set_command_input(command_name string, input CliCommandInput) {
 	cli.last_command_name = command_name
 	cli.last_raw_args = clone_cli_string_slice(input.raw_args)
 	cli.last_arguments = input.arguments.clone()
@@ -95,7 +95,8 @@ fn set_cli_command_input(mut cli VSlimCliApp, command_name string, input CliComm
 	cli.last_input_parsed = input.parsed
 }
 
-fn cli_definition_string_item(item vphp.PhpValue) ?string {
+fn (subject PhpValueSubject) cli_definition_string_item() ?string {
+	item := subject.value
 	if !item.is_valid() || item.is_null() || item.is_undef() || !item.is_string() {
 		return none
 	}
@@ -106,12 +107,13 @@ fn cli_definition_string_item(item vphp.PhpValue) ?string {
 	return name
 }
 
-fn cli_definition_bool(spec vphp.PhpArray, keys []string, fallback bool) bool {
-	value := app_bootstrap_lookup(spec, keys) or { return fallback }
-	return cli_bool_from_value(value, fallback)
+fn (subject AppBootstrapSpec) cli_bool(keys []string, fallback bool) bool {
+	value := subject.lookup(keys) or { return fallback }
+	return value_subject(value).cli_bool(fallback)
 }
 
-fn cli_bool_from_value(value vphp.PhpValue, fallback bool) bool {
+fn (subject PhpValueSubject) cli_bool(fallback bool) bool {
+	value := subject.value
 	if value.is_bool() {
 		return value.to_bool()
 	}
@@ -126,7 +128,8 @@ fn cli_bool_from_value(value vphp.PhpValue, fallback bool) bool {
 	}
 }
 
-fn cli_string_list_from_value(value vphp.PhpValue) ![]string {
+fn (subject PhpValueSubject) cli_string_list() ![]string {
+	value := subject.value
 	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return []string{}
 	}
@@ -152,8 +155,8 @@ fn cli_string_list_from_value(value vphp.PhpValue) ![]string {
 	return out
 }
 
-fn cli_definition_value_type(spec vphp.PhpArray, keys []string, fallback CliInputValueType) !CliInputValueType {
-	raw := app_bootstrap_string(spec, keys) or { return fallback }
+fn (subject AppBootstrapSpec) cli_value_type(keys []string, fallback CliInputValueType) !CliInputValueType {
+	raw := subject.string(keys) or { return fallback }
 	return match raw.to_lower() {
 		'', 'string', 'str' { .string_ }
 		'bool', 'boolean', 'flag' { .bool_ }
@@ -163,8 +166,8 @@ fn cli_definition_value_type(spec vphp.PhpArray, keys []string, fallback CliInpu
 	}
 }
 
-fn cli_definition_choices(spec vphp.PhpArray, keys []string) ![]string {
-	if raw_choices := app_bootstrap_lookup(spec, keys) {
+fn (subject AppBootstrapSpec) cli_choices(keys []string) ![]string {
+	if raw_choices := subject.lookup(keys) {
 		iter := raw_choices.as_iterable() or { return error('CLI choices must be iterable') }
 		mut normalized := iter.to_array()!
 		defer {
@@ -182,9 +185,9 @@ fn cli_definition_choices(spec vphp.PhpArray, keys []string) ![]string {
 	return []string{}
 }
 
-fn cli_definition_string_list(spec vphp.PhpArray, keys []string) ![]string {
-	if raw := app_bootstrap_lookup(spec, keys) {
-		return cli_string_list_from_value(raw)!
+fn (subject AppBootstrapSpec) cli_string_list(keys []string) ![]string {
+	if raw := subject.lookup(keys) {
+		return value_subject(raw).cli_string_list()!
 	}
 	return []string{}
 }
@@ -215,8 +218,8 @@ fn cli_default_strings(value vphp.PhpValue, multiple bool) ![]string {
 	return [value.to_string()]
 }
 
-fn cli_definition_string(spec vphp.PhpArray, keys []string) string {
-	return app_bootstrap_string(spec, keys) or { '' }
+fn (subject AppBootstrapSpec) cli_string(keys []string) string {
+	return subject.string(keys) or { '' }
 }
 
 fn cli_env_value(name string) ?string {
@@ -231,8 +234,9 @@ fn cli_env_value(name string) ?string {
 	return raw
 }
 
-fn cli_parse_argument_spec(item vphp.PhpValue) !CliCommandArgumentSpec {
-	if name := cli_definition_string_item(item) {
+fn (subject PhpValueSubject) parse_cli_argument_spec() !CliCommandArgumentSpec {
+	item := subject.value
+	if name := subject.cli_definition_string_item() {
 		return CliCommandArgumentSpec{
 			name: name
 		}
@@ -242,36 +246,37 @@ fn cli_parse_argument_spec(item vphp.PhpValue) !CliCommandArgumentSpec {
 	defer {
 		spec_arr.release()
 	}
-	name := app_bootstrap_string(spec_arr, ['name', 'arg', 'argument']) or {
+	name := app_bootstrap_spec(spec_arr).string(['name', 'arg', 'argument']) or {
 		return error('CLI argument definition must include a non-empty name')
 	}
-	multiple := cli_definition_bool(spec_arr, ['multiple', 'variadic', 'array'], false)
-	default_values := if default_value := app_bootstrap_lookup(spec_arr, ['default']) {
+	multiple := app_bootstrap_spec(spec_arr).cli_bool(['multiple', 'variadic', 'array'], false)
+	default_values := if default_value := app_bootstrap_spec(spec_arr).lookup(['default']) {
 		cli_default_strings(default_value, multiple)!
 	} else {
 		[]string{}
 	}
 	has_default := default_values.len > 0
 	required_default := !multiple && !has_default
-	value_type := cli_definition_value_type(spec_arr, ['type'], .string_)!
+	value_type := app_bootstrap_spec(spec_arr).cli_value_type(['type'], .string_)!
 	return CliCommandArgumentSpec{
 		name:           name
 		value_type:     value_type
-		required:       cli_definition_bool(spec_arr, ['required'], required_default)
+		required:       app_bootstrap_spec(spec_arr).cli_bool(['required'], required_default)
 		multiple:       multiple
-		env_name:       cli_definition_string(spec_arr, ['env', 'env_name', 'envName'])
-		placeholder:    cli_definition_string(spec_arr, ['placeholder', 'value_placeholder',
+		env_name:       app_bootstrap_spec(spec_arr).cli_string(['env', 'env_name', 'envName'])
+		placeholder:    app_bootstrap_spec(spec_arr).cli_string(['placeholder', 'value_placeholder',
 			'valuePlaceholder'])
-		value_hint:     cli_definition_string(spec_arr, ['value_hint', 'valueHint', 'hint'])
-		description:    app_bootstrap_string(spec_arr, ['description', 'help']) or { '' }
-		choices:        cli_definition_choices(spec_arr, ['choices', 'enum', 'values'])!
+		value_hint:     app_bootstrap_spec(spec_arr).cli_string(['value_hint', 'valueHint', 'hint'])
+		description:    app_bootstrap_spec(spec_arr).string(['description', 'help']) or { '' }
+		choices:        app_bootstrap_spec(spec_arr).cli_choices(['choices', 'enum', 'values'])!
 		has_default:    has_default
 		default_values: default_values
 	}
 }
 
-fn cli_parse_option_spec(item vphp.PhpValue) !CliCommandOptionSpec {
-	if name := cli_definition_string_item(item) {
+fn (subject PhpValueSubject) parse_cli_option_spec() !CliCommandOptionSpec {
+	item := subject.value
+	if name := subject.cli_definition_string_item() {
 		return CliCommandOptionSpec{
 			name: name
 		}
@@ -281,67 +286,68 @@ fn cli_parse_option_spec(item vphp.PhpValue) !CliCommandOptionSpec {
 	defer {
 		spec_arr.release()
 	}
-	name := app_bootstrap_string(spec_arr, ['name', 'option', 'flag']) or {
+	name := app_bootstrap_spec(spec_arr).string(['name', 'option', 'flag']) or {
 		return error('CLI option definition must include a non-empty name')
 	}
-	short := app_bootstrap_string(spec_arr, ['short', 'abbrev']) or { '' }
+	short := app_bootstrap_spec(spec_arr).string(['short', 'abbrev']) or { '' }
 	if short.len > 1 {
 		return error('CLI option "${name}" short name must be a single character')
 	}
-	value_type := cli_definition_value_type(spec_arr, ['type'], .bool_)!
-	multiple := cli_definition_bool(spec_arr, ['multiple', 'array'], false)
+	value_type := app_bootstrap_spec(spec_arr).cli_value_type(['type'], .bool_)!
+	multiple := app_bootstrap_spec(spec_arr).cli_bool(['multiple', 'array'], false)
 	if multiple && value_type == .bool_ {
 		return error('CLI option "${name}" cannot be both bool and multiple')
 	}
-	default_values := if default_value := app_bootstrap_lookup(spec_arr, ['default']) {
+	default_values := if default_value := app_bootstrap_spec(spec_arr).lookup(['default']) {
 		cli_default_strings(default_value, multiple)!
 	} else {
 		[]string{}
 	}
 	has_default := default_values.len > 0
-	deprecated := cli_definition_bool(spec_arr, ['deprecated'], false)
-	deprecation := app_bootstrap_string(spec_arr, ['deprecation_message', 'deprecationMessage',
+	deprecated := app_bootstrap_spec(spec_arr).cli_bool(['deprecated'], false)
+	deprecation := app_bootstrap_spec(spec_arr).string(['deprecation_message', 'deprecationMessage',
 		'deprecated_message', 'deprecatedMessage']) or { '' }
 	return CliCommandOptionSpec{
 		name:           name
 		short:          short
 		value_type:     value_type
-		required:       cli_definition_bool(spec_arr, ['required'], false)
+		required:       app_bootstrap_spec(spec_arr).cli_bool(['required'], false)
 		multiple:       multiple
-		hidden:         cli_definition_bool(spec_arr, ['hidden'], false)
+		hidden:         app_bootstrap_spec(spec_arr).cli_bool(['hidden'], false)
 		deprecated:     deprecated
 		deprecation:    deprecation
-		env_name:       cli_definition_string(spec_arr, ['env', 'env_name', 'envName'])
-		placeholder:    cli_definition_string(spec_arr, ['placeholder', 'value_placeholder',
+		env_name:       app_bootstrap_spec(spec_arr).cli_string(['env', 'env_name', 'envName'])
+		placeholder:    app_bootstrap_spec(spec_arr).cli_string(['placeholder', 'value_placeholder',
 			'valuePlaceholder'])
-		value_hint:     cli_definition_string(spec_arr, ['value_hint', 'valueHint', 'hint'])
-		description:    app_bootstrap_string(spec_arr, ['description', 'help']) or { '' }
-		choices:        cli_definition_choices(spec_arr, ['choices', 'enum', 'values'])!
+		value_hint:     app_bootstrap_spec(spec_arr).cli_string(['value_hint', 'valueHint', 'hint'])
+		description:    app_bootstrap_spec(spec_arr).string(['description', 'help']) or { '' }
+		choices:        app_bootstrap_spec(spec_arr).cli_choices(['choices', 'enum', 'values'])!
 		has_default:    has_default
 		default_values: default_values
 	}
 }
 
-fn cli_parse_command_definition(raw vphp.PhpValue) !CliCommandDefinition {
-	mut spec_arr := php_iterable_array(raw)!
+fn (subject PhpValueSubject) parse_cli_command_definition() !CliCommandDefinition {
+	raw := subject.value
+	mut spec_arr := iterable_array(raw)!
 	defer {
 		spec_arr.release()
 	}
 	mut def := CliCommandDefinition{
-		usage:        app_bootstrap_string(spec_arr, ['usage']) or { '' }
-		description:  app_bootstrap_string(spec_arr, ['description', 'summary', 'help']) or { '' }
-		aliases:      cli_definition_string_list(spec_arr, ['aliases', 'alias']) or { []string{} }
-		hidden:       cli_definition_bool(spec_arr, ['hidden'], false)
-		examples:     cli_definition_string_list(spec_arr, ['examples', 'example']) or {
+		usage:        app_bootstrap_spec(spec_arr).string(['usage']) or { '' }
+		description:  app_bootstrap_spec(spec_arr).string(['description', 'summary', 'help']) or { '' }
+		aliases:      app_bootstrap_spec(spec_arr).cli_string_list(['aliases', 'alias']) or { []string{} }
+		hidden:       app_bootstrap_spec(spec_arr).cli_bool(['hidden'], false)
+		examples:     app_bootstrap_spec(spec_arr).cli_string_list(['examples', 'example']) or {
 			[]string{}
 		}
-		epilog:       app_bootstrap_string(spec_arr, ['epilog', 'footer']) or { '' }
+		epilog:       app_bootstrap_spec(spec_arr).string(['epilog', 'footer']) or { '' }
 		arguments:    []CliCommandArgumentSpec{}
 		options:      []CliCommandOptionSpec{}
 		option_index: map[string]int{}
 		short_index:  map[string]int{}
 	}
-	if raw_args := app_bootstrap_lookup(spec_arr, ['arguments', 'args']) {
+	if raw_args := app_bootstrap_spec(spec_arr).lookup(['arguments', 'args']) {
 		iter := raw_args.as_iterable() or {
 			return error('CLI arguments definition must be iterable')
 		}
@@ -350,7 +356,7 @@ fn cli_parse_command_definition(raw vphp.PhpValue) !CliCommandDefinition {
 			normalized.release()
 		}
 		for idx := 0; idx < normalized.count(); idx++ {
-			arg_spec := cli_parse_argument_spec(normalized.index_value(idx))!
+			arg_spec := value_subject(normalized.index_value(idx)).parse_cli_argument_spec()!
 			if arg_spec.name in def.option_index {
 				return error('CLI argument "${arg_spec.name}" conflicts with an option name')
 			}
@@ -360,7 +366,7 @@ fn cli_parse_command_definition(raw vphp.PhpValue) !CliCommandDefinition {
 			def.arguments << arg_spec
 		}
 	}
-	if raw_options := app_bootstrap_lookup(spec_arr, ['options', 'flags']) {
+	if raw_options := app_bootstrap_spec(spec_arr).lookup(['options', 'flags']) {
 		iter := raw_options.as_iterable() or {
 			return error('CLI options definition must be iterable')
 		}
@@ -369,7 +375,7 @@ fn cli_parse_command_definition(raw vphp.PhpValue) !CliCommandDefinition {
 			normalized.release()
 		}
 		for idx := 0; idx < normalized.count(); idx++ {
-			opt_spec := cli_parse_option_spec(normalized.index_value(idx))!
+			opt_spec := value_subject(normalized.index_value(idx)).parse_cli_option_spec()!
 			if opt_spec.name in def.option_index {
 				return error('CLI option "${opt_spec.name}" is declared more than once')
 			}
@@ -389,12 +395,12 @@ fn cli_parse_command_definition(raw vphp.PhpValue) !CliCommandDefinition {
 	return def
 }
 
-fn cli_find_option(def CliCommandDefinition, name string) ?CliCommandOptionSpec {
+fn (def CliCommandDefinition) find_option(name string) ?CliCommandOptionSpec {
 	index := def.option_index[name] or { return none }
 	return def.options[index]
 }
 
-fn cli_find_short_option(def CliCommandDefinition, short string) ?CliCommandOptionSpec {
+fn (def CliCommandDefinition) find_short_option(short string) ?CliCommandOptionSpec {
 	index := def.short_index[short] or { return none }
 	return def.options[index]
 }
@@ -493,7 +499,7 @@ fn cli_assign_option_value(mut raw_values map[string][]string, mut option_seen m
 	option_seen[spec.name] = true
 }
 
-fn cli_deprecation_warning(spec CliCommandOptionSpec) string {
+fn (spec CliCommandOptionSpec) deprecation_warning() string {
 	if spec.deprecation.trim_space() != '' {
 		return spec.deprecation.trim_space()
 	}
@@ -504,7 +510,7 @@ fn cli_note_option_warning(mut warnings []string, spec CliCommandOptionSpec) {
 	if !spec.deprecated {
 		return
 	}
-	warning := cli_deprecation_warning(spec)
+	warning := spec.deprecation_warning()
 	if warning == '' || warning in warnings {
 		return
 	}
@@ -527,7 +533,7 @@ fn cli_parse_long_option(mut raw_values map[string][]string, mut option_seen map
 	} else {
 		payload, false, ''
 	}
-	spec := cli_find_option(def, name) or { return error('unknown CLI option `--${name}`') }
+	spec := def.find_option(name) or { return error('unknown CLI option `--${name}`') }
 	cli_note_option_warning(mut warnings, spec)
 	if spec.value_type == .bool_ {
 		if attached_has_value {
@@ -563,7 +569,7 @@ fn cli_parse_short_option(mut raw_values map[string][]string, mut option_seen ma
 		if short_name.len != 1 {
 			return error('invalid CLI short option syntax `${arg}`')
 		}
-		spec := cli_find_short_option(def, short_name) or {
+		spec := def.find_short_option(short_name) or {
 			return error('unknown CLI option `-${short_name}`')
 		}
 		cli_note_option_warning(mut warnings, spec)
@@ -578,7 +584,7 @@ fn cli_parse_short_option(mut raw_values map[string][]string, mut option_seen ma
 	if payload.len > 1 {
 		for ch in payload {
 			short_name := rune(ch).str()
-			spec := cli_find_short_option(def, short_name) or {
+			spec := def.find_short_option(short_name) or {
 				return error('unknown CLI option `-${short_name}`')
 			}
 			cli_note_option_warning(mut warnings, spec)
@@ -589,7 +595,7 @@ fn cli_parse_short_option(mut raw_values map[string][]string, mut option_seen ma
 		}
 		return 1
 	}
-	spec := cli_find_short_option(def, payload) or {
+	spec := def.find_short_option(payload) or {
 		return error('unknown CLI option `-${payload}`')
 	}
 	cli_note_option_warning(mut warnings, spec)
@@ -610,7 +616,7 @@ fn cli_parse_short_option(mut raw_values map[string][]string, mut option_seen ma
 	return consumed
 }
 
-fn cli_finalize_options(def CliCommandDefinition, raw_values map[string][]string, option_seen map[string]bool) !map[string]vphp.DynValue {
+fn (def CliCommandDefinition) finalize_options(raw_values map[string][]string, option_seen map[string]bool) !map[string]vphp.DynValue {
 	mut out := map[string]vphp.DynValue{}
 	for spec in def.options {
 		mut values := raw_values[spec.name] or { []string{} }
@@ -650,7 +656,7 @@ fn cli_finalize_options(def CliCommandDefinition, raw_values map[string][]string
 	return out
 }
 
-fn cli_finalize_arguments(def CliCommandDefinition, positionals []string) !(map[string]vphp.DynValue, []string) {
+fn (def CliCommandDefinition) finalize_arguments(positionals []string) !(map[string]vphp.DynValue, []string) {
 	mut out := map[string]vphp.DynValue{}
 	mut handle_args := []string{}
 	mut idx := 0
@@ -708,7 +714,7 @@ fn cli_finalize_arguments(def CliCommandDefinition, positionals []string) !(map[
 	return out, handle_args
 }
 
-fn cli_parse_command_input(def CliCommandDefinition, raw_args []string) !CliCommandInput {
+fn (def CliCommandDefinition) parse_command_input(raw_args []string) !CliCommandInput {
 	mut raw_values := map[string][]string{}
 	mut option_seen := map[string]bool{}
 	mut warnings := []string{}
@@ -736,8 +742,8 @@ fn cli_parse_command_input(def CliCommandDefinition, raw_args []string) !CliComm
 		positionals << arg
 		idx++
 	}
-	arguments, handle_args := cli_finalize_arguments(def, positionals)!
-	options := cli_finalize_options(def, raw_values, option_seen)!
+	arguments, handle_args := def.finalize_arguments(positionals)!
+	options := def.finalize_options(raw_values, option_seen)!
 	return CliCommandInput{
 		positional_args: handle_args
 		arguments:       arguments
@@ -757,7 +763,7 @@ fn cli_command_definition(runtime vphp.PhpValue) !CliCommandDefinition {
 	defer {
 		definition_z.release()
 	}
-	return cli_parse_command_definition(definition_z)!
+	return value_subject(definition_z).parse_cli_command_definition()!
 }
 
 fn cli_runtime_text_method(runtime vphp.PhpValue, method_name string) string {
@@ -779,7 +785,7 @@ fn cli_runtime_string_list_method(runtime vphp.PhpValue, method_name string) []s
 	defer {
 		value_z.release()
 	}
-	return cli_string_list_from_value(value_z) or { []string{} }
+	return value_subject(value_z).cli_string_list() or { []string{} }
 }
 
 fn cli_runtime_bool_method(runtime vphp.PhpValue, method_name string, fallback bool) bool {
@@ -790,14 +796,14 @@ fn cli_runtime_bool_method(runtime vphp.PhpValue, method_name string, fallback b
 	defer {
 		value_z.release()
 	}
-	return cli_bool_from_value(value_z, fallback)
+	return value_subject(value_z).cli_bool(fallback)
 }
 
-fn bind_cli_runtime_to_command(mut cli VSlimCliApp, runtime vphp.PhpValue) {
+fn (mut cli VSlimCliApp) bind_runtime_to_command(runtime vphp.PhpValue) {
 	if !runtime.is_valid() || !runtime.is_object() {
 		return
 	}
-	mut cli_value := cli_self_value(cli)
+	mut cli_value := cli.self_value()
 	defer {
 		cli_value.release()
 	}
@@ -806,7 +812,7 @@ fn bind_cli_runtime_to_command(mut cli VSlimCliApp, runtime vphp.PhpValue) {
 		set_cli_result.release()
 	}
 	if runtime.method_exists('setApp') {
-		mut app_value := app_self_value(ensure_cli_core_app(mut cli))
+		mut app_value := cli.ensure_core_app().self_value()
 		defer {
 			app_value.release()
 		}
@@ -815,8 +821,8 @@ fn bind_cli_runtime_to_command(mut cli VSlimCliApp, runtime vphp.PhpValue) {
 	}
 }
 
-fn resolve_cli_command_input(mut cli VSlimCliApp, runtime vphp.PhpValue, raw_args []string) !CliCommandInput {
-	bind_cli_runtime_to_command(mut cli, runtime)
+fn (mut cli VSlimCliApp) resolve_command_input(runtime vphp.PhpValue, raw_args []string) !CliCommandInput {
+	cli.bind_runtime_to_command(runtime)
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists('definition') {
 		return CliCommandInput{
 			positional_args: clone_cli_string_slice(raw_args)
@@ -829,7 +835,7 @@ fn resolve_cli_command_input(mut cli VSlimCliApp, runtime vphp.PhpValue, raw_arg
 		}
 	}
 	def := cli_command_definition(runtime)!
-	return cli_parse_command_input(def, raw_args)!
+	return def.parse_command_input(raw_args)!
 }
 
 fn cli_command_input_error(runtime vphp.PhpValue, program string, command_name string, message string) !int {

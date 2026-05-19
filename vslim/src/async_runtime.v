@@ -27,36 +27,36 @@ mut:
 	handle thread VSlimAsyncResult
 }
 
-fn async_run(job VSlimAsyncJob) VSlimAsyncResult {
+fn (job VSlimAsyncJob) run() VSlimAsyncResult {
 	match job.kind {
 		.database_query, .database_execute {
-			return database_async_run(job.database)
+			return job.database.run_async()
 		}
 	}
 }
 
-fn async_spawn(job VSlimAsyncJob) &VSlimAsyncHandle {
+fn (job VSlimAsyncJob) spawn() &VSlimAsyncHandle {
 	unsafe {
 		mut handle := &VSlimAsyncHandle(C.emalloc(usize(sizeof(VSlimAsyncHandle))))
-		handle.handle = spawn async_run(job)
+		handle.handle = spawn job.run()
 		return handle
 	}
 }
 
-fn async_wait(ptr &VSlimAsyncHandle) VSlimAsyncResult {
-	if ptr == unsafe { nil } {
+fn (handle &VSlimAsyncHandle) wait() VSlimAsyncResult {
+	if handle == unsafe { nil } {
 		return VSlimAsyncResult{
 			error: 'async handle is missing'
 		}
 	}
-	return ptr.handle.wait()
+	return handle.handle.wait()
 }
 
-fn async_release(ptr &VSlimAsyncHandle) {
-	if ptr == unsafe { nil } {
+fn (handle &VSlimAsyncHandle) release() {
+	if handle == unsafe { nil } {
 		return
 	}
 	unsafe {
-		C.efree(ptr)
+		C.efree(handle)
 	}
 }

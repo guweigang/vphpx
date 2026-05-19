@@ -48,3 +48,29 @@ fn test_vslim_handwritten_sources_do_not_use_stale_vphp_raw_entries() {
 		}
 	}
 }
+
+fn test_vslim_domain_identifiers_do_not_reintroduce_php_prefixes() {
+	banned := [
+		'php_before_middlewares',
+		'php_middlewares',
+		'php_after_middlewares',
+		'php_group_before_middle',
+		'php_group_middle',
+		'php_group_after_middle',
+		'php_handler',
+		'dispatch_php_',
+		'resolve_php_',
+		'apply_php_',
+		'finalize_php_',
+		'build_php_',
+		'add_php_route',
+		'to_php_value',
+		'from_php_value',
+	]
+	for file in vslim_src_files() {
+		source := os.read_file(file) or { panic('failed to read ${file}: ${err}') }
+		for pattern in banned {
+			assert !source.contains(pattern), '${file} should not contain VSlim domain identifier ${pattern}'
+		}
+	}
+}

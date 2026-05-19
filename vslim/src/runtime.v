@@ -2,7 +2,7 @@ module main
 
 import vphp
 
-pub fn new_slim_app() VSlimRuntime {
+pub fn VSlimRuntime.new() VSlimRuntime {
 	return VSlimRuntime{}
 }
 
@@ -14,9 +14,9 @@ pub fn (mut app VSlimRuntime) get(pattern string, handler VSlimHandler) {
 	app.routes << VSlimRoute{
 		method: 'GET'
 		pattern: pattern
-		handler_type: .v_native
+		handler_type: .native
 		v_handler: handler
-		php_handler: vphp.PhpValue.invalid()
+		handler_ref: vphp.PhpValue.invalid()
 	}
 }
 
@@ -24,9 +24,9 @@ pub fn (mut app VSlimRuntime) post(pattern string, handler VSlimHandler) {
 	app.routes << VSlimRoute{
 		method: 'POST'
 		pattern: pattern
-		handler_type: .v_native
+		handler_type: .native
 		v_handler: handler
-		php_handler: vphp.PhpValue.invalid()
+		handler_ref: vphp.PhpValue.invalid()
 	}
 }
 
@@ -34,9 +34,9 @@ pub fn (mut app VSlimRuntime) put(pattern string, handler VSlimHandler) {
 	app.routes << VSlimRoute{
 		method: 'PUT'
 		pattern: pattern
-		handler_type: .v_native
+		handler_type: .native
 		v_handler: handler
-		php_handler: vphp.PhpValue.invalid()
+		handler_ref: vphp.PhpValue.invalid()
 	}
 }
 
@@ -44,9 +44,9 @@ pub fn (mut app VSlimRuntime) patch(pattern string, handler VSlimHandler) {
 	app.routes << VSlimRoute{
 		method: 'PATCH'
 		pattern: pattern
-		handler_type: .v_native
+		handler_type: .native
 		v_handler: handler
-		php_handler: vphp.PhpValue.invalid()
+		handler_ref: vphp.PhpValue.invalid()
 	}
 }
 
@@ -54,9 +54,9 @@ pub fn (mut app VSlimRuntime) delete(pattern string, handler VSlimHandler) {
 	app.routes << VSlimRoute{
 		method: 'DELETE'
 		pattern: pattern
-		handler_type: .v_native
+		handler_type: .native
 		v_handler: handler
-		php_handler: vphp.PhpValue.invalid()
+		handler_ref: vphp.PhpValue.invalid()
 	}
 }
 
@@ -64,9 +64,9 @@ pub fn (mut app VSlimRuntime) any(pattern string, handler VSlimHandler) {
 	app.routes << VSlimRoute{
 		method: '*'
 		pattern: pattern
-		handler_type: .v_native
+		handler_type: .native
 		v_handler: handler
-		php_handler: vphp.PhpValue.invalid()
+		handler_ref: vphp.PhpValue.invalid()
 	}
 }
 
@@ -99,18 +99,19 @@ fn (app VSlimRuntime) dispatch_route(req VSlimRequest) VSlimResponse {
 			method_not_allowed = true
 			continue
 		}
-		mut bound := snapshot_vslim_request(&req)
+		mut bound_snapshot := req.snapshot()
+		mut bound := &bound_snapshot
 		bound.params = snapshot_string_map(params)
 		return route.v_handler(bound)
 	}
 
 	if method_not_allowed {
-		return method_not_allowed_response()
+		return VSlimResponse.method_not_allowed()
 	}
-	return not_found_response()
+	return VSlimResponse.not_found()
 }
 
-fn with_trace_id(req VSlimRequest, next VSlimNext) VSlimResponse {
+fn (req VSlimRequest) with_trace_id(next VSlimNext) VSlimResponse {
 	mut out := req
 	if out.query['trace_id'] == '' {
 		out.query['trace_id'] = 'trace-local-mvp'
@@ -118,61 +119,75 @@ fn with_trace_id(req VSlimRequest, next VSlimNext) VSlimResponse {
 	return next(out)
 }
 
-fn auth_guard(req VSlimRequest, next VSlimNext) VSlimResponse {
+fn (req VSlimRequest) auth_guard(next VSlimNext) VSlimResponse {
 	if req.path_value() == '/private' {
 		token := req.query['token'] or { '' }
 		if token != 'ok' {
-			return text_response(401, 'Unauthorized')
+			return VSlimResponse.text(401, 'Unauthorized')
 		}
 	}
 	return next(req)
 }
 
-fn health_handler(req VSlimRequest) VSlimResponse {
+fn (req VSlimRequest) health_response() VSlimResponse {
 	_ = req
-	return text_response(200, 'OK')
+	return VSlimResponse.text(200, 'OK')
 }
 
-fn user_handler(req VSlimRequest) VSlimResponse {
+fn (req VSlimRequest) user_response() VSlimResponse {
 	user_id := req.params['id'] or { 'unknown' }
 	trace_id := req.query['trace_id'] or { '' }
-	return json_response(200, '{"user":"${user_id}","trace":"${trace_id}"}')
+	return VSlimResponse.json(200, '{"user":"${user_id}","trace":"${trace_id}"}')
 }
 
-fn private_handler(req VSlimRequest) VSlimResponse {
+fn (req VSlimRequest) private_response() VSlimResponse {
 	_ = req
-	return text_response(200, 'secret')
+	return VSlimResponse.text(200, 'secret')
 }
 
-fn panic_handler(req VSlimRequest) VSlimResponse {
+fn (req VSlimRequest) panic_response() VSlimResponse {
 	_ = req
-	return internal_error_response()
+	return VSlimResponse.internal_error()
 }
 
-fn meta_handler(req VSlimRequest) VSlimResponse {
+fn (req VSlimRequest) meta_response() VSlimResponse {
 	trace_id := req.query['trace_id'] or { '' }
-	return json_response(200, '{"runtime":"vslim","bridge":"vphp","server":"vhttpd","trace":"${trace_id}"}')
+	return VSlimResponse.json(200, '{"runtime":"vslim","bridge":"vphp","server":"vhttpd","trace":"${trace_id}"}')
 }
 
-fn new_slim_demo_app() VSlimRuntime {
-	mut app := new_slim_app()
-	app.use(with_trace_id)
-	app.use(auth_guard)
-	app.get('/health', health_handler)
-	app.get('/users/:id', user_handler)
-	app.get('/private', private_handler)
-	app.get('/panic', panic_handler)
-	app.get('/meta', meta_handler)
+fn VSlimRuntime.demo() VSlimRuntime {
+	mut app := VSlimRuntime.new()
+	app.use(fn (req VSlimRequest, next VSlimNext) VSlimResponse {
+		return req.with_trace_id(next)
+	})
+	app.use(fn (req VSlimRequest, next VSlimNext) VSlimResponse {
+		return req.auth_guard(next)
+	})
+	app.get('/health', fn (req VSlimRequest) VSlimResponse {
+		return req.health_response()
+	})
+	app.get('/users/:id', fn (req VSlimRequest) VSlimResponse {
+		return req.user_response()
+	})
+	app.get('/private', fn (req VSlimRequest) VSlimResponse {
+		return req.private_response()
+	})
+	app.get('/panic', fn (req VSlimRequest) VSlimResponse {
+		return req.panic_response()
+	})
+	app.get('/meta', fn (req VSlimRequest) VSlimResponse {
+		return req.meta_response()
+	})
 	return app
 }
 
-fn dispatch_demo_request(req VSlimRequest) VSlimResponse {
-	mut app := new_slim_demo_app()
+fn (req VSlimRequest) dispatch_demo() VSlimResponse {
+	mut app := VSlimRuntime.demo()
 	return app.dispatch(req)
 }
 
-fn dispatch_demo_request_with_params(req VSlimRequest) (VSlimResponse, map[string]string) {
-	mut app := new_slim_demo_app()
+fn (req VSlimRequest) dispatch_demo_with_params() (VSlimResponse, map[string]string) {
+	mut app := VSlimRuntime.demo()
 	method := req.method.to_upper()
 	path := RoutePath.normalize(req.path_value())
 	mut method_not_allowed := false
@@ -185,12 +200,13 @@ fn dispatch_demo_request_with_params(req VSlimRequest) (VSlimResponse, map[strin
 			method_not_allowed = true
 			continue
 		}
-		mut bound := snapshot_vslim_request(&req)
+		mut bound_snapshot := req.snapshot()
+		mut bound := &bound_snapshot
 		bound.params = snapshot_string_map(params)
 		return app.run_middleware(0, bound), params
 	}
 	if method_not_allowed {
-		return method_not_allowed_response(), map[string]string{}
+		return VSlimResponse.method_not_allowed(), map[string]string{}
 	}
-	return not_found_response(), map[string]string{}
+	return VSlimResponse.not_found(), map[string]string{}
 }

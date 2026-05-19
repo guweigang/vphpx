@@ -8,7 +8,7 @@ pub fn (mut r VSlimStreamResponse) construct(stream_type string, chunks vphp.Php
 	r.stream_type = normalize_stream_type(stream_type)
 	r.status = if status <= 0 { 200 } else { status }
 	r.content_type = default_stream_content_type(r.stream_type, content_type).clone()
-	r.headers = snapshot_string_map(normalize_header_map(stream_headers_from_value(headers)))
+	r.headers = snapshot_string_map(normalize_header_map(value_subject(headers).stream_headers()))
 	if 'content-type' !in r.headers {
 		r.headers['content-type'] = r.content_type.clone()
 	}
@@ -73,7 +73,7 @@ pub fn (r &VSlimStreamResponse) has_header(name string) bool {
 pub fn (mut r VSlimStreamResponse) set_header(name string, value string) &VSlimStreamResponse {
 	mut headers := r.header_values()
 	headers[VSlimRequest.normalize_header_name(name)] = value.clone()
-	apply_stream_headers(mut r, headers)
+	r.apply_headers(headers)
 	return &r
 }
 
@@ -89,7 +89,7 @@ pub fn (mut r VSlimStreamResponse) set_content_type(content_type string) &VSlimS
 	r.content_type = default_stream_content_type(r.stream_type, content_type).clone()
 	mut headers := r.header_values()
 	headers['content-type'] = r.content_type.clone()
-	apply_stream_headers(mut r, headers)
+	r.apply_headers(headers)
 	return &r
 }
 
@@ -115,14 +115,15 @@ pub fn (r &VSlimStreamResponse) header_values() map[string]string {
 	return snapshot_string_map(r.headers)
 }
 
-fn apply_stream_headers(mut r VSlimStreamResponse, headers map[string]string) {
+fn (mut r VSlimStreamResponse) apply_headers(headers map[string]string) {
 	r.headers = snapshot_string_map(normalize_header_map(headers))
 	r.content_type = (r.headers['content-type'] or {
 		default_stream_content_type(r.stream_type, r.content_type)
 	}).clone()
 }
 
-fn stream_headers_from_value(headers vphp.PhpValue) map[string]string {
+fn (subject PhpValueSubject) stream_headers() map[string]string {
+	headers := subject.value
 	arr := headers.as_array() or { return map[string]string{} }
 	return arr.to_string_map()
 }
@@ -141,7 +142,8 @@ fn normalize_stream_type(stream_type string) string {
 	return if stream_type.trim_space().to_lower() == 'sse' { 'sse' } else { 'text' }
 }
 
-fn is_worker_stream_response(result vphp.PhpValue) bool {
+fn (subject PhpValueSubject) is_worker_stream_response() bool {
+	result := subject.value
 	return result.is_object() && (result.is_instance_of('VSlim\\Stream\\Response')
 		|| result.is_instance_of('VPhp\\VSlim\\Stream\\Response')
 		|| result.is_instance_of('VPhp\\VHttpd\\PhpWorker\\StreamResponse'))
@@ -149,11 +151,11 @@ fn is_worker_stream_response(result vphp.PhpValue) bool {
 
 fn propagate_request_trace_headers_to_value(req &VSlimRequest, value vphp.PhpValue) {
 	if obj := value.as_object() {
-		propagate_request_trace_headers_to_php_object(req, obj)
+		propagate_request_trace_headers_to_object(req, obj)
 	}
 }
 
-fn propagate_request_trace_headers_to_php_object(req &VSlimRequest, obj vphp.PhpObject) {
+fn propagate_request_trace_headers_to_object(req &VSlimRequest, obj vphp.PhpObject) {
 	if !obj.is_valid() || !obj.method_exists('hasHeader') || !obj.method_exists('setHeader') {
 		return
 	}

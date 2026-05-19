@@ -75,7 +75,7 @@ pub fn (probe &VSlimPhpSignatureProbe) make_psr_response() &VSlimPsr7Response {
 		protocol_version: '1.1'
 		headers:          map[string][]string{}
 		header_names:     map[string]string{}
-		body_ref:         new_psr7_stream('')
+		body_ref:         VSlimPsr7Stream.from_content('')
 	}
 }
 
@@ -88,7 +88,7 @@ pub fn VSlimPhpSignatureProbe.make_static_psr_response() &VSlimPsr7Response {
 		protocol_version: '1.1'
 		headers:          map[string][]string{}
 		header_names:     map[string]string{}
-		body_ref:         new_psr7_stream('')
+		body_ref:         VSlimPsr7Stream.from_content('')
 	}
 }
 
@@ -207,7 +207,7 @@ pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_or_block_alias() &
 	return provider
 }
 
-fn new_probe_listener_provider() &VSlimPsr14ListenerProvider {
+fn VSlimPsr14ListenerProvider.probe() &VSlimPsr14ListenerProvider {
 	mut provider := &VSlimPsr14ListenerProvider{}
 	provider.construct()
 	return provider
@@ -217,19 +217,19 @@ fn (probe &VSlimPhpSignatureProbe) maybe_fresh_provider() ?&VSlimPsr14ListenerPr
 	if isnil(probe.provider_ref) {
 		return none
 	}
-	return new_probe_listener_provider()
+	return VSlimPsr14ListenerProvider.probe()
 }
 
 @[php_method: 'freshProvider']
 @[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider() &VSlimPsr14ListenerProvider {
-	return new_probe_listener_provider()
+	return VSlimPsr14ListenerProvider.probe()
 }
 
 @[php_method: 'freshProviderAlias']
 @[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_alias() &VSlimPsr14ListenerProvider {
-	provider := new_probe_listener_provider()
+	provider := VSlimPsr14ListenerProvider.probe()
 	return provider
 }
 
@@ -238,10 +238,10 @@ pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_alias() &VSlimPsr14Listene
 @[php_arg_name: 'use_alias=useAlias']
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_if_expr(use_alias bool) &VSlimPsr14ListenerProvider {
 	return if use_alias {
-		provider := new_probe_listener_provider()
+		provider := VSlimPsr14ListenerProvider.probe()
 		provider
 	} else {
-		new_probe_listener_provider()
+		VSlimPsr14ListenerProvider.probe()
 	}
 }
 
@@ -250,9 +250,9 @@ pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_if_expr(use_alias boo
 @[php_arg_name: 'use_alias=useAlias']
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_if_expr_alias(use_alias bool) &VSlimPsr14ListenerProvider {
 	provider := if use_alias {
-		new_probe_listener_provider()
+		VSlimPsr14ListenerProvider.probe()
 	} else {
-		new_probe_listener_provider()
+		VSlimPsr14ListenerProvider.probe()
 	}
 	return provider
 }
@@ -263,11 +263,11 @@ pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_if_expr_alias(use_ali
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_match_expr(use_alias bool) &VSlimPsr14ListenerProvider {
 	return match use_alias {
 		true {
-			provider := new_probe_listener_provider()
+			provider := VSlimPsr14ListenerProvider.probe()
 			provider
 		}
 		false {
-			new_probe_listener_provider()
+			VSlimPsr14ListenerProvider.probe()
 		}
 	}
 }
@@ -278,10 +278,10 @@ pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_match_expr(use_alias 
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_match_expr_alias(use_alias bool) &VSlimPsr14ListenerProvider {
 	provider := match use_alias {
 		true {
-			new_probe_listener_provider()
+			VSlimPsr14ListenerProvider.probe()
 		}
 		false {
-			new_probe_listener_provider()
+			VSlimPsr14ListenerProvider.probe()
 		}
 	}
 	return provider
@@ -290,12 +290,12 @@ pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_match_expr_alias(use_
 @[php_method: 'freshProviderFromOrBlock']
 @[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_or_block() &VSlimPsr14ListenerProvider {
-	return probe.maybe_fresh_provider() or { new_probe_listener_provider() }
+	return probe.maybe_fresh_provider() or { VSlimPsr14ListenerProvider.probe() }
 }
 
 @[php_method: 'freshProviderFromOrBlockAlias']
 @[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_or_block_alias() &VSlimPsr14ListenerProvider {
-	provider := probe.maybe_fresh_provider() or { new_probe_listener_provider() }
+	provider := probe.maybe_fresh_provider() or { VSlimPsr14ListenerProvider.probe() }
 	return provider
 }

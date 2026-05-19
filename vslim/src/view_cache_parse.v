@@ -84,7 +84,7 @@ fn (view &VSlimView) read_template_program(path string) !TemplateProgram {
 		}
 	}
 	source := view.read_template_source(path)!
-	program := compile_template_program(source)
+	program := TemplateProgram.compile(source)
 	if view.cache_enabled() {
 		unsafe {
 			vslim_template_program_cache_map[path] = program
@@ -93,7 +93,7 @@ fn (view &VSlimView) read_template_program(path string) !TemplateProgram {
 	return program
 }
 
-fn compile_template_program(source string) TemplateProgram {
+fn TemplateProgram.compile(source string) TemplateProgram {
 	mut parser := TemplateParser{
 		tokens: tokenize_template_source(source)
 	}
@@ -172,12 +172,12 @@ fn (mut parser TemplateParser) parse_until(stop_tokens []string) ([]TemplateNode
 			}
 			continue
 		}
-		nodes << build_template_token_node(token_raw, token_line, token_col)
+		nodes << TemplateNode.from_token(token_raw, token_line, token_col)
 	}
 	return nodes, ''
 }
 
-fn build_template_token_node(token_raw string, line int, col int) TemplateNode {
+fn TemplateNode.from_token(token_raw string, line int, col int) TemplateNode {
 	token := token_raw.trim_space()
 	left_trimmed := trim_left_template_space(token_raw)
 	if token.starts_with('raw:') {

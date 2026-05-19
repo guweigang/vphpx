@@ -14,7 +14,7 @@ fn testing_parse_set_cookie(header string) !(string, string) {
 	return parts[0].trim_space(), parts[1]
 }
 
-fn testing_apply_cookies(request &VSlimPsr7ServerRequest, cookies map[string]string) &VSlimPsr7ServerRequest {
+fn (request &VSlimPsr7ServerRequest) with_testing_cookies(cookies map[string]string) &VSlimPsr7ServerRequest {
 	if cookies.len == 0 {
 		return request
 	}
@@ -22,15 +22,15 @@ fn testing_apply_cookies(request &VSlimPsr7ServerRequest, cookies map[string]str
 	for key, value in cookies {
 		merged[key] = value
 	}
-	return clone_psr7_server_request(request, request.method, request.request_target,
+	return request.clone_with(request.method, request.request_target,
 		request.protocol_version, clone_header_values(request.headers),
-		clone_header_names(request.header_names), server_request_body_or_empty(request),
-		server_request_uri_or_default(request), request.server_params_ref,
+		clone_header_names(request.header_names), request.body_or_empty(),
+		request.uri_or_default(), request.server_params_ref,
 		string_map_to_persistent_array(merged), request.query_params_ref,
 		request.uploaded_files_ref, request.parsed_body_ref, request.attributes_ref)
 }
 
-fn testing_capture_response_cookie(mut h VSlimTestingHarness, response vphp.PhpValue) {
+fn (mut h VSlimTestingHarness) capture_response_cookie(response vphp.PhpValue) {
 	header := testing_response_header(response, 'set-cookie').trim_space()
 	if header == '' {
 		return
@@ -46,10 +46,10 @@ fn testing_capture_response_cookie(mut h VSlimTestingHarness, response vphp.PhpV
 	h.cookies[name] = value
 }
 
-fn testing_build_session_store(app &VSlimApp, cookies map[string]string) VSlimSessionStore {
+fn (app &VSlimApp) testing_build_session_store(cookies map[string]string) VSlimSessionStore {
 	mut session := VSlimSessionStore{}
 	session.construct()
-	configure_default_session_store(mut session, app.config_ref)
+	session.configure_defaults(app.config_ref)
 	if cookie := cookies[session.cookie_name_value()] {
 		session.values = session_decode_values(cookie, session.secret_value())
 		session.loaded = true
@@ -57,7 +57,7 @@ fn testing_build_session_store(app &VSlimApp, cookies map[string]string) VSlimSe
 	return session
 }
 
-fn testing_store_session_cookie(mut h VSlimTestingHarness, session VSlimSessionStore) {
+fn (mut h VSlimTestingHarness) store_session_cookie(session VSlimSessionStore) {
 	h.cookies[session.cookie_name_value()] = session_encode_values(session.values,
 		session.secret_value())
 }
@@ -151,32 +151,32 @@ fn testing_response_body(response vphp.PhpValue) string {
 	return ''
 }
 
-fn testing_new_request(method string, uri string, body string) &VSlimPsr7ServerRequest {
+fn VSlimPsr7ServerRequest.testing_request(method string, uri string, body string) &VSlimPsr7ServerRequest {
 	mut server_params_arg := vphp.PhpArray.new()
 	defer {
 		server_params_arg.release()
 	}
-	mut req := new_psr7_server_request_string(method, uri, server_params_arg)
+	mut req := VSlimPsr7ServerRequest.from_string(method, uri, server_params_arg)
 	if body == '' {
 		return req
 	}
-	return clone_psr7_server_request(req, req.method, req.request_target, req.protocol_version,
+	return req.clone_with(req.method, req.request_target, req.protocol_version,
 		clone_header_values(req.headers), clone_header_names(req.header_names),
-		new_psr7_stream(body), server_request_uri_or_default(req), req.server_params_ref,
+		VSlimPsr7Stream.from_content(body), req.uri_or_default(), req.server_params_ref,
 		req.cookie_params_ref, req.query_params_ref, req.uploaded_files_ref, req.parsed_body_ref,
 		req.attributes_ref)
 }
 
-fn testing_new_json_request(method string, uri string, payload vphp.PhpValue) &VSlimPsr7ServerRequest {
+fn VSlimPsr7ServerRequest.testing_json_request(method string, uri string, payload vphp.PhpValue) &VSlimPsr7ServerRequest {
 	payload_json := payload.to_json()
-	mut req := testing_new_request(method, uri, payload_json)
+	mut req := VSlimPsr7ServerRequest.testing_request(method, uri, payload_json)
 	mut headers := clone_header_values(req.headers)
 	mut header_names := clone_header_names(req.header_names)
 	headers['content-type'] = ['application/json']
 	header_names['content-type'] = 'Content-Type'
-	return clone_psr7_server_request(req, req.method, req.request_target, req.protocol_version,
-		headers, header_names, server_request_body_or_empty(req),
-		server_request_uri_or_default(req), req.server_params_ref, req.cookie_params_ref,
+	return req.clone_with(req.method, req.request_target, req.protocol_version,
+		headers, header_names, req.body_or_empty(),
+		req.uri_or_default(), req.server_params_ref, req.cookie_params_ref,
 		req.query_params_ref, req.uploaded_files_ref, payload.retain(),
 		req.attributes_ref)
 }
@@ -201,7 +201,7 @@ pub fn (h &VSlimTestingHarness) app() &VSlimApp {
 @[php_method]
 pub fn (mut h VSlimTestingHarness) container() &VSlimContainer {
 	if h.app_ref == unsafe { nil } {
-		return new_vslim_container()
+		return VSlimContainer.new()
 	}
 	return h.app_ref.container()
 }
@@ -290,11 +290,11 @@ pub fn (mut h VSlimTestingHarness) with_session(values vphp.PhpValue) &VSlimTest
 			0)
 		return h
 	}
-	mut session := testing_build_session_store(h.app_ref, h.cookies)
+	mut session := h.app_ref.testing_build_session_store(h.cookies)
 	for key, value in values.to_string_map() {
 		session.values[key] = value
 	}
-	testing_store_session_cookie(mut h, session)
+	h.store_session_cookie(session)
 	return h
 }
 
@@ -306,13 +306,13 @@ pub fn (mut h VSlimTestingHarness) acting_as(user_id string) &VSlimTestingHarnes
 			0)
 		return h
 	}
-	mut session := testing_build_session_store(h.app_ref, h.cookies)
+	mut session := h.app_ref.testing_build_session_store(h.cookies)
 	mut guard := VSlimAuthSessionGuard{}
 	guard.construct()
 	guard.set_store(&session)
-	configure_default_auth_guard(mut guard, h.app_ref.config_ref)
+	guard.configure_defaults(h.app_ref.config_ref)
 	guard.login(user_id)
-	testing_store_session_cookie(mut h, session)
+	h.store_session_cookie(session)
 	return h
 }
 
@@ -321,13 +321,13 @@ pub fn (mut h VSlimTestingHarness) acting_as(user_id string) &VSlimTestingHarnes
 @[php_arg_optional: 'body']
 @[php_method]
 pub fn (h &VSlimTestingHarness) request(method string, uri string, body string) &VSlimPsr7ServerRequest {
-	return testing_apply_cookies(testing_new_request(method, uri, body), h.cookies)
+	return VSlimPsr7ServerRequest.testing_request(method, uri, body).with_testing_cookies(h.cookies)
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
 @[php_method: 'jsonRequest']
 pub fn (h &VSlimTestingHarness) json_request(method string, uri string, payload vphp.PhpValue) &VSlimPsr7ServerRequest {
-	return testing_apply_cookies(testing_new_json_request(method, uri, payload), h.cookies)
+	return VSlimPsr7ServerRequest.testing_json_request(method, uri, payload).with_testing_cookies(h.cookies)
 }
 
 @[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface']
@@ -335,16 +335,16 @@ pub fn (h &VSlimTestingHarness) json_request(method string, uri string, payload 
 @[php_method]
 pub fn (h &VSlimTestingHarness) handle(request vphp.PhpObject) &VSlimPsr7Response {
 	if h.app_ref == unsafe { nil } {
-		return new_psr7_text_response(500, 'testing harness app is not configured')
+		return VSlimPsr7Response.text(500, 'testing harness app is not configured')
 	}
 	response := h.app_ref.handle_object(request)
 	unsafe {
 		mut writable := &VSlimTestingHarness(h)
-		mut response_value := build_php_psr7_response_value(response)
+		mut response_value := response.build_psr7_response_value()
 		defer {
 			response_value.release()
 		}
-		testing_capture_response_cookie(mut writable, response_value)
+		writable.capture_response_cookie(response_value)
 	}
 	return response
 }
@@ -355,15 +355,15 @@ pub fn (h &VSlimTestingHarness) handle(request vphp.PhpObject) &VSlimPsr7Respons
 @[php_arg_optional: 'body']
 pub fn (h &VSlimTestingHarness) handle_request(method string, uri string, body string) &VSlimPsr7Response {
 	if h.app_ref == unsafe { nil } {
-		return new_psr7_text_response(500, 'testing harness app is not configured')
+		return VSlimPsr7Response.text(500, 'testing harness app is not configured')
 	}
-	mut req_value := build_php_psr7_server_request_value(testing_apply_cookies(testing_new_request(method,
-		uri, body), h.cookies))
+	mut req_value := VSlimPsr7ServerRequest.testing_request(method, uri,
+		body).with_testing_cookies(h.cookies).build_psr7_server_request_value()
 	defer {
 		req_value.release()
 	}
 	request := req_value.as_object() or {
-		return new_psr7_text_response(500, 'testing request could not be wrapped')
+		return VSlimPsr7Response.text(500, 'testing request could not be wrapped')
 	}
 	return h.app_ref.handle(request)
 }
@@ -372,30 +372,29 @@ pub fn (h &VSlimTestingHarness) handle_request(method string, uri string, body s
 @[php_method: 'handleJson']
 pub fn (h &VSlimTestingHarness) handle_json(method string, uri string, payload vphp.PhpValue) &VSlimPsr7Response {
 	if h.app_ref == unsafe { nil } {
-		return new_psr7_text_response(500, 'testing harness app is not configured')
+		return VSlimPsr7Response.text(500, 'testing harness app is not configured')
 	}
-	mut req_value := build_php_psr7_server_request_value(testing_apply_cookies(testing_new_json_request(method,
-		uri, payload), h.cookies))
+	mut req_value := VSlimPsr7ServerRequest.testing_json_request(method, uri,
+		payload).with_testing_cookies(h.cookies).build_psr7_server_request_value()
 	defer {
 		req_value.release()
 	}
 	request := req_value.as_object() or {
-		return new_psr7_text_response(500, 'testing request could not be wrapped')
+		return VSlimPsr7Response.text(500, 'testing request could not be wrapped')
 	}
 	return h.app_ref.handle(request)
 }
 
 @[php_method: 'dispatchJson']
 pub fn (h &VSlimTestingHarness) dispatch_json(method string, uri string, payload vphp.PhpValue) &VSlimResponse {
-	response := to_vslim_response(new_vslim_response_from_psr_response(h.handle_json(method, uri,
-		payload)))
+	response := h.handle_json(method, uri, payload).to_vslim_response().boxed_snapshot()
 	unsafe {
 		mut writable := &VSlimTestingHarness(h)
-		mut response_value := build_php_response_value(*response)
+		mut response_value := (*response).to_value()
 		defer {
 			response_value.release()
 		}
-		testing_capture_response_cookie(mut writable, response_value)
+		writable.capture_response_cookie(response_value)
 	}
 	return response
 }
@@ -455,24 +454,23 @@ pub fn (h &VSlimTestingHarness) assert_body_contains(response vphp.PhpValue, nee
 @[php_method]
 pub fn (h &VSlimTestingHarness) dispatch(method string, uri string, body string) &VSlimResponse {
 	if h.app_ref == unsafe { nil } {
-		return to_vslim_response(VSlimResponse{
+		return (VSlimResponse{
 			status:       500
 			body:         'testing harness app is not configured'
 			content_type: 'text/plain; charset=utf-8'
 			headers:      {
 				'content-type': 'text/plain; charset=utf-8'
 			}
-		})
+		}).boxed_snapshot()
 	}
-	response := to_vslim_response(new_vslim_response_from_psr_response(h.handle_request(method,
-		uri, body)))
+	response := h.handle_request(method, uri, body).to_vslim_response().boxed_snapshot()
 	unsafe {
 		mut writable := &VSlimTestingHarness(h)
-		mut response_value := build_php_response_value(*response)
+		mut response_value := (*response).to_value()
 		defer {
 			response_value.release()
 		}
-		testing_capture_response_cookie(mut writable, response_value)
+		writable.capture_response_cookie(response_value)
 	}
 	return response
 }

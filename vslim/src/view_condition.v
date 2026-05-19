@@ -119,7 +119,7 @@ fn (view &VSlimView) eval_template_condition_node(node TemplateConditionNode, sc
 	match node.kind {
 		.expr {
 			value := view.eval_template_expr_node(node.expr, scalars, lists, objects, template_path, 0, 0)
-			return template_expr_value_truthy(value)
+			return value.truthy()
 		}
 		.not {
 			if node.children.len == 0 {
@@ -146,7 +146,7 @@ fn (view &VSlimView) eval_template_condition_node(node TemplateConditionNode, sc
 		.compare {
 			left := view.eval_template_expr_node(node.left, scalars, lists, objects, template_path, 0, 0)
 			right := view.eval_template_expr_node(node.right, scalars, lists, objects, template_path, 0, 0)
-			return template_compare_expr_values(left, right, node.op)
+			return left.compare(right, node.op)
 		}
 	}
 }
@@ -307,7 +307,7 @@ fn matches_wrapping_template_condition_parens(raw string) bool {
 	return paren_depth == 0
 }
 
-fn template_expr_value_truthy(value TemplateExprValue) bool {
+fn (value TemplateExprValue) truthy() bool {
 	match value.kind {
 		.list {
 			return value.list.len > 0
@@ -337,17 +337,17 @@ fn template_expr_value_truthy(value TemplateExprValue) bool {
 	}
 }
 
-fn template_compare_expr_values(left TemplateExprValue, right TemplateExprValue, op string) bool {
+fn (left TemplateExprValue) compare(right TemplateExprValue, op string) bool {
 	if op == '==' {
-		return template_compare_equal_values(template_expr_value_string(left), template_expr_value_string(right))
+		return template_compare_equal_values(left.string(), right.string())
 	}
 	if op == '!=' {
-		return !template_compare_equal_values(template_expr_value_string(left), template_expr_value_string(right))
+		return !template_compare_equal_values(left.string(), right.string())
 	}
-	left_raw := template_expr_value_string(left).trim_space()
-	right_raw := template_expr_value_string(right).trim_space()
-	if left_num := template_expr_value_number(left) {
-		if right_num := template_expr_value_number(right) {
+	left_raw := left.string().trim_space()
+	right_raw := right.string().trim_space()
+	if left_num := left.number() {
+		if right_num := right.number() {
 			return match op {
 				'>' { left_num > right_num }
 				'<' { left_num < right_num }
@@ -366,7 +366,7 @@ fn template_compare_expr_values(left TemplateExprValue, right TemplateExprValue,
 	}
 }
 
-fn template_expr_value_number(value TemplateExprValue) ?f64 {
+fn (value TemplateExprValue) number() ?f64 {
 	if value.kind != .scalar {
 		return none
 	}
@@ -380,56 +380,56 @@ fn template_expr_value_number(value TemplateExprValue) ?f64 {
 	return none
 }
 
-fn template_expr_value_cast(value TemplateExprValue, explicit_type string) TemplateExprValue {
+fn (value TemplateExprValue) cast(explicit_type string) TemplateExprValue {
 	match explicit_type {
 		'int' {
-			raw := template_expr_value_string(value).trim_space()
+			raw := value.string().trim_space()
 			if raw == '' {
-				return new_template_expr_scalar_typed('0', 'int')
+				return TemplateExprValue.scalar_typed('0', 'int')
 			}
 			if boolish := parse_template_boolish_value(raw) {
-				return new_template_expr_scalar_typed(if boolish { '1' } else { '0' }, 'int')
+				return TemplateExprValue.scalar_typed(if boolish { '1' } else { '0' }, 'int')
 			}
 			if is_numeric_template_value(raw) {
-				return new_template_expr_scalar_typed('${raw.i64()}', 'int')
+				return TemplateExprValue.scalar_typed('${raw.i64()}', 'int')
 			}
-			return new_template_expr_scalar_typed('0', 'int')
+			return TemplateExprValue.scalar_typed('0', 'int')
 		}
 		'float' {
-			raw := template_expr_value_string(value).trim_space()
+			raw := value.string().trim_space()
 			if raw == '' {
-				return new_template_expr_scalar_typed('0', 'float')
+				return TemplateExprValue.scalar_typed('0', 'float')
 			}
 			if boolish := parse_template_boolish_value(raw) {
-				return new_template_expr_scalar_typed(if boolish { '1' } else { '0' }, 'float')
+				return TemplateExprValue.scalar_typed(if boolish { '1' } else { '0' }, 'float')
 			}
 			if is_numeric_template_value(raw) {
-				return new_template_expr_scalar_typed('${raw.f64()}', 'float')
+				return TemplateExprValue.scalar_typed('${raw.f64()}', 'float')
 			}
-			return new_template_expr_scalar_typed('0', 'float')
+			return TemplateExprValue.scalar_typed('0', 'float')
 		}
 		'bool' {
-			raw := template_expr_value_string(value).trim_space()
+			raw := value.string().trim_space()
 			if raw == '' || is_template_null_literal(raw) {
-				return new_template_expr_scalar_typed('false', 'bool')
+				return TemplateExprValue.scalar_typed('false', 'bool')
 			}
 			if boolish := parse_template_boolish_value(raw) {
-				return new_template_expr_scalar_typed(if boolish { 'true' } else { 'false' }, 'bool')
+				return TemplateExprValue.scalar_typed(if boolish { 'true' } else { 'false' }, 'bool')
 			}
 			if is_numeric_template_value(raw) {
-				return new_template_expr_scalar_typed(if math.abs(raw.f64()) > 1e-9 { 'true' } else { 'false' }, 'bool')
+				return TemplateExprValue.scalar_typed(if math.abs(raw.f64()) > 1e-9 { 'true' } else { 'false' }, 'bool')
 			}
-			return new_template_expr_scalar_typed(if is_truthy_template_value(raw) { 'true' } else { 'false' }, 'bool')
+			return TemplateExprValue.scalar_typed(if is_truthy_template_value(raw) { 'true' } else { 'false' }, 'bool')
 		}
 		'string' {
-			raw := template_expr_value_string(value).trim_space()
+			raw := value.string().trim_space()
 			if raw == '' || is_template_null_literal(raw) {
-				return new_template_expr_scalar_typed('', 'string')
+				return TemplateExprValue.scalar_typed('', 'string')
 			}
 			if boolish := parse_template_boolish_value(raw) {
-				return new_template_expr_scalar_typed(if boolish { '1' } else { '0' }, 'string')
+				return TemplateExprValue.scalar_typed(if boolish { '1' } else { '0' }, 'string')
 			}
-			return new_template_expr_scalar_typed(raw, 'string')
+			return TemplateExprValue.scalar_typed(raw, 'string')
 		}
 		else {
 			return value

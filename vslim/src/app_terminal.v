@@ -2,61 +2,61 @@ module main
 
 import vphp
 
-fn normalize_or_handle_error_with_context(app &VSlimApp, ctx PipelineRequestContext, result vphp.PhpValue, fallback_status int, fallback_message string) VSlimResponse {
-	res, ok := normalize_php_route_response_value(result)
+fn (app &VSlimApp) normalize_or_handle_error_with_context(ctx PipelineRequestContext, result vphp.PhpValue, fallback_status int, fallback_message string) VSlimResponse {
+	res, ok := VSlimResponse.from_route_result(result)
 	if ok {
 		return res
 	}
-	return error_response_from_context(app, ctx, fallback_status, fallback_message,
+	return app.error_response_from_context(ctx, fallback_status, fallback_message,
 		'invalid_response')
 }
 
-fn normalize_or_handle_error_with_context_psr(app &VSlimApp, ctx PipelineRequestContext, result vphp.PhpValue, fallback_status int, fallback_message string) &VSlimPsr7Response {
-	res, ok := normalize_php_route_response_psr_value(result)
+fn (app &VSlimApp) normalize_or_handle_error_with_context_psr(ctx PipelineRequestContext, result vphp.PhpValue, fallback_status int, fallback_message string) &VSlimPsr7Response {
+	res, ok := VSlimResponse.psr7_from_route_result(result)
 	if ok {
 		return res
 	}
-	return error_response_from_context_psr(app, ctx, fallback_status, fallback_message,
+	return app.error_response_from_context_psr(ctx, fallback_status, fallback_message,
 		'invalid_response')
 }
 
-fn normalize_or_handle_error(app &VSlimApp, request_payload vphp.PhpValue, result vphp.PhpValue, fallback_status int, fallback_message string) VSlimResponse {
-	ctx := new_pipeline_request_context_value(RoutePath.normalize('/'), request_payload,
+fn (app &VSlimApp) normalize_or_handle_error(request_payload vphp.PhpValue, result vphp.PhpValue, fallback_status int, fallback_message string) VSlimResponse {
+	ctx := PipelineRequestContext.from_value(RoutePath.normalize('/'), request_payload,
 		route_params_from_payload(request_payload))
-	return normalize_or_handle_error_with_context(app, ctx,
+	return app.normalize_or_handle_error_with_context(ctx,
 		result, fallback_status, fallback_message)
 }
 
-fn fixed_terminal_meta(res VSlimResponse) MiddlewareTerminalMeta {
+fn (res VSlimResponse) fixed_terminal_meta() MiddlewareTerminalMeta {
 	return MiddlewareTerminalMeta{
 		kind:               .fixed_response
-		fixed_response_ref: new_psr7_response_from_vslim_response(res)
+		fixed_response_ref: res.to_psr7_response()
 	}
 }
 
-fn fixed_terminal_meta_psr(res &VSlimPsr7Response) MiddlewareTerminalMeta {
+fn (res &VSlimPsr7Response) fixed_terminal_meta() MiddlewareTerminalMeta {
 	return MiddlewareTerminalMeta{
 		kind:               .fixed_response
-		fixed_response_ref: clone_psr7_response(res, res.get_protocol_version(),
+		fixed_response_ref: res.clone_with(res.get_protocol_version(),
 			clone_header_values(res.headers), clone_header_names(res.header_names),
-			response_body_or_empty(res), res.get_status_code(), res.get_reason_phrase())
+			res.body_or_empty(), res.get_status_code(), res.get_reason_phrase())
 	}
 }
 
-fn not_found_terminal_meta() MiddlewareTerminalMeta {
+fn MiddlewareTerminalMeta.not_found() MiddlewareTerminalMeta {
 	return MiddlewareTerminalMeta{
 		kind: .not_found
 	}
 }
 
-fn method_not_allowed_terminal_meta(allowed_methods []string) MiddlewareTerminalMeta {
+fn MiddlewareTerminalMeta.method_not_allowed(allowed_methods []string) MiddlewareTerminalMeta {
 	return MiddlewareTerminalMeta{
 		kind:            .method_not_allowed
 		allowed_methods: allowed_methods.clone()
 	}
 }
 
-fn error_terminal_meta(status int, message string, fallback_message string, error_code string) MiddlewareTerminalMeta {
+fn MiddlewareTerminalMeta.error(status int, message string, fallback_message string, error_code string) MiddlewareTerminalMeta {
 	return MiddlewareTerminalMeta{
 		kind:             .error_response
 		status:           status
@@ -66,62 +66,62 @@ fn error_terminal_meta(status int, message string, fallback_message string, erro
 	}
 }
 
-fn build_terminal_response(app &VSlimApp, ctx PipelineRequestContext, meta MiddlewareTerminalMeta) VSlimResponse {
+fn (meta MiddlewareTerminalMeta) build_response(app &VSlimApp, ctx PipelineRequestContext) VSlimResponse {
 	return match meta.kind {
 		.fixed_response {
 			if meta.fixed_response_ref == unsafe { nil } {
-				text_response(500, 'Invalid terminal response')
+				VSlimResponse.text(500, 'Invalid terminal response')
 			} else {
-				new_vslim_response_from_psr_response(meta.fixed_response_ref)
+				meta.fixed_response_ref.to_vslim_response()
 			}
 		}
 		.not_found {
-			run_not_found_core_with_context(app, ctx)
+			app.run_not_found_core_with_context(ctx)
 		}
 		.method_not_allowed {
-			build_method_not_allowed_response_with_context(app, ctx, meta.allowed_methods)
+			app.build_method_not_allowed_response_with_context(ctx, meta.allowed_methods)
 		}
 		.error_response {
-			run_error_handler_with_context(app, ctx, meta.status, meta.message) or {
-				default_error_response(app, meta.status, meta.fallback_message, meta.error_code)
+			app.run_error_handler_with_context(ctx, meta.status, meta.message) or {
+				app.default_error_response(meta.status, meta.fallback_message, meta.error_code)
 			}
 		}
 		.none {
-			text_response(500, 'Invalid terminal response')
+			VSlimResponse.text(500, 'Invalid terminal response')
 		}
 	}
 }
 
-fn build_terminal_response_psr(app &VSlimApp, ctx PipelineRequestContext, meta MiddlewareTerminalMeta) &VSlimPsr7Response {
+fn (meta MiddlewareTerminalMeta) build_response_psr(app &VSlimApp, ctx PipelineRequestContext) &VSlimPsr7Response {
 	return match meta.kind {
 		.fixed_response {
 			if meta.fixed_response_ref == unsafe { nil } {
-				new_psr7_text_response(500, 'Invalid terminal response')
+				VSlimPsr7Response.text(500, 'Invalid terminal response')
 			} else {
 				res := meta.fixed_response_ref
-				clone_psr7_response(res, res.protocol_version, clone_header_values(res.headers),
-					clone_header_names(res.header_names), response_body_or_empty(res), res.status,
+				res.clone_with(res.protocol_version, clone_header_values(res.headers),
+					clone_header_names(res.header_names), res.body_or_empty(), res.status,
 					res.reason_phrase)
 			}
 		}
 		.not_found {
-			run_not_found_core_with_context_psr(app, ctx)
+			app.run_not_found_core_with_context_psr(ctx)
 		}
 		.method_not_allowed {
-			build_method_not_allowed_response_with_context_psr(app, ctx, meta.allowed_methods)
+			app.build_method_not_allowed_response_with_context_psr(ctx, meta.allowed_methods)
 		}
 		.error_response {
-			run_error_handler_with_context_psr(app, ctx, meta.status, meta.message) or {
-				default_error_response_psr(app, meta.status, meta.fallback_message, meta.error_code)
+			app.run_error_handler_with_context_psr(ctx, meta.status, meta.message) or {
+				app.default_error_response_psr(meta.status, meta.fallback_message, meta.error_code)
 			}
 		}
 		.none {
-			new_psr7_text_response(500, 'Invalid terminal response')
+			VSlimPsr7Response.text(500, 'Invalid terminal response')
 		}
 	}
 }
 
-fn build_options_response(allowed_methods []string) VSlimResponse {
+fn VSlimResponse.options(allowed_methods []string) VSlimResponse {
 	mut allow := allowed_methods.clone()
 	if 'OPTIONS' !in allow {
 		allow << 'OPTIONS'
@@ -137,15 +137,15 @@ fn build_options_response(allowed_methods []string) VSlimResponse {
 	}
 }
 
-fn build_method_not_allowed_response(app &VSlimApp, payload vphp.PhpValue, allowed_methods []string) VSlimResponse {
-	ctx := new_pipeline_request_context_value(RoutePath.normalize('/'), payload,
+fn (app &VSlimApp) build_method_not_allowed_response(payload vphp.PhpValue, allowed_methods []string) VSlimResponse {
+	ctx := PipelineRequestContext.from_value(RoutePath.normalize('/'), payload,
 		route_params_from_payload(payload))
-	return build_method_not_allowed_response_with_context(app, ctx, allowed_methods)
+	return app.build_method_not_allowed_response_with_context(ctx, allowed_methods)
 }
 
-fn build_method_not_allowed_response_with_context(app &VSlimApp, ctx PipelineRequestContext, allowed_methods []string) VSlimResponse {
-	mut res := run_error_handler_with_context(app, ctx, 405, 'Method not allowed') or {
-		method_not_allowed_response()
+fn (app &VSlimApp) build_method_not_allowed_response_with_context(ctx PipelineRequestContext, allowed_methods []string) VSlimResponse {
+	mut res := app.run_error_handler_with_context(ctx, 405, 'Method not allowed') or {
+		VSlimResponse.method_not_allowed()
 	}
 	if allowed_methods.len > 0 && 'allow' !in res.headers {
 		res.headers['allow'] = allowed_methods.join(', ')
@@ -153,9 +153,9 @@ fn build_method_not_allowed_response_with_context(app &VSlimApp, ctx PipelineReq
 	return res
 }
 
-fn build_method_not_allowed_response_with_context_psr(app &VSlimApp, ctx PipelineRequestContext, allowed_methods []string) &VSlimPsr7Response {
-	mut res := run_error_handler_with_context_psr(app, ctx, 405, 'Method not allowed') or {
-		new_psr7_text_response(405, 'Method Not Allowed')
+fn (app &VSlimApp) build_method_not_allowed_response_with_context_psr(ctx PipelineRequestContext, allowed_methods []string) &VSlimPsr7Response {
+	mut res := app.run_error_handler_with_context_psr(ctx, 405, 'Method not allowed') or {
+		VSlimPsr7Response.text(405, 'Method Not Allowed')
 	}
 	if allowed_methods.len == 0 {
 		return res
@@ -166,20 +166,20 @@ fn build_method_not_allowed_response_with_context_psr(app &VSlimApp, ctx Pipelin
 		headers['allow'] = [allowed_methods.join(', ')]
 		header_names['allow'] = 'Allow'
 	}
-	return clone_psr7_response(res, res.protocol_version, headers, header_names,
-		response_body_or_empty(res), res.status, res.reason_phrase)
+	return res.clone_with(res.protocol_version, headers, header_names,
+		res.body_or_empty(), res.status, res.reason_phrase)
 }
 
-fn run_not_found(app &VSlimApp, req &VSlimRequest) VSlimResponse {
-	payload := build_php_request_value(req, map[string]string{})
+fn (app &VSlimApp) run_not_found(req &VSlimRequest) VSlimResponse {
+	payload := req.build_request_value(map[string]string{})
 	path := RoutePath.normalize(req.path_value())
-	ctx := new_pipeline_request_context_value(path, payload, map[string]string{})
-	res := run_not_found_core_with_context(app, ctx)
+	ctx := PipelineRequestContext.from_value(path, payload, map[string]string{})
+	res := app.run_not_found_core_with_context(ctx)
 	payload.release()
-	return finalize_php_response(app, ctx, res)
+	return app.finalize_with_after_middlewares(ctx, res)
 }
 
-fn run_not_found_core_with_context(app &VSlimApp, ctx PipelineRequestContext) VSlimResponse {
+fn (app &VSlimApp) run_not_found_core_with_context(ctx PipelineRequestContext) VSlimResponse {
 	nf := app.not_found_handler
 	if nf.is_valid() {
 		mut psr_payload := normalize_psr15_server_request(ctx.payload_ref, ctx.route_params)
@@ -190,12 +190,12 @@ fn run_not_found_core_with_context(app &VSlimApp, ctx PipelineRequestContext) VS
 		defer {
 			raw.release()
 		}
-		return normalize_or_handle_error_with_context(app, ctx, raw, 404, 'Not Found')
+		return app.normalize_or_handle_error_with_context(ctx, raw, 404, 'Not Found')
 	}
-	return default_error_response(app, 404, 'Not Found', 'not_found')
+	return app.default_error_response(404, 'Not Found', 'not_found')
 }
 
-fn run_not_found_core_with_context_psr(app &VSlimApp, ctx PipelineRequestContext) &VSlimPsr7Response {
+fn (app &VSlimApp) run_not_found_core_with_context_psr(ctx PipelineRequestContext) &VSlimPsr7Response {
 	nf := app.not_found_handler
 	if nf.is_valid() {
 		mut psr_payload := normalize_psr15_server_request(ctx.payload_ref, ctx.route_params)
@@ -206,18 +206,18 @@ fn run_not_found_core_with_context_psr(app &VSlimApp, ctx PipelineRequestContext
 		defer {
 			raw.release()
 		}
-		return normalize_or_handle_error_with_context_psr(app, ctx, raw, 404, 'Not Found')
+		return app.normalize_or_handle_error_with_context_psr(ctx, raw, 404, 'Not Found')
 	}
-	return default_error_response_psr(app, 404, 'Not Found', 'not_found')
+	return app.default_error_response_psr(404, 'Not Found', 'not_found')
 }
 
-fn run_not_found_core(app &VSlimApp, payload vphp.PhpValue) VSlimResponse {
-	ctx := new_pipeline_request_context_value(RoutePath.normalize('/'), payload,
+fn (app &VSlimApp) run_not_found_core(payload vphp.PhpValue) VSlimResponse {
+	ctx := PipelineRequestContext.from_value(RoutePath.normalize('/'), payload,
 		route_params_from_payload(payload))
-	return run_not_found_core_with_context(app, ctx)
+	return app.run_not_found_core_with_context(ctx)
 }
 
-fn run_error_handler_with_context(app &VSlimApp, ctx PipelineRequestContext, status int, message string) ?VSlimResponse {
+fn (app &VSlimApp) run_error_handler_with_context(ctx PipelineRequestContext, status int, message string) ?VSlimResponse {
 	eh := app.error_handler
 	if !eh.is_valid() {
 		return none
@@ -234,14 +234,14 @@ fn run_error_handler_with_context(app &VSlimApp, ctx PipelineRequestContext, sta
 	defer {
 		raw.release()
 	}
-	res, ok := normalize_php_route_response_value(raw)
+	res, ok := VSlimResponse.from_route_result(raw)
 	if !ok {
 		return none
 	}
 	return res
 }
 
-fn run_error_handler_with_context_psr(app &VSlimApp, ctx PipelineRequestContext, status int, message string) ?&VSlimPsr7Response {
+fn (app &VSlimApp) run_error_handler_with_context_psr(ctx PipelineRequestContext, status int, message string) ?&VSlimPsr7Response {
 	eh := app.error_handler
 	if !eh.is_valid() {
 		return none
@@ -258,38 +258,38 @@ fn run_error_handler_with_context_psr(app &VSlimApp, ctx PipelineRequestContext,
 	defer {
 		raw.release()
 	}
-	res, ok := normalize_php_route_response_psr_value(raw)
+	res, ok := VSlimResponse.psr7_from_route_result(raw)
 	if !ok {
 		return none
 	}
 	return res
 }
 
-fn run_error_handler(app &VSlimApp, request_payload vphp.PhpValue, status int, message string) ?VSlimResponse {
-	ctx := new_pipeline_request_context_value(RoutePath.normalize('/'), request_payload,
+fn (app &VSlimApp) run_error_handler(request_payload vphp.PhpValue, status int, message string) ?VSlimResponse {
+	ctx := PipelineRequestContext.from_value(RoutePath.normalize('/'), request_payload,
 		route_params_from_payload(request_payload))
-	return run_error_handler_with_context(app, ctx, status, message)
+	return app.run_error_handler_with_context(ctx, status, message)
 }
 
-fn default_error_response(app &VSlimApp, status int, message string, error_code string) VSlimResponse {
+fn (app &VSlimApp) default_error_response(status int, message string, error_code string) VSlimResponse {
 	if app.error_response_json {
 		esc_code := json_escape(error_code)
-		return json_response(status,
+		return VSlimResponse.json(status,
 			'{"ok":false,"code":"${esc_code}","error":"${esc_code}","status":${status},"message":"${json_escape(message)}"}')
 	}
-	return text_response(status, message)
+	return VSlimResponse.text(status, message)
 }
 
-fn default_error_response_psr(app &VSlimApp, status int, message string, error_code string) &VSlimPsr7Response {
+fn (app &VSlimApp) default_error_response_psr(status int, message string, error_code string) &VSlimPsr7Response {
 	if app.error_response_json {
 		esc_code := json_escape(error_code)
-		return new_psr7_json_response(status,
+		return VSlimPsr7Response.json(status,
 			'{"ok":false,"code":"${esc_code}","error":"${esc_code}","status":${status},"message":"${json_escape(message)}"}')
 	}
-	return new_psr7_text_response(status, message)
+	return VSlimPsr7Response.text(status, message)
 }
 
-fn internal_phase_continue_response_psr() &VSlimPsr7Response {
+fn VSlimPsr7Response.internal_phase_continue() &VSlimPsr7Response {
 	return &VSlimPsr7Response{
 		status:           299
 		reason_phrase:    normalize_reason_phrase(299, '')
@@ -302,7 +302,7 @@ fn internal_phase_continue_response_psr() &VSlimPsr7Response {
 			'content-type':     'content-type'
 			'x-vslim-continue': 'x-vslim-continue'
 		}
-		body_ref:         new_psr7_stream('')
+		body_ref:         VSlimPsr7Stream.from_content('')
 	}
 }
 

@@ -368,7 +368,8 @@ fn populate_indexed_item_fields(loop_key string, idx string, scalars map[string]
 	}
 }
 
-fn extract_template_data(data vphp.PhpValue) (map[string]string, map[string][]string, map[string]vphp.PhpValue) {
+fn (subject PhpValueSubject) template_data() (map[string]string, map[string][]string, map[string]vphp.PhpValue) {
+	data := subject.value
 	mut scalars := map[string]string{}
 	mut lists := map[string][]string{}
 	mut objects := map[string]vphp.PhpValue{}
@@ -407,7 +408,7 @@ fn collect_template_values(prefix string, value vphp.PhpValue, mut scalars map[s
 						objects, depth + 1)
 				}
 			} else {
-				items := extract_template_list_items(value)
+				items := value_subject(value).template_list_items()
 				if prefix != '' {
 					lists[prefix] = items
 					alias := alias_template_key(prefix)
@@ -514,8 +515,9 @@ fn is_template_list(value vphp.PhpValue) bool {
 	return arr.is_list()
 }
 
-fn extract_template_list_items(value vphp.PhpValue) []string {
+fn (subject PhpValueSubject) template_list_items() []string {
 	mut items := []string{}
+	value := subject.value
 	arr := value.as_array() or { return items }
 	defer {
 		arr.release()
