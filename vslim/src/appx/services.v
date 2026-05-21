@@ -4,7 +4,7 @@ import configx as cfgx
 import containerx
 import routex
 import testingx
-import validation
+import validationx
 import vphp
 
 @[php_arg_name: 'base_path=basePath']
@@ -95,8 +95,8 @@ pub fn (mut app VSlimApp) merge_config_text(text string) &VSlimApp {
 }
 
 @[php_method]
-pub fn (mut app VSlimApp) validate(data vphp.PhpValue, rules vphp.PhpArray) &validation.VSlimValidator {
-	mut validator := validation.VSlimValidator.make(data, rules)
+pub fn (mut app VSlimApp) validate(data vphp.PhpValue, rules vphp.PhpArray) &validationx.VSlimValidator {
+	mut validator := validationx.VSlimValidator.make(data, rules)
 	validator.validate()
 	return validator
 }

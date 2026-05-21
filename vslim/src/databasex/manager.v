@@ -1,6 +1,6 @@
 module databasex
 
-import vhttpd
+import vhttpdx
 
 @[php_method]
 pub fn (mut db VSlimDatabaseManager) construct() &VSlimDatabaseManager {
@@ -45,10 +45,10 @@ pub fn (db &VSlimDatabaseManager) transport() string {
 }
 
 @[php_method: 'vhttpdClient']
-pub fn (mut db VSlimDatabaseManager) vhttpd_client() &vhttpd.VSlimVhttpdClient {
+pub fn (mut db VSlimDatabaseManager) vhttpd_client() &vhttpdx.VSlimVhttpdClient {
 	db.construct()
 	if db.vhttpd_client_ref == unsafe { nil } {
-		mut client := &vhttpd.VSlimVhttpdClient{}
+		mut client := &vhttpdx.VSlimVhttpdClient{}
 		client.construct(db.config_ref.upstream_socket_value(),
 			f64(db.config_ref.timeout_ms_value()) / 1000.0)
 		db.vhttpd_client_ref = client

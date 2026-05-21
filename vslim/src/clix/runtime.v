@@ -1,7 +1,7 @@
 module clix
 
 import appx
-import logger
+import loggerx
 import vphp
 
 struct CliRuntimeInvocation {
@@ -37,11 +37,11 @@ fn (cli &VSlimCliApp) runtime_invocation(argv []string) CliRuntimeInvocation {
 		if argv.len > 1 {
 			inv.command_args = clone_string_slice(argv[1..])
 		}
-		logger.cli_debug_log('effective_args exit argv0=${inv.argv0} strip=true args=${inv.command_args}')
+		loggerx.cli_debug_log('effective_args exit argv0=${inv.argv0} strip=true args=${inv.command_args}')
 		return inv
 	}
 	inv.command_args = clone_string_slice(argv)
-	logger.cli_debug_log('effective_args exit argv0=${inv.argv0} strip=false args=${inv.command_args}')
+	loggerx.cli_debug_log('effective_args exit argv0=${inv.argv0} strip=false args=${inv.command_args}')
 	return inv
 }
 
@@ -80,7 +80,7 @@ fn (mut cli VSlimCliApp) command_summary_text(command_name string) !string {
 }
 
 fn (mut cli VSlimCliApp) command_help_text(program string, command_name string) !string {
-	logger.cli_debug_log('command_help_text start command="${command_name}" program="${program}"')
+	loggerx.cli_debug_log('command_help_text start command="${command_name}" program="${program}"')
 	mut handler_z := cli.lookup_command_handler(command_name)!
 	defer {
 		handler_z.release()
@@ -89,14 +89,14 @@ fn (mut cli VSlimCliApp) command_help_text(program string, command_name string) 
 	defer {
 		runtime.release()
 	}
-	logger.cli_debug_log('command_help_text runtime_ready command="${command_name}"')
+	loggerx.cli_debug_log('command_help_text runtime_ready command="${command_name}"')
 	return command_help_text_from_runtime(runtime, program, command_name)
 }
 
 fn (mut cli VSlimCliApp) command_listing_line(command_name string) string {
 	name := command_name.trim_space().clone()
 	if name == '' {
-		logger.cli_debug_log('listing_line empty command_name raw="${command_name}"')
+		loggerx.cli_debug_log('listing_line empty command_name raw="${command_name}"')
 		return ''
 	}
 	mut summary := cli.command_summary_text(name) or { '' }
@@ -105,7 +105,7 @@ fn (mut cli VSlimCliApp) command_listing_line(command_name string) string {
 		alias_text := 'aliases: ${aliases.join(',')}'
 		summary = if summary != '' { '${summary} [${alias_text}]' } else { '[${alias_text}]' }
 	}
-	logger.cli_debug_log('listing_line name="${name}" summary="${summary}"')
+	loggerx.cli_debug_log('listing_line name="${name}" summary="${summary}"')
 	return help_line(name, summary)
 }
 
@@ -173,7 +173,7 @@ fn cli_append_command_listing_lines(mut lines []string, mut cli VSlimCliApp, gro
 		for name in groups[0].commands {
 			command_name := name.trim_space().clone()
 			if command_name == '' {
-				logger.cli_debug_log('listing_inline empty command_name raw="${name}"')
+				loggerx.cli_debug_log('listing_inline empty command_name raw="${name}"')
 				continue
 			}
 			mut summary := cli.command_summary_text(command_name) or { '' }
@@ -186,7 +186,7 @@ fn cli_append_command_listing_lines(mut lines []string, mut cli VSlimCliApp, gro
 					'[${alias_text}]'
 				}
 			}
-			logger.cli_debug_log('listing_inline name="${command_name}" summary="${summary}"')
+			loggerx.cli_debug_log('listing_inline name="${command_name}" summary="${summary}"')
 			mut base_line := command_name.clone()
 			if summary != '' {
 				width := 28
@@ -209,7 +209,7 @@ fn cli_append_command_listing_lines(mut lines []string, mut cli VSlimCliApp, gro
 		for name in group.commands {
 			command_name := name.trim_space().clone()
 			if command_name == '' {
-				logger.cli_debug_log('listing_inline empty grouped command_name raw="${name}"')
+				loggerx.cli_debug_log('listing_inline empty grouped command_name raw="${name}"')
 				continue
 			}
 			mut summary := cli.command_summary_text(command_name) or { '' }
@@ -222,7 +222,7 @@ fn cli_append_command_listing_lines(mut lines []string, mut cli VSlimCliApp, gro
 					'[${alias_text}]'
 				}
 			}
-			logger.cli_debug_log('listing_inline name="${command_name}" summary="${summary}"')
+			loggerx.cli_debug_log('listing_inline name="${command_name}" summary="${summary}"')
 			mut base_line := command_name.clone()
 			if summary != '' {
 				width := 28
@@ -238,13 +238,13 @@ fn cli_append_command_listing_lines(mut lines []string, mut cli VSlimCliApp, gro
 }
 
 fn (mut cli VSlimCliApp) runtime_list_text() string {
-	logger.cli_debug_log('list_text start')
-	logger.cli_debug_log('list_text order=${cli.command_order}')
+	loggerx.cli_debug_log('list_text start')
+	loggerx.cli_debug_log('list_text order=${cli.command_order}')
 	mut lines := []string{}
 	groups := cli.command_listing_groups()
-	logger.cli_debug_log('list_text groups=${groups.len}')
+	loggerx.cli_debug_log('list_text groups=${groups.len}')
 	cli_append_command_listing_lines(mut lines, mut cli, groups, false)
-	logger.cli_debug_log('list_text lines=${lines.len}')
+	loggerx.cli_debug_log('list_text lines=${lines.len}')
 	return lines.join('\n') + '\n'
 }
 
@@ -287,7 +287,7 @@ fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvo
 	mut args := clone_string_slice(inv.command_args)
 	inv.command_args = []string{}
 	mut idx := 0
-	logger.cli_debug_log('parse_invocation start args=${args}')
+	loggerx.cli_debug_log('parse_invocation start args=${args}')
 	for idx < args.len {
 		arg := args[idx].trim_space()
 		if arg == '' {
@@ -359,9 +359,9 @@ fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvo
 	}
 	if idx < args.len {
 		inv.command_args = clone_string_slice(args[idx..])
-		logger.cli_debug_log('parse_invocation found command_args=${inv.command_args} from index ${idx}')
+		loggerx.cli_debug_log('parse_invocation found command_args=${inv.command_args} from index ${idx}')
 	} else {
-		logger.cli_debug_log('parse_invocation no command_args found, idx=${idx} len=${args.len}')
+		loggerx.cli_debug_log('parse_invocation no command_args found, idx=${idx} len=${args.len}')
 	}
 	if inv.bootstrap_dir != '' && inv.bootstrap_file != '' {
 		return error('CLI options `--bootstrap-dir` and `--bootstrap-file` cannot be used together')
@@ -384,21 +384,21 @@ fn (mut cli VSlimCliApp) runtime_apply_bootstrap(bootstrap_file string, bootstra
 
 @[php_method: 'helpText']
 pub fn (mut cli VSlimCliApp) help_text() string {
-	logger.cli_debug_log('help_text cli=${usize(cli)} core=${usize(cli.core_app_ref)}')
-	logger.cli_debug_log('help_text order=${cli.command_order}')
+	loggerx.cli_debug_log('help_text cli=${usize(cli)} core=${usize(cli.core_app_ref)}')
+	loggerx.cli_debug_log('help_text order=${cli.command_order}')
 	return cli.runtime_help_text('vslim')
 }
 
 @[php_arg_name: 'command_name=commandName']
 @[php_method: 'commandHelp']
 pub fn (mut cli VSlimCliApp) command_help(command_name string) string {
-	logger.cli_debug_log('command_help cli=${usize(cli)} core=${usize(cli.core_app_ref)} command="${command_name}"')
+	loggerx.cli_debug_log('command_help cli=${usize(cli)} core=${usize(cli.core_app_ref)} command="${command_name}"')
 	return cli.command_help_text('vslim', command_name) or { '' }
 }
 
 @[php_method: 'runArgv']
 pub fn (mut cli VSlimCliApp) run_argv(argv vphp.PhpIterable) int {
-	logger.cli_debug_log('run_argv enter cli=${usize(cli)} core=${usize(cli.core_app_ref)}')
+	loggerx.cli_debug_log('run_argv enter cli=${usize(cli)} core=${usize(cli.core_app_ref)}')
 	argv_list := cli_args_to_array(argv) or {
 		vphp.PhpException.raise_class('InvalidArgumentException', 'argv must be iterable', 0)
 		return 1
@@ -441,8 +441,8 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.PhpIterable) int {
 		}
 	}
 	if show_help {
-		logger.cli_debug_log('run_argv branch=help command="${command_name}"')
-		logger.cli_debug_log('run_argv branch=help order=${cli.command_order}')
+		loggerx.cli_debug_log('run_argv branch=help command="${command_name}"')
+		loggerx.cli_debug_log('run_argv branch=help order=${cli.command_order}')
 		if command_name != '' {
 			vphp.PhpOutput.write(cli.command_help_text(program, command_name) or {
 				cli_runtime_write_stderr(err.msg())
@@ -454,10 +454,10 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.PhpIterable) int {
 		return 0
 	}
 	if show_list {
-		logger.cli_debug_log('run_argv branch=list enter')
-		logger.cli_debug_log('run_argv branch=list order=${cli.command_order}')
+		loggerx.cli_debug_log('run_argv branch=list enter')
+		loggerx.cli_debug_log('run_argv branch=list order=${cli.command_order}')
 		vphp.PhpOutput.write(cli.runtime_list_text())
-		logger.cli_debug_log('run_argv branch=list exit')
+		loggerx.cli_debug_log('run_argv branch=list exit')
 		return 0
 	}
 	if command_name == '' {
@@ -465,7 +465,7 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.PhpIterable) int {
 		return 1
 	}
 	if args_request_command_help(command_args) {
-		logger.cli_debug_log('run_argv branch=command_help command="${command_name}"')
+		loggerx.cli_debug_log('run_argv branch=command_help command="${command_name}"')
 		vphp.PhpOutput.write(cli.command_help_text(program, command_name) or {
 			cli_runtime_write_stderr(err.msg())
 			return 1
@@ -482,6 +482,6 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.PhpIterable) int {
 			cli_runtime_write_stderr(warning)
 		}
 	}
-	logger.cli_debug_log('run_argv exit cli=${usize(cli)} code=${code}')
+	loggerx.cli_debug_log('run_argv exit cli=${usize(cli)} code=${code}')
 	return code
 }

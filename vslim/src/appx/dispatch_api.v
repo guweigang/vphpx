@@ -1,7 +1,7 @@
 module appx
 
 import httpx
-import logger
+import loggerx
 import vphp
 
 fn (app &VSlimApp) dispatch_request_facade(req &httpx.VSlimRequest) &httpx.VSlimResponse {
@@ -18,7 +18,7 @@ fn (app &VSlimApp) dispatch_request_facade(req &httpx.VSlimRequest) &httpx.VSlim
 		empty := httpx.VSlimResponse.empty()
 		return empty.boxed_snapshot()
 	}
-	logger.cli_debug_log('dispatch.facade result status=${result.response_ref.status} body_len=${result.response_ref.body.len}')
+	loggerx.cli_debug_log('dispatch.facade result status=${result.response_ref.status} body_len=${result.response_ref.body.len}')
 	return result.response_ref.boxed_snapshot_ref()
 }
 
@@ -44,9 +44,9 @@ fn (app &VSlimApp) dispatch_response_value(req &httpx.VSlimRequest) vphp.PhpValu
 	mut scope := vphp.PhpScope.request()
 	app.prepare_kernel()
 	response := app.dispatch_request_facade(req)
-	logger.cli_debug_log('dispatch.box before_leave status=${response.status} body_len=${response.body.len}')
+	loggerx.cli_debug_log('dispatch.box before_leave status=${response.status} body_len=${response.body.len}')
 	scope.close()
-	logger.cli_debug_log('dispatch.box after_leave status=${response.status} body_len=${response.body.len}')
+	loggerx.cli_debug_log('dispatch.box after_leave status=${response.status} body_len=${response.body.len}')
 	return httpx.vslim_response_ref_to_value(response)
 }
 

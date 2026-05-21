@@ -1,7 +1,7 @@
 module appx
 
 import configx as cfgx
-import logger
+import loggerx
 import mcpx as mcp
 import cachex
 import clockx
@@ -59,7 +59,7 @@ fn (mut app VSlimApp) bootstrap_file_apply(path string) ! {
 		|| lower.ends_with('\\bootstrap\\app.php') || lower.ends_with('/app.php')
 		|| lower.ends_with('\\app.php')
 	file_exists := fsx.is_file(clean)
-	logger.cli_debug_log('bootstrap_file clean="${clean}" lower="${lower}" should_preload=${should_preload} is_file=${file_exists}')
+	loggerx.cli_debug_log('bootstrap_file clean="${clean}" lower="${lower}" should_preload=${should_preload} is_file=${file_exists}')
 	if should_preload && file_exists {
 		project_root := if fsx.is_bootstrap_dir_path(fsx.dirname(clean)) {
 			fsx.dirname(fsx.dirname(clean))
@@ -67,7 +67,7 @@ fn (mut app VSlimApp) bootstrap_file_apply(path string) ! {
 			fsx.dirname(clean)
 		}
 		if project_root != '' {
-			logger.cli_debug_log('bootstrap_file preload project_root="${project_root}"')
+			loggerx.cli_debug_log('bootstrap_file preload project_root="${project_root}"')
 			supportx.preload_bootstrap_spec_classes(project_root, result)
 		}
 	}
@@ -124,7 +124,7 @@ fn (mut app VSlimApp) apply_bootstrap_services(spec vphp.PhpArray) ! {
 		app.set_clock(clock)
 	}
 	if value := supportx.app_bootstrap_spec(spec).lookup(['logger']) {
-		log_writer := supportx.require_native_bootstrap_object[logger.VSlimLogger](value,
+		log_writer := supportx.require_native_bootstrap_object[loggerx.VSlimLogger](value,
 			'VSlim\\Log\\Logger', 'logger')!
 		app.set_logger(log_writer)
 	}

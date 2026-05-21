@@ -40,7 +40,7 @@ $port = 19620 + random_int(0, 200);
 $tmp = sys_get_temp_dir() . '/vhttpd_stream_' . getmypid() . '_' . $port;
 @mkdir($tmp, 0777, true);
 
-$pidFile = $tmp . '/vhttpd.pid';
+$pidFile = $tmp . '/vhttpdx.pid';
 $eventLog = $tmp . '/events.ndjson';
 $stdoutLog = $tmp . '/stdout.log';
 $workerSock = $tmp . '/worker.sock';

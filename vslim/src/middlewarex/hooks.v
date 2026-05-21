@@ -1,6 +1,6 @@
 module middlewarex
 
-import logger
+import loggerx
 import vphp
 
 pub fn release_hooks(mut hooks []vphp.PhpValue) {
@@ -34,7 +34,7 @@ pub fn clone_standard_hooks(base []vphp.PhpValue, extra []vphp.PhpValue) []vphp.
 		cloned := hook.owned()
 		if idx == 0 {
 			slot_addr := unsafe { usize(&base[idx]) }
-			logger.cli_debug_log('middleware.collect app idx=${idx} slot=${slot_addr} src_kind=${hook.kind_name()} src_valid=${hook.is_valid()} src_null=${hook.is_null()} src_undef=${hook.is_undef()} clone_valid=${cloned.is_valid()} clone_null=${cloned.is_null()} clone_undef=${cloned.is_undef()}')
+			loggerx.cli_debug_log('middleware.collect app idx=${idx} slot=${slot_addr} src_kind=${hook.kind_name()} src_valid=${hook.is_valid()} src_null=${hook.is_null()} src_undef=${hook.is_undef()} clone_valid=${cloned.is_valid()} clone_null=${cloned.is_null()} clone_undef=${cloned.is_undef()}')
 		}
 		out << cloned
 	}

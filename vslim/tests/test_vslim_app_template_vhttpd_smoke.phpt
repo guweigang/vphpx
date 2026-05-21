@@ -71,11 +71,11 @@ $port = free_port();
 $tmp = sys_get_temp_dir() . '/vslim_template_vhttpd_' . getmypid() . '_' . $port;
 @mkdir($tmp, 0777, true);
 
-$pidFile = $tmp . '/vhttpd.pid';
+$pidFile = $tmp . '/vhttpdx.pid';
 $eventLog = $tmp . '/events.ndjson';
 $stdoutLog = $tmp . '/stdout.log';
 $socket = $tmp . '/worker.sock';
-$configPath = $tmp . '/vhttpd.toml';
+$configPath = $tmp . '/vhttpdx.toml';
 $workerApp = $templateRoot . '/public/worker.php';
 
 $prependFile = $tmp . '/psr_mock.php';

@@ -1,7 +1,7 @@
 module middlewarex
 
 import httpx
-import logger
+import loggerx
 import vphp
 
 pub enum MiddlewareRegistrationKind {
@@ -141,7 +141,7 @@ pub fn (handler &VSlimPsr15NextHandler) handle(request vphp.PhpObject) &httpx.VS
 		if res == nil {
 			return httpx.VSlimPsr7Response.text(500, 'Middleware next handler returned null')
 		}
-		logger.cli_debug_log('next.handle result status=${res.get_status_code()} body_len=${httpx.psr7_stream_string(res.body_or_empty()).len}')
+		loggerx.cli_debug_log('next.handle result status=${res.get_status_code()} body_len=${httpx.psr7_stream_string(res.body_or_empty()).len}')
 		return res.clone_with(res.get_protocol_version(), httpx.clone_header_values(res.headers),
 			httpx.clone_header_names(res.header_names), res.body_or_empty(), res.get_status_code(),
 			res.get_reason_phrase())

@@ -26,7 +26,7 @@ $port = 19480 + random_int(0, 300);
 $tmp = sys_get_temp_dir() . '/vhttpd_timeout_' . getmypid() . '_' . $port;
 @mkdir($tmp, 0777, true);
 
-$pidFile = $tmp . '/vhttpd.pid';
+$pidFile = $tmp . '/vhttpdx.pid';
 $eventLog = $tmp . '/events.ndjson';
 $stdoutLog = $tmp . '/stdout.log';
 $workerSock = $tmp . '/worker.sock';

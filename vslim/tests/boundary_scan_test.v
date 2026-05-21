@@ -341,16 +341,16 @@ fn test_appx_uses_theme_default_service_constructors() {
 	assert container_source.contains('pub fn (mut c VSlimContainer) set_owned_object'), 'containerx should own owned object service binding'
 	for pattern in [
 		'&cfgx.VSlimConfig{}',
-		'&logger.VSlimLogger{}',
-		'&logger.VSlimPsrLogger{}',
+		'&loggerx.VSlimLogger{}',
+		'&loggerx.VSlimPsrLogger{}',
 		'&eventx.VSlimPsr14ListenerProvider{}',
 		'&eventx.VSlimPsr14EventDispatcher{}',
 		'&cachex.VSlimPsr16Cache{}',
 		'&cachex.VSlimPsr6CacheItemPool{}',
 		'&httpx.VSlimPsr18Client{}',
 		'&databasex.VSlimDatabaseManager{}',
-		'&job.VSlimJobDispatcher{}',
-		'&job.VSlimJobWorker{}',
+		'&jobx.VSlimJobDispatcher{}',
+		'&jobx.VSlimJobWorker{}',
 		'&databasex.VSlimDatabaseMigrator{}',
 		'&mcp.VSlimMcpApp{}',
 	] {
@@ -434,11 +434,11 @@ fn test_routing_module_stays_pure_and_below_route_domain() {
 		'import sessionx',
 		'import containerx',
 		'import configx',
-		'import logger',
+		'import loggerx',
 		'import fsx',
 		'import errorx',
 	]
-	for file in vslim_module_files('routing') {
+	for file in vslim_module_files('routingx') {
 		source := os.read_file(file) or { panic('failed to read ${file}: ${err}') }
 		for pattern in banned_imports {
 			assert !source.contains(pattern), '${file} should keep routing as pure path/query/pattern algorithms, not ${pattern}'
@@ -466,8 +466,8 @@ fn test_routex_does_not_depend_on_app_lifecycle_modules() {
 
 fn test_appx_does_not_reown_routing_algorithms() {
 	banned_patterns := [
-		'import routing',
-		'routing.',
+		'import routingx',
+		'routingx.',
 		'fn (subject PhpValueSubject) normalized_methods()',
 	]
 	for file in vslim_module_files('appx') {
@@ -484,7 +484,7 @@ fn test_appx_does_not_reown_websocket_handler_dispatch() {
 		'dispatch_websocket_container_service(',
 		'service.method_exists(',
 		'service_obj.call_method(',
-		'websocket.handler_args(',
+		'websocketx.handler_args(',
 		"method_exists('onOpen')",
 		"method_exists('onMessage')",
 		"method_exists('onClose')",

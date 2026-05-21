@@ -7,7 +7,7 @@ import vphp
 @[php_arg_optional: 'default_status,default_reason_phrase']
 @[php_method]
 pub fn (mut r VSlimPsr7Response) construct(default_status int, default_reason_phrase string) &VSlimPsr7Response {
-	r.status = default_status(default_status)
+	r.status = httpx.default_status(default_status)
 	r.reason_phrase = normalize_reason_phrase(r.status, default_reason_phrase)
 	r.protocol_version = normalize_protocol_version(r.protocol_version)
 	if r.headers.len == 0 {

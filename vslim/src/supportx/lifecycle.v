@@ -1,6 +1,6 @@
 module supportx
 
-import logger
+import loggerx
 import vphp
 
 pub fn input_value(raw vphp.PhpValue, kind string) !vphp.PhpValue {
@@ -138,5 +138,5 @@ fn log_class_visibility(kind string, class_name string) {
 		no_autoload_arg)
 	exists_autoload := vphp.PhpFunction.named('class_exists').result_bool(class_arg, autoload_arg)
 	hits := included_hits(class_name)
-	logger.cli_debug_log('${kind}_class_visibility class="${class_name}" exists_no_autoload=${exists_no_autoload} exists_autoload=${exists_autoload} included_hits=${hits}')
+	loggerx.cli_debug_log('${kind}_class_visibility class="${class_name}" exists_no_autoload=${exists_no_autoload} exists_autoload=${exists_autoload} included_hits=${hits}')
 }

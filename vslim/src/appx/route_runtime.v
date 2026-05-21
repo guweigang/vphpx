@@ -2,11 +2,11 @@ module appx
 
 import routex
 import vphp
-import websocket
+import websocketx
 
 @[php_method: 'handleWebSocket']
 pub fn (mut app VSlimApp) handle_websocket(frame vphp.PhpArray, conn vphp.PhpObject) vphp.PhpValue {
-	route_frame := websocket.select_route_frame(mut app.websocket_conn_route, app.websocket_routes,
+	route_frame := websocketx.select_route_frame(mut app.websocket_conn_route, app.websocket_routes,
 		frame)
 	if route_frame.should_reject_open() {
 		return vphp.PhpBool.of(false).take_value()
@@ -16,7 +16,7 @@ pub fn (mut app VSlimApp) handle_websocket(frame vphp.PhpArray, conn vphp.PhpObj
 	}
 	result := app.dispatch_websocket_route_handler(app.websocket_routes[route_frame.index],
 		route_frame.event, frame, conn)
-	websocket.finish_route_frame(mut app.websocket_conn_route, route_frame)
+	websocketx.finish_route_frame(mut app.websocket_conn_route, route_frame)
 	return result
 }
 
@@ -69,7 +69,7 @@ fn (mut app VSlimApp) add_route(method string, name string, pattern string, hand
 }
 
 fn (mut app VSlimApp) add_websocket_route(name string, pattern string, handler vphp.PhpValue) {
-	if !websocket.is_supported_handler_value(handler) {
+	if !websocketx.is_supported_handler_value(handler) {
 		return
 	}
 	app.websocket_routes << routex.VSlimRoute.websocket(name, pattern, handler)
@@ -91,20 +91,20 @@ fn (app &VSlimApp) dispatch_websocket_route_handler(route routex.VSlimRoute, eve
 	if !handler_value.is_valid() {
 		return vphp.PhpValue.null()
 	}
-	if websocket.is_live_handler_value(handler_value) {
+	if websocketx.is_live_handler_value(handler_value) {
 		unsafe {
 			mut mutable_app := &VSlimApp(app)
 			return mutable_app.dispatch_live_websocket_handler(handler_value, event, frame, conn)
 		}
 	}
 	if handler_value.is_object() || handler_value.is_callable() {
-		return websocket.dispatch_handler_value(handler_value, event, frame, conn)
+		return websocketx.dispatch_handler_value(handler_value, event, frame, conn)
 	}
 	if handler_value.is_string() && app.has_container() {
 		service := app.resolve_container_service(handler_value.to_string()) or {
 			return vphp.PhpValue.null()
 		}
-		return websocket.dispatch_service_handler(service, '', event, frame, conn)
+		return websocketx.dispatch_service_handler(service, '', event, frame, conn)
 	}
 	if handler_array := handler_value.as_array() {
 		if !app.has_container() {
@@ -114,7 +114,7 @@ fn (app &VSlimApp) dispatch_websocket_route_handler(route routex.VSlimRoute, eve
 		if parts.len >= 1 && parts[0] != '' {
 			service := app.resolve_container_service(parts[0]) or { return vphp.PhpValue.null() }
 			method := if parts.len == 2 { parts[1] } else { '' }
-			return websocket.dispatch_service_handler(service, method, event, frame, conn)
+			return websocketx.dispatch_service_handler(service, method, event, frame, conn)
 		}
 	}
 	return vphp.PhpValue.null()

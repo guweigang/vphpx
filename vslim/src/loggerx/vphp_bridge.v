@@ -1,4 +1,4 @@
-module logger
+module loggerx
 
 import vphp
 
@@ -640,7 +640,7 @@ pub fn vphp_wrap_vslimpsrlogger_set_logger(ptr voidptr, ctx vphp.Context) voidpt
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'inner', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &logger.VSlimLogger(php_args.at_named_or_index(0, 'inner').raw_obj()) }
+    arg_0 := unsafe { &loggerx.VSlimLogger(php_args.at_named_or_index(0, 'inner').raw_obj()) }
     res := recv.set_logger(arg_0)
     return voidptr(res)
 }
@@ -761,7 +761,7 @@ pub fn vphp_wrap_vslimpsrlogger_log(ptr voidptr, ctx vphp.Context)  {
     } else {
         vphp.PhpArray.empty()
     }
-    arg_2_params := logger.VSlimPsrLoggerContextParams{
+    arg_2_params := loggerx.VSlimPsrLoggerContextParams{
         context: arg_2_params_context
     }
     recv.log(arg_0, arg_1, arg_2_params)
@@ -784,7 +784,7 @@ pub fn vphp_wrap_vslimpsrlogger_emergency(ptr voidptr, ctx vphp.Context)  {
     } else {
         vphp.PhpArray.empty()
     }
-    arg_1_params := logger.VSlimPsrLoggerContextParams{
+    arg_1_params := loggerx.VSlimPsrLoggerContextParams{
         context: arg_1_params_context
     }
     recv.emergency(arg_0, arg_1_params)
@@ -807,7 +807,7 @@ pub fn vphp_wrap_vslimpsrlogger_alert(ptr voidptr, ctx vphp.Context)  {
     } else {
         vphp.PhpArray.empty()
     }
-    arg_1_params := logger.VSlimPsrLoggerContextParams{
+    arg_1_params := loggerx.VSlimPsrLoggerContextParams{
         context: arg_1_params_context
     }
     recv.alert(arg_0, arg_1_params)
@@ -830,7 +830,7 @@ pub fn vphp_wrap_vslimpsrlogger_critical(ptr voidptr, ctx vphp.Context)  {
     } else {
         vphp.PhpArray.empty()
     }
-    arg_1_params := logger.VSlimPsrLoggerContextParams{
+    arg_1_params := loggerx.VSlimPsrLoggerContextParams{
         context: arg_1_params_context
     }
     recv.critical(arg_0, arg_1_params)
@@ -853,7 +853,7 @@ pub fn vphp_wrap_vslimpsrlogger_error(ptr voidptr, ctx vphp.Context)  {
     } else {
         vphp.PhpArray.empty()
     }
-    arg_1_params := logger.VSlimPsrLoggerContextParams{
+    arg_1_params := loggerx.VSlimPsrLoggerContextParams{
         context: arg_1_params_context
     }
     recv.error(arg_0, arg_1_params)
@@ -876,7 +876,7 @@ pub fn vphp_wrap_vslimpsrlogger_warning(ptr voidptr, ctx vphp.Context)  {
     } else {
         vphp.PhpArray.empty()
     }
-    arg_1_params := logger.VSlimPsrLoggerContextParams{
+    arg_1_params := loggerx.VSlimPsrLoggerContextParams{
         context: arg_1_params_context
     }
     recv.warning(arg_0, arg_1_params)
@@ -899,7 +899,7 @@ pub fn vphp_wrap_vslimpsrlogger_notice(ptr voidptr, ctx vphp.Context)  {
     } else {
         vphp.PhpArray.empty()
     }
-    arg_1_params := logger.VSlimPsrLoggerContextParams{
+    arg_1_params := loggerx.VSlimPsrLoggerContextParams{
         context: arg_1_params_context
     }
     recv.notice(arg_0, arg_1_params)
@@ -922,7 +922,7 @@ pub fn vphp_wrap_vslimpsrlogger_info(ptr voidptr, ctx vphp.Context)  {
     } else {
         vphp.PhpArray.empty()
     }
-    arg_1_params := logger.VSlimPsrLoggerContextParams{
+    arg_1_params := loggerx.VSlimPsrLoggerContextParams{
         context: arg_1_params_context
     }
     recv.info(arg_0, arg_1_params)
@@ -945,7 +945,7 @@ pub fn vphp_wrap_vslimpsrlogger_debug(ptr voidptr, ctx vphp.Context)  {
     } else {
         vphp.PhpArray.empty()
     }
-    arg_1_params := logger.VSlimPsrLoggerContextParams{
+    arg_1_params := loggerx.VSlimPsrLoggerContextParams{
         context: arg_1_params_context
     }
     recv.debug(arg_0, arg_1_params)

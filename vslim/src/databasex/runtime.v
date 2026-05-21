@@ -2,7 +2,7 @@ module databasex
 
 import db.mysql
 import os
-import vhttpd
+import vhttpdx
 import vphp
 
 $if linux {
@@ -231,7 +231,7 @@ pub fn (db &VSlimDatabaseManager) database_upstream_timeout_seconds() f64 {
 	return f64(db.config_ref.timeout_ms_value()) / 1000.0
 }
 
-pub fn (mut db VSlimDatabaseManager) database_upstream_client() &vhttpd.VSlimVhttpdClient {
+pub fn (mut db VSlimDatabaseManager) database_upstream_client() &vhttpdx.VSlimVhttpdClient {
 	return db.vhttpd_client()
 }
 

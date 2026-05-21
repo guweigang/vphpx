@@ -397,7 +397,7 @@ const config_file_priority = [
 	'cache.toml',
 	'database.toml',
 	'stream.toml',
-	'vhttpd.toml',
+	'vhttpdx.toml',
 ]
 
 fn config_dir_files(path string) ![]string {

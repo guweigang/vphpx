@@ -1,7 +1,7 @@
 module appx
 
 import httpx
-import logger
+import loggerx
 import liveviewx
 import middlewarex
 import routex
@@ -89,7 +89,7 @@ fn (app &VSlimApp) bind_route_target_if_supported(target vphp.PhpValue) {
 
 fn (mut chain MiddlewareChain) dispatch_entry(handler vphp.PhpValue, payload vphp.PhpValue) !vphp.PhpValue {
 	target, explicit_method := chain.app.resolve_middleware_target(handler) or {
-		logger.cli_debug_log('middleware.target.resolve.error msg=${err.msg()} handler_valid=${handler.is_valid()} handler_kind=${handler.kind_name()}')
+		loggerx.cli_debug_log('middleware.target.resolve.error msg=${err.msg()} handler_valid=${handler.is_valid()} handler_kind=${handler.kind_name()}')
 		return err
 	}
 	chain.app.bind_route_target_if_supported(target)
@@ -114,7 +114,7 @@ fn (mut chain MiddlewareChain) dispatch_entry(handler vphp.PhpValue, payload vph
 		normalized := httpx.VSlimPsr7Response.from_value(result)
 		return httpx.vslim_response_to_value(normalized.to_vslim_response())
 	}
-	logger.cli_debug_log('middleware.target.invalid method=${method} target_valid=${target.is_valid()} target_kind=${target.kind_name()} target_class=${target.class_name()}')
+	loggerx.cli_debug_log('middleware.target.invalid method=${method} target_valid=${target.is_valid()} target_kind=${target.kind_name()} target_class=${target.class_name()}')
 	return error('Middleware must implement Psr\\Http\\Server\\MiddlewareInterface')
 }
 

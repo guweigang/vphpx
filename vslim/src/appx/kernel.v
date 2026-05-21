@@ -1,7 +1,7 @@
 module appx
 
 import httpx
-import logger
+import loggerx
 
 struct AppKernelTraceState {
 	enabled    bool
@@ -44,14 +44,14 @@ fn (app &VSlimApp) dispatch_request_with_trace_labels(req &httpx.VSlimRequest, e
 	trace := app.new_kernel_trace(req, enter_stage)
 	mut res, params, effective_req := app.dispatch_request_with_params(req, trace.enabled,
 		trace.base_bytes)
-	logger.cli_debug_log('kernel.after_dispatch status=${res.status} body_len=${res.body.len}')
+	loggerx.cli_debug_log('kernel.after_dispatch status=${res.status} body_len=${res.body.len}')
 	trace.log(app, req, after_core_stage)
 	res.propagate_request_trace_headers(effective_req)
-	logger.cli_debug_log('kernel.after_propagate status=${res.status} body_len=${res.body.len}')
+	loggerx.cli_debug_log('kernel.after_propagate status=${res.status} body_len=${res.body.len}')
 	if req.effective_method() == 'HEAD' {
 		res.body = ''
 	}
-	logger.cli_debug_log('kernel.before_snapshot status=${res.status} body_len=${res.body.len}')
+	loggerx.cli_debug_log('kernel.before_snapshot status=${res.status} body_len=${res.body.len}')
 	trace.log(app, req, before_return_stage)
 	return AppKernelDispatchResult{
 		response_ref:          res.boxed_snapshot()

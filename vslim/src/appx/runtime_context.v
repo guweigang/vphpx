@@ -1,7 +1,7 @@
 module appx
 
 import httpx
-import logger
+import loggerx
 import os
 import clockx
 import vphp
@@ -132,7 +132,7 @@ fn (app &VSlimApp) trace_mem_log(req &httpx.VSlimRequest, stage string, base_byt
 	log_writer.debug_context('memory trace', context_arr)
 }
 
-fn (app &VSlimApp) resolve_logger() &logger.VSlimLogger {
+fn (app &VSlimApp) resolve_logger() &loggerx.VSlimLogger {
 	unsafe {
 		mut writable := &VSlimApp(app)
 		return writable.logger()

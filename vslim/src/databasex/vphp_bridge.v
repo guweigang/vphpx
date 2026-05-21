@@ -2,7 +2,7 @@ module databasex
 
 import vphp
 
-import vhttpd
+import vhttpdx
 
 #include "php_bridge.h"
 

@@ -8,13 +8,13 @@ import containerx
 import databasex
 import eventx
 import httpx
-import job
-import logger
+import jobx
+import loggerx
 import mcpx
 import routex
 import sessionx
 import testingx
-import validation
+import validationx
 import viewx
 
 #include "php_bridge.h"
@@ -868,7 +868,7 @@ pub fn vphp_wrap_vslimapp_set_logger(ptr voidptr, ctx vphp.Context) voidptr {
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'logWriter', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &logger.VSlimLogger(php_args.at_named_or_index(0, 'logWriter').raw_obj()) }
+    arg_0 := unsafe { &loggerx.VSlimLogger(php_args.at_named_or_index(0, 'logWriter').raw_obj()) }
     res := recv.set_logger(arg_0)
     return voidptr(res)
 }

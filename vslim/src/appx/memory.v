@@ -1,10 +1,10 @@
 module appx
 
-import logger
+import loggerx
 import routex
 
 pub fn (mut app VSlimApp) cleanup() {
-	logger.cli_debug_log('app.cleanup automatic entry app=${usize(app)}')
+	loggerx.cli_debug_log('app.cleanup automatic entry app=${usize(app)}')
 	// Direct bridge-owned fields on VSlimApp are automatically released by
 	// generic_free_raw() later in the destruction pipeline. We only manually
 	// release bridge refs that are nested inside custom V structs, because the
@@ -31,5 +31,5 @@ pub fn (mut app VSlimApp) cleanup() {
 			app.module_classes.free()
 		}
 	}
-	logger.cli_debug_log('app.cleanup native collections done')
+	loggerx.cli_debug_log('app.cleanup native collections done')
 }

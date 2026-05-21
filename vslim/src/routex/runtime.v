@@ -1,7 +1,7 @@
 module routex
 
 import httpx
-import routing
+import routingx
 import vphp
 
 pub fn VSlimRuntime.new() VSlimRuntime {
@@ -89,7 +89,7 @@ fn (app VSlimRuntime) run_middleware(index int, req httpx.VSlimRequest) httpx.VS
 
 fn (app VSlimRuntime) dispatch_route(req httpx.VSlimRequest) httpx.VSlimResponse {
 	method := req.method.to_upper()
-	path := routing.Path.normalize(req.path_value())
+	path := routingx.Path.normalize(req.path_value())
 	mut method_not_allowed := false
 
 	for route in app.routes {
@@ -191,7 +191,7 @@ pub fn dispatch_demo(req httpx.VSlimRequest) httpx.VSlimResponse {
 pub fn dispatch_demo_with_params(req httpx.VSlimRequest) (httpx.VSlimResponse, map[string]string) {
 	mut app := VSlimRuntime.demo()
 	method := req.method.to_upper()
-	path := routing.Path.normalize(req.path_value())
+	path := routingx.Path.normalize(req.path_value())
 	mut method_not_allowed := false
 	for route in app.routes {
 		ok, params := route.matches(path)

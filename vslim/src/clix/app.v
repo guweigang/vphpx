@@ -1,13 +1,13 @@
 module clix
 
 import appx
-import logger
+import loggerx
 import vphp
 
 fn (mut cli VSlimCliApp) ensure_core_app() &appx.VSlimApp {
 	if cli.core_app_ref == unsafe { nil } {
 		cli.core_app_ref = appx.VSlimApp.new_core()
-		logger.cli_debug_log('ensure_cli_core_app new cli=${usize(cli)} core=${usize(cli.core_app_ref)}')
+		loggerx.cli_debug_log('ensure_cli_core_app new cli=${usize(cli)} core=${usize(cli.core_app_ref)}')
 	}
 	return cli.core_app_ref
 }
@@ -50,9 +50,9 @@ fn (cli &VSlimCliApp) wrap_runtime_value() vphp.PhpValue {
 		if isnil(cli) {
 			return vphp.PhpValue.null()
 		}
-		logger.cli_debug_log(cli.trace_message('wrap_runtime_cli_value enter cli=${usize(cli)}'))
+		loggerx.cli_debug_log(cli.trace_message('wrap_runtime_cli_value enter cli=${usize(cli)}'))
 		payload := vphp.bind_borrowed_object_value[VSlimCliApp](cli)
-		logger.cli_debug_log(cli.trace_message('wrap_runtime_cli_value exit cli=${usize(cli)} valid=${payload.is_valid()} type=${payload.type_name()}'))
+		loggerx.cli_debug_log(cli.trace_message('wrap_runtime_cli_value exit cli=${usize(cli)} valid=${payload.is_valid()} type=${payload.type_name()}'))
 		return payload
 	}
 }
@@ -68,7 +68,7 @@ fn derive_command_name_from_handler(handler vphp.PhpValue) !string {
 	if handler.is_valid() && handler.is_object() {
 		name := command_name_from_short_name(short_class_name(handler.class_name()))
 		if name == '' {
-			logger.cli_debug_log('derive_command_name_from_handler object empty class="${handler.class_name()}"')
+			loggerx.cli_debug_log('derive_command_name_from_handler object empty class="${handler.class_name()}"')
 			return error('command name must not be empty')
 		}
 		return name
@@ -170,7 +170,7 @@ fn (mut cli VSlimCliApp) resolve_command_class_runtime(class_name string) !vphp.
 fn (cli &VSlimCliApp) lookup_command_handler(name string) !vphp.PhpValue {
 	command_name := name.trim_space()
 	if command_name == '' {
-		logger.cli_debug_log('lookup_cli_command_handler empty name raw="${name}"')
+		loggerx.cli_debug_log('lookup_cli_command_handler empty name raw="${name}"')
 		return error('command name must not be empty')
 	}
 	handler := cli.command_handlers[command_name] or {
@@ -279,7 +279,7 @@ fn (mut cli VSlimCliApp) run_registered_cli_command_with_program(name string, ar
 	defer {
 		cli.current_trace = ''
 	}
-	logger.cli_debug_log(cli.trace_message('run_registered_cli_command start name="${command_name}" args=${args.len}'))
+	loggerx.cli_debug_log(cli.trace_message('run_registered_cli_command start name="${command_name}" args=${args.len}'))
 	mut handler := cli.lookup_command_handler(command_name)!
 	defer {
 		handler.release()
@@ -323,7 +323,7 @@ fn (mut cli VSlimCliApp) run_registered_cli_command_with_program(name string, ar
 		}
 		code = cli_command_exit_code(result)
 	}
-	logger.cli_debug_log(cli.trace_message('run_registered_cli_command exit name="${command_name}" code=${code}'))
+	loggerx.cli_debug_log(cli.trace_message('run_registered_cli_command exit name="${command_name}" code=${code}'))
 	return code
 }
 
@@ -333,12 +333,12 @@ fn (mut cli VSlimCliApp) run_registered_cli_command(name string, args []string) 
 
 @[php_method]
 pub fn (mut cli VSlimCliApp) construct() &VSlimCliApp {
-	logger.cli_debug_reset_overrides()
+	loggerx.cli_debug_reset_overrides()
 	cli.ensure_core_app()
 	cli.ensure_registry()
 	cli.project_root = ''
 	cli.reset_command_input()
-	logger.cli_debug_log('cli.construct cli=${usize(&cli)} core=${usize(cli.core_app_ref)}')
+	loggerx.cli_debug_log('cli.construct cli=${usize(&cli)} core=${usize(cli.core_app_ref)}')
 	return &cli
 }
 
@@ -384,11 +384,11 @@ pub fn (cli &VSlimCliApp) debug_bridge_path(path string) vphp.PhpValue {
 @[php_method]
 pub fn (mut cli VSlimCliApp) command(name string, handler vphp.PhpValue) &VSlimCliApp {
 	cli.ensure_registry()
-	logger.cli_debug_log('command enter cli=${usize(&cli)} raw_name="${name}" raw_len=${name.len} handler_type=${handler.kind_name()}')
+	loggerx.cli_debug_log('command enter cli=${usize(&cli)} raw_name="${name}" raw_len=${name.len} handler_type=${handler.kind_name()}')
 	command_name := name.trim_space().clone()
-	logger.cli_debug_log('command normalized cli=${usize(&cli)} command_name="${command_name}" len=${command_name.len}')
+	loggerx.cli_debug_log('command normalized cli=${usize(&cli)} command_name="${command_name}" len=${command_name.len}')
 	if command_name == '' {
-		logger.cli_debug_log('command empty raw_name="${name}" raw_len=${name.len}')
+		loggerx.cli_debug_log('command empty raw_name="${name}" raw_len=${name.len}')
 		vphp.PhpException.raise_class('InvalidArgumentException', 'command name must not be empty',
 			0)
 		return &cli
@@ -410,7 +410,7 @@ pub fn (mut cli VSlimCliApp) command(name string, handler vphp.PhpValue) &VSlimC
 	if command_name !in cli.command_handlers {
 		cli.command_order << command_name.clone()
 	}
-	logger.cli_debug_log('command register cli=${usize(&cli)} command_name="${command_name}" order_len=${cli.command_order.len} handlers_len=${cli.command_handlers.len}')
+	loggerx.cli_debug_log('command register cli=${usize(&cli)} command_name="${command_name}" order_len=${cli.command_order.len} handlers_len=${cli.command_handlers.len}')
 	cli.clear_command_metadata(command_name)
 	cli.command_handlers[command_name] = handler_value.retain()
 	cli.command_canonical[command_name] = command_name.clone()
@@ -418,7 +418,7 @@ pub fn (mut cli VSlimCliApp) command(name string, handler vphp.PhpValue) &VSlimC
 		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
 		return &cli
 	}
-	logger.cli_debug_log('command exit cli=${usize(&cli)} command_name="${command_name}" order=${cli.command_order}')
+	loggerx.cli_debug_log('command exit cli=${usize(&cli)} command_name="${command_name}" order=${cli.command_order}')
 	return &cli
 }
 
@@ -562,7 +562,7 @@ pub fn (mut cli VSlimCliApp) run(name string, args vphp.PhpIterable) int {
 }
 
 pub fn (mut cli VSlimCliApp) cleanup() {
-	logger.cli_debug_log('cli.cleanup auto-release entry cli=${usize(&cli)} handlers=${cli.command_handlers.len}')
+	loggerx.cli_debug_log('cli.cleanup auto-release entry cli=${usize(&cli)} handlers=${cli.command_handlers.len}')
 	// command_handlers is a direct bridge-owned field, so generic_free_raw() will
 	// release it after cleanup() returns.
 	unsafe {
@@ -578,6 +578,6 @@ pub fn (mut cli VSlimCliApp) cleanup() {
 		cli.last_option_seen.free()
 		cli.last_warnings.free()
 	}
-	logger.cli_debug_reset_overrides()
-	logger.cli_debug_log('cli.cleanup native done')
+	loggerx.cli_debug_reset_overrides()
+	loggerx.cli_debug_log('cli.cleanup native done')
 }

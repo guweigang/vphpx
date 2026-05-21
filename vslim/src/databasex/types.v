@@ -1,7 +1,7 @@
 module databasex
 
 import db.mysql
-import vhttpd
+import vhttpdx
 import vphp
 
 @[php_class: 'VSlim\\Database\\Config']
@@ -26,7 +26,7 @@ mut:
 pub struct VSlimDatabaseManager {
 mut:
 	config_ref          &VSlimDatabaseConfig      = unsafe { nil }      @[php_ignore]
-	vhttpd_client_ref   &vhttpd.VSlimVhttpdClient = unsafe { nil } @[php_ignore]
+	vhttpd_client_ref   &vhttpdx.VSlimVhttpdClient = unsafe { nil } @[php_ignore]
 	mysql_pool          mysql.ConnectionPool      @[php_ignore]
 	mysql_connected     bool                      @[php_ignore]
 	mysql_tx_conn       mysql.DB                  @[php_ignore]

@@ -1,11 +1,7 @@
 module httpx
 
-import routing
+import routingx
 import vphp
-
-pub fn normalize_header_name(name string) string {
-	return routing.Header.normalize_name(name)
-}
 
 pub fn validate_header_name_or_throw(name string) ?string {
 	key := normalize_header_name(name)
@@ -72,11 +68,6 @@ pub fn normalize_fragment(fragment string) string {
 
 pub fn normalize_port(port int) int {
 	return if port <= 0 { -1 } else { port }
-}
-
-pub fn normalize_protocol_version(version string) string {
-	trimmed := version.trim_space()
-	return if trimmed == '' { '1.1' } else { trimmed }
 }
 
 pub fn validate_request_target_or_throw(request_target string) ?string {

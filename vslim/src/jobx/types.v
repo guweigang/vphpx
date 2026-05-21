@@ -1,4 +1,4 @@
-module job
+module jobx
 
 import databasex
 

@@ -1,6 +1,6 @@
 module routex
 
-import routing
+import routingx
 import vphp
 
 pub fn VSlimRoute.from_callable_handler(method string, name string, pattern string, handler vphp.PhpValue) VSlimRoute {
@@ -25,15 +25,15 @@ pub fn VSlimRoute.with_resource_meta(method string, name string, pattern string,
 }
 
 pub fn (route VSlimRoute) normalized_pattern() string {
-	return routing.Path.normalize(route.pattern)
+	return routingx.Path.normalize(route.pattern)
 }
 
 pub fn normalize_route_path(path string) string {
-	return routing.Path.normalize(path)
+	return routingx.Path.normalize(path)
 }
 
 pub fn (route VSlimRoute) matches(path string) (bool, map[string]string) {
-	return routing.RoutePattern.matches(route.pattern, path)
+	return routingx.RoutePattern.matches(route.pattern, path)
 }
 
 pub fn (mut route VSlimRoute) release_owned_refs() {
@@ -48,9 +48,9 @@ pub fn (mut route VSlimRoute) release_owned_refs() {
 }
 
 pub fn render_route_url(pattern string, params &map[string]string, query &map[string]string) ?string {
-	return routing.RoutePattern.render_url(pattern, params, query)
+	return routingx.RoutePattern.render_url(pattern, params, query)
 }
 
 pub fn encode_query_params(query &map[string]string) string {
-	return routing.Query.encode_map(query)
+	return routingx.Query.encode_map(query)
 }

@@ -1,7 +1,7 @@
 module appx
 
 import httpx
-import logger
+import loggerx
 import middlewarex
 import vphp
 
@@ -49,7 +49,7 @@ fn (app &VSlimApp) dispatch_middleware_chain_with_context(ctx PipelineRequestCon
 		res := app.error_response_from_context(error_ctx, 500, msg, 'handler_not_callable')
 		return PipelineDispatchResult.from(httpx.vslim_response_to_value(res), error_payload)
 	}
-	logger.cli_debug_log('middleware.chain.raw type=${response.type_name()} class=${response.class_name()} valid=${response.is_valid()} null=${response.is_null()} undef=${response.is_undef()}')
+	loggerx.cli_debug_log('middleware.chain.raw type=${response.type_name()} class=${response.class_name()} valid=${response.is_valid()} null=${response.is_null()} undef=${response.is_undef()}')
 	if forwarded_request := middlewarex.take_forwarded_request_snapshot(middlewarex.forwarded_request_key(chain)) {
 		mut forwarded := middlewarex.request_with_forwarded_snapshot(ctx.payload_ref,
 			ctx.route_params, forwarded_request)
@@ -74,11 +74,11 @@ fn (mut chain MiddlewareChain) dispatch(payload vphp.PhpValue) !vphp.PhpValue {
 	mw := chain.middlewares[chain.index]
 	chain.index++
 	if !mw.is_valid() || mw.is_null() || mw.is_undef() {
-		logger.cli_debug_log('middleware.invalid idx=${chain.index - 1} valid=${mw.is_valid()} null=${mw.is_null()} undef=${mw.is_undef()} total=${chain.middlewares.len}')
+		loggerx.cli_debug_log('middleware.invalid idx=${chain.index - 1} valid=${mw.is_valid()} null=${mw.is_null()} undef=${mw.is_undef()} total=${chain.middlewares.len}')
 		return error('Middleware is not valid')
 	}
 	if !mw.is_valid() || mw.is_null() || mw.is_undef() {
-		logger.cli_debug_log('middleware.req.invalid idx=${chain.index - 1} valid=${mw.is_valid()} null=${mw.is_null()} undef=${mw.is_undef()}')
+		loggerx.cli_debug_log('middleware.req.invalid idx=${chain.index - 1} valid=${mw.is_valid()} null=${mw.is_null()} undef=${mw.is_undef()}')
 	}
 	response := chain.dispatch_entry(mw, payload)!
 	if !response.is_valid() || response.is_null() || response.is_undef() {
@@ -119,13 +119,13 @@ fn (app &VSlimApp) dispatch_after_phase_middleware_psr(ctx PipelineRequestContex
 }
 
 fn (app &VSlimApp) apply_after_middlewares(ctx PipelineRequestContext, initial httpx.VSlimResponse) httpx.VSlimResponse {
-	logger.cli_debug_log('after.input vslim status=${initial.status} body_len=${initial.body.len}')
+	loggerx.cli_debug_log('after.input vslim status=${initial.status} body_len=${initial.body.len}')
 	initial_psr := initial.to_psr7_response()
-	logger.cli_debug_log('after.input psr status=${initial_psr.get_status_code()} body_len=${httpx.psr7_stream_string(initial_psr.body_or_empty()).len}')
+	loggerx.cli_debug_log('after.input psr status=${initial_psr.get_status_code()} body_len=${httpx.psr7_stream_string(initial_psr.body_or_empty()).len}')
 	psr := app.apply_after_middlewares_psr(ctx, initial_psr)
-	logger.cli_debug_log('after.psr final status=${psr.get_status_code()} body_len=${httpx.psr7_stream_string(psr.body_or_empty()).len}')
+	loggerx.cli_debug_log('after.psr final status=${psr.get_status_code()} body_len=${httpx.psr7_stream_string(psr.body_or_empty()).len}')
 	res := psr.to_vslim_response()
-	logger.cli_debug_log('after.vslim final status=${res.status} body_len=${res.body.len}')
+	loggerx.cli_debug_log('after.vslim final status=${res.status} body_len=${res.body.len}')
 	return res
 }
 
@@ -161,11 +161,11 @@ fn (app &VSlimApp) apply_after_middlewares_psr(ctx PipelineRequestContext, initi
 		}
 		if response.is_object() && response.is_instance_of('Psr\\Http\\Message\\ResponseInterface') {
 			psr := httpx.VSlimPsr7Response.from_value(response)
-			logger.cli_debug_log('after.raw psr status=${psr.get_status_code()} body_len=${httpx.psr7_stream_string(psr.body_or_empty()).len}')
+			loggerx.cli_debug_log('after.raw psr status=${psr.get_status_code()} body_len=${httpx.psr7_stream_string(psr.body_or_empty()).len}')
 		}
 		mut res, ok := httpx.VSlimPsr7Response.from_route_result(response)
 		if ok {
-			logger.cli_debug_log('after.normalized psr status=${res.get_status_code()} body_len=${httpx.psr7_stream_string(res.body_or_empty()).len}')
+			loggerx.cli_debug_log('after.normalized psr status=${res.get_status_code()} body_len=${httpx.psr7_stream_string(res.body_or_empty()).len}')
 			current = res
 			continue
 		}

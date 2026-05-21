@@ -1,6 +1,6 @@
 module appx
 
-import logger
+import loggerx
 import middlewarex
 import routex
 import supportx
@@ -17,7 +17,7 @@ fn (mut app VSlimApp) register_middleware_kind(handler vphp.PhpValue, kind middl
 	}
 	entry := handler.retain()
 	if kind == .standard && app.middlewares.len == 0 {
-		logger.cli_debug_log('middleware.register kind=${entry.kind_name()} valid=${entry.is_valid()} null=${entry.is_null()} undef=${entry.is_undef()} handler_type=${handler.type_name()} handler_class=${handler.class_name()}')
+		loggerx.cli_debug_log('middleware.register kind=${entry.kind_name()} valid=${entry.is_valid()} null=${entry.is_null()} undef=${entry.is_undef()} handler_type=${handler.type_name()} handler_class=${handler.class_name()}')
 	}
 	match kind {
 		.standard { app.middlewares << entry }

@@ -8,8 +8,8 @@ import controllerx
 import databasex
 import eventx
 import httpx
-import job
-import logger
+import jobx
+import loggerx
 import mcpx as mcp
 import sessionx
 import testingx
@@ -79,8 +79,8 @@ fn (mut app VSlimApp) sync_logger_services_to_container() {
 	if app.container_ref == unsafe { nil } {
 		return
 	}
-	app.container_ref.set_borrowed_object[logger.VSlimLogger](logger.service_logger, app.logger())
-	app.container_ref.set_borrowed_object[logger.VSlimPsrLogger](logger.service_psr_logger,
+	app.container_ref.set_borrowed_object[loggerx.VSlimLogger](loggerx.service_logger, app.logger())
+	app.container_ref.set_borrowed_object[loggerx.VSlimPsrLogger](loggerx.service_psr_logger,
 		app.psr_logger())
 }
 
@@ -247,7 +247,7 @@ pub fn (mut app VSlimApp) clock() vphp.PhpObject {
 }
 
 @[php_method: 'setLogger']
-pub fn (mut app VSlimApp) set_logger(log_writer &logger.VSlimLogger) &VSlimApp {
+pub fn (mut app VSlimApp) set_logger(log_writer &loggerx.VSlimLogger) &VSlimApp {
 	app.logger_ref = log_writer
 	if app.psr_logger_ref != unsafe { nil } {
 		app.psr_logger_ref.set_logger(log_writer)
@@ -257,18 +257,18 @@ pub fn (mut app VSlimApp) set_logger(log_writer &logger.VSlimLogger) &VSlimApp {
 }
 
 @[php_method]
-pub fn (mut app VSlimApp) logger() &logger.VSlimLogger {
+pub fn (mut app VSlimApp) logger() &loggerx.VSlimLogger {
 	if app.logger_ref == unsafe { nil } {
-		app.logger_ref = logger.VSlimLogger.app_default(app.config_ref)
+		app.logger_ref = loggerx.VSlimLogger.app_default(app.config_ref)
 	}
 	return app.logger_ref
 }
 
 @[php_return_type: 'Psr\\Log\\LoggerInterface']
 @[php_method: 'psrLogger']
-pub fn (mut app VSlimApp) psr_logger() &logger.VSlimPsrLogger {
+pub fn (mut app VSlimApp) psr_logger() &loggerx.VSlimPsrLogger {
 	if app.psr_logger_ref == unsafe { nil } {
-		app.psr_logger_ref = logger.VSlimPsrLogger.from_logger(app.logger())
+		app.psr_logger_ref = loggerx.VSlimPsrLogger.from_logger(app.logger())
 	} else {
 		app.psr_logger_ref.set_logger(app.logger())
 	}
@@ -430,17 +430,17 @@ pub fn (mut app VSlimApp) db() &databasex.VSlimDatabaseManager {
 }
 
 @[php_method: 'jobDispatcher']
-pub fn (mut app VSlimApp) job_dispatcher() &job.VSlimJobDispatcher {
+pub fn (mut app VSlimApp) job_dispatcher() &jobx.VSlimJobDispatcher {
 	if app.job_dispatcher_ref == unsafe { nil } {
-		app.job_dispatcher_ref = job.VSlimJobDispatcher.from_manager(app.database())
+		app.job_dispatcher_ref = jobx.VSlimJobDispatcher.from_manager(app.database())
 	}
 	return app.job_dispatcher_ref
 }
 
 @[php_method: 'jobWorker']
-pub fn (mut app VSlimApp) job_worker() &job.VSlimJobWorker {
+pub fn (mut app VSlimApp) job_worker() &jobx.VSlimJobWorker {
 	if app.job_worker_ref == unsafe { nil } {
-		app.job_worker_ref = job.VSlimJobWorker.from_manager(app.database())
+		app.job_worker_ref = jobx.VSlimJobWorker.from_manager(app.database())
 	}
 	return app.job_worker_ref
 }

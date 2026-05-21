@@ -1,4 +1,4 @@
-module logger
+module loggerx
 
 import configx as cfgx
 import os

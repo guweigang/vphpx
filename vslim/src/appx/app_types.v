@@ -6,8 +6,8 @@ import containerx
 import databasex
 import eventx
 import httpx
-import job
-import logger
+import jobx
+import loggerx
 import mcpx as mcp
 import routex
 import vphp
@@ -43,8 +43,8 @@ mut:
 	view_cache_enabled    bool                               @[php_prop: viewCacheEnabled]
 	view_cache_configured bool                               @[php_prop: viewCacheConfigured]
 	view_helpers          map[string]vphp.PhpCallable        @[php_ignore]
-	logger_ref            &logger.VSlimLogger                = unsafe { nil }                @[php_ignore]
-	psr_logger_ref        &logger.VSlimPsrLogger             = unsafe { nil }             @[php_ignore]
+	logger_ref            &loggerx.VSlimLogger                = unsafe { nil }                @[php_ignore]
+	psr_logger_ref        &loggerx.VSlimPsrLogger             = unsafe { nil }             @[php_ignore]
 	clock_ref             vphp.PhpObject                     = vphp.PhpObject.invalid()                     @[php_ignore]
 	listener_provider_ref &eventx.VSlimPsr14ListenerProvider = unsafe { nil } @[php_ignore]
 	dispatcher_ref        &eventx.VSlimPsr14EventDispatcher  = unsafe { nil }  @[php_ignore]
@@ -53,8 +53,8 @@ mut:
 	http_client_ref       &httpx.VSlimPsr18Client            = unsafe { nil }            @[php_ignore]
 	database_ref          &databasex.VSlimDatabaseManager    = unsafe { nil }    @[php_ignore]
 	migrator_ref          &databasex.VSlimDatabaseMigrator   = unsafe { nil }   @[php_ignore]
-	job_dispatcher_ref    &job.VSlimJobDispatcher            = unsafe { nil }            @[php_ignore]
-	job_worker_ref        &job.VSlimJobWorker                = unsafe { nil }                @[php_ignore]
+	job_dispatcher_ref    &jobx.VSlimJobDispatcher            = unsafe { nil }            @[php_ignore]
+	job_worker_ref        &jobx.VSlimJobWorker                = unsafe { nil }                @[php_ignore]
 	providers             []vphp.PhpObject                   @[php_ignore]
 	provider_classes      map[string]bool                    @[php_ignore]
 	modules               []vphp.PhpObject                   @[php_ignore]

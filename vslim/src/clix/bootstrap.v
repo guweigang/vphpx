@@ -2,7 +2,7 @@ module clix
 
 import appx
 import fsx
-import logger
+import loggerx
 import supportx
 import vphp
 
@@ -46,7 +46,7 @@ fn (mut cli VSlimCliApp) bootstrap_file_apply(path string) ! {
 
 fn (mut cli VSlimCliApp) bootstrap_dir_apply(path string) ! {
 	clean := fsx.normalize_dir_path(path)
-	logger.cli_debug_log('bootstrap_dir input="${path}" clean="${clean}"')
+	loggerx.cli_debug_log('bootstrap_dir input="${path}" clean="${clean}"')
 	if clean == '' {
 		return error('CLI bootstrap directory must not be empty')
 	}
@@ -55,7 +55,7 @@ fn (mut cli VSlimCliApp) bootstrap_dir_apply(path string) ! {
 		return
 	}
 	project_root := if fsx.is_bootstrap_dir_path(clean) { fsx.dirname(clean) } else { clean }
-	logger.cli_debug_log('project_root="${project_root}"')
+	loggerx.cli_debug_log('project_root="${project_root}"')
 	if project_root == '' {
 		return error('CLI bootstrap directory has no project root')
 	}
@@ -73,8 +73,8 @@ fn (mut cli VSlimCliApp) bootstrap_dir_apply(path string) ! {
 	}
 	bootstrap_candidate_probe := vphp.PhpFunction.named('sprintf').result_string(format_arg,
 		project_root_arg, bootstrap_arg)
-	logger.cli_debug_log('project_root_echo="${project_root_echo}"')
-	logger.cli_debug_log('bootstrap_candidate_probe="${bootstrap_candidate_probe}"')
+	loggerx.cli_debug_log('project_root_echo="${project_root_echo}"')
+	loggerx.cli_debug_log('bootstrap_candidate_probe="${bootstrap_candidate_probe}"')
 	bootstrap_candidate := bootstrap_candidate_probe
 	mut app_arg := vphp.PhpString.of('app.php')
 	defer {
@@ -83,7 +83,7 @@ fn (mut cli VSlimCliApp) bootstrap_dir_apply(path string) ! {
 	app_candidate_fallback := vphp.PhpFunction.named('sprintf').result_string(format_arg,
 		project_root_arg, app_arg)
 	mut shared_applied := false
-	logger.cli_debug_log('app_candidate="${bootstrap_candidate}" is_file=${fsx.is_file(bootstrap_candidate)}')
+	loggerx.cli_debug_log('app_candidate="${bootstrap_candidate}" is_file=${fsx.is_file(bootstrap_candidate)}')
 	if fsx.is_file(bootstrap_candidate) {
 		mut core := cli.ensure_core_app()
 		supportx.preload_bootstrap_project_classes(project_root)
@@ -103,7 +103,7 @@ fn (mut cli VSlimCliApp) bootstrap_dir_apply(path string) ! {
 		shared_applied = true
 	} else {
 		app_candidate := app_candidate_fallback
-		logger.cli_debug_log('app_candidate="${app_candidate}" is_file=${fsx.is_file(app_candidate)}')
+		loggerx.cli_debug_log('app_candidate="${app_candidate}" is_file=${fsx.is_file(app_candidate)}')
 		if fsx.is_file(app_candidate) {
 			mut core := cli.ensure_core_app()
 			supportx.preload_bootstrap_project_classes(project_root)
@@ -192,19 +192,19 @@ fn (mut cli VSlimCliApp) apply_bootstrap_file_result(path string, value vphp.Php
 	}
 	if value.is_callable() {
 		handlers_before := cli.command_handlers.len
-		logger.cli_debug_log("bootstrap_file_result callable path=\"${path}\" handlers_before=${handlers_before}")
+		loggerx.cli_debug_log("bootstrap_file_result callable path=\"${path}\" handlers_before=${handlers_before}")
 		mut cli_value := cli.self_value()
 		defer {
 			cli_value.release()
 		}
-		logger.cli_debug_log('bootstrap_file_result cli_value valid=${cli_value.is_valid()} type=${cli_value.type_name()}')
+		loggerx.cli_debug_log('bootstrap_file_result cli_value valid=${cli_value.is_valid()} type=${cli_value.type_name()}')
 		callable := value.as_callable() or { return error(cli_bootstrap_file_return_error(path)) }
 		mut result := callable.invoke(cli_value)
 		defer {
 			result.release()
 		}
 		handlers_after := cli.command_handlers.len
-		logger.cli_debug_log('bootstrap_file_result closure_done handlers_before=${handlers_before} handlers_after=${handlers_after} order=${cli.command_order}')
+		loggerx.cli_debug_log('bootstrap_file_result closure_done handlers_before=${handlers_before} handlers_after=${handlers_after} order=${cli.command_order}')
 		if !result.is_valid() || result.is_null() || result.is_undef() {
 			return
 		}
@@ -227,17 +227,17 @@ fn cli_display_path(path string) string {
 fn (mut cli VSlimCliApp) apply_command_class_conventions_with_paths(commands_dir string) !bool {
 	mut applied := false
 	entries := fsx.scandir_names(commands_dir)
-	logger.cli_debug_log('commands_dir="${commands_dir}" entries=${entries}')
+	loggerx.cli_debug_log('commands_dir="${commands_dir}" entries=${entries}')
 	for entry in entries {
 		if !entry.ends_with('.php') {
-			logger.cli_debug_log('skip_command_entry="${entry}"')
+			loggerx.cli_debug_log('skip_command_entry="${entry}"')
 			continue
 		}
 		entry_name_for_log := entry.clone()
 		file_for_log := (commands_dir + '/' + entry_name_for_log).clone()
 		display_file_for_log := cli_display_path(file_for_log).clone()
 		class_name_for_log := ('App\\Commands\\' + file_stem(entry_name_for_log)).clone()
-		logger.cli_debug_log('command_entry_preinclude="${entry_name_for_log}" file="${display_file_for_log}" class="${class_name_for_log}"')
+		loggerx.cli_debug_log('command_entry_preinclude="${entry_name_for_log}" file="${display_file_for_log}" class="${class_name_for_log}"')
 		mut class_name_arg := vphp.PhpString.of(class_name_for_log)
 		defer {
 			class_name_arg.release()
@@ -249,7 +249,7 @@ fn (mut cli VSlimCliApp) apply_command_class_conventions_with_paths(commands_dir
 		}
 		class_exists := vphp.PhpFunction.named('class_exists').result_bool(class_name_arg,
 			autoload_arg)
-		logger.cli_debug_log('command_entry="${entry_name_for_log}" file="${display_file_for_log}" class="${class_name_for_log}" class_exists=${class_exists}')
+		loggerx.cli_debug_log('command_entry="${entry_name_for_log}" file="${display_file_for_log}" class="${class_name_for_log}" class_exists=${class_exists}')
 		if !class_exists {
 			return error('command convention file "${display_file_for_log}" must declare class ${class_name_for_log}')
 		}

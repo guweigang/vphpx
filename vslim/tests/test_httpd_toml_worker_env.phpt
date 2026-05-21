@@ -33,11 +33,11 @@ $port = 19890 + random_int(0, 60);
 $tmp = sys_get_temp_dir() . '/vhttpd_toml_env_' . getmypid() . '_' . $port;
 @mkdir($tmp, 0777, true);
 
-$pidFile = $tmp . '/vhttpd.pid';
+$pidFile = $tmp . '/vhttpdx.pid';
 $eventLog = $tmp . '/events.ndjson';
 $stdoutLog = $tmp . '/stdout.log';
 $socket = $tmp . '/worker.sock';
-$configPath = $tmp . '/vhttpd.toml';
+$configPath = $tmp . '/vhttpdx.toml';
 $appPath = $tmp . '/app.php';
 
 $appPhp = <<<'PHP'

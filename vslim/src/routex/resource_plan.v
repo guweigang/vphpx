@@ -1,6 +1,6 @@
 module routex
 
-import routing
+import routingx
 import vphp
 
 pub struct ResourceRoutePlanItem {
@@ -15,11 +15,11 @@ pub:
 
 pub fn resource_route_plan(raw_resource_path string, controller string, include_page_routes bool, options ResourceRouteOptions) []ResourceRoutePlanItem {
 	clean_controller := controller.trim_space()
-	path := routing.Resource.normalize_path(raw_resource_path)
+	path := routingx.Resource.normalize_path(raw_resource_path)
 	if clean_controller == '' || path == '' {
 		return []ResourceRoutePlanItem{}
 	}
-	base_name := routing.Resource.name_from_path(path)
+	base_name := routingx.Resource.name_from_path(path)
 	opts := options
 	actions := ['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']
 	handler_index := make_resource_handler(clean_controller, 'index')
@@ -29,9 +29,9 @@ pub fn resource_route_plan(raw_resource_path string, controller string, include_
 	handler_destroy := make_resource_handler(clean_controller, 'destroy')
 	handler_create := make_resource_handler(clean_controller, 'create')
 	handler_edit := make_resource_handler(clean_controller, 'edit')
-	id_param := routing.Resource.normalize_param_name(opts.param_name)
+	id_param := routingx.Resource.normalize_param_name(opts.param_name)
 	member_base_path := if opts.shallow {
-		routing.Resource.shallow_member_base_path(path)
+		routingx.Resource.shallow_member_base_path(path)
 	} else {
 		path
 	}
@@ -74,11 +74,11 @@ pub fn resource_route_plan(raw_resource_path string, controller string, include_
 
 pub fn singleton_route_plan(raw_resource_path string, controller string, include_page_routes bool, options ResourceRouteOptions) []ResourceRoutePlanItem {
 	clean_controller := controller.trim_space()
-	path := routing.Resource.normalize_path(raw_resource_path)
+	path := routingx.Resource.normalize_path(raw_resource_path)
 	if clean_controller == '' || path == '' {
 		return []ResourceRoutePlanItem{}
 	}
-	base_name := routing.Resource.name_from_path(path)
+	base_name := routingx.Resource.name_from_path(path)
 	opts := options
 	actions := ['show', 'create', 'store', 'edit', 'update', 'destroy']
 	handler_show := make_resource_handler(clean_controller, 'show')
