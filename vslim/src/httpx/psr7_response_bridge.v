@@ -1,16 +1,15 @@
 module httpx
 
-import psrx
 import vphp
 
 pub fn VSlimPsr7Response.from_vslim_response(res VSlimResponse) &VSlimPsr7Response {
 	mut headers := map[string][]string{}
 	for key, value in res.headers() {
-		headers[psrx.normalize_header_name(key)] = [value]
+		headers[normalize_header_name(key)] = [value]
 	}
 	return &VSlimPsr7Response{
-		status:           psrx.normalize_status(res.status)
-		reason_phrase:    psrx.normalize_reason_phrase(res.status, '').clone()
+		status:           normalize_status(res.status)
+		reason_phrase:    normalize_reason_phrase(res.status, '').clone()
 		protocol_version: '1.1'
 		headers:          clone_header_values(headers)
 		body_ref:         VSlimPsr7Stream.from_content(res.body.clone())
@@ -106,8 +105,8 @@ pub fn VSlimPsr7Response.from_value(result vphp.PhpValue) &VSlimPsr7Response {
 				VSlimPsr7Stream.from_content('')
 			}
 			return &VSlimPsr7Response{
-				status:           psrx.normalize_status(status)
-				reason_phrase:    psrx.normalize_reason_phrase(status, reason)
+				status:           normalize_status(status)
+				reason_phrase:    normalize_reason_phrase(status, reason)
 				protocol_version: normalize_protocol_version(protocol)
 				headers:          headers
 				header_names:     header_names

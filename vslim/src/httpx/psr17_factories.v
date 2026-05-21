@@ -1,6 +1,5 @@
 module httpx
 
-import psrx
 import vphp
 
 @[php_method]
@@ -22,7 +21,7 @@ pub fn (mut f VSlimPsr17ServerRequestFactory) construct() &VSlimPsr17ServerReque
 @[php_arg_type(uri: 'Psr\\Http\\Message\\UriInterface|string')]
 @[php_method: 'createRequest']
 pub fn (f &VSlimPsr17RequestFactory) create_request(method string, uri vphp.PhpValue) &VSlimPsr7Request {
-	return VSlimPsr7Request.from_uri_value(psrx.validate_method_or_fallback(method, 'GET'), uri)
+	return VSlimPsr7Request.from_uri_value(validate_method_or_fallback(method, 'GET'), uri)
 }
 
 @[params]
@@ -34,7 +33,7 @@ struct VSlimPsr17CreateServerRequestParams {
 @[php_arg_type(uri: 'Psr\\Http\\Message\\UriInterface|string')]
 @[php_method: 'createServerRequest']
 pub fn (f &VSlimPsr17ServerRequestFactory) create_server_request(method string, uri vphp.PhpValue, params VSlimPsr17CreateServerRequestParams) &VSlimPsr7ServerRequest {
-	return VSlimPsr7ServerRequest.from_uri_value(psrx.validate_method_or_fallback(method, 'GET'), uri,
+	return VSlimPsr7ServerRequest.from_uri_value(validate_method_or_fallback(method, 'GET'), uri,
 		params.server_params)
 }
 
@@ -47,7 +46,7 @@ struct VSlimPsr17CreateResponseParams {
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method: 'createResponse']
 pub fn (f &VSlimPsr17ResponseFactory) create_response(params VSlimPsr17CreateResponseParams) &VSlimPsr7Response {
-	status := psrx.validate_response_status_or_throw(params.status) or {
+	status := validate_response_status_or_throw(params.status) or {
 		return &VSlimPsr7Response{
 			status:           200
 			reason_phrase:    'OK'
@@ -58,7 +57,7 @@ pub fn (f &VSlimPsr17ResponseFactory) create_response(params VSlimPsr17CreateRes
 	}
 	return &VSlimPsr7Response{
 		status:           status
-		reason_phrase:    psrx.normalize_reason_phrase(status, params.reason_phrase)
+		reason_phrase:    normalize_reason_phrase(status, params.reason_phrase)
 		protocol_version: '1.1'
 		headers:          map[string][]string{}
 		body_ref:         VSlimPsr7Stream.from_content('')

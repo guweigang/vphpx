@@ -1,7 +1,6 @@
 module httpx
 
 import routing
-import psrx
 import vphp
 
 struct PhpValueSubject {
@@ -53,7 +52,7 @@ pub fn VSlimPsr7ServerRequest.with_uri(method string, uri &VSlimPsr7Uri, server_
 	out.server_params_ref = server_params_input.retain()
 	out.cookie_params_ref = empty_persistent_array()
 	out.query_params_ref =
-		string_map_to_persistent_array(routing.Query.parse(psrx.normalize_query(uri.query)))
+		string_map_to_persistent_array(routing.Query.parse(normalize_query(uri.query)))
 	out.uploaded_files_ref = empty_persistent_array()
 	out.parsed_body_ref = persistent_null_value()
 	out.attributes_ref = empty_persistent_array_value()

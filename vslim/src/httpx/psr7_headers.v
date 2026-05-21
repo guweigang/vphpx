@@ -1,6 +1,5 @@
 module httpx
 
-import psrx
 import vphp
 
 pub fn clone_header_values(headers map[string][]string) map[string][]string {
@@ -53,7 +52,7 @@ fn (subject PhpValueSubject) psr7_header_state() (map[string][]string, map[strin
 		header_names: map[string]string{}
 	}, fn (key vphp.PhpValue, child vphp.PhpValue, mut state Psr7HeaderState) {
 		name := key.to_string()
-		normalized := psrx.normalize_header_name(name)
+		normalized := normalize_header_name(name)
 		state.headers[normalized] = value_subject(child).header_values() or { []string{} }
 		state.header_names[normalized] = name
 	})
@@ -80,7 +79,7 @@ fn (subject PhpValueSubject) header_values() ?[]string {
 	if value.is_array() {
 		mut out := []string{}
 		for entry in value.to_string_list() {
-			if !psrx.is_valid_header_value(entry) {
+			if !is_valid_header_value(entry) {
 				vphp.PhpException.raise_class('InvalidArgumentException',
 					'header values must not contain CR or LF characters', 0)
 				return none
@@ -90,7 +89,7 @@ fn (subject PhpValueSubject) header_values() ?[]string {
 		return out
 	}
 	entry := value.to_string()
-	if !psrx.is_valid_header_value(entry) {
+	if !is_valid_header_value(entry) {
 		vphp.PhpException.raise_class('InvalidArgumentException',
 			'header values must not contain CR or LF characters', 0)
 		return none

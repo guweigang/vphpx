@@ -1,6 +1,5 @@
 module httpx
 
-import psrx
 import vphp
 
 pub fn route_params_from_payload(payload vphp.PhpValue) map[string]string {
@@ -178,7 +177,7 @@ pub fn normalize_psr15_server_request_object(request vphp.PhpObject, route_param
 		persistent_value_assoc_with_strings(empty_persistent_array_value(), route_params)
 	}
 	mut normalized := (&VSlimPsr7ServerRequest{
-		method:             psrx.normalize_method(method)
+		method:             normalize_method(method)
 		request_target:     request_target
 		protocol_version:   normalize_protocol_version(protocol_version)
 		headers:            header_map

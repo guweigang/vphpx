@@ -1,6 +1,5 @@
 module httpx
 
-import psrx
 import vphp
 
 @[php_method]
@@ -63,12 +62,12 @@ pub fn (r &VSlimPsr7ServerRequest) get_headers() map[string][]string {
 
 @[php_method: 'hasHeader']
 pub fn (r &VSlimPsr7ServerRequest) has_header(name vphp.PhpValue) bool {
-	return psrx.normalize_header_name(name.to_string()) in r.headers
+	return normalize_header_name(name.to_string()) in r.headers
 }
 
 @[php_method: 'getHeader']
 pub fn (r &VSlimPsr7ServerRequest) get_header(name vphp.PhpValue) []string {
-	key := psrx.normalize_header_name(name.to_string())
+	key := normalize_header_name(name.to_string())
 	return clone_header_list(r.headers[key] or { []string{} })
 }
 
@@ -84,7 +83,7 @@ pub fn (r &VSlimPsr7ServerRequest) with_header(name vphp.PhpValue, value vphp.Ph
 	mut header_names := clone_header_names(r.header_names)
 	raw_name := name.to_string()
 	original_name := raw_name.trim_space()
-	key := psrx.validate_header_name_or_throw(raw_name) or {
+	key := validate_header_name_or_throw(raw_name) or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
 			clone_header_values(r.headers), clone_header_names(r.header_names),
 			r.body_or_empty(), r.uri_or_default(), r.server_params_ref,
@@ -111,7 +110,7 @@ pub fn (r &VSlimPsr7ServerRequest) with_header(name vphp.PhpValue, value vphp.Ph
 pub fn (r &VSlimPsr7ServerRequest) with_added_header(name vphp.PhpValue, value vphp.PhpValue) &VSlimPsr7ServerRequest {
 	raw_name := name.to_string()
 	original_name := raw_name.trim_space()
-	key := psrx.validate_header_name_or_throw(raw_name) or {
+	key := validate_header_name_or_throw(raw_name) or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
 			clone_header_values(r.headers), clone_header_names(r.header_names),
 			r.body_or_empty(), r.uri_or_default(), r.server_params_ref,
@@ -144,7 +143,7 @@ pub fn (r &VSlimPsr7ServerRequest) with_added_header(name vphp.PhpValue, value v
 pub fn (r &VSlimPsr7ServerRequest) without_header(name vphp.PhpValue) &VSlimPsr7ServerRequest {
 	mut headers := clone_header_values(r.headers)
 	mut header_names := clone_header_names(r.header_names)
-	key := psrx.normalize_header_name(name.to_string())
+	key := normalize_header_name(name.to_string())
 	headers.delete(key)
 	header_names.delete(key)
 	return r.clone_with(r.method, r.request_target, r.protocol_version, headers,
@@ -204,7 +203,7 @@ pub fn (r &VSlimPsr7ServerRequest) get_request_target() string {
 @[php_arg_name: 'request_target=requestTarget']
 @[php_method: 'withRequestTarget']
 pub fn (r &VSlimPsr7ServerRequest) with_request_target(request_target vphp.PhpValue) &VSlimPsr7ServerRequest {
-	target := psrx.validate_request_target_or_throw(request_target.to_string()) or {
+	target := validate_request_target_or_throw(request_target.to_string()) or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
 			clone_header_values(r.headers), clone_header_names(r.header_names),
 			r.body_or_empty(), r.uri_or_default(), r.server_params_ref,
@@ -220,13 +219,13 @@ pub fn (r &VSlimPsr7ServerRequest) with_request_target(request_target vphp.PhpVa
 
 @[php_method: 'getMethod']
 pub fn (r &VSlimPsr7ServerRequest) get_method() string {
-	return psrx.normalize_method(r.method)
+	return normalize_method(r.method)
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
 @[php_method: 'withMethod']
 pub fn (r &VSlimPsr7ServerRequest) with_method(method vphp.PhpValue) &VSlimPsr7ServerRequest {
-	next_method := psrx.validate_method_or_throw(method.to_string()) or {
+	next_method := validate_method_or_throw(method.to_string()) or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
 			clone_header_values(r.headers), clone_header_names(r.header_names),
 			r.body_or_empty(), r.uri_or_default(), r.server_params_ref,
@@ -263,7 +262,7 @@ pub fn (r &VSlimPsr7ServerRequest) with_uri(uri vphp.PhpValue, preserve_host boo
 	next_uri := VSlimPsr7Uri.from_value(uri)
 	mut headers := clone_header_values(r.headers)
 	mut header_names := clone_header_names(r.header_names)
-	current_host := headers[psrx.normalize_header_name('Host')] or { []string{} }
+	current_host := headers[normalize_header_name('Host')] or { []string{} }
 	if !preserve_host || current_host.len == 0 || current_host[0].trim_space() == '' {
 		apply_psr7_host_header(mut headers, mut header_names, next_uri)
 	}

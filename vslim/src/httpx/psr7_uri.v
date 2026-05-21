@@ -1,6 +1,5 @@
 module httpx
 
-import psrx
 import vphp
 
 @[php_arg_name: 'default_uri=defaultUri']
@@ -27,7 +26,7 @@ pub fn (u &VSlimPsr7Uri) str() string {
 
 @[php_method: 'getScheme']
 pub fn (u &VSlimPsr7Uri) get_scheme() string {
-	return psrx.normalize_scheme(u.scheme)
+	return normalize_scheme(u.scheme)
 }
 
 @[php_method: 'getAuthority']
@@ -48,17 +47,17 @@ pub fn (u &VSlimPsr7Uri) get_user_info() string {
 
 @[php_method: 'getHost']
 pub fn (u &VSlimPsr7Uri) get_host() string {
-	return psrx.normalize_host(u.host)
+	return normalize_host(u.host)
 }
 
 @[php_method: 'getPort']
 pub fn (u &VSlimPsr7Uri) get_port() ?int {
-	port := psrx.normalize_port(u.port)
+	port := normalize_port(u.port)
 	if port <= 0 {
 		return none
 	}
-	scheme := psrx.normalize_scheme(u.scheme)
-	if standard := psrx.default_port_for_scheme(scheme) {
+	scheme := normalize_scheme(u.scheme)
+	if standard := default_port_for_scheme(scheme) {
 		if port == standard {
 			return none
 		}
@@ -73,12 +72,12 @@ pub fn (u &VSlimPsr7Uri) get_path() string {
 
 @[php_method: 'getQuery']
 pub fn (u &VSlimPsr7Uri) get_query() string {
-	return psrx.normalize_query(u.query)
+	return normalize_query(u.query)
 }
 
 @[php_method: 'getFragment']
 pub fn (u &VSlimPsr7Uri) get_fragment() string {
-	return psrx.normalize_fragment(u.fragment)
+	return normalize_fragment(u.fragment)
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\UriInterface']
@@ -158,14 +157,14 @@ pub fn (uri &VSlimPsr7Uri) clone_or_default() &VSlimPsr7Uri {
 
 fn (u &VSlimPsr7Uri) clone_with(scheme string, user string, password string, host string, port int, path string, query string, fragment string) &VSlimPsr7Uri {
 	return &VSlimPsr7Uri{
-		scheme:   psrx.normalize_scheme(scheme).clone()
+		scheme:   normalize_scheme(scheme).clone()
 		user:     user.clone()
 		password: password.clone()
-		host:     psrx.normalize_host(host).clone()
-		port:     psrx.normalize_port(port)
-		path:     psrx.normalize_path(path, psrx.normalize_host(host)).clone()
-		query:    psrx.normalize_query(query).clone()
-		fragment: psrx.normalize_fragment(fragment).clone()
+		host:     normalize_host(host).clone()
+		port:     normalize_port(port)
+		path:     normalize_path(path, normalize_host(host)).clone()
+		query:    normalize_query(query).clone()
+		fragment: normalize_fragment(fragment).clone()
 	}
 }
 
@@ -202,7 +201,7 @@ pub fn VSlimPsr7Uri.from_value(value vphp.PhpValue) &VSlimPsr7Uri {
 }
 
 fn build_psr7_authority(u &VSlimPsr7Uri) string {
-	host := psrx.normalize_host(u.host)
+	host := normalize_host(u.host)
 	if host == '' {
 		return ''
 	}
@@ -219,9 +218,9 @@ fn build_psr7_authority(u &VSlimPsr7Uri) string {
 }
 
 pub fn build_psr7_uri_string(u &VSlimPsr7Uri) string {
-	scheme := psrx.normalize_scheme(u.scheme)
+	scheme := normalize_scheme(u.scheme)
 	authority := build_psr7_authority(u)
-	mut path := psrx.normalize_path(u.path, u.host)
+	mut path := normalize_path(u.path, u.host)
 	if authority != '' && path != '' && !path.starts_with('/') {
 		path = '/' + path
 	}
@@ -236,11 +235,11 @@ pub fn build_psr7_uri_string(u &VSlimPsr7Uri) string {
 		out += '//' + authority
 	}
 	out += path
-	query := psrx.normalize_query(u.query)
+	query := normalize_query(u.query)
 	if query != '' {
 		out += '?' + query
 	}
-	fragment := psrx.normalize_fragment(u.fragment)
+	fragment := normalize_fragment(u.fragment)
 	if fragment != '' {
 		out += '#' + fragment
 	}
@@ -248,16 +247,16 @@ pub fn build_psr7_uri_string(u &VSlimPsr7Uri) string {
 }
 
 pub fn build_psr7_request_target(uri &VSlimPsr7Uri) string {
-	mut path := psrx.normalize_path(uri.path, uri.host)
+	mut path := normalize_path(uri.path, uri.host)
 	if path == '' {
 		path = '/'
 	}
-	query := psrx.normalize_query(uri.query)
+	query := normalize_query(uri.query)
 	return if query == '' { path } else { '${path}?${query}' }
 }
 
 pub fn build_psr7_host_header(uri &VSlimPsr7Uri) string {
-	host := psrx.normalize_host(uri.host)
+	host := normalize_host(uri.host)
 	if host == '' {
 		return ''
 	}
@@ -269,7 +268,7 @@ pub fn build_psr7_host_header(uri &VSlimPsr7Uri) string {
 }
 
 pub fn apply_psr7_host_header(mut headers map[string][]string, mut header_names map[string]string, uri &VSlimPsr7Uri) {
-	key := psrx.normalize_header_name('Host')
+	key := normalize_header_name('Host')
 	host := build_psr7_host_header(uri)
 	if host == '' {
 		headers.delete(key)
@@ -311,27 +310,27 @@ fn VSlimPsr7Uri.fallback(raw string) VSlimPsr7Uri {
 	}
 	return VSlimPsr7Uri{
 		port:     -1
-		path:     psrx.normalize_path(path, '')
-		query:    psrx.normalize_query(query)
-		fragment: psrx.normalize_fragment(fragment)
+		path:     normalize_path(path, '')
+		query:    normalize_query(query)
+		fragment: normalize_fragment(fragment)
 	}
 }
 
 fn absolute_psr7_uri(raw string) ?VSlimPsr7Uri {
 	scheme_sep := raw.index('://') or { return none }
-	scheme := psrx.normalize_scheme(raw[..scheme_sep])
+	scheme := normalize_scheme(raw[..scheme_sep])
 	if scheme == '' {
 		return none
 	}
 	mut rest := raw[scheme_sep + 3..]
 	mut fragment := ''
 	if idx := rest.index('#') {
-		fragment = psrx.normalize_fragment(rest[idx + 1..])
+		fragment = normalize_fragment(rest[idx + 1..])
 		rest = rest[..idx]
 	}
 	mut query := ''
 	if idx := rest.index('?') {
-		query = psrx.normalize_query(rest[idx + 1..])
+		query = normalize_query(rest[idx + 1..])
 		rest = rest[..idx]
 	}
 	mut authority := rest
@@ -360,23 +359,23 @@ fn absolute_psr7_uri(raw string) ?VSlimPsr7Uri {
 		if end > 0 {
 			host = host_port[..end + 1]
 			if end + 1 < host_port.len && host_port[end + 1] == `:` {
-				port = psrx.normalize_port(host_port[end + 2..].int())
+				port = normalize_port(host_port[end + 2..].int())
 			}
 		}
 	} else if colon := host_port.last_index(':') {
 		port_candidate := host_port[colon + 1..]
 		if port_candidate != '' && port_candidate.bytes().all(it >= `0` && it <= `9`) {
 			host = host_port[..colon]
-			port = psrx.normalize_port(port_candidate.int())
+			port = normalize_port(port_candidate.int())
 		}
 	}
 	return VSlimPsr7Uri{
 		scheme:   scheme
 		user:     user
 		password: password
-		host:     psrx.normalize_host(host)
+		host:     normalize_host(host)
 		port:     port
-		path:     psrx.normalize_path(path, psrx.normalize_host(host))
+		path:     normalize_path(path, normalize_host(host))
 		query:    query
 		fragment: fragment
 	}

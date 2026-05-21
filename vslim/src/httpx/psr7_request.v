@@ -1,6 +1,5 @@
 module httpx
 
-import psrx
 import vphp
 
 @[php_method]
@@ -51,12 +50,12 @@ pub fn (r &VSlimPsr7Request) get_headers() map[string][]string {
 
 @[php_method: 'hasHeader']
 pub fn (r &VSlimPsr7Request) has_header(name vphp.PhpValue) bool {
-	return psrx.normalize_header_name(value_subject(name).log_message()) in r.headers
+	return normalize_header_name(value_subject(name).log_message()) in r.headers
 }
 
 @[php_method: 'getHeader']
 pub fn (r &VSlimPsr7Request) get_header(name vphp.PhpValue) []string {
-	key := psrx.normalize_header_name(value_subject(name).log_message())
+	key := normalize_header_name(value_subject(name).log_message())
 	return clone_header_list(r.headers[key] or { []string{} })
 }
 
@@ -71,7 +70,7 @@ pub fn (r &VSlimPsr7Request) with_header(name vphp.PhpValue, value vphp.PhpValue
 	mut headers := clone_header_values(r.headers)
 	mut header_names := clone_header_names(r.header_names)
 	original_name := value_subject(name).log_message().trim_space()
-	key := psrx.validate_header_name_or_throw(value_subject(name).log_message()) or {
+	key := validate_header_name_or_throw(value_subject(name).log_message()) or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
 			clone_header_values(r.headers), clone_header_names(r.header_names),
 			r.body_or_empty(), r.uri_or_default())
@@ -91,7 +90,7 @@ pub fn (r &VSlimPsr7Request) with_header(name vphp.PhpValue, value vphp.PhpValue
 @[php_method: 'withAddedHeader']
 pub fn (r &VSlimPsr7Request) with_added_header(name vphp.PhpValue, value vphp.PhpValue) &VSlimPsr7Request {
 	original_name := value_subject(name).log_message().trim_space()
-	key := psrx.validate_header_name_or_throw(value_subject(name).log_message()) or {
+	key := validate_header_name_or_throw(value_subject(name).log_message()) or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
 			clone_header_values(r.headers), clone_header_names(r.header_names),
 			r.body_or_empty(), r.uri_or_default())
@@ -118,7 +117,7 @@ pub fn (r &VSlimPsr7Request) with_added_header(name vphp.PhpValue, value vphp.Ph
 pub fn (r &VSlimPsr7Request) without_header(name vphp.PhpValue) &VSlimPsr7Request {
 	mut headers := clone_header_values(r.headers)
 	mut header_names := clone_header_names(r.header_names)
-	key := psrx.normalize_header_name(value_subject(name).log_message())
+	key := normalize_header_name(value_subject(name).log_message())
 	headers.delete(key)
 	header_names.delete(key)
 	return r.clone_with(r.method, r.request_target, r.protocol_version, headers,
@@ -160,7 +159,7 @@ pub fn (r &VSlimPsr7Request) get_request_target() string {
 @[php_arg_name: 'request_target=requestTarget']
 @[php_method: 'withRequestTarget']
 pub fn (r &VSlimPsr7Request) with_request_target(request_target vphp.PhpValue) &VSlimPsr7Request {
-	target := psrx.validate_request_target_or_throw(value_subject(request_target).log_message()) or {
+	target := validate_request_target_or_throw(value_subject(request_target).log_message()) or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
 			clone_header_values(r.headers), clone_header_names(r.header_names),
 			r.body_or_empty(), r.uri_or_default())
@@ -172,13 +171,13 @@ pub fn (r &VSlimPsr7Request) with_request_target(request_target vphp.PhpValue) &
 
 @[php_method: 'getMethod']
 pub fn (r &VSlimPsr7Request) get_method() string {
-	return psrx.normalize_method(r.method)
+	return normalize_method(r.method)
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\RequestInterface']
 @[php_method: 'withMethod']
 pub fn (r &VSlimPsr7Request) with_method(method vphp.PhpValue) &VSlimPsr7Request {
-	next_method := psrx.validate_method_or_throw(value_subject(method).log_message()) or {
+	next_method := validate_method_or_throw(value_subject(method).log_message()) or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
 			clone_header_values(r.headers), clone_header_names(r.header_names),
 			r.body_or_empty(), r.uri_or_default())
@@ -211,7 +210,7 @@ pub fn (r &VSlimPsr7Request) with_uri(uri vphp.PhpValue, preserve_host bool) &VS
 	next_uri := VSlimPsr7Uri.from_value(uri)
 	mut headers := clone_header_values(r.headers)
 	mut header_names := clone_header_names(r.header_names)
-	current_host := headers[psrx.normalize_header_name('Host')] or { []string{} }
+	current_host := headers[normalize_header_name('Host')] or { []string{} }
 	if !preserve_host || current_host.len == 0 || current_host[0].trim_space() == '' {
 		apply_psr7_host_header(mut headers, mut header_names, next_uri)
 	}

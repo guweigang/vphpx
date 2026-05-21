@@ -1,7 +1,6 @@
 module httpx
 
 import configx
-import psrx
 import vphp
 
 struct Psr18OutboundRequest {
@@ -100,8 +99,8 @@ pub fn (client &VSlimPsr18Client) send_request(request vphp.PhpObject) &VSlimPsr
 	body := stream.contents() or { '' }
 	_ = stream.close()
 	return &VSlimPsr7Response{
-		status:           psrx.default_status(head.status)
-		reason_phrase:    psrx.normalize_reason_phrase(head.status, head.reason_phrase)
+		status:           default_status(head.status)
+		reason_phrase:    normalize_reason_phrase(head.status, head.reason_phrase)
 		protocol_version: normalize_protocol_version(head.protocol_version)
 		headers:          clone_header_values(head.headers)
 		header_names:     clone_header_names(head.header_names)
@@ -152,7 +151,7 @@ fn normalize_psr18_request(request vphp.PhpObject) !Psr18OutboundRequest {
 	method_raw := request.with_method_result[vphp.PhpString, string]('getMethod', fn (z vphp.PhpString) string {
 		return z.value()
 	}) or { return error('request method must be a non-empty token') }
-	method := psrx.validate_method_or_throw(method_raw) or {
+	method := validate_method_or_throw(method_raw) or {
 		return error('request method must be a non-empty token')
 	}
 	mut uri_value := request.call_method('getUri')
@@ -166,11 +165,11 @@ fn normalize_psr18_request(request vphp.PhpObject) !Psr18OutboundRequest {
 		return error('request URI must not be empty')
 	}
 	uri := VSlimPsr7Uri.parse(uri_text)
-	scheme := psrx.normalize_scheme(uri.scheme)
+	scheme := normalize_scheme(uri.scheme)
 	if scheme !in ['http', 'https'] {
 		return error('request URI scheme must be http or https')
 	}
-	if psrx.normalize_host(uri.host) == '' {
+	if normalize_host(uri.host) == '' {
 		return error('request URI host must not be empty')
 	}
 	url := build_psr7_uri_string(&uri)
@@ -180,7 +179,7 @@ fn normalize_psr18_request(request vphp.PhpObject) !Psr18OutboundRequest {
 	target_raw := request.with_method_result[vphp.PhpString, string]('getRequestTarget', fn (z vphp.PhpString) string {
 		return z.value()
 	}) or { '' }
-	request_target := if target_raw.trim_space() == '' { build_psr7_request_target(&uri) } else { psrx.validate_request_target_or_throw(target_raw) or {
+	request_target := if target_raw.trim_space() == '' { build_psr7_request_target(&uri) } else { validate_request_target_or_throw(target_raw) or {
 			''} }
 	if request_target == '' {
 		return error('request target must be a non-empty string without whitespace')
@@ -196,7 +195,7 @@ fn normalize_psr18_request(request vphp.PhpObject) !Psr18OutboundRequest {
 		headers_value.release()
 	}
 	mut headers, mut header_names := psr7_header_state_from_value(headers_value)
-	if psrx.normalize_header_name('Host') !in headers {
+	if normalize_header_name('Host') !in headers {
 		apply_psr7_host_header(mut headers, mut header_names, &uri)
 	}
 	body := request.with_method_result[vphp.PhpValue, string]('getBody', fn (z vphp.PhpValue) string {
@@ -340,7 +339,7 @@ fn Psr18ParsedResponseHead.read_last_http_response() Psr18ParsedResponseHead {
 			sep := line.index(':') or { continue }
 			name := line[..sep].trim_space()
 			value := line[sep + 1..].trim_space()
-			key := psrx.normalize_header_name(name)
+			key := normalize_header_name(name)
 			if key == '' {
 				continue
 			}

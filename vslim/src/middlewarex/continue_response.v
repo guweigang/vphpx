@@ -1,12 +1,11 @@
 module middlewarex
 
 import httpx
-import psrx
 
 pub fn phase_continue_response() &httpx.VSlimPsr7Response {
 	return &httpx.VSlimPsr7Response{
 		status:           299
-		reason_phrase:    psrx.normalize_reason_phrase(299, '')
+		reason_phrase:    httpx.normalize_reason_phrase(299, '')
 		protocol_version: '1.1'
 		headers:          {
 			'content-type':     ['text/plain; charset=utf-8']

@@ -1,6 +1,5 @@
 module httpx
 
-import psrx
 import routing
 import vphp
 
@@ -11,7 +10,7 @@ pub fn VSlimPsr7ServerRequest.from_vslim_request_value(req &VSlimRequest, route_
 	}
 	mut header_names := map[string]string{}
 	for key in headers.keys() {
-		header_names[psrx.normalize_header_name(key)] = key
+		header_names[normalize_header_name(key)] = key
 	}
 	if req.host != '' && 'host' !in headers {
 		host_line := if req.port != '' { '${req.host}:${req.port}' } else { req.host }
@@ -19,7 +18,7 @@ pub fn VSlimPsr7ServerRequest.from_vslim_request_value(req &VSlimRequest, route_
 		header_names['host'] = 'Host'
 	}
 	return (&VSlimPsr7ServerRequest{
-		method:             psrx.normalize_method(req.method)
+		method:             normalize_method(req.method)
 		request_target:     req.raw_path
 		protocol_version:   normalize_protocol_version(req.protocol_version)
 		headers:            headers

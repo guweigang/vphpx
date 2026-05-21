@@ -1,6 +1,5 @@
 module httpx
 
-import psrx
 import vphp
 
 pub fn (r &VSlimPsr7Response) body_or_empty() &VSlimPsr7Stream {
@@ -39,10 +38,10 @@ pub fn (r &VSlimPsr7ServerRequest) uri_or_default() &VSlimPsr7Uri {
 }
 
 pub fn (r &VSlimPsr7Response) clone_with(protocol_version string, headers map[string][]string, header_names map[string]string, body &VSlimPsr7Stream, status int, reason_phrase string) &VSlimPsr7Response {
-	resolved_status := psrx.default_status(status)
+	resolved_status := default_status(status)
 	return &VSlimPsr7Response{
 		status:           resolved_status
-		reason_phrase:    psrx.normalize_reason_phrase(resolved_status, reason_phrase).clone()
+		reason_phrase:    normalize_reason_phrase(resolved_status, reason_phrase).clone()
 		protocol_version: normalize_protocol_version(protocol_version).clone()
 		headers:          clone_header_values(headers)
 		header_names:     clone_header_names(header_names)

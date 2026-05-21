@@ -1,6 +1,5 @@
 module httpx
 
-import psrx
 import vphp
 
 fn response_from_object_props(object vphp.PhpObject) ?VSlimResponse {
@@ -133,7 +132,7 @@ pub fn VSlimPsr7Response.from_route_result(result vphp.PhpValue) (&VSlimPsr7Resp
 		if headers_value := arr.value('headers') {
 			if headers_array := headers_value.as_array() {
 				for name in headers_array.assoc_keys() {
-					normalized := psrx.normalize_header_name(name)
+					normalized := normalize_header_name(name)
 					headers[normalized] = [headers_array[name].to_string()]
 					header_names[normalized] = name
 				}
@@ -151,8 +150,8 @@ pub fn VSlimPsr7Response.from_route_result(result vphp.PhpValue) (&VSlimPsr7Resp
 			header_names['content-type'] = 'content-type'
 		}
 		return &VSlimPsr7Response{
-			status:           psrx.normalize_status(status)
-			reason_phrase:    psrx.normalize_reason_phrase(status, '')
+			status:           normalize_status(status)
+			reason_phrase:    normalize_reason_phrase(status, '')
 			protocol_version: '1.1'
 			headers:          clone_header_values(headers)
 			header_names:     header_names
