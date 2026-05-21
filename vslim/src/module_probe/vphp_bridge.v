@@ -638,3 +638,29 @@ pub fn (obj &VSlimDebugObjectProbe) bind_owned_php_object_value() vphp.PhpValue 
     return vphp.bind_owned_object_value[VSlimDebugObjectProbe](obj)
 }
 
+@[export: 'vphp_wrap_vslim_module_probe']
+fn vphp_wrap_vslim_module_probe(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := module_probe_value()
+    ctx.return().v[string](res)
+}
+
+@[export: 'vphp_wrap_vslim_module_probe_options']
+fn vphp_wrap_vslim_module_probe_options(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'prefix', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'count', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0_params_prefix := if php_args.has_named_or_index(0, 'prefix') { php_args.at_named_or_index(0, 'prefix').as_v[string]() } else { 'default' }
+    arg_0_params_count := if php_args.has_named_or_index(1, 'count') { php_args.at_named_or_index(1, 'count').as_v[int]() } else { 3 }
+    arg_0_params := module_probe.VSlimModuleProbeOptions{
+        prefix: arg_0_params_prefix
+        count: arg_0_params_count
+    }
+    res := module_probe_options(arg_0_params)
+    ctx.return().v[string](res)
+}
+
