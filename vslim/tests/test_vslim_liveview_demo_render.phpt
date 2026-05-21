@@ -19,7 +19,7 @@ final class DemoRenderLiveView extends VSlim\Live\View {
 
     public function render(VSlim\VHttpd\Request $req, VSlim\Live\Socket $socket): string
     {
-        $this->setApp($GLOBALS['demo_app']);
+        $this->setContainer($GLOBALS['demo_app']->container());
         $this->setTemplate('live_counter_demo.html');
         $socket
             ->assign('live_script', $this->runtimeScriptTag())

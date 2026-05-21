@@ -90,7 +90,7 @@ final class CounterLiveWsView extends VSlim\Live\View
         }
         if (str_starts_with($id, 'badge-') && $socket->has('badge_label_' . $id)) {
             $component = new CounterBadgeComponent();
-            $component->setApp($GLOBALS['ws_app']);
+            $component->setContainer($GLOBALS['ws_app']->container());
             $component->setTemplate('live_counter_badge_test.html');
             $component->setId($id);
             $component->assign('badge_id', $id);

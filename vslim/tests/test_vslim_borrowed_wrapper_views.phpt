@@ -14,13 +14,13 @@ $controllerView2 = $controller->view();
 echo (spl_object_id($controllerView1) === spl_object_id($controllerView2) ? 'controller-same' : 'controller-diff') . PHP_EOL;
 echo $controllerView2->asset('app.js') . PHP_EOL;
 
-$live = (new VSlim\Live\View())->setApp($app);
+$live = (new VSlim\Live\View())->setContainer($app->container());
 $liveView1 = $live->view();
 $liveView2 = $live->view();
 echo (spl_object_id($liveView1) === spl_object_id($liveView2) ? 'live-same' : 'live-diff') . PHP_EOL;
 echo $liveView2->asset('app.js') . PHP_EOL;
 
-$component = (new VSlim\Live\Component())->setApp($app);
+$component = (new VSlim\Live\Component())->setContainer($app->container());
 $componentView1 = $component->view();
 $componentView2 = $component->view();
 echo (spl_object_id($componentView1) === spl_object_id($componentView2) ? 'component-same' : 'component-diff') . PHP_EOL;
