@@ -239,7 +239,7 @@ fn test_cli_bootstrap_does_not_depend_on_appx_filesystem_helpers() {
 		}
 		source := os.read_file(file) or { panic('failed to read ${file}: ${err}') }
 		for pattern in banned_patterns {
-			assert !source.contains(pattern), '${file} should import fsx for filesystem helpers, not ${pattern}'
+			assert !source.contains(pattern), '${file} should import supportx for filesystem helpers, not ${pattern}'
 		}
 	}
 }
@@ -435,7 +435,7 @@ fn test_routing_module_stays_pure_and_below_route_domain() {
 		'import containerx',
 		'import configx',
 		'import loggerx',
-		'import fsx',
+		'import supportx',
 		'import errorx',
 	]
 	for file in vslim_module_files('routingx') {
@@ -453,7 +453,7 @@ fn test_routex_does_not_depend_on_app_lifecycle_modules() {
 		'import sessionx',
 		'import viewx',
 		'import liveviewx',
-		'import fsx',
+		'import supportx',
 		'import errorx',
 	]
 	for file in vslim_module_files('routex') {

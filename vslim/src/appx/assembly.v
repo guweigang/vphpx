@@ -8,7 +8,7 @@ import clockx
 import containerx
 import controllerx
 import eventx
-import fsx
+
 import httpx
 import middlewarex
 import supportx
@@ -58,13 +58,13 @@ fn (mut app VSlimApp) bootstrap_file_apply(path string) ! {
 	should_preload := lower.ends_with('/bootstrap/app.php')
 		|| lower.ends_with('\\bootstrap\\app.php') || lower.ends_with('/app.php')
 		|| lower.ends_with('\\app.php')
-	file_exists := fsx.is_file(clean)
+	file_exists := supportx.is_file(clean)
 	loggerx.cli_debug_log('bootstrap_file clean="${clean}" lower="${lower}" should_preload=${should_preload} is_file=${file_exists}')
 	if should_preload && file_exists {
-		project_root := if fsx.is_bootstrap_dir_path(fsx.dirname(clean)) {
-			fsx.dirname(fsx.dirname(clean))
+		project_root := if supportx.is_bootstrap_dir_path(supportx.dirname(clean)) {
+			supportx.dirname(supportx.dirname(clean))
 		} else {
-			fsx.dirname(clean)
+			supportx.dirname(clean)
 		}
 		if project_root != '' {
 			loggerx.cli_debug_log('bootstrap_file preload project_root="${project_root}"')
@@ -246,7 +246,7 @@ fn (mut app VSlimApp) apply_bootstrap_middleware_item(kind middlewarex.Middlewar
 }
 
 fn (mut app VSlimApp) apply_bootstrap_convention_providers(path string) !bool {
-	if !fsx.is_file(path) {
+	if !supportx.is_file(path) {
 		return false
 	}
 	mut raw := vphp.PhpIncludeFile.at(path).load()
@@ -264,7 +264,7 @@ fn (mut app VSlimApp) apply_bootstrap_convention_providers(path string) !bool {
 }
 
 fn (mut app VSlimApp) apply_bootstrap_convention_modules(path string) !bool {
-	if !fsx.is_file(path) {
+	if !supportx.is_file(path) {
 		return false
 	}
 	mut raw := vphp.PhpIncludeFile.at(path).load()
@@ -283,10 +283,10 @@ fn (mut app VSlimApp) apply_bootstrap_convention_modules(path string) !bool {
 
 fn (mut app VSlimApp) apply_bootstrap_convention_provider_classes(project_root string) !bool {
 	mut applied := false
-	for file in fsx.glob_paths(fsx.join_path(project_root, 'app/Providers/*.php')) {
-		_ = fsx.include_once_file(file)
-		class_name := 'App\\Providers\\' + fsx.file_stem(file)
-		if !fsx.class_exists(class_name) {
+	for file in supportx.glob_paths(supportx.join_path(project_root, 'app/Providers/*.php')) {
+		_ = supportx.include_once_file(file)
+		class_name := 'App\\Providers\\' + supportx.file_stem(file)
+		if !supportx.class_exists(class_name) {
 			return error('provider convention file "${file}" must declare class ${class_name}')
 		}
 		app.register_service_provider_class(class_name)!
@@ -297,10 +297,10 @@ fn (mut app VSlimApp) apply_bootstrap_convention_provider_classes(project_root s
 
 fn (mut app VSlimApp) apply_bootstrap_convention_module_classes(project_root string) !bool {
 	mut applied := false
-	for file in fsx.glob_paths(fsx.join_path(project_root, 'app/Modules/*.php')) {
-		_ = fsx.include_once_file(file)
-		class_name := 'App\\Modules\\' + fsx.file_stem(file)
-		if !fsx.class_exists(class_name) {
+	for file in supportx.glob_paths(supportx.join_path(project_root, 'app/Modules/*.php')) {
+		_ = supportx.include_once_file(file)
+		class_name := 'App\\Modules\\' + supportx.file_stem(file)
+		if !supportx.class_exists(class_name) {
 			return error('module convention file "${file}" must declare class ${class_name}')
 		}
 		app.register_module_class(class_name)!
@@ -316,19 +316,19 @@ fn (mut app VSlimApp) apply_bootstrap_convention_http_classes(project_root strin
 	defer {
 		app_value.release()
 	}
-	for file in fsx.glob_paths(fsx.join_path(project_root, 'app/Http/Controllers/*.php')) {
-		_ = fsx.include_once_file(file)
-		class_name := 'App\\Http\\Controllers\\' + fsx.file_stem(file)
-		if !fsx.class_exists(class_name) {
+	for file in supportx.glob_paths(supportx.join_path(project_root, 'app/Http/Controllers/*.php')) {
+		_ = supportx.include_once_file(file)
+		class_name := 'App\\Http\\Controllers\\' + supportx.file_stem(file)
+		if !supportx.class_exists(class_name) {
 			return error('controller convention file "${file}" must declare class ${class_name}')
 		}
 		controllerx.register_convention_controller(mut container, class_name, app_value)!
 		applied = true
 	}
-	for file in fsx.glob_paths(fsx.join_path(project_root, 'app/Http/Middleware/*.php')) {
-		_ = fsx.include_once_file(file)
-		class_name := 'App\\Http\\Middleware\\' + fsx.file_stem(file)
-		if !fsx.class_exists(class_name) {
+	for file in supportx.glob_paths(supportx.join_path(project_root, 'app/Http/Middleware/*.php')) {
+		_ = supportx.include_once_file(file)
+		class_name := 'App\\Http\\Middleware\\' + supportx.file_stem(file)
+		if !supportx.class_exists(class_name) {
 			return error('middleware convention file "${file}" must declare class ${class_name}')
 		}
 		applied = true
@@ -337,7 +337,7 @@ fn (mut app VSlimApp) apply_bootstrap_convention_http_classes(project_root strin
 }
 
 fn (mut app VSlimApp) apply_bootstrap_convention_spec(path string, label string) !bool {
-	if !fsx.is_file(path) {
+	if !supportx.is_file(path) {
 		return false
 	}
 	mut raw := vphp.PhpIncludeFile.at(path).load()
@@ -366,35 +366,35 @@ fn (mut app VSlimApp) apply_bootstrap_convention_spec(path string, label string)
 
 pub fn (mut app VSlimApp) apply_bootstrap_shared_conventions(project_root string) !bool {
 	mut applied := false
-	config_candidates := [fsx.join_path(project_root, 'config'),
-		fsx.join_path(project_root, 'config/app.toml'), fsx.join_path(project_root, 'app.toml')]
+	config_candidates := [supportx.join_path(project_root, 'config'),
+		supportx.join_path(project_root, 'config/app.toml'), supportx.join_path(project_root, 'app.toml')]
 	for candidate in config_candidates {
-		if fsx.is_file(candidate) || fsx.is_dir(candidate) {
+		if supportx.is_file(candidate) || supportx.is_dir(candidate) {
 			app.load_config(candidate)
 			applied = true
 			break
 		}
 	}
-	if app.apply_bootstrap_convention_spec(fsx.join_path(project_root, 'bootstrap/runtime.php'),
+	if app.apply_bootstrap_convention_spec(supportx.join_path(project_root, 'bootstrap/runtime.php'),
 		'runtime')!
 	{
 		applied = true
 	}
-	if app.apply_bootstrap_convention_spec(fsx.join_path(project_root, 'bootstrap/services.php'),
+	if app.apply_bootstrap_convention_spec(supportx.join_path(project_root, 'bootstrap/services.php'),
 		'services')!
 	{
 		applied = true
 	}
-	if app.apply_bootstrap_convention_spec(fsx.join_path(project_root, 'bootstrap/errors.php'),
+	if app.apply_bootstrap_convention_spec(supportx.join_path(project_root, 'bootstrap/errors.php'),
 		'errors')!
 	{
 		applied = true
 	}
 	if app.view_base_path() == '' {
-		view_candidates := [fsx.join_path(project_root, 'views'),
-			fsx.join_path(project_root, 'resources/views')]
+		view_candidates := [supportx.join_path(project_root, 'views'),
+			supportx.join_path(project_root, 'resources/views')]
 		for view_dir in view_candidates {
-			if !fsx.is_dir(view_dir) {
+			if !supportx.is_dir(view_dir) {
 				continue
 			}
 			app.set_view_base_path(view_dir)
@@ -402,7 +402,7 @@ pub fn (mut app VSlimApp) apply_bootstrap_shared_conventions(project_root string
 			break
 		}
 	}
-	if app.apply_bootstrap_convention_providers(fsx.join_path(project_root,
+	if app.apply_bootstrap_convention_providers(supportx.join_path(project_root,
 		'bootstrap/providers.php'))!
 	{
 		applied = true
@@ -410,7 +410,7 @@ pub fn (mut app VSlimApp) apply_bootstrap_shared_conventions(project_root string
 	if app.apply_bootstrap_convention_provider_classes(project_root)! {
 		applied = true
 	}
-	if app.apply_bootstrap_convention_modules(fsx.join_path(project_root, 'bootstrap/modules.php'))! {
+	if app.apply_bootstrap_convention_modules(supportx.join_path(project_root, 'bootstrap/modules.php'))! {
 		applied = true
 	}
 	if app.apply_bootstrap_convention_module_classes(project_root)! {
@@ -428,31 +428,31 @@ fn (mut app VSlimApp) apply_bootstrap_http_conventions(project_root string) !boo
 	defer {
 		app_value.release()
 	}
-	if app.apply_bootstrap_convention_spec(fsx.join_path(project_root, 'app/Http/errors.php'),
+	if app.apply_bootstrap_convention_spec(supportx.join_path(project_root, 'app/Http/errors.php'),
 		'errors')!
 	{
 		applied = true
 	}
-	if supportx.bootstrap_convention_hook_file(fsx.join_path(project_root,
+	if supportx.bootstrap_convention_hook_file(supportx.join_path(project_root,
 		'app/Http/controllers.php')).apply(app_value, 'controllers')!
 	{
 		applied = true
 	}
-	if supportx.bootstrap_convention_hook_file(fsx.join_path(project_root,
+	if supportx.bootstrap_convention_hook_file(supportx.join_path(project_root,
 		'bootstrap/middleware.php')).apply(app_value, 'middleware')!
 	{
 		applied = true
 	}
-	if supportx.bootstrap_convention_hook_file(fsx.join_path(project_root,
+	if supportx.bootstrap_convention_hook_file(supportx.join_path(project_root,
 		'app/Http/middleware.php')).apply(app_value, 'middleware')!
 	{
 		applied = true
 	}
-	for route_file in fsx.glob_paths(fsx.join_path(project_root, 'routes/*.php')) {
+	for route_file in supportx.glob_paths(supportx.join_path(project_root, 'routes/*.php')) {
 		_ = supportx.bootstrap_convention_hook_file(route_file).apply(app_value, 'routes')!
 		applied = true
 	}
-	for route_file in fsx.glob_paths(fsx.join_path(project_root, 'app/Http/routes/*.php')) {
+	for route_file in supportx.glob_paths(supportx.join_path(project_root, 'app/Http/routes/*.php')) {
 		_ = supportx.bootstrap_convention_hook_file(route_file).apply(app_value, 'routes')!
 		applied = true
 	}
@@ -460,7 +460,7 @@ fn (mut app VSlimApp) apply_bootstrap_http_conventions(project_root string) !boo
 }
 
 fn (mut app VSlimApp) apply_bootstrap_conventions(path string) ! {
-	project_root := if fsx.is_bootstrap_dir_path(path) { fsx.dirname(path) } else { path }
+	project_root := if supportx.is_bootstrap_dir_path(path) { supportx.dirname(path) } else { path }
 	if project_root == '' {
 		return error('bootstrap directory "${path}" has no project root')
 	}
@@ -546,7 +546,7 @@ pub fn (mut app VSlimApp) bootstrap_file(path string) &VSlimApp {
 
 @[php_method: 'bootstrapDir']
 pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
-	clean := fsx.normalize_dir_path(path)
+	clean := supportx.normalize_dir_path(path)
 	if clean == '' {
 		vphp.PhpException.raise_class('InvalidArgumentException',
 			'bootstrap directory must not be empty', 0)
@@ -555,7 +555,7 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 	if !clean.ends_with('.php') {
 		supportx.preload_bootstrap_project_classes(clean)
 	}
-	if clean.ends_with('.php') && fsx.is_file(clean) {
+	if clean.ends_with('.php') && supportx.is_file(clean) {
 		mut result := vphp.PhpIncludeFile.at(clean).load()
 		defer {
 			result.release()
@@ -565,10 +565,10 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 			|| lower.ends_with('\\bootstrap\\app.php') || lower.ends_with('/app.php')
 			|| lower.ends_with('\\app.php')
 		if should_preload {
-			project_root := if fsx.is_bootstrap_dir_path(fsx.dirname(clean)) {
-				fsx.dirname(fsx.dirname(clean))
+			project_root := if supportx.is_bootstrap_dir_path(supportx.dirname(clean)) {
+				supportx.dirname(supportx.dirname(clean))
 			} else {
-				fsx.dirname(clean)
+				supportx.dirname(clean)
 			}
 			if project_root != '' {
 				supportx.preload_bootstrap_spec_classes(project_root, result)
@@ -581,15 +581,15 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 		return &app
 	}
 	bootstrap_candidate := clean + '/bootstrap/app.php'
-	if fsx.is_file(bootstrap_candidate) {
+	if supportx.is_file(bootstrap_candidate) {
 		mut result := vphp.PhpIncludeFile.at(bootstrap_candidate).load()
 		defer {
 			result.release()
 		}
-		project_root := if fsx.is_bootstrap_dir_path(fsx.dirname(bootstrap_candidate)) {
-			fsx.dirname(fsx.dirname(bootstrap_candidate))
+		project_root := if supportx.is_bootstrap_dir_path(supportx.dirname(bootstrap_candidate)) {
+			supportx.dirname(supportx.dirname(bootstrap_candidate))
 		} else {
-			fsx.dirname(bootstrap_candidate)
+			supportx.dirname(bootstrap_candidate)
 		}
 		if project_root != '' {
 			supportx.preload_bootstrap_spec_classes(project_root, result)
@@ -601,15 +601,15 @@ pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
 		return &app
 	}
 	app_candidate := clean + '/app.php'
-	if fsx.is_file(app_candidate) {
+	if supportx.is_file(app_candidate) {
 		mut result := vphp.PhpIncludeFile.at(app_candidate).load()
 		defer {
 			result.release()
 		}
-		project_root := if fsx.is_bootstrap_dir_path(fsx.dirname(app_candidate)) {
-			fsx.dirname(fsx.dirname(app_candidate))
+		project_root := if supportx.is_bootstrap_dir_path(supportx.dirname(app_candidate)) {
+			supportx.dirname(supportx.dirname(app_candidate))
 		} else {
-			fsx.dirname(app_candidate)
+			supportx.dirname(app_candidate)
 		}
 		if project_root != '' {
 			supportx.preload_bootstrap_spec_classes(project_root, result)

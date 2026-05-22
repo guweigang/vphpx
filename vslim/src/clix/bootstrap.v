@@ -1,7 +1,7 @@
 module clix
 
 import appx
-import fsx
+
 import loggerx
 import supportx
 import vphp
@@ -17,17 +17,17 @@ fn (mut cli VSlimCliApp) bootstrap_file_apply(path string) ! {
 	}
 	lower := clean.to_lower()
 	if (lower.ends_with('/bootstrap/app.php') || lower.ends_with('\\bootstrap\\app.php')
-		|| lower.ends_with('/app.php') || lower.ends_with('\\app.php')) && fsx.is_file(clean) {
+		|| lower.ends_with('/app.php') || lower.ends_with('\\app.php')) && supportx.is_file(clean) {
 		mut core := cli.ensure_core_app()
 		mut result := vphp.PhpIncludeFile.at(clean).load()
 		defer {
 			result.release()
 		}
-		if fsx.is_file(clean) {
-			project_root := if fsx.is_bootstrap_dir_path(fsx.dirname(clean)) {
-				fsx.dirname(fsx.dirname(clean))
+		if supportx.is_file(clean) {
+			project_root := if supportx.is_bootstrap_dir_path(supportx.dirname(clean)) {
+				supportx.dirname(supportx.dirname(clean))
 			} else {
-				fsx.dirname(clean)
+				supportx.dirname(clean)
 			}
 			if project_root != '' {
 				supportx.preload_bootstrap_spec_classes(project_root, result)
@@ -45,16 +45,16 @@ fn (mut cli VSlimCliApp) bootstrap_file_apply(path string) ! {
 }
 
 fn (mut cli VSlimCliApp) bootstrap_dir_apply(path string) ! {
-	clean := fsx.normalize_dir_path(path)
+	clean := supportx.normalize_dir_path(path)
 	loggerx.cli_debug_log('bootstrap_dir input="${path}" clean="${clean}"')
 	if clean == '' {
 		return error('CLI bootstrap directory must not be empty')
 	}
-	if clean.ends_with('.php') && fsx.is_file(clean) {
+	if clean.ends_with('.php') && supportx.is_file(clean) {
 		cli.bootstrap_file_apply(clean)!
 		return
 	}
-	project_root := if fsx.is_bootstrap_dir_path(clean) { fsx.dirname(clean) } else { clean }
+	project_root := if supportx.is_bootstrap_dir_path(clean) { supportx.dirname(clean) } else { clean }
 	loggerx.cli_debug_log('project_root="${project_root}"')
 	if project_root == '' {
 		return error('CLI bootstrap directory has no project root')
@@ -83,18 +83,18 @@ fn (mut cli VSlimCliApp) bootstrap_dir_apply(path string) ! {
 	app_candidate_fallback := vphp.PhpFunction.named('sprintf').result_string(format_arg,
 		project_root_arg, app_arg)
 	mut shared_applied := false
-	loggerx.cli_debug_log('app_candidate="${bootstrap_candidate}" is_file=${fsx.is_file(bootstrap_candidate)}')
-	if fsx.is_file(bootstrap_candidate) {
+	loggerx.cli_debug_log('app_candidate="${bootstrap_candidate}" is_file=${supportx.is_file(bootstrap_candidate)}')
+	if supportx.is_file(bootstrap_candidate) {
 		mut core := cli.ensure_core_app()
 		supportx.preload_bootstrap_project_classes(project_root)
 		mut result := vphp.PhpIncludeFile.at(bootstrap_candidate).load()
 		defer {
 			result.release()
 		}
-		project_root_for_candidate := if fsx.is_bootstrap_dir_path(fsx.dirname(bootstrap_candidate)) {
-			fsx.dirname(fsx.dirname(bootstrap_candidate))
+		project_root_for_candidate := if supportx.is_bootstrap_dir_path(supportx.dirname(bootstrap_candidate)) {
+			supportx.dirname(supportx.dirname(bootstrap_candidate))
 		} else {
-			fsx.dirname(bootstrap_candidate)
+			supportx.dirname(bootstrap_candidate)
 		}
 		if project_root_for_candidate != '' {
 			supportx.preload_bootstrap_spec_classes(project_root_for_candidate, result)
@@ -103,18 +103,18 @@ fn (mut cli VSlimCliApp) bootstrap_dir_apply(path string) ! {
 		shared_applied = true
 	} else {
 		app_candidate := app_candidate_fallback
-		loggerx.cli_debug_log('app_candidate="${app_candidate}" is_file=${fsx.is_file(app_candidate)}')
-		if fsx.is_file(app_candidate) {
+		loggerx.cli_debug_log('app_candidate="${app_candidate}" is_file=${supportx.is_file(app_candidate)}')
+		if supportx.is_file(app_candidate) {
 			mut core := cli.ensure_core_app()
 			supportx.preload_bootstrap_project_classes(project_root)
 			mut result := vphp.PhpIncludeFile.at(app_candidate).load()
 			defer {
 				result.release()
 			}
-			project_root_for_candidate := if fsx.is_bootstrap_dir_path(fsx.dirname(app_candidate)) {
-				fsx.dirname(fsx.dirname(app_candidate))
+			project_root_for_candidate := if supportx.is_bootstrap_dir_path(supportx.dirname(app_candidate)) {
+				supportx.dirname(supportx.dirname(app_candidate))
 			} else {
-				fsx.dirname(app_candidate)
+				supportx.dirname(app_candidate)
 			}
 			if project_root_for_candidate != '' {
 				supportx.preload_bootstrap_spec_classes(project_root_for_candidate, result)
@@ -140,7 +140,7 @@ fn (mut cli VSlimCliApp) bootstrap_dir_apply(path string) ! {
 		cli_applied = true
 	}
 	cli_bootstrap_path := project_root + '/bootstrap/cli.php'
-	if fsx.is_file(cli_bootstrap_path) {
+	if supportx.is_file(cli_bootstrap_path) {
 		mut raw := vphp.PhpIncludeFile.at(cli_bootstrap_path).load()
 		defer {
 			raw.release()
@@ -221,12 +221,12 @@ fn (mut cli VSlimCliApp) apply_bootstrap_file_result(path string, value vphp.Php
 }
 
 fn cli_display_path(path string) string {
-	return fsx.normalize_dir_path(path).replace('\\', '/')
+	return supportx.normalize_dir_path(path).replace('\\', '/')
 }
 
 fn (mut cli VSlimCliApp) apply_command_class_conventions_with_paths(commands_dir string) !bool {
 	mut applied := false
-	entries := fsx.scandir_names(commands_dir)
+	entries := supportx.scandir_names(commands_dir)
 	loggerx.cli_debug_log('commands_dir="${commands_dir}" entries=${entries}')
 	for entry in entries {
 		if !entry.ends_with('.php') {
@@ -242,7 +242,7 @@ fn (mut cli VSlimCliApp) apply_command_class_conventions_with_paths(commands_dir
 		defer {
 			class_name_arg.release()
 		}
-		_ = fsx.include_once_file(commands_dir + '/' + entry)
+		_ = supportx.include_once_file(commands_dir + '/' + entry)
 		mut autoload_arg := vphp.PhpBool.of(true)
 		defer {
 			autoload_arg.release()
@@ -265,7 +265,7 @@ fn (mut cli VSlimCliApp) apply_bootstrap_conventions_with_paths(commands_dir str
 	if cli.apply_command_class_conventions_with_paths(commands_dir)! {
 		applied = true
 	}
-	if fsx.is_file(cli_bootstrap_path) {
+	if supportx.is_file(cli_bootstrap_path) {
 		mut raw := vphp.PhpIncludeFile.at(cli_bootstrap_path).load()
 		defer {
 			raw.release()

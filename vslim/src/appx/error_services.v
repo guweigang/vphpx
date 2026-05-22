@@ -3,7 +3,7 @@ module appx
 import configx as cfgx
 import databasex
 import errorx
-import fsx
+import supportx
 import httpx
 import os
 import sessionx
@@ -106,7 +106,7 @@ pub fn (mut app VSlimApp) doctor_report() map[string]string {
 	config_path := if cfg_ref != unsafe { nil } { cfg_ref.path() } else { '' }
 	config_mode := if config_path.trim_space() == '' {
 		'none'
-	} else if fsx.is_dir(config_path) {
+	} else if supportx.is_dir(config_path) {
 		'dir'
 	} else {
 		'file'
@@ -159,7 +159,7 @@ fn (app &VSlimApp) migrator_project_root() string {
 		mut config_path := app.config_ref.path().trim_space()
 		if config_path != '' {
 			config_path = config_path.trim_right('/\\')
-			if fsx.is_dir(config_path) {
+			if supportx.is_dir(config_path) {
 				if config_path.ends_with('/config') || config_path.ends_with('\\config') {
 					return os.dir(config_path)
 				}

@@ -1,6 +1,5 @@
 module supportx
 
-import fsx
 import vphp
 
 pub struct BootstrapConventionHookFile {
@@ -20,7 +19,7 @@ pub fn is_bootstrap_callable_pair(value vphp.PhpValue) bool {
 }
 
 pub fn (file BootstrapConventionHookFile) apply(app_value vphp.PhpValue, label string) !bool {
-	if !fsx.is_file(file.path) {
+	if !is_file(file.path) {
 		return false
 	}
 	mut raw := vphp.PhpIncludeFile.at(file.path).load()
@@ -43,7 +42,7 @@ pub fn bootstrap_project_class_file(project_root string, class_name string) stri
 	if relative == '' {
 		return ''
 	}
-	return fsx.join_path(project_root, 'app/' + relative + '.php')
+	return join_path(project_root, 'app/' + relative + '.php')
 }
 
 pub fn preload_bootstrap_spec_class_items(project_root string, raw vphp.PhpValue) {
@@ -53,8 +52,8 @@ pub fn preload_bootstrap_spec_class_items(project_root string, raw vphp.PhpValue
 	if raw.is_string() {
 		class_name := raw.to_string()
 		file := bootstrap_project_class_file(project_root, class_name)
-		if file != '' && fsx.is_file(file) {
-			_ = fsx.include_once_file(file)
+		if file != '' && is_file(file) {
+			_ = include_once_file(file)
 		}
 		return
 	}
@@ -75,11 +74,11 @@ pub fn preload_bootstrap_spec_classes(project_root string, raw vphp.PhpValue) {
 	if modules := app_bootstrap_spec(normalized).lookup(['modules']) {
 		preload_bootstrap_spec_class_items(project_root, modules)
 	}
-	for file in fsx.glob_paths(fsx.join_path(project_root, 'app/Http/Controllers/*.php')) {
-		_ = fsx.include_once_file(file)
+	for file in glob_paths(join_path(project_root, 'app/Http/Controllers/*.php')) {
+		_ = include_once_file(file)
 	}
-	for file in fsx.glob_paths(fsx.join_path(project_root, 'app/Http/Middleware/*.php')) {
-		_ = fsx.include_once_file(file)
+	for file in glob_paths(join_path(project_root, 'app/Http/Middleware/*.php')) {
+		_ = include_once_file(file)
 	}
 }
 
@@ -87,25 +86,25 @@ pub fn preload_bootstrap_project_classes(project_root string) {
 	if project_root.trim_space() == '' {
 		return
 	}
-	support_file := fsx.join_path(project_root, 'support.php')
-	if fsx.is_file(support_file) {
-		_ = fsx.include_once_file(support_file)
+	support_file := join_path(project_root, 'support.php')
+	if is_file(support_file) {
+		_ = include_once_file(support_file)
 	}
 	patterns := [
-		fsx.join_path(project_root, 'app/Providers/*.php'),
-		fsx.join_path(project_root, 'app/Modules/*.php'),
-		fsx.join_path(project_root, 'app/Http/Controllers/*.php'),
-		fsx.join_path(project_root, 'app/Http/Middleware/*.php'),
+		join_path(project_root, 'app/Providers/*.php'),
+		join_path(project_root, 'app/Modules/*.php'),
+		join_path(project_root, 'app/Http/Controllers/*.php'),
+		join_path(project_root, 'app/Http/Middleware/*.php'),
 	]
 	for pattern in patterns {
-		for file in fsx.glob_paths(pattern) {
-			_ = fsx.include_once_file(file)
+		for file in glob_paths(pattern) {
+			_ = include_once_file(file)
 		}
 	}
 }
 
 pub fn bootstrap_controller_declares_own_constructor(class_name string) bool {
-	if class_name.trim_space() == '' || !fsx.class_exists(class_name) {
+	if class_name.trim_space() == '' || !class_exists(class_name) {
 		return false
 	}
 	mut class_arg := vphp.PhpString.of(class_name)
