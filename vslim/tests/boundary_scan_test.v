@@ -62,7 +62,7 @@ fn test_vslim_handwritten_sources_do_not_use_stale_vphp_raw_entries() {
 	banned := [
 		'Context.from_entry(',
 		'Context.from_raw(',
-		'ZExData.new(',
+		'ZendExecuteData.new(',
 		'.raw_ex()',
 		'.raw_zval()',
 		'ZVal.from_raw(',
