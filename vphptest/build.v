@@ -90,7 +90,7 @@ fn main() {
 	} else {
 		files := os.ls('.') or { []string{} }
 		for f in files {
-			if f.ends_with('.v') && f != 'build.v' && f != 'bridge.v' && f != 'mod.v'
+			if f.ends_with('.v') && f != 'build.v' && f != 'vphp_bridge.v' && f != 'mod.v'
 				&& !f.ends_with('_test.v') {
 				target_files << os.real_path(os.join_path(project_root, f))
 			}

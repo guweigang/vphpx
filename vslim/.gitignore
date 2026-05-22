@@ -6,4 +6,4 @@ examples/symfony/vendor/
 examples/wordpress/vendor/
 build
 php_bridge.c
-src/bridge.v
+src/vphp_bridge.v

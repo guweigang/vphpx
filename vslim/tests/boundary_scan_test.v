@@ -9,7 +9,7 @@ fn vslim_root() string {
 fn vslim_src_files() []string {
 	mut files := os.walk_ext(os.join_path(vslim_root(), 'src'), '.v')
 	files.sort()
-	return files.filter(!it.ends_with('/bridge.v'))
+	return files.filter(!it.ends_with('/vphp_bridge.v'))
 }
 
 fn service_id_source_files() []string {

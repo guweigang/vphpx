@@ -27,25 +27,25 @@ __global C.articlestatus_ce &C.zend_class_entry
 __global C.vphp__task_ce &C.zend_class_entry
 __global C.stringablebox_ce &C.zend_class_entry
 
-@[export: 'AbstractReport_new_raw']
-pub fn abstractreport_new_raw() voidptr {
+@[export: 'abstract_report_new_raw']
+pub fn abstract_report_new_raw() voidptr {
     return vphp.generic_new_raw[AbstractReport]()
 }
-@[export: 'AbstractReport_free_raw']
-pub fn abstractreport_free_raw(ptr voidptr) {
+@[export: 'abstract_report_free_raw']
+pub fn abstract_report_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[AbstractReport](ptr)
 }
-@[export: 'AbstractReport_cleanup_raw']
-pub fn abstractreport_cleanup_raw(ptr voidptr) {
+@[export: 'abstract_report_cleanup_raw']
+pub fn abstract_report_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'AbstractReport_get_prop']
-pub fn abstractreport_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'abstract_report_get_prop']
+pub fn abstract_report_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -56,8 +56,8 @@ pub fn abstractreport_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.
         }
     }
 }
-@[export: 'AbstractReport_set_prop']
-pub fn abstractreport_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'abstract_report_set_prop']
+pub fn abstract_report_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -68,39 +68,39 @@ pub fn abstractreport_set_prop(ptr voidptr, name_ptr &char, name_len int, value 
         }
     }
 }
-@[export: 'AbstractReport_sync_props']
-pub fn abstractreport_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'abstract_report_sync_props']
+pub fn abstract_report_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &AbstractReport(ptr)
         out.add_property_string('title', obj.title)
     }
 }
-@[export: 'vphp_wrap_AbstractReport_label']
-pub fn vphp_wrap_abstractreport_label(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_abstract_report_label']
+pub fn vphp_wrap_abstract_report_label(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &AbstractReport(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.label()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_AbstractReport_summarize']
-pub fn vphp_wrap_abstractreport_summarize(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_abstract_report_summarize']
+pub fn vphp_wrap_abstract_report_summarize(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &AbstractReport(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.summarize()
     ctx.return().v[string](res)
 }
-@[export: 'AbstractReport_handlers']
-pub fn abstractreport_handlers() voidptr {
+@[export: 'abstract_report_handlers']
+pub fn abstract_report_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(abstractreport_get_prop),
-        write_handler: voidptr(abstractreport_set_prop),
-        sync_handler: voidptr(abstractreport_sync_props),
-        new_raw: voidptr(abstractreport_new_raw),
-        cleanup_raw: voidptr(abstractreport_cleanup_raw),
-        free_raw: voidptr(abstractreport_free_raw)
+        prop_handler: voidptr(abstract_report_get_prop),
+        write_handler: voidptr(abstract_report_set_prop),
+        sync_handler: voidptr(abstract_report_sync_props),
+        new_raw: voidptr(abstract_report_new_raw),
+        cleanup_raw: voidptr(abstract_report_cleanup_raw),
+        free_raw: voidptr(abstract_report_free_raw)
     )
 }
 pub fn AbstractReport.php_class_entry() vphp.ZendClassEntry {
@@ -108,54 +108,48 @@ pub fn AbstractReport.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn AbstractReport.php_object_handlers() voidptr {
-    return abstractreport_handlers()
+    return abstract_report_handlers()
 }
 
 pub fn AbstractReport.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
-    mut value := vphp.PhpValue.null()
-    binding := vphp.PhpObjectBinding.new[AbstractReport]()
-    if v_ptr == 0 || !binding.is_valid() {
-        return value.take_zval()
-    }
-    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
-    return value.take_zval()
+    return vphp.bind_object_zval[AbstractReport](v_ptr, ownership)
 }
 
 pub fn (obj &AbstractReport) bind_php_object() vphp.ZVal {
-    return AbstractReport.php_object_zval(obj, .borrowed)
+    return vphp.bind_borrowed_object_zval[AbstractReport](obj)
 }
 
 pub fn (obj &AbstractReport) bind_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+    return vphp.bind_borrowed_object_value[AbstractReport](obj)
 }
 
 pub fn (obj &AbstractReport) bind_owned_php_object() vphp.ZVal {
-    return AbstractReport.php_object_zval(obj, .owned_request)
+    return vphp.bind_owned_object_zval[AbstractReport](obj)
 }
 
 pub fn (obj &AbstractReport) bind_owned_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+    return vphp.bind_owned_object_value[AbstractReport](obj)
 }
 
-@[export: 'DailyReport_new_raw']
-pub fn dailyreport_new_raw() voidptr {
+@[export: 'daily_report_new_raw']
+pub fn daily_report_new_raw() voidptr {
     return vphp.generic_new_raw[DailyReport]()
 }
-@[export: 'DailyReport_free_raw']
-pub fn dailyreport_free_raw(ptr voidptr) {
+@[export: 'daily_report_free_raw']
+pub fn daily_report_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[DailyReport](ptr)
 }
-@[export: 'DailyReport_cleanup_raw']
-pub fn dailyreport_cleanup_raw(ptr voidptr) {
+@[export: 'daily_report_cleanup_raw']
+pub fn daily_report_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'DailyReport_get_prop']
-pub fn dailyreport_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'daily_report_get_prop']
+pub fn daily_report_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -166,8 +160,8 @@ pub fn dailyreport_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zva
         }
     }
 }
-@[export: 'DailyReport_set_prop']
-pub fn dailyreport_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'daily_report_set_prop']
+pub fn daily_report_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -178,16 +172,16 @@ pub fn dailyreport_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.
         }
     }
 }
-@[export: 'DailyReport_sync_props']
-pub fn dailyreport_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'daily_report_sync_props']
+pub fn daily_report_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &DailyReport(ptr)
         out.add_property_string('summary', obj.summary)
     }
 }
-@[export: 'vphp_wrap_DailyReport_construct']
-pub fn vphp_wrap_dailyreport_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_daily_report_construct']
+pub fn vphp_wrap_daily_report_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &DailyReport(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -200,23 +194,23 @@ pub fn vphp_wrap_dailyreport_construct(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.construct(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_DailyReport_summarize']
-pub fn vphp_wrap_dailyreport_summarize(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_daily_report_summarize']
+pub fn vphp_wrap_daily_report_summarize(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &DailyReport(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.summarize()
     ctx.return().v[string](res)
 }
-@[export: 'DailyReport_handlers']
-pub fn dailyreport_handlers() voidptr {
+@[export: 'daily_report_handlers']
+pub fn daily_report_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(dailyreport_get_prop),
-        write_handler: voidptr(dailyreport_set_prop),
-        sync_handler: voidptr(dailyreport_sync_props),
-        new_raw: voidptr(dailyreport_new_raw),
-        cleanup_raw: voidptr(dailyreport_cleanup_raw),
-        free_raw: voidptr(dailyreport_free_raw)
+        prop_handler: voidptr(daily_report_get_prop),
+        write_handler: voidptr(daily_report_set_prop),
+        sync_handler: voidptr(daily_report_sync_props),
+        new_raw: voidptr(daily_report_new_raw),
+        cleanup_raw: voidptr(daily_report_cleanup_raw),
+        free_raw: voidptr(daily_report_free_raw)
     )
 }
 pub fn DailyReport.php_class_entry() vphp.ZendClassEntry {
@@ -224,53 +218,47 @@ pub fn DailyReport.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn DailyReport.php_object_handlers() voidptr {
-    return dailyreport_handlers()
+    return daily_report_handlers()
 }
 
 pub fn DailyReport.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
-    mut value := vphp.PhpValue.null()
-    binding := vphp.PhpObjectBinding.new[DailyReport]()
-    if v_ptr == 0 || !binding.is_valid() {
-        return value.take_zval()
-    }
-    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
-    return value.take_zval()
+    return vphp.bind_object_zval[DailyReport](v_ptr, ownership)
 }
 
 pub fn (obj &DailyReport) bind_php_object() vphp.ZVal {
-    return DailyReport.php_object_zval(obj, .borrowed)
+    return vphp.bind_borrowed_object_zval[DailyReport](obj)
 }
 
 pub fn (obj &DailyReport) bind_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+    return vphp.bind_borrowed_object_value[DailyReport](obj)
 }
 
 pub fn (obj &DailyReport) bind_owned_php_object() vphp.ZVal {
-    return DailyReport.php_object_zval(obj, .owned_request)
+    return vphp.bind_owned_object_zval[DailyReport](obj)
 }
 
 pub fn (obj &DailyReport) bind_owned_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+    return vphp.bind_owned_object_value[DailyReport](obj)
 }
 
-@[export: 'Author_new_raw']
+@[export: 'author_new_raw']
 pub fn author_new_raw() voidptr {
     return vphp.generic_new_raw[Author]()
 }
-@[export: 'Author_free_raw']
+@[export: 'author_free_raw']
 pub fn author_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[Author](ptr)
 }
-@[export: 'Author_cleanup_raw']
+@[export: 'author_cleanup_raw']
 pub fn author_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'Author_get_prop']
+@[export: 'author_get_prop']
 pub fn author_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
@@ -282,7 +270,7 @@ pub fn author_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
         }
     }
 }
-@[export: 'Author_set_prop']
+@[export: 'author_set_prop']
 pub fn author_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
@@ -294,7 +282,7 @@ pub fn author_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval)
         }
     }
 }
-@[export: 'Author_sync_props']
+@[export: 'author_sync_props']
 pub fn author_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
@@ -302,7 +290,7 @@ pub fn author_sync_props(ptr voidptr, zv &C.zval) {
         out.add_property_string('name', obj.name)
     }
 }
-@[export: 'vphp_wrap_Author_create']
+@[export: 'vphp_wrap_author_create']
 pub fn vphp_wrap_author_create(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -313,7 +301,7 @@ pub fn vphp_wrap_author_create(ctx vphp.Context) voidptr {
     res := Author.create(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_Author_get_name']
+@[export: 'vphp_wrap_author_get_name']
 pub fn vphp_wrap_author_get_name(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Author(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
@@ -321,7 +309,7 @@ pub fn vphp_wrap_author_get_name(ptr voidptr, ctx vphp.Context)  {
     res := recv.get_name()
     ctx.return().v[string](res)
 }
-@[export: 'Author_handlers']
+@[export: 'author_handlers']
 pub fn author_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
         prop_handler: voidptr(author_get_prop),
@@ -341,49 +329,43 @@ pub fn Author.php_object_handlers() voidptr {
 }
 
 pub fn Author.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
-    mut value := vphp.PhpValue.null()
-    binding := vphp.PhpObjectBinding.new[Author]()
-    if v_ptr == 0 || !binding.is_valid() {
-        return value.take_zval()
-    }
-    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
-    return value.take_zval()
+    return vphp.bind_object_zval[Author](v_ptr, ownership)
 }
 
 pub fn (obj &Author) bind_php_object() vphp.ZVal {
-    return Author.php_object_zval(obj, .borrowed)
+    return vphp.bind_borrowed_object_zval[Author](obj)
 }
 
 pub fn (obj &Author) bind_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+    return vphp.bind_borrowed_object_value[Author](obj)
 }
 
 pub fn (obj &Author) bind_owned_php_object() vphp.ZVal {
-    return Author.php_object_zval(obj, .owned_request)
+    return vphp.bind_owned_object_zval[Author](obj)
 }
 
 pub fn (obj &Author) bind_owned_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+    return vphp.bind_owned_object_value[Author](obj)
 }
 
-@[export: 'Post_new_raw']
+@[export: 'post_new_raw']
 pub fn post_new_raw() voidptr {
     return vphp.generic_new_raw[Post]()
 }
-@[export: 'Post_free_raw']
+@[export: 'post_free_raw']
 pub fn post_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[Post](ptr)
 }
-@[export: 'Post_cleanup_raw']
+@[export: 'post_cleanup_raw']
 pub fn post_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'Post_get_prop']
+@[export: 'post_get_prop']
 pub fn post_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
@@ -395,7 +377,7 @@ pub fn post_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
         }
     }
 }
-@[export: 'Post_set_prop']
+@[export: 'post_set_prop']
 pub fn post_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
@@ -407,7 +389,7 @@ pub fn post_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
         }
     }
 }
-@[export: 'Post_sync_props']
+@[export: 'post_sync_props']
 pub fn post_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
@@ -415,7 +397,7 @@ pub fn post_sync_props(ptr voidptr, zv &C.zval) {
         out.add_property_long('post_id', i64(obj.post_id))
     }
 }
-@[export: 'vphp_wrap_Post_set_author']
+@[export: 'vphp_wrap_post_set_author']
 pub fn vphp_wrap_post_set_author(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Post(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
@@ -426,7 +408,7 @@ pub fn vphp_wrap_post_set_author(ptr voidptr, ctx vphp.Context)  {
     arg_0 := unsafe { &Author(php_args.at_named_or_index(0, 'author').raw_obj()) }
     recv.set_author(arg_0)
 }
-@[export: 'vphp_wrap_Post_get_author']
+@[export: 'vphp_wrap_post_get_author']
 pub fn vphp_wrap_post_get_author(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &Post(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
@@ -434,7 +416,7 @@ pub fn vphp_wrap_post_get_author(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.get_author()
     return voidptr(res)
 }
-@[export: 'Post_handlers']
+@[export: 'post_handlers']
 pub fn post_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
         prop_handler: voidptr(post_get_prop),
@@ -454,49 +436,43 @@ pub fn Post.php_object_handlers() voidptr {
 }
 
 pub fn Post.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
-    mut value := vphp.PhpValue.null()
-    binding := vphp.PhpObjectBinding.new[Post]()
-    if v_ptr == 0 || !binding.is_valid() {
-        return value.take_zval()
-    }
-    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
-    return value.take_zval()
+    return vphp.bind_object_zval[Post](v_ptr, ownership)
 }
 
 pub fn (obj &Post) bind_php_object() vphp.ZVal {
-    return Post.php_object_zval(obj, .borrowed)
+    return vphp.bind_borrowed_object_zval[Post](obj)
 }
 
 pub fn (obj &Post) bind_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+    return vphp.bind_borrowed_object_value[Post](obj)
 }
 
 pub fn (obj &Post) bind_owned_php_object() vphp.ZVal {
-    return Post.php_object_zval(obj, .owned_request)
+    return vphp.bind_owned_object_zval[Post](obj)
 }
 
 pub fn (obj &Post) bind_owned_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+    return vphp.bind_owned_object_value[Post](obj)
 }
 
-@[export: 'Article_new_raw']
+@[export: 'article_new_raw']
 pub fn article_new_raw() voidptr {
     return vphp.generic_new_raw[Article]()
 }
-@[export: 'Article_free_raw']
+@[export: 'article_free_raw']
 pub fn article_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[Article](ptr)
 }
-@[export: 'Article_cleanup_raw']
+@[export: 'article_cleanup_raw']
 pub fn article_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'Article_get_prop']
+@[export: 'article_get_prop']
 pub fn article_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
@@ -520,7 +496,7 @@ pub fn article_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
         }
     }
 }
-@[export: 'Article_set_prop']
+@[export: 'article_set_prop']
 pub fn article_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
@@ -540,7 +516,7 @@ pub fn article_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval
         }
     }
 }
-@[export: 'Article_sync_props']
+@[export: 'article_sync_props']
 pub fn article_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
@@ -568,7 +544,7 @@ pub fn Article.sync_statics_from_php(ctx vphp.Context) {
     mut s := Article.statics()
     s.total_count = ce.static_prop[int]("total_count")
 }
-@[export: 'vphp_wrap_Article_construct']
+@[export: 'vphp_wrap_article_construct']
 pub fn vphp_wrap_article_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &Article(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
@@ -584,7 +560,7 @@ pub fn vphp_wrap_article_construct(ptr voidptr, ctx vphp.Context) voidptr {
     Article.sync_statics_to_php(ctx)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_Article_internal_format']
+@[export: 'vphp_wrap_article_internal_format']
 pub fn vphp_wrap_article_internal_format(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Article(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
@@ -594,7 +570,7 @@ pub fn vphp_wrap_article_internal_format(ptr voidptr, ctx vphp.Context)  {
     Article.sync_statics_to_php(ctx)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_Article_create']
+@[export: 'vphp_wrap_article_create']
 pub fn vphp_wrap_article_create(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -607,7 +583,7 @@ pub fn vphp_wrap_article_create(ctx vphp.Context) voidptr {
     Article.sync_statics_to_php(ctx)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_Article_get_formatted_title']
+@[export: 'vphp_wrap_article_get_formatted_title']
 pub fn vphp_wrap_article_get_formatted_title(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Article(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
@@ -617,7 +593,7 @@ pub fn vphp_wrap_article_get_formatted_title(ptr voidptr, ctx vphp.Context)  {
     Article.sync_statics_to_php(ctx)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_Article_save']
+@[export: 'vphp_wrap_article_save']
 pub fn vphp_wrap_article_save(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Article(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
@@ -627,7 +603,7 @@ pub fn vphp_wrap_article_save(ptr voidptr, ctx vphp.Context)  {
     Article.sync_statics_to_php(ctx)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_Article_dump_properties']
+@[export: 'vphp_wrap_article_dump_properties']
 pub fn vphp_wrap_article_dump_properties(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Article(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
@@ -640,7 +616,7 @@ pub fn vphp_wrap_article_dump_properties(ptr voidptr, ctx vphp.Context)  {
     recv.dump_properties(arg_0)
     Article.sync_statics_to_php(ctx)
 }
-@[export: 'vphp_wrap_Article_process_with_callback']
+@[export: 'vphp_wrap_article_process_with_callback']
 pub fn vphp_wrap_article_process_with_callback(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Article(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
@@ -657,7 +633,7 @@ pub fn vphp_wrap_article_process_with_callback(ptr voidptr, ctx vphp.Context)  {
     Article.sync_statics_to_php(ctx)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_Article_restore_author']
+@[export: 'vphp_wrap_article_restore_author']
 pub fn vphp_wrap_article_restore_author(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -670,7 +646,7 @@ pub fn vphp_wrap_article_restore_author(ctx vphp.Context) voidptr {
     Article.sync_statics_to_php(ctx)
     return voidptr(res)
 }
-@[export: 'Article_handlers']
+@[export: 'article_handlers']
 pub fn article_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
         prop_handler: voidptr(article_get_prop),
@@ -690,49 +666,43 @@ pub fn Article.php_object_handlers() voidptr {
 }
 
 pub fn Article.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
-    mut value := vphp.PhpValue.null()
-    binding := vphp.PhpObjectBinding.new[Article]()
-    if v_ptr == 0 || !binding.is_valid() {
-        return value.take_zval()
-    }
-    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
-    return value.take_zval()
+    return vphp.bind_object_zval[Article](v_ptr, ownership)
 }
 
 pub fn (obj &Article) bind_php_object() vphp.ZVal {
-    return Article.php_object_zval(obj, .borrowed)
+    return vphp.bind_borrowed_object_zval[Article](obj)
 }
 
 pub fn (obj &Article) bind_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+    return vphp.bind_borrowed_object_value[Article](obj)
 }
 
 pub fn (obj &Article) bind_owned_php_object() vphp.ZVal {
-    return Article.php_object_zval(obj, .owned_request)
+    return vphp.bind_owned_object_zval[Article](obj)
 }
 
 pub fn (obj &Article) bind_owned_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+    return vphp.bind_owned_object_value[Article](obj)
 }
 
-@[export: 'Story_new_raw']
+@[export: 'story_new_raw']
 pub fn story_new_raw() voidptr {
     return vphp.generic_new_raw[Story]()
 }
-@[export: 'Story_free_raw']
+@[export: 'story_free_raw']
 pub fn story_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[Story](ptr)
 }
-@[export: 'Story_cleanup_raw']
+@[export: 'story_cleanup_raw']
 pub fn story_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'Story_get_prop']
+@[export: 'story_get_prop']
 pub fn story_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
@@ -744,7 +714,7 @@ pub fn story_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
         }
     }
 }
-@[export: 'Story_set_prop']
+@[export: 'story_set_prop']
 pub fn story_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
@@ -756,7 +726,7 @@ pub fn story_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) 
         }
     }
 }
-@[export: 'Story_sync_props']
+@[export: 'story_sync_props']
 pub fn story_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
@@ -764,7 +734,7 @@ pub fn story_sync_props(ptr voidptr, zv &C.zval) {
         out.add_property_long('chapter_count', i64(obj.chapter_count))
     }
 }
-@[export: 'vphp_wrap_Story_create']
+@[export: 'vphp_wrap_story_create']
 pub fn vphp_wrap_story_create(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -777,7 +747,7 @@ pub fn vphp_wrap_story_create(ctx vphp.Context) voidptr {
     res := Story.create(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_Story_tell']
+@[export: 'vphp_wrap_story_tell']
 pub fn vphp_wrap_story_tell(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Story(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
@@ -785,7 +755,7 @@ pub fn vphp_wrap_story_tell(ptr voidptr, ctx vphp.Context)  {
     res := recv.tell()
     ctx.return().v[string](res)
 }
-@[export: 'Story_handlers']
+@[export: 'story_handlers']
 pub fn story_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
         prop_handler: voidptr(story_get_prop),
@@ -805,50 +775,44 @@ pub fn Story.php_object_handlers() voidptr {
 }
 
 pub fn Story.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
-    mut value := vphp.PhpValue.null()
-    binding := vphp.PhpObjectBinding.new[Story]()
-    if v_ptr == 0 || !binding.is_valid() {
-        return value.take_zval()
-    }
-    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
-    return value.take_zval()
+    return vphp.bind_object_zval[Story](v_ptr, ownership)
 }
 
 pub fn (obj &Story) bind_php_object() vphp.ZVal {
-    return Story.php_object_zval(obj, .borrowed)
+    return vphp.bind_borrowed_object_zval[Story](obj)
 }
 
 pub fn (obj &Story) bind_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+    return vphp.bind_borrowed_object_value[Story](obj)
 }
 
 pub fn (obj &Story) bind_owned_php_object() vphp.ZVal {
-    return Story.php_object_zval(obj, .owned_request)
+    return vphp.bind_owned_object_zval[Story](obj)
 }
 
 pub fn (obj &Story) bind_owned_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+    return vphp.bind_owned_object_value[Story](obj)
 }
 
-@[export: 'AliasBase_new_raw']
-pub fn aliasbase_new_raw() voidptr {
+@[export: 'alias_base_new_raw']
+pub fn alias_base_new_raw() voidptr {
     return vphp.generic_new_raw[AliasBase]()
 }
-@[export: 'AliasBase_free_raw']
-pub fn aliasbase_free_raw(ptr voidptr) {
+@[export: 'alias_base_free_raw']
+pub fn alias_base_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[AliasBase](ptr)
 }
-@[export: 'AliasBase_cleanup_raw']
-pub fn aliasbase_cleanup_raw(ptr voidptr) {
+@[export: 'alias_base_cleanup_raw']
+pub fn alias_base_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'AliasBase_get_prop']
-pub fn aliasbase_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'alias_base_get_prop']
+pub fn alias_base_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -859,8 +823,8 @@ pub fn aliasbase_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval)
         }
     }
 }
-@[export: 'AliasBase_set_prop']
-pub fn aliasbase_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'alias_base_set_prop']
+pub fn alias_base_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -871,16 +835,16 @@ pub fn aliasbase_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zv
         }
     }
 }
-@[export: 'AliasBase_sync_props']
-pub fn aliasbase_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'alias_base_sync_props']
+pub fn alias_base_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &AliasBase(ptr)
         out.add_property_string('label', obj.label)
     }
 }
-@[export: 'vphp_wrap_AliasBase_construct']
-pub fn vphp_wrap_aliasbase_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_alias_base_construct']
+pub fn vphp_wrap_alias_base_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &AliasBase(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -891,15 +855,15 @@ pub fn vphp_wrap_aliasbase_construct(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.construct(arg_0)
     return voidptr(res)
 }
-@[export: 'AliasBase_handlers']
-pub fn aliasbase_handlers() voidptr {
+@[export: 'alias_base_handlers']
+pub fn alias_base_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(aliasbase_get_prop),
-        write_handler: voidptr(aliasbase_set_prop),
-        sync_handler: voidptr(aliasbase_sync_props),
-        new_raw: voidptr(aliasbase_new_raw),
-        cleanup_raw: voidptr(aliasbase_cleanup_raw),
-        free_raw: voidptr(aliasbase_free_raw)
+        prop_handler: voidptr(alias_base_get_prop),
+        write_handler: voidptr(alias_base_set_prop),
+        sync_handler: voidptr(alias_base_sync_props),
+        new_raw: voidptr(alias_base_new_raw),
+        cleanup_raw: voidptr(alias_base_cleanup_raw),
+        free_raw: voidptr(alias_base_free_raw)
     )
 }
 pub fn AliasBase.php_class_entry() vphp.ZendClassEntry {
@@ -907,54 +871,48 @@ pub fn AliasBase.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn AliasBase.php_object_handlers() voidptr {
-    return aliasbase_handlers()
+    return alias_base_handlers()
 }
 
 pub fn AliasBase.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
-    mut value := vphp.PhpValue.null()
-    binding := vphp.PhpObjectBinding.new[AliasBase]()
-    if v_ptr == 0 || !binding.is_valid() {
-        return value.take_zval()
-    }
-    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
-    return value.take_zval()
+    return vphp.bind_object_zval[AliasBase](v_ptr, ownership)
 }
 
 pub fn (obj &AliasBase) bind_php_object() vphp.ZVal {
-    return AliasBase.php_object_zval(obj, .borrowed)
+    return vphp.bind_borrowed_object_zval[AliasBase](obj)
 }
 
 pub fn (obj &AliasBase) bind_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+    return vphp.bind_borrowed_object_value[AliasBase](obj)
 }
 
 pub fn (obj &AliasBase) bind_owned_php_object() vphp.ZVal {
-    return AliasBase.php_object_zval(obj, .owned_request)
+    return vphp.bind_owned_object_zval[AliasBase](obj)
 }
 
 pub fn (obj &AliasBase) bind_owned_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+    return vphp.bind_owned_object_value[AliasBase](obj)
 }
 
-@[export: 'AliasWorker_new_raw']
-pub fn aliasworker_new_raw() voidptr {
+@[export: 'alias_worker_new_raw']
+pub fn alias_worker_new_raw() voidptr {
     return vphp.generic_new_raw[AliasWorker]()
 }
-@[export: 'AliasWorker_free_raw']
-pub fn aliasworker_free_raw(ptr voidptr) {
+@[export: 'alias_worker_free_raw']
+pub fn alias_worker_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[AliasWorker](ptr)
 }
-@[export: 'AliasWorker_cleanup_raw']
-pub fn aliasworker_cleanup_raw(ptr voidptr) {
+@[export: 'alias_worker_cleanup_raw']
+pub fn alias_worker_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'AliasWorker_get_prop']
-pub fn aliasworker_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'alias_worker_get_prop']
+pub fn alias_worker_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -965,8 +923,8 @@ pub fn aliasworker_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zva
         }
     }
 }
-@[export: 'AliasWorker_set_prop']
-pub fn aliasworker_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'alias_worker_set_prop']
+pub fn alias_worker_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -977,16 +935,16 @@ pub fn aliasworker_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.
         }
     }
 }
-@[export: 'AliasWorker_sync_props']
-pub fn aliasworker_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'alias_worker_sync_props']
+pub fn alias_worker_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &AliasWorker(ptr)
         out.add_property_string('title', obj.title)
     }
 }
-@[export: 'vphp_wrap_AliasWorker_construct']
-pub fn vphp_wrap_aliasworker_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_alias_worker_construct']
+pub fn vphp_wrap_alias_worker_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &AliasWorker(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -999,39 +957,39 @@ pub fn vphp_wrap_aliasworker_construct(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.construct(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_AliasWorker_save']
-pub fn vphp_wrap_aliasworker_save(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_alias_worker_save']
+pub fn vphp_wrap_alias_worker_save(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &AliasWorker(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.save()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_AliasWorker_get_formatted_title']
-pub fn vphp_wrap_aliasworker_get_formatted_title(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_alias_worker_get_formatted_title']
+pub fn vphp_wrap_alias_worker_get_formatted_title(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &AliasWorker(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_formatted_title()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_AliasWorker_ping']
-pub fn vphp_wrap_aliasworker_ping(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_alias_worker_ping']
+pub fn vphp_wrap_alias_worker_ping(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &AliasWorker(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.ping()
     ctx.return().v[string](res)
 }
-@[export: 'AliasWorker_handlers']
-pub fn aliasworker_handlers() voidptr {
+@[export: 'alias_worker_handlers']
+pub fn alias_worker_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(aliasworker_get_prop),
-        write_handler: voidptr(aliasworker_set_prop),
-        sync_handler: voidptr(aliasworker_sync_props),
-        new_raw: voidptr(aliasworker_new_raw),
-        cleanup_raw: voidptr(aliasworker_cleanup_raw),
-        free_raw: voidptr(aliasworker_free_raw)
+        prop_handler: voidptr(alias_worker_get_prop),
+        write_handler: voidptr(alias_worker_set_prop),
+        sync_handler: voidptr(alias_worker_sync_props),
+        new_raw: voidptr(alias_worker_new_raw),
+        cleanup_raw: voidptr(alias_worker_cleanup_raw),
+        free_raw: voidptr(alias_worker_free_raw)
     )
 }
 pub fn AliasWorker.php_class_entry() vphp.ZendClassEntry {
@@ -1039,92 +997,86 @@ pub fn AliasWorker.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn AliasWorker.php_object_handlers() voidptr {
-    return aliasworker_handlers()
+    return alias_worker_handlers()
 }
 
 pub fn AliasWorker.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
-    mut value := vphp.PhpValue.null()
-    binding := vphp.PhpObjectBinding.new[AliasWorker]()
-    if v_ptr == 0 || !binding.is_valid() {
-        return value.take_zval()
-    }
-    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
-    return value.take_zval()
+    return vphp.bind_object_zval[AliasWorker](v_ptr, ownership)
 }
 
 pub fn (obj &AliasWorker) bind_php_object() vphp.ZVal {
-    return AliasWorker.php_object_zval(obj, .borrowed)
+    return vphp.bind_borrowed_object_zval[AliasWorker](obj)
 }
 
 pub fn (obj &AliasWorker) bind_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+    return vphp.bind_borrowed_object_value[AliasWorker](obj)
 }
 
 pub fn (obj &AliasWorker) bind_owned_php_object() vphp.ZVal {
-    return AliasWorker.php_object_zval(obj, .owned_request)
+    return vphp.bind_owned_object_zval[AliasWorker](obj)
 }
 
 pub fn (obj &AliasWorker) bind_owned_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+    return vphp.bind_owned_object_value[AliasWorker](obj)
 }
 
-@[export: 'RuntimeDemoBaseException_new_raw']
-pub fn runtimedemobaseexception_new_raw() voidptr {
+@[export: 'runtime_demo_base_exception_new_raw']
+pub fn runtime_demo_base_exception_new_raw() voidptr {
     return vphp.generic_new_raw[RuntimeDemoBaseException]()
 }
-@[export: 'RuntimeDemoBaseException_free_raw']
-pub fn runtimedemobaseexception_free_raw(ptr voidptr) {
+@[export: 'runtime_demo_base_exception_free_raw']
+pub fn runtime_demo_base_exception_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[RuntimeDemoBaseException](ptr)
 }
-@[export: 'RuntimeDemoBaseException_cleanup_raw']
-pub fn runtimedemobaseexception_cleanup_raw(ptr voidptr) {
+@[export: 'runtime_demo_base_exception_cleanup_raw']
+pub fn runtime_demo_base_exception_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-fn runtimedemobaseexception_load_from_php(php_obj vphp.ZendObject) RuntimeDemoBaseException {
+fn runtime_demo_base_exception_load_from_php(php_obj vphp.ZendObject) RuntimeDemoBaseException {
     mut recv := RuntimeDemoBaseException{}
     if !php_obj.is_valid() {
         return recv
     }
     return recv
 }
-fn runtimedemobaseexception_sync_to_php(php_obj vphp.ZendObject, recv RuntimeDemoBaseException) {
+fn runtime_demo_base_exception_sync_to_php(php_obj vphp.ZendObject, recv RuntimeDemoBaseException) {
     if !php_obj.is_valid() {
         return
     }
 }
-@[export: 'RuntimeDemoBaseException_get_prop']
-pub fn runtimedemobaseexception_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'runtime_demo_base_exception_get_prop']
+pub fn runtime_demo_base_exception_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'RuntimeDemoBaseException_set_prop']
-pub fn runtimedemobaseexception_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'runtime_demo_base_exception_set_prop']
+pub fn runtime_demo_base_exception_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'RuntimeDemoBaseException_sync_props']
-pub fn runtimedemobaseexception_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'runtime_demo_base_exception_sync_props']
+pub fn runtime_demo_base_exception_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'RuntimeDemoBaseException_handlers']
-pub fn runtimedemobaseexception_handlers() voidptr {
+@[export: 'runtime_demo_base_exception_handlers']
+pub fn runtime_demo_base_exception_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(runtimedemobaseexception_get_prop),
-        write_handler: voidptr(runtimedemobaseexception_set_prop),
-        sync_handler: voidptr(runtimedemobaseexception_sync_props),
-        new_raw: voidptr(runtimedemobaseexception_new_raw),
-        cleanup_raw: voidptr(runtimedemobaseexception_cleanup_raw),
-        free_raw: voidptr(runtimedemobaseexception_free_raw)
+        prop_handler: voidptr(runtime_demo_base_exception_get_prop),
+        write_handler: voidptr(runtime_demo_base_exception_set_prop),
+        sync_handler: voidptr(runtime_demo_base_exception_sync_props),
+        new_raw: voidptr(runtime_demo_base_exception_new_raw),
+        cleanup_raw: voidptr(runtime_demo_base_exception_cleanup_raw),
+        free_raw: voidptr(runtime_demo_base_exception_free_raw)
     )
 }
 pub fn RuntimeDemoBaseException.php_class_entry() vphp.ZendClassEntry {
@@ -1132,92 +1084,86 @@ pub fn RuntimeDemoBaseException.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn RuntimeDemoBaseException.php_object_handlers() voidptr {
-    return runtimedemobaseexception_handlers()
+    return runtime_demo_base_exception_handlers()
 }
 
 pub fn RuntimeDemoBaseException.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
-    mut value := vphp.PhpValue.null()
-    binding := vphp.PhpObjectBinding.new[RuntimeDemoBaseException]()
-    if v_ptr == 0 || !binding.is_valid() {
-        return value.take_zval()
-    }
-    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
-    return value.take_zval()
+    return vphp.bind_object_zval[RuntimeDemoBaseException](v_ptr, ownership)
 }
 
 pub fn (obj &RuntimeDemoBaseException) bind_php_object() vphp.ZVal {
-    return RuntimeDemoBaseException.php_object_zval(obj, .borrowed)
+    return vphp.bind_borrowed_object_zval[RuntimeDemoBaseException](obj)
 }
 
 pub fn (obj &RuntimeDemoBaseException) bind_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+    return vphp.bind_borrowed_object_value[RuntimeDemoBaseException](obj)
 }
 
 pub fn (obj &RuntimeDemoBaseException) bind_owned_php_object() vphp.ZVal {
-    return RuntimeDemoBaseException.php_object_zval(obj, .owned_request)
+    return vphp.bind_owned_object_zval[RuntimeDemoBaseException](obj)
 }
 
 pub fn (obj &RuntimeDemoBaseException) bind_owned_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+    return vphp.bind_owned_object_value[RuntimeDemoBaseException](obj)
 }
 
-@[export: 'RuntimeDemoChildException_new_raw']
-pub fn runtimedemochildexception_new_raw() voidptr {
+@[export: 'runtime_demo_child_exception_new_raw']
+pub fn runtime_demo_child_exception_new_raw() voidptr {
     return vphp.generic_new_raw[RuntimeDemoChildException]()
 }
-@[export: 'RuntimeDemoChildException_free_raw']
-pub fn runtimedemochildexception_free_raw(ptr voidptr) {
+@[export: 'runtime_demo_child_exception_free_raw']
+pub fn runtime_demo_child_exception_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[RuntimeDemoChildException](ptr)
 }
-@[export: 'RuntimeDemoChildException_cleanup_raw']
-pub fn runtimedemochildexception_cleanup_raw(ptr voidptr) {
+@[export: 'runtime_demo_child_exception_cleanup_raw']
+pub fn runtime_demo_child_exception_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-fn runtimedemochildexception_load_from_php(php_obj vphp.ZendObject) RuntimeDemoChildException {
+fn runtime_demo_child_exception_load_from_php(php_obj vphp.ZendObject) RuntimeDemoChildException {
     mut recv := RuntimeDemoChildException{}
     if !php_obj.is_valid() {
         return recv
     }
     return recv
 }
-fn runtimedemochildexception_sync_to_php(php_obj vphp.ZendObject, recv RuntimeDemoChildException) {
+fn runtime_demo_child_exception_sync_to_php(php_obj vphp.ZendObject, recv RuntimeDemoChildException) {
     if !php_obj.is_valid() {
         return
     }
 }
-@[export: 'RuntimeDemoChildException_get_prop']
-pub fn runtimedemochildexception_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'runtime_demo_child_exception_get_prop']
+pub fn runtime_demo_child_exception_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'RuntimeDemoChildException_set_prop']
-pub fn runtimedemochildexception_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'runtime_demo_child_exception_set_prop']
+pub fn runtime_demo_child_exception_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'RuntimeDemoChildException_sync_props']
-pub fn runtimedemochildexception_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'runtime_demo_child_exception_sync_props']
+pub fn runtime_demo_child_exception_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'RuntimeDemoChildException_handlers']
-pub fn runtimedemochildexception_handlers() voidptr {
+@[export: 'runtime_demo_child_exception_handlers']
+pub fn runtime_demo_child_exception_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(runtimedemochildexception_get_prop),
-        write_handler: voidptr(runtimedemochildexception_set_prop),
-        sync_handler: voidptr(runtimedemochildexception_sync_props),
-        new_raw: voidptr(runtimedemochildexception_new_raw),
-        cleanup_raw: voidptr(runtimedemochildexception_cleanup_raw),
-        free_raw: voidptr(runtimedemochildexception_free_raw)
+        prop_handler: voidptr(runtime_demo_child_exception_get_prop),
+        write_handler: voidptr(runtime_demo_child_exception_set_prop),
+        sync_handler: voidptr(runtime_demo_child_exception_sync_props),
+        new_raw: voidptr(runtime_demo_child_exception_new_raw),
+        cleanup_raw: voidptr(runtime_demo_child_exception_cleanup_raw),
+        free_raw: voidptr(runtime_demo_child_exception_free_raw)
     )
 }
 pub fn RuntimeDemoChildException.php_class_entry() vphp.ZendClassEntry {
@@ -1225,54 +1171,48 @@ pub fn RuntimeDemoChildException.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn RuntimeDemoChildException.php_object_handlers() voidptr {
-    return runtimedemochildexception_handlers()
+    return runtime_demo_child_exception_handlers()
 }
 
 pub fn RuntimeDemoChildException.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
-    mut value := vphp.PhpValue.null()
-    binding := vphp.PhpObjectBinding.new[RuntimeDemoChildException]()
-    if v_ptr == 0 || !binding.is_valid() {
-        return value.take_zval()
-    }
-    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
-    return value.take_zval()
+    return vphp.bind_object_zval[RuntimeDemoChildException](v_ptr, ownership)
 }
 
 pub fn (obj &RuntimeDemoChildException) bind_php_object() vphp.ZVal {
-    return RuntimeDemoChildException.php_object_zval(obj, .borrowed)
+    return vphp.bind_borrowed_object_zval[RuntimeDemoChildException](obj)
 }
 
 pub fn (obj &RuntimeDemoChildException) bind_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+    return vphp.bind_borrowed_object_value[RuntimeDemoChildException](obj)
 }
 
 pub fn (obj &RuntimeDemoChildException) bind_owned_php_object() vphp.ZVal {
-    return RuntimeDemoChildException.php_object_zval(obj, .owned_request)
+    return vphp.bind_owned_object_zval[RuntimeDemoChildException](obj)
 }
 
 pub fn (obj &RuntimeDemoChildException) bind_owned_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+    return vphp.bind_owned_object_value[RuntimeDemoChildException](obj)
 }
 
-@[export: 'CallableProcessor_new_raw']
-pub fn callableprocessor_new_raw() voidptr {
+@[export: 'callable_processor_new_raw']
+pub fn callable_processor_new_raw() voidptr {
     return vphp.generic_new_raw[CallableProcessor]()
 }
-@[export: 'CallableProcessor_free_raw']
-pub fn callableprocessor_free_raw(ptr voidptr) {
+@[export: 'callable_processor_free_raw']
+pub fn callable_processor_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[CallableProcessor](ptr)
 }
-@[export: 'CallableProcessor_cleanup_raw']
-pub fn callableprocessor_cleanup_raw(ptr voidptr) {
+@[export: 'callable_processor_cleanup_raw']
+pub fn callable_processor_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'CallableProcessor_get_prop']
-pub fn callableprocessor_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'callable_processor_get_prop']
+pub fn callable_processor_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -1283,8 +1223,8 @@ pub fn callableprocessor_get_prop(ptr voidptr, name_ptr &char, name_len int, rv 
         }
     }
 }
-@[export: 'CallableProcessor_set_prop']
-pub fn callableprocessor_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'callable_processor_set_prop']
+pub fn callable_processor_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -1295,16 +1235,16 @@ pub fn callableprocessor_set_prop(ptr voidptr, name_ptr &char, name_len int, val
         }
     }
 }
-@[export: 'CallableProcessor_sync_props']
-pub fn callableprocessor_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'callable_processor_sync_props']
+pub fn callable_processor_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &CallableProcessor(ptr)
         out.add_property_string('prefix', obj.prefix)
     }
 }
-@[export: 'vphp_wrap_CallableProcessor_construct']
-pub fn vphp_wrap_callableprocessor_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_callable_processor_construct']
+pub fn vphp_wrap_callable_processor_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &CallableProcessor(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1315,8 +1255,8 @@ pub fn vphp_wrap_callableprocessor_construct(ptr voidptr, ctx vphp.Context) void
     recv.construct(arg_0)
     return ptr
 }
-@[export: 'vphp_wrap_CallableProcessor_process']
-pub fn vphp_wrap_callableprocessor_process(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_callable_processor_process']
+pub fn vphp_wrap_callable_processor_process(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &CallableProcessor(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1330,8 +1270,8 @@ pub fn vphp_wrap_callableprocessor_process(ptr voidptr, ctx vphp.Context)  {
     res := recv.process(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_CallableProcessor_transform']
-pub fn vphp_wrap_callableprocessor_transform(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_callable_processor_transform']
+pub fn vphp_wrap_callable_processor_transform(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &CallableProcessor(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1347,8 +1287,8 @@ pub fn vphp_wrap_callableprocessor_transform(ptr voidptr, ctx vphp.Context)  {
     res := recv.transform(arg_0, arg_1)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_CallableProcessor_apply']
-pub fn vphp_wrap_callableprocessor_apply(ctx vphp.Context)  {
+@[export: 'vphp_wrap_callable_processor_apply']
+pub fn vphp_wrap_callable_processor_apply(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -1381,23 +1321,23 @@ fn vphp_wrap_struct_closure_callableprocessor_struct_closure(ctx vphp.Context, c
     ctx.create_saved_closure[VPhpStructClosureCallableProcessorStructClosure](cb, voidptr(vphp_struct_closure_bridge_callableprocessor_struct_closure), 2)
 }
 
-@[export: 'vphp_wrap_CallableProcessor_struct_closure']
-pub fn vphp_wrap_callableprocessor_struct_closure(ctx vphp.Context)  {
+@[export: 'vphp_wrap_callable_processor_struct_closure']
+pub fn vphp_wrap_callable_processor_struct_closure(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := CallableProcessor.struct_closure()
     // Returned value is a struct-param closure: wrap using generated bridge
     vphp_wrap_struct_closure_callableprocessor_struct_closure(ctx, res)
 }
-@[export: 'CallableProcessor_handlers']
-pub fn callableprocessor_handlers() voidptr {
+@[export: 'callable_processor_handlers']
+pub fn callable_processor_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(callableprocessor_get_prop),
-        write_handler: voidptr(callableprocessor_set_prop),
-        sync_handler: voidptr(callableprocessor_sync_props),
-        new_raw: voidptr(callableprocessor_new_raw),
-        cleanup_raw: voidptr(callableprocessor_cleanup_raw),
-        free_raw: voidptr(callableprocessor_free_raw)
+        prop_handler: voidptr(callable_processor_get_prop),
+        write_handler: voidptr(callable_processor_set_prop),
+        sync_handler: voidptr(callable_processor_sync_props),
+        new_raw: voidptr(callable_processor_new_raw),
+        cleanup_raw: voidptr(callable_processor_cleanup_raw),
+        free_raw: voidptr(callable_processor_free_raw)
     )
 }
 pub fn CallableProcessor.php_class_entry() vphp.ZendClassEntry {
@@ -1405,72 +1345,66 @@ pub fn CallableProcessor.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn CallableProcessor.php_object_handlers() voidptr {
-    return callableprocessor_handlers()
+    return callable_processor_handlers()
 }
 
 pub fn CallableProcessor.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
-    mut value := vphp.PhpValue.null()
-    binding := vphp.PhpObjectBinding.new[CallableProcessor]()
-    if v_ptr == 0 || !binding.is_valid() {
-        return value.take_zval()
-    }
-    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
-    return value.take_zval()
+    return vphp.bind_object_zval[CallableProcessor](v_ptr, ownership)
 }
 
 pub fn (obj &CallableProcessor) bind_php_object() vphp.ZVal {
-    return CallableProcessor.php_object_zval(obj, .borrowed)
+    return vphp.bind_borrowed_object_zval[CallableProcessor](obj)
 }
 
 pub fn (obj &CallableProcessor) bind_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+    return vphp.bind_borrowed_object_value[CallableProcessor](obj)
 }
 
 pub fn (obj &CallableProcessor) bind_owned_php_object() vphp.ZVal {
-    return CallableProcessor.php_object_zval(obj, .owned_request)
+    return vphp.bind_owned_object_zval[CallableProcessor](obj)
 }
 
 pub fn (obj &CallableProcessor) bind_owned_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+    return vphp.bind_owned_object_value[CallableProcessor](obj)
 }
 
-@[export: 'Finder_new_raw']
+@[export: 'finder_new_raw']
 pub fn finder_new_raw() voidptr {
     return vphp.generic_new_raw[Finder]()
 }
-@[export: 'Finder_free_raw']
+@[export: 'finder_free_raw']
 pub fn finder_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[Finder](ptr)
 }
-@[export: 'Finder_cleanup_raw']
+@[export: 'finder_cleanup_raw']
 pub fn finder_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'Finder_get_prop']
+@[export: 'finder_get_prop']
 pub fn finder_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'Finder_set_prop']
+@[export: 'finder_set_prop']
 pub fn finder_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'Finder_sync_props']
+@[export: 'finder_sync_props']
 pub fn finder_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_Finder_construct']
+@[export: 'vphp_wrap_finder_construct']
 pub fn vphp_wrap_finder_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &Finder(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
@@ -1479,7 +1413,7 @@ pub fn vphp_wrap_finder_construct(ptr voidptr, ctx vphp.Context) voidptr {
     recv.construct(arg_0)
     return ptr
 }
-@[export: 'vphp_wrap_Finder_find']
+@[export: 'vphp_wrap_finder_find']
 pub fn vphp_wrap_finder_find(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Finder(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
@@ -1492,7 +1426,7 @@ pub fn vphp_wrap_finder_find(ptr voidptr, ctx vphp.Context)  {
         return recv.find(arg_0)
     })
 }
-@[export: 'vphp_wrap_Finder_index_of']
+@[export: 'vphp_wrap_finder_index_of']
 pub fn vphp_wrap_finder_index_of(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Finder(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
@@ -1505,7 +1439,7 @@ pub fn vphp_wrap_finder_index_of(ptr voidptr, ctx vphp.Context)  {
         return recv.index_of(arg_0)
     })
 }
-@[export: 'vphp_wrap_Finder_has_match']
+@[export: 'vphp_wrap_finder_has_match']
 pub fn vphp_wrap_finder_has_match(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Finder(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
@@ -1518,7 +1452,7 @@ pub fn vphp_wrap_finder_has_match(ptr voidptr, ctx vphp.Context)  {
         return recv.has_match(arg_0)
     })
 }
-@[export: 'vphp_wrap_Finder_try_parse_int']
+@[export: 'vphp_wrap_finder_try_parse_int']
 pub fn vphp_wrap_finder_try_parse_int(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1530,7 +1464,7 @@ pub fn vphp_wrap_finder_try_parse_int(ctx vphp.Context)  {
         return Finder.try_parse_int(arg_0)
     })
 }
-@[export: 'Finder_handlers']
+@[export: 'finder_handlers']
 pub fn finder_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
         prop_handler: voidptr(finder_get_prop),
@@ -1550,50 +1484,44 @@ pub fn Finder.php_object_handlers() voidptr {
 }
 
 pub fn Finder.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
-    mut value := vphp.PhpValue.null()
-    binding := vphp.PhpObjectBinding.new[Finder]()
-    if v_ptr == 0 || !binding.is_valid() {
-        return value.take_zval()
-    }
-    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
-    return value.take_zval()
+    return vphp.bind_object_zval[Finder](v_ptr, ownership)
 }
 
 pub fn (obj &Finder) bind_php_object() vphp.ZVal {
-    return Finder.php_object_zval(obj, .borrowed)
+    return vphp.bind_borrowed_object_zval[Finder](obj)
 }
 
 pub fn (obj &Finder) bind_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+    return vphp.bind_borrowed_object_value[Finder](obj)
 }
 
 pub fn (obj &Finder) bind_owned_php_object() vphp.ZVal {
-    return Finder.php_object_zval(obj, .owned_request)
+    return vphp.bind_owned_object_zval[Finder](obj)
 }
 
 pub fn (obj &Finder) bind_owned_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+    return vphp.bind_owned_object_value[Finder](obj)
 }
 
-@[export: 'ReadonlyRecord_new_raw']
-pub fn readonlyrecord_new_raw() voidptr {
+@[export: 'readonly_record_new_raw']
+pub fn readonly_record_new_raw() voidptr {
     return vphp.generic_new_raw[ReadonlyRecord]()
 }
-@[export: 'ReadonlyRecord_free_raw']
-pub fn readonlyrecord_free_raw(ptr voidptr) {
+@[export: 'readonly_record_free_raw']
+pub fn readonly_record_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[ReadonlyRecord](ptr)
 }
-@[export: 'ReadonlyRecord_cleanup_raw']
-pub fn readonlyrecord_cleanup_raw(ptr voidptr) {
+@[export: 'readonly_record_cleanup_raw']
+pub fn readonly_record_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'ReadonlyRecord_get_prop']
-pub fn readonlyrecord_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'readonly_record_get_prop']
+pub fn readonly_record_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -1608,8 +1536,8 @@ pub fn readonlyrecord_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.
         }
     }
 }
-@[export: 'ReadonlyRecord_set_prop']
-pub fn readonlyrecord_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'readonly_record_set_prop']
+pub fn readonly_record_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -1620,8 +1548,8 @@ pub fn readonlyrecord_set_prop(ptr voidptr, name_ptr &char, name_len int, value 
         }
     }
 }
-@[export: 'ReadonlyRecord_sync_props']
-pub fn readonlyrecord_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'readonly_record_sync_props']
+pub fn readonly_record_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &ReadonlyRecord(ptr)
@@ -1629,8 +1557,8 @@ pub fn readonlyrecord_sync_props(ptr voidptr, zv &C.zval) {
         out.add_property_string('title', obj.title)
     }
 }
-@[export: 'vphp_wrap_ReadonlyRecord_construct']
-pub fn vphp_wrap_readonlyrecord_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_readonly_record_construct']
+pub fn vphp_wrap_readonly_record_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &ReadonlyRecord(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1641,23 +1569,23 @@ pub fn vphp_wrap_readonlyrecord_construct(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.construct(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_ReadonlyRecord_reveal']
-pub fn vphp_wrap_readonlyrecord_reveal(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_readonly_record_reveal']
+pub fn vphp_wrap_readonly_record_reveal(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &ReadonlyRecord(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.reveal()
     ctx.return().v[string](res)
 }
-@[export: 'ReadonlyRecord_handlers']
-pub fn readonlyrecord_handlers() voidptr {
+@[export: 'readonly_record_handlers']
+pub fn readonly_record_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(readonlyrecord_get_prop),
-        write_handler: voidptr(readonlyrecord_set_prop),
-        sync_handler: voidptr(readonlyrecord_sync_props),
-        new_raw: voidptr(readonlyrecord_new_raw),
-        cleanup_raw: voidptr(readonlyrecord_cleanup_raw),
-        free_raw: voidptr(readonlyrecord_free_raw)
+        prop_handler: voidptr(readonly_record_get_prop),
+        write_handler: voidptr(readonly_record_set_prop),
+        sync_handler: voidptr(readonly_record_sync_props),
+        new_raw: voidptr(readonly_record_new_raw),
+        cleanup_raw: voidptr(readonly_record_cleanup_raw),
+        free_raw: voidptr(readonly_record_free_raw)
     )
 }
 pub fn ReadonlyRecord.php_class_entry() vphp.ZendClassEntry {
@@ -1665,54 +1593,48 @@ pub fn ReadonlyRecord.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn ReadonlyRecord.php_object_handlers() voidptr {
-    return readonlyrecord_handlers()
+    return readonly_record_handlers()
 }
 
 pub fn ReadonlyRecord.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
-    mut value := vphp.PhpValue.null()
-    binding := vphp.PhpObjectBinding.new[ReadonlyRecord]()
-    if v_ptr == 0 || !binding.is_valid() {
-        return value.take_zval()
-    }
-    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
-    return value.take_zval()
+    return vphp.bind_object_zval[ReadonlyRecord](v_ptr, ownership)
 }
 
 pub fn (obj &ReadonlyRecord) bind_php_object() vphp.ZVal {
-    return ReadonlyRecord.php_object_zval(obj, .borrowed)
+    return vphp.bind_borrowed_object_zval[ReadonlyRecord](obj)
 }
 
 pub fn (obj &ReadonlyRecord) bind_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+    return vphp.bind_borrowed_object_value[ReadonlyRecord](obj)
 }
 
 pub fn (obj &ReadonlyRecord) bind_owned_php_object() vphp.ZVal {
-    return ReadonlyRecord.php_object_zval(obj, .owned_request)
+    return vphp.bind_owned_object_zval[ReadonlyRecord](obj)
 }
 
 pub fn (obj &ReadonlyRecord) bind_owned_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+    return vphp.bind_owned_object_value[ReadonlyRecord](obj)
 }
 
-@[export: 'TraitPost_new_raw']
-pub fn traitpost_new_raw() voidptr {
+@[export: 'trait_post_new_raw']
+pub fn trait_post_new_raw() voidptr {
     return vphp.generic_new_raw[TraitPost]()
 }
-@[export: 'TraitPost_free_raw']
-pub fn traitpost_free_raw(ptr voidptr) {
+@[export: 'trait_post_free_raw']
+pub fn trait_post_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[TraitPost](ptr)
 }
-@[export: 'TraitPost_cleanup_raw']
-pub fn traitpost_cleanup_raw(ptr voidptr) {
+@[export: 'trait_post_cleanup_raw']
+pub fn trait_post_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'TraitPost_get_prop']
-pub fn traitpost_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'trait_post_get_prop']
+pub fn trait_post_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -1731,8 +1653,8 @@ pub fn traitpost_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval)
         }
     }
 }
-@[export: 'TraitPost_set_prop']
-pub fn traitpost_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'trait_post_set_prop']
+pub fn trait_post_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -1751,8 +1673,8 @@ pub fn traitpost_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zv
         }
     }
 }
-@[export: 'TraitPost_sync_props']
-pub fn traitpost_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'trait_post_sync_props']
+pub fn trait_post_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &TraitPost(ptr)
@@ -1761,8 +1683,8 @@ pub fn traitpost_sync_props(ptr voidptr, zv &C.zval) {
         out.add_property_long('visits', i64(obj.visits))
     }
 }
-@[export: 'vphp_wrap_TraitPost_construct']
-pub fn vphp_wrap_traitpost_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_trait_post_construct']
+pub fn vphp_wrap_trait_post_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &TraitPost(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1773,47 +1695,47 @@ pub fn vphp_wrap_traitpost_construct(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.construct(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_TraitPost_summary']
-pub fn vphp_wrap_traitpost_summary(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_trait_post_summary']
+pub fn vphp_wrap_trait_post_summary(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &TraitPost(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.summary()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_TraitPost_bump']
-pub fn vphp_wrap_traitpost_bump(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_trait_post_bump']
+pub fn vphp_wrap_trait_post_bump(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &TraitPost(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.bump()
     ctx.return().v[int](res)
 }
-@[export: 'vphp_wrap_TraitPost_trait_only']
-pub fn vphp_wrap_traitpost_trait_only(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_trait_post_trait_only']
+pub fn vphp_wrap_trait_post_trait_only(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &TraitPost(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.trait_only()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_TraitPost_internal_trait']
-pub fn vphp_wrap_traitpost_internal_trait(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_trait_post_internal_trait']
+pub fn vphp_wrap_trait_post_internal_trait(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &TraitPost(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.internal_trait()
     ctx.return().v[string](res)
 }
-@[export: 'TraitPost_handlers']
-pub fn traitpost_handlers() voidptr {
+@[export: 'trait_post_handlers']
+pub fn trait_post_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(traitpost_get_prop),
-        write_handler: voidptr(traitpost_set_prop),
-        sync_handler: voidptr(traitpost_sync_props),
-        new_raw: voidptr(traitpost_new_raw),
-        cleanup_raw: voidptr(traitpost_cleanup_raw),
-        free_raw: voidptr(traitpost_free_raw)
+        prop_handler: voidptr(trait_post_get_prop),
+        write_handler: voidptr(trait_post_set_prop),
+        sync_handler: voidptr(trait_post_sync_props),
+        new_raw: voidptr(trait_post_new_raw),
+        cleanup_raw: voidptr(trait_post_cleanup_raw),
+        free_raw: voidptr(trait_post_free_raw)
     )
 }
 pub fn TraitPost.php_class_entry() vphp.ZendClassEntry {
@@ -1821,53 +1743,47 @@ pub fn TraitPost.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn TraitPost.php_object_handlers() voidptr {
-    return traitpost_handlers()
+    return trait_post_handlers()
 }
 
 pub fn TraitPost.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
-    mut value := vphp.PhpValue.null()
-    binding := vphp.PhpObjectBinding.new[TraitPost]()
-    if v_ptr == 0 || !binding.is_valid() {
-        return value.take_zval()
-    }
-    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
-    return value.take_zval()
+    return vphp.bind_object_zval[TraitPost](v_ptr, ownership)
 }
 
 pub fn (obj &TraitPost) bind_php_object() vphp.ZVal {
-    return TraitPost.php_object_zval(obj, .borrowed)
+    return vphp.bind_borrowed_object_zval[TraitPost](obj)
 }
 
 pub fn (obj &TraitPost) bind_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+    return vphp.bind_borrowed_object_value[TraitPost](obj)
 }
 
 pub fn (obj &TraitPost) bind_owned_php_object() vphp.ZVal {
-    return TraitPost.php_object_zval(obj, .owned_request)
+    return vphp.bind_owned_object_zval[TraitPost](obj)
 }
 
 pub fn (obj &TraitPost) bind_owned_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+    return vphp.bind_owned_object_value[TraitPost](obj)
 }
 
-@[export: 'Validator_new_raw']
+@[export: 'validator_new_raw']
 pub fn validator_new_raw() voidptr {
     return vphp.generic_new_raw[Validator]()
 }
-@[export: 'Validator_free_raw']
+@[export: 'validator_free_raw']
 pub fn validator_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[Validator](ptr)
 }
-@[export: 'Validator_cleanup_raw']
+@[export: 'validator_cleanup_raw']
 pub fn validator_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'Validator_get_prop']
+@[export: 'validator_get_prop']
 pub fn validator_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
@@ -1879,7 +1795,7 @@ pub fn validator_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval)
         }
     }
 }
-@[export: 'Validator_set_prop']
+@[export: 'validator_set_prop']
 pub fn validator_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
@@ -1891,7 +1807,7 @@ pub fn validator_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zv
         }
     }
 }
-@[export: 'Validator_sync_props']
+@[export: 'validator_sync_props']
 pub fn validator_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
@@ -1899,7 +1815,7 @@ pub fn validator_sync_props(ptr voidptr, zv &C.zval) {
         out.add_property_bool('strict', obj.strict)
     }
 }
-@[export: 'vphp_wrap_Validator_construct']
+@[export: 'vphp_wrap_validator_construct']
 pub fn vphp_wrap_validator_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &Validator(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
@@ -1911,7 +1827,7 @@ pub fn vphp_wrap_validator_construct(ptr voidptr, ctx vphp.Context) voidptr {
     recv.construct(arg_0)
     return ptr
 }
-@[export: 'vphp_wrap_Validator_check']
+@[export: 'vphp_wrap_validator_check']
 pub fn vphp_wrap_validator_check(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Validator(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
@@ -1924,7 +1840,7 @@ pub fn vphp_wrap_validator_check(ptr voidptr, ctx vphp.Context)  {
         return recv.check(arg_0)!
     })
 }
-@[export: 'vphp_wrap_Validator_sanitize']
+@[export: 'vphp_wrap_validator_sanitize']
 pub fn vphp_wrap_validator_sanitize(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Validator(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
@@ -1937,7 +1853,7 @@ pub fn vphp_wrap_validator_sanitize(ptr voidptr, ctx vphp.Context)  {
         return recv.sanitize(arg_0)!
     })
 }
-@[export: 'vphp_wrap_Validator_assert_valid']
+@[export: 'vphp_wrap_validator_assert_valid']
 pub fn vphp_wrap_validator_assert_valid(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Validator(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
@@ -1950,7 +1866,7 @@ pub fn vphp_wrap_validator_assert_valid(ptr voidptr, ctx vphp.Context)  {
         recv.assert_valid(arg_0)!
     })
 }
-@[export: 'vphp_wrap_Validator_parse_int']
+@[export: 'vphp_wrap_validator_parse_int']
 pub fn vphp_wrap_validator_parse_int(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1962,7 +1878,7 @@ pub fn vphp_wrap_validator_parse_int(ctx vphp.Context)  {
         return Validator.parse_int(arg_0)!
     })
 }
-@[export: 'Validator_handlers']
+@[export: 'validator_handlers']
 pub fn validator_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
         prop_handler: voidptr(validator_get_prop),
@@ -1982,50 +1898,44 @@ pub fn Validator.php_object_handlers() voidptr {
 }
 
 pub fn Validator.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
-    mut value := vphp.PhpValue.null()
-    binding := vphp.PhpObjectBinding.new[Validator]()
-    if v_ptr == 0 || !binding.is_valid() {
-        return value.take_zval()
-    }
-    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
-    return value.take_zval()
+    return vphp.bind_object_zval[Validator](v_ptr, ownership)
 }
 
 pub fn (obj &Validator) bind_php_object() vphp.ZVal {
-    return Validator.php_object_zval(obj, .borrowed)
+    return vphp.bind_borrowed_object_zval[Validator](obj)
 }
 
 pub fn (obj &Validator) bind_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+    return vphp.bind_borrowed_object_value[Validator](obj)
 }
 
 pub fn (obj &Validator) bind_owned_php_object() vphp.ZVal {
-    return Validator.php_object_zval(obj, .owned_request)
+    return vphp.bind_owned_object_zval[Validator](obj)
 }
 
 pub fn (obj &Validator) bind_owned_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+    return vphp.bind_owned_object_value[Validator](obj)
 }
 
-@[export: 'DispatchableSample_new_raw']
-pub fn dispatchablesample_new_raw() voidptr {
+@[export: 'dispatchable_sample_new_raw']
+pub fn dispatchable_sample_new_raw() voidptr {
     return vphp.generic_new_raw[DispatchableSample]()
 }
-@[export: 'DispatchableSample_free_raw']
-pub fn dispatchablesample_free_raw(ptr voidptr) {
+@[export: 'dispatchable_sample_free_raw']
+pub fn dispatchable_sample_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[DispatchableSample](ptr)
 }
-@[export: 'DispatchableSample_cleanup_raw']
-pub fn dispatchablesample_cleanup_raw(ptr voidptr) {
+@[export: 'dispatchable_sample_cleanup_raw']
+pub fn dispatchable_sample_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'DispatchableSample_get_prop']
-pub fn dispatchablesample_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'dispatchable_sample_get_prop']
+pub fn dispatchable_sample_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -2036,8 +1946,8 @@ pub fn dispatchablesample_get_prop(ptr voidptr, name_ptr &char, name_len int, rv
         }
     }
 }
-@[export: 'DispatchableSample_set_prop']
-pub fn dispatchablesample_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'dispatchable_sample_set_prop']
+pub fn dispatchable_sample_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -2048,16 +1958,16 @@ pub fn dispatchablesample_set_prop(ptr voidptr, name_ptr &char, name_len int, va
         }
     }
 }
-@[export: 'DispatchableSample_sync_props']
-pub fn dispatchablesample_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'dispatchable_sample_sync_props']
+pub fn dispatchable_sample_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &DispatchableSample(ptr)
         out.add_property_string('name', obj.name)
     }
 }
-@[export: 'vphp_wrap_DispatchableSample_construct']
-pub fn vphp_wrap_dispatchablesample_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_dispatchable_sample_construct']
+pub fn vphp_wrap_dispatchable_sample_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &DispatchableSample(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2068,8 +1978,8 @@ pub fn vphp_wrap_dispatchablesample_construct(ptr voidptr, ctx vphp.Context) voi
     res := recv.construct(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_DispatchableSample_tagged']
-pub fn vphp_wrap_dispatchablesample_tagged(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_dispatchable_sample_tagged']
+pub fn vphp_wrap_dispatchable_sample_tagged(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &DispatchableSample(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2080,15 +1990,15 @@ pub fn vphp_wrap_dispatchablesample_tagged(ptr voidptr, ctx vphp.Context)  {
     res := recv.tagged(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'DispatchableSample_handlers']
-pub fn dispatchablesample_handlers() voidptr {
+@[export: 'dispatchable_sample_handlers']
+pub fn dispatchable_sample_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(dispatchablesample_get_prop),
-        write_handler: voidptr(dispatchablesample_set_prop),
-        sync_handler: voidptr(dispatchablesample_sync_props),
-        new_raw: voidptr(dispatchablesample_new_raw),
-        cleanup_raw: voidptr(dispatchablesample_cleanup_raw),
-        free_raw: voidptr(dispatchablesample_free_raw)
+        prop_handler: voidptr(dispatchable_sample_get_prop),
+        write_handler: voidptr(dispatchable_sample_set_prop),
+        sync_handler: voidptr(dispatchable_sample_sync_props),
+        new_raw: voidptr(dispatchable_sample_new_raw),
+        cleanup_raw: voidptr(dispatchable_sample_cleanup_raw),
+        free_raw: voidptr(dispatchable_sample_free_raw)
     )
 }
 pub fn DispatchableSample.php_class_entry() vphp.ZendClassEntry {
@@ -2096,101 +2006,95 @@ pub fn DispatchableSample.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn DispatchableSample.php_object_handlers() voidptr {
-    return dispatchablesample_handlers()
+    return dispatchable_sample_handlers()
 }
 
 pub fn DispatchableSample.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
-    mut value := vphp.PhpValue.null()
-    binding := vphp.PhpObjectBinding.new[DispatchableSample]()
-    if v_ptr == 0 || !binding.is_valid() {
-        return value.take_zval()
-    }
-    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
-    return value.take_zval()
+    return vphp.bind_object_zval[DispatchableSample](v_ptr, ownership)
 }
 
 pub fn (obj &DispatchableSample) bind_php_object() vphp.ZVal {
-    return DispatchableSample.php_object_zval(obj, .borrowed)
+    return vphp.bind_borrowed_object_zval[DispatchableSample](obj)
 }
 
 pub fn (obj &DispatchableSample) bind_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+    return vphp.bind_borrowed_object_value[DispatchableSample](obj)
 }
 
 pub fn (obj &DispatchableSample) bind_owned_php_object() vphp.ZVal {
-    return DispatchableSample.php_object_zval(obj, .owned_request)
+    return vphp.bind_owned_object_zval[DispatchableSample](obj)
 }
 
 pub fn (obj &DispatchableSample) bind_owned_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+    return vphp.bind_owned_object_value[DispatchableSample](obj)
 }
 
-@[export: 'VPhpTask_new_raw']
-pub fn vphptask_new_raw() voidptr {
+@[export: 'v_php_task_new_raw']
+pub fn v_php_task_new_raw() voidptr {
     return vphp.generic_new_raw[VPhpTask]()
 }
-@[export: 'VPhpTask_free_raw']
-pub fn vphptask_free_raw(ptr voidptr) {
+@[export: 'v_php_task_free_raw']
+pub fn v_php_task_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VPhpTask](ptr)
 }
-@[export: 'VPhpTask_cleanup_raw']
-pub fn vphptask_cleanup_raw(ptr voidptr) {
+@[export: 'v_php_task_cleanup_raw']
+pub fn v_php_task_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VPhpTask_get_prop']
-pub fn vphptask_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'v_php_task_get_prop']
+pub fn v_php_task_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VPhpTask_set_prop']
-pub fn vphptask_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'v_php_task_set_prop']
+pub fn v_php_task_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VPhpTask_sync_props']
-pub fn vphptask_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'v_php_task_sync_props']
+pub fn v_php_task_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VPhpTask_spawn']
-pub fn vphp_wrap_vphptask_spawn(ctx vphp.Context)  {
+@[export: 'vphp_wrap_v_php_task_spawn']
+pub fn vphp_wrap_v_php_task_spawn(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     arg_0 := ctx
     VPhpTask.@spawn(arg_0)
 }
-@[export: 'vphp_wrap_VPhpTask_wait']
-pub fn vphp_wrap_vphptask_wait(ctx vphp.Context)  {
+@[export: 'vphp_wrap_v_php_task_wait']
+pub fn vphp_wrap_v_php_task_wait(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     arg_0 := ctx
     VPhpTask.wait(arg_0)
 }
-@[export: 'vphp_wrap_VPhpTask_list']
-pub fn vphp_wrap_vphptask_list(ctx vphp.Context)  {
+@[export: 'vphp_wrap_v_php_task_list']
+pub fn vphp_wrap_v_php_task_list(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     arg_0 := ctx
     VPhpTask.list(arg_0)
 }
-@[export: 'VPhpTask_handlers']
-pub fn vphptask_handlers() voidptr {
+@[export: 'v_php_task_handlers']
+pub fn v_php_task_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vphptask_get_prop),
-        write_handler: voidptr(vphptask_set_prop),
-        sync_handler: voidptr(vphptask_sync_props),
-        new_raw: voidptr(vphptask_new_raw),
-        cleanup_raw: voidptr(vphptask_cleanup_raw),
-        free_raw: voidptr(vphptask_free_raw)
+        prop_handler: voidptr(v_php_task_get_prop),
+        write_handler: voidptr(v_php_task_set_prop),
+        sync_handler: voidptr(v_php_task_sync_props),
+        new_raw: voidptr(v_php_task_new_raw),
+        cleanup_raw: voidptr(v_php_task_cleanup_raw),
+        free_raw: voidptr(v_php_task_free_raw)
     )
 }
 pub fn VPhpTask.php_class_entry() vphp.ZendClassEntry {
@@ -2198,54 +2102,48 @@ pub fn VPhpTask.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VPhpTask.php_object_handlers() voidptr {
-    return vphptask_handlers()
+    return v_php_task_handlers()
 }
 
 pub fn VPhpTask.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
-    mut value := vphp.PhpValue.null()
-    binding := vphp.PhpObjectBinding.new[VPhpTask]()
-    if v_ptr == 0 || !binding.is_valid() {
-        return value.take_zval()
-    }
-    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
-    return value.take_zval()
+    return vphp.bind_object_zval[VPhpTask](v_ptr, ownership)
 }
 
 pub fn (obj &VPhpTask) bind_php_object() vphp.ZVal {
-    return VPhpTask.php_object_zval(obj, .borrowed)
+    return vphp.bind_borrowed_object_zval[VPhpTask](obj)
 }
 
 pub fn (obj &VPhpTask) bind_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+    return vphp.bind_borrowed_object_value[VPhpTask](obj)
 }
 
 pub fn (obj &VPhpTask) bind_owned_php_object() vphp.ZVal {
-    return VPhpTask.php_object_zval(obj, .owned_request)
+    return vphp.bind_owned_object_zval[VPhpTask](obj)
 }
 
 pub fn (obj &VPhpTask) bind_owned_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+    return vphp.bind_owned_object_value[VPhpTask](obj)
 }
 
-@[export: 'StringableBox_new_raw']
-pub fn stringablebox_new_raw() voidptr {
+@[export: 'stringable_box_new_raw']
+pub fn stringable_box_new_raw() voidptr {
     return vphp.generic_new_raw[StringableBox]()
 }
-@[export: 'StringableBox_free_raw']
-pub fn stringablebox_free_raw(ptr voidptr) {
+@[export: 'stringable_box_free_raw']
+pub fn stringable_box_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[StringableBox](ptr)
 }
-@[export: 'StringableBox_cleanup_raw']
-pub fn stringablebox_cleanup_raw(ptr voidptr) {
+@[export: 'stringable_box_cleanup_raw']
+pub fn stringable_box_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'StringableBox_get_prop']
-pub fn stringablebox_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'stringable_box_get_prop']
+pub fn stringable_box_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -2256,8 +2154,8 @@ pub fn stringablebox_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.z
         }
     }
 }
-@[export: 'StringableBox_set_prop']
-pub fn stringablebox_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'stringable_box_set_prop']
+pub fn stringable_box_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -2268,16 +2166,16 @@ pub fn stringablebox_set_prop(ptr voidptr, name_ptr &char, name_len int, value &
         }
     }
 }
-@[export: 'StringableBox_sync_props']
-pub fn stringablebox_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'stringable_box_sync_props']
+pub fn stringable_box_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &StringableBox(ptr)
         out.add_property_string('name', obj.name)
     }
 }
-@[export: 'vphp_wrap_StringableBox_construct']
-pub fn vphp_wrap_stringablebox_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_stringable_box_construct']
+pub fn vphp_wrap_stringable_box_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &StringableBox(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2288,23 +2186,23 @@ pub fn vphp_wrap_stringablebox_construct(ptr voidptr, ctx vphp.Context) voidptr 
     res := recv.construct(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_StringableBox_str']
-pub fn vphp_wrap_stringablebox_str(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_stringable_box_str']
+pub fn vphp_wrap_stringable_box_str(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &StringableBox(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.str()
     ctx.return().v[string](res)
 }
-@[export: 'StringableBox_handlers']
-pub fn stringablebox_handlers() voidptr {
+@[export: 'stringable_box_handlers']
+pub fn stringable_box_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(stringablebox_get_prop),
-        write_handler: voidptr(stringablebox_set_prop),
-        sync_handler: voidptr(stringablebox_sync_props),
-        new_raw: voidptr(stringablebox_new_raw),
-        cleanup_raw: voidptr(stringablebox_cleanup_raw),
-        free_raw: voidptr(stringablebox_free_raw)
+        prop_handler: voidptr(stringable_box_get_prop),
+        write_handler: voidptr(stringable_box_set_prop),
+        sync_handler: voidptr(stringable_box_sync_props),
+        new_raw: voidptr(stringable_box_new_raw),
+        cleanup_raw: voidptr(stringable_box_cleanup_raw),
+        free_raw: voidptr(stringable_box_free_raw)
     )
 }
 pub fn StringableBox.php_class_entry() vphp.ZendClassEntry {
@@ -2312,33 +2210,27 @@ pub fn StringableBox.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn StringableBox.php_object_handlers() voidptr {
-    return stringablebox_handlers()
+    return stringable_box_handlers()
 }
 
 pub fn StringableBox.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
-    mut value := vphp.PhpValue.null()
-    binding := vphp.PhpObjectBinding.new[StringableBox]()
-    if v_ptr == 0 || !binding.is_valid() {
-        return value.take_zval()
-    }
-    vphp.PhpReturn.from_zval(value.to_zval()).bound_object(v_ptr, binding.class_entry, binding.handlers, ownership)
-    return value.take_zval()
+    return vphp.bind_object_zval[StringableBox](v_ptr, ownership)
 }
 
 pub fn (obj &StringableBox) bind_php_object() vphp.ZVal {
-    return StringableBox.php_object_zval(obj, .borrowed)
+    return vphp.bind_borrowed_object_zval[StringableBox](obj)
 }
 
 pub fn (obj &StringableBox) bind_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_php_object())
+    return vphp.bind_borrowed_object_value[StringableBox](obj)
 }
 
 pub fn (obj &StringableBox) bind_owned_php_object() vphp.ZVal {
-    return StringableBox.php_object_zval(obj, .owned_request)
+    return vphp.bind_owned_object_zval[StringableBox](obj)
 }
 
 pub fn (obj &StringableBox) bind_owned_php_object_value() vphp.PhpValue {
-    return vphp.PhpValue.adopt_zval(obj.bind_owned_php_object())
+    return vphp.bind_owned_object_value[StringableBox](obj)
 }
 
 @[export: 'vphp_wrap_v_add']
