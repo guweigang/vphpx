@@ -6,19 +6,19 @@ import vphp
 
 __global C.vslim__mcp__app_ce &C.zend_class_entry
 
-@[export: 'VSlimMcpApp_new_raw']
-pub fn vslimmcpapp_new_raw() voidptr {
+@[export: 'vslim_mcp_app_new_raw']
+pub fn vslim_mcp_app_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimMcpApp]()
 }
-@[export: 'VSlimMcpApp_free_raw']
-pub fn vslimmcpapp_free_raw(ptr voidptr) {
+@[export: 'vslim_mcp_app_free_raw']
+pub fn vslim_mcp_app_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimMcpApp](ptr)
 }
-@[export: 'VSlimMcpApp_cleanup_raw']
-pub fn vslimmcpapp_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_mcp_app_cleanup_raw']
+pub fn vslim_mcp_app_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
@@ -27,27 +27,27 @@ pub fn vslimmcpapp_cleanup_raw(ptr voidptr) {
         obj.cleanup()
     }
 }
-@[export: 'VSlimMcpApp_get_prop']
-pub fn vslimmcpapp_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_mcp_app_get_prop']
+pub fn vslim_mcp_app_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimMcpApp_set_prop']
-pub fn vslimmcpapp_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_mcp_app_set_prop']
+pub fn vslim_mcp_app_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimMcpApp_sync_props']
-pub fn vslimmcpapp_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_mcp_app_sync_props']
+pub fn vslim_mcp_app_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimMcpApp_construct']
-pub fn vphp_wrap_vslimmcpapp_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_mcp_app_construct']
+pub fn vphp_wrap_vslim_mcp_app_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimMcpApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -60,8 +60,8 @@ pub fn vphp_wrap_vslimmcpapp_construct(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.construct(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_server_info']
-pub fn vphp_wrap_vslimmcpapp_server_info(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_mcp_app_server_info']
+pub fn vphp_wrap_vslim_mcp_app_server_info(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimMcpApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -75,8 +75,8 @@ pub fn vphp_wrap_vslimmcpapp_server_info(ptr voidptr, ctx vphp.Context) voidptr 
     res := recv.server_info(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_capability']
-pub fn vphp_wrap_vslimmcpapp_capability(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_mcp_app_capability']
+pub fn vphp_wrap_vslim_mcp_app_capability(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimMcpApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -92,8 +92,8 @@ pub fn vphp_wrap_vslimmcpapp_capability(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.capability(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_capabilities']
-pub fn vphp_wrap_vslimmcpapp_capabilities(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_mcp_app_capabilities']
+pub fn vphp_wrap_vslim_mcp_app_capabilities(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimMcpApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -107,8 +107,8 @@ pub fn vphp_wrap_vslimmcpapp_capabilities(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.capabilities(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_register']
-pub fn vphp_wrap_vslimmcpapp_register(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_mcp_app_register']
+pub fn vphp_wrap_vslim_mcp_app_register(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimMcpApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -124,8 +124,8 @@ pub fn vphp_wrap_vslimmcpapp_register(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.register(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_tool']
-pub fn vphp_wrap_vslimmcpapp_tool(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_mcp_app_tool']
+pub fn vphp_wrap_vslim_mcp_app_tool(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimMcpApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -148,8 +148,8 @@ pub fn vphp_wrap_vslimmcpapp_tool(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.tool(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_resource']
-pub fn vphp_wrap_vslimmcpapp_resource(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_mcp_app_resource']
+pub fn vphp_wrap_vslim_mcp_app_resource(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimMcpApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -171,8 +171,8 @@ pub fn vphp_wrap_vslimmcpapp_resource(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.resource(arg_0, arg_1, arg_2, arg_3, arg_4)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_prompt']
-pub fn vphp_wrap_vslimmcpapp_prompt(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_mcp_app_prompt']
+pub fn vphp_wrap_vslim_mcp_app_prompt(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimMcpApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -195,8 +195,8 @@ pub fn vphp_wrap_vslimmcpapp_prompt(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.prompt(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_notification']
-pub fn vphp_wrap_vslimmcpapp_notification(ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_mcp_app_notification']
+pub fn vphp_wrap_vslim_mcp_app_notification(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -211,8 +211,8 @@ pub fn vphp_wrap_vslimmcpapp_notification(ctx vphp.Context)  {
     res := VSlimMcpApp.notification(arg_0, arg_1)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_request']
-pub fn vphp_wrap_vslimmcpapp_request(ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_mcp_app_request']
+pub fn vphp_wrap_vslim_mcp_app_request(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -229,8 +229,8 @@ pub fn vphp_wrap_vslimmcpapp_request(ctx vphp.Context)  {
     res := VSlimMcpApp.request(arg_0, arg_1, arg_2)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_sampling_request']
-pub fn vphp_wrap_vslimmcpapp_sampling_request(ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_mcp_app_sampling_request']
+pub fn vphp_wrap_vslim_mcp_app_sampling_request(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -257,8 +257,8 @@ pub fn vphp_wrap_vslimmcpapp_sampling_request(ctx vphp.Context)  {
     res := VSlimMcpApp.sampling_request(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6, arg_7)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_queued_result']
-pub fn vphp_wrap_vslimmcpapp_queued_result(ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_mcp_app_queued_result']
+pub fn vphp_wrap_vslim_mcp_app_queued_result(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -286,8 +286,8 @@ pub fn vphp_wrap_vslimmcpapp_queued_result(ctx vphp.Context)  {
     res := VSlimMcpApp.queued_result(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6)
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_queue_messages']
-pub fn vphp_wrap_vslimmcpapp_queue_messages(ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_mcp_app_queue_messages']
+pub fn vphp_wrap_vslim_mcp_app_queue_messages(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -315,8 +315,8 @@ pub fn vphp_wrap_vslimmcpapp_queue_messages(ctx vphp.Context)  {
     res := VSlimMcpApp.queue_messages(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6)
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_notify']
-pub fn vphp_wrap_vslimmcpapp_notify(ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_mcp_app_notify']
+pub fn vphp_wrap_vslim_mcp_app_notify(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -343,8 +343,8 @@ pub fn vphp_wrap_vslimmcpapp_notify(ctx vphp.Context)  {
     res := VSlimMcpApp.notify(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6, arg_7)
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_queue_notification']
-pub fn vphp_wrap_vslimmcpapp_queue_notification(ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_mcp_app_queue_notification']
+pub fn vphp_wrap_vslim_mcp_app_queue_notification(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -365,8 +365,8 @@ pub fn vphp_wrap_vslimmcpapp_queue_notification(ctx vphp.Context)  {
     res := VSlimMcpApp.queue_notification(arg_0, arg_1, arg_2, arg_3, arg_4)
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_queue_request']
-pub fn vphp_wrap_vslimmcpapp_queue_request(ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_mcp_app_queue_request']
+pub fn vphp_wrap_vslim_mcp_app_queue_request(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -389,8 +389,8 @@ pub fn vphp_wrap_vslimmcpapp_queue_request(ctx vphp.Context)  {
     res := VSlimMcpApp.queue_request(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5)
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_queue_progress']
-pub fn vphp_wrap_vslimmcpapp_queue_progress(ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_mcp_app_queue_progress']
+pub fn vphp_wrap_vslim_mcp_app_queue_progress(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -412,8 +412,8 @@ pub fn vphp_wrap_vslimmcpapp_queue_progress(ctx vphp.Context)  {
     res := VSlimMcpApp.queue_progress(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6)
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_queue_log']
-pub fn vphp_wrap_vslimmcpapp_queue_log(ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_mcp_app_queue_log']
+pub fn vphp_wrap_vslim_mcp_app_queue_log(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -435,8 +435,8 @@ pub fn vphp_wrap_vslimmcpapp_queue_log(ctx vphp.Context)  {
     res := VSlimMcpApp.queue_log(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6)
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_queue_sampling']
-pub fn vphp_wrap_vslimmcpapp_queue_sampling(ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_mcp_app_queue_sampling']
+pub fn vphp_wrap_vslim_mcp_app_queue_sampling(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -463,8 +463,8 @@ pub fn vphp_wrap_vslimmcpapp_queue_sampling(ctx vphp.Context)  {
     res := VSlimMcpApp.queue_sampling(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6, arg_7)
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_client_capabilities']
-pub fn vphp_wrap_vslimmcpapp_client_capabilities(ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_mcp_app_client_capabilities']
+pub fn vphp_wrap_vslim_mcp_app_client_capabilities(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -477,8 +477,8 @@ pub fn vphp_wrap_vslimmcpapp_client_capabilities(ctx vphp.Context)  {
     res := VSlimMcpApp.client_capabilities(arg_0)
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_client_supports']
-pub fn vphp_wrap_vslimmcpapp_client_supports(ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_mcp_app_client_supports']
+pub fn vphp_wrap_vslim_mcp_app_client_supports(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -493,8 +493,8 @@ pub fn vphp_wrap_vslimmcpapp_client_supports(ctx vphp.Context)  {
     res := VSlimMcpApp.client_supports(arg_0, arg_1)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_capability_error']
-pub fn vphp_wrap_vslimmcpapp_capability_error(ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_mcp_app_capability_error']
+pub fn vphp_wrap_vslim_mcp_app_capability_error(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -511,8 +511,8 @@ pub fn vphp_wrap_vslimmcpapp_capability_error(ctx vphp.Context)  {
     res := VSlimMcpApp.capability_error(arg_0, arg_1, arg_2)
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_require_capability']
-pub fn vphp_wrap_vslimmcpapp_require_capability(ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_mcp_app_require_capability']
+pub fn vphp_wrap_vslim_mcp_app_require_capability(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -531,8 +531,8 @@ pub fn vphp_wrap_vslimmcpapp_require_capability(ctx vphp.Context)  {
     res := VSlimMcpApp.require_capability(arg_0, arg_1, arg_2, arg_3)
     ctx.return().v[vphp.PhpValue](res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_handle_mcp_dispatch']
-pub fn vphp_wrap_vslimmcpapp_handle_mcp_dispatch(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_mcp_app_handle_mcp_dispatch']
+pub fn vphp_wrap_vslim_mcp_app_handle_mcp_dispatch(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimMcpApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -546,8 +546,8 @@ pub fn vphp_wrap_vslimmcpapp_handle_mcp_dispatch(ptr voidptr, ctx vphp.Context) 
     res := recv.handle_mcp_dispatch(arg_0)
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_handle']
-pub fn vphp_wrap_vslimmcpapp_handle(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_mcp_app_handle']
+pub fn vphp_wrap_vslim_mcp_app_handle(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimMcpApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -561,8 +561,8 @@ pub fn vphp_wrap_vslimmcpapp_handle(ptr voidptr, ctx vphp.Context)  {
     res := recv.handle(arg_0)
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'vphp_wrap_VSlimMcpApp_handle_mcp']
-pub fn vphp_wrap_vslimmcpapp_handle_mcp(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_mcp_app_handle_mcp']
+pub fn vphp_wrap_vslim_mcp_app_handle_mcp(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimMcpApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -576,15 +576,15 @@ pub fn vphp_wrap_vslimmcpapp_handle_mcp(ptr voidptr, ctx vphp.Context)  {
     res := recv.handle_mcp(arg_0)
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'VSlimMcpApp_handlers']
-pub fn vslimmcpapp_handlers() voidptr {
+@[export: 'vslim_mcp_app_handlers']
+pub fn vslim_mcp_app_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimmcpapp_get_prop),
-        write_handler: voidptr(vslimmcpapp_set_prop),
-        sync_handler: voidptr(vslimmcpapp_sync_props),
-        new_raw: voidptr(vslimmcpapp_new_raw),
-        cleanup_raw: voidptr(vslimmcpapp_cleanup_raw),
-        free_raw: voidptr(vslimmcpapp_free_raw)
+        prop_handler: voidptr(vslim_mcp_app_get_prop),
+        write_handler: voidptr(vslim_mcp_app_set_prop),
+        sync_handler: voidptr(vslim_mcp_app_sync_props),
+        new_raw: voidptr(vslim_mcp_app_new_raw),
+        cleanup_raw: voidptr(vslim_mcp_app_cleanup_raw),
+        free_raw: voidptr(vslim_mcp_app_free_raw)
     )
 }
 pub fn VSlimMcpApp.php_class_entry() vphp.ZendClassEntry {
@@ -592,7 +592,7 @@ pub fn VSlimMcpApp.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimMcpApp.php_object_handlers() voidptr {
-    return vslimmcpapp_handlers()
+    return vslim_mcp_app_handlers()
 }
 
 pub fn VSlimMcpApp.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

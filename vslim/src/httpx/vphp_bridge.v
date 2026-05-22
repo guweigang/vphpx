@@ -24,19 +24,19 @@ __global C.vslim__psr18__client_ce &C.zend_class_entry
 __global C.vslim__psr7adapter_ce &C.zend_class_entry
 __global C.vslim__vhttpd__response_ce &C.zend_class_entry
 
-@[export: 'VSlimRequest_new_raw']
-pub fn vslimrequest_new_raw() voidptr {
+@[export: 'vslim_request_new_raw']
+pub fn vslim_request_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimRequest]()
 }
-@[export: 'VSlimRequest_free_raw']
-pub fn vslimrequest_free_raw(ptr voidptr) {
+@[export: 'vslim_request_free_raw']
+pub fn vslim_request_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimRequest](ptr)
 }
-@[export: 'VSlimRequest_cleanup_raw']
-pub fn vslimrequest_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_request_cleanup_raw']
+pub fn vslim_request_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
@@ -45,8 +45,8 @@ pub fn vslimrequest_cleanup_raw(ptr voidptr) {
         obj.free()
     }
 }
-@[export: 'VSlimRequest_get_prop']
-pub fn vslimrequest_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_request_get_prop']
+pub fn vslim_request_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -85,8 +85,8 @@ pub fn vslimrequest_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zv
         }
     }
 }
-@[export: 'VSlimRequest_set_prop']
-pub fn vslimrequest_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_request_set_prop']
+pub fn vslim_request_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -125,8 +125,8 @@ pub fn vslimrequest_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C
         }
     }
 }
-@[export: 'VSlimRequest_sync_props']
-pub fn vslimrequest_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_request_sync_props']
+pub fn vslim_request_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimRequest(ptr)
@@ -140,8 +140,8 @@ pub fn vslimrequest_sync_props(ptr voidptr, zv &C.zval) {
         out.add_property_string('remoteAddr', obj.remote_addr)
     }
 }
-@[export: 'vphp_wrap_VSlimRequest_construct']
-pub fn vphp_wrap_vslimrequest_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_request_construct']
+pub fn vphp_wrap_vslim_request_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -156,16 +156,16 @@ pub fn vphp_wrap_vslimrequest_construct(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.construct(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimRequest_str']
-pub fn vphp_wrap_vslimrequest_str(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_str']
+pub fn vphp_wrap_vslim_request_str(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.str()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_set_query']
-pub fn vphp_wrap_vslimrequest_set_query(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_request_set_query']
+pub fn vphp_wrap_vslim_request_set_query(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -179,8 +179,8 @@ pub fn vphp_wrap_vslimrequest_set_query(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.set_query(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimRequest_set_method']
-pub fn vphp_wrap_vslimrequest_set_method(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_request_set_method']
+pub fn vphp_wrap_vslim_request_set_method(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -191,8 +191,8 @@ pub fn vphp_wrap_vslimrequest_set_method(ptr voidptr, ctx vphp.Context) voidptr 
     res := recv.set_method(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimRequest_set_target']
-pub fn vphp_wrap_vslimrequest_set_target(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_request_set_target']
+pub fn vphp_wrap_vslim_request_set_target(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -203,24 +203,24 @@ pub fn vphp_wrap_vslimrequest_set_target(ptr voidptr, ctx vphp.Context) voidptr 
     res := recv.set_target(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimRequest_path_value']
-pub fn vphp_wrap_vslimrequest_path_value(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_path_value']
+pub fn vphp_wrap_vslim_request_path_value(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.path_value()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_query_string_value']
-pub fn vphp_wrap_vslimrequest_query_string_value(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_query_string_value']
+pub fn vphp_wrap_vslim_request_query_string_value(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.query_string_value()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_set_body']
-pub fn vphp_wrap_vslimrequest_set_body(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_request_set_body']
+pub fn vphp_wrap_vslim_request_set_body(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -231,8 +231,8 @@ pub fn vphp_wrap_vslimrequest_set_body(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.set_body(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimRequest_set_scheme']
-pub fn vphp_wrap_vslimrequest_set_scheme(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_request_set_scheme']
+pub fn vphp_wrap_vslim_request_set_scheme(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -243,8 +243,8 @@ pub fn vphp_wrap_vslimrequest_set_scheme(ptr voidptr, ctx vphp.Context) voidptr 
     res := recv.set_scheme(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimRequest_set_host']
-pub fn vphp_wrap_vslimrequest_set_host(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_request_set_host']
+pub fn vphp_wrap_vslim_request_set_host(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -255,8 +255,8 @@ pub fn vphp_wrap_vslimrequest_set_host(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.set_host(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimRequest_set_port']
-pub fn vphp_wrap_vslimrequest_set_port(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_request_set_port']
+pub fn vphp_wrap_vslim_request_set_port(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -267,8 +267,8 @@ pub fn vphp_wrap_vslimrequest_set_port(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.set_port(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimRequest_set_protocol_version']
-pub fn vphp_wrap_vslimrequest_set_protocol_version(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_request_set_protocol_version']
+pub fn vphp_wrap_vslim_request_set_protocol_version(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -279,8 +279,8 @@ pub fn vphp_wrap_vslimrequest_set_protocol_version(ptr voidptr, ctx vphp.Context
     res := recv.set_protocol_version(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimRequest_set_remote_addr']
-pub fn vphp_wrap_vslimrequest_set_remote_addr(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_request_set_remote_addr']
+pub fn vphp_wrap_vslim_request_set_remote_addr(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -291,8 +291,8 @@ pub fn vphp_wrap_vslimrequest_set_remote_addr(ptr voidptr, ctx vphp.Context) voi
     res := recv.set_remote_addr(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimRequest_set_headers']
-pub fn vphp_wrap_vslimrequest_set_headers(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_request_set_headers']
+pub fn vphp_wrap_vslim_request_set_headers(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -306,8 +306,8 @@ pub fn vphp_wrap_vslimrequest_set_headers(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.set_headers(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimRequest_set_cookies']
-pub fn vphp_wrap_vslimrequest_set_cookies(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_request_set_cookies']
+pub fn vphp_wrap_vslim_request_set_cookies(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -321,8 +321,8 @@ pub fn vphp_wrap_vslimrequest_set_cookies(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.set_cookies(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimRequest_set_attributes']
-pub fn vphp_wrap_vslimrequest_set_attributes(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_request_set_attributes']
+pub fn vphp_wrap_vslim_request_set_attributes(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -336,8 +336,8 @@ pub fn vphp_wrap_vslimrequest_set_attributes(ptr voidptr, ctx vphp.Context) void
     res := recv.set_attributes(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimRequest_set_server']
-pub fn vphp_wrap_vslimrequest_set_server(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_request_set_server']
+pub fn vphp_wrap_vslim_request_set_server(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -351,8 +351,8 @@ pub fn vphp_wrap_vslimrequest_set_server(ptr voidptr, ctx vphp.Context) voidptr 
     res := recv.set_server(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimRequest_set_uploaded_files']
-pub fn vphp_wrap_vslimrequest_set_uploaded_files(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_request_set_uploaded_files']
+pub fn vphp_wrap_vslim_request_set_uploaded_files(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -366,8 +366,8 @@ pub fn vphp_wrap_vslimrequest_set_uploaded_files(ptr voidptr, ctx vphp.Context) 
     res := recv.set_uploaded_files(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimRequest_set_params']
-pub fn vphp_wrap_vslimrequest_set_params(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_request_set_params']
+pub fn vphp_wrap_vslim_request_set_params(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -381,8 +381,8 @@ pub fn vphp_wrap_vslimrequest_set_params(ptr voidptr, ctx vphp.Context) voidptr 
     res := recv.set_params(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimRequest_query']
-pub fn vphp_wrap_vslimrequest_query(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_query']
+pub fn vphp_wrap_vslim_request_query(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -393,16 +393,16 @@ pub fn vphp_wrap_vslimrequest_query(ptr voidptr, ctx vphp.Context)  {
     res := recv.query(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_query_params']
-pub fn vphp_wrap_vslimrequest_query_params(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_query_params']
+pub fn vphp_wrap_vslim_request_query_params(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.query_params()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_has_query']
-pub fn vphp_wrap_vslimrequest_has_query(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_has_query']
+pub fn vphp_wrap_vslim_request_has_query(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -413,8 +413,8 @@ pub fn vphp_wrap_vslimrequest_has_query(ptr voidptr, ctx vphp.Context)  {
     res := recv.has_query(arg_0)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_input']
-pub fn vphp_wrap_vslimrequest_input(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_input']
+pub fn vphp_wrap_vslim_request_input(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -425,8 +425,8 @@ pub fn vphp_wrap_vslimrequest_input(ptr voidptr, ctx vphp.Context)  {
     res := recv.input(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_input_or']
-pub fn vphp_wrap_vslimrequest_input_or(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_input_or']
+pub fn vphp_wrap_vslim_request_input_or(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -439,8 +439,8 @@ pub fn vphp_wrap_vslimrequest_input_or(ptr voidptr, ctx vphp.Context)  {
     res := recv.input_or(arg_0, arg_1)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_has_input']
-pub fn vphp_wrap_vslimrequest_has_input(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_has_input']
+pub fn vphp_wrap_vslim_request_has_input(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -451,96 +451,96 @@ pub fn vphp_wrap_vslimrequest_has_input(ptr voidptr, ctx vphp.Context)  {
     res := recv.has_input(arg_0)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_all_inputs']
-pub fn vphp_wrap_vslimrequest_all_inputs(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_all_inputs']
+pub fn vphp_wrap_vslim_request_all_inputs(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.all_inputs()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_parsed_body']
-pub fn vphp_wrap_vslimrequest_parsed_body(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_parsed_body']
+pub fn vphp_wrap_vslim_request_parsed_body(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.parsed_body()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_body_format']
-pub fn vphp_wrap_vslimrequest_body_format(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_body_format']
+pub fn vphp_wrap_vslim_request_body_format(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.body_format()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_is_json_body']
-pub fn vphp_wrap_vslimrequest_is_json_body(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_is_json_body']
+pub fn vphp_wrap_vslim_request_is_json_body(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.is_json_body()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_is_form_body']
-pub fn vphp_wrap_vslimrequest_is_form_body(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_is_form_body']
+pub fn vphp_wrap_vslim_request_is_form_body(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.is_form_body()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_is_multipart_body']
-pub fn vphp_wrap_vslimrequest_is_multipart_body(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_is_multipart_body']
+pub fn vphp_wrap_vslim_request_is_multipart_body(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.is_multipart_body()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_json_body']
-pub fn vphp_wrap_vslimrequest_json_body(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_json_body']
+pub fn vphp_wrap_vslim_request_json_body(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.json_body()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_form_body']
-pub fn vphp_wrap_vslimrequest_form_body(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_form_body']
+pub fn vphp_wrap_vslim_request_form_body(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.form_body()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_multipart_body']
-pub fn vphp_wrap_vslimrequest_multipart_body(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_multipart_body']
+pub fn vphp_wrap_vslim_request_multipart_body(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.multipart_body()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_parse_error']
-pub fn vphp_wrap_vslimrequest_parse_error(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_parse_error']
+pub fn vphp_wrap_vslim_request_parse_error(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.parse_error()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_query_all']
-pub fn vphp_wrap_vslimrequest_query_all(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_query_all']
+pub fn vphp_wrap_vslim_request_query_all(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.query_all()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_header']
-pub fn vphp_wrap_vslimrequest_header(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_header']
+pub fn vphp_wrap_vslim_request_header(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -551,16 +551,16 @@ pub fn vphp_wrap_vslimrequest_header(ptr voidptr, ctx vphp.Context)  {
     res := recv.header(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_headers']
-pub fn vphp_wrap_vslimrequest_headers(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_headers']
+pub fn vphp_wrap_vslim_request_headers(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.headers()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_has_header']
-pub fn vphp_wrap_vslimrequest_has_header(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_has_header']
+pub fn vphp_wrap_vslim_request_has_header(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -571,32 +571,32 @@ pub fn vphp_wrap_vslimrequest_has_header(ptr voidptr, ctx vphp.Context)  {
     res := recv.has_header(arg_0)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_content_type']
-pub fn vphp_wrap_vslimrequest_content_type(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_content_type']
+pub fn vphp_wrap_vslim_request_content_type(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.content_type()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_request_id']
-pub fn vphp_wrap_vslimrequest_request_id(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_request_id']
+pub fn vphp_wrap_vslim_request_request_id(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.request_id()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_trace_id']
-pub fn vphp_wrap_vslimrequest_trace_id(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_trace_id']
+pub fn vphp_wrap_vslim_request_trace_id(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.trace_id()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_cookie']
-pub fn vphp_wrap_vslimrequest_cookie(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_cookie']
+pub fn vphp_wrap_vslim_request_cookie(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -607,16 +607,16 @@ pub fn vphp_wrap_vslimrequest_cookie(ptr voidptr, ctx vphp.Context)  {
     res := recv.cookie(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_cookies']
-pub fn vphp_wrap_vslimrequest_cookies(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_cookies']
+pub fn vphp_wrap_vslim_request_cookies(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.cookies()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_has_cookie']
-pub fn vphp_wrap_vslimrequest_has_cookie(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_has_cookie']
+pub fn vphp_wrap_vslim_request_has_cookie(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -627,8 +627,8 @@ pub fn vphp_wrap_vslimrequest_has_cookie(ptr voidptr, ctx vphp.Context)  {
     res := recv.has_cookie(arg_0)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_param']
-pub fn vphp_wrap_vslimrequest_param(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_param']
+pub fn vphp_wrap_vslim_request_param(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -639,16 +639,16 @@ pub fn vphp_wrap_vslimrequest_param(ptr voidptr, ctx vphp.Context)  {
     res := recv.param(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_route_params']
-pub fn vphp_wrap_vslimrequest_route_params(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_route_params']
+pub fn vphp_wrap_vslim_request_route_params(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.route_params()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_has_param']
-pub fn vphp_wrap_vslimrequest_has_param(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_has_param']
+pub fn vphp_wrap_vslim_request_has_param(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -659,8 +659,8 @@ pub fn vphp_wrap_vslimrequest_has_param(ptr voidptr, ctx vphp.Context)  {
     res := recv.has_param(arg_0)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_attribute']
-pub fn vphp_wrap_vslimrequest_attribute(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_attribute']
+pub fn vphp_wrap_vslim_request_attribute(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -671,16 +671,16 @@ pub fn vphp_wrap_vslimrequest_attribute(ptr voidptr, ctx vphp.Context)  {
     res := recv.attribute(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_attributes']
-pub fn vphp_wrap_vslimrequest_attributes(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_attributes']
+pub fn vphp_wrap_vslim_request_attributes(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.attributes()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_has_attribute']
-pub fn vphp_wrap_vslimrequest_has_attribute(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_has_attribute']
+pub fn vphp_wrap_vslim_request_has_attribute(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -691,8 +691,8 @@ pub fn vphp_wrap_vslimrequest_has_attribute(ptr voidptr, ctx vphp.Context)  {
     res := recv.has_attribute(arg_0)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_server_value']
-pub fn vphp_wrap_vslimrequest_server_value(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_server_value']
+pub fn vphp_wrap_vslim_request_server_value(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -703,16 +703,16 @@ pub fn vphp_wrap_vslimrequest_server_value(ptr voidptr, ctx vphp.Context)  {
     res := recv.server_value(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_server_params']
-pub fn vphp_wrap_vslimrequest_server_params(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_server_params']
+pub fn vphp_wrap_vslim_request_server_params(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.server_params()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_has_server']
-pub fn vphp_wrap_vslimrequest_has_server(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_has_server']
+pub fn vphp_wrap_vslim_request_has_server(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -723,95 +723,95 @@ pub fn vphp_wrap_vslimrequest_has_server(ptr voidptr, ctx vphp.Context)  {
     res := recv.has_server(arg_0)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_uploaded_file_count']
-pub fn vphp_wrap_vslimrequest_uploaded_file_count(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_uploaded_file_count']
+pub fn vphp_wrap_vslim_request_uploaded_file_count(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.uploaded_file_count()
     ctx.return().v[int](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_uploaded_files']
-pub fn vphp_wrap_vslimrequest_uploaded_files(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_uploaded_files']
+pub fn vphp_wrap_vslim_request_uploaded_files(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.uploaded_files()
     ctx.return().v[[]string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_has_uploaded_files']
-pub fn vphp_wrap_vslimrequest_has_uploaded_files(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_has_uploaded_files']
+pub fn vphp_wrap_vslim_request_has_uploaded_files(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.has_uploaded_files()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_is_secure']
-pub fn vphp_wrap_vslimrequest_is_secure(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_is_secure']
+pub fn vphp_wrap_vslim_request_is_secure(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.is_secure()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_headers_all']
-pub fn vphp_wrap_vslimrequest_headers_all(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_headers_all']
+pub fn vphp_wrap_vslim_request_headers_all(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.headers_all()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_cookies_all']
-pub fn vphp_wrap_vslimrequest_cookies_all(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_cookies_all']
+pub fn vphp_wrap_vslim_request_cookies_all(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.cookies_all()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_params_all']
-pub fn vphp_wrap_vslimrequest_params_all(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_params_all']
+pub fn vphp_wrap_vslim_request_params_all(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.params_all()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_attributes_all']
-pub fn vphp_wrap_vslimrequest_attributes_all(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_attributes_all']
+pub fn vphp_wrap_vslim_request_attributes_all(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.attributes_all()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_server_all']
-pub fn vphp_wrap_vslimrequest_server_all(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_server_all']
+pub fn vphp_wrap_vslim_request_server_all(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.server_all()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimRequest_uploaded_files_all']
-pub fn vphp_wrap_vslimrequest_uploaded_files_all(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_request_uploaded_files_all']
+pub fn vphp_wrap_vslim_request_uploaded_files_all(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.uploaded_files_all()
     ctx.return().v[[]string](res)
 }
-@[export: 'VSlimRequest_handlers']
-pub fn vslimrequest_handlers() voidptr {
+@[export: 'vslim_request_handlers']
+pub fn vslim_request_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimrequest_get_prop),
-        write_handler: voidptr(vslimrequest_set_prop),
-        sync_handler: voidptr(vslimrequest_sync_props),
-        new_raw: voidptr(vslimrequest_new_raw),
-        cleanup_raw: voidptr(vslimrequest_cleanup_raw),
-        free_raw: voidptr(vslimrequest_free_raw)
+        prop_handler: voidptr(vslim_request_get_prop),
+        write_handler: voidptr(vslim_request_set_prop),
+        sync_handler: voidptr(vslim_request_sync_props),
+        new_raw: voidptr(vslim_request_new_raw),
+        cleanup_raw: voidptr(vslim_request_cleanup_raw),
+        free_raw: voidptr(vslim_request_free_raw)
     )
 }
 pub fn VSlimRequest.php_class_entry() vphp.ZendClassEntry {
@@ -819,7 +819,7 @@ pub fn VSlimRequest.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimRequest.php_object_handlers() voidptr {
-    return vslimrequest_handlers()
+    return vslim_request_handlers()
 }
 
 pub fn VSlimRequest.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -842,25 +842,25 @@ pub fn (obj &VSlimRequest) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimRequest](obj)
 }
 
-@[export: 'VSlimPsr7Stream_new_raw']
-pub fn vslimpsr7stream_new_raw() voidptr {
+@[export: 'vslim_psr7_stream_new_raw']
+pub fn vslim_psr7_stream_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr7Stream]()
 }
-@[export: 'VSlimPsr7Stream_free_raw']
-pub fn vslimpsr7stream_free_raw(ptr voidptr) {
+@[export: 'vslim_psr7_stream_free_raw']
+pub fn vslim_psr7_stream_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimPsr7Stream](ptr)
 }
-@[export: 'VSlimPsr7Stream_cleanup_raw']
-pub fn vslimpsr7stream_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_psr7_stream_cleanup_raw']
+pub fn vslim_psr7_stream_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimPsr7Stream_get_prop']
-pub fn vslimpsr7stream_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_psr7_stream_get_prop']
+pub fn vslim_psr7_stream_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -879,8 +879,8 @@ pub fn vslimpsr7stream_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C
         }
     }
 }
-@[export: 'VSlimPsr7Stream_set_prop']
-pub fn vslimpsr7stream_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_psr7_stream_set_prop']
+pub fn vslim_psr7_stream_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -899,8 +899,8 @@ pub fn vslimpsr7stream_set_prop(ptr voidptr, name_ptr &char, name_len int, value
         }
     }
 }
-@[export: 'VSlimPsr7Stream_sync_props']
-pub fn vslimpsr7stream_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_psr7_stream_sync_props']
+pub fn vslim_psr7_stream_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimPsr7Stream(ptr)
@@ -909,8 +909,8 @@ pub fn vslimpsr7stream_sync_props(ptr voidptr, zv &C.zval) {
         out.add_property_bool('detached', obj.detached)
     }
 }
-@[export: 'vphp_wrap_VSlimPsr7Stream_construct']
-pub fn vphp_wrap_vslimpsr7stream_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_stream_construct']
+pub fn vphp_wrap_vslim_psr7_stream_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -921,31 +921,31 @@ pub fn vphp_wrap_vslimpsr7stream_construct(ptr voidptr, ctx vphp.Context) voidpt
     res := recv.construct(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Stream_str']
-pub fn vphp_wrap_vslimpsr7stream_str(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_stream_str']
+pub fn vphp_wrap_vslim_psr7_stream_str(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.str()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Stream_close']
-pub fn vphp_wrap_vslimpsr7stream_close(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_stream_close']
+pub fn vphp_wrap_vslim_psr7_stream_close(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     recv.close()
 }
-@[export: 'vphp_wrap_VSlimPsr7Stream_detach']
-pub fn vphp_wrap_vslimpsr7stream_detach(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_stream_detach']
+pub fn vphp_wrap_vslim_psr7_stream_detach(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.detach()
     ctx.return().v[vphp.PhpNull](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Stream_get_size']
-pub fn vphp_wrap_vslimpsr7stream_get_size(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_stream_get_size']
+pub fn vphp_wrap_vslim_psr7_stream_get_size(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -953,32 +953,32 @@ pub fn vphp_wrap_vslimpsr7stream_get_size(ptr voidptr, ctx vphp.Context)  {
         return recv.get_size()
     })
 }
-@[export: 'vphp_wrap_VSlimPsr7Stream_tell']
-pub fn vphp_wrap_vslimpsr7stream_tell(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_stream_tell']
+pub fn vphp_wrap_vslim_psr7_stream_tell(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.tell()
     ctx.return().v[int](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Stream_eof']
-pub fn vphp_wrap_vslimpsr7stream_eof(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_stream_eof']
+pub fn vphp_wrap_vslim_psr7_stream_eof(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.eof()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Stream_is_seekable']
-pub fn vphp_wrap_vslimpsr7stream_is_seekable(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_stream_is_seekable']
+pub fn vphp_wrap_vslim_psr7_stream_is_seekable(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.is_seekable()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Stream_seek']
-pub fn vphp_wrap_vslimpsr7stream_seek(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_stream_seek']
+pub fn vphp_wrap_vslim_psr7_stream_seek(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -990,23 +990,23 @@ pub fn vphp_wrap_vslimpsr7stream_seek(ptr voidptr, ctx vphp.Context)  {
     arg_1 := php_args.at_named_or_index(1, 'defaultWhence').value
     recv.seek(arg_0, arg_1)
 }
-@[export: 'vphp_wrap_VSlimPsr7Stream_rewind']
-pub fn vphp_wrap_vslimpsr7stream_rewind(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_stream_rewind']
+pub fn vphp_wrap_vslim_psr7_stream_rewind(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     recv.rewind()
 }
-@[export: 'vphp_wrap_VSlimPsr7Stream_is_writable']
-pub fn vphp_wrap_vslimpsr7stream_is_writable(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_stream_is_writable']
+pub fn vphp_wrap_vslim_psr7_stream_is_writable(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.is_writable()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Stream_write']
-pub fn vphp_wrap_vslimpsr7stream_write(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_stream_write']
+pub fn vphp_wrap_vslim_psr7_stream_write(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1017,16 +1017,16 @@ pub fn vphp_wrap_vslimpsr7stream_write(ptr voidptr, ctx vphp.Context)  {
     res := recv.write(arg_0)
     ctx.return().v[int](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Stream_is_readable']
-pub fn vphp_wrap_vslimpsr7stream_is_readable(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_stream_is_readable']
+pub fn vphp_wrap_vslim_psr7_stream_is_readable(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.is_readable()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Stream_read']
-pub fn vphp_wrap_vslimpsr7stream_read(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_stream_read']
+pub fn vphp_wrap_vslim_psr7_stream_read(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1037,16 +1037,16 @@ pub fn vphp_wrap_vslimpsr7stream_read(ptr voidptr, ctx vphp.Context)  {
     res := recv.read(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Stream_get_contents']
-pub fn vphp_wrap_vslimpsr7stream_get_contents(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_stream_get_contents']
+pub fn vphp_wrap_vslim_psr7_stream_get_contents(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_contents()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Stream_get_metadata']
-pub fn vphp_wrap_vslimpsr7stream_get_metadata(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_stream_get_metadata']
+pub fn vphp_wrap_vslim_psr7_stream_get_metadata(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1057,15 +1057,15 @@ pub fn vphp_wrap_vslimpsr7stream_get_metadata(ptr voidptr, ctx vphp.Context)  {
     res := recv.get_metadata(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
-@[export: 'VSlimPsr7Stream_handlers']
-pub fn vslimpsr7stream_handlers() voidptr {
+@[export: 'vslim_psr7_stream_handlers']
+pub fn vslim_psr7_stream_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimpsr7stream_get_prop),
-        write_handler: voidptr(vslimpsr7stream_set_prop),
-        sync_handler: voidptr(vslimpsr7stream_sync_props),
-        new_raw: voidptr(vslimpsr7stream_new_raw),
-        cleanup_raw: voidptr(vslimpsr7stream_cleanup_raw),
-        free_raw: voidptr(vslimpsr7stream_free_raw)
+        prop_handler: voidptr(vslim_psr7_stream_get_prop),
+        write_handler: voidptr(vslim_psr7_stream_set_prop),
+        sync_handler: voidptr(vslim_psr7_stream_sync_props),
+        new_raw: voidptr(vslim_psr7_stream_new_raw),
+        cleanup_raw: voidptr(vslim_psr7_stream_cleanup_raw),
+        free_raw: voidptr(vslim_psr7_stream_free_raw)
     )
 }
 pub fn VSlimPsr7Stream.php_class_entry() vphp.ZendClassEntry {
@@ -1073,7 +1073,7 @@ pub fn VSlimPsr7Stream.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimPsr7Stream.php_object_handlers() voidptr {
-    return vslimpsr7stream_handlers()
+    return vslim_psr7_stream_handlers()
 }
 
 pub fn VSlimPsr7Stream.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1096,19 +1096,19 @@ pub fn (obj &VSlimPsr7Stream) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr7Stream](obj)
 }
 
-@[export: 'VSlimPsr7UploadedFile_new_raw']
-pub fn vslimpsr7uploadedfile_new_raw() voidptr {
+@[export: 'vslim_psr7_uploaded_file_new_raw']
+pub fn vslim_psr7_uploaded_file_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr7UploadedFile]()
 }
-@[export: 'VSlimPsr7UploadedFile_free_raw']
-pub fn vslimpsr7uploadedfile_free_raw(ptr voidptr) {
+@[export: 'vslim_psr7_uploaded_file_free_raw']
+pub fn vslim_psr7_uploaded_file_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimPsr7UploadedFile](ptr)
 }
-@[export: 'VSlimPsr7UploadedFile_cleanup_raw']
-pub fn vslimpsr7uploadedfile_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_psr7_uploaded_file_cleanup_raw']
+pub fn vslim_psr7_uploaded_file_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
@@ -1117,8 +1117,8 @@ pub fn vslimpsr7uploadedfile_cleanup_raw(ptr voidptr) {
         obj.cleanup()
     }
 }
-@[export: 'VSlimPsr7UploadedFile_get_prop']
-pub fn vslimpsr7uploadedfile_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_psr7_uploaded_file_get_prop']
+pub fn vslim_psr7_uploaded_file_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -1129,8 +1129,8 @@ pub fn vslimpsr7uploadedfile_get_prop(ptr voidptr, name_ptr &char, name_len int,
         }
     }
 }
-@[export: 'VSlimPsr7UploadedFile_set_prop']
-pub fn vslimpsr7uploadedfile_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_psr7_uploaded_file_set_prop']
+pub fn vslim_psr7_uploaded_file_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -1141,16 +1141,16 @@ pub fn vslimpsr7uploadedfile_set_prop(ptr voidptr, name_ptr &char, name_len int,
         }
     }
 }
-@[export: 'VSlimPsr7UploadedFile_sync_props']
-pub fn vslimpsr7uploadedfile_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_psr7_uploaded_file_sync_props']
+pub fn vslim_psr7_uploaded_file_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimPsr7UploadedFile(ptr)
         out.add_property_bool('moved', obj.moved)
     }
 }
-@[export: 'vphp_wrap_VSlimPsr7UploadedFile_construct']
-pub fn vphp_wrap_vslimpsr7uploadedfile_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_uploaded_file_construct']
+pub fn vphp_wrap_vslim_psr7_uploaded_file_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7UploadedFile(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1169,16 +1169,16 @@ pub fn vphp_wrap_vslimpsr7uploadedfile_construct(ptr voidptr, ctx vphp.Context) 
     res := recv.construct(arg_0, arg_1, arg_2, arg_3, arg_4)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7UploadedFile_get_stream']
-pub fn vphp_wrap_vslimpsr7uploadedfile_get_stream(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_uploaded_file_get_stream']
+pub fn vphp_wrap_vslim_psr7_uploaded_file_get_stream(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7UploadedFile(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_stream()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7UploadedFile_move_to']
-pub fn vphp_wrap_vslimpsr7uploadedfile_move_to(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_uploaded_file_move_to']
+pub fn vphp_wrap_vslim_psr7_uploaded_file_move_to(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7UploadedFile(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1188,8 +1188,8 @@ pub fn vphp_wrap_vslimpsr7uploadedfile_move_to(ptr voidptr, ctx vphp.Context)  {
     arg_0 := php_args.at_named_or_index(0, 'targetPath').value
     recv.move_to(arg_0)
 }
-@[export: 'vphp_wrap_VSlimPsr7UploadedFile_get_size']
-pub fn vphp_wrap_vslimpsr7uploadedfile_get_size(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_uploaded_file_get_size']
+pub fn vphp_wrap_vslim_psr7_uploaded_file_get_size(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7UploadedFile(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1197,16 +1197,16 @@ pub fn vphp_wrap_vslimpsr7uploadedfile_get_size(ptr voidptr, ctx vphp.Context)  
         return recv.get_size()
     })
 }
-@[export: 'vphp_wrap_VSlimPsr7UploadedFile_get_error']
-pub fn vphp_wrap_vslimpsr7uploadedfile_get_error(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_uploaded_file_get_error']
+pub fn vphp_wrap_vslim_psr7_uploaded_file_get_error(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7UploadedFile(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_error()
     ctx.return().v[int](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7UploadedFile_get_client_filename']
-pub fn vphp_wrap_vslimpsr7uploadedfile_get_client_filename(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_uploaded_file_get_client_filename']
+pub fn vphp_wrap_vslim_psr7_uploaded_file_get_client_filename(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7UploadedFile(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1214,8 +1214,8 @@ pub fn vphp_wrap_vslimpsr7uploadedfile_get_client_filename(ptr voidptr, ctx vphp
         return recv.get_client_filename()
     })
 }
-@[export: 'vphp_wrap_VSlimPsr7UploadedFile_get_client_media_type']
-pub fn vphp_wrap_vslimpsr7uploadedfile_get_client_media_type(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_uploaded_file_get_client_media_type']
+pub fn vphp_wrap_vslim_psr7_uploaded_file_get_client_media_type(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7UploadedFile(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1223,23 +1223,23 @@ pub fn vphp_wrap_vslimpsr7uploadedfile_get_client_media_type(ptr voidptr, ctx vp
         return recv.get_client_media_type()
     })
 }
-@[export: 'vphp_wrap_VSlimPsr7UploadedFile_str']
-pub fn vphp_wrap_vslimpsr7uploadedfile_str(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_uploaded_file_str']
+pub fn vphp_wrap_vslim_psr7_uploaded_file_str(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7UploadedFile(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.str()
     ctx.return().v[string](res)
 }
-@[export: 'VSlimPsr7UploadedFile_handlers']
-pub fn vslimpsr7uploadedfile_handlers() voidptr {
+@[export: 'vslim_psr7_uploaded_file_handlers']
+pub fn vslim_psr7_uploaded_file_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimpsr7uploadedfile_get_prop),
-        write_handler: voidptr(vslimpsr7uploadedfile_set_prop),
-        sync_handler: voidptr(vslimpsr7uploadedfile_sync_props),
-        new_raw: voidptr(vslimpsr7uploadedfile_new_raw),
-        cleanup_raw: voidptr(vslimpsr7uploadedfile_cleanup_raw),
-        free_raw: voidptr(vslimpsr7uploadedfile_free_raw)
+        prop_handler: voidptr(vslim_psr7_uploaded_file_get_prop),
+        write_handler: voidptr(vslim_psr7_uploaded_file_set_prop),
+        sync_handler: voidptr(vslim_psr7_uploaded_file_sync_props),
+        new_raw: voidptr(vslim_psr7_uploaded_file_new_raw),
+        cleanup_raw: voidptr(vslim_psr7_uploaded_file_cleanup_raw),
+        free_raw: voidptr(vslim_psr7_uploaded_file_free_raw)
     )
 }
 pub fn VSlimPsr7UploadedFile.php_class_entry() vphp.ZendClassEntry {
@@ -1247,7 +1247,7 @@ pub fn VSlimPsr7UploadedFile.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimPsr7UploadedFile.php_object_handlers() voidptr {
-    return vslimpsr7uploadedfile_handlers()
+    return vslim_psr7_uploaded_file_handlers()
 }
 
 pub fn VSlimPsr7UploadedFile.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1270,19 +1270,19 @@ pub fn (obj &VSlimPsr7UploadedFile) bind_owned_php_object_value() vphp.PhpValue 
     return vphp.bind_owned_object_value[VSlimPsr7UploadedFile](obj)
 }
 
-@[export: 'VSlimPsr7Response_new_raw']
-pub fn vslimpsr7response_new_raw() voidptr {
+@[export: 'vslim_psr7_response_new_raw']
+pub fn vslim_psr7_response_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr7Response]()
 }
-@[export: 'VSlimPsr7Response_free_raw']
-pub fn vslimpsr7response_free_raw(ptr voidptr) {
+@[export: 'vslim_psr7_response_free_raw']
+pub fn vslim_psr7_response_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimPsr7Response](ptr)
 }
-@[export: 'VSlimPsr7Response_cleanup_raw']
-pub fn vslimpsr7response_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_psr7_response_cleanup_raw']
+pub fn vslim_psr7_response_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
@@ -1291,8 +1291,8 @@ pub fn vslimpsr7response_cleanup_raw(ptr voidptr) {
         obj.cleanup()
     }
 }
-@[export: 'VSlimPsr7Response_get_prop']
-pub fn vslimpsr7response_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_psr7_response_get_prop']
+pub fn vslim_psr7_response_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -1303,8 +1303,8 @@ pub fn vslimpsr7response_get_prop(ptr voidptr, name_ptr &char, name_len int, rv 
         }
     }
 }
-@[export: 'VSlimPsr7Response_set_prop']
-pub fn vslimpsr7response_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_psr7_response_set_prop']
+pub fn vslim_psr7_response_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -1315,16 +1315,16 @@ pub fn vslimpsr7response_set_prop(ptr voidptr, name_ptr &char, name_len int, val
         }
     }
 }
-@[export: 'VSlimPsr7Response_sync_props']
-pub fn vslimpsr7response_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_psr7_response_sync_props']
+pub fn vslim_psr7_response_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimPsr7Response(ptr)
         out.add_property_long('status', i64(obj.status))
     }
 }
-@[export: 'vphp_wrap_VSlimPsr7Response_construct']
-pub fn vphp_wrap_vslimpsr7response_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_response_construct']
+pub fn vphp_wrap_vslim_psr7_response_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1337,16 +1337,16 @@ pub fn vphp_wrap_vslimpsr7response_construct(ptr voidptr, ctx vphp.Context) void
     res := recv.construct(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Response_get_protocol_version']
-pub fn vphp_wrap_vslimpsr7response_get_protocol_version(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_response_get_protocol_version']
+pub fn vphp_wrap_vslim_psr7_response_get_protocol_version(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_protocol_version()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Response_with_protocol_version']
-pub fn vphp_wrap_vslimpsr7response_with_protocol_version(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_response_with_protocol_version']
+pub fn vphp_wrap_vslim_psr7_response_with_protocol_version(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1357,16 +1357,16 @@ pub fn vphp_wrap_vslimpsr7response_with_protocol_version(ptr voidptr, ctx vphp.C
     res := recv.with_protocol_version(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Response_get_headers']
-pub fn vphp_wrap_vslimpsr7response_get_headers(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_response_get_headers']
+pub fn vphp_wrap_vslim_psr7_response_get_headers(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_headers()
     ctx.return().v[map[string][]string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Response_has_header']
-pub fn vphp_wrap_vslimpsr7response_has_header(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_response_has_header']
+pub fn vphp_wrap_vslim_psr7_response_has_header(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1377,8 +1377,8 @@ pub fn vphp_wrap_vslimpsr7response_has_header(ptr voidptr, ctx vphp.Context)  {
     res := recv.has_header(arg_0)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Response_get_header']
-pub fn vphp_wrap_vslimpsr7response_get_header(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_response_get_header']
+pub fn vphp_wrap_vslim_psr7_response_get_header(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1389,8 +1389,8 @@ pub fn vphp_wrap_vslimpsr7response_get_header(ptr voidptr, ctx vphp.Context)  {
     res := recv.get_header(arg_0)
     ctx.return().v[[]string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Response_get_header_line']
-pub fn vphp_wrap_vslimpsr7response_get_header_line(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_response_get_header_line']
+pub fn vphp_wrap_vslim_psr7_response_get_header_line(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1401,8 +1401,8 @@ pub fn vphp_wrap_vslimpsr7response_get_header_line(ptr voidptr, ctx vphp.Context
     res := recv.get_header_line(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Response_with_header']
-pub fn vphp_wrap_vslimpsr7response_with_header(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_response_with_header']
+pub fn vphp_wrap_vslim_psr7_response_with_header(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1415,8 +1415,8 @@ pub fn vphp_wrap_vslimpsr7response_with_header(ptr voidptr, ctx vphp.Context) vo
     res := recv.with_header(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Response_with_added_header']
-pub fn vphp_wrap_vslimpsr7response_with_added_header(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_response_with_added_header']
+pub fn vphp_wrap_vslim_psr7_response_with_added_header(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1429,8 +1429,8 @@ pub fn vphp_wrap_vslimpsr7response_with_added_header(ptr voidptr, ctx vphp.Conte
     res := recv.with_added_header(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Response_without_header']
-pub fn vphp_wrap_vslimpsr7response_without_header(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_response_without_header']
+pub fn vphp_wrap_vslim_psr7_response_without_header(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1441,16 +1441,16 @@ pub fn vphp_wrap_vslimpsr7response_without_header(ptr voidptr, ctx vphp.Context)
     res := recv.without_header(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Response_get_body']
-pub fn vphp_wrap_vslimpsr7response_get_body(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_response_get_body']
+pub fn vphp_wrap_vslim_psr7_response_get_body(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_body()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Response_with_body']
-pub fn vphp_wrap_vslimpsr7response_with_body(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_response_with_body']
+pub fn vphp_wrap_vslim_psr7_response_with_body(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1461,16 +1461,16 @@ pub fn vphp_wrap_vslimpsr7response_with_body(ptr voidptr, ctx vphp.Context) void
     res := recv.with_body(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Response_get_status_code']
-pub fn vphp_wrap_vslimpsr7response_get_status_code(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_response_get_status_code']
+pub fn vphp_wrap_vslim_psr7_response_get_status_code(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_status_code()
     ctx.return().v[int](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Response_with_status']
-pub fn vphp_wrap_vslimpsr7response_with_status(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_response_with_status']
+pub fn vphp_wrap_vslim_psr7_response_with_status(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1483,16 +1483,16 @@ pub fn vphp_wrap_vslimpsr7response_with_status(ptr voidptr, ctx vphp.Context) vo
     res := recv.with_status(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Response_get_reason_phrase']
-pub fn vphp_wrap_vslimpsr7response_get_reason_phrase(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_response_get_reason_phrase']
+pub fn vphp_wrap_vslim_psr7_response_get_reason_phrase(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_reason_phrase()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Response_set_cookie_full']
-pub fn vphp_wrap_vslimpsr7response_set_cookie_full(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_response_set_cookie_full']
+pub fn vphp_wrap_vslim_psr7_response_set_cookie_full(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1517,8 +1517,8 @@ pub fn vphp_wrap_vslimpsr7response_set_cookie_full(ptr voidptr, ctx vphp.Context
     res := recv.set_cookie_full(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6, arg_7)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Response_delete_cookie']
-pub fn vphp_wrap_vslimpsr7response_delete_cookie(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_response_delete_cookie']
+pub fn vphp_wrap_vslim_psr7_response_delete_cookie(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1529,23 +1529,23 @@ pub fn vphp_wrap_vslimpsr7response_delete_cookie(ptr voidptr, ctx vphp.Context) 
     res := recv.delete_cookie(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Response_str']
-pub fn vphp_wrap_vslimpsr7response_str(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_response_str']
+pub fn vphp_wrap_vslim_psr7_response_str(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.str()
     ctx.return().v[string](res)
 }
-@[export: 'VSlimPsr7Response_handlers']
-pub fn vslimpsr7response_handlers() voidptr {
+@[export: 'vslim_psr7_response_handlers']
+pub fn vslim_psr7_response_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimpsr7response_get_prop),
-        write_handler: voidptr(vslimpsr7response_set_prop),
-        sync_handler: voidptr(vslimpsr7response_sync_props),
-        new_raw: voidptr(vslimpsr7response_new_raw),
-        cleanup_raw: voidptr(vslimpsr7response_cleanup_raw),
-        free_raw: voidptr(vslimpsr7response_free_raw)
+        prop_handler: voidptr(vslim_psr7_response_get_prop),
+        write_handler: voidptr(vslim_psr7_response_set_prop),
+        sync_handler: voidptr(vslim_psr7_response_sync_props),
+        new_raw: voidptr(vslim_psr7_response_new_raw),
+        cleanup_raw: voidptr(vslim_psr7_response_cleanup_raw),
+        free_raw: voidptr(vslim_psr7_response_free_raw)
     )
 }
 pub fn VSlimPsr7Response.php_class_entry() vphp.ZendClassEntry {
@@ -1553,7 +1553,7 @@ pub fn VSlimPsr7Response.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimPsr7Response.php_object_handlers() voidptr {
-    return vslimpsr7response_handlers()
+    return vslim_psr7_response_handlers()
 }
 
 pub fn VSlimPsr7Response.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1576,25 +1576,25 @@ pub fn (obj &VSlimPsr7Response) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr7Response](obj)
 }
 
-@[export: 'VSlimPsr7Uri_new_raw']
-pub fn vslimpsr7uri_new_raw() voidptr {
+@[export: 'vslim_psr7_uri_new_raw']
+pub fn vslim_psr7_uri_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr7Uri]()
 }
-@[export: 'VSlimPsr7Uri_free_raw']
-pub fn vslimpsr7uri_free_raw(ptr voidptr) {
+@[export: 'vslim_psr7_uri_free_raw']
+pub fn vslim_psr7_uri_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimPsr7Uri](ptr)
 }
-@[export: 'VSlimPsr7Uri_cleanup_raw']
-pub fn vslimpsr7uri_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_psr7_uri_cleanup_raw']
+pub fn vslim_psr7_uri_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimPsr7Uri_get_prop']
-pub fn vslimpsr7uri_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_psr7_uri_get_prop']
+pub fn vslim_psr7_uri_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -1633,8 +1633,8 @@ pub fn vslimpsr7uri_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zv
         }
     }
 }
-@[export: 'VSlimPsr7Uri_set_prop']
-pub fn vslimpsr7uri_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_psr7_uri_set_prop']
+pub fn vslim_psr7_uri_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -1673,8 +1673,8 @@ pub fn vslimpsr7uri_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C
         }
     }
 }
-@[export: 'VSlimPsr7Uri_sync_props']
-pub fn vslimpsr7uri_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_psr7_uri_sync_props']
+pub fn vslim_psr7_uri_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimPsr7Uri(ptr)
@@ -1688,8 +1688,8 @@ pub fn vslimpsr7uri_sync_props(ptr voidptr, zv &C.zval) {
         out.add_property_string('fragment', obj.fragment)
     }
 }
-@[export: 'vphp_wrap_VSlimPsr7Uri_construct']
-pub fn vphp_wrap_vslimpsr7uri_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_uri_construct']
+pub fn vphp_wrap_vslim_psr7_uri_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1700,48 +1700,48 @@ pub fn vphp_wrap_vslimpsr7uri_construct(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.construct(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Uri_str']
-pub fn vphp_wrap_vslimpsr7uri_str(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_uri_str']
+pub fn vphp_wrap_vslim_psr7_uri_str(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.str()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Uri_get_scheme']
-pub fn vphp_wrap_vslimpsr7uri_get_scheme(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_uri_get_scheme']
+pub fn vphp_wrap_vslim_psr7_uri_get_scheme(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_scheme()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Uri_get_authority']
-pub fn vphp_wrap_vslimpsr7uri_get_authority(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_uri_get_authority']
+pub fn vphp_wrap_vslim_psr7_uri_get_authority(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_authority()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Uri_get_user_info']
-pub fn vphp_wrap_vslimpsr7uri_get_user_info(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_uri_get_user_info']
+pub fn vphp_wrap_vslim_psr7_uri_get_user_info(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_user_info()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Uri_get_host']
-pub fn vphp_wrap_vslimpsr7uri_get_host(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_uri_get_host']
+pub fn vphp_wrap_vslim_psr7_uri_get_host(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_host()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Uri_get_port']
-pub fn vphp_wrap_vslimpsr7uri_get_port(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_uri_get_port']
+pub fn vphp_wrap_vslim_psr7_uri_get_port(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1749,32 +1749,32 @@ pub fn vphp_wrap_vslimpsr7uri_get_port(ptr voidptr, ctx vphp.Context)  {
         return recv.get_port()
     })
 }
-@[export: 'vphp_wrap_VSlimPsr7Uri_get_path']
-pub fn vphp_wrap_vslimpsr7uri_get_path(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_uri_get_path']
+pub fn vphp_wrap_vslim_psr7_uri_get_path(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_path()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Uri_get_query']
-pub fn vphp_wrap_vslimpsr7uri_get_query(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_uri_get_query']
+pub fn vphp_wrap_vslim_psr7_uri_get_query(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_query()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Uri_get_fragment']
-pub fn vphp_wrap_vslimpsr7uri_get_fragment(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_uri_get_fragment']
+pub fn vphp_wrap_vslim_psr7_uri_get_fragment(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_fragment()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Uri_with_scheme']
-pub fn vphp_wrap_vslimpsr7uri_with_scheme(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_uri_with_scheme']
+pub fn vphp_wrap_vslim_psr7_uri_with_scheme(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1785,8 +1785,8 @@ pub fn vphp_wrap_vslimpsr7uri_with_scheme(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.with_scheme(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Uri_with_user_info']
-pub fn vphp_wrap_vslimpsr7uri_with_user_info(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_uri_with_user_info']
+pub fn vphp_wrap_vslim_psr7_uri_with_user_info(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1799,8 +1799,8 @@ pub fn vphp_wrap_vslimpsr7uri_with_user_info(ptr voidptr, ctx vphp.Context) void
     res := recv.with_user_info(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Uri_with_host']
-pub fn vphp_wrap_vslimpsr7uri_with_host(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_uri_with_host']
+pub fn vphp_wrap_vslim_psr7_uri_with_host(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1811,8 +1811,8 @@ pub fn vphp_wrap_vslimpsr7uri_with_host(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.with_host(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Uri_with_port']
-pub fn vphp_wrap_vslimpsr7uri_with_port(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_uri_with_port']
+pub fn vphp_wrap_vslim_psr7_uri_with_port(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1823,8 +1823,8 @@ pub fn vphp_wrap_vslimpsr7uri_with_port(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.with_port(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Uri_with_path']
-pub fn vphp_wrap_vslimpsr7uri_with_path(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_uri_with_path']
+pub fn vphp_wrap_vslim_psr7_uri_with_path(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1835,8 +1835,8 @@ pub fn vphp_wrap_vslimpsr7uri_with_path(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.with_path(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Uri_with_query']
-pub fn vphp_wrap_vslimpsr7uri_with_query(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_uri_with_query']
+pub fn vphp_wrap_vslim_psr7_uri_with_query(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1847,8 +1847,8 @@ pub fn vphp_wrap_vslimpsr7uri_with_query(ptr voidptr, ctx vphp.Context) voidptr 
     res := recv.with_query(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Uri_with_fragment']
-pub fn vphp_wrap_vslimpsr7uri_with_fragment(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_uri_with_fragment']
+pub fn vphp_wrap_vslim_psr7_uri_with_fragment(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1859,15 +1859,15 @@ pub fn vphp_wrap_vslimpsr7uri_with_fragment(ptr voidptr, ctx vphp.Context) voidp
     res := recv.with_fragment(arg_0)
     return voidptr(res)
 }
-@[export: 'VSlimPsr7Uri_handlers']
-pub fn vslimpsr7uri_handlers() voidptr {
+@[export: 'vslim_psr7_uri_handlers']
+pub fn vslim_psr7_uri_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimpsr7uri_get_prop),
-        write_handler: voidptr(vslimpsr7uri_set_prop),
-        sync_handler: voidptr(vslimpsr7uri_sync_props),
-        new_raw: voidptr(vslimpsr7uri_new_raw),
-        cleanup_raw: voidptr(vslimpsr7uri_cleanup_raw),
-        free_raw: voidptr(vslimpsr7uri_free_raw)
+        prop_handler: voidptr(vslim_psr7_uri_get_prop),
+        write_handler: voidptr(vslim_psr7_uri_set_prop),
+        sync_handler: voidptr(vslim_psr7_uri_sync_props),
+        new_raw: voidptr(vslim_psr7_uri_new_raw),
+        cleanup_raw: voidptr(vslim_psr7_uri_cleanup_raw),
+        free_raw: voidptr(vslim_psr7_uri_free_raw)
     )
 }
 pub fn VSlimPsr7Uri.php_class_entry() vphp.ZendClassEntry {
@@ -1875,7 +1875,7 @@ pub fn VSlimPsr7Uri.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimPsr7Uri.php_object_handlers() voidptr {
-    return vslimpsr7uri_handlers()
+    return vslim_psr7_uri_handlers()
 }
 
 pub fn VSlimPsr7Uri.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1898,19 +1898,19 @@ pub fn (obj &VSlimPsr7Uri) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr7Uri](obj)
 }
 
-@[export: 'VSlimPsr7Request_new_raw']
-pub fn vslimpsr7request_new_raw() voidptr {
+@[export: 'vslim_psr7_request_new_raw']
+pub fn vslim_psr7_request_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr7Request]()
 }
-@[export: 'VSlimPsr7Request_free_raw']
-pub fn vslimpsr7request_free_raw(ptr voidptr) {
+@[export: 'vslim_psr7_request_free_raw']
+pub fn vslim_psr7_request_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimPsr7Request](ptr)
 }
-@[export: 'VSlimPsr7Request_cleanup_raw']
-pub fn vslimpsr7request_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_psr7_request_cleanup_raw']
+pub fn vslim_psr7_request_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
@@ -1919,8 +1919,8 @@ pub fn vslimpsr7request_cleanup_raw(ptr voidptr) {
         obj.cleanup()
     }
 }
-@[export: 'VSlimPsr7Request_get_prop']
-pub fn vslimpsr7request_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_psr7_request_get_prop']
+pub fn vslim_psr7_request_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -1931,8 +1931,8 @@ pub fn vslimpsr7request_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &
         }
     }
 }
-@[export: 'VSlimPsr7Request_set_prop']
-pub fn vslimpsr7request_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_psr7_request_set_prop']
+pub fn vslim_psr7_request_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -1943,32 +1943,32 @@ pub fn vslimpsr7request_set_prop(ptr voidptr, name_ptr &char, name_len int, valu
         }
     }
 }
-@[export: 'VSlimPsr7Request_sync_props']
-pub fn vslimpsr7request_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_psr7_request_sync_props']
+pub fn vslim_psr7_request_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimPsr7Request(ptr)
         out.add_property_string('method', obj.method)
     }
 }
-@[export: 'vphp_wrap_VSlimPsr7Request_construct']
-pub fn vphp_wrap_vslimpsr7request_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_request_construct']
+pub fn vphp_wrap_vslim_psr7_request_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Request_get_protocol_version']
-pub fn vphp_wrap_vslimpsr7request_get_protocol_version(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_request_get_protocol_version']
+pub fn vphp_wrap_vslim_psr7_request_get_protocol_version(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_protocol_version()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Request_with_protocol_version']
-pub fn vphp_wrap_vslimpsr7request_with_protocol_version(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_request_with_protocol_version']
+pub fn vphp_wrap_vslim_psr7_request_with_protocol_version(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1979,16 +1979,16 @@ pub fn vphp_wrap_vslimpsr7request_with_protocol_version(ptr voidptr, ctx vphp.Co
     res := recv.with_protocol_version(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Request_get_headers']
-pub fn vphp_wrap_vslimpsr7request_get_headers(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_request_get_headers']
+pub fn vphp_wrap_vslim_psr7_request_get_headers(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_headers()
     ctx.return().v[map[string][]string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Request_has_header']
-pub fn vphp_wrap_vslimpsr7request_has_header(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_request_has_header']
+pub fn vphp_wrap_vslim_psr7_request_has_header(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1999,8 +1999,8 @@ pub fn vphp_wrap_vslimpsr7request_has_header(ptr voidptr, ctx vphp.Context)  {
     res := recv.has_header(arg_0)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Request_get_header']
-pub fn vphp_wrap_vslimpsr7request_get_header(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_request_get_header']
+pub fn vphp_wrap_vslim_psr7_request_get_header(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2011,8 +2011,8 @@ pub fn vphp_wrap_vslimpsr7request_get_header(ptr voidptr, ctx vphp.Context)  {
     res := recv.get_header(arg_0)
     ctx.return().v[[]string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Request_get_header_line']
-pub fn vphp_wrap_vslimpsr7request_get_header_line(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_request_get_header_line']
+pub fn vphp_wrap_vslim_psr7_request_get_header_line(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2023,8 +2023,8 @@ pub fn vphp_wrap_vslimpsr7request_get_header_line(ptr voidptr, ctx vphp.Context)
     res := recv.get_header_line(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Request_with_header']
-pub fn vphp_wrap_vslimpsr7request_with_header(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_request_with_header']
+pub fn vphp_wrap_vslim_psr7_request_with_header(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2037,8 +2037,8 @@ pub fn vphp_wrap_vslimpsr7request_with_header(ptr voidptr, ctx vphp.Context) voi
     res := recv.with_header(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Request_with_added_header']
-pub fn vphp_wrap_vslimpsr7request_with_added_header(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_request_with_added_header']
+pub fn vphp_wrap_vslim_psr7_request_with_added_header(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2051,8 +2051,8 @@ pub fn vphp_wrap_vslimpsr7request_with_added_header(ptr voidptr, ctx vphp.Contex
     res := recv.with_added_header(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Request_without_header']
-pub fn vphp_wrap_vslimpsr7request_without_header(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_request_without_header']
+pub fn vphp_wrap_vslim_psr7_request_without_header(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2063,16 +2063,16 @@ pub fn vphp_wrap_vslimpsr7request_without_header(ptr voidptr, ctx vphp.Context) 
     res := recv.without_header(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Request_get_body']
-pub fn vphp_wrap_vslimpsr7request_get_body(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_request_get_body']
+pub fn vphp_wrap_vslim_psr7_request_get_body(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_body()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Request_with_body']
-pub fn vphp_wrap_vslimpsr7request_with_body(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_request_with_body']
+pub fn vphp_wrap_vslim_psr7_request_with_body(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2083,16 +2083,16 @@ pub fn vphp_wrap_vslimpsr7request_with_body(ptr voidptr, ctx vphp.Context) voidp
     res := recv.with_body(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Request_get_request_target']
-pub fn vphp_wrap_vslimpsr7request_get_request_target(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_request_get_request_target']
+pub fn vphp_wrap_vslim_psr7_request_get_request_target(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_request_target()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Request_with_request_target']
-pub fn vphp_wrap_vslimpsr7request_with_request_target(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_request_with_request_target']
+pub fn vphp_wrap_vslim_psr7_request_with_request_target(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2103,16 +2103,16 @@ pub fn vphp_wrap_vslimpsr7request_with_request_target(ptr voidptr, ctx vphp.Cont
     res := recv.with_request_target(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Request_get_method']
-pub fn vphp_wrap_vslimpsr7request_get_method(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_request_get_method']
+pub fn vphp_wrap_vslim_psr7_request_get_method(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_method()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Request_with_method']
-pub fn vphp_wrap_vslimpsr7request_with_method(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_request_with_method']
+pub fn vphp_wrap_vslim_psr7_request_with_method(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2123,16 +2123,16 @@ pub fn vphp_wrap_vslimpsr7request_with_method(ptr voidptr, ctx vphp.Context) voi
     res := recv.with_method(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Request_get_uri']
-pub fn vphp_wrap_vslimpsr7request_get_uri(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_request_get_uri']
+pub fn vphp_wrap_vslim_psr7_request_get_uri(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_uri()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Request_with_uri']
-pub fn vphp_wrap_vslimpsr7request_with_uri(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_request_with_uri']
+pub fn vphp_wrap_vslim_psr7_request_with_uri(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2145,23 +2145,23 @@ pub fn vphp_wrap_vslimpsr7request_with_uri(ptr voidptr, ctx vphp.Context) voidpt
     res := recv.with_uri(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Request_str']
-pub fn vphp_wrap_vslimpsr7request_str(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_request_str']
+pub fn vphp_wrap_vslim_psr7_request_str(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.str()
     ctx.return().v[string](res)
 }
-@[export: 'VSlimPsr7Request_handlers']
-pub fn vslimpsr7request_handlers() voidptr {
+@[export: 'vslim_psr7_request_handlers']
+pub fn vslim_psr7_request_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimpsr7request_get_prop),
-        write_handler: voidptr(vslimpsr7request_set_prop),
-        sync_handler: voidptr(vslimpsr7request_sync_props),
-        new_raw: voidptr(vslimpsr7request_new_raw),
-        cleanup_raw: voidptr(vslimpsr7request_cleanup_raw),
-        free_raw: voidptr(vslimpsr7request_free_raw)
+        prop_handler: voidptr(vslim_psr7_request_get_prop),
+        write_handler: voidptr(vslim_psr7_request_set_prop),
+        sync_handler: voidptr(vslim_psr7_request_sync_props),
+        new_raw: voidptr(vslim_psr7_request_new_raw),
+        cleanup_raw: voidptr(vslim_psr7_request_cleanup_raw),
+        free_raw: voidptr(vslim_psr7_request_free_raw)
     )
 }
 pub fn VSlimPsr7Request.php_class_entry() vphp.ZendClassEntry {
@@ -2169,7 +2169,7 @@ pub fn VSlimPsr7Request.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimPsr7Request.php_object_handlers() voidptr {
-    return vslimpsr7request_handlers()
+    return vslim_psr7_request_handlers()
 }
 
 pub fn VSlimPsr7Request.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -2192,19 +2192,19 @@ pub fn (obj &VSlimPsr7Request) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr7Request](obj)
 }
 
-@[export: 'VSlimPsr7ServerRequest_new_raw']
-pub fn vslimpsr7serverrequest_new_raw() voidptr {
+@[export: 'vslim_psr7_server_request_new_raw']
+pub fn vslim_psr7_server_request_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr7ServerRequest]()
 }
-@[export: 'VSlimPsr7ServerRequest_free_raw']
-pub fn vslimpsr7serverrequest_free_raw(ptr voidptr) {
+@[export: 'vslim_psr7_server_request_free_raw']
+pub fn vslim_psr7_server_request_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimPsr7ServerRequest](ptr)
 }
-@[export: 'VSlimPsr7ServerRequest_cleanup_raw']
-pub fn vslimpsr7serverrequest_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_psr7_server_request_cleanup_raw']
+pub fn vslim_psr7_server_request_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
@@ -2214,8 +2214,8 @@ pub fn vslimpsr7serverrequest_cleanup_raw(ptr voidptr) {
         obj.free()
     }
 }
-@[export: 'VSlimPsr7ServerRequest_get_prop']
-pub fn vslimpsr7serverrequest_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_psr7_server_request_get_prop']
+pub fn vslim_psr7_server_request_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -2226,8 +2226,8 @@ pub fn vslimpsr7serverrequest_get_prop(ptr voidptr, name_ptr &char, name_len int
         }
     }
 }
-@[export: 'VSlimPsr7ServerRequest_set_prop']
-pub fn vslimpsr7serverrequest_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_psr7_server_request_set_prop']
+pub fn vslim_psr7_server_request_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -2238,32 +2238,32 @@ pub fn vslimpsr7serverrequest_set_prop(ptr voidptr, name_ptr &char, name_len int
         }
     }
 }
-@[export: 'VSlimPsr7ServerRequest_sync_props']
-pub fn vslimpsr7serverrequest_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_psr7_server_request_sync_props']
+pub fn vslim_psr7_server_request_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimPsr7ServerRequest(ptr)
         out.add_property_string('method', obj.method)
     }
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_construct']
-pub fn vphp_wrap_vslimpsr7serverrequest_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_server_request_construct']
+pub fn vphp_wrap_vslim_psr7_server_request_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_get_protocol_version']
-pub fn vphp_wrap_vslimpsr7serverrequest_get_protocol_version(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_server_request_get_protocol_version']
+pub fn vphp_wrap_vslim_psr7_server_request_get_protocol_version(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_protocol_version()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_with_protocol_version']
-pub fn vphp_wrap_vslimpsr7serverrequest_with_protocol_version(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_server_request_with_protocol_version']
+pub fn vphp_wrap_vslim_psr7_server_request_with_protocol_version(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2274,16 +2274,16 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_protocol_version(ptr voidptr, ctx v
     res := recv.with_protocol_version(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_get_headers']
-pub fn vphp_wrap_vslimpsr7serverrequest_get_headers(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_server_request_get_headers']
+pub fn vphp_wrap_vslim_psr7_server_request_get_headers(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_headers()
     ctx.return().v[map[string][]string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_has_header']
-pub fn vphp_wrap_vslimpsr7serverrequest_has_header(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_server_request_has_header']
+pub fn vphp_wrap_vslim_psr7_server_request_has_header(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2294,8 +2294,8 @@ pub fn vphp_wrap_vslimpsr7serverrequest_has_header(ptr voidptr, ctx vphp.Context
     res := recv.has_header(arg_0)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_get_header']
-pub fn vphp_wrap_vslimpsr7serverrequest_get_header(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_server_request_get_header']
+pub fn vphp_wrap_vslim_psr7_server_request_get_header(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2306,8 +2306,8 @@ pub fn vphp_wrap_vslimpsr7serverrequest_get_header(ptr voidptr, ctx vphp.Context
     res := recv.get_header(arg_0)
     ctx.return().v[[]string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_get_header_line']
-pub fn vphp_wrap_vslimpsr7serverrequest_get_header_line(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_server_request_get_header_line']
+pub fn vphp_wrap_vslim_psr7_server_request_get_header_line(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2318,8 +2318,8 @@ pub fn vphp_wrap_vslimpsr7serverrequest_get_header_line(ptr voidptr, ctx vphp.Co
     res := recv.get_header_line(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_with_header']
-pub fn vphp_wrap_vslimpsr7serverrequest_with_header(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_server_request_with_header']
+pub fn vphp_wrap_vslim_psr7_server_request_with_header(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2332,8 +2332,8 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_header(ptr voidptr, ctx vphp.Contex
     res := recv.with_header(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_with_added_header']
-pub fn vphp_wrap_vslimpsr7serverrequest_with_added_header(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_server_request_with_added_header']
+pub fn vphp_wrap_vslim_psr7_server_request_with_added_header(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2346,8 +2346,8 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_added_header(ptr voidptr, ctx vphp.
     res := recv.with_added_header(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_without_header']
-pub fn vphp_wrap_vslimpsr7serverrequest_without_header(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_server_request_without_header']
+pub fn vphp_wrap_vslim_psr7_server_request_without_header(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2358,16 +2358,16 @@ pub fn vphp_wrap_vslimpsr7serverrequest_without_header(ptr voidptr, ctx vphp.Con
     res := recv.without_header(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_get_body']
-pub fn vphp_wrap_vslimpsr7serverrequest_get_body(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_server_request_get_body']
+pub fn vphp_wrap_vslim_psr7_server_request_get_body(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_body()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_with_body']
-pub fn vphp_wrap_vslimpsr7serverrequest_with_body(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_server_request_with_body']
+pub fn vphp_wrap_vslim_psr7_server_request_with_body(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2378,16 +2378,16 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_body(ptr voidptr, ctx vphp.Context)
     res := recv.with_body(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_get_request_target']
-pub fn vphp_wrap_vslimpsr7serverrequest_get_request_target(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_server_request_get_request_target']
+pub fn vphp_wrap_vslim_psr7_server_request_get_request_target(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_request_target()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_with_request_target']
-pub fn vphp_wrap_vslimpsr7serverrequest_with_request_target(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_server_request_with_request_target']
+pub fn vphp_wrap_vslim_psr7_server_request_with_request_target(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2398,16 +2398,16 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_request_target(ptr voidptr, ctx vph
     res := recv.with_request_target(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_get_method']
-pub fn vphp_wrap_vslimpsr7serverrequest_get_method(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_server_request_get_method']
+pub fn vphp_wrap_vslim_psr7_server_request_get_method(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_method()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_with_method']
-pub fn vphp_wrap_vslimpsr7serverrequest_with_method(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_server_request_with_method']
+pub fn vphp_wrap_vslim_psr7_server_request_with_method(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2418,16 +2418,16 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_method(ptr voidptr, ctx vphp.Contex
     res := recv.with_method(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_get_uri']
-pub fn vphp_wrap_vslimpsr7serverrequest_get_uri(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_server_request_get_uri']
+pub fn vphp_wrap_vslim_psr7_server_request_get_uri(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_uri()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_with_uri']
-pub fn vphp_wrap_vslimpsr7serverrequest_with_uri(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_server_request_with_uri']
+pub fn vphp_wrap_vslim_psr7_server_request_with_uri(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2440,24 +2440,24 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_uri(ptr voidptr, ctx vphp.Context) 
     res := recv.with_uri(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_get_server_params']
-pub fn vphp_wrap_vslimpsr7serverrequest_get_server_params(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_server_request_get_server_params']
+pub fn vphp_wrap_vslim_psr7_server_request_get_server_params(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_server_params()
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_get_cookie_params']
-pub fn vphp_wrap_vslimpsr7serverrequest_get_cookie_params(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_server_request_get_cookie_params']
+pub fn vphp_wrap_vslim_psr7_server_request_get_cookie_params(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_cookie_params()
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_with_cookie_params']
-pub fn vphp_wrap_vslimpsr7serverrequest_with_cookie_params(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_server_request_with_cookie_params']
+pub fn vphp_wrap_vslim_psr7_server_request_with_cookie_params(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2471,16 +2471,16 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_cookie_params(ptr voidptr, ctx vphp
     res := recv.with_cookie_params(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_get_query_params']
-pub fn vphp_wrap_vslimpsr7serverrequest_get_query_params(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_server_request_get_query_params']
+pub fn vphp_wrap_vslim_psr7_server_request_get_query_params(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_query_params()
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_with_query_params']
-pub fn vphp_wrap_vslimpsr7serverrequest_with_query_params(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_server_request_with_query_params']
+pub fn vphp_wrap_vslim_psr7_server_request_with_query_params(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2494,16 +2494,16 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_query_params(ptr voidptr, ctx vphp.
     res := recv.with_query_params(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_get_uploaded_files']
-pub fn vphp_wrap_vslimpsr7serverrequest_get_uploaded_files(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_server_request_get_uploaded_files']
+pub fn vphp_wrap_vslim_psr7_server_request_get_uploaded_files(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_uploaded_files()
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_with_uploaded_files']
-pub fn vphp_wrap_vslimpsr7serverrequest_with_uploaded_files(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_server_request_with_uploaded_files']
+pub fn vphp_wrap_vslim_psr7_server_request_with_uploaded_files(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2517,16 +2517,16 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_uploaded_files(ptr voidptr, ctx vph
     res := recv.with_uploaded_files(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_get_parsed_body']
-pub fn vphp_wrap_vslimpsr7serverrequest_get_parsed_body(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_server_request_get_parsed_body']
+pub fn vphp_wrap_vslim_psr7_server_request_get_parsed_body(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_parsed_body()
     ctx.return().v[vphp.PhpValue](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_with_parsed_body']
-pub fn vphp_wrap_vslimpsr7serverrequest_with_parsed_body(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_server_request_with_parsed_body']
+pub fn vphp_wrap_vslim_psr7_server_request_with_parsed_body(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2537,16 +2537,16 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_parsed_body(ptr voidptr, ctx vphp.C
     res := recv.with_parsed_body(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_get_attributes']
-pub fn vphp_wrap_vslimpsr7serverrequest_get_attributes(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_server_request_get_attributes']
+pub fn vphp_wrap_vslim_psr7_server_request_get_attributes(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_attributes()
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_get_attribute']
-pub fn vphp_wrap_vslimpsr7serverrequest_get_attribute(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_server_request_get_attribute']
+pub fn vphp_wrap_vslim_psr7_server_request_get_attribute(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2559,8 +2559,8 @@ pub fn vphp_wrap_vslimpsr7serverrequest_get_attribute(ptr voidptr, ctx vphp.Cont
     res := recv.get_attribute(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_with_attribute']
-pub fn vphp_wrap_vslimpsr7serverrequest_with_attribute(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_server_request_with_attribute']
+pub fn vphp_wrap_vslim_psr7_server_request_with_attribute(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2573,8 +2573,8 @@ pub fn vphp_wrap_vslimpsr7serverrequest_with_attribute(ptr voidptr, ctx vphp.Con
     res := recv.with_attribute(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_without_attribute']
-pub fn vphp_wrap_vslimpsr7serverrequest_without_attribute(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_server_request_without_attribute']
+pub fn vphp_wrap_vslim_psr7_server_request_without_attribute(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2585,23 +2585,23 @@ pub fn vphp_wrap_vslimpsr7serverrequest_without_attribute(ptr voidptr, ctx vphp.
     res := recv.without_attribute(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7ServerRequest_str']
-pub fn vphp_wrap_vslimpsr7serverrequest_str(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_server_request_str']
+pub fn vphp_wrap_vslim_psr7_server_request_str(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.str()
     ctx.return().v[string](res)
 }
-@[export: 'VSlimPsr7ServerRequest_handlers']
-pub fn vslimpsr7serverrequest_handlers() voidptr {
+@[export: 'vslim_psr7_server_request_handlers']
+pub fn vslim_psr7_server_request_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimpsr7serverrequest_get_prop),
-        write_handler: voidptr(vslimpsr7serverrequest_set_prop),
-        sync_handler: voidptr(vslimpsr7serverrequest_sync_props),
-        new_raw: voidptr(vslimpsr7serverrequest_new_raw),
-        cleanup_raw: voidptr(vslimpsr7serverrequest_cleanup_raw),
-        free_raw: voidptr(vslimpsr7serverrequest_free_raw)
+        prop_handler: voidptr(vslim_psr7_server_request_get_prop),
+        write_handler: voidptr(vslim_psr7_server_request_set_prop),
+        sync_handler: voidptr(vslim_psr7_server_request_sync_props),
+        new_raw: voidptr(vslim_psr7_server_request_new_raw),
+        cleanup_raw: voidptr(vslim_psr7_server_request_cleanup_raw),
+        free_raw: voidptr(vslim_psr7_server_request_free_raw)
     )
 }
 pub fn VSlimPsr7ServerRequest.php_class_entry() vphp.ZendClassEntry {
@@ -2609,7 +2609,7 @@ pub fn VSlimPsr7ServerRequest.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimPsr7ServerRequest.php_object_handlers() voidptr {
-    return vslimpsr7serverrequest_handlers()
+    return vslim_psr7_server_request_handlers()
 }
 
 pub fn VSlimPsr7ServerRequest.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -2632,52 +2632,52 @@ pub fn (obj &VSlimPsr7ServerRequest) bind_owned_php_object_value() vphp.PhpValue
     return vphp.bind_owned_object_value[VSlimPsr7ServerRequest](obj)
 }
 
-@[export: 'VSlimPsr17ResponseFactory_new_raw']
-pub fn vslimpsr17responsefactory_new_raw() voidptr {
+@[export: 'vslim_psr17_response_factory_new_raw']
+pub fn vslim_psr17_response_factory_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr17ResponseFactory]()
 }
-@[export: 'VSlimPsr17ResponseFactory_free_raw']
-pub fn vslimpsr17responsefactory_free_raw(ptr voidptr) {
+@[export: 'vslim_psr17_response_factory_free_raw']
+pub fn vslim_psr17_response_factory_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimPsr17ResponseFactory](ptr)
 }
-@[export: 'VSlimPsr17ResponseFactory_cleanup_raw']
-pub fn vslimpsr17responsefactory_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_psr17_response_factory_cleanup_raw']
+pub fn vslim_psr17_response_factory_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimPsr17ResponseFactory_get_prop']
-pub fn vslimpsr17responsefactory_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_psr17_response_factory_get_prop']
+pub fn vslim_psr17_response_factory_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimPsr17ResponseFactory_set_prop']
-pub fn vslimpsr17responsefactory_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_psr17_response_factory_set_prop']
+pub fn vslim_psr17_response_factory_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimPsr17ResponseFactory_sync_props']
-pub fn vslimpsr17responsefactory_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_psr17_response_factory_sync_props']
+pub fn vslim_psr17_response_factory_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimPsr17ResponseFactory_construct']
-pub fn vphp_wrap_vslimpsr17responsefactory_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr17_response_factory_construct']
+pub fn vphp_wrap_vslim_psr17_response_factory_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr17ResponseFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr17ResponseFactory_create_response']
-pub fn vphp_wrap_vslimpsr17responsefactory_create_response(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr17_response_factory_create_response']
+pub fn vphp_wrap_vslim_psr17_response_factory_create_response(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr17ResponseFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2694,15 +2694,15 @@ pub fn vphp_wrap_vslimpsr17responsefactory_create_response(ptr voidptr, ctx vphp
     res := recv.create_response(arg_0_params)
     return voidptr(res)
 }
-@[export: 'VSlimPsr17ResponseFactory_handlers']
-pub fn vslimpsr17responsefactory_handlers() voidptr {
+@[export: 'vslim_psr17_response_factory_handlers']
+pub fn vslim_psr17_response_factory_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimpsr17responsefactory_get_prop),
-        write_handler: voidptr(vslimpsr17responsefactory_set_prop),
-        sync_handler: voidptr(vslimpsr17responsefactory_sync_props),
-        new_raw: voidptr(vslimpsr17responsefactory_new_raw),
-        cleanup_raw: voidptr(vslimpsr17responsefactory_cleanup_raw),
-        free_raw: voidptr(vslimpsr17responsefactory_free_raw)
+        prop_handler: voidptr(vslim_psr17_response_factory_get_prop),
+        write_handler: voidptr(vslim_psr17_response_factory_set_prop),
+        sync_handler: voidptr(vslim_psr17_response_factory_sync_props),
+        new_raw: voidptr(vslim_psr17_response_factory_new_raw),
+        cleanup_raw: voidptr(vslim_psr17_response_factory_cleanup_raw),
+        free_raw: voidptr(vslim_psr17_response_factory_free_raw)
     )
 }
 pub fn VSlimPsr17ResponseFactory.php_class_entry() vphp.ZendClassEntry {
@@ -2710,7 +2710,7 @@ pub fn VSlimPsr17ResponseFactory.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimPsr17ResponseFactory.php_object_handlers() voidptr {
-    return vslimpsr17responsefactory_handlers()
+    return vslim_psr17_response_factory_handlers()
 }
 
 pub fn VSlimPsr17ResponseFactory.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -2733,52 +2733,52 @@ pub fn (obj &VSlimPsr17ResponseFactory) bind_owned_php_object_value() vphp.PhpVa
     return vphp.bind_owned_object_value[VSlimPsr17ResponseFactory](obj)
 }
 
-@[export: 'VSlimPsr17RequestFactory_new_raw']
-pub fn vslimpsr17requestfactory_new_raw() voidptr {
+@[export: 'vslim_psr17_request_factory_new_raw']
+pub fn vslim_psr17_request_factory_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr17RequestFactory]()
 }
-@[export: 'VSlimPsr17RequestFactory_free_raw']
-pub fn vslimpsr17requestfactory_free_raw(ptr voidptr) {
+@[export: 'vslim_psr17_request_factory_free_raw']
+pub fn vslim_psr17_request_factory_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimPsr17RequestFactory](ptr)
 }
-@[export: 'VSlimPsr17RequestFactory_cleanup_raw']
-pub fn vslimpsr17requestfactory_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_psr17_request_factory_cleanup_raw']
+pub fn vslim_psr17_request_factory_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimPsr17RequestFactory_get_prop']
-pub fn vslimpsr17requestfactory_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_psr17_request_factory_get_prop']
+pub fn vslim_psr17_request_factory_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimPsr17RequestFactory_set_prop']
-pub fn vslimpsr17requestfactory_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_psr17_request_factory_set_prop']
+pub fn vslim_psr17_request_factory_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimPsr17RequestFactory_sync_props']
-pub fn vslimpsr17requestfactory_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_psr17_request_factory_sync_props']
+pub fn vslim_psr17_request_factory_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimPsr17RequestFactory_construct']
-pub fn vphp_wrap_vslimpsr17requestfactory_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr17_request_factory_construct']
+pub fn vphp_wrap_vslim_psr17_request_factory_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr17RequestFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr17RequestFactory_create_request']
-pub fn vphp_wrap_vslimpsr17requestfactory_create_request(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr17_request_factory_create_request']
+pub fn vphp_wrap_vslim_psr17_request_factory_create_request(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr17RequestFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2791,15 +2791,15 @@ pub fn vphp_wrap_vslimpsr17requestfactory_create_request(ptr voidptr, ctx vphp.C
     res := recv.create_request(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'VSlimPsr17RequestFactory_handlers']
-pub fn vslimpsr17requestfactory_handlers() voidptr {
+@[export: 'vslim_psr17_request_factory_handlers']
+pub fn vslim_psr17_request_factory_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimpsr17requestfactory_get_prop),
-        write_handler: voidptr(vslimpsr17requestfactory_set_prop),
-        sync_handler: voidptr(vslimpsr17requestfactory_sync_props),
-        new_raw: voidptr(vslimpsr17requestfactory_new_raw),
-        cleanup_raw: voidptr(vslimpsr17requestfactory_cleanup_raw),
-        free_raw: voidptr(vslimpsr17requestfactory_free_raw)
+        prop_handler: voidptr(vslim_psr17_request_factory_get_prop),
+        write_handler: voidptr(vslim_psr17_request_factory_set_prop),
+        sync_handler: voidptr(vslim_psr17_request_factory_sync_props),
+        new_raw: voidptr(vslim_psr17_request_factory_new_raw),
+        cleanup_raw: voidptr(vslim_psr17_request_factory_cleanup_raw),
+        free_raw: voidptr(vslim_psr17_request_factory_free_raw)
     )
 }
 pub fn VSlimPsr17RequestFactory.php_class_entry() vphp.ZendClassEntry {
@@ -2807,7 +2807,7 @@ pub fn VSlimPsr17RequestFactory.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimPsr17RequestFactory.php_object_handlers() voidptr {
-    return vslimpsr17requestfactory_handlers()
+    return vslim_psr17_request_factory_handlers()
 }
 
 pub fn VSlimPsr17RequestFactory.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -2830,52 +2830,52 @@ pub fn (obj &VSlimPsr17RequestFactory) bind_owned_php_object_value() vphp.PhpVal
     return vphp.bind_owned_object_value[VSlimPsr17RequestFactory](obj)
 }
 
-@[export: 'VSlimPsr17StreamFactory_new_raw']
-pub fn vslimpsr17streamfactory_new_raw() voidptr {
+@[export: 'vslim_psr17_stream_factory_new_raw']
+pub fn vslim_psr17_stream_factory_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr17StreamFactory]()
 }
-@[export: 'VSlimPsr17StreamFactory_free_raw']
-pub fn vslimpsr17streamfactory_free_raw(ptr voidptr) {
+@[export: 'vslim_psr17_stream_factory_free_raw']
+pub fn vslim_psr17_stream_factory_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimPsr17StreamFactory](ptr)
 }
-@[export: 'VSlimPsr17StreamFactory_cleanup_raw']
-pub fn vslimpsr17streamfactory_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_psr17_stream_factory_cleanup_raw']
+pub fn vslim_psr17_stream_factory_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimPsr17StreamFactory_get_prop']
-pub fn vslimpsr17streamfactory_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_psr17_stream_factory_get_prop']
+pub fn vslim_psr17_stream_factory_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimPsr17StreamFactory_set_prop']
-pub fn vslimpsr17streamfactory_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_psr17_stream_factory_set_prop']
+pub fn vslim_psr17_stream_factory_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimPsr17StreamFactory_sync_props']
-pub fn vslimpsr17streamfactory_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_psr17_stream_factory_sync_props']
+pub fn vslim_psr17_stream_factory_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimPsr17StreamFactory_construct']
-pub fn vphp_wrap_vslimpsr17streamfactory_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr17_stream_factory_construct']
+pub fn vphp_wrap_vslim_psr17_stream_factory_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr17StreamFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr17StreamFactory_create_stream']
-pub fn vphp_wrap_vslimpsr17streamfactory_create_stream(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr17_stream_factory_create_stream']
+pub fn vphp_wrap_vslim_psr17_stream_factory_create_stream(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr17StreamFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2889,8 +2889,8 @@ pub fn vphp_wrap_vslimpsr17streamfactory_create_stream(ptr voidptr, ctx vphp.Con
     res := recv.create_stream(arg_0_params)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr17StreamFactory_create_stream_from_file']
-pub fn vphp_wrap_vslimpsr17streamfactory_create_stream_from_file(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr17_stream_factory_create_stream_from_file']
+pub fn vphp_wrap_vslim_psr17_stream_factory_create_stream_from_file(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr17StreamFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2906,8 +2906,8 @@ pub fn vphp_wrap_vslimpsr17streamfactory_create_stream_from_file(ptr voidptr, ct
     res := recv.create_stream_from_file(arg_0, arg_1_params)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr17StreamFactory_create_stream_from_resource']
-pub fn vphp_wrap_vslimpsr17streamfactory_create_stream_from_resource(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr17_stream_factory_create_stream_from_resource']
+pub fn vphp_wrap_vslim_psr17_stream_factory_create_stream_from_resource(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr17StreamFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2921,15 +2921,15 @@ pub fn vphp_wrap_vslimpsr17streamfactory_create_stream_from_resource(ptr voidptr
     res := recv.create_stream_from_resource(arg_0)
     return voidptr(res)
 }
-@[export: 'VSlimPsr17StreamFactory_handlers']
-pub fn vslimpsr17streamfactory_handlers() voidptr {
+@[export: 'vslim_psr17_stream_factory_handlers']
+pub fn vslim_psr17_stream_factory_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimpsr17streamfactory_get_prop),
-        write_handler: voidptr(vslimpsr17streamfactory_set_prop),
-        sync_handler: voidptr(vslimpsr17streamfactory_sync_props),
-        new_raw: voidptr(vslimpsr17streamfactory_new_raw),
-        cleanup_raw: voidptr(vslimpsr17streamfactory_cleanup_raw),
-        free_raw: voidptr(vslimpsr17streamfactory_free_raw)
+        prop_handler: voidptr(vslim_psr17_stream_factory_get_prop),
+        write_handler: voidptr(vslim_psr17_stream_factory_set_prop),
+        sync_handler: voidptr(vslim_psr17_stream_factory_sync_props),
+        new_raw: voidptr(vslim_psr17_stream_factory_new_raw),
+        cleanup_raw: voidptr(vslim_psr17_stream_factory_cleanup_raw),
+        free_raw: voidptr(vslim_psr17_stream_factory_free_raw)
     )
 }
 pub fn VSlimPsr17StreamFactory.php_class_entry() vphp.ZendClassEntry {
@@ -2937,7 +2937,7 @@ pub fn VSlimPsr17StreamFactory.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimPsr17StreamFactory.php_object_handlers() voidptr {
-    return vslimpsr17streamfactory_handlers()
+    return vslim_psr17_stream_factory_handlers()
 }
 
 pub fn VSlimPsr17StreamFactory.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -2960,52 +2960,52 @@ pub fn (obj &VSlimPsr17StreamFactory) bind_owned_php_object_value() vphp.PhpValu
     return vphp.bind_owned_object_value[VSlimPsr17StreamFactory](obj)
 }
 
-@[export: 'VSlimPsr17UploadedFileFactory_new_raw']
-pub fn vslimpsr17uploadedfilefactory_new_raw() voidptr {
+@[export: 'vslim_psr17_uploaded_file_factory_new_raw']
+pub fn vslim_psr17_uploaded_file_factory_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr17UploadedFileFactory]()
 }
-@[export: 'VSlimPsr17UploadedFileFactory_free_raw']
-pub fn vslimpsr17uploadedfilefactory_free_raw(ptr voidptr) {
+@[export: 'vslim_psr17_uploaded_file_factory_free_raw']
+pub fn vslim_psr17_uploaded_file_factory_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimPsr17UploadedFileFactory](ptr)
 }
-@[export: 'VSlimPsr17UploadedFileFactory_cleanup_raw']
-pub fn vslimpsr17uploadedfilefactory_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_psr17_uploaded_file_factory_cleanup_raw']
+pub fn vslim_psr17_uploaded_file_factory_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimPsr17UploadedFileFactory_get_prop']
-pub fn vslimpsr17uploadedfilefactory_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_psr17_uploaded_file_factory_get_prop']
+pub fn vslim_psr17_uploaded_file_factory_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimPsr17UploadedFileFactory_set_prop']
-pub fn vslimpsr17uploadedfilefactory_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_psr17_uploaded_file_factory_set_prop']
+pub fn vslim_psr17_uploaded_file_factory_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimPsr17UploadedFileFactory_sync_props']
-pub fn vslimpsr17uploadedfilefactory_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_psr17_uploaded_file_factory_sync_props']
+pub fn vslim_psr17_uploaded_file_factory_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimPsr17UploadedFileFactory_construct']
-pub fn vphp_wrap_vslimpsr17uploadedfilefactory_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr17_uploaded_file_factory_construct']
+pub fn vphp_wrap_vslim_psr17_uploaded_file_factory_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr17UploadedFileFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr17UploadedFileFactory_create_uploaded_file']
-pub fn vphp_wrap_vslimpsr17uploadedfilefactory_create_uploaded_file(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr17_uploaded_file_factory_create_uploaded_file']
+pub fn vphp_wrap_vslim_psr17_uploaded_file_factory_create_uploaded_file(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr17UploadedFileFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -3033,15 +3033,15 @@ pub fn vphp_wrap_vslimpsr17uploadedfilefactory_create_uploaded_file(ptr voidptr,
     res := recv.create_uploaded_file(arg_0, arg_1_params)
     return voidptr(res)
 }
-@[export: 'VSlimPsr17UploadedFileFactory_handlers']
-pub fn vslimpsr17uploadedfilefactory_handlers() voidptr {
+@[export: 'vslim_psr17_uploaded_file_factory_handlers']
+pub fn vslim_psr17_uploaded_file_factory_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimpsr17uploadedfilefactory_get_prop),
-        write_handler: voidptr(vslimpsr17uploadedfilefactory_set_prop),
-        sync_handler: voidptr(vslimpsr17uploadedfilefactory_sync_props),
-        new_raw: voidptr(vslimpsr17uploadedfilefactory_new_raw),
-        cleanup_raw: voidptr(vslimpsr17uploadedfilefactory_cleanup_raw),
-        free_raw: voidptr(vslimpsr17uploadedfilefactory_free_raw)
+        prop_handler: voidptr(vslim_psr17_uploaded_file_factory_get_prop),
+        write_handler: voidptr(vslim_psr17_uploaded_file_factory_set_prop),
+        sync_handler: voidptr(vslim_psr17_uploaded_file_factory_sync_props),
+        new_raw: voidptr(vslim_psr17_uploaded_file_factory_new_raw),
+        cleanup_raw: voidptr(vslim_psr17_uploaded_file_factory_cleanup_raw),
+        free_raw: voidptr(vslim_psr17_uploaded_file_factory_free_raw)
     )
 }
 pub fn VSlimPsr17UploadedFileFactory.php_class_entry() vphp.ZendClassEntry {
@@ -3049,7 +3049,7 @@ pub fn VSlimPsr17UploadedFileFactory.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimPsr17UploadedFileFactory.php_object_handlers() voidptr {
-    return vslimpsr17uploadedfilefactory_handlers()
+    return vslim_psr17_uploaded_file_factory_handlers()
 }
 
 pub fn VSlimPsr17UploadedFileFactory.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -3072,52 +3072,52 @@ pub fn (obj &VSlimPsr17UploadedFileFactory) bind_owned_php_object_value() vphp.P
     return vphp.bind_owned_object_value[VSlimPsr17UploadedFileFactory](obj)
 }
 
-@[export: 'VSlimPsr17UriFactory_new_raw']
-pub fn vslimpsr17urifactory_new_raw() voidptr {
+@[export: 'vslim_psr17_uri_factory_new_raw']
+pub fn vslim_psr17_uri_factory_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr17UriFactory]()
 }
-@[export: 'VSlimPsr17UriFactory_free_raw']
-pub fn vslimpsr17urifactory_free_raw(ptr voidptr) {
+@[export: 'vslim_psr17_uri_factory_free_raw']
+pub fn vslim_psr17_uri_factory_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimPsr17UriFactory](ptr)
 }
-@[export: 'VSlimPsr17UriFactory_cleanup_raw']
-pub fn vslimpsr17urifactory_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_psr17_uri_factory_cleanup_raw']
+pub fn vslim_psr17_uri_factory_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimPsr17UriFactory_get_prop']
-pub fn vslimpsr17urifactory_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_psr17_uri_factory_get_prop']
+pub fn vslim_psr17_uri_factory_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimPsr17UriFactory_set_prop']
-pub fn vslimpsr17urifactory_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_psr17_uri_factory_set_prop']
+pub fn vslim_psr17_uri_factory_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimPsr17UriFactory_sync_props']
-pub fn vslimpsr17urifactory_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_psr17_uri_factory_sync_props']
+pub fn vslim_psr17_uri_factory_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimPsr17UriFactory_construct']
-pub fn vphp_wrap_vslimpsr17urifactory_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr17_uri_factory_construct']
+pub fn vphp_wrap_vslim_psr17_uri_factory_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr17UriFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr17UriFactory_create_uri']
-pub fn vphp_wrap_vslimpsr17urifactory_create_uri(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr17_uri_factory_create_uri']
+pub fn vphp_wrap_vslim_psr17_uri_factory_create_uri(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr17UriFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -3131,15 +3131,15 @@ pub fn vphp_wrap_vslimpsr17urifactory_create_uri(ptr voidptr, ctx vphp.Context) 
     res := recv.create_uri(arg_0_params)
     return voidptr(res)
 }
-@[export: 'VSlimPsr17UriFactory_handlers']
-pub fn vslimpsr17urifactory_handlers() voidptr {
+@[export: 'vslim_psr17_uri_factory_handlers']
+pub fn vslim_psr17_uri_factory_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimpsr17urifactory_get_prop),
-        write_handler: voidptr(vslimpsr17urifactory_set_prop),
-        sync_handler: voidptr(vslimpsr17urifactory_sync_props),
-        new_raw: voidptr(vslimpsr17urifactory_new_raw),
-        cleanup_raw: voidptr(vslimpsr17urifactory_cleanup_raw),
-        free_raw: voidptr(vslimpsr17urifactory_free_raw)
+        prop_handler: voidptr(vslim_psr17_uri_factory_get_prop),
+        write_handler: voidptr(vslim_psr17_uri_factory_set_prop),
+        sync_handler: voidptr(vslim_psr17_uri_factory_sync_props),
+        new_raw: voidptr(vslim_psr17_uri_factory_new_raw),
+        cleanup_raw: voidptr(vslim_psr17_uri_factory_cleanup_raw),
+        free_raw: voidptr(vslim_psr17_uri_factory_free_raw)
     )
 }
 pub fn VSlimPsr17UriFactory.php_class_entry() vphp.ZendClassEntry {
@@ -3147,7 +3147,7 @@ pub fn VSlimPsr17UriFactory.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimPsr17UriFactory.php_object_handlers() voidptr {
-    return vslimpsr17urifactory_handlers()
+    return vslim_psr17_uri_factory_handlers()
 }
 
 pub fn VSlimPsr17UriFactory.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -3170,52 +3170,52 @@ pub fn (obj &VSlimPsr17UriFactory) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr17UriFactory](obj)
 }
 
-@[export: 'VSlimPsr17ServerRequestFactory_new_raw']
-pub fn vslimpsr17serverrequestfactory_new_raw() voidptr {
+@[export: 'vslim_psr17_server_request_factory_new_raw']
+pub fn vslim_psr17_server_request_factory_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr17ServerRequestFactory]()
 }
-@[export: 'VSlimPsr17ServerRequestFactory_free_raw']
-pub fn vslimpsr17serverrequestfactory_free_raw(ptr voidptr) {
+@[export: 'vslim_psr17_server_request_factory_free_raw']
+pub fn vslim_psr17_server_request_factory_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimPsr17ServerRequestFactory](ptr)
 }
-@[export: 'VSlimPsr17ServerRequestFactory_cleanup_raw']
-pub fn vslimpsr17serverrequestfactory_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_psr17_server_request_factory_cleanup_raw']
+pub fn vslim_psr17_server_request_factory_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimPsr17ServerRequestFactory_get_prop']
-pub fn vslimpsr17serverrequestfactory_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_psr17_server_request_factory_get_prop']
+pub fn vslim_psr17_server_request_factory_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimPsr17ServerRequestFactory_set_prop']
-pub fn vslimpsr17serverrequestfactory_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_psr17_server_request_factory_set_prop']
+pub fn vslim_psr17_server_request_factory_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimPsr17ServerRequestFactory_sync_props']
-pub fn vslimpsr17serverrequestfactory_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_psr17_server_request_factory_sync_props']
+pub fn vslim_psr17_server_request_factory_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimPsr17ServerRequestFactory_construct']
-pub fn vphp_wrap_vslimpsr17serverrequestfactory_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr17_server_request_factory_construct']
+pub fn vphp_wrap_vslim_psr17_server_request_factory_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr17ServerRequestFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr17ServerRequestFactory_create_server_request']
-pub fn vphp_wrap_vslimpsr17serverrequestfactory_create_server_request(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr17_server_request_factory_create_server_request']
+pub fn vphp_wrap_vslim_psr17_server_request_factory_create_server_request(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr17ServerRequestFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -3240,15 +3240,15 @@ pub fn vphp_wrap_vslimpsr17serverrequestfactory_create_server_request(ptr voidpt
     res := recv.create_server_request(arg_0, arg_1, arg_2_params)
     return voidptr(res)
 }
-@[export: 'VSlimPsr17ServerRequestFactory_handlers']
-pub fn vslimpsr17serverrequestfactory_handlers() voidptr {
+@[export: 'vslim_psr17_server_request_factory_handlers']
+pub fn vslim_psr17_server_request_factory_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimpsr17serverrequestfactory_get_prop),
-        write_handler: voidptr(vslimpsr17serverrequestfactory_set_prop),
-        sync_handler: voidptr(vslimpsr17serverrequestfactory_sync_props),
-        new_raw: voidptr(vslimpsr17serverrequestfactory_new_raw),
-        cleanup_raw: voidptr(vslimpsr17serverrequestfactory_cleanup_raw),
-        free_raw: voidptr(vslimpsr17serverrequestfactory_free_raw)
+        prop_handler: voidptr(vslim_psr17_server_request_factory_get_prop),
+        write_handler: voidptr(vslim_psr17_server_request_factory_set_prop),
+        sync_handler: voidptr(vslim_psr17_server_request_factory_sync_props),
+        new_raw: voidptr(vslim_psr17_server_request_factory_new_raw),
+        cleanup_raw: voidptr(vslim_psr17_server_request_factory_cleanup_raw),
+        free_raw: voidptr(vslim_psr17_server_request_factory_free_raw)
     )
 }
 pub fn VSlimPsr17ServerRequestFactory.php_class_entry() vphp.ZendClassEntry {
@@ -3256,7 +3256,7 @@ pub fn VSlimPsr17ServerRequestFactory.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimPsr17ServerRequestFactory.php_object_handlers() voidptr {
-    return vslimpsr17serverrequestfactory_handlers()
+    return vslim_psr17_server_request_factory_handlers()
 }
 
 pub fn VSlimPsr17ServerRequestFactory.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -3279,63 +3279,63 @@ pub fn (obj &VSlimPsr17ServerRequestFactory) bind_owned_php_object_value() vphp.
     return vphp.bind_owned_object_value[VSlimPsr17ServerRequestFactory](obj)
 }
 
-@[export: 'VSlimPsr18ClientException_new_raw']
-pub fn vslimpsr18clientexception_new_raw() voidptr {
+@[export: 'vslim_psr18_client_exception_new_raw']
+pub fn vslim_psr18_client_exception_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr18ClientException]()
 }
-@[export: 'VSlimPsr18ClientException_free_raw']
-pub fn vslimpsr18clientexception_free_raw(ptr voidptr) {
+@[export: 'vslim_psr18_client_exception_free_raw']
+pub fn vslim_psr18_client_exception_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimPsr18ClientException](ptr)
 }
-@[export: 'VSlimPsr18ClientException_cleanup_raw']
-pub fn vslimpsr18clientexception_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_psr18_client_exception_cleanup_raw']
+pub fn vslim_psr18_client_exception_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-fn vslimpsr18clientexception_load_from_php(php_obj vphp.ZendObject) VSlimPsr18ClientException {
+fn vslim_psr18_client_exception_load_from_php(php_obj vphp.ZendObject) VSlimPsr18ClientException {
     mut recv := VSlimPsr18ClientException{}
     if !php_obj.is_valid() {
         return recv
     }
     return recv
 }
-fn vslimpsr18clientexception_sync_to_php(php_obj vphp.ZendObject, recv VSlimPsr18ClientException) {
+fn vslim_psr18_client_exception_sync_to_php(php_obj vphp.ZendObject, recv VSlimPsr18ClientException) {
     if !php_obj.is_valid() {
         return
     }
 }
-@[export: 'VSlimPsr18ClientException_get_prop']
-pub fn vslimpsr18clientexception_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_psr18_client_exception_get_prop']
+pub fn vslim_psr18_client_exception_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimPsr18ClientException_set_prop']
-pub fn vslimpsr18clientexception_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_psr18_client_exception_set_prop']
+pub fn vslim_psr18_client_exception_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimPsr18ClientException_sync_props']
-pub fn vslimpsr18clientexception_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_psr18_client_exception_sync_props']
+pub fn vslim_psr18_client_exception_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'VSlimPsr18ClientException_handlers']
-pub fn vslimpsr18clientexception_handlers() voidptr {
+@[export: 'vslim_psr18_client_exception_handlers']
+pub fn vslim_psr18_client_exception_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimpsr18clientexception_get_prop),
-        write_handler: voidptr(vslimpsr18clientexception_set_prop),
-        sync_handler: voidptr(vslimpsr18clientexception_sync_props),
-        new_raw: voidptr(vslimpsr18clientexception_new_raw),
-        cleanup_raw: voidptr(vslimpsr18clientexception_cleanup_raw),
-        free_raw: voidptr(vslimpsr18clientexception_free_raw)
+        prop_handler: voidptr(vslim_psr18_client_exception_get_prop),
+        write_handler: voidptr(vslim_psr18_client_exception_set_prop),
+        sync_handler: voidptr(vslim_psr18_client_exception_sync_props),
+        new_raw: voidptr(vslim_psr18_client_exception_new_raw),
+        cleanup_raw: voidptr(vslim_psr18_client_exception_cleanup_raw),
+        free_raw: voidptr(vslim_psr18_client_exception_free_raw)
     )
 }
 pub fn VSlimPsr18ClientException.php_class_entry() vphp.ZendClassEntry {
@@ -3343,7 +3343,7 @@ pub fn VSlimPsr18ClientException.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimPsr18ClientException.php_object_handlers() voidptr {
-    return vslimpsr18clientexception_handlers()
+    return vslim_psr18_client_exception_handlers()
 }
 
 pub fn VSlimPsr18ClientException.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -3366,58 +3366,58 @@ pub fn (obj &VSlimPsr18ClientException) bind_owned_php_object_value() vphp.PhpVa
     return vphp.bind_owned_object_value[VSlimPsr18ClientException](obj)
 }
 
-@[export: 'VSlimPsr18RequestException_new_raw']
-pub fn vslimpsr18requestexception_new_raw() voidptr {
+@[export: 'vslim_psr18_request_exception_new_raw']
+pub fn vslim_psr18_request_exception_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr18RequestException]()
 }
-@[export: 'VSlimPsr18RequestException_free_raw']
-pub fn vslimpsr18requestexception_free_raw(ptr voidptr) {
+@[export: 'vslim_psr18_request_exception_free_raw']
+pub fn vslim_psr18_request_exception_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimPsr18RequestException](ptr)
 }
-@[export: 'VSlimPsr18RequestException_cleanup_raw']
-pub fn vslimpsr18requestexception_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_psr18_request_exception_cleanup_raw']
+pub fn vslim_psr18_request_exception_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-fn vslimpsr18requestexception_load_from_php(php_obj vphp.ZendObject) VSlimPsr18RequestException {
+fn vslim_psr18_request_exception_load_from_php(php_obj vphp.ZendObject) VSlimPsr18RequestException {
     mut recv := VSlimPsr18RequestException{}
     if !php_obj.is_valid() {
         return recv
     }
     return recv
 }
-fn vslimpsr18requestexception_sync_to_php(php_obj vphp.ZendObject, recv VSlimPsr18RequestException) {
+fn vslim_psr18_request_exception_sync_to_php(php_obj vphp.ZendObject, recv VSlimPsr18RequestException) {
     if !php_obj.is_valid() {
         return
     }
 }
-@[export: 'VSlimPsr18RequestException_get_prop']
-pub fn vslimpsr18requestexception_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_psr18_request_exception_get_prop']
+pub fn vslim_psr18_request_exception_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimPsr18RequestException_set_prop']
-pub fn vslimpsr18requestexception_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_psr18_request_exception_set_prop']
+pub fn vslim_psr18_request_exception_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimPsr18RequestException_sync_props']
-pub fn vslimpsr18requestexception_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_psr18_request_exception_sync_props']
+pub fn vslim_psr18_request_exception_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimPsr18RequestException_attach_request']
-pub fn vphp_wrap_vslimpsr18requestexception_attach_request(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr18_request_exception_attach_request']
+pub fn vphp_wrap_vslim_psr18_request_exception_attach_request(ptr voidptr, ctx vphp.Context)  {
     this_obj := vphp.ZendObject.from_ptr(ptr)
-    mut recv := vslimpsr18requestexception_load_from_php(this_obj)
+    mut recv := vslim_psr18_request_exception_load_from_php(this_obj)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -3428,27 +3428,27 @@ pub fn vphp_wrap_vslimpsr18requestexception_attach_request(ptr voidptr, ctx vphp
         return
     }
     recv.attach_request(arg_0)
-    vslimpsr18requestexception_sync_to_php(this_obj, recv)
+    vslim_psr18_request_exception_sync_to_php(this_obj, recv)
 }
-@[export: 'vphp_wrap_VSlimPsr18RequestException_get_request']
-pub fn vphp_wrap_vslimpsr18requestexception_get_request(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr18_request_exception_get_request']
+pub fn vphp_wrap_vslim_psr18_request_exception_get_request(ptr voidptr, ctx vphp.Context)  {
     this_obj := vphp.ZendObject.from_ptr(ptr)
-    mut recv := vslimpsr18requestexception_load_from_php(this_obj)
+    mut recv := vslim_psr18_request_exception_load_from_php(this_obj)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_request()
-    vslimpsr18requestexception_sync_to_php(this_obj, recv)
+    vslim_psr18_request_exception_sync_to_php(this_obj, recv)
     ctx.return().v[vphp.PhpObject](res)
 }
-@[export: 'VSlimPsr18RequestException_handlers']
-pub fn vslimpsr18requestexception_handlers() voidptr {
+@[export: 'vslim_psr18_request_exception_handlers']
+pub fn vslim_psr18_request_exception_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimpsr18requestexception_get_prop),
-        write_handler: voidptr(vslimpsr18requestexception_set_prop),
-        sync_handler: voidptr(vslimpsr18requestexception_sync_props),
-        new_raw: voidptr(vslimpsr18requestexception_new_raw),
-        cleanup_raw: voidptr(vslimpsr18requestexception_cleanup_raw),
-        free_raw: voidptr(vslimpsr18requestexception_free_raw)
+        prop_handler: voidptr(vslim_psr18_request_exception_get_prop),
+        write_handler: voidptr(vslim_psr18_request_exception_set_prop),
+        sync_handler: voidptr(vslim_psr18_request_exception_sync_props),
+        new_raw: voidptr(vslim_psr18_request_exception_new_raw),
+        cleanup_raw: voidptr(vslim_psr18_request_exception_cleanup_raw),
+        free_raw: voidptr(vslim_psr18_request_exception_free_raw)
     )
 }
 pub fn VSlimPsr18RequestException.php_class_entry() vphp.ZendClassEntry {
@@ -3456,7 +3456,7 @@ pub fn VSlimPsr18RequestException.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimPsr18RequestException.php_object_handlers() voidptr {
-    return vslimpsr18requestexception_handlers()
+    return vslim_psr18_request_exception_handlers()
 }
 
 pub fn VSlimPsr18RequestException.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -3479,58 +3479,58 @@ pub fn (obj &VSlimPsr18RequestException) bind_owned_php_object_value() vphp.PhpV
     return vphp.bind_owned_object_value[VSlimPsr18RequestException](obj)
 }
 
-@[export: 'VSlimPsr18NetworkException_new_raw']
-pub fn vslimpsr18networkexception_new_raw() voidptr {
+@[export: 'vslim_psr18_network_exception_new_raw']
+pub fn vslim_psr18_network_exception_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr18NetworkException]()
 }
-@[export: 'VSlimPsr18NetworkException_free_raw']
-pub fn vslimpsr18networkexception_free_raw(ptr voidptr) {
+@[export: 'vslim_psr18_network_exception_free_raw']
+pub fn vslim_psr18_network_exception_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimPsr18NetworkException](ptr)
 }
-@[export: 'VSlimPsr18NetworkException_cleanup_raw']
-pub fn vslimpsr18networkexception_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_psr18_network_exception_cleanup_raw']
+pub fn vslim_psr18_network_exception_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-fn vslimpsr18networkexception_load_from_php(php_obj vphp.ZendObject) VSlimPsr18NetworkException {
+fn vslim_psr18_network_exception_load_from_php(php_obj vphp.ZendObject) VSlimPsr18NetworkException {
     mut recv := VSlimPsr18NetworkException{}
     if !php_obj.is_valid() {
         return recv
     }
     return recv
 }
-fn vslimpsr18networkexception_sync_to_php(php_obj vphp.ZendObject, recv VSlimPsr18NetworkException) {
+fn vslim_psr18_network_exception_sync_to_php(php_obj vphp.ZendObject, recv VSlimPsr18NetworkException) {
     if !php_obj.is_valid() {
         return
     }
 }
-@[export: 'VSlimPsr18NetworkException_get_prop']
-pub fn vslimpsr18networkexception_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_psr18_network_exception_get_prop']
+pub fn vslim_psr18_network_exception_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimPsr18NetworkException_set_prop']
-pub fn vslimpsr18networkexception_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_psr18_network_exception_set_prop']
+pub fn vslim_psr18_network_exception_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimPsr18NetworkException_sync_props']
-pub fn vslimpsr18networkexception_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_psr18_network_exception_sync_props']
+pub fn vslim_psr18_network_exception_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimPsr18NetworkException_attach_request']
-pub fn vphp_wrap_vslimpsr18networkexception_attach_request(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr18_network_exception_attach_request']
+pub fn vphp_wrap_vslim_psr18_network_exception_attach_request(ptr voidptr, ctx vphp.Context)  {
     this_obj := vphp.ZendObject.from_ptr(ptr)
-    mut recv := vslimpsr18networkexception_load_from_php(this_obj)
+    mut recv := vslim_psr18_network_exception_load_from_php(this_obj)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -3541,27 +3541,27 @@ pub fn vphp_wrap_vslimpsr18networkexception_attach_request(ptr voidptr, ctx vphp
         return
     }
     recv.attach_request(arg_0)
-    vslimpsr18networkexception_sync_to_php(this_obj, recv)
+    vslim_psr18_network_exception_sync_to_php(this_obj, recv)
 }
-@[export: 'vphp_wrap_VSlimPsr18NetworkException_get_request']
-pub fn vphp_wrap_vslimpsr18networkexception_get_request(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr18_network_exception_get_request']
+pub fn vphp_wrap_vslim_psr18_network_exception_get_request(ptr voidptr, ctx vphp.Context)  {
     this_obj := vphp.ZendObject.from_ptr(ptr)
-    mut recv := vslimpsr18networkexception_load_from_php(this_obj)
+    mut recv := vslim_psr18_network_exception_load_from_php(this_obj)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_request()
-    vslimpsr18networkexception_sync_to_php(this_obj, recv)
+    vslim_psr18_network_exception_sync_to_php(this_obj, recv)
     ctx.return().v[vphp.PhpObject](res)
 }
-@[export: 'VSlimPsr18NetworkException_handlers']
-pub fn vslimpsr18networkexception_handlers() voidptr {
+@[export: 'vslim_psr18_network_exception_handlers']
+pub fn vslim_psr18_network_exception_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimpsr18networkexception_get_prop),
-        write_handler: voidptr(vslimpsr18networkexception_set_prop),
-        sync_handler: voidptr(vslimpsr18networkexception_sync_props),
-        new_raw: voidptr(vslimpsr18networkexception_new_raw),
-        cleanup_raw: voidptr(vslimpsr18networkexception_cleanup_raw),
-        free_raw: voidptr(vslimpsr18networkexception_free_raw)
+        prop_handler: voidptr(vslim_psr18_network_exception_get_prop),
+        write_handler: voidptr(vslim_psr18_network_exception_set_prop),
+        sync_handler: voidptr(vslim_psr18_network_exception_sync_props),
+        new_raw: voidptr(vslim_psr18_network_exception_new_raw),
+        cleanup_raw: voidptr(vslim_psr18_network_exception_cleanup_raw),
+        free_raw: voidptr(vslim_psr18_network_exception_free_raw)
     )
 }
 pub fn VSlimPsr18NetworkException.php_class_entry() vphp.ZendClassEntry {
@@ -3569,7 +3569,7 @@ pub fn VSlimPsr18NetworkException.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimPsr18NetworkException.php_object_handlers() voidptr {
-    return vslimpsr18networkexception_handlers()
+    return vslim_psr18_network_exception_handlers()
 }
 
 pub fn VSlimPsr18NetworkException.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -3592,25 +3592,25 @@ pub fn (obj &VSlimPsr18NetworkException) bind_owned_php_object_value() vphp.PhpV
     return vphp.bind_owned_object_value[VSlimPsr18NetworkException](obj)
 }
 
-@[export: 'VSlimPsr18Client_new_raw']
-pub fn vslimpsr18client_new_raw() voidptr {
+@[export: 'vslim_psr18_client_new_raw']
+pub fn vslim_psr18_client_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr18Client]()
 }
-@[export: 'VSlimPsr18Client_free_raw']
-pub fn vslimpsr18client_free_raw(ptr voidptr) {
+@[export: 'vslim_psr18_client_free_raw']
+pub fn vslim_psr18_client_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimPsr18Client](ptr)
 }
-@[export: 'VSlimPsr18Client_cleanup_raw']
-pub fn vslimpsr18client_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_psr18_client_cleanup_raw']
+pub fn vslim_psr18_client_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimPsr18Client_get_prop']
-pub fn vslimpsr18client_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_psr18_client_get_prop']
+pub fn vslim_psr18_client_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -3621,8 +3621,8 @@ pub fn vslimpsr18client_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &
         }
     }
 }
-@[export: 'VSlimPsr18Client_set_prop']
-pub fn vslimpsr18client_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_psr18_client_set_prop']
+pub fn vslim_psr18_client_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -3633,24 +3633,24 @@ pub fn vslimpsr18client_set_prop(ptr voidptr, name_ptr &char, name_len int, valu
         }
     }
 }
-@[export: 'VSlimPsr18Client_sync_props']
-pub fn vslimpsr18client_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_psr18_client_sync_props']
+pub fn vslim_psr18_client_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimPsr18Client(ptr)
         out.add_property_long('timeoutSeconds', i64(obj.timeout_seconds))
     }
 }
-@[export: 'vphp_wrap_VSlimPsr18Client_construct']
-pub fn vphp_wrap_vslimpsr18client_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr18_client_construct']
+pub fn vphp_wrap_vslim_psr18_client_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr18Client(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr18Client_timeout']
-pub fn vphp_wrap_vslimpsr18client_timeout(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr18_client_timeout']
+pub fn vphp_wrap_vslim_psr18_client_timeout(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr18Client(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -3661,8 +3661,8 @@ pub fn vphp_wrap_vslimpsr18client_timeout(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.timeout(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr18Client_ignore_warning']
-pub fn vphp_wrap_vslimpsr18client_ignore_warning(ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr18_client_ignore_warning']
+pub fn vphp_wrap_vslim_psr18_client_ignore_warning(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -3678,16 +3678,16 @@ pub fn vphp_wrap_vslimpsr18client_ignore_warning(ctx vphp.Context)  {
     res := VSlimPsr18Client.ignore_warning(arg_0, arg_1, arg_2, arg_3)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimPsr18Client_timeout_seconds_value']
-pub fn vphp_wrap_vslimpsr18client_timeout_seconds_value(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr18_client_timeout_seconds_value']
+pub fn vphp_wrap_vslim_psr18_client_timeout_seconds_value(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr18Client(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.timeout_seconds_value()
     ctx.return().v[int](res)
 }
-@[export: 'vphp_wrap_VSlimPsr18Client_send_request']
-pub fn vphp_wrap_vslimpsr18client_send_request(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr18_client_send_request']
+pub fn vphp_wrap_vslim_psr18_client_send_request(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr18Client(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -3701,15 +3701,15 @@ pub fn vphp_wrap_vslimpsr18client_send_request(ptr voidptr, ctx vphp.Context) vo
     res := recv.send_request(arg_0)
     return voidptr(res)
 }
-@[export: 'VSlimPsr18Client_handlers']
-pub fn vslimpsr18client_handlers() voidptr {
+@[export: 'vslim_psr18_client_handlers']
+pub fn vslim_psr18_client_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimpsr18client_get_prop),
-        write_handler: voidptr(vslimpsr18client_set_prop),
-        sync_handler: voidptr(vslimpsr18client_sync_props),
-        new_raw: voidptr(vslimpsr18client_new_raw),
-        cleanup_raw: voidptr(vslimpsr18client_cleanup_raw),
-        free_raw: voidptr(vslimpsr18client_free_raw)
+        prop_handler: voidptr(vslim_psr18_client_get_prop),
+        write_handler: voidptr(vslim_psr18_client_set_prop),
+        sync_handler: voidptr(vslim_psr18_client_sync_props),
+        new_raw: voidptr(vslim_psr18_client_new_raw),
+        cleanup_raw: voidptr(vslim_psr18_client_cleanup_raw),
+        free_raw: voidptr(vslim_psr18_client_free_raw)
     )
 }
 pub fn VSlimPsr18Client.php_class_entry() vphp.ZendClassEntry {
@@ -3717,7 +3717,7 @@ pub fn VSlimPsr18Client.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimPsr18Client.php_object_handlers() voidptr {
-    return vslimpsr18client_handlers()
+    return vslim_psr18_client_handlers()
 }
 
 pub fn VSlimPsr18Client.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -3740,44 +3740,44 @@ pub fn (obj &VSlimPsr18Client) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr18Client](obj)
 }
 
-@[export: 'VSlimPsr7Adapter_new_raw']
-pub fn vslimpsr7adapter_new_raw() voidptr {
+@[export: 'vslim_psr7_adapter_new_raw']
+pub fn vslim_psr7_adapter_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr7Adapter]()
 }
-@[export: 'VSlimPsr7Adapter_free_raw']
-pub fn vslimpsr7adapter_free_raw(ptr voidptr) {
+@[export: 'vslim_psr7_adapter_free_raw']
+pub fn vslim_psr7_adapter_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimPsr7Adapter](ptr)
 }
-@[export: 'VSlimPsr7Adapter_cleanup_raw']
-pub fn vslimpsr7adapter_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_psr7_adapter_cleanup_raw']
+pub fn vslim_psr7_adapter_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimPsr7Adapter_get_prop']
-pub fn vslimpsr7adapter_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_psr7_adapter_get_prop']
+pub fn vslim_psr7_adapter_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimPsr7Adapter_set_prop']
-pub fn vslimpsr7adapter_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_psr7_adapter_set_prop']
+pub fn vslim_psr7_adapter_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimPsr7Adapter_sync_props']
-pub fn vslimpsr7adapter_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_psr7_adapter_sync_props']
+pub fn vslim_psr7_adapter_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimPsr7Adapter_to_vslim_response']
-pub fn vphp_wrap_vslimpsr7adapter_to_vslim_response(ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_adapter_to_vslim_response']
+pub fn vphp_wrap_vslim_psr7_adapter_to_vslim_response(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -3787,8 +3787,8 @@ pub fn vphp_wrap_vslimpsr7adapter_to_vslim_response(ctx vphp.Context) voidptr {
     res := VSlimPsr7Adapter.to_vslim_response(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Adapter_to_vslim_request']
-pub fn vphp_wrap_vslimpsr7adapter_to_vslim_request(ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_adapter_to_vslim_request']
+pub fn vphp_wrap_vslim_psr7_adapter_to_vslim_request(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -3798,8 +3798,8 @@ pub fn vphp_wrap_vslimpsr7adapter_to_vslim_request(ctx vphp.Context) voidptr {
     res := VSlimPsr7Adapter.to_vslim_request(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimPsr7Adapter_to_worker_envelope']
-pub fn vphp_wrap_vslimpsr7adapter_to_worker_envelope(ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_psr7_adapter_to_worker_envelope']
+pub fn vphp_wrap_vslim_psr7_adapter_to_worker_envelope(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -3809,15 +3809,15 @@ pub fn vphp_wrap_vslimpsr7adapter_to_worker_envelope(ctx vphp.Context)  {
     res := VSlimPsr7Adapter.to_worker_envelope(arg_0)
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'VSlimPsr7Adapter_handlers']
-pub fn vslimpsr7adapter_handlers() voidptr {
+@[export: 'vslim_psr7_adapter_handlers']
+pub fn vslim_psr7_adapter_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimpsr7adapter_get_prop),
-        write_handler: voidptr(vslimpsr7adapter_set_prop),
-        sync_handler: voidptr(vslimpsr7adapter_sync_props),
-        new_raw: voidptr(vslimpsr7adapter_new_raw),
-        cleanup_raw: voidptr(vslimpsr7adapter_cleanup_raw),
-        free_raw: voidptr(vslimpsr7adapter_free_raw)
+        prop_handler: voidptr(vslim_psr7_adapter_get_prop),
+        write_handler: voidptr(vslim_psr7_adapter_set_prop),
+        sync_handler: voidptr(vslim_psr7_adapter_sync_props),
+        new_raw: voidptr(vslim_psr7_adapter_new_raw),
+        cleanup_raw: voidptr(vslim_psr7_adapter_cleanup_raw),
+        free_raw: voidptr(vslim_psr7_adapter_free_raw)
     )
 }
 pub fn VSlimPsr7Adapter.php_class_entry() vphp.ZendClassEntry {
@@ -3825,7 +3825,7 @@ pub fn VSlimPsr7Adapter.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimPsr7Adapter.php_object_handlers() voidptr {
-    return vslimpsr7adapter_handlers()
+    return vslim_psr7_adapter_handlers()
 }
 
 pub fn VSlimPsr7Adapter.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -3848,19 +3848,19 @@ pub fn (obj &VSlimPsr7Adapter) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr7Adapter](obj)
 }
 
-@[export: 'VSlimResponse_new_raw']
-pub fn vslimresponse_new_raw() voidptr {
+@[export: 'vslim_response_new_raw']
+pub fn vslim_response_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimResponse]()
 }
-@[export: 'VSlimResponse_free_raw']
-pub fn vslimresponse_free_raw(ptr voidptr) {
+@[export: 'vslim_response_free_raw']
+pub fn vslim_response_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimResponse](ptr)
 }
-@[export: 'VSlimResponse_cleanup_raw']
-pub fn vslimresponse_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_response_cleanup_raw']
+pub fn vslim_response_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
@@ -3869,8 +3869,8 @@ pub fn vslimresponse_cleanup_raw(ptr voidptr) {
         obj.free()
     }
 }
-@[export: 'VSlimResponse_get_prop']
-pub fn vslimresponse_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_response_get_prop']
+pub fn vslim_response_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -3889,8 +3889,8 @@ pub fn vslimresponse_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.z
         }
     }
 }
-@[export: 'VSlimResponse_set_prop']
-pub fn vslimresponse_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_response_set_prop']
+pub fn vslim_response_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -3909,8 +3909,8 @@ pub fn vslimresponse_set_prop(ptr voidptr, name_ptr &char, name_len int, value &
         }
     }
 }
-@[export: 'VSlimResponse_sync_props']
-pub fn vslimresponse_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_response_sync_props']
+pub fn vslim_response_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimResponse(ptr)
@@ -3919,8 +3919,8 @@ pub fn vslimresponse_sync_props(ptr voidptr, zv &C.zval) {
         out.add_property_string('contentType', obj.content_type)
     }
 }
-@[export: 'vphp_wrap_VSlimResponse_construct']
-pub fn vphp_wrap_vslimresponse_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_response_construct']
+pub fn vphp_wrap_vslim_response_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -3935,8 +3935,8 @@ pub fn vphp_wrap_vslimresponse_construct(ptr voidptr, ctx vphp.Context) voidptr 
     res := recv.construct(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimResponse_header']
-pub fn vphp_wrap_vslimresponse_header(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_response_header']
+pub fn vphp_wrap_vslim_response_header(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -3947,16 +3947,16 @@ pub fn vphp_wrap_vslimresponse_header(ptr voidptr, ctx vphp.Context)  {
     res := recv.header(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimResponse_headers']
-pub fn vphp_wrap_vslimresponse_headers(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_response_headers']
+pub fn vphp_wrap_vslim_response_headers(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.headers()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimResponse_has_header']
-pub fn vphp_wrap_vslimresponse_has_header(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_response_has_header']
+pub fn vphp_wrap_vslim_response_has_header(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -3967,8 +3967,8 @@ pub fn vphp_wrap_vslimresponse_has_header(ptr voidptr, ctx vphp.Context)  {
     res := recv.has_header(arg_0)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimResponse_set_header']
-pub fn vphp_wrap_vslimresponse_set_header(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_response_set_header']
+pub fn vphp_wrap_vslim_response_set_header(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -3981,8 +3981,8 @@ pub fn vphp_wrap_vslimresponse_set_header(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.set_header(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimResponse_with_request_id']
-pub fn vphp_wrap_vslimresponse_with_request_id(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_response_with_request_id']
+pub fn vphp_wrap_vslim_response_with_request_id(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -3993,8 +3993,8 @@ pub fn vphp_wrap_vslimresponse_with_request_id(ptr voidptr, ctx vphp.Context) vo
     res := recv.with_request_id(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimResponse_with_trace_id']
-pub fn vphp_wrap_vslimresponse_with_trace_id(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_response_with_trace_id']
+pub fn vphp_wrap_vslim_response_with_trace_id(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -4005,8 +4005,8 @@ pub fn vphp_wrap_vslimresponse_with_trace_id(ptr voidptr, ctx vphp.Context) void
     res := recv.with_trace_id(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimResponse_set_content_type']
-pub fn vphp_wrap_vslimresponse_set_content_type(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_response_set_content_type']
+pub fn vphp_wrap_vslim_response_set_content_type(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -4017,16 +4017,16 @@ pub fn vphp_wrap_vslimresponse_set_content_type(ptr voidptr, ctx vphp.Context) v
     res := recv.set_content_type(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimResponse_cookie_header']
-pub fn vphp_wrap_vslimresponse_cookie_header(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_response_cookie_header']
+pub fn vphp_wrap_vslim_response_cookie_header(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.cookie_header()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimResponse_set_cookie']
-pub fn vphp_wrap_vslimresponse_set_cookie(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_response_set_cookie']
+pub fn vphp_wrap_vslim_response_set_cookie(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -4039,8 +4039,8 @@ pub fn vphp_wrap_vslimresponse_set_cookie(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.set_cookie(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimResponse_set_cookie_opts']
-pub fn vphp_wrap_vslimresponse_set_cookie_opts(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_response_set_cookie_opts']
+pub fn vphp_wrap_vslim_response_set_cookie_opts(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -4055,8 +4055,8 @@ pub fn vphp_wrap_vslimresponse_set_cookie_opts(ptr voidptr, ctx vphp.Context) vo
     res := recv.set_cookie_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimResponse_set_cookie_full']
-pub fn vphp_wrap_vslimresponse_set_cookie_full(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_response_set_cookie_full']
+pub fn vphp_wrap_vslim_response_set_cookie_full(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -4081,8 +4081,8 @@ pub fn vphp_wrap_vslimresponse_set_cookie_full(ptr voidptr, ctx vphp.Context) vo
     res := recv.set_cookie_full(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6, arg_7)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimResponse_delete_cookie']
-pub fn vphp_wrap_vslimresponse_delete_cookie(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_response_delete_cookie']
+pub fn vphp_wrap_vslim_response_delete_cookie(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -4093,8 +4093,8 @@ pub fn vphp_wrap_vslimresponse_delete_cookie(ptr voidptr, ctx vphp.Context) void
     res := recv.delete_cookie(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimResponse_set_status']
-pub fn vphp_wrap_vslimresponse_set_status(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_response_set_status']
+pub fn vphp_wrap_vslim_response_set_status(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -4105,8 +4105,8 @@ pub fn vphp_wrap_vslimresponse_set_status(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.set_status(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimResponse_with_status']
-pub fn vphp_wrap_vslimresponse_with_status(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_response_with_status']
+pub fn vphp_wrap_vslim_response_with_status(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -4117,8 +4117,8 @@ pub fn vphp_wrap_vslimresponse_with_status(ptr voidptr, ctx vphp.Context) voidpt
     res := recv.with_status(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimResponse_text']
-pub fn vphp_wrap_vslimresponse_text(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_response_text']
+pub fn vphp_wrap_vslim_response_text(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -4129,8 +4129,8 @@ pub fn vphp_wrap_vslimresponse_text(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.text(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimResponse_json']
-pub fn vphp_wrap_vslimresponse_json(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_response_json']
+pub fn vphp_wrap_vslim_response_json(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -4141,8 +4141,8 @@ pub fn vphp_wrap_vslimresponse_json(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.json(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimResponse_html']
-pub fn vphp_wrap_vslimresponse_html(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_response_html']
+pub fn vphp_wrap_vslim_response_html(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -4153,8 +4153,8 @@ pub fn vphp_wrap_vslimresponse_html(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.html(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimResponse_redirect']
-pub fn vphp_wrap_vslimresponse_redirect(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_response_redirect']
+pub fn vphp_wrap_vslim_response_redirect(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -4165,8 +4165,8 @@ pub fn vphp_wrap_vslimresponse_redirect(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.redirect(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimResponse_redirect_with_status']
-pub fn vphp_wrap_vslimresponse_redirect_with_status(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_response_redirect_with_status']
+pub fn vphp_wrap_vslim_response_redirect_with_status(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -4179,39 +4179,39 @@ pub fn vphp_wrap_vslimresponse_redirect_with_status(ptr voidptr, ctx vphp.Contex
     res := recv.redirect_with_status(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimResponse_headers_all']
-pub fn vphp_wrap_vslimresponse_headers_all(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_response_headers_all']
+pub fn vphp_wrap_vslim_response_headers_all(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.headers_all()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimResponse_str']
-pub fn vphp_wrap_vslimresponse_str(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_response_str']
+pub fn vphp_wrap_vslim_response_str(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.str()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimResponse_content_length']
-pub fn vphp_wrap_vslimresponse_content_length(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_response_content_length']
+pub fn vphp_wrap_vslim_response_content_length(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.content_length()
     ctx.return().v[int](res)
 }
-@[export: 'VSlimResponse_handlers']
-pub fn vslimresponse_handlers() voidptr {
+@[export: 'vslim_response_handlers']
+pub fn vslim_response_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimresponse_get_prop),
-        write_handler: voidptr(vslimresponse_set_prop),
-        sync_handler: voidptr(vslimresponse_sync_props),
-        new_raw: voidptr(vslimresponse_new_raw),
-        cleanup_raw: voidptr(vslimresponse_cleanup_raw),
-        free_raw: voidptr(vslimresponse_free_raw)
+        prop_handler: voidptr(vslim_response_get_prop),
+        write_handler: voidptr(vslim_response_set_prop),
+        sync_handler: voidptr(vslim_response_sync_props),
+        new_raw: voidptr(vslim_response_new_raw),
+        cleanup_raw: voidptr(vslim_response_cleanup_raw),
+        free_raw: voidptr(vslim_response_free_raw)
     )
 }
 pub fn VSlimResponse.php_class_entry() vphp.ZendClassEntry {
@@ -4219,7 +4219,7 @@ pub fn VSlimResponse.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimResponse.php_object_handlers() voidptr {
-    return vslimresponse_handlers()
+    return vslim_response_handlers()
 }
 
 pub fn VSlimResponse.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

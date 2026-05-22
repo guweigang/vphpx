@@ -7,19 +7,19 @@ import vphp
 __global C.vslim__support__serviceprovider_ce &C.zend_class_entry
 __global C.vslim__support__module_ce &C.zend_class_entry
 
-@[export: 'VSlimServiceProvider_new_raw']
-pub fn vslimserviceprovider_new_raw() voidptr {
+@[export: 'vslim_service_provider_new_raw']
+pub fn vslim_service_provider_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimServiceProvider]()
 }
-@[export: 'VSlimServiceProvider_free_raw']
-pub fn vslimserviceprovider_free_raw(ptr voidptr) {
+@[export: 'vslim_service_provider_free_raw']
+pub fn vslim_service_provider_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimServiceProvider](ptr)
 }
-@[export: 'VSlimServiceProvider_cleanup_raw']
-pub fn vslimserviceprovider_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_service_provider_cleanup_raw']
+pub fn vslim_service_provider_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
@@ -28,35 +28,35 @@ pub fn vslimserviceprovider_cleanup_raw(ptr voidptr) {
         obj.cleanup()
     }
 }
-@[export: 'VSlimServiceProvider_get_prop']
-pub fn vslimserviceprovider_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_service_provider_get_prop']
+pub fn vslim_service_provider_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimServiceProvider_set_prop']
-pub fn vslimserviceprovider_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_service_provider_set_prop']
+pub fn vslim_service_provider_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimServiceProvider_sync_props']
-pub fn vslimserviceprovider_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_service_provider_sync_props']
+pub fn vslim_service_provider_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimServiceProvider_construct']
-pub fn vphp_wrap_vslimserviceprovider_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_service_provider_construct']
+pub fn vphp_wrap_vslim_service_provider_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimServiceProvider(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimServiceProvider_set_app']
-pub fn vphp_wrap_vslimserviceprovider_set_app(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_service_provider_set_app']
+pub fn vphp_wrap_vslim_service_provider_set_app(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimServiceProvider(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -70,31 +70,31 @@ pub fn vphp_wrap_vslimserviceprovider_set_app(ptr voidptr, ctx vphp.Context) voi
     res := recv.set_app(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimServiceProvider_has_app']
-pub fn vphp_wrap_vslimserviceprovider_has_app(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_service_provider_has_app']
+pub fn vphp_wrap_vslim_service_provider_has_app(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimServiceProvider(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.has_app()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimServiceProvider_app']
-pub fn vphp_wrap_vslimserviceprovider_app(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_service_provider_app']
+pub fn vphp_wrap_vslim_service_provider_app(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimServiceProvider(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.app()
     ctx.return().v[vphp.PhpObject](res)
 }
-@[export: 'VSlimServiceProvider_handlers']
-pub fn vslimserviceprovider_handlers() voidptr {
+@[export: 'vslim_service_provider_handlers']
+pub fn vslim_service_provider_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimserviceprovider_get_prop),
-        write_handler: voidptr(vslimserviceprovider_set_prop),
-        sync_handler: voidptr(vslimserviceprovider_sync_props),
-        new_raw: voidptr(vslimserviceprovider_new_raw),
-        cleanup_raw: voidptr(vslimserviceprovider_cleanup_raw),
-        free_raw: voidptr(vslimserviceprovider_free_raw)
+        prop_handler: voidptr(vslim_service_provider_get_prop),
+        write_handler: voidptr(vslim_service_provider_set_prop),
+        sync_handler: voidptr(vslim_service_provider_sync_props),
+        new_raw: voidptr(vslim_service_provider_new_raw),
+        cleanup_raw: voidptr(vslim_service_provider_cleanup_raw),
+        free_raw: voidptr(vslim_service_provider_free_raw)
     )
 }
 pub fn VSlimServiceProvider.php_class_entry() vphp.ZendClassEntry {
@@ -102,7 +102,7 @@ pub fn VSlimServiceProvider.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimServiceProvider.php_object_handlers() voidptr {
-    return vslimserviceprovider_handlers()
+    return vslim_service_provider_handlers()
 }
 
 pub fn VSlimServiceProvider.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -125,19 +125,19 @@ pub fn (obj &VSlimServiceProvider) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimServiceProvider](obj)
 }
 
-@[export: 'VSlimModule_new_raw']
-pub fn vslimmodule_new_raw() voidptr {
+@[export: 'vslim_module_new_raw']
+pub fn vslim_module_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimModule]()
 }
-@[export: 'VSlimModule_free_raw']
-pub fn vslimmodule_free_raw(ptr voidptr) {
+@[export: 'vslim_module_free_raw']
+pub fn vslim_module_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimModule](ptr)
 }
-@[export: 'VSlimModule_cleanup_raw']
-pub fn vslimmodule_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_module_cleanup_raw']
+pub fn vslim_module_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
@@ -146,35 +146,35 @@ pub fn vslimmodule_cleanup_raw(ptr voidptr) {
         obj.cleanup()
     }
 }
-@[export: 'VSlimModule_get_prop']
-pub fn vslimmodule_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_module_get_prop']
+pub fn vslim_module_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimModule_set_prop']
-pub fn vslimmodule_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_module_set_prop']
+pub fn vslim_module_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimModule_sync_props']
-pub fn vslimmodule_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_module_sync_props']
+pub fn vslim_module_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimModule_construct']
-pub fn vphp_wrap_vslimmodule_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_module_construct']
+pub fn vphp_wrap_vslim_module_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimModule(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimModule_set_app']
-pub fn vphp_wrap_vslimmodule_set_app(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_module_set_app']
+pub fn vphp_wrap_vslim_module_set_app(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimModule(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -188,31 +188,31 @@ pub fn vphp_wrap_vslimmodule_set_app(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.set_app(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimModule_has_app']
-pub fn vphp_wrap_vslimmodule_has_app(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_module_has_app']
+pub fn vphp_wrap_vslim_module_has_app(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimModule(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.has_app()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimModule_app']
-pub fn vphp_wrap_vslimmodule_app(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_module_app']
+pub fn vphp_wrap_vslim_module_app(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimModule(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.app()
     ctx.return().v[vphp.PhpObject](res)
 }
-@[export: 'VSlimModule_handlers']
-pub fn vslimmodule_handlers() voidptr {
+@[export: 'vslim_module_handlers']
+pub fn vslim_module_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimmodule_get_prop),
-        write_handler: voidptr(vslimmodule_set_prop),
-        sync_handler: voidptr(vslimmodule_sync_props),
-        new_raw: voidptr(vslimmodule_new_raw),
-        cleanup_raw: voidptr(vslimmodule_cleanup_raw),
-        free_raw: voidptr(vslimmodule_free_raw)
+        prop_handler: voidptr(vslim_module_get_prop),
+        write_handler: voidptr(vslim_module_set_prop),
+        sync_handler: voidptr(vslim_module_sync_props),
+        new_raw: voidptr(vslim_module_new_raw),
+        cleanup_raw: voidptr(vslim_module_cleanup_raw),
+        free_raw: voidptr(vslim_module_free_raw)
     )
 }
 pub fn VSlimModule.php_class_entry() vphp.ZendClassEntry {
@@ -220,7 +220,7 @@ pub fn VSlimModule.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimModule.php_object_handlers() voidptr {
-    return vslimmodule_handlers()
+    return vslim_module_handlers()
 }
 
 pub fn VSlimModule.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

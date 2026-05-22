@@ -14,52 +14,52 @@ __global C.vslim__live__componentstate_ce &C.zend_class_entry
 __global C.vslim__live__form_ce &C.zend_class_entry
 __global C.vslim__live__socket_ce &C.zend_class_entry
 
-@[export: 'VSlimLiveView_new_raw']
-pub fn vslimliveview_new_raw() voidptr {
+@[export: 'vslim_live_view_new_raw']
+pub fn vslim_live_view_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimLiveView]()
 }
-@[export: 'VSlimLiveView_free_raw']
-pub fn vslimliveview_free_raw(ptr voidptr) {
+@[export: 'vslim_live_view_free_raw']
+pub fn vslim_live_view_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimLiveView](ptr)
 }
-@[export: 'VSlimLiveView_cleanup_raw']
-pub fn vslimliveview_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_live_view_cleanup_raw']
+pub fn vslim_live_view_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimLiveView_get_prop']
-pub fn vslimliveview_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_live_view_get_prop']
+pub fn vslim_live_view_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimLiveView_set_prop']
-pub fn vslimliveview_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_live_view_set_prop']
+pub fn vslim_live_view_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimLiveView_sync_props']
-pub fn vslimliveview_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_live_view_sync_props']
+pub fn vslim_live_view_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimLiveView_construct']
-pub fn vphp_wrap_vslimliveview_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_view_construct']
+pub fn vphp_wrap_vslim_live_view_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_set_container']
-pub fn vphp_wrap_vslimliveview_set_container(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_view_set_container']
+pub fn vphp_wrap_vslim_live_view_set_container(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -70,8 +70,8 @@ pub fn vphp_wrap_vslimliveview_set_container(ptr voidptr, ctx vphp.Context) void
     res := recv.set_container(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_set_view']
-pub fn vphp_wrap_vslimliveview_set_view(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_view_set_view']
+pub fn vphp_wrap_vslim_live_view_set_view(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -82,16 +82,16 @@ pub fn vphp_wrap_vslimliveview_set_view(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.set_view(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_view']
-pub fn vphp_wrap_vslimliveview_view(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_view_view']
+pub fn vphp_wrap_vslim_live_view_view(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.view()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_set_template']
-pub fn vphp_wrap_vslimliveview_set_template(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_view_set_template']
+pub fn vphp_wrap_vslim_live_view_set_template(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -102,16 +102,16 @@ pub fn vphp_wrap_vslimliveview_set_template(ptr voidptr, ctx vphp.Context) voidp
     res := recv.set_template(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_template']
-pub fn vphp_wrap_vslimliveview_template(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_view_template']
+pub fn vphp_wrap_vslim_live_view_template(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.template()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_set_layout']
-pub fn vphp_wrap_vslimliveview_set_layout(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_view_set_layout']
+pub fn vphp_wrap_vslim_live_view_set_layout(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -122,16 +122,16 @@ pub fn vphp_wrap_vslimliveview_set_layout(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.set_layout(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_layout']
-pub fn vphp_wrap_vslimliveview_layout(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_view_layout']
+pub fn vphp_wrap_vslim_live_view_layout(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.layout()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_set_root_id']
-pub fn vphp_wrap_vslimliveview_set_root_id(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_view_set_root_id']
+pub fn vphp_wrap_vslim_live_view_set_root_id(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -142,32 +142,32 @@ pub fn vphp_wrap_vslimliveview_set_root_id(ptr voidptr, ctx vphp.Context) voidpt
     res := recv.set_root_id(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_root_id']
-pub fn vphp_wrap_vslimliveview_root_id(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_view_root_id']
+pub fn vphp_wrap_vslim_live_view_root_id(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.root_id()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_live_marker']
-pub fn vphp_wrap_vslimliveview_live_marker(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_view_live_marker']
+pub fn vphp_wrap_vslim_live_view_live_marker(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.live_marker()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_attr_prefix']
-pub fn vphp_wrap_vslimliveview_attr_prefix(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_view_attr_prefix']
+pub fn vphp_wrap_vslim_live_view_attr_prefix(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.attr_prefix()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_attr_name']
-pub fn vphp_wrap_vslimliveview_attr_name(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_view_attr_name']
+pub fn vphp_wrap_vslim_live_view_attr_name(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -178,24 +178,24 @@ pub fn vphp_wrap_vslimliveview_attr_name(ptr voidptr, ctx vphp.Context)  {
     res := recv.attr_name(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_runtime_asset']
-pub fn vphp_wrap_vslimliveview_runtime_asset(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_view_runtime_asset']
+pub fn vphp_wrap_vslim_live_view_runtime_asset(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.runtime_asset()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_runtime_script_tag']
-pub fn vphp_wrap_vslimliveview_runtime_script_tag(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_view_runtime_script_tag']
+pub fn vphp_wrap_vslim_live_view_runtime_script_tag(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.runtime_script_tag()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_bootstrap_attrs']
-pub fn vphp_wrap_vslimliveview_bootstrap_attrs(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_view_bootstrap_attrs']
+pub fn vphp_wrap_vslim_live_view_bootstrap_attrs(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -208,8 +208,8 @@ pub fn vphp_wrap_vslimliveview_bootstrap_attrs(ptr voidptr, ctx vphp.Context)  {
     res := recv.bootstrap_attrs(arg_0, arg_1)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_render_template']
-pub fn vphp_wrap_vslimliveview_render_template(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_view_render_template']
+pub fn vphp_wrap_vslim_live_view_render_template(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -222,8 +222,8 @@ pub fn vphp_wrap_vslimliveview_render_template(ptr voidptr, ctx vphp.Context)  {
     res := recv.render_template(arg_0, arg_1)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_render_template_with_layout']
-pub fn vphp_wrap_vslimliveview_render_template_with_layout(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_view_render_template_with_layout']
+pub fn vphp_wrap_vslim_live_view_render_template_with_layout(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -238,8 +238,8 @@ pub fn vphp_wrap_vslimliveview_render_template_with_layout(ptr voidptr, ctx vphp
     res := recv.render_template_with_layout(arg_0, arg_1, arg_2)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_render_socket']
-pub fn vphp_wrap_vslimliveview_render_socket(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_view_render_socket']
+pub fn vphp_wrap_vslim_live_view_render_socket(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -252,8 +252,8 @@ pub fn vphp_wrap_vslimliveview_render_socket(ptr voidptr, ctx vphp.Context)  {
     res := recv.render_socket(arg_0, arg_1)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_render_socket_with_layout']
-pub fn vphp_wrap_vslimliveview_render_socket_with_layout(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_view_render_socket_with_layout']
+pub fn vphp_wrap_vslim_live_view_render_socket_with_layout(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -268,8 +268,8 @@ pub fn vphp_wrap_vslimliveview_render_socket_with_layout(ptr voidptr, ctx vphp.C
     res := recv.render_socket_with_layout(arg_0, arg_1, arg_2)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_html']
-pub fn vphp_wrap_vslimliveview_html(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_view_html']
+pub fn vphp_wrap_vslim_live_view_html(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -280,8 +280,8 @@ pub fn vphp_wrap_vslimliveview_html(ptr voidptr, ctx vphp.Context)  {
     res := recv.html(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_response']
-pub fn vphp_wrap_vslimliveview_response(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_view_response']
+pub fn vphp_wrap_vslim_live_view_response(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -292,8 +292,8 @@ pub fn vphp_wrap_vslimliveview_response(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.response(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_patch']
-pub fn vphp_wrap_vslimliveview_patch(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_view_patch']
+pub fn vphp_wrap_vslim_live_view_patch(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -306,8 +306,8 @@ pub fn vphp_wrap_vslimliveview_patch(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.patch(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveView_patch_template']
-pub fn vphp_wrap_vslimliveview_patch_template(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_view_patch_template']
+pub fn vphp_wrap_vslim_live_view_patch_template(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -322,15 +322,15 @@ pub fn vphp_wrap_vslimliveview_patch_template(ptr voidptr, ctx vphp.Context) voi
     res := recv.patch_template(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'VSlimLiveView_handlers']
-pub fn vslimliveview_handlers() voidptr {
+@[export: 'vslim_live_view_handlers']
+pub fn vslim_live_view_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimliveview_get_prop),
-        write_handler: voidptr(vslimliveview_set_prop),
-        sync_handler: voidptr(vslimliveview_sync_props),
-        new_raw: voidptr(vslimliveview_new_raw),
-        cleanup_raw: voidptr(vslimliveview_cleanup_raw),
-        free_raw: voidptr(vslimliveview_free_raw)
+        prop_handler: voidptr(vslim_live_view_get_prop),
+        write_handler: voidptr(vslim_live_view_set_prop),
+        sync_handler: voidptr(vslim_live_view_sync_props),
+        new_raw: voidptr(vslim_live_view_new_raw),
+        cleanup_raw: voidptr(vslim_live_view_cleanup_raw),
+        free_raw: voidptr(vslim_live_view_free_raw)
     )
 }
 pub fn VSlimLiveView.php_class_entry() vphp.ZendClassEntry {
@@ -338,7 +338,7 @@ pub fn VSlimLiveView.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimLiveView.php_object_handlers() voidptr {
-    return vslimliveview_handlers()
+    return vslim_live_view_handlers()
 }
 
 pub fn VSlimLiveView.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -361,52 +361,52 @@ pub fn (obj &VSlimLiveView) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimLiveView](obj)
 }
 
-@[export: 'VSlimLiveComponent_new_raw']
-pub fn vslimlivecomponent_new_raw() voidptr {
+@[export: 'vslim_live_component_new_raw']
+pub fn vslim_live_component_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimLiveComponent]()
 }
-@[export: 'VSlimLiveComponent_free_raw']
-pub fn vslimlivecomponent_free_raw(ptr voidptr) {
+@[export: 'vslim_live_component_free_raw']
+pub fn vslim_live_component_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimLiveComponent](ptr)
 }
-@[export: 'VSlimLiveComponent_cleanup_raw']
-pub fn vslimlivecomponent_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_live_component_cleanup_raw']
+pub fn vslim_live_component_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimLiveComponent_get_prop']
-pub fn vslimlivecomponent_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_live_component_get_prop']
+pub fn vslim_live_component_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimLiveComponent_set_prop']
-pub fn vslimlivecomponent_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_live_component_set_prop']
+pub fn vslim_live_component_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimLiveComponent_sync_props']
-pub fn vslimlivecomponent_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_live_component_sync_props']
+pub fn vslim_live_component_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_construct']
-pub fn vphp_wrap_vslimlivecomponent_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_construct']
+pub fn vphp_wrap_vslim_live_component_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_set_container']
-pub fn vphp_wrap_vslimlivecomponent_set_container(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_set_container']
+pub fn vphp_wrap_vslim_live_component_set_container(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -417,8 +417,8 @@ pub fn vphp_wrap_vslimlivecomponent_set_container(ptr voidptr, ctx vphp.Context)
     res := recv.set_container(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_set_view']
-pub fn vphp_wrap_vslimlivecomponent_set_view(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_set_view']
+pub fn vphp_wrap_vslim_live_component_set_view(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -429,16 +429,16 @@ pub fn vphp_wrap_vslimlivecomponent_set_view(ptr voidptr, ctx vphp.Context) void
     res := recv.set_view(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_view']
-pub fn vphp_wrap_vslimlivecomponent_view(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_view']
+pub fn vphp_wrap_vslim_live_component_view(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.view()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_set_template']
-pub fn vphp_wrap_vslimlivecomponent_set_template(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_set_template']
+pub fn vphp_wrap_vslim_live_component_set_template(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -449,16 +449,16 @@ pub fn vphp_wrap_vslimlivecomponent_set_template(ptr voidptr, ctx vphp.Context) 
     res := recv.set_template(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_template']
-pub fn vphp_wrap_vslimlivecomponent_template(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_component_template']
+pub fn vphp_wrap_vslim_live_component_template(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.template()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_set_layout']
-pub fn vphp_wrap_vslimlivecomponent_set_layout(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_set_layout']
+pub fn vphp_wrap_vslim_live_component_set_layout(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -469,16 +469,16 @@ pub fn vphp_wrap_vslimlivecomponent_set_layout(ptr voidptr, ctx vphp.Context) vo
     res := recv.set_layout(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_layout']
-pub fn vphp_wrap_vslimlivecomponent_layout(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_component_layout']
+pub fn vphp_wrap_vslim_live_component_layout(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.layout()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_set_id']
-pub fn vphp_wrap_vslimlivecomponent_set_id(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_set_id']
+pub fn vphp_wrap_vslim_live_component_set_id(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -489,16 +489,16 @@ pub fn vphp_wrap_vslimlivecomponent_set_id(ptr voidptr, ctx vphp.Context) voidpt
     res := recv.set_id(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_id']
-pub fn vphp_wrap_vslimlivecomponent_id(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_component_id']
+pub fn vphp_wrap_vslim_live_component_id(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.id()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_bind_socket']
-pub fn vphp_wrap_vslimlivecomponent_bind_socket(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_bind_socket']
+pub fn vphp_wrap_vslim_live_component_bind_socket(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -509,24 +509,24 @@ pub fn vphp_wrap_vslimlivecomponent_bind_socket(ptr voidptr, ctx vphp.Context) v
     res := recv.bind_socket(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_has_socket']
-pub fn vphp_wrap_vslimlivecomponent_has_socket(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_component_has_socket']
+pub fn vphp_wrap_vslim_live_component_has_socket(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.has_socket()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_state']
-pub fn vphp_wrap_vslimlivecomponent_state(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_state']
+pub fn vphp_wrap_vslim_live_component_state(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.state()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_assign']
-pub fn vphp_wrap_vslimlivecomponent_assign(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_assign']
+pub fn vphp_wrap_vslim_live_component_assign(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -539,8 +539,8 @@ pub fn vphp_wrap_vslimlivecomponent_assign(ptr voidptr, ctx vphp.Context) voidpt
     res := recv.assign(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_assign_many']
-pub fn vphp_wrap_vslimlivecomponent_assign_many(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_assign_many']
+pub fn vphp_wrap_vslim_live_component_assign_many(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -554,24 +554,24 @@ pub fn vphp_wrap_vslimlivecomponent_assign_many(ptr voidptr, ctx vphp.Context) v
     res := recv.assign_many(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_assigns']
-pub fn vphp_wrap_vslimlivecomponent_assigns(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_component_assigns']
+pub fn vphp_wrap_vslim_live_component_assigns(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.assigns()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_clear_assigns']
-pub fn vphp_wrap_vslimlivecomponent_clear_assigns(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_clear_assigns']
+pub fn vphp_wrap_vslim_live_component_clear_assigns(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.clear_assigns()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_render_template']
-pub fn vphp_wrap_vslimlivecomponent_render_template(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_component_render_template']
+pub fn vphp_wrap_vslim_live_component_render_template(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -584,16 +584,16 @@ pub fn vphp_wrap_vslimlivecomponent_render_template(ptr voidptr, ctx vphp.Contex
     res := recv.render_template(arg_0, arg_1)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_html']
-pub fn vphp_wrap_vslimlivecomponent_html(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_component_html']
+pub fn vphp_wrap_vslim_live_component_html(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.html()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_patch']
-pub fn vphp_wrap_vslimlivecomponent_patch(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_patch']
+pub fn vphp_wrap_vslim_live_component_patch(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -604,24 +604,24 @@ pub fn vphp_wrap_vslimlivecomponent_patch(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.patch(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_patch_bound']
-pub fn vphp_wrap_vslimlivecomponent_patch_bound(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_patch_bound']
+pub fn vphp_wrap_vslim_live_component_patch_bound(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.patch_bound()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_component_marker']
-pub fn vphp_wrap_vslimlivecomponent_component_marker(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_component_component_marker']
+pub fn vphp_wrap_vslim_live_component_component_marker(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.component_marker()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_append_to']
-pub fn vphp_wrap_vslimlivecomponent_append_to(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_append_to']
+pub fn vphp_wrap_vslim_live_component_append_to(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -634,8 +634,8 @@ pub fn vphp_wrap_vslimlivecomponent_append_to(ptr voidptr, ctx vphp.Context) voi
     res := recv.append_to(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_append_to_bound']
-pub fn vphp_wrap_vslimlivecomponent_append_to_bound(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_append_to_bound']
+pub fn vphp_wrap_vslim_live_component_append_to_bound(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -646,8 +646,8 @@ pub fn vphp_wrap_vslimlivecomponent_append_to_bound(ptr voidptr, ctx vphp.Contex
     res := recv.append_to_bound(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_prepend_to']
-pub fn vphp_wrap_vslimlivecomponent_prepend_to(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_prepend_to']
+pub fn vphp_wrap_vslim_live_component_prepend_to(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -660,8 +660,8 @@ pub fn vphp_wrap_vslimlivecomponent_prepend_to(ptr voidptr, ctx vphp.Context) vo
     res := recv.prepend_to(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_prepend_to_bound']
-pub fn vphp_wrap_vslimlivecomponent_prepend_to_bound(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_prepend_to_bound']
+pub fn vphp_wrap_vslim_live_component_prepend_to_bound(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -672,8 +672,8 @@ pub fn vphp_wrap_vslimlivecomponent_prepend_to_bound(ptr voidptr, ctx vphp.Conte
     res := recv.prepend_to_bound(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_remove']
-pub fn vphp_wrap_vslimlivecomponent_remove(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_remove']
+pub fn vphp_wrap_vslim_live_component_remove(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -684,23 +684,23 @@ pub fn vphp_wrap_vslimlivecomponent_remove(ptr voidptr, ctx vphp.Context) voidpt
     res := recv.remove(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponent_remove_bound']
-pub fn vphp_wrap_vslimlivecomponent_remove_bound(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_remove_bound']
+pub fn vphp_wrap_vslim_live_component_remove_bound(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponent(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.remove_bound()
     return voidptr(res)
 }
-@[export: 'VSlimLiveComponent_handlers']
-pub fn vslimlivecomponent_handlers() voidptr {
+@[export: 'vslim_live_component_handlers']
+pub fn vslim_live_component_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimlivecomponent_get_prop),
-        write_handler: voidptr(vslimlivecomponent_set_prop),
-        sync_handler: voidptr(vslimlivecomponent_sync_props),
-        new_raw: voidptr(vslimlivecomponent_new_raw),
-        cleanup_raw: voidptr(vslimlivecomponent_cleanup_raw),
-        free_raw: voidptr(vslimlivecomponent_free_raw)
+        prop_handler: voidptr(vslim_live_component_get_prop),
+        write_handler: voidptr(vslim_live_component_set_prop),
+        sync_handler: voidptr(vslim_live_component_sync_props),
+        new_raw: voidptr(vslim_live_component_new_raw),
+        cleanup_raw: voidptr(vslim_live_component_cleanup_raw),
+        free_raw: voidptr(vslim_live_component_free_raw)
     )
 }
 pub fn VSlimLiveComponent.php_class_entry() vphp.ZendClassEntry {
@@ -708,7 +708,7 @@ pub fn VSlimLiveComponent.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimLiveComponent.php_object_handlers() voidptr {
-    return vslimlivecomponent_handlers()
+    return vslim_live_component_handlers()
 }
 
 pub fn VSlimLiveComponent.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -731,44 +731,44 @@ pub fn (obj &VSlimLiveComponent) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimLiveComponent](obj)
 }
 
-@[export: 'VSlimLiveComponentState_new_raw']
-pub fn vslimlivecomponentstate_new_raw() voidptr {
+@[export: 'vslim_live_component_state_new_raw']
+pub fn vslim_live_component_state_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimLiveComponentState]()
 }
-@[export: 'VSlimLiveComponentState_free_raw']
-pub fn vslimlivecomponentstate_free_raw(ptr voidptr) {
+@[export: 'vslim_live_component_state_free_raw']
+pub fn vslim_live_component_state_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimLiveComponentState](ptr)
 }
-@[export: 'VSlimLiveComponentState_cleanup_raw']
-pub fn vslimlivecomponentstate_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_live_component_state_cleanup_raw']
+pub fn vslim_live_component_state_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimLiveComponentState_get_prop']
-pub fn vslimlivecomponentstate_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_live_component_state_get_prop']
+pub fn vslim_live_component_state_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimLiveComponentState_set_prop']
-pub fn vslimlivecomponentstate_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_live_component_state_set_prop']
+pub fn vslim_live_component_state_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimLiveComponentState_sync_props']
-pub fn vslimlivecomponentstate_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_live_component_state_sync_props']
+pub fn vslim_live_component_state_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimLiveComponentState_set']
-pub fn vphp_wrap_vslimlivecomponentstate_set(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_state_set']
+pub fn vphp_wrap_vslim_live_component_state_set(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponentState(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -781,8 +781,8 @@ pub fn vphp_wrap_vslimlivecomponentstate_set(ptr voidptr, ctx vphp.Context) void
     res := recv.set(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponentState_get']
-pub fn vphp_wrap_vslimlivecomponentstate_get(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_component_state_get']
+pub fn vphp_wrap_vslim_live_component_state_get(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveComponentState(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -793,8 +793,8 @@ pub fn vphp_wrap_vslimlivecomponentstate_get(ptr voidptr, ctx vphp.Context)  {
     res := recv.get(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponentState_get_or']
-pub fn vphp_wrap_vslimlivecomponentstate_get_or(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_component_state_get_or']
+pub fn vphp_wrap_vslim_live_component_state_get_or(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveComponentState(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -807,8 +807,8 @@ pub fn vphp_wrap_vslimlivecomponentstate_get_or(ptr voidptr, ctx vphp.Context)  
     res := recv.get_or(arg_0, arg_1)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponentState_clear']
-pub fn vphp_wrap_vslimlivecomponentstate_clear(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_component_state_clear']
+pub fn vphp_wrap_vslim_live_component_state_clear(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveComponentState(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -819,23 +819,23 @@ pub fn vphp_wrap_vslimlivecomponentstate_clear(ptr voidptr, ctx vphp.Context) vo
     res := recv.clear(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveComponentState_available']
-pub fn vphp_wrap_vslimlivecomponentstate_available(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_component_state_available']
+pub fn vphp_wrap_vslim_live_component_state_available(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveComponentState(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.available()
     ctx.return().v[bool](res)
 }
-@[export: 'VSlimLiveComponentState_handlers']
-pub fn vslimlivecomponentstate_handlers() voidptr {
+@[export: 'vslim_live_component_state_handlers']
+pub fn vslim_live_component_state_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimlivecomponentstate_get_prop),
-        write_handler: voidptr(vslimlivecomponentstate_set_prop),
-        sync_handler: voidptr(vslimlivecomponentstate_sync_props),
-        new_raw: voidptr(vslimlivecomponentstate_new_raw),
-        cleanup_raw: voidptr(vslimlivecomponentstate_cleanup_raw),
-        free_raw: voidptr(vslimlivecomponentstate_free_raw)
+        prop_handler: voidptr(vslim_live_component_state_get_prop),
+        write_handler: voidptr(vslim_live_component_state_set_prop),
+        sync_handler: voidptr(vslim_live_component_state_sync_props),
+        new_raw: voidptr(vslim_live_component_state_new_raw),
+        cleanup_raw: voidptr(vslim_live_component_state_cleanup_raw),
+        free_raw: voidptr(vslim_live_component_state_free_raw)
     )
 }
 pub fn VSlimLiveComponentState.php_class_entry() vphp.ZendClassEntry {
@@ -843,7 +843,7 @@ pub fn VSlimLiveComponentState.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimLiveComponentState.php_object_handlers() voidptr {
-    return vslimlivecomponentstate_handlers()
+    return vslim_live_component_state_handlers()
 }
 
 pub fn VSlimLiveComponentState.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -866,25 +866,25 @@ pub fn (obj &VSlimLiveComponentState) bind_owned_php_object_value() vphp.PhpValu
     return vphp.bind_owned_object_value[VSlimLiveComponentState](obj)
 }
 
-@[export: 'VSlimLiveForm_new_raw']
-pub fn vslimliveform_new_raw() voidptr {
+@[export: 'vslim_live_form_new_raw']
+pub fn vslim_live_form_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimLiveForm]()
 }
-@[export: 'VSlimLiveForm_free_raw']
-pub fn vslimliveform_free_raw(ptr voidptr) {
+@[export: 'vslim_live_form_free_raw']
+pub fn vslim_live_form_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimLiveForm](ptr)
 }
-@[export: 'VSlimLiveForm_cleanup_raw']
-pub fn vslimliveform_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_live_form_cleanup_raw']
+pub fn vslim_live_form_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimLiveForm_get_prop']
-pub fn vslimliveform_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_live_form_get_prop']
+pub fn vslim_live_form_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -903,8 +903,8 @@ pub fn vslimliveform_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.z
         }
     }
 }
-@[export: 'VSlimLiveForm_set_prop']
-pub fn vslimliveform_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_live_form_set_prop']
+pub fn vslim_live_form_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -923,8 +923,8 @@ pub fn vslimliveform_set_prop(ptr voidptr, name_ptr &char, name_len int, value &
         }
     }
 }
-@[export: 'VSlimLiveForm_sync_props']
-pub fn vslimliveform_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_live_form_sync_props']
+pub fn vslim_live_form_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimLiveForm(ptr)
@@ -933,24 +933,24 @@ pub fn vslimliveform_sync_props(ptr voidptr, zv &C.zval) {
         out.add_property_bool('validated', obj.validated)
     }
 }
-@[export: 'vphp_wrap_VSlimLiveForm_name']
-pub fn vphp_wrap_vslimliveform_name(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_form_name']
+pub fn vphp_wrap_vslim_live_form_name(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.name()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveForm_available']
-pub fn vphp_wrap_vslimliveform_available(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_form_available']
+pub fn vphp_wrap_vslim_live_form_available(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.available()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimLiveForm_fill']
-pub fn vphp_wrap_vslimliveform_fill(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_form_fill']
+pub fn vphp_wrap_vslim_live_form_fill(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -964,8 +964,8 @@ pub fn vphp_wrap_vslimliveform_fill(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.fill(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveForm_reset']
-pub fn vphp_wrap_vslimliveform_reset(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_form_reset']
+pub fn vphp_wrap_vslim_live_form_reset(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -979,8 +979,8 @@ pub fn vphp_wrap_vslimliveform_reset(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.reset(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveForm_validate']
-pub fn vphp_wrap_vslimliveform_validate(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_form_validate']
+pub fn vphp_wrap_vslim_live_form_validate(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -991,8 +991,8 @@ pub fn vphp_wrap_vslimliveform_validate(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.validate(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveForm_errors']
-pub fn vphp_wrap_vslimliveform_errors(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_form_errors']
+pub fn vphp_wrap_vslim_live_form_errors(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1006,16 +1006,16 @@ pub fn vphp_wrap_vslimliveform_errors(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.errors(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveForm_clear_errors']
-pub fn vphp_wrap_vslimliveform_clear_errors(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_form_clear_errors']
+pub fn vphp_wrap_vslim_live_form_clear_errors(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.clear_errors()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveForm_clear_error']
-pub fn vphp_wrap_vslimliveform_clear_error(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_form_clear_error']
+pub fn vphp_wrap_vslim_live_form_clear_error(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1026,8 +1026,8 @@ pub fn vphp_wrap_vslimliveform_clear_error(ptr voidptr, ctx vphp.Context) voidpt
     res := recv.clear_error(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveForm_forget']
-pub fn vphp_wrap_vslimliveform_forget(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_form_forget']
+pub fn vphp_wrap_vslim_live_form_forget(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1038,8 +1038,8 @@ pub fn vphp_wrap_vslimliveform_forget(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.forget(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveForm_forget_many']
-pub fn vphp_wrap_vslimliveform_forget_many(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_form_forget_many']
+pub fn vphp_wrap_vslim_live_form_forget_many(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1053,8 +1053,8 @@ pub fn vphp_wrap_vslimliveform_forget_many(ptr voidptr, ctx vphp.Context) voidpt
     res := recv.forget_many(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveForm_input']
-pub fn vphp_wrap_vslimliveform_input(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_form_input']
+pub fn vphp_wrap_vslim_live_form_input(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1065,8 +1065,8 @@ pub fn vphp_wrap_vslimliveform_input(ptr voidptr, ctx vphp.Context)  {
     res := recv.input(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveForm_input_or']
-pub fn vphp_wrap_vslimliveform_input_or(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_form_input_or']
+pub fn vphp_wrap_vslim_live_form_input_or(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1079,8 +1079,8 @@ pub fn vphp_wrap_vslimliveform_input_or(ptr voidptr, ctx vphp.Context)  {
     res := recv.input_or(arg_0, arg_1)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveForm_error']
-pub fn vphp_wrap_vslimliveform_error(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_form_error']
+pub fn vphp_wrap_vslim_live_form_error(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1091,8 +1091,8 @@ pub fn vphp_wrap_vslimliveform_error(ptr voidptr, ctx vphp.Context)  {
     res := recv.error(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveForm_has_error']
-pub fn vphp_wrap_vslimliveform_has_error(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_form_has_error']
+pub fn vphp_wrap_vslim_live_form_has_error(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1103,47 +1103,47 @@ pub fn vphp_wrap_vslimliveform_has_error(ptr voidptr, ctx vphp.Context)  {
     res := recv.has_error(arg_0)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimLiveForm_valid']
-pub fn vphp_wrap_vslimliveform_valid(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_form_valid']
+pub fn vphp_wrap_vslim_live_form_valid(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.valid()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimLiveForm_invalid']
-pub fn vphp_wrap_vslimliveform_invalid(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_form_invalid']
+pub fn vphp_wrap_vslim_live_form_invalid(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.invalid()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimLiveForm_error_count']
-pub fn vphp_wrap_vslimliveform_error_count(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_form_error_count']
+pub fn vphp_wrap_vslim_live_form_error_count(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.error_count()
     ctx.return().v[int](res)
 }
-@[export: 'vphp_wrap_VSlimLiveForm_data']
-pub fn vphp_wrap_vslimliveform_data(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_form_data']
+pub fn vphp_wrap_vslim_live_form_data(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveForm(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.data()
     ctx.return().v[vphp.PhpArray](res)
 }
-@[export: 'VSlimLiveForm_handlers']
-pub fn vslimliveform_handlers() voidptr {
+@[export: 'vslim_live_form_handlers']
+pub fn vslim_live_form_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimliveform_get_prop),
-        write_handler: voidptr(vslimliveform_set_prop),
-        sync_handler: voidptr(vslimliveform_sync_props),
-        new_raw: voidptr(vslimliveform_new_raw),
-        cleanup_raw: voidptr(vslimliveform_cleanup_raw),
-        free_raw: voidptr(vslimliveform_free_raw)
+        prop_handler: voidptr(vslim_live_form_get_prop),
+        write_handler: voidptr(vslim_live_form_set_prop),
+        sync_handler: voidptr(vslim_live_form_sync_props),
+        new_raw: voidptr(vslim_live_form_new_raw),
+        cleanup_raw: voidptr(vslim_live_form_cleanup_raw),
+        free_raw: voidptr(vslim_live_form_free_raw)
     )
 }
 pub fn VSlimLiveForm.php_class_entry() vphp.ZendClassEntry {
@@ -1151,7 +1151,7 @@ pub fn VSlimLiveForm.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimLiveForm.php_object_handlers() voidptr {
-    return vslimliveform_handlers()
+    return vslim_live_form_handlers()
 }
 
 pub fn VSlimLiveForm.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1174,25 +1174,25 @@ pub fn (obj &VSlimLiveForm) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimLiveForm](obj)
 }
 
-@[export: 'VSlimLiveSocket_new_raw']
-pub fn vslimlivesocket_new_raw() voidptr {
+@[export: 'vslim_live_socket_new_raw']
+pub fn vslim_live_socket_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimLiveSocket]()
 }
-@[export: 'VSlimLiveSocket_free_raw']
-pub fn vslimlivesocket_free_raw(ptr voidptr) {
+@[export: 'vslim_live_socket_free_raw']
+pub fn vslim_live_socket_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimLiveSocket](ptr)
 }
-@[export: 'VSlimLiveSocket_cleanup_raw']
-pub fn vslimlivesocket_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_live_socket_cleanup_raw']
+pub fn vslim_live_socket_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimLiveSocket_get_prop']
-pub fn vslimlivesocket_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_live_socket_get_prop']
+pub fn vslim_live_socket_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -1223,8 +1223,8 @@ pub fn vslimlivesocket_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C
         }
     }
 }
-@[export: 'VSlimLiveSocket_set_prop']
-pub fn vslimlivesocket_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_live_socket_set_prop']
+pub fn vslim_live_socket_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -1255,8 +1255,8 @@ pub fn vslimlivesocket_set_prop(ptr voidptr, name_ptr &char, name_len int, value
         }
     }
 }
-@[export: 'VSlimLiveSocket_sync_props']
-pub fn vslimlivesocket_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_live_socket_sync_props']
+pub fn vslim_live_socket_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimLiveSocket(ptr)
@@ -1268,16 +1268,16 @@ pub fn vslimlivesocket_sync_props(ptr voidptr, zv &C.zval) {
         out.add_property_string('rootId', obj.root_id)
     }
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_construct']
-pub fn vphp_wrap_vslimlivesocket_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_construct']
+pub fn vphp_wrap_vslim_live_socket_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_set_id']
-pub fn vphp_wrap_vslimlivesocket_set_id(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_set_id']
+pub fn vphp_wrap_vslim_live_socket_set_id(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1288,16 +1288,16 @@ pub fn vphp_wrap_vslimlivesocket_set_id(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.set_id(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_id']
-pub fn vphp_wrap_vslimlivesocket_id(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_id']
+pub fn vphp_wrap_vslim_live_socket_id(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.id()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_set_connected']
-pub fn vphp_wrap_vslimlivesocket_set_connected(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_set_connected']
+pub fn vphp_wrap_vslim_live_socket_set_connected(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1308,16 +1308,16 @@ pub fn vphp_wrap_vslimlivesocket_set_connected(ptr voidptr, ctx vphp.Context) vo
     res := recv.set_connected(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_connected']
-pub fn vphp_wrap_vslimlivesocket_connected(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_connected']
+pub fn vphp_wrap_vslim_live_socket_connected(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.connected()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_set_target']
-pub fn vphp_wrap_vslimlivesocket_set_target(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_set_target']
+pub fn vphp_wrap_vslim_live_socket_set_target(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1328,16 +1328,16 @@ pub fn vphp_wrap_vslimlivesocket_set_target(ptr voidptr, ctx vphp.Context) voidp
     res := recv.set_target(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_target']
-pub fn vphp_wrap_vslimlivesocket_target(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_target']
+pub fn vphp_wrap_vslim_live_socket_target(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.target()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_set_root_id']
-pub fn vphp_wrap_vslimlivesocket_set_root_id(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_set_root_id']
+pub fn vphp_wrap_vslim_live_socket_set_root_id(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1348,16 +1348,16 @@ pub fn vphp_wrap_vslimlivesocket_set_root_id(ptr voidptr, ctx vphp.Context) void
     res := recv.set_root_id(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_root_id']
-pub fn vphp_wrap_vslimlivesocket_root_id(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_root_id']
+pub fn vphp_wrap_vslim_live_socket_root_id(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.root_id()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_assign']
-pub fn vphp_wrap_vslimlivesocket_assign(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_assign']
+pub fn vphp_wrap_vslim_live_socket_assign(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1370,8 +1370,8 @@ pub fn vphp_wrap_vslimlivesocket_assign(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.assign(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_assign_many']
-pub fn vphp_wrap_vslimlivesocket_assign_many(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_assign_many']
+pub fn vphp_wrap_vslim_live_socket_assign_many(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1385,8 +1385,8 @@ pub fn vphp_wrap_vslimlivesocket_assign_many(ptr voidptr, ctx vphp.Context) void
     res := recv.assign_many(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_assign_form']
-pub fn vphp_wrap_vslimlivesocket_assign_form(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_assign_form']
+pub fn vphp_wrap_vslim_live_socket_assign_form(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1400,8 +1400,8 @@ pub fn vphp_wrap_vslimlivesocket_assign_form(ptr voidptr, ctx vphp.Context) void
     res := recv.assign_form(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_reset_form']
-pub fn vphp_wrap_vslimlivesocket_reset_form(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_reset_form']
+pub fn vphp_wrap_vslim_live_socket_reset_form(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1415,8 +1415,8 @@ pub fn vphp_wrap_vslimlivesocket_reset_form(ptr voidptr, ctx vphp.Context) voidp
     res := recv.reset_form(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_forget']
-pub fn vphp_wrap_vslimlivesocket_forget(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_forget']
+pub fn vphp_wrap_vslim_live_socket_forget(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1427,8 +1427,8 @@ pub fn vphp_wrap_vslimlivesocket_forget(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.forget(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_forget_input']
-pub fn vphp_wrap_vslimlivesocket_forget_input(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_forget_input']
+pub fn vphp_wrap_vslim_live_socket_forget_input(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1439,8 +1439,8 @@ pub fn vphp_wrap_vslimlivesocket_forget_input(ptr voidptr, ctx vphp.Context) voi
     res := recv.forget_input(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_forget_inputs']
-pub fn vphp_wrap_vslimlivesocket_forget_inputs(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_forget_inputs']
+pub fn vphp_wrap_vslim_live_socket_forget_inputs(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1454,16 +1454,16 @@ pub fn vphp_wrap_vslimlivesocket_forget_inputs(ptr voidptr, ctx vphp.Context) vo
     res := recv.forget_inputs(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_clear_assigns']
-pub fn vphp_wrap_vslimlivesocket_clear_assigns(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_clear_assigns']
+pub fn vphp_wrap_vslim_live_socket_clear_assigns(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.clear_assigns()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_assign_component_state']
-pub fn vphp_wrap_vslimlivesocket_assign_component_state(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_assign_component_state']
+pub fn vphp_wrap_vslim_live_socket_assign_component_state(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1478,8 +1478,8 @@ pub fn vphp_wrap_vslimlivesocket_assign_component_state(ptr voidptr, ctx vphp.Co
     res := recv.assign_component_state(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_component_state']
-pub fn vphp_wrap_vslimlivesocket_component_state(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_component_state']
+pub fn vphp_wrap_vslim_live_socket_component_state(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1492,8 +1492,8 @@ pub fn vphp_wrap_vslimlivesocket_component_state(ptr voidptr, ctx vphp.Context) 
     res := recv.component_state(arg_0, arg_1)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_component_state_or']
-pub fn vphp_wrap_vslimlivesocket_component_state_or(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_component_state_or']
+pub fn vphp_wrap_vslim_live_socket_component_state_or(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1508,8 +1508,8 @@ pub fn vphp_wrap_vslimlivesocket_component_state_or(ptr voidptr, ctx vphp.Contex
     res := recv.component_state_or(arg_0, arg_1, arg_2)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_clear_component_state']
-pub fn vphp_wrap_vslimlivesocket_clear_component_state(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_clear_component_state']
+pub fn vphp_wrap_vslim_live_socket_clear_component_state(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1522,8 +1522,8 @@ pub fn vphp_wrap_vslimlivesocket_clear_component_state(ptr voidptr, ctx vphp.Con
     res := recv.clear_component_state(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_assign_error']
-pub fn vphp_wrap_vslimlivesocket_assign_error(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_assign_error']
+pub fn vphp_wrap_vslim_live_socket_assign_error(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1536,8 +1536,8 @@ pub fn vphp_wrap_vslimlivesocket_assign_error(ptr voidptr, ctx vphp.Context) voi
     res := recv.assign_error(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_assign_errors']
-pub fn vphp_wrap_vslimlivesocket_assign_errors(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_assign_errors']
+pub fn vphp_wrap_vslim_live_socket_assign_errors(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1551,8 +1551,8 @@ pub fn vphp_wrap_vslimlivesocket_assign_errors(ptr voidptr, ctx vphp.Context) vo
     res := recv.assign_errors(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_clear_error']
-pub fn vphp_wrap_vslimlivesocket_clear_error(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_clear_error']
+pub fn vphp_wrap_vslim_live_socket_clear_error(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1563,16 +1563,16 @@ pub fn vphp_wrap_vslimlivesocket_clear_error(ptr voidptr, ctx vphp.Context) void
     res := recv.clear_error(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_clear_errors']
-pub fn vphp_wrap_vslimlivesocket_clear_errors(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_clear_errors']
+pub fn vphp_wrap_vslim_live_socket_clear_errors(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.clear_errors()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_input']
-pub fn vphp_wrap_vslimlivesocket_input(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_input']
+pub fn vphp_wrap_vslim_live_socket_input(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1583,8 +1583,8 @@ pub fn vphp_wrap_vslimlivesocket_input(ptr voidptr, ctx vphp.Context)  {
     res := recv.input(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_input_or']
-pub fn vphp_wrap_vslimlivesocket_input_or(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_input_or']
+pub fn vphp_wrap_vslim_live_socket_input_or(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1597,8 +1597,8 @@ pub fn vphp_wrap_vslimlivesocket_input_or(ptr voidptr, ctx vphp.Context)  {
     res := recv.input_or(arg_0, arg_1)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_old']
-pub fn vphp_wrap_vslimlivesocket_old(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_old']
+pub fn vphp_wrap_vslim_live_socket_old(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1609,8 +1609,8 @@ pub fn vphp_wrap_vslimlivesocket_old(ptr voidptr, ctx vphp.Context)  {
     res := recv.old(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_old_or']
-pub fn vphp_wrap_vslimlivesocket_old_or(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_old_or']
+pub fn vphp_wrap_vslim_live_socket_old_or(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1623,8 +1623,8 @@ pub fn vphp_wrap_vslimlivesocket_old_or(ptr voidptr, ctx vphp.Context)  {
     res := recv.old_or(arg_0, arg_1)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_error']
-pub fn vphp_wrap_vslimlivesocket_error(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_error']
+pub fn vphp_wrap_vslim_live_socket_error(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1635,8 +1635,8 @@ pub fn vphp_wrap_vslimlivesocket_error(ptr voidptr, ctx vphp.Context)  {
     res := recv.error(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_has_error']
-pub fn vphp_wrap_vslimlivesocket_has_error(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_has_error']
+pub fn vphp_wrap_vslim_live_socket_has_error(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1647,8 +1647,8 @@ pub fn vphp_wrap_vslimlivesocket_has_error(ptr voidptr, ctx vphp.Context)  {
     res := recv.has_error(arg_0)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_form']
-pub fn vphp_wrap_vslimlivesocket_form(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_form']
+pub fn vphp_wrap_vslim_live_socket_form(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1659,8 +1659,8 @@ pub fn vphp_wrap_vslimlivesocket_form(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.form(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_get']
-pub fn vphp_wrap_vslimlivesocket_get(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_get']
+pub fn vphp_wrap_vslim_live_socket_get(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1671,8 +1671,8 @@ pub fn vphp_wrap_vslimlivesocket_get(ptr voidptr, ctx vphp.Context)  {
     res := recv.get(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_has']
-pub fn vphp_wrap_vslimlivesocket_has(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_has']
+pub fn vphp_wrap_vslim_live_socket_has(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1683,16 +1683,16 @@ pub fn vphp_wrap_vslimlivesocket_has(ptr voidptr, ctx vphp.Context)  {
     res := recv.has(arg_0)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_assigns']
-pub fn vphp_wrap_vslimlivesocket_assigns(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_assigns']
+pub fn vphp_wrap_vslim_live_socket_assigns(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.assigns()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_patch']
-pub fn vphp_wrap_vslimlivesocket_patch(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_patch']
+pub fn vphp_wrap_vslim_live_socket_patch(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1705,8 +1705,8 @@ pub fn vphp_wrap_vslimlivesocket_patch(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.patch(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_append']
-pub fn vphp_wrap_vslimlivesocket_append(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_append']
+pub fn vphp_wrap_vslim_live_socket_append(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1719,8 +1719,8 @@ pub fn vphp_wrap_vslimlivesocket_append(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.append(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_prepend']
-pub fn vphp_wrap_vslimlivesocket_prepend(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_prepend']
+pub fn vphp_wrap_vslim_live_socket_prepend(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1733,8 +1733,8 @@ pub fn vphp_wrap_vslimlivesocket_prepend(ptr voidptr, ctx vphp.Context) voidptr 
     res := recv.prepend(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_set_text']
-pub fn vphp_wrap_vslimlivesocket_set_text(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_set_text']
+pub fn vphp_wrap_vslim_live_socket_set_text(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1747,8 +1747,8 @@ pub fn vphp_wrap_vslimlivesocket_set_text(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.set_text(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_set_attr']
-pub fn vphp_wrap_vslimlivesocket_set_attr(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_set_attr']
+pub fn vphp_wrap_vslim_live_socket_set_attr(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1763,8 +1763,8 @@ pub fn vphp_wrap_vslimlivesocket_set_attr(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.set_attr(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_remove']
-pub fn vphp_wrap_vslimlivesocket_remove(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_remove']
+pub fn vphp_wrap_vslim_live_socket_remove(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1775,24 +1775,24 @@ pub fn vphp_wrap_vslimlivesocket_remove(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.remove(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_patches']
-pub fn vphp_wrap_vslimlivesocket_patches(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_patches']
+pub fn vphp_wrap_vslim_live_socket_patches(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.patches()
     ctx.return().v[[]map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_clear_patches']
-pub fn vphp_wrap_vslimlivesocket_clear_patches(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_clear_patches']
+pub fn vphp_wrap_vslim_live_socket_clear_patches(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.clear_patches()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_push_event']
-pub fn vphp_wrap_vslimlivesocket_push_event(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_push_event']
+pub fn vphp_wrap_vslim_live_socket_push_event(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1805,24 +1805,24 @@ pub fn vphp_wrap_vslimlivesocket_push_event(ptr voidptr, ctx vphp.Context) voidp
     res := recv.push_event(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_events']
-pub fn vphp_wrap_vslimlivesocket_events(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_events']
+pub fn vphp_wrap_vslim_live_socket_events(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.events()
     ctx.return().v[[]map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_clear_events']
-pub fn vphp_wrap_vslimlivesocket_clear_events(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_clear_events']
+pub fn vphp_wrap_vslim_live_socket_clear_events(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.clear_events()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_flash']
-pub fn vphp_wrap_vslimlivesocket_flash(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_flash']
+pub fn vphp_wrap_vslim_live_socket_flash(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1835,24 +1835,24 @@ pub fn vphp_wrap_vslimlivesocket_flash(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.flash(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_flashes']
-pub fn vphp_wrap_vslimlivesocket_flashes(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_flashes']
+pub fn vphp_wrap_vslim_live_socket_flashes(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.flashes()
     ctx.return().v[[]map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_clear_flashes']
-pub fn vphp_wrap_vslimlivesocket_clear_flashes(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_clear_flashes']
+pub fn vphp_wrap_vslim_live_socket_clear_flashes(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.clear_flashes()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_join_topic']
-pub fn vphp_wrap_vslimlivesocket_join_topic(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_join_topic']
+pub fn vphp_wrap_vslim_live_socket_join_topic(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1863,8 +1863,8 @@ pub fn vphp_wrap_vslimlivesocket_join_topic(ptr voidptr, ctx vphp.Context) voidp
     res := recv.join_topic(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_leave_topic']
-pub fn vphp_wrap_vslimlivesocket_leave_topic(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_leave_topic']
+pub fn vphp_wrap_vslim_live_socket_leave_topic(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1875,8 +1875,8 @@ pub fn vphp_wrap_vslimlivesocket_leave_topic(ptr voidptr, ctx vphp.Context) void
     res := recv.leave_topic(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_broadcast_info']
-pub fn vphp_wrap_vslimlivesocket_broadcast_info(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_broadcast_info']
+pub fn vphp_wrap_vslim_live_socket_broadcast_info(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1893,24 +1893,24 @@ pub fn vphp_wrap_vslimlivesocket_broadcast_info(ptr voidptr, ctx vphp.Context) v
     res := recv.broadcast_info(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_pubsub_commands']
-pub fn vphp_wrap_vslimlivesocket_pubsub_commands(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_pubsub_commands']
+pub fn vphp_wrap_vslim_live_socket_pubsub_commands(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.pubsub_commands()
     ctx.return().v[[]map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_clear_pubsub']
-pub fn vphp_wrap_vslimlivesocket_clear_pubsub(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_clear_pubsub']
+pub fn vphp_wrap_vslim_live_socket_clear_pubsub(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.clear_pubsub()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_redirect']
-pub fn vphp_wrap_vslimlivesocket_redirect(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_redirect']
+pub fn vphp_wrap_vslim_live_socket_redirect(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1921,24 +1921,24 @@ pub fn vphp_wrap_vslimlivesocket_redirect(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.redirect(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_redirect_to']
-pub fn vphp_wrap_vslimlivesocket_redirect_to(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_redirect_to']
+pub fn vphp_wrap_vslim_live_socket_redirect_to(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.redirect_to()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_clear_redirect']
-pub fn vphp_wrap_vslimlivesocket_clear_redirect(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_clear_redirect']
+pub fn vphp_wrap_vslim_live_socket_clear_redirect(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.clear_redirect()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_navigate']
-pub fn vphp_wrap_vslimlivesocket_navigate(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_navigate']
+pub fn vphp_wrap_vslim_live_socket_navigate(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1949,31 +1949,31 @@ pub fn vphp_wrap_vslimlivesocket_navigate(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.navigate(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_navigate_to']
-pub fn vphp_wrap_vslimlivesocket_navigate_to(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_live_socket_navigate_to']
+pub fn vphp_wrap_vslim_live_socket_navigate_to(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.navigate_to()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimLiveSocket_clear_navigate']
-pub fn vphp_wrap_vslimlivesocket_clear_navigate(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_live_socket_clear_navigate']
+pub fn vphp_wrap_vslim_live_socket_clear_navigate(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimLiveSocket(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.clear_navigate()
     return voidptr(res)
 }
-@[export: 'VSlimLiveSocket_handlers']
-pub fn vslimlivesocket_handlers() voidptr {
+@[export: 'vslim_live_socket_handlers']
+pub fn vslim_live_socket_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimlivesocket_get_prop),
-        write_handler: voidptr(vslimlivesocket_set_prop),
-        sync_handler: voidptr(vslimlivesocket_sync_props),
-        new_raw: voidptr(vslimlivesocket_new_raw),
-        cleanup_raw: voidptr(vslimlivesocket_cleanup_raw),
-        free_raw: voidptr(vslimlivesocket_free_raw)
+        prop_handler: voidptr(vslim_live_socket_get_prop),
+        write_handler: voidptr(vslim_live_socket_set_prop),
+        sync_handler: voidptr(vslim_live_socket_sync_props),
+        new_raw: voidptr(vslim_live_socket_new_raw),
+        cleanup_raw: voidptr(vslim_live_socket_cleanup_raw),
+        free_raw: voidptr(vslim_live_socket_free_raw)
     )
 }
 pub fn VSlimLiveSocket.php_class_entry() vphp.ZendClassEntry {
@@ -1981,7 +1981,7 @@ pub fn VSlimLiveSocket.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimLiveSocket.php_object_handlers() voidptr {
-    return vslimlivesocket_handlers()
+    return vslim_live_socket_handlers()
 }
 
 pub fn VSlimLiveSocket.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

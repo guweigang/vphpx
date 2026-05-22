@@ -6,19 +6,19 @@ import vphp
 
 __global C.vslim__websocket__app_ce &C.zend_class_entry
 
-@[export: 'VSlimWebSocketApp_new_raw']
-pub fn vslimwebsocketapp_new_raw() voidptr {
+@[export: 'vslim_web_socket_app_new_raw']
+pub fn vslim_web_socket_app_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimWebSocketApp]()
 }
-@[export: 'VSlimWebSocketApp_free_raw']
-pub fn vslimwebsocketapp_free_raw(ptr voidptr) {
+@[export: 'vslim_web_socket_app_free_raw']
+pub fn vslim_web_socket_app_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimWebSocketApp](ptr)
 }
-@[export: 'VSlimWebSocketApp_cleanup_raw']
-pub fn vslimwebsocketapp_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_web_socket_app_cleanup_raw']
+pub fn vslim_web_socket_app_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
@@ -27,27 +27,27 @@ pub fn vslimwebsocketapp_cleanup_raw(ptr voidptr) {
         obj.free()
     }
 }
-@[export: 'VSlimWebSocketApp_get_prop']
-pub fn vslimwebsocketapp_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_web_socket_app_get_prop']
+pub fn vslim_web_socket_app_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimWebSocketApp_set_prop']
-pub fn vslimwebsocketapp_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_web_socket_app_set_prop']
+pub fn vslim_web_socket_app_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimWebSocketApp_sync_props']
-pub fn vslimwebsocketapp_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_web_socket_app_sync_props']
+pub fn vslim_web_socket_app_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimWebSocketApp_construct']
-pub fn vphp_wrap_vslimwebsocketapp_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_web_socket_app_construct']
+pub fn vphp_wrap_vslim_web_socket_app_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -62,8 +62,8 @@ pub fn vphp_wrap_vslimwebsocketapp_construct(ptr voidptr, ctx vphp.Context) void
     res := recv.construct(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimWebSocketApp_on_open']
-pub fn vphp_wrap_vslimwebsocketapp_on_open(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_web_socket_app_on_open']
+pub fn vphp_wrap_vslim_web_socket_app_on_open(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -77,8 +77,8 @@ pub fn vphp_wrap_vslimwebsocketapp_on_open(ptr voidptr, ctx vphp.Context) voidpt
     res := recv.on_open(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimWebSocketApp_on_message']
-pub fn vphp_wrap_vslimwebsocketapp_on_message(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_web_socket_app_on_message']
+pub fn vphp_wrap_vslim_web_socket_app_on_message(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -92,8 +92,8 @@ pub fn vphp_wrap_vslimwebsocketapp_on_message(ptr voidptr, ctx vphp.Context) voi
     res := recv.on_message(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimWebSocketApp_on_close']
-pub fn vphp_wrap_vslimwebsocketapp_on_close(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_web_socket_app_on_close']
+pub fn vphp_wrap_vslim_web_socket_app_on_close(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -107,32 +107,32 @@ pub fn vphp_wrap_vslimwebsocketapp_on_close(ptr voidptr, ctx vphp.Context) voidp
     res := recv.on_close(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimWebSocketApp_has_on_open']
-pub fn vphp_wrap_vslimwebsocketapp_has_on_open(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_web_socket_app_has_on_open']
+pub fn vphp_wrap_vslim_web_socket_app_has_on_open(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.has_on_open()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimWebSocketApp_has_on_message']
-pub fn vphp_wrap_vslimwebsocketapp_has_on_message(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_web_socket_app_has_on_message']
+pub fn vphp_wrap_vslim_web_socket_app_has_on_message(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.has_on_message()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimWebSocketApp_has_on_close']
-pub fn vphp_wrap_vslimwebsocketapp_has_on_close(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_web_socket_app_has_on_close']
+pub fn vphp_wrap_vslim_web_socket_app_has_on_close(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.has_on_close()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimWebSocketApp_remember']
-pub fn vphp_wrap_vslimwebsocketapp_remember(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_web_socket_app_remember']
+pub fn vphp_wrap_vslim_web_socket_app_remember(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -146,8 +146,8 @@ pub fn vphp_wrap_vslimwebsocketapp_remember(ptr voidptr, ctx vphp.Context) voidp
     res := recv.remember(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimWebSocketApp_forget']
-pub fn vphp_wrap_vslimwebsocketapp_forget(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_web_socket_app_forget']
+pub fn vphp_wrap_vslim_web_socket_app_forget(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -158,8 +158,8 @@ pub fn vphp_wrap_vslimwebsocketapp_forget(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.forget(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimWebSocketApp_has_connection']
-pub fn vphp_wrap_vslimwebsocketapp_has_connection(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_web_socket_app_has_connection']
+pub fn vphp_wrap_vslim_web_socket_app_has_connection(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -170,8 +170,8 @@ pub fn vphp_wrap_vslimwebsocketapp_has_connection(ptr voidptr, ctx vphp.Context)
     res := recv.has_connection(arg_0)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimWebSocketApp_join']
-pub fn vphp_wrap_vslimwebsocketapp_join(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_web_socket_app_join']
+pub fn vphp_wrap_vslim_web_socket_app_join(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -184,8 +184,8 @@ pub fn vphp_wrap_vslimwebsocketapp_join(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.join(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimWebSocketApp_leave']
-pub fn vphp_wrap_vslimwebsocketapp_leave(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_web_socket_app_leave']
+pub fn vphp_wrap_vslim_web_socket_app_leave(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -198,8 +198,8 @@ pub fn vphp_wrap_vslimwebsocketapp_leave(ptr voidptr, ctx vphp.Context) voidptr 
     res := recv.leave(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimWebSocketApp_members']
-pub fn vphp_wrap_vslimwebsocketapp_members(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_web_socket_app_members']
+pub fn vphp_wrap_vslim_web_socket_app_members(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -210,16 +210,16 @@ pub fn vphp_wrap_vslimwebsocketapp_members(ptr voidptr, ctx vphp.Context)  {
     res := recv.members(arg_0)
     ctx.return().v[[]string](res)
 }
-@[export: 'vphp_wrap_VSlimWebSocketApp_connection_ids']
-pub fn vphp_wrap_vslimwebsocketapp_connection_ids(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_web_socket_app_connection_ids']
+pub fn vphp_wrap_vslim_web_socket_app_connection_ids(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.connection_ids()
     ctx.return().v[[]string](res)
 }
-@[export: 'vphp_wrap_VSlimWebSocketApp_rooms_for']
-pub fn vphp_wrap_vslimwebsocketapp_rooms_for(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_web_socket_app_rooms_for']
+pub fn vphp_wrap_vslim_web_socket_app_rooms_for(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -230,8 +230,8 @@ pub fn vphp_wrap_vslimwebsocketapp_rooms_for(ptr voidptr, ctx vphp.Context)  {
     res := recv.rooms_for(arg_0)
     ctx.return().v[[]string](res)
 }
-@[export: 'vphp_wrap_VSlimWebSocketApp_send_to']
-pub fn vphp_wrap_vslimwebsocketapp_send_to(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_web_socket_app_send_to']
+pub fn vphp_wrap_vslim_web_socket_app_send_to(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -244,8 +244,8 @@ pub fn vphp_wrap_vslimwebsocketapp_send_to(ptr voidptr, ctx vphp.Context)  {
     res := recv.send_to(arg_0, arg_1)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimWebSocketApp_broadcast']
-pub fn vphp_wrap_vslimwebsocketapp_broadcast(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_web_socket_app_broadcast']
+pub fn vphp_wrap_vslim_web_socket_app_broadcast(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -260,8 +260,8 @@ pub fn vphp_wrap_vslimwebsocketapp_broadcast(ptr voidptr, ctx vphp.Context)  {
     res := recv.broadcast(arg_0, arg_1, arg_2)
     ctx.return().v[int](res)
 }
-@[export: 'vphp_wrap_VSlimWebSocketApp_handle']
-pub fn vphp_wrap_vslimwebsocketapp_handle(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_web_socket_app_handle']
+pub fn vphp_wrap_vslim_web_socket_app_handle(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -280,8 +280,8 @@ pub fn vphp_wrap_vslimwebsocketapp_handle(ptr voidptr, ctx vphp.Context)  {
     res := recv.handle(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
-@[export: 'vphp_wrap_VSlimWebSocketApp_handle_websocket']
-pub fn vphp_wrap_vslimwebsocketapp_handle_websocket(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_web_socket_app_handle_websocket']
+pub fn vphp_wrap_vslim_web_socket_app_handle_websocket(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -300,15 +300,15 @@ pub fn vphp_wrap_vslimwebsocketapp_handle_websocket(ptr voidptr, ctx vphp.Contex
     res := recv.handle_websocket(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
-@[export: 'VSlimWebSocketApp_handlers']
-pub fn vslimwebsocketapp_handlers() voidptr {
+@[export: 'vslim_web_socket_app_handlers']
+pub fn vslim_web_socket_app_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimwebsocketapp_get_prop),
-        write_handler: voidptr(vslimwebsocketapp_set_prop),
-        sync_handler: voidptr(vslimwebsocketapp_sync_props),
-        new_raw: voidptr(vslimwebsocketapp_new_raw),
-        cleanup_raw: voidptr(vslimwebsocketapp_cleanup_raw),
-        free_raw: voidptr(vslimwebsocketapp_free_raw)
+        prop_handler: voidptr(vslim_web_socket_app_get_prop),
+        write_handler: voidptr(vslim_web_socket_app_set_prop),
+        sync_handler: voidptr(vslim_web_socket_app_sync_props),
+        new_raw: voidptr(vslim_web_socket_app_new_raw),
+        cleanup_raw: voidptr(vslim_web_socket_app_cleanup_raw),
+        free_raw: voidptr(vslim_web_socket_app_free_raw)
     )
 }
 pub fn VSlimWebSocketApp.php_class_entry() vphp.ZendClassEntry {
@@ -316,7 +316,7 @@ pub fn VSlimWebSocketApp.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimWebSocketApp.php_object_handlers() voidptr {
-    return vslimwebsocketapp_handlers()
+    return vslim_web_socket_app_handlers()
 }
 
 pub fn VSlimWebSocketApp.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

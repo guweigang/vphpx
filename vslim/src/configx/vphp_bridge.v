@@ -6,19 +6,19 @@ import vphp
 
 __global C.vslim__config_ce &C.zend_class_entry
 
-@[export: 'VSlimConfig_new_raw']
-pub fn vslimconfig_new_raw() voidptr {
+@[export: 'vslim_config_new_raw']
+pub fn vslim_config_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimConfig]()
 }
-@[export: 'VSlimConfig_free_raw']
-pub fn vslimconfig_free_raw(ptr voidptr) {
+@[export: 'vslim_config_free_raw']
+pub fn vslim_config_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimConfig](ptr)
 }
-@[export: 'VSlimConfig_cleanup_raw']
-pub fn vslimconfig_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_config_cleanup_raw']
+pub fn vslim_config_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
@@ -27,35 +27,35 @@ pub fn vslimconfig_cleanup_raw(ptr voidptr) {
         obj.free()
     }
 }
-@[export: 'VSlimConfig_get_prop']
-pub fn vslimconfig_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_config_get_prop']
+pub fn vslim_config_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimConfig_set_prop']
-pub fn vslimconfig_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_config_set_prop']
+pub fn vslim_config_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimConfig_sync_props']
-pub fn vslimconfig_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_config_sync_props']
+pub fn vslim_config_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimConfig_construct']
-pub fn vphp_wrap_vslimconfig_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_config_construct']
+pub fn vphp_wrap_vslim_config_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimConfig_load']
-pub fn vphp_wrap_vslimconfig_load(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_config_load']
+pub fn vphp_wrap_vslim_config_load(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -66,8 +66,8 @@ pub fn vphp_wrap_vslimconfig_load(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.load(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimConfig_load_dir']
-pub fn vphp_wrap_vslimconfig_load_dir(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_config_load_dir']
+pub fn vphp_wrap_vslim_config_load_dir(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -78,8 +78,8 @@ pub fn vphp_wrap_vslimconfig_load_dir(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.load_dir(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimConfig_load_text']
-pub fn vphp_wrap_vslimconfig_load_text(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_config_load_text']
+pub fn vphp_wrap_vslim_config_load_text(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -90,8 +90,8 @@ pub fn vphp_wrap_vslimconfig_load_text(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.load_text(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimConfig_merge_file']
-pub fn vphp_wrap_vslimconfig_merge_file(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_config_merge_file']
+pub fn vphp_wrap_vslim_config_merge_file(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -102,8 +102,8 @@ pub fn vphp_wrap_vslimconfig_merge_file(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.merge_file(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimConfig_merge_dir']
-pub fn vphp_wrap_vslimconfig_merge_dir(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_config_merge_dir']
+pub fn vphp_wrap_vslim_config_merge_dir(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -114,8 +114,8 @@ pub fn vphp_wrap_vslimconfig_merge_dir(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.merge_dir(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimConfig_merge_text']
-pub fn vphp_wrap_vslimconfig_merge_text(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_config_merge_text']
+pub fn vphp_wrap_vslim_config_merge_text(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -126,24 +126,24 @@ pub fn vphp_wrap_vslimconfig_merge_text(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.merge_text(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimConfig_is_loaded']
-pub fn vphp_wrap_vslimconfig_is_loaded(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_config_is_loaded']
+pub fn vphp_wrap_vslim_config_is_loaded(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.is_loaded()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimConfig_path']
-pub fn vphp_wrap_vslimconfig_path(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_config_path']
+pub fn vphp_wrap_vslim_config_path(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.path()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimConfig_has']
-pub fn vphp_wrap_vslimconfig_has(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_config_has']
+pub fn vphp_wrap_vslim_config_has(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -154,8 +154,8 @@ pub fn vphp_wrap_vslimconfig_has(ptr voidptr, ctx vphp.Context)  {
     res := recv.has(arg_0)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimConfig_get_string']
-pub fn vphp_wrap_vslimconfig_get_string(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_config_get_string']
+pub fn vphp_wrap_vslim_config_get_string(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -168,8 +168,8 @@ pub fn vphp_wrap_vslimconfig_get_string(ptr voidptr, ctx vphp.Context)  {
     res := recv.get_string(arg_0, arg_1)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimConfig_get_int']
-pub fn vphp_wrap_vslimconfig_get_int(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_config_get_int']
+pub fn vphp_wrap_vslim_config_get_int(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -182,8 +182,8 @@ pub fn vphp_wrap_vslimconfig_get_int(ptr voidptr, ctx vphp.Context)  {
     res := recv.get_int(arg_0, arg_1)
     ctx.return().v[int](res)
 }
-@[export: 'vphp_wrap_VSlimConfig_get_bool']
-pub fn vphp_wrap_vslimconfig_get_bool(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_config_get_bool']
+pub fn vphp_wrap_vslim_config_get_bool(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -196,8 +196,8 @@ pub fn vphp_wrap_vslimconfig_get_bool(ptr voidptr, ctx vphp.Context)  {
     res := recv.get_bool(arg_0, arg_1)
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimConfig_get_float']
-pub fn vphp_wrap_vslimconfig_get_float(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_config_get_float']
+pub fn vphp_wrap_vslim_config_get_float(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -210,8 +210,8 @@ pub fn vphp_wrap_vslimconfig_get_float(ptr voidptr, ctx vphp.Context)  {
     res := recv.get_float(arg_0, arg_1)
     ctx.return().v[f64](res)
 }
-@[export: 'vphp_wrap_VSlimConfig_get_string_list']
-pub fn vphp_wrap_vslimconfig_get_string_list(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_config_get_string_list']
+pub fn vphp_wrap_vslim_config_get_string_list(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -222,8 +222,8 @@ pub fn vphp_wrap_vslimconfig_get_string_list(ptr voidptr, ctx vphp.Context)  {
     res := recv.get_string_list(arg_0)
     ctx.return().v[[]string](res)
 }
-@[export: 'vphp_wrap_VSlimConfig_get_json']
-pub fn vphp_wrap_vslimconfig_get_json(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_config_get_json']
+pub fn vphp_wrap_vslim_config_get_json(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -236,8 +236,8 @@ pub fn vphp_wrap_vslimconfig_get_json(ptr voidptr, ctx vphp.Context)  {
     res := recv.get_json(arg_0, arg_1)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimConfig_get']
-pub fn vphp_wrap_vslimconfig_get(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_config_get']
+pub fn vphp_wrap_vslim_config_get(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -250,8 +250,8 @@ pub fn vphp_wrap_vslimconfig_get(ptr voidptr, ctx vphp.Context)  {
     res := recv.get(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
-@[export: 'vphp_wrap_VSlimConfig_get_map']
-pub fn vphp_wrap_vslimconfig_get_map(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_config_get_map']
+pub fn vphp_wrap_vslim_config_get_map(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -264,8 +264,8 @@ pub fn vphp_wrap_vslimconfig_get_map(ptr voidptr, ctx vphp.Context)  {
     res := recv.get_map(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
-@[export: 'vphp_wrap_VSlimConfig_get_list']
-pub fn vphp_wrap_vslimconfig_get_list(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_config_get_list']
+pub fn vphp_wrap_vslim_config_get_list(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -278,23 +278,23 @@ pub fn vphp_wrap_vslimconfig_get_list(ptr voidptr, ctx vphp.Context)  {
     res := recv.get_list(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
-@[export: 'vphp_wrap_VSlimConfig_all_json']
-pub fn vphp_wrap_vslimconfig_all_json(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_config_all_json']
+pub fn vphp_wrap_vslim_config_all_json(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.all_json()
     ctx.return().v[string](res)
 }
-@[export: 'VSlimConfig_handlers']
-pub fn vslimconfig_handlers() voidptr {
+@[export: 'vslim_config_handlers']
+pub fn vslim_config_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimconfig_get_prop),
-        write_handler: voidptr(vslimconfig_set_prop),
-        sync_handler: voidptr(vslimconfig_sync_props),
-        new_raw: voidptr(vslimconfig_new_raw),
-        cleanup_raw: voidptr(vslimconfig_cleanup_raw),
-        free_raw: voidptr(vslimconfig_free_raw)
+        prop_handler: voidptr(vslim_config_get_prop),
+        write_handler: voidptr(vslim_config_set_prop),
+        sync_handler: voidptr(vslim_config_sync_props),
+        new_raw: voidptr(vslim_config_new_raw),
+        cleanup_raw: voidptr(vslim_config_cleanup_raw),
+        free_raw: voidptr(vslim_config_free_raw)
     )
 }
 pub fn VSlimConfig.php_class_entry() vphp.ZendClassEntry {
@@ -302,7 +302,7 @@ pub fn VSlimConfig.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimConfig.php_object_handlers() voidptr {
-    return vslimconfig_handlers()
+    return vslim_config_handlers()
 }
 
 pub fn VSlimConfig.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

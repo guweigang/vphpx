@@ -9,52 +9,52 @@ import httpx
 
 __global C.vslim__testing__harness_ce &C.zend_class_entry
 
-@[export: 'VSlimTestingHarness_new_raw']
-pub fn vslimtestingharness_new_raw() voidptr {
+@[export: 'vslim_testing_harness_new_raw']
+pub fn vslim_testing_harness_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimTestingHarness]()
 }
-@[export: 'VSlimTestingHarness_free_raw']
-pub fn vslimtestingharness_free_raw(ptr voidptr) {
+@[export: 'vslim_testing_harness_free_raw']
+pub fn vslim_testing_harness_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimTestingHarness](ptr)
 }
-@[export: 'VSlimTestingHarness_cleanup_raw']
-pub fn vslimtestingharness_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_testing_harness_cleanup_raw']
+pub fn vslim_testing_harness_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimTestingHarness_get_prop']
-pub fn vslimtestingharness_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_testing_harness_get_prop']
+pub fn vslim_testing_harness_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimTestingHarness_set_prop']
-pub fn vslimtestingharness_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_testing_harness_set_prop']
+pub fn vslim_testing_harness_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimTestingHarness_sync_props']
-pub fn vslimtestingharness_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_testing_harness_sync_props']
+pub fn vslim_testing_harness_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_construct']
-pub fn vphp_wrap_vslimtestingharness_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_construct']
+pub fn vphp_wrap_vslim_testing_harness_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_set_app']
-pub fn vphp_wrap_vslimtestingharness_set_app(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_set_app']
+pub fn vphp_wrap_vslim_testing_harness_set_app(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -68,24 +68,24 @@ pub fn vphp_wrap_vslimtestingharness_set_app(ptr voidptr, ctx vphp.Context) void
     res := recv.set_app(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_app']
-pub fn vphp_wrap_vslimtestingharness_app(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_testing_harness_app']
+pub fn vphp_wrap_vslim_testing_harness_app(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.app()
     ctx.return().v[vphp.PhpObject](res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_container']
-pub fn vphp_wrap_vslimtestingharness_container(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_container']
+pub fn vphp_wrap_vslim_testing_harness_container(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.container()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_with_service']
-pub fn vphp_wrap_vslimtestingharness_with_service(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_with_service']
+pub fn vphp_wrap_vslim_testing_harness_with_service(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -98,8 +98,8 @@ pub fn vphp_wrap_vslimtestingharness_with_service(ptr voidptr, ctx vphp.Context)
     res := recv.with_service(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_with_factory']
-pub fn vphp_wrap_vslimtestingharness_with_factory(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_with_factory']
+pub fn vphp_wrap_vslim_testing_harness_with_factory(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -115,8 +115,8 @@ pub fn vphp_wrap_vslimtestingharness_with_factory(ptr voidptr, ctx vphp.Context)
     res := recv.with_factory(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_with_config']
-pub fn vphp_wrap_vslimtestingharness_with_config(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_with_config']
+pub fn vphp_wrap_vslim_testing_harness_with_config(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -127,8 +127,8 @@ pub fn vphp_wrap_vslimtestingharness_with_config(ptr voidptr, ctx vphp.Context) 
     res := recv.with_config(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_with_config_text']
-pub fn vphp_wrap_vslimtestingharness_with_config_text(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_with_config_text']
+pub fn vphp_wrap_vslim_testing_harness_with_config_text(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -139,8 +139,8 @@ pub fn vphp_wrap_vslimtestingharness_with_config_text(ptr voidptr, ctx vphp.Cont
     res := recv.with_config_text(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_with_cookie']
-pub fn vphp_wrap_vslimtestingharness_with_cookie(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_with_cookie']
+pub fn vphp_wrap_vslim_testing_harness_with_cookie(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -153,8 +153,8 @@ pub fn vphp_wrap_vslimtestingharness_with_cookie(ptr voidptr, ctx vphp.Context) 
     res := recv.with_cookie(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_without_cookie']
-pub fn vphp_wrap_vslimtestingharness_without_cookie(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_without_cookie']
+pub fn vphp_wrap_vslim_testing_harness_without_cookie(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -165,24 +165,24 @@ pub fn vphp_wrap_vslimtestingharness_without_cookie(ptr voidptr, ctx vphp.Contex
     res := recv.without_cookie(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_clear_cookies']
-pub fn vphp_wrap_vslimtestingharness_clear_cookies(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_clear_cookies']
+pub fn vphp_wrap_vslim_testing_harness_clear_cookies(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.clear_cookies()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_cookies']
-pub fn vphp_wrap_vslimtestingharness_cookies(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_testing_harness_cookies']
+pub fn vphp_wrap_vslim_testing_harness_cookies(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.cookies()
     ctx.return().v[map[string]string](res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_with_session']
-pub fn vphp_wrap_vslimtestingharness_with_session(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_with_session']
+pub fn vphp_wrap_vslim_testing_harness_with_session(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -193,8 +193,8 @@ pub fn vphp_wrap_vslimtestingharness_with_session(ptr voidptr, ctx vphp.Context)
     res := recv.with_session(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_acting_as']
-pub fn vphp_wrap_vslimtestingharness_acting_as(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_acting_as']
+pub fn vphp_wrap_vslim_testing_harness_acting_as(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -205,8 +205,8 @@ pub fn vphp_wrap_vslimtestingharness_acting_as(ptr voidptr, ctx vphp.Context) vo
     res := recv.acting_as(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_request']
-pub fn vphp_wrap_vslimtestingharness_request(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_request']
+pub fn vphp_wrap_vslim_testing_harness_request(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -221,8 +221,8 @@ pub fn vphp_wrap_vslimtestingharness_request(ptr voidptr, ctx vphp.Context) void
     res := recv.request(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_json_request']
-pub fn vphp_wrap_vslimtestingharness_json_request(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_json_request']
+pub fn vphp_wrap_vslim_testing_harness_json_request(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -237,8 +237,8 @@ pub fn vphp_wrap_vslimtestingharness_json_request(ptr voidptr, ctx vphp.Context)
     res := recv.json_request(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_handle']
-pub fn vphp_wrap_vslimtestingharness_handle(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_handle']
+pub fn vphp_wrap_vslim_testing_harness_handle(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -252,8 +252,8 @@ pub fn vphp_wrap_vslimtestingharness_handle(ptr voidptr, ctx vphp.Context) voidp
     res := recv.handle(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_handle_request']
-pub fn vphp_wrap_vslimtestingharness_handle_request(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_handle_request']
+pub fn vphp_wrap_vslim_testing_harness_handle_request(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -268,8 +268,8 @@ pub fn vphp_wrap_vslimtestingharness_handle_request(ptr voidptr, ctx vphp.Contex
     res := recv.handle_request(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_handle_json']
-pub fn vphp_wrap_vslimtestingharness_handle_json(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_handle_json']
+pub fn vphp_wrap_vslim_testing_harness_handle_json(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -284,8 +284,8 @@ pub fn vphp_wrap_vslimtestingharness_handle_json(ptr voidptr, ctx vphp.Context) 
     res := recv.handle_json(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_dispatch_json']
-pub fn vphp_wrap_vslimtestingharness_dispatch_json(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_dispatch_json']
+pub fn vphp_wrap_vslim_testing_harness_dispatch_json(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -300,8 +300,8 @@ pub fn vphp_wrap_vslimtestingharness_dispatch_json(ptr voidptr, ctx vphp.Context
     res := recv.dispatch_json(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_response_status']
-pub fn vphp_wrap_vslimtestingharness_response_status(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_testing_harness_response_status']
+pub fn vphp_wrap_vslim_testing_harness_response_status(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -312,8 +312,8 @@ pub fn vphp_wrap_vslimtestingharness_response_status(ptr voidptr, ctx vphp.Conte
     res := recv.response_status(arg_0)
     ctx.return().v[int](res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_response_header']
-pub fn vphp_wrap_vslimtestingharness_response_header(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_testing_harness_response_header']
+pub fn vphp_wrap_vslim_testing_harness_response_header(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -326,8 +326,8 @@ pub fn vphp_wrap_vslimtestingharness_response_header(ptr voidptr, ctx vphp.Conte
     res := recv.response_header(arg_0, arg_1)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_response_body']
-pub fn vphp_wrap_vslimtestingharness_response_body(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_testing_harness_response_body']
+pub fn vphp_wrap_vslim_testing_harness_response_body(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -338,8 +338,8 @@ pub fn vphp_wrap_vslimtestingharness_response_body(ptr voidptr, ctx vphp.Context
     res := recv.response_body(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_response_json']
-pub fn vphp_wrap_vslimtestingharness_response_json(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_testing_harness_response_json']
+pub fn vphp_wrap_vslim_testing_harness_response_json(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -350,8 +350,8 @@ pub fn vphp_wrap_vslimtestingharness_response_json(ptr voidptr, ctx vphp.Context
     res := recv.response_json(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_assert_status']
-pub fn vphp_wrap_vslimtestingharness_assert_status(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_assert_status']
+pub fn vphp_wrap_vslim_testing_harness_assert_status(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -364,8 +364,8 @@ pub fn vphp_wrap_vslimtestingharness_assert_status(ptr voidptr, ctx vphp.Context
     res := recv.assert_status(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_assert_header']
-pub fn vphp_wrap_vslimtestingharness_assert_header(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_assert_header']
+pub fn vphp_wrap_vslim_testing_harness_assert_header(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -380,8 +380,8 @@ pub fn vphp_wrap_vslimtestingharness_assert_header(ptr voidptr, ctx vphp.Context
     res := recv.assert_header(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_assert_body_contains']
-pub fn vphp_wrap_vslimtestingharness_assert_body_contains(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_assert_body_contains']
+pub fn vphp_wrap_vslim_testing_harness_assert_body_contains(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -394,8 +394,8 @@ pub fn vphp_wrap_vslimtestingharness_assert_body_contains(ptr voidptr, ctx vphp.
     res := recv.assert_body_contains(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_dispatch']
-pub fn vphp_wrap_vslimtestingharness_dispatch(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_dispatch']
+pub fn vphp_wrap_vslim_testing_harness_dispatch(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -410,8 +410,8 @@ pub fn vphp_wrap_vslimtestingharness_dispatch(ptr voidptr, ctx vphp.Context) voi
     res := recv.dispatch(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_get']
-pub fn vphp_wrap_vslimtestingharness_get(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_get']
+pub fn vphp_wrap_vslim_testing_harness_get(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -422,8 +422,8 @@ pub fn vphp_wrap_vslimtestingharness_get(ptr voidptr, ctx vphp.Context) voidptr 
     res := recv.get(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_get_json']
-pub fn vphp_wrap_vslimtestingharness_get_json(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_get_json']
+pub fn vphp_wrap_vslim_testing_harness_get_json(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -434,8 +434,8 @@ pub fn vphp_wrap_vslimtestingharness_get_json(ptr voidptr, ctx vphp.Context) voi
     res := recv.get_json(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_post']
-pub fn vphp_wrap_vslimtestingharness_post(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_post']
+pub fn vphp_wrap_vslim_testing_harness_post(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -448,8 +448,8 @@ pub fn vphp_wrap_vslimtestingharness_post(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.post(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_post_json']
-pub fn vphp_wrap_vslimtestingharness_post_json(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_post_json']
+pub fn vphp_wrap_vslim_testing_harness_post_json(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -462,8 +462,8 @@ pub fn vphp_wrap_vslimtestingharness_post_json(ptr voidptr, ctx vphp.Context) vo
     res := recv.post_json(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_put']
-pub fn vphp_wrap_vslimtestingharness_put(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_put']
+pub fn vphp_wrap_vslim_testing_harness_put(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -476,8 +476,8 @@ pub fn vphp_wrap_vslimtestingharness_put(ptr voidptr, ctx vphp.Context) voidptr 
     res := recv.put(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_put_json']
-pub fn vphp_wrap_vslimtestingharness_put_json(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_put_json']
+pub fn vphp_wrap_vslim_testing_harness_put_json(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -490,8 +490,8 @@ pub fn vphp_wrap_vslimtestingharness_put_json(ptr voidptr, ctx vphp.Context) voi
     res := recv.put_json(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_patch']
-pub fn vphp_wrap_vslimtestingharness_patch(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_patch']
+pub fn vphp_wrap_vslim_testing_harness_patch(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -504,8 +504,8 @@ pub fn vphp_wrap_vslimtestingharness_patch(ptr voidptr, ctx vphp.Context) voidpt
     res := recv.patch(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_patch_json']
-pub fn vphp_wrap_vslimtestingharness_patch_json(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_patch_json']
+pub fn vphp_wrap_vslim_testing_harness_patch_json(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -518,8 +518,8 @@ pub fn vphp_wrap_vslimtestingharness_patch_json(ptr voidptr, ctx vphp.Context) v
     res := recv.patch_json(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_delete']
-pub fn vphp_wrap_vslimtestingharness_delete(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_delete']
+pub fn vphp_wrap_vslim_testing_harness_delete(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -532,8 +532,8 @@ pub fn vphp_wrap_vslimtestingharness_delete(ptr voidptr, ctx vphp.Context) voidp
     res := recv.delete(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimTestingHarness_delete_json']
-pub fn vphp_wrap_vslimtestingharness_delete_json(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_delete_json']
+pub fn vphp_wrap_vslim_testing_harness_delete_json(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -546,15 +546,15 @@ pub fn vphp_wrap_vslimtestingharness_delete_json(ptr voidptr, ctx vphp.Context) 
     res := recv.delete_json(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'VSlimTestingHarness_handlers']
-pub fn vslimtestingharness_handlers() voidptr {
+@[export: 'vslim_testing_harness_handlers']
+pub fn vslim_testing_harness_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimtestingharness_get_prop),
-        write_handler: voidptr(vslimtestingharness_set_prop),
-        sync_handler: voidptr(vslimtestingharness_sync_props),
-        new_raw: voidptr(vslimtestingharness_new_raw),
-        cleanup_raw: voidptr(vslimtestingharness_cleanup_raw),
-        free_raw: voidptr(vslimtestingharness_free_raw)
+        prop_handler: voidptr(vslim_testing_harness_get_prop),
+        write_handler: voidptr(vslim_testing_harness_set_prop),
+        sync_handler: voidptr(vslim_testing_harness_sync_props),
+        new_raw: voidptr(vslim_testing_harness_new_raw),
+        cleanup_raw: voidptr(vslim_testing_harness_cleanup_raw),
+        free_raw: voidptr(vslim_testing_harness_free_raw)
     )
 }
 pub fn VSlimTestingHarness.php_class_entry() vphp.ZendClassEntry {
@@ -562,7 +562,7 @@ pub fn VSlimTestingHarness.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimTestingHarness.php_object_handlers() voidptr {
-    return vslimtestingharness_handlers()
+    return vslim_testing_harness_handlers()
 }
 
 pub fn VSlimTestingHarness.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

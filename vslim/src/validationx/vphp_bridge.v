@@ -6,44 +6,44 @@ import vphp
 
 __global C.vslim__validate__validator_ce &C.zend_class_entry
 
-@[export: 'VSlimValidator_new_raw']
-pub fn vslimvalidator_new_raw() voidptr {
+@[export: 'vslim_validator_new_raw']
+pub fn vslim_validator_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimValidator]()
 }
-@[export: 'VSlimValidator_free_raw']
-pub fn vslimvalidator_free_raw(ptr voidptr) {
+@[export: 'vslim_validator_free_raw']
+pub fn vslim_validator_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimValidator](ptr)
 }
-@[export: 'VSlimValidator_cleanup_raw']
-pub fn vslimvalidator_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_validator_cleanup_raw']
+pub fn vslim_validator_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimValidator_get_prop']
-pub fn vslimvalidator_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_validator_get_prop']
+pub fn vslim_validator_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimValidator_set_prop']
-pub fn vslimvalidator_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_validator_set_prop']
+pub fn vslim_validator_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimValidator_sync_props']
-pub fn vslimvalidator_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_validator_sync_props']
+pub fn vslim_validator_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimValidator_make']
-pub fn vphp_wrap_vslimvalidator_make(ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_validator_make']
+pub fn vphp_wrap_vslim_validator_make(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -58,16 +58,16 @@ pub fn vphp_wrap_vslimvalidator_make(ctx vphp.Context) voidptr {
     res := VSlimValidator.make(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimValidator_construct']
-pub fn vphp_wrap_vslimvalidator_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_validator_construct']
+pub fn vphp_wrap_vslim_validator_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimValidator(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimValidator_set_data']
-pub fn vphp_wrap_vslimvalidator_set_data(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_validator_set_data']
+pub fn vphp_wrap_vslim_validator_set_data(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimValidator(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -78,8 +78,8 @@ pub fn vphp_wrap_vslimvalidator_set_data(ptr voidptr, ctx vphp.Context) voidptr 
     res := recv.set_data(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimValidator_set_rules']
-pub fn vphp_wrap_vslimvalidator_set_rules(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_validator_set_rules']
+pub fn vphp_wrap_vslim_validator_set_rules(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimValidator(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -93,63 +93,63 @@ pub fn vphp_wrap_vslimvalidator_set_rules(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.set_rules(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimValidator_validate']
-pub fn vphp_wrap_vslimvalidator_validate(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_validator_validate']
+pub fn vphp_wrap_vslim_validator_validate(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimValidator(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.validate()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimValidator_passes']
-pub fn vphp_wrap_vslimvalidator_passes(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_validator_passes']
+pub fn vphp_wrap_vslim_validator_passes(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimValidator(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.passes()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimValidator_fails']
-pub fn vphp_wrap_vslimvalidator_fails(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_validator_fails']
+pub fn vphp_wrap_vslim_validator_fails(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimValidator(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.fails()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimValidator_errors']
-pub fn vphp_wrap_vslimvalidator_errors(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_validator_errors']
+pub fn vphp_wrap_vslim_validator_errors(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimValidator(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.errors()
     ctx.return().v[vphp.PhpValue](res)
 }
-@[export: 'vphp_wrap_VSlimValidator_validated']
-pub fn vphp_wrap_vslimvalidator_validated(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_validator_validated']
+pub fn vphp_wrap_vslim_validator_validated(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimValidator(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.validated()
     ctx.return().v[vphp.PhpValue](res)
 }
-@[export: 'vphp_wrap_VSlimValidator_data']
-pub fn vphp_wrap_vslimvalidator_data(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_validator_data']
+pub fn vphp_wrap_vslim_validator_data(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimValidator(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.data()
     ctx.return().v[vphp.PhpValue](res)
 }
-@[export: 'VSlimValidator_handlers']
-pub fn vslimvalidator_handlers() voidptr {
+@[export: 'vslim_validator_handlers']
+pub fn vslim_validator_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimvalidator_get_prop),
-        write_handler: voidptr(vslimvalidator_set_prop),
-        sync_handler: voidptr(vslimvalidator_sync_props),
-        new_raw: voidptr(vslimvalidator_new_raw),
-        cleanup_raw: voidptr(vslimvalidator_cleanup_raw),
-        free_raw: voidptr(vslimvalidator_free_raw)
+        prop_handler: voidptr(vslim_validator_get_prop),
+        write_handler: voidptr(vslim_validator_set_prop),
+        sync_handler: voidptr(vslim_validator_sync_props),
+        new_raw: voidptr(vslim_validator_new_raw),
+        cleanup_raw: voidptr(vslim_validator_cleanup_raw),
+        free_raw: voidptr(vslim_validator_free_raw)
     )
 }
 pub fn VSlimValidator.php_class_entry() vphp.ZendClassEntry {
@@ -157,7 +157,7 @@ pub fn VSlimValidator.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimValidator.php_object_handlers() voidptr {
-    return vslimvalidator_handlers()
+    return vslim_validator_handlers()
 }
 
 pub fn VSlimValidator.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

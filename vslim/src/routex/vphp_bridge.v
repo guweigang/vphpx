@@ -6,19 +6,19 @@ import vphp
 
 __global C.vslim__routegroup_ce &C.zend_class_entry
 
-@[export: 'RouteGroup_new_raw']
-pub fn routegroup_new_raw() voidptr {
+@[export: 'route_group_new_raw']
+pub fn route_group_new_raw() voidptr {
     return vphp.generic_new_raw[RouteGroup]()
 }
-@[export: 'RouteGroup_free_raw']
-pub fn routegroup_free_raw(ptr voidptr) {
+@[export: 'route_group_free_raw']
+pub fn route_group_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[RouteGroup](ptr)
 }
-@[export: 'RouteGroup_cleanup_raw']
-pub fn routegroup_cleanup_raw(ptr voidptr) {
+@[export: 'route_group_cleanup_raw']
+pub fn route_group_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
@@ -27,27 +27,27 @@ pub fn routegroup_cleanup_raw(ptr voidptr) {
         obj.cleanup()
     }
 }
-@[export: 'RouteGroup_get_prop']
-pub fn routegroup_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'route_group_get_prop']
+pub fn route_group_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'RouteGroup_set_prop']
-pub fn routegroup_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'route_group_set_prop']
+pub fn route_group_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'RouteGroup_sync_props']
-pub fn routegroup_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'route_group_sync_props']
+pub fn route_group_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_RouteGroup_group']
-pub fn vphp_wrap_routegroup_group(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_group']
+pub fn vphp_wrap_route_group_group(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -58,8 +58,8 @@ pub fn vphp_wrap_routegroup_group(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.group(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_middleware']
-pub fn vphp_wrap_routegroup_middleware(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_middleware']
+pub fn vphp_wrap_route_group_middleware(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -70,8 +70,8 @@ pub fn vphp_wrap_routegroup_middleware(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.middleware(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_before']
-pub fn vphp_wrap_routegroup_before(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_before']
+pub fn vphp_wrap_route_group_before(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -82,8 +82,8 @@ pub fn vphp_wrap_routegroup_before(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.before(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_after']
-pub fn vphp_wrap_routegroup_after(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_after']
+pub fn vphp_wrap_route_group_after(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -94,8 +94,8 @@ pub fn vphp_wrap_routegroup_after(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.after(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_get']
-pub fn vphp_wrap_routegroup_get(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_get']
+pub fn vphp_wrap_route_group_get(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -108,8 +108,8 @@ pub fn vphp_wrap_routegroup_get(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.get(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_post']
-pub fn vphp_wrap_routegroup_post(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_post']
+pub fn vphp_wrap_route_group_post(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -122,8 +122,8 @@ pub fn vphp_wrap_routegroup_post(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.post(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_put']
-pub fn vphp_wrap_routegroup_put(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_put']
+pub fn vphp_wrap_route_group_put(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -136,8 +136,8 @@ pub fn vphp_wrap_routegroup_put(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.put(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_head']
-pub fn vphp_wrap_routegroup_head(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_head']
+pub fn vphp_wrap_route_group_head(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -150,8 +150,8 @@ pub fn vphp_wrap_routegroup_head(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.head(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_options']
-pub fn vphp_wrap_routegroup_options(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_options']
+pub fn vphp_wrap_route_group_options(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -164,8 +164,8 @@ pub fn vphp_wrap_routegroup_options(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.options(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_patch']
-pub fn vphp_wrap_routegroup_patch(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_patch']
+pub fn vphp_wrap_route_group_patch(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -178,8 +178,8 @@ pub fn vphp_wrap_routegroup_patch(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.patch(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_delete']
-pub fn vphp_wrap_routegroup_delete(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_delete']
+pub fn vphp_wrap_route_group_delete(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -192,8 +192,8 @@ pub fn vphp_wrap_routegroup_delete(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.delete(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_any']
-pub fn vphp_wrap_routegroup_any(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_any']
+pub fn vphp_wrap_route_group_any(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -206,8 +206,8 @@ pub fn vphp_wrap_routegroup_any(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.any(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_live']
-pub fn vphp_wrap_routegroup_live(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_live']
+pub fn vphp_wrap_route_group_live(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -220,8 +220,8 @@ pub fn vphp_wrap_routegroup_live(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.live(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_websocket']
-pub fn vphp_wrap_routegroup_websocket(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_websocket']
+pub fn vphp_wrap_route_group_websocket(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -234,8 +234,8 @@ pub fn vphp_wrap_routegroup_websocket(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.websocket(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_map']
-pub fn vphp_wrap_routegroup_map(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_map']
+pub fn vphp_wrap_route_group_map(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -250,8 +250,8 @@ pub fn vphp_wrap_routegroup_map(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.map(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_get_named']
-pub fn vphp_wrap_routegroup_get_named(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_get_named']
+pub fn vphp_wrap_route_group_get_named(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -266,8 +266,8 @@ pub fn vphp_wrap_routegroup_get_named(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.get_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_post_named']
-pub fn vphp_wrap_routegroup_post_named(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_post_named']
+pub fn vphp_wrap_route_group_post_named(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -282,8 +282,8 @@ pub fn vphp_wrap_routegroup_post_named(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.post_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_put_named']
-pub fn vphp_wrap_routegroup_put_named(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_put_named']
+pub fn vphp_wrap_route_group_put_named(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -298,8 +298,8 @@ pub fn vphp_wrap_routegroup_put_named(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.put_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_head_named']
-pub fn vphp_wrap_routegroup_head_named(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_head_named']
+pub fn vphp_wrap_route_group_head_named(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -314,8 +314,8 @@ pub fn vphp_wrap_routegroup_head_named(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.head_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_options_named']
-pub fn vphp_wrap_routegroup_options_named(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_options_named']
+pub fn vphp_wrap_route_group_options_named(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -330,8 +330,8 @@ pub fn vphp_wrap_routegroup_options_named(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.options_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_patch_named']
-pub fn vphp_wrap_routegroup_patch_named(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_patch_named']
+pub fn vphp_wrap_route_group_patch_named(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -346,8 +346,8 @@ pub fn vphp_wrap_routegroup_patch_named(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.patch_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_delete_named']
-pub fn vphp_wrap_routegroup_delete_named(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_delete_named']
+pub fn vphp_wrap_route_group_delete_named(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -362,8 +362,8 @@ pub fn vphp_wrap_routegroup_delete_named(ptr voidptr, ctx vphp.Context) voidptr 
     res := recv.delete_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_any_named']
-pub fn vphp_wrap_routegroup_any_named(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_any_named']
+pub fn vphp_wrap_route_group_any_named(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -378,8 +378,8 @@ pub fn vphp_wrap_routegroup_any_named(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.any_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_websocket_named']
-pub fn vphp_wrap_routegroup_websocket_named(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_websocket_named']
+pub fn vphp_wrap_route_group_websocket_named(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -394,8 +394,8 @@ pub fn vphp_wrap_routegroup_websocket_named(ptr voidptr, ctx vphp.Context) voidp
     res := recv.websocket_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_map_named']
-pub fn vphp_wrap_routegroup_map_named(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_map_named']
+pub fn vphp_wrap_route_group_map_named(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -412,8 +412,8 @@ pub fn vphp_wrap_routegroup_map_named(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.map_named(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_resource']
-pub fn vphp_wrap_routegroup_resource(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_resource']
+pub fn vphp_wrap_route_group_resource(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -426,8 +426,8 @@ pub fn vphp_wrap_routegroup_resource(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.resource(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_api_resource']
-pub fn vphp_wrap_routegroup_api_resource(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_api_resource']
+pub fn vphp_wrap_route_group_api_resource(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -440,8 +440,8 @@ pub fn vphp_wrap_routegroup_api_resource(ptr voidptr, ctx vphp.Context) voidptr 
     res := recv.api_resource(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_singleton']
-pub fn vphp_wrap_routegroup_singleton(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_singleton']
+pub fn vphp_wrap_route_group_singleton(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -454,8 +454,8 @@ pub fn vphp_wrap_routegroup_singleton(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.singleton(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_api_singleton']
-pub fn vphp_wrap_routegroup_api_singleton(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_api_singleton']
+pub fn vphp_wrap_route_group_api_singleton(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -468,8 +468,8 @@ pub fn vphp_wrap_routegroup_api_singleton(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.api_singleton(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_resource_opts']
-pub fn vphp_wrap_routegroup_resource_opts(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_resource_opts']
+pub fn vphp_wrap_route_group_resource_opts(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -487,8 +487,8 @@ pub fn vphp_wrap_routegroup_resource_opts(ptr voidptr, ctx vphp.Context) voidptr
     res := recv.resource_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_api_resource_opts']
-pub fn vphp_wrap_routegroup_api_resource_opts(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_api_resource_opts']
+pub fn vphp_wrap_route_group_api_resource_opts(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -506,8 +506,8 @@ pub fn vphp_wrap_routegroup_api_resource_opts(ptr voidptr, ctx vphp.Context) voi
     res := recv.api_resource_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_singleton_opts']
-pub fn vphp_wrap_routegroup_singleton_opts(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_singleton_opts']
+pub fn vphp_wrap_route_group_singleton_opts(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -525,8 +525,8 @@ pub fn vphp_wrap_routegroup_singleton_opts(ptr voidptr, ctx vphp.Context) voidpt
     res := recv.singleton_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_RouteGroup_api_singleton_opts']
-pub fn vphp_wrap_routegroup_api_singleton_opts(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_route_group_api_singleton_opts']
+pub fn vphp_wrap_route_group_api_singleton_opts(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &RouteGroup(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -544,15 +544,15 @@ pub fn vphp_wrap_routegroup_api_singleton_opts(ptr voidptr, ctx vphp.Context) vo
     res := recv.api_singleton_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'RouteGroup_handlers']
-pub fn routegroup_handlers() voidptr {
+@[export: 'route_group_handlers']
+pub fn route_group_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(routegroup_get_prop),
-        write_handler: voidptr(routegroup_set_prop),
-        sync_handler: voidptr(routegroup_sync_props),
-        new_raw: voidptr(routegroup_new_raw),
-        cleanup_raw: voidptr(routegroup_cleanup_raw),
-        free_raw: voidptr(routegroup_free_raw)
+        prop_handler: voidptr(route_group_get_prop),
+        write_handler: voidptr(route_group_set_prop),
+        sync_handler: voidptr(route_group_sync_props),
+        new_raw: voidptr(route_group_new_raw),
+        cleanup_raw: voidptr(route_group_cleanup_raw),
+        free_raw: voidptr(route_group_free_raw)
     )
 }
 pub fn RouteGroup.php_class_entry() vphp.ZendClassEntry {
@@ -560,7 +560,7 @@ pub fn RouteGroup.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn RouteGroup.php_object_handlers() voidptr {
-    return routegroup_handlers()
+    return route_group_handlers()
 }
 
 pub fn RouteGroup.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

@@ -8,19 +8,19 @@ import httpx
 
 __global C.vslim__view_ce &C.zend_class_entry
 
-@[export: 'VSlimView_new_raw']
-pub fn vslimview_new_raw() voidptr {
+@[export: 'vslim_view_new_raw']
+pub fn vslim_view_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimView]()
 }
-@[export: 'VSlimView_free_raw']
-pub fn vslimview_free_raw(ptr voidptr) {
+@[export: 'vslim_view_free_raw']
+pub fn vslim_view_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimView](ptr)
 }
-@[export: 'VSlimView_cleanup_raw']
-pub fn vslimview_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_view_cleanup_raw']
+pub fn vslim_view_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
@@ -29,8 +29,8 @@ pub fn vslimview_cleanup_raw(ptr voidptr) {
         obj.cleanup()
     }
 }
-@[export: 'VSlimView_get_prop']
-pub fn vslimview_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_view_get_prop']
+pub fn vslim_view_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -49,8 +49,8 @@ pub fn vslimview_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval)
         }
     }
 }
-@[export: 'VSlimView_set_prop']
-pub fn vslimview_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_view_set_prop']
+pub fn vslim_view_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
     unsafe {
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
@@ -69,8 +69,8 @@ pub fn vslimview_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zv
         }
     }
 }
-@[export: 'VSlimView_sync_props']
-pub fn vslimview_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_view_sync_props']
+pub fn vslim_view_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimView(ptr)
@@ -79,8 +79,8 @@ pub fn vslimview_sync_props(ptr voidptr, zv &C.zval) {
         out.add_property_bool('cacheEnabled', obj.cache_enabled)
     }
 }
-@[export: 'vphp_wrap_VSlimView_render_response']
-pub fn vphp_wrap_vslimview_render_response(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_view_render_response']
+pub fn vphp_wrap_vslim_view_render_response(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -93,8 +93,8 @@ pub fn vphp_wrap_vslimview_render_response(ptr voidptr, ctx vphp.Context) voidpt
     res := recv.render_response(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimView_render_response_with_layout']
-pub fn vphp_wrap_vslimview_render_response_with_layout(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_view_render_response_with_layout']
+pub fn vphp_wrap_vslim_view_render_response_with_layout(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -109,8 +109,8 @@ pub fn vphp_wrap_vslimview_render_response_with_layout(ptr voidptr, ctx vphp.Con
     res := recv.render_response_with_layout(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimView_construct']
-pub fn vphp_wrap_vslimview_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_view_construct']
+pub fn vphp_wrap_vslim_view_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -123,8 +123,8 @@ pub fn vphp_wrap_vslimview_construct(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.construct(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimView_set_base_path']
-pub fn vphp_wrap_vslimview_set_base_path(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_view_set_base_path']
+pub fn vphp_wrap_vslim_view_set_base_path(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -135,16 +135,16 @@ pub fn vphp_wrap_vslimview_set_base_path(ptr voidptr, ctx vphp.Context) voidptr 
     res := recv.set_base_path(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimView_base_path']
-pub fn vphp_wrap_vslimview_base_path(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_view_base_path']
+pub fn vphp_wrap_vslim_view_base_path(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.base_path()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimView_set_assets_prefix']
-pub fn vphp_wrap_vslimview_set_assets_prefix(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_view_set_assets_prefix']
+pub fn vphp_wrap_vslim_view_set_assets_prefix(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -155,16 +155,16 @@ pub fn vphp_wrap_vslimview_set_assets_prefix(ptr voidptr, ctx vphp.Context) void
     res := recv.set_assets_prefix(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimView_assets_prefix']
-pub fn vphp_wrap_vslimview_assets_prefix(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_view_assets_prefix']
+pub fn vphp_wrap_vslim_view_assets_prefix(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.assets_prefix()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimView_set_cache_enabled']
-pub fn vphp_wrap_vslimview_set_cache_enabled(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_view_set_cache_enabled']
+pub fn vphp_wrap_vslim_view_set_cache_enabled(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -175,24 +175,24 @@ pub fn vphp_wrap_vslimview_set_cache_enabled(ptr voidptr, ctx vphp.Context) void
     res := recv.set_cache_enabled(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimView_cache_enabled']
-pub fn vphp_wrap_vslimview_cache_enabled(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_view_cache_enabled']
+pub fn vphp_wrap_vslim_view_cache_enabled(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.cache_enabled()
     ctx.return().v[bool](res)
 }
-@[export: 'vphp_wrap_VSlimView_clear_cache']
-pub fn vphp_wrap_vslimview_clear_cache(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_view_clear_cache']
+pub fn vphp_wrap_vslim_view_clear_cache(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.clear_cache()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimView_helper']
-pub fn vphp_wrap_vslimview_helper(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_view_helper']
+pub fn vphp_wrap_vslim_view_helper(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -208,8 +208,8 @@ pub fn vphp_wrap_vslimview_helper(ptr voidptr, ctx vphp.Context) voidptr {
     res := recv.helper(arg_0, arg_1)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimView_asset']
-pub fn vphp_wrap_vslimview_asset(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_view_asset']
+pub fn vphp_wrap_vslim_view_asset(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -220,8 +220,8 @@ pub fn vphp_wrap_vslimview_asset(ptr voidptr, ctx vphp.Context)  {
     res := recv.asset(arg_0)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimView_render']
-pub fn vphp_wrap_vslimview_render(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_view_render']
+pub fn vphp_wrap_vslim_view_render(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -234,8 +234,8 @@ pub fn vphp_wrap_vslimview_render(ptr voidptr, ctx vphp.Context)  {
     res := recv.render(arg_0, arg_1)
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimView_render_with_layout']
-pub fn vphp_wrap_vslimview_render_with_layout(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_view_render_with_layout']
+pub fn vphp_wrap_vslim_view_render_with_layout(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -250,15 +250,15 @@ pub fn vphp_wrap_vslimview_render_with_layout(ptr voidptr, ctx vphp.Context)  {
     res := recv.render_with_layout(arg_0, arg_1, arg_2)
     ctx.return().v[string](res)
 }
-@[export: 'VSlimView_handlers']
-pub fn vslimview_handlers() voidptr {
+@[export: 'vslim_view_handlers']
+pub fn vslim_view_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimview_get_prop),
-        write_handler: voidptr(vslimview_set_prop),
-        sync_handler: voidptr(vslimview_sync_props),
-        new_raw: voidptr(vslimview_new_raw),
-        cleanup_raw: voidptr(vslimview_cleanup_raw),
-        free_raw: voidptr(vslimview_free_raw)
+        prop_handler: voidptr(vslim_view_get_prop),
+        write_handler: voidptr(vslim_view_set_prop),
+        sync_handler: voidptr(vslim_view_sync_props),
+        new_raw: voidptr(vslim_view_new_raw),
+        cleanup_raw: voidptr(vslim_view_cleanup_raw),
+        free_raw: voidptr(vslim_view_free_raw)
     )
 }
 pub fn VSlimView.php_class_entry() vphp.ZendClassEntry {
@@ -266,7 +266,7 @@ pub fn VSlimView.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimView.php_object_handlers() voidptr {
-    return vslimview_handlers()
+    return vslim_view_handlers()
 }
 
 pub fn VSlimView.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

@@ -9,44 +9,44 @@ import httpx
 __global C.vslim__psr15__nexthandler_ce &C.zend_class_entry
 __global C.vslim__psr15__continuehandler_ce &C.zend_class_entry
 
-@[export: 'VSlimPsr15NextHandler_new_raw']
-pub fn vslimpsr15nexthandler_new_raw() voidptr {
+@[export: 'vslim_psr15_next_handler_new_raw']
+pub fn vslim_psr15_next_handler_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr15NextHandler]()
 }
-@[export: 'VSlimPsr15NextHandler_free_raw']
-pub fn vslimpsr15nexthandler_free_raw(ptr voidptr) {
+@[export: 'vslim_psr15_next_handler_free_raw']
+pub fn vslim_psr15_next_handler_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimPsr15NextHandler](ptr)
 }
-@[export: 'VSlimPsr15NextHandler_cleanup_raw']
-pub fn vslimpsr15nexthandler_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_psr15_next_handler_cleanup_raw']
+pub fn vslim_psr15_next_handler_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimPsr15NextHandler_get_prop']
-pub fn vslimpsr15nexthandler_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_psr15_next_handler_get_prop']
+pub fn vslim_psr15_next_handler_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimPsr15NextHandler_set_prop']
-pub fn vslimpsr15nexthandler_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_psr15_next_handler_set_prop']
+pub fn vslim_psr15_next_handler_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimPsr15NextHandler_sync_props']
-pub fn vslimpsr15nexthandler_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_psr15_next_handler_sync_props']
+pub fn vslim_psr15_next_handler_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimPsr15NextHandler_handle']
-pub fn vphp_wrap_vslimpsr15nexthandler_handle(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr15_next_handler_handle']
+pub fn vphp_wrap_vslim_psr15_next_handler_handle(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr15NextHandler(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -60,15 +60,15 @@ pub fn vphp_wrap_vslimpsr15nexthandler_handle(ptr voidptr, ctx vphp.Context) voi
     res := recv.handle(arg_0)
     return voidptr(res)
 }
-@[export: 'VSlimPsr15NextHandler_handlers']
-pub fn vslimpsr15nexthandler_handlers() voidptr {
+@[export: 'vslim_psr15_next_handler_handlers']
+pub fn vslim_psr15_next_handler_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimpsr15nexthandler_get_prop),
-        write_handler: voidptr(vslimpsr15nexthandler_set_prop),
-        sync_handler: voidptr(vslimpsr15nexthandler_sync_props),
-        new_raw: voidptr(vslimpsr15nexthandler_new_raw),
-        cleanup_raw: voidptr(vslimpsr15nexthandler_cleanup_raw),
-        free_raw: voidptr(vslimpsr15nexthandler_free_raw)
+        prop_handler: voidptr(vslim_psr15_next_handler_get_prop),
+        write_handler: voidptr(vslim_psr15_next_handler_set_prop),
+        sync_handler: voidptr(vslim_psr15_next_handler_sync_props),
+        new_raw: voidptr(vslim_psr15_next_handler_new_raw),
+        cleanup_raw: voidptr(vslim_psr15_next_handler_cleanup_raw),
+        free_raw: voidptr(vslim_psr15_next_handler_free_raw)
     )
 }
 pub fn VSlimPsr15NextHandler.php_class_entry() vphp.ZendClassEntry {
@@ -76,7 +76,7 @@ pub fn VSlimPsr15NextHandler.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimPsr15NextHandler.php_object_handlers() voidptr {
-    return vslimpsr15nexthandler_handlers()
+    return vslim_psr15_next_handler_handlers()
 }
 
 pub fn VSlimPsr15NextHandler.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -99,44 +99,44 @@ pub fn (obj &VSlimPsr15NextHandler) bind_owned_php_object_value() vphp.PhpValue 
     return vphp.bind_owned_object_value[VSlimPsr15NextHandler](obj)
 }
 
-@[export: 'VSlimPsr15ContinueHandler_new_raw']
-pub fn vslimpsr15continuehandler_new_raw() voidptr {
+@[export: 'vslim_psr15_continue_handler_new_raw']
+pub fn vslim_psr15_continue_handler_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr15ContinueHandler]()
 }
-@[export: 'VSlimPsr15ContinueHandler_free_raw']
-pub fn vslimpsr15continuehandler_free_raw(ptr voidptr) {
+@[export: 'vslim_psr15_continue_handler_free_raw']
+pub fn vslim_psr15_continue_handler_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimPsr15ContinueHandler](ptr)
 }
-@[export: 'VSlimPsr15ContinueHandler_cleanup_raw']
-pub fn vslimpsr15continuehandler_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_psr15_continue_handler_cleanup_raw']
+pub fn vslim_psr15_continue_handler_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimPsr15ContinueHandler_get_prop']
-pub fn vslimpsr15continuehandler_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_psr15_continue_handler_get_prop']
+pub fn vslim_psr15_continue_handler_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimPsr15ContinueHandler_set_prop']
-pub fn vslimpsr15continuehandler_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_psr15_continue_handler_set_prop']
+pub fn vslim_psr15_continue_handler_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimPsr15ContinueHandler_sync_props']
-pub fn vslimpsr15continuehandler_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_psr15_continue_handler_sync_props']
+pub fn vslim_psr15_continue_handler_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimPsr15ContinueHandler_handle']
-pub fn vphp_wrap_vslimpsr15continuehandler_handle(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr15_continue_handler_handle']
+pub fn vphp_wrap_vslim_psr15_continue_handler_handle(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr15ContinueHandler(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -150,15 +150,15 @@ pub fn vphp_wrap_vslimpsr15continuehandler_handle(ptr voidptr, ctx vphp.Context)
     res := recv.handle(arg_0)
     return voidptr(res)
 }
-@[export: 'VSlimPsr15ContinueHandler_handlers']
-pub fn vslimpsr15continuehandler_handlers() voidptr {
+@[export: 'vslim_psr15_continue_handler_handlers']
+pub fn vslim_psr15_continue_handler_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimpsr15continuehandler_get_prop),
-        write_handler: voidptr(vslimpsr15continuehandler_set_prop),
-        sync_handler: voidptr(vslimpsr15continuehandler_sync_props),
-        new_raw: voidptr(vslimpsr15continuehandler_new_raw),
-        cleanup_raw: voidptr(vslimpsr15continuehandler_cleanup_raw),
-        free_raw: voidptr(vslimpsr15continuehandler_free_raw)
+        prop_handler: voidptr(vslim_psr15_continue_handler_get_prop),
+        write_handler: voidptr(vslim_psr15_continue_handler_set_prop),
+        sync_handler: voidptr(vslim_psr15_continue_handler_sync_props),
+        new_raw: voidptr(vslim_psr15_continue_handler_new_raw),
+        cleanup_raw: voidptr(vslim_psr15_continue_handler_cleanup_raw),
+        free_raw: voidptr(vslim_psr15_continue_handler_free_raw)
     )
 }
 pub fn VSlimPsr15ContinueHandler.php_class_entry() vphp.ZendClassEntry {
@@ -166,7 +166,7 @@ pub fn VSlimPsr15ContinueHandler.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimPsr15ContinueHandler.php_object_handlers() voidptr {
-    return vslimpsr15continuehandler_handlers()
+    return vslim_psr15_continue_handler_handlers()
 }
 
 pub fn VSlimPsr15ContinueHandler.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

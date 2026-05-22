@@ -9,52 +9,52 @@ import databasex
 __global C.vslim__job__dispatcher_ce &C.zend_class_entry
 __global C.vslim__job__worker_ce &C.zend_class_entry
 
-@[export: 'VSlimJobDispatcher_new_raw']
-pub fn vslimjobdispatcher_new_raw() voidptr {
+@[export: 'vslim_job_dispatcher_new_raw']
+pub fn vslim_job_dispatcher_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimJobDispatcher]()
 }
-@[export: 'VSlimJobDispatcher_free_raw']
-pub fn vslimjobdispatcher_free_raw(ptr voidptr) {
+@[export: 'vslim_job_dispatcher_free_raw']
+pub fn vslim_job_dispatcher_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimJobDispatcher](ptr)
 }
-@[export: 'VSlimJobDispatcher_cleanup_raw']
-pub fn vslimjobdispatcher_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_job_dispatcher_cleanup_raw']
+pub fn vslim_job_dispatcher_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimJobDispatcher_get_prop']
-pub fn vslimjobdispatcher_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_job_dispatcher_get_prop']
+pub fn vslim_job_dispatcher_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimJobDispatcher_set_prop']
-pub fn vslimjobdispatcher_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_job_dispatcher_set_prop']
+pub fn vslim_job_dispatcher_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimJobDispatcher_sync_props']
-pub fn vslimjobdispatcher_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_job_dispatcher_sync_props']
+pub fn vslim_job_dispatcher_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimJobDispatcher_construct']
-pub fn vphp_wrap_vslimjobdispatcher_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_job_dispatcher_construct']
+pub fn vphp_wrap_vslim_job_dispatcher_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimJobDispatcher(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimJobDispatcher_set_manager']
-pub fn vphp_wrap_vslimjobdispatcher_set_manager(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_job_dispatcher_set_manager']
+pub fn vphp_wrap_vslim_job_dispatcher_set_manager(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimJobDispatcher(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -65,16 +65,16 @@ pub fn vphp_wrap_vslimjobdispatcher_set_manager(ptr voidptr, ctx vphp.Context) v
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimJobDispatcher_manager']
-pub fn vphp_wrap_vslimjobdispatcher_manager(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_job_dispatcher_manager']
+pub fn vphp_wrap_vslim_job_dispatcher_manager(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimJobDispatcher(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.manager()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimJobDispatcher_dispatch']
-pub fn vphp_wrap_vslimjobdispatcher_dispatch(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_job_dispatcher_dispatch']
+pub fn vphp_wrap_vslim_job_dispatcher_dispatch(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimJobDispatcher(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -93,15 +93,15 @@ pub fn vphp_wrap_vslimjobdispatcher_dispatch(ptr voidptr, ctx vphp.Context)  {
     res := recv.dispatch(arg_0, arg_1, arg_2, arg_3, arg_4)
     ctx.return().v[i64](res)
 }
-@[export: 'VSlimJobDispatcher_handlers']
-pub fn vslimjobdispatcher_handlers() voidptr {
+@[export: 'vslim_job_dispatcher_handlers']
+pub fn vslim_job_dispatcher_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimjobdispatcher_get_prop),
-        write_handler: voidptr(vslimjobdispatcher_set_prop),
-        sync_handler: voidptr(vslimjobdispatcher_sync_props),
-        new_raw: voidptr(vslimjobdispatcher_new_raw),
-        cleanup_raw: voidptr(vslimjobdispatcher_cleanup_raw),
-        free_raw: voidptr(vslimjobdispatcher_free_raw)
+        prop_handler: voidptr(vslim_job_dispatcher_get_prop),
+        write_handler: voidptr(vslim_job_dispatcher_set_prop),
+        sync_handler: voidptr(vslim_job_dispatcher_sync_props),
+        new_raw: voidptr(vslim_job_dispatcher_new_raw),
+        cleanup_raw: voidptr(vslim_job_dispatcher_cleanup_raw),
+        free_raw: voidptr(vslim_job_dispatcher_free_raw)
     )
 }
 pub fn VSlimJobDispatcher.php_class_entry() vphp.ZendClassEntry {
@@ -109,7 +109,7 @@ pub fn VSlimJobDispatcher.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimJobDispatcher.php_object_handlers() voidptr {
-    return vslimjobdispatcher_handlers()
+    return vslim_job_dispatcher_handlers()
 }
 
 pub fn VSlimJobDispatcher.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -132,52 +132,52 @@ pub fn (obj &VSlimJobDispatcher) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimJobDispatcher](obj)
 }
 
-@[export: 'VSlimJobWorker_new_raw']
-pub fn vslimjobworker_new_raw() voidptr {
+@[export: 'vslim_job_worker_new_raw']
+pub fn vslim_job_worker_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimJobWorker]()
 }
-@[export: 'VSlimJobWorker_free_raw']
-pub fn vslimjobworker_free_raw(ptr voidptr) {
+@[export: 'vslim_job_worker_free_raw']
+pub fn vslim_job_worker_free_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
     vphp.generic_free_raw[VSlimJobWorker](ptr)
 }
-@[export: 'VSlimJobWorker_cleanup_raw']
-pub fn vslimjobworker_cleanup_raw(ptr voidptr) {
+@[export: 'vslim_job_worker_cleanup_raw']
+pub fn vslim_job_worker_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
 }
-@[export: 'VSlimJobWorker_get_prop']
-pub fn vslimjobworker_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+@[export: 'vslim_job_worker_get_prop']
+pub fn vslim_job_worker_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = rv
 }
-@[export: 'VSlimJobWorker_set_prop']
-pub fn vslimjobworker_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+@[export: 'vslim_job_worker_set_prop']
+pub fn vslim_job_worker_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
     _ = ptr
     _ = name_ptr
     _ = name_len
     _ = value
 }
-@[export: 'VSlimJobWorker_sync_props']
-pub fn vslimjobworker_sync_props(ptr voidptr, zv &C.zval) {
+@[export: 'vslim_job_worker_sync_props']
+pub fn vslim_job_worker_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_VSlimJobWorker_construct']
-pub fn vphp_wrap_vslimjobworker_construct(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_job_worker_construct']
+pub fn vphp_wrap_vslim_job_worker_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimJobWorker(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimJobWorker_set_manager']
-pub fn vphp_wrap_vslimjobworker_set_manager(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_job_worker_set_manager']
+pub fn vphp_wrap_vslim_job_worker_set_manager(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimJobWorker(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -188,8 +188,8 @@ pub fn vphp_wrap_vslimjobworker_set_manager(ptr voidptr, ctx vphp.Context) voidp
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimJobWorker_set_worker_id']
-pub fn vphp_wrap_vslimjobworker_set_worker_id(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_job_worker_set_worker_id']
+pub fn vphp_wrap_vslim_job_worker_set_worker_id(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimJobWorker(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -200,16 +200,16 @@ pub fn vphp_wrap_vslimjobworker_set_worker_id(ptr voidptr, ctx vphp.Context) voi
     res := recv.set_worker_id(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimJobWorker_worker_id_value']
-pub fn vphp_wrap_vslimjobworker_worker_id_value(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_job_worker_worker_id_value']
+pub fn vphp_wrap_vslim_job_worker_worker_id_value(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimJobWorker(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.worker_id_value()
     ctx.return().v[string](res)
 }
-@[export: 'vphp_wrap_VSlimJobWorker_set_retry_delay_seconds']
-pub fn vphp_wrap_vslimjobworker_set_retry_delay_seconds(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_job_worker_set_retry_delay_seconds']
+pub fn vphp_wrap_vslim_job_worker_set_retry_delay_seconds(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimJobWorker(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -220,8 +220,8 @@ pub fn vphp_wrap_vslimjobworker_set_retry_delay_seconds(ptr voidptr, ctx vphp.Co
     res := recv.set_retry_delay_seconds(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimJobWorker_set_reserve_timeout_seconds']
-pub fn vphp_wrap_vslimjobworker_set_reserve_timeout_seconds(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_job_worker_set_reserve_timeout_seconds']
+pub fn vphp_wrap_vslim_job_worker_set_reserve_timeout_seconds(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimJobWorker(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -232,8 +232,8 @@ pub fn vphp_wrap_vslimjobworker_set_reserve_timeout_seconds(ptr voidptr, ctx vph
     res := recv.set_reserve_timeout_seconds(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_VSlimJobWorker_run_once']
-pub fn vphp_wrap_vslimjobworker_run_once(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_job_worker_run_once']
+pub fn vphp_wrap_vslim_job_worker_run_once(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimJobWorker(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -244,8 +244,8 @@ pub fn vphp_wrap_vslimjobworker_run_once(ptr voidptr, ctx vphp.Context)  {
     res := recv.run_once(arg_0)
     ctx.return().v[int](res)
 }
-@[export: 'vphp_wrap_VSlimJobWorker_run']
-pub fn vphp_wrap_vslimjobworker_run(ptr voidptr, ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_job_worker_run']
+pub fn vphp_wrap_vslim_job_worker_run(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimJobWorker(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -262,15 +262,15 @@ pub fn vphp_wrap_vslimjobworker_run(ptr voidptr, ctx vphp.Context)  {
     res := recv.run(arg_0, arg_1, arg_2, arg_3)
     ctx.return().v[int](res)
 }
-@[export: 'VSlimJobWorker_handlers']
-pub fn vslimjobworker_handlers() voidptr {
+@[export: 'vslim_job_worker_handlers']
+pub fn vslim_job_worker_handlers() voidptr {
     return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslimjobworker_get_prop),
-        write_handler: voidptr(vslimjobworker_set_prop),
-        sync_handler: voidptr(vslimjobworker_sync_props),
-        new_raw: voidptr(vslimjobworker_new_raw),
-        cleanup_raw: voidptr(vslimjobworker_cleanup_raw),
-        free_raw: voidptr(vslimjobworker_free_raw)
+        prop_handler: voidptr(vslim_job_worker_get_prop),
+        write_handler: voidptr(vslim_job_worker_set_prop),
+        sync_handler: voidptr(vslim_job_worker_sync_props),
+        new_raw: voidptr(vslim_job_worker_new_raw),
+        cleanup_raw: voidptr(vslim_job_worker_cleanup_raw),
+        free_raw: voidptr(vslim_job_worker_free_raw)
     )
 }
 pub fn VSlimJobWorker.php_class_entry() vphp.ZendClassEntry {
@@ -278,7 +278,7 @@ pub fn VSlimJobWorker.php_class_entry() vphp.ZendClassEntry {
 }
 
 pub fn VSlimJobWorker.php_object_handlers() voidptr {
-    return vslimjobworker_handlers()
+    return vslim_job_worker_handlers()
 }
 
 pub fn VSlimJobWorker.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
