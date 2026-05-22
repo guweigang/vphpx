@@ -1,7 +1,7 @@
 module appx
 
 import cachex
-import clockx
+import supportx
 import configx as cfgx
 import containerx
 import controllerx
@@ -64,14 +64,14 @@ fn (mut app VSlimApp) sync_clock_service_to_container() {
 	if app.container_ref == unsafe { nil } {
 		return
 	}
-	if !clockx.psr20_clock_is_valid(app.clock_ref) {
+	if !supportx.psr20_clock_is_valid(app.clock_ref) {
 		mut old := app.clock_ref
 		old.release()
-		app.clock_ref = clockx.new_psr20_system_clock_ref()
+		app.clock_ref = supportx.new_psr20_system_clock_ref()
 	}
 	mut clock_value := app.clock_ref.to_request_owned().take_value()
-	app.container_ref.set(clockx.service_clock, clock_value)
-	app.container_ref.set(clockx.service_psr_clock, clock_value)
+	app.container_ref.set(supportx.service_clock, clock_value)
+	app.container_ref.set(supportx.service_psr_clock, clock_value)
 	clock_value.release()
 }
 
@@ -221,7 +221,7 @@ pub fn (app &VSlimApp) has_logger() bool {
 @[php_arg_type: 'clock=Psr\\Clock\\ClockInterface']
 @[php_method: 'setClock']
 pub fn (mut app VSlimApp) set_clock(clock vphp.PhpObject) &VSlimApp {
-	if !clockx.psr20_clock_is_valid(clock) {
+	if !supportx.psr20_clock_is_valid(clock) {
 		vphp.PhpException.raise_class('InvalidArgumentException',
 			'clock must implement Psr\\Clock\\ClockInterface', 0)
 		return app
@@ -237,10 +237,10 @@ pub fn (mut app VSlimApp) set_clock(clock vphp.PhpObject) &VSlimApp {
 @[php_return_type: 'Psr\\Clock\\ClockInterface']
 @[php_method]
 pub fn (mut app VSlimApp) clock() vphp.PhpObject {
-	if !clockx.psr20_clock_is_valid(app.clock_ref) {
+	if !supportx.psr20_clock_is_valid(app.clock_ref) {
 		mut old := app.clock_ref
 		old.release()
-		app.clock_ref = clockx.new_psr20_system_clock_ref()
+		app.clock_ref = supportx.new_psr20_system_clock_ref()
 		app.sync_clock_service_to_container()
 	}
 	return app.clock_ref.to_request_owned()

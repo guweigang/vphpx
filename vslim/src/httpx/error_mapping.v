@@ -1,6 +1,5 @@
-module errorx
+module httpx
 
-import httpx
 import vphp
 
 pub fn php_value_json_fragment(value vphp.PhpValue) string {
@@ -24,18 +23,18 @@ pub fn validation_error_json_body(status int, errors vphp.PhpValue) string {
 	return '{"ok":false,"code":"validation_error","error":"validation_error","status":${status},"message":"Validation failed","errors":${php_value_json_fragment(errors)}}'
 }
 
-pub fn default_response(status int, message string, error_code string, json_enabled bool) httpx.VSlimResponse {
+pub fn default_response(status int, message string, error_code string, json_enabled bool) VSlimResponse {
 	if json_enabled {
-		return httpx.VSlimResponse.json(status, error_json_body(status, message, error_code))
+		return VSlimResponse.json(status, error_json_body(status, message, error_code))
 	}
-	return httpx.VSlimResponse.text(status, message)
+	return VSlimResponse.text(status, message)
 }
 
-pub fn default_psr_response(status int, message string, error_code string, json_enabled bool) &httpx.VSlimPsr7Response {
+pub fn default_psr_response(status int, message string, error_code string, json_enabled bool) &VSlimPsr7Response {
 	if json_enabled {
-		return httpx.VSlimPsr7Response.json(status, error_json_body(status, message, error_code))
+		return VSlimPsr7Response.json(status, error_json_body(status, message, error_code))
 	}
-	return httpx.VSlimPsr7Response.text(status, message)
+	return VSlimPsr7Response.text(status, message)
 }
 
 fn exception_class_name(exception vphp.PhpObject) string {

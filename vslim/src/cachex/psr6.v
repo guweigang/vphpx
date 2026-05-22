@@ -1,6 +1,6 @@
 module cachex
 
-import clockx
+import supportx
 import configx as cfgx
 import vphp
 
@@ -54,7 +54,7 @@ pub fn (pool &VSlimPsr6CacheItemPool) default_ttl_seconds_value() int {
 @[php_method: 'setClock']
 pub fn (mut pool VSlimPsr6CacheItemPool) set_clock(clock vphp.PhpObject) &VSlimPsr6CacheItemPool {
 	pool.ensure()
-	if !clockx.psr20_clock_is_valid(clock) {
+	if !supportx.psr20_clock_is_valid(clock) {
 		vphp.PhpException.raise_class('InvalidArgumentException',
 			'clock must implement Psr\\Clock\\ClockInterface', 0)
 		return &pool
@@ -245,7 +245,7 @@ pub fn (item &VSlimPsr6CacheItem) is_hit() bool {
 	if !item.hit {
 		return false
 	}
-	now_unix := clockx.psr20_clock_now_unix_or_throw(item.clock_ref) or { return false }
+	now_unix := supportx.psr20_clock_now_unix_or_throw(item.clock_ref) or { return false }
 	if item.expires_at_unix > 0 && item.expires_at_unix <= now_unix {
 		return false
 	}
@@ -290,8 +290,8 @@ fn (mut pool VSlimPsr6CacheItemPool) ensure() {
 	if pool.deferred.len == 0 {
 		pool.deferred = map[string]Psr6DeferredEntry{}
 	}
-	if !clockx.psr20_clock_is_valid(pool.clock_ref) {
-		pool.clock_ref = clockx.new_psr20_system_clock_ref()
+	if !supportx.psr20_clock_is_valid(pool.clock_ref) {
+		pool.clock_ref = supportx.new_psr20_system_clock_ref()
 	}
 	if pool.default_ttl_seconds < 0 {
 		pool.default_ttl_seconds = 0
@@ -299,8 +299,8 @@ fn (mut pool VSlimPsr6CacheItemPool) ensure() {
 }
 
 fn (mut item VSlimPsr6CacheItem) ensure_clock() {
-	if !clockx.psr20_clock_is_valid(item.clock_ref) {
-		item.clock_ref = clockx.new_psr20_system_clock_ref()
+	if !supportx.psr20_clock_is_valid(item.clock_ref) {
+		item.clock_ref = supportx.new_psr20_system_clock_ref()
 	}
 }
 
@@ -324,7 +324,7 @@ pub fn (mut pool VSlimPsr6CacheItemPool) item_for_key(key string) &VSlimPsr6Cach
 }
 
 pub fn (mut pool VSlimPsr6CacheItemPool) persist_snapshot(snapshot Psr6ItemSnapshot) bool {
-	now_unix := clockx.psr20_clock_now_unix_or_throw(pool.clock_ref) or { return false }
+	now_unix := supportx.psr20_clock_now_unix_or_throw(pool.clock_ref) or { return false }
 	if !snapshot.has_value || snapshot.expires_at_unix < 0
 		|| (snapshot.expires_at_unix > 0 && snapshot.expires_at_unix <= now_unix) {
 		pool.remove_entry(pool.storage_key(snapshot.key))
@@ -410,7 +410,7 @@ pub fn (mut pool VSlimPsr6CacheItemPool) clear_deferred_entries() {
 }
 
 fn psr6_deferred_entry_expired(clock vphp.PhpObject, entry Psr6DeferredEntry) bool {
-	now_unix := clockx.psr20_clock_now_unix_or_throw(clock) or { return false }
+	now_unix := supportx.psr20_clock_now_unix_or_throw(clock) or { return false }
 	return entry.expires_at_unix > 0 && entry.expires_at_unix <= now_unix
 }
 
@@ -503,7 +503,7 @@ fn psr6_resolve_relative_expiration_or_throw(clock vphp.PhpObject, time_value vp
 	if !time_value.is_valid() || time_value.is_null() || time_value.is_undef() {
 		return 0
 	}
-	now_unix := clockx.psr20_clock_now_unix_or_throw(clock)!
+	now_unix := supportx.psr20_clock_now_unix_or_throw(clock)!
 	if time_value.is_long() {
 		seconds := time_value.to_i64()
 		if seconds <= 0 {
@@ -512,7 +512,7 @@ fn psr6_resolve_relative_expiration_or_throw(clock vphp.PhpObject, time_value vp
 		return now_unix + seconds
 	}
 	if time_value.is_object() && time_value.is_instance_of('DateInterval') {
-		mut now_dt := clockx.psr20_clock_now_datetime_or_throw(clock) or {
+		mut now_dt := supportx.psr20_clock_now_datetime_or_throw(clock) or {
 			return error('failed to resolve clock time for expiration resolution')
 		}
 		defer {

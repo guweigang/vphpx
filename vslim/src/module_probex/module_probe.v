@@ -1,4 +1,4 @@
-module module_probe
+module module_probex
 
 @[php_interface: 'VSlim\\Compiler\\ModuleProbeContract']
 pub interface VSlimModuleProbeContract {

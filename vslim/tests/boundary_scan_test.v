@@ -404,10 +404,10 @@ fn test_appx_uses_theme_default_service_constructors() {
 		panic('failed to read mcpx/app.v: ${err}')
 	}
 	assert mcp_source.contains('pub fn VSlimMcpApp.new_default'), 'MCP app default construction should be owned by mcpx'
-	clock_source := os.read_file(os.join_path(vslim_root(), 'src', 'clockx', 'clock.v')) or {
-		panic('failed to read clockx/clock.v: ${err}')
+	clock_source := os.read_file(os.join_path(vslim_root(), 'src', 'supportx', 'clock.v')) or {
+		panic('failed to read supportx/clock.v: ${err}')
 	}
-	assert clock_source.contains('pub fn VSlimPsr20Clock.new_object'), 'PSR-20 clock PHP object construction should be owned by clockx static constructor'
+	assert clock_source.contains('pub fn VSlimPsr20Clock.new_object'), 'PSR-20 clock PHP object construction should be owned by supportx static constructor'
 	assert !clock_source.contains("new_psr20_system_clock_ref() vphp.PhpObject {\n\tclock := vphp.PhpClass.named('VSlim\\\\Psr20\\\\Clock').construct()"), 'clock ref helper should delegate PHP object construction to VSlimPsr20Clock.new_object'
 }
 
@@ -436,7 +436,6 @@ fn test_routing_module_stays_pure_and_below_route_domain() {
 		'import configx',
 		'import loggerx',
 		'import supportx',
-		'import errorx',
 	]
 	for file in vslim_module_files('routingx') {
 		source := os.read_file(file) or { panic('failed to read ${file}: ${err}') }
@@ -454,7 +453,6 @@ fn test_routex_does_not_depend_on_app_lifecycle_modules() {
 		'import viewx',
 		'import liveviewx',
 		'import supportx',
-		'import errorx',
 	]
 	for file in vslim_module_files('routex') {
 		source := os.read_file(file) or { panic('failed to read ${file}: ${err}') }
@@ -698,19 +696,19 @@ fn test_appx_does_not_reown_psr15_predicates() {
 fn test_appx_does_not_reown_error_json_helpers() {
 	for file in vslim_module_files('appx') {
 		source := os.read_file(file) or { panic('failed to read ${file}: ${err}') }
-		assert !source.contains('fn json_escape('), '${file} should use errorx for JSON escaping'
-		assert !source.contains('fn error_json_body('), '${file} should use errorx for error JSON bodies'
-		assert !source.contains('"Validation failed","errors"'), '${file} should use errorx for validation error JSON bodies'
-		assert !source.contains('php_value_json_fragment(errors)'), '${file} should use errorx for validation error JSON bodies'
-		assert !source.contains('httpx.VSlimResponse.json(status, errorx.error_json_body'), '${file} should use errorx default response builders'
-		assert !source.contains('httpx.VSlimPsr7Response.json(status, errorx.error_json_body'), '${file} should use errorx default PSR response builders'
+		assert !source.contains('fn json_escape('), '${file} should use httpx for JSON escaping'
+		assert !source.contains('fn error_json_body('), '${file} should use httpx for error JSON bodies'
+		assert !source.contains('"Validation failed","errors"'), '${file} should use httpx for validation error JSON bodies'
+		assert !source.contains('php_value_json_fragment(errors)'), '${file} should use httpx for validation error JSON bodies'
+		assert !source.contains('httpx.VSlimResponse.json(status, errorx.error_json_body'), '${file} should use httpx default response builders'
+		assert !source.contains('httpx.VSlimPsr7Response.json(status, errorx.error_json_body'), '${file} should use httpx default PSR response builders'
 	}
-	source := os.read_file(os.join_path(vslim_root(), 'src', 'errorx', 'mapping.v')) or {
-		panic('failed to read errorx/mapping.v: ${err}')
+	source := os.read_file(os.join_path(vslim_root(), 'src', 'httpx', 'error_mapping.v')) or {
+		panic('failed to read httpx/error_mapping.v: ${err}')
 	}
-	assert source.contains('pub fn error_json_body'), 'error JSON body construction should be owned by errorx'
-	assert source.contains('pub fn validation_error_json_body'), 'validation error JSON body construction should be owned by errorx'
-	assert source.contains('pub fn default_response'), 'default error response construction should be owned by errorx'
+	assert source.contains('pub fn error_json_body'), 'error JSON body construction should be owned by httpx'
+	assert source.contains('pub fn validation_error_json_body'), 'validation error JSON body construction should be owned by httpx'
+	assert source.contains('pub fn default_response'), 'default error response construction should be owned by httpx'
 }
 
 fn test_appx_does_not_reown_http_allow_header_response_mutation() {

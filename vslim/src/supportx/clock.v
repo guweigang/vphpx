@@ -1,6 +1,14 @@
-module clockx
+module supportx
 
 import vphp
+
+pub const service_clock = 'clock'
+pub const service_psr_clock = 'Psr\\Clock\\ClockInterface'
+
+@[php_implements: 'Psr\\Clock\\ClockInterface']
+@[php_class: 'VSlim\\Psr20\\Clock']
+@[heap]
+pub struct VSlimPsr20Clock {}
 
 @[php_method]
 pub fn (mut clock VSlimPsr20Clock) construct() &VSlimPsr20Clock {

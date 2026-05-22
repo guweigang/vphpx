@@ -4,7 +4,6 @@ import configx as cfgx
 import loggerx
 import mcpx as mcp
 import cachex
-import clockx
 import containerx
 import controllerx
 import eventx
@@ -117,7 +116,7 @@ fn (mut app VSlimApp) apply_bootstrap_runtime_flags(spec vphp.PhpArray) {
 
 fn (mut app VSlimApp) apply_bootstrap_services(spec vphp.PhpArray) ! {
 	if value := supportx.app_bootstrap_spec(spec).lookup(['clock']) {
-		if !clockx.psr20_is_clock(value) {
+		if !supportx.psr20_is_clock(value) {
 			return error('bootstrap clock must implement Psr\\Clock\\ClockInterface')
 		}
 		clock := value.as_object() or { return error('bootstrap clock must be an object') }

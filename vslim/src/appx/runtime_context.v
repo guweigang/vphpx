@@ -3,7 +3,7 @@ module appx
 import httpx
 import loggerx
 import os
-import clockx
+import supportx
 import vphp
 
 #include "php_bridge.h"
@@ -110,7 +110,7 @@ fn (app &VSlimApp) trace_mem_log(req &httpx.VSlimRequest, stage string, base_byt
 	defer {
 		clock.release()
 	}
-	context['ts'] = clockx.psr20_clock_now_unix_milli_string_or_throw(clock) or { '' }
+	context['ts'] = supportx.psr20_clock_now_unix_milli_string_or_throw(clock) or { '' }
 	context['stage'] = stage
 	context['method'] = req.method
 	context['path'] = req.path_value()

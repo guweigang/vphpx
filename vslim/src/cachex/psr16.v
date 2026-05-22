@@ -1,6 +1,6 @@
 module cachex
 
-import clockx
+import supportx
 import configx as cfgx
 import vphp
 
@@ -46,7 +46,7 @@ pub fn (cache &VSlimPsr16Cache) default_ttl_seconds_value() int {
 @[php_method: 'setClock']
 pub fn (mut cache VSlimPsr16Cache) set_clock(clock vphp.PhpObject) &VSlimPsr16Cache {
 	cache.ensure()
-	if !clockx.psr20_clock_is_valid(clock) {
+	if !supportx.psr20_clock_is_valid(clock) {
 		vphp.PhpException.raise_class('InvalidArgumentException',
 			'clock must implement Psr\\Clock\\ClockInterface', 0)
 		return &cache
@@ -202,8 +202,8 @@ fn (mut cache VSlimPsr16Cache) ensure() {
 	if cache.entries.len == 0 {
 		cache.entries = map[string]PsrCacheEntry{}
 	}
-	if !clockx.psr20_clock_is_valid(cache.clock_ref) {
-		cache.clock_ref = clockx.new_psr20_system_clock_ref()
+	if !supportx.psr20_clock_is_valid(cache.clock_ref) {
+		cache.clock_ref = supportx.new_psr20_system_clock_ref()
 	}
 	if cache.default_ttl_seconds < 0 {
 		cache.default_ttl_seconds = 0
@@ -250,7 +250,7 @@ pub fn (mut cache VSlimPsr16Cache) prune_expired_entry(key string) {
 }
 
 fn psr_cache_entry_expired(clock vphp.PhpObject, entry PsrCacheEntry) bool {
-	now_unix := clockx.psr20_clock_now_unix_or_throw(clock) or { return false }
+	now_unix := supportx.psr20_clock_now_unix_or_throw(clock) or { return false }
 	return entry.expires_at_unix > 0 && entry.expires_at_unix <= now_unix
 }
 
@@ -281,7 +281,7 @@ fn psr_cache_apply_default_ttl(clock vphp.PhpObject, expires_at i64, default_ttl
 	if expires_at != 0 || default_ttl_seconds <= 0 {
 		return expires_at
 	}
-	now_unix := clockx.psr20_clock_now_unix_or_throw(clock) or { return expires_at }
+	now_unix := supportx.psr20_clock_now_unix_or_throw(clock) or { return expires_at }
 	return now_unix + i64(default_ttl_seconds)
 }
 
@@ -289,7 +289,7 @@ fn psr_cache_resolve_relative_ttl_or_throw(clock vphp.PhpObject, ttl vphp.PhpVal
 	if !ttl.is_valid() || ttl.is_null() || ttl.is_undef() {
 		return 0
 	}
-	now_unix := clockx.psr20_clock_now_unix_or_throw(clock)!
+	now_unix := supportx.psr20_clock_now_unix_or_throw(clock)!
 	if ttl.is_long() {
 		seconds := ttl.to_i64()
 		if seconds <= 0 {
@@ -305,7 +305,7 @@ fn psr_cache_resolve_relative_ttl_or_throw(clock vphp.PhpObject, ttl vphp.PhpVal
 		return now_unix + seconds
 	}
 	if ttl.is_object() && ttl.is_instance_of('DateInterval') {
-		mut now_dt := clockx.psr20_clock_now_datetime_or_throw(clock) or {
+		mut now_dt := supportx.psr20_clock_now_datetime_or_throw(clock) or {
 			return error('failed to resolve clock time for TTL resolution')
 		}
 		defer {

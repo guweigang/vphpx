@@ -1,4 +1,4 @@
-module module_probe
+module module_probex
 
 import eventx
 import httpx

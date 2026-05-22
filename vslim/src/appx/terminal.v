@@ -1,6 +1,5 @@
 module appx
 
-import errorx
 import httpx
 import middlewarex
 import vphp
@@ -205,9 +204,9 @@ fn (app &VSlimApp) run_error_handler(request_payload vphp.PhpValue, status int, 
 }
 
 fn (app &VSlimApp) default_error_response(status int, message string, error_code string) httpx.VSlimResponse {
-	return errorx.default_response(status, message, error_code, app.error_response_json)
+	return httpx.default_response(status, message, error_code, app.error_response_json)
 }
 
 fn (app &VSlimApp) default_error_response_psr(status int, message string, error_code string) &httpx.VSlimPsr7Response {
-	return errorx.default_psr_response(status, message, error_code, app.error_response_json)
+	return httpx.default_psr_response(status, message, error_code, app.error_response_json)
 }

@@ -2,7 +2,6 @@ module appx
 
 import configx as cfgx
 import databasex
-import errorx
 import supportx
 import httpx
 import os
@@ -25,7 +24,7 @@ pub fn (app &VSlimApp) error_response(status int, message string, error_code str
 @[php_arg_optional: 'status']
 pub fn (app &VSlimApp) validation_error(errors vphp.PhpValue, status int) &httpx.VSlimPsr7Response {
 	error_status := if status <= 0 { 422 } else { status }
-	json_body := errorx.validation_error_json_body(error_status, errors)
+	json_body := httpx.validation_error_json_body(error_status, errors)
 	return httpx.VSlimResponse.json(error_status, json_body).to_psr7_response()
 }
 
@@ -90,9 +89,9 @@ pub fn (app &VSlimApp) service_unavailable_response(message string) &httpx.VSlim
 @[php_arg_optional: 'fallback_status']
 pub fn (app &VSlimApp) exception_response(exception vphp.PhpObject, fallback_status int) &httpx.VSlimPsr7Response {
 	status := if fallback_status >= 400 && fallback_status <= 599 { fallback_status } else { 500 }
-	resolved_status := errorx.exception_status_code(exception, status)
-	message := errorx.exception_message_value(exception, 'Internal Server Error')
-	code := errorx.exception_error_code(exception)
+	resolved_status := httpx.exception_status_code(exception, status)
+	message := httpx.exception_message_value(exception, 'Internal Server Error')
+	code := httpx.exception_error_code(exception)
 	return app.default_error_response(resolved_status, message, code).to_psr7_response()
 }
 
