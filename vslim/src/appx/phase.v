@@ -15,7 +15,7 @@ fn (app &VSlimApp) dispatch_phase_middleware(payload vphp.PhpValue, route_params
 }
 
 fn (app &VSlimApp) dispatch_before_phase_middleware(payload vphp.PhpValue, route_params map[string]string, handler vphp.PhpValue) !middlewarex.PhaseMiddlewareDispatchResult {
-	mut cont := middlewarex.VSlimPsr15ContinueHandler.with_dispatcher(dispatch_psr15_next_handler)
+	mut cont := middlewarex.VSlimPsr15ContinueHandler.with_dispatcher(middlewarex.dispatch_psr15_next_handler)
 	next_handler := cont.request_handler_object()
 	response := app.dispatch_phase_middleware(payload, route_params, handler, next_handler)!
 	return middlewarex.PhaseMiddlewareDispatchResult.from_before(payload, route_params, cont,

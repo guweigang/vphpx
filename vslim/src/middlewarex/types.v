@@ -36,7 +36,7 @@ pub type Psr15NextDispatcher = fn (mut Psr15NextHandlerState, u64, vphp.PhpObjec
 pub struct Psr15NextHandlerState {
 pub mut:
 	mode                  Psr15NextHandlerMode     = .continue_marker
-	chain_ref             voidptr                  = unsafe { nil }
+	chain_ref             &MiddlewareChain         = unsafe { nil }
 	fixed_response_ref    &httpx.VSlimPsr7Response = unsafe { nil }
 	has_forwarded_request bool
 	dispatcher            Psr15NextDispatcher = unsafe { nil }
@@ -58,11 +58,11 @@ pub mut:
 	state Psr15NextHandlerState
 }
 
-pub fn VSlimPsr15NextHandler.for_chain(chain_ref voidptr, dispatcher Psr15NextDispatcher) &VSlimPsr15NextHandler {
+pub fn VSlimPsr15NextHandler.for_chain(chain &MiddlewareChain, dispatcher Psr15NextDispatcher) &VSlimPsr15NextHandler {
 	return &VSlimPsr15NextHandler{
 		state: Psr15NextHandlerState{
 			mode:       .middleware_chain
-			chain_ref:  chain_ref
+			chain_ref:  chain
 			dispatcher: dispatcher
 		}
 	}

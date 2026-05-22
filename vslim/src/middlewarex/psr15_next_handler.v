@@ -1,20 +1,15 @@
-module appx
+module middlewarex
 
 import httpx
-import middlewarex
 import vphp
 
-fn (ctx PipelineRequestContext) with_current_request(request vphp.PhpValue) PipelineRequestContext {
-	return ctx.with_payload_value(request)
-}
-
-fn dispatch_psr15_next_handler(mut state middlewarex.Psr15NextHandlerState, key u64, request vphp.PhpObject) &httpx.VSlimPsr7Response {
+pub fn dispatch_psr15_next_handler(mut state Psr15NextHandlerState, key u64, request vphp.PhpObject) &httpx.VSlimPsr7Response {
 	return match state.mode {
 		.middleware_chain {
 			if state.chain_ref == unsafe { nil } {
 				httpx.VSlimPsr7Response.text(500, 'Middleware chain is not available')
 			} else {
-				mut chain := unsafe { &MiddlewareChain(state.chain_ref) }
+				mut chain := state.chain_ref
 				mut request_value := request.to_value()
 				defer {
 					request_value.release()
@@ -29,9 +24,7 @@ fn dispatch_psr15_next_handler(mut state middlewarex.Psr15NextHandlerState, key 
 							err.msg()
 						}
 						error_ctx := chain.request_ctx.with_current_request(request_value)
-						res := chain.app.run_error_handler_with_context_psr(error_ctx, 500, msg) or {
-							chain.app.default_error_response_psr(500, msg, 'handler_not_callable')
-						}
+						res := chain.on_error(chain.app_ctx, error_ctx, msg)
 						return res
 					}
 				} else {
@@ -42,9 +35,7 @@ fn dispatch_psr15_next_handler(mut state middlewarex.Psr15NextHandlerState, key 
 							err.msg()
 						}
 						error_ctx := chain.request_ctx.with_current_request(request_value)
-						res := chain.app.run_error_handler_with_context_psr(error_ctx, 500, msg) or {
-							chain.app.default_error_response_psr(500, msg, 'handler_not_callable')
-						}
+						res := chain.on_error(chain.app_ctx, error_ctx, msg)
 						return res
 					}
 				}
@@ -72,12 +63,12 @@ fn dispatch_psr15_next_handler(mut state middlewarex.Psr15NextHandlerState, key 
 		.continue_marker {
 			mut normalized := httpx.normalize_psr15_server_request_object(request,
 				map[string]string{})
-			if snapshot := middlewarex.snapshot_phase_forwarded_request(normalized) {
-				middlewarex.store_forwarded_request_snapshot(key, snapshot)
+			if snapshot := snapshot_phase_forwarded_request(normalized) {
+				store_forwarded_request_snapshot(key, snapshot)
 			}
 			normalized.release()
 			state.has_forwarded_request = true
-			middlewarex.phase_continue_response()
+			phase_continue_response()
 		}
 	}
 }

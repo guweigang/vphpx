@@ -87,37 +87,6 @@ fn (app &VSlimApp) bind_route_target_if_supported(target vphp.PhpValue) {
 	supportx.bind_to_app(target, app_value)
 }
 
-fn (mut chain MiddlewareChain) dispatch_entry(handler vphp.PhpValue, payload vphp.PhpValue) !vphp.PhpValue {
-	target, explicit_method := chain.app.resolve_middleware_target(handler) or {
-		loggerx.cli_debug_log('middleware.target.resolve.error msg=${err.msg()} handler_valid=${handler.is_valid()} handler_kind=${handler.kind_name()}')
-		return err
-	}
-	chain.app.bind_route_target_if_supported(target)
-	method := httpx.psr15_middleware_target_method(target, explicit_method)
-	if middlewarex.is_phase_middleware_target(target, explicit_method) {
-		mut psr_payload := httpx.normalize_psr15_server_request(payload,
-			chain.request_ctx.route_params)
-		defer {
-			psr_payload.release()
-		}
-		mut next_handler := (&chain).build_psr15_next_handler_object()
-		if !next_handler.is_valid() {
-			return error('Next handler object could not be created')
-		}
-		defer {
-			next_handler.release()
-		}
-		mut result := middlewarex.dispatch_phase_process(target, psr_payload, next_handler)!
-		defer {
-			result.release()
-		}
-		normalized := httpx.VSlimPsr7Response.from_value(result)
-		return httpx.vslim_response_to_value(normalized.to_vslim_response())
-	}
-	loggerx.cli_debug_log('middleware.target.invalid method=${method} target_valid=${target.is_valid()} target_kind=${target.kind_name()} target_class=${target.class_name()}')
-	return error('Middleware must implement Psr\\Http\\Server\\MiddlewareInterface')
-}
-
 fn (app &VSlimApp) dispatch_route_handler(handler vphp.PhpValue, payload vphp.PhpValue, route_params map[string]string) !vphp.PhpValue {
 	if !handler.is_valid() {
 		return error('Invalid route handler')

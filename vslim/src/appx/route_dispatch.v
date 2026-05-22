@@ -2,6 +2,7 @@ module appx
 
 import os
 import httpx
+import middlewarex
 import routex
 import streamx
 import vphp
@@ -22,7 +23,7 @@ fn (app &VSlimApp) dispatch_request_with_params(req &httpx.VSlimRequest, trace_o
 	path := req.normalized_path()
 	if app.has_not_found_pipeline(path) {
 		result := app.dispatch_not_found_terminal(req)
-		ctx := PipelineRequestContext{
+		ctx := middlewarex.PipelineRequestContext{
 			path:         path
 			payload_ref:  result.payload_ref.owned()
 			route_params: map[string]string{}
@@ -66,7 +67,7 @@ fn (app &VSlimApp) dispatch_request_worker_value(req &httpx.VSlimRequest) vphp.P
 	path := req.normalized_path()
 	if app.has_not_found_pipeline(path) {
 		result := app.dispatch_not_found_terminal(req)
-		ctx := PipelineRequestContext{
+		ctx := middlewarex.PipelineRequestContext{
 			path:         path
 			payload_ref:  result.payload_ref.owned()
 			route_params: map[string]string{}
@@ -132,7 +133,7 @@ fn (app &VSlimApp) dispatch_psr15_request_object(request_object vphp.PhpObject) 
 	path := req.normalized_path()
 	if app.has_not_found_pipeline(path) {
 		result := app.dispatch_not_found_terminal(req)
-		ctx := PipelineRequestContext{
+		ctx := middlewarex.PipelineRequestContext{
 			path:         path
 			payload_ref:  result.payload_ref.owned()
 			route_params: map[string]string{}
@@ -143,11 +144,11 @@ fn (app &VSlimApp) dispatch_psr15_request_object(request_object vphp.PhpObject) 
 		res, _ := routex.dispatch_demo_with_params(req.to_vslim_request())
 		return res.to_psr7_response()
 	}
-	ctx := PipelineRequestContext.from_object(path, normalized_request, map[string]string{})
+	ctx := middlewarex.PipelineRequestContext.from_object(path, normalized_request, map[string]string{})
 	return app.run_not_found_core_with_context_psr(ctx)
 }
 
-fn (result PipelineDispatchResult) route_dispatch_resolution(route_params map[string]string) routex.RouteDispatchResolution {
+fn route_dispatch_resolution(result middlewarex.PipelineDispatchResult, route_params map[string]string) routex.RouteDispatchResolution {
 	return routex.RouteDispatchResolution{
 		response_ref: result.response_ref.owned()
 		payload_ref:  result.payload_ref.owned()
@@ -176,24 +177,24 @@ fn (app &VSlimApp) resolve_route_dispatch(req &httpx.VSlimRequest, source_payloa
 			if trace_on {
 				app.trace_mem_log(req, 'route.after_middleware_chain', trace_base)
 			}
-			return result.route_dispatch_resolution(resolved_route.route_params)
+			return route_dispatch_resolution(result, resolved_route.route_params)
 		}
 		.options {
 			result := app.dispatch_terminal(&dispatch_req,
-				MiddlewareTerminalMeta.fixed_response(httpx.VSlimResponse.options(resolved_route.allowed_methods)))
-			return result.route_dispatch_resolution(map[string]string{})
+				middlewarex.MiddlewareTerminalMeta.fixed_response(httpx.VSlimResponse.options(resolved_route.allowed_methods)))
+			return route_dispatch_resolution(result, map[string]string{})
 		}
 		.method_not_allowed {
 			result := app.dispatch_terminal(&dispatch_req,
-				MiddlewareTerminalMeta.method_not_allowed(resolved_route.allowed_methods))
-			return result.route_dispatch_resolution(map[string]string{})
+				middlewarex.MiddlewareTerminalMeta.method_not_allowed(resolved_route.allowed_methods))
+			return route_dispatch_resolution(result, map[string]string{})
 		}
 		.unresolved {}
 	}
 
 	if app.has_not_found_pipeline(path) {
 		result := app.dispatch_not_found_terminal(&dispatch_req)
-		return result.route_dispatch_resolution(map[string]string{})
+		return route_dispatch_resolution(result, map[string]string{})
 	}
 	return routex.RouteDispatchResolution.unresolved()
 }
@@ -202,15 +203,15 @@ fn (app &VSlimApp) resolve_route_dispatch_object(req &httpx.VSlimRequest, source
 	return app.resolve_route_dispatch(req, source_payload.to_value(), trace_on, trace_base)
 }
 
-fn (app &VSlimApp) dispatch_route_match(path string, initial_payload vphp.PhpValue, validation_req &httpx.VSlimRequest, route routex.VSlimRoute, params map[string]string) PipelineDispatchResult {
+fn (app &VSlimApp) dispatch_route_match(path string, initial_payload vphp.PhpValue, validation_req &httpx.VSlimRequest, route routex.VSlimRoute, params map[string]string) middlewarex.PipelineDispatchResult {
 	validation_meta, has_validation_meta := app.request_validation_terminal_meta(validation_req)
 	if has_validation_meta {
-		return app.dispatch_pipeline(path, initial_payload, RawDispatchPlan{
+		return app.dispatch_pipeline(path, initial_payload, middlewarex.RawDispatchPlan{
 			route_params:  httpx.snapshot_string_map(params)
 			terminal_meta: validation_meta
 		})
 	}
-	return app.dispatch_pipeline(path, initial_payload, RawDispatchPlan{
+	return app.dispatch_pipeline(path, initial_payload, middlewarex.RawDispatchPlan{
 		route_params:             httpx.snapshot_string_map(params)
 		route_handler:            route.handler_ref.clone()
 		resource_action:          route.resource_action
@@ -222,7 +223,7 @@ fn (app &VSlimApp) dispatch_routes_psr15(req &httpx.VSlimRequest, request_payloa
 	path := req.normalized_path()
 	resolved := app.resolve_route_dispatch_object(req, request_payload, false, 0)
 	if resolved.handled {
-		ctx := PipelineRequestContext{
+		ctx := middlewarex.PipelineRequestContext{
 			path:         path
 			payload_ref:  resolved.payload_ref.owned()
 			route_params: httpx.snapshot_string_map(resolved.route_params)
@@ -240,7 +241,7 @@ fn (app &VSlimApp) dispatch_routes_with_params(req &httpx.VSlimRequest, trace_on
 		if trace_on {
 			app.trace_mem_log(req, 'route.after_normalize', trace_base)
 		}
-		ctx := PipelineRequestContext{
+		ctx := middlewarex.PipelineRequestContext{
 			path:         path
 			payload_ref:  resolved.payload_ref.owned()
 			route_params: httpx.snapshot_string_map(resolved.route_params)
@@ -255,7 +256,7 @@ fn (app &VSlimApp) dispatch_routes_worker_with_params(req &httpx.VSlimRequest) (
 	path := req.normalized_path()
 	resolved := app.resolve_route_dispatch(req, vphp.PhpValue.null(), false, 0)
 	if resolved.handled {
-		ctx := PipelineRequestContext{
+		ctx := middlewarex.PipelineRequestContext{
 			path:         path
 			payload_ref:  resolved.payload_ref.owned()
 			route_params: httpx.snapshot_string_map(resolved.route_params)
@@ -289,16 +290,16 @@ fn (app &VSlimApp) max_body_bytes() int {
 	return max_bytes
 }
 
-fn (app &VSlimApp) request_validation_terminal_meta(req &httpx.VSlimRequest) (MiddlewareTerminalMeta, bool) {
+fn (app &VSlimApp) request_validation_terminal_meta(req &httpx.VSlimRequest) (middlewarex.MiddlewareTerminalMeta, bool) {
 	max_bytes := app.max_body_bytes()
 	if max_bytes > 0 && req.body.len > max_bytes {
-		return MiddlewareTerminalMeta.error(413, 'Payload too large', 'Payload Too Large',
+		return middlewarex.MiddlewareTerminalMeta.error(413, 'Payload too large', 'Payload Too Large',
 			'payload_too_large'), true
 	}
 	parse_msg := req.parse_error()
 	if parse_msg != '' {
-		return MiddlewareTerminalMeta.error(400, 'Bad Request: invalid JSON body',
+		return middlewarex.MiddlewareTerminalMeta.error(400, 'Bad Request: invalid JSON body',
 			'Bad Request: invalid JSON body', 'bad_json_body'), true
 	}
-	return MiddlewareTerminalMeta{}, false
+	return middlewarex.MiddlewareTerminalMeta{}, false
 }

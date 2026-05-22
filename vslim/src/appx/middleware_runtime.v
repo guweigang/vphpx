@@ -7,31 +7,70 @@ import vphp
 
 #include "php_bridge.h"
 
-fn (chain &MiddlewareChain) build_psr15_next_handler_object() vphp.PhpObject {
-	unsafe {
-		return middlewarex.VSlimPsr15NextHandler.for_chain(voidptr(chain),
-			dispatch_psr15_next_handler).request_handler_object()
-	}
+fn app_terminal_callback(app_ptr voidptr, ctx middlewarex.PipelineRequestContext, plan middlewarex.RawDispatchPlan) !vphp.PhpValue {
+	mut app := unsafe { &VSlimApp(app_ptr) }
+	return app.execute_dispatch_plan(ctx, plan)!
 }
 
-fn (app &VSlimApp) dispatch_middleware_chain_with_plan(path string, payload vphp.PhpValue, route_middle []vphp.PhpValue, plan RawDispatchPlan) !PipelineDispatchResult {
-	request_ctx := PipelineRequestContext.from_value(path, payload, plan.route_params)
+fn app_error_callback(app_ptr voidptr, ctx middlewarex.PipelineRequestContext, msg string) &httpx.VSlimPsr7Response {
+	mut app := unsafe { &VSlimApp(app_ptr) }
+	res := app.error_response_from_context(ctx, 500, msg, 'handler_not_callable')
+	return res.to_psr7_response()
+}
+
+fn app_execute_middleware_callback(app_ptr voidptr, chain &middlewarex.MiddlewareChain, handler vphp.PhpValue, payload vphp.PhpValue) !vphp.PhpValue {
+	mut app := unsafe { &VSlimApp(app_ptr) }
+	target, explicit_method := app.resolve_middleware_target(handler) or {
+		loggerx.cli_debug_log('middleware.target.resolve.error msg=${err.msg()} handler_valid=${handler.is_valid()} handler_kind=${handler.kind_name()}')
+		return err
+	}
+	app.bind_route_target_if_supported(target)
+	method := httpx.psr15_middleware_target_method(target, explicit_method)
+	if middlewarex.is_phase_middleware_target(target, explicit_method) {
+		mut psr_payload := httpx.normalize_psr15_server_request(payload,
+			chain.request_ctx.route_params)
+		defer {
+			psr_payload.release()
+		}
+		mut next_handler := chain.build_psr15_next_handler_object(middlewarex.dispatch_psr15_next_handler)
+		if !next_handler.is_valid() {
+			return error('Next handler object could not be created')
+		}
+		defer {
+			next_handler.release()
+		}
+		mut result := middlewarex.dispatch_phase_process(target, psr_payload, next_handler)!
+		defer {
+			result.release()
+		}
+		normalized := httpx.VSlimPsr7Response.from_value(result)
+		return httpx.vslim_response_to_value(normalized.to_vslim_response())
+	}
+	loggerx.cli_debug_log('middleware.target.invalid method=${method} target_valid=${target.is_valid()} target_kind=${target.kind_name()} target_class=${target.class_name()}')
+	return error('Middleware must implement Psr\\Http\\Server\\MiddlewareInterface')
+}
+
+fn (app &VSlimApp) dispatch_middleware_chain_with_plan(path string, payload vphp.PhpValue, route_middle []vphp.PhpValue, plan middlewarex.RawDispatchPlan) !middlewarex.PipelineDispatchResult {
+	request_ctx := middlewarex.PipelineRequestContext.from_value(path, payload, plan.route_params)
 	return app.dispatch_middleware_chain_with_context(request_ctx, route_middle, plan)
 }
 
-fn (app &VSlimApp) dispatch_middleware_chain_with_context(ctx PipelineRequestContext, route_middle []vphp.PhpValue, plan RawDispatchPlan) !PipelineDispatchResult {
+fn (app &VSlimApp) dispatch_middleware_chain_with_context(ctx middlewarex.PipelineRequestContext, route_middle []vphp.PhpValue, plan middlewarex.RawDispatchPlan) !middlewarex.PipelineDispatchResult {
 	if app.middlewares.len == 0 && route_middle.len == 0 {
-		return PipelineDispatchResult.from(app.execute_dispatch_plan(ctx, plan)!, ctx.payload_ref)
+		return middlewarex.PipelineDispatchResult.from(app.execute_dispatch_plan(ctx, plan)!, ctx.payload_ref)
 	}
 	mut chain_plan := plan.clone()
 	defer {
 		chain_plan.release()
 	}
-	mut chain := &MiddlewareChain{
-		app:         app
+	mut chain := &middlewarex.MiddlewareChain{
+		app_ctx:     voidptr(app)
 		request_ctx: ctx
 		middlewares: app.collect_standard_middlewares(route_middle)
 		plan:        chain_plan
+		on_terminal: app_terminal_callback
+		on_error:    app_error_callback
+		on_execute:  app_execute_middleware_callback
 	}
 	defer {
 		release_collected_middlewares(mut chain.middlewares)
@@ -47,7 +86,7 @@ fn (app &VSlimApp) dispatch_middleware_chain_with_context(ctx PipelineRequestCon
 		}
 		error_ctx := ctx.with_payload_value(error_payload)
 		res := app.error_response_from_context(error_ctx, 500, msg, 'handler_not_callable')
-		return PipelineDispatchResult.from(httpx.vslim_response_to_value(res), error_payload)
+		return middlewarex.PipelineDispatchResult.from(httpx.vslim_response_to_value(res), error_payload)
 	}
 	loggerx.cli_debug_log('middleware.chain.raw type=${response.type_name()} class=${response.class_name()} valid=${response.is_valid()} null=${response.is_null()} undef=${response.is_undef()}')
 	if forwarded_request := middlewarex.take_forwarded_request_snapshot(middlewarex.forwarded_request_key(chain)) {
@@ -55,62 +94,12 @@ fn (app &VSlimApp) dispatch_middleware_chain_with_context(ctx PipelineRequestCon
 			ctx.route_params, forwarded_request)
 		out := forwarded.owned().to_value()
 		forwarded.release()
-		return PipelineDispatchResult.from(response, out)
+		return middlewarex.PipelineDispatchResult.from(response, out)
 	}
-	return PipelineDispatchResult.from(response, ctx.payload_ref)
+	return middlewarex.PipelineDispatchResult.from(response, ctx.payload_ref)
 }
 
-fn (mut chain MiddlewareChain) dispatch(payload vphp.PhpValue) !vphp.PhpValue {
-	mut normalized := httpx.normalize_psr15_server_request(payload, chain.request_ctx.route_params)
-	if snapshot := middlewarex.snapshot_phase_forwarded_request(normalized) {
-		middlewarex.store_forwarded_request_snapshot(middlewarex.forwarded_request_key(chain),
-			snapshot)
-	}
-	normalized.release()
-	effective_ctx := chain.request_ctx.with_payload_value(payload)
-	if chain.index >= chain.middlewares.len {
-		return chain.app.execute_dispatch_plan(effective_ctx, chain.plan)!
-	}
-	mw := chain.middlewares[chain.index]
-	chain.index++
-	if !mw.is_valid() || mw.is_null() || mw.is_undef() {
-		loggerx.cli_debug_log('middleware.invalid idx=${chain.index - 1} valid=${mw.is_valid()} null=${mw.is_null()} undef=${mw.is_undef()} total=${chain.middlewares.len}')
-		return error('Middleware is not valid')
-	}
-	if !mw.is_valid() || mw.is_null() || mw.is_undef() {
-		loggerx.cli_debug_log('middleware.req.invalid idx=${chain.index - 1} valid=${mw.is_valid()} null=${mw.is_null()} undef=${mw.is_undef()}')
-	}
-	response := chain.dispatch_entry(mw, payload)!
-	if !response.is_valid() || response.is_null() || response.is_undef() {
-		return error('Middleware must return a response')
-	}
-	return response
-}
-
-fn (mut chain MiddlewareChain) dispatch_pre_normalized(payload vphp.PhpValue) !vphp.PhpValue {
-	if normalized := payload.as_object() {
-		if snapshot := middlewarex.snapshot_phase_forwarded_request(normalized) {
-			middlewarex.store_forwarded_request_snapshot(middlewarex.forwarded_request_key(chain),
-				snapshot)
-		}
-	}
-	effective_ctx := chain.request_ctx.with_payload_value(payload)
-	if chain.index >= chain.middlewares.len {
-		return chain.app.execute_dispatch_plan(effective_ctx, chain.plan)!
-	}
-	mw := chain.middlewares[chain.index]
-	chain.index++
-	if !mw.is_valid() || mw.is_null() || mw.is_undef() {
-		return error('Middleware is not valid')
-	}
-	response := chain.dispatch_entry(mw, payload)!
-	if !response.is_valid() || response.is_null() || response.is_undef() {
-		return error('Middleware must return a response')
-	}
-	return response
-}
-
-fn (app &VSlimApp) dispatch_after_phase_middleware_psr(ctx PipelineRequestContext, hook vphp.PhpValue, current &httpx.VSlimPsr7Response) !vphp.PhpValue {
+fn (app &VSlimApp) dispatch_after_phase_middleware_psr(ctx middlewarex.PipelineRequestContext, hook vphp.PhpValue, current &httpx.VSlimPsr7Response) !vphp.PhpValue {
 	next_handler := middlewarex.fixed_response_request_handler_object(current)
 	if !hook.is_valid() || hook.is_null() || hook.is_undef() {
 		return error('Middleware is not valid')
@@ -118,7 +107,7 @@ fn (app &VSlimApp) dispatch_after_phase_middleware_psr(ctx PipelineRequestContex
 	return app.dispatch_phase_middleware(ctx.payload_ref, ctx.route_params, hook, next_handler)
 }
 
-fn (app &VSlimApp) apply_after_middlewares(ctx PipelineRequestContext, initial httpx.VSlimResponse) httpx.VSlimResponse {
+fn (app &VSlimApp) apply_after_middlewares(ctx middlewarex.PipelineRequestContext, initial httpx.VSlimResponse) httpx.VSlimResponse {
 	loggerx.cli_debug_log('after.input vslim status=${initial.status} body_len=${initial.body.len}')
 	initial_psr := initial.to_psr7_response()
 	loggerx.cli_debug_log('after.input psr status=${initial_psr.get_status_code()} body_len=${httpx.psr7_stream_string(initial_psr.body_or_empty()).len}')
@@ -129,7 +118,7 @@ fn (app &VSlimApp) apply_after_middlewares(ctx PipelineRequestContext, initial h
 	return res
 }
 
-fn (app &VSlimApp) apply_after_middlewares_psr(ctx PipelineRequestContext, initial &httpx.VSlimPsr7Response) &httpx.VSlimPsr7Response {
+fn (app &VSlimApp) apply_after_middlewares_psr(ctx middlewarex.PipelineRequestContext, initial &httpx.VSlimPsr7Response) &httpx.VSlimPsr7Response {
 	mut group_after := app.matching_group_after_middlewares(ctx.path)
 	defer {
 		release_collected_middlewares(mut group_after)
@@ -175,10 +164,10 @@ fn (app &VSlimApp) apply_after_middlewares_psr(ctx PipelineRequestContext, initi
 	return current
 }
 
-fn (app &VSlimApp) finalize_with_after_middlewares(ctx PipelineRequestContext, initial httpx.VSlimResponse) httpx.VSlimResponse {
+fn (app &VSlimApp) finalize_with_after_middlewares(ctx middlewarex.PipelineRequestContext, initial httpx.VSlimResponse) httpx.VSlimResponse {
 	return app.apply_after_middlewares(ctx, initial)
 }
 
-fn (app &VSlimApp) finalize_with_after_middlewares_psr(ctx PipelineRequestContext, initial &httpx.VSlimPsr7Response) &httpx.VSlimPsr7Response {
+fn (app &VSlimApp) finalize_with_after_middlewares_psr(ctx middlewarex.PipelineRequestContext, initial &httpx.VSlimPsr7Response) &httpx.VSlimPsr7Response {
 	return app.apply_after_middlewares_psr(ctx, initial)
 }
