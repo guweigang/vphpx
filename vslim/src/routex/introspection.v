@@ -1,6 +1,6 @@
 module routex
 
-import routingx
+import httpx
 
 pub fn route_names(routes []VSlimRoute) []string {
 	mut out := []string{}
@@ -25,7 +25,7 @@ pub fn has_route_name(routes []VSlimRoute, name string) bool {
 }
 
 pub fn route_index_for_path(routes []VSlimRoute, raw_path string) (int, bool) {
-	path := routingx.Path.normalize(raw_path)
+	path := httpx.Path.normalize(raw_path)
 	for i, route in routes {
 		ok, _ := route.matches(path)
 		if ok {
@@ -107,7 +107,7 @@ pub fn route_conflicts(routes []VSlimRoute) []map[string]string {
 }
 
 pub fn allowed_methods_for(routes []VSlimRoute, raw_path string) []string {
-	path := routingx.Path.normalize(raw_path)
+	path := httpx.Path.normalize(raw_path)
 	mut allowed := []string{}
 	for route in routes {
 		ok, _ := route.matches(path)

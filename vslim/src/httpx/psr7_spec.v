@@ -1,6 +1,5 @@
 module httpx
 
-import routingx
 import vphp
 
 pub fn validate_header_name_or_throw(name string) ?string {

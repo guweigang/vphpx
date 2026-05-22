@@ -1,15 +1,15 @@
 module routex
 
-import routingx
+import httpx
 
 pub fn normalize_base_path(base_path string) string {
-	return routingx.Path.normalize_base_path(base_path)
+	return httpx.Path.normalize_base_path(base_path)
 }
 
 pub fn apply_base_path(base_path string, path string) string {
-	return routingx.Path.apply_base_path(base_path, path)
+	return httpx.Path.apply_base_path(base_path, path)
 }
 
 pub fn absolute_url(scheme string, host string, path string) string {
-	return routingx.Path.absolute_url(scheme, host, path)
+	return httpx.Path.absolute_url(scheme, host, path)
 }

@@ -1,7 +1,6 @@
 module streamx
 
 import httpx
-import routingx
 import vphp
 
 struct PhpValueSubject {
@@ -57,7 +56,7 @@ pub fn VSlimStreamResponse.sse_with(events vphp.PhpValue, status int, headers vp
 @[php_method]
 pub fn (r &VSlimStreamResponse) header(name string) string {
 	headers := r.header_values()
-	return headers[routingx.Header.normalize_name(name)] or { '' }
+	return headers[httpx.Header.normalize_name(name)] or { '' }
 }
 
 @[php_method]
@@ -78,13 +77,13 @@ pub fn (r &VSlimStreamResponse) content_type_value() string {
 @[php_method: 'hasHeader']
 pub fn (r &VSlimStreamResponse) has_header(name string) bool {
 	headers := r.header_values()
-	return routingx.Header.normalize_name(name) in headers
+	return httpx.Header.normalize_name(name) in headers
 }
 
 @[php_method: 'setHeader']
 pub fn (mut r VSlimStreamResponse) set_header(name string, value string) &VSlimStreamResponse {
 	mut headers := r.header_values()
-	headers[routingx.Header.normalize_name(name)] = value.clone()
+	headers[httpx.Header.normalize_name(name)] = value.clone()
 	r.apply_headers(headers)
 	return &r
 }

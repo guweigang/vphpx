@@ -1,6 +1,5 @@
 module routex
 
-import routingx
 import vphp
 
 pub struct ResourceRouteOptions {
@@ -61,7 +60,7 @@ pub fn ResourceRouteOptions.from_options(options vphp.PhpArray) ResourceRouteOpt
 	}
 	param := options['param']
 	if is_present_resource_option(param) {
-		out.param_name = routingx.Resource.normalize_param_name(param.to_string())
+		out.param_name = Resource.normalize_param_name(param.to_string())
 	}
 	shallow := options['shallow']
 	if is_present_resource_option(shallow) {

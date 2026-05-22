@@ -1,7 +1,5 @@
 module httpx
 
-import routingx
-
 @[php_class: 'VSlim\\VHttpd\\Response']
 @[heap]
 pub struct VSlimResponse {
@@ -31,7 +29,7 @@ pub fn (mut r VSlimResponse) construct(status int, body string, content_type str
 @[php_method]
 pub fn (r &VSlimResponse) header(name string) string {
 	headers := r.header_values()
-	return headers[routingx.Header.normalize_name(name)] or { '' }
+	return headers[Header.normalize_name(name)] or { '' }
 }
 
 @[php_method]
@@ -42,13 +40,13 @@ pub fn (r &VSlimResponse) headers() map[string]string {
 @[php_method: 'hasHeader']
 pub fn (r &VSlimResponse) has_header(name string) bool {
 	headers := r.header_values()
-	return routingx.Header.normalize_name(name) in headers
+	return Header.normalize_name(name) in headers
 }
 
 @[php_method: 'setHeader']
 pub fn (mut r VSlimResponse) set_header(name string, value string) &VSlimResponse {
 	mut headers := r.header_values()
-	headers[routingx.Header.normalize_name(name)] = value
+	headers[Header.normalize_name(name)] = value
 	r.apply_headers(headers)
 	return r
 }

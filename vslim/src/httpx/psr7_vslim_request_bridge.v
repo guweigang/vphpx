@@ -1,6 +1,5 @@
 module httpx
 
-import routingx
 import vphp
 
 pub fn VSlimPsr7ServerRequest.from_vslim_request_value(req &VSlimRequest, route_params map[string]string) vphp.PhpValue {
@@ -51,7 +50,7 @@ pub fn VSlimRequest.from_psr_server_request_object(payload vphp.PhpObject, route
 		} else if raw_path.trim_space() == '' {
 			raw_path = built_target
 		}
-		uri_query_params := routingx.Query.parse(uri.get_query())
+		uri_query_params := Query.parse(uri.get_query())
 		query_params := if uri.get_query().trim_space() != '' {
 			uri_query_params
 		} else {
@@ -60,7 +59,7 @@ pub fn VSlimRequest.from_psr_server_request_object(payload vphp.PhpObject, route
 		mut out := &VSlimRequest{
 			method:           internal.get_method()
 			raw_path:         raw_path
-			path:             routingx.Path.normalize(uri.get_path())
+			path:             Path.normalize(uri.get_path())
 			body:             psr7_stream_string(internal.body_or_empty())
 			query_string:     uri.get_query()
 			scheme:           uri.get_scheme()

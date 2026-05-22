@@ -1,7 +1,6 @@
 module httpx
 
 import net.http
-import routingx
 import vphp
 
 @[php_class: 'VSlim\\VHttpd\\Request']
@@ -63,19 +62,19 @@ pub fn (mut r VSlimRequest) set_method(method string) &VSlimRequest {
 @[php_method: 'setTarget']
 pub fn (mut r VSlimRequest) set_target(raw_path string) &VSlimRequest {
 	r.raw_path = raw_path.clone()
-	r.path, r.query_string = routingx.Path.normalize_target(raw_path)
-	r.query = routingx.Query.parse(r.query_string)
+	r.path, r.query_string = Path.normalize_target(raw_path)
+	r.query = Query.parse(r.query_string)
 	return r
 }
 
 @[php_method: 'path']
 pub fn (r &VSlimRequest) path_value() string {
-	path, _ := routingx.Path.normalize_target(r.raw_path)
+	path, _ := Path.normalize_target(r.raw_path)
 	return path
 }
 
 pub fn (r &VSlimRequest) normalized_path() string {
-	return routingx.Path.normalize(r.path_value())
+	return Path.normalize(r.path_value())
 }
 
 @[php_method: 'queryString']
@@ -295,7 +294,7 @@ pub fn (r &VSlimRequest) query_all() map[string]string {
 @[php_method]
 pub fn (r &VSlimRequest) header(name string) string {
 	headers := r.header_values()
-	return headers[routingx.Header.normalize_name(name)] or { '' }
+	return headers[Header.normalize_name(name)] or { '' }
 }
 
 @[php_method]
@@ -306,7 +305,7 @@ pub fn (r &VSlimRequest) headers() map[string]string {
 @[php_method: 'hasHeader']
 pub fn (r &VSlimRequest) has_header(name string) bool {
 	headers := r.header_values()
-	return routingx.Header.normalize_name(name) in headers
+	return Header.normalize_name(name) in headers
 }
 
 @[php_method: 'contentType']
@@ -496,12 +495,12 @@ fn (r &VSlimRequest) header_values() map[string]string {
 fn (r &VSlimRequest) query_values() map[string]string {
 	raw_query_string := r.raw_query_string()
 	if raw_query_string != r.query_string {
-		return routingx.Query.parse(raw_query_string)
+		return Query.parse(raw_query_string)
 	}
 	if r.query.len > 0 {
 		return snapshot_string_map(r.query)
 	}
-	return routingx.Query.parse(raw_query_string)
+	return Query.parse(raw_query_string)
 }
 
 fn (r &VSlimRequest) input_values() map[string]string {
@@ -668,7 +667,7 @@ pub fn (mut target VSlimRequest) sync_from_snapshot(snapshot VSlimRequest) {
 }
 
 pub fn VSlimRequest.new(method string, raw_path string, body string) &VSlimRequest {
-	path, query_string := routingx.Path.normalize_target(raw_path)
+	path, query_string := Path.normalize_target(raw_path)
 	mut req := &VSlimRequest{
 		method:       method.clone()
 		raw_path:     raw_path.clone()
@@ -677,7 +676,7 @@ pub fn VSlimRequest.new(method string, raw_path string, body string) &VSlimReque
 		body:         body.clone()
 	}
 	req.apply_defaults()
-	req.query = routingx.Query.parse(query_string)
+	req.query = Query.parse(query_string)
 	return req
 }
 
@@ -685,7 +684,7 @@ pub fn VSlimRequest.from_value(envelope vphp.PhpValue) &VSlimRequest {
 	method := envelope.string_at('method', 'GET')
 	raw_path := envelope.string_at('path', '/')
 	body := envelope.string_at('body', '')
-	path, query_string := routingx.Path.normalize_target(raw_path)
+	path, query_string := Path.normalize_target(raw_path)
 	mut req := &VSlimRequest{
 		method:       method.clone()
 		raw_path:     raw_path.clone()
@@ -702,7 +701,7 @@ pub fn VSlimRequest.from_value(envelope vphp.PhpValue) &VSlimRequest {
 	req.query = if part := envelope.value('query') {
 		snapshot_string_map(part.to_string_map())
 	} else {
-		routingx.Query.parse(query_string)
+		Query.parse(query_string)
 	}
 	req.headers = if part := envelope.value('headers') {
 		snapshot_string_map(normalize_header_map(part.to_string_map()))

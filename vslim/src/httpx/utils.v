@@ -1,7 +1,5 @@
 module httpx
 
-import routingx
-
 pub fn snapshot_string_map(input map[string]string) map[string]string {
 	mut out := map[string]string{}
 	for key, value in input {
@@ -27,7 +25,7 @@ pub fn normalize_header_map(headers map[string]string) map[string]string {
 }
 
 pub fn normalize_header_name(name string) string {
-	return routingx.Header.normalize_name(name)
+	return Header.normalize_name(name)
 }
 
 pub fn build_set_cookie_header(name string, value string, path string, domain string, max_age int, secure bool, http_only bool, same_site string) string {
@@ -71,17 +69,17 @@ pub fn build_set_cookie_header(name string, value string, path string, domain st
 }
 
 pub fn split_path_and_query(raw_path string) (string, map[string]string) {
-	path, query_str := routingx.Path.normalize_target(raw_path)
-	return path, routingx.Query.parse(query_str)
+	path, query_str := Path.normalize_target(raw_path)
+	return path, Query.parse(query_str)
 }
 
 pub fn raw_query_string(raw_path string) string {
-	_, query_string := routingx.Path.normalize_target(raw_path)
+	_, query_string := Path.normalize_target(raw_path)
 	return query_string
 }
 
 pub fn encode_query_map(query map[string]string) string {
-	return routingx.Query.encode_map(&query)
+	return Query.encode_map(&query)
 }
 
 pub fn multipart_boundary_from_content_type(content_type string) string {

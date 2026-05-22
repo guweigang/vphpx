@@ -1,4 +1,4 @@
-module routingx
+module routex
 
 pub struct Resource {}
 
