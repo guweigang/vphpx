@@ -5,7 +5,8 @@ declare(strict_types=1);
 $root = dirname(__DIR__);
 $autoload = $root . '/vendor/autoload.php';
 if (!is_file($autoload)) {
-    $autoload = $root . '/../../../vhttpd/php/package/vendor/autoload.php';
+    $vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname($root, 3) . '/vhttpd';
+    $autoload = $vhttpdRoot . '/php/package/vendor/autoload.php';
 }
 if (is_file($autoload)) {
     require_once $autoload;

@@ -13,7 +13,8 @@ if (!is_file(dirname(__DIR__) . '/examples/vendor/autoload.php')) {
 ?>
 --FILE--
 <?php
-putenv('VHTTPD_APP=' . dirname(__DIR__) . '/../../vhttpd/examples/hello-app.php');
+$vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd';
+putenv('VHTTPD_APP=' . $vhttpdRoot . '/examples/hello-app.php');
 define('VSLIM_HTTPD_WORKER_NOAUTO', true);
 $autoload = dirname(__DIR__) . '/examples/vendor/autoload.php';
 if (!is_file($autoload)) { echo "autoload_missing\n"; exit; }

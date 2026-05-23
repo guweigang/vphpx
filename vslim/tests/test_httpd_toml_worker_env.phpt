@@ -4,7 +4,8 @@ vhttpd passes [worker.env] from TOML into php-worker getenv
 <?php
 if (!extension_loaded("vslim")) print "skip";
 if (getenv("CODEX_SANDBOX_NETWORK_DISABLED") === "1") print "skip";
-if (!is_file(dirname(__DIR__, 3) . '/vhttpd/vhttpd')) print "skip";
+$vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd';
+if (!is_file($vhttpdRoot . '/vhttpd')) print "skip";
 $probe = sys_get_temp_dir() . '/vhttpd_unix_probe_' . getmypid() . '.sock';
 @unlink($probe);
 $errno = 0;
@@ -23,20 +24,20 @@ if (is_file($probe)) {
 --FILE--
 <?php
 $root = dirname(__DIR__);
-$repoRoot = dirname($root);
-$src = $repoRoot . '/vhttpd/src';
-$bin = $repoRoot . '/vhttpd/vhttpd';
+$vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname($root, 2) . '/vhttpd';
+$src = $vhttpdRoot . '/src';
+$bin = $vhttpdRoot . '/vhttpd';
 
 
 $port = 19890 + random_int(0, 60);
 $tmp = sys_get_temp_dir() . '/vhttpd_toml_env_' . getmypid() . '_' . $port;
 @mkdir($tmp, 0777, true);
 
-$pidFile = $tmp . '/vhttpd.pid';
+$pidFile = $tmp . '/vhttpdx.pid';
 $eventLog = $tmp . '/events.ndjson';
 $stdoutLog = $tmp . '/stdout.log';
 $socket = $tmp . '/worker.sock';
-$configPath = $tmp . '/vhttpd.toml';
+$configPath = $tmp . '/vhttpdx.toml';
 $appPath = $tmp . '/app.php';
 
 $appPhp = <<<'PHP'
@@ -69,7 +70,7 @@ event_log = "{$eventLog}"
 autostart = true
 read_timeout_ms = 3000
 socket = "{$socket}"
-cmd = "php -d extension={$root}/vslim.so {$root}/../../vhttpd/php/package/bin/vphp-worker --socket {$socket}"
+cmd = "php -d extension={$root}/vslim.so {$vhttpdRoot}/php/package/bin/vphp-worker --socket {$socket}"
 
 [worker.env]
 VHTTPD_APP = "{$appPath}"

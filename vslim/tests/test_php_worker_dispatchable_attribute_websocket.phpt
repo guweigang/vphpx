@@ -4,7 +4,7 @@ php-worker accepts custom WebSocket dispatchables marked with VHttpd Dispatchabl
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 3) . '/vhttpd/php/package/vendor/autoload.php';
+require_once (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/php/package/vendor/autoload.php';
 
 $fixture = sys_get_temp_dir() . '/vhttpd_dispatchable_websocket_fixture.php';
 file_put_contents($fixture, <<<'PHP'

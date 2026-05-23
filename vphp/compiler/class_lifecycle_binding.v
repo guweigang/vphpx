@@ -4,14 +4,16 @@ import compiler.repr
 
 struct ClassLifecycleGlue {
 	class_name         string
+	type_ref           string
 	lower_name         string
 	has_cleanup_method bool
 	has_free_method    bool
 }
 
-fn ClassLifecycleGlue.new(class_name string, lower_name string, r &repr.PhpClassRepr) ClassLifecycleGlue {
+fn ClassLifecycleGlue.new(class_name string, type_ref string, lower_name string, r &repr.PhpClassRepr) ClassLifecycleGlue {
 	return ClassLifecycleGlue{
 		class_name:         class_name
+		type_ref:           type_ref
 		lower_name:         lower_name
 		has_cleanup_method: r.has_cleanup_method
 		has_free_method:    r.has_free_method
@@ -28,35 +30,35 @@ fn (glue ClassLifecycleGlue) render_lines() []string {
 
 fn (glue ClassLifecycleGlue) render_new_raw_lines() []string {
 	return [
-		"@[export: '${glue.class_name}_new_raw']",
+		"@[export: '${glue.lower_name}_new_raw']",
 		'pub fn ${glue.lower_name}_new_raw() voidptr {',
-		'    return vphp.generic_new_raw[${glue.class_name}]()',
+		'    return vphp.generic_new_raw[${glue.type_ref}]()',
 		'}',
 	]
 }
 
 fn (glue ClassLifecycleGlue) render_free_raw_lines() []string {
 	return [
-		"@[export: '${glue.class_name}_free_raw']",
+		"@[export: '${glue.lower_name}_free_raw']",
 		'pub fn ${glue.lower_name}_free_raw(ptr voidptr) {',
 		'    if ptr == 0 {',
 		'        return',
 		'    }',
-		'    vphp.generic_free_raw[${glue.class_name}](ptr)',
+		'    vphp.generic_free_raw[${glue.type_ref}](ptr)',
 		'}',
 	]
 }
 
 fn (glue ClassLifecycleGlue) render_cleanup_raw_lines() []string {
 	mut out := []string{}
-	out << "@[export: '${glue.class_name}_cleanup_raw']"
+	out << "@[export: '${glue.lower_name}_cleanup_raw']"
 	out << 'pub fn ${glue.lower_name}_cleanup_raw(ptr voidptr) {'
 	out << '    if ptr == 0 {'
 	out << '        return'
 	out << '    }'
 	if glue.has_cleanup_method || glue.has_free_method {
 		out << '    unsafe {'
-		out << '        mut obj := &${glue.class_name}(ptr)'
+		out << '        mut obj := &${glue.type_ref}(ptr)'
 		if glue.has_cleanup_method {
 			out << '        obj.cleanup()'
 		}

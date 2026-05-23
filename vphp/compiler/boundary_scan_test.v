@@ -16,7 +16,7 @@ fn assert_no_boundary_regressions(path string, source string) {
 	banned := [
 		'Context.from_entry(',
 		'Context.from_raw(',
-		'ZExData.new(',
+		'ZendExecuteData.new(',
 		'PhpReturn.from_ptr(rv)',
 		'.raw_ex()',
 		'.raw_zval()',
@@ -53,8 +53,8 @@ fn assert_no_boundary_regressions(path string, source string) {
 }
 
 fn test_generated_bridge_keeps_raw_only_at_known_boundaries() {
-	source := read_repo_file('vphptest/bridge.v')
-	assert_no_boundary_regressions('vphptest/bridge.v', source)
+	source := read_repo_file('vphptest/vphp_bridge.v')
+	assert_no_boundary_regressions('vphptest/vphp_bridge.v', source)
 
 	closure_sig_count := source.count('ex &C.zend_execute_data, ret &C.zval')
 	assert closure_sig_count > 0
@@ -111,7 +111,7 @@ fn test_compiler_keeps_closure_bridge_abi_signature_centralized() {
 
 fn test_context_keeps_execute_and_return_wrappers() {
 	source := read_repo_file('vphp/context.v')
-	assert source.contains('ex  ZExData'), 'Context.ex should stay wrapped as ZExData'
+	assert source.contains('ex  ZendExecuteData'), 'Context.ex should stay wrapped as ZendExecuteData'
 	assert source.contains('ret PhpReturn'), 'Context.ret should stay wrapped as PhpReturn'
 	for line in source.split_into_lines() {
 		assert !line.contains('&C.zend_execute_data'), 'Context should not store raw execute data: ${line.trim_space()}'

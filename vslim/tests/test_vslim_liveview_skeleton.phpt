@@ -18,7 +18,7 @@ final class CounterLiveView extends VSlim\Live\View {
 
     public function render(VSlim\VHttpd\Request $req, VSlim\Live\Socket $socket): string
     {
-        $this->setApp($GLOBALS['app']);
+        $this->setContainer($GLOBALS['app']->container());
         $this->setTemplate('live_counter.html');
         return $this->html($socket);
     }
@@ -65,7 +65,7 @@ echo $socket->flashes()[0]['kind'] . '|' . $socket->flashes()[0]['message'] . PH
 echo $socket->redirectTo() . PHP_EOL;
 
 $helper = new CounterLiveView();
-$helper->setApp($app)->setTemplate('live_counter.html');
+$helper->setContainer($app->container())->setTemplate('live_counter.html');
 $socket2 = new VSlim\Live\Socket();
 $socket2->setTarget('/counter')->setRootId('counter-root')->assign('title', 'Counter')->assign('count', '99');
 $helper->patch($socket2, 'counter-root');
@@ -127,7 +127,7 @@ echo ($profileForm->valid() ? 'form-valid' : 'form-not-validated') . '|' . $prof
 
 $component = new VSlim\Live\Component();
 $component
-    ->setApp($app)
+    ->setContainer($app->container())
     ->setTemplate('live_counter.html')
     ->setId('counter-fragment')
     ->assign('title', 'Component')

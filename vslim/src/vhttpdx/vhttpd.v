@@ -1,0 +1,135 @@
+module vhttpdx
+
+import net.unix
+import time
+import vphp
+
+@[php_class: 'VSlim\\VHttpd\\Client']
+@[heap]
+pub struct VSlimVhttpdClient {
+mut:
+	socket_path             string @[php_prop: socketPath]
+	connect_timeout_seconds f64 = 2.0 @[php_prop: connectTimeoutSeconds]
+}
+
+@[php_method]
+@[php_arg_name: 'socket_path=socketPath,connect_timeout_seconds=connectTimeoutSeconds']
+pub fn (mut c VSlimVhttpdClient) construct(socket_path string, connect_timeout_seconds f64) &VSlimVhttpdClient {
+	c.socket_path = socket_path.trim_space()
+	c.connect_timeout_seconds = normalize_vhttpd_client_timeout(connect_timeout_seconds)
+	return &c
+}
+
+@[php_method: 'socketPath']
+pub fn (c &VSlimVhttpdClient) socket_path() string {
+	return c.socket_path
+}
+
+@[php_method: 'connectTimeoutSeconds']
+pub fn (c &VSlimVhttpdClient) connect_timeout_seconds() f64 {
+	return c.connect_timeout_seconds
+}
+
+@[php_method]
+pub fn (c &VSlimVhttpdClient) request(payload vphp.PhpArray) vphp.PhpArray {
+	return c.request_frames(payload, none)
+}
+
+@[php_method: 'requestFrames']
+@[php_arg_default: 'frames=[]']
+@[php_arg_optional: 'frames']
+pub fn (c &VSlimVhttpdClient) request_frames(payload vphp.PhpArray, frames ?vphp.PhpArray) vphp.PhpArray {
+	if c.socket_path.trim_space() == '' {
+		vphp.PhpException.raise_class('RuntimeException', 'socket path must not be empty', 0)
+		return vphp.PhpArray.new()
+	}
+	json_payload := payload.to_json_with_flags(256)
+	if json_payload == '' {
+		vphp.PhpException.raise_class('RuntimeException', 'json_encode_failed', 0)
+		return vphp.PhpArray.new()
+	}
+	frame_list := if frame_values := frames {
+		frame_values.to_string_list()
+	} else {
+		[]string{}
+	}
+	mut conn := unix.connect_stream(c.socket_path) or {
+		vphp.PhpException.raise_class('RuntimeException', 'connect_failed: ${err.msg()}', 0)
+		return vphp.PhpArray.new()
+	}
+	defer {
+		conn.close() or {}
+	}
+	timeout := vhttpd_client_timeout(c.connect_timeout_seconds)
+	conn.set_read_timeout(timeout)
+	conn.set_write_timeout(timeout)
+	vhttpd_client_write_frame(mut conn, json_payload) or {
+		vphp.PhpException.raise_class('RuntimeException', 'write_failed: ${err.msg()}', 0)
+		return vphp.PhpArray.new()
+	}
+	for frame in frame_list {
+		vhttpd_client_write_frame(mut conn, frame) or {
+			vphp.PhpException.raise_class('RuntimeException', 'write_failed: ${err.msg()}', 0)
+			return vphp.PhpArray.new()
+		}
+	}
+	raw_response := vhttpd_client_read_frame(mut conn) or {
+		vphp.PhpException.raise_class('RuntimeException', 'read_failed: ${err.msg()}', 0)
+		return vphp.PhpArray.new()
+	}
+	if raw_response.trim_space() == '' {
+		vphp.PhpException.raise_class('RuntimeException', 'empty_response', 0)
+		return vphp.PhpArray.new()
+	}
+	decoded := vphp.PhpJson.decode_assoc_value(raw_response)
+	defer {
+		decoded.release()
+	}
+	if !decoded.is_valid() || !decoded.is_array() {
+		vphp.PhpException.raise_class('RuntimeException', 'invalid_response_json', 0)
+		return vphp.PhpArray.new()
+	}
+	return decoded.as_array() or { vphp.PhpArray.new() }
+}
+
+fn normalize_vhttpd_client_timeout(timeout_seconds f64) f64 {
+	return if timeout_seconds > 0 { timeout_seconds } else { 2.0 }
+}
+
+fn vhttpd_client_timeout(timeout_seconds f64) time.Duration {
+	return i64(timeout_seconds * f64(time.second))
+}
+
+fn vhttpd_client_write_frame(mut conn unix.StreamConn, payload string) ! {
+	header := [
+		u8((payload.len >> 24) & 0xff),
+		u8((payload.len >> 16) & 0xff),
+		u8((payload.len >> 8) & 0xff),
+		u8(payload.len & 0xff),
+	]
+	conn.write(header)!
+	conn.write_string(payload)!
+}
+
+fn vhttpd_client_read_frame(mut conn unix.StreamConn) !string {
+	header := vhttpd_client_read_exactly(mut conn, 4)!
+	size := (int(header[0]) << 24) | (int(header[1]) << 16) | (int(header[2]) << 8) | int(header[3])
+	if size <= 0 {
+		return error('empty_response')
+	}
+	body := vhttpd_client_read_exactly(mut conn, size)!
+	return body.bytestr()
+}
+
+fn vhttpd_client_read_exactly(mut conn unix.StreamConn, len int) ![]u8 {
+	mut out := []u8{len: len}
+	mut offset := 0
+	for offset < len {
+		read_now := conn.read(mut out[offset..])!
+		if read_now <= 0 {
+			return error('unexpected EOF')
+		}
+		offset += read_now
+	}
+	return out
+}

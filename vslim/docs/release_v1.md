@@ -199,7 +199,7 @@ flowchart LR
 
 长期路线见：
 
-- [`psr-roadmap.md`](/Users/guweigang/Source/vphpx/vslim/docs/psr-roadmap.md)
+- [`psr-roadmap.md`](vslim/docs/psr-roadmap.md)
   `vslim` 后续以系统化覆盖 PSR 为目标；遇到能力边界先升级 `vphp`
 
 ## 一句话

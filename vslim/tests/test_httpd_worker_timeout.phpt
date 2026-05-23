@@ -4,14 +4,15 @@ vhttpd returns 504 and timeout headers when worker read timeout is exceeded
 <?php
 if (!extension_loaded("vslim")) print "skip";
 if (getenv("CODEX_SANDBOX_NETWORK_DISABLED") === "1") print "skip";
-if (!is_file(dirname(__DIR__, 3) . '/vhttpd/vhttpd')) print "skip";
+$vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd';
+if (!is_file($vhttpdRoot . '/vhttpd')) print "skip";
 ?>
 --FILE--
 <?php
 $root = dirname(__DIR__);
-$repoRoot = dirname($root);
-$src = $repoRoot . '/vhttpd/src';
-$bin = $repoRoot . '/vhttpd/vhttpd';
+$vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname($root, 2) . '/vhttpd';
+$src = $vhttpdRoot . '/src';
+$bin = $vhttpdRoot . '/vhttpd';
 
 function last_response_headers(): array {
     $headers = function_exists('http_get_last_response_headers')
@@ -25,11 +26,11 @@ $port = 19480 + random_int(0, 300);
 $tmp = sys_get_temp_dir() . '/vhttpd_timeout_' . getmypid() . '_' . $port;
 @mkdir($tmp, 0777, true);
 
-$pidFile = $tmp . '/vhttpd.pid';
+$pidFile = $tmp . '/vhttpdx.pid';
 $eventLog = $tmp . '/events.ndjson';
 $stdoutLog = $tmp . '/stdout.log';
 $workerSock = $tmp . '/worker.sock';
-$workerPhp = $root . '/../../vhttpd/php/package/bin/vphp-worker';
+$workerPhp = $vhttpdRoot . '/php/package/bin/vphp-worker';
 $extSo = $root . '/vslim.so';
 $slowApp = $root . '/tests/fixtures/slow_app_fixture.php';
 

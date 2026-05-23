@@ -88,7 +88,7 @@ php -d extension=./vslim.so bin/vslim about --help
 $app = (new VSlim\App())->bootstrapDir(__DIR__);
 ```
 
-如果你更喜欢显式装配，模板也提供了 [`bootstrap/app.php`](/Users/guweigang/Source/vphpx/vslim/templates/app/bootstrap/app.php)。
+如果你更喜欢显式装配，模板也提供了 [`bootstrap/app.php`](vslim/templates/app/bootstrap/app.php)。
 它返回一份 bootstrap spec，把 `config_path`、`providers`、`modules`、`middleware_setup`、`routes`、
 `not_found` / `error` 和 `boot` 集中到一处。为了让“刚复制模板、还没跑 composer install”的场景也能先工作，
 这个文件和 `bootstrap/cli.php` 还会显式 `require_once` 模板里自己的类文件。
@@ -278,7 +278,7 @@ $app->setAuthUserProvider(fn (string $id): array => ['id' => $id]);
 
 如果你想要一份更完整、可直接照着执行的版本，继续看：
 
-- [`docs/operations/README.md`](/Users/guweigang/Source/vphpx/vslim/docs/operations/README.md)
+- [`docs/operations/README.md`](vslim/docs/operations/README.md)
 
 CLI schema 当前支持这些常用字段：
 
@@ -335,6 +335,6 @@ $test->actingAs('42');
 
 如果你需要更完整的目录骨架，可以继续参考：
 
-- [`examples/skeleton_app.php`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton_app.php)
-- [`examples/skeleton/README.md`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton/README.md)
-- [`docs/app/skeleton.md`](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
+- [`examples/skeleton_app.php`](vslim/examples/skeleton_app.php)
+- [`examples/skeleton/README.md`](vslim/examples/skeleton/README.md)
+- [`docs/app/skeleton.md`](vslim/docs/app/skeleton.md)

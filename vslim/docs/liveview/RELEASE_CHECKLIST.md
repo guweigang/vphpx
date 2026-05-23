@@ -108,9 +108,9 @@ Current non-goals to keep in mind:
 
 Before release, verify these 3 docs are aligned:
 
-- [GETTING_STARTED.md](/Users/guweigang/Source/vphpx/vslim/docs/liveview/GETTING_STARTED.md)
-- [README.md](/Users/guweigang/Source/vphpx/vslim/docs/liveview/README.md)
-- [examples/README.md](/Users/guweigang/Source/vphpx/vslim/examples/README.md)
+- [GETTING_STARTED.md](vslim/docs/liveview/GETTING_STARTED.md)
+- [README.md](vslim/docs/liveview/README.md)
+- [examples/README.md](vslim/examples/README.md)
 
 They should agree on:
 
@@ -124,8 +124,8 @@ They should agree on:
 At minimum, run:
 
 ```bash
-make -C /Users/guweigang/Source/vphpx/vslim
-TEST_PHP_EXECUTABLE="$(which php)" php /Users/guweigang/Source/vphpx/vphptest/run-tests.php -q --show-all -d extension=/Users/guweigang/Source/vphpx/vslim/vslim.so /Users/guweigang/Source/vphpx/vslim/tests/test_vslim_liveview_skeleton.phpt /Users/guweigang/Source/vphpx/vslim/tests/test_vslim_liveview_demo_render.phpt /Users/guweigang/Source/vphpx/vslim/tests/test_vslim_liveview_websocket_protocol.phpt
+make -C vslim
+TEST_PHP_EXECUTABLE="$(which php)" php vphptest/run-tests.php -q --show-all -d extension=vslim/vslim.so vslim/tests/test_vslim_liveview_skeleton.phpt vslim/tests/test_vslim_liveview_demo_render.phpt vslim/tests/test_vslim_liveview_websocket_protocol.phpt
 ```
 
 If you touch dispatch or websocket routing, also re-test the `vhttpd` demo path manually.

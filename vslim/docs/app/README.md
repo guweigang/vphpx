@@ -2,12 +2,12 @@
 
 `VSlim\App` 是整个框架的入口。当前代码真理之源主要在：
 
-- [`src/app_dispatch_api.v`](/Users/guweigang/Source/vphpx/vslim/src/app_dispatch_api.v)
-- [`src/app_kernel.v`](/Users/guweigang/Source/vphpx/vslim/src/app_kernel.v)
-- [`src/app_execution_kernel.v`](/Users/guweigang/Source/vphpx/vslim/src/app_execution_kernel.v)
-- [`src/app_route_dispatch.v`](/Users/guweigang/Source/vphpx/vslim/src/app_route_dispatch.v)
-- [`src/app_psr_bridge.v`](/Users/guweigang/Source/vphpx/vslim/src/app_psr_bridge.v)
-- [`tests/test_php_route_builder.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_php_route_builder.phpt)
+- [`src/app_dispatch_api.v`](vslim/src/app_dispatch_api.v)
+- [`src/app_kernel.v`](vslim/src/app_kernel.v)
+- [`src/app_execution_kernel.v`](vslim/src/app_execution_kernel.v)
+- [`src/app_route_dispatch.v`](vslim/src/app_route_dispatch.v)
+- [`src/app_psr_bridge.v`](vslim/src/app_psr_bridge.v)
+- [`tests/test_php_route_builder.phpt`](vslim/tests/test_php_route_builder.phpt)
 
 先定一个产品边界：
 
@@ -86,8 +86,8 @@
 
 详细说明见：
 
-- [kernel.md](/Users/guweigang/Source/vphpx/vslim/docs/app/kernel.md)
-- [skeleton.md](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
+- [kernel.md](vslim/docs/app/kernel.md)
+- [skeleton.md](vslim/docs/app/skeleton.md)
 
 ## 最小示例
 
@@ -464,9 +464,9 @@ app/
 
 如果你更想走“约定优于配置”，也可以完全不写它，让 `bootstrapDir(__DIR__)` 直接按这些 convention 文件自动收骨架；对应回归见：
 
-- [`test_vslim_app_bootstrap_dir_conventions.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_app_bootstrap_dir_conventions.phpt)
-- [`vslim_bootstrap_conventions/support.php`](/Users/guweigang/Source/vphpx/vslim/tests/fixtures/vslim_bootstrap_conventions/support.php)
-- [`test_vslim_app_bootstrap_app_dirs.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_app_bootstrap_app_dirs.phpt)
+- [`test_vslim_app_bootstrap_dir_conventions.phpt`](vslim/tests/test_vslim_app_bootstrap_dir_conventions.phpt)
+- [`vslim_bootstrap_conventions/support.php`](vslim/tests/fixtures/vslim_bootstrap_conventions/support.php)
+- [`test_vslim_app_bootstrap_app_dirs.phpt`](vslim/tests/test_vslim_app_bootstrap_app_dirs.phpt)
 
 推荐职责：
 
@@ -515,20 +515,20 @@ app/
 - middleware class 的挂载继续放 `app/Http/middleware.php`
 - `app/Http/Middleware/*.php` 继续只负责预加载 class，避免把“发现文件”和“挂 middleware”混成一层
 
-现在 [`examples/demo_app.php`](/Users/guweigang/Source/vphpx/vslim/examples/demo_app.php) 已经按这套方式启动，真正的装配逻辑则收在：
+现在 [`examples/demo_app.php`](vslim/examples/demo_app.php) 已经按这套方式启动，真正的装配逻辑则收在：
 
-- [`examples/demo/bootstrap/app.php`](/Users/guweigang/Source/vphpx/vslim/examples/demo/bootstrap/app.php)
-- [`examples/demo/bootstrap/providers.php`](/Users/guweigang/Source/vphpx/vslim/examples/demo/bootstrap/providers.php)
-- [`examples/demo/routes/web.php`](/Users/guweigang/Source/vphpx/vslim/examples/demo/routes/web.php)
-- [`examples/demo/routes/api.php`](/Users/guweigang/Source/vphpx/vslim/examples/demo/routes/api.php)
-- [`examples/demo/routes/debug.php`](/Users/guweigang/Source/vphpx/vslim/examples/demo/routes/debug.php)
+- [`examples/demo/bootstrap/app.php`](vslim/examples/demo/bootstrap/app.php)
+- [`examples/demo/bootstrap/providers.php`](vslim/examples/demo/bootstrap/providers.php)
+- [`examples/demo/routes/web.php`](vslim/examples/demo/routes/web.php)
+- [`examples/demo/routes/api.php`](vslim/examples/demo/routes/api.php)
+- [`examples/demo/routes/debug.php`](vslim/examples/demo/routes/debug.php)
 
 如果你更想看纯 `app/Http` 目录风格的骨架，可以直接看：
 
-- [`examples/skeleton_app.php`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton_app.php)
-- [`examples/skeleton/app/Http/controllers.php`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton/app/Http/controllers.php)
-- [`examples/skeleton/app/Http/Controllers/HomeController.php`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton/app/Http/Controllers/HomeController.php)
-- [`examples/skeleton/app/Http/Controllers/CatalogController.php`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton/app/Http/Controllers/CatalogController.php)
+- [`examples/skeleton_app.php`](vslim/examples/skeleton_app.php)
+- [`examples/skeleton/app/Http/controllers.php`](vslim/examples/skeleton/app/Http/controllers.php)
+- [`examples/skeleton/app/Http/Controllers/HomeController.php`](vslim/examples/skeleton/app/Http/Controllers/HomeController.php)
+- [`examples/skeleton/app/Http/Controllers/CatalogController.php`](vslim/examples/skeleton/app/Http/Controllers/CatalogController.php)
 
 ## 4. phase middleware 与 middleware
 
@@ -753,6 +753,6 @@ print_r($app->allowedMethodsFor('/users/7'));
 
 对应详细文档：
 
-- [`../container/container.md`](/Users/guweigang/Source/vphpx/vslim/docs/container/container.md)
-- [`../config/config.md`](/Users/guweigang/Source/vphpx/vslim/docs/config/config.md)
-- [`../view/view.md`](/Users/guweigang/Source/vphpx/vslim/docs/view/view.md)
+- [`../container/container.md`](vslim/docs/container/container.md)
+- [`../config/config.md`](vslim/docs/config/config.md)
+- [`../view/view.md`](vslim/docs/view/view.md)

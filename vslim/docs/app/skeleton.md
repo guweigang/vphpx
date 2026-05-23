@@ -6,11 +6,11 @@
 
 它不解释底层 kernel 执行细节，那部分看：
 
-- [kernel.md](/Users/guweigang/Source/vphpx/vslim/docs/app/kernel.md)
+- [kernel.md](vslim/docs/app/kernel.md)
 
 也不重复所有 builder API 说明，那部分看：
 
-- [README.md](/Users/guweigang/Source/vphpx/vslim/docs/app/README.md)
+- [README.md](vslim/docs/app/README.md)
 
 ## 推荐入口
 
@@ -166,9 +166,9 @@ public/
 
 当前最完整的参考例子就是：
 
-- [`examples/skeleton_app.php`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton_app.php)
-- [`examples/skeleton/README.md`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton/README.md)
-- [`templates/app/README.md`](/Users/guweigang/Source/vphpx/vslim/templates/app/README.md)
+- [`examples/skeleton_app.php`](vslim/examples/skeleton_app.php)
+- [`examples/skeleton/README.md`](vslim/examples/skeleton/README.md)
+- [`templates/app/README.md`](vslim/templates/app/README.md)
 
 这个例子已经覆盖：
 
@@ -182,7 +182,7 @@ public/
 
 如果你只想要一个更短的起点，而不是完整例子，直接从：
 
-- [`templates/app/README.md`](/Users/guweigang/Source/vphpx/vslim/templates/app/README.md)
+- [`templates/app/README.md`](vslim/templates/app/README.md)
 
 开始就够了。
 

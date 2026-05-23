@@ -16,12 +16,12 @@
 
 文件：
 
-- [`src/app_dispatch_api.v`](/Users/guweigang/Source/vphpx/vslim/src/app_dispatch_api.v)
-- [`src/app_assembly.v`](/Users/guweigang/Source/vphpx/vslim/src/app_assembly.v)
-- [`src/app_pipeline.v`](/Users/guweigang/Source/vphpx/vslim/src/app_pipeline.v)
-- [`src/app_bootstrap.v`](/Users/guweigang/Source/vphpx/vslim/src/app_bootstrap.v)
-- [`src/app_modules.v`](/Users/guweigang/Source/vphpx/vslim/src/app_modules.v)
-- [`src/app_services.v`](/Users/guweigang/Source/vphpx/vslim/src/app_services.v)
+- [`src/app_dispatch_api.v`](vslim/src/app_dispatch_api.v)
+- [`src/app_assembly.v`](vslim/src/app_assembly.v)
+- [`src/app_pipeline.v`](vslim/src/app_pipeline.v)
+- [`src/app_bootstrap.v`](vslim/src/app_bootstrap.v)
+- [`src/app_modules.v`](vslim/src/app_modules.v)
+- [`src/app_services.v`](vslim/src/app_services.v)
 
 这一层对 PHP userland 暴露：
 
@@ -37,10 +37,10 @@
 
 文件：
 
-- [`src/app_kernel.v`](/Users/guweigang/Source/vphpx/vslim/src/app_kernel.v)
-- [`src/app_execution_kernel.v`](/Users/guweigang/Source/vphpx/vslim/src/app_execution_kernel.v)
-- [`src/app_terminal.v`](/Users/guweigang/Source/vphpx/vslim/src/app_terminal.v)
-- [`src/app_middleware_runtime.v`](/Users/guweigang/Source/vphpx/vslim/src/app_middleware_runtime.v)
+- [`src/app_kernel.v`](vslim/src/app_kernel.v)
+- [`src/app_execution_kernel.v`](vslim/src/app_execution_kernel.v)
+- [`src/app_terminal.v`](vslim/src/app_terminal.v)
+- [`src/app_middleware_runtime.v`](vslim/src/app_middleware_runtime.v)
 
 这里处理的是一次请求的通用骨架：
 
@@ -57,11 +57,11 @@
 
 文件：
 
-- [`src/route.v`](/Users/guweigang/Source/vphpx/vslim/src/route.v)
-- [`src/route_runtime.v`](/Users/guweigang/Source/vphpx/vslim/src/route_runtime.v)
-- [`src/route_builder.v`](/Users/guweigang/Source/vphpx/vslim/src/route_builder.v)
-- [`src/route_resource.v`](/Users/guweigang/Source/vphpx/vslim/src/route_resource.v)
-- [`src/app_route_dispatch.v`](/Users/guweigang/Source/vphpx/vslim/src/app_route_dispatch.v)
+- [`src/route.v`](vslim/src/route.v)
+- [`src/route_runtime.v`](vslim/src/route_runtime.v)
+- [`src/route_builder.v`](vslim/src/route_builder.v)
+- [`src/route_resource.v`](vslim/src/route_resource.v)
+- [`src/app_route_dispatch.v`](vslim/src/app_route_dispatch.v)
 
 这里处理：
 
@@ -75,8 +75,8 @@
 
 文件：
 
-- [`src/app_psr_bridge.v`](/Users/guweigang/Source/vphpx/vslim/src/app_psr_bridge.v)
-- [`src/psr_http.v`](/Users/guweigang/Source/vphpx/vslim/src/psr_http.v)
+- [`src/app_psr_bridge.v`](vslim/src/app_psr_bridge.v)
+- [`src/psr_http.v`](vslim/src/psr_http.v)
 
 这里处理：
 

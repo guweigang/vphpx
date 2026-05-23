@@ -101,6 +101,6 @@ $response = $responseFactory
 
 ## Relationship To Other Docs
 
-- 如果你关注长期方向，看 [../psr-roadmap.md](/Users/guweigang/Source/vphpx/vslim/docs/psr-roadmap.md)
-- 如果你关注现有 bridge，看 [../psr7_bridge.md](/Users/guweigang/Source/vphpx/vslim/docs/psr7_bridge.md)
-- 如果你关注 worker / envelope 集成，看 [../integration/psr7.md](/Users/guweigang/Source/vphpx/vslim/docs/integration/psr7.md)
+- 如果你关注长期方向，看 [../psr-roadmap.md](vslim/docs/psr-roadmap.md)
+- 如果你关注现有 bridge，看 [../psr7_bridge.md](vslim/docs/psr7_bridge.md)
+- 如果你关注 worker / envelope 集成，看 [../integration/psr7.md](vslim/docs/integration/psr7.md)

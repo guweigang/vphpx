@@ -21,9 +21,9 @@ VSlim 本身不是完整 PSR-7 实现，但当前扩展已经内建了一个桥�
 
 真理之源：
 
-- [`vslim/src/psr7_adapter_runtime.v`](/Users/guweigang/Source/vphpx/vslim/src/psr7_adapter_runtime.v)
-- [`tests/test_vslim_psr7_adapter.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_psr7_adapter.phpt)
-- [`tests/test_psr7_worker_app.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_psr7_worker_app.phpt)
+- [`vslim/src/psr7_adapter_runtime.v`](vslim/src/psr7_adapter_runtime.v)
+- [`tests/test_vslim_psr7_adapter.phpt`](vslim/tests/test_vslim_psr7_adapter.phpt)
+- [`tests/test_psr7_worker_app.phpt`](vslim/tests/test_psr7_worker_app.phpt)
 
 ## 类名
 

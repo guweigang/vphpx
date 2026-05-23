@@ -8,7 +8,7 @@ if (!extension_loaded("vslim")) print "skip";
 <?php
 require_once __DIR__ . '/php_worker_package_bootstrap.php';
 
-$fixture = dirname(__DIR__, 3) . '/vhttpd/examples/mcp-app.php';
+$fixture = (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/examples/mcp-app.php';
 $server = new VHttpd\PhpWorker\Server('/tmp/vhttpd_mcp_test.sock', $fixture);
 
 $initialize = $server->dispatchRequest([

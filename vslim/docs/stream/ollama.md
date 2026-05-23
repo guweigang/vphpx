@@ -99,4 +99,4 @@ $app->map(['GET', 'POST'], '/ollama/sse', function (VSlim\VHttpd\Request $req) {
 
 如果你想看 `Factory` 的纯 text / SSE 用法，再看：
 
-- [`factory.md`](/Users/guweigang/Source/vphpx/vslim/docs/stream/factory.md)
+- [`factory.md`](vslim/docs/stream/factory.md)

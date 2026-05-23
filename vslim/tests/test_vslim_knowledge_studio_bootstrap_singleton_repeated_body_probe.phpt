@@ -6,7 +6,8 @@ VSlim knowledge studio bootstrap survives repeated full body probe loops
 <?php
 putenv('STUDIO_DATA_SOURCE=demo');
 
-require '/Users/guweigang/Source/vphpx/knowledge-studio/bootstrap/http.php';
+$knowledgeStudioRoot = dirname(__DIR__, 2) . '/knowledge-studio';
+require $knowledgeStudioRoot . '/bootstrap/http.php';
 
 $checks = [
     '/console' => 'Acme Research',

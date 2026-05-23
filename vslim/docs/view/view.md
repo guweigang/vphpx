@@ -11,23 +11,23 @@
 
 当前实现分布在这些文件中：
 
-- [`src/view.v`](/Users/guweigang/Source/vphpx/vslim/src/view.v)
-- [`src/view_ast.v`](/Users/guweigang/Source/vphpx/vslim/src/view_ast.v)
-- [`src/view_cache_parse.v`](/Users/guweigang/Source/vphpx/vslim/src/view_cache_parse.v)
-- [`src/view_render.v`](/Users/guweigang/Source/vphpx/vslim/src/view_render.v)
-- [`src/view_condition.v`](/Users/guweigang/Source/vphpx/vslim/src/view_condition.v)
-- [`src/view_expr.v`](/Users/guweigang/Source/vphpx/vslim/src/view_expr.v)
-- [`src/view_runtime.v`](/Users/guweigang/Source/vphpx/vslim/src/view_runtime.v)
-- [`src/view_data_reduce.v`](/Users/guweigang/Source/vphpx/vslim/src/view_data_reduce.v)
+- [`src/view.v`](vslim/src/view.v)
+- [`src/view_ast.v`](vslim/src/view_ast.v)
+- [`src/view_cache_parse.v`](vslim/src/view_cache_parse.v)
+- [`src/view_render.v`](vslim/src/view_render.v)
+- [`src/view_condition.v`](vslim/src/view_condition.v)
+- [`src/view_expr.v`](vslim/src/view_expr.v)
+- [`src/view_runtime.v`](vslim/src/view_runtime.v)
+- [`src/view_data_reduce.v`](vslim/src/view_data_reduce.v)
 
 主要回归测试：
 
-- [`tests/test_vslim_mvc_view_controller.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_mvc_view_controller.phpt)
-- [`tests/test_vslim_view_layout_include.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_view_layout_include.phpt)
-- [`tests/test_vslim_view_control_flow.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_view_control_flow.phpt)
-- [`tests/test_vslim_view_helpers.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_view_helpers.phpt)
-- [`tests/test_vslim_view_include_params.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_view_include_params.phpt)
-- [`tests/test_vslim_view_debug_tokens.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_view_debug_tokens.phpt)
+- [`tests/test_vslim_mvc_view_controller.phpt`](vslim/tests/test_vslim_mvc_view_controller.phpt)
+- [`tests/test_vslim_view_layout_include.phpt`](vslim/tests/test_vslim_view_layout_include.phpt)
+- [`tests/test_vslim_view_control_flow.phpt`](vslim/tests/test_vslim_view_control_flow.phpt)
+- [`tests/test_vslim_view_helpers.phpt`](vslim/tests/test_vslim_view_helpers.phpt)
+- [`tests/test_vslim_view_include_params.phpt`](vslim/tests/test_vslim_view_include_params.phpt)
+- [`tests/test_vslim_view_debug_tokens.phpt`](vslim/tests/test_vslim_view_debug_tokens.phpt)
 
 ## 语法分层
 
@@ -451,7 +451,7 @@ layout：
 
 这类模板在当前 View 里是正式支持的，相关回归可以参考：
 
-- [`tests/test_vslim_view_control_flow.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_view_control_flow.phpt)
+- [`tests/test_vslim_view_control_flow.phpt`](vslim/tests/test_vslim_view_control_flow.phpt)
 
 ## Debug
 

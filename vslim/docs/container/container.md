@@ -4,10 +4,10 @@
 
 真理之源：
 
-- [`src/container.v`](/Users/guweigang/Source/vphpx/vslim/src/container.v)
-- [`src/bridge.v`](/Users/guweigang/Source/vphpx/vslim/src/bridge.v)
-- [`tests/test_vslim_container_psr11_ext.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_container_psr11_ext.phpt)
-- [`tests/test_vslim_container_route_handler.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_container_route_handler.phpt)
+- [`src/container.v`](vslim/src/container.v)
+- [`src/bridge.v`](vslim/src/bridge.v)
+- [`tests/test_vslim_container_psr11_ext.phpt`](vslim/tests/test_vslim_container_psr11_ext.phpt)
+- [`tests/test_vslim_container_route_handler.phpt`](vslim/tests/test_vslim_container_route_handler.phpt)
 
 ## 依赖
 
@@ -17,9 +17,9 @@
 `VSlim\Container` 与相关异常类会在首次实例化 / 抛出时自动完成运行时晚绑定。
 真理之源见：
 
-- [`src/container.v`](/Users/guweigang/Source/vphpx/vslim/src/container.v)
-- [`src/bridge.v`](/Users/guweigang/Source/vphpx/vslim/src/bridge.v)
-- [`tests/test_vslim_container_psr11_ext.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_container_psr11_ext.phpt)
+- [`src/container.v`](vslim/src/container.v)
+- [`src/bridge.v`](vslim/src/bridge.v)
+- [`tests/test_vslim_container_psr11_ext.phpt`](vslim/tests/test_vslim_container_psr11_ext.phpt)
 
 实现方式：
 

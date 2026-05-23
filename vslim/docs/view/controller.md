@@ -4,9 +4,9 @@
 
 真理之源：
 
-- [`src/mvc.v`](/Users/guweigang/Source/vphpx/vslim/src/mvc.v)
-- [`tests/test_vslim_mvc_view_controller.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_mvc_view_controller.phpt)
-- [`tests/test_vslim_view_layout_include.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_view_layout_include.phpt)
+- [`src/mvc.v`](vslim/src/mvc.v)
+- [`tests/test_vslim_mvc_view_controller.phpt`](vslim/tests/test_vslim_mvc_view_controller.phpt)
+- [`tests/test_vslim_view_layout_include.phpt`](vslim/tests/test_vslim_view_layout_include.phpt)
 
 ## 初始化
 

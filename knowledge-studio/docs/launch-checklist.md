@@ -92,7 +92,7 @@
 发布前至少跑下面三条：
 
 ```bash
-cd /Users/guweigang/Source/vphpx/knowledge-studio
+cd knowledge-studio
 php -d extension=../vslim/vslim.so bin/vslim db:migrate
 php -d extension=../vslim/vslim.so bin/vslim studio:seed-demo
 php -d extension=../vslim/vslim.so tests/console_db_write_smoke.php

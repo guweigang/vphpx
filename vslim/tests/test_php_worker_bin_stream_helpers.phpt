@@ -28,7 +28,8 @@ if (!is_file($autoload)) { echo "autoload_missing\n"; exit; }
 require_once $autoload;
 
 $root = dirname(__DIR__);
-$workerBin = $root . '/../../vhttpd/php/package/bin/vphp-worker';
+$vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname($root, 2) . '/vhttpd';
+$workerBin = $vhttpdRoot . '/php/package/bin/vphp-worker';
 $extSo = $root . '/vslim.so';
 $app = $root . '/tests/fixtures/worker_helper_stream_app_fixture.php';
 $sock = sys_get_temp_dir() . '/vslim_php_worker_bin_stream_' . getmypid() . '.sock';

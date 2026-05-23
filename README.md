@@ -161,6 +161,24 @@ Key doc:
 
 - [vslim/README.md](vslim/README.md)
 
+## Minimum Build Layout
+
+After the repository split, `vphpx` no longer vendors `vhttpd`. The minimum layout for the full VSlim build and runtime integration tests is:
+
+```text
+<workspace>/
+  vphpx/
+  vhttpd/
+```
+
+`vslim/Makefile` resolves `VHTTPD_ROOT` to `../vhttpd` from the `vphpx` repository by default. If your checkout uses a different layout, pass it explicitly:
+
+```bash
+make -C vslim runtime-check VHTTPD_ROOT=/path/to/vhttpd
+```
+
+The core `vphp` and `vphptest` build/test flows do not need `vhttpd`; only VSlim runtime/worker integration paths do.
+
 ## Who This Is For
 
 This repo is a good fit if you want to:
@@ -366,6 +384,24 @@ php -d extension=./hello_vphp.so -r 'echo hello_from_v("PHP"), PHP_EOL;'
 入口文档：
 
 - [vslim/README.md](vslim/README.md)
+
+## 最小可构建布局
+
+拆分仓库之后，`vphpx` 不再内置 `vhttpd`。如果要完整构建 VSlim 并运行 runtime / worker 集成测试，最小目录关系是：
+
+```text
+<workspace>/
+  vphpx/
+  vhttpd/
+```
+
+`vslim/Makefile` 默认会把 `VHTTPD_ROOT` 解析到 `vphpx` 同级的 `vhttpd`。如果你的 checkout 不是这个布局，可以显式指定：
+
+```bash
+make -C vslim runtime-check VHTTPD_ROOT=/path/to/vhttpd
+```
+
+只跑 `vphp` / `vphptest` 的核心构建和测试不需要 `vhttpd`；依赖它的是 VSlim runtime / worker 集成链路。
 
 ## 适合谁
 

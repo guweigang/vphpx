@@ -4,7 +4,7 @@ VSlim app template can serve requests through vhttpd and php-worker
 <?php
 if (!extension_loaded("vslim")) print "skip";
 if (getenv("CODEX_SANDBOX_NETWORK_DISABLED") === "1") print "skip";
-if (!is_file(dirname(__DIR__, 3) . '/vhttpd/vhttpd')) print "skip";
+if (!is_file((getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/vhttpd')) print "skip";
 $probe = sys_get_temp_dir() . '/vhttpd_unix_probe_' . getmypid() . '.sock';
 @unlink($probe);
 $errno = 0;
@@ -62,20 +62,46 @@ function response_header(array $headers, string $name): string {
 
 $root = dirname(__DIR__);
 $repoRoot = dirname($root);
-$bin = $repoRoot . '/vhttpd/vhttpd';
+$vhttpdRoot = getenv('VHTTPD_ROOT') ?: (dirname($repoRoot) . '/vhttpd');
+$bin = $vhttpdRoot . '/vhttpd';
 $templateRoot = $root . '/templates/app';
-$workerPhp = $repoRoot . '/vhttpd/php/package/bin/vphp-worker';
+$workerPhp = $vhttpdRoot . '/php/package/bin/vphp-worker';
 
 $port = free_port();
 $tmp = sys_get_temp_dir() . '/vslim_template_vhttpd_' . getmypid() . '_' . $port;
 @mkdir($tmp, 0777, true);
 
-$pidFile = $tmp . '/vhttpd.pid';
+$pidFile = $tmp . '/vhttpdx.pid';
 $eventLog = $tmp . '/events.ndjson';
 $stdoutLog = $tmp . '/stdout.log';
 $socket = $tmp . '/worker.sock';
-$configPath = $tmp . '/vhttpd.toml';
+$configPath = $tmp . '/vhttpdx.toml';
 $workerApp = $templateRoot . '/public/worker.php';
+
+$prependFile = $tmp . '/psr_mock.php';
+$psrMockCode = <<<'PHP'
+<?php
+namespace Psr\Http\Message {
+    interface RequestInterface {}
+    interface ServerRequestInterface extends RequestInterface {
+        public function getAttribute(string $name, $default = null);
+        public function withAttribute(string $name, $value);
+    }
+    interface ResponseInterface {}
+}
+namespace Psr\Http\Server {
+    interface RequestHandlerInterface {
+        public function handle(\Psr\Http\Message\ServerRequestInterface $request): \Psr\Http\Message\ResponseInterface;
+    }
+    interface MiddlewareInterface {
+        public function process(
+            \Psr\Http\Message\ServerRequestInterface $request,
+            RequestHandlerInterface $handler
+        ): \Psr\Http\Message\ResponseInterface;
+    }
+}
+PHP;
+file_put_contents($prependFile, $psrMockCode);
 
 $toml = <<<TOML
 [server]
@@ -86,14 +112,16 @@ port = {$port}
 pid_file = "{$pidFile}"
 event_log = "{$eventLog}"
 
+[php]
+worker_entry = "{$workerPhp}"
+app_entry = "{$workerApp}"
+extensions = ["{$root}/vslim.so"]
+args = ["-d", "auto_prepend_file={$prependFile}"]
+
 [worker]
 autostart = true
 read_timeout_ms = 3000
 socket = "{$socket}"
-cmd = "php -d extension={$root}/vslim.so {$workerPhp} --socket {$socket}"
-
-[worker.env]
-VHTTPD_APP = "{$workerApp}"
 TOML;
 file_put_contents($configPath, $toml);
 

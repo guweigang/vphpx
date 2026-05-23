@@ -17,8 +17,8 @@
 启动示例：
 
 ```bash
-cd /Users/guweigang/Source/vhttpd
-./vhttpd --config /Users/guweigang/Source/vphpx/vslim/examples/mcp.toml
+cd ../vhttpd
+./vhttpd --config vslim/examples/mcp.toml
 ```
 
 默认端口：

@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+VHTTPD_ROOT="${VHTTPD_ROOT:-$(cd "${ROOT}/../.." && pwd)/vhttpd}"
 SMOKE="${ROOT}/tests/psr7_matrix_smoke.php"
 COMPOSER_BIN="${COMPOSER_BIN:-composer}"
 
@@ -14,7 +15,7 @@ if ! command -v "${COMPOSER_BIN}" >/dev/null 2>&1; then
   exit 2
 fi
 
-WORKDIR="${PSR_MATRIX_WORKDIR:-${ROOT}/../../vhttpd/examples/.runtime/psr-matrix}"
+WORKDIR="${PSR_MATRIX_WORKDIR:-${VHTTPD_ROOT}/examples/.runtime/psr-matrix}"
 rm -rf "${WORKDIR}"
 mkdir -p "${WORKDIR}"
 

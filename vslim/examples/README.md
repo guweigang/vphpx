@@ -3,8 +3,8 @@
 如果你想直接看一套更接近应用目录的骨架入口，最短路径是：
 
 1. 先跑 `skeleton_app.php --self-test`
-2. 再读 [`examples/skeleton/README.md`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton/README.md) 的扩展点速查
-3. 如果目标是复制一个项目起点，继续读 [`templates/app/README.md`](/Users/guweigang/Source/vphpx/vslim/templates/app/README.md)
+2. 再读 [`examples/skeleton/README.md`](vslim/examples/skeleton/README.md) 的扩展点速查
+3. 如果目标是复制一个项目起点，继续读 [`templates/app/README.md`](vslim/templates/app/README.md)
 
 ```bash
 php -d extension=./vslim.so vslim/examples/skeleton_app.php --self-test
@@ -21,15 +21,15 @@ php -d extension=./vslim.so vslim/examples/skeleton_app.php --self-test
 相关入口按用途分三层看最省时间：
 
 - 示例骨架说明：
-  [`examples/skeleton/README.md`](/Users/guweigang/Source/vphpx/vslim/examples/skeleton/README.md)
+  [`examples/skeleton/README.md`](vslim/examples/skeleton/README.md)
 - 模板项目起点：
-  [`templates/app/README.md`](/Users/guweigang/Source/vphpx/vslim/templates/app/README.md)
+  [`templates/app/README.md`](vslim/templates/app/README.md)
 - 骨架设计说明：
-  [`docs/app/skeleton.md`](/Users/guweigang/Source/vphpx/vslim/docs/app/skeleton.md)
+  [`docs/app/skeleton.md`](vslim/docs/app/skeleton.md)
 
 如果你不是想看示例，而是想直接复制一个最小项目起点，就不用先读这一页，直接去模板 README 即可。
 模板现在已经把 `php -S` 的 `public/index.php` 和 `vhttpd/php-worker` 的 `public/worker.php` 都配好；
-如果你要看“同一个 app 在两种 transport 下怎么跑”，优先读 [`templates/app/README.md`](/Users/guweigang/Source/vphpx/vslim/templates/app/README.md)。
+如果你要看“同一个 app 在两种 transport 下怎么跑”，优先读 [`templates/app/README.md`](vslim/templates/app/README.md)。
 
 `demo_app.php` 现在不再自己堆所有定义，而是作为一个薄入口去加载：
 
@@ -85,7 +85,7 @@ $app = (new VSlim\App())->bootstrapDir(__DIR__ . '/demo');
 
 ## VSlim LiveView Demo
 
-如果想先看最短入门路径，可以先读 [docs/liveview/GETTING_STARTED.md](/Users/guweigang/Source/vphpx/vslim/docs/liveview/GETTING_STARTED.md)。
+如果想先看最短入门路径，可以先读 [docs/liveview/GETTING_STARTED.md](vslim/docs/liveview/GETTING_STARTED.md)。
 
 文件：
 
@@ -122,15 +122,15 @@ $app = (new VSlim\App())->bootstrapDir(__DIR__ . '/demo');
 如果用 `vhttpd + php-worker` 跑：
 
 ```bash
-cd /Users/guweigang/Source/vhttpd
-./vhttpd --config /Users/guweigang/Source/vphpx/vslim/examples/liveview.toml
+cd ../vhttpd
+./vhttpd --config vslim/examples/liveview.toml
 ```
 
 如果想顺手把 `vhttpd` 和 `php-worker` 的 stdout/stderr 一起落盘，建议这样启动：
 
 ```bash
-cd /Users/guweigang/Source/vhttpd
-./vhttpd --config /Users/guweigang/Source/vphpx/vslim/examples/liveview.toml >> /tmp/vhttpd_vslim_liveview.stdout.log 2>&1
+cd ../vhttpd
+./vhttpd --config vslim/examples/liveview.toml >> /tmp/vhttpd_vslim_liveview.stdout.log 2>&1
 ```
 
 LiveView demo 入口本身也会往 `php://stderr` 打关键日志，同时还会旁路写入：
@@ -161,7 +161,7 @@ curl --noproxy '*' -s http://127.0.0.1:19892/meta
 如果只想快速用 PHP 内建 server 看 HTTP 首屏入口：
 
 ```bash
-php -d extension=/Users/guweigang/Source/vphpx/vslim/vslim.so -S 127.0.0.1:8092 /Users/guweigang/Source/vphpx/vslim/examples/liveview_app.php
+php -d extension=vslim/vslim.so -S 127.0.0.1:8092 vslim/examples/liveview_app.php
 ```
 
 页面地址：
@@ -175,29 +175,29 @@ http://127.0.0.1:8092/
 脚本：`k6_demo.js`
 
 ```bash
-k6 run /Users/guweigang/Source/vphpx/vslim/examples/k6_demo.js
+k6 run vslim/examples/k6_demo.js
 ```
 
 可选环境变量：
 
 ```bash
-BASE_URL=http://127.0.0.1:19888 API_TOKEN=demo-token k6 run /Users/guweigang/Source/vphpx/vslim/examples/k6_demo.js
+BASE_URL=http://127.0.0.1:19888 API_TOKEN=demo-token k6 run vslim/examples/k6_demo.js
 ```
 
 单路由压测（定位内存增长）：
 
 ```bash
 # 仅 hello
-BASE_URL=http://127.0.0.1:19888 ROUTE_MODE=hello k6 run /Users/guweigang/Source/vphpx/vslim/examples/k6_demo.js
+BASE_URL=http://127.0.0.1:19888 ROUTE_MODE=hello k6 run vslim/examples/k6_demo.js
 
 # 仅 api
-BASE_URL=http://127.0.0.1:19888 API_TOKEN=demo-token ROUTE_MODE=api k6 run /Users/guweigang/Source/vphpx/vslim/examples/k6_demo.js
+BASE_URL=http://127.0.0.1:19888 API_TOKEN=demo-token ROUTE_MODE=api k6 run vslim/examples/k6_demo.js
 
 # 仅 forms
-BASE_URL=http://127.0.0.1:19888 ROUTE_MODE=forms k6 run /Users/guweigang/Source/vphpx/vslim/examples/k6_demo.js
+BASE_URL=http://127.0.0.1:19888 ROUTE_MODE=forms k6 run vslim/examples/k6_demo.js
 
 # 仅 health
-BASE_URL=http://127.0.0.1:19888 ROUTE_MODE=health k6 run /Users/guweigang/Source/vphpx/vslim/examples/k6_demo.js
+BASE_URL=http://127.0.0.1:19888 ROUTE_MODE=health k6 run vslim/examples/k6_demo.js
 ```
 
 ## 性能基线（本地实测）
@@ -226,7 +226,7 @@ BASE_URL=http://127.0.0.1:19888 ROUTE_MODE=health k6 run /Users/guweigang/Source
 `vslim-demo.toml` 已启用：
 
 - `prefix = /assets`
-- `root = /Users/guweigang/Source/vphpx/vslim/examples/public`
+- `root = vslim/examples/public`
 
 快速验证：
 
@@ -264,20 +264,20 @@ php -d extension=./vslim.so vslim/examples/lianhanghao_query.php city 深圳 10
 运行前先确保 `vhttpd` 已按 `vslim-demo.toml` 启动并监听 `127.0.0.1:19888`。
 
 ```bash
-/Users/guweigang/Source/vphpx/vslim/examples/verify_demo.sh
+vslim/examples/verify_demo.sh
 ```
 
 或指定目标地址：
 
 ```bash
-BASE_URL=http://127.0.0.1:19888 /Users/guweigang/Source/vphpx/vslim/examples/verify_demo.sh
+BASE_URL=http://127.0.0.1:19888 vslim/examples/verify_demo.sh
 ```
 
 也可以使用 `vslim/Makefile` 的快捷目标：
 
 ```bash
-make -C /Users/guweigang/Source/vphpx/vslim demo-self-test
-make -C /Users/guweigang/Source/vphpx/vslim demo-verify
+make -C vslim demo-self-test
+make -C vslim demo-verify
 ```
 
 ## Config 用法示例
@@ -291,7 +291,7 @@ make -C /Users/guweigang/Source/vphpx/vslim demo-verify
 运行：
 
 ```bash
-php -d extension=/Users/guweigang/Source/vphpx/vslim/vslim.so /Users/guweigang/Source/vphpx/vslim/examples/config_usage.php
+php -d extension=vslim/vslim.so vslim/examples/config_usage.php
 ```
 
 ## VSlim Ollama Stream Demo
@@ -316,8 +316,8 @@ php -d extension=/Users/guweigang/Source/vphpx/vslim/vslim.so /Users/guweigang/S
 启动：
 
 ```bash
-cd /Users/guweigang/Source/vhttpd
-./vhttpd --config /Users/guweigang/Source/vphpx/vslim/examples/ollama.toml
+cd ../vhttpd
+./vhttpd --config vslim/examples/ollama.toml
 ```
 
 打开最小前端页面：
@@ -369,8 +369,8 @@ curl --noproxy '*' -N "http://127.0.0.1:19889/ollama/sse?prompt=Explain%20VSlim%
 启动：
 
 ```bash
-cd /Users/guweigang/Source/vhttpd
-./vhttpd --config /Users/guweigang/Source/vphpx/vslim/examples/stream_factory.toml
+cd ../vhttpd
+./vhttpd --config vslim/examples/stream_factory.toml
 ```
 
 打开页面：
@@ -383,8 +383,8 @@ http://127.0.0.1:19890/
 
 文件：
 
-- `/Users/guweigang/Source/vhttpd/examples/stream-dispatch-app.php`
-- `/Users/guweigang/Source/vhttpd/examples/config/stream-dispatch.toml`
+- `../vhttpd/examples/stream-dispatch-app.php`
+- `../vhttpd/examples/config/stream-dispatch.toml`
 
 这个示例用来验证 Stream phase 2：
 
@@ -397,8 +397,8 @@ http://127.0.0.1:19890/
 启动：
 
 ```bash
-cd /Users/guweigang/Source/vhttpd
-./vhttpd --config /Users/guweigang/Source/vhttpd/examples/config/stream-dispatch.toml
+cd ../vhttpd
+./vhttpd --config ../vhttpd/examples/config/stream-dispatch.toml
 ```
 
 验证：
@@ -432,8 +432,8 @@ curl --noproxy '*' -N http://127.0.0.1:19893/events/sse
 启动：
 
 ```bash
-cd /Users/guweigang/Source/vhttpd
-./vhttpd --config /Users/guweigang/Source/vphpx/vslim/examples/websocket.toml
+cd ../vhttpd
+./vhttpd --config vslim/examples/websocket.toml
 ```
 
 打开页面：
@@ -445,8 +445,8 @@ http://127.0.0.1:19891/
 如果你要试验 phase 2 的 websocket message-dispatch 模式，用这份配置：
 
 ```bash
-cd /Users/guweigang/Source/vhttpd
-./vhttpd --config /Users/guweigang/Source/vphpx/vslim/examples/websocket_dispatch.toml
+cd ../vhttpd
+./vhttpd --config vslim/examples/websocket_dispatch.toml
 ```
 
 打开页面：
@@ -477,8 +477,8 @@ http://127.0.0.1:19892/
 启动：
 
 ```bash
-cd /Users/guweigang/Source/vhttpd
-./vhttpd --config /Users/guweigang/Source/vphpx/vslim/examples/mcp.toml
+cd ../vhttpd
+./vhttpd --config vslim/examples/mcp.toml
 ```
 
 验证：
@@ -496,7 +496,7 @@ curl --noproxy '*' -s \
 
 更完整的手工验证步骤见：
 
-- [`/Users/guweigang/Source/vphpx/vslim/docs/mcp/runbook.md`](/Users/guweigang/Source/vphpx/vslim/docs/mcp/runbook.md)
+- [`vslim/docs/mcp/runbook.md`](vslim/docs/mcp/runbook.md)
 
 POST JSON：
 
@@ -510,11 +510,11 @@ curl --noproxy '*' -N \
 离线调试或测试时，可指定 fixture，避免真实访问 Ollama：
 
 ```bash
-cp /Users/guweigang/Source/vphpx/vslim/examples/ollama.toml /tmp/vslim-ollama-fixture.toml
+cp vslim/examples/ollama.toml /tmp/vslim-ollama-fixture.toml
 # 把 /tmp/vslim-ollama-fixture.toml 里的 worker.env.OLLAMA_STREAM_FIXTURE 改成：
-# /Users/guweigang/Source/vphpx/vslim/tests/fixtures/ollama_stream_fixture.ndjson
+# vslim/tests/fixtures/ollama_stream_fixture.ndjson
 # 然后启动：
-cd /Users/guweigang/Source/vhttpd
+cd ../vhttpd
 ./vhttpd --config /tmp/vslim-ollama-fixture.toml
 ```
 

@@ -433,11 +433,12 @@ fn main() {
 	}
 
 	if target_files.len == 0 {
-		files := os.ls(source_dir) or { []string{} }
-		for f in files {
-			if f.ends_with('.v') && f != 'build.v' && f != 'bridge.v' && f != 'mod.v'
-				&& !f.ends_with('_test.v') {
-				target_files << os.real_path(os.join_path(source_dir, f))
+		files := os.walk_ext(source_dir, '.v')
+		for file in files {
+			base := os.base(file)
+			if base != 'build.v' && base != 'bridge.v' && base != 'vphp_bridge.v' && base != 'mod.v'
+				&& !base.ends_with('_test.v') {
+				target_files << os.real_path(file)
 			}
 		}
 	}

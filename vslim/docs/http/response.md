@@ -4,9 +4,9 @@
 
 真理之源：
 
-- [`src/response.v`](/Users/guweigang/Source/vphpx/vslim/src/response.v)
-- [`tests/test_demo_dispatch.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_demo_dispatch.phpt)
-- [`tests/test_vslim_request_trace_ids.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_request_trace_ids.phpt)
+- [`src/response.v`](vslim/src/response.v)
+- [`tests/test_demo_dispatch.phpt`](vslim/tests/test_demo_dispatch.phpt)
+- [`tests/test_vslim_request_trace_ids.phpt`](vslim/tests/test_vslim_request_trace_ids.phpt)
 
 ## 构造
 

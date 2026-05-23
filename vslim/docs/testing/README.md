@@ -124,5 +124,5 @@ echo $test->responseBody($test->get('/me'));
 
 当前最有代表性的测试有：
 
-- [`test_vslim_testing_harness.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_testing_harness.phpt)
-- [`test_vslim_testing_session_auth_helpers.phpt`](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_testing_session_auth_helpers.phpt)
+- [`test_vslim_testing_harness.phpt`](vslim/tests/test_vslim_testing_harness.phpt)
+- [`test_vslim_testing_session_auth_helpers.phpt`](vslim/tests/test_vslim_testing_session_auth_helpers.phpt)

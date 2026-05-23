@@ -2,14 +2,15 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+VHTTPD_ROOT="${VHTTPD_ROOT:-$(cd "${ROOT}/../.." && pwd)/vhttpd}"
 COMPOSER_BIN="${COMPOSER_BIN:-composer}"
-WORKDIR="${FRAMEWORK_MATRIX_WORKDIR:-${ROOT}/../../vhttpd/examples}"
-RUNTIME_DIR="${FRAMEWORK_MATRIX_RUNTIME_DIR:-${ROOT}/../../vhttpd/examples/.runtime/framework-matrix}"
+WORKDIR="${FRAMEWORK_MATRIX_WORKDIR:-${VHTTPD_ROOT}/examples}"
+RUNTIME_DIR="${FRAMEWORK_MATRIX_RUNTIME_DIR:-${VHTTPD_ROOT}/examples/.runtime/framework-matrix}"
 HOST="${VHTTPD_HOST:-127.0.0.1}"
 START_PORT="${FRAMEWORK_MATRIX_START_PORT:-19910}"
-HTTPD_BIN="${ROOT}/../../vhttpd/vhttpd"
+HTTPD_BIN="${VHTTPD_ROOT}/vhttpd"
 EXT_SO="${ROOT}/vslim.so"
-WORKER_ENTRY="${ROOT}/../../vhttpd/php/package/bin/vphp-worker"
+WORKER_ENTRY="${VHTTPD_ROOT}/php/package/bin/vphp-worker"
 
 if ! command -v php >/dev/null 2>&1; then
   echo "php not found"

@@ -209,4 +209,4 @@ After the minimal page works, the usual order is:
 3. use `flash()`, `navigate()`, and targeted component events
 4. use room `broadcast_info()` when multiple tabs should sync
 
-For the full conventions and protocol details, read [README.md](/Users/guweigang/Source/vphpx/vslim/docs/liveview/README.md).
+For the full conventions and protocol details, read [README.md](vslim/docs/liveview/README.md).

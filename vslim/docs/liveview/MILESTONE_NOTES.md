@@ -118,17 +118,17 @@ The demo now shows:
 
 Relevant docs:
 
-- [GETTING_STARTED.md](/Users/guweigang/Source/vphpx/vslim/docs/liveview/GETTING_STARTED.md)
-- [README.md](/Users/guweigang/Source/vphpx/vslim/docs/liveview/README.md)
-- [examples/README.md](/Users/guweigang/Source/vphpx/vslim/examples/README.md)
+- [GETTING_STARTED.md](vslim/docs/liveview/GETTING_STARTED.md)
+- [README.md](vslim/docs/liveview/README.md)
+- [examples/README.md](vslim/examples/README.md)
 
 ## Validation Status
 
 Verified in automated tests:
 
-- [test_vslim_liveview_skeleton.phpt](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_liveview_skeleton.phpt)
-- [test_vslim_liveview_demo_render.phpt](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_liveview_demo_render.phpt)
-- [test_vslim_liveview_websocket_protocol.phpt](/Users/guweigang/Source/vphpx/vslim/tests/test_vslim_liveview_websocket_protocol.phpt)
+- [test_vslim_liveview_skeleton.phpt](vslim/tests/test_vslim_liveview_skeleton.phpt)
+- [test_vslim_liveview_demo_render.phpt](vslim/tests/test_vslim_liveview_demo_render.phpt)
+- [test_vslim_liveview_websocket_protocol.phpt](vslim/tests/test_vslim_liveview_websocket_protocol.phpt)
 
 Verified manually in the demo:
 

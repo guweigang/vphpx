@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-$vhttpdPackageSrc = dirname(__DIR__, 3) . '/vhttpd/php/package/src';
+$vhttpdPackageSrc = (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/php/package/src';
 
 $requireClass = static function (string $class, string $relativePath) use ($vhttpdPackageSrc): void {
     if (class_exists($class, false)) {

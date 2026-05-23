@@ -138,6 +138,6 @@ if ($resp = VSlim\Mcp\App::require_capability($frame, 'sampling', 'Sampling capa
 
 现成示例：
 
-- [`/Users/guweigang/Source/vphpx/vslim/examples/mcp_app.php`](/Users/guweigang/Source/vphpx/vslim/examples/mcp_app.php)
-- [`/Users/guweigang/Source/vphpx/vslim/examples/mcp.toml`](/Users/guweigang/Source/vphpx/vslim/examples/mcp.toml)
-- [`/Users/guweigang/Source/vphpx/vslim/docs/mcp/runbook.md`](/Users/guweigang/Source/vphpx/vslim/docs/mcp/runbook.md)
+- [`vslim/examples/mcp_app.php`](vslim/examples/mcp_app.php)
+- [`vslim/examples/mcp.toml`](vslim/examples/mcp.toml)
+- [`vslim/docs/mcp/runbook.md`](vslim/docs/mcp/runbook.md)

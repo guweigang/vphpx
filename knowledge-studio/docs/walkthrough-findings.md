@@ -35,8 +35,8 @@
 
 当前状态：
 
-- [ConsoleWorkspaceService.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Services/ConsoleWorkspaceService.php:280) 的 `releaseSnapshot()` 已经把 `draftDocuments` / `draftEntries` 作为候选载荷
-- [console_releases.html](/Users/guweigang/Source/vphpx/knowledge-studio/resources/views/console_releases.html:1) 现在明确区分：
+- [ConsoleWorkspaceService.php](knowledge-studio/app/Services/ConsoleWorkspaceService.php:280) 的 `releaseSnapshot()` 已经把 `draftDocuments` / `draftEntries` 作为候选载荷
+- [console_releases.html](knowledge-studio/resources/views/console_releases.html:1) 现在明确区分：
   - 本次待发布草稿
   - 当前公开内容
   - 历史版本
@@ -50,8 +50,8 @@
 
 当前状态：
 
-- [console_document_editor.html](/Users/guweigang/Source/vphpx/knowledge-studio/resources/views/console_document_editor.html:1) 和 [console_entry_editor.html](/Users/guweigang/Source/vphpx/knowledge-studio/resources/views/console_entry_editor.html:1) 已经只保留“保存草稿 / 去发布版本 / 返回列表”
-- [ConsoleController.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Http/Controllers/ConsoleController.php:1854) 的 `publishDocument()` 和 [ConsoleController.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Http/Controllers/ConsoleController.php:1892) 的 `publishEntry()` 现在统一导流到 `/console/releases`
+- [console_document_editor.html](knowledge-studio/resources/views/console_document_editor.html:1) 和 [console_entry_editor.html](knowledge-studio/resources/views/console_entry_editor.html:1) 已经只保留“保存草稿 / 去发布版本 / 返回列表”
+- [ConsoleController.php](knowledge-studio/app/Http/Controllers/ConsoleController.php:1854) 的 `publishDocument()` 和 [ConsoleController.php](knowledge-studio/app/Http/Controllers/ConsoleController.php:1892) 的 `publishEntry()` 现在统一导流到 `/console/releases`
 - 编辑器相关文案已经改成“保存草稿 -> 交给发布中心”
 
 结果：
@@ -63,8 +63,8 @@
 
 当前状态：
 
-- [console.html](/Users/guweigang/Source/vphpx/knowledge-studio/resources/views/console.html:162) 的最近文档和最近条目都补上了 `继续完善`
-- [ConsoleController.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Http/Controllers/ConsoleController.php:173) 已经给最近内容挂上编辑链接
+- [console.html](knowledge-studio/resources/views/console.html:162) 的最近文档和最近条目都补上了 `继续完善`
+- [ConsoleController.php](knowledge-studio/app/Http/Controllers/ConsoleController.php:173) 已经给最近内容挂上编辑链接
 
 结果：
 
@@ -75,9 +75,9 @@
 
 当前状态：
 
-- [validation.html](/Users/guweigang/Source/vphpx/knowledge-studio/resources/views/validation.html:95) 的 citation 卡片标题已经可以直接点进详情页
+- [validation.html](knowledge-studio/resources/views/validation.html:95) 的 citation 卡片标题已经可以直接点进详情页
 - 同卡片里还补了 `查看来源详情`
-- [AssistantAnswerService.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Services/AssistantAnswerService.php:80)、[AssistantAnswerPresenter.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Presenters/AssistantAnswerPresenter.php:15) 和 [PublicController.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Http/Controllers/PublicController.php:255) 已经把引用类型和详情链接接通
+- [AssistantAnswerService.php](knowledge-studio/app/Services/AssistantAnswerService.php:80)、[AssistantAnswerPresenter.php](knowledge-studio/app/Presenters/AssistantAnswerPresenter.php:15) 和 [PublicController.php](knowledge-studio/app/Http/Controllers/PublicController.php:255) 已经把引用类型和详情链接接通
 
 结果：
 
@@ -87,7 +87,7 @@
 
 当前状态：
 
-- [public_detail.html](/Users/guweigang/Source/vphpx/knowledge-studio/resources/views/public_detail.html:1) 除了 `返回品牌页` 之外，已经补了 `回到验证页`
+- [public_detail.html](knowledge-studio/resources/views/public_detail.html:1) 除了 `返回品牌页` 之外，已经补了 `回到验证页`
 
 结果：
 
@@ -98,15 +98,15 @@
 
 当前状态：
 
-- [console_releases.html](/Users/guweigang/Source/vphpx/knowledge-studio/resources/views/console_releases.html:204) 的历史记录已经带：
+- [console_releases.html](knowledge-studio/resources/views/console_releases.html:204) 的历史记录已经带：
   - 查看品牌页
   - 查看验证页
-- [KnowledgeRepository.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Repositories/KnowledgeRepository.php:330) 新增了 `findReleaseByVersion()`、`releasedDocumentsForVersion()`、`releasedEntriesForVersion()`
-- [PublicWorkspaceService.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Services/PublicWorkspaceService.php:55) 到 [PublicController.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Http/Controllers/PublicController.php:39) 这一条链，已经按 `?release=<version>` 真正切换公开内容
+- [KnowledgeRepository.php](knowledge-studio/app/Repositories/KnowledgeRepository.php:330) 新增了 `findReleaseByVersion()`、`releasedDocumentsForVersion()`、`releasedEntriesForVersion()`
+- [PublicWorkspaceService.php](knowledge-studio/app/Services/PublicWorkspaceService.php:55) 到 [PublicController.php](knowledge-studio/app/Http/Controllers/PublicController.php:39) 这一条链，已经按 `?release=<version>` 真正切换公开内容
 - 历史版本模式下，品牌页、验证页、来源详情页都会提示“当前正在查看历史版本”，见：
-  - [brand.html](/Users/guweigang/Source/vphpx/knowledge-studio/resources/views/brand.html:1)
-  - [validation.html](/Users/guweigang/Source/vphpx/knowledge-studio/resources/views/validation.html:1)
-  - [public_detail.html](/Users/guweigang/Source/vphpx/knowledge-studio/resources/views/public_detail.html:1)
+  - [brand.html](knowledge-studio/resources/views/brand.html:1)
+  - [validation.html](knowledge-studio/resources/views/validation.html:1)
+  - [public_detail.html](knowledge-studio/resources/views/public_detail.html:1)
 
 结果：
 
@@ -117,9 +117,9 @@
 
 当前状态：
 
-- [ConsoleWorkspaceService.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Services/ConsoleWorkspaceService.php:301) 现在会按最近更新时间排序候选草稿
+- [ConsoleWorkspaceService.php](knowledge-studio/app/Services/ConsoleWorkspaceService.php:301) 现在会按最近更新时间排序候选草稿
 - 候选区只会默认勾选最近更新的一小批草稿，其余候选保持未选
-- [console_releases.html](/Users/guweigang/Source/vphpx/knowledge-studio/resources/views/console_releases.html:1) 已经给默认勾选项补了 `本轮推荐`
+- [console_releases.html](knowledge-studio/resources/views/console_releases.html:1) 已经给默认勾选项补了 `本轮推荐`
 
 结果：
 
@@ -130,9 +130,9 @@
 
 当前状态：
 
-- [console_releases.html](/Users/guweigang/Source/vphpx/knowledge-studio/resources/views/console_releases.html:1) 现在允许直接勾选“这次发布为什么值得发”
-- [ConsoleController.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Http/Controllers/ConsoleController.php:1411) 已经把 gap signals 变成可提交的 `release_reasons[]`
-- [ConsoleWorkspaceService.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Services/ConsoleWorkspaceService.php:714) 会把这些原因自动写到 release notes 开头
+- [console_releases.html](knowledge-studio/resources/views/console_releases.html:1) 现在允许直接勾选“这次发布为什么值得发”
+- [ConsoleController.php](knowledge-studio/app/Http/Controllers/ConsoleController.php:1411) 已经把 gap signals 变成可提交的 `release_reasons[]`
+- [ConsoleWorkspaceService.php](knowledge-studio/app/Services/ConsoleWorkspaceService.php:714) 会把这些原因自动写到 release notes 开头
 
 结果：
 
@@ -143,9 +143,9 @@
 
 当前状态：
 
-- [LocalizedUrlBuilder.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Support/LocalizedUrlBuilder.php:212) 的 `validationWithQuery()` 现在会生成 `/brand/{tenant}/validation`
-- [routes/web.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Http/routes/web.php:152) 已经把 `/brand/:tenant/validation` 设为 canonical 入口
-- [PublicController.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Http/Controllers/PublicController.php:384) 的旧 `assistant()` 现在只负责兼容跳转
+- [LocalizedUrlBuilder.php](knowledge-studio/app/Support/LocalizedUrlBuilder.php:212) 的 `validationWithQuery()` 现在会生成 `/brand/{tenant}/validation`
+- [routes/web.php](knowledge-studio/app/Http/routes/web.php:152) 已经把 `/brand/:tenant/validation` 设为 canonical 入口
+- [PublicController.php](knowledge-studio/app/Http/Controllers/PublicController.php:384) 的旧 `assistant()` 现在只负责兼容跳转
 - 实际运行态 walkthrough 已确认：
   - 品牌页 CTA 会进入 `/validation`
   - 控制台首页“打开验证页”会进入 `/validation`
@@ -165,8 +165,8 @@
   - `引用来源`
   - `验证之后下一步做什么`
 - 引用来源标题已经能直接点进：
-  - [public_detail document](/Users/guweigang/Source/vphpx/knowledge-studio/resources/views/public_detail.html:1)
-  - [public_detail entry](/Users/guweigang/Source/vphpx/knowledge-studio/resources/views/public_detail.html:1)
+  - [public_detail document](knowledge-studio/resources/views/public_detail.html:1)
+  - [public_detail entry](knowledge-studio/resources/views/public_detail.html:1)
 - `tests/console_db_write_smoke.php` 已再次通过，说明这轮修正没有打断写入链
 
 结果：
@@ -178,9 +178,9 @@
 
 当前状态：
 
-- [PublicBrandPresenter.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Presenters/PublicBrandPresenter.php:14) 现在会优先使用当前请求里的 `release`，不再偷偷回落到 snapshot 自己的版本
-- [PublicController.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Http/Controllers/PublicController.php:284) 现在会给 citation 详情链接补上当前 `release`
-- [PublicController.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Http/Controllers/PublicController.php:561) 里的公开详情页回到验证页，也已经保留 `release`
+- [PublicBrandPresenter.php](knowledge-studio/app/Presenters/PublicBrandPresenter.php:14) 现在会优先使用当前请求里的 `release`，不再偷偷回落到 snapshot 自己的版本
+- [PublicController.php](knowledge-studio/app/Http/Controllers/PublicController.php:284) 现在会给 citation 详情链接补上当前 `release`
+- [PublicController.php](knowledge-studio/app/Http/Controllers/PublicController.php:561) 里的公开详情页回到验证页，也已经保留 `release`
 - 真实运行态 walkthrough 已确认：
   - `/brand/acme-research?release=v0.1` 上的“开始知识验证”会进入 `/brand/acme-research/validation?release=v0.1`
   - `/brand/acme-research/documents/doc-acme-1?release=v0.1` 上的“回到验证页”会回到 `/brand/acme-research/validation?release=v0.1`
@@ -195,9 +195,9 @@
 
 当前状态：
 
-- [ConsoleWorkspaceService.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Services/ConsoleWorkspaceService.php:249) 现在会在 release notes 为空时，按版本状态和载荷数量生成可读摘要
-- [PublicWorkspaceService.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Services/PublicWorkspaceService.php:405) 也会在公开面为历史版本和当前版本补同类说明
-- [DemoCatalog.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Support/DemoCatalog.php:240) 的 fallback release 数据也已经带上基线 notes
+- [ConsoleWorkspaceService.php](knowledge-studio/app/Services/ConsoleWorkspaceService.php:249) 现在会在 release notes 为空时，按版本状态和载荷数量生成可读摘要
+- [PublicWorkspaceService.php](knowledge-studio/app/Services/PublicWorkspaceService.php:405) 也会在公开面为历史版本和当前版本补同类说明
+- [DemoCatalog.php](knowledge-studio/app/Support/DemoCatalog.php:240) 的 fallback release 数据也已经带上基线 notes
 - 真实运行态 walkthrough 已确认：
   - `/console/releases` 里的 `v0.1` 不再是空白说明，而会显示 `Public knowledge release covering 3 docs / 3 entries.`
   - onboarding draft release 也会显示基于载荷数量的 handoff 摘要
@@ -212,9 +212,9 @@
 
 当前状态：
 
-- [KnowledgeRepository.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Repositories/KnowledgeRepository.php:320) 新增了 `latestPublishedRelease()`
-- [PublicWorkspaceService.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Services/PublicWorkspaceService.php:405) 现在默认会把“当前公开版本”解析到最近 `published` 的 release，而不是单纯时间上最新的一条
-- [ConsoleWorkspaceService.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Services/ConsoleWorkspaceService.php:279) 的 `releaseSnapshot()` 也改成按真实 public payload 计算“当前公开版本”的版本号、说明和内容数量
+- [KnowledgeRepository.php](knowledge-studio/app/Repositories/KnowledgeRepository.php:320) 新增了 `latestPublishedRelease()`
+- [PublicWorkspaceService.php](knowledge-studio/app/Services/PublicWorkspaceService.php:405) 现在默认会把“当前公开版本”解析到最近 `published` 的 release，而不是单纯时间上最新的一条
+- [ConsoleWorkspaceService.php](knowledge-studio/app/Services/ConsoleWorkspaceService.php:279) 的 `releaseSnapshot()` 也改成按真实 public payload 计算“当前公开版本”的版本号、说明和内容数量
 - 真实运行态 walkthrough 已确认：
   - 品牌页默认回到 `v0.1 / published`
   - 验证页默认回到 `v0.1 / published`
@@ -229,15 +229,15 @@
 
 当前状态：
 
-- [PublicController.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Http/Controllers/PublicController.php:24) 现在会把对外看到的版本号格式化成显示名
-- [ConsoleController.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Http/Controllers/ConsoleController.php:1353) 也会把发布中心里的当前版本、版本比较和历史表统一走同一套显示名
-- [ConsoleController.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Http/Controllers/ConsoleController.php:1041) 还会在中文环境下把 `ops` 页里 demo 审计目标、job 名称和 provisioning checklist 名称做显示层本地化，避免 `Acme Operations Brief 2026.Q2`、`Settlement exception triage`、`Sync public validation cache` 这类英文 seed 文本直接暴露给演示用户
+- [PublicController.php](knowledge-studio/app/Http/Controllers/PublicController.php:24) 现在会把对外看到的版本号格式化成显示名
+- [ConsoleController.php](knowledge-studio/app/Http/Controllers/ConsoleController.php:1353) 也会把发布中心里的当前版本、版本比较和历史表统一走同一套显示名
+- [ConsoleController.php](knowledge-studio/app/Http/Controllers/ConsoleController.php:1041) 还会在中文环境下把 `ops` 页里 demo 审计目标、job 名称和 provisioning checklist 名称做显示层本地化，避免 `Acme Operations Brief 2026.Q2`、`Settlement exception triage`、`Sync public validation cache` 这类英文 seed 文本直接暴露给演示用户
 - 同一控制器现在也会把控制台里自动生成的 onboarding 文档 / FAQ 标题、以及 release history / version compare 里的 onboarding scaffold notes 做显示层本地化，避免 `Starter Launch Plan for ...`、`Team FAQ for ...`、`Starter onboarding release scaffold ...` 这类模板文案直接出现在中文 walkthrough 里
 - 当前显示规则已经至少覆盖：
   - `v0.1` -> `2026.Q2`
   - `onboarding-*` -> `Customer Onboarding Draft` / `客户开通草稿`
   - `next` -> `Next Release` / `下一发布版本`
-- [PublicController.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Http/Controllers/PublicController.php:666) 的公开显示名也已经按 locale 切换：
+- [PublicController.php](knowledge-studio/app/Http/Controllers/PublicController.php:666) 的公开显示名也已经按 locale 切换：
   - `acme-research` 在中文环境下显示为 `Acme 运营简报`
   - `nova-advisory` 在中文环境下显示为 `Nova 知识台`
 - 真实运行态 walkthrough 已确认：
@@ -264,7 +264,7 @@
 
 证据：
 
-- [routes/web.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Http/routes/web.php:42) 和 [routes/web.php](/Users/guweigang/Source/vphpx/knowledge-studio/app/Http/routes/web.php:118) 仍保留 `/publish`
+- [routes/web.php](knowledge-studio/app/Http/routes/web.php:42) 和 [routes/web.php](knowledge-studio/app/Http/routes/web.php:118) 仍保留 `/publish`
 
 当前控制：
 
@@ -284,8 +284,8 @@
 
 已修复：
 
-- [console_documents.html](/Users/guweigang/Source/vphpx/knowledge-studio/resources/views/console_documents.html:1)
-- [console_faqs.html](/Users/guweigang/Source/vphpx/knowledge-studio/resources/views/console_faqs.html:1)
+- [console_documents.html](knowledge-studio/resources/views/console_documents.html:1)
+- [console_faqs.html](knowledge-studio/resources/views/console_faqs.html:1)
 
 说明：
 

@@ -5,14 +5,15 @@ ai stream demo app returns stable text and sse stream contracts
 declare(strict_types=1);
 
 define('VSLIM_HTTPD_WORKER_NOAUTO', true);
-$autoload = dirname(__DIR__, 3) . '/vhttpd/php/package/vendor/autoload.php';
+$autoload = (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/php/package/vendor/autoload.php';
 if (!is_file($autoload)) {
     $autoload = dirname(__DIR__) . '/vendor/autoload.php';
 }
 if (!is_file($autoload)) { echo "autoload_missing\n"; exit; }
 require_once $autoload;
 
-$app = require __DIR__ . '/../../../vhttpd/examples/ai-stream-app.php';
+$vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd';
+$app = require $vhttpdRoot . '/examples/ai-stream-app.php';
 
 $text = $app([
     'method' => 'GET',

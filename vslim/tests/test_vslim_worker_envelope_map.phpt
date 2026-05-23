@@ -6,7 +6,7 @@ VHTTPD worker preserves map envelope headers for request and trace ids
 <?php
 putenv('VHTTPD_APP=' . __DIR__ . '/fixtures/vslim_envelope_map_fixture.php');
 define('VSLIM_HTTPD_WORKER_NOAUTO', true);
-$autoload = dirname(__DIR__, 3) . '/vhttpd/php/package/vendor/autoload.php';
+$autoload = (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/php/package/vendor/autoload.php';
 if (!is_file($autoload)) {
     $autoload = dirname(__DIR__) . '/vendor/autoload.php';
 }
