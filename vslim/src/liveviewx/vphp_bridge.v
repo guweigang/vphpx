@@ -8,11 +8,319 @@ import viewx
 
 #include "php_bridge.h"
 
+__global C.vslim__live__form_ce &C.zend_class_entry
 __global C.vslim__live__view_ce &C.zend_class_entry
 __global C.vslim__live__component_ce &C.zend_class_entry
 __global C.vslim__live__componentstate_ce &C.zend_class_entry
-__global C.vslim__live__form_ce &C.zend_class_entry
 __global C.vslim__live__socket_ce &C.zend_class_entry
+
+@[export: 'vslim_live_form_new_raw']
+pub fn vslim_live_form_new_raw() voidptr {
+    return vphp.generic_new_raw[VSlimLiveForm]()
+}
+@[export: 'vslim_live_form_free_raw']
+pub fn vslim_live_form_free_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+    vphp.generic_free_raw[VSlimLiveForm](ptr)
+}
+@[export: 'vslim_live_form_cleanup_raw']
+pub fn vslim_live_form_cleanup_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+}
+@[export: 'vslim_live_form_get_prop']
+pub fn vslim_live_form_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
+    unsafe {
+        name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
+        obj := &VSlimLiveForm(ptr)
+        if name == 'name' {
+            ret.v[string](obj.name)
+            return
+        }
+        if name == 'lastErrorCount' {
+            ret.v[i64](i64(obj.last_error_count))
+            return
+        }
+        if name == 'validated' {
+            ret.v[bool](obj.validated)
+            return
+        }
+    }
+}
+@[export: 'vslim_live_form_set_prop']
+pub fn vslim_live_form_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
+    unsafe {
+        name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
+        mut obj := &VSlimLiveForm(ptr)
+        if name == 'name' {
+            obj.name = arg.get_string()
+            return
+        }
+        if name == 'lastErrorCount' {
+            obj.last_error_count = int(arg.get_int())
+            return
+        }
+        if name == 'validated' {
+            obj.validated = arg.get_bool()
+            return
+        }
+    }
+}
+@[export: 'vslim_live_form_sync_props']
+pub fn vslim_live_form_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
+    unsafe {
+        obj := &VSlimLiveForm(ptr)
+        out.add_property_string('name', obj.name)
+        out.add_property_long('lastErrorCount', i64(obj.last_error_count))
+        out.add_property_bool('validated', obj.validated)
+    }
+}
+@[export: 'vphp_wrap_vslim_live_form_name']
+pub fn vphp_wrap_vslim_live_form_name(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimLiveForm(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := recv.name()
+    ctx.return().v[string](res)
+}
+@[export: 'vphp_wrap_vslim_live_form_available']
+pub fn vphp_wrap_vslim_live_form_available(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimLiveForm(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := recv.available()
+    ctx.return().v[bool](res)
+}
+@[export: 'vphp_wrap_vslim_live_form_fill']
+pub fn vphp_wrap_vslim_live_form_fill(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimLiveForm(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'values', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'values').array() or {
+        vphp.throw_exception('argument 0 must be array', 0)
+        return unsafe { nil }
+    }
+    res := recv.fill(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_vslim_live_form_reset']
+pub fn vphp_wrap_vslim_live_form_reset(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimLiveForm(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'values', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'values').array() or {
+        vphp.throw_exception('argument 0 must be array', 0)
+        return unsafe { nil }
+    }
+    res := recv.reset(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_vslim_live_form_validate']
+pub fn vphp_wrap_vslim_live_form_validate(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimLiveForm(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'validator', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'validator').value
+    res := recv.validate(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_vslim_live_form_errors']
+pub fn vphp_wrap_vslim_live_form_errors(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimLiveForm(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'values', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'values').array() or {
+        vphp.throw_exception('argument 0 must be array', 0)
+        return unsafe { nil }
+    }
+    res := recv.errors(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_vslim_live_form_clear_errors']
+pub fn vphp_wrap_vslim_live_form_clear_errors(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimLiveForm(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := recv.clear_errors()
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_vslim_live_form_clear_error']
+pub fn vphp_wrap_vslim_live_form_clear_error(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimLiveForm(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'field', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'field').as_v[string]()
+    res := recv.clear_error(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_vslim_live_form_forget']
+pub fn vphp_wrap_vslim_live_form_forget(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimLiveForm(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'field', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'field').as_v[string]()
+    res := recv.forget(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_vslim_live_form_forget_many']
+pub fn vphp_wrap_vslim_live_form_forget_many(ptr voidptr, ctx vphp.Context) voidptr {
+    mut recv := unsafe { &VSlimLiveForm(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'fields', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'fields').array() or {
+        vphp.throw_exception('argument 0 must be array', 0)
+        return unsafe { nil }
+    }
+    res := recv.forget_many(arg_0)
+    return voidptr(res)
+}
+@[export: 'vphp_wrap_vslim_live_form_input']
+pub fn vphp_wrap_vslim_live_form_input(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimLiveForm(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'field', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'field').as_v[string]()
+    res := recv.input(arg_0)
+    ctx.return().v[string](res)
+}
+@[export: 'vphp_wrap_vslim_live_form_input_or']
+pub fn vphp_wrap_vslim_live_form_input_or(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimLiveForm(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'field', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'fallback', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'field').as_v[string]()
+    arg_1 := php_args.at_named_or_index(1, 'fallback').as_v[string]()
+    res := recv.input_or(arg_0, arg_1)
+    ctx.return().v[string](res)
+}
+@[export: 'vphp_wrap_vslim_live_form_error']
+pub fn vphp_wrap_vslim_live_form_error(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimLiveForm(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'field', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'field').as_v[string]()
+    res := recv.error(arg_0)
+    ctx.return().v[string](res)
+}
+@[export: 'vphp_wrap_vslim_live_form_has_error']
+pub fn vphp_wrap_vslim_live_form_has_error(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimLiveForm(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'field', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'field').as_v[string]()
+    res := recv.has_error(arg_0)
+    ctx.return().v[bool](res)
+}
+@[export: 'vphp_wrap_vslim_live_form_valid']
+pub fn vphp_wrap_vslim_live_form_valid(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimLiveForm(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := recv.valid()
+    ctx.return().v[bool](res)
+}
+@[export: 'vphp_wrap_vslim_live_form_invalid']
+pub fn vphp_wrap_vslim_live_form_invalid(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimLiveForm(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := recv.invalid()
+    ctx.return().v[bool](res)
+}
+@[export: 'vphp_wrap_vslim_live_form_error_count']
+pub fn vphp_wrap_vslim_live_form_error_count(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimLiveForm(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := recv.error_count()
+    ctx.return().v[int](res)
+}
+@[export: 'vphp_wrap_vslim_live_form_data']
+pub fn vphp_wrap_vslim_live_form_data(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimLiveForm(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := recv.data()
+    ctx.return().v[vphp.PhpArray](res)
+}
+@[export: 'vslim_live_form_handlers']
+pub fn vslim_live_form_handlers() voidptr {
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(vslim_live_form_get_prop),
+        write_handler: voidptr(vslim_live_form_set_prop),
+        sync_handler: voidptr(vslim_live_form_sync_props),
+        new_raw: voidptr(vslim_live_form_new_raw),
+        cleanup_raw: voidptr(vslim_live_form_cleanup_raw),
+        free_raw: voidptr(vslim_live_form_free_raw)
+    )
+}
+pub fn VSlimLiveForm.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.vslim__live__form_ce)
+}
+
+pub fn VSlimLiveForm.php_object_handlers() voidptr {
+    return vslim_live_form_handlers()
+}
+
+pub fn VSlimLiveForm.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    return vphp.bind_object_zval[VSlimLiveForm](v_ptr, ownership)
+}
+
+pub fn (obj &VSlimLiveForm) bind_php_object() vphp.ZVal {
+    return vphp.bind_borrowed_object_zval[VSlimLiveForm](obj)
+}
+
+pub fn (obj &VSlimLiveForm) bind_php_object_value() vphp.PhpValue {
+    return vphp.bind_borrowed_object_value[VSlimLiveForm](obj)
+}
+
+pub fn (obj &VSlimLiveForm) bind_owned_php_object() vphp.ZVal {
+    return vphp.bind_owned_object_zval[VSlimLiveForm](obj)
+}
+
+pub fn (obj &VSlimLiveForm) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.bind_owned_object_value[VSlimLiveForm](obj)
+}
 
 @[export: 'vslim_live_view_new_raw']
 pub fn vslim_live_view_new_raw() voidptr {
@@ -864,314 +1172,6 @@ pub fn (obj &VSlimLiveComponentState) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimLiveComponentState) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimLiveComponentState](obj)
-}
-
-@[export: 'vslim_live_form_new_raw']
-pub fn vslim_live_form_new_raw() voidptr {
-    return vphp.generic_new_raw[VSlimLiveForm]()
-}
-@[export: 'vslim_live_form_free_raw']
-pub fn vslim_live_form_free_raw(ptr voidptr) {
-    if ptr == 0 {
-        return
-    }
-    vphp.generic_free_raw[VSlimLiveForm](ptr)
-}
-@[export: 'vslim_live_form_cleanup_raw']
-pub fn vslim_live_form_cleanup_raw(ptr voidptr) {
-    if ptr == 0 {
-        return
-    }
-}
-@[export: 'vslim_live_form_get_prop']
-pub fn vslim_live_form_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
-    ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
-    unsafe {
-        name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
-        obj := &VSlimLiveForm(ptr)
-        if name == 'name' {
-            ret.v[string](obj.name)
-            return
-        }
-        if name == 'lastErrorCount' {
-            ret.v[i64](i64(obj.last_error_count))
-            return
-        }
-        if name == 'validated' {
-            ret.v[bool](obj.validated)
-            return
-        }
-    }
-}
-@[export: 'vslim_live_form_set_prop']
-pub fn vslim_live_form_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
-    arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
-    unsafe {
-        name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
-        mut obj := &VSlimLiveForm(ptr)
-        if name == 'name' {
-            obj.name = arg.get_string()
-            return
-        }
-        if name == 'lastErrorCount' {
-            obj.last_error_count = int(arg.get_int())
-            return
-        }
-        if name == 'validated' {
-            obj.validated = arg.get_bool()
-            return
-        }
-    }
-}
-@[export: 'vslim_live_form_sync_props']
-pub fn vslim_live_form_sync_props(ptr voidptr, zv &C.zval) {
-    out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
-    unsafe {
-        obj := &VSlimLiveForm(ptr)
-        out.add_property_string('name', obj.name)
-        out.add_property_long('lastErrorCount', i64(obj.last_error_count))
-        out.add_property_bool('validated', obj.validated)
-    }
-}
-@[export: 'vphp_wrap_vslim_live_form_name']
-pub fn vphp_wrap_vslim_live_form_name(ptr voidptr, ctx vphp.Context)  {
-    mut recv := unsafe { &VSlimLiveForm(ptr) }
-    mut vphp_scope := vphp.PhpScope.once()
-    defer { vphp_scope.close() }
-    res := recv.name()
-    ctx.return().v[string](res)
-}
-@[export: 'vphp_wrap_vslim_live_form_available']
-pub fn vphp_wrap_vslim_live_form_available(ptr voidptr, ctx vphp.Context)  {
-    mut recv := unsafe { &VSlimLiveForm(ptr) }
-    mut vphp_scope := vphp.PhpScope.once()
-    defer { vphp_scope.close() }
-    res := recv.available()
-    ctx.return().v[bool](res)
-}
-@[export: 'vphp_wrap_vslim_live_form_fill']
-pub fn vphp_wrap_vslim_live_form_fill(ptr voidptr, ctx vphp.Context) voidptr {
-    mut recv := unsafe { &VSlimLiveForm(ptr) }
-    mut vphp_scope := vphp.PhpScope.once()
-    defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'values', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'values').array() or {
-        vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
-    }
-    res := recv.fill(arg_0)
-    return voidptr(res)
-}
-@[export: 'vphp_wrap_vslim_live_form_reset']
-pub fn vphp_wrap_vslim_live_form_reset(ptr voidptr, ctx vphp.Context) voidptr {
-    mut recv := unsafe { &VSlimLiveForm(ptr) }
-    mut vphp_scope := vphp.PhpScope.once()
-    defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'values', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'values').array() or {
-        vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
-    }
-    res := recv.reset(arg_0)
-    return voidptr(res)
-}
-@[export: 'vphp_wrap_vslim_live_form_validate']
-pub fn vphp_wrap_vslim_live_form_validate(ptr voidptr, ctx vphp.Context) voidptr {
-    mut recv := unsafe { &VSlimLiveForm(ptr) }
-    mut vphp_scope := vphp.PhpScope.once()
-    defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'validator', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'validator').value
-    res := recv.validate(arg_0)
-    return voidptr(res)
-}
-@[export: 'vphp_wrap_vslim_live_form_errors']
-pub fn vphp_wrap_vslim_live_form_errors(ptr voidptr, ctx vphp.Context) voidptr {
-    mut recv := unsafe { &VSlimLiveForm(ptr) }
-    mut vphp_scope := vphp.PhpScope.once()
-    defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'values', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'values').array() or {
-        vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
-    }
-    res := recv.errors(arg_0)
-    return voidptr(res)
-}
-@[export: 'vphp_wrap_vslim_live_form_clear_errors']
-pub fn vphp_wrap_vslim_live_form_clear_errors(ptr voidptr, ctx vphp.Context) voidptr {
-    mut recv := unsafe { &VSlimLiveForm(ptr) }
-    mut vphp_scope := vphp.PhpScope.once()
-    defer { vphp_scope.close() }
-    res := recv.clear_errors()
-    return voidptr(res)
-}
-@[export: 'vphp_wrap_vslim_live_form_clear_error']
-pub fn vphp_wrap_vslim_live_form_clear_error(ptr voidptr, ctx vphp.Context) voidptr {
-    mut recv := unsafe { &VSlimLiveForm(ptr) }
-    mut vphp_scope := vphp.PhpScope.once()
-    defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'field', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'field').as_v[string]()
-    res := recv.clear_error(arg_0)
-    return voidptr(res)
-}
-@[export: 'vphp_wrap_vslim_live_form_forget']
-pub fn vphp_wrap_vslim_live_form_forget(ptr voidptr, ctx vphp.Context) voidptr {
-    mut recv := unsafe { &VSlimLiveForm(ptr) }
-    mut vphp_scope := vphp.PhpScope.once()
-    defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'field', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'field').as_v[string]()
-    res := recv.forget(arg_0)
-    return voidptr(res)
-}
-@[export: 'vphp_wrap_vslim_live_form_forget_many']
-pub fn vphp_wrap_vslim_live_form_forget_many(ptr voidptr, ctx vphp.Context) voidptr {
-    mut recv := unsafe { &VSlimLiveForm(ptr) }
-    mut vphp_scope := vphp.PhpScope.once()
-    defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'fields', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'fields').array() or {
-        vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
-    }
-    res := recv.forget_many(arg_0)
-    return voidptr(res)
-}
-@[export: 'vphp_wrap_vslim_live_form_input']
-pub fn vphp_wrap_vslim_live_form_input(ptr voidptr, ctx vphp.Context)  {
-    mut recv := unsafe { &VSlimLiveForm(ptr) }
-    mut vphp_scope := vphp.PhpScope.once()
-    defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'field', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'field').as_v[string]()
-    res := recv.input(arg_0)
-    ctx.return().v[string](res)
-}
-@[export: 'vphp_wrap_vslim_live_form_input_or']
-pub fn vphp_wrap_vslim_live_form_input_or(ptr voidptr, ctx vphp.Context)  {
-    mut recv := unsafe { &VSlimLiveForm(ptr) }
-    mut vphp_scope := vphp.PhpScope.once()
-    defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'field', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'fallback', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'field').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'fallback').as_v[string]()
-    res := recv.input_or(arg_0, arg_1)
-    ctx.return().v[string](res)
-}
-@[export: 'vphp_wrap_vslim_live_form_error']
-pub fn vphp_wrap_vslim_live_form_error(ptr voidptr, ctx vphp.Context)  {
-    mut recv := unsafe { &VSlimLiveForm(ptr) }
-    mut vphp_scope := vphp.PhpScope.once()
-    defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'field', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'field').as_v[string]()
-    res := recv.error(arg_0)
-    ctx.return().v[string](res)
-}
-@[export: 'vphp_wrap_vslim_live_form_has_error']
-pub fn vphp_wrap_vslim_live_form_has_error(ptr voidptr, ctx vphp.Context)  {
-    mut recv := unsafe { &VSlimLiveForm(ptr) }
-    mut vphp_scope := vphp.PhpScope.once()
-    defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'field', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'field').as_v[string]()
-    res := recv.has_error(arg_0)
-    ctx.return().v[bool](res)
-}
-@[export: 'vphp_wrap_vslim_live_form_valid']
-pub fn vphp_wrap_vslim_live_form_valid(ptr voidptr, ctx vphp.Context)  {
-    mut recv := unsafe { &VSlimLiveForm(ptr) }
-    mut vphp_scope := vphp.PhpScope.once()
-    defer { vphp_scope.close() }
-    res := recv.valid()
-    ctx.return().v[bool](res)
-}
-@[export: 'vphp_wrap_vslim_live_form_invalid']
-pub fn vphp_wrap_vslim_live_form_invalid(ptr voidptr, ctx vphp.Context)  {
-    mut recv := unsafe { &VSlimLiveForm(ptr) }
-    mut vphp_scope := vphp.PhpScope.once()
-    defer { vphp_scope.close() }
-    res := recv.invalid()
-    ctx.return().v[bool](res)
-}
-@[export: 'vphp_wrap_vslim_live_form_error_count']
-pub fn vphp_wrap_vslim_live_form_error_count(ptr voidptr, ctx vphp.Context)  {
-    mut recv := unsafe { &VSlimLiveForm(ptr) }
-    mut vphp_scope := vphp.PhpScope.once()
-    defer { vphp_scope.close() }
-    res := recv.error_count()
-    ctx.return().v[int](res)
-}
-@[export: 'vphp_wrap_vslim_live_form_data']
-pub fn vphp_wrap_vslim_live_form_data(ptr voidptr, ctx vphp.Context)  {
-    mut recv := unsafe { &VSlimLiveForm(ptr) }
-    mut vphp_scope := vphp.PhpScope.once()
-    defer { vphp_scope.close() }
-    res := recv.data()
-    ctx.return().v[vphp.PhpArray](res)
-}
-@[export: 'vslim_live_form_handlers']
-pub fn vslim_live_form_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_live_form_get_prop),
-        write_handler: voidptr(vslim_live_form_set_prop),
-        sync_handler: voidptr(vslim_live_form_sync_props),
-        new_raw: voidptr(vslim_live_form_new_raw),
-        cleanup_raw: voidptr(vslim_live_form_cleanup_raw),
-        free_raw: voidptr(vslim_live_form_free_raw)
-    )
-}
-pub fn VSlimLiveForm.php_class_entry() vphp.ZendClassEntry {
-    return vphp.ZendClassEntry.from_ptr(C.vslim__live__form_ce)
-}
-
-pub fn VSlimLiveForm.php_object_handlers() voidptr {
-    return vslim_live_form_handlers()
-}
-
-pub fn VSlimLiveForm.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
-    return vphp.bind_object_zval[VSlimLiveForm](v_ptr, ownership)
-}
-
-pub fn (obj &VSlimLiveForm) bind_php_object() vphp.ZVal {
-    return vphp.bind_borrowed_object_zval[VSlimLiveForm](obj)
-}
-
-pub fn (obj &VSlimLiveForm) bind_php_object_value() vphp.PhpValue {
-    return vphp.bind_borrowed_object_value[VSlimLiveForm](obj)
-}
-
-pub fn (obj &VSlimLiveForm) bind_owned_php_object() vphp.ZVal {
-    return vphp.bind_owned_object_zval[VSlimLiveForm](obj)
-}
-
-pub fn (obj &VSlimLiveForm) bind_owned_php_object_value() vphp.PhpValue {
-    return vphp.bind_owned_object_value[VSlimLiveForm](obj)
 }
 
 @[export: 'vslim_live_socket_new_raw']
