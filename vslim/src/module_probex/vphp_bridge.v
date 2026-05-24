@@ -9,6 +9,7 @@ import httpx
 
 __global C.vslim__compiler__moduleprobereadonlybox_ce &C.zend_class_entry
 __global C.vslim__compiler__moduleprobebox_ce &C.zend_class_entry
+__global C.vslim__compiler__moduleprobetypedconsts_ce &C.zend_class_entry
 __global C.vslim__dev__phpsignatureprobe_ce &C.zend_class_entry
 __global C.vslim__debug__objectprobe_ce &C.zend_class_entry
 
@@ -222,6 +223,84 @@ pub fn (obj &VSlimModuleProbeBox) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimModuleProbeBox) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimModuleProbeBox](obj)
+}
+
+@[export: 'vslim_module_probe_typed_consts_new_raw']
+pub fn vslim_module_probe_typed_consts_new_raw() voidptr {
+    return vphp.generic_new_raw[VSlimModuleProbeTypedConsts]()
+}
+@[export: 'vslim_module_probe_typed_consts_free_raw']
+pub fn vslim_module_probe_typed_consts_free_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+    vphp.generic_free_raw[VSlimModuleProbeTypedConsts](ptr)
+}
+@[export: 'vslim_module_probe_typed_consts_cleanup_raw']
+pub fn vslim_module_probe_typed_consts_cleanup_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+}
+@[export: 'vslim_module_probe_typed_consts_get_prop']
+pub fn vslim_module_probe_typed_consts_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    _ = ptr
+    _ = name_ptr
+    _ = name_len
+    _ = rv
+}
+@[export: 'vslim_module_probe_typed_consts_set_prop']
+pub fn vslim_module_probe_typed_consts_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    _ = ptr
+    _ = name_ptr
+    _ = name_len
+    _ = value
+}
+@[export: 'vslim_module_probe_typed_consts_sync_props']
+pub fn vslim_module_probe_typed_consts_sync_props(ptr voidptr, zv &C.zval) {
+    _ = ptr
+    _ = zv
+}
+pub fn VSlimModuleProbeTypedConsts.consts() VSlimModuleProbeConsts {
+    return vslim_module_probe_consts
+}
+@[export: 'vslim_module_probe_typed_consts_handlers']
+pub fn vslim_module_probe_typed_consts_handlers() voidptr {
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(vslim_module_probe_typed_consts_get_prop),
+        write_handler: voidptr(vslim_module_probe_typed_consts_set_prop),
+        sync_handler: voidptr(vslim_module_probe_typed_consts_sync_props),
+        new_raw: voidptr(vslim_module_probe_typed_consts_new_raw),
+        cleanup_raw: voidptr(vslim_module_probe_typed_consts_cleanup_raw),
+        free_raw: voidptr(vslim_module_probe_typed_consts_free_raw)
+    )
+}
+pub fn VSlimModuleProbeTypedConsts.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.vslim__compiler__moduleprobetypedconsts_ce)
+}
+
+pub fn VSlimModuleProbeTypedConsts.php_object_handlers() voidptr {
+    return vslim_module_probe_typed_consts_handlers()
+}
+
+pub fn VSlimModuleProbeTypedConsts.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    return vphp.bind_object_zval[VSlimModuleProbeTypedConsts](v_ptr, ownership)
+}
+
+pub fn (obj &VSlimModuleProbeTypedConsts) bind_php_object() vphp.ZVal {
+    return vphp.bind_borrowed_object_zval[VSlimModuleProbeTypedConsts](obj)
+}
+
+pub fn (obj &VSlimModuleProbeTypedConsts) bind_php_object_value() vphp.PhpValue {
+    return vphp.bind_borrowed_object_value[VSlimModuleProbeTypedConsts](obj)
+}
+
+pub fn (obj &VSlimModuleProbeTypedConsts) bind_owned_php_object() vphp.ZVal {
+    return vphp.bind_owned_object_zval[VSlimModuleProbeTypedConsts](obj)
+}
+
+pub fn (obj &VSlimModuleProbeTypedConsts) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.bind_owned_object_value[VSlimModuleProbeTypedConsts](obj)
 }
 
 @[export: 'vslim_php_signature_probe_new_raw']

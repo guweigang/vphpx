@@ -83,6 +83,7 @@ extern zend_class_entry *vslim__vhttpd__response_ce;
 extern zend_class_entry *vslim__compiler__moduleprobekind_ce;
 extern zend_class_entry *vslim__compiler__moduleprobereadonlybox_ce;
 extern zend_class_entry *vslim__compiler__moduleprobebox_ce;
+extern zend_class_entry *vslim__compiler__moduleprobetypedconsts_ce;
 extern zend_class_entry *vslim__dev__phpsignatureprobe_ce;
 extern zend_class_entry *vslim__debug__objectprobe_ce;
 extern zend_class_entry *vslim__log__logger_ce;

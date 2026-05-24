@@ -458,6 +458,14 @@ namespace VSlim\Compiler {
         public mixed $value;
         public function __construct() {}
     }
+
+    class ModuleProbeTypedConsts
+    {
+        public const string CONST_VERSION = '1.0.0';
+        public const bool IS_ACTIVE = true;
+        public const int MAX_LIMIT = 100;
+        public function __construct() {}
+    }
 }
 
 namespace VSlim\Container {
@@ -935,12 +943,12 @@ namespace VSlim\Live {
 namespace VSlim\Log {
     class Level
     {
-        public const DEBUG = 'debug';
-        public const DISABLED = 'disabled';
-        public const ERROR = 'error';
-        public const FATAL = 'fatal';
-        public const INFO = 'info';
-        public const WARN = 'warn';
+        public const string DEBUG = 'debug';
+        public const string DISABLED = 'disabled';
+        public const string ERROR = 'error';
+        public const string FATAL = 'fatal';
+        public const string INFO = 'info';
+        public const string WARN = 'warn';
         public function __construct() {}
         public static function all(): array {}
         public static function debug(): string {}

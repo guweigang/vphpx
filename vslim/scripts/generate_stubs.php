@@ -348,10 +348,15 @@ function render_class(ReflectionClass $class): array
         }
         $visibility = $constant->isPrivate() ? 'private' : ($constant->isProtected() ? 'protected' : 'public');
         $final = $constant->isFinal() ? ' final' : '';
+        $type = '';
+        if (method_exists($constant, 'hasType') && $constant->hasType()) {
+            $type = render_type($constant->getType()) . ' ';
+        }
         $lines[] = sprintf(
-            '        %s%s const %s = %s;',
+            '        %s%s const %s%s = %s;',
             $visibility,
             $final,
+            $type,
             $constant->getName(),
             render_value($constant->getValue()),
         );

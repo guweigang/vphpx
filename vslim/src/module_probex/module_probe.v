@@ -69,3 +69,20 @@ pub fn module_probe_value() string {
 pub fn module_probe_options(options VSlimModuleProbeOptions) string {
 	return '${options.prefix}:${options.count}'
 }
+
+struct VSlimModuleProbeConsts {
+	max_limit     int    = 100
+	const_version string = '1.0.0'
+	is_active     bool   = true
+}
+
+const vslim_module_probe_consts = VSlimModuleProbeConsts{
+	max_limit: 100
+	const_version: '1.0.0'
+	is_active: true
+}
+
+@[php_class: 'VSlim\\Compiler\\ModuleProbeTypedConsts']
+@[php_const: 'vslim_module_probe_consts']
+pub struct VSlimModuleProbeTypedConsts {}
+
