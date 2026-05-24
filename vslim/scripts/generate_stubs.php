@@ -257,8 +257,42 @@ function render_function(ReflectionFunction $function): array
 /**
  * @return list<string>
  */
+function render_enum(ReflectionClass $class): array
+{
+    $lines = [];
+    $header = '    enum ' . $class->getShortName();
+
+    if ($class->isBacked()) {
+        $backingType = $class->getBackingType();
+        if ($backingType instanceof ReflectionNamedType) {
+            $header .= ': ' . $backingType->getName();
+        }
+    }
+
+    $lines[] = $header;
+    $lines[] = '    {';
+
+    foreach ($class->getCases() as $case) {
+        if ($class->isBacked()) {
+            $lines[] = sprintf('        case %s = %s;', $case->getName(), render_value($case->getBackingValue()));
+        } else {
+            $lines[] = sprintf('        case %s;', $case->getName());
+        }
+    }
+
+    $lines[] = '    }';
+    return $lines;
+}
+
+/**
+ * @return list<string>
+ */
 function render_class(ReflectionClass $class): array
 {
+    if (method_exists($class, 'isEnum') && $class->isEnum()) {
+        return render_enum($class);
+    }
+
     $lines = [];
     $header = '    ';
     if ($class->isFinal() && !$class->isTrait()) {
@@ -401,7 +435,7 @@ function render_callable_signature(ReflectionFunctionAbstract $function): array
     $params = [];
     $docblock = [];
     foreach ($function->getParameters() as $parameter) {
-        [$rendered, $paramDoc] = render_parameter($parameter);
+        [$rendered, $paramDoc] = render_parameter($parameter, $function);
         $params[] = $rendered;
         if ($paramDoc !== null) {
             $docblock[] = ' * @param ' . $paramDoc . ' $' . $parameter->getName();
@@ -433,12 +467,19 @@ function render_callable_signature(ReflectionFunctionAbstract $function): array
 /**
  * @return array{0:string,1:?string}
  */
-function render_parameter(ReflectionParameter $parameter): array
+function render_parameter(ReflectionParameter $parameter, ?ReflectionFunctionAbstract $function = null): array
 {
     $reference = $parameter->isPassedByReference() ? '&' : '';
     $variadic = $parameter->isVariadic() ? '...' : '';
     $name = '$' . $parameter->getName();
     $type = $parameter->hasType() ? render_type($parameter->getType()) : null;
+
+    if ($function instanceof ReflectionMethod && in_array($function->getName(), ['from', 'tryFrom'], true)) {
+        $declaringClass = $function->getDeclaringClass();
+        if ($declaringClass->implementsInterface('BackedEnum')) {
+            $type = 'int|string';
+        }
+    }
 
     if ($parameter->isVariadic()) {
         return [($type !== null ? $type . ' ' : '') . $reference . $variadic . $name, null];

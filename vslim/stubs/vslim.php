@@ -446,15 +446,10 @@ namespace VSlim\Compiler {
         public function test_sumtype(string|int $val): string|int {}
     }
 
-    class ModuleProbeKind implements \BackedEnum, \UnitEnum
+    enum ModuleProbeKind: int
     {
-        public const alpha = \VSlim\Compiler\ModuleProbeKind::alpha;
-        public const beta = \VSlim\Compiler\ModuleProbeKind::beta;
-        public readonly string $name;
-        public readonly int $value;
-        public static function cases(): array {}
-        public static function from(string|int $value): static {}
-        public static function tryFrom(string|int $value): ?static {}
+        case alpha = 7;
+        case beta = 11;
     }
 
     readonly class ModuleProbeReadOnlyBox
