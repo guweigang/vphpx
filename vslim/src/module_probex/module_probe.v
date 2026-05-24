@@ -21,12 +21,26 @@ pub:
 @[php_const]
 const module_probe_constant = 'module-constant-ok'
 
+pub type VSlimModuleProbeSum = int | string
+
 @[php_implements: 'VSlim\\Compiler\\ModuleProbeContract']
 @[php_class: 'VSlim\\Compiler\\ModuleProbeBox']
 pub struct VSlimModuleProbeBox {
 pub mut:
 	name  string = 'box'
 	count int
+}
+
+@[php_method]
+pub fn (b &VSlimModuleProbeBox) test_sumtype(val VSlimModuleProbeSum) VSlimModuleProbeSum {
+	match val {
+		int {
+			return VSlimModuleProbeSum(val + 100)
+		}
+		string {
+			return VSlimModuleProbeSum('hello:${val}')
+		}
+	}
 }
 
 @[php_method]

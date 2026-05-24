@@ -69,6 +69,18 @@ pub fn vslim_module_probe_box_sync_props(ptr voidptr, zv &C.zval) {
         out.add_property_long('count', i64(obj.count))
     }
 }
+@[export: 'vphp_wrap_vslim_module_probe_box_test_sumtype']
+pub fn vphp_wrap_vslim_module_probe_box_test_sumtype(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimModuleProbeBox(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'val', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'val').as_v[module_probex.VSlimModuleProbeSum]()
+    res := recv.test_sumtype(arg_0)
+    ctx.return().v[module_probex.VSlimModuleProbeSum](res)
+}
 @[export: 'vphp_wrap_vslim_module_probe_box_label']
 pub fn vphp_wrap_vslim_module_probe_box_label(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimModuleProbeBox(ptr) }
