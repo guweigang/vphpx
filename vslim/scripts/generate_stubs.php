@@ -334,8 +334,13 @@ function render_class(ReflectionClass $class): array
         }
         $visibility = $property->isPrivate() ? 'private' : ($property->isProtected() ? 'protected' : 'public');
         $static = $property->isStatic() ? ' static' : '';
-        $readonly = $property->isReadOnly() ? ' readonly' : '';
-        $type = $property->hasType() ? render_type($property->getType()) . ' ' : '';
+        $readonly = ($property->isReadOnly() && !$class->isReadOnly()) ? ' readonly' : '';
+        $type = '';
+        if ($property->hasType()) {
+            $type = render_type($property->getType()) . ' ';
+        } elseif ($property->isReadOnly() || $class->isReadOnly()) {
+            $type = 'mixed ';
+        }
         $lines[] = sprintf(
             '        %s%s%s %s$%s;',
             $visibility,

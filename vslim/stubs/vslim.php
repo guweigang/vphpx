@@ -459,8 +459,8 @@ namespace VSlim\Compiler {
 
     readonly class ModuleProbeReadOnlyBox
     {
-        public readonly $title;
-        public readonly $value;
+        public mixed $title;
+        public mixed $value;
         public function __construct() {}
     }
 }
