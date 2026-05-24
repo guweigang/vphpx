@@ -267,12 +267,17 @@ function render_class(ReflectionClass $class): array
         $header .= 'abstract ';
     }
 
+    $readonly = '';
+    if (method_exists($class, 'isReadOnly') && $class->isReadOnly()) {
+        $readonly = 'readonly ';
+    }
+
     if ($class->isInterface()) {
         $header .= 'interface ';
     } elseif ($class->isTrait()) {
         $header .= 'trait ';
     } else {
-        $header .= 'class ';
+        $header .= $readonly . 'class ';
     }
 
     $header .= $class->getShortName();

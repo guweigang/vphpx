@@ -7,9 +7,98 @@ import httpx
 
 #include "php_bridge.h"
 
+__global C.vslim__compiler__moduleprobereadonlybox_ce &C.zend_class_entry
 __global C.vslim__compiler__moduleprobebox_ce &C.zend_class_entry
 __global C.vslim__dev__phpsignatureprobe_ce &C.zend_class_entry
 __global C.vslim__debug__objectprobe_ce &C.zend_class_entry
+
+@[export: 'vslim_module_probe_read_only_box_new_raw']
+pub fn vslim_module_probe_read_only_box_new_raw() voidptr {
+    return vphp.generic_new_raw[VSlimModuleProbeReadOnlyBox]()
+}
+@[export: 'vslim_module_probe_read_only_box_free_raw']
+pub fn vslim_module_probe_read_only_box_free_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+    vphp.generic_free_raw[VSlimModuleProbeReadOnlyBox](ptr)
+}
+@[export: 'vslim_module_probe_read_only_box_cleanup_raw']
+pub fn vslim_module_probe_read_only_box_cleanup_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+}
+@[export: 'vslim_module_probe_read_only_box_get_prop']
+pub fn vslim_module_probe_read_only_box_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
+    unsafe {
+        name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
+        obj := &VSlimModuleProbeReadOnlyBox(ptr)
+        if name == 'title' {
+            ret.v[string](obj.title)
+            return
+        }
+        if name == 'value' {
+            ret.v[i64](i64(obj.value))
+            return
+        }
+    }
+}
+@[export: 'vslim_module_probe_read_only_box_set_prop']
+pub fn vslim_module_probe_read_only_box_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    _ = ptr
+    _ = name_ptr
+    _ = name_len
+    _ = value
+}
+@[export: 'vslim_module_probe_read_only_box_sync_props']
+pub fn vslim_module_probe_read_only_box_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
+    unsafe {
+        obj := &VSlimModuleProbeReadOnlyBox(ptr)
+        out.add_property_string('title', obj.title)
+        out.add_property_long('value', i64(obj.value))
+    }
+}
+@[export: 'vslim_module_probe_read_only_box_handlers']
+pub fn vslim_module_probe_read_only_box_handlers() voidptr {
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(vslim_module_probe_read_only_box_get_prop),
+        write_handler: voidptr(vslim_module_probe_read_only_box_set_prop),
+        sync_handler: voidptr(vslim_module_probe_read_only_box_sync_props),
+        new_raw: voidptr(vslim_module_probe_read_only_box_new_raw),
+        cleanup_raw: voidptr(vslim_module_probe_read_only_box_cleanup_raw),
+        free_raw: voidptr(vslim_module_probe_read_only_box_free_raw)
+    )
+}
+pub fn VSlimModuleProbeReadOnlyBox.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.vslim__compiler__moduleprobereadonlybox_ce)
+}
+
+pub fn VSlimModuleProbeReadOnlyBox.php_object_handlers() voidptr {
+    return vslim_module_probe_read_only_box_handlers()
+}
+
+pub fn VSlimModuleProbeReadOnlyBox.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    return vphp.bind_object_zval[VSlimModuleProbeReadOnlyBox](v_ptr, ownership)
+}
+
+pub fn (obj &VSlimModuleProbeReadOnlyBox) bind_php_object() vphp.ZVal {
+    return vphp.bind_borrowed_object_zval[VSlimModuleProbeReadOnlyBox](obj)
+}
+
+pub fn (obj &VSlimModuleProbeReadOnlyBox) bind_php_object_value() vphp.PhpValue {
+    return vphp.bind_borrowed_object_value[VSlimModuleProbeReadOnlyBox](obj)
+}
+
+pub fn (obj &VSlimModuleProbeReadOnlyBox) bind_owned_php_object() vphp.ZVal {
+    return vphp.bind_owned_object_zval[VSlimModuleProbeReadOnlyBox](obj)
+}
+
+pub fn (obj &VSlimModuleProbeReadOnlyBox) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.bind_owned_object_value[VSlimModuleProbeReadOnlyBox](obj)
+}
 
 @[export: 'vslim_module_probe_box_new_raw']
 pub fn vslim_module_probe_box_new_raw() voidptr {

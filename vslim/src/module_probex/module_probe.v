@@ -23,6 +23,13 @@ const module_probe_constant = 'module-constant-ok'
 
 pub type VSlimModuleProbeSum = int | string
 
+@[php_class: 'VSlim\\Compiler\\ModuleProbeReadOnlyBox']
+pub struct VSlimModuleProbeReadOnlyBox {
+pub:
+	title string = 'readonly-box'
+	value int
+}
+
 @[php_implements: 'VSlim\\Compiler\\ModuleProbeContract']
 @[php_class: 'VSlim\\Compiler\\ModuleProbeBox']
 pub struct VSlimModuleProbeBox {
