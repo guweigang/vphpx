@@ -52,6 +52,11 @@ pub fn (b &VSlimModuleProbeBox) test_sumtype(val VSlimModuleProbeSum) VSlimModul
 }
 
 @[php_method]
+pub fn (b &VSlimModuleProbeBox) test_enum_echo(kind VSlimModuleProbeKind) VSlimModuleProbeKind {
+	return kind
+}
+
+@[php_method]
 pub fn (b &VSlimModuleProbeBox) label() string {
 	return '${b.name}:${b.count}'
 }
