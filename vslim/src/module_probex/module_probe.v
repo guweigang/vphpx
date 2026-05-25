@@ -1,5 +1,6 @@
 module module_probex
 
+import vphp
 @[php_interface: 'VSlim\\Compiler\\ModuleProbeContract']
 pub interface VSlimModuleProbeContract {
 	label() string
@@ -85,4 +86,25 @@ const vslim_module_probe_consts = VSlimModuleProbeConsts{
 @[php_class: 'VSlim\\Compiler\\ModuleProbeTypedConsts']
 @[php_const: 'vslim_module_probe_consts']
 pub struct VSlimModuleProbeTypedConsts {}
+
+@[php_class: 'VSlim\\Compiler\\ModuleProbeWrapperBox']
+pub struct VSlimModuleProbeWrapperBox {
+pub mut:
+	val vphp.PhpValue
+	obj vphp.PhpObject
+	str vphp.PhpString
+	num vphp.PhpInt
+	b   vphp.PhpBool
+	arr vphp.PhpArray
+}
+
+@[php_method]
+pub fn (mut b VSlimModuleProbeWrapperBox) change_props(new_val vphp.PhpValue, new_obj vphp.PhpObject, new_str vphp.PhpString, new_num vphp.PhpInt, new_b vphp.PhpBool, new_arr vphp.PhpArray) {
+	b.val = new_val.retain()
+	b.obj = new_obj.retain()
+	b.str = new_str.retain()
+	b.num = new_num.retain()
+	b.b = new_b.retain()
+	b.arr = new_arr.retain()
+}
 
