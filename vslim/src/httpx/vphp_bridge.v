@@ -842,6 +842,10 @@ pub fn (obj &VSlimRequest) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimRequest](obj)
 }
 
+pub fn (val VSlimRequest) php_class_name() string {
+    return 'VSlim\\VHttpd\\Request'
+}
+
 @[export: 'vslim_psr7_stream_new_raw']
 pub fn vslim_psr7_stream_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr7Stream]()
@@ -1096,6 +1100,10 @@ pub fn (obj &VSlimPsr7Stream) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr7Stream](obj)
 }
 
+pub fn (val VSlimPsr7Stream) php_class_name() string {
+    return 'VSlim\\Psr7\\Stream'
+}
+
 @[export: 'vslim_psr7_uploaded_file_new_raw']
 pub fn vslim_psr7_uploaded_file_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr7UploadedFile]()
@@ -1268,6 +1276,10 @@ pub fn (obj &VSlimPsr7UploadedFile) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimPsr7UploadedFile) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr7UploadedFile](obj)
+}
+
+pub fn (val VSlimPsr7UploadedFile) php_class_name() string {
+    return 'VSlim\\Psr7\\UploadedFile'
 }
 
 @[export: 'vslim_psr7_response_new_raw']
@@ -1574,6 +1586,10 @@ pub fn (obj &VSlimPsr7Response) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimPsr7Response) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr7Response](obj)
+}
+
+pub fn (val VSlimPsr7Response) php_class_name() string {
+    return 'VSlim\\Psr7\\Response'
 }
 
 @[export: 'vslim_psr7_uri_new_raw']
@@ -1898,6 +1914,10 @@ pub fn (obj &VSlimPsr7Uri) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr7Uri](obj)
 }
 
+pub fn (val VSlimPsr7Uri) php_class_name() string {
+    return 'VSlim\\Psr7\\Uri'
+}
+
 @[export: 'vslim_psr7_request_new_raw']
 pub fn vslim_psr7_request_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr7Request]()
@@ -2190,6 +2210,10 @@ pub fn (obj &VSlimPsr7Request) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimPsr7Request) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr7Request](obj)
+}
+
+pub fn (val VSlimPsr7Request) php_class_name() string {
+    return 'VSlim\\Psr7\\Request'
 }
 
 @[export: 'vslim_psr7_server_request_new_raw']
@@ -2632,6 +2656,10 @@ pub fn (obj &VSlimPsr7ServerRequest) bind_owned_php_object_value() vphp.PhpValue
     return vphp.bind_owned_object_value[VSlimPsr7ServerRequest](obj)
 }
 
+pub fn (val VSlimPsr7ServerRequest) php_class_name() string {
+    return 'VSlim\\Psr7\\ServerRequest'
+}
+
 @[export: 'vslim_psr17_response_factory_new_raw']
 pub fn vslim_psr17_response_factory_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr17ResponseFactory]()
@@ -2733,6 +2761,10 @@ pub fn (obj &VSlimPsr17ResponseFactory) bind_owned_php_object_value() vphp.PhpVa
     return vphp.bind_owned_object_value[VSlimPsr17ResponseFactory](obj)
 }
 
+pub fn (val VSlimPsr17ResponseFactory) php_class_name() string {
+    return 'VSlim\\Psr17\\ResponseFactory'
+}
+
 @[export: 'vslim_psr17_request_factory_new_raw']
 pub fn vslim_psr17_request_factory_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr17RequestFactory]()
@@ -2828,6 +2860,10 @@ pub fn (obj &VSlimPsr17RequestFactory) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimPsr17RequestFactory) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr17RequestFactory](obj)
+}
+
+pub fn (val VSlimPsr17RequestFactory) php_class_name() string {
+    return 'VSlim\\Psr17\\RequestFactory'
 }
 
 @[export: 'vslim_psr17_stream_factory_new_raw']
@@ -2960,6 +2996,10 @@ pub fn (obj &VSlimPsr17StreamFactory) bind_owned_php_object_value() vphp.PhpValu
     return vphp.bind_owned_object_value[VSlimPsr17StreamFactory](obj)
 }
 
+pub fn (val VSlimPsr17StreamFactory) php_class_name() string {
+    return 'VSlim\\Psr17\\StreamFactory'
+}
+
 @[export: 'vslim_psr17_uploaded_file_factory_new_raw']
 pub fn vslim_psr17_uploaded_file_factory_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr17UploadedFileFactory]()
@@ -3072,6 +3112,10 @@ pub fn (obj &VSlimPsr17UploadedFileFactory) bind_owned_php_object_value() vphp.P
     return vphp.bind_owned_object_value[VSlimPsr17UploadedFileFactory](obj)
 }
 
+pub fn (val VSlimPsr17UploadedFileFactory) php_class_name() string {
+    return 'VSlim\\Psr17\\UploadedFileFactory'
+}
+
 @[export: 'vslim_psr17_uri_factory_new_raw']
 pub fn vslim_psr17_uri_factory_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr17UriFactory]()
@@ -3168,6 +3212,10 @@ pub fn (obj &VSlimPsr17UriFactory) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimPsr17UriFactory) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr17UriFactory](obj)
+}
+
+pub fn (val VSlimPsr17UriFactory) php_class_name() string {
+    return 'VSlim\\Psr17\\UriFactory'
 }
 
 @[export: 'vslim_psr17_server_request_factory_new_raw']
@@ -3279,6 +3327,10 @@ pub fn (obj &VSlimPsr17ServerRequestFactory) bind_owned_php_object_value() vphp.
     return vphp.bind_owned_object_value[VSlimPsr17ServerRequestFactory](obj)
 }
 
+pub fn (val VSlimPsr17ServerRequestFactory) php_class_name() string {
+    return 'VSlim\\Psr17\\ServerRequestFactory'
+}
+
 @[export: 'vslim_psr18_client_exception_new_raw']
 pub fn vslim_psr18_client_exception_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr18ClientException]()
@@ -3364,6 +3416,10 @@ pub fn (obj &VSlimPsr18ClientException) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimPsr18ClientException) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr18ClientException](obj)
+}
+
+pub fn (val VSlimPsr18ClientException) php_class_name() string {
+    return 'VSlim\\Psr18\\ClientException'
 }
 
 @[export: 'vslim_psr18_request_exception_new_raw']
@@ -3479,6 +3535,10 @@ pub fn (obj &VSlimPsr18RequestException) bind_owned_php_object_value() vphp.PhpV
     return vphp.bind_owned_object_value[VSlimPsr18RequestException](obj)
 }
 
+pub fn (val VSlimPsr18RequestException) php_class_name() string {
+    return 'VSlim\\Psr18\\RequestException'
+}
+
 @[export: 'vslim_psr18_network_exception_new_raw']
 pub fn vslim_psr18_network_exception_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr18NetworkException]()
@@ -3590,6 +3650,10 @@ pub fn (obj &VSlimPsr18NetworkException) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimPsr18NetworkException) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr18NetworkException](obj)
+}
+
+pub fn (val VSlimPsr18NetworkException) php_class_name() string {
+    return 'VSlim\\Psr18\\NetworkException'
 }
 
 @[export: 'vslim_psr18_client_new_raw']
@@ -3740,6 +3804,10 @@ pub fn (obj &VSlimPsr18Client) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr18Client](obj)
 }
 
+pub fn (val VSlimPsr18Client) php_class_name() string {
+    return 'VSlim\\Psr18\\Client'
+}
+
 @[export: 'vslim_psr7_adapter_new_raw']
 pub fn vslim_psr7_adapter_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr7Adapter]()
@@ -3846,6 +3914,10 @@ pub fn (obj &VSlimPsr7Adapter) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimPsr7Adapter) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr7Adapter](obj)
+}
+
+pub fn (val VSlimPsr7Adapter) php_class_name() string {
+    return 'VSlim\\Psr7Adapter'
 }
 
 @[export: 'vslim_response_new_raw']
@@ -4240,5 +4312,9 @@ pub fn (obj &VSlimResponse) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimResponse) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimResponse](obj)
+}
+
+pub fn (val VSlimResponse) php_class_name() string {
+    return 'VSlim\\VHttpd\\Response'
 }
 

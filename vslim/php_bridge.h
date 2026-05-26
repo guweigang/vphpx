@@ -17,6 +17,7 @@ extern zend_module_entry vslim_module_entry;
 extern void* vphp_get_active_globals();
 
 PHP_FUNCTION(vslim_module_probe);
+PHP_FUNCTION(vslim_module_probe_variadic);
 PHP_FUNCTION(vslim_module_probe_options);
 extern zend_class_entry *vslim__compiler__moduleprobecontract_ce;
 extern zend_class_entry *vslim__session__store_ce;
@@ -84,6 +85,7 @@ extern zend_class_entry *vslim__compiler__moduleprobekind_ce;
 extern zend_class_entry *vslim__compiler__moduleprobereadonlybox_ce;
 extern zend_class_entry *vslim__compiler__moduleprobebox_ce;
 extern zend_class_entry *vslim__compiler__moduleprobetypedconsts_ce;
+extern zend_class_entry *vslim__compiler__moduleprobewrapperbox_ce;
 extern zend_class_entry *vslim__dev__phpsignatureprobe_ce;
 extern zend_class_entry *vslim__debug__objectprobe_ce;
 extern zend_class_entry *vslim__log__logger_ce;

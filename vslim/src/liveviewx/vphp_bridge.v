@@ -322,6 +322,10 @@ pub fn (obj &VSlimLiveForm) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimLiveForm](obj)
 }
 
+pub fn (val VSlimLiveForm) php_class_name() string {
+    return 'VSlim\\Live\\Form'
+}
+
 @[export: 'vslim_live_view_new_raw']
 pub fn vslim_live_view_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimLiveView]()
@@ -667,6 +671,10 @@ pub fn (obj &VSlimLiveView) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimLiveView) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimLiveView](obj)
+}
+
+pub fn (val VSlimLiveView) php_class_name() string {
+    return 'VSlim\\Live\\View'
 }
 
 @[export: 'vslim_live_component_new_raw']
@@ -1039,6 +1047,10 @@ pub fn (obj &VSlimLiveComponent) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimLiveComponent](obj)
 }
 
+pub fn (val VSlimLiveComponent) php_class_name() string {
+    return 'VSlim\\Live\\Component'
+}
+
 @[export: 'vslim_live_component_state_new_raw']
 pub fn vslim_live_component_state_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimLiveComponentState]()
@@ -1172,6 +1184,10 @@ pub fn (obj &VSlimLiveComponentState) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimLiveComponentState) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimLiveComponentState](obj)
+}
+
+pub fn (val VSlimLiveComponentState) php_class_name() string {
+    return 'VSlim\\Live\\ComponentState'
 }
 
 @[export: 'vslim_live_socket_new_raw']
@@ -2002,5 +2018,9 @@ pub fn (obj &VSlimLiveSocket) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimLiveSocket) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimLiveSocket](obj)
+}
+
+pub fn (val VSlimLiveSocket) php_class_name() string {
+    return 'VSlim\\Live\\Socket'
 }
 

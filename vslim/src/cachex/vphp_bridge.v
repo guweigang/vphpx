@@ -99,6 +99,10 @@ pub fn (obj &VSlimPsr16CacheException) bind_owned_php_object_value() vphp.PhpVal
     return vphp.bind_owned_object_value[VSlimPsr16CacheException](obj)
 }
 
+pub fn (val VSlimPsr16CacheException) php_class_name() string {
+    return 'VSlim\\Psr16\\CacheException'
+}
+
 @[export: 'vslim_psr16_invalid_argument_exception_new_raw']
 pub fn vslim_psr16_invalid_argument_exception_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr16InvalidArgumentException]()
@@ -184,6 +188,10 @@ pub fn (obj &VSlimPsr16InvalidArgumentException) bind_owned_php_object() vphp.ZV
 
 pub fn (obj &VSlimPsr16InvalidArgumentException) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr16InvalidArgumentException](obj)
+}
+
+pub fn (val VSlimPsr16InvalidArgumentException) php_class_name() string {
+    return 'VSlim\\Psr16\\InvalidArgumentException'
 }
 
 @[export: 'vslim_psr16_cache_new_raw']
@@ -447,6 +455,10 @@ pub fn (obj &VSlimPsr16Cache) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr16Cache](obj)
 }
 
+pub fn (val VSlimPsr16Cache) php_class_name() string {
+    return 'VSlim\\Psr16\\Cache'
+}
+
 @[export: 'vslim_psr6_cache_exception_new_raw']
 pub fn vslim_psr6_cache_exception_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr6CacheException]()
@@ -534,6 +546,10 @@ pub fn (obj &VSlimPsr6CacheException) bind_owned_php_object_value() vphp.PhpValu
     return vphp.bind_owned_object_value[VSlimPsr6CacheException](obj)
 }
 
+pub fn (val VSlimPsr6CacheException) php_class_name() string {
+    return 'VSlim\\Psr6\\CacheException'
+}
+
 @[export: 'vslim_psr6_invalid_argument_exception_new_raw']
 pub fn vslim_psr6_invalid_argument_exception_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr6InvalidArgumentException]()
@@ -619,6 +635,10 @@ pub fn (obj &VSlimPsr6InvalidArgumentException) bind_owned_php_object() vphp.ZVa
 
 pub fn (obj &VSlimPsr6InvalidArgumentException) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr6InvalidArgumentException](obj)
+}
+
+pub fn (val VSlimPsr6InvalidArgumentException) php_class_name() string {
+    return 'VSlim\\Psr6\\InvalidArgumentException'
 }
 
 @[export: 'vslim_psr6_cache_item_new_raw']
@@ -758,6 +778,10 @@ pub fn (obj &VSlimPsr6CacheItem) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimPsr6CacheItem) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr6CacheItem](obj)
+}
+
+pub fn (val VSlimPsr6CacheItem) php_class_name() string {
+    return 'VSlim\\Psr6\\CacheItem'
 }
 
 @[export: 'vslim_psr6_cache_item_pool_new_raw']
@@ -1017,5 +1041,9 @@ pub fn (obj &VSlimPsr6CacheItemPool) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimPsr6CacheItemPool) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr6CacheItemPool](obj)
+}
+
+pub fn (val VSlimPsr6CacheItemPool) php_class_name() string {
+    return 'VSlim\\Psr6\\CacheItemPool'
 }
 

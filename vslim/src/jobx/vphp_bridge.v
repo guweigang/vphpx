@@ -132,6 +132,10 @@ pub fn (obj &VSlimJobDispatcher) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimJobDispatcher](obj)
 }
 
+pub fn (val VSlimJobDispatcher) php_class_name() string {
+    return 'VSlim\\Job\\Dispatcher'
+}
+
 @[export: 'vslim_job_worker_new_raw']
 pub fn vslim_job_worker_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimJobWorker]()
@@ -299,5 +303,9 @@ pub fn (obj &VSlimJobWorker) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimJobWorker) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimJobWorker](obj)
+}
+
+pub fn (val VSlimJobWorker) php_class_name() string {
+    return 'VSlim\\Job\\Worker'
 }
 

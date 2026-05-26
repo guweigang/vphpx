@@ -278,3 +278,7 @@ pub fn (obj &VSlimController) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimController](obj)
 }
 
+pub fn (val VSlimController) php_class_name() string {
+    return 'VSlim\\Controller'
+}
+

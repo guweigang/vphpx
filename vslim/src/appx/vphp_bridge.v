@@ -2131,3 +2131,7 @@ pub fn (obj &VSlimApp) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimApp](obj)
 }
 
+pub fn (val VSlimApp) php_class_name() string {
+    return 'VSlim\\App'
+}
+

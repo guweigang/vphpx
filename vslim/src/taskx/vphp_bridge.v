@@ -105,6 +105,10 @@ pub fn (obj &VSlimTask) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimTask](obj)
 }
 
+pub fn (val VSlimTask) php_class_name() string {
+    return 'VSlim\\Task'
+}
+
 @[export: 'vslim_task_handle_new_raw']
 pub fn vslim_task_handle_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimTaskHandle]()
@@ -190,5 +194,9 @@ pub fn (obj &VSlimTaskHandle) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimTaskHandle) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimTaskHandle](obj)
+}
+
+pub fn (val VSlimTaskHandle) php_class_name() string {
+    return 'VSlim\\TaskHandle'
 }
 

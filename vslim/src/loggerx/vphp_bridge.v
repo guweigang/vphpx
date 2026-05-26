@@ -588,6 +588,10 @@ pub fn (obj &VSlimLogger) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimLogger](obj)
 }
 
+pub fn (val VSlimLogger) php_class_name() string {
+    return 'VSlim\\Log\\Logger'
+}
+
 @[export: 'vslim_psr_logger_new_raw']
 pub fn vslim_psr_logger_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsrLogger]()
@@ -997,6 +1001,10 @@ pub fn (obj &VSlimPsrLogger) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsrLogger](obj)
 }
 
+pub fn (val VSlimPsrLogger) php_class_name() string {
+    return 'VSlim\\Log\\PsrLogger'
+}
+
 @[export: 'vslim_log_level_new_raw']
 pub fn vslim_log_level_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimLogLevel]()
@@ -1122,5 +1130,9 @@ pub fn (obj &VSlimLogLevel) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimLogLevel) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimLogLevel](obj)
+}
+
+pub fn (val VSlimLogLevel) php_class_name() string {
+    return 'VSlim\\Log\\Level'
 }
 

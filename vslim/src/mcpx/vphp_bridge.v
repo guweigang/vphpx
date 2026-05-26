@@ -615,3 +615,7 @@ pub fn (obj &VSlimMcpApp) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimMcpApp](obj)
 }
 
+pub fn (val VSlimMcpApp) php_class_name() string {
+    return 'VSlim\\Mcp\\App'
+}
+

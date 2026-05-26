@@ -339,3 +339,7 @@ pub fn (obj &VSlimWebSocketApp) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimWebSocketApp](obj)
 }
 
+pub fn (val VSlimWebSocketApp) php_class_name() string {
+    return 'VSlim\\WebSocket\\App'
+}
+

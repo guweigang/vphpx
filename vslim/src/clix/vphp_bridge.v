@@ -334,3 +334,7 @@ pub fn (obj &VSlimCliApp) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimCliApp](obj)
 }
 
+pub fn (val VSlimCliApp) php_class_name() string {
+    return 'VSlim\\Cli\\App'
+}
+

@@ -63,6 +63,11 @@ pub fn (b &VSlimModuleProbeBox) test_sumtype_echo(val VSlimModuleProbeSumType) V
 }
 
 @[php_method]
+pub fn (b &VSlimModuleProbeBox) test_variadic(sep string, args ...string) string {
+	return args.join(sep)
+}
+
+@[php_method]
 pub fn (b &VSlimModuleProbeBox) label() string {
 	return '${b.name}:${b.count}'
 }
@@ -75,6 +80,15 @@ pub fn VSlimModuleProbeBox.static_label() string {
 @[php_function: 'vslim_module_probe']
 pub fn module_probe_value() string {
 	return 'module-probe-ok'
+}
+
+@[php_function: 'vslim_module_probe_variadic']
+pub fn module_probe_variadic(args ...int) int {
+	mut sum := 0
+	for val in args {
+		sum += val
+	}
+	return sum
 }
 
 @[php_function: 'vslim_module_probe_options']

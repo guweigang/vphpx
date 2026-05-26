@@ -149,6 +149,10 @@ pub fn (obj &VSlimPsr14ListenerProvider) bind_owned_php_object_value() vphp.PhpV
     return vphp.bind_owned_object_value[VSlimPsr14ListenerProvider](obj)
 }
 
+pub fn (val VSlimPsr14ListenerProvider) php_class_name() string {
+    return 'VSlim\\Psr14\\ListenerProvider'
+}
+
 @[export: 'vslim_psr14_event_dispatcher_new_raw']
 pub fn vslim_psr14_event_dispatcher_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr14EventDispatcher]()
@@ -297,5 +301,9 @@ pub fn (obj &VSlimPsr14EventDispatcher) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimPsr14EventDispatcher) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr14EventDispatcher](obj)
+}
+
+pub fn (val VSlimPsr14EventDispatcher) php_class_name() string {
+    return 'VSlim\\Psr14\\EventDispatcher'
 }
 

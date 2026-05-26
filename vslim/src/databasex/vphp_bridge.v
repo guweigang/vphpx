@@ -326,6 +326,10 @@ pub fn (obj &VSlimDatabaseConfig) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimDatabaseConfig](obj)
 }
 
+pub fn (val VSlimDatabaseConfig) php_class_name() string {
+    return 'VSlim\\Database\\Config'
+}
+
 @[export: 'vslim_database_manager_new_raw']
 pub fn vslim_database_manager_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimDatabaseManager]()
@@ -687,6 +691,10 @@ pub fn (obj &VSlimDatabaseManager) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimDatabaseManager](obj)
 }
 
+pub fn (val VSlimDatabaseManager) php_class_name() string {
+    return 'VSlim\\Database\\Manager'
+}
+
 @[export: 'vslim_database_pending_result_new_raw']
 pub fn vslim_database_pending_result_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimDatabasePendingResult]()
@@ -804,6 +812,10 @@ pub fn (obj &VSlimDatabasePendingResult) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimDatabasePendingResult) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimDatabasePendingResult](obj)
+}
+
+pub fn (val VSlimDatabasePendingResult) php_class_name() string {
+    return 'VSlim\\Database\\PendingResult'
 }
 
 @[export: 'vslim_database_query_new_raw']
@@ -1089,6 +1101,10 @@ pub fn (obj &VSlimDatabaseQuery) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimDatabaseQuery](obj)
 }
 
+pub fn (val VSlimDatabaseQuery) php_class_name() string {
+    return 'VSlim\\Database\\Query'
+}
+
 @[export: 'vslim_database_model_new_raw']
 pub fn vslim_database_model_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimDatabaseModel]()
@@ -1366,6 +1382,10 @@ pub fn (obj &VSlimDatabaseModel) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimDatabaseModel) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimDatabaseModel](obj)
+}
+
+pub fn (val VSlimDatabaseModel) php_class_name() string {
+    return 'VSlim\\Database\\Model'
 }
 
 @[export: 'vslim_database_migration_new_raw']
@@ -1675,6 +1695,10 @@ pub fn (obj &VSlimDatabaseMigration) bind_owned_php_object_value() vphp.PhpValue
     return vphp.bind_owned_object_value[VSlimDatabaseMigration](obj)
 }
 
+pub fn (val VSlimDatabaseMigration) php_class_name() string {
+    return 'VSlim\\Database\\Migration'
+}
+
 @[export: 'vslim_database_seeder_new_raw']
 pub fn vslim_database_seeder_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimDatabaseSeeder]()
@@ -1812,6 +1836,10 @@ pub fn (obj &VSlimDatabaseSeeder) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimDatabaseSeeder) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimDatabaseSeeder](obj)
+}
+
+pub fn (val VSlimDatabaseSeeder) php_class_name() string {
+    return 'VSlim\\Database\\Seeder'
 }
 
 @[export: 'vslim_database_migrator_new_raw']
@@ -2051,5 +2079,9 @@ pub fn (obj &VSlimDatabaseMigrator) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimDatabaseMigrator) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimDatabaseMigrator](obj)
+}
+
+pub fn (val VSlimDatabaseMigrator) php_class_name() string {
+    return 'VSlim\\Database\\Migrator'
 }
 

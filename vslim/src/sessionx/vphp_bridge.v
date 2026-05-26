@@ -454,6 +454,10 @@ pub fn (obj &VSlimSessionStore) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimSessionStore](obj)
 }
 
+pub fn (val VSlimSessionStore) php_class_name() string {
+    return 'VSlim\\Session\\Store'
+}
+
 @[export: 'vslim_auth_session_guard_new_raw']
 pub fn vslim_auth_session_guard_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimAuthSessionGuard]()
@@ -629,6 +633,10 @@ pub fn (obj &VSlimAuthSessionGuard) bind_owned_php_object_value() vphp.PhpValue 
     return vphp.bind_owned_object_value[VSlimAuthSessionGuard](obj)
 }
 
+pub fn (val VSlimAuthSessionGuard) php_class_name() string {
+    return 'VSlim\\Auth\\SessionGuard'
+}
+
 @[export: 'vslim_session_start_middleware_new_raw']
 pub fn vslim_session_start_middleware_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimSessionStartMiddleware]()
@@ -754,6 +762,10 @@ pub fn (obj &VSlimSessionStartMiddleware) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimSessionStartMiddleware) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimSessionStartMiddleware](obj)
+}
+
+pub fn (val VSlimSessionStartMiddleware) php_class_name() string {
+    return 'VSlim\\Session\\StartMiddleware'
 }
 
 @[export: 'vslim_auth_require_middleware_new_raw']
@@ -903,6 +915,10 @@ pub fn (obj &VSlimAuthRequireMiddleware) bind_owned_php_object_value() vphp.PhpV
     return vphp.bind_owned_object_value[VSlimAuthRequireMiddleware](obj)
 }
 
+pub fn (val VSlimAuthRequireMiddleware) php_class_name() string {
+    return 'VSlim\\Auth\\RequireAuthMiddleware'
+}
+
 @[export: 'vslim_auth_guest_middleware_new_raw']
 pub fn vslim_auth_guest_middleware_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimAuthGuestMiddleware]()
@@ -1048,6 +1064,10 @@ pub fn (obj &VSlimAuthGuestMiddleware) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimAuthGuestMiddleware) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimAuthGuestMiddleware](obj)
+}
+
+pub fn (val VSlimAuthGuestMiddleware) php_class_name() string {
+    return 'VSlim\\Auth\\GuestMiddleware'
 }
 
 @[export: 'vslim_auth_require_ability_middleware_new_raw']
@@ -1235,5 +1255,9 @@ pub fn (obj &VSlimAuthRequireAbilityMiddleware) bind_owned_php_object() vphp.ZVa
 
 pub fn (obj &VSlimAuthRequireAbilityMiddleware) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimAuthRequireAbilityMiddleware](obj)
+}
+
+pub fn (val VSlimAuthRequireAbilityMiddleware) php_class_name() string {
+    return 'VSlim\\Auth\\RequireAbilityMiddleware'
 }
 
