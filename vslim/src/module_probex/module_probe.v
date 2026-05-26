@@ -23,6 +23,7 @@ pub:
 const module_probe_constant = 'module-constant-ok'
 
 pub type VSlimModuleProbeSum = int | string
+pub type VSlimModuleProbeSumType = int | VSlimModuleProbeReadOnlyBox | VSlimModuleProbeKind
 
 @[php_class: 'VSlim\\Compiler\\ModuleProbeReadOnlyBox']
 pub struct VSlimModuleProbeReadOnlyBox {
@@ -54,6 +55,11 @@ pub fn (b &VSlimModuleProbeBox) test_sumtype(val VSlimModuleProbeSum) VSlimModul
 @[php_method]
 pub fn (b &VSlimModuleProbeBox) test_enum_echo(kind VSlimModuleProbeKind) VSlimModuleProbeKind {
 	return kind
+}
+
+@[php_method]
+pub fn (b &VSlimModuleProbeBox) test_sumtype_echo(val VSlimModuleProbeSumType) VSlimModuleProbeSumType {
+	return val
 }
 
 @[php_method]
