@@ -9,3 +9,4 @@ vslim/tests/*.log
 vslim/tests/*.out
 .idea/
 vendor
+scratch
