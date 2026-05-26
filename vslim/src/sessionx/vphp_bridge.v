@@ -510,7 +510,11 @@ pub fn vphp_wrap_vslim_auth_session_guard_set_store(ptr voidptr, ctx vphp.Contex
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'store', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &sessionx.VSlimSessionStore(php_args.at_named_or_index(0, 'store').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'store').to_v_ptr[sessionx.VSlimSessionStore]() or {
+        vphp.throw_exception('argument 0 must be object bound to sessionx.VSlimSessionStore, got ' + php_args.at_named_or_index(0, 'store').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &sessionx.VSlimSessionStore(arg_0_ptr) }
     res := recv.set_store(arg_0)
     return voidptr(res)
 }
@@ -689,7 +693,11 @@ pub fn vphp_wrap_vslim_session_start_middleware_set_container(ptr voidptr, ctx v
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'container', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &containerx.VSlimContainer(php_args.at_named_or_index(0, 'container').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
+        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
     return voidptr(res)
 }
@@ -820,7 +828,11 @@ pub fn vphp_wrap_vslim_auth_require_middleware_set_container(ptr voidptr, ctx vp
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'container', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &containerx.VSlimContainer(php_args.at_named_or_index(0, 'container').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
+        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
     return voidptr(res)
 }
@@ -971,7 +983,11 @@ pub fn vphp_wrap_vslim_auth_guest_middleware_set_container(ptr voidptr, ctx vphp
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'container', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &containerx.VSlimContainer(php_args.at_named_or_index(0, 'container').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
+        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
     return voidptr(res)
 }
@@ -1122,7 +1138,11 @@ pub fn vphp_wrap_vslim_auth_require_ability_middleware_set_container(ptr voidptr
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'container', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &containerx.VSlimContainer(php_args.at_named_or_index(0, 'container').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
+        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
     return voidptr(res)
 }

@@ -68,6 +68,11 @@ pub fn (b &VSlimModuleProbeBox) test_variadic(sep string, args ...string) string
 }
 
 @[php_method]
+pub fn (b &VSlimModuleProbeBox) test_struct_param(box &VSlimModuleProbeReadOnlyBox) string {
+	return box.title
+}
+
+@[php_method]
 pub fn (b &VSlimModuleProbeBox) label() string {
 	return '${b.name}:${b.count}'
 }

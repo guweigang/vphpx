@@ -214,6 +214,22 @@ pub fn vphp_wrap_vslim_module_probe_box_test_variadic(ptr voidptr, ctx vphp.Cont
     res := recv.test_variadic(arg_0, ...arg_1)
     ctx.return().v[string](res)
 }
+@[export: 'vphp_wrap_vslim_module_probe_box_test_struct_param']
+pub fn vphp_wrap_vslim_module_probe_box_test_struct_param(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimModuleProbeBox(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'box', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0_ptr := php_args.at_named_or_index(0, 'box').to_v_ptr[module_probex.VSlimModuleProbeReadOnlyBox]() or {
+        vphp.throw_exception('argument 0 must be object bound to module_probex.VSlimModuleProbeReadOnlyBox, got ' + php_args.at_named_or_index(0, 'box').zval().type_name(), 0)
+        return
+    }
+    arg_0 := unsafe { &module_probex.VSlimModuleProbeReadOnlyBox(arg_0_ptr) }
+    res := recv.test_struct_param(arg_0)
+    ctx.return().v[string](res)
+}
 @[export: 'vphp_wrap_vslim_module_probe_box_label']
 pub fn vphp_wrap_vslim_module_probe_box_label(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimModuleProbeBox(ptr) }
@@ -727,7 +743,11 @@ pub fn vphp_wrap_vslim_php_signature_probe_set_provider(ptr voidptr, ctx vphp.Co
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'provider', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &eventx.VSlimPsr14ListenerProvider(php_args.at_named_or_index(0, 'provider').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'provider').to_v_ptr[eventx.VSlimPsr14ListenerProvider]() or {
+        vphp.throw_exception('argument 0 must be object bound to eventx.VSlimPsr14ListenerProvider, got ' + php_args.at_named_or_index(0, 'provider').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &eventx.VSlimPsr14ListenerProvider(arg_0_ptr) }
     res := recv.set_provider(arg_0)
     return voidptr(res)
 }

@@ -564,7 +564,11 @@ pub fn vphp_wrap_vslim_database_manager_set_config(ptr voidptr, ctx vphp.Context
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'config', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &databasex.VSlimDatabaseConfig(php_args.at_named_or_index(0, 'config').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'config').to_v_ptr[databasex.VSlimDatabaseConfig]() or {
+        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseConfig, got ' + php_args.at_named_or_index(0, 'config').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &databasex.VSlimDatabaseConfig(arg_0_ptr) }
     res := recv.set_config(arg_0)
     return voidptr(res)
 }
@@ -870,7 +874,11 @@ pub fn vphp_wrap_vslim_database_query_set_manager(ptr voidptr, ctx vphp.Context)
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'manager', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(php_args.at_named_or_index(0, 'manager').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
+        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -1157,7 +1165,11 @@ pub fn vphp_wrap_vslim_database_model_set_manager(ptr voidptr, ctx vphp.Context)
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'manager', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(php_args.at_named_or_index(0, 'manager').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
+        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -1440,7 +1452,11 @@ pub fn vphp_wrap_vslim_database_migration_set_manager(ptr voidptr, ctx vphp.Cont
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'manager', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(php_args.at_named_or_index(0, 'manager').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
+        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -1751,7 +1767,11 @@ pub fn vphp_wrap_vslim_database_seeder_set_manager(ptr voidptr, ctx vphp.Context
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'manager', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(php_args.at_named_or_index(0, 'manager').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
+        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -1894,7 +1914,11 @@ pub fn vphp_wrap_vslim_database_migrator_set_manager(ptr voidptr, ctx vphp.Conte
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'manager', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(php_args.at_named_or_index(0, 'manager').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
+        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }

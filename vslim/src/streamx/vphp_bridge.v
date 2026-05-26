@@ -603,7 +603,11 @@ pub fn vphp_wrap_vslim_stream_ollama_client_from_config(ctx vphp.Context) voidpt
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'config', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &configx.VSlimConfig(php_args.at_named_or_index(0, 'config').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'config').to_v_ptr[configx.VSlimConfig]() or {
+        vphp.throw_exception('argument 0 must be object bound to configx.VSlimConfig, got ' + php_args.at_named_or_index(0, 'config').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &configx.VSlimConfig(arg_0_ptr) }
     res := VSlimStreamOllamaClient.from_config(arg_0)
     return voidptr(res)
 }
