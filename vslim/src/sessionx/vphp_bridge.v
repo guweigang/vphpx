@@ -454,6 +454,10 @@ pub fn (obj &VSlimSessionStore) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimSessionStore](obj)
 }
 
+pub fn (val VSlimSessionStore) php_class_name() string {
+    return 'VSlim\\Session\\Store'
+}
+
 @[export: 'vslim_auth_session_guard_new_raw']
 pub fn vslim_auth_session_guard_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimAuthSessionGuard]()
@@ -506,7 +510,11 @@ pub fn vphp_wrap_vslim_auth_session_guard_set_store(ptr voidptr, ctx vphp.Contex
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'store', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &sessionx.VSlimSessionStore(php_args.at_named_or_index(0, 'store').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'store').to_v_ptr[sessionx.VSlimSessionStore]() or {
+        vphp.throw_exception('argument 0 must be object bound to sessionx.VSlimSessionStore, got ' + php_args.at_named_or_index(0, 'store').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &sessionx.VSlimSessionStore(arg_0_ptr) }
     res := recv.set_store(arg_0)
     return voidptr(res)
 }
@@ -629,6 +637,10 @@ pub fn (obj &VSlimAuthSessionGuard) bind_owned_php_object_value() vphp.PhpValue 
     return vphp.bind_owned_object_value[VSlimAuthSessionGuard](obj)
 }
 
+pub fn (val VSlimAuthSessionGuard) php_class_name() string {
+    return 'VSlim\\Auth\\SessionGuard'
+}
+
 @[export: 'vslim_session_start_middleware_new_raw']
 pub fn vslim_session_start_middleware_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimSessionStartMiddleware]()
@@ -681,7 +693,11 @@ pub fn vphp_wrap_vslim_session_start_middleware_set_container(ptr voidptr, ctx v
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'container', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &containerx.VSlimContainer(php_args.at_named_or_index(0, 'container').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
+        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
     return voidptr(res)
 }
@@ -756,6 +772,10 @@ pub fn (obj &VSlimSessionStartMiddleware) bind_owned_php_object_value() vphp.Php
     return vphp.bind_owned_object_value[VSlimSessionStartMiddleware](obj)
 }
 
+pub fn (val VSlimSessionStartMiddleware) php_class_name() string {
+    return 'VSlim\\Session\\StartMiddleware'
+}
+
 @[export: 'vslim_auth_require_middleware_new_raw']
 pub fn vslim_auth_require_middleware_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimAuthRequireMiddleware]()
@@ -808,7 +828,11 @@ pub fn vphp_wrap_vslim_auth_require_middleware_set_container(ptr voidptr, ctx vp
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'container', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &containerx.VSlimContainer(php_args.at_named_or_index(0, 'container').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
+        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
     return voidptr(res)
 }
@@ -903,6 +927,10 @@ pub fn (obj &VSlimAuthRequireMiddleware) bind_owned_php_object_value() vphp.PhpV
     return vphp.bind_owned_object_value[VSlimAuthRequireMiddleware](obj)
 }
 
+pub fn (val VSlimAuthRequireMiddleware) php_class_name() string {
+    return 'VSlim\\Auth\\RequireAuthMiddleware'
+}
+
 @[export: 'vslim_auth_guest_middleware_new_raw']
 pub fn vslim_auth_guest_middleware_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimAuthGuestMiddleware]()
@@ -955,7 +983,11 @@ pub fn vphp_wrap_vslim_auth_guest_middleware_set_container(ptr voidptr, ctx vphp
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'container', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &containerx.VSlimContainer(php_args.at_named_or_index(0, 'container').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
+        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
     return voidptr(res)
 }
@@ -1050,6 +1082,10 @@ pub fn (obj &VSlimAuthGuestMiddleware) bind_owned_php_object_value() vphp.PhpVal
     return vphp.bind_owned_object_value[VSlimAuthGuestMiddleware](obj)
 }
 
+pub fn (val VSlimAuthGuestMiddleware) php_class_name() string {
+    return 'VSlim\\Auth\\GuestMiddleware'
+}
+
 @[export: 'vslim_auth_require_ability_middleware_new_raw']
 pub fn vslim_auth_require_ability_middleware_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimAuthRequireAbilityMiddleware]()
@@ -1102,7 +1138,11 @@ pub fn vphp_wrap_vslim_auth_require_ability_middleware_set_container(ptr voidptr
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'container', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &containerx.VSlimContainer(php_args.at_named_or_index(0, 'container').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
+        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
     return voidptr(res)
 }
@@ -1235,5 +1275,9 @@ pub fn (obj &VSlimAuthRequireAbilityMiddleware) bind_owned_php_object() vphp.ZVa
 
 pub fn (obj &VSlimAuthRequireAbilityMiddleware) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimAuthRequireAbilityMiddleware](obj)
+}
+
+pub fn (val VSlimAuthRequireAbilityMiddleware) php_class_name() string {
+    return 'VSlim\\Auth\\RequireAbilityMiddleware'
 }
 

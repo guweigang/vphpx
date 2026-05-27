@@ -302,6 +302,10 @@ pub fn (obj &VSlimStreamResponse) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimStreamResponse](obj)
 }
 
+pub fn (val VSlimStreamResponse) php_class_name() string {
+    return 'VSlim\\Stream\\Response'
+}
+
 @[export: 'vslim_stream_ndjson_decoder_new_raw']
 pub fn vslim_stream_ndjson_decoder_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimStreamNdjsonDecoder]()
@@ -386,6 +390,10 @@ pub fn (obj &VSlimStreamNdjsonDecoder) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimStreamNdjsonDecoder) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimStreamNdjsonDecoder](obj)
+}
+
+pub fn (val VSlimStreamNdjsonDecoder) php_class_name() string {
+    return 'VSlim\\Stream\\NdjsonDecoder'
 }
 
 @[export: 'vslim_stream_sse_encoder_new_raw']
@@ -477,6 +485,10 @@ pub fn (obj &VSlimStreamSseEncoder) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimStreamSseEncoder) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimStreamSseEncoder](obj)
+}
+
+pub fn (val VSlimStreamSseEncoder) php_class_name() string {
+    return 'VSlim\\Stream\\SseEncoder'
 }
 
 @[export: 'vslim_stream_ollama_client_new_raw']
@@ -591,7 +603,11 @@ pub fn vphp_wrap_vslim_stream_ollama_client_from_config(ctx vphp.Context) voidpt
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'config', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &configx.VSlimConfig(php_args.at_named_or_index(0, 'config').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'config').to_v_ptr[configx.VSlimConfig]() or {
+        vphp.throw_exception('argument 0 must be object bound to configx.VSlimConfig, got ' + php_args.at_named_or_index(0, 'config').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &configx.VSlimConfig(arg_0_ptr) }
     res := VSlimStreamOllamaClient.from_config(arg_0)
     return voidptr(res)
 }
@@ -810,6 +826,10 @@ pub fn (obj &VSlimStreamOllamaClient) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimStreamOllamaClient) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimStreamOllamaClient](obj)
+}
+
+pub fn (val VSlimStreamOllamaClient) php_class_name() string {
+    return 'VSlim\\Stream\\OllamaClient'
 }
 
 @[export: 'vslim_stream_factory_new_raw']
@@ -1039,5 +1059,9 @@ pub fn (obj &VSlimStreamFactory) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimStreamFactory) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimStreamFactory](obj)
+}
+
+pub fn (val VSlimStreamFactory) php_class_name() string {
+    return 'VSlim\\Stream\\Factory'
 }
 

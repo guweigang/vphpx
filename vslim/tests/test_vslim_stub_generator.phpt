@@ -57,7 +57,7 @@ var_dump(str_contains($stub, 'public function setDriver(string $driver): \VSlim\
 var_dump(!str_contains($stub, 'public function set_driver('));
 var_dump(str_contains($stub, 'public function setHeader(string $name, string $value): \VSlim\VHttpd\Response {}'));
 var_dump(str_contains($stub, 'public function cookieHeader(): string {}'));
-var_dump(str_contains($stub, 'public $rawPath;'));
+var_dump(str_contains($stub, 'public string $rawPath;'));
 var_dump(!str_contains($stub, 'public $raw_path;'));
 var_dump(!str_contains($vhttpdRequestStub, 'public $path;'));
 var_dump(!str_contains($vhttpdRequestStub, 'public $queryString;'));
@@ -67,11 +67,11 @@ var_dump(str_contains($stub, 'public function setHeaders(array $headers): \VSlim
 var_dump(str_contains($stub, 'public function setAttributes(array $attributes): \VSlim\VHttpd\Request {}'));
 var_dump(str_contains($stub, 'public function setQuery(array $query): \VSlim\VHttpd\Request {}'));
 var_dump(str_contains($stub, 'public function setUploadedFiles(array $uploadedFiles): \VSlim\VHttpd\Request {}'));
-var_dump(str_contains($stub, 'public $protocolVersion;'));
+var_dump(str_contains($stub, 'public string $protocolVersion;'));
 var_dump(!str_contains($stub, 'public $protocol_version;'));
-var_dump(str_contains($stub, 'public $contentType;'));
+var_dump(str_contains($stub, 'public string $contentType;'));
 var_dump(!str_contains($stub, 'public $content_type;'));
-var_dump(str_contains($stub, 'public $streamType;'));
+var_dump(str_contains($stub, 'public string $streamType;'));
 var_dump(!str_contains($stub, 'public $stream_type;'));
 var_dump(str_contains($stub, 'public function withUri(\Psr\Http\Message\UriInterface $uri, bool $preserveHost = false): \Psr\Http\Message\RequestInterface {}'));
 var_dump(str_contains($stub, 'public function withUri(\Psr\Http\Message\UriInterface $uri, bool $preserveHost = false): \Psr\Http\Message\ServerRequestInterface {}'));
@@ -84,7 +84,7 @@ var_dump(str_contains($stub, 'public function createStream(string $content = \'\
 var_dump(str_contains($stub, 'public function createStreamFromFile(string $filename, string $mode = \'r\'): \Psr\Http\Message\StreamInterface {}'));
 var_dump(str_contains($stub, 'public function createUploadedFile(\Psr\Http\Message\StreamInterface $stream, ?int $size = null, int $error = UPLOAD_ERR_OK, ?string $clientFilename = null, ?string $clientMediaType = null): \Psr\Http\Message\UploadedFileInterface {}'));
 var_dump(str_contains($stub, 'public function createUri(string $uri = \'\'): \Psr\Http\Message\UriInterface {}'));
-var_dump(str_contains($stub, "public const DEBUG = 'debug';"));
+var_dump(str_contains($stub, "public const string DEBUG = 'debug';"));
 
 @unlink($stubPath);
 ?>

@@ -326,6 +326,10 @@ pub fn (obj &VSlimDatabaseConfig) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimDatabaseConfig](obj)
 }
 
+pub fn (val VSlimDatabaseConfig) php_class_name() string {
+    return 'VSlim\\Database\\Config'
+}
+
 @[export: 'vslim_database_manager_new_raw']
 pub fn vslim_database_manager_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimDatabaseManager]()
@@ -560,7 +564,11 @@ pub fn vphp_wrap_vslim_database_manager_set_config(ptr voidptr, ctx vphp.Context
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'config', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &databasex.VSlimDatabaseConfig(php_args.at_named_or_index(0, 'config').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'config').to_v_ptr[databasex.VSlimDatabaseConfig]() or {
+        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseConfig, got ' + php_args.at_named_or_index(0, 'config').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &databasex.VSlimDatabaseConfig(arg_0_ptr) }
     res := recv.set_config(arg_0)
     return voidptr(res)
 }
@@ -687,6 +695,10 @@ pub fn (obj &VSlimDatabaseManager) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimDatabaseManager](obj)
 }
 
+pub fn (val VSlimDatabaseManager) php_class_name() string {
+    return 'VSlim\\Database\\Manager'
+}
+
 @[export: 'vslim_database_pending_result_new_raw']
 pub fn vslim_database_pending_result_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimDatabasePendingResult]()
@@ -806,6 +818,10 @@ pub fn (obj &VSlimDatabasePendingResult) bind_owned_php_object_value() vphp.PhpV
     return vphp.bind_owned_object_value[VSlimDatabasePendingResult](obj)
 }
 
+pub fn (val VSlimDatabasePendingResult) php_class_name() string {
+    return 'VSlim\\Database\\PendingResult'
+}
+
 @[export: 'vslim_database_query_new_raw']
 pub fn vslim_database_query_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimDatabaseQuery]()
@@ -858,7 +874,11 @@ pub fn vphp_wrap_vslim_database_query_set_manager(ptr voidptr, ctx vphp.Context)
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'manager', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(php_args.at_named_or_index(0, 'manager').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
+        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -1089,6 +1109,10 @@ pub fn (obj &VSlimDatabaseQuery) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimDatabaseQuery](obj)
 }
 
+pub fn (val VSlimDatabaseQuery) php_class_name() string {
+    return 'VSlim\\Database\\Query'
+}
+
 @[export: 'vslim_database_model_new_raw']
 pub fn vslim_database_model_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimDatabaseModel]()
@@ -1141,7 +1165,11 @@ pub fn vphp_wrap_vslim_database_model_set_manager(ptr voidptr, ctx vphp.Context)
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'manager', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(php_args.at_named_or_index(0, 'manager').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
+        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -1368,6 +1396,10 @@ pub fn (obj &VSlimDatabaseModel) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimDatabaseModel](obj)
 }
 
+pub fn (val VSlimDatabaseModel) php_class_name() string {
+    return 'VSlim\\Database\\Model'
+}
+
 @[export: 'vslim_database_migration_new_raw']
 pub fn vslim_database_migration_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimDatabaseMigration]()
@@ -1420,7 +1452,11 @@ pub fn vphp_wrap_vslim_database_migration_set_manager(ptr voidptr, ctx vphp.Cont
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'manager', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(php_args.at_named_or_index(0, 'manager').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
+        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -1675,6 +1711,10 @@ pub fn (obj &VSlimDatabaseMigration) bind_owned_php_object_value() vphp.PhpValue
     return vphp.bind_owned_object_value[VSlimDatabaseMigration](obj)
 }
 
+pub fn (val VSlimDatabaseMigration) php_class_name() string {
+    return 'VSlim\\Database\\Migration'
+}
+
 @[export: 'vslim_database_seeder_new_raw']
 pub fn vslim_database_seeder_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimDatabaseSeeder]()
@@ -1727,7 +1767,11 @@ pub fn vphp_wrap_vslim_database_seeder_set_manager(ptr voidptr, ctx vphp.Context
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'manager', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(php_args.at_named_or_index(0, 'manager').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
+        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -1814,6 +1858,10 @@ pub fn (obj &VSlimDatabaseSeeder) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimDatabaseSeeder](obj)
 }
 
+pub fn (val VSlimDatabaseSeeder) php_class_name() string {
+    return 'VSlim\\Database\\Seeder'
+}
+
 @[export: 'vslim_database_migrator_new_raw']
 pub fn vslim_database_migrator_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimDatabaseMigrator]()
@@ -1866,7 +1914,11 @@ pub fn vphp_wrap_vslim_database_migrator_set_manager(ptr voidptr, ctx vphp.Conte
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'manager', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(php_args.at_named_or_index(0, 'manager').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
+        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -2051,5 +2103,9 @@ pub fn (obj &VSlimDatabaseMigrator) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimDatabaseMigrator) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimDatabaseMigrator](obj)
+}
+
+pub fn (val VSlimDatabaseMigrator) php_class_name() string {
+    return 'VSlim\\Database\\Migrator'
 }
 

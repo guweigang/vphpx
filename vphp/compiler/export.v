@@ -11,6 +11,7 @@ fn (c Compiler) collect_non_type_fragments() builder.ExportFragments {
 		ext_name:          c.ext_name
 		class_ce_by_type:  c.class_ce_map()
 		class_php_by_type: c.class_php_map()
+		table:             c.table
 	}
 
 	for el in c.elements {
@@ -32,6 +33,7 @@ fn (c Compiler) collect_type_fragments() builder.ExportFragments {
 		ext_name:          c.ext_name
 		class_ce_by_type:  c.class_ce_map()
 		class_php_by_type: c.class_php_map()
+		table:             c.table
 	}
 
 	for el in c.elements {
@@ -156,6 +158,7 @@ fn (mut c Compiler) generate_v_glue() ! {
 		ext_name:       c.ext_name
 		globals_repr:   c.globals_repr
 		params_structs: c.params_structs
+		table:          c.table
 	}
 	v_code := v_glue.generate(mut c.elements)
 	os.write_file(c.bridge_output_path(), v_code)!
@@ -205,6 +208,7 @@ fn (c Compiler) generate_module_glue_files(v_glue VGenerator) ! {
 	module_dirs := c.module_dirs()
 	mut classes_by_module := map[string][]repr.PhpClassRepr{}
 	mut funcs_by_module := map[string][]repr.PhpFuncRepr{}
+	mut enums_by_module := map[string][]repr.PhpEnumRepr{}
 	for el in c.elements {
 		if el is repr.PhpClassRepr {
 			if el.is_trait || el.module_name == '' || el.module_name == 'main' {
@@ -216,6 +220,11 @@ fn (c Compiler) generate_module_glue_files(v_glue VGenerator) ! {
 				continue
 			}
 			funcs_by_module[el.module_name] << el
+		} else if el is repr.PhpEnumRepr {
+			if el.module_name == '' || el.module_name == 'main' {
+				continue
+			}
+			enums_by_module[el.module_name] << el
 		}
 	}
 	// 合并所有需要生成 glue 的模块
@@ -226,9 +235,13 @@ fn (c Compiler) generate_module_glue_files(v_glue VGenerator) ! {
 	for m, _ in funcs_by_module {
 		all_modules[m] = true
 	}
+	for m, _ in enums_by_module {
+		all_modules[m] = true
+	}
 	for module_name, _ in all_modules {
 		classes := classes_by_module[module_name] or { []repr.PhpClassRepr{} }
 		funcs := funcs_by_module[module_name] or { []repr.PhpFuncRepr{} }
+		enums := enums_by_module[module_name] or { []repr.PhpEnumRepr{} }
 		module_dir := module_dirs[module_name] or { continue }
 		mut out := strings.new_builder(1024)
 		out.write_string('module ${module_name}\n\n')
@@ -249,10 +262,18 @@ fn (c Compiler) generate_module_glue_files(v_glue VGenerator) ! {
 		for class in classes {
 			out.write_string(v_glue.gen_class_glue_for_module(class, module_name).join('\n'))
 			out.write_string('\n\n')
+			out.write_string('pub fn (val ${class.name}) php_class_name() string {\n')
+			out.write_string('    return \'${class.php_name.replace("\'", "\\\'")}\'\n')
+			out.write_string('}\n\n')
 		}
 		for func in funcs {
 			out.write_string(v_glue.gen_func_glue_for_module(func, module_name).join('\n'))
 			out.write_string('\n\n')
+		}
+		for enum_el in enums {
+			out.write_string('pub fn (val ${enum_el.name}) php_class_name() string {\n')
+			out.write_string('    return \'${enum_el.php_name.replace("\'", "\\\'")}\'\n')
+			out.write_string('}\n\n')
 		}
 		os.write_file(os.join_path(module_dir, 'vphp_bridge.v'), out.str())!
 	}
@@ -321,6 +342,9 @@ fn (mut c Compiler) generate_h() ! {
 	res.write_string('#include <Zend/zend_attributes.h>\n')
 	res.write_string('#include <Zend/zend_enum.h>\n')
 	res.write_string('#include <ext/standard/info.h>\n\n')
+	res.write_string('#ifndef ZEND_ACC_READONLY_CLASS\n')
+	res.write_string('#define ZEND_ACC_READONLY_CLASS 0\n')
+	res.write_string('#endif\n\n')
 
 	// 3. 写入扩展模块入口声明
 	res.write_string('extern zend_module_entry ${c.ext_name}_module_entry;\n')

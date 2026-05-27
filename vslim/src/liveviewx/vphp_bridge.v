@@ -322,6 +322,10 @@ pub fn (obj &VSlimLiveForm) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimLiveForm](obj)
 }
 
+pub fn (val VSlimLiveForm) php_class_name() string {
+    return 'VSlim\\Live\\Form'
+}
+
 @[export: 'vslim_live_view_new_raw']
 pub fn vslim_live_view_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimLiveView]()
@@ -374,7 +378,11 @@ pub fn vphp_wrap_vslim_live_view_set_container(ptr voidptr, ctx vphp.Context) vo
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'container', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &containerx.VSlimContainer(php_args.at_named_or_index(0, 'container').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
+        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
     return voidptr(res)
 }
@@ -386,7 +394,11 @@ pub fn vphp_wrap_vslim_live_view_set_view(ptr voidptr, ctx vphp.Context) voidptr
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'view', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &viewx.VSlimView(php_args.at_named_or_index(0, 'view').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'view').to_v_ptr[viewx.VSlimView]() or {
+        vphp.throw_exception('argument 0 must be object bound to viewx.VSlimView, got ' + php_args.at_named_or_index(0, 'view').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &viewx.VSlimView(arg_0_ptr) }
     res := recv.set_view(arg_0)
     return voidptr(res)
 }
@@ -511,7 +523,11 @@ pub fn vphp_wrap_vslim_live_view_bootstrap_attrs(ptr voidptr, ctx vphp.Context) 
         vphp.PhpArgMeta{ index: 0, name: 'socket', attributes: []vphp.PhpAttribute{} },
         vphp.PhpArgMeta{ index: 1, name: 'endpoint', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(php_args.at_named_or_index(0, 'socket').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
+        vphp.throw_exception('argument 0 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(0, 'socket').zval().type_name(), 0)
+        return
+    }
+    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(arg_0_ptr) }
     arg_1 := php_args.at_named_or_index(1, 'endpoint').as_v[string]()
     res := recv.bootstrap_attrs(arg_0, arg_1)
     ctx.return().v[string](res)
@@ -556,7 +572,11 @@ pub fn vphp_wrap_vslim_live_view_render_socket(ptr voidptr, ctx vphp.Context)  {
         vphp.PhpArgMeta{ index: 1, name: 'socket', attributes: []vphp.PhpAttribute{} },
     ])
     arg_0 := php_args.at_named_or_index(0, 'template').as_v[string]()
-    arg_1 := unsafe { &liveviewx.VSlimLiveSocket(php_args.at_named_or_index(1, 'socket').raw_obj()) }
+    arg_1_ptr := php_args.at_named_or_index(1, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
+        vphp.throw_exception('argument 1 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(1, 'socket').zval().type_name(), 0)
+        return
+    }
+    arg_1 := unsafe { &liveviewx.VSlimLiveSocket(arg_1_ptr) }
     res := recv.render_socket(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -572,7 +592,11 @@ pub fn vphp_wrap_vslim_live_view_render_socket_with_layout(ptr voidptr, ctx vphp
     ])
     arg_0 := php_args.at_named_or_index(0, 'template').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'layout').as_v[string]()
-    arg_2 := unsafe { &liveviewx.VSlimLiveSocket(php_args.at_named_or_index(2, 'socket').raw_obj()) }
+    arg_2_ptr := php_args.at_named_or_index(2, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
+        vphp.throw_exception('argument 2 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(2, 'socket').zval().type_name(), 0)
+        return
+    }
+    arg_2 := unsafe { &liveviewx.VSlimLiveSocket(arg_2_ptr) }
     res := recv.render_socket_with_layout(arg_0, arg_1, arg_2)
     ctx.return().v[string](res)
 }
@@ -584,7 +608,11 @@ pub fn vphp_wrap_vslim_live_view_html(ptr voidptr, ctx vphp.Context)  {
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'socket', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(php_args.at_named_or_index(0, 'socket').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
+        vphp.throw_exception('argument 0 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(0, 'socket').zval().type_name(), 0)
+        return
+    }
+    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(arg_0_ptr) }
     res := recv.html(arg_0)
     ctx.return().v[string](res)
 }
@@ -596,7 +624,11 @@ pub fn vphp_wrap_vslim_live_view_response(ptr voidptr, ctx vphp.Context) voidptr
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'socket', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(php_args.at_named_or_index(0, 'socket').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
+        vphp.throw_exception('argument 0 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(0, 'socket').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(arg_0_ptr) }
     res := recv.response(arg_0)
     return voidptr(res)
 }
@@ -609,7 +641,11 @@ pub fn vphp_wrap_vslim_live_view_patch(ptr voidptr, ctx vphp.Context) voidptr {
         vphp.PhpArgMeta{ index: 0, name: 'socket', attributes: []vphp.PhpAttribute{} },
         vphp.PhpArgMeta{ index: 1, name: 'targetId', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(php_args.at_named_or_index(0, 'socket').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
+        vphp.throw_exception('argument 0 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(0, 'socket').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(arg_0_ptr) }
     arg_1 := php_args.at_named_or_index(1, 'targetId').as_v[string]()
     res := recv.patch(arg_0, arg_1)
     return voidptr(res)
@@ -624,7 +660,11 @@ pub fn vphp_wrap_vslim_live_view_patch_template(ptr voidptr, ctx vphp.Context) v
         vphp.PhpArgMeta{ index: 1, name: 'targetId', attributes: []vphp.PhpAttribute{} },
         vphp.PhpArgMeta{ index: 2, name: 'template', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(php_args.at_named_or_index(0, 'socket').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
+        vphp.throw_exception('argument 0 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(0, 'socket').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(arg_0_ptr) }
     arg_1 := php_args.at_named_or_index(1, 'targetId').as_v[string]()
     arg_2 := php_args.at_named_or_index(2, 'template').as_v[string]()
     res := recv.patch_template(arg_0, arg_1, arg_2)
@@ -667,6 +707,10 @@ pub fn (obj &VSlimLiveView) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimLiveView) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimLiveView](obj)
+}
+
+pub fn (val VSlimLiveView) php_class_name() string {
+    return 'VSlim\\Live\\View'
 }
 
 @[export: 'vslim_live_component_new_raw']
@@ -721,7 +765,11 @@ pub fn vphp_wrap_vslim_live_component_set_container(ptr voidptr, ctx vphp.Contex
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'container', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &containerx.VSlimContainer(php_args.at_named_or_index(0, 'container').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
+        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
     return voidptr(res)
 }
@@ -733,7 +781,11 @@ pub fn vphp_wrap_vslim_live_component_set_view(ptr voidptr, ctx vphp.Context) vo
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'view', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &viewx.VSlimView(php_args.at_named_or_index(0, 'view').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'view').to_v_ptr[viewx.VSlimView]() or {
+        vphp.throw_exception('argument 0 must be object bound to viewx.VSlimView, got ' + php_args.at_named_or_index(0, 'view').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &viewx.VSlimView(arg_0_ptr) }
     res := recv.set_view(arg_0)
     return voidptr(res)
 }
@@ -813,7 +865,11 @@ pub fn vphp_wrap_vslim_live_component_bind_socket(ptr voidptr, ctx vphp.Context)
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'socket', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(php_args.at_named_or_index(0, 'socket').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
+        vphp.throw_exception('argument 0 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(0, 'socket').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(arg_0_ptr) }
     res := recv.bind_socket(arg_0)
     return voidptr(res)
 }
@@ -908,7 +964,11 @@ pub fn vphp_wrap_vslim_live_component_patch(ptr voidptr, ctx vphp.Context) voidp
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'socket', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(php_args.at_named_or_index(0, 'socket').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
+        vphp.throw_exception('argument 0 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(0, 'socket').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(arg_0_ptr) }
     res := recv.patch(arg_0)
     return voidptr(res)
 }
@@ -937,7 +997,11 @@ pub fn vphp_wrap_vslim_live_component_append_to(ptr voidptr, ctx vphp.Context) v
         vphp.PhpArgMeta{ index: 0, name: 'socket', attributes: []vphp.PhpAttribute{} },
         vphp.PhpArgMeta{ index: 1, name: 'targetId', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(php_args.at_named_or_index(0, 'socket').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
+        vphp.throw_exception('argument 0 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(0, 'socket').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(arg_0_ptr) }
     arg_1 := php_args.at_named_or_index(1, 'targetId').as_v[string]()
     res := recv.append_to(arg_0, arg_1)
     return voidptr(res)
@@ -963,7 +1027,11 @@ pub fn vphp_wrap_vslim_live_component_prepend_to(ptr voidptr, ctx vphp.Context) 
         vphp.PhpArgMeta{ index: 0, name: 'socket', attributes: []vphp.PhpAttribute{} },
         vphp.PhpArgMeta{ index: 1, name: 'targetId', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(php_args.at_named_or_index(0, 'socket').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
+        vphp.throw_exception('argument 0 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(0, 'socket').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(arg_0_ptr) }
     arg_1 := php_args.at_named_or_index(1, 'targetId').as_v[string]()
     res := recv.prepend_to(arg_0, arg_1)
     return voidptr(res)
@@ -988,7 +1056,11 @@ pub fn vphp_wrap_vslim_live_component_remove(ptr voidptr, ctx vphp.Context) void
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'socket', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(php_args.at_named_or_index(0, 'socket').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
+        vphp.throw_exception('argument 0 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(0, 'socket').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &liveviewx.VSlimLiveSocket(arg_0_ptr) }
     res := recv.remove(arg_0)
     return voidptr(res)
 }
@@ -1037,6 +1109,10 @@ pub fn (obj &VSlimLiveComponent) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimLiveComponent) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimLiveComponent](obj)
+}
+
+pub fn (val VSlimLiveComponent) php_class_name() string {
+    return 'VSlim\\Live\\Component'
 }
 
 @[export: 'vslim_live_component_state_new_raw']
@@ -1172,6 +1248,10 @@ pub fn (obj &VSlimLiveComponentState) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimLiveComponentState) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimLiveComponentState](obj)
+}
+
+pub fn (val VSlimLiveComponentState) php_class_name() string {
+    return 'VSlim\\Live\\ComponentState'
 }
 
 @[export: 'vslim_live_socket_new_raw']
@@ -2002,5 +2082,9 @@ pub fn (obj &VSlimLiveSocket) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimLiveSocket) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimLiveSocket](obj)
+}
+
+pub fn (val VSlimLiveSocket) php_class_name() string {
+    return 'VSlim\\Live\\Socket'
 }
 

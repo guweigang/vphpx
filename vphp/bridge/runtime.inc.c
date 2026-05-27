@@ -300,8 +300,7 @@ bool vphp_validate_internal_call(zend_execute_data *execute_data) {
   arg_count = ZEND_CALL_NUM_ARGS(execute_data);
   min_args = func->common.required_num_args;
   max_args = func->common.num_args;
-  variadic = max_args > 0 &&
-             ZEND_ARG_IS_VARIADIC(&func->common.arg_info[max_args - 1]);
+  variadic = (func->common.fn_flags & ZEND_ACC_VARIADIC) != 0;
 
   if (arg_count < min_args || (!variadic && arg_count > max_args)) {
     vphp_zend_wrong_parameters_count_error(min_args,
@@ -1562,3 +1561,32 @@ void vphp_uninstall_runtime_binding_hooks(void) {
   vphp_prev_execute_ex = NULL;
   vphp_prev_execute_internal = NULL;
 }
+
+void *vphp_zend_enum_get_case(void *ce, const char *name, int name_len) {
+#if PHP_VERSION_ID >= 80100
+  zend_string *zs = zend_string_init(name, name_len, 0);
+  zend_object *zo = zend_enum_get_case((zend_class_entry *)ce, zs);
+  zend_string_release(zs);
+  return (void *)zo;
+#else
+  return NULL;
+#endif
+}
+
+void vphp_zval_set_object_copy(void *z, void *zo) {
+  if (z && zo) {
+    ZVAL_OBJ_COPY((zval *)z, (zend_object *)zo);
+  }
+}
+
+bool vphp_object_ce_equals(void *obj, void *ce) {
+  if (!obj || !ce) return false;
+  return ((zend_object *)obj)->ce == (zend_class_entry *)ce;
+}
+
+bool vphp_object_is_instance_of(void *obj, void *ce) {
+  if (!obj || !ce) return false;
+  return instanceof_function(((zend_object *)obj)->ce, (zend_class_entry *)ce) != 0;
+}
+
+

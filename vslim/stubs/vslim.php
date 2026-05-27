@@ -8,6 +8,16 @@ declare(strict_types=1);
  * Do not load it in production.
  */
 
+namespace {
+    const MODULE_PROBE_CONSTANT = 'module-constant-ok';
+}
+
+namespace {
+    function vslim_module_probe(): string {}
+
+    function vslim_module_probe_options(string $prefix = 'default', int $count = 3): string {}
+}
+
 namespace VSlim {
     class App
     {
@@ -21,24 +31,24 @@ namespace VSlim {
         protected $viewBasePath;
         protected $viewCacheConfigured;
         protected $viewCacheEnabled;
-        public function __construct(?callable $onOpen = null, ?callable $onMessage = null, ?callable $onClose = null) {}
+        public function __construct() {}
         public function abilityMiddleware(string $ability): \Psr\Http\Server\MiddlewareInterface {}
         public function after(mixed $handler): \VSlim\App {}
         public function allowedMethodsFor(string $rawPath): array {}
         public function any(string $pattern, mixed $handler): \VSlim\App {}
         public function anyNamed(string $name, string $pattern, mixed $handler): \VSlim\App {}
         public function apiResource(string $resourcePath, string $controller): \VSlim\App {}
-        public function apiResourceOpts(string $resourcePath, string $controller, mixed $options): \VSlim\App {}
+        public function apiResourceOpts(string $resourcePath, string $controller, array $options): \VSlim\App {}
         public function apiSingleton(string $resourcePath, string $controller): \VSlim\App {}
-        public function apiSingletonOpts(string $resourcePath, string $controller, mixed $options): \VSlim\App {}
+        public function apiSingletonOpts(string $resourcePath, string $controller, array $options): \VSlim\App {}
         public function assetsPrefix(): string {}
-        public function auth(mixed $request): \VSlim\Auth\SessionGuard {}
-        public function authCheck(mixed $request): bool {}
-        public function authGuest(mixed $request): bool {}
-        public function authId(mixed $request): string {}
+        public function auth(object $request): \VSlim\Auth\SessionGuard {}
+        public function authCheck(object $request): bool {}
+        public function authGuest(object $request): bool {}
+        public function authId(object $request): string {}
         public function authMiddleware(): \Psr\Http\Server\MiddlewareInterface {}
         public function authRedirectTo(): string {}
-        public function authUser(mixed $request): mixed {}
+        public function authUser(object $request): mixed {}
         public function badRequest(string $message = 'Bad Request'): \Psr\Http\Message\ResponseInterface {}
         public function before(mixed $handler): \VSlim\App {}
         public function boot(): \VSlim\App {}
@@ -48,8 +58,8 @@ namespace VSlim {
         public function bootstrapFile(string $path): \VSlim\App {}
         public function cache(): \Psr\SimpleCache\CacheInterface {}
         public function cachePool(): \Psr\Cache\CacheItemPoolInterface {}
-        public function can(string $ability, mixed $request): bool {}
-        public function cannot(string $ability, mixed $request): bool {}
+        public function can(string $ability, object $request): bool {}
+        public function cannot(string $ability, object $request): bool {}
         public function clearViewCache(): \VSlim\App {}
         public function clock(): \Psr\Clock\ClockInterface {}
         public function config(): \VSlim\Config {}
@@ -68,19 +78,22 @@ namespace VSlim {
         public function dispatchRequest($req): \VSlim\VHttpd\Response {}
         public function dispatcher(): \Psr\EventDispatcher\EventDispatcherInterface {}
         public function doctor(): array {}
-        public function error(mixed $handler): \VSlim\App {}
+        public function error(callable $handler): \VSlim\App {}
         public function errorResponse(int $status, string $message, string $errorCode = ''): \Psr\Http\Message\ResponseInterface {}
         public function errorResponseJsonEnabled(): bool {}
         public function events(): \Psr\EventDispatcher\EventDispatcherInterface {}
-        public function exceptionResponse(mixed $exception, int $fallbackStatus = 500): \Psr\Http\Message\ResponseInterface {}
+        public function exceptionResponse(object $exception, int $fallbackStatus = 500): \Psr\Http\Message\ResponseInterface {}
         public function forbidden(string $message = 'Forbidden'): \Psr\Http\Message\ResponseInterface {}
         public function get(string $pattern, mixed $handler): \VSlim\App {}
         public function getNamed(string $name, string $pattern, mixed $handler): \VSlim\App {}
         public function group(string $prefix): \VSlim\RouteGroup {}
+        public function groupAfter(string $prefix, mixed $handler): \VSlim\App {}
+        public function groupBefore(string $prefix, mixed $handler): \VSlim\App {}
+        public function groupMiddleware(string $prefix, mixed $handler): \VSlim\App {}
         public function guestMiddleware(): \Psr\Http\Server\MiddlewareInterface {}
         public function handle(\Psr\Http\Message\ServerRequestInterface $request): \Psr\Http\Message\ResponseInterface {}
-        public function handleMcpDispatch(mixed $frame): mixed {}
-        public function handleWebSocket(mixed $frame, mixed $conn): mixed {}
+        public function handleMcpDispatch(array $frame): array {}
+        public function handleWebSocket(array $frame, object $conn): mixed {}
         public function hasAuthUserProvider(): bool {}
         public function hasConfig(): bool {}
         public function hasContainer(): bool {}
@@ -93,18 +106,18 @@ namespace VSlim {
         public function hasRouteName(string $name): bool {}
         public function head(string $pattern, mixed $handler): \VSlim\App {}
         public function headNamed(string $name, string $pattern, mixed $handler): \VSlim\App {}
-        public function helper(string $name, mixed $handler): \VSlim\App {}
+        public function helper(string $name, callable $handler): \VSlim\App {}
         public function httpClient(): \Psr\Http\Client\ClientInterface {}
         public function jobDispatcher(): \VSlim\Job\Dispatcher {}
         public function jobWorker(): \VSlim\Job\Worker {}
         public function listenerProvider(): \Psr\EventDispatcher\ListenerProviderInterface {}
         public function live(string $pattern, mixed $handler): \VSlim\App {}
-        public function liveWs(mixed $handler, mixed $frame, mixed $conn): mixed {}
+        public function liveWs(mixed $handler, array $frame, object $conn): mixed {}
         public function loadConfig(string $path): \VSlim\App {}
         public function loadConfigText(string $text): \VSlim\App {}
         public function logger(): \VSlim\Log\Logger {}
-        public function login(mixed $request, mixed $response, string $userId): bool {}
-        public function logout(mixed $request, mixed $response): bool {}
+        public function login(object $request, object $response, string $userId): bool {}
+        public function logout(object $request, object $response): bool {}
         public function makeView(): \VSlim\View {}
         public function map(mixed $methods, string $pattern, mixed $handler): \VSlim\App {}
         public function mapNamed(mixed $methods, string $name, string $pattern, mixed $handler): \VSlim\App {}
@@ -133,7 +146,7 @@ namespace VSlim {
         public function registerMany(\Traversable|array $providers): \VSlim\App {}
         public function resolveAuthUser(string $userId): mixed {}
         public function resource(string $resourcePath, string $controller): \VSlim\App {}
-        public function resourceOpts(string $resourcePath, string $controller, mixed $options): \VSlim\App {}
+        public function resourceOpts(string $resourcePath, string $controller, array $options): \VSlim\App {}
         public function routeConflictKeys(): array {}
         public function routeConflicts() {}
         public function routeCount(): int {}
@@ -141,12 +154,12 @@ namespace VSlim {
         public function routeManifestLines(): array {}
         public function routeNames(): array {}
         public function serviceUnavailable(string $message = 'Service Unavailable'): \Psr\Http\Message\ResponseInterface {}
-        public function session(mixed $request): \VSlim\Session\Store {}
+        public function session(object $request): \VSlim\Session\Store {}
         public function setAssetsPrefix(string $prefix): \VSlim\App {}
-        public function setAuthGateResolver(mixed $resolver): \VSlim\App {}
+        public function setAuthGateResolver(callable $resolver): \VSlim\App {}
         public function setAuthRedirectTo(string $path): \VSlim\App {}
         public function setAuthUserProvider(mixed $provider): \VSlim\App {}
-        public function setAuthUserResolver(mixed $resolver): \VSlim\App {}
+        public function setAuthUserResolver(callable $resolver): \VSlim\App {}
         public function setBasePath(string $basePath): \VSlim\App {}
         public function setCache(\Psr\SimpleCache\CacheInterface $cache): \VSlim\App {}
         public function setCachePool(\Psr\Cache\CacheItemPoolInterface $pool): \VSlim\App {}
@@ -155,18 +168,18 @@ namespace VSlim {
         public function setContainer($container): \VSlim\App {}
         public function setDatabase($database): \VSlim\App {}
         public function setDispatcher(\Psr\EventDispatcher\EventDispatcherInterface $dispatcher): \VSlim\App {}
-        public function setErrorHandler(mixed $handler): \VSlim\App {}
+        public function setErrorHandler(callable $handler): \VSlim\App {}
         public function setErrorResponseJson(bool $enabled): \VSlim\App {}
         public function setHttpClient(\Psr\Http\Client\ClientInterface $client): \VSlim\App {}
         public function setListenerProvider(\Psr\EventDispatcher\ListenerProviderInterface $provider): \VSlim\App {}
-        public function setLogger($logger): \VSlim\App {}
-        public function setMcp($mcp): \VSlim\App {}
+        public function setLogger($logWriter): \VSlim\App {}
+        public function setMcp($server): \VSlim\App {}
         public function setMigrator($migrator): \VSlim\App {}
-        public function setNotFoundHandler(mixed $handler): \VSlim\App {}
+        public function setNotFoundHandler(callable $handler): \VSlim\App {}
         public function setViewBasePath(string $basePath): \VSlim\App {}
         public function setViewCache(bool $enabled): \VSlim\App {}
         public function singleton(string $resourcePath, string $controller): \VSlim\App {}
-        public function singletonOpts(string $resourcePath, string $controller, mixed $options): \VSlim\App {}
+        public function singletonOpts(string $resourcePath, string $controller, array $options): \VSlim\App {}
         public function startSessionMiddleware(): \Psr\Http\Server\MiddlewareInterface {}
         public function testing(): \VSlim\Testing\Harness {}
         public function unauthorized(string $message = 'Unauthorized'): \Psr\Http\Message\ResponseInterface {}
@@ -174,7 +187,7 @@ namespace VSlim {
         public function urlForAbs(string $name, mixed $params, string $scheme, string $host): string {}
         public function urlForQuery(string $name, mixed $params, mixed $query): string {}
         public function urlForQueryAbs(string $name, mixed $params, mixed $query, string $scheme, string $host): string {}
-        public function validate(mixed $data, mixed $rules): \VSlim\Validate\Validator {}
+        public function validate(mixed $data, array $rules): \VSlim\Validate\Validator {}
         public function validationError(mixed $errors, int $status = 422): \Psr\Http\Message\ResponseInterface {}
         public function view(string $template, mixed $data): \Psr\Http\Message\ResponseInterface {}
         public function viewBasePath(): string {}
@@ -214,7 +227,7 @@ namespace VSlim {
     class Container
     {
         public function __construct() {}
-        public function factory(string $id, mixed $callable): \VSlim\Container {}
+        public function factory(string $id, callable $callable): \VSlim\Container {}
         public function get(string $id): mixed {}
         public function has(string $id): bool {}
         public function set(string $id, mixed $value): \VSlim\Container {}
@@ -222,15 +235,15 @@ namespace VSlim {
 
     class Controller
     {
-        public function __construct($app) {}
-        public function app(): \VSlim\App {}
+        public function __construct(object $app) {}
+        public function app(): object {}
         public function json(string $body, int $status): \Psr\Http\Message\ResponseInterface {}
         public function redirect(string $location, int $status): \Psr\Http\Message\ResponseInterface {}
         public function redirectTo(string $name, mixed $params, int $status): \Psr\Http\Message\ResponseInterface {}
         public function redirectToQuery(string $name, mixed $params, mixed $query, int $status): \Psr\Http\Message\ResponseInterface {}
         public function render(string $template, mixed $data): \Psr\Http\Message\ResponseInterface {}
         public function renderWithLayout(string $template, string $layout, mixed $data): \Psr\Http\Message\ResponseInterface {}
-        public function setApp($app): \VSlim\Controller {}
+        public function setApp(object $app): \VSlim\Controller {}
         public function setView($view): \VSlim\Controller {}
         public function text(string $body, int $status): \Psr\Http\Message\ResponseInterface {}
         public function urlFor(string $name, mixed $params): string {}
@@ -255,16 +268,15 @@ namespace VSlim {
 
     class RouteGroup
     {
-        protected $app;
         protected $prefix;
         public function __construct() {}
         public function after(mixed $handler): \VSlim\RouteGroup {}
         public function any(string $pattern, mixed $handler): \VSlim\RouteGroup {}
         public function anyNamed(string $name, string $pattern, mixed $handler): \VSlim\RouteGroup {}
         public function apiResource(string $resourcePath, string $controller): \VSlim\RouteGroup {}
-        public function apiResourceOpts(string $resourcePath, string $controller, mixed $options): \VSlim\RouteGroup {}
+        public function apiResourceOpts(string $resourcePath, string $controller, array $options): \VSlim\RouteGroup {}
         public function apiSingleton(string $resourcePath, string $controller): \VSlim\RouteGroup {}
-        public function apiSingletonOpts(string $resourcePath, string $controller, mixed $options): \VSlim\RouteGroup {}
+        public function apiSingletonOpts(string $resourcePath, string $controller, array $options): \VSlim\RouteGroup {}
         public function before(mixed $handler): \VSlim\RouteGroup {}
         public function delete(string $pattern, mixed $handler): \VSlim\RouteGroup {}
         public function deleteNamed(string $name, string $pattern, mixed $handler): \VSlim\RouteGroup {}
@@ -286,9 +298,9 @@ namespace VSlim {
         public function put(string $pattern, mixed $handler): \VSlim\RouteGroup {}
         public function putNamed(string $name, string $pattern, mixed $handler): \VSlim\RouteGroup {}
         public function resource(string $resourcePath, string $controller): \VSlim\RouteGroup {}
-        public function resourceOpts(string $resourcePath, string $controller, mixed $options): \VSlim\RouteGroup {}
+        public function resourceOpts(string $resourcePath, string $controller, array $options): \VSlim\RouteGroup {}
         public function singleton(string $resourcePath, string $controller): \VSlim\RouteGroup {}
-        public function singletonOpts(string $resourcePath, string $controller, mixed $options): \VSlim\RouteGroup {}
+        public function singletonOpts(string $resourcePath, string $controller, array $options): \VSlim\RouteGroup {}
         public function websocket(string $pattern, mixed $handler): \VSlim\RouteGroup {}
         public function websocketNamed(string $name, string $pattern, mixed $handler): \VSlim\RouteGroup {}
     }
@@ -311,16 +323,16 @@ namespace VSlim {
 
     class View
     {
-        protected $assetsPrefix;
-        protected $basePath;
-        protected $cacheEnabled;
+        public $assetsPrefix;
+        public $basePath;
+        public $cacheEnabled;
         public function __construct(string $basePath, string $assetsPrefix) {}
         public function asset(string $path): string {}
         public function assetsPrefix(): string {}
         public function basePath(): string {}
         public function cacheEnabled(): bool {}
         public function clearCache(): \VSlim\View {}
-        public function helper(string $name, mixed $handler): \VSlim\View {}
+        public function helper(string $name, callable $handler): \VSlim\View {}
         public function render(string $template, mixed $data): string {}
         public function renderResponse(string $template, mixed $data): \Psr\Http\Message\ResponseInterface {}
         public function renderResponseWithLayout(string $template, string $layout, mixed $data): \Psr\Http\Message\ResponseInterface {}
@@ -338,7 +350,8 @@ namespace VSlim\Auth {
         public function __construct() {}
         public function process(\Psr\Http\Message\ServerRequestInterface $request, \Psr\Http\Server\RequestHandlerInterface $handler): \Psr\Http\Message\ResponseInterface {}
         public function redirectTo(): string {}
-        public function setApp($app): \VSlim\Auth\GuestMiddleware {}
+        public function setApp(mixed $app): \VSlim\Auth\GuestMiddleware {}
+        public function setContainer($container): \VSlim\Auth\GuestMiddleware {}
         public function setRedirectTo(string $redirectPath): \VSlim\Auth\GuestMiddleware {}
     }
 
@@ -352,7 +365,8 @@ namespace VSlim\Auth {
         public function message(): string {}
         public function process(\Psr\Http\Message\ServerRequestInterface $request, \Psr\Http\Server\RequestHandlerInterface $handler): \Psr\Http\Message\ResponseInterface {}
         public function setAbility(string $ability): \VSlim\Auth\RequireAbilityMiddleware {}
-        public function setApp($app): \VSlim\Auth\RequireAbilityMiddleware {}
+        public function setApp(mixed $app): \VSlim\Auth\RequireAbilityMiddleware {}
+        public function setContainer($container): \VSlim\Auth\RequireAbilityMiddleware {}
         public function setMessage(string $message): \VSlim\Auth\RequireAbilityMiddleware {}
         public function setStatus(int $status): \VSlim\Auth\RequireAbilityMiddleware {}
         public function status(): int {}
@@ -364,7 +378,8 @@ namespace VSlim\Auth {
         public function __construct() {}
         public function process(\Psr\Http\Message\ServerRequestInterface $request, \Psr\Http\Server\RequestHandlerInterface $handler): \Psr\Http\Message\ResponseInterface {}
         public function redirectTo(): string {}
-        public function setApp($app): \VSlim\Auth\RequireAuthMiddleware {}
+        public function setApp(mixed $app): \VSlim\Auth\RequireAuthMiddleware {}
+        public function setContainer($container): \VSlim\Auth\RequireAuthMiddleware {}
         public function setRedirectTo(string $redirectPath): \VSlim\Auth\RequireAuthMiddleware {}
     }
 
@@ -412,6 +427,44 @@ namespace VSlim\Cli {
         public function run(string $name, \Traversable|array $args): int {}
         public function runArgv(\Traversable|array $argv): int {}
         public function warnings(): array {}
+    }
+}
+
+namespace VSlim\Compiler {
+    interface ModuleProbeContract
+    {
+        function label(): string;
+    }
+
+    class ModuleProbeBox implements \VSlim\Compiler\ModuleProbeContract
+    {
+        public $count;
+        public $name;
+        public function __construct() {}
+        public function label(): string {}
+        public static function staticLabel(): string {}
+        public function test_sumtype(string|int $val): string|int {}
+    }
+
+    enum ModuleProbeKind: int
+    {
+        case alpha = 7;
+        case beta = 11;
+    }
+
+    readonly class ModuleProbeReadOnlyBox
+    {
+        public mixed $title;
+        public mixed $value;
+        public function __construct() {}
+    }
+
+    class ModuleProbeTypedConsts
+    {
+        public const string CONST_VERSION = '1.0.0';
+        public const bool IS_ACTIVE = true;
+        public const int MAX_LIMIT = 100;
+        public function __construct() {}
     }
 }
 
@@ -716,7 +769,7 @@ namespace VSlim\Live {
         public function appendTo($socket, string $targetId): \VSlim\Live\Socket {}
         public function appendToBound(string $targetId): \VSlim\Live\Socket {}
         public function assign(string $key, mixed $value): \VSlim\Live\Component {}
-        public function assignMany(mixed $values): \VSlim\Live\Component {}
+        public function assignMany(array $values): \VSlim\Live\Component {}
         public function assigns(): array {}
         public function bindSocket($socket): \VSlim\Live\Component {}
         public function clearAssigns(): \VSlim\Live\Component {}
@@ -732,7 +785,7 @@ namespace VSlim\Live {
         public function remove($socket): \VSlim\Live\Socket {}
         public function removeBound(): \VSlim\Live\Socket {}
         public function renderTemplate(string $template, mixed $data): string {}
-        public function setApp($app): \VSlim\Live\Component {}
+        public function setContainer($container): \VSlim\Live\Component {}
         public function setId(string $id): \VSlim\Live\Component {}
         public function setLayout(string $layout): \VSlim\Live\Component {}
         public function setTemplate(string $template): \VSlim\Live\Component {}
@@ -755,52 +808,52 @@ namespace VSlim\Live {
 
     class Form
     {
-        protected $fields;
-        protected $lastErrorCount;
-        protected $name;
-        protected $validated;
+        public $fields;
+        public $lastErrorCount;
+        public $name;
+        public $validated;
         public function __construct() {}
         public function available(): bool {}
         public function clearError(string $field): \VSlim\Live\Form {}
         public function clearErrors(): \VSlim\Live\Form {}
-        public function data(): mixed {}
+        public function data(): array {}
         public function error(string $field): string {}
         public function errorCount(): int {}
-        public function errors(mixed $values): \VSlim\Live\Form {}
-        public function fill(mixed $values): \VSlim\Live\Form {}
+        public function errors(array $values): \VSlim\Live\Form {}
+        public function fill(array $values): \VSlim\Live\Form {}
         public function forget(string $field): \VSlim\Live\Form {}
-        public function forgetMany(mixed $fields): \VSlim\Live\Form {}
+        public function forgetMany(array $fields): \VSlim\Live\Form {}
         public function hasError(string $field): bool {}
         public function input(string $field): string {}
         public function inputOr(string $field, string $fallback): string {}
         public function invalid(): bool {}
         public function name(): string {}
-        public function reset(mixed $values): \VSlim\Live\Form {}
+        public function reset(array $values): \VSlim\Live\Form {}
         public function valid(): bool {}
         public function validate(mixed $validator): \VSlim\Live\Form {}
     }
 
     class Socket
     {
-        protected $assigns;
-        protected $connected;
-        protected $events;
-        protected $flashes;
-        protected $id;
-        protected $navigateTo;
-        protected $patches;
-        protected $pubsub;
-        protected $rawPath;
-        protected $redirectTo;
-        protected $rootId;
+        public $assigns;
+        public $connected;
+        public $events;
+        public $flashes;
+        public $id;
+        public $navigateTo;
+        public $patches;
+        public $pubsub;
+        public $rawPath;
+        public $redirectTo;
+        public $rootId;
         public function __construct() {}
         public function append(string $targetId, string $html): \VSlim\Live\Socket {}
         public function assign(string $key, mixed $value): \VSlim\Live\Socket {}
         public function assignComponentState(string $componentId, string $field, mixed $value): \VSlim\Live\Socket {}
         public function assignError(string $field, string $message): \VSlim\Live\Socket {}
-        public function assignErrors(mixed $values): \VSlim\Live\Socket {}
-        public function assignForm(mixed $values): \VSlim\Live\Socket {}
-        public function assignMany(mixed $values): \VSlim\Live\Socket {}
+        public function assignErrors(array $values): \VSlim\Live\Socket {}
+        public function assignForm(array $values): \VSlim\Live\Socket {}
+        public function assignMany(array $values): \VSlim\Live\Socket {}
         public function assigns(): array {}
         public function broadcastInfo(string $room, string $event, mixed $payload, bool $includeSelf): \VSlim\Live\Socket {}
         public function clearAssigns(): \VSlim\Live\Socket {}
@@ -822,7 +875,7 @@ namespace VSlim\Live {
         public function flashes() {}
         public function forget(string $key): \VSlim\Live\Socket {}
         public function forgetInput(string $field): \VSlim\Live\Socket {}
-        public function forgetInputs(mixed $fields): \VSlim\Live\Socket {}
+        public function forgetInputs(array $fields): \VSlim\Live\Socket {}
         public function form(string $name): \VSlim\Live\Form {}
         public function get(string $key): string {}
         public function has(string $key): bool {}
@@ -844,7 +897,7 @@ namespace VSlim\Live {
         public function redirect(string $location): \VSlim\Live\Socket {}
         public function redirectTo(): string {}
         public function remove(string $targetId): \VSlim\Live\Socket {}
-        public function resetForm(mixed $values): \VSlim\Live\Socket {}
+        public function resetForm(array $values): \VSlim\Live\Socket {}
         public function rootId(): string {}
         public function setAttr(string $targetId, string $name, string $value): \VSlim\Live\Socket {}
         public function setConnected(bool $connected): \VSlim\Live\Socket {}
@@ -877,7 +930,7 @@ namespace VSlim\Live {
         public function rootId(): string {}
         public function runtimeAsset(): string {}
         public function runtimeScriptTag(): string {}
-        public function setApp($app): \VSlim\Live\View {}
+        public function setContainer($container): \VSlim\Live\View {}
         public function setLayout(string $layout): \VSlim\Live\View {}
         public function setRootId(string $rootId): \VSlim\Live\View {}
         public function setTemplate(string $template): \VSlim\Live\View {}
@@ -890,12 +943,12 @@ namespace VSlim\Live {
 namespace VSlim\Log {
     class Level
     {
-        public const DEBUG = 'debug';
-        public const DISABLED = 'disabled';
-        public const ERROR = 'error';
-        public const FATAL = 'fatal';
-        public const INFO = 'info';
-        public const WARN = 'warn';
+        public const string DEBUG = 'debug';
+        public const string DISABLED = 'disabled';
+        public const string ERROR = 'error';
+        public const string FATAL = 'fatal';
+        public const string INFO = 'info';
+        public const string WARN = 'warn';
         public function __construct() {}
         public static function all(): array {}
         public static function debug(): string {}
@@ -989,30 +1042,32 @@ namespace VSlim\Log {
 namespace VSlim\Mcp {
     class App
     {
-        public function __construct() {}
-        public function capabilities(mixed $definitions): \VSlim\Mcp\App {}
-        public function capability(string $name, mixed $definition): \VSlim\Mcp\App {}
-        public static function capabilityError(mixed $frame, string $message, int $status): mixed {}
-        public static function clientCapabilities(mixed $frame): mixed {}
-        public static function clientSupports(mixed $frame, string $name): bool {}
-        public function handleMcpDispatch(mixed $frame): mixed {}
-        public static function notification(string $method, mixed $params): string {}
-        public static function notify(mixed $id, string $method, mixed $params, string $sessionId, string $protocolVersion): mixed {}
-        public function prompt(string $name, string $description, mixed $arguments, mixed $handler): \VSlim\Mcp\App {}
-        public static function queueLog(mixed $id, string $level, string $message, mixed $data, string $logger, string $sessionId, string $protocolVersion): mixed {}
-        public static function queueMessages(mixed $id, mixed $result, mixed $messages, int $status, string $protocolVersion, string $sessionId, mixed $headers): mixed {}
-        public static function queueNotification(mixed $id, string $method, mixed $params, string $sessionId, string $protocolVersion): mixed {}
-        public static function queueProgress(mixed $id, mixed $progressToken, mixed $progress, mixed $total, string $message, string $sessionId, string $protocolVersion): mixed {}
-        public static function queueRequest(mixed $responseId, mixed $requestId, string $method, mixed $params, string $sessionId, string $protocolVersion): mixed {}
-        public static function queueSampling(mixed $responseId, mixed $samplingId, mixed $messages, string $sessionId, string $protocolVersion, mixed $modelPreferences, string $systemPrompt, int $maxTokens): mixed {}
-        public static function queuedResult(mixed $id, mixed $result, mixed $notifications, int $status, string $protocolVersion, string $sessionId, mixed $headers): mixed {}
-        public function register(string $method, mixed $handler): \VSlim\Mcp\App {}
-        public static function request(mixed $id, string $method, mixed $params): string {}
-        public static function requireCapability(mixed $frame, string $name, string $message, int $status): mixed {}
-        public function resource(string $uri, string $name, string $description, string $mimeType, mixed $handler): \VSlim\Mcp\App {}
-        public static function samplingRequest(mixed $id, mixed $messages, mixed $modelPreferences, string $systemPrompt, int $maxTokens, mixed $temperature, mixed $tools, mixed $toolChoice): string {}
-        public function serverInfo(mixed $info): \VSlim\Mcp\App {}
-        public function tool(string $name, string $description, mixed $inputSchema, mixed $handler): \VSlim\Mcp\App {}
+        public function __construct(?array $serverInfo = [], ?array $serverCapabilities = []) {}
+        public function capabilities(array $definitions): \VSlim\Mcp\App {}
+        public function capability(string $name, array $definition): \VSlim\Mcp\App {}
+        public static function capabilityError(array $frame, string $message, int $status): array {}
+        public static function clientCapabilities(array $frame): array {}
+        public static function clientSupports(array $frame, string $name): bool {}
+        public function handle(array $frame): array {}
+        public function handleMcp(array $frame): array {}
+        public function handleMcpDispatch(array $frame): array {}
+        public static function notification(string $method, array $params): string {}
+        public static function notify(mixed $id, string $method, array $params, string $sessionId, string $protocolVersion, mixed $result = null, int $status = 200, ?array $headers = []): array {}
+        public function prompt(string $name, string $description, array $arguments, callable $handler): \VSlim\Mcp\App {}
+        public static function queueLog(mixed $id, string $level, string $message, mixed $data, string $logger, string $sessionId, string $protocolVersion): array {}
+        public static function queueMessages(mixed $id, mixed $result, array $messages, int $status, string $protocolVersion, string $sessionId, array $headers): array {}
+        public static function queueNotification(mixed $id, string $method, array $params, string $sessionId, string $protocolVersion): array {}
+        public static function queueProgress(mixed $id, mixed $progressToken, mixed $progress, mixed $total, string $message, string $sessionId, string $protocolVersion): array {}
+        public static function queueRequest(mixed $responseId, mixed $requestId, string $method, array $params, string $sessionId, string $protocolVersion): array {}
+        public static function queueSampling(mixed $responseId, mixed $samplingId, array $messages, string $sessionId, string $protocolVersion, mixed $modelPreferences, string $systemPrompt, int $maxTokens): array {}
+        public static function queuedResult(mixed $id, mixed $result, array $notifications, int $status, string $protocolVersion, string $sessionId, array $headers): array {}
+        public function register(string $method, callable $handler): \VSlim\Mcp\App {}
+        public static function request(mixed $id, string $method, array $params): string {}
+        public static function requireCapability(array $frame, string $name, string $message, int $status): mixed {}
+        public function resource(string $uri, string $name, string $description, string $mimeType, callable $handler): \VSlim\Mcp\App {}
+        public static function samplingRequest(mixed $id, array $messages, mixed $modelPreferences, string $systemPrompt, int $maxTokens, mixed $temperature, mixed $tools, mixed $toolChoice): string {}
+        public function serverInfo(array $info): \VSlim\Mcp\App {}
+        public function tool(string $name, string $description, array $inputSchema, callable $handler): \VSlim\Mcp\App {}
     }
 }
 
@@ -1021,8 +1076,8 @@ namespace VSlim\Psr14 {
     {
         public function __construct() {}
         public function dispatch(object $event): object {}
-        public function listen(string $eventClass, mixed $listener): \VSlim\Psr14\EventDispatcher {}
-        public function listenAny(mixed $listener): \VSlim\Psr14\EventDispatcher {}
+        public function listen(string $eventClass, callable $listener): \VSlim\Psr14\EventDispatcher {}
+        public function listenAny(callable $listener): \VSlim\Psr14\EventDispatcher {}
         public function provider(): \Psr\EventDispatcher\ListenerProviderInterface {}
         public function setProvider(\Psr\EventDispatcher\ListenerProviderInterface $provider): \VSlim\Psr14\EventDispatcher {}
     }
@@ -1032,8 +1087,8 @@ namespace VSlim\Psr14 {
         protected $listeners;
         public function __construct() {}
         public function getListenersForEvent(object $event): \Traversable|array {}
-        public function listen(string $eventClass, mixed $listener): \VSlim\Psr14\ListenerProvider {}
-        public function listenAny(mixed $listener): \VSlim\Psr14\ListenerProvider {}
+        public function listen(string $eventClass, callable $listener): \VSlim\Psr14\ListenerProvider {}
+        public function listenAny(callable $listener): \VSlim\Psr14\ListenerProvider {}
         public function listenerCount(): int {}
     }
 }
@@ -1041,14 +1096,14 @@ namespace VSlim\Psr14 {
 namespace VSlim\Psr15 {
     class ContinueHandler
     {
-        protected $state;
+        public $state;
         public function __construct() {}
         public function handle(\Psr\Http\Message\ServerRequestInterface $request): \Psr\Http\Message\ResponseInterface {}
     }
 
     class NextHandler
     {
-        protected $state;
+        public $state;
         public function __construct() {}
         public function handle(\Psr\Http\Message\ServerRequestInterface $request): \Psr\Http\Message\ResponseInterface {}
     }
@@ -1129,7 +1184,7 @@ namespace VSlim\Psr17 {
 namespace VSlim\Psr18 {
     class Client
     {
-        protected $timeoutSeconds;
+        public $timeoutSeconds;
         public function __construct() {}
         public static function ignorePhpWarning(int $errNo, string $errStr, string $errFile, int $errLine): bool {}
         public function sendRequest(\Psr\Http\Message\RequestInterface $request): \Psr\Http\Message\ResponseInterface {}
@@ -1215,7 +1270,7 @@ namespace VSlim\Psr6 {
 namespace VSlim\Psr7 {
     class Request implements \Stringable
     {
-        protected $method;
+        public $method;
         public function __construct() {}
         public function __toString(): string {}
         public function getBody(): \Psr\Http\Message\StreamInterface {}
@@ -1239,7 +1294,7 @@ namespace VSlim\Psr7 {
 
     class Response implements \Stringable
     {
-        protected $status;
+        public $status;
         public function __construct(int $defaultStatus = 200, string $defaultReasonPhrase = '') {}
         public function __toString(): string {}
         public function deleteCookie(string $name): \VSlim\Psr7\Response {}
@@ -1262,7 +1317,7 @@ namespace VSlim\Psr7 {
 
     class ServerRequest implements \Stringable
     {
-        protected $method;
+        public $method;
         public function __construct() {}
         public function __toString(): string {}
         public function getAttribute(mixed $name, mixed $defaultValue = null): mixed {}
@@ -1291,7 +1346,7 @@ namespace VSlim\Psr7 {
         public function withProtocolVersion(mixed $version): \Psr\Http\Message\ServerRequestInterface {}
         public function withQueryParams(array $query): \Psr\Http\Message\ServerRequestInterface {}
         public function withRequestTarget(mixed $requestTarget): \Psr\Http\Message\ServerRequestInterface {}
-        public function withUploadedFiles(mixed $uploadedFiles): \Psr\Http\Message\ServerRequestInterface {}
+        public function withUploadedFiles(array $uploadedFiles): \Psr\Http\Message\ServerRequestInterface {}
         public function withUri(\Psr\Http\Message\UriInterface $uri, bool $preserveHost = false): \Psr\Http\Message\ServerRequestInterface {}
         public function withoutAttribute(mixed $name): \Psr\Http\Message\ServerRequestInterface {}
         public function withoutHeader(mixed $name): \Psr\Http\Message\ServerRequestInterface {}
@@ -1299,14 +1354,14 @@ namespace VSlim\Psr7 {
 
     class Stream implements \Stringable
     {
-        protected $content;
-        protected $detached;
-        protected $metadata;
-        protected $position;
+        public $content;
+        public $detached;
+        public $metadata;
+        public $position;
         public function __construct(string $defaultContent = '') {}
         public function __toString(): string {}
         public function close(): void {}
-        public function detach(): mixed {}
+        public function detach(): null {}
         public function eof(): bool {}
         public function getContents(): string {}
         public function getMetadata(mixed $defaultKey = null): mixed {}
@@ -1323,7 +1378,7 @@ namespace VSlim\Psr7 {
 
     class UploadedFile implements \Stringable
     {
-        protected $moved;
+        public $moved;
         public function __construct(mixed $defaultStream, ?int $defaultSize, int $defaultError, ?string $defaultClientFilename = null, ?string $defaultClientMediaType = null) {}
         public function __toString(): string {}
         public function getClientFilename(): ?string {}
@@ -1336,14 +1391,14 @@ namespace VSlim\Psr7 {
 
     class Uri implements \Stringable
     {
-        protected $fragment;
-        protected $host;
-        protected $password;
-        protected $path;
-        protected $port;
-        protected $query;
-        protected $scheme;
-        protected $user;
+        public $fragment;
+        public $host;
+        public $password;
+        public $path;
+        public $port;
+        public $query;
+        public $scheme;
+        public $user;
         public function __construct(string $defaultUri = '') {}
         public function __toString(): string {}
         public function getAuthority(): string {}
@@ -1369,7 +1424,8 @@ namespace VSlim\Session {
     {
         public function __construct() {}
         public function process(\Psr\Http\Message\ServerRequestInterface $request, \Psr\Http\Server\RequestHandlerInterface $handler): \Psr\Http\Message\ResponseInterface {}
-        public function setApp($app): \VSlim\Session\StartMiddleware {}
+        public function setApp(mixed $app): \VSlim\Session\StartMiddleware {}
+        public function setContainer($container): \VSlim\Session\StartMiddleware {}
     }
 
     class Store
@@ -1387,9 +1443,9 @@ namespace VSlim\Session {
         public function all(): array {}
         public function clear(): \VSlim\Session\Store {}
         public function clearFlashes(): \VSlim\Session\Store {}
-        public function commit(mixed $response): bool {}
+        public function commit(object $response): bool {}
         public function cookie(): string {}
-        public function destroy(mixed $response): bool {}
+        public function destroy(object $response): bool {}
         public function domain(): string {}
         public function flash(string $key, string $value): \VSlim\Session\Store {}
         public function forget(string $key): \VSlim\Session\Store {}
@@ -1399,7 +1455,7 @@ namespace VSlim\Session {
         public function hasFlash(string $key): bool {}
         public function httpOnly(): bool {}
         public function isLoaded(): bool {}
-        public function load(mixed $request): \VSlim\Session\Store {}
+        public function load(object $request): \VSlim\Session\Store {}
         public function path(): string {}
         public function pull(string $key, string $defaultValue = ''): string {}
         public function pullFlash(string $key, string $defaultValue = ''): string {}
@@ -1423,42 +1479,48 @@ namespace VSlim\Stream {
     class Factory
     {
         public function __construct() {}
+        public static function dispatchResponse(object $response, int $batchSize = 1, int $delayMs = 0): mixed {}
+        public static function dispatchSse(mixed $events, int $status, array $headers, int $batchSize = 1, int $delayMs = 0): mixed {}
         public static function ollamaSse(mixed $requestPayload): mixed {}
-        public static function ollamaSseWith(mixed $requestPayload, mixed $options): mixed {}
+        public static function ollamaSseWith(mixed $requestPayload, array $options): mixed {}
         public static function ollamaText(mixed $requestPayload): mixed {}
-        public static function ollamaTextWith(mixed $requestPayload, mixed $options): mixed {}
+        public static function ollamaTextWith(mixed $requestPayload, array $options): mixed {}
         public static function sse(mixed $events): mixed {}
-        public static function sseWith(mixed $events, int $status, mixed $headers): mixed {}
+        public static function sseWith(mixed $events, int $status, array $headers): mixed {}
         public static function text(mixed $chunks): mixed {}
-        public static function textWith(mixed $chunks, int $status, string $contentType, mixed $headers): mixed {}
+        public static function textWith(mixed $chunks, int $status, string $contentType, array $headers): mixed {}
     }
 
     class NdjsonDecoder
     {
         public function __construct() {}
-        public static function decode(mixed $stream): mixed {}
+        public static function decode(mixed $stream): array {}
     }
 
     class OllamaClient
     {
-        protected $apiKey;
-        protected $chatUrl;
-        protected $defaultModel;
-        protected $fixturePath;
+        public $apiKey;
+        public $chatUrl;
+        public $defaultModel;
+        public $fixturePath;
         public function __construct(string $chatUrl, string $defaultModel, string $apiKey, string $fixturePath) {}
         public function apiKey(): string {}
         public function chatUrl(): string {}
         public function defaultModel(): string {}
         public function fixturePath(): string {}
-        public static function fromApp($app): \VSlim\Stream\OllamaClient {}
+        public static function fromApp(mixed $app): \VSlim\Stream\OllamaClient {}
         public static function fromConfig($config): \VSlim\Stream\OllamaClient {}
         public static function fromEnv(): \VSlim\Stream\OllamaClient {}
-        public static function fromOptions(mixed $options): \VSlim\Stream\OllamaClient {}
-        public function openStream(mixed $payload): mixed {}
-        public function payload(mixed $input): mixed {}
-        public function payloadFromRequest(mixed $requestPayload): mixed {}
+        public static function fromOptions(array $options): \VSlim\Stream\OllamaClient {}
+        public function openStream(array $payload): array {}
+        public function payload(array $input): array {}
+        public function payloadFromRequest(mixed $requestPayload): array {}
         public function sseResponseFromRequest(mixed $requestPayload): mixed {}
         public function textResponseFromRequest(mixed $requestPayload): mixed {}
+        public function upstreamPlan(array $payload, string $outputMode = 'sse'): mixed {}
+        public function upstreamPlanFromRequest(mixed $requestPayload, string $outputMode = 'sse'): mixed {}
+        public function upstreamSsePlanFromRequest(mixed $requestPayload): mixed {}
+        public function upstreamTextPlanFromRequest(mixed $requestPayload): mixed {}
     }
 
     class Response
@@ -1469,6 +1531,7 @@ namespace VSlim\Stream {
         public $streamType;
         public function __construct(string $streamType, mixed $chunks, int $status, string $contentType, mixed $headers) {}
         public function chunks(): mixed {}
+        public function content_type(): string {}
         public function hasHeader(string $name): bool {}
         public function header(string $name): string {}
         public function headers(): array {}
@@ -1478,6 +1541,7 @@ namespace VSlim\Stream {
         public function setStatus(int $status): \VSlim\Stream\Response {}
         public static function sse(mixed $events): \VSlim\Stream\Response {}
         public static function sseWith(mixed $events, int $status, mixed $headers): \VSlim\Stream\Response {}
+        public function stream_type(): string {}
         public static function text(mixed $chunks): \VSlim\Stream\Response {}
         public static function textWith(mixed $chunks, int $status, string $contentType, mixed $headers): \VSlim\Stream\Response {}
     }
@@ -1485,7 +1549,7 @@ namespace VSlim\Stream {
     class SseEncoder
     {
         public function __construct() {}
-        public static function fromOllama(mixed $rows, string $model): mixed {}
+        public static function fromOllama(array $rows, string $model): array {}
     }
 }
 
@@ -1493,17 +1557,17 @@ namespace VSlim\Support {
     class Module
     {
         public function __construct() {}
-        public function app(): \VSlim\App {}
+        public function app(): object {}
         public function hasApp(): bool {}
-        public function setApp($app): \VSlim\Support\Module {}
+        public function setApp(object $app): \VSlim\Support\Module {}
     }
 
     class ServiceProvider
     {
         public function __construct() {}
-        public function app(): \VSlim\App {}
+        public function app(): object {}
         public function hasApp(): bool {}
-        public function setApp($app): \VSlim\Support\ServiceProvider {}
+        public function setApp(object $app): \VSlim\Support\ServiceProvider {}
     }
 }
 
@@ -1513,7 +1577,7 @@ namespace VSlim\Testing {
         protected $cookies;
         public function __construct() {}
         public function actingAs(string $userId): \VSlim\Testing\Harness {}
-        public function app(): \VSlim\App {}
+        public function app(): object {}
         public function assertBodyContains(mixed $response, string $needle): \VSlim\Testing\Harness {}
         public function assertHeader(mixed $response, string $name, string $expected): \VSlim\Testing\Harness {}
         public function assertStatus(mixed $response, int $expected): \VSlim\Testing\Harness {}
@@ -1541,11 +1605,11 @@ namespace VSlim\Testing {
         public function responseHeader(mixed $response, string $name): string {}
         public function responseJson(mixed $response): mixed {}
         public function responseStatus(mixed $response): int {}
-        public function setApp($app): \VSlim\Testing\Harness {}
+        public function setApp(object $app): \VSlim\Testing\Harness {}
         public function withConfig(string $path): \VSlim\Testing\Harness {}
         public function withConfigText(string $text): \VSlim\Testing\Harness {}
         public function withCookie(string $name, string $value): \VSlim\Testing\Harness {}
-        public function withFactory(string $id, mixed $callable): \VSlim\Testing\Harness {}
+        public function withFactory(string $id, callable $callable): \VSlim\Testing\Harness {}
         public function withService(string $id, mixed $value): \VSlim\Testing\Harness {}
         public function withSession(mixed $values): \VSlim\Testing\Harness {}
         public function withoutCookie(string $name): \VSlim\Testing\Harness {}
@@ -1559,28 +1623,28 @@ namespace VSlim\VHttpd {
         protected $socketPath;
         public function __construct(string $socketPath, float $connectTimeoutSeconds) {}
         public function connectTimeoutSeconds(): float {}
-        public function request(mixed $payload): mixed {}
-        public function requestFrames(mixed $payload, array $frames = []): mixed {}
+        public function request(array $payload): array {}
+        public function requestFrames(array $payload, ?array $frames = []): array {}
         public function socketPath(): string {}
     }
 
     class Request implements \Stringable
     {
-        protected $attributes;
+        public $attributes;
         public $body;
-        protected $cookies;
-        protected $headers;
+        public $cookies;
+        public $headers;
         public $host;
         public $method;
-        protected $params;
+        public $params;
         public $port;
         public $protocolVersion;
-        protected $query;
+        public $query;
         public $rawPath;
         public $remoteAddr;
         public $scheme;
-        protected $server;
-        protected $uploadedFiles;
+        public $server;
+        public $uploadedFiles;
         public function __construct(string $method, string $rawPath, string $body) {}
         public function __toString(): string {}
         public function allInputs(): array {}
@@ -1651,7 +1715,7 @@ namespace VSlim\VHttpd {
     {
         public $body;
         public $contentType;
-        protected $headers;
+        public $headers;
         public $status;
         public function __construct(int $status, string $body, string $contentType) {}
         public function __toString(): string {}
@@ -1691,10 +1755,10 @@ namespace VSlim\Validate {
         public function data(): mixed {}
         public function errors(): mixed {}
         public function fails(): bool {}
-        public static function make(mixed $data, mixed $rules): \VSlim\Validate\Validator {}
+        public static function make(mixed $data, array $rules): \VSlim\Validate\Validator {}
         public function passes(): bool {}
         public function setData(mixed $data): \VSlim\Validate\Validator {}
-        public function setRules(mixed $rules): \VSlim\Validate\Validator {}
+        public function setRules(array $rules): \VSlim\Validate\Validator {}
         public function validate(): \VSlim\Validate\Validator {}
         public function validated(): mixed {}
     }
@@ -1705,12 +1769,12 @@ namespace VSlim\WebSocket {
     {
         protected $connections;
         protected $rooms;
-        public function __construct() {}
+        public function __construct(?callable $onOpen = null, ?callable $onMessage = null, ?callable $onClose = null) {}
         public function broadcast(string $data, string $room, string $exceptId): int {}
         public function connectionIds(): array {}
         public function forget(mixed $connOrId): \VSlim\WebSocket\App {}
-        public function handle(array $frame, mixed $conn): mixed {}
-        public function handleWebSocket(mixed $frame, mixed $conn): mixed {}
+        public function handle(array $frame, object $conn): mixed {}
+        public function handleWebSocket(array $frame, object $conn): mixed {}
         public function hasConnection(mixed $connOrId): bool {}
         public function hasOnClose(): bool {}
         public function hasOnMessage(): bool {}
@@ -1718,10 +1782,10 @@ namespace VSlim\WebSocket {
         public function join(string $room, mixed $connOrId): \VSlim\WebSocket\App {}
         public function leave(string $room, mixed $connOrId): \VSlim\WebSocket\App {}
         public function members(string $room): array {}
-        public function onClose(mixed $handler): \VSlim\WebSocket\App {}
-        public function onMessage(mixed $handler): \VSlim\WebSocket\App {}
-        public function onOpen(mixed $handler): \VSlim\WebSocket\App {}
-        public function remember(mixed $conn): \VSlim\WebSocket\App {}
+        public function onClose(callable $handler): \VSlim\WebSocket\App {}
+        public function onMessage(callable $handler): \VSlim\WebSocket\App {}
+        public function onOpen(callable $handler): \VSlim\WebSocket\App {}
+        public function remember(object $conn): \VSlim\WebSocket\App {}
         public function roomsFor(mixed $connOrId): array {}
         public function sendTo(mixed $connOrId, string $data): bool {}
     }

@@ -61,7 +61,11 @@ pub fn vphp_wrap_vslim_job_dispatcher_set_manager(ptr voidptr, ctx vphp.Context)
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'manager', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(php_args.at_named_or_index(0, 'manager').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
+        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -132,6 +136,10 @@ pub fn (obj &VSlimJobDispatcher) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimJobDispatcher](obj)
 }
 
+pub fn (val VSlimJobDispatcher) php_class_name() string {
+    return 'VSlim\\Job\\Dispatcher'
+}
+
 @[export: 'vslim_job_worker_new_raw']
 pub fn vslim_job_worker_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimJobWorker]()
@@ -184,7 +192,11 @@ pub fn vphp_wrap_vslim_job_worker_set_manager(ptr voidptr, ctx vphp.Context) voi
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'manager', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(php_args.at_named_or_index(0, 'manager').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
+        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -299,5 +311,9 @@ pub fn (obj &VSlimJobWorker) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimJobWorker) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimJobWorker](obj)
+}
+
+pub fn (val VSlimJobWorker) php_class_name() string {
+    return 'VSlim\\Job\\Worker'
 }
 

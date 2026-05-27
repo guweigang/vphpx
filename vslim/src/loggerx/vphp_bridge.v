@@ -588,6 +588,10 @@ pub fn (obj &VSlimLogger) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimLogger](obj)
 }
 
+pub fn (val VSlimLogger) php_class_name() string {
+    return 'VSlim\\Log\\Logger'
+}
+
 @[export: 'vslim_psr_logger_new_raw']
 pub fn vslim_psr_logger_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsrLogger]()
@@ -640,7 +644,11 @@ pub fn vphp_wrap_vslim_psr_logger_set_logger(ptr voidptr, ctx vphp.Context) void
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'inner', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &loggerx.VSlimLogger(php_args.at_named_or_index(0, 'inner').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'inner').to_v_ptr[loggerx.VSlimLogger]() or {
+        vphp.throw_exception('argument 0 must be object bound to loggerx.VSlimLogger, got ' + php_args.at_named_or_index(0, 'inner').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &loggerx.VSlimLogger(arg_0_ptr) }
     res := recv.set_logger(arg_0)
     return voidptr(res)
 }
@@ -997,6 +1005,10 @@ pub fn (obj &VSlimPsrLogger) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsrLogger](obj)
 }
 
+pub fn (val VSlimPsrLogger) php_class_name() string {
+    return 'VSlim\\Log\\PsrLogger'
+}
+
 @[export: 'vslim_log_level_new_raw']
 pub fn vslim_log_level_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimLogLevel]()
@@ -1122,5 +1134,9 @@ pub fn (obj &VSlimLogLevel) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimLogLevel) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimLogLevel](obj)
+}
+
+pub fn (val VSlimLogLevel) php_class_name() string {
+    return 'VSlim\\Log\\Level'
 }
 

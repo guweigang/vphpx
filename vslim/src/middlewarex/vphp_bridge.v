@@ -99,6 +99,10 @@ pub fn (obj &VSlimPsr15NextHandler) bind_owned_php_object_value() vphp.PhpValue 
     return vphp.bind_owned_object_value[VSlimPsr15NextHandler](obj)
 }
 
+pub fn (val VSlimPsr15NextHandler) php_class_name() string {
+    return 'VSlim\\Psr15\\NextHandler'
+}
+
 @[export: 'vslim_psr15_continue_handler_new_raw']
 pub fn vslim_psr15_continue_handler_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimPsr15ContinueHandler]()
@@ -187,5 +191,9 @@ pub fn (obj &VSlimPsr15ContinueHandler) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimPsr15ContinueHandler) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr15ContinueHandler](obj)
+}
+
+pub fn (val VSlimPsr15ContinueHandler) php_class_name() string {
+    return 'VSlim\\Psr15\\ContinueHandler'
 }
 

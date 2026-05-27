@@ -1,5 +1,6 @@
 module compiler
 
+import v.ast
 import compiler.php_types
 import compiler.repr
 
@@ -121,11 +122,11 @@ fn build_php_arg_bindings(args []repr.PhpArgRepr) []PhpArgBinding {
 	return bindings
 }
 
-fn build_php_arg_setup(args []repr.PhpArgRepr, returns_voidptr bool, allow_raw_object bool) PhpArgSetup {
+fn build_php_arg_setup(args []repr.PhpArgRepr, returns_voidptr bool, allow_raw_object bool, table &ast.Table) PhpArgSetup {
 	mut lines := gen_php_args_lines(args)
 	mut names := []string{}
 	for binding in build_php_arg_bindings(args) {
-		lines << binding.render_lines(returns_voidptr, allow_raw_object)
+		lines << binding.render_lines(returns_voidptr, allow_raw_object, table)
 		names << binding.call_name()
 	}
 	return PhpArgSetup{
@@ -136,16 +137,22 @@ fn build_php_arg_setup(args []repr.PhpArgRepr, returns_voidptr bool, allow_raw_o
 
 fn (binding PhpArgBinding) call_name() string {
 	return match binding.kind {
-		.single { binding.var_name }
+		.single {
+			if binding.arg.is_variadic {
+				'...${binding.var_name}'
+			} else {
+				binding.var_name
+			}
+		}
 		.params_struct { binding.params_struct.call_name() }
 	}
 }
 
-fn (binding PhpArgBinding) render_lines(returns_voidptr bool, allow_raw_object bool) []string {
+fn (binding PhpArgBinding) render_lines(returns_voidptr bool, allow_raw_object bool, table &ast.Table) []string {
 	return match binding.kind {
 		.single {
 			PhpSingleArgBinding.new(binding.arg, binding.var_name, binding.php_index,
-				allow_raw_object).render_lines(returns_voidptr)
+				allow_raw_object).render_lines(returns_voidptr, table)
 		}
 		.params_struct {
 			binding.params_struct.render_lines(returns_voidptr)
@@ -153,8 +160,11 @@ fn (binding PhpArgBinding) render_lines(returns_voidptr bool, allow_raw_object b
 	}
 }
 
-fn (binding PhpSingleArgBinding) render_lines(returns_voidptr bool) []string {
+fn (binding PhpSingleArgBinding) render_lines(returns_voidptr bool, table &ast.Table) []string {
 	arg := binding.arg
+	if arg.is_variadic {
+		return binding.render_v_value_lines()
+	}
 	if is_context_arg_type(arg.v_type) {
 		return ['    ${binding.var_name} := ctx']
 	}
@@ -170,11 +180,25 @@ fn (binding PhpSingleArgBinding) render_lines(returns_voidptr bool) []string {
 	if lines := binding.render_optional_lines() {
 		return lines
 	}
-	if lines := binding.render_raw_object_lines() {
-		return lines
+
+	clean_type := arg.v_type.trim_left('?&')
+	is_sumtype_or_enum := if table != unsafe { nil } {
+		if sym := table.find_sym(clean_type) {
+			sym.kind == .sum_type || sym.kind == .enum
+		} else {
+			false
+		}
+	} else {
+		false
 	}
-	if lines := binding.render_ref_object_lines() {
-		return lines
+
+	if !is_sumtype_or_enum {
+		if lines := binding.render_raw_object_lines() {
+			return lines
+		}
+		if lines := binding.render_ref_object_lines(returns_voidptr) {
+			return lines
+		}
 	}
 	return binding.render_v_value_lines()
 }
@@ -209,22 +233,30 @@ fn (binding PhpSingleArgBinding) render_raw_object_lines() ?[]string {
 	if binding.allow_raw_object {
 		tm := php_types.TypeMap.get_type(arg.v_type)
 		if tm.c_type == 'void*' {
-			v_type := if arg.v_type.starts_with('&') { arg.v_type } else { '&' + arg.v_type }
-			read := binding.read()
-			return [
-				'    ${binding.var_name} := ${read.with_default('unsafe { ${v_type}(${read.arg_expr()}.raw_obj()) }')}',
-			]
+			clean := arg.v_type.trim_left('?&')
+			if clean == 'voidptr' || clean.starts_with('C.') {
+				v_type := if arg.v_type.starts_with('&') { arg.v_type } else { '&' + arg.v_type }
+				read := binding.read()
+				return [
+					'    ${binding.var_name} := ${read.with_default('unsafe { ${v_type}(${read.arg_expr()}.raw_obj()) }')}',
+				]
+			}
 		}
 	}
 	return none
 }
 
-fn (binding PhpSingleArgBinding) render_ref_object_lines() ?[]string {
+fn (binding PhpSingleArgBinding) render_ref_object_lines(returns_voidptr bool) ?[]string {
 	arg := binding.arg
 	if arg.v_type.starts_with('&') {
+		clean_type := arg.v_type[1..]
 		read := binding.read()
 		return [
-			'    ${binding.var_name} := ${read.with_default('unsafe { ${arg.v_type}(${read.arg_expr()}.raw_obj()) }')}',
+			'    ${binding.var_name}_ptr := ${read.arg_expr()}.to_v_ptr[${clean_type}]() or {',
+			"        vphp.throw_exception('argument ${binding.index} must be object bound to ${clean_type}, got \' + ${read.arg_expr()}.zval().type_name(), 0)",
+			'        ${arg_return_stmt(returns_voidptr)}',
+			'    }',
+			'    ${binding.var_name} := unsafe { &${clean_type}(${binding.var_name}_ptr) }',
 		]
 	}
 	return none

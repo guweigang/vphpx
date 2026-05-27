@@ -95,6 +95,10 @@ pub fn (obj &VSlimContainerException) bind_owned_php_object_value() vphp.PhpValu
     return vphp.bind_owned_object_value[VSlimContainerException](obj)
 }
 
+pub fn (val VSlimContainerException) php_class_name() string {
+    return 'VSlim\\Container\\ContainerException'
+}
+
 @[export: 'vslim_container_not_found_exception_new_raw']
 pub fn vslim_container_not_found_exception_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimContainerNotFoundException]()
@@ -180,6 +184,10 @@ pub fn (obj &VSlimContainerNotFoundException) bind_owned_php_object() vphp.ZVal 
 
 pub fn (obj &VSlimContainerNotFoundException) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimContainerNotFoundException](obj)
+}
+
+pub fn (val VSlimContainerNotFoundException) php_class_name() string {
+    return 'VSlim\\Container\\NotFoundException'
 }
 
 @[export: 'vslim_container_new_raw']
@@ -318,5 +326,9 @@ pub fn (obj &VSlimContainer) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimContainer) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimContainer](obj)
+}
+
+pub fn (val VSlimContainer) php_class_name() string {
+    return 'VSlim\\Container'
 }
 

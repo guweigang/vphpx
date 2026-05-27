@@ -1,5 +1,6 @@
 module builder
 
+import v.ast
 import compiler.php_types
 
 pub enum ClassType {
@@ -39,6 +40,7 @@ pub:
 	type_       string
 	php_type    string
 	is_optional bool
+	is_variadic bool
 	php_default string
 	attributes  []ClassAttribute
 }
@@ -70,6 +72,8 @@ pub mut:
 	constants             []ClassConstant
 	methods               []ClassMethod
 	attributes            []ClassAttribute
+	table                 &ast.Table = unsafe { nil }
+	v_name                string
 }
 
 fn new_builder(type_ ClassType, php_name string, c_name string) &ClassBuilder {
@@ -95,6 +99,12 @@ pub fn new_enum_builder(php_name string, c_name string) &ClassBuilder {
 	b.create_object = false
 	return b
 }
+
+pub fn (mut b ClassBuilder) set_v_name(v_name string) &ClassBuilder {
+	b.v_name = v_name
+	return b
+}
+
 
 pub fn (mut b ClassBuilder) set_parent(parent_name string) &ClassBuilder {
 	b.parent = parent_name
@@ -290,40 +300,10 @@ fn (b &ClassBuilder) render_registration_function() string {
 	}
 	if b.type != .interface_ {
 		for con in b.constants {
-			match con.type_ {
-				'string' {
-					res << '        zend_declare_class_constant_string(${ce_ptr}, "${con.name}", sizeof("${con.name}")-1, "${con.value}");'
-				}
-				'double' {
-					res << '        zend_declare_class_constant_double(${ce_ptr}, "${con.name}", sizeof("${con.name}")-1, ${con.value});'
-				}
-				'long', 'int' {
-					res << '        zend_declare_class_constant_long(${ce_ptr}, "${con.name}", sizeof("${con.name}")-1, ${con.value});'
-				}
-				'bool' {
-					res << '        zend_declare_class_constant_bool(${ce_ptr}, "${con.name}", sizeof("${con.name}")-1, ${con.value});'
-				}
-				else {}
-			}
+			res << b.render_typed_class_constant(ce_ptr, con)
 		}
 		for prop in b.properties {
-			match prop.type_ {
-				'long', 'int' {
-					res << '        zend_declare_property_long(${ce_ptr}, "${prop.name}", sizeof("${prop.name}")-1, 0, ${prop.flags});'
-				}
-				'double', 'f64' {
-					res << '        zend_declare_property_double(${ce_ptr}, "${prop.name}", sizeof("${prop.name}")-1, 0.0, ${prop.flags});'
-				}
-				'bool' {
-					res << '        zend_declare_property_bool(${ce_ptr}, "${prop.name}", sizeof("${prop.name}")-1, 0, ${prop.flags});'
-				}
-				'string' {
-					res << '        zend_declare_property_string(${ce_ptr}, "${prop.name}", sizeof("${prop.name}")-1, "", ${prop.flags});'
-				}
-				else {
-					res << '        zend_declare_property_null(${ce_ptr}, "${prop.name}", sizeof("${prop.name}")-1, ${prop.flags});'
-				}
-			}
+			res << b.render_typed_property(ce_ptr, prop)
 		}
 		for i, attr in b.attributes {
 			attr_var := 'attribute_${lower_name}_${i}'
@@ -364,10 +344,54 @@ pub fn (b &ClassBuilder) render_impl_postlude() string {
 	return '${b.render_methods_array()}\n${b.render_registration_function()}'
 }
 
-fn arg_type_info(v_type string) ArgTypeInfo {
+fn arg_type_info(v_type string, table &ast.Table) ArgTypeInfo {
 	decl := parse_php_type_decl(v_type)
 	clean := decl.clean
 	allow_null := decl.allow_null
+	if table != unsafe { nil } {
+		if sym := table.find_sym(clean) {
+			if sym.kind == .sum_type {
+				mut masks := []string{}
+				mut resolved_allow_null := allow_null
+				if sym.info is ast.SumType {
+					for variant in sym.info.variants {
+						name := table.get_type_name(variant)
+						if name == 'none' {
+							resolved_allow_null = true
+							continue
+						}
+						if builtin := php_builtin_type_info(name) {
+							if builtin.mask != '' {
+								masks << builtin.mask
+							} else if builtin.code == 'IS_STRING' {
+								masks << 'MAY_BE_STRING'
+							} else if builtin.code == 'IS_LONG' {
+								masks << 'MAY_BE_LONG'
+							} else if builtin.code == '_IS_BOOL' {
+								masks << 'MAY_BE_BOOL'
+							} else if builtin.code == 'IS_DOUBLE' {
+								masks << 'MAY_BE_DOUBLE'
+							} else if builtin.code == 'IS_ARRAY' {
+								masks << 'MAY_BE_ARRAY'
+							} else if builtin.code == 'IS_OBJECT' {
+								masks << 'MAY_BE_OBJECT'
+							}
+						} else {
+							masks << 'MAY_BE_OBJECT'
+						}
+					}
+				}
+				if masks.len > 0 {
+					return ArgTypeInfo{
+						code:           ''
+						mask:           masks.join('|')
+						mask_obj_class: ''
+						allow_null:     resolved_allow_null
+					}
+				}
+			}
+		}
+	}
 	if builtin := php_builtin_type_info(v_type) {
 		return ArgTypeInfo{
 			code:           builtin.code
@@ -411,9 +435,9 @@ fn method_has_literal_class_arg(m ClassMethod) bool {
 	return false
 }
 
-fn method_arginfo_header(m ClassMethod) string {
+fn method_arginfo_header(m ClassMethod, table &ast.Table) string {
 	resolved_return_type := m.return_spec.resolved_type()
-	type_info := arg_type_info(resolved_return_type)
+	type_info := arg_type_info(resolved_return_type, table)
 	return render_method_arginfo_header(m.c_func, m.php_name, method_required_args(m),
 		resolved_return_type, m.return_spec.arginfo_obj_type(), type_info,
 		method_has_literal_class_arg(m))
@@ -423,7 +447,7 @@ fn method_required_args(m ClassMethod) int {
 	mut required := m.args.len
 	for required > 0 {
 		last := m.args[required - 1]
-		if last.is_optional {
+		if last.is_optional || last.is_variadic {
 			required--
 			continue
 		}
@@ -496,11 +520,11 @@ pub fn (b &ClassBuilder) render_arginfo_defs() string {
 			res << 'ZEND_END_ARG_INFO()'
 			continue
 		}
-		res << method_arginfo_header(m)
+		res << method_arginfo_header(m, b.table)
 		for arg in m.args {
 			raw_type := if arg.php_type != '' { arg.php_type } else { arg.type_ }
 			validate_php_arg_type_or_panic(raw_type, arg.name, m.php_name)
-			res << render_arginfo_arg_line(arg.name, raw_type, arg.php_default)
+			res << render_arginfo_arg_line(arg.name, raw_type, arg.php_default, arg.is_variadic, b.table)
 		}
 		res << 'ZEND_END_ARG_INFO()'
 	}
@@ -532,3 +556,85 @@ pub fn (b &ClassBuilder) export_fragments() ExportFragments {
 		minit_lines:  [b.render_minit()]
 	}
 }
+
+fn (b &ClassBuilder) render_typed_class_constant(ce_ptr string, con ClassConstant) []string {
+	mut res := []string{}
+	c_type_code := match con.type_ {
+		'string' { 'IS_STRING' }
+		'double' { 'IS_DOUBLE' }
+		'long', 'int' { 'IS_LONG' }
+		'bool' { '_IS_BOOL' }
+		else { '' }
+	}
+	if c_type_code == '' {
+		return res
+	}
+
+	zval_init := match con.type_ {
+		'string' { 'ZVAL_STR(&val, zend_string_init("${con.value}", sizeof("${con.value}")-1, 1));' }
+		'double' { 'ZVAL_DOUBLE(&val, ${con.value});' }
+		'long', 'int' { 'ZVAL_LONG(&val, ${con.value});' }
+		'bool' { 'ZVAL_BOOL(&val, ${con.value});' }
+		else { '' }
+	}
+
+	legacy_fn := match con.type_ {
+		'string' { 'zend_declare_class_constant_string(${ce_ptr}, "${con.name}", sizeof("${con.name}")-1, "${con.value}");' }
+		'double' { 'zend_declare_class_constant_double(${ce_ptr}, "${con.name}", sizeof("${con.name}")-1, ${con.value});' }
+		'long', 'int' { 'zend_declare_class_constant_long(${ce_ptr}, "${con.name}", sizeof("${con.name}")-1, ${con.value});' }
+		'bool' { 'zend_declare_class_constant_bool(${ce_ptr}, "${con.name}", sizeof("${con.name}")-1, ${con.value});' }
+		else { '' }
+	}
+
+	res << '#if PHP_VERSION_ID >= 80300'
+	res << '        {'
+	res << '            zval val;'
+	res << '            ${zval_init}'
+	res << '            zend_string *const_name = zend_string_init("${con.name}", sizeof("${con.name}")-1, 1);'
+	res << '            zend_declare_typed_class_constant(${ce_ptr}, const_name, &val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(${c_type_code}, 0, 0));'
+	res << '            zend_string_release(const_name);'
+	res << '            zval_ptr_dtor(&val);'
+	res << '        }'
+	res << '#else'
+	res << '        ${legacy_fn}'
+	res << '#endif'
+
+	return res
+}
+
+fn (b &ClassBuilder) render_typed_property(ce_ptr string, prop ClassProperty) []string {
+	mut res := []string{}
+	// 先查原始 V 标量类型（string/int/i64/bool/f64/f32）
+	mut php_code := ''
+	if builtin := php_builtin_type_info(prop.type_) {
+		php_code = builtin.code
+	}
+	// 再查包装类型（PhpString/PhpInt/PhpArray 等）
+	if php_code == '' {
+		if spec := php_types.PhpTypeSpec.from_v_type(prop.type_) {
+			if spec.php_mask == '' {
+				php_code = spec.php_code
+			}
+		}
+	}
+	// IS_MIXED / 空 code → 无类型属性
+	if php_code == '' || php_code == 'IS_MIXED' {
+		res << '        zend_declare_property_null(${ce_ptr}, "${prop.name}", sizeof("${prop.name}")-1, ${prop.flags});'
+		return res
+	}
+	default_init := match php_code {
+		'IS_STRING' { 'ZVAL_EMPTY_STRING(&default_val);' }
+		'IS_LONG' { 'ZVAL_LONG(&default_val, 0);' }
+		'IS_DOUBLE' { 'ZVAL_DOUBLE(&default_val, 0.0);' }
+		'_IS_BOOL', 'IS_FALSE' { 'ZVAL_FALSE(&default_val);' }
+		'IS_TRUE' { 'ZVAL_TRUE(&default_val);' }
+		else { 'ZVAL_NULL(&default_val);' }
+	}
+	res << '        {'
+	res << '            zval default_val;'
+	res << '            ${default_init}'
+	res << '            zend_declare_typed_property(${ce_ptr}, zend_string_init_interned("${prop.name}", sizeof("${prop.name}")-1, 1), &default_val, ${prop.flags}, NULL, (zend_type) ZEND_TYPE_INIT_CODE(${php_code}, 0, 0));'
+	res << '        }'
+	return res
+}
+

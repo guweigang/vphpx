@@ -325,3 +325,7 @@ pub fn (obj &VSlimConfig) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimConfig](obj)
 }
 
+pub fn (val VSlimConfig) php_class_name() string {
+    return 'VSlim\\Config'
+}
+

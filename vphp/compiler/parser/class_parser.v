@@ -397,7 +397,7 @@ pub fn add_class_method(mut cls repr.PhpClassRepr, stmt ast.FnDecl, table &ast.T
 		return
 	}
 	start_idx := if stmt.is_method { 1 } else { 0 }
-	args := build_php_args(stmt.params, table, start_idx, attrs.php_arg_types, attrs.php_arg_names,
+	args := build_php_args(stmt.params, table, start_idx, stmt.is_variadic, attrs.php_arg_types, attrs.php_arg_names,
 		attrs.php_arg_optional, attrs.php_arg_defaults, attrs.php_param_attrs, params_structs)
 
 	ret_type := strip_module(table.type_to_str(stmt.return_type))
@@ -407,12 +407,16 @@ pub fn add_class_method(mut cls repr.PhpClassRepr, stmt ast.FnDecl, table &ast.T
 		&& normalize_delegated_target_type(ret_type) == cls.name {
 		println('  - [Compiler][note] borrowed self-return inferred: ${cls.name}.${stmt.name} -> consider adding @[php_borrowed_return]')
 	}
+	mut php_return_type := attrs.php_return_type
+	if stmt.is_noreturn && php_return_type == '' {
+		php_return_type = 'never'
+	}
 	cls.methods << repr.PhpMethodRepr{
 		name:            attrs.php_name
 		v_name:          stmt.name
 		v_c_func:        '${cls.name}_${stmt.name}'
 		is_static:       false
-		return_spec:     repr.new_return_repr(ret_type, attrs.php_return_type)
+		return_spec:     repr.new_return_repr(ret_type, php_return_type)
 		borrowed_return: attrs.borrowed_return || inferred_borrowed
 		visibility:      if stmt.is_pub { 'public' } else { 'protected' }
 		args:            args
@@ -429,16 +433,20 @@ pub fn add_class_static_method(mut cls repr.PhpClassRepr, stmt ast.FnDecl, table
 	if !attrs.has_php_callable {
 		return
 	}
-	args := build_php_args(stmt.params, table, 0, attrs.php_arg_types, attrs.php_arg_names,
+	args := build_php_args(stmt.params, table, 0, stmt.is_variadic, attrs.php_arg_types, attrs.php_arg_names,
 		attrs.php_arg_optional, attrs.php_arg_defaults, attrs.php_param_attrs, params_structs)
 
 	ret_type := strip_module(table.type_to_str(stmt.return_type))
+	mut php_return_type_static := attrs.php_return_type
+	if stmt.is_noreturn && php_return_type_static == '' {
+		php_return_type_static = 'never'
+	}
 	cls.methods << repr.PhpMethodRepr{
 		name:            attrs.php_name
 		v_name:          method_name
 		v_c_func:        '${cls.name}_${method_name}'
 		is_static:       true
-		return_spec:     repr.new_return_repr(ret_type, attrs.php_return_type)
+		return_spec:     repr.new_return_repr(ret_type, php_return_type_static)
 		borrowed_return: attrs.borrowed_return
 		visibility:      if stmt.is_pub { 'public' } else { 'protected' }
 		args:            args

@@ -180,3 +180,7 @@ pub fn (obj &VSlimValidator) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimValidator](obj)
 }
 
+pub fn (val VSlimValidator) php_class_name() string {
+    return 'VSlim\\Validate\\Validator'
+}
+

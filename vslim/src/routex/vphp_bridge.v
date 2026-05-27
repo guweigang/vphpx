@@ -583,3 +583,7 @@ pub fn (obj &RouteGroup) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[RouteGroup](obj)
 }
 
+pub fn (val RouteGroup) php_class_name() string {
+    return 'VSlim\\RouteGroup'
+}
+

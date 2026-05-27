@@ -585,3 +585,7 @@ pub fn (obj &VSlimTestingHarness) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimTestingHarness](obj)
 }
 
+pub fn (val VSlimTestingHarness) php_class_name() string {
+    return 'VSlim\\Testing\\Harness'
+}
+

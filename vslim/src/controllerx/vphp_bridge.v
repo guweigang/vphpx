@@ -83,7 +83,11 @@ pub fn vphp_wrap_vslim_controller_set_view(ptr voidptr, ctx vphp.Context) voidpt
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'view', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &viewx.VSlimView(php_args.at_named_or_index(0, 'view').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'view').to_v_ptr[viewx.VSlimView]() or {
+        vphp.throw_exception('argument 0 must be object bound to viewx.VSlimView, got ' + php_args.at_named_or_index(0, 'view').zval().type_name(), 0)
+        return unsafe { nil }
+    }
+    arg_0 := unsafe { &viewx.VSlimView(arg_0_ptr) }
     res := recv.set_view(arg_0)
     return voidptr(res)
 }
@@ -276,5 +280,9 @@ pub fn (obj &VSlimController) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimController) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimController](obj)
+}
+
+pub fn (val VSlimController) php_class_name() string {
+    return 'VSlim\\Controller'
 }
 

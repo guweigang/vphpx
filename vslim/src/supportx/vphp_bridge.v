@@ -100,6 +100,10 @@ pub fn (obj &VSlimPsr20Clock) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimPsr20Clock](obj)
 }
 
+pub fn (val VSlimPsr20Clock) php_class_name() string {
+    return 'VSlim\\Psr20\\Clock'
+}
+
 @[export: 'vslim_service_provider_new_raw']
 pub fn vslim_service_provider_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimServiceProvider]()
@@ -216,6 +220,10 @@ pub fn (obj &VSlimServiceProvider) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimServiceProvider) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimServiceProvider](obj)
+}
+
+pub fn (val VSlimServiceProvider) php_class_name() string {
+    return 'VSlim\\Support\\ServiceProvider'
 }
 
 @[export: 'vslim_module_new_raw']
@@ -336,6 +344,10 @@ pub fn (obj &VSlimModule) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimModule](obj)
 }
 
+pub fn (val VSlimModule) php_class_name() string {
+    return 'VSlim\\Support\\Module'
+}
+
 @[export: 'vslim_env_loader_new_raw']
 pub fn vslim_env_loader_new_raw() voidptr {
     return vphp.generic_new_raw[VSlimEnvLoader]()
@@ -431,5 +443,9 @@ pub fn (obj &VSlimEnvLoader) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VSlimEnvLoader) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VSlimEnvLoader](obj)
+}
+
+pub fn (val VSlimEnvLoader) php_class_name() string {
+    return 'VSlim\\EnvLoader'
 }
 
