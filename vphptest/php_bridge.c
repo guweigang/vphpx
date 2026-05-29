@@ -1462,7 +1462,11 @@ static int abstractreport_register_class(void) {
         abstractreport_ce = zend_register_internal_class(&ce);
         abstractreport_ce->ce_flags |= ZEND_ACC_EXPLICIT_ABSTRACT_CLASS;
         abstractreport_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(abstractreport_ce, "title", sizeof("title")-1, "", ZEND_ACC_PUBLIC);
+        {
+            zval default_val;
+            ZVAL_EMPTY_STRING(&default_val);
+            zend_declare_typed_property(abstractreport_ce, zend_string_init_interned("title", sizeof("title")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+        }
     }
     return SUCCESS;
 }
@@ -1539,7 +1543,11 @@ static int dailyreport_register_class(void) {
         }
         dailyreport_ce = zend_register_internal_class_ex(&ce, parent_ce);
         dailyreport_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(dailyreport_ce, "summary", sizeof("summary")-1, "", ZEND_ACC_PUBLIC);
+        {
+            zval default_val;
+            ZVAL_EMPTY_STRING(&default_val);
+            zend_declare_typed_property(dailyreport_ce, zend_string_init_interned("summary", sizeof("summary")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+        }
     }
     return SUCCESS;
 }
@@ -1624,7 +1632,11 @@ static int author_register_class(void) {
         INIT_CLASS_ENTRY(ce, "Author", author_methods);
         author_ce = zend_register_internal_class(&ce);
         author_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(author_ce, "name", sizeof("name")-1, "", ZEND_ACC_PUBLIC);
+        {
+            zval default_val;
+            ZVAL_EMPTY_STRING(&default_val);
+            zend_declare_typed_property(author_ce, zend_string_init_interned("name", sizeof("name")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+        }
     }
     return SUCCESS;
 }
@@ -1721,7 +1733,11 @@ static int post_register_class(void) {
         INIT_CLASS_ENTRY(ce, "Post", post_methods);
         post_ce = zend_register_internal_class(&ce);
         post_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_long(post_ce, "post_id", sizeof("post_id")-1, 0, ZEND_ACC_PUBLIC);
+        {
+            zval default_val;
+            ZVAL_LONG(&default_val, 0);
+            zend_declare_typed_property(post_ce, zend_string_init_interned("post_id", sizeof("post_id")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_LONG, 0, 0));
+        }
         zend_declare_property_null(post_ce, "author", sizeof("author")-1, ZEND_ACC_PUBLIC);
     }
     return SUCCESS;
@@ -1954,15 +1970,72 @@ static int article_register_class(void) {
             return FAILURE;
         }
         zend_class_implements(article_ce, 1, iface_0_ce);
+#if PHP_VERSION_ID >= 80300
+        {
+            zval val;
+            ZVAL_LONG(&val, 1024);
+            zend_string *const_name = zend_string_init("MAX_TITLE_LEN", sizeof("MAX_TITLE_LEN")-1, 1);
+            zend_declare_typed_class_constant(article_ce, const_name, &val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_LONG, 0, 0));
+            zend_string_release(const_name);
+            zval_ptr_dtor(&val);
+        }
+#else
         zend_declare_class_constant_long(article_ce, "MAX_TITLE_LEN", sizeof("MAX_TITLE_LEN")-1, 1024);
+#endif
+#if PHP_VERSION_ID >= 80300
+        {
+            zval val;
+            ZVAL_STR(&val, zend_string_init("Samantha Black", sizeof("Samantha Black")-1, 1));
+            zend_string *const_name = zend_string_init("NAME", sizeof("NAME")-1, 1);
+            zend_declare_typed_class_constant(article_ce, const_name, &val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+            zend_string_release(const_name);
+            zval_ptr_dtor(&val);
+        }
+#else
         zend_declare_class_constant_string(article_ce, "NAME", sizeof("NAME")-1, "Samantha Black");
+#endif
+#if PHP_VERSION_ID >= 80300
+        {
+            zval val;
+            ZVAL_LONG(&val, 24);
+            zend_string *const_name = zend_string_init("AGE", sizeof("AGE")-1, 1);
+            zend_declare_typed_class_constant(article_ce, const_name, &val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_LONG, 0, 0));
+            zend_string_release(const_name);
+            zval_ptr_dtor(&val);
+        }
+#else
         zend_declare_class_constant_long(article_ce, "AGE", sizeof("AGE")-1, 24);
-        zend_declare_property_long(article_ce, "created_at", sizeof("created_at")-1, 0, ZEND_ACC_PUBLIC | ZEND_ACC_READONLY);
-        zend_declare_property_long(article_ce, "id", sizeof("id")-1, 0, ZEND_ACC_PUBLIC);
-        zend_declare_property_string(article_ce, "title", sizeof("title")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_bool(article_ce, "is_top", sizeof("is_top")-1, 0, ZEND_ACC_PUBLIC);
-        zend_declare_property_string(article_ce, "content", sizeof("content")-1, "", ZEND_ACC_PROTECTED);
-        zend_declare_property_long(article_ce, "total_count", sizeof("total_count")-1, 0, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC);
+#endif
+        {
+            zval default_val;
+            ZVAL_LONG(&default_val, 0);
+            zend_declare_typed_property(article_ce, zend_string_init_interned("created_at", sizeof("created_at")-1, 1), &default_val, ZEND_ACC_PUBLIC | ZEND_ACC_READONLY, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_LONG, 0, 0));
+        }
+        {
+            zval default_val;
+            ZVAL_LONG(&default_val, 0);
+            zend_declare_typed_property(article_ce, zend_string_init_interned("id", sizeof("id")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_LONG, 0, 0));
+        }
+        {
+            zval default_val;
+            ZVAL_EMPTY_STRING(&default_val);
+            zend_declare_typed_property(article_ce, zend_string_init_interned("title", sizeof("title")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+        }
+        {
+            zval default_val;
+            ZVAL_FALSE(&default_val);
+            zend_declare_typed_property(article_ce, zend_string_init_interned("is_top", sizeof("is_top")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(_IS_BOOL, 0, 0));
+        }
+        {
+            zval default_val;
+            ZVAL_EMPTY_STRING(&default_val);
+            zend_declare_typed_property(article_ce, zend_string_init_interned("content", sizeof("content")-1, 1), &default_val, ZEND_ACC_PROTECTED, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+        }
+        {
+            zval default_val;
+            ZVAL_LONG(&default_val, 0);
+            zend_declare_typed_property(article_ce, zend_string_init_interned("total_count", sizeof("total_count")-1, 1), &default_val, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_LONG, 0, 0));
+        }
     }
     return SUCCESS;
 }
@@ -2053,7 +2126,11 @@ static int story_register_class(void) {
         }
         story_ce = zend_register_internal_class_ex(&ce, parent_ce);
         story_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_long(story_ce, "chapter_count", sizeof("chapter_count")-1, 0, ZEND_ACC_PUBLIC);
+        {
+            zval default_val;
+            ZVAL_LONG(&default_val, 0);
+            zend_declare_typed_property(story_ce, zend_string_init_interned("chapter_count", sizeof("chapter_count")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_LONG, 0, 0));
+        }
     }
     return SUCCESS;
 }
@@ -2097,7 +2174,11 @@ static int demo__contracts__aliasbase_register_class(void) {
         INIT_CLASS_ENTRY(ce, "Demo\\Contracts\\AliasBase", demo__contracts__aliasbase_methods);
         demo__contracts__aliasbase_ce = zend_register_internal_class(&ce);
         demo__contracts__aliasbase_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(demo__contracts__aliasbase_ce, "label", sizeof("label")-1, "", ZEND_ACC_PUBLIC);
+        {
+            zval default_val;
+            ZVAL_EMPTY_STRING(&default_val);
+            zend_declare_typed_property(demo__contracts__aliasbase_ce, zend_string_init_interned("label", sizeof("label")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+        }
     }
     return SUCCESS;
 }
@@ -2239,7 +2320,11 @@ static int aliasworker_register_class(void) {
             return FAILURE;
         }
         zend_class_implements(aliasworker_ce, 2, iface_0_ce, iface_1_ce);
-        zend_declare_property_string(aliasworker_ce, "title", sizeof("title")-1, "", ZEND_ACC_PUBLIC);
+        {
+            zval default_val;
+            ZVAL_EMPTY_STRING(&default_val);
+            zend_declare_typed_property(aliasworker_ce, zend_string_init_interned("title", sizeof("title")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+        }
     }
     return SUCCESS;
 }
@@ -2426,7 +2511,11 @@ static int callableprocessor_register_class(void) {
         INIT_CLASS_ENTRY(ce, "CallableProcessor", callableprocessor_methods);
         callableprocessor_ce = zend_register_internal_class(&ce);
         callableprocessor_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(callableprocessor_ce, "prefix", sizeof("prefix")-1, "", ZEND_ACC_PUBLIC);
+        {
+            zval default_val;
+            ZVAL_EMPTY_STRING(&default_val);
+            zend_declare_typed_property(callableprocessor_ce, zend_string_init_interned("prefix", sizeof("prefix")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+        }
     }
     return SUCCESS;
 }
@@ -2569,7 +2658,11 @@ static int finder_register_class(void) {
         INIT_CLASS_ENTRY(ce, "Finder", finder_methods);
         finder_ce = zend_register_internal_class(&ce);
         finder_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_null(finder_ce, "items", sizeof("items")-1, ZEND_ACC_PUBLIC);
+        {
+            zval default_val;
+            ZVAL_NULL(&default_val);
+            zend_declare_typed_property(finder_ce, zend_string_init_interned("items", sizeof("items")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_ARRAY, 0, 0));
+        }
     }
     return SUCCESS;
 }
@@ -2640,9 +2733,21 @@ static int readonlyrecord_register_class(void) {
         INIT_CLASS_ENTRY(ce, "ReadonlyRecord", readonlyrecord_methods);
         readonlyrecord_ce = zend_register_internal_class(&ce);
         readonlyrecord_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_long(readonlyrecord_ce, "created_at", sizeof("created_at")-1, 0, ZEND_ACC_PUBLIC | ZEND_ACC_READONLY);
-        zend_declare_property_string(readonlyrecord_ce, "title", sizeof("title")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_string(readonlyrecord_ce, "internal_note", sizeof("internal_note")-1, "", ZEND_ACC_PROTECTED);
+        {
+            zval default_val;
+            ZVAL_LONG(&default_val, 0);
+            zend_declare_typed_property(readonlyrecord_ce, zend_string_init_interned("created_at", sizeof("created_at")-1, 1), &default_val, ZEND_ACC_PUBLIC | ZEND_ACC_READONLY, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_LONG, 0, 0));
+        }
+        {
+            zval default_val;
+            ZVAL_EMPTY_STRING(&default_val);
+            zend_declare_typed_property(readonlyrecord_ce, zend_string_init_interned("title", sizeof("title")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+        }
+        {
+            zval default_val;
+            ZVAL_EMPTY_STRING(&default_val);
+            zend_declare_typed_property(readonlyrecord_ce, zend_string_init_interned("internal_note", sizeof("internal_note")-1, 1), &default_val, ZEND_ACC_PROTECTED, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+        }
     }
     return SUCCESS;
 }
@@ -2794,10 +2899,26 @@ static int traitpost_register_class(void) {
         INIT_CLASS_ENTRY(ce, "TraitPost", traitpost_methods);
         traitpost_ce = zend_register_internal_class(&ce);
         traitpost_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(traitpost_ce, "title", sizeof("title")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_string(traitpost_ce, "slug", sizeof("slug")-1, "", ZEND_ACC_PUBLIC);
-        zend_declare_property_long(traitpost_ce, "visits", sizeof("visits")-1, 0, ZEND_ACC_PUBLIC);
-        zend_declare_property_string(traitpost_ce, "internal_note", sizeof("internal_note")-1, "", ZEND_ACC_PROTECTED);
+        {
+            zval default_val;
+            ZVAL_EMPTY_STRING(&default_val);
+            zend_declare_typed_property(traitpost_ce, zend_string_init_interned("title", sizeof("title")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+        }
+        {
+            zval default_val;
+            ZVAL_EMPTY_STRING(&default_val);
+            zend_declare_typed_property(traitpost_ce, zend_string_init_interned("slug", sizeof("slug")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+        }
+        {
+            zval default_val;
+            ZVAL_LONG(&default_val, 0);
+            zend_declare_typed_property(traitpost_ce, zend_string_init_interned("visits", sizeof("visits")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_LONG, 0, 0));
+        }
+        {
+            zval default_val;
+            ZVAL_EMPTY_STRING(&default_val);
+            zend_declare_typed_property(traitpost_ce, zend_string_init_interned("internal_note", sizeof("internal_note")-1, 1), &default_val, ZEND_ACC_PROTECTED, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+        }
     }
     return SUCCESS;
 }
@@ -2943,7 +3064,11 @@ static int validator_register_class(void) {
         INIT_CLASS_ENTRY(ce, "Validator", validator_methods);
         validator_ce = zend_register_internal_class(&ce);
         validator_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_bool(validator_ce, "strict", sizeof("strict")-1, 0, ZEND_ACC_PUBLIC);
+        {
+            zval default_val;
+            ZVAL_FALSE(&default_val);
+            zend_declare_typed_property(validator_ce, zend_string_init_interned("strict", sizeof("strict")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(_IS_BOOL, 0, 0));
+        }
     }
     return SUCCESS;
 }
@@ -3015,7 +3140,11 @@ static int dispatchablesample_register_class(void) {
         INIT_CLASS_ENTRY(ce, "DispatchableSample", dispatchablesample_methods);
         dispatchablesample_ce = zend_register_internal_class(&ce);
         dispatchablesample_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(dispatchablesample_ce, "name", sizeof("name")-1, "", ZEND_ACC_PUBLIC);
+        {
+            zval default_val;
+            ZVAL_EMPTY_STRING(&default_val);
+            zend_declare_typed_property(dispatchablesample_ce, zend_string_init_interned("name", sizeof("name")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+        }
         zend_string *attribute_dispatchablesample_0_name = zend_string_init_interned("PhpDispatchable", sizeof("PhpDispatchable")-1, 1);
         zend_attribute *attribute_dispatchablesample_0 = vphp_zend_add_class_attribute(dispatchablesample_ce, attribute_dispatchablesample_0_name, 1);
         zend_string_release(attribute_dispatchablesample_0_name);
@@ -3202,7 +3331,11 @@ static int stringablebox_register_class(void) {
         INIT_CLASS_ENTRY(ce, "StringableBox", stringablebox_methods);
         stringablebox_ce = zend_register_internal_class(&ce);
         stringablebox_ce->create_object = vphp_create_object_handler;
-        zend_declare_property_string(stringablebox_ce, "name", sizeof("name")-1, "", ZEND_ACC_PUBLIC);
+        {
+            zval default_val;
+            ZVAL_EMPTY_STRING(&default_val);
+            zend_declare_typed_property(stringablebox_ce, zend_string_init_interned("name", sizeof("name")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+        }
     }
     return SUCCESS;
 }

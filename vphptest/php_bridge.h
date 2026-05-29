@@ -7,6 +7,10 @@
 #include <Zend/zend_enum.h>
 #include <ext/standard/info.h>
 
+#ifndef ZEND_ACC_READONLY_CLASS
+#define ZEND_ACC_READONLY_CLASS 0
+#endif
+
 extern zend_module_entry vphptest_module_entry;
 #define phpext_vphptest_ptr &vphptest_module_entry
 

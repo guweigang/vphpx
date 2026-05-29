@@ -1,6 +1,7 @@
 module main
 
 import vphp
+import vphp.object
 
 #include "php_bridge.h"
 
@@ -107,8 +108,8 @@ pub fn AbstractReport.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.abstractreport_ce)
 }
 
-pub fn AbstractReport.php_object_handlers() voidptr {
-    return abstract_report_handlers()
+pub fn AbstractReport.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(abstract_report_handlers())
 }
 
 pub fn AbstractReport.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -129,6 +130,10 @@ pub fn (obj &AbstractReport) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &AbstractReport) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[AbstractReport](obj)
+}
+
+pub fn (val AbstractReport) php_class_name() string {
+    return 'AbstractReport'
 }
 
 @[export: 'daily_report_new_raw']
@@ -217,8 +222,8 @@ pub fn DailyReport.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.dailyreport_ce)
 }
 
-pub fn DailyReport.php_object_handlers() voidptr {
-    return daily_report_handlers()
+pub fn DailyReport.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(daily_report_handlers())
 }
 
 pub fn DailyReport.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -239,6 +244,10 @@ pub fn (obj &DailyReport) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &DailyReport) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[DailyReport](obj)
+}
+
+pub fn (val DailyReport) php_class_name() string {
+    return 'DailyReport'
 }
 
 @[export: 'author_new_raw']
@@ -324,8 +333,8 @@ pub fn Author.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.author_ce)
 }
 
-pub fn Author.php_object_handlers() voidptr {
-    return author_handlers()
+pub fn Author.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(author_handlers())
 }
 
 pub fn Author.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -346,6 +355,10 @@ pub fn (obj &Author) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &Author) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[Author](obj)
+}
+
+pub fn (val Author) php_class_name() string {
+    return 'Author'
 }
 
 @[export: 'post_new_raw']
@@ -405,7 +418,11 @@ pub fn vphp_wrap_post_set_author(ptr voidptr, ctx vphp.Context)  {
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'author', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &Author(php_args.at_named_or_index(0, 'author').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'author').to_v_ptr[Author]() or {
+        vphp.throw_exception('argument 0 must be object bound to Author, got ' + php_args.at_named_or_index(0, 'author').zval().type_name(), 0)
+        return
+    }
+    arg_0 := unsafe { &Author(arg_0_ptr) }
     recv.set_author(arg_0)
 }
 @[export: 'vphp_wrap_post_get_author']
@@ -431,8 +448,8 @@ pub fn Post.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.post_ce)
 }
 
-pub fn Post.php_object_handlers() voidptr {
-    return post_handlers()
+pub fn Post.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(post_handlers())
 }
 
 pub fn Post.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -453,6 +470,10 @@ pub fn (obj &Post) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &Post) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[Post](obj)
+}
+
+pub fn (val Post) php_class_name() string {
+    return 'Post'
 }
 
 @[export: 'article_new_raw']
@@ -661,8 +682,8 @@ pub fn Article.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.article_ce)
 }
 
-pub fn Article.php_object_handlers() voidptr {
-    return article_handlers()
+pub fn Article.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(article_handlers())
 }
 
 pub fn Article.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -683,6 +704,10 @@ pub fn (obj &Article) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &Article) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[Article](obj)
+}
+
+pub fn (val Article) php_class_name() string {
+    return 'Article'
 }
 
 @[export: 'story_new_raw']
@@ -742,7 +767,12 @@ pub fn vphp_wrap_story_create(ctx vphp.Context) voidptr {
         vphp.PhpArgMeta{ index: 0, name: 'author', attributes: []vphp.PhpAttribute{} },
         vphp.PhpArgMeta{ index: 1, name: 'chapters', attributes: []vphp.PhpAttribute{} },
     ])
-    arg_0 := unsafe { &Author(php_args.at_named_or_index(0, 'author').raw_obj()) }
+    arg_0_ptr := php_args.at_named_or_index(0, 'author').to_v_ptr[Author]() or {
+        vphp.throw_exception('argument 0 must be object bound to Author, got ' + php_args.at_named_or_index(0, 'author').zval().type_name(), 0)
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
+    }
+    arg_0 := unsafe { &Author(arg_0_ptr) }
     arg_1 := php_args.at_named_or_index(1, 'chapters').as_v[int]()
     res := Story.create(arg_0, arg_1)
     return voidptr(res)
@@ -770,8 +800,8 @@ pub fn Story.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.story_ce)
 }
 
-pub fn Story.php_object_handlers() voidptr {
-    return story_handlers()
+pub fn Story.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(story_handlers())
 }
 
 pub fn Story.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -792,6 +822,10 @@ pub fn (obj &Story) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &Story) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[Story](obj)
+}
+
+pub fn (val Story) php_class_name() string {
+    return 'Story'
 }
 
 @[export: 'alias_base_new_raw']
@@ -870,8 +904,8 @@ pub fn AliasBase.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.demo__contracts__aliasbase_ce)
 }
 
-pub fn AliasBase.php_object_handlers() voidptr {
-    return alias_base_handlers()
+pub fn AliasBase.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(alias_base_handlers())
 }
 
 pub fn AliasBase.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -892,6 +926,10 @@ pub fn (obj &AliasBase) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &AliasBase) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[AliasBase](obj)
+}
+
+pub fn (val AliasBase) php_class_name() string {
+    return 'Demo\\Contracts\\AliasBase'
 }
 
 @[export: 'alias_worker_new_raw']
@@ -996,8 +1034,8 @@ pub fn AliasWorker.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.aliasworker_ce)
 }
 
-pub fn AliasWorker.php_object_handlers() voidptr {
-    return alias_worker_handlers()
+pub fn AliasWorker.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(alias_worker_handlers())
 }
 
 pub fn AliasWorker.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1018,6 +1056,10 @@ pub fn (obj &AliasWorker) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &AliasWorker) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[AliasWorker](obj)
+}
+
+pub fn (val AliasWorker) php_class_name() string {
+    return 'AliasWorker'
 }
 
 @[export: 'runtime_demo_base_exception_new_raw']
@@ -1083,8 +1125,8 @@ pub fn RuntimeDemoBaseException.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.runtimedemo__baseexception_ce)
 }
 
-pub fn RuntimeDemoBaseException.php_object_handlers() voidptr {
-    return runtime_demo_base_exception_handlers()
+pub fn RuntimeDemoBaseException.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(runtime_demo_base_exception_handlers())
 }
 
 pub fn RuntimeDemoBaseException.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1105,6 +1147,10 @@ pub fn (obj &RuntimeDemoBaseException) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &RuntimeDemoBaseException) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[RuntimeDemoBaseException](obj)
+}
+
+pub fn (val RuntimeDemoBaseException) php_class_name() string {
+    return 'RuntimeDemo\\BaseException'
 }
 
 @[export: 'runtime_demo_child_exception_new_raw']
@@ -1170,8 +1216,8 @@ pub fn RuntimeDemoChildException.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.runtimedemo__childexception_ce)
 }
 
-pub fn RuntimeDemoChildException.php_object_handlers() voidptr {
-    return runtime_demo_child_exception_handlers()
+pub fn RuntimeDemoChildException.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(runtime_demo_child_exception_handlers())
 }
 
 pub fn RuntimeDemoChildException.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1192,6 +1238,10 @@ pub fn (obj &RuntimeDemoChildException) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &RuntimeDemoChildException) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[RuntimeDemoChildException](obj)
+}
+
+pub fn (val RuntimeDemoChildException) php_class_name() string {
+    return 'RuntimeDemo\\ChildException'
 }
 
 @[export: 'callable_processor_new_raw']
@@ -1344,8 +1394,8 @@ pub fn CallableProcessor.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.callableprocessor_ce)
 }
 
-pub fn CallableProcessor.php_object_handlers() voidptr {
-    return callable_processor_handlers()
+pub fn CallableProcessor.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(callable_processor_handlers())
 }
 
 pub fn CallableProcessor.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1366,6 +1416,10 @@ pub fn (obj &CallableProcessor) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &CallableProcessor) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[CallableProcessor](obj)
+}
+
+pub fn (val CallableProcessor) php_class_name() string {
+    return 'CallableProcessor'
 }
 
 @[export: 'finder_new_raw']
@@ -1479,8 +1533,8 @@ pub fn Finder.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.finder_ce)
 }
 
-pub fn Finder.php_object_handlers() voidptr {
-    return finder_handlers()
+pub fn Finder.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(finder_handlers())
 }
 
 pub fn Finder.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1501,6 +1555,10 @@ pub fn (obj &Finder) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &Finder) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[Finder](obj)
+}
+
+pub fn (val Finder) php_class_name() string {
+    return 'Finder'
 }
 
 @[export: 'readonly_record_new_raw']
@@ -1592,8 +1650,8 @@ pub fn ReadonlyRecord.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.readonlyrecord_ce)
 }
 
-pub fn ReadonlyRecord.php_object_handlers() voidptr {
-    return readonly_record_handlers()
+pub fn ReadonlyRecord.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(readonly_record_handlers())
 }
 
 pub fn ReadonlyRecord.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1614,6 +1672,10 @@ pub fn (obj &ReadonlyRecord) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &ReadonlyRecord) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[ReadonlyRecord](obj)
+}
+
+pub fn (val ReadonlyRecord) php_class_name() string {
+    return 'ReadonlyRecord'
 }
 
 @[export: 'trait_post_new_raw']
@@ -1742,8 +1804,8 @@ pub fn TraitPost.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.traitpost_ce)
 }
 
-pub fn TraitPost.php_object_handlers() voidptr {
-    return trait_post_handlers()
+pub fn TraitPost.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(trait_post_handlers())
 }
 
 pub fn TraitPost.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1764,6 +1826,10 @@ pub fn (obj &TraitPost) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &TraitPost) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[TraitPost](obj)
+}
+
+pub fn (val TraitPost) php_class_name() string {
+    return 'TraitPost'
 }
 
 @[export: 'validator_new_raw']
@@ -1893,8 +1959,8 @@ pub fn Validator.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.validator_ce)
 }
 
-pub fn Validator.php_object_handlers() voidptr {
-    return validator_handlers()
+pub fn Validator.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(validator_handlers())
 }
 
 pub fn Validator.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1915,6 +1981,10 @@ pub fn (obj &Validator) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &Validator) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[Validator](obj)
+}
+
+pub fn (val Validator) php_class_name() string {
+    return 'Validator'
 }
 
 @[export: 'dispatchable_sample_new_raw']
@@ -2005,8 +2075,8 @@ pub fn DispatchableSample.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.dispatchablesample_ce)
 }
 
-pub fn DispatchableSample.php_object_handlers() voidptr {
-    return dispatchable_sample_handlers()
+pub fn DispatchableSample.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(dispatchable_sample_handlers())
 }
 
 pub fn DispatchableSample.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -2027,6 +2097,14 @@ pub fn (obj &DispatchableSample) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &DispatchableSample) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[DispatchableSample](obj)
+}
+
+pub fn (val DispatchableSample) php_class_name() string {
+    return 'DispatchableSample'
+}
+
+pub fn (val ArticleStatus) php_class_name() string {
+    return 'ArticleStatus'
 }
 
 @[export: 'v_php_task_new_raw']
@@ -2101,8 +2179,8 @@ pub fn VPhpTask.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vphp__task_ce)
 }
 
-pub fn VPhpTask.php_object_handlers() voidptr {
-    return v_php_task_handlers()
+pub fn VPhpTask.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(v_php_task_handlers())
 }
 
 pub fn VPhpTask.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -2123,6 +2201,10 @@ pub fn (obj &VPhpTask) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &VPhpTask) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[VPhpTask](obj)
+}
+
+pub fn (val VPhpTask) php_class_name() string {
+    return 'VPhp\\Task'
 }
 
 @[export: 'stringable_box_new_raw']
@@ -2209,8 +2291,8 @@ pub fn StringableBox.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.stringablebox_ce)
 }
 
-pub fn StringableBox.php_object_handlers() voidptr {
-    return stringable_box_handlers()
+pub fn StringableBox.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(stringable_box_handlers())
 }
 
 pub fn StringableBox.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -2231,6 +2313,10 @@ pub fn (obj &StringableBox) bind_owned_php_object() vphp.ZVal {
 
 pub fn (obj &StringableBox) bind_owned_php_object_value() vphp.PhpValue {
     return vphp.bind_owned_object_value[StringableBox](obj)
+}
+
+pub fn (val StringableBox) php_class_name() string {
+    return 'StringableBox'
 }
 
 @[export: 'vphp_wrap_v_add']
@@ -3669,9 +3755,37 @@ fn vphp_wrap_v_get_alerts(ctx vphp.Context) {
     v_get_alerts(arg_0)
 }
 
+fn vphp_get_class_entry_by_v_name(v_name string) voidptr {
+    return match v_name {
+        'AbstractReport' { C.abstractreport_ce }
+        'DailyReport' { C.dailyreport_ce }
+        'Author' { C.author_ce }
+        'Post' { C.post_ce }
+        'Article' { C.article_ce }
+        'Story' { C.story_ce }
+        'AliasBase' { C.demo__contracts__aliasbase_ce }
+        'AliasWorker' { C.aliasworker_ce }
+        'RuntimeDemoBaseException' { C.runtimedemo__baseexception_ce }
+        'RuntimeDemoChildException' { C.runtimedemo__childexception_ce }
+        'CallableProcessor' { C.callableprocessor_ce }
+        'Finder' { C.finder_ce }
+        'ReadonlyRecord' { C.readonlyrecord_ce }
+        'TraitPost' { C.traitpost_ce }
+        'Validator' { C.validator_ce }
+        'DispatchableSample' { C.dispatchablesample_ce }
+        'ArticleStatus' { C.articlestatus_ce }
+        'VPhpTask' { C.vphp__task_ce }
+        'StringableBox' { C.stringablebox_ce }
+        else { // SAFETY: nil literal in unsafe context
+	unsafe { nil } }
+    }
+}
+
 @[export: 'vphp_ext_auto_startup']
 fn vphp_ext_auto_startup() {
     vphp.register_auto_interface_binding('AliasWorker', 'RuntimeContracts\\Greeter')
+
+    vphp.register_class_entry_lookup(vphp_get_class_entry_by_v_name)
 
     vphp.ITask.register('AnalyzeTask', fn (args []vphp.ZVal) vphp.ITask {
         return AnalyzeTask{
