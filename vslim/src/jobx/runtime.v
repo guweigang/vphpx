@@ -270,14 +270,9 @@ fn (mut worker VSlimJobWorker) perform(reserved VSlimReservedJob) bool {
 	defer {
 		result.release()
 	}
-	if vphp.PhpException.has_current() {
-		message := vphp.PhpException.current_message()
+	if message := vphp.PhpException.current_message_opt() {
 		vphp.PhpException.clear()
-		return worker.fail_or_release(reserved, if message == '' {
-			'job handle threw an exception'
-		} else {
-			message
-		})
+		return worker.fail_or_release(reserved, message)
 	}
 	return worker.complete(reserved)
 }
