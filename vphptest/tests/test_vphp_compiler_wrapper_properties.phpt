@@ -1,10 +1,10 @@
 --TEST--
-VSlim compiler supports PHP wrappers property binding, getter, setter and sync
+vphp compiler supports PHP wrappers property binding, getter, setter and sync
 --SKIPIF--
-<?php if (!extension_loaded('vslim')) print 'skip'; ?>
+<?php if (!extension_loaded('vphptest')) print 'skip'; ?>
 --FILE--
 <?php
-$class = new ReflectionClass(VSlim\Compiler\ModuleProbeWrapperBox::class);
+$class = new ReflectionClass(VPHP\Compiler\ModuleProbeWrapperBox::class);
 
 $expectedTypes = [
     'val' => null, // mixed / no type
@@ -27,7 +27,7 @@ foreach ($expectedTypes as $name => $expectedType) {
 }
 
 echo "=== Default Values ===\n";
-$box = new VSlim\Compiler\ModuleProbeWrapperBox();
+$box = new VPHP\Compiler\ModuleProbeWrapperBox();
 var_dump($box->val);
 var_dump($box->obj);
 var_dump($box->str);

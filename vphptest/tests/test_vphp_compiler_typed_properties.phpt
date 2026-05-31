@@ -1,11 +1,11 @@
 --TEST--
-VSlim compiler supports PHP 8.0+ typed properties
+vphp compiler supports PHP 8.0+ typed properties
 --SKIPIF--
-<?php if (!extension_loaded('vslim')) print 'skip'; ?>
+<?php if (!extension_loaded('vphptest')) print 'skip'; ?>
 --FILE--
 <?php
 // ModuleProbeReadOnlyBox 有 title(string) 和 value(int) 两个 pub 属性
-$class = new ReflectionClass(VSlim\Compiler\ModuleProbeReadOnlyBox::class);
+$class = new ReflectionClass(VPHP\Compiler\ModuleProbeReadOnlyBox::class);
 
 $props = [
     'title' => 'string',
@@ -27,7 +27,7 @@ foreach ($props as $name => $expectedType) {
 }
 
 // ModuleProbeBox 有 name(string) 和 count(int) 两个 pub mut 属性
-$class2 = new ReflectionClass(VSlim\Compiler\ModuleProbeBox::class);
+$class2 = new ReflectionClass(VPHP\Compiler\ModuleProbeBox::class);
 
 $props2 = [
     'name'  => 'string',
