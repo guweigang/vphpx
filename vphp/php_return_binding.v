@@ -101,26 +101,31 @@ pub fn (ret PhpReturn) resource(ptr voidptr, label string) {
 }
 
 pub fn (ret PhpReturn) object(v_ptr voidptr, ce ZendClassEntry) {
-	object.return_unbound(ret.raw_ptr(), v_ptr, ce.raw_ptr())
+	object.return_unbound(ret.raw_ptr(), v_ptr, ce)
 }
 
-pub fn (ret PhpReturn) bound_object(v_ptr voidptr, ce ZendClassEntry, handlers voidptr, ownership OwnershipKind) {
+pub fn (ret PhpReturn) bound_object(v_ptr voidptr, ce ZendClassEntry, handlers object.ObjectHandlers, ownership OwnershipKind) {
 	match ownership {
 		.borrowed {
-			object.return_bound(ret.raw_ptr(), v_ptr, ce.raw_ptr(), handlers, .borrowed)
+			object.return_bound(ret.raw_ptr(), v_ptr, ce, handlers, .borrowed)
 		}
-		.owned_request, .owned_persistent {
-			object.return_bound(ret.raw_ptr(), v_ptr, ce.raw_ptr(), handlers, .owned)
+		.owned_request {
+			object.register_root(v_ptr)
+			object.return_bound(ret.raw_ptr(), v_ptr, ce, handlers, .owned)
+		}
+		.owned_persistent {
+			object.register_root(v_ptr)
+			object.return_bound(ret.raw_ptr(), v_ptr, ce, handlers, .owned)
 		}
 	}
 }
 
-pub fn (ret PhpReturn) owned_object(v_ptr voidptr, ce ZendClassEntry, handlers voidptr) {
+pub fn (ret PhpReturn) owned_object(v_ptr voidptr, ce ZendClassEntry, handlers object.ObjectHandlers) {
 	ret.bound_object(v_ptr, ce, handlers, .owned_request)
 }
 
-pub fn (ret PhpReturn) borrowed_object(v_ptr voidptr, ce ZendClassEntry, handlers voidptr) {
-	ret.bound_object(v_ptr, ce, handlers, .borrowed)
+pub fn (ret PhpReturn) borrowed_object(v_ptr voidptr, ce ZendClassEntry, handlers object.ObjectHandlers) {
+	object.return_bound(ret.raw_ptr(), v_ptr, ce, handlers, .borrowed)
 }
 
 // --- From php_return_compound.v ---
@@ -383,13 +388,15 @@ pub fn (ret PhpReturn) v[T](val T) {
 			$if variant.typ is $struct {
 				match val {
 					variant.typ {
-						mut v_name := $typeof(variant.typ).name
+						mut v_name := typeof(variant.typ).name
 						if v_name.contains('.') {
 							v_name = v_name.all_after_last('.')
 						}
-						ce := unsafe { vphp_get_class_entry_fn(v_name) }
-						if ce != unsafe { nil } {
+						ce := cached_class_entry(v_name)
+						if ce != unsafe { nil } // SAFETY: nil literal in unsafe context
+						  {
 							mut layout := SumTypeLayout{}
+							// SAFETY: C interop block with valid pointer arguments
 							unsafe {
 								C.memcpy(&layout, &val, sizeof(SumTypeLayout))
 							}
@@ -405,14 +412,17 @@ pub fn (ret PhpReturn) v[T](val T) {
 					variant.typ {
 						$for enum_case in variant.typ.values {
 							if val == T(enum_case.value) {
-								mut v_name := $typeof(variant.typ).name
+								mut v_name := typeof(variant.typ).name
 								if v_name.contains('.') {
 									v_name = v_name.all_after_last('.')
 								}
-								ce := unsafe { vphp_get_class_entry_fn(v_name) }
-								if ce != unsafe { nil } {
-									case_zo := C.vphp_zend_enum_get_case(ce, &char(enum_case.name.str), enum_case.name.len)
-									if case_zo != unsafe { nil } {
+								ce := cached_class_entry(v_name)
+								if ce != unsafe { nil } // SAFETY: nil literal in unsafe context
+								  {
+									case_zo := C.vphp_zend_enum_get_case(ce,
+										&char(enum_case.name.str), enum_case.name.len)
+									if case_zo != unsafe { nil } // SAFETY: nil literal in unsafe context
+									  {
 										mut out := ret.to_zval()
 										C.vphp_zval_set_object_copy(out.raw_ptr(), case_zo)
 										return

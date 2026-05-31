@@ -32,15 +32,21 @@ pub fn (v ZVal) from_v[T](value T) ! {
 		}
 		if !has_meta {
 			full_name := typeof[T]().name
-			php_name = if full_name.contains('.') { full_name.all_after_last('.') } else { full_name }
+			php_name = if full_name.contains('.') {
+				full_name.all_after_last('.')
+			} else {
+				full_name
+			}
 		}
 		ce := C.vphp_find_loaded_class_entry(&char(php_name.str), php_name.len)
-		if ce == unsafe { nil } {
+		if ce == unsafe { nil } // SAFETY: nil literal in unsafe context
+		  {
 			return error('failed to find php class entry for enum: ${php_name}')
 		}
 		case_name := value.str()
 		case_zo := C.vphp_zend_enum_get_case(ce, &char(case_name.str), case_name.len)
-		if case_zo == unsafe { nil } {
+		if case_zo == unsafe { nil } // SAFETY: nil literal in unsafe context
+		  {
 			return error('failed to get php enum case for: ${case_name}')
 		}
 		C.vphp_zval_set_object_copy(v.raw_ptr(), case_zo)

@@ -1,10 +1,10 @@
 --TEST--
-VSlim compiler supports PHP 8.3 typed class constants
+vphp compiler supports PHP 8.3 typed class constants
 --SKIPIF--
-<?php if (!extension_loaded('vslim')) print 'skip'; ?>
+<?php if (!extension_loaded('vphptest')) print 'skip'; ?>
 --FILE--
 <?php
-$class = new ReflectionClass(VSlim\Compiler\ModuleProbeTypedConsts::class);
+$class = new ReflectionClass(VPHP\Compiler\ModuleProbeTypedConsts::class);
 
 $constants = [
     'MAX_LIMIT'     => 100,

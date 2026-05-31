@@ -5,23 +5,7 @@ import vphp.zend
 import vphp.zval
 
 // --- From zend_class_entry_type.v ---
-pub struct ZendClassEntry {
-	raw voidptr
-}
-
-pub fn ZendClassEntry.from_ptr(raw voidptr) ZendClassEntry {
-	return ZendClassEntry{
-		raw: raw
-	}
-}
-
-pub fn (ce ZendClassEntry) is_valid() bool {
-	return ce.raw_ptr() != 0
-}
-
-pub fn (ce ZendClassEntry) raw_ptr() voidptr {
-	return ce.raw
-}
+pub type ZendClassEntry = zend.ZendClassEntry
 
 pub fn (ce ZendClassEntry) set_static_prop[T](name string, val T) {
 	if !ce.is_valid() {
@@ -147,7 +131,7 @@ pub fn (obj ZendObject) release() {
 	obj.handle.release()
 }
 
-pub fn (obj ZendObject) bind_handlers(handlers voidptr, ownership OwnershipKind) {
+pub fn (obj ZendObject) bind_handlers(handlers object.ObjectHandlers, ownership OwnershipKind) {
 	if !obj.is_valid() {
 		return
 	}
@@ -161,14 +145,15 @@ pub fn (obj ZendObject) bind_handlers(handlers voidptr, ownership OwnershipKind)
 	}
 }
 
-pub fn (obj ZendObject) ensure_binding_ptr(handlers voidptr, ownership OwnershipKind) voidptr {
+pub fn (obj ZendObject) ensure_binding_ptr(handlers object.ObjectHandlers, ownership OwnershipKind) voidptr {
 	if !obj.is_valid() {
-		return unsafe { nil }
+		return // SAFETY: nil literal in unsafe context
+		 unsafe { nil }
 	}
 	return obj.handle.ensure_binding_ptr(handlers, object_binding_ownership(ownership))
 }
 
-pub fn (obj ZendObject) init_owned_instance(handlers voidptr) {
+pub fn (obj ZendObject) init_owned_instance(handlers object.ObjectHandlers) {
 	if !obj.is_valid() {
 		return
 	}
@@ -177,7 +162,8 @@ pub fn (obj ZendObject) init_owned_instance(handlers voidptr) {
 
 pub fn (obj ZendObject) bound_v_ptr() voidptr {
 	if !obj.is_valid() {
-		return unsafe { nil }
+		return // SAFETY: nil literal in unsafe context
+		 unsafe { nil }
 	}
 	return obj.handle.bound_v_ptr()
 }

@@ -9,7 +9,7 @@ pub mut:
 	return_spec  ReturnSpec
 	args         []ClassMethodArg // reuse ClassMethodArg for function args
 	uses_context bool
-	table        &ast.Table = unsafe { nil }
+	table        &ast.Table = unsafe { nil } // SAFETY: nil literal in unsafe context
 }
 
 pub fn new_func_builder(php_name string, c_func string) &FuncBuilder {
@@ -52,7 +52,8 @@ pub fn (b &FuncBuilder) render_arginfo() string {
 	for arg in b.args {
 		raw_type := if arg.php_type != '' { arg.php_type } else { arg.type_ }
 		validate_php_arg_type_or_panic(raw_type, arg.name, b.php_name)
-		res << render_arginfo_arg_line(arg.name, raw_type, arg.php_default, arg.is_variadic, b.table)
+		res << render_arginfo_arg_line(arg.name, raw_type, arg.php_default, arg.is_variadic,
+			b.table)
 	}
 	res << 'ZEND_END_ARG_INFO()'
 	return res.join('\n')

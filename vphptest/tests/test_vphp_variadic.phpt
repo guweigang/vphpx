@@ -1,17 +1,17 @@
 --TEST--
-VSlim compiler supports variadic parameters interop for methods and functions
+vphp compiler supports variadic parameters interop for methods and functions
 --SKIPIF--
-<?php if (!extension_loaded('vslim')) print 'skip'; ?>
+<?php if (!extension_loaded('vphptest')) print 'skip'; ?>
 --FILE--
 <?php
 // 1. 测试反射以验证 variadic 的正确性
 echo "--- Testing Reflection ---\n";
-$rf = new ReflectionFunction('vslim_module_probe_variadic');
+$rf = new ReflectionFunction('v_compiler_probe_variadic');
 $params = $rf->getParameters();
 echo "Function args count: ", count($params), "\n";
 echo "Function arg isVariadic: ", ($params[0]->isVariadic() ? 'yes' : 'no'), "\n";
 
-$rc = new ReflectionClass('VSlim\Compiler\ModuleProbeBox');
+$rc = new ReflectionClass('VPHP\Compiler\ModuleProbeBox');
 $rm = $rc->getMethod('test_variadic');
 $mParams = $rm->getParameters();
 echo "Method args count: ", count($mParams), "\n";
@@ -20,13 +20,13 @@ echo "Method 2nd arg isVariadic: ", ($mParams[1]->isVariadic() ? 'yes' : 'no'), 
 
 // 2. 测试全局变参函数执行
 echo "--- Testing Variadic Function ---\n";
-echo "Sum of empty: ", vslim_module_probe_variadic(), "\n";
-echo "Sum of [1, 2, 3]: ", vslim_module_probe_variadic(1, 2, 3), "\n";
-echo "Sum of [10, -5, 20, 30]: ", vslim_module_probe_variadic(10, -5, 20, 30), "\n";
+echo "Sum of empty: ", v_compiler_probe_variadic(), "\n";
+echo "Sum of [1, 2, 3]: ", v_compiler_probe_variadic(1, 2, 3), "\n";
+echo "Sum of [10, -5, 20, 30]: ", v_compiler_probe_variadic(10, -5, 20, 30), "\n";
 
 // 3. 测试成员变参方法执行
 echo "--- Testing Variadic Method ---\n";
-$box = new VSlim\Compiler\ModuleProbeBox();
+$box = new VPHP\Compiler\ModuleProbeBox();
 echo "Join empty with comma: ", $box->test_variadic(','), "\n";
 echo "Join standard strings: ", $box->test_variadic('-', 'a', 'b', 'c'), "\n";
 echo "Join long strings: ", $box->test_variadic('::', 'hello', 'world', 'vphp', 'variadic'), "\n";

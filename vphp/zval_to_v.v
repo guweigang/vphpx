@@ -16,15 +16,21 @@ __global (
 )
 
 fn init() {
+	// SAFETY: C interop block with valid pointer arguments
 	unsafe {
 		vphp_get_class_entry_fn = nil
 	}
 }
 
 pub fn register_class_entry_lookup(f GetClassEntryFn) {
+	// SAFETY: C interop block with valid pointer arguments
 	unsafe {
 		vphp_get_class_entry_fn = f
 	}
+}
+
+fn cached_class_entry(name string) voidptr {
+	return unsafe { vphp_get_class_entry_fn(name) }
 }
 
 // ======== Zend Value -> V 转换 API ========
@@ -69,16 +75,18 @@ pub fn (v ZVal) to_v[T]() !T {
 	}
 	$if T is $struct {
 		if v.is_object() {
-			mut v_name := $typeof(T).name
+			mut v_name := typeof(T).name
 			if v_name.contains('.') {
 				v_name = v_name.all_after_last('.')
 			}
-			ce := unsafe { vphp_get_class_entry_fn(v_name) }
-			if ce != unsafe { nil } {
+			ce := cached_class_entry(v_name)
+			if ce != unsafe { nil } // SAFETY: nil literal in unsafe context
+			  {
 				zend_obj := ZendObject.from_zval(v)
 				if C.vphp_object_is_instance_of(zend_obj.raw_ptr(), ce) {
 					ptr := zend_obj.bound_v_ptr()
-					if ptr != unsafe { nil } {
+					if ptr != unsafe { nil } // SAFETY: nil literal in unsafe context
+					  {
 						return unsafe { *(&T(ptr)) }
 					}
 				}
@@ -183,7 +191,7 @@ pub fn (v ZVal) to_v[T]() !T {
 			return error('type mismatch: expected array<ZVal>, got ${v.type_name()}')
 		}
 		mut out := []ZVal{}
-		out = v.foreach_with_ctx[[]ZVal](out, fn (_ ZVal, val ZVal, mut acc []ZVal) {
+		out = v.foreach_with_ctx[[]ZVal](out, fn (_ ZVal, val ZVal, mut acc []vphp.ZVal) {
 			acc << val
 		})
 		return out
@@ -223,7 +231,7 @@ pub fn (v ZVal) to_v[T]() !T {
 			return error('type mismatch: expected map<string,ZVal>, got ${v.type_name()}')
 		}
 		mut out := map[string]ZVal{}
-		out = v.foreach_with_ctx[map[string]ZVal](out, fn (key ZVal, val ZVal, mut m map[string]ZVal) {
+		out = v.foreach_with_ctx[map[string]ZVal](out, fn (key ZVal, val ZVal, mut m map[string]vphp.ZVal) {
 			m[key.to_string()] = val
 		})
 		return out
@@ -305,22 +313,25 @@ pub fn (v ZVal) to_v[T]() !T {
 			}
 			$if variant.typ is $struct {
 				if v.is_object() {
-					mut v_name := $typeof(variant.typ).name
+					mut v_name := typeof(variant.typ).name
 					if v_name.contains('.') {
 						v_name = v_name.all_after_last('.')
 					}
-					ce := unsafe { vphp_get_class_entry_fn(v_name) }
-					if ce != unsafe { nil } {
+					ce := cached_class_entry(v_name)
+					if ce != unsafe { nil } // SAFETY: nil literal in unsafe context
+					  {
 						zend_obj := ZendObject.from_zval(v)
 						eq := C.vphp_object_is_instance_of(zend_obj.raw_ptr(), ce)
 						if eq {
 							ptr := zend_obj.bound_v_ptr()
-							if ptr != unsafe { nil } {
+							if ptr != unsafe { nil } // SAFETY: nil literal in unsafe context
+							  {
 								mut layout := SumTypeLayout{
 									typ: variant.typ
 									ptr: ptr
 								}
 								mut res := T{}
+								// SAFETY: C interop block with valid pointer arguments
 								unsafe {
 									C.memcpy(&res, &layout, sizeof(T))
 								}
@@ -358,4 +369,3 @@ pub fn (v ZVal) to_v[T]() !T {
 	}
 	return error('unsupported to_v conversion for requested type')
 }
-

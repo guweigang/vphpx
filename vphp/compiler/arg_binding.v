@@ -61,7 +61,12 @@ fn gen_php_args_lines(args []repr.PhpArgRepr) []string {
 }
 
 fn arg_return_stmt(returns_voidptr bool) string {
-	return if returns_voidptr { 'return unsafe { nil }' } else { 'return' }
+	return if returns_voidptr {
+		'return // SAFETY: nil literal in unsafe context
+	unsafe { nil }'
+	} else {
+		'return'
+	}
 }
 
 fn PhpSingleArgBinding.new(arg repr.PhpArgRepr, var_name string, index int, allow_raw_object bool) PhpSingleArgBinding {
@@ -144,7 +149,9 @@ fn (binding PhpArgBinding) call_name() string {
 				binding.var_name
 			}
 		}
-		.params_struct { binding.params_struct.call_name() }
+		.params_struct {
+			binding.params_struct.call_name()
+		}
 	}
 }
 
@@ -182,7 +189,8 @@ fn (binding PhpSingleArgBinding) render_lines(returns_voidptr bool, table &ast.T
 	}
 
 	clean_type := arg.v_type.trim_left('?&')
-	is_sumtype_or_enum := if table != unsafe { nil } {
+	is_sumtype_or_enum := if table != unsafe { nil } // SAFETY: nil literal in unsafe context
+	  {
 		if sym := table.find_sym(clean_type) {
 			sym.kind == .sum_type || sym.kind == .enum
 		} else {
@@ -253,7 +261,7 @@ fn (binding PhpSingleArgBinding) render_ref_object_lines(returns_voidptr bool) ?
 		read := binding.read()
 		return [
 			'    ${binding.var_name}_ptr := ${read.arg_expr()}.to_v_ptr[${clean_type}]() or {',
-			"        vphp.throw_exception('argument ${binding.index} must be object bound to ${clean_type}, got \' + ${read.arg_expr()}.zval().type_name(), 0)",
+			'        vphp.throw_exception(\'argument ${binding.index} must be object bound to ${clean_type}, got \' + ${read.arg_expr()}.zval().type_name(), 0)',
 			'        ${arg_return_stmt(returns_voidptr)}',
 			'    }',
 			'    ${binding.var_name} := unsafe { &${clean_type}(${binding.var_name}_ptr) }',

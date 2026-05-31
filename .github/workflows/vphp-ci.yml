@@ -20,6 +20,28 @@ env:
   VPHP_V_GC: none
 
 jobs:
+  lint:
+    name: V format check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup V
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/v /tmp/vlang
+          git clone --depth=1 --branch "$V_REF" https://github.com/vlang/v /tmp/vlang
+          make -C /tmp/vlang
+          echo "/tmp/vlang" >> "$GITHUB_PATH"
+          /tmp/vlang/v version
+
+      - name: Check formatting
+        shell: bash
+        run: |
+          v fmt -verify vphp/
+
   vphptest:
     name: vphptest PHP ${{ matrix.php-version }} ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
