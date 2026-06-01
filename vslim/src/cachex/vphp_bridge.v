@@ -1,6 +1,7 @@
 module cachex
 
 import vphp
+import vphp.object
 
 #include "php_bridge.h"
 
@@ -75,8 +76,8 @@ pub fn VSlimPsr16CacheException.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr16__cacheexception_ce)
 }
 
-pub fn VSlimPsr16CacheException.php_object_handlers() voidptr {
-    return vslim_psr16_cache_exception_handlers()
+pub fn VSlimPsr16CacheException.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr16_cache_exception_handlers())
 }
 
 pub fn VSlimPsr16CacheException.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -166,8 +167,8 @@ pub fn VSlimPsr16InvalidArgumentException.php_class_entry() vphp.ZendClassEntry 
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr16__invalidargumentexception_ce)
 }
 
-pub fn VSlimPsr16InvalidArgumentException.php_object_handlers() voidptr {
-    return vslim_psr16_invalid_argument_exception_handlers()
+pub fn VSlimPsr16InvalidArgumentException.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr16_invalid_argument_exception_handlers())
 }
 
 pub fn VSlimPsr16InvalidArgumentException.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -292,7 +293,8 @@ pub fn vphp_wrap_vslim_psr16_cache_set_clock(ptr voidptr, ctx vphp.Context) void
     ])
     arg_0 := php_args.at_named_or_index(0, 'clock').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.set_clock(arg_0)
     return voidptr(res)
@@ -431,8 +433,8 @@ pub fn VSlimPsr16Cache.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr16__cache_ce)
 }
 
-pub fn VSlimPsr16Cache.php_object_handlers() voidptr {
-    return vslim_psr16_cache_handlers()
+pub fn VSlimPsr16Cache.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr16_cache_handlers())
 }
 
 pub fn VSlimPsr16Cache.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -522,8 +524,8 @@ pub fn VSlimPsr6CacheException.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr6__cacheexception_ce)
 }
 
-pub fn VSlimPsr6CacheException.php_object_handlers() voidptr {
-    return vslim_psr6_cache_exception_handlers()
+pub fn VSlimPsr6CacheException.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr6_cache_exception_handlers())
 }
 
 pub fn VSlimPsr6CacheException.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -613,8 +615,8 @@ pub fn VSlimPsr6InvalidArgumentException.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr6__invalidargumentexception_ce)
 }
 
-pub fn VSlimPsr6InvalidArgumentException.php_object_handlers() voidptr {
-    return vslim_psr6_invalid_argument_exception_handlers()
+pub fn VSlimPsr6InvalidArgumentException.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr6_invalid_argument_exception_handlers())
 }
 
 pub fn VSlimPsr6InvalidArgumentException.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -756,8 +758,8 @@ pub fn VSlimPsr6CacheItem.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr6__cacheitem_ce)
 }
 
-pub fn VSlimPsr6CacheItem.php_object_handlers() voidptr {
-    return vslim_psr6_cache_item_handlers()
+pub fn VSlimPsr6CacheItem.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr6_cache_item_handlers())
 }
 
 pub fn VSlimPsr6CacheItem.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -882,7 +884,8 @@ pub fn vphp_wrap_vslim_psr6_cache_item_pool_set_clock(ptr voidptr, ctx vphp.Cont
     ])
     arg_0 := php_args.at_named_or_index(0, 'clock').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.set_clock(arg_0)
     return voidptr(res)
@@ -1019,8 +1022,8 @@ pub fn VSlimPsr6CacheItemPool.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr6__cacheitempool_ce)
 }
 
-pub fn VSlimPsr6CacheItemPool.php_object_handlers() voidptr {
-    return vslim_psr6_cache_item_pool_handlers()
+pub fn VSlimPsr6CacheItemPool.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr6_cache_item_pool_handlers())
 }
 
 pub fn VSlimPsr6CacheItemPool.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

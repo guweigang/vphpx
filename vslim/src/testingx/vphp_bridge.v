@@ -1,6 +1,7 @@
 module testingx
 
 import vphp
+import vphp.object
 
 import containerx
 import httpx
@@ -63,7 +64,8 @@ pub fn vphp_wrap_vslim_testing_harness_set_app(ptr voidptr, ctx vphp.Context) vo
     ])
     arg_0 := php_args.at_named_or_index(0, 'app').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.set_app(arg_0)
     return voidptr(res)
@@ -110,7 +112,8 @@ pub fn vphp_wrap_vslim_testing_harness_with_factory(ptr voidptr, ctx vphp.Contex
     arg_0 := php_args.at_named_or_index(0, 'id').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'callable').callable() or {
         vphp.throw_exception('argument 1 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.with_factory(arg_0, arg_1)
     return voidptr(res)
@@ -247,7 +250,8 @@ pub fn vphp_wrap_vslim_testing_harness_handle(ptr voidptr, ctx vphp.Context) voi
     ])
     arg_0 := php_args.at_named_or_index(0, 'request').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.handle(arg_0)
     return voidptr(res)
@@ -561,8 +565,8 @@ pub fn VSlimTestingHarness.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__testing__harness_ce)
 }
 
-pub fn VSlimTestingHarness.php_object_handlers() voidptr {
-    return vslim_testing_harness_handlers()
+pub fn VSlimTestingHarness.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_testing_harness_handlers())
 }
 
 pub fn VSlimTestingHarness.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

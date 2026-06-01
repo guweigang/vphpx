@@ -1,6 +1,7 @@
 module validationx
 
 import vphp
+import vphp.object
 
 #include "php_bridge.h"
 
@@ -53,7 +54,8 @@ pub fn vphp_wrap_vslim_validator_make(ctx vphp.Context) voidptr {
     arg_0 := php_args.at_named_or_index(0, 'data').value
     arg_1 := php_args.at_named_or_index(1, 'rules').array() or {
         vphp.throw_exception('argument 1 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := VSlimValidator.make(arg_0, arg_1)
     return voidptr(res)
@@ -88,7 +90,8 @@ pub fn vphp_wrap_vslim_validator_set_rules(ptr voidptr, ctx vphp.Context) voidpt
     ])
     arg_0 := php_args.at_named_or_index(0, 'rules').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.set_rules(arg_0)
     return voidptr(res)
@@ -156,8 +159,8 @@ pub fn VSlimValidator.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__validate__validator_ce)
 }
 
-pub fn VSlimValidator.php_object_handlers() voidptr {
-    return vslim_validator_handlers()
+pub fn VSlimValidator.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_validator_handlers())
 }
 
 pub fn VSlimValidator.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

@@ -1,6 +1,7 @@
 module controllerx
 
 import vphp
+import vphp.object
 
 import httpx
 import viewx
@@ -55,7 +56,8 @@ pub fn vphp_wrap_vslim_controller_construct(ptr voidptr, ctx vphp.Context) voidp
     ])
     arg_0 := php_args.at_named_or_index(0, 'app').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.construct(arg_0)
     return voidptr(res)
@@ -70,7 +72,8 @@ pub fn vphp_wrap_vslim_controller_set_app(ptr voidptr, ctx vphp.Context) voidptr
     ])
     arg_0 := php_args.at_named_or_index(0, 'app').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.set_app(arg_0)
     return voidptr(res)
@@ -85,7 +88,8 @@ pub fn vphp_wrap_vslim_controller_set_view(ptr voidptr, ctx vphp.Context) voidpt
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'view').to_v_ptr[viewx.VSlimView]() or {
         vphp.throw_exception('argument 0 must be object bound to viewx.VSlimView, got ' + php_args.at_named_or_index(0, 'view').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &viewx.VSlimView(arg_0_ptr) }
     res := recv.set_view(arg_0)
@@ -258,8 +262,8 @@ pub fn VSlimController.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__controller_ce)
 }
 
-pub fn VSlimController.php_object_handlers() voidptr {
-    return vslim_controller_handlers()
+pub fn VSlimController.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_controller_handlers())
 }
 
 pub fn VSlimController.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

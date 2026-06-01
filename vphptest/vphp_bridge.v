@@ -21,6 +21,12 @@ __global C.runtimedemo__childexception_ce &C.zend_class_entry
 __global C.callableprocessor_ce &C.zend_class_entry
 __global C.finder_ce &C.zend_class_entry
 __global C.readonlyrecord_ce &C.zend_class_entry
+__global C.vphp__compiler__moduleprobecontract_ce &C.zend_class_entry
+__global C.vphp__compiler__moduleprobekind_ce &C.zend_class_entry
+__global C.vphp__compiler__moduleprobereadonlybox_ce &C.zend_class_entry
+__global C.vphp__compiler__moduleprobebox_ce &C.zend_class_entry
+__global C.vphp__compiler__moduleprobetypedconsts_ce &C.zend_class_entry
+__global C.vphp__compiler__moduleprobewrapperbox_ce &C.zend_class_entry
 __global C.traitpost_ce &C.zend_class_entry
 __global C.validator_ce &C.zend_class_entry
 __global C.dispatchablesample_ce &C.zend_class_entry
@@ -1676,6 +1682,539 @@ pub fn (obj &ReadonlyRecord) bind_owned_php_object_value() vphp.PhpValue {
 
 pub fn (val ReadonlyRecord) php_class_name() string {
     return 'ReadonlyRecord'
+}
+
+pub fn (val VphpModuleProbeKind) php_class_name() string {
+    return 'VPHP\\Compiler\\ModuleProbeKind'
+}
+
+@[export: 'vphp_module_probe_read_only_box_new_raw']
+pub fn vphp_module_probe_read_only_box_new_raw() voidptr {
+    return vphp.generic_new_raw[VphpModuleProbeReadOnlyBox]()
+}
+@[export: 'vphp_module_probe_read_only_box_free_raw']
+pub fn vphp_module_probe_read_only_box_free_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+    vphp.generic_free_raw[VphpModuleProbeReadOnlyBox](ptr)
+}
+@[export: 'vphp_module_probe_read_only_box_cleanup_raw']
+pub fn vphp_module_probe_read_only_box_cleanup_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+}
+@[export: 'vphp_module_probe_read_only_box_get_prop']
+pub fn vphp_module_probe_read_only_box_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
+    unsafe {
+        name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
+        obj := &VphpModuleProbeReadOnlyBox(ptr)
+        if name == 'title' {
+            ret.v[string](obj.title)
+            return
+        }
+        if name == 'value' {
+            ret.v[i64](i64(obj.value))
+            return
+        }
+    }
+}
+@[export: 'vphp_module_probe_read_only_box_set_prop']
+pub fn vphp_module_probe_read_only_box_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    _ = ptr
+    _ = name_ptr
+    _ = name_len
+    _ = value
+}
+@[export: 'vphp_module_probe_read_only_box_sync_props']
+pub fn vphp_module_probe_read_only_box_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
+    unsafe {
+        obj := &VphpModuleProbeReadOnlyBox(ptr)
+        out.add_property_string('title', obj.title)
+        out.add_property_long('value', i64(obj.value))
+    }
+}
+@[export: 'vphp_module_probe_read_only_box_handlers']
+pub fn vphp_module_probe_read_only_box_handlers() voidptr {
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(vphp_module_probe_read_only_box_get_prop),
+        write_handler: voidptr(vphp_module_probe_read_only_box_set_prop),
+        sync_handler: voidptr(vphp_module_probe_read_only_box_sync_props),
+        new_raw: voidptr(vphp_module_probe_read_only_box_new_raw),
+        cleanup_raw: voidptr(vphp_module_probe_read_only_box_cleanup_raw),
+        free_raw: voidptr(vphp_module_probe_read_only_box_free_raw)
+    )
+}
+pub fn VphpModuleProbeReadOnlyBox.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.vphp__compiler__moduleprobereadonlybox_ce)
+}
+
+pub fn VphpModuleProbeReadOnlyBox.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vphp_module_probe_read_only_box_handlers())
+}
+
+pub fn VphpModuleProbeReadOnlyBox.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    return vphp.bind_object_zval[VphpModuleProbeReadOnlyBox](v_ptr, ownership)
+}
+
+pub fn (obj &VphpModuleProbeReadOnlyBox) bind_php_object() vphp.ZVal {
+    return vphp.bind_borrowed_object_zval[VphpModuleProbeReadOnlyBox](obj)
+}
+
+pub fn (obj &VphpModuleProbeReadOnlyBox) bind_php_object_value() vphp.PhpValue {
+    return vphp.bind_borrowed_object_value[VphpModuleProbeReadOnlyBox](obj)
+}
+
+pub fn (obj &VphpModuleProbeReadOnlyBox) bind_owned_php_object() vphp.ZVal {
+    return vphp.bind_owned_object_zval[VphpModuleProbeReadOnlyBox](obj)
+}
+
+pub fn (obj &VphpModuleProbeReadOnlyBox) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.bind_owned_object_value[VphpModuleProbeReadOnlyBox](obj)
+}
+
+pub fn (val VphpModuleProbeReadOnlyBox) php_class_name() string {
+    return 'VPHP\\Compiler\\ModuleProbeReadOnlyBox'
+}
+
+@[export: 'vphp_module_probe_box_new_raw']
+pub fn vphp_module_probe_box_new_raw() voidptr {
+    return vphp.generic_new_raw[VphpModuleProbeBox]()
+}
+@[export: 'vphp_module_probe_box_free_raw']
+pub fn vphp_module_probe_box_free_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+    vphp.generic_free_raw[VphpModuleProbeBox](ptr)
+}
+@[export: 'vphp_module_probe_box_cleanup_raw']
+pub fn vphp_module_probe_box_cleanup_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+}
+@[export: 'vphp_module_probe_box_get_prop']
+pub fn vphp_module_probe_box_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
+    unsafe {
+        name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
+        obj := &VphpModuleProbeBox(ptr)
+        if name == 'name' {
+            ret.v[string](obj.name)
+            return
+        }
+        if name == 'count' {
+            ret.v[i64](i64(obj.count))
+            return
+        }
+    }
+}
+@[export: 'vphp_module_probe_box_set_prop']
+pub fn vphp_module_probe_box_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
+    unsafe {
+        name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
+        mut obj := &VphpModuleProbeBox(ptr)
+        if name == 'name' {
+            obj.name = arg.get_string()
+            return
+        }
+        if name == 'count' {
+            obj.count = int(arg.get_int())
+            return
+        }
+    }
+}
+@[export: 'vphp_module_probe_box_sync_props']
+pub fn vphp_module_probe_box_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
+    unsafe {
+        obj := &VphpModuleProbeBox(ptr)
+        out.add_property_string('name', obj.name)
+        out.add_property_long('count', i64(obj.count))
+    }
+}
+@[export: 'vphp_wrap_vphp_module_probe_box_test_sumtype']
+pub fn vphp_wrap_vphp_module_probe_box_test_sumtype(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VphpModuleProbeBox(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'val', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'val').as_v[VphpModuleProbeSum]()
+    res := recv.test_sumtype(arg_0)
+    ctx.return().v[VphpModuleProbeSum](res)
+}
+@[export: 'vphp_wrap_vphp_module_probe_box_test_enum_echo']
+pub fn vphp_wrap_vphp_module_probe_box_test_enum_echo(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VphpModuleProbeBox(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'kind', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'kind').as_v[VphpModuleProbeKind]()
+    res := recv.test_enum_echo(arg_0)
+    ctx.return().v[VphpModuleProbeKind](res)
+}
+@[export: 'vphp_wrap_vphp_module_probe_box_test_sumtype_echo']
+pub fn vphp_wrap_vphp_module_probe_box_test_sumtype_echo(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VphpModuleProbeBox(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'val', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'val').as_v[VphpModuleProbeSumType]()
+    res := recv.test_sumtype_echo(arg_0)
+    ctx.return().v[VphpModuleProbeSumType](res)
+}
+@[export: 'vphp_wrap_vphp_module_probe_box_test_variadic']
+pub fn vphp_wrap_vphp_module_probe_box_test_variadic(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VphpModuleProbeBox(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'sep', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'args', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'sep').as_v[string]()
+    arg_1 := php_args.as_variadic_v[string](1)
+    res := recv.test_variadic(arg_0, ...arg_1)
+    ctx.return().v[string](res)
+}
+@[export: 'vphp_wrap_vphp_module_probe_box_test_struct_param']
+pub fn vphp_wrap_vphp_module_probe_box_test_struct_param(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VphpModuleProbeBox(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'box', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0_ptr := php_args.at_named_or_index(0, 'box').to_v_ptr[VphpModuleProbeReadOnlyBox]() or {
+        vphp.throw_exception('argument 0 must be object bound to VphpModuleProbeReadOnlyBox, got ' + php_args.at_named_or_index(0, 'box').zval().type_name(), 0)
+        return
+    }
+    arg_0 := unsafe { &VphpModuleProbeReadOnlyBox(arg_0_ptr) }
+    res := recv.test_struct_param(arg_0)
+    ctx.return().v[string](res)
+}
+@[export: 'vphp_wrap_vphp_module_probe_box_label']
+pub fn vphp_wrap_vphp_module_probe_box_label(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VphpModuleProbeBox(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := recv.label()
+    ctx.return().v[string](res)
+}
+@[export: 'vphp_wrap_vphp_module_probe_box_static_label']
+pub fn vphp_wrap_vphp_module_probe_box_static_label(ctx vphp.Context)  {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := VphpModuleProbeBox.static_label()
+    ctx.return().v[string](res)
+}
+@[export: 'vphp_module_probe_box_handlers']
+pub fn vphp_module_probe_box_handlers() voidptr {
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(vphp_module_probe_box_get_prop),
+        write_handler: voidptr(vphp_module_probe_box_set_prop),
+        sync_handler: voidptr(vphp_module_probe_box_sync_props),
+        new_raw: voidptr(vphp_module_probe_box_new_raw),
+        cleanup_raw: voidptr(vphp_module_probe_box_cleanup_raw),
+        free_raw: voidptr(vphp_module_probe_box_free_raw)
+    )
+}
+pub fn VphpModuleProbeBox.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.vphp__compiler__moduleprobebox_ce)
+}
+
+pub fn VphpModuleProbeBox.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vphp_module_probe_box_handlers())
+}
+
+pub fn VphpModuleProbeBox.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    return vphp.bind_object_zval[VphpModuleProbeBox](v_ptr, ownership)
+}
+
+pub fn (obj &VphpModuleProbeBox) bind_php_object() vphp.ZVal {
+    return vphp.bind_borrowed_object_zval[VphpModuleProbeBox](obj)
+}
+
+pub fn (obj &VphpModuleProbeBox) bind_php_object_value() vphp.PhpValue {
+    return vphp.bind_borrowed_object_value[VphpModuleProbeBox](obj)
+}
+
+pub fn (obj &VphpModuleProbeBox) bind_owned_php_object() vphp.ZVal {
+    return vphp.bind_owned_object_zval[VphpModuleProbeBox](obj)
+}
+
+pub fn (obj &VphpModuleProbeBox) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.bind_owned_object_value[VphpModuleProbeBox](obj)
+}
+
+pub fn (val VphpModuleProbeBox) php_class_name() string {
+    return 'VPHP\\Compiler\\ModuleProbeBox'
+}
+
+@[export: 'vphp_module_probe_typed_consts_new_raw']
+pub fn vphp_module_probe_typed_consts_new_raw() voidptr {
+    return vphp.generic_new_raw[VphpModuleProbeTypedConsts]()
+}
+@[export: 'vphp_module_probe_typed_consts_free_raw']
+pub fn vphp_module_probe_typed_consts_free_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+    vphp.generic_free_raw[VphpModuleProbeTypedConsts](ptr)
+}
+@[export: 'vphp_module_probe_typed_consts_cleanup_raw']
+pub fn vphp_module_probe_typed_consts_cleanup_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+}
+@[export: 'vphp_module_probe_typed_consts_get_prop']
+pub fn vphp_module_probe_typed_consts_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    _ = ptr
+    _ = name_ptr
+    _ = name_len
+    _ = rv
+}
+@[export: 'vphp_module_probe_typed_consts_set_prop']
+pub fn vphp_module_probe_typed_consts_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    _ = ptr
+    _ = name_ptr
+    _ = name_len
+    _ = value
+}
+@[export: 'vphp_module_probe_typed_consts_sync_props']
+pub fn vphp_module_probe_typed_consts_sync_props(ptr voidptr, zv &C.zval) {
+    _ = ptr
+    _ = zv
+}
+pub fn VphpModuleProbeTypedConsts.consts() VphpModuleProbeConsts {
+    return compiler_probe_consts
+}
+@[export: 'vphp_module_probe_typed_consts_handlers']
+pub fn vphp_module_probe_typed_consts_handlers() voidptr {
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(vphp_module_probe_typed_consts_get_prop),
+        write_handler: voidptr(vphp_module_probe_typed_consts_set_prop),
+        sync_handler: voidptr(vphp_module_probe_typed_consts_sync_props),
+        new_raw: voidptr(vphp_module_probe_typed_consts_new_raw),
+        cleanup_raw: voidptr(vphp_module_probe_typed_consts_cleanup_raw),
+        free_raw: voidptr(vphp_module_probe_typed_consts_free_raw)
+    )
+}
+pub fn VphpModuleProbeTypedConsts.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.vphp__compiler__moduleprobetypedconsts_ce)
+}
+
+pub fn VphpModuleProbeTypedConsts.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vphp_module_probe_typed_consts_handlers())
+}
+
+pub fn VphpModuleProbeTypedConsts.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    return vphp.bind_object_zval[VphpModuleProbeTypedConsts](v_ptr, ownership)
+}
+
+pub fn (obj &VphpModuleProbeTypedConsts) bind_php_object() vphp.ZVal {
+    return vphp.bind_borrowed_object_zval[VphpModuleProbeTypedConsts](obj)
+}
+
+pub fn (obj &VphpModuleProbeTypedConsts) bind_php_object_value() vphp.PhpValue {
+    return vphp.bind_borrowed_object_value[VphpModuleProbeTypedConsts](obj)
+}
+
+pub fn (obj &VphpModuleProbeTypedConsts) bind_owned_php_object() vphp.ZVal {
+    return vphp.bind_owned_object_zval[VphpModuleProbeTypedConsts](obj)
+}
+
+pub fn (obj &VphpModuleProbeTypedConsts) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.bind_owned_object_value[VphpModuleProbeTypedConsts](obj)
+}
+
+pub fn (val VphpModuleProbeTypedConsts) php_class_name() string {
+    return 'VPHP\\Compiler\\ModuleProbeTypedConsts'
+}
+
+@[export: 'vphp_module_probe_wrapper_box_new_raw']
+pub fn vphp_module_probe_wrapper_box_new_raw() voidptr {
+    return vphp.generic_new_raw[VphpModuleProbeWrapperBox]()
+}
+@[export: 'vphp_module_probe_wrapper_box_free_raw']
+pub fn vphp_module_probe_wrapper_box_free_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+    vphp.generic_free_raw[VphpModuleProbeWrapperBox](ptr)
+}
+@[export: 'vphp_module_probe_wrapper_box_cleanup_raw']
+pub fn vphp_module_probe_wrapper_box_cleanup_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+}
+@[export: 'vphp_module_probe_wrapper_box_get_prop']
+pub fn vphp_module_probe_wrapper_box_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
+    unsafe {
+        name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
+        obj := &VphpModuleProbeWrapperBox(ptr)
+        if name == 'val' {
+            ret.v[vphp.PhpValue](obj.val)
+            return
+        }
+        if name == 'obj' {
+            ret.v[vphp.PhpObject](obj.obj)
+            return
+        }
+        if name == 'str' {
+            ret.v[vphp.PhpString](obj.str)
+            return
+        }
+        if name == 'num' {
+            ret.v[vphp.PhpInt](obj.num)
+            return
+        }
+        if name == 'b' {
+            ret.v[vphp.PhpBool](obj.b)
+            return
+        }
+        if name == 'arr' {
+            ret.v[vphp.PhpArray](obj.arr)
+            return
+        }
+    }
+}
+@[export: 'vphp_module_probe_wrapper_box_set_prop']
+pub fn vphp_module_probe_wrapper_box_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
+    unsafe {
+        name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
+        mut obj := &VphpModuleProbeWrapperBox(ptr)
+        if name == 'val' {
+            obj.val = vphp.PhpValue.from_zval(arg).retain()
+            return
+        }
+        if name == 'obj' {
+            obj.obj = (vphp.PhpObject.from_zval(arg) or { vphp.PhpObject.invalid() }).retain()
+            return
+        }
+        if name == 'str' {
+            obj.str = vphp.PhpString.coerce(arg).retain()
+            return
+        }
+        if name == 'num' {
+            obj.num = vphp.PhpInt.coerce(arg).retain()
+            return
+        }
+        if name == 'b' {
+            obj.b = vphp.PhpBool.coerce(arg).retain()
+            return
+        }
+        if name == 'arr' {
+            obj.arr = (vphp.PhpArray.from_zval(arg) or { vphp.PhpArray.empty() }).retain()
+            return
+        }
+    }
+}
+@[export: 'vphp_module_probe_wrapper_box_sync_props']
+pub fn vphp_module_probe_wrapper_box_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
+    unsafe {
+        obj := &VphpModuleProbeWrapperBox(ptr)
+        out.set_prop('val', obj.val.to_zval())
+        out.set_prop('obj', obj.obj.to_zval())
+        out.set_prop('str', obj.str.to_zval())
+        out.set_prop('num', obj.num.to_zval())
+        out.set_prop('b', obj.b.to_zval())
+        out.set_prop('arr', obj.arr.to_zval())
+    }
+}
+@[export: 'vphp_wrap_vphp_module_probe_wrapper_box_change_props']
+pub fn vphp_wrap_vphp_module_probe_wrapper_box_change_props(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VphpModuleProbeWrapperBox(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'newVal', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'newObj', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 2, name: 'newStr', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 3, name: 'newNum', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 4, name: 'newB', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 5, name: 'newArr', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.at_named_or_index(0, 'newVal').value
+    arg_1 := php_args.at_named_or_index(1, 'newObj').object() or {
+        vphp.throw_exception('argument 1 must be object', 0)
+        return
+    }
+    arg_2 := php_args.at_named_or_index(2, 'newStr').string_value() or {
+        vphp.throw_exception('argument 2 must be string', 0)
+        return
+    }
+    arg_3 := php_args.at_named_or_index(3, 'newNum').int_value() or {
+        vphp.throw_exception('argument 3 must be int', 0)
+        return
+    }
+    arg_4 := php_args.at_named_or_index(4, 'newB').bool_value() or {
+        vphp.throw_exception('argument 4 must be bool', 0)
+        return
+    }
+    arg_5 := php_args.at_named_or_index(5, 'newArr').array() or {
+        vphp.throw_exception('argument 5 must be array', 0)
+        return
+    }
+    recv.change_props(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5)
+}
+@[export: 'vphp_module_probe_wrapper_box_handlers']
+pub fn vphp_module_probe_wrapper_box_handlers() voidptr {
+    return vphp.ZendClassHandlers.new(
+        prop_handler: voidptr(vphp_module_probe_wrapper_box_get_prop),
+        write_handler: voidptr(vphp_module_probe_wrapper_box_set_prop),
+        sync_handler: voidptr(vphp_module_probe_wrapper_box_sync_props),
+        new_raw: voidptr(vphp_module_probe_wrapper_box_new_raw),
+        cleanup_raw: voidptr(vphp_module_probe_wrapper_box_cleanup_raw),
+        free_raw: voidptr(vphp_module_probe_wrapper_box_free_raw)
+    )
+}
+pub fn VphpModuleProbeWrapperBox.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.vphp__compiler__moduleprobewrapperbox_ce)
+}
+
+pub fn VphpModuleProbeWrapperBox.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vphp_module_probe_wrapper_box_handlers())
+}
+
+pub fn VphpModuleProbeWrapperBox.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    return vphp.bind_object_zval[VphpModuleProbeWrapperBox](v_ptr, ownership)
+}
+
+pub fn (obj &VphpModuleProbeWrapperBox) bind_php_object() vphp.ZVal {
+    return vphp.bind_borrowed_object_zval[VphpModuleProbeWrapperBox](obj)
+}
+
+pub fn (obj &VphpModuleProbeWrapperBox) bind_php_object_value() vphp.PhpValue {
+    return vphp.bind_borrowed_object_value[VphpModuleProbeWrapperBox](obj)
+}
+
+pub fn (obj &VphpModuleProbeWrapperBox) bind_owned_php_object() vphp.ZVal {
+    return vphp.bind_owned_object_zval[VphpModuleProbeWrapperBox](obj)
+}
+
+pub fn (obj &VphpModuleProbeWrapperBox) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.bind_owned_object_value[VphpModuleProbeWrapperBox](obj)
+}
+
+pub fn (val VphpModuleProbeWrapperBox) php_class_name() string {
+    return 'VPHP\\Compiler\\ModuleProbeWrapperBox'
 }
 
 @[export: 'trait_post_new_raw']
@@ -3650,6 +4189,44 @@ fn vphp_wrap_v_record_match(ctx vphp.Context) {
     })
 }
 
+@[export: 'vphp_wrap_v_compiler_probe']
+fn vphp_wrap_v_compiler_probe(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := v_compiler_probe()
+    ctx.return().v[string](res)
+}
+
+@[export: 'vphp_wrap_v_compiler_probe_variadic']
+fn vphp_wrap_v_compiler_probe_variadic(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'args', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0 := php_args.as_variadic_v[int](0)
+    res := v_compiler_probe_variadic(...arg_0)
+    ctx.return().v[int](res)
+}
+
+@[export: 'vphp_wrap_v_compiler_probe_options']
+fn vphp_wrap_v_compiler_probe_options(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'prefix', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 1, name: 'count', attributes: []vphp.PhpAttribute{} },
+    ])
+    arg_0_params_prefix := if php_args.has_named_or_index(0, 'prefix') { php_args.at_named_or_index(0, 'prefix').as_v[string]() } else { 'default' }
+    arg_0_params_count := if php_args.has_named_or_index(1, 'count') { php_args.at_named_or_index(1, 'count').as_v[int]() } else { 3 }
+    arg_0_params := VphpModuleProbeOptions{
+        prefix: arg_0_params_prefix
+        count: arg_0_params_count
+    }
+    res := v_compiler_probe_options(arg_0_params)
+    ctx.return().v[string](res)
+}
+
 @[export: 'vphp_wrap_v_new_coach']
 fn vphp_wrap_v_new_coach(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
@@ -3770,6 +4347,11 @@ fn vphp_get_class_entry_by_v_name(v_name string) voidptr {
         'CallableProcessor' { C.callableprocessor_ce }
         'Finder' { C.finder_ce }
         'ReadonlyRecord' { C.readonlyrecord_ce }
+        'VphpModuleProbeKind' { C.vphp__compiler__moduleprobekind_ce }
+        'VphpModuleProbeReadOnlyBox' { C.vphp__compiler__moduleprobereadonlybox_ce }
+        'VphpModuleProbeBox' { C.vphp__compiler__moduleprobebox_ce }
+        'VphpModuleProbeTypedConsts' { C.vphp__compiler__moduleprobetypedconsts_ce }
+        'VphpModuleProbeWrapperBox' { C.vphp__compiler__moduleprobewrapperbox_ce }
         'TraitPost' { C.traitpost_ce }
         'Validator' { C.validator_ce }
         'DispatchableSample' { C.dispatchablesample_ce }

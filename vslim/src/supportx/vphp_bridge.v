@@ -1,6 +1,7 @@
 module supportx
 
 import vphp
+import vphp.object
 
 #include "php_bridge.h"
 
@@ -76,8 +77,8 @@ pub fn VSlimPsr20Clock.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr20__clock_ce)
 }
 
-pub fn VSlimPsr20Clock.php_object_handlers() voidptr {
-    return vslim_psr20_clock_handlers()
+pub fn VSlimPsr20Clock.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr20_clock_handlers())
 }
 
 pub fn VSlimPsr20Clock.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -162,7 +163,8 @@ pub fn vphp_wrap_vslim_service_provider_set_app(ptr voidptr, ctx vphp.Context) v
     ])
     arg_0 := php_args.at_named_or_index(0, 'app').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.set_app(arg_0)
     return voidptr(res)
@@ -198,8 +200,8 @@ pub fn VSlimServiceProvider.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__support__serviceprovider_ce)
 }
 
-pub fn VSlimServiceProvider.php_object_handlers() voidptr {
-    return vslim_service_provider_handlers()
+pub fn VSlimServiceProvider.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_service_provider_handlers())
 }
 
 pub fn VSlimServiceProvider.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -284,7 +286,8 @@ pub fn vphp_wrap_vslim_module_set_app(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0 := php_args.at_named_or_index(0, 'app').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.set_app(arg_0)
     return voidptr(res)
@@ -320,8 +323,8 @@ pub fn VSlimModule.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__support__module_ce)
 }
 
-pub fn VSlimModule.php_object_handlers() voidptr {
-    return vslim_module_handlers()
+pub fn VSlimModule.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_module_handlers())
 }
 
 pub fn VSlimModule.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -421,8 +424,8 @@ pub fn VSlimEnvLoader.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__envloader_ce)
 }
 
-pub fn VSlimEnvLoader.php_object_handlers() voidptr {
-    return vslim_env_loader_handlers()
+pub fn VSlimEnvLoader.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_env_loader_handlers())
 }
 
 pub fn VSlimEnvLoader.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

@@ -1,6 +1,7 @@
 module databasex
 
 import vphp
+import vphp.object
 
 import vhttpdx
 
@@ -302,8 +303,8 @@ pub fn VSlimDatabaseConfig.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__database__config_ce)
 }
 
-pub fn VSlimDatabaseConfig.php_object_handlers() voidptr {
-    return vslim_database_config_handlers()
+pub fn VSlimDatabaseConfig.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_database_config_handlers())
 }
 
 pub fn VSlimDatabaseConfig.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -566,7 +567,8 @@ pub fn vphp_wrap_vslim_database_manager_set_config(ptr voidptr, ctx vphp.Context
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'config').to_v_ptr[databasex.VSlimDatabaseConfig]() or {
         vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseConfig, got ' + php_args.at_named_or_index(0, 'config').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &databasex.VSlimDatabaseConfig(arg_0_ptr) }
     res := recv.set_config(arg_0)
@@ -671,8 +673,8 @@ pub fn VSlimDatabaseManager.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__database__manager_ce)
 }
 
-pub fn VSlimDatabaseManager.php_object_handlers() voidptr {
-    return vslim_database_manager_handlers()
+pub fn VSlimDatabaseManager.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_database_manager_handlers())
 }
 
 pub fn VSlimDatabaseManager.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -794,8 +796,8 @@ pub fn VSlimDatabasePendingResult.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__database__pendingresult_ce)
 }
 
-pub fn VSlimDatabasePendingResult.php_object_handlers() voidptr {
-    return vslim_database_pending_result_handlers()
+pub fn VSlimDatabasePendingResult.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_database_pending_result_handlers())
 }
 
 pub fn VSlimDatabasePendingResult.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -876,7 +878,8 @@ pub fn vphp_wrap_vslim_database_query_set_manager(ptr voidptr, ctx vphp.Context)
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
         vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
@@ -1085,8 +1088,8 @@ pub fn VSlimDatabaseQuery.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__database__query_ce)
 }
 
-pub fn VSlimDatabaseQuery.php_object_handlers() voidptr {
-    return vslim_database_query_handlers()
+pub fn VSlimDatabaseQuery.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_database_query_handlers())
 }
 
 pub fn VSlimDatabaseQuery.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1167,7 +1170,8 @@ pub fn vphp_wrap_vslim_database_model_set_manager(ptr voidptr, ctx vphp.Context)
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
         vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
@@ -1372,8 +1376,8 @@ pub fn VSlimDatabaseModel.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__database__model_ce)
 }
 
-pub fn VSlimDatabaseModel.php_object_handlers() voidptr {
-    return vslim_database_model_handlers()
+pub fn VSlimDatabaseModel.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_database_model_handlers())
 }
 
 pub fn VSlimDatabaseModel.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1454,7 +1458,8 @@ pub fn vphp_wrap_vslim_database_migration_set_manager(ptr voidptr, ctx vphp.Cont
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
         vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
@@ -1687,8 +1692,8 @@ pub fn VSlimDatabaseMigration.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__database__migration_ce)
 }
 
-pub fn VSlimDatabaseMigration.php_object_handlers() voidptr {
-    return vslim_database_migration_handlers()
+pub fn VSlimDatabaseMigration.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_database_migration_handlers())
 }
 
 pub fn VSlimDatabaseMigration.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1769,7 +1774,8 @@ pub fn vphp_wrap_vslim_database_seeder_set_manager(ptr voidptr, ctx vphp.Context
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
         vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
@@ -1834,8 +1840,8 @@ pub fn VSlimDatabaseSeeder.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__database__seeder_ce)
 }
 
-pub fn VSlimDatabaseSeeder.php_object_handlers() voidptr {
-    return vslim_database_seeder_handlers()
+pub fn VSlimDatabaseSeeder.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_database_seeder_handlers())
 }
 
 pub fn VSlimDatabaseSeeder.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1916,7 +1922,8 @@ pub fn vphp_wrap_vslim_database_migrator_set_manager(ptr voidptr, ctx vphp.Conte
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
         vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
@@ -2081,8 +2088,8 @@ pub fn VSlimDatabaseMigrator.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__database__migrator_ce)
 }
 
-pub fn VSlimDatabaseMigrator.php_object_handlers() voidptr {
-    return vslim_database_migrator_handlers()
+pub fn VSlimDatabaseMigrator.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_database_migrator_handlers())
 }
 
 pub fn VSlimDatabaseMigrator.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

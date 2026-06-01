@@ -1,6 +1,7 @@
 module middlewarex
 
 import vphp
+import vphp.object
 
 import httpx
 
@@ -55,7 +56,8 @@ pub fn vphp_wrap_vslim_psr15_next_handler_handle(ptr voidptr, ctx vphp.Context) 
     ])
     arg_0 := php_args.at_named_or_index(0, 'request').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.handle(arg_0)
     return voidptr(res)
@@ -75,8 +77,8 @@ pub fn VSlimPsr15NextHandler.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr15__nexthandler_ce)
 }
 
-pub fn VSlimPsr15NextHandler.php_object_handlers() voidptr {
-    return vslim_psr15_next_handler_handlers()
+pub fn VSlimPsr15NextHandler.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr15_next_handler_handlers())
 }
 
 pub fn VSlimPsr15NextHandler.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -149,7 +151,8 @@ pub fn vphp_wrap_vslim_psr15_continue_handler_handle(ptr voidptr, ctx vphp.Conte
     ])
     arg_0 := php_args.at_named_or_index(0, 'request').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.handle(arg_0)
     return voidptr(res)
@@ -169,8 +172,8 @@ pub fn VSlimPsr15ContinueHandler.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr15__continuehandler_ce)
 }
 
-pub fn VSlimPsr15ContinueHandler.php_object_handlers() voidptr {
-    return vslim_psr15_continue_handler_handlers()
+pub fn VSlimPsr15ContinueHandler.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr15_continue_handler_handlers())
 }
 
 pub fn VSlimPsr15ContinueHandler.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

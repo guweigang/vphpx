@@ -1,6 +1,7 @@
 module jobx
 
 import vphp
+import vphp.object
 
 import databasex
 
@@ -63,7 +64,8 @@ pub fn vphp_wrap_vslim_job_dispatcher_set_manager(ptr voidptr, ctx vphp.Context)
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
         vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
@@ -112,8 +114,8 @@ pub fn VSlimJobDispatcher.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__job__dispatcher_ce)
 }
 
-pub fn VSlimJobDispatcher.php_object_handlers() voidptr {
-    return vslim_job_dispatcher_handlers()
+pub fn VSlimJobDispatcher.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_job_dispatcher_handlers())
 }
 
 pub fn VSlimJobDispatcher.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -194,7 +196,8 @@ pub fn vphp_wrap_vslim_job_worker_set_manager(ptr voidptr, ctx vphp.Context) voi
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
         vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
@@ -289,8 +292,8 @@ pub fn VSlimJobWorker.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__job__worker_ce)
 }
 
-pub fn VSlimJobWorker.php_object_handlers() voidptr {
-    return vslim_job_worker_handlers()
+pub fn VSlimJobWorker.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_job_worker_handlers())
 }
 
 pub fn VSlimJobWorker.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

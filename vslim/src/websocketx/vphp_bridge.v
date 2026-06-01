@@ -1,6 +1,7 @@
 module websocketx
 
 import vphp
+import vphp.object
 
 #include "php_bridge.h"
 
@@ -72,7 +73,8 @@ pub fn vphp_wrap_vslim_web_socket_app_on_open(ptr voidptr, ctx vphp.Context) voi
     ])
     arg_0 := php_args.at_named_or_index(0, 'handler').callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.on_open(arg_0)
     return voidptr(res)
@@ -87,7 +89,8 @@ pub fn vphp_wrap_vslim_web_socket_app_on_message(ptr voidptr, ctx vphp.Context) 
     ])
     arg_0 := php_args.at_named_or_index(0, 'handler').callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.on_message(arg_0)
     return voidptr(res)
@@ -102,7 +105,8 @@ pub fn vphp_wrap_vslim_web_socket_app_on_close(ptr voidptr, ctx vphp.Context) vo
     ])
     arg_0 := php_args.at_named_or_index(0, 'handler').callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.on_close(arg_0)
     return voidptr(res)
@@ -141,7 +145,8 @@ pub fn vphp_wrap_vslim_web_socket_app_remember(ptr voidptr, ctx vphp.Context) vo
     ])
     arg_0 := php_args.at_named_or_index(0, 'conn').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.remember(arg_0)
     return voidptr(res)
@@ -315,8 +320,8 @@ pub fn VSlimWebSocketApp.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__websocket__app_ce)
 }
 
-pub fn VSlimWebSocketApp.php_object_handlers() voidptr {
-    return vslim_web_socket_app_handlers()
+pub fn VSlimWebSocketApp.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_web_socket_app_handlers())
 }
 
 pub fn VSlimWebSocketApp.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

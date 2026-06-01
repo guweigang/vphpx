@@ -1,6 +1,7 @@
 module mcpx
 
 import vphp
+import vphp.object
 
 #include "php_bridge.h"
 
@@ -70,7 +71,8 @@ pub fn vphp_wrap_vslim_mcp_app_server_info(ptr voidptr, ctx vphp.Context) voidpt
     ])
     arg_0 := php_args.at_named_or_index(0, 'info').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.server_info(arg_0)
     return voidptr(res)
@@ -87,7 +89,8 @@ pub fn vphp_wrap_vslim_mcp_app_capability(ptr voidptr, ctx vphp.Context) voidptr
     arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'definition').array() or {
         vphp.throw_exception('argument 1 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.capability(arg_0, arg_1)
     return voidptr(res)
@@ -102,7 +105,8 @@ pub fn vphp_wrap_vslim_mcp_app_capabilities(ptr voidptr, ctx vphp.Context) voidp
     ])
     arg_0 := php_args.at_named_or_index(0, 'definitions').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.capabilities(arg_0)
     return voidptr(res)
@@ -119,7 +123,8 @@ pub fn vphp_wrap_vslim_mcp_app_register(ptr voidptr, ctx vphp.Context) voidptr {
     arg_0 := php_args.at_named_or_index(0, 'method').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'handler').callable() or {
         vphp.throw_exception('argument 1 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.register(arg_0, arg_1)
     return voidptr(res)
@@ -139,11 +144,13 @@ pub fn vphp_wrap_vslim_mcp_app_tool(ptr voidptr, ctx vphp.Context) voidptr {
     arg_1 := php_args.at_named_or_index(1, 'description').as_v[string]()
     arg_2 := php_args.at_named_or_index(2, 'inputSchema').array() or {
         vphp.throw_exception('argument 2 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_3 := php_args.at_named_or_index(3, 'handler').callable() or {
         vphp.throw_exception('argument 3 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.tool(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
@@ -166,7 +173,8 @@ pub fn vphp_wrap_vslim_mcp_app_resource(ptr voidptr, ctx vphp.Context) voidptr {
     arg_3 := php_args.at_named_or_index(3, 'mimeType').as_v[string]()
     arg_4 := php_args.at_named_or_index(4, 'handler').callable() or {
         vphp.throw_exception('argument 4 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.resource(arg_0, arg_1, arg_2, arg_3, arg_4)
     return voidptr(res)
@@ -186,11 +194,13 @@ pub fn vphp_wrap_vslim_mcp_app_prompt(ptr voidptr, ctx vphp.Context) voidptr {
     arg_1 := php_args.at_named_or_index(1, 'description').as_v[string]()
     arg_2 := php_args.at_named_or_index(2, 'arguments').array() or {
         vphp.throw_exception('argument 2 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_3 := php_args.at_named_or_index(3, 'handler').callable() or {
         vphp.throw_exception('argument 3 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.prompt(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
@@ -591,8 +601,8 @@ pub fn VSlimMcpApp.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__mcp__app_ce)
 }
 
-pub fn VSlimMcpApp.php_object_handlers() voidptr {
-    return vslim_mcp_app_handlers()
+pub fn VSlimMcpApp.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_mcp_app_handlers())
 }
 
 pub fn VSlimMcpApp.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

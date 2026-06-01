@@ -1,6 +1,7 @@
 module eventx
 
 import vphp
+import vphp.object
 
 #include "php_bridge.h"
 
@@ -67,7 +68,8 @@ pub fn vphp_wrap_vslim_psr14_listener_provider_listen(ptr voidptr, ctx vphp.Cont
     arg_0 := php_args.at_named_or_index(0, 'eventClass').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'listener').callable() or {
         vphp.throw_exception('argument 1 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.listen(arg_0, arg_1)
     return voidptr(res)
@@ -82,7 +84,8 @@ pub fn vphp_wrap_vslim_psr14_listener_provider_listen_any(ptr voidptr, ctx vphp.
     ])
     arg_0 := php_args.at_named_or_index(0, 'listener').callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.listen_any(arg_0)
     return voidptr(res)
@@ -125,8 +128,8 @@ pub fn VSlimPsr14ListenerProvider.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr14__listenerprovider_ce)
 }
 
-pub fn VSlimPsr14ListenerProvider.php_object_handlers() voidptr {
-    return vslim_psr14_listener_provider_handlers()
+pub fn VSlimPsr14ListenerProvider.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr14_listener_provider_handlers())
 }
 
 pub fn VSlimPsr14ListenerProvider.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -207,7 +210,8 @@ pub fn vphp_wrap_vslim_psr14_event_dispatcher_set_provider(ptr voidptr, ctx vphp
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'provider').to_v_ptr[eventx.VSlimPsr14ListenerProvider]() or {
         vphp.throw_exception('argument 0 must be object bound to eventx.VSlimPsr14ListenerProvider, got ' + php_args.at_named_or_index(0, 'provider').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &eventx.VSlimPsr14ListenerProvider(arg_0_ptr) }
     res := recv.set_provider(arg_0)
@@ -233,7 +237,8 @@ pub fn vphp_wrap_vslim_psr14_event_dispatcher_listen(ptr voidptr, ctx vphp.Conte
     arg_0 := php_args.at_named_or_index(0, 'eventClass').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'listener').callable() or {
         vphp.throw_exception('argument 1 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.listen(arg_0, arg_1)
     return voidptr(res)
@@ -248,7 +253,8 @@ pub fn vphp_wrap_vslim_psr14_event_dispatcher_listen_any(ptr voidptr, ctx vphp.C
     ])
     arg_0 := php_args.at_named_or_index(0, 'listener').callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.listen_any(arg_0)
     return voidptr(res)
@@ -283,8 +289,8 @@ pub fn VSlimPsr14EventDispatcher.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr14__eventdispatcher_ce)
 }
 
-pub fn VSlimPsr14EventDispatcher.php_object_handlers() voidptr {
-    return vslim_psr14_event_dispatcher_handlers()
+pub fn VSlimPsr14EventDispatcher.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr14_event_dispatcher_handlers())
 }
 
 pub fn VSlimPsr14EventDispatcher.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

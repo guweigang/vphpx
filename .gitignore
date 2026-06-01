@@ -10,3 +10,5 @@ vslim/tests/*.out
 .idea/
 vendor
 scratch
+.omo/
+vphptest/build

@@ -1,6 +1,7 @@
 module viewx
 
 import vphp
+import vphp.object
 
 import httpx
 
@@ -203,7 +204,8 @@ pub fn vphp_wrap_vslim_view_helper(ptr voidptr, ctx vphp.Context) voidptr {
     arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'handler').callable() or {
         vphp.throw_exception('argument 1 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.helper(arg_0, arg_1)
     return voidptr(res)
@@ -265,8 +267,8 @@ pub fn VSlimView.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__view_ce)
 }
 
-pub fn VSlimView.php_object_handlers() voidptr {
-    return vslim_view_handlers()
+pub fn VSlimView.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_view_handlers())
 }
 
 pub fn VSlimView.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
