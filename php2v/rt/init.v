@@ -7,9 +7,11 @@ module rt
 fn C.php_embed_shutdown()
 @[c_extern]
 fn C.php2v_update_tsrm_cache()
+@[c_extern]
+fn C.php2v_refresh_request()
 
 // init 初始化 PHP embed 引擎运行上下文
-pub fn init() {
+fn init() {
 	unsafe {
 		C.php2v_update_tsrm_cache()
 	}

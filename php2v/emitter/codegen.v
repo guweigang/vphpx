@@ -6,7 +6,6 @@ pub fn wrap_as_main(funcs string, body string) string {
 
 ${funcs}
 fn main() {
-	rt.init()
 	defer {
 		rt.shutdown()
 	}

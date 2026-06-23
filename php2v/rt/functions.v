@@ -37,8 +37,10 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 			if args.len > 0 {
 				z_ret := new_zval()
 				code_str := args[0].to_string()
+				println('PHP2V DEBUG - eval code: ' + code_str)
 				unsafe {
 					res := C.php2v_eval_string(code_str.str, usize(code_str.len), z_ret)
+					println('PHP2V DEBUG - eval result: ${res}')
 					if res == 0 {
 						return PhpVal{ raw: z_ret }
 					}
@@ -80,9 +82,11 @@ pub fn include_file(path PhpVal, incl_type string) PhpVal {
 	}
 	
 	code := 'return ${keyword} \'${escaped_path}\';'
+	println('PHP2V DEBUG - include_file - eval code: ' + code)
 	z_ret := new_zval()
 	unsafe {
 		res := C.php2v_eval_string(code.str, usize(code.len), z_ret)
+		println('PHP2V DEBUG - include_file - result: ${res}')
 		if res == 0 {
 			return PhpVal{ raw: z_ret }
 		}
