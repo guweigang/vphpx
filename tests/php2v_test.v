@@ -115,8 +115,13 @@ fn test_transpiler_end_to_end() {
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址
-	php_inc_res := os.execute('php-config --includes')
-	php_inc := if php_inc_res.exit_code == 0 { php_inc_res.output.trim_space() } else { '' }
+	mut php_inc := ''
+	if os.exists('/usr/local/php-embed/include/php/sapi/embed/php_embed.h') {
+		php_inc = '-I/usr/local/php-embed/include/php -I/usr/local/php-embed/include/php/main -I/usr/local/php-embed/include/php/TSRM -I/usr/local/php-embed/include/php/Zend'
+	} else {
+		php_inc_res := os.execute('php-config --includes')
+		php_inc = if php_inc_res.exit_code == 0 { php_inc_res.output.trim_space() } else { '' }
+	}
 
 	for file in files {
 		if !file.ends_with('.php') {
@@ -152,7 +157,7 @@ fn test_transpiler_end_to_end() {
 
 		// 3. 运行 V 共享库编译以验证在 C 级别是否语法正确且能正常链接
 		temp_so_file := os.join_path(os.temp_dir(), file.all_before_last('.') + '_gen.so')
-		v_comp_cmd := 'v -path "${pwd}:@vlib" -shared -cc clang -cflags "-undefined dynamic_lookup -I${pwd}/php2v/rt ${php_inc}" -o "${temp_so_file}" "${temp_v_file}"'
+		v_comp_cmd := 'v -path "${pwd}:@vlib" -shared -cc clang -cflags "-DZTS -undefined dynamic_lookup -I${pwd}/php2v/rt ${php_inc}" -o "${temp_so_file}" "${temp_v_file}"'
 		comp_res := os.execute(v_comp_cmd)
 		
 		// 清理临时 so 文件，保留 .v 源码文件供查看
