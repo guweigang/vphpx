@@ -22,4 +22,7 @@ pub:
 	dim       ?&AstNode @[json: 'dim']
 	key_var   ?&AstNode @[json: 'keyVar']
 	value_var ?&AstNode @[json: 'valueVar']
+	init      []AstNode @[json: 'init']
+	conds     []AstNode @[json: 'conds']
+	loop      []AstNode @[json: 'loop']
 }

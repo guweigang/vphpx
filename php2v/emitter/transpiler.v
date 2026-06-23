@@ -87,6 +87,20 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 		ast.node_stmt_foreach {
 			t.visit_foreach(node)
 		}
+		ast.node_stmt_while {
+			t.visit_while(node)
+		}
+		ast.node_stmt_for {
+			t.visit_for(node)
+		}
+		ast.node_stmt_break {
+			t.write_indent()
+			t.write_line('break')
+		}
+		ast.node_stmt_continue {
+			t.write_indent()
+			t.write_line('continue')
+		}
 		else {
 			t.write_indent()
 			t.write_line('// unsupported statement: ${node.node_type}')
@@ -425,6 +439,71 @@ fn (mut t Transpiler) visit_foreach(node ast.AstNode) {
 	t.indent--
 	t.write_indent()
 	t.write_line('}')
+	
+	t.indent--
+	t.write_indent()
+	t.write_line('}')
+}
+
+fn (mut t Transpiler) visit_while(node ast.AstNode) {
+	cond_node := node.cond or { panic('While statement missing cond') }
+	cond_str := t.visit_expr(*cond_node)
+	
+	t.write_indent()
+	t.write_line('for rt.is_true(${cond_str}) {')
+	t.indent++
+	for stmt in node.stmts {
+		t.visit_stmt(stmt)
+	}
+	t.indent--
+	t.write_indent()
+	t.write_line('}')
+}
+
+fn (mut t Transpiler) visit_for(node ast.AstNode) {
+	t.write_indent()
+	t.write_line('{')
+	t.indent++
+	
+	old_scope := t.scope
+	
+	// 1. 初始化表达式
+	for init_node in node.init {
+		t.write_indent()
+		expr_str := t.visit_expr(init_node)
+		t.write_line(expr_str)
+	}
+	
+	// 2. 无限循环主体
+	t.write_indent()
+	t.write_line('for {')
+	t.indent++
+	
+	// 3. 条件判断，若不满足则跳出
+	if node.conds.len > 0 {
+		last_cond := node.conds[node.conds.len - 1]
+		cond_str := t.visit_expr(last_cond)
+		t.write_indent()
+		t.write_line('if !rt.is_true(${cond_str}) { break }')
+	}
+	
+	// 4. 循环体语句
+	for stmt in node.stmts {
+		t.visit_stmt(stmt)
+	}
+	
+	// 5. 循环后操作表达式
+	for loop_node in node.loop {
+		t.write_indent()
+		expr_str := t.visit_expr(loop_node)
+		t.write_line(expr_str)
+	}
+	
+	t.indent--
+	t.write_indent()
+	t.write_line('}')
+	
+	t.scope = old_scope
 	
 	t.indent--
 	t.write_indent()

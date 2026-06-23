@@ -33,6 +33,9 @@ function cleanNode($node) {
             if (($node->getType() === 'Arg' || $node->getType() === 'ArrayItem') && $subName === 'value') {
                 $outName = 'expr';
             }
+            if ($node->getType() === 'Stmt_For' && $subName === 'cond') {
+                $outName = 'conds';
+            }
             if (is_array($val)) {
                 $res[$outName] = array_map('cleanNode', $val);
             } elseif ($val instanceof \PhpParser\Node) {

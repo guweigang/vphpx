@@ -62,6 +62,15 @@ fn test_transpiler_end_to_end() {
 			'mut var_val := item.val',
 			'mut var_key := item.key',
 		]
+		'10_loops.php': [
+			'for rt.is_true(rt.less(var_i, rt.new_int(3))) {',
+			'mut var_j := rt.new_int(0)',
+			'if !rt.is_true(rt.less(var_j, rt.new_int(5))) { break }',
+			'if rt.is_true(rt.equal(var_j, rt.new_int(2))) {',
+			'continue',
+			'if rt.is_true(rt.equal(var_j, rt.new_int(4))) {',
+			'break',
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址

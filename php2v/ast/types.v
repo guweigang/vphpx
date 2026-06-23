@@ -10,6 +10,10 @@ pub const node_stmt_function = 'Stmt_Function'
 pub const node_stmt_return = 'Stmt_Return'
 pub const node_expr_funccall = 'Expr_FuncCall'
 pub const node_stmt_foreach = 'Stmt_Foreach'
+pub const node_stmt_while = 'Stmt_While'
+pub const node_stmt_for = 'Stmt_For'
+pub const node_stmt_break = 'Stmt_Break'
+pub const node_stmt_continue = 'Stmt_Continue'
 
 // 表达式节点类型
 pub const node_expr_assign = 'Expr_Assign'
