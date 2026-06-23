@@ -1,8 +1,8 @@
 module main
 
 import os
-import php2v.ast
-import php2v.emitter
+import php2v.src.ast
+import php2v.src.emitter
 
 fn main() {
 	if os.args.len < 3 {
@@ -41,7 +41,7 @@ fn main() {
 
 	parser_path := find_parser_path() or {
 		eprintln('Error: ${err}')
-		return
+		exit(1)
 	}
 
 	// 1. 调用 php 生成 JSON AST
@@ -90,17 +90,17 @@ fn find_parser_path() !string {
 	}
 	// 2. 检查可执行程序所在目录
 	exe_dir := os.dir(os.executable())
-	p_exe := os.join_path(exe_dir, 'php2v_scripts/parser.php')
+	p_exe := os.join_path(exe_dir, 'scripts/parser.php')
 	if os.exists(p_exe) {
 		return p_exe
 	}
 	// 3. 检查当前工作目录
-	p_pwd := os.join_path(os.getwd(), 'php2v_scripts/parser.php')
+	p_pwd := os.join_path(os.getwd(), 'php2v/scripts/parser.php')
 	if os.exists(p_pwd) {
 		return p_pwd
 	}
 	// 4. 检查开发环境预设绝对路径
-	dev_path := '/Users/guweigang/Source/vphpx/php2v_scripts/parser.php'
+	dev_path := '/Users/guweigang/Source/vphpx/php2v/scripts/parser.php'
 	if os.exists(dev_path) {
 		return dev_path
 	}

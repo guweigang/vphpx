@@ -42,12 +42,13 @@ fn main() {
 	}
 
 	pwd := os.getwd()
+	script_dir := os.dir(os.real_path(os.args[0]))
 
-	// 2. 检查并编译 php2v_bin
-	php2v_bin := os.join_path(pwd, 'php2v_bin')
+	// 2. 检查并编译 php2v (放在 php2v 目录下)
+	php2v_bin := os.join_path(script_dir, 'php2v')
 	if !os.exists(php2v_bin) {
 		println('Compiling php2v compiler...')
-		comp_php2v := os.execute('v -o "${php2v_bin}" php2v')
+		comp_php2v := os.execute('v -o "${php2v_bin}" "${os.join_path(script_dir, "src")}"')
 		if comp_php2v.exit_code != 0 {
 			eprintln('Error: Failed to compile php2v: ${comp_php2v.output}')
 			return
@@ -83,7 +84,7 @@ fn main() {
 
 	// 5. 编译为可执行二进制文件
 	println('Compiling ${temp_v_file} -> ${output_bin}...')
-	v_comp_cmd := 'v -nocache -path "${pwd}:@vlib" -cc clang -cflags "-DZTS -I${pwd}/php2v/rt ${php_inc} ${php_libs}" -o "${output_bin}" "${temp_v_file}"'
+	v_comp_cmd := 'v -nocache -path "${pwd}:@vlib" -cc clang -cflags "-DZTS -I${os.join_path(script_dir, "src", "rt")} ${php_inc} ${php_libs}" -o "${output_bin}" "${temp_v_file}"'
 	comp_res := os.execute(v_comp_cmd)
 
 	if comp_res.exit_code != 0 {

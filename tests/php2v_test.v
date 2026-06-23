@@ -133,7 +133,7 @@ fn test_transpiler_end_to_end() {
 
 		// 1. 运行 php2v 将 PHP 源码转译为 V 源码
 		temp_v_file := os.join_path(fixtures_dir, file.all_before_last('.') + '.v')
-		transpile_res := os.execute('./php2v_bin compile "${php_file}" -o "${temp_v_file}"')
+		transpile_res := os.execute('./php2v/php2v compile "${php_file}" -o "${temp_v_file}"')
 		if transpile_res.exit_code != 0 {
 			assert false, 'php2v transpilation failed for ${file}: ${transpile_res.output}'
 		}
@@ -157,7 +157,7 @@ fn test_transpiler_end_to_end() {
 
 		// 3. 运行 V 共享库编译以验证在 C 级别是否语法正确且能正常链接
 		temp_so_file := os.join_path(os.temp_dir(), file.all_before_last('.') + '_gen.so')
-		v_comp_cmd := 'v -path "${pwd}:@vlib" -shared -cc clang -cflags "-DZTS -undefined dynamic_lookup -I${pwd}/php2v/rt ${php_inc}" -o "${temp_so_file}" "${temp_v_file}"'
+		v_comp_cmd := 'v -path "${pwd}:@vlib" -shared -cc clang -cflags "-DZTS -undefined dynamic_lookup -I${pwd}/php2v/src/rt ${php_inc}" -o "${temp_so_file}" "${temp_v_file}"'
 		comp_res := os.execute(v_comp_cmd)
 		
 		// 清理临时 so 文件，保留 .v 源码文件供查看
