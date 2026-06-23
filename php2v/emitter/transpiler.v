@@ -103,7 +103,12 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			return 'rt.new_float(${node.value})'
 		}
 		ast.node_scalar_string {
-			escaped := node.value.replace('\\', '\\\\').replace('\'', '\\\'')
+			escaped := node.value
+				.replace('\\', '\\\\')
+				.replace('\'', '\\\'')
+				.replace('\n', '\\n')
+				.replace('\r', '\\r')
+				.replace('\t', '\\t')
 			return 'rt.new_string(\'${escaped}\')'
 		}
 		ast.node_expr_const {
