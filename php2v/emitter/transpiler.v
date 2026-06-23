@@ -363,6 +363,11 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			prop_name := node.name
 			return 'get_property(${obj_var_name}, \'${prop_name}\')'
 		}
+		ast.node_expr_eval {
+			expr_node := node.expr or { panic('Eval missing expr') }
+			expr_str := t.visit_expr(*expr_node)
+			return 'rt.call_function(\'eval\', [${expr_str}])'
+		}
 		else {
 			return '// unsupported expression: ${node.node_type}'
 		}

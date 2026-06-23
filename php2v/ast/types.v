@@ -21,6 +21,7 @@ pub const node_stmt_property_property = 'Stmt_PropertyProperty'
 pub const node_expr_new = 'Expr_New'
 pub const node_expr_method_call = 'Expr_MethodCall'
 pub const node_expr_property_fetch = 'Expr_PropertyFetch'
+pub const node_expr_eval = 'Expr_Eval'
 
 // 表达式节点类型
 pub const node_expr_assign = 'Expr_Assign'

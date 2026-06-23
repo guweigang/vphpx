@@ -81,6 +81,13 @@ fn test_transpiler_end_to_end() {
 			'rt.echo_val(call_method(var_user, \'getName\', []rt.PhpVal{}))',
 			'set_property(var_user, \'name\', rt.new_string(\'Bob\'))',
 		]
+		'12_dynamic.php': [
+			"rt.call_function('eval', [rt.new_string('echo \\'eval works\\n\\';')])",
+			"mut var_md5_res := rt.call_function('md5', [rt.new_string('hello')])",
+			"rt.echo_val(var_md5_res)",
+			"mut var_json_res := rt.call_function('json_encode', [rt.create_array([rt.ArrayItem{ key: none, val: rt.new_int(1) }, rt.ArrayItem{ key: none, val: rt.new_int(2) }, rt.ArrayItem{ key: none, val: rt.new_int(3) }])])",
+			"rt.echo_val(var_json_res)",
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址

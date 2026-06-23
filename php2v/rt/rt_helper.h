@@ -19,4 +19,32 @@ static inline int php2v_hash_get_entry(void *ht, uint32_t index, zval **val, zen
 	return 0;
 }
 
+// php2v_call_zend_function 动态在全局函数表中查找 name 并利用 params 指针数组进行解包直调
+static inline int php2v_call_zend_function(const char *name, size_t name_len, zval *retval, uint32_t param_count, zval **params) {
+	zend_string *zstr_name = zend_string_init(name, name_len, 0);
+	zval func_zval;
+	ZVAL_STR(&func_zval, zstr_name);
+	
+	zval *z_args = NULL;
+	if (param_count > 0) {
+		z_args = (zval *)alloca(param_count * sizeof(zval));
+		for (uint32_t i = 0; i < param_count; i++) {
+			z_args[i] = *(params[i]);
+		}
+	}
+	
+	int res = call_user_function(EG(function_table), NULL, &func_zval, retval, param_count, z_args);
+	
+	zend_string_release(zstr_name);
+	return res;
+}
+
+// php2v_eval_string 调用 zend_eval_string 执行动态代码
+static inline int php2v_eval_string(const char *str, size_t len, zval *retval) {
+	char *code = (char *)alloca(len + 1);
+	memcpy(code, str, len);
+	code[len] = '\0';
+	return zend_eval_string(code, retval, "php2v_eval");
+}
+
 #endif

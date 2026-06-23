@@ -5,6 +5,8 @@ module rt
 #include "rt_helper.h"
 
 fn C.php2v_hash_get_entry(ht voidptr, index u32, val &&C.zval, key &&voidptr, num_key &u64) int
+fn C.php2v_call_zend_function(name &char, name_len usize, retval &C.zval, param_count u32, params &&C.zval) int
+fn C.php2v_eval_string(str &char, len usize, retval &C.zval) int
 
 // 声明 Zend zval 的底层内存结构
 @[typedef]
