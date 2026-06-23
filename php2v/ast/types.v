@@ -14,6 +14,13 @@ pub const node_stmt_while = 'Stmt_While'
 pub const node_stmt_for = 'Stmt_For'
 pub const node_stmt_break = 'Stmt_Break'
 pub const node_stmt_continue = 'Stmt_Continue'
+pub const node_stmt_class = 'Stmt_Class'
+pub const node_stmt_class_method = 'Stmt_ClassMethod'
+pub const node_stmt_property = 'Stmt_Property'
+pub const node_stmt_property_property = 'Stmt_PropertyProperty'
+pub const node_expr_new = 'Expr_New'
+pub const node_expr_method_call = 'Expr_MethodCall'
+pub const node_expr_property_fetch = 'Expr_PropertyFetch'
 
 // 表达式节点类型
 pub const node_expr_assign = 'Expr_Assign'

@@ -3,6 +3,19 @@ module emitter
 import strings
 import php2v.ast
 
+pub struct ClassInfo {
+pub mut:
+	name    string
+	methods []MethodInfo
+	props   []string
+}
+
+pub struct MethodInfo {
+pub:
+	name        string
+	param_count int
+}
+
 pub struct Transpiler {
 pub mut:
 	out              strings.Builder
@@ -11,6 +24,7 @@ pub mut:
 	indent           int
 	scope            VarScope
 	custom_functions map[string]bool
+	classes          []ClassInfo
 }
 
 pub fn Transpiler.new() Transpiler {
@@ -20,6 +34,7 @@ pub fn Transpiler.new() Transpiler {
 		indent:           1
 		scope:            VarScope.new()
 		custom_functions: map[string]bool{}
+		classes:          []ClassInfo{}
 	}
 }
 
@@ -35,6 +50,9 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 	for stmt in stmts {
 		t.visit_stmt(stmt)
 	}
+	
+	t.generate_dispatchers()
+	
 	return t.out.str()
 }
 
@@ -92,6 +110,9 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 		}
 		ast.node_stmt_for {
 			t.visit_for(node)
+		}
+		ast.node_stmt_class {
+			t.visit_class(node)
 		}
 		ast.node_stmt_break {
 			t.write_indent()
@@ -155,6 +176,20 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 				} else {
 					return '${arr_var_name}.array_push(${expr_str})'
 				}
+			}
+			
+			if var_node.node_type == ast.node_expr_property_fetch {
+				obj_var_node := var_node.var or { panic('PropertyFetch missing var') }
+				obj_var_name := t.visit_expr(*obj_var_node)
+				prop_name := var_node.name
+				
+				expr_node := node.expr or { panic('Assign node missing expr') }
+				mut expr_str := t.visit_expr(*expr_node)
+				if expr_node.node_type == ast.node_expr_variable {
+					expr_str += '.dup()'
+				}
+				
+				return 'set_property(${obj_var_name}, \'${prop_name}\', ${expr_str})'
 			}
 			
 			if var_node.node_type != ast.node_expr_variable {
@@ -286,6 +321,47 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			} else {
 				panic('ArrayDimFetch missing dim in read context')
 			}
+		}
+		ast.node_expr_new {
+			class_name := node.class_name
+			mut arg_strs := []string{}
+			for arg in node.args {
+				arg_val := arg.expr or { panic('Arg missing expr') }
+				arg_str := t.visit_expr(*arg_val)
+				if arg_val.node_type == ast.node_expr_variable {
+					arg_strs << '${arg_str}.dup()'
+				} else {
+					arg_strs << arg_str
+				}
+			}
+			return 'create_${class_name.to_lower()}(${arg_strs.join(", ")})'
+		}
+		ast.node_expr_method_call {
+			obj_var_node := node.var or { panic('MethodCall missing var') }
+			obj_var_name := t.visit_expr(*obj_var_node)
+			method_name := node.name
+			
+			mut arg_strs := []string{}
+			for arg in node.args {
+				arg_val := arg.expr or { panic('Arg missing expr') }
+				arg_str := t.visit_expr(*arg_val)
+				if arg_val.node_type == ast.node_expr_variable {
+					arg_strs << '${arg_str}.dup()'
+				} else {
+					arg_strs << arg_str
+				}
+			}
+			if arg_strs.len == 0 {
+				return 'call_method(${obj_var_name}, \'${method_name}\', []rt.PhpVal{})'
+			} else {
+				return 'call_method(${obj_var_name}, \'${method_name}\', [${arg_strs.join(", ")}])'
+			}
+		}
+		ast.node_expr_property_fetch {
+			obj_var_node := node.var or { panic('PropertyFetch missing var') }
+			obj_var_name := t.visit_expr(*obj_var_node)
+			prop_name := node.name
+			return 'get_property(${obj_var_name}, \'${prop_name}\')'
 		}
 		else {
 			return '// unsupported expression: ${node.node_type}'
@@ -508,4 +584,297 @@ fn (mut t Transpiler) visit_for(node ast.AstNode) {
 	t.indent--
 	t.write_indent()
 	t.write_line('}')
+}
+
+fn (mut t Transpiler) visit_class(node ast.AstNode) {
+	t.is_in_func = true
+	
+	// 收集 ClassInfo
+	mut class_info := ClassInfo{
+		name: node.name
+		methods: []MethodInfo{}
+		props: []string{}
+	}
+	for stmt in node.stmts {
+		if stmt.node_type == ast.node_stmt_property {
+			for prop in stmt.props {
+				class_info.props << prop.name
+			}
+		} else if stmt.node_type == ast.node_stmt_class_method {
+			class_info.methods << MethodInfo{
+				name: stmt.name
+				param_count: stmt.params.len
+			}
+		}
+	}
+	t.classes << class_info
+
+	// 生成结构体定义
+	t.write_line('struct Class_${node.name} {')
+	t.write_line('pub mut:')
+	t.indent++
+	for prop in class_info.props {
+		t.write_indent()
+		t.write_line('prop_${prop} rt.PhpVal')
+	}
+	t.indent--
+	t.write_line('}')
+	t.write_line('')
+
+	// 遍历生成方法
+	for stmt in node.stmts {
+		if stmt.node_type == ast.node_stmt_class_method {
+			t.visit_class_method(node.name, stmt)
+		}
+	}
+
+	t.is_in_func = false
+}
+
+fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
+	t.is_in_func = true
+	old_indent := t.indent
+	t.indent = 0
+	old_scope := t.scope
+	t.scope = VarScope.new()
+	t.scope.declare('this')
+
+	mut param_names := []string{}
+	for param in node.params {
+		param_var := param.var or { panic('Param missing var') }
+		param_name := param_var.name
+		t.scope.declare(param_name)
+		param_names << 'var_${param_name} rt.PhpVal'
+	}
+
+	t.write_indent()
+	t.write_line('fn (mut this Class_${class_name}) method_${node.name.to_lower()}(${param_names.join(", ")}) rt.PhpVal {')
+	
+	t.indent++
+	
+	// 声明 $this 代理变量以支持 $this->prop 的正常读写
+	t.write_indent()
+	t.write_line('mut var_this := rt.new_object(\'${class_name}\', &this)')
+	
+	for stmt in node.stmts {
+		t.visit_stmt(stmt)
+	}
+	
+	if node.stmts.len == 0 || node.stmts[node.stmts.len - 1].node_type != ast.node_stmt_return {
+		t.write_indent()
+		t.write_line('return rt.new_null()')
+	}
+	
+	t.indent--
+	t.write_indent()
+	t.write_line('}')
+	t.write_line('')
+
+	t.indent = old_indent
+	t.scope = old_scope
+}
+
+fn (mut t Transpiler) generate_dispatchers() {
+	t.is_in_func = true
+	t.indent = 0
+
+	if t.classes.len == 0 {
+		t.write_line('fn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {')
+		t.write_line('\treturn rt.new_null()')
+		t.write_line('}')
+		t.write_line('')
+		t.write_line('fn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {')
+		t.write_line('\treturn rt.new_null()')
+		t.write_line('}')
+		t.write_line('')
+		t.write_line('fn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {}')
+		t.write_line('')
+		t.is_in_func = false
+		return
+	}
+
+	// 1. 生成每个类的 create_ClassName 实例化辅助函数
+	for cls in t.classes {
+		mut construct_info := ?MethodInfo(none)
+		for m in cls.methods {
+			if m.name == '__construct' {
+				construct_info = m
+				break
+			}
+		}
+		
+		mut param_decls := []string{}
+		mut param_pass := []string{}
+		if info := construct_info {
+			for i in 0 .. info.param_count {
+				param_decls << 'arg_${i} rt.PhpVal'
+				param_pass << 'arg_${i}'
+			}
+		}
+		
+		t.write_line('fn create_${cls.name.to_lower()}(${param_decls.join(", ")}) rt.PhpVal {')
+		t.indent++
+		t.write_indent()
+		t.write_line('mut obj := &Class_${cls.name}{')
+		t.indent++
+		for prop in cls.props {
+			t.write_indent()
+			t.write_line('prop_${prop}: rt.new_null()')
+		}
+		t.indent--
+		t.write_indent()
+		t.write_line('}')
+		
+		if construct_info != none {
+			t.write_indent()
+			t.write_line('obj.method___construct(${param_pass.join(", ")})')
+		}
+		
+		t.write_indent()
+		t.write_line('return rt.new_object(\'${cls.name}\', obj)')
+		t.indent--
+		t.write_line('}')
+		t.write_line('')
+	}
+
+	// 2. 生成 call_method 全局路由分发器
+	t.write_line('fn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {')
+	t.indent++
+	t.write_indent()
+	t.write_line('if !obj.is_object() { return rt.new_null() }')
+	t.write_indent()
+	t.write_line('obj_info := obj.get_object()')
+	t.write_indent()
+	t.write_line('match obj_info.class_name {')
+	t.indent++
+	for cls in t.classes {
+		t.write_indent()
+		t.write_line('\'${cls.name}\' {')
+		t.indent++
+		t.write_indent()
+		t.write_line('mut c_obj := &Class_${cls.name}(obj_info.ptr)')
+		t.write_indent()
+		t.write_line('match method_name {')
+		t.indent++
+		for m in cls.methods {
+			t.write_indent()
+			t.write_line('\'${m.name}\' {')
+			t.indent++
+			
+			mut args_pass := []string{}
+			for i in 0 .. m.param_count {
+				args_pass << 'if args.len > ${i} { args[${i}] } else { rt.new_null() }'
+			}
+			t.write_indent()
+			t.write_line('return c_obj.method_${m.name.to_lower()}(${args_pass.join(", ")})')
+			
+			t.indent--
+			t.write_indent()
+			t.write_line('}')
+		}
+		t.write_indent()
+		t.write_line('else {}')
+		t.indent--
+		t.write_indent()
+		t.write_line('}')
+		t.indent--
+		t.write_indent()
+		t.write_line('}')
+	}
+	t.write_indent()
+	t.write_line('else {}')
+	t.indent--
+	t.write_indent()
+	t.write_line('}')
+	t.write_indent()
+	t.write_line('return rt.new_null()')
+	t.indent--
+	t.write_line('}')
+	t.write_line('')
+
+	// 3. 生成 get_property 全局路由分发器
+	t.write_line('fn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {')
+	t.indent++
+	t.write_indent()
+	t.write_line('if !obj.is_object() { return rt.new_null() }')
+	t.write_indent()
+	t.write_line('obj_info := obj.get_object()')
+	t.write_indent()
+	t.write_line('match obj_info.class_name {')
+	t.indent++
+	for cls in t.classes {
+		t.write_indent()
+		t.write_line('\'${cls.name}\' {')
+		t.indent++
+		t.write_indent()
+		t.write_line('c_obj := &Class_${cls.name}(obj_info.ptr)')
+		t.write_indent()
+		t.write_line('match prop_name {')
+		t.indent++
+		for prop in cls.props {
+			t.write_indent()
+			t.write_line('\'${prop}\' { return c_obj.prop_${prop} }')
+		}
+		t.write_indent()
+		t.write_line('else {}')
+		t.indent--
+		t.write_indent()
+		t.write_line('}')
+		t.indent--
+		t.write_indent()
+		t.write_line('}')
+	}
+	t.write_indent()
+	t.write_line('else {}')
+	t.indent--
+	t.write_indent()
+	t.write_line('}')
+	t.write_indent()
+	t.write_line('return rt.new_null()')
+	t.indent--
+	t.write_line('}')
+	t.write_line('')
+
+	// 4. 生成 set_property 全局路由分发器
+	t.write_line('fn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {')
+	t.indent++
+	t.write_indent()
+	t.write_line('if !obj.is_object() { return }')
+	t.write_indent()
+	t.write_line('obj_info := obj.get_object()')
+	t.write_indent()
+	t.write_line('match obj_info.class_name {')
+	t.indent++
+	for cls in t.classes {
+		t.write_indent()
+		t.write_line('\'${cls.name}\' {')
+		t.indent++
+		t.write_indent()
+		t.write_line('mut c_obj := &Class_${cls.name}(obj_info.ptr)')
+		t.write_indent()
+		t.write_line('match prop_name {')
+		t.indent++
+		for prop in cls.props {
+			t.write_indent()
+			t.write_line('\'${prop}\' { c_obj.prop_${prop} = val }')
+		}
+		t.write_indent()
+		t.write_line('else {}')
+		t.indent--
+		t.write_indent()
+		t.write_line('}')
+		t.indent--
+		t.write_indent()
+		t.write_line('}')
+	}
+	t.write_indent()
+	t.write_line('else {}')
+	t.indent--
+	t.write_indent()
+	t.write_line('}')
+	t.indent--
+	t.write_line('}')
+	t.write_line('')
+
+	t.is_in_func = false
 }

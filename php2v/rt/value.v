@@ -388,3 +388,37 @@ pub fn (mut it ArrayIterator) next() ?IterItem {
 		return none
 	}
 }
+
+// PhpObject 承载 AOT 中的 PHP 对象
+pub struct PhpObject {
+pub mut:
+	class_name string
+	ptr        voidptr
+}
+
+// new_object 将 V 结构体指针及类名封装为弱类型的 PhpVal
+pub fn new_object(class_name string, ptr voidptr) PhpVal {
+	z := new_zval()
+	unsafe {
+		mut obj := &PhpObject(malloc(int(sizeof(PhpObject))))
+		obj.class_name = class_name
+		obj.ptr = ptr
+		
+		mut p := &voidptr(&z.value)
+		*p = obj
+		z.u1.type_info = 8 // IS_OBJECT
+	}
+	return PhpVal{ raw: z }
+}
+
+pub fn (v PhpVal) is_object() bool {
+	return v.raw != 0 && (v.raw.u1.type_info & 0xff) == 8
+}
+
+pub fn (v PhpVal) get_object() &PhpObject {
+	unsafe {
+		if !v.is_object() { return &PhpObject(nil) }
+		p := &voidptr(&v.raw.value)
+		return &PhpObject(*p)
+	}
+}

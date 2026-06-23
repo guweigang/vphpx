@@ -71,6 +71,16 @@ fn test_transpiler_end_to_end() {
 			'if rt.is_true(rt.equal(var_j, rt.new_int(4))) {',
 			'break',
 		]
+		'11_oop.php': [
+			'struct Class_User {',
+			'prop_name rt.PhpVal',
+			'fn (mut this Class_User) method___construct(var_name rt.PhpVal) rt.PhpVal {',
+			'fn (mut this Class_User) method_getname() rt.PhpVal {',
+			'fn create_user(arg_0 rt.PhpVal) rt.PhpVal {',
+			'mut var_user := create_user(rt.new_string(\'Alice\'))',
+			'rt.echo_val(call_method(var_user, \'getName\', []rt.PhpVal{}))',
+			'set_property(var_user, \'name\', rt.new_string(\'Bob\'))',
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址

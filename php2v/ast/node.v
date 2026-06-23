@@ -25,4 +25,6 @@ pub:
 	init      []AstNode @[json: 'init']
 	conds     []AstNode @[json: 'conds']
 	loop      []AstNode @[json: 'loop']
+	props     []AstNode @[json: 'props']
+	class_name string   @[json: 'class']
 }
