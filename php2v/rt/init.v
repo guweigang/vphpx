@@ -1,17 +1,17 @@
 module rt
 
 #include "zts_def.h"
+#include "zts_inst.h"
 
 @[c_extern]
-fn C.php_embed_init(argc int, argv &&char) int
-@[c_extern]
 fn C.php_embed_shutdown()
+@[c_extern]
+fn C.php2v_update_tsrm_cache()
 
 // init 初始化 PHP embed 引擎运行上下文
 pub fn init() {
 	unsafe {
-		argv := [&char(0)]
-		C.php_embed_init(0, argv.data)
+		C.php2v_update_tsrm_cache()
 	}
 }
 
