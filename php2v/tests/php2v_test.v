@@ -4,7 +4,11 @@ import os
 
 fn test_transpiler_end_to_end() {
 	pwd := os.getwd()
-	fixtures_dir := os.join_path(pwd, 'tests/fixtures')
+	// 动态适配 tests 目录的重定位，既支持根目录下运行，也支持在 php2v/ 目录下运行
+	mut fixtures_dir := os.join_path(pwd, 'php2v/tests/fixtures')
+	if !os.exists(fixtures_dir) {
+		fixtures_dir = os.join_path(pwd, 'tests/fixtures')
+	}
 	files := os.ls(fixtures_dir) or { panic(err) }
 
 	// 预期生成的 V 代码特征片段，用于进行高精度源码结构比对测试
@@ -133,7 +137,11 @@ fn test_transpiler_end_to_end() {
 
 		// 1. 运行 php2v 将 PHP 源码转译为 V 源码
 		temp_v_file := os.join_path(fixtures_dir, file.all_before_last('.') + '.v')
-		transpile_res := os.execute('./php2v/php2v compile "${php_file}" -o "${temp_v_file}"')
+		mut php2v_exe := './php2v/php2v'
+		if !os.exists(php2v_exe) {
+			php2v_exe = './php2v'
+		}
+		transpile_res := os.execute('${php2v_exe} compile "${php_file}" -o "${temp_v_file}"')
 		if transpile_res.exit_code != 0 {
 			assert false, 'php2v transpilation failed for ${file}: ${transpile_res.output}'
 		}
@@ -157,7 +165,12 @@ fn test_transpiler_end_to_end() {
 
 		// 3. 运行 V 共享库编译以验证在 C 级别是否语法正确且能正常链接
 		temp_so_file := os.join_path(os.temp_dir(), file.all_before_last('.') + '_gen.so')
-		v_comp_cmd := 'v -path "${pwd}:@vlib" -shared -cc clang -cflags "-DZTS -undefined dynamic_lookup -I${pwd}/php2v/src/rt ${php_inc}" -o "${temp_so_file}" "${temp_v_file}"'
+		mut rt_inc := os.join_path(pwd, 'php2v/src/rt')
+		if !os.exists(rt_inc) {
+			rt_inc = os.join_path(pwd, 'src/rt')
+		}
+		mut v_path := '${pwd}:${os.dir(pwd)}:@vlib'
+		v_comp_cmd := 'v -path "${v_path}" -shared -cc clang -cflags "-DZTS -undefined dynamic_lookup -I${rt_inc} ${php_inc}" -o "${temp_so_file}" "${temp_v_file}"'
 		comp_res := os.execute(v_comp_cmd)
 		
 		// 清理临时 so 文件，保留 .v 源码文件供查看
