@@ -105,6 +105,13 @@ fn test_transpiler_end_to_end() {
 			'mut var_fn := rt.new_object(\'Closure_2\', &Closure_2{ prop_x: var_x.dup() })',
 			'rt.echo_val(call_closure(var_fn, [rt.new_int(3)]))',
 		]
+		'14_include.php': [
+			"mut var_path := rt.new_string('tests/fixtures/14_included.inc')",
+			"mut var_ret := rt.include_file(var_path, '1')",
+			"rt.echo_val(var_ret)",
+			"mut var_ret2 := rt.include_file(var_path, '2')",
+			"rt.echo_val(rt.new_string('once_done\\n'))",
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址

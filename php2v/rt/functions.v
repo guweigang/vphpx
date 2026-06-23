@@ -66,3 +66,27 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 		}
 	}
 }
+
+pub fn include_file(path PhpVal, incl_type string) PhpVal {
+	path_str := path.to_string()
+	escaped_path := path_str.replace('\\', '\\\\').replace('\'', '\\\'')
+	
+	mut keyword := 'include'
+	match incl_type {
+		'2' { keyword = 'include_once' }
+		'3' { keyword = 'require' }
+		'4' { keyword = 'require_once' }
+		else {}
+	}
+	
+	code := 'return ${keyword} \'${escaped_path}\';'
+	z_ret := new_zval()
+	unsafe {
+		res := C.php2v_eval_string(code.str, usize(code.len), z_ret)
+		if res == 0 {
+			return PhpVal{ raw: z_ret }
+		}
+		free(z_ret)
+	}
+	return new_null()
+}

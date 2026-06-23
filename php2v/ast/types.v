@@ -24,6 +24,7 @@ pub const node_expr_property_fetch = 'Expr_PropertyFetch'
 pub const node_expr_eval = 'Expr_Eval'
 pub const node_expr_closure = 'Expr_Closure'
 pub const node_expr_arrow_function = 'Expr_ArrowFunction'
+pub const node_expr_include = 'Expr_Include'
 
 // 表达式节点类型
 pub const node_expr_assign = 'Expr_Assign'

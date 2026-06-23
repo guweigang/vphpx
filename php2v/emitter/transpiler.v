@@ -538,6 +538,14 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			}
 			return 'rt.new_object(\'${class_name}\', &${class_name}{ ${init_fields.join(", ")} })'
 		}
+		ast.node_expr_include {
+			path_node := node.expr or { panic('Include missing expr') }
+			if voidptr(path_node) != 0 {
+				path_str := t.visit_expr(*path_node)
+				return 'rt.include_file(${path_str}, \'${node.incl_type}\')'
+			}
+			return 'rt.new_null()'
+		}
 		else {
 			return '// unsupported expression: ${node.node_type}'
 		}

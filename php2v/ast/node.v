@@ -27,5 +27,6 @@ pub:
 	loop      []AstNode @[json: 'loop']
 	props     []AstNode @[json: 'props']
 	uses      []AstNode @[json: 'uses']
+	incl_type string    @[json: 'type']
 	class_name string   @[json: 'class']
 }
