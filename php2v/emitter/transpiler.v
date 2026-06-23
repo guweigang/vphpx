@@ -20,6 +20,10 @@ pub struct Transpiler {
 pub mut:
 	out              strings.Builder
 	func_out         strings.Builder
+	closures_code    strings.Builder
+	is_in_closure    bool
+	closure_count    int
+	closure_names    []string
 	is_in_func       bool
 	indent           int
 	scope            VarScope
@@ -31,6 +35,7 @@ pub fn Transpiler.new() Transpiler {
 	return Transpiler{
 		out:              strings.new_builder(1024)
 		func_out:         strings.new_builder(1024)
+		closures_code:    strings.new_builder(1024)
 		indent:           1
 		scope:            VarScope.new()
 		custom_functions: map[string]bool{}
@@ -53,12 +58,20 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 	
 	t.generate_dispatchers()
 	
+	if t.closures_code.len > 0 {
+		t.func_out.write_string(t.closures_code.str())
+	}
+	
+	t.generate_call_closure()
+	
 	return t.out.str()
 }
 
 fn (mut t Transpiler) write_indent() {
 	indent_str := '\t'.repeat(t.indent)
-	if t.is_in_func {
+	if t.is_in_closure {
+		t.closures_code.write_string(indent_str)
+	} else if t.is_in_func {
 		t.func_out.write_string(indent_str)
 	} else {
 		t.out.write_string(indent_str)
@@ -66,7 +79,9 @@ fn (mut t Transpiler) write_indent() {
 }
 
 fn (mut t Transpiler) write_line(s string) {
-	if t.is_in_func {
+	if t.is_in_closure {
+		t.closures_code.writeln(s)
+	} else if t.is_in_func {
 		t.func_out.writeln(s)
 	} else {
 		t.out.writeln(s)
@@ -74,7 +89,9 @@ fn (mut t Transpiler) write_line(s string) {
 }
 
 fn (mut t Transpiler) write_string(s string) {
-	if t.is_in_func {
+	if t.is_in_closure {
+		t.closures_code.write_string(s)
+	} else if t.is_in_func {
 		t.func_out.write_string(s)
 	} else {
 		t.out.write_string(s)
@@ -211,7 +228,6 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			}
 		}
 		ast.node_expr_funccall {
-			func_name := node.name
 			mut arg_strs := []string{}
 			for arg in node.args {
 				arg_val := arg.expr or { panic('Arg missing expr') }
@@ -223,6 +239,18 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 				}
 			}
 			
+			if callable_expr_node := node.expr {
+				if voidptr(callable_expr_node) != 0 {
+					callable_expr := t.visit_expr(*callable_expr_node)
+					if arg_strs.len == 0 {
+						return 'call_closure(${callable_expr}, []rt.PhpVal{})'
+					} else {
+						return 'call_closure(${callable_expr}, [${arg_strs.join(", ")}])'
+					}
+				}
+			}
+			
+			func_name := node.name
 			if func_name in t.custom_functions {
 				return 'func_${func_name}(${arg_strs.join(", ")})'
 			} else {
@@ -367,6 +395,148 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			expr_node := node.expr or { panic('Eval missing expr') }
 			expr_str := t.visit_expr(*expr_node)
 			return 'rt.call_function(\'eval\', [${expr_str}])'
+		}
+		ast.node_expr_closure {
+			t.closure_count++
+			class_name := 'Closure_${t.closure_count}'
+			t.closure_names << class_name
+			
+			mut captured_vars := []string{}
+			for use_node in node.uses {
+				use_var := use_node.var or { continue }
+				captured_vars << use_var.name
+			}
+			
+			t.closures_code.writeln('struct ${class_name} {')
+			t.closures_code.writeln('pub mut:')
+			for var_name in captured_vars {
+				t.closures_code.writeln('\tprop_${var_name} rt.PhpVal')
+			}
+			t.closures_code.writeln('}')
+			t.closures_code.writeln('')
+			
+			old_is_in_closure := t.is_in_closure
+			t.is_in_closure = true
+			old_indent := t.indent
+			t.indent = 0
+			old_scope := t.scope
+			t.scope = VarScope.new()
+			
+			mut param_names := []string{}
+			for param in node.params {
+				param_var := param.var or { panic('Param missing var') }
+				param_name := param_var.name
+				t.scope.declare(param_name)
+				param_names << param_name
+			}
+			
+			t.write_indent()
+			t.write_line('fn (mut this ${class_name}) invoke(args []rt.PhpVal) rt.PhpVal {')
+			t.indent++
+			
+			for i, param_name in param_names {
+				t.write_indent()
+				t.write_line('mut var_${param_name} := if args.len > ${i} { args[${i}].dup() } else { rt.new_null() }')
+			}
+			
+			for var_name in captured_vars {
+				t.scope.declare(var_name)
+				t.write_indent()
+				t.write_line('mut var_${var_name} := this.prop_${var_name}.dup()')
+			}
+			
+			for stmt in node.stmts {
+				t.visit_stmt(stmt)
+			}
+			
+			if node.stmts.len == 0 || node.stmts[node.stmts.len - 1].node_type != ast.node_stmt_return {
+				t.write_indent()
+				t.write_line('return rt.new_null()')
+			}
+			
+			t.indent--
+			t.write_indent()
+			t.write_line('}')
+			t.write_line('')
+			
+			t.is_in_closure = old_is_in_closure
+			t.indent = old_indent
+			t.scope = old_scope
+			
+			mut init_fields := []string{}
+			for var_name in captured_vars {
+				init_fields << 'prop_${var_name}: var_${var_name}.dup()'
+			}
+			return 'rt.new_object(\'${class_name}\', &${class_name}{ ${init_fields.join(", ")} })'
+		}
+		ast.node_expr_arrow_function {
+			t.closure_count++
+			class_name := 'Closure_${t.closure_count}'
+			t.closure_names << class_name
+			
+			mut captured_vars := []string{}
+			expr_node := node.expr or { panic('ArrowFunction missing expr') }
+			
+			mut param_names := []string{}
+			for param in node.params {
+				param_var := param.var or { panic('Param missing var') }
+				param_names << param_var.name
+			}
+			
+			t.find_captured_vars_rec(*expr_node, param_names, mut captured_vars)
+			
+			t.closures_code.writeln('struct ${class_name} {')
+			t.closures_code.writeln('pub mut:')
+			for var_name in captured_vars {
+				t.closures_code.writeln('\tprop_${var_name} rt.PhpVal')
+			}
+			t.closures_code.writeln('}')
+			t.closures_code.writeln('')
+			
+			old_is_in_closure := t.is_in_closure
+			t.is_in_closure = true
+			old_indent := t.indent
+			t.indent = 0
+			old_scope := t.scope
+			t.scope = VarScope.new()
+			
+			for param_name in param_names {
+				t.scope.declare(param_name)
+			}
+			
+			t.write_indent()
+			t.write_line('fn (mut this ${class_name}) invoke(args []rt.PhpVal) rt.PhpVal {')
+			t.indent++
+			
+			for i, param_name in param_names {
+				t.write_indent()
+				t.write_line('mut var_${param_name} := if args.len > ${i} { args[${i}].dup() } else { rt.new_null() }')
+			}
+			
+			for var_name in captured_vars {
+				t.scope.declare(var_name)
+				t.write_indent()
+				t.write_line('mut var_${var_name} := this.prop_${var_name}.dup()')
+			}
+			
+			expr_str := t.visit_expr(*expr_node)
+			t.write_indent()
+			t.write_line('return ${expr_str}')
+			
+			t.indent--
+			t.write_indent()
+			t.write_line('}')
+			t.write_line('')
+			
+			t.is_in_closure = old_is_in_closure
+			t.indent = old_indent
+			t.scope = old_scope
+			
+			mut init_fields := []string{}
+			for var_name in captured_vars {
+				init_fields << 'prop_${var_name}: var_${var_name}.dup()'
+			}
+			return 'rt.new_object(\'${class_name}\', &${class_name}{ ${init_fields.join(", ")} })'
 		}
 		else {
 			return '// unsupported expression: ${node.node_type}'
@@ -882,4 +1052,102 @@ fn (mut t Transpiler) generate_dispatchers() {
 	t.write_line('')
 
 	t.is_in_func = false
+}
+
+fn (mut t Transpiler) generate_call_closure() {
+	old_is_in_func := t.is_in_func
+	t.is_in_func = true
+	t.indent = 0
+	
+	t.write_line('fn call_closure(cb rt.PhpVal, args []rt.PhpVal) rt.PhpVal {')
+	if t.closure_names.len == 0 {
+		t.write_line('\treturn rt.new_null()')
+		t.write_line('}')
+		t.write_line('')
+		t.is_in_func = old_is_in_func
+		return
+	}
+	
+	t.write_line('\tif !cb.is_object() { return rt.new_null() }')
+	t.write_line('\tobj_info := cb.get_object()')
+	t.write_line('\tmatch obj_info.class_name {')
+	for name in t.closure_names {
+		t.write_line('\t\t\'${name}\' {')
+		t.write_line('\t\t\tmut c_obj := &${name}(obj_info.ptr)')
+		t.write_line('\t\t\treturn c_obj.invoke(args)')
+		t.write_line('\t\t}')
+	}
+	t.write_line('\t\telse {}')
+	t.write_line('\t}')
+	t.write_line('\treturn rt.new_null()')
+	t.write_line('}')
+	t.write_line('')
+	
+	t.is_in_func = old_is_in_func
+}
+
+fn (t &Transpiler) find_captured_vars_rec(node ast.AstNode, params []string, mut captured []string) {
+	match node.node_type {
+		ast.node_expr_variable {
+			name := node.name
+			if name !in params && name != 'this' && name != '' {
+				if t.scope.has_var(name) {
+					if name !in captured {
+						captured << name
+					}
+				}
+			}
+		}
+		ast.node_bin_plus, ast.node_bin_minus, ast.node_bin_mul, ast.node_bin_div,
+		ast.node_bin_mod, ast.node_bin_concat, ast.node_bin_greater, ast.node_bin_smaller,
+		ast.node_bin_greater_equal, ast.node_bin_smaller_equal, ast.node_bin_equal,
+		ast.node_bin_identical {
+			if n := node.left { if voidptr(n) != 0 { t.find_captured_vars_rec(*n, params, mut captured) } }
+			if n := node.right { if voidptr(n) != 0 { t.find_captured_vars_rec(*n, params, mut captured) } }
+		}
+		ast.node_expr_funccall {
+			if n := node.expr { if voidptr(n) != 0 { t.find_captured_vars_rec(*n, params, mut captured) } }
+			if node.args.len > 0 {
+				for n in node.args {
+					t.find_captured_vars_rec(n, params, mut captured)
+				}
+			}
+		}
+		ast.node_expr_method_call {
+			if n := node.var { if voidptr(n) != 0 { t.find_captured_vars_rec(*n, params, mut captured) } }
+			if node.args.len > 0 {
+				for n in node.args {
+					t.find_captured_vars_rec(n, params, mut captured)
+				}
+			}
+		}
+		ast.node_expr_property_fetch {
+			if n := node.var { if voidptr(n) != 0 { t.find_captured_vars_rec(*n, params, mut captured) } }
+		}
+		ast.node_expr_array {
+			if node.items.len > 0 {
+				for n in node.items {
+					t.find_captured_vars_rec(n, params, mut captured)
+				}
+			}
+		}
+		ast.node_expr_array_item {
+			if n := node.key { if voidptr(n) != 0 { t.find_captured_vars_rec(*n, params, mut captured) } }
+			if n := node.expr { if voidptr(n) != 0 { t.find_captured_vars_rec(*n, params, mut captured) } }
+		}
+		ast.node_expr_array_dim_fetch {
+			if n := node.var { if voidptr(n) != 0 { t.find_captured_vars_rec(*n, params, mut captured) } }
+			if n := node.dim { if voidptr(n) != 0 { t.find_captured_vars_rec(*n, params, mut captured) } }
+		}
+		ast.node_expr_new {
+			if node.args.len > 0 {
+				for n in node.args {
+					t.find_captured_vars_rec(n, params, mut captured)
+				}
+			}
+		}
+		else {
+			if n := node.expr { if voidptr(n) != 0 { t.find_captured_vars_rec(*n, params, mut captured) } }
+		}
+	}
 }

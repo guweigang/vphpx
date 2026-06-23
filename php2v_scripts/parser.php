@@ -39,6 +39,9 @@ function cleanNode($node) {
             if ($node->getType() === 'Stmt_PropertyProperty' && $subName === 'default') {
                 $outName = 'expr';
             }
+            if ($node->getType() === 'Expr_FuncCall' && $subName === 'name' && !is_string($val) && !($val instanceof \PhpParser\Node\Name)) {
+                $outName = 'expr';
+            }
             if (is_array($val)) {
                 $res[$outName] = array_map('cleanNode', $val);
             } elseif ($val instanceof \PhpParser\Node) {

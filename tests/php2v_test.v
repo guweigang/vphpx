@@ -88,6 +88,23 @@ fn test_transpiler_end_to_end() {
 			"mut var_json_res := rt.call_function('json_encode', [rt.create_array([rt.ArrayItem{ key: none, val: rt.new_int(1) }, rt.ArrayItem{ key: none, val: rt.new_int(2) }, rt.ArrayItem{ key: none, val: rt.new_int(3) }])])",
 			"rt.echo_val(var_json_res)",
 		]
+		'13_closure.php': [
+			'struct Closure_1 {',
+			'prop_x rt.PhpVal',
+			'fn (mut this Closure_1) invoke(args []rt.PhpVal) rt.PhpVal {',
+			'mut var_y := if args.len > 0 { args[0].dup() } else { rt.new_null() }',
+			'mut var_x := this.prop_x.dup()',
+			'return rt.add(var_x, var_y)',
+			'struct Closure_2 {',
+			'fn (mut this Closure_2) invoke(args []rt.PhpVal) rt.PhpVal {',
+			'mut var_z := if args.len > 0 { args[0].dup() } else { rt.new_null() }',
+			'return rt.mul(var_z, var_x)',
+			'fn call_closure(cb rt.PhpVal, args []rt.PhpVal) rt.PhpVal {',
+			'mut var_cb := rt.new_object(\'Closure_1\', &Closure_1{ prop_x: var_x.dup() })',
+			'rt.echo_val(call_closure(var_cb, [rt.new_int(5)]))',
+			'mut var_fn := rt.new_object(\'Closure_2\', &Closure_2{ prop_x: var_x.dup() })',
+			'rt.echo_val(call_closure(var_fn, [rt.new_int(3)]))',
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址

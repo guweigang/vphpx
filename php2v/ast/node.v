@@ -26,5 +26,6 @@ pub:
 	conds     []AstNode @[json: 'conds']
 	loop      []AstNode @[json: 'loop']
 	props     []AstNode @[json: 'props']
+	uses      []AstNode @[json: 'uses']
 	class_name string   @[json: 'class']
 }
