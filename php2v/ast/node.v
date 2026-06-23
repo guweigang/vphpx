@@ -17,4 +17,7 @@ pub:
 	params    []AstNode @[json: 'params']
 	args      []AstNode @[json: 'args']
 	by_ref    string    @[json: 'byRef']
+	items     []AstNode @[json: 'items']
+	key       ?&AstNode @[json: 'key']
+	dim       ?&AstNode @[json: 'dim']
 }

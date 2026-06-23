@@ -116,6 +116,25 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 		}
 		ast.node_expr_assign {
 			var_node := node.var or { panic('Assign node missing var') }
+			
+			if var_node.node_type == ast.node_expr_array_dim_fetch {
+				arr_var_node := var_node.var or { panic('ArrayDimFetch missing var') }
+				arr_var_name := t.visit_expr(*arr_var_node)
+				
+				expr_node := node.expr or { panic('Assign node missing expr') }
+				mut expr_str := t.visit_expr(*expr_node)
+				if expr_node.node_type == ast.node_expr_variable {
+					expr_str += '.dup()'
+				}
+				
+				if dim_node := var_node.dim {
+					dim_str := t.visit_expr(*dim_node)
+					return '${arr_var_name}.array_set(${dim_str}, ${expr_str})'
+				} else {
+					return '${arr_var_name}.array_push(${expr_str})'
+				}
+			}
+			
 			if var_node.node_type != ast.node_expr_variable {
 				return '// unsupported assign target: ${var_node.node_type}'
 			}
@@ -217,6 +236,34 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			left := node.left or { panic('identical missing left') }
 			right := node.right or { panic('identical missing right') }
 			return 'rt.identical(${t.visit_expr(*left)}, ${t.visit_expr(*right)})'
+		}
+		ast.node_expr_array {
+			mut item_strs := []string{}
+			for item in node.items {
+				val_node := item.expr or { panic('ArrayItem missing expr') }
+				val_str := t.visit_expr(*val_node)
+				if key_node := item.key {
+					key_str := t.visit_expr(*key_node)
+					item_strs << 'rt.ArrayItem{ key: ${key_str}, val: ${val_str} }'
+				} else {
+					item_strs << 'rt.ArrayItem{ key: none, val: ${val_str} }'
+				}
+			}
+			if item_strs.len == 0 {
+				return 'rt.new_array()'
+			} else {
+				return 'rt.create_array([${item_strs.join(", ")}])'
+			}
+		}
+		ast.node_expr_array_dim_fetch {
+			var_node := node.var or { panic('ArrayDimFetch missing var') }
+			var_str := t.visit_expr(*var_node)
+			if dim_node := node.dim {
+				dim_str := t.visit_expr(*dim_node)
+				return '${var_str}.array_get(${dim_str})'
+			} else {
+				panic('ArrayDimFetch missing dim in read context')
+			}
 		}
 		else {
 			return '// unsupported expression: ${node.node_type}'

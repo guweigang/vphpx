@@ -21,6 +21,18 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 			}
 			return new_string('')
 		}
+		'count' {
+			if args.len > 0 {
+				if args[0].is_array() {
+					return new_int(args[0].array_count())
+				}
+				if args[0].is_null() {
+					return new_int(0)
+				}
+				return new_int(1)
+			}
+			return new_int(0)
+		}
 		else {
 			eprintln('Warning: calling unsupported function: ${name}')
 			return new_null()

@@ -14,6 +14,9 @@ pub const node_expr_funccall = 'Expr_FuncCall'
 pub const node_expr_assign = 'Expr_Assign'
 pub const node_expr_variable = 'Expr_Variable'
 pub const node_expr_const = 'Expr_ConstFetch'
+pub const node_expr_array = 'Expr_Array'
+pub const node_expr_array_item = 'ArrayItem'
+pub const node_expr_array_dim_fetch = 'Expr_ArrayDimFetch'
 
 // 二元运算节点类型
 pub const node_bin_plus = 'Expr_BinaryOp_Plus'

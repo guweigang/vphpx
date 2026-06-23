@@ -216,3 +216,101 @@ pub fn (v PhpVal) dup() PhpVal {
 	}
 	return PhpVal{ raw: z }
 }
+
+// Zend 数组操作外部 C 函数声明
+fn C.zend_new_array(size u32) voidptr
+fn C.zend_hash_index_update(ht voidptr, h u64, pData voidptr) voidptr
+fn C.zend_hash_str_update(ht voidptr, key &char, len usize, pData voidptr) voidptr
+fn C.zend_hash_next_index_insert(ht voidptr, pData voidptr) voidptr
+fn C.zend_hash_index_find(ht voidptr, h u64) &C.zval
+fn C.zend_hash_str_find(ht voidptr, key &char, len usize) &C.zval
+
+// ArrayItem 表示数组字面量的一个键值项
+pub struct ArrayItem {
+pub:
+	key ?PhpVal
+	val PhpVal
+}
+
+// new_array 创建一个空的 PHP 数组 zval
+pub fn new_array() PhpVal {
+	z := new_zval()
+	unsafe {
+		arr_ptr := C.zend_new_array(0)
+		mut p := &voidptr(&z.value)
+		*p = arr_ptr
+		z.u1.type_info = 7 // IS_ARRAY
+	}
+	return PhpVal{ raw: z }
+}
+
+// create_array 接收项数组并构建完整的 PHP 关联或索引数组
+pub fn create_array(items []ArrayItem) PhpVal {
+	arr := new_array()
+	for item in items {
+		if k := item.key {
+			arr.array_set(k, item.val)
+		} else {
+			arr.array_push(item.val)
+		}
+	}
+	return arr
+}
+
+// array_set 根据键更新或设置数组项 (支持整数键和字符串键)
+pub fn (v PhpVal) array_set(key PhpVal, val PhpVal) {
+	unsafe {
+		if !v.is_array() { return }
+		p_arr := &voidptr(&v.raw.value)
+		arr_ptr := *p_arr
+		if arr_ptr == 0 { return }
+		
+		val_dup := val.dup()
+		typ := key.raw.u1.type_info & 0xff
+		if typ == 4 { // IS_LONG
+			h := key.to_i64()
+			C.zend_hash_index_update(arr_ptr, u64(h), val_dup.raw)
+		} else {
+			k_str := key.to_string()
+			C.zend_hash_str_update(arr_ptr, k_str.str, usize(k_str.len), val_dup.raw)
+		}
+	}
+}
+
+// array_push 向数组末尾追加元素
+pub fn (v PhpVal) array_push(val PhpVal) {
+	unsafe {
+		if !v.is_array() { return }
+		p_arr := &voidptr(&v.raw.value)
+		arr_ptr := *p_arr
+		if arr_ptr == 0 { return }
+		
+		val_dup := val.dup()
+		C.zend_hash_next_index_insert(arr_ptr, val_dup.raw)
+	}
+}
+
+// array_get 从数组中获取指定键对应的元素
+pub fn (v PhpVal) array_get(key PhpVal) PhpVal {
+	unsafe {
+		if !v.is_array() { return new_null() }
+		p_arr := &voidptr(&v.raw.value)
+		arr_ptr := *p_arr
+		if arr_ptr == 0 { return new_null() }
+		
+		typ := key.raw.u1.type_info & 0xff
+		mut res_zval := &C.zval(nil)
+		if typ == 4 { // IS_LONG
+			h := key.to_i64()
+			res_zval = C.zend_hash_index_find(arr_ptr, u64(h))
+		} else {
+			k_str := key.to_string()
+			res_zval = C.zend_hash_str_find(arr_ptr, k_str.str, usize(k_str.len))
+		}
+		
+		if res_zval == 0 {
+			return new_null()
+		}
+		return PhpVal{ raw: res_zval }.dup()
+	}
+}

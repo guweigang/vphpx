@@ -49,6 +49,13 @@ fn test_transpiler_end_to_end() {
 			'mut var_res := func_add_five(rt.new_int(10))',
 			'rt.echo_val(var_res)',
 		]
+		'08_arrays.php': [
+			'mut var_arr := rt.create_array([rt.ArrayItem{ key: none, val: rt.new_int(10) }, rt.ArrayItem{ key: none, val: rt.new_int(20) }])',
+			'var_arr.array_push(rt.new_int(30))',
+			'var_arr.array_set(rt.new_string(\'key\'), rt.new_string(\'hello\'))',
+			'rt.echo_val(var_arr.array_get(rt.new_int(0)))',
+			'rt.echo_val(rt.call_function(\'count\', [var_arr.dup()]))',
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址

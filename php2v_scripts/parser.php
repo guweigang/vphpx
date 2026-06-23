@@ -30,7 +30,7 @@ function cleanNode($node) {
         foreach ($node->getSubNodeNames() as $subName) {
             $val = $node->$subName;
             $outName = $subName;
-            if ($node->getType() === 'Arg' && $subName === 'value') {
+            if (($node->getType() === 'Arg' || $node->getType() === 'ArrayItem') && $subName === 'value') {
                 $outName = 'expr';
             }
             if (is_array($val)) {
