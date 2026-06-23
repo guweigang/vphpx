@@ -13,3 +13,4 @@ scratch
 .omo/
 vphptest/build
 php2v_bin
+tests/fixtures/*.v

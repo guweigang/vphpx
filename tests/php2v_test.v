@@ -103,7 +103,7 @@ fn test_transpiler_end_to_end() {
 		println('Testing: ${file}...')
 
 		// 1. 运行 php2v 将 PHP 源码转译为 V 源码
-		temp_v_file := os.join_path(os.temp_dir(), file.all_before_last('.') + '_gen.v')
+		temp_v_file := os.join_path(fixtures_dir, file.all_before_last('.') + '.v')
 		transpile_res := os.execute('./php2v_bin compile "${php_file}" -o "${temp_v_file}"')
 		if transpile_res.exit_code != 0 {
 			assert false, 'php2v transpilation failed for ${file}: ${transpile_res.output}'
@@ -131,8 +131,7 @@ fn test_transpiler_end_to_end() {
 		v_comp_cmd := 'v -path "${pwd}:@vlib" -shared -cc clang -cflags "-undefined dynamic_lookup -I${pwd}/php2v/rt ${php_inc}" -o "${temp_so_file}" "${temp_v_file}"'
 		comp_res := os.execute(v_comp_cmd)
 		
-		// 清理所有临时文件
-		os.rm(temp_v_file) or {}
+		// 清理临时 so 文件，保留 .v 源码文件供查看
 		os.rm(temp_so_file) or {}
 
 		if comp_res.exit_code != 0 {
