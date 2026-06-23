@@ -59,6 +59,7 @@ fn main() {
 
 	// 3. 转译为 V 代码
 	mut transpiler := emitter.Transpiler.new()
+	transpiler.current_file = input_file
 	v_body := transpiler.transpile(stmts)
 	v_code := emitter.wrap_as_main(transpiler.func_out.str(), v_body)
 

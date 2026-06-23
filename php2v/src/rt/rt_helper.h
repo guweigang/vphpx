@@ -75,4 +75,44 @@ static inline int php2v_eval_string(const char *str, size_t len, zval *retval) {
 	return 0;
 }
 
+// php2v_register_constant 在运行时将常量注册到 Zend 常量表
+static inline int php2v_register_constant(const char *name, size_t name_len, zval *val) {
+	php2v_update_tsrm_cache();
+	zend_constant c;
+	c.filename = NULL;
+	c.attributes = NULL;
+	
+	ZVAL_COPY(&c.value, val);
+	c.name = zend_string_init(name, name_len, 0);
+	
+	#ifndef PHP_USER_CONSTANT
+	#define PHP_USER_CONSTANT 0x7f
+	#endif
+	
+	ZEND_CONSTANT_SET_FLAGS(&c, CONST_CS, PHP_USER_CONSTANT);
+	
+	if (zend_register_constant(&c) == FAILURE) {
+		zend_error(E_WARNING, "Constant %s already defined", name);
+		zend_string_release(c.name);
+		zval_ptr_dtor(&c.value);
+		return 0;
+	}
+	return 1;
+}
+
+// php2v_get_constant 获取 Zend 常量表中的常量值
+static inline int php2v_get_constant(const char *name, size_t name_len, zval *retval) {
+	php2v_update_tsrm_cache();
+	zend_string *zstr = zend_string_init(name, name_len, 0);
+	zend_constant *c = zend_get_constant(zstr);
+	zend_string_release(zstr);
+	if (c) {
+		ZVAL_COPY(retval, &c->value);
+		return 1;
+	}
+	zend_throw_error(NULL, "Undefined constant \"%s\"", name);
+	ZVAL_NULL(retval);
+	return 0;
+}
+
 #endif

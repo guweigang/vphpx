@@ -25,7 +25,8 @@ function cleanNode($node) {
     }
     if ($node instanceof \PhpParser\Node) {
         $res = [
-            'nodeType' => $node->getType()
+            'nodeType' => $node->getType(),
+            'line' => $node->getStartLine()
         ];
         foreach ($node->getSubNodeNames() as $subName) {
             $val = $node->$subName;

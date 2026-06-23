@@ -29,4 +29,13 @@ pub:
 	uses      []AstNode @[json: 'uses']
 	incl_type string    @[json: 'type']
 	class_name string   @[json: 'class']
+	line       int      @[json: 'line']
+	consts     []ConstItem @[json: 'consts']
+}
+
+pub struct ConstItem {
+pub:
+	node_type string   @[json: 'nodeType']
+	name      string   @[json: 'name']
+	value     AstNode  @[json: 'value']
 }

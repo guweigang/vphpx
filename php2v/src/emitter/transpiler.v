@@ -1,6 +1,7 @@
 module emitter
 
 import strings
+import os
 import php2v.src.ast
 
 pub struct ClassInfo {
@@ -29,6 +30,7 @@ pub mut:
 	scope            VarScope
 	custom_functions map[string]bool
 	classes          []ClassInfo
+	current_file     string
 }
 
 pub fn Transpiler.new() Transpiler {
@@ -40,6 +42,7 @@ pub fn Transpiler.new() Transpiler {
 		scope:            VarScope.new()
 		custom_functions: map[string]bool{}
 		classes:          []ClassInfo{}
+		current_file:     ''
 	}
 }
 
@@ -139,10 +142,21 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 			t.write_indent()
 			t.write_line('continue')
 		}
+		ast.node_stmt_const {
+			t.visit_const(node)
+		}
 		else {
 			t.write_indent()
 			t.write_line('// unsupported statement: ${node.node_type}')
 		}
+	}
+}
+
+fn (mut t Transpiler) visit_const(node ast.AstNode) {
+	for c in node.consts {
+		val_str := t.visit_expr(c.value)
+		t.write_indent()
+		t.write_line("rt.define_constant('${c.name}', ${val_str})")
 	}
 }
 
@@ -171,8 +185,21 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 				'true' { return 'rt.new_bool(true)' }
 				'false' { return 'rt.new_bool(false)' }
 				'null' { return 'rt.new_null()' }
-				else { return 'rt.new_string(\'${node.name}\')' }
+				else { return 'rt.get_constant(\'${node.name}\')' }
 			}
+		}
+		ast.node_scalar_magic_const_dir {
+			dir_path := os.dir(os.real_path(t.current_file))
+			escaped := dir_path.replace('\\', '\\\\').replace('\'', '\\\'')
+			return 'rt.new_string(\'${escaped}\')'
+		}
+		ast.node_scalar_magic_const_file {
+			file_path := os.real_path(t.current_file)
+			escaped := file_path.replace('\\', '\\\\').replace('\'', '\\\'')
+			return 'rt.new_string(\'${escaped}\')'
+		}
+		ast.node_scalar_magic_const_line {
+			return 'rt.new_int(${node.line})'
 		}
 		ast.node_expr_assign {
 			var_node := node.var or { panic('Assign node missing var') }

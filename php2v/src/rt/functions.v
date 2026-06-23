@@ -94,3 +94,23 @@ pub fn include_file(path PhpVal, incl_type string) PhpVal {
 	}
 	return new_null()
 }
+
+// define_constant 在运行时定义用户空间常量
+pub fn define_constant(name string, val PhpVal) {
+	unsafe {
+		C.php2v_register_constant(name.str, usize(name.len), val.raw)
+	}
+}
+
+// get_constant 在运行时获取常量值，若未定义会抛出 PHP 异常并返回 null
+pub fn get_constant(name string) PhpVal {
+	z_ret := new_zval()
+	unsafe {
+		res := C.php2v_get_constant(name.str, usize(name.len), z_ret)
+		if res == 1 {
+			return PhpVal{ raw: z_ret }
+		}
+		free(z_ret)
+	}
+	return new_null()
+}

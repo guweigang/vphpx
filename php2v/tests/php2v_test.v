@@ -116,6 +116,12 @@ fn test_transpiler_end_to_end() {
 			"mut var_ret2 := rt.include_file(var_path, '2')",
 			"rt.echo_val(rt.new_string('once_done\\n'))",
 		]
+		'15_constants.php': [
+			"rt.define_constant('APP_ENV'",
+			"rt.get_constant('APP_ENV')",
+			"rt.get_constant('DB_PORT')",
+			"rt.new_int(5)",
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址
