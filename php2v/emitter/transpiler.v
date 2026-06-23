@@ -84,6 +84,9 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 		ast.node_stmt_return {
 			t.visit_return(node)
 		}
+		ast.node_stmt_foreach {
+			t.visit_foreach(node)
+		}
 		else {
 			t.write_indent()
 			t.write_line('// unsupported statement: ${node.node_type}')
@@ -372,4 +375,58 @@ fn (mut t Transpiler) visit_return(node ast.AstNode) {
 	} else {
 		t.write_line('return rt.new_null()')
 	}
+}
+
+fn (mut t Transpiler) visit_foreach(node ast.AstNode) {
+	expr_node := node.expr or { panic('Foreach statement missing expr') }
+	expr_str := t.visit_expr(*expr_node)
+	
+	t.write_indent()
+	t.write_line('{')
+	t.indent++
+	
+	// 在本层局部作用域中隔离迭代器
+	t.write_indent()
+	t.write_line('mut iter := ${expr_str}.iterator()')
+	
+	t.write_indent()
+	t.write_line('for {')
+	t.indent++
+	
+	t.write_indent()
+	t.write_line('item := iter.next() or { break }')
+	
+	// 备份作用域，声明循环变量
+	old_scope := t.scope
+	
+	// 解析值变量名并声明为局部变量
+	val_var_node := node.value_var or { panic('Foreach missing valueVar') }
+	val_var_name := val_var_node.name
+	t.scope.declare(val_var_name)
+	t.write_indent()
+	t.write_line('mut var_${val_var_name} := item.val')
+	
+	// 如果存在键变量，解析并声明
+	if key_var_node := node.key_var {
+		key_var_name := key_var_node.name
+		t.scope.declare(key_var_name)
+		t.write_indent()
+		t.write_line('mut var_${key_var_name} := item.key')
+	}
+	
+	// 遍历执行循环体内的语句
+	for stmt in node.stmts {
+		t.visit_stmt(stmt)
+	}
+	
+	// 还原作用域
+	t.scope = old_scope
+	
+	t.indent--
+	t.write_indent()
+	t.write_line('}')
+	
+	t.indent--
+	t.write_indent()
+	t.write_line('}')
 }

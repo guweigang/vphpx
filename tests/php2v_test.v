@@ -56,6 +56,12 @@ fn test_transpiler_end_to_end() {
 			'rt.echo_val(var_arr.array_get(rt.new_int(0)))',
 			'rt.echo_val(rt.call_function(\'count\', [var_arr.dup()]))',
 		]
+		'09_foreach.php': [
+			'mut iter := var_arr.iterator()',
+			'item := iter.next() or { break }',
+			'mut var_val := item.val',
+			'mut var_key := item.key',
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址
@@ -96,7 +102,7 @@ fn test_transpiler_end_to_end() {
 
 		// 3. 运行 V 共享库编译以验证在 C 级别是否语法正确且能正常链接
 		temp_so_file := os.join_path(os.temp_dir(), file.all_before_last('.') + '_gen.so')
-		v_comp_cmd := 'v -path "${pwd}:@vlib" -shared -cc clang -cflags "-undefined dynamic_lookup ${php_inc}" -o "${temp_so_file}" "${temp_v_file}"'
+		v_comp_cmd := 'v -path "${pwd}:@vlib" -shared -cc clang -cflags "-undefined dynamic_lookup -I${pwd}/php2v/rt ${php_inc}" -o "${temp_so_file}" "${temp_v_file}"'
 		comp_res := os.execute(v_comp_cmd)
 		
 		// 清理所有临时文件

@@ -9,6 +9,7 @@ pub const node_stmt_else = 'Stmt_Else'
 pub const node_stmt_function = 'Stmt_Function'
 pub const node_stmt_return = 'Stmt_Return'
 pub const node_expr_funccall = 'Expr_FuncCall'
+pub const node_stmt_foreach = 'Stmt_Foreach'
 
 // 表达式节点类型
 pub const node_expr_assign = 'Expr_Assign'

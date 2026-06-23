@@ -20,4 +20,6 @@ pub:
 	items     []AstNode @[json: 'items']
 	key       ?&AstNode @[json: 'key']
 	dim       ?&AstNode @[json: 'dim']
+	key_var   ?&AstNode @[json: 'keyVar']
+	value_var ?&AstNode @[json: 'valueVar']
 }

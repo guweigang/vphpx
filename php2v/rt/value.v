@@ -2,6 +2,10 @@ module rt
 
 #include <php.h>
 
+#include "rt_helper.h"
+
+fn C.php2v_hash_get_entry(ht voidptr, index u32, val &&C.zval, key &&voidptr, num_key &u64) int
+
 // 声明 Zend zval 的底层内存结构
 @[typedef]
 pub struct C.zval {
@@ -312,5 +316,75 @@ pub fn (v PhpVal) array_get(key PhpVal) PhpVal {
 			return new_null()
 		}
 		return PhpVal{ raw: res_zval }.dup()
+	}
+}
+
+// ArrayIterator 包装了对 PHP 数组的外部迭代状态
+pub struct ArrayIterator {
+pub mut:
+	arr   PhpVal
+	index u32
+	limit u32
+}
+
+pub struct IterItem {
+pub:
+	key PhpVal
+	val PhpVal
+}
+
+pub fn (v PhpVal) iterator() ArrayIterator {
+	unsafe {
+		if !v.is_array() {
+			return ArrayIterator{ arr: v, index: 0, limit: 0 }
+		}
+		p_arr := &voidptr(&v.raw.value)
+		arr_ptr := *p_arr
+		if arr_ptr == 0 {
+			return ArrayIterator{ arr: v, index: 0, limit: 0 }
+		}
+		// HashTable 结构体中偏移 24 字节为已使用的 Bucket 数量 (nNumUsed)
+		n_used_ptr := &u32(charptr(arr_ptr) + 24)
+		return ArrayIterator{
+			arr: v
+			index: 0
+			limit: *n_used_ptr
+		}
+	}
+}
+
+pub fn (mut it ArrayIterator) next() ?IterItem {
+	unsafe {
+		if it.index >= it.limit { return none }
+		p_arr := &voidptr(&it.arr.raw.value)
+		arr_ptr := *p_arr
+		if arr_ptr == 0 { return none }
+		
+		mut val_zval := &C.zval(nil)
+		mut key_zstr := voidptr(0)
+		mut num_key := u64(0)
+		
+		for it.index < it.limit {
+			curr_idx := it.index
+			it.index++
+			
+			res := C.php2v_hash_get_entry(arr_ptr, curr_idx, &val_zval, &key_zstr, &num_key)
+			if res == 1 {
+				mut k := new_null()
+				if key_zstr != 0 {
+					len_ptr := &usize(charptr(key_zstr) + 16)
+					val_ptr := charptr(key_zstr) + 24
+					k = new_string(tos(val_ptr, int(*len_ptr)))
+				} else {
+					k = new_int(i64(num_key))
+				}
+				
+				return IterItem{
+					key: k
+					val: PhpVal{ raw: val_zval }.dup()
+				}
+			}
+		}
+		return none
 	}
 }
