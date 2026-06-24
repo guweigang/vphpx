@@ -431,7 +431,6 @@ pre[class*="language-"] {
 pre[class*="language-"] code[class*="language-"] {
     background: transparent !important;
     text-shadow: none !important;
-    color: var(--text-main) !important;
 }
 
 /* High Contrast Prism colors customized for dark mode theme */
@@ -500,11 +499,18 @@ pre[class*="language-"] code[class*="language-"] {
 .json-formatter-null {
     color: var(--text-dark) !important; /* Mid gray null */
 }
-/* Bracket styling to avoid invisible brackets in dark theme */
+/* Bracket and length styling to avoid invisible elements in dark theme */
 .json-formatter-row, 
 .json-formatter-bracket, 
 .json-formatter-comma {
     color: #bab7c7 !important;
+}
+.json-formatter-constructor-name {
+    color: #827e91 !important; /* Bright gray constructor names like 'Array', 'Object' */
+    font-weight: 500;
+}
+.json-formatter-array-len {
+    color: var(--secondary) !important; /* Cyan array length indicators */
 }
 .json-formatter-toggler:after {
     color: var(--text-muted) !important;

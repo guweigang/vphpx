@@ -133,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const renderedDom = formatter.render();
+        renderedDom.classList.add('json-formatter-dark');
         astTreeContainerEl.appendChild(renderedDom);
     }
 
