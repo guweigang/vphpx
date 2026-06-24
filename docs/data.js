@@ -4971,5 +4971,337 @@ window.PLAYGROUND_DATA = [
         ]
       }
     ]
+  },
+  {
+    "key": "24_switch_case",
+    "title": "24 Switch Case",
+    "filename": "24_switch_case.php",
+    "php": "<?php\n$x = 2;\n\nswitch ($x) {\n    case 1:\n        echo \"one\\n\";\n        break;\n    case 2:\n    case 3:\n        echo \"two or three\\n\";\n        break;\n    default:\n        echo \"default case\\n\";\n}\n",
+    "v": "import php2v.rt\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.new_null()\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.new_null()\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {}\n\nfn call_closure(cb rt.PhpVal, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.new_null()\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_x := rt.new_int(2)\n\tmut switch_val_1 := var_x\n\tif rt.is_true(rt.equal(switch_val_1, rt.new_int(1))) {\n\t\trt.echo_val(rt.new_string('one\\n'))\n\t} else if rt.is_true(rt.equal(switch_val_1, rt.new_int(2))) || rt.is_true(rt.equal(switch_val_1, rt.new_int(3))) {\n\t\trt.echo_val(rt.new_string('two or three\\n'))\n\t} else {\n\t\trt.echo_val(rt.new_string('default case\\n'))\n\t}\n}\n",
+    "ast": [
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 2,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 2,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 2,
+            "name": "x"
+          },
+          "expr": {
+            "nodeType": "Scalar_Int",
+            "line": 2,
+            "value": "2"
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Switch",
+        "line": 4,
+        "cond": {
+          "nodeType": "Expr_Variable",
+          "line": 4,
+          "name": "x"
+        },
+        "cases": [
+          {
+            "nodeType": "Stmt_Case",
+            "line": 5,
+            "cond": {
+              "nodeType": "Scalar_Int",
+              "line": 5,
+              "value": "1"
+            },
+            "stmts": [
+              {
+                "nodeType": "Stmt_Echo",
+                "line": 6,
+                "exprs": [
+                  {
+                    "nodeType": "Scalar_String",
+                    "line": 6,
+                    "value": "one\n"
+                  }
+                ]
+              },
+              {
+                "nodeType": "Stmt_Break",
+                "line": 7,
+                "num": null
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_Case",
+            "line": 8,
+            "cond": {
+              "nodeType": "Scalar_Int",
+              "line": 8,
+              "value": "2"
+            },
+            "stmts": []
+          },
+          {
+            "nodeType": "Stmt_Case",
+            "line": 9,
+            "cond": {
+              "nodeType": "Scalar_Int",
+              "line": 9,
+              "value": "3"
+            },
+            "stmts": [
+              {
+                "nodeType": "Stmt_Echo",
+                "line": 10,
+                "exprs": [
+                  {
+                    "nodeType": "Scalar_String",
+                    "line": 10,
+                    "value": "two or three\n"
+                  }
+                ]
+              },
+              {
+                "nodeType": "Stmt_Break",
+                "line": 11,
+                "num": null
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_Case",
+            "line": 12,
+            "cond": null,
+            "stmts": [
+              {
+                "nodeType": "Stmt_Echo",
+                "line": 13,
+                "exprs": [
+                  {
+                    "nodeType": "Scalar_String",
+                    "line": 13,
+                    "value": "default case\n"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "25_match_expr",
+    "title": "25 Match Expr",
+    "filename": "25_match_expr.php",
+    "php": "<?php\n$x = 3;\n\n$y = match ($x) {\n    1 => \"one\",\n    2, 3 => \"two or three\",\n    default => \"other\",\n};\n\necho $y . \"\\n\";\n",
+    "v": "import php2v.rt\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.new_null()\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.new_null()\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {}\n\nfn call_closure(cb rt.PhpVal, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.new_null()\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_x := rt.new_int(3)\n\tmut match_val_1 := var_x\n\tmut var_y := if rt.is_true(rt.equal(match_val_1, rt.new_int(1))) { rt.new_string('one') } else if rt.is_true(rt.equal(match_val_1, rt.new_int(2))) || rt.is_true(rt.equal(match_val_1, rt.new_int(3))) { rt.new_string('two or three') } else { rt.new_string('other') }\n\trt.echo_val(rt.concat(var_y, rt.new_string('\\n')))\n}\n",
+    "ast": [
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 2,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 2,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 2,
+            "name": "x"
+          },
+          "expr": {
+            "nodeType": "Scalar_Int",
+            "line": 2,
+            "value": "3"
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 4,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 4,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 4,
+            "name": "y"
+          },
+          "expr": {
+            "nodeType": "Expr_Match",
+            "line": 4,
+            "cond": {
+              "nodeType": "Expr_Variable",
+              "line": 4,
+              "name": "x"
+            },
+            "arms": [
+              {
+                "nodeType": "MatchArm",
+                "line": 5,
+                "conds": [
+                  {
+                    "nodeType": "Scalar_Int",
+                    "line": 5,
+                    "value": "1"
+                  }
+                ],
+                "body": {
+                  "nodeType": "Scalar_String",
+                  "line": 5,
+                  "value": "one"
+                }
+              },
+              {
+                "nodeType": "MatchArm",
+                "line": 6,
+                "conds": [
+                  {
+                    "nodeType": "Scalar_Int",
+                    "line": 6,
+                    "value": "2"
+                  },
+                  {
+                    "nodeType": "Scalar_Int",
+                    "line": 6,
+                    "value": "3"
+                  }
+                ],
+                "body": {
+                  "nodeType": "Scalar_String",
+                  "line": 6,
+                  "value": "two or three"
+                }
+              },
+              {
+                "nodeType": "MatchArm",
+                "line": 7,
+                "conds": null,
+                "body": {
+                  "nodeType": "Scalar_String",
+                  "line": 7,
+                  "value": "other"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 10,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 10,
+            "left": {
+              "nodeType": "Expr_Variable",
+              "line": 10,
+              "name": "y"
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 10,
+              "value": "\n"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "26_do_while",
+    "title": "26 Do While",
+    "filename": "26_do_while.php",
+    "php": "<?php\n$i = 0;\ndo {\n    echo $i . \"\\n\";\n    $i = $i + 1;\n} while ($i < 3);\n",
+    "v": "import php2v.rt\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.new_null()\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.new_null()\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {}\n\nfn call_closure(cb rt.PhpVal, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.new_null()\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_i := rt.new_int(0)\n\tfor {\n\t\trt.echo_val(rt.concat(var_i, rt.new_string('\\n')))\n\t\tvar_i = rt.add(var_i, rt.new_int(1))\n\t\tif !rt.is_true(rt.less(var_i, rt.new_int(3))) {\n\t\t\tbreak\n\t\t}\n\t}\n}\n",
+    "ast": [
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 2,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 2,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 2,
+            "name": "i"
+          },
+          "expr": {
+            "nodeType": "Scalar_Int",
+            "line": 2,
+            "value": "0"
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Do",
+        "line": 3,
+        "stmts": [
+          {
+            "nodeType": "Stmt_Echo",
+            "line": 4,
+            "exprs": [
+              {
+                "nodeType": "Expr_BinaryOp_Concat",
+                "line": 4,
+                "left": {
+                  "nodeType": "Expr_Variable",
+                  "line": 4,
+                  "name": "i"
+                },
+                "right": {
+                  "nodeType": "Scalar_String",
+                  "line": 4,
+                  "value": "\n"
+                }
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_Expression",
+            "line": 5,
+            "expr": {
+              "nodeType": "Expr_Assign",
+              "line": 5,
+              "var": {
+                "nodeType": "Expr_Variable",
+                "line": 5,
+                "name": "i"
+              },
+              "expr": {
+                "nodeType": "Expr_BinaryOp_Plus",
+                "line": 5,
+                "left": {
+                  "nodeType": "Expr_Variable",
+                  "line": 5,
+                  "name": "i"
+                },
+                "right": {
+                  "nodeType": "Scalar_Int",
+                  "line": 5,
+                  "value": "1"
+                }
+              }
+            }
+          }
+        ],
+        "cond": {
+          "nodeType": "Expr_BinaryOp_Smaller",
+          "line": 6,
+          "left": {
+            "nodeType": "Expr_Variable",
+            "line": 6,
+            "name": "i"
+          },
+          "right": {
+            "nodeType": "Scalar_Int",
+            "line": 6,
+            "value": "3"
+          }
+        }
+      }
+    ]
   }
 ];

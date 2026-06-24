@@ -41,6 +41,8 @@ pub mut:
 	undeclared_classes map[string]bool
 	current_namespace string
 	use_aliases map[string]string
+	switch_count int
+	pre_stmts []string
 }
 
 pub fn Transpiler.new() Transpiler {
@@ -56,8 +58,12 @@ pub fn Transpiler.new() Transpiler {
 		undeclared_classes: map[string]bool{}
 		current_namespace: ''
 		use_aliases: map[string]string{}
+		switch_count: 0
+		pre_stmts: []string{}
 	}
 }
+
+
 
 // transpile 预扫描函数并遍历语句，返回生成的 V 代码
 pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
@@ -162,6 +168,22 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 }
 
 fn (mut t Transpiler) write_indent() {
+	if t.pre_stmts.len > 0 {
+		pre := t.pre_stmts.clone()
+		t.pre_stmts.clear()
+
+		for stmt in pre {
+			indent_str := '\t'.repeat(t.indent)
+			if t.is_in_closure {
+				t.closures_code.writeln('${indent_str}${stmt}')
+			} else if t.is_in_func {
+				t.func_out.writeln('${indent_str}${stmt}')
+			} else {
+				t.out.writeln('${indent_str}${stmt}')
+			}
+		}
+	}
+
 	indent_str := '\t'.repeat(t.indent)
 	if t.is_in_closure {
 		t.closures_code.write_string(indent_str)
@@ -171,6 +193,7 @@ fn (mut t Transpiler) write_indent() {
 		t.out.write_string(indent_str)
 	}
 }
+
 
 fn (mut t Transpiler) write_line(s string) {
 	if t.is_in_closure {
@@ -199,11 +222,12 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 		}
 		ast.node_stmt_expression {
 			if expr := node.expr {
-				t.write_indent()
 				expr_str := t.visit_expr(*expr)
+				t.write_indent()
 				t.write_line(expr_str)
 			}
 		}
+
 		ast.node_stmt_if {
 			t.visit_if(node)
 		}
@@ -219,6 +243,10 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 		ast.node_stmt_while {
 			t.visit_while(node)
 		}
+		ast.node_stmt_do {
+			t.visit_do(node)
+		}
+
 		ast.node_stmt_for {
 			t.visit_for(node)
 		}
@@ -239,6 +267,10 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 		ast.node_stmt_try_catch {
 			t.visit_try_catch(node)
 		}
+		ast.node_stmt_switch {
+			t.visit_switch(node)
+		}
+
 		ast.node_stmt_namespace {
 			old_ns := t.current_namespace
 			t.current_namespace = node.name
@@ -728,6 +760,66 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			expr_str := t.visit_expr(*expr_node)
 			return 'rt.call_function(\'eval\', [${expr_str}])'
 		}
+		ast.node_expr_match {
+			cond_node := node.cond or { panic('Match expression missing cond') }
+			cond_val_expr := t.visit_expr(*cond_node)
+
+			t.switch_count++
+			match_var := 'match_val_${t.switch_count}'
+
+			t.pre_stmts << 'mut ${match_var} := ${cond_val_expr}'
+
+
+			mut if_else_expr := strings.new_builder(128)
+
+			mut has_default := false
+			mut default_body := ''
+
+			mut non_default_arms := []ast.AstNode{}
+			for arm in node.arms {
+				if arm.conds.len == 0 {
+					has_default = true
+					body_node := arm.body or { panic('MatchArm missing body') }
+					default_body = t.visit_expr(*body_node)
+				} else {
+					non_default_arms << arm
+				}
+			}
+
+			for idx, arm in non_default_arms {
+				body_node := arm.body or { panic('MatchArm missing body') }
+				body_val := t.visit_expr(*body_node)
+
+				if idx == 0 {
+					if_else_expr.write_string('if ')
+				} else {
+					if_else_expr.write_string(' else if ')
+				}
+
+				for c_idx, c_node in arm.conds {
+					if c_idx > 0 {
+						if_else_expr.write_string(' || ')
+					}
+					if_else_expr.write_string('rt.is_true(rt.equal(${match_var}, ')
+					if_else_expr.write_string(t.visit_expr(c_node))
+					if_else_expr.write_string('))')
+				}
+				if_else_expr.write_string(' { ${body_val} }')
+			}
+
+			if has_default {
+				if non_default_arms.len > 0 {
+					if_else_expr.write_string(' else { ${default_body} }')
+				} else {
+					if_else_expr.write_string('if true { ${default_body} } else { rt.new_null() }')
+				}
+			} else {
+				if_else_expr.write_string(' else { rt.new_null() }')
+			}
+
+			return if_else_expr.str()
+		}
+
 		ast.node_expr_closure {
 			t.closure_count++
 			class_name := 'Closure_${t.closure_count}'
@@ -981,11 +1073,12 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 
 fn (mut t Transpiler) visit_echo(node ast.AstNode) {
 	for expr in node.exprs {
-		t.write_indent()
 		expr_str := t.visit_expr(expr)
+		t.write_indent()
 		t.write_line('rt.echo_val(${expr_str})')
 	}
 }
+
 
 fn (mut t Transpiler) visit_if(node ast.AstNode) {
 	cond_node := node.cond or { panic('If statement missing cond') }
@@ -1076,14 +1169,16 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 }
 
 fn (mut t Transpiler) visit_return(node ast.AstNode) {
-	t.write_indent()
 	if expr := node.expr {
 		expr_str := t.visit_expr(*expr)
+		t.write_indent()
 		t.write_line('return ${expr_str}')
 	} else {
+		t.write_indent()
 		t.write_line('return rt.new_null()')
 	}
 }
+
 
 fn (mut t Transpiler) visit_foreach(node ast.AstNode) {
 	expr_node := node.expr or { panic('Foreach statement missing expr') }
@@ -1154,7 +1249,34 @@ fn (mut t Transpiler) visit_while(node ast.AstNode) {
 	t.write_line('}')
 }
 
+fn (mut t Transpiler) visit_do(node ast.AstNode) {
+	cond_node := node.cond or { panic('Do-while statement missing cond') }
+	cond_str := t.visit_expr(*cond_node)
+
+	t.write_indent()
+	t.write_line('for {')
+	t.indent++
+
+	for stmt in node.stmts {
+		t.visit_stmt(stmt)
+	}
+
+	t.write_indent()
+	t.write_line('if !rt.is_true(${cond_str}) {')
+	t.indent++
+	t.write_indent()
+	t.write_line('break')
+	t.indent--
+	t.write_indent()
+	t.write_line('}')
+
+	t.indent--
+	t.write_indent()
+	t.write_line('}')
+}
+
 fn (mut t Transpiler) visit_for(node ast.AstNode) {
+
 	t.write_indent()
 	t.write_line('{')
 	t.indent++
@@ -1163,16 +1285,16 @@ fn (mut t Transpiler) visit_for(node ast.AstNode) {
 	
 	// 1. 初始化表达式
 	for init_node in node.init {
-		t.write_indent()
 		expr_str := t.visit_expr(init_node)
+		t.write_indent()
 		t.write_line(expr_str)
 	}
-	
+
 	// 2. 无限循环主体
 	t.write_indent()
 	t.write_line('for {')
 	t.indent++
-	
+
 	// 3. 条件判断，若不满足则跳出
 	if node.conds.len > 0 {
 		last_cond := node.conds[node.conds.len - 1]
@@ -1180,18 +1302,19 @@ fn (mut t Transpiler) visit_for(node ast.AstNode) {
 		t.write_indent()
 		t.write_line('if !rt.is_true(${cond_str}) { break }')
 	}
-	
+
 	// 4. 循环体语句
 	for stmt in node.stmts {
 		t.visit_stmt(stmt)
 	}
-	
+
 	// 5. 循环后操作表达式
 	for loop_node in node.loop {
-		t.write_indent()
 		expr_str := t.visit_expr(loop_node)
+		t.write_indent()
 		t.write_line(expr_str)
 	}
+
 	
 	t.indent--
 	t.write_indent()
@@ -1852,6 +1975,103 @@ fn (t Transpiler) collect_vars_in_scope_rec(node ast.AstNode, mut referenced map
 	for use in node.uses { t.collect_vars_in_scope_rec(use, mut referenced, mut assigned) }
 	for v in node.vars { t.collect_vars_in_scope_rec(v, mut referenced, mut assigned) }
 	for p in node.parts { t.collect_vars_in_scope_rec(p, mut referenced, mut assigned) }
+	for cs in node.cases { t.collect_vars_in_scope_rec(cs, mut referenced, mut assigned) }
+	for arm in node.arms { t.collect_vars_in_scope_rec(arm, mut referenced, mut assigned) }
+	if body := node.body { if voidptr(body) != 0 { t.collect_vars_in_scope_rec(*body, mut referenced, mut assigned) } }
 }
+
+
+struct SwitchBranch {
+	conds      []ast.AstNode
+	stmts      []ast.AstNode
+	is_default bool
+}
+
+fn (mut t Transpiler) visit_switch(node ast.AstNode) {
+	cond_node := node.cond or { return }
+	cond_val_expr := t.visit_expr(*cond_node)
+
+	t.switch_count++
+	switch_var := 'switch_val_${t.switch_count}'
+
+	t.write_indent()
+	t.write_line('mut ${switch_var} := ${cond_val_expr}')
+
+	mut branches := []SwitchBranch{}
+	mut current_conds := []ast.AstNode{}
+	mut group_has_default := false
+
+	for i, case_node in node.cases {
+		if case_cond := case_node.cond {
+			if voidptr(case_cond) != 0 {
+				current_conds << *case_cond
+			}
+		} else {
+			group_has_default = true
+		}
+
+		if case_node.stmts.len > 0 || i == node.cases.len - 1 {
+			branches << SwitchBranch{
+				conds:      current_conds.clone()
+				stmts:      case_node.stmts
+				is_default: group_has_default
+			}
+			current_conds.clear()
+			group_has_default = false
+		}
+	}
+
+	if branches.len > 0 {
+		for idx, branch in branches {
+			if idx == 0 {
+				t.write_indent()
+				if branch.is_default {
+					t.write_string('if true {')
+				} else {
+					t.write_string('if ')
+					for c_idx, c_node in branch.conds {
+						if c_idx > 0 {
+							t.write_string(' || ')
+						}
+						t.write_string('rt.is_true(rt.equal(${switch_var}, ')
+						t.write_string(t.visit_expr(c_node))
+						t.write_string('))')
+					}
+					t.write_string(' {')
+				}
+			} else {
+				if branch.is_default {
+					t.write_indent()
+					t.write_string('} else {')
+				} else {
+					t.write_indent()
+					t.write_string('} else if ')
+					for c_idx, c_node in branch.conds {
+						if c_idx > 0 {
+							t.write_string(' || ')
+						}
+						t.write_string('rt.is_true(rt.equal(${switch_var}, ')
+						t.write_string(t.visit_expr(c_node))
+						t.write_string('))')
+					}
+					t.write_string(' {')
+				}
+			}
+			t.write_line('')
+			t.indent++
+			for stmt in branch.stmts {
+				if stmt.node_type == ast.node_stmt_break {
+					continue
+				}
+				t.visit_stmt(stmt)
+			}
+			t.indent--
+		}
+		t.write_indent()
+		t.write_line('}')
+	}
+}
+
+
 
 

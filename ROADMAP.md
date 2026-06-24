@@ -5,15 +5,16 @@
 ---
 
 ## 阶段 1：核心流程控制补全
-- [ ] **`Stmt_Switch` / `Stmt_Case` / `Stmt_Default`**
+- [x] **`Stmt_Switch` / `Stmt_Case` / `Stmt_Default`**
   - *转译设计*：将 PHP 的 `switch` 分支结构翻译为 V 语言的 `match` 语句或扁平化的 `if-else` 条件链。
   - *测试用例*：`24_switch_case.php`
-- [ ] **`Expr_Match`** (PHP 8.0+)
+- [x] **`Expr_Match`** (PHP 8.0+)
   - *转译设计*：转译为 V 语言原生的 `match` 表达式，并将其结果值赋给 `PhpVal` 变量。
   - *测试用例*：`25_match_expr.php`
-- [ ] **`Stmt_Do`**
+- [x] **`Stmt_Do`**
   - *转译设计*：将 `do-while` 循环转译为 V 语言的 `for { ... if !cond { break } }` 结构。
   - *测试用例*：`26_do_while.php`
+
 
 ---
 

@@ -25,6 +25,14 @@ pub const node_expr_eval = 'Expr_Eval'
 pub const node_expr_closure = 'Expr_Closure'
 pub const node_expr_arrow_function = 'Expr_ArrowFunction'
 pub const node_expr_include = 'Expr_Include'
+pub const node_stmt_switch = 'Stmt_Switch'
+pub const node_stmt_case = 'Stmt_Case'
+pub const node_expr_match = 'Expr_Match'
+pub const node_match_arm = 'MatchArm'
+pub const node_stmt_do = 'Stmt_Do'
+
+
+
 
 // 表达式节点类型
 pub const node_expr_assign = 'Expr_Assign'

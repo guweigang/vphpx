@@ -180,6 +180,31 @@ fn test_transpiler_end_to_end() {
 			'var_d = rt.new_null()',
 			'var_arr.array_unset(',
 		]
+		'24_switch_case.php': [
+			'mut switch_val_1 := var_x',
+			'if rt.is_true(rt.equal(switch_val_1, rt.new_int(1))) {',
+			'} else if rt.is_true(rt.equal(switch_val_1, rt.new_int(2))) || rt.is_true(rt.equal(switch_val_1, rt.new_int(3))) {',
+			'} else {',
+			'rt.echo_val(rt.new_string(\'default case\\n\'))',
+		]
+		'25_match_expr.php': [
+			'mut match_val_1 := var_x',
+			'mut var_y := if rt.is_true(rt.equal(match_val_1, rt.new_int(1))) { rt.new_string(\'one\') }',
+			'else if rt.is_true(rt.equal(match_val_1, rt.new_int(2))) || rt.is_true(rt.equal(match_val_1, rt.new_int(3)))',
+			'else { rt.new_string(\'other\') }',
+		]
+		'26_do_while.php': [
+			'mut var_i := rt.new_int(0)',
+			'for {',
+			'rt.echo_val(rt.concat(var_i, rt.new_string(\'\\n\')))',
+
+			'var_i = rt.add(var_i, rt.new_int(1))',
+			'if !rt.is_true(rt.less(var_i, rt.new_int(3))) {',
+			'break',
+		]
+
+
+
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址

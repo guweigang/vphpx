@@ -28,7 +28,12 @@ pub:
 	value_var ?&AstNode @[json: 'valueVar']
 	init      []AstNode @[json: 'init']
 	conds     []AstNode @[json: 'conds']
+	cases     []AstNode @[json: 'cases']
+	arms      []AstNode @[json: 'arms']
+	body      ?&AstNode @[json: 'body']
 	loop      []AstNode @[json: 'loop']
+
+
 	props     []AstNode @[json: 'props']
 	uses      []AstNode @[json: 'uses']
 	incl_type string    @[json: 'type']
