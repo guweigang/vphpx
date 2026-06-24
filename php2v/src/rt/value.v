@@ -9,6 +9,16 @@ fn C.php2v_call_zend_function(name &char, name_len usize, retval &C.zval, param_
 fn C.php2v_eval_string(str &char, len usize, retval &C.zval) int
 fn C.php2v_register_constant(name &char, len usize, val &C.zval) int
 fn C.php2v_get_constant(name &char, len usize, val &C.zval) int
+fn C.increment_function(op &C.zval) int
+fn C.decrement_function(op &C.zval) int
+fn C.bitwise_and_function(result &C.zval, op1 &C.zval, op2 &C.zval) int
+fn C.bitwise_or_function(result &C.zval, op1 &C.zval, op2 &C.zval) int
+fn C.bitwise_xor_function(result &C.zval, op1 &C.zval, op2 &C.zval) int
+fn C.shift_left_function(result &C.zval, op1 &C.zval, op2 &C.zval) int
+fn C.shift_right_function(result &C.zval, op1 &C.zval, op2 &C.zval) int
+fn C.bitwise_not_function(result &C.zval, op1 &C.zval) int
+
+
 
 // 声明 Zend zval 的底层内存结构
 @[typedef]
@@ -591,3 +601,83 @@ pub fn instance_of(obj PhpVal, class_name string) bool {
 	}
 	return false
 }
+
+pub fn post_inc(v PhpVal) PhpVal {
+	old := v.dup()
+	unsafe {
+		C.increment_function(v.raw)
+	}
+	return old
+}
+
+pub fn post_dec(v PhpVal) PhpVal {
+	old := v.dup()
+	unsafe {
+		C.decrement_function(v.raw)
+	}
+	return old
+}
+
+pub fn pre_inc(v PhpVal) PhpVal {
+	unsafe {
+		C.increment_function(v.raw)
+	}
+	return v
+}
+
+pub fn pre_dec(v PhpVal) PhpVal {
+	unsafe {
+		C.decrement_function(v.raw)
+	}
+	return v
+}
+
+pub fn bitwise_and(a PhpVal, b PhpVal) PhpVal {
+	z := new_zval()
+	unsafe {
+		C.bitwise_and_function(z, a.raw, b.raw)
+	}
+	return PhpVal{ raw: z }
+}
+
+pub fn bitwise_or(a PhpVal, b PhpVal) PhpVal {
+	z := new_zval()
+	unsafe {
+		C.bitwise_or_function(z, a.raw, b.raw)
+	}
+	return PhpVal{ raw: z }
+}
+
+pub fn bitwise_xor(a PhpVal, b PhpVal) PhpVal {
+	z := new_zval()
+	unsafe {
+		C.bitwise_xor_function(z, a.raw, b.raw)
+	}
+	return PhpVal{ raw: z }
+}
+
+pub fn shift_left(a PhpVal, b PhpVal) PhpVal {
+	z := new_zval()
+	unsafe {
+		C.shift_left_function(z, a.raw, b.raw)
+	}
+	return PhpVal{ raw: z }
+}
+
+pub fn shift_right(a PhpVal, b PhpVal) PhpVal {
+	z := new_zval()
+	unsafe {
+		C.shift_right_function(z, a.raw, b.raw)
+	}
+	return PhpVal{ raw: z }
+}
+
+pub fn bitwise_not(a PhpVal) PhpVal {
+	z := new_zval()
+	unsafe {
+		C.bitwise_not_function(z, a.raw)
+	}
+	return PhpVal{ raw: z }
+}
+
+

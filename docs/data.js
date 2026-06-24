@@ -5214,8 +5214,8 @@ window.PLAYGROUND_DATA = [
     "key": "26_do_while",
     "title": "26 Do While",
     "filename": "26_do_while.php",
-    "php": "<?php\n$i = 0;\ndo {\n    echo $i . \"\\n\";\n    $i = $i + 1;\n} while ($i < 3);\n",
-    "v": "import php2v.rt\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.new_null()\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.new_null()\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {}\n\nfn call_closure(cb rt.PhpVal, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.new_null()\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_i := rt.new_int(0)\n\tfor {\n\t\trt.echo_val(rt.concat(var_i, rt.new_string('\\n')))\n\t\tvar_i = rt.add(var_i, rt.new_int(1))\n\t\tif !rt.is_true(rt.less(var_i, rt.new_int(3))) {\n\t\t\tbreak\n\t\t}\n\t}\n}\n",
+    "php": "<?php\n$i = 0;\ndo {\n    echo $i . \"\\n\";\n    $i++;\n} while ($i < 3);\n",
+    "v": "import php2v.rt\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.new_null()\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.new_null()\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {}\n\nfn call_closure(cb rt.PhpVal, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.new_null()\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_i := rt.new_int(0)\n\tfor {\n\t\trt.echo_val(rt.concat(var_i, rt.new_string('\\n')))\n\t\trt.post_inc(var_i)\n\t\tif !rt.is_true(rt.less(var_i, rt.new_int(3))) {\n\t\t\tbreak\n\t\t}\n\t}\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -5263,26 +5263,12 @@ window.PLAYGROUND_DATA = [
             "nodeType": "Stmt_Expression",
             "line": 5,
             "expr": {
-              "nodeType": "Expr_Assign",
+              "nodeType": "Expr_PostInc",
               "line": 5,
               "var": {
                 "nodeType": "Expr_Variable",
                 "line": 5,
                 "name": "i"
-              },
-              "expr": {
-                "nodeType": "Expr_BinaryOp_Plus",
-                "line": 5,
-                "left": {
-                  "nodeType": "Expr_Variable",
-                  "line": 5,
-                  "name": "i"
-                },
-                "right": {
-                  "nodeType": "Scalar_Int",
-                  "line": 5,
-                  "value": "1"
-                }
               }
             }
           }
@@ -5301,6 +5287,736 @@ window.PLAYGROUND_DATA = [
             "value": "3"
           }
         }
+      }
+    ]
+  },
+  {
+    "key": "27_increment_decrement",
+    "title": "27 Increment Decrement",
+    "filename": "27_increment_decrement.php",
+    "php": "<?php\n$a = 5;\n\n// 测试后置自增\n$b = $a++;\necho \"b is \" . $b . \", a is \" . $a . \"\\n\";\n\n// 测试后置自减\n$c = $a--;\necho \"c is \" . $c . \", a is \" . $a . \"\\n\";\n\n// 测试前置自增\n$d = ++$a;\necho \"d is \" . $d . \", a is \" . $a . \"\\n\";\n\n// 测试前置自减\n$e = --$a;\necho \"e is \" . $e . \", a is \" . $a . \"\\n\";\n",
+    "v": "import php2v.rt\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.new_null()\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.new_null()\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {}\n\nfn call_closure(cb rt.PhpVal, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.new_null()\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_a := rt.new_int(5)\n\tmut var_b := rt.post_inc(var_a)\n\trt.echo_val(rt.concat(rt.concat(rt.concat(rt.concat(rt.new_string('b is '), var_b), rt.new_string(', a is ')), var_a), rt.new_string('\\n')))\n\tmut var_c := rt.post_dec(var_a)\n\trt.echo_val(rt.concat(rt.concat(rt.concat(rt.concat(rt.new_string('c is '), var_c), rt.new_string(', a is ')), var_a), rt.new_string('\\n')))\n\tmut var_d := rt.pre_inc(var_a)\n\trt.echo_val(rt.concat(rt.concat(rt.concat(rt.concat(rt.new_string('d is '), var_d), rt.new_string(', a is ')), var_a), rt.new_string('\\n')))\n\tmut var_e := rt.pre_dec(var_a)\n\trt.echo_val(rt.concat(rt.concat(rt.concat(rt.concat(rt.new_string('e is '), var_e), rt.new_string(', a is ')), var_a), rt.new_string('\\n')))\n}\n",
+    "ast": [
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 2,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 2,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 2,
+            "name": "a"
+          },
+          "expr": {
+            "nodeType": "Scalar_Int",
+            "line": 2,
+            "value": "5"
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 5,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 5,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 5,
+            "name": "b"
+          },
+          "expr": {
+            "nodeType": "Expr_PostInc",
+            "line": 5,
+            "var": {
+              "nodeType": "Expr_Variable",
+              "line": 5,
+              "name": "a"
+            }
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 6,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 6,
+            "left": {
+              "nodeType": "Expr_BinaryOp_Concat",
+              "line": 6,
+              "left": {
+                "nodeType": "Expr_BinaryOp_Concat",
+                "line": 6,
+                "left": {
+                  "nodeType": "Expr_BinaryOp_Concat",
+                  "line": 6,
+                  "left": {
+                    "nodeType": "Scalar_String",
+                    "line": 6,
+                    "value": "b is "
+                  },
+                  "right": {
+                    "nodeType": "Expr_Variable",
+                    "line": 6,
+                    "name": "b"
+                  }
+                },
+                "right": {
+                  "nodeType": "Scalar_String",
+                  "line": 6,
+                  "value": ", a is "
+                }
+              },
+              "right": {
+                "nodeType": "Expr_Variable",
+                "line": 6,
+                "name": "a"
+              }
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 6,
+              "value": "\n"
+            }
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 9,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 9,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 9,
+            "name": "c"
+          },
+          "expr": {
+            "nodeType": "Expr_PostDec",
+            "line": 9,
+            "var": {
+              "nodeType": "Expr_Variable",
+              "line": 9,
+              "name": "a"
+            }
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 10,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 10,
+            "left": {
+              "nodeType": "Expr_BinaryOp_Concat",
+              "line": 10,
+              "left": {
+                "nodeType": "Expr_BinaryOp_Concat",
+                "line": 10,
+                "left": {
+                  "nodeType": "Expr_BinaryOp_Concat",
+                  "line": 10,
+                  "left": {
+                    "nodeType": "Scalar_String",
+                    "line": 10,
+                    "value": "c is "
+                  },
+                  "right": {
+                    "nodeType": "Expr_Variable",
+                    "line": 10,
+                    "name": "c"
+                  }
+                },
+                "right": {
+                  "nodeType": "Scalar_String",
+                  "line": 10,
+                  "value": ", a is "
+                }
+              },
+              "right": {
+                "nodeType": "Expr_Variable",
+                "line": 10,
+                "name": "a"
+              }
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 10,
+              "value": "\n"
+            }
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 13,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 13,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 13,
+            "name": "d"
+          },
+          "expr": {
+            "nodeType": "Expr_PreInc",
+            "line": 13,
+            "var": {
+              "nodeType": "Expr_Variable",
+              "line": 13,
+              "name": "a"
+            }
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 14,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 14,
+            "left": {
+              "nodeType": "Expr_BinaryOp_Concat",
+              "line": 14,
+              "left": {
+                "nodeType": "Expr_BinaryOp_Concat",
+                "line": 14,
+                "left": {
+                  "nodeType": "Expr_BinaryOp_Concat",
+                  "line": 14,
+                  "left": {
+                    "nodeType": "Scalar_String",
+                    "line": 14,
+                    "value": "d is "
+                  },
+                  "right": {
+                    "nodeType": "Expr_Variable",
+                    "line": 14,
+                    "name": "d"
+                  }
+                },
+                "right": {
+                  "nodeType": "Scalar_String",
+                  "line": 14,
+                  "value": ", a is "
+                }
+              },
+              "right": {
+                "nodeType": "Expr_Variable",
+                "line": 14,
+                "name": "a"
+              }
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 14,
+              "value": "\n"
+            }
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 17,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 17,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 17,
+            "name": "e"
+          },
+          "expr": {
+            "nodeType": "Expr_PreDec",
+            "line": 17,
+            "var": {
+              "nodeType": "Expr_Variable",
+              "line": 17,
+              "name": "a"
+            }
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 18,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 18,
+            "left": {
+              "nodeType": "Expr_BinaryOp_Concat",
+              "line": 18,
+              "left": {
+                "nodeType": "Expr_BinaryOp_Concat",
+                "line": 18,
+                "left": {
+                  "nodeType": "Expr_BinaryOp_Concat",
+                  "line": 18,
+                  "left": {
+                    "nodeType": "Scalar_String",
+                    "line": 18,
+                    "value": "e is "
+                  },
+                  "right": {
+                    "nodeType": "Expr_Variable",
+                    "line": 18,
+                    "name": "e"
+                  }
+                },
+                "right": {
+                  "nodeType": "Scalar_String",
+                  "line": 18,
+                  "value": ", a is "
+                }
+              },
+              "right": {
+                "nodeType": "Expr_Variable",
+                "line": 18,
+                "name": "a"
+              }
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 18,
+              "value": "\n"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "28_bitwise_ops",
+    "title": "28 Bitwise Ops",
+    "filename": "28_bitwise_ops.php",
+    "php": "<?php\n$a = 5;\n$b = 3;\n\n$c = $a & $b;\necho \"bitwise and: \" . $c . \"\\n\";\n\n$d = $a | $b;\necho \"bitwise or: \" . $d . \"\\n\";\n\n$e = $a ^ $b;\necho \"bitwise xor: \" . $e . \"\\n\";\n\n$f = $a << 1;\necho \"shift left: \" . $f . \"\\n\";\n\n$g = $a >> 1;\necho \"shift right: \" . $g . \"\\n\";\n\n$h = ~$a;\necho \"bitwise not: \" . $h . \"\\n\";\n\n$i = @$a;\necho \"error suppress: \" . $i . \"\\n\";\n\n",
+    "v": "import php2v.rt\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.new_null()\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.new_null()\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {}\n\nfn call_closure(cb rt.PhpVal, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.new_null()\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_a := rt.new_int(5)\n\tmut var_b := rt.new_int(3)\n\tmut var_c := rt.bitwise_and(var_a, var_b)\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('bitwise and: '), var_c), rt.new_string('\\n')))\n\tmut var_d := rt.bitwise_or(var_a, var_b)\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('bitwise or: '), var_d), rt.new_string('\\n')))\n\tmut var_e := rt.bitwise_xor(var_a, var_b)\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('bitwise xor: '), var_e), rt.new_string('\\n')))\n\tmut var_f := rt.shift_left(var_a, rt.new_int(1))\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('shift left: '), var_f), rt.new_string('\\n')))\n\tmut var_g := rt.shift_right(var_a, rt.new_int(1))\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('shift right: '), var_g), rt.new_string('\\n')))\n\tmut var_h := rt.bitwise_not(var_a)\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('bitwise not: '), var_h), rt.new_string('\\n')))\n\tmut var_i := var_a\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('error suppress: '), var_i), rt.new_string('\\n')))\n}\n",
+    "ast": [
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 2,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 2,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 2,
+            "name": "a"
+          },
+          "expr": {
+            "nodeType": "Scalar_Int",
+            "line": 2,
+            "value": "5"
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 3,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 3,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 3,
+            "name": "b"
+          },
+          "expr": {
+            "nodeType": "Scalar_Int",
+            "line": 3,
+            "value": "3"
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 5,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 5,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 5,
+            "name": "c"
+          },
+          "expr": {
+            "nodeType": "Expr_BinaryOp_BitwiseAnd",
+            "line": 5,
+            "left": {
+              "nodeType": "Expr_Variable",
+              "line": 5,
+              "name": "a"
+            },
+            "right": {
+              "nodeType": "Expr_Variable",
+              "line": 5,
+              "name": "b"
+            }
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 6,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 6,
+            "left": {
+              "nodeType": "Expr_BinaryOp_Concat",
+              "line": 6,
+              "left": {
+                "nodeType": "Scalar_String",
+                "line": 6,
+                "value": "bitwise and: "
+              },
+              "right": {
+                "nodeType": "Expr_Variable",
+                "line": 6,
+                "name": "c"
+              }
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 6,
+              "value": "\n"
+            }
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 8,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 8,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 8,
+            "name": "d"
+          },
+          "expr": {
+            "nodeType": "Expr_BinaryOp_BitwiseOr",
+            "line": 8,
+            "left": {
+              "nodeType": "Expr_Variable",
+              "line": 8,
+              "name": "a"
+            },
+            "right": {
+              "nodeType": "Expr_Variable",
+              "line": 8,
+              "name": "b"
+            }
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 9,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 9,
+            "left": {
+              "nodeType": "Expr_BinaryOp_Concat",
+              "line": 9,
+              "left": {
+                "nodeType": "Scalar_String",
+                "line": 9,
+                "value": "bitwise or: "
+              },
+              "right": {
+                "nodeType": "Expr_Variable",
+                "line": 9,
+                "name": "d"
+              }
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 9,
+              "value": "\n"
+            }
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 11,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 11,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 11,
+            "name": "e"
+          },
+          "expr": {
+            "nodeType": "Expr_BinaryOp_BitwiseXor",
+            "line": 11,
+            "left": {
+              "nodeType": "Expr_Variable",
+              "line": 11,
+              "name": "a"
+            },
+            "right": {
+              "nodeType": "Expr_Variable",
+              "line": 11,
+              "name": "b"
+            }
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 12,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 12,
+            "left": {
+              "nodeType": "Expr_BinaryOp_Concat",
+              "line": 12,
+              "left": {
+                "nodeType": "Scalar_String",
+                "line": 12,
+                "value": "bitwise xor: "
+              },
+              "right": {
+                "nodeType": "Expr_Variable",
+                "line": 12,
+                "name": "e"
+              }
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 12,
+              "value": "\n"
+            }
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 14,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 14,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 14,
+            "name": "f"
+          },
+          "expr": {
+            "nodeType": "Expr_BinaryOp_ShiftLeft",
+            "line": 14,
+            "left": {
+              "nodeType": "Expr_Variable",
+              "line": 14,
+              "name": "a"
+            },
+            "right": {
+              "nodeType": "Scalar_Int",
+              "line": 14,
+              "value": "1"
+            }
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 15,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 15,
+            "left": {
+              "nodeType": "Expr_BinaryOp_Concat",
+              "line": 15,
+              "left": {
+                "nodeType": "Scalar_String",
+                "line": 15,
+                "value": "shift left: "
+              },
+              "right": {
+                "nodeType": "Expr_Variable",
+                "line": 15,
+                "name": "f"
+              }
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 15,
+              "value": "\n"
+            }
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 17,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 17,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 17,
+            "name": "g"
+          },
+          "expr": {
+            "nodeType": "Expr_BinaryOp_ShiftRight",
+            "line": 17,
+            "left": {
+              "nodeType": "Expr_Variable",
+              "line": 17,
+              "name": "a"
+            },
+            "right": {
+              "nodeType": "Scalar_Int",
+              "line": 17,
+              "value": "1"
+            }
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 18,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 18,
+            "left": {
+              "nodeType": "Expr_BinaryOp_Concat",
+              "line": 18,
+              "left": {
+                "nodeType": "Scalar_String",
+                "line": 18,
+                "value": "shift right: "
+              },
+              "right": {
+                "nodeType": "Expr_Variable",
+                "line": 18,
+                "name": "g"
+              }
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 18,
+              "value": "\n"
+            }
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 20,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 20,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 20,
+            "name": "h"
+          },
+          "expr": {
+            "nodeType": "Expr_BitwiseNot",
+            "line": 20,
+            "expr": {
+              "nodeType": "Expr_Variable",
+              "line": 20,
+              "name": "a"
+            }
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 21,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 21,
+            "left": {
+              "nodeType": "Expr_BinaryOp_Concat",
+              "line": 21,
+              "left": {
+                "nodeType": "Scalar_String",
+                "line": 21,
+                "value": "bitwise not: "
+              },
+              "right": {
+                "nodeType": "Expr_Variable",
+                "line": 21,
+                "name": "h"
+              }
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 21,
+              "value": "\n"
+            }
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 23,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 23,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 23,
+            "name": "i"
+          },
+          "expr": {
+            "nodeType": "Expr_ErrorSuppress",
+            "line": 23,
+            "expr": {
+              "nodeType": "Expr_Variable",
+              "line": 23,
+              "name": "a"
+            }
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 24,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 24,
+            "left": {
+              "nodeType": "Expr_BinaryOp_Concat",
+              "line": 24,
+              "left": {
+                "nodeType": "Scalar_String",
+                "line": 24,
+                "value": "error suppress: "
+              },
+              "right": {
+                "nodeType": "Expr_Variable",
+                "line": 24,
+                "name": "i"
+              }
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 24,
+              "value": "\n"
+            }
+          }
+        ]
       }
     ]
   }

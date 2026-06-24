@@ -685,6 +685,36 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			left_str := t.visit_expr(*left)
 			return 'if !(${left_str}).is_null() { ${left_str} } else { ${t.visit_expr(*right)} }'
 		}
+		ast.node_bin_bitwise_and {
+			left := node.left or { panic('BitwiseAnd missing left') }
+			right := node.right or { panic('BitwiseAnd missing right') }
+			return 'rt.bitwise_and(${t.visit_expr(*left)}, ${t.visit_expr(*right)})'
+		}
+		ast.node_bin_bitwise_or {
+			left := node.left or { panic('BitwiseOr missing left') }
+			right := node.right or { panic('BitwiseOr missing right') }
+			return 'rt.bitwise_or(${t.visit_expr(*left)}, ${t.visit_expr(*right)})'
+		}
+		ast.node_bin_bitwise_xor {
+			left := node.left or { panic('BitwiseXor missing left') }
+			right := node.right or { panic('BitwiseXor missing right') }
+			return 'rt.bitwise_xor(${t.visit_expr(*left)}, ${t.visit_expr(*right)})'
+		}
+		ast.node_bin_shift_left {
+			left := node.left or { panic('ShiftLeft missing left') }
+			right := node.right or { panic('ShiftLeft missing right') }
+			return 'rt.shift_left(${t.visit_expr(*left)}, ${t.visit_expr(*right)})'
+		}
+		ast.node_bin_shift_right {
+			left := node.left or { panic('ShiftRight missing left') }
+			right := node.right or { panic('ShiftRight missing right') }
+			return 'rt.shift_right(${t.visit_expr(*left)}, ${t.visit_expr(*right)})'
+		}
+		ast.node_expr_bitwise_not {
+			expr_node := node.expr or { panic('BitwiseNot missing expr') }
+			return 'rt.bitwise_not(${t.visit_expr(*expr_node)})'
+		}
+
 		ast.node_expr_array {
 			mut item_strs := []string{}
 			for item in node.items {
@@ -819,8 +849,34 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 
 			return if_else_expr.str()
 		}
+		ast.node_expr_post_inc {
+			var_node := node.var or { panic('PostInc missing var') }
+			var_str := t.visit_expr(*var_node)
+			return 'rt.post_inc(${var_str})'
+		}
+		ast.node_expr_post_dec {
+			var_node := node.var or { panic('PostDec missing var') }
+			var_str := t.visit_expr(*var_node)
+			return 'rt.post_dec(${var_str})'
+		}
+		ast.node_expr_pre_inc {
+			var_node := node.var or { panic('PreInc missing var') }
+			var_str := t.visit_expr(*var_node)
+			return 'rt.pre_inc(${var_str})'
+		}
+		ast.node_expr_pre_dec {
+			var_node := node.var or { panic('PreDec missing var') }
+			var_str := t.visit_expr(*var_node)
+			return 'rt.pre_dec(${var_str})'
+		}
+		ast.node_expr_error_suppress {
+			expr_node := node.expr or { panic('ErrorSuppress missing expr') }
+			return t.visit_expr(*expr_node)
+		}
+
 
 		ast.node_expr_closure {
+
 			t.closure_count++
 			class_name := 'Closure_${t.closure_count}'
 			t.closure_names << class_name

@@ -19,15 +19,16 @@
 ---
 
 ## 阶段 2：高级运算符与字面量增强
-- [ ] **自增自减运算符 (`Expr_PostInc`, `Expr_PostDec`, `Expr_PreInc`, `Expr_PreDec`)**
+- [x] **自增自减运算符 (`Expr_PostInc`, `Expr_PostDec`, `Expr_PreInc`, `Expr_PreDec`)**
   - *转译设计*：在 V 语言侧通过 `rt` 运行时相关方法（如 `rt.post_inc(mut &i)`）模拟自增减副作用与值返回。
   - *测试用例*：`27_increment_decrement.php`
-- [ ] **位运算符 (与 `&`, 或 `|`, 异或 `^`, 取反 `~`, 左移 `<<`, 右移 `>>`)**
+- [x] **位运算符 (与 `&`, 或 `|`, 异或 `^`, 取反 `~`, 左移 `<<`, 右移 `>>`)**
   - *转译设计*：在运行时 `rt` 中封装对应的二进制位运算函数（如 `rt.bitwise_and(a, b)`）。
   - *测试用例*：`28_bitwise_ops.php`
-- [ ] **错误抑制符 (`Expr_ErrorSuppress`)**
+- [x] **错误抑制符 (`Expr_ErrorSuppress`)**
   - *转译设计*：在 V 侧转译为其内部表达式本身（即忽略 `@` 标记），运行时进行非致命错误的捕获或直接放行。
   - *测试用例*：结合已有用例进行容错验证。
+
 
 ---
 

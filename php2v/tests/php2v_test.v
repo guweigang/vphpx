@@ -197,12 +197,27 @@ fn test_transpiler_end_to_end() {
 			'mut var_i := rt.new_int(0)',
 			'for {',
 			'rt.echo_val(rt.concat(var_i, rt.new_string(\'\\n\')))',
-
-			'var_i = rt.add(var_i, rt.new_int(1))',
+			'rt.post_inc(var_i)',
 			'if !rt.is_true(rt.less(var_i, rt.new_int(3))) {',
 			'break',
 		]
-
+		'27_increment_decrement.php': [
+			'mut var_a := rt.new_int(5)',
+			'mut var_b := rt.post_inc(var_a)',
+			'mut var_c := rt.post_dec(var_a)',
+			'mut var_d := rt.pre_inc(var_a)',
+			'mut var_e := rt.pre_dec(var_a)',
+		]
+		'28_bitwise_ops.php': [
+			'mut var_c := rt.bitwise_and(var_a, var_b)',
+			'mut var_d := rt.bitwise_or(var_a, var_b)',
+			'mut var_e := rt.bitwise_xor(var_a, var_b)',
+			'mut var_f := rt.shift_left(var_a, rt.new_int(1))',
+			'mut var_g := rt.shift_right(var_a, rt.new_int(1))',
+			'mut var_h := rt.bitwise_not(var_a)',
+			'mut var_i := var_a',
+			'rt.echo_val(rt.concat(rt.concat(rt.new_string(\'error suppress: \'), var_i), rt.new_string(\'\\n\')))',
+		]
 
 
 	}

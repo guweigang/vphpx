@@ -30,11 +30,15 @@ pub const node_stmt_case = 'Stmt_Case'
 pub const node_expr_match = 'Expr_Match'
 pub const node_match_arm = 'MatchArm'
 pub const node_stmt_do = 'Stmt_Do'
-
-
+pub const node_expr_post_inc = 'Expr_PostInc'
+pub const node_expr_post_dec = 'Expr_PostDec'
+pub const node_expr_pre_inc = 'Expr_PreInc'
+pub const node_expr_pre_dec = 'Expr_PreDec'
+pub const node_expr_error_suppress = 'Expr_ErrorSuppress'
 
 
 // 表达式节点类型
+
 pub const node_expr_assign = 'Expr_Assign'
 pub const node_expr_variable = 'Expr_Variable'
 pub const node_expr_const = 'Expr_ConstFetch'
@@ -63,8 +67,15 @@ pub const node_bin_bool_or = 'Expr_BinaryOp_BooleanOr'
 pub const node_bin_logical_and = 'Expr_BinaryOp_LogicalAnd'
 pub const node_bin_logical_or = 'Expr_BinaryOp_LogicalOr'
 pub const node_bin_coalesce = 'Expr_BinaryOp_Coalesce'
+pub const node_bin_bitwise_and = 'Expr_BinaryOp_BitwiseAnd'
+pub const node_bin_bitwise_or = 'Expr_BinaryOp_BitwiseOr'
+pub const node_bin_bitwise_xor = 'Expr_BinaryOp_BitwiseXor'
+pub const node_bin_shift_left = 'Expr_BinaryOp_ShiftLeft'
+pub const node_bin_shift_right = 'Expr_BinaryOp_ShiftRight'
+pub const node_expr_bitwise_not = 'Expr_BitwiseNot'
 
 // 标量节点类型
+
 pub const node_scalar_int = 'Scalar_Int'
 pub const node_scalar_float = 'Scalar_Float'
 pub const node_scalar_string = 'Scalar_String'
