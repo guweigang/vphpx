@@ -1,4 +1,4 @@
-.PHONY: all clean test
+.PHONY: all clean test playground
 
 all: php2v
 
@@ -7,6 +7,9 @@ php2v:
 
 test: php2v
 	v test tests/
+
+playground:
+	python3 scripts/generate_playground_data.py
 
 clean:
 	rm -f php2v
