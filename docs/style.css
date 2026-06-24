@@ -11,16 +11,21 @@
     --bg-glass-active: rgba(54, 47, 78, 0.9);
     --border-glass: rgba(255, 255, 255, 0.1);
     --border-glass-focus: rgba(157, 124, 255, 0.5);
-    
-    --primary: #9d7cff; /* Bright purple for dark mode visibility */
+
+    --primary: #9d7cff;
+    /* Bright purple for dark mode visibility */
     --primary-glow: rgba(157, 124, 255, 0.35);
-    --secondary: #00e5ff; /* Cyan */
+    --secondary: #00e5ff;
+    /* Cyan */
     --secondary-glow: rgba(0, 229, 255, 0.25);
-    
-    --text-main: #fcfbfe; /* Bright white */
-    --text-muted: #c1bdcc; /* Soft light-gray */
-    --text-dark: #827e91; /* Mid gray */
-    
+
+    --text-main: #fcfbfe;
+    /* Bright white */
+    --text-muted: #c1bdcc;
+    /* Soft light-gray */
+    --text-dark: #827e91;
+    /* Mid gray */
+
     --panel-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.55);
     --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-smooth: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -41,7 +46,8 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-pre, code {
+pre,
+code {
     font-family: 'Fira Code', 'Courier New', Courier, monospace;
 }
 
@@ -50,13 +56,16 @@ pre, code {
     width: 6px;
     height: 6px;
 }
+
 ::-webkit-scrollbar-track {
     background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.15);
     border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
     background: var(--primary);
 }
@@ -353,7 +362,7 @@ pre, code {
 
 /* Tabs */
 .tabbed-header {
-    padding: 0;
+    padding: 0 16px 0 0;
     justify-content: space-between;
 }
 
@@ -434,31 +443,66 @@ pre[class*="language-"] code[class*="language-"] {
 }
 
 /* High Contrast Prism colors customized for dark mode theme */
-.token.comment, .token.prolog, .token.doctype, .token.cdata {
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
     color: #79768a !important;
     font-style: italic;
 }
+
 .token.punctuation {
     color: #bab7c7 !important;
 }
-.token.property, .token.tag, .token.boolean, .token.number, .token.constant, .token.symbol, .token.deleted {
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.deleted {
     color: var(--secondary) !important;
 }
-.token.selector, .token.attr-name, .token.string, .token.char, .token.builtin, .token.inserted {
-    color: #ffe082 !important; /* Pastel gold */
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+    color: #ffe082 !important;
+    /* Pastel gold */
 }
-.token.operator, .token.entity, .token.url, .language-css .token.string, .style .token.string {
-    color: #90caf9 !important; /* Sky blue */
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+    color: #90caf9 !important;
+    /* Sky blue */
 }
-.token.atrule, .token.attr-value, .token.keyword {
-    color: #cfbcff !important; /* Soft bright purple */
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+    color: #cfbcff !important;
+    /* Soft bright purple */
     font-weight: 500;
 }
-.token.function, .token.class-name {
-    color: #92e095 !important; /* Soft neon green */
+
+.token.function,
+.token.class-name {
+    color: #92e095 !important;
+    /* Soft neon green */
 }
-.token.regex, .token.important, .token.variable {
-    color: #ff9e80 !important; /* Coral orange */
+
+.token.regex,
+.token.important,
+.token.variable {
+    color: #ff9e80 !important;
+    /* Coral orange */
 }
 
 /* AST Tree Container */
@@ -479,59 +523,97 @@ pre[class*="language-"] code[class*="language-"] {
     color: var(--text-muted) !important;
     margin-left: 16px !important;
 }
+
 .json-formatter-row .json-formatter-row {
     margin-left: 20px !important;
 }
+
 .json-formatter-key {
-    color: #cfbcff !important; /* Soft violet key */
+    color: #cfbcff !important;
+    /* Soft violet key */
 }
+
 .json-formatter-string {
-    color: #ffe082 !important; /* Soft orange string */
+    color: #ffe082 !important;
+    /* Soft orange string */
     word-break: break-all;
     white-space: pre-wrap;
 }
+
 .json-formatter-number {
-    color: #80deea !important; /* Soft cyan number */
+    color: #80deea !important;
+    /* Soft cyan number */
 }
+
 .json-formatter-boolean {
-    color: #ff9e80 !important; /* Soft coral boolean */
+    color: #ff9e80 !important;
+    /* Soft coral boolean */
 }
+
 .json-formatter-null {
-    color: var(--text-dark) !important; /* Mid gray null */
+    color: var(--text-dark) !important;
+    /* Mid gray null */
 }
+
 /* Bracket and length styling to avoid invisible elements in dark theme */
-.json-formatter-row, 
-.json-formatter-bracket, 
+.json-formatter-row,
+.json-formatter-bracket,
 .json-formatter-comma {
     color: #bab7c7 !important;
 }
+
 .json-formatter-constructor-name {
-    color: #827e91 !important; /* Bright gray constructor names like 'Array', 'Object' */
+    color: #827e91 !important;
+    /* Bright gray constructor names like 'Array', 'Object' */
     font-weight: 500;
 }
+
 .json-formatter-array-len {
-    color: var(--secondary) !important; /* Cyan array length indicators */
+    color: var(--secondary) !important;
+    /* Cyan array length indicators */
 }
+
 .json-formatter-toggler:after {
     color: var(--text-muted) !important;
     font-size: 10px !important;
     transition: transform var(--transition-fast), color var(--transition-fast);
 }
+
 .json-formatter-toggler:hover:after {
     color: var(--secondary) !important;
 }
+
 .json-formatter-row.json-formatter-empty {
     opacity: 0.65;
 }
 
 /* Animations */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.code-panel, .fixture-item {
+.code-panel,
+.fixture-item {
     animation: fadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Custom Line Numbers Styling for Dark Mode */
+.line-numbers .line-numbers-rows {
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding: 16px 0 !important;
+}
+
+.line-numbers-rows > span:before {
+    color: var(--text-dark) !important;
+    text-shadow: none !important;
 }
 
 /* Responsive adjustments */

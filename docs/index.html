@@ -15,6 +15,8 @@
     
     <!-- PrismJS Theme (Dark Tomorrow) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+    <!-- PrismJS Line Numbers Plugin CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/line-numbers/prism-line-numbers.min.css">
     
     <!-- Custom Style -->
     <link rel="stylesheet" href="style.css">
@@ -71,7 +73,7 @@
                         <span class="panel-filename" id="php-filename">loading...</span>
                     </div>
                     <div class="panel-body">
-                        <pre class="language-php"><code id="php-code-box" class="language-php"></code></pre>
+                        <pre class="language-php line-numbers"><code id="php-code-box" class="language-php"></code></pre>
                     </div>
                 </div>
 
@@ -87,7 +89,7 @@
                     <div class="panel-body tab-content-container">
                         <!-- Tab 1: V Target Code -->
                         <div class="tab-content active" id="tab-v-code">
-                            <pre class="language-v"><code id="v-code-box" class="language-v"></code></pre>
+                            <pre class="language-v line-numbers"><code id="v-code-box" class="language-v"></code></pre>
                         </div>
                         
                         <!-- Tab 2: AST Tree -->
@@ -113,6 +115,9 @@
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-clike.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-php.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-v.min.js"></script>
+    
+    <!-- PrismJS Line Numbers Plugin JS -->
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
 
     <!-- JSON Formatter JS -->
     <script src="https://cdn.jsdelivr.net/npm/json-formatter-js@2.3.4/dist/json-formatter.umd.min.js"></script>
