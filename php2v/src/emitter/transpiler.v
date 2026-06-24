@@ -39,6 +39,8 @@ pub mut:
 	current_catch_label string // 当前语句所属 of the try-catch block's catch label
 	current_finally_label string // 当前语句所属 of the try-catch block's finally label
 	undeclared_classes map[string]bool
+	current_namespace string
+	use_aliases map[string]string
 }
 
 pub fn Transpiler.new() Transpiler {
@@ -52,6 +54,8 @@ pub fn Transpiler.new() Transpiler {
 		classes:          []ClassInfo{}
 		current_file:     ''
 		undeclared_classes: map[string]bool{}
+		current_namespace: ''
+		use_aliases: map[string]string{}
 	}
 }
 
@@ -61,6 +65,15 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 	for stmt in stmts {
 		if stmt.node_type == ast.node_stmt_function {
 			t.custom_functions[stmt.name] = true
+		}
+	}
+
+	ref_vars, ass_vars := t.collect_vars_in_scope(stmts)
+	for v in ref_vars {
+		if v !in ass_vars && !t.scope.has_var(v) {
+			t.write_indent()
+			t.write_line('mut var_${v} := rt.new_null()')
+			t.scope.declare(v)
 		}
 	}
 
@@ -226,6 +239,40 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 		ast.node_stmt_try_catch {
 			t.visit_try_catch(node)
 		}
+		ast.node_stmt_namespace {
+			old_ns := t.current_namespace
+			t.current_namespace = node.name
+			for stmt in node.stmts {
+				t.visit_stmt(stmt)
+			}
+			t.current_namespace = old_ns
+		}
+		ast.node_stmt_use {
+			for u in node.uses {
+				mut alias := u.alias
+				if alias == '' {
+					parts := u.name.split('\\')
+					alias = parts[parts.len - 1]
+				}
+				t.use_aliases[alias] = u.name
+			}
+		}
+		ast.node_stmt_unset {
+			for v in node.vars {
+				if v.node_type == ast.node_expr_array_dim_fetch {
+					arr_node := v.var or { panic('Unset array dim missing var') }
+					dim_node := v.dim or { panic('Unset array dim missing dim') }
+					arr_str := t.visit_expr(*arr_node)
+					dim_str := t.visit_expr(*dim_node)
+					t.write_indent()
+					t.write_line('${arr_str}.array_unset(${dim_str})')
+				} else {
+					var_str := t.visit_expr(v)
+					t.write_indent()
+					t.write_line('${var_str} = rt.new_null()')
+				}
+			}
+		}
 		else {
 			t.write_indent()
 			t.write_line('// unsupported statement: ${node.node_type}')
@@ -282,7 +329,8 @@ fn (mut t Transpiler) visit_try_catch(node ast.AstNode) {
 	for c in node.catches {
 		mut type_checks := []string{}
 		for typ in c.types {
-			type_checks << "rt.instance_of(var_e_${my_id}, '${typ}')"
+			resolved_type := t.resolve_class_name(typ)
+			type_checks << "rt.instance_of(var_e_${my_id}, '${resolved_type}')"
 		}
 		t.write_indent()
 		if type_checks.len > 0 {
@@ -634,7 +682,7 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			}
 		}
 		ast.node_expr_new {
-			class_name := node.class_name
+			class_name := t.resolve_class_name(node.class_name)
 			t.undeclared_classes[class_name] = true
 			mut arg_strs := []string{}
 			for arg in node.args {
@@ -728,6 +776,15 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 				t.scope.declare(var_name)
 				t.write_indent()
 				t.write_line('mut var_${var_name} := this.prop_${var_name}.dup()')
+			}
+			
+			ref_vars, ass_vars := t.collect_vars_in_scope(node.stmts)
+			for v in ref_vars {
+				if v !in ass_vars && !t.scope.has_var(v) {
+					t.write_indent()
+					t.write_line('mut var_${v} := rt.new_null()')
+					t.scope.declare(v)
+				}
 			}
 			
 			for stmt in node.stmts {
@@ -860,7 +917,61 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 				// V struct embedding: this.Class_Parent.method_name() 直接调用父类方法
 				return 'this.Class_${parent_class}.method_${node.name.to_lower()}(${arg_strs.join(", ")})'
 			}
-			return '// unsupported static call: ${node.class_name}::${node.name}'
+			
+			// self/static 或普通类名的静态调用
+			mut class_name := node.class_name
+			if class_name == 'self' || class_name == 'static' {
+				class_name = t.current_class
+			} else {
+				class_name = t.resolve_class_name(class_name)
+			}
+			t.undeclared_classes[class_name] = true
+			
+			mut arg_strs := []string{}
+			mut arg_formals := []string{}
+			mut arg_calls := []string{}
+			for i, arg in node.args {
+				arg_val := arg.expr or { panic('Arg missing expr') }
+				arg_str := t.visit_expr(*arg_val)
+				if arg_val.node_type == ast.node_expr_variable {
+					arg_strs << '${arg_str}.dup()'
+				} else {
+					arg_strs << arg_str
+				}
+				arg_formals << 'arg_${i} rt.PhpVal'
+				arg_calls << 'arg_${i}'
+			}
+			
+			if arg_strs.len == 0 {
+				return 'fn () rt.PhpVal { mut temp := Class_${class_name}{}; return temp.method_${node.name.to_lower()}() }()'
+			} else {
+				return 'fn (${arg_formals.join(", ")}) rt.PhpVal { mut temp := Class_${class_name}{}; return temp.method_${node.name.to_lower()}(${arg_calls.join(", ")}) }(${arg_strs.join(", ")})'
+			}
+		}
+		ast.node_scalar_encapsed, ast.node_scalar_interpolated_string {
+			if node.parts.len == 0 {
+				return "rt.new_string('')"
+			}
+			mut res := t.visit_expr(node.parts[0])
+			for i in 1 .. node.parts.len {
+				part_str := t.visit_expr(node.parts[i])
+				res = 'rt.concat(${res}, ${part_str})'
+			}
+			return res
+		}
+		ast.node_scalar_encapsed_string_part, ast.node_scalar_interpolated_string_part {
+			escaped := node.value
+				.replace('\\', '\\\\')
+				.replace('\'', '\\\'')
+				.replace('\n', '\\n')
+				.replace('\r', '\\r')
+				.replace('\t', '\\t')
+			return 'rt.new_string(\'${escaped}\')'
+		}
+		ast.node_expr_empty {
+			expr_node := node.expr or { panic('Empty missing expr') }
+			expr_str := t.visit_expr(*expr_node)
+			return 'rt.new_bool(!rt.is_true(${expr_str}))'
 		}
 		else {
 			return '// unsupported expression: ${node.node_type}'
@@ -939,6 +1050,14 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 	t.write_line('fn func_${node.name}(${param_names.join(", ")}) rt.PhpVal {')
 	
 	t.indent++
+	ref_vars, ass_vars := t.collect_vars_in_scope(node.stmts)
+	for v in ref_vars {
+		if v !in ass_vars && !t.scope.has_var(v) {
+			t.write_indent()
+			t.write_line('mut var_${v} := rt.new_null()')
+			t.scope.declare(v)
+		}
+	}
 	for stmt in node.stmts {
 		t.visit_stmt(stmt)
 	}
@@ -1087,12 +1206,14 @@ fn (mut t Transpiler) visit_for(node ast.AstNode) {
 
 fn (mut t Transpiler) visit_class(node ast.AstNode) {
 	t.is_in_func = true
-	t.current_class = node.name
+	resolved_name := t.resolve_class_name(node.name)
+	resolved_extends := t.resolve_class_name(node.extends)
+	t.current_class = resolved_name
 	
 	// 收集 ClassInfo：只收集本类自身声明的属性和方法
 	mut class_info := ClassInfo{
-		name: node.name
-		extends: node.extends
+		name: resolved_name
+		extends: resolved_extends
 		methods: []MethodInfo{}
 		props: []string{}
 		all_props: []string{}
@@ -1164,7 +1285,7 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 	if class_info.extends.len > 0 {
 		mut parent_exists := false
 		for parent_cls in t.classes {
-			if parent_cls.name == class_info.extends {
+			if parent_cls.name == class_info.extends && class_info.extends !in t.undeclared_classes {
 				parent_exists = true
 				for p in parent_cls.all_props {
 					class_info.all_props << p
@@ -1194,11 +1315,11 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 	t.classes << class_info
 
 	// 生成结构体定义（V struct embedding 方式）
-	t.write_line('struct Class_${node.name} {')
+	t.write_line('struct Class_${resolved_name} {')
 	if class_info.extends.len > 0 {
 		mut parent_exists := false
 		for p_cls in t.classes {
-			if p_cls.name == class_info.extends {
+			if p_cls.name == class_info.extends && class_info.extends !in t.undeclared_classes {
 				parent_exists = true
 				break
 			}
@@ -1226,14 +1347,14 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 	// 遍历生成方法
 	for stmt in node.stmts {
 		if stmt.node_type == ast.node_stmt_class_method {
-			t.visit_class_method(node.name, stmt)
+			t.visit_class_method(resolved_name, stmt)
 		}
 	}
 
 	if is_exception_subclass {
 		if '__construct' !in own_method_names_originally {
 			t.write_indent()
-			t.write_line('fn (mut this Class_${node.name}) method___construct(var_message rt.PhpVal) rt.PhpVal {')
+			t.write_line('fn (mut this Class_${resolved_name}) method___construct(var_message rt.PhpVal) rt.PhpVal {')
 			t.indent++
 			t.write_indent()
 			t.write_line('this.prop_message = var_message')
@@ -1246,7 +1367,7 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 		}
 		if 'getMessage' !in own_method_names_originally {
 			t.write_indent()
-			t.write_line('fn (mut this Class_${node.name}) method_getmessage() rt.PhpVal {')
+			t.write_line('fn (mut this Class_${resolved_name}) method_getmessage() rt.PhpVal {')
 			t.indent++
 			t.write_indent()
 			t.write_line('return this.prop_message')
@@ -1285,6 +1406,15 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	// 声明 $this 代理变量以支持 $this->prop 的正常读写
 	t.write_indent()
 	t.write_line('mut var_this := rt.new_object(\'${class_name}\', ${t.get_parents_expr(class_name)}, &this)')
+	
+	ref_vars, ass_vars := t.collect_vars_in_scope(node.stmts)
+	for v in ref_vars {
+		if v !in ass_vars && !t.scope.has_var(v) {
+			t.write_indent()
+			t.write_line('mut var_${v} := rt.new_null()')
+			t.scope.declare(v)
+		}
+	}
 	
 	for stmt in node.stmts {
 		t.visit_stmt(stmt)
@@ -1405,23 +1535,25 @@ fn (mut t Transpiler) generate_dispatchers() {
 		// dispatch_method：使用 all_methods（含继承），V promotion 自动处理
 		t.write_line('fn (mut this Class_${cls.name}) dispatch_method(method_name string, args []rt.PhpVal) rt.PhpVal {')
 		t.indent++
-		t.write_indent()
-		t.write_line('match method_name {')
-		t.indent++
-		for m in cls.all_methods {
+		if cls.all_methods.len > 0 {
 			t.write_indent()
-			mut args_pass := []string{}
-			for i in 0 .. m.param_count {
-				args_pass << 'if args.len > ${i} { args[${i}] } else { rt.new_null() }'
+			t.write_line('match method_name {')
+			t.indent++
+			for m in cls.all_methods {
+				t.write_indent()
+				mut args_pass := []string{}
+				for i in 0 .. m.param_count {
+					args_pass << 'if args.len > ${i} { args[${i}] } else { rt.new_null() }'
+				}
+				// 无论自身方法还是继承方法，都直接 this.method_name()，V promotion 处理
+				t.write_line('\'${m.name}\' { return this.method_${m.name.to_lower()}(${args_pass.join(", ")}) }')
 			}
-			// 无论自身方法还是继承方法，都直接 this.method_name()，V promotion 处理
-			t.write_line('\'${m.name}\' { return this.method_${m.name.to_lower()}(${args_pass.join(", ")}) }')
+			t.write_indent()
+			t.write_line('else {}')
+			t.indent--
+			t.write_indent()
+			t.write_line('}')
 		}
-		t.write_indent()
-		t.write_line('else {}')
-		t.indent--
-		t.write_indent()
-		t.write_line('}')
 		t.write_indent()
 		t.write_line('return rt.new_null()')
 		t.indent--
@@ -1431,18 +1563,20 @@ fn (mut t Transpiler) generate_dispatchers() {
 		// dispatch_get_prop：使用 all_props（含继承），V promotion 自动处理
 		t.write_line('fn (this &Class_${cls.name}) dispatch_get_prop(prop_name string) rt.PhpVal {')
 		t.indent++
-		t.write_indent()
-		t.write_line('match prop_name {')
-		t.indent++
-		for prop in cls.all_props {
+		if cls.all_props.len > 0 {
 			t.write_indent()
-			t.write_line('\'${prop}\' { return this.prop_${prop} }')
+			t.write_line('match prop_name {')
+			t.indent++
+			for prop in cls.all_props {
+				t.write_indent()
+				t.write_line('\'${prop}\' { return this.prop_${prop} }')
+			}
+			t.write_indent()
+			t.write_line('else {}')
+			t.indent--
+			t.write_indent()
+			t.write_line('}')
 		}
-		t.write_indent()
-		t.write_line('else {}')
-		t.indent--
-		t.write_indent()
-		t.write_line('}')
 		t.write_indent()
 		t.write_line('return rt.new_null()')
 		t.indent--
@@ -1452,18 +1586,20 @@ fn (mut t Transpiler) generate_dispatchers() {
 		// dispatch_set_prop：使用 all_props（含继承），V promotion 自动处理
 		t.write_line('fn (mut this Class_${cls.name}) dispatch_set_prop(prop_name string, val rt.PhpVal) {')
 		t.indent++
-		t.write_indent()
-		t.write_line('match prop_name {')
-		t.indent++
-		for prop in cls.all_props {
+		if cls.all_props.len > 0 {
 			t.write_indent()
-			t.write_line('\'${prop}\' { this.prop_${prop} = val }')
+			t.write_line('match prop_name {')
+			t.indent++
+			for prop in cls.all_props {
+				t.write_indent()
+				t.write_line('\'${prop}\' { this.prop_${prop} = val }')
+			}
+			t.write_indent()
+			t.write_line('else {}')
+			t.indent--
+			t.write_indent()
+			t.write_line('}')
 		}
-		t.write_indent()
-		t.write_line('else {}')
-		t.indent--
-		t.write_indent()
-		t.write_line('}')
 		t.indent--
 		t.write_line('}')
 		t.write_line('')
@@ -1613,4 +1749,109 @@ fn (t Transpiler) get_parents_expr(class_name string) string {
 	}
 	return '[${elements.join(", ")}]'
 }
+
+fn (t Transpiler) resolve_class_name(name string) string {
+	if name == '' {
+		return ''
+	}
+	mut full_name := name
+	if full_name.starts_with('\\') {
+		full_name = full_name.substr(1, full_name.len)
+	} else {
+		parts := full_name.split('\\')
+		first_part := parts[0]
+		if first_part in t.use_aliases {
+			resolved_first := t.use_aliases[first_part]
+			if parts.len > 1 {
+				full_name = resolved_first + '\\' + parts[1..].join('\\')
+			} else {
+				full_name = resolved_first
+			}
+		} else if t.current_namespace != '' {
+			full_name = t.current_namespace + '\\' + full_name
+		}
+	}
+	return full_name.replace('\\', '_')
+}
+
+fn (t Transpiler) collect_vars_in_scope(nodes []ast.AstNode) ([]string, []string) {
+	mut referenced := map[string]bool{}
+	mut assigned := map[string]bool{}
+	for node in nodes {
+		t.collect_vars_in_scope_rec(node, mut referenced, mut assigned)
+	}
+	mut ref_list := []string{}
+	for k, _ in referenced { ref_list << k }
+	mut ass_list := []string{}
+	for k, _ in assigned { ass_list << k }
+	return ref_list, ass_list
+}
+
+fn (t Transpiler) collect_vars_in_scope_rec(node ast.AstNode, mut referenced map[string]bool, mut assigned map[string]bool) {
+	if node.node_type in [ast.node_stmt_function, ast.node_stmt_class, ast.node_expr_closure] {
+		return
+	}
+	
+	match node.node_type {
+		ast.node_expr_variable {
+			if node.name != 'this' && node.name !in ['_GET', '_POST', '_SERVER', '_COOKIE', '_SESSION', '_REQUEST', '_ENV'] {
+				referenced[node.name] = true
+			}
+		}
+		ast.node_expr_assign {
+			var_node := node.var or { &ast.AstNode{} }
+			if voidptr(var_node) != 0 && var_node.node_type == ast.node_expr_variable {
+				assigned[var_node.name] = true
+			}
+		}
+		ast.node_stmt_foreach {
+			if vv := node.value_var {
+				if voidptr(vv) != 0 && vv.node_type == ast.node_expr_variable {
+					assigned[vv.name] = true
+				}
+			}
+			if kv := node.key_var {
+				if voidptr(kv) != 0 && kv.node_type == ast.node_expr_variable {
+					assigned[kv.name] = true
+				}
+			}
+		}
+		ast.node_stmt_catch {
+			if v := node.var {
+				if voidptr(v) != 0 && v.node_type == ast.node_expr_variable {
+					assigned[v.name] = true
+				}
+			}
+		}
+		else {}
+	}
+	
+	for expr in node.exprs { t.collect_vars_in_scope_rec(expr, mut referenced, mut assigned) }
+	if expr := node.expr { if voidptr(expr) != 0 { t.collect_vars_in_scope_rec(*expr, mut referenced, mut assigned) } }
+	if val := node.var { if voidptr(val) != 0 { t.collect_vars_in_scope_rec(*val, mut referenced, mut assigned) } }
+	if left := node.left { if voidptr(left) != 0 { t.collect_vars_in_scope_rec(*left, mut referenced, mut assigned) } }
+	if right := node.right { if voidptr(right) != 0 { t.collect_vars_in_scope_rec(*right, mut referenced, mut assigned) } }
+	if cond := node.cond { if voidptr(cond) != 0 { t.collect_vars_in_scope_rec(*cond, mut referenced, mut assigned) } }
+	for stmt in node.stmts { t.collect_vars_in_scope_rec(stmt, mut referenced, mut assigned) }
+	for elseif in node.elseifs { t.collect_vars_in_scope_rec(elseif, mut referenced, mut assigned) }
+	if el := node.@else { if voidptr(el) != 0 { t.collect_vars_in_scope_rec(*el, mut referenced, mut assigned) } }
+	if iff := node.@if { if voidptr(iff) != 0 { t.collect_vars_in_scope_rec(*iff, mut referenced, mut assigned) } }
+	for c in node.catches { t.collect_vars_in_scope_rec(c, mut referenced, mut assigned) }
+	if fin := node.finally { if voidptr(fin) != 0 { t.collect_vars_in_scope_rec(*fin, mut referenced, mut assigned) } }
+	for param in node.params { t.collect_vars_in_scope_rec(param, mut referenced, mut assigned) }
+	for arg in node.args { t.collect_vars_in_scope_rec(arg, mut referenced, mut assigned) }
+	for item in node.items { t.collect_vars_in_scope_rec(item, mut referenced, mut assigned) }
+	if k := node.key { if voidptr(k) != 0 { t.collect_vars_in_scope_rec(*k, mut referenced, mut assigned) } }
+	if d := node.dim { if voidptr(d) != 0 { t.collect_vars_in_scope_rec(*d, mut referenced, mut assigned) } }
+	if kv := node.key_var { if voidptr(kv) != 0 { t.collect_vars_in_scope_rec(*kv, mut referenced, mut assigned) } }
+	if vv := node.value_var { if voidptr(vv) != 0 { t.collect_vars_in_scope_rec(*vv, mut referenced, mut assigned) } }
+	for init in node.init { t.collect_vars_in_scope_rec(init, mut referenced, mut assigned) }
+	for cond in node.conds { t.collect_vars_in_scope_rec(cond, mut referenced, mut assigned) }
+	for loop in node.loop { t.collect_vars_in_scope_rec(loop, mut referenced, mut assigned) }
+	for prop in node.props { t.collect_vars_in_scope_rec(prop, mut referenced, mut assigned) }
+	for use in node.uses { t.collect_vars_in_scope_rec(use, mut referenced, mut assigned) }
+	for v in node.vars { t.collect_vars_in_scope_rec(v, mut referenced, mut assigned) }
+	for p in node.parts { t.collect_vars_in_scope_rec(p, mut referenced, mut assigned) }
+}
+
 

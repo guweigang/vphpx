@@ -232,6 +232,8 @@ fn C.zend_hash_str_update(ht voidptr, key &char, len usize, pData voidptr) voidp
 fn C.zend_hash_next_index_insert(ht voidptr, pData voidptr) voidptr
 fn C.zend_hash_index_find(ht voidptr, h u64) &C.zval
 fn C.zend_hash_str_find(ht voidptr, key &char, len usize) &C.zval
+fn C.zend_hash_index_del(ht voidptr, h u64) int
+fn C.zend_hash_str_del(ht voidptr, key &char, len usize) int
 
 // ArrayItem 表示数组字面量的一个键值项
 pub struct ArrayItem {
@@ -345,6 +347,25 @@ pub fn (v PhpVal) array_isset(key PhpVal) bool {
 			return false
 		}
 		return (res_zval.u1.type_info & 0xff) != 1 // 1 is IS_NULL
+	}
+}
+
+// array_unset 物理删除数组中指定键对应的元素
+pub fn (v PhpVal) array_unset(key PhpVal) {
+	unsafe {
+		if !v.is_array() { return }
+		p_arr := &voidptr(&v.raw.value)
+		arr_ptr := *p_arr
+		if arr_ptr == 0 { return }
+		
+		typ := key.raw.u1.type_info & 0xff
+		if typ == 4 { // IS_LONG
+			h := key.to_i64()
+			C.zend_hash_index_del(arr_ptr, u64(h))
+		} else {
+			k_str := key.to_string()
+			C.zend_hash_str_del(arr_ptr, k_str.str, usize(k_str.len))
+		}
 	}
 }
 

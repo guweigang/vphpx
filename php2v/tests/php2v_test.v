@@ -158,6 +158,28 @@ fn test_transpiler_end_to_end() {
 			'rt.get_superglobal(\'_SERVER\')',
 			'.array_isset(',
 		]
+		'21_namespaces.php': [
+			'Class_App_Utils_Helper',
+			'Class_App_Core_Application',
+			'create_app_utils_helper()',
+			'create_app_core_application()',
+			'temp.method_info(',
+			'temp.method_init(',
+		]
+		'22_string_interpolation.php': [
+			'rt.concat(',
+			'rt.new_string(\'Hello \')',
+			'var_name',
+			'rt.new_string(\', next year you will be \')',
+			'var_age',
+			'rt.new_string(\' years old.\')',
+		]
+		'23_unset_empty.php': [
+			'rt.new_bool(!rt.is_true(',
+			'var_not_exist',
+			'var_d = rt.new_null()',
+			'var_arr.array_unset(',
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址

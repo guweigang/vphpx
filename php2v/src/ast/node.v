@@ -37,6 +37,8 @@ pub:
 	line       int      @[json: 'line']
 	consts     []ConstItem @[json: 'consts']
 	vars       []AstNode @[json: 'vars']
+	parts      []AstNode @[json: 'parts']
+	alias      string    @[json: 'alias']
 }
 
 pub struct ConstItem {
