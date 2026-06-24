@@ -353,6 +353,37 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			right := node.right or { panic('identical missing right') }
 			return 'rt.identical(${t.visit_expr(*left)}, ${t.visit_expr(*right)})'
 		}
+		ast.node_expr_boolean_not {
+			expr_node := node.expr or { panic('BooleanNot missing expr') }
+			return 'rt.new_bool(!rt.is_true(${t.visit_expr(*expr_node)}))'
+		}
+		ast.node_bin_bool_and, ast.node_bin_logical_and {
+			left := node.left or { panic('and missing left') }
+			right := node.right or { panic('and missing right') }
+			return 'rt.new_bool(rt.is_true(${t.visit_expr(*left)}) && rt.is_true(${t.visit_expr(*right)}))'
+		}
+		ast.node_bin_bool_or, ast.node_bin_logical_or {
+			left := node.left or { panic('or missing left') }
+			right := node.right or { panic('or missing right') }
+			return 'rt.new_bool(rt.is_true(${t.visit_expr(*left)}) || rt.is_true(${t.visit_expr(*right)}))'
+		}
+		ast.node_expr_ternary {
+			cond := node.cond or { panic('Ternary missing cond') }
+			cond_str := t.visit_expr(*cond)
+			if if_node := node.@if {
+				else_node := node.@else or { panic('Ternary missing else') }
+				return 'if rt.is_true(${cond_str}) { ${t.visit_expr(*if_node)} } else { ${t.visit_expr(*else_node)} }'
+			} else {
+				else_node := node.@else or { panic('Ternary missing else') }
+				return 'if rt.is_true(${cond_str}) { ${cond_str} } else { ${t.visit_expr(*else_node)} }'
+			}
+		}
+		ast.node_bin_coalesce {
+			left := node.left or { panic('Coalesce missing left') }
+			right := node.right or { panic('Coalesce missing right') }
+			left_str := t.visit_expr(*left)
+			return 'if !(${left_str}).is_null() { ${left_str} } else { ${t.visit_expr(*right)} }'
+		}
 		ast.node_expr_array {
 			mut item_strs := []string{}
 			for item in node.items {

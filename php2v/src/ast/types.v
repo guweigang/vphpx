@@ -34,6 +34,8 @@ pub const node_expr_array = 'Expr_Array'
 pub const node_expr_array_item = 'ArrayItem'
 pub const node_expr_array_dim_fetch = 'Expr_ArrayDimFetch'
 pub const node_expr_static_call = 'Expr_StaticCall'
+pub const node_expr_boolean_not = 'Expr_BooleanNot'
+pub const node_expr_ternary = 'Expr_Ternary'
 
 // 二元运算节点类型
 pub const node_bin_plus = 'Expr_BinaryOp_Plus'
@@ -48,6 +50,11 @@ pub const node_bin_greater_equal = 'Expr_BinaryOp_GreaterOrEqual'
 pub const node_bin_smaller_equal = 'Expr_BinaryOp_SmallerOrEqual'
 pub const node_bin_equal = 'Expr_BinaryOp_Equal'
 pub const node_bin_identical = 'Expr_BinaryOp_Identical'
+pub const node_bin_bool_and = 'Expr_BinaryOp_BooleanAnd'
+pub const node_bin_bool_or = 'Expr_BinaryOp_BooleanOr'
+pub const node_bin_logical_and = 'Expr_BinaryOp_LogicalAnd'
+pub const node_bin_logical_or = 'Expr_BinaryOp_LogicalOr'
+pub const node_bin_coalesce = 'Expr_BinaryOp_Coalesce'
 
 // 标量节点类型
 pub const node_scalar_int = 'Scalar_Int'

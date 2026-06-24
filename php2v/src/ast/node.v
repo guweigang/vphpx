@@ -12,6 +12,7 @@ pub:
 	stmts     []AstNode @[json: 'stmts']
 	elseifs   []AstNode @[json: 'elseifs']
 	@else     ?&AstNode @[json: 'else']
+	@if       ?&AstNode @[json: 'if']
 	value     string    @[json: 'value']
 	name      string    @[json: 'name']
 	params    []AstNode @[json: 'params']

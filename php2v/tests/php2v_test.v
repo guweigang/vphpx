@@ -136,6 +136,16 @@ fn test_transpiler_end_to_end() {
 			'fn create_dog(arg_0 rt.PhpVal, arg_1 rt.PhpVal) rt.PhpVal {',
 			'mut var_dog := create_dog(rt.new_string(\'Rex\'), rt.new_string(\'Labrador\'))',
 		]
+		'17_boolean_logical.php': [
+			'rt.new_bool(!rt.is_true(',
+			'&& rt.is_true(func_log_true(rt.new_string(\'right_true\'))',
+			'|| rt.is_true(func_log_true(rt.new_string(\'right_true\'))',
+		]
+		'18_ternary_coalesce.php': [
+			'if rt.is_true(rt.greater(',
+			'if rt.is_true(var_a) { var_a } else {',
+			'if !(var_b).is_null() { var_b } else {',
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址
