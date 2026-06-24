@@ -1,7 +1,7 @@
 module ast
 
 pub struct AstNode {
-pub:
+pub mut:
 	node_type string    @[json: 'nodeType']
 	exprs     []AstNode @[json: 'exprs']
 	expr      ?&AstNode @[json: 'expr']
@@ -36,10 +36,11 @@ pub:
 
 	props     []AstNode @[json: 'props']
 	uses      []AstNode @[json: 'uses']
-	incl_type string    @[json: 'type']
+	incl_type string   @[json: 'type']
 	class_name string   @[json: 'class']
 	extends    string   @[json: 'extends']
 	implements []string @[json: 'implements']
+	traits     []string @[json: 'traits']
 
 	line       int      @[json: 'line']
 	consts     []ConstItem @[json: 'consts']
@@ -53,4 +54,96 @@ pub:
 	node_type string   @[json: 'nodeType']
 	name      string   @[json: 'name']
 	value     AstNode  @[json: 'value']
+}
+
+fn clone_ptr(p ?&AstNode) ?&AstNode {
+	if val := p {
+		if voidptr(val) == 0 {
+			return none
+		}
+		return val.clone()
+	}
+	return none
+}
+
+pub fn (n &AstNode) clone() &AstNode {
+	mut exprs := []AstNode{}
+	for e in n.exprs { exprs << *e.clone() }
+	mut stmts := []AstNode{}
+	for s in n.stmts { stmts << *s.clone() }
+	mut elseifs := []AstNode{}
+	for ei in n.elseifs { elseifs << *ei.clone() }
+	mut catches := []AstNode{}
+	for c in n.catches { catches << *c.clone() }
+	mut params := []AstNode{}
+	for p in n.params { params << *p.clone() }
+	mut args := []AstNode{}
+	for a in n.args { args << *a.clone() }
+	mut items := []AstNode{}
+	for it in n.items { items << *it.clone() }
+	mut init := []AstNode{}
+	for i in n.init { init << *i.clone() }
+	mut conds := []AstNode{}
+	for cd in n.conds { conds << *cd.clone() }
+	mut cases := []AstNode{}
+	for cs in n.cases { cases << *cs.clone() }
+	mut arms := []AstNode{}
+	for am in n.arms { arms << *am.clone() }
+	mut loop_nodes := []AstNode{}
+	for l in n.loop { loop_nodes << *l.clone() }
+	mut props := []AstNode{}
+	for p in n.props { props << *p.clone() }
+	mut uses := []AstNode{}
+	for u in n.uses { uses << *u.clone() }
+	mut consts := []ConstItem{}
+	for c in n.consts { consts << ConstItem{ node_type: c.node_type, name: c.name, value: *c.value.clone() } }
+	mut vars := []AstNode{}
+	for v in n.vars { vars << *v.clone() }
+	mut parts := []AstNode{}
+	for p in n.parts { parts << *p.clone() }
+
+	return &AstNode{
+		node_type: n.node_type
+		exprs: exprs
+		expr: clone_ptr(n.expr)
+		var: clone_ptr(n.var)
+		left: clone_ptr(n.left)
+		right: clone_ptr(n.right)
+		cond: clone_ptr(n.cond)
+		stmts: stmts
+		elseifs: elseifs
+		@else: clone_ptr(n.@else)
+		@if: clone_ptr(n.@if)
+		catches: catches
+		finally: clone_ptr(n.finally)
+		types: n.types.clone()
+		value: n.value
+		name: n.name
+		params: params
+		args: args
+		by_ref: n.by_ref
+		items: items
+		key: clone_ptr(n.key)
+		dim: clone_ptr(n.dim)
+		key_var: clone_ptr(n.key_var)
+		value_var: clone_ptr(n.value_var)
+		init: init
+		conds: conds
+		cases: cases
+		arms: arms
+		body: clone_ptr(n.body)
+		loop: loop_nodes
+		props: props
+		uses: uses
+		incl_type: n.incl_type
+		class_name: n.class_name
+		extends: n.extends
+		implements: n.implements.clone()
+		traits: n.traits.clone()
+		line: n.line
+		consts: consts
+		vars: vars
+		parts: parts
+		alias: n.alias
+	}
 }

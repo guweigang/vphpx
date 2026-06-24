@@ -88,6 +88,8 @@ pub const node_scalar_magic_const_file = 'Scalar_MagicConst_File'
 pub const node_scalar_magic_const_line = 'Scalar_MagicConst_Line'
 pub const node_stmt_const = 'Stmt_Const'
 pub const node_stmt_class_const = 'Stmt_ClassConst'
+pub const node_stmt_trait = 'Stmt_Trait'
+pub const node_stmt_trait_use = 'Stmt_TraitUse'
 
 pub const node_stmt_try_catch = 'Stmt_TryCatch'
 pub const node_stmt_catch = 'Stmt_Catch'

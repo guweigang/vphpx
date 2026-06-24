@@ -46,6 +46,7 @@ pub mut:
 	switch_count int
 	pre_stmts []string
 	const_out strings.Builder
+	traits    map[string]ast.AstNode
 }
 
 pub fn Transpiler.new() Transpiler {
@@ -64,6 +65,7 @@ pub fn Transpiler.new() Transpiler {
 		use_aliases: map[string]string{}
 		switch_count: 0
 		pre_stmts: []string{}
+		traits: map[string]ast.AstNode{}
 	}
 }
 
@@ -72,14 +74,18 @@ pub fn Transpiler.new() Transpiler {
 
 // transpile 预扫描函数并遍历语句，返回生成的 V 代码
 pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
+	mut local_stmts := stmts.clone()
+	t.collect_traits(mut local_stmts)
+	t.apply_traits(mut local_stmts)
+
 	// 预扫描顶层自定义函数，登记到 custom_functions 中以支持任意顺序的调用
-	for stmt in stmts {
+	for stmt in local_stmts {
 		if stmt.node_type == ast.node_stmt_function {
 			t.custom_functions[stmt.name] = true
 		}
 	}
 
-	ref_vars, ass_vars := t.collect_vars_in_scope(stmts)
+	ref_vars, ass_vars := t.collect_vars_in_scope(local_stmts)
 	for v in ref_vars {
 		if v !in ass_vars && !t.scope.has_var(v) {
 			t.write_indent()
@@ -88,7 +94,7 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 		}
 	}
 
-	for stmt in stmts {
+	for stmt in local_stmts {
 		t.visit_stmt(stmt)
 	}
 
@@ -2187,6 +2193,58 @@ fn (mut t Transpiler) visit_switch(node ast.AstNode) {
 		}
 		t.write_indent()
 		t.write_line('}')
+	}
+}
+
+fn (mut t Transpiler) collect_traits(mut stmts []ast.AstNode) {
+	mut filtered := []ast.AstNode{}
+	for i in 0 .. stmts.len {
+		mut stmt := stmts[i]
+		if stmt.node_type == ast.node_stmt_trait {
+			t.traits[stmt.name] = *stmt.clone()
+		} else {
+			if stmt.node_type == ast.node_stmt_namespace {
+				t.collect_traits(mut stmts[i].stmts)
+			}
+			filtered << *stmts[i].clone()
+		}
+	}
+	for stmts.len > 0 {
+		stmts.delete(0)
+	}
+	for f in filtered {
+		stmts << f
+	}
+}
+
+fn (mut t Transpiler) apply_traits(mut stmts []ast.AstNode) {
+	for i in 0 .. stmts.len {
+		if stmts[i].node_type == ast.node_stmt_class {
+			mut new_class_stmts := []ast.AstNode{}
+			for j in 0 .. stmts[i].stmts.len {
+				class_stmt := stmts[i].stmts[j]
+				if class_stmt.node_type == ast.node_stmt_trait_use {
+					for trait_name in class_stmt.traits {
+						resolved_trait := t.resolve_class_name(trait_name)
+						if tr := t.traits[resolved_trait] {
+							for trait_member in tr.stmts {
+								new_class_stmts << *trait_member.clone()
+							}
+						}
+					}
+				} else {
+					new_class_stmts << *class_stmt.clone()
+				}
+			}
+			for stmts[i].stmts.len > 0 {
+				stmts[i].stmts.delete(0)
+			}
+			for ncs in new_class_stmts {
+				stmts[i].stmts << ncs
+			}
+		} else if stmts[i].node_type == ast.node_stmt_namespace {
+			t.apply_traits(mut stmts[i].stmts)
+		}
 	}
 }
 

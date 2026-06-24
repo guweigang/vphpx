@@ -232,6 +232,11 @@ fn test_transpiler_end_to_end() {
 			'rt.echo_val(rt.new_string(\'fl is Logger\\n\'))',
 			'call_method(var_fl, \'log\', [rt.new_string(\'hello\')])',
 		]
+		'31_oop_traits.php': [
+			'struct Class_User {',
+			'fn (mut this Class_User) method_sayhello(var_name rt.PhpVal) rt.PhpVal {',
+			'call_method(var_u, \'sayHello\', [rt.new_string(\'Alice\')])',
+		]
 
 
 
