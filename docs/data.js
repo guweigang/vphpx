@@ -6019,5 +6019,501 @@ window.PLAYGROUND_DATA = [
         ]
       }
     ]
+  },
+  {
+    "key": "29_class_constants",
+    "title": "29 Class Constants",
+    "filename": "29_class_constants.php",
+    "php": "<?php\nclass User {\n    const ROLE_ADMIN = \"admin\";\n    const ROLE_USER = \"user\";\n\n    public function getAdminRole() {\n        return self::ROLE_ADMIN;\n    }\n}\n\necho User::ROLE_ADMIN . \"\\n\";\n\n$u = new User();\necho $u->getAdminRole() . \"\\n\";\n",
+    "v": "import php2v.rt\n\nconst class_user_role_admin = rt.new_string('admin')\nconst class_user_role_user = rt.new_string('user')\nstruct Class_User {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_User) method_getadminrole() rt.PhpVal {\n\tmut var_this := rt.new_object('User', []string{}, &this)\n\treturn class_user_role_admin\n}\n\nfn create_user() rt.PhpVal {\n\tmut obj := &Class_User{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn rt.new_object('User', []string{}, obj)\n}\n\nfn (mut this Class_User) dispatch_method(method_name string, args []rt.PhpVal) rt.PhpVal {\n\tmatch method_name {\n\t\t'getAdminRole' { return this.method_getadminrole() }\n\t\telse {}\n\t}\n\treturn rt.new_null()\n}\n\nfn (this &Class_User) dispatch_get_prop(prop_name string) rt.PhpVal {\n\treturn rt.new_null()\n}\n\nfn (mut this Class_User) dispatch_set_prop(prop_name string, val rt.PhpVal) {\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn call_closure(cb rt.PhpVal, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.new_null()\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\trt.echo_val(rt.concat(class_user_role_admin, rt.new_string('\\n')))\n\tmut var_u := create_user()\n\trt.echo_val(rt.concat(call_method(var_u, 'getAdminRole', []rt.PhpVal{}), rt.new_string('\\n')))\n}\n",
+    "ast": [
+      {
+        "nodeType": "Stmt_Class",
+        "line": 2,
+        "attrGroups": [],
+        "flags": "0",
+        "name": "User",
+        "extends": null,
+        "implements": [],
+        "stmts": [
+          {
+            "nodeType": "Stmt_ClassConst",
+            "line": 3,
+            "attrGroups": [],
+            "flags": "0",
+            "type": null,
+            "consts": [
+              {
+                "nodeType": "Const",
+                "line": 3,
+                "name": "ROLE_ADMIN",
+                "value": {
+                  "nodeType": "Scalar_String",
+                  "line": 3,
+                  "value": "admin"
+                }
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_ClassConst",
+            "line": 4,
+            "attrGroups": [],
+            "flags": "0",
+            "type": null,
+            "consts": [
+              {
+                "nodeType": "Const",
+                "line": 4,
+                "name": "ROLE_USER",
+                "value": {
+                  "nodeType": "Scalar_String",
+                  "line": 4,
+                  "value": "user"
+                }
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_ClassMethod",
+            "line": 6,
+            "attrGroups": [],
+            "flags": "1",
+            "byRef": "false",
+            "name": "getAdminRole",
+            "params": [],
+            "returnType": null,
+            "stmts": [
+              {
+                "nodeType": "Stmt_Return",
+                "line": 7,
+                "expr": {
+                  "nodeType": "Expr_ClassConstFetch",
+                  "line": 7,
+                  "class": "self",
+                  "name": "ROLE_ADMIN"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 11,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 11,
+            "left": {
+              "nodeType": "Expr_ClassConstFetch",
+              "line": 11,
+              "class": "User",
+              "name": "ROLE_ADMIN"
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 11,
+              "value": "\n"
+            }
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 13,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 13,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 13,
+            "name": "u"
+          },
+          "expr": {
+            "nodeType": "Expr_New",
+            "line": 13,
+            "class": "User",
+            "args": []
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 14,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 14,
+            "left": {
+              "nodeType": "Expr_MethodCall",
+              "line": 14,
+              "var": {
+                "nodeType": "Expr_Variable",
+                "line": 14,
+                "name": "u"
+              },
+              "name": "getAdminRole",
+              "args": []
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 14,
+              "value": "\n"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "30_oop_interfaces",
+    "title": "30 Oop Interfaces",
+    "filename": "30_oop_interfaces.php",
+    "php": "<?php\n\ninterface Logger {\n    public function log($msg);\n}\n\nclass FileLogger implements Logger {\n    public function log($msg) {\n        echo \"LOG: \" . $msg . \"\\n\";\n    }\n}\n\n$fl = new FileLogger();\nif ($fl instanceof Logger) {\n    echo \"fl is Logger\\n\";\n} else {\n    echo \"fl is not Logger\\n\";\n}\n\n$fl->log(\"hello\");\n",
+    "v": "import php2v.rt\n\nstruct Class_FileLogger {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_FileLogger) method_log(var_msg rt.PhpVal) rt.PhpVal {\n\tmut var_this := rt.new_object('FileLogger', ['Logger'], &this)\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('LOG: '), var_msg), rt.new_string('\\n')))\n\treturn rt.new_null()\n}\n\nfn create_filelogger() rt.PhpVal {\n\tmut obj := &Class_FileLogger{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn rt.new_object('FileLogger', ['Logger'], obj)\n}\n\nfn (mut this Class_FileLogger) dispatch_method(method_name string, args []rt.PhpVal) rt.PhpVal {\n\tmatch method_name {\n\t\t'log' { return this.method_log(if args.len > 0 { args[0] } else { rt.new_null() }) }\n\t\telse {}\n\t}\n\treturn rt.new_null()\n}\n\nfn (this &Class_FileLogger) dispatch_get_prop(prop_name string) rt.PhpVal {\n\treturn rt.new_null()\n}\n\nfn (mut this Class_FileLogger) dispatch_set_prop(prop_name string, val rt.PhpVal) {\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn call_closure(cb rt.PhpVal, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.new_null()\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_msg := rt.new_null()\n\tmut var_fl := create_filelogger()\n\tif rt.is_true(rt.new_bool(rt.instance_of(var_fl, 'Logger'))) {\n\t\trt.echo_val(rt.new_string('fl is Logger\\n'))\n\t} else {\n\t\trt.echo_val(rt.new_string('fl is not Logger\\n'))\n\t}\n\tcall_method(var_fl, 'log', [rt.new_string('hello')])\n}\n",
+    "ast": [
+      {
+        "nodeType": "Stmt_Interface",
+        "line": 3,
+        "attrGroups": [],
+        "name": "Logger",
+        "extends": [],
+        "stmts": [
+          {
+            "nodeType": "Stmt_ClassMethod",
+            "line": 4,
+            "attrGroups": [],
+            "flags": "1",
+            "byRef": "false",
+            "name": "log",
+            "params": [
+              {
+                "nodeType": "Param",
+                "line": 4,
+                "attrGroups": [],
+                "flags": "0",
+                "type": null,
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 4,
+                  "name": "msg"
+                },
+                "default": null,
+                "hooks": []
+              }
+            ],
+            "returnType": null,
+            "stmts": null
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Class",
+        "line": 7,
+        "attrGroups": [],
+        "flags": "0",
+        "name": "FileLogger",
+        "extends": null,
+        "implements": [
+          "Logger"
+        ],
+        "stmts": [
+          {
+            "nodeType": "Stmt_ClassMethod",
+            "line": 8,
+            "attrGroups": [],
+            "flags": "1",
+            "byRef": "false",
+            "name": "log",
+            "params": [
+              {
+                "nodeType": "Param",
+                "line": 8,
+                "attrGroups": [],
+                "flags": "0",
+                "type": null,
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 8,
+                  "name": "msg"
+                },
+                "default": null,
+                "hooks": []
+              }
+            ],
+            "returnType": null,
+            "stmts": [
+              {
+                "nodeType": "Stmt_Echo",
+                "line": 9,
+                "exprs": [
+                  {
+                    "nodeType": "Expr_BinaryOp_Concat",
+                    "line": 9,
+                    "left": {
+                      "nodeType": "Expr_BinaryOp_Concat",
+                      "line": 9,
+                      "left": {
+                        "nodeType": "Scalar_String",
+                        "line": 9,
+                        "value": "LOG: "
+                      },
+                      "right": {
+                        "nodeType": "Expr_Variable",
+                        "line": 9,
+                        "name": "msg"
+                      }
+                    },
+                    "right": {
+                      "nodeType": "Scalar_String",
+                      "line": 9,
+                      "value": "\n"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 13,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 13,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 13,
+            "name": "fl"
+          },
+          "expr": {
+            "nodeType": "Expr_New",
+            "line": 13,
+            "class": "FileLogger",
+            "args": []
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_If",
+        "line": 14,
+        "cond": {
+          "nodeType": "Expr_Instanceof",
+          "line": 14,
+          "expr": {
+            "nodeType": "Expr_Variable",
+            "line": 14,
+            "name": "fl"
+          },
+          "class": "Logger"
+        },
+        "stmts": [
+          {
+            "nodeType": "Stmt_Echo",
+            "line": 15,
+            "exprs": [
+              {
+                "nodeType": "Scalar_String",
+                "line": 15,
+                "value": "fl is Logger\n"
+              }
+            ]
+          }
+        ],
+        "elseifs": [],
+        "else": {
+          "nodeType": "Stmt_Else",
+          "line": 16,
+          "stmts": [
+            {
+              "nodeType": "Stmt_Echo",
+              "line": 17,
+              "exprs": [
+                {
+                  "nodeType": "Scalar_String",
+                  "line": 17,
+                  "value": "fl is not Logger\n"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 20,
+        "expr": {
+          "nodeType": "Expr_MethodCall",
+          "line": 20,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 20,
+            "name": "fl"
+          },
+          "name": "log",
+          "args": [
+            {
+              "nodeType": "Arg",
+              "line": 20,
+              "name": null,
+              "expr": {
+                "nodeType": "Scalar_String",
+                "line": 20,
+                "value": "hello"
+              },
+              "byRef": "false",
+              "unpack": "false"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "key": "31_oop_traits",
+    "title": "31 Oop Traits",
+    "filename": "31_oop_traits.php",
+    "php": "<?php\n\ntrait MyTrait {\n    public function sayHello($name) {\n        echo \"Hello, \" . $name . \"\\n\";\n    }\n}\n\nclass User {\n    use MyTrait;\n}\n\n$u = new User();\n$u->sayHello(\"Alice\");\n",
+    "v": "import php2v.rt\n\nstruct Class_User {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_User) method_sayhello(var_name rt.PhpVal) rt.PhpVal {\n\tmut var_this := rt.new_object('User', []string{}, &this)\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('Hello, '), var_name), rt.new_string('\\n')))\n\treturn rt.new_null()\n}\n\nfn create_user() rt.PhpVal {\n\tmut obj := &Class_User{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn rt.new_object('User', []string{}, obj)\n}\n\nfn (mut this Class_User) dispatch_method(method_name string, args []rt.PhpVal) rt.PhpVal {\n\tmatch method_name {\n\t\t'sayHello' { return this.method_sayhello(if args.len > 0 { args[0] } else { rt.new_null() }) }\n\t\telse {}\n\t}\n\treturn rt.new_null()\n}\n\nfn (this &Class_User) dispatch_get_prop(prop_name string) rt.PhpVal {\n\treturn rt.new_null()\n}\n\nfn (mut this Class_User) dispatch_set_prop(prop_name string, val rt.PhpVal) {\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn call_closure(cb rt.PhpVal, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.new_null()\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_u := create_user()\n\tcall_method(var_u, 'sayHello', [rt.new_string('Alice')])\n}\n",
+    "ast": [
+      {
+        "nodeType": "Stmt_Trait",
+        "line": 3,
+        "attrGroups": [],
+        "name": "MyTrait",
+        "stmts": [
+          {
+            "nodeType": "Stmt_ClassMethod",
+            "line": 4,
+            "attrGroups": [],
+            "flags": "1",
+            "byRef": "false",
+            "name": "sayHello",
+            "params": [
+              {
+                "nodeType": "Param",
+                "line": 4,
+                "attrGroups": [],
+                "flags": "0",
+                "type": null,
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 4,
+                  "name": "name"
+                },
+                "default": null,
+                "hooks": []
+              }
+            ],
+            "returnType": null,
+            "stmts": [
+              {
+                "nodeType": "Stmt_Echo",
+                "line": 5,
+                "exprs": [
+                  {
+                    "nodeType": "Expr_BinaryOp_Concat",
+                    "line": 5,
+                    "left": {
+                      "nodeType": "Expr_BinaryOp_Concat",
+                      "line": 5,
+                      "left": {
+                        "nodeType": "Scalar_String",
+                        "line": 5,
+                        "value": "Hello, "
+                      },
+                      "right": {
+                        "nodeType": "Expr_Variable",
+                        "line": 5,
+                        "name": "name"
+                      }
+                    },
+                    "right": {
+                      "nodeType": "Scalar_String",
+                      "line": 5,
+                      "value": "\n"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Class",
+        "line": 9,
+        "attrGroups": [],
+        "flags": "0",
+        "name": "User",
+        "extends": null,
+        "implements": [],
+        "stmts": [
+          {
+            "nodeType": "Stmt_TraitUse",
+            "line": 10,
+            "traits": [
+              "MyTrait"
+            ],
+            "adaptations": []
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 13,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 13,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 13,
+            "name": "u"
+          },
+          "expr": {
+            "nodeType": "Expr_New",
+            "line": 13,
+            "class": "User",
+            "args": []
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 14,
+        "expr": {
+          "nodeType": "Expr_MethodCall",
+          "line": 14,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 14,
+            "name": "u"
+          },
+          "name": "sayHello",
+          "args": [
+            {
+              "nodeType": "Arg",
+              "line": 14,
+              "name": null,
+              "expr": {
+                "nodeType": "Scalar_String",
+                "line": 14,
+                "value": "Alice"
+              },
+              "byRef": "false",
+              "unpack": "false"
+            }
+          ]
+        }
+      }
+    ]
   }
 ];
