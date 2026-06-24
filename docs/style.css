@@ -606,6 +606,10 @@ pre[class*="language-"] code[class*="language-"] {
 }
 
 /* Custom Line Numbers Styling for Dark Mode */
+pre[class*="language-"].line-numbers {
+    padding-left: 3.8em !important;
+}
+
 .line-numbers .line-numbers-rows {
     border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
     padding: 16px 0 !important;
