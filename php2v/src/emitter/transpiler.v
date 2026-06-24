@@ -439,6 +439,7 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			}
 			
 			t.closures_code.writeln('struct ${class_name} {')
+			t.closures_code.writeln('\trt.PhpObjectBase')
 			t.closures_code.writeln('pub mut:')
 			for var_name in captured_vars {
 				t.closures_code.writeln('\tprop_${var_name} rt.PhpVal')
@@ -517,6 +518,7 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			t.find_captured_vars_rec(*expr_node, param_names, mut captured_vars)
 			
 			t.closures_code.writeln('struct ${class_name} {')
+			t.closures_code.writeln('\trt.PhpObjectBase')
 			t.closures_code.writeln('pub mut:')
 			for var_name in captured_vars {
 				t.closures_code.writeln('\tprop_${var_name} rt.PhpVal')
@@ -895,7 +897,7 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 		t.write_line('\tClass_${class_info.extends}')
 	} else {
 		// 无继承：嵌入基类
-		t.write_line('\tPhpObjectBase')
+		t.write_line('\trt.PhpObjectBase')
 	}
 	if class_info.props.len > 0 {
 		t.write_line('pub mut:')
@@ -964,7 +966,7 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 }
 
 // 递归生成嵌套的结构体初始化代码
-fn (mut t Transpiler) generate_struct_init(cls ClassInfo, outer_name string) {
+fn (mut t Transpiler) generate_struct_init(cls ClassInfo) {
 	if cls.extends.len > 0 {
 		// 有继承：先嵌套初始化父类
 		for parent_cls in t.classes {
@@ -972,7 +974,7 @@ fn (mut t Transpiler) generate_struct_init(cls ClassInfo, outer_name string) {
 				t.write_indent()
 				t.write_line('Class_${cls.extends}: Class_${cls.extends}{')
 				t.indent++
-				t.generate_struct_init(parent_cls, outer_name)
+				t.generate_struct_init(parent_cls)
 				t.indent--
 				t.write_indent()
 				t.write_line('}')
@@ -980,47 +982,9 @@ fn (mut t Transpiler) generate_struct_init(cls ClassInfo, outer_name string) {
 			}
 		}
 	} else {
-		// 最底层基类，初始化 PhpObjectBase 函数指针，实现运行时多态委托
+		// 最底层基类，初始化 rt.PhpObjectBase
 		t.write_indent()
-		t.write_line('PhpObjectBase: PhpObjectBase{')
-		t.indent++
-
-		t.write_indent()
-		t.write_line('dispatch_method: fn (ptr voidptr, method_name string, args []rt.PhpVal) rt.PhpVal {')
-		t.indent++
-		t.write_indent()
-		t.write_line('mut c := &Class_${outer_name}(ptr)')
-		t.write_indent()
-		t.write_line('return c.dispatch_method(method_name, args)')
-		t.indent--
-		t.write_indent()
-		t.write_line('}')
-
-		t.write_indent()
-		t.write_line('dispatch_get_prop: fn (ptr voidptr, prop_name string) rt.PhpVal {')
-		t.indent++
-		t.write_indent()
-		t.write_line('c := &Class_${outer_name}(ptr)')
-		t.write_indent()
-		t.write_line('return c.dispatch_get_prop(prop_name)')
-		t.indent--
-		t.write_indent()
-		t.write_line('}')
-
-		t.write_indent()
-		t.write_line('dispatch_set_prop: fn (ptr voidptr, prop_name string, val rt.PhpVal) {')
-		t.indent++
-		t.write_indent()
-		t.write_line('mut c := &Class_${outer_name}(ptr)')
-		t.write_indent()
-		t.write_line('c.dispatch_set_prop(prop_name, val)')
-		t.indent--
-		t.write_indent()
-		t.write_line('}')
-
-		t.indent--
-		t.write_indent()
-		t.write_line('}')
+		t.write_line('PhpObjectBase: rt.PhpObjectBase{}')
 	}
 	// 初始化本类自身的属性
 	for prop in cls.props {
@@ -1048,15 +1012,6 @@ fn (mut t Transpiler) generate_dispatchers() {
 		return
 	}
 
-	// 0. 生成 PhpObjectBase 基类，它包含用于多态派发的分发函数指针
-	t.write_line('struct PhpObjectBase {')
-	t.write_line('mut:')
-	t.write_line('\tdispatch_method   fn (ptr voidptr, method_name string, args []rt.PhpVal) rt.PhpVal = unsafe { nil }')
-	t.write_line('\tdispatch_get_prop fn (ptr voidptr, prop_name string) rt.PhpVal = unsafe { nil }')
-	t.write_line('\tdispatch_set_prop fn (ptr voidptr, prop_name string, val rt.PhpVal) = unsafe { nil }')
-	t.write_line('}')
-	t.write_line('')
-
 	// 1. 生成每个类的 create_ClassName 实例化辅助函数
 	for cls in t.classes {
 		// 在 all_methods 中查找构造函数
@@ -1083,7 +1038,7 @@ fn (mut t Transpiler) generate_dispatchers() {
 		// 嵌套初始化
 		t.write_line('mut obj := &Class_${cls.name}{')
 		t.indent++
-		t.generate_struct_init(cls, cls.name)
+		t.generate_struct_init(cls)
 		t.indent--
 		t.write_indent()
 		t.write_line('}')
@@ -1170,68 +1125,19 @@ fn (mut t Transpiler) generate_dispatchers() {
 		t.write_line('')
 	}
 
-	// 3. 全局路由分发器，利用基类函数指针实现极简的多态委托
+	// 3. 极简的全局路由分发器桥接
 	t.write_line('fn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {')
-	t.indent++
-	t.write_indent()
-	t.write_line('if !obj.is_object() { return rt.new_null() }')
-	t.write_indent()
-	t.write_line('obj_info := obj.get_object()')
-	t.write_indent()
-	t.write_line('base := &PhpObjectBase(obj_info.ptr)')
-	t.write_indent()
-	t.write_line('if base.dispatch_method != unsafe { nil } {')
-	t.indent++
-	t.write_indent()
-	t.write_line('return base.dispatch_method(obj_info.ptr, method_name, args)')
-	t.indent--
-	t.write_indent()
-	t.write_line('}')
-	t.write_indent()
-	t.write_line('return rt.new_null()')
-	t.indent--
+	t.write_line('\treturn rt.call_method(obj, method_name, args)')
 	t.write_line('}')
 	t.write_line('')
 
 	t.write_line('fn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {')
-	t.indent++
-	t.write_indent()
-	t.write_line('if !obj.is_object() { return rt.new_null() }')
-	t.write_indent()
-	t.write_line('obj_info := obj.get_object()')
-	t.write_indent()
-	t.write_line('base := &PhpObjectBase(obj_info.ptr)')
-	t.write_indent()
-	t.write_line('if base.dispatch_get_prop != unsafe { nil } {')
-	t.indent++
-	t.write_indent()
-	t.write_line('return base.dispatch_get_prop(obj_info.ptr, prop_name)')
-	t.indent--
-	t.write_indent()
-	t.write_line('}')
-	t.write_indent()
-	t.write_line('return rt.new_null()')
-	t.indent--
+	t.write_line('\treturn rt.get_property(obj, prop_name)')
 	t.write_line('}')
 	t.write_line('')
 
 	t.write_line('fn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {')
-	t.indent++
-	t.write_indent()
-	t.write_line('if !obj.is_object() { return }')
-	t.write_indent()
-	t.write_line('obj_info := obj.get_object()')
-	t.write_indent()
-	t.write_line('mut base := &PhpObjectBase(obj_info.ptr)')
-	t.write_indent()
-	t.write_line('if base.dispatch_set_prop != unsafe { nil } {')
-	t.indent++
-	t.write_indent()
-	t.write_line('base.dispatch_set_prop(obj_info.ptr, prop_name, val)')
-	t.indent--
-	t.write_indent()
-	t.write_line('}')
-	t.indent--
+	t.write_line('\trt.set_property(obj, prop_name, val)')
 	t.write_line('}')
 	t.write_line('')
 
@@ -1253,12 +1159,13 @@ fn (mut t Transpiler) generate_call_closure() {
 	}
 	
 	t.write_line('\tif !cb.is_object() { return rt.new_null() }')
-	t.write_line('\tobj_info := cb.get_object()')
+	t.write_line('\tmut obj_info := cb.get_object()')
 	t.write_line('\tmatch obj_info.class_name {')
 	for name in t.closure_names {
 		t.write_line('\t\t\'${name}\' {')
-		t.write_line('\t\t\tmut c_obj := &${name}(obj_info.ptr)')
-		t.write_line('\t\t\treturn c_obj.invoke(args)')
+		t.write_line('\t\t\tif mut obj_info.obj is ${name} {')
+		t.write_line('\t\t\t\treturn obj_info.obj.invoke(args)')
+		t.write_line('\t\t\t}')
 		t.write_line('\t\t}')
 	}
 	t.write_line('\t\telse {}')

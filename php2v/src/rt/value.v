@@ -393,26 +393,68 @@ pub fn (mut it ArrayIterator) next() ?IterItem {
 	}
 }
 
+// IPhpObject 接口，提供动态的多态方法/属性路由契约
+pub interface IPhpObject {
+mut:
+	dispatch_method(method_name string, args []PhpVal) PhpVal
+	dispatch_get_prop(prop_name string) PhpVal
+	dispatch_set_prop(prop_name string, val PhpVal)
+}
+
+// PhpObjectBase 结构体可作为 PHP 类的通用嵌入基类，提供默认实现以隐式实现 IPhpObject
+pub struct PhpObjectBase {}
+
+pub fn (mut this PhpObjectBase) dispatch_method(method_name string, args []PhpVal) PhpVal {
+	return new_null()
+}
+
+pub fn (this &PhpObjectBase) dispatch_get_prop(prop_name string) PhpVal {
+	return new_null()
+}
+
+pub fn (mut this PhpObjectBase) dispatch_set_prop(prop_name string, val PhpVal) {}
+
 // PhpObject 承载 AOT 中的 PHP 对象
 pub struct PhpObject {
 pub mut:
 	class_name string
-	ptr        voidptr
+	obj        IPhpObject
 }
 
-// new_object 将 V 结构体指针及类名封装为弱类型的 PhpVal
-pub fn new_object(class_name string, ptr voidptr) PhpVal {
+// new_object 将实现 IPhpObject 接口的结构体及类名封装为弱类型的 PhpVal
+pub fn new_object(class_name string, obj IPhpObject) PhpVal {
 	z := new_zval()
 	unsafe {
-		mut obj := &PhpObject(malloc(int(sizeof(PhpObject))))
-		obj.class_name = class_name
-		obj.ptr = ptr
+		mut p_obj := &PhpObject(malloc(int(sizeof(PhpObject))))
+		p_obj.class_name = class_name
+		p_obj.obj = obj
 		
 		mut p := &voidptr(&z.value)
-		*p = obj
+		*p = p_obj
 		z.u1.type_info = 8 // IS_OBJECT
 	}
 	return PhpVal{ raw: z }
+}
+
+// call_method 公共运行时分发器，基于 IPhpObject 接口实现多态派发
+pub fn call_method(obj PhpVal, method_name string, args []PhpVal) PhpVal {
+	if !obj.is_object() { return new_null() }
+	mut obj_info := obj.get_object()
+	return obj_info.obj.dispatch_method(method_name, args)
+}
+
+// get_property 公共运行时分发器
+pub fn get_property(obj PhpVal, prop_name string) PhpVal {
+	if !obj.is_object() { return new_null() }
+	mut obj_info := obj.get_object()
+	return obj_info.obj.dispatch_get_prop(prop_name)
+}
+
+// set_property 公共运行时分发器
+pub fn set_property(obj PhpVal, prop_name string, val PhpVal) {
+	if !obj.is_object() { return }
+	mut obj_info := obj.get_object()
+	obj_info.obj.dispatch_set_prop(prop_name, val)
 }
 
 pub fn (v PhpVal) is_object() bool {
