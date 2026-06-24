@@ -4,6 +4,9 @@
 #include <php.h>
 #include "zts_def.h"
 
+static zval php2v_active_exception;
+static int php2v_has_active_exception = 0;
+
 static inline int php2v_hash_get_entry(void *ht, uint32_t index, zval **val, zend_string **key, zend_ulong *num_key) {
 	php2v_update_tsrm_cache();
 	HashTable *arr = (HashTable *)ht;
@@ -39,6 +42,26 @@ static inline int php2v_call_zend_function(const char *name, size_t name_len, zv
 	int res = call_user_function(EG(function_table), NULL, &func_zval, retval, param_count, z_args);
 	
 	zend_string_release(zstr_name);
+	return res;
+}
+
+// php2v_call_method 动态在对象中查找并调用方法
+static inline int php2v_call_method(zval *obj, const char *method_name, size_t method_len, zval *retval, uint32_t param_count, zval **params) {
+	php2v_update_tsrm_cache();
+	zval method_zval;
+	ZVAL_STRINGL(&method_zval, method_name, method_len);
+	
+	zval *z_args = NULL;
+	if (param_count > 0) {
+		z_args = (zval *)alloca(param_count * sizeof(zval));
+		for (uint32_t i = 0; i < param_count; i++) {
+			z_args[i] = *(params[i]);
+		}
+	}
+	
+	int res = call_user_function(EG(function_table), obj, &method_zval, retval, param_count, z_args);
+	
+	zval_ptr_dtor(&method_zval);
 	return res;
 }
 
@@ -113,6 +136,64 @@ static inline int php2v_get_constant(const char *name, size_t name_len, zval *re
 	zend_throw_error(NULL, "Undefined constant \"%s\"", name);
 	ZVAL_NULL(retval);
 	return 0;
+}
+
+static inline int php2v_has_exception() {
+	php2v_update_tsrm_cache();
+	return php2v_has_active_exception || (EG(exception) != NULL);
+}
+
+static inline void php2v_get_and_clear_exception(zval *retval) {
+	php2v_update_tsrm_cache();
+	if (php2v_has_active_exception) {
+		ZVAL_COPY(retval, &php2v_active_exception);
+		zval_ptr_dtor(&php2v_active_exception);
+		ZVAL_UNDEF(&php2v_active_exception);
+		php2v_has_active_exception = 0;
+	} else if (EG(exception)) {
+		ZVAL_OBJ(retval, EG(exception));
+		EG(exception) = NULL;
+	} else {
+		ZVAL_NULL(retval);
+	}
+}
+
+static inline void php2v_throw_exception_object(zval *ex) {
+	php2v_update_tsrm_cache();
+	if (ex) {
+		ZVAL_COPY(&php2v_active_exception, ex);
+		php2v_has_active_exception = 1;
+	}
+}
+
+static inline int php2v_get_superglobal(const char *name, size_t name_len, zval *retval) {
+	php2v_update_tsrm_cache();
+	zend_string *zstr = zend_string_init(name, name_len, 0);
+	zval *val = zend_hash_find(&EG(symbol_table), zstr);
+	zend_string_release(zstr);
+	if (val) {
+		ZVAL_COPY(retval, val);
+		return 1;
+	}
+	ZVAL_NULL(retval);
+	return 0;
+}
+
+static inline void php2v_register_global(const char *name, size_t name_len, zval *val) {
+	php2v_update_tsrm_cache();
+	zend_string *zstr = zend_string_init(name, name_len, 0);
+	zend_hash_update(&EG(symbol_table), zstr, val);
+	zend_string_release(zstr);
+}
+
+static inline int php2v_instance_of(zval *obj, const char *class_name, size_t name_len) {
+	php2v_update_tsrm_cache();
+	if (!obj || Z_TYPE_P(obj) != IS_OBJECT) return 0;
+	zend_string *zstr = zend_string_init(class_name, name_len, 0);
+	zend_class_entry *ce = zend_lookup_class(zstr);
+	zend_string_release(zstr);
+	if (!ce) return 0;
+	return instanceof_function(Z_OBJCE_P(obj), ce);
 }
 
 #endif

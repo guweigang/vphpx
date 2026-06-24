@@ -64,3 +64,8 @@ pub const node_scalar_magic_const_dir = 'Scalar_MagicConst_Dir'
 pub const node_scalar_magic_const_file = 'Scalar_MagicConst_File'
 pub const node_scalar_magic_const_line = 'Scalar_MagicConst_Line'
 pub const node_stmt_const = 'Stmt_Const'
+pub const node_stmt_try_catch = 'Stmt_TryCatch'
+pub const node_stmt_catch = 'Stmt_Catch'
+pub const node_expr_throw = 'Expr_Throw'
+pub const node_expr_isset = 'Expr_Isset'
+

@@ -323,6 +323,31 @@ pub fn (v PhpVal) array_get(key PhpVal) PhpVal {
 	}
 }
 
+// array_isset 检查数组中指定键对应的元素是否存在且不为 null
+pub fn (v PhpVal) array_isset(key PhpVal) bool {
+	unsafe {
+		if !v.is_array() { return false }
+		p_arr := &voidptr(&v.raw.value)
+		arr_ptr := *p_arr
+		if arr_ptr == 0 { return false }
+		
+		typ := key.raw.u1.type_info & 0xff
+		mut res_zval := &C.zval(nil)
+		if typ == 4 { // IS_LONG
+			h := key.to_i64()
+			res_zval = C.zend_hash_index_find(arr_ptr, u64(h))
+		} else {
+			k_str := key.to_string()
+			res_zval = C.zend_hash_str_find(arr_ptr, k_str.str, usize(k_str.len))
+		}
+		
+		if res_zval == 0 {
+			return false
+		}
+		return (res_zval.u1.type_info & 0xff) != 1 // 1 is IS_NULL
+	}
+}
+
 // ArrayIterator 包装了对 PHP 数组的外部迭代状态
 pub struct ArrayIterator {
 pub mut:
@@ -414,19 +439,25 @@ pub fn (this &PhpObjectBase) dispatch_get_prop(prop_name string) PhpVal {
 
 pub fn (mut this PhpObjectBase) dispatch_set_prop(prop_name string, val PhpVal) {}
 
+pub const magic_php_object = u64(0x56504850585F4F42)
+
 // PhpObject 承载 AOT 中的 PHP 对象
 pub struct PhpObject {
 pub mut:
+	magic      u64
 	class_name string
+	parents    []string
 	obj        IPhpObject
 }
 
 // new_object 将实现 IPhpObject 接口的结构体及类名封装为弱类型的 PhpVal
-pub fn new_object(class_name string, obj IPhpObject) PhpVal {
+pub fn new_object(class_name string, parents []string, obj IPhpObject) PhpVal {
 	z := new_zval()
 	unsafe {
 		mut p_obj := &PhpObject(malloc(int(sizeof(PhpObject))))
+		p_obj.magic = magic_php_object
 		p_obj.class_name = class_name
+		p_obj.parents = parents
 		p_obj.obj = obj
 		
 		mut p := &voidptr(&z.value)
@@ -440,6 +471,15 @@ pub fn new_object(class_name string, obj IPhpObject) PhpVal {
 pub fn call_method(obj PhpVal, method_name string, args []PhpVal) PhpVal {
 	if !obj.is_object() { return new_null() }
 	mut obj_info := obj.get_object()
+	if voidptr(obj_info) == 0 {
+		z := new_zval()
+		mut raw_args := []&C.zval{}
+		for a in args {
+			raw_args << a.raw
+		}
+		C.php2v_call_method(obj.raw, method_name.str, usize(method_name.len), z, u32(args.len), raw_args.data)
+		return PhpVal{ raw: z }
+	}
 	return obj_info.obj.dispatch_method(method_name, args)
 }
 
@@ -447,6 +487,9 @@ pub fn call_method(obj PhpVal, method_name string, args []PhpVal) PhpVal {
 pub fn get_property(obj PhpVal, prop_name string) PhpVal {
 	if !obj.is_object() { return new_null() }
 	mut obj_info := obj.get_object()
+	if voidptr(obj_info) == 0 {
+		return new_null()
+	}
 	return obj_info.obj.dispatch_get_prop(prop_name)
 }
 
@@ -454,6 +497,9 @@ pub fn get_property(obj PhpVal, prop_name string) PhpVal {
 pub fn set_property(obj PhpVal, prop_name string, val PhpVal) {
 	if !obj.is_object() { return }
 	mut obj_info := obj.get_object()
+	if voidptr(obj_info) == 0 {
+		return
+	}
 	obj_info.obj.dispatch_set_prop(prop_name, val)
 }
 
@@ -464,7 +510,63 @@ pub fn (v PhpVal) is_object() bool {
 pub fn (v PhpVal) get_object() &PhpObject {
 	unsafe {
 		if !v.is_object() { return &PhpObject(nil) }
-		p := &voidptr(&v.raw.value)
-		return &PhpObject(*p)
+		p_ptr := &voidptr(&v.raw.value)
+		p := *p_ptr
+		if p == 0 { return &PhpObject(nil) }
+		p_obj := &PhpObject(p)
+		if p_obj.magic == magic_php_object {
+			return p_obj
+		}
+		return &PhpObject(nil)
 	}
+}
+
+// Exception & Superglobal FFI Bindings
+fn C.php2v_has_exception() int
+fn C.php2v_get_and_clear_exception(retval &C.zval)
+fn C.php2v_throw_exception_object(ex &C.zval)
+fn C.php2v_get_superglobal(name &char, len usize, retval &C.zval) int
+fn C.php2v_register_global(name &char, len usize, val &C.zval)
+fn C.php2v_instance_of(obj &C.zval, class_name &char, len usize) int
+fn C.php2v_call_method(obj &C.zval, name &char, len usize, retval &C.zval, param_count u32, params voidptr) int
+
+pub fn has_exception() bool {
+	return C.php2v_has_exception() != 0
+}
+
+pub fn get_and_clear_exception() PhpVal {
+	z := new_zval()
+	C.php2v_get_and_clear_exception(z)
+	return PhpVal{ raw: z }
+}
+
+pub fn throw_exception(ex PhpVal) {
+	C.php2v_throw_exception_object(ex.raw)
+}
+
+pub fn get_superglobal(name string) PhpVal {
+	z := new_zval()
+	C.php2v_get_superglobal(name.str, usize(name.len), z)
+	return PhpVal{ raw: z }
+}
+
+pub fn register_global(name string, val PhpVal) {
+	C.php2v_register_global(name.str, usize(name.len), val.raw)
+}
+
+pub fn instance_of(obj PhpVal, class_name string) bool {
+	if !obj.is_object() { return false }
+	mut obj_info := obj.get_object()
+	if voidptr(obj_info) == 0 {
+		return C.php2v_instance_of(obj.raw, class_name.str, usize(class_name.len)) != 0
+	}
+	if obj_info.class_name == class_name {
+		return true
+	}
+	for parent in obj_info.parents {
+		if parent == class_name {
+			return true
+		}
+	}
+	return false
 }

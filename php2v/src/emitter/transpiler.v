@@ -35,6 +35,10 @@ pub mut:
 	classes          []ClassInfo
 	current_class    string // 当前正在转译的类名（用于 parent:: 解析）
 	current_file     string
+	try_count        int
+	current_catch_label string // 当前语句所属 of the try-catch block's catch label
+	current_finally_label string // 当前语句所属 of the try-catch block's finally label
+	undeclared_classes map[string]bool
 }
 
 pub fn Transpiler.new() Transpiler {
@@ -47,6 +51,7 @@ pub fn Transpiler.new() Transpiler {
 		custom_functions: map[string]bool{}
 		classes:          []ClassInfo{}
 		current_file:     ''
+		undeclared_classes: map[string]bool{}
 	}
 }
 
@@ -62,6 +67,75 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 	for stmt in stmts {
 		t.visit_stmt(stmt)
 	}
+
+	// 补全在转译中遇到的未显式声明的类（如 Exception 等内置类）
+	old_is_in_func := t.is_in_func
+	t.is_in_func = true
+	for name, _ in t.undeclared_classes {
+		mut exists := false
+		for cls in t.classes {
+			if cls.name == name {
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			mut new_cls := ClassInfo{
+				name: name
+				extends: ''
+				methods: []MethodInfo{}
+				props: []string{}
+				all_props: []string{}
+				all_methods: []MethodInfo{}
+			}
+			if name == 'Exception' {
+				new_cls.props << ['message', 'code', 'file', 'line']
+				new_cls.methods << MethodInfo{ name: '__construct', param_count: 1 }
+				new_cls.methods << MethodInfo{ name: 'getMessage', param_count: 0 }
+			}
+			new_cls.all_props = new_cls.props.clone()
+			new_cls.all_methods = new_cls.methods.clone()
+			t.classes << new_cls
+			
+			t.write_line('struct Class_${name} {')
+			t.write_line('\trt.PhpObjectBase')
+			if new_cls.props.len > 0 {
+				t.write_line('pub mut:')
+				t.indent++
+				for prop in new_cls.props {
+					t.write_indent()
+					t.write_line('prop_${prop} rt.PhpVal')
+				}
+				t.indent--
+			}
+			t.write_line('}')
+			t.write_line('')
+
+			if name == 'Exception' {
+				old_indent := t.indent
+				t.indent = 0
+				t.write_line('fn (mut this Class_Exception) method___construct(var_message rt.PhpVal) rt.PhpVal {')
+				t.indent++
+				t.write_indent()
+				t.write_line('this.prop_message = var_message')
+				t.write_indent()
+				t.write_line('return rt.new_null()')
+				t.indent--
+				t.write_line('}')
+				t.write_line('')
+
+				t.write_line('fn (mut this Class_Exception) method_getmessage() rt.PhpVal {')
+				t.indent++
+				t.write_indent()
+				t.write_line('return this.prop_message')
+				t.indent--
+				t.write_line('}')
+				t.write_line('')
+				t.indent = old_indent
+			}
+		}
+	}
+	t.is_in_func = old_is_in_func
 	
 	t.generate_dispatchers()
 	
@@ -149,10 +223,18 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 		ast.node_stmt_const {
 			t.visit_const(node)
 		}
+		ast.node_stmt_try_catch {
+			t.visit_try_catch(node)
+		}
 		else {
 			t.write_indent()
 			t.write_line('// unsupported statement: ${node.node_type}')
 		}
+	}
+	
+	if t.current_catch_label != '' && node.node_type != ast.node_stmt_return && node.node_type != ast.node_stmt_try_catch {
+		t.write_indent()
+		t.write_line('if rt.has_exception() { unsafe { goto ${t.current_catch_label} } }')
 	}
 }
 
@@ -164,10 +246,149 @@ fn (mut t Transpiler) visit_const(node ast.AstNode) {
 	}
 }
 
+fn (mut t Transpiler) visit_try_catch(node ast.AstNode) {
+	t.try_count++
+	my_id := t.try_count
+	catch_label := 'catch_label_${my_id}'
+	finally_label := 'finally_label_${my_id}'
+	end_label := 'end_label_${my_id}'
+
+	old_catch := t.current_catch_label
+	old_finally := t.current_finally_label
+
+	t.current_catch_label = catch_label
+	t.current_finally_label = finally_label
+
+	for stmt in node.stmts {
+		t.visit_stmt(stmt)
+	}
+
+	t.write_indent()
+	if node.finally != none {
+		t.write_line('unsafe { goto ${finally_label} }')
+	} else {
+		t.write_line('unsafe { goto ${end_label} }')
+	}
+
+	t.current_catch_label = old_catch
+	t.current_finally_label = old_finally
+
+	t.write_line('')
+	t.write_line('${catch_label}:')
+	t.write_indent()
+	t.write_line('mut var_e_${my_id} := rt.get_and_clear_exception()')
+
+	mut is_first_catch := true
+	for c in node.catches {
+		mut type_checks := []string{}
+		for typ in c.types {
+			type_checks << "rt.instance_of(var_e_${my_id}, '${typ}')"
+		}
+		t.write_indent()
+		if type_checks.len > 0 {
+			type_expr := type_checks.join(" || ")
+			if is_first_catch {
+				t.write_string('if ${type_expr} {')
+				is_first_catch = false
+			} else {
+				t.write_string('else if ${type_expr} {')
+			}
+		} else {
+			if is_first_catch {
+				t.write_string('if true {')
+				is_first_catch = false
+			} else {
+				t.write_string('else if true {')
+			}
+		}
+		t.write_line('')
+		t.indent++
+
+		if var_node := c.var {
+			t.scope.declare(var_node.name)
+			t.write_indent()
+			t.write_line('mut var_${var_node.name} := var_e_${my_id}.dup()')
+		}
+
+		for catch_stmt in c.stmts {
+			t.visit_stmt(catch_stmt)
+		}
+
+		t.write_indent()
+		if node.finally != none {
+			t.write_line('unsafe { goto ${finally_label} }')
+		} else {
+			t.write_line('unsafe { goto ${end_label} }')
+		}
+		t.indent--
+		t.write_indent()
+		t.write_line('}')
+	}
+
+	if node.catches.len > 0 {
+		t.write_indent()
+		t.write_line('else {')
+		t.indent++
+		t.write_indent()
+		t.write_line('rt.throw_exception(var_e_${my_id})')
+		t.write_indent()
+		if node.finally != none {
+			t.write_line('unsafe { goto ${finally_label} }')
+		} else {
+			t.write_line('unsafe { goto ${end_label} }')
+		}
+		t.indent--
+		t.write_indent()
+		t.write_line('}')
+	}
+
+	if f_node := node.finally {
+		t.write_line('')
+		t.write_line('${finally_label}:')
+		for f_stmt in f_node.stmts {
+			t.visit_stmt(f_stmt)
+		}
+		t.write_indent()
+		t.write_line('if rt.has_exception() { return rt.new_null() }')
+	}
+
+	t.write_line('')
+	t.write_line('${end_label}:')
+}
+
+
+
 fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 	match node.node_type {
+		ast.node_expr_isset {
+			mut checks := []string{}
+			for v in node.vars {
+				if v.node_type == ast.node_expr_array_dim_fetch {
+					arr_node := v.var or { panic('ArrayDimFetch missing var') }
+					dim_node := v.dim or { panic('ArrayDimFetch missing dim') }
+					arr_str := t.visit_expr(*arr_node)
+					dim_str := t.visit_expr(*dim_node)
+					checks << '${arr_str}.array_isset(${dim_str})'
+				} else {
+					var_str := t.visit_expr(v)
+					checks << '!(${var_str}).is_null()'
+				}
+			}
+			if checks.len == 0 {
+				return 'rt.new_bool(false)'
+			}
+			return 'rt.new_bool(${checks.join(" && ")})'
+		}
 		ast.node_expr_variable {
+			if node.name in ['_GET', '_POST', '_SERVER', '_COOKIE', '_SESSION', '_REQUEST', '_ENV'] {
+				return 'rt.get_superglobal(\'${node.name}\')'
+			}
 			return 'var_${node.name}'
+		}
+		ast.node_expr_throw {
+			expr_node := node.expr or { panic('Throw missing expr') }
+			expr_str := t.visit_expr(*expr_node)
+			return 'rt.throw_exception(${expr_str})'
 		}
 		ast.node_scalar_int {
 			return 'rt.new_int(${node.value})'
@@ -414,6 +635,7 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 		}
 		ast.node_expr_new {
 			class_name := node.class_name
+			t.undeclared_classes[class_name] = true
 			mut arg_strs := []string{}
 			for arg in node.args {
 				arg_val := arg.expr or { panic('Arg missing expr') }
@@ -530,7 +752,7 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			for var_name in captured_vars {
 				init_fields << 'prop_${var_name}: var_${var_name}.dup()'
 			}
-			return 'rt.new_object(\'${class_name}\', &${class_name}{ ${init_fields.join(", ")} })'
+			return 'rt.new_object(\'${class_name}\', [\'Closure\'], &${class_name}{ ${init_fields.join(", ")} })'
 		}
 		ast.node_expr_arrow_function {
 			t.closure_count++
@@ -600,7 +822,7 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			for var_name in captured_vars {
 				init_fields << 'prop_${var_name}: var_${var_name}.dup()'
 			}
-			return 'rt.new_object(\'${class_name}\', &${class_name}{ ${init_fields.join(", ")} })'
+			return 'rt.new_object(\'${class_name}\', [\'Closure\'], &${class_name}{ ${init_fields.join(", ")} })'
 		}
 		ast.node_expr_include {
 			path_node := node.expr or { panic('Include missing expr') }
@@ -878,6 +1100,7 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 	}
 	
 	mut own_method_names := map[string]bool{}
+	mut own_method_names_originally := map[string]bool{}
 	for stmt in node.stmts {
 		if stmt.node_type == ast.node_stmt_property {
 			for prop in stmt.props {
@@ -889,21 +1112,66 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 				param_count: stmt.params.len
 			}
 			own_method_names[stmt.name] = true
+			own_method_names_originally[stmt.name] = true
 		}
 	}
 	
+	// 检查是否继承了 Exception 内置类
+	mut is_exception_subclass := false
+	mut temp_extends := class_info.extends
+	for temp_extends != '' {
+		if temp_extends == 'Exception' {
+			is_exception_subclass = true
+			break
+		}
+		mut found := false
+		for p_cls in t.classes {
+			if p_cls.name == temp_extends {
+				temp_extends = p_cls.extends
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.undeclared_classes[temp_extends] = true
+			break
+		}
+	}
+
+	if is_exception_subclass {
+		if 'message' !in class_info.props { class_info.props << 'message' }
+		if 'code' !in class_info.props { class_info.props << 'code' }
+		if 'file' !in class_info.props { class_info.props << 'file' }
+		if 'line' !in class_info.props { class_info.props << 'line' }
+		
+		if '__construct' !in own_method_names {
+			class_info.methods << MethodInfo{
+				name: '__construct'
+				param_count: 1
+			}
+			own_method_names['__construct'] = true
+		}
+		if 'getMessage' !in own_method_names {
+			class_info.methods << MethodInfo{
+				name: 'getMessage'
+				param_count: 0
+			}
+			own_method_names['getMessage'] = true
+		}
+	}
+
 	// 构建 all_props / all_methods（含继承），用于 dispatch 生成
 	if class_info.extends.len > 0 {
+		mut parent_exists := false
 		for parent_cls in t.classes {
 			if parent_cls.name == class_info.extends {
-				// all_props = 父类全部属性 + 子类自身属性
+				parent_exists = true
 				for p in parent_cls.all_props {
 					class_info.all_props << p
 				}
 				for p in class_info.props {
 					class_info.all_props << p
 				}
-				// all_methods = 子类自身方法 + 父类未被覆写的方法
 				for m in class_info.methods {
 					class_info.all_methods << m
 				}
@@ -915,6 +1183,10 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 				break
 			}
 		}
+		if !parent_exists {
+			class_info.all_props = class_info.props.clone()
+			class_info.all_methods = class_info.methods.clone()
+		}
 	} else {
 		class_info.all_props = class_info.props.clone()
 		class_info.all_methods = class_info.methods.clone()
@@ -924,10 +1196,19 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 	// 生成结构体定义（V struct embedding 方式）
 	t.write_line('struct Class_${node.name} {')
 	if class_info.extends.len > 0 {
-		// 有继承：嵌入父类 struct
-		t.write_line('\tClass_${class_info.extends}')
+		mut parent_exists := false
+		for p_cls in t.classes {
+			if p_cls.name == class_info.extends {
+				parent_exists = true
+				break
+			}
+		}
+		if parent_exists {
+			t.write_line('\tClass_${class_info.extends}')
+		} else {
+			t.write_line('\trt.PhpObjectBase')
+		}
 	} else {
-		// 无继承：嵌入基类
 		t.write_line('\trt.PhpObjectBase')
 	}
 	if class_info.props.len > 0 {
@@ -946,6 +1227,33 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 	for stmt in node.stmts {
 		if stmt.node_type == ast.node_stmt_class_method {
 			t.visit_class_method(node.name, stmt)
+		}
+	}
+
+	if is_exception_subclass {
+		if '__construct' !in own_method_names_originally {
+			t.write_indent()
+			t.write_line('fn (mut this Class_${node.name}) method___construct(var_message rt.PhpVal) rt.PhpVal {')
+			t.indent++
+			t.write_indent()
+			t.write_line('this.prop_message = var_message')
+			t.write_indent()
+			t.write_line('return rt.new_null()')
+			t.indent--
+			t.write_indent()
+			t.write_line('}')
+			t.write_line('')
+		}
+		if 'getMessage' !in own_method_names_originally {
+			t.write_indent()
+			t.write_line('fn (mut this Class_${node.name}) method_getmessage() rt.PhpVal {')
+			t.indent++
+			t.write_indent()
+			t.write_line('return this.prop_message')
+			t.indent--
+			t.write_indent()
+			t.write_line('}')
+			t.write_line('')
 		}
 	}
 
@@ -976,7 +1284,7 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	
 	// 声明 $this 代理变量以支持 $this->prop 的正常读写
 	t.write_indent()
-	t.write_line('mut var_this := rt.new_object(\'${class_name}\', &this)')
+	t.write_line('mut var_this := rt.new_object(\'${class_name}\', ${t.get_parents_expr(class_name)}, &this)')
 	
 	for stmt in node.stmts {
 		t.visit_stmt(stmt)
@@ -999,9 +1307,10 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 // 递归生成嵌套的结构体初始化代码
 fn (mut t Transpiler) generate_struct_init(cls ClassInfo) {
 	if cls.extends.len > 0 {
-		// 有继承：先嵌套初始化父类
+		mut parent_exists := false
 		for parent_cls in t.classes {
-			if parent_cls.name == cls.extends {
+			if parent_cls.name == cls.extends && cls.extends !in t.undeclared_classes {
+				parent_exists = true
 				t.write_indent()
 				t.write_line('Class_${cls.extends}: Class_${cls.extends}{')
 				t.indent++
@@ -1011,6 +1320,10 @@ fn (mut t Transpiler) generate_struct_init(cls ClassInfo) {
 				t.write_line('}')
 				break
 			}
+		}
+		if !parent_exists {
+			t.write_indent()
+			t.write_line('PhpObjectBase: rt.PhpObjectBase{}')
 		}
 	} else {
 		// 最底层基类，初始化 rt.PhpObjectBase
@@ -1081,7 +1394,7 @@ fn (mut t Transpiler) generate_dispatchers() {
 		}
 		
 		t.write_indent()
-		t.write_line('return rt.new_object(\'${cls.name}\', obj)')
+		t.write_line('return rt.new_object(\'${cls.name}\', ${t.get_parents_expr(cls.name)}, obj)')
 		t.indent--
 		t.write_line('}')
 		t.write_line('')
@@ -1273,3 +1586,31 @@ fn (t &Transpiler) find_captured_vars_rec(node ast.AstNode, params []string, mut
 		}
 	}
 }
+
+fn (t Transpiler) get_parents_expr(class_name string) string {
+	mut parents := []string{}
+	mut curr := class_name
+	for {
+		mut found := false
+		for cls in t.classes {
+			if cls.name == curr && cls.extends != '' {
+				parents << cls.extends
+				curr = cls.extends
+				found = true
+				break
+			}
+		}
+		if !found {
+			break
+		}
+	}
+	if parents.len == 0 {
+		return '[]string{}'
+	}
+	mut elements := []string{}
+	for p in parents {
+		elements << "'${p}'"
+	}
+	return '[${elements.join(", ")}]'
+}
+

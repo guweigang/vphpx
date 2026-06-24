@@ -104,9 +104,9 @@ fn test_transpiler_end_to_end() {
 			'mut var_z := if args.len > 0 { args[0].dup() } else { rt.new_null() }',
 			'return rt.mul(var_z, var_x)',
 			'fn call_closure(cb rt.PhpVal, args []rt.PhpVal) rt.PhpVal {',
-			'mut var_cb := rt.new_object(\'Closure_1\', &Closure_1{ prop_x: var_x.dup() })',
+			'mut var_cb := rt.new_object(\'Closure_1\', [\'Closure\'], \u0026Closure_1{ prop_x: var_x.dup() })',
 			'rt.echo_val(call_closure(var_cb, [rt.new_int(5)]))',
-			'mut var_fn := rt.new_object(\'Closure_2\', &Closure_2{ prop_x: var_x.dup() })',
+			'mut var_fn := rt.new_object(\'Closure_2\', [\'Closure\'], \u0026Closure_2{ prop_x: var_x.dup() })',
 			'rt.echo_val(call_closure(var_fn, [rt.new_int(3)]))',
 		]
 		'14_include.php': [
@@ -145,6 +145,18 @@ fn test_transpiler_end_to_end() {
 			'if rt.is_true(rt.greater(',
 			'if rt.is_true(var_a) { var_a } else {',
 			'if !(var_b).is_null() { var_b } else {',
+		]
+		'19_exceptions.php': [
+			'rt.throw_exception(',
+			'catch_label_1:',
+			'finally_label_1:',
+			'rt.instance_of(var_e_1, \'MyException\')',
+			'rt.instance_of(var_e_1, \'Exception\')',
+		]
+		'20_web_superglobals.php': [
+			'rt.get_superglobal(\'_GET\')',
+			'rt.get_superglobal(\'_SERVER\')',
+			'.array_isset(',
 		]
 	}
 

@@ -13,6 +13,9 @@ pub:
 	elseifs   []AstNode @[json: 'elseifs']
 	@else     ?&AstNode @[json: 'else']
 	@if       ?&AstNode @[json: 'if']
+	catches   []AstNode @[json: 'catches']
+	finally   ?&AstNode @[json: 'finally']
+	types     []string  @[json: 'types']
 	value     string    @[json: 'value']
 	name      string    @[json: 'name']
 	params    []AstNode @[json: 'params']
@@ -33,6 +36,7 @@ pub:
 	extends    string   @[json: 'extends']
 	line       int      @[json: 'line']
 	consts     []ConstItem @[json: 'consts']
+	vars       []AstNode @[json: 'vars']
 }
 
 pub struct ConstItem {
