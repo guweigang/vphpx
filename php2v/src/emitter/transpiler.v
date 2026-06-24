@@ -2,7 +2,7 @@ module emitter
 
 import strings
 import os
-import php2v.src.ast
+import php2v.ast
 
 pub struct ClassInfo {
 pub mut:
