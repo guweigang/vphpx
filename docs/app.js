@@ -3,22 +3,43 @@
  * ------------------------------------------------------------- */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. 检查数据是否存在
+    // 1. 错误捕获诊断系统 (Diagnostic Error Console Overlay)
+    const debugConsoleEl = document.getElementById('debug-console');
+    
+    function logDiagnosticError(message) {
+        if (!debugConsoleEl) return;
+        debugConsoleEl.style.display = 'block';
+        const errorLine = document.createElement('div');
+        errorLine.style.marginBottom = '6px';
+        errorLine.style.borderBottom = '1px dashed rgba(255,82,82,0.2)';
+        errorLine.style.paddingBottom = '4px';
+        errorLine.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        debugConsoleEl.appendChild(errorLine);
+        debugConsoleEl.scrollTop = debugConsoleEl.scrollHeight;
+    }
+
+    window.addEventListener('error', (e) => {
+        logDiagnosticError(`Runtime Error: ${e.message} at ${e.filename}:${e.lineno}`);
+    });
+
+    window.addEventListener('unhandledrejection', (e) => {
+        logDiagnosticError(`Unhandled Rejection: ${e.reason}`);
+    });
+
+    // 2. 检查 Playground 核心数据
     if (!window.PLAYGROUND_DATA || !Array.isArray(window.PLAYGROUND_DATA)) {
-        console.error('Error: PLAYGROUND_DATA is missing or corrupted.');
-        alert('无法加载测试用例数据，请确认 data.js 已正确生成。');
+        logDiagnosticError('Critical Error: window.PLAYGROUND_DATA is missing or empty. Please run "make playground" to generate it.');
+        alert('无法加载测试用例数据，请确认 docs/data.js 已正确生成。');
         return;
     }
 
     const data = window.PLAYGROUND_DATA;
 
-    // 2. DOM 元素缓存
+    // 3. DOM 元素缓存 (除会被销毁的代码 code 盒子外)
     const fixturesListEl = document.getElementById('fixtures-list');
     const searchInputEl = document.getElementById('search-input');
     const phpFilenameEl = document.getElementById('php-filename');
-    const phpCodeBoxEl = document.getElementById('php-code-box');
     const outputFilenameEl = document.getElementById('output-filename');
-    const vCodeBoxEl = document.getElementById('v-code-box');
     const astTreeContainerEl = document.getElementById('ast-tree-container');
     const btnCollapseAst = document.getElementById('btn-collapse-ast');
     
@@ -26,14 +47,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
 
-    // 3. 应用状态
+    // 4. 应用状态
     let currentFixtureIndex = 0;
     let filteredData = [...data];
     let activeTabId = 'tab-v-code';
     let astDepth = 2; // 默认展开层数
     let isAstFullyExpanded = false;
 
-    // 4. 渲染测试用例列表
+    // 5. 检查 Prism 和组件加载状态，对非正常加载情况进行报警
+    if (!window.Prism) {
+        logDiagnosticError('Warning: PrismJS core library was not detected. Syntax highlighting will be disabled.');
+    } else {
+        if (!Prism.languages.php) {
+            logDiagnosticError('Warning: Prism PHP language component not loaded. PHP code will fall back to plain text.');
+        }
+        if (!Prism.languages.v) {
+            logDiagnosticError('Warning: Prism V language component not loaded. V code will fall back to plain text.');
+        }
+    }
+
+    // 6. 渲染测试用例列表
     function renderFixturesList() {
         fixturesListEl.innerHTML = '';
         
@@ -42,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        filteredData.forEach((fixture, index) => {
+        filteredData.forEach((fixture) => {
             const item = document.createElement('div');
             item.className = 'fixture-item';
             
@@ -58,7 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
 
             item.addEventListener('click', () => {
-                // 根据原始数组中的索引来选中
                 const realIndex = data.findIndex(d => d.key === fixture.key);
                 selectFixture(realIndex);
             });
@@ -67,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 5. 选中测试用例并更新 UI
+    // 7. 选中测试用例并更新 UI
     function selectFixture(index) {
         if (index < 0 || index >= data.length) return;
         currentFixtureIndex = index;
@@ -78,7 +110,6 @@ document.addEventListener('DOMContentLoaded', () => {
             item.classList.remove('active');
         });
         
-        // 在当前过滤列表里找到对应的 DOM 并加上 active 属性
         const filteredIndex = filteredData.findIndex(d => d.key === fixture.key);
         if (filteredIndex !== -1) {
             const items = fixturesListEl.querySelectorAll('.fixture-item');
@@ -87,33 +118,45 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // 渲染 PHP 源码
+        // 渲染 PHP 源码 - 重塑 DOM 避免 Prism 渲染残留及缓存导致的高亮失效
         phpFilenameEl.textContent = fixture.filename;
-        phpCodeBoxEl.textContent = fixture.php;
-        try {
-            if (window.Prism) {
-                Prism.highlightElement(phpCodeBoxEl);
+        const phpPre = document.querySelector('#panel-php-source pre');
+        if (phpPre) {
+            phpPre.innerHTML = `<code id="php-code-box" class="language-php"></code>`;
+            const phpCodeBox = document.getElementById('php-code-box');
+            phpCodeBox.textContent = fixture.php;
+            
+            try {
+                if (window.Prism && Prism.languages.php) {
+                    Prism.highlightElement(phpCodeBox);
+                }
+            } catch (e) {
+                logDiagnosticError(`Prism PHP highlighting failed: ${e.message}`);
             }
-        } catch (e) {
-            console.error("Prism PHP highlighting failed:", e);
         }
 
-        // 渲染 V 源码
+        // 渲染 V 源码 - 重塑 DOM 避免 Prism 渲染残留及缓存导致的高亮失效
         outputFilenameEl.textContent = fixture.key + '.v';
-        vCodeBoxEl.textContent = fixture.v;
-        try {
-            if (window.Prism) {
-                Prism.highlightElement(vCodeBoxEl);
+        const vPre = document.querySelector('#tab-v-code pre');
+        if (vPre) {
+            vPre.innerHTML = `<code id="v-code-box" class="language-v"></code>`;
+            const vCodeBox = document.getElementById('v-code-box');
+            vCodeBox.textContent = fixture.v;
+            
+            try {
+                if (window.Prism && Prism.languages.v) {
+                    Prism.highlightElement(vCodeBox);
+                }
+            } catch (e) {
+                logDiagnosticError(`Prism V highlighting failed: ${e.message}`);
             }
-        } catch (e) {
-            console.error("Prism V highlighting failed:", e);
         }
 
         // 渲染 AST 树
         renderAstTree(fixture.ast);
     }
 
-    // 6. 渲染 AST 树视图
+    // 8. 渲染 AST 树视图
     function renderAstTree(astObj) {
         astTreeContainerEl.innerHTML = '';
         
@@ -122,24 +165,28 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // 使用 JSON Formatter JS 渲染
-        // JSONFormatter(object, openAtDepth, config)
-        const formatter = new JSONFormatter(astObj, astDepth, {
-            hoverPreviewEnabled: true,
-            hoverPreviewArrayCount: 5,
-            hoverPreviewFieldCount: 5,
-            animateOpen: true,
-            animateClose: true
-        });
+        try {
+            // 使用 JSON Formatter JS 渲染
+            const formatter = new JSONFormatter(astObj, astDepth, {
+                hoverPreviewEnabled: true,
+                hoverPreviewArrayCount: 5,
+                hoverPreviewFieldCount: 5,
+                animateOpen: true,
+                animateClose: true
+            });
 
-        const renderedDom = formatter.render();
-        renderedDom.classList.add('json-formatter-dark');
-        astTreeContainerEl.appendChild(renderedDom);
+            const renderedDom = formatter.render();
+            renderedDom.classList.add('json-formatter-dark');
+            astTreeContainerEl.appendChild(renderedDom);
+        } catch (e) {
+            logDiagnosticError(`JSON Tree rendering failed: ${e.message}`);
+            astTreeContainerEl.textContent = JSON.stringify(astObj, null, 2);
+        }
     }
 
-    // 7. Tab 切换逻辑
+    // 9. Tab 切换逻辑
     tabBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', () => {
             const targetTab = btn.getAttribute('data-tab');
             activeTabId = targetTab;
 
@@ -151,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 8. 搜索过滤逻辑
+    // 10. 搜索过滤逻辑
     searchInputEl.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase().trim();
         
@@ -162,20 +209,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         renderFixturesList();
         
-        // 过滤后，如果当前选中的项目不在过滤结果中，自动选中过滤结果的第一个
         if (filteredData.length > 0) {
             const isCurrentInFiltered = filteredData.some(d => d.key === data[currentFixtureIndex].key);
             if (!isCurrentInFiltered) {
                 const firstFilteredOriginalIndex = data.findIndex(d => d.key === filteredData[0].key);
                 selectFixture(firstFilteredOriginalIndex);
             } else {
-                // 如果在，只需重置当前 active 状态即可（selectFixture 会处理）
                 selectFixture(currentFixtureIndex);
             }
         }
     });
 
-    // 9. 折叠/展开 AST 控制按钮
+    // 11. 折叠/展开 AST 控制按钮
     btnCollapseAst.addEventListener('click', () => {
         if (isAstFullyExpanded) {
             astDepth = 2;
@@ -187,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 展开 AST
             `;
         } else {
-            astDepth = 100; // 展开到极深层级
+            astDepth = 100;
             isAstFullyExpanded = true;
             btnCollapseAst.innerHTML = `
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -197,13 +242,12 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
         
-        // 重新渲染当前选中的 AST Tree
         if (data[currentFixtureIndex]) {
             renderAstTree(data[currentFixtureIndex].ast);
         }
     });
 
-    // 10. 初始化应用
+    // 12. 初始化应用
     renderFixturesList();
     if (data.length > 0) {
         selectFixture(0);
