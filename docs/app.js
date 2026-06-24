@@ -90,12 +90,24 @@ document.addEventListener('DOMContentLoaded', () => {
         // 渲染 PHP 源码
         phpFilenameEl.textContent = fixture.filename;
         phpCodeBoxEl.textContent = fixture.php;
-        Prism.highlightElement(phpCodeBoxEl);
+        try {
+            if (window.Prism) {
+                Prism.highlightElement(phpCodeBoxEl);
+            }
+        } catch (e) {
+            console.error("Prism PHP highlighting failed:", e);
+        }
 
         // 渲染 V 源码
         outputFilenameEl.textContent = fixture.key + '.v';
         vCodeBoxEl.textContent = fixture.v;
-        Prism.highlightElement(vCodeBoxEl);
+        try {
+            if (window.Prism) {
+                Prism.highlightElement(vCodeBoxEl);
+            }
+        } catch (e) {
+            console.error("Prism V highlighting failed:", e);
+        }
 
         // 渲染 AST 树
         renderAstTree(fixture.ast);

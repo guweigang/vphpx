@@ -1,27 +1,27 @@
 /* -------------------------------------------------------------
  * PHP to V Playground Custom CSS
- * Modern Glassmorphic Dark Theme
+ * Modern Glassmorphic Dark Theme (Optimized Contrast)
  * ------------------------------------------------------------- */
 
 /* Custom Reset & Variables */
 :root {
-    --bg-gradient: radial-gradient(circle at 80% 20%, #1a1726 0%, #0c0a12 100%);
-    --bg-glass: rgba(26, 23, 38, 0.65);
-    --bg-glass-hover: rgba(40, 36, 57, 0.85);
-    --bg-glass-active: rgba(60, 54, 86, 0.9);
-    --border-glass: rgba(255, 255, 255, 0.08);
-    --border-glass-focus: rgba(124, 77, 255, 0.4);
+    --bg-gradient: radial-gradient(circle at 80% 20%, #171422 0%, #09070f 100%);
+    --bg-glass: rgba(22, 19, 33, 0.75);
+    --bg-glass-hover: rgba(35, 30, 52, 0.85);
+    --bg-glass-active: rgba(54, 47, 78, 0.9);
+    --border-glass: rgba(255, 255, 255, 0.1);
+    --border-glass-focus: rgba(157, 124, 255, 0.5);
     
-    --primary: #7c4dff;
-    --primary-glow: rgba(124, 77, 255, 0.35);
-    --secondary: #00e5ff;
+    --primary: #9d7cff; /* Bright purple for dark mode visibility */
+    --primary-glow: rgba(157, 124, 255, 0.35);
+    --secondary: #00e5ff; /* Cyan */
     --secondary-glow: rgba(0, 229, 255, 0.25);
     
-    --text-main: #f5f4f8;
-    --text-muted: #9f9baa;
-    --text-dark: #635f70;
+    --text-main: #fcfbfe; /* Bright white */
+    --text-muted: #c1bdcc; /* Soft light-gray */
+    --text-dark: #827e91; /* Mid gray */
     
-    --panel-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+    --panel-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.55);
     --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-smooth: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -54,7 +54,7 @@ pre, code {
     background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.15);
     border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
@@ -76,7 +76,7 @@ pre, code {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: rgba(12, 10, 18, 0.8);
+    background: rgba(9, 7, 15, 0.85);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-glass);
     z-index: 10;
@@ -92,7 +92,7 @@ pre, code {
     font-size: 20px;
     font-weight: 700;
     letter-spacing: 0.5px;
-    background: linear-gradient(135deg, #a88beb 0%, #f8acff 100%);
+    background: linear-gradient(135deg, #b39cf0 0%, #fabfff 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -109,7 +109,7 @@ pre, code {
 }
 
 .badge {
-    background: rgba(0, 229, 255, 0.15);
+    background: rgba(0, 229, 255, 0.12);
     border: 1px solid var(--secondary);
     color: var(--secondary);
     padding: 2px 8px;
@@ -143,14 +143,14 @@ pre, code {
 }
 
 .btn-secondary {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--border-glass);
     color: var(--text-main);
 }
 
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.25);
     transform: translateY(-1px);
 }
 
@@ -189,7 +189,7 @@ pre, code {
     border-right: 1px solid var(--border-glass);
     display: flex;
     flex-direction: column;
-    background: rgba(10, 8, 16, 0.45);
+    background: rgba(9, 7, 15, 0.5);
     backdrop-filter: blur(8px);
     flex-shrink: 0;
 }
@@ -212,7 +212,7 @@ pre, code {
 
 #search-input {
     width: 100%;
-    background: rgba(0, 0, 0, 0.35);
+    background: rgba(0, 0, 0, 0.45);
     border: 1px solid var(--border-glass);
     padding: 10px 16px 10px 40px;
     border-radius: 8px;
@@ -247,22 +247,22 @@ pre, code {
     gap: 4px;
     padding: 12px 16px;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(255, 255, 255, 0.015);
     border: 1px solid transparent;
     cursor: pointer;
     transition: all var(--transition-smooth);
 }
 
 .fixture-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.04);
     transform: translateX(4px);
-    border-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.04);
 }
 
 .fixture-item.active {
     background: var(--bg-glass-active);
     border-color: var(--primary);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), 0 0 10px var(--primary-glow);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), 0 0 10px var(--primary-glow);
     position: relative;
 }
 
@@ -295,7 +295,7 @@ pre, code {
     display: flex;
     gap: 16px;
     padding: 16px;
-    background: rgba(14, 12, 22, 0.35);
+    background: rgba(9, 7, 15, 0.4);
     overflow: hidden;
 }
 
@@ -314,7 +314,7 @@ pre, code {
 }
 
 .code-panel:hover {
-    border-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
 .panel-header {
@@ -323,7 +323,7 @@ pre, code {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: rgba(10, 8, 16, 0.5);
+    background: rgba(9, 7, 15, 0.6);
     border-bottom: 1px solid var(--border-glass);
     flex-shrink: 0;
 }
@@ -342,9 +342,12 @@ pre, code {
     font-family: 'Fira Code', monospace;
 }
 
+/* Flex Container fixing Height Collapses */
 .panel-body {
     flex: 1;
-    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     position: relative;
 }
 
@@ -380,7 +383,7 @@ pre, code {
 
 .tab-btn.active {
     color: var(--primary);
-    background: rgba(0, 0, 0, 0.15);
+    background: rgba(0, 0, 0, 0.2);
     font-weight: 600;
 }
 
@@ -394,22 +397,24 @@ pre, code {
     background: var(--primary);
 }
 
-/* Tab Contents */
+/* Tab Contents Layout fixing height collapse */
 .tab-content-container {
+    flex: 1;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .tab-content {
     display: none;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
     flex: 1;
+    flex-direction: column;
+    overflow: auto;
+    width: 100%;
 }
 
 .tab-content.active {
-    display: block;
+    display: flex;
 }
 
 /* Prism Overrides */
@@ -419,48 +424,49 @@ pre[class*="language-"] {
     background: transparent !important;
     font-size: 13.5px !important;
     line-height: 1.6 !important;
-    height: 100%;
-    overflow: visible !important;
+    overflow: auto !important;
+    flex: 1;
 }
 
-code[class*="language-"] {
+pre[class*="language-"] code[class*="language-"] {
     background: transparent !important;
     text-shadow: none !important;
-    color: #e2e1e7 !important;
+    color: var(--text-main) !important;
 }
 
-/* Overriding some default Prism Colors to look premium */
+/* High Contrast Prism colors customized for dark mode theme */
 .token.comment, .token.prolog, .token.doctype, .token.cdata {
-    color: #636175 !important;
+    color: #79768a !important;
     font-style: italic;
 }
 .token.punctuation {
-    color: #a09eb0 !important;
+    color: #bab7c7 !important;
 }
 .token.property, .token.tag, .token.boolean, .token.number, .token.constant, .token.symbol, .token.deleted {
     color: var(--secondary) !important;
 }
 .token.selector, .token.attr-name, .token.string, .token.char, .token.builtin, .token.inserted {
-    color: #ffe082 !important;
+    color: #ffe082 !important; /* Pastel gold */
 }
 .token.operator, .token.entity, .token.url, .language-css .token.string, .style .token.string {
-    color: #90caf9 !important;
+    color: #90caf9 !important; /* Sky blue */
 }
 .token.atrule, .token.attr-value, .token.keyword {
-    color: #b39ddb !important;
+    color: #cfbcff !important; /* Soft bright purple */
     font-weight: 500;
 }
 .token.function, .token.class-name {
-    color: #81c784 !important;
+    color: #92e095 !important; /* Soft neon green */
 }
 .token.regex, .token.important, .token.variable {
-    color: #ff8a65 !important;
+    color: #ff9e80 !important; /* Coral orange */
 }
 
 /* AST Tree Container */
 .ast-tree-wrapper {
     padding: 20px;
-    height: 100%;
+    flex: 1;
+    overflow-y: auto;
 }
 
 #ast-tree-container {
@@ -469,30 +475,36 @@ code[class*="language-"] {
     line-height: 1.6;
 }
 
-/* JSON Formatter Style Overrides for Dark Mode */
+/* JSON Formatter Dark-Mode Customization */
 .json-formatter-row {
-    color: var(--text-main) !important;
+    color: var(--text-muted) !important;
     margin-left: 16px !important;
 }
 .json-formatter-row .json-formatter-row {
     margin-left: 20px !important;
 }
 .json-formatter-key {
-    color: #b39ddb !important; /* Soft violet */
+    color: #cfbcff !important; /* Soft violet key */
 }
 .json-formatter-string {
-    color: #ffe082 !important; /* Soft orange */
+    color: #ffe082 !important; /* Soft orange string */
     word-break: break-all;
     white-space: pre-wrap;
 }
 .json-formatter-number {
-    color: #80deea !important; /* Soft cyan */
+    color: #80deea !important; /* Soft cyan number */
 }
 .json-formatter-boolean {
-    color: #ff8a65 !important; /* Soft coral */
+    color: #ff9e80 !important; /* Soft coral boolean */
 }
 .json-formatter-null {
-    color: #635f70 !important;
+    color: var(--text-dark) !important; /* Mid gray null */
+}
+/* Bracket styling to avoid invisible brackets in dark theme */
+.json-formatter-row, 
+.json-formatter-bracket, 
+.json-formatter-comma {
+    color: #bab7c7 !important;
 }
 .json-formatter-toggler:after {
     color: var(--text-muted) !important;
@@ -500,7 +512,7 @@ code[class*="language-"] {
     transition: transform var(--transition-fast), color var(--transition-fast);
 }
 .json-formatter-toggler:hover:after {
-    color: var(--primary) !important;
+    color: var(--secondary) !important;
 }
 .json-formatter-row.json-formatter-empty {
     opacity: 0.65;
