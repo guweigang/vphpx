@@ -218,6 +218,21 @@ fn test_transpiler_end_to_end() {
 			'mut var_i := var_a',
 			'rt.echo_val(rt.concat(rt.concat(rt.new_string(\'error suppress: \'), var_i), rt.new_string(\'\\n\')))',
 		]
+		'29_class_constants.php': [
+			'const class_user_role_admin = rt.new_string(\'admin\')',
+			'const class_user_role_user = rt.new_string(\'user\')',
+			'return class_user_role_admin',
+			'rt.echo_val(rt.concat(class_user_role_admin, rt.new_string(\'\\n\')))',
+			'mut var_u := create_user()',
+		]
+		'30_oop_interfaces.php': [
+			'struct Class_FileLogger {',
+			'fn (mut this Class_FileLogger) method_log(var_msg rt.PhpVal) rt.PhpVal {',
+			'rt.new_bool(rt.instance_of(var_fl, \'Logger\'))',
+			'rt.echo_val(rt.new_string(\'fl is Logger\\n\'))',
+			'call_method(var_fl, \'log\', [rt.new_string(\'hello\')])',
+		]
+
 
 
 	}

@@ -8,11 +8,13 @@ pub struct ClassInfo {
 pub mut:
 	name        string
 	extends     string
+	implements  []string
 	methods     []MethodInfo // 本类自身声明的方法
 	props       []string     // 本类自身声明的属性
 	all_props   []string     // 含继承的全部属性（用于 dispatch_get/set_prop）
 	all_methods []MethodInfo // 含继承的全部方法（用于 dispatch_method）
 }
+
 
 pub struct MethodInfo {
 pub:
@@ -43,6 +45,7 @@ pub mut:
 	use_aliases map[string]string
 	switch_count int
 	pre_stmts []string
+	const_out strings.Builder
 }
 
 pub fn Transpiler.new() Transpiler {
@@ -50,6 +53,7 @@ pub fn Transpiler.new() Transpiler {
 		out:              strings.new_builder(1024)
 		func_out:         strings.new_builder(1024)
 		closures_code:    strings.new_builder(1024)
+		const_out:        strings.new_builder(1024)
 		indent:           1
 		scope:            VarScope.new()
 		custom_functions: map[string]bool{}
@@ -62,6 +66,7 @@ pub fn Transpiler.new() Transpiler {
 		pre_stmts: []string{}
 	}
 }
+
 
 
 
@@ -163,9 +168,17 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 	}
 	
 	t.generate_call_closure()
-	
+
+	if t.const_out.len > 0 {
+		mut new_func_out := strings.new_builder(t.const_out.len + t.func_out.len)
+		new_func_out.write_string(t.const_out.str())
+		new_func_out.write_string(t.func_out.str())
+		t.func_out = new_func_out
+	}
+
 	return t.out.str()
 }
+
 
 fn (mut t Transpiler) write_indent() {
 	if t.pre_stmts.len > 0 {
@@ -304,6 +317,9 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 					t.write_line('${var_str} = rt.new_null()')
 				}
 			}
+		}
+		ast.node_stmt_interface {
+			// 接口本身在代码生成中直接忽略
 		}
 		else {
 			t.write_indent()
@@ -458,6 +474,12 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 				return 'rt.new_bool(false)'
 			}
 			return 'rt.new_bool(${checks.join(" && ")})'
+		}
+		ast.node_expr_instanceof {
+			expr_node := node.expr or { panic('InstanceOf missing expr') }
+			expr_str := t.visit_expr(*expr_node)
+			resolved_class := t.resolve_class_name(node.class_name)
+			return 'rt.new_bool(rt.instance_of(${expr_str}, \'${resolved_class}\'))'
 		}
 		ast.node_expr_variable {
 			if node.name in ['_GET', '_POST', '_SERVER', '_COOKIE', '_SESSION', '_REQUEST', '_ENV'] {
@@ -873,6 +895,23 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			expr_node := node.expr or { panic('ErrorSuppress missing expr') }
 			return t.visit_expr(*expr_node)
 		}
+		ast.node_expr_class_const_fetch {
+			mut cls := node.class_name
+			if cls == 'self' {
+				cls = t.current_class
+			} else if cls == 'parent' {
+				mut parent_cls := ''
+				for c in t.classes {
+					if c.name == t.current_class {
+						parent_cls = c.extends
+						break
+					}
+				}
+				cls = parent_cls
+			}
+			return 'class_${cls.to_lower()}_${node.name.to_lower()}'
+		}
+
 
 
 		ast.node_expr_closure {
@@ -1393,11 +1432,13 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 	mut class_info := ClassInfo{
 		name: resolved_name
 		extends: resolved_extends
+		implements: node.implements.clone()
 		methods: []MethodInfo{}
 		props: []string{}
 		all_props: []string{}
 		all_methods: []MethodInfo{}
 	}
+
 	
 	mut own_method_names := map[string]bool{}
 	mut own_method_names_originally := map[string]bool{}
@@ -1413,8 +1454,14 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 			}
 			own_method_names[stmt.name] = true
 			own_method_names_originally[stmt.name] = true
+		} else if stmt.node_type == ast.node_stmt_class_const {
+			for c in stmt.consts {
+				val_str := t.visit_expr(c.value)
+				t.const_out.writeln('const class_${resolved_name.to_lower()}_${c.name.to_lower()} = ${val_str}')
+			}
 		}
 	}
+
 	
 	// 检查是否继承了 Exception 内置类
 	mut is_exception_subclass := false
@@ -1904,21 +1951,35 @@ fn (t &Transpiler) find_captured_vars_rec(node ast.AstNode, params []string, mut
 
 fn (t Transpiler) get_parents_expr(class_name string) string {
 	mut parents := []string{}
-	mut curr := class_name
-	for {
-		mut found := false
+	mut queue := []string{}
+	queue << class_name
+
+	mut visited := map[string]bool{}
+	visited[class_name] = true
+
+	for queue.len > 0 {
+		curr := queue[0]
+		queue.delete(0)
+
 		for cls in t.classes {
-			if cls.name == curr && cls.extends != '' {
-				parents << cls.extends
-				curr = cls.extends
-				found = true
+			if cls.name == curr {
+				if cls.extends != '' && cls.extends !in visited {
+					parents << cls.extends
+					visited[cls.extends] = true
+					queue << cls.extends
+				}
+				for impl in cls.implements {
+					if impl !in visited {
+						parents << impl
+						visited[impl] = true
+						queue << impl
+					}
+				}
 				break
 			}
 		}
-		if !found {
-			break
-		}
 	}
+
 	if parents.len == 0 {
 		return '[]string{}'
 	}
@@ -1928,6 +1989,7 @@ fn (t Transpiler) get_parents_expr(class_name string) string {
 	}
 	return '[${elements.join(", ")}]'
 }
+
 
 fn (t Transpiler) resolve_class_name(name string) string {
 	if name == '' {

@@ -39,6 +39,8 @@ pub:
 	incl_type string    @[json: 'type']
 	class_name string   @[json: 'class']
 	extends    string   @[json: 'extends']
+	implements []string @[json: 'implements']
+
 	line       int      @[json: 'line']
 	consts     []ConstItem @[json: 'consts']
 	vars       []AstNode @[json: 'vars']

@@ -35,6 +35,7 @@ pub const node_expr_post_dec = 'Expr_PostDec'
 pub const node_expr_pre_inc = 'Expr_PreInc'
 pub const node_expr_pre_dec = 'Expr_PreDec'
 pub const node_expr_error_suppress = 'Expr_ErrorSuppress'
+pub const node_stmt_interface = 'Stmt_Interface'
 
 
 // 表达式节点类型
@@ -42,6 +43,9 @@ pub const node_expr_error_suppress = 'Expr_ErrorSuppress'
 pub const node_expr_assign = 'Expr_Assign'
 pub const node_expr_variable = 'Expr_Variable'
 pub const node_expr_const = 'Expr_ConstFetch'
+pub const node_expr_class_const_fetch = 'Expr_ClassConstFetch'
+pub const node_expr_instanceof = 'Expr_Instanceof'
+
 pub const node_expr_array = 'Expr_Array'
 pub const node_expr_array_item = 'ArrayItem'
 pub const node_expr_array_dim_fetch = 'Expr_ArrayDimFetch'
@@ -83,6 +87,8 @@ pub const node_scalar_magic_const_dir = 'Scalar_MagicConst_Dir'
 pub const node_scalar_magic_const_file = 'Scalar_MagicConst_File'
 pub const node_scalar_magic_const_line = 'Scalar_MagicConst_Line'
 pub const node_stmt_const = 'Stmt_Const'
+pub const node_stmt_class_const = 'Stmt_ClassConst'
+
 pub const node_stmt_try_catch = 'Stmt_TryCatch'
 pub const node_stmt_catch = 'Stmt_Catch'
 pub const node_expr_throw = 'Expr_Throw'
