@@ -33,6 +33,7 @@ pub const node_expr_const = 'Expr_ConstFetch'
 pub const node_expr_array = 'Expr_Array'
 pub const node_expr_array_item = 'ArrayItem'
 pub const node_expr_array_dim_fetch = 'Expr_ArrayDimFetch'
+pub const node_expr_static_call = 'Expr_StaticCall'
 
 // 二元运算节点类型
 pub const node_bin_plus = 'Expr_BinaryOp_Plus'

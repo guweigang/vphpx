@@ -122,6 +122,20 @@ fn test_transpiler_end_to_end() {
 			"rt.get_constant('DB_PORT')",
 			"rt.new_int(5)",
 		]
+		'16_oop_inheritance.php': [
+			'struct Class_Animal {',
+			'prop_name rt.PhpVal',
+			'fn (mut this Class_Animal) method___construct(var_name rt.PhpVal) rt.PhpVal {',
+			'fn (mut this Class_Animal) method_greet() rt.PhpVal {',
+			'struct Class_Dog {',
+			'prop_breed rt.PhpVal',
+			'fn (mut this Class_Dog) method___construct(var_name rt.PhpVal, var_breed rt.PhpVal) rt.PhpVal {',
+			'this.Class_Animal.method___construct(var_name.dup())',
+			'fn (mut this Class_Dog) method_greet() rt.PhpVal {',
+			'this.Class_Animal.method_greet()',
+			'fn create_dog(arg_0 rt.PhpVal, arg_1 rt.PhpVal) rt.PhpVal {',
+			'mut var_dog := create_dog(rt.new_string(\'Rex\'), rt.new_string(\'Labrador\'))',
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址

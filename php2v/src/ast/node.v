@@ -29,6 +29,7 @@ pub:
 	uses      []AstNode @[json: 'uses']
 	incl_type string    @[json: 'type']
 	class_name string   @[json: 'class']
+	extends    string   @[json: 'extends']
 	line       int      @[json: 'line']
 	consts     []ConstItem @[json: 'consts']
 }

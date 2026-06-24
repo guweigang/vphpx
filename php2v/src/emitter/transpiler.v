@@ -6,9 +6,12 @@ import php2v.src.ast
 
 pub struct ClassInfo {
 pub mut:
-	name    string
-	methods []MethodInfo
-	props   []string
+	name        string
+	extends     string
+	methods     []MethodInfo // 本类自身声明的方法
+	props       []string     // 本类自身声明的属性
+	all_props   []string     // 含继承的全部属性（用于 dispatch_get/set_prop）
+	all_methods []MethodInfo // 含继承的全部方法（用于 dispatch_method）
 }
 
 pub struct MethodInfo {
@@ -30,6 +33,7 @@ pub mut:
 	scope            VarScope
 	custom_functions map[string]bool
 	classes          []ClassInfo
+	current_class    string // 当前正在转译的类名（用于 parent:: 解析）
 	current_file     string
 }
 
@@ -573,6 +577,36 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			}
 			return 'rt.new_null()'
 		}
+		ast.node_expr_static_call {
+			// parent::method(...) 的转译
+			if node.class_name == 'parent' {
+				// 查找当前类的父类名称
+				mut parent_class := ''
+				for cls in t.classes {
+					if cls.name == t.current_class {
+						parent_class = cls.extends
+						break
+					}
+				}
+				if parent_class.len == 0 {
+					return '// error: parent:: used without extends'
+				}
+				
+				mut arg_strs := []string{}
+				for arg in node.args {
+					arg_val := arg.expr or { panic('Arg missing expr') }
+					arg_str := t.visit_expr(*arg_val)
+					if arg_val.node_type == ast.node_expr_variable {
+						arg_strs << '${arg_str}.dup()'
+					} else {
+						arg_strs << arg_str
+					}
+				}
+				// V struct embedding: this.Class_Parent.method_name() 直接调用父类方法
+				return 'this.Class_${parent_class}.method_${node.name.to_lower()}(${arg_strs.join(", ")})'
+			}
+			return '// unsupported static call: ${node.class_name}::${node.name}'
+		}
 		else {
 			return '// unsupported expression: ${node.node_type}'
 		}
@@ -798,13 +832,19 @@ fn (mut t Transpiler) visit_for(node ast.AstNode) {
 
 fn (mut t Transpiler) visit_class(node ast.AstNode) {
 	t.is_in_func = true
+	t.current_class = node.name
 	
-	// 收集 ClassInfo
+	// 收集 ClassInfo：只收集本类自身声明的属性和方法
 	mut class_info := ClassInfo{
 		name: node.name
+		extends: node.extends
 		methods: []MethodInfo{}
 		props: []string{}
+		all_props: []string{}
+		all_methods: []MethodInfo{}
 	}
+	
+	mut own_method_names := map[string]bool{}
 	for stmt in node.stmts {
 		if stmt.node_type == ast.node_stmt_property {
 			for prop in stmt.props {
@@ -815,19 +855,57 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 				name: stmt.name
 				param_count: stmt.params.len
 			}
+			own_method_names[stmt.name] = true
 		}
+	}
+	
+	// 构建 all_props / all_methods（含继承），用于 dispatch 生成
+	if class_info.extends.len > 0 {
+		for parent_cls in t.classes {
+			if parent_cls.name == class_info.extends {
+				// all_props = 父类全部属性 + 子类自身属性
+				for p in parent_cls.all_props {
+					class_info.all_props << p
+				}
+				for p in class_info.props {
+					class_info.all_props << p
+				}
+				// all_methods = 子类自身方法 + 父类未被覆写的方法
+				for m in class_info.methods {
+					class_info.all_methods << m
+				}
+				for pm in parent_cls.all_methods {
+					if pm.name !in own_method_names {
+						class_info.all_methods << pm
+					}
+				}
+				break
+			}
+		}
+	} else {
+		class_info.all_props = class_info.props.clone()
+		class_info.all_methods = class_info.methods.clone()
 	}
 	t.classes << class_info
 
-	// 生成结构体定义
+	// 生成结构体定义（V struct embedding 方式）
 	t.write_line('struct Class_${node.name} {')
-	t.write_line('pub mut:')
-	t.indent++
-	for prop in class_info.props {
-		t.write_indent()
-		t.write_line('prop_${prop} rt.PhpVal')
+	if class_info.extends.len > 0 {
+		// 有继承：嵌入父类 struct
+		t.write_line('\tClass_${class_info.extends}')
+	} else {
+		// 无继承：嵌入基类
+		t.write_line('\tPhpObjectBase')
 	}
-	t.indent--
+	if class_info.props.len > 0 {
+		t.write_line('pub mut:')
+		t.indent++
+		for prop in class_info.props {
+			t.write_indent()
+			t.write_line('prop_${prop} rt.PhpVal')
+		}
+		t.indent--
+	}
 	t.write_line('}')
 	t.write_line('')
 
@@ -838,6 +916,7 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 		}
 	}
 
+	t.current_class = ''
 	t.is_in_func = false
 }
 
@@ -884,6 +963,72 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	t.scope = old_scope
 }
 
+// 递归生成嵌套的结构体初始化代码
+fn (mut t Transpiler) generate_struct_init(cls ClassInfo, outer_name string) {
+	if cls.extends.len > 0 {
+		// 有继承：先嵌套初始化父类
+		for parent_cls in t.classes {
+			if parent_cls.name == cls.extends {
+				t.write_indent()
+				t.write_line('Class_${cls.extends}: Class_${cls.extends}{')
+				t.indent++
+				t.generate_struct_init(parent_cls, outer_name)
+				t.indent--
+				t.write_indent()
+				t.write_line('}')
+				break
+			}
+		}
+	} else {
+		// 最底层基类，初始化 PhpObjectBase 函数指针，实现运行时多态委托
+		t.write_indent()
+		t.write_line('PhpObjectBase: PhpObjectBase{')
+		t.indent++
+
+		t.write_indent()
+		t.write_line('dispatch_method: fn (ptr voidptr, method_name string, args []rt.PhpVal) rt.PhpVal {')
+		t.indent++
+		t.write_indent()
+		t.write_line('mut c := &Class_${outer_name}(ptr)')
+		t.write_indent()
+		t.write_line('return c.dispatch_method(method_name, args)')
+		t.indent--
+		t.write_indent()
+		t.write_line('}')
+
+		t.write_indent()
+		t.write_line('dispatch_get_prop: fn (ptr voidptr, prop_name string) rt.PhpVal {')
+		t.indent++
+		t.write_indent()
+		t.write_line('c := &Class_${outer_name}(ptr)')
+		t.write_indent()
+		t.write_line('return c.dispatch_get_prop(prop_name)')
+		t.indent--
+		t.write_indent()
+		t.write_line('}')
+
+		t.write_indent()
+		t.write_line('dispatch_set_prop: fn (ptr voidptr, prop_name string, val rt.PhpVal) {')
+		t.indent++
+		t.write_indent()
+		t.write_line('mut c := &Class_${outer_name}(ptr)')
+		t.write_indent()
+		t.write_line('c.dispatch_set_prop(prop_name, val)')
+		t.indent--
+		t.write_indent()
+		t.write_line('}')
+
+		t.indent--
+		t.write_indent()
+		t.write_line('}')
+	}
+	// 初始化本类自身的属性
+	for prop in cls.props {
+		t.write_indent()
+		t.write_line('prop_${prop}: rt.new_null()')
+	}
+}
+
 fn (mut t Transpiler) generate_dispatchers() {
 	t.is_in_func = true
 	t.indent = 0
@@ -903,10 +1048,20 @@ fn (mut t Transpiler) generate_dispatchers() {
 		return
 	}
 
+	// 0. 生成 PhpObjectBase 基类，它包含用于多态派发的分发函数指针
+	t.write_line('struct PhpObjectBase {')
+	t.write_line('mut:')
+	t.write_line('\tdispatch_method   fn (ptr voidptr, method_name string, args []rt.PhpVal) rt.PhpVal = unsafe { nil }')
+	t.write_line('\tdispatch_get_prop fn (ptr voidptr, prop_name string) rt.PhpVal = unsafe { nil }')
+	t.write_line('\tdispatch_set_prop fn (ptr voidptr, prop_name string, val rt.PhpVal) = unsafe { nil }')
+	t.write_line('}')
+	t.write_line('')
+
 	// 1. 生成每个类的 create_ClassName 实例化辅助函数
 	for cls in t.classes {
+		// 在 all_methods 中查找构造函数
 		mut construct_info := ?MethodInfo(none)
-		for m in cls.methods {
+		for m in cls.all_methods {
 			if m.name == '__construct' {
 				construct_info = m
 				break
@@ -925,18 +1080,17 @@ fn (mut t Transpiler) generate_dispatchers() {
 		t.write_line('fn create_${cls.name.to_lower()}(${param_decls.join(", ")}) rt.PhpVal {')
 		t.indent++
 		t.write_indent()
+		// 嵌套初始化
 		t.write_line('mut obj := &Class_${cls.name}{')
 		t.indent++
-		for prop in cls.props {
-			t.write_indent()
-			t.write_line('prop_${prop}: rt.new_null()')
-		}
+		t.generate_struct_init(cls, cls.name)
 		t.indent--
 		t.write_indent()
 		t.write_line('}')
 		
 		if construct_info != none {
 			t.write_indent()
+			// V struct embedding: 方法直接通过 promotion 调用，无需 unsafe
 			t.write_line('obj.method___construct(${param_pass.join(", ")})')
 		}
 		
@@ -947,7 +1101,76 @@ fn (mut t Transpiler) generate_dispatchers() {
 		t.write_line('')
 	}
 
-	// 2. 生成 call_method 全局路由分发器
+	// 2. 生成每个类的 dispatch_method / dispatch_get_prop / dispatch_set_prop
+	for cls in t.classes {
+		// dispatch_method：使用 all_methods（含继承），V promotion 自动处理
+		t.write_line('fn (mut this Class_${cls.name}) dispatch_method(method_name string, args []rt.PhpVal) rt.PhpVal {')
+		t.indent++
+		t.write_indent()
+		t.write_line('match method_name {')
+		t.indent++
+		for m in cls.all_methods {
+			t.write_indent()
+			mut args_pass := []string{}
+			for i in 0 .. m.param_count {
+				args_pass << 'if args.len > ${i} { args[${i}] } else { rt.new_null() }'
+			}
+			// 无论自身方法还是继承方法，都直接 this.method_name()，V promotion 处理
+			t.write_line('\'${m.name}\' { return this.method_${m.name.to_lower()}(${args_pass.join(", ")}) }')
+		}
+		t.write_indent()
+		t.write_line('else {}')
+		t.indent--
+		t.write_indent()
+		t.write_line('}')
+		t.write_indent()
+		t.write_line('return rt.new_null()')
+		t.indent--
+		t.write_line('}')
+		t.write_line('')
+
+		// dispatch_get_prop：使用 all_props（含继承），V promotion 自动处理
+		t.write_line('fn (this &Class_${cls.name}) dispatch_get_prop(prop_name string) rt.PhpVal {')
+		t.indent++
+		t.write_indent()
+		t.write_line('match prop_name {')
+		t.indent++
+		for prop in cls.all_props {
+			t.write_indent()
+			t.write_line('\'${prop}\' { return this.prop_${prop} }')
+		}
+		t.write_indent()
+		t.write_line('else {}')
+		t.indent--
+		t.write_indent()
+		t.write_line('}')
+		t.write_indent()
+		t.write_line('return rt.new_null()')
+		t.indent--
+		t.write_line('}')
+		t.write_line('')
+
+		// dispatch_set_prop：使用 all_props（含继承），V promotion 自动处理
+		t.write_line('fn (mut this Class_${cls.name}) dispatch_set_prop(prop_name string, val rt.PhpVal) {')
+		t.indent++
+		t.write_indent()
+		t.write_line('match prop_name {')
+		t.indent++
+		for prop in cls.all_props {
+			t.write_indent()
+			t.write_line('\'${prop}\' { this.prop_${prop} = val }')
+		}
+		t.write_indent()
+		t.write_line('else {}')
+		t.indent--
+		t.write_indent()
+		t.write_line('}')
+		t.indent--
+		t.write_line('}')
+		t.write_line('')
+	}
+
+	// 3. 全局路由分发器，利用基类函数指针实现极简的多态委托
 	t.write_line('fn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {')
 	t.indent++
 	t.write_indent()
@@ -955,44 +1178,12 @@ fn (mut t Transpiler) generate_dispatchers() {
 	t.write_indent()
 	t.write_line('obj_info := obj.get_object()')
 	t.write_indent()
-	t.write_line('match obj_info.class_name {')
-	t.indent++
-	for cls in t.classes {
-		t.write_indent()
-		t.write_line('\'${cls.name}\' {')
-		t.indent++
-		t.write_indent()
-		t.write_line('mut c_obj := &Class_${cls.name}(obj_info.ptr)')
-		t.write_indent()
-		t.write_line('match method_name {')
-		t.indent++
-		for m in cls.methods {
-			t.write_indent()
-			t.write_line('\'${m.name}\' {')
-			t.indent++
-			
-			mut args_pass := []string{}
-			for i in 0 .. m.param_count {
-				args_pass << 'if args.len > ${i} { args[${i}] } else { rt.new_null() }'
-			}
-			t.write_indent()
-			t.write_line('return c_obj.method_${m.name.to_lower()}(${args_pass.join(", ")})')
-			
-			t.indent--
-			t.write_indent()
-			t.write_line('}')
-		}
-		t.write_indent()
-		t.write_line('else {}')
-		t.indent--
-		t.write_indent()
-		t.write_line('}')
-		t.indent--
-		t.write_indent()
-		t.write_line('}')
-	}
+	t.write_line('base := &PhpObjectBase(obj_info.ptr)')
 	t.write_indent()
-	t.write_line('else {}')
+	t.write_line('if base.dispatch_method != unsafe { nil } {')
+	t.indent++
+	t.write_indent()
+	t.write_line('return base.dispatch_method(obj_info.ptr, method_name, args)')
 	t.indent--
 	t.write_indent()
 	t.write_line('}')
@@ -1002,7 +1193,6 @@ fn (mut t Transpiler) generate_dispatchers() {
 	t.write_line('}')
 	t.write_line('')
 
-	// 3. 生成 get_property 全局路由分发器
 	t.write_line('fn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {')
 	t.indent++
 	t.write_indent()
@@ -1010,32 +1200,12 @@ fn (mut t Transpiler) generate_dispatchers() {
 	t.write_indent()
 	t.write_line('obj_info := obj.get_object()')
 	t.write_indent()
-	t.write_line('match obj_info.class_name {')
-	t.indent++
-	for cls in t.classes {
-		t.write_indent()
-		t.write_line('\'${cls.name}\' {')
-		t.indent++
-		t.write_indent()
-		t.write_line('c_obj := &Class_${cls.name}(obj_info.ptr)')
-		t.write_indent()
-		t.write_line('match prop_name {')
-		t.indent++
-		for prop in cls.props {
-			t.write_indent()
-			t.write_line('\'${prop}\' { return c_obj.prop_${prop} }')
-		}
-		t.write_indent()
-		t.write_line('else {}')
-		t.indent--
-		t.write_indent()
-		t.write_line('}')
-		t.indent--
-		t.write_indent()
-		t.write_line('}')
-	}
+	t.write_line('base := &PhpObjectBase(obj_info.ptr)')
 	t.write_indent()
-	t.write_line('else {}')
+	t.write_line('if base.dispatch_get_prop != unsafe { nil } {')
+	t.indent++
+	t.write_indent()
+	t.write_line('return base.dispatch_get_prop(obj_info.ptr, prop_name)')
 	t.indent--
 	t.write_indent()
 	t.write_line('}')
@@ -1045,7 +1215,6 @@ fn (mut t Transpiler) generate_dispatchers() {
 	t.write_line('}')
 	t.write_line('')
 
-	// 4. 生成 set_property 全局路由分发器
 	t.write_line('fn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {')
 	t.indent++
 	t.write_indent()
@@ -1053,32 +1222,12 @@ fn (mut t Transpiler) generate_dispatchers() {
 	t.write_indent()
 	t.write_line('obj_info := obj.get_object()')
 	t.write_indent()
-	t.write_line('match obj_info.class_name {')
-	t.indent++
-	for cls in t.classes {
-		t.write_indent()
-		t.write_line('\'${cls.name}\' {')
-		t.indent++
-		t.write_indent()
-		t.write_line('mut c_obj := &Class_${cls.name}(obj_info.ptr)')
-		t.write_indent()
-		t.write_line('match prop_name {')
-		t.indent++
-		for prop in cls.props {
-			t.write_indent()
-			t.write_line('\'${prop}\' { c_obj.prop_${prop} = val }')
-		}
-		t.write_indent()
-		t.write_line('else {}')
-		t.indent--
-		t.write_indent()
-		t.write_line('}')
-		t.indent--
-		t.write_indent()
-		t.write_line('}')
-	}
+	t.write_line('mut base := &PhpObjectBase(obj_info.ptr)')
 	t.write_indent()
-	t.write_line('else {}')
+	t.write_line('if base.dispatch_set_prop != unsafe { nil } {')
+	t.indent++
+	t.write_indent()
+	t.write_line('base.dispatch_set_prop(obj_info.ptr, prop_name, val)')
 	t.indent--
 	t.write_indent()
 	t.write_line('}')
