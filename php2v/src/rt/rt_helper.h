@@ -196,4 +196,32 @@ static inline int php2v_instance_of(zval *obj, const char *class_name, size_t na
 	return instanceof_function(Z_OBJCE_P(obj), ce);
 }
 
+static zval php2v_null_val;
+static zval php2v_true_val;
+static zval php2v_false_val;
+static int php2v_constants_inited = 0;
+
+static inline void php2v_init_constants() {
+	if (php2v_constants_inited) return;
+	ZVAL_NULL(&php2v_null_val);
+	ZVAL_TRUE(&php2v_true_val);
+	ZVAL_FALSE(&php2v_false_val);
+	php2v_constants_inited = 1;
+}
+
+static inline zval* php2v_get_null() {
+	php2v_init_constants();
+	return &php2v_null_val;
+}
+
+static inline zval* php2v_get_true() {
+	php2v_init_constants();
+	return &php2v_true_val;
+}
+
+static inline zval* php2v_get_false() {
+	php2v_init_constants();
+	return &php2v_false_val;
+}
+
 #endif

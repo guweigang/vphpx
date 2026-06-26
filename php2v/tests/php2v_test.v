@@ -14,38 +14,37 @@ fn test_transpiler_end_to_end() {
 	// 预期生成的 V 代码特征片段，用于进行高精度源码结构比对测试
 	expected_snippets := {
 		'01_echo.php': [
-			'rt.echo_val(rt.new_string(\'Hello World',
+			'print(\'Hello World\\n\')',
 		]
 		'02_variables.php': [
-			'mut var_a := rt.new_string(\'hello\')',
-			'mut var_b := rt.new_string(\'world',
-			'rt.echo_val(var_a)',
-			'rt.echo_val(var_b)',
+			"mut var_a := 'hello'",
+			"mut var_b := 'world\\n'",
+			'print(var_a)',
+			'print(var_b)',
 		]
 		'03_arithmetic.php': [
-			'mut var_a := rt.add(rt.new_int(10), rt.new_int(20))',
-			'mut var_b := rt.sub(var_a, rt.new_int(5))',
-			'mut var_c := rt.mul(var_b, rt.new_int(2))',
-			'mut var_d := rt.div(var_c, rt.new_int(5))',
-			'rt.echo_val(var_d)',
+			'mut var_a := 10 + 20',
+			'mut var_b := var_a - 5',
+			'mut var_c := var_b * 2',
+			'mut var_d := var_c / 5',
+			'print(var_d.str())',
 		]
 		'04_string_concat.php': [
-			'mut var_name := rt.new_string(\'PHP\')',
-			'rt.concat(rt.new_string(\'Hello \'), var_name)',
+			"mut var_name := 'PHP'",
+			"print('Hello ' + var_name",
 		]
 		'05_if_else.php': [
-			'mut var_a := rt.new_int(15)',
-			'if rt.is_true(rt.greater(var_a, rt.new_int(20))) {',
-			'} else if rt.is_true(rt.greater(var_a, rt.new_int(10))) {',
+			'mut var_a := 15',
+			'if var_a > 20 {',
+			'} else if var_a > 10 {',
 			'} else {',
 		]
 		'06_truthy.php': [
-			'mut var_a := rt.new_string(\'\')',
-			'if rt.is_true(var_a) {',
-			'mut var_b := rt.new_string(\'0\')',
-			'if rt.is_true(var_b) {',
-			'mut var_c := rt.new_int(123)',
-			'if rt.is_true(var_c) {',
+			"mut var_a := ''",
+			'if var_a.len > 0 && var_a != \'0\' {',
+			"mut var_b := '0'",
+			'mut var_c := 123',
+			'if var_c != 0 {',
 		]
 		'07_functions.php': [
 			'fn func_add_five(var_val rt.PhpVal) rt.PhpVal {',
@@ -58,7 +57,7 @@ fn test_transpiler_end_to_end() {
 			'var_arr.array_push(rt.new_int(30))',
 			'var_arr.array_set(rt.new_string(\'key\'), rt.new_string(\'hello\'))',
 			'rt.echo_val(var_arr.array_get(rt.new_int(0)))',
-			'rt.echo_val(rt.call_function(\'count\', [var_arr.dup()]))',
+			'rt.echo_val(rt.new_int(var_arr.dup().array_count()))',
 		]
 		'09_foreach.php': [
 			'mut iter := var_arr.iterator()',
@@ -67,23 +66,23 @@ fn test_transpiler_end_to_end() {
 			'mut var_key := item.key',
 		]
 		'10_loops.php': [
-			'for rt.is_true(rt.less(var_i, rt.new_int(3))) {',
-			'mut var_j := rt.new_int(0)',
-			'if !rt.is_true(rt.less(var_j, rt.new_int(5))) { break }',
-			'if rt.is_true(rt.equal(var_j, rt.new_int(2))) {',
+			'for var_i < 3 {',
+			'mut var_j := 0',
+			'if !(var_j < 5) { break }',
+			'if var_j == 2 {',
 			'continue',
-			'if rt.is_true(rt.equal(var_j, rt.new_int(4))) {',
+			'if var_j == 4 {',
 			'break',
 		]
 		'11_oop.php': [
 			'struct Class_User {',
-			'prop_name rt.PhpVal',
-			'fn (mut this Class_User) method___construct(var_name rt.PhpVal) rt.PhpVal {',
-			'fn (mut this Class_User) method_getname() rt.PhpVal {',
-			'fn create_user(arg_0 rt.PhpVal) rt.PhpVal {',
-			'mut var_user := create_user(rt.new_string(\'Alice\'))',
-			'rt.echo_val(call_method(var_user, \'getName\', []rt.PhpVal{}))',
-			'set_property(var_user, \'name\', rt.new_string(\'Bob\'))',
+			'name string',
+			'fn (mut this Class_User) construct(name string) ',
+			'fn (mut this Class_User) getname() string {',
+			'fn create_user(name string) &Class_User {',
+			"mut var_user := create_user('Alice')",
+			'print(var_user.getname())',
+			"var_user.name = 'Bob'",
 		]
 		'12_dynamic.php': [
 			"rt.call_function('eval', [rt.new_string('echo \\'eval works\\n\\';')])",
@@ -104,17 +103,17 @@ fn test_transpiler_end_to_end() {
 			'mut var_z := if args.len > 0 { args[0].dup() } else { rt.new_null() }',
 			'return rt.mul(var_z, var_x)',
 			'fn call_closure(cb rt.PhpVal, args []rt.PhpVal) rt.PhpVal {',
-			'mut var_cb := rt.new_object(\'Closure_1\', [\'Closure\'], \u0026Closure_1{ prop_x: var_x.dup() })',
+			'mut var_cb := rt.new_object(\'Closure_1\', [\'Closure\'], \u0026Closure_1{ prop_x: rt.new_int(var_x) })',
 			'rt.echo_val(call_closure(var_cb, [rt.new_int(5)]))',
-			'mut var_fn := rt.new_object(\'Closure_2\', [\'Closure\'], \u0026Closure_2{ prop_x: var_x.dup() })',
+			'mut var_fn := rt.new_object(\'Closure_2\', [\'Closure\'], \u0026Closure_2{ prop_x: rt.new_int(var_x) })',
 			'rt.echo_val(call_closure(var_fn, [rt.new_int(3)]))',
 		]
 		'14_include.php': [
-			"mut var_path := rt.new_string('tests/fixtures/14_included.inc')",
-			"mut var_ret := rt.include_file(var_path, '1')",
+			"mut var_path := 'tests/fixtures/14_included.inc'",
+			"mut var_ret := rt.include_file(rt.new_string(var_path), '1')",
 			"rt.echo_val(var_ret)",
-			"mut var_ret2 := rt.include_file(var_path, '2')",
-			"rt.echo_val(rt.new_string('once_done\\n'))",
+			"mut var_ret2 := rt.include_file(rt.new_string(var_path), '2')",
+			"print('once_done\\n')",
 		]
 		'15_constants.php': [
 			"rt.define_constant('APP_ENV'",
@@ -125,16 +124,15 @@ fn test_transpiler_end_to_end() {
 		'16_oop_inheritance.php': [
 			'struct Class_Animal {',
 			'prop_name rt.PhpVal',
-			'fn (mut this Class_Animal) method___construct(var_name rt.PhpVal) rt.PhpVal {',
-			'fn (mut this Class_Animal) method_greet() rt.PhpVal {',
+			'fn (mut this Class_Animal) construct(var_name rt.PhpVal) ',
+			'fn (mut this Class_Animal) greet() rt.PhpVal {',
 			'struct Class_Dog {',
-			'prop_breed rt.PhpVal',
-			'fn (mut this Class_Dog) method___construct(var_name rt.PhpVal, var_breed rt.PhpVal) rt.PhpVal {',
-			'this.Class_Animal.method___construct(var_name.dup())',
-			'fn (mut this Class_Dog) method_greet() rt.PhpVal {',
-			'this.Class_Animal.method_greet()',
-			'fn create_dog(arg_0 rt.PhpVal, arg_1 rt.PhpVal) rt.PhpVal {',
-			'mut var_dog := create_dog(rt.new_string(\'Rex\'), rt.new_string(\'Labrador\'))',
+			'breed string',
+			'fn (mut this Class_Dog) construct(name string, breed string) ',
+			'fn (mut this Class_Dog) greet() rt.PhpVal {',
+			'this.Class_Animal.greet()',
+			'fn create_dog(name string, breed string) &Class_Dog {',
+			"mut var_dog := create_dog('Rex', 'Labrador')",
 		]
 		'17_boolean_logical.php': [
 			'rt.new_bool(!rt.is_true(',
@@ -143,7 +141,7 @@ fn test_transpiler_end_to_end() {
 		]
 		'18_ternary_coalesce.php': [
 			'if rt.is_true(rt.greater(',
-			'if rt.is_true(var_a) { var_a } else {',
+			'if rt.is_true(rt.new_int(var_a)) { rt.new_int(var_a) } else {',
 			'if !(var_b).is_null() { var_b } else {',
 		]
 		'19_exceptions.php': [
@@ -163,59 +161,57 @@ fn test_transpiler_end_to_end() {
 			'Class_App_Core_Application',
 			'create_app_utils_helper()',
 			'create_app_core_application()',
-			'temp.method_info(',
-			'temp.method_init(',
+			'temp.info(',
+			'temp.init(',
 		]
 		'22_string_interpolation.php': [
-			'rt.concat(',
-			'rt.new_string(\'Hello \')',
-			'var_name',
-			'rt.new_string(\', next year you will be \')',
-			'var_age',
-			'rt.new_string(\' years old.\')',
+			'mut var_name := \'Alice\'',
+			'mut var_age := 20',
+			'"Hello \${var_name}',
+			'\${var_age.str()}',
+			'print(var_msg',
 		]
 		'23_unset_empty.php': [
 			'rt.new_bool(!rt.is_true(',
 			'var_not_exist',
-			'var_d = rt.new_null()',
+			"var_d = ''",
 			'var_arr.array_unset(',
 		]
 		'24_switch_case.php': [
-			'mut switch_val_1 := var_x',
-			'if rt.is_true(rt.equal(switch_val_1, rt.new_int(1))) {',
-			'} else if rt.is_true(rt.equal(switch_val_1, rt.new_int(2))) || rt.is_true(rt.equal(switch_val_1, rt.new_int(3))) {',
-			'} else {',
-			'rt.echo_val(rt.new_string(\'default case\\n\'))',
+			'match var_x {',
+			'1 {',
+			'2, 3 {',
+			'print(\'default case\\n\')',
 		]
 		'25_match_expr.php': [
-			'mut match_val_1 := var_x',
-			'mut var_y := if rt.is_true(rt.equal(match_val_1, rt.new_int(1))) { rt.new_string(\'one\') }',
-			'else if rt.is_true(rt.equal(match_val_1, rt.new_int(2))) || rt.is_true(rt.equal(match_val_1, rt.new_int(3)))',
-			'else { rt.new_string(\'other\') }',
+			"mut var_y := match var_x {",
+			"1 { rt.new_string('one') }",
+			"2, 3 { rt.new_string('two or three') }",
+			"else { rt.new_string('other') }",
 		]
 		'26_do_while.php': [
-			'mut var_i := rt.new_int(0)',
+			'mut var_i := 0',
 			'for {',
-			'rt.echo_val(rt.concat(var_i, rt.new_string(\'\\n\')))',
-			'rt.post_inc(var_i)',
-			'if !rt.is_true(rt.less(var_i, rt.new_int(3))) {',
+			'rt.echo_val(rt.concat(rt.new_int(var_i), rt.new_string(\'\\n\')))',
+			'var_i += 1',
+			'if !(var_i < 3) {',
 			'break',
 		]
 		'27_increment_decrement.php': [
-			'mut var_a := rt.new_int(5)',
-			'mut var_b := rt.post_inc(var_a)',
-			'mut var_c := rt.post_dec(var_a)',
-			'mut var_d := rt.pre_inc(var_a)',
-			'mut var_e := rt.pre_dec(var_a)',
+			'mut var_a := 5',
+			'mut var_b := rt.post_inc(rt.new_int(var_a))',
+			'mut var_c := rt.post_dec(rt.new_int(var_a))',
+			'mut var_d := rt.pre_inc(rt.new_int(var_a))',
+			'mut var_e := rt.pre_dec(rt.new_int(var_a))',
 		]
 		'28_bitwise_ops.php': [
-			'mut var_c := rt.bitwise_and(var_a, var_b)',
-			'mut var_d := rt.bitwise_or(var_a, var_b)',
-			'mut var_e := rt.bitwise_xor(var_a, var_b)',
-			'mut var_f := rt.shift_left(var_a, rt.new_int(1))',
-			'mut var_g := rt.shift_right(var_a, rt.new_int(1))',
-			'mut var_h := rt.bitwise_not(var_a)',
-			'mut var_i := var_a',
+			'mut var_c := rt.bitwise_and(rt.new_int(var_a), rt.new_int(var_b))',
+			'mut var_d := rt.bitwise_or(rt.new_int(var_a), rt.new_int(var_b))',
+			'mut var_e := rt.bitwise_xor(rt.new_int(var_a), rt.new_int(var_b))',
+			'mut var_f := rt.shift_left(rt.new_int(var_a), rt.new_int(1))',
+			'mut var_g := rt.shift_right(rt.new_int(var_a), rt.new_int(1))',
+			'mut var_h := rt.bitwise_not(rt.new_int(var_a))',
+			'mut var_i := rt.new_int(var_a)',
 			'rt.echo_val(rt.concat(rt.concat(rt.new_string(\'error suppress: \'), var_i), rt.new_string(\'\\n\')))',
 		]
 		'29_class_constants.php': [
@@ -227,15 +223,15 @@ fn test_transpiler_end_to_end() {
 		]
 		'30_oop_interfaces.php': [
 			'struct Class_FileLogger {',
-			'fn (mut this Class_FileLogger) method_log(var_msg rt.PhpVal) rt.PhpVal {',
-			'rt.new_bool(rt.instance_of(var_fl, \'Logger\'))',
-			'rt.echo_val(rt.new_string(\'fl is Logger\\n\'))',
-			'call_method(var_fl, \'log\', [rt.new_string(\'hello\')])',
+			'fn (mut this Class_FileLogger) log(msg string) rt.PhpVal {',
+			"rt.instance_of(rt.new_object('FileLogger', ['Logger'], var_fl), 'Logger')",
+			"print('fl is Logger\\n')",
+			"var_fl.log('hello')",
 		]
 		'31_oop_traits.php': [
 			'struct Class_User {',
-			'fn (mut this Class_User) method_sayhello(var_name rt.PhpVal) rt.PhpVal {',
-			'call_method(var_u, \'sayHello\', [rt.new_string(\'Alice\')])',
+			'fn (mut this Class_User) sayhello(name string) rt.PhpVal {',
+			"var_u.sayhello('Alice')",
 		]
 
 

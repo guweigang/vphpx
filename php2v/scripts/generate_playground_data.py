@@ -9,12 +9,11 @@ def main():
     # 确定路径
     script_dir = os.path.dirname(os.path.abspath(__file__))
     php2v_dir = os.path.dirname(script_dir)
-    workspace_dir = os.path.dirname(php2v_dir)
     
     fixtures_dir = os.path.join(php2v_dir, 'tests', 'fixtures')
     parser_php = os.path.join(script_dir, 'parser.php')
-    docs_dir = os.path.join(workspace_dir, 'docs')
-    output_js = os.path.join(docs_dir, 'data.js')
+    playground_dir = os.path.join(php2v_dir, 'playground')
+    output_js = os.path.join(playground_dir, 'data.js')
     
     if not os.path.exists(fixtures_dir):
         print(f"Error: Fixtures directory not found: {fixtures_dir}")
@@ -105,7 +104,7 @@ def main():
         })
         
     # 确保输出目录存在
-    os.makedirs(docs_dir, exist_ok=True)
+    os.makedirs(playground_dir, exist_ok=True)
     
     # 写入 data.js
     try:

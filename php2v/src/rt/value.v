@@ -4,7 +4,6 @@ module rt
 
 #include "rt_helper.h"
 
-fn C.php2v_hash_get_entry(ht voidptr, index u32, val &&C.zval, key &&voidptr, num_key &u64) int
 fn C.php2v_call_zend_function(name &char, name_len usize, retval &C.zval, param_count u32, params &&C.zval) int
 fn C.php2v_eval_string(str &char, len usize, retval &C.zval) int
 fn C.php2v_register_constant(name &char, len usize, val &C.zval) int
@@ -74,20 +73,20 @@ pub fn new_float(f f64) PhpVal {
 	return PhpVal{ raw: z }
 }
 
+fn C.php2v_get_null() &C.zval
+fn C.php2v_get_true() &C.zval
+fn C.php2v_get_false() &C.zval
+
 pub fn new_bool(b bool) PhpVal {
-	z := new_zval()
-	unsafe {
-		z.u1.type_info = if b { u32(3) } else { u32(2) } // IS_TRUE / IS_FALSE
+	if b {
+		return PhpVal{ raw: C.php2v_get_true() }
+	} else {
+		return PhpVal{ raw: C.php2v_get_false() }
 	}
-	return PhpVal{ raw: z }
 }
 
 pub fn new_null() PhpVal {
-	z := new_zval()
-	unsafe {
-		z.u1.type_info = 1 // IS_NULL
-	}
-	return PhpVal{ raw: z }
+	return PhpVal{ raw: C.php2v_get_null() }
 }
 
 pub fn new_string(s string) PhpVal {
@@ -199,16 +198,11 @@ pub fn (v PhpVal) is_array() bool {
 	return v.raw != 0 && (v.raw.u1.type_info & 0xff) == 7
 }
 
-// array_count 从 zend_array (zend_hash) 结构体中读取已使用的元素个数
+// array_count 返回数组中存活元素的数量（纯 V 实现）
 pub fn (v PhpVal) array_count() int {
-	unsafe {
-		if !v.is_array() { return 0 }
-		p_arr := &voidptr(&v.raw.value)
-		arr_ptr := *p_arr
-		if arr_ptr == 0 { return 0 }
-		num_ptr := &u32(charptr(arr_ptr) + 28)
-		return int(*num_ptr)
-	}
+	if !v.is_array() { return 0 }
+	pa := unsafe { extract_from_zval(v.raw) }
+	return pa.count()
 }
 
 // dup 执行写时复制赋值语义并增加 zend_string 引用计数
@@ -235,15 +229,7 @@ pub fn (v PhpVal) dup() PhpVal {
 	return PhpVal{ raw: z }
 }
 
-// Zend 数组操作外部 C 函数声明
-fn C.zend_new_array(size u32) voidptr
-fn C.zend_hash_index_update(ht voidptr, h u64, pData voidptr) voidptr
-fn C.zend_hash_str_update(ht voidptr, key &char, len usize, pData voidptr) voidptr
-fn C.zend_hash_next_index_insert(ht voidptr, pData voidptr) voidptr
-fn C.zend_hash_index_find(ht voidptr, h u64) &C.zval
-fn C.zend_hash_str_find(ht voidptr, key &char, len usize) &C.zval
-fn C.zend_hash_index_del(ht voidptr, h u64) int
-fn C.zend_hash_str_del(ht voidptr, key &char, len usize) int
+
 
 // ArrayItem 表示数组字面量的一个键值项
 pub struct ArrayItem {
@@ -252,139 +238,65 @@ pub:
 	val PhpVal
 }
 
-// new_array 创建一个空的 PHP 数组 zval
+// new_array 创建一个空的 PHP 数组 zval（纯 V 实现）
 pub fn new_array() PhpVal {
-	z := new_zval()
-	unsafe {
-		arr_ptr := C.zend_new_array(0)
-		mut p := &voidptr(&z.value)
-		*p = arr_ptr
-		z.u1.type_info = 7 // IS_ARRAY
-	}
+	mut z := new_zval()
+	pa := PhpArray.new()
+	pa.store_in_zval(z)
+	z.u1.type_info = 7 // IS_ARRAY
 	return PhpVal{ raw: z }
 }
 
-// create_array 接收项数组并构建完整的 PHP 关联或索引数组
+// create_array 从数组字面量项构建完整的 PHP 数组（纯 V 实现）
 pub fn create_array(items []ArrayItem) PhpVal {
-	arr := new_array()
-	for item in items {
-		if k := item.key {
-			arr.array_set(k, item.val)
-		} else {
-			arr.array_push(item.val)
-		}
-	}
-	return arr
+	mut z := new_zval()
+	pa := PhpArray.from_items(items)
+	pa.store_in_zval(z)
+	z.u1.type_info = 7 // IS_ARRAY
+	return PhpVal{ raw: z }
 }
 
-// array_set 根据键更新或设置数组项 (支持整数键和字符串键)
+// array_set 根据键更新或设置数组项（纯 V 实现）
 pub fn (v PhpVal) array_set(key PhpVal, val PhpVal) {
-	unsafe {
-		if !v.is_array() { return }
-		p_arr := &voidptr(&v.raw.value)
-		arr_ptr := *p_arr
-		if arr_ptr == 0 { return }
-		
-		val_dup := val.dup()
-		typ := key.raw.u1.type_info & 0xff
-		if typ == 4 { // IS_LONG
-			h := key.to_i64()
-			C.zend_hash_index_update(arr_ptr, u64(h), val_dup.raw)
-		} else {
-			k_str := key.to_string()
-			C.zend_hash_str_update(arr_ptr, k_str.str, usize(k_str.len), val_dup.raw)
-		}
-	}
+	if !v.is_array() { return }
+	mut pa := unsafe { extract_from_zval(v.raw) }
+	pa.set(key, val)
 }
 
-// array_push 向数组末尾追加元素
+// array_push 向数组末尾追加元素（纯 V 实现）
 pub fn (v PhpVal) array_push(val PhpVal) {
-	unsafe {
-		if !v.is_array() { return }
-		p_arr := &voidptr(&v.raw.value)
-		arr_ptr := *p_arr
-		if arr_ptr == 0 { return }
-		
-		val_dup := val.dup()
-		C.zend_hash_next_index_insert(arr_ptr, val_dup.raw)
-	}
+	if !v.is_array() { return }
+	mut pa := unsafe { extract_from_zval(v.raw) }
+	pa.push(val)
 }
 
-// array_get 从数组中获取指定键对应的元素
+// array_get 从数组中获取指定键对应的元素（纯 V 实现）
 pub fn (v PhpVal) array_get(key PhpVal) PhpVal {
-	unsafe {
-		if !v.is_array() { return new_null() }
-		p_arr := &voidptr(&v.raw.value)
-		arr_ptr := *p_arr
-		if arr_ptr == 0 { return new_null() }
-		
-		typ := key.raw.u1.type_info & 0xff
-		mut res_zval := &C.zval(nil)
-		if typ == 4 { // IS_LONG
-			h := key.to_i64()
-			res_zval = C.zend_hash_index_find(arr_ptr, u64(h))
-		} else {
-			k_str := key.to_string()
-			res_zval = C.zend_hash_str_find(arr_ptr, k_str.str, usize(k_str.len))
-		}
-		
-		if res_zval == 0 {
-			return new_null()
-		}
-		return PhpVal{ raw: res_zval }.dup()
-	}
+	if !v.is_array() { return new_null() }
+	pa := unsafe { extract_from_zval(v.raw) }
+	return pa.get(key)
 }
 
-// array_isset 检查数组中指定键对应的元素是否存在且不为 null
+// array_isset 检查数组中指定键是否存在且值非 null（纯 V 实现）
 pub fn (v PhpVal) array_isset(key PhpVal) bool {
-	unsafe {
-		if !v.is_array() { return false }
-		p_arr := &voidptr(&v.raw.value)
-		arr_ptr := *p_arr
-		if arr_ptr == 0 { return false }
-		
-		typ := key.raw.u1.type_info & 0xff
-		mut res_zval := &C.zval(nil)
-		if typ == 4 { // IS_LONG
-			h := key.to_i64()
-			res_zval = C.zend_hash_index_find(arr_ptr, u64(h))
-		} else {
-			k_str := key.to_string()
-			res_zval = C.zend_hash_str_find(arr_ptr, k_str.str, usize(k_str.len))
-		}
-		
-		if res_zval == 0 {
-			return false
-		}
-		return (res_zval.u1.type_info & 0xff) != 1 // 1 is IS_NULL
-	}
+	if !v.is_array() { return false }
+	pa := unsafe { extract_from_zval(v.raw) }
+	return pa.isset(key)
 }
 
-// array_unset 物理删除数组中指定键对应的元素
+// array_unset 删除数组中指定键对应的元素（纯 V 实现，标记为墓碑）
 pub fn (v PhpVal) array_unset(key PhpVal) {
-	unsafe {
-		if !v.is_array() { return }
-		p_arr := &voidptr(&v.raw.value)
-		arr_ptr := *p_arr
-		if arr_ptr == 0 { return }
-		
-		typ := key.raw.u1.type_info & 0xff
-		if typ == 4 { // IS_LONG
-			h := key.to_i64()
-			C.zend_hash_index_del(arr_ptr, u64(h))
-		} else {
-			k_str := key.to_string()
-			C.zend_hash_str_del(arr_ptr, k_str.str, usize(k_str.len))
-		}
-	}
+	if !v.is_array() { return }
+	mut pa := unsafe { extract_from_zval(v.raw) }
+	pa.del(key)
 }
 
-// ArrayIterator 包装了对 PHP 数组的外部迭代状态
+// ArrayIterator 包装了对 PHP 数组的外部迭代状态（纯 V 实现）
 pub struct ArrayIterator {
 pub mut:
 	arr   PhpVal
-	index u32
-	limit u32
+	index int
+	limit int
 }
 
 pub struct IterItem {
@@ -394,81 +306,67 @@ pub:
 }
 
 pub fn (v PhpVal) iterator() ArrayIterator {
-	unsafe {
-		if !v.is_array() {
-			return ArrayIterator{ arr: v, index: 0, limit: 0 }
-		}
-		p_arr := &voidptr(&v.raw.value)
-		arr_ptr := *p_arr
-		if arr_ptr == 0 {
-			return ArrayIterator{ arr: v, index: 0, limit: 0 }
-		}
-		// HashTable 结构体中偏移 24 字节为已使用的 Bucket 数量 (nNumUsed)
-		n_used_ptr := &u32(charptr(arr_ptr) + 24)
-		return ArrayIterator{
-			arr: v
-			index: 0
-			limit: *n_used_ptr
-		}
+	if !v.is_array() {
+		return ArrayIterator{ arr: v, index: 0, limit: 0 }
+	}
+	pa := unsafe { extract_from_zval(v.raw) }
+	return ArrayIterator{
+		arr:   v
+		index: 0
+		limit: pa.buckets.len
 	}
 }
 
 pub fn (mut it ArrayIterator) next() ?IterItem {
-	unsafe {
-		if it.index >= it.limit { return none }
-		p_arr := &voidptr(&it.arr.raw.value)
-		arr_ptr := *p_arr
-		if arr_ptr == 0 { return none }
-		
-		mut val_zval := &C.zval(nil)
-		mut key_zstr := voidptr(0)
-		mut num_key := u64(0)
-		
-		for it.index < it.limit {
-			curr_idx := it.index
-			it.index++
-			
-			res := C.php2v_hash_get_entry(arr_ptr, curr_idx, &val_zval, &key_zstr, &num_key)
-			if res == 1 {
-				mut k := new_null()
-				if key_zstr != 0 {
-					len_ptr := &usize(charptr(key_zstr) + 16)
-					val_ptr := charptr(key_zstr) + 24
-					k = new_string(tos(val_ptr, int(*len_ptr)))
-				} else {
-					k = new_int(i64(num_key))
-				}
-				
-				return IterItem{
-					key: k
-					val: PhpVal{ raw: val_zval }.dup()
-				}
-			}
+	if it.index >= it.limit { return none }
+	pa := unsafe { extract_from_zval(it.arr.raw) }
+	for it.index < it.limit {
+		idx := it.index
+		it.index++
+		bucket := pa.buckets[idx]
+		if bucket.key_kind == .deleted {
+			continue
 		}
-		return none
+		mut k := new_null()
+		match bucket.key_kind {
+			.int_key {
+				k = new_int(bucket.ikey)
+			}
+			.str_key {
+				k = new_string(bucket.skey)
+			}
+			else {}
+		}
+		return IterItem{
+			key: k
+			val: bucket.val.dup()
+		}
 	}
+	return none
 }
 
 // IPhpObject 接口，提供动态的多态方法/属性路由契约
 pub interface IPhpObject {
 mut:
-	dispatch_method(method_name string, args []PhpVal) PhpVal
-	dispatch_get_prop(prop_name string) PhpVal
-	dispatch_set_prop(prop_name string, val PhpVal)
+	dispatch_method(method_name string, args []PhpVal) ?PhpVal
+	dispatch_get_prop(prop_name string) ?PhpVal
+	dispatch_set_prop(prop_name string, val PhpVal) bool
 }
 
 // PhpObjectBase 结构体可作为 PHP 类的通用嵌入基类，提供默认实现以隐式实现 IPhpObject
 pub struct PhpObjectBase {}
 
-pub fn (mut this PhpObjectBase) dispatch_method(method_name string, args []PhpVal) PhpVal {
-	return new_null()
+pub fn (mut this PhpObjectBase) dispatch_method(method_name string, args []PhpVal) ?PhpVal {
+	return none
 }
 
-pub fn (this &PhpObjectBase) dispatch_get_prop(prop_name string) PhpVal {
-	return new_null()
+pub fn (this &PhpObjectBase) dispatch_get_prop(prop_name string) ?PhpVal {
+	return none
 }
 
-pub fn (mut this PhpObjectBase) dispatch_set_prop(prop_name string, val PhpVal) {}
+pub fn (mut this PhpObjectBase) dispatch_set_prop(prop_name string, val PhpVal) bool {
+	return false
+}
 
 pub const magic_php_object = u64(0x56504850585F4F42)
 
@@ -511,7 +409,7 @@ pub fn call_method(obj PhpVal, method_name string, args []PhpVal) PhpVal {
 		C.php2v_call_method(obj.raw, method_name.str, usize(method_name.len), z, u32(args.len), raw_args.data)
 		return PhpVal{ raw: z }
 	}
-	return obj_info.obj.dispatch_method(method_name, args)
+	return obj_info.obj.dispatch_method(method_name, args) or { new_null() }
 }
 
 // get_property 公共运行时分发器
@@ -521,7 +419,7 @@ pub fn get_property(obj PhpVal, prop_name string) PhpVal {
 	if voidptr(obj_info) == 0 {
 		return new_null()
 	}
-	return obj_info.obj.dispatch_get_prop(prop_name)
+	return obj_info.obj.dispatch_get_prop(prop_name) or { new_null() }
 }
 
 // set_property 公共运行时分发器
