@@ -1,6 +1,7 @@
 module taskx
 
 import vphp
+import vphp.object
 
 #include "php_bridge.h"
 
@@ -61,7 +62,8 @@ pub fn vphp_wrap_vslim_task_spawn(ctx vphp.Context) voidptr {
     arg_0 := php_args.at_named_or_index(0, 'target').value
     arg_1 := php_args.at_named_or_index(1, 'params').array() or {
         vphp.throw_exception('argument 1 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := VSlimTask.@spawn(arg_0, arg_1)
     return voidptr(res)
@@ -81,8 +83,8 @@ pub fn VSlimTask.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__task_ce)
 }
 
-pub fn VSlimTask.php_object_handlers() voidptr {
-    return vslim_task_handlers()
+pub fn VSlimTask.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_task_handlers())
 }
 
 pub fn VSlimTask.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -172,8 +174,8 @@ pub fn VSlimTaskHandle.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__taskhandle_ce)
 }
 
-pub fn VSlimTaskHandle.php_object_handlers() voidptr {
-    return vslim_task_handle_handlers()
+pub fn VSlimTaskHandle.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_task_handle_handlers())
 }
 
 pub fn VSlimTaskHandle.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

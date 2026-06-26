@@ -1,6 +1,7 @@
 module clix
 
 import vphp
+import vphp.object
 
 #include "php_bridge.h"
 
@@ -141,7 +142,8 @@ pub fn vphp_wrap_vslim_cli_app_command_many(ptr voidptr, ctx vphp.Context) voidp
     ])
     arg_0 := php_args.at_named_or_index(0, 'commands').iterable() or {
         vphp.throw_exception('argument 0 must be iterable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.command_many(arg_0)
     return voidptr(res)
@@ -310,8 +312,8 @@ pub fn VSlimCliApp.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__cli__app_ce)
 }
 
-pub fn VSlimCliApp.php_object_handlers() voidptr {
-    return vslim_cli_app_handlers()
+pub fn VSlimCliApp.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_cli_app_handlers())
 }
 
 pub fn VSlimCliApp.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

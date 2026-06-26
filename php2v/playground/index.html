@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>php2v Playground - PHP to V Transpiler</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="A static playground for php2v, showing PHP AST and transpiled V code side-by-side.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- PrismJS Theme (Dark Tomorrow) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+    <!-- PrismJS Line Numbers Plugin CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/line-numbers/prism-line-numbers.min.css">
+    
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="playground-app">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-logo">
+                <span class="logo-text">PHP<span class="logo-arrow">➔</span>V</span>
+                <span class="logo-subtext">Playground</span>
+                <span class="badge">Static Demo</span>
+            </div>
+            
+            <div class="header-actions">
+                <button id="btn-collapse-ast" class="btn btn-secondary" title="折叠/展开 AST 树">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 12h16M4 6h16M4 18h16" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    折叠/展开 AST
+                </button>
+                <a href="https://github.com/guweigang/vphpx" target="_blank" class="github-link" aria-label="GitHub Repository" id="github-repo-link">
+                    <svg class="github-icon" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                    </svg>
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Layout -->
+        <main class="app-main">
+            <!-- Sidebar (Fixtures List) -->
+            <aside class="app-sidebar">
+                <div class="search-container">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input type="text" id="search-input" placeholder="搜索测试用例 (e.g. echo, oop)..." aria-label="Search fixtures">
+                </div>
+                <div class="sidebar-scroll">
+                    <div id="fixtures-list" class="fixtures-list">
+                        <!-- Fixture Items will be injected here -->
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Workspace Panels -->
+            <section class="app-workspace">
+                <!-- Left Panel: PHP Source Code -->
+                <div class="code-panel" id="panel-php-source">
+                    <div class="panel-header">
+                        <span class="panel-title">PHP Source</span>
+                        <span class="panel-filename" id="php-filename">loading...</span>
+                    </div>
+                    <div class="panel-body">
+                        <pre class="language-php line-numbers"><code id="php-code-box" class="language-php"></code></pre>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Transpiled V or AST Tabbed -->
+                <div class="code-panel" id="panel-output">
+                    <div class="panel-header tabbed-header">
+                        <div class="tab-buttons">
+                            <button class="tab-btn active" data-tab="tab-v-code" id="tab-v-btn">V Target Code</button>
+                            <button class="tab-btn" data-tab="tab-ast-tree" id="tab-ast-btn">AST JSON Tree</button>
+                        </div>
+                        <span class="panel-filename" id="output-filename">loading...</span>
+                    </div>
+                    <div class="panel-body tab-content-container">
+                        <!-- Tab 1: V Target Code -->
+                        <div class="tab-content active" id="tab-v-code">
+                            <pre class="language-v line-numbers"><code id="v-code-box" class="language-v"></code></pre>
+                        </div>
+                        
+                        <!-- Tab 2: AST Tree -->
+                        <div class="tab-content" id="tab-ast-tree">
+                            <div class="ast-tree-wrapper">
+                                <div id="ast-tree-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <!-- Diagnostic Debug Console Overlay (Hidden by default, holds load errors) -->
+        <div id="debug-console" style="display: none; position: fixed; bottom: 0; left: 0; width: 100%; max-height: 120px; overflow-y: auto; background: rgba(22, 10, 10, 0.95); color: #ff5252; font-family: monospace; font-size: 11px; z-index: 99999; padding: 10px; border-top: 2px solid #ff5252; box-shadow: 0 -4px 20px rgba(0,0,0,0.5);"></div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- PrismJS Core and components for PHP & V (using highly stable jsDelivr Node) -->
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup-templating.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-clike.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-php.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-v.min.js"></script>
+    
+    <!-- PrismJS Line Numbers Plugin JS -->
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+
+    <!-- JSON Formatter JS -->
+    <script src="https://cdn.jsdelivr.net/npm/json-formatter-js@2.3.4/dist/json-formatter.umd.min.js"></script>
+    
+    <!-- Playground Data -->
+    <script src="data.js"></script>
+    
+    <!-- Playground App Logic -->
+    <script src="app.js"></script>
+</body>
+</html>

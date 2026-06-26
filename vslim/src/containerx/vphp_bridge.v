@@ -1,6 +1,7 @@
 module containerx
 
 import vphp
+import vphp.object
 
 #include "php_bridge.h"
 
@@ -71,8 +72,8 @@ pub fn VSlimContainerException.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__container__containerexception_ce)
 }
 
-pub fn VSlimContainerException.php_object_handlers() voidptr {
-    return vslim_container_exception_handlers()
+pub fn VSlimContainerException.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_container_exception_handlers())
 }
 
 pub fn VSlimContainerException.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -162,8 +163,8 @@ pub fn VSlimContainerNotFoundException.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__container__notfoundexception_ce)
 }
 
-pub fn VSlimContainerNotFoundException.php_object_handlers() voidptr {
-    return vslim_container_not_found_exception_handlers()
+pub fn VSlimContainerNotFoundException.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_container_not_found_exception_handlers())
 }
 
 pub fn VSlimContainerNotFoundException.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -260,7 +261,8 @@ pub fn vphp_wrap_vslim_container_factory(ptr voidptr, ctx vphp.Context) voidptr 
     arg_0 := php_args.at_named_or_index(0, 'id').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'callable').callable() or {
         vphp.throw_exception('argument 1 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.factory(arg_0, arg_1)
     return voidptr(res)
@@ -304,8 +306,8 @@ pub fn VSlimContainer.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__container_ce)
 }
 
-pub fn VSlimContainer.php_object_handlers() voidptr {
-    return vslim_container_handlers()
+pub fn VSlimContainer.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_container_handlers())
 }
 
 pub fn VSlimContainer.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

@@ -1,6 +1,7 @@
 module vhttpdx
 
 import vphp
+import vphp.object
 
 #include "php_bridge.h"
 
@@ -119,8 +120,8 @@ pub fn VSlimVhttpdClient.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__vhttpd__client_ce)
 }
 
-pub fn VSlimVhttpdClient.php_object_handlers() voidptr {
-    return vslim_vhttpd_client_handlers()
+pub fn VSlimVhttpdClient.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_vhttpd_client_handlers())
 }
 
 pub fn VSlimVhttpdClient.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

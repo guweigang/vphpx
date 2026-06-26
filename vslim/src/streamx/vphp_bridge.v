@@ -1,6 +1,7 @@
 module streamx
 
 import vphp
+import vphp.object
 
 import configx
 
@@ -278,8 +279,8 @@ pub fn VSlimStreamResponse.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__stream__response_ce)
 }
 
-pub fn VSlimStreamResponse.php_object_handlers() voidptr {
-    return vslim_stream_response_handlers()
+pub fn VSlimStreamResponse.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_stream_response_handlers())
 }
 
 pub fn VSlimStreamResponse.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -368,8 +369,8 @@ pub fn VSlimStreamNdjsonDecoder.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__stream__ndjsondecoder_ce)
 }
 
-pub fn VSlimStreamNdjsonDecoder.php_object_handlers() voidptr {
-    return vslim_stream_ndjson_decoder_handlers()
+pub fn VSlimStreamNdjsonDecoder.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_stream_ndjson_decoder_handlers())
 }
 
 pub fn VSlimStreamNdjsonDecoder.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -463,8 +464,8 @@ pub fn VSlimStreamSseEncoder.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__stream__sseencoder_ce)
 }
 
-pub fn VSlimStreamSseEncoder.php_object_handlers() voidptr {
-    return vslim_stream_sse_encoder_handlers()
+pub fn VSlimStreamSseEncoder.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_stream_sse_encoder_handlers())
 }
 
 pub fn VSlimStreamSseEncoder.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -605,7 +606,8 @@ pub fn vphp_wrap_vslim_stream_ollama_client_from_config(ctx vphp.Context) voidpt
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'config').to_v_ptr[configx.VSlimConfig]() or {
         vphp.throw_exception('argument 0 must be object bound to configx.VSlimConfig, got ' + php_args.at_named_or_index(0, 'config').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &configx.VSlimConfig(arg_0_ptr) }
     res := VSlimStreamOllamaClient.from_config(arg_0)
@@ -631,7 +633,8 @@ pub fn vphp_wrap_vslim_stream_ollama_client_from_options(ctx vphp.Context) voidp
     ])
     arg_0 := php_args.at_named_or_index(0, 'options').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := VSlimStreamOllamaClient.from_options(arg_0)
     return voidptr(res)
@@ -804,8 +807,8 @@ pub fn VSlimStreamOllamaClient.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__stream__ollamaclient_ce)
 }
 
-pub fn VSlimStreamOllamaClient.php_object_handlers() voidptr {
-    return vslim_stream_ollama_client_handlers()
+pub fn VSlimStreamOllamaClient.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_stream_ollama_client_handlers())
 }
 
 pub fn VSlimStreamOllamaClient.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1037,8 +1040,8 @@ pub fn VSlimStreamFactory.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__stream__factory_ce)
 }
 
-pub fn VSlimStreamFactory.php_object_handlers() voidptr {
-    return vslim_stream_factory_handlers()
+pub fn VSlimStreamFactory.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_stream_factory_handlers())
 }
 
 pub fn VSlimStreamFactory.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

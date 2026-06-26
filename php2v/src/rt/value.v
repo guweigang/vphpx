@@ -1,0 +1,581 @@
+module rt
+
+#include <php.h>
+
+#include "rt_helper.h"
+
+fn C.php2v_call_zend_function(name &char, name_len usize, retval &C.zval, param_count u32, params &&C.zval) int
+fn C.php2v_eval_string(str &char, len usize, retval &C.zval) int
+fn C.php2v_register_constant(name &char, len usize, val &C.zval) int
+fn C.php2v_get_constant(name &char, len usize, val &C.zval) int
+fn C.increment_function(op &C.zval) int
+fn C.decrement_function(op &C.zval) int
+fn C.bitwise_and_function(result &C.zval, op1 &C.zval, op2 &C.zval) int
+fn C.bitwise_or_function(result &C.zval, op1 &C.zval, op2 &C.zval) int
+fn C.bitwise_xor_function(result &C.zval, op1 &C.zval, op2 &C.zval) int
+fn C.shift_left_function(result &C.zval, op1 &C.zval, op2 &C.zval) int
+fn C.shift_right_function(result &C.zval, op1 &C.zval, op2 &C.zval) int
+fn C.bitwise_not_function(result &C.zval, op1 &C.zval) int
+
+
+
+// 声明 Zend zval 的底层内存结构
+@[typedef]
+pub struct C.zval {
+pub mut:
+	value usize
+	u1    C.zval_u1
+}
+
+@[typedef]
+pub struct C.zval_u1 {
+pub mut:
+	type_info u32
+}
+
+// PhpVal 包装了底层的 C.zval 指针
+pub struct PhpVal {
+pub mut:
+	raw &C.zval
+}
+
+// 声明 Zend zend_string 构造器
+fn C.zend_string_init(str &char, len usize, persistent bool) voidptr
+
+// new_zval 在 C 堆上分配一个 zval 并清零 (初始化为 IS_UNDEF 状态)
+fn new_zval() &C.zval {
+	unsafe {
+		z := &C.zval(malloc(int(sizeof(C.zval))))
+		mut p := &usize(&z.value)
+		*p = 0
+		z.u1.type_info = 0 // IS_UNDEF
+		return z
+	}
+}
+
+pub fn new_int(n i64) PhpVal {
+	z := new_zval()
+	unsafe {
+		mut p := &i64(&z.value)
+		*p = n
+		z.u1.type_info = 4 // IS_LONG
+	}
+	return PhpVal{ raw: z }
+}
+
+pub fn new_float(f f64) PhpVal {
+	z := new_zval()
+	unsafe {
+		mut p := &f64(&z.value)
+		*p = f
+		z.u1.type_info = 5 // IS_DOUBLE
+	}
+	return PhpVal{ raw: z }
+}
+
+fn C.php2v_get_null() &C.zval
+fn C.php2v_get_true() &C.zval
+fn C.php2v_get_false() &C.zval
+
+pub fn new_bool(b bool) PhpVal {
+	if b {
+		return PhpVal{ raw: C.php2v_get_true() }
+	} else {
+		return PhpVal{ raw: C.php2v_get_false() }
+	}
+}
+
+pub fn new_null() PhpVal {
+	return PhpVal{ raw: C.php2v_get_null() }
+}
+
+pub fn new_string(s string) PhpVal {
+	z := new_zval()
+	unsafe {
+		str_ptr := C.zend_string_init(s.str, usize(s.len), false)
+		mut p := &voidptr(&z.value)
+		*p = str_ptr
+		z.u1.type_info = 6 // IS_STRING
+	}
+	return PhpVal{ raw: z }
+}
+
+// to_string 零拷贝读取 Zend 字符串或转换标量值为 V 字符串
+pub fn (v PhpVal) to_string() string {
+	unsafe {
+		if v.raw == 0 {
+			return ''
+		}
+		typ := v.raw.u1.type_info & 0xff
+		match typ {
+			1 { return '' }
+			2 { return '' }
+			3 { return '1' }
+			4 {
+				p := &i64(&v.raw.value)
+				return (*p).str()
+			}
+			5 {
+				p := &f64(&v.raw.value)
+				return (*p).str()
+			}
+			6 {
+				p_str := &voidptr(&v.raw.value)
+				str_ptr := *p_str
+				if str_ptr == 0 {
+					return ''
+				}
+				len_ptr := &usize(charptr(str_ptr) + 16)
+				val_ptr := charptr(str_ptr) + 24
+				return tos(val_ptr, int(*len_ptr))
+			}
+			else {
+				return ''
+			}
+		}
+	}
+}
+
+pub fn (v PhpVal) to_bool() bool {
+	unsafe {
+		if v.raw == 0 { return false }
+		typ := v.raw.u1.type_info & 0xff
+		return typ == 3
+	}
+}
+
+pub fn (v PhpVal) to_i64() i64 {
+	unsafe {
+		if v.raw == 0 { return 0 }
+		typ := v.raw.u1.type_info & 0xff
+		if typ == 4 {
+			p := &i64(&v.raw.value)
+			return *p
+		}
+		return 0
+	}
+}
+
+pub fn (v PhpVal) to_f64() f64 {
+	unsafe {
+		if v.raw == 0 { return 0.0 }
+		typ := v.raw.u1.type_info & 0xff
+		if typ == 5 {
+			p := &f64(&v.raw.value)
+			return *p
+		}
+		return 0.0
+	}
+}
+
+pub fn (v PhpVal) is_valid() bool {
+	return v.raw != 0
+}
+
+pub fn (v PhpVal) is_null() bool {
+	return v.raw != 0 && (v.raw.u1.type_info & 0xff) == 1
+}
+
+pub fn (v PhpVal) is_bool() bool {
+	if v.raw == 0 { return false }
+	typ := v.raw.u1.type_info & 0xff
+	return typ == 2 || typ == 3
+}
+
+pub fn (v PhpVal) is_long() bool {
+	return v.raw != 0 && (v.raw.u1.type_info & 0xff) == 4
+}
+
+pub fn (v PhpVal) is_double() bool {
+	return v.raw != 0 && (v.raw.u1.type_info & 0xff) == 5
+}
+
+pub fn (v PhpVal) is_string() bool {
+	return v.raw != 0 && (v.raw.u1.type_info & 0xff) == 6
+}
+
+pub fn (v PhpVal) is_array() bool {
+	return v.raw != 0 && (v.raw.u1.type_info & 0xff) == 7
+}
+
+// array_count 返回数组中存活元素的数量（纯 V 实现）
+pub fn (v PhpVal) array_count() int {
+	if !v.is_array() { return 0 }
+	pa := unsafe { extract_from_zval(v.raw) }
+	return pa.count()
+}
+
+// dup 执行写时复制赋值语义并增加 zend_string 引用计数
+pub fn (v PhpVal) dup() PhpVal {
+	if v.raw == 0 {
+		return PhpVal{ raw: unsafe { nil } }
+	}
+	z := new_zval()
+	unsafe {
+		mut p := &usize(&z.value)
+		p_src := &usize(&v.raw.value)
+		*p = *p_src
+		z.u1.type_info = v.raw.u1.type_info
+		typ := v.raw.u1.type_info & 0xff
+		if typ == 6 {
+			p_str := &voidptr(&v.raw.value)
+			str_ptr := *p_str
+			if str_ptr != 0 {
+				ref_ptr := &u32(str_ptr)
+				(*ref_ptr)++
+			}
+		}
+	}
+	return PhpVal{ raw: z }
+}
+
+
+
+// ArrayItem 表示数组字面量的一个键值项
+pub struct ArrayItem {
+pub:
+	key ?PhpVal
+	val PhpVal
+}
+
+// new_array 创建一个空的 PHP 数组 zval（纯 V 实现）
+pub fn new_array() PhpVal {
+	mut z := new_zval()
+	pa := PhpArray.new()
+	pa.store_in_zval(z)
+	z.u1.type_info = 7 // IS_ARRAY
+	return PhpVal{ raw: z }
+}
+
+// create_array 从数组字面量项构建完整的 PHP 数组（纯 V 实现）
+pub fn create_array(items []ArrayItem) PhpVal {
+	mut z := new_zval()
+	pa := PhpArray.from_items(items)
+	pa.store_in_zval(z)
+	z.u1.type_info = 7 // IS_ARRAY
+	return PhpVal{ raw: z }
+}
+
+// array_set 根据键更新或设置数组项（纯 V 实现）
+pub fn (v PhpVal) array_set(key PhpVal, val PhpVal) {
+	if !v.is_array() { return }
+	mut pa := unsafe { extract_from_zval(v.raw) }
+	pa.set(key, val)
+}
+
+// array_push 向数组末尾追加元素（纯 V 实现）
+pub fn (v PhpVal) array_push(val PhpVal) {
+	if !v.is_array() { return }
+	mut pa := unsafe { extract_from_zval(v.raw) }
+	pa.push(val)
+}
+
+// array_get 从数组中获取指定键对应的元素（纯 V 实现）
+pub fn (v PhpVal) array_get(key PhpVal) PhpVal {
+	if !v.is_array() { return new_null() }
+	pa := unsafe { extract_from_zval(v.raw) }
+	return pa.get(key)
+}
+
+// array_isset 检查数组中指定键是否存在且值非 null（纯 V 实现）
+pub fn (v PhpVal) array_isset(key PhpVal) bool {
+	if !v.is_array() { return false }
+	pa := unsafe { extract_from_zval(v.raw) }
+	return pa.isset(key)
+}
+
+// array_unset 删除数组中指定键对应的元素（纯 V 实现，标记为墓碑）
+pub fn (v PhpVal) array_unset(key PhpVal) {
+	if !v.is_array() { return }
+	mut pa := unsafe { extract_from_zval(v.raw) }
+	pa.del(key)
+}
+
+// ArrayIterator 包装了对 PHP 数组的外部迭代状态（纯 V 实现）
+pub struct ArrayIterator {
+pub mut:
+	arr   PhpVal
+	index int
+	limit int
+}
+
+pub struct IterItem {
+pub:
+	key PhpVal
+	val PhpVal
+}
+
+pub fn (v PhpVal) iterator() ArrayIterator {
+	if !v.is_array() {
+		return ArrayIterator{ arr: v, index: 0, limit: 0 }
+	}
+	pa := unsafe { extract_from_zval(v.raw) }
+	return ArrayIterator{
+		arr:   v
+		index: 0
+		limit: pa.buckets.len
+	}
+}
+
+pub fn (mut it ArrayIterator) next() ?IterItem {
+	if it.index >= it.limit { return none }
+	pa := unsafe { extract_from_zval(it.arr.raw) }
+	for it.index < it.limit {
+		idx := it.index
+		it.index++
+		bucket := pa.buckets[idx]
+		if bucket.key_kind == .deleted {
+			continue
+		}
+		mut k := new_null()
+		match bucket.key_kind {
+			.int_key {
+				k = new_int(bucket.ikey)
+			}
+			.str_key {
+				k = new_string(bucket.skey)
+			}
+			else {}
+		}
+		return IterItem{
+			key: k
+			val: bucket.val.dup()
+		}
+	}
+	return none
+}
+
+// IPhpObject 接口，提供动态的多态方法/属性路由契约
+pub interface IPhpObject {
+mut:
+	dispatch_method(method_name string, args []PhpVal) ?PhpVal
+	dispatch_get_prop(prop_name string) ?PhpVal
+	dispatch_set_prop(prop_name string, val PhpVal) bool
+}
+
+// PhpObjectBase 结构体可作为 PHP 类的通用嵌入基类，提供默认实现以隐式实现 IPhpObject
+pub struct PhpObjectBase {}
+
+pub fn (mut this PhpObjectBase) dispatch_method(method_name string, args []PhpVal) ?PhpVal {
+	return none
+}
+
+pub fn (this &PhpObjectBase) dispatch_get_prop(prop_name string) ?PhpVal {
+	return none
+}
+
+pub fn (mut this PhpObjectBase) dispatch_set_prop(prop_name string, val PhpVal) bool {
+	return false
+}
+
+pub const magic_php_object = u64(0x56504850585F4F42)
+
+// PhpObject 承载 AOT 中的 PHP 对象
+pub struct PhpObject {
+pub mut:
+	magic      u64
+	class_name string
+	parents    []string
+	obj        IPhpObject
+}
+
+// new_object 将实现 IPhpObject 接口的结构体及类名封装为弱类型的 PhpVal
+pub fn new_object(class_name string, parents []string, obj IPhpObject) PhpVal {
+	z := new_zval()
+	unsafe {
+		mut p_obj := &PhpObject(malloc(int(sizeof(PhpObject))))
+		p_obj.magic = magic_php_object
+		p_obj.class_name = class_name
+		p_obj.parents = parents
+		p_obj.obj = obj
+		
+		mut p := &voidptr(&z.value)
+		*p = p_obj
+		z.u1.type_info = 8 // IS_OBJECT
+	}
+	return PhpVal{ raw: z }
+}
+
+// call_method 公共运行时分发器，基于 IPhpObject 接口实现多态派发
+pub fn call_method(obj PhpVal, method_name string, args []PhpVal) PhpVal {
+	if !obj.is_object() { return new_null() }
+	mut obj_info := obj.get_object()
+	if voidptr(obj_info) == 0 {
+		z := new_zval()
+		mut raw_args := []&C.zval{}
+		for a in args {
+			raw_args << a.raw
+		}
+		C.php2v_call_method(obj.raw, method_name.str, usize(method_name.len), z, u32(args.len), raw_args.data)
+		return PhpVal{ raw: z }
+	}
+	return obj_info.obj.dispatch_method(method_name, args) or { new_null() }
+}
+
+// get_property 公共运行时分发器
+pub fn get_property(obj PhpVal, prop_name string) PhpVal {
+	if !obj.is_object() { return new_null() }
+	mut obj_info := obj.get_object()
+	if voidptr(obj_info) == 0 {
+		return new_null()
+	}
+	return obj_info.obj.dispatch_get_prop(prop_name) or { new_null() }
+}
+
+// set_property 公共运行时分发器
+pub fn set_property(obj PhpVal, prop_name string, val PhpVal) {
+	if !obj.is_object() { return }
+	mut obj_info := obj.get_object()
+	if voidptr(obj_info) == 0 {
+		return
+	}
+	obj_info.obj.dispatch_set_prop(prop_name, val)
+}
+
+pub fn (v PhpVal) is_object() bool {
+	return v.raw != 0 && (v.raw.u1.type_info & 0xff) == 8
+}
+
+pub fn (v PhpVal) get_object() &PhpObject {
+	unsafe {
+		if !v.is_object() { return &PhpObject(nil) }
+		p_ptr := &voidptr(&v.raw.value)
+		p := *p_ptr
+		if p == 0 { return &PhpObject(nil) }
+		p_obj := &PhpObject(p)
+		if p_obj.magic == magic_php_object {
+			return p_obj
+		}
+		return &PhpObject(nil)
+	}
+}
+
+// Exception & Superglobal FFI Bindings
+fn C.php2v_has_exception() int
+fn C.php2v_get_and_clear_exception(retval &C.zval)
+fn C.php2v_throw_exception_object(ex &C.zval)
+fn C.php2v_get_superglobal(name &char, len usize, retval &C.zval) int
+fn C.php2v_register_global(name &char, len usize, val &C.zval)
+fn C.php2v_instance_of(obj &C.zval, class_name &char, len usize) int
+fn C.php2v_call_method(obj &C.zval, name &char, len usize, retval &C.zval, param_count u32, params voidptr) int
+
+pub fn has_exception() bool {
+	return C.php2v_has_exception() != 0
+}
+
+pub fn get_and_clear_exception() PhpVal {
+	z := new_zval()
+	C.php2v_get_and_clear_exception(z)
+	return PhpVal{ raw: z }
+}
+
+pub fn throw_exception(ex PhpVal) {
+	C.php2v_throw_exception_object(ex.raw)
+}
+
+pub fn get_superglobal(name string) PhpVal {
+	z := new_zval()
+	C.php2v_get_superglobal(name.str, usize(name.len), z)
+	return PhpVal{ raw: z }
+}
+
+pub fn register_global(name string, val PhpVal) {
+	C.php2v_register_global(name.str, usize(name.len), val.raw)
+}
+
+pub fn instance_of(obj PhpVal, class_name string) bool {
+	if !obj.is_object() { return false }
+	mut obj_info := obj.get_object()
+	if voidptr(obj_info) == 0 {
+		return C.php2v_instance_of(obj.raw, class_name.str, usize(class_name.len)) != 0
+	}
+	if obj_info.class_name == class_name {
+		return true
+	}
+	for parent in obj_info.parents {
+		if parent == class_name {
+			return true
+		}
+	}
+	return false
+}
+
+pub fn post_inc(v PhpVal) PhpVal {
+	old := v.dup()
+	unsafe {
+		C.increment_function(v.raw)
+	}
+	return old
+}
+
+pub fn post_dec(v PhpVal) PhpVal {
+	old := v.dup()
+	unsafe {
+		C.decrement_function(v.raw)
+	}
+	return old
+}
+
+pub fn pre_inc(v PhpVal) PhpVal {
+	unsafe {
+		C.increment_function(v.raw)
+	}
+	return v
+}
+
+pub fn pre_dec(v PhpVal) PhpVal {
+	unsafe {
+		C.decrement_function(v.raw)
+	}
+	return v
+}
+
+pub fn bitwise_and(a PhpVal, b PhpVal) PhpVal {
+	z := new_zval()
+	unsafe {
+		C.bitwise_and_function(z, a.raw, b.raw)
+	}
+	return PhpVal{ raw: z }
+}
+
+pub fn bitwise_or(a PhpVal, b PhpVal) PhpVal {
+	z := new_zval()
+	unsafe {
+		C.bitwise_or_function(z, a.raw, b.raw)
+	}
+	return PhpVal{ raw: z }
+}
+
+pub fn bitwise_xor(a PhpVal, b PhpVal) PhpVal {
+	z := new_zval()
+	unsafe {
+		C.bitwise_xor_function(z, a.raw, b.raw)
+	}
+	return PhpVal{ raw: z }
+}
+
+pub fn shift_left(a PhpVal, b PhpVal) PhpVal {
+	z := new_zval()
+	unsafe {
+		C.shift_left_function(z, a.raw, b.raw)
+	}
+	return PhpVal{ raw: z }
+}
+
+pub fn shift_right(a PhpVal, b PhpVal) PhpVal {
+	z := new_zval()
+	unsafe {
+		C.shift_right_function(z, a.raw, b.raw)
+	}
+	return PhpVal{ raw: z }
+}
+
+pub fn bitwise_not(a PhpVal) PhpVal {
+	z := new_zval()
+	unsafe {
+		C.bitwise_not_function(z, a.raw)
+	}
+	return PhpVal{ raw: z }
+}
+
+

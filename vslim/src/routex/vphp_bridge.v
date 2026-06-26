@@ -1,6 +1,7 @@
 module routex
 
 import vphp
+import vphp.object
 
 #include "php_bridge.h"
 
@@ -482,7 +483,8 @@ pub fn vphp_wrap_route_group_resource_opts(ptr voidptr, ctx vphp.Context) voidpt
     arg_1 := php_args.at_named_or_index(1, 'controller').as_v[string]()
     arg_2 := php_args.at_named_or_index(2, 'options').array() or {
         vphp.throw_exception('argument 2 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.resource_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
@@ -501,7 +503,8 @@ pub fn vphp_wrap_route_group_api_resource_opts(ptr voidptr, ctx vphp.Context) vo
     arg_1 := php_args.at_named_or_index(1, 'controller').as_v[string]()
     arg_2 := php_args.at_named_or_index(2, 'options').array() or {
         vphp.throw_exception('argument 2 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.api_resource_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
@@ -520,7 +523,8 @@ pub fn vphp_wrap_route_group_singleton_opts(ptr voidptr, ctx vphp.Context) voidp
     arg_1 := php_args.at_named_or_index(1, 'controller').as_v[string]()
     arg_2 := php_args.at_named_or_index(2, 'options').array() or {
         vphp.throw_exception('argument 2 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.singleton_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
@@ -539,7 +543,8 @@ pub fn vphp_wrap_route_group_api_singleton_opts(ptr voidptr, ctx vphp.Context) v
     arg_1 := php_args.at_named_or_index(1, 'controller').as_v[string]()
     arg_2 := php_args.at_named_or_index(2, 'options').array() or {
         vphp.throw_exception('argument 2 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.api_singleton_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
@@ -559,8 +564,8 @@ pub fn RouteGroup.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__routegroup_ce)
 }
 
-pub fn RouteGroup.php_object_handlers() voidptr {
-    return route_group_handlers()
+pub fn RouteGroup.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(route_group_handlers())
 }
 
 pub fn RouteGroup.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

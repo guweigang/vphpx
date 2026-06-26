@@ -1,6 +1,7 @@
 module httpx
 
 import vphp
+import vphp.object
 
 #include "php_bridge.h"
 
@@ -174,7 +175,8 @@ pub fn vphp_wrap_vslim_request_set_query(ptr voidptr, ctx vphp.Context) voidptr 
     ])
     arg_0 := php_args.at_named_or_index(0, 'query').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.set_query(arg_0)
     return voidptr(res)
@@ -301,7 +303,8 @@ pub fn vphp_wrap_vslim_request_set_headers(ptr voidptr, ctx vphp.Context) voidpt
     ])
     arg_0 := php_args.at_named_or_index(0, 'headers').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.set_headers(arg_0)
     return voidptr(res)
@@ -316,7 +319,8 @@ pub fn vphp_wrap_vslim_request_set_cookies(ptr voidptr, ctx vphp.Context) voidpt
     ])
     arg_0 := php_args.at_named_or_index(0, 'cookies').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.set_cookies(arg_0)
     return voidptr(res)
@@ -331,7 +335,8 @@ pub fn vphp_wrap_vslim_request_set_attributes(ptr voidptr, ctx vphp.Context) voi
     ])
     arg_0 := php_args.at_named_or_index(0, 'attributes').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.set_attributes(arg_0)
     return voidptr(res)
@@ -346,7 +351,8 @@ pub fn vphp_wrap_vslim_request_set_server(ptr voidptr, ctx vphp.Context) voidptr
     ])
     arg_0 := php_args.at_named_or_index(0, 'server').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.set_server(arg_0)
     return voidptr(res)
@@ -361,7 +367,8 @@ pub fn vphp_wrap_vslim_request_set_uploaded_files(ptr voidptr, ctx vphp.Context)
     ])
     arg_0 := php_args.at_named_or_index(0, 'uploadedFiles').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.set_uploaded_files(arg_0)
     return voidptr(res)
@@ -376,7 +383,8 @@ pub fn vphp_wrap_vslim_request_set_params(ptr voidptr, ctx vphp.Context) voidptr
     ])
     arg_0 := php_args.at_named_or_index(0, 'params').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.set_params(arg_0)
     return voidptr(res)
@@ -818,8 +826,8 @@ pub fn VSlimRequest.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__vhttpd__request_ce)
 }
 
-pub fn VSlimRequest.php_object_handlers() voidptr {
-    return vslim_request_handlers()
+pub fn VSlimRequest.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_request_handlers())
 }
 
 pub fn VSlimRequest.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1076,8 +1084,8 @@ pub fn VSlimPsr7Stream.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr7__stream_ce)
 }
 
-pub fn VSlimPsr7Stream.php_object_handlers() voidptr {
-    return vslim_psr7_stream_handlers()
+pub fn VSlimPsr7Stream.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr7_stream_handlers())
 }
 
 pub fn VSlimPsr7Stream.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1254,8 +1262,8 @@ pub fn VSlimPsr7UploadedFile.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr7__uploadedfile_ce)
 }
 
-pub fn VSlimPsr7UploadedFile.php_object_handlers() voidptr {
-    return vslim_psr7_uploaded_file_handlers()
+pub fn VSlimPsr7UploadedFile.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr7_uploaded_file_handlers())
 }
 
 pub fn VSlimPsr7UploadedFile.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1564,8 +1572,8 @@ pub fn VSlimPsr7Response.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr7__response_ce)
 }
 
-pub fn VSlimPsr7Response.php_object_handlers() voidptr {
-    return vslim_psr7_response_handlers()
+pub fn VSlimPsr7Response.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr7_response_handlers())
 }
 
 pub fn VSlimPsr7Response.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1890,8 +1898,8 @@ pub fn VSlimPsr7Uri.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr7__uri_ce)
 }
 
-pub fn VSlimPsr7Uri.php_object_handlers() voidptr {
-    return vslim_psr7_uri_handlers()
+pub fn VSlimPsr7Uri.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr7_uri_handlers())
 }
 
 pub fn VSlimPsr7Uri.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -2188,8 +2196,8 @@ pub fn VSlimPsr7Request.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr7__request_ce)
 }
 
-pub fn VSlimPsr7Request.php_object_handlers() voidptr {
-    return vslim_psr7_request_handlers()
+pub fn VSlimPsr7Request.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr7_request_handlers())
 }
 
 pub fn VSlimPsr7Request.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -2490,7 +2498,8 @@ pub fn vphp_wrap_vslim_psr7_server_request_with_cookie_params(ptr voidptr, ctx v
     ])
     arg_0 := php_args.at_named_or_index(0, 'cookies').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.with_cookie_params(arg_0)
     return voidptr(res)
@@ -2513,7 +2522,8 @@ pub fn vphp_wrap_vslim_psr7_server_request_with_query_params(ptr voidptr, ctx vp
     ])
     arg_0 := php_args.at_named_or_index(0, 'query').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.with_query_params(arg_0)
     return voidptr(res)
@@ -2536,7 +2546,8 @@ pub fn vphp_wrap_vslim_psr7_server_request_with_uploaded_files(ptr voidptr, ctx 
     ])
     arg_0 := php_args.at_named_or_index(0, 'uploadedFiles').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.with_uploaded_files(arg_0)
     return voidptr(res)
@@ -2632,8 +2643,8 @@ pub fn VSlimPsr7ServerRequest.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr7__serverrequest_ce)
 }
 
-pub fn VSlimPsr7ServerRequest.php_object_handlers() voidptr {
-    return vslim_psr7_server_request_handlers()
+pub fn VSlimPsr7ServerRequest.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr7_server_request_handlers())
 }
 
 pub fn VSlimPsr7ServerRequest.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -2737,8 +2748,8 @@ pub fn VSlimPsr17ResponseFactory.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr17__responsefactory_ce)
 }
 
-pub fn VSlimPsr17ResponseFactory.php_object_handlers() voidptr {
-    return vslim_psr17_response_factory_handlers()
+pub fn VSlimPsr17ResponseFactory.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr17_response_factory_handlers())
 }
 
 pub fn VSlimPsr17ResponseFactory.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -2838,8 +2849,8 @@ pub fn VSlimPsr17RequestFactory.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr17__requestfactory_ce)
 }
 
-pub fn VSlimPsr17RequestFactory.php_object_handlers() voidptr {
-    return vslim_psr17_request_factory_handlers()
+pub fn VSlimPsr17RequestFactory.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr17_request_factory_handlers())
 }
 
 pub fn VSlimPsr17RequestFactory.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -2952,7 +2963,8 @@ pub fn vphp_wrap_vslim_psr17_stream_factory_create_stream_from_resource(ptr void
     ])
     arg_0 := php_args.at_named_or_index(0, 'resource').resource() or {
         vphp.throw_exception('argument 0 must be resource', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.create_stream_from_resource(arg_0)
     return voidptr(res)
@@ -2972,8 +2984,8 @@ pub fn VSlimPsr17StreamFactory.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr17__streamfactory_ce)
 }
 
-pub fn VSlimPsr17StreamFactory.php_object_handlers() voidptr {
-    return vslim_psr17_stream_factory_handlers()
+pub fn VSlimPsr17StreamFactory.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr17_stream_factory_handlers())
 }
 
 pub fn VSlimPsr17StreamFactory.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -3058,7 +3070,8 @@ pub fn vphp_wrap_vslim_psr17_uploaded_file_factory_create_uploaded_file(ptr void
     ])
     arg_0 := php_args.at_named_or_index(0, 'stream').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_1_params_size := if php_args.has_named_or_index(1, 'size') { php_args.at_named_or_index(1, 'size').as_v_opt[int]() } else { none }
     arg_1_params_error := if php_args.has_named_or_index(2, 'error') { php_args.at_named_or_index(2, 'error').as_v[int]() } else { 0 }
@@ -3088,8 +3101,8 @@ pub fn VSlimPsr17UploadedFileFactory.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr17__uploadedfilefactory_ce)
 }
 
-pub fn VSlimPsr17UploadedFileFactory.php_object_handlers() voidptr {
-    return vslim_psr17_uploaded_file_factory_handlers()
+pub fn VSlimPsr17UploadedFileFactory.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr17_uploaded_file_factory_handlers())
 }
 
 pub fn VSlimPsr17UploadedFileFactory.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -3190,8 +3203,8 @@ pub fn VSlimPsr17UriFactory.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr17__urifactory_ce)
 }
 
-pub fn VSlimPsr17UriFactory.php_object_handlers() voidptr {
-    return vslim_psr17_uri_factory_handlers()
+pub fn VSlimPsr17UriFactory.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr17_uri_factory_handlers())
 }
 
 pub fn VSlimPsr17UriFactory.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -3277,7 +3290,8 @@ pub fn vphp_wrap_vslim_psr17_server_request_factory_create_server_request(ptr vo
     arg_2_params_server_params := if php_args.has_named_or_index(2, 'serverParams') {
         php_args.at_named_or_index(2, 'serverParams').array() or {
             vphp.throw_exception('argument 2 must be array', 0)
-            return unsafe { nil }
+            return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
         }
     } else {
         vphp.PhpArray.empty()
@@ -3303,8 +3317,8 @@ pub fn VSlimPsr17ServerRequestFactory.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr17__serverrequestfactory_ce)
 }
 
-pub fn VSlimPsr17ServerRequestFactory.php_object_handlers() voidptr {
-    return vslim_psr17_server_request_factory_handlers()
+pub fn VSlimPsr17ServerRequestFactory.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr17_server_request_factory_handlers())
 }
 
 pub fn VSlimPsr17ServerRequestFactory.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -3394,8 +3408,8 @@ pub fn VSlimPsr18ClientException.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr18__clientexception_ce)
 }
 
-pub fn VSlimPsr18ClientException.php_object_handlers() voidptr {
-    return vslim_psr18_client_exception_handlers()
+pub fn VSlimPsr18ClientException.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr18_client_exception_handlers())
 }
 
 pub fn VSlimPsr18ClientException.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -3511,8 +3525,8 @@ pub fn VSlimPsr18RequestException.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr18__requestexception_ce)
 }
 
-pub fn VSlimPsr18RequestException.php_object_handlers() voidptr {
-    return vslim_psr18_request_exception_handlers()
+pub fn VSlimPsr18RequestException.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr18_request_exception_handlers())
 }
 
 pub fn VSlimPsr18RequestException.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -3628,8 +3642,8 @@ pub fn VSlimPsr18NetworkException.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr18__networkexception_ce)
 }
 
-pub fn VSlimPsr18NetworkException.php_object_handlers() voidptr {
-    return vslim_psr18_network_exception_handlers()
+pub fn VSlimPsr18NetworkException.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr18_network_exception_handlers())
 }
 
 pub fn VSlimPsr18NetworkException.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -3760,7 +3774,8 @@ pub fn vphp_wrap_vslim_psr18_client_send_request(ptr voidptr, ctx vphp.Context) 
     ])
     arg_0 := php_args.at_named_or_index(0, 'request').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.send_request(arg_0)
     return voidptr(res)
@@ -3780,8 +3795,8 @@ pub fn VSlimPsr18Client.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr18__client_ce)
 }
 
-pub fn VSlimPsr18Client.php_object_handlers() voidptr {
-    return vslim_psr18_client_handlers()
+pub fn VSlimPsr18Client.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr18_client_handlers())
 }
 
 pub fn VSlimPsr18Client.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -3892,8 +3907,8 @@ pub fn VSlimPsr7Adapter.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr7adapter_ce)
 }
 
-pub fn VSlimPsr7Adapter.php_object_handlers() voidptr {
-    return vslim_psr7_adapter_handlers()
+pub fn VSlimPsr7Adapter.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_psr7_adapter_handlers())
 }
 
 pub fn VSlimPsr7Adapter.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -4290,8 +4305,8 @@ pub fn VSlimResponse.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__vhttpd__response_ce)
 }
 
-pub fn VSlimResponse.php_object_handlers() voidptr {
-    return vslim_response_handlers()
+pub fn VSlimResponse.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_response_handlers())
 }
 
 pub fn VSlimResponse.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

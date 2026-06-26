@@ -1,6 +1,7 @@
 module sessionx
 
 import vphp
+import vphp.object
 
 import containerx
 import httpx
@@ -228,7 +229,8 @@ pub fn vphp_wrap_vslim_session_store_load(ptr voidptr, ctx vphp.Context) voidptr
     ])
     arg_0 := php_args.at_named_or_index(0, 'request').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.load(arg_0)
     return voidptr(res)
@@ -430,8 +432,8 @@ pub fn VSlimSessionStore.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__session__store_ce)
 }
 
-pub fn VSlimSessionStore.php_object_handlers() voidptr {
-    return vslim_session_store_handlers()
+pub fn VSlimSessionStore.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_session_store_handlers())
 }
 
 pub fn VSlimSessionStore.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -512,7 +514,8 @@ pub fn vphp_wrap_vslim_auth_session_guard_set_store(ptr voidptr, ctx vphp.Contex
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'store').to_v_ptr[sessionx.VSlimSessionStore]() or {
         vphp.throw_exception('argument 0 must be object bound to sessionx.VSlimSessionStore, got ' + php_args.at_named_or_index(0, 'store').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &sessionx.VSlimSessionStore(arg_0_ptr) }
     res := recv.set_store(arg_0)
@@ -613,8 +616,8 @@ pub fn VSlimAuthSessionGuard.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__auth__sessionguard_ce)
 }
 
-pub fn VSlimAuthSessionGuard.php_object_handlers() voidptr {
-    return vslim_auth_session_guard_handlers()
+pub fn VSlimAuthSessionGuard.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_auth_session_guard_handlers())
 }
 
 pub fn VSlimAuthSessionGuard.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -695,7 +698,8 @@ pub fn vphp_wrap_vslim_session_start_middleware_set_container(ptr voidptr, ctx v
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
         vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
@@ -724,11 +728,13 @@ pub fn vphp_wrap_vslim_session_start_middleware_process(ptr voidptr, ctx vphp.Co
     ])
     arg_0 := php_args.at_named_or_index(0, 'request').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_1 := php_args.at_named_or_index(1, 'handler').object() or {
         vphp.throw_exception('argument 1 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.process(arg_0, arg_1)
     return voidptr(res)
@@ -748,8 +754,8 @@ pub fn VSlimSessionStartMiddleware.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__session__startmiddleware_ce)
 }
 
-pub fn VSlimSessionStartMiddleware.php_object_handlers() voidptr {
-    return vslim_session_start_middleware_handlers()
+pub fn VSlimSessionStartMiddleware.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_session_start_middleware_handlers())
 }
 
 pub fn VSlimSessionStartMiddleware.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -830,7 +836,8 @@ pub fn vphp_wrap_vslim_auth_require_middleware_set_container(ptr voidptr, ctx vp
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
         vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
@@ -879,11 +886,13 @@ pub fn vphp_wrap_vslim_auth_require_middleware_process(ptr voidptr, ctx vphp.Con
     ])
     arg_0 := php_args.at_named_or_index(0, 'request').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_1 := php_args.at_named_or_index(1, 'handler').object() or {
         vphp.throw_exception('argument 1 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.process(arg_0, arg_1)
     return voidptr(res)
@@ -903,8 +912,8 @@ pub fn VSlimAuthRequireMiddleware.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__auth__requireauthmiddleware_ce)
 }
 
-pub fn VSlimAuthRequireMiddleware.php_object_handlers() voidptr {
-    return vslim_auth_require_middleware_handlers()
+pub fn VSlimAuthRequireMiddleware.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_auth_require_middleware_handlers())
 }
 
 pub fn VSlimAuthRequireMiddleware.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -985,7 +994,8 @@ pub fn vphp_wrap_vslim_auth_guest_middleware_set_container(ptr voidptr, ctx vphp
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
         vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
@@ -1034,11 +1044,13 @@ pub fn vphp_wrap_vslim_auth_guest_middleware_process(ptr voidptr, ctx vphp.Conte
     ])
     arg_0 := php_args.at_named_or_index(0, 'request').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_1 := php_args.at_named_or_index(1, 'handler').object() or {
         vphp.throw_exception('argument 1 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.process(arg_0, arg_1)
     return voidptr(res)
@@ -1058,8 +1070,8 @@ pub fn VSlimAuthGuestMiddleware.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__auth__guestmiddleware_ce)
 }
 
-pub fn VSlimAuthGuestMiddleware.php_object_handlers() voidptr {
-    return vslim_auth_guest_middleware_handlers()
+pub fn VSlimAuthGuestMiddleware.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_auth_guest_middleware_handlers())
 }
 
 pub fn VSlimAuthGuestMiddleware.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1140,7 +1152,8 @@ pub fn vphp_wrap_vslim_auth_require_ability_middleware_set_container(ptr voidptr
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
         vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
@@ -1229,11 +1242,13 @@ pub fn vphp_wrap_vslim_auth_require_ability_middleware_process(ptr voidptr, ctx 
     ])
     arg_0 := php_args.at_named_or_index(0, 'request').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_1 := php_args.at_named_or_index(1, 'handler').object() or {
         vphp.throw_exception('argument 1 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.process(arg_0, arg_1)
     return voidptr(res)
@@ -1253,8 +1268,8 @@ pub fn VSlimAuthRequireAbilityMiddleware.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__auth__requireabilitymiddleware_ce)
 }
 
-pub fn VSlimAuthRequireAbilityMiddleware.php_object_handlers() voidptr {
-    return vslim_auth_require_ability_middleware_handlers()
+pub fn VSlimAuthRequireAbilityMiddleware.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_auth_require_ability_middleware_handlers())
 }
 
 pub fn VSlimAuthRequireAbilityMiddleware.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

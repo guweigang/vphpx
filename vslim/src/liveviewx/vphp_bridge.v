@@ -1,6 +1,7 @@
 module liveviewx
 
 import vphp
+import vphp.object
 
 import containerx
 import httpx
@@ -107,7 +108,8 @@ pub fn vphp_wrap_vslim_live_form_fill(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0 := php_args.at_named_or_index(0, 'values').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.fill(arg_0)
     return voidptr(res)
@@ -122,7 +124,8 @@ pub fn vphp_wrap_vslim_live_form_reset(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0 := php_args.at_named_or_index(0, 'values').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.reset(arg_0)
     return voidptr(res)
@@ -149,7 +152,8 @@ pub fn vphp_wrap_vslim_live_form_errors(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0 := php_args.at_named_or_index(0, 'values').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.errors(arg_0)
     return voidptr(res)
@@ -196,7 +200,8 @@ pub fn vphp_wrap_vslim_live_form_forget_many(ptr voidptr, ctx vphp.Context) void
     ])
     arg_0 := php_args.at_named_or_index(0, 'fields').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.forget_many(arg_0)
     return voidptr(res)
@@ -298,8 +303,8 @@ pub fn VSlimLiveForm.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__live__form_ce)
 }
 
-pub fn VSlimLiveForm.php_object_handlers() voidptr {
-    return vslim_live_form_handlers()
+pub fn VSlimLiveForm.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_live_form_handlers())
 }
 
 pub fn VSlimLiveForm.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -380,7 +385,8 @@ pub fn vphp_wrap_vslim_live_view_set_container(ptr voidptr, ctx vphp.Context) vo
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
         vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
@@ -396,7 +402,8 @@ pub fn vphp_wrap_vslim_live_view_set_view(ptr voidptr, ctx vphp.Context) voidptr
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'view').to_v_ptr[viewx.VSlimView]() or {
         vphp.throw_exception('argument 0 must be object bound to viewx.VSlimView, got ' + php_args.at_named_or_index(0, 'view').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &viewx.VSlimView(arg_0_ptr) }
     res := recv.set_view(arg_0)
@@ -626,7 +633,8 @@ pub fn vphp_wrap_vslim_live_view_response(ptr voidptr, ctx vphp.Context) voidptr
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
         vphp.throw_exception('argument 0 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(0, 'socket').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &liveviewx.VSlimLiveSocket(arg_0_ptr) }
     res := recv.response(arg_0)
@@ -643,7 +651,8 @@ pub fn vphp_wrap_vslim_live_view_patch(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
         vphp.throw_exception('argument 0 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(0, 'socket').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &liveviewx.VSlimLiveSocket(arg_0_ptr) }
     arg_1 := php_args.at_named_or_index(1, 'targetId').as_v[string]()
@@ -662,7 +671,8 @@ pub fn vphp_wrap_vslim_live_view_patch_template(ptr voidptr, ctx vphp.Context) v
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
         vphp.throw_exception('argument 0 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(0, 'socket').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &liveviewx.VSlimLiveSocket(arg_0_ptr) }
     arg_1 := php_args.at_named_or_index(1, 'targetId').as_v[string]()
@@ -685,8 +695,8 @@ pub fn VSlimLiveView.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__live__view_ce)
 }
 
-pub fn VSlimLiveView.php_object_handlers() voidptr {
-    return vslim_live_view_handlers()
+pub fn VSlimLiveView.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_live_view_handlers())
 }
 
 pub fn VSlimLiveView.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -767,7 +777,8 @@ pub fn vphp_wrap_vslim_live_component_set_container(ptr voidptr, ctx vphp.Contex
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
         vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
@@ -783,7 +794,8 @@ pub fn vphp_wrap_vslim_live_component_set_view(ptr voidptr, ctx vphp.Context) vo
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'view').to_v_ptr[viewx.VSlimView]() or {
         vphp.throw_exception('argument 0 must be object bound to viewx.VSlimView, got ' + php_args.at_named_or_index(0, 'view').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &viewx.VSlimView(arg_0_ptr) }
     res := recv.set_view(arg_0)
@@ -867,7 +879,8 @@ pub fn vphp_wrap_vslim_live_component_bind_socket(ptr voidptr, ctx vphp.Context)
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
         vphp.throw_exception('argument 0 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(0, 'socket').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &liveviewx.VSlimLiveSocket(arg_0_ptr) }
     res := recv.bind_socket(arg_0)
@@ -913,7 +926,8 @@ pub fn vphp_wrap_vslim_live_component_assign_many(ptr voidptr, ctx vphp.Context)
     ])
     arg_0 := php_args.at_named_or_index(0, 'values').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.assign_many(arg_0)
     return voidptr(res)
@@ -966,7 +980,8 @@ pub fn vphp_wrap_vslim_live_component_patch(ptr voidptr, ctx vphp.Context) voidp
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
         vphp.throw_exception('argument 0 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(0, 'socket').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &liveviewx.VSlimLiveSocket(arg_0_ptr) }
     res := recv.patch(arg_0)
@@ -999,7 +1014,8 @@ pub fn vphp_wrap_vslim_live_component_append_to(ptr voidptr, ctx vphp.Context) v
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
         vphp.throw_exception('argument 0 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(0, 'socket').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &liveviewx.VSlimLiveSocket(arg_0_ptr) }
     arg_1 := php_args.at_named_or_index(1, 'targetId').as_v[string]()
@@ -1029,7 +1045,8 @@ pub fn vphp_wrap_vslim_live_component_prepend_to(ptr voidptr, ctx vphp.Context) 
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
         vphp.throw_exception('argument 0 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(0, 'socket').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &liveviewx.VSlimLiveSocket(arg_0_ptr) }
     arg_1 := php_args.at_named_or_index(1, 'targetId').as_v[string]()
@@ -1058,7 +1075,8 @@ pub fn vphp_wrap_vslim_live_component_remove(ptr voidptr, ctx vphp.Context) void
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'socket').to_v_ptr[liveviewx.VSlimLiveSocket]() or {
         vphp.throw_exception('argument 0 must be object bound to liveviewx.VSlimLiveSocket, got ' + php_args.at_named_or_index(0, 'socket').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &liveviewx.VSlimLiveSocket(arg_0_ptr) }
     res := recv.remove(arg_0)
@@ -1087,8 +1105,8 @@ pub fn VSlimLiveComponent.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__live__component_ce)
 }
 
-pub fn VSlimLiveComponent.php_object_handlers() voidptr {
-    return vslim_live_component_handlers()
+pub fn VSlimLiveComponent.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_live_component_handlers())
 }
 
 pub fn VSlimLiveComponent.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1226,8 +1244,8 @@ pub fn VSlimLiveComponentState.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__live__componentstate_ce)
 }
 
-pub fn VSlimLiveComponentState.php_object_handlers() voidptr {
-    return vslim_live_component_state_handlers()
+pub fn VSlimLiveComponentState.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_live_component_state_handlers())
 }
 
 pub fn VSlimLiveComponentState.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
@@ -1460,7 +1478,8 @@ pub fn vphp_wrap_vslim_live_socket_assign_many(ptr voidptr, ctx vphp.Context) vo
     ])
     arg_0 := php_args.at_named_or_index(0, 'values').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.assign_many(arg_0)
     return voidptr(res)
@@ -1475,7 +1494,8 @@ pub fn vphp_wrap_vslim_live_socket_assign_form(ptr voidptr, ctx vphp.Context) vo
     ])
     arg_0 := php_args.at_named_or_index(0, 'values').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.assign_form(arg_0)
     return voidptr(res)
@@ -1490,7 +1510,8 @@ pub fn vphp_wrap_vslim_live_socket_reset_form(ptr voidptr, ctx vphp.Context) voi
     ])
     arg_0 := php_args.at_named_or_index(0, 'values').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.reset_form(arg_0)
     return voidptr(res)
@@ -1529,7 +1550,8 @@ pub fn vphp_wrap_vslim_live_socket_forget_inputs(ptr voidptr, ctx vphp.Context) 
     ])
     arg_0 := php_args.at_named_or_index(0, 'fields').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.forget_inputs(arg_0)
     return voidptr(res)
@@ -1626,7 +1648,8 @@ pub fn vphp_wrap_vslim_live_socket_assign_errors(ptr voidptr, ctx vphp.Context) 
     ])
     arg_0 := php_args.at_named_or_index(0, 'values').array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.assign_errors(arg_0)
     return voidptr(res)
@@ -2060,8 +2083,8 @@ pub fn VSlimLiveSocket.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__live__socket_ce)
 }
 
-pub fn VSlimLiveSocket.php_object_handlers() voidptr {
-    return vslim_live_socket_handlers()
+pub fn VSlimLiveSocket.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_live_socket_handlers())
 }
 
 pub fn VSlimLiveSocket.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {

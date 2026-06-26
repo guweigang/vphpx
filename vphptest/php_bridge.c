@@ -1217,6 +1217,48 @@ PHP_FUNCTION(v_record_match) {
         return;
     }
 }
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_compiler_probe, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_compiler_probe(vphp_context_internal ctx);
+PHP_FUNCTION(v_compiler_probe) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_compiler_probe(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_compiler_probe_variadic, 0, 0, IS_LONG, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_compiler_probe_variadic(vphp_context_internal ctx);
+PHP_FUNCTION(v_compiler_probe_variadic) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_compiler_probe_variadic(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_compiler_probe_options, 0, 0, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, prefix, IS_STRING, 0, "'default'")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, count, IS_LONG, 0, "3")
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_compiler_probe_options(vphp_context_internal ctx);
+PHP_FUNCTION(v_compiler_probe_options) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_compiler_probe_options(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
 ZEND_BEGIN_ARG_INFO_EX(arginfo_v_new_coach, 0, 0, 0)
 ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
@@ -1394,6 +1436,28 @@ static int demo__contracts__aliascontract_register_class(void) {
             return FAILURE;
         }
         zend_class_implements(demo__contracts__aliascontract_ce, 1, iface_0_ce);
+    }
+    return SUCCESS;
+}
+zend_class_entry *vphp__compiler__moduleprobecontract_ce = NULL;
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vphp__compiler__moduleprobecontract_label, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+static const zend_function_entry vphp__compiler__moduleprobecontract_methods[] = {
+    VPHP_ZEND_RAW_FENTRY("label", NULL, arginfo_vphp__compiler__moduleprobecontract_label, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
+    PHP_FE_END
+};
+
+static int vphp__compiler__moduleprobecontract_register_class(void) {
+    if (vphp__compiler__moduleprobecontract_ce != NULL) {
+        return SUCCESS;
+    }
+    vphp__compiler__moduleprobecontract_ce = vphp_find_loaded_class_entry("VPHP\\Compiler\\ModuleProbeContract", sizeof("VPHP\\Compiler\\ModuleProbeContract")-1);
+    if (vphp__compiler__moduleprobecontract_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VPHP\\Compiler\\ModuleProbeContract", vphp__compiler__moduleprobecontract_methods);
+        vphp__compiler__moduleprobecontract_ce = zend_register_internal_interface(&ce);
     }
     return SUCCESS;
 }
@@ -2751,6 +2815,482 @@ static int readonlyrecord_register_class(void) {
     }
     return SUCCESS;
 }
+zend_class_entry *vphp__compiler__moduleprobekind_ce = NULL;
+
+static const zend_function_entry vphp__compiler__moduleprobekind_methods[] = {
+    PHP_FE_END
+};
+
+static int vphp__compiler__moduleprobekind_register_class(void) {
+    if (vphp__compiler__moduleprobekind_ce != NULL) {
+        return SUCCESS;
+    }
+    vphp__compiler__moduleprobekind_ce = vphp_find_loaded_class_entry("VPHP\\Compiler\\ModuleProbeKind", sizeof("VPHP\\Compiler\\ModuleProbeKind")-1);
+    if (vphp__compiler__moduleprobekind_ce != NULL) {
+        return SUCCESS;
+    }
+    vphp__compiler__moduleprobekind_ce = zend_register_internal_enum("VPHP\\Compiler\\ModuleProbeKind", IS_LONG, NULL);
+    { zval _ev; ZVAL_LONG(&_ev, 7); zend_enum_add_case_cstr(vphp__compiler__moduleprobekind_ce, "alpha", &_ev); }
+    { zval _ev; ZVAL_LONG(&_ev, 11); zend_enum_add_case_cstr(vphp__compiler__moduleprobekind_ce, "beta", &_ev); }
+    return SUCCESS;
+}
+zend_class_entry *vphp__compiler__moduleprobereadonlybox_ce = NULL;
+ZEND_BEGIN_ARG_INFO_EX(arginfo_vphp__compiler__moduleprobereadonlybox___construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
+PHP_METHOD(VPHP__Compiler__ModuleProbeReadOnlyBox, __construct) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    extern vphp_class_handlers* vphp_module_probe_read_only_box_handlers();
+    vphp_class_handlers *h = vphp_module_probe_read_only_box_handlers();
+    vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
+    vphp_object_wrapper *wrapper = vphp_obj_from_obj(Z_OBJ_P(getThis()));
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+static const zend_function_entry vphp__compiler__moduleprobereadonlybox_methods[] = {
+    PHP_ME(VPHP__Compiler__ModuleProbeReadOnlyBox, __construct, arginfo_vphp__compiler__moduleprobereadonlybox___construct, ZEND_ACC_PUBLIC)
+    PHP_FE_END
+};
+
+static int vphp__compiler__moduleprobereadonlybox_register_class(void) {
+    if (vphp__compiler__moduleprobereadonlybox_ce != NULL) {
+        return SUCCESS;
+    }
+    vphp__compiler__moduleprobereadonlybox_ce = vphp_find_loaded_class_entry("VPHP\\Compiler\\ModuleProbeReadOnlyBox", sizeof("VPHP\\Compiler\\ModuleProbeReadOnlyBox")-1);
+    if (vphp__compiler__moduleprobereadonlybox_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VPHP\\Compiler\\ModuleProbeReadOnlyBox", vphp__compiler__moduleprobereadonlybox_methods);
+        vphp__compiler__moduleprobereadonlybox_ce = zend_register_internal_class(&ce);
+        vphp__compiler__moduleprobereadonlybox_ce->ce_flags |= ZEND_ACC_READONLY_CLASS;
+        vphp__compiler__moduleprobereadonlybox_ce->create_object = vphp_create_object_handler;
+        {
+            zval default_val;
+            ZVAL_EMPTY_STRING(&default_val);
+            zend_declare_typed_property(vphp__compiler__moduleprobereadonlybox_ce, zend_string_init_interned("title", sizeof("title")-1, 1), &default_val, ZEND_ACC_PUBLIC | ZEND_ACC_READONLY, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+        }
+        {
+            zval default_val;
+            ZVAL_LONG(&default_val, 0);
+            zend_declare_typed_property(vphp__compiler__moduleprobereadonlybox_ce, zend_string_init_interned("value", sizeof("value")-1, 1), &default_val, ZEND_ACC_PUBLIC | ZEND_ACC_READONLY, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_LONG, 0, 0));
+        }
+    }
+    return SUCCESS;
+}
+zend_class_entry *vphp__compiler__moduleprobebox_ce = NULL;
+ZEND_BEGIN_ARG_INFO_EX(arginfo_vphp__compiler__moduleprobebox___construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vphpmoduleprobebox_test_sumtype[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VphpModuleProbeSum", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+{ "val", ZEND_TYPE_INIT_CLASS_CONST("VphpModuleProbeSum", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vphpmoduleprobebox_test_enum_echo[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VphpModuleProbeKind", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+{ "kind", ZEND_TYPE_INIT_CLASS_CONST("VphpModuleProbeKind", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+static const zend_internal_arg_info arginfo_vphpmoduleprobebox_test_sumtype_echo[] = {
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VphpModuleProbeSumType", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+{ "val", ZEND_TYPE_INIT_CLASS_CONST("VphpModuleProbeSumType", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vphpmoduleprobebox_test_variadic, 0, 1, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, sep, IS_STRING, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vphpmoduleprobebox_test_struct_param, 0, 1, IS_STRING, 0)
+ZEND_ARG_INFO(0, box)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vphpmoduleprobebox_label, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vphpmoduleprobebox_static_label, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+PHP_METHOD(VPHP__Compiler__ModuleProbeBox, test_sumtype) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_vphp_module_probe_box_test_sumtype(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* vphp_module_probe_box_handlers();
+    zend_object *vphp_this_obj = Z_OBJ_P(getThis());
+    vphp_object_addref(vphp_this_obj);
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(vphp_this_obj, vphp_module_probe_box_handlers());
+    if (!wrapper->v_ptr) {
+        vphp_object_release(vphp_this_obj);
+        RETURN_FALSE;
+    }
+    vphp_wrap_vphp_module_probe_box_test_sumtype(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        vphp_object_release(vphp_this_obj);
+        return;
+    }
+    vphp_object_release(vphp_this_obj);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VPHP__Compiler__ModuleProbeBox, test_enum_echo) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_vphp_module_probe_box_test_enum_echo(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* vphp_module_probe_box_handlers();
+    zend_object *vphp_this_obj = Z_OBJ_P(getThis());
+    vphp_object_addref(vphp_this_obj);
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(vphp_this_obj, vphp_module_probe_box_handlers());
+    if (!wrapper->v_ptr) {
+        vphp_object_release(vphp_this_obj);
+        RETURN_FALSE;
+    }
+    vphp_wrap_vphp_module_probe_box_test_enum_echo(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        vphp_object_release(vphp_this_obj);
+        return;
+    }
+    vphp_object_release(vphp_this_obj);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VPHP__Compiler__ModuleProbeBox, test_sumtype_echo) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_vphp_module_probe_box_test_sumtype_echo(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* vphp_module_probe_box_handlers();
+    zend_object *vphp_this_obj = Z_OBJ_P(getThis());
+    vphp_object_addref(vphp_this_obj);
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(vphp_this_obj, vphp_module_probe_box_handlers());
+    if (!wrapper->v_ptr) {
+        vphp_object_release(vphp_this_obj);
+        RETURN_FALSE;
+    }
+    vphp_wrap_vphp_module_probe_box_test_sumtype_echo(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        vphp_object_release(vphp_this_obj);
+        return;
+    }
+    vphp_object_release(vphp_this_obj);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VPHP__Compiler__ModuleProbeBox, test_variadic) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_vphp_module_probe_box_test_variadic(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* vphp_module_probe_box_handlers();
+    zend_object *vphp_this_obj = Z_OBJ_P(getThis());
+    vphp_object_addref(vphp_this_obj);
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(vphp_this_obj, vphp_module_probe_box_handlers());
+    if (!wrapper->v_ptr) {
+        vphp_object_release(vphp_this_obj);
+        RETURN_FALSE;
+    }
+    vphp_wrap_vphp_module_probe_box_test_variadic(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        vphp_object_release(vphp_this_obj);
+        return;
+    }
+    vphp_object_release(vphp_this_obj);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VPHP__Compiler__ModuleProbeBox, test_struct_param) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_vphp_module_probe_box_test_struct_param(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* vphp_module_probe_box_handlers();
+    zend_object *vphp_this_obj = Z_OBJ_P(getThis());
+    vphp_object_addref(vphp_this_obj);
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(vphp_this_obj, vphp_module_probe_box_handlers());
+    if (!wrapper->v_ptr) {
+        vphp_object_release(vphp_this_obj);
+        RETURN_FALSE;
+    }
+    vphp_wrap_vphp_module_probe_box_test_struct_param(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        vphp_object_release(vphp_this_obj);
+        return;
+    }
+    vphp_object_release(vphp_this_obj);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VPHP__Compiler__ModuleProbeBox, label) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_vphp_module_probe_box_label(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* vphp_module_probe_box_handlers();
+    zend_object *vphp_this_obj = Z_OBJ_P(getThis());
+    vphp_object_addref(vphp_this_obj);
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(vphp_this_obj, vphp_module_probe_box_handlers());
+    if (!wrapper->v_ptr) {
+        vphp_object_release(vphp_this_obj);
+        RETURN_FALSE;
+    }
+    vphp_wrap_vphp_module_probe_box_label(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        vphp_object_release(vphp_this_obj);
+        return;
+    }
+    vphp_object_release(vphp_this_obj);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(VPHP__Compiler__ModuleProbeBox, staticLabel) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_vphp_module_probe_box_static_label(vphp_context_internal ctx);
+    vphp_wrap_vphp_module_probe_box_static_label(ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VPHP__Compiler__ModuleProbeBox, __construct) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    extern vphp_class_handlers* vphp_module_probe_box_handlers();
+    vphp_class_handlers *h = vphp_module_probe_box_handlers();
+    vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
+    vphp_object_wrapper *wrapper = vphp_obj_from_obj(Z_OBJ_P(getThis()));
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+static const zend_function_entry vphp__compiler__moduleprobebox_methods[] = {
+    PHP_ME(VPHP__Compiler__ModuleProbeBox, __construct, arginfo_vphp__compiler__moduleprobebox___construct, ZEND_ACC_PUBLIC)
+    PHP_ME(VPHP__Compiler__ModuleProbeBox, test_sumtype, arginfo_vphpmoduleprobebox_test_sumtype, ZEND_ACC_PUBLIC)
+    PHP_ME(VPHP__Compiler__ModuleProbeBox, test_enum_echo, arginfo_vphpmoduleprobebox_test_enum_echo, ZEND_ACC_PUBLIC)
+    PHP_ME(VPHP__Compiler__ModuleProbeBox, test_sumtype_echo, arginfo_vphpmoduleprobebox_test_sumtype_echo, ZEND_ACC_PUBLIC)
+    PHP_ME(VPHP__Compiler__ModuleProbeBox, test_variadic, arginfo_vphpmoduleprobebox_test_variadic, ZEND_ACC_PUBLIC)
+    PHP_ME(VPHP__Compiler__ModuleProbeBox, test_struct_param, arginfo_vphpmoduleprobebox_test_struct_param, ZEND_ACC_PUBLIC)
+    PHP_ME(VPHP__Compiler__ModuleProbeBox, label, arginfo_vphpmoduleprobebox_label, ZEND_ACC_PUBLIC)
+    PHP_ME(VPHP__Compiler__ModuleProbeBox, staticLabel, arginfo_vphpmoduleprobebox_static_label, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_FE_END
+};
+
+static int vphp__compiler__moduleprobebox_register_class(void) {
+    if (vphp__compiler__moduleprobebox_ce != NULL) {
+        return SUCCESS;
+    }
+    vphp__compiler__moduleprobebox_ce = vphp_find_loaded_class_entry("VPHP\\Compiler\\ModuleProbeBox", sizeof("VPHP\\Compiler\\ModuleProbeBox")-1);
+    if (vphp__compiler__moduleprobebox_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VPHP\\Compiler\\ModuleProbeBox", vphp__compiler__moduleprobebox_methods);
+        vphp__compiler__moduleprobebox_ce = zend_register_internal_class(&ce);
+        vphp__compiler__moduleprobebox_ce->create_object = vphp_create_object_handler;
+        zend_class_entry *iface_0_ce = vphp_require_class_entry("VPHP\\Compiler\\ModuleProbeContract", sizeof("VPHP\\Compiler\\ModuleProbeContract")-1, 0);
+        if (!iface_0_ce) {
+            vphp_throw("interface VPHP\\\\Compiler\\\\ModuleProbeContract not found for VPHP\\Compiler\\ModuleProbeBox", 0);
+            return FAILURE;
+        }
+        zend_class_implements(vphp__compiler__moduleprobebox_ce, 1, iface_0_ce);
+        {
+            zval default_val;
+            ZVAL_EMPTY_STRING(&default_val);
+            zend_declare_typed_property(vphp__compiler__moduleprobebox_ce, zend_string_init_interned("name", sizeof("name")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+        }
+        {
+            zval default_val;
+            ZVAL_LONG(&default_val, 0);
+            zend_declare_typed_property(vphp__compiler__moduleprobebox_ce, zend_string_init_interned("count", sizeof("count")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_LONG, 0, 0));
+        }
+    }
+    return SUCCESS;
+}
+zend_class_entry *vphp__compiler__moduleprobetypedconsts_ce = NULL;
+ZEND_BEGIN_ARG_INFO_EX(arginfo_vphp__compiler__moduleprobetypedconsts___construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
+PHP_METHOD(VPHP__Compiler__ModuleProbeTypedConsts, __construct) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    extern vphp_class_handlers* vphp_module_probe_typed_consts_handlers();
+    vphp_class_handlers *h = vphp_module_probe_typed_consts_handlers();
+    vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
+    vphp_object_wrapper *wrapper = vphp_obj_from_obj(Z_OBJ_P(getThis()));
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+static const zend_function_entry vphp__compiler__moduleprobetypedconsts_methods[] = {
+    PHP_ME(VPHP__Compiler__ModuleProbeTypedConsts, __construct, arginfo_vphp__compiler__moduleprobetypedconsts___construct, ZEND_ACC_PUBLIC)
+    PHP_FE_END
+};
+
+static int vphp__compiler__moduleprobetypedconsts_register_class(void) {
+    if (vphp__compiler__moduleprobetypedconsts_ce != NULL) {
+        return SUCCESS;
+    }
+    vphp__compiler__moduleprobetypedconsts_ce = vphp_find_loaded_class_entry("VPHP\\Compiler\\ModuleProbeTypedConsts", sizeof("VPHP\\Compiler\\ModuleProbeTypedConsts")-1);
+    if (vphp__compiler__moduleprobetypedconsts_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VPHP\\Compiler\\ModuleProbeTypedConsts", vphp__compiler__moduleprobetypedconsts_methods);
+        vphp__compiler__moduleprobetypedconsts_ce = zend_register_internal_class(&ce);
+        vphp__compiler__moduleprobetypedconsts_ce->create_object = vphp_create_object_handler;
+#if PHP_VERSION_ID >= 80300
+        {
+            zval val;
+            ZVAL_LONG(&val, 100);
+            zend_string *const_name = zend_string_init("MAX_LIMIT", sizeof("MAX_LIMIT")-1, 1);
+            zend_declare_typed_class_constant(vphp__compiler__moduleprobetypedconsts_ce, const_name, &val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_LONG, 0, 0));
+            zend_string_release(const_name);
+            zval_ptr_dtor(&val);
+        }
+#else
+        zend_declare_class_constant_long(vphp__compiler__moduleprobetypedconsts_ce, "MAX_LIMIT", sizeof("MAX_LIMIT")-1, 100);
+#endif
+#if PHP_VERSION_ID >= 80300
+        {
+            zval val;
+            ZVAL_STR(&val, zend_string_init("1.0.0", sizeof("1.0.0")-1, 1));
+            zend_string *const_name = zend_string_init("CONST_VERSION", sizeof("CONST_VERSION")-1, 1);
+            zend_declare_typed_class_constant(vphp__compiler__moduleprobetypedconsts_ce, const_name, &val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+            zend_string_release(const_name);
+            zval_ptr_dtor(&val);
+        }
+#else
+        zend_declare_class_constant_string(vphp__compiler__moduleprobetypedconsts_ce, "CONST_VERSION", sizeof("CONST_VERSION")-1, "1.0.0");
+#endif
+#if PHP_VERSION_ID >= 80300
+        {
+            zval val;
+            ZVAL_BOOL(&val, 1);
+            zend_string *const_name = zend_string_init("IS_ACTIVE", sizeof("IS_ACTIVE")-1, 1);
+            zend_declare_typed_class_constant(vphp__compiler__moduleprobetypedconsts_ce, const_name, &val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(_IS_BOOL, 0, 0));
+            zend_string_release(const_name);
+            zval_ptr_dtor(&val);
+        }
+#else
+        zend_declare_class_constant_bool(vphp__compiler__moduleprobetypedconsts_ce, "IS_ACTIVE", sizeof("IS_ACTIVE")-1, 1);
+#endif
+    }
+    return SUCCESS;
+}
+zend_class_entry *vphp__compiler__moduleprobewrapperbox_ce = NULL;
+ZEND_BEGIN_ARG_INFO_EX(arginfo_vphp__compiler__moduleprobewrapperbox___construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vphpmoduleprobewrapperbox_change_props, 0, 6, IS_VOID, 0)
+ZEND_ARG_TYPE_INFO(0, newVal, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, newObj, IS_OBJECT, 0)
+ZEND_ARG_TYPE_INFO(0, newStr, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, newNum, IS_LONG, 0)
+ZEND_ARG_TYPE_INFO(0, newB, _IS_BOOL, 0)
+ZEND_ARG_TYPE_INFO(0, newArr, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+PHP_METHOD(VPHP__Compiler__ModuleProbeWrapperBox, change_props) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_vphp_module_probe_wrapper_box_change_props(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* vphp_module_probe_wrapper_box_handlers();
+    zend_object *vphp_this_obj = Z_OBJ_P(getThis());
+    vphp_object_addref(vphp_this_obj);
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(vphp_this_obj, vphp_module_probe_wrapper_box_handlers());
+    if (!wrapper->v_ptr) {
+        vphp_object_release(vphp_this_obj);
+        RETURN_NULL();
+    }
+    vphp_wrap_vphp_module_probe_wrapper_box_change_props(wrapper->v_ptr, ctx);
+    if (!EG(exception)) {
+        vphp_mark_void_return(return_value);
+    }
+    vphp_object_release(vphp_this_obj);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+PHP_METHOD(VPHP__Compiler__ModuleProbeWrapperBox, __construct) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    extern vphp_class_handlers* vphp_module_probe_wrapper_box_handlers();
+    vphp_class_handlers *h = vphp_module_probe_wrapper_box_handlers();
+    vphp_init_owned_instance(Z_OBJ_P(getThis()), h);
+    vphp_object_wrapper *wrapper = vphp_obj_from_obj(Z_OBJ_P(getThis()));
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+
+static const zend_function_entry vphp__compiler__moduleprobewrapperbox_methods[] = {
+    PHP_ME(VPHP__Compiler__ModuleProbeWrapperBox, __construct, arginfo_vphp__compiler__moduleprobewrapperbox___construct, ZEND_ACC_PUBLIC)
+    PHP_ME(VPHP__Compiler__ModuleProbeWrapperBox, change_props, arginfo_vphpmoduleprobewrapperbox_change_props, ZEND_ACC_PUBLIC)
+    PHP_FE_END
+};
+
+static int vphp__compiler__moduleprobewrapperbox_register_class(void) {
+    if (vphp__compiler__moduleprobewrapperbox_ce != NULL) {
+        return SUCCESS;
+    }
+    vphp__compiler__moduleprobewrapperbox_ce = vphp_find_loaded_class_entry("VPHP\\Compiler\\ModuleProbeWrapperBox", sizeof("VPHP\\Compiler\\ModuleProbeWrapperBox")-1);
+    if (vphp__compiler__moduleprobewrapperbox_ce != NULL) {
+        return SUCCESS;
+    }
+    {   zend_class_entry ce;
+        INIT_CLASS_ENTRY(ce, "VPHP\\Compiler\\ModuleProbeWrapperBox", vphp__compiler__moduleprobewrapperbox_methods);
+        vphp__compiler__moduleprobewrapperbox_ce = zend_register_internal_class(&ce);
+        vphp__compiler__moduleprobewrapperbox_ce->create_object = vphp_create_object_handler;
+        zend_declare_property_null(vphp__compiler__moduleprobewrapperbox_ce, "val", sizeof("val")-1, ZEND_ACC_PUBLIC);
+        {
+            zval default_val;
+            ZVAL_NULL(&default_val);
+            zend_declare_typed_property(vphp__compiler__moduleprobewrapperbox_ce, zend_string_init_interned("obj", sizeof("obj")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_OBJECT, 0, 0));
+        }
+        {
+            zval default_val;
+            ZVAL_EMPTY_STRING(&default_val);
+            zend_declare_typed_property(vphp__compiler__moduleprobewrapperbox_ce, zend_string_init_interned("str", sizeof("str")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+        }
+        {
+            zval default_val;
+            ZVAL_LONG(&default_val, 0);
+            zend_declare_typed_property(vphp__compiler__moduleprobewrapperbox_ce, zend_string_init_interned("num", sizeof("num")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_LONG, 0, 0));
+        }
+        {
+            zval default_val;
+            ZVAL_FALSE(&default_val);
+            zend_declare_typed_property(vphp__compiler__moduleprobewrapperbox_ce, zend_string_init_interned("b", sizeof("b")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(_IS_BOOL, 0, 0));
+        }
+        {
+            zval default_val;
+            ZVAL_NULL(&default_val);
+            zend_declare_typed_property(vphp__compiler__moduleprobewrapperbox_ce, zend_string_init_interned("arr", sizeof("arr")-1, 1), &default_val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(IS_ARRAY, 0, 0));
+        }
+    }
+    return SUCCESS;
+}
 zend_class_entry *traitpost_ce = NULL;
 ZEND_BEGIN_ARG_INFO_EX(arginfo_traitpost_construct, 0, 0, 1)
 ZEND_ARG_TYPE_INFO(0, title, IS_STRING, 0)
@@ -3459,6 +3999,9 @@ static const zend_function_entry vphptest_functions[] = {
     PHP_FE(v_find_after, arginfo_v_find_after)
     PHP_FE(v_try_divide, arginfo_v_try_divide)
     PHP_FE(v_record_match, arginfo_v_record_match)
+    PHP_FE(v_compiler_probe, arginfo_v_compiler_probe)
+    PHP_FE(v_compiler_probe_variadic, arginfo_v_compiler_probe_variadic)
+    PHP_FE(v_compiler_probe_options, arginfo_v_compiler_probe_options)
     PHP_FE(v_new_coach, arginfo_v_new_coach)
     PHP_FE(v_new_db, arginfo_v_new_db)
     PHP_FE(v_check_res, arginfo_v_check_res)
@@ -3480,6 +4023,7 @@ PHP_MINIT_FUNCTION(vphptest) {
         REGISTER_LONG_CONSTANT("MAX_RETRY", 3, CONST_CS | CONST_PERSISTENT);
         REGISTER_DOUBLE_CONSTANT("PI_VALUE", 3.14159, CONST_CS | CONST_PERSISTENT);
         REGISTER_BOOL_CONSTANT("DEBUG_MODE", 0, CONST_CS | CONST_PERSISTENT);
+        REGISTER_STRING_CONSTANT("COMPILER_PROBE_CONSTANT", "module-constant-ok", CONST_CS | CONST_PERSISTENT);
     {
         zend_function *func_v_php_param_attr_api = zend_hash_str_find_ptr(CG(function_table), "v_php_param_attr_api", sizeof("v_php_param_attr_api")-1);
         if (func_v_php_param_attr_api != NULL) {
@@ -3502,6 +4046,7 @@ PHP_MINIT_FUNCTION(vphptest) {
     if (contentcontract_register_class() != SUCCESS) { return FAILURE; }
     if (demo__contracts__namedcontract_register_class() != SUCCESS) { return FAILURE; }
     if (demo__contracts__aliascontract_register_class() != SUCCESS) { return FAILURE; }
+    if (vphp__compiler__moduleprobecontract_register_class() != SUCCESS) { return FAILURE; }
     if (abstractreport_register_class() != SUCCESS) { return FAILURE; }
     if (dailyreport_register_class() != SUCCESS) { return FAILURE; }
     if (author_register_class() != SUCCESS) { return FAILURE; }
@@ -3515,6 +4060,11 @@ PHP_MINIT_FUNCTION(vphptest) {
     if (callableprocessor_register_class() != SUCCESS) { return FAILURE; }
     if (finder_register_class() != SUCCESS) { return FAILURE; }
     if (readonlyrecord_register_class() != SUCCESS) { return FAILURE; }
+    if (vphp__compiler__moduleprobekind_register_class() != SUCCESS) { return FAILURE; }
+    if (vphp__compiler__moduleprobereadonlybox_register_class() != SUCCESS) { return FAILURE; }
+    if (vphp__compiler__moduleprobebox_register_class() != SUCCESS) { return FAILURE; }
+    if (vphp__compiler__moduleprobetypedconsts_register_class() != SUCCESS) { return FAILURE; }
+    if (vphp__compiler__moduleprobewrapperbox_register_class() != SUCCESS) { return FAILURE; }
     if (traitpost_register_class() != SUCCESS) { return FAILURE; }
     if (validator_register_class() != SUCCESS) { return FAILURE; }
     if (dispatchablesample_register_class() != SUCCESS) { return FAILURE; }

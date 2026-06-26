@@ -1,6 +1,7 @@
 module appx
 
 import vphp
+import vphp.object
 
 import cachex
 import configx
@@ -83,7 +84,8 @@ pub fn vphp_wrap_vslim_app_module_many(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0 := php_args.at_named_or_index(0, 'modules').iterable() or {
         vphp.throw_exception('argument 0 must be iterable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.module_many(arg_0)
     return voidptr(res)
@@ -221,7 +223,8 @@ pub fn vphp_wrap_vslim_app_exception_response(ptr voidptr, ctx vphp.Context) voi
     ])
     arg_0 := php_args.at_named_or_index(0, 'exception').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_1 := if php_args.has_named_or_index(1, 'fallbackStatus') { php_args.at_named_or_index(1, 'fallbackStatus').as_v[int]() } else { 500 }
     res := recv.exception_response(arg_0, arg_1)
@@ -731,7 +734,8 @@ pub fn vphp_wrap_vslim_app_set_not_found_handler(ptr voidptr, ctx vphp.Context) 
     ])
     arg_0 := php_args.at_named_or_index(0, 'handler').callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.set_not_found_handler(arg_0)
     return voidptr(res)
@@ -746,7 +750,8 @@ pub fn vphp_wrap_vslim_app_set_error_handler(ptr voidptr, ctx vphp.Context) void
     ])
     arg_0 := php_args.at_named_or_index(0, 'handler').callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.set_error_handler(arg_0)
     return voidptr(res)
@@ -761,7 +766,8 @@ pub fn vphp_wrap_vslim_app_error(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0 := php_args.at_named_or_index(0, 'handler').callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.error(arg_0)
     return voidptr(res)
@@ -804,7 +810,8 @@ pub fn vphp_wrap_vslim_app_set_mcp(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'server').to_v_ptr[mcpx.VSlimMcpApp]() or {
         vphp.throw_exception('argument 0 must be object bound to mcpx.VSlimMcpApp, got ' + php_args.at_named_or_index(0, 'server').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &mcpx.VSlimMcpApp(arg_0_ptr) }
     res := recv.set_mcp(arg_0)
@@ -851,7 +858,8 @@ pub fn vphp_wrap_vslim_app_set_clock(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0 := php_args.at_named_or_index(0, 'clock').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.set_clock(arg_0)
     return voidptr(res)
@@ -874,7 +882,8 @@ pub fn vphp_wrap_vslim_app_set_logger(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'logWriter').to_v_ptr[loggerx.VSlimLogger]() or {
         vphp.throw_exception('argument 0 must be object bound to loggerx.VSlimLogger, got ' + php_args.at_named_or_index(0, 'logWriter').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &loggerx.VSlimLogger(arg_0_ptr) }
     res := recv.set_logger(arg_0)
@@ -906,7 +915,8 @@ pub fn vphp_wrap_vslim_app_set_listener_provider(ptr voidptr, ctx vphp.Context) 
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'provider').to_v_ptr[eventx.VSlimPsr14ListenerProvider]() or {
         vphp.throw_exception('argument 0 must be object bound to eventx.VSlimPsr14ListenerProvider, got ' + php_args.at_named_or_index(0, 'provider').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &eventx.VSlimPsr14ListenerProvider(arg_0_ptr) }
     res := recv.set_listener_provider(arg_0)
@@ -930,7 +940,8 @@ pub fn vphp_wrap_vslim_app_set_dispatcher(ptr voidptr, ctx vphp.Context) voidptr
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'dispatcher').to_v_ptr[eventx.VSlimPsr14EventDispatcher]() or {
         vphp.throw_exception('argument 0 must be object bound to eventx.VSlimPsr14EventDispatcher, got ' + php_args.at_named_or_index(0, 'dispatcher').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &eventx.VSlimPsr14EventDispatcher(arg_0_ptr) }
     res := recv.set_dispatcher(arg_0)
@@ -962,7 +973,8 @@ pub fn vphp_wrap_vslim_app_set_cache(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'cache').to_v_ptr[cachex.VSlimPsr16Cache]() or {
         vphp.throw_exception('argument 0 must be object bound to cachex.VSlimPsr16Cache, got ' + php_args.at_named_or_index(0, 'cache').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &cachex.VSlimPsr16Cache(arg_0_ptr) }
     res := recv.set_cache(arg_0)
@@ -986,7 +998,8 @@ pub fn vphp_wrap_vslim_app_set_cache_pool(ptr voidptr, ctx vphp.Context) voidptr
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'pool').to_v_ptr[cachex.VSlimPsr6CacheItemPool]() or {
         vphp.throw_exception('argument 0 must be object bound to cachex.VSlimPsr6CacheItemPool, got ' + php_args.at_named_or_index(0, 'pool').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &cachex.VSlimPsr6CacheItemPool(arg_0_ptr) }
     res := recv.set_cache_pool(arg_0)
@@ -1010,7 +1023,8 @@ pub fn vphp_wrap_vslim_app_set_http_client(ptr voidptr, ctx vphp.Context) voidpt
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'client').to_v_ptr[httpx.VSlimPsr18Client]() or {
         vphp.throw_exception('argument 0 must be object bound to httpx.VSlimPsr18Client, got ' + php_args.at_named_or_index(0, 'client').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &httpx.VSlimPsr18Client(arg_0_ptr) }
     res := recv.set_http_client(arg_0)
@@ -1042,7 +1056,8 @@ pub fn vphp_wrap_vslim_app_set_database(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'database').to_v_ptr[databasex.VSlimDatabaseManager]() or {
         vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'database').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_database(arg_0)
@@ -1098,7 +1113,8 @@ pub fn vphp_wrap_vslim_app_set_migrator(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'migrator').to_v_ptr[databasex.VSlimDatabaseMigrator]() or {
         vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseMigrator, got ' + php_args.at_named_or_index(0, 'migrator').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &databasex.VSlimDatabaseMigrator(arg_0_ptr) }
     res := recv.set_migrator(arg_0)
@@ -1182,7 +1198,8 @@ pub fn vphp_wrap_vslim_app_resource_opts(ptr voidptr, ctx vphp.Context) voidptr 
     arg_1 := php_args.at_named_or_index(1, 'controller').as_v[string]()
     arg_2 := php_args.at_named_or_index(2, 'options').array() or {
         vphp.throw_exception('argument 2 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.resource_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
@@ -1201,7 +1218,8 @@ pub fn vphp_wrap_vslim_app_api_resource_opts(ptr voidptr, ctx vphp.Context) void
     arg_1 := php_args.at_named_or_index(1, 'controller').as_v[string]()
     arg_2 := php_args.at_named_or_index(2, 'options').array() or {
         vphp.throw_exception('argument 2 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.api_resource_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
@@ -1220,7 +1238,8 @@ pub fn vphp_wrap_vslim_app_singleton_opts(ptr voidptr, ctx vphp.Context) voidptr
     arg_1 := php_args.at_named_or_index(1, 'controller').as_v[string]()
     arg_2 := php_args.at_named_or_index(2, 'options').array() or {
         vphp.throw_exception('argument 2 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.singleton_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
@@ -1239,7 +1258,8 @@ pub fn vphp_wrap_vslim_app_api_singleton_opts(ptr voidptr, ctx vphp.Context) voi
     arg_1 := php_args.at_named_or_index(1, 'controller').as_v[string]()
     arg_2 := php_args.at_named_or_index(2, 'options').array() or {
         vphp.throw_exception('argument 2 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.api_singleton_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
@@ -1346,7 +1366,8 @@ pub fn vphp_wrap_vslim_app_bootstrap(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0 := php_args.at_named_or_index(0, 'spec').iterable() or {
         vphp.throw_exception('argument 0 must be iterable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.bootstrap(arg_0)
     return voidptr(res)
@@ -1385,7 +1406,8 @@ pub fn vphp_wrap_vslim_app_handle(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0 := php_args.at_named_or_index(0, 'request').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.handle(arg_0)
     return voidptr(res)
@@ -1502,7 +1524,8 @@ pub fn vphp_wrap_vslim_app_set_container(ptr voidptr, ctx vphp.Context) voidptr 
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
         vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
@@ -1534,7 +1557,8 @@ pub fn vphp_wrap_vslim_app_set_config(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0_ptr := php_args.at_named_or_index(0, 'config').to_v_ptr[configx.VSlimConfig]() or {
         vphp.throw_exception('argument 0 must be object bound to configx.VSlimConfig, got ' + php_args.at_named_or_index(0, 'config').zval().type_name(), 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     arg_0 := unsafe { &configx.VSlimConfig(arg_0_ptr) }
     res := recv.set_config(arg_0)
@@ -1608,7 +1632,8 @@ pub fn vphp_wrap_vslim_app_validate(ptr voidptr, ctx vphp.Context) voidptr {
     arg_0 := php_args.at_named_or_index(0, 'data').value
     arg_1 := php_args.at_named_or_index(1, 'rules').array() or {
         vphp.throw_exception('argument 1 must be array', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.validate(arg_0, arg_1)
     return voidptr(res)
@@ -1631,7 +1656,8 @@ pub fn vphp_wrap_vslim_app_session(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0 := php_args.at_named_or_index(0, 'request').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.session(arg_0)
     return voidptr(res)
@@ -1646,7 +1672,8 @@ pub fn vphp_wrap_vslim_app_auth(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0 := php_args.at_named_or_index(0, 'request').object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.auth(arg_0)
     return voidptr(res)
@@ -1661,7 +1688,8 @@ pub fn vphp_wrap_vslim_app_set_auth_user_resolver(ptr voidptr, ctx vphp.Context)
     ])
     arg_0 := php_args.at_named_or_index(0, 'resolver').callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.set_auth_user_resolver(arg_0)
     return voidptr(res)
@@ -1688,7 +1716,8 @@ pub fn vphp_wrap_vslim_app_set_auth_gate_resolver(ptr voidptr, ctx vphp.Context)
     ])
     arg_0 := php_args.at_named_or_index(0, 'resolver').callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.set_auth_gate_resolver(arg_0)
     return voidptr(res)
@@ -1985,7 +2014,8 @@ pub fn vphp_wrap_vslim_app_helper(ptr voidptr, ctx vphp.Context) voidptr {
     arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
     arg_1 := php_args.at_named_or_index(1, 'handler').callable() or {
         vphp.throw_exception('argument 1 must be callable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.helper(arg_0, arg_1)
     return voidptr(res)
@@ -2099,7 +2129,8 @@ pub fn vphp_wrap_vslim_app_register_many(ptr voidptr, ctx vphp.Context) voidptr 
     ])
     arg_0 := php_args.at_named_or_index(0, 'providers').iterable() or {
         vphp.throw_exception('argument 0 must be iterable', 0)
-        return unsafe { nil }
+        return // SAFETY: nil literal in unsafe context
+	unsafe { nil }
     }
     res := recv.register_many(arg_0)
     return voidptr(res)
@@ -2155,8 +2186,8 @@ pub fn VSlimApp.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__app_ce)
 }
 
-pub fn VSlimApp.php_object_handlers() voidptr {
-    return vslim_app_handlers()
+pub fn VSlimApp.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vslim_app_handlers())
 }
 
 pub fn VSlimApp.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
