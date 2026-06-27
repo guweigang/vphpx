@@ -180,6 +180,14 @@ fn (mut t Transpiler) get_expr_type(node ast.AstNode) VarType {
 		ast.node_scalar_magic_const_line {
 			return VarType{ tag: .t_int }
 		}
+		ast.node_expr_array_dim_fetch {
+			var_node := node.var or { return VarType{ tag: .t_unknown } }
+			arr_type := t.get_expr_type(*var_node)
+			if arr_type.is_native_list || arr_type.is_native_map {
+				return VarType{ tag: arr_type.element_type_tag }
+			}
+			return VarType{ tag: .t_unknown }
+		}
 		else { return VarType{ tag: .t_unknown } }
 	}
 }

@@ -252,6 +252,7 @@ fn test_transpiler_end_to_end() {
 			'for var_item in var_list {',
 			'print(var_item.str())',
 			"mut var_map := {",
+			"print(var_map['a'])",
 			"print(var_map.len.str())",
 			"for var_k, var_v in var_map {",
 		]
