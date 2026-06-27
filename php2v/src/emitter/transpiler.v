@@ -1,7 +1,7 @@
 module emitter
 
 import strings
-import php2v.ast
+import ast
 
 pub struct ClassInfo {
 pub mut:
@@ -15,6 +15,7 @@ pub mut:
 	prop_types  map[string]VarType            // 属性名 → 推导出的 V 原生类型
 	param_types map[string]map[string]VarType // 方法名 → 参数名 → 推导类型
 	return_types map[string]VarType           // 方法名 → 返回值推导类型
+	const_types  map[string]VarType           // 类常量名 → 初始值推导类型
 }
 
 pub struct MethodInfo {
@@ -59,6 +60,26 @@ pub mut:
 	method_call_arg_types  map[string][]TypeTag // "class_name::method_name" → 实参类型列表
 	native_params          map[string]bool // P7: 当前方法的原生类型参数名（无 var_ 前缀，无装箱）
 	is_in_construct        bool            // 当前是否在 __construct 方法中（无返回值）
+	global_constants       map[string]GlobalConst // 全局常量表
+	closure_body_builder   strings.Builder // 当前闭包体的临时输出缓冲区
+	is_in_closure_body     bool            // 是否正在生成闭包体代码
+	closure_captured_natives map[string]VarType // 闭包中捕获的原生类型变量
+	extra_imports          map[string]bool // 需要额外导入的 V 模块
+	func_call_arg_types    map[string][]TypeTag         // 函数名 → 调用点实参类型列表
+	func_param_types       map[string]map[string]VarType // 函数名 → 参数名 → 推导类型
+	func_return_types      map[string]VarType            // 函数名 → 返回值推导类型
+	current_func_name      string                         // 当前正在转译的函数名
+	current_func_ret_type  VarType                        // 当前函数的返回值类型
+	func_var_types         map[string]map[string]VarType // 函数名 → 局部变量名 → 推导类型
+	declared_classes       map[string]bool               // 已声明的类
+	expected_type          VarType                       // 上下文期望类型
+}
+
+pub struct GlobalConst {
+pub mut:
+	name     string
+	val_expr string
+	typ      VarType
 }
 
 pub fn Transpiler.new() Transpiler {
@@ -84,6 +105,16 @@ pub fn Transpiler.new() Transpiler {
 		mutated_vars: map[string]bool{}
 		ctor_arg_types: map[string][]TypeTag{}
 		native_params: map[string]bool{}
+		global_constants: map[string]GlobalConst{}
+		closure_body_builder: strings.new_builder(64)
+		closure_captured_natives: map[string]VarType{}
+		extra_imports: map[string]bool{}
+		func_call_arg_types: map[string][]TypeTag{}
+		func_param_types: map[string]map[string]VarType{}
+		func_return_types: map[string]VarType{}
+		func_var_types: map[string]map[string]VarType{}
+		declared_classes: map[string]bool{}
+		expected_type: VarType{ tag: .t_unknown }
 	}
 }
 
@@ -93,11 +124,11 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 	t.collect_traits(mut local_stmts)
 	t.apply_traits(mut local_stmts)
 
-	// 前置类型分析
-	t.analyze_types(local_stmts)
+	// 前置扫描并登记全局常量
+	t.scan_global_constants(local_stmts)
 
-	// P10: 变异分析（追踪哪些变量被原地修改）
-	t.scan_mutations(local_stmts)
+	// 前置扫描并登记全局类与 Exception
+	t.scan_classes(local_stmts)
 
 	// 预扫描顶层自定义函数，登记到 custom_functions 中以支持任意顺序的调用
 	for stmt in local_stmts {
@@ -105,6 +136,9 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 			t.custom_functions[stmt.name] = true
 		}
 	}
+
+	// 前置类型分析
+	t.analyze_types(local_stmts)
 
 	ref_vars, ass_vars := t.collect_vars_in_scope(local_stmts)
 	for v in ref_vars {
@@ -123,15 +157,10 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 	old_is_in_func := t.is_in_func
 	t.is_in_func = true
 	for name, _ in t.undeclared_classes {
-		mut exists := false
-		for cls in t.classes {
-			if cls.name == name {
-				exists = true
-				break
-			}
+		if t.declared_classes[name] {
+			continue
 		}
-		if !exists {
-			mut new_cls := ClassInfo{
+		mut new_cls := ClassInfo{
 				name: name
 				extends: ''
 				methods: []MethodInfo{}
@@ -141,12 +170,27 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 			}
 			if name == 'Exception' {
 				new_cls.props << ['message', 'code', 'file', 'line']
+				new_cls.prop_types['message'] = VarType{ tag: .t_string }
+				new_cls.prop_types['code'] = VarType{ tag: .t_int }
+				new_cls.prop_types['file'] = VarType{ tag: .t_string }
+				new_cls.prop_types['line'] = VarType{ tag: .t_int }
 				new_cls.methods << MethodInfo{ name: '__construct', param_count: 1 }
 				new_cls.methods << MethodInfo{ name: 'getMessage', param_count: 0 }
+				new_cls.return_types['getMessage'] = VarType{ tag: .t_string }
 			}
 			new_cls.all_props = new_cls.props.clone()
 			new_cls.all_methods = new_cls.methods.clone()
-			t.classes << new_cls
+			
+			mut cls_found := false
+			for cls in t.classes {
+				if cls.name == new_cls.name {
+					cls_found = true
+					break
+				}
+			}
+			if !cls_found {
+				t.classes << new_cls
+			}
 			
 			t.write_line('struct Class_${name} {')
 			t.write_line('\trt.PhpObjectBase')
@@ -155,7 +199,15 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 				t.indent++
 				for prop in new_cls.props {
 					t.write_indent()
-					t.write_line('prop_${prop} rt.PhpVal')
+					if name == 'Exception' {
+						match prop {
+							'message', 'file' { t.write_line('${prop_v_name(prop)} string') }
+							'code', 'line' { t.write_line('${prop_v_name(prop)} i64') }
+							else { t.write_line('${prop_v_name(prop)} rt.PhpVal') }
+						}
+					} else {
+						t.write_line('prop_${prop} rt.PhpVal')
+					}
 				}
 				t.indent--
 			}
@@ -168,21 +220,20 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 				t.write_line('fn (mut this Class_Exception) ${method_v_name("__construct")}(var_message rt.PhpVal) {')
 				t.indent++
 				t.write_indent()
-				t.write_line('this.prop_message = var_message')
+				t.write_line('this.message = var_message.to_string()')
 				t.indent--
 				t.write_line('}')
 				t.write_line('')
 
-				t.write_line('fn (mut this Class_Exception) ${method_v_name("getMessage")}() rt.PhpVal {')
+				t.write_line('fn (mut this Class_Exception) ${method_v_name("getMessage")}() string {')
 				t.indent++
 				t.write_indent()
-				t.write_line('return this.prop_message')
+				t.write_line('return this.message')
 				t.indent--
 				t.write_line('}')
 				t.write_line('')
 				t.indent = old_indent
 			}
-		}
 	}
 	t.is_in_func = old_is_in_func
 	
@@ -191,8 +242,6 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 	if t.closures_code.len > 0 {
 		t.func_out.write_string(t.closures_code.str())
 	}
-	
-	t.generate_call_closure()
 
 	if t.const_out.len > 0 {
 		mut new_func_out := strings.new_builder(t.const_out.len + t.func_out.len)
@@ -205,8 +254,8 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 }
 
 fn (mut t Transpiler) current_builder() &strings.Builder {
-	if t.is_in_closure {
-		return &t.closures_code
+	if t.is_in_closure_body {
+		return &t.closure_body_builder
 	} else if t.is_in_func {
 		return &t.func_out
 	} else {
@@ -416,3 +465,140 @@ fn (t &Transpiler) is_class_instance_of(child_class string, target string) bool 
 	}
 	return false
 }
+
+// scan_global_constants 静态分析顶层 AST，提取全局 const 和全局 define() 并注册
+pub fn (mut t Transpiler) scan_global_constants(stmts []ast.AstNode) {
+	for stmt in stmts {
+		match stmt.node_type {
+			ast.node_stmt_const {
+				for c in stmt.consts {
+					val_type := t.get_expr_type(c.value)
+					t.global_constants[c.name] = GlobalConst{
+						name: 'global_const_' + c.name.to_lower()
+						typ: val_type
+					}
+				}
+			}
+			ast.node_stmt_expression {
+				expr := stmt.expr or { continue }
+				if expr.node_type == ast.node_expr_funccall && expr.name == 'define' {
+					if expr.args.len >= 2 {
+						name_node := expr.args[0].expr or { continue }
+						val_node := expr.args[1].expr or { continue }
+						if name_node.node_type == ast.node_scalar_string {
+							val_type := t.get_expr_type(*val_node)
+							t.global_constants[name_node.value] = GlobalConst{
+								name: 'global_const_' + name_node.value.to_lower()
+								typ: val_type
+							}
+						}
+					}
+				}
+			}
+			else {}
+		}
+	}
+}
+
+// scan_classes 静态扫描并登记全局 ClassInfo 到 t.classes，并前置注册 Exception 基类
+pub fn (mut t Transpiler) scan_classes(stmts []ast.AstNode) {
+	for stmt in stmts {
+		if stmt.node_type == ast.node_stmt_class {
+			resolved_name := t.resolve_class_name(stmt.name)
+			mut methods := []MethodInfo{}
+			mut props := []string{}
+			mut const_types := map[string]VarType{}
+			for member in stmt.stmts {
+				match member.node_type {
+					ast.node_stmt_property {
+						for p in member.props {
+							props << p.name
+						}
+					}
+					ast.node_stmt_class_method {
+						methods << MethodInfo{
+							name: member.name
+							param_count: member.params.len
+						}
+					}
+					ast.node_stmt_class_const {
+						for c in member.consts {
+							const_types[c.name] = t.get_expr_type(c.value)
+						}
+					}
+					else {}
+				}
+			}
+			resolved_extends := if stmt.extends.len > 0 { t.resolve_class_name(stmt.extends) } else { '' }
+			
+			// 避免重复 append
+			mut found := false
+			for cls in t.classes {
+				if cls.name == resolved_name {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.classes << ClassInfo{
+					name: resolved_name
+					extends: resolved_extends
+					implements: stmt.implements.map(t.resolve_class_name(it))
+					methods: methods
+					props: props
+					all_props: []string{}
+					all_methods: []MethodInfo{}
+					prop_types: map[string]VarType{}
+					param_types: map[string]map[string]VarType{}
+					return_types: map[string]VarType{}
+					const_types: const_types
+				}
+			}
+		}
+	}
+
+	// 提前注册内置的 Exception 类到 t.classes 和 t.undeclared_classes 中
+	mut has_exception := false
+	for cls in t.classes {
+		if cls.name == 'Exception' {
+			has_exception = true
+			break
+		}
+	}
+	mut inherits_exception := false
+	for cls in t.classes {
+		if cls.extends == 'Exception' {
+			inherits_exception = true
+			break
+		}
+	}
+	if inherits_exception && !has_exception {
+		t.undeclared_classes['Exception'] = true
+		
+		mut new_cls := ClassInfo{
+			name: 'Exception'
+			extends: ''
+			methods: []MethodInfo{}
+			props: []string{}
+			all_props: []string{}
+			all_methods: []MethodInfo{}
+			prop_types: map[string]VarType{}
+			param_types: map[string]map[string]VarType{}
+			return_types: map[string]VarType{}
+		}
+		new_cls.props << ['message', 'code', 'file', 'line']
+		new_cls.prop_types['message'] = VarType{ tag: .t_string }
+		new_cls.prop_types['code'] = VarType{ tag: .t_int }
+		new_cls.prop_types['file'] = VarType{ tag: .t_string }
+		new_cls.prop_types['line'] = VarType{ tag: .t_int }
+		new_cls.methods << MethodInfo{ name: '__construct', param_count: 1 }
+		new_cls.methods << MethodInfo{ name: 'getMessage', param_count: 0 }
+		new_cls.return_types['getMessage'] = VarType{ tag: .t_string }
+		
+		new_cls.all_props = new_cls.props.clone()
+		new_cls.all_methods = new_cls.methods.clone()
+		t.classes << new_cls
+	}
+}
+
+

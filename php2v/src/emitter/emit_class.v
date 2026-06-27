@@ -1,18 +1,12 @@
 module emitter
 
-import php2v.ast
+import ast
 
 // prop_field_path returns the correct field access path for a property,
 // handling inheritance. For own props: "field_name". For inherited: "Class_Parent.field_name".
 fn (t &Transpiler) prop_field_path(cls_name string, prop_name string) string {
 	// Determine the actual struct field name (matches struct generation logic)
-	mut field := ''
-	prop_type := t.get_class_prop_type(cls_name, prop_name)
-	if prop_type.is_scalar() {
-		field = prop_v_name(prop_name)
-	} else {
-		field = 'prop_${prop_name}'
-	}
+	field := prop_v_name(prop_name)
 	for c in t.classes {
 		if c.name == cls_name {
 			if prop_name in c.props {
@@ -35,6 +29,7 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 	resolved_name := t.resolve_class_name(node.name)
 	resolved_extends := t.resolve_class_name(node.extends)
 	t.current_class = resolved_name
+	t.declared_classes[resolved_name] = true
 	
 	// 收集 ClassInfo：只收集本类自身声明的属性和方法
 	mut class_info := ClassInfo{
@@ -63,8 +58,12 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 			own_method_names_originally[stmt.name] = true
 		} else if stmt.node_type == ast.node_stmt_class_const {
 			for c in stmt.consts {
-				val_str := t.visit_expr(c.value)
-				t.const_out.writeln('const class_${resolved_name.to_lower()}_${c.name.to_lower()} = ${val_str}')
+				val_type := t.get_expr_type(c.value)
+				ret_type_str := val_type.to_v_type()
+				val_str := t.visit_expr_native(c.value)
+				t.func_out.writeln('pub fn Class_${resolved_name}.${c.name.to_lower()}() ${ret_type_str} {')
+				t.func_out.writeln('\treturn ${val_str}')
+				t.func_out.writeln('}')
 			}
 		}
 	}
@@ -144,7 +143,27 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 		class_info.all_props = class_info.props.clone()
 		class_info.all_methods = class_info.methods.clone()
 	}
-	t.classes << class_info
+	mut found := false
+	for mut cls in t.classes {
+		if cls.name == class_info.name {
+			cls.methods = class_info.methods.clone()
+			cls.props = class_info.props.clone()
+			cls.all_props = class_info.all_props.clone()
+			cls.all_methods = class_info.all_methods.clone()
+			// 注意：保留原有的 prop_types，因为它们可能已经在 analyze_types 阶段被推导好了
+			if cls.prop_types.len == 0 {
+				cls.prop_types = class_info.prop_types.clone()
+			}
+			if cls.return_types.len == 0 {
+				cls.return_types = class_info.return_types.clone()
+			}
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.classes << class_info
+	}
 
 	// P7 Phase 1: 推断属性/参数/返回值类型
 	t.infer_single_class_types(node, resolved_name)
@@ -177,7 +196,7 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 			if prop_type.is_scalar() {
 				t.write_line('${prop_v_name(prop)} ${prop_type.to_v_type()}')
 			} else {
-				t.write_line('prop_${prop} rt.PhpVal')
+				t.write_line('${prop_v_name(prop)} rt.PhpVal')
 			}
 		}
 		t.indent--
@@ -198,7 +217,7 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 			t.write_line('fn (mut this Class_${resolved_name}) ${method_v_name("__construct")}(var_message rt.PhpVal) {')
 			t.indent++
 			t.write_indent()
-			t.write_line('this.prop_message = var_message')
+			t.write_line('this.${prop_v_name("message")} = var_message.to_string()')
 			t.indent--
 			t.write_indent()
 			t.write_line('}')
@@ -206,10 +225,10 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 		}
 		if 'getMessage' !in own_method_names_originally {
 			t.write_indent()
-			t.write_line('fn (mut this Class_${resolved_name}) ${method_v_name("getMessage")}() rt.PhpVal {')
+			t.write_line('fn (mut this Class_${resolved_name}) ${method_v_name("getMessage")}() string {')
 			t.indent++
 			t.write_indent()
-			t.write_line('return this.prop_message')
+			t.write_line('return this.${prop_v_name("message")}')
 			t.indent--
 			t.write_indent()
 			t.write_line('}')
@@ -228,6 +247,13 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	old_scope := t.scope
 	t.scope = VarScope.new()
 	t.scope.declare('this')
+	old_func_name := t.current_func_name
+	t.current_func_name = node.name
+	
+	old_func_ret := t.current_func_ret_type
+	ret_type := t.get_method_return_type(class_name, node.name)
+	t.current_func_ret_type = ret_type
+
 	// P7: 注册 $this 的类型，使属性/方法访问可以直连
 	t.inferred_types['this'] = VarType{ tag: .t_object, class_name: class_name }
 
@@ -251,9 +277,9 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	}
 
 	// P7 Task 7: 返回值类型推断
-	ret_type := t.get_method_return_type(class_name, node.name)
 	is_construct := node.name == '__construct'
-	ret_type_str := if is_construct { '' } else if ret_type.is_scalar() { ret_type.to_v_type() } else { 'rt.PhpVal' }
+	is_void := ret_type.tag == .t_void
+	ret_type_str := if is_construct || is_void { '' } else if ret_type.is_scalar() { ret_type.to_v_type() } else { 'rt.PhpVal' }
 
 	t.write_indent()
 	// P7 Task 7: 去掉 method_ 前缀（仅内部调用）
@@ -280,7 +306,7 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 		t.visit_stmt(stmt)
 	}
 	
-	if !is_construct {
+	if !is_construct && !is_void {
 		if node.stmts.len == 0 || node.stmts[node.stmts.len - 1].node_type != ast.node_stmt_return {
 			t.write_indent()
 			if ret_type.is_scalar() {
@@ -305,6 +331,8 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 
 	t.indent = old_indent
 	t.scope = old_scope
+	t.current_func_name = old_func_name
+	t.current_func_ret_type = old_func_ret
 	// P7: 清理本方法注册的原生参数，避免污染后续方法
 	for p in registered_native_params {
 		t.native_params.delete(p)
@@ -347,10 +375,10 @@ fn (mut t Transpiler) generate_struct_init(cls ClassInfo) {
 				.t_int { t.write_line('${prop_v_name(prop)}: i64(0)') }
 				.t_float { t.write_line('${prop_v_name(prop)}: f64(0.0)') }
 				.t_bool { t.write_line('${prop_v_name(prop)}: false') }
-				else { t.write_line('prop_${prop}: rt.new_null()') }
+				else { t.write_line('${prop_v_name(prop)}: rt.new_null()') }
 			}
 		} else {
-			t.write_line('prop_${prop}: rt.new_null()')
+			t.write_line('${prop_v_name(prop)}: rt.new_null()')
 		}
 	}
 }
@@ -476,13 +504,7 @@ fn (mut t Transpiler) generate_dispatchers() {
 					raw_arg := 'if args.len > ${i} { args[${i}] } else { rt.new_null() }'
 					if i < param_types_list.len && param_types_list[i].is_scalar() {
 						// 目标参数是原生类型 → 拆箱
-						match param_types_list[i].tag {
-							.t_string { args_pass << '${raw_arg}.to_string()' }
-							.t_int { args_pass << '${raw_arg}.to_int()' }
-							.t_float { args_pass << '${raw_arg}.to_float()' }
-							.t_bool { args_pass << '${raw_arg}.is_true()' }
-							else { args_pass << raw_arg }
-						}
+						args_pass << unbox_expr(raw_arg, param_types_list[i])
 					} else {
 						args_pass << raw_arg
 					}
@@ -490,8 +512,8 @@ fn (mut t Transpiler) generate_dispatchers() {
 				// P7 Task 12: 方法返回类型装箱
 				ret_type := t.get_method_return_type(cls.name, m.name)
 				method_call := 'this.${method_v_name(m.name)}(${args_pass.join(", ")})'
-				if m.name == '__construct' {
-					// construct 无返回值：先调用，再返回 rt.new_null()
+				if m.name == '__construct' || ret_type.tag == .t_void {
+					// construct 和 void 方法无返回值：先调用，再返回 rt.new_null()
 					t.write_line('\'${m.name}\' { ${method_call}; return rt.new_null() }')
 				} else if ret_type.is_scalar() {
 					match ret_type.tag {
@@ -566,13 +588,8 @@ fn (mut t Transpiler) generate_dispatchers() {
 				prop_type := t.get_class_prop_type(cls.name, prop)
 				field_path := t.prop_field_path(cls.name, prop)
 				if prop_type.is_scalar() {
-					match prop_type.tag {
-						.t_string { t.write_line('\'${prop}\' { this.${field_path} = val.to_string(); return true }') }
-						.t_int { t.write_line('\'${prop}\' { this.${field_path} = val.to_int(); return true }') }
-						.t_float { t.write_line('\'${prop}\' { this.${field_path} = val.to_float(); return true }') }
-						.t_bool { t.write_line('\'${prop}\' { this.${field_path} = val.is_true(); return true }') }
-						else { t.write_line('\'${prop}\' { this.${field_path} = val; return true }') }
-					}
+					unboxed := unbox_expr('val', prop_type)
+					t.write_line('\'${prop}\' { this.${field_path} = ${unboxed}; return true }')
 				} else {
 					t.write_line('\'${prop}\' { this.${field_path} = val; return true }')
 				}
@@ -609,43 +626,6 @@ fn (mut t Transpiler) generate_dispatchers() {
 	t.write_line('')
 
 	t.is_in_func = false
-}
-
-fn (mut t Transpiler) generate_call_closure() {
-	// 按需生成：无闭包使用时完全跳过
-	if !t.needs_closure_dispatch {
-		return
-	}
-	old_is_in_func := t.is_in_func
-	t.is_in_func = true
-	t.indent = 0
-	
-	t.write_line('fn call_closure(cb rt.PhpVal, args []rt.PhpVal) rt.PhpVal {')
-	if t.closure_names.len == 0 {
-		t.write_line('\treturn rt.new_null()')
-		t.write_line('}')
-		t.write_line('')
-		t.is_in_func = old_is_in_func
-		return
-	}
-	
-	t.write_line('\tif !cb.is_object() { return rt.new_null() }')
-	t.write_line('\tmut obj_info := cb.get_object()')
-	t.write_line('\tmatch obj_info.class_name {')
-	for name in t.closure_names {
-		t.write_line('\t\t\'${name}\' {')
-		t.write_line('\t\t\tif mut obj_info.obj is ${name} {')
-		t.write_line('\t\t\t\treturn obj_info.obj.invoke(args)')
-		t.write_line('\t\t\t}')
-		t.write_line('\t\t}')
-	}
-	t.write_line('\t\telse {}')
-	t.write_line('\t}')
-	t.write_line('\treturn rt.new_null()')
-	t.write_line('}')
-	t.write_line('')
-	
-	t.is_in_func = old_is_in_func
 }
 
 fn (t &Transpiler) find_captured_vars_rec(node ast.AstNode, params []string, mut captured []string) {
@@ -753,6 +733,62 @@ fn (t Transpiler) get_parents_expr(class_name string) string {
 		elements << "'${p}'"
 	}
 	return '[${elements.join(", ")}]'
+}
+
+// class_implements 检查类是否在编译时已知实现了目标类/接口
+fn (t &Transpiler) class_implements(class_name string, target string) bool {
+	mut queue := []string{}
+	queue << class_name
+	mut visited := map[string]bool{}
+	visited[class_name] = true
+
+	for queue.len > 0 {
+		curr := queue[0]
+		queue.delete(0)
+
+		if curr == target {
+			return true
+		}
+
+		for cls in t.classes {
+			if cls.name == curr {
+				if cls.extends != '' && cls.extends !in visited {
+					visited[cls.extends] = true
+					queue << cls.extends
+				}
+				for impl in cls.implements {
+					if impl !in visited {
+						visited[impl] = true
+						queue << impl
+					}
+				}
+				break
+			}
+		}
+	}
+	return false
+}
+
+// class_does_not_implement 检查类是否在编译时已知不实现目标类/接口
+// 只有当类已声明且我们已遍历完所有父类/接口后才能确定
+fn (t &Transpiler) class_does_not_implement(class_name string, target string) bool {
+	// 如果类未声明，无法确定
+	mut class_exists := false
+	for cls in t.classes {
+		if cls.name == class_name {
+			class_exists = true
+			break
+		}
+	}
+	if !class_exists {
+		return false
+	}
+	// 如果目标在父类/接口链中，返回 false
+	if t.class_implements(class_name, target) {
+		return false
+	}
+	// 类存在但目标不在继承链中，返回 true
+	return true
 }
 
 fn (t Transpiler) resolve_class_name(name string) string {

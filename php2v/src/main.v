@@ -1,8 +1,8 @@
 module main
 
 import os
-import php2v.ast
-import php2v.emitter
+import ast
+import emitter
 
 fn main() {
 	if os.args.len < 3 {
@@ -61,16 +61,23 @@ fn main() {
 	mut transpiler := emitter.Transpiler.new()
 	transpiler.current_file = input_file
 	v_body := transpiler.transpile(stmts)
-	v_code := emitter.wrap_as_main(transpiler.func_out.str(), v_body)
+	v_code := emitter.wrap_as_main(transpiler.func_out.str(), v_body, transpiler.extra_imports)
 
 	// 4. 写入输出文件
 	os.write_file(output_file, v_code) or {
 		eprintln('Failed to write output file: ${err}')
 		return
 	}
+	
+	// 5. 格式化 V 源码
+	fmt_res := os.execute('v fmt -w "${output_file}"')
+	if fmt_res.exit_code != 0 {
+		eprintln('Warning: v fmt failed: ${fmt_res.output}')
+	}
+	
 	println('Successfully transpiled ${input_file} -> ${output_file}')
 
-	// 5. 如果需要，直接编译并运行
+	// 6. 如果需要，直接编译并运行
 	if run_after {
 		run_res := os.execute('v run "${output_file}"')
 		print(run_res.output)

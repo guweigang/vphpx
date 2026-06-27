@@ -36,8 +36,9 @@ pub mut:
 
 	props     []AstNode @[json: 'props']
 	uses      []AstNode @[json: 'uses']
-	incl_type string   @[json: 'type']
-	class_name string   @[json: 'class']
+	incl_type   string   @[json: 'type']
+	return_type string   @[json: 'returnType']
+	class_name  string   @[json: 'class']
 	extends    string   @[json: 'extends']
 	implements []string @[json: 'implements']
 	traits     []string @[json: 'traits']
@@ -136,6 +137,7 @@ pub fn (n &AstNode) clone() &AstNode {
 		props: props
 		uses: uses
 		incl_type: n.incl_type
+		return_type: n.return_type
 		class_name: n.class_name
 		extends: n.extends
 		implements: n.implements.clone()

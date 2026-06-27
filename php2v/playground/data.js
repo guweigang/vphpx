@@ -5,7 +5,7 @@ window.PLAYGROUND_DATA = [
     "title": "01 Echo",
     "filename": "01_echo.php",
     "php": "<?php\necho \"Hello World\\n\";\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tprint('Hello World\\n')\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tprint('Hello World\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Echo",
@@ -25,7 +25,7 @@ window.PLAYGROUND_DATA = [
     "title": "02 Variables",
     "filename": "02_variables.php",
     "php": "<?php\n$a = \"hello\";\n$b = \"world\\n\";\necho $a;\necho \" \";\necho $b;\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_a := 'hello'\n\tmut var_b := 'world\\n'\n\tprint(var_a)\n\tprint(' ')\n\tprint(var_b)\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_a := 'hello'\n\tmut var_b := 'world\\n'\n\tprint(var_a)\n\tprint(' ')\n\tprint(var_b)\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -103,7 +103,7 @@ window.PLAYGROUND_DATA = [
     "title": "03 Arithmetic",
     "filename": "03_arithmetic.php",
     "php": "<?php\n$a = 10 + 20;\n$b = $a - 5;\n$c = $b * 2;\n$d = $c / 5;\necho $d;\necho \"\\n\";\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_a := 10 + 20\n\tmut var_b := var_a - 5\n\tmut var_c := var_b * 2\n\tmut var_d := var_c / 5\n\tprint(var_d.str())\n\tprint('\\n')\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_a := 10 + 20\n\tmut var_b := var_a - 5\n\tmut var_c := var_b * 2\n\tmut var_d := var_c / 5\n\tprint(var_d.str())\n\tprint('\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -242,7 +242,7 @@ window.PLAYGROUND_DATA = [
     "title": "04 String Concat",
     "filename": "04_string_concat.php",
     "php": "<?php\n$name = \"PHP\";\necho \"Hello \" . $name . \" to V!\\n\";\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_name := 'PHP'\n\tprint('Hello ' + var_name + ' to V!\\n')\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_name := 'PHP'\n\tprint('Hello ' + var_name + ' to V!\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -298,7 +298,7 @@ window.PLAYGROUND_DATA = [
     "title": "05 If Else",
     "filename": "05_if_else.php",
     "php": "<?php\n$a = 15;\nif ($a > 20) {\n    echo \"greater than 20\\n\";\n} elseif ($a > 10) {\n    echo \"greater than 10\\n\";\n} else {\n    echo \"less or equal 10\\n\";\n}\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_a := 15\n\tif var_a > 20 {\n\t\tprint('greater than 20\\n')\n\t} else if var_a > 10 {\n\t\tprint('greater than 10\\n')\n\t} else {\n\t\tprint('less or equal 10\\n')\n\t}\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_a := 15\n\tif var_a > 20 {\n\t\tprint('greater than 20\\n')\n\t} else if var_a > 10 {\n\t\tprint('greater than 10\\n')\n\t} else {\n\t\tprint('less or equal 10\\n')\n\t}\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -406,7 +406,7 @@ window.PLAYGROUND_DATA = [
     "title": "06 Truthy",
     "filename": "06_truthy.php",
     "php": "<?php\n$a = \"\";\nif ($a) {\n    echo \"yes1\\n\";\n} else {\n    echo \"no1\\n\";\n}\n$b = \"0\";\nif ($b) {\n    echo \"yes2\\n\";\n} else {\n    echo \"no2\\n\";\n}\n$c = 123;\nif ($c) {\n    echo \"yes3\\n\";\n} else {\n    echo \"no3\\n\";\n}\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_a := ''\n\tif var_a.len > 0 && var_a != '0' {\n\t\tprint('yes1\\n')\n\t} else {\n\t\tprint('no1\\n')\n\t}\n\tmut var_b := '0'\n\tif var_b.len > 0 && var_b != '0' {\n\t\tprint('yes2\\n')\n\t} else {\n\t\tprint('no2\\n')\n\t}\n\tmut var_c := 123\n\tif var_c != 0 {\n\t\tprint('yes3\\n')\n\t} else {\n\t\tprint('no3\\n')\n\t}\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_a := ''\n\tif var_a.len > 0 && var_a != '0' {\n\t\tprint('yes1\\n')\n\t} else {\n\t\tprint('no1\\n')\n\t}\n\tmut var_b := '0'\n\tif var_b.len > 0 && var_b != '0' {\n\t\tprint('yes2\\n')\n\t} else {\n\t\tprint('no2\\n')\n\t}\n\tmut var_c := 123\n\tif var_c != 0 {\n\t\tprint('yes3\\n')\n\t} else {\n\t\tprint('no3\\n')\n\t}\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -589,7 +589,7 @@ window.PLAYGROUND_DATA = [
     "title": "07 Functions",
     "filename": "07_functions.php",
     "php": "<?php\nfunction add_five($val) {\n    return $val + 5;\n}\n$res = add_five(10);\necho $res;\necho \"\\n\";\n",
-    "v": "import php2v.rt\n\nfn func_add_five(var_val rt.PhpVal) rt.PhpVal {\n\treturn rt.add(var_val, rt.new_int(5))\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_res := func_add_five(rt.new_int(10))\n\trt.echo_val(var_res)\n\tprint('\\n')\n}\n",
+    "v": "import rt\n\nfn func_add_five(val i64) i64 {\n\treturn val + 5\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_res := func_add_five(10)\n\tprint(var_res.str())\n\tprint('\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Function",
@@ -698,7 +698,7 @@ window.PLAYGROUND_DATA = [
     "title": "08 Arrays",
     "filename": "08_arrays.php",
     "php": "<?php\n$arr = [10, 20];\n$arr[] = 30;\n$arr['key'] = \"hello\";\n\necho $arr[0];\necho \"\\n\";\necho $arr[2];\necho \"\\n\";\necho $arr['key'];\necho \"\\n\";\necho count($arr);\necho \"\\n\";\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_arr := rt.create_array([rt.ArrayItem{ key: none, val: rt.new_int(10) }, rt.ArrayItem{ key: none, val: rt.new_int(20) }])\n\tvar_arr.array_push(rt.new_int(30))\n\tvar_arr.array_set(rt.new_string('key'), rt.new_string('hello'))\n\trt.echo_val(var_arr.array_get(rt.new_int(0)))\n\tprint('\\n')\n\trt.echo_val(var_arr.array_get(rt.new_int(2)))\n\tprint('\\n')\n\trt.echo_val(var_arr.array_get(rt.new_string('key')))\n\tprint('\\n')\n\trt.echo_val(rt.new_int(var_arr.dup().array_count()))\n\tprint('\\n')\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_arr := rt.create_array([rt.ArrayItem{ key: none, val: 10 },\n\t\trt.ArrayItem{ key: none, val: 20 }])\n\tvar_arr.array_push(30)\n\tvar_arr.array_set('key', 'hello')\n\trt.echo_val(var_arr.array_get(0))\n\tprint('\\n')\n\trt.echo_val(var_arr.array_get(2))\n\tprint('\\n')\n\trt.echo_val(var_arr.array_get('key'))\n\tprint('\\n')\n\tprint(var_arr.dup().array_count().str())\n\tprint('\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -929,7 +929,7 @@ window.PLAYGROUND_DATA = [
     "title": "09 Foreach",
     "filename": "09_foreach.php",
     "php": "<?php\n$arr = [\"a\" => 10, \"b\" => 20];\n\nforeach ($arr as $val) {\n    echo $val;\n    echo \"\\n\";\n}\n\nforeach ($arr as $key => $val) {\n    echo $key;\n    echo \":\";\n    echo $val;\n    echo \"\\n\";\n}\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_arr := rt.create_array([rt.ArrayItem{ key: rt.new_string('a'), val: rt.new_int(10) }, rt.ArrayItem{ key: rt.new_string('b'), val: rt.new_int(20) }])\n\t{\n\t\tmut iter := var_arr.iterator()\n\t\tfor {\n\t\t\titem := iter.next() or { break }\n\t\t\tmut var_val := item.val\n\t\t\trt.echo_val(var_val)\n\t\t\tprint('\\n')\n\t\t}\n\t}\n\t{\n\t\tmut iter := var_arr.iterator()\n\t\tfor {\n\t\t\titem := iter.next() or { break }\n\t\t\tmut var_val := item.val\n\t\t\tmut var_key := item.key\n\t\t\trt.echo_val(var_key)\n\t\t\tprint(':')\n\t\t\trt.echo_val(var_val)\n\t\t\tprint('\\n')\n\t\t}\n\t}\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_arr := {\n\t\t'a': 10\n\t\t'b': 20\n\t}\n\tfor _, var_val in var_arr {\n\t\tprint(var_val.str())\n\t\tprint('\\n')\n\t}\n\tfor var_key, var_val in var_arr {\n\t\tprint(var_key)\n\t\tprint(':')\n\t\tprint(var_val.str())\n\t\tprint('\\n')\n\t}\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -1095,7 +1095,7 @@ window.PLAYGROUND_DATA = [
     "title": "10 Loops",
     "filename": "10_loops.php",
     "php": "<?php\n$i = 0;\nwhile ($i < 3) {\n    echo $i;\n    echo \"\\n\";\n    $i = $i + 1;\n}\n\nfor ($j = 0; $j < 5; $j = $j + 1) {\n    if ($j == 2) {\n        continue;\n    }\n    if ($j == 4) {\n        break;\n    }\n    echo $j;\n    echo \"\\n\";\n}\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_i := 0\n\tfor var_i < 3 {\n\t\tprint(var_i.str())\n\t\tprint('\\n')\n\t\tvar_i = var_i + 1\n\t}\n\t{\n\t\tmut var_j := 0\n\t\tfor {\n\t\t\tif !(var_j < 5) { break }\n\t\t\tif var_j == 2 {\n\t\t\t\tcontinue\n\t\t\t}\n\t\t\tif var_j == 4 {\n\t\t\t\tbreak\n\t\t\t}\n\t\t\tprint(var_j.str())\n\t\t\tprint('\\n')\n\t\t\tvar_j = var_j + 1\n\t\t}\n\t}\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_i := 0\n\tfor var_i < 3 {\n\t\tprint(var_i.str())\n\t\tprint('\\n')\n\t\tvar_i = var_i + 1\n\t}\n\t{\n\t\tmut var_j := 0\n\t\tfor {\n\t\t\tif !(var_j < 5) { break\n\t\t\t }\n\t\t\tif var_j == 2 {\n\t\t\t\tcontinue\n\t\t\t}\n\t\t\tif var_j == 4 {\n\t\t\t\tbreak\n\t\t\t}\n\t\t\tprint(var_j.str())\n\t\t\tprint('\\n')\n\t\t\tvar_j = var_j + 1\n\t\t}\n\t}\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -1330,7 +1330,7 @@ window.PLAYGROUND_DATA = [
     "title": "11 Oop",
     "filename": "11_oop.php",
     "php": "<?php\nclass User {\n    public $name;\n    public function __construct($name) {\n        $this->name = $name;\n    }\n    public function getName() {\n        return $this->name;\n    }\n}\n\n$user = new User(\"Alice\");\necho $user->getName();\necho \"\\n\";\n\n$user->name = \"Bob\";\necho $user->getName();\necho \"\\n\";\n",
-    "v": "import php2v.rt\n\nstruct Class_User {\n\trt.PhpObjectBase\npub mut:\n\t\tname string\n}\n\nfn (mut this Class_User) construct(name string)  {\n\tthis.name = name\n}\n\nfn (mut this Class_User) getname() string {\n\treturn this.name\n}\n\nfn create_user(name string) &Class_User {\n\tmut obj := &Class_User{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\tname: ''\n\t}\n\tobj.construct(name)\n\treturn obj\n}\n\nfn (mut this Class_User) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' { this.construct(if args.len > 0 { args[0] } else { rt.new_null() }.to_string()); return rt.new_null() }\n\t\t'getName' { return rt.new_string(this.getname()) }\n\t\telse { return none }\n\t}\n}\n\nfn (this &Class_User) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'name' { return rt.new_string(this.name) }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_User) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'name' { this.name = val.to_string(); return true }\n\t\telse { return false }\n\t}\n}\n\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_user := create_user('Alice')\n\tprint(var_user.getname())\n\tprint('\\n')\n\tvar_user.name = 'Bob'\n\tprint(var_user.getname())\n\tprint('\\n')\n}\n",
+    "v": "import rt\n\nstruct Class_User {\n\trt.PhpObjectBase\npub mut:\n\tname string\n}\n\nfn (mut this Class_User) construct(name string) {\n\tthis.name = name\n}\n\nfn (mut this Class_User) getname() string {\n\treturn this.name\n}\n\nfn create_user(name string) &Class_User {\n\tmut obj := &Class_User{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\tname:          ''\n\t}\n\tobj.construct(name)\n\treturn obj\n}\n\nfn (mut this Class_User) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' {\n\t\t\tthis.construct(if args.len > 0 { args[0] } else { rt.new_null() }.to_string())\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'getName' {\n\t\t\treturn rt.new_string(this.getname())\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_User) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'name' { return rt.new_string(this.name) }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_User) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'name' {\n\t\t\tthis.name = val.to_string()\n\t\t\treturn true\n\t\t}\n\t\telse {\n\t\t\treturn false\n\t\t}\n\t}\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_user := create_user('Alice')\n\tprint(var_user.getname())\n\tprint('\\n')\n\tvar_user.name = 'Bob'\n\tprint(var_user.getname())\n\tprint('\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Class",
@@ -1555,7 +1555,7 @@ window.PLAYGROUND_DATA = [
     "title": "12 Dynamic",
     "filename": "12_dynamic.php",
     "php": "<?php\n// 验证 eval 逃生通道\neval(\"echo 'eval works\\n';\");\n\n// 验证通用内置函数动态桥接 (V 侧未实现 strlen 之外的其他字符串及加密函数)\n$md5_res = md5(\"hello\");\necho $md5_res;\necho \"\\n\";\n\n$json_res = json_encode([1, 2, 3]);\necho $json_res;\necho \"\\n\";\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\trt.call_function('eval', [rt.new_string('echo \\'eval works\\n\\';')])\n\tmut var_md5_res := rt.call_function('md5', [rt.new_string('hello')])\n\trt.echo_val(var_md5_res)\n\tprint('\\n')\n\tmut var_json_res := rt.call_function('json_encode', [rt.create_array([rt.ArrayItem{ key: none, val: rt.new_int(1) }, rt.ArrayItem{ key: none, val: rt.new_int(2) }, rt.ArrayItem{ key: none, val: rt.new_int(3) }])])\n\trt.echo_val(var_json_res)\n\tprint('\\n')\n}\n",
+    "v": "import rt\nimport crypto.md5\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\trt.call_function('eval', [rt.new_string(\"echo 'eval works\\n';\")])\n\tmut var_md5_res := md5.hexhash('hello')\n\tprint(var_md5_res)\n\tprint('\\n')\n\tmut var_json_res := rt.json_encode(rt.create_array([\n\t\trt.ArrayItem{ key: none, val: 1 },\n\t\trt.ArrayItem{ key: none, val: 2 },\n\t\trt.ArrayItem{ key: none, val: 3 },\n\t]))\n\tprint(var_json_res)\n\tprint('\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -1722,7 +1722,7 @@ window.PLAYGROUND_DATA = [
     "title": "13 Closure",
     "filename": "13_closure.php",
     "php": "<?php\n$x = 10;\n\n// 测试普通闭包和外部捕获\n$cb = function($y) use ($x) {\n    return $x + $y;\n};\necho $cb(5);\necho \"\\n\";\n\n// 测试箭头函数和隐式捕获\n$fn = fn($z) => $z * $x;\necho $fn(3);\necho \"\\n\";\n",
-    "v": "import php2v.rt\n\nstruct Closure_1 {\n\trt.PhpObjectBase\npub mut:\n\tprop_x rt.PhpVal\n}\n\nfn (mut this Closure_1) invoke(args []rt.PhpVal) rt.PhpVal {\n\tmut var_y := if args.len > 0 { args[0].dup() } else { rt.new_null() }\n\tmut var_x := this.prop_x.dup()\n\treturn rt.add(var_x, var_y)\n}\n\nstruct Closure_2 {\n\trt.PhpObjectBase\npub mut:\n\tprop_x rt.PhpVal\n}\n\nfn (mut this Closure_2) invoke(args []rt.PhpVal) rt.PhpVal {\n\tmut var_z := if args.len > 0 { args[0].dup() } else { rt.new_null() }\n\tmut var_x := this.prop_x.dup()\n\treturn rt.mul(var_z, var_x)\n}\n\nfn call_closure(cb rt.PhpVal, args []rt.PhpVal) rt.PhpVal {\n\tif !cb.is_object() { return rt.new_null() }\n\tmut obj_info := cb.get_object()\n\tmatch obj_info.class_name {\n\t\t'Closure_1' {\n\t\t\tif mut obj_info.obj is Closure_1 {\n\t\t\t\treturn obj_info.obj.invoke(args)\n\t\t\t}\n\t\t}\n\t\t'Closure_2' {\n\t\t\tif mut obj_info.obj is Closure_2 {\n\t\t\t\treturn obj_info.obj.invoke(args)\n\t\t\t}\n\t\t}\n\t\telse {}\n\t}\n\treturn rt.new_null()\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_z := rt.new_null()\n\tmut var_x := 10\n\tmut var_cb := rt.new_object('Closure_1', ['Closure'], &Closure_1{ prop_x: rt.new_int(var_x) })\n\trt.echo_val(call_closure(var_cb, [rt.new_int(5)]))\n\tprint('\\n')\n\tmut var_fn := rt.new_object('Closure_2', ['Closure'], &Closure_2{ prop_x: rt.new_int(var_x) })\n\trt.echo_val(call_closure(var_fn, [rt.new_int(3)]))\n\tprint('\\n')\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_z := rt.new_null()\n\tmut var_x := 10\n\tclosure_1_fn := fn [var_x] (this_ptr rt.PhpVal, args []rt.PhpVal) rt.PhpVal {\n\t\tmut var_y := if args.len > 0 { args[0].dup() } else { rt.new_null() }\n\t\treturn rt.add(rt.new_int(var_x), var_y)\n\t}\n\tmut var_cb := rt.new_closure(closure_1_fn)\n\trt.echo_val(rt.call_closure_val(var_cb, [rt.new_int(5)]))\n\tprint('\\n')\n\tclosure_2_fn := fn [var_x] (this_ptr rt.PhpVal, args []rt.PhpVal) rt.PhpVal {\n\t\tmut var_z := if args.len > 0 { args[0].dup() } else { rt.new_null() }\n\t\treturn rt.mul(var_z, rt.new_int(var_x))\n\t}\n\tmut var_fn := rt.new_closure(closure_2_fn)\n\trt.echo_val(rt.call_closure_val(var_fn, [rt.new_int(3)]))\n\tprint('\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -1953,7 +1953,7 @@ window.PLAYGROUND_DATA = [
     "title": "14 Include",
     "filename": "14_include.php",
     "php": "<?php\n// 动态拼接路径，测试变量路径支持\n$path = 'tests/fixtures/14_included.inc';\n\n// 测试 include 并捕获返回值\n$ret = include $path;\necho $ret;\necho \"\\n\";\n\n// 测试 include_once 不会再次执行（测试去重）\n$ret2 = include_once $path;\necho \"once_done\\n\";\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_path := 'tests/fixtures/14_included.inc'\n\tmut var_ret := rt.include_file(rt.new_string(var_path), '1')\n\trt.echo_val(var_ret)\n\tprint('\\n')\n\tmut var_ret2 := rt.include_file(rt.new_string(var_path), '2')\n\tprint('once_done\\n')\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_path := 'tests/fixtures/14_included.inc'\n\tmut var_ret := rt.include_file(var_path, '1')\n\trt.echo_val(var_ret)\n\tprint('\\n')\n\tmut var_ret2 := rt.include_file(var_path, '2')\n\tprint('once_done\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -2059,7 +2059,7 @@ window.PLAYGROUND_DATA = [
     "title": "15 Constants",
     "filename": "15_constants.php",
     "php": "<?php\n// 1. 测试魔术常量\necho \"DIR: \" . __DIR__ . \"\\n\";\necho \"FILE: \" . __FILE__ . \"\\n\";\necho \"LINE: \" . __LINE__ . \"\\n\";\n\n// 2. 测试 const 编译期常量\nconst APP_ENV = 'production';\necho \"ENV: \" . APP_ENV . \"\\n\";\n\n// 3. 测试运行时 define 函数常量\ndefine('DB_PORT', 3306);\necho \"PORT: \" . DB_PORT . \"\\n\";\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('DIR: '), rt.new_string('/Users/guweigang/Source/vphpx/php2v/tests/fixtures')), rt.new_string('\\n')))\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('FILE: '), rt.new_string('/Users/guweigang/Source/vphpx/php2v/tests/fixtures/15_constants.php')), rt.new_string('\\n')))\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('LINE: '), rt.new_int(5)), rt.new_string('\\n')))\n\trt.define_constant('APP_ENV', rt.new_string('production'))\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('ENV: '), rt.get_constant('APP_ENV')), rt.new_string('\\n')))\n\trt.call_function('define', [rt.new_string('DB_PORT'), rt.new_int(3306)])\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('PORT: '), rt.get_constant('DB_PORT')), rt.new_string('\\n')))\n}\n",
+    "v": "import rt\n\nconst global_const_app_env = 'production'\nconst global_const_db_port = 3306\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tprint('DIR: ' + @DIR + '\\n')\n\tprint('FILE: ' + @FILE + '\\n')\n\tprint('LINE: ' + @LINE.int().str() + '\\n')\n\tprint('ENV: ' + global_const_app_env + '\\n')\n\tprint('PORT: ' + global_const_db_port.str() + '\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Echo",
@@ -2262,7 +2262,7 @@ window.PLAYGROUND_DATA = [
     "title": "16 Oop Inheritance",
     "filename": "16_oop_inheritance.php",
     "php": "<?php\nclass Animal {\n    public $name;\n    public function __construct($name) {\n        $this->name = $name;\n    }\n    public function greet() {\n        echo \"Hi, I am \" . $this->name . \"\\n\";\n    }\n}\n\nclass Dog extends Animal {\n    public $breed;\n    public function __construct($name, $breed) {\n        parent::__construct($name);\n        $this->breed = $breed;\n    }\n    public function greet() {\n        parent::greet();\n        echo \"I am a \" . $this->breed . \"\\n\";\n    }\n}\n\n$dog = new Dog(\"Rex\", \"Labrador\");\n$dog->greet();\necho $dog->name . \"\\n\";\necho $dog->breed . \"\\n\";\n",
-    "v": "import php2v.rt\n\nstruct Class_Animal {\n\trt.PhpObjectBase\npub mut:\n\t\tprop_name rt.PhpVal\n}\n\nfn (mut this Class_Animal) construct(var_name rt.PhpVal)  {\n\tthis.dispatch_set_prop('name', var_name.dup())\n}\n\nfn (mut this Class_Animal) greet() rt.PhpVal {\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('Hi, I am '), this.prop_name), rt.new_string('\\n')))\n\treturn rt.new_null()\n}\n\nstruct Class_Dog {\n\tClass_Animal\npub mut:\n\t\tbreed string\n}\n\nfn (mut this Class_Dog) construct(name string, breed string)  {\n\tthis.Class_Animal.construct(rt.new_string(name))\n\tthis.breed = breed\n}\n\nfn (mut this Class_Dog) greet() rt.PhpVal {\n\tthis.Class_Animal.greet()\n\tprint('I am a ' + this.breed + '\\n')\n\treturn rt.new_null()\n}\n\nfn create_animal(arg_0 rt.PhpVal) &Class_Animal {\n\tmut obj := &Class_Animal{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\tprop_name: rt.new_null()\n\t}\n\tobj.construct(arg_0)\n\treturn obj\n}\n\nfn create_dog(name string, breed string) &Class_Dog {\n\tmut obj := &Class_Dog{\n\t\tClass_Animal: Class_Animal{\n\t\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\t\tprop_name: rt.new_null()\n\t\t}\n\t\tbreed: ''\n\t}\n\tobj.construct(name, breed)\n\treturn obj\n}\n\nfn (mut this Class_Animal) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' { this.construct(if args.len > 0 { args[0] } else { rt.new_null() }); return rt.new_null() }\n\t\t'greet' { return this.greet() }\n\t\telse { return none }\n\t}\n}\n\nfn (this &Class_Animal) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'name' { return this.prop_name }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_Animal) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'name' { this.prop_name = val; return true }\n\t\telse { return false }\n\t}\n}\n\n\nfn (mut this Class_Dog) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' { this.construct(if args.len > 0 { args[0] } else { rt.new_null() }.to_string(), if args.len > 1 { args[1] } else { rt.new_null() }.to_string()); return rt.new_null() }\n\t\t'greet' { return this.greet() }\n\t\telse { return none }\n\t}\n}\n\nfn (this &Class_Dog) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'name' { return this.Class_Animal.prop_name }\n\t\t'breed' { return rt.new_string(this.breed) }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_Dog) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'name' { this.Class_Animal.prop_name = val; return true }\n\t\t'breed' { this.breed = val.to_string(); return true }\n\t\telse { return false }\n\t}\n}\n\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_dog := create_dog('Rex', 'Labrador')\n\tvar_dog.greet()\n\trt.echo_val(rt.concat(var_dog.dispatch_get_prop('name') or { rt.new_null() }, rt.new_string('\\n')))\n\tprint(var_dog.breed + '\\n')\n}\n",
+    "v": "import rt\n\nstruct Class_Animal {\n\trt.PhpObjectBase\npub mut:\n\tname rt.PhpVal\n}\n\nfn (mut this Class_Animal) construct(var_name rt.PhpVal) {\n\tthis.name = var_name.dup()\n}\n\nfn (mut this Class_Animal) greet() {\n\tprint('Hi, I am ' + (this.name).str() + '\\n')\n}\n\nstruct Class_Dog {\n\tClass_Animal\npub mut:\n\tbreed string\n}\n\nfn (mut this Class_Dog) construct(name string, breed string) {\n\tthis.Class_Animal.construct(rt.new_string(name))\n\tthis.breed = breed\n}\n\nfn (mut this Class_Dog) greet() {\n\tthis.Class_Animal.greet()\n\tprint('I am a ' + this.breed + '\\n')\n}\n\nfn create_animal(arg_0 rt.PhpVal) &Class_Animal {\n\tmut obj := &Class_Animal{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\tname:          rt.new_null()\n\t}\n\tobj.construct(arg_0)\n\treturn obj\n}\n\nfn create_dog(name string, breed string) &Class_Dog {\n\tmut obj := &Class_Dog{\n\t\tClass_Animal: Class_Animal{\n\t\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\t\tname:          rt.new_null()\n\t\t}\n\t\tbreed:        ''\n\t}\n\tobj.construct(name, breed)\n\treturn obj\n}\n\nfn (mut this Class_Animal) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' {\n\t\t\tthis.construct(if args.len > 0 { args[0] } else { rt.new_null() })\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'greet' {\n\t\t\tthis.greet()\n\t\t\treturn rt.new_null()\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_Animal) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'name' { return this.name }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_Animal) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'name' {\n\t\t\tthis.name = val\n\t\t\treturn true\n\t\t}\n\t\telse {\n\t\t\treturn false\n\t\t}\n\t}\n}\n\nfn (mut this Class_Dog) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' {\n\t\t\tthis.construct(if args.len > 0 { args[0] } else { rt.new_null() }.to_string(), if args.len > 1 {\n\t\t\t\targs[1]\n\t\t\t} else {\n\t\t\t\trt.new_null()\n\t\t\t}.to_string())\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'greet' {\n\t\t\tthis.greet()\n\t\t\treturn rt.new_null()\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_Dog) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'name' { return this.Class_Animal.name }\n\t\t'breed' { return rt.new_string(this.breed) }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_Dog) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'name' {\n\t\t\tthis.Class_Animal.name = val\n\t\t\treturn true\n\t\t}\n\t\t'breed' {\n\t\t\tthis.breed = val.to_string()\n\t\t\treturn true\n\t\t}\n\t\telse {\n\t\t\treturn false\n\t\t}\n\t}\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_dog := create_dog('Rex', 'Labrador')\n\tvar_dog.greet()\n\tprint((var_dog.name).str() + '\\n')\n\tprint(var_dog.breed + '\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Class",
@@ -2681,7 +2681,7 @@ window.PLAYGROUND_DATA = [
     "title": "17 Boolean Logical",
     "filename": "17_boolean_logical.php",
     "php": "<?php\nfunction log_true($msg) {\n    echo $msg . \"\\n\";\n    return true;\n}\nfunction log_false($msg) {\n    echo $msg . \"\\n\";\n    return false;\n}\n\n// 1. !\necho \"!true: \" . (!log_true(\"t1\") ? \"yes\" : \"no\") . \"\\n\";\necho \"!false: \" . (!log_false(\"f1\") ? \"yes\" : \"no\") . \"\\n\";\n\n// 2. && 短路\necho \"&& test 1:\\n\";\n$res1 = log_false(\"left_false\") && log_true(\"right_true\"); // 右侧不应该执行！\necho \"result: \" . ($res1 ? \"true\" : \"false\") . \"\\n\";\n\n// 3. || 短路\necho \"|| test 1:\\n\";\n$res3 = log_true(\"left_true\") || log_true(\"right_true\"); // 右侧不应该执行！\necho \"result: \" . ($res3 ? \"true\" : \"false\") . \"\\n\";\n",
-    "v": "import php2v.rt\n\nfn func_log_true(var_msg rt.PhpVal) rt.PhpVal {\n\trt.echo_val(rt.concat(var_msg, rt.new_string('\\n')))\n\treturn rt.new_bool(true)\n}\n\nfn func_log_false(var_msg rt.PhpVal) rt.PhpVal {\n\trt.echo_val(rt.concat(var_msg, rt.new_string('\\n')))\n\treturn rt.new_bool(false)\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('!true: '), if rt.is_true(rt.new_bool(!rt.is_true(func_log_true(rt.new_string('t1'))))) { rt.new_string('yes') } else { rt.new_string('no') }), rt.new_string('\\n')))\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('!false: '), if rt.is_true(rt.new_bool(!rt.is_true(func_log_false(rt.new_string('f1'))))) { rt.new_string('yes') } else { rt.new_string('no') }), rt.new_string('\\n')))\n\tprint('&& test 1:\\n')\n\tmut var_res1 := rt.new_bool(rt.is_true(func_log_false(rt.new_string('left_false'))) && rt.is_true(func_log_true(rt.new_string('right_true'))))\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('result: '), if rt.is_true(var_res1) { rt.new_string('true') } else { rt.new_string('false') }), rt.new_string('\\n')))\n\tprint('|| test 1:\\n')\n\tmut var_res3 := rt.new_bool(rt.is_true(func_log_true(rt.new_string('left_true'))) || rt.is_true(func_log_true(rt.new_string('right_true'))))\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('result: '), if rt.is_true(var_res3) { rt.new_string('true') } else { rt.new_string('false') }), rt.new_string('\\n')))\n}\n",
+    "v": "import rt\n\nfn func_log_true(msg string) bool {\n\tprint(msg + '\\n')\n\treturn true\n}\n\nfn func_log_false(msg string) bool {\n\tprint(msg + '\\n')\n\treturn false\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tprint('!true: ' + if !(func_log_true('t1')) { 'yes' } else { 'no' } + '\\n')\n\tprint('!false: ' + if !(func_log_false('f1')) { 'yes' } else { 'no' } + '\\n')\n\tprint('&& test 1:\\n')\n\tmut var_res1 := func_log_false('left_false') && func_log_true('right_true')\n\tprint('result: ' + if var_res1 { 'true' } else { 'false' } + '\\n')\n\tprint('|| test 1:\\n')\n\tmut var_res3 := func_log_true('left_true') || func_log_true('right_true')\n\tprint('result: ' + if var_res3 { 'true' } else { 'false' } + '\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Function",
@@ -3144,7 +3144,7 @@ window.PLAYGROUND_DATA = [
     "title": "18 Ternary Coalesce",
     "filename": "18_ternary_coalesce.php",
     "php": "<?php\n$a = 10;\n$b = null;\n$c = 20;\n\n// 1. 标准三元\necho ($a > 5 ? \"gt\" : \"lt\") . \"\\n\";\necho ($a < 5 ? \"gt\" : \"lt\") . \"\\n\";\n\n// 2. 简写三元\n$res1 = $a ?: 15;\necho \"res1: \" . $res1 . \"\\n\";\n\n$res2 = 0 ?: 15;\necho \"res2: \" . $res2 . \"\\n\";\n\n// 3. 空接合\n$res3 = $b ?? 100;\necho \"res3: \" . $res3 . \"\\n\";\n\n$res4 = $c ?? 100;\necho \"res4: \" . $res4 . \"\\n\";\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_a := 10\n\tmut var_b := rt.new_null()\n\tmut var_c := 20\n\trt.echo_val(rt.concat(if rt.is_true(rt.greater(rt.new_int(var_a), rt.new_int(5))) { rt.new_string('gt') } else { rt.new_string('lt') }, rt.new_string('\\n')))\n\trt.echo_val(rt.concat(if rt.is_true(rt.less(rt.new_int(var_a), rt.new_int(5))) { rt.new_string('gt') } else { rt.new_string('lt') }, rt.new_string('\\n')))\n\tmut var_res1 := if rt.is_true(rt.new_int(var_a)) { rt.new_int(var_a) } else { rt.new_int(15) }\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('res1: '), var_res1), rt.new_string('\\n')))\n\tmut var_res2 := if rt.is_true(rt.new_int(0)) { rt.new_int(0) } else { rt.new_int(15) }\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('res2: '), var_res2), rt.new_string('\\n')))\n\tmut var_res3 := if !(var_b).is_null() { var_b } else { rt.new_int(100) }\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('res3: '), var_res3), rt.new_string('\\n')))\n\tmut var_res4 := if !(rt.new_int(var_c)).is_null() { rt.new_int(var_c) } else { rt.new_int(100) }\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('res4: '), var_res4), rt.new_string('\\n')))\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_a := 10\n\tmut var_b := rt.new_null()\n\tmut var_c := 20\n\tprint(if var_a > 5 { 'gt' } else { 'lt' } + '\\n')\n\tprint(if var_a < 5 { 'gt' } else { 'lt' } + '\\n')\n\tmut var_res1 := if var_a != 0 { var_a } else { 15 }\n\tprint('res1: ' + var_res1.str() + '\\n')\n\tmut var_res2 := if rt.is_true(rt.new_int(0)) { 0 } else { 15 }\n\tprint('res2: ' + var_res2.str() + '\\n')\n\tmut var_res3 := if !var_b.is_null() { var_b } else { rt.new_int(100) }\n\tprint('res3: ' + var_res3.str() + '\\n')\n\tmut var_res4 := if !(rt.new_int(var_c)).is_null() { var_c } else { 100 }\n\tprint('res4: ' + var_res4.str() + '\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -3519,7 +3519,7 @@ window.PLAYGROUND_DATA = [
     "title": "19 Exceptions",
     "filename": "19_exceptions.php",
     "php": "<?php\n\nclass MyException extends Exception {}\n\nfunction test_exception($throw_val) {\n    try {\n        if ($throw_val == 1) {\n            throw new Exception(\"base exception\");\n        } else if ($throw_val == 2) {\n            throw new MyException(\"my exception\");\n        }\n        echo \"no exception\\n\";\n    } catch (MyException $e) {\n        echo \"caught MyException: \" . $e->getMessage() . \"\\n\";\n    } catch (Exception $e) {\n        echo \"caught Exception: \" . $e->getMessage() . \"\\n\";\n    } finally {\n        echo \"finally block\\n\";\n    }\n}\n\ntest_exception(0);\ntest_exception(1);\ntest_exception(2);\n",
-    "v": "import php2v.rt\n\nstruct Class_MyException {\n\trt.PhpObjectBase\npub mut:\n\t\tprop_message rt.PhpVal\n\t\tprop_code rt.PhpVal\n\t\tprop_file rt.PhpVal\n\t\tprop_line rt.PhpVal\n}\n\n\tfn (mut this Class_MyException) construct(var_message rt.PhpVal) {\n\t\tthis.prop_message = var_message\n\t}\n\n\tfn (mut this Class_MyException) getmessage() rt.PhpVal {\n\t\treturn this.prop_message\n\t}\n\nfn func_test_exception(var_throw_val rt.PhpVal) rt.PhpVal {\n\tif rt.is_true(rt.equal(var_throw_val, rt.new_int(1))) {\n\t\trt.throw_exception(rt.new_object('Exception', []string{}, create_exception(rt.new_string('base exception'))))\n\t\tif rt.has_exception() { unsafe { goto catch_label_1 } }\n\t} else {\n\t\tif rt.is_true(rt.equal(var_throw_val, rt.new_int(2))) {\n\t\t\trt.throw_exception(rt.new_object('MyException', ['Exception'], create_myexception(rt.new_string('my exception'))))\n\t\t\tif rt.has_exception() { unsafe { goto catch_label_1 } }\n\t\t}\n\t\tif rt.has_exception() { unsafe { goto catch_label_1 } }\n\t}\n\tif rt.has_exception() { unsafe { goto catch_label_1 } }\n\tprint('no exception\\n')\n\tif rt.has_exception() { unsafe { goto catch_label_1 } }\n\tunsafe { goto finally_label_1 }\n\ncatch_label_1:\n\tmut var_e_1 := rt.get_and_clear_exception()\n\tif rt.instance_of(var_e_1, 'MyException') {\n\t\tmut var_e := var_e_1.dup()\n\t\trt.echo_val(rt.concat(rt.concat(rt.new_string('caught MyException: '), call_method(var_e, 'getMessage', []rt.PhpVal{})), rt.new_string('\\n')))\n\t\tunsafe { goto finally_label_1 }\n\t}\n\telse if rt.instance_of(var_e_1, 'Exception') {\n\t\tmut var_e := var_e_1.dup()\n\t\trt.echo_val(rt.concat(rt.concat(rt.new_string('caught Exception: '), call_method(var_e, 'getMessage', []rt.PhpVal{})), rt.new_string('\\n')))\n\t\tunsafe { goto finally_label_1 }\n\t}\n\telse {\n\t\trt.throw_exception(var_e_1)\n\t\tunsafe { goto finally_label_1 }\n\t}\n\nfinally_label_1:\n\tprint('finally block\\n')\n\tif rt.has_exception() { return rt.new_null() }\n\nend_label_1:\n\treturn rt.new_null()\n}\n\nstruct Class_Exception {\n\trt.PhpObjectBase\npub mut:\n\t\tprop_message rt.PhpVal\n\t\tprop_code rt.PhpVal\n\t\tprop_file rt.PhpVal\n\t\tprop_line rt.PhpVal\n}\n\nfn (mut this Class_Exception) construct(var_message rt.PhpVal) {\n\tthis.prop_message = var_message\n}\n\nfn (mut this Class_Exception) getmessage() rt.PhpVal {\n\treturn this.prop_message\n}\n\nfn create_myexception(arg_0 rt.PhpVal) &Class_MyException {\n\tmut obj := &Class_MyException{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\tprop_message: rt.new_null()\n\t\tprop_code: rt.new_null()\n\t\tprop_file: rt.new_null()\n\t\tprop_line: rt.new_null()\n\t}\n\tobj.construct(arg_0)\n\treturn obj\n}\n\nfn create_exception(arg_0 rt.PhpVal) &Class_Exception {\n\tmut obj := &Class_Exception{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\tprop_message: rt.new_null()\n\t\tprop_code: rt.new_null()\n\t\tprop_file: rt.new_null()\n\t\tprop_line: rt.new_null()\n\t}\n\tobj.construct(arg_0)\n\treturn obj\n}\n\nfn (mut this Class_MyException) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' { this.construct(if args.len > 0 { args[0] } else { rt.new_null() }); return rt.new_null() }\n\t\t'getMessage' { return this.getmessage() }\n\t\telse { return none }\n\t}\n}\n\nfn (this &Class_MyException) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'message' { return this.prop_message }\n\t\t'code' { return this.prop_code }\n\t\t'file' { return this.prop_file }\n\t\t'line' { return this.prop_line }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_MyException) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'message' { this.prop_message = val; return true }\n\t\t'code' { this.prop_code = val; return true }\n\t\t'file' { this.prop_file = val; return true }\n\t\t'line' { this.prop_line = val; return true }\n\t\telse { return false }\n\t}\n}\n\n\nfn (mut this Class_Exception) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' { this.construct(if args.len > 0 { args[0] } else { rt.new_null() }); return rt.new_null() }\n\t\t'getMessage' { return this.getmessage() }\n\t\telse { return none }\n\t}\n}\n\nfn (this &Class_Exception) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'message' { return this.prop_message }\n\t\t'code' { return this.prop_code }\n\t\t'file' { return this.prop_file }\n\t\t'line' { return this.prop_line }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_Exception) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'message' { this.prop_message = val; return true }\n\t\t'code' { this.prop_code = val; return true }\n\t\t'file' { this.prop_file = val; return true }\n\t\t'line' { this.prop_line = val; return true }\n\t\telse { return false }\n\t}\n}\n\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tfunc_test_exception(rt.new_int(0))\n\tfunc_test_exception(rt.new_int(1))\n\tfunc_test_exception(rt.new_int(2))\n}\n",
+    "v": "import rt\n\nstruct Class_MyException {\n\trt.PhpObjectBase\npub mut:\n\tmessage string\n\tcode    i64\n\tfile    string\n\tline    i64\n}\n\nfn (mut this Class_MyException) construct(var_message rt.PhpVal) {\n\tthis.message = var_message.to_string()\n}\n\nfn (mut this Class_MyException) getmessage() string {\n\treturn this.message\n}\n\nfn func_test_exception(throw_val i64) rt.PhpVal {\n\tif throw_val == 1 {\n\t\trt.throw_exception(rt.new_object('Exception', []string{},\n\t\t\tcreate_exception(rt.new_string('base exception'))))\n\t\tif rt.has_exception() {\n\t\t\tunsafe {\n\t\t\t\tgoto catch_label_1\n\t\t\t}\n\t\t}\n\t} else {\n\t\tif throw_val == 2 {\n\t\t\trt.throw_exception(rt.new_object('MyException', ['Exception'],\n\t\t\t\tcreate_myexception(rt.new_string('my exception'))))\n\t\t\tif rt.has_exception() {\n\t\t\t\tunsafe {\n\t\t\t\t\tgoto catch_label_1\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\tif rt.has_exception() {\n\t\t\tunsafe {\n\t\t\t\tgoto catch_label_1\n\t\t\t}\n\t\t}\n\t}\n\tif rt.has_exception() {\n\t\tunsafe {\n\t\t\tgoto catch_label_1\n\t\t}\n\t}\n\tprint('no exception\\n')\n\tif rt.has_exception() {\n\t\tunsafe {\n\t\t\tgoto catch_label_1\n\t\t}\n\t}\n\tunsafe {\n\t\tgoto finally_label_1\n\t}\n\tcatch_label_1:\n\tmut var_e_1 := rt.get_and_clear_exception()\n\tif rt.instance_of(var_e_1, 'MyException') {\n\t\tmut var_e := var_e_1.dup()\n\t\tprint('caught MyException: ' + (call_method(var_e, 'getMessage', []rt.PhpVal{})).str() +\n\t\t\t'\\n')\n\t\tunsafe {\n\t\t\tgoto finally_label_1\n\t\t}\n\t} else if rt.instance_of(var_e_1, 'Exception') {\n\t\tmut var_e := var_e_1.dup()\n\t\tprint('caught Exception: ' + (call_method(var_e, 'getMessage', []rt.PhpVal{})).str() + '\\n')\n\t\tunsafe {\n\t\t\tgoto finally_label_1\n\t\t}\n\t} else {\n\t\trt.throw_exception(var_e_1)\n\t\tunsafe {\n\t\t\tgoto finally_label_1\n\t\t}\n\t}\n\n\tfinally_label_1:\n\tprint('finally block\\n')\n\tif rt.has_exception() { return rt.new_null() }\n\n\tend_label_1:\n\treturn rt.new_null()\n}\n\nstruct Class_Exception {\n\trt.PhpObjectBase\npub mut:\n\tmessage string\n\tcode    i64\n\tfile    string\n\tline    i64\n}\n\nfn (mut this Class_Exception) construct(var_message rt.PhpVal) {\n\tthis.message = var_message.to_string()\n}\n\nfn (mut this Class_Exception) getmessage() string {\n\treturn this.message\n}\n\nfn create_myexception(arg_0 rt.PhpVal) &Class_MyException {\n\tmut obj := &Class_MyException{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\tmessage:       ''\n\t\tcode:          i64(0)\n\t\tfile:          ''\n\t\tline:          i64(0)\n\t}\n\tobj.construct(arg_0)\n\treturn obj\n}\n\nfn create_exception(arg_0 rt.PhpVal) &Class_Exception {\n\tmut obj := &Class_Exception{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\tmessage:       ''\n\t\tcode:          i64(0)\n\t\tfile:          ''\n\t\tline:          i64(0)\n\t}\n\tobj.construct(arg_0)\n\treturn obj\n}\n\nfn (mut this Class_MyException) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' {\n\t\t\tthis.construct(if args.len > 0 { args[0] } else { rt.new_null() })\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'getMessage' {\n\t\t\treturn rt.new_string(this.getmessage())\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_MyException) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'message' { return rt.new_string(this.message) }\n\t\t'code' { return rt.new_int(this.code) }\n\t\t'file' { return rt.new_string(this.file) }\n\t\t'line' { return rt.new_int(this.line) }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_MyException) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'message' {\n\t\t\tthis.message = val.to_string()\n\t\t\treturn true\n\t\t}\n\t\t'code' {\n\t\t\tthis.code = val.to_i64()\n\t\t\treturn true\n\t\t}\n\t\t'file' {\n\t\t\tthis.file = val.to_string()\n\t\t\treturn true\n\t\t}\n\t\t'line' {\n\t\t\tthis.line = val.to_i64()\n\t\t\treturn true\n\t\t}\n\t\telse {\n\t\t\treturn false\n\t\t}\n\t}\n}\n\nfn (mut this Class_Exception) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' {\n\t\t\tthis.construct(if args.len > 0 { args[0] } else { rt.new_null() })\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'getMessage' {\n\t\t\treturn rt.new_string(this.getmessage())\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_Exception) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'message' { return rt.new_string(this.message) }\n\t\t'code' { return rt.new_int(this.code) }\n\t\t'file' { return rt.new_string(this.file) }\n\t\t'line' { return rt.new_int(this.line) }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_Exception) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'message' {\n\t\t\tthis.message = val.to_string()\n\t\t\treturn true\n\t\t}\n\t\t'code' {\n\t\t\tthis.code = val.to_i64()\n\t\t\treturn true\n\t\t}\n\t\t'file' {\n\t\t\tthis.file = val.to_string()\n\t\t\treturn true\n\t\t}\n\t\t'line' {\n\t\t\tthis.line = val.to_i64()\n\t\t\treturn true\n\t\t}\n\t\telse {\n\t\t\treturn false\n\t\t}\n\t}\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tfunc_test_exception(0)\n\tfunc_test_exception(1)\n\tfunc_test_exception(2)\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Class",
@@ -3872,7 +3872,7 @@ window.PLAYGROUND_DATA = [
     "title": "20 Web Superglobals",
     "filename": "20_web_superglobals.php",
     "php": "<?php\n$_GET['test_key'] = 'hello';\necho \"GET test_key: \" . $_GET['test_key'] . \"\\n\";\n\nif (isset($_GET['name'])) {\n    echo \"GET name: \" . $_GET['name'] . \"\\n\";\n}\n\n$_SERVER['HTTP_HOST'] = 'localhost';\necho \"SERVER HOST: \" . $_SERVER['HTTP_HOST'] . \"\\n\";\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\trt.get_superglobal('_GET').array_set(rt.new_string('test_key'), rt.new_string('hello'))\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('GET test_key: '), rt.get_superglobal('_GET').array_get(rt.new_string('test_key'))), rt.new_string('\\n')))\n\tif rt.is_true(rt.new_bool(rt.get_superglobal('_GET').array_isset(rt.new_string('name')))) {\n\t\trt.echo_val(rt.concat(rt.concat(rt.new_string('GET name: '), rt.get_superglobal('_GET').array_get(rt.new_string('name'))), rt.new_string('\\n')))\n\t}\n\trt.get_superglobal('_SERVER').array_set(rt.new_string('HTTP_HOST'), rt.new_string('localhost'))\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('SERVER HOST: '), rt.get_superglobal('_SERVER').array_get(rt.new_string('HTTP_HOST'))), rt.new_string('\\n')))\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\trt.get_superglobal('_GET').array_set('test_key', 'hello')\n\tprint('GET test_key: ' + (rt.get_superglobal('_GET').array_get('test_key')).str() + '\\n')\n\tif rt.is_true(rt.new_bool(rt.get_superglobal('_GET').array_isset(rt.new_string('name')))) {\n\t\tprint('GET name: ' + (rt.get_superglobal('_GET').array_get('name')).str() + '\\n')\n\t}\n\trt.get_superglobal('_SERVER').array_set('HTTP_HOST', 'localhost')\n\tprint('SERVER HOST: ' + (rt.get_superglobal('_SERVER').array_get('HTTP_HOST')).str() + '\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -4077,7 +4077,7 @@ window.PLAYGROUND_DATA = [
     "title": "21 Namespaces",
     "filename": "21_namespaces.php",
     "php": "<?php\nnamespace App\\Utils;\n\nclass Helper {\n    public function log($msg) {\n        echo \"[Log] \" . $msg . \"\\n\";\n    }\n    public static function info($msg) {\n        echo \"[Info] \" . $msg . \"\\n\";\n    }\n}\n\nnamespace App\\Core;\n\nuse App\\Utils\\Helper;\nuse App\\Utils\\Helper as AliasHelper;\n\nclass Application {\n    public function run() {\n        $helper = new Helper();\n        $helper->log(\"App run\");\n\n        self::init();\n\n        AliasHelper::info(\"Done\");\n    }\n\n    public static function init() {\n        echo \"Init core\\n\";\n    }\n}\n\n$app = new Application();\n$app->run();\n",
-    "v": "import php2v.rt\n\nstruct Class_App_Utils_Helper {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_App_Utils_Helper) log(msg string) rt.PhpVal {\n\tprint('[Log] ' + msg + '\\n')\n\treturn rt.new_null()\n}\n\nfn (mut this Class_App_Utils_Helper) info(msg string) rt.PhpVal {\n\tprint('[Info] ' + msg + '\\n')\n\treturn rt.new_null()\n}\n\nstruct Class_App_Core_Application {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_App_Core_Application) run() rt.PhpVal {\n\tmut var_helper := create_app_utils_helper()\n\tvar_helper.log('App run')\n\tfn () rt.PhpVal { mut temp := Class_App_Core_Application{}; return temp.init() }()\n\tfn (arg_0 string) rt.PhpVal { mut temp := Class_App_Utils_Helper{}; return temp.info(arg_0) }('Done')\n\treturn rt.new_null()\n}\n\nfn (mut this Class_App_Core_Application) init() rt.PhpVal {\n\tprint('Init core\\n')\n\treturn rt.new_null()\n}\n\nfn create_app_utils_helper() &Class_App_Utils_Helper {\n\tmut obj := &Class_App_Utils_Helper{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn obj\n}\n\nfn create_app_core_application() &Class_App_Core_Application {\n\tmut obj := &Class_App_Core_Application{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn obj\n}\n\nfn (mut this Class_App_Utils_Helper) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'log' { return this.log(if args.len > 0 { args[0] } else { rt.new_null() }.to_string()) }\n\t\t'info' { return this.info(if args.len > 0 { args[0] } else { rt.new_null() }.to_string()) }\n\t\telse { return none }\n\t}\n}\n\nfn (this &Class_App_Utils_Helper) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\treturn none\n}\n\nfn (mut this Class_App_Utils_Helper) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\treturn false\n}\n\n\nfn (mut this Class_App_Core_Application) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'run' { return this.run() }\n\t\t'init' { return this.init() }\n\t\telse { return none }\n\t}\n}\n\nfn (this &Class_App_Core_Application) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\treturn none\n}\n\nfn (mut this Class_App_Core_Application) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\treturn false\n}\n\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_app := create_app_core_application()\n\tvar_app.run()\n}\n",
+    "v": "import rt\n\nstruct Class_App_Utils_Helper {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_App_Utils_Helper) log(msg string) {\n\tprint('[Log] ' + msg + '\\n')\n}\n\nfn (mut this Class_App_Utils_Helper) info(msg string) {\n\tprint('[Info] ' + msg + '\\n')\n}\n\nstruct Class_App_Core_Application {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_App_Core_Application) run() {\n\tmut var_helper := create_app_utils_helper()\n\tvar_helper.log('App run')\n\tfn () rt.PhpVal {\n\t\tmut temp := Class_App_Core_Application{}\n\t\ttemp.init()\n\t\treturn rt.new_null()\n\t}()\n\tfn (arg_0 string) rt.PhpVal {\n\t\tmut temp := Class_App_Utils_Helper{}\n\t\ttemp.info(arg_0)\n\t\treturn rt.new_null()\n\t}('Done')\n}\n\nfn (mut this Class_App_Core_Application) init() {\n\tprint('Init core\\n')\n}\n\nfn create_app_utils_helper() &Class_App_Utils_Helper {\n\tmut obj := &Class_App_Utils_Helper{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn obj\n}\n\nfn create_app_core_application() &Class_App_Core_Application {\n\tmut obj := &Class_App_Core_Application{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn obj\n}\n\nfn (mut this Class_App_Utils_Helper) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'log' {\n\t\t\tthis.log(if args.len > 0 { args[0] } else { rt.new_null() }.to_string())\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'info' {\n\t\t\tthis.info(if args.len > 0 { args[0] } else { rt.new_null() }.to_string())\n\t\t\treturn rt.new_null()\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_App_Utils_Helper) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\treturn none\n}\n\nfn (mut this Class_App_Utils_Helper) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\treturn false\n}\n\nfn (mut this Class_App_Core_Application) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'run' {\n\t\t\tthis.run()\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'init' {\n\t\t\tthis.init()\n\t\t\treturn rt.new_null()\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_App_Core_Application) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\treturn none\n}\n\nfn (mut this Class_App_Core_Application) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\treturn false\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_app := create_app_core_application()\n\tvar_app.run()\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Namespace",
@@ -4417,7 +4417,7 @@ window.PLAYGROUND_DATA = [
     "title": "22 String Interpolation",
     "filename": "22_string_interpolation.php",
     "php": "<?php\n$name = \"Alice\";\n$age = 20;\n$msg = \"Hello $name, next year you will be {$age} years old.\";\necho $msg . \"\\n\";\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_name := 'Alice'\n\tmut var_age := 20\n\tmut var_msg := \"Hello ${var_name}, next year you will be ${var_age.str()} years old.\"\n\tprint(var_msg + '\\n')\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_name := 'Alice'\n\tmut var_age := 20\n\tmut var_msg := 'Hello ${var_name}, next year you will be ${var_age.str()} years old.'\n\tprint(var_msg + '\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -4526,7 +4526,7 @@ window.PLAYGROUND_DATA = [
     "title": "23 Unset Empty",
     "filename": "23_unset_empty.php",
     "php": "<?php\n$a = \"\";\n$b = 0;\n$c = null;\n$d = \"hello\";\n\necho empty($a) ? \"a is empty\\n\" : \"a is not empty\\n\";\necho empty($b) ? \"b is empty\\n\" : \"b is not empty\\n\";\necho empty($c) ? \"c is empty\\n\" : \"c is not empty\\n\";\necho empty($d) ? \"d is empty\\n\" : \"d is not empty\\n\";\necho empty($not_exist) ? \"not_exist is empty\\n\" : \"not_exist is not empty\\n\";\n\n$arr = array(\"key\" => \"value\", \"key2\" => \"value2\");\necho empty($arr[\"key\"]) ? \"key is empty\\n\" : \"key is not empty\\n\";\necho empty($arr[\"not_exist\"]) ? \"not_exist key is empty\\n\" : \"not_exist key is not empty\\n\";\n\nunset($d);\necho empty($d) ? \"d is empty after unset\\n\" : \"d is not empty after unset\\n\";\n\nunset($arr[\"key\"]);\necho empty($arr[\"key\"]) ? \"key is empty after unset\\n\" : \"key is not empty after unset\\n\";\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_not_exist := rt.new_null()\n\tmut var_a := ''\n\tmut var_b := 0\n\tmut var_c := rt.new_null()\n\tmut var_d := 'hello'\n\trt.echo_val(if rt.is_true(rt.new_bool(!rt.is_true(rt.new_string(var_a)))) { rt.new_string('a is empty\\n') } else { rt.new_string('a is not empty\\n') })\n\trt.echo_val(if rt.is_true(rt.new_bool(!rt.is_true(rt.new_int(var_b)))) { rt.new_string('b is empty\\n') } else { rt.new_string('b is not empty\\n') })\n\trt.echo_val(if rt.is_true(rt.new_bool(!rt.is_true(var_c))) { rt.new_string('c is empty\\n') } else { rt.new_string('c is not empty\\n') })\n\trt.echo_val(if rt.is_true(rt.new_bool(!rt.is_true(rt.new_string(var_d)))) { rt.new_string('d is empty\\n') } else { rt.new_string('d is not empty\\n') })\n\trt.echo_val(if rt.is_true(rt.new_bool(!rt.is_true(var_not_exist))) { rt.new_string('not_exist is empty\\n') } else { rt.new_string('not_exist is not empty\\n') })\n\tmut var_arr := rt.create_array([rt.ArrayItem{ key: rt.new_string('key'), val: rt.new_string('value') }, rt.ArrayItem{ key: rt.new_string('key2'), val: rt.new_string('value2') }])\n\trt.echo_val(if rt.is_true(rt.new_bool(!rt.is_true(var_arr.array_get(rt.new_string('key'))))) { rt.new_string('key is empty\\n') } else { rt.new_string('key is not empty\\n') })\n\trt.echo_val(if rt.is_true(rt.new_bool(!rt.is_true(var_arr.array_get(rt.new_string('not_exist'))))) { rt.new_string('not_exist key is empty\\n') } else { rt.new_string('not_exist key is not empty\\n') })\n\tvar_d = ''\n\trt.echo_val(if rt.is_true(rt.new_bool(!rt.is_true(rt.new_string(var_d)))) { rt.new_string('d is empty after unset\\n') } else { rt.new_string('d is not empty after unset\\n') })\n\tvar_arr.array_unset(rt.new_string('key'))\n\trt.echo_val(if rt.is_true(rt.new_bool(!rt.is_true(var_arr.array_get(rt.new_string('key'))))) { rt.new_string('key is empty after unset\\n') } else { rt.new_string('key is not empty after unset\\n') })\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_not_exist := rt.new_null()\n\tmut var_a := ''\n\tmut var_b := 0\n\tmut var_c := rt.new_null()\n\tmut var_d := 'hello'\n\tprint(if var_a == '' { 'a is empty\\n' } else { 'a is not empty\\n' })\n\tprint(if var_b == 0 { 'b is empty\\n' } else { 'b is not empty\\n' })\n\tprint(if !rt.is_true(var_c) { 'c is empty\\n' } else { 'c is not empty\\n' })\n\tprint(if var_d == '' { 'd is empty\\n' } else { 'd is not empty\\n' })\n\tprint(if !rt.is_true(var_not_exist) {\n\t\t'not_exist is empty\\n'\n\t} else {\n\t\t'not_exist is not empty\\n'\n\t})\n\tmut var_arr := {\n\t\t'key':  'value'\n\t\t'key2': 'value2'\n\t}\n\tprint(if var_arr['key'] == '' { 'key is empty\\n' } else { 'key is not empty\\n' })\n\tprint(if var_arr['not_exist'] == '' {\n\t\t'not_exist key is empty\\n'\n\t} else {\n\t\t'not_exist key is not empty\\n'\n\t})\n\tvar_d = ''\n\tprint(if var_d == '' { 'd is empty after unset\\n' } else { 'd is not empty after unset\\n' })\n\tvar_arr.delete('key')\n\tprint(if var_arr['key'] == '' {\n\t\t'key is empty after unset\\n'\n\t} else {\n\t\t'key is not empty after unset\\n'\n\t})\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -4977,7 +4977,7 @@ window.PLAYGROUND_DATA = [
     "title": "24 Switch Case",
     "filename": "24_switch_case.php",
     "php": "<?php\n$x = 2;\n\nswitch ($x) {\n    case 1:\n        echo \"one\\n\";\n        break;\n    case 2:\n    case 3:\n        echo \"two or three\\n\";\n        break;\n    default:\n        echo \"default case\\n\";\n}\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_x := 2\n\tmatch var_x {\n\t\t1 {\n\t\t\tprint('one\\n')\n\t\t}\n\t\t2, 3 {\n\t\t\tprint('two or three\\n')\n\t\t}\n\t\telse {\n\t\t\tprint('default case\\n')\n\t\t}\n\t}\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_x := 2\n\tmatch var_x {\n\t\t1 {\n\t\t\tprint('one\\n')\n\t\t}\n\t\t2, 3 {\n\t\t\tprint('two or three\\n')\n\t\t}\n\t\telse {\n\t\t\tprint('default case\\n')\n\t\t}\n\t}\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -5097,7 +5097,7 @@ window.PLAYGROUND_DATA = [
     "title": "25 Match Expr",
     "filename": "25_match_expr.php",
     "php": "<?php\n$x = 3;\n\n$y = match ($x) {\n    1 => \"one\",\n    2, 3 => \"two or three\",\n    default => \"other\",\n};\n\necho $y . \"\\n\";\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_x := 3\n\tmut var_y := match var_x { 1 { rt.new_string('one') } 2, 3 { rt.new_string('two or three') } else { rt.new_string('other') } }\n\trt.echo_val(rt.concat(var_y, rt.new_string('\\n')))\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_x := 3\n\tmut var_y := match var_x {\n\t\t1 { rt.new_string('one') }\n\t\t2, 3 { rt.new_string('two or three') }\n\t\telse { rt.new_string('other') }\n\t}\n\n\tprint(var_y.str() + '\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -5215,7 +5215,7 @@ window.PLAYGROUND_DATA = [
     "title": "26 Do While",
     "filename": "26_do_while.php",
     "php": "<?php\n$i = 0;\ndo {\n    echo $i . \"\\n\";\n    $i++;\n} while ($i < 3);\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_i := 0\n\tfor {\n\t\trt.echo_val(rt.concat(rt.new_int(var_i), rt.new_string('\\n')))\n\t\tvar_i += 1\n\t\tif !(var_i < 3) {\n\t\t\tbreak\n\t\t}\n\t}\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_i := 0\n\tfor {\n\t\tprint(var_i.str() + '\\n')\n\t\tvar_i += 1\n\t\tif !(var_i < 3) {\n\t\t\tbreak\n\t\t}\n\t}\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -5295,7 +5295,7 @@ window.PLAYGROUND_DATA = [
     "title": "27 Increment Decrement",
     "filename": "27_increment_decrement.php",
     "php": "<?php\n$a = 5;\n\n// 测试后置自增\n$b = $a++;\necho \"b is \" . $b . \", a is \" . $a . \"\\n\";\n\n// 测试后置自减\n$c = $a--;\necho \"c is \" . $c . \", a is \" . $a . \"\\n\";\n\n// 测试前置自增\n$d = ++$a;\necho \"d is \" . $d . \", a is \" . $a . \"\\n\";\n\n// 测试前置自减\n$e = --$a;\necho \"e is \" . $e . \", a is \" . $a . \"\\n\";\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_a := 5\n\tmut var_b := rt.post_inc(rt.new_int(var_a))\n\trt.echo_val(rt.concat(rt.concat(rt.concat(rt.concat(rt.new_string('b is '), var_b), rt.new_string(', a is ')), rt.new_int(var_a)), rt.new_string('\\n')))\n\tmut var_c := rt.post_dec(rt.new_int(var_a))\n\trt.echo_val(rt.concat(rt.concat(rt.concat(rt.concat(rt.new_string('c is '), var_c), rt.new_string(', a is ')), rt.new_int(var_a)), rt.new_string('\\n')))\n\tmut var_d := rt.pre_inc(rt.new_int(var_a))\n\trt.echo_val(rt.concat(rt.concat(rt.concat(rt.concat(rt.new_string('d is '), var_d), rt.new_string(', a is ')), rt.new_int(var_a)), rt.new_string('\\n')))\n\tmut var_e := rt.pre_dec(rt.new_int(var_a))\n\trt.echo_val(rt.concat(rt.concat(rt.concat(rt.concat(rt.new_string('e is '), var_e), rt.new_string(', a is ')), rt.new_int(var_a)), rt.new_string('\\n')))\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_a := 5\n\tmut var_b := rt.post_inc(rt.new_int(var_a))\n\tprint('b is ' + var_b.str() + ', a is ' + var_a.str() + '\\n')\n\tmut var_c := rt.post_dec(rt.new_int(var_a))\n\tprint('c is ' + var_c.str() + ', a is ' + var_a.str() + '\\n')\n\tmut var_d := rt.pre_inc(rt.new_int(var_a))\n\tprint('d is ' + var_d.str() + ', a is ' + var_a.str() + '\\n')\n\tmut var_e := rt.pre_dec(rt.new_int(var_a))\n\tprint('e is ' + var_e.str() + ', a is ' + var_a.str() + '\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -5598,7 +5598,7 @@ window.PLAYGROUND_DATA = [
     "title": "28 Bitwise Ops",
     "filename": "28_bitwise_ops.php",
     "php": "<?php\n$a = 5;\n$b = 3;\n\n$c = $a & $b;\necho \"bitwise and: \" . $c . \"\\n\";\n\n$d = $a | $b;\necho \"bitwise or: \" . $d . \"\\n\";\n\n$e = $a ^ $b;\necho \"bitwise xor: \" . $e . \"\\n\";\n\n$f = $a << 1;\necho \"shift left: \" . $f . \"\\n\";\n\n$g = $a >> 1;\necho \"shift right: \" . $g . \"\\n\";\n\n$h = ~$a;\necho \"bitwise not: \" . $h . \"\\n\";\n\n$i = @$a;\necho \"error suppress: \" . $i . \"\\n\";\n\n",
-    "v": "import php2v.rt\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_a := 5\n\tmut var_b := 3\n\tmut var_c := rt.bitwise_and(rt.new_int(var_a), rt.new_int(var_b))\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('bitwise and: '), var_c), rt.new_string('\\n')))\n\tmut var_d := rt.bitwise_or(rt.new_int(var_a), rt.new_int(var_b))\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('bitwise or: '), var_d), rt.new_string('\\n')))\n\tmut var_e := rt.bitwise_xor(rt.new_int(var_a), rt.new_int(var_b))\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('bitwise xor: '), var_e), rt.new_string('\\n')))\n\tmut var_f := rt.shift_left(rt.new_int(var_a), rt.new_int(1))\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('shift left: '), var_f), rt.new_string('\\n')))\n\tmut var_g := rt.shift_right(rt.new_int(var_a), rt.new_int(1))\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('shift right: '), var_g), rt.new_string('\\n')))\n\tmut var_h := rt.bitwise_not(rt.new_int(var_a))\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('bitwise not: '), var_h), rt.new_string('\\n')))\n\tmut var_i := rt.new_int(var_a)\n\trt.echo_val(rt.concat(rt.concat(rt.new_string('error suppress: '), var_i), rt.new_string('\\n')))\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_a := 5\n\tmut var_b := 3\n\tmut var_c := var_a & var_b\n\tprint('bitwise and: ' + var_c.str() + '\\n')\n\tmut var_d := var_a | var_b\n\tprint('bitwise or: ' + var_d.str() + '\\n')\n\tmut var_e := var_a ^ var_b\n\tprint('bitwise xor: ' + var_e.str() + '\\n')\n\tmut var_f := var_a << 1\n\tprint('shift left: ' + var_f.str() + '\\n')\n\tmut var_g := var_a >> 1\n\tprint('shift right: ' + var_g.str() + '\\n')\n\tmut var_h := ~var_a\n\tprint('bitwise not: ' + var_h.str() + '\\n')\n\tmut var_i := rt.new_int(var_a)\n\tprint('error suppress: ' + var_i.str() + '\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Expression",
@@ -6025,7 +6025,7 @@ window.PLAYGROUND_DATA = [
     "title": "29 Class Constants",
     "filename": "29_class_constants.php",
     "php": "<?php\nclass User {\n    const ROLE_ADMIN = \"admin\";\n    const ROLE_USER = \"user\";\n\n    public function getAdminRole() {\n        return self::ROLE_ADMIN;\n    }\n}\n\necho User::ROLE_ADMIN . \"\\n\";\n\n$u = new User();\necho $u->getAdminRole() . \"\\n\";\n",
-    "v": "import php2v.rt\n\nconst class_user_role_admin = rt.new_string('admin')\nconst class_user_role_user = rt.new_string('user')\nstruct Class_User {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_User) getadminrole() rt.PhpVal {\n\treturn class_user_role_admin\n}\n\nfn create_user() &Class_User {\n\tmut obj := &Class_User{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn obj\n}\n\nfn (mut this Class_User) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'getAdminRole' { return this.getadminrole() }\n\t\telse { return none }\n\t}\n}\n\nfn (this &Class_User) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\treturn none\n}\n\nfn (mut this Class_User) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\treturn false\n}\n\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\trt.echo_val(rt.concat(class_user_role_admin, rt.new_string('\\n')))\n\tmut var_u := create_user()\n\trt.echo_val(rt.concat(var_u.getadminrole(), rt.new_string('\\n')))\n}\n",
+    "v": "import rt\n\npub fn Class_User.role_admin() string {\n\treturn 'admin'\n}\n\npub fn Class_User.role_user() string {\n\treturn 'user'\n}\n\nstruct Class_User {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_User) getadminrole() rt.PhpVal {\n\treturn rt.new_string(Class_User.role_admin())\n}\n\nfn create_user() &Class_User {\n\tmut obj := &Class_User{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn obj\n}\n\nfn (mut this Class_User) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'getAdminRole' { return this.getadminrole() }\n\t\telse { return none }\n\t}\n}\n\nfn (this &Class_User) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\treturn none\n}\n\nfn (mut this Class_User) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\treturn false\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tprint(Class_User.role_admin() + '\\n')\n\tmut var_u := create_user()\n\tprint((var_u.getadminrole()).str() + '\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Class",
@@ -6171,7 +6171,7 @@ window.PLAYGROUND_DATA = [
     "title": "30 Oop Interfaces",
     "filename": "30_oop_interfaces.php",
     "php": "<?php\n\ninterface Logger {\n    public function log($msg);\n}\n\nclass FileLogger implements Logger {\n    public function log($msg) {\n        echo \"LOG: \" . $msg . \"\\n\";\n    }\n}\n\n$fl = new FileLogger();\nif ($fl instanceof Logger) {\n    echo \"fl is Logger\\n\";\n} else {\n    echo \"fl is not Logger\\n\";\n}\n\n$fl->log(\"hello\");\n",
-    "v": "import php2v.rt\n\nstruct Class_FileLogger {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_FileLogger) log(msg string) rt.PhpVal {\n\tprint('LOG: ' + msg + '\\n')\n\treturn rt.new_null()\n}\n\nfn create_filelogger() &Class_FileLogger {\n\tmut obj := &Class_FileLogger{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn obj\n}\n\nfn (mut this Class_FileLogger) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'log' { return this.log(if args.len > 0 { args[0] } else { rt.new_null() }.to_string()) }\n\t\telse { return none }\n\t}\n}\n\nfn (this &Class_FileLogger) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\treturn none\n}\n\nfn (mut this Class_FileLogger) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\treturn false\n}\n\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_msg := rt.new_null()\n\tmut var_fl := create_filelogger()\n\tif rt.is_true(rt.new_bool(rt.instance_of(rt.new_object('FileLogger', ['Logger'], var_fl), 'Logger'))) {\n\t\tprint('fl is Logger\\n')\n\t} else {\n\t\tprint('fl is not Logger\\n')\n\t}\n\tvar_fl.log('hello')\n}\n",
+    "v": "import rt\n\ninterface Logger {\n\tlog(rt.PhpVal) rt.PhpVal\n}\n\nstruct Class_FileLogger {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_FileLogger) log(msg string) {\n\tprint('LOG: ' + msg + '\\n')\n}\n\nfn create_filelogger() &Class_FileLogger {\n\tmut obj := &Class_FileLogger{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn obj\n}\n\nfn (mut this Class_FileLogger) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'log' {\n\t\t\tthis.log(if args.len > 0 { args[0] } else { rt.new_null() }.to_string())\n\t\t\treturn rt.new_null()\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_FileLogger) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\treturn none\n}\n\nfn (mut this Class_FileLogger) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\treturn false\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_msg := rt.new_null()\n\tmut var_fl := create_filelogger()\n\tif true {\n\t\tprint('fl is Logger\\n')\n\t} else {\n\t\tprint('fl is not Logger\\n')\n\t}\n\tvar_fl.log('hello')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Interface",
@@ -6380,7 +6380,7 @@ window.PLAYGROUND_DATA = [
     "title": "31 Oop Traits",
     "filename": "31_oop_traits.php",
     "php": "<?php\n\ntrait MyTrait {\n    public function sayHello($name) {\n        echo \"Hello, \" . $name . \"\\n\";\n    }\n}\n\nclass User {\n    use MyTrait;\n}\n\n$u = new User();\n$u->sayHello(\"Alice\");\n",
-    "v": "import php2v.rt\n\nstruct Class_User {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_User) sayhello(name string) rt.PhpVal {\n\tprint('Hello, ' + name + '\\n')\n\treturn rt.new_null()\n}\n\nfn create_user() &Class_User {\n\tmut obj := &Class_User{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn obj\n}\n\nfn (mut this Class_User) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'sayHello' { return this.sayhello(if args.len > 0 { args[0] } else { rt.new_null() }.to_string()) }\n\t\telse { return none }\n\t}\n}\n\nfn (this &Class_User) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\treturn none\n}\n\nfn (mut this Class_User) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\treturn false\n}\n\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_u := create_user()\n\tvar_u.sayhello('Alice')\n}\n",
+    "v": "import rt\n\nstruct Class_User {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_User) sayhello(name string) {\n\tprint('Hello, ' + name + '\\n')\n}\n\nfn create_user() &Class_User {\n\tmut obj := &Class_User{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn obj\n}\n\nfn (mut this Class_User) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'sayHello' {\n\t\t\tthis.sayhello(if args.len > 0 { args[0] } else { rt.new_null() }.to_string())\n\t\t\treturn rt.new_null()\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_User) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\treturn none\n}\n\nfn (mut this Class_User) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\treturn false\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_u := create_user()\n\tvar_u.sayhello('Alice')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Trait",
@@ -6513,6 +6513,606 @@ window.PLAYGROUND_DATA = [
             }
           ]
         }
+      }
+    ]
+  },
+  {
+    "key": "32_builtin_inference",
+    "title": "32 Builtin Inference",
+    "filename": "32_builtin_inference.php",
+    "php": "<?php\n$str = \"hello world\";\n$len = strlen($str);\necho \"len: \" . $len . \"\\n\";\n\n$arr = [1, 2, 3];\n$cnt = count($arr);\necho \"cnt: \" . $cnt . \"\\n\";\n\n$upper = strtoupper($str);\necho \"upper: \" . $upper . \"\\n\";\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_str := 'hello world'\n\tmut var_len := var_str.len\n\tprint('len: ' + var_len.str() + '\\n')\n\tmut var_arr := [1, 2, 3]\n\tmut var_cnt := var_arr.len\n\tprint('cnt: ' + var_cnt.str() + '\\n')\n\tmut var_upper := var_str.to_upper()\n\tprint('upper: ' + var_upper + '\\n')\n}\n",
+    "ast": [
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 2,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 2,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 2,
+            "name": "str"
+          },
+          "expr": {
+            "nodeType": "Scalar_String",
+            "line": 2,
+            "value": "hello world"
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 3,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 3,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 3,
+            "name": "len"
+          },
+          "expr": {
+            "nodeType": "Expr_FuncCall",
+            "line": 3,
+            "name": "strlen",
+            "args": [
+              {
+                "nodeType": "Arg",
+                "line": 3,
+                "name": null,
+                "expr": {
+                  "nodeType": "Expr_Variable",
+                  "line": 3,
+                  "name": "str"
+                },
+                "byRef": "false",
+                "unpack": "false"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 4,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 4,
+            "left": {
+              "nodeType": "Expr_BinaryOp_Concat",
+              "line": 4,
+              "left": {
+                "nodeType": "Scalar_String",
+                "line": 4,
+                "value": "len: "
+              },
+              "right": {
+                "nodeType": "Expr_Variable",
+                "line": 4,
+                "name": "len"
+              }
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 4,
+              "value": "\n"
+            }
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 6,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 6,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 6,
+            "name": "arr"
+          },
+          "expr": {
+            "nodeType": "Expr_Array",
+            "line": 6,
+            "items": [
+              {
+                "nodeType": "ArrayItem",
+                "line": 6,
+                "key": null,
+                "expr": {
+                  "nodeType": "Scalar_Int",
+                  "line": 6,
+                  "value": "1"
+                },
+                "byRef": "false",
+                "unpack": "false"
+              },
+              {
+                "nodeType": "ArrayItem",
+                "line": 6,
+                "key": null,
+                "expr": {
+                  "nodeType": "Scalar_Int",
+                  "line": 6,
+                  "value": "2"
+                },
+                "byRef": "false",
+                "unpack": "false"
+              },
+              {
+                "nodeType": "ArrayItem",
+                "line": 6,
+                "key": null,
+                "expr": {
+                  "nodeType": "Scalar_Int",
+                  "line": 6,
+                  "value": "3"
+                },
+                "byRef": "false",
+                "unpack": "false"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 7,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 7,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 7,
+            "name": "cnt"
+          },
+          "expr": {
+            "nodeType": "Expr_FuncCall",
+            "line": 7,
+            "name": "count",
+            "args": [
+              {
+                "nodeType": "Arg",
+                "line": 7,
+                "name": null,
+                "expr": {
+                  "nodeType": "Expr_Variable",
+                  "line": 7,
+                  "name": "arr"
+                },
+                "byRef": "false",
+                "unpack": "false"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 8,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 8,
+            "left": {
+              "nodeType": "Expr_BinaryOp_Concat",
+              "line": 8,
+              "left": {
+                "nodeType": "Scalar_String",
+                "line": 8,
+                "value": "cnt: "
+              },
+              "right": {
+                "nodeType": "Expr_Variable",
+                "line": 8,
+                "name": "cnt"
+              }
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 8,
+              "value": "\n"
+            }
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 10,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 10,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 10,
+            "name": "upper"
+          },
+          "expr": {
+            "nodeType": "Expr_FuncCall",
+            "line": 10,
+            "name": "strtoupper",
+            "args": [
+              {
+                "nodeType": "Arg",
+                "line": 10,
+                "name": null,
+                "expr": {
+                  "nodeType": "Expr_Variable",
+                  "line": 10,
+                  "name": "str"
+                },
+                "byRef": "false",
+                "unpack": "false"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 11,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 11,
+            "left": {
+              "nodeType": "Expr_BinaryOp_Concat",
+              "line": 11,
+              "left": {
+                "nodeType": "Scalar_String",
+                "line": 11,
+                "value": "upper: "
+              },
+              "right": {
+                "nodeType": "Expr_Variable",
+                "line": 11,
+                "name": "upper"
+              }
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 11,
+              "value": "\n"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "33_pure_arrays",
+    "title": "33 Pure Arrays",
+    "filename": "33_pure_arrays.php",
+    "php": "<?php\n$list = [10, 20];\n$list[] = 30;\necho count($list);\necho \"\\n\";\nforeach ($list as $item) {\n    echo $item;\n    echo \"\\n\";\n}\n\n$map = [\"a\" => \"hello\", \"b\" => \"world\"];\necho $map[\"a\"];\necho \"\\n\";\necho count($map);\necho \"\\n\";\nforeach ($map as $k => $v) {\n    echo $k;\n    echo \":\";\n    echo $v;\n    echo \"\\n\";\n}\n",
+    "v": "import rt\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_list := [10, 20]\n\tvar_list << 30\n\tprint(var_list.len.str())\n\tprint('\\n')\n\tfor var_item in var_list {\n\t\tprint(var_item.str())\n\t\tprint('\\n')\n\t}\n\tmut var_map := {\n\t\t'a': 'hello'\n\t\t'b': 'world'\n\t}\n\tprint(var_map['a'])\n\tprint('\\n')\n\tprint(var_map.len.str())\n\tprint('\\n')\n\tfor var_k, var_v in var_map {\n\t\tprint(var_k)\n\t\tprint(':')\n\t\tprint(var_v)\n\t\tprint('\\n')\n\t}\n}\n",
+    "ast": [
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 2,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 2,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 2,
+            "name": "list"
+          },
+          "expr": {
+            "nodeType": "Expr_Array",
+            "line": 2,
+            "items": [
+              {
+                "nodeType": "ArrayItem",
+                "line": 2,
+                "key": null,
+                "expr": {
+                  "nodeType": "Scalar_Int",
+                  "line": 2,
+                  "value": "10"
+                },
+                "byRef": "false",
+                "unpack": "false"
+              },
+              {
+                "nodeType": "ArrayItem",
+                "line": 2,
+                "key": null,
+                "expr": {
+                  "nodeType": "Scalar_Int",
+                  "line": 2,
+                  "value": "20"
+                },
+                "byRef": "false",
+                "unpack": "false"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 3,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 3,
+          "var": {
+            "nodeType": "Expr_ArrayDimFetch",
+            "line": 3,
+            "var": {
+              "nodeType": "Expr_Variable",
+              "line": 3,
+              "name": "list"
+            },
+            "dim": null
+          },
+          "expr": {
+            "nodeType": "Scalar_Int",
+            "line": 3,
+            "value": "30"
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 4,
+        "exprs": [
+          {
+            "nodeType": "Expr_FuncCall",
+            "line": 4,
+            "name": "count",
+            "args": [
+              {
+                "nodeType": "Arg",
+                "line": 4,
+                "name": null,
+                "expr": {
+                  "nodeType": "Expr_Variable",
+                  "line": 4,
+                  "name": "list"
+                },
+                "byRef": "false",
+                "unpack": "false"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 5,
+        "exprs": [
+          {
+            "nodeType": "Scalar_String",
+            "line": 5,
+            "value": "\n"
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Foreach",
+        "line": 6,
+        "expr": {
+          "nodeType": "Expr_Variable",
+          "line": 6,
+          "name": "list"
+        },
+        "keyVar": null,
+        "byRef": "false",
+        "valueVar": {
+          "nodeType": "Expr_Variable",
+          "line": 6,
+          "name": "item"
+        },
+        "stmts": [
+          {
+            "nodeType": "Stmt_Echo",
+            "line": 7,
+            "exprs": [
+              {
+                "nodeType": "Expr_Variable",
+                "line": 7,
+                "name": "item"
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_Echo",
+            "line": 8,
+            "exprs": [
+              {
+                "nodeType": "Scalar_String",
+                "line": 8,
+                "value": "\n"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 11,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 11,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 11,
+            "name": "map"
+          },
+          "expr": {
+            "nodeType": "Expr_Array",
+            "line": 11,
+            "items": [
+              {
+                "nodeType": "ArrayItem",
+                "line": 11,
+                "key": {
+                  "nodeType": "Scalar_String",
+                  "line": 11,
+                  "value": "a"
+                },
+                "expr": {
+                  "nodeType": "Scalar_String",
+                  "line": 11,
+                  "value": "hello"
+                },
+                "byRef": "false",
+                "unpack": "false"
+              },
+              {
+                "nodeType": "ArrayItem",
+                "line": 11,
+                "key": {
+                  "nodeType": "Scalar_String",
+                  "line": 11,
+                  "value": "b"
+                },
+                "expr": {
+                  "nodeType": "Scalar_String",
+                  "line": 11,
+                  "value": "world"
+                },
+                "byRef": "false",
+                "unpack": "false"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 12,
+        "exprs": [
+          {
+            "nodeType": "Expr_ArrayDimFetch",
+            "line": 12,
+            "var": {
+              "nodeType": "Expr_Variable",
+              "line": 12,
+              "name": "map"
+            },
+            "dim": {
+              "nodeType": "Scalar_String",
+              "line": 12,
+              "value": "a"
+            }
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 13,
+        "exprs": [
+          {
+            "nodeType": "Scalar_String",
+            "line": 13,
+            "value": "\n"
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 14,
+        "exprs": [
+          {
+            "nodeType": "Expr_FuncCall",
+            "line": 14,
+            "name": "count",
+            "args": [
+              {
+                "nodeType": "Arg",
+                "line": 14,
+                "name": null,
+                "expr": {
+                  "nodeType": "Expr_Variable",
+                  "line": 14,
+                  "name": "map"
+                },
+                "byRef": "false",
+                "unpack": "false"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 15,
+        "exprs": [
+          {
+            "nodeType": "Scalar_String",
+            "line": 15,
+            "value": "\n"
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Foreach",
+        "line": 16,
+        "expr": {
+          "nodeType": "Expr_Variable",
+          "line": 16,
+          "name": "map"
+        },
+        "keyVar": {
+          "nodeType": "Expr_Variable",
+          "line": 16,
+          "name": "k"
+        },
+        "byRef": "false",
+        "valueVar": {
+          "nodeType": "Expr_Variable",
+          "line": 16,
+          "name": "v"
+        },
+        "stmts": [
+          {
+            "nodeType": "Stmt_Echo",
+            "line": 17,
+            "exprs": [
+              {
+                "nodeType": "Expr_Variable",
+                "line": 17,
+                "name": "k"
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_Echo",
+            "line": 18,
+            "exprs": [
+              {
+                "nodeType": "Scalar_String",
+                "line": 18,
+                "value": ":"
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_Echo",
+            "line": 19,
+            "exprs": [
+              {
+                "nodeType": "Expr_Variable",
+                "line": 19,
+                "name": "v"
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_Echo",
+            "line": 20,
+            "exprs": [
+              {
+                "nodeType": "Scalar_String",
+                "line": 20,
+                "value": "\n"
+              }
+            ]
+          }
+        ]
       }
     ]
   }

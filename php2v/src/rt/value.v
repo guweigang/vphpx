@@ -1,5 +1,7 @@
 module rt
 
+import strings
+
 #include <php.h>
 
 #include "rt_helper.h"
@@ -102,6 +104,11 @@ pub fn new_string(s string) PhpVal {
 
 // to_string 零拷贝读取 Zend 字符串或转换标量值为 V 字符串
 pub fn (v PhpVal) to_string() string {
+	return v.str()
+}
+
+// str() 方法使 PhpVal 可以在字符串插值中使用，类似 PHP 的 __toString()
+pub fn (v PhpVal) str() string {
 	unsafe {
 		if v.raw == 0 {
 			return ''
@@ -231,11 +238,32 @@ pub fn (v PhpVal) dup() PhpVal {
 
 
 
+pub type PhpKey = string | int | PhpVal
+pub type PhpArg = string | int | bool | f64 | PhpVal
+
+pub fn (k PhpKey) to_php_val() PhpVal {
+	match k {
+		PhpVal { return k }
+		int { return new_int(k) }
+		string { return new_string(k) }
+	}
+}
+
+pub fn (a PhpArg) to_php_val() PhpVal {
+	match a {
+		PhpVal { return a }
+		int { return new_int(a) }
+		string { return new_string(a) }
+		bool { return new_bool(a) }
+		f64 { return new_float(a) }
+	}
+}
+
 // ArrayItem 表示数组字面量的一个键值项
 pub struct ArrayItem {
 pub:
-	key ?PhpVal
-	val PhpVal
+	key ?PhpKey
+	val PhpArg
 }
 
 // new_array 创建一个空的 PHP 数组 zval（纯 V 实现）
@@ -257,38 +285,38 @@ pub fn create_array(items []ArrayItem) PhpVal {
 }
 
 // array_set 根据键更新或设置数组项（纯 V 实现）
-pub fn (v PhpVal) array_set(key PhpVal, val PhpVal) {
+pub fn (v PhpVal) array_set(key PhpKey, val PhpArg) {
 	if !v.is_array() { return }
 	mut pa := unsafe { extract_from_zval(v.raw) }
-	pa.set(key, val)
+	pa.set(key.to_php_val(), val.to_php_val())
 }
 
 // array_push 向数组末尾追加元素（纯 V 实现）
-pub fn (v PhpVal) array_push(val PhpVal) {
+pub fn (v PhpVal) array_push(val PhpArg) {
 	if !v.is_array() { return }
 	mut pa := unsafe { extract_from_zval(v.raw) }
-	pa.push(val)
+	pa.push(val.to_php_val())
 }
 
 // array_get 从数组中获取指定键对应的元素（纯 V 实现）
-pub fn (v PhpVal) array_get(key PhpVal) PhpVal {
+pub fn (v PhpVal) array_get(key PhpKey) PhpVal {
 	if !v.is_array() { return new_null() }
 	pa := unsafe { extract_from_zval(v.raw) }
-	return pa.get(key)
+	return pa.get(key.to_php_val())
 }
 
 // array_isset 检查数组中指定键是否存在且值非 null（纯 V 实现）
-pub fn (v PhpVal) array_isset(key PhpVal) bool {
+pub fn (v PhpVal) array_isset(key PhpKey) bool {
 	if !v.is_array() { return false }
 	pa := unsafe { extract_from_zval(v.raw) }
-	return pa.isset(key)
+	return pa.isset(key.to_php_val())
 }
 
 // array_unset 删除数组中指定键对应的元素（纯 V 实现，标记为墓碑）
-pub fn (v PhpVal) array_unset(key PhpVal) {
+pub fn (v PhpVal) array_unset(key PhpKey) {
 	if !v.is_array() { return }
 	mut pa := unsafe { extract_from_zval(v.raw) }
-	pa.del(key)
+	pa.del(key.to_php_val())
 }
 
 // ArrayIterator 包装了对 PHP 数组的外部迭代状态（纯 V 实现）
@@ -448,6 +476,157 @@ pub fn (v PhpVal) get_object() &PhpObject {
 		}
 		return &PhpObject(nil)
 	}
+}
+
+// Closure support: store V native fn as PhpVal
+pub const magic_php_closure = u64(0x56504850585F434C) // 'VHPX_CL'
+
+pub struct PhpClosure {
+pub mut:
+	magic   u64
+	this_ptr PhpVal  // 绑定的 this 对象（可以是 new_null()）
+	invoke  fn (PhpVal, []PhpVal) PhpVal
+}
+
+// new_closure 将 V 原生 fn 封装为 PhpVal
+pub fn new_closure(invoke fn (PhpVal, []PhpVal) PhpVal) PhpVal {
+	z := new_zval()
+	unsafe {
+		mut p_closure := &PhpClosure(malloc(int(sizeof(PhpClosure))))
+		p_closure.magic = magic_php_closure
+		p_closure.this_ptr = new_null()
+		p_closure.invoke = invoke
+		
+		mut p := &voidptr(&z.value)
+		*p = p_closure
+		z.u1.type_info = 9 // IS_CLOSURE (custom type)
+	}
+	return PhpVal{ raw: z }
+}
+
+pub fn (v PhpVal) is_closure() bool {
+	return v.raw != 0 && (v.raw.u1.type_info & 0xff) == 9
+}
+
+pub fn (v PhpVal) get_closure() &PhpClosure {
+	unsafe {
+		if !v.is_closure() { return &PhpClosure(nil) }
+		p_ptr := &voidptr(&v.raw.value)
+		p := *p_ptr
+		if p == 0 { return &PhpClosure(nil) }
+		p_closure := &PhpClosure(p)
+		if p_closure.magic == magic_php_closure {
+			return p_closure
+		}
+		return &PhpClosure(nil)
+	}
+}
+
+// call_closure_val 直接调用闭包 fn
+pub fn call_closure_val(cb PhpVal, args []PhpVal) PhpVal {
+	if !cb.is_closure() { return new_null() }
+	closure := cb.get_closure()
+	if closure == unsafe { nil } || closure.invoke == unsafe { nil } {
+		return new_null()
+	}
+	return closure.invoke(closure.this_ptr, args)
+}
+
+// json_encode 将 PhpVal 转换为 JSON 字符串（纯 V 实现，无需调用 PHP）
+pub fn json_encode(v PhpVal) string {
+	if v.raw == 0 {
+		return 'null'
+	}
+	typ := unsafe { v.raw.u1.type_info & 0xff }
+	return match typ {
+		1 { 'null' } // IS_NULL
+		2 { 'false' } // IS_FALSE
+		3 { 'true' } // IS_TRUE
+		4 { v.to_string() } // IS_LONG
+		5 { v.to_string() } // IS_DOUBLE
+		6 { json_encode_string(v.to_string()) } // IS_STRING
+		7 { json_encode_array(v) } // IS_ARRAY
+		else { 'null' }
+	}
+}
+
+fn json_encode_string(s string) string {
+	mut sb := strings.new_builder(s.len + 2)
+	sb.write_u8(`"`)
+	for c in s.bytes() {
+		match c {
+			`"` { sb.write_string('\\"') }
+			`\\` { sb.write_string('\\\\') }
+			`\n` { sb.write_string('\\n') }
+			`\r` { sb.write_string('\\r') }
+			`\t` { sb.write_string('\\t') }
+			else {
+				if c < 0x20 {
+					sb.write_string('\\u${c:02x}')
+				} else {
+					sb.write_u8(c)
+				}
+			}
+		}
+	}
+	sb.write_u8(`"`)
+	return sb.str()
+}
+
+fn json_encode_array(v PhpVal) string {
+	pa := unsafe { extract_from_zval(v.raw) }
+	if pa.buckets.len == 0 {
+		return '[]'
+	}
+	// 判断是 JSON 数组还是对象：所有键都是连续整数 0,1,2...
+	mut is_list := true
+	mut expected_idx := i64(0)
+	for bucket in pa.buckets {
+		if bucket.key_kind == .deleted {
+			continue
+		}
+		if bucket.key_kind != .int_key || bucket.ikey != expected_idx {
+			is_list = false
+			break
+		}
+		expected_idx++
+	}
+	mut sb := strings.new_builder(64)
+	if is_list {
+		sb.write_u8(`[`)
+		mut first := true
+		for bucket in pa.buckets {
+			if bucket.key_kind == .deleted {
+				continue
+			}
+			if !first {
+				sb.write_u8(`,`)
+			}
+			first = false
+			sb.write_string(json_encode(bucket.val))
+		}
+		sb.write_u8(`]`)
+	} else {
+		sb.write_u8(`{`)
+		mut first := true
+		for bucket in pa.buckets {
+			if bucket.key_kind == .deleted {
+				continue
+			}
+			if !first {
+				sb.write_u8(`,`)
+			}
+			first = false
+			key_str := if bucket.key_kind == .str_key {
+				json_encode_string(bucket.skey)
+			} else {
+				'${bucket.ikey}'
+			}
+			sb.write_string('${key_str}:${json_encode(bucket.val)}')
+		}
+		sb.write_u8(`}`)
+	}
+	return sb.str()
 }
 
 // Exception & Superglobal FFI Bindings

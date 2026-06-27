@@ -69,9 +69,8 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 	}
 }
 
-pub fn include_file(path PhpVal, incl_type string) PhpVal {
-	path_str := path.to_string()
-	escaped_path := path_str.replace('\\', '\\\\').replace('\'', '\\\'')
+pub fn include_file(path string, incl_type string) PhpVal {
+	escaped_path := path.replace('\\', '\\\\').replace('\'', '\\\'')
 	
 	mut keyword := 'include'
 	match incl_type {
