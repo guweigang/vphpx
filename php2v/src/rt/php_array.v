@@ -360,9 +360,9 @@ pub fn PhpArray.from_items(items []ArrayItem) PhpArray {
 	mut pa := PhpArray.new()
 	for item in items {
 		if k := item.key {
-			pa.set(k, item.val)
+			pa.set(k.to_php_val(), item.val.to_php_val())
 		} else {
-			pa.push(item.val)
+			pa.push(item.val.to_php_val())
 		}
 	}
 	return pa

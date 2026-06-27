@@ -53,10 +53,10 @@ fn test_transpiler_end_to_end() {
 			'print(var_res.str())',
 		]
 		'08_arrays.php': [
-			'mut var_arr := rt.create_array([rt.ArrayItem{ key: none, val: rt.new_int(10) },',
-			'var_arr.array_push(rt.new_int(30))',
-			'var_arr.array_set(rt.new_string(\'key\'), rt.new_string(\'hello\'))',
-			'rt.echo_val(var_arr.array_get(rt.new_int(0)))',
+			'mut var_arr := rt.create_array([rt.ArrayItem{ key: none, val: 10 },',
+			'var_arr.array_push(30)',
+			'var_arr.array_set(\'key\', \'hello\')',
+			'rt.echo_val(var_arr.array_get(0))',
 			'print(var_arr.dup().array_count().str())',
 		]
 		'09_foreach.php': [

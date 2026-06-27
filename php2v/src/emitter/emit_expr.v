@@ -916,13 +916,15 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 					}
 				}
 				
-				mut expr_str := t.visit_expr(*expr_node)
-				if expr_node.node_type == ast.node_expr_variable {
+				expr_typ := t.get_expr_type(*expr_node)
+				mut expr_str := if expr_typ.is_scalar() { t.visit_expr_native(*expr_node) } else { t.visit_expr(*expr_node) }
+				if !expr_typ.is_scalar() && expr_node.node_type == ast.node_expr_variable {
 					expr_str += '.dup()'
 				}
 				
 				if dim_node := var_node.dim {
-					dim_str := t.visit_expr(*dim_node)
+					dim_typ := t.get_expr_type(*dim_node)
+					dim_str := if dim_typ.is_scalar() { t.visit_expr_native(*dim_node) } else { t.visit_expr(*dim_node) }
 					return '${arr_var_name}.array_set(${dim_str}, ${expr_str})'
 				} else {
 					return '${arr_var_name}.array_push(${expr_str})'
@@ -1308,9 +1310,12 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			mut item_strs := []string{}
 			for item in node.items {
 				val_node := item.expr or { panic('ArrayItem missing expr') }
-				val_str := t.visit_expr(*val_node)
+				val_typ := t.get_expr_type(*val_node)
+				val_str := if val_typ.is_scalar() { t.visit_expr_native(*val_node) } else { t.visit_expr(*val_node) }
+				
 				if key_node := item.key {
-					key_str := t.visit_expr(*key_node)
+					key_typ := t.get_expr_type(*key_node)
+					key_str := if key_typ.is_scalar() { t.visit_expr_native(*key_node) } else { t.visit_expr(*key_node) }
 					item_strs << 'rt.ArrayItem{ key: ${key_str}, val: ${val_str} }'
 				} else {
 					item_strs << 'rt.ArrayItem{ key: none, val: ${val_str} }'
@@ -1337,7 +1342,8 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 				}
 			}
 			if dim_node := node.dim {
-				dim_str := t.visit_expr(*dim_node)
+				dim_typ := t.get_expr_type(*dim_node)
+				dim_str := if dim_typ.is_scalar() { t.visit_expr_native(*dim_node) } else { t.visit_expr(*dim_node) }
 				return '${var_str}.array_get(${dim_str})'
 			} else {
 				panic('ArrayDimFetch missing dim in read context')

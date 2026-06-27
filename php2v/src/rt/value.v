@@ -238,11 +238,32 @@ pub fn (v PhpVal) dup() PhpVal {
 
 
 
+pub type PhpKey = string | int | PhpVal
+pub type PhpArg = string | int | bool | f64 | PhpVal
+
+pub fn (k PhpKey) to_php_val() PhpVal {
+	match k {
+		PhpVal { return k }
+		int { return new_int(k) }
+		string { return new_string(k) }
+	}
+}
+
+pub fn (a PhpArg) to_php_val() PhpVal {
+	match a {
+		PhpVal { return a }
+		int { return new_int(a) }
+		string { return new_string(a) }
+		bool { return new_bool(a) }
+		f64 { return new_float(a) }
+	}
+}
+
 // ArrayItem 表示数组字面量的一个键值项
 pub struct ArrayItem {
 pub:
-	key ?PhpVal
-	val PhpVal
+	key ?PhpKey
+	val PhpArg
 }
 
 // new_array 创建一个空的 PHP 数组 zval（纯 V 实现）
@@ -264,38 +285,38 @@ pub fn create_array(items []ArrayItem) PhpVal {
 }
 
 // array_set 根据键更新或设置数组项（纯 V 实现）
-pub fn (v PhpVal) array_set(key PhpVal, val PhpVal) {
+pub fn (v PhpVal) array_set(key PhpKey, val PhpArg) {
 	if !v.is_array() { return }
 	mut pa := unsafe { extract_from_zval(v.raw) }
-	pa.set(key, val)
+	pa.set(key.to_php_val(), val.to_php_val())
 }
 
 // array_push 向数组末尾追加元素（纯 V 实现）
-pub fn (v PhpVal) array_push(val PhpVal) {
+pub fn (v PhpVal) array_push(val PhpArg) {
 	if !v.is_array() { return }
 	mut pa := unsafe { extract_from_zval(v.raw) }
-	pa.push(val)
+	pa.push(val.to_php_val())
 }
 
 // array_get 从数组中获取指定键对应的元素（纯 V 实现）
-pub fn (v PhpVal) array_get(key PhpVal) PhpVal {
+pub fn (v PhpVal) array_get(key PhpKey) PhpVal {
 	if !v.is_array() { return new_null() }
 	pa := unsafe { extract_from_zval(v.raw) }
-	return pa.get(key)
+	return pa.get(key.to_php_val())
 }
 
 // array_isset 检查数组中指定键是否存在且值非 null（纯 V 实现）
-pub fn (v PhpVal) array_isset(key PhpVal) bool {
+pub fn (v PhpVal) array_isset(key PhpKey) bool {
 	if !v.is_array() { return false }
 	pa := unsafe { extract_from_zval(v.raw) }
-	return pa.isset(key)
+	return pa.isset(key.to_php_val())
 }
 
 // array_unset 删除数组中指定键对应的元素（纯 V 实现，标记为墓碑）
-pub fn (v PhpVal) array_unset(key PhpVal) {
+pub fn (v PhpVal) array_unset(key PhpKey) {
 	if !v.is_array() { return }
 	mut pa := unsafe { extract_from_zval(v.raw) }
-	pa.del(key)
+	pa.del(key.to_php_val())
 }
 
 // ArrayIterator 包装了对 PHP 数组的外部迭代状态（纯 V 实现）
