@@ -48,6 +48,11 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 		if stmt.node_type == ast.node_stmt_property {
 			for prop in stmt.props {
 				class_info.props << prop.name
+				if default_node := prop.default_val {
+					if voidptr(default_node) != 0 {
+						class_info.prop_defaults[prop.name] = get_prop_default_expr(*default_node)
+					}
+				}
 			}
 		} else if stmt.node_type == ast.node_stmt_class_method {
 			mut p_names := []string{}
@@ -205,7 +210,8 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 			if prop_type.is_scalar() {
 				t.write_line('${prop_v_name(prop)} ${prop_type.to_v_type()}')
 			} else {
-				t.write_line('${prop_v_name(prop)} rt.PhpVal = rt.new_null()')
+				default_expr := class_info.prop_defaults[prop] or { 'rt.new_null()' }
+				t.write_line('${prop_v_name(prop)} rt.PhpVal = ${default_expr}')
 			}
 		}
 		t.indent--

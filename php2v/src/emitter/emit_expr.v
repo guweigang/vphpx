@@ -10,6 +10,15 @@ fn (mut t Transpiler) get_expr_type(node ast.AstNode) VarType {
 		ast.node_scalar_string { return VarType{ tag: .t_string } }
 		ast.node_scalar_encapsed, ast.node_scalar_interpolated_string { return VarType{ tag: .t_string } }
 		ast.node_expr_variable {
+			if t.current_class != '' && t.current_func_name != '' {
+				if m := t.find_method(t.current_class, t.current_func_name) {
+					for pname in m.param_names {
+						if pname == node.name {
+							return t.get_method_param_type(t.current_class, t.current_func_name, pname)
+						}
+					}
+				}
+			}
 			// 先检查函数参数类型
 			if t.current_func_name != '' {
 				if params := t.func_param_types[t.current_func_name] {
@@ -2182,6 +2191,17 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 		}
 		ast.node_expr_empty {
 			expr_node := node.expr or { panic('Empty missing expr') }
+			expr_type := t.get_expr_type(*expr_node)
+			if expr_type.is_scalar() {
+				native_expr := t.visit_expr_native(*expr_node)
+				match expr_type.tag {
+					.t_string { return 'rt.new_bool(${native_expr} == \'\')' }
+					.t_int { return 'rt.new_bool(${native_expr} == 0)' }
+					.t_float { return 'rt.new_bool(${native_expr} == 0.0)' }
+					.t_bool { return 'rt.new_bool(!${native_expr})' }
+					else {}
+				}
+			}
 			expr_str := t.visit_expr(*expr_node)
 			return 'rt.new_bool(!rt.is_true(${expr_str}))'
 		}
