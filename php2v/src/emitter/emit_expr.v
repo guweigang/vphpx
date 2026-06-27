@@ -357,19 +357,24 @@ fn (mut t Transpiler) visit_expr_native(node ast.AstNode) string {
 			return "'${escaped}'"
 		}
 		ast.node_expr_property_fetch {
-			// 原生属性访问：返回原生字段值（非 PhpVal）
 			obj_var_node := node.var or { return t.visit_expr(node) }
 			if obj_var_node.node_type == ast.node_expr_variable {
 				obj_type := t.inferred_types[obj_var_node.name] or { VarType{ tag: .t_unknown } }
 				if obj_type.is_object() {
-					prop_type := t.get_class_prop_type(obj_type.class_name, node.name)
-					if prop_type.is_scalar() {
+					mut has_prop := false
+					for cls in t.classes {
+						if cls.name.to_lower() == obj_type.class_name.to_lower() {
+							if node.name in cls.all_props {
+								has_prop = true
+								break
+							}
+						}
+					}
+					if has_prop {
+						prop_type := t.get_class_prop_type(obj_type.class_name, node.name)
 						field_name := prop_v_name(node.name)
 						t.last_expr_type = prop_type
-						if obj_var_node.name == 'this' {
-							return 'this.${field_name}'
-						}
-						obj_var_name := t.visit_expr(*obj_var_node)
+						obj_var_name := if obj_var_node.name == 'this' { 'this' } else { t.visit_expr(*obj_var_node) }
 						return '${obj_var_name}.${field_name}'
 					}
 				}
@@ -958,44 +963,51 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			if var_node.node_type == ast.node_expr_property_fetch {
 				obj_var_node := var_node.var or { panic('PropertyFetch missing var') }
 				prop_name := var_node.name
-
 				expr_node := node.expr or { panic('Assign node missing expr') }
 
-				// P7 Task 8/10: 已知对象类型 + 原生属性 → 直连赋值
 				if obj_var_node.node_type == ast.node_expr_variable {
 					obj_type := t.inferred_types[obj_var_node.name] or { VarType{ tag: .t_unknown } }
 					if obj_type.is_object() {
-						prop_type := t.get_class_prop_type(obj_type.class_name, prop_name)
-						if prop_type.is_scalar() {
+						mut has_prop := false
+						for cls in t.classes {
+							if cls.name.to_lower() == obj_type.class_name.to_lower() {
+								if prop_name in cls.all_props {
+									has_prop = true
+									break
+								}
+							}
+						}
+						
+						if has_prop {
+							prop_type := t.get_class_prop_type(obj_type.class_name, prop_name)
 							field_name := prop_v_name(prop_name)
+							
 							mut rhs := ''
-							if expr_node.node_type == ast.node_expr_variable {
-								// 变量 RHS：用 visit_expr，按类型匹配/拆箱
-								rhs = t.visit_expr(*expr_node)
-								src_type := t.inferred_types[expr_node.name] or { VarType{ tag: .t_unknown } }
-								if src_type.tag == prop_type.tag {
-									// 类型匹配：直接赋值
-								} else if src_type.tag == .t_unknown {
-									// 未知类型参数（var_xxx rt.PhpVal）：拆箱
-									rhs = unbox_expr(rhs, prop_type)
+							if prop_type.is_scalar() {
+								if expr_node.node_type == ast.node_expr_variable {
+									rhs = t.visit_expr(*expr_node)
+									src_type := t.inferred_types[expr_node.name] or { VarType{ tag: .t_unknown } }
+									if src_type.tag == .t_unknown {
+										rhs = unbox_expr(rhs, prop_type)
+									}
+								} else {
+									rhs = t.visit_expr_native(*expr_node)
 								}
 							} else {
-								// 非变量 RHS（字面量、表达式等）：用 native 表达式
-								rhs = t.visit_expr_native(*expr_node)
+								rhs = t.visit_expr(*expr_node)
+								if expr_node.node_type == ast.node_expr_variable {
+									rhs += '.dup()'
+								}
 							}
-							if obj_var_node.name == 'this' {
-								return 'this.${field_name} = ${rhs}'
-							} else {
-								external_name := t.visit_expr(*obj_var_node)
-								return '${external_name}.${field_name} = ${rhs}'
-							}
+							
+							mut obj_name := if obj_var_node.name == 'this' { 'this' } else { t.visit_expr(*obj_var_node) }
+							return '${obj_name}.${field_name} = ${rhs}'
 						}
 					}
 				}
 
-				// 回退： set_property / dispatch_set_prop
+				// 回退：动态属性 set_property / dispatch_set_prop
 				if obj_var_node.name == 'this' {
-					// $this 属性赋值：直接调用 dispatch_set_prop
 					mut expr_str := t.visit_expr(*expr_node)
 					if expr_node.node_type == ast.node_expr_variable {
 						if !t.native_params[expr_node.name] {
@@ -1470,32 +1482,37 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			obj_var_node := node.var or { panic('PropertyFetch missing var') }
 			obj_var_name := t.visit_expr(*obj_var_node)
 			prop_name := node.name
-			// P7 Task 8/10: 已知对象类型 + 原生属性 → 直接访问
+			// P7 Task 8/10: 已知对象类型 + 属性已定义 → 直接访问原生字段
 			if obj_var_node.node_type == ast.node_expr_variable {
 				obj_type := t.inferred_types[obj_var_node.name] or { VarType{ tag: .t_unknown } }
 				if obj_type.is_object() {
-					prop_type := t.get_class_prop_type(obj_type.class_name, prop_name)
-					if prop_type.is_scalar() {
+					mut has_prop := false
+					for cls in t.classes {
+						if cls.name.to_lower() == obj_type.class_name.to_lower() {
+							if prop_name in cls.all_props {
+								has_prop = true
+								break
+							}
+						}
+					}
+					
+					if has_prop {
+						prop_type := t.get_class_prop_type(obj_type.class_name, prop_name)
 						field_name := prop_v_name(prop_name)
-						// $this->prop 内部直接 this.field
 						if obj_var_node.name == 'this' {
 							return 'this.${field_name}'
 						}
-						// 外部变量是 &Class_Xxx 结构体指针，直接访问字段并装箱
-						match prop_type.tag {
-							.t_string { return 'rt.new_string(${obj_var_name}.${field_name})' }
-							.t_int { return 'rt.new_int(${obj_var_name}.${field_name})' }
-							.t_float { return 'rt.new_float(${obj_var_name}.${field_name})' }
-							.t_bool { return 'rt.new_bool(${obj_var_name}.${field_name})' }
-							else { return '${obj_var_name}.${field_name}' }
+						if prop_type.is_scalar() {
+							match prop_type.tag {
+								.t_string { return 'rt.new_string(${obj_var_name}.${field_name})' }
+								.t_int { return 'rt.new_int(${obj_var_name}.${field_name})' }
+								.t_float { return 'rt.new_float(${obj_var_name}.${field_name})' }
+								.t_bool { return 'rt.new_bool(${obj_var_name}.${field_name})' }
+								else { return '${obj_var_name}.${field_name}' }
+							}
+						} else {
+							return '${obj_var_name}.${field_name}'
 						}
-					} else {
-						// PhpVal 属性
-						if obj_var_node.name == 'this' {
-							return 'this.${prop_v_name(prop_name)}'
-						}
-						// 外部变量：通过 dispatch_get_prop 访问
-						return '${obj_var_name}.dispatch_get_prop(\'${prop_name}\') or { rt.new_null() }'
 					}
 				}
 			}
