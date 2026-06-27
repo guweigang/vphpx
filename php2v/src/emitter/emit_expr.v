@@ -188,6 +188,30 @@ fn (mut t Transpiler) get_expr_type(node ast.AstNode) VarType {
 			}
 			return VarType{ tag: .t_unknown }
 		}
+		ast.node_expr_class_const_fetch {
+			mut cls := node.class_name
+			if cls == 'self' {
+				cls = t.current_class
+			} else if cls == 'parent' {
+				mut parent_cls := ''
+				for c in t.classes {
+					if c.name == t.current_class {
+						parent_cls = c.extends
+						break
+					}
+				}
+				cls = parent_cls
+			}
+			resolved_cls := t.resolve_class_name(cls)
+			for c_info in t.classes {
+				if c_info.name.to_lower() == resolved_cls.to_lower() {
+					if const_type := c_info.const_types[node.name] {
+						return const_type
+					}
+				}
+			}
+			return VarType{ tag: .t_unknown }
+		}
 		else { return VarType{ tag: .t_unknown } }
 	}
 }
@@ -1063,6 +1087,11 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 				mut expr_str := t.visit_expr(*expr_node)
 				t.expected_type = old_expected
 				
+				expr_typ := t.get_expr_type(*expr_node)
+				if expr_typ.is_scalar() || expr_typ.is_native_list || expr_typ.is_native_map {
+					expr_str = box_expr(expr_str, expr_typ)
+				}
+				
 				// P10: 仅为被原地修改的变量生成 .dup()
 				if expr_node.node_type == ast.node_expr_variable && t.mutated_vars[expr_node.name] {
 					expr_str += '.dup()'
@@ -1630,7 +1659,8 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 				}
 				cls = parent_cls
 			}
-			return 'class_${cls.to_lower()}_${node.name.to_lower()}'
+			resolved_cls := t.resolve_class_name(cls)
+			return 'Class_${resolved_cls}.${node.name.to_lower()}()'
 		}
 
 		ast.node_expr_closure {

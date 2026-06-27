@@ -15,6 +15,7 @@ pub mut:
 	prop_types  map[string]VarType            // 属性名 → 推导出的 V 原生类型
 	param_types map[string]map[string]VarType // 方法名 → 参数名 → 推导类型
 	return_types map[string]VarType           // 方法名 → 返回值推导类型
+	const_types  map[string]VarType           // 类常量名 → 初始值推导类型
 }
 
 pub struct MethodInfo {
@@ -506,6 +507,7 @@ pub fn (mut t Transpiler) scan_classes(stmts []ast.AstNode) {
 			resolved_name := t.resolve_class_name(stmt.name)
 			mut methods := []MethodInfo{}
 			mut props := []string{}
+			mut const_types := map[string]VarType{}
 			for member in stmt.stmts {
 				match member.node_type {
 					ast.node_stmt_property {
@@ -517,6 +519,11 @@ pub fn (mut t Transpiler) scan_classes(stmts []ast.AstNode) {
 						methods << MethodInfo{
 							name: member.name
 							param_count: member.params.len
+						}
+					}
+					ast.node_stmt_class_const {
+						for c in member.consts {
+							const_types[c.name] = t.get_expr_type(c.value)
 						}
 					}
 					else {}
@@ -544,6 +551,7 @@ pub fn (mut t Transpiler) scan_classes(stmts []ast.AstNode) {
 					prop_types: map[string]VarType{}
 					param_types: map[string]map[string]VarType{}
 					return_types: map[string]VarType{}
+					const_types: const_types
 				}
 			}
 		}

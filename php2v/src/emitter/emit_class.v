@@ -58,8 +58,12 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 			own_method_names_originally[stmt.name] = true
 		} else if stmt.node_type == ast.node_stmt_class_const {
 			for c in stmt.consts {
-				val_str := t.visit_expr(c.value)
-				t.const_out.writeln('const class_${resolved_name.to_lower()}_${c.name.to_lower()} = ${val_str}')
+				val_type := t.get_expr_type(c.value)
+				ret_type_str := val_type.to_v_type()
+				val_str := t.visit_expr_native(c.value)
+				t.func_out.writeln('pub fn Class_${resolved_name}.${c.name.to_lower()}() ${ret_type_str} {')
+				t.func_out.writeln('\treturn ${val_str}')
+				t.func_out.writeln('}')
 			}
 		}
 	}
@@ -245,6 +249,11 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	t.scope.declare('this')
 	old_func_name := t.current_func_name
 	t.current_func_name = node.name
+	
+	old_func_ret := t.current_func_ret_type
+	ret_type := t.get_method_return_type(class_name, node.name)
+	t.current_func_ret_type = ret_type
+
 	// P7: 注册 $this 的类型，使属性/方法访问可以直连
 	t.inferred_types['this'] = VarType{ tag: .t_object, class_name: class_name }
 
@@ -268,7 +277,6 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	}
 
 	// P7 Task 7: 返回值类型推断
-	ret_type := t.get_method_return_type(class_name, node.name)
 	is_construct := node.name == '__construct'
 	is_void := ret_type.tag == .t_void
 	ret_type_str := if is_construct || is_void { '' } else if ret_type.is_scalar() { ret_type.to_v_type() } else { 'rt.PhpVal' }
@@ -324,6 +332,7 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	t.indent = old_indent
 	t.scope = old_scope
 	t.current_func_name = old_func_name
+	t.current_func_ret_type = old_func_ret
 	// P7: 清理本方法注册的原生参数，避免污染后续方法
 	for p in registered_native_params {
 		t.native_params.delete(p)

@@ -221,10 +221,10 @@ fn test_transpiler_end_to_end() {
 			"print('error suppress: ' + var_i.str() + '\\n')",
 		]
 		'29_class_constants.php': [
-			'const class_user_role_admin = rt.new_string(\'admin\')',
-			'const class_user_role_user = rt.new_string(\'user\')',
-			'return class_user_role_admin',
-			"print(class_user_role_admin.str() + '\\n')",
+			'pub fn Class_User.role_admin() string {',
+			'pub fn Class_User.role_user() string {',
+			'return rt.new_string(Class_User.role_admin())',
+			"print(Class_User.role_admin() + '\\n')",
 			'mut var_u := create_user()',
 		]
 		'30_oop_interfaces.php': [

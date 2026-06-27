@@ -544,7 +544,13 @@ fn (mut t Transpiler) visit_return(node ast.AstNode) {
 			t.write_indent()
 			t.write_line('return ${expr_str}')
 		} else {
-			expr_str := t.visit_expr(*expr)
+			expr_typ := t.get_expr_type(*expr)
+			mut expr_str := t.visit_expr(*expr)
+			if !t.current_func_ret_type.is_native_list && !t.current_func_ret_type.is_native_map {
+				if expr_typ.is_scalar() || expr_typ.is_native_list || expr_typ.is_native_map {
+					expr_str = box_expr(expr_str, expr_typ)
+				}
+			}
 			t.write_indent()
 			t.write_line('return ${expr_str}')
 		}
