@@ -256,6 +256,11 @@ fn test_transpiler_end_to_end() {
 			"print(var_map.len.str())",
 			"for var_k, var_v in var_map {",
 		]
+		'34_wp_error.php': [
+			'struct Class_WP_Error',
+			'fn (mut this Class_WP_Error) add(code string, message string, var_data rt.PhpVal)',
+			'func_do_action',
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址

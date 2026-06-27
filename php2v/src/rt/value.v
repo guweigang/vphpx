@@ -205,6 +205,17 @@ pub fn (v PhpVal) is_array() bool {
 	return v.raw != 0 && (v.raw.u1.type_info & 0xff) == 7
 }
 
+fn C.convert_to_array(op &C.zval) int
+
+pub fn cast_array(val PhpVal) PhpVal {
+	if val.is_array() {
+		return val.dup()
+	}
+	mut res := val.dup()
+	C.convert_to_array(res.raw)
+	return res
+}
+
 // array_count 返回数组中存活元素的数量（纯 V 实现）
 pub fn (v PhpVal) array_count() int {
 	if !v.is_array() { return 0 }
@@ -284,6 +295,33 @@ pub fn create_array(items []ArrayItem) PhpVal {
 	return PhpVal{ raw: z }
 }
 
+// create_array_from_list 从 PhpVal 列表中快速构建带有顺序数字键的 PHP 数组
+pub fn create_array_from_list(vals []PhpVal) PhpVal {
+	mut items := []ArrayItem{}
+	for val in vals {
+		items << ArrayItem{
+			key: none
+			val: val
+		}
+	}
+	return create_array(items)
+}
+
+// func_array_keys 纯 V 语言版的 array_keys 键获取实现（避免跨越 FFI 边界）
+pub fn func_array_keys(v PhpVal) PhpVal {
+	if !v.is_array() { return new_array() }
+	pa := unsafe { extract_from_zval(v.raw) }
+	mut keys := []PhpVal{}
+	for bucket in pa.buckets {
+		match bucket.key_kind {
+			.int_key { keys << new_int(bucket.ikey) }
+			.str_key { keys << new_string(bucket.skey) }
+			else {}
+		}
+	}
+	return create_array_from_list(keys)
+}
+
 // array_set 根据键更新或设置数组项（纯 V 实现）
 pub fn (v PhpVal) array_set(key PhpKey, val PhpArg) {
 	if !v.is_array() { return }
@@ -303,6 +341,29 @@ pub fn (v PhpVal) array_get(key PhpKey) PhpVal {
 	if !v.is_array() { return new_null() }
 	pa := unsafe { extract_from_zval(v.raw) }
 	return pa.get(key.to_php_val())
+}
+
+// array_get_mut 获取指定键对应的元素的可变引用（如果不存在或不是数组，则自动就地初始化为空数组，实现 Auto-vivification）
+pub fn (mut v PhpVal) array_get_mut(key PhpKey) PhpVal {
+	if !v.is_array() {
+		mut pa_self := PhpArray.new()
+		pa_self.store_in_zval(v.raw)
+		v.raw.u1.type_info = 7
+	}
+	mut pa := unsafe { extract_from_zval(v.raw) }
+	k_val := key.to_php_val()
+	if !pa.isset(k_val) {
+		empty_arr := new_array()
+		pa.set(k_val, empty_arr)
+		return empty_arr
+	}
+	mut sub_val := pa.get(k_val)
+	if !sub_val.is_array() {
+		mut pa_sub := PhpArray.new()
+		pa_sub.store_in_zval(sub_val.raw)
+		sub_val.raw.u1.type_info = 7
+	}
+	return sub_val
 }
 
 // array_isset 检查数组中指定键是否存在且值非 null（纯 V 实现）
@@ -485,7 +546,7 @@ pub struct PhpClosure {
 pub mut:
 	magic   u64
 	this_ptr PhpVal  // 绑定的 this 对象（可以是 new_null()）
-	invoke  fn (PhpVal, []PhpVal) PhpVal
+	invoke  fn (PhpVal, []PhpVal) PhpVal = unsafe { nil }
 }
 
 // new_closure 将 V 原生 fn 封装为 PhpVal

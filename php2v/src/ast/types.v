@@ -36,6 +36,11 @@ pub const node_expr_pre_inc = 'Expr_PreInc'
 pub const node_expr_pre_dec = 'Expr_PreDec'
 pub const node_expr_error_suppress = 'Expr_ErrorSuppress'
 pub const node_stmt_interface = 'Stmt_Interface'
+pub const node_expr_cast_array = 'Expr_Cast_Array'
+pub const node_expr_cast_int = 'Expr_Cast_Int'
+pub const node_expr_cast_double = 'Expr_Cast_Double'
+pub const node_expr_cast_string = 'Expr_Cast_String'
+pub const node_expr_cast_bool = 'Expr_Cast_Bool'
 
 
 // 表达式节点类型

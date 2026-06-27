@@ -50,9 +50,16 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 				class_info.props << prop.name
 			}
 		} else if stmt.node_type == ast.node_stmt_class_method {
+			mut p_names := []string{}
+			for param in stmt.params {
+				if param_var := param.var {
+					p_names << param_var.name
+				}
+			}
 			class_info.methods << MethodInfo{
 				name: stmt.name
 				param_count: stmt.params.len
+				param_names: p_names
 			}
 			own_method_names[stmt.name] = true
 			own_method_names_originally[stmt.name] = true
@@ -100,6 +107,7 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 			class_info.methods << MethodInfo{
 				name: '__construct'
 				param_count: 1
+				param_names: ['message']
 			}
 			own_method_names['__construct'] = true
 		}
@@ -107,6 +115,7 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 			class_info.methods << MethodInfo{
 				name: 'getMessage'
 				param_count: 0
+				param_names: []string{}
 			}
 			own_method_names['getMessage'] = true
 		}
@@ -196,7 +205,7 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 			if prop_type.is_scalar() {
 				t.write_line('${prop_v_name(prop)} ${prop_type.to_v_type()}')
 			} else {
-				t.write_line('${prop_v_name(prop)} rt.PhpVal')
+				t.write_line('${prop_v_name(prop)} rt.PhpVal = rt.new_null()')
 			}
 		}
 		t.indent--
@@ -260,19 +269,33 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	// P7 Task 7: 参数使用推断类型；无法推断则保持 rt.PhpVal
 	mut param_names := []string{}
 	mut registered_native_params := []string{}
+	mut registered_mutated_params := []string{}
 	for param in node.params {
 		param_var := param.var or { panic('Param missing var') }
 		param_name := param_var.name
 		t.scope.declare(param_name)
 		param_type := t.get_method_param_type(class_name, node.name, param_name)
+		
+		mut shadow_name := param_name
+		if t.mutated_vars[param_name] || t.mutated_vars['var_' + param_name] {
+			if param_type.is_scalar() {
+				shadow_name = '${param_name}_mutated'
+			} else {
+				shadow_name = 'var_${param_name}_mutated'
+			}
+			t.var_aliases[param_name] = shadow_name
+			registered_mutated_params << param_name
+		}
+		
 		if param_type.is_scalar() {
 			// 原生类型参数：直接用参数名（无 var_ 前缀），登记到类型表和 native_params
 			param_names << '${param_name} ${param_type.to_v_type()}'
-			t.inferred_types[param_name] = param_type
-			t.native_params[param_name] = true
-			registered_native_params << param_name
+			t.inferred_types[shadow_name] = param_type
+			t.native_params[shadow_name] = true
+			registered_native_params << shadow_name
 		} else {
 			param_names << 'var_${param_name} rt.PhpVal'
+			t.inferred_types[shadow_name] = param_type
 		}
 	}
 
@@ -297,8 +320,39 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	for v in ref_vars {
 		if v !in ass_vars && !t.scope.has_var(v) {
 			t.write_indent()
-			t.write_line('mut var_${v} := rt.new_null()')
+			v_var := t.get_v_var_name(v)
+			v_type := t.inferred_types[v_var] or { t.inferred_types[v] or { VarType{ tag: .t_unknown } } }
+			if v_type.is_native_list {
+				t.write_line('mut ${v_var} := []rt.PhpVal{}')
+			} else if v_type.is_native_map {
+				t.write_line('mut ${v_var} := map[string]rt.PhpVal{}')
+			} else if v_type.is_scalar() {
+				match v_type.tag {
+					.t_int { t.write_line('mut ${v_var} := i64(0)') }
+					.t_float { t.write_line('mut ${v_var} := f64(0.0)') }
+					.t_bool { t.write_line('mut ${v_var} := false') }
+					else { t.write_line("mut ${v_var} := ''") }
+				}
+			} else {
+				t.write_line('mut ${v_var} := rt.new_null()')
+			}
 			t.scope.declare(v)
+		}
+	}
+	
+	// 对于在方法体内被修改过的参数，在进入方法体第一行进行 mut 局部可变复制
+	for param in node.params {
+		param_var := param.var or { continue }
+		param_name := param_var.name
+		param_type := t.get_method_param_type(class_name, node.name, param_name)
+		if t.mutated_vars[param_name] || t.mutated_vars['var_' + param_name] {
+			t.write_indent()
+			if param_type.is_scalar() {
+				t.write_line('mut ${param_name}_mutated := ${param_name}')
+				t.native_vars['${param_name}_mutated'] = true
+			} else {
+				t.write_line('mut var_${param_name}_mutated := var_${param_name}')
+			}
 		}
 	}
 	
@@ -337,6 +391,10 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	for p in registered_native_params {
 		t.native_params.delete(p)
 	}
+	for p in registered_mutated_params {
+		t.var_aliases.delete(p)
+	}
+	t.native_vars.clear()
 }
 
 // 递归生成嵌套的结构体初始化代码
@@ -378,7 +436,8 @@ fn (mut t Transpiler) generate_struct_init(cls ClassInfo) {
 				else { t.write_line('${prop_v_name(prop)}: rt.new_null()') }
 			}
 		} else {
-			t.write_line('${prop_v_name(prop)}: rt.new_null()')
+			default_val := cls.prop_defaults[prop] or { 'rt.new_null()' }
+			t.write_line('${prop_v_name(prop)}: ${default_val}')
 		}
 	}
 }
