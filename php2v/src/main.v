@@ -1,8 +1,8 @@
 module main
 
 import os
-import php2v.ast
-import php2v.emitter
+import ast
+import emitter
 
 fn main() {
 	if os.args.len < 3 {

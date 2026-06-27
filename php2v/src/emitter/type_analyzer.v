@@ -1,6 +1,6 @@
 module emitter
 
-import php2v.ast
+import ast
 
 // analyze_types 统一类型分析入口
 // 两阶段遍历：

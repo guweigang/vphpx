@@ -1,6 +1,6 @@
 module emitter
 
-import php2v.ast
+import ast
 
 // ============================================================
 // 公共辅助函数：消除 emit_expr.v / emit_stmt.v / emit_class.v 中的重复代码

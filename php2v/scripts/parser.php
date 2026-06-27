@@ -23,6 +23,10 @@ function cleanNode($node) {
     if ($node instanceof \PhpParser\Node\Name || $node instanceof \PhpParser\Node\Identifier) {
         return $node->toString();
     }
+    // NullableType 扁平化为 "?type" 字符串
+    if ($node instanceof \PhpParser\Node\NullableType) {
+        return '?' . $node->type->toString();
+    }
     if ($node instanceof \PhpParser\Node) {
         $res = [
             'nodeType' => $node->getType(),

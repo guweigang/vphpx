@@ -1,6 +1,6 @@
 module emitter
 
-import php2v.ast
+import ast
 
 // prop_field_path returns the correct field access path for a property,
 // handling inheritance. For own props: "field_name". For inherited: "Class_Parent.field_name".

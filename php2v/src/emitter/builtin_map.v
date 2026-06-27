@@ -1,6 +1,6 @@
 module emitter
 
-import php2v.ast
+import ast
 
 // get_builtin_return_tag 返回内置函数的已知推断返回类型
 pub fn get_builtin_return_tag(name string) ?TypeTag {

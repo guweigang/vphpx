@@ -309,7 +309,7 @@ fn test_transpiler_end_to_end() {
 		if !os.exists(rt_inc) {
 			rt_inc = os.join_path(pwd, 'src/rt')
 		}
-		mut v_path := '${pwd}:${os.dir(pwd)}:@vlib'
+		mut v_path := '${os.join_path(pwd, "php2v/src")}:${pwd}:${os.dir(pwd)}:@vlib'
 		v_comp_cmd := 'v -path "${v_path}" -shared -cc clang -cflags "-DZTS -undefined dynamic_lookup -I${rt_inc} ${php_inc}" -o "${temp_so_file}" "${temp_v_file}"'
 		comp_res := os.execute(v_comp_cmd)
 		

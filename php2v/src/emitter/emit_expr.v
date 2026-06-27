@@ -1,7 +1,7 @@
 module emitter
 
 import strings
-import php2v.ast
+import ast
 
 fn (mut t Transpiler) get_expr_type(node ast.AstNode) VarType {
 	match node.node_type {

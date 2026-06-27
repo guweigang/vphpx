@@ -1,6 +1,6 @@
 module emitter
 
-import php2v.ast
+import ast
 
 fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 	match node.node_type {
