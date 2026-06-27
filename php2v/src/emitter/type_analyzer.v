@@ -475,11 +475,16 @@ fn (mut t Transpiler) scan_mutations_expr(node ast.AstNode) {
 	match node.node_type {
 		ast.node_expr_assign {
 			var_node := node.var or { return }
+			if var_node.node_type == ast.node_expr_variable {
+				t.mutated_vars[var_node.name] = true
+				t.mutated_vars['var_' + var_node.name] = true
+			}
 			// 数组维度赋值：$arr[] = x 或 $arr['k'] = x → $arr 被修改
 			if var_node.node_type == ast.node_expr_array_dim_fetch {
 				if base := var_node.var {
 					if base.node_type == ast.node_expr_variable {
 						t.mutated_vars[base.name] = true
+						t.mutated_vars['var_' + base.name] = true
 					}
 				}
 			}
@@ -488,6 +493,7 @@ fn (mut t Transpiler) scan_mutations_expr(node ast.AstNode) {
 				if base := var_node.var {
 					if base.node_type == ast.node_expr_variable {
 						t.mutated_vars[base.name] = true
+						t.mutated_vars['var_' + base.name] = true
 					}
 				}
 			}
@@ -1572,6 +1578,15 @@ fn (mut t Transpiler) scan_array_usages_expr(node ast.AstNode, mut states map[st
 				states[lhs.name] = s
 				t.scan_array_usages_expr(*rhs, mut states, false, none)
 			} else {
+				if lhs.node_type == ast.node_expr_variable {
+					rhs_typ := t.get_expr_type(*rhs)
+					if !rhs_typ.is_native_list && !rhs_typ.is_native_map {
+						mut s := states[lhs.name] or { ArrayInferState{ can_be_list: true, can_be_map: true, has_array_ops: false } }
+						s.can_be_list = false
+						s.can_be_map = false
+						states[lhs.name] = s
+					}
+				}
 				t.scan_array_usages_expr(*lhs, mut states, true, *rhs)
 				t.scan_array_usages_expr(*rhs, mut states, false, none)
 			}

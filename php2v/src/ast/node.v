@@ -32,6 +32,8 @@ pub mut:
 	arms      []AstNode @[json: 'arms']
 	body      ?&AstNode @[json: 'body']
 	loop      []AstNode @[json: 'loop']
+	default_val  ?&AstNode @[json: 'default']
+	variadic  string      @[json: 'variadic']
 
 
 	props     []AstNode @[json: 'props']
@@ -134,6 +136,8 @@ pub fn (n &AstNode) clone() &AstNode {
 		arms: arms
 		body: clone_ptr(n.body)
 		loop: loop_nodes
+		default_val: clone_ptr(n.default_val)
+		variadic: n.variadic
 		props: props
 		uses: uses
 		incl_type: n.incl_type

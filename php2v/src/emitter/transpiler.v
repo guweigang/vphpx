@@ -16,12 +16,15 @@ pub mut:
 	param_types map[string]map[string]VarType // 方法名 → 参数名 → 推导类型
 	return_types map[string]VarType           // 方法名 → 返回值推导类型
 	const_types  map[string]VarType           // 类常量名 → 初始值推导类型
+	prop_defaults map[string]string           // 属性名 → V 侧的默认值表达式
 }
 
 pub struct MethodInfo {
 pub:
 	name        string
 	param_count int
+	param_names []string
+	is_variadic bool
 }
 
 pub struct Transpiler {
@@ -73,6 +76,10 @@ pub mut:
 	func_var_types         map[string]map[string]VarType // 函数名 → 局部变量名 → 推导类型
 	declared_classes       map[string]bool               // 已声明的类
 	expected_type          VarType                       // 上下文期望类型
+	var_aliases            map[string]string             // 变量重命名映射（处理局部变量遮蔽冲突）
+	foreach_depth          int                           // 循环嵌套深度（用于生成唯一的迭代器变量名）
+	native_vars            map[string]bool               // 本地声明的原生变量（用于精确判定是否需要装箱）
+	custom_function_infos  map[string]MethodInfo         // 自定义全局函数签名信息（含可变参数状态）
 }
 
 pub struct GlobalConst {
@@ -91,8 +98,12 @@ pub fn Transpiler.new() Transpiler {
 		indent:           1
 		scope:            VarScope.new()
 		custom_functions: map[string]bool{}
+		custom_function_infos: map[string]MethodInfo{}
 		classes:          []ClassInfo{}
 		current_file:     ''
+		foreach_depth:    0
+		var_aliases:      map[string]string{}
+		native_vars:      map[string]bool{}
 		undeclared_classes: map[string]bool{}
 		current_namespace: ''
 		use_aliases: map[string]string{}
@@ -130,12 +141,8 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 	// 前置扫描并登记全局类与 Exception
 	t.scan_classes(local_stmts)
 
-	// 预扫描顶层自定义函数，登记到 custom_functions 中以支持任意顺序的调用
-	for stmt in local_stmts {
-		if stmt.node_type == ast.node_stmt_function {
-			t.custom_functions[stmt.name] = true
-		}
-	}
+	// 预扫描顶层及嵌套自定义函数，登记到 custom_functions 中
+	t.scan_custom_functions(local_stmts)
 
 	// 前置类型分析
 	t.analyze_types(local_stmts)
@@ -144,7 +151,22 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 	for v in ref_vars {
 		if v !in ass_vars && !t.scope.has_var(v) {
 			t.write_indent()
-			t.write_line('mut var_${v} := rt.new_null()')
+			v_var := t.get_v_var_name(v)
+			v_type := t.inferred_types[v_var] or { t.inferred_types[v] or { VarType{ tag: .t_unknown } } }
+			if v_type.is_native_list {
+				t.write_line('mut ${v_var} := []rt.PhpVal{}')
+			} else if v_type.is_native_map {
+				t.write_line('mut ${v_var} := map[string]rt.PhpVal{}')
+			} else if v_type.is_scalar() {
+				match v_type.tag {
+					.t_int { t.write_line('mut ${v_var} := i64(0)') }
+					.t_float { t.write_line('mut ${v_var} := f64(0.0)') }
+					.t_bool { t.write_line('mut ${v_var} := false') }
+					else { t.write_line("mut ${v_var} := ''") }
+				}
+			} else {
+				t.write_line('mut ${v_var} := rt.new_null()')
+			}
 			t.scope.declare(v)
 		}
 	}
@@ -174,8 +196,8 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 				new_cls.prop_types['code'] = VarType{ tag: .t_int }
 				new_cls.prop_types['file'] = VarType{ tag: .t_string }
 				new_cls.prop_types['line'] = VarType{ tag: .t_int }
-				new_cls.methods << MethodInfo{ name: '__construct', param_count: 1 }
-				new_cls.methods << MethodInfo{ name: 'getMessage', param_count: 0 }
+				new_cls.methods << MethodInfo{ name: '__construct', param_count: 1, param_names: ['message'] }
+				new_cls.methods << MethodInfo{ name: 'getMessage', param_count: 0, param_names: []string{} }
 				new_cls.return_types['getMessage'] = VarType{ tag: .t_string }
 			}
 			new_cls.all_props = new_cls.props.clone()
@@ -500,6 +522,23 @@ pub fn (mut t Transpiler) scan_global_constants(stmts []ast.AstNode) {
 	}
 }
 
+// 辅助提取属性默认值的 V 表达式
+fn get_prop_default_expr(node ast.AstNode) string {
+	match node.node_type {
+		ast.node_expr_array { return 'rt.new_array()' }
+		ast.node_scalar_string { return "rt.new_string('${escape_single_quoted(node.value)}')" }
+		ast.node_scalar_int { return 'rt.new_int(${node.value})' }
+		ast.node_scalar_float { return 'rt.new_float(${node.value})' }
+		ast.node_expr_const {
+			if node.name.to_lower() == 'true' { return 'rt.new_bool(true)' }
+			if node.name.to_lower() == 'false' { return 'rt.new_bool(false)' }
+			if node.name.to_lower() == 'null' { return 'rt.new_null()' }
+		}
+		else {}
+	}
+	return 'rt.new_null()'
+}
+
 // scan_classes 静态扫描并登记全局 ClassInfo 到 t.classes，并前置注册 Exception 基类
 pub fn (mut t Transpiler) scan_classes(stmts []ast.AstNode) {
 	for stmt in stmts {
@@ -507,18 +546,31 @@ pub fn (mut t Transpiler) scan_classes(stmts []ast.AstNode) {
 			resolved_name := t.resolve_class_name(stmt.name)
 			mut methods := []MethodInfo{}
 			mut props := []string{}
+			mut prop_defaults := map[string]string{}
 			mut const_types := map[string]VarType{}
 			for member in stmt.stmts {
 				match member.node_type {
 					ast.node_stmt_property {
 						for p in member.props {
 							props << p.name
+							if default_node := p.default_val {
+								if voidptr(default_node) != 0 {
+									prop_defaults[p.name] = get_prop_default_expr(*default_node)
+								}
+							}
 						}
 					}
 					ast.node_stmt_class_method {
+						mut p_names := []string{}
+						for param in member.params {
+							if param_var := param.var {
+								p_names << param_var.name
+							}
+						}
 						methods << MethodInfo{
 							name: member.name
 							param_count: member.params.len
+							param_names: p_names
 						}
 					}
 					ast.node_stmt_class_const {
@@ -552,6 +604,7 @@ pub fn (mut t Transpiler) scan_classes(stmts []ast.AstNode) {
 					param_types: map[string]map[string]VarType{}
 					return_types: map[string]VarType{}
 					const_types: const_types
+					prop_defaults: prop_defaults
 				}
 			}
 		}
@@ -591,13 +644,69 @@ pub fn (mut t Transpiler) scan_classes(stmts []ast.AstNode) {
 		new_cls.prop_types['code'] = VarType{ tag: .t_int }
 		new_cls.prop_types['file'] = VarType{ tag: .t_string }
 		new_cls.prop_types['line'] = VarType{ tag: .t_int }
-		new_cls.methods << MethodInfo{ name: '__construct', param_count: 1 }
-		new_cls.methods << MethodInfo{ name: 'getMessage', param_count: 0 }
+		new_cls.methods << MethodInfo{ name: '__construct', param_count: 1, param_names: ['message'] }
+		new_cls.methods << MethodInfo{ name: 'getMessage', param_count: 0, param_names: []string{} }
 		new_cls.return_types['getMessage'] = VarType{ tag: .t_string }
 		
 		new_cls.all_props = new_cls.props.clone()
 		new_cls.all_methods = new_cls.methods.clone()
 		t.classes << new_cls
+	}
+}
+
+// find_method 查找指定类（及继承的）的 MethodInfo
+pub fn (t Transpiler) find_method(class_name string, method_name string) ?MethodInfo {
+	for cls in t.classes {
+		if cls.name.to_lower() == class_name.to_lower() {
+			for m in cls.all_methods {
+				if m.name.to_lower() == method_name.to_lower() {
+					return m
+				}
+			}
+		}
+	}
+	return none
+}
+
+// get_v_var_name 根据 PHP 变量名，计算其在 V 语言侧的物理变量名（处理别名、原生性与 var_ 前缀）
+pub fn (t Transpiler) get_v_var_name(php_var_name string) string {
+	if alias := t.var_aliases[php_var_name] {
+		return alias
+	}
+	if t.native_params[php_var_name] || t.native_vars[php_var_name] {
+		return php_var_name
+	}
+	return 'var_${php_var_name}'
+}
+
+// scan_custom_functions 递归扫描并登记所有自定义函数（支持 if/foreach 嵌套）
+pub fn (mut t Transpiler) scan_custom_functions(nodes []ast.AstNode) {
+	for node in nodes {
+		if node.node_type == ast.node_stmt_function {
+			t.custom_functions[node.name] = true
+			mut p_names := []string{}
+			mut has_variadic := false
+			for param in node.params {
+				if param_var := param.var {
+					p_names << param_var.name
+				}
+				if param.variadic == 'true' {
+					has_variadic = true
+				}
+			}
+			t.custom_function_infos[node.name] = MethodInfo{
+				name: node.name
+				param_count: node.params.len
+				param_names: p_names
+				is_variadic: has_variadic
+			}
+		}
+		if node.stmts.len > 0 {
+			t.scan_custom_functions(node.stmts)
+		}
+		if else_node := node.@else {
+			t.scan_custom_functions(else_node.stmts)
+		}
 	}
 }
 

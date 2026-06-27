@@ -11,6 +11,13 @@ pub fn VarScope.new() VarScope {
 	}
 }
 
+// clone 克隆当前的 VarScope，复制 declared 的 map 避免引用共用
+pub fn (s VarScope) clone() VarScope {
+	return VarScope{
+		declared: s.declared.clone()
+	}
+}
+
 // has_var 检查变量是否已被声明
 pub fn (s VarScope) has_var(name string) bool {
 	return name in s.declared

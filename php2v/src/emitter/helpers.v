@@ -23,6 +23,13 @@ pub fn escape_double_quoted(s string) string {
 
 // box_expr 将原生 V 表达式包装为 rt.PhpVal
 pub fn box_expr(code string, typ VarType) string {
+	if typ.class_name.len > 0 || typ.tag == .t_object {
+		if code.starts_with('rt.new_object') || code.starts_with('rt.new_null') {
+			return code
+		}
+		cls := if typ.class_name.len > 0 { typ.class_name } else { 'WP_Error' }
+		return "rt.new_object('${cls}', []string{}, ${code})"
+	}
 	match typ.tag {
 		.t_int { return 'rt.new_int(${code})' }
 		.t_float { return 'rt.new_float(${code})' }
@@ -35,10 +42,10 @@ pub fn box_expr(code string, typ VarType) string {
 // unbox_expr 将 rt.PhpVal 表达式转换为原生 V 类型
 pub fn unbox_expr(code string, typ VarType) string {
 	match typ.tag {
-		.t_int { return '${code}.to_i64()' }
-		.t_float { return '${code}.to_f64()' }
-		.t_string { return '${code}.to_string()' }
-		.t_bool { return '${code}.is_true()' }
+		.t_int { return '(${code}).to_i64()' }
+		.t_float { return '(${code}).to_f64()' }
+		.t_string { return '(${code}).str()' }
+		.t_bool { return '(${code}).to_bool()' }
 		else { return code }
 	}
 }
@@ -54,8 +61,16 @@ pub enum ExprCtx {
 
 // dup_if_needed 对 PhpVal 变量追加 .dup()，避免别名共享
 // 非变量表达式直接返回原代码
-pub fn dup_if_needed(code string, arg_node ast.AstNode) string {
+pub fn (t Transpiler) dup_if_needed(code string, arg_node ast.AstNode) string {
 	if arg_node.node_type == ast.node_expr_variable {
+		var_name := arg_node.name
+		typ := t.inferred_types[var_name] or { VarType{ tag: .t_unknown } }
+		if typ.tag == .t_object || typ.class_name.len > 0 {
+			return code
+		}
+		if t.native_params[var_name] || t.native_vars[var_name] || var_name.ends_with('_mutated') {
+			return code
+		}
 		return '${code}.dup()'
 	}
 	return code
@@ -86,21 +101,24 @@ pub fn (mut t Transpiler) compile_expr(node ast.AstNode, ctx ExprCtx) string {
 // 根据源类型和目标类型决定装箱/拆箱策略
 pub fn (mut t Transpiler) compile_arg(arg_node ast.AstNode, target_type VarType) CallArgResult {
 	arg_type := t.get_expr_type(arg_node)
-	if target_type.is_scalar() && arg_type.is_scalar() {
-		// 目标期望原生类型，源也是原生类型 → 直接传递
+	target_is_native := target_type.is_scalar() || target_type.class_name.len > 0
+	arg_is_native := arg_type.is_scalar() || arg_type.class_name.len > 0
+	
+	if target_is_native && arg_is_native {
+		// 目标是原生，源也是原生 → 直接传递
 		return CallArgResult{ code: t.compile_expr(arg_node, .native), typ: arg_type }
-	} else if target_type.is_scalar() && !arg_type.is_scalar() {
-		// 目标期望原生类型，源是 PhpVal → 拆箱
+	} else if target_is_native && !arg_is_native {
+		// 目标是原生，源是包装 → 拆箱
 		raw := t.compile_expr(arg_node, .boxed)
 		return CallArgResult{ code: unbox_expr(raw, target_type), typ: arg_type }
-	} else if !target_type.is_scalar() && arg_type.is_scalar() {
-		// 目标期望 PhpVal，源是原生类型 → 装箱
+	} else if !target_is_native && arg_is_native {
+		// 目标是包装，源是原生 → 装箱
 		native_val := t.compile_expr(arg_node, .native)
 		return CallArgResult{ code: box_expr(native_val, arg_type), typ: arg_type }
 	} else {
-		// 目标期望 PhpVal，源也是 PhpVal → 直接传递，变量需 .dup()
+		// 目标是包装，源是包装 → 直接传递，变量需 .dup()
 		code := t.compile_expr(arg_node, .boxed)
-		return CallArgResult{ code: dup_if_needed(code, arg_node), typ: arg_type }
+		return CallArgResult{ code: t.dup_if_needed(code, arg_node), typ: arg_type }
 	}
 }
 
@@ -108,5 +126,5 @@ pub fn (mut t Transpiler) compile_arg(arg_node ast.AstNode, target_type VarType)
 // 用于 funccall、call_method fallback 等不需要 4-way 矩阵的场景
 pub fn (mut t Transpiler) compile_arg_simple(arg_node ast.AstNode) string {
 	code := t.compile_expr(arg_node, .boxed)
-	return dup_if_needed(code, arg_node)
+	return t.dup_if_needed(code, arg_node)
 }

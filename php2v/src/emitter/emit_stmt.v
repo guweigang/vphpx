@@ -469,7 +469,22 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 	for v in ref_vars {
 		if v !in ass_vars && !t.scope.has_var(v) {
 			t.write_indent()
-			t.write_line('mut var_${v} := rt.new_null()')
+			v_var := t.get_v_var_name(v)
+			v_type := t.inferred_types[v_var] or { t.inferred_types[v] or { VarType{ tag: .t_unknown } } }
+			if v_type.is_native_list {
+				t.write_line('mut ${v_var} := []rt.PhpVal{}')
+			} else if v_type.is_native_map {
+				t.write_line('mut ${v_var} := map[string]rt.PhpVal{}')
+			} else if v_type.is_scalar() {
+				match v_type.tag {
+					.t_int { t.write_line('mut ${v_var} := i64(0)') }
+					.t_float { t.write_line('mut ${v_var} := f64(0.0)') }
+					.t_bool { t.write_line('mut ${v_var} := false') }
+					else { t.write_line("mut ${v_var} := ''") }
+				}
+			} else {
+				t.write_line('mut ${v_var} := rt.new_null()')
+			}
 			t.scope.declare(v)
 		}
 	}
@@ -538,22 +553,9 @@ fn (mut t Transpiler) visit_return(node ast.AstNode) {
 				}
 			}
 		}
-		// 如果当前函数有原生返回值类型，使用原生表达式
-		if t.current_func_ret_type.is_scalar() {
-			expr_str := t.visit_expr_native(*expr)
-			t.write_indent()
-			t.write_line('return ${expr_str}')
-		} else {
-			expr_typ := t.get_expr_type(*expr)
-			mut expr_str := t.visit_expr(*expr)
-			if !t.current_func_ret_type.is_native_list && !t.current_func_ret_type.is_native_map {
-				if expr_typ.is_scalar() || expr_typ.is_native_list || expr_typ.is_native_map {
-					expr_str = box_expr(expr_str, expr_typ)
-				}
-			}
-			t.write_indent()
-			t.write_line('return ${expr_str}')
-		}
+		result := t.compile_arg(*expr, t.current_func_ret_type)
+		t.write_indent()
+		t.write_line('return ${result.code}')
 	} else {
 		t.write_indent()
 		if t.current_func_ret_type.is_scalar() {
@@ -589,29 +591,53 @@ fn (mut t Transpiler) visit_foreach(node ast.AstNode) {
 	expr_node := node.expr or { panic('Foreach statement missing expr') }
 	arr_type := t.get_expr_type(*expr_node)
 	
+	val_var_node := node.value_var or { panic('Foreach missing valueVar') }
+	mut val_var_name := val_var_node.name
+	mut key_var_name := ''
+	if key_var_node := node.key_var {
+		key_var_name = key_var_node.name
+	}
+
+	old_aliases := t.var_aliases.clone()
+	old_native_vars := t.native_vars.clone()
+	if t.scope.has_var(val_var_name) {
+		shadow_name := 'var_${val_var_name}_shadow'
+		t.var_aliases[val_var_name] = shadow_name
+		val_var_name = shadow_name
+	}
+	if key_var_name.len > 0 && t.scope.has_var(key_var_name) {
+		shadow_name := 'var_${key_var_name}_shadow'
+		t.var_aliases[key_var_name] = shadow_name
+		key_var_name = shadow_name
+	}
+	
 	if arr_type.is_native_list || arr_type.is_native_map {
 		arr_str := t.visit_expr(*expr_node)
-		val_var_node := node.value_var or { panic('Foreach missing valueVar') }
-		val_var_name := val_var_node.name
-		
-		old_scope := t.scope
+		old_scope := t.scope.clone()
 		t.scope.declare(val_var_name)
+		if arr_type.element_type_tag in [.t_int, .t_float, .t_bool, .t_string] {
+			t.native_vars[val_var_name] = true
+		}
 		
 		old_inferred := t.inferred_types.clone()
 		t.inferred_types[val_var_name] = VarType{ tag: arr_type.element_type_tag }
 		
 		t.write_indent()
-		if key_var_node := node.key_var {
-			key_var_name := key_var_node.name
+		if key_var_name.len > 0 {
 			t.scope.declare(key_var_name)
 			key_tag := if arr_type.is_native_list { TypeTag.t_int } else { TypeTag.t_string }
 			t.inferred_types[key_var_name] = VarType{ tag: key_tag }
-			t.write_line('for var_${key_var_name}, var_${val_var_name} in ${arr_str} {')
+			t.native_vars[key_var_name] = true
+			
+			key_v := if key_var_name.starts_with('var_') { key_var_name } else { 'var_' + key_var_name }
+			val_v := if val_var_name.starts_with('var_') { val_var_name } else { 'var_' + val_var_name }
+			t.write_line('for ${key_v}, ${val_v} in ${arr_str} {')
 		} else {
+			val_v := if val_var_name.starts_with('var_') { val_var_name } else { 'var_' + val_var_name }
 			if arr_type.is_native_list {
-				t.write_line('for var_${val_var_name} in ${arr_str} {')
+				t.write_line('for ${val_v} in ${arr_str} {')
 			} else {
-				t.write_line('for _, var_${val_var_name} in ${arr_str} {')
+				t.write_line('for _, ${val_v} in ${arr_str} {')
 			}
 		}
 		
@@ -623,10 +649,15 @@ fn (mut t Transpiler) visit_foreach(node ast.AstNode) {
 		
 		t.inferred_types = old_inferred.clone()
 		t.scope = old_scope
+		t.var_aliases = old_aliases.clone()
+		t.native_vars = old_native_vars.clone()
 		t.write_indent()
 		t.write_line('}')
 		return
 	}
+	
+	t.foreach_depth++
+	iter_name := 'iter_${t.foreach_depth}'
 	
 	expr_str := t.visit_expr(*expr_node)
 	
@@ -636,31 +667,33 @@ fn (mut t Transpiler) visit_foreach(node ast.AstNode) {
 	
 	// 在本层局部作用域中隔离迭代器
 	t.write_indent()
-	t.write_line('mut iter := ${expr_str}.iterator()')
+	t.write_line('mut ${iter_name} := ${expr_str}.iterator()')
 	
 	t.write_indent()
 	t.write_line('for {')
 	t.indent++
 	
+	item_var_name := 'item_${t.foreach_depth}'
+	
 	t.write_indent()
-	t.write_line('item := iter.next() or { break }')
+	t.write_line('${item_var_name} := ${iter_name}.next() or { break }')
 	
 	// 备份作用域，声明循环变量
-	old_scope := t.scope
+	old_scope := t.scope.clone()
+	old_inferred := t.inferred_types.clone()
 	
-	// 解析值变量名并声明为局部变量
-	val_var_node := node.value_var or { panic('Foreach missing valueVar') }
-	val_var_name := val_var_node.name
 	t.scope.declare(val_var_name)
+	t.inferred_types[val_var_name] = VarType{ tag: .t_unknown }
 	t.write_indent()
-	t.write_line('mut var_${val_var_name} := item.val')
+	val_v := if val_var_name.starts_with('var_') { val_var_name } else { 'var_' + val_var_name }
+	t.write_line('mut ${val_v} := ${item_var_name}.val')
 	
-	// 如果存在键变量，解析并声明
-	if key_var_node := node.key_var {
-		key_var_name := key_var_node.name
+	if key_var_name.len > 0 {
 		t.scope.declare(key_var_name)
+		t.inferred_types[key_var_name] = VarType{ tag: .t_unknown }
 		t.write_indent()
-		t.write_line('mut var_${key_var_name} := item.key')
+		key_v := if key_var_name.starts_with('var_') { key_var_name } else { 'var_' + key_var_name }
+		t.write_line('mut ${key_v} := ${item_var_name}.key')
 	}
 	
 	// 遍历执行循环体内的语句
@@ -668,8 +701,12 @@ fn (mut t Transpiler) visit_foreach(node ast.AstNode) {
 		t.visit_stmt(stmt)
 	}
 	
-	// 还原作用域
+	// 还原作用域与别名表
 	t.scope = old_scope
+	t.inferred_types = old_inferred.clone()
+	t.var_aliases = old_aliases.clone()
+	t.native_vars = old_native_vars.clone()
+	t.foreach_depth--
 	
 	t.indent--
 	t.write_indent()
