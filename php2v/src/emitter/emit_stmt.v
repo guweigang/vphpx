@@ -9,6 +9,28 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 		}
 		ast.node_stmt_expression {
 			if expr := node.expr {
+				// 拦截并原生化全局 define 常量
+				if expr.node_type == ast.node_expr_funccall && expr.name == 'define' {
+					if expr.args.len >= 2 {
+						name_node := expr.args[0].expr or { panic('define missing name') }
+						if name_node.node_type == ast.node_scalar_string {
+							if gc := t.global_constants[name_node.value] {
+								val_node := expr.args[1].expr or { panic('define missing val') }
+								val_str := t.visit_expr_native(*val_node)
+								t.const_out.writeln('const ${gc.name} = ${val_str}')
+								// 刷新副作用语句后返回
+								if t.post_stmts.len > 0 {
+									for s in t.post_stmts {
+										t.write_indent()
+										t.write_line(s)
+									}
+									t.post_stmts.clear()
+								}
+								return
+							}
+						}
+					}
+				}
 				// 原生 int 变量的独立自增/自减语句优化
 				if t.try_emit_native_incdec(*expr) {
 					// 已处理
@@ -119,7 +141,29 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 			}
 		}
 		ast.node_stmt_interface {
-			// 接口本身在代码生成中直接忽略
+			// 生成 V 原生 interface 定义（顶层）
+			old_is_in_func := t.is_in_func
+			t.is_in_func = true
+			t.write_line('interface ${node.name} {')
+			t.indent++
+			for stmt in node.stmts {
+				if stmt.node_type == ast.node_stmt_class_method {
+					// 收集参数
+					mut param_strs := []string{}
+					for param in stmt.params {
+						param_name := param.name
+						// 接口方法参数使用 PhpVal 类型（因为无法推断）
+						param_strs << '${param_name} rt.PhpVal'
+					}
+					params_str := if param_strs.len > 0 { param_strs.join(', ') } else { '' }
+					t.write_indent()
+					t.write_line('${method_v_name(stmt.name)}(${params_str}) rt.PhpVal')
+				}
+			}
+			t.indent--
+			t.write_line('}')
+			t.write_line('')
+			t.is_in_func = old_is_in_func
 		}
 		else {
 			t.write_indent()
@@ -160,12 +204,7 @@ fn (mut t Transpiler) visit_echo(node ast.AstNode) {
 	for expr in node.exprs {
 		// 字符串字面量 echo 优化：跳过 PhpVal 装箱/拆箱，直接 print
 		if expr.node_type == ast.node_scalar_string {
-			escaped := expr.value
-				.replace('\\', '\\\\')
-				.replace('\'', '\\\'')
-				.replace('\n', '\\n')
-				.replace('\r', '\\r')
-				.replace('\t', '\\t')
+			escaped := escape_single_quoted(expr.value)
 			t.write_indent()
 			t.write_line('print(\'${escaped}\')')
 			continue
@@ -212,9 +251,8 @@ fn (mut t Transpiler) visit_echo(node ast.AstNode) {
 
 fn (mut t Transpiler) visit_const(node ast.AstNode) {
 	for c in node.consts {
-		val_str := t.visit_expr(c.value)
-		t.write_indent()
-		t.write_line("rt.define_constant('${c.name}', ${val_str})")
+		val_str := t.visit_expr_native(c.value)
+		t.const_out.writeln('const global_const_${c.name.to_lower()} = ${val_str}')
 	}
 }
 
@@ -382,16 +420,43 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 	old_scope := t.scope
 	t.scope = VarScope.new()
 
+	// 设置当前函数上下文
+	old_func_name := t.current_func_name
+	old_func_ret := t.current_func_ret_type
+	t.current_func_name = node.name
+	ret_type := t.func_return_types[node.name] or { VarType{ tag: .t_unknown } }
+	t.current_func_ret_type = ret_type
+
+	// 设置当前函数的局部变量类型（供 get_expr_type 使用）
+	old_inferred := t.inferred_types.clone()
+	if func_vars := t.func_var_types[node.name] {
+		for vname, vtype in func_vars {
+			t.inferred_types[vname] = vtype
+		}
+	}
+
+	mut registered_native_params := []string{}
 	mut param_names := []string{}
 	for param in node.params {
 		param_var := param.var or { panic('Param missing var') }
 		param_name := param_var.name
 		t.scope.declare(param_name)
-		param_names << 'var_${param_name} rt.PhpVal'
+		// 检查是否有推断的原生参数类型
+		param_type := t.get_func_param_type(node.name, param_name)
+		if param_type.is_scalar() {
+			param_names << '${param_name} ${param_type.to_v_type()}'
+			t.inferred_types[param_name] = param_type
+			t.native_params[param_name] = true
+			registered_native_params << param_name
+		} else {
+			param_names << 'var_${param_name} rt.PhpVal'
+		}
 	}
 
+	has_native_ret := ret_type.is_scalar()
+	ret_type_str := if has_native_ret { ' ${ret_type.to_v_type()}' } else { ' rt.PhpVal' }
 	t.write_indent()
-	t.write_line('fn func_${node.name}(${param_names.join(", ")}) rt.PhpVal {')
+	t.write_line('fn func_${node.name}(${param_names.join(", ")})${ret_type_str} {')
 	
 	t.indent++
 	ref_vars, ass_vars := t.collect_vars_in_scope(node.stmts)
@@ -407,12 +472,32 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 	}
 	if node.stmts.len == 0 || node.stmts[node.stmts.len - 1].node_type != ast.node_stmt_return {
 		t.write_indent()
-		t.write_line('return rt.new_null()')
+		if has_native_ret {
+			t.write_line('return ${t.get_native_default(ret_type)}')
+		} else {
+			t.write_line('return rt.new_null()')
+		}
 	}
 	t.indent--
 	t.write_indent()
 	t.write_line('}')
 	t.write_line('')
+
+	// 清理当前函数上下文
+	for p in registered_native_params {
+		t.native_params.delete(p)
+	}
+	// 恢复 inferred_types：清除函数局部变量，恢复原始内容
+	for key in t.inferred_types.keys() {
+		if key !in old_inferred {
+			t.inferred_types.delete(key)
+		}
+	}
+	for key, val in old_inferred {
+		t.inferred_types[key] = val
+	}
+	t.current_func_name = old_func_name
+	t.current_func_ret_type = old_func_ret
 
 	t.is_in_func = false
 	t.indent = old_indent
@@ -427,12 +512,64 @@ fn (mut t Transpiler) visit_return(node ast.AstNode) {
 		return
 	}
 	if expr := node.expr {
-		expr_str := t.visit_expr(*expr)
-		t.write_indent()
-		t.write_line('return ${expr_str}')
+		// 检查是否是返回 void 方法调用
+		if expr.node_type == ast.node_expr_method_call {
+			if obj_var_node := expr.var {
+				if obj_var_node.node_type == ast.node_expr_variable {
+					obj_type := t.inferred_types[obj_var_node.name] or { VarType{ tag: .t_unknown } }
+					if obj_type.is_object() {
+						ret_type := t.get_method_return_type(obj_type.class_name, expr.name)
+						if ret_type.tag == .t_void {
+							// void 方法：先调用，再返回 null
+							expr_str := t.visit_expr(*expr)
+							t.write_indent()
+							t.write_line('${expr_str}')
+							t.write_indent()
+							t.write_line('return rt.new_null()')
+							return
+						}
+					}
+				}
+			}
+		}
+		// 如果当前函数有原生返回值类型，使用原生表达式
+		if t.current_func_ret_type.is_scalar() {
+			expr_str := t.visit_expr_native(*expr)
+			t.write_indent()
+			t.write_line('return ${expr_str}')
+		} else {
+			expr_str := t.visit_expr(*expr)
+			t.write_indent()
+			t.write_line('return ${expr_str}')
+		}
 	} else {
 		t.write_indent()
-		t.write_line('return rt.new_null()')
+		if t.current_func_ret_type.is_scalar() {
+			t.write_line('return ${t.get_native_default(t.current_func_ret_type)}')
+		} else {
+			t.write_line('return rt.new_null()')
+		}
+	}
+}
+
+// get_func_param_type 获取函数参数的推断类型
+fn (t &Transpiler) get_func_param_type(func_name string, param_name string) VarType {
+	if params := t.func_param_types[func_name] {
+		if pt := params[param_name] {
+			return pt
+		}
+	}
+	return VarType{ tag: .t_unknown }
+}
+
+// get_native_default 返回原生类型的默认零值
+fn (t &Transpiler) get_native_default(typ VarType) string {
+	return match typ.tag {
+		.t_int { '0' }
+		.t_float { '0.0' }
+		.t_bool { 'false' }
+		.t_string { "''" }
+		else { 'rt.new_null()' }
 	}
 }
 

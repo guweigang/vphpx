@@ -2,35 +2,18 @@ module emitter
 
 import php2v.ast
 
-// analyze_types 对所有的顶层语句进行前置类型推导，收集并确定原生变量的类型。
+// analyze_types 统一类型分析入口
+// 两阶段遍历：
+// Phase 1: 类型推导 + 对象类型扫描 + 变异分析 → 解析到 t.inferred_types
+// Phase 2: 构造函数/方法调用点扫描（依赖 t.inferred_types）
 pub fn (mut t Transpiler) analyze_types(stmts []ast.AstNode) {
-	mut var_assign_types := map[string][]TypeTag{}
-	t.infer_stmts_types(stmts, mut var_assign_types)
+	mut ctx := AnalyzeCtx{}
 
-	// 根据收集到的所有赋值类型，决定变量在 scope 中的最终推导类型
-	for name, tags in var_assign_types {
-		if tags.len == 0 {
-			continue
-		}
-		first := tags[0]
-		mut all_same := true
-		for tag in tags {
-			if tag != first {
-				all_same = false
-				break
-			}
-		}
-		if all_same && first in [.t_int, .t_float, .t_bool, .t_string] {
-			t.inferred_types[name] = VarType{ tag: first }
-		} else {
-			t.inferred_types[name] = VarType{ tag: .t_unknown }
-		}
-	}
+	// Phase 1: 类型推导 + 对象扫描 + 变异分析
+	t.analyze_stmts_phase1(stmts, mut ctx)
 
-	// P7: 独立 pass 扫描 $x = new ClassName()，填充对象类型
-	mut object_classes := map[string][]string{}
-	t.scan_object_types_stmts(stmts, mut object_classes)
-	for name, classes in object_classes {
+	// 先解析对象类型（Phase 2 的方法调用点扫描需要 inferred_types 中的对象类型）
+	for name, classes in ctx.object_classes {
 		if classes.len == 0 {
 			continue
 		}
@@ -47,82 +30,252 @@ pub fn (mut t Transpiler) analyze_types(stmts []ast.AstNode) {
 		}
 	}
 
-	// P7 Pass 0: 扫描所有 new ClassName(args) 调用点，用实参类型初始化构造函数参数推断
-	t.scan_ctor_call_sites(stmts)
-	// P7 Pass 0b: 扫描所有 $obj->method(args) 调用点，用实参类型推断方法参数类型
-	t.scan_method_call_sites(stmts)
-}
+	// Phase 2: 调用点扫描（构造函数/方法，依赖对象类型）
+	t.analyze_stmts_phase2(stmts)
 
-fn (mut t Transpiler) infer_stmts_types(stmts []ast.AstNode, mut var_assign_types map[string][]TypeTag) {
-	for stmt in stmts {
-		t.infer_stmt_types(stmt, mut var_assign_types)
+	// Phase 3: 函数类型推断（参数类型 + 返回值类型 + 局部变量类型）
+	t.analyze_func_types(stmts)
+
+	// Phase 4: 重新推导标量变量类型（此时 func_return_types 已填充）
+	// 只更新尚未确定类型的变量，避免覆盖已解析的对象类型
+	mut ctx2 := AnalyzeCtx{}
+	ctx2.infer_types = true
+	t.analyze_stmts_phase1(stmts, mut ctx2)
+
+	// 解析标量变量类型（仅当变量尚未在 inferred_types 中时）
+	for name, tags in ctx2.var_assign_types {
+		if tags.len == 0 {
+			continue
+		}
+		// 如果变量已有类型（如对象类型），跳过
+		if name in t.inferred_types {
+			continue
+		}
+		first := tags[0]
+		mut all_same := true
+		for tag in tags {
+			if tag != first {
+				all_same = false
+				break
+			}
+		}
+		if all_same && first in [.t_int, .t_float, .t_bool, .t_string] {
+			t.inferred_types[name] = VarType{ tag: first }
+		} else {
+			t.inferred_types[name] = VarType{ tag: .t_unknown }
+		}
 	}
 }
 
-fn (mut t Transpiler) infer_stmt_types(node ast.AstNode, mut var_assign_types map[string][]TypeTag) {
+// AnalyzeCtx 统一分析上下文，携带各 pass 需要的局部数据
+struct AnalyzeCtx {
+mut:
+	var_assign_types map[string][]TypeTag
+	object_classes   map[string][]string
+	infer_types      bool = true
+}
+
+// analyze_stmts_phase1 第一阶段：类型推导 + 对象扫描 + 变异分析
+fn (mut t Transpiler) analyze_stmts_phase1(stmts []ast.AstNode, mut ctx AnalyzeCtx) {
+	for stmt in stmts {
+		t.analyze_stmt_phase1(stmt, mut ctx)
+	}
+}
+
+fn (mut t Transpiler) analyze_stmt_phase1(node ast.AstNode, mut ctx AnalyzeCtx) {
 	match node.node_type {
 		ast.node_stmt_expression {
 			if expr := node.expr {
-				t.infer_expr_types(*expr, mut var_assign_types)
+				if ctx.infer_types {
+					t.infer_expr_types(*expr, mut ctx.var_assign_types)
+				}
+				t.scan_object_types_expr(*expr, mut ctx.object_classes)
+				t.scan_mutations_expr(*expr)
 			}
 		}
 		ast.node_stmt_if {
-			if cond := node.cond { t.infer_expr_types(*cond, mut var_assign_types) }
-			t.infer_stmts_types(node.stmts, mut var_assign_types)
+			if ctx.infer_types {
+				if cond := node.cond { t.infer_expr_types(*cond, mut ctx.var_assign_types) }
+			}
+			t.analyze_stmts_phase1(node.stmts, mut ctx)
 			for elseif in node.elseifs {
-				if elseif_cond := elseif.cond { t.infer_expr_types(*elseif_cond, mut var_assign_types) }
-				t.infer_stmts_types(elseif.stmts, mut var_assign_types)
+				if ctx.infer_types {
+					if elseif_cond := elseif.cond { t.infer_expr_types(*elseif_cond, mut ctx.var_assign_types) }
+				}
+				t.analyze_stmts_phase1(elseif.stmts, mut ctx)
 			}
 			if el := node.@else {
-				t.infer_stmts_types(el.stmts, mut var_assign_types)
+				t.analyze_stmts_phase1(el.stmts, mut ctx)
 			}
 		}
 		ast.node_stmt_while, ast.node_stmt_do {
-			if cond := node.cond { t.infer_expr_types(*cond, mut var_assign_types) }
-			t.infer_stmts_types(node.stmts, mut var_assign_types)
+			if ctx.infer_types {
+				if cond := node.cond { t.infer_expr_types(*cond, mut ctx.var_assign_types) }
+			}
+			t.analyze_stmts_phase1(node.stmts, mut ctx)
 		}
 		ast.node_stmt_for {
-			for init in node.init { t.infer_expr_types(init, mut var_assign_types) }
-			for cond in node.conds { t.infer_expr_types(cond, mut var_assign_types) }
-			for loop in node.loop { t.infer_expr_types(loop, mut var_assign_types) }
-			t.infer_stmts_types(node.stmts, mut var_assign_types)
+			if ctx.infer_types {
+				for init in node.init { t.infer_expr_types(init, mut ctx.var_assign_types) }
+				for cond in node.conds { t.infer_expr_types(cond, mut ctx.var_assign_types) }
+				for loop_expr in node.loop {
+					t.infer_expr_types(loop_expr, mut ctx.var_assign_types)
+					t.scan_mutations_expr(loop_expr)
+				}
+			} else {
+				for loop_expr in node.loop {
+					t.scan_mutations_expr(loop_expr)
+				}
+			}
+			t.analyze_stmts_phase1(node.stmts, mut ctx)
 		}
 		ast.node_stmt_foreach {
-			if expr := node.expr { t.infer_expr_types(*expr, mut var_assign_types) }
-			if val_var := node.value_var {
-				var_assign_types[val_var.name] << .t_unknown
+			if ctx.infer_types {
+				if expr := node.expr { t.infer_expr_types(*expr, mut ctx.var_assign_types) }
+				if val_var := node.value_var {
+					ctx.var_assign_types[val_var.name] << .t_unknown
+				}
+				if key_var := node.key_var {
+					ctx.var_assign_types[key_var.name] << .t_unknown
+				}
 			}
-			if key_var := node.key_var {
-				var_assign_types[key_var.name] << .t_unknown
-			}
-			t.infer_stmts_types(node.stmts, mut var_assign_types)
+			t.analyze_stmts_phase1(node.stmts, mut ctx)
 		}
 		ast.node_stmt_try_catch {
-			t.infer_stmts_types(node.stmts, mut var_assign_types)
+			t.analyze_stmts_phase1(node.stmts, mut ctx)
 			for c in node.catches {
-				if c_var := c.var {
-					var_assign_types[c_var.name] << .t_unknown
+				if ctx.infer_types {
+					if c_var := c.var {
+						ctx.var_assign_types[c_var.name] << .t_unknown
+					}
 				}
-				t.infer_stmts_types(c.stmts, mut var_assign_types)
+				t.analyze_stmts_phase1(c.stmts, mut ctx)
 			}
 			if fin := node.finally {
-				t.infer_stmts_types(fin.stmts, mut var_assign_types)
+				t.analyze_stmts_phase1(fin.stmts, mut ctx)
 			}
 		}
 		ast.node_stmt_switch {
-			if cond := node.cond { t.infer_expr_types(*cond, mut var_assign_types) }
+			if ctx.infer_types {
+				if cond := node.cond { t.infer_expr_types(*cond, mut ctx.var_assign_types) }
+			}
 			for case_node in node.cases {
-				if case_cond := case_node.cond { t.infer_expr_types(*case_cond, mut var_assign_types) }
-				t.infer_stmts_types(case_node.stmts, mut var_assign_types)
+				if ctx.infer_types {
+					if case_cond := case_node.cond { t.infer_expr_types(*case_cond, mut ctx.var_assign_types) }
+				}
+				t.analyze_stmts_phase1(case_node.stmts, mut ctx)
 			}
 		}
 		ast.node_stmt_namespace {
-			t.infer_stmts_types(node.stmts, mut var_assign_types)
+			old_ns := t.current_namespace
+			t.current_namespace = node.name
+			t.analyze_stmts_phase1(node.stmts, mut ctx)
+			t.current_namespace = old_ns
+		}
+		ast.node_stmt_unset {
+			for v in node.vars {
+				if v.node_type == ast.node_expr_variable {
+					t.mutated_vars[v.name] = true
+				}
+			}
+		}
+		ast.node_stmt_use {
+			for u in node.uses {
+				mut alias := u.alias
+				if alias == '' {
+					parts := u.name.split('\\')
+					alias = parts[parts.len - 1]
+				}
+				t.use_aliases[alias] = u.name
+			}
+		}
+		// 函数/类：descend for object/mutation scans, 但不做顶层类型推导
+		ast.node_stmt_function {
+			old_infer := ctx.infer_types
+			ctx.infer_types = false
+			t.analyze_stmts_phase1(node.stmts, mut ctx)
+			ctx.infer_types = old_infer
+		}
+		ast.node_stmt_class {
+			old_infer := ctx.infer_types
+			ctx.infer_types = false
+			t.analyze_stmts_phase1(node.stmts, mut ctx)
+			ctx.infer_types = old_infer
+		}
+		ast.node_stmt_class_method {
+			old_infer := ctx.infer_types
+			ctx.infer_types = false
+			t.analyze_stmts_phase1(node.stmts, mut ctx)
+			ctx.infer_types = old_infer
 		}
 		else {}
 	}
 }
 
+// analyze_stmts_phase2 第二阶段：构造函数/方法调用点扫描（依赖 t.inferred_types）
+fn (mut t Transpiler) analyze_stmts_phase2(stmts []ast.AstNode) {
+	for stmt in stmts {
+		t.analyze_stmt_phase2(stmt)
+	}
+}
+
+fn (mut t Transpiler) analyze_stmt_phase2(node ast.AstNode) {
+	match node.node_type {
+		ast.node_stmt_expression {
+			if expr := node.expr {
+				t.scan_ctor_call_sites_expr(*expr)
+				t.scan_method_call_sites_expr(*expr)
+			}
+		}
+		ast.node_stmt_if {
+			t.analyze_stmts_phase2(node.stmts)
+			for elseif in node.elseifs { t.analyze_stmts_phase2(elseif.stmts) }
+			if el := node.@else { t.analyze_stmts_phase2(el.stmts) }
+		}
+		ast.node_stmt_while, ast.node_stmt_do {
+			t.analyze_stmts_phase2(node.stmts)
+		}
+		ast.node_stmt_for {
+			for init in node.init { t.scan_ctor_call_sites_expr(init) }
+			for cond in node.conds { t.scan_ctor_call_sites_expr(cond) }
+			for loop_expr in node.loop {
+				t.scan_ctor_call_sites_expr(loop_expr)
+				t.scan_method_call_sites_expr(loop_expr)
+			}
+			t.analyze_stmts_phase2(node.stmts)
+		}
+		ast.node_stmt_foreach {
+			t.analyze_stmts_phase2(node.stmts)
+		}
+		ast.node_stmt_try_catch {
+			t.analyze_stmts_phase2(node.stmts)
+			for c in node.catches { t.analyze_stmts_phase2(c.stmts) }
+			if fin := node.finally { t.analyze_stmts_phase2(fin.stmts) }
+		}
+		ast.node_stmt_switch {
+			for case_node in node.cases { t.analyze_stmts_phase2(case_node.stmts) }
+		}
+		ast.node_stmt_namespace {
+			t.analyze_stmts_phase2(node.stmts)
+		}
+		ast.node_stmt_echo {
+			for expr in node.exprs { t.scan_method_call_sites_expr(expr) }
+		}
+		ast.node_stmt_return {
+			if expr := node.expr { t.scan_method_call_sites_expr(*expr) }
+		}
+		ast.node_stmt_function {
+			t.analyze_stmts_phase2(node.stmts)
+		}
+		ast.node_stmt_class {
+			t.analyze_stmts_phase2(node.stmts)
+		}
+		ast.node_stmt_class_method {
+			t.analyze_stmts_phase2(node.stmts)
+		}
+		else {}
+	}
+}
 fn (mut t Transpiler) infer_expr_types(node ast.AstNode, mut var_assign_types map[string][]TypeTag) TypeTag {
 	match node.node_type {
 		ast.node_scalar_int {
@@ -141,7 +294,12 @@ fn (mut t Transpiler) infer_expr_types(node ast.AstNode, mut var_assign_types ma
 			match node.name.to_lower() {
 				'true', 'false' { return .t_bool }
 				'null' { return .t_null }
-				else { return .t_unknown }
+				else {
+					if gc := t.global_constants[node.name] {
+						return gc.typ.tag
+					}
+					return .t_unknown
+				}
 			}
 		}
 		ast.node_expr_variable {
@@ -171,7 +329,9 @@ fn (mut t Transpiler) infer_expr_types(node ast.AstNode, mut var_assign_types ma
 			}
 			return val_type
 		}
-		ast.node_bin_plus, ast.node_bin_minus, ast.node_bin_mul, ast.node_bin_div {
+		ast.node_bin_plus, ast.node_bin_minus, ast.node_bin_mul, ast.node_bin_div,
+		ast.node_bin_bitwise_and, ast.node_bin_bitwise_or, ast.node_bin_bitwise_xor,
+		ast.node_bin_shift_left, ast.node_bin_shift_right {
 			left := node.left or { return .t_unknown }
 			right := node.right or { return .t_unknown }
 			l_type := t.infer_expr_types(*left, mut var_assign_types)
@@ -181,6 +341,88 @@ fn (mut t Transpiler) infer_expr_types(node ast.AstNode, mut var_assign_types ma
 			}
 			if l_type == .t_float || r_type == .t_float {
 				return .t_float
+			}
+			return .t_unknown
+		}
+		ast.node_bin_mod {
+			left := node.left or { return .t_unknown }
+			right := node.right or { return .t_unknown }
+			l_type := t.infer_expr_types(*left, mut var_assign_types)
+			r_type := t.infer_expr_types(*right, mut var_assign_types)
+			if l_type == .t_int && r_type == .t_int {
+				return .t_int
+			}
+			return .t_unknown
+		}
+		ast.node_bin_greater, ast.node_bin_smaller, ast.node_bin_greater_equal,
+		ast.node_bin_smaller_equal, ast.node_bin_equal, ast.node_bin_identical {
+			left := node.left or { return .t_unknown }
+			right := node.right or { return .t_unknown }
+			t.infer_expr_types(*left, mut var_assign_types)
+			t.infer_expr_types(*right, mut var_assign_types)
+			return .t_bool
+		}
+		ast.node_bin_bool_and, ast.node_bin_logical_and,
+		ast.node_bin_bool_or, ast.node_bin_logical_or {
+			left := node.left or { return .t_unknown }
+			right := node.right or { return .t_unknown }
+			t.infer_expr_types(*left, mut var_assign_types)
+			t.infer_expr_types(*right, mut var_assign_types)
+			return .t_bool
+		}
+		ast.node_expr_boolean_not {
+			expr_node := node.expr or { return .t_unknown }
+			t.infer_expr_types(*expr_node, mut var_assign_types)
+			return .t_bool
+		}
+		ast.node_expr_ternary {
+			cond := node.cond or { return .t_unknown }
+			t.infer_expr_types(*cond, mut var_assign_types)
+			if if_node := node.@if {
+				else_node := node.@else or { return .t_unknown }
+				if_type := t.infer_expr_types(*if_node, mut var_assign_types)
+				else_type := t.infer_expr_types(*else_node, mut var_assign_types)
+				if if_type == else_type {
+					return if_type
+				}
+			} else {
+				else_node := node.@else or { return .t_unknown }
+				cond_type := t.infer_expr_types(*cond, mut var_assign_types)
+				else_type := t.infer_expr_types(*else_node, mut var_assign_types)
+				if cond_type == else_type {
+					return cond_type
+				}
+			}
+			return .t_unknown
+		}
+		ast.node_bin_coalesce {
+			left := node.left or { return .t_unknown }
+			right := node.right or { return .t_unknown }
+			l_type := t.infer_expr_types(*left, mut var_assign_types)
+			r_type := t.infer_expr_types(*right, mut var_assign_types)
+			if l_type == r_type {
+				return l_type
+			}
+			return .t_unknown
+		}
+		ast.node_expr_bitwise_not {
+			expr_node := node.expr or { return .t_unknown }
+			e_type := t.infer_expr_types(*expr_node, mut var_assign_types)
+			if e_type == .t_int { return .t_int }
+			return .t_unknown
+		}
+		ast.node_expr_funccall {
+			// 递归推断参数表达式类型
+			for arg in node.args {
+				if arg_expr := arg.expr { t.infer_expr_types(*arg_expr, mut var_assign_types) }
+			}
+			// 如果是内置函数，使用其已知的返回类型
+			if tag := get_builtin_return_tag(node.name) {
+				return tag
+			}
+			// 如果函数有已知的原生返回值类型，使用它
+			if ret_type := t.func_return_types[node.name] {
+				return ret_type.tag
 			}
 			return .t_unknown
 		}
@@ -198,69 +440,6 @@ fn (mut t Transpiler) infer_expr_types(node ast.AstNode, mut var_assign_types ma
 
 // ─── P7: 对象类型扫描 pass ───
 // 独立扫描 $x = new ClassName() 赋值，填充 object_classes
-
-fn (mut t Transpiler) scan_object_types_stmts(stmts []ast.AstNode, mut object_classes map[string][]string) {
-	for stmt in stmts {
-		t.scan_object_types_stmt(stmt, mut object_classes)
-	}
-}
-
-fn (mut t Transpiler) scan_object_types_stmt(node ast.AstNode, mut object_classes map[string][]string) {
-	match node.node_type {
-		ast.node_stmt_expression {
-			if expr := node.expr { t.scan_object_types_expr(*expr, mut object_classes) }
-		}
-		ast.node_stmt_if {
-			t.scan_object_types_stmts(node.stmts, mut object_classes)
-			for elseif in node.elseifs { t.scan_object_types_stmts(elseif.stmts, mut object_classes) }
-			if el := node.@else { t.scan_object_types_stmts(el.stmts, mut object_classes) }
-		}
-		ast.node_stmt_while, ast.node_stmt_do {
-			t.scan_object_types_stmts(node.stmts, mut object_classes)
-		}
-		ast.node_stmt_for {
-			t.scan_object_types_stmts(node.stmts, mut object_classes)
-		}
-		ast.node_stmt_foreach {
-			t.scan_object_types_stmts(node.stmts, mut object_classes)
-		}
-		ast.node_stmt_try_catch {
-			t.scan_object_types_stmts(node.stmts, mut object_classes)
-			for c in node.catches { t.scan_object_types_stmts(c.stmts, mut object_classes) }
-			if fin := node.finally { t.scan_object_types_stmts(fin.stmts, mut object_classes) }
-		}
-		ast.node_stmt_switch {
-			for case_node in node.cases { t.scan_object_types_stmts(case_node.stmts, mut object_classes) }
-		}
-		ast.node_stmt_namespace {
-			old_ns := t.current_namespace
-			t.current_namespace = node.name
-			t.scan_object_types_stmts(node.stmts, mut object_classes)
-			t.current_namespace = old_ns
-		}
-		ast.node_stmt_function {
-			t.scan_object_types_stmts(node.stmts, mut object_classes)
-		}
-		ast.node_stmt_class {
-			t.scan_object_types_stmts(node.stmts, mut object_classes)
-		}
-		ast.node_stmt_class_method {
-			t.scan_object_types_stmts(node.stmts, mut object_classes)
-		}
-		ast.node_stmt_use {
-			for u in node.uses {
-				mut alias := u.alias
-				if alias == '' {
-					parts := u.name.split('\\')
-					alias = parts[parts.len - 1]
-				}
-				t.use_aliases[alias] = u.name
-			}
-		}
-		else {}
-	}
-}
-
 fn (mut t Transpiler) scan_object_types_expr(node ast.AstNode, mut object_classes map[string][]string) {
 	match node.node_type {
 		ast.node_expr_assign {
@@ -289,60 +468,6 @@ fn (mut t Transpiler) scan_object_types_expr(node ast.AstNode, mut object_classe
 
 // ─── P10: 变异分析 pass ───
 // 扫描哪些变量被原地修改（array dim fetch 赋值、inc/dec、unset、property 赋值）
-
-pub fn (mut t Transpiler) scan_mutations(stmts []ast.AstNode) {
-	t.scan_mutations_stmts(stmts)
-}
-
-fn (mut t Transpiler) scan_mutations_stmts(stmts []ast.AstNode) {
-	for stmt in stmts {
-		t.scan_mutations_stmt(stmt)
-	}
-}
-
-fn (mut t Transpiler) scan_mutations_stmt(node ast.AstNode) {
-	match node.node_type {
-		ast.node_stmt_expression {
-			if expr := node.expr { t.scan_mutations_expr(*expr) }
-		}
-		ast.node_stmt_if {
-			t.scan_mutations_stmts(node.stmts)
-			for elseif in node.elseifs { t.scan_mutations_stmts(elseif.stmts) }
-			if el := node.@else { t.scan_mutations_stmts(el.stmts) }
-		}
-		ast.node_stmt_while, ast.node_stmt_do {
-			t.scan_mutations_stmts(node.stmts)
-		}
-		ast.node_stmt_for {
-			for init in node.init { t.scan_mutations_expr(init) }
-			for loop in node.loop { t.scan_mutations_expr(loop) }
-			t.scan_mutations_stmts(node.stmts)
-		}
-		ast.node_stmt_foreach {
-			t.scan_mutations_stmts(node.stmts)
-		}
-		ast.node_stmt_try_catch {
-			t.scan_mutations_stmts(node.stmts)
-			for c in node.catches { t.scan_mutations_stmts(c.stmts) }
-			if fin := node.finally { t.scan_mutations_stmts(fin.stmts) }
-		}
-		ast.node_stmt_switch {
-			for case_node in node.cases { t.scan_mutations_stmts(case_node.stmts) }
-		}
-		ast.node_stmt_namespace {
-			t.scan_mutations_stmts(node.stmts)
-		}
-		ast.node_stmt_unset {
-			for v in node.vars {
-				if v.node_type == ast.node_expr_variable {
-					t.mutated_vars[v.name] = true
-				}
-			}
-		}
-		else {}
-	}
-}
-
 fn (mut t Transpiler) scan_mutations_expr(node ast.AstNode) {
 	match node.node_type {
 		ast.node_expr_assign {
@@ -386,60 +511,6 @@ fn (mut t Transpiler) scan_mutations_expr(node ast.AstNode) {
 
 // ─── P7 Pass 0: new ClassName(args) 调用点扫描 ───────────────────────
 // 扫描全局 AST 中所有 new ClassName(args)，用实参类型初始化 ctor_arg_types
-
-pub fn (mut t Transpiler) scan_ctor_call_sites(stmts []ast.AstNode) {
-	for stmt in stmts {
-		t.scan_ctor_call_sites_stmt(stmt)
-	}
-}
-
-fn (mut t Transpiler) scan_ctor_call_sites_stmt(node ast.AstNode) {
-	match node.node_type {
-		ast.node_stmt_expression {
-			if expr := node.expr { t.scan_ctor_call_sites_expr(*expr) }
-		}
-		ast.node_stmt_if {
-			t.scan_ctor_call_sites_stmts(node.stmts)
-			for elseif in node.elseifs { t.scan_ctor_call_sites_stmts(elseif.stmts) }
-			if el := node.@else { t.scan_ctor_call_sites_stmts(el.stmts) }
-		}
-		ast.node_stmt_while, ast.node_stmt_do {
-			t.scan_ctor_call_sites_stmts(node.stmts)
-		}
-		ast.node_stmt_for {
-			for init in node.init { t.scan_ctor_call_sites_expr(init) }
-			t.scan_ctor_call_sites_stmts(node.stmts)
-		}
-		ast.node_stmt_foreach {
-			t.scan_ctor_call_sites_stmts(node.stmts)
-		}
-		ast.node_stmt_try_catch {
-			t.scan_ctor_call_sites_stmts(node.stmts)
-			for c in node.catches { t.scan_ctor_call_sites_stmts(c.stmts) }
-			if fin := node.finally { t.scan_ctor_call_sites_stmts(fin.stmts) }
-		}
-		ast.node_stmt_switch {
-			for case_node in node.cases { t.scan_ctor_call_sites_stmts(case_node.stmts) }
-		}
-		ast.node_stmt_namespace {
-			old_ns := t.current_namespace
-			t.current_namespace = node.name
-			t.scan_ctor_call_sites_stmts(node.stmts)
-			t.current_namespace = old_ns
-		}
-		ast.node_stmt_function {
-			t.scan_ctor_call_sites_stmts(node.stmts)
-		}
-		else {}
-	}
-}
-
-fn (mut t Transpiler) scan_ctor_call_sites_stmts(stmts []ast.AstNode) {
-	for stmt in stmts {
-		t.scan_ctor_call_sites_stmt(stmt)
-	}
-}
-
 fn (mut t Transpiler) scan_ctor_call_sites_expr(node ast.AstNode) {
 	match node.node_type {
 		ast.node_expr_new {
@@ -477,73 +548,6 @@ fn (mut t Transpiler) scan_ctor_call_sites_expr(node ast.AstNode) {
 
 // ─── P7 Pass 0b: 方法调用点扫描 ───────────────────────
 // 扫描全局 AST 中所有 $obj->method(args)，用实参类型填充 method_call_arg_types
-
-pub fn (mut t Transpiler) scan_method_call_sites(stmts []ast.AstNode) {
-	for stmt in stmts {
-		t.scan_method_call_sites_stmt(stmt)
-	}
-}
-
-fn (mut t Transpiler) scan_method_call_sites_stmt(node ast.AstNode) {
-	match node.node_type {
-		ast.node_stmt_expression {
-			if expr := node.expr { t.scan_method_call_sites_expr(*expr) }
-		}
-		ast.node_stmt_if {
-			t.scan_method_call_sites_stmts(node.stmts)
-			for elseif in node.elseifs { t.scan_method_call_sites_stmts(elseif.stmts) }
-			if el := node.@else { t.scan_method_call_sites_stmts(el.stmts) }
-		}
-		ast.node_stmt_while, ast.node_stmt_do {
-			t.scan_method_call_sites_stmts(node.stmts)
-		}
-		ast.node_stmt_for {
-			for init in node.init { t.scan_method_call_sites_expr(init) }
-			for cond in node.conds { t.scan_method_call_sites_expr(cond) }
-			for loop_expr in node.loop { t.scan_method_call_sites_expr(loop_expr) }
-			t.scan_method_call_sites_stmts(node.stmts)
-		}
-		ast.node_stmt_foreach {
-			t.scan_method_call_sites_stmts(node.stmts)
-		}
-		ast.node_stmt_try_catch {
-			t.scan_method_call_sites_stmts(node.stmts)
-			for c in node.catches { t.scan_method_call_sites_stmts(c.stmts) }
-			if fin := node.finally { t.scan_method_call_sites_stmts(fin.stmts) }
-		}
-		ast.node_stmt_switch {
-			for case_node in node.cases { t.scan_method_call_sites_stmts(case_node.stmts) }
-		}
-		ast.node_stmt_namespace {
-			t.scan_method_call_sites_stmts(node.stmts)
-		}
-		ast.node_stmt_function {
-			t.scan_method_call_sites_stmts(node.stmts)
-		}
-		ast.node_stmt_class {
-			t.scan_method_call_sites_stmts(node.stmts)
-		}
-		ast.node_stmt_class_method {
-			t.scan_method_call_sites_stmts(node.stmts)
-		}
-		ast.node_stmt_echo {
-			for expr in node.exprs {
-				t.scan_method_call_sites_expr(expr)
-			}
-		}
-		ast.node_stmt_return {
-			if expr := node.expr { t.scan_method_call_sites_expr(*expr) }
-		}
-		else {}
-	}
-}
-
-fn (mut t Transpiler) scan_method_call_sites_stmts(stmts []ast.AstNode) {
-	for stmt in stmts {
-		t.scan_method_call_sites_stmt(stmt)
-	}
-}
-
 fn (mut t Transpiler) scan_method_call_sites_expr(node ast.AstNode) {
 	match node.node_type {
 		ast.node_expr_method_call {
@@ -669,8 +673,18 @@ pub fn (mut t Transpiler) infer_class_types(stmts []ast.AstNode) {
 					for param in method_stmt.params {
 						param_var := param.var or { continue }
 						param_name := param_var.name
-						// 分析参数使用：如果参数只被赋值给原生类型属性，参数也用原生类型
-						param_type := t.infer_param_type_from_usage(method_stmt.stmts, param_name, prop_types)
+						// 1) PHP 类型提示优先
+						mut param_type := VarType{ tag: .t_unknown }
+						if param.incl_type != '' {
+							hint_tag := php_type_to_tag(param.incl_type)
+							if hint_tag != .t_unknown {
+								param_type = VarType{ tag: hint_tag }
+							}
+						}
+						// 2) 回退：分析参数使用
+						if param_type.tag == .t_unknown {
+							param_type = t.infer_param_type_from_usage(method_stmt.stmts, param_name, prop_types)
+						}
 						if param_type.tag != .t_unknown {
 							method_params[param_name] = param_type
 						}
@@ -692,7 +706,20 @@ pub fn (mut t Transpiler) infer_class_types(stmts []ast.AstNode) {
 			for method_stmt in stmt.stmts {
 				if method_stmt.node_type == ast.node_stmt_class_method {
 					method_name := method_stmt.name
-					ret_type := t.infer_method_return_type(method_stmt.stmts, prop_types)
+					// PHP 返回类型提示优先
+					mut ret_type := VarType{ tag: .t_unknown }
+					if method_stmt.return_type != '' {
+						hint := method_stmt.return_type.trim_left('?')
+						hint_tag := php_type_to_tag(hint)
+						if hint_tag != .t_unknown {
+							ret_type = VarType{ tag: hint_tag }
+						} else if method_stmt.return_type.to_lower() == 'void' {
+							ret_type = VarType{ tag: .t_void }
+						}
+					}
+					if ret_type.tag == .t_unknown {
+						ret_type = t.infer_method_return_type(method_stmt.stmts, prop_types)
+					}
 					if ret_type.tag != .t_unknown {
 						return_types[method_name] = ret_type
 					}
@@ -877,7 +904,8 @@ fn (mut t Transpiler) infer_method_return_type(stmts []ast.AstNode, prop_types m
 	mut return_tags := []TypeTag{}
 	t.scan_return_types(stmts, prop_types, mut return_tags)
 	if return_tags.len == 0 {
-		return VarType{ tag: .t_unknown }
+		// 没有 return 语句或只有 return; → void 函数
+		return VarType{ tag: .t_void }
 	}
 	first := return_tags[0]
 	mut all_same := true
@@ -946,17 +974,27 @@ pub fn (mut t Transpiler) infer_single_class_types(node ast.AstNode, class_name 
 		}
 	}
 
-	// 构建初始 var_assign_types：用调用点实参类型将参数名映射到类型
+	// 构建初始 var_assign_types：优先 PHP 类型提示，其次调用点实参类型
 	mut var_assign_types := map[string][]TypeTag{}
 	if ctor := ctor_node {
-		if arg_types := t.ctor_arg_types[class_name.to_lower()] {
-			for i, param in ctor.params {
-				if i >= arg_types.len { break }
-				param_var := param.var or { continue }
-				param_name := param_var.name
-				arg_tag := arg_types[i]
-				if arg_tag in [.t_int, .t_float, .t_bool, .t_string] {
-					var_assign_types[param_name] << arg_tag
+		for i, param in ctor.params {
+			param_var := param.var or { continue }
+			param_name := param_var.name
+			// 1) PHP 类型提示优先
+			if param.incl_type != '' {
+				hint_tag := php_type_to_tag(param.incl_type)
+				if hint_tag != .t_unknown {
+					var_assign_types[param_name] << hint_tag
+					continue
+				}
+			}
+			// 2) 回退：调用点实参类型
+			if arg_types := t.ctor_arg_types[class_name.to_lower()] {
+				if i < arg_types.len {
+					arg_tag := arg_types[i]
+					if arg_tag in [.t_int, .t_float, .t_bool, .t_string] {
+						var_assign_types[param_name] << arg_tag
+					}
 				}
 			}
 		}
@@ -1004,7 +1042,18 @@ pub fn (mut t Transpiler) infer_single_class_types(node ast.AstNode, class_name 
 			for i, param in method_stmt.params {
 				param_var := param.var or { continue }
 				param_name := param_var.name
-				param_type := t.infer_param_type_from_usage(method_stmt.stmts, param_name, prop_types)
+				// 0) PHP 类型提示优先
+				mut param_type := VarType{ tag: .t_unknown }
+				if param.incl_type != '' {
+					hint_tag := php_type_to_tag(param.incl_type)
+					if hint_tag != .t_unknown {
+						param_type = VarType{ tag: hint_tag }
+					}
+				}
+				// 1) 回退：分析参数使用
+				if param_type.tag == .t_unknown {
+					param_type = t.infer_param_type_from_usage(method_stmt.stmts, param_name, prop_types)
+				}
 				if param_type.tag != .t_unknown {
 					method_params[param_name] = param_type
 				} else if i < call_arg_types.len && call_arg_types[i] in [.t_int, .t_float, .t_bool, .t_string] {
@@ -1032,7 +1081,20 @@ pub fn (mut t Transpiler) infer_single_class_types(node ast.AstNode, class_name 
 	for method_stmt in node.stmts {
 		if method_stmt.node_type == ast.node_stmt_class_method {
 			method_name := method_stmt.name
-			ret_type := t.infer_method_return_type(method_stmt.stmts, prop_types)
+			// PHP 返回类型提示优先
+			mut ret_type := VarType{ tag: .t_unknown }
+			if method_stmt.return_type != '' {
+				hint := method_stmt.return_type.trim_left('?')
+				hint_tag := php_type_to_tag(hint)
+				if hint_tag != .t_unknown {
+					ret_type = VarType{ tag: hint_tag }
+				} else if method_stmt.return_type.to_lower() == 'void' {
+					ret_type = VarType{ tag: .t_void }
+				}
+			}
+			if ret_type.tag == .t_unknown {
+				ret_type = t.infer_method_return_type(method_stmt.stmts, prop_types)
+			}
 			if ret_type.tag != .t_unknown {
 				return_types[method_name] = ret_type
 			}
@@ -1046,6 +1108,275 @@ pub fn (mut t Transpiler) infer_single_class_types(node ast.AstNode, class_name 
 			t.classes[i].param_types = param_types.clone()
 			t.classes[i].return_types = return_types.clone()
 			break
+		}
+	}
+}
+
+// ─── Phase 3: 函数类型推断 ───────────────────────
+
+// analyze_func_types 扫描所有函数定义和调用点，推断参数类型、返回值类型和局部变量类型
+pub fn (mut t Transpiler) analyze_func_types(stmts []ast.AstNode) {
+	// Step 1: 扫描函数调用点，收集实参类型
+	t.scan_func_call_sites(stmts)
+
+	// Step 2: 对每个函数，用调用点实参类型推断参数类型和返回值类型
+	t.infer_func_types_from_stmts(stmts)
+}
+
+// scan_func_call_sites 递归扫描 AST 中所有函数调用，收集实参类型
+fn (mut t Transpiler) scan_func_call_sites(stmts []ast.AstNode) {
+	for stmt in stmts {
+		t.scan_func_call_sites_expr(stmt)
+	}
+}
+
+fn (mut t Transpiler) scan_func_call_sites_expr(node ast.AstNode) {
+	match node.node_type {
+		ast.node_expr_funccall {
+			func_name := node.name
+			if func_name in t.custom_functions {
+				mut arg_types := []TypeTag{}
+				mut dummy_types := map[string][]TypeTag{}
+				for arg in node.args {
+					arg_expr := arg.expr or { continue }
+					arg_type := t.infer_expr_types(*arg_expr, mut dummy_types)
+					arg_types << arg_type
+				}
+				if func_name !in t.func_call_arg_types {
+					t.func_call_arg_types[func_name] = arg_types.clone()
+				} else {
+					existing := t.func_call_arg_types[func_name]
+					for i in 0 .. existing.len {
+						if i < arg_types.len && existing[i] != arg_types[i] {
+							t.func_call_arg_types[func_name][i] = .t_unknown
+						}
+					}
+				}
+			}
+			// 递归扫描子表达式
+			for arg in node.args {
+				if arg_expr := arg.expr { t.scan_func_call_sites_expr(*arg_expr) }
+			}
+		}
+		else {
+			if expr := node.expr { t.scan_func_call_sites_expr(*expr) }
+			if left := node.left { t.scan_func_call_sites_expr(*left) }
+			if right := node.right { t.scan_func_call_sites_expr(*right) }
+			for arg in node.args {
+				if arg_expr := arg.expr { t.scan_func_call_sites_expr(*arg_expr) }
+			}
+			t.scan_func_call_sites(node.stmts)
+			for elseif in node.elseifs {
+				t.scan_func_call_sites(elseif.stmts)
+			}
+			if el := node.@else { t.scan_func_call_sites(el.stmts) }
+		}
+	}
+}
+
+// infer_func_types_from_stmts 递归扫描函数定义，推断参数/返回值/局部变量类型
+fn (mut t Transpiler) infer_func_types_from_stmts(stmts []ast.AstNode) {
+	for stmt in stmts {
+		if stmt.node_type == ast.node_stmt_function {
+			t.infer_single_func_types(stmt)
+		} else if stmt.node_type == ast.node_stmt_namespace {
+			t.infer_func_types_from_stmts(stmt.stmts)
+		}
+	}
+}
+
+// php_type_to_tag 将 PHP 类型提示字符串映射为 TypeTag。
+// 仅处理简单标量类型；nullable (?string)、联合 (int|string)、类名等返回 .t_unknown。
+fn php_type_to_tag(php_type string) TypeTag {
+	match php_type.to_lower() {
+		'string' { return .t_string }
+		'int', 'integer' { return .t_int }
+		'float', 'double' { return .t_float }
+		'bool', 'boolean' { return .t_bool }
+		else { return .t_unknown }
+	}
+}
+
+// infer_single_func_types 推断单个函数的参数类型、返回值类型和局部变量类型
+fn (mut t Transpiler) infer_single_func_types(node ast.AstNode) {
+	func_name := node.name
+
+	// 推断参数类型：PHP 类型提示优先，其次从调用点实参推断
+	mut param_types := map[string]VarType{}
+	mut var_assign_types := map[string][]TypeTag{}
+	for i, param in node.params {
+		param_var := param.var or { continue }
+		param_name := param_var.name
+
+		// 1) PHP 类型提示（如 string $name, int $age）
+		mut resolved_tag := TypeTag.t_unknown
+		if param.incl_type != '' {
+			hint_tag := php_type_to_tag(param.incl_type)
+			if hint_tag != .t_unknown {
+				resolved_tag = hint_tag
+			}
+		}
+
+		// 2) 无类型提示时，从调用点实参推断
+		if resolved_tag == .t_unknown {
+			if arg_types := t.func_call_arg_types[func_name] {
+				if i < arg_types.len {
+					arg_tag := arg_types[i]
+					if arg_tag in [.t_int, .t_float, .t_bool, .t_string] {
+						resolved_tag = arg_tag
+					}
+				}
+			}
+		}
+
+		if resolved_tag != .t_unknown {
+			param_types[param_name] = VarType{ tag: resolved_tag }
+			var_assign_types[param_name] << resolved_tag
+		}
+	}
+
+	// 用参数类型作为种子，对函数体跑类型推导，推断局部变量类型
+	t.infer_expr_types_for_func(node.stmts, mut var_assign_types)
+
+	// 解析局部变量类型
+	mut local_var_types := map[string]VarType{}
+	for vname, tags in var_assign_types {
+		if tags.len == 0 { continue }
+		first := tags[0]
+		mut all_same := true
+		for tag in tags {
+			if tag != first {
+				all_same = false
+				break
+			}
+		}
+		if all_same && first in [.t_int, .t_float, .t_bool, .t_string] {
+			local_var_types[vname] = VarType{ tag: first }
+		}
+	}
+
+	// 推断返回值类型：PHP 返回类型提示优先
+	mut ret_type := VarType{ tag: .t_unknown }
+	if node.return_type != '' {
+		hint := node.return_type.trim_left('?')
+		hint_tag := php_type_to_tag(hint)
+		if hint_tag != .t_unknown {
+			ret_type = VarType{ tag: hint_tag }
+		} else if node.return_type.to_lower() == 'void' {
+			ret_type = VarType{ tag: .t_void }
+		}
+	}
+	if ret_type.tag == .t_unknown {
+		ret_type = t.infer_func_return_type(node.stmts, mut var_assign_types)
+	}
+	if ret_type.tag != .t_unknown && ret_type.tag != .t_void {
+		t.func_return_types[func_name] = ret_type
+	}
+	if param_types.len > 0 {
+		t.func_param_types[func_name] = param_types.clone()
+	}
+	if local_var_types.len > 0 {
+		t.func_var_types[func_name] = local_var_types.clone()
+	}
+}
+
+// infer_expr_types_for_func 对函数体跑类型推导，结果写入 var_assign_types
+fn (mut t Transpiler) infer_expr_types_for_func(stmts []ast.AstNode, mut var_assign_types map[string][]TypeTag) {
+	for stmt in stmts {
+		t.infer_expr_types_for_func_stmt(stmt, mut var_assign_types)
+	}
+}
+
+fn (mut t Transpiler) infer_expr_types_for_func_stmt(node ast.AstNode, mut var_assign_types map[string][]TypeTag) {
+	match node.node_type {
+		ast.node_stmt_expression {
+			if expr := node.expr {
+				t.infer_expr_types(*expr, mut var_assign_types)
+			}
+		}
+		ast.node_stmt_return {
+			if expr := node.expr {
+				t.infer_expr_types(*expr, mut var_assign_types)
+			}
+		}
+		ast.node_stmt_if {
+			if cond := node.cond { t.infer_expr_types(*cond, mut var_assign_types) }
+			t.infer_expr_types_for_func(node.stmts, mut var_assign_types)
+			for elseif in node.elseifs {
+				if elseif_cond := elseif.cond { t.infer_expr_types(*elseif_cond, mut var_assign_types) }
+				t.infer_expr_types_for_func(elseif.stmts, mut var_assign_types)
+			}
+			if el := node.@else {
+				t.infer_expr_types_for_func(el.stmts, mut var_assign_types)
+			}
+		}
+		ast.node_stmt_while, ast.node_stmt_do {
+			if cond := node.cond { t.infer_expr_types(*cond, mut var_assign_types) }
+			t.infer_expr_types_for_func(node.stmts, mut var_assign_types)
+		}
+		ast.node_stmt_for {
+			for init in node.init { t.infer_expr_types(init, mut var_assign_types) }
+			for cond in node.conds { t.infer_expr_types(cond, mut var_assign_types) }
+			for loop_expr in node.loop { t.infer_expr_types(loop_expr, mut var_assign_types) }
+			t.infer_expr_types_for_func(node.stmts, mut var_assign_types)
+		}
+		ast.node_stmt_foreach {
+			if expr := node.expr { t.infer_expr_types(*expr, mut var_assign_types) }
+			t.infer_expr_types_for_func(node.stmts, mut var_assign_types)
+		}
+		ast.node_stmt_echo {
+			for expr in node.exprs {
+				t.infer_expr_types(expr, mut var_assign_types)
+			}
+		}
+		else {
+			if expr := node.expr { t.infer_expr_types(*expr, mut var_assign_types) }
+			for stmt in node.stmts {
+				t.infer_expr_types_for_func_stmt(stmt, mut var_assign_types)
+			}
+		}
+	}
+}
+
+// infer_func_return_type 推断函数的返回值类型
+fn (mut t Transpiler) infer_func_return_type(stmts []ast.AstNode, mut var_assign_types map[string][]TypeTag) VarType {
+	mut return_tags := []TypeTag{}
+	t.scan_func_return_tags(stmts, mut var_assign_types, mut return_tags)
+	if return_tags.len == 0 {
+		return VarType{ tag: .t_void }
+	}
+	first := return_tags[0]
+	mut all_same := true
+	for tag in return_tags {
+		if tag != first {
+			all_same = false
+			break
+		}
+	}
+	if all_same && first in [.t_int, .t_float, .t_bool, .t_string] {
+		return VarType{ tag: first }
+	}
+	return VarType{ tag: .t_unknown }
+}
+
+fn (mut t Transpiler) scan_func_return_tags(stmts []ast.AstNode, mut var_assign_types map[string][]TypeTag, mut return_tags []TypeTag) {
+	for stmt in stmts {
+		match stmt.node_type {
+			ast.node_stmt_return {
+				if expr := stmt.expr {
+					tag := t.infer_expr_types(*expr, mut var_assign_types)
+					return_tags << tag
+				}
+			}
+			else {
+				t.scan_func_return_tags(stmt.stmts, mut var_assign_types, mut return_tags)
+				for elseif in stmt.elseifs {
+					t.scan_func_return_tags(elseif.stmts, mut var_assign_types, mut return_tags)
+				}
+				if el := stmt.@else {
+					t.scan_func_return_tags(el.stmts, mut var_assign_types, mut return_tags)
+				}
+			}
 		}
 	}
 }
