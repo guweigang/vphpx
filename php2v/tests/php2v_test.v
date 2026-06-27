@@ -176,10 +176,12 @@ fn test_transpiler_end_to_end() {
 			'print(var_msg',
 		]
 		'23_unset_empty.php': [
-			'rt.new_bool(!rt.is_true(',
-			'var_not_exist',
-			"var_d = ''",
-			'var_arr.array_unset(',
+			"var_a == ''",
+			"var_b == 0",
+			"!rt.is_true(var_c)",
+			"var_d == ''",
+			"!rt.is_true(var_not_exist)",
+			"var_arr.array_unset(",
 		]
 		'24_switch_case.php': [
 			'match var_x {',

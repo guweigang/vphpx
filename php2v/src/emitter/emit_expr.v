@@ -425,6 +425,24 @@ fn (mut t Transpiler) visit_expr_native(node ast.AstNode) string {
 			ns := t.current_namespace.replace('\\', '\\\\')
 			return "'${ns}'"
 		}
+		ast.node_expr_empty {
+			expr_node := node.expr or { panic('Empty missing expr') }
+			expr_type := t.get_expr_type(*expr_node)
+			t.last_expr_type = VarType{ tag: .t_bool }
+			if expr_type.is_scalar() {
+				code := t.visit_expr_native(*expr_node)
+				match expr_type.tag {
+					.t_string { return "${code} == ''" }
+					.t_int { return "${code} == 0" }
+					.t_float { return "${code} == 0.0" }
+					.t_bool { return "!(${code})" }
+					.t_null { return 'true' }
+					else {}
+				}
+			}
+			expr_str := t.visit_expr(*expr_node)
+			return '!rt.is_true(${expr_str})'
+		}
 		else {
 			return t.visit_expr(node)
 		}
@@ -578,6 +596,23 @@ fn (mut t Transpiler) emit_native_condition(node ast.AstNode) string {
 				.t_string { return "var_${node.name}.len > 0 && var_${node.name} != '0'" }
 				else { return '' }
 			}
+		}
+		ast.node_expr_empty {
+			expr_node := node.expr or { return '' }
+			expr_type := t.get_expr_type(*expr_node)
+			if expr_type.is_scalar() {
+				code := t.visit_expr_native(*expr_node)
+				match expr_type.tag {
+					.t_string { return "${code} == ''" }
+					.t_int { return "${code} == 0" }
+					.t_float { return "${code} == 0.0" }
+					.t_bool { return "!(${code})" }
+					.t_null { return 'true' }
+					else {}
+				}
+			}
+			expr_str := t.visit_expr(*expr_node)
+			return '!rt.is_true(${expr_str})'
 		}
 		else { return '' }
 	}
