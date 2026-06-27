@@ -50,6 +50,53 @@ fn (mut t Transpiler) get_expr_type(node ast.AstNode) VarType {
 		ast.node_bin_concat {
 			return VarType{ tag: .t_string }
 		}
+		ast.node_expr_array {
+			mut is_list := true
+			mut is_map := true
+			mut elem_tags := []TypeTag{}
+			for item in node.items {
+				if key := item.key {
+					if key.node_type == ast.node_scalar_string {
+						is_list = false
+					} else if key.node_type == ast.node_scalar_int {
+						is_map = false
+					} else {
+						is_list = false
+						is_map = false
+					}
+				} else {
+					is_map = false
+				}
+				if val := item.expr {
+					elem_tags << t.get_expr_type(*val).tag
+				}
+			}
+			mut elem_tag := TypeTag.t_unknown
+			if elem_tags.len > 0 {
+				first := elem_tags[0]
+				mut all_same := true
+				for tag in elem_tags {
+					if tag != first {
+						all_same = false
+						break
+					}
+				}
+				if all_same && first in [.t_int, .t_float, .t_string, .t_bool] {
+					elem_tag = first
+				}
+			}
+			mut force_non_native := false
+			if !t.expected_type.is_native_list && !t.expected_type.is_native_map {
+				force_non_native = true
+			}
+			if is_list && !is_map && !force_non_native {
+				return VarType{ tag: .t_array, is_native_list: true, element_type_tag: elem_tag }
+			}
+			if is_map && !is_list && !force_non_native {
+				return VarType{ tag: .t_array, is_native_map: true, element_type_tag: elem_tag }
+			}
+			return VarType{ tag: .t_array }
+		}
 		ast.node_expr_funccall {
 			// 优先使用已知内置函数的返回类型
 			if tag := get_builtin_return_tag(node.name) {
@@ -443,6 +490,21 @@ fn (mut t Transpiler) visit_expr_native(node ast.AstNode) string {
 			expr_str := t.visit_expr(*expr_node)
 			return '!rt.is_true(${expr_str})'
 		}
+		ast.node_expr_array_dim_fetch {
+			var_node := node.var or { panic('ArrayDimFetch missing var') }
+			var_type := t.get_expr_type(*var_node)
+			var_str := t.visit_expr(*var_node)
+			if var_type.is_native_list || var_type.is_native_map {
+				if dim_node := node.dim {
+					dim_str := t.visit_expr_native(*dim_node)
+					t.last_expr_type = VarType{ tag: var_type.element_type_tag }
+					return '${var_str}[${dim_str}]'
+				} else {
+					panic('ArrayDimFetch missing dim in read context')
+				}
+			}
+			return t.visit_expr(node)
+		}
 		else {
 			return t.visit_expr(node)
 		}
@@ -822,9 +884,30 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			
 			if var_node.node_type == ast.node_expr_array_dim_fetch {
 				arr_var_node := var_node.var or { panic('ArrayDimFetch missing var') }
+				arr_var_type := t.get_expr_type(*arr_var_node)
 				arr_var_name := t.visit_expr(*arr_var_node)
 				
 				expr_node := node.expr or { panic('Assign node missing expr') }
+				
+				if arr_var_type.is_native_list || arr_var_type.is_native_map {
+					mut val_str := ''
+					if arr_var_type.element_type_tag != .t_unknown {
+						val_str = t.visit_expr_native(*expr_node)
+					} else {
+						val_str = t.visit_expr(*expr_node)
+						if expr_node.node_type == ast.node_expr_variable {
+							val_str += '.dup()'
+						}
+					}
+					
+					if dim_node := var_node.dim {
+						dim_str := t.visit_expr_native(*dim_node)
+						return '${arr_var_name}[${dim_str}] = ${val_str}'
+					} else {
+						return '${arr_var_name} << ${val_str}'
+					}
+				}
+				
 				mut expr_str := t.visit_expr(*expr_node)
 				if expr_node.node_type == ast.node_expr_variable {
 					expr_str += '.dup()'
@@ -952,8 +1035,24 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 					t.scope.declare(var_name)
 					return 'mut var_${var_name} := ${expr_str}'
 				}
+			} else if var_type.is_native_list || var_type.is_native_map {
+				old_expected := t.expected_type
+				t.expected_type = var_type
+				expr_str := t.visit_expr(*expr_node)
+				t.expected_type = old_expected
+				
+				if t.scope.has_var(var_name) {
+					return 'var_${var_name} = ${expr_str}'
+				} else {
+					t.scope.declare(var_name)
+					return 'mut var_${var_name} := ${expr_str}'
+				}
 			} else {
+				old_expected := t.expected_type
+				t.expected_type = var_type
 				mut expr_str := t.visit_expr(*expr_node)
+				t.expected_type = old_expected
+				
 				// P10: 仅为被原地修改的变量生成 .dup()
 				if expr_node.node_type == ast.node_expr_variable && t.mutated_vars[expr_node.name] {
 					expr_str += '.dup()'
@@ -1164,6 +1263,40 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 		}
 
 		ast.node_expr_array {
+			arr_type := t.get_expr_type(node)
+			if arr_type.is_native_list {
+				mut elem_strs := []string{}
+				for item in node.items {
+					val_node := item.expr or { continue }
+					val_typ := t.get_expr_type(*val_node)
+					if val_typ.tag == arr_type.element_type_tag {
+						elem_strs << t.visit_expr_native(*val_node)
+					} else {
+						elem_strs << t.visit_expr(*val_node)
+					}
+				}
+				t.last_expr_type = arr_type
+				return '[${elem_strs.join(", ")}]'
+			}
+			if arr_type.is_native_map {
+				mut pair_strs := []string{}
+				for item in node.items {
+					key_node := item.key or { continue }
+					val_node := item.expr or { continue }
+					key_str := t.visit_expr_native(*key_node)
+					val_typ := t.get_expr_type(*val_node)
+					mut val_str := ''
+					if val_typ.tag == arr_type.element_type_tag {
+						val_str = t.visit_expr_native(*val_node)
+					} else {
+						val_str = t.visit_expr(*val_node)
+					}
+					pair_strs << '${key_str}: ${val_str}'
+				}
+				t.last_expr_type = arr_type
+				return '{ ${pair_strs.join(", ")} }'
+			}
+			
 			mut item_strs := []string{}
 			for item in node.items {
 				val_node := item.expr or { panic('ArrayItem missing expr') }
@@ -1183,7 +1316,18 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 		}
 		ast.node_expr_array_dim_fetch {
 			var_node := node.var or { panic('ArrayDimFetch missing var') }
+			var_type := t.get_expr_type(*var_node)
 			var_str := t.visit_expr(*var_node)
+			if var_type.is_native_list || var_type.is_native_map {
+				if dim_node := node.dim {
+					dim_str := t.visit_expr_native(*dim_node)
+					elem_type := VarType{ tag: var_type.element_type_tag }
+					t.last_expr_type = elem_type
+					return box_expr('${var_str}[${dim_str}]', elem_type)
+				} else {
+					panic('ArrayDimFetch missing dim in read context')
+				}
+			}
 			if dim_node := node.dim {
 				dim_str := t.visit_expr(*dim_node)
 				return '${var_str}.array_get(${dim_str})'

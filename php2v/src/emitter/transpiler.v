@@ -71,6 +71,7 @@ pub mut:
 	current_func_ret_type  VarType                        // 当前函数的返回值类型
 	func_var_types         map[string]map[string]VarType // 函数名 → 局部变量名 → 推导类型
 	declared_classes       map[string]bool               // 已声明的类
+	expected_type          VarType                       // 上下文期望类型
 }
 
 pub struct GlobalConst {
@@ -112,6 +113,7 @@ pub fn Transpiler.new() Transpiler {
 		func_return_types: map[string]VarType{}
 		func_var_types: map[string]map[string]VarType{}
 		declared_classes: map[string]bool{}
+		expected_type: VarType{ tag: .t_unknown }
 	}
 }
 

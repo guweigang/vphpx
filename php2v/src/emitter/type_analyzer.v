@@ -65,6 +65,9 @@ pub fn (mut t Transpiler) analyze_types(stmts []ast.AstNode) {
 			t.inferred_types[name] = VarType{ tag: .t_unknown }
 		}
 	}
+	
+	// 执行高阶数组原生化细分推导分析
+	t.analyze_arrays(stmts)
 }
 
 // AnalyzeCtx 统一分析上下文，携带各 pass 需要的局部数据
@@ -1376,6 +1379,243 @@ fn (mut t Transpiler) scan_func_return_tags(stmts []ast.AstNode, mut var_assign_
 				if el := stmt.@else {
 					t.scan_func_return_tags(el.stmts, mut var_assign_types, mut return_tags)
 				}
+			}
+		}
+	}
+}
+
+pub struct ArrayInferState {
+pub mut:
+	can_be_list   bool
+	can_be_map    bool
+	has_array_ops bool
+	element_tags  []TypeTag
+}
+
+// analyze_arrays 执行数组原生化的高阶推导分析，将纯 List 或 Map 映射为 V 原生类型
+pub fn (mut t Transpiler) analyze_arrays(stmts []ast.AstNode) {
+	mut states := map[string]ArrayInferState{}
+	t.scan_array_usages_stmts(stmts, mut states)
+	
+	for name, s in states {
+		if name in ['_GET', '_POST', '_SERVER', '_COOKIE', '_SESSION', '_FILES', '_ENV', '_REQUEST', 'GLOBALS'] {
+			t.inferred_types[name] = VarType{
+				tag: .t_array
+				is_native_list: false
+				is_native_map: false
+			}
+			continue
+		}
+		if s.has_array_ops {
+			if s.can_be_list && !s.can_be_map {
+				mut elem_tag := TypeTag.t_unknown
+				if s.element_tags.len > 0 {
+					first := s.element_tags[0]
+					mut all_same := true
+					for tag in s.element_tags {
+						if tag != first {
+							all_same = false
+							break
+						}
+					}
+					if all_same && first in [.t_int, .t_float, .t_string, .t_bool] {
+						elem_tag = first
+					}
+				}
+				t.inferred_types[name] = VarType{
+					tag: .t_array
+					is_native_list: true
+					element_type_tag: elem_tag
+				}
+			} else if s.can_be_map && !s.can_be_list {
+				mut elem_tag := TypeTag.t_unknown
+				if s.element_tags.len > 0 {
+					first := s.element_tags[0]
+					mut all_same := true
+					for tag in s.element_tags {
+						if tag != first {
+							all_same = false
+							break
+						}
+					}
+					if all_same && first in [.t_int, .t_float, .t_string, .t_bool] {
+						elem_tag = first
+					}
+				}
+				t.inferred_types[name] = VarType{
+					tag: .t_array
+					is_native_map: true
+					element_type_tag: elem_tag
+				}
+			} else {
+				t.inferred_types[name] = VarType{
+					tag: .t_array
+					is_native_list: false
+					is_native_map: false
+				}
+			}
+		}
+	}
+}
+
+fn (mut t Transpiler) scan_array_usages_stmt(node ast.AstNode, mut states map[string]ArrayInferState) {
+	match node.node_type {
+		ast.node_stmt_expression {
+			if expr := node.expr {
+				t.scan_array_usages_expr(*expr, mut states, false, none)
+			}
+		}
+		ast.node_stmt_if {
+			if cond := node.cond { t.scan_array_usages_expr(*cond, mut states, false, none) }
+			for elseif in node.elseifs {
+				if cond := elseif.cond { t.scan_array_usages_expr(*cond, mut states, false, none) }
+				t.scan_array_usages_stmts(elseif.stmts, mut states)
+			}
+			t.scan_array_usages_stmts(node.stmts, mut states)
+			if el := node.@else {
+				t.scan_array_usages_stmts(el.stmts, mut states)
+			}
+		}
+		ast.node_stmt_while, ast.node_stmt_do {
+			if cond := node.cond { t.scan_array_usages_expr(*cond, mut states, false, none) }
+			t.scan_array_usages_stmts(node.stmts, mut states)
+		}
+		ast.node_stmt_for {
+			for init in node.init { t.scan_array_usages_expr(init, mut states, false, none) }
+			for cond in node.conds { t.scan_array_usages_expr(cond, mut states, false, none) }
+			for loop in node.loop { t.scan_array_usages_expr(loop, mut states, false, none) }
+			t.scan_array_usages_stmts(node.stmts, mut states)
+		}
+		ast.node_stmt_foreach {
+			if expr := node.expr { t.scan_array_usages_expr(*expr, mut states, false, none) }
+			t.scan_array_usages_stmts(node.stmts, mut states)
+		}
+		ast.node_stmt_class {
+			t.scan_array_usages_stmts(node.stmts, mut states)
+		}
+		ast.node_stmt_class_method, ast.node_stmt_function {
+			t.scan_array_usages_stmts(node.stmts, mut states)
+		}
+		ast.node_stmt_echo {
+			for expr in node.exprs { t.scan_array_usages_expr(expr, mut states, false, none) }
+		}
+		ast.node_stmt_return {
+			if expr := node.expr { t.scan_array_usages_expr(*expr, mut states, false, none) }
+		}
+		ast.node_stmt_unset {
+			for v in node.vars {
+				if v.node_type == ast.node_expr_array_dim_fetch {
+					arr_node := v.var or { continue }
+					if arr_node.node_type == ast.node_expr_variable {
+						mut s := states[arr_node.name] or { ArrayInferState{ can_be_list: true, can_be_map: true, has_array_ops: false } }
+						s.has_array_ops = true
+						s.can_be_list = false // unset 数组元素破坏 List 的连续索引特性，必须降级非 List
+						if dim := v.dim {
+							dim_type := t.get_expr_type(*dim)
+							if dim_type.tag == .t_string || dim.node_type == ast.node_scalar_string {
+								s.can_be_list = false
+							} else if dim_type.tag == .t_int || dim.node_type == ast.node_scalar_int {
+								s.can_be_map = false
+							} else {
+								s.can_be_list = false
+								s.can_be_map = false
+							}
+							t.scan_array_usages_expr(*dim, mut states, false, none)
+						} else {
+							s.can_be_map = false
+						}
+						states[arr_node.name] = s
+					} else {
+						t.scan_array_usages_expr(*arr_node, mut states, false, none)
+						if dim := v.dim { t.scan_array_usages_expr(*dim, mut states, false, none) }
+					}
+				} else {
+					t.scan_array_usages_expr(v, mut states, false, none)
+				}
+			}
+		}
+		else {}
+	}
+}
+
+fn (mut t Transpiler) scan_array_usages_stmts(stmts []ast.AstNode, mut states map[string]ArrayInferState) {
+	for stmt in stmts {
+		t.scan_array_usages_stmt(stmt, mut states)
+	}
+}
+
+fn (mut t Transpiler) scan_array_usages_expr(node ast.AstNode, mut states map[string]ArrayInferState, is_assign_lhs bool, rhs_node ?ast.AstNode) {
+	match node.node_type {
+		ast.node_expr_assign {
+			lhs := node.var or { return }
+			rhs := node.expr or { return }
+			if lhs.node_type == ast.node_expr_variable && rhs.node_type == ast.node_expr_array {
+				mut s := states[lhs.name] or { ArrayInferState{ can_be_list: true, can_be_map: true, has_array_ops: false } }
+				s.has_array_ops = true
+				for item in rhs.items {
+					if key := item.key {
+						if key.node_type == ast.node_scalar_string {
+							s.can_be_list = false
+						} else if key.node_type == ast.node_scalar_int {
+							s.can_be_map = false
+						} else {
+							s.can_be_list = false
+							s.can_be_map = false
+						}
+					} else {
+						s.can_be_map = false
+					}
+					if val := item.expr {
+						s.element_tags << t.get_expr_type(*val).tag
+					}
+				}
+				states[lhs.name] = s
+				t.scan_array_usages_expr(*rhs, mut states, false, none)
+			} else {
+				t.scan_array_usages_expr(*lhs, mut states, true, *rhs)
+				t.scan_array_usages_expr(*rhs, mut states, false, none)
+			}
+		}
+		ast.node_expr_array_dim_fetch {
+			base := node.var or { return }
+			if base.node_type == ast.node_expr_variable {
+				mut s := states[base.name] or { ArrayInferState{ can_be_list: true, can_be_map: true, has_array_ops: false } }
+				s.has_array_ops = true
+				if dim := node.dim {
+					dim_type := t.get_expr_type(*dim)
+					if dim_type.tag == .t_string || dim.node_type == ast.node_scalar_string {
+						s.can_be_list = false
+					} else if dim_type.tag == .t_int || dim.node_type == ast.node_scalar_int {
+						s.can_be_map = false
+					} else {
+						s.can_be_list = false
+						s.can_be_map = false
+					}
+					t.scan_array_usages_expr(*dim, mut states, false, none)
+				} else {
+					s.can_be_map = false
+				}
+				if is_assign_lhs {
+					if rhs := rhs_node {
+						s.element_tags << t.get_expr_type(rhs).tag
+					}
+				}
+				states[base.name] = s
+			} else {
+				t.scan_array_usages_expr(*base, mut states, is_assign_lhs, rhs_node)
+				if dim := node.dim { t.scan_array_usages_expr(*dim, mut states, false, none) }
+			}
+		}
+		else {
+			if expr := node.expr { t.scan_array_usages_expr(*expr, mut states, false, none) }
+			if left := node.left { t.scan_array_usages_expr(*left, mut states, false, none) }
+			if right := node.right { t.scan_array_usages_expr(*right, mut states, false, none) }
+			for arg in node.args {
+				if arg_expr := arg.expr { t.scan_array_usages_expr(*arg_expr, mut states, false, none) }
+			}
+			for item in node.items {
+				if key := item.key { t.scan_array_usages_expr(*key, mut states, false, none) }
+				if val := item.expr { t.scan_array_usages_expr(*val, mut states, false, none) }
 			}
 		}
 	}

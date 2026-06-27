@@ -116,10 +116,16 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 				if v.node_type == ast.node_expr_array_dim_fetch {
 					arr_node := v.var or { panic('Unset array dim missing var') }
 					dim_node := v.dim or { panic('Unset array dim missing dim') }
+					arr_type := t.get_expr_type(*arr_node)
 					arr_str := t.visit_expr(*arr_node)
-					dim_str := t.visit_expr(*dim_node)
 					t.write_indent()
-					t.write_line('${arr_str}.array_unset(${dim_str})')
+					if arr_type.is_native_map {
+						dim_str_native := t.visit_expr_native(*dim_node)
+						t.write_line('${arr_str}.delete(${dim_str_native})')
+					} else {
+						dim_str := t.visit_expr(*dim_node)
+						t.write_line('${arr_str}.array_unset(${dim_str})')
+					}
 				} else if v.node_type == ast.node_expr_variable {
 					typ := t.inferred_types[v.name] or { VarType{ tag: .t_unknown } }
 					t.write_indent()
@@ -575,6 +581,47 @@ fn (t &Transpiler) get_native_default(typ VarType) string {
 
 fn (mut t Transpiler) visit_foreach(node ast.AstNode) {
 	expr_node := node.expr or { panic('Foreach statement missing expr') }
+	arr_type := t.get_expr_type(*expr_node)
+	
+	if arr_type.is_native_list || arr_type.is_native_map {
+		arr_str := t.visit_expr(*expr_node)
+		val_var_node := node.value_var or { panic('Foreach missing valueVar') }
+		val_var_name := val_var_node.name
+		
+		old_scope := t.scope
+		t.scope.declare(val_var_name)
+		
+		old_inferred := t.inferred_types.clone()
+		t.inferred_types[val_var_name] = VarType{ tag: arr_type.element_type_tag }
+		
+		t.write_indent()
+		if key_var_node := node.key_var {
+			key_var_name := key_var_node.name
+			t.scope.declare(key_var_name)
+			key_tag := if arr_type.is_native_list { TypeTag.t_int } else { TypeTag.t_string }
+			t.inferred_types[key_var_name] = VarType{ tag: key_tag }
+			t.write_line('for var_${key_var_name}, var_${val_var_name} in ${arr_str} {')
+		} else {
+			if arr_type.is_native_list {
+				t.write_line('for var_${val_var_name} in ${arr_str} {')
+			} else {
+				t.write_line('for _, var_${val_var_name} in ${arr_str} {')
+			}
+		}
+		
+		t.indent++
+		for stmt in node.stmts {
+			t.visit_stmt(stmt)
+		}
+		t.indent--
+		
+		t.inferred_types = old_inferred.clone()
+		t.scope = old_scope
+		t.write_indent()
+		t.write_line('}')
+		return
+	}
+	
 	expr_str := t.visit_expr(*expr_node)
 	
 	t.write_indent()

@@ -60,10 +60,9 @@ fn test_transpiler_end_to_end() {
 			'print(var_arr.dup().array_count().str())',
 		]
 		'09_foreach.php': [
-			'mut iter := var_arr.iterator()',
-			'item := iter.next() or { break }',
-			'mut var_val := item.val',
-			'mut var_key := item.key',
+			"mut var_arr := {",
+			"for _, var_val in var_arr {",
+			"for var_key, var_val in var_arr {",
 		]
 		'10_loops.php': [
 			'for var_i < 3 {',
@@ -181,7 +180,7 @@ fn test_transpiler_end_to_end() {
 			"!rt.is_true(var_c)",
 			"var_d == ''",
 			"!rt.is_true(var_not_exist)",
-			"var_arr.array_unset(",
+			"var_arr.delete('key')",
 		]
 		'24_switch_case.php': [
 			'match var_x {',
@@ -243,12 +242,19 @@ fn test_transpiler_end_to_end() {
 		]
 		'32_builtin_inference.php': [
 			'mut var_len := var_str.len',
-			'mut var_cnt := var_arr.dup().array_count()',
+			'mut var_cnt := var_arr.len',
 			'mut var_upper := var_str.to_upper()',
 		]
-
-
-
+		'33_pure_arrays.php': [
+			'mut var_list := [10, 20]',
+			'var_list << 30',
+			'print(var_list.len.str())',
+			'for var_item in var_list {',
+			'print(var_item.str())',
+			"mut var_map := {",
+			"print(var_map.len.str())",
+			"for var_k, var_v in var_map {",
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址
