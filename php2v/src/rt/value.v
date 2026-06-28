@@ -443,18 +443,34 @@ mut:
 }
 
 // PhpObjectBase 结构体可作为 PHP 类的通用嵌入基类，提供默认实现以隐式实现 IPhpObject
-pub struct PhpObjectBase {}
+pub struct PhpObjectBase {
+pub mut:
+	dynamic_props map[string]PhpVal
+}
 
 pub fn (mut this PhpObjectBase) dispatch_method(method_name string, args []PhpVal) ?PhpVal {
 	return none
 }
 
 pub fn (this &PhpObjectBase) dispatch_get_prop(prop_name string) ?PhpVal {
+	if prop_name in this.dynamic_props {
+		return this.dynamic_props[prop_name] or { new_null() }
+	}
 	return none
 }
 
 pub fn (mut this PhpObjectBase) dispatch_set_prop(prop_name string, val PhpVal) bool {
-	return false
+	if this.dynamic_props.len == 0 {
+		unsafe {
+			mut self := &PhpObjectBase(&this)
+			self.dynamic_props = map[string]PhpVal{}
+		}
+	}
+	unsafe {
+		mut self := &PhpObjectBase(&this)
+		self.dynamic_props[prop_name] = val
+	}
+	return true
 }
 
 pub const magic_php_object = u64(0x56504850585F4F42)
@@ -497,14 +513,6 @@ pub fn call_method(obj PhpVal, method_name string, args []PhpVal) PhpVal {
 		}
 		C.php2v_call_method(obj.raw, method_name.str, usize(method_name.len), z, u32(args.len), raw_args.data)
 		return PhpVal{ raw: z }
-	}
-	class_name := obj_info.class_name
-	mut r := get_registry()
-	if class_name in r.class_registry {
-		meta := r.class_registry[class_name]
-		if method_name in meta.methods {
-			return meta.methods[method_name](obj, args)
-		}
 	}
 	return obj_info.obj.dispatch_method(method_name, args) or { new_null() }
 }

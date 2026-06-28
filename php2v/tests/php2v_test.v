@@ -264,10 +264,12 @@ fn test_transpiler_end_to_end() {
 		'35_dynamic_all.php': [
 			'rt.register_func',
 			'rt.register_class_factory',
-			'rt.register_class',
 			'rt.create_object_dynamically',
 			'rt.call_callable',
 			'fn init_registry() {',
+			'rt.call_method',
+			'rt.get_property',
+			'dispatch_set_prop',
 		]
 	}
 

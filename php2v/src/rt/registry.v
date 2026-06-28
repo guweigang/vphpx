@@ -1,15 +1,9 @@
 module rt
 
-pub struct ClassMeta {
-pub mut:
-	methods map[string]fn (PhpVal, []PhpVal) PhpVal
-}
-
 struct Registry {
 mut:
 	func_registry   map[string]fn ([]PhpVal) PhpVal
 	class_factories map[string]fn ([]PhpVal) PhpVal
-	class_registry  map[string]ClassMeta
 }
 
 fn C.php2v_get_registry() voidptr
@@ -21,7 +15,6 @@ fn get_registry() &Registry {
 		mut r := &Registry{
 			func_registry: map[string]fn ([]PhpVal) PhpVal{}
 			class_factories: map[string]fn ([]PhpVal) PhpVal{}
-			class_registry: map[string]ClassMeta{}
 		}
 		C.php2v_set_registry(voidptr(r))
 		return r
@@ -37,11 +30,6 @@ pub fn register_func(name string, f fn ([]PhpVal) PhpVal) {
 pub fn register_class_factory(name string, f fn ([]PhpVal) PhpVal) {
 	mut r := get_registry()
 	r.class_factories[name] = f
-}
-
-pub fn register_class(name string, meta ClassMeta) {
-	mut r := get_registry()
-	r.class_registry[name] = meta
 }
 
 pub fn create_object_dynamically(class_name string, args []PhpVal) PhpVal {

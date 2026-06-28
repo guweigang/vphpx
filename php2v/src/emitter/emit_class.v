@@ -464,23 +464,6 @@ fn (mut t Transpiler) generate_dispatchers() {
 	t.indent = 0
 
 	if t.classes.len == 0 {
-		// 按需生成：仅在代码实际使用了对应特性时才注入桩函数
-		if t.needs_method_dispatch {
-			t.write_line('fn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {')
-			t.write_line('\treturn rt.call_method(obj, method_name, args)')
-			t.write_line('}')
-			t.write_line('')
-		}
-		if t.needs_prop_dispatch {
-			t.write_line('fn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {')
-			t.write_line('\treturn rt.get_property(obj, prop_name)')
-			t.write_line('}')
-			t.write_line('')
-			t.write_line('fn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {')
-			t.write_line('\trt.set_property(obj, prop_name, val)')
-			t.write_line('}')
-			t.write_line('')
-		}
 		t.is_in_func = false
 		return
 	}
@@ -674,6 +657,7 @@ fn (mut t Transpiler) generate_dispatchers() {
 		// dispatch_get_prop：P7 Task 12 原生属性装箱，使用 optional 返回值
 		t.write_line('fn (this &Class_${cls.name}) dispatch_get_prop(prop_name string) ?rt.PhpVal {')
 		t.indent++
+		parent_route_get := if cls.extends != '' && !t.undeclared_classes[cls.extends] { 'this.Class_${cls.extends}.dispatch_get_prop(prop_name)' } else { 'this.PhpObjectBase.dispatch_get_prop(prop_name)' }
 		if cls.all_props.len > 0 {
 			t.write_indent()
 			t.write_line('match prop_name {')
@@ -695,13 +679,13 @@ fn (mut t Transpiler) generate_dispatchers() {
 				}
 			}
 			t.write_indent()
-			t.write_line('else { return none }')
+			t.write_line('else { return ${parent_route_get} }')
 			t.indent--
 			t.write_indent()
 			t.write_line('}')
 		} else {
 			t.write_indent()
-			t.write_line('return none')
+			t.write_line('return ${parent_route_get}')
 		}
 		t.indent--
 		t.write_line('}')
@@ -710,6 +694,7 @@ fn (mut t Transpiler) generate_dispatchers() {
 		// dispatch_set_prop：P7 Task 12 原生属性拆箱，返回 bool 表示是否成功
 		t.write_line('fn (mut this Class_${cls.name}) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {')
 		t.indent++
+		parent_route_set := if cls.extends != '' && !t.undeclared_classes[cls.extends] { 'this.Class_${cls.extends}.dispatch_set_prop(prop_name, val)' } else { 'this.PhpObjectBase.dispatch_set_prop(prop_name, val)' }
 		if cls.all_props.len > 0 {
 			t.write_indent()
 			t.write_line('match prop_name {')
@@ -726,35 +711,19 @@ fn (mut t Transpiler) generate_dispatchers() {
 				}
 			}
 			t.write_indent()
-			t.write_line('else { return false }')
+			t.write_line('else { return ${parent_route_set} }')
 			t.indent--
 			t.write_indent()
 			t.write_line('}')
 		} else {
 			t.write_indent()
-			t.write_line('return false')
+			t.write_line('return ${parent_route_set}')
 		}
 		t.indent--
 		t.write_line('}')
 		t.write_line('')
 		t.write_line('')
 	}
-
-	// 3. 极简的全局路由分发器桥接
-	t.write_line('fn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {')
-	t.write_line('\treturn rt.call_method(obj, method_name, args)')
-	t.write_line('}')
-	t.write_line('')
-
-	t.write_line('fn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {')
-	t.write_line('\treturn rt.get_property(obj, prop_name)')
-	t.write_line('}')
-	t.write_line('')
-
-	t.write_line('fn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {')
-	t.write_line('\trt.set_property(obj, prop_name, val)')
-	t.write_line('}')
-	t.write_line('')
 
 	t.is_in_func = false
 }

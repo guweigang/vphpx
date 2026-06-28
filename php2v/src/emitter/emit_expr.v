@@ -1097,7 +1097,7 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 						expr_str += '.dup()'
 					}
 				}
-				return '${obj_var_name}.dispatch_set_prop(\'${prop_name}\', ${expr_str})'
+				return 'rt.set_property(${obj_var_name}, \'${prop_name}\', ${expr_str})'
 			}
 			
 			if var_node.node_type != ast.node_expr_variable {
@@ -1650,9 +1650,9 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 				}
 				method_name_expr := t.visit_expr_native(*name_expr_node)
 				if arg_strs.len == 0 {
-					return 'call_method(${obj_var_name}, ${method_name_expr}, []rt.PhpVal{})'
+					return 'rt.call_method(${obj_var_name}, ${method_name_expr}, []rt.PhpVal{})'
 				} else {
-					return 'call_method(${obj_var_name}, ${method_name_expr}, [${arg_strs.join(", ")}])'
+					return 'rt.call_method(${obj_var_name}, ${method_name_expr}, [${arg_strs.join(", ")}])'
 				}
 			}
 
@@ -1676,9 +1676,9 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 				arg_strs << t.compile_arg_simple(*arg_val)
 			}
 			if arg_strs.len == 0 {
-				return 'call_method(${obj_var_name}, \'${method_name}\', []rt.PhpVal{})'
+				return 'rt.call_method(${obj_var_name}, \'${method_name}\', []rt.PhpVal{})'
 			} else {
-				return 'call_method(${obj_var_name}, \'${method_name}\', [${arg_strs.join(", ")}])'
+				return 'rt.call_method(${obj_var_name}, \'${method_name}\', [${arg_strs.join(", ")}])'
 			}
 		}
 		ast.node_expr_property_fetch {
@@ -1723,7 +1723,7 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 				}
 			}
 			t.needs_prop_dispatch = true
-			return 'get_property(${obj_var_name}, \'${prop_name}\')'
+			return 'rt.get_property(${obj_var_name}, \'${prop_name}\')'
 		}
 		ast.node_expr_eval {
 			expr_node := node.expr or { panic('Eval missing expr') }
