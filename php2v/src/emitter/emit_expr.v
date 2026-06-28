@@ -1260,16 +1260,10 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 								}
 							}
 						}
-						mut var_args := []string{}
 						for i := var_idx; i < node.args.len; i++ {
 							arg := node.args[i]
 							arg_val := arg.expr or { panic('Arg missing expr') }
-							var_args << t.compile_arg_simple(arg_val)
-						}
-						if var_args.len == 0 {
-							arg_strs << 'rt.new_array()'
-						} else {
-							arg_strs << 'rt.create_array_from_list([${var_args.join(", ")}])'
+							arg_strs << t.compile_arg_simple(arg_val)
 						}
 					} else {
 						for i := 0; i < func_info.param_count; i++ {

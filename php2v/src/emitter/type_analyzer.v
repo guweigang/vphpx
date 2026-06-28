@@ -1193,8 +1193,15 @@ fn (mut t Transpiler) infer_func_types_from_stmts(stmts []ast.AstNode) {
 	for stmt in stmts {
 		if stmt.node_type == ast.node_stmt_function {
 			t.infer_single_func_types(stmt)
-		} else if stmt.node_type == ast.node_stmt_namespace {
+		}
+		if stmt.stmts.len > 0 {
 			t.infer_func_types_from_stmts(stmt.stmts)
+		}
+		for elseif in stmt.elseifs {
+			t.infer_func_types_from_stmts(elseif.stmts)
+		}
+		if el := stmt.@else {
+			t.infer_func_types_from_stmts(el.stmts)
 		}
 	}
 }
@@ -1283,7 +1290,7 @@ fn (mut t Transpiler) infer_single_func_types(node ast.AstNode) {
 	if ret_type.tag == .t_unknown {
 		ret_type = t.infer_func_return_type(node.stmts, mut var_assign_types)
 	}
-	if ret_type.tag != .t_unknown && ret_type.tag != .t_void {
+	if ret_type.tag != .t_unknown {
 		t.func_return_types[func_name] = ret_type
 	}
 	if param_types.len > 0 {

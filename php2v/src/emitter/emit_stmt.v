@@ -366,7 +366,11 @@ fn (mut t Transpiler) visit_try_catch(node ast.AstNode) {
 			t.visit_stmt(f_stmt)
 		}
 		t.write_indent()
-		t.write_line('if rt.has_exception() { return rt.new_null() }')
+		if t.current_func_ret_type.tag == .t_void {
+			t.write_line('if rt.has_exception() { return }')
+		} else {
+			t.write_line('if rt.has_exception() { return rt.new_null() }')
+		}
 	}
 
 	t.write_line('')
@@ -441,30 +445,52 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 		}
 	}
 
+	mut has_variadic_param := false
+	mut variadic_param_name := ''
+
 	mut registered_native_params := []string{}
 	mut param_names := []string{}
 	for param in node.params {
 		param_var := param.var or { panic('Param missing var') }
 		param_name := param_var.name
 		t.scope.declare(param_name)
-		// 检查是否有推断的原生参数类型
-		param_type := t.get_func_param_type(node.name, param_name)
-		if param_type.is_scalar() {
-			param_names << '${param_name} ${param_type.to_v_type()}'
-			t.inferred_types[param_name] = param_type
-			t.native_params[param_name] = true
-			registered_native_params << param_name
+
+		is_param_variadic := (param.variadic == 'true')
+		if is_param_variadic {
+			has_variadic_param = true
+			variadic_param_name = param_name
+			param_names << 'var_${param_name}_origin ...rt.PhpVal'
 		} else {
-			param_names << 'var_${param_name} rt.PhpVal'
+			// 检查是否有推断的原生参数类型
+			param_type := t.get_func_param_type(node.name, param_name)
+			if param_type.is_scalar() {
+				param_names << '${param_name} ${param_type.to_v_type()}'
+				t.inferred_types[param_name] = param_type
+				t.native_params[param_name] = true
+				registered_native_params << param_name
+			} else {
+				param_names << 'var_${param_name} rt.PhpVal'
+			}
 		}
 	}
 
 	has_native_ret := ret_type.is_scalar()
-	ret_type_str := if has_native_ret { ' ${ret_type.to_v_type()}' } else { ' rt.PhpVal' }
+	ret_type_str := if ret_type.tag == .t_void {
+		''
+	} else if has_native_ret {
+		' ${ret_type.to_v_type()}'
+	} else {
+		' rt.PhpVal'
+	}
 	t.write_indent()
 	t.write_line('fn ${func_v_name(node.name)}(${param_names.join(", ")})${ret_type_str} {')
-	
+
 	t.indent++
+	if has_variadic_param {
+		t.write_indent()
+		t.write_line('mut var_${variadic_param_name} := rt.create_array_from_list(var_${variadic_param_name}_origin)')
+	}
+
 	ref_vars, ass_vars := t.collect_vars_in_scope(node.stmts)
 	for v in ref_vars {
 		if v !in ass_vars && !t.scope.has_var(v) {
@@ -492,11 +518,13 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 		t.visit_stmt(stmt)
 	}
 	if node.stmts.len == 0 || node.stmts[node.stmts.len - 1].node_type != ast.node_stmt_return {
-		t.write_indent()
-		if has_native_ret {
-			t.write_line('return ${t.get_native_default(ret_type)}')
-		} else {
-			t.write_line('return rt.new_null()')
+		if ret_type.tag != .t_void {
+			t.write_indent()
+			if has_native_ret {
+				t.write_line('return ${t.get_native_default(ret_type)}')
+			} else {
+				t.write_line('return rt.new_null()')
+			}
 		}
 	}
 	t.indent--
