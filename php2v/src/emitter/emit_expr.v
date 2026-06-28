@@ -444,17 +444,10 @@ fn (mut t Transpiler) visit_expr_native(node ast.AstNode) string {
 					obj_type = VarType{ tag: .t_object, class_name: t.current_class }
 				}
 				if obj_type.is_object() {
-					obj_name := if obj_var_node.name == 'this' { 'this' } else { t.visit_expr(*obj_var_node) }
-					method_name := node.name
-					mut arg_strs := []string{}
-					for arg in node.args {
-						arg_val := arg.expr or { panic('Arg missing expr') }
-						arg_str := t.visit_expr(*arg_val)
-						arg_strs << arg_str
-					}
-					ret_type := t.get_method_return_type(obj_type.class_name, method_name)
+					obj_var_name := t.visit_expr(*obj_var_node)
+					ret_type := t.get_method_return_type(obj_type.class_name, node.name)
 					t.last_expr_type = ret_type
-					return '${obj_name}.${method_v_name(method_name)}(${arg_strs.join(", ")})'
+					return t.compile_method_call_known(node, obj_type, *obj_var_node, obj_var_name)
 				}
 			}
 			return t.visit_expr(node)
@@ -1328,9 +1321,9 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 				if voidptr(callable_expr_node) != 0 {
 					callable_expr := t.visit_expr(*callable_expr_node)
 					if arg_strs.len == 0 {
-						return 'rt.call_closure_val(${callable_expr}, []rt.PhpVal{})'
+						return 'rt.call_callable(${callable_expr}, []rt.PhpVal{})'
 					} else {
-						return 'rt.call_closure_val(${callable_expr}, [${arg_strs.join(", ")}])'
+						return 'rt.call_callable(${callable_expr}, [${arg_strs.join(", ")}])'
 					}
 				}
 			}
@@ -1568,6 +1561,19 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			}
 		}
 		ast.node_expr_new {
+			if class_expr_node := node.class_expr {
+				mut arg_strs := []string{}
+				for arg in node.args {
+					arg_val := arg.expr or { panic('Arg missing expr') }
+					arg_strs << t.compile_arg_simple(*arg_val)
+				}
+				class_expr_str := t.visit_expr(*class_expr_node)
+				if arg_strs.len == 0 {
+					return 'rt.create_object_dynamically(${class_expr_str}, []rt.PhpVal{})'
+				} else {
+					return 'rt.create_object_dynamically(${class_expr_str}, [${arg_strs.join(", ")}])'
+				}
+			}
 			class_name := t.resolve_class_name(node.class_name)
 			t.undeclared_classes[class_name] = true
 			// 查找构造函数的参数类型，以便传递原生类型
@@ -1634,6 +1640,22 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 		ast.node_expr_method_call {
 			obj_var_node := node.var or { panic('MethodCall missing var') }
 			obj_var_name := t.visit_expr(*obj_var_node)
+
+			if name_expr_node := node.name_expr {
+				t.needs_method_dispatch = true
+				mut arg_strs := []string{}
+				for arg in node.args {
+					arg_val := arg.expr or { panic('Arg missing expr') }
+					arg_strs << t.compile_arg_simple(*arg_val)
+				}
+				method_name_expr := t.visit_expr(*name_expr_node)
+				if arg_strs.len == 0 {
+					return 'call_method(${obj_var_name}, ${method_name_expr}.to_string(), []rt.PhpVal{})'
+				} else {
+					return 'call_method(${obj_var_name}, ${method_name_expr}.to_string(), [${arg_strs.join(", ")}])'
+				}
+			}
+
 			method_name := node.name
 
 			// P7 Task 10: 已知对象类型 → 直接调用方法（无 IIFE）
@@ -1643,53 +1665,7 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 					obj_type = VarType{ tag: .t_object, class_name: t.current_class }
 				}
 				if obj_type.is_object() {
-					// 构建参数列表，按目标方法参数类型自动装箱/拆箱
-					mut arg_strs := []string{}
-					for i, arg in node.args {
-						arg_val := arg.expr or { panic('Arg missing expr') }
-						mut target_param_type := VarType{ tag: .t_unknown }
-						if m := t.find_method(obj_type.class_name, method_name) {
-							if i < m.param_names.len {
-								pname := m.param_names[i]
-								target_param_type = t.get_method_param_type(obj_type.class_name, method_name, pname)
-							}
-						}
-						result := t.compile_arg(*arg_val, target_param_type)
-						arg_strs << result.code
-						_ = i
-					}
-					
-					if m := t.find_method(obj_type.class_name, method_name) {
-						if node.args.len < m.param_count {
-							for i in node.args.len .. m.param_count {
-								if i < m.param_names.len {
-									pname := m.param_names[i]
-									ptype := t.get_method_param_type(obj_type.class_name, method_name, pname)
-									if ptype.is_scalar() {
-										match ptype.tag {
-											.t_string { arg_strs << "''" }
-											.t_int { arg_strs << '0' }
-											.t_float { arg_strs << '0.0' }
-											.t_bool { arg_strs << 'false' }
-											else { arg_strs << 'rt.new_null()' }
-										}
-									} else {
-										arg_strs << 'rt.new_null()'
-									}
-								} else {
-									arg_strs << 'rt.new_null()'
-								}
-							}
-						}
-					}
-					args_joined := arg_strs.join(', ')
-					// 如果对象就是 this，直接调用
-					if obj_var_node.name == 'this' {
-						return 'this.${method_v_name(method_name)}(${args_joined})'
-					}
-					// 外部对象已知类型 → 直接调用方法（无需 IIFE 包装）
-					call_expr := '${obj_var_name}.${method_v_name(method_name)}(${args_joined})'
-					return call_expr
+					return t.compile_method_call_known(node, obj_type, *obj_var_node, obj_var_name)
 				}
 			}
 			// 回退: call_method
@@ -2298,4 +2274,57 @@ fn (mut t Transpiler) visit_expr_write_dim(node ast.AstNode) string {
 		return '${var_str}.array_get_mut(${dim_str})'
 	}
 	return t.visit_expr(node)
+}
+
+// compile_method_call_known 编译已知对象类型的方法调用，自动根据目标方法参数类型应用 4-way 矩阵装箱/拆箱
+fn (mut t Transpiler) compile_method_call_known(node ast.AstNode, obj_type VarType, obj_var_node ast.AstNode, obj_var_name string) string {
+	method_name := node.name
+	// 构建参数列表，按目标方法参数类型自动装箱/拆箱
+	mut arg_strs := []string{}
+	for i, arg in node.args {
+		arg_val := arg.expr or { panic('Arg missing expr') }
+		mut target_param_type := VarType{ tag: .t_unknown }
+		mut pname := ''
+		if m := t.find_method(obj_type.class_name, method_name) {
+			if i < m.param_names.len {
+				pname = m.param_names[i]
+				target_param_type = t.get_method_param_type(obj_type.class_name, method_name, pname)
+			}
+		}
+		result := t.compile_arg(*arg_val, target_param_type)
+		arg_strs << result.code
+		_ = i
+	}
+	
+	if m := t.find_method(obj_type.class_name, method_name) {
+		if node.args.len < m.param_count {
+			for i in node.args.len .. m.param_count {
+				if i < m.param_names.len {
+					pname := m.param_names[i]
+					ptype := t.get_method_param_type(obj_type.class_name, method_name, pname)
+					if ptype.is_scalar() {
+						match ptype.tag {
+							.t_string { arg_strs << "''" }
+							.t_int { arg_strs << '0' }
+							.t_float { arg_strs << '0.0' }
+							.t_bool { arg_strs << 'false' }
+							else { arg_strs << 'rt.new_null()' }
+						}
+					} else {
+						arg_strs << 'rt.new_null()'
+					}
+				} else {
+					arg_strs << 'rt.new_null()'
+				}
+			}
+		}
+	}
+	args_joined := arg_strs.join(', ')
+	// 如果对象就是 this，直接调用
+	if obj_var_node.node_type == ast.node_expr_variable && obj_var_node.name == 'this' {
+		return 'this.${method_v_name(method_name)}(${args_joined})'
+	}
+	// 外部对象已知类型 → 直接调用方法（无需 IIFE 包装）
+	call_expr := '${obj_var_name}.${method_v_name(method_name)}(${args_joined})'
+	return call_expr
 }

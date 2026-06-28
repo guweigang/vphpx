@@ -41,6 +41,8 @@ pub mut:
 	incl_type   string   @[json: 'type']
 	return_type string   @[json: 'returnType']
 	class_name  string   @[json: 'class']
+	class_expr  ?&AstNode @[json: 'class_expr']
+	name_expr   ?&AstNode @[json: 'name_expr']
 	extends    string   @[json: 'extends']
 	implements []string @[json: 'implements']
 	traits     []string @[json: 'traits']
@@ -144,6 +146,8 @@ pub fn (n &AstNode) clone() &AstNode {
 		incl_type: n.incl_type
 		return_type: n.return_type
 		class_name: n.class_name
+		class_expr: clone_ptr(n.class_expr)
+		name_expr: clone_ptr(n.name_expr)
 		extends: n.extends
 		implements: n.implements.clone()
 		traits: n.traits.clone()

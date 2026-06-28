@@ -81,6 +81,10 @@ pub mut:
 	foreach_depth          int                           // 循环嵌套深度（用于生成唯一的迭代器变量名）
 	native_vars            map[string]bool               // 本地声明的原生变量（用于精确判定是否需要装箱）
 	custom_function_infos  map[string]MethodInfo         // 自定义全局函数签名信息（含可变参数状态）
+	has_dynamic_new         bool
+	has_dynamic_method_call bool
+	has_dynamic_func_call   bool
+	called_builtin_functions map[string]bool
 }
 
 pub struct GlobalConst {
@@ -127,6 +131,10 @@ pub fn Transpiler.new() Transpiler {
 		func_var_types: map[string]map[string]VarType{}
 		declared_classes: map[string]bool{}
 		expected_type: VarType{ tag: .t_unknown }
+		has_dynamic_new:         false
+		has_dynamic_method_call: false
+		has_dynamic_func_call:   false
+		called_builtin_functions: map[string]bool{}
 	}
 }
 
@@ -147,6 +155,9 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 
 	// 前置类型分析
 	t.analyze_types(local_stmts)
+
+	// 扫描动态使用特征
+	t.scan_dynamic_usages(local_stmts)
 
 	ref_vars, ass_vars := t.collect_vars_in_scope(local_stmts)
 	for v in ref_vars {
@@ -261,6 +272,7 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 	t.is_in_func = old_is_in_func
 	
 	t.generate_dispatchers()
+	t.generate_registry_initializers()
 	
 	if t.closures_code.len > 0 {
 		t.func_out.write_string(t.closures_code.str())
@@ -409,8 +421,8 @@ fn method_v_name(method_name string) string {
 // 查找类属性的推导类型（含继承链查找）
 fn (t &Transpiler) get_class_prop_type(class_name string, prop_name string) VarType {
 	for cls in t.classes {
-		if cls.name == class_name {
-			if typ := cls.prop_types[prop_name] {
+		if cls.name.to_lower() == class_name.to_lower() {
+			if typ := find_vartype_map_insensitive(cls.prop_types, prop_name) {
 				return typ
 			}
 			// 递归查父类
@@ -426,9 +438,9 @@ fn (t &Transpiler) get_class_prop_type(class_name string, prop_name string) VarT
 // 查找类方法的参数类型
 fn (t &Transpiler) get_method_param_type(class_name string, method_name string, param_name string) VarType {
 	for cls in t.classes {
-		if cls.name == class_name {
-			if params := cls.param_types[method_name] {
-				if typ := params[param_name] {
+		if cls.name.to_lower() == class_name.to_lower() {
+			if params := find_param_map_insensitive(cls.param_types, method_name) {
+				if typ := find_vartype_map_insensitive(params, param_name) {
 					return typ
 				}
 			}
@@ -445,8 +457,8 @@ fn (t &Transpiler) get_method_param_type(class_name string, method_name string, 
 // 查找类方法的返回值类型
 fn (t &Transpiler) get_method_return_type(class_name string, method_name string) VarType {
 	for cls in t.classes {
-		if cls.name == class_name {
-			if typ := cls.return_types[method_name] {
+		if cls.name.to_lower() == class_name.to_lower() {
+			if typ := find_vartype_map_insensitive(cls.return_types, method_name) {
 				return typ
 			}
 			if cls.extends.len > 0 {
@@ -461,8 +473,8 @@ fn (t &Transpiler) get_method_return_type(class_name string, method_name string)
 // 查找类方法的参数类型映射（参数名 → 类型）
 fn (t &Transpiler) param_types_for_method(class_name string, method_name string) ?map[string]VarType {
 	for cls in t.classes {
-		if cls.name == class_name {
-			if params := cls.param_types[method_name] {
+		if cls.name.to_lower() == class_name.to_lower() {
+			if params := find_param_map_insensitive(cls.param_types, method_name) {
 				return params
 			}
 			if cls.extends.len > 0 {
@@ -719,6 +731,294 @@ pub fn (mut t Transpiler) scan_custom_functions(nodes []ast.AstNode) {
 			t.scan_custom_functions(else_node.stmts)
 		}
 	}
+}
+
+fn find_param_map_insensitive(m map[string]map[string]VarType, key string) ?map[string]VarType {
+	for k, v in m {
+		if k.to_lower() == key.to_lower() {
+			return v
+		}
+	}
+	return none
+}
+
+fn find_vartype_map_insensitive(m map[string]VarType, key string) ?VarType {
+	for k, v in m {
+		if k.to_lower() == key.to_lower() {
+			return v
+		}
+	}
+	return none
+}
+
+fn (mut t Transpiler) scan_dynamic_usages(nodes []ast.AstNode) {
+	for node in nodes {
+		t.scan_dynamic_usages_node(node)
+	}
+}
+
+fn (mut t Transpiler) scan_dynamic_usages_node(node ast.AstNode) {
+	match node.node_type {
+		ast.node_expr_new {
+			if _ := node.class_expr {
+				t.has_dynamic_new = true
+			}
+		}
+		ast.node_expr_method_call {
+			if _ := node.name_expr {
+				t.has_dynamic_method_call = true
+			}
+		}
+		ast.node_expr_funccall {
+			if _ := node.expr {
+				t.has_dynamic_func_call = true
+			} else if node.name != '' {
+				if !t.custom_functions[node.name] {
+					t.called_builtin_functions[node.name] = true
+				}
+			}
+		}
+		else {}
+	}
+
+	// 递归子节点
+	if expr := node.expr { t.scan_dynamic_usages_node(*expr) }
+	if var_node := node.var { t.scan_dynamic_usages_node(*var_node) }
+	if left := node.left { t.scan_dynamic_usages_node(*left) }
+	if right := node.right { t.scan_dynamic_usages_node(*right) }
+	if cond := node.cond { t.scan_dynamic_usages_node(*cond) }
+	if @else := node.@else { t.scan_dynamic_usages_node(*@else) }
+	if @if := node.@if { t.scan_dynamic_usages_node(*@if) }
+	if finally := node.finally { t.scan_dynamic_usages_node(*finally) }
+	if key := node.key { t.scan_dynamic_usages_node(*key) }
+	if dim := node.dim { t.scan_dynamic_usages_node(*dim) }
+	if key_var := node.key_var { t.scan_dynamic_usages_node(*key_var) }
+	if value_var := node.value_var { t.scan_dynamic_usages_node(*value_var) }
+	if body := node.body { t.scan_dynamic_usages_node(*body) }
+	if default_val := node.default_val { t.scan_dynamic_usages_node(*default_val) }
+
+	for e in node.exprs { t.scan_dynamic_usages_node(e) }
+	for s in node.stmts { t.scan_dynamic_usages_node(s) }
+	for ei in node.elseifs { t.scan_dynamic_usages_node(ei) }
+	for c in node.catches { t.scan_dynamic_usages_node(c) }
+	for p in node.params { t.scan_dynamic_usages_node(p) }
+	for a in node.args {
+		if a_expr := a.expr {
+			t.scan_dynamic_usages_node(*a_expr)
+		}
+	}
+	for it in node.items { t.scan_dynamic_usages_node(it) }
+	for i in node.init { t.scan_dynamic_usages_node(i) }
+	for cd in node.conds { t.scan_dynamic_usages_node(cd) }
+	for cs in node.cases { t.scan_dynamic_usages_node(cs) }
+	for am in node.arms { t.scan_dynamic_usages_node(am) }
+	for l in node.loop { t.scan_dynamic_usages_node(l) }
+	for p in node.props { t.scan_dynamic_usages_node(p) }
+	for u in node.uses { t.scan_dynamic_usages_node(u) }
+	for v in node.vars { t.scan_dynamic_usages_node(v) }
+	for p in node.parts { t.scan_dynamic_usages_node(p) }
+}
+
+fn (mut t Transpiler) generate_registry_initializers() {
+	if !t.has_dynamic_new && !t.has_dynamic_method_call && !t.has_dynamic_func_call {
+		return
+	}
+
+	mut lines := []string{}
+	lines << 'fn init_registry() {'
+
+	// 1. 生成自定义函数与内置函数的适配器（如果需要动态函数调用）
+	if t.has_dynamic_func_call {
+		// 生成内置函数的适配器（委托给 rt.call_function）
+		for fname, _ in t.called_builtin_functions {
+			lines << "\trt.register_func('${fname}', fn(args []rt.PhpVal) rt.PhpVal {"
+			lines << "\t\treturn rt.call_function('${fname}', args)"
+			lines << "\t})"
+		}
+
+		// 生成自定义函数的适配器
+		for fname, info in t.custom_function_infos {
+			lines << "\trt.register_func('${fname}', fn(args []rt.PhpVal) rt.PhpVal {"
+			
+			// 1. 拆箱参数
+			mut pass_args := []string{}
+			for idx, pname in info.param_names {
+				ptype := if fname in t.func_param_types { t.func_param_types[fname][pname] or { VarType{ tag: .t_unknown } } } else { VarType{ tag: .t_unknown } }
+				arg_expr := 'if args.len > ${idx} { args[${idx}] } else { rt.new_null() }'
+				mut unboxed_expr := ''
+				if ptype.is_scalar() {
+					unboxed_expr = unbox_expr(arg_expr, ptype)
+				} else {
+					unboxed_expr = arg_expr
+				}
+				lines << "\t\targ_${idx} := ${unboxed_expr}"
+				pass_args << 'arg_${idx}'
+			}
+
+			// 2. 调用原生函数并装箱返回值
+			ret_type := t.func_return_types[fname] or { VarType{ tag: .t_unknown } }
+			call_stmt := '${func_v_name(fname)}(${pass_args.join(", ")})'
+			if ret_type.is_scalar() {
+				boxed := box_expr(call_stmt, ret_type)
+				lines << "\t\treturn ${boxed}"
+			} else {
+				lines << "\t\treturn ${call_stmt}"
+			}
+
+			lines << "\t})"
+		}
+	}
+
+	// 2. 生成类构造函数的适配器 (用于动态 new $className)
+	if t.has_dynamic_new {
+		for cls in t.classes {
+			parents_expr := t.get_parents_expr(cls.name)
+			
+			lines << "\trt.register_class_factory('${cls.name}', fn(args []rt.PhpVal) rt.PhpVal {"
+			
+			// 查找构造函数信息，拆箱参数
+			mut construct_info := ?MethodInfo(none)
+			for m in cls.all_methods {
+				if m.name == '__construct' {
+					construct_info = m
+					break
+				}
+			}
+
+			mut pass_args := []string{}
+			if info := construct_info {
+				if params_map := cls.param_types['__construct'] {
+					mut param_idx := 0
+					for _, ptype in params_map {
+						if param_idx >= info.param_count { break }
+						arg_expr := 'if args.len > ${param_idx} { args[${param_idx}] } else { rt.new_null() }'
+						mut unboxed_expr := ''
+						if ptype.is_scalar() {
+							unboxed_expr = unbox_expr(arg_expr, ptype)
+						} else {
+							unboxed_expr = arg_expr
+						}
+						lines << "\t\tc_arg_${param_idx} := ${unboxed_expr}"
+						pass_args << 'c_arg_${param_idx}'
+						param_idx++
+					}
+					for param_idx < info.param_count {
+						lines << "\t\tc_arg_${param_idx} := if args.len > ${param_idx} { args[${param_idx}] } else { rt.new_null() }"
+						pass_args << 'c_arg_${param_idx}'
+						param_idx++
+					}
+				} else {
+					for i in 0 .. info.param_count {
+						lines << "\t\tc_arg_${i} := if args.len > ${i} { args[${i}] } else { rt.new_null() }"
+						pass_args << 'c_arg_${i}'
+					}
+				}
+			}
+
+			lines << "\t\tobj := create_${cls.name.to_lower()}(${pass_args.join(", ")})"
+			lines << "\t\treturn rt.new_object('${cls.name}', ${parents_expr}, obj)"
+			lines << "\t})"
+		}
+	}
+
+	// 3. 生成类方法的适配器 (用于动态方法调用 $obj->$method())
+	if t.has_dynamic_method_call {
+		for cls in t.classes {
+			if cls.all_methods.len == 0 {
+				continue
+			}
+
+			lines << "\trt.register_class('${cls.name}', rt.ClassMeta{"
+			lines << "\t\tmethods: {"
+			
+			for m in cls.all_methods {
+				lines << "\t\t\t'${m.name}': fn(obj rt.PhpVal, args []rt.PhpVal) rt.PhpVal {"
+				
+				// 1. 获取强类型对象引用
+				lines << "\t\t\t\tmut this_obj := rt.cast_object_ptr[Class_${cls.name}](obj)"
+				
+				// 2. 拆箱参数
+				mut pass_args := []string{}
+				for i := 0; i < m.param_count; i++ {
+					arg_expr := 'if args.len > ${i} { args[${i}] } else { rt.new_null() }'
+					mut unboxed_expr := ''
+					
+					mut target_type := VarType{ tag: .t_unknown }
+					if i < m.param_names.len {
+						pname := m.param_names[i]
+						if m.name in cls.param_types {
+							if pt := cls.param_types[m.name][pname] {
+								target_type = pt
+							}
+						}
+					}
+					
+					if target_type.is_scalar() {
+						unboxed_expr = unbox_expr(arg_expr, target_type)
+					} else {
+						unboxed_expr = arg_expr
+					}
+					
+					lines << "\t\t\t\targ_${i} := ${unboxed_expr}"
+					pass_args << 'arg_${i}'
+				}
+				
+				// 3. 调用原生方法并装箱返回值
+				ret_type := t.get_method_return_type(cls.name, m.name)
+				mut method_call := 'this_obj.${method_v_name(m.name)}(${pass_args.join(", ")})'
+				if m.is_static {
+					mut declaring_class := cls.name
+					mut current := cls.name
+					for current != '' {
+						mut parent_name := ''
+						mut found_m := false
+						for c in t.classes {
+							if c.name == current {
+								parent_name = c.extends
+								for own_m in c.methods {
+									if own_m.name == m.name {
+										declaring_class = c.name
+										found_m = true
+										break
+									}
+								}
+								break
+							}
+						}
+						if found_m {
+							break
+						}
+						current = parent_name
+					}
+					method_call = 'Class_${declaring_class}.${method_v_name(m.name)}(${pass_args.join(", ")})'
+				}
+
+				if m.name == '__construct' || ret_type.tag == .t_void {
+					lines << "\t\t\t\t${method_call}"
+					lines << "\t\t\t\treturn rt.new_null()"
+				} else if ret_type.is_scalar() {
+					boxed := box_expr(method_call, ret_type)
+					lines << "\t\t\t\treturn ${boxed}"
+				} else {
+					lines << "\t\t\t\treturn ${method_call}"
+				}
+
+				lines << "\t\t\t}"
+			}
+			
+			lines << "\t\t}"
+			lines << "\t})"
+		}
+	}
+
+	lines << '}'
+	lines << ''
+	lines << 'fn init() {'
+	lines << '\tinit_registry()'
+	lines << '}'
+	lines << ''
+
+	t.func_out.writeln(lines.join('\n'))
 }
 
 

@@ -498,6 +498,14 @@ pub fn call_method(obj PhpVal, method_name string, args []PhpVal) PhpVal {
 		C.php2v_call_method(obj.raw, method_name.str, usize(method_name.len), z, u32(args.len), raw_args.data)
 		return PhpVal{ raw: z }
 	}
+	class_name := obj_info.class_name
+	mut r := get_registry()
+	if class_name in r.class_registry {
+		meta := r.class_registry[class_name]
+		if method_name in meta.methods {
+			return meta.methods[method_name](obj, args)
+		}
+	}
 	return obj_info.obj.dispatch_method(method_name, args) or { new_null() }
 }
 

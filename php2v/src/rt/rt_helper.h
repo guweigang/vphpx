@@ -224,4 +224,12 @@ static inline zval* php2v_get_false() {
 	return &php2v_false_val;
 }
 
+static void* g_php2v_registry = NULL;
+static inline void* php2v_get_registry() {
+    return g_php2v_registry;
+}
+static inline void php2v_set_registry(void* p) {
+    g_php2v_registry = p;
+}
+
 #endif

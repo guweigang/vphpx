@@ -95,12 +95,12 @@ fn test_transpiler_end_to_end() {
 			'mut var_y := if args.len > 0 { args[0].dup() } else { rt.new_null() }',
 			'return rt.add(rt.new_int(var_x), var_y)',
 			'mut var_cb := rt.new_closure(closure_1_fn)',
-			'rt.echo_val(rt.call_closure_val(var_cb, [rt.new_int(5)]))',
+			'rt.echo_val(rt.call_callable(var_cb, [rt.new_int(5)]))',
 			'closure_2_fn := fn [var_x] (this_ptr rt.PhpVal, args []rt.PhpVal) rt.PhpVal {',
 			'mut var_z := if args.len > 0 { args[0].dup() } else { rt.new_null() }',
 			'return rt.mul(var_z, rt.new_int(var_x))',
 			'mut var_fn := rt.new_closure(closure_2_fn)',
-			'rt.echo_val(rt.call_closure_val(var_fn, [rt.new_int(3)]))',
+			'rt.echo_val(rt.call_callable(var_fn, [rt.new_int(3)]))',
 		]
 		'14_include.php': [
 			"mut var_path := 'tests/fixtures/14_included.inc'",
@@ -258,8 +258,16 @@ fn test_transpiler_end_to_end() {
 		]
 		'34_wp_error.php': [
 			'struct Class_WP_Error',
-			'fn (mut this Class_WP_Error) add(code string, message string, var_data rt.PhpVal)',
+			'fn (mut this Class_WP_Error) add(code string, message string, data string)',
 			'do_action',
+		]
+		'35_dynamic_all.php': [
+			'rt.register_func',
+			'rt.register_class_factory',
+			'rt.register_class',
+			'rt.create_object_dynamically',
+			'rt.call_callable',
+			'fn init_registry() {',
 		]
 	}
 
@@ -314,9 +322,17 @@ fn test_transpiler_end_to_end() {
 		if !os.exists(rt_inc) {
 			rt_inc = os.join_path(pwd, 'src/rt')
 		}
-		mut v_path := '${os.join_path(pwd, "php2v/src")}:${pwd}:${os.dir(pwd)}:@vlib'
-		v_comp_cmd := 'v -path "${v_path}" -shared -cc clang -cflags "-DZTS -undefined dynamic_lookup -I${rt_inc} ${php_inc}" -o "${temp_so_file}" "${temp_v_file}"'
+		clean_v_file := os.join_path(os.temp_dir(), file.all_before_last('.') + '.v')
+		os.cp(temp_v_file, clean_v_file) or { panic(err) }
+		
+		mut v_path := '${os.join_path(pwd, "php2v/src")}:@vlib'
+		if !os.exists(os.join_path(pwd, 'php2v/src')) {
+			v_path = '${os.join_path(pwd, "src")}:@vlib'
+		}
+		v_comp_cmd := 'v -path "${v_path}" -shared -cc clang -cflags "-DZTS -undefined dynamic_lookup -I${rt_inc} ${php_inc}" -o "${temp_so_file}" "${clean_v_file}"'
 		comp_res := os.execute(v_comp_cmd)
+		
+		os.rm(clean_v_file) or {}
 		
 		// 清理临时 so 文件，保留 .v 源码文件供查看
 		os.rm(temp_so_file) or {}
