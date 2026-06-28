@@ -61,10 +61,12 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 					p_names << param_var.name
 				}
 			}
+			is_meth_static := (stmt.flags.int() & 8) != 0
 			class_info.methods << MethodInfo{
 				name: stmt.name
 				param_count: stmt.params.len
 				param_names: p_names
+				is_static: is_meth_static
 			}
 			own_method_names[stmt.name] = true
 			own_method_names_originally[stmt.name] = true
@@ -261,16 +263,18 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	t.indent = 0
 	old_scope := t.scope
 	t.scope = VarScope.new()
-	t.scope.declare('this')
+	is_static_method := if m := t.find_method(class_name, node.name) { m.is_static } else { false }
+	if !is_static_method {
+		t.scope.declare('this')
+		// P7: 注册 $this 的类型，使属性/方法访问可以直连
+		t.inferred_types['this'] = VarType{ tag: .t_object, class_name: class_name }
+	}
 	old_func_name := t.current_func_name
 	t.current_func_name = node.name
 	
 	old_func_ret := t.current_func_ret_type
 	ret_type := t.get_method_return_type(class_name, node.name)
 	t.current_func_ret_type = ret_type
-
-	// P7: 注册 $this 的类型，使属性/方法访问可以直连
-	t.inferred_types['this'] = VarType{ tag: .t_object, class_name: class_name }
 
 	// P7 Task 7: 参数使用推断类型；无法推断则保持 rt.PhpVal
 	mut param_names := []string{}
@@ -311,8 +315,11 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	ret_type_str := if is_construct || is_void { '' } else if ret_type.is_scalar() { ret_type.to_v_type() } else { 'rt.PhpVal' }
 
 	t.write_indent()
-	// P7 Task 7: 去掉 method_ 前缀（仅内部调用）
-	t.write_line('fn (mut this Class_${class_name}) ${method_v_name(node.name)}(${param_names.join(", ")}) ${ret_type_str} {')
+	if is_static_method {
+		t.write_line('fn Class_${class_name}.${method_v_name(node.name)}(${param_names.join(", ")}) ${ret_type_str} {')
+	} else {
+		t.write_line('fn (mut this Class_${class_name}) ${method_v_name(node.name)}(${param_names.join(", ")}) ${ret_type_str} {')
+	}
 	
 	t.indent++
 	
@@ -555,42 +562,82 @@ fn (mut t Transpiler) generate_dispatchers() {
 			t.indent++
 			for m in cls.all_methods {
 				t.write_indent()
-				// 查找该方法所属的类（可能是父类）
-				mut args_pass := []string{}
-				// 查找 param_types 以决定参数传递方式
+				t.write_line('\'${m.name}\' {')
+				t.indent++
+
 				mut param_types_list := []VarType{}
 				if pm := cls.param_types[m.name] {
-					for pn, pt in pm {
-						_ = pn
+					for _, pt in pm {
 						param_types_list << pt
 					}
 				}
+
+				mut args_pass := []string{}
 				for i in 0 .. m.param_count {
+					arg_name := 'dispatch_arg_${i}'
 					raw_arg := 'if args.len > ${i} { args[${i}] } else { rt.new_null() }'
+					mut processed_arg := ''
 					if i < param_types_list.len && param_types_list[i].is_scalar() {
-						// 目标参数是原生类型 → 拆箱
-						args_pass << unbox_expr(raw_arg, param_types_list[i])
+						processed_arg = unbox_expr(raw_arg, param_types_list[i])
 					} else {
-						args_pass << raw_arg
+						processed_arg = raw_arg
 					}
+					t.write_indent()
+					t.write_line('${arg_name} := ${processed_arg}')
+					args_pass << arg_name
 				}
-				// P7 Task 12: 方法返回类型装箱
+
 				ret_type := t.get_method_return_type(cls.name, m.name)
-				method_call := 'this.${method_v_name(m.name)}(${args_pass.join(", ")})'
+				mut method_call := 'this.${method_v_name(m.name)}(${args_pass.join(", ")})'
+				if m.is_static {
+					mut declaring_class := cls.name
+					mut current := cls.name
+					for current != '' {
+						mut parent_name := ''
+						mut found_m := false
+						for c in t.classes {
+							if c.name == current {
+								parent_name = c.extends
+								for own_m in c.methods {
+									if own_m.name == m.name {
+										declaring_class = c.name
+										found_m = true
+										break
+									}
+								}
+								break
+							}
+						}
+						if found_m {
+							break
+						}
+						current = parent_name
+					}
+					method_call = 'Class_${declaring_class}.${method_v_name(m.name)}(${args_pass.join(", ")})'
+				}
+
 				if m.name == '__construct' || ret_type.tag == .t_void {
-					// construct 和 void 方法无返回值：先调用，再返回 rt.new_null()
-					t.write_line('\'${m.name}\' { ${method_call}; return rt.new_null() }')
+					t.write_indent()
+					t.write_line('${method_call}')
+					t.write_indent()
+					t.write_line('return rt.new_null()')
 				} else if ret_type.is_scalar() {
+					t.write_indent()
 					match ret_type.tag {
-						.t_string { t.write_line('\'${m.name}\' { return rt.new_string(${method_call}) }') }
-						.t_int { t.write_line('\'${m.name}\' { return rt.new_int(${method_call}) }') }
-						.t_float { t.write_line('\'${m.name}\' { return rt.new_float(${method_call}) }') }
-						.t_bool { t.write_line('\'${m.name}\' { return rt.new_bool(${method_call}) }') }
-						else { t.write_line('\'${m.name}\' { return ${method_call} }') }
+						.t_string { t.write_line('return rt.new_string(${method_call})') }
+						.t_int { t.write_line('return rt.new_int(${method_call})') }
+						.t_float { t.write_line('return rt.new_float(${method_call})') }
+						.t_bool { t.write_line('return rt.new_bool(${method_call})') }
+						else { t.write_line('return ${method_call}') }
 					}
 				} else {
-					t.write_line('\'${m.name}\' { return ${method_call} }')
+					t.write_indent()
+					t.write_line('return ${method_call}')
 				}
+
+				t.indent--
+				t.write_indent()
+				t.write_line('}')
 			}
 			t.write_indent()
 			t.write_line('else { return none }')

@@ -25,6 +25,7 @@ pub:
 	param_count int
 	param_names []string
 	is_variadic bool
+	is_static   bool
 }
 
 pub struct Transpiler {
@@ -567,10 +568,12 @@ pub fn (mut t Transpiler) scan_classes(stmts []ast.AstNode) {
 								p_names << param_var.name
 							}
 						}
+						is_meth_static := (member.flags.int() & 8) != 0
 						methods << MethodInfo{
 							name: member.name
 							param_count: member.params.len
 							param_names: p_names
+							is_static: is_meth_static
 						}
 					}
 					ast.node_stmt_class_const {

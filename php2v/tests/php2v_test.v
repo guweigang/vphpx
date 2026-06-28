@@ -165,8 +165,8 @@ fn test_transpiler_end_to_end() {
 			'Class_App_Core_Application',
 			'create_app_utils_helper()',
 			'create_app_core_application()',
-			'temp.info(',
-			'temp.init(',
+			'Class_App_Utils_Helper.info(',
+			'Class_App_Core_Application.init(',
 		]
 		'22_string_interpolation.php': [
 			'mut var_name := \'Alice\'',

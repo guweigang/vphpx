@@ -2154,14 +2154,19 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 					arg_calls << call_expr
 			}
 			
+			is_static_method := if m := t.find_method(class_name, node.name) { m.is_static } else { false }
+			ret_type := t.get_method_return_type(class_name, node.name)
+
+			if is_static_method {
+				return 'Class_${class_name}.${method_v_name(node.name)}(${arg_strs.join(", ")})'
+			}
+
 			if arg_strs.len == 0 {
-				ret_type := t.get_method_return_type(class_name, node.name)
 				if ret_type.tag == .t_void {
 					return 'fn () rt.PhpVal { mut temp := Class_${class_name}{}; temp.${method_v_name(node.name)}(); return rt.new_null() }()'
 				}
 				return 'fn () rt.PhpVal { mut temp := Class_${class_name}{}; return temp.${method_v_name(node.name)}() }()'
 			} else {
-				ret_type := t.get_method_return_type(class_name, node.name)
 				if ret_type.tag == .t_void {
 					return 'fn (${arg_formals.join(", ")}) rt.PhpVal { mut temp := Class_${class_name}{}; temp.${method_v_name(node.name)}(${arg_calls.join(", ")}); return rt.new_null() }(${arg_strs.join(", ")})'
 				}

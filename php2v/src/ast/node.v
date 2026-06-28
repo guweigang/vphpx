@@ -50,6 +50,7 @@ pub mut:
 	vars       []AstNode @[json: 'vars']
 	parts      []AstNode @[json: 'parts']
 	alias      string    @[json: 'alias']
+	flags      string    @[json: 'flags']
 }
 
 pub struct ConstItem {
@@ -151,5 +152,6 @@ pub fn (n &AstNode) clone() &AstNode {
 		vars: vars
 		parts: parts
 		alias: n.alias
+		flags: n.flags
 	}
 }
