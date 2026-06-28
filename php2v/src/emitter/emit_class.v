@@ -921,7 +921,7 @@ fn (t Transpiler) collect_vars_in_scope(nodes []ast.AstNode) ([]string, []string
 	mut referenced := map[string]bool{}
 	mut assigned := map[string]bool{}
 	for node in nodes {
-		t.collect_vars_in_scope_rec(node, mut referenced, mut assigned)
+		t.collect_vars_in_scope_rec(&node, mut referenced, mut assigned, 0)
 	}
 	mut ref_list := []string{}
 	for k, _ in referenced { ref_list << k }
@@ -930,7 +930,10 @@ fn (t Transpiler) collect_vars_in_scope(nodes []ast.AstNode) ([]string, []string
 	return ref_list, ass_list
 }
 
-fn (t Transpiler) collect_vars_in_scope_rec(node ast.AstNode, mut referenced map[string]bool, mut assigned map[string]bool) {
+fn (t Transpiler) collect_vars_in_scope_rec(node &ast.AstNode, mut referenced map[string]bool, mut assigned map[string]bool, depth int) {
+	if depth > 100 {
+		return
+	}
 	if node.node_type in [ast.node_stmt_function, ast.node_stmt_class, ast.node_expr_closure] {
 		return
 	}
@@ -942,9 +945,10 @@ fn (t Transpiler) collect_vars_in_scope_rec(node ast.AstNode, mut referenced map
 			}
 		}
 		ast.node_expr_assign {
-			var_node := node.var or { &ast.AstNode{} }
-			if voidptr(var_node) != 0 && var_node.node_type == ast.node_expr_variable {
-				assigned[var_node.name] = true
+			if var_node := node.var {
+				if var_node.node_type == ast.node_expr_variable {
+					assigned[var_node.name] = true
+				}
 			}
 		}
 		ast.node_stmt_foreach {
@@ -969,33 +973,33 @@ fn (t Transpiler) collect_vars_in_scope_rec(node ast.AstNode, mut referenced map
 		else {}
 	}
 	
-	for expr in node.exprs { t.collect_vars_in_scope_rec(expr, mut referenced, mut assigned) }
-	if expr := node.expr { if voidptr(expr) != 0 { t.collect_vars_in_scope_rec(*expr, mut referenced, mut assigned) } }
-	if val := node.var { if voidptr(val) != 0 { t.collect_vars_in_scope_rec(*val, mut referenced, mut assigned) } }
-	if left := node.left { if voidptr(left) != 0 { t.collect_vars_in_scope_rec(*left, mut referenced, mut assigned) } }
-	if right := node.right { if voidptr(right) != 0 { t.collect_vars_in_scope_rec(*right, mut referenced, mut assigned) } }
-	if cond := node.cond { if voidptr(cond) != 0 { t.collect_vars_in_scope_rec(*cond, mut referenced, mut assigned) } }
-	for stmt in node.stmts { t.collect_vars_in_scope_rec(stmt, mut referenced, mut assigned) }
-	for elseif in node.elseifs { t.collect_vars_in_scope_rec(elseif, mut referenced, mut assigned) }
-	if el := node.@else { if voidptr(el) != 0 { t.collect_vars_in_scope_rec(*el, mut referenced, mut assigned) } }
-	if iff := node.@if { if voidptr(iff) != 0 { t.collect_vars_in_scope_rec(*iff, mut referenced, mut assigned) } }
-	for c in node.catches { t.collect_vars_in_scope_rec(c, mut referenced, mut assigned) }
-	if fin := node.finally { if voidptr(fin) != 0 { t.collect_vars_in_scope_rec(*fin, mut referenced, mut assigned) } }
-	for param in node.params { t.collect_vars_in_scope_rec(param, mut referenced, mut assigned) }
-	for arg in node.args { t.collect_vars_in_scope_rec(arg, mut referenced, mut assigned) }
-	for item in node.items { t.collect_vars_in_scope_rec(item, mut referenced, mut assigned) }
-	if k := node.key { if voidptr(k) != 0 { t.collect_vars_in_scope_rec(*k, mut referenced, mut assigned) } }
-	if d := node.dim { if voidptr(d) != 0 { t.collect_vars_in_scope_rec(*d, mut referenced, mut assigned) } }
-	if kv := node.key_var { if voidptr(kv) != 0 { t.collect_vars_in_scope_rec(*kv, mut referenced, mut assigned) } }
-	if vv := node.value_var { if voidptr(vv) != 0 { t.collect_vars_in_scope_rec(*vv, mut referenced, mut assigned) } }
-	for init in node.init { t.collect_vars_in_scope_rec(init, mut referenced, mut assigned) }
-	for cond in node.conds { t.collect_vars_in_scope_rec(cond, mut referenced, mut assigned) }
-	for loop in node.loop { t.collect_vars_in_scope_rec(loop, mut referenced, mut assigned) }
-	for prop in node.props { t.collect_vars_in_scope_rec(prop, mut referenced, mut assigned) }
-	for use in node.uses { t.collect_vars_in_scope_rec(use, mut referenced, mut assigned) }
-	for v in node.vars { t.collect_vars_in_scope_rec(v, mut referenced, mut assigned) }
-	for p in node.parts { t.collect_vars_in_scope_rec(p, mut referenced, mut assigned) }
-	for cs in node.cases { t.collect_vars_in_scope_rec(cs, mut referenced, mut assigned) }
-	for arm in node.arms { t.collect_vars_in_scope_rec(arm, mut referenced, mut assigned) }
-	if body := node.body { if voidptr(body) != 0 { t.collect_vars_in_scope_rec(*body, mut referenced, mut assigned) } }
+	for i in 0 .. node.exprs.len { t.collect_vars_in_scope_rec(&node.exprs[i], mut referenced, mut assigned, depth + 1) }
+	if expr := node.expr { t.collect_vars_in_scope_rec(expr, mut referenced, mut assigned, depth + 1) }
+	if val := node.var { t.collect_vars_in_scope_rec(val, mut referenced, mut assigned, depth + 1) }
+	if left := node.left { t.collect_vars_in_scope_rec(left, mut referenced, mut assigned, depth + 1) }
+	if right := node.right { t.collect_vars_in_scope_rec(right, mut referenced, mut assigned, depth + 1) }
+	if cond := node.cond { t.collect_vars_in_scope_rec(cond, mut referenced, mut assigned, depth + 1) }
+	for i in 0 .. node.stmts.len { t.collect_vars_in_scope_rec(&node.stmts[i], mut referenced, mut assigned, depth + 1) }
+	for i in 0 .. node.elseifs.len { t.collect_vars_in_scope_rec(&node.elseifs[i], mut referenced, mut assigned, depth + 1) }
+	if el := node.@else { t.collect_vars_in_scope_rec(el, mut referenced, mut assigned, depth + 1) }
+	if iff := node.@if { t.collect_vars_in_scope_rec(iff, mut referenced, mut assigned, depth + 1) }
+	for i in 0 .. node.catches.len { t.collect_vars_in_scope_rec(&node.catches[i], mut referenced, mut assigned, depth + 1) }
+	if fin := node.finally { t.collect_vars_in_scope_rec(fin, mut referenced, mut assigned, depth + 1) }
+	for i in 0 .. node.params.len { t.collect_vars_in_scope_rec(&node.params[i], mut referenced, mut assigned, depth + 1) }
+	for i in 0 .. node.args.len { t.collect_vars_in_scope_rec(&node.args[i], mut referenced, mut assigned, depth + 1) }
+	for i in 0 .. node.items.len { t.collect_vars_in_scope_rec(&node.items[i], mut referenced, mut assigned, depth + 1) }
+	if k := node.key { t.collect_vars_in_scope_rec(k, mut referenced, mut assigned, depth + 1) }
+	if d := node.dim { t.collect_vars_in_scope_rec(d, mut referenced, mut assigned, depth + 1) }
+	if kv := node.key_var { t.collect_vars_in_scope_rec(kv, mut referenced, mut assigned, depth + 1) }
+	if vv := node.value_var { t.collect_vars_in_scope_rec(vv, mut referenced, mut assigned, depth + 1) }
+	for i in 0 .. node.init.len { t.collect_vars_in_scope_rec(&node.init[i], mut referenced, mut assigned, depth + 1) }
+	for i in 0 .. node.conds.len { t.collect_vars_in_scope_rec(&node.conds[i], mut referenced, mut assigned, depth + 1) }
+	for i in 0 .. node.loop.len { t.collect_vars_in_scope_rec(&node.loop[i], mut referenced, mut assigned, depth + 1) }
+	for i in 0 .. node.props.len { t.collect_vars_in_scope_rec(&node.props[i], mut referenced, mut assigned, depth + 1) }
+	for i in 0 .. node.uses.len { t.collect_vars_in_scope_rec(&node.uses[i], mut referenced, mut assigned, depth + 1) }
+	for i in 0 .. node.vars.len { t.collect_vars_in_scope_rec(&node.vars[i], mut referenced, mut assigned, depth + 1) }
+	for i in 0 .. node.parts.len { t.collect_vars_in_scope_rec(&node.parts[i], mut referenced, mut assigned, depth + 1) }
+	for i in 0 .. node.cases.len { t.collect_vars_in_scope_rec(&node.cases[i], mut referenced, mut assigned, depth + 1) }
+	for i in 0 .. node.arms.len { t.collect_vars_in_scope_rec(&node.arms[i], mut referenced, mut assigned, depth + 1) }
+	if body := node.body { t.collect_vars_in_scope_rec(body, mut referenced, mut assigned, depth + 1) }
 }

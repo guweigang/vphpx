@@ -3,6 +3,11 @@ module emitter
 import ast
 
 fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
+	t.active_depth++
+	if t.active_depth > 100 {
+		t.active_depth--
+		return
+	}
 	match node.node_type {
 		ast.node_stmt_echo {
 			t.visit_echo(node)
@@ -421,6 +426,7 @@ fn (mut t Transpiler) visit_if(node ast.AstNode) {
 	
 	t.write_indent()
 	t.write_line('}')
+	t.active_depth--
 }
 
 fn (mut t Transpiler) visit_function(node ast.AstNode) {
@@ -539,15 +545,7 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 	for p in registered_native_params {
 		t.native_params.delete(p)
 	}
-	// 恢复 inferred_types：清除函数局部变量，恢复原始内容
-	for key in t.inferred_types.keys() {
-		if key !in old_inferred {
-			t.inferred_types.delete(key)
-		}
-	}
-	for key, val in old_inferred {
-		t.inferred_types[key] = val
-	}
+	t.inferred_types = old_inferred.clone()
 	t.current_func_name = old_func_name
 	t.current_func_ret_type = old_func_ret
 

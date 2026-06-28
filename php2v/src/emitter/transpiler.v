@@ -84,6 +84,15 @@ pub mut:
 	has_dynamic_new         bool
 	has_dynamic_method_call bool
 	has_dynamic_func_call   bool
+	type_cache              map[voidptr]VarType
+	codegen_cache           map[voidptr]CodegenCacheEntry
+	active_depth            int
+}
+
+pub struct CodegenCacheEntry {
+pub mut:
+	code string
+	typ  VarType
 }
 
 pub struct GlobalConst {
@@ -689,12 +698,11 @@ pub fn (t Transpiler) find_method(class_name string, method_name string) ?Method
 	return none
 }
 
-// get_v_var_name 根据 PHP 变量名，计算其在 V 语言侧的物理变量名（处理别名、原生性与 var_ 前缀）
 pub fn (t Transpiler) get_v_var_name(php_var_name string) string {
-	if alias := t.var_aliases[php_var_name] {
-		return alias
+	if php_var_name in t.var_aliases {
+		return t.var_aliases[php_var_name] or { '' }
 	}
-	if t.native_params[php_var_name] || t.native_vars[php_var_name] {
+	if php_var_name in t.native_params || php_var_name in t.native_vars {
 		return php_var_name
 	}
 	return 'var_${php_var_name}'

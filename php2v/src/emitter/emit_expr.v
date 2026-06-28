@@ -21,26 +21,33 @@ fn (mut t Transpiler) get_expr_type(node ast.AstNode) VarType {
 			}
 			// 先检查函数参数类型
 			if t.current_func_name != '' {
-				if params := t.func_param_types[t.current_func_name] {
-					if pt := params[node.name] {
-						return pt
+				if t.current_func_name in t.func_param_types {
+					if params := t.func_param_types[t.current_func_name] {
+						if node.name in params {
+							return params[node.name] or { VarType{ tag: .t_unknown } }
+						}
 					}
 				}
-				// 再检查函数局部变量类型
-				if vars := t.func_var_types[t.current_func_name] {
-					if vt := vars[node.name] {
-						return vt
+				if t.current_func_name in t.func_var_types {
+					if vars := t.func_var_types[t.current_func_name] {
+						if node.name in vars {
+							return vars[node.name] or { VarType{ tag: .t_unknown } }
+						}
 					}
 				}
 			}
-			return t.inferred_types[node.name] or { VarType{ tag: .t_unknown } }
+			if node.name in t.inferred_types {
+				return t.inferred_types[node.name] or { VarType{ tag: .t_unknown } }
+			}
+			return VarType{ tag: .t_unknown }
 		}
 		ast.node_expr_const {
 			match node.name.to_lower() {
 				'true', 'false' { return VarType{ tag: .t_bool } }
 				'null' { return VarType{ tag: .t_null } }
 				else {
-					if gc := t.global_constants[node.name] {
+					if node.name in t.global_constants {
+						gc := t.global_constants[node.name] or { GlobalConst{} }
 						return gc.typ
 					}
 					return VarType{ tag: .t_unknown }
@@ -64,6 +71,10 @@ fn (mut t Transpiler) get_expr_type(node ast.AstNode) VarType {
 			return VarType{ tag: .t_string }
 		}
 		ast.node_expr_array {
+			ptr := voidptr(node.items.data)
+			if cached := t.type_cache[ptr] {
+				return cached
+			}
 			mut is_list := true
 			mut is_map := true
 			mut elem_tags := []TypeTag{}
@@ -102,13 +113,14 @@ fn (mut t Transpiler) get_expr_type(node ast.AstNode) VarType {
 			if !t.expected_type.is_native_list && !t.expected_type.is_native_map {
 				force_non_native = true
 			}
+			mut ret_val := VarType{ tag: .t_array }
 			if is_list && !is_map && !force_non_native {
-				return VarType{ tag: .t_array, is_native_list: true, element_type_tag: elem_tag }
+				ret_val = VarType{ tag: .t_array, is_native_list: true, element_type_tag: elem_tag }
+			} else if is_map && !is_list && !force_non_native {
+				ret_val = VarType{ tag: .t_array, is_native_map: true, element_type_tag: elem_tag }
 			}
-			if is_map && !is_list && !force_non_native {
-				return VarType{ tag: .t_array, is_native_map: true, element_type_tag: elem_tag }
-			}
-			return VarType{ tag: .t_array }
+			t.type_cache[ptr] = ret_val
+			return ret_val
 		}
 		ast.node_expr_funccall {
 			// 优先使用已知内置函数的返回类型
@@ -233,6 +245,17 @@ fn (mut t Transpiler) get_expr_type(node ast.AstNode) VarType {
 }
 
 fn (mut t Transpiler) visit_expr_native(node ast.AstNode) string {
+	t.active_depth++
+	if t.active_depth > 100 {
+		t.active_depth--
+		return ''
+	}
+	res := t.visit_expr_native_impl(node)
+	t.active_depth--
+	return res
+}
+
+fn (mut t Transpiler) visit_expr_native_impl(node ast.AstNode) string {
 	match node.node_type {
 		ast.node_scalar_int {
 			t.last_expr_type = VarType{ tag: .t_int }
@@ -853,6 +876,17 @@ fn (mut t Transpiler) emit_v_interpolation(parts []ast.AstNode) string {
 }
 
 fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
+	t.active_depth++
+	if t.active_depth > 100 {
+		t.active_depth--
+		return ''
+	}
+	res := t.visit_expr_impl(node)
+	t.active_depth--
+	return res
+}
+
+fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 	match node.node_type {
 		ast.node_expr_isset {
 			mut checks := []string{}
@@ -1474,10 +1508,16 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 		}
 
 		ast.node_expr_array {
+			ptr := voidptr(node.items.data)
+			if cached := t.codegen_cache[ptr] {
+				t.last_expr_type = cached.typ
+				return cached.code
+			}
 			mut arr_type := t.get_expr_type(node)
 			if t.expected_type.is_native_list || t.expected_type.is_native_map {
 				arr_type = t.expected_type
 			}
+			mut ret_code := ''
 			if arr_type.is_native_list {
 				mut elem_strs := []string{}
 				for item in node.items {
@@ -1491,11 +1531,11 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 				}
 				t.last_expr_type = arr_type
 				if elem_strs.len == 0 {
-					return '[]rt.PhpVal{}'
+					ret_code = '[]rt.PhpVal{}'
+				} else {
+					ret_code = '[${elem_strs.join(", ")}]'
 				}
-				return '[${elem_strs.join(", ")}]'
-			}
-			if arr_type.is_native_map {
+			} else if arr_type.is_native_map {
 				mut pair_strs := []string{}
 				for item in node.items {
 					key_node := item.key or { continue }
@@ -1512,30 +1552,33 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 				}
 				t.last_expr_type = arr_type
 				if pair_strs.len == 0 {
-					return 'map[string]rt.PhpVal{}'
-				}
-				return '{ ${pair_strs.join(", ")} }'
-			}
-			
-			mut item_strs := []string{}
-			for item in node.items {
-				val_node := item.expr or { panic('ArrayItem missing expr') }
-				val_typ := t.get_expr_type(*val_node)
-				val_str := if val_typ.is_scalar() { t.visit_expr_native(*val_node) } else { t.visit_expr(*val_node) }
-				
-				if key_node := item.key {
-					key_typ := t.get_expr_type(*key_node)
-					key_str := if key_typ.is_scalar() { t.visit_expr_native(*key_node) } else { t.visit_expr(*key_node) }
-					item_strs << 'rt.ArrayItem{ key: ${key_str}, val: ${val_str} }'
+					ret_code = 'map[string]rt.PhpVal{}'
 				} else {
-					item_strs << 'rt.ArrayItem{ key: none, val: ${val_str} }'
+					ret_code = '{ ${pair_strs.join(", ")} }'
+				}
+			} else {
+				mut item_strs := []string{}
+				for item in node.items {
+					val_node := item.expr or { panic('ArrayItem missing expr') }
+					val_typ := t.get_expr_type(*val_node)
+					val_str := if val_typ.is_scalar() { t.visit_expr_native(*val_node) } else { t.visit_expr(*val_node) }
+					
+					if key_node := item.key {
+						key_typ := t.get_expr_type(*key_node)
+						key_str := if key_typ.is_scalar() { t.visit_expr_native(*key_node) } else { t.visit_expr(*key_node) }
+						item_strs << 'rt.ArrayItem{ key: ${key_str}, val: ${val_str} }'
+					} else {
+						item_strs << 'rt.ArrayItem{ key: none, val: ${val_str} }'
+					}
+				}
+				if item_strs.len == 0 {
+					ret_code = 'rt.new_array()'
+				} else {
+					ret_code = 'rt.create_array([${item_strs.join(", ")}])'
 				}
 			}
-			if item_strs.len == 0 {
-				return 'rt.new_array()'
-			} else {
-				return 'rt.create_array([${item_strs.join(", ")}])'
-			}
+			t.codegen_cache[ptr] = CodegenCacheEntry{ code: ret_code, typ: t.last_expr_type }
+			return ret_code
 		}
 		ast.node_expr_array_dim_fetch {
 			var_node := node.var or { panic('ArrayDimFetch missing var') }
