@@ -384,6 +384,14 @@ fn prop_v_name(prop_name string) string {
 	return prop_name
 }
 
+// 全局函数在 V 中的命名（若跟 V 保留关键字冲突，加 func_ 前缀）
+fn func_v_name(name string) string {
+	if is_v_keyword(name) || name in ['print', 'println', 'error', 'panic', 'exit'] {
+		return 'func_${name}'
+	}
+	return name
+}
+
 // 方法在 V 中的方法名（去掉 method_ 前缀）
 fn method_v_name(method_name string) string {
 	// V 不允许方法名以 _ 开头，PHP 魔术方法 __xxx 需要特殊处理

@@ -495,7 +495,7 @@ fn (mut t Transpiler) visit_expr_native(node ast.AstNode) string {
 						}
 					}
 					t.last_expr_type = ret_type
-					return 'func_${func_name}(${arg_strs.join(", ")})'
+					return '${func_v_name(func_name)}(${arg_strs.join(", ")})'
 				}
 			}
 			return t.visit_expr(node)
@@ -1315,10 +1315,10 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 				t.last_expr_type = ret_type
 				// 如果返回值是原生标量，需要装箱为 PhpVal（因为调用上下文通常需要 PhpVal）
 				if ret_type.is_scalar() {
-					call_expr := 'func_${func_name}(${arg_strs.join(", ")})'
+					call_expr := '${func_v_name(func_name)}(${arg_strs.join(", ")})'
 					return box_expr(call_expr, ret_type)
 				}
-				return 'func_${func_name}(${arg_strs.join(", ")})'
+				return '${func_v_name(func_name)}(${arg_strs.join(", ")})'
 			}
 			
 			// 回退：标准 PhpVal 参数处理
@@ -1342,7 +1342,7 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 			}
 			
 			if func_name in t.custom_functions {
-				return 'func_${func_name}(${arg_strs.join(", ")})'
+				return '${func_v_name(func_name)}(${arg_strs.join(", ")})'
 			} else {
 				// VLib 内置函数映射：转译阶段内联，消除运行时字符串 dispatch
 				builtin := t.try_builtin_mapping(func_name, arg_strs, arg_nodes)

@@ -47,9 +47,9 @@ fn test_transpiler_end_to_end() {
 			'if var_c != 0 {',
 		]
 		'07_functions.php': [
-			'fn func_add_five(val i64) i64 {',
+			'fn add_five(val i64) i64 {',
 			'return val + 5',
-			'mut var_res := func_add_five(10)',
+			'mut var_res := add_five(10)',
 			'print(var_res.str())',
 		]
 		'08_arrays.php': [
@@ -132,9 +132,9 @@ fn test_transpiler_end_to_end() {
 			"mut var_dog := create_dog('Rex', 'Labrador')",
 		]
 		'17_boolean_logical.php': [
-			'if !(func_log_true(',
-			'func_log_false(\'left_false\') && func_log_true(\'right_true\')',
-			'func_log_true(\'left_true\') || func_log_true(\'right_true\')',
+			'if !(log_true(',
+			'log_false(\'left_false\') && log_true(\'right_true\')',
+			'log_true(\'left_true\') || log_true(\'right_true\')',
 		]
 		'18_ternary_coalesce.php': [
 			'if var_a > 5',
@@ -259,7 +259,7 @@ fn test_transpiler_end_to_end() {
 		'34_wp_error.php': [
 			'struct Class_WP_Error',
 			'fn (mut this Class_WP_Error) add(code string, message string, var_data rt.PhpVal)',
-			'func_do_action',
+			'do_action',
 		]
 	}
 

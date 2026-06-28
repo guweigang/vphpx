@@ -462,7 +462,7 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 	has_native_ret := ret_type.is_scalar()
 	ret_type_str := if has_native_ret { ' ${ret_type.to_v_type()}' } else { ' rt.PhpVal' }
 	t.write_indent()
-	t.write_line('fn func_${node.name}(${param_names.join(", ")})${ret_type_str} {')
+	t.write_line('fn ${func_v_name(node.name)}(${param_names.join(", ")})${ret_type_str} {')
 	
 	t.indent++
 	ref_vars, ass_vars := t.collect_vars_in_scope(node.stmts)
