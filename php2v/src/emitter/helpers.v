@@ -46,6 +46,7 @@ pub fn unbox_expr(code string, typ VarType) string {
 		.t_float { return '(${code}).to_f64()' }
 		.t_string { return '(${code}).str()' }
 		.t_bool { return '(${code}).to_bool()' }
+		.t_object { return 'rt.cast_object_ptr[Class_${typ.class_name}](${code})' }
 		else { return code }
 	}
 }
@@ -106,11 +107,19 @@ pub fn (mut t Transpiler) compile_arg(arg_node ast.AstNode, target_type VarType)
 	
 	if target_is_native && arg_is_native {
 		// 目标是原生，源也是原生 → 直接传递
-		return CallArgResult{ code: t.compile_expr(arg_node, .native), typ: arg_type }
+		mut prefix := ''
+		if target_type.tag == .t_object {
+			prefix = 'mut '
+		}
+		return CallArgResult{ code: prefix + t.compile_expr(arg_node, .native), typ: arg_type }
 	} else if target_is_native && !arg_is_native {
 		// 目标是原生，源是包装 → 拆箱
 		raw := t.compile_expr(arg_node, .boxed)
-		return CallArgResult{ code: unbox_expr(raw, target_type), typ: arg_type }
+		mut prefix := ''
+		if target_type.tag == .t_object {
+			prefix = 'mut '
+		}
+		return CallArgResult{ code: prefix + unbox_expr(raw, target_type), typ: arg_type }
 	} else if !target_is_native && arg_is_native {
 		// 目标是包装，源是原生 → 装箱
 		native_val := t.compile_expr(arg_node, .native)

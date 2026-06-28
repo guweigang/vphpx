@@ -468,6 +468,9 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 				t.inferred_types[param_name] = param_type
 				t.native_params[param_name] = true
 				registered_native_params << param_name
+			} else if param_type.is_object() {
+				param_names << 'mut var_${param_name} ${param_type.to_v_type()}'
+				t.inferred_types[param_name] = param_type
 			} else {
 				param_names << 'var_${param_name} rt.PhpVal'
 			}

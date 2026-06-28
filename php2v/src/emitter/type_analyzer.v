@@ -688,6 +688,8 @@ pub fn (mut t Transpiler) infer_class_types(stmts []ast.AstNode) {
 							hint_tag := php_type_to_tag(param.incl_type)
 							if hint_tag != .t_unknown {
 								param_type = VarType{ tag: hint_tag }
+							} else {
+								param_type = VarType{ tag: .t_object, class_name: t.resolve_class_name(param.incl_type) }
 							}
 						}
 						// 2) 回退：分析参数使用
@@ -1000,6 +1002,9 @@ pub fn (mut t Transpiler) infer_single_class_types(node ast.AstNode, class_name 
 				if hint_tag != .t_unknown {
 					var_assign_types[param_name] << hint_tag
 					continue
+				} else {
+					var_assign_types[param_name] << .t_object
+					continue
 				}
 			}
 			// 2) 回退：调用点实参类型
@@ -1062,6 +1067,8 @@ pub fn (mut t Transpiler) infer_single_class_types(node ast.AstNode, class_name 
 					hint_tag := php_type_to_tag(param.incl_type)
 					if hint_tag != .t_unknown {
 						param_type = VarType{ tag: hint_tag }
+					} else {
+						param_type = VarType{ tag: .t_object, class_name: t.resolve_class_name(param.incl_type) }
 					}
 				}
 				// 1) 回退：分析参数使用
@@ -1235,6 +1242,9 @@ fn (mut t Transpiler) infer_single_func_types(node ast.AstNode) {
 			hint_tag := php_type_to_tag(param.incl_type)
 			if hint_tag != .t_unknown {
 				resolved_tag = hint_tag
+			} else {
+				resolved_tag = .t_object
+				param_types[param_name] = VarType{ tag: .t_object, class_name: t.resolve_class_name(param.incl_type) }
 			}
 		}
 

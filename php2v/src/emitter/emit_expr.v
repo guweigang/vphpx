@@ -2174,28 +2174,47 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 					mut arg_str := ''
 					mut formal_type := 'rt.PhpVal'
 					mut call_expr := ''
-					
-					if target_type.is_scalar() && arg_type.is_scalar() {
+
+					target_is_native := target_type.is_scalar() || target_type.class_name.len > 0
+					arg_is_native := arg_type.is_scalar() || arg_type.class_name.len > 0
+
+					mut prefix := ''
+					if target_type.tag == .t_object {
+						prefix = 'mut '
+					}
+
+					if target_is_native && arg_is_native {
 						// 实参和目标都是原生类型 → 直接传递
-						arg_str = t.visit_expr_native(*arg_val)
+						arg_str = prefix + t.compile_expr(*arg_val, .native)
 						formal_type = target_type.to_v_type()
-						call_expr = 'arg_${i}'
-					} else if target_type.is_scalar() && !arg_type.is_scalar() {
+						call_expr = prefix + 'arg_${i}'
+					} else if target_is_native && !arg_is_native {
 						// 实参是 PhpVal，目标期望原生类型 → 拆箱
-						raw := t.visit_expr(*arg_val)
+						raw := t.compile_expr(*arg_val, .boxed)
 						unboxed := unbox_expr(raw, target_type)
-						arg_str = unboxed
-						formal_type = 'rt.PhpVal'
-						call_expr = unboxed
-					} else {
-						// 目标期望 PhpVal → 用 compile_arg 处理装箱/dup
+						arg_str = prefix + unboxed
+						formal_type = target_type.to_v_type()
+						call_expr = prefix + 'arg_${i}'
+					} else if !target_is_native && arg_is_native {
+						// 实参是原生，目标期望 PhpVal → 装箱
 						result := t.compile_arg(*arg_val, VarType{ tag: .t_unknown })
 						arg_str = result.code
+						formal_type = 'rt.PhpVal'
+						call_expr = 'arg_${i}'
+					} else {
+						// 目标期望 PhpVal，源也是包装 → 直接传递
+						result := t.compile_arg(*arg_val, VarType{ tag: .t_unknown })
+						arg_str = result.code
+						formal_type = 'rt.PhpVal'
 						call_expr = 'arg_${i}'
 					}
-					
+
 					arg_strs << arg_str
-					arg_formals << 'arg_${i} ${formal_type}'
+					if target_type.tag == .t_object {
+						arg_formals << 'mut arg_${i} ${formal_type}'
+					} else {
+						arg_formals << 'arg_${i} ${formal_type}'
+					}
 					arg_calls << call_expr
 			}
 			

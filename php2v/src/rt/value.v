@@ -539,6 +539,17 @@ pub fn (v PhpVal) get_object() &PhpObject {
 	}
 }
 
+pub fn cast_object_ptr[T](v PhpVal) &T {
+	mut obj_info := v.get_object()
+	if voidptr(obj_info) == 0 {
+		return unsafe { &T(nil) }
+	}
+	if obj_info.obj is &T {
+		return obj_info.obj as &T
+	}
+	return unsafe { &T(nil) }
+}
+
 // Closure support: store V native fn as PhpVal
 pub const magic_php_closure = u64(0x56504850585F434C) // 'VHPX_CL'
 

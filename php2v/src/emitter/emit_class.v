@@ -298,11 +298,15 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 		}
 		
 		if param_type.is_scalar() {
-			// 原生类型参数：直接用参数名（无 var_ 前缀），登记到类型表和 native_params
+			// 原生类型参数：直接用参数名（无 var_ 前缀），登记到类型表 and native_params
 			param_names << '${param_name} ${param_type.to_v_type()}'
 			t.inferred_types[shadow_name] = param_type
 			t.native_params[shadow_name] = true
 			registered_native_params << shadow_name
+		} else if param_type.is_object() {
+			// 原生类对象参数：保留 var_ 前缀，但以原生 Class 指针传递，且一律为 mut
+			param_names << 'mut var_${param_name} ${param_type.to_v_type()}'
+			t.inferred_types[shadow_name] = param_type
 		} else {
 			param_names << 'var_${param_name} rt.PhpVal'
 			t.inferred_types[shadow_name] = param_type
@@ -577,14 +581,28 @@ fn (mut t Transpiler) generate_dispatchers() {
 					arg_name := 'dispatch_arg_${i}'
 					raw_arg := 'if args.len > ${i} { args[${i}] } else { rt.new_null() }'
 					mut processed_arg := ''
-					if i < param_types_list.len && param_types_list[i].is_scalar() {
-						processed_arg = unbox_expr(raw_arg, param_types_list[i])
+					mut is_obj := false
+					if i < param_types_list.len {
+						pt := param_types_list[i]
+						if pt.is_scalar() {
+							processed_arg = unbox_expr(raw_arg, pt)
+						} else if pt.is_object() {
+							processed_arg = unbox_expr(raw_arg, pt)
+							is_obj = true
+						} else {
+							processed_arg = raw_arg
+						}
 					} else {
 						processed_arg = raw_arg
 					}
 					t.write_indent()
-					t.write_line('${arg_name} := ${processed_arg}')
-					args_pass << arg_name
+					if is_obj {
+						t.write_line('mut ${arg_name} := ${processed_arg}')
+						args_pass << 'mut ${arg_name}'
+					} else {
+						t.write_line('${arg_name} := ${processed_arg}')
+						args_pass << arg_name
+					}
 				}
 
 				ret_type := t.get_method_return_type(cls.name, m.name)

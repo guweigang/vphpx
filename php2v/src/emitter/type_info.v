@@ -55,6 +55,7 @@ pub fn (t VarType) to_v_type() string {
 		.t_float { return 'f64' }
 		.t_string { return 'string' }
 		.t_bool { return 'bool' }
+		.t_object { return 'Class_${t.class_name}' }
 		else { return 'rt.PhpVal' }
 	}
 }
