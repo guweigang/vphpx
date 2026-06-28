@@ -84,7 +84,6 @@ pub mut:
 	has_dynamic_new         bool
 	has_dynamic_method_call bool
 	has_dynamic_func_call   bool
-	called_builtin_functions map[string]bool
 }
 
 pub struct GlobalConst {
@@ -134,7 +133,6 @@ pub fn Transpiler.new() Transpiler {
 		has_dynamic_new:         false
 		has_dynamic_method_call: false
 		has_dynamic_func_call:   false
-		called_builtin_functions: map[string]bool{}
 	}
 }
 
@@ -772,10 +770,6 @@ fn (mut t Transpiler) scan_dynamic_usages_node(node ast.AstNode) {
 		ast.node_expr_funccall {
 			if _ := node.expr {
 				t.has_dynamic_func_call = true
-			} else if node.name != '' {
-				if !t.custom_functions[node.name] {
-					t.called_builtin_functions[node.name] = true
-				}
 			}
 		}
 		else {}
@@ -827,15 +821,8 @@ fn (mut t Transpiler) generate_registry_initializers() {
 	mut lines := []string{}
 	lines << 'fn init_registry() {'
 
-	// 1. 生成自定义函数与内置函数的适配器（如果需要动态函数调用）
+	// 1. 生成自定义函数的适配器（如果需要动态函数调用）
 	if t.has_dynamic_func_call {
-		// 生成内置函数的适配器（委托给 rt.call_function）
-		for fname, _ in t.called_builtin_functions {
-			lines << "\trt.register_func('${fname}', fn(args []rt.PhpVal) rt.PhpVal {"
-			lines << "\t\treturn rt.call_function('${fname}', args)"
-			lines << "\t})"
-		}
-
 		// 生成自定义函数的适配器
 		for fname, info in t.custom_function_infos {
 			lines << "\trt.register_func('${fname}', fn(args []rt.PhpVal) rt.PhpVal {"

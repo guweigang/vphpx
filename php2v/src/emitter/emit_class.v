@@ -569,32 +569,33 @@ fn (mut t Transpiler) generate_dispatchers() {
 				t.write_line('\'${m.name}\' {')
 				t.indent++
 
-				mut param_types_list := []VarType{}
-				if pm := cls.param_types[m.name] {
-					for _, pt in pm {
-						param_types_list << pt
-					}
-				}
-
 				mut args_pass := []string{}
 				for i in 0 .. m.param_count {
 					arg_name := 'dispatch_arg_${i}'
 					raw_arg := 'if args.len > ${i} { args[${i}] } else { rt.new_null() }'
 					mut processed_arg := ''
 					mut is_obj := false
-					if i < param_types_list.len {
-						pt := param_types_list[i]
-						if pt.is_scalar() {
-							processed_arg = unbox_expr(raw_arg, pt)
-						} else if pt.is_object() {
-							processed_arg = unbox_expr(raw_arg, pt)
-							is_obj = true
-						} else {
-							processed_arg = raw_arg
+					
+					// 严格按照方法声明的形参顺序获取对应的推导类型
+					mut target_type := VarType{ tag: .t_unknown }
+					if i < m.param_names.len {
+						pname := m.param_names[i]
+						if pm := cls.param_types[m.name] {
+							if pt := pm[pname] {
+								target_type = pt
+							}
 						}
+					}
+
+					if target_type.is_scalar() {
+						processed_arg = unbox_expr(raw_arg, target_type)
+					} else if target_type.is_object() {
+						processed_arg = unbox_expr(raw_arg, target_type)
+						is_obj = true
 					} else {
 						processed_arg = raw_arg
 					}
+
 					t.write_indent()
 					if is_obj {
 						t.write_line('mut ${arg_name} := ${processed_arg}')

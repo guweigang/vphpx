@@ -692,6 +692,17 @@ pub fn (mut t Transpiler) infer_class_types(stmts []ast.AstNode) {
 								param_type = VarType{ tag: .t_object, class_name: t.resolve_class_name(param.incl_type) }
 							}
 						}
+						// 1.5) 参数默认字面量类型优先于使用分析
+						if param_type.tag == .t_unknown {
+							if default_node := param.default_val {
+								if voidptr(default_node) != 0 {
+									default_tag := php_literal_node_to_tag(*default_node)
+									if default_tag != .t_unknown {
+										param_type = VarType{ tag: default_tag }
+									}
+								}
+							}
+						}
 						// 2) 回退：分析参数使用
 						if param_type.tag == .t_unknown {
 							param_type = t.infer_param_type_from_usage(method_stmt.stmts, param_name, prop_types)
@@ -910,51 +921,66 @@ fn (t &Transpiler) expr_references_var(node ast.AstNode, var_name string) bool {
 }
 
 // infer_method_return_type 分析方法的返回值类型
-// 策略：如果所有 return 语句都返回 $this->prop（原生类型），则返回值也是该类型
+// 策略：优先信任确切已知的返回分支类型，如果所有确切已知的返回分支类型完全一致，则以此作为最终返回值类型
 fn (mut t Transpiler) infer_method_return_type(stmts []ast.AstNode, prop_types map[string]VarType) VarType {
-	mut return_tags := []TypeTag{}
+	mut return_tags := []VarType{}
 	t.scan_return_types(stmts, prop_types, mut return_tags)
 	if return_tags.len == 0 {
 		// 没有 return 语句或只有 return; → void 函数
 		return VarType{ tag: .t_void }
 	}
-	first := return_tags[0]
+
+	// 过滤掉所有 .t_unknown 标识的分支，优先采用确切已知的返回分支类型
+	mut known_tags := []VarType{}
+	for typ in return_tags {
+		if typ.tag != .t_unknown {
+			known_tags << typ
+		}
+	}
+
+	if known_tags.len == 0 {
+		return VarType{ tag: .t_unknown }
+	}
+
+	first := known_tags[0]
 	mut all_same := true
-	for tag in return_tags {
-		if tag != first {
+	for typ in known_tags {
+		// 检查 VarType 各字段是否一致
+		if typ.tag != first.tag || typ.class_name != first.class_name || typ.is_native_list != first.is_native_list || typ.is_native_map != first.is_native_map || typ.element_type_tag != first.element_type_tag {
 			all_same = false
 			break
 		}
 	}
-	if all_same && first in [.t_int, .t_float, .t_bool, .t_string] {
-		return VarType{ tag: first }
+
+	if all_same {
+		return first
 	}
 	return VarType{ tag: .t_unknown }
 }
 
-fn (mut t Transpiler) scan_return_types(stmts []ast.AstNode, prop_types map[string]VarType, mut return_tags []TypeTag) {
+fn (mut t Transpiler) scan_return_types(stmts []ast.AstNode, prop_types map[string]VarType, mut return_tags []VarType) {
 	for stmt in stmts {
 		match stmt.node_type {
 			ast.node_stmt_return {
 				if expr := stmt.expr {
 					expr_type := t.get_expr_type(*expr)
 					if expr_type.tag != .t_unknown {
-						return_tags << expr_type.tag
+						return_tags << expr_type
 					} else {
 						// 检查 return $this->prop
 						if expr.node_type == ast.node_expr_property_fetch {
 							obj := expr.var or { continue }
 							if obj.node_type == ast.node_expr_variable && obj.name == 'this' {
 								if typ := prop_types[expr.name] {
-									return_tags << typ.tag
+									return_tags << typ
 								} else {
-									return_tags << .t_unknown
+									return_tags << VarType{ tag: .t_unknown }
 								}
 							} else {
-								return_tags << .t_unknown
+								return_tags << VarType{ tag: .t_unknown }
 							}
 						} else {
-							return_tags << .t_unknown
+							return_tags << VarType{ tag: .t_unknown }
 						}
 					}
 				}
@@ -1048,9 +1074,13 @@ pub fn (mut t Transpiler) infer_single_class_types(node ast.AstNode, class_name 
 
 	// --- Pass 2: 用 prop_types 推断方法参数类型 ---
 	mut param_types := map[string]map[string]VarType{}
+	old_class_p2 := t.current_class
+	old_func_p2 := t.current_func_name
+	t.current_class = class_name
 	for method_stmt in node.stmts {
 		if method_stmt.node_type == ast.node_stmt_class_method {
 			method_name := method_stmt.name
+			t.current_func_name = method_name
 			mut method_params := map[string]VarType{}
 			// 查找方法调用点的实参类型
 			call_key := '${class_name.to_lower()}::${method_name}'
@@ -1069,6 +1099,17 @@ pub fn (mut t Transpiler) infer_single_class_types(node ast.AstNode, class_name 
 						param_type = VarType{ tag: hint_tag }
 					} else {
 						param_type = VarType{ tag: .t_object, class_name: t.resolve_class_name(param.incl_type) }
+					}
+				}
+				// 0.5) 参数默认字面量类型优先于使用分析
+				if param_type.tag == .t_unknown {
+					if default_node := param.default_val {
+						if voidptr(default_node) != 0 {
+							default_tag := php_literal_node_to_tag(*default_node)
+							if default_tag != .t_unknown {
+								param_type = VarType{ tag: default_tag }
+							}
+						}
 					}
 				}
 				// 1) 回退：分析参数使用
@@ -1096,12 +1137,18 @@ pub fn (mut t Transpiler) infer_single_class_types(node ast.AstNode, class_name 
 			}
 		}
 	}
+	t.current_class = old_class_p2
+	t.current_func_name = old_func_p2
 
 	// --- Pass 3: 用 prop_types 推断返回值类型 ---
 	mut return_types := map[string]VarType{}
+	old_class_p3 := t.current_class
+	old_func_p3 := t.current_func_name
+	t.current_class = class_name
 	for method_stmt in node.stmts {
 		if method_stmt.node_type == ast.node_stmt_class_method {
 			method_name := method_stmt.name
+			t.current_func_name = method_name
 			// PHP 返回类型提示优先
 			mut ret_type := VarType{ tag: .t_unknown }
 			if method_stmt.return_type != '' {
@@ -1121,6 +1168,8 @@ pub fn (mut t Transpiler) infer_single_class_types(node ast.AstNode, class_name 
 			}
 		}
 	}
+	t.current_class = old_class_p3
+	t.current_func_name = old_func_p3
 
 	// 存储到对应的 ClassInfo
 	for i, cls in t.classes {
@@ -1248,6 +1297,17 @@ fn (mut t Transpiler) infer_single_func_types(node ast.AstNode) {
 			}
 		}
 
+		// 1.5) 参数默认字面量类型优先于使用分析
+		if resolved_tag == .t_unknown {
+			if default_node := param.default_val {
+				default_tag := php_literal_node_to_tag(*default_node)
+				if default_tag != .t_unknown {
+					resolved_tag = default_tag
+					param_types[param_name] = VarType{ tag: default_tag }
+				}
+			}
+		}
+
 		// 2) 无类型提示时，从调用点实参推断
 		if resolved_tag == .t_unknown {
 			if arg_types := t.func_call_arg_types[func_name] {
@@ -1265,6 +1325,10 @@ fn (mut t Transpiler) infer_single_func_types(node ast.AstNode) {
 			var_assign_types[param_name] << resolved_tag
 		}
 	}
+
+	// 设置当前上下文，以便表达式推导能够查询到函数形参和局部变量
+	old_func := t.current_func_name
+	t.current_func_name = func_name
 
 	// 用参数类型作为种子，对函数体跑类型推导，推断局部变量类型
 	t.infer_expr_types_for_func(node.stmts, mut var_assign_types)
@@ -1285,6 +1349,7 @@ fn (mut t Transpiler) infer_single_func_types(node ast.AstNode) {
 			local_var_types[vname] = VarType{ tag: first }
 		}
 	}
+	t.func_var_types[func_name] = local_var_types.clone()
 
 	// 推断返回值类型：PHP 返回类型提示优先
 	mut ret_type := VarType{ tag: .t_unknown }
@@ -1303,6 +1368,7 @@ fn (mut t Transpiler) infer_single_func_types(node ast.AstNode) {
 	if ret_type.tag != .t_unknown {
 		t.func_return_types[func_name] = ret_type
 	}
+	t.current_func_name = old_func
 	if param_types.len > 0 {
 		t.func_param_types[func_name] = param_types.clone()
 	}
@@ -1370,33 +1436,49 @@ fn (mut t Transpiler) infer_expr_types_for_func_stmt(node ast.AstNode, mut var_a
 }
 
 // infer_func_return_type 推断函数的返回值类型
+// 策略：优先信任确切已知的返回分支类型，如果所有确切已知的返回分支类型完全一致，则以此作为最终返回值类型
 fn (mut t Transpiler) infer_func_return_type(stmts []ast.AstNode, mut var_assign_types map[string][]TypeTag) VarType {
-	mut return_tags := []TypeTag{}
+	mut return_tags := []VarType{}
 	t.scan_func_return_tags(stmts, mut var_assign_types, mut return_tags)
 	if return_tags.len == 0 {
 		return VarType{ tag: .t_void }
 	}
-	first := return_tags[0]
+
+	// 过滤掉所有 .t_unknown 标识的分支，优先采用确切已知的返回分支类型
+	mut known_tags := []VarType{}
+	for typ in return_tags {
+		if typ.tag != .t_unknown {
+			known_tags << typ
+		}
+	}
+
+	if known_tags.len == 0 {
+		return VarType{ tag: .t_unknown }
+	}
+
+	first := known_tags[0]
 	mut all_same := true
-	for tag in return_tags {
-		if tag != first {
+	for typ in known_tags {
+		// 检查 VarType 各字段是否一致
+		if typ.tag != first.tag || typ.class_name != first.class_name || typ.is_native_list != first.is_native_list || typ.is_native_map != first.is_native_map || typ.element_type_tag != first.element_type_tag {
 			all_same = false
 			break
 		}
 	}
-	if all_same && first in [.t_int, .t_float, .t_bool, .t_string] {
-		return VarType{ tag: first }
+
+	if all_same {
+		return first
 	}
 	return VarType{ tag: .t_unknown }
 }
 
-fn (mut t Transpiler) scan_func_return_tags(stmts []ast.AstNode, mut var_assign_types map[string][]TypeTag, mut return_tags []TypeTag) {
+fn (mut t Transpiler) scan_func_return_tags(stmts []ast.AstNode, mut var_assign_types map[string][]TypeTag, mut return_tags []VarType) {
 	for stmt in stmts {
 		match stmt.node_type {
 			ast.node_stmt_return {
 				if expr := stmt.expr {
-					tag := t.infer_expr_types(*expr, mut var_assign_types)
-					return_tags << tag
+					expr_type := t.get_expr_type(*expr)
+					return_tags << expr_type
 				}
 			}
 			else {
@@ -1655,5 +1737,23 @@ fn (mut t Transpiler) scan_array_usages_expr(node ast.AstNode, mut states map[st
 				if val := item.expr { t.scan_array_usages_expr(*val, mut states, false, none) }
 			}
 		}
+	}
+}
+
+fn php_literal_node_to_tag(node ast.AstNode) TypeTag {
+	match node.node_type {
+		'Scalar_Int' { return .t_int }
+		'Scalar_Float' { return .t_float }
+		'Scalar_String' { return .t_string }
+		'Scalar_Encapsed', 'Scalar_InterpolatedString' { return .t_string }
+		'Expr_ConstFetch' {
+			match node.name.to_lower() {
+				'true', 'false' { return .t_bool }
+				'null' { return .t_null }
+				else { return .t_unknown }
+			}
+		}
+		'Expr_Array' { return .t_array }
+		else { return .t_unknown }
 	}
 }

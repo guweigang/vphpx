@@ -18,6 +18,9 @@ pub fn get_builtin_return_tag(name string) ?TypeTag {
 		'is_string', 'is_bool', 'is_object', 'is_numeric', 'isset', 'boolval', 'array_key_exists' {
 			return .t_bool
 		}
+		'array_keys', 'array_merge' {
+			return .t_array
+		}
 		else {
 			return none
 		}
