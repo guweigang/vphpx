@@ -1567,7 +1567,7 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 					arg_val := arg.expr or { panic('Arg missing expr') }
 					arg_strs << t.compile_arg_simple(*arg_val)
 				}
-				class_expr_str := t.visit_expr(*class_expr_node)
+				class_expr_str := t.visit_expr_native(*class_expr_node)
 				if arg_strs.len == 0 {
 					return 'rt.create_object_dynamically(${class_expr_str}, []rt.PhpVal{})'
 				} else {
@@ -1648,11 +1648,11 @@ fn (mut t Transpiler) visit_expr(node ast.AstNode) string {
 					arg_val := arg.expr or { panic('Arg missing expr') }
 					arg_strs << t.compile_arg_simple(*arg_val)
 				}
-				method_name_expr := t.visit_expr(*name_expr_node)
+				method_name_expr := t.visit_expr_native(*name_expr_node)
 				if arg_strs.len == 0 {
-					return 'call_method(${obj_var_name}, ${method_name_expr}.to_string(), []rt.PhpVal{})'
+					return 'call_method(${obj_var_name}, ${method_name_expr}, []rt.PhpVal{})'
 				} else {
-					return 'call_method(${obj_var_name}, ${method_name_expr}.to_string(), [${arg_strs.join(", ")}])'
+					return 'call_method(${obj_var_name}, ${method_name_expr}, [${arg_strs.join(", ")}])'
 				}
 			}
 

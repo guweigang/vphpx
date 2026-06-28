@@ -44,8 +44,7 @@ pub fn register_class(name string, meta ClassMeta) {
 	r.class_registry[name] = meta
 }
 
-pub fn create_object_dynamically(class_val PhpVal, args []PhpVal) PhpVal {
-	class_name := class_val.to_string()
+pub fn create_object_dynamically(class_name string, args []PhpVal) PhpVal {
 	mut r := get_registry()
 	if class_name in r.class_factories {
 		return r.class_factories[class_name](args)
