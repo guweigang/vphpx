@@ -680,6 +680,22 @@ fn (mut t Transpiler) emit_native_condition(node ast.AstNode) string {
 					}
 				}
 			}
+			// Check if inner is a method call returning native bool
+			if expr_node.node_type == ast.node_expr_method_call {
+				obj_var_node := expr_node.var or { return '' }
+				if obj_var_node.node_type == ast.node_expr_variable {
+					mut obj_type := t.inferred_types[obj_var_node.name] or { VarType{ tag: .t_unknown } }
+					if obj_var_node.name == 'this' {
+						obj_type = VarType{ tag: .t_object, class_name: t.current_class }
+					}
+					if obj_type.is_object() {
+						ret_type := t.get_method_return_type(obj_type.class_name, expr_node.name)
+						if ret_type.tag == .t_bool {
+							return '!(${t.visit_expr_native(*expr_node)})'
+						}
+					}
+				}
+			}
 			return ''
 		}
 		ast.node_expr_isset {
@@ -700,6 +716,22 @@ fn (mut t Transpiler) emit_native_condition(node ast.AstNode) string {
 				return 'false'
 			}
 			return checks.join(' && ')
+		}
+		ast.node_expr_method_call {
+			obj_var_node := node.var or { return '' }
+			if obj_var_node.node_type == ast.node_expr_variable {
+				mut obj_type := t.inferred_types[obj_var_node.name] or { VarType{ tag: .t_unknown } }
+				if obj_var_node.name == 'this' {
+					obj_type = VarType{ tag: .t_object, class_name: t.current_class }
+				}
+				if obj_type.is_object() {
+					ret_type := t.get_method_return_type(obj_type.class_name, node.name)
+					if ret_type.tag == .t_bool {
+						return t.visit_expr_native(node)
+					}
+				}
+			}
+			return ''
 		}
 		ast.node_expr_instanceof {
 			expr_node := node.expr or { return '' }

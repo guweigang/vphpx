@@ -223,7 +223,7 @@ fn test_transpiler_end_to_end() {
 		'29_class_constants.php': [
 			'pub fn Class_User.role_admin() string {',
 			'pub fn Class_User.role_user() string {',
-			'return rt.new_string(Class_User.role_admin())',
+			'return Class_User.role_admin()',
 			"print(Class_User.role_admin() + '\\n')",
 			'mut var_u := create_user()',
 		]

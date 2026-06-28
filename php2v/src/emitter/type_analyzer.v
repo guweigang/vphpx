@@ -935,20 +935,25 @@ fn (mut t Transpiler) scan_return_types(stmts []ast.AstNode, prop_types map[stri
 		match stmt.node_type {
 			ast.node_stmt_return {
 				if expr := stmt.expr {
-					// 检查 return $this->prop
-					if expr.node_type == ast.node_expr_property_fetch {
-						obj := expr.var or { continue }
-						if obj.node_type == ast.node_expr_variable && obj.name == 'this' {
-							if typ := prop_types[expr.name] {
-								return_tags << typ.tag
+					expr_type := t.get_expr_type(*expr)
+					if expr_type.tag != .t_unknown {
+						return_tags << expr_type.tag
+					} else {
+						// 检查 return $this->prop
+						if expr.node_type == ast.node_expr_property_fetch {
+							obj := expr.var or { continue }
+							if obj.node_type == ast.node_expr_variable && obj.name == 'this' {
+								if typ := prop_types[expr.name] {
+									return_tags << typ.tag
+								} else {
+									return_tags << .t_unknown
+								}
 							} else {
 								return_tags << .t_unknown
 							}
 						} else {
 							return_tags << .t_unknown
 						}
-					} else {
-						return_tags << .t_unknown
 					}
 				}
 			}
