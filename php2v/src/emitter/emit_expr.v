@@ -682,6 +682,25 @@ fn (mut t Transpiler) emit_native_condition(node ast.AstNode) string {
 			}
 			return ''
 		}
+		ast.node_expr_isset {
+			mut checks := []string{}
+			for v in node.vars {
+				if v.node_type == ast.node_expr_array_dim_fetch {
+					arr_node := v.var or { return '' }
+					dim_node := v.dim or { return '' }
+					arr_str := t.visit_expr(*arr_node)
+					dim_str := t.visit_expr(*dim_node)
+					checks << '${arr_str}.array_isset(${dim_str})'
+				} else {
+					var_str := t.visit_expr(v)
+					checks << '!(${var_str}).is_null()'
+				}
+			}
+			if checks.len == 0 {
+				return 'false'
+			}
+			return checks.join(' && ')
+		}
 		ast.node_expr_instanceof {
 			expr_node := node.expr or { return '' }
 			resolved_class := t.resolve_class_name(node.class_name)
