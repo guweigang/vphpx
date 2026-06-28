@@ -84,8 +84,10 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 
 	// 检查是否继承了 Exception 内置类
 	mut is_exception_subclass := false
+	mut visited := map[string]bool{}
 	mut temp_extends := class_info.extends
-	for temp_extends != '' {
+	for temp_extends != '' && temp_extends !in visited {
+		visited[temp_extends] = true
 		if temp_extends == 'Exception' {
 			is_exception_subclass = true
 			break
