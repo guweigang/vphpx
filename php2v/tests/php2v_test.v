@@ -56,8 +56,8 @@ fn test_transpiler_end_to_end() {
 			'mut var_arr := rt.create_array([rt.ArrayItem{ key: none, val: 10 },',
 			'var_arr.array_push(30)',
 			'var_arr.array_set(\'key\', \'hello\')',
-			'rt.echo_val(var_arr.array_get(0))',
-			'print(var_arr.dup().array_count().str())',
+			'rt.echo_val(var_arr.array_get(rt.new_int(0)))',
+			'print(var_arr.clone().array_count().str())',
 		]
 		'09_foreach.php': [
 			"mut var_arr := {",
@@ -92,12 +92,12 @@ fn test_transpiler_end_to_end() {
 		]
 		'13_closure.php': [
 			'closure_1_fn := fn [var_x] (this_ptr rt.PhpVal, args []rt.PhpVal) rt.PhpVal {',
-			'mut var_y := if args.len > 0 { args[0].dup() } else { rt.new_null() }',
+			'mut var_y := if args.len > 0 { args[0].clone() } else { rt.new_null() }',
 			'return rt.add(rt.new_int(var_x), var_y)',
 			'mut var_cb := rt.new_closure(closure_1_fn)',
 			'rt.echo_val(rt.call_callable(var_cb, [rt.new_int(5)]))',
 			'closure_2_fn := fn [var_x] (this_ptr rt.PhpVal, args []rt.PhpVal) rt.PhpVal {',
-			'mut var_z := if args.len > 0 { args[0].dup() } else { rt.new_null() }',
+			'mut var_z := if args.len > 0 { args[0].clone() } else { rt.new_null() }',
 			'return rt.mul(var_z, rt.new_int(var_x))',
 			'mut var_fn := rt.new_closure(closure_2_fn)',
 			'rt.echo_val(rt.call_callable(var_fn, [rt.new_int(3)]))',
@@ -270,6 +270,45 @@ fn test_transpiler_end_to_end() {
 			'rt.call_method',
 			'rt.get_property',
 			'dispatch_set_prop',
+		]
+		// 36: 闭包内联赋值不泄漏到外层作用域 (WordPress wp_extract_urls 修复)
+		'36_closure_inline_assign.php': [
+			// 闭包内 $item = trim($item) 应在闭包体内
+			'mut var_item := if args.len > 0 { args[0].clone() } else { rt.new_null() }',
+			'var_item = rt.new_string(var_item.clone().to_string().trim_space())',
+			// 闭包内 $link = html_entity_decode($link) 应在闭包体内
+			'mut var_link := if args.len > 0 { args[0].clone() } else { rt.new_null() }',
+			'var_link = rt.call_function(\'html_entity_decode\'',
+			// 外层函数不应有 var_link 声明（关键：不泄漏）
+		]
+		// 37: IIFE 模式 — 静态方法链式调用 (WordPress register_block_type 修复)
+		'37_iife_new_method.php': [
+			'struct Class_Registry',
+			// 静态调用直接生成，不创建 IIFE 闭包
+			'fn Class_Registry.get_instance() rt.PhpVal {',
+			// 链式调用通过 rt.call_method 实现
+			'rt.call_method(Class_Registry.get_instance(), \'register\'',
+			'rt.call_method(Class_Registry.get_instance(), \'unregister\'',
+		]
+		// 38: 长条件表达式 (WordPress 多文件 if 条件修复)
+		'38_long_conditions.php': [
+			'fn validate_and_process(var_block_type rt.PhpVal) rt.PhpVal {',
+			// && 条件正确生成
+			'&& rt.is_true(rt.call_function(\'file_exists\'',
+			// || 条件正确生成
+			'|| rt.is_true(rt.new_bool(!(rt.is_true(rt.call_function(\'file_exists\'',
+			// elseif 正确生成
+			'} else if rt.is_true',
+			'fn complex_condition(var_a rt.PhpVal, var_b rt.PhpVal, var_c rt.PhpVal) string {',
+		]
+		// 39: 静态属性访问 (通过 rt.get_static_prop / rt.set_static_prop / rt.init_static_prop)
+		'39_static_property.php': [
+			'struct Class_Database',
+			// 静态属性通过 rt.get_static_prop / rt.set_static_prop 访问
+			'fn get_connection() rt.PhpVal {',
+			'rt.get_static_prop(',
+			'fn get_config_value(var_key rt.PhpVal) rt.PhpVal {',
+			'fn init_static_database()',
 		]
 	}
 

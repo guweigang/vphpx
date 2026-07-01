@@ -1,0 +1,155 @@
+import rt
+
+pub fn Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema.identifier() string {
+	return 'email_settings'
+}
+pub fn Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema.non_editable_types() rt.PhpVal {
+	return rt.create_array([rt.ArrayItem{ key: none, val: 'title' }, rt.ArrayItem{ key: none, val: 'sectionend' }, rt.ArrayItem{ key: none, val: 'email_color_palette' }, rt.ArrayItem{ key: none, val: 'previewing_new_templates' }, rt.ArrayItem{ key: none, val: 'email_improvements_button' }, rt.ArrayItem{ key: none, val: 'email_notification' }, rt.ArrayItem{ key: none, val: 'email_notification_block_emails' }, rt.ArrayItem{ key: none, val: 'hidden' }])
+}
+struct Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema {
+	rt.PhpObjectBase
+}
+
+fn (mut this Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema) get_item_schema_properties() rt.PhpVal {
+	return rt.create_array([rt.ArrayItem{ key: 'id', val: rt.create_array([rt.ArrayItem{ key: 'description', val: rt.call_function('__', [rt.new_string('Unique identifier for the settings group.'), rt.new_string('woocommerce')]) }, rt.ArrayItem{ key: 'type', val: 'string' }, rt.ArrayItem{ key: 'context', val: Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema.view_edit_context() }, rt.ArrayItem{ key: 'readonly', val: true }]) }, rt.ArrayItem{ key: 'title', val: rt.create_array([rt.ArrayItem{ key: 'description', val: rt.call_function('__', [rt.new_string('Settings title.'), rt.new_string('woocommerce')]) }, rt.ArrayItem{ key: 'type', val: 'string' }, rt.ArrayItem{ key: 'context', val: Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema.view_edit_context() }, rt.ArrayItem{ key: 'readonly', val: true }]) }, rt.ArrayItem{ key: 'description', val: rt.create_array([rt.ArrayItem{ key: 'description', val: rt.call_function('__', [rt.new_string('Settings description.'), rt.new_string('woocommerce')]) }, rt.ArrayItem{ key: 'type', val: 'string' }, rt.ArrayItem{ key: 'context', val: Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema.view_edit_context() }, rt.ArrayItem{ key: 'readonly', val: true }]) }, rt.ArrayItem{ key: 'values', val: rt.create_array([rt.ArrayItem{ key: 'description', val: rt.call_function('__', [rt.new_string('Flat key-value mapping of all setting field values.'), rt.new_string('woocommerce')]) }, rt.ArrayItem{ key: 'type', val: 'object' }, rt.ArrayItem{ key: 'context', val: Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema.view_edit_context() }]) }, rt.ArrayItem{ key: 'groups', val: rt.create_array([rt.ArrayItem{ key: 'description', val: rt.call_function('__', [rt.new_string('Collection of setting groups.'), rt.new_string('woocommerce')]) }, rt.ArrayItem{ key: 'type', val: 'object' }, rt.ArrayItem{ key: 'context', val: Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema.view_edit_context() }, rt.ArrayItem{ key: 'additionalProperties', val: rt.create_array([rt.ArrayItem{ key: 'type', val: 'object' }, rt.ArrayItem{ key: 'description', val: rt.call_function('__', [rt.new_string('Settings group.'), rt.new_string('woocommerce')]) }, rt.ArrayItem{ key: 'properties', val: rt.create_array([rt.ArrayItem{ key: 'title', val: rt.create_array([rt.ArrayItem{ key: 'description', val: rt.call_function('__', [rt.new_string('Group title.'), rt.new_string('woocommerce')]) }, rt.ArrayItem{ key: 'type', val: 'string' }, rt.ArrayItem{ key: 'context', val: Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema.view_edit_context() }]) }, rt.ArrayItem{ key: 'description', val: rt.create_array([rt.ArrayItem{ key: 'description', val: rt.call_function('__', [rt.new_string('Group description.'), rt.new_string('woocommerce')]) }, rt.ArrayItem{ key: 'type', val: 'string' }, rt.ArrayItem{ key: 'context', val: Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema.view_edit_context() }]) }, rt.ArrayItem{ key: 'order', val: rt.create_array([rt.ArrayItem{ key: 'description', val: rt.call_function('__', [rt.new_string('Display order for the group.'), rt.new_string('woocommerce')]) }, rt.ArrayItem{ key: 'type', val: 'integer' }, rt.ArrayItem{ key: 'context', val: Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema.view_edit_context() }, rt.ArrayItem{ key: 'readonly', val: true }]) }, rt.ArrayItem{ key: 'fields', val: rt.create_array([rt.ArrayItem{ key: 'description', val: rt.call_function('__', [rt.new_string('Settings fields.'), rt.new_string('woocommerce')]) }, rt.ArrayItem{ key: 'type', val: 'array' }, rt.ArrayItem{ key: 'context', val: Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema.view_edit_context() }, rt.ArrayItem{ key: 'items', val: this.get_field_schema() }]) }]) }]) }]) }])
+}
+
+fn (mut this Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema) get_field_schema() rt.PhpVal {
+	return rt.create_array([rt.ArrayItem{ key: 'type', val: 'object' }, rt.ArrayItem{ key: 'properties', val: rt.create_array([rt.ArrayItem{ key: 'id', val: rt.create_array([rt.ArrayItem{ key: 'description', val: rt.call_function('__', [rt.new_string('Setting field ID.'), rt.new_string('woocommerce')]) }, rt.ArrayItem{ key: 'type', val: 'string' }, rt.ArrayItem{ key: 'context', val: Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema.view_edit_context() }]) }, rt.ArrayItem{ key: 'label', val: rt.create_array([rt.ArrayItem{ key: 'description', val: rt.call_function('__', [rt.new_string('Setting field label.'), rt.new_string('woocommerce')]) }, rt.ArrayItem{ key: 'type', val: 'string' }, rt.ArrayItem{ key: 'context', val: Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema.view_edit_context() }]) }, rt.ArrayItem{ key: 'type', val: rt.create_array([rt.ArrayItem{ key: 'description', val: rt.call_function('__', [rt.new_string('Setting field type.'), rt.new_string('woocommerce')]) }, rt.ArrayItem{ key: 'type', val: 'string' }, rt.ArrayItem{ key: 'enum', val: rt.create_array([rt.ArrayItem{ key: none, val: 'text' }, rt.ArrayItem{ key: none, val: 'email' }, rt.ArrayItem{ key: none, val: 'checkbox' }, rt.ArrayItem{ key: none, val: 'number' }, rt.ArrayItem{ key: none, val: 'color' }, rt.ArrayItem{ key: none, val: 'select' }]) }, rt.ArrayItem{ key: 'context', val: Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema.view_edit_context() }]) }, rt.ArrayItem{ key: 'desc', val: rt.create_array([rt.ArrayItem{ key: 'description', val: rt.call_function('__', [rt.new_string('Setting field description.'), rt.new_string('woocommerce')]) }, rt.ArrayItem{ key: 'type', val: 'string' }, rt.ArrayItem{ key: 'context', val: Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema.view_edit_context() }]) }, rt.ArrayItem{ key: 'options', val: rt.create_array([rt.ArrayItem{ key: 'description', val: rt.call_function('__', [rt.new_string('Available options for selectable fields.'), rt.new_string('woocommerce')]) }, rt.ArrayItem{ key: 'type', val: 'object' }, rt.ArrayItem{ key: 'context', val: Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema.view_edit_context() }]) }]) }])
+}
+
+fn (mut this Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema) get_item_response(var_item rt.PhpVal, mut var_request Class_WP_REST_Request, mut var_include_fields Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_array) rt.PhpVal {
+	mut var_settings := if rt.is_true(rt.new_bool(var_item.dup().is_array())) { var_item } else { rt.new_array() }
+	mut var_groups := rt.new_array()
+	mut var_values := rt.new_array()
+	mut var_current_group := rt.new_null()
+	mut var_current_group_id := rt.new_null()
+	{
+		mut iter_1 := var_settings.iterator()
+		for {
+			item_1 := iter_1.next() or { break }
+			mut var_setting := item_1.val
+			mut var_setting_type := if !(var_setting.array_get('type')).is_null() { var_setting.array_get('type') } else { rt.new_string('') }
+			if rt.is_true(rt.new_bool(rt.is_true(rt.identical(rt.new_string('title'), var_setting_type)) || rt.is_true(rt.identical(rt.new_string('email_color_palette'), var_setting_type)))) {
+				var_current_group_id = if !(var_setting.array_get('id')).is_null() { var_setting.array_get('id') } else { rt.new_string('') }
+				var_current_group = rt.create_array([rt.ArrayItem{ key: 'title', val: if !(var_setting.array_get('title')).is_null() { var_setting.array_get('title') } else { rt.new_string('') } }, rt.ArrayItem{ key: 'description', val: if !(var_setting.array_get('desc')).is_null() { var_setting.array_get('desc') } else { rt.new_string('') } }, rt.ArrayItem{ key: 'order', val: if var_setting.array_isset(rt.new_string('order')) { // unsupported expression: Expr_Cast_Int } else { rt.new_int(999) } }, rt.ArrayItem{ key: 'fields', val: rt.new_array() }])
+				continue
+			}
+			if rt.is_true(rt.identical(rt.new_string('sectionend'), var_setting_type)) {
+				if rt.is_true(rt.new_bool(rt.is_true(var_current_group) && rt.is_true(var_current_group_id))) {
+					var_groups.array_set(var_current_group_id, var_current_group.dup())
+				}
+				var_current_group = rt.new_null()
+				var_current_group_id = rt.new_null()
+				continue
+			}
+			if rt.is_true(rt.call_function('in_array', [var_setting_type.dup(), Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema.non_editable_types(), rt.new_bool(true)])) {
+				continue
+			}
+			if rt.is_true(rt.new_bool(var_setting.array_isset(rt.new_string('id')) && rt.is_true(var_current_group))) {
+				mut var_setting_id := var_setting.array_get('id')
+				var_setting_type = if !(var_setting.array_get('type')).is_null() { var_setting.array_get('type') } else { rt.new_string('text') }
+				mut var_api_type := rt.new_string(this.map_setting_type_to_api_type((var_setting_type).str()))
+				mut var_field := rt.create_array([rt.ArrayItem{ key: 'id', val: var_setting_id }, rt.ArrayItem{ key: 'label', val: if !(var_setting.array_get('title')).is_null() { var_setting.array_get('title') } else { var_setting_id } }, rt.ArrayItem{ key: 'type', val: var_api_type }])
+				if !(!rt.is_true(var_setting.array_get('desc'))) {
+					var_field.array_set('desc', var_setting.array_get('desc'))
+				}
+				if rt.is_true(rt.new_bool(var_setting.array_isset(rt.new_string('options')) && rt.is_true(rt.new_bool(var_setting.array_get('options').is_array())))) {
+					var_field.array_set('options', var_setting.array_get('options'))
+				}
+				var_current_group.array_get_mut('fields').array_push(var_field.dup())
+				mut var_default_value := if !(var_setting.array_get('default')).is_null() { var_setting.array_get('default') } else { rt.new_string('') }
+				mut var_current_value := rt.call_function('get_option', [var_setting_id.dup(), var_default_value.dup()])
+				if rt.is_true(rt.identical(rt.new_string('checkbox'), var_setting_type)) {
+					var_current_value = rt.identical(rt.new_string('yes'), var_current_value)
+				}
+				var_values.array_set(var_setting_id, var_current_value.dup())
+			}
+		}
+	}
+	closure_1_fn := fn (this_ptr rt.PhpVal, args []rt.PhpVal) rt.PhpVal {
+	mut var_group := if args.len > 0 { args[0].dup() } else { rt.new_null() }
+	return rt.new_bool(!(!rt.is_true(var_group.array_get('fields'))))
+	}
+	var_groups = rt.call_function('array_filter', [var_groups.dup(), rt.new_closure(closure_1_fn)])
+	mut var_response := rt.create_array([rt.ArrayItem{ key: 'id', val: 'email' }, rt.ArrayItem{ key: 'title', val: rt.call_function('__', [rt.new_string('Email design'), rt.new_string('woocommerce')]) }, rt.ArrayItem{ key: 'description', val: rt.call_function('__', [rt.new_string('Customize the look and feel of all you notification emails.'), rt.new_string('woocommerce')]) }, rt.ArrayItem{ key: 'values', val: var_values }, rt.ArrayItem{ key: 'groups', val: var_groups }])
+	if !(!rt.is_true(var_include_fields)) {
+		var_response = rt.call_function('array_intersect_key', [var_response.dup(), rt.call_function('array_flip', [var_include_fields])])
+	}
+	return var_response.dup()
+}
+
+fn (mut this Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema) map_setting_type_to_api_type(setting_type string) string {
+	mut setting_type_mutated := setting_type
+	mut var_type_map := rt.create_array([rt.ArrayItem{ key: 'text', val: 'text' }, rt.ArrayItem{ key: 'email', val: 'email' }, rt.ArrayItem{ key: 'checkbox', val: 'checkbox' }, rt.ArrayItem{ key: 'number', val: 'number' }, rt.ArrayItem{ key: 'color', val: 'color' }, rt.ArrayItem{ key: 'select', val: 'select' }])
+	return (if !(var_type_map.array_get(setting_type_mutated)).is_null() { var_type_map.array_get(setting_type_mutated) } else { rt.new_string('text') }).str()
+}
+
+struct Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_AbstractSchema {
+	rt.PhpObjectBase
+}
+
+fn create_automattic_woocommerce_internal_restapi_routes_v4_settings_email_schema_emailsettingsschema() &Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema {
+	mut obj := &Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema{
+		PhpObjectBase: rt.PhpObjectBase{}
+	}
+	return obj
+}
+
+fn create_automattic_woocommerce_internal_restapi_routes_v4_abstractschema() &Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_AbstractSchema {
+	mut obj := &Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_AbstractSchema{
+		PhpObjectBase: rt.PhpObjectBase{}
+	}
+	return obj
+}
+
+fn (mut this Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	match method_name {
+		'get_item_schema_properties' {
+			return this.get_item_schema_properties()
+		}
+		'get_field_schema' {
+			return this.get_field_schema()
+		}
+		'get_item_response' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			mut dispatch_arg_1 := rt.cast_object_ptr[Class_WP_REST_Request](if args.len > 1 { args[1] } else { rt.new_null() })
+			mut dispatch_arg_2 := rt.cast_object_ptr[Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_array](if args.len > 2 { args[2] } else { rt.new_null() })
+			return this.get_item_response(dispatch_arg_0, mut dispatch_arg_1, mut dispatch_arg_2)
+		}
+		'map_setting_type_to_api_type' {
+			dispatch_arg_0 := (if args.len > 0 { args[0] } else { rt.new_null() }).str()
+			return rt.new_string(this.map_setting_type_to_api_type(dispatch_arg_0))
+		}
+		else { return none }
+	}
+}
+
+fn (this &Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema) dispatch_get_prop(prop_name string) ?rt.PhpVal {
+	return this.PhpObjectBase.dispatch_get_prop(prop_name)
+}
+
+fn (mut this Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_Settings_Email_Schema_EmailSettingsSchema) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {
+	return this.PhpObjectBase.dispatch_set_prop(prop_name, val)
+}
+
+
+fn (mut this Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_AbstractSchema) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	return none
+}
+
+fn (this &Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_AbstractSchema) dispatch_get_prop(prop_name string) ?rt.PhpVal {
+	return this.PhpObjectBase.dispatch_get_prop(prop_name)
+}
+
+fn (mut this Class_Automattic_WooCommerce_Internal_RestApi_Routes_V4_AbstractSchema) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {
+	return this.PhpObjectBase.dispatch_set_prop(prop_name, val)
+}
+
+
+
+
+pub fn init_wp_content_plugins_woocommerce_src_internal_restapi_routes_v4_settings_email_schema_emailsettingsschema_php() {
+	// unsupported statement: Stmt_Declare
+	rt.new_bool(rt.is_true(rt.call_function('defined', [rt.new_string('ABSPATH')])) || rt.is_true(// unsupported expression: Expr_Exit))
+}

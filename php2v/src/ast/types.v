@@ -42,6 +42,38 @@ pub const node_expr_cast_double = 'Expr_Cast_Double'
 pub const node_expr_cast_string = 'Expr_Cast_String'
 pub const node_expr_cast_bool = 'Expr_Cast_Bool'
 
+// 复合赋值节点类型
+pub const node_expr_assign_ref = 'Expr_AssignRef'
+pub const node_expr_assign_op_concat = 'Expr_AssignOp_Concat'
+pub const node_expr_assign_op_plus = 'Expr_AssignOp_Plus'
+pub const node_expr_assign_op_minus = 'Expr_AssignOp_Minus'
+pub const node_expr_assign_op_mul = 'Expr_AssignOp_Mul'
+pub const node_expr_assign_op_div = 'Expr_AssignOp_Div'
+pub const node_expr_assign_op_mod = 'Expr_AssignOp_Mod'
+
+// 比较运算节点类型
+pub const node_bin_not_identical = 'Expr_BinaryOp_NotIdentical'
+pub const node_bin_not_equal = 'Expr_BinaryOp_NotEqual'
+
+// 一元运算节点类型
+pub const node_expr_unary_minus = 'Expr_UnaryMinus'
+pub const node_expr_unary_plus = 'Expr_UnaryPlus'
+
+// 其他表达式节点类型
+pub const node_expr_print = 'Expr_Print'
+pub const node_expr_exit = 'Expr_Exit'
+pub const node_expr_clone = 'Expr_Clone'
+pub const node_expr_cast_object = 'Expr_Cast_Object'
+pub const node_expr_list = 'Expr_List'
+pub const node_bin_logical_xor = 'Expr_BinaryOp_LogicalXor'
+pub const node_expr_assign_op_coalesce = 'Expr_AssignOp_Coalesce'
+
+// 语句节点类型
+pub const node_stmt_global = 'Stmt_Global'
+pub const node_stmt_nop = 'Stmt_Nop'
+pub const node_stmt_declare = 'Stmt_Declare'
+pub const node_stmt_static = 'Stmt_Static'
+
 
 // 表达式节点类型
 
@@ -55,6 +87,7 @@ pub const node_expr_array = 'Expr_Array'
 pub const node_expr_array_item = 'ArrayItem'
 pub const node_expr_array_dim_fetch = 'Expr_ArrayDimFetch'
 pub const node_expr_static_call = 'Expr_StaticCall'
+pub const node_expr_static_prop_fetch = 'Expr_StaticPropertyFetch'
 pub const node_expr_boolean_not = 'Expr_BooleanNot'
 pub const node_expr_ternary = 'Expr_Ternary'
 

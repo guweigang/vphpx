@@ -31,10 +31,26 @@ pub fn box_expr(code string, typ VarType) string {
 		return "rt.new_object('${cls}', []string{}, ${code})"
 	}
 	match typ.tag {
-		.t_int { return 'rt.new_int(${code})' }
-		.t_float { return 'rt.new_float(${code})' }
-		.t_string { return 'rt.new_string(${code})' }
-		.t_bool { return 'rt.new_bool(${code})' }
+		.t_int {
+			if code.starts_with('rt.new_int(') { return code }
+			return 'rt.new_int(${code})'
+		}
+		.t_float {
+			if code.starts_with('rt.new_float(') { return code }
+			return 'rt.new_float(${code})'
+		}
+		.t_string {
+			if code.starts_with('rt.new_string(') { return code }
+			// 如果代码已经是 PhpVal 表达式，先 .str() 转原生 string 再包装
+			if code.starts_with('rt.') || code.starts_with('var_') || code.starts_with('if ') {
+				return 'rt.new_string((${code}).str())'
+			}
+			return 'rt.new_string(${code})'
+		}
+		.t_bool {
+			if code.starts_with('rt.new_bool(') { return code }
+			return 'rt.new_bool(${code})'
+		}
 		else { return code }
 	}
 }
@@ -60,19 +76,26 @@ pub enum ExprCtx {
 
 // ---- 参数传递 ----
 
+// dup_suffix_for_var 返回变量的复制后缀：统一使用 .clone()（PhpVal、原生数组/映射均支持）
+// 对象和原生参数不需要复制
+pub fn (t Transpiler) dup_suffix_for_var(php_var_name string) string {
+	v_var := t.get_v_var_name(php_var_name)
+	typ := t.inferred_types[v_var] or { t.inferred_types[php_var_name] or { VarType{ tag: .t_unknown } } }
+	if typ.tag == .t_object || typ.class_name.len > 0 {
+		return ''
+	}
+	if t.native_params[php_var_name] || t.native_vars[php_var_name] || php_var_name.ends_with('_mutated') {
+		return ''
+	}
+	return '.clone()'
+}
+
 // dup_if_needed 对 PhpVal 变量追加 .dup()，避免别名共享
 // 非变量表达式直接返回原代码
 pub fn (t Transpiler) dup_if_needed(code string, arg_node ast.AstNode) string {
 	if arg_node.node_type == ast.node_expr_variable {
-		var_name := arg_node.name
-		typ := t.inferred_types[var_name] or { VarType{ tag: .t_unknown } }
-		if typ.tag == .t_object || typ.class_name.len > 0 {
-			return code
-		}
-		if t.native_params[var_name] || t.native_vars[var_name] || var_name.ends_with('_mutated') {
-			return code
-		}
-		return '${code}.dup()'
+		suffix := t.dup_suffix_for_var(arg_node.name)
+		return code + suffix
 	}
 	return code
 }
@@ -90,13 +113,45 @@ pub:
 pub fn (mut t Transpiler) compile_expr(node ast.AstNode, ctx ExprCtx) string {
 	match ctx {
 		.boxed {
-			return t.visit_expr(node)
+			code := t.visit_expr(node)
+			// concat 和 cast_string 在 visit_expr 中通常产生原生 string，
+			// 但嵌套 concat 可能产生 PhpVal (rt.concat(...)) → 需要检测
+			node_type := node.node_type
+			if node_type == ast.node_bin_concat || node_type == ast.node_expr_cast_string {
+				// 如果 code 已经是 PhpVal 表达式（以 rt. 开头），用 .str() 提取原生 string
+				if code.starts_with('rt.') {
+					return 'rt.new_string((${code}).str())'
+				}
+				return 'rt.new_string(${code})'
+			}
+			// unary minus/plus 对 int/float 产生原生 native 表达式（如 -1, -2.0），
+			// 但 boxed 上下文需要 PhpVal → 自动装箱
+			if node_type == ast.node_expr_unary_minus || node_type == ast.node_expr_unary_plus {
+				expr_type := t.get_expr_type(node)
+				if expr_type.tag == .t_int || expr_type.tag == .t_float {
+					return box_expr(code, expr_type)
+				}
+			}
+			// scalar int/float 字面量（如 1, 2.0）在部分路径下由 visit_expr 返回 native，
+			// 需要识别并装箱
+			if node_type == ast.node_scalar_int {
+				if !code.starts_with('rt.') {
+					return 'rt.new_int(${code})'
+				}
+			}
+			if node_type == ast.node_scalar_float {
+				if !code.starts_with('rt.') {
+					return 'rt.new_float(${code})'
+				}
+			}
+			return code
 		}
 		.native {
 			return t.visit_expr_native(node)
 		}
 	}
 }
+
 
 // compile_arg 统一编译单个调用参数（4-way 矩阵）
 // 根据源类型和目标类型决定装箱/拆箱策略
@@ -135,5 +190,40 @@ pub fn (mut t Transpiler) compile_arg(arg_node ast.AstNode, target_type VarType)
 // 用于 funccall、call_method fallback 等不需要 4-way 矩阵的场景
 pub fn (mut t Transpiler) compile_arg_simple(arg_node ast.AstNode) string {
 	code := t.compile_expr(arg_node, .boxed)
+	// 如果参数是原生数组/映射变量，需要包装为 PhpVal
+	if arg_node.node_type == ast.node_expr_variable {
+		v_var := t.get_v_var_name(arg_node.name)
+		typ := t.inferred_types[v_var] or { t.inferred_types[arg_node.name] or { VarType{ tag: .t_unknown } } }
+		if typ.is_native_list {
+			return 'rt.create_array_from_list(${code})'
+		}
+		if typ.is_native_map {
+			return 'rt.create_array_from_native_map(${code})'
+		}
+	}
+	// 如果表达式类型是原生标量（int/float/bool）且生成代码不是 PhpVal，需要自动装箱
+	// 比如：string.len + 1 → int/native → 需要 rt.new_int(...)
+	// 注意：只在代码不以 'rt.' 开头时装箱，避免对已是 PhpVal 的表达式重复装箱
+	arg_type := t.get_expr_type(arg_node)
+	if arg_type.is_scalar() && !code.starts_with('rt.') {
+		return box_expr(code, arg_type)
+	}
 	return t.dup_if_needed(code, arg_node)
+}
+
+
+// produces_native_string 判断 visit_expr 是否会生成 V 原生 string（而非 PhpVal）
+// 用于 rt.concat() 等需要 PhpVal 参数的场景，决定是否需包装 rt.new_string()
+pub fn (mut t Transpiler) produces_native_string(node ast.AstNode) bool {
+	match node.node_type {
+		ast.node_bin_concat {
+			return true
+		}
+		ast.node_expr_cast_string {
+			return true
+		}
+		else {
+			return false
+		}
+	}
 }

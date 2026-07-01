@@ -1,0 +1,28 @@
+import rt
+
+struct Class_Automattic_WooCommerce_StoreApi_Routes_V1_AI_Products {
+	rt.PhpObjectBase
+}
+
+fn create_automattic_woocommerce_storeapi_routes_v1_ai_products() &Class_Automattic_WooCommerce_StoreApi_Routes_V1_AI_Products {
+	mut obj := &Class_Automattic_WooCommerce_StoreApi_Routes_V1_AI_Products{
+		PhpObjectBase: rt.PhpObjectBase{}
+	}
+	return obj
+}
+
+fn (mut this Class_Automattic_WooCommerce_StoreApi_Routes_V1_AI_Products) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	return none
+}
+
+fn (this &Class_Automattic_WooCommerce_StoreApi_Routes_V1_AI_Products) dispatch_get_prop(prop_name string) ?rt.PhpVal {
+	return this.PhpObjectBase.dispatch_get_prop(prop_name)
+}
+
+fn (mut this Class_Automattic_WooCommerce_StoreApi_Routes_V1_AI_Products) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {
+	return this.PhpObjectBase.dispatch_set_prop(prop_name, val)
+}
+
+pub fn init_wp_content_plugins_woocommerce_src_storeapi_routes_v1_ai_products_php() {
+	// unsupported statement: Stmt_Declare
+}

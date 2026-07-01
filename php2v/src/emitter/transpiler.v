@@ -28,6 +28,13 @@ pub:
 	is_static   bool
 }
 
+// StaticPropInfo 记录类的静态属性声明
+pub struct StaticPropInfo {
+pub:
+	name         string
+	default_expr string
+}
+
 pub struct Transpiler {
 pub mut:
 	out              strings.Builder
@@ -50,6 +57,7 @@ pub mut:
 	current_namespace string
 	use_aliases map[string]string
 	switch_count int
+	list_tmp_counter int
 	pre_stmts []string
 	post_stmts []string
 	const_out strings.Builder
@@ -63,7 +71,9 @@ pub mut:
 	ctor_arg_types         map[string][]TypeTag // P7: class_name → 构造函数实参类型列表（从调用点推断）
 	method_call_arg_types  map[string][]TypeTag // "class_name::method_name" → 实参类型列表
 	native_params          map[string]bool // P7: 当前方法的原生类型参数名（无 var_ 前缀，无装箱）
+	reassigned_params      map[string]bool // 被重新赋值的原生参数名（需使用 var_xxx 副本）
 	is_in_construct        bool            // 当前是否在 __construct 方法中（无返回值）
+	is_in_switch         bool            // 当前是否在 switch/case 中（break 无需生成）
 	global_constants       map[string]GlobalConst // 全局常量表
 	closure_body_builder   strings.Builder // 当前闭包体的临时输出缓冲区
 	is_in_closure_body     bool            // 是否正在生成闭包体代码
@@ -80,6 +90,7 @@ pub mut:
 	var_aliases            map[string]string             // 变量重命名映射（处理局部变量遮蔽冲突）
 	foreach_depth          int                           // 循环嵌套深度（用于生成唯一的迭代器变量名）
 	native_vars            map[string]bool               // 本地声明的原生变量（用于精确判定是否需要装箱）
+	native_arr_vars        map[string]bool               // 已知持有原生数组/map的变量（用于array_dim_fetch确认）
 	custom_function_infos  map[string]MethodInfo         // 自定义全局函数签名信息（含可变参数状态）
 	has_dynamic_new         bool
 	has_dynamic_method_call bool
@@ -87,6 +98,8 @@ pub mut:
 	type_cache              map[voidptr]VarType
 	codegen_cache           map[voidptr]CodegenCacheEntry
 	active_depth            int
+	mode                    string
+	is_entry_script         bool
 }
 
 pub struct CodegenCacheEntry {
@@ -104,6 +117,7 @@ pub mut:
 
 pub fn Transpiler.new() Transpiler {
 	return Transpiler{
+		mode:             'exe'
 		out:              strings.new_builder(1024)
 		func_out:         strings.new_builder(1024)
 		closures_code:    strings.new_builder(1024)
@@ -117,6 +131,7 @@ pub fn Transpiler.new() Transpiler {
 		foreach_depth:    0
 		var_aliases:      map[string]string{}
 		native_vars:      map[string]bool{}
+		native_arr_vars:  map[string]bool{}
 		undeclared_classes: map[string]bool{}
 		current_namespace: ''
 		use_aliases: map[string]string{}
@@ -129,6 +144,7 @@ pub fn Transpiler.new() Transpiler {
 		mutated_vars: map[string]bool{}
 		ctor_arg_types: map[string][]TypeTag{}
 		native_params: map[string]bool{}
+		reassigned_params: map[string]bool{}
 		global_constants: map[string]GlobalConst{}
 		closure_body_builder: strings.new_builder(64)
 		closure_captured_natives: map[string]VarType{}
@@ -166,6 +182,11 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 	// 扫描动态使用特征
 	t.scan_dynamic_usages(local_stmts)
 
+	// 检测入口脚本：如果顶层代码包含 exit/die，标记为入口脚本
+	if t.mode == 'lib' && t.has_exit_or_die(local_stmts) {
+		t.is_entry_script = true
+	}
+
 	ref_vars, ass_vars := t.collect_vars_in_scope(local_stmts)
 	for v in ref_vars {
 		if v !in ass_vars && !t.scope.has_var(v) {
@@ -174,8 +195,11 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 			v_type := t.inferred_types[v_var] or { t.inferred_types[v] or { VarType{ tag: .t_unknown } } }
 			if v_type.is_native_list {
 				t.write_line('mut ${v_var} := []rt.PhpVal{}')
+				// 登记为原生数组变量，确保 ArrayDimFetch 使用 [] 索引而非 .array_get()
+				t.native_arr_vars[v] = true
 			} else if v_type.is_native_map {
 				t.write_line('mut ${v_var} := map[string]rt.PhpVal{}')
+				t.native_arr_vars[v] = true
 			} else if v_type.is_scalar() {
 				match v_type.tag {
 					.t_int { t.write_line('mut ${v_var} := i64(0)') }
@@ -295,6 +319,46 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 	return t.out.str()
 }
 
+// has_exit_or_die 递归扫描 AST 检测是否存在 exit/die 语句
+fn (t Transpiler) has_exit_or_die(stmts []ast.AstNode) bool {
+	for stmt in stmts {
+		if stmt.node_type == ast.node_expr_exit {
+			return true
+		}
+		// 检查子节点
+		if expr := stmt.expr {
+			if t.has_exit_or_die([*expr]) {
+				return true
+			}
+		}
+		if stmt.stmts.len > 0 {
+			if t.has_exit_or_die(stmt.stmts) {
+				return true
+			}
+		}
+		if stmt.elseifs.len > 0 {
+			for ei in stmt.elseifs {
+				if t.has_exit_or_die(ei.stmts) {
+					return true
+				}
+			}
+		}
+		if else_node := stmt.@else {
+			if t.has_exit_or_die(else_node.stmts) {
+				return true
+			}
+		}
+		if stmt.catches.len > 0 {
+			for c in stmt.catches {
+				if t.has_exit_or_die(c.stmts) {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
 fn (mut t Transpiler) current_builder() &strings.Builder {
 	if t.is_in_closure_body {
 		return &t.closure_body_builder
@@ -309,10 +373,13 @@ fn (mut t Transpiler) write_indent() {
 	if t.pre_stmts.len > 0 {
 		pre := t.pre_stmts.clone()
 		t.pre_stmts.clear()
+		// pre_stmts 写到当前活跃的 builder（闭包体 or 外层函数）
 		mut b := t.current_builder()
+		indent_str := '\t'.repeat(t.indent)
 		for stmt in pre {
-			indent_str := '\t'.repeat(t.indent)
-			b.writeln('${indent_str}${stmt}')
+			for line in stmt.split('\n') {
+				b.writeln('${indent_str}${line}')
+			}
 		}
 	}
 
@@ -405,10 +472,11 @@ fn prop_v_name(prop_name string) string {
 
 // 全局函数在 V 中的命名（若跟 V 保留关键字冲突，加 func_ 前缀）
 fn func_v_name(name string) string {
-	if is_v_keyword(name) || name in ['print', 'println', 'error', 'panic', 'exit'] {
-		return 'func_${name}'
+	lower_name := name.to_lower()
+	if is_v_keyword(lower_name) || lower_name in ['print', 'println', 'error', 'panic', 'exit'] {
+		return 'func_${lower_name}'
 	}
-	return name
+	return lower_name
 }
 
 // 方法在 V 中的方法名（去掉 method_ 前缀）
@@ -701,6 +769,9 @@ pub fn (t Transpiler) find_method(class_name string, method_name string) ?Method
 pub fn (t Transpiler) get_v_var_name(php_var_name string) string {
 	if php_var_name in t.var_aliases {
 		return t.var_aliases[php_var_name] or { '' }
+	}
+	if php_var_name in t.reassigned_params {
+		return 'var_${php_var_name}'
 	}
 	if php_var_name in t.native_params || php_var_name in t.native_vars {
 		return php_var_name

@@ -247,6 +247,10 @@ pub fn (v PhpVal) dup() PhpVal {
 	return PhpVal{ raw: z }
 }
 
+// clone 是 dup 的别名，用于统一 .clone() 调用语法（V 原生数组/映射也用 .clone()）
+pub fn (v PhpVal) clone() PhpVal {
+	return v.dup()
+}
 
 
 pub type PhpKey = string | int | PhpVal
@@ -301,6 +305,18 @@ pub fn create_array_from_list(vals []PhpVal) PhpVal {
 	for val in vals {
 		items << ArrayItem{
 			key: none
+			val: val
+		}
+	}
+	return create_array(items)
+}
+
+// create_array_from_native_map 将 V 原生 map[string]PhpVal 转为 PHP 数组 PhpVal
+pub fn create_array_from_native_map(m map[string]PhpVal) PhpVal {
+	mut items := []ArrayItem{}
+	for key, val in m {
+		items << ArrayItem{
+			key: PhpKey(key)
 			val: val
 		}
 	}
@@ -564,6 +580,25 @@ pub fn cast_object_ptr[T](v PhpVal) &T {
 		return obj_info.obj as &T
 	}
 	return unsafe { &T(nil) }
+}
+
+// array_to_object PHP (object) cast: 将 PhpVal 数组转为 stdClass 对象
+pub fn array_to_object(val PhpVal) PhpVal {
+	if val.is_object() {
+		return val
+	}
+	mut base := PhpObjectBase{}
+	if val.is_array() {
+		mut iter := val.iterator()
+		for {
+			item := iter.next() or { break }
+			key_str := item.key.str()
+			base.dispatch_set_prop(key_str, item.val)
+		}
+	} else if !val.is_null() {
+		base.dispatch_set_prop('0', val)
+	}
+	return new_object('stdClass', []string{}, base)
 }
 
 // Closure support: store V native fn as PhpVal

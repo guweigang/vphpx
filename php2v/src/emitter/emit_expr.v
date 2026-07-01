@@ -240,6 +240,51 @@ fn (mut t Transpiler) get_expr_type(node ast.AstNode) VarType {
 		ast.node_expr_cast_array {
 			return VarType{ tag: .t_unknown }
 		}
+		ast.node_expr_cast_int {
+			return VarType{ tag: .t_int }
+		}
+		ast.node_expr_cast_double {
+			return VarType{ tag: .t_float }
+		}
+		ast.node_expr_cast_string {
+			return VarType{ tag: .t_string }
+		}
+		ast.node_expr_cast_bool {
+			return VarType{ tag: .t_bool }
+		}
+		ast.node_expr_cast_object {
+			return VarType{ tag: .t_object, class_name: 'stdClass' }
+		}
+		ast.node_expr_clone {
+			if expr_node := node.expr {
+				return t.get_expr_type(*expr_node)
+			}
+			return VarType{ tag: .t_object }
+		}
+		ast.node_expr_unary_minus, ast.node_expr_unary_plus {
+			if expr_node := node.expr {
+				return t.get_expr_type(*expr_node)
+			}
+			return VarType{ tag: .t_unknown }
+		}
+		ast.node_bin_not_identical, ast.node_bin_not_equal {
+			return VarType{ tag: .t_bool }
+		}
+		ast.node_expr_print {
+			return VarType{ tag: .t_int }
+		}
+		ast.node_expr_assign_op_concat {
+			return VarType{ tag: .t_string }
+		}
+		ast.node_expr_assign_op_plus, ast.node_expr_assign_op_minus, ast.node_expr_assign_op_mul, ast.node_expr_assign_op_div, ast.node_expr_assign_op_mod {
+			if var_node := node.var {
+				if var_node.node_type == ast.node_expr_variable {
+					v_var := t.get_v_var_name(var_node.name)
+					return t.inferred_types[v_var] or { t.inferred_types[var_node.name] or { VarType{ tag: .t_unknown } } }
+				}
+			}
+			return VarType{ tag: .t_unknown }
+		}
 		else { return VarType{ tag: .t_unknown } }
 	}
 }
@@ -579,6 +624,22 @@ fn (mut t Transpiler) visit_expr_native_impl(node ast.AstNode) string {
 			}
 			return t.visit_expr(node)
 		}
+		ast.node_expr_cast_string {
+			expr_node := node.expr or { panic('CastString missing expr') }
+			expr_type := t.get_expr_type(*expr_node)
+			if expr_type.tag == .t_string {
+				return t.visit_expr_native(*expr_node)
+			}
+			if expr_type.tag in [.t_int, .t_float, .t_bool] {
+				native_expr := t.visit_expr_native(*expr_node)
+				t.last_expr_type = VarType{ tag: .t_string }
+				return '${native_expr}.str()'
+			}
+			// 内部是 PhpVal → 调用 .str() 得到原生 string
+			expr_str := t.visit_expr(*expr_node)
+			t.last_expr_type = VarType{ tag: .t_string }
+			return '(${expr_str}).str()'
+		}
 		else {
 			return t.visit_expr(node)
 		}
@@ -670,18 +731,31 @@ fn (mut t Transpiler) emit_native_condition(node ast.AstNode) string {
 		ast.node_bin_bool_and, ast.node_bin_logical_and {
 			l_node := node.left or { return '' }
 			r_node := node.right or { return '' }
-			l := t.emit_native_condition(*l_node)
-			r := t.emit_native_condition(*r_node)
-			if l != '' && r != '' { return '${l} && ${r}' }
-			return ''
+			// 先尝试纯 native 路径（两侧都是可直接转为 native bool 的表达式）
+			l_native := t.emit_native_condition(*l_node)
+			r_native := t.emit_native_condition(*r_node)
+			if l_native != '' && r_native != '' {
+				return '${l_native} && ${r_native}'
+			}
+			// 回退：用 get_native_bool_condition 递归展开（确保 PhpVal 侧用 rt.is_true 包装）
+			// 避免生成 rt.is_true(rt.new_bool(rt.is_true(L) && rt.is_true(R))) 双层嵌套
+			l_cond := if l_native != '' { l_native } else { t.get_native_bool_condition(*l_node) }
+			r_cond := if r_native != '' { r_native } else { t.get_native_bool_condition(*r_node) }
+			return '${l_cond} && ${r_cond}'
 		}
 		ast.node_bin_bool_or, ast.node_bin_logical_or {
 			l_node := node.left or { return '' }
 			r_node := node.right or { return '' }
-			l := t.emit_native_condition(*l_node)
-			r := t.emit_native_condition(*r_node)
-			if l != '' && r != '' { return '${l} || ${r}' }
-			return ''
+			// 先尝试纯 native 路径
+			l_native := t.emit_native_condition(*l_node)
+			r_native := t.emit_native_condition(*r_node)
+			if l_native != '' && r_native != '' {
+				return '${l_native} || ${r_native}'
+			}
+			// 回退：用 get_native_bool_condition 递归展开
+			l_cond := if l_native != '' { l_native } else { t.get_native_bool_condition(*l_node) }
+			r_cond := if r_native != '' { r_native } else { t.get_native_bool_condition(*r_node) }
+			return '${l_cond} || ${r_cond}'
 		}
 		ast.node_expr_boolean_not {
 			expr_node := node.expr or { return '' }
@@ -743,6 +817,22 @@ fn (mut t Transpiler) emit_native_condition(node ast.AstNode) string {
 				if obj_type.is_object() {
 					ret_type := t.get_method_return_type(obj_type.class_name, node.name)
 					if ret_type.tag == .t_bool {
+						return t.visit_expr_native(node)
+					}
+				}
+			}
+			return ''
+		}
+		ast.node_expr_property_fetch {
+			obj_var_node := node.var or { return '' }
+			if obj_var_node.node_type == ast.node_expr_variable {
+				mut obj_type := t.inferred_types[obj_var_node.name] or { VarType{ tag: .t_unknown } }
+				if obj_var_node.name == 'this' {
+					obj_type = VarType{ tag: .t_object, class_name: t.current_class }
+				}
+				if obj_type.is_object() {
+					prop_type := t.get_class_prop_type(obj_type.class_name, node.name)
+					if prop_type.tag == .t_bool {
 						return t.visit_expr_native(node)
 					}
 				}
@@ -1039,7 +1129,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 					} else {
 						val_str = t.visit_expr(*expr_node)
 						if expr_node.node_type == ast.node_expr_variable {
-							val_str += '.dup()'
+							val_str += t.dup_suffix_for_var(expr_node.name)
 						}
 					}
 					
@@ -1054,7 +1144,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				expr_typ := t.get_expr_type(*expr_node)
 				mut expr_str := if expr_typ.is_scalar() { t.visit_expr_native(*expr_node) } else { t.visit_expr(*expr_node) }
 				if !expr_typ.is_scalar() && expr_node.node_type == ast.node_expr_variable {
-					expr_str += '.dup()'
+					expr_str += t.dup_suffix_for_var(expr_node.name)
 				}
 				
 				if dim_node := var_node.dim {
@@ -1103,7 +1193,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 							} else {
 								rhs = t.visit_expr(*expr_node)
 								if expr_node.node_type == ast.node_expr_variable {
-									rhs += '.dup()'
+									rhs += t.dup_suffix_for_var(expr_node.name)
 								}
 							}
 							
@@ -1117,9 +1207,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				if obj_var_node.name == 'this' {
 					mut expr_str := t.visit_expr(*expr_node)
 					if expr_node.node_type == ast.node_expr_variable {
-						if !t.native_params[expr_node.name] {
-							expr_str += '.dup()'
-						}
+						expr_str += t.dup_suffix_for_var(expr_node.name)
 					}
 					return 'this.dispatch_set_prop(\'${prop_name}\', ${expr_str})'
 				}
@@ -1127,11 +1215,74 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				obj_var_name := t.visit_expr(*obj_var_node)
 				mut expr_str := t.visit_expr(*expr_node)
 				if expr_node.node_type == ast.node_expr_variable {
-					if !t.native_params[expr_node.name] {
-						expr_str += '.dup()'
-					}
+					expr_str += t.dup_suffix_for_var(expr_node.name)
 				}
 				return 'rt.set_property(${obj_var_name}, \'${prop_name}\', ${expr_str})'
+			}
+			
+			// 静态属性赋值：self::$prop = $value / ClassName::$prop = $value
+			if var_node.node_type == ast.node_expr_static_prop_fetch {
+				mut class_name := var_node.class_name
+				if class_name == 'self' || class_name == 'static' {
+					class_name = t.current_class
+				} else {
+					class_name = t.resolve_class_name(class_name)
+				}
+				prop_name := var_node.name
+				expr_node := node.expr or { panic('Assign missing expr') }
+				mut expr_str := t.visit_expr(*expr_node)
+				if expr_node.node_type == ast.node_expr_variable {
+					expr_str += t.dup_suffix_for_var(expr_node.name)
+				}
+				// new ClassName() → create_xxx() 返回 &Class_Xxx，需要包装为 PhpVal
+				if expr_node.node_type == ast.node_expr_new {
+					new_class := t.resolve_class_name(expr_node.class_name)
+					mut resolved_new := new_class
+					if resolved_new == 'self' || resolved_new == 'static' {
+						resolved_new = t.current_class
+					}
+					parents := t.get_parents_expr(resolved_new)
+					expr_str = 'rt.new_object(\'${resolved_new}\', ${parents}, ${expr_str})'
+				}
+				return 'rt.set_static_prop(\'${class_name}\', \'${prop_name}\', ${expr_str})'
+			}
+			
+			// list($a, $b) = $expr → 解构赋值
+			if var_node.node_type == ast.node_expr_list {
+				expr_node := node.expr or { panic('List assign missing expr') }
+				expr_str := t.visit_expr(*expr_node)
+				// 将右侧表达式存到临时变量避免重复求值
+				mut stmts := []string{}
+				t.list_tmp_counter++
+				tmp_var := 'list_tmp_${t.list_tmp_counter}'
+				stmts << 'mut ${tmp_var} := ${expr_str}'
+				for i, item in var_node.items {
+					// items are ArrayItem nodes; the actual target is in item.expr
+					mut target_node := item
+					if item.node_type == ast.node_expr_array_item {
+						if item_expr := item.expr {
+							target_node = *item_expr
+						} else {
+							continue // null entry like list(, $b)
+						}
+					}
+					if target_node.node_type == ast.node_expr_variable {
+						v_name := t.get_v_var_name(target_node.name)
+						declared := t.scope.has_var(target_node.name)
+						if declared {
+							stmts << '${v_name} = (${tmp_var}).array_get(${i})'
+						} else {
+							stmts << 'mut ${v_name} := (${tmp_var}).array_get(${i})'
+							t.scope.declare(target_node.name)
+						}
+					} else if target_node.node_type == ast.node_expr_array_dim_fetch {
+						// list(, $arr['key']) = ...
+						arr_str := t.visit_expr_write_dim(target_node)
+						stmts << '${arr_str} = (${tmp_var}).array_get(${i})'
+					}
+					// skip unrecognized items
+				}
+				return stmts.join('\n')
 			}
 			
 			if var_node.node_type != ast.node_expr_variable {
@@ -1192,10 +1343,12 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 					expr_str = unbox_expr(expr_str, var_type)
 				}
 				if t.scope.has_var(var_name) {
-					return '${v_var} = ${expr_str}'
+					t.pre_stmts << '${v_var} = ${expr_str}'
+					return v_var
 				} else {
 					t.scope.declare(var_name)
-					return 'mut ${v_var} := ${expr_str}'
+					t.pre_stmts << 'mut ${v_var} := ${expr_str}'
+					return v_var
 				}
 			} else if var_type.is_native_list || var_type.is_native_map {
 				old_expected := t.expected_type
@@ -1203,11 +1356,16 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				expr_str := t.visit_expr(*expr_node)
 				t.expected_type = old_expected
 				
+				// 记录此变量为原生数组/map类型，以便 array_dim_fetch 确认检查通过
+				t.native_arr_vars[var_name] = true
+				
 				if t.scope.has_var(var_name) {
-					return '${v_var} = ${expr_str}'
+					t.pre_stmts << '${v_var} = ${expr_str}'
+					return v_var
 				} else {
 					t.scope.declare(var_name)
-					return 'mut ${v_var} := ${expr_str}'
+					t.pre_stmts << 'mut ${v_var} := ${expr_str}'
+					return v_var
 				}
 			} else {
 				old_expected := t.expected_type
@@ -1220,16 +1378,18 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 					expr_str = box_expr(expr_str, expr_typ)
 				}
 				
-				// P10: 仅为被原地修改的变量生成 .dup()
+				// P10: 仅为被原地修改的变量生成复制
 				if expr_node.node_type == ast.node_expr_variable && t.mutated_vars[expr_node.name] {
-					expr_str += '.dup()'
+					expr_str += t.dup_suffix_for_var(expr_node.name)
 				}
 				
 				if t.scope.has_var(var_name) {
-					return '${v_var} = ${expr_str}'
+					t.pre_stmts << '${v_var} = ${expr_str}'
+					return v_var
 				} else {
 					t.scope.declare(var_name)
-					return 'mut ${v_var} := ${expr_str}'
+					t.pre_stmts << 'mut ${v_var} := ${expr_str}'
+					return v_var
 				}
 			}
 		}
@@ -1408,24 +1568,19 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			right := node.right or { panic('concat missing right') }
 			l_type := t.get_expr_type(*left)
 			r_type := t.get_expr_type(*right)
-			l_scalar := l_type.is_scalar()
-			r_scalar := r_type.is_scalar()
-			if l_scalar || r_scalar {
-				// 至少一侧是原生标量，使用 V 原生 + 拼接
-				t.last_expr_type = VarType{ tag: .t_string }
-				l_code := if l_scalar {
-					t.native_to_str(*left, l_type)
-				} else {
-					'(${t.visit_expr(*left)}).str()'
-				}
-				r_code := if r_scalar {
-					t.native_to_str(*right, r_type)
-				} else {
-					'(${t.visit_expr(*right)}).str()'
-				}
-				return '${l_code} + ${r_code}'
+			// 始终产生原生 V string（因为 get_expr_type 声明 concat 返回 t_string）
+			t.last_expr_type = VarType{ tag: .t_string }
+			l_code := if l_type.is_scalar() {
+				t.native_to_str(*left, l_type)
+			} else {
+				'(${t.visit_expr(*left)}).str()'
 			}
-			return 'rt.concat(${t.visit_expr(*left)}, ${t.visit_expr(*right)})'
+			r_code := if r_type.is_scalar() {
+				t.native_to_str(*right, r_type)
+			} else {
+				'(${t.visit_expr(*right)}).str()'
+			}
+			return '${l_code} + ${r_code}'
 		}
 		ast.node_bin_greater {
 			return t.emit_comparison(node, '>', 'rt.greater')
@@ -1467,6 +1622,17 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 		ast.node_expr_ternary {
 			cond := node.cond or { panic('Ternary missing cond') }
 			cond_str := t.get_native_bool_condition(*cond)
+			ternary_type := t.get_expr_type(node)
+			if ternary_type.is_scalar() {
+				t.last_expr_type = ternary_type
+				if if_node := node.@if {
+					else_node := node.@else or { panic('Ternary missing else') }
+					return 'if ${cond_str} { ${t.visit_expr_native(*if_node)} } else { ${t.visit_expr_native(*else_node)} }'
+				} else {
+					else_node := node.@else or { panic('Ternary missing else') }
+					return 'if ${cond_str} { ${t.visit_expr_native(*cond)} } else { ${t.visit_expr_native(*else_node)} }'
+				}
+			}
 			if if_node := node.@if {
 				else_node := node.@else or { panic('Ternary missing else') }
 				return 'if ${cond_str} { ${t.visit_expr(*if_node)} } else { ${t.visit_expr(*else_node)} }'
@@ -1584,7 +1750,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			var_node := node.var or { panic('ArrayDimFetch missing var') }
 			var_type := t.get_expr_type(*var_node)
 			var_str := t.visit_expr(*var_node)
-			is_native_arr := (var_type.is_native_list || var_type.is_native_map) && (t.native_params[var_node.name] || t.native_vars[var_node.name] || var_node.name.ends_with('_mutated'))
+			is_native_arr := (var_type.is_native_list || var_type.is_native_map) && (t.native_params[var_node.name] || t.native_vars[var_node.name] || t.native_arr_vars[var_node.name] || var_node.name.ends_with('_mutated') || var_node.name.ends_with('_shadow'))
 			if is_native_arr {
 				if dim_node := node.dim {
 					dim_str := t.visit_expr_native(*dim_node)
@@ -1597,7 +1763,13 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			}
 			if dim_node := node.dim {
 				dim_typ := t.get_expr_type(*dim_node)
-				dim_str := if dim_typ.is_scalar() { t.visit_expr_native(*dim_node) } else { t.visit_expr(*dim_node) }
+				// array_get 接受 rt.PhpKey（即 rt.PhpVal）参数
+				// native int/float/string 字面量需要先装箱为 PhpVal
+				dim_str := if dim_typ.is_scalar() {
+					box_expr(t.visit_expr_native(*dim_node), dim_typ)
+				} else {
+					t.visit_expr(*dim_node)
+				}
 				return '${var_str}.array_get(${dim_str})'
 			} else {
 				panic('ArrayDimFetch missing dim in read context')
@@ -1618,7 +1790,12 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				}
 			}
 			class_name := t.resolve_class_name(node.class_name)
-			t.undeclared_classes[class_name] = true
+			// self/static → 当前类名
+			mut resolved_class := class_name
+			if resolved_class == 'self' || resolved_class == 'static' {
+				resolved_class = t.current_class
+			}
+			t.undeclared_classes[resolved_class] = true
 			// 查找构造函数的参数类型，以便传递原生类型
 			mut ctor_param_types := []VarType{}
 			for cls in t.classes {
@@ -1647,7 +1824,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				} else {
 					php_val := t.visit_expr(*arg_val)
 					if arg_val.node_type == ast.node_expr_variable {
-						arg_str = '${php_val}.dup()'
+						arg_str = php_val + t.dup_suffix_for_var(arg_val.name)
 					} else {
 						arg_str = php_val
 					}
@@ -1655,12 +1832,12 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				arg_strs << arg_str
 			}
 			
-			if m := t.find_method(class_name, '__construct') {
+			if m := t.find_method(resolved_class, '__construct') {
 				if node.args.len < m.param_count {
 					for i in node.args.len .. m.param_count {
 						if i < m.param_names.len {
 							pname := m.param_names[i]
-							ptype := t.get_method_param_type(class_name, '__construct', pname)
+							ptype := t.get_method_param_type(resolved_class, '__construct', pname)
 							if ptype.is_scalar() {
 								match ptype.tag {
 									.t_string { arg_strs << "''" }
@@ -1678,7 +1855,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 					}
 				}
 			}
-			return 'create_${class_name.to_lower()}(${arg_strs.join(", ")})'
+			return 'create_${resolved_class.to_lower()}(${arg_strs.join(", ")})'
 		}
 		ast.node_expr_method_call {
 			obj_var_node := node.var or { panic('MethodCall missing var') }
@@ -1955,6 +2132,8 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			t.scope = VarScope.new()
 			mut old_captured_natives := t.closure_captured_natives.clone()
 			t.closure_captured_natives = map[string]VarType{}
+			old_pre_stmts := t.pre_stmts.clone()
+			t.pre_stmts.clear()
 			
 			mut param_names := []string{}
 			for param in node.params {
@@ -1967,7 +2146,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			// 参数从 args 提取
 			for i, param_name in param_names {
 				t.write_indent()
-				t.write_line('mut var_${param_name} := if args.len > ${i} { args[${i}].dup() } else { rt.new_null() }')
+				t.write_line('mut var_${param_name} := if args.len > ${i} { args[${i}].clone() } else { rt.new_null() }')
 			}
 			
 			// 捕获变量由 V 原生 [x] 机制处理，声明到 scope 供 body 使用
@@ -2005,6 +2184,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			t.is_in_closure_body = old_is_in_closure_body
 			t.closure_body_builder = old_body_builder
 			t.closure_captured_natives = old_captured_natives.clone()
+			t.pre_stmts = old_pre_stmts
 			for var_name in captured_vars {
 				if ct := captured_types[var_name] {
 					t.inferred_types[var_name] = ct
@@ -2058,6 +2238,8 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			t.scope = VarScope.new()
 			mut old_captured_natives := t.closure_captured_natives.clone()
 			t.closure_captured_natives = map[string]VarType{}
+			old_pre_stmts := t.pre_stmts.clone()
+			t.pre_stmts.clear()
 			
 			for param_name in param_names {
 				t.scope.declare(param_name)
@@ -2065,7 +2247,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			
 			for i, param_name in param_names {
 				t.write_indent()
-				t.write_line('mut var_${param_name} := if args.len > ${i} { args[${i}].dup() } else { rt.new_null() }')
+				t.write_line('mut var_${param_name} := if args.len > ${i} { args[${i}].clone() } else { rt.new_null() }')
 			}
 			
 			for var_name in captured_vars {
@@ -2088,6 +2270,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			t.is_in_closure_body = old_is_in_closure_body
 			t.closure_body_builder = old_body_builder
 			t.closure_captured_natives = old_captured_natives.clone()
+			t.pre_stmts = old_pre_stmts
 			for var_name in captured_vars {
 				if ct := captured_types[var_name] {
 					t.inferred_types[var_name] = ct
@@ -2120,6 +2303,18 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				return 'rt.include_file(${path_str}, \'${node.incl_type}\')'
 			}
 			return 'rt.new_null()'
+		}
+		ast.node_expr_static_prop_fetch {
+			// 静态属性读取：self::$prop / static::$prop / ClassName::$prop
+			mut class_name := node.class_name
+			if class_name == 'self' || class_name == 'static' {
+				class_name = t.current_class
+			} else {
+				class_name = t.resolve_class_name(class_name)
+			}
+			prop_name := node.name
+			t.last_expr_type = VarType{ tag: .t_unknown }
+			return 'rt.get_static_prop(\'${class_name}\', \'${prop_name}\')'
 		}
 		ast.node_expr_static_call {
 			// parent::method(...) 的转译
@@ -2245,15 +2440,28 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			}
 
 			if arg_strs.len == 0 {
+				temp_idx := t.closure_count
+				t.closure_count++
 				if ret_type.tag == .t_void {
-					return 'fn () rt.PhpVal { mut temp := Class_${class_name}{}; temp.${method_v_name(node.name)}(); return rt.new_null() }()'
+					t.pre_stmts << 'mut iife_temp_${temp_idx} := Class_${class_name}{}'
+					t.pre_stmts << 'iife_temp_${temp_idx}.${method_v_name(node.name)}()'
+					return 'rt.new_null()'
 				}
-				return 'fn () rt.PhpVal { mut temp := Class_${class_name}{}; return temp.${method_v_name(node.name)}() }()'
+				t.pre_stmts << 'mut iife_temp_${temp_idx} := Class_${class_name}{}'
+				t.pre_stmts << 'mut iife_result_${temp_idx} := iife_temp_${temp_idx}.${method_v_name(node.name)}()'
+				return 'iife_result_${temp_idx}'
 			} else {
+				temp_idx := t.closure_count
+				t.closure_count++
+				args_joined := arg_strs.join(', ')
 				if ret_type.tag == .t_void {
-					return 'fn (${arg_formals.join(", ")}) rt.PhpVal { mut temp := Class_${class_name}{}; temp.${method_v_name(node.name)}(${arg_calls.join(", ")}); return rt.new_null() }(${arg_strs.join(", ")})'
+					t.pre_stmts << 'mut iife_temp_${temp_idx} := Class_${class_name}{}'
+					t.pre_stmts << 'iife_temp_${temp_idx}.${method_v_name(node.name)}(${args_joined})'
+					return 'rt.new_null()'
 				}
-				return 'fn (${arg_formals.join(", ")}) rt.PhpVal { mut temp := Class_${class_name}{}; return temp.${method_v_name(node.name)}(${arg_calls.join(", ")}) }(${arg_strs.join(", ")})'
+				t.pre_stmts << 'mut iife_temp_${temp_idx} := Class_${class_name}{}'
+				t.pre_stmts << 'mut iife_result_${temp_idx} := iife_temp_${temp_idx}.${method_v_name(node.name)}(${args_joined})'
+				return 'iife_result_${temp_idx}'
 			}
 		}
 		ast.node_scalar_encapsed, ast.node_scalar_interpolated_string {
@@ -2298,8 +2506,277 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			expr_str := t.visit_expr(*expr_node)
 			return 'rt.cast_array(${expr_str})'
 		}
+		ast.node_expr_cast_int {
+			expr_node := node.expr or { panic('CastInt missing expr') }
+			expr_type := t.get_expr_type(*expr_node)
+			if expr_type.tag == .t_int {
+				return t.visit_expr_native(*expr_node)
+			}
+			if expr_type.tag in [.t_float, .t_bool] {
+				native_expr := t.visit_expr_native(*expr_node)
+				t.last_expr_type = VarType{ tag: .t_int }
+				return 'i64(${native_expr})'
+			}
+			if expr_type.tag == .t_string {
+				native_expr := t.visit_expr_native(*expr_node)
+				t.last_expr_type = VarType{ tag: .t_int }
+				return '${native_expr}.i64()'
+			}
+			expr_str := t.visit_expr(*expr_node)
+			t.last_expr_type = VarType{ tag: .t_int }
+			return 'rt.new_int((${expr_str}).to_i64())'
+		}
+		ast.node_expr_cast_double {
+			expr_node := node.expr or { panic('CastDouble missing expr') }
+			expr_type := t.get_expr_type(*expr_node)
+			if expr_type.tag == .t_float {
+				return t.visit_expr_native(*expr_node)
+			}
+			if expr_type.tag in [.t_int, .t_bool] {
+				native_expr := t.visit_expr_native(*expr_node)
+				t.last_expr_type = VarType{ tag: .t_float }
+				return 'f64(${native_expr})'
+			}
+			if expr_type.tag == .t_string {
+				native_expr := t.visit_expr_native(*expr_node)
+				t.last_expr_type = VarType{ tag: .t_float }
+				return '${native_expr}.f64()'
+			}
+			expr_str := t.visit_expr(*expr_node)
+			t.last_expr_type = VarType{ tag: .t_float }
+			return 'rt.new_float((${expr_str}).to_f64())'
+		}
+		ast.node_expr_cast_string {
+			expr_node := node.expr or { panic('CastString missing expr') }
+			expr_type := t.get_expr_type(*expr_node)
+			if expr_type.tag == .t_string {
+				return t.visit_expr_native(*expr_node)
+			}
+			if expr_type.tag in [.t_int, .t_float, .t_bool] {
+				native_expr := t.visit_expr_native(*expr_node)
+				t.last_expr_type = VarType{ tag: .t_string }
+				return '${native_expr}.str()'
+			}
+			// 内部是 PhpVal → 调用 .str() 得到原生 string
+			expr_str := t.visit_expr(*expr_node)
+			t.last_expr_type = VarType{ tag: .t_string }
+			return '(${expr_str}).str()'
+		}
+		ast.node_expr_cast_bool {
+			expr_node := node.expr or { panic('CastBool missing expr') }
+			expr_type := t.get_expr_type(*expr_node)
+			if expr_type.tag == .t_bool {
+				return t.visit_expr_native(*expr_node)
+			}
+			expr_str := t.visit_expr(*expr_node)
+			t.last_expr_type = VarType{ tag: .t_bool }
+			return '(${expr_str}).to_bool()'
+		}
+		ast.node_bin_not_identical {
+			left := node.left or { panic('NotIdentical missing left') }
+			right := node.right or { panic('NotIdentical missing right') }
+			l_type := t.get_expr_type(*left)
+			r_type := t.get_expr_type(*right)
+			if l_type.tag in [.t_int, .t_float] && r_type.tag in [.t_int, .t_float] {
+				t.last_expr_type = VarType{ tag: .t_bool }
+				l_code := t.visit_expr_native(*left)
+				r_code := t.visit_expr_native(*right)
+				return 'rt.new_bool(${l_code} != ${r_code})'
+			}
+			if l_type.tag == .t_string && r_type.tag == .t_string {
+				t.last_expr_type = VarType{ tag: .t_bool }
+				l_code := t.visit_expr_native(*left)
+				r_code := t.visit_expr_native(*right)
+				return 'rt.new_bool(${l_code} != ${r_code})'
+			}
+			t.last_expr_type = VarType{ tag: .t_bool }
+			return 'rt.new_bool(!rt.is_true(rt.identical(${t.visit_expr(*left)}, ${t.visit_expr(*right)})))'
+		}
+		ast.node_bin_not_equal {
+			left := node.left or { panic('NotEqual missing left') }
+			right := node.right or { panic('NotEqual missing right') }
+			l_type := t.get_expr_type(*left)
+			r_type := t.get_expr_type(*right)
+			if l_type.tag in [.t_int, .t_float] && r_type.tag in [.t_int, .t_float] {
+				t.last_expr_type = VarType{ tag: .t_bool }
+				l_code := t.visit_expr_native(*left)
+				r_code := t.visit_expr_native(*right)
+				return 'rt.new_bool(${l_code} != ${r_code})'
+			}
+			if l_type.tag == .t_string && r_type.tag == .t_string {
+				t.last_expr_type = VarType{ tag: .t_bool }
+				l_code := t.visit_expr_native(*left)
+				r_code := t.visit_expr_native(*right)
+				return 'rt.new_bool(${l_code} != ${r_code})'
+			}
+			t.last_expr_type = VarType{ tag: .t_bool }
+			return 'rt.new_bool(!rt.is_true(rt.equal(${t.visit_expr(*left)}, ${t.visit_expr(*right)})))'
+		}
+		ast.node_expr_unary_minus {
+			expr_node := node.expr or { panic('UnaryMinus missing expr') }
+			expr_type := t.get_expr_type(*expr_node)
+			if expr_type.tag == .t_int {
+				t.last_expr_type = VarType{ tag: .t_int }
+				e_code := t.visit_expr_native(*expr_node)
+				return '-${e_code}'
+			}
+			if expr_type.tag == .t_float {
+				t.last_expr_type = VarType{ tag: .t_float }
+				e_code := t.visit_expr_native(*expr_node)
+				return '-${e_code}'
+			}
+			expr_str := t.visit_expr(*expr_node)
+			return 'rt.sub(rt.new_int(0), ${expr_str})'
+		}
+		ast.node_expr_unary_plus {
+			expr_node := node.expr or { panic('UnaryPlus missing expr') }
+			expr_type := t.get_expr_type(*expr_node)
+			if expr_type.tag in [.t_int, .t_float] {
+				return t.visit_expr_native(*expr_node)
+			}
+			return t.visit_expr(*expr_node)
+		}
+		ast.node_expr_assign_op_concat {
+			var_node := node.var or { panic('AssignOp_Concat missing var') }
+			expr_node := node.expr or { panic('AssignOp_Concat missing expr') }
+			if var_node.node_type == ast.node_expr_variable {
+				var_name := var_node.name
+				v_var := t.get_v_var_name(var_name)
+				var_type := t.inferred_types[v_var] or { t.inferred_types[var_name] or { VarType{ tag: .t_unknown } } }
+				expr_type := t.get_expr_type(*expr_node)
+				if var_type.tag == .t_string {
+					rhs := if expr_type.tag == .t_string {
+						t.visit_expr_native(*expr_node)
+					} else if expr_type.is_scalar() {
+						t.native_to_str(*expr_node, expr_type)
+					} else {
+						'(${t.visit_expr(*expr_node)}).str()'
+					}
+					return '${v_var} = ${v_var} + ${rhs}'
+				}
+				mut rhs := t.visit_expr(*expr_node)
+				if t.produces_native_string(*expr_node) {
+					rhs = 'rt.new_string(${rhs})'
+				}
+				return '${v_var} = rt.concat(${v_var}, ${rhs})'
+			}
+			var_str := t.visit_expr(*var_node)
+			mut expr_str := t.visit_expr(*expr_node)
+			if t.produces_native_string(*expr_node) {
+				expr_str = 'rt.new_string(${expr_str})'
+			}
+			return '${var_str} = rt.concat(${var_str}, ${expr_str})'
+		}
+		ast.node_expr_assign_op_plus, ast.node_expr_assign_op_minus, ast.node_expr_assign_op_mul, ast.node_expr_assign_op_div, ast.node_expr_assign_op_mod {
+			var_node := node.var or { panic('AssignOp missing var') }
+			expr_node := node.expr or { panic('AssignOp missing expr') }
+			rt_fn := match node.node_type {
+				ast.node_expr_assign_op_plus { 'rt.add' }
+				ast.node_expr_assign_op_minus { 'rt.sub' }
+				ast.node_expr_assign_op_mul { 'rt.mul' }
+				ast.node_expr_assign_op_div { 'rt.div' }
+				ast.node_expr_assign_op_mod { 'rt.mod_' }
+				else { 'rt.add' }
+			}
+			native_op := match node.node_type {
+				ast.node_expr_assign_op_plus { '+' }
+				ast.node_expr_assign_op_minus { '-' }
+				ast.node_expr_assign_op_mul { '*' }
+				ast.node_expr_assign_op_div { '/' }
+				ast.node_expr_assign_op_mod { '%' }
+				else { '+' }
+			}
+			if var_node.node_type == ast.node_expr_variable {
+				var_name := var_node.name
+				v_var := t.get_v_var_name(var_name)
+				var_type := t.inferred_types[v_var] or { t.inferred_types[var_name] or { VarType{ tag: .t_unknown } } }
+				expr_type := t.get_expr_type(*expr_node)
+				if var_type.tag in [.t_int, .t_float] && expr_type.tag in [.t_int, .t_float, .t_unknown] {
+					rhs := if expr_type.tag in [.t_int, .t_float] {
+						t.visit_expr_native(*expr_node)
+					} else {
+						'(${t.visit_expr(*expr_node)}).to_i64()'
+					}
+					return '${v_var} = ${v_var} ${native_op} ${rhs}'
+				}
+				rhs := t.visit_expr(*expr_node)
+				return '${v_var} = ${rt_fn}(${v_var}, ${rhs})'
+			}
+			var_str := t.visit_expr(*var_node)
+			expr_str := t.visit_expr(*expr_node)
+			return '${var_str} = ${rt_fn}(${var_str}, ${expr_str})'
+		}
+		ast.node_expr_assign_ref {
+			var_node := node.var or { panic('AssignRef missing var') }
+			expr_node := node.expr or { panic('AssignRef missing expr') }
+			expr_str := t.visit_expr(*expr_node)
+			if var_node.node_type == ast.node_expr_variable {
+				var_name := var_node.name
+				v_var := t.get_v_var_name(var_name)
+				if t.scope.has_var(var_name) {
+					return '${v_var} = ${expr_str}'
+				} else {
+					t.scope.declare(var_name)
+					return 'mut ${v_var} := ${expr_str}'
+				}
+			}
+			var_str := t.visit_expr(*var_node)
+			return '${var_str} = ${expr_str}'
+		}
+		ast.node_expr_print {
+			expr_node := node.expr or { panic('Print missing expr') }
+			expr_type := t.get_expr_type(*expr_node)
+			t.last_expr_type = VarType{ tag: .t_int }
+			if expr_type.tag == .t_string {
+				native_str := t.visit_expr_native(*expr_node)
+				return 'fn () { print(${native_str}); return i64(1) }()'
+			}
+			expr_str := t.visit_expr(*expr_node)
+			return 'fn () { print((${expr_str}).str()); return i64(1) }()'
+		}
+		ast.node_expr_exit {
+			if t.is_entry_script {
+				// 入口脚本：exit → print + return
+				if expr_node := node.expr {
+					expr_str := t.visit_expr(*expr_node)
+					return 'print((${expr_str}).str()); return rt.new_int(0)'
+				}
+				return 'return rt.new_null()'
+			}
+			if expr_node := node.expr {
+				expr_str := t.visit_expr(*expr_node)
+				return 'fn () { print((${expr_str}).str()); exit(0) }()'
+			}
+			return 'exit(0)'
+		}
+		ast.node_expr_clone {
+			expr_node := node.expr or { panic('Clone missing expr') }
+			expr_str := t.visit_expr(*expr_node)
+			t.last_expr_type = t.get_expr_type(*expr_node)
+			return '${expr_str}.dup()'
+		}
+		ast.node_expr_cast_object {
+			expr_node := node.expr or { panic('CastObject missing expr') }
+			expr_str := t.visit_expr(*expr_node)
+			t.last_expr_type = VarType{ tag: .t_object, class_name: 'stdClass' }
+			return 'rt.array_to_object(${expr_str})'
+		}
+		ast.node_expr_list {
+			// list() as expression - handled by assignment context in emit_stmt
+			t.last_expr_type = VarType{ tag: .t_unknown }
+			return 'rt.new_null()'
+		}
+		ast.node_bin_logical_xor {
+			left := node.left or { panic('LogicalXor missing left') }
+			right := node.right or { panic('LogicalXor missing right') }
+			l_str := t.visit_expr(*left)
+			r_str := t.visit_expr(*right)
+			t.last_expr_type = VarType{ tag: .t_bool }
+			return 'rt.is_true(${l_str}) != rt.is_true(${r_str})'
+		}
 		else {
-			return '// unsupported expression: ${node.node_type}'
+			t.last_expr_type = VarType{ tag: .t_unknown }
+			return 'rt.new_null()'
 		}
 	}
 }

@@ -1,0 +1,50 @@
+import rt
+
+struct Class_ParagonIE_Sodium_Core_Curve25519_Ge_P2 {
+	rt.PhpObjectBase
+}
+
+struct Class_ParagonIE_Sodium_Core_Curve25519_Ge_ParagonIE_Sodium_Core_Curve25519_Ge_P2 {
+	rt.PhpObjectBase
+}
+
+fn create_paragonie_sodium_core_curve25519_ge_p2() &Class_ParagonIE_Sodium_Core_Curve25519_Ge_P2 {
+	mut obj := &Class_ParagonIE_Sodium_Core_Curve25519_Ge_P2{
+		PhpObjectBase: rt.PhpObjectBase{}
+	}
+	return obj
+}
+
+fn create_paragonie_sodium_core_curve25519_ge_paragonie_sodium_core_curve25519_ge_p2() &Class_ParagonIE_Sodium_Core_Curve25519_Ge_ParagonIE_Sodium_Core_Curve25519_Ge_P2 {
+	mut obj := &Class_ParagonIE_Sodium_Core_Curve25519_Ge_ParagonIE_Sodium_Core_Curve25519_Ge_P2{
+		PhpObjectBase: rt.PhpObjectBase{}
+	}
+	return obj
+}
+
+fn (mut this Class_ParagonIE_Sodium_Core_Curve25519_Ge_P2) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	return none
+}
+
+fn (this &Class_ParagonIE_Sodium_Core_Curve25519_Ge_P2) dispatch_get_prop(prop_name string) ?rt.PhpVal {
+	return this.PhpObjectBase.dispatch_get_prop(prop_name)
+}
+
+fn (mut this Class_ParagonIE_Sodium_Core_Curve25519_Ge_P2) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {
+	return this.PhpObjectBase.dispatch_set_prop(prop_name, val)
+}
+
+fn (mut this Class_ParagonIE_Sodium_Core_Curve25519_Ge_ParagonIE_Sodium_Core_Curve25519_Ge_P2) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	return none
+}
+
+fn (this &Class_ParagonIE_Sodium_Core_Curve25519_Ge_ParagonIE_Sodium_Core_Curve25519_Ge_P2) dispatch_get_prop(prop_name string) ?rt.PhpVal {
+	return this.PhpObjectBase.dispatch_get_prop(prop_name)
+}
+
+fn (mut this Class_ParagonIE_Sodium_Core_Curve25519_Ge_ParagonIE_Sodium_Core_Curve25519_Ge_P2) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {
+	return this.PhpObjectBase.dispatch_set_prop(prop_name, val)
+}
+
+pub fn init_wp_includes_sodium_compat_namespaced_core_curve25519_ge_p2_php() {
+}

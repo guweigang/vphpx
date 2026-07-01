@@ -1,0 +1,107 @@
+import rt
+
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.query() string {
+	return 'QUERY'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.mutation() string {
+	return 'MUTATION'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.subscription() string {
+	return 'SUBSCRIPTION'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.field() string {
+	return 'FIELD'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.fragment_definition() string {
+	return 'FRAGMENT_DEFINITION'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.fragment_spread() string {
+	return 'FRAGMENT_SPREAD'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.inline_fragment() string {
+	return 'INLINE_FRAGMENT'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.variable_definition() string {
+	return 'VARIABLE_DEFINITION'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.executable_locations() rt.PhpVal {
+	return rt.create_array([rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.query(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.query() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.mutation(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.mutation() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.subscription(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.subscription() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.field(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.field() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.fragment_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.fragment_definition() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.fragment_spread(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.fragment_spread() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.inline_fragment(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.inline_fragment() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.variable_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.variable_definition() }])
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.schema() string {
+	return 'SCHEMA'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.scalar() string {
+	return 'SCALAR'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.object() string {
+	return 'OBJECT'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.field_definition() string {
+	return 'FIELD_DEFINITION'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.argument_definition() string {
+	return 'ARGUMENT_DEFINITION'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.iface() string {
+	return 'INTERFACE'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.union() string {
+	return 'UNION'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.enum() string {
+	return 'ENUM'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.enum_value() string {
+	return 'ENUM_VALUE'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.input_object() string {
+	return 'INPUT_OBJECT'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.input_field_definition() string {
+	return 'INPUT_FIELD_DEFINITION'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.type_system_locations() rt.PhpVal {
+	return rt.create_array([rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.schema(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.schema() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.scalar(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.scalar() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.object(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.object() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.field_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.field_definition() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.argument_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.argument_definition() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.iface(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.iface() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.union(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.union() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.enum(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.enum() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.enum_value(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.enum_value() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.input_object(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.input_object() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.input_field_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.input_field_definition() }])
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.locations() rt.PhpVal {
+	return Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.executable_locations() + Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.type_system_locations()
+}
+struct Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation {
+	rt.PhpObjectBase
+}
+
+fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.has(name string) bool {
+	return (rt.new_bool(Class_Automattic_WooCommerce_Vendor_GraphQL_Language_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.locations().array_isset(rt.new_string(name)))).to_bool()
+}
+
+fn create_automattic_woocommerce_vendor_graphql_language_directivelocation() &Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation {
+	mut obj := &Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation{
+		PhpObjectBase: rt.PhpObjectBase{}
+	}
+	return obj
+}
+
+fn (mut this Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	match method_name {
+		'has' {
+			dispatch_arg_0 := (if args.len > 0 { args[0] } else { rt.new_null() }).str()
+			return rt.new_bool(Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation.has(dispatch_arg_0))
+		}
+		else { return none }
+	}
+}
+
+fn (this &Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation) dispatch_get_prop(prop_name string) ?rt.PhpVal {
+	return this.PhpObjectBase.dispatch_get_prop(prop_name)
+}
+
+fn (mut this Class_Automattic_WooCommerce_Vendor_GraphQL_Language_DirectiveLocation) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {
+	return this.PhpObjectBase.dispatch_set_prop(prop_name, val)
+}
+
+
+
+
+pub fn init_wp_content_plugins_woocommerce_lib_packages_graphql_language_directivelocation_php() {
+	// unsupported statement: Stmt_Declare
+}

@@ -74,6 +74,7 @@ fn main() {
 	if fmt_res.exit_code != 0 {
 		eprintln('Warning: v fmt failed: ${fmt_res.output}')
 	}
+	fix_multiline_if(output_file)
 	
 	println('Successfully transpiled ${input_file} -> ${output_file}')
 
@@ -119,4 +120,35 @@ fn print_usage() {
 	println('Usage: php2v compile <input.php> [-o output.v] [--run]')
 	println('  compile  Transpiles a PHP file into V source code')
 	println('  --run    Compiles and runs the generated V code immediately')
+}
+
+// fix_multiline_if fixes multi-line if conditions produced by v fmt
+// where { ends up on a separate line, which V compiler rejects
+fn fix_multiline_if(file_path string) {
+	content := os.read_file(file_path) or { return }
+	lb := '\n'
+	if !content.contains('${lb}\t{') && !content.contains('${lb} {') {
+		return
+	}
+	lines := content.split(lb)
+	mut result := []string{}
+	mut i := 0
+	for i < lines.len {
+		line := lines[i]
+		if i + 1 < lines.len {
+			next_line := lines[i + 1]
+			trimmed := next_line.trim_space()
+			if trimmed == '{' {
+				stripped := line.trim_space()
+				if stripped.starts_with('if ') || stripped.starts_with('} else if ') || stripped.starts_with('for ') {
+					result << line + ' {'
+					i += 2
+					continue
+				}
+			}
+		}
+		result << line
+		i++
+	}
+	os.write_file(file_path, result.join(lb)) or { return }
 }

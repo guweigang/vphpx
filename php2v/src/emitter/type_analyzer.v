@@ -993,6 +993,17 @@ fn (mut t Transpiler) scan_return_types(stmts []ast.AstNode, prop_types map[stri
 				if el := stmt.@else {
 					t.scan_return_types(el.stmts, prop_types, mut return_tags)
 				}
+				// switch cases
+				for case_node in stmt.cases {
+					t.scan_return_types(case_node.stmts, prop_types, mut return_tags)
+				}
+				// try/catch/finally
+				for catch_node in stmt.catches {
+					t.scan_return_types(catch_node.stmts, prop_types, mut return_tags)
+				}
+				if fin := stmt.finally {
+					t.scan_return_types(fin.stmts, prop_types, mut return_tags)
+				}
 			}
 		}
 	}
@@ -1482,12 +1493,26 @@ fn (mut t Transpiler) scan_func_return_tags(stmts []ast.AstNode, mut var_assign_
 				}
 			}
 			else {
-				t.scan_func_return_tags(stmt.stmts, mut var_assign_types, mut return_tags)
+				// 递归扫描所有可能包含 return 的子节点
+				if stmt.stmts.len > 0 {
+					t.scan_func_return_tags(stmt.stmts, mut var_assign_types, mut return_tags)
+				}
 				for elseif in stmt.elseifs {
 					t.scan_func_return_tags(elseif.stmts, mut var_assign_types, mut return_tags)
 				}
 				if el := stmt.@else {
 					t.scan_func_return_tags(el.stmts, mut var_assign_types, mut return_tags)
+				}
+				// switch cases
+				for case_node in stmt.cases {
+					t.scan_func_return_tags(case_node.stmts, mut var_assign_types, mut return_tags)
+				}
+				// try/catch/finally
+				for catch_node in stmt.catches {
+					t.scan_func_return_tags(catch_node.stmts, mut var_assign_types, mut return_tags)
+				}
+				if fin := stmt.finally {
+					t.scan_func_return_tags(fin.stmts, mut var_assign_types, mut return_tags)
 				}
 			}
 		}

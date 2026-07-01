@@ -44,13 +44,27 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 
 	mut own_method_names := map[string]bool{}
 	mut own_method_names_originally := map[string]bool{}
+	// 静态属性列表：(prop_name, default_value_expr)
+	mut static_props := []StaticPropInfo{}
 	for stmt in node.stmts {
 		if stmt.node_type == ast.node_stmt_property {
+			is_prop_static := (stmt.flags.int() & 8) != 0
 			for prop in stmt.props {
-				class_info.props << prop.name
-				if default_node := prop.default_val {
-					if voidptr(default_node) != 0 {
-						class_info.prop_defaults[prop.name] = get_prop_default_expr(*default_node)
+				if is_prop_static {
+					// 静态属性不加入 struct 字段，而是记录到 static_props
+					mut default_str := 'rt.new_null()'
+					if default_node := prop.default_val {
+						if voidptr(default_node) != 0 {
+							default_str = t.visit_expr(*default_node)
+						}
+					}
+					static_props << StaticPropInfo{ name: prop.name, default_expr: default_str }
+				} else {
+					class_info.props << prop.name
+					if default_node := prop.default_val {
+						if voidptr(default_node) != 0 {
+							class_info.prop_defaults[prop.name] = get_prop_default_expr(*default_node)
+						}
 					}
 				}
 			}
@@ -223,6 +237,19 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 	t.write_line('}')
 	t.write_line('')
 
+	// 生成静态属性初始化函数
+	if static_props.len > 0 {
+		t.write_line('fn init_static_${resolved_name.to_lower()}() {')
+		t.indent++
+		for sp in static_props {
+			t.write_indent()
+			t.write_line('rt.init_static_prop(\'${resolved_name}\', \'${sp.name}\', ${sp.default_expr})')
+		}
+		t.indent--
+		t.write_line('}')
+		t.write_line('')
+	}
+
 	// 遍历生成方法
 	for stmt in node.stmts {
 		if stmt.node_type == ast.node_stmt_class_method {
@@ -321,10 +348,11 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	ret_type_str := if is_construct || is_void { '' } else if ret_type.is_scalar() { ret_type.to_v_type() } else { 'rt.PhpVal' }
 
 	t.write_indent()
+	ret_part := if ret_type_str != '' { ' ${ret_type_str}' } else { '' }
 	if is_static_method {
-		t.write_line('fn Class_${class_name}.${method_v_name(node.name)}(${param_names.join(", ")}) ${ret_type_str} {')
+		t.write_line('fn Class_${class_name}.${method_v_name(node.name)}(${param_names.join(", ")})${ret_part} {')
 	} else {
-		t.write_line('fn (mut this Class_${class_name}) ${method_v_name(node.name)}(${param_names.join(", ")}) ${ret_type_str} {')
+		t.write_line('fn (mut this Class_${class_name}) ${method_v_name(node.name)}(${param_names.join(", ")})${ret_part} {')
 	}
 	
 	t.indent++
@@ -517,7 +545,12 @@ fn (mut t Transpiler) generate_dispatchers() {
 		}
 
 		// create_xxx：返回原生结构体指针，避免 PhpVal 装箱
-		t.write_line('fn create_${cls.name.to_lower()}(${native_param_decls.join(", ")}) &Class_${cls.name} {')
+		// 如果没有构造函数信息，使用可变参数接受任意数量的参数
+		if has_native_construct {
+			t.write_line('fn create_${cls.name.to_lower()}(${native_param_decls.join(", ")}) &Class_${cls.name} {')
+		} else {
+			t.write_line('fn create_${cls.name.to_lower()}(_args ...rt.PhpVal) &Class_${cls.name} {')
+		}
 		t.indent++
 		t.write_indent()
 		t.write_line('mut obj := &Class_${cls.name}{')
