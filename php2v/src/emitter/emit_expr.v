@@ -735,12 +735,18 @@ fn (mut t Transpiler) emit_native_condition(node ast.AstNode) string {
 			l_native := t.emit_native_condition(*l_node)
 			r_native := t.emit_native_condition(*r_node)
 			if l_native != '' && r_native != '' {
-				return '${l_native} && ${r_native}'
+				// 如果任一侧包含 || 混用，需要加括号避免 V 歧义
+				l_str := if l_native.contains(' || ') { '(${l_native})' } else { l_native }
+				r_str := if r_native.contains(' || ') { '(${r_native})' } else { r_native }
+				return '${l_str} && ${r_str}'
 			}
 			// 回退：用 get_native_bool_condition 递归展开（确保 PhpVal 侧用 rt.is_true 包装）
 			// 避免生成 rt.is_true(rt.new_bool(rt.is_true(L) && rt.is_true(R))) 双层嵌套
-			l_cond := if l_native != '' { l_native } else { t.get_native_bool_condition(*l_node) }
-			r_cond := if r_native != '' { r_native } else { t.get_native_bool_condition(*r_node) }
+			mut l_cond := if l_native != '' { l_native } else { t.get_native_bool_condition(*l_node) }
+			mut r_cond := if r_native != '' { r_native } else { t.get_native_bool_condition(*r_node) }
+			// 如果任一侧包含 ||，需要加括号避免 V 歧义
+			if l_cond.contains(' || ') { l_cond = '(${l_cond})' }
+			if r_cond.contains(' || ') { r_cond = '(${r_cond})' }
 			return '${l_cond} && ${r_cond}'
 		}
 		ast.node_bin_bool_or, ast.node_bin_logical_or {
