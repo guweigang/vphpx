@@ -1,0 +1,252 @@
+import rt
+
+fn main() {
+	defer {
+		rt.shutdown()
+	}
+
+	rt.call_function('add_action', [rt.new_string('admin_page_access_denied'),
+		rt.new_string('wp_link_manager_disabled_message')])
+	rt.call_function('add_action', [rt.new_string('activity_box_end'),
+		rt.new_string('wp_dashboard_quota')])
+	rt.call_function('add_action', [rt.new_string('welcome_panel'),
+		rt.new_string('wp_welcome_panel')])
+	rt.call_function('add_action', [rt.new_string('attachment_submitbox_misc_actions'),
+		rt.new_string('attachment_submitbox_metadata')])
+	rt.call_function('add_filter', [rt.new_string('plupload_init'),
+		rt.new_string('wp_show_heic_upload_error')])
+	rt.call_function('add_action', [rt.new_string('media_upload_image'),
+		rt.new_string('wp_media_upload_handler')])
+	rt.call_function('add_action', [rt.new_string('media_upload_audio'),
+		rt.new_string('wp_media_upload_handler')])
+	rt.call_function('add_action', [rt.new_string('media_upload_video'),
+		rt.new_string('wp_media_upload_handler')])
+	rt.call_function('add_action', [rt.new_string('media_upload_file'),
+		rt.new_string('wp_media_upload_handler')])
+	rt.call_function('add_action', [rt.new_string('post-plupload-upload-ui'),
+		rt.new_string('media_upload_flash_bypass')])
+	rt.call_function('add_action', [rt.new_string('post-html-upload-ui'),
+		rt.new_string('media_upload_html_bypass')])
+	rt.call_function('add_filter', [rt.new_string('async_upload_image'),
+		rt.new_string('get_media_item'), rt.new_int(10), rt.new_int(2)])
+	rt.call_function('add_filter', [rt.new_string('async_upload_audio'),
+		rt.new_string('get_media_item'), rt.new_int(10), rt.new_int(2)])
+	rt.call_function('add_filter', [rt.new_string('async_upload_video'),
+		rt.new_string('get_media_item'), rt.new_int(10), rt.new_int(2)])
+	rt.call_function('add_filter', [rt.new_string('async_upload_file'),
+		rt.new_string('get_media_item'), rt.new_int(10), rt.new_int(2)])
+	rt.call_function('add_filter', [rt.new_string('media_upload_gallery'),
+		rt.new_string('media_upload_gallery')])
+	rt.call_function('add_filter', [rt.new_string('media_upload_library'),
+		rt.new_string('media_upload_library')])
+	rt.call_function('add_filter', [rt.new_string('media_upload_tabs'),
+		rt.new_string('update_gallery_tab')])
+	rt.call_function('add_action', [rt.new_string('admin_init'),
+		rt.new_string('register_admin_color_schemes'), rt.new_int(1)])
+	rt.call_function('add_action', [rt.new_string('admin_head'),
+		rt.new_string('wp_color_scheme_settings')])
+	rt.call_function('add_action', [rt.new_string('admin_color_scheme_picker'),
+		rt.new_string('admin_color_scheme_picker')])
+	rt.call_function('add_action', [rt.new_string('admin_init'),
+		rt.new_string('wp_admin_headers')])
+	rt.call_function('add_action', [rt.new_string('admin_init'),
+		rt.new_string('send_frame_options_header'), rt.new_int(10),
+		rt.new_int(0)])
+	rt.call_function('add_action', [rt.new_string('admin_head'),
+		rt.new_string('wp_admin_canonical_url')])
+	rt.call_function('add_action', [rt.new_string('admin_head'),
+		rt.new_string('wp_site_icon')])
+	rt.call_function('add_action', [rt.new_string('admin_head'),
+		rt.new_string('wp_admin_viewport_meta')])
+	rt.call_function('add_action', [rt.new_string('customize_controls_head'),
+		rt.new_string('wp_admin_viewport_meta')])
+	rt.call_function('add_filter', [rt.new_string('nav_menu_meta_box_object'),
+		rt.new_string('_wp_nav_menu_meta_box_object')])
+	if rt.is_true(rt.new_bool(!(rt.is_true(rt.call_function('is_customize_preview', []rt.PhpVal{}))))) {
+		rt.call_function('add_action', [rt.new_string('admin_print_styles'),
+			rt.new_string('wp_resource_hints'), rt.new_int(1)])
+	}
+	rt.call_function('add_action', [rt.new_string('admin_print_scripts'),
+		rt.new_string('print_emoji_detection_script')])
+	rt.call_function('add_action', [rt.new_string('admin_print_scripts'),
+		rt.new_string('print_head_scripts'), rt.new_int(20)])
+	rt.call_function('add_action', [rt.new_string('admin_print_footer_scripts'),
+		rt.new_string('_wp_footer_scripts')])
+	rt.call_function('add_action', [rt.new_string('admin_enqueue_scripts'),
+		rt.new_string('wp_enqueue_emoji_styles')])
+	rt.call_function('add_action', [rt.new_string('admin_print_styles'),
+		rt.new_string('print_emoji_styles')])
+	rt.call_function('add_action', [rt.new_string('admin_print_styles'),
+		rt.new_string('print_admin_styles'), rt.new_int(20)])
+	rt.call_function('add_action', [rt.new_string('admin_print_scripts-index.php'),
+		rt.new_string('wp_localize_community_events')])
+	rt.call_function('add_action', [rt.new_string('admin_print_scripts-post.php'),
+		rt.new_string('wp_page_reload_on_back_button_js')])
+	rt.call_function('add_action', [rt.new_string('admin_print_scripts-post-new.php'),
+		rt.new_string('wp_page_reload_on_back_button_js')])
+	rt.call_function('add_action', [rt.new_string('update_option_home'),
+		rt.new_string('update_home_siteurl'), rt.new_int(10),
+		rt.new_int(2)])
+	rt.call_function('add_action', [rt.new_string('update_option_siteurl'),
+		rt.new_string('update_home_siteurl'), rt.new_int(10),
+		rt.new_int(2)])
+	rt.call_function('add_action', [rt.new_string('update_option_page_on_front'),
+		rt.new_string('update_home_siteurl'), rt.new_int(10),
+		rt.new_int(2)])
+	rt.call_function('add_action', [rt.new_string('update_option_admin_email'),
+		rt.new_string('wp_site_admin_email_change_notification'),
+		rt.new_int(10), rt.new_int(3)])
+	rt.call_function('add_action', [rt.new_string('add_option_new_admin_email'),
+		rt.new_string('update_option_new_admin_email'), rt.new_int(10),
+		rt.new_int(2)])
+	rt.call_function('add_action', [rt.new_string('update_option_new_admin_email'),
+		rt.new_string('update_option_new_admin_email'), rt.new_int(10),
+		rt.new_int(2)])
+	rt.call_function('add_filter', [rt.new_string('heartbeat_received'),
+		rt.new_string('wp_check_locked_posts'), rt.new_int(10),
+		rt.new_int(3)])
+	rt.call_function('add_filter', [rt.new_string('heartbeat_received'),
+		rt.new_string('wp_refresh_post_lock'), rt.new_int(10),
+		rt.new_int(3)])
+	rt.call_function('add_filter', [rt.new_string('heartbeat_received'),
+		rt.new_string('heartbeat_autosave'), rt.new_int(500),
+		rt.new_int(2)])
+	rt.call_function('add_filter', [rt.new_string('wp_refresh_nonces'),
+		rt.new_string('wp_refresh_post_nonces'), rt.new_int(10),
+		rt.new_int(3)])
+	rt.call_function('add_filter', [rt.new_string('wp_refresh_nonces'),
+		rt.new_string('wp_refresh_metabox_loader_nonces'), rt.new_int(10),
+		rt.new_int(2)])
+	rt.call_function('add_filter', [rt.new_string('wp_refresh_nonces'),
+		rt.new_string('wp_refresh_heartbeat_nonces')])
+	rt.call_function('add_filter', [rt.new_string('heartbeat_settings'),
+		rt.new_string('wp_heartbeat_set_suspension')])
+	rt.call_function('add_filter', [rt.new_string('use_block_editor_for_post_type'),
+		rt.new_string('_disable_block_editor_for_navigation_post_type'),
+		rt.new_int(10), rt.new_int(2)])
+	rt.call_function('add_action', [rt.new_string('edit_form_after_title'),
+		rt.new_string('_disable_content_editor_for_navigation_post_type')])
+	rt.call_function('add_action', [rt.new_string('edit_form_after_editor'),
+		rt.new_string('_enable_content_editor_for_navigation_post_type')])
+	rt.call_function('add_action', [rt.new_string('admin_head-nav-menus.php'),
+		rt.new_string('_wp_delete_orphaned_draft_menu_items')])
+	rt.call_function('add_filter', [rt.new_string('allowed_options'),
+		rt.new_string('option_update_filter')])
+	rt.call_function('add_action', [rt.new_string('install_plugins_featured'),
+		rt.new_string('install_dashboard')])
+	rt.call_function('add_action', [rt.new_string('install_plugins_upload'),
+		rt.new_string('install_plugins_upload')])
+	rt.call_function('add_action', [rt.new_string('install_plugins_search'),
+		rt.new_string('display_plugins_table')])
+	rt.call_function('add_action', [rt.new_string('install_plugins_popular'),
+		rt.new_string('display_plugins_table')])
+	rt.call_function('add_action', [rt.new_string('install_plugins_recommended'),
+		rt.new_string('display_plugins_table')])
+	rt.call_function('add_action', [rt.new_string('install_plugins_new'),
+		rt.new_string('display_plugins_table')])
+	rt.call_function('add_action', [rt.new_string('install_plugins_beta'),
+		rt.new_string('display_plugins_table')])
+	rt.call_function('add_action', [rt.new_string('install_plugins_favorites'),
+		rt.new_string('display_plugins_table')])
+	rt.call_function('add_action', [
+		rt.new_string('install_plugins_pre_plugin-information'),
+		rt.new_string('install_plugin_information'),
+	])
+	rt.call_function('add_action', [rt.new_string('admin_enqueue_scripts'),
+		rt.create_array([rt.ArrayItem{ key: none, val: 'WP_Internal_Pointers' },
+			rt.ArrayItem{ key: none, val: 'enqueue_scripts' }])])
+	rt.call_function('add_action', [rt.new_string('user_register'),
+		rt.create_array([rt.ArrayItem{ key: none, val: 'WP_Internal_Pointers' },
+			rt.ArrayItem{ key: none, val: 'dismiss_pointers_for_new_users' }])])
+	rt.call_function('add_action', [
+		rt.new_string('customize_controls_print_footer_scripts'),
+		rt.new_string('customize_themes_print_templates'),
+	])
+	rt.call_function('add_action', [
+		rt.new_string('install_themes_pre_theme-information'),
+		rt.new_string('install_theme_information'),
+	])
+	rt.call_function('add_action', [rt.new_string('admin_init'),
+		rt.new_string('default_password_nag_handler')])
+	rt.call_function('add_action', [rt.new_string('admin_notices'),
+		rt.new_string('default_password_nag')])
+	rt.call_function('add_action', [rt.new_string('admin_notices'),
+		rt.new_string('new_user_email_admin_notice')])
+	rt.call_function('add_action', [rt.new_string('profile_update'),
+		rt.new_string('default_password_nag_edit_user'), rt.new_int(10),
+		rt.new_int(2)])
+	rt.call_function('add_action', [rt.new_string('personal_options_update'),
+		rt.new_string('send_confirmation_on_profile_email')])
+	rt.call_function('add_action', [rt.new_string('load-plugins.php'),
+		rt.new_string('wp_plugin_update_rows'), rt.new_int(20)])
+	rt.call_function('add_action', [rt.new_string('load-themes.php'),
+		rt.new_string('wp_theme_update_rows'), rt.new_int(20)])
+	rt.call_function('add_action', [rt.new_string('admin_notices'),
+		rt.new_string('update_nag'), rt.new_int(3)])
+	rt.call_function('add_action', [rt.new_string('admin_notices'),
+		rt.new_string('deactivated_plugins_notice'), rt.new_int(5)])
+	rt.call_function('add_action', [rt.new_string('admin_notices'),
+		rt.new_string('paused_plugins_notice'), rt.new_int(5)])
+	rt.call_function('add_action', [rt.new_string('admin_notices'),
+		rt.new_string('paused_themes_notice'), rt.new_int(5)])
+	rt.call_function('add_action', [rt.new_string('admin_notices'),
+		rt.new_string('maintenance_nag'), rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('admin_notices'),
+		rt.new_string('wp_recovery_mode_nag'), rt.new_int(1)])
+	rt.call_function('add_filter', [rt.new_string('update_footer'),
+		rt.new_string('core_update_footer')])
+	rt.call_function('add_action', [rt.new_string('_core_updated_successfully'),
+		rt.new_string('_redirect_to_about_wordpress')])
+	rt.call_function('add_action', [rt.new_string('upgrader_process_complete'),
+		rt.create_array([rt.ArrayItem{ key: none, val: 'Language_Pack_Upgrader' },
+			rt.ArrayItem{ key: none, val: 'async_upgrade' }]),
+		rt.new_int(20)])
+	rt.call_function('add_action', [rt.new_string('upgrader_process_complete'),
+		rt.new_string('wp_version_check'), rt.new_int(10), rt.new_int(0)])
+	rt.call_function('add_action', [rt.new_string('upgrader_process_complete'),
+		rt.new_string('wp_update_plugins'), rt.new_int(10), rt.new_int(0)])
+	rt.call_function('add_action', [rt.new_string('upgrader_process_complete'),
+		rt.new_string('wp_update_themes'), rt.new_int(10), rt.new_int(0)])
+	rt.call_function('add_filter', [
+		rt.new_string('wp_privacy_personal_data_erasure_page'),
+		rt.new_string('wp_privacy_process_personal_data_erasure_page'),
+		rt.new_int(10),
+		rt.new_int(5),
+	])
+	rt.call_function('add_filter', [
+		rt.new_string('wp_privacy_personal_data_export_page'),
+		rt.new_string('wp_privacy_process_personal_data_export_page'),
+		rt.new_int(10),
+		rt.new_int(7),
+	])
+	rt.call_function('add_action', [
+		rt.new_string('wp_privacy_personal_data_export_file'),
+		rt.new_string('wp_privacy_generate_personal_data_export_file'),
+		rt.new_int(10),
+	])
+	rt.call_function('add_action', [rt.new_string('wp_privacy_personal_data_erased'),
+		rt.new_string('_wp_privacy_send_erasure_fulfillment_notification'),
+		rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('admin_init'),
+		rt.create_array([rt.ArrayItem{ key: none, val: 'WP_Privacy_Policy_Content' },
+			rt.ArrayItem{ key: none, val: 'text_change_check' }]),
+		rt.new_int(100)])
+	rt.call_function('add_action', [rt.new_string('admin_notices'),
+		rt.create_array([rt.ArrayItem{ key: none, val: 'WP_Privacy_Policy_Content' },
+			rt.ArrayItem{ key: none, val: 'notice' }])])
+	rt.call_function('add_action', [rt.new_string('admin_init'),
+		rt.create_array([rt.ArrayItem{ key: none, val: 'WP_Privacy_Policy_Content' },
+			rt.ArrayItem{ key: none, val: 'add_suggested_content' }]),
+		rt.new_int(1)])
+	rt.call_function('add_action', [rt.new_string('post_updated'),
+		rt.create_array([rt.ArrayItem{ key: none, val: 'WP_Privacy_Policy_Content' },
+			rt.ArrayItem{ key: none, val: '_policy_page_updated' }])])
+	rt.call_function('add_filter', [rt.new_string('list_pages'),
+		rt.new_string('_wp_privacy_settings_filter_draft_page_titles'),
+		rt.new_int(10), rt.new_int(2)])
+	rt.call_function('add_action', [rt.new_string('admin_print_styles'),
+		rt.new_string('wp_print_font_faces'), rt.new_int(50)])
+	rt.call_function('add_action', [rt.new_string('admin_print_styles'),
+		rt.new_string('wp_print_font_faces_from_style_variations'),
+		rt.new_int(50)])
+}

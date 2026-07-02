@@ -1,0 +1,138 @@
+import rt
+
+struct Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Definition_ListOfType {
+	rt.PhpObjectBase
+pub mut:
+	wrappedType rt.PhpVal = rt.new_null()
+}
+
+fn (mut this Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Definition_ListOfType) construct(var_type rt.PhpVal) {
+	mut var_type_mutated := var_type
+	this.wrappedType = var_type_mutated.clone()
+}
+
+fn (mut this Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Definition_ListOfType) tostring() string {
+	return '[' + (rt.call_method(this.getwrappedtype(), 'toString', []rt.PhpVal{})).str() + ']'
+}
+
+fn (mut this Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Definition_ListOfType) getwrappedtype() rt.PhpVal {
+	mut iife_temp_0 := Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Schema{}
+	mut iife_result_0 := iife_temp_0.resolvetype(this.wrappedType)
+	return iife_result_0
+}
+
+fn (mut this Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Definition_ListOfType) getinnermosttype() rt.PhpVal {
+	mut var_type := this.getwrappedtype()
+	for rt.is_true(rt.new_bool(rt.instance_of(var_type,
+		'Automattic_WooCommerce_Vendor_GraphQL_Type_Definition_WrappingType'))) {
+		var_type = rt.call_method(var_type, 'getWrappedType', []rt.PhpVal{})
+	}
+	rt.call_function('assert', [
+		rt.new_bool(rt.instance_of(var_type,
+			'Automattic_WooCommerce_Vendor_GraphQL_Type_Definition_NamedType')),
+		rt.new_string('known because we unwrapped all the way down'),
+	])
+	return var_type.clone()
+}
+
+struct Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Definition_Type {
+	rt.PhpObjectBase
+}
+
+struct Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Schema {
+	rt.PhpObjectBase
+}
+
+fn create_automattic_woocommerce_vendor_graphql_type_definition_listoftype(arg_0 rt.PhpVal) &Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Definition_ListOfType {
+	mut obj := &Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Definition_ListOfType{
+		PhpObjectBase: rt.PhpObjectBase{}
+		wrappedType:   rt.new_null()
+	}
+	obj.construct(arg_0)
+	return obj
+}
+
+fn create_automattic_woocommerce_vendor_graphql_type_definition_type(_args ...rt.PhpVal) &Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Definition_Type {
+	mut obj := &Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Definition_Type{
+		PhpObjectBase: rt.PhpObjectBase{}
+	}
+	return obj
+}
+
+fn create_automattic_woocommerce_vendor_graphql_type_schema(_args ...rt.PhpVal) &Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Schema {
+	mut obj := &Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Schema{
+		PhpObjectBase: rt.PhpObjectBase{}
+	}
+	return obj
+}
+
+fn (mut this Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Definition_ListOfType) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	match method_name {
+		'__construct' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			this.construct(dispatch_arg_0)
+			return rt.new_null()
+		}
+		'toString' {
+			return rt.new_string(this.tostring())
+		}
+		'getWrappedType' {
+			return this.getwrappedtype()
+		}
+		'getInnermostType' {
+			return this.getinnermosttype()
+		}
+		else {
+			return none
+		}
+	}
+}
+
+fn (this &Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Definition_ListOfType) dispatch_get_prop(prop_name string) ?rt.PhpVal {
+	match prop_name {
+		'wrappedType' { return this.wrappedType }
+		else { return this.PhpObjectBase.dispatch_get_prop(prop_name) }
+	}
+}
+
+fn (mut this Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Definition_ListOfType) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {
+	match prop_name {
+		'wrappedType' {
+			this.wrappedType = val
+			return true
+		}
+		else {
+			return this.PhpObjectBase.dispatch_set_prop(prop_name, val)
+		}
+	}
+}
+
+fn (mut this Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Definition_Type) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	return none
+}
+
+fn (this &Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Definition_Type) dispatch_get_prop(prop_name string) ?rt.PhpVal {
+	return this.PhpObjectBase.dispatch_get_prop(prop_name)
+}
+
+fn (mut this Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Definition_Type) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {
+	return this.PhpObjectBase.dispatch_set_prop(prop_name, val)
+}
+
+fn (mut this Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Schema) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	return none
+}
+
+fn (this &Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Schema) dispatch_get_prop(prop_name string) ?rt.PhpVal {
+	return this.PhpObjectBase.dispatch_get_prop(prop_name)
+}
+
+fn (mut this Class_Automattic_WooCommerce_Vendor_GraphQL_Type_Schema) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {
+	return this.PhpObjectBase.dispatch_set_prop(prop_name, val)
+}
+
+fn main() {
+	defer {
+		rt.shutdown()
+	}
+}

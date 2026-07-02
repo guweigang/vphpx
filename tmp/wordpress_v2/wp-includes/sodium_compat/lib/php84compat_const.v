@@ -1,0 +1,16 @@
+import rt
+
+const global_const_sodium_crypto_aead_aegis128l_keybytes = 16
+const global_const_sodium_crypto_aead_aegis128l_nsecbytes = 0
+const global_const_sodium_crypto_aead_aegis128l_npubbytes = 32
+const global_const_sodium_crypto_aead_aegis128l_abytes = 32
+const global_const_sodium_crypto_aead_aegis256_keybytes = 32
+const global_const_sodium_crypto_aead_aegis256_nsecbytes = 0
+const global_const_sodium_crypto_aead_aegis256_npubbytes = 32
+const global_const_sodium_crypto_aead_aegis256_abytes = 32
+
+fn main() {
+	defer {
+		rt.shutdown()
+	}
+}

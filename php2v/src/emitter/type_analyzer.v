@@ -1281,9 +1281,14 @@ fn php_type_to_tag(php_type string) TypeTag {
 		'int', 'integer' { return .t_int }
 		'float', 'double' { return .t_float }
 		'bool', 'boolean' { return .t_bool }
+		'null' { return .t_null }
+		'void', 'never' { return .t_void }
+		// PHP 内置类型提示：不是类名，当作 PhpVal（t_array 用来标识）
+		'array', 'callable', 'iterable', 'mixed', 'object' { return .t_array }
 		else { return .t_unknown }
 	}
 }
+
 
 // infer_single_func_types 推断单个函数的参数类型、返回值类型和局部变量类型
 fn (mut t Transpiler) infer_single_func_types(node ast.AstNode) {

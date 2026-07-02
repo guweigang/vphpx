@@ -1,0 +1,332 @@
+import rt
+
+fn main() {
+	defer {
+		rt.shutdown()
+	}
+
+	rt.new_bool(rt.is_true(rt.call_function('defined', [rt.new_string('ABSPATH')]))
+		|| rt.is_true(exit(0)))
+	rt.call_function('add_filter', [rt.new_string('body_class'),
+		rt.new_string('wc_body_class')])
+	rt.call_function('add_filter', [rt.new_string('post_class'),
+		rt.new_string('wc_product_post_class'), rt.new_int(20),
+		rt.new_int(3)])
+	rt.call_function('add_filter', [rt.new_string('get_the_generator_html'),
+		rt.new_string('wc_generator_tag'), rt.new_int(10), rt.new_int(2)])
+	rt.call_function('add_filter', [rt.new_string('get_the_generator_xhtml'),
+		rt.new_string('wc_generator_tag'), rt.new_int(10), rt.new_int(2)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_before_main_content'),
+		rt.new_string('woocommerce_output_content_wrapper'), rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_after_main_content'),
+		rt.new_string('woocommerce_output_content_wrapper_end'),
+		rt.new_int(10)])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_before_shop_loop_item_title'),
+		rt.new_string('woocommerce_show_product_loop_sale_flash'),
+		rt.new_int(10),
+	])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_before_single_product_summary'),
+		rt.new_string('woocommerce_show_product_sale_flash'),
+		rt.new_int(10),
+	])
+	rt.call_function('add_action', [rt.new_string('woocommerce_before_main_content'),
+		rt.new_string('woocommerce_breadcrumb'), rt.new_int(20),
+		rt.new_int(0)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_sidebar'),
+		rt.new_string('woocommerce_get_sidebar'), rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_shop_loop_header'),
+		rt.new_string('woocommerce_product_taxonomy_archive_header')])
+	rt.call_function('add_action', [rt.new_string('woocommerce_archive_description'),
+		rt.new_string('woocommerce_taxonomy_archive_description'),
+		rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_archive_description'),
+		rt.new_string('woocommerce_product_archive_description'),
+		rt.new_int(10)])
+	rt.call_function('add_filter', [rt.new_string('woocommerce_product_loop_start'),
+		rt.new_string('woocommerce_maybe_show_product_subcategories')])
+	rt.call_function('add_action', [rt.new_string('woocommerce_before_shop_loop'),
+		rt.new_string('woocommerce_result_count'), rt.new_int(20)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_before_shop_loop'),
+		rt.new_string('woocommerce_catalog_ordering'), rt.new_int(30)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_no_products_found'),
+		rt.new_string('wc_no_products_found')])
+	rt.call_function('add_action', [rt.new_string('woocommerce_before_shop_loop_item'),
+		rt.new_string('woocommerce_template_loop_product_link_open'),
+		rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_after_shop_loop_item'),
+		rt.new_string('woocommerce_template_loop_product_link_close'),
+		rt.new_int(5)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_after_shop_loop_item'),
+		rt.new_string('woocommerce_template_loop_add_to_cart'),
+		rt.new_int(10)])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_before_shop_loop_item_title'),
+		rt.new_string('woocommerce_template_loop_product_thumbnail'),
+		rt.new_int(10),
+	])
+	rt.call_function('add_action', [rt.new_string('woocommerce_shop_loop_item_title'),
+		rt.new_string('woocommerce_template_loop_product_title'),
+		rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_before_subcategory'),
+		rt.new_string('woocommerce_template_loop_category_link_open'),
+		rt.new_int(10)])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_shop_loop_subcategory_title'),
+		rt.new_string('woocommerce_template_loop_category_title'),
+		rt.new_int(10),
+	])
+	rt.call_function('add_action', [rt.new_string('woocommerce_after_subcategory'),
+		rt.new_string('woocommerce_template_loop_category_link_close'),
+		rt.new_int(10)])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_after_shop_loop_item_title'),
+		rt.new_string('woocommerce_template_loop_price'),
+		rt.new_int(10),
+	])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_after_shop_loop_item_title'),
+		rt.new_string('woocommerce_template_loop_rating'),
+		rt.new_int(5),
+	])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_before_subcategory_title'),
+		rt.new_string('woocommerce_subcategory_thumbnail'),
+		rt.new_int(10),
+	])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_before_single_product_summary'),
+		rt.new_string('woocommerce_show_product_images'),
+		rt.new_int(20),
+	])
+	rt.call_function('add_action', [rt.new_string('woocommerce_product_thumbnails'),
+		rt.new_string('woocommerce_show_product_thumbnails'),
+		rt.new_int(20)])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_after_single_product_summary'),
+		rt.new_string('woocommerce_output_product_data_tabs'),
+		rt.new_int(10),
+	])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_after_single_product_summary'),
+		rt.new_string('woocommerce_upsell_display'),
+		rt.new_int(15),
+	])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_after_single_product_summary'),
+		rt.new_string('woocommerce_output_related_products'),
+		rt.new_int(20),
+	])
+	rt.call_function('add_action', [rt.new_string('woocommerce_single_product_summary'),
+		rt.new_string('woocommerce_template_single_title'), rt.new_int(5)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_single_product_summary'),
+		rt.new_string('woocommerce_template_single_rating'), rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_single_product_summary'),
+		rt.new_string('woocommerce_template_single_price'), rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_single_product_summary'),
+		rt.new_string('woocommerce_template_single_excerpt'),
+		rt.new_int(20)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_single_product_summary'),
+		rt.new_string('woocommerce_template_single_meta'), rt.new_int(40)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_single_product_summary'),
+		rt.new_string('woocommerce_template_single_sharing'),
+		rt.new_int(50)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_review_before'),
+		rt.new_string('woocommerce_review_display_gravatar'),
+		rt.new_int(10)])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_review_before_comment_meta'),
+		rt.new_string('woocommerce_review_display_rating'),
+		rt.new_int(10),
+	])
+	rt.call_function('add_action', [rt.new_string('woocommerce_review_meta'),
+		rt.new_string('woocommerce_review_display_meta'), rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_review_comment_text'),
+		rt.new_string('woocommerce_review_display_comment_text'),
+		rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_single_product_summary'),
+		rt.new_string('woocommerce_template_single_add_to_cart'),
+		rt.new_int(30)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_simple_add_to_cart'),
+		rt.new_string('woocommerce_simple_add_to_cart'), rt.new_int(30)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_grouped_add_to_cart'),
+		rt.new_string('woocommerce_grouped_add_to_cart'), rt.new_int(30)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_variable_add_to_cart'),
+		rt.new_string('woocommerce_variable_add_to_cart'), rt.new_int(30)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_external_add_to_cart'),
+		rt.new_string('woocommerce_external_add_to_cart'), rt.new_int(30)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_single_variation'),
+		rt.new_string('woocommerce_single_variation'), rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_single_variation'),
+		rt.new_string('woocommerce_single_variation_add_to_cart_button'),
+		rt.new_int(20)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_after_shop_loop'),
+		rt.new_string('woocommerce_pagination'), rt.new_int(10)])
+	rt.call_function('add_filter', [rt.new_string('woocommerce_product_tabs'),
+		rt.new_string('woocommerce_default_product_tabs')])
+	rt.call_function('add_filter', [rt.new_string('woocommerce_product_tabs'),
+		rt.new_string('woocommerce_sort_product_tabs'), rt.new_int(99)])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_product_additional_information'),
+		rt.new_string('wc_display_product_attributes'),
+		rt.new_int(10),
+	])
+	rt.call_function('add_action', [rt.new_string('woocommerce_before_checkout_form'),
+		rt.new_string('woocommerce_checkout_login_form'), rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_before_checkout_form'),
+		rt.new_string('woocommerce_checkout_coupon_form'), rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_checkout_order_review'),
+		rt.new_string('woocommerce_order_review'), rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_checkout_order_review'),
+		rt.new_string('woocommerce_checkout_payment'), rt.new_int(20)])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_checkout_terms_and_conditions'),
+		rt.new_string('wc_checkout_privacy_policy_text'),
+		rt.new_int(20),
+	])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_checkout_terms_and_conditions'),
+		rt.new_string('wc_terms_and_conditions_page_content'),
+		rt.new_int(30),
+	])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_checkout_before_customer_details'),
+		rt.new_string('wc_get_pay_buttons'),
+		rt.new_int(30),
+	])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_widget_shopping_cart_buttons'),
+		rt.new_string('woocommerce_widget_shopping_cart_button_view_cart'),
+		rt.new_int(10),
+	])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_widget_shopping_cart_buttons'),
+		rt.new_string('woocommerce_widget_shopping_cart_proceed_to_checkout'),
+		rt.new_int(20),
+	])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_widget_shopping_cart_total'),
+		rt.new_string('woocommerce_widget_shopping_cart_subtotal'),
+		rt.new_int(10),
+	])
+	rt.call_function('add_action', [rt.new_string('woocommerce_cart_collaterals'),
+		rt.new_string('woocommerce_cross_sell_display')])
+	rt.call_function('add_action', [rt.new_string('woocommerce_cart_collaterals'),
+		rt.new_string('woocommerce_cart_totals'), rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_proceed_to_checkout'),
+		rt.new_string('wc_get_pay_buttons'), rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_proceed_to_checkout'),
+		rt.new_string('woocommerce_button_proceed_to_checkout'),
+		rt.new_int(20)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_cart_is_empty'),
+		rt.new_string('wc_empty_cart_message'), rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('wp_footer'),
+		rt.new_string('wc_print_js'), rt.new_int(25)])
+	rt.call_function('add_action', [rt.new_string('wp_body_open'),
+		rt.new_string('woocommerce_demo_store')])
+	closure_1_fn := fn (this_ptr rt.PhpVal, args []rt.PhpVal) rt.PhpVal {
+		if rt.is_true(rt.identical(rt.new_int(0), rt.call_function('did_action', [
+			rt.new_string('wp_body_open'),
+		])))
+		{
+			rt.call_function('woocommerce_demo_store', []rt.PhpVal{})
+		}
+		return rt.new_null()
+	}
+	rt.call_function('add_action', [rt.new_string('wp_footer'),
+		rt.new_closure(closure_1_fn)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_view_order'),
+		rt.new_string('woocommerce_order_details_table'), rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_thankyou'),
+		rt.new_string('woocommerce_order_details_table'), rt.new_int(10)])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_order_details_after_order_table'),
+		rt.new_string('woocommerce_order_again_button'),
+	])
+	rt.call_function('add_action', [rt.new_string('woocommerce_available_downloads'),
+		rt.new_string('woocommerce_order_downloads_table'), rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_auth_page_header'),
+		rt.new_string('woocommerce_output_auth_header'), rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_auth_page_footer'),
+		rt.new_string('woocommerce_output_auth_footer'), rt.new_int(10)])
+	rt.call_function('add_filter', [
+		rt.new_string('jetpack_comment_form_enabled_for_product'),
+		rt.new_string('__return_false'),
+	])
+	rt.call_function('add_action', [rt.new_string('woocommerce_account_navigation'),
+		rt.new_string('woocommerce_account_navigation')])
+	rt.call_function('add_action', [rt.new_string('woocommerce_account_content'),
+		rt.new_string('woocommerce_account_content')])
+	rt.call_function('add_action', [rt.new_string('woocommerce_account_orders_endpoint'),
+		rt.new_string('woocommerce_account_orders')])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_account_view-order_endpoint'),
+		rt.new_string('woocommerce_account_view_order'),
+	])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_account_downloads_endpoint'),
+		rt.new_string('woocommerce_account_downloads'),
+	])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_account_edit-address_endpoint'),
+		rt.new_string('woocommerce_account_edit_address'),
+	])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_account_payment-methods_endpoint'),
+		rt.new_string('woocommerce_account_payment_methods'),
+	])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_account_add-payment-method_endpoint'),
+		rt.new_string('woocommerce_account_add_payment_method'),
+	])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_account_edit-account_endpoint'),
+		rt.new_string('woocommerce_account_edit_account'),
+	])
+	rt.call_function('add_action', [rt.new_string('woocommerce_register_form'),
+		rt.new_string('wc_registration_privacy_policy_text'),
+		rt.new_int(20)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_cart_is_empty'),
+		rt.new_string('woocommerce_output_all_notices'), rt.new_int(5)])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_shortcode_before_product_cat_loop'),
+		rt.new_string('woocommerce_output_all_notices'),
+		rt.new_int(10),
+	])
+	rt.call_function('add_action', [rt.new_string('woocommerce_before_shop_loop'),
+		rt.new_string('woocommerce_output_all_notices'), rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_before_single_product'),
+		rt.new_string('woocommerce_output_all_notices'), rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_before_cart'),
+		rt.new_string('woocommerce_output_all_notices'), rt.new_int(10)])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_before_checkout_form_cart_notices'),
+		rt.new_string('woocommerce_output_all_notices'),
+		rt.new_int(10),
+	])
+	rt.call_function('add_action', [rt.new_string('woocommerce_before_checkout_form'),
+		rt.new_string('woocommerce_output_all_notices'), rt.new_int(10)])
+	rt.call_function('add_action', [rt.new_string('woocommerce_account_content'),
+		rt.new_string('woocommerce_output_all_notices'), rt.new_int(5)])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_before_customer_login_form'),
+		rt.new_string('woocommerce_output_all_notices'),
+		rt.new_int(10),
+	])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_before_lost_password_form'),
+		rt.new_string('woocommerce_output_all_notices'),
+		rt.new_int(10),
+	])
+	rt.call_function('add_action', [rt.new_string('before_woocommerce_pay'),
+		rt.new_string('woocommerce_output_all_notices'), rt.new_int(10)])
+	rt.call_function('add_action', [
+		rt.new_string('woocommerce_before_reset_password_form'),
+		rt.new_string('woocommerce_output_all_notices'),
+		rt.new_int(10),
+	])
+	rt.call_function('add_action', [rt.new_string('after_switch_theme'),
+		rt.new_string('wc_after_switch_theme'), rt.new_int(10),
+		rt.new_int(2)])
+}

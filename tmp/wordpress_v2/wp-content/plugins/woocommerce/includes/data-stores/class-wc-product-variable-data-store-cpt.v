@@ -1,0 +1,1284 @@
+import rt
+import crypto.md5
+
+struct Class_WC_Product_Variable_Data_Store_CPT {
+	rt.PhpObjectBase
+pub mut:
+	prices_array rt.PhpVal = rt.new_array()
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) read_attributes(var_product rt.PhpVal) {
+	mut var_wpdb := rt.new_null()
+	mut var_product_id := rt.call_method(var_product, 'get_id', []rt.PhpVal{})
+	mut var_meta_attributes := rt.call_function('get_post_meta', [
+		var_product_id.clone(), rt.new_string('_product_attributes'),
+		rt.new_bool(true)])
+	if !(!rt.is_true(var_meta_attributes)) && var_meta_attributes.clone().is_array() {
+		mut var_attributes := rt.new_array()
+		mut var_force_update := rt.new_bool(false)
+		mut iter_1 := var_meta_attributes.iterator()
+		for {
+			item_1 := iter_1.next() or { break }
+			mut var_meta_attribute_value := item_1.val
+			mut var_meta_attribute_key := item_1.key
+			mut var_meta_value := rt.call_function('array_merge', [
+				rt.create_array([rt.ArrayItem{ key: 'name', val: '' },
+					rt.ArrayItem{ key: 'value', val: '' }, rt.ArrayItem{ key: 'position', val: 0 },
+					rt.ArrayItem{ key: 'is_visible', val: 0 },
+					rt.ArrayItem{ key: 'is_variation', val: 0 },
+					rt.ArrayItem{ key: 'is_taxonomy', val: 0 }]),
+				rt.cast_array(var_meta_attribute_value),
+			])
+			if rt.is_true(var_meta_value.array_get(rt.new_string('is_variation')))
+				&& rt.is_true(rt.call_function('strstr', [var_meta_value.array_get(rt.new_string('name')), rt.new_string('/')]))
+				&& rt.is_true(rt.new_bool(!rt.is_true(rt.identical(rt.call_function('sanitize_title', [var_meta_value.array_get(rt.new_string('name'))]), var_meta_attribute_key)))) {
+				mut var_child_ids := rt.call_method(var_product, 'get_children', []rt.PhpVal{})
+				if !(!rt.is_true(var_child_ids)) {
+					mut var_products_to_migrate := rt.call_function('implode', [
+						rt.new_string(', '),
+						var_child_ids.clone(),
+					])
+					mut var_old_slug := rt.new_string('attribute_' + var_meta_attribute_key.str())
+					mut var_old_meta_rows := rt.call_method(var_wpdb, 'get_results', [
+						rt.call_method(var_wpdb, 'prepare', [
+							rt.concat(rt.concat(rt.concat(rt.concat(rt.new_string('SELECT post_id, meta_value FROM '), rt.get_property(var_wpdb,
+								'postmeta')),
+								rt.new_string(' WHERE meta_key = %s AND post_id IN ( ')),
+								var_products_to_migrate), rt.new_string(' )')),
+							var_old_slug.clone(),
+						]),
+					])
+					if rt.is_true(var_old_meta_rows) {
+						mut var_new_slug :=
+							rt.new_string('attribute_' +(rt.call_function('sanitize_title', [var_meta_value.array_get(rt.new_string('name'))])).str())
+						mut iter_2 := var_old_meta_rows.iterator()
+						for {
+							item_2 := iter_2.next() or { break }
+							mut var_old_meta_row := item_2.val
+							rt.call_function('update_post_meta', [
+								rt.get_property(var_old_meta_row, 'post_id'),
+								var_new_slug.clone(),
+								rt.get_property(var_old_meta_row, 'meta_value'),
+							])
+						}
+					}
+				}
+				var_force_update = rt.new_bool(true)
+			}
+			if !(!rt.is_true(var_meta_value.array_get(rt.new_string('is_taxonomy')))) {
+				if rt.is_true(rt.new_bool(!(rt.is_true(rt.call_function('taxonomy_exists', [
+					var_meta_value.array_get(rt.new_string('name')),
+				])))))
+				{
+					continue
+				}
+				mut var_id := rt.call_function('wc_attribute_taxonomy_id_by_name', [
+					var_meta_value.array_get(rt.new_string('name')),
+				])
+				mut var_options := rt.call_function('wc_get_object_terms', [
+					var_product_id.clone(), var_meta_value.array_get(rt.new_string('name')),
+					rt.new_string('term_id')])
+			} else {
+				var_id = rt.new_int(0)
+				var_options = rt.call_function('wc_get_text_attributes', [
+					var_meta_value.array_get(rt.new_string('value')),
+				])
+			}
+			mut var_attribute := create_wc_product_attribute()
+			rt.call_method(var_attribute, 'set_id', [var_id.clone()])
+			rt.call_method(var_attribute, 'set_name', [
+				var_meta_value.array_get(rt.new_string('name')),
+			])
+			rt.call_method(var_attribute, 'set_options', [var_options.clone()])
+			rt.call_method(var_attribute, 'set_position', [
+				var_meta_value.array_get(rt.new_string('position')),
+			])
+			rt.call_method(var_attribute, 'set_visible', [
+				var_meta_value.array_get(rt.new_string('is_visible')),
+			])
+			rt.call_method(var_attribute, 'set_variation', [
+				var_meta_value.array_get(rt.new_string('is_variation')),
+			])
+			var_attributes.array_push(rt.call_function('apply_filters', [
+				rt.new_string('woocommerce_product_read_attribute'),
+				var_attribute.clone(),
+				var_meta_value.clone(),
+				var_product.clone(),
+			]))
+		}
+		rt.call_method(var_product, 'set_attributes', [var_attributes.clone()])
+		if rt.is_true(var_force_update) {
+			this.update_attributes(var_product.clone(), rt.new_bool(true))
+		}
+	}
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) read_product_data(var_product rt.PhpVal) {
+	mut var_product_id := rt.call_method(var_product, 'get_id', []rt.PhpVal{})
+	rt.call_function('wp_prime_option_caches', [
+		rt.create_array([
+			rt.ArrayItem{ key: none, val: '_transient_wc_var_prices_' + var_product_id.str() },
+			rt.ArrayItem{ key: none, val: '_transient_timeout_wc_var_prices_' + var_product_id.str() },
+			rt.ArrayItem{ key: none, val: '_transient_wc_product_children_' + var_product_id.str() },
+			rt.ArrayItem{ key: none, val: '_transient_timeout_wc_product_children_' +
+				var_product_id.str() },
+		]),
+	])
+	this.Class_WC_Product_Data_Store_CPT.read_product_data(var_product.clone())
+	rt.call_method(var_product, 'set_regular_price', [rt.new_string('')])
+	rt.call_method(var_product, 'set_sale_price', [rt.new_string('')])
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) read_children(var_product rt.PhpVal, force_read bool) rt.PhpVal {
+	mut force_read_mutated := force_read
+	mut var_children_transient_name := rt.new_string('wc_product_children_' +
+		(rt.call_method(var_product, 'get_id', []rt.PhpVal{})).str())
+	mut var_children := rt.call_function('get_transient', [var_children_transient_name.clone()])
+	if !rt.is_true(var_children) || !(var_children.clone().is_array()) {
+		var_children = rt.new_array()
+	}
+	mut iife_temp_0 := Class_WC_Cache_Helper{}
+	mut iife_result_0 := iife_temp_0.get_transient_version(rt.new_string('product'))
+	mut var_transient_version := iife_result_0
+	if rt.is_true(rt.new_bool(!(rt.is_true(rt.new_bool(force_read_mutated)))))
+		&& rt.is_true(var_children) {
+		if !(this.validate_children_data(var_children.clone(), var_transient_version.clone())) {
+			var_children = rt.new_array()
+			force_read_mutated = true
+		}
+	}
+	if !(var_children.array_isset(rt.new_string('all')))
+		|| !(var_children.array_isset(rt.new_string('visible')))
+		|| rt.is_true(rt.new_bool(force_read_mutated)) {
+		mut var_all_args := {
+			'post_parent': rt.call_method(var_product, 'get_id', []rt.PhpVal{})
+			'post_type':   rt.new_string('product_variation')
+			'orderby':     {
+				'menu_order': rt.new_string('ASC')
+				'ID':         rt.new_string('ASC')
+			}
+			'fields':      rt.new_string('ids')
+			'post_status': map[string]rt.PhpVal{}
+			'numberposts': -1
+		}
+		mut var_visible_only_args := var_all_args.clone()
+		var_visible_only_args.array_set('post_status',
+			Class_Automattic_WooCommerce_Enums_ProductStatus.publish())
+		if rt.is_true(rt.identical(rt.new_string('yes'), rt.call_function('get_option', [
+			rt.new_string('woocommerce_hide_out_of_stock_items'),
+		])))
+		{
+			var_visible_only_args.array_get_mut('tax_query').array_push(rt.create_array([
+				rt.ArrayItem{ key: 'taxonomy', val: 'product_visibility' },
+				rt.ArrayItem{ key: 'field', val: 'name' },
+				rt.ArrayItem{
+					key: 'terms'
+					val: Class_Automattic_WooCommerce_Enums_ProductStockStatus.out_of_stock()
+				},
+				rt.ArrayItem{ key: 'operator', val: 'NOT IN' },
+			]))
+		}
+		var_children.array_set('all', rt.call_function('get_posts', [
+			rt.call_function('apply_filters', [
+				rt.new_string('woocommerce_variable_children_args'),
+				rt.create_array_from_native_map(var_all_args),
+				var_product.clone(),
+				rt.new_bool(false),
+			]),
+		]))
+		var_children.array_set('visible', rt.call_function('get_posts', [
+			rt.call_function('apply_filters', [
+				rt.new_string('woocommerce_variable_children_args'),
+				var_visible_only_args.clone(),
+				var_product.clone(),
+				rt.new_bool(true),
+			]),
+		]))
+		if this.validate_children_data(var_children.clone(), var_transient_version.clone()) {
+			rt.call_function('set_transient', [var_children_transient_name.clone(),
+				var_children.clone(), rt.mul(rt.get_constant('DAY_IN_SECONDS'), rt.new_int(30))])
+		}
+	}
+	var_children.array_set('all', rt.call_function('wp_parse_id_list', [
+		rt.cast_array(var_children.array_get(rt.new_string('all'))),
+	]))
+	var_children.array_set('visible', rt.call_function('wp_parse_id_list', [
+		rt.cast_array(var_children.array_get(rt.new_string('visible'))),
+	]))
+	return var_children.clone()
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) read_variation_attributes(var_product rt.PhpVal) rt.PhpVal {
+	mut var_wpdb := rt.new_null()
+	mut var_variation_attributes := rt.new_array()
+	mut var_attributes := rt.call_method(var_product, 'get_attributes', []rt.PhpVal{})
+	mut var_child_ids := rt.call_method(var_product, 'get_children', []rt.PhpVal{})
+	mut iife_temp_1 := Class_WC_Cache_Helper{}
+	mut iife_result_1 := iife_temp_1.get_cache_prefix(rt.new_string('product_' +
+		(rt.call_method(var_product, 'get_id', []rt.PhpVal{})).str()))
+	mut var_cache_key := rt.new_string(iife_result_1.str() + 'product_variation_attributes_' +
+		(rt.call_method(var_product, 'get_id', []rt.PhpVal{})).str())
+	mut var_cache_group := rt.new_string('products')
+	mut var_cached_data := rt.call_function('wp_cache_get', [
+		var_cache_key.clone(), var_cache_group.clone()])
+	if rt.is_true(rt.new_bool(!rt.is_true(rt.identical(rt.new_bool(false), var_cached_data)))) {
+		return var_cached_data.clone()
+	}
+	if !(!rt.is_true(var_attributes)) {
+		mut iter_3 := var_attributes.iterator()
+		for {
+			item_3 := iter_3.next() or { break }
+			mut var_attribute := item_3.val
+			if !rt.is_true(var_attribute.array_get(rt.new_string('is_variation'))) {
+				continue
+			}
+			if !(!rt.is_true(var_child_ids)) {
+				mut var_format := rt.call_function('array_fill', [
+					rt.new_int(0), rt.new_int(var_child_ids.clone().array_count()),
+					rt.new_string('%d')])
+				mut var_query_in := rt.new_string('(' +
+					(rt.call_function('implode', [rt.new_string(','), var_format.clone()])).str() +
+					')')
+				mut var_query_args := rt.add(rt.create_array([
+					rt.ArrayItem{ key: 'attribute_name', val: rt.call_function('wc_variation_attribute_name', [
+						var_attribute.array_get(rt.new_string('name')),
+					]) },
+				]), var_child_ids)
+				mut var_values := rt.call_function('array_unique', [
+					rt.call_method(var_wpdb, 'get_col', [
+						rt.call_method(var_wpdb, 'prepare', [
+							rt.concat(rt.concat(rt.concat(rt.new_string('SELECT meta_value FROM '), rt.get_property(var_wpdb,
+								'postmeta')), rt.new_string(' WHERE meta_key = %s AND post_id IN ')),
+								var_query_in),
+							var_query_args.clone(),
+						]),
+					]),
+				])
+			} else {
+				var_values = rt.new_array()
+			}
+			if rt.is_true(rt.call_function('in_array', [rt.new_null(), var_values.clone(), rt.new_bool(true)]))
+				|| rt.is_true(rt.call_function('in_array', [rt.new_string(''), var_values.clone(), rt.new_bool(true)]))
+				|| !rt.is_true(var_values) {
+				var_values = if rt.is_true(var_attribute.array_get(rt.new_string('is_taxonomy'))) { rt.call_function('wc_get_object_terms', [
+						rt.call_method(var_product, 'get_id', []rt.PhpVal{}),
+						var_attribute.array_get(rt.new_string('name')),
+						rt.new_string('slug'),
+					]) } else { rt.call_function('wc_get_text_attributes', [
+						var_attribute.array_get(rt.new_string('value')),
+					]) }
+			} else if rt.is_true(rt.new_bool(!(rt.is_true(var_attribute.array_get(rt.new_string('is_taxonomy')))))) {
+				mut var_text_attributes := rt.call_function('wc_get_text_attributes', [
+					var_attribute.array_get(rt.new_string('value')),
+				])
+				mut var_assigned_text_attributes := var_values.clone()
+				var_values = rt.new_array()
+				if rt.is_true(rt.call_function('version_compare', [
+					rt.call_function('get_post_meta', [
+						rt.call_method(var_product, 'get_id', []rt.PhpVal{}),
+						rt.new_string('_product_version'),
+						rt.new_bool(true),
+					]),
+					rt.new_string('2.4.0'),
+					rt.new_string('<'),
+				]))
+				{
+					var_assigned_text_attributes = rt.call_function('array_map', [
+						rt.new_string('sanitize_title'),
+						var_assigned_text_attributes.clone(),
+					])
+					mut iter_4 := var_text_attributes.iterator()
+					for {
+						item_4 := iter_4.next() or { break }
+						mut var_text_attribute := item_4.val
+						if rt.is_true(rt.call_function('in_array', [
+							rt.call_function('sanitize_title', [
+								var_text_attribute.clone()]),
+							var_assigned_text_attributes.clone(),
+							rt.new_bool(true),
+						]))
+						{
+							var_values.array_push(var_text_attribute.clone())
+						}
+					}
+				} else {
+					mut iter_5 := var_text_attributes.iterator()
+					for {
+						item_5 := iter_5.next() or { break }
+						mut var_text_attribute := item_5.val
+						if rt.is_true(rt.call_function('in_array', [
+							var_text_attribute.clone(), var_assigned_text_attributes.clone(),
+							rt.new_bool(true)]))
+						{
+							var_values.array_push(var_text_attribute.clone())
+						}
+					}
+				}
+			}
+			var_variation_attributes.array_set(var_attribute.array_get(rt.new_string('name')), rt.call_function('array_unique', [
+				var_values.clone(),
+			]))
+		}
+	}
+	rt.call_function('wp_cache_set', [var_cache_key.clone(), var_variation_attributes.clone(),
+		var_cache_group.clone()])
+	return var_variation_attributes.clone()
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) read_price_data(var_product rt.PhpVal, for_display bool) rt.PhpVal {
+	mut var_transient_name := rt.new_string('wc_var_prices_' +
+		(rt.call_method(var_product, 'get_id', []rt.PhpVal{})).str())
+	mut iife_temp_2 := Class_WC_Cache_Helper{}
+	mut iife_result_2 := iife_temp_2.get_transient_version(rt.new_string('product'))
+	mut var_transient_version := iife_result_2
+	mut var_price_hash := rt.new_string(this.get_price_hash(var_product.clone(), for_display))
+	mut var_opposite_price_hash := if this.taxes_influence_price(var_product.clone()) {
+		rt.new_null()
+	} else {
+		this.get_price_hash(var_product.clone(), !var_for_display)
+	}
+	if !rt.is_true(this.prices_array.array_get(var_price_hash)) {
+		mut var_transient_cached_prices_array := rt.call_function('array_filter', [
+			rt.cast_array(rt.call_function('json_decode', [
+				rt.new_string(rt.call_function('get_transient', [
+					var_transient_name.clone()]).to_string()),
+				rt.new_bool(true),
+			])),
+		])
+		if !(this.validate_prices_data(var_transient_cached_prices_array.clone(),
+			var_transient_version.clone())) {
+			var_transient_cached_prices_array = rt.new_array()
+		}
+		if !rt.is_true(var_transient_cached_prices_array.array_get(var_price_hash))
+			|| (!(var_opposite_price_hash.clone().is_null())
+			&& rt.is_true(rt.new_bool(!rt.is_true(rt.identical(var_opposite_price_hash, var_price_hash))))
+			&& !rt.is_true(var_transient_cached_prices_array.array_get(var_opposite_price_hash))) {
+			mut var_prices_array := rt.create_array([
+				rt.ArrayItem{ key: 'price', val: rt.new_array() },
+				rt.ArrayItem{ key: 'regular_price', val: rt.new_array() },
+				rt.ArrayItem{ key: 'sale_price', val: rt.new_array() },
+			])
+			mut var_variation_ids := rt.call_method(var_product, 'get_visible_children',
+				[]rt.PhpVal{})
+			if !(!rt.is_true(var_variation_ids)) {
+				rt.call_function('_prime_post_caches', [var_variation_ids.clone()])
+			}
+			mut var_tax_display_mode := if var_for_display { rt.call_function('get_option', [
+					rt.new_string('woocommerce_tax_display_shop'),
+				]) } else { rt.new_null() }
+			mut var_price_decimals := rt.call_function('wc_get_price_decimals', []rt.PhpVal{})
+			mut iter_6 := var_variation_ids.iterator()
+			for {
+				item_6 := iter_6.next() or { break }
+				mut var_variation_id := item_6.val
+				mut var_variation := rt.call_function('wc_get_product', [
+					var_variation_id.clone()])
+				if rt.is_true(var_variation) {
+					mut var_price := rt.call_function('apply_filters', [
+						rt.new_string('woocommerce_variation_prices_price'),
+						rt.call_method(var_variation, 'get_price', [
+							rt.new_string('edit'),
+						]),
+						var_variation.clone(),
+						var_product.clone(),
+					])
+					if rt.is_true(rt.identical(rt.new_string(''), var_price)) {
+						continue
+					}
+					mut var_regular_price := rt.call_function('apply_filters', [
+						rt.new_string('woocommerce_variation_prices_regular_price'),
+						rt.call_method(var_variation, 'get_regular_price', [
+							rt.new_string('edit'),
+						]),
+						var_variation.clone(),
+						var_product.clone(),
+					])
+					mut var_sale_price := rt.call_function('apply_filters', [
+						rt.new_string('woocommerce_variation_prices_sale_price'),
+						rt.call_method(var_variation, 'get_sale_price', [
+							rt.new_string('edit'),
+						]),
+						var_variation.clone(),
+						var_product.clone(),
+					])
+					if rt.is_true(rt.identical(var_sale_price, var_regular_price))
+						|| rt.is_true(rt.new_bool(!rt.is_true(rt.identical(var_sale_price, var_price)))) {
+						var_sale_price = var_regular_price.clone()
+					}
+					if var_for_display {
+						if rt.is_true(rt.identical(rt.new_string('incl'), var_tax_display_mode)) {
+							var_price = if rt.is_true(rt.identical(rt.new_string(''), var_price)) { rt.new_string('') } else { rt.call_function('wc_get_price_including_tax', [
+									var_variation.clone(),
+									rt.create_array([rt.ArrayItem{ key: 'qty', val: 1 },
+										rt.ArrayItem{ key: 'price', val: var_price }]),
+								]) }
+							var_regular_price = if rt.is_true(rt.identical(rt.new_string(''), var_regular_price)) { rt.new_string('') } else { rt.call_function('wc_get_price_including_tax', [
+									var_variation.clone(),
+									rt.create_array([rt.ArrayItem{ key: 'qty', val: 1 },
+										rt.ArrayItem{ key: 'price', val: var_regular_price }]),
+								]) }
+							var_sale_price = if rt.is_true(rt.identical(rt.new_string(''), var_sale_price)) { rt.new_string('') } else { rt.call_function('wc_get_price_including_tax', [
+									var_variation.clone(),
+									rt.create_array([rt.ArrayItem{ key: 'qty', val: 1 },
+										rt.ArrayItem{ key: 'price', val: var_sale_price }]),
+								]) }
+						} else {
+							var_price = if rt.is_true(rt.identical(rt.new_string(''), var_price)) { rt.new_string('') } else { rt.call_function('wc_get_price_excluding_tax', [
+									var_variation.clone(),
+									rt.create_array([rt.ArrayItem{ key: 'qty', val: 1 },
+										rt.ArrayItem{ key: 'price', val: var_price }]),
+								]) }
+							var_regular_price = if rt.is_true(rt.identical(rt.new_string(''), var_regular_price)) { rt.new_string('') } else { rt.call_function('wc_get_price_excluding_tax', [
+									var_variation.clone(),
+									rt.create_array([rt.ArrayItem{ key: 'qty', val: 1 },
+										rt.ArrayItem{ key: 'price', val: var_regular_price }]),
+								]) }
+							var_sale_price = if rt.is_true(rt.identical(rt.new_string(''), var_sale_price)) { rt.new_string('') } else { rt.call_function('wc_get_price_excluding_tax', [
+									var_variation.clone(),
+									rt.create_array([rt.ArrayItem{ key: 'qty', val: 1 },
+										rt.ArrayItem{ key: 'price', val: var_sale_price }]),
+								]) }
+						}
+					}
+					var_prices_array.array_get_mut('price').array_set(var_variation_id, rt.call_function('wc_format_decimal', [
+						var_price.clone(),
+						var_price_decimals.clone(),
+					]))
+					var_prices_array.array_get_mut('regular_price').array_set(var_variation_id, rt.call_function('wc_format_decimal', [
+						var_regular_price.clone(),
+						var_price_decimals.clone(),
+					]))
+					var_prices_array.array_get_mut('sale_price').array_set(var_variation_id, rt.call_function('wc_format_decimal', [
+						var_sale_price.clone(),
+						var_price_decimals.clone(),
+					]))
+					if rt.is_true(rt.call_function('has_filter', [
+						rt.new_string('woocommerce_variation_prices_array'),
+					]))
+					{
+						mut var_original_prices_array := var_prices_array.clone()
+						var_prices_array = rt.call_function('apply_filters', [
+							rt.new_string('woocommerce_variation_prices_array'),
+							var_prices_array.clone(),
+							var_variation.clone(),
+							rt.new_bool(for_display),
+						])
+						if rt.is_true(var_opposite_price_hash) {
+							mut var_prices_array_hash := rt.new_string(md5.hexhash(rt.call_function('wp_json_encode', [
+								var_prices_array.clone(),
+							]).to_string()))
+							mut var_opposite_prices_array := rt.call_function('apply_filters', [
+								rt.new_string('woocommerce_variation_prices_array'),
+								var_original_prices_array.clone(),
+								var_variation.clone(),
+								rt.new_bool(!var_for_display),
+							])
+							mut var_opposite_prices_array_hash := rt.new_string(md5.hexhash(rt.call_function('wp_json_encode', [
+								var_opposite_prices_array.clone(),
+							]).to_string()))
+							if rt.is_true(rt.new_bool(!rt.is_true(rt.identical(var_opposite_prices_array_hash,
+								var_prices_array_hash))))
+							{
+								var_opposite_price_hash = rt.new_null()
+							}
+						}
+					}
+				}
+			}
+			mut iter_7 := var_prices_array.iterator()
+			for {
+				item_7 := iter_7.next() or { break }
+				mut var_values := item_7.val
+				mut var_key := item_7.key
+				var_transient_cached_prices_array.array_get_mut(var_price_hash).array_set(var_key,
+					var_values.clone())
+				if !(var_opposite_price_hash.clone().is_null())
+					&& rt.is_true(rt.new_bool(!rt.is_true(rt.identical(var_opposite_price_hash, var_price_hash)))) {
+					var_transient_cached_prices_array.array_get_mut(var_opposite_price_hash).array_set(var_key,
+						var_values.clone())
+				}
+			}
+			if this.validate_prices_data(var_transient_cached_prices_array.clone(),
+				var_transient_version.clone())
+			{
+				rt.call_function('set_transient', [var_transient_name.clone(),
+					rt.call_function('wp_json_encode', [var_transient_cached_prices_array.clone()]),
+					rt.mul(rt.get_constant('DAY_IN_SECONDS'), rt.new_int(30))])
+			}
+		}
+		this.prices_array.array_set(var_price_hash, rt.call_function('apply_filters', [
+			rt.new_string('woocommerce_variation_prices'),
+			var_transient_cached_prices_array.array_get(var_price_hash),
+			var_product.clone(),
+			rt.new_bool(for_display),
+		]))
+		if !(var_opposite_price_hash.clone().is_null())
+			&& rt.is_true(rt.new_bool(!rt.is_true(rt.identical(var_opposite_price_hash, var_price_hash)))) {
+			this.prices_array.array_set(var_opposite_price_hash, rt.call_function('apply_filters', [
+				rt.new_string('woocommerce_variation_prices'),
+				var_transient_cached_prices_array.array_get(var_opposite_price_hash),
+				var_product.clone(),
+				rt.new_bool(!var_for_display),
+			]))
+		}
+	}
+	return this.prices_array.array_get(var_price_hash)
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) taxes_influence_price(var_product rt.PhpVal) bool {
+	if rt.is_true(rt.new_bool(!(rt.is_true(rt.call_method(var_product, 'is_taxable', []rt.PhpVal{}))))) {
+		return false
+	}
+	mut iife_temp_3 := Class_WC_Tax{}
+	mut iife_result_3 := iife_temp_3.get_rates(rt.call_method(var_product, 'get_tax_class',
+		[]rt.PhpVal{}))
+	if !rt.is_true(iife_result_3) {
+		return false
+	}
+	if !(!rt.is_true(rt.get_property(rt.call_function('WC', []rt.PhpVal{}), 'customer')))
+		&& rt.is_true(rt.call_method(rt.get_property(rt.call_function('WC', []rt.PhpVal{}), 'customer'), 'get_is_vat_exempt', []rt.PhpVal{})) {
+		return false
+	}
+	return true
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) get_price_hash(var_product rt.PhpVal, for_display bool) string {
+	mut var_wp_filter := rt.new_null()
+	mut var_price_hash := rt.create_array([rt.ArrayItem{ key: none, val: false }])
+	if var_for_display && rt.is_true(rt.call_function('wc_tax_enabled', []rt.PhpVal{})) {
+		mut iife_temp_4 := Class_WC_Tax{}
+		mut iife_result_4 := iife_temp_4.get_rates()
+		var_price_hash = rt.create_array([
+			rt.ArrayItem{ key: none, val: rt.call_function('get_option', [
+				rt.new_string('woocommerce_tax_display_shop'),
+				rt.new_string('excl'),
+			]) },
+			rt.ArrayItem{ key: none, val: iife_result_4 },
+			rt.ArrayItem{
+				key: none
+				val: if !rt.is_true(rt.get_property(rt.call_function('WC', []rt.PhpVal{}),
+					'customer')) {
+					rt.new_bool(false)
+				} else {
+					rt.call_method(rt.get_property(rt.call_function('WC', []rt.PhpVal{}),
+						'customer'), 'is_vat_exempt', []rt.PhpVal{})
+				}
+			},
+		])
+	}
+	mut var_filter_names := ['woocommerce_variation_prices_price',
+		'woocommerce_variation_prices_regular_price', 'woocommerce_variation_prices_sale_price']
+	mut var_use_legacy_algorithm := rt.call_function('apply_filters', [
+		rt.new_string('woocommerce_use_legacy_get_variations_price_hash'),
+		rt.new_bool(true),
+		var_product.clone(),
+		rt.new_bool(for_display),
+	])
+	if rt.is_true(var_use_legacy_algorithm) {
+		for var_filter_name in var_filter_names {
+			if !(!rt.is_true(var_wp_filter.array_get(rt.new_string(filter_name)))) {
+				var_price_hash.array_set(filter_name, rt.new_array())
+				mut iter_8 := var_wp_filter.array_get(rt.new_string(filter_name)).iterator()
+				for {
+					item_8 := iter_8.next() or { break }
+					mut var_callbacks := item_8.val
+					mut var_priority := item_8.key
+					var_price_hash.array_get_mut(filter_name).array_push(rt.call_function('array_values', [
+						rt.call_function('wp_list_pluck', [var_callbacks.clone(),
+							rt.new_string('function')]),
+					]))
+				}
+			}
+		}
+	} else {
+		for var_filter_name in var_filter_names {
+			mut iife_temp_5 := Class_Automattic_WooCommerce_Utilities_CallbackUtil{}
+			mut iife_result_5 :=
+				iife_temp_5.get_hook_callback_signatures(rt.new_string(filter_name))
+			mut var_signatures := iife_result_5
+			if !(!rt.is_true(var_signatures)) {
+				var_price_hash.array_set(filter_name, var_signatures.clone())
+			}
+		}
+	}
+	var_price_hash = rt.call_function('apply_filters', [
+		rt.new_string('woocommerce_get_variation_prices_hash'),
+		var_price_hash.clone(),
+		var_product.clone(),
+		rt.new_bool(for_display),
+	])
+	return md5.hexhash(rt.call_function('wp_json_encode', [var_price_hash.clone()]).to_string())
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) child_has_weight(var_product rt.PhpVal) bool {
+	mut var_wpdb := rt.new_null()
+	mut var_children := rt.call_method(var_product, 'get_visible_children', []rt.PhpVal{})
+	if rt.is_true(rt.new_bool(!(rt.is_true(var_children)))) {
+		return false
+	}
+	mut var_format := rt.call_function('array_fill', [rt.new_int(0),
+		rt.new_int(var_children.clone().array_count()), rt.new_string('%d')])
+	mut var_query_in := rt.new_string('(' +
+		(rt.call_function('implode', [rt.new_string(','), var_format.clone()])).str() + ')')
+	return rt.new_bool(!rt.is_true(rt.identical(rt.new_null(), rt.call_method(var_wpdb, 'get_var', [
+		rt.call_method(var_wpdb, 'prepare', [
+			rt.concat(rt.concat(rt.concat(rt.new_string('SELECT post_id FROM '), rt.get_property(var_wpdb,
+				'postmeta')),
+				rt.new_string(" WHERE meta_key = '_weight' AND meta_value > 0 AND post_id IN ")),
+				var_query_in),
+			var_children.clone(),
+		]),
+	]))))
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) child_has_dimensions(var_product rt.PhpVal) bool {
+	mut var_wpdb := rt.new_null()
+	mut var_children := rt.call_method(var_product, 'get_visible_children', []rt.PhpVal{})
+	if rt.is_true(rt.new_bool(!(rt.is_true(var_children)))) {
+		return false
+	}
+	mut var_format := rt.call_function('array_fill', [rt.new_int(0),
+		rt.new_int(var_children.clone().array_count()), rt.new_string('%d')])
+	mut var_query_in := rt.new_string('(' +
+		(rt.call_function('implode', [rt.new_string(','), var_format.clone()])).str() + ')')
+	return rt.new_bool(!rt.is_true(rt.identical(rt.new_null(), rt.call_method(var_wpdb, 'get_var', [
+		rt.call_method(var_wpdb, 'prepare', [
+			rt.concat(rt.concat(rt.concat(rt.new_string('SELECT post_id FROM '), rt.get_property(var_wpdb,
+				'postmeta')),
+				rt.new_string(" WHERE meta_key IN ( '_length', '_width', '_height' ) AND meta_value > 0 AND post_id IN ")),
+				var_query_in),
+			var_children.clone(),
+		]),
+	]))))
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) child_is_in_stock(var_product rt.PhpVal) rt.PhpVal {
+	return rt.new_bool(this.child_has_stock_status(var_product.clone(),
+		Class_Automattic_WooCommerce_Enums_ProductStockStatus.in_stock()))
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) child_has_stock_status(var_product rt.PhpVal, var_status rt.PhpVal) bool {
+	mut var_wpdb := rt.new_null()
+	mut var_status_mutated := var_status
+	mut var_children := rt.call_method(var_product, 'get_children', []rt.PhpVal{})
+	if rt.is_true(var_children) {
+		mut var_format := rt.call_function('array_fill', [rt.new_int(0),
+			rt.new_int(var_children.clone().array_count()), rt.new_string('%d')])
+		mut var_query_in := rt.new_string('(' +
+			(rt.call_function('implode', [rt.new_string(','), var_format.clone()])).str() + ')')
+		mut var_query_args := rt.add(rt.create_array([
+			rt.ArrayItem{ key: 'stock_status', val: var_status_mutated },
+		]), var_children)
+		if rt.is_true(rt.call_function('get_option', [
+			rt.new_string('woocommerce_product_lookup_table_is_generating'),
+		]))
+		{
+			mut var_query := rt.new_string((rt.concat(rt.concat(rt.concat(rt.new_string('SELECT COUNT( post_id ) FROM '), rt.get_property(var_wpdb,
+				'postmeta')),
+				rt.new_string(" WHERE meta_key = '_stock_status' AND meta_value = %s AND post_id IN ")),
+				var_query_in)).str())
+		} else {
+			var_query = rt.new_string((rt.concat(rt.concat(rt.concat(rt.new_string('SELECT COUNT( product_id ) FROM '), rt.get_property(var_wpdb,
+				'wc_product_meta_lookup')),
+				rt.new_string(' WHERE stock_status = %s AND product_id IN ')), var_query_in)).str())
+		}
+		mut var_children_with_status := rt.call_method(var_wpdb, 'get_var', [
+			rt.call_method(var_wpdb, 'prepare', [var_query.clone(),
+				var_query_args.clone()]),
+		])
+	} else {
+		var_children_with_status = rt.new_int(0)
+	}
+	return var_children_with_status.to_bool()
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) sync_variation_names(var_product rt.PhpVal, previous_name string, new_name string) {
+	mut var_wpdb := rt.new_null()
+	if rt.is_true(rt.new_bool(new_name != previous_name)) {
+		rt.call_method(var_wpdb, 'query', [
+			rt.call_method(var_wpdb, 'prepare', [
+				rt.concat(rt.concat(rt.new_string('UPDATE '), rt.get_property(var_wpdb, 'posts')),
+					rt.new_string("\n\t\t\t\t\tSET post_title = REPLACE( post_title, %s, %s )\n\t\t\t\t\tWHERE post_type = 'product_variation'\n\t\t\t\t\tAND post_parent = %d")),
+				rt.new_string((if var_previous_name.len > 0 && var_previous_name != '0' {
+					previous_name
+				} else {
+					'AUTO-DRAFT'
+				}).str()),
+				rt.new_string(new_name),
+				rt.call_method(var_product, 'get_id', []rt.PhpVal{}),
+			]),
+		])
+		mut var_invalidator := rt.call_method(rt.call_function('wc_get_container', []rt.PhpVal{}),
+			'get', [
+			Class_Automattic_WooCommerce_Internal_Caches_ProductVersionStringInvalidator.class(),
+		])
+		mut var_children := rt.call_method(var_product, 'get_children', []rt.PhpVal{})
+		mut iter_9 := var_children.iterator()
+		for {
+			item_9 := iter_9.next() or { break }
+			mut var_child_id := item_9.val
+			rt.call_method(var_invalidator, 'invalidate', [var_child_id.clone()])
+		}
+		rt.call_method(var_invalidator, 'invalidate', [
+			rt.call_method(var_product, 'get_id', []rt.PhpVal{}),
+		])
+	}
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) sync_managed_variation_stock_status(var_product rt.PhpVal) {
+	mut var_wpdb := rt.new_null()
+	if rt.is_true(rt.call_method(var_product, 'get_manage_stock', []rt.PhpVal{})) {
+		mut var_children := rt.call_method(var_product, 'get_children', []rt.PhpVal{})
+		mut var_changed := rt.new_bool(false)
+		mut var_invalidator := rt.call_method(rt.call_function('wc_get_container', []rt.PhpVal{}),
+			'get', [
+			Class_Automattic_WooCommerce_Internal_Caches_ProductVersionStringInvalidator.class(),
+		])
+		if rt.is_true(var_children) {
+			mut var_status := rt.call_method(var_product, 'get_stock_status', []rt.PhpVal{})
+			mut var_format := rt.call_function('array_fill', [
+				rt.new_int(0), rt.new_int(var_children.clone().array_count()),
+				rt.new_string('%d')])
+			mut var_query_in := rt.new_string('(' +
+				(rt.call_function('implode', [rt.new_string(','), var_format.clone()])).str() + ')')
+			mut var_managed_children := rt.call_function('array_unique', [
+				rt.call_method(var_wpdb, 'get_col', [
+					rt.call_method(var_wpdb, 'prepare', [
+						rt.concat(rt.concat(rt.concat(rt.new_string('SELECT post_id FROM '), rt.get_property(var_wpdb,
+							'postmeta')),
+							rt.new_string(" WHERE meta_key = '_manage_stock' AND meta_value != 'yes' AND post_id IN ")),
+							var_query_in),
+						var_children.clone(),
+					]),
+				]),
+			])
+			mut iter_10 := var_managed_children.iterator()
+			for {
+				item_10 := iter_10.next() or { break }
+				mut var_managed_child := item_10.val
+				if rt.is_true(rt.call_function('update_post_meta', [
+					var_managed_child.clone(), rt.new_string('_stock_status'),
+					var_status.clone()]))
+				{
+					this.update_lookup_table(var_managed_child.clone(),
+						rt.new_string('wc_product_meta_lookup'))
+					var_changed = rt.new_bool(true)
+					rt.call_method(var_invalidator, 'invalidate', [
+						var_managed_child.clone()])
+				}
+			}
+		}
+		if rt.is_true(var_changed) {
+			var_children = this.read_children(var_product.clone(), true)
+			rt.call_method(var_product, 'set_children', [
+				var_children.array_get(rt.new_string('all')),
+			])
+			rt.call_method(var_product, 'set_visible_children', [
+				var_children.array_get(rt.new_string('visible')),
+			])
+			rt.call_method(var_invalidator, 'invalidate', [
+				rt.call_method(var_product, 'get_id', []rt.PhpVal{}),
+			])
+		}
+	}
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) sync_price(var_product rt.PhpVal) {
+	mut var_wpdb := rt.new_null()
+	mut var_children := rt.call_method(var_product, 'get_visible_children', []rt.PhpVal{})
+	if rt.is_true(var_children) {
+		mut var_format := rt.call_function('array_fill', [rt.new_int(0),
+			rt.new_int(var_children.clone().array_count()), rt.new_string('%d')])
+		mut var_query_in := rt.new_string('(' +
+			(rt.call_function('implode', [rt.new_string(','), var_format.clone()])).str() + ')')
+		mut var_prices := rt.call_function('array_unique', [
+			rt.call_method(var_wpdb, 'get_col', [
+				rt.call_method(var_wpdb, 'prepare', [
+					rt.concat(rt.concat(rt.concat(rt.new_string('SELECT meta_value FROM '), rt.get_property(var_wpdb,
+						'postmeta')), rt.new_string(" WHERE meta_key = '_price' AND post_id IN ")),
+						var_query_in),
+					var_children.clone(),
+				]),
+			]),
+		])
+	} else {
+		var_prices = rt.new_array()
+	}
+	rt.call_function('delete_post_meta', [
+		rt.call_method(var_product, 'get_id', []rt.PhpVal{}),
+		rt.new_string('_price'),
+	])
+	rt.call_function('delete_post_meta', [
+		rt.call_method(var_product, 'get_id', []rt.PhpVal{}),
+		rt.new_string('_sale_price'),
+	])
+	rt.call_function('delete_post_meta', [
+		rt.call_method(var_product, 'get_id', []rt.PhpVal{}),
+		rt.new_string('_regular_price'),
+	])
+	if rt.is_true(var_prices) {
+		rt.call_function('sort', [var_prices.clone(), rt.get_constant('SORT_NUMERIC')])
+		mut iter_11 := var_prices.iterator()
+		for {
+			item_11 := iter_11.next() or { break }
+			mut var_price := item_11.val
+			if var_price.clone().is_null() || rt.is_true(rt.identical(rt.new_string(''), var_price)) {
+				continue
+			}
+			rt.call_function('add_post_meta', [
+				rt.call_method(var_product, 'get_id', []rt.PhpVal{}),
+				rt.new_string('_price'),
+				var_price.clone(),
+				rt.new_bool(false),
+			])
+		}
+	}
+	this.update_lookup_table(rt.call_method(var_product, 'get_id', []rt.PhpVal{}),
+		rt.new_string('wc_product_meta_lookup'))
+	rt.call_function('do_action', [rt.new_string('woocommerce_updated_product_price'),
+		rt.call_method(var_product, 'get_id', []rt.PhpVal{})])
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) sync_stock_status(var_product rt.PhpVal) {
+	if rt.is_true(rt.call_method(var_product, 'child_is_in_stock', []rt.PhpVal{})) {
+		rt.call_method(var_product, 'set_stock_status', [
+			Class_Automattic_WooCommerce_Enums_ProductStockStatus.in_stock(),
+		])
+	} else if rt.is_true(rt.call_method(var_product, 'child_is_on_backorder', []rt.PhpVal{})) {
+		rt.call_method(var_product, 'set_stock_status', [
+			Class_Automattic_WooCommerce_Enums_ProductStockStatus.on_backorder(),
+		])
+	} else {
+		rt.call_method(var_product, 'set_stock_status', [
+			Class_Automattic_WooCommerce_Enums_ProductStockStatus.out_of_stock(),
+		])
+	}
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) delete_variations(var_product_id rt.PhpVal, force_delete bool) {
+	mut var_product_id_mutated := var_product_id
+	if !(var_product_id_mutated.clone().is_long() || var_product_id_mutated.clone().is_double())
+		|| rt.is_true(rt.greater_equal(rt.new_int(0), var_product_id_mutated)) {
+		return
+	}
+	mut var_variation_ids := rt.call_function('wp_parse_id_list', [
+		rt.call_function('get_posts', [
+			rt.create_array([
+				rt.ArrayItem{ key: 'post_parent', val: var_product_id_mutated },
+				rt.ArrayItem{ key: 'post_type', val: 'product_variation' },
+				rt.ArrayItem{ key: 'fields', val: 'ids' },
+				rt.ArrayItem{ key: 'post_status', val: rt.create_array([
+					rt.ArrayItem{ key: none, val: 'any' },
+					rt.ArrayItem{
+						key: none
+						val: Class_Automattic_WooCommerce_Enums_ProductStatus.trash()
+					},
+					rt.ArrayItem{
+						key: none
+						val: Class_Automattic_WooCommerce_Enums_ProductStatus.auto_draft()
+					},
+				]) },
+				rt.ArrayItem{ key: 'numberposts', val: -1 },
+			]),
+		]),
+	])
+	if !(!rt.is_true(var_variation_ids)) {
+		mut iter_12 := var_variation_ids.iterator()
+		for {
+			item_12 := iter_12.next() or { break }
+			mut var_variation_id := item_12.val
+			if var_force_delete {
+				rt.call_function('do_action', [
+					rt.new_string('woocommerce_before_delete_product_variation'),
+					var_variation_id.clone(),
+				])
+				rt.call_function('wp_delete_post', [var_variation_id.clone(),
+					rt.new_bool(true)])
+				rt.call_function('do_action', [
+					rt.new_string('woocommerce_delete_product_variation'),
+					var_variation_id.clone(),
+				])
+			} else {
+				rt.call_function('wp_trash_post', [var_variation_id.clone()])
+				rt.call_function('do_action', [
+					rt.new_string('woocommerce_trash_product_variation'),
+					var_variation_id.clone(),
+				])
+			}
+		}
+	}
+	rt.call_function('delete_transient', [
+		rt.new_string('wc_product_children_' + var_product_id_mutated.str()),
+	])
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) untrash_variations(var_product_id rt.PhpVal) {
+	mut var_product_id_mutated := var_product_id
+	mut var_variation_ids := rt.call_function('wp_parse_id_list', [
+		rt.call_function('get_posts', [
+			rt.create_array([
+				rt.ArrayItem{ key: 'post_parent', val: var_product_id_mutated },
+				rt.ArrayItem{ key: 'post_type', val: 'product_variation' },
+				rt.ArrayItem{ key: 'fields', val: 'ids' },
+				rt.ArrayItem{ key: 'post_status', val: 'trash' },
+				rt.ArrayItem{ key: 'numberposts', val: -1 },
+			]),
+		]),
+	])
+	if !(!rt.is_true(var_variation_ids)) {
+		mut iter_13 := var_variation_ids.iterator()
+		for {
+			item_13 := iter_13.next() or { break }
+			mut var_variation_id := item_13.val
+			rt.call_function('wp_untrash_post', [var_variation_id.clone()])
+		}
+	}
+	rt.call_function('delete_transient', [
+		rt.new_string('wc_product_children_' + var_product_id_mutated.str()),
+	])
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) validate_children_data(var_children rt.PhpVal, var_deprecated rt.PhpVal) bool {
+	mut var_children_mutated := var_children
+	if !(var_children_mutated.clone().is_array()) {
+		return false
+	}
+	if !rt.is_true(var_children_mutated.array_get(rt.new_string('all')))
+		|| !(var_children_mutated.array_isset(rt.new_string('visible'))) {
+		return false
+	}
+	if !(var_children_mutated.array_get(rt.new_string('all')).is_array())
+		|| !(var_children_mutated.array_get(rt.new_string('visible')).is_array()) {
+		return false
+	}
+	mut iter_14 := var_children_mutated.array_get(rt.new_string('all')).iterator()
+	for {
+		item_14 := iter_14.next() or { break }
+		mut var_id := item_14.val
+		if !(var_id.clone().is_long() || var_id.clone().is_double()) {
+			return false
+		}
+	}
+	mut iter_15 := var_children_mutated.array_get(rt.new_string('visible')).iterator()
+	for {
+		item_15 := iter_15.next() or { break }
+		mut var_id := item_15.val
+		if !(var_id.clone().is_long() || var_id.clone().is_double()) {
+			return false
+		}
+	}
+	return true
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) validate_prices_data(var_prices_array rt.PhpVal, var_deprecated rt.PhpVal) bool {
+	mut var_prices_array_mutated := var_prices_array
+	if !(var_prices_array_mutated.clone().is_array()) {
+		return false
+	}
+	if !rt.is_true(var_prices_array_mutated) {
+		return false
+	}
+	mut var_price_data_is_empty := rt.new_bool(true)
+	mut iter_16 := var_prices_array_mutated.iterator()
+	for {
+		item_16 := iter_16.next() or { break }
+		mut var_price_data := item_16.val
+		if !(var_price_data.clone().is_array()) {
+			return false
+		}
+		mut var_required_types := ['price', 'regular_price', 'sale_price']
+		for var_type in var_required_types {
+			if rt.is_true(rt.identical(rt.new_string('price'), rt.new_string(type)))
+				&& !(!rt.is_true(var_price_data.array_get(rt.new_string(type))))
+				&& rt.is_true(var_price_data_is_empty) {
+				var_price_data_is_empty = rt.new_bool(false)
+			}
+			if !(var_price_data.array_isset(rt.new_string(type)))
+				|| !(var_price_data.array_get(rt.new_string(type)).is_array()) {
+				return false
+			}
+		}
+		mut var_variation_ids :=
+			rt.func_array_keys(var_price_data.array_get(rt.new_string('price')))
+		mut iter_17 := var_variation_ids.iterator()
+		for {
+			item_17 := iter_17.next() or { break }
+			mut var_variation_id := item_17.val
+			if !(var_variation_id.clone().is_long() || var_variation_id.clone().is_double()) {
+				return false
+			}
+			for var_type in var_required_types {
+				if rt.is_true(rt.new_bool(!(rt.is_true(rt.new_bool(var_price_data.array_get(rt.new_string(type)).array_isset(var_variation_id.clone())))))) {
+					return false
+				}
+				mut var_type_price :=
+					var_price_data.array_get(rt.new_string(type)).array_get(var_variation_id)
+				if !(var_type_price.clone().is_long()
+					|| var_type_price.clone().is_double())
+					&& rt.is_true(rt.new_bool(!rt.is_true(rt.identical(rt.new_string(''), var_type_price)))) {
+					return false
+				}
+			}
+		}
+	}
+	if rt.is_true(var_price_data_is_empty) {
+		return false
+	}
+	return true
+}
+
+struct Class_WC_Product_Data_Store_CPT {
+	rt.PhpObjectBase
+}
+
+struct Class_WC_Product_Attribute {
+	rt.PhpObjectBase
+}
+
+struct Class_WC_Cache_Helper {
+	rt.PhpObjectBase
+}
+
+struct Class_WC_Tax {
+	rt.PhpObjectBase
+}
+
+struct Class_Automattic_WooCommerce_Utilities_CallbackUtil {
+	rt.PhpObjectBase
+}
+
+fn create_wc_product_variable_data_store_cpt(_args ...rt.PhpVal) &Class_WC_Product_Variable_Data_Store_CPT {
+	mut obj := &Class_WC_Product_Variable_Data_Store_CPT{
+		PhpObjectBase: rt.PhpObjectBase{}
+		prices_array:  rt.new_array()
+	}
+	return obj
+}
+
+fn create_wc_product_data_store_cpt(_args ...rt.PhpVal) &Class_WC_Product_Data_Store_CPT {
+	mut obj := &Class_WC_Product_Data_Store_CPT{
+		PhpObjectBase: rt.PhpObjectBase{}
+	}
+	return obj
+}
+
+fn create_wc_product_attribute(_args ...rt.PhpVal) &Class_WC_Product_Attribute {
+	mut obj := &Class_WC_Product_Attribute{
+		PhpObjectBase: rt.PhpObjectBase{}
+	}
+	return obj
+}
+
+fn create_wc_cache_helper(_args ...rt.PhpVal) &Class_WC_Cache_Helper {
+	mut obj := &Class_WC_Cache_Helper{
+		PhpObjectBase: rt.PhpObjectBase{}
+	}
+	return obj
+}
+
+fn create_wc_tax(_args ...rt.PhpVal) &Class_WC_Tax {
+	mut obj := &Class_WC_Tax{
+		PhpObjectBase: rt.PhpObjectBase{}
+	}
+	return obj
+}
+
+fn create_automattic_woocommerce_utilities_callbackutil(_args ...rt.PhpVal) &Class_Automattic_WooCommerce_Utilities_CallbackUtil {
+	mut obj := &Class_Automattic_WooCommerce_Utilities_CallbackUtil{
+		PhpObjectBase: rt.PhpObjectBase{}
+	}
+	return obj
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	match method_name {
+		'read_attributes' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			this.read_attributes(dispatch_arg_0)
+			return rt.new_null()
+		}
+		'read_product_data' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			this.read_product_data(dispatch_arg_0)
+			return rt.new_null()
+		}
+		'read_children' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			dispatch_arg_1 := (if args.len > 1 { args[1] } else { rt.new_null() }).to_bool()
+			return this.read_children(dispatch_arg_0, dispatch_arg_1)
+		}
+		'read_variation_attributes' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			return this.read_variation_attributes(dispatch_arg_0)
+		}
+		'read_price_data' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			dispatch_arg_1 := (if args.len > 1 { args[1] } else { rt.new_null() }).to_bool()
+			return this.read_price_data(dispatch_arg_0, dispatch_arg_1)
+		}
+		'taxes_influence_price' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			return rt.new_bool(this.taxes_influence_price(dispatch_arg_0))
+		}
+		'get_price_hash' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			dispatch_arg_1 := (if args.len > 1 { args[1] } else { rt.new_null() }).to_bool()
+			return rt.new_string(this.get_price_hash(dispatch_arg_0, dispatch_arg_1))
+		}
+		'child_has_weight' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			return rt.new_bool(this.child_has_weight(dispatch_arg_0))
+		}
+		'child_has_dimensions' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			return rt.new_bool(this.child_has_dimensions(dispatch_arg_0))
+		}
+		'child_is_in_stock' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			return this.child_is_in_stock(dispatch_arg_0)
+		}
+		'child_has_stock_status' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			dispatch_arg_1 := if args.len > 1 { args[1] } else { rt.new_null() }
+			return rt.new_bool(this.child_has_stock_status(dispatch_arg_0, dispatch_arg_1))
+		}
+		'sync_variation_names' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			dispatch_arg_1 := (if args.len > 1 { args[1] } else { rt.new_null() }).str()
+			dispatch_arg_2 := (if args.len > 2 { args[2] } else { rt.new_null() }).str()
+			this.sync_variation_names(dispatch_arg_0, dispatch_arg_1, dispatch_arg_2)
+			return rt.new_null()
+		}
+		'sync_managed_variation_stock_status' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			this.sync_managed_variation_stock_status(dispatch_arg_0)
+			return rt.new_null()
+		}
+		'sync_price' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			this.sync_price(dispatch_arg_0)
+			return rt.new_null()
+		}
+		'sync_stock_status' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			this.sync_stock_status(dispatch_arg_0)
+			return rt.new_null()
+		}
+		'delete_variations' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			dispatch_arg_1 := (if args.len > 1 { args[1] } else { rt.new_null() }).to_bool()
+			this.delete_variations(dispatch_arg_0, dispatch_arg_1)
+			return rt.new_null()
+		}
+		'untrash_variations' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			this.untrash_variations(dispatch_arg_0)
+			return rt.new_null()
+		}
+		'validate_children_data' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			dispatch_arg_1 := if args.len > 1 { args[1] } else { rt.new_null() }
+			return rt.new_bool(this.validate_children_data(dispatch_arg_0, dispatch_arg_1))
+		}
+		'validate_prices_data' {
+			dispatch_arg_0 := if args.len > 0 { args[0] } else { rt.new_null() }
+			dispatch_arg_1 := if args.len > 1 { args[1] } else { rt.new_null() }
+			return rt.new_bool(this.validate_prices_data(dispatch_arg_0, dispatch_arg_1))
+		}
+		else {
+			return none
+		}
+	}
+}
+
+fn (this &Class_WC_Product_Variable_Data_Store_CPT) dispatch_get_prop(prop_name string) ?rt.PhpVal {
+	match prop_name {
+		'prices_array' { return this.prices_array }
+		else { return this.PhpObjectBase.dispatch_get_prop(prop_name) }
+	}
+}
+
+fn (mut this Class_WC_Product_Variable_Data_Store_CPT) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {
+	match prop_name {
+		'prices_array' {
+			this.prices_array = val
+			return true
+		}
+		else {
+			return this.PhpObjectBase.dispatch_set_prop(prop_name, val)
+		}
+	}
+}
+
+fn (mut this Class_WC_Product_Data_Store_CPT) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	return none
+}
+
+fn (this &Class_WC_Product_Data_Store_CPT) dispatch_get_prop(prop_name string) ?rt.PhpVal {
+	return this.PhpObjectBase.dispatch_get_prop(prop_name)
+}
+
+fn (mut this Class_WC_Product_Data_Store_CPT) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {
+	return this.PhpObjectBase.dispatch_set_prop(prop_name, val)
+}
+
+fn (mut this Class_WC_Product_Attribute) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	return none
+}
+
+fn (this &Class_WC_Product_Attribute) dispatch_get_prop(prop_name string) ?rt.PhpVal {
+	return this.PhpObjectBase.dispatch_get_prop(prop_name)
+}
+
+fn (mut this Class_WC_Product_Attribute) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {
+	return this.PhpObjectBase.dispatch_set_prop(prop_name, val)
+}
+
+fn (mut this Class_WC_Cache_Helper) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	return none
+}
+
+fn (this &Class_WC_Cache_Helper) dispatch_get_prop(prop_name string) ?rt.PhpVal {
+	return this.PhpObjectBase.dispatch_get_prop(prop_name)
+}
+
+fn (mut this Class_WC_Cache_Helper) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {
+	return this.PhpObjectBase.dispatch_set_prop(prop_name, val)
+}
+
+fn (mut this Class_WC_Tax) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	return none
+}
+
+fn (this &Class_WC_Tax) dispatch_get_prop(prop_name string) ?rt.PhpVal {
+	return this.PhpObjectBase.dispatch_get_prop(prop_name)
+}
+
+fn (mut this Class_WC_Tax) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {
+	return this.PhpObjectBase.dispatch_set_prop(prop_name, val)
+}
+
+fn (mut this Class_Automattic_WooCommerce_Utilities_CallbackUtil) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	return none
+}
+
+fn (this &Class_Automattic_WooCommerce_Utilities_CallbackUtil) dispatch_get_prop(prop_name string) ?rt.PhpVal {
+	return this.PhpObjectBase.dispatch_get_prop(prop_name)
+}
+
+fn (mut this Class_Automattic_WooCommerce_Utilities_CallbackUtil) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {
+	return this.PhpObjectBase.dispatch_set_prop(prop_name, val)
+}
+
+fn main() {
+	defer {
+		rt.shutdown()
+	}
+
+	if rt.is_true(rt.new_bool(!(rt.is_true(rt.call_function('defined', [
+		rt.new_string('ABSPATH'),
+	])))))
+	{
+		exit(0)
+	}
+}

@@ -1,0 +1,165 @@
+import rt
+
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.name() string {
+	return 'Name'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.document() string {
+	return 'Document'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.operation_definition() string {
+	return 'OperationDefinition'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.variable_definition() string {
+	return 'VariableDefinition'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.variable() string {
+	return 'Variable'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.selection_set() string {
+	return 'SelectionSet'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.field() string {
+	return 'Field'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.argument() string {
+	return 'Argument'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.fragment_spread() string {
+	return 'FragmentSpread'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.inline_fragment() string {
+	return 'InlineFragment'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.fragment_definition() string {
+	return 'FragmentDefinition'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.int() string {
+	return 'IntValue'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.float() string {
+	return 'FloatValue'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.string() string {
+	return 'StringValue'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.boolean() string {
+	return 'BooleanValue'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.enum() string {
+	return 'EnumValue'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.null() string {
+	return 'NullValue'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.lst() string {
+	return 'ListValue'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.object() string {
+	return 'ObjectValue'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.object_field() string {
+	return 'ObjectField'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.directive() string {
+	return 'Directive'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.named_type() string {
+	return 'NamedType'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.list_type() string {
+	return 'ListType'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.non_null_type() string {
+	return 'NonNullType'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.schema_definition() string {
+	return 'SchemaDefinition'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.operation_type_definition() string {
+	return 'OperationTypeDefinition'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.scalar_type_definition() string {
+	return 'ScalarTypeDefinition'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.object_type_definition() string {
+	return 'ObjectTypeDefinition'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.field_definition() string {
+	return 'FieldDefinition'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.input_value_definition() string {
+	return 'InputValueDefinition'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.interface_type_definition() string {
+	return 'InterfaceTypeDefinition'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.union_type_definition() string {
+	return 'UnionTypeDefinition'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.enum_type_definition() string {
+	return 'EnumTypeDefinition'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.enum_value_definition() string {
+	return 'EnumValueDefinition'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.input_object_type_definition() string {
+	return 'InputObjectTypeDefinition'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.scalar_type_extension() string {
+	return 'ScalarTypeExtension'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.object_type_extension() string {
+	return 'ObjectTypeExtension'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.interface_type_extension() string {
+	return 'InterfaceTypeExtension'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.union_type_extension() string {
+	return 'UnionTypeExtension'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.enum_type_extension() string {
+	return 'EnumTypeExtension'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.input_object_type_extension() string {
+	return 'InputObjectTypeExtension'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.directive_definition() string {
+	return 'DirectiveDefinition'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.schema_extension() string {
+	return 'SchemaExtension'
+}
+pub fn Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.class_map() rt.PhpVal {
+	return rt.create_array([rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.name(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NameNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.document(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_DocumentNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.operation_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_OperationDefinitionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.variable_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_VariableDefinitionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.variable(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_VariableNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.selection_set(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_SelectionSetNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.field(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_FieldNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.argument(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_ArgumentNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.fragment_spread(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_FragmentSpreadNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.inline_fragment(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_InlineFragmentNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.fragment_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_FragmentDefinitionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.int(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_IntValueNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.float(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_FloatValueNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.string(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_StringValueNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.boolean(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_BooleanValueNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.enum(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_EnumValueNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.null(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NullValueNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.lst(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_ListValueNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.object(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_ObjectValueNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.object_field(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_ObjectFieldNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.directive(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_DirectiveNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.named_type(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NamedTypeNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.list_type(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_ListTypeNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.non_null_type(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NonNullTypeNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.schema_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_SchemaDefinitionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.operation_type_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_OperationTypeDefinitionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.scalar_type_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_ScalarTypeDefinitionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.object_type_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_ObjectTypeDefinitionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.field_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_FieldDefinitionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.input_value_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_InputValueDefinitionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.interface_type_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_InterfaceTypeDefinitionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.union_type_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_UnionTypeDefinitionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.enum_type_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_EnumTypeDefinitionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.enum_value_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_EnumValueDefinitionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.input_object_type_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_InputObjectTypeDefinitionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.scalar_type_extension(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_ScalarTypeExtensionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.object_type_extension(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_ObjectTypeExtensionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.interface_type_extension(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_InterfaceTypeExtensionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.union_type_extension(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_UnionTypeExtensionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.enum_type_extension(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_EnumTypeExtensionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.input_object_type_extension(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_InputObjectTypeExtensionNode.class() }, rt.ArrayItem{ key: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind.directive_definition(), val: Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_DirectiveDefinitionNode.class() }])
+}
+struct Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind {
+	rt.PhpObjectBase
+}
+
+fn create_automattic_woocommerce_vendor_graphql_language_ast_nodekind(_args ...rt.PhpVal) &Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind {
+	mut obj := &Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind{
+		PhpObjectBase: rt.PhpObjectBase{}
+	}
+	return obj
+}
+
+fn (mut this Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	return none
+}
+
+fn (this &Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind) dispatch_get_prop(prop_name string) ?rt.PhpVal {
+	return this.PhpObjectBase.dispatch_get_prop(prop_name)
+}
+
+fn (mut this Class_Automattic_WooCommerce_Vendor_GraphQL_Language_AST_NodeKind) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {
+	return this.PhpObjectBase.dispatch_set_prop(prop_name, val)
+}
+
+
+
+fn main() {
+	defer {
+		rt.shutdown()
+	}
+
+}

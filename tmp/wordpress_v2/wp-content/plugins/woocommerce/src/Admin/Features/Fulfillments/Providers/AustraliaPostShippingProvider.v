@@ -1,0 +1,402 @@
+import rt
+
+pub fn Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AustraliaPostShippingProvider.tracking_patterns() rt.PhpVal {
+	return rt.create_array([
+		rt.ArrayItem{ key: 'AU', val: rt.create_array([
+			rt.ArrayItem{ key: 'patterns', val: rt.create_array([
+				rt.ArrayItem{ key: none, val: '/^[A-Z]{2}\\d{9}AU$/' },
+				rt.ArrayItem{ key: none, val: '/^[A-Z]{2}\\d{7}AU$/' },
+				rt.ArrayItem{ key: none, val: '/^\\d{13}$/' },
+				rt.ArrayItem{ key: none, val: '/^\\d{12}$/' },
+				rt.ArrayItem{ key: none, val: '/^\\d{11}$/' },
+				rt.ArrayItem{ key: none, val: '/^[A-Z]{2}\\d{8}[A-Z]{2}$/' },
+				rt.ArrayItem{ key: none, val: '/^[A-Z]{1}\\d{10}[A-Z]{1}$/' },
+				rt.ArrayItem{ key: none, val: '/^[A-Z]{4}\\d{8}$/' },
+				rt.ArrayItem{ key: none, val: '/^EP\\d{10}$/' },
+				rt.ArrayItem{ key: none, val: '/^ST\\d{10}$/' },
+				rt.ArrayItem{ key: none, val: '/^MB\\d{10}$/' },
+				rt.ArrayItem{ key: none, val: '/^PO\\d{10}$/' },
+				rt.ArrayItem{ key: none, val: '/^MP\\d{10,12}$/' },
+				rt.ArrayItem{ key: none, val: '/^DG\\d{10,12}$/' },
+				rt.ArrayItem{ key: none, val: '/^7\\d{15}$/' },
+				rt.ArrayItem{ key: none, val: '/^3\\d{15}$/' },
+				rt.ArrayItem{ key: none, val: '/^8\\d{15}$/' },
+				rt.ArrayItem{ key: none, val: '/^[A-Z]{3}\\d{8,12}$/' },
+				rt.ArrayItem{ key: none, val: '/^33\\d?[A-Z]{2}\\d{18,20}$/' },
+				rt.ArrayItem{ key: none, val: '/^AP\\d{10,13}$/' },
+				rt.ArrayItem{ key: none, val: '/^[0-9]{10}[A-Z]{2}$/' },
+				rt.ArrayItem{ key: none, val: '/^[A-Z]{1}\\d{8}[A-Z]{3}$/' },
+			]) },
+			rt.ArrayItem{ key: 'confidence', val: 90 },
+		]) },
+	])
+}
+
+struct Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AustraliaPostShippingProvider {
+	rt.PhpObjectBase
+}
+
+fn (mut this Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AustraliaPostShippingProvider) get_key() string {
+	return 'australia-post'
+}
+
+fn (mut this Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AustraliaPostShippingProvider) get_name() string {
+	return 'Australia Post'
+}
+
+fn (mut this Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AustraliaPostShippingProvider) get_icon() string {
+	return
+		(rt.call_function('esc_url', [rt.call_method(rt.call_function('WC', []rt.PhpVal{}), 'plugin_url', []rt.PhpVal{})])).str() +
+		'/assets/images/shipping_providers/australia-post.png'
+}
+
+fn (mut this Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AustraliaPostShippingProvider) get_shipping_from_countries() rt.PhpVal {
+	return rt.func_array_keys(Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AustraliaPostShippingProvider.tracking_patterns())
+}
+
+fn (mut this Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AustraliaPostShippingProvider) get_shipping_to_countries() rt.PhpVal {
+	return rt.create_array([rt.ArrayItem{ key: none, val: 'AD' },
+		rt.ArrayItem{ key: none, val: 'AE' }, rt.ArrayItem{ key: none, val: 'AF' },
+		rt.ArrayItem{ key: none, val: 'AG' }, rt.ArrayItem{ key: none, val: 'AI' },
+		rt.ArrayItem{ key: none, val: 'AL' }, rt.ArrayItem{ key: none, val: 'AM' },
+		rt.ArrayItem{ key: none, val: 'AO' }, rt.ArrayItem{ key: none, val: 'AR' },
+		rt.ArrayItem{ key: none, val: 'AS' }, rt.ArrayItem{ key: none, val: 'AT' },
+		rt.ArrayItem{ key: none, val: 'AU' }, rt.ArrayItem{ key: none, val: 'AW' },
+		rt.ArrayItem{ key: none, val: 'AZ' }, rt.ArrayItem{ key: none, val: 'BA' },
+		rt.ArrayItem{ key: none, val: 'BB' }, rt.ArrayItem{ key: none, val: 'BD' },
+		rt.ArrayItem{ key: none, val: 'BE' }, rt.ArrayItem{ key: none, val: 'BF' },
+		rt.ArrayItem{ key: none, val: 'BG' }, rt.ArrayItem{ key: none, val: 'BH' },
+		rt.ArrayItem{ key: none, val: 'BI' }, rt.ArrayItem{ key: none, val: 'BJ' },
+		rt.ArrayItem{ key: none, val: 'BM' }, rt.ArrayItem{ key: none, val: 'BN' },
+		rt.ArrayItem{ key: none, val: 'BO' }, rt.ArrayItem{ key: none, val: 'BR' },
+		rt.ArrayItem{ key: none, val: 'BS' }, rt.ArrayItem{ key: none, val: 'BT' },
+		rt.ArrayItem{ key: none, val: 'BW' }, rt.ArrayItem{ key: none, val: 'BY' },
+		rt.ArrayItem{ key: none, val: 'BZ' }, rt.ArrayItem{ key: none, val: 'CA' },
+		rt.ArrayItem{ key: none, val: 'CC' }, rt.ArrayItem{ key: none, val: 'CD' },
+		rt.ArrayItem{ key: none, val: 'CF' }, rt.ArrayItem{ key: none, val: 'CG' },
+		rt.ArrayItem{ key: none, val: 'CH' }, rt.ArrayItem{ key: none, val: 'CI' },
+		rt.ArrayItem{ key: none, val: 'CK' }, rt.ArrayItem{ key: none, val: 'CL' },
+		rt.ArrayItem{ key: none, val: 'CM' }, rt.ArrayItem{ key: none, val: 'CN' },
+		rt.ArrayItem{ key: none, val: 'CO' }, rt.ArrayItem{ key: none, val: 'CR' },
+		rt.ArrayItem{ key: none, val: 'CU' }, rt.ArrayItem{ key: none, val: 'CV' },
+		rt.ArrayItem{ key: none, val: 'CW' }, rt.ArrayItem{ key: none, val: 'CY' },
+		rt.ArrayItem{ key: none, val: 'CZ' }, rt.ArrayItem{ key: none, val: 'DE' },
+		rt.ArrayItem{ key: none, val: 'DJ' }, rt.ArrayItem{ key: none, val: 'DK' },
+		rt.ArrayItem{ key: none, val: 'DM' }, rt.ArrayItem{ key: none, val: 'DO' },
+		rt.ArrayItem{ key: none, val: 'DZ' }, rt.ArrayItem{ key: none, val: 'EC' },
+		rt.ArrayItem{ key: none, val: 'EE' }, rt.ArrayItem{ key: none, val: 'EG' },
+		rt.ArrayItem{ key: none, val: 'ER' }, rt.ArrayItem{ key: none, val: 'ES' },
+		rt.ArrayItem{ key: none, val: 'ET' }, rt.ArrayItem{ key: none, val: 'FI' },
+		rt.ArrayItem{ key: none, val: 'FJ' }, rt.ArrayItem{ key: none, val: 'FK' },
+		rt.ArrayItem{ key: none, val: 'FM' }, rt.ArrayItem{ key: none, val: 'FO' },
+		rt.ArrayItem{ key: none, val: 'FR' }, rt.ArrayItem{ key: none, val: 'GA' },
+		rt.ArrayItem{ key: none, val: 'GB' }, rt.ArrayItem{ key: none, val: 'GD' },
+		rt.ArrayItem{ key: none, val: 'GE' }, rt.ArrayItem{ key: none, val: 'GF' },
+		rt.ArrayItem{ key: none, val: 'GG' }, rt.ArrayItem{ key: none, val: 'GH' },
+		rt.ArrayItem{ key: none, val: 'GI' }, rt.ArrayItem{ key: none, val: 'GL' },
+		rt.ArrayItem{ key: none, val: 'GM' }, rt.ArrayItem{ key: none, val: 'GN' },
+		rt.ArrayItem{ key: none, val: 'GP' }, rt.ArrayItem{ key: none, val: 'GQ' },
+		rt.ArrayItem{ key: none, val: 'GR' }, rt.ArrayItem{ key: none, val: 'GS' },
+		rt.ArrayItem{ key: none, val: 'GT' }, rt.ArrayItem{ key: none, val: 'GU' },
+		rt.ArrayItem{ key: none, val: 'GW' }, rt.ArrayItem{ key: none, val: 'GY' },
+		rt.ArrayItem{ key: none, val: 'HK' }, rt.ArrayItem{ key: none, val: 'HN' },
+		rt.ArrayItem{ key: none, val: 'HR' }, rt.ArrayItem{ key: none, val: 'HT' },
+		rt.ArrayItem{ key: none, val: 'HU' }, rt.ArrayItem{ key: none, val: 'ID' },
+		rt.ArrayItem{ key: none, val: 'IE' }, rt.ArrayItem{ key: none, val: 'IL' },
+		rt.ArrayItem{ key: none, val: 'IM' }, rt.ArrayItem{ key: none, val: 'IN' },
+		rt.ArrayItem{ key: none, val: 'IO' }, rt.ArrayItem{ key: none, val: 'IQ' },
+		rt.ArrayItem{ key: none, val: 'IR' }, rt.ArrayItem{ key: none, val: 'IS' },
+		rt.ArrayItem{ key: none, val: 'IT' }, rt.ArrayItem{ key: none, val: 'JE' },
+		rt.ArrayItem{ key: none, val: 'JM' }, rt.ArrayItem{ key: none, val: 'JO' },
+		rt.ArrayItem{ key: none, val: 'JP' }, rt.ArrayItem{ key: none, val: 'KE' },
+		rt.ArrayItem{ key: none, val: 'KG' }, rt.ArrayItem{ key: none, val: 'KH' },
+		rt.ArrayItem{ key: none, val: 'KI' }, rt.ArrayItem{ key: none, val: 'KP' },
+		rt.ArrayItem{ key: none, val: 'KR' }, rt.ArrayItem{ key: none, val: 'KW' },
+		rt.ArrayItem{ key: none, val: 'KY' }, rt.ArrayItem{ key: none, val: 'KZ' },
+		rt.ArrayItem{ key: none, val: 'LA' }, rt.ArrayItem{ key: none, val: 'LB' },
+		rt.ArrayItem{ key: none, val: 'LC' }, rt.ArrayItem{ key: none, val: 'LI' },
+		rt.ArrayItem{ key: none, val: 'LK' }, rt.ArrayItem{ key: none, val: 'LR' },
+		rt.ArrayItem{ key: none, val: 'LS' }, rt.ArrayItem{ key: none, val: 'LT' },
+		rt.ArrayItem{ key: none, val: 'LU' }, rt.ArrayItem{ key: none, val: 'LV' },
+		rt.ArrayItem{ key: none, val: 'LY' }, rt.ArrayItem{ key: none, val: 'MA' },
+		rt.ArrayItem{ key: none, val: 'MC' }, rt.ArrayItem{ key: none, val: 'MD' },
+		rt.ArrayItem{ key: none, val: 'ME' }, rt.ArrayItem{ key: none, val: 'MF' },
+		rt.ArrayItem{ key: none, val: 'MG' }, rt.ArrayItem{ key: none, val: 'MH' },
+		rt.ArrayItem{ key: none, val: 'MK' }, rt.ArrayItem{ key: none, val: 'ML' },
+		rt.ArrayItem{ key: none, val: 'MM' }, rt.ArrayItem{ key: none, val: 'MN' },
+		rt.ArrayItem{ key: none, val: 'MO' }, rt.ArrayItem{ key: none, val: 'MP' },
+		rt.ArrayItem{ key: none, val: 'MQ' }, rt.ArrayItem{ key: none, val: 'MR' },
+		rt.ArrayItem{ key: none, val: 'MS' }, rt.ArrayItem{ key: none, val: 'MT' },
+		rt.ArrayItem{ key: none, val: 'MU' }, rt.ArrayItem{ key: none, val: 'MV' },
+		rt.ArrayItem{ key: none, val: 'MW' }, rt.ArrayItem{ key: none, val: 'MX' },
+		rt.ArrayItem{ key: none, val: 'MY' }, rt.ArrayItem{ key: none, val: 'MZ' },
+		rt.ArrayItem{ key: none, val: 'NA' }, rt.ArrayItem{ key: none, val: 'NC' },
+		rt.ArrayItem{ key: none, val: 'NE' }, rt.ArrayItem{ key: none, val: 'NF' },
+		rt.ArrayItem{ key: none, val: 'NG' }, rt.ArrayItem{ key: none, val: 'NI' },
+		rt.ArrayItem{ key: none, val: 'NL' }, rt.ArrayItem{ key: none, val: 'NO' },
+		rt.ArrayItem{ key: none, val: 'NP' }, rt.ArrayItem{ key: none, val: 'NR' },
+		rt.ArrayItem{ key: none, val: 'NU' }, rt.ArrayItem{ key: none, val: 'NZ' },
+		rt.ArrayItem{ key: none, val: 'OM' }, rt.ArrayItem{ key: none, val: 'PA' },
+		rt.ArrayItem{ key: none, val: 'PE' }, rt.ArrayItem{ key: none, val: 'PF' },
+		rt.ArrayItem{ key: none, val: 'PG' }, rt.ArrayItem{ key: none, val: 'PH' },
+		rt.ArrayItem{ key: none, val: 'PK' }, rt.ArrayItem{ key: none, val: 'PL' },
+		rt.ArrayItem{ key: none, val: 'PM' }, rt.ArrayItem{ key: none, val: 'PN' },
+		rt.ArrayItem{ key: none, val: 'PR' }, rt.ArrayItem{ key: none, val: 'PS' },
+		rt.ArrayItem{ key: none, val: 'PT' }, rt.ArrayItem{ key: none, val: 'PW' },
+		rt.ArrayItem{ key: none, val: 'PY' }, rt.ArrayItem{ key: none, val: 'QA' },
+		rt.ArrayItem{ key: none, val: 'RE' }, rt.ArrayItem{ key: none, val: 'RO' },
+		rt.ArrayItem{ key: none, val: 'RS' }, rt.ArrayItem{ key: none, val: 'RU' },
+		rt.ArrayItem{ key: none, val: 'RW' }, rt.ArrayItem{ key: none, val: 'SA' },
+		rt.ArrayItem{ key: none, val: 'SB' }, rt.ArrayItem{ key: none, val: 'SC' },
+		rt.ArrayItem{ key: none, val: 'SD' }, rt.ArrayItem{ key: none, val: 'SE' },
+		rt.ArrayItem{ key: none, val: 'SG' }, rt.ArrayItem{ key: none, val: 'SH' },
+		rt.ArrayItem{ key: none, val: 'SI' }, rt.ArrayItem{ key: none, val: 'SK' },
+		rt.ArrayItem{ key: none, val: 'SL' }, rt.ArrayItem{ key: none, val: 'SM' },
+		rt.ArrayItem{ key: none, val: 'SN' }, rt.ArrayItem{ key: none, val: 'SO' },
+		rt.ArrayItem{ key: none, val: 'SR' }, rt.ArrayItem{ key: none, val: 'SS' },
+		rt.ArrayItem{ key: none, val: 'ST' }, rt.ArrayItem{ key: none, val: 'SV' },
+		rt.ArrayItem{ key: none, val: 'SX' }, rt.ArrayItem{ key: none, val: 'SY' },
+		rt.ArrayItem{ key: none, val: 'SZ' }, rt.ArrayItem{ key: none, val: 'TC' },
+		rt.ArrayItem{ key: none, val: 'TD' }, rt.ArrayItem{ key: none, val: 'TF' },
+		rt.ArrayItem{ key: none, val: 'TG' }, rt.ArrayItem{ key: none, val: 'TH' },
+		rt.ArrayItem{ key: none, val: 'TJ' }, rt.ArrayItem{ key: none, val: 'TK' },
+		rt.ArrayItem{ key: none, val: 'TL' }, rt.ArrayItem{ key: none, val: 'TM' },
+		rt.ArrayItem{ key: none, val: 'TN' }, rt.ArrayItem{ key: none, val: 'TO' },
+		rt.ArrayItem{ key: none, val: 'TR' }, rt.ArrayItem{ key: none, val: 'TT' },
+		rt.ArrayItem{ key: none, val: 'TV' }, rt.ArrayItem{ key: none, val: 'TW' },
+		rt.ArrayItem{ key: none, val: 'TZ' }, rt.ArrayItem{ key: none, val: 'UA' },
+		rt.ArrayItem{ key: none, val: 'UG' }, rt.ArrayItem{ key: none, val: 'UM' },
+		rt.ArrayItem{ key: none, val: 'US' }, rt.ArrayItem{ key: none, val: 'UY' },
+		rt.ArrayItem{ key: none, val: 'UZ' }, rt.ArrayItem{ key: none, val: 'VA' },
+		rt.ArrayItem{ key: none, val: 'VC' }, rt.ArrayItem{ key: none, val: 'VE' },
+		rt.ArrayItem{ key: none, val: 'VG' }, rt.ArrayItem{ key: none, val: 'VI' },
+		rt.ArrayItem{ key: none, val: 'VN' }, rt.ArrayItem{ key: none, val: 'VU' },
+		rt.ArrayItem{ key: none, val: 'WF' }, rt.ArrayItem{ key: none, val: 'WS' },
+		rt.ArrayItem{ key: none, val: 'YE' }, rt.ArrayItem{ key: none, val: 'YT' },
+		rt.ArrayItem{ key: none, val: 'ZA' }, rt.ArrayItem{ key: none, val: 'ZM' },
+		rt.ArrayItem{ key: none, val: 'ZW' }])
+}
+
+fn (mut this Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AustraliaPostShippingProvider) get_tracking_url(tracking_number string) string {
+	return 'https://auspost.com.au/mypost/track/details/' +
+		(rt.call_function('rawurlencode', [rt.new_string(tracking_number)])).str()
+}
+
+fn (mut this Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AustraliaPostShippingProvider) validate_country_pattern(tracking_number string, country_code string) bool {
+	if !(Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AustraliaPostShippingProvider.tracking_patterns().array_isset(rt.new_string(country_code))) {
+		return false
+	}
+	mut iter_1 :=
+		Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AustraliaPostShippingProvider.tracking_patterns().array_get(rt.new_string(country_code)).array_get(rt.new_string('patterns')).iterator()
+	for {
+		item_1 := iter_1.next() or { break }
+		mut var_pattern := item_1.val
+		if rt.is_true(rt.call_function('preg_match', [var_pattern.clone(),
+			rt.new_string(tracking_number)]))
+		{
+			return true
+		}
+	}
+	return false
+}
+
+fn (mut this Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AustraliaPostShippingProvider) try_parse_tracking_number(tracking_number string, shipping_from string, shipping_to string) rt.PhpVal {
+	mut shipping_from_mutated := shipping_from
+	mut shipping_to_mutated := shipping_to
+	if tracking_number == '' || shipping_from_mutated == '' || shipping_to_mutated == '' {
+		return rt.new_null()
+	}
+	mut var_normalized := rt.new_string(rt.call_function('preg_replace', [
+		rt.new_string('/\\s+/'),
+		rt.new_string(''),
+		rt.new_string(tracking_number),
+	]).to_string().to_upper())
+	if !rt.is_true(var_normalized) {
+		return rt.new_null()
+	}
+	shipping_from_mutated = shipping_from_mutated.to_upper()
+	shipping_to_mutated = shipping_to_mutated.to_upper()
+	if rt.is_true(rt.new_bool('AU' != shipping_from_mutated)) {
+		return rt.new_null()
+	}
+	if this.validate_country_pattern(var_normalized.str(), shipping_from_mutated) {
+		mut var_confidence :=
+			Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AustraliaPostShippingProvider.tracking_patterns().array_get(rt.new_string(shipping_from_mutated)).array_get(rt.new_string('confidence'))
+		if rt.is_true(rt.call_function('preg_match', [rt.new_string('/^\\d{11,13}$/'),
+			var_normalized.clone()]))
+		{
+			mut iife_temp_0 :=
+				Class_Automattic_WooCommerce_Admin_Features_Fulfillments_FulfillmentUtils{}
+			mut iife_result_0 := iife_temp_0.validate_mod10_check_digit(var_normalized.clone())
+			if rt.is_true(iife_result_0) {
+				var_confidence = rt.call_function('min', [rt.new_int(98),
+					rt.add(var_confidence, rt.new_int(8))])
+			}
+		}
+		if rt.is_true(rt.call_function('preg_match', [
+			rt.new_string('/^[A-Z]{2}\\d{7,9}AU$/'),
+			var_normalized.clone(),
+		]))
+		{
+			mut iife_temp_1 :=
+				Class_Automattic_WooCommerce_Admin_Features_Fulfillments_FulfillmentUtils{}
+			mut iife_result_1 := iife_temp_1.check_s10_upu_format(var_normalized.clone())
+			if rt.is_true(iife_result_1) {
+				var_confidence = rt.call_function('min', [rt.new_int(98),
+					rt.add(var_confidence, rt.new_int(8))])
+			}
+		}
+		if rt.is_true(rt.call_function('preg_match', [rt.new_string('/^(EP|ST|MB)\\d+/'),
+			var_normalized.clone()]))
+		{
+			var_confidence = rt.call_function('min', [rt.new_int(95),
+				rt.add(var_confidence, rt.new_int(5))])
+		}
+		if rt.is_true(rt.identical(rt.new_string('AU'), rt.new_string(shipping_to_mutated))) {
+			var_confidence = rt.call_function('min', [rt.new_int(98),
+				rt.add(var_confidence, rt.new_int(5))])
+		}
+		mut var_apac_destinations := rt.create_array([
+			rt.ArrayItem{ key: none, val: 'NZ' },
+			rt.ArrayItem{ key: none, val: 'SG' },
+			rt.ArrayItem{ key: none, val: 'HK' },
+			rt.ArrayItem{ key: none, val: 'JP' },
+			rt.ArrayItem{ key: none, val: 'KR' },
+			rt.ArrayItem{ key: none, val: 'TH' },
+			rt.ArrayItem{ key: none, val: 'MY' },
+			rt.ArrayItem{ key: none, val: 'ID' },
+			rt.ArrayItem{ key: none, val: 'PH' },
+			rt.ArrayItem{ key: none, val: 'VN' },
+			rt.ArrayItem{ key: none, val: 'IN' },
+		])
+		if rt.is_true(rt.call_function('in_array', [rt.new_string(shipping_to_mutated).clone(),
+			var_apac_destinations.clone(), rt.new_bool(true)]))
+		{
+			var_confidence = rt.call_function('min', [rt.new_int(95),
+				rt.add(var_confidence, rt.new_int(3))])
+		}
+		mut var_common_destinations := rt.create_array([
+			rt.ArrayItem{ key: none, val: 'US' },
+			rt.ArrayItem{ key: none, val: 'GB' },
+			rt.ArrayItem{ key: none, val: 'CA' },
+			rt.ArrayItem{ key: none, val: 'DE' },
+			rt.ArrayItem{ key: none, val: 'FR' },
+		])
+		if rt.is_true(rt.call_function('in_array', [rt.new_string(shipping_to_mutated).clone(),
+			var_common_destinations.clone(), rt.new_bool(true)]))
+		{
+			var_confidence = rt.call_function('min', [rt.new_int(93),
+				rt.add(var_confidence, rt.new_int(2))])
+		}
+		return rt.create_array([
+			rt.ArrayItem{ key: 'url', val: this.get_tracking_url(var_normalized.str()) },
+			rt.ArrayItem{ key: 'ambiguity_score', val: var_confidence },
+		])
+	}
+	return rt.new_null()
+}
+
+struct Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AbstractShippingProvider {
+	rt.PhpObjectBase
+}
+
+struct Class_Automattic_WooCommerce_Admin_Features_Fulfillments_FulfillmentUtils {
+	rt.PhpObjectBase
+}
+
+fn create_automattic_woocommerce_admin_features_fulfillments_providers_australiapostshippingprovider(_args ...rt.PhpVal) &Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AustraliaPostShippingProvider {
+	mut obj := &Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AustraliaPostShippingProvider{
+		PhpObjectBase: rt.PhpObjectBase{}
+	}
+	return obj
+}
+
+fn create_automattic_woocommerce_admin_features_fulfillments_providers_abstractshippingprovider(_args ...rt.PhpVal) &Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AbstractShippingProvider {
+	mut obj := &Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AbstractShippingProvider{
+		PhpObjectBase: rt.PhpObjectBase{}
+	}
+	return obj
+}
+
+fn create_automattic_woocommerce_admin_features_fulfillments_fulfillmentutils(_args ...rt.PhpVal) &Class_Automattic_WooCommerce_Admin_Features_Fulfillments_FulfillmentUtils {
+	mut obj := &Class_Automattic_WooCommerce_Admin_Features_Fulfillments_FulfillmentUtils{
+		PhpObjectBase: rt.PhpObjectBase{}
+	}
+	return obj
+}
+
+fn (mut this Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AustraliaPostShippingProvider) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	match method_name {
+		'get_key' {
+			return rt.new_string(this.get_key())
+		}
+		'get_name' {
+			return rt.new_string(this.get_name())
+		}
+		'get_icon' {
+			return rt.new_string(this.get_icon())
+		}
+		'get_shipping_from_countries' {
+			return this.get_shipping_from_countries()
+		}
+		'get_shipping_to_countries' {
+			return this.get_shipping_to_countries()
+		}
+		'get_tracking_url' {
+			dispatch_arg_0 := (if args.len > 0 { args[0] } else { rt.new_null() }).str()
+			return rt.new_string(this.get_tracking_url(dispatch_arg_0))
+		}
+		'validate_country_pattern' {
+			dispatch_arg_0 := (if args.len > 0 { args[0] } else { rt.new_null() }).str()
+			dispatch_arg_1 := (if args.len > 1 { args[1] } else { rt.new_null() }).str()
+			return rt.new_bool(this.validate_country_pattern(dispatch_arg_0, dispatch_arg_1))
+		}
+		'try_parse_tracking_number' {
+			dispatch_arg_0 := (if args.len > 0 { args[0] } else { rt.new_null() }).str()
+			dispatch_arg_1 := (if args.len > 1 { args[1] } else { rt.new_null() }).str()
+			dispatch_arg_2 := (if args.len > 2 { args[2] } else { rt.new_null() }).str()
+			return this.try_parse_tracking_number(dispatch_arg_0, dispatch_arg_1, dispatch_arg_2)
+		}
+		else {
+			return none
+		}
+	}
+}
+
+fn (this &Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AustraliaPostShippingProvider) dispatch_get_prop(prop_name string) ?rt.PhpVal {
+	return this.PhpObjectBase.dispatch_get_prop(prop_name)
+}
+
+fn (mut this Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AustraliaPostShippingProvider) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {
+	return this.PhpObjectBase.dispatch_set_prop(prop_name, val)
+}
+
+fn (mut this Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AbstractShippingProvider) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	return none
+}
+
+fn (this &Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AbstractShippingProvider) dispatch_get_prop(prop_name string) ?rt.PhpVal {
+	return this.PhpObjectBase.dispatch_get_prop(prop_name)
+}
+
+fn (mut this Class_Automattic_WooCommerce_Admin_Features_Fulfillments_Providers_AbstractShippingProvider) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {
+	return this.PhpObjectBase.dispatch_set_prop(prop_name, val)
+}
+
+fn (mut this Class_Automattic_WooCommerce_Admin_Features_Fulfillments_FulfillmentUtils) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	return none
+}
+
+fn (this &Class_Automattic_WooCommerce_Admin_Features_Fulfillments_FulfillmentUtils) dispatch_get_prop(prop_name string) ?rt.PhpVal {
+	return this.PhpObjectBase.dispatch_get_prop(prop_name)
+}
+
+fn (mut this Class_Automattic_WooCommerce_Admin_Features_Fulfillments_FulfillmentUtils) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {
+	return this.PhpObjectBase.dispatch_set_prop(prop_name, val)
+}
+
+fn main() {
+	defer {
+		rt.shutdown()
+	}
+}
