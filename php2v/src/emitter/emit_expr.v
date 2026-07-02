@@ -750,11 +750,21 @@ fn (mut t Transpiler) emit_native_condition(node ast.AstNode) string {
 			l_native := t.emit_native_condition(*l_node)
 			r_native := t.emit_native_condition(*r_node)
 			if l_native != '' && r_native != '' {
-				return '${l_native} || ${r_native}'
+				// 如果任一侧包含 && 混用，需要加括号避免 V 歧义
+				l_str := if l_native.contains(' && ') { '(${l_native})' } else { l_native }
+				r_str := if r_native.contains(' && ') { '(${r_native})' } else { r_native }
+				return '${l_str} || ${r_str}'
 			}
 			// 回退：用 get_native_bool_condition 递归展开
-			l_cond := if l_native != '' { l_native } else { t.get_native_bool_condition(*l_node) }
-			r_cond := if r_native != '' { r_native } else { t.get_native_bool_condition(*r_node) }
+			mut l_cond := if l_native != '' { l_native } else { t.get_native_bool_condition(*l_node) }
+			mut r_cond := if r_native != '' { r_native } else { t.get_native_bool_condition(*r_node) }
+			// 如果任一侧包含 &&，需要加括号避免 V 歧义
+			if l_cond.contains(' && ') {
+				l_cond = '(${l_cond})'
+			}
+			if r_cond.contains(' && ') {
+				r_cond = '(${r_cond})'
+			}
 			return '${l_cond} || ${r_cond}'
 		}
 		ast.node_expr_boolean_not {
@@ -764,6 +774,13 @@ fn (mut t Transpiler) emit_native_condition(node ast.AstNode) string {
 			if inner != '' { return '!(${inner})' }
 			// Check if inner is a function call returning native bool
 			if expr_node.node_type == ast.node_expr_funccall {
+				// PHP 内置类型检查函数直接返回 native bool
+				php_bool_funcs := ['is_string', 'is_int', 'is_integer', 'is_long', 'is_float',
+					'is_double', 'is_real', 'is_bool', 'is_null', 'is_array', 'is_object',
+					'is_numeric', 'is_nan', 'is_finite', 'is_infinite', 'is_callable', 'is_countable']
+				if expr_node.name in php_bool_funcs {
+					return '!(${t.visit_expr_native(*expr_node)})'
+				}
 				if ret_type := t.func_return_types[expr_node.name] {
 					if ret_type.tag == .t_bool {
 						return '!(${t.visit_expr_native(*expr_node)})'
@@ -809,6 +826,25 @@ fn (mut t Transpiler) emit_native_condition(node ast.AstNode) string {
 		}
 		ast.node_expr_method_call {
 			obj_var_node := node.var or { return '' }
+			// rt.PhpVal 上返回 native bool 的内置方法列表
+			// 这些方法在 rt 库里直接返回 bool，不需要 rt.new_bool 包装
+			phpval_bool_methods := ['is_string', 'is_int', 'is_integer', 'is_long',
+				'is_float', 'is_double', 'is_real', 'is_bool', 'is_null', 'is_array',
+				'is_object', 'is_numeric', 'is_nan', 'is_finite', 'is_infinite',
+				'is_callable', 'is_countable']
+			if node.name in phpval_bool_methods {
+				// 直接生成 native bool 调用，跳过 rt.new_bool 包装
+				obj_str := t.visit_expr(*obj_var_node)
+				mut arg_strs := []string{}
+				for arg in node.args {
+					arg_val := arg.expr or { continue }
+					arg_strs << t.compile_arg_simple(*arg_val)
+				}
+				if arg_strs.len == 0 {
+					return '${obj_str}.${node.name}()'
+				}
+				return '${obj_str}.${node.name}(${arg_strs.join(', ')})'
+			}
 			if obj_var_node.node_type == ast.node_expr_variable {
 				mut obj_type := t.inferred_types[obj_var_node.name] or { VarType{ tag: .t_unknown } }
 				if obj_var_node.name == 'this' {
@@ -909,6 +945,18 @@ fn (mut t Transpiler) get_native_bool_condition(node ast.AstNode) string {
 	}
 	// Function calls returning native bool
 	if node.node_type == ast.node_expr_funccall {
+		// PHP 内置类型检查函数：生成的 V 代码直接是 native bool
+		// 例如 is_string($x) → var_x.is_string()，本身就是 bool
+		php_bool_funcs := ['is_string', 'is_int', 'is_integer', 'is_long', 'is_float',
+			'is_double', 'is_real', 'is_bool', 'is_null', 'is_array', 'is_object',
+			'is_numeric', 'is_nan', 'is_finite', 'is_infinite', 'is_callable', 'is_countable',
+			'isset', 'empty']
+		if node.name in php_bool_funcs {
+			// visit_expr 会把 is_string($x) 转成 rt.new_bool(var_x.is_string())
+			// 我们需要的是内部的 native bool 表达式，直接用 visit_expr_native
+			return t.visit_expr_native(node)
+		}
+		// 用户自定义函数注册了返回 bool 类型
 		if ret_type := t.func_return_types[node.name] {
 			if ret_type.tag == .t_bool {
 				return t.visit_expr_native(node)
