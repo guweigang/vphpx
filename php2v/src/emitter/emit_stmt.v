@@ -48,9 +48,22 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 					// 跳过 IIFE 结果变量（实际调用已在 pre_stmts 中完成）
 					is_bare_iife := expr_str.starts_with('iife_result_') && !expr_str.contains(' ') && !expr_str.contains('(') && !expr_str.contains('.')
 					if !is_bare_var && !is_bare_iife && !is_bare_mutated {
-						for line in expr_str.split('\n') {
-							t.write_indent()
-							t.write_line(line)
+						// 函数/方法调用等返回值的表达式作为语句时，需 _ = 丢弃返回值
+						if t.expr_produces_value(*expr) {
+							lines := expr_str.split('\n')
+							for i, line in lines {
+								t.write_indent()
+								if i == 0 {
+									t.write_line('_ = ${line}')
+								} else {
+									t.write_line(line)
+								}
+							}
+						} else {
+							for line in expr_str.split('\n') {
+								t.write_indent()
+								t.write_line(line)
+							}
 						}
 					}
 				}
@@ -974,6 +987,77 @@ fn (mut t Transpiler) visit_do(node ast.AstNode) {
 	t.write_line('}')
 }
 
+// expr_produces_value 判断表达式节点作为独立语句时是否产生需要丢弃的返回值。
+// 用于在表达式语句和 for 循环的 init/loop 表达式中添加 `_ = ` 前缀。
+fn (mut t Transpiler) expr_produces_value(expr ast.AstNode) bool {
+	match expr.node_type {
+		// 始终产生值的表达式类型
+		ast.node_expr_post_inc, ast.node_expr_post_dec,
+		ast.node_expr_pre_inc, ast.node_expr_pre_dec,
+		ast.node_expr_include, ast.node_expr_ternary,
+		ast.node_expr_match, ast.node_expr_array_dim_fetch,
+		ast.node_expr_new, ast.node_expr_property_fetch,
+		ast.node_expr_static_prop_fetch {
+			return true
+		}
+		ast.node_expr_funccall {
+			// 检查函数返回类型：若已知为 void 则不产生值
+			if ret_type := t.func_return_types[expr.name] {
+				return ret_type.tag != .t_void
+			}
+			// rt.call_function() 回退始终返回 PhpVal
+			return true
+		}
+		ast.node_expr_method_call {
+			// 已知对象类型时检查方法返回类型
+			if obj_var_node := expr.var {
+				if obj_var_node.node_type == ast.node_expr_variable {
+					mut obj_type := t.inferred_types[obj_var_node.name] or { VarType{ tag: .t_unknown } }
+					if obj_var_node.name == 'this' {
+						obj_type = VarType{ tag: .t_object, class_name: t.current_class }
+					}
+					if obj_type.is_object() {
+						ret_type := t.get_method_return_type(obj_type.class_name, expr.name)
+						if ret_type.tag == .t_void {
+							return false
+						}
+					}
+				}
+			}
+			// rt.call_method() 回退返回 PhpVal
+			return true
+		}
+		ast.node_expr_static_call {
+			// 已知类名时检查方法返回类型
+			if expr.class_name.len > 0 {
+				mut class_name := expr.class_name
+				if class_name == 'parent' {
+					for cls in t.classes {
+						if cls.name == t.current_class {
+							class_name = cls.extends
+							break
+						}
+					}
+				} else if class_name == 'self' || class_name == 'static' {
+					class_name = t.current_class
+				} else {
+					class_name = t.resolve_class_name(class_name)
+				}
+				if class_name.len > 0 {
+					ret_type := t.get_method_return_type(class_name, expr.name)
+					if ret_type.tag == .t_void {
+						return false
+					}
+				}
+			}
+			return true
+		}
+		else {
+			return false
+		}
+	}
+}
+
 fn (mut t Transpiler) visit_for(node ast.AstNode) {
 	old_scope := t.scope
 	
@@ -982,9 +1066,15 @@ fn (mut t Transpiler) visit_for(node ast.AstNode) {
 		expr_str := t.visit_expr(init_node)
 		is_bare_var := expr_str.starts_with('var_') && !expr_str.contains(' ') && !expr_str.contains('(') && !expr_str.contains('.')
 		is_bare_mutated := (expr_str.ends_with('_mutated') || expr_str.ends_with('_shadow')) && !expr_str.contains(' ') && !expr_str.contains('(') && !expr_str.contains('.')
-		if !is_bare_var && !is_bare_mutated {
-			t.write_indent()
-			t.write_line(expr_str)
+		is_bare_iife := expr_str.starts_with('iife_result_') && !expr_str.contains(' ') && !expr_str.contains('(') && !expr_str.contains('.')
+		if !is_bare_var && !is_bare_iife && !is_bare_mutated {
+			if t.expr_produces_value(init_node) {
+				t.write_indent()
+				t.write_line('_ = ${expr_str}')
+			} else {
+				t.write_indent()
+				t.write_line(expr_str)
+			}
 		}
 	}
 
@@ -1013,9 +1103,15 @@ fn (mut t Transpiler) visit_for(node ast.AstNode) {
 			expr_str := t.visit_expr(loop_node)
 			is_bare_var := expr_str.starts_with('var_') && !expr_str.contains(' ') && !expr_str.contains('(') && !expr_str.contains('.')
 			is_bare_mutated := (expr_str.ends_with('_mutated') || expr_str.ends_with('_shadow')) && !expr_str.contains(' ') && !expr_str.contains('(') && !expr_str.contains('.')
-			if !is_bare_var && !is_bare_mutated {
-				t.write_indent()
-				t.write_line(expr_str)
+			is_bare_iife := expr_str.starts_with('iife_result_') && !expr_str.contains(' ') && !expr_str.contains('(') && !expr_str.contains('.')
+			if !is_bare_var && !is_bare_iife && !is_bare_mutated {
+				if t.expr_produces_value(loop_node) {
+					t.write_indent()
+					t.write_line('_ = ${expr_str}')
+				} else {
+					t.write_indent()
+					t.write_line(expr_str)
+				}
 			}
 		}
 	}

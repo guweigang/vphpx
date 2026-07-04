@@ -28,6 +28,7 @@ fn (mut t Transpiler) get_expr_type(node ast.AstNode) VarType {
 						}
 					}
 				}
+
 				if t.current_func_name in t.func_var_types {
 					if vars := t.func_var_types[t.current_func_name] {
 						if node.name in vars {
@@ -392,16 +393,20 @@ fn (mut t Transpiler) visit_expr_native_impl(node ast.AstNode) string {
 			right := node.right or { panic('and missing right') }
 			l_cond := t.get_native_bool_condition(*left)
 			r_cond := t.get_native_bool_condition(*right)
+			l_str := if l_cond.contains(' || ') { '(${l_cond})' } else { l_cond }
+			r_str := if r_cond.contains(' || ') { '(${r_cond})' } else { r_cond }
 			t.last_expr_type = VarType{ tag: .t_bool }
-			return '${l_cond} && ${r_cond}'
+			return '${l_str} && ${r_str}'
 		}
 		ast.node_bin_bool_or, ast.node_bin_logical_or {
 			left := node.left or { panic('or missing left') }
 			right := node.right or { panic('or missing right') }
 			l_cond := t.get_native_bool_condition(*left)
 			r_cond := t.get_native_bool_condition(*right)
+			l_str := if l_cond.contains(' && ') { '(${l_cond})' } else { l_cond }
+			r_str := if r_cond.contains(' && ') { '(${r_cond})' } else { r_cond }
 			t.last_expr_type = VarType{ tag: .t_bool }
-			return '${l_cond} || ${r_cond}'
+			return '${l_str} || ${r_str}'
 		}
 		ast.node_expr_boolean_not {
 			expr_node := node.expr or { panic('BooleanNot missing expr') }
@@ -1538,12 +1543,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				} else {
 					for arg in node.args {
 						arg_val := arg.expr or { panic('Arg missing expr') }
-						arg_typ := t.get_expr_type(arg_val)
-						if arg_typ.is_scalar() {
-							arg_strs << t.visit_expr_native(arg_val)
-						} else {
-							arg_strs << t.compile_arg_simple(arg_val)
-						}
+						arg_strs << t.compile_arg_simple(arg_val)
 					}
 				}
 				ret_type := t.func_return_types[func_name] or { VarType{ tag: .t_unknown } }
@@ -1664,14 +1664,20 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			right := node.right or { panic('and missing right') }
 			l_cond := t.get_native_bool_condition(*left)
 			r_cond := t.get_native_bool_condition(*right)
-			return 'rt.new_bool(${l_cond} && ${r_cond})'
+			// V 不允许 && / || 混用不加括号
+			l_str := if l_cond.contains(' || ') { '(${l_cond})' } else { l_cond }
+			r_str := if r_cond.contains(' || ') { '(${r_cond})' } else { r_cond }
+			return 'rt.new_bool(${l_str} && ${r_str})'
 		}
 		ast.node_bin_bool_or, ast.node_bin_logical_or {
 			left := node.left or { panic('or missing left') }
 			right := node.right or { panic('or missing right') }
 			l_cond := t.get_native_bool_condition(*left)
 			r_cond := t.get_native_bool_condition(*right)
-			return 'rt.new_bool(${l_cond} || ${r_cond})'
+			// V 不允许 || / && 混用不加括号
+			l_str := if l_cond.contains(' && ') { '(${l_cond})' } else { l_cond }
+			r_str := if r_cond.contains(' && ') { '(${r_cond})' } else { r_cond }
+			return 'rt.new_bool(${l_str} || ${r_str})'
 		}
 		ast.node_expr_ternary {
 			cond := node.cond or { panic('Ternary missing cond') }

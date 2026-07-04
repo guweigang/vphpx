@@ -310,6 +310,11 @@ fn test_transpiler_end_to_end() {
 			'fn get_config_value(var_key rt.PhpVal) rt.PhpVal {',
 			'fn init_static_database()',
 		]
+		// 40: 无 MethodInfo 回退情况下原生标量实参自动装箱
+		'40_mysql2date.php': [
+			'fn test_mysql2date(format string, var_var_date rt.PhpVal) rt.PhpVal {',
+			'return test_wp_date(rt.new_string(format), var_var_date.clone())',
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址
