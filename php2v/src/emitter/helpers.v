@@ -26,7 +26,16 @@ pub fn (t Transpiler) box_expr(code string, typ VarType) string {
 	mut real_typ := typ
 	if code.starts_with('var_') {
 		php_name := code.all_after('var_')
-		if php_name in t.inferred_types {
+		mut found := false
+		if t.current_func_name != '' {
+			if func_vars := t.func_var_types[t.current_func_name] {
+				if php_name in func_vars {
+					real_typ = func_vars[php_name] or { typ }
+					found = true
+				}
+			}
+		}
+		if !found && php_name in t.inferred_types {
 			real_typ = t.inferred_types[php_name] or { typ }
 		}
 	}

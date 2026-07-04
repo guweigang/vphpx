@@ -983,7 +983,17 @@ fn (mut t Transpiler) get_native_bool_condition(node ast.AstNode) string {
 		}
 	}
 	// Fallback: wrap the PhpVal expression with rt.is_true()
-	return 'rt.is_true(${t.visit_expr(node)})'
+	expr_str := t.visit_expr(node)
+	expr_type := t.get_expr_type(node)
+	if expr_str.starts_with('rt.new_') {
+		return 'rt.is_true(${expr_str})'
+	}
+	match expr_type.tag {
+		.t_bool { return expr_str }
+		.t_int { return '(${expr_str}) != 0' }
+		.t_float { return '(${expr_str}) != 0.0' }
+		else { return 'rt.is_true(${expr_str})' }
+	}
 }
 
 fn (t Transpiler) binop_native_symbol(node_type string) string {
@@ -1841,7 +1851,16 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			var_node := node.var or { panic('ArrayDimFetch missing var') }
 			var_type := t.get_expr_type(*var_node)
 			var_str := t.visit_expr(*var_node)
-			is_native_arr := (var_type.is_native_list || var_type.is_native_map) && (t.native_params[var_node.name] || t.native_vars[var_node.name] || t.native_arr_vars[var_node.name] || var_node.name.ends_with('_mutated') || var_node.name.ends_with('_shadow'))
+			mut is_native_arr := false
+			if var_type.is_native_list || var_type.is_native_map {
+				mut base_name := var_node.name
+				if base_name.ends_with('_shadow') {
+					base_name = base_name.all_before_last('_shadow')
+				} else if base_name.ends_with('_mutated') {
+					base_name = base_name.all_before_last('_mutated')
+				}
+				is_native_arr = t.native_params[base_name] || t.native_vars[base_name] || t.native_arr_vars[base_name]
+			}
 			if is_native_arr {
 				if dim_node := node.dim {
 					dim_str := t.visit_expr_native(*dim_node)
