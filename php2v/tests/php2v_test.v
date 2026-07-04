@@ -322,6 +322,14 @@ fn test_transpiler_end_to_end() {
 			'var_arr << \'<option>\' + var_val.str() + \'</option>\'',
 			'return rt.create_array_from_list_string(var_arr)',
 		]
+		// 42: 包装变量调用 strlen, trim 等内置函数的安全拆箱
+		'42_strlen_safety.php': [
+			'mut var_val := var_val_arg',
+			'var_val = rt.new_string(\'hello\')',
+			'if (rt.new_string(var_val.str())).str().len > 0 {',
+			'var_val = rt.new_string((rt.new_string(var_val.str())).str().trim_space())',
+			'return (rt.new_string(var_val.str())).str()',
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址

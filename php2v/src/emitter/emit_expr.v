@@ -1392,7 +1392,15 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			
 			v_var := t.get_v_var_name(var_name)
 			var_type := t.inferred_types[v_var] or { t.inferred_types[var_name] or { VarType{ tag: .t_unknown } } }
-			if var_type.is_scalar() {
+			
+			mut is_native := false
+			if t.current_func_name == '' {
+				is_native = var_type.is_scalar()
+			} else {
+				is_native = t.native_params[var_name] || t.native_vars[v_var]
+			}
+
+			if is_native {
 				expr_typ := t.get_expr_type(*expr_node)
 				mut expr_str := t.visit_expr_native(*expr_node)
 				if !expr_typ.is_scalar() {

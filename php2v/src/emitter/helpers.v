@@ -169,6 +169,22 @@ pub fn (mut t Transpiler) compile_expr(node ast.AstNode, ctx ExprCtx) string {
 			return code
 		}
 		.native {
+			if node.node_type == ast.node_expr_variable {
+				var_name := t.var_aliases[node.name] or { node.name }
+				v_var := t.get_v_var_name(node.name)
+				arg_type := t.inferred_types[v_var] or { t.inferred_types[var_name] or { VarType{ tag: .t_unknown } } }
+				
+				mut is_native := false
+				if t.current_func_name == '' {
+					is_native = arg_type.is_scalar()
+				} else {
+					is_native = t.native_params[node.name] || t.native_vars[v_var]
+				}
+				
+				if arg_type.is_scalar() && !is_native {
+					return unbox_expr(t.visit_expr(node), arg_type)
+				}
+			}
 			return t.visit_expr_native(node)
 		}
 	}

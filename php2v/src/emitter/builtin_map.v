@@ -155,7 +155,26 @@ pub fn (mut t Transpiler) try_builtin_mapping(name string, args []string, arg_no
 pub fn (mut t Transpiler) compile_builtin_arg(node ast.AstNode) string {
 	typ := t.get_expr_type(node)
 	if typ.tag == .t_string {
-		return t.visit_expr_native(node)
+		if node.node_type == ast.node_expr_variable {
+			var_name := t.var_aliases[node.name] or { node.name }
+			v_var := t.get_v_var_name(node.name)
+			
+			mut is_native := false
+			if t.current_func_name == '' {
+				decl_type := t.inferred_types[v_var] or { t.inferred_types[var_name] or { VarType{ tag: .t_unknown } } }
+				is_native = decl_type.is_scalar()
+			} else {
+				is_native = t.native_params[node.name] || t.native_vars[v_var]
+			}
+			
+			if is_native {
+				return t.visit_expr_native(node)
+			}
+		} else {
+			return t.visit_expr_native(node)
+		}
+		raw := t.visit_expr(node)
+		return '(${raw}).str()'
 	}
 	return '${t.compile_arg_simple(node)}.to_string()'
 }
