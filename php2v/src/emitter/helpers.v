@@ -28,11 +28,10 @@ pub fn (t Transpiler) box_expr(code string, typ VarType) string {
 		php_name := code.all_after('var_')
 		mut found := false
 		if t.current_func_name != '' {
-			if func_vars := t.func_var_types[t.current_func_name] {
-				if php_name in func_vars {
-					real_typ = func_vars[php_name] or { typ }
-					found = true
-				}
+			lookup_key := '${t.current_func_name}::${php_name}'
+			if lookup_key in t.inferred_types {
+				real_typ = t.inferred_types[lookup_key] or { typ }
+				found = true
 			}
 		}
 		if !found && php_name in t.inferred_types {

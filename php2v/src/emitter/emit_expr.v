@@ -1761,7 +1761,15 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			var_str := t.visit_expr(*var_node)
 			mut is_native_arr := false
 			if var_type.is_native_list || var_type.is_native_map {
-				is_native_arr = t.native_params[var_node.name] || t.native_vars[var_node.name] || t.native_arr_vars[var_node.name]
+				mut check_name := var_node.name
+				if alias := t.var_aliases[var_node.name] {
+					if alias.ends_with('_mutated') {
+						check_name = '${var_node.name}_mutated'
+					} else if alias.ends_with('_shadow') {
+						check_name = '${var_node.name}_shadow'
+					}
+				}
+				is_native_arr = t.native_params[check_name] || t.native_vars[check_name] || t.native_arr_vars[check_name]
 			}
 			if is_native_arr {
 				if dim_node := node.dim {
