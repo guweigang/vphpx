@@ -22,9 +22,15 @@ pub fn escape_double_quoted(s string) string {
 // ---- 装箱 / 拆箱 ----
 
 // box_expr 将原生 V 表达式包装为 rt.PhpVal
-pub fn box_expr(code string, typ VarType) string {
-	if typ.is_native_list {
-		elem_func := match typ.element_type_tag {
+pub fn (t Transpiler) box_expr(code string, typ VarType) string {
+	mut real_typ := typ
+	if code.starts_with('var_') {
+		if code in t.inferred_types {
+			real_typ = t.inferred_types[code] or { typ }
+		}
+	}
+	if real_typ.is_native_list {
+		elem_func := match real_typ.element_type_tag {
 			.t_int { 'create_array_from_list_int' }
 			.t_float { 'create_array_from_list_float' }
 			.t_string { 'create_array_from_list_string' }
@@ -34,8 +40,8 @@ pub fn box_expr(code string, typ VarType) string {
 		if code.starts_with('rt.' + elem_func) { return code }
 		return 'rt.' + elem_func + '(${code})'
 	}
-	if typ.is_native_map {
-		elem_func := match typ.element_type_tag {
+	if real_typ.is_native_map {
+		elem_func := match real_typ.element_type_tag {
 			.t_int { 'create_array_from_native_map_int' }
 			.t_float { 'create_array_from_native_map_float' }
 			.t_string { 'create_array_from_native_map_string' }
@@ -45,14 +51,14 @@ pub fn box_expr(code string, typ VarType) string {
 		if code.starts_with('rt.' + elem_func) { return code }
 		return 'rt.' + elem_func + '(${code})'
 	}
-	if typ.class_name.len > 0 || typ.tag == .t_object {
+	if real_typ.class_name.len > 0 || real_typ.tag == .t_object {
 		if code.starts_with('rt.new_object') || code.starts_with('rt.new_null') {
 			return code
 		}
-		cls := if typ.class_name.len > 0 { typ.class_name } else { 'WP_Error' }
+		cls := if real_typ.class_name.len > 0 { real_typ.class_name } else { 'WP_Error' }
 		return "rt.new_object('${cls}', []string{}, ${code})"
 	}
-	match typ.tag {
+	match real_typ.tag {
 		.t_int {
 			if code.starts_with('rt.new_int(') { return code }
 			return 'rt.new_int(${code})'
@@ -78,7 +84,7 @@ pub fn box_expr(code string, typ VarType) string {
 }
 
 // unbox_expr 将 rt.PhpVal 表达式转换为原生 V 类型
-pub fn unbox_expr(code string, typ VarType) string {
+pub fn (t Transpiler) unbox_expr(code string, typ VarType) string {
 	match typ.tag {
 		.t_int { return '(${code}).to_i64()' }
 		.t_float { return '(${code}).to_f64()' }
@@ -151,7 +157,7 @@ pub fn (mut t Transpiler) compile_expr(node ast.AstNode, ctx ExprCtx) string {
 			if node_type == ast.node_expr_unary_minus || node_type == ast.node_expr_unary_plus {
 				expr_type := t.get_expr_type(node)
 				if expr_type.tag == .t_int || expr_type.tag == .t_float {
-					return box_expr(code, expr_type)
+					return t.box_expr(code, expr_type)
 				}
 			}
 			// scalar int/float 字面量（如 1, 2.0）在部分路径下由 visit_expr 返回 native，
@@ -182,7 +188,7 @@ pub fn (mut t Transpiler) compile_expr(node ast.AstNode, ctx ExprCtx) string {
 				}
 				
 				if arg_type.is_scalar() && !is_native {
-					return unbox_expr(t.visit_expr(node), arg_type)
+					return t.unbox_expr(t.visit_expr(node), arg_type)
 				}
 			}
 			return t.visit_expr_native(node)
@@ -212,11 +218,11 @@ pub fn (mut t Transpiler) compile_arg(arg_node ast.AstNode, target_type VarType)
 		if target_type.tag == .t_object {
 			prefix = 'mut '
 		}
-		return CallArgResult{ code: prefix + unbox_expr(raw, target_type), typ: arg_type }
+		return CallArgResult{ code: prefix + t.unbox_expr(raw, target_type), typ: arg_type }
 	} else if !target_is_native && arg_is_native {
 		// 目标是包装，源是原生 → 装箱
 		native_val := t.compile_expr(arg_node, .native)
-		return CallArgResult{ code: box_expr(native_val, arg_type), typ: arg_type }
+		return CallArgResult{ code: t.box_expr(native_val, arg_type), typ: arg_type }
 	} else {
 		// 目标是包装，源是包装 → 直接传递，变量需 .dup()
 		code := t.compile_expr(arg_node, .boxed)
@@ -244,7 +250,7 @@ pub fn (mut t Transpiler) compile_arg_simple(arg_node ast.AstNode) string {
 	// 注意：只在代码不以 'rt.' 开头时装箱，避免对已是 PhpVal 的表达式重复装箱
 	arg_type := t.get_expr_type(arg_node)
 	if arg_type.is_scalar() && !code.starts_with('rt.') {
-		return box_expr(code, arg_type)
+		return t.box_expr(code, arg_type)
 	}
 	return t.dup_if_needed(code, arg_node)
 }

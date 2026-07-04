@@ -343,7 +343,7 @@ fn (mut t Transpiler) visit_expr_native_impl(node ast.AstNode) string {
 			// 闭包体内引用被捕获的原生变量：需要装箱为 PhpVal
 			if t.is_in_closure_body {
 				if cap_type := t.closure_captured_natives[var_name] {
-					boxed := box_expr('var_${var_name}', cap_type)
+					boxed := t.box_expr('var_${var_name}', cap_type)
 					t.last_expr_type = VarType{ tag: .t_unknown }
 					return boxed
 				}
@@ -1106,7 +1106,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			
 			v_var := t.get_v_var_name(node.name)
 			if typ.is_scalar() {
-				return box_expr(v_var, typ)
+				return t.box_expr(v_var, typ)
 			}
 			return v_var
 		}
@@ -1249,7 +1249,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 									if src_type.is_scalar() {
 										rhs = t.visit_expr_native(*expr_node)
 									} else {
-										rhs = unbox_expr(t.visit_expr(*expr_node), prop_type)
+										rhs = t.unbox_expr(t.visit_expr(*expr_node), prop_type)
 									}
 								} else {
 									rhs = t.visit_expr_native(*expr_node)
@@ -1412,7 +1412,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				expr_typ := t.get_expr_type(*expr_node)
 				mut expr_str := t.visit_expr_native(*expr_node)
 				if !expr_typ.is_scalar() {
-					expr_str = unbox_expr(expr_str, var_type)
+					expr_str = t.unbox_expr(expr_str, var_type)
 				}
 				if t.scope.has_var(var_name) {
 					t.pre_stmts << '${v_var} = ${expr_str}'
@@ -1447,7 +1447,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				
 				expr_typ := t.get_expr_type(*expr_node)
 				if expr_typ.is_scalar() || expr_typ.is_native_list || expr_typ.is_native_map {
-					expr_str = box_expr(expr_str, expr_typ)
+					expr_str = t.box_expr(expr_str, expr_typ)
 				}
 				
 				// P10: 仅为被原地修改的变量生成复制
@@ -1564,7 +1564,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				// 如果返回值是原生标量，需要装箱为 PhpVal（因为调用上下文通常需要 PhpVal）
 				if ret_type.is_scalar() {
 					call_expr := '${func_v_name(func_name)}(${arg_strs.join(", ")})'
-					return box_expr(call_expr, ret_type)
+					return t.box_expr(call_expr, ret_type)
 				}
 				return '${func_v_name(func_name)}(${arg_strs.join(", ")})'
 			}
@@ -1847,7 +1847,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 					dim_str := t.visit_expr_native(*dim_node)
 					elem_type := VarType{ tag: var_type.element_type_tag }
 					t.last_expr_type = elem_type
-					return box_expr('${var_str}[${dim_str}]', elem_type)
+					return t.box_expr('${var_str}[${dim_str}]', elem_type)
 				} else {
 					panic('ArrayDimFetch missing dim in read context')
 				}
@@ -1857,7 +1857,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				// array_get 接受 rt.PhpKey（即 rt.PhpVal）参数
 				// native int/float/string 字面量需要先装箱为 PhpVal
 				dim_str := if dim_typ.is_scalar() {
-					box_expr(t.visit_expr_native(*dim_node), dim_typ)
+					t.box_expr(t.visit_expr_native(*dim_node), dim_typ)
 				} else {
 					t.visit_expr(*dim_node)
 				}
@@ -2496,7 +2496,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 					} else if target_is_native && !arg_is_native {
 						// 实参是 PhpVal，目标期望原生类型 → 拆箱
 						raw := t.compile_expr(*arg_val, .boxed)
-						unboxed := unbox_expr(raw, target_type)
+						unboxed := t.unbox_expr(raw, target_type)
 						arg_str = prefix + unboxed
 						formal_type = target_type.to_v_type()
 						call_expr = prefix + 'arg_${i}'

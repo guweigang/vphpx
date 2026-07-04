@@ -608,9 +608,9 @@ fn (mut t Transpiler) generate_dispatchers() {
 					}
 
 					if target_type.is_scalar() {
-						processed_arg = unbox_expr(raw_arg, target_type)
+						processed_arg = t.unbox_expr(raw_arg, target_type)
 					} else if target_type.is_object() {
-						processed_arg = unbox_expr(raw_arg, target_type)
+						processed_arg = t.unbox_expr(raw_arg, target_type)
 						is_obj = true
 					} else {
 						processed_arg = raw_arg
@@ -741,7 +741,7 @@ fn (mut t Transpiler) generate_dispatchers() {
 				prop_type := t.get_class_prop_type(cls.name, prop)
 				field_path := t.prop_field_path(cls.name, prop)
 				if prop_type.is_scalar() {
-					unboxed := unbox_expr('val', prop_type)
+					unboxed := t.unbox_expr('val', prop_type)
 					t.write_line('\'${prop}\' { this.${field_path} = ${unboxed}; return true }')
 				} else {
 					t.write_line('\'${prop}\' { this.${field_path} = val; return true }')

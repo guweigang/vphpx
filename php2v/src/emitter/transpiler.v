@@ -774,12 +774,12 @@ pub fn (t Transpiler) get_v_var_name(php_var_name string) string {
 		return t.var_aliases[php_var_name] or { '' }
 	}
 	if php_var_name in t.reassigned_params {
-		return 'var_${php_var_name}'
+		return 'var_' + php_var_name.to_lower()
 	}
 	if php_var_name in t.native_params || php_var_name in t.native_vars {
 		return php_var_name
 	}
-	return 'var_${php_var_name}'
+	return 'var_' + php_var_name.to_lower()
 }
 
 // scan_custom_functions 递归扫描并登记所有自定义函数（支持 if/foreach 嵌套）
@@ -916,7 +916,7 @@ fn (mut t Transpiler) generate_registry_initializers() {
 				arg_expr := 'if args.len > ${idx} { args[${idx}] } else { rt.new_null() }'
 				mut unboxed_expr := ''
 				if ptype.is_scalar() {
-					unboxed_expr = unbox_expr(arg_expr, ptype)
+					unboxed_expr = t.unbox_expr(arg_expr, ptype)
 				} else {
 					unboxed_expr = arg_expr
 				}
@@ -931,7 +931,7 @@ fn (mut t Transpiler) generate_registry_initializers() {
 				lines << "\t\t${call_stmt}"
 				lines << "\t\treturn rt.new_null()"
 			} else if ret_type.is_scalar() {
-				boxed := box_expr(call_stmt, ret_type)
+				boxed := t.box_expr(call_stmt, ret_type)
 				lines << "\t\treturn ${boxed}"
 			} else {
 				lines << "\t\treturn ${call_stmt}"
@@ -966,7 +966,7 @@ fn (mut t Transpiler) generate_registry_initializers() {
 						arg_expr := 'if args.len > ${param_idx} { args[${param_idx}] } else { rt.new_null() }'
 						mut unboxed_expr := ''
 						if ptype.is_scalar() {
-							unboxed_expr = unbox_expr(arg_expr, ptype)
+							unboxed_expr = t.unbox_expr(arg_expr, ptype)
 						} else {
 							unboxed_expr = arg_expr
 						}
