@@ -1853,13 +1853,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			var_str := t.visit_expr(*var_node)
 			mut is_native_arr := false
 			if var_type.is_native_list || var_type.is_native_map {
-				mut base_name := var_node.name
-				if base_name.ends_with('_shadow') {
-					base_name = base_name.all_before_last('_shadow')
-				} else if base_name.ends_with('_mutated') {
-					base_name = base_name.all_before_last('_mutated')
-				}
-				is_native_arr = t.native_params[base_name] || t.native_vars[base_name] || t.native_arr_vars[base_name]
+				is_native_arr = t.native_params[var_node.name] || t.native_vars[var_node.name] || t.native_arr_vars[var_node.name]
 			}
 			if is_native_arr {
 				if dim_node := node.dim {
