@@ -623,11 +623,8 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 			v_type := t.inferred_types[v_var] or { t.inferred_types[v] or { VarType{ tag: .t_unknown } } }
 			if t.native_params[v] {
 				t.write_line('mut ${v_var} := ${v}')
-			} else if v_type.is_native_list {
-				t.write_line('mut ${v_var} := []rt.PhpVal{}')
-				t.native_arr_vars[v] = true
-			} else if v_type.is_native_map {
-				t.write_line('mut ${v_var} := map[string]rt.PhpVal{}')
+			} else if v_type.is_native_list || v_type.is_native_map {
+				t.write_line('mut ${v_var} := ' + t.get_empty_literal(v_type))
 				t.native_arr_vars[v] = true
 			} else if v_type.is_scalar() {
 				match v_type.tag {
@@ -652,11 +649,8 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 			// 如果变量是原生参数（如 $user_id → user_id bool），用参数值初始化
 			if t.native_params[v] {
 				t.write_line('mut ${v_var} := ${v}')
-			} else if v_type.is_native_list {
-				t.write_line('mut ${v_var} := []rt.PhpVal{}')
-				t.native_arr_vars[v] = true
-			} else if v_type.is_native_map {
-				t.write_line('mut ${v_var} := map[string]rt.PhpVal{}')
+			} else if v_type.is_native_list || v_type.is_native_map {
+				t.write_line('mut ${v_var} := ' + t.get_empty_literal(v_type))
 				t.native_arr_vars[v] = true
 			} else if v_type.is_scalar() {
 				match v_type.tag {

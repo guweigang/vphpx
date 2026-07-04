@@ -23,6 +23,28 @@ pub fn escape_double_quoted(s string) string {
 
 // box_expr 将原生 V 表达式包装为 rt.PhpVal
 pub fn box_expr(code string, typ VarType) string {
+	if typ.is_native_list {
+		elem_func := match typ.element_type_tag {
+			.t_int { 'create_array_from_list_int' }
+			.t_float { 'create_array_from_list_float' }
+			.t_string { 'create_array_from_list_string' }
+			.t_bool { 'create_array_from_list_bool' }
+			else { 'create_array_from_list' }
+		}
+		if code.starts_with('rt.' + elem_func) { return code }
+		return 'rt.' + elem_func + '(${code})'
+	}
+	if typ.is_native_map {
+		elem_func := match typ.element_type_tag {
+			.t_int { 'create_array_from_native_map_int' }
+			.t_float { 'create_array_from_native_map_float' }
+			.t_string { 'create_array_from_native_map_string' }
+			.t_bool { 'create_array_from_native_map_bool' }
+			else { 'create_array_from_native_map' }
+		}
+		if code.starts_with('rt.' + elem_func) { return code }
+		return 'rt.' + elem_func + '(${code})'
+	}
 	if typ.class_name.len > 0 || typ.tag == .t_object {
 		if code.starts_with('rt.new_object') || code.starts_with('rt.new_null') {
 			return code
@@ -157,8 +179,8 @@ pub fn (mut t Transpiler) compile_expr(node ast.AstNode, ctx ExprCtx) string {
 // 根据源类型和目标类型决定装箱/拆箱策略
 pub fn (mut t Transpiler) compile_arg(arg_node ast.AstNode, target_type VarType) CallArgResult {
 	arg_type := t.get_expr_type(arg_node)
-	target_is_native := target_type.is_scalar() || target_type.class_name.len > 0
-	arg_is_native := arg_type.is_scalar() || arg_type.class_name.len > 0
+	target_is_native := target_type.is_scalar() || target_type.class_name.len > 0 || target_type.is_native_list || target_type.is_native_map
+	arg_is_native := arg_type.is_scalar() || arg_type.class_name.len > 0 || arg_type.is_native_list || arg_type.is_native_map
 	
 	if target_is_native && arg_is_native {
 		// 目标是原生，源也是原生 → 直接传递

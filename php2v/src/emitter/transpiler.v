@@ -986,9 +986,6 @@ fn (mut t Transpiler) generate_registry_initializers() {
 			lines << "\t})"
 		}
 	}
-
-
-
 	lines << '}'
 	lines << ''
 	lines << 'fn init() {'
@@ -998,5 +995,30 @@ fn (mut t Transpiler) generate_registry_initializers() {
 
 	t.func_out.writeln(lines.join('\n'))
 }
+
+pub fn (t Transpiler) get_empty_literal(typ VarType) string {
+	if typ.is_native_list {
+		elem := match typ.element_type_tag {
+			.t_int { 'i64' }
+			.t_float { 'f64' }
+			.t_string { 'string' }
+			.t_bool { 'bool' }
+			else { 'rt.PhpVal' }
+		}
+		return '[]' + elem + '{}'
+	}
+	if typ.is_native_map {
+		elem := match typ.element_type_tag {
+			.t_int { 'i64' }
+			.t_float { 'f64' }
+			.t_string { 'string' }
+			.t_bool { 'bool' }
+			else { 'rt.PhpVal' }
+		}
+		return 'map[string]' + elem + '{}'
+	}
+	return 'rt.new_null()'
+}
+
 
 

@@ -315,6 +315,13 @@ fn test_transpiler_end_to_end() {
 			'fn test_mysql2date(format string, var_var_date rt.PhpVal) rt.PhpVal {',
 			'return test_wp_date(rt.new_string(format), var_var_date.clone())',
 		]
+		// 41: 原生列表空字面量类型自适应及追加标量类型一致
+		'41_array_append.php': [
+			'mut var_arr := []string{}',
+			'var_arr = []string{}',
+			'var_arr << \'<option>\' + var_val.str() + \'</option>\'',
+			'return rt.create_array_from_list_string(var_arr)',
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址

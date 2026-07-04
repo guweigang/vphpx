@@ -369,10 +369,8 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 			t.write_indent()
 			v_var := t.get_v_var_name(v)
 			v_type := t.inferred_types[v_var] or { t.inferred_types[v] or { VarType{ tag: .t_unknown } } }
-			if v_type.is_native_list {
-				t.write_line('mut ${v_var} := []rt.PhpVal{}')
-			} else if v_type.is_native_map {
-				t.write_line('mut ${v_var} := map[string]rt.PhpVal{}')
+			if v_type.is_native_list || v_type.is_native_map {
+				t.write_line('mut ${v_var} := ' + t.get_empty_literal(v_type))
 			} else if v_type.is_scalar() {
 				match v_type.tag {
 					.t_int { t.write_line('mut ${v_var} := i64(0)') }

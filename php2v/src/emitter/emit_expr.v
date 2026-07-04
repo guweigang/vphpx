@@ -1186,10 +1186,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 					if arr_var_type.element_type_tag != .t_unknown {
 						val_str = t.visit_expr_native(*expr_node)
 					} else {
-						val_str = t.visit_expr(*expr_node)
-						if expr_node.node_type == ast.node_expr_variable {
-							val_str += t.dup_suffix_for_var(expr_node.name)
-						}
+						val_str = t.compile_arg_simple(*expr_node)
 					}
 					
 					if dim_node := var_node.dim {
@@ -1757,7 +1754,14 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				}
 				t.last_expr_type = arr_type
 				if elem_strs.len == 0 {
-					ret_code = '[]rt.PhpVal{}'
+					elem := match arr_type.element_type_tag {
+						.t_int { 'i64' }
+						.t_float { 'f64' }
+						.t_string { 'string' }
+						.t_bool { 'bool' }
+						else { 'rt.PhpVal' }
+					}
+					ret_code = '[]' + elem + '{}'
 				} else {
 					ret_code = '[${elem_strs.join(", ")}]'
 				}
@@ -1778,7 +1782,14 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				}
 				t.last_expr_type = arr_type
 				if pair_strs.len == 0 {
-					ret_code = 'map[string]rt.PhpVal{}'
+					elem := match arr_type.element_type_tag {
+						.t_int { 'i64' }
+						.t_float { 'f64' }
+						.t_string { 'string' }
+						.t_bool { 'bool' }
+						else { 'rt.PhpVal' }
+					}
+					ret_code = 'map[string]' + elem + '{}'
 				} else {
 					ret_code = '{ ${pair_strs.join(", ")} }'
 				}

@@ -311,6 +311,50 @@ pub fn create_array_from_list(vals []PhpVal) PhpVal {
 	return create_array(items)
 }
 
+pub fn create_array_from_list_string(vals []string) PhpVal {
+	mut items := []ArrayItem{}
+	for val in vals {
+		items << ArrayItem{
+			key: none
+			val: new_string(val)
+		}
+	}
+	return create_array(items)
+}
+
+pub fn create_array_from_list_int(vals []i64) PhpVal {
+	mut items := []ArrayItem{}
+	for val in vals {
+		items << ArrayItem{
+			key: none
+			val: new_int(val)
+		}
+	}
+	return create_array(items)
+}
+
+pub fn create_array_from_list_float(vals []f64) PhpVal {
+	mut items := []ArrayItem{}
+	for val in vals {
+		items << ArrayItem{
+			key: none
+			val: new_float(val)
+		}
+	}
+	return create_array(items)
+}
+
+pub fn create_array_from_list_bool(vals []bool) PhpVal {
+	mut items := []ArrayItem{}
+	for val in vals {
+		items << ArrayItem{
+			key: none
+			val: new_bool(val)
+		}
+	}
+	return create_array(items)
+}
+
 // create_array_from_native_map 将 V 原生 map[string]PhpVal 转为 PHP 数组 PhpVal
 pub fn create_array_from_native_map(m map[string]PhpVal) PhpVal {
 	mut items := []ArrayItem{}
@@ -318,6 +362,50 @@ pub fn create_array_from_native_map(m map[string]PhpVal) PhpVal {
 		items << ArrayItem{
 			key: PhpKey(key)
 			val: val
+		}
+	}
+	return create_array(items)
+}
+
+pub fn create_array_from_native_map_string(m map[string]string) PhpVal {
+	mut items := []ArrayItem{}
+	for key, val in m {
+		items << ArrayItem{
+			key: PhpKey(key)
+			val: new_string(val)
+		}
+	}
+	return create_array(items)
+}
+
+pub fn create_array_from_native_map_int(m map[string]i64) PhpVal {
+	mut items := []ArrayItem{}
+	for key, val in m {
+		items << ArrayItem{
+			key: PhpKey(key)
+			val: new_int(val)
+		}
+	}
+	return create_array(items)
+}
+
+pub fn create_array_from_native_map_float(m map[string]f64) PhpVal {
+	mut items := []ArrayItem{}
+	for key, val in m {
+		items << ArrayItem{
+			key: PhpKey(key)
+			val: new_float(val)
+		}
+	}
+	return create_array(items)
+}
+
+pub fn create_array_from_native_map_bool(m map[string]bool) PhpVal {
+	mut items := []ArrayItem{}
+	for key, val in m {
+		items << ArrayItem{
+			key: PhpKey(key)
+			val: new_bool(val)
 		}
 	}
 	return create_array(items)
