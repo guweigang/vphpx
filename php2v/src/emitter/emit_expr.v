@@ -825,7 +825,16 @@ fn (mut t Transpiler) emit_native_condition(node ast.AstNode) string {
 					checks << '${arr_str}.array_isset(${dim_str})'
 				} else {
 					var_str := t.visit_expr(v)
-					checks << '!(${var_str}).is_null()'
+					mut is_native := false
+					if v.node_type == ast.node_expr_variable {
+						v_type := t.get_expr_type(v)
+						is_native = v_type.is_scalar() || v_type.is_native_list || v_type.is_native_map
+					}
+					if is_native {
+						checks << 'true'
+					} else {
+						checks << '!(${var_str}).is_null()'
+					}
 				}
 			}
 			if checks.len == 0 {
@@ -1056,7 +1065,16 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 					checks << '${arr_str}.array_isset(${dim_str})'
 				} else {
 					var_str := t.visit_expr(v)
-					checks << '!(${var_str}).is_null()'
+					mut is_native := false
+					if v.node_type == ast.node_expr_variable {
+						v_type := t.get_expr_type(v)
+						is_native = v_type.is_scalar() || v_type.is_native_list || v_type.is_native_map
+					}
+					if is_native {
+						checks << 'true'
+					} else {
+						checks << '!(${var_str}).is_null()'
+					}
 				}
 			}
 			if checks.len == 0 {

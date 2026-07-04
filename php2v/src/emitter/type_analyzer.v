@@ -1363,6 +1363,10 @@ fn (mut t Transpiler) infer_single_func_types(node ast.AstNode) {
 		}
 		if all_same && first in [.t_int, .t_float, .t_bool, .t_string] {
 			local_var_types[vname] = VarType{ tag: first }
+		} else if first == .t_array {
+			if t.inferred_types[vname].tag == .t_array {
+				local_var_types[vname] = t.inferred_types[vname]
+			}
 		}
 	}
 	t.func_var_types[func_name] = local_var_types.clone()
