@@ -336,6 +336,13 @@ fn test_transpiler_end_to_end() {
 			'var_util = create_wp_list_util()',
 			'return var_util.filter(var_args.clone())',
 		]
+		// 44: 返回 void 的自定义函数在动态注册适配器时的代码生成正确性
+		'44_void_func_register.php': [
+			'fn test_void_func(var_msg rt.PhpVal) {',
+			'rt.register_func(\'test_void_func\', fn (args []rt.PhpVal) rt.PhpVal {',
+			'test_void_func(arg_0)',
+			'return rt.new_null()',
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址

@@ -927,7 +927,10 @@ fn (mut t Transpiler) generate_registry_initializers() {
 			// 2. 调用原生函数并装箱返回值
 			ret_type := t.func_return_types[fname] or { VarType{ tag: .t_unknown } }
 			call_stmt := '${func_v_name(fname)}(${pass_args.join(", ")})'
-			if ret_type.is_scalar() {
+			if ret_type.tag == .t_void {
+				lines << "\t\t${call_stmt}"
+				lines << "\t\treturn rt.new_null()"
+			} else if ret_type.is_scalar() {
 				boxed := box_expr(call_stmt, ret_type)
 				lines << "\t\treturn ${boxed}"
 			} else {
