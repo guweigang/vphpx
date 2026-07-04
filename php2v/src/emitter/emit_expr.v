@@ -1951,6 +1951,11 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 		ast.node_expr_method_call {
 			obj_var_node := node.var or { panic('MethodCall missing var') }
 			obj_var_name := t.visit_expr(*obj_var_node)
+			obj_type := t.get_expr_type(*obj_var_node)
+			mut boxed_obj := obj_var_name
+			if obj_type.is_object() || obj_type.class_name.len > 0 {
+				boxed_obj = t.box_expr(obj_var_name, obj_type)
+			}
 
 			if name_expr_node := node.name_expr {
 				t.needs_method_dispatch = true
@@ -1961,9 +1966,9 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				}
 				method_name_expr := t.visit_expr_native(*name_expr_node)
 				if arg_strs.len == 0 {
-					return 'rt.call_method(${obj_var_name}, ${method_name_expr}, []rt.PhpVal{})'
+					return 'rt.call_method(${boxed_obj}, ${method_name_expr}, []rt.PhpVal{})'
 				} else {
-					return 'rt.call_method(${obj_var_name}, ${method_name_expr}, [${arg_strs.join(", ")}])'
+					return 'rt.call_method(${boxed_obj}, ${method_name_expr}, [${arg_strs.join(", ")}])'
 				}
 			}
 
@@ -1971,12 +1976,12 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 
 			// P7 Task 10: 已知对象类型 → 直接调用方法（无 IIFE）
 			if obj_var_node.node_type == ast.node_expr_variable {
-				mut obj_type := t.inferred_types[obj_var_node.name] or { VarType{ tag: .t_unknown } }
+				mut known_obj_type := t.inferred_types[obj_var_node.name] or { VarType{ tag: .t_unknown } }
 				if obj_var_node.name == 'this' {
-					obj_type = VarType{ tag: .t_object, class_name: t.current_class }
+					known_obj_type = VarType{ tag: .t_object, class_name: t.current_class }
 				}
-				if obj_type.is_object() {
-					return t.compile_method_call_known(node, obj_type, *obj_var_node, obj_var_name)
+				if known_obj_type.is_object() {
+					return t.compile_method_call_known(node, known_obj_type, *obj_var_node, obj_var_name)
 				}
 			}
 			// 回退: call_method
@@ -1987,9 +1992,9 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				arg_strs << t.compile_arg_simple(*arg_val)
 			}
 			if arg_strs.len == 0 {
-				return 'rt.call_method(${obj_var_name}, \'${method_name}\', []rt.PhpVal{})'
+				return 'rt.call_method(${boxed_obj}, \'${method_name}\', []rt.PhpVal{})'
 			} else {
-				return 'rt.call_method(${obj_var_name}, \'${method_name}\', [${arg_strs.join(", ")}])'
+				return 'rt.call_method(${boxed_obj}, \'${method_name}\', [${arg_strs.join(", ")}])'
 			}
 		}
 		ast.node_expr_property_fetch {
@@ -2615,7 +2620,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			}
 			expr_str := t.visit_expr(*expr_node)
 			t.last_expr_type = VarType{ tag: .t_int }
-			return 'rt.new_int((${expr_str}).to_i64())'
+			return '(${expr_str}).to_i64()'
 		}
 		ast.node_expr_cast_double {
 			expr_node := node.expr or { panic('CastDouble missing expr') }
@@ -2635,7 +2640,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			}
 			expr_str := t.visit_expr(*expr_node)
 			t.last_expr_type = VarType{ tag: .t_float }
-			return 'rt.new_float((${expr_str}).to_f64())'
+			return '(${expr_str}).to_f64()'
 		}
 		ast.node_expr_cast_string {
 			expr_node := node.expr or { panic('CastString missing expr') }

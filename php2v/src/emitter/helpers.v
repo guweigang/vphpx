@@ -25,8 +25,9 @@ pub fn escape_double_quoted(s string) string {
 pub fn (t Transpiler) box_expr(code string, typ VarType) string {
 	mut real_typ := typ
 	if code.starts_with('var_') {
-		if code in t.inferred_types {
-			real_typ = t.inferred_types[code] or { typ }
+		php_name := code.all_after('var_')
+		if php_name in t.inferred_types {
+			real_typ = t.inferred_types[php_name] or { typ }
 		}
 	}
 	if real_typ.is_native_list {

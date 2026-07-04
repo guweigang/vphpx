@@ -807,6 +807,11 @@ pub fn (mut t Transpiler) scan_custom_functions(nodes []ast.AstNode) {
 		if node.stmts.len > 0 {
 			t.scan_custom_functions(node.stmts)
 		}
+		if node.node_type == ast.node_stmt_if {
+			for elseif_node in node.elseifs {
+				t.scan_custom_functions(elseif_node.stmts)
+			}
+		}
 		if else_node := node.@else {
 			t.scan_custom_functions(else_node.stmts)
 		}

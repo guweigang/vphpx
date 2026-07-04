@@ -49,7 +49,11 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 					is_bare_iife := expr_str.starts_with('iife_result_') && !expr_str.contains(' ') && !expr_str.contains('(') && !expr_str.contains('.')
 					if !is_bare_var && !is_bare_iife && !is_bare_mutated {
 						// 函数/方法调用等返回值的表达式作为语句时，需 _ = 丢弃返回值
-						if t.expr_produces_value(*expr) {
+						mut produces_val := t.expr_produces_value(*expr)
+						if expr_str.contains('.array_push(') || expr_str.contains('.array_set(') {
+							produces_val = false
+						}
+						if produces_val {
 							lines := expr_str.split('\n')
 							for i, line in lines {
 								t.write_indent()
@@ -532,6 +536,13 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 	old_scope := t.scope
 	t.scope = VarScope.new()
 
+	old_native_vars := t.native_vars.clone()
+	old_native_params := t.native_params.clone()
+	old_native_arr_vars := t.native_arr_vars.clone()
+	t.native_vars.clear()
+	t.native_params.clear()
+	t.native_arr_vars.clear()
+
 	// 设置当前函数上下文
 	old_func_name := t.current_func_name
 	old_func_ret := t.current_func_ret_type
@@ -717,6 +728,10 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 	t.is_in_func = false
 	t.indent = old_indent
 	t.scope = old_scope
+
+	t.native_vars = old_native_vars.clone()
+	t.native_params = old_native_params.clone()
+	t.native_arr_vars = old_native_arr_vars.clone()
 }
 
 fn (mut t Transpiler) visit_return(node ast.AstNode) {
