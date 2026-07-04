@@ -633,6 +633,9 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 					.t_bool { t.write_line('mut ${v_var} := false') }
 					else { t.write_line("mut ${v_var} := ''") }
 				}
+			} else if v_type.is_object() {
+				cls := if v_type.class_name.len > 0 { v_type.class_name } else { 'WP_Error' }
+				t.write_line('mut ${v_var} := &Class_${cls}(unsafe { nil })')
 			} else {
 				t.write_line('mut ${v_var} := rt.new_null()')
 			}
@@ -659,6 +662,9 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 					.t_bool { t.write_line('mut ${v_var} := false') }
 					else { t.write_line("mut ${v_var} := ''") }
 				}
+			} else if v_type.is_object() {
+				cls := if v_type.class_name.len > 0 { v_type.class_name } else { 'WP_Error' }
+				t.write_line('mut ${v_var} := &Class_${cls}(unsafe { nil })')
 			} else {
 				t.write_line('mut ${v_var} := rt.new_null()')
 			}
@@ -776,7 +782,8 @@ fn (mut t Transpiler) visit_return(node ast.AstNode) {
 				}
 			}
 		}
-		result := t.compile_arg(*expr, t.current_func_ret_type)
+		real_ret := if t.current_func_ret_type.is_scalar() { t.current_func_ret_type } else { VarType{ tag: .t_unknown } }
+		result := t.compile_arg(*expr, real_ret)
 		t.write_indent()
 		t.write_line('return ${result.code}')
 	} else {

@@ -330,6 +330,12 @@ fn test_transpiler_end_to_end() {
 			'var_val = rt.new_string((rt.new_string(var_val.str())).str().trim_space())',
 			'return (rt.new_string(var_val.str())).str()',
 		]
+		// 43: 自定义类实例做局部变量时的空指针声明与原生方法直接调用
+		'43_object_predeclare.php': [
+			'mut var_util := &Class_WP_List_Util(unsafe { nil })',
+			'var_util = create_wp_list_util()',
+			'return var_util.filter(var_args.clone())',
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址
