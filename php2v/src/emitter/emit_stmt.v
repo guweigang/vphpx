@@ -240,7 +240,23 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 						}
 					} else {
 						t.write_indent()
-						t.write_line('mut ${v_var} := rt.new_null()')
+						v_type := t.inferred_types[v_var] or { VarType{ tag: .t_unknown } }
+						if v_type.is_object() {
+							cls := if v_type.class_name.len > 0 { v_type.class_name } else { 'WP_Error' }
+							t.write_line('mut ${v_var} := &Class_${cls}(unsafe { nil })')
+						} else if v_type.is_native_list || v_type.is_native_map {
+							t.write_line('mut ${v_var} := ' + t.get_empty_literal(v_type))
+						} else if v_type.is_scalar() {
+							t.native_vars[v_var] = true
+							match v_type.tag {
+								.t_int { t.write_line('mut ${v_var} := i64(0)') }
+								.t_float { t.write_line('mut ${v_var} := f64(0.0)') }
+								.t_bool { t.write_line('mut ${v_var} := false') }
+								else { t.write_line("mut ${v_var} := ''") }
+							}
+						} else {
+							t.write_line('mut ${v_var} := rt.new_null()')
+						}
 					}
 				}
 			}
@@ -627,6 +643,7 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 				t.write_line('mut ${v_var} := ' + t.get_empty_literal(v_type))
 				t.native_arr_vars[v] = true
 			} else if v_type.is_scalar() {
+				t.native_vars[v_var] = true
 				match v_type.tag {
 					.t_int { t.write_line('mut ${v_var} := i64(0)') }
 					.t_float { t.write_line('mut ${v_var} := f64(0.0)') }
@@ -656,6 +673,7 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 				t.write_line('mut ${v_var} := ' + t.get_empty_literal(v_type))
 				t.native_arr_vars[v] = true
 			} else if v_type.is_scalar() {
+				t.native_vars[v_var] = true
 				match v_type.tag {
 					.t_int { t.write_line('mut ${v_var} := i64(0)') }
 					.t_float { t.write_line('mut ${v_var} := f64(0.0)') }

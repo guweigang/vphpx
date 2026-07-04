@@ -193,20 +193,20 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 			t.write_indent()
 			v_var := t.get_v_var_name(v)
 			v_type := t.inferred_types[v_var] or { t.inferred_types[v] or { VarType{ tag: .t_unknown } } }
-			if v_type.is_native_list {
-				t.write_line('mut ${v_var} := []rt.PhpVal{}')
-				// 登记为原生数组变量，确保 ArrayDimFetch 使用 [] 索引而非 .array_get()
-				t.native_arr_vars[v] = true
-			} else if v_type.is_native_map {
-				t.write_line('mut ${v_var} := map[string]rt.PhpVal{}')
+			if v_type.is_native_list || v_type.is_native_map {
+				t.write_line('mut ${v_var} := ' + t.get_empty_literal(v_type))
 				t.native_arr_vars[v] = true
 			} else if v_type.is_scalar() {
+				t.native_vars[v_var] = true
 				match v_type.tag {
 					.t_int { t.write_line('mut ${v_var} := i64(0)') }
 					.t_float { t.write_line('mut ${v_var} := f64(0.0)') }
 					.t_bool { t.write_line('mut ${v_var} := false') }
 					else { t.write_line("mut ${v_var} := ''") }
 				}
+			} else if v_type.is_object() {
+				cls := if v_type.class_name.len > 0 { v_type.class_name } else { 'WP_Error' }
+				t.write_line('mut ${v_var} := &Class_${cls}(unsafe { nil })')
 			} else {
 				t.write_line('mut ${v_var} := rt.new_null()')
 			}
@@ -475,6 +475,9 @@ fn func_v_name(name string) string {
 	lower_name := name.to_lower()
 	if is_v_keyword(lower_name) || lower_name in ['print', 'println', 'error', 'panic', 'exit'] {
 		return 'func_${lower_name}'
+	}
+	if lower_name.starts_with('_') {
+		return 'f' + lower_name
 	}
 	return lower_name
 }

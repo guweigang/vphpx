@@ -73,8 +73,10 @@ fn (mut t Transpiler) get_expr_type(node ast.AstNode) VarType {
 		}
 		ast.node_expr_array {
 			ptr := voidptr(node.items.data)
-			if cached := t.type_cache[ptr] {
-				return cached
+			if node.items.len > 0 {
+				if cached := t.type_cache[ptr] {
+					return cached
+				}
 			}
 			mut is_list := true
 			mut is_map := true
@@ -120,7 +122,9 @@ fn (mut t Transpiler) get_expr_type(node ast.AstNode) VarType {
 			} else if is_map && !is_list && !force_non_native {
 				ret_val = VarType{ tag: .t_array, is_native_map: true, element_type_tag: elem_tag }
 			}
-			t.type_cache[ptr] = ret_val
+			if node.items.len > 0 {
+				t.type_cache[ptr] = ret_val
+			}
 			return ret_val
 		}
 		ast.node_expr_funccall {
@@ -695,7 +699,9 @@ fn (mut t Transpiler) emit_comparison(node ast.AstNode, native_op string, rt_fn 
 		return 'rt.new_bool(${l_code} ${native_op} ${r_code})'
 	}
 	t.last_expr_type = VarType{ tag: .t_unknown }
-	return '${rt_fn}(${t.visit_expr(*left)}, ${t.visit_expr(*right)})'
+	l_res := t.compile_arg(*left, VarType{ tag: .t_unknown })
+	r_res := t.compile_arg(*right, VarType{ tag: .t_unknown })
+	return '${rt_fn}(${l_res.code}, ${r_res.code})'
 }
 
 // emit_bitwise 位运算优化：操作数均为 int 时生成原生 V 位运算符，否则回退 rt 函数
@@ -711,7 +717,9 @@ fn (mut t Transpiler) emit_bitwise(node ast.AstNode, native_op string, rt_fn str
 		return '${l_code} ${native_op} ${r_code}'
 	}
 	t.last_expr_type = VarType{ tag: .t_unknown }
-	return '${rt_fn}(${t.visit_expr(*left)}, ${t.visit_expr(*right)})'
+	l_res := t.compile_arg(*left, VarType{ tag: .t_unknown })
+	r_res := t.compile_arg(*right, VarType{ tag: .t_unknown })
+	return '${rt_fn}(${l_res.code}, ${r_res.code})'
 }
 
 // emit_native_condition 对条件表达式尝试生成 V 原生布尔条件
@@ -1740,9 +1748,11 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 
 		ast.node_expr_array {
 			ptr := voidptr(node.items.data)
-			if cached := t.codegen_cache[ptr] {
-				t.last_expr_type = cached.typ
-				return cached.code
+			if node.items.len > 0 {
+				if cached := t.codegen_cache[ptr] {
+					t.last_expr_type = cached.typ
+					return cached.code
+				}
 			}
 			mut arr_type := t.get_expr_type(node)
 			if t.expected_type.is_native_list || t.expected_type.is_native_map {
@@ -1822,7 +1832,9 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 					ret_code = 'rt.create_array([${item_strs.join(", ")}])'
 				}
 			}
-			t.codegen_cache[ptr] = CodegenCacheEntry{ code: ret_code, typ: t.last_expr_type }
+			if node.items.len > 0 {
+				t.codegen_cache[ptr] = CodegenCacheEntry{ code: ret_code, typ: t.last_expr_type }
+			}
 			return ret_code
 		}
 		ast.node_expr_array_dim_fetch {

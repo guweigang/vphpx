@@ -372,6 +372,7 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 			if v_type.is_native_list || v_type.is_native_map {
 				t.write_line('mut ${v_var} := ' + t.get_empty_literal(v_type))
 			} else if v_type.is_scalar() {
+				t.native_vars[v_var] = true
 				match v_type.tag {
 					.t_int { t.write_line('mut ${v_var} := i64(0)') }
 					.t_float { t.write_line('mut ${v_var} := f64(0.0)') }
