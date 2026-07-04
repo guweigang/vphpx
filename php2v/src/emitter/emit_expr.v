@@ -554,18 +554,8 @@ fn (mut t Transpiler) visit_expr_native_impl(node ast.AstNode) string {
 			// 用户自定义函数有原生返回值时，直接返回原生调用
 			if ret_type := t.func_return_types[func_name] {
 				if ret_type.is_scalar() {
-					mut arg_strs := []string{}
-					for arg in node.args {
-						arg_val := arg.expr or { panic('Arg missing expr') }
-						arg_typ := t.get_expr_type(arg_val)
-						if arg_typ.is_scalar() {
-							arg_strs << t.visit_expr_native(arg_val)
-						} else {
-							arg_strs << t.compile_arg_simple(arg_val)
-						}
-					}
 					t.last_expr_type = ret_type
-					return '${func_v_name(func_name)}(${arg_strs.join(", ")})'
+					return t.emit_custom_funccall(node, func_name, ret_type, true)
 				}
 			}
 			return t.visit_expr(node)
@@ -1492,91 +1482,9 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			is_custom := func_name in t.func_param_types || func_name in t.func_return_types || t.custom_functions[func_name]
 			
 			if is_custom {
-				mut arg_strs := []string{}
-				mut info := ?MethodInfo(none)
-				if func_name in t.custom_function_infos {
-					info = t.custom_function_infos[func_name]
-				}
-				
-				if func_info := info {
-					if func_info.is_variadic {
-						var_idx := func_info.param_count - 1
-						for i := 0; i < var_idx; i++ {
-							if i < node.args.len {
-								arg := node.args[i]
-								arg_val := arg.expr or { panic('Arg missing expr') }
-								arg_typ := t.get_expr_type(arg_val)
-								param_name := func_info.param_names[i]
-								param_type := t.get_func_param_type(func_name, param_name)
-								
-								if param_type.is_scalar() && arg_typ.is_scalar() {
-									arg_strs << t.visit_expr_native(arg_val)
-								} else {
-									arg_strs << t.compile_arg_simple(arg_val)
-								}
-							} else {
-								param_name := func_info.param_names[i]
-								param_type := t.get_func_param_type(func_name, param_name)
-								if param_type.is_scalar() {
-									match param_type.tag {
-										.t_int { arg_strs << '0' }
-										.t_float { arg_strs << '0.0' }
-										.t_bool { arg_strs << 'false' }
-										else { arg_strs << "''" }
-									}
-								} else {
-									arg_strs << 'rt.new_null()'
-								}
-							}
-						}
-						for i := var_idx; i < node.args.len; i++ {
-							arg := node.args[i]
-							arg_val := arg.expr or { panic('Arg missing expr') }
-							arg_strs << t.compile_arg_simple(arg_val)
-						}
-					} else {
-						for i := 0; i < func_info.param_count; i++ {
-							if i < node.args.len {
-								arg := node.args[i]
-								arg_val := arg.expr or { panic('Arg missing expr') }
-								arg_typ := t.get_expr_type(arg_val)
-								param_name := func_info.param_names[i]
-								param_type := t.get_func_param_type(func_name, param_name)
-								if param_type.is_scalar() && arg_typ.is_scalar() {
-									arg_strs << t.visit_expr_native(arg_val)
-								} else {
-									arg_strs << t.compile_arg_simple(arg_val)
-								}
-							} else {
-								param_name := func_info.param_names[i]
-								param_type := t.get_func_param_type(func_name, param_name)
-								if param_type.is_scalar() {
-									match param_type.tag {
-										.t_int { arg_strs << '0' }
-										.t_float { arg_strs << '0.0' }
-										.t_bool { arg_strs << 'false' }
-										else { arg_strs << "''" }
-									}
-								} else {
-									arg_strs << 'rt.new_null()'
-								}
-							}
-						}
-					}
-				} else {
-					for arg in node.args {
-						arg_val := arg.expr or { panic('Arg missing expr') }
-						arg_strs << t.compile_arg_simple(arg_val)
-					}
-				}
 				ret_type := t.func_return_types[func_name] or { VarType{ tag: .t_unknown } }
 				t.last_expr_type = ret_type
-				// 如果返回值是原生标量，需要装箱为 PhpVal（因为调用上下文通常需要 PhpVal）
-				if ret_type.is_scalar() {
-					call_expr := '${func_v_name(func_name)}(${arg_strs.join(", ")})'
-					return t.box_expr(call_expr, ret_type)
-				}
-				return '${func_v_name(func_name)}(${arg_strs.join(", ")})'
+				return t.emit_custom_funccall(node, func_name, ret_type, false)
 			}
 			
 			// 回退：标准 PhpVal 参数处理

@@ -281,3 +281,89 @@ pub fn (mut t Transpiler) produces_native_string(node ast.AstNode) bool {
 		}
 	}
 }
+
+pub fn (mut t Transpiler) emit_custom_funccall(node ast.AstNode, func_name string, ret_type VarType, is_native bool) string {
+	mut arg_strs := []string{}
+	mut info := ?MethodInfo(none)
+	if func_name in t.custom_function_infos {
+		info = t.custom_function_infos[func_name]
+	}
+	
+	if func_info := info {
+		if func_info.is_variadic {
+			var_idx := func_info.param_count - 1
+			for i := 0; i < var_idx; i++ {
+				if i < node.args.len {
+					arg := node.args[i]
+					arg_val := arg.expr or { panic('Arg missing expr') }
+					arg_typ := t.get_expr_type(arg_val)
+					param_name := func_info.param_names[i]
+					param_type := t.get_func_param_type(func_name, param_name)
+					
+					if param_type.is_scalar() && arg_typ.is_scalar() {
+						arg_strs << t.visit_expr_native(arg_val)
+					} else {
+						arg_strs << t.compile_arg_simple(arg_val)
+					}
+				} else {
+					param_name := func_info.param_names[i]
+					param_type := t.get_func_param_type(func_name, param_name)
+					if param_type.is_scalar() {
+						match param_type.tag {
+							.t_int { arg_strs << '0' }
+							.t_float { arg_strs << '0.0' }
+							.t_bool { arg_strs << 'false' }
+							else { arg_strs << "''" }
+						}
+					} else {
+						arg_strs << 'rt.new_null()'
+					}
+				}
+			}
+			for i := var_idx; i < node.args.len; i++ {
+				arg := node.args[i]
+				arg_val := arg.expr or { panic('Arg missing expr') }
+				arg_strs << t.compile_arg_simple(arg_val)
+			}
+		} else {
+			for i := 0; i < func_info.param_count; i++ {
+				if i < node.args.len {
+					arg := node.args[i]
+					arg_val := arg.expr or { panic('Arg missing expr') }
+					arg_typ := t.get_expr_type(arg_val)
+					param_name := func_info.param_names[i]
+					param_type := t.get_func_param_type(func_name, param_name)
+					if param_type.is_scalar() && arg_typ.is_scalar() {
+						arg_strs << t.visit_expr_native(arg_val)
+					} else {
+						arg_strs << t.compile_arg_simple(arg_val)
+					}
+				} else {
+					param_name := func_info.param_names[i]
+					param_type := t.get_func_param_type(func_name, param_name)
+					if param_type.is_scalar() {
+						match param_type.tag {
+							.t_int { arg_strs << '0' }
+							.t_float { arg_strs << '0.0' }
+							.t_bool { arg_strs << 'false' }
+							else { arg_strs << "''" }
+						}
+					} else {
+						arg_strs << 'rt.new_null()'
+					}
+				}
+			}
+		}
+	} else {
+		for arg in node.args {
+			arg_val := arg.expr or { panic('Arg missing expr') }
+			arg_strs << t.compile_arg_simple(arg_val)
+		}
+	}
+	
+	call_expr := '${func_v_name(func_name)}(${arg_strs.join(", ")})'
+	if !is_native && ret_type.is_scalar() {
+		return t.box_expr(call_expr, ret_type)
+	}
+	return call_expr
+}
