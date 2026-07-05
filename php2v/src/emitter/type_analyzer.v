@@ -1339,6 +1339,8 @@ fn (mut t Transpiler) infer_single_func_types(node ast.AstNode) {
 		if resolved_tag != .t_unknown {
 			param_types[param_name] = VarType{ tag: resolved_tag }
 			var_assign_types[param_name] << resolved_tag
+		} else {
+			param_types[param_name] = VarType{ tag: .t_unknown }
 		}
 	}
 

@@ -19,20 +19,20 @@ fn (mut t Transpiler) get_expr_type(node ast.AstNode) VarType {
 					}
 				}
 			}
-			// 先检查函数参数类型
+			// 先检查局部变量类型（反应重写与赋值推导）
 			if t.current_func_name != '' {
-				if t.current_func_name in t.func_param_types {
-					if params := t.func_param_types[t.current_func_name] {
-						if node.name in params {
-							return params[node.name] or { VarType{ tag: .t_unknown } }
-						}
-					}
-				}
-
 				if t.current_func_name in t.func_var_types {
 					if vars := t.func_var_types[t.current_func_name] {
 						if node.name in vars {
 							return vars[node.name] or { VarType{ tag: .t_unknown } }
+						}
+					}
+				}
+
+				if t.current_func_name in t.func_param_types {
+					if params := t.func_param_types[t.current_func_name] {
+						if node.name in params {
+							return params[node.name] or { VarType{ tag: .t_unknown } }
 						}
 					}
 				}
@@ -619,7 +619,7 @@ fn (mut t Transpiler) visit_expr_native_impl(node ast.AstNode) string {
 			var_node := node.var or { panic('ArrayDimFetch missing var') }
 			var_type := t.get_expr_type(*var_node)
 			var_str := t.visit_expr(*var_node)
-			is_native_arr := var_type.is_native_list || var_type.is_native_map
+			is_native_arr := t.is_native_array_or_map(*var_node)
 			if is_native_arr {
 				if dim_node := node.dim {
 					dim_str := t.visit_expr_native(*dim_node)
@@ -681,7 +681,12 @@ fn (mut t Transpiler) emit_binop(node ast.AstNode, native_op string, rt_fn strin
 		return '${l_code} ${native_op} ${r_code}'
 	}
 	t.last_expr_type = VarType{ tag: .t_unknown }
-	return '${rt_fn}(${t.visit_expr(*left)}, ${t.visit_expr(*right)})'
+	old_expect := t.expected_type
+	t.expected_type = VarType{ tag: .t_unknown }
+	l_str := t.visit_expr(*left)
+	r_str := t.visit_expr(*right)
+	t.expected_type = old_expect
+	return '${rt_fn}(${l_str}, ${r_str})'
 }
 
 // emit_comparison 比较运算优化：操作数类型可知时生成原生 V 比较，否则回退 rt 函数
@@ -829,8 +834,19 @@ fn (mut t Transpiler) emit_native_condition(node ast.AstNode) string {
 					arr_node := v.var or { return '' }
 					dim_node := v.dim or { return '' }
 					arr_str := t.visit_expr(*arr_node)
-					dim_str := t.visit_expr(*dim_node)
-					checks << '${arr_str}.array_isset(${dim_str})'
+					if t.is_native_array_or_map(*arr_node) {
+						arr_typ := t.get_expr_type(*arr_node)
+						dim_typ := t.get_expr_type(*dim_node)
+						dim_native_str := if dim_typ.is_scalar() { t.visit_expr_native(*dim_node) } else { t.visit_expr(*dim_node) }
+						if arr_typ.is_native_map {
+							checks << '${dim_native_str} in ${arr_str}'
+						} else {
+							checks << '${dim_native_str} >= 0 && ${dim_native_str} < ${arr_str}.len'
+						}
+					} else {
+						dim_str := t.visit_expr(*dim_node)
+						checks << '${arr_str}.array_isset(${dim_str})'
+					}
 				} else {
 					var_str := t.visit_expr(v)
 					mut is_native := false
@@ -1069,8 +1085,19 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 					arr_node := v.var or { panic('ArrayDimFetch missing var') }
 					dim_node := v.dim or { panic('ArrayDimFetch missing dim') }
 					arr_str := t.visit_expr(*arr_node)
-					dim_str := t.visit_expr(*dim_node)
-					checks << '${arr_str}.array_isset(${dim_str})'
+					if t.is_native_array_or_map(*arr_node) {
+						arr_typ := t.get_expr_type(*arr_node)
+						dim_typ := t.get_expr_type(*dim_node)
+						dim_native_str := if dim_typ.is_scalar() { t.visit_expr_native(*dim_node) } else { t.visit_expr(*dim_node) }
+						if arr_typ.is_native_map {
+							checks << '${dim_native_str} in ${arr_str}'
+						} else {
+							checks << '${dim_native_str} >= 0 && ${dim_native_str} < ${arr_str}.len'
+						}
+					} else {
+						dim_str := t.visit_expr(*dim_node)
+						checks << '${arr_str}.array_isset(${dim_str})'
+					}
 				} else {
 					var_str := t.visit_expr(v)
 					mut is_native := false
@@ -1214,7 +1241,7 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				
 				expr_node := node.expr or { panic('Assign node missing expr') }
 				
-				is_native_arr := arr_var_type.is_native_list || arr_var_type.is_native_map
+				is_native_arr := t.is_native_array_or_map(*arr_var_node)
 				if is_native_arr {
 					mut val_str := ''
 					if arr_var_type.element_type_tag != .t_unknown {
@@ -1709,24 +1736,56 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				for item in node.items {
 					val_node := item.expr or { continue }
 					val_typ := t.get_expr_type(*val_node)
+					mut code := ''
 					if val_typ.tag == arr_type.element_type_tag {
-						elem_strs << t.visit_expr_native(*val_node)
+						code = t.visit_expr_native(*val_node)
 					} else {
-						elem_strs << t.visit_expr(*val_node)
+						old_expect := t.expected_type
+						t.expected_type = VarType{ tag: arr_type.element_type_tag }
+						code = t.visit_expr(*val_node)
+						t.expected_type = old_expect
 					}
+					
+					// 物理防线：剥除多余的装箱外壳
+					if arr_type.element_type_tag == .t_string && code.starts_with('rt.new_string(') && code.ends_with(')') {
+						code = code['rt.new_string('.len .. code.len - 1]
+					} else if arr_type.element_type_tag == .t_int && code.starts_with('rt.new_int(') && code.ends_with(')') {
+						code = code['rt.new_int('.len .. code.len - 1]
+					} else if arr_type.element_type_tag == .t_float && code.starts_with('rt.new_float(') && code.ends_with(')') {
+						code = code['rt.new_float('.len .. code.len - 1]
+					} else if arr_type.element_type_tag == .t_bool && code.starts_with('rt.new_bool(') && code.ends_with(')') {
+						code = code['rt.new_bool('.len .. code.len - 1]
+					}
+					elem_strs << code
 				}
-				t.last_expr_type = arr_type
-				if elem_strs.len == 0 {
-					elem := match arr_type.element_type_tag {
-						.t_int { 'i64' }
-						.t_float { 'f64' }
-						.t_string { 'string' }
-						.t_bool { 'bool' }
-						else { 'rt.PhpVal' }
+				
+				mut has_boxed := arr_type.element_type_tag == .t_unknown
+				
+				if has_boxed {
+					elem_strs.clear()
+					for item in node.items {
+						val_node := item.expr or { continue }
+						old_expect := t.expected_type
+						t.expected_type = VarType{ tag: .t_unknown }
+						elem_strs << t.visit_expr(*val_node)
+						t.expected_type = old_expect
 					}
-					ret_code = '[]' + elem + '{}'
-				} else {
+					t.last_expr_type = VarType{ tag: .t_array, is_native_list: true, element_type_tag: .t_unknown }
 					ret_code = '[${elem_strs.join(", ")}]'
+				} else {
+					t.last_expr_type = arr_type
+					if elem_strs.len == 0 {
+						elem := match arr_type.element_type_tag {
+							.t_int { 'i64' }
+							.t_float { 'f64' }
+							.t_string { 'string' }
+							.t_bool { 'bool' }
+							else { 'rt.PhpVal' }
+						}
+						ret_code = '[]' + elem + '{}'
+					} else {
+						ret_code = '[${elem_strs.join(", ")}]'
+					}
 				}
 			} else if arr_type.is_native_map {
 				mut pair_strs := []string{}
@@ -1739,22 +1798,55 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 					if val_typ.tag == arr_type.element_type_tag {
 						val_str = t.visit_expr_native(*val_node)
 					} else {
+						old_expect := t.expected_type
+						t.expected_type = VarType{ tag: arr_type.element_type_tag }
 						val_str = t.visit_expr(*val_node)
+						t.expected_type = old_expect
+					}
+					
+					// 物理防线：剥除多余的装箱外壳
+					if arr_type.element_type_tag == .t_string && val_str.starts_with('rt.new_string(') && val_str.ends_with(')') {
+						val_str = val_str['rt.new_string('.len .. val_str.len - 1]
+					} else if arr_type.element_type_tag == .t_int && val_str.starts_with('rt.new_int(') && val_str.ends_with(')') {
+						val_str = val_str['rt.new_int('.len .. val_str.len - 1]
+					} else if arr_type.element_type_tag == .t_float && val_str.starts_with('rt.new_float(') && val_str.ends_with(')') {
+						val_str = val_str['rt.new_float('.len .. val_str.len - 1]
+					} else if arr_type.element_type_tag == .t_bool && val_str.starts_with('rt.new_bool(') && val_str.ends_with(')') {
+						val_str = val_str['rt.new_bool('.len .. val_str.len - 1]
 					}
 					pair_strs << '${key_str}: ${val_str}'
 				}
-				t.last_expr_type = arr_type
-				if pair_strs.len == 0 {
-					elem := match arr_type.element_type_tag {
-						.t_int { 'i64' }
-						.t_float { 'f64' }
-						.t_string { 'string' }
-						.t_bool { 'bool' }
-						else { 'rt.PhpVal' }
+				
+				mut has_boxed := arr_type.element_type_tag == .t_unknown
+				
+				if has_boxed {
+					pair_strs.clear()
+					for item in node.items {
+						key_node := item.key or { continue }
+						val_node := item.expr or { continue }
+						key_str := t.visit_expr_native(*key_node)
+						old_expect := t.expected_type
+						t.expected_type = VarType{ tag: .t_unknown }
+						val_str := t.visit_expr(*val_node)
+						t.expected_type = old_expect
+						pair_strs << '${key_str}: ${val_str}'
 					}
-					ret_code = 'map[string]' + elem + '{}'
-				} else {
+					t.last_expr_type = VarType{ tag: .t_array, is_native_map: true, element_type_tag: .t_unknown }
 					ret_code = '{ ${pair_strs.join(", ")} }'
+				} else {
+					t.last_expr_type = arr_type
+					if pair_strs.len == 0 {
+						elem := match arr_type.element_type_tag {
+							.t_int { 'i64' }
+							.t_float { 'f64' }
+							.t_string { 'string' }
+							.t_bool { 'bool' }
+							else { 'rt.PhpVal' }
+						}
+						ret_code = 'map[string]' + elem + '{}'
+					} else {
+						ret_code = '{ ${pair_strs.join(", ")} }'
+					}
 				}
 			} else {
 				mut item_strs := []string{}
@@ -1776,6 +1868,13 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				} else {
 					ret_code = 'rt.create_array([${item_strs.join(", ")}])'
 				}
+			}
+			if arr_type.is_native_list && !t.expected_type.is_native_list && !t.expected_type.is_native_map {
+				ret_code = 'rt.create_array_from_list(${ret_code})'
+				t.last_expr_type = VarType{ tag: .t_unknown }
+			} else if arr_type.is_native_map && !t.expected_type.is_native_list && !t.expected_type.is_native_map {
+				ret_code = 'rt.create_array_from_native_map(${ret_code})'
+				t.last_expr_type = VarType{ tag: .t_unknown }
 			}
 			if node.items.len > 0 {
 				t.codegen_cache[ptr] = CodegenCacheEntry{ code: ret_code, typ: t.last_expr_type }
@@ -2667,15 +2766,26 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 		ast.node_expr_unary_minus {
 			expr_node := node.expr or { panic('UnaryMinus missing expr') }
 			expr_type := t.get_expr_type(*expr_node)
+			
+			mut is_expect_native := t.expected_type.is_scalar() || t.expected_type.tag == .t_void
+			
 			if expr_type.tag == .t_int {
 				t.last_expr_type = VarType{ tag: .t_int }
 				e_code := t.visit_expr_native(*expr_node)
-				return '-${e_code}'
+				if is_expect_native {
+					return '-${e_code}'
+				} else {
+					return 'rt.new_int(-${e_code})'
+				}
 			}
 			if expr_type.tag == .t_float {
 				t.last_expr_type = VarType{ tag: .t_float }
 				e_code := t.visit_expr_native(*expr_node)
-				return '-${e_code}'
+				if is_expect_native {
+					return '-${e_code}'
+				} else {
+					return 'rt.new_float(-${e_code})'
+				}
 			}
 			expr_str := t.visit_expr(*expr_node)
 			return 'rt.sub(rt.new_int(0), ${expr_str})'
@@ -2683,8 +2793,19 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 		ast.node_expr_unary_plus {
 			expr_node := node.expr or { panic('UnaryPlus missing expr') }
 			expr_type := t.get_expr_type(*expr_node)
+			
+			mut is_expect_native := t.expected_type.is_scalar() || t.expected_type.tag == .t_void
+			
 			if expr_type.tag in [.t_int, .t_float] {
-				return t.visit_expr_native(*expr_node)
+				if is_expect_native {
+					return t.visit_expr_native(*expr_node)
+				} else {
+					if expr_type.tag == .t_int {
+						return 'rt.new_int(${t.visit_expr_native(*expr_node)})'
+					} else {
+						return 'rt.new_float(${t.visit_expr_native(*expr_node)})'
+					}
+				}
 			}
 			return t.visit_expr(*expr_node)
 		}

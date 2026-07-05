@@ -209,17 +209,21 @@ pub fn (mut t Transpiler) compile_expr(node ast.AstNode, ctx ExprCtx) string {
 // compile_arg 统一编译单个调用参数（4-way 矩阵）
 // 根据源类型和目标类型决定装箱/拆箱策略
 pub fn (mut t Transpiler) compile_arg(arg_node ast.AstNode, target_type VarType) CallArgResult {
+	old_expect := t.expected_type
+	t.expected_type = target_type
+	
 	arg_type := t.get_expr_type(arg_node)
 	target_is_native := target_type.is_scalar() || target_type.class_name.len > 0 || target_type.is_native_list || target_type.is_native_map
 	arg_is_native := arg_type.is_scalar() || arg_type.class_name.len > 0 || arg_type.is_native_list || arg_type.is_native_map
 	
+	mut res := CallArgResult{ typ: arg_type }
 	if target_is_native && arg_is_native {
 		// 目标是原生，源也是原生 → 直接传递
 		mut prefix := ''
 		if target_type.tag == .t_object {
 			prefix = 'mut '
 		}
-		return CallArgResult{ code: prefix + t.compile_expr(arg_node, .native), typ: arg_type }
+		res = CallArgResult{ code: prefix + t.compile_expr(arg_node, .native), typ: arg_type }
 	} else if target_is_native && !arg_is_native {
 		// 目标是原生，源是包装 → 拆箱
 		raw := t.compile_expr(arg_node, .boxed)
@@ -227,30 +231,45 @@ pub fn (mut t Transpiler) compile_arg(arg_node ast.AstNode, target_type VarType)
 		if target_type.tag == .t_object {
 			prefix = 'mut '
 		}
-		return CallArgResult{ code: prefix + t.unbox_expr(raw, target_type), typ: arg_type }
+		res = CallArgResult{ code: prefix + t.unbox_expr(raw, target_type), typ: arg_type }
 	} else if !target_is_native && arg_is_native {
 		// 目标是包装，源是原生 → 装箱
 		native_val := t.compile_expr(arg_node, .native)
-		return CallArgResult{ code: t.box_expr(native_val, arg_type), typ: arg_type }
+		res = CallArgResult{ code: t.box_expr(native_val, arg_type), typ: arg_type }
 	} else {
 		// 目标是包装，源是包装 → 直接传递，变量需 .dup()
 		code := t.compile_expr(arg_node, .boxed)
-		return CallArgResult{ code: t.dup_if_needed(code, arg_node), typ: arg_type }
+		res = CallArgResult{ code: t.dup_if_needed(code, arg_node), typ: arg_type }
 	}
+	
+	t.expected_type = old_expect
+	return res
 }
 
 // compile_arg_simple 编译 PhpVal 参数（无类型推导，变量需 .dup()）
 // 用于 funccall、call_method fallback 等不需要 4-way 矩阵的场景
 pub fn (mut t Transpiler) compile_arg_simple(arg_node ast.AstNode) string {
+	old_expect := t.expected_type
+	t.expected_type = VarType{ tag: .t_unknown }
+	
 	code := t.compile_expr(arg_node, .boxed)
 	// 如果参数是原生数组/映射变量，需要包装为 PhpVal
 	if arg_node.node_type == ast.node_expr_variable {
 		v_var := t.get_v_var_name(arg_node.name)
-		typ := t.inferred_types[v_var] or { t.inferred_types[arg_node.name] or { VarType{ tag: .t_unknown } } }
+		lookup_key := if t.current_func_name != '' { '${t.current_func_name}::${arg_node.name}' } else { arg_node.name }
+		typ := t.inferred_types[v_var] or { t.inferred_types[lookup_key] or { t.inferred_types[arg_node.name] or { VarType{ tag: .t_unknown } } } }
 		if typ.is_native_list {
-			return 'rt.create_array_from_list(${code})'
+			t.expected_type = old_expect
+			match typ.element_type_tag {
+				.t_string { return 'rt.create_array_from_list_string(${code})' }
+				.t_int { return 'rt.create_array_from_list_int(${code})' }
+				.t_float { return 'rt.create_array_from_list_float(${code})' }
+				.t_bool { return 'rt.create_array_from_list_bool(${code})' }
+				else { return 'rt.create_array_from_list(${code})' }
+			}
 		}
 		if typ.is_native_map {
+			t.expected_type = old_expect
 			return 'rt.create_array_from_native_map(${code})'
 		}
 	}
@@ -258,10 +277,15 @@ pub fn (mut t Transpiler) compile_arg_simple(arg_node ast.AstNode) string {
 	// 比如：string.len + 1 → int/native → 需要 rt.new_int(...)
 	// 注意：只在代码不以 'rt.' 开头时装箱，避免对已是 PhpVal 的表达式重复装箱
 	arg_type := t.get_expr_type(arg_node)
+	mut res := code
 	if arg_type.is_scalar() && !code.starts_with('rt.') {
-		return t.box_expr(code, arg_type)
+		res = t.box_expr(code, arg_type)
+	} else {
+		res = t.dup_if_needed(code, arg_node)
 	}
-	return t.dup_if_needed(code, arg_node)
+	
+	t.expected_type = old_expect
+	return res
 }
 
 
@@ -366,3 +390,26 @@ pub fn (mut t Transpiler) emit_custom_funccall(node ast.AstNode, func_name strin
 	}
 	return call_expr
 }
+
+// is_native_array_or_map 判定一个节点在 V 语言生成的实际代码中是否是原生数组/映射。
+// 即使推导类型是 native_list/map，但如果是以 rt.PhpVal 传入的函数参数，其在 V 代码里依然不是原生数组。
+pub fn (t Transpiler) is_native_array_or_map(node ast.AstNode) bool {
+	if node.node_type != ast.node_expr_variable {
+		return false
+	}
+	name := node.name
+	if t.current_func_name != '' {
+		if t.current_func_name in t.func_param_types {
+			if params := t.func_param_types[t.current_func_name] {
+				if name in params {
+					return false
+				}
+			}
+		}
+	}
+	v_var := t.get_v_var_name(name)
+	lookup_key := if t.current_func_name != '' { '${t.current_func_name}::${name}' } else { name }
+	typ := t.inferred_types[v_var] or { t.inferred_types[lookup_key] or { t.inferred_types[name] or { VarType{ tag: .t_unknown } } } }
+	return typ.is_native_list || typ.is_native_map
+}
+
