@@ -848,6 +848,10 @@ fn C.php2v_get_superglobal(name &char, len usize, retval &C.zval) int
 fn C.php2v_register_global(name &char, len usize, val &C.zval)
 fn C.php2v_instance_of(obj &C.zval, class_name &char, len usize) int
 fn C.php2v_call_method(obj &C.zval, name &char, len usize, retval &C.zval, param_count u32, params voidptr) int
+fn C.php2v_get_current_ctx() voidptr
+fn C.php2v_set_current_ctx(ctx voidptr)
+fn C.php2v_zstr_val(zstr voidptr) &char
+fn C.php2v_zstr_len(zstr voidptr) usize
 
 pub fn has_exception() bool {
 	return C.php2v_has_exception() != 0
@@ -864,6 +868,19 @@ pub fn throw_exception(ex PhpVal) {
 }
 
 pub fn get_superglobal(name string) PhpVal {
+	ctx_ptr := C.php2v_get_current_ctx()
+	if ctx_ptr != 0 {
+		ctx := &RequestContext(ctx_ptr)
+		match name {
+			'_GET' { return ctx.get_arr }
+			'_POST' { return ctx.post_arr }
+			'_SERVER' { return ctx.server_arr }
+			'_COOKIE' { return ctx.cookie_arr }
+			'_FILES' { return ctx.files_arr }
+			'_REQUEST' { return ctx.request_arr }
+			else {}
+		}
+	}
 	z := new_zval()
 	C.php2v_get_superglobal(name.str, usize(name.len), z)
 	return PhpVal{ raw: z }

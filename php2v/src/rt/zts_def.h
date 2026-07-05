@@ -44,6 +44,13 @@ static inline void php2v_refresh_request() {
 	}
 }
 
+static inline void php2v_register_thread() {
+#ifdef ZTS
+	ts_resource(0);
+	ZEND_TSRMLS_CACHE_UPDATE();
+#endif
+}
+
 __attribute__((constructor)) static void php2v_auto_embed_init() {
 	php_embed_module.php_ini_ignore = 1;
 	php_embed_module.php_ini_path_override = "/dev/null";

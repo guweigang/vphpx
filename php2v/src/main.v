@@ -24,11 +24,15 @@ fn main() {
 
 	mut output_file := ''
 	mut run_after := false
+	mut mode := 'exe'
 
 	for i := 3; i < os.args.len; i++ {
 		arg := os.args[i]
 		if arg == '-o' && i + 1 < os.args.len {
 			output_file = os.args[i + 1]
+			i++
+		} else if arg == '-mode' && i + 1 < os.args.len {
+			mode = os.args[i + 1]
 			i++
 		} else if arg == '--run' {
 			run_after = true
@@ -60,8 +64,19 @@ fn main() {
 	// 3. 转译为 V 代码
 	mut transpiler := emitter.Transpiler.new()
 	transpiler.current_file = input_file
+	transpiler.mode = mode
 	v_body := transpiler.transpile(stmts)
-	v_code := emitter.wrap_as_main(transpiler.func_out.str(), v_body, transpiler.extra_imports)
+	v_code := if mode == 'web' {
+		base_name := input_file.all_before_last('.').all_after_last('/')
+		func_name := 'run_${base_name}'
+		emitter.wrap_as_entry_script(transpiler.func_out.str(), v_body, func_name, 'main', transpiler.extra_imports)
+	} else if mode == 'lib' {
+		base_name := input_file.all_before_last('.').all_after_last('/')
+		init_func_name := 'init_${base_name}'
+		emitter.wrap_as_lib(transpiler.func_out.str(), v_body, init_func_name, 'main', transpiler.extra_imports)
+	} else {
+		emitter.wrap_as_main(transpiler.func_out.str(), v_body, transpiler.extra_imports)
+	}
 
 	// 4. 写入输出文件
 	os.write_file(output_file, v_code) or {

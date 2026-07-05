@@ -232,4 +232,28 @@ static inline void php2v_set_registry(void* p) {
     g_php2v_registry = p;
 }
 
+#ifdef _MSC_VER
+static __declspec(thread) void* php2v_current_ctx = NULL;
+#else
+static __thread void* php2v_current_ctx = NULL;
+#endif
+
+static inline void php2v_set_current_ctx(void* ctx) {
+    php2v_current_ctx = ctx;
+}
+
+static inline void* php2v_get_current_ctx() {
+    return php2v_current_ctx;
+}
+
+static inline const char* php2v_zstr_val(void* zstr) {
+    if (!zstr) return "";
+    return ((zend_string*)zstr)->val;
+}
+
+static inline size_t php2v_zstr_len(void* zstr) {
+    if (!zstr) return 0;
+    return ((zend_string*)zstr)->len;
+}
+
 #endif

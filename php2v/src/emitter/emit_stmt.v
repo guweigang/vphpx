@@ -307,7 +307,7 @@ fn (mut t Transpiler) visit_echo(node ast.AstNode) {
 		if expr.node_type == ast.node_scalar_string {
 			escaped := escape_single_quoted(expr.value)
 			t.write_indent()
-			t.write_line('print(\'${escaped}\')')
+			t.write_line('rt.print_str(\'${escaped}\')')
 			continue
 		}
 		// 原生类型变量 echo 优化：直接 print，避免装箱/拆箱
@@ -315,17 +315,17 @@ fn (mut t Transpiler) visit_echo(node ast.AstNode) {
 			typ := t.inferred_types[expr.name] or { VarType{ tag: .t_unknown } }
 			if typ.tag == .t_int {
 				t.write_indent()
-				t.write_line('print(var_${expr.name}.str())')
+				t.write_line('rt.print_str(var_${expr.name}.str())')
 				continue
 			}
 			if typ.tag == .t_string {
 				t.write_indent()
-				t.write_line('print(var_${expr.name})')
+				t.write_line('rt.print_str(var_${expr.name})')
 				continue
 			}
 			if typ.tag == .t_bool {
 				t.write_indent()
-				t.write_line('print(if var_${expr.name} { \'1\' } else { \'\' })')
+				t.write_line('rt.print_str(if var_${expr.name} { \'1\' } else { \'\' })')
 				continue
 			}
 		}
@@ -334,14 +334,14 @@ fn (mut t Transpiler) visit_echo(node ast.AstNode) {
 		if expr_type.tag == .t_string {
 			native_str := t.visit_expr_native(expr)
 			t.write_indent()
-			t.write_line('print(${native_str})')
+			t.write_line('rt.print_str(${native_str})')
 			continue
 		}
 		// 原生 int 表达式 echo 优化
 		if expr_type.tag == .t_int {
 			native_int := t.visit_expr_native(expr)
 			t.write_indent()
-			t.write_line('print(${native_int}.str())')
+			t.write_line('rt.print_str(${native_int}.str())')
 			continue
 		}
 		expr_str := t.visit_expr(expr)
