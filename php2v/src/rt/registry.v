@@ -6,6 +6,7 @@ mut:
 	class_factories map[string]fn ([]PhpVal) PhpVal
 	// 静态属性表：class_name -> prop_name -> value
 	static_props    map[string]map[string]PhpVal
+	mysql_pool      voidptr
 }
 
 fn C.php2v_get_registry() voidptr
