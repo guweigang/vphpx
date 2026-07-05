@@ -73,11 +73,10 @@ pub fn (mut p MysqlPool) get_conn(host string, user string, pass string, dbname 
 	
 	db := mysql.connect(config)!
 	
-	mut conn := &MysqlConnHandle{
-		db: db
-		is_in_use: true
-		config_hash: config_hash
-	}
+	mut conn := unsafe { &MysqlConnHandle(malloc(sizeof(MysqlConnHandle))) }
+	conn.db = db
+	conn.is_in_use = true
+	conn.config_hash = config_hash
 	
 	p.conns << conn
 	return conn

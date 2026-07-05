@@ -991,6 +991,22 @@ fn (mut t Transpiler) visit_while(node ast.AstNode) {
 	for stmt in node.stmts {
 		t.visit_stmt(stmt)
 	}
+	
+	// 在循环体底部重新执行并更新 while 条件内的 assign 赋值表达式
+	if cond_node.node_type == ast.node_expr_assign {
+		left_node := cond_node.var or { panic('assign missing var') }
+		right_node := cond_node.expr or { panic('assign missing expr') }
+		old_pre := t.pre_stmts.clone()
+		t.pre_stmts.clear()
+		
+		left_str := t.visit_expr(*left_node)
+		right_str := t.visit_expr(*right_node)
+		
+		t.pre_stmts = old_pre
+		t.write_indent()
+		t.write_line('${left_str} = ${right_str}')
+	}
+	
 	t.indent--
 	t.write_indent()
 	t.write_line('}')

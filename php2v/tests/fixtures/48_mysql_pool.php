@@ -1,5 +1,5 @@
 <?php
-$link = mysqli_connect("127.0.0.1", "root", "", "test");
+$link = mysqli_connect("127.0.0.1", "root", "Abcd.1234", "test");
 if (!$link) {
     echo "Connect failed\n";
     exit(1);

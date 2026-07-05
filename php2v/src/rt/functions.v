@@ -85,31 +85,33 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 		}
 		'mysqli_query' {
 			if args.len < 2 { return new_bool(false) }
-			conn := &MysqlConnHandle(args[0].to_i64())
+			conn := unsafe { &MysqlConnHandle(voidptr(args[0].to_i64())) }
 			query_str := args[1].to_string()
 			res := conn.db.query(query_str) or {
 				eprintln('rt mysqli_query error: ${err} | SQL: ${query_str}')
 				return new_bool(false)
+			}
+			if voidptr(res.result) == unsafe { nil } {
+				return new_bool(true)
 			}
 			maps_data := res.maps()
 			mut field_names := []string{}
 			if maps_data.len > 0 {
 				field_names = maps_data[0].keys()
 			}
-			mut handle := &MysqlResultHandle{
-				maps: maps_data
-				cursor: 0
-				num_rows: int(res.n_rows())
-				num_fields: res.n_fields()
-				field_names: field_names
-			}
+			mut handle := unsafe { &MysqlResultHandle(malloc(sizeof(MysqlResultHandle))) }
+			handle.maps = maps_data
+			handle.cursor = 0
+			handle.num_rows = int(res.n_rows())
+			handle.num_fields = res.n_fields()
+			handle.field_names = field_names
 			return new_int(i64(handle))
 		}
 		'mysqli_fetch_assoc' {
 			if args.len < 1 { return new_null() }
 			val_i := args[0].to_i64()
 			if val_i == 0 { return new_null() }
-			mut handle := &MysqlResultHandle(val_i)
+			mut handle := unsafe { &MysqlResultHandle(voidptr(val_i)) }
 			if handle.cursor >= handle.maps.len {
 				return new_bool(false)
 			}
@@ -124,7 +126,7 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 			if args.len < 1 { return new_null() }
 			val_i := args[0].to_i64()
 			if val_i == 0 { return new_null() }
-			mut handle := &MysqlResultHandle(val_i)
+			mut handle := unsafe { &MysqlResultHandle(voidptr(val_i)) }
 			if handle.cursor >= handle.maps.len {
 				return new_bool(false)
 			}
@@ -147,7 +149,7 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 			if args.len < 1 { return new_int(0) }
 			val_i := args[0].to_i64()
 			if val_i == 0 { return new_int(0) }
-			handle := &MysqlResultHandle(val_i)
+			handle := unsafe { &MysqlResultHandle(voidptr(val_i)) }
 			return new_int(handle.num_rows)
 		}
 		'mysqli_free_result' {
@@ -157,7 +159,7 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 			if args.len > 0 {
 				val_i := args[0].to_i64()
 				if val_i != 0 {
-					conn := &MysqlConnHandle(val_i)
+					conn := unsafe { &MysqlConnHandle(voidptr(val_i)) }
 					mut pool := get_mysql_pool()
 					pool.put_conn(conn)
 				}
