@@ -48,12 +48,16 @@ static inline void php2v_register_thread() {
 #ifdef ZTS
 	ts_resource(0);
 	ZEND_TSRMLS_CACHE_UPDATE();
+	if (EG(vm_stack) == NULL) {
+		zend_vm_stack_init();
+	}
 #endif
 }
 
 static inline void php2v_register_sandbox_bridge();
 
 __attribute__((constructor)) static void php2v_auto_embed_init() {
+	setenv("USE_ZEND_ALLOC", "0", 1);
 	php_embed_module.php_ini_ignore = 1;
 	php_embed_module.php_ini_path_override = "/dev/null";
 #ifdef __APPLE__
