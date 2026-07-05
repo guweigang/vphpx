@@ -92,6 +92,7 @@ static inline int php2v_eval_string(const char *str, size_t len, zval *retval) {
 
 	zend_try {
 		zend_execute(op_array, retval);
+		zend_bailout();
 	} zend_catch {
 		// 捕获 bailout (exit/die/error)，安全刷新请求状态，避免 Zend 自杀
 		php2v_refresh_request();
@@ -319,6 +320,18 @@ static inline void php2v_register_sandbox_bridge() {
         {NULL, NULL, NULL, 0, 0}
     };
     zend_register_functions(NULL, funcs, NULL, MODULE_PERSISTENT);
+}
+
+static inline void php2v_exit() {
+    zend_bailout();
+}
+
+static void* php2v_last_mysql_conn = NULL;
+static inline void php2v_set_last_mysql_conn(void* conn) {
+    php2v_last_mysql_conn = conn;
+}
+static inline void* php2v_get_last_mysql_conn() {
+    return php2v_last_mysql_conn;
 }
 
 #endif

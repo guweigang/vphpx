@@ -2918,9 +2918,9 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			}
 			if expr_node := node.expr {
 				expr_str := t.visit_expr(*expr_node)
-				return 'fn () { print((${expr_str}).str()); exit(0) }()'
+				return 'fn () { print((${expr_str}).str()); C.php2v_exit() }()'
 			}
-			return 'exit(0)'
+			return 'C.php2v_exit()'
 		}
 		ast.node_expr_clone {
 			expr_node := node.expr or { panic('Clone missing expr') }

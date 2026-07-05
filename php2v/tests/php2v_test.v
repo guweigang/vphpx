@@ -14,24 +14,24 @@ fn test_transpiler_end_to_end() {
 	// 预期生成的 V 代码特征片段，用于进行高精度源码结构比对测试
 	expected_snippets := {
 		'01_echo.php': [
-			'print(\'Hello World\\n\')',
+			'rt.print_str(\'Hello World\\n\')',
 		]
 		'02_variables.php': [
 			"mut var_a := 'hello'",
 			"mut var_b := 'world\\n'",
-			'print(var_a)',
-			'print(var_b)',
+			'rt.print_str(var_a)',
+			'rt.print_str(var_b)',
 		]
 		'03_arithmetic.php': [
 			'mut var_a := 10 + 20',
 			'mut var_b := var_a - 5',
 			'mut var_c := var_b * 2',
 			'mut var_d := var_c / 5',
-			'print(var_d.str())',
+			'rt.print_str(var_d.str())',
 		]
 		'04_string_concat.php': [
 			"mut var_name := 'PHP'",
-			"print('Hello ' + var_name",
+			"rt.print_str('Hello ' + var_name",
 		]
 		'05_if_else.php': [
 			'mut var_a := 15',
@@ -50,14 +50,14 @@ fn test_transpiler_end_to_end() {
 			'fn add_five(val i64) i64 {',
 			'return val + 5',
 			'mut var_res := add_five(10)',
-			'print(var_res.str())',
+			'rt.print_str(var_res.str())',
 		]
 		'08_arrays.php': [
 			'mut var_arr := rt.create_array([rt.ArrayItem{ key: none, val: 10 },',
 			'var_arr.array_push(30)',
 			'var_arr.array_set(\'key\', \'hello\')',
 			'rt.echo_val(var_arr.array_get(rt.new_int(0)))',
-			'print(var_arr.clone().array_count().str())',
+			'rt.print_str(var_arr.clone().array_count().str())',
 		]
 		'09_foreach.php': [
 			"mut var_arr := {",
@@ -80,15 +80,15 @@ fn test_transpiler_end_to_end() {
 			'fn (mut this Class_User) getname() string {',
 			'fn create_user(name string) &Class_User {',
 			"mut var_user := create_user('Alice')",
-			'print(var_user.getname())',
+			'rt.print_str(var_user.getname())',
 			"var_user.name = 'Bob'",
 		]
 		'12_dynamic.php': [
 			"rt.call_function('eval', [rt.new_string(\"echo 'eval works\\n';\")])",
 			"mut var_md5_res := md5.hexhash('hello')",
-			'print(var_md5_res)',
+			'rt.print_str(var_md5_res)',
 			'mut var_json_res := rt.json_encode(',
-			'print(var_json_res)',
+			'rt.print_str(var_json_res)',
 		]
 		'13_closure.php': [
 			'closure_1_fn := fn [var_x] (this_ptr rt.PhpVal, args []rt.PhpVal) rt.PhpVal {',
@@ -107,13 +107,13 @@ fn test_transpiler_end_to_end() {
 			"mut var_ret := rt.include_file(var_path, '1')",
 			"rt.echo_val(var_ret)",
 			"mut var_ret2 := rt.include_file(var_path, '2')",
-			"print('once_done\\n')",
+			"rt.print_str('once_done\\n')",
 		]
 		'15_constants.php': [
 			"const global_const_app_env = 'production'",
 			"const global_const_db_port = 3306",
-			"print('ENV: ' + global_const_app_env + '\\n')",
-			"print('PORT: ' + global_const_db_port.str() + '\\n')",
+			"rt.print_str('ENV: ' + global_const_app_env + '\\n')",
+			"rt.print_str('PORT: ' + global_const_db_port.str() + '\\n')",
 			"' + @DIR + '",
 			"' + @FILE + '",
 			"' + @LINE.int().str() + '",
@@ -172,7 +172,7 @@ fn test_transpiler_end_to_end() {
 			'mut var_name := \'Alice\'',
 			'mut var_age := 20',
 			'\'Hello \${var_name}, next year you will be \${var_age.str()} years old.\'',
-			'print(var_msg',
+			'rt.print_str(var_msg',
 		]
 		'23_unset_empty.php': [
 			"var_a == ''",
@@ -186,7 +186,7 @@ fn test_transpiler_end_to_end() {
 			'match var_x {',
 			'1 {',
 			'2, 3 {',
-			'print(\'default case\\n\')',
+			'rt.print_str(\'default case\\n\')',
 		]
 		'25_match_expr.php': [
 			"mut var_y := match var_x {",
@@ -197,7 +197,7 @@ fn test_transpiler_end_to_end() {
 		'26_do_while.php': [
 			'mut var_i := 0',
 			'for {',
-			"print(var_i.str() + '\\n')",
+			"rt.print_str(var_i.str() + '\\n')",
 			'var_i += 1',
 			'if !(var_i < 3) {',
 			'break',
@@ -217,14 +217,14 @@ fn test_transpiler_end_to_end() {
 			'mut var_g := var_a >> 1',
 			'mut var_h := ~var_a',
 			'mut var_i := rt.new_int(var_a)',
-			"print('bitwise and: ' + var_c.str() + '\\n')",
-			"print('error suppress: ' + var_i.str() + '\\n')",
+			"rt.print_str('bitwise and: ' + var_c.str() + '\\n')",
+			"rt.print_str('error suppress: ' + var_i.str() + '\\n')",
 		]
 		'29_class_constants.php': [
 			'pub fn Class_User.role_admin() string {',
 			'pub fn Class_User.role_user() string {',
 			'return Class_User.role_admin()',
-			"print(Class_User.role_admin() + '\\n')",
+			"rt.print_str(Class_User.role_admin() + '\\n')",
 			'mut var_u := create_user()',
 		]
 		'30_oop_interfaces.php': [
@@ -232,7 +232,7 @@ fn test_transpiler_end_to_end() {
 			'struct Class_FileLogger {',
 			'fn (mut this Class_FileLogger) log(msg string) {',
 			'if true {',
-			'print(\'fl is Logger\\n\')',
+			'rt.print_str(\'fl is Logger\\n\')',
 			'var_fl.log(\'hello\')',
 		]
 		'31_oop_traits.php': [
@@ -248,12 +248,12 @@ fn test_transpiler_end_to_end() {
 		'33_pure_arrays.php': [
 			'mut var_list := [10, 20]',
 			'var_list << 30',
-			'print(var_list.len.str())',
+			'rt.print_str(var_list.len.str())',
 			'for var_item in var_list {',
-			'print(var_item.str())',
+			'rt.print_str(var_item.str())',
 			"mut var_map := {",
-			"print(var_map['a'])",
-			"print(var_map.len.str())",
+			"rt.print_str(var_map['a'])",
+			"rt.print_str(var_map.len.str())",
 			"for var_k, var_v in var_map {",
 		]
 		'34_wp_error.php': [

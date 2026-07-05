@@ -38,9 +38,8 @@ static inline void php2v_refresh_request() {
 #ifdef ZTS
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
-	php_request_shutdown(NULL);
-	if (php_request_startup() == FAILURE) {
-		printf("PHP2V ERROR - php_request_startup failed!\n");
+	if (EG(exception)) {
+		zend_clear_exception();
 	}
 }
 
@@ -60,6 +59,8 @@ __attribute__((constructor)) static void php2v_auto_embed_init() {
 	setenv("USE_ZEND_ALLOC", "0", 1);
 	php_embed_module.php_ini_ignore = 1;
 	php_embed_module.php_ini_path_override = "/dev/null";
+	php_embed_module.deactivate = NULL;
+	php_embed_module.flush = NULL;
 #ifdef __APPLE__
 	int argc = *_NSGetArgc();
 	char **argv = *_NSGetArgv();

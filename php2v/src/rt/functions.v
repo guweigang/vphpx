@@ -1,5 +1,8 @@
 module rt
 
+fn C.php2v_set_last_mysql_conn(conn voidptr)
+fn C.php2v_get_last_mysql_conn() voidptr
+
 // call_function 调度 PHP 函数调用
 pub fn call_function(name string, args []PhpVal) PhpVal {
 	match name {
@@ -49,6 +52,15 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 			}
 			return new_null()
 		}
+		'mysqli_report' {
+			return new_bool(true)
+		}
+		'mysqli_init' {
+			return new_bool(true)
+		}
+		'mysqli_get_server_info' {
+			return new_string('8.0.32')
+		}
 		'mysqli_connect', 'mysqli_real_connect' {
 			mut host := 'localhost'
 			mut user := ''
@@ -78,6 +90,7 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 				eprintln('rt mysqli_connect error: ${err}')
 				return new_bool(false)
 			}
+			C.php2v_set_last_mysql_conn(voidptr(conn))
 			if name == 'mysqli_real_connect' {
 				return new_bool(true)
 			}
@@ -85,7 +98,11 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 		}
 		'mysqli_query' {
 			if args.len < 2 { return new_bool(false) }
-			conn := unsafe { &MysqlConnHandle(voidptr(args[0].to_i64())) }
+			addr := args[0].to_i64()
+			mut conn := unsafe { &MysqlConnHandle(voidptr(addr)) }
+			if addr < 10000 {
+				conn = unsafe { &MysqlConnHandle(C.php2v_get_last_mysql_conn()) }
+			}
 			query_str := args[1].to_string()
 			res := conn.db.query(query_str) or {
 				eprintln('rt mysqli_query error: ${err} | SQL: ${query_str}')
@@ -159,7 +176,10 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 			if args.len > 0 {
 				val_i := args[0].to_i64()
 				if val_i != 0 {
-					conn := unsafe { &MysqlConnHandle(voidptr(val_i)) }
+					mut conn := unsafe { &MysqlConnHandle(voidptr(val_i)) }
+					if val_i < 10000 {
+						conn = unsafe { &MysqlConnHandle(C.php2v_get_last_mysql_conn()) }
+					}
 					mut pool := get_mysql_pool()
 					pool.put_conn(conn)
 				}

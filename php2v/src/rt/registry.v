@@ -139,7 +139,7 @@ pub fn register_v_helpers_to_php_interpreter() {
 		'mysqli_fetch_assoc', 'mysqli_fetch_row', 'mysqli_fetch_array',
 		'mysqli_num_rows', 'mysqli_free_result', 'mysqli_close',
 		'mysqli_real_escape_string', 'mysqli_error', 'mysqli_errno',
-		'mysqli_select_db', 'mysqli_set_charset'
+		'mysqli_select_db', 'mysqli_set_charset', 'mysqli_report', 'mysqli_init', 'mysqli_get_server_info'
 	]
 	for b in builtins {
 		if b !in names {

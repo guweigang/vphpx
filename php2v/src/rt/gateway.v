@@ -2,6 +2,9 @@ module rt
 
 import veb
 
+fn C.php2v_refresh_request()
+fn C.php2v_exit()
+
 // RequestContext 并发安全隔离容器
 pub struct RequestContext {
 pub mut:
@@ -107,6 +110,9 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext) veb.Result {
 	// 9. 执行转译后页面主入口
 	if voidptr(app.entry_fn) != 0 {
 		_ = app.entry_fn()
+	}
+	unsafe {
+		C.php2v_refresh_request()
 	}
 	
 	// 10. 清理 TLS，返回输出缓冲
