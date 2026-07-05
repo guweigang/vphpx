@@ -1364,8 +1364,9 @@ fn (mut t Transpiler) infer_single_func_types(node ast.AstNode) {
 		if all_same && first in [.t_int, .t_float, .t_bool, .t_string] {
 			local_var_types[vname] = VarType{ tag: first }
 		} else if first == .t_array {
-			if t.inferred_types[vname].tag == .t_array {
-				local_var_types[vname] = t.inferred_types[vname]
+			lookup_key := '${func_name}::${vname}'
+			if t.inferred_types[lookup_key].tag == .t_array {
+				local_var_types[vname] = t.inferred_types[lookup_key]
 			}
 		}
 	}
@@ -1638,7 +1639,10 @@ fn (mut t Transpiler) scan_array_usages_stmt(node ast.AstNode, mut states map[st
 			t.scan_array_usages_stmts(node.stmts, mut states)
 		}
 		ast.node_stmt_class_method, ast.node_stmt_function {
+			old_func := t.current_func_name
+			t.current_func_name = node.name
 			t.scan_array_usages_stmts(node.stmts, mut states)
+			t.current_func_name = old_func
 		}
 		ast.node_stmt_echo {
 			for expr in node.exprs { t.scan_array_usages_expr(expr, mut states, false, none) }
@@ -1682,6 +1686,16 @@ fn (mut t Transpiler) scan_array_usages_stmt(node ast.AstNode, mut states map[st
 	}
 }
 
+fn (t Transpiler) get_array_infer_key(name string) string {
+	if t.current_func_name != '' {
+		if name in ['_GET', '_POST', '_SERVER', '_COOKIE', '_SESSION', '_FILES', '_ENV', '_REQUEST', 'GLOBALS'] {
+			return name
+		}
+		return '${t.current_func_name}::${name}'
+	}
+	return name
+}
+
 fn (mut t Transpiler) scan_array_usages_stmts(stmts []ast.AstNode, mut states map[string]ArrayInferState) {
 	for stmt in stmts {
 		t.scan_array_usages_stmt(stmt, mut states)
@@ -1694,7 +1708,8 @@ fn (mut t Transpiler) scan_array_usages_expr(node ast.AstNode, mut states map[st
 			lhs := node.var or { return }
 			rhs := node.expr or { return }
 			if lhs.node_type == ast.node_expr_variable && rhs.node_type == ast.node_expr_array {
-				mut s := states[lhs.name] or { ArrayInferState{ can_be_list: true, can_be_map: true, has_array_ops: false } }
+				lhs_key := t.get_array_infer_key(lhs.name)
+				mut s := states[lhs_key] or { ArrayInferState{ can_be_list: true, can_be_map: true, has_array_ops: false } }
 				s.has_array_ops = true
 				for item in rhs.items {
 					if key := item.key {
@@ -1713,16 +1728,17 @@ fn (mut t Transpiler) scan_array_usages_expr(node ast.AstNode, mut states map[st
 						s.element_tags << t.get_expr_type(*val).tag
 					}
 				}
-				states[lhs.name] = s
+				states[lhs_key] = s
 				t.scan_array_usages_expr(*rhs, mut states, false, none)
 			} else {
 				if lhs.node_type == ast.node_expr_variable {
 					rhs_typ := t.get_expr_type(*rhs)
 					if !rhs_typ.is_native_list && !rhs_typ.is_native_map {
-						mut s := states[lhs.name] or { ArrayInferState{ can_be_list: true, can_be_map: true, has_array_ops: false } }
+						lhs_key := t.get_array_infer_key(lhs.name)
+						mut s := states[lhs_key] or { ArrayInferState{ can_be_list: true, can_be_map: true, has_array_ops: false } }
 						s.can_be_list = false
 						s.can_be_map = false
-						states[lhs.name] = s
+						states[lhs_key] = s
 					}
 				}
 				t.scan_array_usages_expr(*lhs, mut states, true, *rhs)
@@ -1732,7 +1748,8 @@ fn (mut t Transpiler) scan_array_usages_expr(node ast.AstNode, mut states map[st
 		ast.node_expr_array_dim_fetch {
 			base := node.var or { return }
 			if base.node_type == ast.node_expr_variable {
-				mut s := states[base.name] or { ArrayInferState{ can_be_list: true, can_be_map: true, has_array_ops: false } }
+				base_key := t.get_array_infer_key(base.name)
+				mut s := states[base_key] or { ArrayInferState{ can_be_list: true, can_be_map: true, has_array_ops: false } }
 				s.has_array_ops = true
 				if dim := node.dim {
 					dim_type := t.get_expr_type(*dim)
@@ -1753,7 +1770,7 @@ fn (mut t Transpiler) scan_array_usages_expr(node ast.AstNode, mut states map[st
 						s.element_tags << t.get_expr_type(rhs).tag
 					}
 				}
-				states[base.name] = s
+				states[base_key] = s
 			} else {
 				t.scan_array_usages_expr(*base, mut states, is_assign_lhs, rhs_node)
 				if dim := node.dim { t.scan_array_usages_expr(*dim, mut states, false, none) }

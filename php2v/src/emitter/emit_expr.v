@@ -37,8 +37,16 @@ fn (mut t Transpiler) get_expr_type(node ast.AstNode) VarType {
 					}
 				}
 			}
-			if node.name in t.inferred_types {
-				return t.inferred_types[node.name] or { VarType{ tag: .t_unknown } }
+			lookup_key := if t.current_func_name != '' { '${t.current_func_name}::${node.name}' } else { node.name }
+			v_var := t.get_v_var_name(node.name)
+			if typ := t.inferred_types[v_var] {
+				return typ
+			}
+			if typ := t.inferred_types[lookup_key] {
+				return typ
+			}
+			if typ := t.inferred_types[node.name] {
+				return typ
 			}
 			return VarType{ tag: .t_unknown }
 		}
@@ -1417,7 +1425,8 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			}
 			
 			v_var := t.get_v_var_name(var_name)
-			var_type := t.inferred_types[v_var] or { t.inferred_types[var_name] or { VarType{ tag: .t_unknown } } }
+			lookup_key := if t.current_func_name != '' { '${t.current_func_name}::${var_name}' } else { var_name }
+			var_type := t.inferred_types[v_var] or { t.inferred_types[lookup_key] or { t.inferred_types[var_name] or { VarType{ tag: .t_unknown } } } }
 			
 			mut is_native := false
 			if t.current_func_name == '' {

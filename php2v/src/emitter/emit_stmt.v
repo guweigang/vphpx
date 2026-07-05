@@ -647,7 +647,8 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 		if v !in ass_vars && !t.scope.has_var(v) {
 			t.write_indent()
 			v_var := t.get_v_var_name(v)
-			v_type := t.inferred_types[v_var] or { t.inferred_types[v] or { VarType{ tag: .t_unknown } } }
+			lookup_key := if t.current_func_name != '' { '${t.current_func_name}::${v}' } else { v }
+			v_type := t.inferred_types[v_var] or { t.inferred_types[lookup_key] or { t.inferred_types[v] or { VarType{ tag: .t_unknown } } } }
 			if t.native_params[v] {
 				t.write_line('mut ${v_var} := ${v}')
 			} else if v_type.is_native_list || v_type.is_native_map {
@@ -676,7 +677,8 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 			t.scope.declare(v)
 			t.write_indent()
 			v_var := t.get_v_var_name(v)
-			v_type := t.inferred_types[v_var] or { t.inferred_types[v] or { VarType{ tag: .t_unknown } } }
+			lookup_key := if t.current_func_name != '' { '${t.current_func_name}::${v}' } else { v }
+			v_type := t.inferred_types[v_var] or { t.inferred_types[lookup_key] or { t.inferred_types[v] or { VarType{ tag: .t_unknown } } } }
 			// 如果变量是原生参数（如 $user_id → user_id bool），用参数值初始化
 			if t.native_params[v] {
 				t.write_line('mut ${v_var} := ${v}')
