@@ -256,4 +256,64 @@ static inline size_t php2v_zstr_len(void* zstr) {
     return ((zend_string*)zstr)->len;
 }
 
+// ---------------- 沙箱互操作桥接接口 ----------------
+typedef void* (*php2v_v_callback_t)(const char* name, int name_len, void* z_args_array);
+static php2v_v_callback_t g_php2v_v_callback = NULL;
+
+static inline void php2v_set_v_callback(php2v_v_callback_t cb) {
+    g_php2v_v_callback = cb;
+}
+
+static void zif_vphp_call_v_native(zend_execute_data *execute_data, zval *return_value) {
+    char *func_name = NULL;
+    size_t func_name_len = 0;
+    zval *args_array = NULL;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_STRING(func_name, func_name_len)
+        Z_PARAM_ARRAY(args_array)
+    ZEND_PARSE_PARAMETERS_END();
+
+    if (g_php2v_v_callback) {
+        void* ret_zval = g_php2v_v_callback(func_name, (int)func_name_len, args_array);
+        if (ret_zval) {
+            ZVAL_COPY_VALUE(return_value, (zval*)ret_zval);
+        } else {
+            ZVAL_NULL(return_value);
+        }
+    } else {
+        php_error_docref(NULL, E_WARNING, "V callback handler not registered");
+        ZVAL_NULL(return_value);
+    }
+}
+
+static inline int php2v_extract_array_elements(void* z_arr, void** out_elements) {
+    if (!z_arr) return 0;
+    HashTable *ht = Z_ARRVAL_P((zval*)z_arr);
+    zval *val;
+    int i = 0;
+    ZEND_HASH_FOREACH_VAL(ht, val) {
+        out_elements[i++] = val;
+    } ZEND_HASH_FOREACH_END();
+    return i;
+}
+
+static inline int php2v_get_array_num_elements(void* z_arr) {
+    if (!z_arr) return 0;
+    return zend_hash_num_elements(Z_ARRVAL_P((zval*)z_arr));
+}
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_vphp_call_v_native, 0, 0, 2)
+    ZEND_ARG_INFO(0, func_name)
+    ZEND_ARG_INFO(0, args)
+ZEND_END_ARG_INFO()
+
+static inline void php2v_register_sandbox_bridge() {
+    static const zend_function_entry funcs[] = {
+        {"vphp_call_v_native", zif_vphp_call_v_native, arginfo_vphp_call_v_native, 2, 0},
+        {NULL, NULL, NULL, 0, 0}
+    };
+    zend_register_functions(NULL, funcs, NULL, MODULE_PERSISTENT);
+}
+
 #endif

@@ -51,6 +51,8 @@ static inline void php2v_register_thread() {
 #endif
 }
 
+static inline void php2v_register_sandbox_bridge();
+
 __attribute__((constructor)) static void php2v_auto_embed_init() {
 	php_embed_module.php_ini_ignore = 1;
 	php_embed_module.php_ini_path_override = "/dev/null";
@@ -65,6 +67,7 @@ __attribute__((constructor)) static void php2v_auto_embed_init() {
 #ifdef ZTS
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
+	php2v_register_sandbox_bridge();
 }
 
 #endif
