@@ -18,7 +18,7 @@ pub fn run_transpiled_wp_load() string {
 		])
 	}
 	
-	// 在 V 侧直接静态调用转译后的 wp_config 引导并返回结果
+	// 在 V 侧直接静态调用转译后的 wp_config 引导
 	if rt.is_true(rt.call_function('file_exists', [
 		rt.new_string((rt.get_constant('ABSPATH')).str() + 'wp-config.php'),
 	]))
@@ -29,6 +29,20 @@ pub fn run_transpiled_wp_load() string {
 		&& rt.is_true(rt.new_bool(!(rt.is_true(rt.call_function('file_exists', [rt.new_string((rt.call_function('dirname', [rt.get_constant('ABSPATH')])).str() + '/wp-settings.php')]))))) {
 		return run_transpiled_wp_config()
 	} else {
-		return 'wp-config.php not found'
+		_ = rt.call_function('define', [rt.new_string('WPINC'),
+			rt.new_string('wp-includes')])
+		_ = rt.include_file(
+			(rt.get_constant('ABSPATH')).str() + (rt.get_constant('WPINC')).str() + '/version.php', '4')
+		_ = rt.include_file(
+			(rt.get_constant('ABSPATH')).str() + (rt.get_constant('WPINC')).str() + '/compat.php', '4')
+		_ = rt.include_file(
+			(rt.get_constant('ABSPATH')).str() + (rt.get_constant('WPINC')).str() + '/load.php', '4')
+		_ = rt.call_function('wp_check_php_mysql_versions', []rt.PhpVal{})
+		_ = rt.call_function('wp_fix_server_vars', []rt.PhpVal{})
+		_ = rt.call_function('define', [rt.new_string('WP_CONTENT_DIR'),
+			rt.new_string((rt.get_constant('ABSPATH')).str() + 'wp-content')])
+		_ = rt.include_file(
+			(rt.get_constant('ABSPATH')).str() + (rt.get_constant('WPINC')).str() + '/functions.php', '4')
 	}
+	return ''
 }

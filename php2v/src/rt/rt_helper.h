@@ -321,6 +321,42 @@ static inline void php2v_register_sandbox_bridge() {
     zend_register_functions(NULL, funcs, NULL, MODULE_PERSISTENT);
 }
 
+static inline int php2v_execute_file(const char* filepath) {
+    zend_file_handle file_handle;
+#if PHP_VERSION_ID >= 80100
+    zend_stream_init_filename(&file_handle, filepath);
+#else
+    file_handle.type = ZEND_HANDLE_FILENAME;
+    file_handle.filename = filepath;
+    file_handle.opened_path = NULL;
+    file_handle.free_filename = 0;
+#endif
+
+    zend_try {
+        zend_op_array *op_array = zend_compile_file(&file_handle, ZEND_REQUIRE);
+        if (op_array) {
+            zval retval;
+            ZVAL_UNDEF(&retval);
+            zend_execute(op_array, &retval);
+            zval_ptr_dtor(&retval);
+            destroy_op_array(op_array);
+        }
+    } zend_catch {
+        if (EG(exception)) {
+            zend_object *exception = EG(exception);
+            zval rv, *msg;
+            msg = zend_read_property(exception->ce, exception, "message", sizeof("message") - 1, 0, &rv);
+            if (msg && Z_TYPE_P(msg) == IS_STRING) {
+                printf("PHP2V ERROR - Exception in execution: %s\n", Z_STRVAL_P(msg));
+            }
+        }
+        php2v_refresh_request();
+    } zend_end_try();
+
+    zend_destroy_file_handle(&file_handle);
+    return 0;
+}
+
 static inline void php2v_exit() {
     zend_bailout();
 }

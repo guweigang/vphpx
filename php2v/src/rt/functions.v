@@ -2,6 +2,7 @@ module rt
 
 fn C.php2v_set_last_mysql_conn(conn voidptr)
 fn C.php2v_get_last_mysql_conn() voidptr
+fn C.php2v_execute_file(filepath &char) int
 
 // call_function 调度 PHP 函数调用
 pub fn call_function(name string, args []PhpVal) PhpVal {
@@ -225,26 +226,9 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 }
 
 pub fn include_file(path string, incl_type string) PhpVal {
-	escaped_path := path.replace('\\', '\\\\').replace('\'', '\\\'')
-	
-	mut keyword := 'include'
-	match incl_type {
-		'2' { keyword = 'include_once' }
-		'3' { keyword = 'require' }
-		'4' { keyword = 'require_once' }
-		else {}
-	}
-	
-	code := 'return ${keyword} \'${escaped_path}\';'
-	println('PHP2V DEBUG - include_file - eval code: ' + code)
-	z_ret := new_zval()
+	println('PHP2V DEBUG - include_file - physical execute: ' + path)
 	unsafe {
-		res := C.php2v_eval_string(code.str, usize(code.len), z_ret)
-		println('PHP2V DEBUG - include_file - result: ${res}')
-		if res == 0 {
-			return PhpVal{ raw: z_ret }
-		}
-		free(z_ret)
+		_ = C.php2v_execute_file(path.str)
 	}
 	return new_null()
 }
