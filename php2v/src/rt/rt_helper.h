@@ -92,7 +92,6 @@ static inline int php2v_eval_string(const char *str, size_t len, zval *retval) {
 
 	zend_try {
 		zend_execute(op_array, retval);
-		zend_bailout();
 	} zend_catch {
 		// 捕获 bailout (exit/die/error)，安全刷新请求状态，避免 Zend 自杀
 		php2v_refresh_request();
