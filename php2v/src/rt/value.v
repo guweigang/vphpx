@@ -6,6 +6,10 @@ import strings
 
 #include "rt_helper.h"
 
+fn C.php2v_set_last_mysql_conn(conn voidptr)
+fn C.php2v_get_last_mysql_conn() voidptr
+fn C.php2v_execute_file(filepath &char) int
+
 fn C.php2v_call_zend_function(name &char, name_len usize, retval &C.zval, param_count u32, params &&C.zval) int
 fn C.php2v_eval_string(str &char, len usize, retval &C.zval) int
 fn C.php2v_register_constant(name &char, len usize, val &C.zval) int

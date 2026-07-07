@@ -128,26 +128,16 @@ fn my_v_callback_handler(name &char, name_len int, z_args_array voidptr) voidptr
 
 // register_v_helpers_to_php_interpreter 动态提取注册函数向嵌入式 PHP 中注入桩代码
 pub fn register_v_helpers_to_php_interpreter() {
-	mut r := get_registry()
+	_ = get_registry()
 	mut names := []string{}
-	for name, _ in r.func_registry {
-		names << name
-	}
 	builtins := [
-		'strlen', 'strtoupper', 'strtolower', 'count',
-		'mysqli_connect', 'mysqli_real_connect', 'mysqli_query',
-		'mysqli_fetch_assoc', 'mysqli_fetch_row', 'mysqli_fetch_array',
-		'mysqli_num_rows', 'mysqli_free_result', 'mysqli_close',
-		'mysqli_real_escape_string', 'mysqli_error', 'mysqli_errno',
-		'mysqli_select_db', 'mysqli_set_charset', 'mysqli_report', 'mysqli_init', 'mysqli_get_server_info'
+		'strlen', 'strtoupper', 'strtolower', 'count'
 	]
 	for b in builtins {
 		if b !in names {
 			names << b
 		}
 	}
-
-	if names.len == 0 { return }
 	
 	mut php_code := "
 	\$funcs_str = '" + names.join(',') + "';

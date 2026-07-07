@@ -8,63 +8,32 @@ const global_const_wp_use_themes = true
 
 // 声明外部 C 接口
 fn C.php2v_eval_string(str &u8, len u64, retval voidptr) int
-fn C.php2v_execute_file(filepath &char) int
 
 fn main() {
-	// 检测是否为 CLI 单次请求渲染模式
+	// 1. 切换工作目录到 WordPress 根路径
+	os.chdir('/Users/guweigang/wwwroot/wordpress') or {
+		exit(1)
+	}
+	
+	// 2. 物理初始化 PHP 虚拟机
+	rt.register_v_helpers_to_php_interpreter()
+	
 	args := os.args
 	if args.len > 1 && args[1] == '--cli' {
-		// 1. 切换工作目录到 WordPress 根路径
-		os.chdir('/Users/guweigang/wwwroot/wordpress') or {
-			exit(1)
-		}
-		
-		// 2. 注册常驻连接池代理和 V 回调桩
-		rt.register_v_helpers_to_php_interpreter()
-		rt.define_constant('DB_PASSWORD', rt.new_string('Abcd.1234'))
-		rt.define_constant('MYSQLI_REPORT_OFF', rt.new_int(0))
-		rt.define_constant('MYSQLI_REPORT_ERROR', rt.new_int(1))
-		rt.define_constant('MYSQLI_REPORT_STRICT', rt.new_int(2))
-		rt.define_constant('MYSQLI_REPORT_ALL', rt.new_int(255))
-		
-		// 3. 构建超全局 $_SERVER 并启动 PHP ob 缓冲
+		// 🟢 CLI 单次请求渲染模式：就地执行一次并退出
 		mut uri := os.getenv('PHP2V_REQUEST_URI')
-		if uri == '' {
-			uri = '/'
-		}
+		if uri == '' { uri = '/' }
 		
-		// 4. 动态物理文件路由执行
 		mut target_file := '/Users/guweigang/wwwroot/wordpress' + uri
-		if uri.ends_with('/') {
-			target_file += 'index.php'
-		}
+		if uri.ends_with('/') { target_file += 'index.php' }
 		
-		if os.exists(target_file) && !target_file.ends_with('index.php') {
-			println('PHP2V - Routing to physical file: ${target_file}')
-			eval_str := "ob_start();"
-			unsafe {
-				C.php2v_eval_string(eval_str.str, u64(eval_str.len), nil)
-			}
-			unsafe {
-				_ = C.php2v_execute_file(target_file.str)
-			}
-			mut res_val := rt.new_null()
-			get_buf_str := "return ob_get_clean();"
-			unsafe {
-				C.php2v_eval_string(get_buf_str.str, u64(get_buf_str.len), res_val.raw)
-			}
-			print(res_val.str())
-		} else {
-			println('PHP2V - Routing to transpiled index')
-			// 直接打印由转译后 V 语言代码连通数据库渲染出来的真实官方主页！！！
-			print(run_transpiled_index())
-		}
-		
+		// CLI 模式直接使用原生输出，更利于开发与调试
+		run_request_cli(uri, target_file)
 		rt.shutdown()
 		exit(0)
 	}
 	
-	// 🟢 正常的常驻 Socket CGI 网关模式
+	// 🟢 常驻 Socket 网关模式：就地循环监听与就地 PHP 缓存渲染
 	mut listener := net.listen_tcp(.ip, '127.0.0.1:8083') or {
 		println('Listen failed: ${err}')
 		return
@@ -94,20 +63,11 @@ fn main() {
 		}
 		
 		uri := req_line[1]
+		mut target_file := '/Users/guweigang/wwwroot/wordpress' + uri
+		if uri.ends_with('/') { target_file += 'index.php' }
 		
-		// 🟢 将 HTTP 请求的超全局数据以标准 CGI 环境变量的方式注入子进程
-		os.setenv('PHP2V_REQUEST_URI', uri, true)
-		os.setenv('REQUEST_URI', uri, true)
-		os.setenv('REQUEST_METHOD', 'GET', true)
-		os.setenv('HTTP_HOST', '127.0.0.1:8083', true)
-		os.setenv('SCRIPT_NAME', uri, true)
-		os.setenv('PHP_SELF', uri, true)
-		
-		// 获取当前自身可执行文件的路径并执行
-		self_exe := os.executable()
-		res := os.execute('"${self_exe}" --cli')
-		
-		html := res.output
+		// 核心就地渲染捕获
+		html := run_request_to_html(uri, target_file)
 		
 		// 返回标准的 HTTP/1.1 响应给浏览器
 		resp := 'HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: ${html.len}\r\nConnection: close\r\n\r\n${html}'
@@ -115,4 +75,85 @@ fn main() {
 		conn.write_string(resp) or {}
 		conn.close() or {}
 	}
+	
+	rt.shutdown()
+}
+
+// run_request_cli 供 CLI 测试使用的直出加载
+fn run_request_cli(uri string, target_file string) {
+	mut script_name := uri
+	if script_name.contains('?') {
+		script_name = script_name.split('?')[0]
+	}
+	if script_name == '/' || script_name == '' {
+		script_name = '/index.php'
+	}
+	
+	setup_err_str := "class mysqli { public \$connect_errno; public \$server_info; }; class mysqli_result { public \$handle; }; " +
+		"define('ABSPATH', '/Users/guweigang/wwwroot/wordpress/'); define('WP_USE_THEMES', true); define('MYSQLI_REPORT_OFF', 0); define('MYSQLI_REPORT_ERROR', 1); define('MYSQLI_REPORT_STRICT', 2); define('MYSQLI_REPORT_ALL', 255); " +
+		"ini_set('opcache.enable', '0'); error_reporting(E_ALL); ini_set('display_errors', '1'); ini_set('display_startup_errors', '1'); "
+	unsafe {
+		C.php2v_eval_string(setup_err_str.str, u64(setup_err_str.len), nil)
+	}
+	
+	setup_server_globals := "\$_SERVER['PHP_SELF'] = '${script_name}'; \$_SERVER['SCRIPT_NAME'] = '${script_name}'; \$_SERVER['SCRIPT_FILENAME'] = '${target_file}'; \$_SERVER['REQUEST_URI'] = '${uri}'; \$_SERVER['HTTP_HOST'] = '127.0.0.1:8083'; \$_SERVER['REQUEST_METHOD'] = 'GET'; \$_SERVER['HTTPS'] = 'on';"
+	unsafe {
+		C.php2v_eval_string(setup_server_globals.str, u64(setup_server_globals.len), nil)
+	}
+	
+	mut load_file := target_file
+	if !os.exists(load_file) || load_file.ends_with('index.php') {
+		load_file = '/Users/guweigang/wwwroot/wordpress/wp-blog-header.php'
+	}
+	
+	eval_include := "include '${load_file}';"
+	unsafe {
+		C.php2v_eval_string(eval_include.str, u64(eval_include.len), nil)
+	}
+}
+
+// run_request_to_html 常驻模式下的就地缓冲区渲染捕获
+fn run_request_to_html(uri string, target_file string) string {
+	mut script_name := uri
+	if script_name.contains('?') {
+		script_name = script_name.split('?')[0]
+	}
+	if script_name == '/' || script_name == '' {
+		script_name = '/index.php'
+	}
+	
+	setup_err_str := "class mysqli { public \$connect_errno; public \$server_info; }; class mysqli_result { public \$handle; }; " +
+		"define('ABSPATH', '/Users/guweigang/wwwroot/wordpress/'); define('WP_USE_THEMES', true); define('MYSQLI_REPORT_OFF', 0); define('MYSQLI_REPORT_ERROR', 1); define('MYSQLI_REPORT_STRICT', 2); define('MYSQLI_REPORT_ALL', 255); " +
+		"ini_set('opcache.enable', '0'); error_reporting(E_ALL); ini_set('display_errors', '1'); ini_set('display_startup_errors', '1'); "
+	unsafe {
+		C.php2v_eval_string(setup_err_str.str, u64(setup_err_str.len), nil)
+	}
+	
+	setup_server_globals := "\$_SERVER['PHP_SELF'] = '${script_name}'; \$_SERVER['SCRIPT_NAME'] = '${script_name}'; \$_SERVER['SCRIPT_FILENAME'] = '${target_file}'; \$_SERVER['REQUEST_URI'] = '${uri}'; \$_SERVER['HTTP_HOST'] = '127.0.0.1:8083'; \$_SERVER['REQUEST_METHOD'] = 'GET'; \$_SERVER['HTTPS'] = 'on';"
+	unsafe {
+		C.php2v_eval_string(setup_server_globals.str, u64(setup_server_globals.len), nil)
+	}
+	
+	eval_str_start := "ob_start();"
+	unsafe {
+		C.php2v_eval_string(eval_str_start.str, u64(eval_str_start.len), nil)
+	}
+	
+	mut load_file := target_file
+	if !os.exists(load_file) || load_file.ends_with('index.php') {
+		load_file = '/Users/guweigang/wwwroot/wordpress/wp-blog-header.php'
+	}
+	
+	eval_include := "include '${load_file}';"
+	unsafe {
+		C.php2v_eval_string(eval_include.str, u64(eval_include.len), nil)
+	}
+	
+	eval_clean := "return ob_get_clean();"
+	mut res_val := rt.new_null()
+	unsafe {
+		C.php2v_eval_string(eval_clean.str, u64(eval_clean.len), res_val.raw)
+	}
+	
+	return res_val.str()
 }

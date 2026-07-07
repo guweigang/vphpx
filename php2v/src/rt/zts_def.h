@@ -25,10 +25,18 @@ static inline void php2v_check_and_clear_exception() {
 	if (EG(exception)) {
 		zend_object *ex = EG(exception);
 		printf("PHP EXCEPTION TRIGGERED: %s\n", ex->ce->name->val);
-		zval rv;
-		zval *msg = zend_read_property(ex->ce, ex, "message", sizeof("message") - 1, 0, &rv);
+		zval rv, rv_file, rv_line;
+		zval *msg = zend_read_property(ex->ce, ex, "message", sizeof("message") - 1, 1, &rv);
 		if (msg && Z_TYPE_P(msg) == IS_STRING) {
 			printf("PHP EXCEPTION MESSAGE: %s\n", Z_STRVAL_P(msg));
+		}
+		if (EG(current_execute_data) && EG(current_execute_data)->func) {
+			zend_op_array *op_array = &EG(current_execute_data)->func->op_array;
+			if (op_array->filename) {
+				const zend_op *opline = EG(current_execute_data)->opline;
+				uint32_t lineno = opline ? opline->lineno : 0;
+				printf("PHP EXCEPTION LOCATION FROM VM EXECUTE: %s on line %u\n", ZSTR_VAL(op_array->filename), lineno);
+			}
 		}
 		zend_clear_exception();
 	}

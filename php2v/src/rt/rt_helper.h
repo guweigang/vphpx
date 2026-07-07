@@ -94,6 +94,14 @@ static inline int php2v_eval_string(const char *str, size_t len, zval *retval) {
 		zend_execute(op_array, retval);
 	} zend_catch {
 		// 捕获 bailout (exit/die/error)，安全刷新请求状态，避免 Zend 自杀
+        printf("C-雷达: Bailout caught. Checking SAPI headers:\n");
+        sapi_header_struct *h;
+        zend_llist_position pos;
+        h = (sapi_header_struct*)zend_llist_get_first_ex(&SG(sapi_headers).headers, &pos);
+        while (h) {
+            printf("  Header: %s\n", h->header);
+            h = (sapi_header_struct*)zend_llist_get_next_ex(&SG(sapi_headers).headers, &pos);
+        }
 		php2v_refresh_request();
 	} zend_end_try();
 	destroy_op_array(op_array);
@@ -101,6 +109,16 @@ static inline int php2v_eval_string(const char *str, size_t len, zval *retval) {
 
 	php2v_check_and_clear_exception();
 	return 0;
+}
+
+static inline void php2v_register_persistent_constant(const char *name, const char *val) {
+    php2v_update_tsrm_cache();
+    
+    zend_string *zname = zend_string_init(name, strlen(name), 0);
+    zend_hash_del(EG(zend_constants), zname);
+    zend_string_release(zname);
+    
+    zend_register_string_constant(name, strlen(name), val, CONST_CS | CONST_PERSISTENT, 0);
 }
 
 // php2v_register_constant 在运行时将常量注册到 Zend 常量表
@@ -119,7 +137,7 @@ static inline int php2v_register_constant(const char *name, size_t name_len, zva
 	
 	ZEND_CONSTANT_SET_FLAGS(&c, CONST_CS, PHP_USER_CONSTANT);
 	
-	if (zend_register_constant(&c) == FAILURE) {
+	if (zend_register_constant(&c) == NULL) {
 		zend_error(E_WARNING, "Constant %s already defined", name);
 		zend_string_release(c.name);
 		zval_ptr_dtor(&c.value);
@@ -269,6 +287,8 @@ static inline void php2v_set_v_callback(php2v_v_callback_t cb) {
     g_php2v_v_callback = cb;
 }
 
+static inline void* php2v_get_last_mysql_conn();
+
 static void zif_vphp_call_v_native(zend_execute_data *execute_data, zval *return_value) {
     char *func_name = NULL;
     size_t func_name_len = 0;
@@ -313,43 +333,503 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_vphp_call_v_native, 0, 0, 2)
     ZEND_ARG_INFO(0, args)
 ZEND_END_ARG_INFO()
 
+static void zif_php2v_mysqli_init(zend_execute_data *execute_data, zval *return_value) {
+    zend_string *class_name = zend_string_init("mysqli", sizeof("mysqli") - 1, 0);
+    zend_class_entry *mysqli_ce = zend_lookup_class(class_name);
+    zend_string_release(class_name);
+    
+    if (mysqli_ce) {
+        object_init_ex(return_value, mysqli_ce);
+    } else {
+        object_init_ex(return_value, zend_standard_class_def);
+    }
+    
+    zval zero;
+    ZVAL_LONG(&zero, 0);
+    zend_update_property(mysqli_ce ? mysqli_ce : zend_standard_class_def, Z_OBJ_P(return_value), "connect_errno", sizeof("connect_errno") - 1, &zero);
+    
+    zval version;
+    ZVAL_STRING(&version, "8.0.32-VPHP");
+    zend_update_property(mysqli_ce ? mysqli_ce : zend_standard_class_def, Z_OBJ_P(return_value), "server_info", sizeof("server_info") - 1, &version);
+}
+
+static void zif_php2v_mysqli_real_connect(zend_execute_data *execute_data, zval *return_value) {
+    zval *dbh = NULL;
+    zval *z_host = NULL;
+    zval *z_user = NULL;
+    zval *z_pass = NULL;
+    zval *z_dbname = NULL;
+    zval *z_port = NULL;
+    zval *z_socket = NULL;
+    zval *z_flags = NULL;
+    
+    ZEND_PARSE_PARAMETERS_START(1, 8)
+        Z_PARAM_OBJECT(dbh)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_ZVAL_OR_NULL(z_host)
+        Z_PARAM_ZVAL_OR_NULL(z_user)
+        Z_PARAM_ZVAL_OR_NULL(z_pass)
+        Z_PARAM_ZVAL_OR_NULL(z_dbname)
+        Z_PARAM_ZVAL_OR_NULL(z_port)
+        Z_PARAM_ZVAL_OR_NULL(z_socket)
+        Z_PARAM_ZVAL_OR_NULL(z_flags)
+    ZEND_PARSE_PARAMETERS_END();
+    
+    if (g_php2v_v_callback) {
+        zval args;
+        array_init(&args);
+        
+        const char *host_str = (z_host && Z_TYPE_P(z_host) == IS_STRING) ? Z_STRVAL_P(z_host) : "127.0.0.1";
+        zval z_h; ZVAL_STRING(&z_h, host_str);
+        add_next_index_zval(&args, &z_h);
+        
+        const char *user_str = (z_user && Z_TYPE_P(z_user) == IS_STRING) ? Z_STRVAL_P(z_user) : "root";
+        zval z_u; ZVAL_STRING(&z_u, user_str);
+        add_next_index_zval(&args, &z_u);
+        
+        const char *pass_str = (z_pass && Z_TYPE_P(z_pass) == IS_STRING) ? Z_STRVAL_P(z_pass) : "";
+        zval z_p; ZVAL_STRING(&z_p, pass_str);
+        add_next_index_zval(&args, &z_p);
+        
+        const char *db_str = (z_dbname && Z_TYPE_P(z_dbname) == IS_STRING) ? Z_STRVAL_P(z_dbname) : "";
+        zval z_d; ZVAL_STRING(&z_d, db_str);
+        add_next_index_zval(&args, &z_d);
+        
+        long port_val = (z_port && Z_TYPE_P(z_port) == IS_LONG) ? Z_LVAL_P(z_port) : 3306;
+        zval z_pt; ZVAL_LONG(&z_pt, port_val);
+        add_next_index_zval(&args, &z_pt);
+        
+        g_php2v_v_callback("mysqli_real_connect", sizeof("mysqli_real_connect") - 1, &args);
+        zval_ptr_dtor(&args);
+    }
+    
+    if (dbh && Z_TYPE_P(dbh) == IS_OBJECT) {
+        zval zero;
+        ZVAL_LONG(&zero, 0);
+        zend_update_property(Z_OBJCE_P(dbh), Z_OBJ_P(dbh), "connect_errno", sizeof("connect_errno") - 1, &zero);
+        
+        void* last_conn = php2v_get_last_mysql_conn();
+        zval z_conn_val;
+        ZVAL_LONG(&z_conn_val, (zend_long)last_conn);
+        zend_update_property(Z_OBJCE_P(dbh), Z_OBJ_P(dbh), "handle", sizeof("handle") - 1, &z_conn_val);
+    }
+    
+    ZVAL_TRUE(return_value);
+}
+
+static void zif_php2v_mysqli_query(zend_execute_data *execute_data, zval *return_value) {
+    zval *dbh = NULL;
+    char *query = NULL;
+    size_t query_len = 0;
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_OBJECT(dbh)
+        Z_PARAM_STRING(query, query_len)
+    ZEND_PARSE_PARAMETERS_END();
+    
+    printf("C-雷达: mysqli_query: %s\n", query);
+    printf("C-雷达: mysqli_query v_callback = %p\n", g_php2v_v_callback);
+    
+    if (g_php2v_v_callback) {
+        zval args;
+        array_init(&args);
+        
+        zval z_dbh;
+        ZVAL_COPY(&z_dbh, dbh);
+        add_next_index_zval(&args, &z_dbh);
+        
+        zval z_query;
+        ZVAL_STRINGL(&z_query, query, query_len);
+        add_next_index_zval(&args, &z_query);
+        
+        void* ret = g_php2v_v_callback("mysqli_query", sizeof("mysqli_query") - 1, &args);
+        zval_ptr_dtor(&args);
+        
+        if (ret) {
+            *return_value = *(zval*)ret;
+        } else {
+            ZVAL_FALSE(return_value);
+        }
+    } else {
+        ZVAL_FALSE(return_value);
+    }
+}
+
+static void zif_php2v_mysqli_report(zend_execute_data *execute_data, zval *return_value) {
+    ZVAL_TRUE(return_value);
+}
+
+static void zif_php2v_mysqli_connect_errno(zend_execute_data *execute_data, zval *return_value) {
+    ZVAL_LONG(return_value, 0);
+}
+
+static void zif_php2v_mysqli_connect_error(zend_execute_data *execute_data, zval *return_value) {
+    ZVAL_NULL(return_value);
+}
+
+static void zif_php2v_mysqli_error(zend_execute_data *execute_data, zval *return_value) {
+    ZVAL_NULL(return_value);
+}
+
+static void zif_php2v_mysqli_errno(zend_execute_data *execute_data, zval *return_value) {
+    ZVAL_LONG(return_value, 0);
+}
+
+static void zif_php2v_mysqli_select_db(zend_execute_data *execute_data, zval *return_value) {
+    zval *z_dbh = NULL;
+    char *dbname = NULL;
+    size_t dbname_len = 0;
+    
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_ZVAL_OR_NULL(z_dbh)
+        Z_PARAM_STRING(dbname, dbname_len)
+    ZEND_PARSE_PARAMETERS_END();
+    
+    if (g_php2v_v_callback && z_dbh && Z_TYPE_P(z_dbh) == IS_OBJECT) {
+        zval *z_handle = zend_read_property(Z_OBJCE_P(z_dbh), Z_OBJ_P(z_dbh), "handle", sizeof("handle") - 1, 1, NULL);
+        zend_long handle_val = zval_get_long(z_handle);
+        
+        zval args;
+        array_init(&args);
+        
+        zval z_res;
+        ZVAL_LONG(&z_res, handle_val);
+        add_next_index_zval(&args, &z_res);
+        
+        zval z_dbname;
+        ZVAL_STRINGL(&z_dbname, dbname, dbname_len);
+        add_next_index_zval(&args, &z_dbname);
+        
+        void* ret = g_php2v_v_callback("mysqli_select_db", sizeof("mysqli_select_db") - 1, &args);
+        zval_ptr_dtor(&args);
+        
+        if (ret && Z_TYPE_P((zval*)ret) == IS_TRUE) {
+            ZVAL_TRUE(return_value);
+        } else {
+            ZVAL_FALSE(return_value);
+        }
+    } else {
+        ZVAL_FALSE(return_value);
+    }
+}
+
+static void zif_php2v_mysqli_set_charset(zend_execute_data *execute_data, zval *return_value) {
+    ZVAL_TRUE(return_value);
+}
+
+static void zif_php2v_mysqli_real_escape_string(zend_execute_data *execute_data, zval *return_value) {
+    zval *dbh = NULL;
+    char *str = NULL;
+    size_t str_len = 0;
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_OBJECT(dbh)
+        Z_PARAM_STRING(str, str_len)
+    ZEND_PARSE_PARAMETERS_END();
+    
+    if (!str || str_len == 0) {
+        ZVAL_EMPTY_STRING(return_value);
+        return;
+    }
+    
+    char *escaped = malloc(str_len * 2 + 1);
+    size_t escaped_len = 0;
+    for (size_t i = 0; i < str_len; i++) {
+        char c = str[i];
+        if (c == '\'' || c == '"' || c == '\\' || c == '\0' || c == '\n' || c == '\r' || c == '\x1a') {
+            escaped[escaped_len++] = '\\';
+            if (c == '\0') {
+                escaped[escaped_len++] = '0';
+            } else if (c == '\n') {
+                escaped[escaped_len++] = 'n';
+            } else if (c == '\r') {
+                escaped[escaped_len++] = 'r';
+            } else if (c == '\x1a') {
+                escaped[escaped_len++] = 'Z';
+            } else {
+                escaped[escaped_len++] = c;
+            }
+        } else {
+            escaped[escaped_len++] = c;
+        }
+    }
+    escaped[escaped_len] = '\0';
+    
+    ZVAL_STRINGL(return_value, escaped, escaped_len);
+    free(escaped);
+}
+
+static void zif_php2v_mysqli_more_results(zend_execute_data *execute_data, zval *return_value) {
+    ZVAL_FALSE(return_value);
+}
+
+static void zif_php2v_mysqli_next_result(zend_execute_data *execute_data, zval *return_value) {
+    ZVAL_FALSE(return_value);
+}
+
+static void zif_php2v_gzinflate(zend_execute_data *execute_data, zval *return_value) {
+    ZVAL_FALSE(return_value);
+}
+
+static void zif_php2v_mysqli_fetch_object(zend_execute_data *execute_data, zval *return_value) {
+    zval *result = NULL;
+    ZEND_PARSE_PARAMETERS_START(1, 4)
+        Z_PARAM_OBJECT(result)
+    ZEND_PARSE_PARAMETERS_END();
+    
+    if (g_php2v_v_callback && result && Z_TYPE_P(result) == IS_OBJECT) {
+        zval *z_handle = zend_read_property(Z_OBJCE_P(result), Z_OBJ_P(result), "handle", sizeof("handle") - 1, 1, NULL);
+        zend_long handle_val = zval_get_long(z_handle);
+        printf("C-雷达: fetch_object: result_obj = %p, handle_val = %ld\n", result, (long)handle_val);
+        
+        zval args;
+        array_init(&args);
+        zval z_res;
+        ZVAL_LONG(&z_res, handle_val);
+        add_next_index_zval(&args, &z_res);
+        
+        void* ret = g_php2v_v_callback("mysqli_fetch_object", sizeof("mysqli_fetch_object") - 1, &args);
+        zval_ptr_dtor(&args);
+        
+        if (ret) {
+            *return_value = *(zval*)ret;
+        } else {
+            ZVAL_NULL(return_value);
+        }
+    } else {
+        ZVAL_NULL(return_value);
+    }
+}
+
+static inline void php2v_parse_and_build_array(const char* encoded_data, int mode, zval* return_value) {
+    if (!encoded_data || strlen(encoded_data) == 0) {
+        ZVAL_NULL(return_value);
+        return;
+    }
+    
+    array_init(return_value);
+    char *str = strdup(encoded_data);
+    char *saveptr1, *saveptr2;
+    char *token = strtok_r(str, "\x01", &saveptr1);
+    int idx = 0;
+    
+    while (token != NULL) {
+        char *kv = strdup(token);
+        char *k = strtok_r(kv, "\x02", &saveptr2);
+        char *v = strtok_r(NULL, "\x02", &saveptr2);
+        if (k) {
+            printf("  [C-DECODE] Mode %d: Key: '%s' -> Val: '%s'\n", mode, k, v ? v : "NULL");
+            if (v) {
+                if (mode == 1 || mode == 3) {
+                    add_assoc_string(return_value, k, v);
+                }
+                if (mode == 2 || mode == 3) {
+                    add_index_string(return_value, idx, v);
+                }
+            } else {
+                if (mode == 1 || mode == 3) {
+                    add_assoc_null(return_value, k);
+                }
+                if (mode == 2 || mode == 3) {
+                    add_index_null(return_value, idx);
+                }
+            }
+        }
+        free(kv);
+        idx++;
+        token = strtok_r(NULL, "\x01", &saveptr1);
+    }
+    free(str);
+}
+
+static void zif_php2v_mysqli_fetch_assoc(zend_execute_data *execute_data, zval *return_value) {
+    zval *result = NULL;
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_OBJECT(result)
+    ZEND_PARSE_PARAMETERS_END();
+    
+    if (g_php2v_v_callback && result && Z_TYPE_P(result) == IS_OBJECT) {
+        zval *z_handle = zend_read_property(Z_OBJCE_P(result), Z_OBJ_P(result), "handle", sizeof("handle") - 1, 1, NULL);
+        zend_long handle_val = zval_get_long(z_handle);
+        
+        zval args;
+        array_init(&args);
+        zval z_res;
+        ZVAL_LONG(&z_res, handle_val);
+        add_next_index_zval(&args, &z_res);
+        
+        void* ret = g_php2v_v_callback("mysqli_fetch_assoc", sizeof("mysqli_fetch_assoc") - 1, &args);
+        zval_ptr_dtor(&args);
+        
+        if (ret && Z_TYPE_P((zval*)ret) == IS_STRING) {
+            php2v_parse_and_build_array(Z_STRVAL_P((zval*)ret), 1, return_value);
+        } else {
+            ZVAL_NULL(return_value);
+        }
+    } else {
+        ZVAL_NULL(return_value);
+    }
+}
+
+static void zif_php2v_mysqli_fetch_row(zend_execute_data *execute_data, zval *return_value) {
+    zval *result = NULL;
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_OBJECT(result)
+    ZEND_PARSE_PARAMETERS_END();
+    
+    if (g_php2v_v_callback && result && Z_TYPE_P(result) == IS_OBJECT) {
+        zval *z_handle = zend_read_property(Z_OBJCE_P(result), Z_OBJ_P(result), "handle", sizeof("handle") - 1, 1, NULL);
+        zend_long handle_val = zval_get_long(z_handle);
+        
+        zval args;
+        array_init(&args);
+        zval z_res;
+        ZVAL_LONG(&z_res, handle_val);
+        add_next_index_zval(&args, &z_res);
+        
+        void* ret = g_php2v_v_callback("mysqli_fetch_row", sizeof("mysqli_fetch_row") - 1, &args);
+        zval_ptr_dtor(&args);
+        
+        if (ret && Z_TYPE_P((zval*)ret) == IS_STRING) {
+            php2v_parse_and_build_array(Z_STRVAL_P((zval*)ret), 2, return_value);
+        } else {
+            ZVAL_NULL(return_value);
+        }
+    } else {
+        ZVAL_NULL(return_value);
+    }
+}
+
+static void zif_php2v_mysqli_fetch_array(zend_execute_data *execute_data, zval *return_value) {
+    zval *result = NULL;
+    ZEND_PARSE_PARAMETERS_START(1, 2)
+        Z_PARAM_OBJECT(result)
+    ZEND_PARSE_PARAMETERS_END();
+    
+    if (g_php2v_v_callback && result && Z_TYPE_P(result) == IS_OBJECT) {
+        zval *z_handle = zend_read_property(Z_OBJCE_P(result), Z_OBJ_P(result), "handle", sizeof("handle") - 1, 1, NULL);
+        zend_long handle_val = zval_get_long(z_handle);
+        
+        zval args;
+        array_init(&args);
+        zval z_res;
+        ZVAL_LONG(&z_res, handle_val);
+        add_next_index_zval(&args, &z_res);
+        
+        void* ret = g_php2v_v_callback("mysqli_fetch_array", sizeof("mysqli_fetch_array") - 1, &args);
+        zval_ptr_dtor(&args);
+        
+        if (ret && Z_TYPE_P((zval*)ret) == IS_STRING) {
+            php2v_parse_and_build_array(Z_STRVAL_P((zval*)ret), 3, return_value);
+        } else {
+            ZVAL_NULL(return_value);
+        }
+    } else {
+        ZVAL_NULL(return_value);
+    }
+}
+
+static void zif_php2v_mysqli_num_rows(zend_execute_data *execute_data, zval *return_value) {
+    zval *result = NULL;
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_OBJECT(result)
+    ZEND_PARSE_PARAMETERS_END();
+    
+    if (g_php2v_v_callback && result && Z_TYPE_P(result) == IS_OBJECT) {
+        zval *z_handle = zend_read_property(Z_OBJCE_P(result), Z_OBJ_P(result), "handle", sizeof("handle") - 1, 1, NULL);
+        zend_long handle_val = zval_get_long(z_handle);
+        
+        zval args;
+        array_init(&args);
+        zval z_res;
+        ZVAL_LONG(&z_res, handle_val);
+        add_next_index_zval(&args, &z_res);
+        
+        void* ret = g_php2v_v_callback("mysqli_num_rows", sizeof("mysqli_num_rows") - 1, &args);
+        zval_ptr_dtor(&args);
+        
+        if (ret) {
+            *return_value = *(zval*)ret;
+        } else {
+            ZVAL_LONG(return_value, 0);
+        }
+    } else {
+        ZVAL_LONG(return_value, 0);
+    }
+}
+
+
+static void zif_php2v_mysqli_free_result(zend_execute_data *execute_data, zval *return_value) {
+    ZVAL_TRUE(return_value);
+}
+
+static void zif_php2v_mysqli_close(zend_execute_data *execute_data, zval *return_value) {
+    ZVAL_TRUE(return_value);
+}
+
+static void zif_php2v_mysqli_get_server_info(zend_execute_data *execute_data, zval *return_value) {
+    ZVAL_STRING(return_value, "8.0.32-VPHP");
+}
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_mysqli_generic, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
 static inline void php2v_register_sandbox_bridge() {
     static const zend_function_entry funcs[] = {
         {"vphp_call_v_native", zif_vphp_call_v_native, arginfo_vphp_call_v_native, 2, 0},
+        {"mysqli_init", zif_php2v_mysqli_init, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_connect", zif_php2v_mysqli_init, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_real_connect", zif_php2v_mysqli_real_connect, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_query", zif_php2v_mysqli_query, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_report", zif_php2v_mysqli_report, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_connect_errno", zif_php2v_mysqli_connect_errno, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_connect_error", zif_php2v_mysqli_connect_error, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_error", zif_php2v_mysqli_error, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_errno", zif_php2v_mysqli_errno, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_select_db", zif_php2v_mysqli_select_db, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_set_charset", zif_php2v_mysqli_set_charset, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_real_escape_string", zif_php2v_mysqli_real_escape_string, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_fetch_assoc", zif_php2v_mysqli_fetch_assoc, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_fetch_row", zif_php2v_mysqli_fetch_row, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_fetch_array", zif_php2v_mysqli_fetch_array, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_fetch_object", zif_php2v_mysqli_fetch_object, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_num_rows", zif_php2v_mysqli_num_rows, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_free_result", zif_php2v_mysqli_free_result, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_close", zif_php2v_mysqli_close, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_get_server_info", zif_php2v_mysqli_get_server_info, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_more_results", zif_php2v_mysqli_more_results, arginfo_mysqli_generic, 0, 0},
+        {"mysqli_next_result", zif_php2v_mysqli_next_result, arginfo_mysqli_generic, 0, 0},
+        {"gzinflate", zif_php2v_gzinflate, arginfo_mysqli_generic, 0, 0},
         {NULL, NULL, NULL, 0, 0}
     };
     zend_register_functions(NULL, funcs, NULL, MODULE_PERSISTENT);
-}
 
+}
 static inline int php2v_execute_file(const char* filepath) {
+    php2v_register_persistent_constant("ABSPATH", "/Users/guweigang/wwwroot/wordpress/");
+    php2v_register_persistent_constant("WP_USE_THEMES", "1");
+    php2v_register_persistent_constant("MYSQLI_REPORT_OFF", "0");
+    php2v_register_persistent_constant("MYSQLI_REPORT_ERROR", "1");
+    php2v_register_persistent_constant("MYSQLI_REPORT_STRICT", "2");
+    php2v_register_persistent_constant("MYSQLI_REPORT_ALL", "255");
+
+    FILE *fp = fopen(filepath, "r");
+    if (!fp) {
+        printf("PHP2V ERROR - Cannot open file: %s\n", filepath);
+        return -1;
+    }
+
     zend_file_handle file_handle;
 #if PHP_VERSION_ID >= 80100
-    zend_stream_init_filename(&file_handle, filepath);
+    zend_stream_init_fp(&file_handle, fp, filepath);
 #else
-    file_handle.type = ZEND_HANDLE_FILENAME;
+    memset(&file_handle, 0, sizeof(zend_file_handle));
+    file_handle.type = ZEND_HANDLE_FP;
+    file_handle.handle.fp = fp;
     file_handle.filename = filepath;
-    file_handle.opened_path = NULL;
-    file_handle.free_filename = 0;
 #endif
 
     zend_try {
-        zend_op_array *op_array = zend_compile_file(&file_handle, ZEND_REQUIRE);
-        if (op_array) {
-            zval retval;
-            ZVAL_UNDEF(&retval);
-            zend_execute(op_array, &retval);
-            zval_ptr_dtor(&retval);
-            destroy_op_array(op_array);
-        }
+        php_execute_script(&file_handle);
     } zend_catch {
-        if (EG(exception)) {
-            zend_object *exception = EG(exception);
-            zval rv, *msg;
-            msg = zend_read_property(exception->ce, exception, "message", sizeof("message") - 1, 0, &rv);
-            if (msg && Z_TYPE_P(msg) == IS_STRING) {
-                printf("PHP2V ERROR - Exception in execution: %s\n", Z_STRVAL_P(msg));
-            }
-        }
         php2v_refresh_request();
     } zend_end_try();
 

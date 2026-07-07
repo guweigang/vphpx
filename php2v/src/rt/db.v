@@ -51,24 +51,9 @@ pub fn (mut p MysqlPool) get_conn(host string, user string, pass string, dbname 
 	
 	config_hash := '${host}:${port}:${user}:${dbname}'
 	
-	// 1. 尝试在现有连接队列中查找闲置的匹配连接，并执行存活探测
+	// 1. 无条件复用已建立好的物理连接句柄
 	for conn in p.conns {
-		if !conn.is_in_use && conn.config_hash == config_hash {
-			mut mut_conn := unsafe { conn }
-			_ := mut_conn.db.query('SELECT 1') or {
-				println('PHP2V - Database connection expired, reconnecting...')
-				config := mysql.Config{
-					host: host
-					username: user
-					password: pass
-					dbname: dbname
-					port: u32(port)
-				}
-				new_db := mysql.connect(config) or { return err }
-				mut_conn.db = new_db
-				new_db.query('SELECT 1') or { return err }
-			}
-			mut_conn.is_in_use = true
+		if conn.config_hash == config_hash {
 			return conn
 		}
 	}

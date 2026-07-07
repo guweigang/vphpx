@@ -1,8 +1,5 @@
 module rt
 
-fn C.php2v_set_last_mysql_conn(conn voidptr)
-fn C.php2v_get_last_mysql_conn() voidptr
-fn C.php2v_execute_file(filepath &char) int
 
 // call_function 调度 PHP 函数调用
 pub fn call_function(name string, args []PhpVal) PhpVal {
@@ -57,7 +54,12 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 			return new_bool(true)
 		}
 		'mysqli_init' {
-			return new_bool(true)
+			mock_obj := new_zval()
+			eval_str := "\$obj = new stdClass(); \$obj->connect_errno = 0; \$obj->server_info = '8.0.32-VPHP'; return \$obj;"
+			unsafe {
+				C.php2v_eval_string(eval_str.str, u64(eval_str.len), mock_obj)
+			}
+			return PhpVal{ raw: mock_obj }
 		}
 		'mysqli_get_server_info' {
 			return new_string('8.0.32')
@@ -68,23 +70,13 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 			mut pass := ''
 			mut dbname := ''
 			mut port := 3306
-			if name == 'mysqli_connect' {
-				if args.len > 0 { host = args[0].to_string() }
-				if args.len > 1 { user = args[1].to_string() }
-				if args.len > 2 { pass = args[2].to_string() }
-				if args.len > 3 { dbname = args[3].to_string() }
-				if args.len > 4 { port = int(args[4].to_i64()) }
-			} else { // mysqli_real_connect
-				if args.len > 1 { host = args[1].to_string() }
-				if args.len > 2 { user = args[2].to_string() }
-				if args.len > 3 { pass = args[3].to_string() }
-				if args.len > 4 { dbname = args[4].to_string() }
-				if args.len > 5 { port = int(args[5].to_i64()) }
-			}
-			if host.contains(':') {
-				parts := host.split(':')
-				host = parts[0]
-				port = parts[1].int()
+			if args.len > 0 { host = args[0].to_string() }
+			if args.len > 1 { user = args[1].to_string() }
+			if args.len > 2 { pass = args[2].to_string() }
+			if args.len > 3 { dbname = args[3].to_string() }
+			if args.len > 4 { port = int(args[4].to_i64()) }
+			if host == 'localhost' {
+				host = '127.0.0.1'
 			}
 			mut pool := get_mysql_pool()
 			conn := pool.get_conn(host, user, pass, dbname, port) or {
@@ -92,10 +84,13 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 				return new_bool(false)
 			}
 			C.php2v_set_last_mysql_conn(voidptr(conn))
-			if name == 'mysqli_real_connect' {
-				return new_bool(true)
+			
+			mock_obj := new_zval()
+			eval_str := "\$obj = new stdClass(); \$obj->connect_errno = 0; \$obj->server_info = '8.0.32-VPHP'; return \$obj;"
+			unsafe {
+				C.php2v_eval_string(eval_str.str, u64(eval_str.len), mock_obj)
 			}
-			return new_int(i64(conn))
+			return PhpVal{ raw: mock_obj }
 		}
 		'mysqli_query' {
 			if args.len < 2 { return new_bool(false) }
@@ -105,6 +100,7 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 				conn = unsafe { &MysqlConnHandle(C.php2v_get_last_mysql_conn()) }
 			}
 			query_str := args[1].to_string()
+			println('PHP2V SQL EXECUTE -> ' + query_str)
 			res := conn.db.query(query_str) or {
 				eprintln('rt mysqli_query error: ${err} | SQL: ${query_str}')
 				return new_bool(false)
@@ -123,45 +119,54 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 			handle.num_rows = int(res.n_rows())
 			handle.num_fields = res.n_fields()
 			handle.field_names = field_names
-			return new_int(i64(handle))
+			
+			mock_obj := new_zval()
+			eval_str := "\$obj = new mysqli_result(); \$obj->handle = " + i64(handle).str() + "; return \$obj;"
+			unsafe {
+				C.php2v_eval_string(eval_str.str, u64(eval_str.len), mock_obj)
+			}
+			return PhpVal{ raw: mock_obj }
 		}
-		'mysqli_fetch_assoc' {
-			if args.len < 1 { return new_null() }
+		'mysqli_fetch_assoc', 'mysqli_fetch_row', 'mysqli_fetch_array' {
+			if args.len < 1 { return new_string('') }
 			val_i := args[0].to_i64()
-			if val_i == 0 { return new_null() }
+			if val_i == 0 { return new_string('') }
 			mut handle := unsafe { &MysqlResultHandle(voidptr(val_i)) }
 			if handle.cursor >= handle.maps.len {
-				return new_bool(false)
+				return new_string('')
 			}
-			mut row_map := new_array()
+			mut parts := []string{}
 			for k, v in handle.maps[handle.cursor] {
-				row_map.array_set(new_string(k), new_string(v))
+				parts << k + '\x02' + v
 			}
+			encoded_str := parts.join('\x01')
 			handle.cursor++
-			return row_map
+			return new_string(encoded_str)
 		}
-		'mysqli_fetch_row', 'mysqli_fetch_array' {
+		'mysqli_fetch_object' {
 			if args.len < 1 { return new_null() }
 			val_i := args[0].to_i64()
 			if val_i == 0 { return new_null() }
 			mut handle := unsafe { &MysqlResultHandle(voidptr(val_i)) }
 			if handle.cursor >= handle.maps.len {
-				return new_bool(false)
+				return new_null()
 			}
-			mut row_arr := new_array()
-			for field_name in handle.field_names {
-				val := handle.maps[handle.cursor][field_name]
-				row_arr.array_push(new_string(val))
+			mut eval_parts := []string{}
+			eval_parts << '\$obj = new stdClass();'
+			for k, v in handle.maps[handle.cursor] {
+				escaped_v := v.replace("'", "\\'")
+				eval_parts << '\$obj->{\'' + k + '\'} = \'' + escaped_v + '\';'
 			}
-			if name == 'mysqli_fetch_array' {
-				for idx, field_name in handle.field_names {
-					val := handle.maps[handle.cursor][field_name]
-					row_arr.array_set(new_string(field_name), new_string(val))
-					row_arr.array_set(new_int(i64(idx)), new_string(val))
-				}
+			eval_parts << 'return \$obj;'
+			eval_str := eval_parts.join(" ")
+			
+			mock_obj := new_zval()
+			unsafe {
+				C.php2v_eval_string(eval_str.str, u64(eval_str.len), mock_obj)
 			}
+			println('V-雷达: fetch_object return: ' + eval_str)
 			handle.cursor++
-			return row_arr
+			return PhpVal{ raw: mock_obj }
 		}
 		'mysqli_num_rows' {
 			if args.len < 1 { return new_int(0) }
@@ -200,6 +205,20 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 			return new_int(0)
 		}
 		'mysqli_select_db' {
+			if args.len < 2 { return new_bool(false) }
+			val_i := args[0].to_i64()
+			mut conn_addr := val_i
+			if conn_addr < 10000 {
+				conn_addr = i64(C.php2v_get_last_mysql_conn())
+			}
+			if conn_addr == 0 { return new_bool(false) }
+			mut conn := unsafe { &MysqlConnHandle(voidptr(conn_addr)) }
+			dbname := args[1].to_string()
+			println('PHP2V SELECT DATABASE -> ' + dbname)
+			conn.db.query('USE ' + dbname) or {
+				eprintln('rt mysqli_select_db error: ${err}')
+				return new_bool(false)
+			}
 			return new_bool(true)
 		}
 		'mysqli_set_charset' {
