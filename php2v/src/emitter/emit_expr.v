@@ -1930,7 +1930,10 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				for item in node.items {
 					val_node := item.expr or { panic('ArrayItem missing expr') }
 					val_typ := t.get_expr_type(*val_node)
-					val_str := if val_typ.is_scalar() { t.visit_expr_native(*val_node) } else { t.visit_expr(*val_node) }
+					mut val_str := if val_typ.is_scalar() { t.visit_expr_native(*val_node) } else { t.visit_expr(*val_node) }
+					if val_typ.class_name.len > 0 || val_typ.tag == .t_object || val_typ.is_native_list || val_typ.is_native_map {
+						val_str = t.box_expr(val_str, val_typ)
+					}
 					
 					if key_node := item.key {
 						key_typ := t.get_expr_type(*key_node)

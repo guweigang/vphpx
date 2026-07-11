@@ -45,6 +45,20 @@ static inline int php2v_call_zend_function(const char *name, size_t name_len, zv
 	return res;
 }
 
+// php2v_call_zend_callable 动态调用任意 zval 可调用对象
+static inline int php2v_call_zend_callable(zval *callable, zval *retval, uint32_t param_count, zval **params) {
+	php2v_update_tsrm_cache();
+	zval *z_args = NULL;
+	if (param_count > 0) {
+		z_args = (zval *)alloca(param_count * sizeof(zval));
+		for (uint32_t i = 0; i < param_count; i++) {
+			z_args[i] = *(params[i]);
+		}
+	}
+	int res = call_user_function(EG(function_table), NULL, callable, retval, param_count, z_args);
+	return res;
+}
+
 // php2v_call_method 动态在对象中查找并调用方法
 static inline int php2v_call_method(zval *obj, const char *method_name, size_t method_len, zval *retval, uint32_t param_count, zval **params) {
 	php2v_update_tsrm_cache();

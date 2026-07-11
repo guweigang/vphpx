@@ -372,6 +372,11 @@ fn test_transpiler_end_to_end() {
 			'mut_this.magic_get(',
 			'this.magic_set(',
 		]
+		// 56: 内置 call_user_func 与 call_user_func_array 动态调用
+		'56_builtin_call_user_func.php': [
+			"rt.call_function('call_user_func'",
+			"rt.call_function('call_user_func_array'",
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址

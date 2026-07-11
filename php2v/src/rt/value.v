@@ -11,6 +11,7 @@ fn C.php2v_get_last_mysql_conn() voidptr
 fn C.php2v_execute_file(filepath &char) int
 
 fn C.php2v_call_zend_function(name &char, name_len usize, retval &C.zval, param_count u32, params &&C.zval) int
+fn C.php2v_call_zend_callable(callable &C.zval, retval &C.zval, param_count u32, params voidptr) int
 fn C.php2v_eval_string(str &char, len usize, retval &C.zval) int
 fn C.php2v_register_constant(name &char, len usize, val &C.zval) int
 fn C.php2v_get_constant(name &char, len usize, val &C.zval) int
@@ -607,6 +608,23 @@ pub fn new_object(class_name string, parents []string, obj IPhpObject) PhpVal {
 		z.u1.type_info = 8 // IS_OBJECT
 	}
 	return PhpVal{ raw: z }
+}
+
+// call_zend_callable 底层利用 Zend 引擎动态调用任何可调用对象 (zval)
+pub fn call_zend_callable(cb PhpVal, args []PhpVal) PhpVal {
+	z := new_zval()
+	mut raw_args := []&C.zval{}
+	for a in args {
+		raw_args << a.raw
+	}
+	unsafe {
+		res := C.php2v_call_zend_callable(cb.raw, z, u32(args.len), raw_args.data)
+		if res == 0 {
+			return PhpVal{ raw: z }
+		}
+		free(z)
+	}
+	return new_null()
 }
 
 // call_method 公共运行时分发器，基于 IPhpObject 接口实现多态派发

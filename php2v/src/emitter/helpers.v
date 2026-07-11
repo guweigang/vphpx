@@ -273,12 +273,11 @@ pub fn (mut t Transpiler) compile_arg_simple(arg_node ast.AstNode) string {
 			return 'rt.create_array_from_native_map(${code})'
 		}
 	}
-	// 如果表达式类型是原生标量（int/float/bool）且生成代码不是 PhpVal，需要自动装箱
-	// 比如：string.len + 1 → int/native → 需要 rt.new_int(...)
+	// 如果表达式类型是原生标量（int/float/bool）或对象/类，且生成代码不是 PhpVal，需要自动装箱
 	// 注意：只在代码不以 'rt.' 开头时装箱，避免对已是 PhpVal 的表达式重复装箱
 	arg_type := t.get_expr_type(arg_node)
 	mut res := code
-	if arg_type.is_scalar() && !code.starts_with('rt.') {
+	if (arg_type.is_scalar() || arg_type.class_name.len > 0 || arg_type.tag == .t_object) && !code.starts_with('rt.') {
 		res = t.box_expr(code, arg_type)
 	} else {
 		res = t.dup_if_needed(code, arg_node)

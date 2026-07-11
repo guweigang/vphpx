@@ -222,6 +222,30 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 		'mysqli_set_charset' {
 			return new_bool(true)
 		}
+		'call_user_func' {
+			if args.len > 0 {
+				cb := args[0]
+				cb_args := args[1..]
+				return call_callable(cb, cb_args)
+			}
+			return new_null()
+		}
+		'call_user_func_array' {
+			if args.len > 0 {
+				cb := args[0]
+				mut cb_args := []PhpVal{}
+				if args.len > 1 && args[1].is_array() {
+					pa := unsafe { extract_from_zval(args[1].raw) }
+					mut it := pa.iter()
+					for {
+						item := it.next_iter() or { break }
+						cb_args << item.val
+					}
+				}
+				return call_callable(cb, cb_args)
+			}
+			return new_null()
+		}
 		else {
 			// 通用动态内置函数绑定
 			z_ret := new_zval()

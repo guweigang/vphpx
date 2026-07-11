@@ -58,11 +58,29 @@ pub fn call_callable(cb PhpVal, args []PhpVal) PhpVal {
 	}
 	if cb.is_string() {
 		func_name := cb.to_string()
+		if func_name.contains('::') {
+			return call_zend_callable(cb, args)
+		}
 		mut r := get_registry()
 		if func_name in r.func_registry {
 			return r.func_registry[func_name](args)
 		}
 		return call_function(func_name, args)
+	}
+	if cb.is_array() {
+		cnt := cb.array_count()
+		if cnt >= 2 {
+			first := cb.array_get(0)
+			second := cb.array_get(1)
+			if first.is_object() {
+				return call_method(first, second.to_string(), args)
+			} else if first.is_string() {
+				return call_zend_callable(cb, args)
+			}
+		}
+	}
+	if cb.is_object() {
+		return call_zend_callable(cb, args)
 	}
 	return new_null()
 }
