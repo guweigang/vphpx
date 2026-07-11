@@ -365,6 +365,13 @@ fn test_transpiler_end_to_end() {
 			'.next()',
 			'for {',
 		]
+		// 55: 魔术方法 __get 与 __set 原生转译与运行
+		'55_oop_magic_properties.php': [
+			'.magic_get(',
+			'.magic_set(',
+			'mut_this.magic_get(',
+			'this.magic_set(',
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址

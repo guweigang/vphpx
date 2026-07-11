@@ -691,6 +691,16 @@ fn (mut t Transpiler) generate_dispatchers() {
 		t.write_line('}')
 		t.write_line('')
 
+		mut has_get := false
+		mut has_set := false
+		for m in cls.all_methods {
+			if m.name == '__get' {
+				has_get = true
+			} else if m.name == '__set' {
+				has_set = true
+			}
+		}
+
 		// dispatch_get_prop：P7 Task 12 原生属性装箱，使用 optional 返回值
 		t.write_line('fn (this &Class_${cls.name}) dispatch_get_prop(prop_name string) ?rt.PhpVal {')
 		t.indent++
@@ -716,13 +726,32 @@ fn (mut t Transpiler) generate_dispatchers() {
 				}
 			}
 			t.write_indent()
-			t.write_line('else { return ${parent_route_get} }')
+			if has_get {
+				t.write_line('else {')
+				t.indent++
+				t.write_indent()
+				t.write_line('mut mut_this := unsafe { &Class_${cls.name}(voidptr(this)) }')
+				t.write_indent()
+				t.write_line('return mut_this.magic_get(rt.new_string(prop_name))')
+				t.indent--
+				t.write_indent()
+				t.write_line('}')
+			} else {
+				t.write_line('else { return ${parent_route_get} }')
+			}
 			t.indent--
 			t.write_indent()
 			t.write_line('}')
 		} else {
-			t.write_indent()
-			t.write_line('return ${parent_route_get}')
+			if has_get {
+				t.write_indent()
+				t.write_line('mut mut_this := unsafe { &Class_${cls.name}(voidptr(this)) }')
+				t.write_indent()
+				t.write_line('return mut_this.magic_get(rt.new_string(prop_name))')
+			} else {
+				t.write_indent()
+				t.write_line('return ${parent_route_get}')
+			}
 		}
 		t.indent--
 		t.write_line('}')
@@ -748,13 +777,32 @@ fn (mut t Transpiler) generate_dispatchers() {
 				}
 			}
 			t.write_indent()
-			t.write_line('else { return ${parent_route_set} }')
+			if has_set {
+				t.write_line('else {')
+				t.indent++
+				t.write_indent()
+				t.write_line('this.magic_set(rt.new_string(prop_name), val)')
+				t.write_indent()
+				t.write_line('return true')
+				t.indent--
+				t.write_indent()
+				t.write_line('}')
+			} else {
+				t.write_line('else { return ${parent_route_set} }')
+			}
 			t.indent--
 			t.write_indent()
 			t.write_line('}')
 		} else {
-			t.write_indent()
-			t.write_line('return ${parent_route_set}')
+			if has_set {
+				t.write_indent()
+				t.write_line('this.magic_set(rt.new_string(prop_name), val)')
+				t.write_indent()
+				t.write_line('return true')
+			} else {
+				t.write_indent()
+				t.write_line('return ${parent_route_set}')
+			}
 		}
 		t.indent--
 		t.write_line('}')

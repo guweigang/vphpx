@@ -1363,6 +1363,36 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 							
 							mut obj_name := if obj_var_node.name == 'this' { 'this' } else { t.visit_expr(*obj_var_node) }
 							return '${obj_name}.${field_name} = ${rhs}'
+						} else {
+							// 动态/未声明属性：检查类及其继承树是否定义了 __set
+							mut has_set := false
+							mut curr_class := obj_type.class_name
+							for curr_class != '' {
+								mut found_cls := false
+								for cls in t.classes {
+									if cls.name.to_lower() == curr_class.to_lower() {
+										found_cls = true
+										for m in cls.all_methods {
+											if m.name == '__set' {
+												has_set = true
+												break
+											}
+										}
+										curr_class = cls.extends
+										break
+									}
+								}
+								if !found_cls { break }
+								if has_set { break }
+							}
+							if has_set {
+								mut expr_str := t.visit_expr(*expr_node)
+								if expr_node.node_type == ast.node_expr_variable {
+									expr_str += t.dup_suffix_for_var(expr_node.name)
+								}
+								mut obj_name := if obj_var_node.name == 'this' { 'this' } else { t.visit_expr(*obj_var_node) }
+								return '${obj_name}.magic_set(rt.new_string(\'${prop_name}\'), ${expr_str})'
+							}
 						}
 					}
 				}
@@ -2145,6 +2175,34 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 							}
 						} else {
 							return '${obj_var_name}.${field_name}'
+						}
+					} else {
+						// 动态/未声明属性：检查类及其继承树是否定义了 __get
+						mut has_get := false
+						mut curr_class := obj_type.class_name
+						for curr_class != '' {
+							mut found_cls := false
+							for cls in t.classes {
+								if cls.name.to_lower() == curr_class.to_lower() {
+									found_cls = true
+									for m in cls.all_methods {
+										if m.name == '__get' {
+											has_get = true
+											break
+										}
+									}
+									curr_class = cls.extends
+									break
+								}
+							}
+							if !found_cls { break }
+							if has_get { break }
+						}
+						if has_get {
+							if obj_var_node.name == 'this' {
+								return 'this.magic_get(rt.new_string(\'${prop_name}\'))'
+							}
+							return '${obj_var_name}.magic_get(rt.new_string(\'${prop_name}\'))'
 						}
 					}
 				}
