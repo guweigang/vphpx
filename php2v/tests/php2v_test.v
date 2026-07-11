@@ -204,10 +204,11 @@ fn test_transpiler_end_to_end() {
 		]
 		'27_increment_decrement.php': [
 			'mut var_a := 5',
-			'mut var_b := rt.post_inc(rt.new_int(var_a))',
-			'mut var_c := rt.post_dec(rt.new_int(var_a))',
-			'mut var_d := rt.pre_inc(rt.new_int(var_a))',
-			'mut var_e := rt.pre_dec(rt.new_int(var_a))',
+			'var_a += 1',
+			'mut var_b := tmp_inc_',
+			'mut var_c := tmp_inc_',
+			'mut var_d := var_a',
+			'mut var_e := var_a',
 		]
 		'28_bitwise_ops.php': [
 			'mut var_c := var_a & var_b',
@@ -355,6 +356,14 @@ fn test_transpiler_end_to_end() {
 			'.offsetget(',
 			'.offsetexists(',
 			'.offsetunset(',
+		]
+		// 54: Iterator 接口原生转译与运行
+		'54_oop_iterator.php': [
+			'.rewind()',
+			'.valid()',
+			'.current()',
+			'.next()',
+			'for {',
 		]
 	}
 

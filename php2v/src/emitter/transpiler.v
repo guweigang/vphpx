@@ -633,7 +633,38 @@ pub fn (mut t Transpiler) scan_global_constants(stmts []ast.AstNode) {
 // 辅助提取属性默认值的 V 表达式
 fn get_prop_default_expr(node ast.AstNode) string {
 	match node.node_type {
-		ast.node_expr_array { return 'rt.new_array()' }
+		ast.node_expr_array {
+			mut is_list := true
+			for item in node.items {
+				if item.key != none {
+					is_list = false
+					break
+				}
+			}
+			if is_list {
+				mut val_strs := []string{}
+				for item in node.items {
+					if val_node := item.expr {
+						val_strs << get_prop_default_expr(*val_node)
+					}
+				}
+				return 'rt.create_array_from_list([ ${val_strs.join(", ")} ])'
+			} else {
+				mut item_strs := []string{}
+				for item in node.items {
+					if val_node := item.expr {
+						val_expr := get_prop_default_expr(*val_node)
+						if key_node := item.key {
+							key_expr := get_prop_default_expr(*key_node)
+							item_strs << 'rt.ArrayItem{ key: ${key_expr}, val: ${val_expr} }'
+						} else {
+							item_strs << 'rt.ArrayItem{ key: none, val: ${val_expr} }'
+						}
+					}
+				}
+				return 'rt.create_array([ ${item_strs.join(", ")} ])'
+			}
+		}
 		ast.node_scalar_string { return "rt.new_string('${escape_single_quoted(node.value)}')" }
 		ast.node_scalar_int { return 'rt.new_int(${node.value})' }
 		ast.node_scalar_float { return 'rt.new_float(${node.value})' }

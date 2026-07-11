@@ -880,7 +880,59 @@ fn (mut t Transpiler) visit_foreach(node ast.AstNode) {
 		t.var_aliases[key_var_name] = shadow_name
 		key_var_name = shadow_name
 	}
-	
+	if arr_type.is_object() && t.class_implements(arr_type.class_name, 'Iterator') {
+		expr_str := t.visit_expr(*expr_node)
+		t.write_indent()
+		t.write_line('${expr_str}.rewind()')
+		t.write_indent()
+		t.write_line('for {')
+		t.indent++
+		t.write_indent()
+		mut is_valid_bool := false
+		for cls in t.classes {
+			if cls.name.to_lower() == arr_type.class_name.to_lower() {
+				if ret_typ := cls.return_types['valid'] {
+					if ret_typ.tag == .t_bool {
+						is_valid_bool = true
+					}
+				}
+				break
+			}
+		}
+		if is_valid_bool {
+			t.write_line('if !(${expr_str}.valid()) { break }')
+		} else {
+			t.write_line('if !rt.is_true(${expr_str}.valid()) { break }')
+		}
+		old_scope := t.scope.clone()
+		old_inferred := t.inferred_types.clone()
+		t.scope.declare(val_var_name)
+		t.inferred_types[val_var_name] = VarType{ tag: .t_unknown }
+		t.write_indent()
+		val_v := if val_var_name.starts_with('var_') { val_var_name } else { 'var_' + val_var_name }
+		t.write_line('mut ${val_v} := ${expr_str}.current()')
+		if key_var_name.len > 0 {
+			t.scope.declare(key_var_name)
+			t.inferred_types[key_var_name] = VarType{ tag: .t_unknown }
+			t.write_indent()
+			key_v := if key_var_name.starts_with('var_') { key_var_name } else { 'var_' + key_var_name }
+			t.write_line('mut ${key_v} := ${expr_str}.key()')
+		}
+		for stmt in node.stmts {
+			t.visit_stmt(stmt)
+		}
+		t.write_indent()
+		t.write_line('${expr_str}.next()')
+		t.scope = old_scope
+		t.inferred_types = old_inferred.clone()
+		t.var_aliases = old_aliases.clone()
+		t.native_vars = old_native_vars.clone()
+		t.indent--
+		t.write_indent()
+		t.write_line('}')
+		return
+	}
+
 	if arr_type.is_native_list || arr_type.is_native_map {
 		arr_str := t.visit_expr(*expr_node)
 		old_scope := t.scope.clone()

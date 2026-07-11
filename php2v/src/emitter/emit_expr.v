@@ -360,6 +360,24 @@ fn (mut t Transpiler) visit_expr_native_impl(node ast.AstNode) string {
 			t.last_expr_type = typ
 			return t.get_v_var_name(node.name)
 		}
+		ast.node_bin_greater, ast.node_bin_smaller, ast.node_bin_greater_equal,
+		ast.node_bin_smaller_equal, ast.node_bin_equal, ast.node_bin_identical {
+			left := node.left or { return '' }
+			right := node.right or { return '' }
+			l_code := t.visit_expr_native(*left)
+			r_code := t.visit_expr_native(*right)
+			op := match node.node_type {
+				ast.node_bin_greater { '>' }
+				ast.node_bin_smaller { '<' }
+				ast.node_bin_greater_equal { '>=' }
+				ast.node_bin_smaller_equal { '<=' }
+				ast.node_bin_equal { '==' }
+				ast.node_bin_identical { '==' }
+				else { '==' }
+			}
+			t.last_expr_type = VarType{ tag: .t_bool }
+			return '${l_code} ${op} ${r_code}'
+		}
 		ast.node_bin_plus {
 			left := node.left or { panic('plus missing left') }
 			right := node.right or { panic('plus missing right') }
@@ -2255,22 +2273,56 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 		}
 		ast.node_expr_post_inc {
 			var_node := node.var or { panic('PostInc missing var') }
-			var_str := t.visit_expr(*var_node)
+			var_type := t.get_expr_type(*var_node)
+			is_native := var_type.tag in [.t_int, .t_float]
+			var_str := if is_native { t.visit_expr_native(*var_node) } else { t.visit_expr(*var_node) }
+			if is_native {
+				t.closure_count++
+				tmp_name := 'tmp_inc_${t.closure_count}'
+				t.pre_stmts << '${tmp_name} := ${var_str}'
+				op := if var_type.tag == .t_int { '+= 1' } else { '+= 1.0' }
+				t.pre_stmts << '${var_str} ${op}'
+				return tmp_name
+			}
 			return 'rt.post_inc(${var_str})'
 		}
 		ast.node_expr_post_dec {
 			var_node := node.var or { panic('PostDec missing var') }
-			var_str := t.visit_expr(*var_node)
+			var_type := t.get_expr_type(*var_node)
+			is_native := var_type.tag in [.t_int, .t_float]
+			var_str := if is_native { t.visit_expr_native(*var_node) } else { t.visit_expr(*var_node) }
+			if is_native {
+				t.closure_count++
+				tmp_name := 'tmp_inc_${t.closure_count}'
+				t.pre_stmts << '${tmp_name} := ${var_str}'
+				op := if var_type.tag == .t_int { '-= 1' } else { '-= 1.0' }
+				t.pre_stmts << '${var_str} ${op}'
+				return tmp_name
+			}
 			return 'rt.post_dec(${var_str})'
 		}
 		ast.node_expr_pre_inc {
 			var_node := node.var or { panic('PreInc missing var') }
-			var_str := t.visit_expr(*var_node)
+			var_type := t.get_expr_type(*var_node)
+			is_native := var_type.tag in [.t_int, .t_float]
+			var_str := if is_native { t.visit_expr_native(*var_node) } else { t.visit_expr(*var_node) }
+			if is_native {
+				op := if var_type.tag == .t_int { '+= 1' } else { '+= 1.0' }
+				t.pre_stmts << '${var_str} ${op}'
+				return var_str
+			}
 			return 'rt.pre_inc(${var_str})'
 		}
 		ast.node_expr_pre_dec {
 			var_node := node.var or { panic('PreDec missing var') }
-			var_str := t.visit_expr(*var_node)
+			var_type := t.get_expr_type(*var_node)
+			is_native := var_type.tag in [.t_int, .t_float]
+			var_str := if is_native { t.visit_expr_native(*var_node) } else { t.visit_expr(*var_node) }
+			if is_native {
+				op := if var_type.tag == .t_int { '-= 1' } else { '-= 1.0' }
+				t.pre_stmts << '${var_str} ${op}'
+				return var_str
+			}
 			return 'rt.pre_dec(${var_str})'
 		}
 		ast.node_expr_error_suppress {
