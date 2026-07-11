@@ -5,6 +5,143 @@ import os
 // call_function 调度 PHP 函数调用
 pub fn call_function(name string, args []PhpVal) PhpVal {
 	match name {
+		'get_class' {
+			if args.len > 0 && args[0].is_object() {
+				obj := args[0]
+				obj_ptr := obj.get_object()
+				if voidptr(obj_ptr) != unsafe { nil } {
+					return new_string(obj_ptr.class_name)
+				}
+			}
+			return call_zend_function(name, args)
+		}
+		'get_parent_class' {
+			if args.len > 0 {
+				obj := args[0]
+				if obj.is_object() {
+					obj_ptr := obj.get_object()
+					if voidptr(obj_ptr) != unsafe { nil } {
+						if obj_ptr.parents.len > 0 {
+							return new_string(obj_ptr.parents[0])
+						}
+						return new_bool(false)
+					}
+				} else if obj.is_string() {
+					class_name := obj.to_string()
+					if parent := get_class_parent_name(class_name) {
+						return new_string(parent)
+					}
+					return new_bool(false)
+				}
+			}
+			return call_zend_function(name, args)
+		}
+		'is_a' {
+			if args.len > 1 {
+				obj := args[0]
+				class_name := args[1].to_string()
+				allow_string := if args.len > 2 { args[2].to_bool() } else { false }
+				if obj.is_object() {
+					obj_ptr := obj.get_object()
+					if voidptr(obj_ptr) != unsafe { nil } {
+						lower_class := class_name.to_lower()
+						if obj_ptr.class_name.to_lower() == lower_class {
+							return new_bool(true)
+						}
+						for p in obj_ptr.parents {
+							if p.to_lower() == lower_class {
+								return new_bool(true)
+							}
+						}
+						return new_bool(false)
+					}
+				} else if allow_string && obj.is_string() {
+					subj_name := obj.to_string()
+					lower_class := class_name.to_lower()
+					if subj_name.to_lower() == lower_class {
+						return new_bool(true)
+					}
+					if is_subclass_of_by_name(subj_name, class_name) {
+						return new_bool(true)
+					}
+					return new_bool(false)
+				}
+			}
+			return call_zend_function(name, args)
+		}
+		'is_subclass_of' {
+			if args.len > 1 {
+				obj := args[0]
+				class_name := args[1].to_string()
+				allow_string := if args.len > 2 { args[2].to_bool() } else { true }
+				if obj.is_object() {
+					obj_ptr := obj.get_object()
+					if voidptr(obj_ptr) != unsafe { nil } {
+						lower_class := class_name.to_lower()
+						for p in obj_ptr.parents {
+							if p.to_lower() == lower_class {
+								return new_bool(true)
+							}
+						}
+						return new_bool(false)
+					}
+				} else if allow_string && obj.is_string() {
+					subj_name := obj.to_string()
+					if is_subclass_of_by_name(subj_name, class_name) {
+						return new_bool(true)
+					}
+					return new_bool(false)
+				}
+			}
+			return call_zend_function(name, args)
+		}
+		'method_exists' {
+			if args.len > 1 {
+				obj := args[0]
+				method_name := args[1].to_string()
+				if obj.is_object() {
+					obj_ptr := obj.get_object()
+					if voidptr(obj_ptr) != unsafe { nil } {
+						mut obj_impl := obj_ptr.obj
+						return new_bool(obj_impl.has_method(method_name))
+					}
+				} else if obj.is_string() {
+					class_name := obj.to_string()
+					return new_bool(class_has_method(class_name, method_name))
+				}
+			}
+			return call_zend_function(name, args)
+		}
+		'property_exists' {
+			if args.len > 1 {
+				obj := args[0]
+				prop_name := args[1].to_string()
+				if obj.is_object() {
+					obj_ptr := obj.get_object()
+					if voidptr(obj_ptr) != unsafe { nil } {
+						mut obj_impl := obj_ptr.obj
+						return new_bool(obj_impl.has_property(prop_name))
+					}
+				} else if obj.is_string() {
+					class_name := obj.to_string()
+					return new_bool(class_has_property(class_name, prop_name))
+				}
+			}
+			return call_zend_function(name, args)
+		}
+		'spl_object_hash' {
+			if args.len > 0 && args[0].is_object() {
+				obj := args[0]
+				obj_ptr := obj.get_object()
+				if voidptr(obj_ptr) != unsafe { nil } {
+					ptr_val := u64(voidptr(obj_ptr))
+					hex_str := ptr_val.hex()
+					padded := '0000000000000000' + hex_str
+					return new_string(padded)
+				}
+			}
+			return call_zend_function(name, args)
+		}
 		'strlen' {
 			if args.len > 0 {
 				return new_int(args[0].to_string().len)
@@ -308,6 +445,23 @@ pub fn get_constant(name string) PhpVal {
 	unsafe {
 		res := C.php2v_get_constant(name.str, usize(name.len), z_ret)
 		if res == 1 {
+			return PhpVal{ raw: z_ret }
+		}
+		free(z_ret)
+	}
+	return new_null()
+}
+
+// call_zend_function 动态在全局函数表中查找并调用函数
+pub fn call_zend_function(name string, args []PhpVal) PhpVal {
+	z_ret := new_zval()
+	mut z_args := []&C.zval{}
+	for arg in args {
+		z_args << arg.raw
+	}
+	unsafe {
+		res := C.php2v_call_zend_function(name.str, usize(name.len), z_ret, u32(args.len), z_args.data)
+		if res == 0 {
 			return PhpVal{ raw: z_ret }
 		}
 		free(z_ret)

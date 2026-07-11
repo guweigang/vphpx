@@ -807,6 +807,63 @@ fn (mut t Transpiler) generate_dispatchers() {
 		t.indent--
 		t.write_line('}')
 		t.write_line('')
+
+		// has_method：IPhpObject 接口实现
+		t.write_line('fn (mut this Class_${cls.name}) has_method(method_name string) bool {')
+		t.indent++
+		if cls.all_methods.len > 0 {
+			t.write_indent()
+			t.write_line('match method_name.to_lower() {')
+			t.indent++
+			for m in cls.all_methods {
+				t.write_indent()
+				t.write_line('\'${m.name.to_lower()}\' { return true }')
+			}
+			t.write_indent()
+			t.write_line('else {}')
+			t.indent--
+			t.write_indent()
+			t.write_line('}')
+		}
+		if cls.extends != '' && !t.undeclared_classes[cls.extends] {
+			t.write_indent()
+			t.write_line('return this.Class_${cls.extends}.has_method(method_name)')
+		} else {
+			t.write_indent()
+			t.write_line('return false')
+		}
+		t.indent--
+		t.write_line('}')
+		t.write_line('')
+
+		// has_property：IPhpObject 接口实现
+		t.write_line('fn (mut this Class_${cls.name}) has_property(prop_name string) bool {')
+		t.indent++
+		if cls.all_props.len > 0 {
+			t.write_indent()
+			t.write_line('match prop_name {')
+			t.indent++
+			for prop in cls.all_props {
+				t.write_indent()
+				t.write_line('\'${prop}\' { return true }')
+			}
+			t.write_indent()
+			t.write_line('else {}')
+			t.indent--
+			t.write_indent()
+			t.write_line('}')
+		}
+		if cls.extends != '' && !t.undeclared_classes[cls.extends] {
+			t.write_indent()
+			t.write_line('if this.Class_${cls.extends}.has_property(prop_name) { return true }')
+		} else {
+			t.write_indent()
+			t.write_line('if this.PhpObjectBase.has_property(prop_name) { return true }')
+		}
+		t.write_indent()
+		t.write_line('return false')
+		t.indent--
+		t.write_line('}')
 		t.write_line('')
 	}
 

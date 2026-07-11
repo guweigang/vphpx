@@ -549,6 +549,8 @@ mut:
 	dispatch_method(method_name string, args []PhpVal) ?PhpVal
 	dispatch_get_prop(prop_name string) ?PhpVal
 	dispatch_set_prop(prop_name string, val PhpVal) bool
+	has_method(method_name string) bool
+	has_property(prop_name string) bool
 }
 
 // PhpObjectBase 结构体可作为 PHP 类的通用嵌入基类，提供默认实现以隐式实现 IPhpObject
@@ -580,6 +582,14 @@ pub fn (mut this PhpObjectBase) dispatch_set_prop(prop_name string, val PhpVal) 
 		self.dynamic_props[prop_name] = val
 	}
 	return true
+}
+
+pub fn (mut this PhpObjectBase) has_method(method_name string) bool {
+	return false
+}
+
+pub fn (mut this PhpObjectBase) has_property(prop_name string) bool {
+	return prop_name in this.dynamic_props
 }
 
 pub const magic_php_object = u64(0x56504850585F4F42)

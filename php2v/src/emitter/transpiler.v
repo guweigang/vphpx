@@ -941,7 +941,7 @@ fn (mut t Transpiler) scan_dynamic_usages_node(node ast.AstNode) {
 }
 
 fn (mut t Transpiler) generate_registry_initializers() {
-	if !t.has_dynamic_new && !t.has_dynamic_method_call && !t.has_dynamic_func_call {
+	if !t.has_dynamic_new && !t.has_dynamic_method_call && !t.has_dynamic_func_call && t.classes.len == 0 {
 		return
 	}
 
@@ -1036,6 +1036,29 @@ fn (mut t Transpiler) generate_registry_initializers() {
 			lines << "\t\treturn rt.new_object('${cls.name}', ${parents_expr}, obj)"
 			lines << "\t})"
 		}
+	}
+
+	// 3. 注册类元数据（用于 method_exists / property_exists / is_a 等 AOT 查询）
+	for cls in t.classes {
+		mut parent_list := []string{}
+		if cls.extends.len > 0 {
+			parent_list << "'${cls.extends}'"
+		}
+		for impl in cls.implements {
+			parent_list << "'${impl}'"
+		}
+		
+		mut method_list := []string{}
+		for m in cls.all_methods {
+			method_list << "'${m.name}'"
+		}
+		
+		mut prop_list := []string{}
+		for p in cls.all_props {
+			prop_list << "'${p}'"
+		}
+		
+		lines << "\trt.register_class_metadata('${cls.name}', [${parent_list.join(', ')}], [${method_list.join(', ')}], [${prop_list.join(', ')}])"
 	}
 	lines << '}'
 	lines << ''

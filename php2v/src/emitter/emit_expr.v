@@ -64,8 +64,19 @@ fn (mut t Transpiler) get_expr_type(node ast.AstNode) VarType {
 			}
 		}
 		ast.node_bin_bitwise_and, ast.node_bin_bitwise_or, ast.node_bin_bitwise_xor,
-		ast.node_bin_shift_left, ast.node_bin_shift_right, ast.node_expr_bitwise_not {
-			return VarType{ tag: .t_int }
+		ast.node_bin_shift_left, ast.node_bin_shift_right {
+			left := node.left or { return VarType{ tag: .t_unknown } }
+			right := node.right or { return VarType{ tag: .t_unknown } }
+			l_t := t.get_expr_type(*left)
+			r_t := t.get_expr_type(*right)
+			if l_t.tag == .t_int && r_t.tag == .t_int { return VarType{ tag: .t_int } }
+			return VarType{ tag: .t_unknown }
+		}
+		ast.node_expr_bitwise_not {
+			expr_node := node.expr or { return VarType{ tag: .t_unknown } }
+			e_t := t.get_expr_type(*expr_node)
+			if e_t.tag == .t_int { return VarType{ tag: .t_int } }
+			return VarType{ tag: .t_unknown }
 		}
 		ast.node_bin_plus, ast.node_bin_minus, ast.node_bin_mul, ast.node_bin_div, ast.node_bin_mod {
 			left := node.left or { return VarType{ tag: .t_unknown } }

@@ -2,6 +2,14 @@ module rt
 
 import os
 
+pub struct ClassMeta {
+pub:
+	name       string
+	parents    []string
+	methods    []string
+	properties []string
+}
+
 struct Registry {
 mut:
 	func_registry    map[string]fn ([]PhpVal) PhpVal
@@ -10,6 +18,7 @@ mut:
 	included_files   map[string]bool
 	// 静态属性表：class_name -> prop_name -> value
 	static_props    map[string]map[string]PhpVal
+	class_metas     map[string]ClassMeta
 	mysql_pool      voidptr
 }
 
@@ -25,12 +34,90 @@ fn get_registry() &Registry {
 			include_registry: map[string]fn () PhpVal{}
 			included_files:   map[string]bool{}
 			static_props:     map[string]map[string]PhpVal{}
+			class_metas:      map[string]ClassMeta{}
 		}
 		C.php2v_set_registry(voidptr(r))
 		C.php2v_set_v_callback(voidptr(my_v_callback_handler))
 		return r
 	}
 	return &Registry(p)
+}
+
+pub fn register_class_metadata(name string, parents []string, methods []string, properties []string) {
+	mut r := get_registry()
+	r.class_metas[name] = ClassMeta{
+		name: name
+		parents: parents
+		methods: methods
+		properties: properties
+	}
+}
+
+pub fn class_has_method(class_name string, method_name string) bool {
+	mut r := get_registry()
+	if class_name in r.class_metas {
+		meta := r.class_metas[class_name]
+		lower_method := method_name.to_lower()
+		for m in meta.methods {
+			if m.to_lower() == lower_method {
+				return true
+			}
+		}
+		// Also check parents recursively
+		for parent in meta.parents {
+			if class_has_method(parent, method_name) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+pub fn class_has_property(class_name string, prop_name string) bool {
+	mut r := get_registry()
+	if class_name in r.class_metas {
+		meta := r.class_metas[class_name]
+		for p in meta.properties {
+			if p == prop_name {
+				return true
+			}
+		}
+		// Also check parents recursively
+		for parent in meta.parents {
+			if class_has_property(parent, prop_name) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+pub fn get_class_parent_name(class_name string) ?string {
+	mut r := get_registry()
+	if class_name in r.class_metas {
+		meta := r.class_metas[class_name]
+		if meta.parents.len > 0 {
+			return meta.parents[0]
+		}
+	}
+	return none
+}
+
+pub fn is_subclass_of_by_name(class_name string, parent_name string) bool {
+	mut r := get_registry()
+	if class_name in r.class_metas {
+		meta := r.class_metas[class_name]
+		lower_parent := parent_name.to_lower()
+		for p in meta.parents {
+			if p.to_lower() == lower_parent {
+				return true
+			}
+			if is_subclass_of_by_name(p, parent_name) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 pub fn register_func(name string, f fn ([]PhpVal) PhpVal) {

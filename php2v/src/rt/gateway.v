@@ -37,7 +37,8 @@ pub fn start_gateway(port int, entry_fn fn () PhpVal) {
 }
 
 // index 处理每一个 HTTP 网关请求
-pub fn (mut app ServerApp) index(mut ctx ServerContext) veb.Result {
+@[GET; POST; '/:path...']
+pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result {
 	// 注册当前子线程的 TSRM 资源，避免 PHP 引擎 C 接口崩溃
 	unsafe {
 		C.php2v_register_thread()

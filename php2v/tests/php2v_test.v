@@ -377,6 +377,13 @@ fn test_transpiler_end_to_end() {
 			"rt.call_function('call_user_func'",
 			"rt.call_function('call_user_func_array'",
 		]
+		// 57: 面向对象核心内置函数原生与双轨支持
+		'57_builtin_class_functions.php': [
+			"rt.register_class_metadata('ChildClass'",
+			"rt.call_function('get_class'",
+			"rt.call_function('is_a'",
+			"rt.call_function('method_exists'",
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址
