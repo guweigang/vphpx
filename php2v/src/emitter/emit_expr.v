@@ -834,8 +834,26 @@ fn (mut t Transpiler) emit_native_condition(node ast.AstNode) string {
 					arr_node := v.var or { return '' }
 					dim_node := v.dim or { return '' }
 					arr_str := t.visit_expr(*arr_node)
-					if t.is_native_array_or_map(*arr_node) {
-						arr_typ := t.get_expr_type(*arr_node)
+					arr_typ := t.get_expr_type(*arr_node)
+					if arr_typ.is_object() && t.class_implements(arr_typ.class_name, 'ArrayAccess') {
+						dim_str := t.visit_expr(*dim_node)
+						mut is_ret_bool := false
+						for cls in t.classes {
+							if cls.name.to_lower() == arr_typ.class_name.to_lower() {
+								if ret_typ := cls.return_types['offsetExists'] {
+									if ret_typ.tag == .t_bool {
+										is_ret_bool = true
+									}
+								}
+								break
+							}
+						}
+						if is_ret_bool {
+							checks << '${arr_str}.offsetexists(${dim_str})'
+						} else {
+							checks << 'rt.is_true(${arr_str}.offsetexists(${dim_str}))'
+						}
+					} else if t.is_native_array_or_map(*arr_node) {
 						dim_typ := t.get_expr_type(*dim_node)
 						dim_native_str := if dim_typ.is_scalar() { t.visit_expr_native(*dim_node) } else { t.visit_expr(*dim_node) }
 						if arr_typ.is_native_map {
@@ -1238,6 +1256,17 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 				arr_var_node := var_node.var or { panic('ArrayDimFetch missing var') }
 				arr_var_type := t.get_expr_type(*arr_var_node)
 				arr_var_name := t.visit_expr_write_dim(*arr_var_node)
+				
+				if arr_var_type.is_object() && t.class_implements(arr_var_type.class_name, 'ArrayAccess') {
+					expr_node := node.expr or { panic('Assign node missing expr') }
+					expr_str := t.visit_expr(*expr_node)
+					if dim_node := var_node.dim {
+						dim_str := t.visit_expr(*dim_node)
+						return '${arr_var_name}.offsetset(${dim_str}, ${expr_str})'
+					} else {
+						return '${arr_var_name}.offsetset(rt.new_null(), ${expr_str})'
+					}
+				}
 				
 				expr_node := node.expr or { panic('Assign node missing expr') }
 				
@@ -1885,6 +1914,15 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 			var_node := node.var or { panic('ArrayDimFetch missing var') }
 			var_type := t.get_expr_type(*var_node)
 			var_str := t.visit_expr(*var_node)
+			if var_type.is_object() && t.class_implements(var_type.class_name, 'ArrayAccess') {
+				if dim_node := node.dim {
+					dim_str := t.visit_expr(*dim_node)
+					t.last_expr_type = VarType{ tag: .t_object, class_name: 'PhpVal' } // 假设 offsetget 返回对象
+					return '${var_str}.offsetget(${dim_str})'
+				} else {
+					panic('ArrayDimFetch missing dim for ArrayAccess read')
+				}
+			}
 			mut is_native_arr := false
 			if var_type.is_native_list || var_type.is_native_map {
 				mut check_name := var_node.name

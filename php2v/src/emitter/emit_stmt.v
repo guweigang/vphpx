@@ -153,7 +153,10 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 					arr_type := t.get_expr_type(*arr_node)
 					arr_str := t.visit_expr(*arr_node)
 					t.write_indent()
-					if arr_type.is_native_map {
+					if arr_type.is_object() && t.class_implements(arr_type.class_name, 'ArrayAccess') {
+						dim_str := t.visit_expr(*dim_node)
+						t.write_line('${arr_str}.offsetunset(${dim_str})')
+					} else if arr_type.is_native_map {
 						dim_str_native := t.visit_expr_native(*dim_node)
 						t.write_line('${arr_str}.delete(${dim_str_native})')
 					} else {

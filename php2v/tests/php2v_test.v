@@ -349,6 +349,13 @@ fn test_transpiler_end_to_end() {
 			'run_transpiled_include_',
 			'rt.include_file(',
 		]
+		// 53: ArrayAccess 接口原生转译与运行
+		'53_oop_arrayaccess.php': [
+			'.offsetset(',
+			'.offsetget(',
+			'.offsetexists(',
+			'.offsetunset(',
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址

@@ -1545,6 +1545,11 @@ pub fn (mut t Transpiler) analyze_arrays(stmts []ast.AstNode) {
 	t.scan_array_usages_stmts(stmts, mut states)
 	
 	for name, s in states {
+		if existing_typ := t.inferred_types[name] {
+			if existing_typ.is_object() {
+				continue
+			}
+		}
 		if name in ['_GET', '_POST', '_SERVER', '_COOKIE', '_SESSION', '_FILES', '_ENV', '_REQUEST', 'GLOBALS'] {
 			t.inferred_types[name] = VarType{
 				tag: .t_array
