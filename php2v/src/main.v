@@ -64,18 +64,23 @@ fn main() {
 	// 3. 转译为 V 代码
 	mut transpiler := emitter.Transpiler.new()
 	transpiler.current_file = input_file
+	transpiler.parser_php_path = parser_path
 	transpiler.mode = mode
 	v_body := transpiler.transpile(stmts)
+
+	all_funcs := transpiler.func_out.str() + transpiler.include_funcs_code.str()
+	final_v_body := transpiler.include_register_code.str() + v_body
+
 	v_code := if mode == 'web' {
 		base_name := input_file.all_before_last('.').all_after_last('/')
 		func_name := 'run_${base_name}'
-		emitter.wrap_as_entry_script(transpiler.func_out.str(), v_body, func_name, 'main', transpiler.extra_imports)
+		emitter.wrap_as_entry_script(all_funcs, final_v_body, func_name, 'main', transpiler.extra_imports)
 	} else if mode == 'lib' {
 		base_name := input_file.all_before_last('.').all_after_last('/')
 		init_func_name := 'init_${base_name}'
-		emitter.wrap_as_lib(transpiler.func_out.str(), v_body, init_func_name, 'main', transpiler.extra_imports)
+		emitter.wrap_as_lib(all_funcs, final_v_body, init_func_name, 'main', transpiler.extra_imports)
 	} else {
-		emitter.wrap_as_main(transpiler.func_out.str(), v_body, transpiler.extra_imports)
+		emitter.wrap_as_main(all_funcs, final_v_body, transpiler.extra_imports)
 	}
 
 	// 4. 写入输出文件

@@ -2,6 +2,7 @@ module emitter
 
 import strings
 import ast
+import os
 
 pub struct ClassInfo {
 pub mut:
@@ -50,6 +51,10 @@ pub mut:
 	classes          []ClassInfo
 	current_class    string // 当前正在转译的类名（用于 parent:: 解析）
 	current_file     string
+	parser_php_path  string
+	transpiled_includes   map[string]string // 绝对路径 -> 转译后的 V 函数名
+	include_funcs_code    strings.Builder   // 已转译的 include 函数定义
+	include_register_code strings.Builder   // 注册 include 的代码段
 	try_count        int
 	current_catch_label string // 当前语句所属 of the try-catch block's catch label
 	current_finally_label string // 当前语句所属 of the try-catch block's finally label
@@ -128,6 +133,10 @@ pub fn Transpiler.new() Transpiler {
 		custom_function_infos: map[string]MethodInfo{}
 		classes:          []ClassInfo{}
 		current_file:     ''
+		parser_php_path:  ''
+		transpiled_includes:   map[string]string{}
+		include_funcs_code:    strings.new_builder(1024)
+		include_register_code: strings.new_builder(1024)
 		foreach_depth:    0
 		var_aliases:      map[string]string{}
 		native_vars:      map[string]bool{}
@@ -1029,6 +1038,122 @@ pub fn (t Transpiler) get_empty_literal(typ VarType) string {
 		return 'map[string]' + elem + '{}'
 	}
 	return 'rt.new_null()'
+}
+
+pub fn (mut t Transpiler) transpile_include_file(path string) string {
+	normalized := os.real_path(path)
+	if normalized in t.transpiled_includes {
+		return t.transpiled_includes[normalized]
+	}
+
+	func_name := t.get_safe_func_name(normalized)
+	t.transpiled_includes[normalized] = func_name
+
+	if t.parser_php_path == '' {
+		eprintln('Warning: parser_php_path not set, cannot transpile include: ' + path)
+		return func_name
+	}
+
+	// 规范化路径以保证跨平台查找
+	if !os.exists(normalized) {
+		eprintln('Warning: include file not found: ' + normalized)
+		return func_name
+	}
+
+	res := os.execute('php "' + t.parser_php_path + '" "' + normalized + '"')
+	if res.exit_code != 0 {
+		eprintln('PHP parsing failed for include ' + path + ': ' + res.output)
+		return func_name
+	}
+
+	stmts := ast.parse_ast_json(res.output) or {
+		eprintln('Failed to parse AST JSON for include ' + path + ': ${err}')
+		return func_name
+	}
+
+	// 实例化子转译器
+	mut sub_t := Transpiler.new()
+	sub_t.current_file = normalized
+	sub_t.parser_php_path = t.parser_php_path
+	sub_t.classes = t.classes.clone()
+	sub_t.custom_functions = t.custom_functions.clone()
+	sub_t.custom_function_infos = t.custom_function_infos.clone()
+	sub_t.global_constants = t.global_constants.clone()
+	sub_t.transpiled_includes = t.transpiled_includes.clone()
+
+	v_body := sub_t.transpile(stmts)
+
+	// 同步回父转译器
+	t.classes = sub_t.classes.clone()
+	t.custom_functions = sub_t.custom_functions.clone()
+	t.custom_function_infos = sub_t.custom_function_infos.clone()
+	t.global_constants = sub_t.global_constants.clone()
+	t.transpiled_includes = sub_t.transpiled_includes.clone()
+
+	t.include_funcs_code.write_string(sub_t.include_funcs_code.str())
+	t.include_register_code.write_string(sub_t.include_register_code.str())
+
+	mut final_body := v_body
+	trimmed := final_body.trim_space()
+	if !trimmed.ends_with('return') && !trimmed.all_after_last('\n').contains('return') {
+		final_body += '\treturn rt.new_null()\n'
+	}
+
+	sub_funcs := sub_t.func_out.str()
+	mut func_code := ''
+	if sub_funcs != '' {
+		func_code += sub_funcs + '\n'
+	}
+	func_code += 'fn ' + func_name + '() rt.PhpVal {\n' + final_body + '}\n'
+	
+	t.include_funcs_code.write_string(func_code)
+	t.include_register_code.writeln('\trt.register_include(\'' + normalized + '\', ' + func_name + ')')
+
+	return func_name
+}
+
+pub fn (t Transpiler) get_safe_func_name(path string) string {
+	mut s := path.to_lower()
+	s = s.replace('/', '_').replace('\\', '_').replace('.', '_').replace('-', '_').replace(':', '_')
+	return 'run_transpiled_include_' + s
+}
+
+pub fn (t &Transpiler) eval_static_path(node ast.AstNode) ?string {
+	match node.node_type {
+		ast.node_scalar_string {
+			return node.value
+		}
+		ast.node_scalar_magic_const_dir {
+			if t.current_file != '' {
+				return os.dir(os.real_path(t.current_file))
+			}
+			return os.getwd()
+		}
+		ast.node_scalar_magic_const_file {
+			if t.current_file != '' {
+				return os.real_path(t.current_file)
+			}
+			return ''
+		}
+		ast.node_expr_const {
+			name := node.name
+			if gc := t.global_constants[name] {
+				expr := gc.val_expr
+				if (expr.starts_with("'") && expr.ends_with("'")) || (expr.starts_with('"') && expr.ends_with('"')) {
+					return expr[1..expr.len - 1]
+				}
+			}
+		}
+		ast.node_bin_concat {
+			left_node := node.left or { return none }
+			right_node := node.right or { return none }
+			left_val := t.eval_static_path(*left_node) or { return none }
+			right_val := t.eval_static_path(*right_node) or { return none }
+			return left_val + right_val
+		}
+		else {}
+	}
+	return none
 }
 
 

@@ -1,5 +1,6 @@
 module rt
 
+import os
 
 // call_function 调度 PHP 函数调用
 pub fn call_function(name string, args []PhpVal) PhpVal {
@@ -38,10 +39,8 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 			if args.len > 0 {
 				z_ret := new_zval()
 				code_str := args[0].to_string()
-				println('PHP2V DEBUG - eval code: ' + code_str)
 				unsafe {
 					res := C.php2v_eval_string(code_str.str, usize(code_str.len), z_ret)
-					println('PHP2V DEBUG - eval result: ${res}')
 					if res == 0 {
 						return PhpVal{ raw: z_ret }
 					}
@@ -100,7 +99,7 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 				conn = unsafe { &MysqlConnHandle(C.php2v_get_last_mysql_conn()) }
 			}
 			query_str := args[1].to_string()
-			println('PHP2V SQL EXECUTE -> ' + query_str)
+
 			res := conn.db.query(query_str) or {
 				eprintln('rt mysqli_query error: ${err} | SQL: ${query_str}')
 				return new_bool(false)
@@ -164,7 +163,6 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 			unsafe {
 				C.php2v_eval_string(eval_str.str, u64(eval_str.len), mock_obj)
 			}
-			println('V-雷达: fetch_object return: ' + eval_str)
 			handle.cursor++
 			return PhpVal{ raw: mock_obj }
 		}
@@ -214,7 +212,7 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 			if conn_addr == 0 { return new_bool(false) }
 			mut conn := unsafe { &MysqlConnHandle(voidptr(conn_addr)) }
 			dbname := args[1].to_string()
-			println('PHP2V SELECT DATABASE -> ' + dbname)
+
 			conn.db.query('USE ' + dbname) or {
 				eprintln('rt mysqli_select_db error: ${err}')
 				return new_bool(false)
@@ -245,11 +243,32 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 }
 
 pub fn include_file(path string, incl_type string) PhpVal {
-	println('PHP2V DEBUG - include_file - physical execute: ' + path)
+	normalized := os.real_path(path)
+	
+	// incl_type 映射：
+	// '1' = include
+	// '2' = include_once
+	// '3' = require
+	// '4' = require_once
+	
+	is_once := incl_type == '2' || incl_type == '4'
+	
+	if is_once && is_included(normalized) {
+		return new_int(1)
+	}
+	
+	mut r := get_registry()
+	if normalized in r.include_registry {
+		mark_included(normalized)
+		func_to_run := r.include_registry[normalized]
+		return func_to_run()
+	}
+	
+	mark_included(normalized)
 	unsafe {
 		_ = C.php2v_execute_file(path.str)
 	}
-	return new_null()
+	return new_int(1)
 }
 
 // define_constant 在运行时定义用户空间常量

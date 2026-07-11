@@ -1,9 +1,13 @@
 module rt
 
+import os
+
 struct Registry {
 mut:
-	func_registry   map[string]fn ([]PhpVal) PhpVal
-	class_factories map[string]fn ([]PhpVal) PhpVal
+	func_registry    map[string]fn ([]PhpVal) PhpVal
+	class_factories  map[string]fn ([]PhpVal) PhpVal
+	include_registry map[string]fn () PhpVal
+	included_files   map[string]bool
 	// 静态属性表：class_name -> prop_name -> value
 	static_props    map[string]map[string]PhpVal
 	mysql_pool      voidptr
@@ -16,9 +20,11 @@ fn get_registry() &Registry {
 	mut p := C.php2v_get_registry()
 	if p == unsafe { nil } {
 		mut r := &Registry{
-			func_registry:   map[string]fn ([]PhpVal) PhpVal{}
-			class_factories: map[string]fn ([]PhpVal) PhpVal{}
-			static_props:    map[string]map[string]PhpVal{}
+			func_registry:    map[string]fn ([]PhpVal) PhpVal{}
+			class_factories:  map[string]fn ([]PhpVal) PhpVal{}
+			include_registry: map[string]fn () PhpVal{}
+			included_files:   map[string]bool{}
+			static_props:     map[string]map[string]PhpVal{}
 		}
 		C.php2v_set_registry(voidptr(r))
 		C.php2v_set_v_callback(voidptr(my_v_callback_handler))
@@ -154,3 +160,22 @@ pub fn register_v_helpers_to_php_interpreter() {
 		free(z_ret)
 	}
 }
+
+pub fn register_include(path string, f fn () PhpVal) {
+	mut r := get_registry()
+	normalized := os.real_path(path)
+	r.include_registry[normalized] = f
+}
+
+pub fn is_included(path string) bool {
+	mut r := get_registry()
+	normalized := os.real_path(path)
+	return r.included_files[normalized]
+}
+
+pub fn mark_included(path string) {
+	mut r := get_registry()
+	normalized := os.real_path(path)
+	r.included_files[normalized] = true
+}
+

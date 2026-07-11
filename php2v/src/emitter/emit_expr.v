@@ -2445,6 +2445,10 @@ fn (mut t Transpiler) visit_expr_impl(node ast.AstNode) string {
 		ast.node_expr_include {
 			path_node := node.expr or { panic('Include missing expr') }
 			if voidptr(path_node) != 0 {
+				// 尝试在编译期静态分析路径
+				if path_val := t.eval_static_path(*path_node) {
+					t.transpile_include_file(path_val)
+				}
 				path_typ := t.get_expr_type(*path_node)
 				path_str := if path_typ.tag == .t_string {
 					t.visit_expr_native(*path_node)

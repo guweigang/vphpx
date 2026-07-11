@@ -343,6 +343,12 @@ fn test_transpiler_end_to_end() {
 			'test_void_func(arg_0)',
 			'return rt.new_null()',
 		]
+		// 52: 静态 include 链全自动 AOT 原生转译与运行
+		'52_include_native_transpiled.php': [
+			'rt.register_include(',
+			'run_transpiled_include_',
+			'rt.include_file(',
+		]
 	}
 
 	// 获取 php-config includes 路径以支持编译时 C 头文件寻址

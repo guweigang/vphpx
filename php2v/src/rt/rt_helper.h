@@ -94,14 +94,7 @@ static inline int php2v_eval_string(const char *str, size_t len, zval *retval) {
 		zend_execute(op_array, retval);
 	} zend_catch {
 		// 捕获 bailout (exit/die/error)，安全刷新请求状态，避免 Zend 自杀
-        printf("C-雷达: Bailout caught. Checking SAPI headers:\n");
-        sapi_header_struct *h;
-        zend_llist_position pos;
-        h = (sapi_header_struct*)zend_llist_get_first_ex(&SG(sapi_headers).headers, &pos);
-        while (h) {
-            printf("  Header: %s\n", h->header);
-            h = (sapi_header_struct*)zend_llist_get_next_ex(&SG(sapi_headers).headers, &pos);
-        }
+
 		php2v_refresh_request();
 	} zend_end_try();
 	destroy_op_array(op_array);
@@ -426,8 +419,7 @@ static void zif_php2v_mysqli_query(zend_execute_data *execute_data, zval *return
         Z_PARAM_STRING(query, query_len)
     ZEND_PARSE_PARAMETERS_END();
     
-    printf("C-雷达: mysqli_query: %s\n", query);
-    printf("C-雷达: mysqli_query v_callback = %p\n", g_php2v_v_callback);
+
     
     if (g_php2v_v_callback) {
         zval args;
@@ -569,6 +561,10 @@ static void zif_php2v_gzinflate(zend_execute_data *execute_data, zval *return_va
     ZVAL_FALSE(return_value);
 }
 
+static void zif_php2v_headers_sent(zend_execute_data *execute_data, zval *return_value) {
+    ZVAL_FALSE(return_value);
+}
+
 static void zif_php2v_mysqli_fetch_object(zend_execute_data *execute_data, zval *return_value) {
     zval *result = NULL;
     ZEND_PARSE_PARAMETERS_START(1, 4)
@@ -578,7 +574,7 @@ static void zif_php2v_mysqli_fetch_object(zend_execute_data *execute_data, zval 
     if (g_php2v_v_callback && result && Z_TYPE_P(result) == IS_OBJECT) {
         zval *z_handle = zend_read_property(Z_OBJCE_P(result), Z_OBJ_P(result), "handle", sizeof("handle") - 1, 1, NULL);
         zend_long handle_val = zval_get_long(z_handle);
-        printf("C-雷达: fetch_object: result_obj = %p, handle_val = %ld\n", result, (long)handle_val);
+
         
         zval args;
         array_init(&args);
@@ -616,7 +612,7 @@ static inline void php2v_parse_and_build_array(const char* encoded_data, int mod
         char *k = strtok_r(kv, "\x02", &saveptr2);
         char *v = strtok_r(NULL, "\x02", &saveptr2);
         if (k) {
-            printf("  [C-DECODE] Mode %d: Key: '%s' -> Val: '%s'\n", mode, k, v ? v : "NULL");
+
             if (v) {
                 if (mode == 1 || mode == 3) {
                     add_assoc_string(return_value, k, v);
