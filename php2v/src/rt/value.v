@@ -445,6 +445,19 @@ pub fn (v PhpVal) array_push(val PhpArg) {
 	pa.push(val.to_php_val())
 }
 
+// array_push_mut 向数组末尾追加一个空数组，并返回该新数组的可变引用（用于嵌套空维追加如 $arr[][] = $val）
+pub fn (mut v PhpVal) array_push_mut() PhpVal {
+	if !v.is_array() {
+		mut pa_self := PhpArray.new()
+		pa_self.store_in_zval(v.raw)
+		v.raw.u1.type_info = 7
+	}
+	mut pa := unsafe { extract_from_zval(v.raw) }
+	empty_arr := new_array()
+	pa.push(empty_arr)
+	return empty_arr
+}
+
 // array_get 从数组中获取指定键对应的元素（纯 V 实现）
 pub fn (v PhpVal) array_get(key PhpKey) PhpVal {
 	if !v.is_array() { return new_null() }
@@ -473,6 +486,15 @@ pub fn (mut v PhpVal) array_get_mut(key PhpKey) PhpVal {
 		sub_val.raw.u1.type_info = 7
 	}
 	return sub_val
+}
+
+// array_get_mut_nested 递归获取多维数组的最后一层，并在必要时自动就地初始化，支持链式写操作
+pub fn (v PhpVal) array_get_mut_nested(keys []PhpVal) PhpVal {
+	mut current := v
+	for key in keys {
+		current = current.array_get_mut(key)
+	}
+	return current
 }
 
 // array_isset 检查数组中指定键是否存在且值非 null（纯 V 实现）
@@ -1017,4 +1039,33 @@ pub fn bitwise_not(a PhpVal) PhpVal {
 	return PhpVal{ raw: z }
 }
 
+pub fn create_array_from_list_with_base(base []PhpVal, extra []PhpVal) PhpVal {
+	mut arr := new_array()
+	for v in base {
+		arr.array_push(v)
+	}
+	for v in extra {
+		arr.array_push(v)
+	}
+	return arr
+}
 
+pub fn func_get_arg_helper(extra []PhpVal, idx PhpVal) PhpVal {
+	i := idx.to_i64()
+	if i >= 0 && i < extra.len {
+		return extra[i].clone()
+	}
+	return new_null()
+}
+
+pub fn func_get_arg_helper_with_base(base []PhpVal, extra []PhpVal, idx PhpVal) PhpVal {
+	i := idx.to_i64()
+	if i >= 0 && i < base.len {
+		return base[i].clone()
+	}
+	offset := i - base.len
+	if offset >= 0 && offset < extra.len {
+		return extra[offset].clone()
+	}
+	return new_null()
+}

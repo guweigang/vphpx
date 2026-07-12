@@ -3,7 +3,7 @@
 all: php2v
 
 php2v:
-	v -keepc -path "..:@vlib" -o php2v src
+	v -nocache -keepc -path "..:@vlib" -o php2v src
 
 test: php2v
 	v test tests/

@@ -17,24 +17,28 @@ fn test_transpiler_end_to_end() {
 			'rt.print_str(\'Hello World\\n\')',
 		]
 		'02_variables.php': [
-			"mut var_a := 'hello'",
-			"mut var_b := 'world\\n'",
+			"mut var_a := ''",
+			"var_a = 'hello'",
+			"var_b = 'world\\n'",
 			'rt.print_str(var_a)',
 			'rt.print_str(var_b)',
 		]
 		'03_arithmetic.php': [
-			'mut var_a := 10 + 20',
-			'mut var_b := var_a - 5',
-			'mut var_c := var_b * 2',
-			'mut var_d := var_c / 5',
+			'mut var_a := i64(0)',
+			'var_a = 10 + 20',
+			'var_b = var_a - 5',
+			'var_c = var_b * 2',
+			'var_d = var_c / 5',
 			'rt.print_str(var_d.str())',
 		]
 		'04_string_concat.php': [
-			"mut var_name := 'PHP'",
+			"mut var_name := ''",
+			"var_name = 'PHP'",
 			"rt.print_str('Hello ' + var_name",
 		]
 		'05_if_else.php': [
-			'mut var_a := 15',
+			'mut var_a := i64(0)',
+			'var_a = 15',
 			'if var_a > 20 {',
 			'} else if var_a > 10 {',
 			'} else {',
@@ -42,31 +46,35 @@ fn test_transpiler_end_to_end() {
 		'06_truthy.php': [
 			"mut var_a := ''",
 			'if var_a.len > 0 && var_a != \'0\' {',
-			"mut var_b := '0'",
-			'mut var_c := 123',
+			"var_b = '0'",
+			"var_c = 123",
 			'if var_c != 0 {',
 		]
 		'07_functions.php': [
 			'fn add_five(val i64) i64 {',
 			'return val + 5',
-			'mut var_res := add_five(10)',
+			'mut var_res := i64(0)',
+			'var_res = add_five(10)',
 			'rt.print_str(var_res.str())',
 		]
 		'08_arrays.php': [
-			'mut var_arr := rt.create_array([rt.ArrayItem{ key: none, val: 10 },',
+			'mut var_arr := rt.new_null()',
+			'var_arr = rt.create_array([rt.ArrayItem{ key: none, val: 10 },',
 			'var_arr.array_push(30)',
 			'var_arr.array_set(\'key\', \'hello\')',
 			'rt.echo_val(var_arr.array_get(rt.new_int(0)))',
 			'rt.print_str(var_arr.clone().array_count().str())',
 		]
 		'09_foreach.php': [
-			"mut var_arr := {",
-			"for _, var_val in var_arr {",
-			"for var_key, var_val in var_arr {",
+			"mut var_arr := map[string]i64{}",
+			"var_arr = {",
+			"for _, var_val_shadow in var_arr {",
+			"for var_key_shadow, var_val_shadow in var_arr {",
 		]
 		'10_loops.php': [
 			'for var_i < 3 {',
-			'mut var_j := 0',
+			'mut var_j := i64(0)',
+			'var_j = 0',
 			'if !(var_j < 5) { break',
 			'if var_j == 2 {',
 			'continue',
@@ -79,34 +87,37 @@ fn test_transpiler_end_to_end() {
 			'fn (mut this Class_User) construct(name string) ',
 			'fn (mut this Class_User) getname() string {',
 			'fn create_user(name string) &Class_User {',
-			"mut var_user := create_user('Alice')",
+			"mut var_user := &Class_User(unsafe { nil })",
+			"var_user = create_user('Alice')",
 			'rt.print_str(var_user.getname())',
 			"var_user.name = 'Bob'",
 		]
 		'12_dynamic.php': [
 			"rt.call_function('eval', [rt.new_string(\"echo 'eval works\\n';\")])",
-			"mut var_md5_res := md5.hexhash('hello')",
+			"mut var_md5_res := ''",
+			"var_md5_res = md5.hexhash('hello')",
 			'rt.print_str(var_md5_res)',
-			'mut var_json_res := rt.json_encode(',
+			'var_json_res = rt.json_encode(',
 			'rt.print_str(var_json_res)',
 		]
 		'13_closure.php': [
 			'closure_1_fn := fn [var_x] (this_ptr rt.PhpVal, args []rt.PhpVal) rt.PhpVal {',
 			'mut var_y := if args.len > 0 { args[0].clone() } else { rt.new_null() }',
 			'return rt.add(rt.new_int(var_x), var_y)',
-			'mut var_cb := rt.new_closure(closure_1_fn)',
+			'var_cb = rt.new_closure(closure_1_fn)',
 			'rt.echo_val(rt.call_callable(var_cb, [rt.new_int(5)]))',
 			'closure_2_fn := fn [var_x] (this_ptr rt.PhpVal, args []rt.PhpVal) rt.PhpVal {',
 			'mut var_z := if args.len > 0 { args[0].clone() } else { rt.new_null() }',
 			'return rt.mul(var_z, rt.new_int(var_x))',
-			'mut var_fn := rt.new_closure(closure_2_fn)',
+			'var_fn = rt.new_closure(closure_2_fn)',
 			'rt.echo_val(rt.call_callable(var_fn, [rt.new_int(3)]))',
 		]
 		'14_include.php': [
-			"mut var_path := 'tests/fixtures/14_included.inc'",
-			"mut var_ret := rt.include_file(var_path, '1')",
+			"mut var_path := ''",
+			"var_path = 'tests/fixtures/14_included.inc'",
+			"var_ret = rt.include_file(var_path, '1')",
 			"rt.echo_val(var_ret)",
-			"mut var_ret2 := rt.include_file(var_path, '2')",
+			"var_ret2 = rt.include_file(var_path, '2')",
 			"rt.print_str('once_done\\n')",
 		]
 		'15_constants.php': [
@@ -129,7 +140,8 @@ fn test_transpiler_end_to_end() {
 			'fn (mut this Class_Dog) greet() {',
 			'this.Class_Animal.greet()',
 			'fn create_dog(name string, breed string) &Class_Dog {',
-			"mut var_dog := create_dog('Rex', 'Labrador')",
+			"mut var_dog := &Class_Dog(unsafe { nil })",
+			"var_dog = create_dog('Rex', 'Labrador')",
 		]
 		'17_boolean_logical.php': [
 			'if !(log_true(',
@@ -169,8 +181,8 @@ fn test_transpiler_end_to_end() {
 			'Class_App_Core_Application.init(',
 		]
 		'22_string_interpolation.php': [
-			'mut var_name := \'Alice\'',
-			'mut var_age := 20',
+			'var_name = \'Alice\'',
+			'var_age = 20',
 			'\'Hello \${var_name}, next year you will be \${var_age.str()} years old.\'',
 			'rt.print_str(var_msg',
 		]
@@ -189,13 +201,13 @@ fn test_transpiler_end_to_end() {
 			'rt.print_str(\'default case\\n\')',
 		]
 		'25_match_expr.php': [
-			"mut var_y := match var_x {",
+			"var_y = match var_x {",
 			"1 { rt.new_string('one') }",
 			"2, 3 { rt.new_string('two or three') }",
 			"else { rt.new_string('other') }",
 		]
 		'26_do_while.php': [
-			'mut var_i := 0',
+			'var_i = 0',
 			'for {',
 			"rt.print_str(var_i.str() + '\\n')",
 			'var_i += 1',
@@ -203,21 +215,21 @@ fn test_transpiler_end_to_end() {
 			'break',
 		]
 		'27_increment_decrement.php': [
-			'mut var_a := 5',
+			'var_a = 5',
 			'var_a += 1',
-			'mut var_b := tmp_inc_',
-			'mut var_c := tmp_inc_',
-			'mut var_d := var_a',
-			'mut var_e := var_a',
+			'var_b = rt.new_int(tmp_inc_1)',
+			'var_c = rt.new_int(tmp_inc_2)',
+			'var_d = rt.new_int(var_a)',
+			'var_e = rt.new_int(var_a)',
 		]
 		'28_bitwise_ops.php': [
-			'mut var_c := var_a & var_b',
-			'mut var_d := var_a | var_b',
-			'mut var_e := var_a ^ var_b',
-			'mut var_f := var_a << 1',
-			'mut var_g := var_a >> 1',
-			'mut var_h := ~var_a',
-			'mut var_i := rt.new_int(var_a)',
+			'var_c = var_a & var_b',
+			'var_d = var_a | var_b',
+			'var_e = var_a ^ var_b',
+			'var_f = var_a << 1',
+			'var_g = var_a >> 1',
+			'var_h = ~var_a',
+			'var_i = rt.new_int(var_a)',
 			"rt.print_str('bitwise and: ' + var_c.str() + '\\n')",
 			"rt.print_str('error suppress: ' + var_i.str() + '\\n')",
 		]
@@ -226,7 +238,7 @@ fn test_transpiler_end_to_end() {
 			'pub fn Class_User.role_user() string {',
 			'return Class_User.role_admin()',
 			"rt.print_str(Class_User.role_admin() + '\\n')",
-			'mut var_u := create_user()',
+			'var_u = create_user()',
 		]
 		'30_oop_interfaces.php': [
 			'interface Logger {',
@@ -242,20 +254,22 @@ fn test_transpiler_end_to_end() {
 			"var_u.sayhello('Alice')",
 		]
 		'32_builtin_inference.php': [
-			'mut var_len := var_str.len',
-			'mut var_cnt := var_arr.len',
-			'mut var_upper := var_str.to_upper()',
+			'var_len = var_str.len',
+			'var_cnt = var_arr.len',
+			'var_upper = var_str.to_upper()',
 		]
 		'33_pure_arrays.php': [
-			'mut var_list := [10, 20]',
-			'var_list << 30',
-			'rt.print_str(var_list.len.str())',
-			'for var_item in var_list {',
-			'rt.print_str(var_item.str())',
-			"mut var_map := {",
+			'mut var_list := rt.new_null()',
+			'var_list = rt.create_array([rt.ArrayItem{ key: none, val: 10 },',
+			'var_list.array_push(30)',
+			'rt.print_str(var_list.clone().array_count().str())',
+			'mut iter_1 := var_list.iterator()',
+			'mut var_item_shadow := item_1.val',
+			"mut var_map := map[string]string{}",
+			"var_map = {",
 			"rt.print_str(var_map['a'])",
 			"rt.print_str(var_map.len.str())",
-			"for var_k, var_v in var_map {",
+			"for var_k_shadow, var_v_shadow in var_map {",
 		]
 		'34_wp_error.php': [
 			'struct Class_WP_Error',
@@ -296,8 +310,8 @@ fn test_transpiler_end_to_end() {
 			'fn validate_and_process(var_block_type rt.PhpVal) rt.PhpVal {',
 			// && 条件正确生成
 			'&& rt.is_true(rt.call_function(\'file_exists\'',
-			// || 条件正确生成
-			'|| rt.is_true(rt.new_bool(!(rt.is_true(rt.call_function(\'file_exists\'',
+			// || 条件正确生成（由于 `!(rt.is_true(...))` 化简）
+			'|| !(rt.is_true(rt.call_function(\'file_exists\'',
 			// elseif 正确生成
 			'} else if rt.is_true',
 			'fn complex_condition(var_a rt.PhpVal, var_b rt.PhpVal, var_c rt.PhpVal) string {',
@@ -318,18 +332,18 @@ fn test_transpiler_end_to_end() {
 		]
 		// 41: 原生列表空字面量类型自适应及追加标量类型一致
 		'41_array_append.php': [
-			'mut var_arr := []string{}',
-			'var_arr = []string{}',
-			'var_arr << \'<option>\' + var_val.str() + \'</option>\'',
-			'return rt.create_array_from_list_string(var_arr)',
+			'mut var_arr := rt.new_null()',
+			'var_arr = rt.new_array()',
+			'var_arr.array_push(\'<option>\' + var_val.str() + \'</option>\')',
+			'return var_arr.clone()',
 		]
 		// 42: 包装变量调用 strlen, trim 等内置函数的安全拆箱
 		'42_strlen_safety.php': [
 			'mut var_val := var_val_arg',
 			'var_val = rt.new_string(\'hello\')',
-			'if (rt.new_string(var_val.str())).str().len > 0 {',
-			'var_val = rt.new_string((rt.new_string(var_val.str())).str().trim_space())',
-			'return (rt.new_string(var_val.str())).str()',
+			'if var_val.str().len > 0 {',
+			'var_val = rt.new_string(var_val.str().trim_space())',
+			'return var_val',
 		]
 		// 43: 自定义类实例做局部变量时的空指针声明与原生方法直接调用
 		'43_object_predeclare.php': [

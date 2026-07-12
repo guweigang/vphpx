@@ -2,7 +2,10 @@ module emitter
 
 import ast
 
-fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
+fn (mut t Transpiler) visit_stmt(node &ast.AstNode) {
+	if t.current_file.ends_with('class-pclzip.php') {
+		eprintln('      [visit_stmt] type: ' + node.node_type + ' line: ' + node.line.str())
+	}
 	t.active_depth++
 	if t.active_depth > 100 {
 		t.active_depth--
@@ -21,7 +24,7 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 						if name_node.node_type == ast.node_scalar_string {
 							if gc := t.global_constants[name_node.value] {
 								val_node := expr.args[1].expr or { panic('define missing val') }
-								val_str := t.visit_expr_native(*val_node)
+								val_str := t.visit_expr_native(val_node)
 								t.const_out.writeln('const ${gc.name} = ${val_str}')
 								// 刷新副作用语句后返回
 								if t.post_stmts.len > 0 {
@@ -38,9 +41,19 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 				}
 				// 原生 int 变量的独立自增/自减语句优化
 				if t.try_emit_native_incdec(*expr) {
-					// 已处理
+				} else if expr.node_type in [
+					ast.node_expr_assign,
+					ast.node_expr_assign_op_concat,
+					ast.node_expr_assign_op_plus,
+					ast.node_expr_assign_op_minus,
+					ast.node_expr_assign_op_mul,
+					ast.node_expr_assign_op_div,
+					ast.node_expr_assign_op_mod,
+					ast.node_expr_assign_ref
+				] {
+					_ = t.visit_expr(expr)
 				} else {
-					expr_str := t.visit_expr(*expr)
+					expr_str := t.visit_expr(expr)
 					// 跳过纯变量名（声明已提取到 pre_stmts）
 					is_bare_var := expr_str.starts_with('var_') && !expr_str.contains(' ') && !expr_str.contains('(') && !expr_str.contains('.')
 					// 跳过 _mutated / _shadow 后缀的裸变量引用
@@ -151,29 +164,37 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 					arr_node := v.var or { panic('Unset array dim missing var') }
 					dim_node := v.dim or { panic('Unset array dim missing dim') }
 					arr_type := t.get_expr_type(*arr_node)
-					arr_str := t.visit_expr(*arr_node)
+					arr_str := t.visit_expr(arr_node)
 					t.write_indent()
 					if arr_type.is_object() && t.class_implements(arr_type.class_name, 'ArrayAccess') {
-						dim_str := t.visit_expr(*dim_node)
+						dim_str := t.visit_expr(dim_node)
 						t.write_line('${arr_str}.offsetunset(${dim_str})')
 					} else if arr_type.is_native_map {
-						dim_str_native := t.visit_expr_native(*dim_node)
+						dim_str_native := t.visit_expr_native(dim_node)
 						t.write_line('${arr_str}.delete(${dim_str_native})')
 					} else {
-						dim_str := t.visit_expr(*dim_node)
+						dim_str := t.visit_expr(dim_node)
 						t.write_line('${arr_str}.array_unset(${dim_str})')
 					}
 				} else if v.node_type == ast.node_expr_variable {
-					typ := t.inferred_types[v.name] or { VarType{ tag: .t_unknown } }
+					lookup_key := if t.current_func_name != '' { '${t.current_func_name}::${v.name}' } else { v.name }
+					v_var := t.get_v_var_name(v.name)
+					typ := t.inferred_types[v_var] or { t.inferred_types[lookup_key] or { t.inferred_types[v.name] or { VarType{ tag: .t_unknown } } } }
 					t.write_indent()
-					match typ.tag {
-						.t_int { t.write_line('var_${v.name} = 0') }
-						.t_float { t.write_line('var_${v.name} = 0.0') }
-						.t_string { t.write_line("var_${v.name} = ''") }
-						.t_bool { t.write_line('var_${v.name} = false') }
-						else {
-							var_str := t.visit_expr(v)
-							t.write_line('${var_str} = rt.new_null()')
+					if typ.is_native_list || typ.is_native_map {
+						var_str := t.visit_expr(v)
+						t.write_line('${var_str}.clear()')
+					} else {
+						match typ.tag {
+							.t_int { t.write_line('${v_var} = 0') }
+							.t_float { t.write_line('${v_var} = 0.0') }
+							.t_string { t.write_line("${v_var} = ''") }
+							.t_bool { t.write_line('${v_var} = false') }
+							.t_object { t.write_line('${v_var} = &Class_${typ.class_name}(unsafe { nil })') }
+							else {
+								var_str := t.visit_expr(v)
+								t.write_line('${var_str} = rt.new_null()')
+							}
 						}
 					}
 				} else {
@@ -237,11 +258,11 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 					if def := v.default_val {
 						def_type := t.get_expr_type(*def)
 						if def_type.is_scalar() {
-							def_str := t.visit_expr_native(*def)
+							def_str := t.visit_expr_native(def)
 							t.write_indent()
 							t.write_line('mut ${v_var} := ${def_str}')
 						} else {
-							def_str := t.visit_expr(*def)
+							def_str := t.visit_expr(def)
 							t.write_indent()
 							t.write_line('mut ${v_var} := ${def_str}')
 						}
@@ -278,6 +299,7 @@ fn (mut t Transpiler) visit_stmt(node ast.AstNode) {
 		t.write_indent()
 		t.write_line('if rt.has_exception() { unsafe { goto ${t.current_catch_label} } }')
 	}
+	t.flush_pre_stmts()
 	t.active_depth--
 }
 
@@ -304,7 +326,7 @@ fn (mut t Transpiler) try_emit_native_incdec(expr ast.AstNode) bool {
 	return true
 }
 
-fn (mut t Transpiler) visit_echo(node ast.AstNode) {
+fn (mut t Transpiler) visit_echo(node &ast.AstNode) {
 	for expr in node.exprs {
 		// 字符串字面量 echo 优化：跳过 PhpVal 装箱/拆箱，直接 print
 		if expr.node_type == ast.node_scalar_string {
@@ -353,14 +375,14 @@ fn (mut t Transpiler) visit_echo(node ast.AstNode) {
 	}
 }
 
-fn (mut t Transpiler) visit_const(node ast.AstNode) {
+fn (mut t Transpiler) visit_const(node &ast.AstNode) {
 	for c in node.consts {
 		val_str := t.visit_expr_native(c.value)
 		t.const_out.writeln('const global_const_${c.name.to_lower()} = ${val_str}')
 	}
 }
 
-fn (mut t Transpiler) visit_try_catch(node ast.AstNode) {
+fn (mut t Transpiler) visit_try_catch(node &ast.AstNode) {
 	t.try_count++
 	my_id := t.try_count
 	catch_label := 'catch_label_${my_id}'
@@ -479,10 +501,9 @@ fn (mut t Transpiler) visit_try_catch(node ast.AstNode) {
 	t.write_line('${end_label}:')
 }
 
-fn (mut t Transpiler) visit_if(node ast.AstNode) {
+fn (mut t Transpiler) visit_if(node &ast.AstNode) {
 	cond_node := node.cond or { panic('If statement missing cond') }
-	native_cond := t.emit_native_condition(*cond_node)
-	cond_str := if native_cond != '' { native_cond } else { 'rt.is_true(${t.visit_expr(*cond_node)})' }
+	cond_str := t.get_native_bool_condition(*cond_node)
 	// 确保条件表达式不包含换行，否则 { 会跑到下一行
 	mut one_line_cond := cond_str
 	one_line_cond = one_line_cond.replace('\n', ' ')
@@ -501,8 +522,7 @@ fn (mut t Transpiler) visit_if(node ast.AstNode) {
 	// 处理 elseifs
 	for elseif_node in node.elseifs {
 		elseif_cond := elseif_node.cond or { panic('Elseif statement missing cond') }
-		elseif_native := t.emit_native_condition(*elseif_cond)
-		elseif_cond_str := if elseif_native != '' { elseif_native } else { 'rt.is_true(${t.visit_expr(*elseif_cond)})' }
+		elseif_cond_str := t.get_native_bool_condition(*elseif_cond)
 		elseif_one_line := elseif_cond_str.replace('\n', ' ').replace('\t', ' ').replace('\r', ' ')
 
 		t.write_indent()
@@ -532,19 +552,23 @@ fn (mut t Transpiler) visit_if(node ast.AstNode) {
 	t.active_depth--
 }
 
-fn (mut t Transpiler) visit_function(node ast.AstNode) {
+fn (mut t Transpiler) visit_function(node &ast.AstNode) {
 	t.is_in_func = true
 	old_indent := t.indent
 	t.indent = 0
 	old_scope := t.scope
-	t.scope = VarScope.new()
+	t.scope = &VarScope{ declared: map[string]bool{} }
 
 	old_native_vars := t.native_vars.clone()
 	old_native_params := t.native_params.clone()
 	old_native_arr_vars := t.native_arr_vars.clone()
+	old_reassigned_params := t.reassigned_params.clone()
+	old_var_aliases := t.var_aliases.clone()
 	t.native_vars.clear()
 	t.native_params.clear()
 	t.native_arr_vars.clear()
+	t.reassigned_params.clear()
+	t.var_aliases.clear()
 
 	// 设置当前函数上下文
 	old_func_name := t.current_func_name
@@ -565,7 +589,7 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 	mut variadic_param_name := ''
 
 	// 提前收集变量信息，用于判断参数是否需要 _arg 后缀
-	ref_vars, ass_vars := t.collect_vars_in_scope(node.stmts)
+	ref_vars, ass_vars := t.collect_vars_in_scope(&node.stmts)
 
 	mut registered_native_params := []string{}
 	mut param_names := []string{}
@@ -582,8 +606,9 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 		} else {
 			// 检查是否有推断的原生参数类型
 			param_type := t.get_func_param_type(node.name, param_name)
+			prefix := if param.by_ref == 'true' { 'mut ' } else { '' }
 			if param_type.is_scalar() {
-				param_names << '${param_name} ${param_type.to_v_type()}'
+				param_names << '${prefix}${param_name} ${param_type.to_v_type()}'
 				t.inferred_types[param_name] = param_type
 				t.native_params[param_name] = true
 				registered_native_params << param_name
@@ -594,16 +619,24 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 			} else if param_type.is_object() {
 				param_names << 'mut var_${param_name} ${param_type.to_v_type()}'
 				t.inferred_types[param_name] = param_type
+				t.native_vars[param_name] = true
+				t.native_vars['var_' + param_name] = true
 			} else {
 				// PhpVal 参数：如果被重新赋值，用 _arg 后缀避免与可变 var_xxx 冲突
+				t.inferred_types[param_name] = VarType{ tag: .t_unknown }
+				t.inferred_types['var_' + param_name] = VarType{ tag: .t_unknown }
 				will_reassign := param_name in ass_vars
 				if will_reassign {
-					param_names << 'var_${param_name}_arg rt.PhpVal'
+					param_names << '${prefix}var_${param_name}_arg rt.PhpVal'
 				} else {
-					param_names << 'var_${param_name} rt.PhpVal'
+					param_names << '${prefix}var_${param_name} rt.PhpVal'
 				}
 			}
 		}
+	}
+	is_dyn := if f := t.custom_function_infos[node.name] { f.has_dynamic_args } else { false }
+	if is_dyn {
+		param_names << '_args ...rt.PhpVal'
 	}
 
 	has_native_ret := ret_type.is_scalar()
@@ -645,9 +678,15 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 			t.write_line('mut ${pvar} := var_${pname}_arg')
 		}
 	}
-	// 先预声明所有被引用但未被赋值的变量（如 superglobal 引用）
-	for v in ref_vars {
-		if v !in ass_vars && !t.scope.has_var(v) {
+	// 先预声明所有局部变量（防止在 if/for 等块内首次定义导致的作用域溢出）
+	mut all_local_vars := ref_vars.clone()
+	for v in ass_vars {
+		if v !in all_local_vars {
+			all_local_vars << v
+		}
+	}
+	for v in all_local_vars {
+		if !t.scope.has_var(v) {
 			t.write_indent()
 			v_var := t.get_v_var_name(v)
 			lookup_key := if t.current_func_name != '' { '${t.current_func_name}::${v}' } else { v }
@@ -668,6 +707,7 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 			} else if v_type.is_object() {
 				cls := if v_type.class_name.len > 0 { v_type.class_name } else { 'WP_Error' }
 				t.write_line('mut ${v_var} := &Class_${cls}(unsafe { nil })')
+				t.native_vars[v_var] = true
 			} else {
 				t.write_line('mut ${v_var} := rt.new_null()')
 			}
@@ -723,9 +763,6 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 	t.write_line('')
 
 	// 清理当前函数上下文
-	for p in registered_native_params {
-		t.native_params.delete(p)
-	}
 	t.inferred_types = old_inferred.clone()
 	t.current_func_name = old_func_name
 	t.current_func_ret_type = old_func_ret
@@ -737,9 +774,11 @@ fn (mut t Transpiler) visit_function(node ast.AstNode) {
 	t.native_vars = old_native_vars.clone()
 	t.native_params = old_native_params.clone()
 	t.native_arr_vars = old_native_arr_vars.clone()
+	t.reassigned_params = old_reassigned_params.clone()
+	t.var_aliases = old_var_aliases.clone()
 }
 
-fn (mut t Transpiler) visit_return(node ast.AstNode) {
+fn (mut t Transpiler) visit_return(node &ast.AstNode) {
 	if t.is_in_construct {
 		// construct 无返回值：return; → return（提前退出）
 		t.write_indent()
@@ -751,7 +790,7 @@ fn (mut t Transpiler) visit_return(node ast.AstNode) {
 		if is_void {
 			// void 函数有 return expr：先执行表达式副作用（pre_stmts），再 bare return
 			// 不输出表达式本身，避免 "expression evaluated but not used" 错误
-			_ := t.visit_expr(*expr)
+			_ := t.visit_expr(expr)
 			t.write_indent()
 			t.write_line('return')
 			return
@@ -765,7 +804,7 @@ fn (mut t Transpiler) visit_return(node ast.AstNode) {
 						ret_type := t.get_method_return_type(obj_type.class_name, expr.name)
 						if ret_type.tag == .t_void {
 							// void 方法：先调用，再返回 null
-							expr_str := t.visit_expr(*expr)
+							expr_str := t.visit_expr(expr)
 							t.write_indent()
 							t.write_line('${expr_str}')
 							t.write_indent()
@@ -784,7 +823,7 @@ fn (mut t Transpiler) visit_return(node ast.AstNode) {
 				if resolved_new == 'self' || resolved_new == 'static' {
 					resolved_new = t.current_class
 				}
-				expr_str := t.visit_expr(*expr)
+				expr_str := t.visit_expr(expr)
 				parents := t.get_parents_expr(resolved_new)
 				t.write_indent()
 				t.write_line('return rt.new_object(\'${resolved_new}\', ${parents}, ${expr_str})')
@@ -857,7 +896,7 @@ fn (t &Transpiler) get_native_default(typ VarType) string {
 	}
 }
 
-fn (mut t Transpiler) visit_foreach(node ast.AstNode) {
+fn (mut t Transpiler) visit_foreach(node &ast.AstNode) {
 	expr_node := node.expr or { panic('Foreach statement missing expr') }
 	arr_type := t.get_expr_type(*expr_node)
 	
@@ -881,7 +920,7 @@ fn (mut t Transpiler) visit_foreach(node ast.AstNode) {
 		key_var_name = shadow_name
 	}
 	if arr_type.is_object() && t.class_implements(arr_type.class_name, 'Iterator') {
-		expr_str := t.visit_expr(*expr_node)
+		expr_str := t.visit_expr(expr_node)
 		t.write_indent()
 		t.write_line('${expr_str}.rewind()')
 		t.write_indent()
@@ -934,7 +973,7 @@ fn (mut t Transpiler) visit_foreach(node ast.AstNode) {
 	}
 
 	if arr_type.is_native_list || arr_type.is_native_map {
-		arr_str := t.visit_expr(*expr_node)
+		arr_str := t.visit_expr(expr_node)
 		old_scope := t.scope.clone()
 		t.scope.declare(val_var_name)
 		if arr_type.element_type_tag in [.t_int, .t_float, .t_bool, .t_string] {
@@ -981,7 +1020,7 @@ fn (mut t Transpiler) visit_foreach(node ast.AstNode) {
 	t.foreach_depth++
 	iter_name := 'iter_${t.foreach_depth}'
 	
-	expr_str := t.visit_expr(*expr_node)
+	expr_str := t.visit_expr(expr_node)
 	
 	// 迭代器变量已按 foreach_depth 唯一命名，无需额外作用域块
 	// （裸 { } 会被 V 解析为 map 字面量导致语法错误）
@@ -1034,10 +1073,9 @@ fn (mut t Transpiler) visit_foreach(node ast.AstNode) {
 	t.write_line('}')
 }
 
-fn (mut t Transpiler) visit_while(node ast.AstNode) {
+fn (mut t Transpiler) visit_while(node &ast.AstNode) {
 	cond_node := node.cond or { panic('While statement missing cond') }
-	native_cond := t.emit_native_condition(*cond_node)
-	cond_str := if native_cond != '' { native_cond } else { 'rt.is_true(${t.visit_expr(*cond_node)})' }
+	cond_str := t.get_native_bool_condition(*cond_node)
 	one_line_cond := cond_str.replace('\n', ' ').replace('\t', ' ').replace('\r', ' ')
 
 	t.write_indent()
@@ -1054,8 +1092,8 @@ fn (mut t Transpiler) visit_while(node ast.AstNode) {
 		old_pre := t.pre_stmts.clone()
 		t.pre_stmts.clear()
 		
-		left_str := t.visit_expr(*left_node)
-		right_str := t.visit_expr(*right_node)
+		left_str := t.visit_expr(left_node)
+		right_str := t.visit_expr(right_node)
 		
 		t.pre_stmts = old_pre
 		t.write_indent()
@@ -1067,10 +1105,9 @@ fn (mut t Transpiler) visit_while(node ast.AstNode) {
 	t.write_line('}')
 }
 
-fn (mut t Transpiler) visit_do(node ast.AstNode) {
+fn (mut t Transpiler) visit_do(node &ast.AstNode) {
 	cond_node := node.cond or { panic('Do-while statement missing cond') }
-	native_cond := t.emit_native_condition(*cond_node)
-	cond_str := if native_cond != '' { native_cond } else { 'rt.is_true(${t.visit_expr(*cond_node)})' }
+	cond_str := t.get_native_bool_condition(*cond_node)
 
 	t.write_indent()
 	t.write_line('for {')
@@ -1165,7 +1202,7 @@ fn (mut t Transpiler) expr_produces_value(expr ast.AstNode) bool {
 	}
 }
 
-fn (mut t Transpiler) visit_for(node ast.AstNode) {
+fn (mut t Transpiler) visit_for(node &ast.AstNode) {
 	old_scope := t.scope
 	
 	// 1. 初始化表达式
@@ -1193,8 +1230,7 @@ fn (mut t Transpiler) visit_for(node ast.AstNode) {
 	// 3. 条件判断，若不满足则跳出
 	if node.conds.len > 0 {
 		last_cond := node.conds[node.conds.len - 1]
-		native_cond := t.emit_native_condition(last_cond)
-		cond_str := if native_cond != '' { native_cond } else { 'rt.is_true(${t.visit_expr(last_cond)})' }
+		cond_str := t.get_native_bool_condition(last_cond)
 		t.write_indent()
 		t.write_line('if !(${cond_str}) { break }')
 	}
@@ -1238,7 +1274,7 @@ struct SwitchBranch {
 
 // can_use_v_match 检查 switch 是否可以生成 V 原生 match 表达式
 // 仅当所有 case 值都是 int 字面量且条件变量也是 int 类型时才安全
-fn (mut t Transpiler) can_use_v_match(cond_node ast.AstNode, branches []SwitchBranch) bool {
+fn (mut t Transpiler) can_use_v_match(cond_node &ast.AstNode, branches []SwitchBranch) bool {
 	// 检查条件变量类型
 	cond_type := t.get_expr_type(cond_node)
 	if cond_type.tag != .t_int {
@@ -1255,7 +1291,7 @@ fn (mut t Transpiler) can_use_v_match(cond_node ast.AstNode, branches []SwitchBr
 	return true
 }
 
-fn (mut t Transpiler) visit_switch(node ast.AstNode) {
+fn (mut t Transpiler) visit_switch(node &ast.AstNode) {
 	cond_node := node.cond or { return }
 
 	t.switch_count++
@@ -1294,7 +1330,7 @@ fn (mut t Transpiler) visit_switch(node ast.AstNode) {
 
 	// 尝试 V 原生 match 优化
 	if t.can_use_v_match(*cond_node, branches) {
-		cond_str := t.visit_expr_native(*cond_node)
+		cond_str := t.visit_expr_native(cond_node)
 		t.write_indent()
 		t.write_line('match ${cond_str} {')
 		t.indent++
@@ -1328,7 +1364,7 @@ fn (mut t Transpiler) visit_switch(node ast.AstNode) {
 	}
 
 	// 回退：使用 if-else 链
-	cond_val_expr := t.visit_expr(*cond_node)
+	cond_val_expr := t.visit_expr(cond_node)
 	switch_var := 'switch_val_${t.switch_count}'
 
 	t.write_indent()

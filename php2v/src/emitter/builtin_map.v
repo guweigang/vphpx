@@ -152,7 +152,7 @@ pub fn (mut t Transpiler) try_builtin_mapping(name string, args []string, arg_no
 // compile_builtin_arg 为接受字符串参数的内置函数智能编译参数表达式。
 // 当参数类型已知为 .t_string 时，直接返回原生 V 字符串（避免多余 of 拆箱/装箱）；
 // 否则返回 PhpVal 表达式并追加 .to_string() 做运行时转换。
-pub fn (mut t Transpiler) compile_builtin_arg(node ast.AstNode) string {
+pub fn (mut t Transpiler) compile_builtin_arg(node &ast.AstNode) string {
 	typ := t.get_expr_type(node)
 	if typ.tag == .t_string {
 		if node.node_type == ast.node_expr_variable {

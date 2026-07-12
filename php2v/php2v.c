@@ -24,6 +24,7 @@ typedef struct _option_ast__AstNode_ptr _option_ast__AstNode_ptr;
 
 // BEGIN_array_fixed_return_typedefs
 typedef struct _v_Array_fixed_u8_128 _v_Array_fixed_u8_128;
+typedef struct _v_Array_fixed_i64_2 _v_Array_fixed_i64_2;
 typedef struct _v_Array_fixed_u8_5 _v_Array_fixed_u8_5;
 typedef struct _v_Array_fixed_u8_20 _v_Array_fixed_u8_20;
 typedef struct _v_Array_fixed_u8_8 _v_Array_fixed_u8_8;
@@ -52,6 +53,7 @@ typedef struct _v_Array_fixed_int_12 _v_Array_fixed_int_12;
 
 // BEGIN_multi_return_typedefs
 typedef struct multi_return_u32_u32 multi_return_u32_u32;
+typedef struct multi_return_rune_int multi_return_rune_int;
 typedef struct multi_return_u64_int multi_return_u64_int;
 typedef struct multi_return_strconv__Dec32_bool multi_return_strconv__Dec32_bool;
 typedef struct multi_return_strconv__Dec64_bool multi_return_strconv__Dec64_bool;
@@ -105,6 +107,7 @@ typedef struct emitter__CallArgResult emitter__CallArgResult;
 typedef struct emitter__VarScope emitter__VarScope;
 typedef struct emitter__ClassInfo emitter__ClassInfo;
 typedef struct emitter__MethodInfo emitter__MethodInfo;
+typedef struct emitter__StaticPropInfo emitter__StaticPropInfo;
 typedef struct emitter__Transpiler emitter__Transpiler;
 typedef struct emitter__CodegenCacheEntry emitter__CodegenCacheEntry;
 typedef struct emitter__GlobalConst emitter__GlobalConst;
@@ -122,6 +125,7 @@ typedef struct _result_multi_return_int_int_int_int_int_i64_bool _result_multi_r
 typedef struct _result_os__File _result_os__File;
 typedef struct _result_FILE_ptr _result_FILE_ptr;
 typedef struct _result_int _result_int;
+typedef struct _result_strings__Builder _result_strings__Builder;
 typedef struct _result_string _result_string;
 typedef struct _result_os__Stat _result_os__Stat;
 typedef struct _result_voidptr _result_voidptr;
@@ -137,8 +141,8 @@ typedef struct _option_string _option_string;
 typedef struct _option_i64 _option_i64;
 typedef struct _option_u64 _option_u64;
 typedef struct _option_emitter__TypeTag _option_emitter__TypeTag;
-typedef struct _option_emitter__MethodInfo _option_emitter__MethodInfo;
 typedef struct _option_emitter__VarType _option_emitter__VarType;
+typedef struct _option_emitter__MethodInfo _option_emitter__MethodInfo;
 typedef struct _option_Map_string_emitter__VarType _option_Map_string_emitter__VarType;
 typedef struct _option_emitter__GlobalConst _option_emitter__GlobalConst;
 typedef struct _option_emitter__CodegenCacheEntry _option_emitter__CodegenCacheEntry;
@@ -1625,6 +1629,26 @@ V_CLOSURE_STATIC_INLINE void v_closure_init_once(v_closure_init_fn init_fn) {
 // added by module `time`, file: time_nix.c.v:8:
 #include <errno.h>
 
+#if defined(__linux__)
+
+// added by module `time`, file: timerfd.c.v:32:
+
+#ifdef __TINYC__
+#include <sys/timerfd.h>
+#else
+#if defined(__has_include)
+#if __has_include(<sys/timerfd.h>)
+#include <sys/timerfd.h>
+#else
+#error VERROR_MESSAGE Header file <sys/timerfd.h>, needed for module `time` was not found. Please install the corresponding development headers.
+#endif
+#else
+#include <sys/timerfd.h>
+#endif
+#endif
+
+#endif
+
 // added by module `os`, file: debugger_darwin.c.v:3:
 
 #ifdef __TINYC__
@@ -2195,6 +2219,7 @@ typedef u8 bool;
 #define _const_os__max_path_buffer_size 4096
 #define _const_os__fslash '/'
 #define _const_os__dot '.'
+#define _const_os__buf_size 4096
 #define _const_os__error_code_not_set -1
 #define _const_os__max_path_len 4096
 #define _const_os__f_ok 0
@@ -2385,10 +2410,12 @@ typedef array Array_int;
 typedef array Array_rune;
 typedef u8 Array_fixed_u8_128 [128];
 typedef map Map_string_string;
+typedef i64 Array_fixed_i64_2 [2];
 typedef array Array_ast__AstNode;
 typedef array Array_ast__ConstItem;
 typedef map Map_string_bool;
 typedef array Array_emitter__MethodInfo;
+typedef array Array_emitter__StaticPropInfo;
 typedef array Array_emitter__TypeTag;
 typedef array Array_emitter__VarType;
 typedef map Map_string_emitter__VarType;
@@ -2455,6 +2482,11 @@ struct os__SizeOfTypeIs0Error {
 
 struct os__ExecutableNotFoundError {
 	Error Error;
+};
+
+struct emitter__StaticPropInfo {
+	string name;
+	string default_expr;
 };
 
 struct ArrayDataHeader {
@@ -2634,6 +2666,14 @@ struct ast__AstNode {
 	string flags;
 };
 
+struct emitter__VarType {
+	emitter__TypeTag tag;
+	string class_name;
+	bool is_native_list;
+	bool is_native_map;
+	emitter__TypeTag element_type_tag;
+};
+
 struct emitter__ClassInfo {
 	string name;
 	string extends;
@@ -2655,14 +2695,6 @@ struct emitter__MethodInfo {
 	Array_string param_names;
 	bool is_variadic;
 	bool is_static;
-};
-
-struct emitter__VarType {
-	emitter__TypeTag tag;
-	string class_name;
-	bool is_native_list;
-	bool is_native_map;
-	emitter__TypeTag element_type_tag;
 };
 
 struct emitter__SwitchBranch {
@@ -2746,6 +2778,10 @@ struct emitter__Transpiler {
 	Array_emitter__ClassInfo classes;
 	string current_class;
 	string current_file;
+	string parser_php_path;
+	Map_string_string transpiled_includes;
+	strings__Builder include_funcs_code;
+	strings__Builder include_register_code;
 	int try_count;
 	string current_catch_label;
 	string current_finally_label;
@@ -2753,6 +2789,7 @@ struct emitter__Transpiler {
 	string current_namespace;
 	Map_string_string use_aliases;
 	int switch_count;
+	int list_tmp_counter;
 	Array_string pre_stmts;
 	Array_string post_stmts;
 	strings__Builder const_out;
@@ -2766,7 +2803,11 @@ struct emitter__Transpiler {
 	Map_string_Array_emitter__TypeTag ctor_arg_types;
 	Map_string_Array_emitter__TypeTag method_call_arg_types;
 	Map_string_bool native_params;
+	Map_string_bool reassigned_params;
 	bool is_in_construct;
+	bool is_in_switch;
+	Map_string_bool collect_referenced;
+	Map_string_bool collect_assigned;
 	Map_string_emitter__GlobalConst global_constants;
 	strings__Builder closure_body_builder;
 	bool is_in_closure_body;
@@ -2783,6 +2824,7 @@ struct emitter__Transpiler {
 	Map_string_string var_aliases;
 	int foreach_depth;
 	Map_string_bool native_vars;
+	Map_string_bool native_arr_vars;
 	Map_string_emitter__MethodInfo custom_function_infos;
 	bool has_dynamic_new;
 	bool has_dynamic_method_call;
@@ -2790,6 +2832,8 @@ struct emitter__Transpiler {
 	Map_voidptr_emitter__VarType type_cache;
 	Map_voidptr_emitter__CodegenCacheEntry codegen_cache;
 	int active_depth;
+	string mode;
+	bool is_entry_script;
 };
 
 struct emitter__GlobalConst {
@@ -2812,6 +2856,9 @@ struct emitter__CallArgResult {
 // BEGIN_array_fixed_return_structs
 struct _v_Array_fixed_u8_128 {
 	u8 ret_arr[128];
+};
+struct _v_Array_fixed_i64_2 {
+	i64 ret_arr[2];
 };
 struct _v_Array_fixed_u8_5 {
 	u8 ret_arr[5];
@@ -2889,6 +2936,11 @@ struct _v_Array_fixed_int_12 {
 struct multi_return_u32_u32 {
 	u32 arg0;
 	u32 arg1;
+};
+
+struct multi_return_rune_int {
+	rune arg0;
+	int arg1;
 };
 
 struct multi_return_u64_int {
@@ -2991,16 +3043,16 @@ struct _option_emitter__TypeTag {
 	byte data[sizeof(emitter__TypeTag) > 1 ? sizeof(emitter__TypeTag) : 1];
 };
 
-struct _option_emitter__MethodInfo {
-	byte state;
-	IError err;
-	byte data[sizeof(emitter__MethodInfo) > 1 ? sizeof(emitter__MethodInfo) : 1];
-};
-
 struct _option_emitter__VarType {
 	byte state;
 	IError err;
 	byte data[sizeof(emitter__VarType) > 1 ? sizeof(emitter__VarType) : 1];
+};
+
+struct _option_emitter__MethodInfo {
+	byte state;
+	IError err;
+	byte data[sizeof(emitter__MethodInfo) > 1 ? sizeof(emitter__MethodInfo) : 1];
 };
 
 struct _option_Map_string_emitter__VarType {
@@ -3099,6 +3151,12 @@ struct _result_int {
 	bool is_error;
 	IError err;
 	byte data[sizeof(int) > 1 ? sizeof(int) : 1];
+};
+
+struct _result_strings__Builder {
+	bool is_error;
+	IError err;
+	byte data[sizeof(strings__Builder) > 1 ? sizeof(strings__Builder) : 1];
 };
 
 struct _result_string {
@@ -3509,6 +3567,7 @@ string builtin__tos2(u8* s);
 string builtin__tos3(char* s);
 string builtin__tos4(u8* s);
 string builtin__tos5(char* s);
+string builtin__u8_vstring(u8* bp);
 string builtin__u8_vstring_with_len(u8* bp, int len);
 bool builtin__string_is_pure_ascii(string s);
 string builtin__string_clone(string a);
@@ -3537,6 +3596,9 @@ string builtin__string_to_lower_ascii(string s);
 string builtin__string_to_lower(string s);
 string builtin__string_to_upper_ascii(string s);
 string builtin__string_to_upper(string s);
+string builtin__string_capitalize(string s);
+string builtin__string_trim_space(string s);
+string builtin__string_trim(string s, string cutset);
 VV_LOC string builtin__string_trim_chars(string s, string cutset, TrimMode mode);
 VV_LOC string builtin__string_trim_runes(string s, string cutset, TrimMode mode);
 string builtin__string_trim_left(string s, string cutset);
@@ -3554,6 +3616,8 @@ bool builtin__u8_is_digit(u8 c);
 bool builtin__u8_is_letter(u8 c);
 void builtin__string_free(string* s);
 string builtin__string_all_before_last(string s, string sub);
+string builtin__string_all_after(string s, string sub);
+string builtin__string_all_after_last(string s, string sub);
 string Array_string_join(Array_string a, string sep);
 string builtin__string_repeat(string s, int count);
 string builtin__StrIntpType_str(StrIntpType x);
@@ -3562,12 +3626,11 @@ VV_LOC f64 builtin__fabs64(f64 x);
 VV_LOC u64 builtin__abs64(i64 x);
 VV_LOC void builtin__StrIntpData_process_str_intp_data(StrIntpData* data, strings__Builder* sb);
 string builtin__str_intp(int data_len, StrIntpData* input_base);
-int builtin__utf8_char_len(u8 b);
 string builtin__utf32_to_str(u32 code);
 string builtin__utf32_to_str_no_malloc(u32 code, u8* buf);
 int builtin__utf32_decode_to_buffer(u32 code, u8* buf);
-int builtin__string_utf32_code(string _rune);
-VV_LOC rune builtin__impl_utf8_to_utf32(u8* _bytes, int _bytes_len);
+VV_LOC bool builtin__utf8_is_continuation(u8 b);
+VV_LOC multi_return_rune_int builtin__utf8_decode_rune(u8* _bytes, int available_len);
 int builtin__utf8_str_visible_length(string s);
 VV_LOC voidptr builtin__vgc_malloc_noscan(usize n);
 VV_LOC voidptr builtin__vgc_memdup_noscan(voidptr src, isize n);
@@ -3660,6 +3723,9 @@ VV_LOC bool os__is_slash(u8 b);
 VV_LOC bool os__has_drive_letter(string path);
 VV_LOC bool os__starts_w_slash_slash(string path);
 VV_LOC bool os__is_curr_dir_ref(int byte_one, int byte_two, int byte_three);
+VV_LOC _result_int os__find_cfile_size(FILE* fp);
+VV_LOC _result_strings__Builder os__slurp_file_in_builder(FILE* fp);
+_result_string os__read_file(string path);
 _result_FILE_ptr os__vfopen(string path, string mode);
 int os__fileno(voidptr cfile);
 VV_LOC bool os__posix_wait_status_exited(int status);
@@ -3745,66 +3811,74 @@ _result_Array_ast__AstNode ast__parse_ast_json(string json_str);
 _option_emitter__TypeTag emitter__get_builtin_return_tag(string name);
 string emitter__Transpiler_try_builtin_mapping_native(emitter__Transpiler* t, string name, Array_string args, Array_ast__AstNode arg_nodes);
 string emitter__Transpiler_try_builtin_mapping(emitter__Transpiler* t, string name, Array_string args, Array_ast__AstNode arg_nodes);
-string emitter__Transpiler_compile_builtin_arg(emitter__Transpiler* t, ast__AstNode node);
+string emitter__Transpiler_compile_builtin_arg(emitter__Transpiler* t, ast__AstNode* node);
 bool emitter__can_use_v_interpolation(Array_ast__AstNode parts);
 string emitter__wrap_as_main(string funcs, string body, Map_string_bool extra_imports);
+string emitter__wrap_as_lib(string funcs, string body, string init_func_name, string module_name, Map_string_bool extra_imports);
+string emitter__wrap_as_entry_script(string funcs, string body, string func_name, string module_name, Map_string_bool extra_imports);
 VV_LOC string emitter__Transpiler_prop_field_path(emitter__Transpiler* t, string cls_name, string prop_name);
-VV_LOC void emitter__Transpiler_visit_class(emitter__Transpiler* t, ast__AstNode node);
+VV_LOC void emitter__Transpiler_visit_class(emitter__Transpiler* t, ast__AstNode* node);
 VV_LOC void emitter__Transpiler_visit_class_method(emitter__Transpiler* t, string class_name, ast__AstNode node);
 VV_LOC void emitter__Transpiler_generate_struct_init(emitter__Transpiler* t, emitter__ClassInfo cls);
 VV_LOC void emitter__Transpiler_generate_dispatchers(emitter__Transpiler* t);
-VV_LOC void emitter__Transpiler_find_captured_vars_rec(emitter__Transpiler* t, ast__AstNode node, Array_string params, Array_string* captured);
+VV_LOC void emitter__Transpiler_find_captured_vars_rec(emitter__Transpiler* t, ast__AstNode* node, Array_string params, Array_string* captured);
 VV_LOC string emitter__Transpiler_get_parents_expr(emitter__Transpiler t, string class_name);
 VV_LOC bool emitter__Transpiler_class_implements(emitter__Transpiler* t, string class_name, string target);
 VV_LOC bool emitter__Transpiler_class_does_not_implement(emitter__Transpiler* t, string class_name, string target);
 VV_LOC string emitter__Transpiler_resolve_class_name(emitter__Transpiler t, string name);
-VV_LOC multi_return_Array_string_Array_string emitter__Transpiler_collect_vars_in_scope(emitter__Transpiler t, Array_ast__AstNode nodes);
-VV_LOC void emitter__Transpiler_collect_vars_in_scope_rec(emitter__Transpiler t, ast__AstNode* node, Map_string_bool* referenced, Map_string_bool* assigned, int depth);
-VV_LOC emitter__VarType emitter__Transpiler_get_expr_type(emitter__Transpiler* t, ast__AstNode node);
-VV_LOC string emitter__Transpiler_visit_expr_native(emitter__Transpiler* t, ast__AstNode node);
-VV_LOC string emitter__Transpiler_visit_expr_native_impl(emitter__Transpiler* t, ast__AstNode node);
-VV_LOC string emitter__Transpiler_native_to_str(emitter__Transpiler* t, ast__AstNode node, emitter__VarType typ);
-VV_LOC string emitter__Transpiler_emit_binop(emitter__Transpiler* t, ast__AstNode node, string native_op, string rt_fn);
-VV_LOC string emitter__Transpiler_emit_comparison(emitter__Transpiler* t, ast__AstNode node, string native_op, string rt_fn);
-VV_LOC string emitter__Transpiler_emit_bitwise(emitter__Transpiler* t, ast__AstNode node, string native_op, string rt_fn);
-VV_LOC string emitter__Transpiler_emit_native_condition(emitter__Transpiler* t, ast__AstNode node);
-VV_LOC string emitter__Transpiler_get_native_bool_condition(emitter__Transpiler* t, ast__AstNode node);
+VV_LOC multi_return_Array_string_Array_string emitter__Transpiler_collect_vars_in_scope(emitter__Transpiler* t, Array_ast__AstNode* nodes);
+VV_LOC void emitter__Transpiler_collect_vars_in_scope_rec(emitter__Transpiler* t, ast__AstNode* node, int depth);
+VV_LOC emitter__VarType emitter__Transpiler_get_expr_type(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC string emitter__Transpiler_visit_expr_native(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC string emitter__Transpiler_visit_expr_native_impl(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC string emitter__Transpiler_native_to_str(emitter__Transpiler* t, ast__AstNode* node, emitter__VarType typ);
+VV_LOC string emitter__Transpiler_emit_binop(emitter__Transpiler* t, ast__AstNode* node, string native_op, string rt_fn);
+VV_LOC string emitter__Transpiler_emit_comparison(emitter__Transpiler* t, ast__AstNode* node, string native_op, string rt_fn);
+VV_LOC string emitter__Transpiler_emit_bitwise(emitter__Transpiler* t, ast__AstNode* node, string native_op, string rt_fn);
+VV_LOC string emitter__Transpiler_emit_native_condition(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC string emitter__Transpiler_get_native_bool_condition(emitter__Transpiler* t, ast__AstNode* node);
 VV_LOC string emitter__Transpiler_binop_native_symbol(emitter__Transpiler t, string node_type);
 VV_LOC string emitter__Transpiler_emit_v_interpolation(emitter__Transpiler* t, Array_ast__AstNode parts);
-VV_LOC string emitter__Transpiler_visit_expr(emitter__Transpiler* t, ast__AstNode node);
-VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__AstNode node);
-VV_LOC string emitter__Transpiler_visit_expr_write_dim(emitter__Transpiler* t, ast__AstNode node);
-VV_LOC string emitter__Transpiler_compile_method_call_known(emitter__Transpiler* t, ast__AstNode node, emitter__VarType obj_type, ast__AstNode obj_var_node, string obj_var_name);
-VV_LOC void emitter__Transpiler_visit_stmt(emitter__Transpiler* t, ast__AstNode node);
+VV_LOC string emitter__Transpiler_visit_expr(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC string emitter__Transpiler_visit_expr_write_dim(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC string emitter__Transpiler_compile_method_call_known(emitter__Transpiler* t, ast__AstNode* node, emitter__VarType obj_type, ast__AstNode obj_var_node, string obj_var_name);
+VV_LOC void emitter__Transpiler_visit_stmt(emitter__Transpiler* t, ast__AstNode* node);
 VV_LOC bool emitter__Transpiler_try_emit_native_incdec(emitter__Transpiler* t, ast__AstNode expr);
-VV_LOC void emitter__Transpiler_visit_echo(emitter__Transpiler* t, ast__AstNode node);
-VV_LOC void emitter__Transpiler_visit_const(emitter__Transpiler* t, ast__AstNode node);
-VV_LOC void emitter__Transpiler_visit_try_catch(emitter__Transpiler* t, ast__AstNode node);
-VV_LOC void emitter__Transpiler_visit_if(emitter__Transpiler* t, ast__AstNode node);
-VV_LOC void emitter__Transpiler_visit_function(emitter__Transpiler* t, ast__AstNode node);
-VV_LOC void emitter__Transpiler_visit_return(emitter__Transpiler* t, ast__AstNode node);
+VV_LOC void emitter__Transpiler_visit_echo(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC void emitter__Transpiler_visit_const(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC void emitter__Transpiler_visit_try_catch(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC void emitter__Transpiler_visit_if(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC void emitter__Transpiler_visit_function(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC void emitter__Transpiler_visit_return(emitter__Transpiler* t, ast__AstNode* node);
 VV_LOC emitter__VarType emitter__Transpiler_get_func_param_type(emitter__Transpiler* t, string func_name, string param_name);
 VV_LOC string emitter__Transpiler_get_native_default(emitter__Transpiler* t, emitter__VarType typ);
-VV_LOC void emitter__Transpiler_visit_foreach(emitter__Transpiler* t, ast__AstNode node);
-VV_LOC void emitter__Transpiler_visit_while(emitter__Transpiler* t, ast__AstNode node);
-VV_LOC void emitter__Transpiler_visit_do(emitter__Transpiler* t, ast__AstNode node);
-VV_LOC void emitter__Transpiler_visit_for(emitter__Transpiler* t, ast__AstNode node);
-VV_LOC bool emitter__Transpiler_can_use_v_match(emitter__Transpiler* t, ast__AstNode cond_node, Array_emitter__SwitchBranch branches);
-VV_LOC void emitter__Transpiler_visit_switch(emitter__Transpiler* t, ast__AstNode node);
+VV_LOC void emitter__Transpiler_visit_foreach(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC void emitter__Transpiler_visit_while(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC void emitter__Transpiler_visit_do(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC bool emitter__Transpiler_expr_produces_value(emitter__Transpiler* t, ast__AstNode expr);
+VV_LOC void emitter__Transpiler_visit_for(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC bool emitter__Transpiler_can_use_v_match(emitter__Transpiler* t, ast__AstNode* cond_node, Array_emitter__SwitchBranch branches);
+VV_LOC void emitter__Transpiler_visit_switch(emitter__Transpiler* t, ast__AstNode* node);
 string emitter__escape_single_quoted(string s);
 string emitter__escape_double_quoted(string s);
-string emitter__box_expr(string code, emitter__VarType typ);
-string emitter__unbox_expr(string code, emitter__VarType typ);
+string emitter__Transpiler_box_expr(emitter__Transpiler t, string code, emitter__VarType typ);
+string emitter__Transpiler_unbox_expr(emitter__Transpiler t, string code, emitter__VarType typ);
+string emitter__Transpiler_dup_suffix_for_var(emitter__Transpiler t, string php_var_name);
 string emitter__Transpiler_dup_if_needed(emitter__Transpiler t, string code, ast__AstNode arg_node);
-string emitter__Transpiler_compile_expr(emitter__Transpiler* t, ast__AstNode node, emitter__ExprCtx ctx);
-emitter__CallArgResult emitter__Transpiler_compile_arg(emitter__Transpiler* t, ast__AstNode arg_node, emitter__VarType target_type);
-string emitter__Transpiler_compile_arg_simple(emitter__Transpiler* t, ast__AstNode arg_node);
+string emitter__Transpiler_compile_expr(emitter__Transpiler* t, ast__AstNode* node, emitter__ExprCtx ctx);
+emitter__CallArgResult emitter__Transpiler_compile_arg(emitter__Transpiler* t, ast__AstNode* arg_node, emitter__VarType target_type);
+string emitter__Transpiler_compile_arg_simple(emitter__Transpiler* t, ast__AstNode* arg_node);
+bool emitter__Transpiler_produces_native_string(emitter__Transpiler* t, ast__AstNode* node);
+string emitter__Transpiler_emit_custom_funccall(emitter__Transpiler* t, ast__AstNode* node, string func_name, emitter__VarType ret_type, bool is_native);
+bool emitter__Transpiler_is_native_array_or_map(emitter__Transpiler t, ast__AstNode* node);
 emitter__VarScope emitter__VarScope__static__new(void);
 emitter__VarScope emitter__VarScope_clone(emitter__VarScope s);
 bool emitter__VarScope_has_var(emitter__VarScope s, string name);
 void emitter__VarScope_declare(emitter__VarScope* s, string name);
 emitter__Transpiler emitter__Transpiler__static__new(void);
 string emitter__Transpiler_transpile(emitter__Transpiler* t, Array_ast__AstNode stmts);
+VV_LOC bool emitter__Transpiler_has_exit_or_die(emitter__Transpiler t, Array_ast__AstNode stmts);
 VV_LOC strings__Builder* emitter__Transpiler_current_builder(emitter__Transpiler* t);
 VV_LOC void emitter__Transpiler_write_indent(emitter__Transpiler* t);
 VV_LOC void emitter__Transpiler_write_line(emitter__Transpiler* t, string s);
@@ -3820,7 +3894,8 @@ VV_LOC emitter__VarType emitter__Transpiler_get_method_param_type(emitter__Trans
 VV_LOC emitter__VarType emitter__Transpiler_get_method_return_type(emitter__Transpiler* t, string class_name, string method_name);
 VV_LOC _option_Map_string_emitter__VarType emitter__Transpiler_param_types_for_method(emitter__Transpiler* t, string class_name, string method_name);
 void emitter__Transpiler_scan_global_constants(emitter__Transpiler* t, Array_ast__AstNode stmts);
-VV_LOC string emitter__get_prop_default_expr(ast__AstNode node);
+VV_LOC void emitter__Transpiler_scan_global_constants_rec(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC string emitter__get_prop_default_expr(ast__AstNode* node);
 void emitter__Transpiler_scan_classes(emitter__Transpiler* t, Array_ast__AstNode stmts);
 _option_emitter__MethodInfo emitter__Transpiler_find_method(emitter__Transpiler t, string class_name, string method_name);
 string emitter__Transpiler_get_v_var_name(emitter__Transpiler t, string php_var_name);
@@ -3828,48 +3903,54 @@ void emitter__Transpiler_scan_custom_functions(emitter__Transpiler* t, Array_ast
 VV_LOC _option_Map_string_emitter__VarType emitter__find_param_map_insensitive(Map_string_Map_string_emitter__VarType m, string key);
 VV_LOC _option_emitter__VarType emitter__find_vartype_map_insensitive(Map_string_emitter__VarType m, string key);
 VV_LOC void emitter__Transpiler_scan_dynamic_usages(emitter__Transpiler* t, Array_ast__AstNode nodes);
-VV_LOC void emitter__Transpiler_scan_dynamic_usages_node(emitter__Transpiler* t, ast__AstNode node);
+VV_LOC void emitter__Transpiler_scan_dynamic_usages_node(emitter__Transpiler* t, ast__AstNode* node);
 VV_LOC void emitter__Transpiler_generate_registry_initializers(emitter__Transpiler* t);
+string emitter__Transpiler_get_empty_literal(emitter__Transpiler t, emitter__VarType typ);
+string emitter__Transpiler_transpile_include_file(emitter__Transpiler* t, string path);
+string emitter__Transpiler_get_safe_func_name(emitter__Transpiler t, string path);
+_option_string emitter__Transpiler_eval_static_path(emitter__Transpiler* t, ast__AstNode* node);
 void emitter__Transpiler_analyze_types(emitter__Transpiler* t, Array_ast__AstNode stmts);
 VV_LOC void emitter__Transpiler_analyze_stmts_phase1(emitter__Transpiler* t, Array_ast__AstNode stmts, emitter__AnalyzeCtx* ctx);
-VV_LOC void emitter__Transpiler_analyze_stmt_phase1(emitter__Transpiler* t, ast__AstNode node, emitter__AnalyzeCtx* ctx);
+VV_LOC void emitter__Transpiler_analyze_stmt_phase1(emitter__Transpiler* t, ast__AstNode* node, emitter__AnalyzeCtx* ctx);
 VV_LOC void emitter__Transpiler_analyze_stmts_phase2(emitter__Transpiler* t, Array_ast__AstNode stmts);
-VV_LOC void emitter__Transpiler_analyze_stmt_phase2(emitter__Transpiler* t, ast__AstNode node);
-VV_LOC emitter__TypeTag emitter__Transpiler_infer_expr_types(emitter__Transpiler* t, ast__AstNode node, Map_string_Array_emitter__TypeTag* var_assign_types);
-VV_LOC void emitter__Transpiler_scan_object_types_expr(emitter__Transpiler* t, ast__AstNode node, Map_string_Array_string* object_classes);
-VV_LOC void emitter__Transpiler_scan_mutations_expr(emitter__Transpiler* t, ast__AstNode node);
-VV_LOC void emitter__Transpiler_scan_ctor_call_sites_expr(emitter__Transpiler* t, ast__AstNode node);
-VV_LOC void emitter__Transpiler_scan_method_call_sites_expr(emitter__Transpiler* t, ast__AstNode node);
+VV_LOC void emitter__Transpiler_analyze_stmt_phase2(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC emitter__TypeTag emitter__Transpiler_infer_expr_types(emitter__Transpiler* t, ast__AstNode* node, Map_string_Array_emitter__TypeTag* var_assign_types);
+VV_LOC void emitter__Transpiler_scan_object_types_expr(emitter__Transpiler* t, ast__AstNode* node, Map_string_Array_string* object_classes);
+VV_LOC void emitter__Transpiler_scan_mutations_expr(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC void emitter__Transpiler_scan_ctor_call_sites_expr(emitter__Transpiler* t, ast__AstNode* node);
+VV_LOC void emitter__Transpiler_scan_method_call_sites_expr(emitter__Transpiler* t, ast__AstNode* node);
 VV_LOC void emitter__Transpiler_scan_prop_assignments(emitter__Transpiler* t, Array_ast__AstNode stmts, Map_string_Array_emitter__TypeTag* prop_tags, Map_string_Array_emitter__TypeTag* var_assign_types);
-VV_LOC void emitter__Transpiler_scan_prop_assignments_expr(emitter__Transpiler* t, ast__AstNode node, Map_string_Array_emitter__TypeTag* prop_tags, Map_string_Array_emitter__TypeTag* var_assign_types);
+VV_LOC void emitter__Transpiler_scan_prop_assignments_expr(emitter__Transpiler* t, ast__AstNode* node, Map_string_Array_emitter__TypeTag* prop_tags, Map_string_Array_emitter__TypeTag* var_assign_types);
 VV_LOC emitter__VarType emitter__Transpiler_infer_param_type_from_usage(emitter__Transpiler* t, Array_ast__AstNode stmts, string param_name, Map_string_emitter__VarType prop_types);
 VV_LOC emitter__ParamUsageResult emitter__Transpiler_scan_param_usage(emitter__Transpiler* t, Array_ast__AstNode stmts, string param_name);
-VV_LOC void emitter__Transpiler_scan_param_usage_expr(emitter__Transpiler* t, ast__AstNode node, string param_name, emitter__ParamUsageResult* result);
-VV_LOC bool emitter__Transpiler_expr_references_var(emitter__Transpiler* t, ast__AstNode node, string var_name);
+VV_LOC void emitter__Transpiler_scan_param_usage_expr(emitter__Transpiler* t, ast__AstNode* node, string param_name, emitter__ParamUsageResult* result);
+VV_LOC bool emitter__Transpiler_expr_references_var(emitter__Transpiler* t, ast__AstNode* node, string var_name);
 VV_LOC emitter__VarType emitter__Transpiler_infer_method_return_type(emitter__Transpiler* t, Array_ast__AstNode stmts, Map_string_emitter__VarType prop_types);
 VV_LOC void emitter__Transpiler_scan_return_types(emitter__Transpiler* t, Array_ast__AstNode stmts, Map_string_emitter__VarType prop_types, Array_emitter__VarType* return_tags);
-void emitter__Transpiler_infer_single_class_types(emitter__Transpiler* t, ast__AstNode node, string class_name);
+void emitter__Transpiler_infer_single_class_types(emitter__Transpiler* t, ast__AstNode* node, string class_name);
 void emitter__Transpiler_analyze_func_types(emitter__Transpiler* t, Array_ast__AstNode stmts);
 VV_LOC void emitter__Transpiler_scan_func_call_sites(emitter__Transpiler* t, Array_ast__AstNode stmts);
-VV_LOC void emitter__Transpiler_scan_func_call_sites_expr(emitter__Transpiler* t, ast__AstNode node);
+VV_LOC void emitter__Transpiler_scan_func_call_sites_expr(emitter__Transpiler* t, ast__AstNode* node);
 VV_LOC void emitter__Transpiler_infer_func_types_from_stmts(emitter__Transpiler* t, Array_ast__AstNode stmts);
 VV_LOC emitter__TypeTag emitter__php_type_to_tag(string php_type);
-VV_LOC void emitter__Transpiler_infer_single_func_types(emitter__Transpiler* t, ast__AstNode node);
+VV_LOC void emitter__Transpiler_infer_single_func_types(emitter__Transpiler* t, ast__AstNode* node);
 VV_LOC void emitter__Transpiler_infer_expr_types_for_func(emitter__Transpiler* t, Array_ast__AstNode stmts, Map_string_Array_emitter__TypeTag* var_assign_types);
-VV_LOC void emitter__Transpiler_infer_expr_types_for_func_stmt(emitter__Transpiler* t, ast__AstNode node, Map_string_Array_emitter__TypeTag* var_assign_types);
+VV_LOC void emitter__Transpiler_infer_expr_types_for_func_stmt(emitter__Transpiler* t, ast__AstNode* node, Map_string_Array_emitter__TypeTag* var_assign_types);
 VV_LOC emitter__VarType emitter__Transpiler_infer_func_return_type(emitter__Transpiler* t, Array_ast__AstNode stmts, Map_string_Array_emitter__TypeTag* var_assign_types);
 VV_LOC void emitter__Transpiler_scan_func_return_tags(emitter__Transpiler* t, Array_ast__AstNode stmts, Map_string_Array_emitter__TypeTag* var_assign_types, Array_emitter__VarType* return_tags);
 void emitter__Transpiler_analyze_arrays(emitter__Transpiler* t, Array_ast__AstNode stmts);
-VV_LOC void emitter__Transpiler_scan_array_usages_stmt(emitter__Transpiler* t, ast__AstNode node, Map_string_emitter__ArrayInferState* states);
+VV_LOC void emitter__Transpiler_scan_array_usages_stmt(emitter__Transpiler* t, ast__AstNode* node, Map_string_emitter__ArrayInferState* states);
+VV_LOC string emitter__Transpiler_get_array_infer_key(emitter__Transpiler t, string name);
 VV_LOC void emitter__Transpiler_scan_array_usages_stmts(emitter__Transpiler* t, Array_ast__AstNode stmts, Map_string_emitter__ArrayInferState* states);
-VV_LOC void emitter__Transpiler_scan_array_usages_expr(emitter__Transpiler* t, ast__AstNode node, Map_string_emitter__ArrayInferState* states, bool is_assign_lhs, _option_ast__AstNode rhs_node);
-VV_LOC emitter__TypeTag emitter__php_literal_node_to_tag(ast__AstNode node);
+VV_LOC void emitter__Transpiler_scan_array_usages_expr(emitter__Transpiler* t, ast__AstNode* node, Map_string_emitter__ArrayInferState* states, bool is_assign_lhs, _option_ast__AstNode rhs_node);
+VV_LOC emitter__TypeTag emitter__php_literal_node_to_tag(ast__AstNode* node);
 bool emitter__VarType_is_scalar(emitter__VarType t);
 bool emitter__VarType_is_object(emitter__VarType t);
 string emitter__VarType_to_v_type(emitter__VarType t);
 VV_LOC void main__main(void);
 VV_LOC _result_string main__find_parser_path(void);
 VV_LOC void main__print_usage(void);
+VV_LOC void main__fix_multiline_if(string file_path);
 VV_LOC string json__json_float_to_raw_string_T_f32(f32 val);
 VV_LOC string json__json_float_to_raw_string_T_f64(f64 val);
 
@@ -3919,6 +4000,31 @@ static string _const_ast__node_expr_pre_dec; // a string literal, inited later
 static string _const_ast__node_expr_error_suppress; // a string literal, inited later
 static string _const_ast__node_stmt_interface; // a string literal, inited later
 static string _const_ast__node_expr_cast_array; // a string literal, inited later
+static string _const_ast__node_expr_cast_int; // a string literal, inited later
+static string _const_ast__node_expr_cast_double; // a string literal, inited later
+static string _const_ast__node_expr_cast_string; // a string literal, inited later
+static string _const_ast__node_expr_cast_bool; // a string literal, inited later
+static string _const_ast__node_expr_assign_ref; // a string literal, inited later
+static string _const_ast__node_expr_assign_op_concat; // a string literal, inited later
+static string _const_ast__node_expr_assign_op_plus; // a string literal, inited later
+static string _const_ast__node_expr_assign_op_minus; // a string literal, inited later
+static string _const_ast__node_expr_assign_op_mul; // a string literal, inited later
+static string _const_ast__node_expr_assign_op_div; // a string literal, inited later
+static string _const_ast__node_expr_assign_op_mod; // a string literal, inited later
+static string _const_ast__node_bin_not_identical; // a string literal, inited later
+static string _const_ast__node_bin_not_equal; // a string literal, inited later
+static string _const_ast__node_expr_unary_minus; // a string literal, inited later
+static string _const_ast__node_expr_unary_plus; // a string literal, inited later
+static string _const_ast__node_expr_print; // a string literal, inited later
+static string _const_ast__node_expr_exit; // a string literal, inited later
+static string _const_ast__node_expr_clone; // a string literal, inited later
+static string _const_ast__node_expr_cast_object; // a string literal, inited later
+static string _const_ast__node_expr_list; // a string literal, inited later
+static string _const_ast__node_bin_logical_xor; // a string literal, inited later
+static string _const_ast__node_stmt_global; // a string literal, inited later
+static string _const_ast__node_stmt_nop; // a string literal, inited later
+static string _const_ast__node_stmt_declare; // a string literal, inited later
+static string _const_ast__node_stmt_static; // a string literal, inited later
 static string _const_ast__node_expr_assign; // a string literal, inited later
 static string _const_ast__node_expr_variable; // a string literal, inited later
 static string _const_ast__node_expr_const; // a string literal, inited later
@@ -3928,6 +4034,7 @@ static string _const_ast__node_expr_array; // a string literal, inited later
 static string _const_ast__node_expr_array_item; // a string literal, inited later
 static string _const_ast__node_expr_array_dim_fetch; // a string literal, inited later
 static string _const_ast__node_expr_static_call; // a string literal, inited later
+static string _const_ast__node_expr_static_prop_fetch; // a string literal, inited later
 static string _const_ast__node_expr_boolean_not; // a string literal, inited later
 static string _const_ast__node_expr_ternary; // a string literal, inited later
 static string _const_ast__node_bin_plus; // a string literal, inited later
@@ -4194,6 +4301,7 @@ static Array_fixed_i32_1264 _const_rune_maps = {((i32)(0xB5)), 0xB5, 743, 0, 0xC
 0x16E40, 0x16E5F, 0, 32, 0x16E60, 0x16E7F, -32, 0, 0x1E900, 0x1E921, 0, 34, 0x1E922, 0x1E943, -34, 0}; // fixed array const
 static const u8 _const_str_intp_has_dynamic_width = 1; // precomputed2
 static const u8 _const_str_intp_has_dynamic_precision = 2; // precomputed2
+static rune _const_utf8_replacement_rune; // inited later
 static const time__Duration _const_time__nanosecond = 1; // precomputed2
 static const time__Duration _const_time__microsecond = 1000; // precomputed2
 static const time__Duration _const_time__millisecond = 1000000; // precomputed2
@@ -6196,12 +6304,12 @@ u32 v_typeof_interface_idx_IError(u32 sidx) {
 	if (sidx == _IError_None___index) return 67;
 	if (sidx == _IError_voidptr_index) return 2;
 	if (sidx == _IError_MessageError_index) return 69;
-	if (sidx == _IError_time__TimeParseError_index) return 271;
-	if (sidx == _IError_os__Eof_index) return 160;
-	if (sidx == _IError_os__NotExpected_index) return 158;
-	if (sidx == _IError_os__FileNotOpenedError_index) return 161;
-	if (sidx == _IError_os__SizeOfTypeIs0Error_index) return 162;
-	if (sidx == _IError_os__ExecutableNotFoundError_index) return 182;
+	if (sidx == _IError_time__TimeParseError_index) return 275;
+	if (sidx == _IError_os__Eof_index) return 161;
+	if (sidx == _IError_os__NotExpected_index) return 159;
+	if (sidx == _IError_os__FileNotOpenedError_index) return 162;
+	if (sidx == _IError_os__SizeOfTypeIs0Error_index) return 163;
+	if (sidx == _IError_os__ExecutableNotFoundError_index) return 183;
 	if (sidx == _IError_Error_index) return 68;
 	return 30;
 }
@@ -9882,6 +9990,9 @@ VV_LOC void builtin__builtin_init(void) {
 	}
 	#endif
 }
+#if 0
+#else
+#endif
 inline int builtin__vstrlen(u8* s) {
 	return ((int)(strlen(((char*)(s)))));
 }
@@ -11799,14 +11910,12 @@ VV_LOC rune builtin__rune_map_to(rune c, MapMode mode) {
 Array_rune builtin__string_runes(string s) {
 	Array_rune runes = builtin____new_array_with_default_noscan(0, s.len, sizeof(rune), 0);
 	for (int i = 0; i < s.len; i++) {
-		int char_len = builtin__utf8_char_len(s.str[i]);
+		multi_return_rune_int mr_2797 = builtin__utf8_decode_rune(&s.str[i], s.len - i);
+		rune r = mr_2797.arg0;
+		int char_len = mr_2797.arg1;
+		builtin__array_push_noscan((array*)&runes, _MOV((rune[]){ r }));
 		if (char_len > 1) {
-			int end = (s.len - 1 >= i + char_len ? (i + char_len) : (s.len));
-			string r = builtin__string_substr(s, i, end);
-			builtin__array_push_noscan((array*)&runes, _MOV((rune[]){ builtin__string_utf32_code(r) }));
 			i += char_len - 1;
-		} else {
-			builtin__array_push_noscan((array*)&runes, _MOV((rune[]){ s.str[i] }));
 		}
 	}
 	return runes;
@@ -11851,6 +11960,9 @@ string builtin__tos5(char* s) {
 		return _S("");
 	}
 	return ((string){.str = ((u8*)(s)), .len = builtin__vstrlen_char(s)});
+}
+string builtin__u8_vstring(u8* bp) {
+	return ((string){.str = bp, .len = builtin__vstrlen(bp)});
 }
 string builtin__u8_vstring_with_len(u8* bp, int len) {
 	return ((string){.str = bp, .len = len, .is_lit = 0});
@@ -12335,6 +12447,35 @@ string builtin__string_to_upper(string s) {
 	}
 	return Array_rune_string(runes);
 }
+string builtin__string_capitalize(string s) {
+	if (s.len == 0) {
+		return _S("");
+	}
+	if (s.len == 1) {
+		return builtin__string_to_upper(builtin__u8_ascii_str(s.str[ 0]));
+	}
+	Array_rune r = builtin__string_runes(s);
+	string letter = builtin__rune_str(((rune*)r.data)[0]);
+	string uletter = builtin__string_to_upper(letter);
+	Array_rune rrest = builtin__array_slice(r, 1, 2147483647);
+	string srest = Array_rune_string(rrest);
+	string res = builtin__string__plus(uletter, srest);
+	return res;
+}
+inline string builtin__string_trim_space(string s) {
+	return builtin__string_trim(s, _S(" \n\t\v\f\r"));
+}
+string builtin__string_trim(string s, string cutset) {
+	if ((s).len == 0 || (cutset).len == 0) {
+		return builtin__string_clone(s);
+	}
+	if (builtin__string_is_pure_ascii(cutset)) {
+		return builtin__string_trim_chars(s, cutset, TrimMode__trim_both);
+	} else {
+		return builtin__string_trim_runes(s, cutset, TrimMode__trim_both);
+	}
+	return (string){.str=(byteptr)"", .is_lit=1};
+}
 VV_LOC string builtin__string_trim_chars(string s, string cutset, TrimMode mode) {
 	int pos_left = 0;
 	int pos_right = s.len - 1;
@@ -12564,6 +12705,20 @@ string builtin__string_all_before_last(string s, string sub) {
 		return builtin__string_clone(s);
 	}
 	return builtin__string_substr(s, 0, pos);
+}
+string builtin__string_all_after(string s, string sub) {
+	int pos = builtin__string_index_(s, sub);
+	if (pos == -1) {
+		return builtin__string_clone(s);
+	}
+	return builtin__string_substr(s, pos + sub.len, 2147483647);
+}
+string builtin__string_all_after_last(string s, string sub) {
+	int pos = builtin__string_index_last_(s, sub);
+	if (pos == -1) {
+		return builtin__string_clone(s);
+	}
+	return builtin__string_substr(s, pos + sub.len, 2147483647);
 }
 string Array_string_join(Array_string a, string sep) {
 	if (a.len == 0) {
@@ -13301,9 +13456,6 @@ string builtin__str_intp(int data_len, StrIntpData* input_base) {
 	strings__Builder_free(&res);
 	return ret;
 }
-int builtin__utf8_char_len(u8 b) {
-	return ((int)((((v__rshift_u32(((u32)(0xe5000000U)), (u64)(((v__rshift_u8(b, (u64)3)) & 0x1e)))) & 3)) + 1));
-}
 string builtin__utf32_to_str(u32 code) {
 	{ // Unsafe block
 		u8* buffer = builtin__malloc_noscan(5);
@@ -13352,46 +13504,76 @@ int builtin__utf32_decode_to_buffer(u32 code, u8* buf) {
 	}
 	return 0;
 }
-int builtin__string_utf32_code(string _rune) {
-	if (_rune.len > 4) {
-		return 0;
-	}
-	return ((int)(builtin__impl_utf8_to_utf32(_rune.str, _rune.len)));
+inline VV_LOC bool builtin__utf8_is_continuation(u8 b) {
+	return ((b & 0xc0)) == 0x80;
 }
-VV_LOC rune builtin__impl_utf8_to_utf32(u8* _bytes, int _bytes_len) {
-	if (_bytes_len == 0 || _bytes_len > 4) {
-		return 0;
+VV_LOC multi_return_rune_int builtin__utf8_decode_rune(u8* _bytes, int available_len) {
+	if (available_len <= 0) {
+		return (multi_return_rune_int){.arg0=0, .arg1=0};
 	}
-	if (_bytes_len == 1) {
-		return ((rune)(_bytes[0]));
+	u8 b0 = _bytes[0];
+	if (b0 < 0x80) {
+		return (multi_return_rune_int){.arg0=((rune)(b0)), .arg1=1};
 	}
-	switch (_bytes_len) {
-		case 2: {
-			rune b0 = ((rune)(_bytes[0]));
-			rune b1 = ((rune)(_bytes[1]));
-			return ((v__lshift_rune(((b0 & 0x1F)), (u64)6)) | ((b1 & 0x3F)));
-		}
-		case 3: {
-			rune b0 = ((rune)(_bytes[0]));
-			rune b1 = ((rune)(_bytes[1]));
-			rune b2 = ((rune)(_bytes[2]));
-			return (((v__lshift_rune(((b0 & 0x0F)), (u64)12)) | (v__lshift_rune(((b1 & 0x3F)), (u64)6))) | ((b2 & 0x3F)));
-		}
-		case 4: {
-			rune b0 = ((rune)(_bytes[0]));
-			rune b1 = ((rune)(_bytes[1]));
-			rune b2 = ((rune)(_bytes[2]));
-			rune b3 = ((rune)(_bytes[3]));
-			return ((((v__lshift_rune(((b0 & 0x07)), (u64)18)) | (v__lshift_rune(((b1 & 0x3F)), (u64)12))) | (v__lshift_rune(((b2 & 0x3F)), (u64)6))) | ((b3 & 0x3F)));
-		}
-		default: {
-			{
-				return 0;
-			}
-		}
+	if (b0 < 0xc2) {
+		return (multi_return_rune_int){.arg0=_const_utf8_replacement_rune, .arg1=1};
 	}
-	
-	return 0;
+	int _t4; /* if prepend */
+	if (b0 < 0xe0) {
+		_t4 = 2;
+		goto _t5;
+	};
+	{
+	if (b0 < 0xf0) {
+		_t4 = 3;
+		goto _t5;
+	};
+	{
+	if (b0 < 0xf5) {
+		_t4 = 4;
+		goto _t5;
+	};
+	{
+		return (multi_return_rune_int){.arg0=_const_utf8_replacement_rune, .arg1=1};
+	}
+	}
+	}
+	_t5: {};
+		int char_len = _t4;
+	if (available_len < char_len) {
+		return (multi_return_rune_int){.arg0=_const_utf8_replacement_rune, .arg1=1};
+	}
+	u8 b1 = _bytes[1];
+	if (!builtin__utf8_is_continuation(b1)) {
+		return (multi_return_rune_int){.arg0=_const_utf8_replacement_rune, .arg1=1};
+	}
+	if (char_len == 2) {
+		return (multi_return_rune_int){.arg0=((v__lshift_rune(((((rune)(b0)) & 0x1f)), (u64)6)) | ((((rune)(b1)) & 0x3f))), .arg1=2};
+	}
+	if (b0 == 0xe0 && b1 < 0xa0) {
+		return (multi_return_rune_int){.arg0=_const_utf8_replacement_rune, .arg1=1};
+	}
+	if (b0 == 0xed && b1 >= 0xa0) {
+		return (multi_return_rune_int){.arg0=_const_utf8_replacement_rune, .arg1=1};
+	}
+	u8 b2 = _bytes[2];
+	if (!builtin__utf8_is_continuation(b2)) {
+		return (multi_return_rune_int){.arg0=_const_utf8_replacement_rune, .arg1=1};
+	}
+	if (char_len == 3) {
+		return (multi_return_rune_int){.arg0=(((v__lshift_rune(((((rune)(b0)) & 0x0f)), (u64)12)) | (v__lshift_rune(((((rune)(b1)) & 0x3f)), (u64)6))) | ((((rune)(b2)) & 0x3f))), .arg1=3};
+	}
+	if (b0 == 0xf0 && b1 < 0x90) {
+		return (multi_return_rune_int){.arg0=_const_utf8_replacement_rune, .arg1=1};
+	}
+	if (b0 == 0xf4 && b1 > 0x8f) {
+		return (multi_return_rune_int){.arg0=_const_utf8_replacement_rune, .arg1=1};
+	}
+	u8 b3 = _bytes[3];
+	if (!builtin__utf8_is_continuation(b3)) {
+		return (multi_return_rune_int){.arg0=_const_utf8_replacement_rune, .arg1=1};
+	}
+	return (multi_return_rune_int){.arg0=((((v__lshift_rune(((((rune)(b0)) & 0x07)), (u64)18)) | (v__lshift_rune(((((rune)(b1)) & 0x3f)), (u64)12))) | (v__lshift_rune(((((rune)(b2)) & 0x3f)), (u64)6))) | ((((rune)(b3)) & 0x3f))), .arg1=4};
 }
 int builtin__utf8_str_visible_length(string s) {
 	return builtin__utf8_grapheme_visible_length(s);
@@ -14665,6 +14847,136 @@ VV_LOC bool os__is_curr_dir_ref(int byte_one, int byte_two, int byte_three) {
 	}
 	return (byte_one < 0 || os__is_slash(((u8)(byte_one)))) && (byte_three < 0 || os__is_slash(((u8)(byte_three))));
 }
+VV_LOC _result_int os__find_cfile_size(FILE* fp) {
+	i32 cseek = fseek(fp, 0, SEEK_END);
+	isize raw_fsize = ftell(fp);
+	if (raw_fsize != 0 && cseek != 0) {
+		return (_result_int){ .is_error=true, .err=builtin___v_error(_S("fseek failed")), .data={E_STRUCT} };
+	}
+	if (raw_fsize < 0) {
+		if (cseek != 0) {
+			return (_result_int){ .is_error=true, .err=builtin___v_error(_S("ftell failed")), .data={E_STRUCT} };
+		}
+		rewind(fp);
+		_result_int _t3;
+		builtin___result_ok(&(int[]) { 0 }, (_result*)(&_t3), sizeof(int));
+		 
+		return _t3;
+	}
+	int len = ((int)(raw_fsize));
+	if (((i64)(len)) < raw_fsize) {
+		return (_result_int){ .is_error=true, .err=builtin___v_error(builtin__string_plus_many(4, _MOV((string[4]){_S("int("), builtin__isize_str(raw_fsize), _S(") cast results in "), builtin__int_str(len)}))), .data={E_STRUCT} };
+	}
+	rewind(fp);
+	GC_reachable_here(&fp);
+	GC_reachable_here(&raw_fsize);
+	_result_int _t5;
+	builtin___result_ok(&(int[]) { len }, (_result*)(&_t5), sizeof(int));
+	 
+	return _t5;
+}
+VV_LOC _result_strings__Builder os__slurp_file_in_builder(FILE* fp) {
+	Array_fixed_u8_4096 buf = {0};
+	strings__Builder sb = strings__new_builder(_const_os__buf_size);
+	for (;;) {
+		_result_int _t1 = os__fread(&buf[0], 1, _const_os__buf_size, fp);
+		if (_t1.is_error) {
+			IError _t2 = _t1.err;
+			IError err = _t2;
+			if ((err)._typ == _IError_os__Eof_index) {
+				break;
+			}
+			strings__Builder_free(&sb);
+			return (_result_strings__Builder){ .is_error=true, .err=err, .data={E_STRUCT} };
+		}
+		
+ 		int nbytes = (*(int*)_t1.data);
+		strings__Builder_write_ptr(&sb, &buf[0], nbytes);
+	}
+	_result_strings__Builder _t4;
+	builtin___result_ok(&(strings__Builder[]) { sb }, (_result*)(&_t4), sizeof(strings__Builder));
+	 
+	return _t4;
+}
+_result_string os__read_file(string path) {
+	string mode = _S("rb");
+	_result_FILE_ptr _t1 = os__vfopen(path, mode);
+	if (_t1.is_error) {
+		_result_string _t2 = {0};
+		_t2.is_error = true;
+		_t2.err = _t1.err;
+		return _t2;
+	}
+	
+ 	FILE* fp = (*(FILE**)_t1.data);
+	_result_int _t3 = os__find_cfile_size(fp);
+	if (_t3.is_error) {
+		{ // defer begin
+			fclose(fp);
+		} // defer end
+		_result_string _t4 = {0};
+		_t4.is_error = true;
+		_t4.err = _t3.err;
+		return _t4;
+	}
+	
+ 	int allocate = (*(int*)_t3.data);
+	if (allocate == 0) {
+		_result_strings__Builder _t5 = os__slurp_file_in_builder(fp);
+		if (_t5.is_error) {
+			{ // defer begin
+				fclose(fp);
+			} // defer end
+			_result_string _t6 = {0};
+			_t6.is_error = true;
+			_t6.err = _t5.err;
+			return _t6;
+		}
+		
+ 		strings__Builder sb = (*(strings__Builder*)_t5.data);
+		string res = strings__Builder_str(&sb);
+		strings__Builder_free(&sb);
+		_result_string _t7;
+		builtin___result_ok(&(string[]) { res }, (_result*)(&_t7), sizeof(string));
+		 
+			{ // defer begin
+				fclose(fp);
+			} // defer end
+		return _t7;
+	}
+	{ // Unsafe block
+		u8* str = builtin__malloc_noscan(allocate + 1);
+		int nelements = ((int)(fread(str, 1, allocate, fp)));
+		int is_eof = ((int)(feof(fp)));
+		int is_error = ((int)(ferror(fp)));
+		if (is_eof == 0 && is_error != 0) {
+			builtin___v_free(str);
+			_result_string _t8 = (_result_string){ .is_error=true, .err=builtin___v_error(_S("fread failed")), .data={E_STRUCT} };
+				{ // defer begin
+					fclose(fp);
+				} // defer end
+			return _t8;
+		}
+		str[nelements] = 0;
+		if (nelements == 0) {
+			_result_string _t9;
+			builtin___result_ok(&(string[]) { builtin__u8_vstring(str) }, (_result*)(&_t9), sizeof(string));
+			 
+				{ // defer begin
+					fclose(fp);
+				} // defer end
+			return _t9;
+		}
+		_result_string _t10;
+		builtin___result_ok(&(string[]) { builtin__u8_vstring_with_len(str, nelements) }, (_result*)(&_t10), sizeof(string));
+		 
+			{ // defer begin
+				fclose(fp);
+			} // defer end
+		return _t10;
+	}
+	return (_result_string){0};
+}
 _result_FILE_ptr os__vfopen(string path, string mode) {
 	if ((path).len == 0) {
 		return (_result_FILE_ptr){ .is_error=true, .err=builtin___v_error(_S("vfopen called with \"\"")), .data={E_STRUCT} };
@@ -15096,14 +15408,14 @@ _result_os__Stat os__stat(string path) {
 		}
 		_result_os__Stat _t2;
 		builtin___result_ok(&(os__Stat[]) { ((os__Stat){
-			.dev = s.st_dev,
+			.dev = ((u64)(s.st_dev)),
 			.inode = s.st_ino,
 			.mode = s.st_mode,
 			.nlink = s.st_nlink,
 			.uid = s.st_uid,
 			.gid = s.st_gid,
-			.rdev = s.st_rdev,
-			.size = s.st_size,
+			.rdev = ((u64)(s.st_rdev)),
+			.size = ((u64)(s.st_size)),
 			.atime = s.st_atime,
 			.mtime = s.st_mtime,
 			.ctime = s.st_ctime,
@@ -15905,7 +16217,7 @@ string emitter__Transpiler_try_builtin_mapping_native(emitter__Transpiler* t, st
 		return _S("");
 	}
 	string a0 = (*(string*)builtin__array_get(args, 0));
-	string a0s = emitter__Transpiler_compile_builtin_arg(t, (*(ast__AstNode*)builtin__array_get(arg_nodes, 0)));
+	string a0s = emitter__Transpiler_compile_builtin_arg(t, (voidptr)&(*(ast__AstNode*)builtin__array_get(arg_nodes, 0)));
 
 	if (_SLIT_EQ(name.str, name.len, "strlen")) {
 		return builtin__string_plus_many(2, _MOV((string[2]){a0s, _S(".len")}));
@@ -15920,9 +16232,9 @@ string emitter__Transpiler_try_builtin_mapping_native(emitter__Transpiler* t, st
 		return builtin__string_plus_many(2, _MOV((string[2]){a0s, _S(".trim_space()")}));
 	}
 	else if (_SLIT_EQ(name.str, name.len, "count") || _SLIT_EQ(name.str, name.len, "sizeof")) {
-		emitter__VarType a0_type = emitter__Transpiler_get_expr_type(t, (*(ast__AstNode*)builtin__array_get(arg_nodes, 0)));
+		emitter__VarType a0_type = emitter__Transpiler_get_expr_type(t, (voidptr)&(*(ast__AstNode*)builtin__array_get(arg_nodes, 0)));
 		if (a0_type.is_native_list || a0_type.is_native_map) {
-			return builtin__string_plus_many(2, _MOV((string[2]){emitter__Transpiler_visit_expr_native(t, (*(ast__AstNode*)builtin__array_get(arg_nodes, 0))), _S(".len")}));
+			return builtin__string_plus_many(2, _MOV((string[2]){emitter__Transpiler_visit_expr_native(t, (voidptr)&(*(ast__AstNode*)builtin__array_get(arg_nodes, 0))), _S(".len")}));
 		}
 		return builtin__string_plus_many(2, _MOV((string[2]){a0, _S(".array_count()")}));
 	}
@@ -16029,10 +16341,63 @@ string emitter__Transpiler_try_builtin_mapping(emitter__Transpiler* t, string na
 	}
 	return native;
 }
-string emitter__Transpiler_compile_builtin_arg(emitter__Transpiler* t, ast__AstNode node) {
+string emitter__Transpiler_compile_builtin_arg(emitter__Transpiler* t, ast__AstNode* node) {
 	emitter__VarType typ = emitter__Transpiler_get_expr_type(t, node);
 	if (typ.tag == emitter__TypeTag__t_string) {
-		return emitter__Transpiler_visit_expr_native(t, node);
+		if (builtin__fast_string_eq(node->node_type, _S("Expr_Variable"))) {
+			string* _t2 = (string*)(builtin__map_get_check(ADDR(map, t->var_aliases), &(string[]){node->name}));
+			_option_string _t1 = {0};
+			if (_t2) {
+				*((string*)&_t1.data) = *((string*)_t2);
+			} else {
+				_t1.state = 2; _t1.err = builtin___v_error(_S("map key does not exist"));
+			}
+			;
+			if (_t1.state != 0) {
+				*(string*) _t1.data = node->name;
+			}
+			
+			string var_name = (*(string*)_t1.data);
+			string v_var = emitter__Transpiler_get_v_var_name(*t, node->name);
+			bool is_native = false;
+			if ((t->current_func_name).len == 0) {
+				emitter__VarType* _t4 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v_var}));
+				_option_emitter__VarType _t3 = {0};
+				if (_t4) {
+					*((emitter__VarType*)&_t3.data) = *((emitter__VarType*)_t4);
+				} else {
+					_t3.state = 2; _t3.err = builtin___v_error(_S("map key does not exist"));
+				}
+				;
+				if (_t3.state != 0) {
+					emitter__VarType* _t6 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){var_name}));
+					_option_emitter__VarType _t5 = {0};
+					if (_t6) {
+						*((emitter__VarType*)&_t5.data) = *((emitter__VarType*)_t6);
+					} else {
+						_t5.state = 2; _t5.err = builtin___v_error(_S("map key does not exist"));
+					}
+					;
+					if (_t5.state != 0) {
+						*(emitter__VarType*) _t5.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+					}
+					
+					*(emitter__VarType*) _t3.data = (*(emitter__VarType*)_t5.data);
+				}
+				
+				emitter__VarType decl_type = (*(emitter__VarType*)_t3.data);
+				is_native = emitter__VarType_is_scalar(decl_type);
+			} else {
+				is_native = (*(bool*)builtin__map_get(ADDR(map, t->native_params), &(string[]){node->name}, &(bool[]){ 0 })) || (*(bool*)builtin__map_get(ADDR(map, t->native_vars), &(string[]){v_var}, &(bool[]){ 0 }));
+			}
+			if (is_native) {
+				return emitter__Transpiler_visit_expr_native(t, node);
+			}
+		} else {
+			return emitter__Transpiler_visit_expr_native(t, node);
+		}
+		string raw = emitter__Transpiler_visit_expr(t, node);
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("("), raw, _S(").str()")}));
 	}
 	return builtin__string_plus_many(2, _MOV((string[2]){emitter__Transpiler_compile_arg_simple(t, node), _S(".to_string()")}));
 }
@@ -16070,6 +16435,44 @@ string emitter__wrap_as_main(string funcs, string body, Map_string_bool extra_im
 	}
 	return builtin__string_plus_many(6, _MOV((string[6]){imports, _S("\n"), funcs, _S("\nfn main() {\n\011defer {\n\011\011rt.shutdown()\n\011}\n\n"), body, _S("}\n")}));
 }
+string emitter__wrap_as_lib(string funcs, string body, string init_func_name, string module_name, Map_string_bool extra_imports) {
+	string imports = builtin__string_plus_many(3, _MOV((string[3]){_S("module "), module_name, _S("\n\nimport rt\n")}));
+	int _t2 = extra_imports.key_values.len;
+	for (int _t1 = 0; _t1 < _t2; ++_t1 ) {
+		int _t3 = extra_imports.key_values.len - _t2;
+		_t2 = extra_imports.key_values.len;
+		if (_t3 < 0) {
+			_t1 = -1;
+			continue;
+		}
+		if (!builtin__DenseArray_has_index(&extra_imports.key_values, _t1)) {continue;}
+		string mod = *(string*)builtin__DenseArray_key(&extra_imports.key_values, _t1);
+		mod = builtin__string_clone(mod);
+		imports = builtin__string__plus(imports, builtin__string_plus_many(3, _MOV((string[3]){_S("import "), mod, _S("\n")})));
+	}
+	return builtin__string_plus_many(8, _MOV((string[8]){imports, _S("\n"), funcs, _S("\n\npub fn "), init_func_name, _S("() {\n"), body, _S("}\n")}));
+}
+string emitter__wrap_as_entry_script(string funcs, string body, string func_name, string module_name, Map_string_bool extra_imports) {
+	string imports = builtin__string_plus_many(3, _MOV((string[3]){_S("module "), module_name, _S("\n\nimport rt\n")}));
+	int _t2 = extra_imports.key_values.len;
+	for (int _t1 = 0; _t1 < _t2; ++_t1 ) {
+		int _t3 = extra_imports.key_values.len - _t2;
+		_t2 = extra_imports.key_values.len;
+		if (_t3 < 0) {
+			_t1 = -1;
+			continue;
+		}
+		if (!builtin__DenseArray_has_index(&extra_imports.key_values, _t1)) {continue;}
+		string mod = *(string*)builtin__DenseArray_key(&extra_imports.key_values, _t1);
+		mod = builtin__string_clone(mod);
+		imports = builtin__string__plus(imports, builtin__string_plus_many(3, _MOV((string[3]){_S("import "), mod, _S("\n")})));
+	}
+	string final_body = body;
+	if (!builtin__string_ends_with(builtin__string_trim_space(body), _S("return rt.new_null()")) && !builtin__string_ends_with(builtin__string_trim_space(body), _S("return rt.new_int(0)"))) {
+		final_body = builtin__string__plus(final_body, _S("\treturn rt.new_null()\n"));
+	}
+	return builtin__string_plus_many(8, _MOV((string[8]){imports, _S("\n"), funcs, _S("\n\npub fn "), func_name, _S("() rt.PhpVal {\n"), final_body, _S("}\n")}));
+}
 VV_LOC string emitter__Transpiler_prop_field_path(emitter__Transpiler* t, string cls_name, string prop_name) {
 	string field = emitter__prop_v_name(prop_name);
 	for (int _t1 = 0; _t1 < t->classes.len; ++_t1) {
@@ -16089,16 +16492,16 @@ VV_LOC string emitter__Transpiler_prop_field_path(emitter__Transpiler* t, string
 	}
 	return _S("");
 }
-VV_LOC void emitter__Transpiler_visit_class(emitter__Transpiler* t, ast__AstNode node) {
+VV_LOC void emitter__Transpiler_visit_class(emitter__Transpiler* t, ast__AstNode* node) {
 	t->is_in_func = true;
-	string resolved_name = emitter__Transpiler_resolve_class_name(*t, node.name);
-	string resolved_extends = emitter__Transpiler_resolve_class_name(*t, node.extends);
+	string resolved_name = emitter__Transpiler_resolve_class_name(*t, node->name);
+	string resolved_extends = emitter__Transpiler_resolve_class_name(*t, node->extends);
 	t->current_class = resolved_name;
 	builtin__map_set(&t->declared_classes, &(string[]){resolved_name}, &(bool[]) { true });
 	emitter__ClassInfo _t1 = ((emitter__ClassInfo){
 		.name = resolved_name,
 		.extends = resolved_extends,
-		.implements = builtin__array_clone_to_depth(&node.implements, 1),
+		.implements = builtin__array_clone_to_depth(&node->implements, 1),
 		.methods = builtin____new_array_with_default(0, 0, sizeof(emitter__MethodInfo), 0),
 		.props = builtin____new_array_with_default(0, 0, sizeof(string), 0),
 		.all_props = builtin____new_array_with_default(0, 0, sizeof(string), 0),
@@ -16114,28 +16517,43 @@ VV_LOC void emitter__Transpiler_visit_class(emitter__Transpiler* t, ast__AstNode
 	;
 	Map_string_bool own_method_names_originally = builtin__new_map_noscan_value(sizeof(string), sizeof(bool), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
 	;
-	for (int _t2 = 0; _t2 < node.stmts.len; ++_t2) {
-		ast__AstNode stmt = ((ast__AstNode*)node.stmts.data)[_t2];
+	Array_emitter__StaticPropInfo static_props = builtin____new_array_with_default(0, 0, sizeof(emitter__StaticPropInfo), 0);
+	for (int _t2 = 0; _t2 < node->stmts.len; ++_t2) {
+		ast__AstNode stmt = ((ast__AstNode*)node->stmts.data)[_t2];
 		if (builtin__fast_string_eq(stmt.node_type, _S("Stmt_Property"))) {
+			bool is_prop_static = ((builtin__string_int(stmt.flags) & 8)) != 0;
 			for (int _t3 = 0; _t3 < stmt.props.len; ++_t3) {
 				ast__AstNode prop = ((ast__AstNode*)stmt.props.data)[_t3];
-				builtin__array_push((array*)&class_info.props, _MOV((string[]){ builtin__string_clone(prop.name) }));
-				_option_ast__AstNode_ptr _t5 = {0};
-				if (_t5 = prop.default_val, _t5.state == 0) {
-					ast__AstNode* default_node = *(ast__AstNode**)_t5.data;
-					GC_reachable_here(&default_node);
-					if (((voidptr)(default_node)) != 0) {
-						builtin__map_set(&class_info.prop_defaults, &(string[]){prop.name}, &(string[]) { emitter__get_prop_default_expr(*default_node) });
+				if (is_prop_static) {
+					string default_str = _S("rt.new_null()");
+					_option_ast__AstNode_ptr _t4 = {0};
+					if (_t4 = prop.default_val, _t4.state == 0) {
+						ast__AstNode* default_node = *(ast__AstNode**)_t4.data;
+						GC_reachable_here(&default_node);
+						if (((voidptr)(default_node)) != 0) {
+							default_str = emitter__Transpiler_visit_expr(t, default_node);
+						}
+					}
+					builtin__array_push((array*)&static_props, _MOV((emitter__StaticPropInfo[]){ ((emitter__StaticPropInfo){.name = prop.name,.default_expr = default_str,}) }));
+				} else {
+					builtin__array_push((array*)&class_info.props, _MOV((string[]){ builtin__string_clone(prop.name) }));
+					_option_ast__AstNode_ptr _t7 = {0};
+					if (_t7 = prop.default_val, _t7.state == 0) {
+						ast__AstNode* default_node = *(ast__AstNode**)_t7.data;
+						GC_reachable_here(&default_node);
+						if (((voidptr)(default_node)) != 0) {
+							builtin__map_set(&class_info.prop_defaults, &(string[]){prop.name}, &(string[]) { emitter__get_prop_default_expr((voidptr)&*default_node) });
+						}
 					}
 				}
 			}
 		} else if (builtin__fast_string_eq(stmt.node_type, _S("Stmt_ClassMethod"))) {
 			Array_string p_names = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-			for (int _t6 = 0; _t6 < stmt.params.len; ++_t6) {
-				ast__AstNode param = ((ast__AstNode*)stmt.params.data)[_t6];
-				_option_ast__AstNode_ptr _t7 = {0};
-				if (_t7 = param.var, _t7.state == 0) {
-					ast__AstNode* param_var = *(ast__AstNode**)_t7.data;
+			for (int _t8 = 0; _t8 < stmt.params.len; ++_t8) {
+				ast__AstNode param = ((ast__AstNode*)stmt.params.data)[_t8];
+				_option_ast__AstNode_ptr _t9 = {0};
+				if (_t9 = param.var, _t9.state == 0) {
+					ast__AstNode* param_var = *(ast__AstNode**)_t9.data;
 					GC_reachable_here(&param_var);
 					builtin__array_push((array*)&p_names, _MOV((string[]){ builtin__string_clone(param_var->name) }));
 				}
@@ -16145,11 +16563,11 @@ VV_LOC void emitter__Transpiler_visit_class(emitter__Transpiler* t, ast__AstNode
 			builtin__map_set(&own_method_names, &(string[]){stmt.name}, &(bool[]) { true });
 			builtin__map_set(&own_method_names_originally, &(string[]){stmt.name}, &(bool[]) { true });
 		} else if (builtin__fast_string_eq(stmt.node_type, _S("Stmt_ClassConst"))) {
-			for (int _t10 = 0; _t10 < stmt.consts.len; ++_t10) {
-				ast__ConstItem c = ((ast__ConstItem*)stmt.consts.data)[_t10];
-				emitter__VarType val_type = emitter__Transpiler_get_expr_type(t, c.value);
+			for (int _t12 = 0; _t12 < stmt.consts.len; ++_t12) {
+				ast__ConstItem c = ((ast__ConstItem*)stmt.consts.data)[_t12];
+				emitter__VarType val_type = emitter__Transpiler_get_expr_type(t, (voidptr)&c.value);
 				string ret_type_str = emitter__VarType_to_v_type(val_type);
-				string val_str = emitter__Transpiler_visit_expr_native(t, c.value);
+				string val_str = emitter__Transpiler_visit_expr_native(t, &c.value);
 				strings__Builder_writeln(&t->func_out, builtin__string_plus_many(7, _MOV((string[7]){_S("pub fn Class_"), resolved_name, _S("."), builtin__string_to_lower(c.name), _S("() "), ret_type_str, _S(" {")})));
 				GC_reachable_here(&c);
 				GC_reachable_here(&val_type);
@@ -16180,8 +16598,8 @@ VV_LOC void emitter__Transpiler_visit_class(emitter__Transpiler* t, ast__AstNode
 			break;
 		}
 		bool found = false;
-		for (int _t11 = 0; _t11 < t->classes.len; ++_t11) {
-			emitter__ClassInfo p_cls = ((emitter__ClassInfo*)t->classes.data)[_t11];
+		for (int _t13 = 0; _t13 < t->classes.len; ++_t13) {
+			emitter__ClassInfo p_cls = ((emitter__ClassInfo*)t->classes.data)[_t13];
 			if (builtin__string__eq(p_cls.name, temp_extends)) {
 				temp_extends = p_cls.extends;
 				found = true;
@@ -16217,24 +16635,24 @@ VV_LOC void emitter__Transpiler_visit_class(emitter__Transpiler* t, ast__AstNode
 	}
 	if (class_info.extends.len > 0) {
 		bool parent_exists = false;
-		for (int _t18 = 0; _t18 < t->classes.len; ++_t18) {
-			emitter__ClassInfo parent_cls = ((emitter__ClassInfo*)t->classes.data)[_t18];
+		for (int _t20 = 0; _t20 < t->classes.len; ++_t20) {
+			emitter__ClassInfo parent_cls = ((emitter__ClassInfo*)t->classes.data)[_t20];
 			if (builtin__string__eq(parent_cls.name, class_info.extends) && !_IN_MAP(ADDR(string, class_info.extends), ADDR(map, t->undeclared_classes))) {
 				parent_exists = true;
-				for (int _t19 = 0; _t19 < parent_cls.all_props.len; ++_t19) {
-					string p = ((string*)parent_cls.all_props.data)[_t19];
+				for (int _t21 = 0; _t21 < parent_cls.all_props.len; ++_t21) {
+					string p = ((string*)parent_cls.all_props.data)[_t21];
 					builtin__array_push((array*)&class_info.all_props, _MOV((string[]){ builtin__string_clone(p) }));
 				}
-				for (int _t21 = 0; _t21 < class_info.props.len; ++_t21) {
-					string p = ((string*)class_info.props.data)[_t21];
+				for (int _t23 = 0; _t23 < class_info.props.len; ++_t23) {
+					string p = ((string*)class_info.props.data)[_t23];
 					builtin__array_push((array*)&class_info.all_props, _MOV((string[]){ builtin__string_clone(p) }));
 				}
-				for (int _t23 = 0; _t23 < class_info.methods.len; ++_t23) {
-					emitter__MethodInfo m = ((emitter__MethodInfo*)class_info.methods.data)[_t23];
+				for (int _t25 = 0; _t25 < class_info.methods.len; ++_t25) {
+					emitter__MethodInfo m = ((emitter__MethodInfo*)class_info.methods.data)[_t25];
 					builtin__array_push((array*)&class_info.all_methods, _MOV((emitter__MethodInfo[]){ m }));
 				}
-				for (int _t25 = 0; _t25 < parent_cls.all_methods.len; ++_t25) {
-					emitter__MethodInfo pm = ((emitter__MethodInfo*)parent_cls.all_methods.data)[_t25];
+				for (int _t27 = 0; _t27 < parent_cls.all_methods.len; ++_t27) {
+					emitter__MethodInfo pm = ((emitter__MethodInfo*)parent_cls.all_methods.data)[_t27];
 					if (!_IN_MAP(ADDR(string, pm.name), ADDR(map, own_method_names))) {
 						builtin__array_push((array*)&class_info.all_methods, _MOV((emitter__MethodInfo[]){ pm }));
 					}
@@ -16251,8 +16669,8 @@ VV_LOC void emitter__Transpiler_visit_class(emitter__Transpiler* t, ast__AstNode
 		class_info.all_methods = builtin__array_clone_to_depth(&class_info.methods, 0);
 	}
 	bool found = false;
-	for (int _t27 = 0; _t27 < t->classes.len; ++_t27) {
-		emitter__ClassInfo* cls = ((emitter__ClassInfo*)t->classes.data) + _t27;
+	for (int _t29 = 0; _t29 < t->classes.len; ++_t29) {
+		emitter__ClassInfo* cls = ((emitter__ClassInfo*)t->classes.data) + _t29;
 		if (builtin__string__eq(cls->name, class_info.name)) {
 			cls->methods = builtin__array_clone_to_depth(&class_info.methods, 0);
 			cls->props = builtin__array_clone_to_depth(&class_info.props, 1);
@@ -16279,6 +16697,7 @@ VV_LOC void emitter__Transpiler_visit_class(emitter__Transpiler* t, ast__AstNode
 	GC_reachable_here(&class_info);
 	GC_reachable_here(&own_method_names);
 	GC_reachable_here(&own_method_names_originally);
+	GC_reachable_here(&static_props);
 	GC_reachable_here(&visited);
 	GC_reachable_here(&temp_extends);
 	emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("struct Class_"), resolved_name, _S(" {")})));
@@ -16289,12 +16708,13 @@ VV_LOC void emitter__Transpiler_visit_class(emitter__Transpiler* t, ast__AstNode
 	GC_reachable_here(&class_info);
 	GC_reachable_here(&own_method_names);
 	GC_reachable_here(&own_method_names_originally);
+	GC_reachable_here(&static_props);
 	GC_reachable_here(&visited);
 	GC_reachable_here(&temp_extends);
 	if (class_info.extends.len > 0) {
 		bool parent_exists = false;
-		for (int _t29 = 0; _t29 < t->classes.len; ++_t29) {
-			emitter__ClassInfo p_cls = ((emitter__ClassInfo*)t->classes.data)[_t29];
+		for (int _t31 = 0; _t31 < t->classes.len; ++_t31) {
+			emitter__ClassInfo p_cls = ((emitter__ClassInfo*)t->classes.data)[_t31];
 			if (builtin__string__eq(p_cls.name, class_info.extends) && !_IN_MAP(ADDR(string, class_info.extends), ADDR(map, t->undeclared_classes))) {
 				parent_exists = true;
 				break;
@@ -16311,27 +16731,27 @@ VV_LOC void emitter__Transpiler_visit_class(emitter__Transpiler* t, ast__AstNode
 	if (class_info.props.len > 0) {
 		emitter__Transpiler_write_line(t, _S("pub mut:"));
 		t->indent++;
-		for (int _t30 = 0; _t30 < class_info.props.len; ++_t30) {
-			string prop = ((string*)class_info.props.data)[_t30];
+		for (int _t32 = 0; _t32 < class_info.props.len; ++_t32) {
+			string prop = ((string*)class_info.props.data)[_t32];
 			emitter__Transpiler_write_indent(t);
 			GC_reachable_here(&prop);
 			emitter__VarType prop_type = emitter__Transpiler_get_class_prop_type(t, resolved_name, prop);
 			if (emitter__VarType_is_scalar(prop_type)) {
 				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){emitter__prop_v_name(prop), _S(" "), emitter__VarType_to_v_type(prop_type)})));
 			} else {
-				string* _t32 = (string*)(builtin__map_get_check(ADDR(map, class_info.prop_defaults), &(string[]){prop}));
-				_option_string _t31 = {0};
-				if (_t32) {
-					*((string*)&_t31.data) = *((string*)_t32);
+				string* _t34 = (string*)(builtin__map_get_check(ADDR(map, class_info.prop_defaults), &(string[]){prop}));
+				_option_string _t33 = {0};
+				if (_t34) {
+					*((string*)&_t33.data) = *((string*)_t34);
 				} else {
-					_t31.state = 2; _t31.err = builtin___v_error(_S("map key does not exist"));
+					_t33.state = 2; _t33.err = builtin___v_error(_S("map key does not exist"));
 				}
 				;
-				if (_t31.state != 0) {
-					*(string*) _t31.data = _S("rt.new_null()");
+				if (_t33.state != 0) {
+					*(string*) _t33.data = _S("rt.new_null()");
 				}
 				
-				string default_expr = (*(string*)_t31.data);
+				string default_expr = (*(string*)_t33.data);
 				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){emitter__prop_v_name(prop), _S(" rt.PhpVal = "), default_expr})));
 				GC_reachable_here(&default_expr);
 			}
@@ -16346,6 +16766,7 @@ VV_LOC void emitter__Transpiler_visit_class(emitter__Transpiler* t, ast__AstNode
 	GC_reachable_here(&class_info);
 	GC_reachable_here(&own_method_names);
 	GC_reachable_here(&own_method_names_originally);
+	GC_reachable_here(&static_props);
 	GC_reachable_here(&visited);
 	GC_reachable_here(&temp_extends);
 	emitter__Transpiler_write_line(t, _S(""));
@@ -16356,10 +16777,25 @@ VV_LOC void emitter__Transpiler_visit_class(emitter__Transpiler* t, ast__AstNode
 	GC_reachable_here(&class_info);
 	GC_reachable_here(&own_method_names);
 	GC_reachable_here(&own_method_names_originally);
+	GC_reachable_here(&static_props);
 	GC_reachable_here(&visited);
 	GC_reachable_here(&temp_extends);
-	for (int _t33 = 0; _t33 < node.stmts.len; ++_t33) {
-		ast__AstNode stmt = ((ast__AstNode*)node.stmts.data)[_t33];
+	if (static_props.len > 0) {
+		emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("fn init_static_"), builtin__string_to_lower(resolved_name), _S("() {")})));
+		t->indent++;
+		for (int _t35 = 0; _t35 < static_props.len; ++_t35) {
+			emitter__StaticPropInfo sp = ((emitter__StaticPropInfo*)static_props.data)[_t35];
+			emitter__Transpiler_write_indent(t);
+			GC_reachable_here(&sp);
+			emitter__Transpiler_write_line(t, builtin__string_plus_many(7, _MOV((string[7]){_S("rt.init_static_prop(\'"), resolved_name, _S("\', \'"), sp.name, _S("\', "), sp.default_expr, _S(")")})));
+			GC_reachable_here(&sp);
+		}
+		t->indent--;
+		emitter__Transpiler_write_line(t, _S("}"));
+		emitter__Transpiler_write_line(t, _S(""));
+	}
+	for (int _t36 = 0; _t36 < node->stmts.len; ++_t36) {
+		ast__AstNode stmt = ((ast__AstNode*)node->stmts.data)[_t36];
 		if (builtin__fast_string_eq(stmt.node_type, _S("Stmt_ClassMethod"))) {
 			emitter__Transpiler_visit_class_method(t, resolved_name, stmt);
 		}
@@ -16392,6 +16828,10 @@ VV_LOC void emitter__Transpiler_visit_class(emitter__Transpiler* t, ast__AstNode
 	t->is_in_func = false;
 }
 VV_LOC void emitter__Transpiler_visit_class_method(emitter__Transpiler* t, string class_name, ast__AstNode node) {
+	builtin__eprintln(builtin__string_plus_many(4, _MOV((string[4]){_S("    - visit_class_method: "), class_name, _S("::"), node.name})));
+	GC_reachable_here(&t);
+	GC_reachable_here(&class_name);
+	GC_reachable_here(&node);
 	t->is_in_func = true;
 	int old_indent = t->indent;
 	t->indent = 0;
@@ -16417,7 +16857,22 @@ VV_LOC void emitter__Transpiler_visit_class_method(emitter__Transpiler* t, strin
 	string old_func_name = t->current_func_name;
 	t->current_func_name = node.name;
 	emitter__VarType old_func_ret = t->current_func_ret_type;
+	builtin__eprintln(_S("      [visit_class_method] before get_method_return_type"));
+	GC_reachable_here(&t);
+	GC_reachable_here(&class_name);
+	GC_reachable_here(&node);
+	GC_reachable_here(&old_scope);
+	GC_reachable_here(&old_func_name);
+	GC_reachable_here(&old_func_ret);
 	emitter__VarType ret_type = emitter__Transpiler_get_method_return_type(t, class_name, node.name);
+	builtin__eprintln(_S("      [visit_class_method] after get_method_return_type"));
+	GC_reachable_here(&t);
+	GC_reachable_here(&class_name);
+	GC_reachable_here(&node);
+	GC_reachable_here(&old_scope);
+	GC_reachable_here(&old_func_name);
+	GC_reachable_here(&old_func_ret);
+	GC_reachable_here(&ret_type);
 	t->current_func_ret_type = ret_type;
 	Array_string param_names = builtin____new_array_with_default(0, 0, sizeof(string), 0);
 	Array_string registered_native_params = builtin____new_array_with_default(0, 0, sizeof(string), 0);
@@ -16475,17 +16930,46 @@ VV_LOC void emitter__Transpiler_visit_class_method(emitter__Transpiler* t, strin
 	GC_reachable_here(&registered_native_params);
 	GC_reachable_here(&registered_mutated_params);
 	GC_reachable_here(&ret_type_str);
+	string ret_part = ((ret_type_str).len != 0 ? (builtin__string_plus_many(2, _MOV((string[2]){_S(" "), ret_type_str}))) : (_S("")));
 	if (is_static_method) {
-		emitter__Transpiler_write_line(t, builtin__string_plus_many(9, _MOV((string[9]){_S("fn Class_"), class_name, _S("."), emitter__method_v_name(node.name), _S("("), Array_string_join(param_names, _S(", ")), _S(") "), ret_type_str, _S(" {")})));
+		emitter__Transpiler_write_line(t, builtin__string_plus_many(9, _MOV((string[9]){_S("fn Class_"), class_name, _S("."), emitter__method_v_name(node.name), _S("("), Array_string_join(param_names, _S(", ")), _S(")"), ret_part, _S(" {")})));
 	} else {
-		emitter__Transpiler_write_line(t, builtin__string_plus_many(9, _MOV((string[9]){_S("fn (mut this Class_"), class_name, _S(") "), emitter__method_v_name(node.name), _S("("), Array_string_join(param_names, _S(", ")), _S(") "), ret_type_str, _S(" {")})));
+		emitter__Transpiler_write_line(t, builtin__string_plus_many(9, _MOV((string[9]){_S("fn (mut this Class_"), class_name, _S(") "), emitter__method_v_name(node.name), _S("("), Array_string_join(param_names, _S(", ")), _S(")"), ret_part, _S(" {")})));
 	}
 	t->indent++;
 	bool old_in_construct = t->is_in_construct;
 	t->is_in_construct = is_construct;
-	multi_return_Array_string_Array_string mr_10373 = emitter__Transpiler_collect_vars_in_scope(*t, node.stmts);
-	Array_string ref_vars = mr_10373.arg0;
-	Array_string ass_vars = mr_10373.arg1;
+	builtin__eprintln(_S("      [visit_class_method] before collect_vars_in_scope"));
+	GC_reachable_here(&t);
+	GC_reachable_here(&class_name);
+	GC_reachable_here(&node);
+	GC_reachable_here(&old_scope);
+	GC_reachable_here(&old_func_name);
+	GC_reachable_here(&old_func_ret);
+	GC_reachable_here(&ret_type);
+	GC_reachable_here(&param_names);
+	GC_reachable_here(&registered_native_params);
+	GC_reachable_here(&registered_mutated_params);
+	GC_reachable_here(&ret_type_str);
+	GC_reachable_here(&ret_part);
+	multi_return_Array_string_Array_string mr_11598 = emitter__Transpiler_collect_vars_in_scope(t, &node.stmts);
+	Array_string ref_vars = mr_11598.arg0;
+	Array_string ass_vars = mr_11598.arg1;
+	builtin__eprintln(_S("      [visit_class_method] after collect_vars_in_scope"));
+	GC_reachable_here(&t);
+	GC_reachable_here(&class_name);
+	GC_reachable_here(&node);
+	GC_reachable_here(&old_scope);
+	GC_reachable_here(&old_func_name);
+	GC_reachable_here(&old_func_ret);
+	GC_reachable_here(&ret_type);
+	GC_reachable_here(&param_names);
+	GC_reachable_here(&registered_native_params);
+	GC_reachable_here(&registered_mutated_params);
+	GC_reachable_here(&ret_type_str);
+	GC_reachable_here(&ret_part);
+	GC_reachable_here(&ref_vars);
+	GC_reachable_here(&ass_vars);
 	for (int _t11 = 0; _t11 < ref_vars.len; ++_t11) {
 		string v = ((string*)ref_vars.data)[_t11];
 		if (!(Array_string_contains(ass_vars, v)) && !emitter__VarScope_has_var(t->scope, v)) {
@@ -16516,11 +17000,10 @@ VV_LOC void emitter__Transpiler_visit_class_method(emitter__Transpiler* t, strin
 			}
 			
 			emitter__VarType v_type = (*(emitter__VarType*)_t12.data);
-			if (v_type.is_native_list) {
-				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := []rt.PhpVal{}")})));
-			} else if (v_type.is_native_map) {
-				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := map[string]rt.PhpVal{}")})));
+			if (v_type.is_native_list || v_type.is_native_map) {
+				emitter__Transpiler_write_line(t, builtin__string__plus(builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := ")})), emitter__Transpiler_get_empty_literal(*t, v_type)));
 			} else if (emitter__VarType_is_scalar(v_type)) {
+				builtin__map_set(&t->native_vars, &(string[]){v_var}, &(bool[]) { true });
 
 				if (v_type.tag == (emitter__TypeTag__t_int)) {
 					emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := i64(0)")})));
@@ -16534,6 +17017,10 @@ VV_LOC void emitter__Transpiler_visit_class_method(emitter__Transpiler* t, strin
 				else {
 					emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := ''")})));
 				}
+			} else if (emitter__VarType_is_object(v_type)) {
+				string cls = (v_type.class_name.len > 0 ? (v_type.class_name) : (_S("WP_Error")));
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(5, _MOV((string[5]){_S("mut "), v_var, _S(" := &Class_"), cls, _S("(unsafe { nil })")})));
+				GC_reachable_here(&cls);
 			} else {
 				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := rt.new_null()")})));
 			}
@@ -16563,7 +17050,7 @@ VV_LOC void emitter__Transpiler_visit_class_method(emitter__Transpiler* t, strin
 	}
 	for (int _t18 = 0; _t18 < node.stmts.len; ++_t18) {
 		ast__AstNode stmt = ((ast__AstNode*)node.stmts.data)[_t18];
-		emitter__Transpiler_visit_stmt(t, stmt);
+		emitter__Transpiler_visit_stmt(t, (voidptr)&stmt);
 		GC_reachable_here(&stmt);
 	}
 	if (!is_construct && !is_void) {
@@ -16605,6 +17092,7 @@ VV_LOC void emitter__Transpiler_visit_class_method(emitter__Transpiler* t, strin
 	GC_reachable_here(&registered_native_params);
 	GC_reachable_here(&registered_mutated_params);
 	GC_reachable_here(&ret_type_str);
+	GC_reachable_here(&ret_part);
 	GC_reachable_here(&ref_vars);
 	GC_reachable_here(&ass_vars);
 	emitter__Transpiler_write_line(t, _S("}"));
@@ -16619,6 +17107,7 @@ VV_LOC void emitter__Transpiler_visit_class_method(emitter__Transpiler* t, strin
 	GC_reachable_here(&registered_native_params);
 	GC_reachable_here(&registered_mutated_params);
 	GC_reachable_here(&ret_type_str);
+	GC_reachable_here(&ret_part);
 	GC_reachable_here(&ref_vars);
 	GC_reachable_here(&ass_vars);
 	emitter__Transpiler_write_line(t, _S(""));
@@ -16633,6 +17122,7 @@ VV_LOC void emitter__Transpiler_visit_class_method(emitter__Transpiler* t, strin
 	GC_reachable_here(&registered_native_params);
 	GC_reachable_here(&registered_mutated_params);
 	GC_reachable_here(&ret_type_str);
+	GC_reachable_here(&ret_part);
 	GC_reachable_here(&ref_vars);
 	GC_reachable_here(&ass_vars);
 	t->indent = old_indent;
@@ -16661,6 +17151,7 @@ VV_LOC void emitter__Transpiler_visit_class_method(emitter__Transpiler* t, strin
 	GC_reachable_here(&registered_native_params);
 	GC_reachable_here(&registered_mutated_params);
 	GC_reachable_here(&ret_type_str);
+	GC_reachable_here(&ret_part);
 	GC_reachable_here(&ref_vars);
 	GC_reachable_here(&ass_vars);
 }
@@ -16806,11 +17297,11 @@ VV_LOC void emitter__Transpiler_generate_dispatchers(emitter__Transpiler* t) {
 				}
 			}
 		}
-		emitter__Transpiler_write_line(t, builtin__string_plus_many(7, _MOV((string[7]){_S("fn create_"), builtin__string_to_lower(cls.name), _S("("), Array_string_join(native_param_decls, _S(", ")), _S(") &Class_"), cls.name, _S(" {")})));
-		GC_reachable_here(&cls);
-		GC_reachable_here(&construct_info);
-		GC_reachable_here(&native_param_decls);
-		GC_reachable_here(&native_param_pass);
+		if (has_native_construct) {
+			emitter__Transpiler_write_line(t, builtin__string_plus_many(7, _MOV((string[7]){_S("fn create_"), builtin__string_to_lower(cls.name), _S("("), Array_string_join(native_param_decls, _S(", ")), _S(") &Class_"), cls.name, _S(" {")})));
+		} else {
+			emitter__Transpiler_write_line(t, builtin__string_plus_many(5, _MOV((string[5]){_S("fn create_"), builtin__string_to_lower(cls.name), _S("(_args ...rt.PhpVal) &Class_"), cls.name, _S(" {")})));
+		}
 		t->indent++;
 		emitter__Transpiler_write_indent(t);
 		GC_reachable_here(&cls);
@@ -16920,9 +17411,9 @@ VV_LOC void emitter__Transpiler_generate_dispatchers(emitter__Transpiler* t) {
 							if (_t20.state == 2 && _t20.err._object != _const_none__._object) { builtin___v_free(_t20.err._object); }
 					}
 					if (emitter__VarType_is_scalar(target_type)) {
-						processed_arg = emitter__unbox_expr(raw_arg, target_type);
+						processed_arg = emitter__Transpiler_unbox_expr(*t, raw_arg, target_type);
 					} else if (emitter__VarType_is_object(target_type)) {
-						processed_arg = emitter__unbox_expr(raw_arg, target_type);
+						processed_arg = emitter__Transpiler_unbox_expr(*t, raw_arg, target_type);
 						is_obj = true;
 					} else {
 						processed_arg = raw_arg;
@@ -17025,6 +17516,16 @@ VV_LOC void emitter__Transpiler_generate_dispatchers(emitter__Transpiler* t) {
 		GC_reachable_here(&cls);
 		emitter__Transpiler_write_line(t, _S(""));
 		GC_reachable_here(&cls);
+		bool has_get = false;
+		bool has_set = false;
+		for (int _t28 = 0; _t28 < cls.all_methods.len; ++_t28) {
+			emitter__MethodInfo m = ((emitter__MethodInfo*)cls.all_methods.data)[_t28];
+			if (builtin__fast_string_eq(m.name, _S("__get"))) {
+				has_get = true;
+			} else if (builtin__fast_string_eq(m.name, _S("__set"))) {
+				has_set = true;
+			}
+		}
 		emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("fn (this &Class_"), cls.name, _S(") dispatch_get_prop(prop_name string) ?rt.PhpVal {")})));
 		GC_reachable_here(&cls);
 		t->indent++;
@@ -17033,8 +17534,8 @@ VV_LOC void emitter__Transpiler_generate_dispatchers(emitter__Transpiler* t) {
 			emitter__Transpiler_write_indent(t);
 			emitter__Transpiler_write_line(t, _S("match prop_name {"));
 			t->indent++;
-			for (int _t28 = 0; _t28 < cls.all_props.len; ++_t28) {
-				string prop = ((string*)cls.all_props.data)[_t28];
+			for (int _t29 = 0; _t29 < cls.all_props.len; ++_t29) {
+				string prop = ((string*)cls.all_props.data)[_t29];
 				emitter__Transpiler_write_indent(t);
 				GC_reachable_here(&prop);
 				emitter__VarType prop_type = emitter__Transpiler_get_class_prop_type(t, cls.name, prop);
@@ -17061,13 +17562,32 @@ VV_LOC void emitter__Transpiler_generate_dispatchers(emitter__Transpiler* t) {
 				}
 			}
 			emitter__Transpiler_write_indent(t);
-			emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("else { return "), parent_route_get, _S(" }")})));
+			if (has_get) {
+				emitter__Transpiler_write_line(t, _S("else {"));
+				t->indent++;
+				emitter__Transpiler_write_indent(t);
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut mut_this := unsafe { &Class_"), cls.name, _S("(voidptr(this)) }")})));
+				emitter__Transpiler_write_indent(t);
+				emitter__Transpiler_write_line(t, _S("return mut_this.magic_get(rt.new_string(prop_name))"));
+				t->indent--;
+				emitter__Transpiler_write_indent(t);
+				emitter__Transpiler_write_line(t, _S("}"));
+			} else {
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("else { return "), parent_route_get, _S(" }")})));
+			}
 			t->indent--;
 			emitter__Transpiler_write_indent(t);
 			emitter__Transpiler_write_line(t, _S("}"));
 		} else {
-			emitter__Transpiler_write_indent(t);
-			emitter__Transpiler_write_line(t, builtin__string_plus_many(2, _MOV((string[2]){_S("return "), parent_route_get})));
+			if (has_get) {
+				emitter__Transpiler_write_indent(t);
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut mut_this := unsafe { &Class_"), cls.name, _S("(voidptr(this)) }")})));
+				emitter__Transpiler_write_indent(t);
+				emitter__Transpiler_write_line(t, _S("return mut_this.magic_get(rt.new_string(prop_name))"));
+			} else {
+				emitter__Transpiler_write_indent(t);
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(2, _MOV((string[2]){_S("return "), parent_route_get})));
+			}
 		}
 		t->indent--;
 		emitter__Transpiler_write_line(t, _S("}"));
@@ -17085,14 +17605,14 @@ VV_LOC void emitter__Transpiler_generate_dispatchers(emitter__Transpiler* t) {
 			emitter__Transpiler_write_indent(t);
 			emitter__Transpiler_write_line(t, _S("match prop_name {"));
 			t->indent++;
-			for (int _t29 = 0; _t29 < cls.all_props.len; ++_t29) {
-				string prop = ((string*)cls.all_props.data)[_t29];
+			for (int _t30 = 0; _t30 < cls.all_props.len; ++_t30) {
+				string prop = ((string*)cls.all_props.data)[_t30];
 				emitter__Transpiler_write_indent(t);
 				GC_reachable_here(&prop);
 				emitter__VarType prop_type = emitter__Transpiler_get_class_prop_type(t, cls.name, prop);
 				string field_path = emitter__Transpiler_prop_field_path(t, cls.name, prop);
 				if (emitter__VarType_is_scalar(prop_type)) {
-					string unboxed = emitter__unbox_expr(_S("val"), prop_type);
+					string unboxed = emitter__Transpiler_unbox_expr(*t, _S("val"), prop_type);
 					emitter__Transpiler_write_line(t, builtin__string_plus_many(7, _MOV((string[7]){_S("\'"), prop, _S("\' { this."), field_path, _S(" = "), unboxed, _S("; return true }")})));
 					GC_reachable_here(&unboxed);
 				} else {
@@ -17100,13 +17620,32 @@ VV_LOC void emitter__Transpiler_generate_dispatchers(emitter__Transpiler* t) {
 				}
 			}
 			emitter__Transpiler_write_indent(t);
-			emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("else { return "), parent_route_set, _S(" }")})));
+			if (has_set) {
+				emitter__Transpiler_write_line(t, _S("else {"));
+				t->indent++;
+				emitter__Transpiler_write_indent(t);
+				emitter__Transpiler_write_line(t, _S("this.magic_set(rt.new_string(prop_name), val)"));
+				emitter__Transpiler_write_indent(t);
+				emitter__Transpiler_write_line(t, _S("return true"));
+				t->indent--;
+				emitter__Transpiler_write_indent(t);
+				emitter__Transpiler_write_line(t, _S("}"));
+			} else {
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("else { return "), parent_route_set, _S(" }")})));
+			}
 			t->indent--;
 			emitter__Transpiler_write_indent(t);
 			emitter__Transpiler_write_line(t, _S("}"));
 		} else {
-			emitter__Transpiler_write_indent(t);
-			emitter__Transpiler_write_line(t, builtin__string_plus_many(2, _MOV((string[2]){_S("return "), parent_route_set})));
+			if (has_set) {
+				emitter__Transpiler_write_indent(t);
+				emitter__Transpiler_write_line(t, _S("this.magic_set(rt.new_string(prop_name), val)"));
+				emitter__Transpiler_write_indent(t);
+				emitter__Transpiler_write_line(t, _S("return true"));
+			} else {
+				emitter__Transpiler_write_indent(t);
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(2, _MOV((string[2]){_S("return "), parent_route_set})));
+			}
 		}
 		t->indent--;
 		emitter__Transpiler_write_line(t, _S("}"));
@@ -17117,6 +17656,61 @@ VV_LOC void emitter__Transpiler_generate_dispatchers(emitter__Transpiler* t) {
 		GC_reachable_here(&cls);
 		GC_reachable_here(&parent_route_get);
 		GC_reachable_here(&parent_route_set);
+		emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("fn (mut this Class_"), cls.name, _S(") has_method(method_name string) bool {")})));
+		GC_reachable_here(&cls);
+		GC_reachable_here(&parent_route_get);
+		GC_reachable_here(&parent_route_set);
+		t->indent++;
+		emitter__Transpiler_write_indent(t);
+		GC_reachable_here(&cls);
+		GC_reachable_here(&parent_route_get);
+		GC_reachable_here(&parent_route_set);
+		emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("return rt.class_has_method(\'"), cls.name, _S("\', method_name)")})));
+		GC_reachable_here(&cls);
+		GC_reachable_here(&parent_route_get);
+		GC_reachable_here(&parent_route_set);
+		t->indent--;
+		emitter__Transpiler_write_line(t, _S("}"));
+		GC_reachable_here(&cls);
+		GC_reachable_here(&parent_route_get);
+		GC_reachable_here(&parent_route_set);
+		emitter__Transpiler_write_line(t, _S(""));
+		GC_reachable_here(&cls);
+		GC_reachable_here(&parent_route_get);
+		GC_reachable_here(&parent_route_set);
+		emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("fn (mut this Class_"), cls.name, _S(") has_property(prop_name string) bool {")})));
+		GC_reachable_here(&cls);
+		GC_reachable_here(&parent_route_get);
+		GC_reachable_here(&parent_route_set);
+		t->indent++;
+		emitter__Transpiler_write_indent(t);
+		GC_reachable_here(&cls);
+		GC_reachable_here(&parent_route_get);
+		GC_reachable_here(&parent_route_set);
+		emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("if rt.class_has_property(\'"), cls.name, _S("\', prop_name) { return true }")})));
+		GC_reachable_here(&cls);
+		GC_reachable_here(&parent_route_get);
+		GC_reachable_here(&parent_route_set);
+		if ((cls.extends).len != 0 && !(*(bool*)builtin__map_get(ADDR(map, t->undeclared_classes), &(string[]){cls.extends}, &(bool[]){ 0 }))) {
+			emitter__Transpiler_write_indent(t);
+			emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("if this.Class_"), cls.extends, _S(".has_property(prop_name) { return true }")})));
+		} else {
+			emitter__Transpiler_write_indent(t);
+			emitter__Transpiler_write_line(t, _S("if this.PhpObjectBase.has_property(prop_name) { return true }"));
+		}
+		emitter__Transpiler_write_indent(t);
+		GC_reachable_here(&cls);
+		GC_reachable_here(&parent_route_get);
+		GC_reachable_here(&parent_route_set);
+		emitter__Transpiler_write_line(t, _S("return false"));
+		GC_reachable_here(&cls);
+		GC_reachable_here(&parent_route_get);
+		GC_reachable_here(&parent_route_set);
+		t->indent--;
+		emitter__Transpiler_write_line(t, _S("}"));
+		GC_reachable_here(&cls);
+		GC_reachable_here(&parent_route_get);
+		GC_reachable_here(&parent_route_set);
 		emitter__Transpiler_write_line(t, _S(""));
 		GC_reachable_here(&cls);
 		GC_reachable_here(&parent_route_get);
@@ -17124,10 +17718,10 @@ VV_LOC void emitter__Transpiler_generate_dispatchers(emitter__Transpiler* t) {
 	}
 	t->is_in_func = false;
 }
-VV_LOC void emitter__Transpiler_find_captured_vars_rec(emitter__Transpiler* t, ast__AstNode node, Array_string params, Array_string* captured) {
+VV_LOC void emitter__Transpiler_find_captured_vars_rec(emitter__Transpiler* t, ast__AstNode* node, Array_string params, Array_string* captured) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_variable)) {
-		string name = node.name;
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_variable)) {
+		string name = node->name;
 		if (!(Array_string_contains(params, name)) && _SLIT_NE(name.str, name.len, "this") && (name).len != 0) {
 			if (emitter__VarScope_has_var(t->scope, name)) {
 				if (!(Array_string_contains(*captured, name))) {
@@ -17136,129 +17730,129 @@ VV_LOC void emitter__Transpiler_find_captured_vars_rec(emitter__Transpiler* t, a
 			}
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_plus) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_minus) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_mul) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_div) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_mod) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_concat) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_greater) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_smaller) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_greater_equal) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_smaller_equal) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_equal) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_identical)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_plus) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_minus) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_mul) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_div) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_mod) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_concat) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_greater) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_smaller) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_greater_equal) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_smaller_equal) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_equal) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_identical)) {
 		_option_ast__AstNode_ptr _t2 = {0};
-		if (_t2 = node.left, _t2.state == 0) {
+		if (_t2 = node->left, _t2.state == 0) {
 			ast__AstNode* n = *(ast__AstNode**)_t2.data;
 			GC_reachable_here(&n);
 			if (((voidptr)(n)) != 0) {
-				emitter__Transpiler_find_captured_vars_rec(t, *n, params, captured);
+				emitter__Transpiler_find_captured_vars_rec(t, (voidptr)&*n, params, captured);
 			}
 		}
 		_option_ast__AstNode_ptr _t3 = {0};
-		if (_t3 = node.right, _t3.state == 0) {
+		if (_t3 = node->right, _t3.state == 0) {
 			ast__AstNode* n = *(ast__AstNode**)_t3.data;
 			GC_reachable_here(&n);
 			if (((voidptr)(n)) != 0) {
-				emitter__Transpiler_find_captured_vars_rec(t, *n, params, captured);
+				emitter__Transpiler_find_captured_vars_rec(t, (voidptr)&*n, params, captured);
 			}
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_funccall)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_funccall)) {
 		_option_ast__AstNode_ptr _t4 = {0};
-		if (_t4 = node.expr, _t4.state == 0) {
+		if (_t4 = node->expr, _t4.state == 0) {
 			ast__AstNode* n = *(ast__AstNode**)_t4.data;
 			GC_reachable_here(&n);
 			if (((voidptr)(n)) != 0) {
-				emitter__Transpiler_find_captured_vars_rec(t, *n, params, captured);
+				emitter__Transpiler_find_captured_vars_rec(t, (voidptr)&*n, params, captured);
 			}
 		}
-		if (node.args.len > 0) {
-			for (int _t5 = 0; _t5 < node.args.len; ++_t5) {
-				ast__AstNode n = ((ast__AstNode*)node.args.data)[_t5];
-				emitter__Transpiler_find_captured_vars_rec(t, n, params, captured);
+		if (node->args.len > 0) {
+			for (int _t5 = 0; _t5 < node->args.len; ++_t5) {
+				ast__AstNode n = ((ast__AstNode*)node->args.data)[_t5];
+				emitter__Transpiler_find_captured_vars_rec(t, (voidptr)&n, params, captured);
 				GC_reachable_here(&n);
 			}
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_method_call)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_method_call)) {
 		_option_ast__AstNode_ptr _t6 = {0};
-		if (_t6 = node.var, _t6.state == 0) {
+		if (_t6 = node->var, _t6.state == 0) {
 			ast__AstNode* n = *(ast__AstNode**)_t6.data;
 			GC_reachable_here(&n);
 			if (((voidptr)(n)) != 0) {
-				emitter__Transpiler_find_captured_vars_rec(t, *n, params, captured);
+				emitter__Transpiler_find_captured_vars_rec(t, (voidptr)&*n, params, captured);
 			}
 		}
-		if (node.args.len > 0) {
-			for (int _t7 = 0; _t7 < node.args.len; ++_t7) {
-				ast__AstNode n = ((ast__AstNode*)node.args.data)[_t7];
-				emitter__Transpiler_find_captured_vars_rec(t, n, params, captured);
+		if (node->args.len > 0) {
+			for (int _t7 = 0; _t7 < node->args.len; ++_t7) {
+				ast__AstNode n = ((ast__AstNode*)node->args.data)[_t7];
+				emitter__Transpiler_find_captured_vars_rec(t, (voidptr)&n, params, captured);
 				GC_reachable_here(&n);
 			}
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_property_fetch)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_property_fetch)) {
 		_option_ast__AstNode_ptr _t8 = {0};
-		if (_t8 = node.var, _t8.state == 0) {
+		if (_t8 = node->var, _t8.state == 0) {
 			ast__AstNode* n = *(ast__AstNode**)_t8.data;
 			GC_reachable_here(&n);
 			if (((voidptr)(n)) != 0) {
-				emitter__Transpiler_find_captured_vars_rec(t, *n, params, captured);
+				emitter__Transpiler_find_captured_vars_rec(t, (voidptr)&*n, params, captured);
 			}
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_array)) {
-		if (node.items.len > 0) {
-			for (int _t9 = 0; _t9 < node.items.len; ++_t9) {
-				ast__AstNode n = ((ast__AstNode*)node.items.data)[_t9];
-				emitter__Transpiler_find_captured_vars_rec(t, n, params, captured);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_array)) {
+		if (node->items.len > 0) {
+			for (int _t9 = 0; _t9 < node->items.len; ++_t9) {
+				ast__AstNode n = ((ast__AstNode*)node->items.data)[_t9];
+				emitter__Transpiler_find_captured_vars_rec(t, (voidptr)&n, params, captured);
 				GC_reachable_here(&n);
 			}
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_array_item)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_array_item)) {
 		_option_ast__AstNode_ptr _t10 = {0};
-		if (_t10 = node.key, _t10.state == 0) {
+		if (_t10 = node->key, _t10.state == 0) {
 			ast__AstNode* n = *(ast__AstNode**)_t10.data;
 			GC_reachable_here(&n);
 			if (((voidptr)(n)) != 0) {
-				emitter__Transpiler_find_captured_vars_rec(t, *n, params, captured);
+				emitter__Transpiler_find_captured_vars_rec(t, (voidptr)&*n, params, captured);
 			}
 		}
 		_option_ast__AstNode_ptr _t11 = {0};
-		if (_t11 = node.expr, _t11.state == 0) {
+		if (_t11 = node->expr, _t11.state == 0) {
 			ast__AstNode* n = *(ast__AstNode**)_t11.data;
 			GC_reachable_here(&n);
 			if (((voidptr)(n)) != 0) {
-				emitter__Transpiler_find_captured_vars_rec(t, *n, params, captured);
+				emitter__Transpiler_find_captured_vars_rec(t, (voidptr)&*n, params, captured);
 			}
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_array_dim_fetch)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_array_dim_fetch)) {
 		_option_ast__AstNode_ptr _t12 = {0};
-		if (_t12 = node.var, _t12.state == 0) {
+		if (_t12 = node->var, _t12.state == 0) {
 			ast__AstNode* n = *(ast__AstNode**)_t12.data;
 			GC_reachable_here(&n);
 			if (((voidptr)(n)) != 0) {
-				emitter__Transpiler_find_captured_vars_rec(t, *n, params, captured);
+				emitter__Transpiler_find_captured_vars_rec(t, (voidptr)&*n, params, captured);
 			}
 		}
 		_option_ast__AstNode_ptr _t13 = {0};
-		if (_t13 = node.dim, _t13.state == 0) {
+		if (_t13 = node->dim, _t13.state == 0) {
 			ast__AstNode* n = *(ast__AstNode**)_t13.data;
 			GC_reachable_here(&n);
 			if (((voidptr)(n)) != 0) {
-				emitter__Transpiler_find_captured_vars_rec(t, *n, params, captured);
+				emitter__Transpiler_find_captured_vars_rec(t, (voidptr)&*n, params, captured);
 			}
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_new)) {
-		if (node.args.len > 0) {
-			for (int _t14 = 0; _t14 < node.args.len; ++_t14) {
-				ast__AstNode n = ((ast__AstNode*)node.args.data)[_t14];
-				emitter__Transpiler_find_captured_vars_rec(t, n, params, captured);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_new)) {
+		if (node->args.len > 0) {
+			for (int _t14 = 0; _t14 < node->args.len; ++_t14) {
+				ast__AstNode n = ((ast__AstNode*)node->args.data)[_t14];
+				emitter__Transpiler_find_captured_vars_rec(t, (voidptr)&n, params, captured);
 				GC_reachable_here(&n);
 			}
 		}
 	}
 	else {
 		_option_ast__AstNode_ptr _t15 = {0};
-		if (_t15 = node.expr, _t15.state == 0) {
+		if (_t15 = node->expr, _t15.state == 0) {
 			ast__AstNode* n = *(ast__AstNode**)_t15.data;
 			GC_reachable_here(&n);
 			if (((voidptr)(n)) != 0) {
-				emitter__Transpiler_find_captured_vars_rec(t, *n, params, captured);
+				emitter__Transpiler_find_captured_vars_rec(t, (voidptr)&*n, params, captured);
 			}
 		}
 	}
@@ -17379,47 +17973,22 @@ VV_LOC string emitter__Transpiler_resolve_class_name(emitter__Transpiler t, stri
 	}
 	return builtin__string_replace(full_name, _S("\\"), _S("_"));
 }
-VV_LOC multi_return_Array_string_Array_string emitter__Transpiler_collect_vars_in_scope(emitter__Transpiler t, Array_ast__AstNode nodes) {
-	Map_string_bool referenced = builtin__new_map_noscan_value(sizeof(string), sizeof(bool), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
-	;
-	Map_string_bool assigned = builtin__new_map_noscan_value(sizeof(string), sizeof(bool), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
-	;
-	for (int _t1 = 0; _t1 < nodes.len; ++_t1) {
-		ast__AstNode node = ((ast__AstNode*)nodes.data)[_t1];
-		emitter__Transpiler_collect_vars_in_scope_rec(t, &node, (voidptr)&referenced, (voidptr)&assigned, 0);
-		GC_reachable_here(&node);
+VV_LOC multi_return_Array_string_Array_string emitter__Transpiler_collect_vars_in_scope(emitter__Transpiler* t, Array_ast__AstNode* nodes) {
+	builtin__map_clear(&t->collect_referenced);
+	GC_reachable_here(&t);
+	GC_reachable_here(&nodes);
+	builtin__map_clear(&t->collect_assigned);
+	GC_reachable_here(&t);
+	GC_reachable_here(&nodes);
+	for (int i = 0; i < nodes->len; ++i) {
+		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(*nodes, i)), 0);
+		GC_reachable_here(&i);
 	}
-	Array_string ref_list = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-	int _t3 = referenced.key_values.len;
-	for (int _t2 = 0; _t2 < _t3; ++_t2 ) {
-		int _t4 = referenced.key_values.len - _t3;
-		_t3 = referenced.key_values.len;
-		if (_t4 < 0) {
-			_t2 = -1;
-			continue;
-		}
-		if (!builtin__DenseArray_has_index(&referenced.key_values, _t2)) {continue;}
-		string k = *(string*)builtin__DenseArray_key(&referenced.key_values, _t2);
-		k = builtin__string_clone(k);
-		builtin__array_push((array*)&ref_list, _MOV((string[]){ builtin__string_clone(k) }));
-	}
-	Array_string ass_list = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-	int _t7 = assigned.key_values.len;
-	for (int _t6 = 0; _t6 < _t7; ++_t6 ) {
-		int _t8 = assigned.key_values.len - _t7;
-		_t7 = assigned.key_values.len;
-		if (_t8 < 0) {
-			_t6 = -1;
-			continue;
-		}
-		if (!builtin__DenseArray_has_index(&assigned.key_values, _t6)) {continue;}
-		string k = *(string*)builtin__DenseArray_key(&assigned.key_values, _t6);
-		k = builtin__string_clone(k);
-		builtin__array_push((array*)&ass_list, _MOV((string[]){ builtin__string_clone(k) }));
-	}
+	Array_string ref_list = builtin__map_keys(&t->collect_referenced);
+	Array_string ass_list = builtin__map_keys(&t->collect_assigned);
 	return (multi_return_Array_string_Array_string){.arg0=ref_list, .arg1=ass_list};
 }
-VV_LOC void emitter__Transpiler_collect_vars_in_scope_rec(emitter__Transpiler t, ast__AstNode* node, Map_string_bool* referenced, Map_string_bool* assigned, int depth) {
+VV_LOC void emitter__Transpiler_collect_vars_in_scope_rec(emitter__Transpiler* t, ast__AstNode* node, int depth) {
 	if (depth > 100) {
 		return;
 	}
@@ -17429,7 +17998,7 @@ VV_LOC void emitter__Transpiler_collect_vars_in_scope_rec(emitter__Transpiler t,
 
 	if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_variable)) {
 		if (!builtin__fast_string_eq(node->name, _S("this")) && !(builtin__fast_string_eq(node->name, _S("_GET")) || builtin__fast_string_eq(node->name, _S("_POST")) || builtin__fast_string_eq(node->name, _S("_SERVER")) || builtin__fast_string_eq(node->name, _S("_COOKIE")) || builtin__fast_string_eq(node->name, _S("_SESSION")) || builtin__fast_string_eq(node->name, _S("_REQUEST")) || builtin__fast_string_eq(node->name, _S("_ENV")))) {
-			builtin__map_set(referenced, &(string[]){node->name}, &(bool[]) { true });
+			builtin__map_set(&t->collect_referenced, &(string[]){node->name}, &(bool[]) { true });
 		}
 	}
 	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign)) {
@@ -17438,7 +18007,7 @@ VV_LOC void emitter__Transpiler_collect_vars_in_scope_rec(emitter__Transpiler t,
 			ast__AstNode* var_node = *(ast__AstNode**)_t1.data;
 			GC_reachable_here(&var_node);
 			if (builtin__fast_string_eq(var_node->node_type, _S("Expr_Variable"))) {
-				builtin__map_set(assigned, &(string[]){var_node->name}, &(bool[]) { true });
+				builtin__map_set(&t->collect_assigned, &(string[]){var_node->name}, &(bool[]) { true });
 			}
 		}
 	}
@@ -17448,7 +18017,7 @@ VV_LOC void emitter__Transpiler_collect_vars_in_scope_rec(emitter__Transpiler t,
 			ast__AstNode* vv = *(ast__AstNode**)_t2.data;
 			GC_reachable_here(&vv);
 			if (((voidptr)(vv)) != 0 && builtin__fast_string_eq(vv->node_type, _S("Expr_Variable"))) {
-				builtin__map_set(assigned, &(string[]){vv->name}, &(bool[]) { true });
+				builtin__map_set(&t->collect_assigned, &(string[]){vv->name}, &(bool[]) { true });
 			}
 		}
 		_option_ast__AstNode_ptr _t3 = {0};
@@ -17456,7 +18025,7 @@ VV_LOC void emitter__Transpiler_collect_vars_in_scope_rec(emitter__Transpiler t,
 			ast__AstNode* kv = *(ast__AstNode**)_t3.data;
 			GC_reachable_here(&kv);
 			if (((voidptr)(kv)) != 0 && builtin__fast_string_eq(kv->node_type, _S("Expr_Variable"))) {
-				builtin__map_set(assigned, &(string[]){kv->name}, &(bool[]) { true });
+				builtin__map_set(&t->collect_assigned, &(string[]){kv->name}, &(bool[]) { true });
 			}
 		}
 	}
@@ -17466,183 +18035,183 @@ VV_LOC void emitter__Transpiler_collect_vars_in_scope_rec(emitter__Transpiler t,
 			ast__AstNode* v = *(ast__AstNode**)_t4.data;
 			GC_reachable_here(&v);
 			if (((voidptr)(v)) != 0 && builtin__fast_string_eq(v->node_type, _S("Expr_Variable"))) {
-				builtin__map_set(assigned, &(string[]){v->name}, &(bool[]) { true });
+				builtin__map_set(&t->collect_assigned, &(string[]){v->name}, &(bool[]) { true });
 			}
 		}
 	}
 	else {
 	}
 	for (int i = 0; i < node->exprs.len; ++i) {
-		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->exprs, i)), referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->exprs, i)), depth + 1);
 		GC_reachable_here(&i);
 	}
 	_option_ast__AstNode_ptr _t5 = {0};
 	if (_t5 = node->expr, _t5.state == 0) {
 		ast__AstNode* expr = *(ast__AstNode**)_t5.data;
 		GC_reachable_here(&expr);
-		emitter__Transpiler_collect_vars_in_scope_rec(t, expr, referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, expr, depth + 1);
 		GC_reachable_here(&expr);
 	}
 	_option_ast__AstNode_ptr _t6 = {0};
 	if (_t6 = node->var, _t6.state == 0) {
 		ast__AstNode* val = *(ast__AstNode**)_t6.data;
 		GC_reachable_here(&val);
-		emitter__Transpiler_collect_vars_in_scope_rec(t, val, referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, val, depth + 1);
 		GC_reachable_here(&val);
 	}
 	_option_ast__AstNode_ptr _t7 = {0};
 	if (_t7 = node->left, _t7.state == 0) {
 		ast__AstNode* left = *(ast__AstNode**)_t7.data;
 		GC_reachable_here(&left);
-		emitter__Transpiler_collect_vars_in_scope_rec(t, left, referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, left, depth + 1);
 		GC_reachable_here(&left);
 	}
 	_option_ast__AstNode_ptr _t8 = {0};
 	if (_t8 = node->right, _t8.state == 0) {
 		ast__AstNode* right = *(ast__AstNode**)_t8.data;
 		GC_reachable_here(&right);
-		emitter__Transpiler_collect_vars_in_scope_rec(t, right, referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, right, depth + 1);
 		GC_reachable_here(&right);
 	}
 	_option_ast__AstNode_ptr _t9 = {0};
 	if (_t9 = node->cond, _t9.state == 0) {
 		ast__AstNode* cond = *(ast__AstNode**)_t9.data;
 		GC_reachable_here(&cond);
-		emitter__Transpiler_collect_vars_in_scope_rec(t, cond, referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, cond, depth + 1);
 		GC_reachable_here(&cond);
 	}
 	for (int i = 0; i < node->stmts.len; ++i) {
-		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->stmts, i)), referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->stmts, i)), depth + 1);
 		GC_reachable_here(&i);
 	}
 	for (int i = 0; i < node->elseifs.len; ++i) {
-		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->elseifs, i)), referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->elseifs, i)), depth + 1);
 		GC_reachable_here(&i);
 	}
 	_option_ast__AstNode_ptr _t10 = {0};
 	if (_t10 = node->__v_else, _t10.state == 0) {
 		ast__AstNode* el = *(ast__AstNode**)_t10.data;
 		GC_reachable_here(&el);
-		emitter__Transpiler_collect_vars_in_scope_rec(t, el, referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, el, depth + 1);
 		GC_reachable_here(&el);
 	}
 	_option_ast__AstNode_ptr _t11 = {0};
 	if (_t11 = node->__v_if, _t11.state == 0) {
 		ast__AstNode* iff = *(ast__AstNode**)_t11.data;
 		GC_reachable_here(&iff);
-		emitter__Transpiler_collect_vars_in_scope_rec(t, iff, referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, iff, depth + 1);
 		GC_reachable_here(&iff);
 	}
 	for (int i = 0; i < node->catches.len; ++i) {
-		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->catches, i)), referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->catches, i)), depth + 1);
 		GC_reachable_here(&i);
 	}
 	_option_ast__AstNode_ptr _t12 = {0};
 	if (_t12 = node->finally, _t12.state == 0) {
 		ast__AstNode* fin = *(ast__AstNode**)_t12.data;
 		GC_reachable_here(&fin);
-		emitter__Transpiler_collect_vars_in_scope_rec(t, fin, referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, fin, depth + 1);
 		GC_reachable_here(&fin);
 	}
 	for (int i = 0; i < node->params.len; ++i) {
-		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->params, i)), referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->params, i)), depth + 1);
 		GC_reachable_here(&i);
 	}
 	for (int i = 0; i < node->args.len; ++i) {
-		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->args, i)), referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->args, i)), depth + 1);
 		GC_reachable_here(&i);
 	}
 	for (int i = 0; i < node->items.len; ++i) {
-		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->items, i)), referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->items, i)), depth + 1);
 		GC_reachable_here(&i);
 	}
 	_option_ast__AstNode_ptr _t13 = {0};
 	if (_t13 = node->key, _t13.state == 0) {
 		ast__AstNode* k = *(ast__AstNode**)_t13.data;
 		GC_reachable_here(&k);
-		emitter__Transpiler_collect_vars_in_scope_rec(t, k, referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, k, depth + 1);
 		GC_reachable_here(&k);
 	}
 	_option_ast__AstNode_ptr _t14 = {0};
 	if (_t14 = node->dim, _t14.state == 0) {
 		ast__AstNode* d = *(ast__AstNode**)_t14.data;
 		GC_reachable_here(&d);
-		emitter__Transpiler_collect_vars_in_scope_rec(t, d, referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, d, depth + 1);
 		GC_reachable_here(&d);
 	}
 	_option_ast__AstNode_ptr _t15 = {0};
 	if (_t15 = node->key_var, _t15.state == 0) {
 		ast__AstNode* kv = *(ast__AstNode**)_t15.data;
 		GC_reachable_here(&kv);
-		emitter__Transpiler_collect_vars_in_scope_rec(t, kv, referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, kv, depth + 1);
 		GC_reachable_here(&kv);
 	}
 	_option_ast__AstNode_ptr _t16 = {0};
 	if (_t16 = node->value_var, _t16.state == 0) {
 		ast__AstNode* vv = *(ast__AstNode**)_t16.data;
 		GC_reachable_here(&vv);
-		emitter__Transpiler_collect_vars_in_scope_rec(t, vv, referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, vv, depth + 1);
 		GC_reachable_here(&vv);
 	}
 	for (int i = 0; i < node->init.len; ++i) {
-		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->init, i)), referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->init, i)), depth + 1);
 		GC_reachable_here(&i);
 	}
 	for (int i = 0; i < node->conds.len; ++i) {
-		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->conds, i)), referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->conds, i)), depth + 1);
 		GC_reachable_here(&i);
 	}
 	for (int i = 0; i < node->loop.len; ++i) {
-		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->loop, i)), referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->loop, i)), depth + 1);
 		GC_reachable_here(&i);
 	}
 	for (int i = 0; i < node->props.len; ++i) {
-		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->props, i)), referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->props, i)), depth + 1);
 		GC_reachable_here(&i);
 	}
 	for (int i = 0; i < node->uses.len; ++i) {
-		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->uses, i)), referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->uses, i)), depth + 1);
 		GC_reachable_here(&i);
 	}
 	for (int i = 0; i < node->vars.len; ++i) {
-		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->vars, i)), referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->vars, i)), depth + 1);
 		GC_reachable_here(&i);
 	}
 	for (int i = 0; i < node->parts.len; ++i) {
-		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->parts, i)), referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->parts, i)), depth + 1);
 		GC_reachable_here(&i);
 	}
 	for (int i = 0; i < node->cases.len; ++i) {
-		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->cases, i)), referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->cases, i)), depth + 1);
 		GC_reachable_here(&i);
 	}
 	for (int i = 0; i < node->arms.len; ++i) {
-		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->arms, i)), referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, &(*(ast__AstNode*)builtin__array_get(node->arms, i)), depth + 1);
 		GC_reachable_here(&i);
 	}
 	_option_ast__AstNode_ptr _t17 = {0};
 	if (_t17 = node->body, _t17.state == 0) {
 		ast__AstNode* body = *(ast__AstNode**)_t17.data;
 		GC_reachable_here(&body);
-		emitter__Transpiler_collect_vars_in_scope_rec(t, body, referenced, assigned, depth + 1);
+		emitter__Transpiler_collect_vars_in_scope_rec(t, body, depth + 1);
 		GC_reachable_here(&body);
 	}
 }
-VV_LOC emitter__VarType emitter__Transpiler_get_expr_type(emitter__Transpiler* t, ast__AstNode node) {
+VV_LOC emitter__VarType emitter__Transpiler_get_expr_type(emitter__Transpiler* t, ast__AstNode* node) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_int)) {
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_int)) {
 		return ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_float)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_float)) {
 		return ((emitter__VarType){.tag = emitter__TypeTag__t_float,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_string)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_string)) {
 		return ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_encapsed) || builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_interpolated_string)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_encapsed) || builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_interpolated_string)) {
 		return ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_variable)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_variable)) {
 		if ((t->current_class).len != 0 && (t->current_func_name).len != 0) {
 			_option_emitter__MethodInfo _t5 = {0};
 			if (_t5 = emitter__Transpiler_find_method(*t, t->current_class, t->current_func_name), _t5.state == 0) {
@@ -17650,15 +18219,15 @@ VV_LOC emitter__VarType emitter__Transpiler_get_expr_type(emitter__Transpiler* t
 				GC_reachable_here(&m);
 				for (int _t6 = 0; _t6 < m.param_names.len; ++_t6) {
 					string pname = ((string*)m.param_names.data)[_t6];
-					if (builtin__string__eq(pname, node.name)) {
+					if (builtin__string__eq(pname, node->name)) {
 						return emitter__Transpiler_get_method_param_type(t, t->current_class, t->current_func_name, pname);
 					}
 				}
 			}
 		}
 		if ((t->current_func_name).len != 0) {
-			if (_IN_MAP(ADDR(string, t->current_func_name), ADDR(map, t->func_param_types))) {
-				Map_string_emitter__VarType* _t9 = (Map_string_emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_param_types), &(string[]){t->current_func_name}));
+			if (_IN_MAP(ADDR(string, t->current_func_name), ADDR(map, t->func_var_types))) {
+				Map_string_emitter__VarType* _t9 = (Map_string_emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_var_types), &(string[]){t->current_func_name}));
 				_option_Map_string_emitter__VarType _t8 = {0};
 				if (_t9) {
 					*((Map_string_emitter__VarType*)&_t8.data) = *((Map_string_emitter__VarType*)_t9);
@@ -17667,10 +18236,10 @@ VV_LOC emitter__VarType emitter__Transpiler_get_expr_type(emitter__Transpiler* t
 				}
 				
 				if (_t8.state == 0) {
-					Map_string_emitter__VarType params = (*(Map_string_emitter__VarType*)_t8.data);
-					GC_reachable_here(&params);
-					if (_IN_MAP(ADDR(string, node.name), ADDR(map, params))) {
-						emitter__VarType* _t12 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, params), &(string[]){node.name}));
+					Map_string_emitter__VarType vars = (*(Map_string_emitter__VarType*)_t8.data);
+					GC_reachable_here(&vars);
+					if (_IN_MAP(ADDR(string, node->name), ADDR(map, vars))) {
+						emitter__VarType* _t12 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, vars), &(string[]){node->name}));
 						_option_emitter__VarType _t11 = {0};
 						if (_t12) {
 							*((emitter__VarType*)&_t11.data) = *((emitter__VarType*)_t12);
@@ -17687,8 +18256,8 @@ VV_LOC emitter__VarType emitter__Transpiler_get_expr_type(emitter__Transpiler* t
 				}
 					if (_t8.state == 2 && _t8.err._object != _const_none__._object) { builtin___v_free(_t8.err._object); }
 			}
-			if (_IN_MAP(ADDR(string, t->current_func_name), ADDR(map, t->func_var_types))) {
-				Map_string_emitter__VarType* _t14 = (Map_string_emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_var_types), &(string[]){t->current_func_name}));
+			if (_IN_MAP(ADDR(string, t->current_func_name), ADDR(map, t->func_param_types))) {
+				Map_string_emitter__VarType* _t14 = (Map_string_emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_param_types), &(string[]){t->current_func_name}));
 				_option_Map_string_emitter__VarType _t13 = {0};
 				if (_t14) {
 					*((Map_string_emitter__VarType*)&_t13.data) = *((Map_string_emitter__VarType*)_t14);
@@ -17697,10 +18266,10 @@ VV_LOC emitter__VarType emitter__Transpiler_get_expr_type(emitter__Transpiler* t
 				}
 				
 				if (_t13.state == 0) {
-					Map_string_emitter__VarType vars = (*(Map_string_emitter__VarType*)_t13.data);
-					GC_reachable_here(&vars);
-					if (_IN_MAP(ADDR(string, node.name), ADDR(map, vars))) {
-						emitter__VarType* _t17 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, vars), &(string[]){node.name}));
+					Map_string_emitter__VarType params = (*(Map_string_emitter__VarType*)_t13.data);
+					GC_reachable_here(&params);
+					if (_IN_MAP(ADDR(string, node->name), ADDR(map, params))) {
+						emitter__VarType* _t17 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, params), &(string[]){node->name}));
 						_option_emitter__VarType _t16 = {0};
 						if (_t17) {
 							*((emitter__VarType*)&_t16.data) = *((emitter__VarType*)_t17);
@@ -17718,68 +18287,124 @@ VV_LOC emitter__VarType emitter__Transpiler_get_expr_type(emitter__Transpiler* t
 					if (_t13.state == 2 && _t13.err._object != _const_none__._object) { builtin___v_free(_t13.err._object); }
 			}
 		}
-		if (_IN_MAP(ADDR(string, node.name), ADDR(map, t->inferred_types))) {
-			emitter__VarType* _t20 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){node.name}));
-			_option_emitter__VarType _t19 = {0};
-			if (_t20) {
-				*((emitter__VarType*)&_t19.data) = *((emitter__VarType*)_t20);
-			} else {
-				_t19.state = 2; _t19.err = builtin___v_error(_S("map key does not exist"));
-			}
-			;
-			if (_t19.state != 0) {
-				*(emitter__VarType*) _t19.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-			}
-			
-			return (*(emitter__VarType*)_t19.data);
+		string lookup_key = ((t->current_func_name).len != 0 ? (builtin__string_plus_many(3, _MOV((string[3]){t->current_func_name, _S("::"), node->name}))) : (node->name));
+		string v_var = emitter__Transpiler_get_v_var_name(*t, node->name);
+		emitter__VarType* _t19 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v_var}));
+		_option_emitter__VarType _t18 = {0};
+		if (_t19) {
+			*((emitter__VarType*)&_t18.data) = *((emitter__VarType*)_t19);
+		} else {
+			_t18.state = 2; _t18.err = builtin___v_error(_S("map key does not exist"));
 		}
+		
+		if (_t18.state == 0) {
+			emitter__VarType typ = (*(emitter__VarType*)_t18.data);
+			GC_reachable_here(&typ);
+			return typ;
+		}
+			if (_t18.state == 2 && _t18.err._object != _const_none__._object) { builtin___v_free(_t18.err._object); }
+		emitter__VarType* _t22 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){lookup_key}));
+		_option_emitter__VarType _t21 = {0};
+		if (_t22) {
+			*((emitter__VarType*)&_t21.data) = *((emitter__VarType*)_t22);
+		} else {
+			_t21.state = 2; _t21.err = builtin___v_error(_S("map key does not exist"));
+		}
+		
+		if (_t21.state == 0) {
+			emitter__VarType typ = (*(emitter__VarType*)_t21.data);
+			GC_reachable_here(&typ);
+			return typ;
+		}
+			if (_t21.state == 2 && _t21.err._object != _const_none__._object) { builtin___v_free(_t21.err._object); }
+		emitter__VarType* _t25 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){node->name}));
+		_option_emitter__VarType _t24 = {0};
+		if (_t25) {
+			*((emitter__VarType*)&_t24.data) = *((emitter__VarType*)_t25);
+		} else {
+			_t24.state = 2; _t24.err = builtin___v_error(_S("map key does not exist"));
+		}
+		
+		if (_t24.state == 0) {
+			emitter__VarType typ = (*(emitter__VarType*)_t24.data);
+			GC_reachable_here(&typ);
+			return typ;
+		}
+			if (_t24.state == 2 && _t24.err._object != _const_none__._object) { builtin___v_free(_t24.err._object); }
 		return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_const)) {
-		string _t22 = builtin__string_to_lower(node.name);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_const)) {
+		string _t28 = builtin__string_to_lower(node->name);
 		
-		if (_SLIT_EQ(_t22.str, _t22.len, "true") || _SLIT_EQ(_t22.str, _t22.len, "false")) {
+		if (_SLIT_EQ(_t28.str, _t28.len, "true") || _SLIT_EQ(_t28.str, _t28.len, "false")) {
 			return ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
-		else if (_SLIT_EQ(_t22.str, _t22.len, "null")) {
+		else if (_SLIT_EQ(_t28.str, _t28.len, "null")) {
 			return ((emitter__VarType){.tag = emitter__TypeTag__t_null,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
 		else {
-			if (_IN_MAP(ADDR(string, node.name), ADDR(map, t->global_constants))) {
-				emitter__GlobalConst* _t26 = (emitter__GlobalConst*)(builtin__map_get_check(ADDR(map, t->global_constants), &(string[]){node.name}));
-				_option_emitter__GlobalConst _t25 = {0};
-				if (_t26) {
-					*((emitter__GlobalConst*)&_t25.data) = *((emitter__GlobalConst*)_t26);
+			if (_IN_MAP(ADDR(string, node->name), ADDR(map, t->global_constants))) {
+				emitter__GlobalConst* _t32 = (emitter__GlobalConst*)(builtin__map_get_check(ADDR(map, t->global_constants), &(string[]){node->name}));
+				_option_emitter__GlobalConst _t31 = {0};
+				if (_t32) {
+					*((emitter__GlobalConst*)&_t31.data) = *((emitter__GlobalConst*)_t32);
 				} else {
-					_t25.state = 2; _t25.err = builtin___v_error(_S("map key does not exist"));
+					_t31.state = 2; _t31.err = builtin___v_error(_S("map key does not exist"));
 				}
 				;
-				if (_t25.state != 0) {
-					*(emitter__GlobalConst*) _t25.data = ((emitter__GlobalConst){.name = (string){.str=(byteptr)"", .is_lit=1},.val_expr = (string){.str=(byteptr)"", .is_lit=1},.typ = ((emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,}),});
+				if (_t31.state != 0) {
+					*(emitter__GlobalConst*) _t31.data = ((emitter__GlobalConst){.name = (string){.str=(byteptr)"", .is_lit=1},.val_expr = (string){.str=(byteptr)"", .is_lit=1},.typ = ((emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,}),});
 				}
 				
-				emitter__GlobalConst gc = (*(emitter__GlobalConst*)_t25.data);
+				emitter__GlobalConst gc = (*(emitter__GlobalConst*)_t31.data);
 				return gc.typ;
 			}
 			return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_bitwise_and) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_bitwise_or) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_bitwise_xor) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_shift_left) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_shift_right) || builtin__fast_string_eq(node.node_type, _const_ast__node_expr_bitwise_not)) {
-		return ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_bitwise_and) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_bitwise_or) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_bitwise_xor) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_shift_left) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_shift_right)) {
+		_option_ast__AstNode_ptr *_t35 = &node->left;
+		if (_t35->state != 0) {
+			return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		}
+		ast__AstNode* left = (*(ast__AstNode**)_t35->data);
+		_option_ast__AstNode_ptr *_t37 = &node->right;
+		if (_t37->state != 0) {
+			return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		}
+		ast__AstNode* right = (*(ast__AstNode**)_t37->data);
+		emitter__VarType l_t = emitter__Transpiler_get_expr_type(t, (voidptr)&*left);
+		emitter__VarType r_t = emitter__Transpiler_get_expr_type(t, (voidptr)&*right);
+		if (l_t.tag == emitter__TypeTag__t_int && r_t.tag == emitter__TypeTag__t_int) {
+			return ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		}
+		return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_plus) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_minus) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_mul) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_div) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_mod)) {
-		_option_ast__AstNode_ptr *_t30 = &node.left;
-		if (_t30->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_bitwise_not)) {
+		_option_ast__AstNode_ptr *_t41 = &node->expr;
+		if (_t41->state != 0) {
 			return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
-		ast__AstNode* left = (*(ast__AstNode**)_t30->data);
-		_option_ast__AstNode_ptr *_t32 = &node.right;
-		if (_t32->state != 0) {
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t41->data);
+		emitter__VarType e_t = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
+		if (e_t.tag == emitter__TypeTag__t_int) {
+			return ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		}
+		return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_plus) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_minus) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_mul) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_div) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_mod)) {
+		_option_ast__AstNode_ptr *_t45 = &node->left;
+		if (_t45->state != 0) {
 			return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
-		ast__AstNode* right = (*(ast__AstNode**)_t32->data);
-		emitter__VarType l_t = emitter__Transpiler_get_expr_type(t, *left);
-		emitter__VarType r_t = emitter__Transpiler_get_expr_type(t, *right);
+		ast__AstNode* left = (*(ast__AstNode**)_t45->data);
+		_option_ast__AstNode_ptr *_t47 = &node->right;
+		if (_t47->state != 0) {
+			return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		}
+		ast__AstNode* right = (*(ast__AstNode**)_t47->data);
+		emitter__VarType l_t = emitter__Transpiler_get_expr_type(t, (voidptr)&*left);
+		emitter__VarType r_t = emitter__Transpiler_get_expr_type(t, (voidptr)&*right);
 		if (l_t.tag == emitter__TypeTag__t_int && r_t.tag == emitter__TypeTag__t_int) {
 			return ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
@@ -17788,33 +18413,35 @@ VV_LOC emitter__VarType emitter__Transpiler_get_expr_type(emitter__Transpiler* t
 		}
 		return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_concat)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_concat)) {
 		return ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_array)) {
-		voidptr ptr = ((voidptr)(node.items.data));
-		emitter__VarType* _t39 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->type_cache), &(voidptr[]){ptr}));
-		_option_emitter__VarType _t38 = {0};
-		if (_t39) {
-			*((emitter__VarType*)&_t38.data) = *((emitter__VarType*)_t39);
-		} else {
-			_t38.state = 2; _t38.err = builtin___v_error(_S("map key does not exist"));
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_array)) {
+		voidptr ptr = ((voidptr)(node->items.data));
+		if (node->items.len > 0) {
+			emitter__VarType* _t54 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->type_cache), &(voidptr[]){ptr}));
+			_option_emitter__VarType _t53 = {0};
+			if (_t54) {
+				*((emitter__VarType*)&_t53.data) = *((emitter__VarType*)_t54);
+			} else {
+				_t53.state = 2; _t53.err = builtin___v_error(_S("map key does not exist"));
+			}
+			
+			if (_t53.state == 0) {
+				emitter__VarType cached = (*(emitter__VarType*)_t53.data);
+				GC_reachable_here(&cached);
+				return cached;
+			}
+				if (_t53.state == 2 && _t53.err._object != _const_none__._object) { builtin___v_free(_t53.err._object); }
 		}
-		
-		if (_t38.state == 0) {
-			emitter__VarType cached = (*(emitter__VarType*)_t38.data);
-			GC_reachable_here(&cached);
-			return cached;
-		}
-			if (_t38.state == 2 && _t38.err._object != _const_none__._object) { builtin___v_free(_t38.err._object); }
 		bool is_list = true;
 		bool is_map = true;
 		Array_emitter__TypeTag elem_tags = builtin____new_array_with_default_noscan(0, 0, sizeof(emitter__TypeTag), 0);
-		for (int _t41 = 0; _t41 < node.items.len; ++_t41) {
-			ast__AstNode item = ((ast__AstNode*)node.items.data)[_t41];
-			_option_ast__AstNode_ptr _t42 = {0};
-			if (_t42 = item.key, _t42.state == 0) {
-				ast__AstNode* key = *(ast__AstNode**)_t42.data;
+		for (int _t56 = 0; _t56 < node->items.len; ++_t56) {
+			ast__AstNode item = ((ast__AstNode*)node->items.data)[_t56];
+			_option_ast__AstNode_ptr _t57 = {0};
+			if (_t57 = item.key, _t57.state == 0) {
+				ast__AstNode* key = *(ast__AstNode**)_t57.data;
 				GC_reachable_here(&key);
 				if (builtin__fast_string_eq(key->node_type, _S("Scalar_String"))) {
 					is_list = false;
@@ -17827,19 +18454,19 @@ VV_LOC emitter__VarType emitter__Transpiler_get_expr_type(emitter__Transpiler* t
 			} else {
 				is_map = false;
 			}
-			_option_ast__AstNode_ptr _t43 = {0};
-			if (_t43 = item.expr, _t43.state == 0) {
-				ast__AstNode* val = *(ast__AstNode**)_t43.data;
+			_option_ast__AstNode_ptr _t58 = {0};
+			if (_t58 = item.expr, _t58.state == 0) {
+				ast__AstNode* val = *(ast__AstNode**)_t58.data;
 				GC_reachable_here(&val);
-				builtin__array_push_noscan((array*)&elem_tags, _MOV((emitter__TypeTag[]){ emitter__Transpiler_get_expr_type(t, *val).tag }));
+				builtin__array_push_noscan((array*)&elem_tags, _MOV((emitter__TypeTag[]){ emitter__Transpiler_get_expr_type(t, (voidptr)&*val).tag }));
 			}
 		}
 		emitter__TypeTag elem_tag = emitter__TypeTag__t_unknown;
 		if (elem_tags.len > 0) {
 			emitter__TypeTag first = (*(emitter__TypeTag*)builtin__array_get(elem_tags, 0));
 			bool all_same = true;
-			for (int _t45 = 0; _t45 < elem_tags.len; ++_t45) {
-				emitter__TypeTag tag = ((emitter__TypeTag*)elem_tags.data)[_t45];
+			for (int _t60 = 0; _t60 < elem_tags.len; ++_t60) {
+				emitter__TypeTag tag = ((emitter__TypeTag*)elem_tags.data)[_t60];
 				if (tag != first) {
 					all_same = false;
 					break;
@@ -17853,189 +18480,191 @@ VV_LOC emitter__VarType emitter__Transpiler_get_expr_type(emitter__Transpiler* t
 		if (!t->expected_type.is_native_list && !t->expected_type.is_native_map) {
 			force_non_native = true;
 		}
-		emitter__VarType _t46 = ((emitter__VarType){.tag = emitter__TypeTag__t_array,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-		emitter__VarType ret_val = _t46;
+		emitter__VarType _t61 = ((emitter__VarType){.tag = emitter__TypeTag__t_array,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		emitter__VarType ret_val = _t61;
 		if (is_list && !is_map && !force_non_native) {
 			ret_val = ((emitter__VarType){.tag = emitter__TypeTag__t_array,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = true,.is_native_map = 0,.element_type_tag = elem_tag,});
 		} else if (is_map && !is_list && !force_non_native) {
 			ret_val = ((emitter__VarType){.tag = emitter__TypeTag__t_array,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = true,.element_type_tag = elem_tag,});
 		}
-		(*(emitter__VarType*)builtin__map_get_and_set((map*)&t->type_cache, &(voidptr[]){ptr}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = ret_val;
+		if (node->items.len > 0) {
+			(*(emitter__VarType*)builtin__map_get_and_set((map*)&t->type_cache, &(voidptr[]){ptr}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = ret_val;
+		}
 		return ret_val;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_funccall)) {
-		_option_emitter__TypeTag _t48 = {0};
-		if (_t48 = emitter__get_builtin_return_tag(node.name), _t48.state == 0) {
-			emitter__TypeTag tag = *(emitter__TypeTag*)_t48.data;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_funccall)) {
+		_option_emitter__TypeTag _t63 = {0};
+		if (_t63 = emitter__get_builtin_return_tag(node->name), _t63.state == 0) {
+			emitter__TypeTag tag = *(emitter__TypeTag*)_t63.data;
 			return ((emitter__VarType){.tag = tag,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
-		emitter__VarType* _t51 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_return_types), &(string[]){node.name}));
-		_option_emitter__VarType _t50 = {0};
-		if (_t51) {
-			*((emitter__VarType*)&_t50.data) = *((emitter__VarType*)_t51);
+		emitter__VarType* _t66 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_return_types), &(string[]){node->name}));
+		_option_emitter__VarType _t65 = {0};
+		if (_t66) {
+			*((emitter__VarType*)&_t65.data) = *((emitter__VarType*)_t66);
 		} else {
-			_t50.state = 2; _t50.err = builtin___v_error(_S("map key does not exist"));
+			_t65.state = 2; _t65.err = builtin___v_error(_S("map key does not exist"));
 		}
 		
-		if (_t50.state == 0) {
-			emitter__VarType ret_type = (*(emitter__VarType*)_t50.data);
+		if (_t65.state == 0) {
+			emitter__VarType ret_type = (*(emitter__VarType*)_t65.data);
 			GC_reachable_here(&ret_type);
 			return ret_type;
 		}
-			if (_t50.state == 2 && _t50.err._object != _const_none__._object) { builtin___v_free(_t50.err._object); }
+			if (_t65.state == 2 && _t65.err._object != _const_none__._object) { builtin___v_free(_t65.err._object); }
 		return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_ternary)) {
-		_option_ast__AstNode_ptr _t54 = {0};
-		if (_t54 = node.__v_if, _t54.state == 0) {
-			ast__AstNode* if_node = *(ast__AstNode**)_t54.data;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_ternary)) {
+		_option_ast__AstNode_ptr _t69 = {0};
+		if (_t69 = node->__v_if, _t69.state == 0) {
+			ast__AstNode* if_node = *(ast__AstNode**)_t69.data;
 			GC_reachable_here(&if_node);
-			_option_ast__AstNode_ptr *_t55 = &node.__v_else;
-			if (_t55->state != 0) {
+			_option_ast__AstNode_ptr *_t70 = &node->__v_else;
+			if (_t70->state != 0) {
 				return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			}
-			ast__AstNode* else_node = (*(ast__AstNode**)_t55->data);
-			emitter__VarType if_type = emitter__Transpiler_get_expr_type(t, *if_node);
-			emitter__VarType else_type = emitter__Transpiler_get_expr_type(t, *else_node);
+			ast__AstNode* else_node = (*(ast__AstNode**)_t70->data);
+			emitter__VarType if_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*if_node);
+			emitter__VarType else_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*else_node);
 			if (if_type.tag == else_type.tag) {
 				return if_type;
 			}
 		} else {
-			_option_ast__AstNode_ptr *_t58 = &node.__v_else;
-			if (_t58->state != 0) {
+			_option_ast__AstNode_ptr *_t73 = &node->__v_else;
+			if (_t73->state != 0) {
 				return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			}
-			ast__AstNode* else_node = (*(ast__AstNode**)_t58->data);
-			_option_ast__AstNode_ptr *_t60 = &node.cond;
-			if (_t60->state != 0) {
+			ast__AstNode* else_node = (*(ast__AstNode**)_t73->data);
+			_option_ast__AstNode_ptr *_t75 = &node->cond;
+			if (_t75->state != 0) {
 				return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			}
-			ast__AstNode* cond = (*(ast__AstNode**)_t60->data);
-			emitter__VarType cond_type = emitter__Transpiler_get_expr_type(t, *cond);
-			emitter__VarType else_type = emitter__Transpiler_get_expr_type(t, *else_node);
+			ast__AstNode* cond = (*(ast__AstNode**)_t75->data);
+			emitter__VarType cond_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*cond);
+			emitter__VarType else_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*else_node);
 			if (cond_type.tag == else_type.tag) {
 				return cond_type;
 			}
 		}
 		return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_coalesce)) {
-		_option_ast__AstNode_ptr *_t64 = &node.left;
-		if (_t64->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_coalesce)) {
+		_option_ast__AstNode_ptr *_t79 = &node->left;
+		if (_t79->state != 0) {
 			return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
-		ast__AstNode* left = (*(ast__AstNode**)_t64->data);
-		_option_ast__AstNode_ptr *_t66 = &node.right;
-		if (_t66->state != 0) {
+		ast__AstNode* left = (*(ast__AstNode**)_t79->data);
+		_option_ast__AstNode_ptr *_t81 = &node->right;
+		if (_t81->state != 0) {
 			return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
-		ast__AstNode* right = (*(ast__AstNode**)_t66->data);
-		emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, *left);
-		emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, *right);
+		ast__AstNode* right = (*(ast__AstNode**)_t81->data);
+		emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*left);
+		emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*right);
 		if (l_type.tag == r_type.tag) {
 			return l_type;
 		}
 		return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_method_call)) {
-		_option_ast__AstNode_ptr *_t70 = &node.var;
-		if (_t70->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_method_call)) {
+		_option_ast__AstNode_ptr *_t85 = &node->var;
+		if (_t85->state != 0) {
 			return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
-		ast__AstNode* obj_var_node = (*(ast__AstNode**)_t70->data);
+		ast__AstNode* obj_var_node = (*(ast__AstNode**)_t85->data);
 		if (builtin__fast_string_eq(obj_var_node->node_type, _S("Expr_Variable"))) {
-			emitter__VarType* _t73 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
-			_option_emitter__VarType _t72 = {0};
-			if (_t73) {
-				*((emitter__VarType*)&_t72.data) = *((emitter__VarType*)_t73);
+			emitter__VarType* _t88 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
+			_option_emitter__VarType _t87 = {0};
+			if (_t88) {
+				*((emitter__VarType*)&_t87.data) = *((emitter__VarType*)_t88);
 			} else {
-				_t72.state = 2; _t72.err = builtin___v_error(_S("map key does not exist"));
+				_t87.state = 2; _t87.err = builtin___v_error(_S("map key does not exist"));
 			}
 			;
-			if (_t72.state != 0) {
-				*(emitter__VarType*) _t72.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			if (_t87.state != 0) {
+				*(emitter__VarType*) _t87.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			}
 			
-			emitter__VarType obj_type = (*(emitter__VarType*)_t72.data);
+			emitter__VarType obj_type = (*(emitter__VarType*)_t87.data);
 			if (emitter__VarType_is_object(obj_type)) {
-				return emitter__Transpiler_get_method_return_type(t, obj_type.class_name, node.name);
+				return emitter__Transpiler_get_method_return_type(t, obj_type.class_name, node->name);
 			}
 		}
 		return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_property_fetch)) {
-		_option_ast__AstNode_ptr *_t76 = &node.var;
-		if (_t76->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_property_fetch)) {
+		_option_ast__AstNode_ptr *_t91 = &node->var;
+		if (_t91->state != 0) {
 			return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
-		ast__AstNode* obj_var_node = (*(ast__AstNode**)_t76->data);
+		ast__AstNode* obj_var_node = (*(ast__AstNode**)_t91->data);
 		if (builtin__fast_string_eq(obj_var_node->node_type, _S("Expr_Variable"))) {
-			emitter__VarType* _t79 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
-			_option_emitter__VarType _t78 = {0};
-			if (_t79) {
-				*((emitter__VarType*)&_t78.data) = *((emitter__VarType*)_t79);
+			emitter__VarType* _t94 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
+			_option_emitter__VarType _t93 = {0};
+			if (_t94) {
+				*((emitter__VarType*)&_t93.data) = *((emitter__VarType*)_t94);
 			} else {
-				_t78.state = 2; _t78.err = builtin___v_error(_S("map key does not exist"));
+				_t93.state = 2; _t93.err = builtin___v_error(_S("map key does not exist"));
 			}
 			;
-			if (_t78.state != 0) {
-				*(emitter__VarType*) _t78.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			if (_t93.state != 0) {
+				*(emitter__VarType*) _t93.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			}
 			
-			emitter__VarType obj_type = (*(emitter__VarType*)_t78.data);
+			emitter__VarType obj_type = (*(emitter__VarType*)_t93.data);
 			if (emitter__VarType_is_object(obj_type)) {
-				return emitter__Transpiler_get_class_prop_type(t, obj_type.class_name, node.name);
+				return emitter__Transpiler_get_class_prop_type(t, obj_type.class_name, node->name);
 			}
 		}
 		return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_greater) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_smaller) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_greater_equal) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_smaller_equal) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_equal) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_identical)) {
-		_option_ast__AstNode_ptr *_t82 = &node.left;
-		if (_t82->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_greater) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_smaller) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_greater_equal) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_smaller_equal) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_equal) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_identical)) {
+		_option_ast__AstNode_ptr *_t97 = &node->left;
+		if (_t97->state != 0) {
 			return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
-		ast__AstNode* left = (*(ast__AstNode**)_t82->data);
-		_option_ast__AstNode_ptr *_t84 = &node.right;
-		if (_t84->state != 0) {
+		ast__AstNode* left = (*(ast__AstNode**)_t97->data);
+		_option_ast__AstNode_ptr *_t99 = &node->right;
+		if (_t99->state != 0) {
 			return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
-		ast__AstNode* right = (*(ast__AstNode**)_t84->data);
-		emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, *left);
-		emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, *right);
+		ast__AstNode* right = (*(ast__AstNode**)_t99->data);
+		emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*left);
+		emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*right);
 		if ((l_type.tag == emitter__TypeTag__t_int || l_type.tag == emitter__TypeTag__t_float) && (r_type.tag == emitter__TypeTag__t_int || r_type.tag == emitter__TypeTag__t_float)) {
 			return ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
 		return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_bool_and) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_logical_and) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_bool_or) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_logical_or) || builtin__fast_string_eq(node.node_type, _const_ast__node_expr_boolean_not)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_bool_and) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_logical_and) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_bool_or) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_logical_or) || builtin__fast_string_eq(node->node_type, _const_ast__node_expr_boolean_not)) {
 		return ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_dir) || builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_file) || builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_function) || builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_method) || builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_class) || builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_namespace)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_dir) || builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_file) || builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_function) || builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_method) || builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_class) || builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_namespace)) {
 		return ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_line)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_line)) {
 		return ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_array_dim_fetch)) {
-		_option_ast__AstNode_ptr *_t91 = &node.var;
-		if (_t91->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_array_dim_fetch)) {
+		_option_ast__AstNode_ptr *_t106 = &node->var;
+		if (_t106->state != 0) {
 			return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
-		ast__AstNode* var_node = (*(ast__AstNode**)_t91->data);
-		emitter__VarType arr_type = emitter__Transpiler_get_expr_type(t, *var_node);
+		ast__AstNode* var_node = (*(ast__AstNode**)_t106->data);
+		emitter__VarType arr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*var_node);
 		if (arr_type.is_native_list || arr_type.is_native_map) {
 			return ((emitter__VarType){.tag = arr_type.element_type_tag,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
 		return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_class_const_fetch)) {
-		string cls = node.class_name;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_class_const_fetch)) {
+		string cls = node->class_name;
 		if (_SLIT_EQ(cls.str, cls.len, "self")) {
 			cls = t->current_class;
 		} else if (_SLIT_EQ(cls.str, cls.len, "parent")) {
 			string parent_cls = _S("");
-			for (int _t95 = 0; _t95 < t->classes.len; ++_t95) {
-				emitter__ClassInfo c = ((emitter__ClassInfo*)t->classes.data)[_t95];
+			for (int _t110 = 0; _t110 < t->classes.len; ++_t110) {
+				emitter__ClassInfo c = ((emitter__ClassInfo*)t->classes.data)[_t110];
 				if (builtin__string__eq(c.name, t->current_class)) {
 					parent_cls = c.extends;
 					break;
@@ -18044,28 +18673,106 @@ VV_LOC emitter__VarType emitter__Transpiler_get_expr_type(emitter__Transpiler* t
 			cls = parent_cls;
 		}
 		string resolved_cls = emitter__Transpiler_resolve_class_name(*t, cls);
-		for (int _t96 = 0; _t96 < t->classes.len; ++_t96) {
-			emitter__ClassInfo c_info = ((emitter__ClassInfo*)t->classes.data)[_t96];
+		for (int _t111 = 0; _t111 < t->classes.len; ++_t111) {
+			emitter__ClassInfo c_info = ((emitter__ClassInfo*)t->classes.data)[_t111];
 			if (builtin__string__eq(builtin__string_to_lower(c_info.name), builtin__string_to_lower(resolved_cls))) {
-				emitter__VarType* _t98 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, c_info.const_types), &(string[]){node.name}));
-				_option_emitter__VarType _t97 = {0};
-				if (_t98) {
-					*((emitter__VarType*)&_t97.data) = *((emitter__VarType*)_t98);
+				emitter__VarType* _t113 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, c_info.const_types), &(string[]){node->name}));
+				_option_emitter__VarType _t112 = {0};
+				if (_t113) {
+					*((emitter__VarType*)&_t112.data) = *((emitter__VarType*)_t113);
 				} else {
-					_t97.state = 2; _t97.err = builtin___v_error(_S("map key does not exist"));
+					_t112.state = 2; _t112.err = builtin___v_error(_S("map key does not exist"));
 				}
 				
-				if (_t97.state == 0) {
-					emitter__VarType const_type = (*(emitter__VarType*)_t97.data);
+				if (_t112.state == 0) {
+					emitter__VarType const_type = (*(emitter__VarType*)_t112.data);
 					GC_reachable_here(&const_type);
 					return const_type;
 				}
-					if (_t97.state == 2 && _t97.err._object != _const_none__._object) { builtin___v_free(_t97.err._object); }
+					if (_t112.state == 2 && _t112.err._object != _const_none__._object) { builtin___v_free(_t112.err._object); }
 			}
 		}
 		return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_cast_array)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_cast_array)) {
+		return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_cast_int)) {
+		return ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_cast_double)) {
+		return ((emitter__VarType){.tag = emitter__TypeTag__t_float,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_cast_string)) {
+		return ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_cast_bool)) {
+		return ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_cast_object)) {
+		return ((emitter__VarType){.tag = emitter__TypeTag__t_object,.class_name = _S("stdClass"),.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_clone)) {
+		_option_ast__AstNode_ptr _t122 = {0};
+		if (_t122 = node->expr, _t122.state == 0) {
+			ast__AstNode* expr_node = *(ast__AstNode**)_t122.data;
+			GC_reachable_here(&expr_node);
+			return emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
+		}
+		return ((emitter__VarType){.tag = emitter__TypeTag__t_object,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_unary_minus) || builtin__fast_string_eq(node->node_type, _const_ast__node_expr_unary_plus)) {
+		_option_ast__AstNode_ptr _t125 = {0};
+		if (_t125 = node->expr, _t125.state == 0) {
+			ast__AstNode* expr_node = *(ast__AstNode**)_t125.data;
+			GC_reachable_here(&expr_node);
+			return emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
+		}
+		return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_not_identical) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_not_equal)) {
+		return ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_print)) {
+		return ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_concat)) {
+		return ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_plus) || builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_minus) || builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_mul) || builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_div) || builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_mod)) {
+		_option_ast__AstNode_ptr _t131 = {0};
+		if (_t131 = node->var, _t131.state == 0) {
+			ast__AstNode* var_node = *(ast__AstNode**)_t131.data;
+			GC_reachable_here(&var_node);
+			if (builtin__fast_string_eq(var_node->node_type, _S("Expr_Variable"))) {
+				string v_var = emitter__Transpiler_get_v_var_name(*t, var_node->name);
+				emitter__VarType* _t134 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v_var}));
+				_option_emitter__VarType _t133 = {0};
+				if (_t134) {
+					*((emitter__VarType*)&_t133.data) = *((emitter__VarType*)_t134);
+				} else {
+					_t133.state = 2; _t133.err = builtin___v_error(_S("map key does not exist"));
+				}
+				;
+				if (_t133.state != 0) {
+					emitter__VarType* _t136 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){var_node->name}));
+					_option_emitter__VarType _t135 = {0};
+					if (_t136) {
+						*((emitter__VarType*)&_t135.data) = *((emitter__VarType*)_t136);
+					} else {
+						_t135.state = 2; _t135.err = builtin___v_error(_S("map key does not exist"));
+					}
+					;
+					if (_t135.state != 0) {
+						*(emitter__VarType*) _t135.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+					}
+					
+					*(emitter__VarType*) _t133.data = (*(emitter__VarType*)_t135.data);
+				}
+				
+				return (*(emitter__VarType*)_t133.data);
+			}
+		}
 		return ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	}
 	else {
@@ -18073,7 +18780,7 @@ VV_LOC emitter__VarType emitter__Transpiler_get_expr_type(emitter__Transpiler* t
 	}
 	return (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,};
 }
-VV_LOC string emitter__Transpiler_visit_expr_native(emitter__Transpiler* t, ast__AstNode node) {
+VV_LOC string emitter__Transpiler_visit_expr_native(emitter__Transpiler* t, ast__AstNode* node) {
 	t->active_depth++;
 	if (t->active_depth > 100) {
 		t->active_depth--;
@@ -18083,23 +18790,23 @@ VV_LOC string emitter__Transpiler_visit_expr_native(emitter__Transpiler* t, ast_
 	t->active_depth--;
 	return res;
 }
-VV_LOC string emitter__Transpiler_visit_expr_native_impl(emitter__Transpiler* t, ast__AstNode node) {
+VV_LOC string emitter__Transpiler_visit_expr_native_impl(emitter__Transpiler* t, ast__AstNode* node) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_int)) {
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_int)) {
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-		return node.value;
+		return node->value;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_float)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_float)) {
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_float,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-		return node.value;
+		return node->value;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_string)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_string)) {
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-		string escaped = emitter__escape_single_quoted(node.value);
+		string escaped = emitter__escape_single_quoted(node->value);
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("'"), escaped, _S("'")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_const)) {
-		string _t4 = builtin__string_to_lower(node.name);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_const)) {
+		string _t4 = builtin__string_to_lower(node->name);
 		
 		if (_SLIT_EQ(_t4.str, _t4.len, "true")) {
 			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
@@ -18117,7 +18824,7 @@ VV_LOC string emitter__Transpiler_visit_expr_native_impl(emitter__Transpiler* t,
 			return _S("none");
 		}
 		else {
-			emitter__GlobalConst* _t9 = (emitter__GlobalConst*)(builtin__map_get_check(ADDR(map, t->global_constants), &(string[]){node.name}));
+			emitter__GlobalConst* _t9 = (emitter__GlobalConst*)(builtin__map_get_check(ADDR(map, t->global_constants), &(string[]){node->name}));
 			_option_emitter__GlobalConst _t8 = {0};
 			if (_t9) {
 				*((emitter__GlobalConst*)&_t8.data) = *((emitter__GlobalConst*)_t9);
@@ -18135,12 +18842,12 @@ VV_LOC string emitter__Transpiler_visit_expr_native_impl(emitter__Transpiler* t,
 			return emitter__Transpiler_visit_expr(t, node);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_variable)) {
-		if (builtin__fast_string_eq(node.name, _S("this"))) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_variable)) {
+		if (builtin__fast_string_eq(node->name, _S("this"))) {
 			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_object,.class_name = t->current_class,.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			return _S("this");
 		}
-		string* _t14 = (string*)(builtin__map_get_check(ADDR(map, t->var_aliases), &(string[]){node.name}));
+		string* _t14 = (string*)(builtin__map_get_check(ADDR(map, t->var_aliases), &(string[]){node->name}));
 		_option_string _t13 = {0};
 		if (_t14) {
 			*((string*)&_t13.data) = *((string*)_t14);
@@ -18149,7 +18856,7 @@ VV_LOC string emitter__Transpiler_visit_expr_native_impl(emitter__Transpiler* t,
 		}
 		;
 		if (_t13.state != 0) {
-			*(string*) _t13.data = node.name;
+			*(string*) _t13.data = node->name;
 		}
 		
 		string var_name = (*(string*)_t13.data);
@@ -18165,7 +18872,7 @@ VV_LOC string emitter__Transpiler_visit_expr_native_impl(emitter__Transpiler* t,
 			if (_t15.state == 0) {
 				emitter__VarType cap_type = (*(emitter__VarType*)_t15.data);
 				GC_reachable_here(&cap_type);
-				string boxed = emitter__box_expr(builtin__string_plus_many(2, _MOV((string[2]){_S("var_"), var_name})), cap_type);
+				string boxed = emitter__Transpiler_box_expr(*t, builtin__string_plus_many(2, _MOV((string[2]){_S("var_"), var_name})), cap_type);
 				t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 				return boxed;
 			}
@@ -18185,380 +18892,401 @@ VV_LOC string emitter__Transpiler_visit_expr_native_impl(emitter__Transpiler* t,
 		
 		emitter__VarType typ = (*(emitter__VarType*)_t18.data);
 		t->last_expr_type = typ;
-		return emitter__Transpiler_get_v_var_name(*t, node.name);
+		return emitter__Transpiler_get_v_var_name(*t, node->name);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_plus)) {
-		_option_ast__AstNode_ptr *_t21 = &node.left;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_greater) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_smaller) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_greater_equal) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_smaller_equal) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_equal) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_identical)) {
+		_option_ast__AstNode_ptr *_t21 = &node->left;
 		if (_t21->state != 0) {
+			return _S("");
+		}
+		ast__AstNode* left = (*(ast__AstNode**)_t21->data);
+		_option_ast__AstNode_ptr *_t23 = &node->right;
+		if (_t23->state != 0) {
+			return _S("");
+		}
+		ast__AstNode* right = (*(ast__AstNode**)_t23->data);
+		string l_code = emitter__Transpiler_visit_expr_native(t, left);
+		string r_code = emitter__Transpiler_visit_expr_native(t, right);
+		string op = ((builtin__fast_string_eq(node->node_type, _const_ast__node_bin_greater))? (_S(">")) : (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_smaller))? (_S("<")) : (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_greater_equal))? (_S(">=")) : (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_smaller_equal))? (_S("<=")) : (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_equal))? (_S("==")) : (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_identical))? (_S("==")) : (_S("==")));
+		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		return builtin__string_plus_many(5, _MOV((string[5]){l_code, _S(" "), op, _S(" "), r_code}));
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_plus)) {
+		_option_ast__AstNode_ptr *_t26 = &node->left;
+		if (_t26->state != 0) {
 			builtin___v_panic(_S("plus missing left"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* left = (*(ast__AstNode**)_t21->data);
-		_option_ast__AstNode_ptr *_t22 = &node.right;
-		if (_t22->state != 0) {
+		ast__AstNode* left = (*(ast__AstNode**)_t26->data);
+		_option_ast__AstNode_ptr *_t27 = &node->right;
+		if (_t27->state != 0) {
 			builtin___v_panic(_S("plus missing right"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* right = (*(ast__AstNode**)_t22->data);
-		string l_code = emitter__Transpiler_visit_expr_native(t, *left);
-		string r_code = emitter__Transpiler_visit_expr_native(t, *right);
+		ast__AstNode* right = (*(ast__AstNode**)_t27->data);
+		string l_code = emitter__Transpiler_visit_expr_native(t, left);
+		string r_code = emitter__Transpiler_visit_expr_native(t, right);
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		return builtin__string_plus_many(3, _MOV((string[3]){l_code, _S(" + "), r_code}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_minus)) {
-		_option_ast__AstNode_ptr *_t24 = &node.left;
-		if (_t24->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_minus)) {
+		_option_ast__AstNode_ptr *_t29 = &node->left;
+		if (_t29->state != 0) {
 			builtin___v_panic(_S("minus missing left"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* left = (*(ast__AstNode**)_t24->data);
-		_option_ast__AstNode_ptr *_t25 = &node.right;
-		if (_t25->state != 0) {
+		ast__AstNode* left = (*(ast__AstNode**)_t29->data);
+		_option_ast__AstNode_ptr *_t30 = &node->right;
+		if (_t30->state != 0) {
 			builtin___v_panic(_S("minus missing right"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* right = (*(ast__AstNode**)_t25->data);
-		string l_code = emitter__Transpiler_visit_expr_native(t, *left);
-		string r_code = emitter__Transpiler_visit_expr_native(t, *right);
+		ast__AstNode* right = (*(ast__AstNode**)_t30->data);
+		string l_code = emitter__Transpiler_visit_expr_native(t, left);
+		string r_code = emitter__Transpiler_visit_expr_native(t, right);
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		return builtin__string_plus_many(3, _MOV((string[3]){l_code, _S(" - "), r_code}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_mul)) {
-		_option_ast__AstNode_ptr *_t27 = &node.left;
-		if (_t27->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_mul)) {
+		_option_ast__AstNode_ptr *_t32 = &node->left;
+		if (_t32->state != 0) {
 			builtin___v_panic(_S("mul missing left"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* left = (*(ast__AstNode**)_t27->data);
-		_option_ast__AstNode_ptr *_t28 = &node.right;
-		if (_t28->state != 0) {
+		ast__AstNode* left = (*(ast__AstNode**)_t32->data);
+		_option_ast__AstNode_ptr *_t33 = &node->right;
+		if (_t33->state != 0) {
 			builtin___v_panic(_S("mul missing right"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* right = (*(ast__AstNode**)_t28->data);
-		string l_code = emitter__Transpiler_visit_expr_native(t, *left);
-		string r_code = emitter__Transpiler_visit_expr_native(t, *right);
+		ast__AstNode* right = (*(ast__AstNode**)_t33->data);
+		string l_code = emitter__Transpiler_visit_expr_native(t, left);
+		string r_code = emitter__Transpiler_visit_expr_native(t, right);
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		return builtin__string_plus_many(3, _MOV((string[3]){l_code, _S(" * "), r_code}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_div)) {
-		_option_ast__AstNode_ptr *_t30 = &node.left;
-		if (_t30->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_div)) {
+		_option_ast__AstNode_ptr *_t35 = &node->left;
+		if (_t35->state != 0) {
 			builtin___v_panic(_S("div missing left"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* left = (*(ast__AstNode**)_t30->data);
-		_option_ast__AstNode_ptr *_t31 = &node.right;
-		if (_t31->state != 0) {
+		ast__AstNode* left = (*(ast__AstNode**)_t35->data);
+		_option_ast__AstNode_ptr *_t36 = &node->right;
+		if (_t36->state != 0) {
 			builtin___v_panic(_S("div missing right"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* right = (*(ast__AstNode**)_t31->data);
-		string l_code = emitter__Transpiler_visit_expr_native(t, *left);
-		string r_code = emitter__Transpiler_visit_expr_native(t, *right);
+		ast__AstNode* right = (*(ast__AstNode**)_t36->data);
+		string l_code = emitter__Transpiler_visit_expr_native(t, left);
+		string r_code = emitter__Transpiler_visit_expr_native(t, right);
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		return builtin__string_plus_many(3, _MOV((string[3]){l_code, _S(" / "), r_code}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_mod)) {
-		_option_ast__AstNode_ptr *_t33 = &node.left;
-		if (_t33->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_mod)) {
+		_option_ast__AstNode_ptr *_t38 = &node->left;
+		if (_t38->state != 0) {
 			builtin___v_panic(_S("mod missing left"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* left = (*(ast__AstNode**)_t33->data);
-		_option_ast__AstNode_ptr *_t34 = &node.right;
-		if (_t34->state != 0) {
+		ast__AstNode* left = (*(ast__AstNode**)_t38->data);
+		_option_ast__AstNode_ptr *_t39 = &node->right;
+		if (_t39->state != 0) {
 			builtin___v_panic(_S("mod missing right"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* right = (*(ast__AstNode**)_t34->data);
-		string l_code = emitter__Transpiler_visit_expr_native(t, *left);
-		string r_code = emitter__Transpiler_visit_expr_native(t, *right);
+		ast__AstNode* right = (*(ast__AstNode**)_t39->data);
+		string l_code = emitter__Transpiler_visit_expr_native(t, left);
+		string r_code = emitter__Transpiler_visit_expr_native(t, right);
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		return builtin__string_plus_many(3, _MOV((string[3]){l_code, _S(" % "), r_code}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_bool_and) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_logical_and)) {
-		_option_ast__AstNode_ptr *_t36 = &node.left;
-		if (_t36->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_bool_and) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_logical_and)) {
+		_option_ast__AstNode_ptr *_t41 = &node->left;
+		if (_t41->state != 0) {
 			builtin___v_panic(_S("and missing left"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* left = (*(ast__AstNode**)_t36->data);
-		_option_ast__AstNode_ptr *_t37 = &node.right;
-		if (_t37->state != 0) {
+		ast__AstNode* left = (*(ast__AstNode**)_t41->data);
+		_option_ast__AstNode_ptr *_t42 = &node->right;
+		if (_t42->state != 0) {
 			builtin___v_panic(_S("and missing right"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* right = (*(ast__AstNode**)_t37->data);
-		string l_cond = emitter__Transpiler_get_native_bool_condition(t, *left);
-		string r_cond = emitter__Transpiler_get_native_bool_condition(t, *right);
+		ast__AstNode* right = (*(ast__AstNode**)_t42->data);
+		string l_cond = emitter__Transpiler_get_native_bool_condition(t, (voidptr)&*left);
+		string r_cond = emitter__Transpiler_get_native_bool_condition(t, (voidptr)&*right);
+		string l_str = (builtin__string_contains(l_cond, _S(" || ")) ? (builtin__string_plus_many(3, _MOV((string[3]){_S("("), l_cond, _S(")")}))) : (l_cond));
+		string r_str = (builtin__string_contains(r_cond, _S(" || ")) ? (builtin__string_plus_many(3, _MOV((string[3]){_S("("), r_cond, _S(")")}))) : (r_cond));
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-		return builtin__string_plus_many(3, _MOV((string[3]){l_cond, _S(" && "), r_cond}));
+		return builtin__string_plus_many(3, _MOV((string[3]){l_str, _S(" && "), r_str}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_bool_or) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_logical_or)) {
-		_option_ast__AstNode_ptr *_t39 = &node.left;
-		if (_t39->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_bool_or) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_logical_or)) {
+		_option_ast__AstNode_ptr *_t44 = &node->left;
+		if (_t44->state != 0) {
 			builtin___v_panic(_S("or missing left"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* left = (*(ast__AstNode**)_t39->data);
-		_option_ast__AstNode_ptr *_t40 = &node.right;
-		if (_t40->state != 0) {
+		ast__AstNode* left = (*(ast__AstNode**)_t44->data);
+		_option_ast__AstNode_ptr *_t45 = &node->right;
+		if (_t45->state != 0) {
 			builtin___v_panic(_S("or missing right"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* right = (*(ast__AstNode**)_t40->data);
-		string l_cond = emitter__Transpiler_get_native_bool_condition(t, *left);
-		string r_cond = emitter__Transpiler_get_native_bool_condition(t, *right);
+		ast__AstNode* right = (*(ast__AstNode**)_t45->data);
+		string l_cond = emitter__Transpiler_get_native_bool_condition(t, (voidptr)&*left);
+		string r_cond = emitter__Transpiler_get_native_bool_condition(t, (voidptr)&*right);
+		string l_str = (builtin__string_contains(l_cond, _S(" && ")) ? (builtin__string_plus_many(3, _MOV((string[3]){_S("("), l_cond, _S(")")}))) : (l_cond));
+		string r_str = (builtin__string_contains(r_cond, _S(" && ")) ? (builtin__string_plus_many(3, _MOV((string[3]){_S("("), r_cond, _S(")")}))) : (r_cond));
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-		return builtin__string_plus_many(3, _MOV((string[3]){l_cond, _S(" || "), r_cond}));
+		return builtin__string_plus_many(3, _MOV((string[3]){l_str, _S(" || "), r_str}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_boolean_not)) {
-		_option_ast__AstNode_ptr *_t42 = &node.expr;
-		if (_t42->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_boolean_not)) {
+		_option_ast__AstNode_ptr *_t47 = &node->expr;
+		if (_t47->state != 0) {
 			builtin___v_panic(_S("BooleanNot missing expr"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* expr_node = (*(ast__AstNode**)_t42->data);
-		string cond = emitter__Transpiler_get_native_bool_condition(t, *expr_node);
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t47->data);
+		string cond = emitter__Transpiler_get_native_bool_condition(t, (voidptr)&*expr_node);
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("!("), cond, _S(")")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_concat)) {
-		_option_ast__AstNode_ptr *_t44 = &node.left;
-		if (_t44->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_concat)) {
+		_option_ast__AstNode_ptr *_t49 = &node->left;
+		if (_t49->state != 0) {
 			builtin___v_panic(_S("concat missing left"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* left = (*(ast__AstNode**)_t44->data);
-		_option_ast__AstNode_ptr *_t45 = &node.right;
-		if (_t45->state != 0) {
+		ast__AstNode* left = (*(ast__AstNode**)_t49->data);
+		_option_ast__AstNode_ptr *_t50 = &node->right;
+		if (_t50->state != 0) {
 			builtin___v_panic(_S("concat missing right"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* right = (*(ast__AstNode**)_t45->data);
-		emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, *left);
-		emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, *right);
-		string l_code = (emitter__VarType_is_scalar(l_type) ? (emitter__Transpiler_native_to_str(t, *left, l_type)) : (builtin__string_plus_many(3, _MOV((string[3]){_S("("), emitter__Transpiler_visit_expr(t, *left), _S(").str()")}))));
-		string r_code = (emitter__VarType_is_scalar(r_type) ? (emitter__Transpiler_native_to_str(t, *right, r_type)) : (builtin__string_plus_many(3, _MOV((string[3]){_S("("), emitter__Transpiler_visit_expr(t, *right), _S(").str()")}))));
+		ast__AstNode* right = (*(ast__AstNode**)_t50->data);
+		emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*left);
+		emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*right);
+		string l_code = (emitter__VarType_is_scalar(l_type) ? (emitter__Transpiler_native_to_str(t, left, l_type)) : (builtin__string_plus_many(3, _MOV((string[3]){_S("("), emitter__Transpiler_visit_expr(t, left), _S(").str()")}))));
+		string r_code = (emitter__VarType_is_scalar(r_type) ? (emitter__Transpiler_native_to_str(t, right, r_type)) : (builtin__string_plus_many(3, _MOV((string[3]){_S("("), emitter__Transpiler_visit_expr(t, right), _S(").str()")}))));
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		return builtin__string_plus_many(3, _MOV((string[3]){l_code, _S(" + "), r_code}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_encapsed) || builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_interpolated_string)) {
-		if (emitter__can_use_v_interpolation(node.parts)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_encapsed) || builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_interpolated_string)) {
+		if (emitter__can_use_v_interpolation(node->parts)) {
 			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-			return emitter__Transpiler_emit_v_interpolation(t, node.parts);
+			return emitter__Transpiler_emit_v_interpolation(t, node->parts);
 		}
 		return emitter__Transpiler_visit_expr(t, node);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_encapsed_string_part) || builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_interpolated_string_part)) {
-		string escaped = emitter__escape_single_quoted(node.value);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_encapsed_string_part) || builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_interpolated_string_part)) {
+		string escaped = emitter__escape_single_quoted(node->value);
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("'"), escaped, _S("'")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_property_fetch)) {
-		_option_ast__AstNode_ptr *_t50 = &node.var;
-		if (_t50->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_property_fetch)) {
+		_option_ast__AstNode_ptr *_t55 = &node->var;
+		if (_t55->state != 0) {
 			return emitter__Transpiler_visit_expr(t, node);
 		}
-		ast__AstNode* obj_var_node = (*(ast__AstNode**)_t50->data);
+		ast__AstNode* obj_var_node = (*(ast__AstNode**)_t55->data);
 		if (builtin__fast_string_eq(obj_var_node->node_type, _S("Expr_Variable"))) {
-			emitter__VarType* _t53 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
-			_option_emitter__VarType _t52 = {0};
-			if (_t53) {
-				*((emitter__VarType*)&_t52.data) = *((emitter__VarType*)_t53);
+			emitter__VarType* _t58 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
+			_option_emitter__VarType _t57 = {0};
+			if (_t58) {
+				*((emitter__VarType*)&_t57.data) = *((emitter__VarType*)_t58);
 			} else {
-				_t52.state = 2; _t52.err = builtin___v_error(_S("map key does not exist"));
+				_t57.state = 2; _t57.err = builtin___v_error(_S("map key does not exist"));
 			}
 			;
-			if (_t52.state != 0) {
-				*(emitter__VarType*) _t52.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			if (_t57.state != 0) {
+				*(emitter__VarType*) _t57.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			}
 			
-			emitter__VarType obj_type = (*(emitter__VarType*)_t52.data);
+			emitter__VarType obj_type = (*(emitter__VarType*)_t57.data);
 			if (emitter__VarType_is_object(obj_type)) {
 				bool has_prop = false;
-				for (int _t54 = 0; _t54 < t->classes.len; ++_t54) {
-					emitter__ClassInfo cls = ((emitter__ClassInfo*)t->classes.data)[_t54];
+				for (int _t59 = 0; _t59 < t->classes.len; ++_t59) {
+					emitter__ClassInfo cls = ((emitter__ClassInfo*)t->classes.data)[_t59];
 					if (builtin__string__eq(builtin__string_to_lower(cls.name), builtin__string_to_lower(obj_type.class_name))) {
-						if ((Array_string_contains(cls.all_props, node.name))) {
+						if ((Array_string_contains(cls.all_props, node->name))) {
 							has_prop = true;
 							break;
 						}
 					}
 				}
 				if (has_prop) {
-					emitter__VarType prop_type = emitter__Transpiler_get_class_prop_type(t, obj_type.class_name, node.name);
-					string field_name = emitter__prop_v_name(node.name);
+					emitter__VarType prop_type = emitter__Transpiler_get_class_prop_type(t, obj_type.class_name, node->name);
+					string field_name = emitter__prop_v_name(node->name);
 					t->last_expr_type = prop_type;
-					string obj_var_name = (builtin__fast_string_eq(obj_var_node->name, _S("this")) ? (_S("this")) : (emitter__Transpiler_visit_expr(t, *obj_var_node)));
+					string obj_var_name = (builtin__fast_string_eq(obj_var_node->name, _S("this")) ? (_S("this")) : (emitter__Transpiler_visit_expr(t, obj_var_node)));
 					return builtin__string_plus_many(3, _MOV((string[3]){obj_var_name, _S("."), field_name}));
 				}
 			}
 		}
 		return emitter__Transpiler_visit_expr(t, node);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_ternary)) {
-		_option_ast__AstNode_ptr *_t57 = &node.cond;
-		if (_t57->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_ternary)) {
+		_option_ast__AstNode_ptr *_t62 = &node->cond;
+		if (_t62->state != 0) {
 			builtin___v_panic(_S("Ternary missing cond"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* cond = (*(ast__AstNode**)_t57->data);
-		string cond_str = emitter__Transpiler_get_native_bool_condition(t, *cond);
+		ast__AstNode* cond = (*(ast__AstNode**)_t62->data);
+		string cond_str = emitter__Transpiler_get_native_bool_condition(t, (voidptr)&*cond);
 		emitter__VarType ternary_type = emitter__Transpiler_get_expr_type(t, node);
 		if (emitter__VarType_is_scalar(ternary_type)) {
 			t->last_expr_type = ternary_type;
-			_option_ast__AstNode_ptr _t58 = {0};
-			if (_t58 = node.__v_if, _t58.state == 0) {
-				ast__AstNode* if_node = *(ast__AstNode**)_t58.data;
-				GC_reachable_here(&if_node);
-				_option_ast__AstNode_ptr *_t59 = &node.__v_else;
-				if (_t59->state != 0) {
-					builtin___v_panic(_S("Ternary missing else"));
-					VUNREACHABLE();
-				;
-				}
-				ast__AstNode* else_node = (*(ast__AstNode**)_t59->data);
-				return builtin__string_plus_many(7, _MOV((string[7]){_S("if "), cond_str, _S(" { "), emitter__Transpiler_visit_expr_native(t, *if_node), _S(" } else { "), emitter__Transpiler_visit_expr_native(t, *else_node), _S(" }")}));
-			} else {
-				_option_ast__AstNode_ptr *_t61 = &node.__v_else;
-				if (_t61->state != 0) {
-					builtin___v_panic(_S("Ternary missing else"));
-					VUNREACHABLE();
-				;
-				}
-				ast__AstNode* else_node = (*(ast__AstNode**)_t61->data);
-				return builtin__string_plus_many(7, _MOV((string[7]){_S("if "), cond_str, _S(" { "), emitter__Transpiler_visit_expr_native(t, *cond), _S(" } else { "), emitter__Transpiler_visit_expr_native(t, *else_node), _S(" }")}));
-			}
-		} else {
 			_option_ast__AstNode_ptr _t63 = {0};
-			if (_t63 = node.__v_if, _t63.state == 0) {
+			if (_t63 = node->__v_if, _t63.state == 0) {
 				ast__AstNode* if_node = *(ast__AstNode**)_t63.data;
 				GC_reachable_here(&if_node);
-				_option_ast__AstNode_ptr *_t64 = &node.__v_else;
+				_option_ast__AstNode_ptr *_t64 = &node->__v_else;
 				if (_t64->state != 0) {
 					builtin___v_panic(_S("Ternary missing else"));
 					VUNREACHABLE();
 				;
 				}
 				ast__AstNode* else_node = (*(ast__AstNode**)_t64->data);
-				return builtin__string_plus_many(7, _MOV((string[7]){_S("if "), cond_str, _S(" { "), emitter__Transpiler_visit_expr(t, *if_node), _S(" } else { "), emitter__Transpiler_visit_expr(t, *else_node), _S(" }")}));
+				return builtin__string_plus_many(7, _MOV((string[7]){_S("if "), cond_str, _S(" { "), emitter__Transpiler_visit_expr_native(t, if_node), _S(" } else { "), emitter__Transpiler_visit_expr_native(t, else_node), _S(" }")}));
 			} else {
-				_option_ast__AstNode_ptr *_t66 = &node.__v_else;
+				_option_ast__AstNode_ptr *_t66 = &node->__v_else;
 				if (_t66->state != 0) {
 					builtin___v_panic(_S("Ternary missing else"));
 					VUNREACHABLE();
 				;
 				}
 				ast__AstNode* else_node = (*(ast__AstNode**)_t66->data);
-				return builtin__string_plus_many(7, _MOV((string[7]){_S("if "), cond_str, _S(" { "), emitter__Transpiler_visit_expr(t, *cond), _S(" } else { "), emitter__Transpiler_visit_expr(t, *else_node), _S(" }")}));
+				return builtin__string_plus_many(7, _MOV((string[7]){_S("if "), cond_str, _S(" { "), emitter__Transpiler_visit_expr_native(t, cond), _S(" } else { "), emitter__Transpiler_visit_expr_native(t, else_node), _S(" }")}));
+			}
+		} else {
+			_option_ast__AstNode_ptr _t68 = {0};
+			if (_t68 = node->__v_if, _t68.state == 0) {
+				ast__AstNode* if_node = *(ast__AstNode**)_t68.data;
+				GC_reachable_here(&if_node);
+				_option_ast__AstNode_ptr *_t69 = &node->__v_else;
+				if (_t69->state != 0) {
+					builtin___v_panic(_S("Ternary missing else"));
+					VUNREACHABLE();
+				;
+				}
+				ast__AstNode* else_node = (*(ast__AstNode**)_t69->data);
+				return builtin__string_plus_many(7, _MOV((string[7]){_S("if "), cond_str, _S(" { "), emitter__Transpiler_visit_expr(t, if_node), _S(" } else { "), emitter__Transpiler_visit_expr(t, else_node), _S(" }")}));
+			} else {
+				_option_ast__AstNode_ptr *_t71 = &node->__v_else;
+				if (_t71->state != 0) {
+					builtin___v_panic(_S("Ternary missing else"));
+					VUNREACHABLE();
+				;
+				}
+				ast__AstNode* else_node = (*(ast__AstNode**)_t71->data);
+				return builtin__string_plus_many(7, _MOV((string[7]){_S("if "), cond_str, _S(" { "), emitter__Transpiler_visit_expr(t, cond), _S(" } else { "), emitter__Transpiler_visit_expr(t, else_node), _S(" }")}));
 			}
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_coalesce)) {
-		_option_ast__AstNode_ptr *_t68 = &node.left;
-		if (_t68->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_coalesce)) {
+		_option_ast__AstNode_ptr *_t73 = &node->left;
+		if (_t73->state != 0) {
 			builtin___v_panic(_S("Coalesce missing left"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* left = (*(ast__AstNode**)_t68->data);
-		_option_ast__AstNode_ptr *_t69 = &node.right;
-		if (_t69->state != 0) {
+		ast__AstNode* left = (*(ast__AstNode**)_t73->data);
+		_option_ast__AstNode_ptr *_t74 = &node->right;
+		if (_t74->state != 0) {
 			builtin___v_panic(_S("Coalesce missing right"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* right = (*(ast__AstNode**)_t69->data);
+		ast__AstNode* right = (*(ast__AstNode**)_t74->data);
 		emitter__VarType coalesce_type = emitter__Transpiler_get_expr_type(t, node);
 		if (emitter__VarType_is_scalar(coalesce_type)) {
 			t->last_expr_type = coalesce_type;
-			string left_str = emitter__Transpiler_visit_expr(t, *left);
-			return builtin__string_plus_many(7, _MOV((string[7]){_S("if !("), left_str, _S(").is_null() { "), emitter__Transpiler_visit_expr_native(t, *left), _S(" } else { "), emitter__Transpiler_visit_expr_native(t, *right), _S(" }")}));
+			string left_str = emitter__Transpiler_visit_expr(t, left);
+			return builtin__string_plus_many(7, _MOV((string[7]){_S("if !("), left_str, _S(").is_null() { "), emitter__Transpiler_visit_expr_native(t, left), _S(" } else { "), emitter__Transpiler_visit_expr_native(t, right), _S(" }")}));
 		} else {
-			string left_str = emitter__Transpiler_visit_expr(t, *left);
-			return builtin__string_plus_many(7, _MOV((string[7]){_S("if !("), left_str, _S(").is_null() { "), left_str, _S(" } else { "), emitter__Transpiler_visit_expr(t, *right), _S(" }")}));
+			string left_str = emitter__Transpiler_visit_expr(t, left);
+			return builtin__string_plus_many(7, _MOV((string[7]){_S("if !("), left_str, _S(").is_null() { "), left_str, _S(" } else { "), emitter__Transpiler_visit_expr(t, right), _S(" }")}));
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_method_call)) {
-		_option_ast__AstNode_ptr *_t72 = &node.var;
-		if (_t72->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_method_call)) {
+		_option_ast__AstNode_ptr *_t77 = &node->var;
+		if (_t77->state != 0) {
 			return emitter__Transpiler_visit_expr(t, node);
 		}
-		ast__AstNode* obj_var_node = (*(ast__AstNode**)_t72->data);
+		ast__AstNode* obj_var_node = (*(ast__AstNode**)_t77->data);
 		if (builtin__fast_string_eq(obj_var_node->node_type, _S("Expr_Variable"))) {
-			emitter__VarType* _t75 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
-			_option_emitter__VarType _t74 = {0};
-			if (_t75) {
-				*((emitter__VarType*)&_t74.data) = *((emitter__VarType*)_t75);
+			emitter__VarType* _t80 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
+			_option_emitter__VarType _t79 = {0};
+			if (_t80) {
+				*((emitter__VarType*)&_t79.data) = *((emitter__VarType*)_t80);
 			} else {
-				_t74.state = 2; _t74.err = builtin___v_error(_S("map key does not exist"));
+				_t79.state = 2; _t79.err = builtin___v_error(_S("map key does not exist"));
 			}
 			;
-			if (_t74.state != 0) {
-				*(emitter__VarType*) _t74.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			if (_t79.state != 0) {
+				*(emitter__VarType*) _t79.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			}
 			
-			emitter__VarType obj_type = (*(emitter__VarType*)_t74.data);
+			emitter__VarType obj_type = (*(emitter__VarType*)_t79.data);
 			if (builtin__fast_string_eq(obj_var_node->name, _S("this"))) {
 				obj_type = ((emitter__VarType){.tag = emitter__TypeTag__t_object,.class_name = t->current_class,.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			}
 			if (emitter__VarType_is_object(obj_type)) {
-				string obj_var_name = emitter__Transpiler_visit_expr(t, *obj_var_node);
-				emitter__VarType ret_type = emitter__Transpiler_get_method_return_type(t, obj_type.class_name, node.name);
+				string obj_var_name = emitter__Transpiler_visit_expr(t, obj_var_node);
+				emitter__VarType ret_type = emitter__Transpiler_get_method_return_type(t, obj_type.class_name, node->name);
 				t->last_expr_type = ret_type;
 				return emitter__Transpiler_compile_method_call_known(t, node, obj_type, *obj_var_node, obj_var_name);
 			}
 		}
 		return emitter__Transpiler_visit_expr(t, node);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_funccall)) {
-		string func_name = node.name;
-		_option_emitter__TypeTag _t78 = {0};
-		if (_t78 = emitter__get_builtin_return_tag(func_name), _t78.state == 0) {
-			emitter__TypeTag tag = *(emitter__TypeTag*)_t78.data;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_funccall)) {
+		string func_name = node->name;
+		_option_emitter__TypeTag _t83 = {0};
+		if (_t83 = emitter__get_builtin_return_tag(func_name), _t83.state == 0) {
+			emitter__TypeTag tag = *(emitter__TypeTag*)_t83.data;
 			if (tag == emitter__TypeTag__t_int || tag == emitter__TypeTag__t_float || tag == emitter__TypeTag__t_string || tag == emitter__TypeTag__t_bool) {
 				Array_string simple_args = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-				for (int _t79 = 0; _t79 < node.args.len; ++_t79) {
-					ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t79];
-					_option_ast__AstNode_ptr *_t80 = &arg.expr;
-					if (_t80->state != 0) {
+				for (int _t84 = 0; _t84 < node->args.len; ++_t84) {
+					ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t84];
+					_option_ast__AstNode_ptr *_t85 = &arg.expr;
+					if (_t85->state != 0) {
 						builtin___v_panic(_S("Arg missing expr"));
 						VUNREACHABLE();
 					;
 					}
-					ast__AstNode* arg_val = (*(ast__AstNode**)_t80->data);
-					builtin__array_push((array*)&simple_args, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, *arg_val) }));
+					ast__AstNode* arg_val = (*(ast__AstNode**)_t85->data);
+					builtin__array_push((array*)&simple_args, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, arg_val) }));
 				}
 				Array_ast__AstNode arg_nodes = builtin____new_array_with_default(0, 0, sizeof(ast__AstNode), 0);
-				for (int _t82 = 0; _t82 < node.args.len; ++_t82) {
-					ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t82];
-					_option_ast__AstNode_ptr *_t83 = &arg.expr;
-					if (_t83->state != 0) {
+				for (int _t87 = 0; _t87 < node->args.len; ++_t87) {
+					ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t87];
+					_option_ast__AstNode_ptr *_t88 = &arg.expr;
+					if (_t88->state != 0) {
 						builtin___v_panic(_S("Arg missing expr"));
 						VUNREACHABLE();
 					;
 					}
-					ast__AstNode* arg_val = (*(ast__AstNode**)_t83->data);
+					ast__AstNode* arg_val = (*(ast__AstNode**)_t88->data);
 					builtin__array_push((array*)&arg_nodes, _MOV((ast__AstNode[]){ *arg_val }));
 				}
 				string builtin_native = emitter__Transpiler_try_builtin_mapping_native(t, func_name, simple_args, arg_nodes);
@@ -18568,83 +19296,66 @@ VV_LOC string emitter__Transpiler_visit_expr_native_impl(emitter__Transpiler* t,
 				}
 			}
 		}
-		emitter__VarType* _t87 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_return_types), &(string[]){func_name}));
-		_option_emitter__VarType _t86 = {0};
-		if (_t87) {
-			*((emitter__VarType*)&_t86.data) = *((emitter__VarType*)_t87);
+		emitter__VarType* _t92 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_return_types), &(string[]){func_name}));
+		_option_emitter__VarType _t91 = {0};
+		if (_t92) {
+			*((emitter__VarType*)&_t91.data) = *((emitter__VarType*)_t92);
 		} else {
-			_t86.state = 2; _t86.err = builtin___v_error(_S("map key does not exist"));
+			_t91.state = 2; _t91.err = builtin___v_error(_S("map key does not exist"));
 		}
 		
-		if (_t86.state == 0) {
-			emitter__VarType ret_type = (*(emitter__VarType*)_t86.data);
+		if (_t91.state == 0) {
+			emitter__VarType ret_type = (*(emitter__VarType*)_t91.data);
 			GC_reachable_here(&ret_type);
 			if (emitter__VarType_is_scalar(ret_type)) {
-				Array_string arg_strs = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-				for (int _t88 = 0; _t88 < node.args.len; ++_t88) {
-					ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t88];
-					_option_ast__AstNode_ptr *_t89 = &arg.expr;
-					if (_t89->state != 0) {
-						builtin___v_panic(_S("Arg missing expr"));
-						VUNREACHABLE();
-					;
-					}
-					ast__AstNode* arg_val = (*(ast__AstNode**)_t89->data);
-					emitter__VarType arg_typ = emitter__Transpiler_get_expr_type(t, *arg_val);
-					if (emitter__VarType_is_scalar(arg_typ)) {
-						builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_visit_expr_native(t, *arg_val) }));
-					} else {
-						builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, *arg_val) }));
-					}
-				}
 				t->last_expr_type = ret_type;
-				return builtin__string_plus_many(4, _MOV((string[4]){emitter__func_v_name(func_name), _S("("), Array_string_join(arg_strs, _S(", ")), _S(")")}));
+				return emitter__Transpiler_emit_custom_funccall(t, node, func_name, ret_type, true);
 			}
 		}
-			if (_t86.state == 2 && _t86.err._object != _const_none__._object) { builtin___v_free(_t86.err._object); }
+			if (_t91.state == 2 && _t91.err._object != _const_none__._object) { builtin___v_free(_t91.err._object); }
 		return emitter__Transpiler_visit_expr(t, node);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_dir)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_dir)) {
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		return _S("@DIR");
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_file)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_file)) {
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		return _S("@FILE");
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_line)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_line)) {
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		return _S("@LINE.int()");
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_function)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_function)) {
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		return _S("@FN");
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_method)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_method)) {
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		return _S("@METHOD");
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_class)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_class)) {
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		return _S("@STRUCT");
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_namespace)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_namespace)) {
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		string ns = builtin__string_replace(t->current_namespace, _S("\\"), _S("\\\\"));
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("'"), ns, _S("'")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_empty)) {
-		_option_ast__AstNode_ptr *_t101 = &node.expr;
-		if (_t101->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_empty)) {
+		_option_ast__AstNode_ptr *_t102 = &node->expr;
+		if (_t102->state != 0) {
 			builtin___v_panic(_S("Empty missing expr"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* expr_node = (*(ast__AstNode**)_t101->data);
-		emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, *expr_node);
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t102->data);
+		emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		if (emitter__VarType_is_scalar(expr_type)) {
-			string code = emitter__Transpiler_visit_expr_native(t, *expr_node);
+			string code = emitter__Transpiler_visit_expr_native(t, expr_node);
 			switch (expr_type.tag) {
 				case emitter__TypeTag__t_string: {
 					return builtin__string_plus_many(2, _MOV((string[2]){code, _S(" == ''")}));
@@ -18673,26 +19384,26 @@ VV_LOC string emitter__Transpiler_visit_expr_native_impl(emitter__Transpiler* t,
 			}
 			
 		}
-		string expr_str = emitter__Transpiler_visit_expr(t, *expr_node);
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("!rt.is_true("), expr_str, _S(")")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_array_dim_fetch)) {
-		_option_ast__AstNode_ptr *_t108 = &node.var;
-		if (_t108->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_array_dim_fetch)) {
+		_option_ast__AstNode_ptr *_t109 = &node->var;
+		if (_t109->state != 0) {
 			builtin___v_panic(_S("ArrayDimFetch missing var"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* var_node = (*(ast__AstNode**)_t108->data);
-		emitter__VarType var_type = emitter__Transpiler_get_expr_type(t, *var_node);
-		string var_str = emitter__Transpiler_visit_expr(t, *var_node);
-		bool is_native_arr = var_type.is_native_list || var_type.is_native_map;
+		ast__AstNode* var_node = (*(ast__AstNode**)_t109->data);
+		emitter__VarType var_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*var_node);
+		string var_str = emitter__Transpiler_visit_expr(t, var_node);
+		bool is_native_arr = emitter__Transpiler_is_native_array_or_map(*t, (voidptr)&*var_node);
 		if (is_native_arr) {
-			_option_ast__AstNode_ptr _t109 = {0};
-			if (_t109 = node.dim, _t109.state == 0) {
-				ast__AstNode* dim_node = *(ast__AstNode**)_t109.data;
+			_option_ast__AstNode_ptr _t110 = {0};
+			if (_t110 = node->dim, _t110.state == 0) {
+				ast__AstNode* dim_node = *(ast__AstNode**)_t110.data;
 				GC_reachable_here(&dim_node);
-				string dim_str = emitter__Transpiler_visit_expr_native(t, *dim_node);
+				string dim_str = emitter__Transpiler_visit_expr_native(t, dim_node);
 				t->last_expr_type = ((emitter__VarType){.tag = var_type.element_type_tag,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 				return builtin__string_plus_many(4, _MOV((string[4]){var_str, _S("["), dim_str, _S("]")}));
 			} else {
@@ -18702,243 +19413,349 @@ VV_LOC string emitter__Transpiler_visit_expr_native_impl(emitter__Transpiler* t,
 		}
 		return emitter__Transpiler_visit_expr(t, node);
 	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_cast_string)) {
+		_option_ast__AstNode_ptr *_t113 = &node->expr;
+		if (_t113->state != 0) {
+			builtin___v_panic(_S("CastString missing expr"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t113->data);
+		emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
+		if (expr_type.tag == emitter__TypeTag__t_string) {
+			return emitter__Transpiler_visit_expr_native(t, expr_node);
+		}
+		if (expr_type.tag == emitter__TypeTag__t_int || expr_type.tag == emitter__TypeTag__t_float || expr_type.tag == emitter__TypeTag__t_bool) {
+			string native_expr = emitter__Transpiler_visit_expr_native(t, expr_node);
+			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			return builtin__string_plus_many(2, _MOV((string[2]){native_expr, _S(".str()")}));
+		}
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
+		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("("), expr_str, _S(").str()")}));
+	}
 	else {
 		return emitter__Transpiler_visit_expr(t, node);
 	}
 	return (string){.str=(byteptr)"", .is_lit=1};
 }
-VV_LOC string emitter__Transpiler_native_to_str(emitter__Transpiler* t, ast__AstNode node, emitter__VarType typ) {
+VV_LOC string emitter__Transpiler_native_to_str(emitter__Transpiler* t, ast__AstNode* node, emitter__VarType typ) {
 	string code = emitter__Transpiler_visit_expr_native(t, node);
 	if (typ.tag == emitter__TypeTag__t_string) {
 		return code;
 	}
 	return builtin__string_plus_many(2, _MOV((string[2]){code, _S(".str()")}));
 }
-VV_LOC string emitter__Transpiler_emit_binop(emitter__Transpiler* t, ast__AstNode node, string native_op, string rt_fn) {
-	_option_ast__AstNode_ptr *_t1 = &node.left;
+VV_LOC string emitter__Transpiler_emit_binop(emitter__Transpiler* t, ast__AstNode* node, string native_op, string rt_fn) {
+	_option_ast__AstNode_ptr *_t1 = &node->left;
 	if (_t1->state != 0) {
 		builtin___v_panic(builtin__string_plus_many(2, _MOV((string[2]){rt_fn, _S(" missing left")})));
 		VUNREACHABLE();
 	;
 	}
 	ast__AstNode* left = (*(ast__AstNode**)_t1->data);
-	_option_ast__AstNode_ptr *_t2 = &node.right;
+	_option_ast__AstNode_ptr *_t2 = &node->right;
 	if (_t2->state != 0) {
 		builtin___v_panic(builtin__string_plus_many(2, _MOV((string[2]){rt_fn, _S(" missing right")})));
 		VUNREACHABLE();
 	;
 	}
 	ast__AstNode* right = (*(ast__AstNode**)_t2->data);
-	emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, *left);
-	emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, *right);
+	emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*left);
+	emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*right);
 	if (l_type.tag == emitter__TypeTag__t_int && r_type.tag == emitter__TypeTag__t_int) {
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-		string l_code = emitter__Transpiler_visit_expr_native(t, *left);
-		string r_code = emitter__Transpiler_visit_expr_native(t, *right);
+		string l_code = emitter__Transpiler_visit_expr_native(t, left);
+		string r_code = emitter__Transpiler_visit_expr_native(t, right);
 		return builtin__string_plus_many(5, _MOV((string[5]){l_code, _S(" "), native_op, _S(" "), r_code}));
 	}
 	if (l_type.tag == emitter__TypeTag__t_float || r_type.tag == emitter__TypeTag__t_float) {
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_float,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-		string l_code = emitter__Transpiler_visit_expr_native(t, *left);
-		string r_code = emitter__Transpiler_visit_expr_native(t, *right);
+		string l_code = emitter__Transpiler_visit_expr_native(t, left);
+		string r_code = emitter__Transpiler_visit_expr_native(t, right);
 		return builtin__string_plus_many(5, _MOV((string[5]){l_code, _S(" "), native_op, _S(" "), r_code}));
 	}
 	t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-	return builtin__string_plus_many(6, _MOV((string[6]){rt_fn, _S("("), emitter__Transpiler_visit_expr(t, *left), _S(", "), emitter__Transpiler_visit_expr(t, *right), _S(")")}));
+	emitter__VarType old_expect = t->expected_type;
+	t->expected_type = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+	string l_str = emitter__Transpiler_visit_expr(t, left);
+	string r_str = emitter__Transpiler_visit_expr(t, right);
+	t->expected_type = old_expect;
+	return builtin__string_plus_many(6, _MOV((string[6]){rt_fn, _S("("), l_str, _S(", "), r_str, _S(")")}));
 }
-VV_LOC string emitter__Transpiler_emit_comparison(emitter__Transpiler* t, ast__AstNode node, string native_op, string rt_fn) {
-	_option_ast__AstNode_ptr *_t1 = &node.left;
+VV_LOC string emitter__Transpiler_emit_comparison(emitter__Transpiler* t, ast__AstNode* node, string native_op, string rt_fn) {
+	_option_ast__AstNode_ptr *_t1 = &node->left;
 	if (_t1->state != 0) {
 		builtin___v_panic(builtin__string_plus_many(2, _MOV((string[2]){rt_fn, _S(" missing left")})));
 		VUNREACHABLE();
 	;
 	}
 	ast__AstNode* left = (*(ast__AstNode**)_t1->data);
-	_option_ast__AstNode_ptr *_t2 = &node.right;
+	_option_ast__AstNode_ptr *_t2 = &node->right;
 	if (_t2->state != 0) {
 		builtin___v_panic(builtin__string_plus_many(2, _MOV((string[2]){rt_fn, _S(" missing right")})));
 		VUNREACHABLE();
 	;
 	}
 	ast__AstNode* right = (*(ast__AstNode**)_t2->data);
-	emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, *left);
-	emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, *right);
+	emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*left);
+	emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*right);
 	if ((l_type.tag == emitter__TypeTag__t_int || l_type.tag == emitter__TypeTag__t_float) && (r_type.tag == emitter__TypeTag__t_int || r_type.tag == emitter__TypeTag__t_float)) {
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-		string l_code = emitter__Transpiler_visit_expr_native(t, *left);
-		string r_code = emitter__Transpiler_visit_expr_native(t, *right);
+		string l_code = emitter__Transpiler_visit_expr_native(t, left);
+		string r_code = emitter__Transpiler_visit_expr_native(t, right);
 		return builtin__string_plus_many(7, _MOV((string[7]){_S("rt.new_bool("), l_code, _S(" "), native_op, _S(" "), r_code, _S(")")}));
 	}
 	t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-	return builtin__string_plus_many(6, _MOV((string[6]){rt_fn, _S("("), emitter__Transpiler_visit_expr(t, *left), _S(", "), emitter__Transpiler_visit_expr(t, *right), _S(")")}));
+	emitter__CallArgResult l_res = emitter__Transpiler_compile_arg(t, (voidptr)&*left, ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,}));
+	emitter__CallArgResult r_res = emitter__Transpiler_compile_arg(t, (voidptr)&*right, ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,}));
+	return builtin__string_plus_many(6, _MOV((string[6]){rt_fn, _S("("), l_res.code, _S(", "), r_res.code, _S(")")}));
 }
-VV_LOC string emitter__Transpiler_emit_bitwise(emitter__Transpiler* t, ast__AstNode node, string native_op, string rt_fn) {
-	_option_ast__AstNode_ptr *_t1 = &node.left;
+VV_LOC string emitter__Transpiler_emit_bitwise(emitter__Transpiler* t, ast__AstNode* node, string native_op, string rt_fn) {
+	_option_ast__AstNode_ptr *_t1 = &node->left;
 	if (_t1->state != 0) {
 		builtin___v_panic(builtin__string_plus_many(2, _MOV((string[2]){rt_fn, _S(" missing left")})));
 		VUNREACHABLE();
 	;
 	}
 	ast__AstNode* left = (*(ast__AstNode**)_t1->data);
-	_option_ast__AstNode_ptr *_t2 = &node.right;
+	_option_ast__AstNode_ptr *_t2 = &node->right;
 	if (_t2->state != 0) {
 		builtin___v_panic(builtin__string_plus_many(2, _MOV((string[2]){rt_fn, _S(" missing right")})));
 		VUNREACHABLE();
 	;
 	}
 	ast__AstNode* right = (*(ast__AstNode**)_t2->data);
-	emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, *left);
-	emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, *right);
+	emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*left);
+	emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*right);
 	if (l_type.tag == emitter__TypeTag__t_int && r_type.tag == emitter__TypeTag__t_int) {
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-		string l_code = emitter__Transpiler_visit_expr_native(t, *left);
-		string r_code = emitter__Transpiler_visit_expr_native(t, *right);
+		string l_code = emitter__Transpiler_visit_expr_native(t, left);
+		string r_code = emitter__Transpiler_visit_expr_native(t, right);
 		return builtin__string_plus_many(5, _MOV((string[5]){l_code, _S(" "), native_op, _S(" "), r_code}));
 	}
 	t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-	return builtin__string_plus_many(6, _MOV((string[6]){rt_fn, _S("("), emitter__Transpiler_visit_expr(t, *left), _S(", "), emitter__Transpiler_visit_expr(t, *right), _S(")")}));
+	emitter__CallArgResult l_res = emitter__Transpiler_compile_arg(t, (voidptr)&*left, ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,}));
+	emitter__CallArgResult r_res = emitter__Transpiler_compile_arg(t, (voidptr)&*right, ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,}));
+	return builtin__string_plus_many(6, _MOV((string[6]){rt_fn, _S("("), l_res.code, _S(", "), r_res.code, _S(")")}));
 }
-VV_LOC string emitter__Transpiler_emit_native_condition(emitter__Transpiler* t, ast__AstNode node) {
+VV_LOC string emitter__Transpiler_emit_native_condition(emitter__Transpiler* t, ast__AstNode* node) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_greater) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_smaller) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_greater_equal) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_smaller_equal) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_equal) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_identical)) {
-		_option_ast__AstNode_ptr *_t1 = &node.left;
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_greater) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_smaller) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_greater_equal) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_smaller_equal) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_equal) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_identical)) {
+		_option_ast__AstNode_ptr *_t1 = &node->left;
 		if (_t1->state != 0) {
 			return _S("");
 		}
 		ast__AstNode* left = (*(ast__AstNode**)_t1->data);
-		_option_ast__AstNode_ptr *_t3 = &node.right;
+		_option_ast__AstNode_ptr *_t3 = &node->right;
 		if (_t3->state != 0) {
 			return _S("");
 		}
 		ast__AstNode* right = (*(ast__AstNode**)_t3->data);
-		emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, *left);
-		emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, *right);
+		emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*left);
+		emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*right);
 		if ((l_type.tag == emitter__TypeTag__t_int || l_type.tag == emitter__TypeTag__t_float) && (r_type.tag == emitter__TypeTag__t_int || r_type.tag == emitter__TypeTag__t_float)) {
-			string op = emitter__Transpiler_binop_native_symbol(*t, node.node_type);
-			string l_code = emitter__Transpiler_visit_expr_native(t, *left);
-			string r_code = emitter__Transpiler_visit_expr_native(t, *right);
+			string op = emitter__Transpiler_binop_native_symbol(*t, node->node_type);
+			string l_code = emitter__Transpiler_visit_expr_native(t, left);
+			string r_code = emitter__Transpiler_visit_expr_native(t, right);
 			return builtin__string_plus_many(5, _MOV((string[5]){l_code, _S(" "), op, _S(" "), r_code}));
 		}
 		return _S("");
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_bool_and) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_logical_and)) {
-		_option_ast__AstNode_ptr *_t7 = &node.left;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_bool_and) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_logical_and)) {
+		_option_ast__AstNode_ptr *_t7 = &node->left;
 		if (_t7->state != 0) {
 			return _S("");
 		}
 		ast__AstNode* l_node = (*(ast__AstNode**)_t7->data);
-		_option_ast__AstNode_ptr *_t9 = &node.right;
+		_option_ast__AstNode_ptr *_t9 = &node->right;
 		if (_t9->state != 0) {
 			return _S("");
 		}
 		ast__AstNode* r_node = (*(ast__AstNode**)_t9->data);
-		string l = emitter__Transpiler_emit_native_condition(t, *l_node);
-		string r = emitter__Transpiler_emit_native_condition(t, *r_node);
-		if ((l).len != 0 && (r).len != 0) {
-			return builtin__string_plus_many(3, _MOV((string[3]){l, _S(" && "), r}));
+		string l_native = emitter__Transpiler_emit_native_condition(t, (voidptr)&*l_node);
+		string r_native = emitter__Transpiler_emit_native_condition(t, (voidptr)&*r_node);
+		if ((l_native).len != 0 && (r_native).len != 0) {
+			string l_str = (builtin__string_contains(l_native, _S(" || ")) ? (builtin__string_plus_many(3, _MOV((string[3]){_S("("), l_native, _S(")")}))) : (l_native));
+			string r_str = (builtin__string_contains(r_native, _S(" || ")) ? (builtin__string_plus_many(3, _MOV((string[3]){_S("("), r_native, _S(")")}))) : (r_native));
+			return builtin__string_plus_many(3, _MOV((string[3]){l_str, _S(" && "), r_str}));
 		}
-		return _S("");
+		string l_cond = ((l_native).len != 0 ? (l_native) : (emitter__Transpiler_get_native_bool_condition(t, (voidptr)&*l_node)));
+		string r_cond = ((r_native).len != 0 ? (r_native) : (emitter__Transpiler_get_native_bool_condition(t, (voidptr)&*r_node)));
+		if (builtin__string_contains(l_cond, _S(" || "))) {
+			l_cond = builtin__string_plus_many(3, _MOV((string[3]){_S("("), l_cond, _S(")")}));
+		}
+		if (builtin__string_contains(r_cond, _S(" || "))) {
+			r_cond = builtin__string_plus_many(3, _MOV((string[3]){_S("("), r_cond, _S(")")}));
+		}
+		return builtin__string_plus_many(3, _MOV((string[3]){l_cond, _S(" && "), r_cond}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_bool_or) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_logical_or)) {
-		_option_ast__AstNode_ptr *_t13 = &node.left;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_bool_or) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_logical_or)) {
+		_option_ast__AstNode_ptr *_t13 = &node->left;
 		if (_t13->state != 0) {
 			return _S("");
 		}
 		ast__AstNode* l_node = (*(ast__AstNode**)_t13->data);
-		_option_ast__AstNode_ptr *_t15 = &node.right;
+		_option_ast__AstNode_ptr *_t15 = &node->right;
 		if (_t15->state != 0) {
 			return _S("");
 		}
 		ast__AstNode* r_node = (*(ast__AstNode**)_t15->data);
-		string l = emitter__Transpiler_emit_native_condition(t, *l_node);
-		string r = emitter__Transpiler_emit_native_condition(t, *r_node);
-		if ((l).len != 0 && (r).len != 0) {
-			return builtin__string_plus_many(3, _MOV((string[3]){l, _S(" || "), r}));
+		string l_native = emitter__Transpiler_emit_native_condition(t, (voidptr)&*l_node);
+		string r_native = emitter__Transpiler_emit_native_condition(t, (voidptr)&*r_node);
+		if ((l_native).len != 0 && (r_native).len != 0) {
+			string l_str = (builtin__string_contains(l_native, _S(" && ")) ? (builtin__string_plus_many(3, _MOV((string[3]){_S("("), l_native, _S(")")}))) : (l_native));
+			string r_str = (builtin__string_contains(r_native, _S(" && ")) ? (builtin__string_plus_many(3, _MOV((string[3]){_S("("), r_native, _S(")")}))) : (r_native));
+			return builtin__string_plus_many(3, _MOV((string[3]){l_str, _S(" || "), r_str}));
 		}
-		return _S("");
+		string l_cond = ((l_native).len != 0 ? (l_native) : (emitter__Transpiler_get_native_bool_condition(t, (voidptr)&*l_node)));
+		string r_cond = ((r_native).len != 0 ? (r_native) : (emitter__Transpiler_get_native_bool_condition(t, (voidptr)&*r_node)));
+		if (builtin__string_contains(l_cond, _S(" && "))) {
+			l_cond = builtin__string_plus_many(3, _MOV((string[3]){_S("("), l_cond, _S(")")}));
+		}
+		if (builtin__string_contains(r_cond, _S(" && "))) {
+			r_cond = builtin__string_plus_many(3, _MOV((string[3]){_S("("), r_cond, _S(")")}));
+		}
+		return builtin__string_plus_many(3, _MOV((string[3]){l_cond, _S(" || "), r_cond}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_boolean_not)) {
-		_option_ast__AstNode_ptr *_t19 = &node.expr;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_boolean_not)) {
+		_option_ast__AstNode_ptr *_t19 = &node->expr;
 		if (_t19->state != 0) {
 			return _S("");
 		}
 		ast__AstNode* expr_node = (*(ast__AstNode**)_t19->data);
-		string inner = emitter__Transpiler_emit_native_condition(t, *expr_node);
+		string inner = emitter__Transpiler_emit_native_condition(t, (voidptr)&*expr_node);
 		if ((inner).len != 0) {
 			return builtin__string_plus_many(3, _MOV((string[3]){_S("!("), inner, _S(")")}));
 		}
 		if (builtin__fast_string_eq(expr_node->node_type, _S("Expr_FuncCall"))) {
-			emitter__VarType* _t23 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_return_types), &(string[]){expr_node->name}));
-			_option_emitter__VarType _t22 = {0};
-			if (_t23) {
-				*((emitter__VarType*)&_t22.data) = *((emitter__VarType*)_t23);
+			Array_string php_bool_funcs = builtin__new_array_from_c_array(17, 17, sizeof(string), _MOV((string[17]){
+					_S("is_string"), _S("is_int"), _S("is_integer"), _S("is_long"), _S("is_float"), _S("is_double"), _S("is_real"), _S("is_bool"), _S("is_null"),
+					_S("is_array"), _S("is_object"), _S("is_numeric"), _S("is_nan"), _S("is_finite"), _S("is_infinite"), _S("is_callable"), _S("is_countable")}));
+			if ((Array_string_contains(php_bool_funcs, expr_node->name))) {
+				return builtin__string_plus_many(3, _MOV((string[3]){_S("!("), emitter__Transpiler_visit_expr_native(t, expr_node), _S(")")}));
+			}
+			emitter__VarType* _t24 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_return_types), &(string[]){expr_node->name}));
+			_option_emitter__VarType _t23 = {0};
+			if (_t24) {
+				*((emitter__VarType*)&_t23.data) = *((emitter__VarType*)_t24);
 			} else {
-				_t22.state = 2; _t22.err = builtin___v_error(_S("map key does not exist"));
+				_t23.state = 2; _t23.err = builtin___v_error(_S("map key does not exist"));
 			}
 			
-			if (_t22.state == 0) {
-				emitter__VarType ret_type = (*(emitter__VarType*)_t22.data);
+			if (_t23.state == 0) {
+				emitter__VarType ret_type = (*(emitter__VarType*)_t23.data);
 				GC_reachable_here(&ret_type);
 				if (ret_type.tag == emitter__TypeTag__t_bool) {
-					return builtin__string_plus_many(3, _MOV((string[3]){_S("!("), emitter__Transpiler_visit_expr_native(t, *expr_node), _S(")")}));
+					return builtin__string_plus_many(3, _MOV((string[3]){_S("!("), emitter__Transpiler_visit_expr_native(t, expr_node), _S(")")}));
 				}
 			}
-				if (_t22.state == 2 && _t22.err._object != _const_none__._object) { builtin___v_free(_t22.err._object); }
+				if (_t23.state == 2 && _t23.err._object != _const_none__._object) { builtin___v_free(_t23.err._object); }
 		}
 		if (builtin__fast_string_eq(expr_node->node_type, _S("Expr_MethodCall"))) {
-			_option_ast__AstNode_ptr *_t25 = &expr_node->var;
-			if (_t25->state != 0) {
+			_option_ast__AstNode_ptr *_t26 = &expr_node->var;
+			if (_t26->state != 0) {
 				return _S("");
 			}
-			ast__AstNode* obj_var_node = (*(ast__AstNode**)_t25->data);
+			ast__AstNode* obj_var_node = (*(ast__AstNode**)_t26->data);
 			if (builtin__fast_string_eq(obj_var_node->node_type, _S("Expr_Variable"))) {
-				emitter__VarType* _t28 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
-				_option_emitter__VarType _t27 = {0};
-				if (_t28) {
-					*((emitter__VarType*)&_t27.data) = *((emitter__VarType*)_t28);
+				emitter__VarType* _t29 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
+				_option_emitter__VarType _t28 = {0};
+				if (_t29) {
+					*((emitter__VarType*)&_t28.data) = *((emitter__VarType*)_t29);
 				} else {
-					_t27.state = 2; _t27.err = builtin___v_error(_S("map key does not exist"));
+					_t28.state = 2; _t28.err = builtin___v_error(_S("map key does not exist"));
 				}
 				;
-				if (_t27.state != 0) {
-					*(emitter__VarType*) _t27.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+				if (_t28.state != 0) {
+					*(emitter__VarType*) _t28.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 				}
 				
-				emitter__VarType obj_type = (*(emitter__VarType*)_t27.data);
+				emitter__VarType obj_type = (*(emitter__VarType*)_t28.data);
 				if (builtin__fast_string_eq(obj_var_node->name, _S("this"))) {
 					obj_type = ((emitter__VarType){.tag = emitter__TypeTag__t_object,.class_name = t->current_class,.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 				}
 				if (emitter__VarType_is_object(obj_type)) {
 					emitter__VarType ret_type = emitter__Transpiler_get_method_return_type(t, obj_type.class_name, expr_node->name);
 					if (ret_type.tag == emitter__TypeTag__t_bool) {
-						return builtin__string_plus_many(3, _MOV((string[3]){_S("!("), emitter__Transpiler_visit_expr_native(t, *expr_node), _S(")")}));
+						return builtin__string_plus_many(3, _MOV((string[3]){_S("!("), emitter__Transpiler_visit_expr_native(t, expr_node), _S(")")}));
 					}
 				}
 			}
 		}
 		return _S("");
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_isset)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_isset)) {
 		Array_string checks = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-		for (int _t31 = 0; _t31 < node.vars.len; ++_t31) {
-			ast__AstNode v = ((ast__AstNode*)node.vars.data)[_t31];
+		for (int _t32 = 0; _t32 < node->vars.len; ++_t32) {
+			ast__AstNode v = ((ast__AstNode*)node->vars.data)[_t32];
 			if (builtin__fast_string_eq(v.node_type, _S("Expr_ArrayDimFetch"))) {
-				_option_ast__AstNode_ptr *_t32 = &v.var;
-				if (_t32->state != 0) {
+				_option_ast__AstNode_ptr *_t33 = &v.var;
+				if (_t33->state != 0) {
 					return _S("");
 				}
-				ast__AstNode* arr_node = (*(ast__AstNode**)_t32->data);
-				_option_ast__AstNode_ptr *_t34 = &v.dim;
-				if (_t34->state != 0) {
+				ast__AstNode* arr_node = (*(ast__AstNode**)_t33->data);
+				_option_ast__AstNode_ptr *_t35 = &v.dim;
+				if (_t35->state != 0) {
 					return _S("");
 				}
-				ast__AstNode* dim_node = (*(ast__AstNode**)_t34->data);
-				string arr_str = emitter__Transpiler_visit_expr(t, *arr_node);
-				string dim_str = emitter__Transpiler_visit_expr(t, *dim_node);
-				builtin__array_push((array*)&checks, _MOV((string[]){ builtin__string_plus_many(4, _MOV((string[4]){arr_str, _S(".array_isset("), dim_str, _S(")")})) }));
+				ast__AstNode* dim_node = (*(ast__AstNode**)_t35->data);
+				string arr_str = emitter__Transpiler_visit_expr(t, arr_node);
+				emitter__VarType arr_typ = emitter__Transpiler_get_expr_type(t, (voidptr)&*arr_node);
+				if (emitter__VarType_is_object(arr_typ) && emitter__Transpiler_class_implements(t, arr_typ.class_name, _S("ArrayAccess"))) {
+					string dim_str = emitter__Transpiler_visit_expr(t, dim_node);
+					bool is_ret_bool = false;
+					for (int _t37 = 0; _t37 < t->classes.len; ++_t37) {
+						emitter__ClassInfo cls = ((emitter__ClassInfo*)t->classes.data)[_t37];
+						if (builtin__string__eq(builtin__string_to_lower(cls.name), builtin__string_to_lower(arr_typ.class_name))) {
+							emitter__VarType* _t39 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, cls.return_types), &(string[]){_S("offsetExists")}));
+							_option_emitter__VarType _t38 = {0};
+							if (_t39) {
+								*((emitter__VarType*)&_t38.data) = *((emitter__VarType*)_t39);
+							} else {
+								_t38.state = 2; _t38.err = builtin___v_error(_S("map key does not exist"));
+							}
+							
+							if (_t38.state == 0) {
+								emitter__VarType ret_typ = (*(emitter__VarType*)_t38.data);
+								GC_reachable_here(&ret_typ);
+								if (ret_typ.tag == emitter__TypeTag__t_bool) {
+									is_ret_bool = true;
+								}
+							}
+								if (_t38.state == 2 && _t38.err._object != _const_none__._object) { builtin___v_free(_t38.err._object); }
+							break;
+						}
+					}
+					if (is_ret_bool) {
+						builtin__array_push((array*)&checks, _MOV((string[]){ builtin__string_plus_many(4, _MOV((string[4]){arr_str, _S(".offsetexists("), dim_str, _S(")")})) }));
+					} else {
+						builtin__array_push((array*)&checks, _MOV((string[]){ builtin__string_plus_many(5, _MOV((string[5]){_S("rt.is_true("), arr_str, _S(".offsetexists("), dim_str, _S("))")})) }));
+					}
+				} else if (emitter__Transpiler_is_native_array_or_map(*t, (voidptr)&*arr_node)) {
+					emitter__VarType dim_typ = emitter__Transpiler_get_expr_type(t, (voidptr)&*dim_node);
+					string dim_native_str = (emitter__VarType_is_scalar(dim_typ) ? (emitter__Transpiler_visit_expr_native(t, dim_node)) : (emitter__Transpiler_visit_expr(t, dim_node)));
+					if (arr_typ.is_native_map) {
+						builtin__array_push((array*)&checks, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){dim_native_str, _S(" in "), arr_str})) }));
+					} else {
+						builtin__array_push((array*)&checks, _MOV((string[]){ builtin__string_plus_many(6, _MOV((string[6]){dim_native_str, _S(" >= 0 && "), dim_native_str, _S(" < "), arr_str, _S(".len")})) }));
+					}
+				} else {
+					string dim_str = emitter__Transpiler_visit_expr(t, dim_node);
+					builtin__array_push((array*)&checks, _MOV((string[]){ builtin__string_plus_many(4, _MOV((string[4]){arr_str, _S(".array_isset("), dim_str, _S(")")})) }));
+				}
 			} else {
-				string var_str = emitter__Transpiler_visit_expr(t, v);
-				builtin__array_push((array*)&checks, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){_S("!("), var_str, _S(").is_null()")})) }));
+				string var_str = emitter__Transpiler_visit_expr(t, (voidptr)&v);
+				bool is_native = false;
+				if (builtin__fast_string_eq(v.node_type, _S("Expr_Variable"))) {
+					emitter__VarType v_type = emitter__Transpiler_get_expr_type(t, (voidptr)&v);
+					is_native = emitter__VarType_is_scalar(v_type) || v_type.is_native_list || v_type.is_native_map;
+				}
+				if (is_native) {
+					builtin__array_push((array*)&checks, _MOV((string[]){ _S("true") }));
+				} else {
+					builtin__array_push((array*)&checks, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){_S("!("), var_str, _S(").is_null()")})) }));
+				}
 			}
 		}
 		if (checks.len == 0) {
@@ -18946,31 +19763,51 @@ VV_LOC string emitter__Transpiler_emit_native_condition(emitter__Transpiler* t, 
 		}
 		return Array_string_join(checks, _S(" && "));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_method_call)) {
-		_option_ast__AstNode_ptr *_t40 = &node.var;
-		if (_t40->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_method_call)) {
+		_option_ast__AstNode_ptr *_t49 = &node->var;
+		if (_t49->state != 0) {
 			return _S("");
 		}
-		ast__AstNode* obj_var_node = (*(ast__AstNode**)_t40->data);
+		ast__AstNode* obj_var_node = (*(ast__AstNode**)_t49->data);
+		Array_string phpval_bool_methods = builtin__new_array_from_c_array(17, 17, sizeof(string), _MOV((string[17]){
+				_S("is_string"), _S("is_int"), _S("is_integer"), _S("is_long"), _S("is_float"), _S("is_double"), _S("is_real"), _S("is_bool"), _S("is_null"),
+				_S("is_array"), _S("is_object"), _S("is_numeric"), _S("is_nan"), _S("is_finite"), _S("is_infinite"), _S("is_callable"), _S("is_countable")}));
+		if ((Array_string_contains(phpval_bool_methods, node->name))) {
+			string obj_str = emitter__Transpiler_visit_expr(t, obj_var_node);
+			Array_string arg_strs = builtin____new_array_with_default(0, 0, sizeof(string), 0);
+			for (int _t51 = 0; _t51 < node->args.len; ++_t51) {
+				ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t51];
+				_option_ast__AstNode_ptr *_t52 = &arg.expr;
+				if (_t52->state != 0) {
+					continue;
+				}
+				ast__AstNode* arg_val = (*(ast__AstNode**)_t52->data);
+				builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, (voidptr)&*arg_val) }));
+			}
+			if (arg_strs.len == 0) {
+				return builtin__string_plus_many(4, _MOV((string[4]){obj_str, _S("."), node->name, _S("()")}));
+			}
+			return builtin__string_plus_many(6, _MOV((string[6]){obj_str, _S("."), node->name, _S("("), Array_string_join(arg_strs, _S(", ")), _S(")")}));
+		}
 		if (builtin__fast_string_eq(obj_var_node->node_type, _S("Expr_Variable"))) {
-			emitter__VarType* _t43 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
-			_option_emitter__VarType _t42 = {0};
-			if (_t43) {
-				*((emitter__VarType*)&_t42.data) = *((emitter__VarType*)_t43);
+			emitter__VarType* _t57 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
+			_option_emitter__VarType _t56 = {0};
+			if (_t57) {
+				*((emitter__VarType*)&_t56.data) = *((emitter__VarType*)_t57);
 			} else {
-				_t42.state = 2; _t42.err = builtin___v_error(_S("map key does not exist"));
+				_t56.state = 2; _t56.err = builtin___v_error(_S("map key does not exist"));
 			}
 			;
-			if (_t42.state != 0) {
-				*(emitter__VarType*) _t42.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			if (_t56.state != 0) {
+				*(emitter__VarType*) _t56.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			}
 			
-			emitter__VarType obj_type = (*(emitter__VarType*)_t42.data);
+			emitter__VarType obj_type = (*(emitter__VarType*)_t56.data);
 			if (builtin__fast_string_eq(obj_var_node->name, _S("this"))) {
 				obj_type = ((emitter__VarType){.tag = emitter__TypeTag__t_object,.class_name = t->current_class,.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			}
 			if (emitter__VarType_is_object(obj_type)) {
-				emitter__VarType ret_type = emitter__Transpiler_get_method_return_type(t, obj_type.class_name, node.name);
+				emitter__VarType ret_type = emitter__Transpiler_get_method_return_type(t, obj_type.class_name, node->name);
 				if (ret_type.tag == emitter__TypeTag__t_bool) {
 					return emitter__Transpiler_visit_expr_native(t, node);
 				}
@@ -18978,27 +19815,59 @@ VV_LOC string emitter__Transpiler_emit_native_condition(emitter__Transpiler* t, 
 		}
 		return _S("");
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_instanceof)) {
-		_option_ast__AstNode_ptr *_t46 = &node.expr;
-		if (_t46->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_property_fetch)) {
+		_option_ast__AstNode_ptr *_t60 = &node->var;
+		if (_t60->state != 0) {
 			return _S("");
 		}
-		ast__AstNode* expr_node = (*(ast__AstNode**)_t46->data);
-		string resolved_class = emitter__Transpiler_resolve_class_name(*t, node.class_name);
-		if (builtin__fast_string_eq(expr_node->node_type, _S("Expr_Variable"))) {
-			emitter__VarType* _t49 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){expr_node->name}));
-			_option_emitter__VarType _t48 = {0};
-			if (_t49) {
-				*((emitter__VarType*)&_t48.data) = *((emitter__VarType*)_t49);
+		ast__AstNode* obj_var_node = (*(ast__AstNode**)_t60->data);
+		if (builtin__fast_string_eq(obj_var_node->node_type, _S("Expr_Variable"))) {
+			emitter__VarType* _t63 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
+			_option_emitter__VarType _t62 = {0};
+			if (_t63) {
+				*((emitter__VarType*)&_t62.data) = *((emitter__VarType*)_t63);
 			} else {
-				_t48.state = 2; _t48.err = builtin___v_error(_S("map key does not exist"));
+				_t62.state = 2; _t62.err = builtin___v_error(_S("map key does not exist"));
 			}
 			;
-			if (_t48.state != 0) {
-				*(emitter__VarType*) _t48.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			if (_t62.state != 0) {
+				*(emitter__VarType*) _t62.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			}
 			
-			emitter__VarType obj_type = (*(emitter__VarType*)_t48.data);
+			emitter__VarType obj_type = (*(emitter__VarType*)_t62.data);
+			if (builtin__fast_string_eq(obj_var_node->name, _S("this"))) {
+				obj_type = ((emitter__VarType){.tag = emitter__TypeTag__t_object,.class_name = t->current_class,.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			}
+			if (emitter__VarType_is_object(obj_type)) {
+				emitter__VarType prop_type = emitter__Transpiler_get_class_prop_type(t, obj_type.class_name, node->name);
+				if (prop_type.tag == emitter__TypeTag__t_bool) {
+					return emitter__Transpiler_visit_expr_native(t, node);
+				}
+			}
+		}
+		return _S("");
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_instanceof)) {
+		_option_ast__AstNode_ptr *_t66 = &node->expr;
+		if (_t66->state != 0) {
+			return _S("");
+		}
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t66->data);
+		string resolved_class = emitter__Transpiler_resolve_class_name(*t, node->class_name);
+		if (builtin__fast_string_eq(expr_node->node_type, _S("Expr_Variable"))) {
+			emitter__VarType* _t69 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){expr_node->name}));
+			_option_emitter__VarType _t68 = {0};
+			if (_t69) {
+				*((emitter__VarType*)&_t68.data) = *((emitter__VarType*)_t69);
+			} else {
+				_t68.state = 2; _t68.err = builtin___v_error(_S("map key does not exist"));
+			}
+			;
+			if (_t68.state != 0) {
+				*(emitter__VarType*) _t68.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			}
+			
+			emitter__VarType obj_type = (*(emitter__VarType*)_t68.data);
 			if (emitter__VarType_is_object(obj_type)) {
 				if (emitter__Transpiler_class_implements(t, obj_type.class_name, resolved_class)) {
 					return _S("true");
@@ -19010,59 +19879,59 @@ VV_LOC string emitter__Transpiler_emit_native_condition(emitter__Transpiler* t, 
 		}
 		return _S("");
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_const)) {
-		string _t53 = builtin__string_to_lower(node.name);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_const)) {
+		string _t73 = builtin__string_to_lower(node->name);
 		
-		if (_SLIT_EQ(_t53.str, _t53.len, "true")) {
+		if (_SLIT_EQ(_t73.str, _t73.len, "true")) {
 			return _S("true");
 		}
-		else if (_SLIT_EQ(_t53.str, _t53.len, "false")) {
+		else if (_SLIT_EQ(_t73.str, _t73.len, "false")) {
 			return _S("false");
 		}
 		else {
 			return _S("");
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_variable)) {
-		emitter__VarType* _t58 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){node.name}));
-		_option_emitter__VarType _t57 = {0};
-		if (_t58) {
-			*((emitter__VarType*)&_t57.data) = *((emitter__VarType*)_t58);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_variable)) {
+		emitter__VarType* _t78 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){node->name}));
+		_option_emitter__VarType _t77 = {0};
+		if (_t78) {
+			*((emitter__VarType*)&_t77.data) = *((emitter__VarType*)_t78);
 		} else {
-			_t57.state = 2; _t57.err = builtin___v_error(_S("map key does not exist"));
+			_t77.state = 2; _t77.err = builtin___v_error(_S("map key does not exist"));
 		}
 		;
-		if (_t57.state != 0) {
-			*(emitter__VarType*) _t57.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		if (_t77.state != 0) {
+			*(emitter__VarType*) _t77.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
 		
-		emitter__VarType typ = (*(emitter__VarType*)_t57.data);
+		emitter__VarType typ = (*(emitter__VarType*)_t77.data);
 
 		if (typ.tag == (emitter__TypeTag__t_int)) {
-			return builtin__string_plus_many(3, _MOV((string[3]){_S("var_"), node.name, _S(" != 0")}));
+			return builtin__string_plus_many(3, _MOV((string[3]){_S("var_"), node->name, _S(" != 0")}));
 		}
 		else if (typ.tag == (emitter__TypeTag__t_float)) {
-			return builtin__string_plus_many(3, _MOV((string[3]){_S("var_"), node.name, _S(" != 0.0")}));
+			return builtin__string_plus_many(3, _MOV((string[3]){_S("var_"), node->name, _S(" != 0.0")}));
 		}
 		else if (typ.tag == (emitter__TypeTag__t_bool)) {
-			return builtin__string_plus_many(2, _MOV((string[2]){_S("var_"), node.name}));
+			return builtin__string_plus_many(2, _MOV((string[2]){_S("var_"), node->name}));
 		}
 		else if (typ.tag == (emitter__TypeTag__t_string)) {
-			return builtin__string_plus_many(5, _MOV((string[5]){_S("var_"), node.name, _S(".len > 0 && var_"), node.name, _S(" != '0'")}));
+			return builtin__string_plus_many(5, _MOV((string[5]){_S("var_"), node->name, _S(".len > 0 && var_"), node->name, _S(" != '0'")}));
 		}
 		else {
 			return _S("");
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_empty)) {
-		_option_ast__AstNode_ptr *_t64 = &node.expr;
-		if (_t64->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_empty)) {
+		_option_ast__AstNode_ptr *_t84 = &node->expr;
+		if (_t84->state != 0) {
 			return _S("");
 		}
-		ast__AstNode* expr_node = (*(ast__AstNode**)_t64->data);
-		emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, *expr_node);
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t84->data);
+		emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
 		if (emitter__VarType_is_scalar(expr_type)) {
-			string code = emitter__Transpiler_visit_expr_native(t, *expr_node);
+			string code = emitter__Transpiler_visit_expr_native(t, expr_node);
 			switch (expr_type.tag) {
 				case emitter__TypeTag__t_string: {
 					return builtin__string_plus_many(2, _MOV((string[2]){code, _S(" == ''")}));
@@ -19091,7 +19960,7 @@ VV_LOC string emitter__Transpiler_emit_native_condition(emitter__Transpiler* t, 
 			}
 			
 		}
-		string expr_str = emitter__Transpiler_visit_expr(t, *expr_node);
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("!rt.is_true("), expr_str, _S(")")}));
 	}
 	else {
@@ -19099,30 +19968,55 @@ VV_LOC string emitter__Transpiler_emit_native_condition(emitter__Transpiler* t, 
 	}
 	return (string){.str=(byteptr)"", .is_lit=1};
 }
-VV_LOC string emitter__Transpiler_get_native_bool_condition(emitter__Transpiler* t, ast__AstNode node) {
+VV_LOC string emitter__Transpiler_get_native_bool_condition(emitter__Transpiler* t, ast__AstNode* node) {
 	string native = emitter__Transpiler_emit_native_condition(t, node);
 	if ((native).len != 0) {
 		return native;
 	}
-	if (builtin__fast_string_eq(node.node_type, _S("Expr_FuncCall"))) {
-		emitter__VarType* _t3 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_return_types), &(string[]){node.name}));
-		_option_emitter__VarType _t2 = {0};
-		if (_t3) {
-			*((emitter__VarType*)&_t2.data) = *((emitter__VarType*)_t3);
+	if (builtin__fast_string_eq(node->node_type, _S("Expr_FuncCall"))) {
+		Array_string php_bool_funcs = builtin__new_array_from_c_array(19, 19, sizeof(string), _MOV((string[19]){
+				_S("is_string"), _S("is_int"), _S("is_integer"), _S("is_long"), _S("is_float"), _S("is_double"), _S("is_real"), _S("is_bool"), _S("is_null"),
+				_S("is_array"), _S("is_object"), _S("is_numeric"), _S("is_nan"), _S("is_finite"), _S("is_infinite"), _S("is_callable"), _S("is_countable"),
+				_S("isset"), _S("empty")}));
+		if ((Array_string_contains(php_bool_funcs, node->name))) {
+			return emitter__Transpiler_visit_expr_native(t, node);
+		}
+		emitter__VarType* _t4 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_return_types), &(string[]){node->name}));
+		_option_emitter__VarType _t3 = {0};
+		if (_t4) {
+			*((emitter__VarType*)&_t3.data) = *((emitter__VarType*)_t4);
 		} else {
-			_t2.state = 2; _t2.err = builtin___v_error(_S("map key does not exist"));
+			_t3.state = 2; _t3.err = builtin___v_error(_S("map key does not exist"));
 		}
 		
-		if (_t2.state == 0) {
-			emitter__VarType ret_type = (*(emitter__VarType*)_t2.data);
+		if (_t3.state == 0) {
+			emitter__VarType ret_type = (*(emitter__VarType*)_t3.data);
 			GC_reachable_here(&ret_type);
 			if (ret_type.tag == emitter__TypeTag__t_bool) {
 				return emitter__Transpiler_visit_expr_native(t, node);
 			}
 		}
-			if (_t2.state == 2 && _t2.err._object != _const_none__._object) { builtin___v_free(_t2.err._object); }
+			if (_t3.state == 2 && _t3.err._object != _const_none__._object) { builtin___v_free(_t3.err._object); }
 	}
-	return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.is_true("), emitter__Transpiler_visit_expr(t, node), _S(")")}));
+	string expr_str = emitter__Transpiler_visit_expr(t, node);
+	emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, node);
+	if (builtin__string_starts_with(expr_str, _S("rt.new_"))) {
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.is_true("), expr_str, _S(")")}));
+	}
+
+	if (expr_type.tag == (emitter__TypeTag__t_bool)) {
+		return expr_str;
+	}
+	else if (expr_type.tag == (emitter__TypeTag__t_int)) {
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("("), expr_str, _S(") != 0")}));
+	}
+	else if (expr_type.tag == (emitter__TypeTag__t_float)) {
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("("), expr_str, _S(") != 0.0")}));
+	}
+	else {
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.is_true("), expr_str, _S(")")}));
+	}
+	return (string){.str=(byteptr)"", .is_lit=1};
 }
 VV_LOC string emitter__Transpiler_binop_native_symbol(emitter__Transpiler t, string node_type) {
 
@@ -19203,7 +20097,7 @@ VV_LOC string emitter__Transpiler_emit_v_interpolation(emitter__Transpiler* t, A
 	string joined = Array_string_join(interp_parts, _S(""));
 	return builtin__string_plus_many(3, _MOV((string[3]){_S("\""), joined, _S("\"")}));
 }
-VV_LOC string emitter__Transpiler_visit_expr(emitter__Transpiler* t, ast__AstNode node) {
+VV_LOC string emitter__Transpiler_visit_expr(emitter__Transpiler* t, ast__AstNode* node) {
 	t->active_depth++;
 	if (t->active_depth > 100) {
 		t->active_depth--;
@@ -19213,12 +20107,12 @@ VV_LOC string emitter__Transpiler_visit_expr(emitter__Transpiler* t, ast__AstNod
 	t->active_depth--;
 	return res;
 }
-VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__AstNode node) {
+VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__AstNode* node) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_isset)) {
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_isset)) {
 		Array_string checks = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-		for (int _t1 = 0; _t1 < node.vars.len; ++_t1) {
-			ast__AstNode v = ((ast__AstNode*)node.vars.data)[_t1];
+		for (int _t1 = 0; _t1 < node->vars.len; ++_t1) {
+			ast__AstNode v = ((ast__AstNode*)node->vars.data)[_t1];
 			if (builtin__fast_string_eq(v.node_type, _S("Expr_ArrayDimFetch"))) {
 				_option_ast__AstNode_ptr *_t2 = &v.var;
 				if (_t2->state != 0) {
@@ -19234,12 +20128,32 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 				;
 				}
 				ast__AstNode* dim_node = (*(ast__AstNode**)_t3->data);
-				string arr_str = emitter__Transpiler_visit_expr(t, *arr_node);
-				string dim_str = emitter__Transpiler_visit_expr(t, *dim_node);
-				builtin__array_push((array*)&checks, _MOV((string[]){ builtin__string_plus_many(4, _MOV((string[4]){arr_str, _S(".array_isset("), dim_str, _S(")")})) }));
+				string arr_str = emitter__Transpiler_visit_expr(t, arr_node);
+				if (emitter__Transpiler_is_native_array_or_map(*t, (voidptr)&*arr_node)) {
+					emitter__VarType arr_typ = emitter__Transpiler_get_expr_type(t, (voidptr)&*arr_node);
+					emitter__VarType dim_typ = emitter__Transpiler_get_expr_type(t, (voidptr)&*dim_node);
+					string dim_native_str = (emitter__VarType_is_scalar(dim_typ) ? (emitter__Transpiler_visit_expr_native(t, dim_node)) : (emitter__Transpiler_visit_expr(t, dim_node)));
+					if (arr_typ.is_native_map) {
+						builtin__array_push((array*)&checks, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){dim_native_str, _S(" in "), arr_str})) }));
+					} else {
+						builtin__array_push((array*)&checks, _MOV((string[]){ builtin__string_plus_many(6, _MOV((string[6]){dim_native_str, _S(" >= 0 && "), dim_native_str, _S(" < "), arr_str, _S(".len")})) }));
+					}
+				} else {
+					string dim_str = emitter__Transpiler_visit_expr(t, dim_node);
+					builtin__array_push((array*)&checks, _MOV((string[]){ builtin__string_plus_many(4, _MOV((string[4]){arr_str, _S(".array_isset("), dim_str, _S(")")})) }));
+				}
 			} else {
-				string var_str = emitter__Transpiler_visit_expr(t, v);
-				builtin__array_push((array*)&checks, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){_S("!("), var_str, _S(").is_null()")})) }));
+				string var_str = emitter__Transpiler_visit_expr(t, (voidptr)&v);
+				bool is_native = false;
+				if (builtin__fast_string_eq(v.node_type, _S("Expr_Variable"))) {
+					emitter__VarType v_type = emitter__Transpiler_get_expr_type(t, (voidptr)&v);
+					is_native = emitter__VarType_is_scalar(v_type) || v_type.is_native_list || v_type.is_native_map;
+				}
+				if (is_native) {
+					builtin__array_push((array*)&checks, _MOV((string[]){ _S("true") }));
+				} else {
+					builtin__array_push((array*)&checks, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){_S("!("), var_str, _S(").is_null()")})) }));
+				}
 			}
 		}
 		if (checks.len == 0) {
@@ -19247,29 +20161,29 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 		}
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_bool("), Array_string_join(checks, _S(" && ")), _S(")")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_instanceof)) {
-		_option_ast__AstNode_ptr *_t8 = &node.expr;
-		if (_t8->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_instanceof)) {
+		_option_ast__AstNode_ptr *_t11 = &node->expr;
+		if (_t11->state != 0) {
 			builtin___v_panic(_S("InstanceOf missing expr"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* expr_node = (*(ast__AstNode**)_t8->data);
-		string resolved_class = emitter__Transpiler_resolve_class_name(*t, node.class_name);
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t11->data);
+		string resolved_class = emitter__Transpiler_resolve_class_name(*t, node->class_name);
 		if (builtin__fast_string_eq(expr_node->node_type, _S("Expr_Variable"))) {
-			emitter__VarType* _t10 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){expr_node->name}));
-			_option_emitter__VarType _t9 = {0};
-			if (_t10) {
-				*((emitter__VarType*)&_t9.data) = *((emitter__VarType*)_t10);
+			emitter__VarType* _t13 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){expr_node->name}));
+			_option_emitter__VarType _t12 = {0};
+			if (_t13) {
+				*((emitter__VarType*)&_t12.data) = *((emitter__VarType*)_t13);
 			} else {
-				_t9.state = 2; _t9.err = builtin___v_error(_S("map key does not exist"));
+				_t12.state = 2; _t12.err = builtin___v_error(_S("map key does not exist"));
 			}
 			;
-			if (_t9.state != 0) {
-				*(emitter__VarType*) _t9.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			if (_t12.state != 0) {
+				*(emitter__VarType*) _t12.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			}
 			
-			emitter__VarType obj_type = (*(emitter__VarType*)_t9.data);
+			emitter__VarType obj_type = (*(emitter__VarType*)_t12.data);
 			if (emitter__VarType_is_object(obj_type)) {
 				if (emitter__Transpiler_class_implements(t, obj_type.class_name, resolved_class)) {
 					t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
@@ -19279,117 +20193,117 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 					t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 					return _S("rt.new_bool(false)");
 				}
-				string expr_str = emitter__Transpiler_visit_expr(t, *expr_node);
+				string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
 				return builtin__string_plus_many(9, _MOV((string[9]){_S("rt.new_bool(rt.instance_of(rt.new_object(\'"), obj_type.class_name, _S("\', "), emitter__Transpiler_get_parents_expr(*t, obj_type.class_name), _S(", "), expr_str, _S("), \'"), resolved_class, _S("\'))")}));
 			}
 		}
-		string expr_str = emitter__Transpiler_visit_expr(t, *expr_node);
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
 		return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.new_bool(rt.instance_of("), expr_str, _S(", \'"), resolved_class, _S("\'))")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_variable)) {
-		if (builtin__fast_string_eq(node.name, _S("this"))) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_variable)) {
+		if (builtin__fast_string_eq(node->name, _S("this"))) {
 			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_object,.class_name = t->current_class,.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			if (t->expected_type.tag == emitter__TypeTag__t_object && builtin__string__eq(t->expected_type.class_name, t->current_class)) {
 				return _S("this");
 			}
 			return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.new_object('"), t->current_class, _S("', "), emitter__Transpiler_get_parents_expr(*t, t->current_class), _S(", &this)")}));
 		}
-		if (builtin__fast_string_eq(node.name, _S("_GET")) || builtin__fast_string_eq(node.name, _S("_POST")) || builtin__fast_string_eq(node.name, _S("_SERVER")) || builtin__fast_string_eq(node.name, _S("_COOKIE")) || builtin__fast_string_eq(node.name, _S("_SESSION")) || builtin__fast_string_eq(node.name, _S("_REQUEST")) || builtin__fast_string_eq(node.name, _S("_ENV"))) {
+		if (builtin__fast_string_eq(node->name, _S("_GET")) || builtin__fast_string_eq(node->name, _S("_POST")) || builtin__fast_string_eq(node->name, _S("_SERVER")) || builtin__fast_string_eq(node->name, _S("_COOKIE")) || builtin__fast_string_eq(node->name, _S("_SESSION")) || builtin__fast_string_eq(node->name, _S("_REQUEST")) || builtin__fast_string_eq(node->name, _S("_ENV"))) {
 			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-			return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.get_superglobal(\'"), node.name, _S("\')")}));
+			return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.get_superglobal(\'"), node->name, _S("\')")}));
 		}
-		string* _t19 = (string*)(builtin__map_get_check(ADDR(map, t->var_aliases), &(string[]){node.name}));
-		_option_string _t18 = {0};
-		if (_t19) {
-			*((string*)&_t18.data) = *((string*)_t19);
+		string* _t22 = (string*)(builtin__map_get_check(ADDR(map, t->var_aliases), &(string[]){node->name}));
+		_option_string _t21 = {0};
+		if (_t22) {
+			*((string*)&_t21.data) = *((string*)_t22);
 		} else {
-			_t18.state = 2; _t18.err = builtin___v_error(_S("map key does not exist"));
+			_t21.state = 2; _t21.err = builtin___v_error(_S("map key does not exist"));
 		}
 		;
-		if (_t18.state != 0) {
-			*(string*) _t18.data = node.name;
+		if (_t21.state != 0) {
+			*(string*) _t21.data = node->name;
 		}
 		
-		string var_name = (*(string*)_t18.data);
-		emitter__VarType* _t21 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){var_name}));
-		_option_emitter__VarType _t20 = {0};
-		if (_t21) {
-			*((emitter__VarType*)&_t20.data) = *((emitter__VarType*)_t21);
+		string var_name = (*(string*)_t21.data);
+		emitter__VarType* _t24 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){var_name}));
+		_option_emitter__VarType _t23 = {0};
+		if (_t24) {
+			*((emitter__VarType*)&_t23.data) = *((emitter__VarType*)_t24);
 		} else {
-			_t20.state = 2; _t20.err = builtin___v_error(_S("map key does not exist"));
+			_t23.state = 2; _t23.err = builtin___v_error(_S("map key does not exist"));
 		}
 		;
-		if (_t20.state != 0) {
-			*(emitter__VarType*) _t20.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		if (_t23.state != 0) {
+			*(emitter__VarType*) _t23.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
 		
-		emitter__VarType typ = (*(emitter__VarType*)_t20.data);
+		emitter__VarType typ = (*(emitter__VarType*)_t23.data);
 		t->last_expr_type = typ;
-		string v_var = emitter__Transpiler_get_v_var_name(*t, node.name);
+		string v_var = emitter__Transpiler_get_v_var_name(*t, node->name);
 		if (emitter__VarType_is_scalar(typ)) {
-			return emitter__box_expr(v_var, typ);
+			return emitter__Transpiler_box_expr(*t, v_var, typ);
 		}
 		return v_var;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_throw)) {
-		_option_ast__AstNode_ptr *_t24 = &node.expr;
-		if (_t24->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_throw)) {
+		_option_ast__AstNode_ptr *_t27 = &node->expr;
+		if (_t27->state != 0) {
 			builtin___v_panic(_S("Throw missing expr"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* expr_node = (*(ast__AstNode**)_t24->data);
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t27->data);
 		if (builtin__fast_string_eq(expr_node->node_type, _S("Expr_New"))) {
 			string class_name = emitter__Transpiler_resolve_class_name(*t, expr_node->class_name);
-			string expr_str = emitter__Transpiler_visit_expr(t, *expr_node);
+			string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
 			string parents = emitter__Transpiler_get_parents_expr(*t, class_name);
 			return builtin__string_plus_many(7, _MOV((string[7]){_S("rt.throw_exception(rt.new_object(\'"), class_name, _S("\', "), parents, _S(", "), expr_str, _S("))")}));
 		}
-		string expr_str = emitter__Transpiler_visit_expr(t, *expr_node);
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.throw_exception("), expr_str, _S(")")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_int)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_int)) {
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_int("), node.value, _S(")")}));
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_int("), node->value, _S(")")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_float)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_float)) {
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_float,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_float("), node.value, _S(")")}));
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_float("), node->value, _S(")")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_string)) {
-		string escaped = emitter__escape_single_quoted(node.value);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_string)) {
+		string escaped = emitter__escape_single_quoted(node->value);
 		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_string(\'"), escaped, _S("\')")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_const)) {
-		string _t30 = builtin__string_to_lower(node.name);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_const)) {
+		string _t33 = builtin__string_to_lower(node->name);
 		
-		if (_SLIT_EQ(_t30.str, _t30.len, "true")) {
+		if (_SLIT_EQ(_t33.str, _t33.len, "true")) {
 			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			;
 			return _S("rt.new_bool(true)");
 		}
-		else if (_SLIT_EQ(_t30.str, _t30.len, "false")) {
+		else if (_SLIT_EQ(_t33.str, _t33.len, "false")) {
 			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			;
 			return _S("rt.new_bool(false)");
 		}
-		else if (_SLIT_EQ(_t30.str, _t30.len, "null")) {
+		else if (_SLIT_EQ(_t33.str, _t33.len, "null")) {
 			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_null,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			;
 			return _S("rt.new_null()");
 		}
 		else {
-			emitter__GlobalConst* _t35 = (emitter__GlobalConst*)(builtin__map_get_check(ADDR(map, t->global_constants), &(string[]){node.name}));
-			_option_emitter__GlobalConst _t34 = {0};
-			if (_t35) {
-				*((emitter__GlobalConst*)&_t34.data) = *((emitter__GlobalConst*)_t35);
+			emitter__GlobalConst* _t38 = (emitter__GlobalConst*)(builtin__map_get_check(ADDR(map, t->global_constants), &(string[]){node->name}));
+			_option_emitter__GlobalConst _t37 = {0};
+			if (_t38) {
+				*((emitter__GlobalConst*)&_t37.data) = *((emitter__GlobalConst*)_t38);
 			} else {
-				_t34.state = 2; _t34.err = builtin___v_error(_S("map key does not exist"));
+				_t37.state = 2; _t37.err = builtin___v_error(_S("map key does not exist"));
 			}
 			
-			if (_t34.state == 0) {
-				emitter__GlobalConst gc = (*(emitter__GlobalConst*)_t34.data);
+			if (_t37.state == 0) {
+				emitter__GlobalConst gc = (*(emitter__GlobalConst*)_t37.data);
 				GC_reachable_here(&gc);
 				t->last_expr_type = gc.typ;
 
@@ -19409,129 +20323,147 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 					return gc.name;
 				}
 			}
-				if (_t34.state == 2 && _t34.err._object != _const_none__._object) { builtin___v_free(_t34.err._object); }
+				if (_t37.state == 2 && _t37.err._object != _const_none__._object) { builtin___v_free(_t37.err._object); }
 			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-			return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.get_constant(\'"), node.name, _S("\')")}));
+			return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.get_constant(\'"), node->name, _S("\')")}));
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_dir)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_dir)) {
 		return _S("rt.new_string(@DIR)");
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_file)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_file)) {
 		return _S("rt.new_string(@FILE)");
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_line)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_line)) {
 		return _S("rt.new_int(@LINE.int())");
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_function)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_function)) {
 		return _S("rt.new_string(@FN)");
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_method)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_method)) {
 		return _S("rt.new_string(@METHOD)");
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_class)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_class)) {
 		return _S("rt.new_string(@STRUCT)");
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_magic_const_namespace)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_namespace)) {
 		string ns = builtin__string_replace(t->current_namespace, _S("\\"), _S("\\\\"));
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_string(\'"), ns, _S("\')")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_assign)) {
-		_option_ast__AstNode_ptr *_t49 = &node.var;
-		if (_t49->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign)) {
+		_option_ast__AstNode_ptr *_t52 = &node->var;
+		if (_t52->state != 0) {
 			builtin___v_panic(_S("Assign node missing var"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* var_node = (*(ast__AstNode**)_t49->data);
+		ast__AstNode* var_node = (*(ast__AstNode**)_t52->data);
 		if (builtin__fast_string_eq(var_node->node_type, _S("Expr_ArrayDimFetch"))) {
-			_option_ast__AstNode_ptr *_t50 = &var_node->var;
-			if (_t50->state != 0) {
+			_option_ast__AstNode_ptr *_t53 = &var_node->var;
+			if (_t53->state != 0) {
 				builtin___v_panic(_S("ArrayDimFetch missing var"));
 				VUNREACHABLE();
 			;
 			}
-			ast__AstNode* arr_var_node = (*(ast__AstNode**)_t50->data);
-			emitter__VarType arr_var_type = emitter__Transpiler_get_expr_type(t, *arr_var_node);
-			string arr_var_name = emitter__Transpiler_visit_expr_write_dim(t, *arr_var_node);
-			_option_ast__AstNode_ptr *_t51 = &node.expr;
-			if (_t51->state != 0) {
+			ast__AstNode* arr_var_node = (*(ast__AstNode**)_t53->data);
+			emitter__VarType arr_var_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*arr_var_node);
+			string arr_var_name = emitter__Transpiler_visit_expr_write_dim(t, (voidptr)&*arr_var_node);
+			if (emitter__VarType_is_object(arr_var_type) && emitter__Transpiler_class_implements(t, arr_var_type.class_name, _S("ArrayAccess"))) {
+				_option_ast__AstNode_ptr *_t54 = &node->expr;
+				if (_t54->state != 0) {
+					builtin___v_panic(_S("Assign node missing expr"));
+					VUNREACHABLE();
+				;
+				}
+				ast__AstNode* expr_node = (*(ast__AstNode**)_t54->data);
+				string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
+				_option_ast__AstNode_ptr _t55 = {0};
+				if (_t55 = var_node->dim, _t55.state == 0) {
+					ast__AstNode* dim_node = *(ast__AstNode**)_t55.data;
+					GC_reachable_here(&dim_node);
+					string dim_str = emitter__Transpiler_visit_expr(t, dim_node);
+					return builtin__string_plus_many(6, _MOV((string[6]){arr_var_name, _S(".offsetset("), dim_str, _S(", "), expr_str, _S(")")}));
+				} else {
+					return builtin__string_plus_many(4, _MOV((string[4]){arr_var_name, _S(".offsetset(rt.new_null(), "), expr_str, _S(")")}));
+				}
+			}
+			_option_ast__AstNode_ptr *_t58 = &node->expr;
+			if (_t58->state != 0) {
 				builtin___v_panic(_S("Assign node missing expr"));
 				VUNREACHABLE();
 			;
 			}
-			ast__AstNode* expr_node = (*(ast__AstNode**)_t51->data);
-			bool is_native_arr = arr_var_type.is_native_list || arr_var_type.is_native_map;
+			ast__AstNode* expr_node = (*(ast__AstNode**)_t58->data);
+			bool is_native_arr = emitter__Transpiler_is_native_array_or_map(*t, (voidptr)&*arr_var_node);
 			if (is_native_arr) {
 				string val_str = _S("");
 				if (arr_var_type.element_type_tag != emitter__TypeTag__t_unknown) {
-					val_str = emitter__Transpiler_visit_expr_native(t, *expr_node);
+					val_str = emitter__Transpiler_visit_expr_native(t, expr_node);
 				} else {
-					val_str = emitter__Transpiler_visit_expr(t, *expr_node);
-					if (builtin__fast_string_eq(expr_node->node_type, _S("Expr_Variable"))) {
-						val_str = builtin__string__plus(val_str, _S(".dup()"));
-					}
+					val_str = emitter__Transpiler_compile_arg_simple(t, (voidptr)&*expr_node);
 				}
-				_option_ast__AstNode_ptr _t52 = {0};
-				if (_t52 = var_node->dim, _t52.state == 0) {
-					ast__AstNode* dim_node = *(ast__AstNode**)_t52.data;
+				_option_ast__AstNode_ptr _t59 = {0};
+				if (_t59 = var_node->dim, _t59.state == 0) {
+					ast__AstNode* dim_node = *(ast__AstNode**)_t59.data;
 					GC_reachable_here(&dim_node);
-					string dim_str = emitter__Transpiler_visit_expr_native(t, *dim_node);
+					string dim_str = emitter__Transpiler_visit_expr_native(t, dim_node);
 					return builtin__string_plus_many(5, _MOV((string[5]){arr_var_name, _S("["), dim_str, _S("] = "), val_str}));
 				} else {
 					return builtin__string_plus_many(3, _MOV((string[3]){arr_var_name, _S(" << "), val_str}));
 				}
 			}
-			emitter__VarType expr_typ = emitter__Transpiler_get_expr_type(t, *expr_node);
-			string expr_str = (emitter__VarType_is_scalar(expr_typ) ? (emitter__Transpiler_visit_expr_native(t, *expr_node)) : (emitter__Transpiler_visit_expr(t, *expr_node)));
-			if (!emitter__VarType_is_scalar(expr_typ) && builtin__fast_string_eq(expr_node->node_type, _S("Expr_Variable"))) {
-				expr_str = builtin__string__plus(expr_str, _S(".dup()"));
+			emitter__VarType expr_typ = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
+			string expr_str = (emitter__VarType_is_scalar(expr_typ) ? (emitter__Transpiler_visit_expr_native(t, expr_node)) : (emitter__Transpiler_visit_expr(t, expr_node)));
+			if (emitter__VarType_is_object(expr_typ) || expr_typ.class_name.len > 0) {
+				expr_str = emitter__Transpiler_box_expr(*t, expr_str, expr_typ);
+			} else if (!emitter__VarType_is_scalar(expr_typ) && builtin__fast_string_eq(expr_node->node_type, _S("Expr_Variable"))) {
+				expr_str = builtin__string__plus(expr_str, emitter__Transpiler_dup_suffix_for_var(*t, expr_node->name));
 			}
-			_option_ast__AstNode_ptr _t55 = {0};
-			if (_t55 = var_node->dim, _t55.state == 0) {
-				ast__AstNode* dim_node = *(ast__AstNode**)_t55.data;
+			_option_ast__AstNode_ptr _t62 = {0};
+			if (_t62 = var_node->dim, _t62.state == 0) {
+				ast__AstNode* dim_node = *(ast__AstNode**)_t62.data;
 				GC_reachable_here(&dim_node);
-				emitter__VarType dim_typ = emitter__Transpiler_get_expr_type(t, *dim_node);
-				string dim_str = (emitter__VarType_is_scalar(dim_typ) ? (emitter__Transpiler_visit_expr_native(t, *dim_node)) : (emitter__Transpiler_visit_expr(t, *dim_node)));
+				emitter__VarType dim_typ = emitter__Transpiler_get_expr_type(t, (voidptr)&*dim_node);
+				string dim_str = (emitter__VarType_is_scalar(dim_typ) ? (emitter__Transpiler_visit_expr_native(t, dim_node)) : (emitter__Transpiler_visit_expr(t, dim_node)));
 				return builtin__string_plus_many(6, _MOV((string[6]){arr_var_name, _S(".array_set("), dim_str, _S(", "), expr_str, _S(")")}));
 			} else {
 				return builtin__string_plus_many(4, _MOV((string[4]){arr_var_name, _S(".array_push("), expr_str, _S(")")}));
 			}
 		}
 		if (builtin__fast_string_eq(var_node->node_type, _S("Expr_PropertyFetch"))) {
-			_option_ast__AstNode_ptr *_t58 = &var_node->var;
-			if (_t58->state != 0) {
+			_option_ast__AstNode_ptr *_t65 = &var_node->var;
+			if (_t65->state != 0) {
 				builtin___v_panic(_S("PropertyFetch missing var"));
 				VUNREACHABLE();
 			;
 			}
-			ast__AstNode* obj_var_node = (*(ast__AstNode**)_t58->data);
+			ast__AstNode* obj_var_node = (*(ast__AstNode**)_t65->data);
 			string prop_name = var_node->name;
-			_option_ast__AstNode_ptr *_t59 = &node.expr;
-			if (_t59->state != 0) {
+			_option_ast__AstNode_ptr *_t66 = &node->expr;
+			if (_t66->state != 0) {
 				builtin___v_panic(_S("Assign node missing expr"));
 				VUNREACHABLE();
 			;
 			}
-			ast__AstNode* expr_node = (*(ast__AstNode**)_t59->data);
+			ast__AstNode* expr_node = (*(ast__AstNode**)_t66->data);
 			if (builtin__fast_string_eq(obj_var_node->node_type, _S("Expr_Variable"))) {
-				emitter__VarType* _t61 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
-				_option_emitter__VarType _t60 = {0};
-				if (_t61) {
-					*((emitter__VarType*)&_t60.data) = *((emitter__VarType*)_t61);
+				emitter__VarType* _t68 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
+				_option_emitter__VarType _t67 = {0};
+				if (_t68) {
+					*((emitter__VarType*)&_t67.data) = *((emitter__VarType*)_t68);
 				} else {
-					_t60.state = 2; _t60.err = builtin___v_error(_S("map key does not exist"));
+					_t67.state = 2; _t67.err = builtin___v_error(_S("map key does not exist"));
 				}
 				;
-				if (_t60.state != 0) {
-					*(emitter__VarType*) _t60.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+				if (_t67.state != 0) {
+					*(emitter__VarType*) _t67.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 				}
 				
-				emitter__VarType obj_type = (*(emitter__VarType*)_t60.data);
+				emitter__VarType obj_type = (*(emitter__VarType*)_t67.data);
 				if (emitter__VarType_is_object(obj_type)) {
 					bool has_prop = false;
-					for (int _t62 = 0; _t62 < t->classes.len; ++_t62) {
-						emitter__ClassInfo cls = ((emitter__ClassInfo*)t->classes.data)[_t62];
+					for (int _t69 = 0; _t69 < t->classes.len; ++_t69) {
+						emitter__ClassInfo cls = ((emitter__ClassInfo*)t->classes.data)[_t69];
 						if (builtin__string__eq(builtin__string_to_lower(cls.name), builtin__string_to_lower(obj_type.class_name))) {
 							if ((Array_string_contains(cls.all_props, prop_name))) {
 								has_prop = true;
@@ -19545,101 +20477,205 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 						string rhs = _S("");
 						if (emitter__VarType_is_scalar(prop_type)) {
 							if (builtin__fast_string_eq(expr_node->node_type, _S("Expr_Variable"))) {
-								emitter__VarType* _t64 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){expr_node->name}));
-								_option_emitter__VarType _t63 = {0};
-								if (_t64) {
-									*((emitter__VarType*)&_t63.data) = *((emitter__VarType*)_t64);
+								emitter__VarType* _t71 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){expr_node->name}));
+								_option_emitter__VarType _t70 = {0};
+								if (_t71) {
+									*((emitter__VarType*)&_t70.data) = *((emitter__VarType*)_t71);
 								} else {
-									_t63.state = 2; _t63.err = builtin___v_error(_S("map key does not exist"));
+									_t70.state = 2; _t70.err = builtin___v_error(_S("map key does not exist"));
 								}
 								;
-								if (_t63.state != 0) {
-									*(emitter__VarType*) _t63.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+								if (_t70.state != 0) {
+									*(emitter__VarType*) _t70.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 								}
 								
-								emitter__VarType src_type = (*(emitter__VarType*)_t63.data);
+								emitter__VarType src_type = (*(emitter__VarType*)_t70.data);
 								if (emitter__VarType_is_scalar(src_type)) {
-									rhs = emitter__Transpiler_visit_expr_native(t, *expr_node);
+									rhs = emitter__Transpiler_visit_expr_native(t, expr_node);
 								} else {
-									rhs = emitter__unbox_expr(emitter__Transpiler_visit_expr(t, *expr_node), prop_type);
+									rhs = emitter__Transpiler_unbox_expr(*t, emitter__Transpiler_visit_expr(t, expr_node), prop_type);
 								}
 							} else {
-								rhs = emitter__Transpiler_visit_expr_native(t, *expr_node);
+								rhs = emitter__Transpiler_visit_expr_native(t, expr_node);
 							}
 						} else {
-							rhs = emitter__Transpiler_visit_expr(t, *expr_node);
+							rhs = emitter__Transpiler_visit_expr(t, expr_node);
 							if (builtin__fast_string_eq(expr_node->node_type, _S("Expr_Variable"))) {
-								rhs = builtin__string__plus(rhs, _S(".dup()"));
+								rhs = builtin__string__plus(rhs, emitter__Transpiler_dup_suffix_for_var(*t, expr_node->name));
 							}
 						}
-						string obj_name = (builtin__fast_string_eq(obj_var_node->name, _S("this")) ? (_S("this")) : (emitter__Transpiler_visit_expr(t, *obj_var_node)));
+						string obj_name = (builtin__fast_string_eq(obj_var_node->name, _S("this")) ? (_S("this")) : (emitter__Transpiler_visit_expr(t, obj_var_node)));
 						return builtin__string_plus_many(5, _MOV((string[5]){obj_name, _S("."), field_name, _S(" = "), rhs}));
+					} else {
+						bool has_set = false;
+						string curr_class = obj_type.class_name;
+						for (;;) {
+							if (!((curr_class).len != 0)) break;
+							bool found_cls = false;
+							for (int _t73 = 0; _t73 < t->classes.len; ++_t73) {
+								emitter__ClassInfo cls = ((emitter__ClassInfo*)t->classes.data)[_t73];
+								if (builtin__string__eq(builtin__string_to_lower(cls.name), builtin__string_to_lower(curr_class))) {
+									found_cls = true;
+									for (int _t74 = 0; _t74 < cls.all_methods.len; ++_t74) {
+										emitter__MethodInfo m = ((emitter__MethodInfo*)cls.all_methods.data)[_t74];
+										if (builtin__fast_string_eq(m.name, _S("__set"))) {
+											has_set = true;
+											break;
+										}
+									}
+									curr_class = cls.extends;
+									break;
+								}
+							}
+							if (!found_cls) {
+								break;
+							}
+							if (has_set) {
+								break;
+							}
+						}
+						if (has_set) {
+							string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
+							if (builtin__fast_string_eq(expr_node->node_type, _S("Expr_Variable"))) {
+								expr_str = builtin__string__plus(expr_str, emitter__Transpiler_dup_suffix_for_var(*t, expr_node->name));
+							}
+							string obj_name = (builtin__fast_string_eq(obj_var_node->name, _S("this")) ? (_S("this")) : (emitter__Transpiler_visit_expr(t, obj_var_node)));
+							return builtin__string_plus_many(6, _MOV((string[6]){obj_name, _S(".magic_set(rt.new_string(\'"), prop_name, _S("\'), "), expr_str, _S(")")}));
+						}
 					}
 				}
 			}
 			if (builtin__fast_string_eq(obj_var_node->name, _S("this"))) {
-				string expr_str = emitter__Transpiler_visit_expr(t, *expr_node);
+				string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
 				if (builtin__fast_string_eq(expr_node->node_type, _S("Expr_Variable"))) {
-					if (!(*(bool*)builtin__map_get(ADDR(map, t->native_params), &(string[]){expr_node->name}, &(bool[]){ 0 }))) {
-						expr_str = builtin__string__plus(expr_str, _S(".dup()"));
-					}
+					expr_str = builtin__string__plus(expr_str, emitter__Transpiler_dup_suffix_for_var(*t, expr_node->name));
 				}
 				return builtin__string_plus_many(5, _MOV((string[5]){_S("this.dispatch_set_prop(\'"), prop_name, _S("\', "), expr_str, _S(")")}));
 			}
 			t->needs_prop_dispatch = true;
-			string obj_var_name = emitter__Transpiler_visit_expr(t, *obj_var_node);
-			string expr_str = emitter__Transpiler_visit_expr(t, *expr_node);
+			string obj_var_name = emitter__Transpiler_visit_expr(t, obj_var_node);
+			string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
 			if (builtin__fast_string_eq(expr_node->node_type, _S("Expr_Variable"))) {
-				if (!(*(bool*)builtin__map_get(ADDR(map, t->native_params), &(string[]){expr_node->name}, &(bool[]){ 0 }))) {
-					expr_str = builtin__string__plus(expr_str, _S(".dup()"));
-				}
+				expr_str = builtin__string__plus(expr_str, emitter__Transpiler_dup_suffix_for_var(*t, expr_node->name));
 			}
 			return builtin__string_plus_many(7, _MOV((string[7]){_S("rt.set_property("), obj_var_name, _S(", \'"), prop_name, _S("\', "), expr_str, _S(")")}));
+		}
+		if (builtin__fast_string_eq(var_node->node_type, _S("Expr_StaticPropertyFetch"))) {
+			string class_name = var_node->class_name;
+			if (_SLIT_EQ(class_name.str, class_name.len, "self") || _SLIT_EQ(class_name.str, class_name.len, "static")) {
+				class_name = t->current_class;
+			} else {
+				class_name = emitter__Transpiler_resolve_class_name(*t, class_name);
+			}
+			string prop_name = var_node->name;
+			_option_ast__AstNode_ptr *_t78 = &node->expr;
+			if (_t78->state != 0) {
+				builtin___v_panic(_S("Assign missing expr"));
+				VUNREACHABLE();
+			;
+			}
+			ast__AstNode* expr_node = (*(ast__AstNode**)_t78->data);
+			string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
+			if (builtin__fast_string_eq(expr_node->node_type, _S("Expr_Variable"))) {
+				expr_str = builtin__string__plus(expr_str, emitter__Transpiler_dup_suffix_for_var(*t, expr_node->name));
+			}
+			if (builtin__fast_string_eq(expr_node->node_type, _S("Expr_New"))) {
+				string new_class = emitter__Transpiler_resolve_class_name(*t, expr_node->class_name);
+				string resolved_new = new_class;
+				if (_SLIT_EQ(resolved_new.str, resolved_new.len, "self") || _SLIT_EQ(resolved_new.str, resolved_new.len, "static")) {
+					resolved_new = t->current_class;
+				}
+				string parents = emitter__Transpiler_get_parents_expr(*t, resolved_new);
+				expr_str = builtin__string_plus_many(7, _MOV((string[7]){_S("rt.new_object(\'"), resolved_new, _S("\', "), parents, _S(", "), expr_str, _S(")")}));
+			}
+			return builtin__string_plus_many(7, _MOV((string[7]){_S("rt.set_static_prop(\'"), class_name, _S("\', \'"), prop_name, _S("\', "), expr_str, _S(")")}));
+		}
+		if (builtin__fast_string_eq(var_node->node_type, _S("Expr_List"))) {
+			_option_ast__AstNode_ptr *_t80 = &node->expr;
+			if (_t80->state != 0) {
+				builtin___v_panic(_S("List assign missing expr"));
+				VUNREACHABLE();
+			;
+			}
+			ast__AstNode* expr_node = (*(ast__AstNode**)_t80->data);
+			string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
+			Array_string stmts = builtin____new_array_with_default(0, 0, sizeof(string), 0);
+			t->list_tmp_counter++;
+			string tmp_var = builtin__string_plus_many(2, _MOV((string[2]){_S("list_tmp_"), builtin__int_str(t->list_tmp_counter)}));
+			builtin__array_push((array*)&stmts, _MOV((string[]){ builtin__string_plus_many(4, _MOV((string[4]){_S("mut "), tmp_var, _S(" := "), expr_str})) }));
+			for (int i = 0; i < var_node->items.len; ++i) {
+				ast__AstNode item = ((ast__AstNode*)var_node->items.data)[i];
+				ast__AstNode target_node = item;
+				if (builtin__fast_string_eq(item.node_type, _S("ArrayItem"))) {
+					_option_ast__AstNode_ptr _t82 = {0};
+					if (_t82 = item.expr, _t82.state == 0) {
+						ast__AstNode* item_expr = *(ast__AstNode**)_t82.data;
+						GC_reachable_here(&item_expr);
+						target_node = *item_expr;
+					} else {
+						continue;
+					}
+				}
+				if (builtin__fast_string_eq(target_node.node_type, _S("Expr_Variable"))) {
+					string v_name = emitter__Transpiler_get_v_var_name(*t, target_node.name);
+					bool declared = emitter__VarScope_has_var(t->scope, target_node.name);
+					if (declared) {
+						builtin__array_push((array*)&stmts, _MOV((string[]){ builtin__string_plus_many(6, _MOV((string[6]){v_name, _S(" = ("), tmp_var, _S(").array_get("), builtin__int_str(i), _S(")")})) }));
+					} else {
+						builtin__array_push((array*)&stmts, _MOV((string[]){ builtin__string_plus_many(7, _MOV((string[7]){_S("mut "), v_name, _S(" := ("), tmp_var, _S(").array_get("), builtin__int_str(i), _S(")")})) }));
+						emitter__VarScope_declare(&t->scope, target_node.name);
+					}
+				} else if (builtin__fast_string_eq(target_node.node_type, _S("Expr_ArrayDimFetch"))) {
+					string arr_str = emitter__Transpiler_visit_expr_write_dim(t, (voidptr)&target_node);
+					builtin__array_push((array*)&stmts, _MOV((string[]){ builtin__string_plus_many(6, _MOV((string[6]){arr_str, _S(" = ("), tmp_var, _S(").array_get("), builtin__int_str(i), _S(")")})) }));
+				}
+			}
+			return Array_string_join(stmts, _S("\n"));
 		}
 		if (!builtin__fast_string_eq(var_node->node_type, _S("Expr_Variable"))) {
 			return builtin__string_plus_many(2, _MOV((string[2]){_S("// unsupported assign target: "), var_node->node_type}));
 		}
 		string var_name = var_node->name;
-		_option_ast__AstNode_ptr *_t69 = &node.expr;
-		if (_t69->state != 0) {
+		_option_ast__AstNode_ptr *_t88 = &node->expr;
+		if (_t88->state != 0) {
 			builtin___v_panic(_S("Assign node missing expr"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* expr_node = (*(ast__AstNode**)_t69->data);
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t88->data);
 		if (builtin__string__eq(expr_node->node_type, _const_ast__node_expr_post_inc) || builtin__string__eq(expr_node->node_type, _const_ast__node_expr_post_dec) || builtin__string__eq(expr_node->node_type, _const_ast__node_expr_pre_inc) || builtin__string__eq(expr_node->node_type, _const_ast__node_expr_pre_dec)) {
-			_option_ast__AstNode_ptr _t70 = {0};
-			if (_t70 = expr_node->var, _t70.state == 0) {
-				ast__AstNode* inc_var = *(ast__AstNode**)_t70.data;
+			_option_ast__AstNode_ptr _t89 = {0};
+			if (_t89 = expr_node->var, _t89.state == 0) {
+				ast__AstNode* inc_var = *(ast__AstNode**)_t89.data;
 				GC_reachable_here(&inc_var);
 				if (((voidptr)(inc_var)) != 0 && builtin__fast_string_eq(inc_var->node_type, _S("Expr_Variable"))) {
-					emitter__VarType* _t72 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){inc_var->name}));
-					_option_emitter__VarType _t71 = {0};
-					if (_t72) {
-						*((emitter__VarType*)&_t71.data) = *((emitter__VarType*)_t72);
+					emitter__VarType* _t91 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){inc_var->name}));
+					_option_emitter__VarType _t90 = {0};
+					if (_t91) {
+						*((emitter__VarType*)&_t90.data) = *((emitter__VarType*)_t91);
 					} else {
-						_t71.state = 2; _t71.err = builtin___v_error(_S("map key does not exist"));
+						_t90.state = 2; _t90.err = builtin___v_error(_S("map key does not exist"));
 					}
 					;
-					if (_t71.state != 0) {
-						*(emitter__VarType*) _t71.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+					if (_t90.state != 0) {
+						*(emitter__VarType*) _t90.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 					}
 					
-					emitter__VarType inc_typ = (*(emitter__VarType*)_t71.data);
+					emitter__VarType inc_typ = (*(emitter__VarType*)_t90.data);
 					if (inc_typ.tag == emitter__TypeTag__t_int) {
-						emitter__VarType* _t74 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){var_name}));
-						_option_emitter__VarType _t73 = {0};
-						if (_t74) {
-							*((emitter__VarType*)&_t73.data) = *((emitter__VarType*)_t74);
+						emitter__VarType* _t93 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){var_name}));
+						_option_emitter__VarType _t92 = {0};
+						if (_t93) {
+							*((emitter__VarType*)&_t92.data) = *((emitter__VarType*)_t93);
 						} else {
-							_t73.state = 2; _t73.err = builtin___v_error(_S("map key does not exist"));
+							_t92.state = 2; _t92.err = builtin___v_error(_S("map key does not exist"));
 						}
 						;
-						if (_t73.state != 0) {
-							*(emitter__VarType*) _t73.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+						if (_t92.state != 0) {
+							*(emitter__VarType*) _t92.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 						}
 						
-						emitter__VarType var_type = (*(emitter__VarType*)_t73.data);
+						emitter__VarType var_type = (*(emitter__VarType*)_t92.data);
 						if (var_type.tag == emitter__TypeTag__t_int) {
 							bool is_post = (builtin__string__eq(expr_node->node_type, _const_ast__node_expr_post_inc) || builtin__string__eq(expr_node->node_type, _const_ast__node_expr_post_dec));
 							bool is_inc = (builtin__string__eq(expr_node->node_type, _const_ast__node_expr_post_inc) || builtin__string__eq(expr_node->node_type, _const_ast__node_expr_pre_inc));
@@ -19673,258 +20709,156 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 			}
 		}
 		string v_var = emitter__Transpiler_get_v_var_name(*t, var_name);
-		emitter__VarType* _t79 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v_var}));
-		_option_emitter__VarType _t78 = {0};
-		if (_t79) {
-			*((emitter__VarType*)&_t78.data) = *((emitter__VarType*)_t79);
+		string lookup_key = ((t->current_func_name).len != 0 ? (builtin__string_plus_many(3, _MOV((string[3]){t->current_func_name, _S("::"), var_name}))) : (var_name));
+		emitter__VarType* _t98 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v_var}));
+		_option_emitter__VarType _t97 = {0};
+		if (_t98) {
+			*((emitter__VarType*)&_t97.data) = *((emitter__VarType*)_t98);
 		} else {
-			_t78.state = 2; _t78.err = builtin___v_error(_S("map key does not exist"));
+			_t97.state = 2; _t97.err = builtin___v_error(_S("map key does not exist"));
 		}
 		;
-		if (_t78.state != 0) {
-			emitter__VarType* _t81 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){var_name}));
-			_option_emitter__VarType _t80 = {0};
-			if (_t81) {
-				*((emitter__VarType*)&_t80.data) = *((emitter__VarType*)_t81);
+		if (_t97.state != 0) {
+			emitter__VarType* _t100 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){lookup_key}));
+			_option_emitter__VarType _t99 = {0};
+			if (_t100) {
+				*((emitter__VarType*)&_t99.data) = *((emitter__VarType*)_t100);
 			} else {
-				_t80.state = 2; _t80.err = builtin___v_error(_S("map key does not exist"));
+				_t99.state = 2; _t99.err = builtin___v_error(_S("map key does not exist"));
 			}
 			;
-			if (_t80.state != 0) {
-				*(emitter__VarType*) _t80.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			if (_t99.state != 0) {
+				emitter__VarType* _t102 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){var_name}));
+				_option_emitter__VarType _t101 = {0};
+				if (_t102) {
+					*((emitter__VarType*)&_t101.data) = *((emitter__VarType*)_t102);
+				} else {
+					_t101.state = 2; _t101.err = builtin___v_error(_S("map key does not exist"));
+				}
+				;
+				if (_t101.state != 0) {
+					*(emitter__VarType*) _t101.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+				}
+				
+				*(emitter__VarType*) _t99.data = (*(emitter__VarType*)_t101.data);
 			}
 			
-			*(emitter__VarType*) _t78.data = (*(emitter__VarType*)_t80.data);
+			*(emitter__VarType*) _t97.data = (*(emitter__VarType*)_t99.data);
 		}
 		
-		emitter__VarType var_type = (*(emitter__VarType*)_t78.data);
-		if (emitter__VarType_is_scalar(var_type)) {
-			emitter__VarType expr_typ = emitter__Transpiler_get_expr_type(t, *expr_node);
-			string expr_str = emitter__Transpiler_visit_expr_native(t, *expr_node);
+		emitter__VarType var_type = (*(emitter__VarType*)_t97.data);
+		bool is_native = false;
+		if ((t->current_func_name).len == 0) {
+			is_native = emitter__VarType_is_scalar(var_type);
+		} else {
+			is_native = (*(bool*)builtin__map_get(ADDR(map, t->native_params), &(string[]){var_name}, &(bool[]){ 0 })) || (*(bool*)builtin__map_get(ADDR(map, t->native_vars), &(string[]){v_var}, &(bool[]){ 0 }));
+		}
+		if (is_native) {
+			emitter__VarType expr_typ = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
+			string expr_str = emitter__Transpiler_visit_expr_native(t, expr_node);
 			if (!emitter__VarType_is_scalar(expr_typ)) {
-				expr_str = emitter__unbox_expr(expr_str, var_type);
+				expr_str = emitter__Transpiler_unbox_expr(*t, expr_str, var_type);
 			}
 			if (emitter__VarScope_has_var(t->scope, var_name)) {
-				return builtin__string_plus_many(3, _MOV((string[3]){v_var, _S(" = "), expr_str}));
+				builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){v_var, _S(" = "), expr_str})) }));
+				return v_var;
 			} else {
 				emitter__VarScope_declare(&t->scope, var_name);
-				return builtin__string_plus_many(4, _MOV((string[4]){_S("mut "), v_var, _S(" := "), expr_str}));
+				builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(4, _MOV((string[4]){_S("mut "), v_var, _S(" := "), expr_str})) }));
+				return v_var;
 			}
 		} else if (var_type.is_native_list || var_type.is_native_map) {
 			emitter__VarType old_expected = t->expected_type;
 			t->expected_type = var_type;
-			string expr_str = emitter__Transpiler_visit_expr(t, *expr_node);
+			string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
 			t->expected_type = old_expected;
+			builtin__map_set(&t->native_arr_vars, &(string[]){var_name}, &(bool[]) { true });
 			if (emitter__VarScope_has_var(t->scope, var_name)) {
-				return builtin__string_plus_many(3, _MOV((string[3]){v_var, _S(" = "), expr_str}));
+				builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){v_var, _S(" = "), expr_str})) }));
+				return v_var;
 			} else {
 				emitter__VarScope_declare(&t->scope, var_name);
-				return builtin__string_plus_many(4, _MOV((string[4]){_S("mut "), v_var, _S(" := "), expr_str}));
+				builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(4, _MOV((string[4]){_S("mut "), v_var, _S(" := "), expr_str})) }));
+				return v_var;
 			}
 		} else {
 			emitter__VarType old_expected = t->expected_type;
 			t->expected_type = var_type;
-			string expr_str = emitter__Transpiler_visit_expr(t, *expr_node);
+			string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
 			t->expected_type = old_expected;
-			emitter__VarType expr_typ = emitter__Transpiler_get_expr_type(t, *expr_node);
+			emitter__VarType expr_typ = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
 			if (emitter__VarType_is_scalar(expr_typ) || expr_typ.is_native_list || expr_typ.is_native_map) {
-				expr_str = emitter__box_expr(expr_str, expr_typ);
+				expr_str = emitter__Transpiler_box_expr(*t, expr_str, expr_typ);
 			}
 			if (builtin__fast_string_eq(expr_node->node_type, _S("Expr_Variable")) && (*(bool*)builtin__map_get(ADDR(map, t->mutated_vars), &(string[]){expr_node->name}, &(bool[]){ 0 }))) {
-				expr_str = builtin__string__plus(expr_str, _S(".dup()"));
+				expr_str = builtin__string__plus(expr_str, emitter__Transpiler_dup_suffix_for_var(*t, expr_node->name));
 			}
 			if (emitter__VarScope_has_var(t->scope, var_name)) {
-				return builtin__string_plus_many(3, _MOV((string[3]){v_var, _S(" = "), expr_str}));
+				builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){v_var, _S(" = "), expr_str})) }));
+				return v_var;
 			} else {
 				emitter__VarScope_declare(&t->scope, var_name);
-				return builtin__string_plus_many(4, _MOV((string[4]){_S("mut "), v_var, _S(" := "), expr_str}));
+				builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(4, _MOV((string[4]){_S("mut "), v_var, _S(" := "), expr_str})) }));
+				return v_var;
 			}
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_funccall)) {
-		string func_name = node.name;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_funccall)) {
+		string func_name = node->name;
 		if (_SLIT_EQ(func_name.str, func_name.len, "array_keys")) {
 			Array_string arg_strs = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-			for (int _t88 = 0; _t88 < node.args.len; ++_t88) {
-				ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t88];
-				_option_ast__AstNode_ptr *_t89 = &arg.expr;
-				if (_t89->state != 0) {
+			for (int _t115 = 0; _t115 < node->args.len; ++_t115) {
+				ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t115];
+				_option_ast__AstNode_ptr *_t116 = &arg.expr;
+				if (_t116->state != 0) {
 					builtin___v_panic(_S("Arg missing expr"));
 					VUNREACHABLE();
 				;
 				}
-				ast__AstNode* arg_val = (*(ast__AstNode**)_t89->data);
-				builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, *arg_val) }));
+				ast__AstNode* arg_val = (*(ast__AstNode**)_t116->data);
+				builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, arg_val) }));
 			}
 			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.func_array_keys("), Array_string_join(arg_strs, _S(", ")), _S(")")}));
 		}
 		bool is_custom = _IN_MAP(ADDR(string, func_name), ADDR(map, t->func_param_types)) || _IN_MAP(ADDR(string, func_name), ADDR(map, t->func_return_types)) || (*(bool*)builtin__map_get(ADDR(map, t->custom_functions), &(string[]){func_name}, &(bool[]){ 0 }));
 		if (is_custom) {
-			Array_string arg_strs = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-			_option_emitter__MethodInfo info = (_option_emitter__MethodInfo){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-			if (_IN_MAP(ADDR(string, func_name), ADDR(map, t->custom_function_infos))) {
-				_option_emitter__MethodInfo _t92;
-				builtin___option_ok(&(emitter__MethodInfo[]) { (*(emitter__MethodInfo*)builtin__map_get(ADDR(map, t->custom_function_infos), &(string[]){func_name}, &(emitter__MethodInfo[]){ (emitter__MethodInfo){.name = (string){.str=(byteptr)"", .is_lit=1},.param_count = 0,.param_names = builtin____new_array(0, 0, sizeof(string)),.is_variadic = 0,.is_static = 0,} })) }, (_option*)(&_t92), sizeof(emitter__MethodInfo));
-				info = _t92;
-			}
-			_option_emitter__MethodInfo _t93 = {0};
-			if (_t93 = info, _t93.state == 0) {
-				emitter__MethodInfo func_info = *(emitter__MethodInfo*)_t93.data;
-				GC_reachable_here(&func_info);
-				if (func_info.is_variadic) {
-					int var_idx = func_info.param_count - 1;
-					for (int i = 0; i < var_idx; i++) {
-						if (i < node.args.len) {
-							ast__AstNode arg = (*(ast__AstNode*)builtin__array_get(node.args, i));
-							_option_ast__AstNode_ptr *_t94 = &arg.expr;
-							if (_t94->state != 0) {
-								builtin___v_panic(_S("Arg missing expr"));
-								VUNREACHABLE();
-							;
-							}
-							ast__AstNode* arg_val = (*(ast__AstNode**)_t94->data);
-							emitter__VarType arg_typ = emitter__Transpiler_get_expr_type(t, *arg_val);
-							string param_name = (*(string*)builtin__array_get(func_info.param_names, i));
-							emitter__VarType param_type = emitter__Transpiler_get_func_param_type(t, func_name, param_name);
-							if (emitter__VarType_is_scalar(param_type) && emitter__VarType_is_scalar(arg_typ)) {
-								builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_visit_expr_native(t, *arg_val) }));
-							} else {
-								builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, *arg_val) }));
-							}
-						} else {
-							string param_name = (*(string*)builtin__array_get(func_info.param_names, i));
-							emitter__VarType param_type = emitter__Transpiler_get_func_param_type(t, func_name, param_name);
-							if (emitter__VarType_is_scalar(param_type)) {
-
-								if (param_type.tag == (emitter__TypeTag__t_int)) {
-									builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("0") }));
-								}
-								else if (param_type.tag == (emitter__TypeTag__t_float)) {
-									builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("0.0") }));
-								}
-								else if (param_type.tag == (emitter__TypeTag__t_bool)) {
-									builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("false") }));
-								}
-								else {
-									builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("''") }));
-								}
-							} else {
-								builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("rt.new_null()") }));
-							}
-						}
-					}
-					for (int i = var_idx; i < node.args.len; i++) {
-						ast__AstNode arg = (*(ast__AstNode*)builtin__array_get(node.args, i));
-						_option_ast__AstNode_ptr *_t102 = &arg.expr;
-						if (_t102->state != 0) {
-							builtin___v_panic(_S("Arg missing expr"));
-							VUNREACHABLE();
-						;
-						}
-						ast__AstNode* arg_val = (*(ast__AstNode**)_t102->data);
-						builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, *arg_val) }));
-					}
-				} else {
-					for (int i = 0; i < func_info.param_count; i++) {
-						if (i < node.args.len) {
-							ast__AstNode arg = (*(ast__AstNode*)builtin__array_get(node.args, i));
-							_option_ast__AstNode_ptr *_t104 = &arg.expr;
-							if (_t104->state != 0) {
-								builtin___v_panic(_S("Arg missing expr"));
-								VUNREACHABLE();
-							;
-							}
-							ast__AstNode* arg_val = (*(ast__AstNode**)_t104->data);
-							emitter__VarType arg_typ = emitter__Transpiler_get_expr_type(t, *arg_val);
-							string param_name = (*(string*)builtin__array_get(func_info.param_names, i));
-							emitter__VarType param_type = emitter__Transpiler_get_func_param_type(t, func_name, param_name);
-							if (emitter__VarType_is_scalar(param_type) && emitter__VarType_is_scalar(arg_typ)) {
-								builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_visit_expr_native(t, *arg_val) }));
-							} else {
-								builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, *arg_val) }));
-							}
-						} else {
-							string param_name = (*(string*)builtin__array_get(func_info.param_names, i));
-							emitter__VarType param_type = emitter__Transpiler_get_func_param_type(t, func_name, param_name);
-							if (emitter__VarType_is_scalar(param_type)) {
-
-								if (param_type.tag == (emitter__TypeTag__t_int)) {
-									builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("0") }));
-								}
-								else if (param_type.tag == (emitter__TypeTag__t_float)) {
-									builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("0.0") }));
-								}
-								else if (param_type.tag == (emitter__TypeTag__t_bool)) {
-									builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("false") }));
-								}
-								else {
-									builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("''") }));
-								}
-							} else {
-								builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("rt.new_null()") }));
-							}
-						}
-					}
-				}
+			emitter__VarType* _t120 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_return_types), &(string[]){func_name}));
+			_option_emitter__VarType _t119 = {0};
+			if (_t120) {
+				*((emitter__VarType*)&_t119.data) = *((emitter__VarType*)_t120);
 			} else {
-				for (int _t112 = 0; _t112 < node.args.len; ++_t112) {
-					ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t112];
-					_option_ast__AstNode_ptr *_t113 = &arg.expr;
-					if (_t113->state != 0) {
-						builtin___v_panic(_S("Arg missing expr"));
-						VUNREACHABLE();
-					;
-					}
-					ast__AstNode* arg_val = (*(ast__AstNode**)_t113->data);
-					emitter__VarType arg_typ = emitter__Transpiler_get_expr_type(t, *arg_val);
-					if (emitter__VarType_is_scalar(arg_typ)) {
-						builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_visit_expr_native(t, *arg_val) }));
-					} else {
-						builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, *arg_val) }));
-					}
-				}
-			}
-			emitter__VarType* _t117 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_return_types), &(string[]){func_name}));
-			_option_emitter__VarType _t116 = {0};
-			if (_t117) {
-				*((emitter__VarType*)&_t116.data) = *((emitter__VarType*)_t117);
-			} else {
-				_t116.state = 2; _t116.err = builtin___v_error(_S("map key does not exist"));
+				_t119.state = 2; _t119.err = builtin___v_error(_S("map key does not exist"));
 			}
 			;
-			if (_t116.state != 0) {
-				*(emitter__VarType*) _t116.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			if (_t119.state != 0) {
+				*(emitter__VarType*) _t119.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			}
 			
-			emitter__VarType ret_type = (*(emitter__VarType*)_t116.data);
+			emitter__VarType ret_type = (*(emitter__VarType*)_t119.data);
 			t->last_expr_type = ret_type;
-			if (emitter__VarType_is_scalar(ret_type)) {
-				string call_expr = builtin__string_plus_many(4, _MOV((string[4]){emitter__func_v_name(func_name), _S("("), Array_string_join(arg_strs, _S(", ")), _S(")")}));
-				return emitter__box_expr(call_expr, ret_type);
-			}
-			return builtin__string_plus_many(4, _MOV((string[4]){emitter__func_v_name(func_name), _S("("), Array_string_join(arg_strs, _S(", ")), _S(")")}));
+			return emitter__Transpiler_emit_custom_funccall(t, node, func_name, ret_type, false);
 		}
 		Array_string arg_strs = builtin____new_array_with_default(0, 0, sizeof(string), 0);
 		Array_ast__AstNode arg_nodes = builtin____new_array_with_default(0, 0, sizeof(ast__AstNode), 0);
-		for (int _t120 = 0; _t120 < node.args.len; ++_t120) {
-			ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t120];
-			_option_ast__AstNode_ptr *_t121 = &arg.expr;
-			if (_t121->state != 0) {
+		for (int _t122 = 0; _t122 < node->args.len; ++_t122) {
+			ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t122];
+			_option_ast__AstNode_ptr *_t123 = &arg.expr;
+			if (_t123->state != 0) {
 				builtin___v_panic(_S("Arg missing expr"));
 				VUNREACHABLE();
 			;
 			}
-			ast__AstNode* arg_val = (*(ast__AstNode**)_t121->data);
-			builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, *arg_val) }));
+			ast__AstNode* arg_val = (*(ast__AstNode**)_t123->data);
+			builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, (voidptr)&*arg_val) }));
 			builtin__array_push((array*)&arg_nodes, _MOV((ast__AstNode[]){ *arg_val }));
 		}
-		_option_ast__AstNode_ptr _t124 = {0};
-		if (_t124 = node.expr, _t124.state == 0) {
-			ast__AstNode* callable_expr_node = *(ast__AstNode**)_t124.data;
+		_option_ast__AstNode_ptr _t126 = {0};
+		if (_t126 = node->expr, _t126.state == 0) {
+			ast__AstNode* callable_expr_node = *(ast__AstNode**)_t126.data;
 			GC_reachable_here(&callable_expr_node);
 			if (((voidptr)(callable_expr_node)) != 0) {
-				string callable_expr = emitter__Transpiler_visit_expr(t, *callable_expr_node);
+				string callable_expr = emitter__Transpiler_visit_expr(t, callable_expr_node);
 				if (arg_strs.len == 0) {
 					return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.call_callable("), callable_expr, _S(", []rt.PhpVal{})")}));
 				} else {
@@ -19946,235 +20880,262 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 			}
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_plus)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_plus)) {
 		return emitter__Transpiler_emit_binop(t, node, _S("+"), _S("rt.add"));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_minus)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_minus)) {
 		return emitter__Transpiler_emit_binop(t, node, _S("-"), _S("rt.sub"));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_mul)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_mul)) {
 		return emitter__Transpiler_emit_binop(t, node, _S("*"), _S("rt.mul"));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_div)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_div)) {
 		return emitter__Transpiler_emit_binop(t, node, _S("/"), _S("rt.div"));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_mod)) {
-		_option_ast__AstNode_ptr *_t135 = &node.left;
-		if (_t135->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_mod)) {
+		_option_ast__AstNode_ptr *_t137 = &node->left;
+		if (_t137->state != 0) {
 			builtin___v_panic(_S("mod missing left"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* left = (*(ast__AstNode**)_t135->data);
-		_option_ast__AstNode_ptr *_t136 = &node.right;
-		if (_t136->state != 0) {
+		ast__AstNode* left = (*(ast__AstNode**)_t137->data);
+		_option_ast__AstNode_ptr *_t138 = &node->right;
+		if (_t138->state != 0) {
 			builtin___v_panic(_S("mod missing right"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* right = (*(ast__AstNode**)_t136->data);
-		emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, *left);
-		emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, *right);
+		ast__AstNode* right = (*(ast__AstNode**)_t138->data);
+		emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*left);
+		emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*right);
 		if (l_type.tag == emitter__TypeTag__t_int && r_type.tag == emitter__TypeTag__t_int) {
 			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-			string l_code = emitter__Transpiler_visit_expr_native(t, *left);
-			string r_code = emitter__Transpiler_visit_expr_native(t, *right);
+			string l_code = emitter__Transpiler_visit_expr_native(t, left);
+			string r_code = emitter__Transpiler_visit_expr_native(t, right);
 			return builtin__string_plus_many(3, _MOV((string[3]){l_code, _S(" % "), r_code}));
 		}
-		return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.mod_("), emitter__Transpiler_visit_expr(t, *left), _S(", "), emitter__Transpiler_visit_expr(t, *right), _S(")")}));
+		return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.mod_("), emitter__Transpiler_visit_expr(t, left), _S(", "), emitter__Transpiler_visit_expr(t, right), _S(")")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_concat)) {
-		_option_ast__AstNode_ptr *_t139 = &node.left;
-		if (_t139->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_concat)) {
+		_option_ast__AstNode_ptr *_t141 = &node->left;
+		if (_t141->state != 0) {
 			builtin___v_panic(_S("concat missing left"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* left = (*(ast__AstNode**)_t139->data);
-		_option_ast__AstNode_ptr *_t140 = &node.right;
-		if (_t140->state != 0) {
+		ast__AstNode* left = (*(ast__AstNode**)_t141->data);
+		_option_ast__AstNode_ptr *_t142 = &node->right;
+		if (_t142->state != 0) {
 			builtin___v_panic(_S("concat missing right"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* right = (*(ast__AstNode**)_t140->data);
-		emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, *left);
-		emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, *right);
-		bool l_scalar = emitter__VarType_is_scalar(l_type);
-		bool r_scalar = emitter__VarType_is_scalar(r_type);
-		if (l_scalar || r_scalar) {
-			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-			string l_code = (l_scalar ? (emitter__Transpiler_native_to_str(t, *left, l_type)) : (builtin__string_plus_many(3, _MOV((string[3]){_S("("), emitter__Transpiler_visit_expr(t, *left), _S(").str()")}))));
-			string r_code = (r_scalar ? (emitter__Transpiler_native_to_str(t, *right, r_type)) : (builtin__string_plus_many(3, _MOV((string[3]){_S("("), emitter__Transpiler_visit_expr(t, *right), _S(").str()")}))));
-			return builtin__string_plus_many(3, _MOV((string[3]){l_code, _S(" + "), r_code}));
-		}
-		return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.concat("), emitter__Transpiler_visit_expr(t, *left), _S(", "), emitter__Transpiler_visit_expr(t, *right), _S(")")}));
+		ast__AstNode* right = (*(ast__AstNode**)_t142->data);
+		emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*left);
+		emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*right);
+		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		string l_code = (emitter__VarType_is_scalar(l_type) ? (emitter__Transpiler_native_to_str(t, left, l_type)) : (builtin__string_plus_many(3, _MOV((string[3]){_S("("), emitter__Transpiler_visit_expr(t, left), _S(").str()")}))));
+		string r_code = (emitter__VarType_is_scalar(r_type) ? (emitter__Transpiler_native_to_str(t, right, r_type)) : (builtin__string_plus_many(3, _MOV((string[3]){_S("("), emitter__Transpiler_visit_expr(t, right), _S(").str()")}))));
+		return builtin__string_plus_many(3, _MOV((string[3]){l_code, _S(" + "), r_code}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_greater)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_greater)) {
 		return emitter__Transpiler_emit_comparison(t, node, _S(">"), _S("rt.greater"));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_smaller)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_smaller)) {
 		return emitter__Transpiler_emit_comparison(t, node, _S("<"), _S("rt.less"));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_greater_equal)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_greater_equal)) {
 		return emitter__Transpiler_emit_comparison(t, node, _S(">="), _S("rt.greater_equal"));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_smaller_equal)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_smaller_equal)) {
 		return emitter__Transpiler_emit_comparison(t, node, _S("<="), _S("rt.less_equal"));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_equal)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_equal)) {
 		return emitter__Transpiler_emit_comparison(t, node, _S("=="), _S("rt.equal"));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_identical)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_identical)) {
 		return emitter__Transpiler_emit_comparison(t, node, _S("=="), _S("rt.identical"));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_boolean_not)) {
-		_option_ast__AstNode_ptr *_t149 = &node.expr;
-		if (_t149->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_boolean_not)) {
+		_option_ast__AstNode_ptr *_t150 = &node->expr;
+		if (_t150->state != 0) {
 			builtin___v_panic(_S("BooleanNot missing expr"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* expr_node = (*(ast__AstNode**)_t149->data);
-		string cond = emitter__Transpiler_get_native_bool_condition(t, *expr_node);
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t150->data);
+		string cond = emitter__Transpiler_get_native_bool_condition(t, (voidptr)&*expr_node);
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_bool(!("), cond, _S("))")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_bool_and) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_logical_and)) {
-		_option_ast__AstNode_ptr *_t151 = &node.left;
-		if (_t151->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_bool_and) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_logical_and)) {
+		_option_ast__AstNode_ptr *_t152 = &node->left;
+		if (_t152->state != 0) {
 			builtin___v_panic(_S("and missing left"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* left = (*(ast__AstNode**)_t151->data);
-		_option_ast__AstNode_ptr *_t152 = &node.right;
-		if (_t152->state != 0) {
+		ast__AstNode* left = (*(ast__AstNode**)_t152->data);
+		_option_ast__AstNode_ptr *_t153 = &node->right;
+		if (_t153->state != 0) {
 			builtin___v_panic(_S("and missing right"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* right = (*(ast__AstNode**)_t152->data);
-		string l_cond = emitter__Transpiler_get_native_bool_condition(t, *left);
-		string r_cond = emitter__Transpiler_get_native_bool_condition(t, *right);
-		return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.new_bool("), l_cond, _S(" && "), r_cond, _S(")")}));
+		ast__AstNode* right = (*(ast__AstNode**)_t153->data);
+		string l_cond = emitter__Transpiler_get_native_bool_condition(t, (voidptr)&*left);
+		string r_cond = emitter__Transpiler_get_native_bool_condition(t, (voidptr)&*right);
+		string l_str = (builtin__string_contains(l_cond, _S(" || ")) ? (builtin__string_plus_many(3, _MOV((string[3]){_S("("), l_cond, _S(")")}))) : (l_cond));
+		string r_str = (builtin__string_contains(r_cond, _S(" || ")) ? (builtin__string_plus_many(3, _MOV((string[3]){_S("("), r_cond, _S(")")}))) : (r_cond));
+		return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.new_bool("), l_str, _S(" && "), r_str, _S(")")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_bool_or) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_logical_or)) {
-		_option_ast__AstNode_ptr *_t154 = &node.left;
-		if (_t154->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_bool_or) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_logical_or)) {
+		_option_ast__AstNode_ptr *_t155 = &node->left;
+		if (_t155->state != 0) {
 			builtin___v_panic(_S("or missing left"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* left = (*(ast__AstNode**)_t154->data);
-		_option_ast__AstNode_ptr *_t155 = &node.right;
-		if (_t155->state != 0) {
+		ast__AstNode* left = (*(ast__AstNode**)_t155->data);
+		_option_ast__AstNode_ptr *_t156 = &node->right;
+		if (_t156->state != 0) {
 			builtin___v_panic(_S("or missing right"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* right = (*(ast__AstNode**)_t155->data);
-		string l_cond = emitter__Transpiler_get_native_bool_condition(t, *left);
-		string r_cond = emitter__Transpiler_get_native_bool_condition(t, *right);
-		return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.new_bool("), l_cond, _S(" || "), r_cond, _S(")")}));
+		ast__AstNode* right = (*(ast__AstNode**)_t156->data);
+		string l_cond = emitter__Transpiler_get_native_bool_condition(t, (voidptr)&*left);
+		string r_cond = emitter__Transpiler_get_native_bool_condition(t, (voidptr)&*right);
+		string l_str = (builtin__string_contains(l_cond, _S(" && ")) ? (builtin__string_plus_many(3, _MOV((string[3]){_S("("), l_cond, _S(")")}))) : (l_cond));
+		string r_str = (builtin__string_contains(r_cond, _S(" && ")) ? (builtin__string_plus_many(3, _MOV((string[3]){_S("("), r_cond, _S(")")}))) : (r_cond));
+		return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.new_bool("), l_str, _S(" || "), r_str, _S(")")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_ternary)) {
-		_option_ast__AstNode_ptr *_t157 = &node.cond;
-		if (_t157->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_ternary)) {
+		_option_ast__AstNode_ptr *_t158 = &node->cond;
+		if (_t158->state != 0) {
 			builtin___v_panic(_S("Ternary missing cond"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* cond = (*(ast__AstNode**)_t157->data);
-		string cond_str = emitter__Transpiler_get_native_bool_condition(t, *cond);
-		_option_ast__AstNode_ptr _t158 = {0};
-		if (_t158 = node.__v_if, _t158.state == 0) {
-			ast__AstNode* if_node = *(ast__AstNode**)_t158.data;
+		ast__AstNode* cond = (*(ast__AstNode**)_t158->data);
+		string cond_str = emitter__Transpiler_get_native_bool_condition(t, (voidptr)&*cond);
+		emitter__VarType ternary_type = emitter__Transpiler_get_expr_type(t, node);
+		if (emitter__VarType_is_scalar(ternary_type)) {
+			t->last_expr_type = ternary_type;
+			_option_ast__AstNode_ptr _t159 = {0};
+			if (_t159 = node->__v_if, _t159.state == 0) {
+				ast__AstNode* if_node = *(ast__AstNode**)_t159.data;
+				GC_reachable_here(&if_node);
+				_option_ast__AstNode_ptr *_t160 = &node->__v_else;
+				if (_t160->state != 0) {
+					builtin___v_panic(_S("Ternary missing else"));
+					VUNREACHABLE();
+				;
+				}
+				ast__AstNode* else_node = (*(ast__AstNode**)_t160->data);
+				return builtin__string_plus_many(7, _MOV((string[7]){_S("if "), cond_str, _S(" { "), emitter__Transpiler_visit_expr_native(t, if_node), _S(" } else { "), emitter__Transpiler_visit_expr_native(t, else_node), _S(" }")}));
+			} else {
+				_option_ast__AstNode_ptr *_t162 = &node->__v_else;
+				if (_t162->state != 0) {
+					builtin___v_panic(_S("Ternary missing else"));
+					VUNREACHABLE();
+				;
+				}
+				ast__AstNode* else_node = (*(ast__AstNode**)_t162->data);
+				return builtin__string_plus_many(7, _MOV((string[7]){_S("if "), cond_str, _S(" { "), emitter__Transpiler_visit_expr_native(t, cond), _S(" } else { "), emitter__Transpiler_visit_expr_native(t, else_node), _S(" }")}));
+			}
+		}
+		_option_ast__AstNode_ptr _t164 = {0};
+		if (_t164 = node->__v_if, _t164.state == 0) {
+			ast__AstNode* if_node = *(ast__AstNode**)_t164.data;
 			GC_reachable_here(&if_node);
-			_option_ast__AstNode_ptr *_t159 = &node.__v_else;
-			if (_t159->state != 0) {
+			_option_ast__AstNode_ptr *_t165 = &node->__v_else;
+			if (_t165->state != 0) {
 				builtin___v_panic(_S("Ternary missing else"));
 				VUNREACHABLE();
 			;
 			}
-			ast__AstNode* else_node = (*(ast__AstNode**)_t159->data);
-			return builtin__string_plus_many(7, _MOV((string[7]){_S("if "), cond_str, _S(" { "), emitter__Transpiler_visit_expr(t, *if_node), _S(" } else { "), emitter__Transpiler_visit_expr(t, *else_node), _S(" }")}));
+			ast__AstNode* else_node = (*(ast__AstNode**)_t165->data);
+			return builtin__string_plus_many(7, _MOV((string[7]){_S("if "), cond_str, _S(" { "), emitter__Transpiler_visit_expr(t, if_node), _S(" } else { "), emitter__Transpiler_visit_expr(t, else_node), _S(" }")}));
 		} else {
-			_option_ast__AstNode_ptr *_t161 = &node.__v_else;
-			if (_t161->state != 0) {
+			_option_ast__AstNode_ptr *_t167 = &node->__v_else;
+			if (_t167->state != 0) {
 				builtin___v_panic(_S("Ternary missing else"));
 				VUNREACHABLE();
 			;
 			}
-			ast__AstNode* else_node = (*(ast__AstNode**)_t161->data);
-			return builtin__string_plus_many(7, _MOV((string[7]){_S("if "), cond_str, _S(" { "), emitter__Transpiler_visit_expr(t, *cond), _S(" } else { "), emitter__Transpiler_visit_expr(t, *else_node), _S(" }")}));
+			ast__AstNode* else_node = (*(ast__AstNode**)_t167->data);
+			return builtin__string_plus_many(7, _MOV((string[7]){_S("if "), cond_str, _S(" { "), emitter__Transpiler_visit_expr(t, cond), _S(" } else { "), emitter__Transpiler_visit_expr(t, else_node), _S(" }")}));
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_coalesce)) {
-		_option_ast__AstNode_ptr *_t163 = &node.left;
-		if (_t163->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_coalesce)) {
+		_option_ast__AstNode_ptr *_t169 = &node->left;
+		if (_t169->state != 0) {
 			builtin___v_panic(_S("Coalesce missing left"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* left = (*(ast__AstNode**)_t163->data);
-		_option_ast__AstNode_ptr *_t164 = &node.right;
-		if (_t164->state != 0) {
+		ast__AstNode* left = (*(ast__AstNode**)_t169->data);
+		_option_ast__AstNode_ptr *_t170 = &node->right;
+		if (_t170->state != 0) {
 			builtin___v_panic(_S("Coalesce missing right"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* right = (*(ast__AstNode**)_t164->data);
-		string left_str = emitter__Transpiler_visit_expr(t, *left);
-		return builtin__string_plus_many(7, _MOV((string[7]){_S("if !("), left_str, _S(").is_null() { "), left_str, _S(" } else { "), emitter__Transpiler_visit_expr(t, *right), _S(" }")}));
+		ast__AstNode* right = (*(ast__AstNode**)_t170->data);
+		string left_str = emitter__Transpiler_visit_expr(t, left);
+		return builtin__string_plus_many(7, _MOV((string[7]){_S("if !("), left_str, _S(").is_null() { "), left_str, _S(" } else { "), emitter__Transpiler_visit_expr(t, right), _S(" }")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_bitwise_and)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_bitwise_and)) {
 		return emitter__Transpiler_emit_bitwise(t, node, _S("&"), _S("rt.bitwise_and"));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_bitwise_or)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_bitwise_or)) {
 		return emitter__Transpiler_emit_bitwise(t, node, _S("|"), _S("rt.bitwise_or"));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_bitwise_xor)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_bitwise_xor)) {
 		return emitter__Transpiler_emit_bitwise(t, node, _S("^"), _S("rt.bitwise_xor"));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_shift_left)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_shift_left)) {
 		return emitter__Transpiler_emit_bitwise(t, node, _S("<<"), _S("rt.shift_left"));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_shift_right)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_shift_right)) {
 		return emitter__Transpiler_emit_bitwise(t, node, _S(">>"), _S("rt.shift_right"));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_bitwise_not)) {
-		_option_ast__AstNode_ptr *_t171 = &node.expr;
-		if (_t171->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_bitwise_not)) {
+		_option_ast__AstNode_ptr *_t177 = &node->expr;
+		if (_t177->state != 0) {
 			builtin___v_panic(_S("BitwiseNot missing expr"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* expr_node = (*(ast__AstNode**)_t171->data);
-		emitter__VarType e_type = emitter__Transpiler_get_expr_type(t, *expr_node);
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t177->data);
+		emitter__VarType e_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
 		if (e_type.tag == emitter__TypeTag__t_int) {
 			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-			string e_code = emitter__Transpiler_visit_expr_native(t, *expr_node);
+			string e_code = emitter__Transpiler_visit_expr_native(t, expr_node);
 			return builtin__string_plus_many(2, _MOV((string[2]){_S("~"), e_code}));
 		}
-		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.bitwise_not("), emitter__Transpiler_visit_expr(t, *expr_node), _S(")")}));
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.bitwise_not("), emitter__Transpiler_visit_expr(t, expr_node), _S(")")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_array)) {
-		voidptr ptr = ((voidptr)(node.items.data));
-		emitter__CodegenCacheEntry* _t175 = (emitter__CodegenCacheEntry*)(builtin__map_get_check(ADDR(map, t->codegen_cache), &(voidptr[]){ptr}));
-		_option_emitter__CodegenCacheEntry _t174 = {0};
-		if (_t175) {
-			*((emitter__CodegenCacheEntry*)&_t174.data) = *((emitter__CodegenCacheEntry*)_t175);
-		} else {
-			_t174.state = 2; _t174.err = builtin___v_error(_S("map key does not exist"));
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_array)) {
+		voidptr ptr = ((voidptr)(node->items.data));
+		if (node->items.len > 0) {
+			emitter__CodegenCacheEntry* _t181 = (emitter__CodegenCacheEntry*)(builtin__map_get_check(ADDR(map, t->codegen_cache), &(voidptr[]){ptr}));
+			_option_emitter__CodegenCacheEntry _t180 = {0};
+			if (_t181) {
+				*((emitter__CodegenCacheEntry*)&_t180.data) = *((emitter__CodegenCacheEntry*)_t181);
+			} else {
+				_t180.state = 2; _t180.err = builtin___v_error(_S("map key does not exist"));
+			}
+			
+			if (_t180.state == 0) {
+				emitter__CodegenCacheEntry cached = (*(emitter__CodegenCacheEntry*)_t180.data);
+				GC_reachable_here(&cached);
+				t->last_expr_type = cached.typ;
+				return cached.code;
+			}
+				if (_t180.state == 2 && _t180.err._object != _const_none__._object) { builtin___v_free(_t180.err._object); }
 		}
-		
-		if (_t174.state == 0) {
-			emitter__CodegenCacheEntry cached = (*(emitter__CodegenCacheEntry*)_t174.data);
-			GC_reachable_here(&cached);
-			t->last_expr_type = cached.typ;
-			return cached.code;
-		}
-			if (_t174.state == 2 && _t174.err._object != _const_none__._object) { builtin___v_free(_t174.err._object); }
 		emitter__VarType arr_type = emitter__Transpiler_get_expr_type(t, node);
 		if (t->expected_type.is_native_list || t->expected_type.is_native_map) {
 			arr_type = t->expected_type;
@@ -20182,75 +21143,151 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 		string ret_code = _S("");
 		if (arr_type.is_native_list) {
 			Array_string elem_strs = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-			for (int _t177 = 0; _t177 < node.items.len; ++_t177) {
-				ast__AstNode item = ((ast__AstNode*)node.items.data)[_t177];
-				_option_ast__AstNode_ptr *_t178 = &item.expr;
-				if (_t178->state != 0) {
+			for (int _t183 = 0; _t183 < node->items.len; ++_t183) {
+				ast__AstNode item = ((ast__AstNode*)node->items.data)[_t183];
+				_option_ast__AstNode_ptr *_t184 = &item.expr;
+				if (_t184->state != 0) {
 					continue;
 				}
-				ast__AstNode* val_node = (*(ast__AstNode**)_t178->data);
-				emitter__VarType val_typ = emitter__Transpiler_get_expr_type(t, *val_node);
+				ast__AstNode* val_node = (*(ast__AstNode**)_t184->data);
+				emitter__VarType val_typ = emitter__Transpiler_get_expr_type(t, (voidptr)&*val_node);
+				string code = _S("");
 				if (val_typ.tag == arr_type.element_type_tag) {
-					builtin__array_push((array*)&elem_strs, _MOV((string[]){ emitter__Transpiler_visit_expr_native(t, *val_node) }));
+					code = emitter__Transpiler_visit_expr_native(t, val_node);
 				} else {
-					builtin__array_push((array*)&elem_strs, _MOV((string[]){ emitter__Transpiler_visit_expr(t, *val_node) }));
+					emitter__VarType old_expect = t->expected_type;
+					t->expected_type = ((emitter__VarType){.tag = arr_type.element_type_tag,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+					code = emitter__Transpiler_visit_expr(t, val_node);
+					t->expected_type = old_expect;
 				}
+				if (arr_type.element_type_tag == emitter__TypeTag__t_string && builtin__string_starts_with(code, _S("rt.new_string(")) && builtin__string_ends_with(code, _S(")"))) {
+					code = builtin__string_substr(code, 14, code.len - 1);
+				} else if (arr_type.element_type_tag == emitter__TypeTag__t_int && builtin__string_starts_with(code, _S("rt.new_int(")) && builtin__string_ends_with(code, _S(")"))) {
+					code = builtin__string_substr(code, 11, code.len - 1);
+				} else if (arr_type.element_type_tag == emitter__TypeTag__t_float && builtin__string_starts_with(code, _S("rt.new_float(")) && builtin__string_ends_with(code, _S(")"))) {
+					code = builtin__string_substr(code, 13, code.len - 1);
+				} else if (arr_type.element_type_tag == emitter__TypeTag__t_bool && builtin__string_starts_with(code, _S("rt.new_bool(")) && builtin__string_ends_with(code, _S(")"))) {
+					code = builtin__string_substr(code, 12, code.len - 1);
+				}
+				builtin__array_push((array*)&elem_strs, _MOV((string[]){ builtin__string_clone(code) }));
 			}
-			t->last_expr_type = arr_type;
-			if (elem_strs.len == 0) {
-				ret_code = _S("[]rt.PhpVal{}");
-			} else {
+			bool has_boxed = arr_type.element_type_tag == emitter__TypeTag__t_unknown;
+			if (has_boxed) {
+				builtin__array_clear(&elem_strs);
+				for (int _t186 = 0; _t186 < node->items.len; ++_t186) {
+					ast__AstNode item = ((ast__AstNode*)node->items.data)[_t186];
+					_option_ast__AstNode_ptr *_t187 = &item.expr;
+					if (_t187->state != 0) {
+						continue;
+					}
+					ast__AstNode* val_node = (*(ast__AstNode**)_t187->data);
+					emitter__VarType old_expect = t->expected_type;
+					t->expected_type = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+					builtin__array_push((array*)&elem_strs, _MOV((string[]){ emitter__Transpiler_visit_expr(t, val_node) }));
+					t->expected_type = old_expect;
+				}
+				t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_array,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = true,.is_native_map = 0,.element_type_tag = emitter__TypeTag__t_unknown,});
 				ret_code = builtin__string_plus_many(3, _MOV((string[3]){_S("["), Array_string_join(elem_strs, _S(", ")), _S("]")}));
+			} else {
+				t->last_expr_type = arr_type;
+				if (elem_strs.len == 0) {
+					string elem = ((arr_type.element_type_tag == (emitter__TypeTag__t_int))? (_S("i64")) : (arr_type.element_type_tag == (emitter__TypeTag__t_float))? (_S("f64")) : (arr_type.element_type_tag == (emitter__TypeTag__t_string))? (_S("string")) : (arr_type.element_type_tag == (emitter__TypeTag__t_bool))? (_S("bool")) : (_S("rt.PhpVal")));
+					ret_code = builtin__string_plus_many(3, _MOV((string[3]){_S("[]"), elem, _S("{}")}));
+				} else {
+					ret_code = builtin__string_plus_many(3, _MOV((string[3]){_S("["), Array_string_join(elem_strs, _S(", ")), _S("]")}));
+				}
 			}
 		} else if (arr_type.is_native_map) {
 			Array_string pair_strs = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-			for (int _t181 = 0; _t181 < node.items.len; ++_t181) {
-				ast__AstNode item = ((ast__AstNode*)node.items.data)[_t181];
-				_option_ast__AstNode_ptr *_t182 = &item.key;
-				if (_t182->state != 0) {
+			for (int _t189 = 0; _t189 < node->items.len; ++_t189) {
+				ast__AstNode item = ((ast__AstNode*)node->items.data)[_t189];
+				_option_ast__AstNode_ptr *_t190 = &item.key;
+				if (_t190->state != 0) {
 					continue;
 				}
-				ast__AstNode* key_node = (*(ast__AstNode**)_t182->data);
-				_option_ast__AstNode_ptr *_t183 = &item.expr;
-				if (_t183->state != 0) {
+				ast__AstNode* key_node = (*(ast__AstNode**)_t190->data);
+				_option_ast__AstNode_ptr *_t191 = &item.expr;
+				if (_t191->state != 0) {
 					continue;
 				}
-				ast__AstNode* val_node = (*(ast__AstNode**)_t183->data);
-				string key_str = emitter__Transpiler_visit_expr_native(t, *key_node);
-				emitter__VarType val_typ = emitter__Transpiler_get_expr_type(t, *val_node);
+				ast__AstNode* val_node = (*(ast__AstNode**)_t191->data);
+				string key_str = emitter__Transpiler_visit_expr_native(t, key_node);
+				emitter__VarType val_typ = emitter__Transpiler_get_expr_type(t, (voidptr)&*val_node);
 				string val_str = _S("");
 				if (val_typ.tag == arr_type.element_type_tag) {
-					val_str = emitter__Transpiler_visit_expr_native(t, *val_node);
+					val_str = emitter__Transpiler_visit_expr_native(t, val_node);
 				} else {
-					val_str = emitter__Transpiler_visit_expr(t, *val_node);
+					emitter__VarType old_expect = t->expected_type;
+					t->expected_type = ((emitter__VarType){.tag = arr_type.element_type_tag,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+					val_str = emitter__Transpiler_visit_expr(t, val_node);
+					t->expected_type = old_expect;
+				}
+				if (arr_type.element_type_tag == emitter__TypeTag__t_string && builtin__string_starts_with(val_str, _S("rt.new_string(")) && builtin__string_ends_with(val_str, _S(")"))) {
+					val_str = builtin__string_substr(val_str, 14, val_str.len - 1);
+				} else if (arr_type.element_type_tag == emitter__TypeTag__t_int && builtin__string_starts_with(val_str, _S("rt.new_int(")) && builtin__string_ends_with(val_str, _S(")"))) {
+					val_str = builtin__string_substr(val_str, 11, val_str.len - 1);
+				} else if (arr_type.element_type_tag == emitter__TypeTag__t_float && builtin__string_starts_with(val_str, _S("rt.new_float(")) && builtin__string_ends_with(val_str, _S(")"))) {
+					val_str = builtin__string_substr(val_str, 13, val_str.len - 1);
+				} else if (arr_type.element_type_tag == emitter__TypeTag__t_bool && builtin__string_starts_with(val_str, _S("rt.new_bool(")) && builtin__string_ends_with(val_str, _S(")"))) {
+					val_str = builtin__string_substr(val_str, 12, val_str.len - 1);
 				}
 				builtin__array_push((array*)&pair_strs, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){key_str, _S(": "), val_str})) }));
 			}
-			t->last_expr_type = arr_type;
-			if (pair_strs.len == 0) {
-				ret_code = _S("map[string]rt.PhpVal{}");
-			} else {
+			bool has_boxed = arr_type.element_type_tag == emitter__TypeTag__t_unknown;
+			if (has_boxed) {
+				builtin__array_clear(&pair_strs);
+				for (int _t193 = 0; _t193 < node->items.len; ++_t193) {
+					ast__AstNode item = ((ast__AstNode*)node->items.data)[_t193];
+					_option_ast__AstNode_ptr *_t194 = &item.key;
+					if (_t194->state != 0) {
+						continue;
+					}
+					ast__AstNode* key_node = (*(ast__AstNode**)_t194->data);
+					_option_ast__AstNode_ptr *_t195 = &item.expr;
+					if (_t195->state != 0) {
+						continue;
+					}
+					ast__AstNode* val_node = (*(ast__AstNode**)_t195->data);
+					string key_str = emitter__Transpiler_visit_expr_native(t, key_node);
+					emitter__VarType old_expect = t->expected_type;
+					t->expected_type = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+					string val_str = emitter__Transpiler_visit_expr(t, val_node);
+					t->expected_type = old_expect;
+					builtin__array_push((array*)&pair_strs, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){key_str, _S(": "), val_str})) }));
+				}
+				t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_array,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = true,.element_type_tag = emitter__TypeTag__t_unknown,});
 				ret_code = builtin__string_plus_many(3, _MOV((string[3]){_S("{ "), Array_string_join(pair_strs, _S(", ")), _S(" }")}));
+			} else {
+				t->last_expr_type = arr_type;
+				if (pair_strs.len == 0) {
+					string elem = ((arr_type.element_type_tag == (emitter__TypeTag__t_int))? (_S("i64")) : (arr_type.element_type_tag == (emitter__TypeTag__t_float))? (_S("f64")) : (arr_type.element_type_tag == (emitter__TypeTag__t_string))? (_S("string")) : (arr_type.element_type_tag == (emitter__TypeTag__t_bool))? (_S("bool")) : (_S("rt.PhpVal")));
+					ret_code = builtin__string_plus_many(3, _MOV((string[3]){_S("map[string]"), elem, _S("{}")}));
+				} else {
+					ret_code = builtin__string_plus_many(3, _MOV((string[3]){_S("{ "), Array_string_join(pair_strs, _S(", ")), _S(" }")}));
+				}
 			}
 		} else {
 			Array_string item_strs = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-			for (int _t185 = 0; _t185 < node.items.len; ++_t185) {
-				ast__AstNode item = ((ast__AstNode*)node.items.data)[_t185];
-				_option_ast__AstNode_ptr *_t186 = &item.expr;
-				if (_t186->state != 0) {
+			for (int _t197 = 0; _t197 < node->items.len; ++_t197) {
+				ast__AstNode item = ((ast__AstNode*)node->items.data)[_t197];
+				_option_ast__AstNode_ptr *_t198 = &item.expr;
+				if (_t198->state != 0) {
 					builtin___v_panic(_S("ArrayItem missing expr"));
 					VUNREACHABLE();
 				;
 				}
-				ast__AstNode* val_node = (*(ast__AstNode**)_t186->data);
-				emitter__VarType val_typ = emitter__Transpiler_get_expr_type(t, *val_node);
-				string val_str = (emitter__VarType_is_scalar(val_typ) ? (emitter__Transpiler_visit_expr_native(t, *val_node)) : (emitter__Transpiler_visit_expr(t, *val_node)));
-				_option_ast__AstNode_ptr _t187 = {0};
-				if (_t187 = item.key, _t187.state == 0) {
-					ast__AstNode* key_node = *(ast__AstNode**)_t187.data;
+				ast__AstNode* val_node = (*(ast__AstNode**)_t198->data);
+				emitter__VarType val_typ = emitter__Transpiler_get_expr_type(t, (voidptr)&*val_node);
+				string val_str = (emitter__VarType_is_scalar(val_typ) ? (emitter__Transpiler_visit_expr_native(t, val_node)) : (emitter__Transpiler_visit_expr(t, val_node)));
+				if (val_typ.class_name.len > 0 || val_typ.tag == emitter__TypeTag__t_object || val_typ.is_native_list || val_typ.is_native_map) {
+					val_str = emitter__Transpiler_box_expr(*t, val_str, val_typ);
+				}
+				_option_ast__AstNode_ptr _t199 = {0};
+				if (_t199 = item.key, _t199.state == 0) {
+					ast__AstNode* key_node = *(ast__AstNode**)_t199.data;
 					GC_reachable_here(&key_node);
-					emitter__VarType key_typ = emitter__Transpiler_get_expr_type(t, *key_node);
-					string key_str = (emitter__VarType_is_scalar(key_typ) ? (emitter__Transpiler_visit_expr_native(t, *key_node)) : (emitter__Transpiler_visit_expr(t, *key_node)));
+					emitter__VarType key_typ = emitter__Transpiler_get_expr_type(t, (voidptr)&*key_node);
+					string key_str = (emitter__VarType_is_scalar(key_typ) ? (emitter__Transpiler_visit_expr_native(t, key_node)) : (emitter__Transpiler_visit_expr(t, key_node)));
 					builtin__array_push((array*)&item_strs, _MOV((string[]){ builtin__string_plus_many(5, _MOV((string[5]){_S("rt.ArrayItem{ key: "), key_str, _S(", val: "), val_str, _S(" }")})) }));
 				} else {
 					builtin__array_push((array*)&item_strs, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){_S("rt.ArrayItem{ key: none, val: "), val_str, _S(" }")})) }));
@@ -20262,146 +21299,192 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 				ret_code = builtin__string_plus_many(3, _MOV((string[3]){_S("rt.create_array(["), Array_string_join(item_strs, _S(", ")), _S("])")}));
 			}
 		}
-		(*(emitter__CodegenCacheEntry*)builtin__map_get_and_set((map*)&t->codegen_cache, &(voidptr[]){ptr}, &(emitter__CodegenCacheEntry[]){ (emitter__CodegenCacheEntry){.code = (string){.str=(byteptr)"", .is_lit=1},.typ = (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,},} })) = ((emitter__CodegenCacheEntry){.code = ret_code,.typ = t->last_expr_type,});
+		if (arr_type.is_native_list && !t->expected_type.is_native_list && !t->expected_type.is_native_map) {
+			ret_code = builtin__string_plus_many(3, _MOV((string[3]){_S("rt.create_array_from_list("), ret_code, _S(")")}));
+			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		} else if (arr_type.is_native_map && !t->expected_type.is_native_list && !t->expected_type.is_native_map) {
+			ret_code = builtin__string_plus_many(3, _MOV((string[3]){_S("rt.create_array_from_native_map("), ret_code, _S(")")}));
+			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		}
+		if (node->items.len > 0) {
+			(*(emitter__CodegenCacheEntry*)builtin__map_get_and_set((map*)&t->codegen_cache, &(voidptr[]){ptr}, &(emitter__CodegenCacheEntry[]){ (emitter__CodegenCacheEntry){.code = (string){.str=(byteptr)"", .is_lit=1},.typ = (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,},} })) = ((emitter__CodegenCacheEntry){.code = ret_code,.typ = t->last_expr_type,});
+		}
 		return ret_code;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_array_dim_fetch)) {
-		_option_ast__AstNode_ptr *_t191 = &node.var;
-		if (_t191->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_array_dim_fetch)) {
+		_option_ast__AstNode_ptr *_t203 = &node->var;
+		if (_t203->state != 0) {
 			builtin___v_panic(_S("ArrayDimFetch missing var"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* var_node = (*(ast__AstNode**)_t191->data);
-		emitter__VarType var_type = emitter__Transpiler_get_expr_type(t, *var_node);
-		string var_str = emitter__Transpiler_visit_expr(t, *var_node);
-		bool is_native_arr = (var_type.is_native_list || var_type.is_native_map) && ((*(bool*)builtin__map_get(ADDR(map, t->native_params), &(string[]){var_node->name}, &(bool[]){ 0 })) || (*(bool*)builtin__map_get(ADDR(map, t->native_vars), &(string[]){var_node->name}, &(bool[]){ 0 })) || builtin__string_ends_with(var_node->name, _S("_mutated")));
-		if (is_native_arr) {
-			_option_ast__AstNode_ptr _t192 = {0};
-			if (_t192 = node.dim, _t192.state == 0) {
-				ast__AstNode* dim_node = *(ast__AstNode**)_t192.data;
+		ast__AstNode* var_node = (*(ast__AstNode**)_t203->data);
+		emitter__VarType var_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*var_node);
+		string var_str = emitter__Transpiler_visit_expr(t, var_node);
+		if (emitter__VarType_is_object(var_type) && emitter__Transpiler_class_implements(t, var_type.class_name, _S("ArrayAccess"))) {
+			_option_ast__AstNode_ptr _t204 = {0};
+			if (_t204 = node->dim, _t204.state == 0) {
+				ast__AstNode* dim_node = *(ast__AstNode**)_t204.data;
 				GC_reachable_here(&dim_node);
-				string dim_str = emitter__Transpiler_visit_expr_native(t, *dim_node);
-				emitter__VarType _t193 = ((emitter__VarType){.tag = var_type.element_type_tag,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-				emitter__VarType elem_type = _t193;
-				t->last_expr_type = elem_type;
-				return emitter__box_expr(builtin__string_plus_many(4, _MOV((string[4]){var_str, _S("["), dim_str, _S("]")})), elem_type);
+				string dim_str = emitter__Transpiler_visit_expr(t, dim_node);
+				t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_object,.class_name = _S("PhpVal"),.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+				return builtin__string_plus_many(4, _MOV((string[4]){var_str, _S(".offsetget("), dim_str, _S(")")}));
 			} else {
-				builtin___v_panic(_S("ArrayDimFetch missing dim in read context"));
+				builtin___v_panic(_S("ArrayDimFetch missing dim for ArrayAccess read"));
 				VUNREACHABLE();
 			}
 		}
-		_option_ast__AstNode_ptr _t195 = {0};
-		if (_t195 = node.dim, _t195.state == 0) {
-			ast__AstNode* dim_node = *(ast__AstNode**)_t195.data;
+		bool is_native_arr = false;
+		if (var_type.is_native_list || var_type.is_native_map) {
+			string check_name = var_node->name;
+			string* _t207 = (string*)(builtin__map_get_check(ADDR(map, t->var_aliases), &(string[]){var_node->name}));
+			_option_string _t206 = {0};
+			if (_t207) {
+				*((string*)&_t206.data) = *((string*)_t207);
+			} else {
+				_t206.state = 2; _t206.err = builtin___v_error(_S("map key does not exist"));
+			}
+			
+			if (_t206.state == 0) {
+				string alias = (*(string*)_t206.data);
+				GC_reachable_here(&alias);
+				if (builtin__string_ends_with(alias, _S("_mutated"))) {
+					check_name = builtin__string_plus_many(2, _MOV((string[2]){var_node->name, _S("_mutated")}));
+				} else if (builtin__string_ends_with(alias, _S("_shadow"))) {
+					check_name = builtin__string_plus_many(2, _MOV((string[2]){var_node->name, _S("_shadow")}));
+				}
+			}
+				if (_t206.state == 2 && _t206.err._object != _const_none__._object) { builtin___v_free(_t206.err._object); }
+			is_native_arr = (*(bool*)builtin__map_get(ADDR(map, t->native_params), &(string[]){check_name}, &(bool[]){ 0 })) || (*(bool*)builtin__map_get(ADDR(map, t->native_vars), &(string[]){check_name}, &(bool[]){ 0 })) || (*(bool*)builtin__map_get(ADDR(map, t->native_arr_vars), &(string[]){check_name}, &(bool[]){ 0 }));
+		}
+		if (is_native_arr) {
+			_option_ast__AstNode_ptr _t208 = {0};
+			if (_t208 = node->dim, _t208.state == 0) {
+				ast__AstNode* dim_node = *(ast__AstNode**)_t208.data;
+				GC_reachable_here(&dim_node);
+				string dim_str = emitter__Transpiler_visit_expr_native(t, dim_node);
+				emitter__VarType _t209 = ((emitter__VarType){.tag = var_type.element_type_tag,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+				emitter__VarType elem_type = _t209;
+				t->last_expr_type = elem_type;
+				return emitter__Transpiler_box_expr(*t, builtin__string_plus_many(4, _MOV((string[4]){var_str, _S("["), dim_str, _S("]")})), elem_type);
+			} else {
+				return builtin__string_plus_many(2, _MOV((string[2]){var_str, _S(".array_push_mut()")}));
+			}
+		}
+		_option_ast__AstNode_ptr _t212 = {0};
+		if (_t212 = node->dim, _t212.state == 0) {
+			ast__AstNode* dim_node = *(ast__AstNode**)_t212.data;
 			GC_reachable_here(&dim_node);
-			emitter__VarType dim_typ = emitter__Transpiler_get_expr_type(t, *dim_node);
-			string dim_str = (emitter__VarType_is_scalar(dim_typ) ? (emitter__Transpiler_visit_expr_native(t, *dim_node)) : (emitter__Transpiler_visit_expr(t, *dim_node)));
+			emitter__VarType dim_typ = emitter__Transpiler_get_expr_type(t, (voidptr)&*dim_node);
+			string dim_str = (emitter__VarType_is_scalar(dim_typ) ? (emitter__Transpiler_box_expr(*t, emitter__Transpiler_visit_expr_native(t, dim_node), dim_typ)) : (emitter__Transpiler_visit_expr(t, dim_node)));
 			return builtin__string_plus_many(4, _MOV((string[4]){var_str, _S(".array_get("), dim_str, _S(")")}));
 		} else {
-			builtin___v_panic(_S("ArrayDimFetch missing dim in read context"));
-			VUNREACHABLE();
+			return builtin__string_plus_many(2, _MOV((string[2]){var_str, _S(".array_push_mut()")}));
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_new)) {
-		_option_ast__AstNode_ptr _t197 = {0};
-		if (_t197 = node.class_expr, _t197.state == 0) {
-			ast__AstNode* class_expr_node = *(ast__AstNode**)_t197.data;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_new)) {
+		_option_ast__AstNode_ptr _t215 = {0};
+		if (_t215 = node->class_expr, _t215.state == 0) {
+			ast__AstNode* class_expr_node = *(ast__AstNode**)_t215.data;
 			GC_reachable_here(&class_expr_node);
 			Array_string arg_strs = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-			for (int _t198 = 0; _t198 < node.args.len; ++_t198) {
-				ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t198];
-				_option_ast__AstNode_ptr *_t199 = &arg.expr;
-				if (_t199->state != 0) {
+			for (int _t216 = 0; _t216 < node->args.len; ++_t216) {
+				ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t216];
+				_option_ast__AstNode_ptr *_t217 = &arg.expr;
+				if (_t217->state != 0) {
 					builtin___v_panic(_S("Arg missing expr"));
 					VUNREACHABLE();
 				;
 				}
-				ast__AstNode* arg_val = (*(ast__AstNode**)_t199->data);
-				builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, *arg_val) }));
+				ast__AstNode* arg_val = (*(ast__AstNode**)_t217->data);
+				builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, (voidptr)&*arg_val) }));
 			}
-			string class_expr_str = emitter__Transpiler_visit_expr_native(t, *class_expr_node);
+			string class_expr_str = emitter__Transpiler_visit_expr_native(t, class_expr_node);
 			if (arg_strs.len == 0) {
 				return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.create_object_dynamically("), class_expr_str, _S(", []rt.PhpVal{})")}));
 			} else {
 				return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.create_object_dynamically("), class_expr_str, _S(", ["), Array_string_join(arg_strs, _S(", ")), _S("])")}));
 			}
 		}
-		string class_name = emitter__Transpiler_resolve_class_name(*t, node.class_name);
-		builtin__map_set(&t->undeclared_classes, &(string[]){class_name}, &(bool[]) { true });
+		string class_name = emitter__Transpiler_resolve_class_name(*t, node->class_name);
+		string resolved_class = class_name;
+		if (_SLIT_EQ(resolved_class.str, resolved_class.len, "self") || _SLIT_EQ(resolved_class.str, resolved_class.len, "static")) {
+			resolved_class = t->current_class;
+		}
+		builtin__map_set(&t->undeclared_classes, &(string[]){resolved_class}, &(bool[]) { true });
 		Array_emitter__VarType ctor_param_types = builtin____new_array_with_default(0, 0, sizeof(emitter__VarType), 0);
-		for (int _t203 = 0; _t203 < t->classes.len; ++_t203) {
-			emitter__ClassInfo cls = ((emitter__ClassInfo*)t->classes.data)[_t203];
+		for (int _t221 = 0; _t221 < t->classes.len; ++_t221) {
+			emitter__ClassInfo cls = ((emitter__ClassInfo*)t->classes.data)[_t221];
 			if (builtin__string__eq(builtin__string_to_lower(cls.name), builtin__string_to_lower(class_name))) {
-				Map_string_emitter__VarType* _t205 = (Map_string_emitter__VarType*)(builtin__map_get_check(ADDR(map, cls.param_types), &(string[]){_S("__construct")}));
-				_option_Map_string_emitter__VarType _t204 = {0};
-				if (_t205) {
-					*((Map_string_emitter__VarType*)&_t204.data) = *((Map_string_emitter__VarType*)_t205);
+				Map_string_emitter__VarType* _t223 = (Map_string_emitter__VarType*)(builtin__map_get_check(ADDR(map, cls.param_types), &(string[]){_S("__construct")}));
+				_option_Map_string_emitter__VarType _t222 = {0};
+				if (_t223) {
+					*((Map_string_emitter__VarType*)&_t222.data) = *((Map_string_emitter__VarType*)_t223);
 				} else {
-					_t204.state = 2; _t204.err = builtin___v_error(_S("map key does not exist"));
+					_t222.state = 2; _t222.err = builtin___v_error(_S("map key does not exist"));
 				}
 				
-				if (_t204.state == 0) {
-					Map_string_emitter__VarType pm = (*(Map_string_emitter__VarType*)_t204.data);
+				if (_t222.state == 0) {
+					Map_string_emitter__VarType pm = (*(Map_string_emitter__VarType*)_t222.data);
 					GC_reachable_here(&pm);
-					int _t207 = pm.key_values.len;
-					for (int _t206 = 0; _t206 < _t207; ++_t206 ) {
-						int _t208 = pm.key_values.len - _t207;
-						_t207 = pm.key_values.len;
-						if (_t208 < 0) {
-							_t206 = -1;
+					int _t225 = pm.key_values.len;
+					for (int _t224 = 0; _t224 < _t225; ++_t224 ) {
+						int _t226 = pm.key_values.len - _t225;
+						_t225 = pm.key_values.len;
+						if (_t226 < 0) {
+							_t224 = -1;
 							continue;
 						}
-						if (!builtin__DenseArray_has_index(&pm.key_values, _t206)) {continue;}
-						string pname = *(string*)builtin__DenseArray_key(&pm.key_values, _t206);
+						if (!builtin__DenseArray_has_index(&pm.key_values, _t224)) {continue;}
+						string pname = *(string*)builtin__DenseArray_key(&pm.key_values, _t224);
 						pname = builtin__string_clone(pname);
-						emitter__VarType ptype = (*(emitter__VarType*)builtin__DenseArray_value(&pm.key_values, _t206));
+						emitter__VarType ptype = (*(emitter__VarType*)builtin__DenseArray_value(&pm.key_values, _t224));
 						{string _ = pname;}
 						;
 						builtin__array_push((array*)&ctor_param_types, _MOV((emitter__VarType[]){ ptype }));
 					}
 				}
-					if (_t204.state == 2 && _t204.err._object != _const_none__._object) { builtin___v_free(_t204.err._object); }
+					if (_t222.state == 2 && _t222.err._object != _const_none__._object) { builtin___v_free(_t222.err._object); }
 				break;
 			}
 		}
 		Array_string arg_strs = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-		for (int i = 0; i < node.args.len; ++i) {
-			ast__AstNode arg = ((ast__AstNode*)node.args.data)[i];
-			_option_ast__AstNode_ptr *_t210 = &arg.expr;
-			if (_t210->state != 0) {
+		for (int i = 0; i < node->args.len; ++i) {
+			ast__AstNode arg = ((ast__AstNode*)node->args.data)[i];
+			_option_ast__AstNode_ptr *_t228 = &arg.expr;
+			if (_t228->state != 0) {
 				builtin___v_panic(_S("Arg missing expr"));
 				VUNREACHABLE();
 			;
 			}
-			ast__AstNode* arg_val = (*(ast__AstNode**)_t210->data);
-			emitter__VarType _t211 = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-			emitter__VarType target_type = _t211;
+			ast__AstNode* arg_val = (*(ast__AstNode**)_t228->data);
+			emitter__VarType _t229 = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			emitter__VarType target_type = _t229;
 			if (i < ctor_param_types.len) {
 				target_type = (*(emitter__VarType*)builtin__array_get(ctor_param_types, i));
 			}
 			string arg_str = _S("");
 			if (emitter__VarType_is_scalar(target_type)) {
-				arg_str = emitter__Transpiler_visit_expr_native(t, *arg_val);
+				arg_str = emitter__Transpiler_visit_expr_native(t, arg_val);
 			} else {
-				string php_val = emitter__Transpiler_visit_expr(t, *arg_val);
+				string php_val = emitter__Transpiler_visit_expr(t, arg_val);
 				if (builtin__fast_string_eq(arg_val->node_type, _S("Expr_Variable"))) {
-					arg_str = builtin__string_plus_many(2, _MOV((string[2]){php_val, _S(".dup()")}));
+					arg_str = builtin__string__plus(php_val, emitter__Transpiler_dup_suffix_for_var(*t, arg_val->name));
 				} else {
 					arg_str = php_val;
 				}
 			}
 			builtin__array_push((array*)&arg_strs, _MOV((string[]){ builtin__string_clone(arg_str) }));
 		}
-		_option_emitter__MethodInfo _t213 = {0};
-		if (_t213 = emitter__Transpiler_find_method(*t, class_name, _S("__construct")), _t213.state == 0) {
-			emitter__MethodInfo m = *(emitter__MethodInfo*)_t213.data;
+		_option_emitter__MethodInfo _t231 = {0};
+		if (_t231 = emitter__Transpiler_find_method(*t, resolved_class, _S("__construct")), _t231.state == 0) {
+			emitter__MethodInfo m = *(emitter__MethodInfo*)_t231.data;
 			GC_reachable_here(&m);
-			if (node.args.len < m.param_count) {
-				for (int i = node.args.len; i < m.param_count; ++i) {
+			if (node->args.len < m.param_count) {
+				for (int i = node->args.len; i < m.param_count; ++i) {
 					if (i < m.param_names.len) {
 						string pname = (*(string*)builtin__array_get(m.param_names, i));
-						emitter__VarType ptype = emitter__Transpiler_get_method_param_type(t, class_name, _S("__construct"), pname);
+						emitter__VarType ptype = emitter__Transpiler_get_method_param_type(t, resolved_class, _S("__construct"), pname);
 						if (emitter__VarType_is_scalar(ptype)) {
 
 							if (ptype.tag == (emitter__TypeTag__t_string)) {
@@ -20428,113 +21511,118 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 				}
 			}
 		}
-		return builtin__string_plus_many(5, _MOV((string[5]){_S("create_"), builtin__string_to_lower(class_name), _S("("), Array_string_join(arg_strs, _S(", ")), _S(")")}));
+		return builtin__string_plus_many(5, _MOV((string[5]){_S("create_"), builtin__string_to_lower(resolved_class), _S("("), Array_string_join(arg_strs, _S(", ")), _S(")")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_method_call)) {
-		_option_ast__AstNode_ptr *_t222 = &node.var;
-		if (_t222->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_method_call)) {
+		_option_ast__AstNode_ptr *_t240 = &node->var;
+		if (_t240->state != 0) {
 			builtin___v_panic(_S("MethodCall missing var"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* obj_var_node = (*(ast__AstNode**)_t222->data);
-		string obj_var_name = emitter__Transpiler_visit_expr(t, *obj_var_node);
-		_option_ast__AstNode_ptr _t223 = {0};
-		if (_t223 = node.name_expr, _t223.state == 0) {
-			ast__AstNode* name_expr_node = *(ast__AstNode**)_t223.data;
+		ast__AstNode* obj_var_node = (*(ast__AstNode**)_t240->data);
+		string obj_var_name = emitter__Transpiler_visit_expr(t, obj_var_node);
+		emitter__VarType obj_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*obj_var_node);
+		string boxed_obj = obj_var_name;
+		if (emitter__VarType_is_object(obj_type) || obj_type.class_name.len > 0) {
+			boxed_obj = emitter__Transpiler_box_expr(*t, obj_var_name, obj_type);
+		}
+		_option_ast__AstNode_ptr _t241 = {0};
+		if (_t241 = node->name_expr, _t241.state == 0) {
+			ast__AstNode* name_expr_node = *(ast__AstNode**)_t241.data;
 			GC_reachable_here(&name_expr_node);
 			t->needs_method_dispatch = true;
 			Array_string arg_strs = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-			for (int _t224 = 0; _t224 < node.args.len; ++_t224) {
-				ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t224];
-				_option_ast__AstNode_ptr *_t225 = &arg.expr;
-				if (_t225->state != 0) {
+			for (int _t242 = 0; _t242 < node->args.len; ++_t242) {
+				ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t242];
+				_option_ast__AstNode_ptr *_t243 = &arg.expr;
+				if (_t243->state != 0) {
 					builtin___v_panic(_S("Arg missing expr"));
 					VUNREACHABLE();
 				;
 				}
-				ast__AstNode* arg_val = (*(ast__AstNode**)_t225->data);
-				builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, *arg_val) }));
+				ast__AstNode* arg_val = (*(ast__AstNode**)_t243->data);
+				builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, (voidptr)&*arg_val) }));
 			}
-			string method_name_expr = emitter__Transpiler_visit_expr_native(t, *name_expr_node);
+			string method_name_expr = emitter__Transpiler_visit_expr_native(t, name_expr_node);
 			if (arg_strs.len == 0) {
-				return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.call_method("), obj_var_name, _S(", "), method_name_expr, _S(", []rt.PhpVal{})")}));
+				return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.call_method("), boxed_obj, _S(", "), method_name_expr, _S(", []rt.PhpVal{})")}));
 			} else {
-				return builtin__string_plus_many(7, _MOV((string[7]){_S("rt.call_method("), obj_var_name, _S(", "), method_name_expr, _S(", ["), Array_string_join(arg_strs, _S(", ")), _S("])")}));
+				return builtin__string_plus_many(7, _MOV((string[7]){_S("rt.call_method("), boxed_obj, _S(", "), method_name_expr, _S(", ["), Array_string_join(arg_strs, _S(", ")), _S("])")}));
 			}
 		}
-		string method_name = node.name;
+		string method_name = node->name;
 		if (builtin__fast_string_eq(obj_var_node->node_type, _S("Expr_Variable"))) {
-			emitter__VarType* _t230 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
-			_option_emitter__VarType _t229 = {0};
-			if (_t230) {
-				*((emitter__VarType*)&_t229.data) = *((emitter__VarType*)_t230);
+			emitter__VarType* _t248 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
+			_option_emitter__VarType _t247 = {0};
+			if (_t248) {
+				*((emitter__VarType*)&_t247.data) = *((emitter__VarType*)_t248);
 			} else {
-				_t229.state = 2; _t229.err = builtin___v_error(_S("map key does not exist"));
+				_t247.state = 2; _t247.err = builtin___v_error(_S("map key does not exist"));
 			}
 			;
-			if (_t229.state != 0) {
-				*(emitter__VarType*) _t229.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			if (_t247.state != 0) {
+				*(emitter__VarType*) _t247.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			}
 			
-			emitter__VarType obj_type = (*(emitter__VarType*)_t229.data);
+			emitter__VarType known_obj_type = (*(emitter__VarType*)_t247.data);
 			if (builtin__fast_string_eq(obj_var_node->name, _S("this"))) {
-				obj_type = ((emitter__VarType){.tag = emitter__TypeTag__t_object,.class_name = t->current_class,.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+				known_obj_type = ((emitter__VarType){.tag = emitter__TypeTag__t_object,.class_name = t->current_class,.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			}
-			if (emitter__VarType_is_object(obj_type)) {
-				return emitter__Transpiler_compile_method_call_known(t, node, obj_type, *obj_var_node, obj_var_name);
+			if (emitter__VarType_is_object(known_obj_type)) {
+				return emitter__Transpiler_compile_method_call_known(t, node, known_obj_type, *obj_var_node, obj_var_name);
 			}
 		}
 		t->needs_method_dispatch = true;
 		Array_string arg_strs = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-		for (int _t232 = 0; _t232 < node.args.len; ++_t232) {
-			ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t232];
-			_option_ast__AstNode_ptr *_t233 = &arg.expr;
-			if (_t233->state != 0) {
+		for (int _t250 = 0; _t250 < node->args.len; ++_t250) {
+			ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t250];
+			_option_ast__AstNode_ptr *_t251 = &arg.expr;
+			if (_t251->state != 0) {
 				builtin___v_panic(_S("Arg missing expr"));
 				VUNREACHABLE();
 			;
 			}
-			ast__AstNode* arg_val = (*(ast__AstNode**)_t233->data);
-			builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, *arg_val) }));
+			ast__AstNode* arg_val = (*(ast__AstNode**)_t251->data);
+			builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, (voidptr)&*arg_val) }));
 		}
 		if (arg_strs.len == 0) {
-			return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.call_method("), obj_var_name, _S(", \'"), method_name, _S("\', []rt.PhpVal{})")}));
+			return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.call_method("), boxed_obj, _S(", \'"), method_name, _S("\', []rt.PhpVal{})")}));
 		} else {
-			return builtin__string_plus_many(7, _MOV((string[7]){_S("rt.call_method("), obj_var_name, _S(", \'"), method_name, _S("\', ["), Array_string_join(arg_strs, _S(", ")), _S("])")}));
+			return builtin__string_plus_many(7, _MOV((string[7]){_S("rt.call_method("), boxed_obj, _S(", \'"), method_name, _S("\', ["), Array_string_join(arg_strs, _S(", ")), _S("])")}));
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_property_fetch)) {
-		_option_ast__AstNode_ptr *_t237 = &node.var;
-		if (_t237->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_property_fetch)) {
+		_option_ast__AstNode_ptr *_t255 = &node->var;
+		if (_t255->state != 0) {
 			builtin___v_panic(_S("PropertyFetch missing var"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* obj_var_node = (*(ast__AstNode**)_t237->data);
-		string obj_var_name = emitter__Transpiler_visit_expr(t, *obj_var_node);
-		string prop_name = node.name;
+		ast__AstNode* obj_var_node = (*(ast__AstNode**)_t255->data);
+		string obj_var_name = emitter__Transpiler_visit_expr(t, obj_var_node);
+		string prop_name = node->name;
 		if (builtin__fast_string_eq(obj_var_node->node_type, _S("Expr_Variable"))) {
-			emitter__VarType* _t239 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
-			_option_emitter__VarType _t238 = {0};
-			if (_t239) {
-				*((emitter__VarType*)&_t238.data) = *((emitter__VarType*)_t239);
+			emitter__VarType* _t257 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
+			_option_emitter__VarType _t256 = {0};
+			if (_t257) {
+				*((emitter__VarType*)&_t256.data) = *((emitter__VarType*)_t257);
 			} else {
-				_t238.state = 2; _t238.err = builtin___v_error(_S("map key does not exist"));
+				_t256.state = 2; _t256.err = builtin___v_error(_S("map key does not exist"));
 			}
 			;
-			if (_t238.state != 0) {
-				*(emitter__VarType*) _t238.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			if (_t256.state != 0) {
+				*(emitter__VarType*) _t256.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			}
 			
-			emitter__VarType obj_type = (*(emitter__VarType*)_t238.data);
+			emitter__VarType obj_type = (*(emitter__VarType*)_t256.data);
 			if (builtin__fast_string_eq(obj_var_node->name, _S("this"))) {
 				obj_type = ((emitter__VarType){.tag = emitter__TypeTag__t_object,.class_name = t->current_class,.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			}
 			if (emitter__VarType_is_object(obj_type)) {
 				bool has_prop = false;
-				for (int _t240 = 0; _t240 < t->classes.len; ++_t240) {
-					emitter__ClassInfo cls = ((emitter__ClassInfo*)t->classes.data)[_t240];
+				for (int _t258 = 0; _t258 < t->classes.len; ++_t258) {
+					emitter__ClassInfo cls = ((emitter__ClassInfo*)t->classes.data)[_t258];
 					if (builtin__string__eq(builtin__string_to_lower(cls.name), builtin__string_to_lower(obj_type.class_name))) {
 						if ((Array_string_contains(cls.all_props, prop_name))) {
 							has_prop = true;
@@ -20568,38 +21656,72 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 					} else {
 						return builtin__string_plus_many(3, _MOV((string[3]){obj_var_name, _S("."), field_name}));
 					}
+				} else {
+					bool has_get = false;
+					string curr_class = obj_type.class_name;
+					for (;;) {
+						if (!((curr_class).len != 0)) break;
+						bool found_cls = false;
+						for (int _t266 = 0; _t266 < t->classes.len; ++_t266) {
+							emitter__ClassInfo cls = ((emitter__ClassInfo*)t->classes.data)[_t266];
+							if (builtin__string__eq(builtin__string_to_lower(cls.name), builtin__string_to_lower(curr_class))) {
+								found_cls = true;
+								for (int _t267 = 0; _t267 < cls.all_methods.len; ++_t267) {
+									emitter__MethodInfo m = ((emitter__MethodInfo*)cls.all_methods.data)[_t267];
+									if (builtin__fast_string_eq(m.name, _S("__get"))) {
+										has_get = true;
+										break;
+									}
+								}
+								curr_class = cls.extends;
+								break;
+							}
+						}
+						if (!found_cls) {
+							break;
+						}
+						if (has_get) {
+							break;
+						}
+					}
+					if (has_get) {
+						if (builtin__fast_string_eq(obj_var_node->name, _S("this"))) {
+							return builtin__string_plus_many(3, _MOV((string[3]){_S("this.magic_get(rt.new_string(\'"), prop_name, _S("\'))")}));
+						}
+						return builtin__string_plus_many(4, _MOV((string[4]){obj_var_name, _S(".magic_get(rt.new_string(\'"), prop_name, _S("\'))")}));
+					}
 				}
 			}
 		}
 		t->needs_prop_dispatch = true;
 		return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.get_property("), obj_var_name, _S(", \'"), prop_name, _S("\')")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_eval)) {
-		_option_ast__AstNode_ptr *_t249 = &node.expr;
-		if (_t249->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_eval)) {
+		_option_ast__AstNode_ptr *_t271 = &node->expr;
+		if (_t271->state != 0) {
 			builtin___v_panic(_S("Eval missing expr"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* expr_node = (*(ast__AstNode**)_t249->data);
-		string expr_str = emitter__Transpiler_visit_expr(t, *expr_node);
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t271->data);
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.call_function(\'eval\', ["), expr_str, _S("])")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_match)) {
-		_option_ast__AstNode_ptr *_t251 = &node.cond;
-		if (_t251->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_match)) {
+		_option_ast__AstNode_ptr *_t273 = &node->cond;
+		if (_t273->state != 0) {
 			builtin___v_panic(_S("Match expression missing cond"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* cond_node = (*(ast__AstNode**)_t251->data);
-		emitter__VarType cond_type = emitter__Transpiler_get_expr_type(t, *cond_node);
+		ast__AstNode* cond_node = (*(ast__AstNode**)_t273->data);
+		emitter__VarType cond_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*cond_node);
 		bool can_native = cond_type.tag == emitter__TypeTag__t_int;
 		if (can_native) {
-			for (int _t252 = 0; _t252 < node.arms.len; ++_t252) {
-				ast__AstNode arm = ((ast__AstNode*)node.arms.data)[_t252];
-				for (int _t253 = 0; _t253 < arm.conds.len; ++_t253) {
-					ast__AstNode c_node = ((ast__AstNode*)arm.conds.data)[_t253];
+			for (int _t274 = 0; _t274 < node->arms.len; ++_t274) {
+				ast__AstNode arm = ((ast__AstNode*)node->arms.data)[_t274];
+				for (int _t275 = 0; _t275 < arm.conds.len; ++_t275) {
+					ast__AstNode c_node = ((ast__AstNode*)arm.conds.data)[_t275];
 					if (!builtin__fast_string_eq(c_node.node_type, _S("Scalar_Int"))) {
 						can_native = false;
 						break;
@@ -20611,7 +21733,7 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 			}
 		}
 		if (can_native) {
-			string cond_str = emitter__Transpiler_visit_expr_native(t, *cond_node);
+			string cond_str = emitter__Transpiler_visit_expr_native(t, cond_node);
 			strings__Builder match_expr = strings__new_builder(128);
 			{
 				strings__Builder_write_string(&match_expr, _S("match "));
@@ -20627,35 +21749,35 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 			bool has_default = false;
 			string default_body = _S("");
 			Array_ast__AstNode non_default_arms = builtin____new_array_with_default(0, 0, sizeof(ast__AstNode), 0);
-			for (int _t254 = 0; _t254 < node.arms.len; ++_t254) {
-				ast__AstNode arm = ((ast__AstNode*)node.arms.data)[_t254];
+			for (int _t276 = 0; _t276 < node->arms.len; ++_t276) {
+				ast__AstNode arm = ((ast__AstNode*)node->arms.data)[_t276];
 				if (arm.conds.len == 0) {
 					has_default = true;
-					_option_ast__AstNode_ptr *_t255 = &arm.body;
-					if (_t255->state != 0) {
+					_option_ast__AstNode_ptr *_t277 = &arm.body;
+					if (_t277->state != 0) {
 						builtin___v_panic(_S("MatchArm missing body"));
 						VUNREACHABLE();
 					;
 					}
-					ast__AstNode* body_node = (*(ast__AstNode**)_t255->data);
-					default_body = emitter__Transpiler_visit_expr(t, *body_node);
+					ast__AstNode* body_node = (*(ast__AstNode**)_t277->data);
+					default_body = emitter__Transpiler_visit_expr(t, body_node);
 				} else {
 					builtin__array_push((array*)&non_default_arms, _MOV((ast__AstNode[]){ arm }));
 				}
 			}
-			for (int _t257 = 0; _t257 < non_default_arms.len; ++_t257) {
-				ast__AstNode arm = ((ast__AstNode*)non_default_arms.data)[_t257];
-				_option_ast__AstNode_ptr *_t258 = &arm.body;
-				if (_t258->state != 0) {
+			for (int _t279 = 0; _t279 < non_default_arms.len; ++_t279) {
+				ast__AstNode arm = ((ast__AstNode*)non_default_arms.data)[_t279];
+				_option_ast__AstNode_ptr *_t280 = &arm.body;
+				if (_t280->state != 0) {
 					builtin___v_panic(_S("MatchArm missing body"));
 					VUNREACHABLE();
 				;
 				}
-				ast__AstNode* body_node = (*(ast__AstNode**)_t258->data);
-				string body_val = emitter__Transpiler_visit_expr(t, *body_node);
+				ast__AstNode* body_node = (*(ast__AstNode**)_t280->data);
+				string body_val = emitter__Transpiler_visit_expr(t, body_node);
 				Array_string case_vals = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-				for (int _t259 = 0; _t259 < arm.conds.len; ++_t259) {
-					ast__AstNode c_node = ((ast__AstNode*)arm.conds.data)[_t259];
+				for (int _t281 = 0; _t281 < arm.conds.len; ++_t281) {
+					ast__AstNode c_node = ((ast__AstNode*)arm.conds.data)[_t281];
 					builtin__array_push((array*)&case_vals, _MOV((string[]){ builtin__string_clone(c_node.value) }));
 				}
 				{
@@ -20697,7 +21819,7 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 			GC_reachable_here(&non_default_arms);
 			return strings__Builder_str(&match_expr);
 		}
-		string cond_val_expr = emitter__Transpiler_visit_expr(t, *cond_node);
+		string cond_val_expr = emitter__Transpiler_visit_expr(t, cond_node);
 		t->switch_count++;
 		string match_var = builtin__string_plus_many(2, _MOV((string[2]){_S("match_val_"), builtin__int_str(t->switch_count)}));
 		builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(4, _MOV((string[4]){_S("mut "), match_var, _S(" := "), cond_val_expr})) }));
@@ -20705,32 +21827,32 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 		bool has_default = false;
 		string default_body = _S("");
 		Array_ast__AstNode non_default_arms = builtin____new_array_with_default(0, 0, sizeof(ast__AstNode), 0);
-		for (int _t263 = 0; _t263 < node.arms.len; ++_t263) {
-			ast__AstNode arm = ((ast__AstNode*)node.arms.data)[_t263];
+		for (int _t285 = 0; _t285 < node->arms.len; ++_t285) {
+			ast__AstNode arm = ((ast__AstNode*)node->arms.data)[_t285];
 			if (arm.conds.len == 0) {
 				has_default = true;
-				_option_ast__AstNode_ptr *_t264 = &arm.body;
-				if (_t264->state != 0) {
+				_option_ast__AstNode_ptr *_t286 = &arm.body;
+				if (_t286->state != 0) {
 					builtin___v_panic(_S("MatchArm missing body"));
 					VUNREACHABLE();
 				;
 				}
-				ast__AstNode* body_node = (*(ast__AstNode**)_t264->data);
-				default_body = emitter__Transpiler_visit_expr(t, *body_node);
+				ast__AstNode* body_node = (*(ast__AstNode**)_t286->data);
+				default_body = emitter__Transpiler_visit_expr(t, body_node);
 			} else {
 				builtin__array_push((array*)&non_default_arms, _MOV((ast__AstNode[]){ arm }));
 			}
 		}
 		for (int idx = 0; idx < non_default_arms.len; ++idx) {
 			ast__AstNode arm = ((ast__AstNode*)non_default_arms.data)[idx];
-			_option_ast__AstNode_ptr *_t266 = &arm.body;
-			if (_t266->state != 0) {
+			_option_ast__AstNode_ptr *_t288 = &arm.body;
+			if (_t288->state != 0) {
 				builtin___v_panic(_S("MatchArm missing body"));
 				VUNREACHABLE();
 			;
 			}
-			ast__AstNode* body_node = (*(ast__AstNode**)_t266->data);
-			string body_val = emitter__Transpiler_visit_expr(t, *body_node);
+			ast__AstNode* body_node = (*(ast__AstNode**)_t288->data);
+			string body_val = emitter__Transpiler_visit_expr(t, body_node);
 			if (idx == 0) {
 				strings__Builder_write_string(&if_else_expr, _S("if "));
 			} else {
@@ -20749,7 +21871,7 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 					strings__Builder_write_string(&if_else_expr, _S(", "));
 					GC_reachable_here(&c_node);
 				}
-				strings__Builder_write_string(&if_else_expr, emitter__Transpiler_visit_expr(t, c_node));
+				strings__Builder_write_string(&if_else_expr, emitter__Transpiler_visit_expr(t, (voidptr)&c_node));
 				GC_reachable_here(&c_node);
 				strings__Builder_write_string(&if_else_expr, _S("))"));
 				GC_reachable_here(&c_node);
@@ -20788,68 +21910,102 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 		}
 		return strings__Builder_str(&if_else_expr);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_post_inc)) {
-		_option_ast__AstNode_ptr *_t268 = &node.var;
-		if (_t268->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_post_inc)) {
+		_option_ast__AstNode_ptr *_t290 = &node->var;
+		if (_t290->state != 0) {
 			builtin___v_panic(_S("PostInc missing var"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* var_node = (*(ast__AstNode**)_t268->data);
-		string var_str = emitter__Transpiler_visit_expr(t, *var_node);
+		ast__AstNode* var_node = (*(ast__AstNode**)_t290->data);
+		emitter__VarType var_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*var_node);
+		bool is_native = (var_type.tag == emitter__TypeTag__t_int || var_type.tag == emitter__TypeTag__t_float);
+		string var_str = (is_native ? (emitter__Transpiler_visit_expr_native(t, var_node)) : (emitter__Transpiler_visit_expr(t, var_node)));
+		if (is_native) {
+			t->closure_count++;
+			string tmp_name = builtin__string_plus_many(2, _MOV((string[2]){_S("tmp_inc_"), builtin__int_str(t->closure_count)}));
+			builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){tmp_name, _S(" := "), var_str})) }));
+			string op = (var_type.tag == emitter__TypeTag__t_int ? (_S("+= 1")) : (_S("+= 1.0")));
+			builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){var_str, _S(" "), op})) }));
+			return tmp_name;
+		}
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.post_inc("), var_str, _S(")")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_post_dec)) {
-		_option_ast__AstNode_ptr *_t270 = &node.var;
-		if (_t270->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_post_dec)) {
+		_option_ast__AstNode_ptr *_t295 = &node->var;
+		if (_t295->state != 0) {
 			builtin___v_panic(_S("PostDec missing var"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* var_node = (*(ast__AstNode**)_t270->data);
-		string var_str = emitter__Transpiler_visit_expr(t, *var_node);
+		ast__AstNode* var_node = (*(ast__AstNode**)_t295->data);
+		emitter__VarType var_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*var_node);
+		bool is_native = (var_type.tag == emitter__TypeTag__t_int || var_type.tag == emitter__TypeTag__t_float);
+		string var_str = (is_native ? (emitter__Transpiler_visit_expr_native(t, var_node)) : (emitter__Transpiler_visit_expr(t, var_node)));
+		if (is_native) {
+			t->closure_count++;
+			string tmp_name = builtin__string_plus_many(2, _MOV((string[2]){_S("tmp_inc_"), builtin__int_str(t->closure_count)}));
+			builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){tmp_name, _S(" := "), var_str})) }));
+			string op = (var_type.tag == emitter__TypeTag__t_int ? (_S("-= 1")) : (_S("-= 1.0")));
+			builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){var_str, _S(" "), op})) }));
+			return tmp_name;
+		}
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.post_dec("), var_str, _S(")")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_pre_inc)) {
-		_option_ast__AstNode_ptr *_t272 = &node.var;
-		if (_t272->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_pre_inc)) {
+		_option_ast__AstNode_ptr *_t300 = &node->var;
+		if (_t300->state != 0) {
 			builtin___v_panic(_S("PreInc missing var"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* var_node = (*(ast__AstNode**)_t272->data);
-		string var_str = emitter__Transpiler_visit_expr(t, *var_node);
+		ast__AstNode* var_node = (*(ast__AstNode**)_t300->data);
+		emitter__VarType var_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*var_node);
+		bool is_native = (var_type.tag == emitter__TypeTag__t_int || var_type.tag == emitter__TypeTag__t_float);
+		string var_str = (is_native ? (emitter__Transpiler_visit_expr_native(t, var_node)) : (emitter__Transpiler_visit_expr(t, var_node)));
+		if (is_native) {
+			string op = (var_type.tag == emitter__TypeTag__t_int ? (_S("+= 1")) : (_S("+= 1.0")));
+			builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){var_str, _S(" "), op})) }));
+			return var_str;
+		}
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.pre_inc("), var_str, _S(")")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_pre_dec)) {
-		_option_ast__AstNode_ptr *_t274 = &node.var;
-		if (_t274->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_pre_dec)) {
+		_option_ast__AstNode_ptr *_t304 = &node->var;
+		if (_t304->state != 0) {
 			builtin___v_panic(_S("PreDec missing var"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* var_node = (*(ast__AstNode**)_t274->data);
-		string var_str = emitter__Transpiler_visit_expr(t, *var_node);
+		ast__AstNode* var_node = (*(ast__AstNode**)_t304->data);
+		emitter__VarType var_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*var_node);
+		bool is_native = (var_type.tag == emitter__TypeTag__t_int || var_type.tag == emitter__TypeTag__t_float);
+		string var_str = (is_native ? (emitter__Transpiler_visit_expr_native(t, var_node)) : (emitter__Transpiler_visit_expr(t, var_node)));
+		if (is_native) {
+			string op = (var_type.tag == emitter__TypeTag__t_int ? (_S("-= 1")) : (_S("-= 1.0")));
+			builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){var_str, _S(" "), op})) }));
+			return var_str;
+		}
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.pre_dec("), var_str, _S(")")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_error_suppress)) {
-		_option_ast__AstNode_ptr *_t276 = &node.expr;
-		if (_t276->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_error_suppress)) {
+		_option_ast__AstNode_ptr *_t308 = &node->expr;
+		if (_t308->state != 0) {
 			builtin___v_panic(_S("ErrorSuppress missing expr"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* expr_node = (*(ast__AstNode**)_t276->data);
-		return emitter__Transpiler_visit_expr(t, *expr_node);
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t308->data);
+		return emitter__Transpiler_visit_expr(t, expr_node);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_class_const_fetch)) {
-		string cls = node.class_name;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_class_const_fetch)) {
+		string cls = node->class_name;
 		if (_SLIT_EQ(cls.str, cls.len, "self")) {
 			cls = t->current_class;
 		} else if (_SLIT_EQ(cls.str, cls.len, "parent")) {
 			string parent_cls = _S("");
-			for (int _t278 = 0; _t278 < t->classes.len; ++_t278) {
-				emitter__ClassInfo c = ((emitter__ClassInfo*)t->classes.data)[_t278];
+			for (int _t310 = 0; _t310 < t->classes.len; ++_t310) {
+				emitter__ClassInfo c = ((emitter__ClassInfo*)t->classes.data)[_t310];
 				if (builtin__string__eq(c.name, t->current_class)) {
 					parent_cls = c.extends;
 					break;
@@ -20858,36 +22014,36 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 			cls = parent_cls;
 		}
 		string resolved_cls = emitter__Transpiler_resolve_class_name(*t, cls);
-		return builtin__string_plus_many(5, _MOV((string[5]){_S("Class_"), resolved_cls, _S("."), builtin__string_to_lower(node.name), _S("()")}));
+		return builtin__string_plus_many(5, _MOV((string[5]){_S("Class_"), resolved_cls, _S("."), builtin__string_to_lower(node->name), _S("()")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_closure)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_closure)) {
 		t->closure_count++;
 		Array_string captured_vars = builtin____new_array_with_default(0, 0, sizeof(string), 0);
 		Map_string_bool ref_captured = builtin__new_map_noscan_value(sizeof(string), sizeof(bool), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
 		;
 		Map_string_emitter__VarType captured_types = builtin__new_map(sizeof(string), sizeof(emitter__VarType), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
 		;
-		for (int _t280 = 0; _t280 < node.uses.len; ++_t280) {
-			ast__AstNode use_node = ((ast__AstNode*)node.uses.data)[_t280];
-			_option_ast__AstNode_ptr *_t281 = &use_node.var;
-			if (_t281->state != 0) {
+		for (int _t312 = 0; _t312 < node->uses.len; ++_t312) {
+			ast__AstNode use_node = ((ast__AstNode*)node->uses.data)[_t312];
+			_option_ast__AstNode_ptr *_t313 = &use_node.var;
+			if (_t313->state != 0) {
 				continue;
 			}
-			ast__AstNode* use_var = (*(ast__AstNode**)_t281->data);
+			ast__AstNode* use_var = (*(ast__AstNode**)_t313->data);
 			builtin__array_push((array*)&captured_vars, _MOV((string[]){ builtin__string_clone(use_var->name) }));
-			emitter__VarType* _t284 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){use_var->name}));
-			_option_emitter__VarType _t283 = {0};
-			if (_t284) {
-				*((emitter__VarType*)&_t283.data) = *((emitter__VarType*)_t284);
+			emitter__VarType* _t316 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){use_var->name}));
+			_option_emitter__VarType _t315 = {0};
+			if (_t316) {
+				*((emitter__VarType*)&_t315.data) = *((emitter__VarType*)_t316);
 			} else {
-				_t283.state = 2; _t283.err = builtin___v_error(_S("map key does not exist"));
+				_t315.state = 2; _t315.err = builtin___v_error(_S("map key does not exist"));
 			}
 			;
-			if (_t283.state != 0) {
-				*(emitter__VarType*) _t283.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			if (_t315.state != 0) {
+				*(emitter__VarType*) _t315.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			}
 			
-			(*(emitter__VarType*)builtin__map_get_and_set((map*)&captured_types, &(string[]){use_var->name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = (*(emitter__VarType*)_t283.data);
+			(*(emitter__VarType*)builtin__map_get_and_set((map*)&captured_types, &(string[]){use_var->name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = (*(emitter__VarType*)_t315.data);
 			if (builtin__fast_string_eq(use_node.by_ref, _S("true"))) {
 				builtin__map_set(&ref_captured, &(string[]){use_var->name}, &(bool[]) { true });
 			}
@@ -20903,16 +22059,25 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 		Map_string_emitter__VarType old_captured_natives = builtin__map_clone(&t->closure_captured_natives);
 		t->closure_captured_natives = builtin__new_map(sizeof(string), sizeof(emitter__VarType), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
 		;
+		Array_string old_pre_stmts = builtin__array_clone_to_depth(&t->pre_stmts, 1);
+		builtin__array_clear(&t->pre_stmts);
+		GC_reachable_here(&captured_vars);
+		GC_reachable_here(&ref_captured);
+		GC_reachable_here(&captured_types);
+		GC_reachable_here(&old_body_builder);
+		GC_reachable_here(&old_scope);
+		GC_reachable_here(&old_captured_natives);
+		GC_reachable_here(&old_pre_stmts);
 		Array_string param_names = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-		for (int _t285 = 0; _t285 < node.params.len; ++_t285) {
-			ast__AstNode param = ((ast__AstNode*)node.params.data)[_t285];
-			_option_ast__AstNode_ptr *_t286 = &param.var;
-			if (_t286->state != 0) {
+		for (int _t317 = 0; _t317 < node->params.len; ++_t317) {
+			ast__AstNode param = ((ast__AstNode*)node->params.data)[_t317];
+			_option_ast__AstNode_ptr *_t318 = &param.var;
+			if (_t318->state != 0) {
 				builtin___v_panic(_S("Param missing var"));
 				VUNREACHABLE();
 			;
 			}
-			ast__AstNode* param_var = (*(ast__AstNode**)_t286->data);
+			ast__AstNode* param_var = (*(ast__AstNode**)_t318->data);
 			string param_name = param_var->name;
 			emitter__VarScope_declare(&t->scope, param_name);
 			GC_reachable_here(&param);
@@ -20924,47 +22089,47 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 			string param_name = ((string*)param_names.data)[i];
 			emitter__Transpiler_write_indent(t);
 			GC_reachable_here(&param_name);
-			emitter__Transpiler_write_line(t, builtin__string_plus_many(7, _MOV((string[7]){_S("mut var_"), param_name, _S(" := if args.len > "), builtin__int_str(i), _S(" { args["), builtin__int_str(i), _S("].dup() } else { rt.new_null() }")})));
+			emitter__Transpiler_write_line(t, builtin__string_plus_many(7, _MOV((string[7]){_S("mut var_"), param_name, _S(" := if args.len > "), builtin__int_str(i), _S(" { args["), builtin__int_str(i), _S("].clone() } else { rt.new_null() }")})));
 			GC_reachable_here(&param_name);
 		}
-		for (int _t288 = 0; _t288 < captured_vars.len; ++_t288) {
-			string var_name = ((string*)captured_vars.data)[_t288];
+		for (int _t320 = 0; _t320 < captured_vars.len; ++_t320) {
+			string var_name = ((string*)captured_vars.data)[_t320];
 			emitter__VarScope_declare(&t->scope, var_name);
 			GC_reachable_here(&var_name);
-			emitter__VarType* _t290 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, captured_types), &(string[]){var_name}));
-			_option_emitter__VarType _t289 = {0};
-			if (_t290) {
-				*((emitter__VarType*)&_t289.data) = *((emitter__VarType*)_t290);
+			emitter__VarType* _t322 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, captured_types), &(string[]){var_name}));
+			_option_emitter__VarType _t321 = {0};
+			if (_t322) {
+				*((emitter__VarType*)&_t321.data) = *((emitter__VarType*)_t322);
 			} else {
-				_t289.state = 2; _t289.err = builtin___v_error(_S("map key does not exist"));
+				_t321.state = 2; _t321.err = builtin___v_error(_S("map key does not exist"));
 			}
 			
-			if (_t289.state == 0) {
-				emitter__VarType ct = (*(emitter__VarType*)_t289.data);
+			if (_t321.state == 0) {
+				emitter__VarType ct = (*(emitter__VarType*)_t321.data);
 				GC_reachable_here(&ct);
 				if (ct.tag != emitter__TypeTag__t_unknown) {
 					(*(emitter__VarType*)builtin__map_get_and_set((map*)&t->closure_captured_natives, &(string[]){var_name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = ct;
 				}
 			}
-				if (_t289.state == 2 && _t289.err._object != _const_none__._object) { builtin___v_free(_t289.err._object); }
+				if (_t321.state == 2 && _t321.err._object != _const_none__._object) { builtin___v_free(_t321.err._object); }
 		}
-		multi_return_Array_string_Array_string mr_67657 = emitter__Transpiler_collect_vars_in_scope(*t, node.stmts);
-		Array_string ref_vars = mr_67657.arg0;
-		Array_string ass_vars = mr_67657.arg1;
-		for (int _t291 = 0; _t291 < ref_vars.len; ++_t291) {
-			string v = ((string*)ref_vars.data)[_t291];
+		multi_return_Array_string_Array_string mr_87890 = emitter__Transpiler_collect_vars_in_scope(t, &node->stmts);
+		Array_string ref_vars = mr_87890.arg0;
+		Array_string ass_vars = mr_87890.arg1;
+		for (int _t323 = 0; _t323 < ref_vars.len; ++_t323) {
+			string v = ((string*)ref_vars.data)[_t323];
 			if (!(Array_string_contains(ass_vars, v)) && !emitter__VarScope_has_var(t->scope, v)) {
 				emitter__Transpiler_write_indent(t);
 				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut var_"), v, _S(" := rt.new_null()")})));
 				emitter__VarScope_declare(&t->scope, v);
 			}
 		}
-		for (int _t292 = 0; _t292 < node.stmts.len; ++_t292) {
-			ast__AstNode stmt = ((ast__AstNode*)node.stmts.data)[_t292];
-			emitter__Transpiler_visit_stmt(t, stmt);
+		for (int _t324 = 0; _t324 < node->stmts.len; ++_t324) {
+			ast__AstNode stmt = ((ast__AstNode*)node->stmts.data)[_t324];
+			emitter__Transpiler_visit_stmt(t, (voidptr)&stmt);
 			GC_reachable_here(&stmt);
 		}
-		if (node.stmts.len == 0 || !builtin__fast_string_eq((*(ast__AstNode*)builtin__array_get(node.stmts, node.stmts.len - 1)).node_type, _S("Stmt_Return"))) {
+		if (node->stmts.len == 0 || !builtin__fast_string_eq((*(ast__AstNode*)builtin__array_get(node->stmts, node->stmts.len - 1)).node_type, _S("Stmt_Return"))) {
 			emitter__Transpiler_write_indent(t);
 			emitter__Transpiler_write_line(t, _S("return rt.new_null()"));
 		}
@@ -20974,90 +22139,91 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 		t->is_in_closure_body = old_is_in_closure_body;
 		t->closure_body_builder = old_body_builder;
 		t->closure_captured_natives = builtin__map_clone(&old_captured_natives);
-		for (int _t293 = 0; _t293 < captured_vars.len; ++_t293) {
-			string var_name = ((string*)captured_vars.data)[_t293];
-			emitter__VarType* _t295 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, captured_types), &(string[]){var_name}));
-			_option_emitter__VarType _t294 = {0};
-			if (_t295) {
-				*((emitter__VarType*)&_t294.data) = *((emitter__VarType*)_t295);
+		t->pre_stmts = old_pre_stmts;
+		for (int _t325 = 0; _t325 < captured_vars.len; ++_t325) {
+			string var_name = ((string*)captured_vars.data)[_t325];
+			emitter__VarType* _t327 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, captured_types), &(string[]){var_name}));
+			_option_emitter__VarType _t326 = {0};
+			if (_t327) {
+				*((emitter__VarType*)&_t326.data) = *((emitter__VarType*)_t327);
 			} else {
-				_t294.state = 2; _t294.err = builtin___v_error(_S("map key does not exist"));
+				_t326.state = 2; _t326.err = builtin___v_error(_S("map key does not exist"));
 			}
 			
-			if (_t294.state == 0) {
-				emitter__VarType ct = (*(emitter__VarType*)_t294.data);
+			if (_t326.state == 0) {
+				emitter__VarType ct = (*(emitter__VarType*)_t326.data);
 				GC_reachable_here(&ct);
 				(*(emitter__VarType*)builtin__map_get_and_set((map*)&t->inferred_types, &(string[]){var_name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = ct;
 			}
-				if (_t294.state == 2 && _t294.err._object != _const_none__._object) { builtin___v_free(_t294.err._object); }
+				if (_t326.state == 2 && _t326.err._object != _const_none__._object) { builtin___v_free(_t326.err._object); }
 		}
 		Array_string capture_parts = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-		for (int _t296 = 0; _t296 < captured_vars.len; ++_t296) {
-			string var_name = ((string*)captured_vars.data)[_t296];
+		for (int _t328 = 0; _t328 < captured_vars.len; ++_t328) {
+			string var_name = ((string*)captured_vars.data)[_t328];
 			if ((*(bool*)builtin__map_get(ADDR(map, ref_captured), &(string[]){var_name}, &(bool[]){ 0 }))) {
 				builtin__array_push((array*)&capture_parts, _MOV((string[]){ builtin__string_plus_many(2, _MOV((string[2]){_S("mut var_"), var_name})) }));
 			} else {
 				builtin__array_push((array*)&capture_parts, _MOV((string[]){ builtin__string_plus_many(2, _MOV((string[2]){_S("var_"), var_name})) }));
 			}
 		}
-		string _t299; /* if prepend */
+		string _t331; /* if prepend */
 		if (capture_parts.len > 0) {
-			_t299 = builtin__string_plus_many(3, _MOV((string[3]){_S("["), Array_string_join(capture_parts, _S(", ")), _S("] ")}));
-			goto _t300;
+			_t331 = builtin__string_plus_many(3, _MOV((string[3]){_S("["), Array_string_join(capture_parts, _S(", ")), _S("] ")}));
+			goto _t332;
 		};
 		{
-			_t299 = _S("");
+			_t331 = _S("");
 		}
-	_t300: {};
-				string capture_str = _t299;
+	_t332: {};
+				string capture_str = _t331;
 		string closure_fn_name = builtin__string_plus_many(3, _MOV((string[3]){_S("closure_"), builtin__int_str(t->closure_count), _S("_fn")}));
 		string closure_fn_def = builtin__string_plus_many(6, _MOV((string[6]){closure_fn_name, _S(" := fn "), capture_str, _S("(this_ptr rt.PhpVal, args []rt.PhpVal) rt.PhpVal {\n"), body_str, _S("\t}")}));
 		builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_clone(closure_fn_def) }));
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_closure("), closure_fn_name, _S(")")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_arrow_function)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_arrow_function)) {
 		t->closure_count++;
-		_option_ast__AstNode_ptr *_t303 = &node.expr;
-		if (_t303->state != 0) {
+		_option_ast__AstNode_ptr *_t335 = &node->expr;
+		if (_t335->state != 0) {
 			builtin___v_panic(_S("ArrowFunction missing expr"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* expr_node = (*(ast__AstNode**)_t303->data);
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t335->data);
 		Array_string param_names = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-		for (int _t304 = 0; _t304 < node.params.len; ++_t304) {
-			ast__AstNode param = ((ast__AstNode*)node.params.data)[_t304];
-			_option_ast__AstNode_ptr *_t305 = &param.var;
-			if (_t305->state != 0) {
+		for (int _t336 = 0; _t336 < node->params.len; ++_t336) {
+			ast__AstNode param = ((ast__AstNode*)node->params.data)[_t336];
+			_option_ast__AstNode_ptr *_t337 = &param.var;
+			if (_t337->state != 0) {
 				builtin___v_panic(_S("Param missing var"));
 				VUNREACHABLE();
 			;
 			}
-			ast__AstNode* param_var = (*(ast__AstNode**)_t305->data);
+			ast__AstNode* param_var = (*(ast__AstNode**)_t337->data);
 			builtin__array_push((array*)&param_names, _MOV((string[]){ builtin__string_clone(param_var->name) }));
 		}
 		Array_string captured_vars = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-		emitter__Transpiler_find_captured_vars_rec(t, *expr_node, param_names, &captured_vars);
+		emitter__Transpiler_find_captured_vars_rec(t, (voidptr)&*expr_node, param_names, &captured_vars);
 		GC_reachable_here(&expr_node);
 		GC_reachable_here(&param_names);
 		GC_reachable_here(&captured_vars);
 		Map_string_emitter__VarType captured_types = builtin__new_map(sizeof(string), sizeof(emitter__VarType), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
 		;
-		for (int _t307 = 0; _t307 < captured_vars.len; ++_t307) {
-			string var_name = ((string*)captured_vars.data)[_t307];
-			emitter__VarType* _t309 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){var_name}));
-			_option_emitter__VarType _t308 = {0};
-			if (_t309) {
-				*((emitter__VarType*)&_t308.data) = *((emitter__VarType*)_t309);
+		for (int _t339 = 0; _t339 < captured_vars.len; ++_t339) {
+			string var_name = ((string*)captured_vars.data)[_t339];
+			emitter__VarType* _t341 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){var_name}));
+			_option_emitter__VarType _t340 = {0};
+			if (_t341) {
+				*((emitter__VarType*)&_t340.data) = *((emitter__VarType*)_t341);
 			} else {
-				_t308.state = 2; _t308.err = builtin___v_error(_S("map key does not exist"));
+				_t340.state = 2; _t340.err = builtin___v_error(_S("map key does not exist"));
 			}
 			;
-			if (_t308.state != 0) {
-				*(emitter__VarType*) _t308.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			if (_t340.state != 0) {
+				*(emitter__VarType*) _t340.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			}
 			
-			(*(emitter__VarType*)builtin__map_get_and_set((map*)&captured_types, &(string[]){var_name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = (*(emitter__VarType*)_t308.data);
+			(*(emitter__VarType*)builtin__map_get_and_set((map*)&captured_types, &(string[]){var_name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = (*(emitter__VarType*)_t340.data);
 		}
 		strings__Builder old_body_builder = t->closure_body_builder;
 		bool old_is_in_closure_body = t->is_in_closure_body;
@@ -21070,8 +22236,18 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 		Map_string_emitter__VarType old_captured_natives = builtin__map_clone(&t->closure_captured_natives);
 		t->closure_captured_natives = builtin__new_map(sizeof(string), sizeof(emitter__VarType), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
 		;
-		for (int _t310 = 0; _t310 < param_names.len; ++_t310) {
-			string param_name = ((string*)param_names.data)[_t310];
+		Array_string old_pre_stmts = builtin__array_clone_to_depth(&t->pre_stmts, 1);
+		builtin__array_clear(&t->pre_stmts);
+		GC_reachable_here(&expr_node);
+		GC_reachable_here(&param_names);
+		GC_reachable_here(&captured_vars);
+		GC_reachable_here(&captured_types);
+		GC_reachable_here(&old_body_builder);
+		GC_reachable_here(&old_scope);
+		GC_reachable_here(&old_captured_natives);
+		GC_reachable_here(&old_pre_stmts);
+		for (int _t342 = 0; _t342 < param_names.len; ++_t342) {
+			string param_name = ((string*)param_names.data)[_t342];
 			emitter__VarScope_declare(&t->scope, param_name);
 			GC_reachable_here(&param_name);
 		}
@@ -21079,31 +22255,31 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 			string param_name = ((string*)param_names.data)[i];
 			emitter__Transpiler_write_indent(t);
 			GC_reachable_here(&param_name);
-			emitter__Transpiler_write_line(t, builtin__string_plus_many(7, _MOV((string[7]){_S("mut var_"), param_name, _S(" := if args.len > "), builtin__int_str(i), _S(" { args["), builtin__int_str(i), _S("].dup() } else { rt.new_null() }")})));
+			emitter__Transpiler_write_line(t, builtin__string_plus_many(7, _MOV((string[7]){_S("mut var_"), param_name, _S(" := if args.len > "), builtin__int_str(i), _S(" { args["), builtin__int_str(i), _S("].clone() } else { rt.new_null() }")})));
 			GC_reachable_here(&param_name);
 		}
-		for (int _t311 = 0; _t311 < captured_vars.len; ++_t311) {
-			string var_name = ((string*)captured_vars.data)[_t311];
+		for (int _t343 = 0; _t343 < captured_vars.len; ++_t343) {
+			string var_name = ((string*)captured_vars.data)[_t343];
 			emitter__VarScope_declare(&t->scope, var_name);
 			GC_reachable_here(&var_name);
-			emitter__VarType* _t313 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, captured_types), &(string[]){var_name}));
-			_option_emitter__VarType _t312 = {0};
-			if (_t313) {
-				*((emitter__VarType*)&_t312.data) = *((emitter__VarType*)_t313);
+			emitter__VarType* _t345 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, captured_types), &(string[]){var_name}));
+			_option_emitter__VarType _t344 = {0};
+			if (_t345) {
+				*((emitter__VarType*)&_t344.data) = *((emitter__VarType*)_t345);
 			} else {
-				_t312.state = 2; _t312.err = builtin___v_error(_S("map key does not exist"));
+				_t344.state = 2; _t344.err = builtin___v_error(_S("map key does not exist"));
 			}
 			
-			if (_t312.state == 0) {
-				emitter__VarType ct = (*(emitter__VarType*)_t312.data);
+			if (_t344.state == 0) {
+				emitter__VarType ct = (*(emitter__VarType*)_t344.data);
 				GC_reachable_here(&ct);
 				if (ct.tag != emitter__TypeTag__t_unknown) {
 					(*(emitter__VarType*)builtin__map_get_and_set((map*)&t->closure_captured_natives, &(string[]){var_name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = ct;
 				}
 			}
-				if (_t312.state == 2 && _t312.err._object != _const_none__._object) { builtin___v_free(_t312.err._object); }
+				if (_t344.state == 2 && _t344.err._object != _const_none__._object) { builtin___v_free(_t344.err._object); }
 		}
-		string expr_str = emitter__Transpiler_visit_expr(t, *expr_node);
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
 		emitter__Transpiler_write_indent(t);
 		GC_reachable_here(&expr_node);
 		GC_reachable_here(&param_names);
@@ -21112,6 +22288,7 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 		GC_reachable_here(&old_body_builder);
 		GC_reachable_here(&old_scope);
 		GC_reachable_here(&old_captured_natives);
+		GC_reachable_here(&old_pre_stmts);
 		GC_reachable_here(&expr_str);
 		emitter__Transpiler_write_line(t, builtin__string_plus_many(2, _MOV((string[2]){_S("return "), expr_str})));
 		GC_reachable_here(&expr_node);
@@ -21121,6 +22298,7 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 		GC_reachable_here(&old_body_builder);
 		GC_reachable_here(&old_scope);
 		GC_reachable_here(&old_captured_natives);
+		GC_reachable_here(&old_pre_stmts);
 		GC_reachable_here(&expr_str);
 		string body_str = strings__Builder_str(&t->closure_body_builder);
 		t->indent = old_indent;
@@ -21128,63 +22306,82 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 		t->is_in_closure_body = old_is_in_closure_body;
 		t->closure_body_builder = old_body_builder;
 		t->closure_captured_natives = builtin__map_clone(&old_captured_natives);
-		for (int _t314 = 0; _t314 < captured_vars.len; ++_t314) {
-			string var_name = ((string*)captured_vars.data)[_t314];
-			emitter__VarType* _t316 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, captured_types), &(string[]){var_name}));
-			_option_emitter__VarType _t315 = {0};
-			if (_t316) {
-				*((emitter__VarType*)&_t315.data) = *((emitter__VarType*)_t316);
+		t->pre_stmts = old_pre_stmts;
+		for (int _t346 = 0; _t346 < captured_vars.len; ++_t346) {
+			string var_name = ((string*)captured_vars.data)[_t346];
+			emitter__VarType* _t348 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, captured_types), &(string[]){var_name}));
+			_option_emitter__VarType _t347 = {0};
+			if (_t348) {
+				*((emitter__VarType*)&_t347.data) = *((emitter__VarType*)_t348);
 			} else {
-				_t315.state = 2; _t315.err = builtin___v_error(_S("map key does not exist"));
+				_t347.state = 2; _t347.err = builtin___v_error(_S("map key does not exist"));
 			}
 			
-			if (_t315.state == 0) {
-				emitter__VarType ct = (*(emitter__VarType*)_t315.data);
+			if (_t347.state == 0) {
+				emitter__VarType ct = (*(emitter__VarType*)_t347.data);
 				GC_reachable_here(&ct);
 				(*(emitter__VarType*)builtin__map_get_and_set((map*)&t->inferred_types, &(string[]){var_name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = ct;
 			}
-				if (_t315.state == 2 && _t315.err._object != _const_none__._object) { builtin___v_free(_t315.err._object); }
+				if (_t347.state == 2 && _t347.err._object != _const_none__._object) { builtin___v_free(_t347.err._object); }
 		}
 		Array_string capture_parts = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-		for (int _t317 = 0; _t317 < captured_vars.len; ++_t317) {
-			string var_name = ((string*)captured_vars.data)[_t317];
+		for (int _t349 = 0; _t349 < captured_vars.len; ++_t349) {
+			string var_name = ((string*)captured_vars.data)[_t349];
 			builtin__array_push((array*)&capture_parts, _MOV((string[]){ builtin__string_plus_many(2, _MOV((string[2]){_S("var_"), var_name})) }));
 		}
-		string _t319; /* if prepend */
+		string _t351; /* if prepend */
 		if (capture_parts.len > 0) {
-			_t319 = builtin__string_plus_many(3, _MOV((string[3]){_S("["), Array_string_join(capture_parts, _S(", ")), _S("] ")}));
-			goto _t320;
+			_t351 = builtin__string_plus_many(3, _MOV((string[3]){_S("["), Array_string_join(capture_parts, _S(", ")), _S("] ")}));
+			goto _t352;
 		};
 		{
-			_t319 = _S("");
+			_t351 = _S("");
 		}
-	_t320: {};
-				string capture_str = _t319;
+	_t352: {};
+				string capture_str = _t351;
 		string closure_fn_name = builtin__string_plus_many(3, _MOV((string[3]){_S("closure_"), builtin__int_str(t->closure_count), _S("_fn")}));
 		string closure_fn_def = builtin__string_plus_many(6, _MOV((string[6]){closure_fn_name, _S(" := fn "), capture_str, _S("(this_ptr rt.PhpVal, args []rt.PhpVal) rt.PhpVal {\n"), body_str, _S("\t}")}));
 		builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_clone(closure_fn_def) }));
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_closure("), closure_fn_name, _S(")")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_include)) {
-		_option_ast__AstNode_ptr *_t323 = &node.expr;
-		if (_t323->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_include)) {
+		_option_ast__AstNode_ptr *_t355 = &node->expr;
+		if (_t355->state != 0) {
 			builtin___v_panic(_S("Include missing expr"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* path_node = (*(ast__AstNode**)_t323->data);
+		ast__AstNode* path_node = (*(ast__AstNode**)_t355->data);
 		if (((voidptr)(path_node)) != 0) {
-			emitter__VarType path_typ = emitter__Transpiler_get_expr_type(t, *path_node);
-			string path_str = (path_typ.tag == emitter__TypeTag__t_string ? (emitter__Transpiler_visit_expr_native(t, *path_node)) : (builtin__string_plus_many(3, _MOV((string[3]){_S("("), emitter__Transpiler_visit_expr(t, *path_node), _S(").to_string()")}))));
-			return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.include_file("), path_str, _S(", \'"), node.incl_type, _S("\')")}));
+			_option_string _t356 = {0};
+			if (_t356 = emitter__Transpiler_eval_static_path(t, (voidptr)&*path_node), _t356.state == 0) {
+				string path_val = *(string*)_t356.data;
+				GC_reachable_here(&path_val);
+				emitter__Transpiler_transpile_include_file(t, path_val);
+				GC_reachable_here(&path_val);
+			}
+			emitter__VarType path_typ = emitter__Transpiler_get_expr_type(t, (voidptr)&*path_node);
+			string path_str = (path_typ.tag == emitter__TypeTag__t_string ? (emitter__Transpiler_visit_expr_native(t, path_node)) : (builtin__string_plus_many(3, _MOV((string[3]){_S("("), emitter__Transpiler_visit_expr(t, path_node), _S(").to_string()")}))));
+			return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.include_file("), path_str, _S(", \'"), node->incl_type, _S("\')")}));
 		}
 		return _S("rt.new_null()");
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_static_call)) {
-		if (builtin__fast_string_eq(node.class_name, _S("parent"))) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_static_prop_fetch)) {
+		string class_name = node->class_name;
+		if (_SLIT_EQ(class_name.str, class_name.len, "self") || _SLIT_EQ(class_name.str, class_name.len, "static")) {
+			class_name = t->current_class;
+		} else {
+			class_name = emitter__Transpiler_resolve_class_name(*t, class_name);
+		}
+		string prop_name = node->name;
+		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.get_static_prop(\'"), class_name, _S("\', \'"), prop_name, _S("\')")}));
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_static_call)) {
+		if (builtin__fast_string_eq(node->class_name, _S("parent"))) {
 			string parent_class = _S("");
-			for (int _t326 = 0; _t326 < t->classes.len; ++_t326) {
-				emitter__ClassInfo c = ((emitter__ClassInfo*)t->classes.data)[_t326];
+			for (int _t360 = 0; _t360 < t->classes.len; ++_t360) {
+				emitter__ClassInfo c = ((emitter__ClassInfo*)t->classes.data)[_t360];
 				if (builtin__string__eq(c.name, t->current_class)) {
 					parent_class = c.extends;
 					break;
@@ -21194,49 +22391,49 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 				return _S("// error: parent:: used without extends");
 			}
 			Array_emitter__VarType parent_param_types = builtin____new_array_with_default(0, 0, sizeof(emitter__VarType), 0);
-			string method_name = node.name;
-			_option_Map_string_emitter__VarType _t328 = {0};
-			if (_t328 = emitter__Transpiler_param_types_for_method(t, parent_class, method_name), _t328.state == 0) {
-				Map_string_emitter__VarType pm = *(Map_string_emitter__VarType*)_t328.data;
+			string method_name = node->name;
+			_option_Map_string_emitter__VarType _t362 = {0};
+			if (_t362 = emitter__Transpiler_param_types_for_method(t, parent_class, method_name), _t362.state == 0) {
+				Map_string_emitter__VarType pm = *(Map_string_emitter__VarType*)_t362.data;
 				GC_reachable_here(&pm);
-				int _t330 = pm.key_values.len;
-				for (int _t329 = 0; _t329 < _t330; ++_t329 ) {
-					int _t331 = pm.key_values.len - _t330;
-					_t330 = pm.key_values.len;
-					if (_t331 < 0) {
-						_t329 = -1;
+				int _t364 = pm.key_values.len;
+				for (int _t363 = 0; _t363 < _t364; ++_t363 ) {
+					int _t365 = pm.key_values.len - _t364;
+					_t364 = pm.key_values.len;
+					if (_t365 < 0) {
+						_t363 = -1;
 						continue;
 					}
-					if (!builtin__DenseArray_has_index(&pm.key_values, _t329)) {continue;}
-					string pn = *(string*)builtin__DenseArray_key(&pm.key_values, _t329);
+					if (!builtin__DenseArray_has_index(&pm.key_values, _t363)) {continue;}
+					string pn = *(string*)builtin__DenseArray_key(&pm.key_values, _t363);
 					pn = builtin__string_clone(pn);
-					emitter__VarType pt = (*(emitter__VarType*)builtin__DenseArray_value(&pm.key_values, _t329));
+					emitter__VarType pt = (*(emitter__VarType*)builtin__DenseArray_value(&pm.key_values, _t363));
 					{string _ = pn;}
 					;
 					builtin__array_push((array*)&parent_param_types, _MOV((emitter__VarType[]){ pt }));
 				}
 			}
 			Array_string arg_strs = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-			for (int i = 0; i < node.args.len; ++i) {
-				ast__AstNode arg = ((ast__AstNode*)node.args.data)[i];
-				_option_ast__AstNode_ptr *_t333 = &arg.expr;
-				if (_t333->state != 0) {
+			for (int i = 0; i < node->args.len; ++i) {
+				ast__AstNode arg = ((ast__AstNode*)node->args.data)[i];
+				_option_ast__AstNode_ptr *_t367 = &arg.expr;
+				if (_t367->state != 0) {
 					builtin___v_panic(_S("Arg missing expr"));
 					VUNREACHABLE();
 				;
 				}
-				ast__AstNode* arg_val = (*(ast__AstNode**)_t333->data);
-				emitter__VarType _t334 = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-				emitter__VarType target_type = _t334;
+				ast__AstNode* arg_val = (*(ast__AstNode**)_t367->data);
+				emitter__VarType _t368 = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+				emitter__VarType target_type = _t368;
 				if (i < parent_param_types.len) {
 					target_type = (*(emitter__VarType*)builtin__array_get(parent_param_types, i));
 				}
-				emitter__CallArgResult result = emitter__Transpiler_compile_arg(t, *arg_val, target_type);
+				emitter__CallArgResult result = emitter__Transpiler_compile_arg(t, (voidptr)&*arg_val, target_type);
 				builtin__array_push((array*)&arg_strs, _MOV((string[]){ builtin__string_clone(result.code) }));
 			}
-			return builtin__string_plus_many(7, _MOV((string[7]){_S("this.Class_"), parent_class, _S("."), emitter__method_v_name(node.name), _S("("), Array_string_join(arg_strs, _S(", ")), _S(")")}));
+			return builtin__string_plus_many(7, _MOV((string[7]){_S("this.Class_"), parent_class, _S("."), emitter__method_v_name(node->name), _S("("), Array_string_join(arg_strs, _S(", ")), _S(")")}));
 		}
-		string class_name = node.class_name;
+		string class_name = node->class_name;
 		if (_SLIT_EQ(class_name.str, class_name.len, "self") || _SLIT_EQ(class_name.str, class_name.len, "static")) {
 			class_name = t->current_class;
 		} else {
@@ -21244,23 +22441,23 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 		}
 		builtin__map_set(&t->undeclared_classes, &(string[]){class_name}, &(bool[]) { true });
 		Array_emitter__VarType target_param_types = builtin____new_array_with_default(0, 0, sizeof(emitter__VarType), 0);
-		string method_name = node.name;
-		_option_Map_string_emitter__VarType _t337 = {0};
-		if (_t337 = emitter__Transpiler_param_types_for_method(t, class_name, method_name), _t337.state == 0) {
-			Map_string_emitter__VarType pm = *(Map_string_emitter__VarType*)_t337.data;
+		string method_name = node->name;
+		_option_Map_string_emitter__VarType _t371 = {0};
+		if (_t371 = emitter__Transpiler_param_types_for_method(t, class_name, method_name), _t371.state == 0) {
+			Map_string_emitter__VarType pm = *(Map_string_emitter__VarType*)_t371.data;
 			GC_reachable_here(&pm);
-			int _t339 = pm.key_values.len;
-			for (int _t338 = 0; _t338 < _t339; ++_t338 ) {
-				int _t340 = pm.key_values.len - _t339;
-				_t339 = pm.key_values.len;
-				if (_t340 < 0) {
-					_t338 = -1;
+			int _t373 = pm.key_values.len;
+			for (int _t372 = 0; _t372 < _t373; ++_t372 ) {
+				int _t374 = pm.key_values.len - _t373;
+				_t373 = pm.key_values.len;
+				if (_t374 < 0) {
+					_t372 = -1;
 					continue;
 				}
-				if (!builtin__DenseArray_has_index(&pm.key_values, _t338)) {continue;}
-				string pn = *(string*)builtin__DenseArray_key(&pm.key_values, _t338);
+				if (!builtin__DenseArray_has_index(&pm.key_values, _t372)) {continue;}
+				string pn = *(string*)builtin__DenseArray_key(&pm.key_values, _t372);
 				pn = builtin__string_clone(pn);
-				emitter__VarType pt = (*(emitter__VarType*)builtin__DenseArray_value(&pm.key_values, _t338));
+				emitter__VarType pt = (*(emitter__VarType*)builtin__DenseArray_value(&pm.key_values, _t372));
 				{string _ = pn;}
 				;
 				builtin__array_push((array*)&target_param_types, _MOV((emitter__VarType[]){ pt }));
@@ -21269,18 +22466,18 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 		Array_string arg_strs = builtin____new_array_with_default(0, 0, sizeof(string), 0);
 		Array_string arg_formals = builtin____new_array_with_default(0, 0, sizeof(string), 0);
 		Array_string arg_calls = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-		for (int i = 0; i < node.args.len; ++i) {
-			ast__AstNode arg = ((ast__AstNode*)node.args.data)[i];
-			_option_ast__AstNode_ptr *_t342 = &arg.expr;
-			if (_t342->state != 0) {
+		for (int i = 0; i < node->args.len; ++i) {
+			ast__AstNode arg = ((ast__AstNode*)node->args.data)[i];
+			_option_ast__AstNode_ptr *_t376 = &arg.expr;
+			if (_t376->state != 0) {
 				builtin___v_panic(_S("Arg missing expr"));
 				VUNREACHABLE();
 			;
 			}
-			ast__AstNode* arg_val = (*(ast__AstNode**)_t342->data);
-			emitter__VarType arg_type = emitter__Transpiler_get_expr_type(t, *arg_val);
-			emitter__VarType _t343 = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-			emitter__VarType target_type = _t343;
+			ast__AstNode* arg_val = (*(ast__AstNode**)_t376->data);
+			emitter__VarType arg_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*arg_val);
+			emitter__VarType _t377 = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			emitter__VarType target_type = _t377;
 			if (i < target_param_types.len) {
 				target_type = (*(emitter__VarType*)builtin__array_get(target_param_types, i));
 			}
@@ -21294,22 +22491,22 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 				prefix = _S("mut ");
 			}
 			if (target_is_native && arg_is_native) {
-				arg_str = builtin__string__plus(prefix, emitter__Transpiler_compile_expr(t, *arg_val, emitter__ExprCtx__native));
+				arg_str = builtin__string__plus(prefix, emitter__Transpiler_compile_expr(t, (voidptr)&*arg_val, emitter__ExprCtx__native));
 				formal_type = emitter__VarType_to_v_type(target_type);
 				call_expr = builtin__string__plus(prefix, builtin__string_plus_many(2, _MOV((string[2]){_S("arg_"), builtin__int_str(i)})));
 			} else if (target_is_native && !arg_is_native) {
-				string raw = emitter__Transpiler_compile_expr(t, *arg_val, emitter__ExprCtx__boxed);
-				string unboxed = emitter__unbox_expr(raw, target_type);
+				string raw = emitter__Transpiler_compile_expr(t, (voidptr)&*arg_val, emitter__ExprCtx__boxed);
+				string unboxed = emitter__Transpiler_unbox_expr(*t, raw, target_type);
 				arg_str = builtin__string__plus(prefix, unboxed);
 				formal_type = emitter__VarType_to_v_type(target_type);
 				call_expr = builtin__string__plus(prefix, builtin__string_plus_many(2, _MOV((string[2]){_S("arg_"), builtin__int_str(i)})));
 			} else if (!target_is_native && arg_is_native) {
-				emitter__CallArgResult result = emitter__Transpiler_compile_arg(t, *arg_val, ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,}));
+				emitter__CallArgResult result = emitter__Transpiler_compile_arg(t, (voidptr)&*arg_val, ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,}));
 				arg_str = result.code;
 				formal_type = _S("rt.PhpVal");
 				call_expr = builtin__string_plus_many(2, _MOV((string[2]){_S("arg_"), builtin__int_str(i)}));
 			} else {
-				emitter__CallArgResult result = emitter__Transpiler_compile_arg(t, *arg_val, ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,}));
+				emitter__CallArgResult result = emitter__Transpiler_compile_arg(t, (voidptr)&*arg_val, ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,}));
 				arg_str = result.code;
 				formal_type = _S("rt.PhpVal");
 				call_expr = builtin__string_plus_many(2, _MOV((string[2]){_S("arg_"), builtin__int_str(i)}));
@@ -21322,65 +22519,78 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 			}
 			builtin__array_push((array*)&arg_calls, _MOV((string[]){ builtin__string_clone(call_expr) }));
 		}
-		bool _t348; /* if prepend */
-		_option_emitter__MethodInfo _t350 = {0};
-		if (_t350 = emitter__Transpiler_find_method(*t, class_name, node.name), _t350.state == 0) {
-			emitter__MethodInfo m = *(emitter__MethodInfo*)_t350.data;
+		bool _t382; /* if prepend */
+		_option_emitter__MethodInfo _t384 = {0};
+		if (_t384 = emitter__Transpiler_find_method(*t, class_name, node->name), _t384.state == 0) {
+			emitter__MethodInfo m = *(emitter__MethodInfo*)_t384.data;
 			GC_reachable_here(&m);
-			_t348 = m.is_static;
-			goto _t349;
+			_t382 = m.is_static;
+			goto _t383;
 		};
 		{
-			_t348 = false;
+			_t382 = false;
 		}
-	_t349: {};
-				bool is_static_method = _t348;
-		emitter__VarType ret_type = emitter__Transpiler_get_method_return_type(t, class_name, node.name);
+	_t383: {};
+				bool is_static_method = _t382;
+		emitter__VarType ret_type = emitter__Transpiler_get_method_return_type(t, class_name, node->name);
 		if (is_static_method) {
-			return builtin__string_plus_many(7, _MOV((string[7]){_S("Class_"), class_name, _S("."), emitter__method_v_name(node.name), _S("("), Array_string_join(arg_strs, _S(", ")), _S(")")}));
+			return builtin__string_plus_many(7, _MOV((string[7]){_S("Class_"), class_name, _S("."), emitter__method_v_name(node->name), _S("("), Array_string_join(arg_strs, _S(", ")), _S(")")}));
 		}
 		if (arg_strs.len == 0) {
+			int temp_idx = t->closure_count;
+			t->closure_count++;
 			if (ret_type.tag == emitter__TypeTag__t_void) {
-				return builtin__string_plus_many(5, _MOV((string[5]){_S("fn () rt.PhpVal { mut temp := Class_"), class_name, _S("{}; temp."), emitter__method_v_name(node.name), _S("(); return rt.new_null() }()")}));
+				builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(5, _MOV((string[5]){_S("mut iife_temp_"), builtin__int_str(temp_idx), _S(" := Class_"), class_name, _S("{}")})) }));
+				builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(5, _MOV((string[5]){_S("iife_temp_"), builtin__int_str(temp_idx), _S("."), emitter__method_v_name(node->name), _S("()")})) }));
+				return _S("rt.new_null()");
 			}
-			return builtin__string_plus_many(5, _MOV((string[5]){_S("fn () rt.PhpVal { mut temp := Class_"), class_name, _S("{}; return temp."), emitter__method_v_name(node.name), _S("() }()")}));
+			builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(5, _MOV((string[5]){_S("mut iife_temp_"), builtin__int_str(temp_idx), _S(" := Class_"), class_name, _S("{}")})) }));
+			builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(7, _MOV((string[7]){_S("mut iife_result_"), builtin__int_str(temp_idx), _S(" := iife_temp_"), builtin__int_str(temp_idx), _S("."), emitter__method_v_name(node->name), _S("()")})) }));
+			return builtin__string_plus_many(2, _MOV((string[2]){_S("iife_result_"), builtin__int_str(temp_idx)}));
 		} else {
+			int temp_idx = t->closure_count;
+			t->closure_count++;
+			string args_joined = Array_string_join(arg_strs, _S(", "));
 			if (ret_type.tag == emitter__TypeTag__t_void) {
-				return builtin__string_plus_many(11, _MOV((string[11]){_S("fn ("), Array_string_join(arg_formals, _S(", ")), _S(") rt.PhpVal { mut temp := Class_"), class_name, _S("{}; temp."), emitter__method_v_name(node.name), _S("("), Array_string_join(arg_calls, _S(", ")), _S("); return rt.new_null() }("), Array_string_join(arg_strs, _S(", ")), _S(")")}));
+				builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(5, _MOV((string[5]){_S("mut iife_temp_"), builtin__int_str(temp_idx), _S(" := Class_"), class_name, _S("{}")})) }));
+				builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(7, _MOV((string[7]){_S("iife_temp_"), builtin__int_str(temp_idx), _S("."), emitter__method_v_name(node->name), _S("("), args_joined, _S(")")})) }));
+				return _S("rt.new_null()");
 			}
-			return builtin__string_plus_many(11, _MOV((string[11]){_S("fn ("), Array_string_join(arg_formals, _S(", ")), _S(") rt.PhpVal { mut temp := Class_"), class_name, _S("{}; return temp."), emitter__method_v_name(node.name), _S("("), Array_string_join(arg_calls, _S(", ")), _S(") }("), Array_string_join(arg_strs, _S(", ")), _S(")")}));
+			builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(5, _MOV((string[5]){_S("mut iife_temp_"), builtin__int_str(temp_idx), _S(" := Class_"), class_name, _S("{}")})) }));
+			builtin__array_push((array*)&t->pre_stmts, _MOV((string[]){ builtin__string_plus_many(9, _MOV((string[9]){_S("mut iife_result_"), builtin__int_str(temp_idx), _S(" := iife_temp_"), builtin__int_str(temp_idx), _S("."), emitter__method_v_name(node->name), _S("("), args_joined, _S(")")})) }));
+			return builtin__string_plus_many(2, _MOV((string[2]){_S("iife_result_"), builtin__int_str(temp_idx)}));
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_encapsed) || builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_interpolated_string)) {
-		if (node.parts.len == 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_encapsed) || builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_interpolated_string)) {
+		if (node->parts.len == 0) {
 			return _S("rt.new_string('')");
 		}
-		if (emitter__can_use_v_interpolation(node.parts)) {
-			string joined = emitter__Transpiler_emit_v_interpolation(t, node.parts);
+		if (emitter__can_use_v_interpolation(node->parts)) {
+			string joined = emitter__Transpiler_emit_v_interpolation(t, node->parts);
 			return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_string("), joined, _S(")")}));
 		}
-		string res = emitter__Transpiler_visit_expr(t, (*(ast__AstNode*)builtin__array_get(node.parts, 0)));
-		for (int i = 1; i < node.parts.len; ++i) {
-			string part_str = emitter__Transpiler_visit_expr(t, (*(ast__AstNode*)builtin__array_get(node.parts, i)));
+		string res = emitter__Transpiler_visit_expr(t, (voidptr)&(*(ast__AstNode*)builtin__array_get(node->parts, 0)));
+		for (int i = 1; i < node->parts.len; ++i) {
+			string part_str = emitter__Transpiler_visit_expr(t, (voidptr)&(*(ast__AstNode*)builtin__array_get(node->parts, i)));
 			res = builtin__string_plus_many(5, _MOV((string[5]){_S("rt.concat("), res, _S(", "), part_str, _S(")")}));
 		}
 		return res;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_encapsed_string_part) || builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_interpolated_string_part)) {
-		string escaped = emitter__escape_single_quoted(node.value);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_encapsed_string_part) || builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_interpolated_string_part)) {
+		string escaped = emitter__escape_single_quoted(node->value);
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_string(\'"), escaped, _S("\')")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_empty)) {
-		_option_ast__AstNode_ptr *_t360 = &node.expr;
-		if (_t360->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_empty)) {
+		_option_ast__AstNode_ptr *_t402 = &node->expr;
+		if (_t402->state != 0) {
 			builtin___v_panic(_S("Empty missing expr"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* expr_node = (*(ast__AstNode**)_t360->data);
-		emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, *expr_node);
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t402->data);
+		emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
 		if (emitter__VarType_is_scalar(expr_type)) {
-			string native_expr = emitter__Transpiler_visit_expr_native(t, *expr_node);
+			string native_expr = emitter__Transpiler_visit_expr_native(t, expr_node);
 
 			if (expr_type.tag == (emitter__TypeTag__t_string)) {
 				return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_bool("), native_expr, _S(" == \'\')")}));
@@ -21397,53 +22607,493 @@ VV_LOC string emitter__Transpiler_visit_expr_impl(emitter__Transpiler* t, ast__A
 			else {
 			}
 		}
-		string expr_str = emitter__Transpiler_visit_expr(t, *expr_node);
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_bool(!rt.is_true("), expr_str, _S("))")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_cast_array)) {
-		_option_ast__AstNode_ptr *_t366 = &node.expr;
-		if (_t366->state != 0) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_cast_array)) {
+		_option_ast__AstNode_ptr *_t408 = &node->expr;
+		if (_t408->state != 0) {
 			builtin___v_panic(_S("CastArray missing expr"));
 			VUNREACHABLE();
 		;
 		}
-		ast__AstNode* expr_node = (*(ast__AstNode**)_t366->data);
-		string expr_str = emitter__Transpiler_visit_expr(t, *expr_node);
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t408->data);
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.cast_array("), expr_str, _S(")")}));
 	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_cast_int)) {
+		_option_ast__AstNode_ptr *_t410 = &node->expr;
+		if (_t410->state != 0) {
+			builtin___v_panic(_S("CastInt missing expr"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t410->data);
+		emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
+		if (expr_type.tag == emitter__TypeTag__t_int) {
+			return emitter__Transpiler_visit_expr_native(t, expr_node);
+		}
+		if (expr_type.tag == emitter__TypeTag__t_float || expr_type.tag == emitter__TypeTag__t_bool) {
+			string native_expr = emitter__Transpiler_visit_expr_native(t, expr_node);
+			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			return builtin__string_plus_many(3, _MOV((string[3]){_S("i64("), native_expr, _S(")")}));
+		}
+		if (expr_type.tag == emitter__TypeTag__t_string) {
+			string native_expr = emitter__Transpiler_visit_expr_native(t, expr_node);
+			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			return builtin__string_plus_many(2, _MOV((string[2]){native_expr, _S(".i64()")}));
+		}
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
+		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("("), expr_str, _S(").to_i64()")}));
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_cast_double)) {
+		_option_ast__AstNode_ptr *_t415 = &node->expr;
+		if (_t415->state != 0) {
+			builtin___v_panic(_S("CastDouble missing expr"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t415->data);
+		emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
+		if (expr_type.tag == emitter__TypeTag__t_float) {
+			return emitter__Transpiler_visit_expr_native(t, expr_node);
+		}
+		if (expr_type.tag == emitter__TypeTag__t_int || expr_type.tag == emitter__TypeTag__t_bool) {
+			string native_expr = emitter__Transpiler_visit_expr_native(t, expr_node);
+			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_float,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			return builtin__string_plus_many(3, _MOV((string[3]){_S("f64("), native_expr, _S(")")}));
+		}
+		if (expr_type.tag == emitter__TypeTag__t_string) {
+			string native_expr = emitter__Transpiler_visit_expr_native(t, expr_node);
+			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_float,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			return builtin__string_plus_many(2, _MOV((string[2]){native_expr, _S(".f64()")}));
+		}
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
+		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_float,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("("), expr_str, _S(").to_f64()")}));
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_cast_string)) {
+		_option_ast__AstNode_ptr *_t420 = &node->expr;
+		if (_t420->state != 0) {
+			builtin___v_panic(_S("CastString missing expr"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t420->data);
+		emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
+		if (expr_type.tag == emitter__TypeTag__t_string) {
+			return emitter__Transpiler_visit_expr_native(t, expr_node);
+		}
+		if (expr_type.tag == emitter__TypeTag__t_int || expr_type.tag == emitter__TypeTag__t_float || expr_type.tag == emitter__TypeTag__t_bool) {
+			string native_expr = emitter__Transpiler_visit_expr_native(t, expr_node);
+			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			return builtin__string_plus_many(2, _MOV((string[2]){native_expr, _S(".str()")}));
+		}
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
+		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("("), expr_str, _S(").str()")}));
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_cast_bool)) {
+		_option_ast__AstNode_ptr *_t424 = &node->expr;
+		if (_t424->state != 0) {
+			builtin___v_panic(_S("CastBool missing expr"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t424->data);
+		emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
+		if (expr_type.tag == emitter__TypeTag__t_bool) {
+			return emitter__Transpiler_visit_expr_native(t, expr_node);
+		}
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
+		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("("), expr_str, _S(").to_bool()")}));
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_not_identical)) {
+		_option_ast__AstNode_ptr *_t427 = &node->left;
+		if (_t427->state != 0) {
+			builtin___v_panic(_S("NotIdentical missing left"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* left = (*(ast__AstNode**)_t427->data);
+		_option_ast__AstNode_ptr *_t428 = &node->right;
+		if (_t428->state != 0) {
+			builtin___v_panic(_S("NotIdentical missing right"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* right = (*(ast__AstNode**)_t428->data);
+		emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*left);
+		emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*right);
+		if ((l_type.tag == emitter__TypeTag__t_int || l_type.tag == emitter__TypeTag__t_float) && (r_type.tag == emitter__TypeTag__t_int || r_type.tag == emitter__TypeTag__t_float)) {
+			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			string l_code = emitter__Transpiler_visit_expr_native(t, left);
+			string r_code = emitter__Transpiler_visit_expr_native(t, right);
+			return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.new_bool("), l_code, _S(" != "), r_code, _S(")")}));
+		}
+		if (l_type.tag == emitter__TypeTag__t_string && r_type.tag == emitter__TypeTag__t_string) {
+			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			string l_code = emitter__Transpiler_visit_expr_native(t, left);
+			string r_code = emitter__Transpiler_visit_expr_native(t, right);
+			return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.new_bool("), l_code, _S(" != "), r_code, _S(")")}));
+		}
+		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.new_bool(!rt.is_true(rt.identical("), emitter__Transpiler_visit_expr(t, left), _S(", "), emitter__Transpiler_visit_expr(t, right), _S(")))")}));
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_not_equal)) {
+		_option_ast__AstNode_ptr *_t432 = &node->left;
+		if (_t432->state != 0) {
+			builtin___v_panic(_S("NotEqual missing left"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* left = (*(ast__AstNode**)_t432->data);
+		_option_ast__AstNode_ptr *_t433 = &node->right;
+		if (_t433->state != 0) {
+			builtin___v_panic(_S("NotEqual missing right"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* right = (*(ast__AstNode**)_t433->data);
+		emitter__VarType l_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*left);
+		emitter__VarType r_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*right);
+		if ((l_type.tag == emitter__TypeTag__t_int || l_type.tag == emitter__TypeTag__t_float) && (r_type.tag == emitter__TypeTag__t_int || r_type.tag == emitter__TypeTag__t_float)) {
+			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			string l_code = emitter__Transpiler_visit_expr_native(t, left);
+			string r_code = emitter__Transpiler_visit_expr_native(t, right);
+			return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.new_bool("), l_code, _S(" != "), r_code, _S(")")}));
+		}
+		if (l_type.tag == emitter__TypeTag__t_string && r_type.tag == emitter__TypeTag__t_string) {
+			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			string l_code = emitter__Transpiler_visit_expr_native(t, left);
+			string r_code = emitter__Transpiler_visit_expr_native(t, right);
+			return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.new_bool("), l_code, _S(" != "), r_code, _S(")")}));
+		}
+		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.new_bool(!rt.is_true(rt.equal("), emitter__Transpiler_visit_expr(t, left), _S(", "), emitter__Transpiler_visit_expr(t, right), _S(")))")}));
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_unary_minus)) {
+		_option_ast__AstNode_ptr *_t437 = &node->expr;
+		if (_t437->state != 0) {
+			builtin___v_panic(_S("UnaryMinus missing expr"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t437->data);
+		emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
+		bool is_expect_native = emitter__VarType_is_scalar(t->expected_type) || t->expected_type.tag == emitter__TypeTag__t_void;
+		if (expr_type.tag == emitter__TypeTag__t_int) {
+			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			string e_code = emitter__Transpiler_visit_expr_native(t, expr_node);
+			if (is_expect_native) {
+				return builtin__string_plus_many(2, _MOV((string[2]){_S("-"), e_code}));
+			} else {
+				return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_int(-"), e_code, _S(")")}));
+			}
+		}
+		if (expr_type.tag == emitter__TypeTag__t_float) {
+			t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_float,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			string e_code = emitter__Transpiler_visit_expr_native(t, expr_node);
+			if (is_expect_native) {
+				return builtin__string_plus_many(2, _MOV((string[2]){_S("-"), e_code}));
+			} else {
+				return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_float(-"), e_code, _S(")")}));
+			}
+		}
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.sub(rt.new_int(0), "), expr_str, _S(")")}));
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_unary_plus)) {
+		_option_ast__AstNode_ptr *_t443 = &node->expr;
+		if (_t443->state != 0) {
+			builtin___v_panic(_S("UnaryPlus missing expr"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t443->data);
+		emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
+		bool is_expect_native = emitter__VarType_is_scalar(t->expected_type) || t->expected_type.tag == emitter__TypeTag__t_void;
+		if (expr_type.tag == emitter__TypeTag__t_int || expr_type.tag == emitter__TypeTag__t_float) {
+			if (is_expect_native) {
+				return emitter__Transpiler_visit_expr_native(t, expr_node);
+			} else {
+				if (expr_type.tag == emitter__TypeTag__t_int) {
+					return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_int("), emitter__Transpiler_visit_expr_native(t, expr_node), _S(")")}));
+				} else {
+					return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_float("), emitter__Transpiler_visit_expr_native(t, expr_node), _S(")")}));
+				}
+			}
+		}
+		return emitter__Transpiler_visit_expr(t, expr_node);
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_concat)) {
+		_option_ast__AstNode_ptr *_t448 = &node->var;
+		if (_t448->state != 0) {
+			builtin___v_panic(_S("AssignOp_Concat missing var"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* var_node = (*(ast__AstNode**)_t448->data);
+		_option_ast__AstNode_ptr *_t449 = &node->expr;
+		if (_t449->state != 0) {
+			builtin___v_panic(_S("AssignOp_Concat missing expr"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t449->data);
+		if (builtin__fast_string_eq(var_node->node_type, _S("Expr_Variable"))) {
+			string var_name = var_node->name;
+			string v_var = emitter__Transpiler_get_v_var_name(*t, var_name);
+			emitter__VarType* _t451 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v_var}));
+			_option_emitter__VarType _t450 = {0};
+			if (_t451) {
+				*((emitter__VarType*)&_t450.data) = *((emitter__VarType*)_t451);
+			} else {
+				_t450.state = 2; _t450.err = builtin___v_error(_S("map key does not exist"));
+			}
+			;
+			if (_t450.state != 0) {
+				emitter__VarType* _t453 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){var_name}));
+				_option_emitter__VarType _t452 = {0};
+				if (_t453) {
+					*((emitter__VarType*)&_t452.data) = *((emitter__VarType*)_t453);
+				} else {
+					_t452.state = 2; _t452.err = builtin___v_error(_S("map key does not exist"));
+				}
+				;
+				if (_t452.state != 0) {
+					*(emitter__VarType*) _t452.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+				}
+				
+				*(emitter__VarType*) _t450.data = (*(emitter__VarType*)_t452.data);
+			}
+			
+			emitter__VarType var_type = (*(emitter__VarType*)_t450.data);
+			emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
+			if (var_type.tag == emitter__TypeTag__t_string) {
+				string rhs = (expr_type.tag == emitter__TypeTag__t_string ? (emitter__Transpiler_visit_expr_native(t, expr_node)) : emitter__VarType_is_scalar(expr_type) ? (emitter__Transpiler_native_to_str(t, expr_node, expr_type)) : (builtin__string_plus_many(3, _MOV((string[3]){_S("("), emitter__Transpiler_visit_expr(t, expr_node), _S(").str()")}))));
+				return builtin__string_plus_many(5, _MOV((string[5]){v_var, _S(" = "), v_var, _S(" + "), rhs}));
+			}
+			string rhs = emitter__Transpiler_visit_expr(t, expr_node);
+			if (emitter__Transpiler_produces_native_string(t, (voidptr)&*expr_node)) {
+				rhs = builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_string("), rhs, _S(")")}));
+			}
+			return builtin__string_plus_many(6, _MOV((string[6]){v_var, _S(" = rt.concat("), v_var, _S(", "), rhs, _S(")")}));
+		}
+		string var_str = emitter__Transpiler_visit_expr(t, var_node);
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
+		if (emitter__Transpiler_produces_native_string(t, (voidptr)&*expr_node)) {
+			expr_str = builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_string("), expr_str, _S(")")}));
+		}
+		return builtin__string_plus_many(6, _MOV((string[6]){var_str, _S(" = rt.concat("), var_str, _S(", "), expr_str, _S(")")}));
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_plus) || builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_minus) || builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_mul) || builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_div) || builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_mod)) {
+		_option_ast__AstNode_ptr *_t457 = &node->var;
+		if (_t457->state != 0) {
+			builtin___v_panic(_S("AssignOp missing var"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* var_node = (*(ast__AstNode**)_t457->data);
+		_option_ast__AstNode_ptr *_t458 = &node->expr;
+		if (_t458->state != 0) {
+			builtin___v_panic(_S("AssignOp missing expr"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t458->data);
+		string rt_fn = ((builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_plus))? (_S("rt.add")) : (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_minus))? (_S("rt.sub")) : (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_mul))? (_S("rt.mul")) : (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_div))? (_S("rt.div")) : (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_mod))? (_S("rt.mod_")) : (_S("rt.add")));
+		string native_op = ((builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_plus))? (_S("+")) : (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_minus))? (_S("-")) : (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_mul))? (_S("*")) : (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_div))? (_S("/")) : (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_op_mod))? (_S("%")) : (_S("+")));
+		if (builtin__fast_string_eq(var_node->node_type, _S("Expr_Variable"))) {
+			string var_name = var_node->name;
+			string v_var = emitter__Transpiler_get_v_var_name(*t, var_name);
+			emitter__VarType* _t460 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v_var}));
+			_option_emitter__VarType _t459 = {0};
+			if (_t460) {
+				*((emitter__VarType*)&_t459.data) = *((emitter__VarType*)_t460);
+			} else {
+				_t459.state = 2; _t459.err = builtin___v_error(_S("map key does not exist"));
+			}
+			;
+			if (_t459.state != 0) {
+				emitter__VarType* _t462 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){var_name}));
+				_option_emitter__VarType _t461 = {0};
+				if (_t462) {
+					*((emitter__VarType*)&_t461.data) = *((emitter__VarType*)_t462);
+				} else {
+					_t461.state = 2; _t461.err = builtin___v_error(_S("map key does not exist"));
+				}
+				;
+				if (_t461.state != 0) {
+					*(emitter__VarType*) _t461.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+				}
+				
+				*(emitter__VarType*) _t459.data = (*(emitter__VarType*)_t461.data);
+			}
+			
+			emitter__VarType var_type = (*(emitter__VarType*)_t459.data);
+			emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
+			if ((var_type.tag == emitter__TypeTag__t_int || var_type.tag == emitter__TypeTag__t_float) && (expr_type.tag == emitter__TypeTag__t_int || expr_type.tag == emitter__TypeTag__t_float || expr_type.tag == emitter__TypeTag__t_unknown)) {
+				string rhs = ((expr_type.tag == emitter__TypeTag__t_int || expr_type.tag == emitter__TypeTag__t_float) ? (emitter__Transpiler_visit_expr_native(t, expr_node)) : (builtin__string_plus_many(3, _MOV((string[3]){_S("("), emitter__Transpiler_visit_expr(t, expr_node), _S(").to_i64()")}))));
+				return builtin__string_plus_many(7, _MOV((string[7]){v_var, _S(" = "), v_var, _S(" "), native_op, _S(" "), rhs}));
+			}
+			string rhs = emitter__Transpiler_visit_expr(t, expr_node);
+			return builtin__string_plus_many(8, _MOV((string[8]){v_var, _S(" = "), rt_fn, _S("("), v_var, _S(", "), rhs, _S(")")}));
+		}
+		string var_str = emitter__Transpiler_visit_expr(t, var_node);
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
+		return builtin__string_plus_many(8, _MOV((string[8]){var_str, _S(" = "), rt_fn, _S("("), var_str, _S(", "), expr_str, _S(")")}));
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign_ref)) {
+		_option_ast__AstNode_ptr *_t466 = &node->var;
+		if (_t466->state != 0) {
+			builtin___v_panic(_S("AssignRef missing var"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* var_node = (*(ast__AstNode**)_t466->data);
+		_option_ast__AstNode_ptr *_t467 = &node->expr;
+		if (_t467->state != 0) {
+			builtin___v_panic(_S("AssignRef missing expr"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t467->data);
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
+		if (builtin__fast_string_eq(var_node->node_type, _S("Expr_Variable"))) {
+			string var_name = var_node->name;
+			string v_var = emitter__Transpiler_get_v_var_name(*t, var_name);
+			if (emitter__VarScope_has_var(t->scope, var_name)) {
+				return builtin__string_plus_many(3, _MOV((string[3]){v_var, _S(" = "), expr_str}));
+			} else {
+				emitter__VarScope_declare(&t->scope, var_name);
+				return builtin__string_plus_many(4, _MOV((string[4]){_S("mut "), v_var, _S(" := "), expr_str}));
+			}
+		}
+		string var_str = emitter__Transpiler_visit_expr(t, var_node);
+		return builtin__string_plus_many(3, _MOV((string[3]){var_str, _S(" = "), expr_str}));
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_print)) {
+		_option_ast__AstNode_ptr *_t471 = &node->expr;
+		if (_t471->state != 0) {
+			builtin___v_panic(_S("Print missing expr"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t471->data);
+		emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
+		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		if (expr_type.tag == emitter__TypeTag__t_string) {
+			string native_str = emitter__Transpiler_visit_expr_native(t, expr_node);
+			return builtin__string_plus_many(3, _MOV((string[3]){_S("fn () { print("), native_str, _S("); return i64(1) }()")}));
+		}
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("fn () { print(("), expr_str, _S(").str()); return i64(1) }()")}));
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_exit)) {
+		if (t->is_entry_script) {
+			_option_ast__AstNode_ptr _t474 = {0};
+			if (_t474 = node->expr, _t474.state == 0) {
+				ast__AstNode* expr_node = *(ast__AstNode**)_t474.data;
+				GC_reachable_here(&expr_node);
+				string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
+				return builtin__string_plus_many(3, _MOV((string[3]){_S("print(("), expr_str, _S(").str()); return rt.new_int(0)")}));
+			}
+			return _S("return rt.new_null()");
+		}
+		_option_ast__AstNode_ptr _t477 = {0};
+		if (_t477 = node->expr, _t477.state == 0) {
+			ast__AstNode* expr_node = *(ast__AstNode**)_t477.data;
+			GC_reachable_here(&expr_node);
+			string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
+			return builtin__string_plus_many(3, _MOV((string[3]){_S("fn () { print(("), expr_str, _S(").str()); C.php2v_exit() }()")}));
+		}
+		return _S("C.php2v_exit()");
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_clone)) {
+		_option_ast__AstNode_ptr *_t480 = &node->expr;
+		if (_t480->state != 0) {
+			builtin___v_panic(_S("Clone missing expr"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t480->data);
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
+		t->last_expr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
+		return builtin__string_plus_many(2, _MOV((string[2]){expr_str, _S(".dup()")}));
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_cast_object)) {
+		_option_ast__AstNode_ptr *_t482 = &node->expr;
+		if (_t482->state != 0) {
+			builtin___v_panic(_S("CastObject missing expr"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* expr_node = (*(ast__AstNode**)_t482->data);
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
+		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_object,.class_name = _S("stdClass"),.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.array_to_object("), expr_str, _S(")")}));
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_list)) {
+		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		return _S("rt.new_null()");
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_logical_xor)) {
+		_option_ast__AstNode_ptr *_t485 = &node->left;
+		if (_t485->state != 0) {
+			builtin___v_panic(_S("LogicalXor missing left"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* left = (*(ast__AstNode**)_t485->data);
+		_option_ast__AstNode_ptr *_t486 = &node->right;
+		if (_t486->state != 0) {
+			builtin___v_panic(_S("LogicalXor missing right"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* right = (*(ast__AstNode**)_t486->data);
+		string l_str = emitter__Transpiler_visit_expr(t, left);
+		string r_str = emitter__Transpiler_visit_expr(t, right);
+		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_bool,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.is_true("), l_str, _S(") != rt.is_true("), r_str, _S(")")}));
+	}
 	else {
-		return builtin__string_plus_many(2, _MOV((string[2]){_S("// unsupported expression: "), node.node_type}));
+		t->last_expr_type = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		return _S("rt.new_null()");
 	}
 	return (string){.str=(byteptr)"", .is_lit=1};
 }
-VV_LOC string emitter__Transpiler_visit_expr_write_dim(emitter__Transpiler* t, ast__AstNode node) {
-	if (builtin__fast_string_eq(node.node_type, _S("Expr_ArrayDimFetch"))) {
-		_option_ast__AstNode_ptr *_t1 = &node.var;
+VV_LOC string emitter__Transpiler_visit_expr_write_dim(emitter__Transpiler* t, ast__AstNode* node) {
+	if (builtin__fast_string_eq(node->node_type, _S("Expr_ArrayDimFetch"))) {
+		_option_ast__AstNode_ptr *_t1 = &node->var;
 		if (_t1->state != 0) {
 			builtin___v_panic(_S("ArrayDimFetch missing var"));
 			VUNREACHABLE();
 		;
 		}
 		ast__AstNode* var_node = (*(ast__AstNode**)_t1->data);
-		_option_ast__AstNode_ptr *_t2 = &node.dim;
-		if (_t2->state != 0) {
-			builtin___v_panic(_S("ArrayDimFetch missing dim"));
-			VUNREACHABLE();
-		;
+		string var_str = emitter__Transpiler_visit_expr_write_dim(t, (voidptr)&*var_node);
+		_option_ast__AstNode_ptr _t2 = {0};
+		if (_t2 = node->dim, _t2.state == 0) {
+			ast__AstNode* dim_node = *(ast__AstNode**)_t2.data;
+			GC_reachable_here(&dim_node);
+			emitter__VarType dim_typ = emitter__Transpiler_get_expr_type(t, (voidptr)&*dim_node);
+			string dim_str = (emitter__VarType_is_scalar(dim_typ) ? (emitter__Transpiler_visit_expr_native(t, dim_node)) : (emitter__Transpiler_visit_expr(t, dim_node)));
+			return builtin__string_plus_many(4, _MOV((string[4]){var_str, _S(".array_get_mut("), dim_str, _S(")")}));
+		} else {
+			return builtin__string_plus_many(2, _MOV((string[2]){var_str, _S(".array_push_mut()")}));
 		}
-		ast__AstNode* dim_node = (*(ast__AstNode**)_t2->data);
-		string var_str = emitter__Transpiler_visit_expr_write_dim(t, *var_node);
-		emitter__VarType dim_typ = emitter__Transpiler_get_expr_type(t, *dim_node);
-		string dim_str = (emitter__VarType_is_scalar(dim_typ) ? (emitter__Transpiler_visit_expr_native(t, *dim_node)) : (emitter__Transpiler_visit_expr(t, *dim_node)));
-		return builtin__string_plus_many(4, _MOV((string[4]){var_str, _S(".array_get_mut("), dim_str, _S(")")}));
 	}
 	return emitter__Transpiler_visit_expr(t, node);
 }
-VV_LOC string emitter__Transpiler_compile_method_call_known(emitter__Transpiler* t, ast__AstNode node, emitter__VarType obj_type, ast__AstNode obj_var_node, string obj_var_name) {
-	string method_name = node.name;
+VV_LOC string emitter__Transpiler_compile_method_call_known(emitter__Transpiler* t, ast__AstNode* node, emitter__VarType obj_type, ast__AstNode obj_var_node, string obj_var_name) {
+	string method_name = node->name;
 	Array_string arg_strs = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-	for (int i = 0; i < node.args.len; ++i) {
-		ast__AstNode arg = ((ast__AstNode*)node.args.data)[i];
+	for (int i = 0; i < node->args.len; ++i) {
+		ast__AstNode arg = ((ast__AstNode*)node->args.data)[i];
 		_option_ast__AstNode_ptr *_t1 = &arg.expr;
 		if (_t1->state != 0) {
 			builtin___v_panic(_S("Arg missing expr"));
@@ -21463,7 +23113,7 @@ VV_LOC string emitter__Transpiler_compile_method_call_known(emitter__Transpiler*
 				target_param_type = emitter__Transpiler_get_method_param_type(t, obj_type.class_name, method_name, pname);
 			}
 		}
-		emitter__CallArgResult result = emitter__Transpiler_compile_arg(t, *arg_val, target_param_type);
+		emitter__CallArgResult result = emitter__Transpiler_compile_arg(t, (voidptr)&*arg_val, target_param_type);
 		builtin__array_push((array*)&arg_strs, _MOV((string[]){ builtin__string_clone(result.code) }));
 		{int _ = i;}
 		;
@@ -21472,8 +23122,8 @@ VV_LOC string emitter__Transpiler_compile_method_call_known(emitter__Transpiler*
 	if (_t5 = emitter__Transpiler_find_method(*t, obj_type.class_name, method_name), _t5.state == 0) {
 		emitter__MethodInfo m = *(emitter__MethodInfo*)_t5.data;
 		GC_reachable_here(&m);
-		if (node.args.len < m.param_count) {
-			for (int i = node.args.len; i < m.param_count; ++i) {
+		if (node->args.len < m.param_count) {
+			for (int i = node->args.len; i < m.param_count; ++i) {
 				if (i < m.param_names.len) {
 					string pname = (*(string*)builtin__array_get(m.param_names, i));
 					emitter__VarType ptype = emitter__Transpiler_get_method_param_type(t, obj_type.class_name, method_name, pname);
@@ -21510,19 +23160,22 @@ VV_LOC string emitter__Transpiler_compile_method_call_known(emitter__Transpiler*
 	string call_expr = builtin__string_plus_many(6, _MOV((string[6]){obj_var_name, _S("."), emitter__method_v_name(method_name), _S("("), args_joined, _S(")")}));
 	return call_expr;
 }
-VV_LOC void emitter__Transpiler_visit_stmt(emitter__Transpiler* t, ast__AstNode node) {
+VV_LOC void emitter__Transpiler_visit_stmt(emitter__Transpiler* t, ast__AstNode* node) {
+	if (builtin__string_ends_with(t->current_file, _S("class-pclzip.php"))) {
+		builtin__eprintln(builtin__string_plus_many(4, _MOV((string[4]){_S("      [visit_stmt] type: "), node->node_type, _S(" line: "), builtin__int_str(node->line)})));
+	}
 	t->active_depth++;
 	if (t->active_depth > 100) {
 		t->active_depth--;
 		return;
 	}
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_echo)) {
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_echo)) {
 		emitter__Transpiler_visit_echo(t, node);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_expression)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_expression)) {
 		_option_ast__AstNode_ptr _t1 = {0};
-		if (_t1 = node.expr, _t1.state == 0) {
+		if (_t1 = node->expr, _t1.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t1.data;
 			GC_reachable_here(&expr);
 			if (builtin__fast_string_eq(expr->node_type, _S("Expr_FuncCall")) && builtin__fast_string_eq(expr->name, _S("define"))) {
@@ -21553,7 +23206,7 @@ VV_LOC void emitter__Transpiler_visit_stmt(emitter__Transpiler* t, ast__AstNode 
 							;
 							}
 							ast__AstNode* val_node = (*(ast__AstNode**)_t5->data);
-							string val_str = emitter__Transpiler_visit_expr_native(t, *val_node);
+							string val_str = emitter__Transpiler_visit_expr_native(t, val_node);
 							strings__Builder_writeln(&t->const_out, builtin__string_plus_many(4, _MOV((string[4]){_S("const "), gc.name, _S(" = "), val_str})));
 							GC_reachable_here(&gc);
 							GC_reachable_here(&val_node);
@@ -21576,15 +23229,42 @@ VV_LOC void emitter__Transpiler_visit_stmt(emitter__Transpiler* t, ast__AstNode 
 			}
 			if (emitter__Transpiler_try_emit_native_incdec(t, *expr)) {
 			} else {
-				string expr_str = emitter__Transpiler_visit_expr(t, *expr);
-				emitter__Transpiler_write_indent(t);
-				GC_reachable_here(&expr_str);
-				emitter__Transpiler_write_line(t, expr_str);
-				GC_reachable_here(&expr_str);
+				string expr_str = emitter__Transpiler_visit_expr(t, expr);
+				bool is_bare_var = builtin__string_starts_with(expr_str, _S("var_")) && !builtin__string_contains(expr_str, _S(" ")) && !builtin__string_contains(expr_str, _S("(")) && !builtin__string_contains(expr_str, _S("."));
+				bool is_bare_mutated = (builtin__string_ends_with(expr_str, _S("_mutated")) || builtin__string_ends_with(expr_str, _S("_shadow"))) && !builtin__string_contains(expr_str, _S(" ")) && !builtin__string_contains(expr_str, _S("(")) && !builtin__string_contains(expr_str, _S("."));
+				bool is_bare_iife = builtin__string_starts_with(expr_str, _S("iife_result_")) && !builtin__string_contains(expr_str, _S(" ")) && !builtin__string_contains(expr_str, _S("(")) && !builtin__string_contains(expr_str, _S("."));
+				if (!is_bare_var && !is_bare_iife && !is_bare_mutated) {
+					bool produces_val = emitter__Transpiler_expr_produces_value(t, *expr);
+					if (builtin__string_contains(expr_str, _S(".array_push(")) || builtin__string_contains(expr_str, _S(".array_set("))) {
+						produces_val = false;
+					}
+					if (produces_val) {
+						Array_string lines = builtin__string_split(expr_str, _S("\n"));
+						for (int i = 0; i < lines.len; ++i) {
+							string line = ((string*)lines.data)[i];
+							emitter__Transpiler_write_indent(t);
+							GC_reachable_here(&line);
+							if (i == 0) {
+								emitter__Transpiler_write_line(t, builtin__string_plus_many(2, _MOV((string[2]){_S("_ = "), line})));
+							} else {
+								emitter__Transpiler_write_line(t, line);
+							}
+						}
+					} else {
+						Array_string _t7 = builtin__string_split(expr_str, _S("\n"));
+						for (int _t8 = 0; _t8 < _t7.len; ++_t8) {
+							string line = ((string*)_t7.data)[_t8];
+							emitter__Transpiler_write_indent(t);
+							GC_reachable_here(&line);
+							emitter__Transpiler_write_line(t, line);
+							GC_reachable_here(&line);
+						}
+					}
+				}
 			}
 			if (t->post_stmts.len > 0) {
-				for (int _t7 = 0; _t7 < t->post_stmts.len; ++_t7) {
-					string s = ((string*)t->post_stmts.data)[_t7];
+				for (int _t9 = 0; _t9 < t->post_stmts.len; ++_t9) {
+					string s = ((string*)t->post_stmts.data)[_t9];
 					emitter__Transpiler_write_indent(t);
 					GC_reachable_here(&s);
 					emitter__Transpiler_write_line(t, s);
@@ -21594,60 +23274,62 @@ VV_LOC void emitter__Transpiler_visit_stmt(emitter__Transpiler* t, ast__AstNode 
 			}
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_if)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_if)) {
 		emitter__Transpiler_visit_if(t, node);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_function)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_function)) {
 		emitter__Transpiler_visit_function(t, node);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_return)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_return)) {
 		emitter__Transpiler_visit_return(t, node);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_foreach)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_foreach)) {
 		emitter__Transpiler_visit_foreach(t, node);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_while)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_while)) {
 		emitter__Transpiler_visit_while(t, node);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_do)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_do)) {
 		emitter__Transpiler_visit_do(t, node);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_for)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_for)) {
 		emitter__Transpiler_visit_for(t, node);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_class)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_class)) {
 		emitter__Transpiler_visit_class(t, node);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_break)) {
-		emitter__Transpiler_write_indent(t);
-		emitter__Transpiler_write_line(t, _S("break"));
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_break)) {
+		if (!t->is_in_switch) {
+			emitter__Transpiler_write_indent(t);
+			emitter__Transpiler_write_line(t, _S("break"));
+		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_continue)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_continue)) {
 		emitter__Transpiler_write_indent(t);
 		emitter__Transpiler_write_line(t, _S("continue"));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_const)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_const)) {
 		emitter__Transpiler_visit_const(t, node);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_try_catch)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_try_catch)) {
 		emitter__Transpiler_visit_try_catch(t, node);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_switch)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_switch)) {
 		emitter__Transpiler_visit_switch(t, node);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_namespace)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_namespace)) {
 		string old_ns = t->current_namespace;
-		t->current_namespace = node.name;
-		for (int _t8 = 0; _t8 < node.stmts.len; ++_t8) {
-			ast__AstNode stmt = ((ast__AstNode*)node.stmts.data)[_t8];
-			emitter__Transpiler_visit_stmt(t, stmt);
+		t->current_namespace = node->name;
+		for (int _t10 = 0; _t10 < node->stmts.len; ++_t10) {
+			ast__AstNode stmt = ((ast__AstNode*)node->stmts.data)[_t10];
+			emitter__Transpiler_visit_stmt(t, (voidptr)&stmt);
 			GC_reachable_here(&stmt);
 		}
 		t->current_namespace = old_ns;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_use)) {
-		for (int _t9 = 0; _t9 < node.uses.len; ++_t9) {
-			ast__AstNode u = ((ast__AstNode*)node.uses.data)[_t9];
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_use)) {
+		for (int _t11 = 0; _t11 < node->uses.len; ++_t11) {
+			ast__AstNode u = ((ast__AstNode*)node->uses.data)[_t11];
 			string alias = u.alias;
 			if ((alias).len == 0) {
 				Array_string parts = builtin__string_split(u.name, _S("\\"));
@@ -21656,54 +23338,58 @@ VV_LOC void emitter__Transpiler_visit_stmt(emitter__Transpiler* t, ast__AstNode 
 			builtin__map_set(&t->use_aliases, &(string[]){alias}, &(string[]) { u.name });
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_unset)) {
-		for (int _t10 = 0; _t10 < node.vars.len; ++_t10) {
-			ast__AstNode v = ((ast__AstNode*)node.vars.data)[_t10];
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_unset)) {
+		for (int _t12 = 0; _t12 < node->vars.len; ++_t12) {
+			ast__AstNode v = ((ast__AstNode*)node->vars.data)[_t12];
 			if (builtin__fast_string_eq(v.node_type, _S("Expr_ArrayDimFetch"))) {
-				_option_ast__AstNode_ptr *_t11 = &v.var;
-				if (_t11->state != 0) {
+				_option_ast__AstNode_ptr *_t13 = &v.var;
+				if (_t13->state != 0) {
 					builtin___v_panic(_S("Unset array dim missing var"));
 					VUNREACHABLE();
 				;
 				}
-				ast__AstNode* arr_node = (*(ast__AstNode**)_t11->data);
-				_option_ast__AstNode_ptr *_t12 = &v.dim;
-				if (_t12->state != 0) {
+				ast__AstNode* arr_node = (*(ast__AstNode**)_t13->data);
+				_option_ast__AstNode_ptr *_t14 = &v.dim;
+				if (_t14->state != 0) {
 					builtin___v_panic(_S("Unset array dim missing dim"));
 					VUNREACHABLE();
 				;
 				}
-				ast__AstNode* dim_node = (*(ast__AstNode**)_t12->data);
-				emitter__VarType arr_type = emitter__Transpiler_get_expr_type(t, *arr_node);
-				string arr_str = emitter__Transpiler_visit_expr(t, *arr_node);
+				ast__AstNode* dim_node = (*(ast__AstNode**)_t14->data);
+				emitter__VarType arr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*arr_node);
+				string arr_str = emitter__Transpiler_visit_expr(t, arr_node);
 				emitter__Transpiler_write_indent(t);
 				GC_reachable_here(&arr_node);
 				GC_reachable_here(&dim_node);
 				GC_reachable_here(&arr_type);
 				GC_reachable_here(&arr_str);
-				if (arr_type.is_native_map) {
-					string dim_str_native = emitter__Transpiler_visit_expr_native(t, *dim_node);
+				if (emitter__VarType_is_object(arr_type) && emitter__Transpiler_class_implements(t, arr_type.class_name, _S("ArrayAccess"))) {
+					string dim_str = emitter__Transpiler_visit_expr(t, dim_node);
+					emitter__Transpiler_write_line(t, builtin__string_plus_many(4, _MOV((string[4]){arr_str, _S(".offsetunset("), dim_str, _S(")")})));
+					GC_reachable_here(&dim_str);
+				} else if (arr_type.is_native_map) {
+					string dim_str_native = emitter__Transpiler_visit_expr_native(t, dim_node);
 					emitter__Transpiler_write_line(t, builtin__string_plus_many(4, _MOV((string[4]){arr_str, _S(".delete("), dim_str_native, _S(")")})));
 					GC_reachable_here(&dim_str_native);
 				} else {
-					string dim_str = emitter__Transpiler_visit_expr(t, *dim_node);
+					string dim_str = emitter__Transpiler_visit_expr(t, dim_node);
 					emitter__Transpiler_write_line(t, builtin__string_plus_many(4, _MOV((string[4]){arr_str, _S(".array_unset("), dim_str, _S(")")})));
 					GC_reachable_here(&dim_str);
 				}
 			} else if (builtin__fast_string_eq(v.node_type, _S("Expr_Variable"))) {
-				emitter__VarType* _t14 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v.name}));
-				_option_emitter__VarType _t13 = {0};
-				if (_t14) {
-					*((emitter__VarType*)&_t13.data) = *((emitter__VarType*)_t14);
+				emitter__VarType* _t16 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v.name}));
+				_option_emitter__VarType _t15 = {0};
+				if (_t16) {
+					*((emitter__VarType*)&_t15.data) = *((emitter__VarType*)_t16);
 				} else {
-					_t13.state = 2; _t13.err = builtin___v_error(_S("map key does not exist"));
+					_t15.state = 2; _t15.err = builtin___v_error(_S("map key does not exist"));
 				}
 				;
-				if (_t13.state != 0) {
-					*(emitter__VarType*) _t13.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+				if (_t15.state != 0) {
+					*(emitter__VarType*) _t15.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 				}
 				
-				emitter__VarType typ = (*(emitter__VarType*)_t13.data);
+				emitter__VarType typ = (*(emitter__VarType*)_t15.data);
 				emitter__Transpiler_write_indent(t);
 				GC_reachable_here(&typ);
 
@@ -21720,12 +23406,12 @@ VV_LOC void emitter__Transpiler_visit_stmt(emitter__Transpiler* t, ast__AstNode 
 					emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("var_"), v.name, _S(" = false")})));
 				}
 				else {
-					string var_str = emitter__Transpiler_visit_expr(t, v);
+					string var_str = emitter__Transpiler_visit_expr(t, (voidptr)&v);
 					emitter__Transpiler_write_line(t, builtin__string_plus_many(2, _MOV((string[2]){var_str, _S(" = rt.new_null()")})));
 					GC_reachable_here(&var_str);
 				}
 			} else {
-				string var_str = emitter__Transpiler_visit_expr(t, v);
+				string var_str = emitter__Transpiler_visit_expr(t, (voidptr)&v);
 				emitter__Transpiler_write_indent(t);
 				GC_reachable_here(&var_str);
 				emitter__Transpiler_write_line(t, builtin__string_plus_many(2, _MOV((string[2]){var_str, _S(" = rt.new_null()")})));
@@ -21733,30 +23419,30 @@ VV_LOC void emitter__Transpiler_visit_stmt(emitter__Transpiler* t, ast__AstNode 
 			}
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_interface)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_interface)) {
 		bool old_is_in_func = t->is_in_func;
 		t->is_in_func = true;
-		emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("interface "), node.name, _S(" {")})));
+		emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("interface "), node->name, _S(" {")})));
 		t->indent++;
-		for (int _t15 = 0; _t15 < node.stmts.len; ++_t15) {
-			ast__AstNode stmt = ((ast__AstNode*)node.stmts.data)[_t15];
+		for (int _t17 = 0; _t17 < node->stmts.len; ++_t17) {
+			ast__AstNode stmt = ((ast__AstNode*)node->stmts.data)[_t17];
 			if (builtin__fast_string_eq(stmt.node_type, _S("Stmt_ClassMethod"))) {
 				Array_string param_strs = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-				for (int _t16 = 0; _t16 < stmt.params.len; ++_t16) {
-					ast__AstNode param = ((ast__AstNode*)stmt.params.data)[_t16];
+				for (int _t18 = 0; _t18 < stmt.params.len; ++_t18) {
+					ast__AstNode param = ((ast__AstNode*)stmt.params.data)[_t18];
 					string param_name = param.name;
 					builtin__array_push((array*)&param_strs, _MOV((string[]){ builtin__string_plus_many(2, _MOV((string[2]){param_name, _S(" rt.PhpVal")})) }));
 				}
-				string _t18; /* if prepend */
+				string _t20; /* if prepend */
 				if (param_strs.len > 0) {
-					_t18 = Array_string_join(param_strs, _S(", "));
-					goto _t19;
+					_t20 = Array_string_join(param_strs, _S(", "));
+					goto _t21;
 				};
 				{
-					_t18 = _S("");
+					_t20 = _S("");
 				}
-	_t19: {};
-								string params_str = _t18;
+	_t21: {};
+								string params_str = _t20;
 				emitter__Transpiler_write_indent(t);
 				GC_reachable_here(&param_strs);
 				GC_reachable_here(&params_str);
@@ -21770,14 +23456,104 @@ VV_LOC void emitter__Transpiler_visit_stmt(emitter__Transpiler* t, ast__AstNode 
 		emitter__Transpiler_write_line(t, _S(""));
 		t->is_in_func = old_is_in_func;
 	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_global)) {
+		for (int _t22 = 0; _t22 < node->vars.len; ++_t22) {
+			ast__AstNode v = ((ast__AstNode*)node->vars.data)[_t22];
+			string var_name = v.name;
+			string v_var = emitter__Transpiler_get_v_var_name(*t, var_name);
+			if (!emitter__VarScope_has_var(t->scope, var_name)) {
+				emitter__VarScope_declare(&t->scope, var_name);
+				emitter__Transpiler_write_indent(t);
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(5, _MOV((string[5]){_S("mut "), v_var, _S(" := rt.get_superglobal(\'"), var_name, _S("\')")})));
+			}
+		}
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_nop)) {
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_declare)) {
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_static)) {
+		for (int _t23 = 0; _t23 < node->vars.len; ++_t23) {
+			ast__AstNode v = ((ast__AstNode*)node->vars.data)[_t23];
+			_option_ast__AstNode_ptr *_t24 = &v.var;
+			if (_t24->state != 0) {
+				continue;
+			}
+			ast__AstNode* var_node = (*(ast__AstNode**)_t24->data);
+			string var_name = var_node->name;
+			string v_var = emitter__Transpiler_get_v_var_name(*t, var_name);
+			if (!emitter__VarScope_has_var(t->scope, var_name)) {
+				emitter__VarScope_declare(&t->scope, var_name);
+				_option_ast__AstNode_ptr _t25 = {0};
+				if (_t25 = v.default_val, _t25.state == 0) {
+					ast__AstNode* def = *(ast__AstNode**)_t25.data;
+					GC_reachable_here(&def);
+					emitter__VarType def_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*def);
+					if (emitter__VarType_is_scalar(def_type)) {
+						string def_str = emitter__Transpiler_visit_expr_native(t, def);
+						emitter__Transpiler_write_indent(t);
+						GC_reachable_here(&def_str);
+						emitter__Transpiler_write_line(t, builtin__string_plus_many(4, _MOV((string[4]){_S("mut "), v_var, _S(" := "), def_str})));
+						GC_reachable_here(&def_str);
+					} else {
+						string def_str = emitter__Transpiler_visit_expr(t, def);
+						emitter__Transpiler_write_indent(t);
+						GC_reachable_here(&def_str);
+						emitter__Transpiler_write_line(t, builtin__string_plus_many(4, _MOV((string[4]){_S("mut "), v_var, _S(" := "), def_str})));
+						GC_reachable_here(&def_str);
+					}
+				} else {
+					emitter__Transpiler_write_indent(t);
+					emitter__VarType* _t27 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v_var}));
+					_option_emitter__VarType _t26 = {0};
+					if (_t27) {
+						*((emitter__VarType*)&_t26.data) = *((emitter__VarType*)_t27);
+					} else {
+						_t26.state = 2; _t26.err = builtin___v_error(_S("map key does not exist"));
+					}
+					;
+					if (_t26.state != 0) {
+						*(emitter__VarType*) _t26.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+					}
+					
+					emitter__VarType v_type = (*(emitter__VarType*)_t26.data);
+					if (emitter__VarType_is_object(v_type)) {
+						string cls = (v_type.class_name.len > 0 ? (v_type.class_name) : (_S("WP_Error")));
+						emitter__Transpiler_write_line(t, builtin__string_plus_many(5, _MOV((string[5]){_S("mut "), v_var, _S(" := &Class_"), cls, _S("(unsafe { nil })")})));
+						GC_reachable_here(&cls);
+					} else if (v_type.is_native_list || v_type.is_native_map) {
+						emitter__Transpiler_write_line(t, builtin__string__plus(builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := ")})), emitter__Transpiler_get_empty_literal(*t, v_type)));
+					} else if (emitter__VarType_is_scalar(v_type)) {
+						builtin__map_set(&t->native_vars, &(string[]){v_var}, &(bool[]) { true });
+
+						if (v_type.tag == (emitter__TypeTag__t_int)) {
+							emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := i64(0)")})));
+						}
+						else if (v_type.tag == (emitter__TypeTag__t_float)) {
+							emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := f64(0.0)")})));
+						}
+						else if (v_type.tag == (emitter__TypeTag__t_bool)) {
+							emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := false")})));
+						}
+						else {
+							emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := ''")})));
+						}
+					} else {
+						emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := rt.new_null()")})));
+					}
+				}
+			}
+		}
+	}
 	else {
 		emitter__Transpiler_write_indent(t);
-		emitter__Transpiler_write_line(t, builtin__string_plus_many(2, _MOV((string[2]){_S("// unsupported statement: "), node.node_type})));
+		emitter__Transpiler_write_line(t, builtin__string_plus_many(2, _MOV((string[2]){_S("// unsupported statement: "), node->node_type})));
 	}
-	if ((t->current_catch_label).len != 0 && !builtin__fast_string_eq(node.node_type, _S("Stmt_Return")) && !builtin__fast_string_eq(node.node_type, _S("Stmt_TryCatch"))) {
+	if ((t->current_catch_label).len != 0 && !builtin__fast_string_eq(node->node_type, _S("Stmt_Return")) && !builtin__fast_string_eq(node->node_type, _S("Stmt_TryCatch"))) {
 		emitter__Transpiler_write_indent(t);
 		emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("if rt.has_exception() { unsafe { goto "), t->current_catch_label, _S(" } }")})));
 	}
+	t->active_depth--;
 }
 VV_LOC bool emitter__Transpiler_try_emit_native_incdec(emitter__Transpiler* t, ast__AstNode expr) {
 	string incdec_op = ((builtin__fast_string_eq(expr.node_type, _const_ast__node_expr_post_inc) || builtin__fast_string_eq(expr.node_type, _const_ast__node_expr_pre_inc))? (_S("+= 1")) : (builtin__fast_string_eq(expr.node_type, _const_ast__node_expr_post_dec) || builtin__fast_string_eq(expr.node_type, _const_ast__node_expr_pre_dec))? (_S("-= 1")) : (_S("")));
@@ -21822,14 +23598,14 @@ VV_LOC bool emitter__Transpiler_try_emit_native_incdec(emitter__Transpiler* t, a
 	GC_reachable_here(&typ);
 	return true;
 }
-VV_LOC void emitter__Transpiler_visit_echo(emitter__Transpiler* t, ast__AstNode node) {
-	for (int _t1 = 0; _t1 < node.exprs.len; ++_t1) {
-		ast__AstNode expr = ((ast__AstNode*)node.exprs.data)[_t1];
+VV_LOC void emitter__Transpiler_visit_echo(emitter__Transpiler* t, ast__AstNode* node) {
+	for (int _t1 = 0; _t1 < node->exprs.len; ++_t1) {
+		ast__AstNode expr = ((ast__AstNode*)node->exprs.data)[_t1];
 		if (builtin__fast_string_eq(expr.node_type, _S("Scalar_String"))) {
 			string escaped = emitter__escape_single_quoted(expr.value);
 			emitter__Transpiler_write_indent(t);
 			GC_reachable_here(&escaped);
-			emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("print(\'"), escaped, _S("\')")})));
+			emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("rt.print_str(\'"), escaped, _S("\')")})));
 			GC_reachable_here(&escaped);
 			continue;
 		}
@@ -21849,38 +23625,38 @@ VV_LOC void emitter__Transpiler_visit_echo(emitter__Transpiler* t, ast__AstNode 
 			emitter__VarType typ = (*(emitter__VarType*)_t2.data);
 			if (typ.tag == emitter__TypeTag__t_int) {
 				emitter__Transpiler_write_indent(t);
-				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("print(var_"), expr.name, _S(".str())")})));
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("rt.print_str(var_"), expr.name, _S(".str())")})));
 				continue;
 			}
 			if (typ.tag == emitter__TypeTag__t_string) {
 				emitter__Transpiler_write_indent(t);
-				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("print(var_"), expr.name, _S(")")})));
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("rt.print_str(var_"), expr.name, _S(")")})));
 				continue;
 			}
 			if (typ.tag == emitter__TypeTag__t_bool) {
 				emitter__Transpiler_write_indent(t);
-				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("print(if var_"), expr.name, _S(" { \'1\' } else { \'\' })")})));
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("rt.print_str(if var_"), expr.name, _S(" { \'1\' } else { \'\' })")})));
 				continue;
 			}
 		}
-		emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, expr);
+		emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&expr);
 		if (expr_type.tag == emitter__TypeTag__t_string) {
-			string native_str = emitter__Transpiler_visit_expr_native(t, expr);
+			string native_str = emitter__Transpiler_visit_expr_native(t, (voidptr)&expr);
 			emitter__Transpiler_write_indent(t);
 			GC_reachable_here(&native_str);
-			emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("print("), native_str, _S(")")})));
+			emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("rt.print_str("), native_str, _S(")")})));
 			GC_reachable_here(&native_str);
 			continue;
 		}
 		if (expr_type.tag == emitter__TypeTag__t_int) {
-			string native_int = emitter__Transpiler_visit_expr_native(t, expr);
+			string native_int = emitter__Transpiler_visit_expr_native(t, (voidptr)&expr);
 			emitter__Transpiler_write_indent(t);
 			GC_reachable_here(&native_int);
-			emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("print("), native_int, _S(".str())")})));
+			emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("rt.print_str("), native_int, _S(".str())")})));
 			GC_reachable_here(&native_int);
 			continue;
 		}
-		string expr_str = emitter__Transpiler_visit_expr(t, expr);
+		string expr_str = emitter__Transpiler_visit_expr(t, (voidptr)&expr);
 		emitter__Transpiler_write_indent(t);
 		GC_reachable_here(&expr);
 		GC_reachable_here(&expr_type);
@@ -21891,16 +23667,16 @@ VV_LOC void emitter__Transpiler_visit_echo(emitter__Transpiler* t, ast__AstNode 
 		GC_reachable_here(&expr_str);
 	}
 }
-VV_LOC void emitter__Transpiler_visit_const(emitter__Transpiler* t, ast__AstNode node) {
-	for (int _t1 = 0; _t1 < node.consts.len; ++_t1) {
-		ast__ConstItem c = ((ast__ConstItem*)node.consts.data)[_t1];
-		string val_str = emitter__Transpiler_visit_expr_native(t, c.value);
+VV_LOC void emitter__Transpiler_visit_const(emitter__Transpiler* t, ast__AstNode* node) {
+	for (int _t1 = 0; _t1 < node->consts.len; ++_t1) {
+		ast__ConstItem c = ((ast__ConstItem*)node->consts.data)[_t1];
+		string val_str = emitter__Transpiler_visit_expr_native(t, (voidptr)&c.value);
 		strings__Builder_writeln(&t->const_out, builtin__string_plus_many(4, _MOV((string[4]){_S("const global_const_"), builtin__string_to_lower(c.name), _S(" = "), val_str})));
 		GC_reachable_here(&c);
 		GC_reachable_here(&val_str);
 	}
 }
-VV_LOC void emitter__Transpiler_visit_try_catch(emitter__Transpiler* t, ast__AstNode node) {
+VV_LOC void emitter__Transpiler_visit_try_catch(emitter__Transpiler* t, ast__AstNode* node) {
 	t->try_count++;
 	int my_id = t->try_count;
 	string catch_label = builtin__string_plus_many(2, _MOV((string[2]){_S("catch_label_"), builtin__int_str(my_id)}));
@@ -21910,9 +23686,9 @@ VV_LOC void emitter__Transpiler_visit_try_catch(emitter__Transpiler* t, ast__Ast
 	string old_finally = t->current_finally_label;
 	t->current_catch_label = catch_label;
 	t->current_finally_label = finally_label;
-	for (int _t1 = 0; _t1 < node.stmts.len; ++_t1) {
-		ast__AstNode stmt = ((ast__AstNode*)node.stmts.data)[_t1];
-		emitter__Transpiler_visit_stmt(t, stmt);
+	for (int _t1 = 0; _t1 < node->stmts.len; ++_t1) {
+		ast__AstNode stmt = ((ast__AstNode*)node->stmts.data)[_t1];
+		emitter__Transpiler_visit_stmt(t, (voidptr)&stmt);
 		GC_reachable_here(&stmt);
 	}
 	emitter__Transpiler_write_indent(t);
@@ -21923,7 +23699,7 @@ VV_LOC void emitter__Transpiler_visit_try_catch(emitter__Transpiler* t, ast__Ast
 	GC_reachable_here(&end_label);
 	GC_reachable_here(&old_catch);
 	GC_reachable_here(&old_finally);
-	if ((node.finally).state != 2) {
+	if ((node->finally).state != 2) {
 		emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("unsafe { goto "), finally_label, _S(" }")})));
 	} else {
 		emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("unsafe { goto "), end_label, _S(" }")})));
@@ -21963,8 +23739,8 @@ VV_LOC void emitter__Transpiler_visit_try_catch(emitter__Transpiler* t, ast__Ast
 	GC_reachable_here(&old_catch);
 	GC_reachable_here(&old_finally);
 	bool is_first_catch = true;
-	for (int _t2 = 0; _t2 < node.catches.len; ++_t2) {
-		ast__AstNode c = ((ast__AstNode*)node.catches.data)[_t2];
+	for (int _t2 = 0; _t2 < node->catches.len; ++_t2) {
+		ast__AstNode c = ((ast__AstNode*)node->catches.data)[_t2];
 		Array_string type_checks = builtin____new_array_with_default(0, 0, sizeof(string), 0);
 		for (int _t3 = 0; _t3 < c.types.len; ++_t3) {
 			string typ = ((string*)c.types.data)[_t3];
@@ -21998,22 +23774,24 @@ VV_LOC void emitter__Transpiler_visit_try_catch(emitter__Transpiler* t, ast__Ast
 		if (_t5 = c.var, _t5.state == 0) {
 			ast__AstNode* var_node = *(ast__AstNode**)_t5.data;
 			GC_reachable_here(&var_node);
-			emitter__VarScope_declare(&t->scope, var_node->name);
-			GC_reachable_here(&var_node);
 			emitter__Transpiler_write_indent(t);
 			GC_reachable_here(&var_node);
-			emitter__Transpiler_write_line(t, builtin__string_plus_many(5, _MOV((string[5]){_S("mut var_"), var_node->name, _S(" := var_e_"), builtin__int_str(my_id), _S(".dup()")})));
-			GC_reachable_here(&var_node);
+			if (emitter__VarScope_has_var(t->scope, var_node->name)) {
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(5, _MOV((string[5]){_S("var_"), var_node->name, _S(" = var_e_"), builtin__int_str(my_id), _S(".clone()")})));
+			} else {
+				emitter__VarScope_declare(&t->scope, var_node->name);
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(5, _MOV((string[5]){_S("mut var_"), var_node->name, _S(" := var_e_"), builtin__int_str(my_id), _S(".clone()")})));
+			}
 		}
 		for (int _t6 = 0; _t6 < c.stmts.len; ++_t6) {
 			ast__AstNode catch_stmt = ((ast__AstNode*)c.stmts.data)[_t6];
-			emitter__Transpiler_visit_stmt(t, catch_stmt);
+			emitter__Transpiler_visit_stmt(t, (voidptr)&catch_stmt);
 			GC_reachable_here(&catch_stmt);
 		}
 		emitter__Transpiler_write_indent(t);
 		GC_reachable_here(&c);
 		GC_reachable_here(&type_checks);
-		if ((node.finally).state != 2) {
+		if ((node->finally).state != 2) {
 			emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("unsafe { goto "), finally_label, _S(" }")})));
 		} else {
 			emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("unsafe { goto "), end_label, _S(" }")})));
@@ -22026,14 +23804,14 @@ VV_LOC void emitter__Transpiler_visit_try_catch(emitter__Transpiler* t, ast__Ast
 		GC_reachable_here(&c);
 		GC_reachable_here(&type_checks);
 	}
-	if (node.catches.len > 0) {
+	if (node->catches.len > 0) {
 		emitter__Transpiler_write_indent(t);
 		emitter__Transpiler_write_line(t, _S("else {"));
 		t->indent++;
 		emitter__Transpiler_write_indent(t);
 		emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("rt.throw_exception(var_e_"), builtin__int_str(my_id), _S(")")})));
 		emitter__Transpiler_write_indent(t);
-		if ((node.finally).state != 2) {
+		if ((node->finally).state != 2) {
 			emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("unsafe { goto "), finally_label, _S(" }")})));
 		} else {
 			emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("unsafe { goto "), end_label, _S(" }")})));
@@ -22043,7 +23821,7 @@ VV_LOC void emitter__Transpiler_visit_try_catch(emitter__Transpiler* t, ast__Ast
 		emitter__Transpiler_write_line(t, _S("}"));
 	}
 	_option_ast__AstNode_ptr _t7 = {0};
-	if (_t7 = node.finally, _t7.state == 0) {
+	if (_t7 = node->finally, _t7.state == 0) {
 		ast__AstNode* f_node = *(ast__AstNode**)_t7.data;
 		GC_reachable_here(&f_node);
 		emitter__Transpiler_write_line(t, _S(""));
@@ -22052,7 +23830,7 @@ VV_LOC void emitter__Transpiler_visit_try_catch(emitter__Transpiler* t, ast__Ast
 		GC_reachable_here(&f_node);
 		for (int _t8 = 0; _t8 < f_node->stmts.len; ++_t8) {
 			ast__AstNode f_stmt = ((ast__AstNode*)f_node->stmts.data)[_t8];
-			emitter__Transpiler_visit_stmt(t, f_stmt);
+			emitter__Transpiler_visit_stmt(t, (voidptr)&f_stmt);
 			GC_reachable_here(&f_stmt);
 		}
 		emitter__Transpiler_write_indent(t);
@@ -22080,37 +23858,43 @@ VV_LOC void emitter__Transpiler_visit_try_catch(emitter__Transpiler* t, ast__Ast
 	GC_reachable_here(&old_catch);
 	GC_reachable_here(&old_finally);
 }
-VV_LOC void emitter__Transpiler_visit_if(emitter__Transpiler* t, ast__AstNode node) {
-	_option_ast__AstNode_ptr *_t1 = &node.cond;
+VV_LOC void emitter__Transpiler_visit_if(emitter__Transpiler* t, ast__AstNode* node) {
+	_option_ast__AstNode_ptr *_t1 = &node->cond;
 	if (_t1->state != 0) {
 		builtin___v_panic(_S("If statement missing cond"));
 		VUNREACHABLE();
 	;
 	}
 	ast__AstNode* cond_node = (*(ast__AstNode**)_t1->data);
-	string native_cond = emitter__Transpiler_emit_native_condition(t, *cond_node);
-	string cond_str = ((native_cond).len != 0 ? (native_cond) : (builtin__string_plus_many(3, _MOV((string[3]){_S("rt.is_true("), emitter__Transpiler_visit_expr(t, *cond_node), _S(")")}))));
+	string native_cond = emitter__Transpiler_emit_native_condition(t, (voidptr)&*cond_node);
+	string cond_str = ((native_cond).len != 0 ? (native_cond) : (builtin__string_plus_many(3, _MOV((string[3]){_S("rt.is_true("), emitter__Transpiler_visit_expr(t, cond_node), _S(")")}))));
+	string one_line_cond = cond_str;
+	one_line_cond = builtin__string_replace(one_line_cond, _S("\n"), _S(" "));
+	one_line_cond = builtin__string_replace(one_line_cond, _S("\t"), _S(" "));
+	one_line_cond = builtin__string_replace(one_line_cond, _S("\r"), _S(" "));
 	emitter__Transpiler_write_indent(t);
 	GC_reachable_here(&t);
 	GC_reachable_here(&node);
 	GC_reachable_here(&cond_node);
 	GC_reachable_here(&native_cond);
 	GC_reachable_here(&cond_str);
-	emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("if "), cond_str, _S(" {")})));
+	GC_reachable_here(&one_line_cond);
+	emitter__Transpiler_write_string(t, builtin__string_plus_many(3, _MOV((string[3]){_S("if "), one_line_cond, _S(" {\n")})));
 	GC_reachable_here(&t);
 	GC_reachable_here(&node);
 	GC_reachable_here(&cond_node);
 	GC_reachable_here(&native_cond);
 	GC_reachable_here(&cond_str);
+	GC_reachable_here(&one_line_cond);
 	t->indent++;
-	for (int _t2 = 0; _t2 < node.stmts.len; ++_t2) {
-		ast__AstNode stmt = ((ast__AstNode*)node.stmts.data)[_t2];
-		emitter__Transpiler_visit_stmt(t, stmt);
+	for (int _t2 = 0; _t2 < node->stmts.len; ++_t2) {
+		ast__AstNode stmt = ((ast__AstNode*)node->stmts.data)[_t2];
+		emitter__Transpiler_visit_stmt(t, (voidptr)&stmt);
 		GC_reachable_here(&stmt);
 	}
 	t->indent--;
-	for (int _t3 = 0; _t3 < node.elseifs.len; ++_t3) {
-		ast__AstNode elseif_node = ((ast__AstNode*)node.elseifs.data)[_t3];
+	for (int _t3 = 0; _t3 < node->elseifs.len; ++_t3) {
+		ast__AstNode elseif_node = ((ast__AstNode*)node->elseifs.data)[_t3];
 		_option_ast__AstNode_ptr *_t4 = &elseif_node.cond;
 		if (_t4->state != 0) {
 			builtin___v_panic(_S("Elseif statement missing cond"));
@@ -22118,28 +23902,31 @@ VV_LOC void emitter__Transpiler_visit_if(emitter__Transpiler* t, ast__AstNode no
 		;
 		}
 		ast__AstNode* elseif_cond = (*(ast__AstNode**)_t4->data);
-		string elseif_native = emitter__Transpiler_emit_native_condition(t, *elseif_cond);
-		string elseif_cond_str = ((elseif_native).len != 0 ? (elseif_native) : (builtin__string_plus_many(3, _MOV((string[3]){_S("rt.is_true("), emitter__Transpiler_visit_expr(t, *elseif_cond), _S(")")}))));
+		string elseif_native = emitter__Transpiler_emit_native_condition(t, (voidptr)&*elseif_cond);
+		string elseif_cond_str = ((elseif_native).len != 0 ? (elseif_native) : (builtin__string_plus_many(3, _MOV((string[3]){_S("rt.is_true("), emitter__Transpiler_visit_expr(t, elseif_cond), _S(")")}))));
+		string elseif_one_line = builtin__string_replace(builtin__string_replace(builtin__string_replace(elseif_cond_str, _S("\n"), _S(" ")), _S("\t"), _S(" ")), _S("\r"), _S(" "));
 		emitter__Transpiler_write_indent(t);
 		GC_reachable_here(&elseif_node);
 		GC_reachable_here(&elseif_cond);
 		GC_reachable_here(&elseif_native);
 		GC_reachable_here(&elseif_cond_str);
-		emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("} else if "), elseif_cond_str, _S(" {")})));
+		GC_reachable_here(&elseif_one_line);
+		emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("} else if "), elseif_one_line, _S(" {")})));
 		GC_reachable_here(&elseif_node);
 		GC_reachable_here(&elseif_cond);
 		GC_reachable_here(&elseif_native);
 		GC_reachable_here(&elseif_cond_str);
+		GC_reachable_here(&elseif_one_line);
 		t->indent++;
 		for (int _t5 = 0; _t5 < elseif_node.stmts.len; ++_t5) {
 			ast__AstNode stmt = ((ast__AstNode*)elseif_node.stmts.data)[_t5];
-			emitter__Transpiler_visit_stmt(t, stmt);
+			emitter__Transpiler_visit_stmt(t, (voidptr)&stmt);
 			GC_reachable_here(&stmt);
 		}
 		t->indent--;
 	}
 	_option_ast__AstNode_ptr _t6 = {0};
-	if (_t6 = node.__v_else, _t6.state == 0) {
+	if (_t6 = node->__v_else, _t6.state == 0) {
 		ast__AstNode* else_node = *(ast__AstNode**)_t6.data;
 		GC_reachable_here(&else_node);
 		emitter__Transpiler_write_indent(t);
@@ -22149,7 +23936,7 @@ VV_LOC void emitter__Transpiler_visit_if(emitter__Transpiler* t, ast__AstNode no
 		t->indent++;
 		for (int _t7 = 0; _t7 < else_node->stmts.len; ++_t7) {
 			ast__AstNode stmt = ((ast__AstNode*)else_node->stmts.data)[_t7];
-			emitter__Transpiler_visit_stmt(t, stmt);
+			emitter__Transpiler_visit_stmt(t, (voidptr)&stmt);
 			GC_reachable_here(&stmt);
 		}
 		t->indent--;
@@ -22160,24 +23947,50 @@ VV_LOC void emitter__Transpiler_visit_if(emitter__Transpiler* t, ast__AstNode no
 	GC_reachable_here(&cond_node);
 	GC_reachable_here(&native_cond);
 	GC_reachable_here(&cond_str);
+	GC_reachable_here(&one_line_cond);
 	emitter__Transpiler_write_line(t, _S("}"));
 	GC_reachable_here(&t);
 	GC_reachable_here(&node);
 	GC_reachable_here(&cond_node);
 	GC_reachable_here(&native_cond);
 	GC_reachable_here(&cond_str);
+	GC_reachable_here(&one_line_cond);
 	t->active_depth--;
 }
-VV_LOC void emitter__Transpiler_visit_function(emitter__Transpiler* t, ast__AstNode node) {
+VV_LOC void emitter__Transpiler_visit_function(emitter__Transpiler* t, ast__AstNode* node) {
 	t->is_in_func = true;
 	int old_indent = t->indent;
 	t->indent = 0;
 	emitter__VarScope old_scope = t->scope;
 	t->scope = emitter__VarScope__static__new();
+	Map_string_bool old_native_vars = builtin__map_clone(&t->native_vars);
+	Map_string_bool old_native_params = builtin__map_clone(&t->native_params);
+	Map_string_bool old_native_arr_vars = builtin__map_clone(&t->native_arr_vars);
+	builtin__map_clear(&t->native_vars);
+	GC_reachable_here(&t);
+	GC_reachable_here(&node);
+	GC_reachable_here(&old_scope);
+	GC_reachable_here(&old_native_vars);
+	GC_reachable_here(&old_native_params);
+	GC_reachable_here(&old_native_arr_vars);
+	builtin__map_clear(&t->native_params);
+	GC_reachable_here(&t);
+	GC_reachable_here(&node);
+	GC_reachable_here(&old_scope);
+	GC_reachable_here(&old_native_vars);
+	GC_reachable_here(&old_native_params);
+	GC_reachable_here(&old_native_arr_vars);
+	builtin__map_clear(&t->native_arr_vars);
+	GC_reachable_here(&t);
+	GC_reachable_here(&node);
+	GC_reachable_here(&old_scope);
+	GC_reachable_here(&old_native_vars);
+	GC_reachable_here(&old_native_params);
+	GC_reachable_here(&old_native_arr_vars);
 	string old_func_name = t->current_func_name;
 	emitter__VarType old_func_ret = t->current_func_ret_type;
-	t->current_func_name = node.name;
-	emitter__VarType* _t2 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_return_types), &(string[]){node.name}));
+	t->current_func_name = node->name;
+	emitter__VarType* _t2 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_return_types), &(string[]){node->name}));
 	_option_emitter__VarType _t1 = {0};
 	if (_t2) {
 		*((emitter__VarType*)&_t1.data) = *((emitter__VarType*)_t2);
@@ -22192,7 +24005,7 @@ VV_LOC void emitter__Transpiler_visit_function(emitter__Transpiler* t, ast__AstN
 	emitter__VarType ret_type = (*(emitter__VarType*)_t1.data);
 	t->current_func_ret_type = ret_type;
 	Map_string_emitter__VarType old_inferred = builtin__map_clone(&t->inferred_types);
-	Map_string_emitter__VarType* _t4 = (Map_string_emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_var_types), &(string[]){node.name}));
+	Map_string_emitter__VarType* _t4 = (Map_string_emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_var_types), &(string[]){node->name}));
 	_option_Map_string_emitter__VarType _t3 = {0};
 	if (_t4) {
 		*((Map_string_emitter__VarType*)&_t3.data) = *((Map_string_emitter__VarType*)_t4);
@@ -22221,10 +24034,13 @@ VV_LOC void emitter__Transpiler_visit_function(emitter__Transpiler* t, ast__AstN
 		if (_t3.state == 2 && _t3.err._object != _const_none__._object) { builtin___v_free(_t3.err._object); }
 	bool has_variadic_param = false;
 	string variadic_param_name = _S("");
+	multi_return_Array_string_Array_string mr_16385 = emitter__Transpiler_collect_vars_in_scope(t, &node->stmts);
+	Array_string ref_vars = mr_16385.arg0;
+	Array_string ass_vars = mr_16385.arg1;
 	Array_string registered_native_params = builtin____new_array_with_default(0, 0, sizeof(string), 0);
 	Array_string param_names = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-	for (int _t8 = 0; _t8 < node.params.len; ++_t8) {
-		ast__AstNode param = ((ast__AstNode*)node.params.data)[_t8];
+	for (int _t8 = 0; _t8 < node->params.len; ++_t8) {
+		ast__AstNode param = ((ast__AstNode*)node->params.data)[_t8];
 		_option_ast__AstNode_ptr *_t9 = &param.var;
 		if (_t9->state != 0) {
 			builtin___v_panic(_S("Param missing var"));
@@ -22243,17 +24059,25 @@ VV_LOC void emitter__Transpiler_visit_function(emitter__Transpiler* t, ast__AstN
 			variadic_param_name = param_name;
 			builtin__array_push((array*)&param_names, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){_S("var_"), param_name, _S("_origin ...rt.PhpVal")})) }));
 		} else {
-			emitter__VarType param_type = emitter__Transpiler_get_func_param_type(t, node.name, param_name);
+			emitter__VarType param_type = emitter__Transpiler_get_func_param_type(t, node->name, param_name);
 			if (emitter__VarType_is_scalar(param_type)) {
 				builtin__array_push((array*)&param_names, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){param_name, _S(" "), emitter__VarType_to_v_type(param_type)})) }));
 				(*(emitter__VarType*)builtin__map_get_and_set((map*)&t->inferred_types, &(string[]){param_name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = param_type;
 				builtin__map_set(&t->native_params, &(string[]){param_name}, &(bool[]) { true });
 				builtin__array_push((array*)&registered_native_params, _MOV((string[]){ builtin__string_clone(param_name) }));
+				emitter__VarScope_declare(&t->scope, builtin__string_plus_many(2, _MOV((string[2]){_S("var_"), param_name})));
+				(*(emitter__VarType*)builtin__map_get_and_set((map*)&t->inferred_types, &(string[]){builtin__string_plus_many(2, _MOV((string[2]){_S("var_"), param_name}))}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = param_type;
+				builtin__map_set(&t->native_vars, &(string[]){builtin__string_plus_many(2, _MOV((string[2]){_S("var_"), param_name}))}, &(bool[]) { true });
 			} else if (emitter__VarType_is_object(param_type)) {
 				builtin__array_push((array*)&param_names, _MOV((string[]){ builtin__string_plus_many(4, _MOV((string[4]){_S("mut var_"), param_name, _S(" "), emitter__VarType_to_v_type(param_type)})) }));
 				(*(emitter__VarType*)builtin__map_get_and_set((map*)&t->inferred_types, &(string[]){param_name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = param_type;
 			} else {
-				builtin__array_push((array*)&param_names, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){_S("var_"), param_name, _S(" rt.PhpVal")})) }));
+				bool will_reassign = (Array_string_contains(ass_vars, param_name));
+				if (will_reassign) {
+					builtin__array_push((array*)&param_names, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){_S("var_"), param_name, _S("_arg rt.PhpVal")})) }));
+				} else {
+					builtin__array_push((array*)&param_names, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){_S("var_"), param_name, _S(" rt.PhpVal")})) }));
+				}
 			}
 		}
 	}
@@ -22263,23 +24087,33 @@ VV_LOC void emitter__Transpiler_visit_function(emitter__Transpiler* t, ast__AstN
 	GC_reachable_here(&t);
 	GC_reachable_here(&node);
 	GC_reachable_here(&old_scope);
+	GC_reachable_here(&old_native_vars);
+	GC_reachable_here(&old_native_params);
+	GC_reachable_here(&old_native_arr_vars);
 	GC_reachable_here(&old_func_name);
 	GC_reachable_here(&old_func_ret);
 	GC_reachable_here(&ret_type);
 	GC_reachable_here(&old_inferred);
 	GC_reachable_here(&variadic_param_name);
+	GC_reachable_here(&ref_vars);
+	GC_reachable_here(&ass_vars);
 	GC_reachable_here(&registered_native_params);
 	GC_reachable_here(&param_names);
 	GC_reachable_here(&ret_type_str);
-	emitter__Transpiler_write_line(t, builtin__string_plus_many(7, _MOV((string[7]){_S("fn "), emitter__func_v_name(node.name), _S("("), Array_string_join(param_names, _S(", ")), _S(")"), ret_type_str, _S(" {")})));
+	emitter__Transpiler_write_line(t, builtin__string_plus_many(7, _MOV((string[7]){_S("fn "), emitter__func_v_name(node->name), _S("("), Array_string_join(param_names, _S(", ")), _S(")"), ret_type_str, _S(" {")})));
 	GC_reachable_here(&t);
 	GC_reachable_here(&node);
 	GC_reachable_here(&old_scope);
+	GC_reachable_here(&old_native_vars);
+	GC_reachable_here(&old_native_params);
+	GC_reachable_here(&old_native_arr_vars);
 	GC_reachable_here(&old_func_name);
 	GC_reachable_here(&old_func_ret);
 	GC_reachable_here(&ret_type);
 	GC_reachable_here(&old_inferred);
 	GC_reachable_here(&variadic_param_name);
+	GC_reachable_here(&ref_vars);
+	GC_reachable_here(&ass_vars);
 	GC_reachable_here(&registered_native_params);
 	GC_reachable_here(&param_names);
 	GC_reachable_here(&ret_type_str);
@@ -22288,44 +24122,88 @@ VV_LOC void emitter__Transpiler_visit_function(emitter__Transpiler* t, ast__AstN
 		emitter__Transpiler_write_indent(t);
 		emitter__Transpiler_write_line(t, builtin__string_plus_many(5, _MOV((string[5]){_S("mut var_"), variadic_param_name, _S(" := rt.create_array_from_list(var_"), variadic_param_name, _S("_origin)")})));
 	}
-	multi_return_Array_string_Array_string mr_13302 = emitter__Transpiler_collect_vars_in_scope(*t, node.stmts);
-	Array_string ref_vars = mr_13302.arg0;
-	Array_string ass_vars = mr_13302.arg1;
-	for (int _t15 = 0; _t15 < ref_vars.len; ++_t15) {
-		string v = ((string*)ref_vars.data)[_t15];
+	for (int _t16 = 0; _t16 < registered_native_params.len; ++_t16) {
+		string rp = ((string*)registered_native_params.data)[_t16];
+		emitter__Transpiler_write_indent(t);
+		GC_reachable_here(&rp);
+		emitter__Transpiler_write_line(t, builtin__string_plus_many(4, _MOV((string[4]){_S("mut var_"), rp, _S(" := "), rp})));
+		GC_reachable_here(&rp);
+		if ((Array_string_contains(ass_vars, rp))) {
+			builtin__map_set(&t->reassigned_params, &(string[]){rp}, &(bool[]) { true });
+		}
+	}
+	for (int _t17 = 0; _t17 < node->params.len; ++_t17) {
+		ast__AstNode param = ((ast__AstNode*)node->params.data)[_t17];
+		_option_ast__AstNode_ptr *_t18 = &param.var;
+		if (_t18->state != 0) {
+			continue;
+		}
+		ast__AstNode* param_var = (*(ast__AstNode**)_t18->data);
+		string pname = param_var->name;
+		if (_IN_MAP(ADDR(string, pname), ADDR(map, t->native_params))) {
+			continue;
+		}
+		emitter__VarType pname_type = emitter__Transpiler_get_func_param_type(t, node->name, pname);
+		if (emitter__VarType_is_scalar(pname_type) || emitter__VarType_is_object(pname_type)) {
+			continue;
+		}
+		string pvar = builtin__string_plus_many(2, _MOV((string[2]){_S("var_"), pname}));
+		if ((Array_string_contains(ass_vars, pname))) {
+			emitter__VarScope_declare(&t->scope, pname);
+			emitter__Transpiler_write_indent(t);
+			emitter__Transpiler_write_line(t, builtin__string_plus_many(5, _MOV((string[5]){_S("mut "), pvar, _S(" := var_"), pname, _S("_arg")})));
+		}
+	}
+	for (int _t19 = 0; _t19 < ref_vars.len; ++_t19) {
+		string v = ((string*)ref_vars.data)[_t19];
 		if (!(Array_string_contains(ass_vars, v)) && !emitter__VarScope_has_var(t->scope, v)) {
 			emitter__Transpiler_write_indent(t);
 			string v_var = emitter__Transpiler_get_v_var_name(*t, v);
-			emitter__VarType* _t17 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v_var}));
-			_option_emitter__VarType _t16 = {0};
-			if (_t17) {
-				*((emitter__VarType*)&_t16.data) = *((emitter__VarType*)_t17);
+			string lookup_key = ((t->current_func_name).len != 0 ? (builtin__string_plus_many(3, _MOV((string[3]){t->current_func_name, _S("::"), v}))) : (v));
+			emitter__VarType* _t21 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v_var}));
+			_option_emitter__VarType _t20 = {0};
+			if (_t21) {
+				*((emitter__VarType*)&_t20.data) = *((emitter__VarType*)_t21);
 			} else {
-				_t16.state = 2; _t16.err = builtin___v_error(_S("map key does not exist"));
+				_t20.state = 2; _t20.err = builtin___v_error(_S("map key does not exist"));
 			}
 			;
-			if (_t16.state != 0) {
-				emitter__VarType* _t19 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v}));
-				_option_emitter__VarType _t18 = {0};
-				if (_t19) {
-					*((emitter__VarType*)&_t18.data) = *((emitter__VarType*)_t19);
+			if (_t20.state != 0) {
+				emitter__VarType* _t23 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){lookup_key}));
+				_option_emitter__VarType _t22 = {0};
+				if (_t23) {
+					*((emitter__VarType*)&_t22.data) = *((emitter__VarType*)_t23);
 				} else {
-					_t18.state = 2; _t18.err = builtin___v_error(_S("map key does not exist"));
+					_t22.state = 2; _t22.err = builtin___v_error(_S("map key does not exist"));
 				}
 				;
-				if (_t18.state != 0) {
-					*(emitter__VarType*) _t18.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+				if (_t22.state != 0) {
+					emitter__VarType* _t25 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v}));
+					_option_emitter__VarType _t24 = {0};
+					if (_t25) {
+						*((emitter__VarType*)&_t24.data) = *((emitter__VarType*)_t25);
+					} else {
+						_t24.state = 2; _t24.err = builtin___v_error(_S("map key does not exist"));
+					}
+					;
+					if (_t24.state != 0) {
+						*(emitter__VarType*) _t24.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+					}
+					
+					*(emitter__VarType*) _t22.data = (*(emitter__VarType*)_t24.data);
 				}
 				
-				*(emitter__VarType*) _t16.data = (*(emitter__VarType*)_t18.data);
+				*(emitter__VarType*) _t20.data = (*(emitter__VarType*)_t22.data);
 			}
 			
-			emitter__VarType v_type = (*(emitter__VarType*)_t16.data);
-			if (v_type.is_native_list) {
-				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := []rt.PhpVal{}")})));
-			} else if (v_type.is_native_map) {
-				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := map[string]rt.PhpVal{}")})));
+			emitter__VarType v_type = (*(emitter__VarType*)_t20.data);
+			if ((*(bool*)builtin__map_get(ADDR(map, t->native_params), &(string[]){v}, &(bool[]){ 0 }))) {
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(4, _MOV((string[4]){_S("mut "), v_var, _S(" := "), v})));
+			} else if (v_type.is_native_list || v_type.is_native_map) {
+				emitter__Transpiler_write_line(t, builtin__string__plus(builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := ")})), emitter__Transpiler_get_empty_literal(*t, v_type)));
+				builtin__map_set(&t->native_arr_vars, &(string[]){v}, &(bool[]) { true });
 			} else if (emitter__VarType_is_scalar(v_type)) {
+				builtin__map_set(&t->native_vars, &(string[]){v_var}, &(bool[]) { true });
 
 				if (v_type.tag == (emitter__TypeTag__t_int)) {
 					emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := i64(0)")})));
@@ -22339,20 +24217,98 @@ VV_LOC void emitter__Transpiler_visit_function(emitter__Transpiler* t, ast__AstN
 				else {
 					emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := ''")})));
 				}
+			} else if (emitter__VarType_is_object(v_type)) {
+				string cls = (v_type.class_name.len > 0 ? (v_type.class_name) : (_S("WP_Error")));
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(5, _MOV((string[5]){_S("mut "), v_var, _S(" := &Class_"), cls, _S("(unsafe { nil })")})));
+				GC_reachable_here(&cls);
 			} else {
 				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := rt.new_null()")})));
 			}
 			emitter__VarScope_declare(&t->scope, v);
 			GC_reachable_here(&v_var);
+			GC_reachable_here(&lookup_key);
 			GC_reachable_here(&v_type);
 		}
 	}
-	for (int _t20 = 0; _t20 < node.stmts.len; ++_t20) {
-		ast__AstNode stmt = ((ast__AstNode*)node.stmts.data)[_t20];
-		emitter__Transpiler_visit_stmt(t, stmt);
+	for (int _t26 = 0; _t26 < ass_vars.len; ++_t26) {
+		string v = ((string*)ass_vars.data)[_t26];
+		if (!emitter__VarScope_has_var(t->scope, v)) {
+			emitter__VarScope_declare(&t->scope, v);
+			emitter__Transpiler_write_indent(t);
+			string v_var = emitter__Transpiler_get_v_var_name(*t, v);
+			string lookup_key = ((t->current_func_name).len != 0 ? (builtin__string_plus_many(3, _MOV((string[3]){t->current_func_name, _S("::"), v}))) : (v));
+			emitter__VarType* _t28 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v_var}));
+			_option_emitter__VarType _t27 = {0};
+			if (_t28) {
+				*((emitter__VarType*)&_t27.data) = *((emitter__VarType*)_t28);
+			} else {
+				_t27.state = 2; _t27.err = builtin___v_error(_S("map key does not exist"));
+			}
+			;
+			if (_t27.state != 0) {
+				emitter__VarType* _t30 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){lookup_key}));
+				_option_emitter__VarType _t29 = {0};
+				if (_t30) {
+					*((emitter__VarType*)&_t29.data) = *((emitter__VarType*)_t30);
+				} else {
+					_t29.state = 2; _t29.err = builtin___v_error(_S("map key does not exist"));
+				}
+				;
+				if (_t29.state != 0) {
+					emitter__VarType* _t32 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v}));
+					_option_emitter__VarType _t31 = {0};
+					if (_t32) {
+						*((emitter__VarType*)&_t31.data) = *((emitter__VarType*)_t32);
+					} else {
+						_t31.state = 2; _t31.err = builtin___v_error(_S("map key does not exist"));
+					}
+					;
+					if (_t31.state != 0) {
+						*(emitter__VarType*) _t31.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+					}
+					
+					*(emitter__VarType*) _t29.data = (*(emitter__VarType*)_t31.data);
+				}
+				
+				*(emitter__VarType*) _t27.data = (*(emitter__VarType*)_t29.data);
+			}
+			
+			emitter__VarType v_type = (*(emitter__VarType*)_t27.data);
+			if ((*(bool*)builtin__map_get(ADDR(map, t->native_params), &(string[]){v}, &(bool[]){ 0 }))) {
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(4, _MOV((string[4]){_S("mut "), v_var, _S(" := "), v})));
+			} else if (v_type.is_native_list || v_type.is_native_map) {
+				emitter__Transpiler_write_line(t, builtin__string__plus(builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := ")})), emitter__Transpiler_get_empty_literal(*t, v_type)));
+				builtin__map_set(&t->native_arr_vars, &(string[]){v}, &(bool[]) { true });
+			} else if (emitter__VarType_is_scalar(v_type)) {
+				builtin__map_set(&t->native_vars, &(string[]){v_var}, &(bool[]) { true });
+
+				if (v_type.tag == (emitter__TypeTag__t_int)) {
+					emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := i64(0)")})));
+				}
+				else if (v_type.tag == (emitter__TypeTag__t_float)) {
+					emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := f64(0.0)")})));
+				}
+				else if (v_type.tag == (emitter__TypeTag__t_bool)) {
+					emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := false")})));
+				}
+				else {
+					emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := ''")})));
+				}
+			} else if (emitter__VarType_is_object(v_type)) {
+				string cls = (v_type.class_name.len > 0 ? (v_type.class_name) : (_S("WP_Error")));
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(5, _MOV((string[5]){_S("mut "), v_var, _S(" := &Class_"), cls, _S("(unsafe { nil })")})));
+				GC_reachable_here(&cls);
+			} else {
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := rt.new_null()")})));
+			}
+		}
+	}
+	for (int _t33 = 0; _t33 < node->stmts.len; ++_t33) {
+		ast__AstNode stmt = ((ast__AstNode*)node->stmts.data)[_t33];
+		emitter__Transpiler_visit_stmt(t, (voidptr)&stmt);
 		GC_reachable_here(&stmt);
 	}
-	if (node.stmts.len == 0 || !builtin__fast_string_eq((*(ast__AstNode*)builtin__array_get(node.stmts, node.stmts.len - 1)).node_type, _S("Stmt_Return"))) {
+	if (node->stmts.len == 0 || !builtin__fast_string_eq((*(ast__AstNode*)builtin__array_get(node->stmts, node->stmts.len - 1)).node_type, _S("Stmt_Return"))) {
 		if (ret_type.tag != emitter__TypeTag__t_void) {
 			emitter__Transpiler_write_indent(t);
 			if (has_native_ret) {
@@ -22367,46 +24323,55 @@ VV_LOC void emitter__Transpiler_visit_function(emitter__Transpiler* t, ast__AstN
 	GC_reachable_here(&t);
 	GC_reachable_here(&node);
 	GC_reachable_here(&old_scope);
+	GC_reachable_here(&old_native_vars);
+	GC_reachable_here(&old_native_params);
+	GC_reachable_here(&old_native_arr_vars);
 	GC_reachable_here(&old_func_name);
 	GC_reachable_here(&old_func_ret);
 	GC_reachable_here(&ret_type);
 	GC_reachable_here(&old_inferred);
 	GC_reachable_here(&variadic_param_name);
+	GC_reachable_here(&ref_vars);
+	GC_reachable_here(&ass_vars);
 	GC_reachable_here(&registered_native_params);
 	GC_reachable_here(&param_names);
 	GC_reachable_here(&ret_type_str);
-	GC_reachable_here(&ref_vars);
-	GC_reachable_here(&ass_vars);
 	emitter__Transpiler_write_line(t, _S("}"));
 	GC_reachable_here(&t);
 	GC_reachable_here(&node);
 	GC_reachable_here(&old_scope);
+	GC_reachable_here(&old_native_vars);
+	GC_reachable_here(&old_native_params);
+	GC_reachable_here(&old_native_arr_vars);
 	GC_reachable_here(&old_func_name);
 	GC_reachable_here(&old_func_ret);
 	GC_reachable_here(&ret_type);
 	GC_reachable_here(&old_inferred);
 	GC_reachable_here(&variadic_param_name);
+	GC_reachable_here(&ref_vars);
+	GC_reachable_here(&ass_vars);
 	GC_reachable_here(&registered_native_params);
 	GC_reachable_here(&param_names);
 	GC_reachable_here(&ret_type_str);
-	GC_reachable_here(&ref_vars);
-	GC_reachable_here(&ass_vars);
 	emitter__Transpiler_write_line(t, _S(""));
 	GC_reachable_here(&t);
 	GC_reachable_here(&node);
 	GC_reachable_here(&old_scope);
+	GC_reachable_here(&old_native_vars);
+	GC_reachable_here(&old_native_params);
+	GC_reachable_here(&old_native_arr_vars);
 	GC_reachable_here(&old_func_name);
 	GC_reachable_here(&old_func_ret);
 	GC_reachable_here(&ret_type);
 	GC_reachable_here(&old_inferred);
 	GC_reachable_here(&variadic_param_name);
+	GC_reachable_here(&ref_vars);
+	GC_reachable_here(&ass_vars);
 	GC_reachable_here(&registered_native_params);
 	GC_reachable_here(&param_names);
 	GC_reachable_here(&ret_type_str);
-	GC_reachable_here(&ref_vars);
-	GC_reachable_here(&ass_vars);
-	for (int _t21 = 0; _t21 < registered_native_params.len; ++_t21) {
-		string p = ((string*)registered_native_params.data)[_t21];
+	for (int _t34 = 0; _t34 < registered_native_params.len; ++_t34) {
+		string p = ((string*)registered_native_params.data)[_t34];
 		builtin__map_delete(&t->native_params, &(string[]){p});
 		GC_reachable_here(&p);
 	}
@@ -22416,17 +24381,27 @@ VV_LOC void emitter__Transpiler_visit_function(emitter__Transpiler* t, ast__AstN
 	t->is_in_func = false;
 	t->indent = old_indent;
 	t->scope = old_scope;
+	t->native_vars = builtin__map_clone(&old_native_vars);
+	t->native_params = builtin__map_clone(&old_native_params);
+	t->native_arr_vars = builtin__map_clone(&old_native_arr_vars);
 }
-VV_LOC void emitter__Transpiler_visit_return(emitter__Transpiler* t, ast__AstNode node) {
+VV_LOC void emitter__Transpiler_visit_return(emitter__Transpiler* t, ast__AstNode* node) {
 	if (t->is_in_construct) {
 		emitter__Transpiler_write_indent(t);
 		emitter__Transpiler_write_line(t, _S("return"));
 		return;
 	}
+	bool is_void = t->current_func_ret_type.tag == emitter__TypeTag__t_void;
 	_option_ast__AstNode_ptr _t1 = {0};
-	if (_t1 = node.expr, _t1.state == 0) {
+	if (_t1 = node->expr, _t1.state == 0) {
 		ast__AstNode* expr = *(ast__AstNode**)_t1.data;
 		GC_reachable_here(&expr);
+		if (is_void) {
+			emitter__Transpiler_visit_expr(t, expr);
+			emitter__Transpiler_write_indent(t);
+			emitter__Transpiler_write_line(t, _S("return"));
+			return;
+		}
 		if (builtin__fast_string_eq(expr->node_type, _S("Expr_MethodCall"))) {
 			_option_ast__AstNode_ptr _t2 = {0};
 			if (_t2 = expr->var, _t2.state == 0) {
@@ -22449,7 +24424,7 @@ VV_LOC void emitter__Transpiler_visit_return(emitter__Transpiler* t, ast__AstNod
 					if (emitter__VarType_is_object(obj_type)) {
 						emitter__VarType ret_type = emitter__Transpiler_get_method_return_type(t, obj_type.class_name, expr->name);
 						if (ret_type.tag == emitter__TypeTag__t_void) {
-							string expr_str = emitter__Transpiler_visit_expr(t, *expr);
+							string expr_str = emitter__Transpiler_visit_expr(t, expr);
 							emitter__Transpiler_write_indent(t);
 							GC_reachable_here(&expr_str);
 							emitter__Transpiler_write_line(t, expr_str);
@@ -22464,16 +24439,93 @@ VV_LOC void emitter__Transpiler_visit_return(emitter__Transpiler* t, ast__AstNod
 				}
 			}
 		}
-		emitter__CallArgResult result = emitter__Transpiler_compile_arg(t, *expr, t->current_func_ret_type);
+		if (builtin__fast_string_eq(expr->node_type, _S("Expr_New"))) {
+			if (t->current_func_ret_type.tag == emitter__TypeTag__t_unknown || t->current_func_ret_type.tag == emitter__TypeTag__t_object) {
+				string new_class = emitter__Transpiler_resolve_class_name(*t, expr->class_name);
+				string resolved_new = new_class;
+				if (_SLIT_EQ(resolved_new.str, resolved_new.len, "self") || _SLIT_EQ(resolved_new.str, resolved_new.len, "static")) {
+					resolved_new = t->current_class;
+				}
+				string expr_str = emitter__Transpiler_visit_expr(t, expr);
+				string parents = emitter__Transpiler_get_parents_expr(*t, resolved_new);
+				emitter__Transpiler_write_indent(t);
+				GC_reachable_here(&new_class);
+				GC_reachable_here(&resolved_new);
+				GC_reachable_here(&expr_str);
+				GC_reachable_here(&parents);
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(7, _MOV((string[7]){_S("return rt.new_object(\'"), resolved_new, _S("\', "), parents, _S(", "), expr_str, _S(")")})));
+				GC_reachable_here(&new_class);
+				GC_reachable_here(&resolved_new);
+				GC_reachable_here(&expr_str);
+				GC_reachable_here(&parents);
+				return;
+			}
+		}
+		if (builtin__fast_string_eq(expr->node_type, _S("Expr_FuncCall"))) {
+			if (t->current_func_ret_type.tag == emitter__TypeTag__t_unknown || t->current_func_ret_type.tag == emitter__TypeTag__t_object) {
+				emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr);
+				if (expr_type.tag == emitter__TypeTag__t_unknown) {
+					string factory_name = expr->name;
+					if (builtin__string_starts_with(factory_name, _S("create_"))) {
+						string suffix = builtin__string_trim_left(factory_name, _S("create_"));
+						Array_string _t5 = {0};
+						Array_string _t5_orig = builtin__string_split(suffix, _S("_"));
+						int _t5_len = _t5_orig.len;
+						_t5 = builtin____new_array(0, _t5_len, sizeof(string));
+
+						for (int _t7 = 0; _t7 < _t5_len; ++_t7) {
+							string it = ((string*) _t5_orig.data)[_t7];
+							string _t6 = builtin__string_capitalize(it);
+							builtin__array_push((array*)&_t5, &_t6);
+						}
+						string struct_name = builtin__string__plus(_S("Class_"), Array_string_join(_t5, _S("_")));
+						for (int _t8 = 0; _t8 < t->classes.len; ++_t8) {
+							emitter__ClassInfo cls = ((emitter__ClassInfo*)t->classes.data)[_t8];
+							if (builtin__string__eq(cls.name, struct_name)) {
+								emitter__CallArgResult result = emitter__Transpiler_compile_arg(t, (voidptr)&*expr, t->current_func_ret_type);
+								emitter__Transpiler_write_indent(t);
+								GC_reachable_here(&result);
+								Array_string _t9 = {0};
+								Array_string _t9_orig = builtin__string_split(suffix, _S("_"));
+								int _t9_len = _t9_orig.len;
+								_t9 = builtin____new_array(0, _t9_len, sizeof(string));
+
+								for (int _t11 = 0; _t11 < _t9_len; ++_t11) {
+									string it = ((string*) _t9_orig.data)[_t11];
+									string _t10 = builtin__string_capitalize(it);
+									builtin__array_push((array*)&_t9, &_t10);
+								}
+								emitter__Transpiler_write_line(t, builtin__string_plus_many(5, _MOV((string[5]){_S("return rt.new_object(\'"), Array_string_join(_t9, _S("_")), _S("\', []string{}, "), result.code, _S(")")})));
+								GC_reachable_here(&result);
+								return;
+							}
+						}
+					}
+				} else if (expr_type.tag == emitter__TypeTag__t_object && expr_type.class_name.len > 0) {
+					emitter__CallArgResult result = emitter__Transpiler_compile_arg(t, (voidptr)&*expr, t->current_func_ret_type);
+					emitter__Transpiler_write_indent(t);
+					GC_reachable_here(&result);
+					emitter__Transpiler_write_line(t, builtin__string_plus_many(2, _MOV((string[2]){_S("return "), result.code})));
+					GC_reachable_here(&result);
+					return;
+				}
+			}
+		}
+		emitter__VarType real_ret = (emitter__VarType_is_scalar(t->current_func_ret_type) ? (t->current_func_ret_type) : (((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,})));
+		emitter__CallArgResult result = emitter__Transpiler_compile_arg(t, (voidptr)&*expr, real_ret);
 		emitter__Transpiler_write_indent(t);
 		GC_reachable_here(&expr);
+		GC_reachable_here(&real_ret);
 		GC_reachable_here(&result);
 		emitter__Transpiler_write_line(t, builtin__string_plus_many(2, _MOV((string[2]){_S("return "), result.code})));
 		GC_reachable_here(&expr);
+		GC_reachable_here(&real_ret);
 		GC_reachable_here(&result);
 	} else {
 		emitter__Transpiler_write_indent(t);
-		if (emitter__VarType_is_scalar(t->current_func_ret_type)) {
+		if (is_void) {
+			emitter__Transpiler_write_line(t, _S("return"));
+		} else if (emitter__VarType_is_scalar(t->current_func_ret_type)) {
 			emitter__Transpiler_write_line(t, builtin__string_plus_many(2, _MOV((string[2]){_S("return "), emitter__Transpiler_get_native_default(t, t->current_func_ret_type)})));
 		} else {
 			emitter__Transpiler_write_line(t, _S("return rt.new_null()"));
@@ -22513,16 +24565,16 @@ VV_LOC emitter__VarType emitter__Transpiler_get_func_param_type(emitter__Transpi
 VV_LOC string emitter__Transpiler_get_native_default(emitter__Transpiler* t, emitter__VarType typ) {
 	return ((typ.tag == (emitter__TypeTag__t_int))? (_S("0")) : (typ.tag == (emitter__TypeTag__t_float))? (_S("0.0")) : (typ.tag == (emitter__TypeTag__t_bool))? (_S("false")) : (typ.tag == (emitter__TypeTag__t_string))? (_S("''")) : (_S("rt.new_null()")));
 }
-VV_LOC void emitter__Transpiler_visit_foreach(emitter__Transpiler* t, ast__AstNode node) {
-	_option_ast__AstNode_ptr *_t1 = &node.expr;
+VV_LOC void emitter__Transpiler_visit_foreach(emitter__Transpiler* t, ast__AstNode* node) {
+	_option_ast__AstNode_ptr *_t1 = &node->expr;
 	if (_t1->state != 0) {
 		builtin___v_panic(_S("Foreach statement missing expr"));
 		VUNREACHABLE();
 	;
 	}
 	ast__AstNode* expr_node = (*(ast__AstNode**)_t1->data);
-	emitter__VarType arr_type = emitter__Transpiler_get_expr_type(t, *expr_node);
-	_option_ast__AstNode_ptr *_t2 = &node.value_var;
+	emitter__VarType arr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr_node);
+	_option_ast__AstNode_ptr *_t2 = &node->value_var;
 	if (_t2->state != 0) {
 		builtin___v_panic(_S("Foreach missing valueVar"));
 		VUNREACHABLE();
@@ -22532,7 +24584,7 @@ VV_LOC void emitter__Transpiler_visit_foreach(emitter__Transpiler* t, ast__AstNo
 	string val_var_name = val_var_node->name;
 	string key_var_name = _S("");
 	_option_ast__AstNode_ptr _t3 = {0};
-	if (_t3 = node.key_var, _t3.state == 0) {
+	if (_t3 = node->key_var, _t3.state == 0) {
 		ast__AstNode* key_var_node = *(ast__AstNode**)_t3.data;
 		GC_reachable_here(&key_var_node);
 		key_var_name = key_var_node->name;
@@ -22549,8 +24601,106 @@ VV_LOC void emitter__Transpiler_visit_foreach(emitter__Transpiler* t, ast__AstNo
 		builtin__map_set(&t->var_aliases, &(string[]){key_var_name}, &(string[]) { shadow_name });
 		key_var_name = shadow_name;
 	}
+	if (emitter__VarType_is_object(arr_type) && emitter__Transpiler_class_implements(t, arr_type.class_name, _S("Iterator"))) {
+		string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
+		emitter__Transpiler_write_indent(t);
+		GC_reachable_here(&expr_str);
+		emitter__Transpiler_write_line(t, builtin__string_plus_many(2, _MOV((string[2]){expr_str, _S(".rewind()")})));
+		GC_reachable_here(&expr_str);
+		emitter__Transpiler_write_indent(t);
+		GC_reachable_here(&expr_str);
+		emitter__Transpiler_write_line(t, _S("for {"));
+		GC_reachable_here(&expr_str);
+		t->indent++;
+		emitter__Transpiler_write_indent(t);
+		GC_reachable_here(&expr_str);
+		bool is_valid_bool = false;
+		for (int _t4 = 0; _t4 < t->classes.len; ++_t4) {
+			emitter__ClassInfo cls = ((emitter__ClassInfo*)t->classes.data)[_t4];
+			if (builtin__string__eq(builtin__string_to_lower(cls.name), builtin__string_to_lower(arr_type.class_name))) {
+				emitter__VarType* _t6 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, cls.return_types), &(string[]){_S("valid")}));
+				_option_emitter__VarType _t5 = {0};
+				if (_t6) {
+					*((emitter__VarType*)&_t5.data) = *((emitter__VarType*)_t6);
+				} else {
+					_t5.state = 2; _t5.err = builtin___v_error(_S("map key does not exist"));
+				}
+				
+				if (_t5.state == 0) {
+					emitter__VarType ret_typ = (*(emitter__VarType*)_t5.data);
+					GC_reachable_here(&ret_typ);
+					if (ret_typ.tag == emitter__TypeTag__t_bool) {
+						is_valid_bool = true;
+					}
+				}
+					if (_t5.state == 2 && _t5.err._object != _const_none__._object) { builtin___v_free(_t5.err._object); }
+				break;
+			}
+		}
+		if (is_valid_bool) {
+			emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("if !("), expr_str, _S(".valid()) { break }")})));
+		} else {
+			emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("if !rt.is_true("), expr_str, _S(".valid()) { break }")})));
+		}
+		emitter__VarScope old_scope = emitter__VarScope_clone(t->scope);
+		Map_string_emitter__VarType old_inferred = builtin__map_clone(&t->inferred_types);
+		emitter__VarScope_declare(&t->scope, val_var_name);
+		GC_reachable_here(&expr_str);
+		GC_reachable_here(&old_scope);
+		GC_reachable_here(&old_inferred);
+		(*(emitter__VarType*)builtin__map_get_and_set((map*)&t->inferred_types, &(string[]){val_var_name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		emitter__Transpiler_write_indent(t);
+		GC_reachable_here(&expr_str);
+		GC_reachable_here(&old_scope);
+		GC_reachable_here(&old_inferred);
+		string val_v = (builtin__string_starts_with(val_var_name, _S("var_")) ? (val_var_name) : (builtin__string__plus(_S("var_"), val_var_name)));
+		emitter__Transpiler_write_line(t, builtin__string_plus_many(5, _MOV((string[5]){_S("mut "), val_v, _S(" := "), expr_str, _S(".current()")})));
+		GC_reachable_here(&expr_str);
+		GC_reachable_here(&old_scope);
+		GC_reachable_here(&old_inferred);
+		GC_reachable_here(&val_v);
+		if (key_var_name.len > 0) {
+			emitter__VarScope_declare(&t->scope, key_var_name);
+			(*(emitter__VarType*)builtin__map_get_and_set((map*)&t->inferred_types, &(string[]){key_var_name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			emitter__Transpiler_write_indent(t);
+			string key_v = (builtin__string_starts_with(key_var_name, _S("var_")) ? (key_var_name) : (builtin__string__plus(_S("var_"), key_var_name)));
+			emitter__Transpiler_write_line(t, builtin__string_plus_many(5, _MOV((string[5]){_S("mut "), key_v, _S(" := "), expr_str, _S(".key()")})));
+			GC_reachable_here(&key_v);
+		}
+		for (int _t7 = 0; _t7 < node->stmts.len; ++_t7) {
+			ast__AstNode stmt = ((ast__AstNode*)node->stmts.data)[_t7];
+			emitter__Transpiler_visit_stmt(t, (voidptr)&stmt);
+			GC_reachable_here(&stmt);
+		}
+		emitter__Transpiler_write_indent(t);
+		GC_reachable_here(&expr_str);
+		GC_reachable_here(&old_scope);
+		GC_reachable_here(&old_inferred);
+		GC_reachable_here(&val_v);
+		emitter__Transpiler_write_line(t, builtin__string_plus_many(2, _MOV((string[2]){expr_str, _S(".next()")})));
+		GC_reachable_here(&expr_str);
+		GC_reachable_here(&old_scope);
+		GC_reachable_here(&old_inferred);
+		GC_reachable_here(&val_v);
+		t->scope = old_scope;
+		t->inferred_types = builtin__map_clone(&old_inferred);
+		t->var_aliases = builtin__map_clone(&old_aliases);
+		t->native_vars = builtin__map_clone(&old_native_vars);
+		t->indent--;
+		emitter__Transpiler_write_indent(t);
+		GC_reachable_here(&expr_str);
+		GC_reachable_here(&old_scope);
+		GC_reachable_here(&old_inferred);
+		GC_reachable_here(&val_v);
+		emitter__Transpiler_write_line(t, _S("}"));
+		GC_reachable_here(&expr_str);
+		GC_reachable_here(&old_scope);
+		GC_reachable_here(&old_inferred);
+		GC_reachable_here(&val_v);
+		return;
+	}
 	if (arr_type.is_native_list || arr_type.is_native_map) {
-		string arr_str = emitter__Transpiler_visit_expr(t, *expr_node);
+		string arr_str = emitter__Transpiler_visit_expr(t, expr_node);
 		emitter__VarScope old_scope = emitter__VarScope_clone(t->scope);
 		emitter__VarScope_declare(&t->scope, val_var_name);
 		GC_reachable_here(&arr_str);
@@ -22583,9 +24733,9 @@ VV_LOC void emitter__Transpiler_visit_foreach(emitter__Transpiler* t, ast__AstNo
 			}
 		}
 		t->indent++;
-		for (int _t4 = 0; _t4 < node.stmts.len; ++_t4) {
-			ast__AstNode stmt = ((ast__AstNode*)node.stmts.data)[_t4];
-			emitter__Transpiler_visit_stmt(t, stmt);
+		for (int _t8 = 0; _t8 < node->stmts.len; ++_t8) {
+			ast__AstNode stmt = ((ast__AstNode*)node->stmts.data)[_t8];
+			emitter__Transpiler_visit_stmt(t, (voidptr)&stmt);
 			GC_reachable_here(&stmt);
 		}
 		t->indent--;
@@ -22605,32 +24755,7 @@ VV_LOC void emitter__Transpiler_visit_foreach(emitter__Transpiler* t, ast__AstNo
 	}
 	t->foreach_depth++;
 	string iter_name = builtin__string_plus_many(2, _MOV((string[2]){_S("iter_"), builtin__int_str(t->foreach_depth)}));
-	string expr_str = emitter__Transpiler_visit_expr(t, *expr_node);
-	emitter__Transpiler_write_indent(t);
-	GC_reachable_here(&t);
-	GC_reachable_here(&node);
-	GC_reachable_here(&expr_node);
-	GC_reachable_here(&arr_type);
-	GC_reachable_here(&val_var_node);
-	GC_reachable_here(&val_var_name);
-	GC_reachable_here(&key_var_name);
-	GC_reachable_here(&old_aliases);
-	GC_reachable_here(&old_native_vars);
-	GC_reachable_here(&iter_name);
-	GC_reachable_here(&expr_str);
-	emitter__Transpiler_write_line(t, _S("{"));
-	GC_reachable_here(&t);
-	GC_reachable_here(&node);
-	GC_reachable_here(&expr_node);
-	GC_reachable_here(&arr_type);
-	GC_reachable_here(&val_var_node);
-	GC_reachable_here(&val_var_name);
-	GC_reachable_here(&key_var_name);
-	GC_reachable_here(&old_aliases);
-	GC_reachable_here(&old_native_vars);
-	GC_reachable_here(&iter_name);
-	GC_reachable_here(&expr_str);
-	t->indent++;
+	string expr_str = emitter__Transpiler_visit_expr(t, expr_node);
 	emitter__Transpiler_write_indent(t);
 	GC_reachable_here(&t);
 	GC_reachable_here(&node);
@@ -22765,49 +24890,15 @@ VV_LOC void emitter__Transpiler_visit_foreach(emitter__Transpiler* t, ast__AstNo
 		emitter__Transpiler_write_line(t, builtin__string_plus_many(5, _MOV((string[5]){_S("mut "), key_v, _S(" := "), item_var_name, _S(".key")})));
 		GC_reachable_here(&key_v);
 	}
-	for (int _t5 = 0; _t5 < node.stmts.len; ++_t5) {
-		ast__AstNode stmt = ((ast__AstNode*)node.stmts.data)[_t5];
-		emitter__Transpiler_visit_stmt(t, stmt);
+	for (int _t9 = 0; _t9 < node->stmts.len; ++_t9) {
+		ast__AstNode stmt = ((ast__AstNode*)node->stmts.data)[_t9];
+		emitter__Transpiler_visit_stmt(t, (voidptr)&stmt);
 		GC_reachable_here(&stmt);
 	}
 	t->scope = old_scope;
 	t->inferred_types = builtin__map_clone(&old_inferred);
 	t->var_aliases = builtin__map_clone(&old_aliases);
 	t->native_vars = builtin__map_clone(&old_native_vars);
-	t->foreach_depth--;
-	t->indent--;
-	emitter__Transpiler_write_indent(t);
-	GC_reachable_here(&t);
-	GC_reachable_here(&node);
-	GC_reachable_here(&expr_node);
-	GC_reachable_here(&arr_type);
-	GC_reachable_here(&val_var_node);
-	GC_reachable_here(&val_var_name);
-	GC_reachable_here(&key_var_name);
-	GC_reachable_here(&old_aliases);
-	GC_reachable_here(&old_native_vars);
-	GC_reachable_here(&iter_name);
-	GC_reachable_here(&expr_str);
-	GC_reachable_here(&item_var_name);
-	GC_reachable_here(&old_scope);
-	GC_reachable_here(&old_inferred);
-	GC_reachable_here(&val_v);
-	emitter__Transpiler_write_line(t, _S("}"));
-	GC_reachable_here(&t);
-	GC_reachable_here(&node);
-	GC_reachable_here(&expr_node);
-	GC_reachable_here(&arr_type);
-	GC_reachable_here(&val_var_node);
-	GC_reachable_here(&val_var_name);
-	GC_reachable_here(&key_var_name);
-	GC_reachable_here(&old_aliases);
-	GC_reachable_here(&old_native_vars);
-	GC_reachable_here(&iter_name);
-	GC_reachable_here(&expr_str);
-	GC_reachable_here(&item_var_name);
-	GC_reachable_here(&old_scope);
-	GC_reachable_here(&old_inferred);
-	GC_reachable_here(&val_v);
 	t->indent--;
 	emitter__Transpiler_write_indent(t);
 	GC_reachable_here(&t);
@@ -22842,33 +24933,72 @@ VV_LOC void emitter__Transpiler_visit_foreach(emitter__Transpiler* t, ast__AstNo
 	GC_reachable_here(&old_inferred);
 	GC_reachable_here(&val_v);
 }
-VV_LOC void emitter__Transpiler_visit_while(emitter__Transpiler* t, ast__AstNode node) {
-	_option_ast__AstNode_ptr *_t1 = &node.cond;
+VV_LOC void emitter__Transpiler_visit_while(emitter__Transpiler* t, ast__AstNode* node) {
+	_option_ast__AstNode_ptr *_t1 = &node->cond;
 	if (_t1->state != 0) {
 		builtin___v_panic(_S("While statement missing cond"));
 		VUNREACHABLE();
 	;
 	}
 	ast__AstNode* cond_node = (*(ast__AstNode**)_t1->data);
-	string native_cond = emitter__Transpiler_emit_native_condition(t, *cond_node);
-	string cond_str = ((native_cond).len != 0 ? (native_cond) : (builtin__string_plus_many(3, _MOV((string[3]){_S("rt.is_true("), emitter__Transpiler_visit_expr(t, *cond_node), _S(")")}))));
+	string native_cond = emitter__Transpiler_emit_native_condition(t, (voidptr)&*cond_node);
+	string cond_str = ((native_cond).len != 0 ? (native_cond) : (builtin__string_plus_many(3, _MOV((string[3]){_S("rt.is_true("), emitter__Transpiler_visit_expr(t, cond_node), _S(")")}))));
+	string one_line_cond = builtin__string_replace(builtin__string_replace(builtin__string_replace(cond_str, _S("\n"), _S(" ")), _S("\t"), _S(" ")), _S("\r"), _S(" "));
 	emitter__Transpiler_write_indent(t);
 	GC_reachable_here(&t);
 	GC_reachable_here(&node);
 	GC_reachable_here(&cond_node);
 	GC_reachable_here(&native_cond);
 	GC_reachable_here(&cond_str);
-	emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("for "), cond_str, _S(" {")})));
+	GC_reachable_here(&one_line_cond);
+	emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("for "), one_line_cond, _S(" {")})));
 	GC_reachable_here(&t);
 	GC_reachable_here(&node);
 	GC_reachable_here(&cond_node);
 	GC_reachable_here(&native_cond);
 	GC_reachable_here(&cond_str);
+	GC_reachable_here(&one_line_cond);
 	t->indent++;
-	for (int _t2 = 0; _t2 < node.stmts.len; ++_t2) {
-		ast__AstNode stmt = ((ast__AstNode*)node.stmts.data)[_t2];
-		emitter__Transpiler_visit_stmt(t, stmt);
+	for (int _t2 = 0; _t2 < node->stmts.len; ++_t2) {
+		ast__AstNode stmt = ((ast__AstNode*)node->stmts.data)[_t2];
+		emitter__Transpiler_visit_stmt(t, (voidptr)&stmt);
 		GC_reachable_here(&stmt);
+	}
+	if (builtin__fast_string_eq(cond_node->node_type, _S("Expr_Assign"))) {
+		_option_ast__AstNode_ptr *_t3 = &cond_node->var;
+		if (_t3->state != 0) {
+			builtin___v_panic(_S("assign missing var"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* left_node = (*(ast__AstNode**)_t3->data);
+		_option_ast__AstNode_ptr *_t4 = &cond_node->expr;
+		if (_t4->state != 0) {
+			builtin___v_panic(_S("assign missing expr"));
+			VUNREACHABLE();
+		;
+		}
+		ast__AstNode* right_node = (*(ast__AstNode**)_t4->data);
+		Array_string old_pre = builtin__array_clone_to_depth(&t->pre_stmts, 1);
+		builtin__array_clear(&t->pre_stmts);
+		GC_reachable_here(&left_node);
+		GC_reachable_here(&right_node);
+		GC_reachable_here(&old_pre);
+		string left_str = emitter__Transpiler_visit_expr(t, left_node);
+		string right_str = emitter__Transpiler_visit_expr(t, right_node);
+		t->pre_stmts = old_pre;
+		emitter__Transpiler_write_indent(t);
+		GC_reachable_here(&left_node);
+		GC_reachable_here(&right_node);
+		GC_reachable_here(&old_pre);
+		GC_reachable_here(&left_str);
+		GC_reachable_here(&right_str);
+		emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){left_str, _S(" = "), right_str})));
+		GC_reachable_here(&left_node);
+		GC_reachable_here(&right_node);
+		GC_reachable_here(&old_pre);
+		GC_reachable_here(&left_str);
+		GC_reachable_here(&right_str);
 	}
 	t->indent--;
 	emitter__Transpiler_write_indent(t);
@@ -22877,23 +25007,25 @@ VV_LOC void emitter__Transpiler_visit_while(emitter__Transpiler* t, ast__AstNode
 	GC_reachable_here(&cond_node);
 	GC_reachable_here(&native_cond);
 	GC_reachable_here(&cond_str);
+	GC_reachable_here(&one_line_cond);
 	emitter__Transpiler_write_line(t, _S("}"));
 	GC_reachable_here(&t);
 	GC_reachable_here(&node);
 	GC_reachable_here(&cond_node);
 	GC_reachable_here(&native_cond);
 	GC_reachable_here(&cond_str);
+	GC_reachable_here(&one_line_cond);
 }
-VV_LOC void emitter__Transpiler_visit_do(emitter__Transpiler* t, ast__AstNode node) {
-	_option_ast__AstNode_ptr *_t1 = &node.cond;
+VV_LOC void emitter__Transpiler_visit_do(emitter__Transpiler* t, ast__AstNode* node) {
+	_option_ast__AstNode_ptr *_t1 = &node->cond;
 	if (_t1->state != 0) {
 		builtin___v_panic(_S("Do-while statement missing cond"));
 		VUNREACHABLE();
 	;
 	}
 	ast__AstNode* cond_node = (*(ast__AstNode**)_t1->data);
-	string native_cond = emitter__Transpiler_emit_native_condition(t, *cond_node);
-	string cond_str = ((native_cond).len != 0 ? (native_cond) : (builtin__string_plus_many(3, _MOV((string[3]){_S("rt.is_true("), emitter__Transpiler_visit_expr(t, *cond_node), _S(")")}))));
+	string native_cond = emitter__Transpiler_emit_native_condition(t, (voidptr)&*cond_node);
+	string cond_str = ((native_cond).len != 0 ? (native_cond) : (builtin__string_plus_many(3, _MOV((string[3]){_S("rt.is_true("), emitter__Transpiler_visit_expr(t, cond_node), _S(")")}))));
 	emitter__Transpiler_write_indent(t);
 	GC_reachable_here(&t);
 	GC_reachable_here(&node);
@@ -22907,9 +25039,9 @@ VV_LOC void emitter__Transpiler_visit_do(emitter__Transpiler* t, ast__AstNode no
 	GC_reachable_here(&native_cond);
 	GC_reachable_here(&cond_str);
 	t->indent++;
-	for (int _t2 = 0; _t2 < node.stmts.len; ++_t2) {
-		ast__AstNode stmt = ((ast__AstNode*)node.stmts.data)[_t2];
-		emitter__Transpiler_visit_stmt(t, stmt);
+	for (int _t2 = 0; _t2 < node->stmts.len; ++_t2) {
+		ast__AstNode stmt = ((ast__AstNode*)node->stmts.data)[_t2];
+		emitter__Transpiler_visit_stmt(t, (voidptr)&stmt);
 		GC_reachable_here(&stmt);
 	}
 	emitter__Transpiler_write_indent(t);
@@ -22964,24 +25096,107 @@ VV_LOC void emitter__Transpiler_visit_do(emitter__Transpiler* t, ast__AstNode no
 	GC_reachable_here(&native_cond);
 	GC_reachable_here(&cond_str);
 }
-VV_LOC void emitter__Transpiler_visit_for(emitter__Transpiler* t, ast__AstNode node) {
-	emitter__Transpiler_write_indent(t);
-	GC_reachable_here(&t);
-	GC_reachable_here(&node);
-	emitter__Transpiler_write_line(t, _S("{"));
-	GC_reachable_here(&t);
-	GC_reachable_here(&node);
-	t->indent++;
+VV_LOC bool emitter__Transpiler_expr_produces_value(emitter__Transpiler* t, ast__AstNode expr) {
+
+	if (builtin__fast_string_eq(expr.node_type, _const_ast__node_expr_post_inc) || builtin__fast_string_eq(expr.node_type, _const_ast__node_expr_post_dec) || builtin__fast_string_eq(expr.node_type, _const_ast__node_expr_pre_inc) || builtin__fast_string_eq(expr.node_type, _const_ast__node_expr_pre_dec) || builtin__fast_string_eq(expr.node_type, _const_ast__node_expr_include) || builtin__fast_string_eq(expr.node_type, _const_ast__node_expr_ternary) || builtin__fast_string_eq(expr.node_type, _const_ast__node_expr_match) || builtin__fast_string_eq(expr.node_type, _const_ast__node_expr_array_dim_fetch) || builtin__fast_string_eq(expr.node_type, _const_ast__node_expr_new) || builtin__fast_string_eq(expr.node_type, _const_ast__node_expr_property_fetch) || builtin__fast_string_eq(expr.node_type, _const_ast__node_expr_static_prop_fetch)) {
+		return true;
+	}
+	else if (builtin__fast_string_eq(expr.node_type, _const_ast__node_expr_funccall)) {
+		emitter__VarType* _t3 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_return_types), &(string[]){expr.name}));
+		_option_emitter__VarType _t2 = {0};
+		if (_t3) {
+			*((emitter__VarType*)&_t2.data) = *((emitter__VarType*)_t3);
+		} else {
+			_t2.state = 2; _t2.err = builtin___v_error(_S("map key does not exist"));
+		}
+		
+		if (_t2.state == 0) {
+			emitter__VarType ret_type = (*(emitter__VarType*)_t2.data);
+			GC_reachable_here(&ret_type);
+			return ret_type.tag != emitter__TypeTag__t_void;
+		}
+			if (_t2.state == 2 && _t2.err._object != _const_none__._object) { builtin___v_free(_t2.err._object); }
+		return true;
+	}
+	else if (builtin__fast_string_eq(expr.node_type, _const_ast__node_expr_method_call)) {
+		_option_ast__AstNode_ptr _t6 = {0};
+		if (_t6 = expr.var, _t6.state == 0) {
+			ast__AstNode* obj_var_node = *(ast__AstNode**)_t6.data;
+			GC_reachable_here(&obj_var_node);
+			if (builtin__fast_string_eq(obj_var_node->node_type, _S("Expr_Variable"))) {
+				emitter__VarType* _t8 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){obj_var_node->name}));
+				_option_emitter__VarType _t7 = {0};
+				if (_t8) {
+					*((emitter__VarType*)&_t7.data) = *((emitter__VarType*)_t8);
+				} else {
+					_t7.state = 2; _t7.err = builtin___v_error(_S("map key does not exist"));
+				}
+				;
+				if (_t7.state != 0) {
+					*(emitter__VarType*) _t7.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+				}
+				
+				emitter__VarType obj_type = (*(emitter__VarType*)_t7.data);
+				if (builtin__fast_string_eq(obj_var_node->name, _S("this"))) {
+					obj_type = ((emitter__VarType){.tag = emitter__TypeTag__t_object,.class_name = t->current_class,.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+				}
+				if (emitter__VarType_is_object(obj_type)) {
+					emitter__VarType ret_type = emitter__Transpiler_get_method_return_type(t, obj_type.class_name, expr.name);
+					if (ret_type.tag == emitter__TypeTag__t_void) {
+						return false;
+					}
+				}
+			}
+		}
+		return true;
+	}
+	else if (builtin__fast_string_eq(expr.node_type, _const_ast__node_expr_static_call)) {
+		if (expr.class_name.len > 0) {
+			string class_name = expr.class_name;
+			if (_SLIT_EQ(class_name.str, class_name.len, "parent")) {
+				for (int _t11 = 0; _t11 < t->classes.len; ++_t11) {
+					emitter__ClassInfo cls = ((emitter__ClassInfo*)t->classes.data)[_t11];
+					if (builtin__string__eq(cls.name, t->current_class)) {
+						class_name = cls.extends;
+						break;
+					}
+				}
+			} else if (_SLIT_EQ(class_name.str, class_name.len, "self") || _SLIT_EQ(class_name.str, class_name.len, "static")) {
+				class_name = t->current_class;
+			} else {
+				class_name = emitter__Transpiler_resolve_class_name(*t, class_name);
+			}
+			if (class_name.len > 0) {
+				emitter__VarType ret_type = emitter__Transpiler_get_method_return_type(t, class_name, expr.name);
+				if (ret_type.tag == emitter__TypeTag__t_void) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	else {
+		return false;
+	}
+	return 0;
+}
+VV_LOC void emitter__Transpiler_visit_for(emitter__Transpiler* t, ast__AstNode* node) {
 	emitter__VarScope old_scope = t->scope;
-	for (int _t1 = 0; _t1 < node.init.len; ++_t1) {
-		ast__AstNode init_node = ((ast__AstNode*)node.init.data)[_t1];
-		string expr_str = emitter__Transpiler_visit_expr(t, init_node);
-		emitter__Transpiler_write_indent(t);
-		GC_reachable_here(&init_node);
-		GC_reachable_here(&expr_str);
-		emitter__Transpiler_write_line(t, expr_str);
-		GC_reachable_here(&init_node);
-		GC_reachable_here(&expr_str);
+	for (int _t1 = 0; _t1 < node->init.len; ++_t1) {
+		ast__AstNode init_node = ((ast__AstNode*)node->init.data)[_t1];
+		string expr_str = emitter__Transpiler_visit_expr(t, (voidptr)&init_node);
+		bool is_bare_var = builtin__string_starts_with(expr_str, _S("var_")) && !builtin__string_contains(expr_str, _S(" ")) && !builtin__string_contains(expr_str, _S("(")) && !builtin__string_contains(expr_str, _S("."));
+		bool is_bare_mutated = (builtin__string_ends_with(expr_str, _S("_mutated")) || builtin__string_ends_with(expr_str, _S("_shadow"))) && !builtin__string_contains(expr_str, _S(" ")) && !builtin__string_contains(expr_str, _S("(")) && !builtin__string_contains(expr_str, _S("."));
+		bool is_bare_iife = builtin__string_starts_with(expr_str, _S("iife_result_")) && !builtin__string_contains(expr_str, _S(" ")) && !builtin__string_contains(expr_str, _S("(")) && !builtin__string_contains(expr_str, _S("."));
+		if (!is_bare_var && !is_bare_iife && !is_bare_mutated) {
+			if (emitter__Transpiler_expr_produces_value(t, init_node)) {
+				emitter__Transpiler_write_indent(t);
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(2, _MOV((string[2]){_S("_ = "), expr_str})));
+			} else {
+				emitter__Transpiler_write_indent(t);
+				emitter__Transpiler_write_line(t, expr_str);
+			}
+		}
 	}
 	emitter__Transpiler_write_indent(t);
 	GC_reachable_here(&t);
@@ -22992,10 +25207,10 @@ VV_LOC void emitter__Transpiler_visit_for(emitter__Transpiler* t, ast__AstNode n
 	GC_reachable_here(&node);
 	GC_reachable_here(&old_scope);
 	t->indent++;
-	if (node.conds.len > 0) {
-		ast__AstNode last_cond = (*(ast__AstNode*)builtin__array_get(node.conds, node.conds.len - 1));
-		string native_cond = emitter__Transpiler_emit_native_condition(t, last_cond);
-		string cond_str = ((native_cond).len != 0 ? (native_cond) : (builtin__string_plus_many(3, _MOV((string[3]){_S("rt.is_true("), emitter__Transpiler_visit_expr(t, last_cond), _S(")")}))));
+	if (node->conds.len > 0) {
+		ast__AstNode last_cond = (*(ast__AstNode*)builtin__array_get(node->conds, node->conds.len - 1));
+		string native_cond = emitter__Transpiler_emit_native_condition(t, (voidptr)&last_cond);
+		string cond_str = ((native_cond).len != 0 ? (native_cond) : (builtin__string_plus_many(3, _MOV((string[3]){_S("rt.is_true("), emitter__Transpiler_visit_expr(t, (voidptr)&last_cond), _S(")")}))));
 		emitter__Transpiler_write_indent(t);
 		GC_reachable_here(&last_cond);
 		GC_reachable_here(&native_cond);
@@ -23005,19 +25220,27 @@ VV_LOC void emitter__Transpiler_visit_for(emitter__Transpiler* t, ast__AstNode n
 		GC_reachable_here(&native_cond);
 		GC_reachable_here(&cond_str);
 	}
-	for (int _t2 = 0; _t2 < node.stmts.len; ++_t2) {
-		ast__AstNode stmt = ((ast__AstNode*)node.stmts.data)[_t2];
-		emitter__Transpiler_visit_stmt(t, stmt);
+	for (int _t2 = 0; _t2 < node->stmts.len; ++_t2) {
+		ast__AstNode stmt = ((ast__AstNode*)node->stmts.data)[_t2];
+		emitter__Transpiler_visit_stmt(t, (voidptr)&stmt);
 		GC_reachable_here(&stmt);
 	}
-	for (int _t3 = 0; _t3 < node.loop.len; ++_t3) {
-		ast__AstNode loop_node = ((ast__AstNode*)node.loop.data)[_t3];
+	for (int _t3 = 0; _t3 < node->loop.len; ++_t3) {
+		ast__AstNode loop_node = ((ast__AstNode*)node->loop.data)[_t3];
 		if (!emitter__Transpiler_try_emit_native_incdec(t, loop_node)) {
-			string expr_str = emitter__Transpiler_visit_expr(t, loop_node);
-			emitter__Transpiler_write_indent(t);
-			GC_reachable_here(&expr_str);
-			emitter__Transpiler_write_line(t, expr_str);
-			GC_reachable_here(&expr_str);
+			string expr_str = emitter__Transpiler_visit_expr(t, (voidptr)&loop_node);
+			bool is_bare_var = builtin__string_starts_with(expr_str, _S("var_")) && !builtin__string_contains(expr_str, _S(" ")) && !builtin__string_contains(expr_str, _S("(")) && !builtin__string_contains(expr_str, _S("."));
+			bool is_bare_mutated = (builtin__string_ends_with(expr_str, _S("_mutated")) || builtin__string_ends_with(expr_str, _S("_shadow"))) && !builtin__string_contains(expr_str, _S(" ")) && !builtin__string_contains(expr_str, _S("(")) && !builtin__string_contains(expr_str, _S("."));
+			bool is_bare_iife = builtin__string_starts_with(expr_str, _S("iife_result_")) && !builtin__string_contains(expr_str, _S(" ")) && !builtin__string_contains(expr_str, _S("(")) && !builtin__string_contains(expr_str, _S("."));
+			if (!is_bare_var && !is_bare_iife && !is_bare_mutated) {
+				if (emitter__Transpiler_expr_produces_value(t, loop_node)) {
+					emitter__Transpiler_write_indent(t);
+					emitter__Transpiler_write_line(t, builtin__string_plus_many(2, _MOV((string[2]){_S("_ = "), expr_str})));
+				} else {
+					emitter__Transpiler_write_indent(t);
+					emitter__Transpiler_write_line(t, expr_str);
+				}
+			}
 		}
 	}
 	t->indent--;
@@ -23030,17 +25253,8 @@ VV_LOC void emitter__Transpiler_visit_for(emitter__Transpiler* t, ast__AstNode n
 	GC_reachable_here(&node);
 	GC_reachable_here(&old_scope);
 	t->scope = old_scope;
-	t->indent--;
-	emitter__Transpiler_write_indent(t);
-	GC_reachable_here(&t);
-	GC_reachable_here(&node);
-	GC_reachable_here(&old_scope);
-	emitter__Transpiler_write_line(t, _S("}"));
-	GC_reachable_here(&t);
-	GC_reachable_here(&node);
-	GC_reachable_here(&old_scope);
 }
-VV_LOC bool emitter__Transpiler_can_use_v_match(emitter__Transpiler* t, ast__AstNode cond_node, Array_emitter__SwitchBranch branches) {
+VV_LOC bool emitter__Transpiler_can_use_v_match(emitter__Transpiler* t, ast__AstNode* cond_node, Array_emitter__SwitchBranch branches) {
 	emitter__VarType cond_type = emitter__Transpiler_get_expr_type(t, cond_node);
 	if (cond_type.tag != emitter__TypeTag__t_int) {
 		return false;
@@ -23056,18 +25270,20 @@ VV_LOC bool emitter__Transpiler_can_use_v_match(emitter__Transpiler* t, ast__Ast
 	}
 	return true;
 }
-VV_LOC void emitter__Transpiler_visit_switch(emitter__Transpiler* t, ast__AstNode node) {
-	_option_ast__AstNode_ptr *_t1 = &node.cond;
+VV_LOC void emitter__Transpiler_visit_switch(emitter__Transpiler* t, ast__AstNode* node) {
+	_option_ast__AstNode_ptr *_t1 = &node->cond;
 	if (_t1->state != 0) {
 		return;
 	}
 	ast__AstNode* cond_node = (*(ast__AstNode**)_t1->data);
 	t->switch_count++;
+	bool old_in_switch = t->is_in_switch;
+	t->is_in_switch = true;
 	Array_emitter__SwitchBranch branches = builtin____new_array_with_default(0, 0, sizeof(emitter__SwitchBranch), 0);
 	Array_ast__AstNode current_conds = builtin____new_array_with_default(0, 0, sizeof(ast__AstNode), 0);
 	bool group_has_default = false;
-	for (int i = 0; i < node.cases.len; ++i) {
-		ast__AstNode case_node = ((ast__AstNode*)node.cases.data)[i];
+	for (int i = 0; i < node->cases.len; ++i) {
+		ast__AstNode case_node = ((ast__AstNode*)node->cases.data)[i];
 		_option_ast__AstNode_ptr _t2 = {0};
 		if (_t2 = case_node.cond, _t2.state == 0) {
 			ast__AstNode* case_cond = *(ast__AstNode**)_t2.data;
@@ -23078,17 +25294,20 @@ VV_LOC void emitter__Transpiler_visit_switch(emitter__Transpiler* t, ast__AstNod
 		} else {
 			group_has_default = true;
 		}
-		if (case_node.stmts.len > 0 || i == node.cases.len - 1) {
+		if (case_node.stmts.len > 0 || i == node->cases.len - 1) {
 			builtin__array_push((array*)&branches, _MOV((emitter__SwitchBranch[]){ ((emitter__SwitchBranch){.conds = builtin__array_clone_to_depth(&current_conds, 0),.stmts = case_node.stmts,.is_default = group_has_default,}) }));
 			builtin__array_clear(&current_conds);
 			group_has_default = false;
 		}
 	}
 	if (branches.len == 0) {
+			{ // defer begin
+				t->is_in_switch = old_in_switch;
+			} // defer end
 		return;
 	}
-	if (emitter__Transpiler_can_use_v_match(t, *cond_node, branches)) {
-		string cond_str = emitter__Transpiler_visit_expr_native(t, *cond_node);
+	if (emitter__Transpiler_can_use_v_match(t, (voidptr)&*cond_node, branches)) {
+		string cond_str = emitter__Transpiler_visit_expr_native(t, cond_node);
 		emitter__Transpiler_write_indent(t);
 		GC_reachable_here(&cond_str);
 		emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("match "), cond_str, _S(" {")})));
@@ -23117,7 +25336,7 @@ VV_LOC void emitter__Transpiler_visit_switch(emitter__Transpiler* t, ast__AstNod
 				if (builtin__fast_string_eq(stmt.node_type, _S("Stmt_Break"))) {
 					continue;
 				}
-				emitter__Transpiler_visit_stmt(t, stmt);
+				emitter__Transpiler_visit_stmt(t, (voidptr)&stmt);
 				GC_reachable_here(&stmt);
 			}
 			t->indent--;
@@ -23131,9 +25350,12 @@ VV_LOC void emitter__Transpiler_visit_switch(emitter__Transpiler* t, ast__AstNod
 		GC_reachable_here(&cond_str);
 		emitter__Transpiler_write_line(t, _S("}"));
 		GC_reachable_here(&cond_str);
+			{ // defer begin
+				t->is_in_switch = old_in_switch;
+			} // defer end
 		return;
 	}
-	string cond_val_expr = emitter__Transpiler_visit_expr(t, *cond_node);
+	string cond_val_expr = emitter__Transpiler_visit_expr(t, cond_node);
 	string switch_var = builtin__string_plus_many(2, _MOV((string[2]){_S("switch_val_"), builtin__int_str(t->switch_count)}));
 	emitter__Transpiler_write_indent(t);
 	GC_reachable_here(&t);
@@ -23166,7 +25388,7 @@ VV_LOC void emitter__Transpiler_visit_switch(emitter__Transpiler* t, ast__AstNod
 					}
 					emitter__Transpiler_write_string(t, builtin__string_plus_many(3, _MOV((string[3]){_S("rt.is_true(rt.equal("), switch_var, _S(", ")})));
 					GC_reachable_here(&c_node);
-					emitter__Transpiler_write_string(t, emitter__Transpiler_visit_expr(t, c_node));
+					emitter__Transpiler_write_string(t, emitter__Transpiler_visit_expr(t, (voidptr)&c_node));
 					GC_reachable_here(&c_node);
 					emitter__Transpiler_write_string(t, _S("))"));
 					GC_reachable_here(&c_node);
@@ -23187,7 +25409,7 @@ VV_LOC void emitter__Transpiler_visit_switch(emitter__Transpiler* t, ast__AstNod
 					}
 					emitter__Transpiler_write_string(t, builtin__string_plus_many(3, _MOV((string[3]){_S("rt.is_true(rt.equal("), switch_var, _S(", ")})));
 					GC_reachable_here(&c_node);
-					emitter__Transpiler_write_string(t, emitter__Transpiler_visit_expr(t, c_node));
+					emitter__Transpiler_write_string(t, emitter__Transpiler_visit_expr(t, (voidptr)&c_node));
 					GC_reachable_here(&c_node);
 					emitter__Transpiler_write_string(t, _S("))"));
 					GC_reachable_here(&c_node);
@@ -23203,7 +25425,7 @@ VV_LOC void emitter__Transpiler_visit_switch(emitter__Transpiler* t, ast__AstNod
 			if (builtin__fast_string_eq(stmt.node_type, _S("Stmt_Break"))) {
 				continue;
 			}
-			emitter__Transpiler_visit_stmt(t, stmt);
+			emitter__Transpiler_visit_stmt(t, (voidptr)&stmt);
 			GC_reachable_here(&stmt);
 		}
 		t->indent--;
@@ -23224,32 +25446,109 @@ VV_LOC void emitter__Transpiler_visit_switch(emitter__Transpiler* t, ast__AstNod
 	GC_reachable_here(&current_conds);
 	GC_reachable_here(&cond_val_expr);
 	GC_reachable_here(&switch_var);
+	{ // defer begin
+		t->is_in_switch = old_in_switch;
+	} // defer end
 }
 string emitter__escape_single_quoted(string s) {
+	if ((s).len == 0) {
+		return _S("");
+	}
 	return builtin__string_replace(builtin__string_replace(builtin__string_replace(builtin__string_replace(builtin__string_replace(s, _S("\\"), _S("\\\\")), _S("\'"), _S("\\\'")), _S("\n"), _S("\\n")), _S("\r"), _S("\\r")), _S("\t"), _S("\\t"));
 }
 string emitter__escape_double_quoted(string s) {
+	if ((s).len == 0) {
+		return _S("");
+	}
 	return builtin__string_replace(builtin__string_replace(builtin__string_replace(builtin__string_replace(builtin__string_replace(builtin__string_replace(s, _S("\\"), _S("\\\\")), _S("\""), _S("\\\"")), _S("\n"), _S("\\n")), _S("\r"), _S("\\r")), _S("\t"), _S("\\t")), _S("$"), _S("\\$"));
 }
-string emitter__box_expr(string code, emitter__VarType typ) {
-	if (typ.class_name.len > 0 || typ.tag == emitter__TypeTag__t_object) {
+string emitter__Transpiler_box_expr(emitter__Transpiler t, string code, emitter__VarType typ) {
+	emitter__VarType real_typ = typ;
+	if (builtin__string_starts_with(code, _S("var_"))) {
+		string php_name = builtin__string_all_after(code, _S("var_"));
+		bool found = false;
+		if ((t.current_func_name).len != 0) {
+			string lookup_key = builtin__string_plus_many(3, _MOV((string[3]){t.current_func_name, _S("::"), php_name}));
+			if (_IN_MAP(ADDR(string, lookup_key), ADDR(map, t.inferred_types))) {
+				emitter__VarType* _t2 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t.inferred_types), &(string[]){lookup_key}));
+				_option_emitter__VarType _t1 = {0};
+				if (_t2) {
+					*((emitter__VarType*)&_t1.data) = *((emitter__VarType*)_t2);
+				} else {
+					_t1.state = 2; _t1.err = builtin___v_error(_S("map key does not exist"));
+				}
+				;
+				if (_t1.state != 0) {
+					*(emitter__VarType*) _t1.data = typ;
+				}
+				
+				real_typ = (*(emitter__VarType*)_t1.data);
+				found = true;
+			}
+		}
+		if (!found && _IN_MAP(ADDR(string, php_name), ADDR(map, t.inferred_types))) {
+			emitter__VarType* _t4 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t.inferred_types), &(string[]){php_name}));
+			_option_emitter__VarType _t3 = {0};
+			if (_t4) {
+				*((emitter__VarType*)&_t3.data) = *((emitter__VarType*)_t4);
+			} else {
+				_t3.state = 2; _t3.err = builtin___v_error(_S("map key does not exist"));
+			}
+			;
+			if (_t3.state != 0) {
+				*(emitter__VarType*) _t3.data = typ;
+			}
+			
+			real_typ = (*(emitter__VarType*)_t3.data);
+		}
+	}
+	if (real_typ.is_native_list) {
+		string elem_func = ((real_typ.element_type_tag == (emitter__TypeTag__t_int))? (_S("create_array_from_list_int")) : (real_typ.element_type_tag == (emitter__TypeTag__t_float))? (_S("create_array_from_list_float")) : (real_typ.element_type_tag == (emitter__TypeTag__t_string))? (_S("create_array_from_list_string")) : (real_typ.element_type_tag == (emitter__TypeTag__t_bool))? (_S("create_array_from_list_bool")) : (_S("create_array_from_list")));
+		if (builtin__string_starts_with(code, builtin__string__plus(_S("rt."), elem_func))) {
+			return code;
+		}
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt."), elem_func, builtin__string_plus_many(3, _MOV((string[3]){_S("("), code, _S(")")}))}));
+	}
+	if (real_typ.is_native_map) {
+		string elem_func = ((real_typ.element_type_tag == (emitter__TypeTag__t_int))? (_S("create_array_from_native_map_int")) : (real_typ.element_type_tag == (emitter__TypeTag__t_float))? (_S("create_array_from_native_map_float")) : (real_typ.element_type_tag == (emitter__TypeTag__t_string))? (_S("create_array_from_native_map_string")) : (real_typ.element_type_tag == (emitter__TypeTag__t_bool))? (_S("create_array_from_native_map_bool")) : (_S("create_array_from_native_map")));
+		if (builtin__string_starts_with(code, builtin__string__plus(_S("rt."), elem_func))) {
+			return code;
+		}
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt."), elem_func, builtin__string_plus_many(3, _MOV((string[3]){_S("("), code, _S(")")}))}));
+	}
+	if (real_typ.class_name.len > 0 || real_typ.tag == emitter__TypeTag__t_object) {
 		if (builtin__string_starts_with(code, _S("rt.new_object")) || builtin__string_starts_with(code, _S("rt.new_null"))) {
 			return code;
 		}
-		string cls = (typ.class_name.len > 0 ? (typ.class_name) : (_S("WP_Error")));
-		return builtin__string_plus_many(5, _MOV((string[5]){_S("rt.new_object('"), cls, _S("', []string{}, "), code, _S(")")}));
+		string cls = (real_typ.class_name.len > 0 ? (real_typ.class_name) : (_S("WP_Error")));
+		return builtin__string_plus_many(7, _MOV((string[7]){_S("rt.new_object('"), cls, _S("', "), emitter__Transpiler_get_parents_expr(t, cls), _S(", "), code, _S(")")}));
 	}
 
-	if (typ.tag == (emitter__TypeTag__t_int)) {
+	if (real_typ.tag == (emitter__TypeTag__t_int)) {
+		if (builtin__string_starts_with(code, _S("rt.new_int("))) {
+			return code;
+		}
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_int("), code, _S(")")}));
 	}
-	else if (typ.tag == (emitter__TypeTag__t_float)) {
+	else if (real_typ.tag == (emitter__TypeTag__t_float)) {
+		if (builtin__string_starts_with(code, _S("rt.new_float("))) {
+			return code;
+		}
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_float("), code, _S(")")}));
 	}
-	else if (typ.tag == (emitter__TypeTag__t_string)) {
+	else if (real_typ.tag == (emitter__TypeTag__t_string)) {
+		if (builtin__string_starts_with(code, _S("rt.new_string("))) {
+			return code;
+		}
+		if (builtin__string_starts_with(code, _S("rt.")) || builtin__string_starts_with(code, _S("var_")) || builtin__string_starts_with(code, _S("if "))) {
+			return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_string(("), code, _S(").str())")}));
+		}
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_string("), code, _S(")")}));
 	}
-	else if (typ.tag == (emitter__TypeTag__t_bool)) {
+	else if (real_typ.tag == (emitter__TypeTag__t_bool)) {
+		if (builtin__string_starts_with(code, _S("rt.new_bool("))) {
+			return code;
+		}
 		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_bool("), code, _S(")")}));
 	}
 	else {
@@ -23257,7 +25556,7 @@ string emitter__box_expr(string code, emitter__VarType typ) {
 	}
 	return (string){.str=(byteptr)"", .is_lit=1};
 }
-string emitter__unbox_expr(string code, emitter__VarType typ) {
+string emitter__Transpiler_unbox_expr(emitter__Transpiler t, string code, emitter__VarType typ) {
 	switch (typ.tag) {
 		case emitter__TypeTag__t_int: {
 			return builtin__string_plus_many(3, _MOV((string[3]){_S("("), code, _S(").to_i64()")}));
@@ -23287,10 +25586,171 @@ string emitter__unbox_expr(string code, emitter__VarType typ) {
 	
 	return (string){.str=(byteptr)"", .is_lit=1};
 }
+string emitter__Transpiler_dup_suffix_for_var(emitter__Transpiler t, string php_var_name) {
+	string v_var = emitter__Transpiler_get_v_var_name(t, php_var_name);
+	emitter__VarType* _t2 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t.inferred_types), &(string[]){v_var}));
+	_option_emitter__VarType _t1 = {0};
+	if (_t2) {
+		*((emitter__VarType*)&_t1.data) = *((emitter__VarType*)_t2);
+	} else {
+		_t1.state = 2; _t1.err = builtin___v_error(_S("map key does not exist"));
+	}
+	;
+	if (_t1.state != 0) {
+		emitter__VarType* _t4 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t.inferred_types), &(string[]){php_var_name}));
+		_option_emitter__VarType _t3 = {0};
+		if (_t4) {
+			*((emitter__VarType*)&_t3.data) = *((emitter__VarType*)_t4);
+		} else {
+			_t3.state = 2; _t3.err = builtin___v_error(_S("map key does not exist"));
+		}
+		;
+		if (_t3.state != 0) {
+			*(emitter__VarType*) _t3.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		}
+		
+		*(emitter__VarType*) _t1.data = (*(emitter__VarType*)_t3.data);
+	}
+	
+	emitter__VarType typ = (*(emitter__VarType*)_t1.data);
+	if (typ.tag == emitter__TypeTag__t_object || typ.class_name.len > 0) {
+		return _S("");
+	}
+	if ((*(bool*)builtin__map_get(ADDR(map, t.native_params), &(string[]){php_var_name}, &(bool[]){ 0 })) || (*(bool*)builtin__map_get(ADDR(map, t.native_vars), &(string[]){php_var_name}, &(bool[]){ 0 })) || builtin__string_ends_with(php_var_name, _S("_mutated"))) {
+		return _S("");
+	}
+	return _S(".clone()");
+}
 string emitter__Transpiler_dup_if_needed(emitter__Transpiler t, string code, ast__AstNode arg_node) {
 	if (builtin__fast_string_eq(arg_node.node_type, _S("Expr_Variable"))) {
-		string var_name = arg_node.name;
-		emitter__VarType* _t2 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t.inferred_types), &(string[]){var_name}));
+		string suffix = emitter__Transpiler_dup_suffix_for_var(t, arg_node.name);
+		return builtin__string__plus(code, suffix);
+	}
+	return code;
+}
+string emitter__Transpiler_compile_expr(emitter__Transpiler* t, ast__AstNode* node, emitter__ExprCtx ctx) {
+
+	if (ctx == (emitter__ExprCtx__boxed)) {
+		string code = emitter__Transpiler_visit_expr(t, node);
+		string node_type = node->node_type;
+		if (_SLIT_EQ(node_type.str, node_type.len, "Expr_BinaryOp_Concat") || _SLIT_EQ(node_type.str, node_type.len, "Expr_Cast_String")) {
+			if (builtin__string_starts_with(code, _S("rt."))) {
+				return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_string(("), code, _S(").str())")}));
+			}
+			return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_string("), code, _S(")")}));
+		}
+		if (_SLIT_EQ(node_type.str, node_type.len, "Expr_UnaryMinus") || _SLIT_EQ(node_type.str, node_type.len, "Expr_UnaryPlus")) {
+			emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, node);
+			if (expr_type.tag == emitter__TypeTag__t_int || expr_type.tag == emitter__TypeTag__t_float) {
+				return emitter__Transpiler_box_expr(*t, code, expr_type);
+			}
+		}
+		if (_SLIT_EQ(node_type.str, node_type.len, "Scalar_Int")) {
+			if (!builtin__string_starts_with(code, _S("rt."))) {
+				return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_int("), code, _S(")")}));
+			}
+		}
+		if (_SLIT_EQ(node_type.str, node_type.len, "Scalar_Float")) {
+			if (!builtin__string_starts_with(code, _S("rt."))) {
+				return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_float("), code, _S(")")}));
+			}
+		}
+		return code;
+	}
+	else if (ctx == (emitter__ExprCtx__native)) {
+		if (builtin__fast_string_eq(node->node_type, _S("Expr_Variable"))) {
+			string* _t8 = (string*)(builtin__map_get_check(ADDR(map, t->var_aliases), &(string[]){node->name}));
+			_option_string _t7 = {0};
+			if (_t8) {
+				*((string*)&_t7.data) = *((string*)_t8);
+			} else {
+				_t7.state = 2; _t7.err = builtin___v_error(_S("map key does not exist"));
+			}
+			;
+			if (_t7.state != 0) {
+				*(string*) _t7.data = node->name;
+			}
+			
+			string var_name = (*(string*)_t7.data);
+			string v_var = emitter__Transpiler_get_v_var_name(*t, node->name);
+			emitter__VarType* _t10 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v_var}));
+			_option_emitter__VarType _t9 = {0};
+			if (_t10) {
+				*((emitter__VarType*)&_t9.data) = *((emitter__VarType*)_t10);
+			} else {
+				_t9.state = 2; _t9.err = builtin___v_error(_S("map key does not exist"));
+			}
+			;
+			if (_t9.state != 0) {
+				emitter__VarType* _t12 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){var_name}));
+				_option_emitter__VarType _t11 = {0};
+				if (_t12) {
+					*((emitter__VarType*)&_t11.data) = *((emitter__VarType*)_t12);
+				} else {
+					_t11.state = 2; _t11.err = builtin___v_error(_S("map key does not exist"));
+				}
+				;
+				if (_t11.state != 0) {
+					*(emitter__VarType*) _t11.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+				}
+				
+				*(emitter__VarType*) _t9.data = (*(emitter__VarType*)_t11.data);
+			}
+			
+			emitter__VarType arg_type = (*(emitter__VarType*)_t9.data);
+			bool is_native = false;
+			if ((t->current_func_name).len == 0) {
+				is_native = emitter__VarType_is_scalar(arg_type);
+			} else {
+				is_native = (*(bool*)builtin__map_get(ADDR(map, t->native_params), &(string[]){node->name}, &(bool[]){ 0 })) || (*(bool*)builtin__map_get(ADDR(map, t->native_vars), &(string[]){v_var}, &(bool[]){ 0 }));
+			}
+			if (emitter__VarType_is_scalar(arg_type) && !is_native) {
+				return emitter__Transpiler_unbox_expr(*t, emitter__Transpiler_visit_expr(t, node), arg_type);
+			}
+		}
+		return emitter__Transpiler_visit_expr_native(t, node);
+	}
+	return (string){.str=(byteptr)"", .is_lit=1};
+}
+emitter__CallArgResult emitter__Transpiler_compile_arg(emitter__Transpiler* t, ast__AstNode* arg_node, emitter__VarType target_type) {
+	emitter__VarType old_expect = t->expected_type;
+	t->expected_type = target_type;
+	emitter__VarType arg_type = emitter__Transpiler_get_expr_type(t, arg_node);
+	bool target_is_native = emitter__VarType_is_scalar(target_type) || target_type.class_name.len > 0 || target_type.is_native_list || target_type.is_native_map;
+	bool arg_is_native = emitter__VarType_is_scalar(arg_type) || arg_type.class_name.len > 0 || arg_type.is_native_list || arg_type.is_native_map;
+	emitter__CallArgResult _t1 = ((emitter__CallArgResult){.code = (string){.str=(byteptr)"", .is_lit=1},.typ = arg_type,});
+	emitter__CallArgResult res = _t1;
+	if (target_is_native && arg_is_native) {
+		string prefix = _S("");
+		if (target_type.tag == emitter__TypeTag__t_object) {
+			prefix = _S("mut ");
+		}
+		res = ((emitter__CallArgResult){.code = builtin__string__plus(prefix, emitter__Transpiler_compile_expr(t, arg_node, emitter__ExprCtx__native)),.typ = arg_type,});
+	} else if (target_is_native && !arg_is_native) {
+		string raw = emitter__Transpiler_compile_expr(t, arg_node, emitter__ExprCtx__boxed);
+		string prefix = _S("");
+		if (target_type.tag == emitter__TypeTag__t_object) {
+			prefix = _S("mut ");
+		}
+		res = ((emitter__CallArgResult){.code = builtin__string__plus(prefix, emitter__Transpiler_unbox_expr(*t, raw, target_type)),.typ = arg_type,});
+	} else if (!target_is_native && arg_is_native) {
+		string native_val = emitter__Transpiler_compile_expr(t, arg_node, emitter__ExprCtx__native);
+		res = ((emitter__CallArgResult){.code = emitter__Transpiler_box_expr(*t, native_val, arg_type),.typ = arg_type,});
+	} else {
+		string code = emitter__Transpiler_compile_expr(t, arg_node, emitter__ExprCtx__boxed);
+		res = ((emitter__CallArgResult){.code = emitter__Transpiler_dup_if_needed(*t, code, *arg_node),.typ = arg_type,});
+	}
+	t->expected_type = old_expect;
+	return res;
+}
+string emitter__Transpiler_compile_arg_simple(emitter__Transpiler* t, ast__AstNode* arg_node) {
+	emitter__VarType old_expect = t->expected_type;
+	t->expected_type = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+	string code = emitter__Transpiler_compile_expr(t, arg_node, emitter__ExprCtx__boxed);
+	if (builtin__fast_string_eq(arg_node->node_type, _S("Expr_Variable"))) {
+		string v_var = emitter__Transpiler_get_v_var_name(*t, arg_node->name);
+		string lookup_key = ((t->current_func_name).len != 0 ? (builtin__string_plus_many(3, _MOV((string[3]){t->current_func_name, _S("::"), arg_node->name}))) : (arg_node->name));
+		emitter__VarType* _t2 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v_var}));
 		_option_emitter__VarType _t1 = {0};
 		if (_t2) {
 			*((emitter__VarType*)&_t1.data) = *((emitter__VarType*)_t2);
@@ -23299,59 +25759,272 @@ string emitter__Transpiler_dup_if_needed(emitter__Transpiler t, string code, ast
 		}
 		;
 		if (_t1.state != 0) {
-			*(emitter__VarType*) _t1.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			emitter__VarType* _t4 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){lookup_key}));
+			_option_emitter__VarType _t3 = {0};
+			if (_t4) {
+				*((emitter__VarType*)&_t3.data) = *((emitter__VarType*)_t4);
+			} else {
+				_t3.state = 2; _t3.err = builtin___v_error(_S("map key does not exist"));
+			}
+			;
+			if (_t3.state != 0) {
+				emitter__VarType* _t6 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){arg_node->name}));
+				_option_emitter__VarType _t5 = {0};
+				if (_t6) {
+					*((emitter__VarType*)&_t5.data) = *((emitter__VarType*)_t6);
+				} else {
+					_t5.state = 2; _t5.err = builtin___v_error(_S("map key does not exist"));
+				}
+				;
+				if (_t5.state != 0) {
+					*(emitter__VarType*) _t5.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+				}
+				
+				*(emitter__VarType*) _t3.data = (*(emitter__VarType*)_t5.data);
+			}
+			
+			*(emitter__VarType*) _t1.data = (*(emitter__VarType*)_t3.data);
 		}
 		
 		emitter__VarType typ = (*(emitter__VarType*)_t1.data);
-		if (typ.tag == emitter__TypeTag__t_object || typ.class_name.len > 0) {
-			return code;
-		}
-		if ((*(bool*)builtin__map_get(ADDR(map, t.native_params), &(string[]){var_name}, &(bool[]){ 0 })) || (*(bool*)builtin__map_get(ADDR(map, t.native_vars), &(string[]){var_name}, &(bool[]){ 0 })) || builtin__string_ends_with(var_name, _S("_mutated"))) {
-			return code;
-		}
-		return builtin__string_plus_many(2, _MOV((string[2]){code, _S(".dup()")}));
-	}
-	return code;
-}
-string emitter__Transpiler_compile_expr(emitter__Transpiler* t, ast__AstNode node, emitter__ExprCtx ctx) {
+		if (typ.is_native_list) {
+			t->expected_type = old_expect;
 
-	if (ctx == (emitter__ExprCtx__boxed)) {
-		return emitter__Transpiler_visit_expr(t, node);
+			if (typ.element_type_tag == (emitter__TypeTag__t_string)) {
+				return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.create_array_from_list_string("), code, _S(")")}));
+			}
+			else if (typ.element_type_tag == (emitter__TypeTag__t_int)) {
+				return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.create_array_from_list_int("), code, _S(")")}));
+			}
+			else if (typ.element_type_tag == (emitter__TypeTag__t_float)) {
+				return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.create_array_from_list_float("), code, _S(")")}));
+			}
+			else if (typ.element_type_tag == (emitter__TypeTag__t_bool)) {
+				return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.create_array_from_list_bool("), code, _S(")")}));
+			}
+			else {
+				return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.create_array_from_list("), code, _S(")")}));
+			}
+		}
+		if (typ.is_native_map) {
+			t->expected_type = old_expect;
+			return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.create_array_from_native_map("), code, _S(")")}));
+		}
 	}
-	else if (ctx == (emitter__ExprCtx__native)) {
-		return emitter__Transpiler_visit_expr_native(t, node);
-	}
-	return (string){.str=(byteptr)"", .is_lit=1};
-}
-emitter__CallArgResult emitter__Transpiler_compile_arg(emitter__Transpiler* t, ast__AstNode arg_node, emitter__VarType target_type) {
 	emitter__VarType arg_type = emitter__Transpiler_get_expr_type(t, arg_node);
-	bool target_is_native = emitter__VarType_is_scalar(target_type) || target_type.class_name.len > 0;
-	bool arg_is_native = emitter__VarType_is_scalar(arg_type) || arg_type.class_name.len > 0;
-	if (target_is_native && arg_is_native) {
-		string prefix = _S("");
-		if (target_type.tag == emitter__TypeTag__t_object) {
-			prefix = _S("mut ");
-		}
-		return ((emitter__CallArgResult){.code = builtin__string__plus(prefix, emitter__Transpiler_compile_expr(t, arg_node, emitter__ExprCtx__native)),.typ = arg_type,});
-	} else if (target_is_native && !arg_is_native) {
-		string raw = emitter__Transpiler_compile_expr(t, arg_node, emitter__ExprCtx__boxed);
-		string prefix = _S("");
-		if (target_type.tag == emitter__TypeTag__t_object) {
-			prefix = _S("mut ");
-		}
-		return ((emitter__CallArgResult){.code = builtin__string__plus(prefix, emitter__unbox_expr(raw, target_type)),.typ = arg_type,});
-	} else if (!target_is_native && arg_is_native) {
-		string native_val = emitter__Transpiler_compile_expr(t, arg_node, emitter__ExprCtx__native);
-		return ((emitter__CallArgResult){.code = emitter__box_expr(native_val, arg_type),.typ = arg_type,});
+	string res = code;
+	if ((emitter__VarType_is_scalar(arg_type) || arg_type.class_name.len > 0 || arg_type.tag == emitter__TypeTag__t_object) && !builtin__string_starts_with(code, _S("rt."))) {
+		res = emitter__Transpiler_box_expr(*t, code, arg_type);
 	} else {
-		string code = emitter__Transpiler_compile_expr(t, arg_node, emitter__ExprCtx__boxed);
-		return ((emitter__CallArgResult){.code = emitter__Transpiler_dup_if_needed(*t, code, arg_node),.typ = arg_type,});
+		res = emitter__Transpiler_dup_if_needed(*t, code, *arg_node);
 	}
-	return (emitter__CallArgResult){.code = (string){.str=(byteptr)"", .is_lit=1},.typ = (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,},};
+	t->expected_type = old_expect;
+	return res;
 }
-string emitter__Transpiler_compile_arg_simple(emitter__Transpiler* t, ast__AstNode arg_node) {
-	string code = emitter__Transpiler_compile_expr(t, arg_node, emitter__ExprCtx__boxed);
-	return emitter__Transpiler_dup_if_needed(*t, code, arg_node);
+bool emitter__Transpiler_produces_native_string(emitter__Transpiler* t, ast__AstNode* node) {
+
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_concat)) {
+		return true;
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_cast_string)) {
+		return true;
+	}
+	else {
+		return false;
+	}
+	return 0;
+}
+string emitter__Transpiler_emit_custom_funccall(emitter__Transpiler* t, ast__AstNode* node, string func_name, emitter__VarType ret_type, bool is_native) {
+	Array_string arg_strs = builtin____new_array_with_default(0, 0, sizeof(string), 0);
+	_option_emitter__MethodInfo info = (_option_emitter__MethodInfo){ .state=2, .err=_const_none__, .data={E_STRUCT} };
+	if (_IN_MAP(ADDR(string, func_name), ADDR(map, t->custom_function_infos))) {
+		_option_emitter__MethodInfo _t1;
+		builtin___option_ok(&(emitter__MethodInfo[]) { (*(emitter__MethodInfo*)builtin__map_get(ADDR(map, t->custom_function_infos), &(string[]){func_name}, &(emitter__MethodInfo[]){ (emitter__MethodInfo){.name = (string){.str=(byteptr)"", .is_lit=1},.param_count = 0,.param_names = builtin____new_array(0, 0, sizeof(string)),.is_variadic = 0,.is_static = 0,} })) }, (_option*)(&_t1), sizeof(emitter__MethodInfo));
+		info = _t1;
+	}
+	_option_emitter__MethodInfo _t2 = {0};
+	if (_t2 = info, _t2.state == 0) {
+		emitter__MethodInfo func_info = *(emitter__MethodInfo*)_t2.data;
+		GC_reachable_here(&func_info);
+		if (func_info.is_variadic) {
+			int var_idx = func_info.param_count - 1;
+			for (int i = 0; i < var_idx; i++) {
+				if (i < node->args.len) {
+					ast__AstNode arg = (*(ast__AstNode*)builtin__array_get(node->args, i));
+					_option_ast__AstNode_ptr *_t3 = &arg.expr;
+					if (_t3->state != 0) {
+						builtin___v_panic(_S("Arg missing expr"));
+						VUNREACHABLE();
+					;
+					}
+					ast__AstNode* arg_val = (*(ast__AstNode**)_t3->data);
+					emitter__VarType arg_typ = emitter__Transpiler_get_expr_type(t, arg_val);
+					string param_name = (*(string*)builtin__array_get(func_info.param_names, i));
+					emitter__VarType param_type = emitter__Transpiler_get_func_param_type(t, func_name, param_name);
+					if (emitter__VarType_is_scalar(param_type) && emitter__VarType_is_scalar(arg_typ)) {
+						builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_visit_expr_native(t, arg_val) }));
+					} else {
+						builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, arg_val) }));
+					}
+				} else {
+					string param_name = (*(string*)builtin__array_get(func_info.param_names, i));
+					emitter__VarType param_type = emitter__Transpiler_get_func_param_type(t, func_name, param_name);
+					if (emitter__VarType_is_scalar(param_type)) {
+
+						if (param_type.tag == (emitter__TypeTag__t_int)) {
+							builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("0") }));
+						}
+						else if (param_type.tag == (emitter__TypeTag__t_float)) {
+							builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("0.0") }));
+						}
+						else if (param_type.tag == (emitter__TypeTag__t_bool)) {
+							builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("false") }));
+						}
+						else {
+							builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("''") }));
+						}
+					} else {
+						builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("rt.new_null()") }));
+					}
+				}
+			}
+			for (int i = var_idx; i < node->args.len; i++) {
+				ast__AstNode arg = (*(ast__AstNode*)builtin__array_get(node->args, i));
+				_option_ast__AstNode_ptr *_t11 = &arg.expr;
+				if (_t11->state != 0) {
+					builtin___v_panic(_S("Arg missing expr"));
+					VUNREACHABLE();
+				;
+				}
+				ast__AstNode* arg_val = (*(ast__AstNode**)_t11->data);
+				builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, arg_val) }));
+			}
+		} else {
+			for (int i = 0; i < func_info.param_count; i++) {
+				if (i < node->args.len) {
+					ast__AstNode arg = (*(ast__AstNode*)builtin__array_get(node->args, i));
+					_option_ast__AstNode_ptr *_t13 = &arg.expr;
+					if (_t13->state != 0) {
+						builtin___v_panic(_S("Arg missing expr"));
+						VUNREACHABLE();
+					;
+					}
+					ast__AstNode* arg_val = (*(ast__AstNode**)_t13->data);
+					emitter__VarType arg_typ = emitter__Transpiler_get_expr_type(t, arg_val);
+					string param_name = (*(string*)builtin__array_get(func_info.param_names, i));
+					emitter__VarType param_type = emitter__Transpiler_get_func_param_type(t, func_name, param_name);
+					if (emitter__VarType_is_scalar(param_type) && emitter__VarType_is_scalar(arg_typ)) {
+						builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_visit_expr_native(t, arg_val) }));
+					} else {
+						builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, arg_val) }));
+					}
+				} else {
+					string param_name = (*(string*)builtin__array_get(func_info.param_names, i));
+					emitter__VarType param_type = emitter__Transpiler_get_func_param_type(t, func_name, param_name);
+					if (emitter__VarType_is_scalar(param_type)) {
+
+						if (param_type.tag == (emitter__TypeTag__t_int)) {
+							builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("0") }));
+						}
+						else if (param_type.tag == (emitter__TypeTag__t_float)) {
+							builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("0.0") }));
+						}
+						else if (param_type.tag == (emitter__TypeTag__t_bool)) {
+							builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("false") }));
+						}
+						else {
+							builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("''") }));
+						}
+					} else {
+						builtin__array_push((array*)&arg_strs, _MOV((string[]){ _S("rt.new_null()") }));
+					}
+				}
+			}
+		}
+	} else {
+		for (int _t21 = 0; _t21 < node->args.len; ++_t21) {
+			ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t21];
+			_option_ast__AstNode_ptr *_t22 = &arg.expr;
+			if (_t22->state != 0) {
+				builtin___v_panic(_S("Arg missing expr"));
+				VUNREACHABLE();
+			;
+			}
+			ast__AstNode* arg_val = (*(ast__AstNode**)_t22->data);
+			builtin__array_push((array*)&arg_strs, _MOV((string[]){ emitter__Transpiler_compile_arg_simple(t, arg_val) }));
+		}
+	}
+	string call_expr = builtin__string_plus_many(4, _MOV((string[4]){emitter__func_v_name(func_name), _S("("), Array_string_join(arg_strs, _S(", ")), _S(")")}));
+	if (!is_native && emitter__VarType_is_scalar(ret_type)) {
+		return emitter__Transpiler_box_expr(*t, call_expr, ret_type);
+	}
+	return call_expr;
+}
+bool emitter__Transpiler_is_native_array_or_map(emitter__Transpiler t, ast__AstNode* node) {
+	if (!builtin__fast_string_eq(node->node_type, _S("Expr_Variable"))) {
+		return false;
+	}
+	string name = node->name;
+	if ((t.current_func_name).len != 0) {
+		if (_IN_MAP(ADDR(string, t.current_func_name), ADDR(map, t.func_param_types))) {
+			Map_string_emitter__VarType* _t3 = (Map_string_emitter__VarType*)(builtin__map_get_check(ADDR(map, t.func_param_types), &(string[]){t.current_func_name}));
+			_option_Map_string_emitter__VarType _t2 = {0};
+			if (_t3) {
+				*((Map_string_emitter__VarType*)&_t2.data) = *((Map_string_emitter__VarType*)_t3);
+			} else {
+				_t2.state = 2; _t2.err = builtin___v_error(_S("map key does not exist"));
+			}
+			
+			if (_t2.state == 0) {
+				Map_string_emitter__VarType params = (*(Map_string_emitter__VarType*)_t2.data);
+				GC_reachable_here(&params);
+				if (_IN_MAP(ADDR(string, name), ADDR(map, params))) {
+					return false;
+				}
+			}
+				if (_t2.state == 2 && _t2.err._object != _const_none__._object) { builtin___v_free(_t2.err._object); }
+		}
+	}
+	string v_var = emitter__Transpiler_get_v_var_name(t, name);
+	string lookup_key = ((t.current_func_name).len != 0 ? (builtin__string_plus_many(3, _MOV((string[3]){t.current_func_name, _S("::"), name}))) : (name));
+	emitter__VarType* _t6 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t.inferred_types), &(string[]){v_var}));
+	_option_emitter__VarType _t5 = {0};
+	if (_t6) {
+		*((emitter__VarType*)&_t5.data) = *((emitter__VarType*)_t6);
+	} else {
+		_t5.state = 2; _t5.err = builtin___v_error(_S("map key does not exist"));
+	}
+	;
+	if (_t5.state != 0) {
+		emitter__VarType* _t8 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t.inferred_types), &(string[]){lookup_key}));
+		_option_emitter__VarType _t7 = {0};
+		if (_t8) {
+			*((emitter__VarType*)&_t7.data) = *((emitter__VarType*)_t8);
+		} else {
+			_t7.state = 2; _t7.err = builtin___v_error(_S("map key does not exist"));
+		}
+		;
+		if (_t7.state != 0) {
+			emitter__VarType* _t10 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t.inferred_types), &(string[]){name}));
+			_option_emitter__VarType _t9 = {0};
+			if (_t10) {
+				*((emitter__VarType*)&_t9.data) = *((emitter__VarType*)_t10);
+			} else {
+				_t9.state = 2; _t9.err = builtin___v_error(_S("map key does not exist"));
+			}
+			;
+			if (_t9.state != 0) {
+				*(emitter__VarType*) _t9.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+			}
+			
+			*(emitter__VarType*) _t7.data = (*(emitter__VarType*)_t9.data);
+		}
+		
+		*(emitter__VarType*) _t5.data = (*(emitter__VarType*)_t7.data);
+	}
+	
+	emitter__VarType typ = (*(emitter__VarType*)_t5.data);
+	return typ.is_native_list || typ.is_native_map;
 }
 emitter__VarScope emitter__VarScope__static__new(void) {
 	return ((emitter__VarScope){.declared = builtin__new_map_noscan_value(sizeof(string), sizeof(bool), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
@@ -23382,6 +26055,11 @@ emitter__Transpiler emitter__Transpiler__static__new(void) {
 		.classes = builtin____new_array_with_default(0, 0, sizeof(emitter__ClassInfo), 0),
 		.current_class = (string){.str=(byteptr)"", .is_lit=1},
 		.current_file = _S(""),
+		.parser_php_path = _S(""),
+		.transpiled_includes = builtin__new_map(sizeof(string), sizeof(string), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
+		,
+		.include_funcs_code = strings__new_builder(1024),
+		.include_register_code = strings__new_builder(1024),
 		.try_count = 0,
 		.current_catch_label = (string){.str=(byteptr)"", .is_lit=1},
 		.current_finally_label = (string){.str=(byteptr)"", .is_lit=1},
@@ -23391,6 +26069,7 @@ emitter__Transpiler emitter__Transpiler__static__new(void) {
 		.use_aliases = builtin__new_map(sizeof(string), sizeof(string), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
 		,
 		.switch_count = 0,
+		.list_tmp_counter = 0,
 		.pre_stmts = builtin____new_array_with_default(0, 0, sizeof(string), 0),
 		.post_stmts = builtin____new_array_with_default(0, 0, sizeof(string), 0),
 		.const_out = strings__new_builder(1024),
@@ -23409,7 +26088,14 @@ emitter__Transpiler emitter__Transpiler__static__new(void) {
 		.method_call_arg_types = builtin__new_map(sizeof(string), sizeof(Array_emitter__TypeTag), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string),
 		.native_params = builtin__new_map_noscan_value(sizeof(string), sizeof(bool), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
 		,
+		.reassigned_params = builtin__new_map_noscan_value(sizeof(string), sizeof(bool), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
+		,
 		.is_in_construct = 0,
+		.is_in_switch = 0,
+		.collect_referenced = builtin__new_map_noscan_value(sizeof(string), sizeof(bool), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
+		,
+		.collect_assigned = builtin__new_map_noscan_value(sizeof(string), sizeof(bool), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
+		,
 		.global_constants = builtin__new_map(sizeof(string), sizeof(emitter__GlobalConst), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
 		,
 		.closure_body_builder = strings__new_builder(64),
@@ -23436,6 +26122,8 @@ emitter__Transpiler emitter__Transpiler__static__new(void) {
 		.foreach_depth = 0,
 		.native_vars = builtin__new_map_noscan_value(sizeof(string), sizeof(bool), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
 		,
+		.native_arr_vars = builtin__new_map_noscan_value(sizeof(string), sizeof(bool), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
+		,
 		.custom_function_infos = builtin__new_map(sizeof(string), sizeof(emitter__MethodInfo), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
 		,
 		.has_dynamic_new = false,
@@ -23444,9 +26132,14 @@ emitter__Transpiler emitter__Transpiler__static__new(void) {
 		.type_cache = builtin__new_map(sizeof(voidptr), sizeof(emitter__VarType), &builtin__map_hash_int_8, &builtin__map_eq_int_8, &builtin__map_clone_int_8, &builtin__map_free_nop),
 		.codegen_cache = builtin__new_map(sizeof(voidptr), sizeof(emitter__CodegenCacheEntry), &builtin__map_hash_int_8, &builtin__map_eq_int_8, &builtin__map_clone_int_8, &builtin__map_free_nop),
 		.active_depth = 0,
+		.mode = _S("exe"),
+		.is_entry_script = 0,
 	});
 }
 string emitter__Transpiler_transpile(emitter__Transpiler* t, Array_ast__AstNode stmts) {
+	builtin__println(builtin__string__plus(_S("Transpiling file start: "), t->current_file));
+	GC_reachable_here(&t);
+	GC_reachable_here(&stmts);
 	Array_ast__AstNode local_stmts = builtin__array_clone_to_depth(&stmts, 0);
 	emitter__Transpiler_collect_traits(t, &local_stmts);
 	GC_reachable_here(&t);
@@ -23456,7 +26149,15 @@ string emitter__Transpiler_transpile(emitter__Transpiler* t, Array_ast__AstNode 
 	GC_reachable_here(&t);
 	GC_reachable_here(&stmts);
 	GC_reachable_here(&local_stmts);
+	builtin__println(_S("  - scan_global_constants"));
+	GC_reachable_here(&t);
+	GC_reachable_here(&stmts);
+	GC_reachable_here(&local_stmts);
 	emitter__Transpiler_scan_global_constants(t, local_stmts);
+	GC_reachable_here(&t);
+	GC_reachable_here(&stmts);
+	GC_reachable_here(&local_stmts);
+	builtin__println(_S("  - scan_classes"));
 	GC_reachable_here(&t);
 	GC_reachable_here(&stmts);
 	GC_reachable_here(&local_stmts);
@@ -23464,7 +26165,15 @@ string emitter__Transpiler_transpile(emitter__Transpiler* t, Array_ast__AstNode 
 	GC_reachable_here(&t);
 	GC_reachable_here(&stmts);
 	GC_reachable_here(&local_stmts);
+	builtin__println(_S("  - scan_custom_functions"));
+	GC_reachable_here(&t);
+	GC_reachable_here(&stmts);
+	GC_reachable_here(&local_stmts);
 	emitter__Transpiler_scan_custom_functions(t, local_stmts);
+	GC_reachable_here(&t);
+	GC_reachable_here(&stmts);
+	GC_reachable_here(&local_stmts);
+	builtin__println(_S("  - analyze_types"));
 	GC_reachable_here(&t);
 	GC_reachable_here(&stmts);
 	GC_reachable_here(&local_stmts);
@@ -23472,13 +26181,24 @@ string emitter__Transpiler_transpile(emitter__Transpiler* t, Array_ast__AstNode 
 	GC_reachable_here(&t);
 	GC_reachable_here(&stmts);
 	GC_reachable_here(&local_stmts);
+	builtin__println(_S("  - scan_dynamic_usages"));
+	GC_reachable_here(&t);
+	GC_reachable_here(&stmts);
+	GC_reachable_here(&local_stmts);
 	emitter__Transpiler_scan_dynamic_usages(t, local_stmts);
 	GC_reachable_here(&t);
 	GC_reachable_here(&stmts);
 	GC_reachable_here(&local_stmts);
-	multi_return_Array_string_Array_string mr_6657 = emitter__Transpiler_collect_vars_in_scope(*t, local_stmts);
-	Array_string ref_vars = mr_6657.arg0;
-	Array_string ass_vars = mr_6657.arg1;
+	if (builtin__fast_string_eq(t->mode, _S("lib")) && emitter__Transpiler_has_exit_or_die(*t, local_stmts)) {
+		t->is_entry_script = true;
+	}
+	builtin__println(_S("  - collect_vars_in_scope"));
+	GC_reachable_here(&t);
+	GC_reachable_here(&stmts);
+	GC_reachable_here(&local_stmts);
+	multi_return_Array_string_Array_string mr_8330 = emitter__Transpiler_collect_vars_in_scope(t, &local_stmts);
+	Array_string ref_vars = mr_8330.arg0;
+	Array_string ass_vars = mr_8330.arg1;
 	for (int _t1 = 0; _t1 < ref_vars.len; ++_t1) {
 		string v = ((string*)ref_vars.data)[_t1];
 		if (!(Array_string_contains(ass_vars, v)) && !emitter__VarScope_has_var(t->scope, v)) {
@@ -23509,11 +26229,11 @@ string emitter__Transpiler_transpile(emitter__Transpiler* t, Array_ast__AstNode 
 			}
 			
 			emitter__VarType v_type = (*(emitter__VarType*)_t2.data);
-			if (v_type.is_native_list) {
-				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := []rt.PhpVal{}")})));
-			} else if (v_type.is_native_map) {
-				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := map[string]rt.PhpVal{}")})));
+			if (v_type.is_native_list || v_type.is_native_map) {
+				emitter__Transpiler_write_line(t, builtin__string__plus(builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := ")})), emitter__Transpiler_get_empty_literal(*t, v_type)));
+				builtin__map_set(&t->native_arr_vars, &(string[]){v}, &(bool[]) { true });
 			} else if (emitter__VarType_is_scalar(v_type)) {
+				builtin__map_set(&t->native_vars, &(string[]){v_var}, &(bool[]) { true });
 
 				if (v_type.tag == (emitter__TypeTag__t_int)) {
 					emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := i64(0)")})));
@@ -23527,6 +26247,10 @@ string emitter__Transpiler_transpile(emitter__Transpiler* t, Array_ast__AstNode 
 				else {
 					emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := ''")})));
 				}
+			} else if (emitter__VarType_is_object(v_type)) {
+				string cls = (v_type.class_name.len > 0 ? (v_type.class_name) : (_S("WP_Error")));
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(5, _MOV((string[5]){_S("mut "), v_var, _S(" := &Class_"), cls, _S("(unsafe { nil })")})));
+				GC_reachable_here(&cls);
 			} else {
 				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := rt.new_null()")})));
 			}
@@ -23535,29 +26259,99 @@ string emitter__Transpiler_transpile(emitter__Transpiler* t, Array_ast__AstNode 
 			GC_reachable_here(&v_type);
 		}
 	}
-	for (int _t6 = 0; _t6 < local_stmts.len; ++_t6) {
-		ast__AstNode stmt = ((ast__AstNode*)local_stmts.data)[_t6];
-		emitter__Transpiler_visit_stmt(t, stmt);
+	for (int _t6 = 0; _t6 < ass_vars.len; ++_t6) {
+		string v = ((string*)ass_vars.data)[_t6];
+		if (!emitter__VarScope_has_var(t->scope, v)) {
+			emitter__VarScope_declare(&t->scope, v);
+			emitter__Transpiler_write_indent(t);
+			string v_var = emitter__Transpiler_get_v_var_name(*t, v);
+			emitter__VarType* _t8 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v_var}));
+			_option_emitter__VarType _t7 = {0};
+			if (_t8) {
+				*((emitter__VarType*)&_t7.data) = *((emitter__VarType*)_t8);
+			} else {
+				_t7.state = 2; _t7.err = builtin___v_error(_S("map key does not exist"));
+			}
+			;
+			if (_t7.state != 0) {
+				emitter__VarType* _t10 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){v}));
+				_option_emitter__VarType _t9 = {0};
+				if (_t10) {
+					*((emitter__VarType*)&_t9.data) = *((emitter__VarType*)_t10);
+				} else {
+					_t9.state = 2; _t9.err = builtin___v_error(_S("map key does not exist"));
+				}
+				;
+				if (_t9.state != 0) {
+					*(emitter__VarType*) _t9.data = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+				}
+				
+				*(emitter__VarType*) _t7.data = (*(emitter__VarType*)_t9.data);
+			}
+			
+			emitter__VarType v_type = (*(emitter__VarType*)_t7.data);
+			if (v_type.is_native_list || v_type.is_native_map) {
+				emitter__Transpiler_write_line(t, builtin__string__plus(builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := ")})), emitter__Transpiler_get_empty_literal(*t, v_type)));
+				builtin__map_set(&t->native_arr_vars, &(string[]){v}, &(bool[]) { true });
+			} else if (emitter__VarType_is_scalar(v_type)) {
+				builtin__map_set(&t->native_vars, &(string[]){v_var}, &(bool[]) { true });
+
+				if (v_type.tag == (emitter__TypeTag__t_int)) {
+					emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := i64(0)")})));
+				}
+				else if (v_type.tag == (emitter__TypeTag__t_float)) {
+					emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := f64(0.0)")})));
+				}
+				else if (v_type.tag == (emitter__TypeTag__t_bool)) {
+					emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := false")})));
+				}
+				else {
+					emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := ''")})));
+				}
+			} else if (emitter__VarType_is_object(v_type)) {
+				string cls = (v_type.class_name.len > 0 ? (v_type.class_name) : (_S("WP_Error")));
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(5, _MOV((string[5]){_S("mut "), v_var, _S(" := &Class_"), cls, _S("(unsafe { nil })")})));
+				GC_reachable_here(&cls);
+			} else {
+				emitter__Transpiler_write_line(t, builtin__string_plus_many(3, _MOV((string[3]){_S("mut "), v_var, _S(" := rt.new_null()")})));
+			}
+		}
+	}
+	builtin__println(_S("  - visit_stmt loop start"));
+	GC_reachable_here(&t);
+	GC_reachable_here(&stmts);
+	GC_reachable_here(&local_stmts);
+	GC_reachable_here(&ref_vars);
+	GC_reachable_here(&ass_vars);
+	for (int _t11 = 0; _t11 < local_stmts.len; ++_t11) {
+		ast__AstNode stmt = ((ast__AstNode*)local_stmts.data)[_t11];
+		emitter__Transpiler_visit_stmt(t, (voidptr)&stmt);
 		GC_reachable_here(&stmt);
 	}
+	builtin__println(_S("  - visit_stmt loop end"));
+	GC_reachable_here(&t);
+	GC_reachable_here(&stmts);
+	GC_reachable_here(&local_stmts);
+	GC_reachable_here(&ref_vars);
+	GC_reachable_here(&ass_vars);
 	bool old_is_in_func = t->is_in_func;
 	t->is_in_func = true;
-	Map_string_bool _t7 = t->undeclared_classes;
-	int _t9 = _t7.key_values.len;
-	for (int _t8 = 0; _t8 < _t9; ++_t8 ) {
-		int _t10 = _t7.key_values.len - _t9;
-		_t9 = _t7.key_values.len;
-		if (_t10 < 0) {
-			_t8 = -1;
+	Map_string_bool _t12 = t->undeclared_classes;
+	int _t14 = _t12.key_values.len;
+	for (int _t13 = 0; _t13 < _t14; ++_t13 ) {
+		int _t15 = _t12.key_values.len - _t14;
+		_t14 = _t12.key_values.len;
+		if (_t15 < 0) {
+			_t13 = -1;
 			continue;
 		}
-		if (!builtin__DenseArray_has_index(&_t7.key_values, _t8)) {continue;}
-		string name = *(string*)builtin__DenseArray_key(&_t7.key_values, _t8);
+		if (!builtin__DenseArray_has_index(&_t12.key_values, _t13)) {continue;}
+		string name = *(string*)builtin__DenseArray_key(&_t12.key_values, _t13);
 		name = builtin__string_clone(name);
 		if ((*(bool*)builtin__map_get(ADDR(map, t->declared_classes), &(string[]){name}, &(bool[]){ 0 }))) {
 			continue;
 		}
-		emitter__ClassInfo _t11 = ((emitter__ClassInfo){
+		emitter__ClassInfo _t16 = ((emitter__ClassInfo){
 			.name = name,
 			.extends = _S(""),
 			.implements = builtin____new_array(0, 0, sizeof(string)),
@@ -23571,9 +26365,9 @@ string emitter__Transpiler_transpile(emitter__Transpiler* t, Array_ast__AstNode 
 			.const_types = builtin__new_map(sizeof(string), sizeof(emitter__VarType), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string),
 			.prop_defaults = builtin__new_map(sizeof(string), sizeof(string), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string),
 		});
-		emitter__ClassInfo new_cls = _t11;
+		emitter__ClassInfo new_cls = _t16;
 		if (_SLIT_EQ(name.str, name.len, "Exception")) {
-			_PUSH_MANY(&new_cls.props, (builtin__new_array_from_c_array(4, 4, sizeof(string), _MOV((string[4]){_S("message"), _S("code"), _S("file"), _S("line")}))), _t12, Array_string);
+			_PUSH_MANY(&new_cls.props, (builtin__new_array_from_c_array(4, 4, sizeof(string), _MOV((string[4]){_S("message"), _S("code"), _S("file"), _S("line")}))), _t17, Array_string);
 			(*(emitter__VarType*)builtin__map_get_and_set((map*)&new_cls.prop_types, &(string[]){_S("message")}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			(*(emitter__VarType*)builtin__map_get_and_set((map*)&new_cls.prop_types, &(string[]){_S("code")}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = ((emitter__VarType){.tag = emitter__TypeTag__t_int,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			(*(emitter__VarType*)builtin__map_get_and_set((map*)&new_cls.prop_types, &(string[]){_S("file")}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = ((emitter__VarType){.tag = emitter__TypeTag__t_string,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
@@ -23585,8 +26379,8 @@ string emitter__Transpiler_transpile(emitter__Transpiler* t, Array_ast__AstNode 
 		new_cls.all_props = builtin__array_clone_to_depth(&new_cls.props, 1);
 		new_cls.all_methods = builtin__array_clone_to_depth(&new_cls.methods, 0);
 		bool cls_found = false;
-		for (int _t15 = 0; _t15 < t->classes.len; ++_t15) {
-			emitter__ClassInfo cls = ((emitter__ClassInfo*)t->classes.data)[_t15];
+		for (int _t20 = 0; _t20 < t->classes.len; ++_t20) {
+			emitter__ClassInfo cls = ((emitter__ClassInfo*)t->classes.data)[_t20];
 			if (builtin__string__eq(cls.name, new_cls.name)) {
 				cls_found = true;
 				break;
@@ -23604,8 +26398,8 @@ string emitter__Transpiler_transpile(emitter__Transpiler* t, Array_ast__AstNode 
 		if (new_cls.props.len > 0) {
 			emitter__Transpiler_write_line(t, _S("pub mut:"));
 			t->indent++;
-			for (int _t17 = 0; _t17 < new_cls.props.len; ++_t17) {
-				string prop = ((string*)new_cls.props.data)[_t17];
+			for (int _t22 = 0; _t22 < new_cls.props.len; ++_t22) {
+				string prop = ((string*)new_cls.props.data)[_t22];
 				emitter__Transpiler_write_indent(t);
 				GC_reachable_here(&prop);
 				if (_SLIT_EQ(name.str, name.len, "Exception")) {
@@ -23677,6 +26471,52 @@ string emitter__Transpiler_transpile(emitter__Transpiler* t, Array_ast__AstNode 
 	}
 	return strings__Builder_str(&t->out);
 }
+VV_LOC bool emitter__Transpiler_has_exit_or_die(emitter__Transpiler t, Array_ast__AstNode stmts) {
+	for (int _t1 = 0; _t1 < stmts.len; ++_t1) {
+		ast__AstNode stmt = ((ast__AstNode*)stmts.data)[_t1];
+		if (builtin__fast_string_eq(stmt.node_type, _S("Expr_Exit"))) {
+			return true;
+		}
+		_option_ast__AstNode_ptr _t3 = {0};
+		if (_t3 = stmt.expr, _t3.state == 0) {
+			ast__AstNode* expr = *(ast__AstNode**)_t3.data;
+			GC_reachable_here(&expr);
+			if (emitter__Transpiler_has_exit_or_die(t, builtin__new_array_from_c_array(1, 1, sizeof(ast__AstNode), _MOV((ast__AstNode[1]){*expr})))) {
+				return true;
+			}
+		}
+		if (stmt.stmts.len > 0) {
+			if (emitter__Transpiler_has_exit_or_die(t, stmt.stmts)) {
+				return true;
+			}
+		}
+		if (stmt.elseifs.len > 0) {
+			for (int _t6 = 0; _t6 < stmt.elseifs.len; ++_t6) {
+				ast__AstNode ei = ((ast__AstNode*)stmt.elseifs.data)[_t6];
+				if (emitter__Transpiler_has_exit_or_die(t, ei.stmts)) {
+					return true;
+				}
+			}
+		}
+		_option_ast__AstNode_ptr _t8 = {0};
+		if (_t8 = stmt.__v_else, _t8.state == 0) {
+			ast__AstNode* else_node = *(ast__AstNode**)_t8.data;
+			GC_reachable_here(&else_node);
+			if (emitter__Transpiler_has_exit_or_die(t, else_node->stmts)) {
+				return true;
+			}
+		}
+		if (stmt.catches.len > 0) {
+			for (int _t10 = 0; _t10 < stmt.catches.len; ++_t10) {
+				ast__AstNode c = ((ast__AstNode*)stmt.catches.data)[_t10];
+				if (emitter__Transpiler_has_exit_or_die(t, c.stmts)) {
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
 VV_LOC strings__Builder* emitter__Transpiler_current_builder(emitter__Transpiler* t) {
 	if (t->is_in_closure_body) {
 		return &t->closure_body_builder;
@@ -23693,12 +26533,15 @@ VV_LOC void emitter__Transpiler_write_indent(emitter__Transpiler* t) {
 		builtin__array_clear(&t->pre_stmts);
 		GC_reachable_here(&pre);
 		strings__Builder* b = emitter__Transpiler_current_builder(t);
+		string indent_str = builtin__string_repeat(_S("\t"), t->indent);
 		for (int _t1 = 0; _t1 < pre.len; ++_t1) {
 			string stmt = ((string*)pre.data)[_t1];
-			string indent_str = builtin__string_repeat(_S("\t"), t->indent);
-			strings__Builder_writeln(b, builtin__string_plus_many(2, _MOV((string[2]){indent_str, stmt})));
-			GC_reachable_here(&stmt);
-			GC_reachable_here(&indent_str);
+			Array_string _t2 = builtin__string_split(stmt, _S("\n"));
+			for (int _t3 = 0; _t3 < _t2.len; ++_t3) {
+				string line = ((string*)_t2.data)[_t3];
+				strings__Builder_writeln(b, builtin__string_plus_many(2, _MOV((string[2]){indent_str, line})));
+				GC_reachable_here(&line);
+			}
 		}
 	}
 	string indent_str = builtin__string_repeat(_S("\t"), t->indent);
@@ -23799,10 +26642,14 @@ VV_LOC string emitter__prop_v_name(string prop_name) {
 	return prop_name;
 }
 VV_LOC string emitter__func_v_name(string name) {
-	if (emitter__is_v_keyword(name) || (_SLIT_EQ(name.str, name.len, "print") || _SLIT_EQ(name.str, name.len, "println") || _SLIT_EQ(name.str, name.len, "error") || _SLIT_EQ(name.str, name.len, "panic") || _SLIT_EQ(name.str, name.len, "exit"))) {
-		return builtin__string_plus_many(2, _MOV((string[2]){_S("func_"), name}));
+	string lower_name = builtin__string_to_lower(name);
+	if (emitter__is_v_keyword(lower_name) || (_SLIT_EQ(lower_name.str, lower_name.len, "print") || _SLIT_EQ(lower_name.str, lower_name.len, "println") || _SLIT_EQ(lower_name.str, lower_name.len, "error") || _SLIT_EQ(lower_name.str, lower_name.len, "panic") || _SLIT_EQ(lower_name.str, lower_name.len, "exit"))) {
+		return builtin__string_plus_many(2, _MOV((string[2]){_S("func_"), lower_name}));
 	}
-	return name;
+	if (builtin__string_starts_with(lower_name, _S("_"))) {
+		return builtin__string__plus(_S("f"), lower_name);
+	}
+	return lower_name;
 }
 VV_LOC string emitter__method_v_name(string method_name) {
 	if (builtin__string_starts_with(method_name, _S("__"))) {
@@ -23896,65 +26743,283 @@ VV_LOC _option_Map_string_emitter__VarType emitter__Transpiler_param_types_for_m
 void emitter__Transpiler_scan_global_constants(emitter__Transpiler* t, Array_ast__AstNode stmts) {
 	for (int _t1 = 0; _t1 < stmts.len; ++_t1) {
 		ast__AstNode stmt = ((ast__AstNode*)stmts.data)[_t1];
+		emitter__Transpiler_scan_global_constants_rec(t, &stmt);
+		GC_reachable_here(&stmt);
+	}
+}
+VV_LOC void emitter__Transpiler_scan_global_constants_rec(emitter__Transpiler* t, ast__AstNode* node) {
 
-		if (builtin__fast_string_eq(stmt.node_type, _const_ast__node_stmt_const)) {
-			for (int _t2 = 0; _t2 < stmt.consts.len; ++_t2) {
-				ast__ConstItem c = ((ast__ConstItem*)stmt.consts.data)[_t2];
-				emitter__VarType val_type = emitter__Transpiler_get_expr_type(t, c.value);
-				(*(emitter__GlobalConst*)builtin__map_get_and_set((map*)&t->global_constants, &(string[]){c.name}, &(emitter__GlobalConst[]){ (emitter__GlobalConst){.name = (string){.str=(byteptr)"", .is_lit=1},.val_expr = (string){.str=(byteptr)"", .is_lit=1},.typ = (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,},} })) = ((emitter__GlobalConst){.name = builtin__string__plus(_S("global_const_"), builtin__string_to_lower(c.name)),.val_expr = (string){.str=(byteptr)"", .is_lit=1},.typ = val_type,});
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_const)) {
+		for (int _t1 = 0; _t1 < node->consts.len; ++_t1) {
+			ast__ConstItem c = ((ast__ConstItem*)node->consts.data)[_t1];
+			emitter__VarType val_type = emitter__Transpiler_get_expr_type(t, (voidptr)&c.value);
+			string val_expr = _S("");
+			_option_string _t2 = {0};
+			if (_t2 = emitter__Transpiler_eval_static_path(t, (voidptr)&c.value), _t2.state == 0) {
+				string static_val = *(string*)_t2.data;
+				GC_reachable_here(&static_val);
+				val_expr = builtin__string_plus_many(3, _MOV((string[3]){_S("'"), static_val, _S("'")}));
+			} else {
+				val_expr = emitter__Transpiler_visit_expr(t, (voidptr)&c.value);
 			}
+			(*(emitter__GlobalConst*)builtin__map_get_and_set((map*)&t->global_constants, &(string[]){c.name}, &(emitter__GlobalConst[]){ (emitter__GlobalConst){.name = (string){.str=(byteptr)"", .is_lit=1},.val_expr = (string){.str=(byteptr)"", .is_lit=1},.typ = (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,},} })) = ((emitter__GlobalConst){.name = builtin__string__plus(_S("global_const_"), builtin__string_to_lower(c.name)),.val_expr = val_expr,.typ = val_type,});
 		}
-		else if (builtin__fast_string_eq(stmt.node_type, _const_ast__node_stmt_expression)) {
-			_option_ast__AstNode_ptr *_t3 = &stmt.expr;
-			if (_t3->state != 0) {
-				continue;
-			}
-			ast__AstNode* expr = (*(ast__AstNode**)_t3->data);
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_expression)) {
+		_option_ast__AstNode_ptr _t3 = {0};
+		if (_t3 = node->expr, _t3.state == 0) {
+			ast__AstNode* expr = *(ast__AstNode**)_t3.data;
+			GC_reachable_here(&expr);
 			if (builtin__fast_string_eq(expr->node_type, _S("Expr_FuncCall")) && builtin__fast_string_eq(expr->name, _S("define"))) {
 				if (expr->args.len >= 2) {
 					_option_ast__AstNode_ptr *_t4 = ADDR(_option_ast__AstNode_ptr, (*(ast__AstNode*)builtin__array_get(expr->args, 0)).expr);
 					if (_t4->state != 0) {
-						continue;
+						return;
 					}
 					ast__AstNode* name_node = (*(ast__AstNode**)_t4->data);
 					_option_ast__AstNode_ptr *_t5 = ADDR(_option_ast__AstNode_ptr, (*(ast__AstNode*)builtin__array_get(expr->args, 1)).expr);
 					if (_t5->state != 0) {
-						continue;
+						return;
 					}
 					ast__AstNode* val_node = (*(ast__AstNode**)_t5->data);
 					if (builtin__fast_string_eq(name_node->node_type, _S("Scalar_String"))) {
-						emitter__VarType val_type = emitter__Transpiler_get_expr_type(t, *val_node);
-						(*(emitter__GlobalConst*)builtin__map_get_and_set((map*)&t->global_constants, &(string[]){name_node->value}, &(emitter__GlobalConst[]){ (emitter__GlobalConst){.name = (string){.str=(byteptr)"", .is_lit=1},.val_expr = (string){.str=(byteptr)"", .is_lit=1},.typ = (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,},} })) = ((emitter__GlobalConst){.name = builtin__string__plus(_S("global_const_"), builtin__string_to_lower(name_node->value)),.val_expr = (string){.str=(byteptr)"", .is_lit=1},.typ = val_type,});
+						emitter__VarType val_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*val_node);
+						string val_expr = _S("");
+						_option_string _t6 = {0};
+						if (_t6 = emitter__Transpiler_eval_static_path(t, (voidptr)&*val_node), _t6.state == 0) {
+							string static_val = *(string*)_t6.data;
+							GC_reachable_here(&static_val);
+							val_expr = builtin__string_plus_many(3, _MOV((string[3]){_S("'"), static_val, _S("'")}));
+						} else {
+							val_expr = emitter__Transpiler_visit_expr(t, val_node);
+						}
+						(*(emitter__GlobalConst*)builtin__map_get_and_set((map*)&t->global_constants, &(string[]){name_node->value}, &(emitter__GlobalConst[]){ (emitter__GlobalConst){.name = (string){.str=(byteptr)"", .is_lit=1},.val_expr = (string){.str=(byteptr)"", .is_lit=1},.typ = (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,},} })) = ((emitter__GlobalConst){.name = builtin__string__plus(_S("global_const_"), builtin__string_to_lower(name_node->value)),.val_expr = val_expr,.typ = val_type,});
 					}
 				}
 			}
 		}
-		else {
-		}
+	}
+	else {
+	}
+	for (int i = 0; i < node->exprs.len; ++i) {
+		emitter__Transpiler_scan_global_constants_rec(t, &(*(ast__AstNode*)builtin__array_get(node->exprs, i)));
+		GC_reachable_here(&i);
+	}
+	_option_ast__AstNode_ptr _t7 = {0};
+	if (_t7 = node->expr, _t7.state == 0) {
+		ast__AstNode* expr = *(ast__AstNode**)_t7.data;
+		GC_reachable_here(&expr);
+		emitter__Transpiler_scan_global_constants_rec(t, expr);
+		GC_reachable_here(&expr);
+	}
+	_option_ast__AstNode_ptr _t8 = {0};
+	if (_t8 = node->var, _t8.state == 0) {
+		ast__AstNode* val = *(ast__AstNode**)_t8.data;
+		GC_reachable_here(&val);
+		emitter__Transpiler_scan_global_constants_rec(t, val);
+		GC_reachable_here(&val);
+	}
+	_option_ast__AstNode_ptr _t9 = {0};
+	if (_t9 = node->left, _t9.state == 0) {
+		ast__AstNode* left = *(ast__AstNode**)_t9.data;
+		GC_reachable_here(&left);
+		emitter__Transpiler_scan_global_constants_rec(t, left);
+		GC_reachable_here(&left);
+	}
+	_option_ast__AstNode_ptr _t10 = {0};
+	if (_t10 = node->right, _t10.state == 0) {
+		ast__AstNode* right = *(ast__AstNode**)_t10.data;
+		GC_reachable_here(&right);
+		emitter__Transpiler_scan_global_constants_rec(t, right);
+		GC_reachable_here(&right);
+	}
+	_option_ast__AstNode_ptr _t11 = {0};
+	if (_t11 = node->cond, _t11.state == 0) {
+		ast__AstNode* cond = *(ast__AstNode**)_t11.data;
+		GC_reachable_here(&cond);
+		emitter__Transpiler_scan_global_constants_rec(t, cond);
+		GC_reachable_here(&cond);
+	}
+	for (int i = 0; i < node->stmts.len; ++i) {
+		emitter__Transpiler_scan_global_constants_rec(t, &(*(ast__AstNode*)builtin__array_get(node->stmts, i)));
+		GC_reachable_here(&i);
+	}
+	for (int i = 0; i < node->elseifs.len; ++i) {
+		emitter__Transpiler_scan_global_constants_rec(t, &(*(ast__AstNode*)builtin__array_get(node->elseifs, i)));
+		GC_reachable_here(&i);
+	}
+	_option_ast__AstNode_ptr _t12 = {0};
+	if (_t12 = node->__v_else, _t12.state == 0) {
+		ast__AstNode* el = *(ast__AstNode**)_t12.data;
+		GC_reachable_here(&el);
+		emitter__Transpiler_scan_global_constants_rec(t, el);
+		GC_reachable_here(&el);
+	}
+	_option_ast__AstNode_ptr _t13 = {0};
+	if (_t13 = node->__v_if, _t13.state == 0) {
+		ast__AstNode* iff = *(ast__AstNode**)_t13.data;
+		GC_reachable_here(&iff);
+		emitter__Transpiler_scan_global_constants_rec(t, iff);
+		GC_reachable_here(&iff);
+	}
+	for (int i = 0; i < node->catches.len; ++i) {
+		emitter__Transpiler_scan_global_constants_rec(t, &(*(ast__AstNode*)builtin__array_get(node->catches, i)));
+		GC_reachable_here(&i);
+	}
+	_option_ast__AstNode_ptr _t14 = {0};
+	if (_t14 = node->finally, _t14.state == 0) {
+		ast__AstNode* fin = *(ast__AstNode**)_t14.data;
+		GC_reachable_here(&fin);
+		emitter__Transpiler_scan_global_constants_rec(t, fin);
+		GC_reachable_here(&fin);
+	}
+	for (int i = 0; i < node->params.len; ++i) {
+		emitter__Transpiler_scan_global_constants_rec(t, &(*(ast__AstNode*)builtin__array_get(node->params, i)));
+		GC_reachable_here(&i);
+	}
+	for (int i = 0; i < node->args.len; ++i) {
+		emitter__Transpiler_scan_global_constants_rec(t, &(*(ast__AstNode*)builtin__array_get(node->args, i)));
+		GC_reachable_here(&i);
+	}
+	for (int i = 0; i < node->items.len; ++i) {
+		emitter__Transpiler_scan_global_constants_rec(t, &(*(ast__AstNode*)builtin__array_get(node->items, i)));
+		GC_reachable_here(&i);
+	}
+	_option_ast__AstNode_ptr _t15 = {0};
+	if (_t15 = node->key, _t15.state == 0) {
+		ast__AstNode* k = *(ast__AstNode**)_t15.data;
+		GC_reachable_here(&k);
+		emitter__Transpiler_scan_global_constants_rec(t, k);
+		GC_reachable_here(&k);
+	}
+	_option_ast__AstNode_ptr _t16 = {0};
+	if (_t16 = node->dim, _t16.state == 0) {
+		ast__AstNode* d = *(ast__AstNode**)_t16.data;
+		GC_reachable_here(&d);
+		emitter__Transpiler_scan_global_constants_rec(t, d);
+		GC_reachable_here(&d);
+	}
+	_option_ast__AstNode_ptr _t17 = {0};
+	if (_t17 = node->key_var, _t17.state == 0) {
+		ast__AstNode* kv = *(ast__AstNode**)_t17.data;
+		GC_reachable_here(&kv);
+		emitter__Transpiler_scan_global_constants_rec(t, kv);
+		GC_reachable_here(&kv);
+	}
+	_option_ast__AstNode_ptr _t18 = {0};
+	if (_t18 = node->value_var, _t18.state == 0) {
+		ast__AstNode* vv = *(ast__AstNode**)_t18.data;
+		GC_reachable_here(&vv);
+		emitter__Transpiler_scan_global_constants_rec(t, vv);
+		GC_reachable_here(&vv);
+	}
+	for (int i = 0; i < node->init.len; ++i) {
+		emitter__Transpiler_scan_global_constants_rec(t, &(*(ast__AstNode*)builtin__array_get(node->init, i)));
+		GC_reachable_here(&i);
+	}
+	for (int i = 0; i < node->conds.len; ++i) {
+		emitter__Transpiler_scan_global_constants_rec(t, &(*(ast__AstNode*)builtin__array_get(node->conds, i)));
+		GC_reachable_here(&i);
+	}
+	for (int i = 0; i < node->loop.len; ++i) {
+		emitter__Transpiler_scan_global_constants_rec(t, &(*(ast__AstNode*)builtin__array_get(node->loop, i)));
+		GC_reachable_here(&i);
+	}
+	for (int i = 0; i < node->props.len; ++i) {
+		emitter__Transpiler_scan_global_constants_rec(t, &(*(ast__AstNode*)builtin__array_get(node->props, i)));
+		GC_reachable_here(&i);
+	}
+	for (int i = 0; i < node->uses.len; ++i) {
+		emitter__Transpiler_scan_global_constants_rec(t, &(*(ast__AstNode*)builtin__array_get(node->uses, i)));
+		GC_reachable_here(&i);
+	}
+	for (int i = 0; i < node->vars.len; ++i) {
+		emitter__Transpiler_scan_global_constants_rec(t, &(*(ast__AstNode*)builtin__array_get(node->vars, i)));
+		GC_reachable_here(&i);
+	}
+	for (int i = 0; i < node->parts.len; ++i) {
+		emitter__Transpiler_scan_global_constants_rec(t, &(*(ast__AstNode*)builtin__array_get(node->parts, i)));
+		GC_reachable_here(&i);
+	}
+	for (int i = 0; i < node->cases.len; ++i) {
+		emitter__Transpiler_scan_global_constants_rec(t, &(*(ast__AstNode*)builtin__array_get(node->cases, i)));
+		GC_reachable_here(&i);
+	}
+	for (int i = 0; i < node->arms.len; ++i) {
+		emitter__Transpiler_scan_global_constants_rec(t, &(*(ast__AstNode*)builtin__array_get(node->arms, i)));
+		GC_reachable_here(&i);
+	}
+	_option_ast__AstNode_ptr _t19 = {0};
+	if (_t19 = node->body, _t19.state == 0) {
+		ast__AstNode* body = *(ast__AstNode**)_t19.data;
+		GC_reachable_here(&body);
+		emitter__Transpiler_scan_global_constants_rec(t, body);
+		GC_reachable_here(&body);
 	}
 }
-VV_LOC string emitter__get_prop_default_expr(ast__AstNode node) {
+VV_LOC string emitter__get_prop_default_expr(ast__AstNode* node) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_array)) {
-		return _S("rt.new_array()");
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_array)) {
+		bool is_list = true;
+		for (int _t1 = 0; _t1 < node->items.len; ++_t1) {
+			ast__AstNode item = ((ast__AstNode*)node->items.data)[_t1];
+			if ((item.key).state != 2) {
+				is_list = false;
+				break;
+			}
+		}
+		if (is_list) {
+			Array_string val_strs = builtin____new_array_with_default(0, 0, sizeof(string), 0);
+			for (int _t2 = 0; _t2 < node->items.len; ++_t2) {
+				ast__AstNode item = ((ast__AstNode*)node->items.data)[_t2];
+				_option_ast__AstNode_ptr _t3 = {0};
+				if (_t3 = item.expr, _t3.state == 0) {
+					ast__AstNode* val_node = *(ast__AstNode**)_t3.data;
+					GC_reachable_here(&val_node);
+					builtin__array_push((array*)&val_strs, _MOV((string[]){ emitter__get_prop_default_expr((voidptr)&*val_node) }));
+				}
+			}
+			return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.create_array_from_list([ "), Array_string_join(val_strs, _S(", ")), _S(" ])")}));
+		} else {
+			Array_string item_strs = builtin____new_array_with_default(0, 0, sizeof(string), 0);
+			for (int _t6 = 0; _t6 < node->items.len; ++_t6) {
+				ast__AstNode item = ((ast__AstNode*)node->items.data)[_t6];
+				_option_ast__AstNode_ptr _t7 = {0};
+				if (_t7 = item.expr, _t7.state == 0) {
+					ast__AstNode* val_node = *(ast__AstNode**)_t7.data;
+					GC_reachable_here(&val_node);
+					string val_expr = emitter__get_prop_default_expr((voidptr)&*val_node);
+					_option_ast__AstNode_ptr _t8 = {0};
+					if (_t8 = item.key, _t8.state == 0) {
+						ast__AstNode* key_node = *(ast__AstNode**)_t8.data;
+						GC_reachable_here(&key_node);
+						string key_expr = emitter__get_prop_default_expr((voidptr)&*key_node);
+						builtin__array_push((array*)&item_strs, _MOV((string[]){ builtin__string_plus_many(5, _MOV((string[5]){_S("rt.ArrayItem{ key: "), key_expr, _S(", val: "), val_expr, _S(" }")})) }));
+					} else {
+						builtin__array_push((array*)&item_strs, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){_S("rt.ArrayItem{ key: none, val: "), val_expr, _S(" }")})) }));
+					}
+				}
+			}
+			return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.create_array([ "), Array_string_join(item_strs, _S(", ")), _S(" ])")}));
+		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_string)) {
-		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_string('"), emitter__escape_single_quoted(node.value), _S("')")}));
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_string)) {
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_string('"), emitter__escape_single_quoted(node->value), _S("')")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_int)) {
-		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_int("), node.value, _S(")")}));
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_int)) {
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_int("), node->value, _S(")")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_float)) {
-		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_float("), node.value, _S(")")}));
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_float)) {
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("rt.new_float("), node->value, _S(")")}));
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_const)) {
-		if (builtin__string__eq(builtin__string_to_lower(node.name), _S("true"))) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_const)) {
+		if (builtin__string__eq(builtin__string_to_lower(node->name), _S("true"))) {
 			return _S("rt.new_bool(true)");
 		}
-		if (builtin__string__eq(builtin__string_to_lower(node.name), _S("false"))) {
+		if (builtin__string__eq(builtin__string_to_lower(node->name), _S("false"))) {
 			return _S("rt.new_bool(false)");
 		}
-		if (builtin__string__eq(builtin__string_to_lower(node.name), _S("null"))) {
+		if (builtin__string__eq(builtin__string_to_lower(node->name), _S("null"))) {
 			return _S("rt.new_null()");
 		}
 	}
@@ -23985,7 +27050,7 @@ void emitter__Transpiler_scan_classes(emitter__Transpiler* t, Array_ast__AstNode
 							ast__AstNode* default_node = *(ast__AstNode**)_t5.data;
 							GC_reachable_here(&default_node);
 							if (((voidptr)(default_node)) != 0) {
-								builtin__map_set(&prop_defaults, &(string[]){p.name}, &(string[]) { emitter__get_prop_default_expr(*default_node) });
+								builtin__map_set(&prop_defaults, &(string[]){p.name}, &(string[]) { emitter__get_prop_default_expr((voidptr)&*default_node) });
 							}
 						}
 					}
@@ -24007,7 +27072,7 @@ void emitter__Transpiler_scan_classes(emitter__Transpiler* t, Array_ast__AstNode
 				else if (builtin__fast_string_eq(member.node_type, _const_ast__node_stmt_class_const)) {
 					for (int _t10 = 0; _t10 < member.consts.len; ++_t10) {
 						ast__ConstItem c = ((ast__ConstItem*)member.consts.data)[_t10];
-						(*(emitter__VarType*)builtin__map_get_and_set((map*)&const_types, &(string[]){c.name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = emitter__Transpiler_get_expr_type(t, c.value);
+						(*(emitter__VarType*)builtin__map_get_and_set((map*)&const_types, &(string[]){c.name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = emitter__Transpiler_get_expr_type(t, (voidptr)&c.value);
 					}
 				}
 				else {
@@ -24135,10 +27200,13 @@ string emitter__Transpiler_get_v_var_name(emitter__Transpiler t, string php_var_
 		
 		return (*(string*)_t2.data);
 	}
+	if (_IN_MAP(ADDR(string, php_var_name), ADDR(map, t.reassigned_params))) {
+		return builtin__string__plus(_S("var_"), builtin__string_to_lower(php_var_name));
+	}
 	if (_IN_MAP(ADDR(string, php_var_name), ADDR(map, t.native_params)) || _IN_MAP(ADDR(string, php_var_name), ADDR(map, t.native_vars))) {
 		return php_var_name;
 	}
-	return builtin__string_plus_many(2, _MOV((string[2]){_S("var_"), php_var_name}));
+	return builtin__string__plus(_S("var_"), builtin__string_to_lower(php_var_name));
 }
 void emitter__Transpiler_scan_custom_functions(emitter__Transpiler* t, Array_ast__AstNode nodes) {
 	for (int _t1 = 0; _t1 < nodes.len; ++_t1) {
@@ -24164,9 +27232,16 @@ void emitter__Transpiler_scan_custom_functions(emitter__Transpiler* t, Array_ast
 		if (node.stmts.len > 0) {
 			emitter__Transpiler_scan_custom_functions(t, node.stmts);
 		}
-		_option_ast__AstNode_ptr _t5 = {0};
-		if (_t5 = node.__v_else, _t5.state == 0) {
-			ast__AstNode* else_node = *(ast__AstNode**)_t5.data;
+		if (builtin__fast_string_eq(node.node_type, _S("Stmt_If"))) {
+			for (int _t5 = 0; _t5 < node.elseifs.len; ++_t5) {
+				ast__AstNode elseif_node = ((ast__AstNode*)node.elseifs.data)[_t5];
+				emitter__Transpiler_scan_custom_functions(t, elseif_node.stmts);
+				GC_reachable_here(&elseif_node);
+			}
+		}
+		_option_ast__AstNode_ptr _t6 = {0};
+		if (_t6 = node.__v_else, _t6.state == 0) {
+			ast__AstNode* else_node = *(ast__AstNode**)_t6.data;
 			GC_reachable_here(&else_node);
 			emitter__Transpiler_scan_custom_functions(t, else_node->stmts);
 			GC_reachable_here(&else_node);
@@ -24220,218 +27295,218 @@ VV_LOC _option_emitter__VarType emitter__find_vartype_map_insensitive(Map_string
 VV_LOC void emitter__Transpiler_scan_dynamic_usages(emitter__Transpiler* t, Array_ast__AstNode nodes) {
 	for (int _t1 = 0; _t1 < nodes.len; ++_t1) {
 		ast__AstNode node = ((ast__AstNode*)nodes.data)[_t1];
-		emitter__Transpiler_scan_dynamic_usages_node(t, node);
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&node);
 		GC_reachable_here(&node);
 	}
 }
-VV_LOC void emitter__Transpiler_scan_dynamic_usages_node(emitter__Transpiler* t, ast__AstNode node) {
+VV_LOC void emitter__Transpiler_scan_dynamic_usages_node(emitter__Transpiler* t, ast__AstNode* node) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_new)) {
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_new)) {
 		_option_ast__AstNode_ptr _t1 = {0};
-		if (_t1 = node.class_expr, _t1.state == 0) {
+		if (_t1 = node->class_expr, _t1.state == 0) {
 			t->has_dynamic_new = true;
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_method_call)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_method_call)) {
 		_option_ast__AstNode_ptr _t2 = {0};
-		if (_t2 = node.name_expr, _t2.state == 0) {
+		if (_t2 = node->name_expr, _t2.state == 0) {
 			t->has_dynamic_method_call = true;
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_funccall)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_funccall)) {
 		_option_ast__AstNode_ptr _t3 = {0};
-		if (_t3 = node.expr, _t3.state == 0) {
+		if (_t3 = node->expr, _t3.state == 0) {
 			t->has_dynamic_func_call = true;
 		}
 	}
 	else {
 	}
 	_option_ast__AstNode_ptr _t4 = {0};
-	if (_t4 = node.expr, _t4.state == 0) {
+	if (_t4 = node->expr, _t4.state == 0) {
 		ast__AstNode* expr = *(ast__AstNode**)_t4.data;
 		GC_reachable_here(&expr);
-		emitter__Transpiler_scan_dynamic_usages_node(t, *expr);
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&*expr);
 		GC_reachable_here(&expr);
 	}
 	_option_ast__AstNode_ptr _t5 = {0};
-	if (_t5 = node.var, _t5.state == 0) {
+	if (_t5 = node->var, _t5.state == 0) {
 		ast__AstNode* var_node = *(ast__AstNode**)_t5.data;
 		GC_reachable_here(&var_node);
-		emitter__Transpiler_scan_dynamic_usages_node(t, *var_node);
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&*var_node);
 		GC_reachable_here(&var_node);
 	}
 	_option_ast__AstNode_ptr _t6 = {0};
-	if (_t6 = node.left, _t6.state == 0) {
+	if (_t6 = node->left, _t6.state == 0) {
 		ast__AstNode* left = *(ast__AstNode**)_t6.data;
 		GC_reachable_here(&left);
-		emitter__Transpiler_scan_dynamic_usages_node(t, *left);
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&*left);
 		GC_reachable_here(&left);
 	}
 	_option_ast__AstNode_ptr _t7 = {0};
-	if (_t7 = node.right, _t7.state == 0) {
+	if (_t7 = node->right, _t7.state == 0) {
 		ast__AstNode* right = *(ast__AstNode**)_t7.data;
 		GC_reachable_here(&right);
-		emitter__Transpiler_scan_dynamic_usages_node(t, *right);
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&*right);
 		GC_reachable_here(&right);
 	}
 	_option_ast__AstNode_ptr _t8 = {0};
-	if (_t8 = node.cond, _t8.state == 0) {
+	if (_t8 = node->cond, _t8.state == 0) {
 		ast__AstNode* cond = *(ast__AstNode**)_t8.data;
 		GC_reachable_here(&cond);
-		emitter__Transpiler_scan_dynamic_usages_node(t, *cond);
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&*cond);
 		GC_reachable_here(&cond);
 	}
 	_option_ast__AstNode_ptr _t9 = {0};
-	if (_t9 = node.__v_else, _t9.state == 0) {
+	if (_t9 = node->__v_else, _t9.state == 0) {
 		ast__AstNode* __v_else = *(ast__AstNode**)_t9.data;
 		GC_reachable_here(&__v_else);
-		emitter__Transpiler_scan_dynamic_usages_node(t, *__v_else);
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&*__v_else);
 		GC_reachable_here(&__v_else);
 	}
 	_option_ast__AstNode_ptr _t10 = {0};
-	if (_t10 = node.__v_if, _t10.state == 0) {
+	if (_t10 = node->__v_if, _t10.state == 0) {
 		ast__AstNode* __v_if = *(ast__AstNode**)_t10.data;
 		GC_reachable_here(&__v_if);
-		emitter__Transpiler_scan_dynamic_usages_node(t, *__v_if);
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&*__v_if);
 		GC_reachable_here(&__v_if);
 	}
 	_option_ast__AstNode_ptr _t11 = {0};
-	if (_t11 = node.finally, _t11.state == 0) {
+	if (_t11 = node->finally, _t11.state == 0) {
 		ast__AstNode* finally = *(ast__AstNode**)_t11.data;
 		GC_reachable_here(&finally);
-		emitter__Transpiler_scan_dynamic_usages_node(t, *finally);
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&*finally);
 		GC_reachable_here(&finally);
 	}
 	_option_ast__AstNode_ptr _t12 = {0};
-	if (_t12 = node.key, _t12.state == 0) {
+	if (_t12 = node->key, _t12.state == 0) {
 		ast__AstNode* key = *(ast__AstNode**)_t12.data;
 		GC_reachable_here(&key);
-		emitter__Transpiler_scan_dynamic_usages_node(t, *key);
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&*key);
 		GC_reachable_here(&key);
 	}
 	_option_ast__AstNode_ptr _t13 = {0};
-	if (_t13 = node.dim, _t13.state == 0) {
+	if (_t13 = node->dim, _t13.state == 0) {
 		ast__AstNode* dim = *(ast__AstNode**)_t13.data;
 		GC_reachable_here(&dim);
-		emitter__Transpiler_scan_dynamic_usages_node(t, *dim);
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&*dim);
 		GC_reachable_here(&dim);
 	}
 	_option_ast__AstNode_ptr _t14 = {0};
-	if (_t14 = node.key_var, _t14.state == 0) {
+	if (_t14 = node->key_var, _t14.state == 0) {
 		ast__AstNode* key_var = *(ast__AstNode**)_t14.data;
 		GC_reachable_here(&key_var);
-		emitter__Transpiler_scan_dynamic_usages_node(t, *key_var);
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&*key_var);
 		GC_reachable_here(&key_var);
 	}
 	_option_ast__AstNode_ptr _t15 = {0};
-	if (_t15 = node.value_var, _t15.state == 0) {
+	if (_t15 = node->value_var, _t15.state == 0) {
 		ast__AstNode* value_var = *(ast__AstNode**)_t15.data;
 		GC_reachable_here(&value_var);
-		emitter__Transpiler_scan_dynamic_usages_node(t, *value_var);
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&*value_var);
 		GC_reachable_here(&value_var);
 	}
 	_option_ast__AstNode_ptr _t16 = {0};
-	if (_t16 = node.body, _t16.state == 0) {
+	if (_t16 = node->body, _t16.state == 0) {
 		ast__AstNode* body = *(ast__AstNode**)_t16.data;
 		GC_reachable_here(&body);
-		emitter__Transpiler_scan_dynamic_usages_node(t, *body);
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&*body);
 		GC_reachable_here(&body);
 	}
 	_option_ast__AstNode_ptr _t17 = {0};
-	if (_t17 = node.default_val, _t17.state == 0) {
+	if (_t17 = node->default_val, _t17.state == 0) {
 		ast__AstNode* default_val = *(ast__AstNode**)_t17.data;
 		GC_reachable_here(&default_val);
-		emitter__Transpiler_scan_dynamic_usages_node(t, *default_val);
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&*default_val);
 		GC_reachable_here(&default_val);
 	}
-	for (int _t18 = 0; _t18 < node.exprs.len; ++_t18) {
-		ast__AstNode e = ((ast__AstNode*)node.exprs.data)[_t18];
-		emitter__Transpiler_scan_dynamic_usages_node(t, e);
+	for (int _t18 = 0; _t18 < node->exprs.len; ++_t18) {
+		ast__AstNode e = ((ast__AstNode*)node->exprs.data)[_t18];
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&e);
 		GC_reachable_here(&e);
 	}
-	for (int _t19 = 0; _t19 < node.stmts.len; ++_t19) {
-		ast__AstNode s = ((ast__AstNode*)node.stmts.data)[_t19];
-		emitter__Transpiler_scan_dynamic_usages_node(t, s);
+	for (int _t19 = 0; _t19 < node->stmts.len; ++_t19) {
+		ast__AstNode s = ((ast__AstNode*)node->stmts.data)[_t19];
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&s);
 		GC_reachable_here(&s);
 	}
-	for (int _t20 = 0; _t20 < node.elseifs.len; ++_t20) {
-		ast__AstNode ei = ((ast__AstNode*)node.elseifs.data)[_t20];
-		emitter__Transpiler_scan_dynamic_usages_node(t, ei);
+	for (int _t20 = 0; _t20 < node->elseifs.len; ++_t20) {
+		ast__AstNode ei = ((ast__AstNode*)node->elseifs.data)[_t20];
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&ei);
 		GC_reachable_here(&ei);
 	}
-	for (int _t21 = 0; _t21 < node.catches.len; ++_t21) {
-		ast__AstNode c = ((ast__AstNode*)node.catches.data)[_t21];
-		emitter__Transpiler_scan_dynamic_usages_node(t, c);
+	for (int _t21 = 0; _t21 < node->catches.len; ++_t21) {
+		ast__AstNode c = ((ast__AstNode*)node->catches.data)[_t21];
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&c);
 		GC_reachable_here(&c);
 	}
-	for (int _t22 = 0; _t22 < node.params.len; ++_t22) {
-		ast__AstNode p = ((ast__AstNode*)node.params.data)[_t22];
-		emitter__Transpiler_scan_dynamic_usages_node(t, p);
+	for (int _t22 = 0; _t22 < node->params.len; ++_t22) {
+		ast__AstNode p = ((ast__AstNode*)node->params.data)[_t22];
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&p);
 		GC_reachable_here(&p);
 	}
-	for (int _t23 = 0; _t23 < node.args.len; ++_t23) {
-		ast__AstNode a = ((ast__AstNode*)node.args.data)[_t23];
+	for (int _t23 = 0; _t23 < node->args.len; ++_t23) {
+		ast__AstNode a = ((ast__AstNode*)node->args.data)[_t23];
 		_option_ast__AstNode_ptr _t24 = {0};
 		if (_t24 = a.expr, _t24.state == 0) {
 			ast__AstNode* a_expr = *(ast__AstNode**)_t24.data;
 			GC_reachable_here(&a_expr);
-			emitter__Transpiler_scan_dynamic_usages_node(t, *a_expr);
+			emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&*a_expr);
 			GC_reachable_here(&a_expr);
 		}
 	}
-	for (int _t25 = 0; _t25 < node.items.len; ++_t25) {
-		ast__AstNode it = ((ast__AstNode*)node.items.data)[_t25];
-		emitter__Transpiler_scan_dynamic_usages_node(t, it);
+	for (int _t25 = 0; _t25 < node->items.len; ++_t25) {
+		ast__AstNode it = ((ast__AstNode*)node->items.data)[_t25];
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&it);
 		GC_reachable_here(&it);
 	}
-	for (int _t26 = 0; _t26 < node.init.len; ++_t26) {
-		ast__AstNode i = ((ast__AstNode*)node.init.data)[_t26];
-		emitter__Transpiler_scan_dynamic_usages_node(t, i);
+	for (int _t26 = 0; _t26 < node->init.len; ++_t26) {
+		ast__AstNode i = ((ast__AstNode*)node->init.data)[_t26];
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&i);
 		GC_reachable_here(&i);
 	}
-	for (int _t27 = 0; _t27 < node.conds.len; ++_t27) {
-		ast__AstNode cd = ((ast__AstNode*)node.conds.data)[_t27];
-		emitter__Transpiler_scan_dynamic_usages_node(t, cd);
+	for (int _t27 = 0; _t27 < node->conds.len; ++_t27) {
+		ast__AstNode cd = ((ast__AstNode*)node->conds.data)[_t27];
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&cd);
 		GC_reachable_here(&cd);
 	}
-	for (int _t28 = 0; _t28 < node.cases.len; ++_t28) {
-		ast__AstNode cs = ((ast__AstNode*)node.cases.data)[_t28];
-		emitter__Transpiler_scan_dynamic_usages_node(t, cs);
+	for (int _t28 = 0; _t28 < node->cases.len; ++_t28) {
+		ast__AstNode cs = ((ast__AstNode*)node->cases.data)[_t28];
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&cs);
 		GC_reachable_here(&cs);
 	}
-	for (int _t29 = 0; _t29 < node.arms.len; ++_t29) {
-		ast__AstNode am = ((ast__AstNode*)node.arms.data)[_t29];
-		emitter__Transpiler_scan_dynamic_usages_node(t, am);
+	for (int _t29 = 0; _t29 < node->arms.len; ++_t29) {
+		ast__AstNode am = ((ast__AstNode*)node->arms.data)[_t29];
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&am);
 		GC_reachable_here(&am);
 	}
-	for (int _t30 = 0; _t30 < node.loop.len; ++_t30) {
-		ast__AstNode l = ((ast__AstNode*)node.loop.data)[_t30];
-		emitter__Transpiler_scan_dynamic_usages_node(t, l);
+	for (int _t30 = 0; _t30 < node->loop.len; ++_t30) {
+		ast__AstNode l = ((ast__AstNode*)node->loop.data)[_t30];
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&l);
 		GC_reachable_here(&l);
 	}
-	for (int _t31 = 0; _t31 < node.props.len; ++_t31) {
-		ast__AstNode p = ((ast__AstNode*)node.props.data)[_t31];
-		emitter__Transpiler_scan_dynamic_usages_node(t, p);
+	for (int _t31 = 0; _t31 < node->props.len; ++_t31) {
+		ast__AstNode p = ((ast__AstNode*)node->props.data)[_t31];
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&p);
 		GC_reachable_here(&p);
 	}
-	for (int _t32 = 0; _t32 < node.uses.len; ++_t32) {
-		ast__AstNode u = ((ast__AstNode*)node.uses.data)[_t32];
-		emitter__Transpiler_scan_dynamic_usages_node(t, u);
+	for (int _t32 = 0; _t32 < node->uses.len; ++_t32) {
+		ast__AstNode u = ((ast__AstNode*)node->uses.data)[_t32];
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&u);
 		GC_reachable_here(&u);
 	}
-	for (int _t33 = 0; _t33 < node.vars.len; ++_t33) {
-		ast__AstNode v = ((ast__AstNode*)node.vars.data)[_t33];
-		emitter__Transpiler_scan_dynamic_usages_node(t, v);
+	for (int _t33 = 0; _t33 < node->vars.len; ++_t33) {
+		ast__AstNode v = ((ast__AstNode*)node->vars.data)[_t33];
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&v);
 		GC_reachable_here(&v);
 	}
-	for (int _t34 = 0; _t34 < node.parts.len; ++_t34) {
-		ast__AstNode p = ((ast__AstNode*)node.parts.data)[_t34];
-		emitter__Transpiler_scan_dynamic_usages_node(t, p);
+	for (int _t34 = 0; _t34 < node->parts.len; ++_t34) {
+		ast__AstNode p = ((ast__AstNode*)node->parts.data)[_t34];
+		emitter__Transpiler_scan_dynamic_usages_node(t, (voidptr)&p);
 		GC_reachable_here(&p);
 	}
 }
 VV_LOC void emitter__Transpiler_generate_registry_initializers(emitter__Transpiler* t) {
-	if (!t->has_dynamic_new && !t->has_dynamic_method_call && !t->has_dynamic_func_call) {
+	if (!t->has_dynamic_new && !t->has_dynamic_method_call && !t->has_dynamic_func_call && t->classes.len == 0) {
 		return;
 	}
 	Array_string lines = builtin____new_array_with_default(0, 0, sizeof(string), 0);
@@ -24479,7 +27554,7 @@ VV_LOC void emitter__Transpiler_generate_registry_initializers(emitter__Transpil
 				string arg_expr = builtin__string_plus_many(5, _MOV((string[5]){_S("if args.len > "), builtin__int_str(idx), _S(" { args["), builtin__int_str(idx), _S("] } else { rt.new_null() }")}));
 				string unboxed_expr = _S("");
 				if (emitter__VarType_is_scalar(ptype)) {
-					unboxed_expr = emitter__unbox_expr(arg_expr, ptype);
+					unboxed_expr = emitter__Transpiler_unbox_expr(*t, arg_expr, ptype);
 				} else {
 					unboxed_expr = arg_expr;
 				}
@@ -24500,8 +27575,11 @@ VV_LOC void emitter__Transpiler_generate_registry_initializers(emitter__Transpil
 			
 			emitter__VarType ret_type = (*(emitter__VarType*)_t13.data);
 			string call_stmt = builtin__string_plus_many(4, _MOV((string[4]){emitter__func_v_name(fname), _S("("), Array_string_join(pass_args, _S(", ")), _S(")")}));
-			if (emitter__VarType_is_scalar(ret_type)) {
-				string boxed = emitter__box_expr(call_stmt, ret_type);
+			if (ret_type.tag == emitter__TypeTag__t_void) {
+				builtin__array_push((array*)&lines, _MOV((string[]){ builtin__string_plus_many(2, _MOV((string[2]){_S("\t\t"), call_stmt})) }));
+				builtin__array_push((array*)&lines, _MOV((string[]){ _S("\t\treturn rt.new_null()") }));
+			} else if (emitter__VarType_is_scalar(ret_type)) {
+				string boxed = emitter__Transpiler_box_expr(*t, call_stmt, ret_type);
 				builtin__array_push((array*)&lines, _MOV((string[]){ builtin__string_plus_many(2, _MOV((string[2]){_S("\t\treturn "), boxed})) }));
 			} else {
 				builtin__array_push((array*)&lines, _MOV((string[]){ builtin__string_plus_many(2, _MOV((string[2]){_S("\t\treturn "), call_stmt})) }));
@@ -24510,54 +27588,54 @@ VV_LOC void emitter__Transpiler_generate_registry_initializers(emitter__Transpil
 		}
 	}
 	if (t->has_dynamic_new) {
-		for (int _t18 = 0; _t18 < t->classes.len; ++_t18) {
-			emitter__ClassInfo cls = ((emitter__ClassInfo*)t->classes.data)[_t18];
+		for (int _t20 = 0; _t20 < t->classes.len; ++_t20) {
+			emitter__ClassInfo cls = ((emitter__ClassInfo*)t->classes.data)[_t20];
 			string parents_expr = emitter__Transpiler_get_parents_expr(*t, cls.name);
 			builtin__array_push((array*)&lines, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){_S("\trt.register_class_factory('"), cls.name, _S("', fn(args []rt.PhpVal) rt.PhpVal {")})) }));
 			_option_emitter__MethodInfo construct_info = (_option_emitter__MethodInfo){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-			for (int _t20 = 0; _t20 < cls.all_methods.len; ++_t20) {
-				emitter__MethodInfo m = ((emitter__MethodInfo*)cls.all_methods.data)[_t20];
+			for (int _t22 = 0; _t22 < cls.all_methods.len; ++_t22) {
+				emitter__MethodInfo m = ((emitter__MethodInfo*)cls.all_methods.data)[_t22];
 				if (builtin__fast_string_eq(m.name, _S("__construct"))) {
-					_option_emitter__MethodInfo _t21;
-					builtin___option_ok(&(emitter__MethodInfo[]) { m }, (_option*)(&_t21), sizeof(emitter__MethodInfo));
-					construct_info = _t21;
+					_option_emitter__MethodInfo _t23;
+					builtin___option_ok(&(emitter__MethodInfo[]) { m }, (_option*)(&_t23), sizeof(emitter__MethodInfo));
+					construct_info = _t23;
 					break;
 				}
 			}
 			Array_string pass_args = builtin____new_array_with_default(0, 0, sizeof(string), 0);
-			_option_emitter__MethodInfo _t22 = {0};
-			if (_t22 = construct_info, _t22.state == 0) {
-				emitter__MethodInfo info = *(emitter__MethodInfo*)_t22.data;
+			_option_emitter__MethodInfo _t24 = {0};
+			if (_t24 = construct_info, _t24.state == 0) {
+				emitter__MethodInfo info = *(emitter__MethodInfo*)_t24.data;
 				GC_reachable_here(&info);
-				Map_string_emitter__VarType* _t24 = (Map_string_emitter__VarType*)(builtin__map_get_check(ADDR(map, cls.param_types), &(string[]){_S("__construct")}));
-				_option_Map_string_emitter__VarType _t23 = {0};
-				if (_t24) {
-					*((Map_string_emitter__VarType*)&_t23.data) = *((Map_string_emitter__VarType*)_t24);
+				Map_string_emitter__VarType* _t26 = (Map_string_emitter__VarType*)(builtin__map_get_check(ADDR(map, cls.param_types), &(string[]){_S("__construct")}));
+				_option_Map_string_emitter__VarType _t25 = {0};
+				if (_t26) {
+					*((Map_string_emitter__VarType*)&_t25.data) = *((Map_string_emitter__VarType*)_t26);
 				} else {
-					_t23.state = 2; _t23.err = builtin___v_error(_S("map key does not exist"));
+					_t25.state = 2; _t25.err = builtin___v_error(_S("map key does not exist"));
 				}
 				
-				if (_t23.state == 0) {
-					Map_string_emitter__VarType params_map = (*(Map_string_emitter__VarType*)_t23.data);
+				if (_t25.state == 0) {
+					Map_string_emitter__VarType params_map = (*(Map_string_emitter__VarType*)_t25.data);
 					GC_reachable_here(&params_map);
 					int param_idx = 0;
-					int _t26 = params_map.key_values.len;
-					for (int _t25 = 0; _t25 < _t26; ++_t25 ) {
-						int _t27 = params_map.key_values.len - _t26;
-						_t26 = params_map.key_values.len;
-						if (_t27 < 0) {
-							_t25 = -1;
+					int _t28 = params_map.key_values.len;
+					for (int _t27 = 0; _t27 < _t28; ++_t27 ) {
+						int _t29 = params_map.key_values.len - _t28;
+						_t28 = params_map.key_values.len;
+						if (_t29 < 0) {
+							_t27 = -1;
 							continue;
 						}
-						if (!builtin__DenseArray_has_index(&params_map.key_values, _t25)) {continue;}
-						emitter__VarType ptype = (*(emitter__VarType*)builtin__DenseArray_value(&params_map.key_values, _t25));
+						if (!builtin__DenseArray_has_index(&params_map.key_values, _t27)) {continue;}
+						emitter__VarType ptype = (*(emitter__VarType*)builtin__DenseArray_value(&params_map.key_values, _t27));
 						if (param_idx >= info.param_count) {
 							break;
 						}
 						string arg_expr = builtin__string_plus_many(5, _MOV((string[5]){_S("if args.len > "), builtin__int_str(param_idx), _S(" { args["), builtin__int_str(param_idx), _S("] } else { rt.new_null() }")}));
 						string unboxed_expr = _S("");
 						if (emitter__VarType_is_scalar(ptype)) {
-							unboxed_expr = emitter__unbox_expr(arg_expr, ptype);
+							unboxed_expr = emitter__Transpiler_unbox_expr(*t, arg_expr, ptype);
 						} else {
 							unboxed_expr = arg_expr;
 						}
@@ -24572,7 +27650,7 @@ VV_LOC void emitter__Transpiler_generate_registry_initializers(emitter__Transpil
 						param_idx++;
 					}
 				} else {
-					if (_t23.state == 2 && _t23.err._object != _const_none__._object) { builtin___v_free(_t23.err._object); }
+					if (_t25.state == 2 && _t25.err._object != _const_none__._object) { builtin___v_free(_t25.err._object); }
 					for (int i = 0; i < info.param_count; ++i) {
 						builtin__array_push((array*)&lines, _MOV((string[]){ builtin__string_plus_many(7, _MOV((string[7]){_S("\t\tc_arg_"), builtin__int_literal_str(i), _S(" := if args.len > "), builtin__int_literal_str(i), _S(" { args["), builtin__int_literal_str(i), _S("] } else { rt.new_null() }")})) }));
 						builtin__array_push((array*)&pass_args, _MOV((string[]){ builtin__string_plus_many(2, _MOV((string[2]){_S("c_arg_"), builtin__int_literal_str(i)})) }));
@@ -24584,6 +27662,28 @@ VV_LOC void emitter__Transpiler_generate_registry_initializers(emitter__Transpil
 			builtin__array_push((array*)&lines, _MOV((string[]){ _S("\t})") }));
 		}
 	}
+	for (int _t39 = 0; _t39 < t->classes.len; ++_t39) {
+		emitter__ClassInfo cls = ((emitter__ClassInfo*)t->classes.data)[_t39];
+		Array_string parent_list = builtin____new_array_with_default(0, 0, sizeof(string), 0);
+		if (cls.extends.len > 0) {
+			builtin__array_push((array*)&parent_list, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){_S("'"), cls.extends, _S("'")})) }));
+		}
+		for (int _t41 = 0; _t41 < cls.implements.len; ++_t41) {
+			string impl = ((string*)cls.implements.data)[_t41];
+			builtin__array_push((array*)&parent_list, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){_S("'"), impl, _S("'")})) }));
+		}
+		Array_string method_list = builtin____new_array_with_default(0, 0, sizeof(string), 0);
+		for (int _t43 = 0; _t43 < cls.all_methods.len; ++_t43) {
+			emitter__MethodInfo m = ((emitter__MethodInfo*)cls.all_methods.data)[_t43];
+			builtin__array_push((array*)&method_list, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){_S("'"), m.name, _S("'")})) }));
+		}
+		Array_string prop_list = builtin____new_array_with_default(0, 0, sizeof(string), 0);
+		for (int _t45 = 0; _t45 < cls.all_props.len; ++_t45) {
+			string p = ((string*)cls.all_props.data)[_t45];
+			builtin__array_push((array*)&prop_list, _MOV((string[]){ builtin__string_plus_many(3, _MOV((string[3]){_S("'"), p, _S("'")})) }));
+		}
+		builtin__array_push((array*)&lines, _MOV((string[]){ builtin__string_plus_many(9, _MOV((string[9]){_S("\trt.register_class_metadata('"), cls.name, _S("', ["), Array_string_join(parent_list, _S(", ")), _S("], ["), Array_string_join(method_list, _S(", ")), _S("], ["), Array_string_join(prop_list, _S(", ")), _S("])")})) }));
+	}
 	builtin__array_push((array*)&lines, _MOV((string[]){ _S("}") }));
 	builtin__array_push((array*)&lines, _MOV((string[]){ _S("") }));
 	builtin__array_push((array*)&lines, _MOV((string[]){ _S("fn init() {") }));
@@ -24594,9 +27694,220 @@ VV_LOC void emitter__Transpiler_generate_registry_initializers(emitter__Transpil
 	GC_reachable_here(&t);
 	GC_reachable_here(&lines);
 }
+string emitter__Transpiler_get_empty_literal(emitter__Transpiler t, emitter__VarType typ) {
+	if (typ.is_native_list) {
+		string elem = ((typ.element_type_tag == (emitter__TypeTag__t_int))? (_S("i64")) : (typ.element_type_tag == (emitter__TypeTag__t_float))? (_S("f64")) : (typ.element_type_tag == (emitter__TypeTag__t_string))? (_S("string")) : (typ.element_type_tag == (emitter__TypeTag__t_bool))? (_S("bool")) : (_S("rt.PhpVal")));
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("[]"), elem, _S("{}")}));
+	}
+	if (typ.is_native_map) {
+		string elem = ((typ.element_type_tag == (emitter__TypeTag__t_int))? (_S("i64")) : (typ.element_type_tag == (emitter__TypeTag__t_float))? (_S("f64")) : (typ.element_type_tag == (emitter__TypeTag__t_string))? (_S("string")) : (typ.element_type_tag == (emitter__TypeTag__t_bool))? (_S("bool")) : (_S("rt.PhpVal")));
+		return builtin__string_plus_many(3, _MOV((string[3]){_S("map[string]"), elem, _S("{}")}));
+	}
+	return _S("rt.new_null()");
+}
+string emitter__Transpiler_transpile_include_file(emitter__Transpiler* t, string path) {
+	string normalized = os__real_path(path);
+	builtin__println(builtin__string__plus(_S("Transpiling include: "), normalized));
+	GC_reachable_here(&t);
+	GC_reachable_here(&path);
+	GC_reachable_here(&normalized);
+	if (_IN_MAP(ADDR(string, normalized), ADDR(map, t->transpiled_includes))) {
+		return (*(string*)builtin__map_get(ADDR(map, t->transpiled_includes), &(string[]){normalized}, &(string[]){ (string){.str=(byteptr)"", .is_lit=1} }));
+	}
+	string func_name = emitter__Transpiler_get_safe_func_name(*t, normalized);
+	builtin__map_set(&t->transpiled_includes, &(string[]){normalized}, &(string[]) { func_name });
+	if ((t->parser_php_path).len == 0) {
+		builtin__eprintln(builtin__string__plus(_S("Warning: parser_php_path not set, cannot transpile include: "), path));
+		return func_name;
+	}
+	if (!os__exists(normalized)) {
+		builtin__eprintln(builtin__string__plus(_S("Warning: include file not found: "), normalized));
+		return func_name;
+	}
+	os__Result res = os__execute(builtin__string_plus_many(5, _MOV((string[5]){_S("php \""), t->parser_php_path, _S("\" \""), normalized, _S("\"")})));
+	if (res.exit_code != 0) {
+		builtin__eprintln(builtin__string_plus_many(4, _MOV((string[4]){_S("PHP parsing failed for include "), path, _S(": "), res.output})));
+		return func_name;
+	}
+	_result_Array_ast__AstNode _t5 = ast__parse_ast_json(res.output);
+	if (_t5.is_error) {
+		IError _t6 = _t5.err;
+		IError err = _t6;
+		builtin__eprintln(builtin__string_plus_many(3, _MOV((string[3]){_S("Failed to parse AST JSON for include "), path, builtin__str_intp(2, _MOV((StrIntpData[]){{_S(": "), 0xfe10, {.d_s = builtin__IError_str(err)}, 0, 0, 0}, {_SLIT0, 0, { .d_c = 0 }, 0, 0, 0}}))})));
+		return func_name;
+	}
+	
+ 	Array_ast__AstNode stmts = (*(Array_ast__AstNode*)_t5.data);
+	emitter__Transpiler sub_t = emitter__Transpiler__static__new();
+	sub_t.current_file = normalized;
+	sub_t.parser_php_path = t->parser_php_path;
+	sub_t.classes = builtin__array_clone_to_depth(&t->classes, 0);
+	sub_t.custom_functions = builtin__map_clone(&t->custom_functions);
+	sub_t.custom_function_infos = builtin__map_clone(&t->custom_function_infos);
+	sub_t.global_constants = builtin__map_clone(&t->global_constants);
+	sub_t.transpiled_includes = builtin__map_clone(&t->transpiled_includes);
+	string v_body = emitter__Transpiler_transpile(&sub_t, stmts);
+	t->classes = builtin__array_clone_to_depth(&sub_t.classes, 0);
+	t->custom_functions = builtin__map_clone(&sub_t.custom_functions);
+	t->custom_function_infos = builtin__map_clone(&sub_t.custom_function_infos);
+	t->global_constants = builtin__map_clone(&sub_t.global_constants);
+	t->transpiled_includes = builtin__map_clone(&sub_t.transpiled_includes);
+	strings__Builder_write_string(&t->include_funcs_code, strings__Builder_str(&sub_t.include_funcs_code));
+	GC_reachable_here(&t);
+	GC_reachable_here(&path);
+	GC_reachable_here(&normalized);
+	GC_reachable_here(&func_name);
+	GC_reachable_here(&res);
+	GC_reachable_here(&stmts);
+	GC_reachable_here(&sub_t);
+	GC_reachable_here(&v_body);
+	strings__Builder_write_string(&t->include_register_code, strings__Builder_str(&sub_t.include_register_code));
+	GC_reachable_here(&t);
+	GC_reachable_here(&path);
+	GC_reachable_here(&normalized);
+	GC_reachable_here(&func_name);
+	GC_reachable_here(&res);
+	GC_reachable_here(&stmts);
+	GC_reachable_here(&sub_t);
+	GC_reachable_here(&v_body);
+	string final_body = v_body;
+	string trimmed = builtin__string_trim_space(final_body);
+	if (!builtin__string_ends_with(trimmed, _S("return")) && !builtin__string_contains(builtin__string_all_after_last(trimmed, _S("\n")), _S("return"))) {
+		final_body = builtin__string__plus(final_body, _S("\treturn rt.new_null()\n"));
+	}
+	string sub_funcs = strings__Builder_str(&sub_t.func_out);
+	string func_code = _S("");
+	if ((sub_funcs).len != 0) {
+		func_code = builtin__string__plus(func_code, builtin__string__plus(sub_funcs, _S("\n")));
+	}
+	func_code = builtin__string__plus(func_code, builtin__string_plus_many(5, _MOV((string[5]){_S("fn "), func_name, _S("() rt.PhpVal {\n"), final_body, _S("}\n")})));
+	strings__Builder_write_string(&t->include_funcs_code, func_code);
+	GC_reachable_here(&t);
+	GC_reachable_here(&path);
+	GC_reachable_here(&normalized);
+	GC_reachable_here(&func_name);
+	GC_reachable_here(&res);
+	GC_reachable_here(&stmts);
+	GC_reachable_here(&sub_t);
+	GC_reachable_here(&v_body);
+	GC_reachable_here(&final_body);
+	GC_reachable_here(&trimmed);
+	GC_reachable_here(&sub_funcs);
+	GC_reachable_here(&func_code);
+	strings__Builder_writeln(&t->include_register_code, builtin__string_plus_many(5, _MOV((string[5]){_S("\trt.register_include(\'"), normalized, _S("\', "), func_name, _S(")")})));
+	GC_reachable_here(&t);
+	GC_reachable_here(&path);
+	GC_reachable_here(&normalized);
+	GC_reachable_here(&func_name);
+	GC_reachable_here(&res);
+	GC_reachable_here(&stmts);
+	GC_reachable_here(&sub_t);
+	GC_reachable_here(&v_body);
+	GC_reachable_here(&final_body);
+	GC_reachable_here(&trimmed);
+	GC_reachable_here(&sub_funcs);
+	GC_reachable_here(&func_code);
+	return func_name;
+}
+string emitter__Transpiler_get_safe_func_name(emitter__Transpiler t, string path) {
+	string s = builtin__string_to_lower(path);
+	s = builtin__string_replace(builtin__string_replace(builtin__string_replace(builtin__string_replace(builtin__string_replace(s, _S("/"), _S("_")), _S("\\"), _S("_")), _S("."), _S("_")), _S("-"), _S("_")), _S(":"), _S("_"));
+	return builtin__string__plus(_S("run_transpiled_include_"), s);
+}
+_option_string emitter__Transpiler_eval_static_path(emitter__Transpiler* t, ast__AstNode* node) {
+
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_string)) {
+		_option_string _t1;
+		builtin___option_ok(&(string[]) { node->value }, (_option*)(&_t1), sizeof(string));
+		 
+		return _t1;
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_dir)) {
+		if ((t->current_file).len != 0) {
+			_option_string _t2;
+			builtin___option_ok(&(string[]) { os__dir(os__real_path(t->current_file)) }, (_option*)(&_t2), sizeof(string));
+			 
+			return _t2;
+		}
+		_option_string _t3;
+		builtin___option_ok(&(string[]) { os__getwd() }, (_option*)(&_t3), sizeof(string));
+		 
+		return _t3;
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_magic_const_file)) {
+		if ((t->current_file).len != 0) {
+			_option_string _t4;
+			builtin___option_ok(&(string[]) { os__real_path(t->current_file) }, (_option*)(&_t4), sizeof(string));
+			 
+			return _t4;
+		}
+		_option_string _t5;
+		builtin___option_ok(&(string[]) { _S("") }, (_option*)(&_t5), sizeof(string));
+		 
+		return _t5;
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_const)) {
+		string name = node->name;
+		emitter__GlobalConst* _t7 = (emitter__GlobalConst*)(builtin__map_get_check(ADDR(map, t->global_constants), &(string[]){name}));
+		_option_emitter__GlobalConst _t6 = {0};
+		if (_t7) {
+			*((emitter__GlobalConst*)&_t6.data) = *((emitter__GlobalConst*)_t7);
+		} else {
+			_t6.state = 2; _t6.err = builtin___v_error(_S("map key does not exist"));
+		}
+		
+		if (_t6.state == 0) {
+			emitter__GlobalConst gc = (*(emitter__GlobalConst*)_t6.data);
+			GC_reachable_here(&gc);
+			string expr = gc.val_expr;
+			if ((builtin__string_starts_with(expr, _S("'")) && builtin__string_ends_with(expr, _S("'"))) || (builtin__string_starts_with(expr, _S("\"")) && builtin__string_ends_with(expr, _S("\"")))) {
+				_option_string _t8;
+				builtin___option_ok(&(string[]) { builtin__string_substr(expr, 1, expr.len - 1) }, (_option*)(&_t8), sizeof(string));
+				 
+				return _t8;
+			}
+		}
+			if (_t6.state == 2 && _t6.err._object != _const_none__._object) { builtin___v_free(_t6.err._object); }
+	}
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_concat)) {
+		_option_ast__AstNode_ptr *_t9 = &node->left;
+		if (_t9->state != 0) {
+			return (_option_string){ .state=2, .err=_const_none__, .data={E_STRUCT} };
+		}
+		ast__AstNode* left_node = (*(ast__AstNode**)_t9->data);
+		_option_ast__AstNode_ptr *_t11 = &node->right;
+		if (_t11->state != 0) {
+			return (_option_string){ .state=2, .err=_const_none__, .data={E_STRUCT} };
+		}
+		ast__AstNode* right_node = (*(ast__AstNode**)_t11->data);
+		_option_string _t13 = emitter__Transpiler_eval_static_path(t, (voidptr)&*left_node);
+		if (_t13.state != 0) {
+			return (_option_string){ .state=2, .err=_const_none__, .data={E_STRUCT} };
+		}
+		
+ 		string left_val = (*(string*)_t13.data);
+		_option_string _t15 = emitter__Transpiler_eval_static_path(t, (voidptr)&*right_node);
+		if (_t15.state != 0) {
+			return (_option_string){ .state=2, .err=_const_none__, .data={E_STRUCT} };
+		}
+		
+ 		string right_val = (*(string*)_t15.data);
+		_option_string _t17;
+		builtin___option_ok(&(string[]) { builtin__string__plus(left_val, right_val) }, (_option*)(&_t17), sizeof(string));
+		 
+		return _t17;
+	}
+	else {
+	}
+	return (_option_string){ .state=2, .err=_const_none__, .data={E_STRUCT} };
+}
 void emitter__Transpiler_analyze_types(emitter__Transpiler* t, Array_ast__AstNode stmts) {
 	emitter__AnalyzeCtx _t1 = ((emitter__AnalyzeCtx){.var_assign_types = builtin__new_map(sizeof(string), sizeof(Array_emitter__TypeTag), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string),.object_classes = builtin__new_map(sizeof(string), sizeof(Array_string), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string),.infer_types = true,});
 	emitter__AnalyzeCtx ctx = _t1;
+	builtin__println(_S("    - analyze_types Phase 1"));
+	GC_reachable_here(&t);
+	GC_reachable_here(&stmts);
+	GC_reachable_here(&ctx);
 	emitter__Transpiler_analyze_stmts_phase1(t, stmts, (voidptr)&ctx);
 	GC_reachable_here(&t);
 	GC_reachable_here(&stmts);
@@ -24630,11 +27941,23 @@ void emitter__Transpiler_analyze_types(emitter__Transpiler* t, Array_ast__AstNod
 			(*(emitter__VarType*)builtin__map_get_and_set((map*)&t->inferred_types, &(string[]){name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = ((emitter__VarType){.tag = emitter__TypeTag__t_object,.class_name = first_class,.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
 	}
+	builtin__println(_S("    - analyze_types Phase 2"));
+	GC_reachable_here(&t);
+	GC_reachable_here(&stmts);
+	GC_reachable_here(&ctx);
 	emitter__Transpiler_analyze_stmts_phase2(t, stmts);
 	GC_reachable_here(&t);
 	GC_reachable_here(&stmts);
 	GC_reachable_here(&ctx);
+	builtin__println(_S("    - analyze_types Phase 3"));
+	GC_reachable_here(&t);
+	GC_reachable_here(&stmts);
+	GC_reachable_here(&ctx);
 	emitter__Transpiler_analyze_func_types(t, stmts);
+	GC_reachable_here(&t);
+	GC_reachable_here(&stmts);
+	GC_reachable_here(&ctx);
+	builtin__println(_S("    - analyze_types Phase 4"));
 	GC_reachable_here(&t);
 	GC_reachable_here(&stmts);
 	GC_reachable_here(&ctx);
@@ -24689,45 +28012,45 @@ void emitter__Transpiler_analyze_types(emitter__Transpiler* t, Array_ast__AstNod
 VV_LOC void emitter__Transpiler_analyze_stmts_phase1(emitter__Transpiler* t, Array_ast__AstNode stmts, emitter__AnalyzeCtx* ctx) {
 	for (int _t1 = 0; _t1 < stmts.len; ++_t1) {
 		ast__AstNode stmt = ((ast__AstNode*)stmts.data)[_t1];
-		emitter__Transpiler_analyze_stmt_phase1(t, stmt, ctx);
+		emitter__Transpiler_analyze_stmt_phase1(t, (voidptr)&stmt, ctx);
 		GC_reachable_here(&stmt);
 	}
 }
-VV_LOC void emitter__Transpiler_analyze_stmt_phase1(emitter__Transpiler* t, ast__AstNode node, emitter__AnalyzeCtx* ctx) {
+VV_LOC void emitter__Transpiler_analyze_stmt_phase1(emitter__Transpiler* t, ast__AstNode* node, emitter__AnalyzeCtx* ctx) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_expression)) {
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_expression)) {
 		_option_ast__AstNode_ptr _t1 = {0};
-		if (_t1 = node.expr, _t1.state == 0) {
+		if (_t1 = node->expr, _t1.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t1.data;
 			GC_reachable_here(&expr);
 			if (ctx->infer_types) {
-				emitter__Transpiler_infer_expr_types(t, *expr, (voidptr)&ctx->var_assign_types);
+				emitter__Transpiler_infer_expr_types(t, (voidptr)&*expr, (voidptr)&ctx->var_assign_types);
 			}
-			emitter__Transpiler_scan_object_types_expr(t, *expr, (voidptr)&ctx->object_classes);
+			emitter__Transpiler_scan_object_types_expr(t, (voidptr)&*expr, (voidptr)&ctx->object_classes);
 			GC_reachable_here(&expr);
-			emitter__Transpiler_scan_mutations_expr(t, *expr);
+			emitter__Transpiler_scan_mutations_expr(t, (voidptr)&*expr);
 			GC_reachable_here(&expr);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_if)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_if)) {
 		if (ctx->infer_types) {
 			_option_ast__AstNode_ptr _t2 = {0};
-			if (_t2 = node.cond, _t2.state == 0) {
+			if (_t2 = node->cond, _t2.state == 0) {
 				ast__AstNode* cond = *(ast__AstNode**)_t2.data;
 				GC_reachable_here(&cond);
-				emitter__Transpiler_infer_expr_types(t, *cond, (voidptr)&ctx->var_assign_types);
+				emitter__Transpiler_infer_expr_types(t, (voidptr)&*cond, (voidptr)&ctx->var_assign_types);
 				GC_reachable_here(&cond);
 			}
 		}
-		emitter__Transpiler_analyze_stmts_phase1(t, node.stmts, ctx);
-		for (int _t3 = 0; _t3 < node.elseifs.len; ++_t3) {
-			ast__AstNode elseif = ((ast__AstNode*)node.elseifs.data)[_t3];
+		emitter__Transpiler_analyze_stmts_phase1(t, node->stmts, ctx);
+		for (int _t3 = 0; _t3 < node->elseifs.len; ++_t3) {
+			ast__AstNode elseif = ((ast__AstNode*)node->elseifs.data)[_t3];
 			if (ctx->infer_types) {
 				_option_ast__AstNode_ptr _t4 = {0};
 				if (_t4 = elseif.cond, _t4.state == 0) {
 					ast__AstNode* elseif_cond = *(ast__AstNode**)_t4.data;
 					GC_reachable_here(&elseif_cond);
-					emitter__Transpiler_infer_expr_types(t, *elseif_cond, (voidptr)&ctx->var_assign_types);
+					emitter__Transpiler_infer_expr_types(t, (voidptr)&*elseif_cond, (voidptr)&ctx->var_assign_types);
 					GC_reachable_here(&elseif_cond);
 				}
 			}
@@ -24735,81 +28058,81 @@ VV_LOC void emitter__Transpiler_analyze_stmt_phase1(emitter__Transpiler* t, ast_
 			GC_reachable_here(&elseif);
 		}
 		_option_ast__AstNode_ptr _t5 = {0};
-		if (_t5 = node.__v_else, _t5.state == 0) {
+		if (_t5 = node->__v_else, _t5.state == 0) {
 			ast__AstNode* el = *(ast__AstNode**)_t5.data;
 			GC_reachable_here(&el);
 			emitter__Transpiler_analyze_stmts_phase1(t, el->stmts, ctx);
 			GC_reachable_here(&el);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_while) || builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_do)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_while) || builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_do)) {
 		if (ctx->infer_types) {
 			_option_ast__AstNode_ptr _t6 = {0};
-			if (_t6 = node.cond, _t6.state == 0) {
+			if (_t6 = node->cond, _t6.state == 0) {
 				ast__AstNode* cond = *(ast__AstNode**)_t6.data;
 				GC_reachable_here(&cond);
-				emitter__Transpiler_infer_expr_types(t, *cond, (voidptr)&ctx->var_assign_types);
+				emitter__Transpiler_infer_expr_types(t, (voidptr)&*cond, (voidptr)&ctx->var_assign_types);
 				GC_reachable_here(&cond);
 			}
 		}
-		emitter__Transpiler_analyze_stmts_phase1(t, node.stmts, ctx);
+		emitter__Transpiler_analyze_stmts_phase1(t, node->stmts, ctx);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_for)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_for)) {
 		if (ctx->infer_types) {
-			for (int _t7 = 0; _t7 < node.init.len; ++_t7) {
-				ast__AstNode init = ((ast__AstNode*)node.init.data)[_t7];
-				emitter__Transpiler_infer_expr_types(t, init, (voidptr)&ctx->var_assign_types);
+			for (int _t7 = 0; _t7 < node->init.len; ++_t7) {
+				ast__AstNode init = ((ast__AstNode*)node->init.data)[_t7];
+				emitter__Transpiler_infer_expr_types(t, (voidptr)&init, (voidptr)&ctx->var_assign_types);
 				GC_reachable_here(&init);
 			}
-			for (int _t8 = 0; _t8 < node.conds.len; ++_t8) {
-				ast__AstNode cond = ((ast__AstNode*)node.conds.data)[_t8];
-				emitter__Transpiler_infer_expr_types(t, cond, (voidptr)&ctx->var_assign_types);
+			for (int _t8 = 0; _t8 < node->conds.len; ++_t8) {
+				ast__AstNode cond = ((ast__AstNode*)node->conds.data)[_t8];
+				emitter__Transpiler_infer_expr_types(t, (voidptr)&cond, (voidptr)&ctx->var_assign_types);
 				GC_reachable_here(&cond);
 			}
-			for (int _t9 = 0; _t9 < node.loop.len; ++_t9) {
-				ast__AstNode loop_expr = ((ast__AstNode*)node.loop.data)[_t9];
-				emitter__Transpiler_infer_expr_types(t, loop_expr, (voidptr)&ctx->var_assign_types);
+			for (int _t9 = 0; _t9 < node->loop.len; ++_t9) {
+				ast__AstNode loop_expr = ((ast__AstNode*)node->loop.data)[_t9];
+				emitter__Transpiler_infer_expr_types(t, (voidptr)&loop_expr, (voidptr)&ctx->var_assign_types);
 				GC_reachable_here(&loop_expr);
-				emitter__Transpiler_scan_mutations_expr(t, loop_expr);
+				emitter__Transpiler_scan_mutations_expr(t, (voidptr)&loop_expr);
 				GC_reachable_here(&loop_expr);
 			}
 		} else {
-			for (int _t10 = 0; _t10 < node.loop.len; ++_t10) {
-				ast__AstNode loop_expr = ((ast__AstNode*)node.loop.data)[_t10];
-				emitter__Transpiler_scan_mutations_expr(t, loop_expr);
+			for (int _t10 = 0; _t10 < node->loop.len; ++_t10) {
+				ast__AstNode loop_expr = ((ast__AstNode*)node->loop.data)[_t10];
+				emitter__Transpiler_scan_mutations_expr(t, (voidptr)&loop_expr);
 				GC_reachable_here(&loop_expr);
 			}
 		}
-		emitter__Transpiler_analyze_stmts_phase1(t, node.stmts, ctx);
+		emitter__Transpiler_analyze_stmts_phase1(t, node->stmts, ctx);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_foreach)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_foreach)) {
 		if (ctx->infer_types) {
 			_option_ast__AstNode_ptr _t11 = {0};
-			if (_t11 = node.expr, _t11.state == 0) {
+			if (_t11 = node->expr, _t11.state == 0) {
 				ast__AstNode* expr = *(ast__AstNode**)_t11.data;
 				GC_reachable_here(&expr);
-				emitter__Transpiler_infer_expr_types(t, *expr, (voidptr)&ctx->var_assign_types);
+				emitter__Transpiler_infer_expr_types(t, (voidptr)&*expr, (voidptr)&ctx->var_assign_types);
 				GC_reachable_here(&expr);
 			}
 			_option_ast__AstNode_ptr _t12 = {0};
-			if (_t12 = node.value_var, _t12.state == 0) {
+			if (_t12 = node->value_var, _t12.state == 0) {
 				ast__AstNode* val_var = *(ast__AstNode**)_t12.data;
 				GC_reachable_here(&val_var);
 				builtin__array_push_noscan((array*)&(*(Array_emitter__TypeTag*)builtin__map_get_and_set((map*)&ctx->var_assign_types, &(string[]){val_var->name}, &(Array_emitter__TypeTag[]){ builtin____new_array_noscan(0, 0, sizeof(emitter__TypeTag)) })), _MOV((emitter__TypeTag[]){ emitter__TypeTag__t_unknown }));
 			}
 			_option_ast__AstNode_ptr _t14 = {0};
-			if (_t14 = node.key_var, _t14.state == 0) {
+			if (_t14 = node->key_var, _t14.state == 0) {
 				ast__AstNode* key_var = *(ast__AstNode**)_t14.data;
 				GC_reachable_here(&key_var);
 				builtin__array_push_noscan((array*)&(*(Array_emitter__TypeTag*)builtin__map_get_and_set((map*)&ctx->var_assign_types, &(string[]){key_var->name}, &(Array_emitter__TypeTag[]){ builtin____new_array_noscan(0, 0, sizeof(emitter__TypeTag)) })), _MOV((emitter__TypeTag[]){ emitter__TypeTag__t_unknown }));
 			}
 		}
-		emitter__Transpiler_analyze_stmts_phase1(t, node.stmts, ctx);
+		emitter__Transpiler_analyze_stmts_phase1(t, node->stmts, ctx);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_try_catch)) {
-		emitter__Transpiler_analyze_stmts_phase1(t, node.stmts, ctx);
-		for (int _t16 = 0; _t16 < node.catches.len; ++_t16) {
-			ast__AstNode c = ((ast__AstNode*)node.catches.data)[_t16];
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_try_catch)) {
+		emitter__Transpiler_analyze_stmts_phase1(t, node->stmts, ctx);
+		for (int _t16 = 0; _t16 < node->catches.len; ++_t16) {
+			ast__AstNode c = ((ast__AstNode*)node->catches.data)[_t16];
 			if (ctx->infer_types) {
 				_option_ast__AstNode_ptr _t17 = {0};
 				if (_t17 = c.var, _t17.state == 0) {
@@ -24822,31 +28145,31 @@ VV_LOC void emitter__Transpiler_analyze_stmt_phase1(emitter__Transpiler* t, ast_
 			GC_reachable_here(&c);
 		}
 		_option_ast__AstNode_ptr _t19 = {0};
-		if (_t19 = node.finally, _t19.state == 0) {
+		if (_t19 = node->finally, _t19.state == 0) {
 			ast__AstNode* fin = *(ast__AstNode**)_t19.data;
 			GC_reachable_here(&fin);
 			emitter__Transpiler_analyze_stmts_phase1(t, fin->stmts, ctx);
 			GC_reachable_here(&fin);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_switch)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_switch)) {
 		if (ctx->infer_types) {
 			_option_ast__AstNode_ptr _t20 = {0};
-			if (_t20 = node.cond, _t20.state == 0) {
+			if (_t20 = node->cond, _t20.state == 0) {
 				ast__AstNode* cond = *(ast__AstNode**)_t20.data;
 				GC_reachable_here(&cond);
-				emitter__Transpiler_infer_expr_types(t, *cond, (voidptr)&ctx->var_assign_types);
+				emitter__Transpiler_infer_expr_types(t, (voidptr)&*cond, (voidptr)&ctx->var_assign_types);
 				GC_reachable_here(&cond);
 			}
 		}
-		for (int _t21 = 0; _t21 < node.cases.len; ++_t21) {
-			ast__AstNode case_node = ((ast__AstNode*)node.cases.data)[_t21];
+		for (int _t21 = 0; _t21 < node->cases.len; ++_t21) {
+			ast__AstNode case_node = ((ast__AstNode*)node->cases.data)[_t21];
 			if (ctx->infer_types) {
 				_option_ast__AstNode_ptr _t22 = {0};
 				if (_t22 = case_node.cond, _t22.state == 0) {
 					ast__AstNode* case_cond = *(ast__AstNode**)_t22.data;
 					GC_reachable_here(&case_cond);
-					emitter__Transpiler_infer_expr_types(t, *case_cond, (voidptr)&ctx->var_assign_types);
+					emitter__Transpiler_infer_expr_types(t, (voidptr)&*case_cond, (voidptr)&ctx->var_assign_types);
 					GC_reachable_here(&case_cond);
 				}
 			}
@@ -24854,24 +28177,24 @@ VV_LOC void emitter__Transpiler_analyze_stmt_phase1(emitter__Transpiler* t, ast_
 			GC_reachable_here(&case_node);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_namespace)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_namespace)) {
 		string old_ns = t->current_namespace;
-		t->current_namespace = node.name;
-		emitter__Transpiler_analyze_stmts_phase1(t, node.stmts, ctx);
+		t->current_namespace = node->name;
+		emitter__Transpiler_analyze_stmts_phase1(t, node->stmts, ctx);
 		GC_reachable_here(&old_ns);
 		t->current_namespace = old_ns;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_unset)) {
-		for (int _t23 = 0; _t23 < node.vars.len; ++_t23) {
-			ast__AstNode v = ((ast__AstNode*)node.vars.data)[_t23];
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_unset)) {
+		for (int _t23 = 0; _t23 < node->vars.len; ++_t23) {
+			ast__AstNode v = ((ast__AstNode*)node->vars.data)[_t23];
 			if (builtin__fast_string_eq(v.node_type, _S("Expr_Variable"))) {
 				builtin__map_set(&t->mutated_vars, &(string[]){v.name}, &(bool[]) { true });
 			}
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_use)) {
-		for (int _t24 = 0; _t24 < node.uses.len; ++_t24) {
-			ast__AstNode u = ((ast__AstNode*)node.uses.data)[_t24];
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_use)) {
+		for (int _t24 = 0; _t24 < node->uses.len; ++_t24) {
+			ast__AstNode u = ((ast__AstNode*)node->uses.data)[_t24];
 			string alias = u.alias;
 			if ((alias).len == 0) {
 				Array_string parts = builtin__string_split(u.name, _S("\\"));
@@ -24880,22 +28203,22 @@ VV_LOC void emitter__Transpiler_analyze_stmt_phase1(emitter__Transpiler* t, ast_
 			builtin__map_set(&t->use_aliases, &(string[]){alias}, &(string[]) { u.name });
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_function)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_function)) {
 		bool old_infer = ctx->infer_types;
 		ctx->infer_types = false;
-		emitter__Transpiler_analyze_stmts_phase1(t, node.stmts, ctx);
+		emitter__Transpiler_analyze_stmts_phase1(t, node->stmts, ctx);
 		ctx->infer_types = old_infer;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_class)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_class)) {
 		bool old_infer = ctx->infer_types;
 		ctx->infer_types = false;
-		emitter__Transpiler_analyze_stmts_phase1(t, node.stmts, ctx);
+		emitter__Transpiler_analyze_stmts_phase1(t, node->stmts, ctx);
 		ctx->infer_types = old_infer;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_class_method)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_class_method)) {
 		bool old_infer = ctx->infer_types;
 		ctx->infer_types = false;
-		emitter__Transpiler_analyze_stmts_phase1(t, node.stmts, ctx);
+		emitter__Transpiler_analyze_stmts_phase1(t, node->stmts, ctx);
 		ctx->infer_types = old_infer;
 	}
 	else {
@@ -24904,133 +28227,133 @@ VV_LOC void emitter__Transpiler_analyze_stmt_phase1(emitter__Transpiler* t, ast_
 VV_LOC void emitter__Transpiler_analyze_stmts_phase2(emitter__Transpiler* t, Array_ast__AstNode stmts) {
 	for (int _t1 = 0; _t1 < stmts.len; ++_t1) {
 		ast__AstNode stmt = ((ast__AstNode*)stmts.data)[_t1];
-		emitter__Transpiler_analyze_stmt_phase2(t, stmt);
+		emitter__Transpiler_analyze_stmt_phase2(t, (voidptr)&stmt);
 		GC_reachable_here(&stmt);
 	}
 }
-VV_LOC void emitter__Transpiler_analyze_stmt_phase2(emitter__Transpiler* t, ast__AstNode node) {
+VV_LOC void emitter__Transpiler_analyze_stmt_phase2(emitter__Transpiler* t, ast__AstNode* node) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_expression)) {
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_expression)) {
 		_option_ast__AstNode_ptr _t1 = {0};
-		if (_t1 = node.expr, _t1.state == 0) {
+		if (_t1 = node->expr, _t1.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t1.data;
 			GC_reachable_here(&expr);
-			emitter__Transpiler_scan_ctor_call_sites_expr(t, *expr);
+			emitter__Transpiler_scan_ctor_call_sites_expr(t, (voidptr)&*expr);
 			GC_reachable_here(&expr);
-			emitter__Transpiler_scan_method_call_sites_expr(t, *expr);
+			emitter__Transpiler_scan_method_call_sites_expr(t, (voidptr)&*expr);
 			GC_reachable_here(&expr);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_if)) {
-		emitter__Transpiler_analyze_stmts_phase2(t, node.stmts);
-		for (int _t2 = 0; _t2 < node.elseifs.len; ++_t2) {
-			ast__AstNode elseif = ((ast__AstNode*)node.elseifs.data)[_t2];
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_if)) {
+		emitter__Transpiler_analyze_stmts_phase2(t, node->stmts);
+		for (int _t2 = 0; _t2 < node->elseifs.len; ++_t2) {
+			ast__AstNode elseif = ((ast__AstNode*)node->elseifs.data)[_t2];
 			emitter__Transpiler_analyze_stmts_phase2(t, elseif.stmts);
 			GC_reachable_here(&elseif);
 		}
 		_option_ast__AstNode_ptr _t3 = {0};
-		if (_t3 = node.__v_else, _t3.state == 0) {
+		if (_t3 = node->__v_else, _t3.state == 0) {
 			ast__AstNode* el = *(ast__AstNode**)_t3.data;
 			GC_reachable_here(&el);
 			emitter__Transpiler_analyze_stmts_phase2(t, el->stmts);
 			GC_reachable_here(&el);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_while) || builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_do)) {
-		emitter__Transpiler_analyze_stmts_phase2(t, node.stmts);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_while) || builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_do)) {
+		emitter__Transpiler_analyze_stmts_phase2(t, node->stmts);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_for)) {
-		for (int _t4 = 0; _t4 < node.init.len; ++_t4) {
-			ast__AstNode init = ((ast__AstNode*)node.init.data)[_t4];
-			emitter__Transpiler_scan_ctor_call_sites_expr(t, init);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_for)) {
+		for (int _t4 = 0; _t4 < node->init.len; ++_t4) {
+			ast__AstNode init = ((ast__AstNode*)node->init.data)[_t4];
+			emitter__Transpiler_scan_ctor_call_sites_expr(t, (voidptr)&init);
 			GC_reachable_here(&init);
 		}
-		for (int _t5 = 0; _t5 < node.conds.len; ++_t5) {
-			ast__AstNode cond = ((ast__AstNode*)node.conds.data)[_t5];
-			emitter__Transpiler_scan_ctor_call_sites_expr(t, cond);
+		for (int _t5 = 0; _t5 < node->conds.len; ++_t5) {
+			ast__AstNode cond = ((ast__AstNode*)node->conds.data)[_t5];
+			emitter__Transpiler_scan_ctor_call_sites_expr(t, (voidptr)&cond);
 			GC_reachable_here(&cond);
 		}
-		for (int _t6 = 0; _t6 < node.loop.len; ++_t6) {
-			ast__AstNode loop_expr = ((ast__AstNode*)node.loop.data)[_t6];
-			emitter__Transpiler_scan_ctor_call_sites_expr(t, loop_expr);
+		for (int _t6 = 0; _t6 < node->loop.len; ++_t6) {
+			ast__AstNode loop_expr = ((ast__AstNode*)node->loop.data)[_t6];
+			emitter__Transpiler_scan_ctor_call_sites_expr(t, (voidptr)&loop_expr);
 			GC_reachable_here(&loop_expr);
-			emitter__Transpiler_scan_method_call_sites_expr(t, loop_expr);
+			emitter__Transpiler_scan_method_call_sites_expr(t, (voidptr)&loop_expr);
 			GC_reachable_here(&loop_expr);
 		}
-		emitter__Transpiler_analyze_stmts_phase2(t, node.stmts);
+		emitter__Transpiler_analyze_stmts_phase2(t, node->stmts);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_foreach)) {
-		emitter__Transpiler_analyze_stmts_phase2(t, node.stmts);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_foreach)) {
+		emitter__Transpiler_analyze_stmts_phase2(t, node->stmts);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_try_catch)) {
-		emitter__Transpiler_analyze_stmts_phase2(t, node.stmts);
-		for (int _t7 = 0; _t7 < node.catches.len; ++_t7) {
-			ast__AstNode c = ((ast__AstNode*)node.catches.data)[_t7];
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_try_catch)) {
+		emitter__Transpiler_analyze_stmts_phase2(t, node->stmts);
+		for (int _t7 = 0; _t7 < node->catches.len; ++_t7) {
+			ast__AstNode c = ((ast__AstNode*)node->catches.data)[_t7];
 			emitter__Transpiler_analyze_stmts_phase2(t, c.stmts);
 			GC_reachable_here(&c);
 		}
 		_option_ast__AstNode_ptr _t8 = {0};
-		if (_t8 = node.finally, _t8.state == 0) {
+		if (_t8 = node->finally, _t8.state == 0) {
 			ast__AstNode* fin = *(ast__AstNode**)_t8.data;
 			GC_reachable_here(&fin);
 			emitter__Transpiler_analyze_stmts_phase2(t, fin->stmts);
 			GC_reachable_here(&fin);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_switch)) {
-		for (int _t9 = 0; _t9 < node.cases.len; ++_t9) {
-			ast__AstNode case_node = ((ast__AstNode*)node.cases.data)[_t9];
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_switch)) {
+		for (int _t9 = 0; _t9 < node->cases.len; ++_t9) {
+			ast__AstNode case_node = ((ast__AstNode*)node->cases.data)[_t9];
 			emitter__Transpiler_analyze_stmts_phase2(t, case_node.stmts);
 			GC_reachable_here(&case_node);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_namespace)) {
-		emitter__Transpiler_analyze_stmts_phase2(t, node.stmts);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_namespace)) {
+		emitter__Transpiler_analyze_stmts_phase2(t, node->stmts);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_echo)) {
-		for (int _t10 = 0; _t10 < node.exprs.len; ++_t10) {
-			ast__AstNode expr = ((ast__AstNode*)node.exprs.data)[_t10];
-			emitter__Transpiler_scan_method_call_sites_expr(t, expr);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_echo)) {
+		for (int _t10 = 0; _t10 < node->exprs.len; ++_t10) {
+			ast__AstNode expr = ((ast__AstNode*)node->exprs.data)[_t10];
+			emitter__Transpiler_scan_method_call_sites_expr(t, (voidptr)&expr);
 			GC_reachable_here(&expr);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_return)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_return)) {
 		_option_ast__AstNode_ptr _t11 = {0};
-		if (_t11 = node.expr, _t11.state == 0) {
+		if (_t11 = node->expr, _t11.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t11.data;
 			GC_reachable_here(&expr);
-			emitter__Transpiler_scan_method_call_sites_expr(t, *expr);
+			emitter__Transpiler_scan_method_call_sites_expr(t, (voidptr)&*expr);
 			GC_reachable_here(&expr);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_function)) {
-		emitter__Transpiler_analyze_stmts_phase2(t, node.stmts);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_function)) {
+		emitter__Transpiler_analyze_stmts_phase2(t, node->stmts);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_class)) {
-		emitter__Transpiler_analyze_stmts_phase2(t, node.stmts);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_class)) {
+		emitter__Transpiler_analyze_stmts_phase2(t, node->stmts);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_class_method)) {
-		emitter__Transpiler_analyze_stmts_phase2(t, node.stmts);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_class_method)) {
+		emitter__Transpiler_analyze_stmts_phase2(t, node->stmts);
 	}
 	else {
 	}
 }
-VV_LOC emitter__TypeTag emitter__Transpiler_infer_expr_types(emitter__Transpiler* t, ast__AstNode node, Map_string_Array_emitter__TypeTag* var_assign_types) {
+VV_LOC emitter__TypeTag emitter__Transpiler_infer_expr_types(emitter__Transpiler* t, ast__AstNode* node, Map_string_Array_emitter__TypeTag* var_assign_types) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_int)) {
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_int)) {
 		return emitter__TypeTag__t_int;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_float)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_float)) {
 		return emitter__TypeTag__t_float;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_string)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_string)) {
 		return emitter__TypeTag__t_string;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_encapsed) || builtin__fast_string_eq(node.node_type, _const_ast__node_scalar_interpolated_string)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_encapsed) || builtin__fast_string_eq(node->node_type, _const_ast__node_scalar_interpolated_string)) {
 		return emitter__TypeTag__t_string;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_const)) {
-		string _t5 = builtin__string_to_lower(node.name);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_const)) {
+		string _t5 = builtin__string_to_lower(node->name);
 		
 		if (_SLIT_EQ(_t5.str, _t5.len, "true") || _SLIT_EQ(_t5.str, _t5.len, "false")) {
 			return emitter__TypeTag__t_bool;
@@ -25039,7 +28362,7 @@ VV_LOC emitter__TypeTag emitter__Transpiler_infer_expr_types(emitter__Transpiler
 			return emitter__TypeTag__t_null;
 		}
 		else {
-			emitter__GlobalConst* _t9 = (emitter__GlobalConst*)(builtin__map_get_check(ADDR(map, t->global_constants), &(string[]){node.name}));
+			emitter__GlobalConst* _t9 = (emitter__GlobalConst*)(builtin__map_get_check(ADDR(map, t->global_constants), &(string[]){node->name}));
 			_option_emitter__GlobalConst _t8 = {0};
 			if (_t9) {
 				*((emitter__GlobalConst*)&_t8.data) = *((emitter__GlobalConst*)_t9);
@@ -25056,12 +28379,12 @@ VV_LOC emitter__TypeTag emitter__Transpiler_infer_expr_types(emitter__Transpiler
 			return emitter__TypeTag__t_unknown;
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_variable)) {
-		if (builtin__fast_string_eq(node.name, _S("_GET")) || builtin__fast_string_eq(node.name, _S("_POST")) || builtin__fast_string_eq(node.name, _S("_SERVER")) || builtin__fast_string_eq(node.name, _S("_COOKIE")) || builtin__fast_string_eq(node.name, _S("_SESSION")) || builtin__fast_string_eq(node.name, _S("_REQUEST")) || builtin__fast_string_eq(node.name, _S("_ENV"))) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_variable)) {
+		if (builtin__fast_string_eq(node->name, _S("_GET")) || builtin__fast_string_eq(node->name, _S("_POST")) || builtin__fast_string_eq(node->name, _S("_SERVER")) || builtin__fast_string_eq(node->name, _S("_COOKIE")) || builtin__fast_string_eq(node->name, _S("_SESSION")) || builtin__fast_string_eq(node->name, _S("_REQUEST")) || builtin__fast_string_eq(node->name, _S("_ENV"))) {
 			return emitter__TypeTag__t_unknown;
 		}
 		emitter__TypeTag current_tag = emitter__TypeTag__t_unknown;
-		Array_emitter__TypeTag* _t14 = (Array_emitter__TypeTag*)(builtin__map_get_check((var_assign_types), &(string[]){node.name}));
+		Array_emitter__TypeTag* _t14 = (Array_emitter__TypeTag*)(builtin__map_get_check((var_assign_types), &(string[]){node->name}));
 		_option_Array_emitter__TypeTag _t13 = {0};
 		if (_t14) {
 			*((Array_emitter__TypeTag*)&_t13.data) = *((Array_emitter__TypeTag*)_t14);
@@ -25086,36 +28409,36 @@ VV_LOC emitter__TypeTag emitter__Transpiler_infer_expr_types(emitter__Transpiler
 			if (_t13.state == 2 && _t13.err._object != _const_none__._object) { builtin___v_free(_t13.err._object); }
 		return current_tag;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_assign)) {
-		_option_ast__AstNode_ptr *_t17 = &node.var;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign)) {
+		_option_ast__AstNode_ptr *_t17 = &node->var;
 		if (_t17->state != 0) {
 			return emitter__TypeTag__t_unknown;
 		}
 		ast__AstNode* var_node = (*(ast__AstNode**)_t17->data);
-		_option_ast__AstNode_ptr *_t19 = &node.expr;
+		_option_ast__AstNode_ptr *_t19 = &node->expr;
 		if (_t19->state != 0) {
 			return emitter__TypeTag__t_unknown;
 		}
 		ast__AstNode* expr_node = (*(ast__AstNode**)_t19->data);
-		emitter__TypeTag val_type = emitter__Transpiler_infer_expr_types(t, *expr_node, var_assign_types);
+		emitter__TypeTag val_type = emitter__Transpiler_infer_expr_types(t, (voidptr)&*expr_node, var_assign_types);
 		if (builtin__fast_string_eq(var_node->node_type, _S("Expr_Variable"))) {
 			builtin__array_push_noscan((array*)&(*(Array_emitter__TypeTag*)builtin__map_get_and_set((map*)var_assign_types, &(string[]){var_node->name}, &(Array_emitter__TypeTag[]){ builtin____new_array_noscan(0, 0, sizeof(emitter__TypeTag)) })), _MOV((emitter__TypeTag[]){ val_type }));
 		}
 		return val_type;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_plus) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_minus) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_mul) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_div) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_bitwise_and) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_bitwise_or) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_bitwise_xor) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_shift_left) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_shift_right)) {
-		_option_ast__AstNode_ptr *_t23 = &node.left;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_plus) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_minus) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_mul) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_div) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_bitwise_and) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_bitwise_or) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_bitwise_xor) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_shift_left) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_shift_right)) {
+		_option_ast__AstNode_ptr *_t23 = &node->left;
 		if (_t23->state != 0) {
 			return emitter__TypeTag__t_unknown;
 		}
 		ast__AstNode* left = (*(ast__AstNode**)_t23->data);
-		_option_ast__AstNode_ptr *_t25 = &node.right;
+		_option_ast__AstNode_ptr *_t25 = &node->right;
 		if (_t25->state != 0) {
 			return emitter__TypeTag__t_unknown;
 		}
 		ast__AstNode* right = (*(ast__AstNode**)_t25->data);
-		emitter__TypeTag l_type = emitter__Transpiler_infer_expr_types(t, *left, var_assign_types);
-		emitter__TypeTag r_type = emitter__Transpiler_infer_expr_types(t, *right, var_assign_types);
+		emitter__TypeTag l_type = emitter__Transpiler_infer_expr_types(t, (voidptr)&*left, var_assign_types);
+		emitter__TypeTag r_type = emitter__Transpiler_infer_expr_types(t, (voidptr)&*right, var_assign_types);
 		if (l_type == emitter__TypeTag__t_int && r_type == emitter__TypeTag__t_int) {
 			return emitter__TypeTag__t_int;
 		}
@@ -25124,155 +28447,155 @@ VV_LOC emitter__TypeTag emitter__Transpiler_infer_expr_types(emitter__Transpiler
 		}
 		return emitter__TypeTag__t_unknown;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_mod)) {
-		_option_ast__AstNode_ptr *_t30 = &node.left;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_mod)) {
+		_option_ast__AstNode_ptr *_t30 = &node->left;
 		if (_t30->state != 0) {
 			return emitter__TypeTag__t_unknown;
 		}
 		ast__AstNode* left = (*(ast__AstNode**)_t30->data);
-		_option_ast__AstNode_ptr *_t32 = &node.right;
+		_option_ast__AstNode_ptr *_t32 = &node->right;
 		if (_t32->state != 0) {
 			return emitter__TypeTag__t_unknown;
 		}
 		ast__AstNode* right = (*(ast__AstNode**)_t32->data);
-		emitter__TypeTag l_type = emitter__Transpiler_infer_expr_types(t, *left, var_assign_types);
-		emitter__TypeTag r_type = emitter__Transpiler_infer_expr_types(t, *right, var_assign_types);
+		emitter__TypeTag l_type = emitter__Transpiler_infer_expr_types(t, (voidptr)&*left, var_assign_types);
+		emitter__TypeTag r_type = emitter__Transpiler_infer_expr_types(t, (voidptr)&*right, var_assign_types);
 		if (l_type == emitter__TypeTag__t_int && r_type == emitter__TypeTag__t_int) {
 			return emitter__TypeTag__t_int;
 		}
 		return emitter__TypeTag__t_unknown;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_greater) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_smaller) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_greater_equal) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_smaller_equal) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_equal) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_identical)) {
-		_option_ast__AstNode_ptr *_t36 = &node.left;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_greater) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_smaller) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_greater_equal) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_smaller_equal) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_equal) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_identical)) {
+		_option_ast__AstNode_ptr *_t36 = &node->left;
 		if (_t36->state != 0) {
 			return emitter__TypeTag__t_unknown;
 		}
 		ast__AstNode* left = (*(ast__AstNode**)_t36->data);
-		_option_ast__AstNode_ptr *_t38 = &node.right;
+		_option_ast__AstNode_ptr *_t38 = &node->right;
 		if (_t38->state != 0) {
 			return emitter__TypeTag__t_unknown;
 		}
 		ast__AstNode* right = (*(ast__AstNode**)_t38->data);
-		emitter__Transpiler_infer_expr_types(t, *left, var_assign_types);
+		emitter__Transpiler_infer_expr_types(t, (voidptr)&*left, var_assign_types);
 		GC_reachable_here(&left);
 		GC_reachable_here(&right);
-		emitter__Transpiler_infer_expr_types(t, *right, var_assign_types);
+		emitter__Transpiler_infer_expr_types(t, (voidptr)&*right, var_assign_types);
 		GC_reachable_here(&left);
 		GC_reachable_here(&right);
 		return emitter__TypeTag__t_bool;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_bool_and) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_logical_and) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_bool_or) || builtin__fast_string_eq(node.node_type, _const_ast__node_bin_logical_or)) {
-		_option_ast__AstNode_ptr *_t41 = &node.left;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_bool_and) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_logical_and) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_bool_or) || builtin__fast_string_eq(node->node_type, _const_ast__node_bin_logical_or)) {
+		_option_ast__AstNode_ptr *_t41 = &node->left;
 		if (_t41->state != 0) {
 			return emitter__TypeTag__t_unknown;
 		}
 		ast__AstNode* left = (*(ast__AstNode**)_t41->data);
-		_option_ast__AstNode_ptr *_t43 = &node.right;
+		_option_ast__AstNode_ptr *_t43 = &node->right;
 		if (_t43->state != 0) {
 			return emitter__TypeTag__t_unknown;
 		}
 		ast__AstNode* right = (*(ast__AstNode**)_t43->data);
-		emitter__Transpiler_infer_expr_types(t, *left, var_assign_types);
+		emitter__Transpiler_infer_expr_types(t, (voidptr)&*left, var_assign_types);
 		GC_reachable_here(&left);
 		GC_reachable_here(&right);
-		emitter__Transpiler_infer_expr_types(t, *right, var_assign_types);
+		emitter__Transpiler_infer_expr_types(t, (voidptr)&*right, var_assign_types);
 		GC_reachable_here(&left);
 		GC_reachable_here(&right);
 		return emitter__TypeTag__t_bool;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_boolean_not)) {
-		_option_ast__AstNode_ptr *_t46 = &node.expr;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_boolean_not)) {
+		_option_ast__AstNode_ptr *_t46 = &node->expr;
 		if (_t46->state != 0) {
 			return emitter__TypeTag__t_unknown;
 		}
 		ast__AstNode* expr_node = (*(ast__AstNode**)_t46->data);
-		emitter__Transpiler_infer_expr_types(t, *expr_node, var_assign_types);
+		emitter__Transpiler_infer_expr_types(t, (voidptr)&*expr_node, var_assign_types);
 		GC_reachable_here(&expr_node);
 		return emitter__TypeTag__t_bool;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_ternary)) {
-		_option_ast__AstNode_ptr *_t49 = &node.cond;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_ternary)) {
+		_option_ast__AstNode_ptr *_t49 = &node->cond;
 		if (_t49->state != 0) {
 			return emitter__TypeTag__t_unknown;
 		}
 		ast__AstNode* cond = (*(ast__AstNode**)_t49->data);
-		emitter__Transpiler_infer_expr_types(t, *cond, var_assign_types);
+		emitter__Transpiler_infer_expr_types(t, (voidptr)&*cond, var_assign_types);
 		GC_reachable_here(&cond);
 		_option_ast__AstNode_ptr _t51 = {0};
-		if (_t51 = node.__v_if, _t51.state == 0) {
+		if (_t51 = node->__v_if, _t51.state == 0) {
 			ast__AstNode* if_node = *(ast__AstNode**)_t51.data;
 			GC_reachable_here(&if_node);
-			_option_ast__AstNode_ptr *_t52 = &node.__v_else;
+			_option_ast__AstNode_ptr *_t52 = &node->__v_else;
 			if (_t52->state != 0) {
 				return emitter__TypeTag__t_unknown;
 			}
 			ast__AstNode* else_node = (*(ast__AstNode**)_t52->data);
-			emitter__TypeTag if_type = emitter__Transpiler_infer_expr_types(t, *if_node, var_assign_types);
-			emitter__TypeTag else_type = emitter__Transpiler_infer_expr_types(t, *else_node, var_assign_types);
+			emitter__TypeTag if_type = emitter__Transpiler_infer_expr_types(t, (voidptr)&*if_node, var_assign_types);
+			emitter__TypeTag else_type = emitter__Transpiler_infer_expr_types(t, (voidptr)&*else_node, var_assign_types);
 			if (if_type == else_type) {
 				return if_type;
 			}
 		} else {
-			_option_ast__AstNode_ptr *_t55 = &node.__v_else;
+			_option_ast__AstNode_ptr *_t55 = &node->__v_else;
 			if (_t55->state != 0) {
 				return emitter__TypeTag__t_unknown;
 			}
 			ast__AstNode* else_node = (*(ast__AstNode**)_t55->data);
-			emitter__TypeTag cond_type = emitter__Transpiler_infer_expr_types(t, *cond, var_assign_types);
-			emitter__TypeTag else_type = emitter__Transpiler_infer_expr_types(t, *else_node, var_assign_types);
+			emitter__TypeTag cond_type = emitter__Transpiler_infer_expr_types(t, (voidptr)&*cond, var_assign_types);
+			emitter__TypeTag else_type = emitter__Transpiler_infer_expr_types(t, (voidptr)&*else_node, var_assign_types);
 			if (cond_type == else_type) {
 				return cond_type;
 			}
 		}
 		return emitter__TypeTag__t_unknown;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_bin_coalesce)) {
-		_option_ast__AstNode_ptr *_t59 = &node.left;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_bin_coalesce)) {
+		_option_ast__AstNode_ptr *_t59 = &node->left;
 		if (_t59->state != 0) {
 			return emitter__TypeTag__t_unknown;
 		}
 		ast__AstNode* left = (*(ast__AstNode**)_t59->data);
-		_option_ast__AstNode_ptr *_t61 = &node.right;
+		_option_ast__AstNode_ptr *_t61 = &node->right;
 		if (_t61->state != 0) {
 			return emitter__TypeTag__t_unknown;
 		}
 		ast__AstNode* right = (*(ast__AstNode**)_t61->data);
-		emitter__TypeTag l_type = emitter__Transpiler_infer_expr_types(t, *left, var_assign_types);
-		emitter__TypeTag r_type = emitter__Transpiler_infer_expr_types(t, *right, var_assign_types);
+		emitter__TypeTag l_type = emitter__Transpiler_infer_expr_types(t, (voidptr)&*left, var_assign_types);
+		emitter__TypeTag r_type = emitter__Transpiler_infer_expr_types(t, (voidptr)&*right, var_assign_types);
 		if (l_type == r_type) {
 			return l_type;
 		}
 		return emitter__TypeTag__t_unknown;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_bitwise_not)) {
-		_option_ast__AstNode_ptr *_t65 = &node.expr;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_bitwise_not)) {
+		_option_ast__AstNode_ptr *_t65 = &node->expr;
 		if (_t65->state != 0) {
 			return emitter__TypeTag__t_unknown;
 		}
 		ast__AstNode* expr_node = (*(ast__AstNode**)_t65->data);
-		emitter__TypeTag e_type = emitter__Transpiler_infer_expr_types(t, *expr_node, var_assign_types);
+		emitter__TypeTag e_type = emitter__Transpiler_infer_expr_types(t, (voidptr)&*expr_node, var_assign_types);
 		if (e_type == emitter__TypeTag__t_int) {
 			return emitter__TypeTag__t_int;
 		}
 		return emitter__TypeTag__t_unknown;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_funccall)) {
-		for (int _t69 = 0; _t69 < node.args.len; ++_t69) {
-			ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t69];
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_funccall)) {
+		for (int _t69 = 0; _t69 < node->args.len; ++_t69) {
+			ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t69];
 			_option_ast__AstNode_ptr _t70 = {0};
 			if (_t70 = arg.expr, _t70.state == 0) {
 				ast__AstNode* arg_expr = *(ast__AstNode**)_t70.data;
 				GC_reachable_here(&arg_expr);
-				emitter__Transpiler_infer_expr_types(t, *arg_expr, var_assign_types);
+				emitter__Transpiler_infer_expr_types(t, (voidptr)&*arg_expr, var_assign_types);
 				GC_reachable_here(&arg_expr);
 			}
 		}
 		_option_emitter__TypeTag _t71 = {0};
-		if (_t71 = emitter__get_builtin_return_tag(node.name), _t71.state == 0) {
+		if (_t71 = emitter__get_builtin_return_tag(node->name), _t71.state == 0) {
 			emitter__TypeTag tag = *(emitter__TypeTag*)_t71.data;
 			return tag;
 		}
-		emitter__VarType* _t74 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_return_types), &(string[]){node.name}));
+		emitter__VarType* _t74 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->func_return_types), &(string[]){node->name}));
 		_option_emitter__VarType _t73 = {0};
 		if (_t74) {
 			*((emitter__VarType*)&_t73.data) = *((emitter__VarType*)_t74);
@@ -25290,33 +28613,33 @@ VV_LOC emitter__TypeTag emitter__Transpiler_infer_expr_types(emitter__Transpiler
 	}
 	else {
 		_option_ast__AstNode_ptr _t77 = {0};
-		if (_t77 = node.expr, _t77.state == 0) {
+		if (_t77 = node->expr, _t77.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t77.data;
 			GC_reachable_here(&expr);
-			emitter__Transpiler_infer_expr_types(t, *expr, var_assign_types);
+			emitter__Transpiler_infer_expr_types(t, (voidptr)&*expr, var_assign_types);
 			GC_reachable_here(&expr);
 		}
 		_option_ast__AstNode_ptr _t78 = {0};
-		if (_t78 = node.left, _t78.state == 0) {
+		if (_t78 = node->left, _t78.state == 0) {
 			ast__AstNode* left = *(ast__AstNode**)_t78.data;
 			GC_reachable_here(&left);
-			emitter__Transpiler_infer_expr_types(t, *left, var_assign_types);
+			emitter__Transpiler_infer_expr_types(t, (voidptr)&*left, var_assign_types);
 			GC_reachable_here(&left);
 		}
 		_option_ast__AstNode_ptr _t79 = {0};
-		if (_t79 = node.right, _t79.state == 0) {
+		if (_t79 = node->right, _t79.state == 0) {
 			ast__AstNode* right = *(ast__AstNode**)_t79.data;
 			GC_reachable_here(&right);
-			emitter__Transpiler_infer_expr_types(t, *right, var_assign_types);
+			emitter__Transpiler_infer_expr_types(t, (voidptr)&*right, var_assign_types);
 			GC_reachable_here(&right);
 		}
-		for (int _t80 = 0; _t80 < node.args.len; ++_t80) {
-			ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t80];
+		for (int _t80 = 0; _t80 < node->args.len; ++_t80) {
+			ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t80];
 			_option_ast__AstNode_ptr _t81 = {0};
 			if (_t81 = arg.expr, _t81.state == 0) {
 				ast__AstNode* arg_expr = *(ast__AstNode**)_t81.data;
 				GC_reachable_here(&arg_expr);
-				emitter__Transpiler_infer_expr_types(t, *arg_expr, var_assign_types);
+				emitter__Transpiler_infer_expr_types(t, (voidptr)&*arg_expr, var_assign_types);
 				GC_reachable_here(&arg_expr);
 			}
 		}
@@ -25324,15 +28647,15 @@ VV_LOC emitter__TypeTag emitter__Transpiler_infer_expr_types(emitter__Transpiler
 	}
 	return 0;
 }
-VV_LOC void emitter__Transpiler_scan_object_types_expr(emitter__Transpiler* t, ast__AstNode node, Map_string_Array_string* object_classes) {
+VV_LOC void emitter__Transpiler_scan_object_types_expr(emitter__Transpiler* t, ast__AstNode* node, Map_string_Array_string* object_classes) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_assign)) {
-		_option_ast__AstNode_ptr *_t1 = &node.var;
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign)) {
+		_option_ast__AstNode_ptr *_t1 = &node->var;
 		if (_t1->state != 0) {
 			return;
 		}
 		ast__AstNode* var_node = (*(ast__AstNode**)_t1->data);
-		_option_ast__AstNode_ptr *_t2 = &node.expr;
+		_option_ast__AstNode_ptr *_t2 = &node->expr;
 		if (_t2->state != 0) {
 			return;
 		}
@@ -25345,48 +28668,48 @@ VV_LOC void emitter__Transpiler_scan_object_types_expr(emitter__Transpiler* t, a
 				builtin__array_push((array*)&(*(Array_string*)builtin__map_get_and_set((map*)object_classes, &(string[]){var_node->name}, &(Array_string[]){ builtin____new_array(0, 0, sizeof(string)) })), _MOV((string[]){ _S("") }));
 			}
 		}
-		emitter__Transpiler_scan_object_types_expr(t, *expr_node, object_classes);
+		emitter__Transpiler_scan_object_types_expr(t, (voidptr)&*expr_node, object_classes);
 		GC_reachable_here(&var_node);
 		GC_reachable_here(&expr_node);
 	}
 	else {
 		_option_ast__AstNode_ptr _t5 = {0};
-		if (_t5 = node.expr, _t5.state == 0) {
+		if (_t5 = node->expr, _t5.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t5.data;
 			GC_reachable_here(&expr);
-			emitter__Transpiler_scan_object_types_expr(t, *expr, object_classes);
+			emitter__Transpiler_scan_object_types_expr(t, (voidptr)&*expr, object_classes);
 			GC_reachable_here(&expr);
 		}
 		_option_ast__AstNode_ptr _t6 = {0};
-		if (_t6 = node.left, _t6.state == 0) {
+		if (_t6 = node->left, _t6.state == 0) {
 			ast__AstNode* left = *(ast__AstNode**)_t6.data;
 			GC_reachable_here(&left);
-			emitter__Transpiler_scan_object_types_expr(t, *left, object_classes);
+			emitter__Transpiler_scan_object_types_expr(t, (voidptr)&*left, object_classes);
 			GC_reachable_here(&left);
 		}
 		_option_ast__AstNode_ptr _t7 = {0};
-		if (_t7 = node.right, _t7.state == 0) {
+		if (_t7 = node->right, _t7.state == 0) {
 			ast__AstNode* right = *(ast__AstNode**)_t7.data;
 			GC_reachable_here(&right);
-			emitter__Transpiler_scan_object_types_expr(t, *right, object_classes);
+			emitter__Transpiler_scan_object_types_expr(t, (voidptr)&*right, object_classes);
 			GC_reachable_here(&right);
 		}
-		for (int _t8 = 0; _t8 < node.args.len; ++_t8) {
-			ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t8];
+		for (int _t8 = 0; _t8 < node->args.len; ++_t8) {
+			ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t8];
 			_option_ast__AstNode_ptr _t9 = {0};
 			if (_t9 = arg.expr, _t9.state == 0) {
 				ast__AstNode* arg_expr = *(ast__AstNode**)_t9.data;
 				GC_reachable_here(&arg_expr);
-				emitter__Transpiler_scan_object_types_expr(t, *arg_expr, object_classes);
+				emitter__Transpiler_scan_object_types_expr(t, (voidptr)&*arg_expr, object_classes);
 				GC_reachable_here(&arg_expr);
 			}
 		}
 	}
 }
-VV_LOC void emitter__Transpiler_scan_mutations_expr(emitter__Transpiler* t, ast__AstNode node) {
+VV_LOC void emitter__Transpiler_scan_mutations_expr(emitter__Transpiler* t, ast__AstNode* node) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_assign)) {
-		_option_ast__AstNode_ptr *_t1 = &node.var;
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign)) {
+		_option_ast__AstNode_ptr *_t1 = &node->var;
 		if (_t1->state != 0) {
 			return;
 		}
@@ -25418,16 +28741,16 @@ VV_LOC void emitter__Transpiler_scan_mutations_expr(emitter__Transpiler* t, ast_
 			}
 		}
 		_option_ast__AstNode_ptr _t4 = {0};
-		if (_t4 = node.expr, _t4.state == 0) {
+		if (_t4 = node->expr, _t4.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t4.data;
 			GC_reachable_here(&expr);
-			emitter__Transpiler_scan_mutations_expr(t, *expr);
+			emitter__Transpiler_scan_mutations_expr(t, (voidptr)&*expr);
 			GC_reachable_here(&expr);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_post_inc) || builtin__fast_string_eq(node.node_type, _const_ast__node_expr_post_dec) || builtin__fast_string_eq(node.node_type, _const_ast__node_expr_pre_inc) || builtin__fast_string_eq(node.node_type, _const_ast__node_expr_pre_dec)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_post_inc) || builtin__fast_string_eq(node->node_type, _const_ast__node_expr_post_dec) || builtin__fast_string_eq(node->node_type, _const_ast__node_expr_pre_inc) || builtin__fast_string_eq(node->node_type, _const_ast__node_expr_pre_dec)) {
 		_option_ast__AstNode_ptr _t5 = {0};
-		if (_t5 = node.var, _t5.state == 0) {
+		if (_t5 = node->var, _t5.state == 0) {
 			ast__AstNode* var_node = *(ast__AstNode**)_t5.data;
 			GC_reachable_here(&var_node);
 			if (builtin__fast_string_eq(var_node->node_type, _S("Expr_Variable"))) {
@@ -25437,53 +28760,53 @@ VV_LOC void emitter__Transpiler_scan_mutations_expr(emitter__Transpiler* t, ast_
 	}
 	else {
 		_option_ast__AstNode_ptr _t6 = {0};
-		if (_t6 = node.expr, _t6.state == 0) {
+		if (_t6 = node->expr, _t6.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t6.data;
 			GC_reachable_here(&expr);
-			emitter__Transpiler_scan_mutations_expr(t, *expr);
+			emitter__Transpiler_scan_mutations_expr(t, (voidptr)&*expr);
 			GC_reachable_here(&expr);
 		}
 		_option_ast__AstNode_ptr _t7 = {0};
-		if (_t7 = node.left, _t7.state == 0) {
+		if (_t7 = node->left, _t7.state == 0) {
 			ast__AstNode* left = *(ast__AstNode**)_t7.data;
 			GC_reachable_here(&left);
-			emitter__Transpiler_scan_mutations_expr(t, *left);
+			emitter__Transpiler_scan_mutations_expr(t, (voidptr)&*left);
 			GC_reachable_here(&left);
 		}
 		_option_ast__AstNode_ptr _t8 = {0};
-		if (_t8 = node.right, _t8.state == 0) {
+		if (_t8 = node->right, _t8.state == 0) {
 			ast__AstNode* right = *(ast__AstNode**)_t8.data;
 			GC_reachable_here(&right);
-			emitter__Transpiler_scan_mutations_expr(t, *right);
+			emitter__Transpiler_scan_mutations_expr(t, (voidptr)&*right);
 			GC_reachable_here(&right);
 		}
-		for (int _t9 = 0; _t9 < node.args.len; ++_t9) {
-			ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t9];
+		for (int _t9 = 0; _t9 < node->args.len; ++_t9) {
+			ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t9];
 			_option_ast__AstNode_ptr _t10 = {0};
 			if (_t10 = arg.expr, _t10.state == 0) {
 				ast__AstNode* arg_expr = *(ast__AstNode**)_t10.data;
 				GC_reachable_here(&arg_expr);
-				emitter__Transpiler_scan_mutations_expr(t, *arg_expr);
+				emitter__Transpiler_scan_mutations_expr(t, (voidptr)&*arg_expr);
 				GC_reachable_here(&arg_expr);
 			}
 		}
 	}
 }
-VV_LOC void emitter__Transpiler_scan_ctor_call_sites_expr(emitter__Transpiler* t, ast__AstNode node) {
+VV_LOC void emitter__Transpiler_scan_ctor_call_sites_expr(emitter__Transpiler* t, ast__AstNode* node) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_new)) {
-		string class_name = builtin__string_to_lower(emitter__Transpiler_resolve_class_name(*t, node.class_name));
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_new)) {
+		string class_name = builtin__string_to_lower(emitter__Transpiler_resolve_class_name(*t, node->class_name));
 		Map_string_Array_emitter__TypeTag dummy_types = builtin__new_map(sizeof(string), sizeof(Array_emitter__TypeTag), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
 		;
 		Array_emitter__TypeTag arg_types = builtin____new_array_with_default_noscan(0, 0, sizeof(emitter__TypeTag), 0);
-		for (int _t1 = 0; _t1 < node.args.len; ++_t1) {
-			ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t1];
+		for (int _t1 = 0; _t1 < node->args.len; ++_t1) {
+			ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t1];
 			_option_ast__AstNode_ptr *_t2 = &arg.expr;
 			if (_t2->state != 0) {
 				continue;
 			}
 			ast__AstNode* arg_expr = (*(ast__AstNode**)_t2->data);
-			emitter__TypeTag arg_type = emitter__Transpiler_infer_expr_types(t, *arg_expr, (voidptr)&dummy_types);
+			emitter__TypeTag arg_type = emitter__Transpiler_infer_expr_types(t, (voidptr)&*arg_expr, (voidptr)&dummy_types);
 			builtin__array_push_noscan((array*)&arg_types, _MOV((emitter__TypeTag[]){ arg_type }));
 		}
 		if (!_IN_MAP(ADDR(string, class_name), ADDR(map, t->ctor_arg_types))) {
@@ -25499,42 +28822,42 @@ VV_LOC void emitter__Transpiler_scan_ctor_call_sites_expr(emitter__Transpiler* t
 	}
 	else {
 		_option_ast__AstNode_ptr _t4 = {0};
-		if (_t4 = node.expr, _t4.state == 0) {
+		if (_t4 = node->expr, _t4.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t4.data;
 			GC_reachable_here(&expr);
-			emitter__Transpiler_scan_ctor_call_sites_expr(t, *expr);
+			emitter__Transpiler_scan_ctor_call_sites_expr(t, (voidptr)&*expr);
 			GC_reachable_here(&expr);
 		}
 		_option_ast__AstNode_ptr _t5 = {0};
-		if (_t5 = node.left, _t5.state == 0) {
+		if (_t5 = node->left, _t5.state == 0) {
 			ast__AstNode* left = *(ast__AstNode**)_t5.data;
 			GC_reachable_here(&left);
-			emitter__Transpiler_scan_ctor_call_sites_expr(t, *left);
+			emitter__Transpiler_scan_ctor_call_sites_expr(t, (voidptr)&*left);
 			GC_reachable_here(&left);
 		}
 		_option_ast__AstNode_ptr _t6 = {0};
-		if (_t6 = node.right, _t6.state == 0) {
+		if (_t6 = node->right, _t6.state == 0) {
 			ast__AstNode* right = *(ast__AstNode**)_t6.data;
 			GC_reachable_here(&right);
-			emitter__Transpiler_scan_ctor_call_sites_expr(t, *right);
+			emitter__Transpiler_scan_ctor_call_sites_expr(t, (voidptr)&*right);
 			GC_reachable_here(&right);
 		}
-		for (int _t7 = 0; _t7 < node.args.len; ++_t7) {
-			ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t7];
+		for (int _t7 = 0; _t7 < node->args.len; ++_t7) {
+			ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t7];
 			_option_ast__AstNode_ptr _t8 = {0};
 			if (_t8 = arg.expr, _t8.state == 0) {
 				ast__AstNode* arg_expr = *(ast__AstNode**)_t8.data;
 				GC_reachable_here(&arg_expr);
-				emitter__Transpiler_scan_ctor_call_sites_expr(t, *arg_expr);
+				emitter__Transpiler_scan_ctor_call_sites_expr(t, (voidptr)&*arg_expr);
 				GC_reachable_here(&arg_expr);
 			}
 		}
 	}
 }
-VV_LOC void emitter__Transpiler_scan_method_call_sites_expr(emitter__Transpiler* t, ast__AstNode node) {
+VV_LOC void emitter__Transpiler_scan_method_call_sites_expr(emitter__Transpiler* t, ast__AstNode* node) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_method_call)) {
-		_option_ast__AstNode_ptr *_t1 = &node.var;
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_method_call)) {
+		_option_ast__AstNode_ptr *_t1 = &node->var;
 		if (_t1->state != 0) {
 			return;
 		}
@@ -25555,18 +28878,18 @@ VV_LOC void emitter__Transpiler_scan_method_call_sites_expr(emitter__Transpiler*
 			emitter__VarType obj_type = (*(emitter__VarType*)_t2.data);
 			if (emitter__VarType_is_object(obj_type)) {
 				string class_name = builtin__string_to_lower(obj_type.class_name);
-				string method_name = node.name;
+				string method_name = node->name;
 				Map_string_Array_emitter__TypeTag dummy_types = builtin__new_map(sizeof(string), sizeof(Array_emitter__TypeTag), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
 				;
 				Array_emitter__TypeTag arg_types = builtin____new_array_with_default_noscan(0, 0, sizeof(emitter__TypeTag), 0);
-				for (int _t4 = 0; _t4 < node.args.len; ++_t4) {
-					ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t4];
+				for (int _t4 = 0; _t4 < node->args.len; ++_t4) {
+					ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t4];
 					_option_ast__AstNode_ptr *_t5 = &arg.expr;
 					if (_t5->state != 0) {
 						continue;
 					}
 					ast__AstNode* arg_expr = (*(ast__AstNode**)_t5->data);
-					emitter__TypeTag arg_type = emitter__Transpiler_infer_expr_types(t, *arg_expr, (voidptr)&dummy_types);
+					emitter__TypeTag arg_type = emitter__Transpiler_infer_expr_types(t, (voidptr)&*arg_expr, (voidptr)&dummy_types);
 					builtin__array_push_noscan((array*)&arg_types, _MOV((emitter__TypeTag[]){ arg_type }));
 				}
 				string key = builtin__string_plus_many(3, _MOV((string[3]){class_name, _S("::"), method_name}));
@@ -25583,37 +28906,37 @@ VV_LOC void emitter__Transpiler_scan_method_call_sites_expr(emitter__Transpiler*
 			}
 		}
 		_option_ast__AstNode_ptr _t7 = {0};
-		if (_t7 = node.var, _t7.state == 0) {
+		if (_t7 = node->var, _t7.state == 0) {
 			ast__AstNode* obj = *(ast__AstNode**)_t7.data;
 			GC_reachable_here(&obj);
-			emitter__Transpiler_scan_method_call_sites_expr(t, *obj);
+			emitter__Transpiler_scan_method_call_sites_expr(t, (voidptr)&*obj);
 			GC_reachable_here(&obj);
 		}
-		for (int _t8 = 0; _t8 < node.args.len; ++_t8) {
-			ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t8];
+		for (int _t8 = 0; _t8 < node->args.len; ++_t8) {
+			ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t8];
 			_option_ast__AstNode_ptr _t9 = {0};
 			if (_t9 = arg.expr, _t9.state == 0) {
 				ast__AstNode* arg_expr = *(ast__AstNode**)_t9.data;
 				GC_reachable_here(&arg_expr);
-				emitter__Transpiler_scan_method_call_sites_expr(t, *arg_expr);
+				emitter__Transpiler_scan_method_call_sites_expr(t, (voidptr)&*arg_expr);
 				GC_reachable_here(&arg_expr);
 			}
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_static_call)) {
-		string class_name = builtin__string_to_lower(emitter__Transpiler_resolve_class_name(*t, node.class_name));
-		string method_name = node.name;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_static_call)) {
+		string class_name = builtin__string_to_lower(emitter__Transpiler_resolve_class_name(*t, node->class_name));
+		string method_name = node->name;
 		Map_string_Array_emitter__TypeTag dummy_types = builtin__new_map(sizeof(string), sizeof(Array_emitter__TypeTag), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
 		;
 		Array_emitter__TypeTag arg_types = builtin____new_array_with_default_noscan(0, 0, sizeof(emitter__TypeTag), 0);
-		for (int _t10 = 0; _t10 < node.args.len; ++_t10) {
-			ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t10];
+		for (int _t10 = 0; _t10 < node->args.len; ++_t10) {
+			ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t10];
 			_option_ast__AstNode_ptr *_t11 = &arg.expr;
 			if (_t11->state != 0) {
 				continue;
 			}
 			ast__AstNode* arg_expr = (*(ast__AstNode**)_t11->data);
-			emitter__TypeTag arg_type = emitter__Transpiler_infer_expr_types(t, *arg_expr, (voidptr)&dummy_types);
+			emitter__TypeTag arg_type = emitter__Transpiler_infer_expr_types(t, (voidptr)&*arg_expr, (voidptr)&dummy_types);
 			builtin__array_push_noscan((array*)&arg_types, _MOV((emitter__TypeTag[]){ arg_type }));
 		}
 		string key = builtin__string_plus_many(3, _MOV((string[3]){class_name, _S("::"), method_name}));
@@ -25627,46 +28950,46 @@ VV_LOC void emitter__Transpiler_scan_method_call_sites_expr(emitter__Transpiler*
 				}
 			}
 		}
-		for (int _t13 = 0; _t13 < node.args.len; ++_t13) {
-			ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t13];
+		for (int _t13 = 0; _t13 < node->args.len; ++_t13) {
+			ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t13];
 			_option_ast__AstNode_ptr _t14 = {0};
 			if (_t14 = arg.expr, _t14.state == 0) {
 				ast__AstNode* arg_expr = *(ast__AstNode**)_t14.data;
 				GC_reachable_here(&arg_expr);
-				emitter__Transpiler_scan_method_call_sites_expr(t, *arg_expr);
+				emitter__Transpiler_scan_method_call_sites_expr(t, (voidptr)&*arg_expr);
 				GC_reachable_here(&arg_expr);
 			}
 		}
 	}
 	else {
 		_option_ast__AstNode_ptr _t15 = {0};
-		if (_t15 = node.expr, _t15.state == 0) {
+		if (_t15 = node->expr, _t15.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t15.data;
 			GC_reachable_here(&expr);
-			emitter__Transpiler_scan_method_call_sites_expr(t, *expr);
+			emitter__Transpiler_scan_method_call_sites_expr(t, (voidptr)&*expr);
 			GC_reachable_here(&expr);
 		}
 		_option_ast__AstNode_ptr _t16 = {0};
-		if (_t16 = node.left, _t16.state == 0) {
+		if (_t16 = node->left, _t16.state == 0) {
 			ast__AstNode* left = *(ast__AstNode**)_t16.data;
 			GC_reachable_here(&left);
-			emitter__Transpiler_scan_method_call_sites_expr(t, *left);
+			emitter__Transpiler_scan_method_call_sites_expr(t, (voidptr)&*left);
 			GC_reachable_here(&left);
 		}
 		_option_ast__AstNode_ptr _t17 = {0};
-		if (_t17 = node.right, _t17.state == 0) {
+		if (_t17 = node->right, _t17.state == 0) {
 			ast__AstNode* right = *(ast__AstNode**)_t17.data;
 			GC_reachable_here(&right);
-			emitter__Transpiler_scan_method_call_sites_expr(t, *right);
+			emitter__Transpiler_scan_method_call_sites_expr(t, (voidptr)&*right);
 			GC_reachable_here(&right);
 		}
-		for (int _t18 = 0; _t18 < node.args.len; ++_t18) {
-			ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t18];
+		for (int _t18 = 0; _t18 < node->args.len; ++_t18) {
+			ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t18];
 			_option_ast__AstNode_ptr _t19 = {0};
 			if (_t19 = arg.expr, _t19.state == 0) {
 				ast__AstNode* arg_expr = *(ast__AstNode**)_t19.data;
 				GC_reachable_here(&arg_expr);
-				emitter__Transpiler_scan_method_call_sites_expr(t, *arg_expr);
+				emitter__Transpiler_scan_method_call_sites_expr(t, (voidptr)&*arg_expr);
 				GC_reachable_here(&arg_expr);
 			}
 		}
@@ -25675,19 +28998,19 @@ VV_LOC void emitter__Transpiler_scan_method_call_sites_expr(emitter__Transpiler*
 VV_LOC void emitter__Transpiler_scan_prop_assignments(emitter__Transpiler* t, Array_ast__AstNode stmts, Map_string_Array_emitter__TypeTag* prop_tags, Map_string_Array_emitter__TypeTag* var_assign_types) {
 	for (int _t1 = 0; _t1 < stmts.len; ++_t1) {
 		ast__AstNode stmt = ((ast__AstNode*)stmts.data)[_t1];
-		emitter__Transpiler_scan_prop_assignments_expr(t, stmt, prop_tags, var_assign_types);
+		emitter__Transpiler_scan_prop_assignments_expr(t, (voidptr)&stmt, prop_tags, var_assign_types);
 		GC_reachable_here(&stmt);
 	}
 }
-VV_LOC void emitter__Transpiler_scan_prop_assignments_expr(emitter__Transpiler* t, ast__AstNode node, Map_string_Array_emitter__TypeTag* prop_tags, Map_string_Array_emitter__TypeTag* var_assign_types) {
+VV_LOC void emitter__Transpiler_scan_prop_assignments_expr(emitter__Transpiler* t, ast__AstNode* node, Map_string_Array_emitter__TypeTag* prop_tags, Map_string_Array_emitter__TypeTag* var_assign_types) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_assign)) {
-		_option_ast__AstNode_ptr *_t1 = &node.var;
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign)) {
+		_option_ast__AstNode_ptr *_t1 = &node->var;
 		if (_t1->state != 0) {
 			return;
 		}
 		ast__AstNode* var_node = (*(ast__AstNode**)_t1->data);
-		_option_ast__AstNode_ptr *_t2 = &node.expr;
+		_option_ast__AstNode_ptr *_t2 = &node->expr;
 		if (_t2->state != 0) {
 			return;
 		}
@@ -25700,61 +29023,61 @@ VV_LOC void emitter__Transpiler_scan_prop_assignments_expr(emitter__Transpiler* 
 			ast__AstNode* obj = (*(ast__AstNode**)_t3->data);
 			if (builtin__fast_string_eq(obj->node_type, _S("Expr_Variable")) && builtin__fast_string_eq(obj->name, _S("this"))) {
 				string prop_name = var_node->name;
-				emitter__TypeTag val_type = emitter__Transpiler_infer_expr_types(t, *expr_node, var_assign_types);
+				emitter__TypeTag val_type = emitter__Transpiler_infer_expr_types(t, (voidptr)&*expr_node, var_assign_types);
 				builtin__array_push_noscan((array*)&(*(Array_emitter__TypeTag*)builtin__map_get_and_set((map*)prop_tags, &(string[]){prop_name}, &(Array_emitter__TypeTag[]){ builtin____new_array_noscan(0, 0, sizeof(emitter__TypeTag)) })), _MOV((emitter__TypeTag[]){ val_type }));
 			}
 		}
-		emitter__Transpiler_scan_prop_assignments_expr(t, *expr_node, prop_tags, var_assign_types);
+		emitter__Transpiler_scan_prop_assignments_expr(t, (voidptr)&*expr_node, prop_tags, var_assign_types);
 		GC_reachable_here(&var_node);
 		GC_reachable_here(&expr_node);
 	}
 	else {
 		_option_ast__AstNode_ptr _t5 = {0};
-		if (_t5 = node.expr, _t5.state == 0) {
+		if (_t5 = node->expr, _t5.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t5.data;
 			GC_reachable_here(&expr);
-			emitter__Transpiler_scan_prop_assignments_expr(t, *expr, prop_tags, var_assign_types);
+			emitter__Transpiler_scan_prop_assignments_expr(t, (voidptr)&*expr, prop_tags, var_assign_types);
 			GC_reachable_here(&expr);
 		}
 		_option_ast__AstNode_ptr _t6 = {0};
-		if (_t6 = node.left, _t6.state == 0) {
+		if (_t6 = node->left, _t6.state == 0) {
 			ast__AstNode* left = *(ast__AstNode**)_t6.data;
 			GC_reachable_here(&left);
-			emitter__Transpiler_scan_prop_assignments_expr(t, *left, prop_tags, var_assign_types);
+			emitter__Transpiler_scan_prop_assignments_expr(t, (voidptr)&*left, prop_tags, var_assign_types);
 			GC_reachable_here(&left);
 		}
 		_option_ast__AstNode_ptr _t7 = {0};
-		if (_t7 = node.right, _t7.state == 0) {
+		if (_t7 = node->right, _t7.state == 0) {
 			ast__AstNode* right = *(ast__AstNode**)_t7.data;
 			GC_reachable_here(&right);
-			emitter__Transpiler_scan_prop_assignments_expr(t, *right, prop_tags, var_assign_types);
+			emitter__Transpiler_scan_prop_assignments_expr(t, (voidptr)&*right, prop_tags, var_assign_types);
 			GC_reachable_here(&right);
 		}
-		for (int _t8 = 0; _t8 < node.args.len; ++_t8) {
-			ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t8];
+		for (int _t8 = 0; _t8 < node->args.len; ++_t8) {
+			ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t8];
 			_option_ast__AstNode_ptr _t9 = {0};
 			if (_t9 = arg.expr, _t9.state == 0) {
 				ast__AstNode* arg_expr = *(ast__AstNode**)_t9.data;
 				GC_reachable_here(&arg_expr);
-				emitter__Transpiler_scan_prop_assignments_expr(t, *arg_expr, prop_tags, var_assign_types);
+				emitter__Transpiler_scan_prop_assignments_expr(t, (voidptr)&*arg_expr, prop_tags, var_assign_types);
 				GC_reachable_here(&arg_expr);
 			}
 		}
-		for (int _t10 = 0; _t10 < node.stmts.len; ++_t10) {
-			ast__AstNode stmt = ((ast__AstNode*)node.stmts.data)[_t10];
-			emitter__Transpiler_scan_prop_assignments_expr(t, stmt, prop_tags, var_assign_types);
+		for (int _t10 = 0; _t10 < node->stmts.len; ++_t10) {
+			ast__AstNode stmt = ((ast__AstNode*)node->stmts.data)[_t10];
+			emitter__Transpiler_scan_prop_assignments_expr(t, (voidptr)&stmt, prop_tags, var_assign_types);
 			GC_reachable_here(&stmt);
 		}
-		for (int _t11 = 0; _t11 < node.elseifs.len; ++_t11) {
-			ast__AstNode elseif = ((ast__AstNode*)node.elseifs.data)[_t11];
-			emitter__Transpiler_scan_prop_assignments_expr(t, elseif, prop_tags, var_assign_types);
+		for (int _t11 = 0; _t11 < node->elseifs.len; ++_t11) {
+			ast__AstNode elseif = ((ast__AstNode*)node->elseifs.data)[_t11];
+			emitter__Transpiler_scan_prop_assignments_expr(t, (voidptr)&elseif, prop_tags, var_assign_types);
 			GC_reachable_here(&elseif);
 		}
 		_option_ast__AstNode_ptr _t12 = {0};
-		if (_t12 = node.__v_else, _t12.state == 0) {
+		if (_t12 = node->__v_else, _t12.state == 0) {
 			ast__AstNode* el = *(ast__AstNode**)_t12.data;
 			GC_reachable_here(&el);
-			emitter__Transpiler_scan_prop_assignments_expr(t, *el, prop_tags, var_assign_types);
+			emitter__Transpiler_scan_prop_assignments_expr(t, (voidptr)&*el, prop_tags, var_assign_types);
 			GC_reachable_here(&el);
 		}
 	}
@@ -25800,20 +29123,20 @@ VV_LOC emitter__ParamUsageResult emitter__Transpiler_scan_param_usage(emitter__T
 	emitter__ParamUsageResult result = _t1;
 	for (int _t2 = 0; _t2 < stmts.len; ++_t2) {
 		ast__AstNode stmt = ((ast__AstNode*)stmts.data)[_t2];
-		emitter__Transpiler_scan_param_usage_expr(t, stmt, param_name, (voidptr)&result);
+		emitter__Transpiler_scan_param_usage_expr(t, (voidptr)&stmt, param_name, (voidptr)&result);
 		GC_reachable_here(&stmt);
 	}
 	return result;
 }
-VV_LOC void emitter__Transpiler_scan_param_usage_expr(emitter__Transpiler* t, ast__AstNode node, string param_name, emitter__ParamUsageResult* result) {
+VV_LOC void emitter__Transpiler_scan_param_usage_expr(emitter__Transpiler* t, ast__AstNode* node, string param_name, emitter__ParamUsageResult* result) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_assign)) {
-		_option_ast__AstNode_ptr *_t1 = &node.var;
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign)) {
+		_option_ast__AstNode_ptr *_t1 = &node->var;
 		if (_t1->state != 0) {
 			return;
 		}
 		ast__AstNode* var_node = (*(ast__AstNode**)_t1->data);
-		_option_ast__AstNode_ptr *_t2 = &node.expr;
+		_option_ast__AstNode_ptr *_t2 = &node->expr;
 		if (_t2->state != 0) {
 			return;
 		}
@@ -25831,98 +29154,98 @@ VV_LOC void emitter__Transpiler_scan_param_usage_expr(emitter__Transpiler* t, as
 				}
 			}
 		}
-		if (emitter__Transpiler_expr_references_var(t, *expr_node, param_name)) {
+		if (emitter__Transpiler_expr_references_var(t, (voidptr)&*expr_node, param_name)) {
 			result->other_uses = true;
 		}
 	}
 	else {
 		if (emitter__Transpiler_expr_references_var(t, node, param_name)) {
-			if (!builtin__fast_string_eq(node.node_type, _S("Expr_Assign"))) {
+			if (!builtin__fast_string_eq(node->node_type, _S("Expr_Assign"))) {
 				result->other_uses = true;
 			}
 		}
 	}
 	_option_ast__AstNode_ptr _t5 = {0};
-	if (_t5 = node.expr, _t5.state == 0) {
+	if (_t5 = node->expr, _t5.state == 0) {
 		ast__AstNode* expr = *(ast__AstNode**)_t5.data;
 		GC_reachable_here(&expr);
-		emitter__Transpiler_scan_param_usage_expr(t, *expr, param_name, result);
+		emitter__Transpiler_scan_param_usage_expr(t, (voidptr)&*expr, param_name, result);
 		GC_reachable_here(&expr);
 	}
-	for (int _t6 = 0; _t6 < node.stmts.len; ++_t6) {
-		ast__AstNode stmt = ((ast__AstNode*)node.stmts.data)[_t6];
-		emitter__Transpiler_scan_param_usage_expr(t, stmt, param_name, result);
+	for (int _t6 = 0; _t6 < node->stmts.len; ++_t6) {
+		ast__AstNode stmt = ((ast__AstNode*)node->stmts.data)[_t6];
+		emitter__Transpiler_scan_param_usage_expr(t, (voidptr)&stmt, param_name, result);
 		GC_reachable_here(&stmt);
 	}
-	for (int _t7 = 0; _t7 < node.elseifs.len; ++_t7) {
-		ast__AstNode elseif = ((ast__AstNode*)node.elseifs.data)[_t7];
-		emitter__Transpiler_scan_param_usage_expr(t, elseif, param_name, result);
+	for (int _t7 = 0; _t7 < node->elseifs.len; ++_t7) {
+		ast__AstNode elseif = ((ast__AstNode*)node->elseifs.data)[_t7];
+		emitter__Transpiler_scan_param_usage_expr(t, (voidptr)&elseif, param_name, result);
 		GC_reachable_here(&elseif);
 	}
 	_option_ast__AstNode_ptr _t8 = {0};
-	if (_t8 = node.__v_else, _t8.state == 0) {
+	if (_t8 = node->__v_else, _t8.state == 0) {
 		ast__AstNode* el = *(ast__AstNode**)_t8.data;
 		GC_reachable_here(&el);
-		emitter__Transpiler_scan_param_usage_expr(t, *el, param_name, result);
+		emitter__Transpiler_scan_param_usage_expr(t, (voidptr)&*el, param_name, result);
 		GC_reachable_here(&el);
 	}
 }
-VV_LOC bool emitter__Transpiler_expr_references_var(emitter__Transpiler* t, ast__AstNode node, string var_name) {
-	if (builtin__fast_string_eq(node.node_type, _S("Expr_Variable")) && builtin__string__eq(node.name, var_name)) {
+VV_LOC bool emitter__Transpiler_expr_references_var(emitter__Transpiler* t, ast__AstNode* node, string var_name) {
+	if (builtin__fast_string_eq(node->node_type, _S("Expr_Variable")) && builtin__string__eq(node->name, var_name)) {
 		return true;
 	}
 	_option_ast__AstNode_ptr _t2 = {0};
-	if (_t2 = node.expr, _t2.state == 0) {
+	if (_t2 = node->expr, _t2.state == 0) {
 		ast__AstNode* expr = *(ast__AstNode**)_t2.data;
 		GC_reachable_here(&expr);
-		if (emitter__Transpiler_expr_references_var(t, *expr, var_name)) {
+		if (emitter__Transpiler_expr_references_var(t, (voidptr)&*expr, var_name)) {
 			return true;
 		}
 	}
 	_option_ast__AstNode_ptr _t4 = {0};
-	if (_t4 = node.left, _t4.state == 0) {
+	if (_t4 = node->left, _t4.state == 0) {
 		ast__AstNode* left = *(ast__AstNode**)_t4.data;
 		GC_reachable_here(&left);
-		if (emitter__Transpiler_expr_references_var(t, *left, var_name)) {
+		if (emitter__Transpiler_expr_references_var(t, (voidptr)&*left, var_name)) {
 			return true;
 		}
 	}
 	_option_ast__AstNode_ptr _t6 = {0};
-	if (_t6 = node.right, _t6.state == 0) {
+	if (_t6 = node->right, _t6.state == 0) {
 		ast__AstNode* right = *(ast__AstNode**)_t6.data;
 		GC_reachable_here(&right);
-		if (emitter__Transpiler_expr_references_var(t, *right, var_name)) {
+		if (emitter__Transpiler_expr_references_var(t, (voidptr)&*right, var_name)) {
 			return true;
 		}
 	}
-	for (int _t8 = 0; _t8 < node.args.len; ++_t8) {
-		ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t8];
+	for (int _t8 = 0; _t8 < node->args.len; ++_t8) {
+		ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t8];
 		_option_ast__AstNode_ptr _t9 = {0};
 		if (_t9 = arg.expr, _t9.state == 0) {
 			ast__AstNode* arg_expr = *(ast__AstNode**)_t9.data;
 			GC_reachable_here(&arg_expr);
-			if (emitter__Transpiler_expr_references_var(t, *arg_expr, var_name)) {
+			if (emitter__Transpiler_expr_references_var(t, (voidptr)&*arg_expr, var_name)) {
 				return true;
 			}
 		}
 	}
-	for (int _t11 = 0; _t11 < node.stmts.len; ++_t11) {
-		ast__AstNode stmt = ((ast__AstNode*)node.stmts.data)[_t11];
-		if (emitter__Transpiler_expr_references_var(t, stmt, var_name)) {
+	for (int _t11 = 0; _t11 < node->stmts.len; ++_t11) {
+		ast__AstNode stmt = ((ast__AstNode*)node->stmts.data)[_t11];
+		if (emitter__Transpiler_expr_references_var(t, (voidptr)&stmt, var_name)) {
 			return true;
 		}
 	}
-	for (int _t13 = 0; _t13 < node.elseifs.len; ++_t13) {
-		ast__AstNode elseif = ((ast__AstNode*)node.elseifs.data)[_t13];
-		if (emitter__Transpiler_expr_references_var(t, elseif, var_name)) {
+	for (int _t13 = 0; _t13 < node->elseifs.len; ++_t13) {
+		ast__AstNode elseif = ((ast__AstNode*)node->elseifs.data)[_t13];
+		if (emitter__Transpiler_expr_references_var(t, (voidptr)&elseif, var_name)) {
 			return true;
 		}
 	}
 	_option_ast__AstNode_ptr _t15 = {0};
-	if (_t15 = node.__v_else, _t15.state == 0) {
+	if (_t15 = node->__v_else, _t15.state == 0) {
 		ast__AstNode* el = *(ast__AstNode**)_t15.data;
 		GC_reachable_here(&el);
-		if (emitter__Transpiler_expr_references_var(t, *el, var_name)) {
+		if (emitter__Transpiler_expr_references_var(t, (voidptr)&*el, var_name)) {
 			return true;
 		}
 	}
@@ -25971,7 +29294,7 @@ VV_LOC void emitter__Transpiler_scan_return_types(emitter__Transpiler* t, Array_
 			if (_t2 = stmt.expr, _t2.state == 0) {
 				ast__AstNode* expr = *(ast__AstNode**)_t2.data;
 				GC_reachable_here(&expr);
-				emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, *expr);
+				emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr);
 				if (expr_type.tag != emitter__TypeTag__t_unknown) {
 					builtin__array_push((array*)return_tags, _MOV((emitter__VarType[]){ expr_type }));
 				} else {
@@ -26021,13 +29344,30 @@ VV_LOC void emitter__Transpiler_scan_return_types(emitter__Transpiler* t, Array_
 				emitter__Transpiler_scan_return_types(t, el->stmts, prop_types, return_tags);
 				GC_reachable_here(&el);
 			}
+			for (int _t13 = 0; _t13 < stmt.cases.len; ++_t13) {
+				ast__AstNode case_node = ((ast__AstNode*)stmt.cases.data)[_t13];
+				emitter__Transpiler_scan_return_types(t, case_node.stmts, prop_types, return_tags);
+				GC_reachable_here(&case_node);
+			}
+			for (int _t14 = 0; _t14 < stmt.catches.len; ++_t14) {
+				ast__AstNode catch_node = ((ast__AstNode*)stmt.catches.data)[_t14];
+				emitter__Transpiler_scan_return_types(t, catch_node.stmts, prop_types, return_tags);
+				GC_reachable_here(&catch_node);
+			}
+			_option_ast__AstNode_ptr _t15 = {0};
+			if (_t15 = stmt.finally, _t15.state == 0) {
+				ast__AstNode* fin = *(ast__AstNode**)_t15.data;
+				GC_reachable_here(&fin);
+				emitter__Transpiler_scan_return_types(t, fin->stmts, prop_types, return_tags);
+				GC_reachable_here(&fin);
+			}
 		}
 	}
 }
-void emitter__Transpiler_infer_single_class_types(emitter__Transpiler* t, ast__AstNode node, string class_name) {
+void emitter__Transpiler_infer_single_class_types(emitter__Transpiler* t, ast__AstNode* node, string class_name) {
 	_option_ast__AstNode ctor_node = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-	for (int _t1 = 0; _t1 < node.stmts.len; ++_t1) {
-		ast__AstNode method_stmt = ((ast__AstNode*)node.stmts.data)[_t1];
+	for (int _t1 = 0; _t1 < node->stmts.len; ++_t1) {
+		ast__AstNode method_stmt = ((ast__AstNode*)node->stmts.data)[_t1];
 		if (builtin__fast_string_eq(method_stmt.node_type, _S("Stmt_ClassMethod")) && builtin__fast_string_eq(method_stmt.name, _S("__construct"))) {
 			_option_ast__AstNode _t2;
 			builtin___option_ok(&(ast__AstNode[]) { method_stmt }, (_option*)(&_t2), sizeof(ast__AstNode));
@@ -26082,8 +29422,8 @@ void emitter__Transpiler_infer_single_class_types(emitter__Transpiler* t, ast__A
 	}
 	Map_string_Array_emitter__TypeTag prop_tags = builtin__new_map(sizeof(string), sizeof(Array_emitter__TypeTag), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
 	;
-	for (int _t10 = 0; _t10 < node.stmts.len; ++_t10) {
-		ast__AstNode method_stmt = ((ast__AstNode*)node.stmts.data)[_t10];
+	for (int _t10 = 0; _t10 < node->stmts.len; ++_t10) {
+		ast__AstNode method_stmt = ((ast__AstNode*)node->stmts.data)[_t10];
 		if (builtin__fast_string_eq(method_stmt.node_type, _S("Stmt_ClassMethod"))) {
 			emitter__Transpiler_scan_prop_assignments(t, method_stmt.stmts, (voidptr)&prop_tags, (voidptr)&var_assign_types);
 		}
@@ -26122,8 +29462,8 @@ void emitter__Transpiler_infer_single_class_types(emitter__Transpiler* t, ast__A
 	string old_class_p2 = t->current_class;
 	string old_func_p2 = t->current_func_name;
 	t->current_class = class_name;
-	for (int _t15 = 0; _t15 < node.stmts.len; ++_t15) {
-		ast__AstNode method_stmt = ((ast__AstNode*)node.stmts.data)[_t15];
+	for (int _t15 = 0; _t15 < node->stmts.len; ++_t15) {
+		ast__AstNode method_stmt = ((ast__AstNode*)node->stmts.data)[_t15];
 		if (builtin__fast_string_eq(method_stmt.node_type, _S("Stmt_ClassMethod"))) {
 			string method_name = method_stmt.name;
 			t->current_func_name = method_name;
@@ -26169,7 +29509,7 @@ void emitter__Transpiler_infer_single_class_types(emitter__Transpiler* t, ast__A
 						ast__AstNode* default_node = *(ast__AstNode**)_t20.data;
 						GC_reachable_here(&default_node);
 						if (((voidptr)(default_node)) != 0) {
-							emitter__TypeTag default_tag = emitter__php_literal_node_to_tag(*default_node);
+							emitter__TypeTag default_tag = emitter__php_literal_node_to_tag((voidptr)&*default_node);
 							if (default_tag != emitter__TypeTag__t_unknown) {
 								param_type = ((emitter__VarType){.tag = default_tag,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 							}
@@ -26216,8 +29556,8 @@ void emitter__Transpiler_infer_single_class_types(emitter__Transpiler* t, ast__A
 	string old_class_p3 = t->current_class;
 	string old_func_p3 = t->current_func_name;
 	t->current_class = class_name;
-	for (int _t23 = 0; _t23 < node.stmts.len; ++_t23) {
-		ast__AstNode method_stmt = ((ast__AstNode*)node.stmts.data)[_t23];
+	for (int _t23 = 0; _t23 < node->stmts.len; ++_t23) {
+		ast__AstNode method_stmt = ((ast__AstNode*)node->stmts.data)[_t23];
 		if (builtin__fast_string_eq(method_stmt.node_type, _S("Stmt_ClassMethod"))) {
 			string method_name = method_stmt.name;
 			t->current_func_name = method_name;
@@ -26263,26 +29603,26 @@ void emitter__Transpiler_analyze_func_types(emitter__Transpiler* t, Array_ast__A
 VV_LOC void emitter__Transpiler_scan_func_call_sites(emitter__Transpiler* t, Array_ast__AstNode stmts) {
 	for (int _t1 = 0; _t1 < stmts.len; ++_t1) {
 		ast__AstNode stmt = ((ast__AstNode*)stmts.data)[_t1];
-		emitter__Transpiler_scan_func_call_sites_expr(t, stmt);
+		emitter__Transpiler_scan_func_call_sites_expr(t, (voidptr)&stmt);
 		GC_reachable_here(&stmt);
 	}
 }
-VV_LOC void emitter__Transpiler_scan_func_call_sites_expr(emitter__Transpiler* t, ast__AstNode node) {
+VV_LOC void emitter__Transpiler_scan_func_call_sites_expr(emitter__Transpiler* t, ast__AstNode* node) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_funccall)) {
-		string func_name = node.name;
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_funccall)) {
+		string func_name = node->name;
 		if (_IN_MAP(ADDR(string, func_name), ADDR(map, t->custom_functions))) {
 			Array_emitter__TypeTag arg_types = builtin____new_array_with_default_noscan(0, 0, sizeof(emitter__TypeTag), 0);
 			Map_string_Array_emitter__TypeTag dummy_types = builtin__new_map(sizeof(string), sizeof(Array_emitter__TypeTag), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
 			;
-			for (int _t1 = 0; _t1 < node.args.len; ++_t1) {
-				ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t1];
+			for (int _t1 = 0; _t1 < node->args.len; ++_t1) {
+				ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t1];
 				_option_ast__AstNode_ptr *_t2 = &arg.expr;
 				if (_t2->state != 0) {
 					continue;
 				}
 				ast__AstNode* arg_expr = (*(ast__AstNode**)_t2->data);
-				emitter__TypeTag arg_type = emitter__Transpiler_infer_expr_types(t, *arg_expr, (voidptr)&dummy_types);
+				emitter__TypeTag arg_type = emitter__Transpiler_infer_expr_types(t, (voidptr)&*arg_expr, (voidptr)&dummy_types);
 				builtin__array_push_noscan((array*)&arg_types, _MOV((emitter__TypeTag[]){ arg_type }));
 			}
 			if (!_IN_MAP(ADDR(string, func_name), ADDR(map, t->func_call_arg_types))) {
@@ -26296,57 +29636,57 @@ VV_LOC void emitter__Transpiler_scan_func_call_sites_expr(emitter__Transpiler* t
 				}
 			}
 		}
-		for (int _t4 = 0; _t4 < node.args.len; ++_t4) {
-			ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t4];
+		for (int _t4 = 0; _t4 < node->args.len; ++_t4) {
+			ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t4];
 			_option_ast__AstNode_ptr _t5 = {0};
 			if (_t5 = arg.expr, _t5.state == 0) {
 				ast__AstNode* arg_expr = *(ast__AstNode**)_t5.data;
 				GC_reachable_here(&arg_expr);
-				emitter__Transpiler_scan_func_call_sites_expr(t, *arg_expr);
+				emitter__Transpiler_scan_func_call_sites_expr(t, (voidptr)&*arg_expr);
 				GC_reachable_here(&arg_expr);
 			}
 		}
 	}
 	else {
 		_option_ast__AstNode_ptr _t6 = {0};
-		if (_t6 = node.expr, _t6.state == 0) {
+		if (_t6 = node->expr, _t6.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t6.data;
 			GC_reachable_here(&expr);
-			emitter__Transpiler_scan_func_call_sites_expr(t, *expr);
+			emitter__Transpiler_scan_func_call_sites_expr(t, (voidptr)&*expr);
 			GC_reachable_here(&expr);
 		}
 		_option_ast__AstNode_ptr _t7 = {0};
-		if (_t7 = node.left, _t7.state == 0) {
+		if (_t7 = node->left, _t7.state == 0) {
 			ast__AstNode* left = *(ast__AstNode**)_t7.data;
 			GC_reachable_here(&left);
-			emitter__Transpiler_scan_func_call_sites_expr(t, *left);
+			emitter__Transpiler_scan_func_call_sites_expr(t, (voidptr)&*left);
 			GC_reachable_here(&left);
 		}
 		_option_ast__AstNode_ptr _t8 = {0};
-		if (_t8 = node.right, _t8.state == 0) {
+		if (_t8 = node->right, _t8.state == 0) {
 			ast__AstNode* right = *(ast__AstNode**)_t8.data;
 			GC_reachable_here(&right);
-			emitter__Transpiler_scan_func_call_sites_expr(t, *right);
+			emitter__Transpiler_scan_func_call_sites_expr(t, (voidptr)&*right);
 			GC_reachable_here(&right);
 		}
-		for (int _t9 = 0; _t9 < node.args.len; ++_t9) {
-			ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t9];
+		for (int _t9 = 0; _t9 < node->args.len; ++_t9) {
+			ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t9];
 			_option_ast__AstNode_ptr _t10 = {0};
 			if (_t10 = arg.expr, _t10.state == 0) {
 				ast__AstNode* arg_expr = *(ast__AstNode**)_t10.data;
 				GC_reachable_here(&arg_expr);
-				emitter__Transpiler_scan_func_call_sites_expr(t, *arg_expr);
+				emitter__Transpiler_scan_func_call_sites_expr(t, (voidptr)&*arg_expr);
 				GC_reachable_here(&arg_expr);
 			}
 		}
-		emitter__Transpiler_scan_func_call_sites(t, node.stmts);
-		for (int _t11 = 0; _t11 < node.elseifs.len; ++_t11) {
-			ast__AstNode elseif = ((ast__AstNode*)node.elseifs.data)[_t11];
+		emitter__Transpiler_scan_func_call_sites(t, node->stmts);
+		for (int _t11 = 0; _t11 < node->elseifs.len; ++_t11) {
+			ast__AstNode elseif = ((ast__AstNode*)node->elseifs.data)[_t11];
 			emitter__Transpiler_scan_func_call_sites(t, elseif.stmts);
 			GC_reachable_here(&elseif);
 		}
 		_option_ast__AstNode_ptr _t12 = {0};
-		if (_t12 = node.__v_else, _t12.state == 0) {
+		if (_t12 = node->__v_else, _t12.state == 0) {
 			ast__AstNode* el = *(ast__AstNode**)_t12.data;
 			GC_reachable_here(&el);
 			emitter__Transpiler_scan_func_call_sites(t, el->stmts);
@@ -26358,7 +29698,7 @@ VV_LOC void emitter__Transpiler_infer_func_types_from_stmts(emitter__Transpiler*
 	for (int _t1 = 0; _t1 < stmts.len; ++_t1) {
 		ast__AstNode stmt = ((ast__AstNode*)stmts.data)[_t1];
 		if (builtin__fast_string_eq(stmt.node_type, _S("Stmt_Function"))) {
-			emitter__Transpiler_infer_single_func_types(t, stmt);
+			emitter__Transpiler_infer_single_func_types(t, (voidptr)&stmt);
 		}
 		if (stmt.stmts.len > 0) {
 			emitter__Transpiler_infer_func_types_from_stmts(t, stmt.stmts);
@@ -26392,19 +29732,28 @@ VV_LOC emitter__TypeTag emitter__php_type_to_tag(string php_type) {
 	else if (_SLIT_EQ(_t1.str, _t1.len, "bool") || _SLIT_EQ(_t1.str, _t1.len, "boolean")) {
 		return emitter__TypeTag__t_bool;
 	}
+	else if (_SLIT_EQ(_t1.str, _t1.len, "null")) {
+		return emitter__TypeTag__t_null;
+	}
+	else if (_SLIT_EQ(_t1.str, _t1.len, "void") || _SLIT_EQ(_t1.str, _t1.len, "never")) {
+		return emitter__TypeTag__t_void;
+	}
+	else if (_SLIT_EQ(_t1.str, _t1.len, "array") || _SLIT_EQ(_t1.str, _t1.len, "callable") || _SLIT_EQ(_t1.str, _t1.len, "iterable") || _SLIT_EQ(_t1.str, _t1.len, "mixed") || _SLIT_EQ(_t1.str, _t1.len, "object")) {
+		return emitter__TypeTag__t_array;
+	}
 	else {
 		return emitter__TypeTag__t_unknown;
 	}
 	return 0;
 }
-VV_LOC void emitter__Transpiler_infer_single_func_types(emitter__Transpiler* t, ast__AstNode node) {
-	string func_name = node.name;
+VV_LOC void emitter__Transpiler_infer_single_func_types(emitter__Transpiler* t, ast__AstNode* node) {
+	string func_name = node->name;
 	Map_string_emitter__VarType param_types = builtin__new_map(sizeof(string), sizeof(emitter__VarType), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
 	;
 	Map_string_Array_emitter__TypeTag var_assign_types = builtin__new_map(sizeof(string), sizeof(Array_emitter__TypeTag), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string)
 	;
-	for (int i = 0; i < node.params.len; ++i) {
-		ast__AstNode param = ((ast__AstNode*)node.params.data)[i];
+	for (int i = 0; i < node->params.len; ++i) {
+		ast__AstNode param = ((ast__AstNode*)node->params.data)[i];
 		_option_ast__AstNode_ptr *_t1 = &param.var;
 		if (_t1->state != 0) {
 			continue;
@@ -26426,7 +29775,7 @@ VV_LOC void emitter__Transpiler_infer_single_func_types(emitter__Transpiler* t, 
 			if (_t2 = param.default_val, _t2.state == 0) {
 				ast__AstNode* default_node = *(ast__AstNode**)_t2.data;
 				GC_reachable_here(&default_node);
-				emitter__TypeTag default_tag = emitter__php_literal_node_to_tag(*default_node);
+				emitter__TypeTag default_tag = emitter__php_literal_node_to_tag((voidptr)&*default_node);
 				if (default_tag != emitter__TypeTag__t_unknown) {
 					resolved_tag = default_tag;
 					(*(emitter__VarType*)builtin__map_get_and_set((map*)&param_types, &(string[]){param_name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = ((emitter__VarType){.tag = default_tag,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
@@ -26457,11 +29806,13 @@ VV_LOC void emitter__Transpiler_infer_single_func_types(emitter__Transpiler* t, 
 		if (resolved_tag != emitter__TypeTag__t_unknown) {
 			(*(emitter__VarType*)builtin__map_get_and_set((map*)&param_types, &(string[]){param_name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = ((emitter__VarType){.tag = resolved_tag,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 			builtin__array_push_noscan((array*)&(*(Array_emitter__TypeTag*)builtin__map_get_and_set((map*)&var_assign_types, &(string[]){param_name}, &(Array_emitter__TypeTag[]){ builtin____new_array_noscan(0, 0, sizeof(emitter__TypeTag)) })), _MOV((emitter__TypeTag[]){ resolved_tag }));
+		} else {
+			(*(emitter__VarType*)builtin__map_get_and_set((map*)&param_types, &(string[]){param_name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
 	}
 	string old_func = t->current_func_name;
 	t->current_func_name = func_name;
-	emitter__Transpiler_infer_expr_types_for_func(t, node.stmts, (voidptr)&var_assign_types);
+	emitter__Transpiler_infer_expr_types_for_func(t, node->stmts, (voidptr)&var_assign_types);
 	GC_reachable_here(&t);
 	GC_reachable_here(&node);
 	GC_reachable_here(&func_name);
@@ -26496,22 +29847,27 @@ VV_LOC void emitter__Transpiler_infer_single_func_types(emitter__Transpiler* t, 
 		}
 		if (all_same && (first == emitter__TypeTag__t_int || first == emitter__TypeTag__t_float || first == emitter__TypeTag__t_bool || first == emitter__TypeTag__t_string)) {
 			(*(emitter__VarType*)builtin__map_get_and_set((map*)&local_var_types, &(string[]){vname}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = ((emitter__VarType){.tag = first,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
+		} else if (first == emitter__TypeTag__t_array) {
+			string lookup_key = builtin__string_plus_many(3, _MOV((string[3]){func_name, _S("::"), vname}));
+			if ((*(emitter__VarType*)builtin__map_get(ADDR(map, t->inferred_types), &(string[]){lookup_key}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })).tag == emitter__TypeTag__t_array) {
+				(*(emitter__VarType*)builtin__map_get_and_set((map*)&local_var_types, &(string[]){vname}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = (*(emitter__VarType*)builtin__map_get(ADDR(map, t->inferred_types), &(string[]){lookup_key}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} }));
+			}
 		}
 	}
 	(*(Map_string_emitter__VarType*)builtin__map_get_and_set((map*)&t->func_var_types, &(string[]){func_name}, &(Map_string_emitter__VarType[]){ builtin__new_map(sizeof(string), sizeof(emitter__VarType), &builtin__map_hash_string, &builtin__map_eq_string, &builtin__map_clone_string, &builtin__map_free_string) })) = builtin__map_clone(&local_var_types);
 	emitter__VarType _t10 = ((emitter__VarType){.tag = emitter__TypeTag__t_unknown,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 	emitter__VarType ret_type = _t10;
-	if ((node.return_type).len != 0) {
-		string hint = builtin__string_trim_left(node.return_type, _S("?"));
+	if ((node->return_type).len != 0) {
+		string hint = builtin__string_trim_left(node->return_type, _S("?"));
 		emitter__TypeTag hint_tag = emitter__php_type_to_tag(hint);
 		if (hint_tag != emitter__TypeTag__t_unknown) {
 			ret_type = ((emitter__VarType){.tag = hint_tag,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
-		} else if (builtin__string__eq(builtin__string_to_lower(node.return_type), _S("void"))) {
+		} else if (builtin__string__eq(builtin__string_to_lower(node->return_type), _S("void"))) {
 			ret_type = ((emitter__VarType){.tag = emitter__TypeTag__t_void,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,});
 		}
 	}
 	if (ret_type.tag == emitter__TypeTag__t_unknown) {
-		ret_type = emitter__Transpiler_infer_func_return_type(t, node.stmts, (voidptr)&var_assign_types);
+		ret_type = emitter__Transpiler_infer_func_return_type(t, node->stmts, (voidptr)&var_assign_types);
 	}
 	if (ret_type.tag != emitter__TypeTag__t_unknown) {
 		(*(emitter__VarType*)builtin__map_get_and_set((map*)&t->func_return_types, &(string[]){func_name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = ret_type;
@@ -26527,115 +29883,115 @@ VV_LOC void emitter__Transpiler_infer_single_func_types(emitter__Transpiler* t, 
 VV_LOC void emitter__Transpiler_infer_expr_types_for_func(emitter__Transpiler* t, Array_ast__AstNode stmts, Map_string_Array_emitter__TypeTag* var_assign_types) {
 	for (int _t1 = 0; _t1 < stmts.len; ++_t1) {
 		ast__AstNode stmt = ((ast__AstNode*)stmts.data)[_t1];
-		emitter__Transpiler_infer_expr_types_for_func_stmt(t, stmt, var_assign_types);
+		emitter__Transpiler_infer_expr_types_for_func_stmt(t, (voidptr)&stmt, var_assign_types);
 		GC_reachable_here(&stmt);
 	}
 }
-VV_LOC void emitter__Transpiler_infer_expr_types_for_func_stmt(emitter__Transpiler* t, ast__AstNode node, Map_string_Array_emitter__TypeTag* var_assign_types) {
+VV_LOC void emitter__Transpiler_infer_expr_types_for_func_stmt(emitter__Transpiler* t, ast__AstNode* node, Map_string_Array_emitter__TypeTag* var_assign_types) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_expression)) {
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_expression)) {
 		_option_ast__AstNode_ptr _t1 = {0};
-		if (_t1 = node.expr, _t1.state == 0) {
+		if (_t1 = node->expr, _t1.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t1.data;
 			GC_reachable_here(&expr);
-			emitter__Transpiler_infer_expr_types(t, *expr, var_assign_types);
+			emitter__Transpiler_infer_expr_types(t, (voidptr)&*expr, var_assign_types);
 			GC_reachable_here(&expr);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_return)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_return)) {
 		_option_ast__AstNode_ptr _t2 = {0};
-		if (_t2 = node.expr, _t2.state == 0) {
+		if (_t2 = node->expr, _t2.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t2.data;
 			GC_reachable_here(&expr);
-			emitter__Transpiler_infer_expr_types(t, *expr, var_assign_types);
+			emitter__Transpiler_infer_expr_types(t, (voidptr)&*expr, var_assign_types);
 			GC_reachable_here(&expr);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_if)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_if)) {
 		_option_ast__AstNode_ptr _t3 = {0};
-		if (_t3 = node.cond, _t3.state == 0) {
+		if (_t3 = node->cond, _t3.state == 0) {
 			ast__AstNode* cond = *(ast__AstNode**)_t3.data;
 			GC_reachable_here(&cond);
-			emitter__Transpiler_infer_expr_types(t, *cond, var_assign_types);
+			emitter__Transpiler_infer_expr_types(t, (voidptr)&*cond, var_assign_types);
 			GC_reachable_here(&cond);
 		}
-		emitter__Transpiler_infer_expr_types_for_func(t, node.stmts, var_assign_types);
-		for (int _t4 = 0; _t4 < node.elseifs.len; ++_t4) {
-			ast__AstNode elseif = ((ast__AstNode*)node.elseifs.data)[_t4];
+		emitter__Transpiler_infer_expr_types_for_func(t, node->stmts, var_assign_types);
+		for (int _t4 = 0; _t4 < node->elseifs.len; ++_t4) {
+			ast__AstNode elseif = ((ast__AstNode*)node->elseifs.data)[_t4];
 			_option_ast__AstNode_ptr _t5 = {0};
 			if (_t5 = elseif.cond, _t5.state == 0) {
 				ast__AstNode* elseif_cond = *(ast__AstNode**)_t5.data;
 				GC_reachable_here(&elseif_cond);
-				emitter__Transpiler_infer_expr_types(t, *elseif_cond, var_assign_types);
+				emitter__Transpiler_infer_expr_types(t, (voidptr)&*elseif_cond, var_assign_types);
 				GC_reachable_here(&elseif_cond);
 			}
 			emitter__Transpiler_infer_expr_types_for_func(t, elseif.stmts, var_assign_types);
 			GC_reachable_here(&elseif);
 		}
 		_option_ast__AstNode_ptr _t6 = {0};
-		if (_t6 = node.__v_else, _t6.state == 0) {
+		if (_t6 = node->__v_else, _t6.state == 0) {
 			ast__AstNode* el = *(ast__AstNode**)_t6.data;
 			GC_reachable_here(&el);
 			emitter__Transpiler_infer_expr_types_for_func(t, el->stmts, var_assign_types);
 			GC_reachable_here(&el);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_while) || builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_do)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_while) || builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_do)) {
 		_option_ast__AstNode_ptr _t7 = {0};
-		if (_t7 = node.cond, _t7.state == 0) {
+		if (_t7 = node->cond, _t7.state == 0) {
 			ast__AstNode* cond = *(ast__AstNode**)_t7.data;
 			GC_reachable_here(&cond);
-			emitter__Transpiler_infer_expr_types(t, *cond, var_assign_types);
+			emitter__Transpiler_infer_expr_types(t, (voidptr)&*cond, var_assign_types);
 			GC_reachable_here(&cond);
 		}
-		emitter__Transpiler_infer_expr_types_for_func(t, node.stmts, var_assign_types);
+		emitter__Transpiler_infer_expr_types_for_func(t, node->stmts, var_assign_types);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_for)) {
-		for (int _t8 = 0; _t8 < node.init.len; ++_t8) {
-			ast__AstNode init = ((ast__AstNode*)node.init.data)[_t8];
-			emitter__Transpiler_infer_expr_types(t, init, var_assign_types);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_for)) {
+		for (int _t8 = 0; _t8 < node->init.len; ++_t8) {
+			ast__AstNode init = ((ast__AstNode*)node->init.data)[_t8];
+			emitter__Transpiler_infer_expr_types(t, (voidptr)&init, var_assign_types);
 			GC_reachable_here(&init);
 		}
-		for (int _t9 = 0; _t9 < node.conds.len; ++_t9) {
-			ast__AstNode cond = ((ast__AstNode*)node.conds.data)[_t9];
-			emitter__Transpiler_infer_expr_types(t, cond, var_assign_types);
+		for (int _t9 = 0; _t9 < node->conds.len; ++_t9) {
+			ast__AstNode cond = ((ast__AstNode*)node->conds.data)[_t9];
+			emitter__Transpiler_infer_expr_types(t, (voidptr)&cond, var_assign_types);
 			GC_reachable_here(&cond);
 		}
-		for (int _t10 = 0; _t10 < node.loop.len; ++_t10) {
-			ast__AstNode loop_expr = ((ast__AstNode*)node.loop.data)[_t10];
-			emitter__Transpiler_infer_expr_types(t, loop_expr, var_assign_types);
+		for (int _t10 = 0; _t10 < node->loop.len; ++_t10) {
+			ast__AstNode loop_expr = ((ast__AstNode*)node->loop.data)[_t10];
+			emitter__Transpiler_infer_expr_types(t, (voidptr)&loop_expr, var_assign_types);
 			GC_reachable_here(&loop_expr);
 		}
-		emitter__Transpiler_infer_expr_types_for_func(t, node.stmts, var_assign_types);
+		emitter__Transpiler_infer_expr_types_for_func(t, node->stmts, var_assign_types);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_foreach)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_foreach)) {
 		_option_ast__AstNode_ptr _t11 = {0};
-		if (_t11 = node.expr, _t11.state == 0) {
+		if (_t11 = node->expr, _t11.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t11.data;
 			GC_reachable_here(&expr);
-			emitter__Transpiler_infer_expr_types(t, *expr, var_assign_types);
+			emitter__Transpiler_infer_expr_types(t, (voidptr)&*expr, var_assign_types);
 			GC_reachable_here(&expr);
 		}
-		emitter__Transpiler_infer_expr_types_for_func(t, node.stmts, var_assign_types);
+		emitter__Transpiler_infer_expr_types_for_func(t, node->stmts, var_assign_types);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_echo)) {
-		for (int _t12 = 0; _t12 < node.exprs.len; ++_t12) {
-			ast__AstNode expr = ((ast__AstNode*)node.exprs.data)[_t12];
-			emitter__Transpiler_infer_expr_types(t, expr, var_assign_types);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_echo)) {
+		for (int _t12 = 0; _t12 < node->exprs.len; ++_t12) {
+			ast__AstNode expr = ((ast__AstNode*)node->exprs.data)[_t12];
+			emitter__Transpiler_infer_expr_types(t, (voidptr)&expr, var_assign_types);
 			GC_reachable_here(&expr);
 		}
 	}
 	else {
 		_option_ast__AstNode_ptr _t13 = {0};
-		if (_t13 = node.expr, _t13.state == 0) {
+		if (_t13 = node->expr, _t13.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t13.data;
 			GC_reachable_here(&expr);
-			emitter__Transpiler_infer_expr_types(t, *expr, var_assign_types);
+			emitter__Transpiler_infer_expr_types(t, (voidptr)&*expr, var_assign_types);
 			GC_reachable_here(&expr);
 		}
-		for (int _t14 = 0; _t14 < node.stmts.len; ++_t14) {
-			ast__AstNode stmt = ((ast__AstNode*)node.stmts.data)[_t14];
-			emitter__Transpiler_infer_expr_types_for_func_stmt(t, stmt, var_assign_types);
+		for (int _t14 = 0; _t14 < node->stmts.len; ++_t14) {
+			ast__AstNode stmt = ((ast__AstNode*)node->stmts.data)[_t14];
+			emitter__Transpiler_infer_expr_types_for_func_stmt(t, (voidptr)&stmt, var_assign_types);
 			GC_reachable_here(&stmt);
 		}
 	}
@@ -26683,12 +30039,14 @@ VV_LOC void emitter__Transpiler_scan_func_return_tags(emitter__Transpiler* t, Ar
 			if (_t2 = stmt.expr, _t2.state == 0) {
 				ast__AstNode* expr = *(ast__AstNode**)_t2.data;
 				GC_reachable_here(&expr);
-				emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, *expr);
+				emitter__VarType expr_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*expr);
 				builtin__array_push((array*)return_tags, _MOV((emitter__VarType[]){ expr_type }));
 			}
 		}
 		else {
-			emitter__Transpiler_scan_func_return_tags(t, stmt.stmts, var_assign_types, return_tags);
+			if (stmt.stmts.len > 0) {
+				emitter__Transpiler_scan_func_return_tags(t, stmt.stmts, var_assign_types, return_tags);
+			}
 			for (int _t4 = 0; _t4 < stmt.elseifs.len; ++_t4) {
 				ast__AstNode elseif = ((ast__AstNode*)stmt.elseifs.data)[_t4];
 				emitter__Transpiler_scan_func_return_tags(t, elseif.stmts, var_assign_types, return_tags);
@@ -26700,6 +30058,23 @@ VV_LOC void emitter__Transpiler_scan_func_return_tags(emitter__Transpiler* t, Ar
 				GC_reachable_here(&el);
 				emitter__Transpiler_scan_func_return_tags(t, el->stmts, var_assign_types, return_tags);
 				GC_reachable_here(&el);
+			}
+			for (int _t6 = 0; _t6 < stmt.cases.len; ++_t6) {
+				ast__AstNode case_node = ((ast__AstNode*)stmt.cases.data)[_t6];
+				emitter__Transpiler_scan_func_return_tags(t, case_node.stmts, var_assign_types, return_tags);
+				GC_reachable_here(&case_node);
+			}
+			for (int _t7 = 0; _t7 < stmt.catches.len; ++_t7) {
+				ast__AstNode catch_node = ((ast__AstNode*)stmt.catches.data)[_t7];
+				emitter__Transpiler_scan_func_return_tags(t, catch_node.stmts, var_assign_types, return_tags);
+				GC_reachable_here(&catch_node);
+			}
+			_option_ast__AstNode_ptr _t8 = {0};
+			if (_t8 = stmt.finally, _t8.state == 0) {
+				ast__AstNode* fin = *(ast__AstNode**)_t8.data;
+				GC_reachable_here(&fin);
+				emitter__Transpiler_scan_func_return_tags(t, fin->stmts, var_assign_types, return_tags);
+				GC_reachable_here(&fin);
 			}
 		}
 	}
@@ -26723,6 +30098,22 @@ void emitter__Transpiler_analyze_arrays(emitter__Transpiler* t, Array_ast__AstNo
 		string name = *(string*)builtin__DenseArray_key(&states.key_values, _t1);
 		name = builtin__string_clone(name);
 		emitter__ArrayInferState s = (*(emitter__ArrayInferState*)builtin__DenseArray_value(&states.key_values, _t1));
+		emitter__VarType* _t5 = (emitter__VarType*)(builtin__map_get_check(ADDR(map, t->inferred_types), &(string[]){name}));
+		_option_emitter__VarType _t4 = {0};
+		if (_t5) {
+			*((emitter__VarType*)&_t4.data) = *((emitter__VarType*)_t5);
+		} else {
+			_t4.state = 2; _t4.err = builtin___v_error(_S("map key does not exist"));
+		}
+		
+		if (_t4.state == 0) {
+			emitter__VarType existing_typ = (*(emitter__VarType*)_t4.data);
+			GC_reachable_here(&existing_typ);
+			if (emitter__VarType_is_object(existing_typ)) {
+				continue;
+			}
+		}
+			if (_t4.state == 2 && _t4.err._object != _const_none__._object) { builtin___v_free(_t4.err._object); }
 		if (_SLIT_EQ(name.str, name.len, "_GET") || _SLIT_EQ(name.str, name.len, "_POST") || _SLIT_EQ(name.str, name.len, "_SERVER") || _SLIT_EQ(name.str, name.len, "_COOKIE") || _SLIT_EQ(name.str, name.len, "_SESSION") || _SLIT_EQ(name.str, name.len, "_FILES") || _SLIT_EQ(name.str, name.len, "_ENV") || _SLIT_EQ(name.str, name.len, "_REQUEST") || _SLIT_EQ(name.str, name.len, "GLOBALS")) {
 			(*(emitter__VarType*)builtin__map_get_and_set((map*)&t->inferred_types, &(string[]){name}, &(emitter__VarType[]){ (emitter__VarType){.tag = 0,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = 0,.is_native_map = 0,.element_type_tag = 0,} })) = ((emitter__VarType){.tag = emitter__TypeTag__t_array,.class_name = (string){.str=(byteptr)"", .is_lit=1},.is_native_list = false,.is_native_map = false,.element_type_tag = 0,});
 			continue;
@@ -26733,8 +30124,8 @@ void emitter__Transpiler_analyze_arrays(emitter__Transpiler* t, Array_ast__AstNo
 				if (s.element_tags.len > 0) {
 					emitter__TypeTag first = (*(emitter__TypeTag*)builtin__array_get(s.element_tags, 0));
 					bool all_same = true;
-					for (int _t4 = 0; _t4 < s.element_tags.len; ++_t4) {
-						emitter__TypeTag tag = ((emitter__TypeTag*)s.element_tags.data)[_t4];
+					for (int _t6 = 0; _t6 < s.element_tags.len; ++_t6) {
+						emitter__TypeTag tag = ((emitter__TypeTag*)s.element_tags.data)[_t6];
 						if (tag != first) {
 							all_same = false;
 							break;
@@ -26750,8 +30141,8 @@ void emitter__Transpiler_analyze_arrays(emitter__Transpiler* t, Array_ast__AstNo
 				if (s.element_tags.len > 0) {
 					emitter__TypeTag first = (*(emitter__TypeTag*)builtin__array_get(s.element_tags, 0));
 					bool all_same = true;
-					for (int _t5 = 0; _t5 < s.element_tags.len; ++_t5) {
-						emitter__TypeTag tag = ((emitter__TypeTag*)s.element_tags.data)[_t5];
+					for (int _t7 = 0; _t7 < s.element_tags.len; ++_t7) {
+						emitter__TypeTag tag = ((emitter__TypeTag*)s.element_tags.data)[_t7];
 						if (tag != first) {
 							all_same = false;
 							break;
@@ -26768,119 +30159,123 @@ void emitter__Transpiler_analyze_arrays(emitter__Transpiler* t, Array_ast__AstNo
 		}
 	}
 }
-VV_LOC void emitter__Transpiler_scan_array_usages_stmt(emitter__Transpiler* t, ast__AstNode node, Map_string_emitter__ArrayInferState* states) {
+VV_LOC void emitter__Transpiler_scan_array_usages_stmt(emitter__Transpiler* t, ast__AstNode* node, Map_string_emitter__ArrayInferState* states) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_expression)) {
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_expression)) {
 		_option_ast__AstNode_ptr _t1 = {0};
-		if (_t1 = node.expr, _t1.state == 0) {
+		if (_t1 = node->expr, _t1.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t1.data;
 			GC_reachable_here(&expr);
 			_option_ast__AstNode _t2 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-			emitter__Transpiler_scan_array_usages_expr(t, *expr, states, false, _t2);
+			emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*expr, states, false, _t2);
 			GC_reachable_here(&expr);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_if)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_if)) {
 		_option_ast__AstNode_ptr _t3 = {0};
-		if (_t3 = node.cond, _t3.state == 0) {
+		if (_t3 = node->cond, _t3.state == 0) {
 			ast__AstNode* cond = *(ast__AstNode**)_t3.data;
 			GC_reachable_here(&cond);
 			_option_ast__AstNode _t4 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-			emitter__Transpiler_scan_array_usages_expr(t, *cond, states, false, _t4);
+			emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*cond, states, false, _t4);
 			GC_reachable_here(&cond);
 		}
-		for (int _t5 = 0; _t5 < node.elseifs.len; ++_t5) {
-			ast__AstNode elseif = ((ast__AstNode*)node.elseifs.data)[_t5];
+		for (int _t5 = 0; _t5 < node->elseifs.len; ++_t5) {
+			ast__AstNode elseif = ((ast__AstNode*)node->elseifs.data)[_t5];
 			_option_ast__AstNode_ptr _t6 = {0};
 			if (_t6 = elseif.cond, _t6.state == 0) {
 				ast__AstNode* cond = *(ast__AstNode**)_t6.data;
 				GC_reachable_here(&cond);
 				_option_ast__AstNode _t7 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-				emitter__Transpiler_scan_array_usages_expr(t, *cond, states, false, _t7);
+				emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*cond, states, false, _t7);
 				GC_reachable_here(&cond);
 			}
 			emitter__Transpiler_scan_array_usages_stmts(t, elseif.stmts, states);
 			GC_reachable_here(&elseif);
 		}
-		emitter__Transpiler_scan_array_usages_stmts(t, node.stmts, states);
+		emitter__Transpiler_scan_array_usages_stmts(t, node->stmts, states);
 		_option_ast__AstNode_ptr _t8 = {0};
-		if (_t8 = node.__v_else, _t8.state == 0) {
+		if (_t8 = node->__v_else, _t8.state == 0) {
 			ast__AstNode* el = *(ast__AstNode**)_t8.data;
 			GC_reachable_here(&el);
 			emitter__Transpiler_scan_array_usages_stmts(t, el->stmts, states);
 			GC_reachable_here(&el);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_while) || builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_do)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_while) || builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_do)) {
 		_option_ast__AstNode_ptr _t9 = {0};
-		if (_t9 = node.cond, _t9.state == 0) {
+		if (_t9 = node->cond, _t9.state == 0) {
 			ast__AstNode* cond = *(ast__AstNode**)_t9.data;
 			GC_reachable_here(&cond);
 			_option_ast__AstNode _t10 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-			emitter__Transpiler_scan_array_usages_expr(t, *cond, states, false, _t10);
+			emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*cond, states, false, _t10);
 			GC_reachable_here(&cond);
 		}
-		emitter__Transpiler_scan_array_usages_stmts(t, node.stmts, states);
+		emitter__Transpiler_scan_array_usages_stmts(t, node->stmts, states);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_for)) {
-		for (int _t11 = 0; _t11 < node.init.len; ++_t11) {
-			ast__AstNode init = ((ast__AstNode*)node.init.data)[_t11];
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_for)) {
+		for (int _t11 = 0; _t11 < node->init.len; ++_t11) {
+			ast__AstNode init = ((ast__AstNode*)node->init.data)[_t11];
 			_option_ast__AstNode _t12 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-			emitter__Transpiler_scan_array_usages_expr(t, init, states, false, _t12);
+			emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&init, states, false, _t12);
 			GC_reachable_here(&init);
 		}
-		for (int _t13 = 0; _t13 < node.conds.len; ++_t13) {
-			ast__AstNode cond = ((ast__AstNode*)node.conds.data)[_t13];
+		for (int _t13 = 0; _t13 < node->conds.len; ++_t13) {
+			ast__AstNode cond = ((ast__AstNode*)node->conds.data)[_t13];
 			_option_ast__AstNode _t14 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-			emitter__Transpiler_scan_array_usages_expr(t, cond, states, false, _t14);
+			emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&cond, states, false, _t14);
 			GC_reachable_here(&cond);
 		}
-		for (int _t15 = 0; _t15 < node.loop.len; ++_t15) {
-			ast__AstNode loop = ((ast__AstNode*)node.loop.data)[_t15];
+		for (int _t15 = 0; _t15 < node->loop.len; ++_t15) {
+			ast__AstNode loop = ((ast__AstNode*)node->loop.data)[_t15];
 			_option_ast__AstNode _t16 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-			emitter__Transpiler_scan_array_usages_expr(t, loop, states, false, _t16);
+			emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&loop, states, false, _t16);
 			GC_reachable_here(&loop);
 		}
-		emitter__Transpiler_scan_array_usages_stmts(t, node.stmts, states);
+		emitter__Transpiler_scan_array_usages_stmts(t, node->stmts, states);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_foreach)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_foreach)) {
 		_option_ast__AstNode_ptr _t17 = {0};
-		if (_t17 = node.expr, _t17.state == 0) {
+		if (_t17 = node->expr, _t17.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t17.data;
 			GC_reachable_here(&expr);
 			_option_ast__AstNode _t18 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-			emitter__Transpiler_scan_array_usages_expr(t, *expr, states, false, _t18);
+			emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*expr, states, false, _t18);
 			GC_reachable_here(&expr);
 		}
-		emitter__Transpiler_scan_array_usages_stmts(t, node.stmts, states);
+		emitter__Transpiler_scan_array_usages_stmts(t, node->stmts, states);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_class)) {
-		emitter__Transpiler_scan_array_usages_stmts(t, node.stmts, states);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_class)) {
+		emitter__Transpiler_scan_array_usages_stmts(t, node->stmts, states);
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_class_method) || builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_function)) {
-		emitter__Transpiler_scan_array_usages_stmts(t, node.stmts, states);
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_class_method) || builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_function)) {
+		string old_func = t->current_func_name;
+		t->current_func_name = node->name;
+		emitter__Transpiler_scan_array_usages_stmts(t, node->stmts, states);
+		GC_reachable_here(&old_func);
+		t->current_func_name = old_func;
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_echo)) {
-		for (int _t19 = 0; _t19 < node.exprs.len; ++_t19) {
-			ast__AstNode expr = ((ast__AstNode*)node.exprs.data)[_t19];
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_echo)) {
+		for (int _t19 = 0; _t19 < node->exprs.len; ++_t19) {
+			ast__AstNode expr = ((ast__AstNode*)node->exprs.data)[_t19];
 			_option_ast__AstNode _t20 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-			emitter__Transpiler_scan_array_usages_expr(t, expr, states, false, _t20);
+			emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&expr, states, false, _t20);
 			GC_reachable_here(&expr);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_return)) {
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_return)) {
 		_option_ast__AstNode_ptr _t21 = {0};
-		if (_t21 = node.expr, _t21.state == 0) {
+		if (_t21 = node->expr, _t21.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t21.data;
 			GC_reachable_here(&expr);
 			_option_ast__AstNode _t22 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-			emitter__Transpiler_scan_array_usages_expr(t, *expr, states, false, _t22);
+			emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*expr, states, false, _t22);
 			GC_reachable_here(&expr);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_stmt_unset)) {
-		for (int _t23 = 0; _t23 < node.vars.len; ++_t23) {
-			ast__AstNode v = ((ast__AstNode*)node.vars.data)[_t23];
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_stmt_unset)) {
+		for (int _t23 = 0; _t23 < node->vars.len; ++_t23) {
+			ast__AstNode v = ((ast__AstNode*)node->vars.data)[_t23];
 			if (builtin__fast_string_eq(v.node_type, _S("Expr_ArrayDimFetch"))) {
 				_option_ast__AstNode_ptr *_t24 = &v.var;
 				if (_t24->state != 0) {
@@ -26907,7 +30302,7 @@ VV_LOC void emitter__Transpiler_scan_array_usages_stmt(emitter__Transpiler* t, a
 					if (_t27 = v.dim, _t27.state == 0) {
 						ast__AstNode* dim = *(ast__AstNode**)_t27.data;
 						GC_reachable_here(&dim);
-						emitter__VarType dim_type = emitter__Transpiler_get_expr_type(t, *dim);
+						emitter__VarType dim_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*dim);
 						if (dim_type.tag == emitter__TypeTag__t_string || builtin__fast_string_eq(dim->node_type, _S("Scalar_String"))) {
 							s.can_be_list = false;
 						} else if (dim_type.tag == emitter__TypeTag__t_int || builtin__fast_string_eq(dim->node_type, _S("Scalar_Int"))) {
@@ -26917,7 +30312,7 @@ VV_LOC void emitter__Transpiler_scan_array_usages_stmt(emitter__Transpiler* t, a
 							s.can_be_map = false;
 						}
 						_option_ast__AstNode _t28 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-						emitter__Transpiler_scan_array_usages_expr(t, *dim, states, false, _t28);
+						emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*dim, states, false, _t28);
 						GC_reachable_here(&dim);
 						GC_reachable_here(&dim_type);
 					} else {
@@ -26926,47 +30321,57 @@ VV_LOC void emitter__Transpiler_scan_array_usages_stmt(emitter__Transpiler* t, a
 					(*(emitter__ArrayInferState*)builtin__map_get_and_set((map*)states, &(string[]){arr_node->name}, &(emitter__ArrayInferState[]){ (emitter__ArrayInferState){.can_be_list = 0,.can_be_map = 0,.has_array_ops = 0,.element_tags = builtin____new_array_noscan(0, 0, sizeof(emitter__TypeTag)),} })) = s;
 				} else {
 					_option_ast__AstNode _t29 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-					emitter__Transpiler_scan_array_usages_expr(t, *arr_node, states, false, _t29);
+					emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*arr_node, states, false, _t29);
 					_option_ast__AstNode_ptr _t30 = {0};
 					if (_t30 = v.dim, _t30.state == 0) {
 						ast__AstNode* dim = *(ast__AstNode**)_t30.data;
 						GC_reachable_here(&dim);
 						_option_ast__AstNode _t31 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-						emitter__Transpiler_scan_array_usages_expr(t, *dim, states, false, _t31);
+						emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*dim, states, false, _t31);
 						GC_reachable_here(&dim);
 					}
 				}
 			} else {
 				_option_ast__AstNode _t32 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-				emitter__Transpiler_scan_array_usages_expr(t, v, states, false, _t32);
+				emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&v, states, false, _t32);
 			}
 		}
 	}
 	else {
 	}
 }
+VV_LOC string emitter__Transpiler_get_array_infer_key(emitter__Transpiler t, string name) {
+	if ((t.current_func_name).len != 0) {
+		if (_SLIT_EQ(name.str, name.len, "_GET") || _SLIT_EQ(name.str, name.len, "_POST") || _SLIT_EQ(name.str, name.len, "_SERVER") || _SLIT_EQ(name.str, name.len, "_COOKIE") || _SLIT_EQ(name.str, name.len, "_SESSION") || _SLIT_EQ(name.str, name.len, "_FILES") || _SLIT_EQ(name.str, name.len, "_ENV") || _SLIT_EQ(name.str, name.len, "_REQUEST") || _SLIT_EQ(name.str, name.len, "GLOBALS")) {
+			return name;
+		}
+		return builtin__string_plus_many(3, _MOV((string[3]){t.current_func_name, _S("::"), name}));
+	}
+	return name;
+}
 VV_LOC void emitter__Transpiler_scan_array_usages_stmts(emitter__Transpiler* t, Array_ast__AstNode stmts, Map_string_emitter__ArrayInferState* states) {
 	for (int _t1 = 0; _t1 < stmts.len; ++_t1) {
 		ast__AstNode stmt = ((ast__AstNode*)stmts.data)[_t1];
-		emitter__Transpiler_scan_array_usages_stmt(t, stmt, states);
+		emitter__Transpiler_scan_array_usages_stmt(t, (voidptr)&stmt, states);
 		GC_reachable_here(&stmt);
 	}
 }
-VV_LOC void emitter__Transpiler_scan_array_usages_expr(emitter__Transpiler* t, ast__AstNode node, Map_string_emitter__ArrayInferState* states, bool is_assign_lhs, _option_ast__AstNode rhs_node) {
+VV_LOC void emitter__Transpiler_scan_array_usages_expr(emitter__Transpiler* t, ast__AstNode* node, Map_string_emitter__ArrayInferState* states, bool is_assign_lhs, _option_ast__AstNode rhs_node) {
 
-	if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_assign)) {
-		_option_ast__AstNode_ptr *_t1 = &node.var;
+	if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_assign)) {
+		_option_ast__AstNode_ptr *_t1 = &node->var;
 		if (_t1->state != 0) {
 			return;
 		}
 		ast__AstNode* lhs = (*(ast__AstNode**)_t1->data);
-		_option_ast__AstNode_ptr *_t2 = &node.expr;
+		_option_ast__AstNode_ptr *_t2 = &node->expr;
 		if (_t2->state != 0) {
 			return;
 		}
 		ast__AstNode* rhs = (*(ast__AstNode**)_t2->data);
 		if (builtin__fast_string_eq(lhs->node_type, _S("Expr_Variable")) && builtin__fast_string_eq(rhs->node_type, _S("Expr_Array"))) {
-			emitter__ArrayInferState* _t4 = (emitter__ArrayInferState*)(builtin__map_get_check((states), &(string[]){lhs->name}));
+			string lhs_key = emitter__Transpiler_get_array_infer_key(*t, lhs->name);
+			emitter__ArrayInferState* _t4 = (emitter__ArrayInferState*)(builtin__map_get_check((states), &(string[]){lhs_key}));
 			_option_emitter__ArrayInferState _t3 = {0};
 			if (_t4) {
 				*((emitter__ArrayInferState*)&_t3.data) = *((emitter__ArrayInferState*)_t4);
@@ -27001,18 +30406,20 @@ VV_LOC void emitter__Transpiler_scan_array_usages_expr(emitter__Transpiler* t, a
 				if (_t7 = item.expr, _t7.state == 0) {
 					ast__AstNode* val = *(ast__AstNode**)_t7.data;
 					GC_reachable_here(&val);
-					builtin__array_push_noscan((array*)&s.element_tags, _MOV((emitter__TypeTag[]){ emitter__Transpiler_get_expr_type(t, *val).tag }));
+					builtin__array_push_noscan((array*)&s.element_tags, _MOV((emitter__TypeTag[]){ emitter__Transpiler_get_expr_type(t, (voidptr)&*val).tag }));
 				}
 			}
-			(*(emitter__ArrayInferState*)builtin__map_get_and_set((map*)states, &(string[]){lhs->name}, &(emitter__ArrayInferState[]){ (emitter__ArrayInferState){.can_be_list = 0,.can_be_map = 0,.has_array_ops = 0,.element_tags = builtin____new_array_noscan(0, 0, sizeof(emitter__TypeTag)),} })) = s;
+			(*(emitter__ArrayInferState*)builtin__map_get_and_set((map*)states, &(string[]){lhs_key}, &(emitter__ArrayInferState[]){ (emitter__ArrayInferState){.can_be_list = 0,.can_be_map = 0,.has_array_ops = 0,.element_tags = builtin____new_array_noscan(0, 0, sizeof(emitter__TypeTag)),} })) = s;
 			_option_ast__AstNode _t9 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-			emitter__Transpiler_scan_array_usages_expr(t, *rhs, states, false, _t9);
+			emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*rhs, states, false, _t9);
+			GC_reachable_here(&lhs_key);
 			GC_reachable_here(&s);
 		} else {
 			if (builtin__fast_string_eq(lhs->node_type, _S("Expr_Variable"))) {
-				emitter__VarType rhs_typ = emitter__Transpiler_get_expr_type(t, *rhs);
+				emitter__VarType rhs_typ = emitter__Transpiler_get_expr_type(t, (voidptr)&*rhs);
 				if (!rhs_typ.is_native_list && !rhs_typ.is_native_map) {
-					emitter__ArrayInferState* _t11 = (emitter__ArrayInferState*)(builtin__map_get_check((states), &(string[]){lhs->name}));
+					string lhs_key = emitter__Transpiler_get_array_infer_key(*t, lhs->name);
+					emitter__ArrayInferState* _t11 = (emitter__ArrayInferState*)(builtin__map_get_check((states), &(string[]){lhs_key}));
 					_option_emitter__ArrayInferState _t10 = {0};
 					if (_t11) {
 						*((emitter__ArrayInferState*)&_t10.data) = *((emitter__ArrayInferState*)_t11);
@@ -27027,24 +30434,25 @@ VV_LOC void emitter__Transpiler_scan_array_usages_expr(emitter__Transpiler* t, a
 					emitter__ArrayInferState s = (*(emitter__ArrayInferState*)_t10.data);
 					s.can_be_list = false;
 					s.can_be_map = false;
-					(*(emitter__ArrayInferState*)builtin__map_get_and_set((map*)states, &(string[]){lhs->name}, &(emitter__ArrayInferState[]){ (emitter__ArrayInferState){.can_be_list = 0,.can_be_map = 0,.has_array_ops = 0,.element_tags = builtin____new_array_noscan(0, 0, sizeof(emitter__TypeTag)),} })) = s;
+					(*(emitter__ArrayInferState*)builtin__map_get_and_set((map*)states, &(string[]){lhs_key}, &(emitter__ArrayInferState[]){ (emitter__ArrayInferState){.can_be_list = 0,.can_be_map = 0,.has_array_ops = 0,.element_tags = builtin____new_array_noscan(0, 0, sizeof(emitter__TypeTag)),} })) = s;
 				}
 			}
 			_option_ast__AstNode _t12;
 			builtin___option_ok(&(ast__AstNode[]) { *rhs }, (_option*)(&_t12), sizeof(ast__AstNode));
-			emitter__Transpiler_scan_array_usages_expr(t, *lhs, states, true, _t12);
+			emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*lhs, states, true, _t12);
 			_option_ast__AstNode _t13 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-			emitter__Transpiler_scan_array_usages_expr(t, *rhs, states, false, _t13);
+			emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*rhs, states, false, _t13);
 		}
 	}
-	else if (builtin__fast_string_eq(node.node_type, _const_ast__node_expr_array_dim_fetch)) {
-		_option_ast__AstNode_ptr *_t14 = &node.var;
+	else if (builtin__fast_string_eq(node->node_type, _const_ast__node_expr_array_dim_fetch)) {
+		_option_ast__AstNode_ptr *_t14 = &node->var;
 		if (_t14->state != 0) {
 			return;
 		}
 		ast__AstNode* base = (*(ast__AstNode**)_t14->data);
 		if (builtin__fast_string_eq(base->node_type, _S("Expr_Variable"))) {
-			emitter__ArrayInferState* _t16 = (emitter__ArrayInferState*)(builtin__map_get_check((states), &(string[]){base->name}));
+			string base_key = emitter__Transpiler_get_array_infer_key(*t, base->name);
+			emitter__ArrayInferState* _t16 = (emitter__ArrayInferState*)(builtin__map_get_check((states), &(string[]){base_key}));
 			_option_emitter__ArrayInferState _t15 = {0};
 			if (_t16) {
 				*((emitter__ArrayInferState*)&_t15.data) = *((emitter__ArrayInferState*)_t16);
@@ -27059,10 +30467,10 @@ VV_LOC void emitter__Transpiler_scan_array_usages_expr(emitter__Transpiler* t, a
 			emitter__ArrayInferState s = (*(emitter__ArrayInferState*)_t15.data);
 			s.has_array_ops = true;
 			_option_ast__AstNode_ptr _t17 = {0};
-			if (_t17 = node.dim, _t17.state == 0) {
+			if (_t17 = node->dim, _t17.state == 0) {
 				ast__AstNode* dim = *(ast__AstNode**)_t17.data;
 				GC_reachable_here(&dim);
-				emitter__VarType dim_type = emitter__Transpiler_get_expr_type(t, *dim);
+				emitter__VarType dim_type = emitter__Transpiler_get_expr_type(t, (voidptr)&*dim);
 				if (dim_type.tag == emitter__TypeTag__t_string || builtin__fast_string_eq(dim->node_type, _S("Scalar_String"))) {
 					s.can_be_list = false;
 				} else if (dim_type.tag == emitter__TypeTag__t_int || builtin__fast_string_eq(dim->node_type, _S("Scalar_Int"))) {
@@ -27072,7 +30480,7 @@ VV_LOC void emitter__Transpiler_scan_array_usages_expr(emitter__Transpiler* t, a
 					s.can_be_map = false;
 				}
 				_option_ast__AstNode _t18 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-				emitter__Transpiler_scan_array_usages_expr(t, *dim, states, false, _t18);
+				emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*dim, states, false, _t18);
 				GC_reachable_here(&dim);
 				GC_reachable_here(&dim_type);
 			} else {
@@ -27083,66 +30491,66 @@ VV_LOC void emitter__Transpiler_scan_array_usages_expr(emitter__Transpiler* t, a
 				if (_t19 = rhs_node, _t19.state == 0) {
 					ast__AstNode rhs = *(ast__AstNode*)_t19.data;
 					GC_reachable_here(&rhs);
-					builtin__array_push_noscan((array*)&s.element_tags, _MOV((emitter__TypeTag[]){ emitter__Transpiler_get_expr_type(t, rhs).tag }));
+					builtin__array_push_noscan((array*)&s.element_tags, _MOV((emitter__TypeTag[]){ emitter__Transpiler_get_expr_type(t, (voidptr)&rhs).tag }));
 				}
 			}
-			(*(emitter__ArrayInferState*)builtin__map_get_and_set((map*)states, &(string[]){base->name}, &(emitter__ArrayInferState[]){ (emitter__ArrayInferState){.can_be_list = 0,.can_be_map = 0,.has_array_ops = 0,.element_tags = builtin____new_array_noscan(0, 0, sizeof(emitter__TypeTag)),} })) = s;
+			(*(emitter__ArrayInferState*)builtin__map_get_and_set((map*)states, &(string[]){base_key}, &(emitter__ArrayInferState[]){ (emitter__ArrayInferState){.can_be_list = 0,.can_be_map = 0,.has_array_ops = 0,.element_tags = builtin____new_array_noscan(0, 0, sizeof(emitter__TypeTag)),} })) = s;
 		} else {
-			emitter__Transpiler_scan_array_usages_expr(t, *base, states, is_assign_lhs, rhs_node);
+			emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*base, states, is_assign_lhs, rhs_node);
 			_option_ast__AstNode_ptr _t21 = {0};
-			if (_t21 = node.dim, _t21.state == 0) {
+			if (_t21 = node->dim, _t21.state == 0) {
 				ast__AstNode* dim = *(ast__AstNode**)_t21.data;
 				GC_reachable_here(&dim);
 				_option_ast__AstNode _t22 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-				emitter__Transpiler_scan_array_usages_expr(t, *dim, states, false, _t22);
+				emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*dim, states, false, _t22);
 				GC_reachable_here(&dim);
 			}
 		}
 	}
 	else {
 		_option_ast__AstNode_ptr _t23 = {0};
-		if (_t23 = node.expr, _t23.state == 0) {
+		if (_t23 = node->expr, _t23.state == 0) {
 			ast__AstNode* expr = *(ast__AstNode**)_t23.data;
 			GC_reachable_here(&expr);
 			_option_ast__AstNode _t24 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-			emitter__Transpiler_scan_array_usages_expr(t, *expr, states, false, _t24);
+			emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*expr, states, false, _t24);
 			GC_reachable_here(&expr);
 		}
 		_option_ast__AstNode_ptr _t25 = {0};
-		if (_t25 = node.left, _t25.state == 0) {
+		if (_t25 = node->left, _t25.state == 0) {
 			ast__AstNode* left = *(ast__AstNode**)_t25.data;
 			GC_reachable_here(&left);
 			_option_ast__AstNode _t26 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-			emitter__Transpiler_scan_array_usages_expr(t, *left, states, false, _t26);
+			emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*left, states, false, _t26);
 			GC_reachable_here(&left);
 		}
 		_option_ast__AstNode_ptr _t27 = {0};
-		if (_t27 = node.right, _t27.state == 0) {
+		if (_t27 = node->right, _t27.state == 0) {
 			ast__AstNode* right = *(ast__AstNode**)_t27.data;
 			GC_reachable_here(&right);
 			_option_ast__AstNode _t28 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-			emitter__Transpiler_scan_array_usages_expr(t, *right, states, false, _t28);
+			emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*right, states, false, _t28);
 			GC_reachable_here(&right);
 		}
-		for (int _t29 = 0; _t29 < node.args.len; ++_t29) {
-			ast__AstNode arg = ((ast__AstNode*)node.args.data)[_t29];
+		for (int _t29 = 0; _t29 < node->args.len; ++_t29) {
+			ast__AstNode arg = ((ast__AstNode*)node->args.data)[_t29];
 			_option_ast__AstNode_ptr _t30 = {0};
 			if (_t30 = arg.expr, _t30.state == 0) {
 				ast__AstNode* arg_expr = *(ast__AstNode**)_t30.data;
 				GC_reachable_here(&arg_expr);
 				_option_ast__AstNode _t31 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-				emitter__Transpiler_scan_array_usages_expr(t, *arg_expr, states, false, _t31);
+				emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*arg_expr, states, false, _t31);
 				GC_reachable_here(&arg_expr);
 			}
 		}
-		for (int _t32 = 0; _t32 < node.items.len; ++_t32) {
-			ast__AstNode item = ((ast__AstNode*)node.items.data)[_t32];
+		for (int _t32 = 0; _t32 < node->items.len; ++_t32) {
+			ast__AstNode item = ((ast__AstNode*)node->items.data)[_t32];
 			_option_ast__AstNode_ptr _t33 = {0};
 			if (_t33 = item.key, _t33.state == 0) {
 				ast__AstNode* key = *(ast__AstNode**)_t33.data;
 				GC_reachable_here(&key);
 				_option_ast__AstNode _t34 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-				emitter__Transpiler_scan_array_usages_expr(t, *key, states, false, _t34);
+				emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*key, states, false, _t34);
 				GC_reachable_here(&key);
 			}
 			_option_ast__AstNode_ptr _t35 = {0};
@@ -27150,28 +30558,28 @@ VV_LOC void emitter__Transpiler_scan_array_usages_expr(emitter__Transpiler* t, a
 				ast__AstNode* val = *(ast__AstNode**)_t35.data;
 				GC_reachable_here(&val);
 				_option_ast__AstNode _t36 = (_option_ast__AstNode){ .state=2, .err=_const_none__, .data={E_STRUCT} };
-				emitter__Transpiler_scan_array_usages_expr(t, *val, states, false, _t36);
+				emitter__Transpiler_scan_array_usages_expr(t, (voidptr)&*val, states, false, _t36);
 				GC_reachable_here(&val);
 			}
 		}
 	}
 }
-VV_LOC emitter__TypeTag emitter__php_literal_node_to_tag(ast__AstNode node) {
+VV_LOC emitter__TypeTag emitter__php_literal_node_to_tag(ast__AstNode* node) {
 
-	if (_SLIT_EQ(node.node_type.str, node.node_type.len, "Scalar_Int")) {
+	if (_SLIT_EQ(node->node_type.str, node->node_type.len, "Scalar_Int")) {
 		return emitter__TypeTag__t_int;
 	}
-	else if (_SLIT_EQ(node.node_type.str, node.node_type.len, "Scalar_Float")) {
+	else if (_SLIT_EQ(node->node_type.str, node->node_type.len, "Scalar_Float")) {
 		return emitter__TypeTag__t_float;
 	}
-	else if (_SLIT_EQ(node.node_type.str, node.node_type.len, "Scalar_String")) {
+	else if (_SLIT_EQ(node->node_type.str, node->node_type.len, "Scalar_String")) {
 		return emitter__TypeTag__t_string;
 	}
-	else if (_SLIT_EQ(node.node_type.str, node.node_type.len, "Scalar_Encapsed") || _SLIT_EQ(node.node_type.str, node.node_type.len, "Scalar_InterpolatedString")) {
+	else if (_SLIT_EQ(node->node_type.str, node->node_type.len, "Scalar_Encapsed") || _SLIT_EQ(node->node_type.str, node->node_type.len, "Scalar_InterpolatedString")) {
 		return emitter__TypeTag__t_string;
 	}
-	else if (_SLIT_EQ(node.node_type.str, node.node_type.len, "Expr_ConstFetch")) {
-		string _t5 = builtin__string_to_lower(node.name);
+	else if (_SLIT_EQ(node->node_type.str, node->node_type.len, "Expr_ConstFetch")) {
+		string _t5 = builtin__string_to_lower(node->name);
 		
 		if (_SLIT_EQ(_t5.str, _t5.len, "true") || _SLIT_EQ(_t5.str, _t5.len, "false")) {
 			return emitter__TypeTag__t_bool;
@@ -27183,7 +30591,7 @@ VV_LOC emitter__TypeTag emitter__php_literal_node_to_tag(ast__AstNode node) {
 			return emitter__TypeTag__t_unknown;
 		}
 	}
-	else if (_SLIT_EQ(node.node_type.str, node.node_type.len, "Expr_Array")) {
+	else if (_SLIT_EQ(node->node_type.str, node->node_type.len, "Expr_Array")) {
 		return emitter__TypeTag__t_array;
 	}
 	else {
@@ -27252,10 +30660,14 @@ VV_LOC void main__main(void) {
 	}
 	string output_file = _S("");
 	bool run_after = false;
+	string mode = _S("exe");
 	for (int i = 3; i < _const_os__args.len; i++) {
 		string arg = (*(string*)builtin__array_get(_const_os__args, i));
 		if (_SLIT_EQ(arg.str, arg.len, "-o") && i + 1 < _const_os__args.len) {
 			output_file = (*(string*)builtin__array_get(_const_os__args, i + 1));
+			i++;
+		} else if (_SLIT_EQ(arg.str, arg.len, "-mode") && i + 1 < _const_os__args.len) {
+			mode = (*(string*)builtin__array_get(_const_os__args, i + 1));
 			i++;
 		} else if (_SLIT_EQ(arg.str, arg.len, "--run")) {
 			run_after = true;
@@ -27291,12 +30703,35 @@ VV_LOC void main__main(void) {
  	Array_ast__AstNode stmts = (*(Array_ast__AstNode*)_t3.data);
 	emitter__Transpiler transpiler = emitter__Transpiler__static__new();
 	transpiler.current_file = input_file;
+	transpiler.parser_php_path = parser_path;
+	transpiler.mode = mode;
 	string v_body = emitter__Transpiler_transpile(&transpiler, stmts);
-	string v_code = emitter__wrap_as_main(strings__Builder_str(&transpiler.func_out), v_body, transpiler.extra_imports);
-	_result_void _t5 = os__write_file(output_file, v_code);
-	if (_t5.is_error) {
-		IError _t6 = _t5.err;
-		IError err = _t6;
+	string all_funcs = builtin__string__plus(strings__Builder_str(&transpiler.func_out), strings__Builder_str(&transpiler.include_funcs_code));
+	string final_v_body = builtin__string__plus(strings__Builder_str(&transpiler.include_register_code), v_body);
+	string _t5; /* if prepend */
+	if (_SLIT_EQ(mode.str, mode.len, "web")) {
+		string base_name = builtin__string_all_after_last(builtin__string_all_before_last(input_file, _S(".")), _S("/"));
+		string func_name = builtin__string_plus_many(2, _MOV((string[2]){_S("run_"), base_name}));
+		_t5 = emitter__wrap_as_entry_script(all_funcs, final_v_body, func_name, _S("main"), transpiler.extra_imports);
+		goto _t6;
+	};
+	{
+	if (_SLIT_EQ(mode.str, mode.len, "lib")) {
+		string base_name = builtin__string_all_after_last(builtin__string_all_before_last(input_file, _S(".")), _S("/"));
+		string init_func_name = builtin__string_plus_many(2, _MOV((string[2]){_S("init_"), base_name}));
+		_t5 = emitter__wrap_as_lib(all_funcs, final_v_body, init_func_name, _S("main"), transpiler.extra_imports);
+		goto _t6;
+	};
+	{
+		_t5 = emitter__wrap_as_main(all_funcs, final_v_body, transpiler.extra_imports);
+	}
+	}
+	_t6: {};
+		string v_code = _t5;
+	_result_void _t7 = os__write_file(output_file, v_code);
+	if (_t7.is_error) {
+		IError _t8 = _t7.err;
+		IError err = _t8;
 		builtin__eprintln(builtin__str_intp(2, _MOV((StrIntpData[]){{_S("Failed to write output file: "), 0xfe10, {.d_s = builtin__IError_str(err)}, 0, 0, 0}, {_SLIT0, 0, { .d_c = 0 }, 0, 0, 0}})));
 		return;
 	}
@@ -27305,25 +30740,45 @@ VV_LOC void main__main(void) {
 	GC_reachable_here(&cmd);
 	GC_reachable_here(&input_file);
 	GC_reachable_here(&output_file);
+	GC_reachable_here(&mode);
 	GC_reachable_here(&parser_path);
 	GC_reachable_here(&res);
 	GC_reachable_here(&stmts);
 	GC_reachable_here(&transpiler);
 	GC_reachable_here(&v_body);
+	GC_reachable_here(&all_funcs);
+	GC_reachable_here(&final_v_body);
 	GC_reachable_here(&v_code);
 	os__Result fmt_res = os__execute(builtin__string_plus_many(3, _MOV((string[3]){_S("v fmt -w \""), output_file, _S("\"")})));
 	if (fmt_res.exit_code != 0) {
 		builtin__eprintln(builtin__string_plus_many(2, _MOV((string[2]){_S("Warning: v fmt failed: "), fmt_res.output})));
 	}
-	builtin__println(builtin__string_plus_many(4, _MOV((string[4]){_S("Successfully transpiled "), input_file, _S(" -> "), output_file})));
+	main__fix_multiline_if(output_file);
 	GC_reachable_here(&cmd);
 	GC_reachable_here(&input_file);
 	GC_reachable_here(&output_file);
+	GC_reachable_here(&mode);
 	GC_reachable_here(&parser_path);
 	GC_reachable_here(&res);
 	GC_reachable_here(&stmts);
 	GC_reachable_here(&transpiler);
 	GC_reachable_here(&v_body);
+	GC_reachable_here(&all_funcs);
+	GC_reachable_here(&final_v_body);
+	GC_reachable_here(&v_code);
+	GC_reachable_here(&fmt_res);
+	builtin__println(builtin__string_plus_many(4, _MOV((string[4]){_S("Successfully transpiled "), input_file, _S(" -> "), output_file})));
+	GC_reachable_here(&cmd);
+	GC_reachable_here(&input_file);
+	GC_reachable_here(&output_file);
+	GC_reachable_here(&mode);
+	GC_reachable_here(&parser_path);
+	GC_reachable_here(&res);
+	GC_reachable_here(&stmts);
+	GC_reachable_here(&transpiler);
+	GC_reachable_here(&v_body);
+	GC_reachable_here(&all_funcs);
+	GC_reachable_here(&final_v_body);
 	GC_reachable_here(&v_code);
 	GC_reachable_here(&fmt_res);
 	if (run_after) {
@@ -27376,6 +30831,50 @@ VV_LOC void main__print_usage(void) {
 	builtin__println(_S("  compile  Transpiles a PHP file into V source code"));
 	builtin__println(_S("  --run    Compiles and runs the generated V code immediately"));
 }
+VV_LOC void main__fix_multiline_if(string file_path) {
+	_result_string _t1 = os__read_file(file_path);
+	if (_t1.is_error) {
+		return;
+	}
+	
+ 	string content = (*(string*)_t1.data);
+	string lb = _S("\n");
+	if (!builtin__string_contains(content, builtin__string_plus_many(2, _MOV((string[2]){lb, _S("\t{")}))) && !builtin__string_contains(content, builtin__string_plus_many(2, _MOV((string[2]){lb, _S(" {")})))) {
+		return;
+	}
+	Array_string lines = builtin__string_split(content, lb);
+	Array_string result = builtin____new_array_with_default(0, 0, sizeof(string), 0);
+	int i = 0;
+	for (;;) {
+		if (!(i < lines.len)) break;
+		string line = (*(string*)builtin__array_get(lines, i));
+		if (i + 1 < lines.len) {
+			string next_line = (*(string*)builtin__array_get(lines, i + 1));
+			string trimmed = builtin__string_trim_space(next_line);
+			if (_SLIT_EQ(trimmed.str, trimmed.len, "{")) {
+				string stripped = builtin__string_trim_space(line);
+				if (builtin__string_starts_with(stripped, _S("if ")) || builtin__string_starts_with(stripped, _S("} else if ")) || builtin__string_starts_with(stripped, _S("for "))) {
+					builtin__array_push((array*)&result, _MOV((string[]){ builtin__string__plus(line, _S(" {")) }));
+					i += 2;
+					continue;
+				}
+			}
+		}
+		builtin__array_push((array*)&result, _MOV((string[]){ builtin__string_clone(line) }));
+		i++;
+	}
+	_result_void _t4 = os__write_file(file_path, Array_string_join(result, lb));
+	if (_t4.is_error) {
+		return;
+	}
+	
+ ;
+	GC_reachable_here(&file_path);
+	GC_reachable_here(&content);
+	GC_reachable_here(&lb);
+	GC_reachable_here(&lines);
+	GC_reachable_here(&result);
+}
 VV_LOC string json__json_float_to_raw_string_T_f32(f32 val) {
 	if (val == 0) {
 		return _S("0");
@@ -27426,6 +30925,7 @@ void _vinit(int ___argc, voidptr ___argv) {
 	_const_none__ = I_None___to_Interface_IError((HEAP(None__, ((None__){.Error = ((Error){E_STRUCT}),}))));
 	_const_min_i64 = ((i64)(-9223372036854775807LL - 1));
 	_const_max_i64 = ((i64)(9223372036854775807LL));
+	_const_utf8_replacement_rune = ((rune)(0xfffd));
 	// Initializations of consts for module os
 	_const_os__fslash_str = _S("/");
 	_const_os__dot_dot = _S("..");
@@ -27470,6 +30970,31 @@ void _vinit(int ___argc, voidptr ___argv) {
 	_const_ast__node_expr_error_suppress = _S("Expr_ErrorSuppress");
 	_const_ast__node_stmt_interface = _S("Stmt_Interface");
 	_const_ast__node_expr_cast_array = _S("Expr_Cast_Array");
+	_const_ast__node_expr_cast_int = _S("Expr_Cast_Int");
+	_const_ast__node_expr_cast_double = _S("Expr_Cast_Double");
+	_const_ast__node_expr_cast_string = _S("Expr_Cast_String");
+	_const_ast__node_expr_cast_bool = _S("Expr_Cast_Bool");
+	_const_ast__node_expr_assign_ref = _S("Expr_AssignRef");
+	_const_ast__node_expr_assign_op_concat = _S("Expr_AssignOp_Concat");
+	_const_ast__node_expr_assign_op_plus = _S("Expr_AssignOp_Plus");
+	_const_ast__node_expr_assign_op_minus = _S("Expr_AssignOp_Minus");
+	_const_ast__node_expr_assign_op_mul = _S("Expr_AssignOp_Mul");
+	_const_ast__node_expr_assign_op_div = _S("Expr_AssignOp_Div");
+	_const_ast__node_expr_assign_op_mod = _S("Expr_AssignOp_Mod");
+	_const_ast__node_bin_not_identical = _S("Expr_BinaryOp_NotIdentical");
+	_const_ast__node_bin_not_equal = _S("Expr_BinaryOp_NotEqual");
+	_const_ast__node_expr_unary_minus = _S("Expr_UnaryMinus");
+	_const_ast__node_expr_unary_plus = _S("Expr_UnaryPlus");
+	_const_ast__node_expr_print = _S("Expr_Print");
+	_const_ast__node_expr_exit = _S("Expr_Exit");
+	_const_ast__node_expr_clone = _S("Expr_Clone");
+	_const_ast__node_expr_cast_object = _S("Expr_Cast_Object");
+	_const_ast__node_expr_list = _S("Expr_List");
+	_const_ast__node_bin_logical_xor = _S("Expr_BinaryOp_LogicalXor");
+	_const_ast__node_stmt_global = _S("Stmt_Global");
+	_const_ast__node_stmt_nop = _S("Stmt_Nop");
+	_const_ast__node_stmt_declare = _S("Stmt_Declare");
+	_const_ast__node_stmt_static = _S("Stmt_Static");
 	_const_ast__node_expr_assign = _S("Expr_Assign");
 	_const_ast__node_expr_variable = _S("Expr_Variable");
 	_const_ast__node_expr_const = _S("Expr_ConstFetch");
@@ -27479,6 +31004,7 @@ void _vinit(int ___argc, voidptr ___argv) {
 	_const_ast__node_expr_array_item = _S("ArrayItem");
 	_const_ast__node_expr_array_dim_fetch = _S("Expr_ArrayDimFetch");
 	_const_ast__node_expr_static_call = _S("Expr_StaticCall");
+	_const_ast__node_expr_static_prop_fetch = _S("Expr_StaticPropertyFetch");
 	_const_ast__node_expr_boolean_not = _S("Expr_BooleanNot");
 	_const_ast__node_expr_ternary = _S("Expr_Ternary");
 	_const_ast__node_bin_plus = _S("Expr_BinaryOp_Plus");

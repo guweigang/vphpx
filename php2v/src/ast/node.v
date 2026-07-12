@@ -102,14 +102,14 @@ pub fn (n &AstNode) clone() &AstNode {
 	mut uses := []AstNode{}
 	for u in n.uses { uses << *u.clone() }
 	mut consts := []ConstItem{}
-	for c in n.consts { consts << ConstItem{ node_type: c.node_type, name: c.name, value: *c.value.clone() } }
+	for c in n.consts { consts << ConstItem{ node_type: c.node_type.clone(), name: c.name.clone(), value: *c.value.clone() } }
 	mut vars := []AstNode{}
 	for v in n.vars { vars << *v.clone() }
 	mut parts := []AstNode{}
 	for p in n.parts { parts << *p.clone() }
 
 	return &AstNode{
-		node_type: n.node_type
+		node_type: n.node_type.clone()
 		exprs: exprs
 		expr: clone_ptr(n.expr)
 		var: clone_ptr(n.var)
@@ -123,11 +123,11 @@ pub fn (n &AstNode) clone() &AstNode {
 		catches: catches
 		finally: clone_ptr(n.finally)
 		types: n.types.clone()
-		value: n.value
-		name: n.name
+		value: n.value.clone()
+		name: n.name.clone()
 		params: params
 		args: args
-		by_ref: n.by_ref
+		by_ref: n.by_ref.clone()
 		items: items
 		key: clone_ptr(n.key)
 		dim: clone_ptr(n.dim)
@@ -140,22 +140,22 @@ pub fn (n &AstNode) clone() &AstNode {
 		body: clone_ptr(n.body)
 		loop: loop_nodes
 		default_val: clone_ptr(n.default_val)
-		variadic: n.variadic
+		variadic: n.variadic.clone()
 		props: props
 		uses: uses
-		incl_type: n.incl_type
-		return_type: n.return_type
-		class_name: n.class_name
+		incl_type: n.incl_type.clone()
+		return_type: n.return_type.clone()
+		class_name: n.class_name.clone()
 		class_expr: clone_ptr(n.class_expr)
 		name_expr: clone_ptr(n.name_expr)
-		extends: n.extends
+		extends: n.extends.clone()
 		implements: n.implements.clone()
 		traits: n.traits.clone()
 		line: n.line
 		consts: consts
 		vars: vars
 		parts: parts
-		alias: n.alias
-		flags: n.flags
+		alias: n.alias.clone()
+		flags: n.flags.clone()
 	}
 }

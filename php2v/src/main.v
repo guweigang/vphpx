@@ -55,14 +55,19 @@ fn main() {
 		return
 	}
 
-	// 2. 解析 AST
-	stmts := ast.parse_ast_json(res.output) or {
+	// 2. 解析 AST 并深度克隆以脱离 cJSON 内存生命周期
+	parsed_stmts := ast.parse_ast_json(res.output) or {
 		eprintln('Failed to parse AST JSON: ${err}')
 		return
+	}
+	mut stmts := []ast.AstNode{}
+	for i in 0 .. parsed_stmts.len {
+		stmts << *parsed_stmts[i].clone()
 	}
 
 	// 3. 转译为 V 代码
 	mut transpiler := emitter.Transpiler.new()
+	transpiler.ast_json_cache << res.output
 	transpiler.current_file = input_file
 	transpiler.parser_php_path = parser_path
 	transpiler.mode = mode
@@ -84,6 +89,7 @@ fn main() {
 	}
 
 	// 4. 写入输出文件
+
 	os.write_file(output_file, v_code) or {
 		eprintln('Failed to write output file: ${err}')
 		return

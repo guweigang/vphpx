@@ -27,6 +27,8 @@ pub:
 	param_names []string
 	is_variadic bool
 	is_static   bool
+	param_by_ref []bool
+	has_dynamic_args bool
 }
 
 // StaticPropInfo 记录类的静态属性声明
@@ -46,7 +48,7 @@ pub mut:
 	closure_names    []string
 	is_in_func       bool
 	indent           int
-	scope            VarScope
+	scope            &VarScope
 	custom_functions map[string]bool
 	classes          []ClassInfo
 	current_class    string // 当前正在转译的类名（用于 parent:: 解析）
@@ -79,6 +81,9 @@ pub mut:
 	reassigned_params      map[string]bool // 被重新赋值的原生参数名（需使用 var_xxx 副本）
 	is_in_construct        bool            // 当前是否在 __construct 方法中（无返回值）
 	is_in_switch         bool            // 当前是否在 switch/case 中（break 无需生成）
+	collect_referenced   map[string]bool
+	collect_assigned     map[string]bool
+	ast_json_cache       []string
 	global_constants       map[string]GlobalConst // 全局常量表
 	closure_body_builder   strings.Builder // 当前闭包体的临时输出缓冲区
 	is_in_closure_body     bool            // 是否正在生成闭包体代码
@@ -100,17 +105,9 @@ pub mut:
 	has_dynamic_new         bool
 	has_dynamic_method_call bool
 	has_dynamic_func_call   bool
-	type_cache              map[voidptr]VarType
-	codegen_cache           map[voidptr]CodegenCacheEntry
 	active_depth            int
 	mode                    string
 	is_entry_script         bool
-}
-
-pub struct CodegenCacheEntry {
-pub mut:
-	code string
-	typ  VarType
 }
 
 pub struct GlobalConst {
@@ -128,7 +125,7 @@ pub fn Transpiler.new() Transpiler {
 		closures_code:    strings.new_builder(1024)
 		const_out:        strings.new_builder(1024)
 		indent:           1
-		scope:            VarScope.new()
+		scope:            &VarScope{ declared: map[string]bool{} }
 		custom_functions: map[string]bool{}
 		custom_function_infos: map[string]MethodInfo{}
 		classes:          []ClassInfo{}
@@ -155,6 +152,9 @@ pub fn Transpiler.new() Transpiler {
 		native_params: map[string]bool{}
 		reassigned_params: map[string]bool{}
 		global_constants: map[string]GlobalConst{}
+		collect_referenced: map[string]bool{}
+		collect_assigned: map[string]bool{}
+		ast_json_cache: []string{}
 		closure_body_builder: strings.new_builder(64)
 		closure_captured_natives: map[string]VarType{}
 		extra_imports: map[string]bool{}
@@ -172,23 +172,29 @@ pub fn Transpiler.new() Transpiler {
 
 // transpile 预扫描函数并遍历语句，返回生成的 V 代码
 pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
+	println('Transpiling file start: ' + t.current_file)
 	mut local_stmts := stmts.clone()
 	t.collect_traits(mut local_stmts)
 	t.apply_traits(mut local_stmts)
 
 	// 前置扫描并登记全局常量
+	println('  - scan_global_constants')
 	t.scan_global_constants(local_stmts)
 
 	// 前置扫描并登记全局类与 Exception
+	println('  - scan_classes')
 	t.scan_classes(local_stmts)
 
 	// 预扫描顶层及嵌套自定义函数，登记到 custom_functions 中
+	println('  - scan_custom_functions')
 	t.scan_custom_functions(local_stmts)
 
 	// 前置类型分析
+	println('  - analyze_types')
 	t.analyze_types(local_stmts)
 
 	// 扫描动态使用特征
+	println('  - scan_dynamic_usages')
 	t.scan_dynamic_usages(local_stmts)
 
 	// 检测入口脚本：如果顶层代码包含 exit/die，标记为入口脚本
@@ -196,7 +202,8 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 		t.is_entry_script = true
 	}
 
-	ref_vars, ass_vars := t.collect_vars_in_scope(local_stmts)
+	println('  - collect_vars_in_scope')
+	ref_vars, ass_vars := t.collect_vars_in_scope(&local_stmts)
 	for v in ref_vars {
 		if v !in ass_vars && !t.scope.has_var(v) {
 			t.write_indent()
@@ -223,9 +230,37 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 		}
 	}
 
+	for v in ass_vars {
+		if !t.scope.has_var(v) {
+			t.scope.declare(v)
+			t.write_indent()
+			v_var := t.get_v_var_name(v)
+			v_type := t.inferred_types[v_var] or { t.inferred_types[v] or { VarType{ tag: .t_unknown } } }
+			if v_type.is_native_list || v_type.is_native_map {
+				t.write_line('mut ${v_var} := ' + t.get_empty_literal(v_type))
+				t.native_arr_vars[v] = true
+			} else if v_type.is_scalar() {
+				t.native_vars[v_var] = true
+				match v_type.tag {
+					.t_int { t.write_line('mut ${v_var} := i64(0)') }
+					.t_float { t.write_line('mut ${v_var} := f64(0.0)') }
+					.t_bool { t.write_line('mut ${v_var} := false') }
+					else { t.write_line("mut ${v_var} := ''") }
+				}
+			} else if v_type.is_object() {
+				cls := if v_type.class_name.len > 0 { v_type.class_name } else { 'WP_Error' }
+				t.write_line('mut ${v_var} := &Class_${cls}(unsafe { nil })')
+			} else {
+				t.write_line('mut ${v_var} := rt.new_null()')
+			}
+		}
+	}
+
+	println('  - visit_stmt loop start')
 	for stmt in local_stmts {
 		t.visit_stmt(stmt)
 	}
+	println('  - visit_stmt loop end')
 
 	// 补全在转译中遇到的未显式声明的类（如 Exception 等内置类）
 	old_is_in_func := t.is_in_func
@@ -378,11 +413,10 @@ fn (mut t Transpiler) current_builder() &strings.Builder {
 	}
 }
 
-fn (mut t Transpiler) write_indent() {
+fn (mut t Transpiler) flush_pre_stmts() {
 	if t.pre_stmts.len > 0 {
 		pre := t.pre_stmts.clone()
 		t.pre_stmts.clear()
-		// pre_stmts 写到当前活跃的 builder（闭包体 or 外层函数）
 		mut b := t.current_builder()
 		indent_str := '\t'.repeat(t.indent)
 		for stmt in pre {
@@ -391,7 +425,10 @@ fn (mut t Transpiler) write_indent() {
 			}
 		}
 	}
+}
 
+fn (mut t Transpiler) write_indent() {
+	t.flush_pre_stmts()
 	indent_str := '\t'.repeat(t.indent)
 	mut b := t.current_builder()
 	b.write_string(indent_str)
@@ -599,39 +636,88 @@ fn (t &Transpiler) is_class_instance_of(child_class string, target string) bool 
 // scan_global_constants 静态分析顶层 AST，提取全局 const 和全局 define() 并注册
 pub fn (mut t Transpiler) scan_global_constants(stmts []ast.AstNode) {
 	for stmt in stmts {
-		match stmt.node_type {
-			ast.node_stmt_const {
-				for c in stmt.consts {
-					val_type := t.get_expr_type(c.value)
-					t.global_constants[c.name] = GlobalConst{
-						name: 'global_const_' + c.name.to_lower()
-						typ: val_type
-					}
+		t.scan_global_constants_rec(&stmt)
+	}
+}
+
+fn (mut t Transpiler) scan_global_constants_rec(node &ast.AstNode) {
+	match node.node_type {
+		ast.node_stmt_const {
+			for c in node.consts {
+				val_type := t.get_expr_type(c.value)
+				mut val_expr := ''
+				if static_val := t.eval_static_path(c.value) {
+					val_expr = "'" + static_val + "'"
+				} else {
+					val_expr = t.visit_expr(c.value)
+				}
+				t.global_constants[c.name] = GlobalConst{
+					name: 'global_const_' + c.name.to_lower()
+					val_expr: val_expr
+					typ: val_type
 				}
 			}
-			ast.node_stmt_expression {
-				expr := stmt.expr or { continue }
+		}
+		ast.node_stmt_expression {
+			if expr := node.expr {
 				if expr.node_type == ast.node_expr_funccall && expr.name == 'define' {
 					if expr.args.len >= 2 {
-						name_node := expr.args[0].expr or { continue }
-						val_node := expr.args[1].expr or { continue }
+						name_node := expr.args[0].expr or { return }
+						val_node := expr.args[1].expr or { return }
 						if name_node.node_type == ast.node_scalar_string {
 							val_type := t.get_expr_type(*val_node)
+							mut val_expr := ''
+							if static_val := t.eval_static_path(*val_node) {
+								val_expr = "'" + static_val + "'"
+							} else {
+								val_expr = t.visit_expr(val_node)
+							}
 							t.global_constants[name_node.value] = GlobalConst{
 								name: 'global_const_' + name_node.value.to_lower()
+								val_expr: val_expr
 								typ: val_type
 							}
 						}
 					}
 				}
 			}
-			else {}
 		}
+		else {}
 	}
+
+	for i in 0 .. node.exprs.len { t.scan_global_constants_rec(&node.exprs[i]) }
+	if expr := node.expr { t.scan_global_constants_rec(expr) }
+	if val := node.var { t.scan_global_constants_rec(val) }
+	if left := node.left { t.scan_global_constants_rec(left) }
+	if right := node.right { t.scan_global_constants_rec(right) }
+	if cond := node.cond { t.scan_global_constants_rec(cond) }
+	for i in 0 .. node.stmts.len { t.scan_global_constants_rec(&node.stmts[i]) }
+	for i in 0 .. node.elseifs.len { t.scan_global_constants_rec(&node.elseifs[i]) }
+	if el := node.@else { t.scan_global_constants_rec(el) }
+	if iff := node.@if { t.scan_global_constants_rec(iff) }
+	for i in 0 .. node.catches.len { t.scan_global_constants_rec(&node.catches[i]) }
+	if fin := node.finally { t.scan_global_constants_rec(fin) }
+	for i in 0 .. node.params.len { t.scan_global_constants_rec(&node.params[i]) }
+	for i in 0 .. node.args.len { t.scan_global_constants_rec(&node.args[i]) }
+	for i in 0 .. node.items.len { t.scan_global_constants_rec(&node.items[i]) }
+	if k := node.key { t.scan_global_constants_rec(k) }
+	if d := node.dim { t.scan_global_constants_rec(d) }
+	if kv := node.key_var { t.scan_global_constants_rec(kv) }
+	if vv := node.value_var { t.scan_global_constants_rec(vv) }
+	for i in 0 .. node.init.len { t.scan_global_constants_rec(&node.init[i]) }
+	for i in 0 .. node.conds.len { t.scan_global_constants_rec(&node.conds[i]) }
+	for i in 0 .. node.loop.len { t.scan_global_constants_rec(&node.loop[i]) }
+	for i in 0 .. node.props.len { t.scan_global_constants_rec(&node.props[i]) }
+	for i in 0 .. node.uses.len { t.scan_global_constants_rec(&node.uses[i]) }
+	for i in 0 .. node.vars.len { t.scan_global_constants_rec(&node.vars[i]) }
+	for i in 0 .. node.parts.len { t.scan_global_constants_rec(&node.parts[i]) }
+	for i in 0 .. node.cases.len { t.scan_global_constants_rec(&node.cases[i]) }
+	for i in 0 .. node.arms.len { t.scan_global_constants_rec(&node.arms[i]) }
+	if body := node.body { t.scan_global_constants_rec(body) }
 }
 
 // 辅助提取属性默认值的 V 表达式
-fn get_prop_default_expr(node ast.AstNode) string {
+fn get_prop_default_expr(node &ast.AstNode) string {
 	match node.node_type {
 		ast.node_expr_array {
 			mut is_list := true
@@ -701,17 +787,22 @@ pub fn (mut t Transpiler) scan_classes(stmts []ast.AstNode) {
 					}
 					ast.node_stmt_class_method {
 						mut p_names := []string{}
+						mut p_by_ref := []bool{}
 						for param in member.params {
 							if param_var := param.var {
 								p_names << param_var.name
 							}
+							p_by_ref << (param.by_ref == 'true')
 						}
 						is_meth_static := (member.flags.int() & 8) != 0
+						has_dyn := has_dynamic_args_call(member.stmts)
 						methods << MethodInfo{
 							name: member.name
 							param_count: member.params.len
 							param_names: p_names
 							is_static: is_meth_static
+							param_by_ref: p_by_ref
+							has_dynamic_args: has_dyn
 						}
 					}
 					ast.node_stmt_class_const {
@@ -799,6 +890,11 @@ pub fn (mut t Transpiler) scan_classes(stmts []ast.AstNode) {
 pub fn (t Transpiler) find_method(class_name string, method_name string) ?MethodInfo {
 	for cls in t.classes {
 		if cls.name.to_lower() == class_name.to_lower() {
+			for m in cls.methods {
+				if m.name.to_lower() == method_name.to_lower() {
+					return m
+				}
+			}
 			for m in cls.all_methods {
 				if m.name.to_lower() == method_name.to_lower() {
 					return m
@@ -809,9 +905,12 @@ pub fn (t Transpiler) find_method(class_name string, method_name string) ?Method
 	return none
 }
 
-pub fn (t Transpiler) get_v_var_name(php_var_name string) string {
+pub fn (t &Transpiler) get_v_var_name(php_var_name string) string {
 	if php_var_name in t.var_aliases {
 		return t.var_aliases[php_var_name] or { '' }
+	}
+	if php_var_name in ['from', 'to', 'type', 'short', 'char', 'int', 'byte', 'struct', 'class', 'interface', 'fn', 'import', 'module', 'const', 'mut', 'pub', 'return', 'if', 'else', 'match', 'for', 'in', 'go', 'select', 'or', 'as', 'true', 'false', 'none'] {
+		return 'var_' + php_var_name.to_lower()
 	}
 	if php_var_name in t.reassigned_params {
 		return 'var_' + php_var_name.to_lower()
@@ -837,11 +936,13 @@ pub fn (mut t Transpiler) scan_custom_functions(nodes []ast.AstNode) {
 					has_variadic = true
 				}
 			}
+			has_dyn := has_dynamic_args_call(node.stmts)
 			t.custom_function_infos[node.name] = MethodInfo{
 				name: node.name
 				param_count: node.params.len
 				param_names: p_names
 				is_variadic: has_variadic
+				has_dynamic_args: has_dyn
 			}
 		}
 		if node.stmts.len > 0 {
@@ -882,7 +983,7 @@ fn (mut t Transpiler) scan_dynamic_usages(nodes []ast.AstNode) {
 	}
 }
 
-fn (mut t Transpiler) scan_dynamic_usages_node(node ast.AstNode) {
+fn (mut t Transpiler) scan_dynamic_usages_node(node &ast.AstNode) {
 	match node.node_type {
 		ast.node_expr_new {
 			if _ := node.class_expr {
@@ -1096,6 +1197,7 @@ pub fn (t Transpiler) get_empty_literal(typ VarType) string {
 
 pub fn (mut t Transpiler) transpile_include_file(path string) string {
 	normalized := os.real_path(path)
+	println('Transpiling include: ' + normalized)
 	if normalized in t.transpiled_includes {
 		return t.transpiled_includes[normalized]
 	}
@@ -1120,9 +1222,15 @@ pub fn (mut t Transpiler) transpile_include_file(path string) string {
 		return func_name
 	}
 
-	stmts := ast.parse_ast_json(res.output) or {
+	t.ast_json_cache << res.output
+
+	parsed_stmts := ast.parse_ast_json(res.output) or {
 		eprintln('Failed to parse AST JSON for include ' + path + ': ${err}')
 		return func_name
+	}
+	mut stmts := []ast.AstNode{}
+	for i in 0 .. parsed_stmts.len {
+		stmts << *parsed_stmts[i].clone()
 	}
 
 	// 实例化子转译器
@@ -1134,6 +1242,7 @@ pub fn (mut t Transpiler) transpile_include_file(path string) string {
 	sub_t.custom_function_infos = t.custom_function_infos.clone()
 	sub_t.global_constants = t.global_constants.clone()
 	sub_t.transpiled_includes = t.transpiled_includes.clone()
+	sub_t.ast_json_cache = t.ast_json_cache.clone()
 
 	v_body := sub_t.transpile(stmts)
 
@@ -1172,7 +1281,7 @@ pub fn (t Transpiler) get_safe_func_name(path string) string {
 	return 'run_transpiled_include_' + s
 }
 
-pub fn (t &Transpiler) eval_static_path(node ast.AstNode) ?string {
+pub fn (t &Transpiler) eval_static_path(node &ast.AstNode) ?string {
 	match node.node_type {
 		ast.node_scalar_string {
 			return node.value
@@ -1208,6 +1317,64 @@ pub fn (t &Transpiler) eval_static_path(node ast.AstNode) ?string {
 		else {}
 	}
 	return none
+}
+
+fn has_dynamic_args_call(nodes []ast.AstNode) bool {
+	for node in nodes {
+		if node.node_type == ast.node_expr_funccall {
+			if node.name in ['func_get_args', 'func_num_args', 'func_get_arg'] {
+				return true
+			}
+		}
+		if node.stmts.len > 0 {
+			if has_dynamic_args_call(node.stmts) {
+				return true
+			}
+		}
+		if node.conds.len > 0 {
+			if has_dynamic_args_call(node.conds) {
+				return true
+			}
+		}
+		if node.loop.len > 0 {
+			if has_dynamic_args_call(node.loop) {
+				return true
+			}
+		}
+		if expr_node := node.expr {
+			if has_dynamic_args_call([*expr_node]) {
+				return true
+			}
+		}
+		if left_node := node.left {
+			if has_dynamic_args_call([*left_node]) {
+				return true
+			}
+		}
+		if right_node := node.right {
+			if has_dynamic_args_call([*right_node]) {
+				return true
+			}
+		}
+		for arg in node.args {
+			if val := arg.expr {
+				if has_dynamic_args_call([*val]) {
+					return true
+				}
+			}
+		}
+		for c in node.cases {
+			if has_dynamic_args_call(c.stmts) {
+				return true
+			}
+		}
+		for c in node.catches {
+			if has_dynamic_args_call(c.stmts) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 

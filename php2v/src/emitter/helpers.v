@@ -1,6 +1,7 @@
 module emitter
 
 import ast
+import strings
 
 // ============================================================
 // 公共辅助函数：消除 emit_expr.v / emit_stmt.v / emit_class.v 中的重复代码
@@ -11,12 +12,43 @@ import ast
 // escape_single_quoted 将原始字符串转义为 V 单引号字符串内容
 // 替代原先分散在 8 处的重复 .replace 链
 pub fn escape_single_quoted(s string) string {
-	return s.replace('\\', '\\\\').replace('\'', '\\\'').replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
+	if s == '' {
+		return ''
+	}
+	mut sb := strings.new_builder(s.len * 2)
+	for i in 0 .. s.len {
+		b := s[i]
+		match b {
+			`\\` { sb.write_string('\\\\') }
+			`\'` { sb.write_string('\\\'') }
+			`\n` { sb.write_string('\\n') }
+			`\r` { sb.write_string('\\r') }
+			`\t` { sb.write_string('\\t') }
+			else { sb.write_byte(b) }
+		}
+	}
+	return sb.str()
 }
 
 // escape_double_quoted 将原始字符串转义为 V 双引号字符串内容（额外处理 $）
 pub fn escape_double_quoted(s string) string {
-	return s.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t').replace('\$', '\\$')
+	if s == '' {
+		return ''
+	}
+	mut sb := strings.new_builder(s.len * 2)
+	for i in 0 .. s.len {
+		b := s[i]
+		match b {
+			`\\` { sb.write_string('\\\\') }
+			`"`  { sb.write_string('\\"') }
+			`\n` { sb.write_string('\\n') }
+			`\r` { sb.write_string('\\r') }
+			`\t` { sb.write_string('\\t') }
+			`$`  { sb.write_string('\\$') }
+			else { sb.write_byte(b) }
+		}
+	}
+	return sb.str()
 }
 
 // ---- 装箱 / 拆箱 ----
@@ -65,7 +97,7 @@ pub fn (t Transpiler) box_expr(code string, typ VarType) string {
 			return code
 		}
 		cls := if real_typ.class_name.len > 0 { real_typ.class_name } else { 'WP_Error' }
-		return "rt.new_object('${cls}', []string{}, ${code})"
+		return "rt.new_object('${cls}', ${t.get_parents_expr(cls)}, ${code})"
 	}
 	match real_typ.tag {
 		.t_int {
@@ -99,7 +131,12 @@ pub fn (t Transpiler) unbox_expr(code string, typ VarType) string {
 		.t_float { return '(${code}).to_f64()' }
 		.t_string { return '(${code}).str()' }
 		.t_bool { return '(${code}).to_bool()' }
-		.t_object { return 'rt.cast_object_ptr[Class_${typ.class_name}](${code})' }
+		.t_object { 
+			if code == 'none' || code == 'rt.new_null()' {
+				return '&Class_${typ.class_name}(unsafe { nil })'
+			}
+			return 'rt.cast_object_ptr[Class_${typ.class_name}](${code})' 
+		}
 		else { return code }
 	}
 }
@@ -147,7 +184,7 @@ pub:
 // compile_expr 统一表达式编译入口
 // 根据 ExprCtx 决定生成 PhpVal 包装代码还是 V 原生代码
 // 当请求 .native 但节点不支持原生输出时，自动降级为 .boxed + 拆箱
-pub fn (mut t Transpiler) compile_expr(node ast.AstNode, ctx ExprCtx) string {
+pub fn (mut t Transpiler) compile_expr(node &ast.AstNode, ctx ExprCtx) string {
 	match ctx {
 		.boxed {
 			code := t.visit_expr(node)
@@ -185,9 +222,8 @@ pub fn (mut t Transpiler) compile_expr(node ast.AstNode, ctx ExprCtx) string {
 		}
 		.native {
 			if node.node_type == ast.node_expr_variable {
-				var_name := t.var_aliases[node.name] or { node.name }
 				v_var := t.get_v_var_name(node.name)
-				arg_type := t.inferred_types[v_var] or { t.inferred_types[var_name] or { VarType{ tag: .t_unknown } } }
+				arg_type := t.get_expr_type(node)
 				
 				mut is_native := false
 				if t.current_func_name == '' {
@@ -208,7 +244,7 @@ pub fn (mut t Transpiler) compile_expr(node ast.AstNode, ctx ExprCtx) string {
 
 // compile_arg 统一编译单个调用参数（4-way 矩阵）
 // 根据源类型和目标类型决定装箱/拆箱策略
-pub fn (mut t Transpiler) compile_arg(arg_node ast.AstNode, target_type VarType) CallArgResult {
+pub fn (mut t Transpiler) compile_arg(arg_node &ast.AstNode, target_type VarType) CallArgResult {
 	old_expect := t.expected_type
 	t.expected_type = target_type
 	
@@ -248,7 +284,7 @@ pub fn (mut t Transpiler) compile_arg(arg_node ast.AstNode, target_type VarType)
 
 // compile_arg_simple 编译 PhpVal 参数（无类型推导，变量需 .dup()）
 // 用于 funccall、call_method fallback 等不需要 4-way 矩阵的场景
-pub fn (mut t Transpiler) compile_arg_simple(arg_node ast.AstNode) string {
+pub fn (mut t Transpiler) compile_arg_simple(arg_node &ast.AstNode) string {
 	old_expect := t.expected_type
 	t.expected_type = VarType{ tag: .t_unknown }
 	
@@ -257,7 +293,7 @@ pub fn (mut t Transpiler) compile_arg_simple(arg_node ast.AstNode) string {
 	if arg_node.node_type == ast.node_expr_variable {
 		v_var := t.get_v_var_name(arg_node.name)
 		lookup_key := if t.current_func_name != '' { '${t.current_func_name}::${arg_node.name}' } else { arg_node.name }
-		typ := t.inferred_types[v_var] or { t.inferred_types[lookup_key] or { t.inferred_types[arg_node.name] or { VarType{ tag: .t_unknown } } } }
+		typ := t.inferred_types[arg_node.name] or { t.inferred_types[v_var] or { t.inferred_types[lookup_key] or { VarType{ tag: .t_unknown } } } }
 		if typ.is_native_list {
 			t.expected_type = old_expect
 			match typ.element_type_tag {
@@ -290,7 +326,7 @@ pub fn (mut t Transpiler) compile_arg_simple(arg_node ast.AstNode) string {
 
 // produces_native_string 判断 visit_expr 是否会生成 V 原生 string（而非 PhpVal）
 // 用于 rt.concat() 等需要 PhpVal 参数的场景，决定是否需包装 rt.new_string()
-pub fn (mut t Transpiler) produces_native_string(node ast.AstNode) bool {
+pub fn (mut t Transpiler) produces_native_string(node &ast.AstNode) bool {
 	match node.node_type {
 		ast.node_bin_concat {
 			return true
@@ -304,7 +340,7 @@ pub fn (mut t Transpiler) produces_native_string(node ast.AstNode) bool {
 	}
 }
 
-pub fn (mut t Transpiler) emit_custom_funccall(node ast.AstNode, func_name string, ret_type VarType, is_native bool) string {
+pub fn (mut t Transpiler) emit_custom_funccall(node &ast.AstNode, func_name string, ret_type VarType, is_native bool) string {
 	mut arg_strs := []string{}
 	mut info := ?MethodInfo(none)
 	if func_name in t.custom_function_infos {
@@ -321,12 +357,24 @@ pub fn (mut t Transpiler) emit_custom_funccall(node ast.AstNode, func_name strin
 					arg_typ := t.get_expr_type(arg_val)
 					param_name := func_info.param_names[i]
 					param_type := t.get_func_param_type(func_name, param_name)
+					is_ref := if i < func_info.param_by_ref.len { func_info.param_by_ref[i] } else { false }
 					
+					mut code := ''
 					if param_type.is_scalar() && arg_typ.is_scalar() {
-						arg_strs << t.visit_expr_native(arg_val)
+						code = t.visit_expr_native(arg_val)
 					} else {
-						arg_strs << t.compile_arg_simple(arg_val)
+						code = t.compile_arg_simple(arg_val)
 					}
+					if is_ref {
+						if code.ends_with('.clone()') {
+							code = code.all_before_last('.clone()')
+						}
+						if code.contains('.array_get(') {
+							code = code.replace('.array_get(', '.array_get_mut(')
+						}
+						code = 'mut ' + code
+					}
+					arg_strs << code
 				} else {
 					param_name := func_info.param_names[i]
 					param_type := t.get_func_param_type(func_name, param_name)
@@ -355,11 +403,24 @@ pub fn (mut t Transpiler) emit_custom_funccall(node ast.AstNode, func_name strin
 					arg_typ := t.get_expr_type(arg_val)
 					param_name := func_info.param_names[i]
 					param_type := t.get_func_param_type(func_name, param_name)
+					is_ref := if i < func_info.param_by_ref.len { func_info.param_by_ref[i] } else { false }
+					
+					mut code := ''
 					if param_type.is_scalar() && arg_typ.is_scalar() {
-						arg_strs << t.visit_expr_native(arg_val)
+						code = t.visit_expr_native(arg_val)
 					} else {
-						arg_strs << t.compile_arg_simple(arg_val)
+						code = t.compile_arg_simple(arg_val)
 					}
+					if is_ref {
+						if code.ends_with('.clone()') {
+							code = code.all_before_last('.clone()')
+						}
+						if code.contains('.array_get(') {
+							code = code.replace('.array_get(', '.array_get_mut(')
+						}
+						code = 'mut ' + code
+					}
+					arg_strs << code
 				} else {
 					param_name := func_info.param_names[i]
 					param_type := t.get_func_param_type(func_name, param_name)
@@ -392,7 +453,7 @@ pub fn (mut t Transpiler) emit_custom_funccall(node ast.AstNode, func_name strin
 
 // is_native_array_or_map 判定一个节点在 V 语言生成的实际代码中是否是原生数组/映射。
 // 即使推导类型是 native_list/map，但如果是以 rt.PhpVal 传入的函数参数，其在 V 代码里依然不是原生数组。
-pub fn (t Transpiler) is_native_array_or_map(node ast.AstNode) bool {
+pub fn (t Transpiler) is_native_array_or_map(node &ast.AstNode) bool {
 	if node.node_type != ast.node_expr_variable {
 		return false
 	}
@@ -405,10 +466,17 @@ pub fn (t Transpiler) is_native_array_or_map(node ast.AstNode) bool {
 				}
 			}
 		}
+		if t.current_class != '' {
+			if m := t.find_method(t.current_class, t.current_func_name) {
+				if name in m.param_names {
+					return false
+				}
+			}
+		}
 	}
 	v_var := t.get_v_var_name(name)
 	lookup_key := if t.current_func_name != '' { '${t.current_func_name}::${name}' } else { name }
-	typ := t.inferred_types[v_var] or { t.inferred_types[lookup_key] or { t.inferred_types[name] or { VarType{ tag: .t_unknown } } } }
+	typ := t.inferred_types[name] or { t.inferred_types[v_var] or { t.inferred_types[lookup_key] or { VarType{ tag: .t_unknown } } } }
 	return typ.is_native_list || typ.is_native_map
 }
 

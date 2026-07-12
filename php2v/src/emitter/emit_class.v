@@ -24,13 +24,14 @@ fn (t &Transpiler) prop_field_path(cls_name string, prop_name string) string {
 	return ''
 }
 
-fn (mut t Transpiler) visit_class(node ast.AstNode) {
+fn (mut t Transpiler) visit_class(node &ast.AstNode) {
 	t.is_in_func = true
 	resolved_name := t.resolve_class_name(node.name)
 	resolved_extends := t.resolve_class_name(node.extends)
 	t.current_class = resolved_name
 	t.declared_classes[resolved_name] = true
 	
+
 	// 收集 ClassInfo：只收集本类自身声明的属性和方法
 	mut class_info := ClassInfo{
 		name: resolved_name
@@ -55,7 +56,7 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 					mut default_str := 'rt.new_null()'
 					if default_node := prop.default_val {
 						if voidptr(default_node) != 0 {
-							default_str = t.visit_expr(*default_node)
+							default_str = t.visit_expr(default_node)
 						}
 					}
 					static_props << StaticPropInfo{ name: prop.name, default_expr: default_str }
@@ -70,17 +71,22 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 			}
 		} else if stmt.node_type == ast.node_stmt_class_method {
 			mut p_names := []string{}
+			mut p_by_ref := []bool{}
 			for param in stmt.params {
 				if param_var := param.var {
 					p_names << param_var.name
 				}
+				p_by_ref << (param.by_ref == 'true')
 			}
 			is_meth_static := (stmt.flags.int() & 8) != 0
+			has_dyn := has_dynamic_args_call(stmt.stmts)
 			class_info.methods << MethodInfo{
 				name: stmt.name
 				param_count: stmt.params.len
 				param_names: p_names
 				is_static: is_meth_static
+				param_by_ref: p_by_ref
+				has_dynamic_args: has_dyn
 			}
 			own_method_names[stmt.name] = true
 			own_method_names_originally[stmt.name] = true
@@ -88,7 +94,7 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 			for c in stmt.consts {
 				val_type := t.get_expr_type(c.value)
 				ret_type_str := val_type.to_v_type()
-				val_str := t.visit_expr_native(c.value)
+				val_str := t.visit_expr_native(&c.value)
 				t.func_out.writeln('pub fn Class_${resolved_name}.${c.name.to_lower()}() ${ret_type_str} {')
 				t.func_out.writeln('\treturn ${val_str}')
 				t.func_out.writeln('}')
@@ -221,6 +227,7 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 	if class_info.props.len > 0 {
 		t.write_line('pub mut:')
 		t.indent++
+
 		// 重新读取推断后的 ClassInfo（infer_single_class_types 已在上面调用）
 		for prop in class_info.props {
 			t.write_indent()
@@ -287,11 +294,25 @@ fn (mut t Transpiler) visit_class(node ast.AstNode) {
 }
 
 fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
+	eprintln('    - visit_class_method: ' + class_name + '::' + node.name)
 	t.is_in_func = true
 	old_indent := t.indent
 	t.indent = 0
 	old_scope := t.scope
-	t.scope = VarScope.new()
+	t.scope = &VarScope{ declared: map[string]bool{} }
+	
+	old_native_vars := t.native_vars.clone()
+	old_native_params := t.native_params.clone()
+	old_native_arr_vars := t.native_arr_vars.clone()
+	old_reassigned_params := t.reassigned_params.clone()
+	old_var_aliases := t.var_aliases.clone()
+
+	t.native_vars.clear()
+	t.native_params.clear()
+	t.native_arr_vars.clear()
+	t.reassigned_params.clear()
+	t.var_aliases.clear()
+
 	is_static_method := if m := t.find_method(class_name, node.name) { m.is_static } else { false }
 	if !is_static_method {
 		t.scope.declare('this')
@@ -302,7 +323,9 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	t.current_func_name = node.name
 	
 	old_func_ret := t.current_func_ret_type
+	eprintln('      [visit_class_method] before get_method_return_type')
 	ret_type := t.get_method_return_type(class_name, node.name)
+	eprintln('      [visit_class_method] after get_method_return_type')
 	t.current_func_ret_type = ret_type
 
 	// P7 Task 7: 参数使用推断类型；无法推断则保持 rt.PhpVal
@@ -326,9 +349,10 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 			registered_mutated_params << param_name
 		}
 		
+		prefix := if param.by_ref == 'true' { 'mut ' } else { '' }
 		if param_type.is_scalar() {
 			// 原生类型参数：直接用参数名（无 var_ 前缀），登记到类型表 and native_params
-			param_names << '${param_name} ${param_type.to_v_type()}'
+			param_names << '${prefix}${param_name} ${param_type.to_v_type()}'
 			t.inferred_types[shadow_name] = param_type
 			t.native_params[shadow_name] = true
 			registered_native_params << shadow_name
@@ -336,10 +360,15 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 			// 原生类对象参数：保留 var_ 前缀，但以原生 Class 指针传递，且一律为 mut
 			param_names << 'mut var_${param_name} ${param_type.to_v_type()}'
 			t.inferred_types[shadow_name] = param_type
+			t.native_vars['var_' + shadow_name] = true
 		} else {
-			param_names << 'var_${param_name} rt.PhpVal'
-			t.inferred_types[shadow_name] = param_type
+			param_names << '${prefix}var_${param_name} rt.PhpVal'
+			t.inferred_types[shadow_name] = VarType{ tag: .t_unknown }
 		}
+	}
+	is_dyn := if m := t.find_method(class_name, node.name) { m.has_dynamic_args } else { false }
+	if is_dyn {
+		param_names << '_args ...rt.PhpVal'
 	}
 
 	// P7 Task 7: 返回值类型推断
@@ -363,12 +392,21 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	
 	// P7 Task 8: 不再生成 var_this 代理变量，直接通过 this.field 访问
 	
-	ref_vars, ass_vars := t.collect_vars_in_scope(node.stmts)
-	for v in ref_vars {
-		if v !in ass_vars && !t.scope.has_var(v) {
+	eprintln('      [visit_class_method] before collect_vars_in_scope')
+	ref_vars, ass_vars := t.collect_vars_in_scope(&node.stmts)
+	eprintln('      [visit_class_method] after collect_vars_in_scope')
+	mut all_local_vars := ref_vars.clone()
+	for v in ass_vars {
+		if v !in all_local_vars {
+			all_local_vars << v
+		}
+	}
+	for v in all_local_vars {
+		if !t.scope.has_var(v) {
 			t.write_indent()
 			v_var := t.get_v_var_name(v)
-			v_type := t.inferred_types[v_var] or { t.inferred_types[v] or { VarType{ tag: .t_unknown } } }
+			lookup_key := if t.current_func_name != '' { '${t.current_func_name}::${v}' } else { v }
+			v_type := t.inferred_types[v_var] or { t.inferred_types[lookup_key] or { t.inferred_types[v] or { VarType{ tag: .t_unknown } } } }
 			if v_type.is_native_list || v_type.is_native_map {
 				t.write_line('mut ${v_var} := ' + t.get_empty_literal(v_type))
 			} else if v_type.is_scalar() {
@@ -382,6 +420,7 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 			} else if v_type.is_object() {
 				cls := if v_type.class_name.len > 0 { v_type.class_name } else { 'WP_Error' }
 				t.write_line('mut ${v_var} := &Class_${cls}(unsafe { nil })')
+				t.native_vars[v_var] = true
 			} else {
 				t.write_line('mut ${v_var} := rt.new_null()')
 			}
@@ -436,14 +475,11 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	t.scope = old_scope
 	t.current_func_name = old_func_name
 	t.current_func_ret_type = old_func_ret
-	// P7: 清理本方法注册的原生参数，避免污染后续方法
-	for p in registered_native_params {
-		t.native_params.delete(p)
-	}
-	for p in registered_mutated_params {
-		t.var_aliases.delete(p)
-	}
-	t.native_vars.clear()
+	t.native_vars = old_native_vars.clone()
+	t.native_params = old_native_params.clone()
+	t.native_arr_vars = old_native_arr_vars.clone()
+	t.reassigned_params = old_reassigned_params.clone()
+	t.var_aliases = old_var_aliases.clone()
 }
 
 // 递归生成嵌套的结构体初始化代码
@@ -594,7 +630,6 @@ fn (mut t Transpiler) generate_dispatchers() {
 					arg_name := 'dispatch_arg_${i}'
 					raw_arg := 'if args.len > ${i} { args[${i}] } else { rt.new_null() }'
 					mut processed_arg := ''
-					mut is_obj := false
 					
 					// 严格按照方法声明的形参顺序获取对应的推导类型
 					mut target_type := VarType{ tag: .t_unknown }
@@ -607,17 +642,20 @@ fn (mut t Transpiler) generate_dispatchers() {
 						}
 					}
 
+					mut is_mut := false
 					if target_type.is_scalar() {
 						processed_arg = t.unbox_expr(raw_arg, target_type)
+						is_mut = if i < m.param_by_ref.len { m.param_by_ref[i] } else { false }
 					} else if target_type.is_object() {
 						processed_arg = t.unbox_expr(raw_arg, target_type)
-						is_obj = true
+						is_mut = true
 					} else {
 						processed_arg = raw_arg
+						is_mut = if i < m.param_by_ref.len { m.param_by_ref[i] } else { false }
 					}
 
 					t.write_indent()
-					if is_obj {
+					if is_mut {
 						t.write_line('mut ${arg_name} := ${processed_arg}')
 						args_pass << 'mut ${arg_name}'
 					} else {
@@ -839,7 +877,7 @@ fn (mut t Transpiler) generate_dispatchers() {
 	t.is_in_func = false
 }
 
-fn (t &Transpiler) find_captured_vars_rec(node ast.AstNode, params []string, mut captured []string) {
+fn (t &Transpiler) find_captured_vars_rec(node &ast.AstNode, params []string, mut captured []string) {
 	match node.node_type {
 		ast.node_expr_variable {
 			name := node.name
@@ -1026,20 +1064,18 @@ fn (t Transpiler) resolve_class_name(name string) string {
 	return full_name.replace('\\', '_')
 }
 
-fn (t Transpiler) collect_vars_in_scope(nodes []ast.AstNode) ([]string, []string) {
-	mut referenced := map[string]bool{}
-	mut assigned := map[string]bool{}
-	for node in nodes {
-		t.collect_vars_in_scope_rec(&node, mut referenced, mut assigned, 0)
+fn (mut t Transpiler) collect_vars_in_scope(nodes &[]ast.AstNode) ([]string, []string) {
+	t.collect_referenced.clear()
+	t.collect_assigned.clear()
+	for i in 0 .. nodes.len {
+		t.collect_vars_in_scope_rec(&nodes[i], 0)
 	}
-	mut ref_list := []string{}
-	for k, _ in referenced { ref_list << k }
-	mut ass_list := []string{}
-	for k, _ in assigned { ass_list << k }
+	ref_list := t.collect_referenced.keys()
+	ass_list := t.collect_assigned.keys()
 	return ref_list, ass_list
 }
 
-fn (t Transpiler) collect_vars_in_scope_rec(node &ast.AstNode, mut referenced map[string]bool, mut assigned map[string]bool, depth int) {
+fn (mut t Transpiler) collect_vars_in_scope_rec(node &ast.AstNode, depth int) {
 	if depth > 100 {
 		return
 	}
@@ -1050,65 +1086,65 @@ fn (t Transpiler) collect_vars_in_scope_rec(node &ast.AstNode, mut referenced ma
 	match node.node_type {
 		ast.node_expr_variable {
 			if node.name != 'this' && node.name !in ['_GET', '_POST', '_SERVER', '_COOKIE', '_SESSION', '_REQUEST', '_ENV'] {
-				referenced[node.name] = true
+				t.collect_referenced[node.name] = true
 			}
 		}
 		ast.node_expr_assign {
 			if var_node := node.var {
 				if var_node.node_type == ast.node_expr_variable {
-					assigned[var_node.name] = true
+					t.collect_assigned[var_node.name] = true
 				}
 			}
 		}
 		ast.node_stmt_foreach {
 			if vv := node.value_var {
 				if voidptr(vv) != 0 && vv.node_type == ast.node_expr_variable {
-					assigned[vv.name] = true
+					t.collect_assigned[vv.name] = true
 				}
 			}
 			if kv := node.key_var {
 				if voidptr(kv) != 0 && kv.node_type == ast.node_expr_variable {
-					assigned[kv.name] = true
+					t.collect_assigned[kv.name] = true
 				}
 			}
 		}
 		ast.node_stmt_catch {
 			if v := node.var {
 				if voidptr(v) != 0 && v.node_type == ast.node_expr_variable {
-					assigned[v.name] = true
+					t.collect_assigned[v.name] = true
 				}
 			}
 		}
 		else {}
 	}
 	
-	for i in 0 .. node.exprs.len { t.collect_vars_in_scope_rec(&node.exprs[i], mut referenced, mut assigned, depth + 1) }
-	if expr := node.expr { t.collect_vars_in_scope_rec(expr, mut referenced, mut assigned, depth + 1) }
-	if val := node.var { t.collect_vars_in_scope_rec(val, mut referenced, mut assigned, depth + 1) }
-	if left := node.left { t.collect_vars_in_scope_rec(left, mut referenced, mut assigned, depth + 1) }
-	if right := node.right { t.collect_vars_in_scope_rec(right, mut referenced, mut assigned, depth + 1) }
-	if cond := node.cond { t.collect_vars_in_scope_rec(cond, mut referenced, mut assigned, depth + 1) }
-	for i in 0 .. node.stmts.len { t.collect_vars_in_scope_rec(&node.stmts[i], mut referenced, mut assigned, depth + 1) }
-	for i in 0 .. node.elseifs.len { t.collect_vars_in_scope_rec(&node.elseifs[i], mut referenced, mut assigned, depth + 1) }
-	if el := node.@else { t.collect_vars_in_scope_rec(el, mut referenced, mut assigned, depth + 1) }
-	if iff := node.@if { t.collect_vars_in_scope_rec(iff, mut referenced, mut assigned, depth + 1) }
-	for i in 0 .. node.catches.len { t.collect_vars_in_scope_rec(&node.catches[i], mut referenced, mut assigned, depth + 1) }
-	if fin := node.finally { t.collect_vars_in_scope_rec(fin, mut referenced, mut assigned, depth + 1) }
-	for i in 0 .. node.params.len { t.collect_vars_in_scope_rec(&node.params[i], mut referenced, mut assigned, depth + 1) }
-	for i in 0 .. node.args.len { t.collect_vars_in_scope_rec(&node.args[i], mut referenced, mut assigned, depth + 1) }
-	for i in 0 .. node.items.len { t.collect_vars_in_scope_rec(&node.items[i], mut referenced, mut assigned, depth + 1) }
-	if k := node.key { t.collect_vars_in_scope_rec(k, mut referenced, mut assigned, depth + 1) }
-	if d := node.dim { t.collect_vars_in_scope_rec(d, mut referenced, mut assigned, depth + 1) }
-	if kv := node.key_var { t.collect_vars_in_scope_rec(kv, mut referenced, mut assigned, depth + 1) }
-	if vv := node.value_var { t.collect_vars_in_scope_rec(vv, mut referenced, mut assigned, depth + 1) }
-	for i in 0 .. node.init.len { t.collect_vars_in_scope_rec(&node.init[i], mut referenced, mut assigned, depth + 1) }
-	for i in 0 .. node.conds.len { t.collect_vars_in_scope_rec(&node.conds[i], mut referenced, mut assigned, depth + 1) }
-	for i in 0 .. node.loop.len { t.collect_vars_in_scope_rec(&node.loop[i], mut referenced, mut assigned, depth + 1) }
-	for i in 0 .. node.props.len { t.collect_vars_in_scope_rec(&node.props[i], mut referenced, mut assigned, depth + 1) }
-	for i in 0 .. node.uses.len { t.collect_vars_in_scope_rec(&node.uses[i], mut referenced, mut assigned, depth + 1) }
-	for i in 0 .. node.vars.len { t.collect_vars_in_scope_rec(&node.vars[i], mut referenced, mut assigned, depth + 1) }
-	for i in 0 .. node.parts.len { t.collect_vars_in_scope_rec(&node.parts[i], mut referenced, mut assigned, depth + 1) }
-	for i in 0 .. node.cases.len { t.collect_vars_in_scope_rec(&node.cases[i], mut referenced, mut assigned, depth + 1) }
-	for i in 0 .. node.arms.len { t.collect_vars_in_scope_rec(&node.arms[i], mut referenced, mut assigned, depth + 1) }
-	if body := node.body { t.collect_vars_in_scope_rec(body, mut referenced, mut assigned, depth + 1) }
+	for i in 0 .. node.exprs.len { t.collect_vars_in_scope_rec(&node.exprs[i], depth + 1) }
+	if expr := node.expr { t.collect_vars_in_scope_rec(expr, depth + 1) }
+	if val := node.var { t.collect_vars_in_scope_rec(val, depth + 1) }
+	if left := node.left { t.collect_vars_in_scope_rec(left, depth + 1) }
+	if right := node.right { t.collect_vars_in_scope_rec(right, depth + 1) }
+	if cond := node.cond { t.collect_vars_in_scope_rec(cond, depth + 1) }
+	for i in 0 .. node.stmts.len { t.collect_vars_in_scope_rec(&node.stmts[i], depth + 1) }
+	for i in 0 .. node.elseifs.len { t.collect_vars_in_scope_rec(&node.elseifs[i], depth + 1) }
+	if el := node.@else { t.collect_vars_in_scope_rec(el, depth + 1) }
+	if iff := node.@if { t.collect_vars_in_scope_rec(iff, depth + 1) }
+	for i in 0 .. node.catches.len { t.collect_vars_in_scope_rec(&node.catches[i], depth + 1) }
+	if fin := node.finally { t.collect_vars_in_scope_rec(fin, depth + 1) }
+	for i in 0 .. node.params.len { t.collect_vars_in_scope_rec(&node.params[i], depth + 1) }
+	for i in 0 .. node.args.len { t.collect_vars_in_scope_rec(&node.args[i], depth + 1) }
+	for i in 0 .. node.items.len { t.collect_vars_in_scope_rec(&node.items[i], depth + 1) }
+	if k := node.key { t.collect_vars_in_scope_rec(k, depth + 1) }
+	if d := node.dim { t.collect_vars_in_scope_rec(d, depth + 1) }
+	if kv := node.key_var { t.collect_vars_in_scope_rec(kv, depth + 1) }
+	if vv := node.value_var { t.collect_vars_in_scope_rec(vv, depth + 1) }
+	for i in 0 .. node.init.len { t.collect_vars_in_scope_rec(&node.init[i], depth + 1) }
+	for i in 0 .. node.conds.len { t.collect_vars_in_scope_rec(&node.conds[i], depth + 1) }
+	for i in 0 .. node.loop.len { t.collect_vars_in_scope_rec(&node.loop[i], depth + 1) }
+	for i in 0 .. node.props.len { t.collect_vars_in_scope_rec(&node.props[i], depth + 1) }
+	for i in 0 .. node.uses.len { t.collect_vars_in_scope_rec(&node.uses[i], depth + 1) }
+	for i in 0 .. node.vars.len { t.collect_vars_in_scope_rec(&node.vars[i], depth + 1) }
+	for i in 0 .. node.parts.len { t.collect_vars_in_scope_rec(&node.parts[i], depth + 1) }
+	for i in 0 .. node.cases.len { t.collect_vars_in_scope_rec(&node.cases[i], depth + 1) }
+	for i in 0 .. node.arms.len { t.collect_vars_in_scope_rec(&node.arms[i], depth + 1) }
+	if body := node.body { t.collect_vars_in_scope_rec(body, depth + 1) }
 }

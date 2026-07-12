@@ -196,19 +196,28 @@ fn (mut t Transpiler) analyze_stmt_phase1(node ast.AstNode, mut ctx AnalyzeCtx) 
 		ast.node_stmt_function {
 			old_infer := ctx.infer_types
 			ctx.infer_types = false
+			old_func := t.current_func_name
+			t.current_func_name = node.name
 			t.analyze_stmts_phase1(node.stmts, mut ctx)
+			t.current_func_name = old_func
 			ctx.infer_types = old_infer
 		}
 		ast.node_stmt_class {
 			old_infer := ctx.infer_types
 			ctx.infer_types = false
+			old_class := t.current_class
+			t.current_class = node.name
 			t.analyze_stmts_phase1(node.stmts, mut ctx)
+			t.current_class = old_class
 			ctx.infer_types = old_infer
 		}
 		ast.node_stmt_class_method {
 			old_infer := ctx.infer_types
 			ctx.infer_types = false
+			old_func := t.current_func_name
+			t.current_func_name = node.name
 			t.analyze_stmts_phase1(node.stmts, mut ctx)
+			t.current_func_name = old_func
 			ctx.infer_types = old_infer
 		}
 		else {}
@@ -505,6 +514,57 @@ fn (mut t Transpiler) scan_mutations_expr(node ast.AstNode) {
 				if var_node.node_type == ast.node_expr_variable {
 					t.mutated_vars[var_node.name] = true
 				}
+			}
+		}
+		ast.node_expr_funccall {
+			if func_info := t.custom_function_infos[node.name] {
+				for i, arg in node.args {
+					if i < func_info.param_by_ref.len && func_info.param_by_ref[i] {
+						if arg_val := arg.expr {
+							if arg_val.node_type == ast.node_expr_variable {
+								t.mutated_vars[arg_val.name] = true
+								t.mutated_vars['var_' + arg_val.name] = true
+							}
+						}
+					}
+				}
+			}
+			for arg in node.args {
+				if arg_expr := arg.expr { t.scan_mutations_expr(*arg_expr) }
+			}
+		}
+		ast.node_expr_method_call {
+			mut obj_class := ''
+			if obj_var := node.var {
+				if obj_var.node_type == ast.node_expr_variable {
+					if obj_var.name == 'this' {
+						obj_class = t.current_class
+					} else {
+						lookup_key := if t.current_func_name != '' { '${t.current_func_name}::${obj_var.name}' } else { obj_var.name }
+						if typ := t.inferred_types[lookup_key] {
+							if typ.tag == .t_object {
+								obj_class = typ.class_name
+							}
+						}
+					}
+				}
+			}
+			if obj_class != '' {
+				if m := t.find_method(obj_class, node.name) {
+					for i, arg in node.args {
+						if i < m.param_by_ref.len && m.param_by_ref[i] {
+							if arg_val := arg.expr {
+								if arg_val.node_type == ast.node_expr_variable {
+									t.mutated_vars[arg_val.name] = true
+									t.mutated_vars['var_' + arg_val.name] = true
+								}
+							}
+						}
+					}
+				}
+			}
+			for arg in node.args {
+				if arg_expr := arg.expr { t.scan_mutations_expr(*arg_expr) }
 			}
 		}
 		else {
@@ -1060,8 +1120,14 @@ pub fn (mut t Transpiler) infer_single_class_types(node ast.AstNode, class_name 
 	mut prop_tags := map[string][]TypeTag{}
 	for method_stmt in node.stmts {
 		if method_stmt.node_type == ast.node_stmt_class_method {
+			old_class := t.current_class
+			old_func := t.current_func_name
+			t.current_class = class_name
+			t.current_func_name = method_stmt.name
 			// 每个方法都用公共的 var_assign_types（包含平级参数类型）
 			t.scan_prop_assignments(method_stmt.stmts, mut prop_tags, mut var_assign_types)
+			t.current_class = old_class
+			t.current_func_name = old_func
 		}
 	}
 
@@ -1770,6 +1836,7 @@ fn (mut t Transpiler) scan_array_usages_expr(node ast.AstNode, mut states map[st
 					}
 					t.scan_array_usages_expr(*dim, mut states, false, none)
 				} else {
+					s.can_be_list = false
 					s.can_be_map = false
 				}
 				if is_assign_lhs {
