@@ -204,7 +204,10 @@ fn (mut t Transpiler) visit_class(node &ast.AstNode) {
 	}
 
 	// P7 Phase 1: 推断属性/参数/返回值类型
+	eprintln('  - visit_class: ' + resolved_name)
+	eprintln('    [visit_class] before infer_single_class_types')
 	t.infer_single_class_types(node, resolved_name)
+	eprintln('    [visit_class] after infer_single_class_types')
 
 	// 生成结构体定义（V struct embedding 方式）
 	t.write_line('struct Class_${resolved_name} {')
@@ -1067,6 +1070,8 @@ fn (t Transpiler) resolve_class_name(name string) string {
 fn (mut t Transpiler) collect_vars_in_scope(nodes &[]ast.AstNode) ([]string, []string) {
 	t.collect_referenced.clear()
 	t.collect_assigned.clear()
+	t.collect_globals.clear()
+	t.collect_statics.clear()
 	for i in 0 .. nodes.len {
 		t.collect_vars_in_scope_rec(&nodes[i], 0)
 	}
@@ -1112,6 +1117,19 @@ fn (mut t Transpiler) collect_vars_in_scope_rec(node &ast.AstNode, depth int) {
 			if v := node.var {
 				if voidptr(v) != 0 && v.node_type == ast.node_expr_variable {
 					t.collect_assigned[v.name] = true
+				}
+			}
+		}
+		ast.node_stmt_global {
+			for v in node.vars {
+				t.collect_globals[v.name] = true
+			}
+		}
+		ast.node_stmt_static {
+			for v in node.vars {
+				var_node := v.var or { continue }
+				if voidptr(var_node) != 0 && var_node.node_type == ast.node_expr_variable {
+					t.collect_statics[var_node.name] = true
 				}
 			}
 		}

@@ -48,15 +48,27 @@ fn main() {
 		exit(1)
 	}
 
-	// 1. 调用 php 生成 JSON AST
-	res := os.execute('php "${parser_path}" "${input_file}"')
-	if res.exit_code != 0 {
-		eprintln('PHP parsing failed: ${res.output}')
-		return
+	// 1. 获取/调用 php 生成 JSON AST 缓存
+	safe_name := input_file.replace('/', '_').replace(':', '_').replace('\\', '_')
+	cache_dir := os.join_path(os.dir(parser_path), 'tmp/ast_cache')
+	cache_path := os.join_path(cache_dir, safe_name + '.json')
+	mut json_ast := ''
+	if os.exists(cache_path) {
+		json_ast = os.read_file(cache_path) or { '' }
+	}
+	if json_ast == '' {
+		res := os.execute('php "${parser_path}" "${input_file}"')
+		if res.exit_code != 0 {
+			eprintln('PHP parsing failed: ${res.output}')
+			return
+		}
+		json_ast = res.output
+		os.mkdir_all(cache_dir) or {}
+		os.write_file(cache_path, json_ast) or {}
 	}
 
 	// 2. 解析 AST 并深度克隆以脱离 cJSON 内存生命周期
-	parsed_stmts := ast.parse_ast_json(res.output) or {
+	parsed_stmts := ast.parse_ast_json(json_ast) or {
 		eprintln('Failed to parse AST JSON: ${err}')
 		return
 	}
@@ -67,7 +79,6 @@ fn main() {
 
 	// 3. 转译为 V 代码
 	mut transpiler := emitter.Transpiler.new()
-	transpiler.ast_json_cache << res.output
 	transpiler.current_file = input_file
 	transpiler.parser_php_path = parser_path
 	transpiler.mode = mode

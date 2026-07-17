@@ -591,6 +591,31 @@ fn (mut t Transpiler) visit_function(node &ast.AstNode) {
 	// 提前收集变量信息，用于判断参数是否需要 _arg 后缀
 	ref_vars, ass_vars := t.collect_vars_in_scope(&node.stmts)
 
+	// 检测大小写敏感变量名引起的 V 标识符冲突并进行别名处理
+	mut all_names := []string{}
+	for param in node.params {
+		param_var := param.var or { continue }
+		all_names << param_var.name
+	}
+	for v in ref_vars {
+		if v !in all_names { all_names << v }
+	}
+	for v in ass_vars {
+		if v !in all_names { all_names << v }
+	}
+	mut seen_lower := map[string]string{}
+	for name in all_names {
+		lower := name.to_lower()
+		if lower in seen_lower {
+			existing_name := seen_lower[lower]
+			if existing_name != name {
+				t.var_aliases[name] = 'var_' + name.to_lower() + '_coll'
+			}
+		} else {
+			seen_lower[lower] = name
+		}
+	}
+
 	mut registered_native_params := []string{}
 	mut param_names := []string{}
 	for param in node.params {
@@ -679,9 +704,14 @@ fn (mut t Transpiler) visit_function(node &ast.AstNode) {
 		}
 	}
 	// 先预声明所有局部变量（防止在 if/for 等块内首次定义导致的作用域溢出）
-	mut all_local_vars := ref_vars.clone()
+	mut all_local_vars := []string{}
+	for v in ref_vars {
+		if v !in t.collect_globals && v !in t.collect_statics {
+			all_local_vars << v
+		}
+	}
 	for v in ass_vars {
-		if v !in all_local_vars {
+		if v !in all_local_vars && v !in t.collect_globals && v !in t.collect_statics {
 			all_local_vars << v
 		}
 	}
@@ -716,7 +746,7 @@ fn (mut t Transpiler) visit_function(node &ast.AstNode) {
 	}
 	// 预声明所有被赋值的变量，确保在 if/else 分支内的赋值也能在函数作用域可见
 	for v in ass_vars {
-		if !t.scope.has_var(v) {
+		if !t.scope.has_var(v) && v !in t.collect_globals && v !in t.collect_statics {
 			t.scope.declare(v)
 			t.write_indent()
 			v_var := t.get_v_var_name(v)

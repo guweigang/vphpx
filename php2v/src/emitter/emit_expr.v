@@ -1527,20 +1527,22 @@ fn (mut t Transpiler) visit_expr_impl(node &ast.AstNode) string {
 							// 动态/未声明属性：检查类及其继承树是否定义了 __set
 							mut has_set := false
 							mut curr_class := obj_type.class_name
+							mut visited := []string{}
 							for curr_class != '' {
+								if curr_class in visited { break }
+								visited << curr_class
 								mut found_cls := false
-								for cls in t.classes {
-									if cls.name.to_lower() == curr_class.to_lower() {
-										found_cls = true
-										for m in cls.all_methods {
-											if m.name == '__set' {
-												has_set = true
-												break
-											}
+								idx := t.class_name_map[curr_class.to_lower()] or { -1 }
+								if idx != -1 {
+									cls := t.classes[idx]
+									found_cls = true
+									for m in cls.all_methods {
+										if m.name == '__set' {
+											has_set = true
+											break
 										}
-										curr_class = cls.extends
-										break
 									}
+									curr_class = cls.extends
 								}
 								if !found_cls { break }
 								if has_set { break }
@@ -1761,6 +1763,25 @@ fn (mut t Transpiler) visit_expr_impl(node &ast.AstNode) string {
 			}
 		}
 		ast.node_expr_funccall {
+			if node.args.len == 1 && node.args[0].node_type == 'VariadicPlaceholder' {
+				func_name := node.name
+				t.closure_count++
+				closure_fn_name := 'closure_${t.closure_count}_fn'
+				if func_name != '' {
+					t.pre_stmts << '${closure_fn_name} := fn (this_ptr rt.PhpVal, args []rt.PhpVal) rt.PhpVal {
+						return rt.call_callable(rt.new_string(\'${func_name}\'), args)
+					}'
+				} else if callable_expr_node := node.expr {
+					if voidptr(callable_expr_node) != 0 {
+						callable_expr := t.visit_expr(callable_expr_node)
+						t.pre_stmts << 'mut var_func_captured := ${callable_expr}'
+						t.pre_stmts << '${closure_fn_name} := fn [var_func_captured] (this_ptr rt.PhpVal, args []rt.PhpVal) rt.PhpVal {
+							return rt.call_callable(var_func_captured, args)
+						}'
+					}
+				}
+				return 'rt.new_closure(${closure_fn_name})'
+			}
 			func_name := node.name
 			
 			if func_name == 'array_keys' {
@@ -2273,6 +2294,21 @@ fn (mut t Transpiler) visit_expr_impl(node &ast.AstNode) string {
 			return 'create_${resolved_class.to_lower()}(${arg_strs.join(", ")})'
 		}
 		ast.node_expr_method_call {
+			if node.args.len == 1 && node.args[0].node_type == 'VariadicPlaceholder' {
+				obj_var_node := node.var or { panic('MethodCall missing var') }
+				obj_expr_str := t.visit_expr(obj_var_node)
+				t.closure_count++
+				closure_fn_name := 'closure_${t.closure_count}_fn'
+				t.pre_stmts << 'mut var_obj_captured := ${obj_expr_str}'
+				method_name := if node.name != '' { '\'' + node.name + '\'' } else if name_expr_node := node.name_expr { t.visit_expr(name_expr_node) } else { '\'\'' }
+				t.pre_stmts << '${closure_fn_name} := fn [var_obj_captured] (this_ptr rt.PhpVal, args []rt.PhpVal) rt.PhpVal {
+					mut cb := rt.new_array()
+					cb.array_push(var_obj_captured)
+					cb.array_push(rt.new_string(${method_name}))
+					return rt.call_callable(cb, args)
+				}'
+				return 'rt.new_closure(${closure_fn_name})'
+			}
 			obj_var_node := node.var or { panic('MethodCall missing var') }
 			obj_var_name := t.visit_expr(obj_var_node)
 			obj_type := t.get_expr_type(*obj_var_node)
@@ -2363,20 +2399,22 @@ fn (mut t Transpiler) visit_expr_impl(node &ast.AstNode) string {
 						// 动态/未声明属性：检查类及其继承树是否定义了 __get
 						mut has_get := false
 						mut curr_class := obj_type.class_name
+						mut visited := []string{}
 						for curr_class != '' {
+							if curr_class in visited { break }
+							visited << curr_class
 							mut found_cls := false
-							for cls in t.classes {
-								if cls.name.to_lower() == curr_class.to_lower() {
-									found_cls = true
-									for m in cls.all_methods {
-										if m.name == '__get' {
-											has_get = true
-											break
-										}
+							idx := t.class_name_map[curr_class.to_lower()] or { -1 }
+							if idx != -1 {
+								cls := t.classes[idx]
+								found_cls = true
+								for m in cls.all_methods {
+									if m.name == '__get' {
+										has_get = true
+										break
 									}
-									curr_class = cls.extends
-									break
 								}
+								curr_class = cls.extends
 							}
 							if !found_cls { break }
 							if has_get { break }
@@ -2803,6 +2841,24 @@ fn (mut t Transpiler) visit_expr_impl(node &ast.AstNode) string {
 			return 'rt.get_static_prop(\'${class_name}\', \'${prop_name}\')'
 		}
 		ast.node_expr_static_call {
+			if node.args.len == 1 && node.args[0].node_type == 'VariadicPlaceholder' {
+				mut class_name := node.class_name
+				if class_name == 'self' || class_name == 'static' {
+					class_name = t.current_class
+				} else {
+					class_name = t.resolve_class_name(class_name)
+				}
+				method_name := node.name
+				t.closure_count++
+				closure_fn_name := 'closure_${t.closure_count}_fn'
+				t.pre_stmts << '${closure_fn_name} := fn (this_ptr rt.PhpVal, args []rt.PhpVal) rt.PhpVal {
+					mut cb := rt.new_array()
+					cb.array_push(rt.new_string(\'${class_name}\'))
+					cb.array_push(rt.new_string(\'${method_name}\'))
+					return rt.call_callable(cb, args)
+				}'
+				return 'rt.new_closure(${closure_fn_name})'
+			}
 			// parent::method(...) 的转译
 			if node.class_name == 'parent' {
 				// 查找当前类的父类名称

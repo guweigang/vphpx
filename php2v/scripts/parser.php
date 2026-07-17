@@ -87,4 +87,4 @@ try {
 
 $cleaned = array_map('cleanNode', $stmts);
 
-echo json_encode($cleaned, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n";
+echo json_encode($cleaned, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE) . "\n";

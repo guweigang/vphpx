@@ -51,6 +51,7 @@ pub mut:
 	scope            &VarScope
 	custom_functions map[string]bool
 	classes          []ClassInfo
+	class_name_map   map[string]int
 	current_class    string // 当前正在转译的类名（用于 parent:: 解析）
 	current_file     string
 	parser_php_path  string
@@ -83,7 +84,8 @@ pub mut:
 	is_in_switch         bool            // 当前是否在 switch/case 中（break 无需生成）
 	collect_referenced   map[string]bool
 	collect_assigned     map[string]bool
-	ast_json_cache       []string
+	collect_globals      map[string]bool
+	collect_statics      map[string]bool
 	global_constants       map[string]GlobalConst // 全局常量表
 	closure_body_builder   strings.Builder // 当前闭包体的临时输出缓冲区
 	is_in_closure_body     bool            // 是否正在生成闭包体代码
@@ -129,6 +131,7 @@ pub fn Transpiler.new() Transpiler {
 		custom_functions: map[string]bool{}
 		custom_function_infos: map[string]MethodInfo{}
 		classes:          []ClassInfo{}
+		class_name_map:   map[string]int{}
 		current_file:     ''
 		parser_php_path:  ''
 		transpiled_includes:   map[string]string{}
@@ -154,7 +157,8 @@ pub fn Transpiler.new() Transpiler {
 		global_constants: map[string]GlobalConst{}
 		collect_referenced: map[string]bool{}
 		collect_assigned: map[string]bool{}
-		ast_json_cache: []string{}
+		collect_globals: map[string]bool{}
+		collect_statics: map[string]bool{}
 		closure_body_builder: strings.new_builder(64)
 		closure_captured_natives: map[string]VarType{}
 		extra_imports: map[string]bool{}
@@ -184,6 +188,7 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 	// 前置扫描并登记全局类与 Exception
 	println('  - scan_classes')
 	t.scan_classes(local_stmts)
+	t.rebuild_class_map()
 
 	// 预扫描顶层及嵌套自定义函数，登记到 custom_functions 中
 	println('  - scan_custom_functions')
@@ -544,16 +549,23 @@ fn method_v_name(method_name string) string {
 
 // 查找类属性的推导类型（含继承链查找）
 fn (t &Transpiler) get_class_prop_type(class_name string, prop_name string) VarType {
-	for cls in t.classes {
-		if cls.name.to_lower() == class_name.to_lower() {
-			if typ := find_vartype_map_insensitive(cls.prop_types, prop_name) {
-				return typ
-			}
-			// 递归查父类
-			if cls.extends.len > 0 {
-				return t.get_class_prop_type(cls.extends, prop_name)
-			}
-			return VarType{ tag: .t_unknown }
+	return t.get_class_prop_type_rec(class_name, prop_name, [])
+}
+
+fn (t &Transpiler) get_class_prop_type_rec(class_name string, prop_name string, visited []string) VarType {
+	if class_name in visited {
+		return VarType{ tag: .t_unknown }
+	}
+	mut next_visited := visited.clone()
+	next_visited << class_name
+	idx := t.class_name_map[class_name.to_lower()] or { -1 }
+	if idx != -1 {
+		cls := t.classes[idx]
+		if typ := find_vartype_map_insensitive(cls.prop_types, prop_name) {
+			return typ
+		}
+		if cls.extends.len > 0 {
+			return t.get_class_prop_type_rec(cls.extends, prop_name, next_visited)
 		}
 	}
 	return VarType{ tag: .t_unknown }
@@ -561,18 +573,25 @@ fn (t &Transpiler) get_class_prop_type(class_name string, prop_name string) VarT
 
 // 查找类方法的参数类型
 fn (t &Transpiler) get_method_param_type(class_name string, method_name string, param_name string) VarType {
-	for cls in t.classes {
-		if cls.name.to_lower() == class_name.to_lower() {
-			if params := find_param_map_insensitive(cls.param_types, method_name) {
-				if typ := find_vartype_map_insensitive(params, param_name) {
-					return typ
-				}
+	return t.get_method_param_type_rec(class_name, method_name, param_name, [])
+}
+
+fn (t &Transpiler) get_method_param_type_rec(class_name string, method_name string, param_name string, visited []string) VarType {
+	if class_name in visited {
+		return VarType{ tag: .t_unknown }
+	}
+	mut next_visited := visited.clone()
+	next_visited << class_name
+	idx := t.class_name_map[class_name.to_lower()] or { -1 }
+	if idx != -1 {
+		cls := t.classes[idx]
+		if params := find_param_map_insensitive(cls.param_types, method_name) {
+			if typ := find_vartype_map_insensitive(params, param_name) {
+				return typ
 			}
-			// 递归查父类
-			if cls.extends.len > 0 {
-				return t.get_method_param_type(cls.extends, method_name, param_name)
-			}
-			return VarType{ tag: .t_unknown }
+		}
+		if cls.extends.len > 0 {
+			return t.get_method_param_type_rec(cls.extends, method_name, param_name, next_visited)
 		}
 	}
 	return VarType{ tag: .t_unknown }
@@ -580,15 +599,23 @@ fn (t &Transpiler) get_method_param_type(class_name string, method_name string, 
 
 // 查找类方法的返回值类型
 fn (t &Transpiler) get_method_return_type(class_name string, method_name string) VarType {
-	for cls in t.classes {
-		if cls.name.to_lower() == class_name.to_lower() {
-			if typ := find_vartype_map_insensitive(cls.return_types, method_name) {
-				return typ
-			}
-			if cls.extends.len > 0 {
-				return t.get_method_return_type(cls.extends, method_name)
-			}
-			return VarType{ tag: .t_unknown }
+	return t.get_method_return_type_rec(class_name, method_name, [])
+}
+
+fn (t &Transpiler) get_method_return_type_rec(class_name string, method_name string, visited []string) VarType {
+	if class_name in visited {
+		return VarType{ tag: .t_unknown }
+	}
+	mut next_visited := visited.clone()
+	next_visited << class_name
+	idx := t.class_name_map[class_name.to_lower()] or { -1 }
+	if idx != -1 {
+		cls := t.classes[idx]
+		if typ := find_vartype_map_insensitive(cls.return_types, method_name) {
+			return typ
+		}
+		if cls.extends.len > 0 {
+			return t.get_method_return_type_rec(cls.extends, method_name, next_visited)
 		}
 	}
 	return VarType{ tag: .t_unknown }
@@ -596,15 +623,23 @@ fn (t &Transpiler) get_method_return_type(class_name string, method_name string)
 
 // 查找类方法的参数类型映射（参数名 → 类型）
 fn (t &Transpiler) param_types_for_method(class_name string, method_name string) ?map[string]VarType {
-	for cls in t.classes {
-		if cls.name.to_lower() == class_name.to_lower() {
-			if params := find_param_map_insensitive(cls.param_types, method_name) {
-				return params
-			}
-			if cls.extends.len > 0 {
-				return t.param_types_for_method(cls.extends, method_name)
-			}
-			return none
+	return t.param_types_for_method_rec(class_name, method_name, [])
+}
+
+fn (t &Transpiler) param_types_for_method_rec(class_name string, method_name string, visited []string) ?map[string]VarType {
+	if class_name in visited {
+		return none
+	}
+	mut next_visited := visited.clone()
+	next_visited << class_name
+	idx := t.class_name_map[class_name.to_lower()] or { -1 }
+	if idx != -1 {
+		cls := t.classes[idx]
+		if params := find_param_map_insensitive(cls.param_types, method_name) {
+			return params
+		}
+		if cls.extends.len > 0 {
+			return t.param_types_for_method_rec(cls.extends, method_name, next_visited)
 		}
 	}
 	return none
@@ -612,25 +647,40 @@ fn (t &Transpiler) param_types_for_method(class_name string, method_name string)
 
 // 检查类是否继承/实现指定的类或接口
 fn (t &Transpiler) is_class_instance_of(child_class string, target string) bool {
+	return t.is_class_instance_of_rec(child_class, target, [])
+}
+
+fn (t &Transpiler) is_class_instance_of_rec(child_class string, target string, visited []string) bool {
 	if child_class == target {
 		return true
 	}
-	for cls in t.classes {
-		if cls.name == child_class {
-			// 检查 implements
-			for iface in cls.implements {
-				if iface == target {
-					return true
-				}
+	if child_class in visited {
+		return false
+	}
+	mut next_visited := visited.clone()
+	next_visited << child_class
+	idx := t.class_name_map[child_class.to_lower()] or { -1 }
+	if idx != -1 {
+		cls := t.classes[idx]
+		// 检查 implements
+		for iface in cls.implements {
+			if iface == target {
+				return true
 			}
-			// 递归检查父类
-			if cls.extends.len > 0 {
-				return t.is_class_instance_of(cls.extends, target)
-			}
-			return false
+		}
+		// 递归检查父类
+		if cls.extends.len > 0 {
+			return t.is_class_instance_of_rec(cls.extends, target, next_visited)
 		}
 	}
 	return false
+}
+
+pub fn (mut t Transpiler) rebuild_class_map() {
+	t.class_name_map.clear()
+	for i, cls in t.classes {
+		t.class_name_map[cls.name.to_lower()] = i
+	}
 }
 
 // scan_global_constants 静态分析顶层 AST，提取全局 const 和全局 define() 并注册
@@ -1216,15 +1266,25 @@ pub fn (mut t Transpiler) transpile_include_file(path string) string {
 		return func_name
 	}
 
-	res := os.execute('php "' + t.parser_php_path + '" "' + normalized + '"')
-	if res.exit_code != 0 {
-		eprintln('PHP parsing failed for include ' + path + ': ' + res.output)
-		return func_name
+	safe_name := normalized.replace('/', '_').replace(':', '_').replace('\\', '_')
+	cache_dir := os.join_path(os.dir(t.parser_php_path), 'tmp/ast_cache')
+	cache_path := os.join_path(cache_dir, safe_name + '.json')
+	mut json_ast := ''
+	if os.exists(cache_path) {
+		json_ast = os.read_file(cache_path) or { '' }
+	}
+	if json_ast == '' {
+		res := os.execute('php "' + t.parser_php_path + '" "' + normalized + '"')
+		if res.exit_code != 0 {
+			eprintln('PHP parsing failed for include ' + path + ': ' + res.output)
+			return func_name
+		}
+		json_ast = res.output
+		os.mkdir_all(cache_dir) or {}
+		os.write_file(cache_path, json_ast) or {}
 	}
 
-	t.ast_json_cache << res.output
-
-	parsed_stmts := ast.parse_ast_json(res.output) or {
+	parsed_stmts := ast.parse_ast_json(json_ast) or {
 		eprintln('Failed to parse AST JSON for include ' + path + ': ${err}')
 		return func_name
 	}
@@ -1238,16 +1298,17 @@ pub fn (mut t Transpiler) transpile_include_file(path string) string {
 	sub_t.current_file = normalized
 	sub_t.parser_php_path = t.parser_php_path
 	sub_t.classes = t.classes.clone()
+	sub_t.rebuild_class_map()
 	sub_t.custom_functions = t.custom_functions.clone()
 	sub_t.custom_function_infos = t.custom_function_infos.clone()
 	sub_t.global_constants = t.global_constants.clone()
 	sub_t.transpiled_includes = t.transpiled_includes.clone()
-	sub_t.ast_json_cache = t.ast_json_cache.clone()
 
 	v_body := sub_t.transpile(stmts)
 
 	// 同步回父转译器
 	t.classes = sub_t.classes.clone()
+	t.rebuild_class_map()
 	t.custom_functions = sub_t.custom_functions.clone()
 	t.custom_function_infos = sub_t.custom_function_infos.clone()
 	t.global_constants = sub_t.global_constants.clone()
