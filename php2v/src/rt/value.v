@@ -258,13 +258,14 @@ pub fn (v PhpVal) clone() PhpVal {
 }
 
 
-pub type PhpKey = string | int | PhpVal
-pub type PhpArg = string | int | bool | f64 | PhpVal
+pub type PhpKey = string | int | i64 | PhpVal
+pub type PhpArg = string | int | i64 | bool | f64 | PhpVal
 
 pub fn (k PhpKey) to_php_val() PhpVal {
 	match k {
 		PhpVal { return k }
 		int { return new_int(k) }
+		i64 { return new_int(k) }
 		string { return new_string(k) }
 	}
 }
@@ -273,6 +274,7 @@ pub fn (a PhpArg) to_php_val() PhpVal {
 	match a {
 		PhpVal { return a }
 		int { return new_int(a) }
+		i64 { return new_int(a) }
 		string { return new_string(a) }
 		bool { return new_bool(a) }
 		f64 { return new_float(a) }

@@ -660,7 +660,7 @@ fn (mut t Transpiler) visit_function(node &ast.AstNode) {
 		}
 	}
 	is_dyn := if f := t.custom_function_infos[node.name] { f.has_dynamic_args } else { false }
-	if is_dyn {
+	if is_dyn && !has_variadic_param {
 		param_names << '_args ...rt.PhpVal'
 	}
 

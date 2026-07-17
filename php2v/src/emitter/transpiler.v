@@ -98,6 +98,7 @@ pub mut:
 	current_func_ret_type  VarType                        // 当前函数的返回值类型
 	func_var_types         map[string]map[string]VarType // 函数名 → 局部变量名 → 推导类型
 	declared_classes       map[string]bool               // 已声明的类
+	declared_classes_in_file map[string]bool               // 在本文件中显式声明的类
 	expected_type          VarType                       // 上下文期望类型
 	var_aliases            map[string]string             // 变量重命名映射（处理局部变量遮蔽冲突）
 	foreach_depth          int                           // 循环嵌套深度（用于生成唯一的迭代器变量名）
@@ -110,6 +111,7 @@ pub mut:
 	active_depth            int
 	mode                    string
 	is_entry_script         bool
+	is_sub_transpiler       bool
 }
 
 pub struct GlobalConst {
@@ -167,6 +169,7 @@ pub fn Transpiler.new() Transpiler {
 		func_return_types: map[string]VarType{}
 		func_var_types: map[string]map[string]VarType{}
 		declared_classes: map[string]bool{}
+		declared_classes_in_file: map[string]bool{}
 		expected_type: VarType{ tag: .t_unknown }
 		has_dynamic_new:         false
 		has_dynamic_method_call: false
@@ -270,6 +273,8 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 	// 补全在转译中遇到的未显式声明的类（如 Exception 等内置类）
 	old_is_in_func := t.is_in_func
 	t.is_in_func = true
+	eprintln('DECLARED CLASSES: ${t.declared_classes.keys()}')
+	eprintln('UNDECLARED CLASSES: ${t.undeclared_classes.keys()}')
 	for name, _ in t.undeclared_classes {
 		if t.declared_classes[name] {
 			continue
@@ -350,6 +355,12 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 			}
 	}
 	t.is_in_func = old_is_in_func
+	
+	mut class_names := []string{}
+	for cls in t.classes {
+		class_names << cls.name
+	}
+	eprintln('CLASSES IN TRANSPILER: ${class_names}')
 	
 	t.generate_dispatchers()
 	t.generate_registry_initializers()
@@ -1092,6 +1103,9 @@ fn (mut t Transpiler) scan_dynamic_usages_node(node &ast.AstNode) {
 }
 
 fn (mut t Transpiler) generate_registry_initializers() {
+	if t.is_sub_transpiler {
+		return
+	}
 	if !t.has_dynamic_new && !t.has_dynamic_method_call && !t.has_dynamic_func_call && t.classes.len == 0 {
 		return
 	}
@@ -1140,6 +1154,9 @@ fn (mut t Transpiler) generate_registry_initializers() {
 	// 2. 生成类构造函数的适配器 (用于动态 new $className)
 	if t.has_dynamic_new {
 		for cls in t.classes {
+			if t.declared_classes[cls.name] && !t.declared_classes_in_file[cls.name] {
+				continue
+			}
 			parents_expr := t.get_parents_expr(cls.name)
 			
 			lines << "\trt.register_class_factory('${cls.name}', fn(args []rt.PhpVal) rt.PhpVal {"
@@ -1191,6 +1208,9 @@ fn (mut t Transpiler) generate_registry_initializers() {
 
 	// 3. 注册类元数据（用于 method_exists / property_exists / is_a 等 AOT 查询）
 	for cls in t.classes {
+		if t.declared_classes[cls.name] && !t.declared_classes_in_file[cls.name] {
+			continue
+		}
 		mut parent_list := []string{}
 		if cls.extends.len > 0 {
 			parent_list << "'${cls.extends}'"
@@ -1295,6 +1315,7 @@ pub fn (mut t Transpiler) transpile_include_file(path string) string {
 
 	// 实例化子转译器
 	mut sub_t := Transpiler.new()
+	sub_t.is_sub_transpiler = true
 	sub_t.current_file = normalized
 	sub_t.parser_php_path = t.parser_php_path
 	sub_t.classes = t.classes.clone()
@@ -1303,6 +1324,8 @@ pub fn (mut t Transpiler) transpile_include_file(path string) string {
 	sub_t.custom_function_infos = t.custom_function_infos.clone()
 	sub_t.global_constants = t.global_constants.clone()
 	sub_t.transpiled_includes = t.transpiled_includes.clone()
+	sub_t.declared_classes = t.declared_classes.clone()
+	sub_t.undeclared_classes = t.undeclared_classes.clone()
 
 	v_body := sub_t.transpile(stmts)
 
@@ -1313,6 +1336,8 @@ pub fn (mut t Transpiler) transpile_include_file(path string) string {
 	t.custom_function_infos = sub_t.custom_function_infos.clone()
 	t.global_constants = sub_t.global_constants.clone()
 	t.transpiled_includes = sub_t.transpiled_includes.clone()
+	t.declared_classes = sub_t.declared_classes.clone()
+	t.undeclared_classes = sub_t.undeclared_classes.clone()
 
 	t.include_funcs_code.write_string(sub_t.include_funcs_code.str())
 	t.include_register_code.write_string(sub_t.include_register_code.str())

@@ -1,0 +1,55 @@
+version: 1
+scope:
+  include:
+    - "vphp/**"
+  exclude: []
+repowiki:
+  template: architecture
+  notes:
+    - text: "vphp 是 V 面向 Zend/PHP 的底层绑定与导出层，模块名 vphp，位于 vphp/ 目录。核心职责：V↔Zend 双向互操作（V 导出为 PHP function/class/interface/trait/enum，V 调用 PHP 函数/方法/对象）。"
+    - text: "值模型分四层：Zend zval → ZVal → ZBox 生命周期包装 → 语义 PHP 包装（PhpValue/PhpInt/PhpString 等）。所有值类型文件在 vphp/ 根目录和 vphp/zval/ 子目录。"
+    - text: "ownership 模型是显式分层的：RequestBorrowedZBox、RequestOwnedZBox、PersistentOwnedZBox、PhpValueZBox。request/frame scope 在 vphp/scope/ 中。"
+    - text: "compiler/ 是内置导出编译器，流水线：parser → repr → builder → emitter → 生成 C/V glue 代码。子目录含 parser/、repr/、builder/、linker/、php_types/、docs/。"
+    - text: "object/ 子目录负责 PHP 对象在 V 侧的绑定：handle、handlers、property、lifecycle、return、roots、zval 交互。"
+    - text: "zend/ 子目录是对 Zend C API 的低层封装：types、value、call、closure、object、array、include、constants、superglobals、execute 等。"
+    - text: "bridge/ 包含 C 头文件兼容层（compat.h）和各类 .inc.c 片段（call、debug、object、runtime、values），用于 FFI 桥接。"
+    - text: "execute/ 子目录包含执行上下文相关：args.v、context.v、handle.v。"
+    - text: "v_bridge.c / v_bridge.h 是 V↔C 的桥接入口，配合 bridge/ 目录的 .inc.c 文件工作。"
+  documents:
+    - title: "vphp 模块总览"
+      goal: "模块定位、核心职责、目录结构、与上层 vphptest/vslim 的关系"
+      parent: ""
+    - title: "值模型与分层架构"
+      goal: "ZVal → ZBox → 语义包装的分层设计，各层职责边界，类型转换规则"
+      parent: ""
+    - title: "Ownership 与生命周期"
+      goal: "RequestBorrowed/Owned/Persistent 三种 ownership 语义，request/frame scope，autorelease 机制"
+      parent: ""
+    - title: "V→PHP 互操作"
+      goal: "PhpFunction/PhpObject 语义调用 API，ZVal 底层逃逸路径，参数传递与返回值处理"
+      parent: ""
+    - title: "V→PHP 导出（Compiler）"
+      goal: "导出编译器流水线（parser→repr→builder→emitter），function/class/interface/trait/enum/closure 导出机制"
+      parent: ""
+      template: |
+        ## 编译器流水线概览
+        ## 解析阶段（Parser）
+        ## 中间表示（Repr）
+        ## 构建阶段（Builder）
+        ## 代码生成（Emitter）
+        ## 各类导出目标
+        ## 已知限制与待办
+    - title: "对象系统"
+      goal: "object/ 子目录的对象绑定、属性处理、handler 链、生命周期管理"
+      parent: ""
+    - title: "Zend API 封装层"
+      goal: "zend/ 子目录对 Zend C API 的封装：types、value、call、closure、array 等"
+      parent: ""
+    - title: "Bridge 与 FFI 层"
+      goal: "bridge/ 目录和 v_bridge.c/h 的 C 兼容层设计，.inc.c 片段组织方式"
+      parent: ""
+knowledgecard:
+  notes:
+    - text: "vphp 模块内部按职责分为 7 个子目录：compiler/（导出编译器）、zval/（值操作）、zend/（Zend API 封装）、object/（对象绑定）、bridge/（C FFI 片段）、scope/（生命周期作用域）、execute/（执行上下文）。根目录约 80+ .v 文件覆盖值类型定义、生命周期、interop、导出注解等。"
+    - text: "值类型文件命名规则：php_<type>_type.v（如 php_int_type.v）、zval_<feature>.v（如 zval_array.v）、php_<feature>.v（如 php_function.v）。遵循此命名约定添加新类型。"
+    - text: "compiler/ 子目录结构：parser/（V 源码解析）、repr/（中间表示）、builder/（构建绑定信息）、linker/（链接）、php_types/（PHP 类型映射），以及 c_*.v 系列文件负责 C 代码生成。"

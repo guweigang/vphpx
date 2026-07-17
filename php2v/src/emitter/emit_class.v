@@ -30,6 +30,7 @@ fn (mut t Transpiler) visit_class(node &ast.AstNode) {
 	resolved_extends := t.resolve_class_name(node.extends)
 	t.current_class = resolved_name
 	t.declared_classes[resolved_name] = true
+	t.declared_classes_in_file[resolved_name] = true
 	
 
 	// 收集 ClassInfo：只收集本类自身声明的属性和方法
@@ -326,51 +327,59 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	t.current_func_name = node.name
 	
 	old_func_ret := t.current_func_ret_type
-	eprintln('      [visit_class_method] before get_method_return_type')
 	ret_type := t.get_method_return_type(class_name, node.name)
-	eprintln('      [visit_class_method] after get_method_return_type')
 	t.current_func_ret_type = ret_type
 
 	// P7 Task 7: 参数使用推断类型；无法推断则保持 rt.PhpVal
 	mut param_names := []string{}
 	mut registered_native_params := []string{}
 	mut registered_mutated_params := []string{}
+	mut has_variadic_param := false
+	mut variadic_param_name := ''
 	for param in node.params {
 		param_var := param.var or { panic('Param missing var') }
 		param_name := param_var.name
 		t.scope.declare(param_name)
-		param_type := t.get_method_param_type(class_name, node.name, param_name)
 		
-		mut shadow_name := param_name
-		if t.mutated_vars[param_name] || t.mutated_vars['var_' + param_name] {
-			if param_type.is_scalar() {
-				shadow_name = '${param_name}_mutated'
-			} else {
-				shadow_name = 'var_${param_name}_mutated'
-			}
-			t.var_aliases[param_name] = shadow_name
-			registered_mutated_params << param_name
-		}
-		
-		prefix := if param.by_ref == 'true' { 'mut ' } else { '' }
-		if param_type.is_scalar() {
-			// 原生类型参数：直接用参数名（无 var_ 前缀），登记到类型表 and native_params
-			param_names << '${prefix}${param_name} ${param_type.to_v_type()}'
-			t.inferred_types[shadow_name] = param_type
-			t.native_params[shadow_name] = true
-			registered_native_params << shadow_name
-		} else if param_type.is_object() {
-			// 原生类对象参数：保留 var_ 前缀，但以原生 Class 指针传递，且一律为 mut
-			param_names << 'mut var_${param_name} ${param_type.to_v_type()}'
-			t.inferred_types[shadow_name] = param_type
-			t.native_vars['var_' + shadow_name] = true
+		is_param_variadic := (param.variadic == 'true')
+		if is_param_variadic {
+			has_variadic_param = true
+			variadic_param_name = param_name
+			param_names << 'var_${param_name}_origin ...rt.PhpVal'
 		} else {
-			param_names << '${prefix}var_${param_name} rt.PhpVal'
-			t.inferred_types[shadow_name] = VarType{ tag: .t_unknown }
+			param_type := t.get_method_param_type(class_name, node.name, param_name)
+			
+			mut shadow_name := param_name
+			if t.mutated_vars[param_name] || t.mutated_vars['var_' + param_name] {
+				if param_type.is_scalar() {
+					shadow_name = '${param_name}_mutated'
+				} else {
+					shadow_name = 'var_${param_name}_mutated'
+				}
+				t.var_aliases[param_name] = shadow_name
+				registered_mutated_params << param_name
+			}
+			
+			prefix := if param.by_ref == 'true' { 'mut ' } else { '' }
+			if param_type.is_scalar() {
+				// 原生类型参数：直接用参数名（无 var_ 前缀），登记到类型表 and native_params
+				param_names << '${prefix}${param_name} ${param_type.to_v_type()}'
+				t.inferred_types[shadow_name] = param_type
+				t.native_params[shadow_name] = true
+				registered_native_params << shadow_name
+			} else if param_type.is_object() {
+				// 原生类对象参数：保留 var_ 前缀，但以原生 Class 指针传递，且一律为 mut
+				param_names << 'mut var_${param_name} ${param_type.to_v_type()}'
+				t.inferred_types[shadow_name] = param_type
+				t.native_vars['var_' + shadow_name] = true
+			} else {
+				param_names << '${prefix}var_${param_name} rt.PhpVal'
+				t.inferred_types[shadow_name] = VarType{ tag: .t_unknown }
+			}
 		}
 	}
 	is_dyn := if m := t.find_method(class_name, node.name) { m.has_dynamic_args } else { false }
-	if is_dyn {
+	if is_dyn && !has_variadic_param {
 		param_names << '_args ...rt.PhpVal'
 	}
 
@@ -388,6 +397,10 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	}
 	
 	t.indent++
+	if has_variadic_param {
+		t.write_indent()
+		t.write_line('mut var_${variadic_param_name} := rt.create_array_from_list(var_${variadic_param_name}_origin)')
+	}
 	
 	// 标记当前在 construct 中，以便 visit_return 正确处理
 	old_in_construct := t.is_in_construct
@@ -542,6 +555,10 @@ fn (mut t Transpiler) generate_dispatchers() {
 	// 1. 生成每个类的工厂函数
 	//    P7 Task 7: 生成 new_xxx(原生参数) 和 create_xxx(PhpVal 参数) 两套
 	for cls in t.classes {
+		eprintln('CLASS: ${cls.name}, DECLARED: ${t.declared_classes[cls.name]}, IN_FILE: ${t.declared_classes_in_file[cls.name]}')
+		if t.declared_classes[cls.name] && !t.declared_classes_in_file[cls.name] {
+			continue
+		}
 		// 在 all_methods 中查找构造函数
 		mut construct_info := ?MethodInfo(none)
 		for m in cls.all_methods {
@@ -616,6 +633,9 @@ fn (mut t Transpiler) generate_dispatchers() {
 	// 注意：虽然有条件标志 needs_method_dispatch/needs_prop_dispatch，但由于标志是在
 	// 表达式遍历时设置的，而类定义在此之前生成，所以暂时总是生成这些函数
 	for cls in t.classes {
+		if t.declared_classes[cls.name] && !t.declared_classes_in_file[cls.name] {
+			continue
+		}
 		// dispatch_method：使用 optional 返回值
 		t.write_line('fn (mut this Class_${cls.name}) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {')
 		t.indent++
