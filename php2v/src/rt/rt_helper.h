@@ -24,7 +24,6 @@ static inline int php2v_hash_get_entry(void *ht, uint32_t index, zval **val, zen
 	return 0;
 }
 
-// php2v_call_zend_function 动态在全局函数表中查找 name 并利用 params 指针数组进行解包直调
 static inline int php2v_call_zend_function(const char *name, size_t name_len, zval *retval, uint32_t param_count, zval **params) {
 	php2v_update_tsrm_cache();
 	zend_string *zstr_name = zend_string_init(name, name_len, 0);

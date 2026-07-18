@@ -359,6 +359,111 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 		'mysqli_set_charset' {
 			return new_bool(true)
 		}
+		'current' {
+			if args.len >= 1 && args[0].is_array() {
+				pa := extract_from_zval(args[0].raw)
+				return pa.current()
+			}
+			return new_bool(false)
+		}
+		'next' {
+			if args.len >= 1 && args[0].is_array() {
+				mut pa := unsafe { &PhpArray(voidptr(extract_from_zval(args[0].raw))) }
+				unsafe {
+					return pa.next()
+				}
+			}
+			return new_bool(false)
+		}
+		'prev' {
+			if args.len >= 1 && args[0].is_array() {
+				mut pa := unsafe { &PhpArray(voidptr(extract_from_zval(args[0].raw))) }
+				unsafe {
+					return pa.prev()
+				}
+			}
+			return new_bool(false)
+		}
+		'reset' {
+			if args.len >= 1 && args[0].is_array() {
+				mut pa := unsafe { &PhpArray(voidptr(extract_from_zval(args[0].raw))) }
+				unsafe {
+					return pa.reset()
+				}
+			}
+			return new_bool(false)
+		}
+		'end' {
+			if args.len >= 1 && args[0].is_array() {
+				mut pa := unsafe { &PhpArray(voidptr(extract_from_zval(args[0].raw))) }
+				unsafe {
+					return pa.end()
+				}
+			}
+			return new_bool(false)
+		}
+		'key' {
+			if args.len >= 1 && args[0].is_array() {
+				pa := extract_from_zval(args[0].raw)
+				return pa.key()
+			}
+			return new_null()
+		}
+		'array_unshift' {
+			if args.len >= 2 && args[0].is_array() {
+				mut pa := unsafe { &PhpArray(voidptr(extract_from_zval(args[0].raw))) }
+				for i := args.len - 1; i >= 1; i-- {
+					unsafe {
+						pa.unshift(args[i])
+					}
+				}
+				return new_int(pa.count())
+			}
+			return new_int(0)
+		}
+		'array_shift' {
+			if args.len >= 1 && args[0].is_array() {
+				mut pa := unsafe { &PhpArray(voidptr(extract_from_zval(args[0].raw))) }
+				unsafe {
+					return pa.shift()
+				}
+			}
+			return new_null()
+		}
+		'array_push' {
+			if args.len >= 2 && args[0].is_array() {
+				mut pa := unsafe { &PhpArray(voidptr(extract_from_zval(args[0].raw))) }
+				for i := 1; i < args.len; i++ {
+					unsafe {
+						pa.push(args[i])
+					}
+				}
+				return new_int(pa.count())
+			}
+			return new_int(0)
+		}
+		'array_pop' {
+			if args.len >= 1 && args[0].is_array() {
+				mut pa := unsafe { &PhpArray(voidptr(extract_from_zval(args[0].raw))) }
+				unsafe {
+					return pa.pop()
+				}
+			}
+			return new_null()
+		}
+		'array_merge' {
+			mut res_pa := PhpArray.new()
+			for arg in args {
+				if arg.is_array() {
+					other := extract_from_zval(arg.raw)
+					res_pa = res_pa.merge(other)
+				}
+			}
+			mut z := new_zval()
+			res_pa.store_in_zval(z)
+			z.u1.type_info = 7 // IS_ARRAY
+			return PhpVal{ raw: z }
+		}
 		'call_user_func' {
 			if args.len > 0 {
 				cb := args[0]
