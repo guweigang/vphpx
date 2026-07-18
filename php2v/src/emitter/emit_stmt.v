@@ -574,7 +574,10 @@ fn (mut t Transpiler) visit_function(node &ast.AstNode) {
 	old_func_name := t.current_func_name
 	old_func_ret := t.current_func_ret_type
 	t.current_func_name = node.name
-	ret_type := t.func_return_types[node.name] or { VarType{ tag: .t_unknown } }
+	mut ret_type := t.func_return_types[node.name] or { VarType{ tag: .t_unknown } }
+	if ret_type.tag == .t_void {
+		ret_type = VarType{ tag: .t_unknown }
+	}
 	t.current_func_ret_type = ret_type
 
 	// 设置当前函数的局部变量类型（供 get_expr_type 使用）
@@ -665,9 +668,8 @@ fn (mut t Transpiler) visit_function(node &ast.AstNode) {
 	}
 
 	has_native_ret := ret_type.is_scalar()
-	ret_type_str := if ret_type.tag == .t_void {
-		''
-	} else if has_native_ret {
+	// PHP 函数一律至少返回 rt.PhpVal，防止 void 导致的表达式赋值报错
+	ret_type_str := if has_native_ret {
 		' ${ret_type.to_v_type()}'
 	} else {
 		' rt.PhpVal'
@@ -778,13 +780,11 @@ fn (mut t Transpiler) visit_function(node &ast.AstNode) {
 		t.visit_stmt(stmt)
 	}
 	if node.stmts.len == 0 || node.stmts[node.stmts.len - 1].node_type != ast.node_stmt_return {
-		if ret_type.tag != .t_void {
-			t.write_indent()
-			if has_native_ret {
-				t.write_line('return ${t.get_native_default(ret_type)}')
-			} else {
-				t.write_line('return rt.new_null()')
-			}
+		t.write_indent()
+		if has_native_ret {
+			t.write_line('return ${t.get_native_default(ret_type)}')
+		} else {
+			t.write_line('return rt.new_null()')
 		}
 	}
 	t.indent--

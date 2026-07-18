@@ -133,11 +133,11 @@ fn test_transpiler_end_to_end() {
 			'struct Class_Animal {',
 			'name rt.PhpVal',
 			'fn (mut this Class_Animal) construct(var_name rt.PhpVal) ',
-			'fn (mut this Class_Animal) greet() {',
+			'fn (mut this Class_Animal) greet() rt.PhpVal {',
 			'struct Class_Dog {',
 			'breed string',
 			'fn (mut this Class_Dog) construct(name string, breed string) ',
-			'fn (mut this Class_Dog) greet() {',
+			'fn (mut this Class_Dog) greet() rt.PhpVal {',
 			'this.Class_Animal.greet()',
 			'fn create_dog(name string, breed string) &Class_Dog {',
 			"mut var_dog := &Class_Dog(unsafe { nil })",
@@ -243,14 +243,14 @@ fn test_transpiler_end_to_end() {
 		'30_oop_interfaces.php': [
 			'interface Logger {',
 			'struct Class_FileLogger {',
-			'fn (mut this Class_FileLogger) log(msg string) {',
+			'fn (mut this Class_FileLogger) log(msg string) rt.PhpVal {',
 			'if true {',
 			'rt.print_str(\'fl is Logger\\n\')',
 			'var_fl.log(\'hello\')',
 		]
 		'31_oop_traits.php': [
 			'struct Class_User {',
-			'fn (mut this Class_User) sayhello(name string) {',
+			'fn (mut this Class_User) sayhello(name string) rt.PhpVal {',
 			"var_u.sayhello('Alice')",
 		]
 		'32_builtin_inference.php': [
@@ -353,7 +353,7 @@ fn test_transpiler_end_to_end() {
 		]
 		// 44: 返回 void 的自定义函数在动态注册适配器时的代码生成正确性
 		'44_void_func_register.php': [
-			'fn test_void_func(var_msg rt.PhpVal) {',
+			'fn test_void_func(var_msg rt.PhpVal) rt.PhpVal {',
 			'rt.register_func(\'test_void_func\', fn (args []rt.PhpVal) rt.PhpVal {',
 			'test_void_func(arg_0)',
 			'return rt.new_null()',

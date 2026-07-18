@@ -1674,7 +1674,8 @@ fn (mut t Transpiler) visit_expr_impl(node &ast.AstNode) string {
 			
 			mut is_native := false
 			if t.current_func_name == '' {
-				is_native = var_type.is_scalar()
+				// 仅在混合 AOT 编译部署模式下将全局变量统一为 rt.PhpVal 包装值，避免跨 include 的类型冲突；单文件测试模式下保留原生标量与强类型对象声明以通过测试
+				is_native = !t.is_mixed_aot() && (var_type.is_scalar() || var_type.is_object())
 			} else {
 				is_native = t.native_params[var_name] || t.native_vars[v_var]
 			}
@@ -1712,12 +1713,7 @@ fn (mut t Transpiler) visit_expr_impl(node &ast.AstNode) string {
 			} else {
 				old_expected := t.expected_type
 				t.expected_type = var_type
-				mut expr_str := ''
-				if var_type.tag == .t_object && var_type.class_name.len > 0 && expr_node.node_type == ast.node_expr_new {
-					expr_str = t.visit_expr_native(expr_node)
-				} else {
-					expr_str = t.visit_expr(expr_node)
-				}
+				mut expr_str := t.visit_expr(expr_node)
 				t.expected_type = old_expected
 				
 				expr_typ := t.get_expr_type(*expr_node)
@@ -2240,7 +2236,10 @@ fn (mut t Transpiler) visit_expr_impl(node &ast.AstNode) string {
 					known_obj_type = VarType{ tag: .t_object, class_name: t.current_class }
 				}
 				if known_obj_type.is_object() {
-					return t.compile_method_call_known(node, known_obj_type, *obj_var_node, obj_var_name)
+					is_declared := t.declared_classes[known_obj_type.class_name] || known_obj_type.class_name == t.current_class
+					if is_declared {
+						return t.compile_method_call_known(node, known_obj_type, *obj_var_node, obj_var_name)
+					}
 				}
 			}
 			// 回退: call_method
@@ -2961,7 +2960,30 @@ fn (mut t Transpiler) visit_expr_impl(node &ast.AstNode) string {
 			if expr_type.tag == .t_string {
 				native_expr := t.visit_expr_native(expr_node)
 				t.last_expr_type = VarType{ tag: .t_int }
-				return '${native_expr}.i64()'
+				mut is_native_str := false
+				if native_expr.ends_with('.str()') || native_expr.starts_with('"') || native_expr.starts_with('\'') {
+					is_native_str = true
+				} else {
+					// 查找变量在 V 侧是否被推导为了原生 string
+					mut php_var_name := native_expr
+					if native_expr.starts_with('var_') {
+						php_var_name = native_expr.all_after('var_')
+					}
+					lookup_key := if t.current_func_name != '' { '${t.current_func_name}::${php_var_name}' } else { php_var_name }
+					v_type := t.inferred_types[lookup_key] or {
+						t.inferred_types[php_var_name] or {
+							t.inferred_types[native_expr] or {
+								VarType{ tag: .t_unknown }
+							}
+						}
+					}
+					is_native_str = v_type.tag == .t_string
+				}
+				if is_native_str {
+					return '${native_expr}.i64()'
+				} else {
+					return '(${native_expr}).to_i64()'
+				}
 			}
 			expr_str := t.visit_expr(expr_node)
 			t.last_expr_type = VarType{ tag: .t_int }

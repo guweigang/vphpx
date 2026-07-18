@@ -236,7 +236,7 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 			if v_type.is_native_list || v_type.is_native_map {
 				t.write_line('mut ${v_var} := ' + t.get_empty_literal(v_type))
 				t.native_arr_vars[v] = true
-			} else if v_type.is_scalar() {
+			} else if (t.current_func_name != '' || !t.is_mixed_aot()) && v_type.is_scalar() {
 				t.native_vars[v_var] = true
 				match v_type.tag {
 					.t_int { t.write_line('mut ${v_var} := i64(0)') }
@@ -244,7 +244,7 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 					.t_bool { t.write_line('mut ${v_var} := false') }
 					else { t.write_line("mut ${v_var} := ''") }
 				}
-			} else if v_type.is_object() {
+			} else if (t.current_func_name != '' || !t.is_mixed_aot()) && v_type.is_object() {
 				cls := if v_type.class_name.len > 0 { v_type.class_name } else { 'WP_Error' }
 				t.write_line('mut ${v_var} := &Class_${cls}(unsafe { nil })')
 			} else {
@@ -263,7 +263,7 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 			if v_type.is_native_list || v_type.is_native_map {
 				t.write_line('mut ${v_var} := ' + t.get_empty_literal(v_type))
 				t.native_arr_vars[v] = true
-			} else if v_type.is_scalar() {
+			} else if (t.current_func_name != '' || !t.is_mixed_aot()) && v_type.is_scalar() {
 				t.native_vars[v_var] = true
 				match v_type.tag {
 					.t_int { t.write_line('mut ${v_var} := i64(0)') }
@@ -271,7 +271,7 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 					.t_bool { t.write_line('mut ${v_var} := false') }
 					else { t.write_line("mut ${v_var} := ''") }
 				}
-			} else if v_type.is_object() {
+			} else if (t.current_func_name != '' || !t.is_mixed_aot()) && v_type.is_object() {
 				cls := if v_type.class_name.len > 0 { v_type.class_name } else { 'WP_Error' }
 				t.write_line('mut ${v_var} := &Class_${cls}(unsafe { nil })')
 			} else {
@@ -286,94 +286,104 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 	}
 	println('  - visit_stmt loop end')
 
-	// 补全在转译中遇到的未显式声明的类（如 Exception 等内置类）
-	old_is_in_func := t.is_in_func
-	t.is_in_func = true
-	eprintln('DECLARED CLASSES: ${t.declared_classes.keys()}')
-	eprintln('UNDECLARED CLASSES: ${t.undeclared_classes.keys()}')
-	for name, _ in t.undeclared_classes {
-		if t.declared_classes[name] {
-			continue
-		}
-		mut new_cls := ClassInfo{
-				name: name
-				extends: ''
-				methods: []MethodInfo{}
-				props: []string{}
-				all_props: []string{}
-				all_methods: []MethodInfo{}
+	// 补全在转译中遇到的未显式声明的类（如 Exception 等内置类）仅在最外层转译器中生成
+	if !t.is_sub_transpiler {
+		body_code := t.out.str()
+		t.out.clear()
+		
+		old_is_in_func := t.is_in_func
+		t.is_in_func = true
+		eprintln('DECLARED CLASSES: ${t.declared_classes.keys()}')
+		eprintln('UNDECLARED CLASSES: ${t.undeclared_classes.keys()}')
+		for name, _ in t.undeclared_classes {
+			if t.declared_classes[name] {
+				continue
 			}
-			if name == 'Exception' {
-				new_cls.props << ['message', 'code', 'file', 'line']
-				new_cls.prop_types['message'] = VarType{ tag: .t_string }
-				new_cls.prop_types['code'] = VarType{ tag: .t_int }
-				new_cls.prop_types['file'] = VarType{ tag: .t_string }
-				new_cls.prop_types['line'] = VarType{ tag: .t_int }
-				new_cls.methods << MethodInfo{ name: '__construct', param_count: 1, param_names: ['message'] }
-				new_cls.methods << MethodInfo{ name: 'getMessage', param_count: 0, param_names: []string{} }
-				new_cls.return_types['getMessage'] = VarType{ tag: .t_string }
-			}
-			new_cls.all_props = new_cls.props.clone()
-			new_cls.all_methods = new_cls.methods.clone()
-			
-			mut cls_found := false
-			for cls in t.classes {
-				if cls.name == new_cls.name {
-					cls_found = true
-					break
+			mut new_cls := ClassInfo{
+					name: name
+					extends: ''
+					methods: []MethodInfo{}
+					props: []string{}
+					all_props: []string{}
+					all_methods: []MethodInfo{}
 				}
-			}
-			if !cls_found {
-				t.classes << new_cls
-			}
-			
-			t.write_line('struct Class_${name} {')
-			t.write_line('\trt.PhpObjectBase')
-			if new_cls.props.len > 0 {
-				t.write_line('pub mut:')
-				t.indent++
-				for prop in new_cls.props {
-					t.write_indent()
-					if name == 'Exception' {
-						match prop {
-							'message', 'file' { t.write_line('${prop_v_name(prop)} string') }
-							'code', 'line' { t.write_line('${prop_v_name(prop)} i64') }
-							else { t.write_line('${prop_v_name(prop)} rt.PhpVal') }
-						}
-					} else {
-						t.write_line('prop_${prop} rt.PhpVal')
+				if name == 'Exception' {
+					new_cls.props << ['message', 'code', 'file', 'line']
+					new_cls.prop_types['message'] = VarType{ tag: .t_string }
+					new_cls.prop_types['code'] = VarType{ tag: .t_int }
+					new_cls.prop_types['file'] = VarType{ tag: .t_string }
+					new_cls.prop_types['line'] = VarType{ tag: .t_int }
+					new_cls.methods << MethodInfo{ name: '__construct', param_count: 1, param_names: ['message'] }
+					new_cls.methods << MethodInfo{ name: 'getMessage', param_count: 0, param_names: []string{} }
+					new_cls.return_types['getMessage'] = VarType{ tag: .t_string }
+				}
+				new_cls.all_props = new_cls.props.clone()
+				new_cls.all_methods = new_cls.methods.clone()
+				
+				mut cls_found := false
+				for cls in t.classes {
+					if cls.name == new_cls.name {
+						cls_found = true
+						break
 					}
 				}
-				t.indent--
-			} else {
-				t.write_line('pub mut:')
-				t.write_line('\t_dummy bool')
-			}
-			t.write_line('}')
-			t.write_line('')
-
-			if name == 'Exception' {
-				old_indent := t.indent
-				t.indent = 0
-				t.write_line('fn (mut this Class_Exception) ${method_v_name("__construct")}(var_message rt.PhpVal) {')
-				t.indent++
-				t.write_indent()
-				t.write_line('this.message = var_message.to_string()')
-				t.indent--
+				if !cls_found {
+					t.classes << new_cls
+				}
+				
+				t.write_line('struct Class_${name} {')
+				t.write_line('\trt.PhpObjectBase')
+				if new_cls.props.len > 0 {
+					t.write_line('pub mut:')
+					t.indent++
+					for prop in new_cls.props {
+						t.write_indent()
+						if name == 'Exception' {
+							match prop {
+								'message', 'file' { t.write_line('${prop_v_name(prop)} string') }
+								'code', 'line' { t.write_line('${prop_v_name(prop)} i64') }
+								else { t.write_line('${prop_v_name(prop)} rt.PhpVal') }
+							}
+						} else {
+							t.write_line('prop_${prop} rt.PhpVal')
+						}
+					}
+					t.indent--
+				} else {
+					t.write_line('pub mut:')
+					t.write_line('\t_dummy bool')
+				}
 				t.write_line('}')
 				t.write_line('')
 
-				t.write_line('fn (mut this Class_Exception) ${method_v_name("getMessage")}() string {')
-				t.indent++
-				t.write_indent()
-				t.write_line('return this.message')
-				t.indent--
-				t.write_line('}')
-				t.write_line('')
-				t.indent = old_indent
-			}
+				if name == 'Exception' {
+					old_indent := t.indent
+					t.indent = 0
+					t.write_line('fn (mut this Class_Exception) ${method_v_name("__construct")}(var_message rt.PhpVal) {')
+					t.indent++
+					t.write_indent()
+					t.write_line('this.message = var_message.to_string()')
+					t.indent--
+					t.write_line('}')
+					t.write_line('')
+
+					t.write_line('fn (mut this Class_Exception) ${method_v_name("getMessage")}() string {')
+					t.indent++
+					t.write_indent()
+					t.write_line('return this.message')
+					t.indent--
+					t.write_line('}')
+					t.write_line('')
+					t.indent = old_indent
+				}
+		}
+		t.is_in_func = old_is_in_func
+		
+		stub_code := t.out.str()
+		t.func_out.write_string(stub_code)
+		t.out.clear()
+		t.out.write_string(body_code)
 	}
-	t.is_in_func = old_is_in_func
 	
 	mut class_names := []string{}
 	for cls in t.classes {
@@ -1360,6 +1370,8 @@ pub fn (mut t Transpiler) transpile_include_file(path string) string {
 	sub_t.transpiled_includes = t.transpiled_includes.clone()
 	sub_t.declared_classes = t.declared_classes.clone()
 	sub_t.undeclared_classes = t.undeclared_classes.clone()
+	sub_t.func_param_types = t.func_param_types.clone()
+	sub_t.func_return_types = t.func_return_types.clone()
 
 	v_body := sub_t.transpile(stmts)
 
@@ -1372,6 +1384,8 @@ pub fn (mut t Transpiler) transpile_include_file(path string) string {
 	t.transpiled_includes = sub_t.transpiled_includes.clone()
 	t.declared_classes = sub_t.declared_classes.clone()
 	t.undeclared_classes = sub_t.undeclared_classes.clone()
+	t.func_param_types = sub_t.func_param_types.clone()
+	t.func_return_types = sub_t.func_return_types.clone()
 
 	t.include_funcs_code.write_string(sub_t.include_funcs_code.str())
 	t.include_register_code.write_string(sub_t.include_register_code.str())
@@ -1532,6 +1546,11 @@ pub fn parse_v_type_str(v_type_str string) VarType {
 		}
 	}
 	return VarType{ tag: .t_unknown }
+}
+
+pub fn (t Transpiler) is_mixed_aot() bool {
+	// 如果当前转译的文件不在 tests/fixtures 里，那就是 mixed AOT 部署模式
+	return !t.current_file.contains('tests/fixtures')
 }
 
 

@@ -327,7 +327,10 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	t.current_func_name = node.name
 	
 	old_func_ret := t.current_func_ret_type
-	ret_type := t.get_method_return_type(class_name, node.name)
+	mut ret_type := t.get_method_return_type(class_name, node.name)
+	if node.name != '__construct' && ret_type.tag == .t_void {
+		ret_type = VarType{ tag: .t_unknown }
+	}
 	t.current_func_ret_type = ret_type
 
 	// P7 Task 7: 参数使用推断类型；无法推断则保持 rt.PhpVal
@@ -391,8 +394,8 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 
 	// P7 Task 7: 返回值类型推断
 	is_construct := node.name == '__construct'
-	is_void := ret_type.tag == .t_void
-	ret_type_str := if is_construct || is_void { '' } else if ret_type.is_scalar() { ret_type.to_v_type() } else { 'rt.PhpVal' }
+	// 任何 PHP 普通方法都有隐式 null 返回，不应当生成 V 语言的 void 函数；除构造函数外，一律至少返回 rt.PhpVal
+	ret_type_str := if is_construct { '' } else if ret_type.is_scalar() { ret_type.to_v_type() } else { 'rt.PhpVal' }
 
 	t.write_indent()
 	ret_part := if ret_type_str != '' { ' ${ret_type_str}' } else { '' }
@@ -470,7 +473,7 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 		t.visit_stmt(stmt)
 	}
 	
-	if !is_construct && !is_void {
+	if !is_construct {
 		if node.stmts.len == 0 || node.stmts[node.stmts.len - 1].node_type != ast.node_stmt_return {
 			t.write_indent()
 			if ret_type.is_scalar() {
