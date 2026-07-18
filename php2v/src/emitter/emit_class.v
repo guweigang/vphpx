@@ -336,6 +336,7 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 	mut registered_mutated_params := []string{}
 	mut has_variadic_param := false
 	mut variadic_param_name := ''
+	mut param_v_types := []string{}
 	for param in node.params {
 		param_var := param.var or { panic('Param missing var') }
 		param_name := param_var.name
@@ -346,6 +347,7 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 			has_variadic_param = true
 			variadic_param_name = param_name
 			param_names << 'var_${param_name}_origin ...rt.PhpVal'
+			param_v_types << '...rt.PhpVal'
 		} else {
 			param_type := t.get_method_param_type(class_name, node.name, param_name)
 			
@@ -367,17 +369,21 @@ fn (mut t Transpiler) visit_class_method(class_name string, node ast.AstNode) {
 				t.inferred_types[shadow_name] = param_type
 				t.native_params[shadow_name] = true
 				registered_native_params << shadow_name
+				param_v_types << param_type.to_v_type()
 			} else if param_type.is_object() {
 				// 原生类对象参数：保留 var_ 前缀，但以原生 Class 指针传递，且一律为 mut
 				param_names << 'mut var_${param_name} ${param_type.to_v_type()}'
 				t.inferred_types[shadow_name] = param_type
 				t.native_vars['var_' + shadow_name] = true
+				param_v_types << param_type.to_v_type()
 			} else {
 				param_names << '${prefix}var_${param_name} rt.PhpVal'
 				t.inferred_types[shadow_name] = VarType{ tag: .t_unknown }
+				param_v_types << 'rt.PhpVal'
 			}
 		}
 	}
+	t.method_param_v_types['${class_name}::${node.name}'] = param_v_types
 	is_dyn := if m := t.find_method(class_name, node.name) { m.has_dynamic_args } else { false }
 	if is_dyn && !has_variadic_param {
 		param_names << '_args ...rt.PhpVal'
@@ -654,16 +660,9 @@ fn (mut t Transpiler) generate_dispatchers() {
 					raw_arg := 'if args.len > ${i} { args[${i}] } else { rt.new_null() }'
 					mut processed_arg := ''
 					
-					// 严格按照方法声明的形参顺序获取对应的推导类型
-					mut target_type := VarType{ tag: .t_unknown }
-					if i < m.param_names.len {
-						pname := m.param_names[i]
-						if pm := cls.param_types[m.name] {
-							if pt := pm[pname] {
-								target_type = pt
-							}
-						}
-					}
+					// 严格从 get_method_param_v_type 中获取当初生成方法签名的实际 V 类型，消除时序矛盾
+					v_type_str := t.get_method_param_v_type(cls.name, m.name, i)
+					target_type := parse_v_type_str(v_type_str)
 
 					mut is_mut := false
 					if target_type.is_scalar() {

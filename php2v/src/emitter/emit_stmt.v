@@ -854,9 +854,13 @@ fn (mut t Transpiler) visit_return(node &ast.AstNode) {
 					resolved_new = t.current_class
 				}
 				expr_str := t.visit_expr(expr)
-				parents := t.get_parents_expr(resolved_new)
 				t.write_indent()
-				t.write_line('return rt.new_object(\'${resolved_new}\', ${parents}, ${expr_str})')
+				if expr_str.starts_with('rt.new_object') {
+					t.write_line('return ${expr_str}')
+				} else {
+					parents := t.get_parents_expr(resolved_new)
+					t.write_line('return rt.new_object(\'${resolved_new}\', ${parents}, ${expr_str})')
+				}
 				return
 			}
 		}
@@ -875,7 +879,11 @@ fn (mut t Transpiler) visit_return(node &ast.AstNode) {
 							if cls.name == struct_name {
 								result := t.compile_arg(*expr, t.current_func_ret_type)
 								t.write_indent()
-								t.write_line('return rt.new_object(\'${suffix.split('_').map(it.capitalize()).join('_')}\', []string{}, ${result.code})')
+								if result.code.starts_with('rt.new_object') {
+									t.write_line('return ${result.code}')
+								} else {
+									t.write_line('return rt.new_object(\'${suffix.split('_').map(it.capitalize()).join('_')}\', []string{}, ${result.code})')
+								}
 								return
 							}
 						}

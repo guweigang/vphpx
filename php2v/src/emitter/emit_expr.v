@@ -1326,8 +1326,12 @@ fn (mut t Transpiler) visit_expr_impl(node &ast.AstNode) string {
 			if expr_node.node_type == ast.node_expr_new {
 				class_name := t.resolve_class_name(expr_node.class_name)
 				expr_str := t.visit_expr(expr_node)
-				parents := t.get_parents_expr(class_name)
-				return 'rt.throw_exception(rt.new_object(\'${class_name}\', ${parents}, ${expr_str}))'
+				if expr_str.starts_with('rt.new_object') {
+					return 'rt.throw_exception(${expr_str})'
+				} else {
+					parents := t.get_parents_expr(class_name)
+					return 'rt.throw_exception(rt.new_object(\'${class_name}\', ${parents}, ${expr_str}))'
+				}
 			}
 			expr_str := t.visit_expr(expr_node)
 			return 'rt.throw_exception(${expr_str})'
@@ -1564,7 +1568,7 @@ fn (mut t Transpiler) visit_expr_impl(node &ast.AstNode) string {
 					expr_str += t.dup_suffix_for_var(expr_node.name)
 				}
 				// new ClassName() → create_xxx() 返回 &Class_Xxx，需要包装为 PhpVal
-				if expr_node.node_type == ast.node_expr_new {
+				if expr_node.node_type == ast.node_expr_new && !expr_str.starts_with('rt.new_object') {
 					new_class := t.resolve_class_name(expr_node.class_name)
 					mut resolved_new := new_class
 					if resolved_new == 'self' || resolved_new == 'static' {
@@ -1708,7 +1712,12 @@ fn (mut t Transpiler) visit_expr_impl(node &ast.AstNode) string {
 			} else {
 				old_expected := t.expected_type
 				t.expected_type = var_type
-				mut expr_str := t.visit_expr(expr_node)
+				mut expr_str := ''
+				if var_type.tag == .t_object && var_type.class_name.len > 0 && expr_node.node_type == ast.node_expr_new {
+					expr_str = t.visit_expr_native(expr_node)
+				} else {
+					expr_str = t.visit_expr(expr_node)
+				}
 				t.expected_type = old_expected
 				
 				expr_typ := t.get_expr_type(*expr_node)
@@ -3235,29 +3244,18 @@ fn (mut t Transpiler) visit_expr_impl(node &ast.AstNode) string {
 	}
 }
 
-// visit_expr_write_dim 专门用于写上下文下的嵌套数组获取，将只读的 array_get 递归转换为可写的 array_get_mut
+// visit_expr_write_dim 专门用于写上下文下的嵌套数组获取，将只读的 array_get 递归转换为可写的 array_get_mut 或 array_push_mut
 fn (mut t Transpiler) visit_expr_write_dim(node &ast.AstNode) string {
-	mut keys := []string{}
-	base_str := t.collect_write_dim_keys(node, mut keys)
-	if keys.len == 0 {
-		return base_str
-	}
-	if keys.len == 1 {
-		return '${base_str}.array_get_mut(${keys[0]})'
-	}
-	return '${base_str}.array_get_mut_nested([${keys.join(", ")}])'
-}
-
-fn (mut t Transpiler) collect_write_dim_keys(node &ast.AstNode, mut keys []string) string {
 	if node.node_type == ast.node_expr_array_dim_fetch {
 		var_node := node.var or { panic('ArrayDimFetch missing var') }
-		base_str := t.collect_write_dim_keys(*var_node, mut keys)
+		base_str := t.visit_expr_write_dim(*var_node)
 		if dim_node := node.dim {
 			dim_typ := t.get_expr_type(*dim_node)
 			dim_str := if dim_typ.is_scalar() { t.visit_expr(dim_node) } else { t.visit_expr(dim_node) }
-			keys << dim_str
+			return '${base_str}.array_get_mut(${dim_str})'
+		} else {
+			return '${base_str}.array_push_mut()'
 		}
-		return base_str
 	}
 	return t.visit_expr(node)
 }

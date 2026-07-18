@@ -112,6 +112,8 @@ pub mut:
 	mode                    string
 	is_entry_script         bool
 	is_sub_transpiler       bool
+	allowed_includes        []string
+	method_param_v_types    map[string][]string
 }
 
 pub struct GlobalConst {
@@ -157,6 +159,7 @@ pub fn Transpiler.new() Transpiler {
 		native_params: map[string]bool{}
 		reassigned_params: map[string]bool{}
 		global_constants: map[string]GlobalConst{}
+		method_param_v_types: map[string][]string{}
 		collect_referenced: map[string]bool{}
 		collect_assigned: map[string]bool{}
 		collect_globals: map[string]bool{}
@@ -174,6 +177,19 @@ pub fn Transpiler.new() Transpiler {
 		has_dynamic_new:         false
 		has_dynamic_method_call: false
 		has_dynamic_func_call:   false
+		allowed_includes: [
+			'wp-includes/plugin.php',
+			'wp-includes/class-wp-hook.php',
+			'wp-includes/load.php',
+			'wp-includes/default-filters.php',
+			'wp-includes/version.php',
+			'wp-includes/compat.php',
+			'wp-blog-header.php',
+			'wp-load.php',
+			'wp-config.php',
+			'wp-settings.php',
+			'tests/fixtures/'
+		]
 	}
 }
 
@@ -329,6 +345,9 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 					}
 				}
 				t.indent--
+			} else {
+				t.write_line('pub mut:')
+				t.write_line('\t_dummy bool')
 			}
 			t.write_line('}')
 			t.write_line('')
@@ -1267,6 +1286,21 @@ pub fn (t Transpiler) get_empty_literal(typ VarType) string {
 
 pub fn (mut t Transpiler) transpile_include_file(path string) string {
 	normalized := os.real_path(path)
+	
+	mut allowed := false
+	for pattern in t.allowed_includes {
+		if normalized.contains(pattern) {
+			allowed = true
+			break
+		}
+	}
+	if !allowed {
+		println('Skipping transpile of include: ' + normalized + ' (will execute via Zend)')
+		func_name := t.get_safe_func_name(normalized)
+		t.transpiled_includes[normalized] = func_name
+		return func_name
+	}
+
 	println('Transpiling include: ' + normalized)
 	if normalized in t.transpiled_includes {
 		return t.transpiled_includes[normalized]
@@ -1461,6 +1495,43 @@ fn has_dynamic_args_call(nodes []ast.AstNode) bool {
 		}
 	}
 	return false
+}
+
+// get_method_param_v_type 递归向上查找当初生成方法签名时，第 param_idx 个参数的实际 V 语言类型
+pub fn (t &Transpiler) get_method_param_v_type(class_name string, method_name string, param_idx int) string {
+	mut curr_class := class_name
+	for curr_class != '' {
+		key := '${curr_class}::${method_name}'
+		if types := t.method_param_v_types[key] {
+			if param_idx < types.len {
+				return types[param_idx]
+			}
+		}
+		// 查找父类
+		idx := t.class_name_map[curr_class.to_lower()] or { -1 }
+		if idx != -1 {
+			curr_class = t.classes[idx].extends
+		} else {
+			break
+		}
+	}
+	return 'rt.PhpVal'
+}
+
+// parse_v_type_str 将 V 语言的类型字符串解析回对应的 VarType
+pub fn parse_v_type_str(v_type_str string) VarType {
+	match v_type_str {
+		'string' { return VarType{ tag: .t_string } }
+		'i64' { return VarType{ tag: .t_int } }
+		'f64' { return VarType{ tag: .t_float } }
+		'bool' { return VarType{ tag: .t_bool } }
+		else {
+			if v_type_str.starts_with('Class_') {
+				return VarType{ tag: .t_object, class_name: v_type_str.all_after('Class_') }
+			}
+		}
+	}
+	return VarType{ tag: .t_unknown }
 }
 
 
