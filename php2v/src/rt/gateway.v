@@ -137,9 +137,9 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	}, voidptr(&ctx))
 
 	// 11. 重置 PHP 请求上下文，清理旧资源
-	unsafe {
-		C.php2v_refresh_request()
-	}
+	// unsafe {
+	// 	C.php2v_refresh_request()
+	// }
 	
 	// 12. 清理 TLS，返回输出缓冲
 	res_body := req_ctx.output_buf
