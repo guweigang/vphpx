@@ -60,17 +60,7 @@ static inline void php2v_refresh_request() {
 
 static inline void php2v_register_thread() {
 #ifdef ZTS
-	ts_resource(0);
 	ZEND_TSRMLS_CACHE_UPDATE();
-	static __thread int request_started = 0;
-	if (!request_started) {
-		if (EG(vm_stack) == NULL) {
-			zend_vm_stack_init();
-		}
-		php_request_startup();
-		request_started = 1;
-		ZEND_TSRMLS_CACHE_UPDATE();
-	}
 #endif
 }
 
@@ -83,12 +73,48 @@ static inline void php2v_shutdown_request() {
 
 static inline void php2v_register_sandbox_bridge();
 
+typedef struct {
+	char *buf;
+	size_t cap;
+	size_t len;
+} php2v_req_buf;
+
+#ifdef _MSC_VER
+static __declspec(thread) void* php2v_current_ctx = NULL;
+#else
+static __thread void* php2v_current_ctx = NULL;
+#endif
+
+static inline size_t php2v_ub_write(const char *str, size_t str_length) {
+#ifdef ZTS
+	ZEND_TSRMLS_CACHE_UPDATE();
+#endif
+	if (php2v_current_ctx && str && str_length > 0) {
+		php2v_req_buf *b = (php2v_req_buf *)php2v_current_ctx;
+		if (b->len + str_length >= b->cap) {
+			size_t new_cap = (b->cap == 0) ? 4096 : (b->cap * 2 + str_length);
+			char *new_buf = (char *)realloc(b->buf, new_cap);
+			if (new_buf) {
+				b->buf = new_buf;
+				b->cap = new_cap;
+			}
+		}
+		if (b->buf) {
+			memcpy(b->buf + b->len, str, str_length);
+			b->len += str_length;
+			b->buf[b->len] = '\0';
+		}
+	}
+	return str_length;
+}
+
 __attribute__((constructor)) static void php2v_auto_embed_init() {
 	setenv("USE_ZEND_ALLOC", "0", 1);
 	php_embed_module.php_ini_ignore = 1;
 	php_embed_module.php_ini_path_override = "/dev/null";
 	php_embed_module.deactivate = NULL;
 	php_embed_module.flush = NULL;
+	php_embed_module.ub_write = php2v_ub_write;
 #ifdef __APPLE__
 	int argc = *_NSGetArgc();
 	char **argv = *_NSGetArgv();

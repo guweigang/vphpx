@@ -286,11 +286,7 @@ static inline void php2v_set_registry(void* p) {
     g_php2v_registry = p;
 }
 
-#ifdef _MSC_VER
-static __declspec(thread) void* php2v_current_ctx = NULL;
-#else
-static __thread void* php2v_current_ctx = NULL;
-#endif
+
 
 static inline void php2v_set_current_ctx(void* ctx) {
     php2v_current_ctx = ctx;

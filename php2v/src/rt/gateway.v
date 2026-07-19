@@ -10,6 +10,13 @@ fn C.php2v_get_response_status() int
 fn C.php2v_get_response_headers(callback fn (header_line &char, user_data voidptr), user_data voidptr)
 fn C.php2v_inject_http_globals(get &C.zval, post &C.zval, cookie &C.zval, server &C.zval, files &C.zval)
 
+struct C.php2v_req_buf {
+mut:
+	buf &char
+	cap usize
+	len usize
+}
+
 // RequestContext 并发安全隔离容器
 pub struct RequestContext {
 pub mut:
@@ -39,7 +46,6 @@ pub fn start_gateway(port int, entry_fn fn () PhpVal) {
 		entry_fn: entry_fn
 	}
 	veb.run[ServerApp, ServerContext](mut app, port)
-	for {}
 }
 
 // index 处理每一个 HTTP 网关请求
@@ -114,8 +120,13 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 		output_buf: ''
 	}
 	
-	// 8. 绑定上下文到 TLS 并注入超全局变量到 Zend 引擎
-	C.php2v_set_current_ctx(req_ctx)
+	// 8. 绑定 C 侧输出缓冲区和上下文到 TLS，并注入超全局变量到 Zend 引擎
+	mut req_buf := C.php2v_req_buf{
+		buf: 0
+		cap: 0
+		len: 0
+	}
+	C.php2v_set_current_ctx(voidptr(&req_buf))
 	unsafe {
 		C.php2v_inject_http_globals(get_arr.raw, post_arr.raw, cookie_arr.raw, server.raw, files_arr.raw)
 	}
@@ -126,7 +137,7 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	register_global('_FILES', files_arr)
 	register_global('_REQUEST', request_arr)
 	
-	// 9. 在 zend_try 保护中执行转译后页面主入口并捕获 Zend 输出缓冲
+	// 9. 在 zend_try 保护中执行转译后页面主入口
 	if voidptr(app.entry_fn) != 0 {
 		_ = call_function('ob_start', []PhpVal{})
 		C.php2v_run_entry(voidptr(app.entry_fn))
@@ -134,6 +145,12 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 		if zend_out.is_string() {
 			req_ctx.output_buf += zend_out.str()
 		}
+	}
+
+	// 提取由 C 侧 SAPI ub_write 回调直接收集到的裸输出数据 (包括 wp_die, Fatal error 等)
+	if req_buf.len > 0 && req_buf.buf != 0 {
+		req_ctx.output_buf += unsafe { req_buf.buf.vstring_with_len(int(req_buf.len)) }
+		unsafe { C.free(req_buf.buf) }
 	}
 	
 	// 10. 读取并同步状态码和 HTTP Headers 到 veb
