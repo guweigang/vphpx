@@ -100,6 +100,14 @@ __attribute__((constructor)) static void php2v_auto_embed_init() {
 #ifdef ZTS
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
+	zend_string *k1 = zend_string_init("opcache.enable", sizeof("opcache.enable") - 1, 0);
+	zend_alter_ini_entry_chars(k1, "0", sizeof("0") - 1, PHP_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
+	zend_string_release(k1);
+
+	zend_string *k2 = zend_string_init("opcache.enable_cli", sizeof("opcache.enable_cli") - 1, 0);
+	zend_alter_ini_entry_chars(k2, "0", sizeof("0") - 1, PHP_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
+	zend_string_release(k2);
+
 	php2v_register_sandbox_bridge();
 }
 
