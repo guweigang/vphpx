@@ -221,11 +221,11 @@ static inline void php2v_register_global(const char *name, size_t name_len, zval
 static inline void php2v_inject_http_globals(zval *get, zval *post, zval *cookie, zval *server, zval *files) {
 	php2v_update_tsrm_cache();
 	
-	zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_GET]);
-	zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_POST]);
-	zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_COOKIE]);
-	zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_SERVER]);
-	zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_FILES]);
+	if (Z_REFCOUNTED(PG(http_globals)[TRACK_VARS_GET])) zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_GET]);
+	if (Z_REFCOUNTED(PG(http_globals)[TRACK_VARS_POST])) zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_POST]);
+	if (Z_REFCOUNTED(PG(http_globals)[TRACK_VARS_COOKIE])) zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_COOKIE]);
+	if (Z_REFCOUNTED(PG(http_globals)[TRACK_VARS_SERVER])) zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_SERVER]);
+	if (Z_REFCOUNTED(PG(http_globals)[TRACK_VARS_FILES])) zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_FILES]);
 	
 	ZVAL_COPY(&PG(http_globals)[TRACK_VARS_GET], get);
 	ZVAL_COPY(&PG(http_globals)[TRACK_VARS_POST], post);
