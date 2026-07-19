@@ -852,6 +852,10 @@ static inline void php2v_register_sandbox_bridge() {
 
 }
 static inline int php2v_execute_file(const char* filepath) {
+    php2v_update_tsrm_cache();
+#ifdef ZTS
+    if (tsrm_get_ls_cache() == NULL) return 0;
+#endif
     php2v_register_persistent_constant("ABSPATH", "/Users/guweigang/wwwroot/wordpress/");
     php2v_register_persistent_constant("WP_USE_THEMES", "1");
     php2v_register_persistent_constant("MYSQLI_REPORT_OFF", "0");
