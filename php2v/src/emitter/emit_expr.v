@@ -748,7 +748,8 @@ fn (mut t Transpiler) visit_expr_native_impl(node &ast.AstNode) string {
 		}
 		ast.node_scalar_magic_const_dir {
 			t.last_expr_type = VarType{ tag: .t_string }
-			return '@DIR'
+			dir := if t.current_file != '' { os.dir(os.real_path(t.current_file)) } else { os.getwd() }
+			return "'${dir}'"
 		}
 		ast.node_scalar_magic_const_file {
 			t.last_expr_type = VarType{ tag: .t_string }
@@ -1422,7 +1423,8 @@ fn (mut t Transpiler) visit_expr_impl(node &ast.AstNode) string {
 			}
 		}
 		ast.node_scalar_magic_const_dir {
-			return 'rt.new_string(@DIR)'
+			dir := if t.current_file != '' { os.dir(os.real_path(t.current_file)) } else { os.getwd() }
+			return "rt.new_string('${dir}')"
 		}
 		ast.node_scalar_magic_const_file {
 			return 'rt.new_string(@FILE)'
