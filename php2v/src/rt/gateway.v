@@ -129,10 +129,8 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	C.php2v_get_response_headers(fn (header_line &char, user_data voidptr) {
 		mut c := &ServerContext(user_data)
 		line := unsafe { header_line.vstring() }
-		parts := line.split_once(':') or { return }
-		name := parts[0].trim_space()
-		value := parts[1].trim_space()
-		c.res.header.set_custom(name, value) or {}
+		name, value := line.split_once(':') or { return }
+		c.res.header.set_custom(name.trim_space(), value.trim_space()) or {}
 	}, voidptr(&ctx))
 	
 	// 11. 清理 TLS，返回输出缓冲
