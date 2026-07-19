@@ -185,8 +185,6 @@ pub fn Transpiler.new() Transpiler {
 		has_dynamic_method_call: false
 		has_dynamic_func_call:   false
 		allowed_includes: [
-			'wp-includes/plugin.php',
-			'wp-includes/class-wp-hook.php',
 			'wp-includes/default-filters.php',
 			'wp-includes/version.php',
 			'wp-includes/compat.php',
