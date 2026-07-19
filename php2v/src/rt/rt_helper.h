@@ -211,6 +211,8 @@ static inline int php2v_get_superglobal(const char *name, size_t name_len, zval 
 static inline void php2v_register_global(const char *name, size_t name_len, zval *val) {
 	php2v_update_tsrm_cache();
 	zend_string *zstr = zend_string_init(name, name_len, 0);
+	zend_is_auto_global(zstr);
+	Z_TRY_ADDREF_P(val);
 	zend_hash_update(&EG(symbol_table), zstr, val);
 	zend_string_release(zstr);
 }
