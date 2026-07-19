@@ -850,12 +850,12 @@ static inline void php2v_exit() {
     zend_bailout();
 }
 
-static inline void php2v_run_entry(void (*entry_fn)()) {
+static inline void php2v_run_entry(void *entry_fn) {
 #ifdef ZTS
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
 	zend_try {
-		entry_fn();
+		((void (*)())entry_fn)();
 	} zend_catch {
 		// 被 bailout 捕获，安全退出当前 PHP 请求，不需要做任何事情
 	} zend_end_try();
