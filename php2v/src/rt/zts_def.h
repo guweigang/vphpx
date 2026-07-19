@@ -73,7 +73,7 @@ static inline void php2v_register_thread() {
 static inline void php2v_shutdown_request() {
 #ifdef ZTS
 	ZEND_TSRMLS_CACHE_UPDATE();
-	php_request_shutdown();
+	php_request_shutdown(NULL);
 #endif
 }
 
