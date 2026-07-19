@@ -117,6 +117,11 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	unsafe {
 		C.php2v_inject_http_globals(get_arr.raw, post_arr.raw, cookie_arr.raw, server.raw, files_arr.raw)
 	}
+	register_global('_SERVER', server)
+	register_global('_GET', get_arr)
+	register_global('_POST', post_arr)
+	register_global('_COOKIE', cookie_arr)
+	register_global('_FILES', files_arr)
 	register_global('_REQUEST', request_arr)
 	
 	// 9. 在 zend_try 保护中执行转译后页面主入口并捕获 Zend 输出缓冲

@@ -215,6 +215,7 @@ static inline void php2v_register_global(const char *name, size_t name_len, zval
 	Z_TRY_ADDREF_P(val);
 	zend_hash_update(&EG(symbol_table), zstr, val);
 	zend_string_release(zstr);
+	zend_rebuild_symbol_table();
 }
 
 static inline void php2v_inject_http_globals(zval *get, zval *post, zval *cookie, zval *server, zval *files) {
