@@ -92,7 +92,7 @@ fn main() {
 		func_name := 'run_${base_name}'
 		emitter.wrap_as_entry_script(all_funcs, final_v_body, func_name, 'main', transpiler.extra_imports)
 	} else if mode == 'gateway' {
-		emitter.wrap_as_gateway(all_funcs, final_v_body, transpiler.extra_imports)
+		emitter.wrap_as_gateway(all_funcs, final_v_body, os.dir(input_file), transpiler.extra_imports)
 	} else if mode == 'lib' {
 		base_name := input_file.all_before_last('.').all_after_last('/')
 		init_func_name := 'init_${base_name}'

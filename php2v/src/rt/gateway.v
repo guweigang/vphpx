@@ -4,6 +4,8 @@ import veb
 
 fn C.php2v_refresh_request()
 fn C.php2v_exit()
+fn C.php2v_get_response_status() int
+fn C.php2v_get_response_headers(callback fn (header_line &char, user_data voidptr), user_data voidptr)
 
 // RequestContext 并发安全隔离容器
 pub struct RequestContext {
@@ -116,10 +118,26 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 		C.php2v_refresh_request()
 	}
 	
-	// 10. 清理 TLS，返回输出缓冲
+	// 10. 读取并同步状态码和 HTTP Headers 到 veb
+	status_code := C.php2v_get_response_status()
+	if status_code > 0 {
+		ctx.res.status_code = status_code
+	} else {
+		ctx.res.status_code = 200
+	}
+	
+	C.php2v_get_response_headers(fn (header_line &char, user_data voidptr) {
+		mut c := &ServerContext(user_data)
+		line := unsafe { header_line.vstring() }
+		parts := line.split_once(':') or { return }
+		name := parts[0].trim_space()
+		value := parts[1].trim_space()
+		c.res.header.set_custom(name, value) or {}
+	}, voidptr(&ctx))
+	
+	// 11. 清理 TLS，返回输出缓冲
 	res_body := req_ctx.output_buf
 	C.php2v_set_current_ctx(0)
 	
-	ctx.res.set_status(.ok)
 	return ctx.html(res_body)
 }

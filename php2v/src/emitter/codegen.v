@@ -52,7 +52,7 @@ ${final_body}}
 }
 
 // wrap_as_gateway 将程序包装为带有 veb HTTP 网关服务的 main 程序
-pub fn wrap_as_gateway(funcs string, body string, extra_imports map[string]bool) string {
+pub fn wrap_as_gateway(funcs string, body string, input_dir string, extra_imports map[string]bool) string {
 	mut imports := 'import rt\nimport crypto.md5\nimport crypto.sha1\n'
 	for mod, _ in extra_imports {
 		imports += 'import ${mod}\n'
@@ -70,8 +70,8 @@ pub fn wrap_as_gateway(funcs string, body string, extra_imports map[string]bool)
 		}
 	}
 	
-	register_code := register_lines.join('\n')
-	entry_code := entry_lines.join('\n')
+	register_code := register_lines.join('\n').replace('@DIR', '"' + input_dir + '"')
+	entry_code := entry_lines.join('\n').replace('@DIR', '"' + input_dir + '"')
 	
 	return '${imports}
 ${funcs}

@@ -850,6 +850,25 @@ static inline void php2v_exit() {
     zend_bailout();
 }
 
+static inline int php2v_get_response_status() {
+#ifdef ZTS
+	ZEND_TSRMLS_CACHE_UPDATE();
+#endif
+	return SG(sapi_headers).http_response_code;
+}
+
+static inline void php2v_get_response_headers(void (*callback)(const char *header_line, void *user_data), void *user_data) {
+#ifdef ZTS
+	ZEND_TSRMLS_CACHE_UPDATE();
+#endif
+	zend_llist_position pos;
+	sapi_header_struct *h = (sapi_header_struct *)zend_llist_get_first_ex(&SG(sapi_headers).headers, &pos);
+	while (h) {
+		callback(h->header, user_data);
+		h = (sapi_header_struct *)zend_llist_get_next_ex(&SG(sapi_headers).headers, &pos);
+	}
+}
+
 static void* php2v_last_mysql_conn = NULL;
 static inline void php2v_set_last_mysql_conn(void* conn) {
     php2v_last_mysql_conn = conn;
