@@ -127,9 +127,9 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 		len: 0
 	}
 	C.php2v_set_current_ctx(voidptr(&req_buf))
-	unsafe {
-		C.php2v_inject_http_globals(get_arr.raw, post_arr.raw, cookie_arr.raw, server.raw, files_arr.raw)
-	}
+	// unsafe {
+	// 	C.php2v_inject_http_globals(get_arr.raw, post_arr.raw, cookie_arr.raw, server.raw, files_arr.raw)
+	// }
 	register_global('_SERVER', server)
 	register_global('_GET', get_arr)
 	register_global('_POST', post_arr)
