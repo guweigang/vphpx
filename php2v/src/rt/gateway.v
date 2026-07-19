@@ -137,9 +137,9 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	register_global('_FILES', files_arr)
 	register_global('_REQUEST', request_arr)
 	
-	// 9. 在 zend_try 保护中执行转译后页面主入口
+	// 9. 执行转译后页面主入口
 	if voidptr(app.entry_fn) != 0 {
-		C.php2v_run_entry(voidptr(app.entry_fn))
+		app.entry_fn()
 	}
 
 	// 提取由 C 侧 SAPI ub_write 回调直接收集到的裸输出数据 (包括 wp_die, Fatal error 等)
