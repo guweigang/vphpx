@@ -7,6 +7,7 @@ fn C.php2v_exit()
 fn C.php2v_run_entry(entry_fn voidptr)
 fn C.php2v_get_response_status() int
 fn C.php2v_get_response_headers(callback fn (header_line &char, user_data voidptr), user_data voidptr)
+fn C.php2v_inject_http_globals(get &C.zval, post &C.zval, cookie &C.zval, server &C.zval, files &C.zval)
 
 // RequestContext 并发安全隔离容器
 pub struct RequestContext {
@@ -113,11 +114,9 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	
 	// 8. 绑定上下文到 TLS 并注入超全局变量到 Zend 引擎
 	C.php2v_set_current_ctx(req_ctx)
-	register_global('_SERVER', server)
-	register_global('_GET', get_arr)
-	register_global('_POST', post_arr)
-	register_global('_COOKIE', cookie_arr)
-	register_global('_FILES', files_arr)
+	unsafe {
+		C.php2v_inject_http_globals(get_arr.raw, post_arr.raw, cookie_arr.raw, server.raw, files_arr.raw)
+	}
 	register_global('_REQUEST', request_arr)
 	
 	// 9. 在 zend_try 保护中执行转译后页面主入口并捕获 Zend 输出缓冲

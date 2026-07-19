@@ -217,6 +217,28 @@ static inline void php2v_register_global(const char *name, size_t name_len, zval
 	zend_string_release(zstr);
 }
 
+static inline void php2v_inject_http_globals(zval *get, zval *post, zval *cookie, zval *server, zval *files) {
+	php2v_update_tsrm_cache();
+	
+	zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_GET]);
+	zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_POST]);
+	zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_COOKIE]);
+	zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_SERVER]);
+	zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_FILES]);
+	
+	ZVAL_COPY(&PG(http_globals)[TRACK_VARS_GET], get);
+	ZVAL_COPY(&PG(http_globals)[TRACK_VARS_POST], post);
+	ZVAL_COPY(&PG(http_globals)[TRACK_VARS_COOKIE], cookie);
+	ZVAL_COPY(&PG(http_globals)[TRACK_VARS_SERVER], server);
+	ZVAL_COPY(&PG(http_globals)[TRACK_VARS_FILES], files);
+	
+	zend_is_auto_global_str(ZEND_STRL("_GET"));
+	zend_is_auto_global_str(ZEND_STRL("_POST"));
+	zend_is_auto_global_str(ZEND_STRL("_COOKIE"));
+	zend_is_auto_global_str(ZEND_STRL("_SERVER"));
+	zend_is_auto_global_str(ZEND_STRL("_FILES"));
+}
+
 static inline int php2v_instance_of(zval *obj, const char *class_name, size_t name_len) {
 	php2v_update_tsrm_cache();
 	if (!obj || Z_TYPE_P(obj) != IS_OBJECT) return 0;
