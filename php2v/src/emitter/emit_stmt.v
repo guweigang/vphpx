@@ -29,15 +29,6 @@ fn (mut t Transpiler) visit_stmt(node &ast.AstNode) {
 									t.declared_consts[gc.name] = true
 									t.const_out.writeln('const ${gc.name} = ${val_str}')
 								}
-								// 刷新副作用语句后返回
-								if t.post_stmts.len > 0 {
-									for s in t.post_stmts {
-										t.write_indent()
-										t.write_line(s)
-									}
-									t.post_stmts.clear()
-								}
-								return
 							}
 						}
 					}
