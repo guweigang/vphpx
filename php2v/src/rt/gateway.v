@@ -39,6 +39,7 @@ pub fn start_gateway(port int, entry_fn fn () PhpVal) {
 		entry_fn: entry_fn
 	}
 	veb.run[ServerApp, ServerContext](mut app, port)
+	for {}
 }
 
 // index 处理每一个 HTTP 网关请求
