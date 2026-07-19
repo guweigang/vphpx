@@ -63,6 +63,7 @@ pub mut:
 	current_finally_label string // 当前语句所属 of the try-catch block's finally label
 	undeclared_classes map[string]bool
 	current_namespace string
+	if_cond_counter int
 	use_aliases map[string]string
 	switch_count int
 	list_tmp_counter int
@@ -86,6 +87,7 @@ pub mut:
 	collect_assigned     map[string]bool
 	collect_globals      map[string]bool
 	collect_statics      map[string]bool
+	current_func_globals map[string]bool
 	global_constants       map[string]GlobalConst // 全局常量表
 	closure_body_builder   strings.Builder // 当前闭包体的临时输出缓冲区
 	is_in_closure_body     bool            // 是否正在生成闭包体代码
@@ -99,11 +101,13 @@ pub mut:
 	func_var_types         map[string]map[string]VarType // 函数名 → 局部变量名 → 推导类型
 	declared_classes       map[string]bool               // 已声明的类
 	declared_classes_in_file map[string]bool               // 在本文件中显式声明的类
+	declared_consts        map[string]bool               // 已定义的全局常量
+	declared_functions     map[string]bool               // 已声明的函数名（防止重定义）
 	expected_type          VarType                       // 上下文期望类型
 	var_aliases            map[string]string             // 变量重命名映射（处理局部变量遮蔽冲突）
 	foreach_depth          int                           // 循环嵌套深度（用于生成唯一的迭代器变量名）
 	native_vars            map[string]bool               // 本地声明的原生变量（用于精确判定是否需要装箱）
-	native_arr_vars        map[string]bool               // 已知持有原生数组/map的变量（用于array_dim_fetch确认）
+	native_arr_vars        map[string]VarType            // 已知持有原生数组/map的变量（用于array_dim_fetch确认）
 	custom_function_infos  map[string]MethodInfo         // 自定义全局函数签名信息（含可变参数状态）
 	has_dynamic_new         bool
 	has_dynamic_method_call bool
@@ -144,7 +148,9 @@ pub fn Transpiler.new() Transpiler {
 		foreach_depth:    0
 		var_aliases:      map[string]string{}
 		native_vars:      map[string]bool{}
-		native_arr_vars:  map[string]bool{}
+		native_arr_vars:  map[string]VarType{}
+		current_func_globals: map[string]bool{}
+		declared_functions: map[string]bool{}
 		undeclared_classes: map[string]bool{}
 		current_namespace: ''
 		use_aliases: map[string]string{}
@@ -173,6 +179,7 @@ pub fn Transpiler.new() Transpiler {
 		func_var_types: map[string]map[string]VarType{}
 		declared_classes: map[string]bool{}
 		declared_classes_in_file: map[string]bool{}
+		declared_consts:  map[string]bool{}
 		expected_type: VarType{ tag: .t_unknown }
 		has_dynamic_new:         false
 		has_dynamic_method_call: false
@@ -235,7 +242,7 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 			v_type := t.inferred_types[v_var] or { t.inferred_types[v] or { VarType{ tag: .t_unknown } } }
 			if v_type.is_native_list || v_type.is_native_map {
 				t.write_line('mut ${v_var} := ' + t.get_empty_literal(v_type))
-				t.native_arr_vars[v] = true
+				t.native_arr_vars[v] = v_type
 			} else if (t.current_func_name != '' || !t.is_mixed_aot()) && v_type.is_scalar() {
 				t.native_vars[v_var] = true
 				match v_type.tag {
@@ -245,6 +252,7 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 					else { t.write_line("mut ${v_var} := ''") }
 				}
 			} else if (t.current_func_name != '' || !t.is_mixed_aot()) && v_type.is_object() {
+				t.native_vars[v_var] = true
 				cls := if v_type.class_name.len > 0 { v_type.class_name } else { 'WP_Error' }
 				t.write_line('mut ${v_var} := &Class_${cls}(unsafe { nil })')
 			} else {
@@ -262,7 +270,7 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 			v_type := t.inferred_types[v_var] or { t.inferred_types[v] or { VarType{ tag: .t_unknown } } }
 			if v_type.is_native_list || v_type.is_native_map {
 				t.write_line('mut ${v_var} := ' + t.get_empty_literal(v_type))
-				t.native_arr_vars[v] = true
+				t.native_arr_vars[v] = v_type
 			} else if (t.current_func_name != '' || !t.is_mixed_aot()) && v_type.is_scalar() {
 				t.native_vars[v_var] = true
 				match v_type.tag {
@@ -272,6 +280,7 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 					else { t.write_line("mut ${v_var} := ''") }
 				}
 			} else if (t.current_func_name != '' || !t.is_mixed_aot()) && v_type.is_object() {
+				t.native_vars[v_var] = true
 				cls := if v_type.class_name.len > 0 { v_type.class_name } else { 'WP_Error' }
 				t.write_line('mut ${v_var} := &Class_${cls}(unsafe { nil })')
 			} else {
@@ -351,7 +360,7 @@ pub fn (mut t Transpiler) transpile(stmts []ast.AstNode) string {
 					t.indent--
 				} else {
 					t.write_line('pub mut:')
-					t.write_line('\t_dummy bool')
+					t.write_line('\tdummy bool')
 				}
 				t.write_line('}')
 				t.write_line('')
@@ -1370,8 +1379,13 @@ pub fn (mut t Transpiler) transpile_include_file(path string) string {
 	sub_t.transpiled_includes = t.transpiled_includes.clone()
 	sub_t.declared_classes = t.declared_classes.clone()
 	sub_t.undeclared_classes = t.undeclared_classes.clone()
+	sub_t.declared_consts = t.declared_consts.clone()
 	sub_t.func_param_types = t.func_param_types.clone()
 	sub_t.func_return_types = t.func_return_types.clone()
+	sub_t.inferred_types = t.inferred_types.clone()
+	sub_t.native_vars = t.native_vars.clone()
+	sub_t.native_arr_vars = t.native_arr_vars.clone()
+	sub_t.declared_functions = t.declared_functions.clone()
 
 	v_body := sub_t.transpile(stmts)
 
@@ -1384,8 +1398,19 @@ pub fn (mut t Transpiler) transpile_include_file(path string) string {
 	t.transpiled_includes = sub_t.transpiled_includes.clone()
 	t.declared_classes = sub_t.declared_classes.clone()
 	t.undeclared_classes = sub_t.undeclared_classes.clone()
+	t.declared_consts = sub_t.declared_consts.clone()
+	t.declared_functions = sub_t.declared_functions.clone()
 	t.func_param_types = sub_t.func_param_types.clone()
 	t.func_return_types = sub_t.func_return_types.clone()
+	for k, v in sub_t.inferred_types {
+		t.inferred_types[k] = v
+	}
+	for k, v in sub_t.native_vars {
+		t.native_vars[k] = v
+	}
+	for k, v in sub_t.native_arr_vars {
+		t.native_arr_vars[k] = v
+	}
 
 	t.include_funcs_code.write_string(sub_t.include_funcs_code.str())
 	t.include_register_code.write_string(sub_t.include_register_code.str())

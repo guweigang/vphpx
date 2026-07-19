@@ -75,7 +75,7 @@ fn test_transpiler_end_to_end() {
 			'for var_i < 3 {',
 			'mut var_j := i64(0)',
 			'var_j = 0',
-			'if !(var_j < 5) { break',
+			'if (var_j < 5) == false { break',
 			'if var_j == 2 {',
 			'continue',
 			'if var_j == 4 {',
@@ -144,7 +144,7 @@ fn test_transpiler_end_to_end() {
 			"var_dog = create_dog('Rex', 'Labrador')",
 		]
 		'17_boolean_logical.php': [
-			'if !(log_true(',
+			'if (log_true(',
 			'log_false(\'left_false\') && log_true(\'right_true\')',
 			'log_true(\'left_true\') || log_true(\'right_true\')',
 		]
@@ -189,9 +189,9 @@ fn test_transpiler_end_to_end() {
 		'23_unset_empty.php': [
 			"var_a == ''",
 			"var_b == 0",
-			"!rt.is_true(var_c)",
+			"rt.is_true(var_c) == false",
 			"var_d == ''",
-			"!rt.is_true(var_not_exist)",
+			"rt.is_true(var_not_exist) == false",
 			"var_arr.delete('key')",
 		]
 		'24_switch_case.php': [
@@ -211,7 +211,7 @@ fn test_transpiler_end_to_end() {
 			'for {',
 			"rt.print_str(var_i.str() + '\\n')",
 			'var_i += 1',
-			'if !(var_i < 3) {',
+			'if (var_i < 3) == false {',
 			'break',
 		]
 		'27_increment_decrement.php': [
@@ -311,7 +311,7 @@ fn test_transpiler_end_to_end() {
 			// && 条件正确生成
 			'&& rt.is_true(rt.call_function(\'file_exists\'',
 			// || 条件正确生成（由于 `!(rt.is_true(...))` 化简）
-			'|| !(rt.is_true(rt.call_function(\'file_exists\'',
+			'|| (rt.is_true(rt.call_function(\'file_exists\'',
 			// elseif 正确生成
 			'} else if rt.is_true',
 			'fn complex_condition(var_a rt.PhpVal, var_b rt.PhpVal, var_c rt.PhpVal) string {',
@@ -458,7 +458,7 @@ fn test_transpiler_end_to_end() {
 		if !os.exists(os.join_path(pwd, 'php2v/src')) {
 			v_path = '${os.join_path(pwd, "src")}:@vlib'
 		}
-		v_comp_cmd := 'v -path "${v_path}" -shared -cc clang -cflags "-DZTS -undefined dynamic_lookup -I${rt_inc} ${php_inc}" -o "${temp_so_file}" "${clean_v_file}"'
+		v_comp_cmd := 'v -nocache -path "${v_path}" -shared -cc clang -cflags "-DZTS -undefined dynamic_lookup -I${rt_inc} ${php_inc}" -o "${temp_so_file}" "${clean_v_file}"'
 		comp_res := os.execute(v_comp_cmd)
 		
 		os.rm(clean_v_file) or {}

@@ -73,7 +73,7 @@ pub fn (mut t Transpiler) try_builtin_mapping_native(name string, args []string,
 			return ''
 		}
 		'is_null' {
-			return '${a0}.is_null()'
+			return '${a0}.raw == voidptr(0) || (${a0}.raw.u1.type_info & 0xff) == 1'
 		}
 		'is_array' {
 			return '${a0}.is_array()'
@@ -97,7 +97,7 @@ pub fn (mut t Transpiler) try_builtin_mapping_native(name string, args []string,
 			return '${a0}.is_long() || ${a0}.is_double()'
 		}
 		'isset' {
-			return '!${a0}.is_null()'
+			return '${a0}.raw != voidptr(0) && (${a0}.raw.u1.type_info & 0xff) != 1'
 		}
 		'intval' {
 			return '${a0}.to_i64()'

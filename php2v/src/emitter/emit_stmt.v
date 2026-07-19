@@ -25,7 +25,10 @@ fn (mut t Transpiler) visit_stmt(node &ast.AstNode) {
 							if gc := t.global_constants[name_node.value] {
 								val_node := expr.args[1].expr or { panic('define missing val') }
 								val_str := t.visit_expr_native(val_node)
-								t.const_out.writeln('const ${gc.name} = ${val_str}')
+								if !t.declared_consts[gc.name] {
+									t.declared_consts[gc.name] = true
+									t.const_out.writeln('const ${gc.name} = ${val_str}')
+								}
 								// 刷新副作用语句后返回
 								if t.post_stmts.len > 0 {
 									for s in t.post_stmts {
@@ -257,7 +260,8 @@ fn (mut t Transpiler) visit_stmt(node &ast.AstNode) {
 					t.scope.declare(var_name)
 					if def := v.default_val {
 						def_type := t.get_expr_type(*def)
-						if def_type.is_scalar() {
+						if !t.is_mixed_aot() && def_type.is_scalar() {
+							t.native_vars[v_var] = true
 							def_str := t.visit_expr_native(def)
 							t.write_indent()
 							t.write_line('mut ${v_var} := ${def_str}')
@@ -377,8 +381,12 @@ fn (mut t Transpiler) visit_echo(node &ast.AstNode) {
 
 fn (mut t Transpiler) visit_const(node &ast.AstNode) {
 	for c in node.consts {
+		c_name := 'global_const_${c.name.to_lower()}'
 		val_str := t.visit_expr_native(c.value)
-		t.const_out.writeln('const global_const_${c.name.to_lower()} = ${val_str}')
+		if !t.declared_consts[c_name] {
+			t.declared_consts[c_name] = true
+			t.const_out.writeln('const ${c_name} = ${val_str}')
+		}
 	}
 }
 
@@ -510,8 +518,29 @@ fn (mut t Transpiler) visit_if(node &ast.AstNode) {
 	one_line_cond = one_line_cond.replace('\t', ' ')
 	one_line_cond = one_line_cond.replace('\r', ' ')
 
+	// 1. 在最外层求值当前 if 的条件
+	t.if_cond_counter++
+	cond_var := 'if_cond_${t.if_cond_counter}'
 	t.write_indent()
-	t.write_string('if ${one_line_cond} {\n')
+	t.write_line('${cond_var} := ${one_line_cond}')
+
+	// 2. 在最外层求值所有 elseif 的条件并保存变量名
+	mut elseif_vars := []string{}
+	for elseif_node in node.elseifs {
+		elseif_cond := elseif_node.cond or { panic('Elseif statement missing cond') }
+		elseif_cond_str := t.get_native_bool_condition(*elseif_cond)
+		elseif_one_line := elseif_cond_str.replace('\n', ' ').replace('\t', ' ').replace('\r', ' ')
+
+		t.if_cond_counter++
+		var_name := 'if_cond_${t.if_cond_counter}'
+		elseif_vars << var_name
+		t.write_indent()
+		t.write_line('${var_name} := ${elseif_one_line}')
+	}
+
+	// 3. 开始输出 if 结构
+	t.write_indent()
+	t.write_string('if ${cond_var} {\n')
 	
 	t.indent++
 	for stmt in node.stmts {
@@ -520,13 +549,9 @@ fn (mut t Transpiler) visit_if(node &ast.AstNode) {
 	t.indent--
 	
 	// 处理 elseifs
-	for elseif_node in node.elseifs {
-		elseif_cond := elseif_node.cond or { panic('Elseif statement missing cond') }
-		elseif_cond_str := t.get_native_bool_condition(*elseif_cond)
-		elseif_one_line := elseif_cond_str.replace('\n', ' ').replace('\t', ' ').replace('\r', ' ')
-
+	for idx, elseif_node in node.elseifs {
 		t.write_indent()
-		t.write_line('} else if ${elseif_one_line} {')
+		t.write_line('} else if ${elseif_vars[idx]} {')
 		
 		t.indent++
 		for stmt in elseif_node.stmts {
@@ -553,6 +578,12 @@ fn (mut t Transpiler) visit_if(node &ast.AstNode) {
 }
 
 fn (mut t Transpiler) visit_function(node &ast.AstNode) {
+	func_vname := func_v_name(node.name)
+	if t.declared_functions[func_vname] {
+		return
+	}
+	t.declared_functions[func_vname] = true
+
 	t.is_in_func = true
 	old_indent := t.indent
 	t.indent = 0
@@ -593,6 +624,8 @@ fn (mut t Transpiler) visit_function(node &ast.AstNode) {
 
 	// 提前收集变量信息，用于判断参数是否需要 _arg 后缀
 	ref_vars, ass_vars := t.collect_vars_in_scope(&node.stmts)
+	old_func_globals := t.current_func_globals.clone()
+	t.current_func_globals = t.collect_globals.clone()
 
 	// 检测大小写敏感变量名引起的 V 标识符冲突并进行别名处理
 	mut all_names := []string{}
@@ -727,7 +760,7 @@ fn (mut t Transpiler) visit_function(node &ast.AstNode) {
 				t.write_line('mut ${v_var} := ${v}')
 			} else if v_type.is_native_list || v_type.is_native_map {
 				t.write_line('mut ${v_var} := ' + t.get_empty_literal(v_type))
-				t.native_arr_vars[v] = true
+				t.native_arr_vars[v] = v_type
 			} else if v_type.is_scalar() {
 				t.native_vars[v_var] = true
 				match v_type.tag {
@@ -759,7 +792,7 @@ fn (mut t Transpiler) visit_function(node &ast.AstNode) {
 				t.write_line('mut ${v_var} := ${v}')
 			} else if v_type.is_native_list || v_type.is_native_map {
 				t.write_line('mut ${v_var} := ' + t.get_empty_literal(v_type))
-				t.native_arr_vars[v] = true
+				t.native_arr_vars[v] = v_type
 			} else if v_type.is_scalar() {
 				t.native_vars[v_var] = true
 				match v_type.tag {
@@ -806,6 +839,7 @@ fn (mut t Transpiler) visit_function(node &ast.AstNode) {
 	t.native_arr_vars = old_native_arr_vars.clone()
 	t.reassigned_params = old_reassigned_params.clone()
 	t.var_aliases = old_var_aliases.clone()
+	t.current_func_globals = old_func_globals.clone()
 }
 
 fn (mut t Transpiler) visit_return(node &ast.AstNode) {
@@ -897,7 +931,7 @@ fn (mut t Transpiler) visit_return(node &ast.AstNode) {
 				}
 			}
 		}
-		real_ret := if t.current_func_ret_type.is_scalar() { t.current_func_ret_type } else { VarType{ tag: .t_unknown } }
+		real_ret := if !t.is_in_closure_body && t.current_func_ret_type.is_scalar() { t.current_func_ret_type } else { VarType{ tag: .t_unknown } }
 		result := t.compile_arg(*expr, real_ret)
 		t.write_indent()
 		t.write_line('return ${result.code}')
@@ -979,7 +1013,7 @@ fn (mut t Transpiler) visit_foreach(node &ast.AstNode) {
 		if is_valid_bool {
 			t.write_line('if !(${expr_str}.valid()) { break }')
 		} else {
-			t.write_line('if !rt.is_true(${expr_str}.valid()) { break }')
+			t.write_line('if rt.is_true(${expr_str}.valid()) == false { break }')
 		}
 		old_scope := t.scope.clone()
 		old_inferred := t.inferred_types.clone()
@@ -1010,7 +1044,12 @@ fn (mut t Transpiler) visit_foreach(node &ast.AstNode) {
 		return
 	}
 
-	if arr_type.is_native_list || arr_type.is_native_map {
+	mut is_physically_native := true
+	if expr_node.node_type == ast.node_expr_variable {
+		v_var := t.get_v_var_name(expr_node.name)
+		is_physically_native = t.native_vars[v_var] || t.native_vars[expr_node.name] || t.native_params[expr_node.name] || (expr_node.name in t.native_arr_vars)
+	}
+	if is_physically_native && (arr_type.is_native_list || arr_type.is_native_map) {
 		arr_str := t.visit_expr(expr_node)
 		old_scope := t.scope.clone()
 		t.scope.declare(val_var_name)
@@ -1155,8 +1194,12 @@ fn (mut t Transpiler) visit_do(node &ast.AstNode) {
 		t.visit_stmt(stmt)
 	}
 
+	t.if_cond_counter++
+	cond_var := 'if_cond_${t.if_cond_counter}'
 	t.write_indent()
-	t.write_line('if !(${cond_str}) {')
+	t.write_line('${cond_var} := ${cond_str}')
+	t.write_indent()
+	t.write_line('if ${cond_var} == false {')
 	t.indent++
 	t.write_indent()
 	t.write_line('break')
@@ -1269,8 +1312,12 @@ fn (mut t Transpiler) visit_for(node &ast.AstNode) {
 	if node.conds.len > 0 {
 		last_cond := node.conds[node.conds.len - 1]
 		cond_str := t.get_native_bool_condition(last_cond)
+		t.if_cond_counter++
+		cond_var := 'if_cond_${t.if_cond_counter}'
 		t.write_indent()
-		t.write_line('if !(${cond_str}) { break }')
+		t.write_line('${cond_var} := ${cond_str}')
+		t.write_indent()
+		t.write_line('if ${cond_var} == false { break }')
 	}
 
 	// 4. 循环体语句

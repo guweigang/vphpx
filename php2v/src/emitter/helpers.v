@@ -56,8 +56,19 @@ pub fn escape_double_quoted(s string) string {
 // box_expr 将原生 V 表达式包装为 rt.PhpVal
 pub fn (t Transpiler) box_expr(code string, typ VarType) string {
 	mut real_typ := typ
-	if code.starts_with('var_') {
-		php_name := code.all_after('var_')
+	mut is_pure_var := code.starts_with('var_')
+	if is_pure_var {
+		clean_code := code.replace('.clone()', '')
+		if clean_code.contains('.') || clean_code.contains('(') || clean_code.contains('[') {
+			is_pure_var = false
+		}
+	}
+	if is_pure_var {
+		mut v_var := code
+		if dot_idx := v_var.index('.') {
+			v_var = v_var[0..dot_idx]
+		}
+		php_name := v_var.all_after('var_')
 		mut found := false
 		if t.current_func_name != '' {
 			lookup_key := '${t.current_func_name}::${php_name}'
@@ -68,6 +79,25 @@ pub fn (t Transpiler) box_expr(code string, typ VarType) string {
 		}
 		if !found && php_name in t.inferred_types {
 			real_typ = t.inferred_types[php_name] or { typ }
+		}
+		mut has_native_arr := false
+		if !t.is_mixed_aot() || t.current_func_name != '' {
+			has_native_arr = php_name in t.native_arr_vars || v_var in t.native_arr_vars
+			if t.current_func_name != '' && php_name in t.current_func_globals {
+				has_native_arr = false
+			}
+		}
+		if has_native_arr {
+			real_typ = if php_name in t.native_arr_vars { t.native_arr_vars[php_name] } else { t.native_arr_vars[v_var] }
+		} else {
+			real_typ.is_native_list = false
+			real_typ.is_native_map = false
+		}
+		
+		if !t.native_vars[v_var] && !t.native_vars['var_' + php_name] && !t.native_params[php_name] {
+			if !real_typ.is_native_map && !real_typ.is_native_list && real_typ.class_name.len == 0 && real_typ.tag != .t_object {
+				return code
+			}
 		}
 	}
 	if real_typ.is_native_list {
@@ -97,6 +127,9 @@ pub fn (t Transpiler) box_expr(code string, typ VarType) string {
 			return code
 		}
 		cls := if real_typ.class_name.len > 0 { real_typ.class_name } else { 'WP_Error' }
+		if !t.declared_classes[cls] && cls != t.current_class {
+			return code
+		}
 		return "rt.new_object('${cls}', ${t.get_parents_expr(cls)}, ${code})"
 	}
 	match real_typ.tag {
@@ -294,7 +327,14 @@ pub fn (mut t Transpiler) compile_arg_simple(arg_node &ast.AstNode) string {
 		v_var := t.get_v_var_name(arg_node.name)
 		lookup_key := if t.current_func_name != '' { '${t.current_func_name}::${arg_node.name}' } else { arg_node.name }
 		typ := t.inferred_types[arg_node.name] or { t.inferred_types[v_var] or { t.inferred_types[lookup_key] or { VarType{ tag: .t_unknown } } } }
-		if typ.is_native_list {
+		mut is_physically_native := t.native_vars[v_var] || t.native_vars[arg_node.name] || t.native_params[arg_node.name]
+		if !t.is_mixed_aot() || t.current_func_name != '' {
+			is_physically_native = is_physically_native || (arg_node.name in t.native_arr_vars)
+		}
+		if t.current_func_name != '' && arg_node.name in t.current_func_globals {
+			is_physically_native = false
+		}
+		if is_physically_native && typ.is_native_list {
 			t.expected_type = old_expect
 			match typ.element_type_tag {
 				.t_string { return 'rt.create_array_from_list_string(${code})' }
@@ -304,16 +344,22 @@ pub fn (mut t Transpiler) compile_arg_simple(arg_node &ast.AstNode) string {
 				else { return 'rt.create_array_from_list(${code})' }
 			}
 		}
-		if typ.is_native_map {
+		if is_physically_native && typ.is_native_map {
 			t.expected_type = old_expect
-			return 'rt.create_array_from_native_map(${code})'
+			match typ.element_type_tag {
+				.t_string { return 'rt.create_array_from_native_map_string(${code})' }
+				.t_int { return 'rt.create_array_from_native_map_int(${code})' }
+				.t_float { return 'rt.create_array_from_native_map_float(${code})' }
+				.t_bool { return 'rt.create_array_from_native_map_bool(${code})' }
+				else { return 'rt.create_array_from_native_map(${code})' }
+			}
 		}
 	}
 	// 如果表达式类型是原生标量（int/float/bool）或对象/类，且生成代码不是 PhpVal，需要自动装箱
 	// 注意：只在代码不以 'rt.' 开头时装箱，避免对已是 PhpVal 的表达式重复装箱
 	arg_type := t.get_expr_type(arg_node)
 	mut res := code
-	if (arg_type.is_scalar() || arg_type.class_name.len > 0 || arg_type.tag == .t_object) && !code.starts_with('rt.') {
+	if (arg_type.is_scalar() || arg_type.class_name.len > 0 || arg_type.tag == .t_object || arg_type.is_native_list || arg_type.is_native_map) && !code.starts_with('rt.') {
 		res = t.box_expr(code, arg_type)
 	} else {
 		res = t.dup_if_needed(code, arg_node)

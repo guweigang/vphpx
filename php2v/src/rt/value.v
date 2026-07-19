@@ -1071,3 +1071,38 @@ pub fn func_get_arg_helper_with_base(base []PhpVal, extra []PhpVal, idx PhpVal) 
 	}
 	return new_null()
 }
+
+pub fn is_null(v PhpVal) bool {
+	return v.is_null()
+}
+
+pub fn ternary(cond bool, if_val PhpVal, else_val PhpVal) PhpVal {
+	if cond {
+		return if_val
+	} else {
+		return else_val
+	}
+}
+
+pub fn coalesce(left PhpVal, right PhpVal) PhpVal {
+	if left.raw != 0 && (left.raw.u1.type_info & 0xff) != 1 {
+		return left
+	}
+	return right
+}
+
+pub fn ternary_string(cond bool, if_val string, else_val string) string {
+	if cond {
+		return if_val
+	} else {
+		return else_val
+	}
+}
+
+pub fn ternary_int(cond bool, if_val i64, else_val i64) i64 {
+	if cond {
+		return if_val
+	} else {
+		return else_val
+	}
+}
