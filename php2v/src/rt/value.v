@@ -99,7 +99,7 @@ pub fn new_null() PhpVal {
 pub fn new_string(s string) PhpVal {
 	z := new_zval()
 	unsafe {
-		str_ptr := C.zend_string_init(s.str, usize(s.len), false)
+		str_ptr := C.zend_string_init(s.str, usize(s.len), true)
 		mut p := &voidptr(&z.value)
 		*p = str_ptr
 		z.u1.type_info = 6 // IS_STRING
