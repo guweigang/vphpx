@@ -4,6 +4,7 @@ import veb
 
 fn C.php2v_refresh_request()
 fn C.php2v_exit()
+fn C.php2v_run_entry(entry_fn fn ())
 fn C.php2v_get_response_status() int
 fn C.php2v_get_response_headers(callback fn (header_line &char, user_data voidptr), user_data voidptr)
 
@@ -110,9 +111,9 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	// 8. 绑定上下文到 TLS
 	C.php2v_set_current_ctx(req_ctx)
 	
-	// 9. 执行转译后页面主入口
+	// 9. 在 zend_try 保护中执行转译后页面主入口
 	if voidptr(app.entry_fn) != 0 {
-		_ = app.entry_fn()
+		C.php2v_run_entry(app.entry_fn)
 	}
 	unsafe {
 		C.php2v_refresh_request()
