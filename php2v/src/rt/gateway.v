@@ -139,12 +139,7 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	
 	// 9. 在 zend_try 保护中执行转译后页面主入口
 	if voidptr(app.entry_fn) != 0 {
-		_ = call_function('ob_start', []PhpVal{})
 		C.php2v_run_entry(voidptr(app.entry_fn))
-		zend_out := call_function('ob_get_clean', []PhpVal{})
-		if zend_out.is_string() {
-			req_ctx.output_buf += zend_out.str()
-		}
 	}
 
 	// 提取由 C 侧 SAPI ub_write 回调直接收集到的裸输出数据 (包括 wp_die, Fatal error 等)

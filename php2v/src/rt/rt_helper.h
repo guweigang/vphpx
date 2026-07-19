@@ -26,7 +26,10 @@ static inline int php2v_hash_get_entry(void *ht, uint32_t index, zval **val, zen
 
 static inline int php2v_call_zend_function(const char *name, size_t name_len, zval *retval, uint32_t param_count, zval **params) {
 	php2v_update_tsrm_cache();
-	zend_string *zstr_name = zend_string_init(name, name_len, 0);
+#ifdef ZTS
+	if (tsrm_get_ls_cache() == NULL || EG(function_table) == NULL) return -1;
+#endif
+	zend_string *zstr_name = zend_string_init(name, name_len, 1);
 	zval func_zval;
 	ZVAL_STR(&func_zval, zstr_name);
 	
@@ -47,6 +50,9 @@ static inline int php2v_call_zend_function(const char *name, size_t name_len, zv
 // php2v_call_zend_callable 动态调用任意 zval 可调用对象
 static inline int php2v_call_zend_callable(zval *callable, zval *retval, uint32_t param_count, zval **params) {
 	php2v_update_tsrm_cache();
+#ifdef ZTS
+	if (tsrm_get_ls_cache() == NULL || EG(function_table) == NULL) return -1;
+#endif
 	zval *z_args = NULL;
 	if (param_count > 0) {
 		z_args = (zval *)alloca(param_count * sizeof(zval));
