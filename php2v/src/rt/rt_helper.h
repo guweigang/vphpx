@@ -879,18 +879,11 @@ static inline void php2v_run_entry(void *entry_fn) {
 #ifdef ZTS
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
-	printf("[PHP2V_DEBUG] Before entry_fn\n");
-	fflush(stdout);
 	zend_try {
 		((void (*)())entry_fn)();
-		printf("[PHP2V_DEBUG] Normal end of entry_fn\n");
-		fflush(stdout);
 	} zend_catch {
-		printf("[PHP2V_DEBUG] Caught zend_bailout!\n");
-		fflush(stdout);
+		// 被 bailout 捕获，安全退出当前 PHP 请求
 	} zend_end_try();
-	printf("[PHP2V_DEBUG] After zend_try block\n");
-	fflush(stdout);
 }
 
 static inline int php2v_get_response_status() {
