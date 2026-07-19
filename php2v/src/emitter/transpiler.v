@@ -187,7 +187,6 @@ pub fn Transpiler.new() Transpiler {
 		allowed_includes: [
 			'wp-includes/plugin.php',
 			'wp-includes/class-wp-hook.php',
-			'wp-includes/load.php',
 			'wp-includes/default-filters.php',
 			'wp-includes/version.php',
 			'wp-includes/compat.php',
