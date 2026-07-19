@@ -126,17 +126,15 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	register_global('_REQUEST', request_arr)
 	
 	// 9. 在 zend_try 保护中执行转译后页面主入口并捕获 Zend 输出缓冲
+	println('[GATEWAY_DEBUG] Step 9: calling run_entry...')
 	if voidptr(app.entry_fn) != 0 {
-		// _ = call_function('ob_start', []PhpVal{})
 		C.php2v_run_entry(voidptr(app.entry_fn))
-		// zend_out := call_function('ob_get_clean', []PhpVal{})
-		// if zend_out.is_string() {
-		// 	req_ctx.output_buf += zend_out.str()
-		// }
 	}
+	println('[GATEWAY_DEBUG] Step 9: finished run_entry')
 	
 	// 10. 读取并同步状态码和 HTTP Headers 到 veb
 	status_code := C.php2v_get_response_status()
+	println('[GATEWAY_DEBUG] Step 10: status_code=${status_code}')
 	if status_code > 0 {
 		ctx.res.status_code = status_code
 	} else {
@@ -151,13 +149,16 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	}, voidptr(&ctx))
 
 	// 11. 正式结束当前 PHP 请求上下文，释放内存与旧资源
+	println('[GATEWAY_DEBUG] Step 11: shutting down request...')
 	unsafe {
 		C.php2v_shutdown_request()
 	}
+	println('[GATEWAY_DEBUG] Step 11: finished shutdown')
 	
 	// 12. 清理 TLS，返回输出缓冲
 	res_body := req_ctx.output_buf
 	C.php2v_set_current_ctx(0)
 	
+	println('[GATEWAY_DEBUG] Step 12: returning html body len=${res_body.len}')
 	return ctx.html(res_body)
 }
