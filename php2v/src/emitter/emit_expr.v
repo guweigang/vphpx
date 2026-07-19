@@ -1020,7 +1020,7 @@ fn (mut t Transpiler) emit_native_condition(node &ast.AstNode) string {
 					mut is_native := false
 					if v.node_type == ast.node_expr_variable {
 						v_type := t.get_expr_type(v)
-						is_native = v_type.is_scalar() || v_type.is_native_list || v_type.is_native_map
+						is_native = v_type.is_native_list || v_type.is_native_map
 					}
 					if is_native {
 						checks << 'true'

@@ -72,9 +72,10 @@ pub fn wrap_as_gateway(funcs string, body string, input_dir string, extra_import
 	
 	register_code := register_lines.join('\n').replace('@DIR', '"' + input_dir + '"')
 	entry_code := entry_lines.join('\n').replace('@DIR', '"' + input_dir + '"')
+	fixed_funcs := funcs.replace('@DIR', '"' + input_dir + '"')
 	
 	return '${imports}
-${funcs}
+${fixed_funcs}
 
 pub fn run_gateway_entry() rt.PhpVal {
 ${entry_code}
