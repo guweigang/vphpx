@@ -3,6 +3,7 @@ module rt
 import veb
 
 fn C.php2v_refresh_request()
+fn C.php2v_shutdown_request()
 fn C.php2v_exit()
 fn C.php2v_run_entry(entry_fn voidptr)
 fn C.php2v_get_response_status() int
@@ -149,10 +150,10 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 		c.res.header.set_custom(name.trim_space(), value.trim_space()) or {}
 	}, voidptr(&ctx))
 
-	// 11. 重置 PHP 请求上下文，清理旧资源
-	// unsafe {
-	// 	C.php2v_refresh_request()
-	// }
+	// 11. 正式结束当前 PHP 请求上下文，释放内存与旧资源
+	unsafe {
+		C.php2v_shutdown_request()
+	}
 	
 	// 12. 清理 TLS，返回输出缓冲
 	res_body := req_ctx.output_buf

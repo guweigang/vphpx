@@ -62,15 +62,18 @@ static inline void php2v_register_thread() {
 #ifdef ZTS
 	ts_resource(0);
 	ZEND_TSRMLS_CACHE_UPDATE();
-	static __thread int request_started = 0;
-	if (!request_started) {
-		if (EG(vm_stack) == NULL) {
-			zend_vm_stack_init();
-		}
-		php_request_startup();
-		request_started = 1;
-		ZEND_TSRMLS_CACHE_UPDATE();
+	if (EG(vm_stack) == NULL) {
+		zend_vm_stack_init();
 	}
+	php_request_startup();
+	ZEND_TSRMLS_CACHE_UPDATE();
+#endif
+}
+
+static inline void php2v_shutdown_request() {
+#ifdef ZTS
+	ZEND_TSRMLS_CACHE_UPDATE();
+	php_request_shutdown();
 #endif
 }
 
