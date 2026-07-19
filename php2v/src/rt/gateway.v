@@ -122,12 +122,12 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	
 	// 9. 在 zend_try 保护中执行转译后页面主入口并捕获 Zend 输出缓冲
 	if voidptr(app.entry_fn) != 0 {
-		_ = call_function('ob_start', []PhpVal{})
+		// _ = call_function('ob_start', []PhpVal{})
 		C.php2v_run_entry(voidptr(app.entry_fn))
-		zend_out := call_function('ob_get_clean', []PhpVal{})
-		if zend_out.is_string() {
-			req_ctx.output_buf += zend_out.str()
-		}
+		// zend_out := call_function('ob_get_clean', []PhpVal{})
+		// if zend_out.is_string() {
+		// 	req_ctx.output_buf += zend_out.str()
+		// }
 	}
 	
 	// 10. 读取并同步状态码和 HTTP Headers 到 veb
