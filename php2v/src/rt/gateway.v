@@ -148,12 +148,10 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 		c.res.header.set_custom(name.trim_space(), value.trim_space()) or {}
 	}, voidptr(&ctx))
 
-	// 11. 正式结束当前 PHP 请求上下文，释放内存与旧资源
-	println('[GATEWAY_DEBUG] Step 11: shutting down request...')
-	unsafe {
-		C.php2v_shutdown_request()
-	}
-	println('[GATEWAY_DEBUG] Step 11: finished shutdown')
+	// 11. 清理请求上下文
+	// unsafe {
+	// 	C.php2v_shutdown_request()
+	// }
 	
 	// 12. 清理 TLS，返回输出缓冲
 	res_body := req_ctx.output_buf
