@@ -56,6 +56,9 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	server.array_set(new_string('REQUEST_URI'), new_string(request_uri))
 	server.array_set(new_string('QUERY_STRING'), new_string(query_string))
 	server.array_set(new_string('REMOTE_ADDR'), new_string(ctx.ip()))
+	server.array_set(new_string('PHP_SELF'), new_string('/index.php'))
+	server.array_set(new_string('SCRIPT_NAME'), new_string('/index.php'))
+	server.array_set(new_string('SCRIPT_FILENAME'), new_string('/Users/guweigang/wwwroot/wordpress/index.php'))
 	
 	// 注入常用 HTTP 头部到 $_SERVER
 	if host := ctx.req.header.get(.host) {
@@ -108,8 +111,14 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 		output_buf: ''
 	}
 	
-	// 8. 绑定上下文到 TLS
+	// 8. 绑定上下文到 TLS 并注入超全局变量到 Zend 引擎
 	C.php2v_set_current_ctx(req_ctx)
+	register_global('_SERVER', server)
+	register_global('_GET', get_arr)
+	register_global('_POST', post_arr)
+	register_global('_COOKIE', cookie_arr)
+	register_global('_FILES', files_arr)
+	register_global('_REQUEST', request_arr)
 	
 	// 9. 在 zend_try 保护中执行转译后页面主入口并捕获 Zend 输出缓冲
 	if voidptr(app.entry_fn) != 0 {
