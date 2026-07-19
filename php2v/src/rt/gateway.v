@@ -111,12 +111,14 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	// 8. 绑定上下文到 TLS
 	C.php2v_set_current_ctx(req_ctx)
 	
-	// 9. 在 zend_try 保护中执行转译后页面主入口
+	// 9. 在 zend_try 保护中执行转译后页面主入口并捕获 Zend 输出缓冲
 	if voidptr(app.entry_fn) != 0 {
+		_ = call_function('ob_start', []PhpVal{})
 		C.php2v_run_entry(voidptr(app.entry_fn))
-	}
-	unsafe {
-		C.php2v_refresh_request()
+		zend_out := call_function('ob_get_clean', []PhpVal{})
+		if zend_out.is_string() {
+			req_ctx.output_buf += zend_out.str()
+		}
 	}
 	
 	// 10. 读取并同步状态码和 HTTP Headers 到 veb
@@ -133,8 +135,13 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 		name, value := line.split_once(':') or { return }
 		c.res.header.set_custom(name.trim_space(), value.trim_space()) or {}
 	}, voidptr(&ctx))
+
+	// 11. 重置 PHP 请求上下文，清理旧资源
+	unsafe {
+		C.php2v_refresh_request()
+	}
 	
-	// 11. 清理 TLS，返回输出缓冲
+	// 12. 清理 TLS，返回输出缓冲
 	res_body := req_ctx.output_buf
 	C.php2v_set_current_ctx(0)
 	
