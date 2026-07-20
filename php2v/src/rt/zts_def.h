@@ -89,6 +89,8 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 	if (b) {
 		php2v_inject_http_globals(b->get_str, b->post_str, b->cookie_str, b->server_str, b->files_str);
 	}
+	/* 开启输出缓冲，让 WordPress 可以先输出内容再设置 headers */
+	php_output_start_default();
 #endif
 	if (setjmp(php2v_exit_jmp_buf) == 0) {
 		zend_first_try {
@@ -102,8 +104,8 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 		// 安全捕获到了静态转译代码里 php2v_exit() 发出的自定义 longjmp ！！！
 		printf("SUCCESSFULLY CAUGHT CUSTOM LONGJMP EXIT IN THREAD CONTEXT !!!\n");
 	}
-	php_output_end_all();
 	php_output_flush_all();
+	php_output_end_all();
 }
 
 static inline void php2v_shutdown_request() {
@@ -140,6 +142,36 @@ static inline void php2v_append_output(const char *str, size_t str_length) {
 	php2v_ub_write(str, str_length);
 }
 
+static void php2v_register_server_variables(zval *track_vars_array) {
+	/* 当 Zend 引擎的 auto_global 惰性加载机制触发 $_SERVER 初始化时，
+	   此回调被调用。我们从 TLS php2v_current_ctx 中读取序列化的 SERVER 数据，
+	   解析后写入 track_vars_array，防止 embed SAPI 默认产生的空 $_SERVER 覆盖注入内容 */
+	if (!php2v_current_ctx) return;
+	php2v_req_buf *b = (php2v_req_buf *)php2v_current_ctx;
+	if (!b->server_str || strlen(b->server_str) == 0) return;
+	
+	char *dup = strdup(b->server_str);
+	char *p = dup;
+	while (*p) {
+		char *key = p;
+		char *sep2 = strchr(p, '\x02');
+		if (!sep2) break;
+		*sep2 = '\0';
+		char *val = sep2 + 1;
+		
+		char *sep1 = strchr(val, '\x01');
+		if (sep1) {
+			*sep1 = '\0';
+			p = sep1 + 1;
+		} else {
+			p = val + strlen(val);
+		}
+		
+		php_register_variable(key, val, track_vars_array);
+	}
+	free(dup);
+}
+
 __attribute__((constructor)) static void php2v_auto_embed_init() {
 	setenv("USE_ZEND_ALLOC", "0", 1);
 	setenv("PHPRC", "/nonexistent", 1);
@@ -149,6 +181,7 @@ __attribute__((constructor)) static void php2v_auto_embed_init() {
 	php_embed_module.deactivate = NULL;
 	php_embed_module.flush = NULL;
 	php_embed_module.ub_write = php2v_ub_write;
+	php_embed_module.register_server_variables = php2v_register_server_variables;
 	
 	char *embed_argv[] = { "wordpress_server", "-d", "opcache.enable=0", "-d", "opcache.enable_cli=0", NULL };
 	php_embed_init(5, embed_argv);
