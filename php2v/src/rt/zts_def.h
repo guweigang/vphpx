@@ -72,6 +72,9 @@ static inline void php2v_refresh_request() {
 	}
 }
 
+#include <setjmp.h>
+static __thread jmp_buf php2v_exit_jmp_buf;
+
 static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 #ifdef ZTS
 	ts_resource(0);
@@ -87,13 +90,18 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 		php2v_inject_http_globals(b->get, b->post, b->cookie, b->server, b->files);
 	}
 #endif
-	zend_first_try {
-		if (entry_fn) {
-			entry_fn();
-		}
-	} zend_catch {
-		// 被 zend_bailout 捕获，安全处理 exit/wp_die 等
-	} zend_end_try();
+	if (setjmp(php2v_exit_jmp_buf) == 0) {
+		zend_first_try {
+			if (entry_fn) {
+				entry_fn();
+			}
+		} zend_catch {
+			// 捕获动态文件的 zend_bailout
+		} zend_end_try();
+	} else {
+		// 安全捕获到了静态转译代码里 php2v_exit() 发出的自定义 longjmp ！！！
+		printf("SUCCESSFULLY CAUGHT CUSTOM LONGJMP EXIT IN THREAD CONTEXT !!!\n");
+	}
 	php_output_end_all();
 	php_output_flush_all();
 }

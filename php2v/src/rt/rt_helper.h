@@ -887,11 +887,11 @@ static inline int php2v_execute_file(const char* filepath) {
     return 0;
 }
 
+#include <setjmp.h>
+extern __thread jmp_buf php2v_exit_jmp_buf;
+
 static inline void php2v_exit() {
-#ifdef ZTS
-    ZEND_TSRMLS_CACHE_UPDATE();
-#endif
-    zend_bailout();
+    longjmp(php2v_exit_jmp_buf, 1);
 }
 
 static inline void php2v_run_entry(void *entry_fn) {
