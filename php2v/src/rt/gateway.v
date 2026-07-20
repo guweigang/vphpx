@@ -12,10 +12,6 @@ fn C.php2v_get_response_headers(callback fn (header_line &char, user_data voidpt
 fn C.php2v_inject_http_globals(get &C.zval, post &C.zval, cookie &C.zval, server &C.zval, files &C.zval)
 fn C.php2v_register_mysqli_classes()
 
-__global (
-	is_class_registered = false
-)
-
 struct C.php2v_req_buf {
 mut:
 	buf    &char
@@ -62,13 +58,6 @@ pub fn start_gateway(port int, entry_fn fn () PhpVal) {
 // index 处理每一个 HTTP 网关请求
 @[GET; POST; '/:path...']
 pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result {
-	unsafe {
-		if !is_class_registered {
-			is_class_registered = true
-			C.php2v_register_mysqli_classes()
-		}
-	}
-
 	query_string := if ctx.req.url.contains('?') { ctx.req.url.all_after('?') } else { '' }
 	request_uri := if ctx.req.url.contains('?') { ctx.req.url.all_before('?') } else { ctx.req.url }
 
