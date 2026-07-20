@@ -241,26 +241,47 @@ static inline void php2v_register_global(const char *name, size_t name_len, zval
 	zend_rebuild_symbol_table();
 }
 
-void php2v_inject_http_globals(zval *get, zval *post, zval *cookie, zval *server, zval *files) {
-	php2v_update_tsrm_cache();
-	
-	if (Z_REFCOUNTED(PG(http_globals)[TRACK_VARS_GET])) zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_GET]);
-	if (Z_REFCOUNTED(PG(http_globals)[TRACK_VARS_POST])) zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_POST]);
-	if (Z_REFCOUNTED(PG(http_globals)[TRACK_VARS_COOKIE])) zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_COOKIE]);
-	if (Z_REFCOUNTED(PG(http_globals)[TRACK_VARS_SERVER])) zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_SERVER]);
-	if (Z_REFCOUNTED(PG(http_globals)[TRACK_VARS_FILES])) zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_FILES]);
-	
-	ZVAL_COPY(&PG(http_globals)[TRACK_VARS_GET], get);
-	ZVAL_COPY(&PG(http_globals)[TRACK_VARS_POST], post);
-	ZVAL_COPY(&PG(http_globals)[TRACK_VARS_COOKIE], cookie);
-	ZVAL_COPY(&PG(http_globals)[TRACK_VARS_SERVER], server);
-	ZVAL_COPY(&PG(http_globals)[TRACK_VARS_FILES], files);
-	
-	zend_is_auto_global_str(ZEND_STRL("_GET"));
-	zend_is_auto_global_str(ZEND_STRL("_POST"));
-	zend_is_auto_global_str(ZEND_STRL("_COOKIE"));
-	zend_is_auto_global_str(ZEND_STRL("_SERVER"));
-	zend_is_auto_global_str(ZEND_STRL("_FILES"));
+void php2v_parse_and_inject_global(int track_var_idx, const char *serialized_str) {
+    zval *global_arr = &PG(http_globals)[track_var_idx];
+    if (Z_TYPE_P(global_arr) == IS_ARRAY) {
+        zval_ptr_dtor(global_arr);
+    }
+    array_init(global_arr);
+    
+    if (!serialized_str || strlen(serialized_str) == 0) {
+        return;
+    }
+    
+    char *dup = strdup(serialized_str);
+    char *saveptr1, *saveptr2;
+    char *pair = strtok_r(dup, "\x01", &saveptr1);
+    while (pair) {
+        char *key = strtok_r(pair, "\x02", &saveptr2);
+        char *val = strtok_r(NULL, "\x02", &saveptr2);
+        if (key) {
+            zval zval_val;
+            ZVAL_STRING(&zval_val, val ? val : "");
+            zend_hash_str_update(Z_ARRVAL_P(global_arr), key, strlen(key), &zval_val);
+        }
+        pair = strtok_r(NULL, "\x01", &saveptr1);
+    }
+    free(dup);
+}
+
+void php2v_inject_http_globals(const char *get_str, const char *post_str, const char *cookie_str, const char *server_str, const char *files_str) {
+    php2v_update_tsrm_cache();
+    
+    php2v_parse_and_inject_global(TRACK_VARS_GET, get_str);
+    php2v_parse_and_inject_global(TRACK_VARS_POST, post_str);
+    php2v_parse_and_inject_global(TRACK_VARS_COOKIE, cookie_str);
+    php2v_parse_and_inject_global(TRACK_VARS_SERVER, server_str);
+    php2v_parse_and_inject_global(TRACK_VARS_FILES, files_str);
+    
+    zend_is_auto_global_str(ZEND_STRL("_GET"));
+    zend_is_auto_global_str(ZEND_STRL("_POST"));
+    zend_is_auto_global_str(ZEND_STRL("_COOKIE"));
+    zend_is_auto_global_str(ZEND_STRL("_SERVER"));
+    zend_is_auto_global_str(ZEND_STRL("_FILES"));
 }
 
 static inline int php2v_instance_of(zval *obj, const char *class_name, size_t name_len) {

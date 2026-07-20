@@ -10,17 +10,17 @@
 #endif
 
 extern void php2v_register_sandbox_bridge();
-extern void php2v_inject_http_globals(zval *get, zval *post, zval *cookie, zval *server, zval *files);
+extern void php2v_inject_http_globals(const char *get, const char *post, const char *cookie, const char *server, const char *files);
 
 typedef struct {
 	char *buf;
 	size_t cap;
 	size_t len;
-	zval *get;
-	zval *post;
-	zval *cookie;
-	zval *server;
-	zval *files;
+	const char *get_str;
+	const char *post_str;
+	const char *cookie_str;
+	const char *server_str;
+	const char *files_str;
 } php2v_req_buf;
 
 #ifdef _MSC_VER
@@ -86,8 +86,8 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 	ZEND_TSRMLS_CACHE_UPDATE();
 	php2v_register_sandbox_bridge();
 	php2v_req_buf *b = (php2v_req_buf *)php2v_current_ctx;
-	if (b && b->server) {
-		php2v_inject_http_globals(b->get, b->post, b->cookie, b->server, b->files);
+	if (b) {
+		php2v_inject_http_globals(b->get_str, b->post_str, b->cookie_str, b->server_str, b->files_str);
 	}
 #endif
 	if (setjmp(php2v_exit_jmp_buf) == 0) {

@@ -9,19 +9,16 @@ fn C.php2v_run_entry(entry_fn voidptr)
 fn C.php2v_run_in_thread_context(entry_fn voidptr)
 fn C.php2v_get_response_status() int
 fn C.php2v_get_response_headers(callback fn (header_line &char, user_data voidptr), user_data voidptr)
-fn C.php2v_inject_http_globals(get &C.zval, post &C.zval, cookie &C.zval, server &C.zval, files &C.zval)
-fn C.php2v_register_mysqli_classes()
-
 struct C.php2v_req_buf {
 mut:
-	buf    &char
-	cap    usize
-	len    usize
-	get    &C.zval
-	post   &C.zval
-	cookie &C.zval
-	server &C.zval
-	files  &C.zval
+	buf        &char
+	cap        usize
+	len        usize
+	get_str    &char
+	post_str   &char
+	cookie_str &char
+	server_str &char
+	files_str  &char
 }
 
 // RequestContext 并发安全隔离容器
@@ -65,95 +62,61 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	query_string := if ctx.req.url.contains('?') { ctx.req.url.all_after('?') } else { '' }
 	request_uri := if ctx.req.url.contains('?') { ctx.req.url.all_before('?') } else { ctx.req.url }
 
-	// 1. 从 HTTP 请求构建 $_SERVER
-	mut server := new_array()
-	server.array_set(new_string('REQUEST_METHOD'), new_string(ctx.req.method.str()))
-	server.array_set(new_string('REQUEST_URI'), new_string(request_uri))
-	server.array_set(new_string('QUERY_STRING'), new_string(query_string))
-	server.array_set(new_string('REMOTE_ADDR'), new_string(ctx.ip()))
-	server.array_set(new_string('PHP_SELF'), new_string('/index.php'))
-	server.array_set(new_string('SCRIPT_NAME'), new_string('/index.php'))
-	server.array_set(new_string('SCRIPT_FILENAME'), new_string('/Users/guweigang/wwwroot/wordpress/index.php'))
-	server.array_set(new_string('DOCUMENT_ROOT'), new_string('/Users/guweigang/wwwroot/wordpress'))
-	server.array_set(new_string('SERVER_NAME'), new_string('localhost'))
-	server.array_set(new_string('SERVER_PORT'), new_string('8083'))
-	server.array_set(new_string('HTTP_HOST'), new_string('localhost:8083'))
-	server.array_set(new_string('SERVER_PROTOCOL'), new_string('HTTP/1.1'))
+	// 1. 构建超全局变量键值 map
+	mut server_map := map[string]string{}
+	server_map['REQUEST_METHOD'] = ctx.req.method.str()
+	server_map['REQUEST_URI'] = request_uri
+	server_map['QUERY_STRING'] = query_string
+	server_map['REMOTE_ADDR'] = ctx.ip()
+	server_map['PHP_SELF'] = '/index.php'
+	server_map['SCRIPT_NAME'] = '/index.php'
+	server_map['SCRIPT_FILENAME'] = '/Users/guweigang/wwwroot/wordpress/index.php'
+	server_map['DOCUMENT_ROOT'] = '/Users/guweigang/wwwroot/wordpress'
+	server_map['SERVER_NAME'] = 'localhost'
+	server_map['SERVER_PORT'] = '8083'
+	server_map['HTTP_HOST'] = 'localhost:8083'
+	server_map['SERVER_PROTOCOL'] = 'HTTP/1.1'
 	
-	// 注入常用 HTTP 头部到 $_SERVER
 	if host := ctx.req.header.get(.host) {
-		server.array_set(new_string('HTTP_HOST'), new_string(host))
+		server_map['HTTP_HOST'] = host
 	}
 	if ua := ctx.req.header.get(.user_agent) {
-		server.array_set(new_string('HTTP_USER_AGENT'), new_string(ua))
+		server_map['HTTP_USER_AGENT'] = ua
 	}
 	if accept := ctx.req.header.get(.accept) {
-		server.array_set(new_string('HTTP_ACCEPT'), new_string(accept))
+		server_map['HTTP_ACCEPT'] = accept
 	}
-	
-	// 2. 解析 $_GET
-	mut get_arr := new_array()
-	for k, v in ctx.query {
-		get_arr.array_set(new_string(k), new_string(v))
-	}
-	
-	// 3. 解析 $_POST
-	mut post_arr := new_array()
-	for k, v in ctx.form {
-		post_arr.array_set(new_string(k), new_string(v))
-	}
-	
-	// 4. 解析 $_COOKIE
-	mut cookie_arr := new_array()
+
+	mut cookie_map := map[string]string{}
 	if cookie_hdr := ctx.req.header.get(.cookie) {
 		for pair in cookie_hdr.split(';') {
 			parts := pair.trim_space().split('=')
 			if parts.len == 2 {
-				cookie_arr.array_set(new_string(parts[0]), new_string(parts[1]))
+				cookie_map[parts[0]] = parts[1]
 			}
 		}
 	}
-	
-	// 5. 解析 $_FILES
-	mut files_arr := new_array()
-	
-	// 6. 合并构建 $_REQUEST
-	mut request_arr := call_function('array_merge', [get_arr.clone(), post_arr.clone(), cookie_arr.clone()])
-	
-	// 7. 组装 RequestContext 实例
-	mut req_ctx := &RequestContext{
-		get_arr: get_arr
-		post_arr: post_arr
-		server_arr: server
-		cookie_arr: cookie_arr
-		files_arr: files_arr
-		request_arr: request_arr
-		output_buf: ''
-	}
-	
-	// 8. 绑定 C 侧输出缓冲区和上下文到 TLS，并注入超全局变量到 Zend 引擎
+
+	get_str := serialize_map(ctx.query)
+	post_str := serialize_map(ctx.form)
+	cookie_str := serialize_map(cookie_map)
+	server_str := serialize_map(server_map)
+	files_str := ''
+
+	// 2. 绑定 C 侧输出缓冲区与序列化后的 HTTP 参数结构体到 TLS
 	mut req_buf := C.php2v_req_buf{
 		buf: 0
 		cap: 0
 		len: 0
-		get: get_arr.raw
-		post: post_arr.raw
-		cookie: cookie_arr.raw
-		server: server.raw
-		files: files_arr.raw
+		get_str: &char(get_str.str)
+		post_str: &char(post_str.str)
+		cookie_str: &char(cookie_str.str)
+		server_str: &char(server_str.str)
+		files_str: &char(files_str.str)
 	}
 	C.php2v_set_current_ctx(voidptr(&req_buf))
-	register_global('_SERVER', server)
-	register_global('_GET', get_arr)
-	register_global('_POST', post_arr)
-	register_global('_COOKIE', cookie_arr)
-	register_global('_FILES', files_arr)
-	register_global('_REQUEST', request_arr)
-	_ = call_function('define', [new_string('ABSPATH'), new_string('/Users/guweigang/wwwroot/wordpress/')])
-	_ = call_function('define', [new_string('WPINC'), new_string('wp-includes')])
-	_ = call_function('define', [new_string('WP_CONTENT_DIR'), new_string('/Users/guweigang/wwwroot/wordpress/wp-content')])
 	
-	// 9. 在子线程 TSRM 绑定与 zend_try 保护中执行转译后页面主入口
+	// 3. 在子线程 TSRM 绑定与 longjmp/bailout 保护中执行转译后页面主入口
 	println("=== Ready to execute PHP script in thread context ===")
 	if voidptr(app.entry_fn) != 0 {
 		unsafe {
@@ -190,4 +153,11 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	}
 	C.php2v_set_current_ctx(0)
 	return ctx.html(res_body)
+}
+fn serialize_map(m map[string]string) string {
+	mut parts := []string{}
+	for k, v in m {
+		parts << '${k}\x02${v}'
+	}
+	return parts.join('\x01')
 }
