@@ -853,7 +853,6 @@ static inline void php2v_register_sandbox_bridge() {
 }
 static inline int php2v_execute_file(const char* filepath) {
     php2v_update_tsrm_cache();
-    php2v_register_custom_functions();
 #ifdef ZTS
     if (tsrm_get_ls_cache() == NULL) return 0;
 #endif
