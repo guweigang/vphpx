@@ -136,6 +136,10 @@ static inline size_t php2v_ub_write(const char *str, size_t str_length) {
 	return str_length;
 }
 
+static inline void php2v_append_output(const char *str, size_t str_length) {
+	php2v_ub_write(str, str_length);
+}
+
 __attribute__((constructor)) static void php2v_auto_embed_init() {
 	setenv("USE_ZEND_ALLOC", "0", 1);
 	setenv("PHPRC", "/nonexistent", 1);

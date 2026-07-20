@@ -924,19 +924,6 @@ pub fn throw_exception(ex PhpVal) {
 }
 
 pub fn get_superglobal(name string) PhpVal {
-	ctx_ptr := C.php2v_get_current_ctx()
-	if ctx_ptr != 0 {
-		ctx := &RequestContext(ctx_ptr)
-		match name {
-			'_GET' { return ctx.get_arr }
-			'_POST' { return ctx.post_arr }
-			'_SERVER' { return ctx.server_arr }
-			'_COOKIE' { return ctx.cookie_arr }
-			'_FILES' { return ctx.files_arr }
-			'_REQUEST' { return ctx.request_arr }
-			else {}
-		}
-	}
 	z := new_zval()
 	C.php2v_get_superglobal(name.str, usize(name.len), z)
 	return PhpVal{ raw: z }
