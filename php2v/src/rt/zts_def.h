@@ -87,7 +87,7 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 		php2v_inject_http_globals(b->get, b->post, b->cookie, b->server, b->files);
 	}
 #endif
-	zend_try {
+	zend_first_try {
 		if (entry_fn) {
 			entry_fn();
 		}
