@@ -253,17 +253,25 @@ void php2v_parse_and_inject_global(int track_var_idx, const char *serialized_str
     }
     
     char *dup = strdup(serialized_str);
-    char *saveptr1, *saveptr2;
-    char *pair = strtok_r(dup, "\x01", &saveptr1);
-    while (pair) {
-        char *key = strtok_r(pair, "\x02", &saveptr2);
-        char *val = strtok_r(NULL, "\x02", &saveptr2);
-        if (key) {
-            zval zval_val;
-            ZVAL_STRING(&zval_val, val ? val : "");
-            zend_hash_str_update(Z_ARRVAL_P(global_arr), key, strlen(key), &zval_val);
+    char *p = dup;
+    while (*p) {
+        char *key = p;
+        char *sep2 = strchr(p, '\x02');
+        if (!sep2) break;
+        *sep2 = '\0';
+        char *val = sep2 + 1;
+        
+        char *sep1 = strchr(val, '\x01');
+        if (sep1) {
+            *sep1 = '\0';
+            p = sep1 + 1;
+        } else {
+            p = val + strlen(val);
         }
-        pair = strtok_r(NULL, "\x01", &saveptr1);
+        
+        zval zval_val;
+        ZVAL_STRING(&zval_val, val);
+        zend_hash_str_update(Z_ARRVAL_P(global_arr), key, strlen(key), &zval_val);
     }
     free(dup);
 }
@@ -849,7 +857,6 @@ ZEND_END_ARG_INFO()
 void php2v_register_sandbox_bridge() {
     static const zend_function_entry funcs[] = {
         {"vphp_call_v_native", zif_vphp_call_v_native, arginfo_vphp_call_v_native, 2, 0},
-        {"gzinflate", zif_php2v_gzinflate, arginfo_mysqli_generic, 0, 0},
         {NULL, NULL, NULL, 0, 0}
     };
     if (EG(function_table)) {
