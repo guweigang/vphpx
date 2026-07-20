@@ -888,6 +888,8 @@ static inline int php2v_execute_file(const char* filepath) {
     file_handle.filename = filepath;
 #endif
 
+    uint32_t old_compiler_options = CG(compiler_options);
+    CG(compiler_options) |= ZEND_COMPILE_IGNORE_OTHER_FILES;
     zend_try {
         php_execute_script(&file_handle);
         php_output_end_all();
@@ -895,6 +897,7 @@ static inline int php2v_execute_file(const char* filepath) {
     } zend_catch {
         php2v_refresh_request();
     } zend_end_try();
+    CG(compiler_options) = old_compiler_options;
 
     zend_destroy_file_handle(&file_handle);
     return 0;
