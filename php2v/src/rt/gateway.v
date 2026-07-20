@@ -49,6 +49,9 @@ pub mut:
 
 // start_gateway 启动 veb HTTP 常驻服务网关
 pub fn start_gateway(port int, entry_fn fn () PhpVal) {
+	unsafe {
+		C.php2v_register_mysqli_classes()
+	}
 	mut app := &ServerApp{
 		entry_fn: entry_fn
 	}
