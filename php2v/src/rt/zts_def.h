@@ -65,7 +65,11 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 	if (EG(vm_stack) == NULL) {
 		zend_vm_stack_init();
 	}
-	php_request_startup();
+	static __thread int req_inited = 0;
+	if (!req_inited) {
+		php_request_startup();
+		req_inited = 1;
+	}
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
 	zend_try {

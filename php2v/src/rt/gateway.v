@@ -52,10 +52,7 @@ pub fn start_gateway(port int, entry_fn fn () PhpVal) {
 // index 处理每一个 HTTP 网关请求
 @[GET; POST; '/:path...']
 pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result {
-	// 注册当前子线程的 TSRM 资源，避免 PHP 引擎 C 接口崩溃
-	unsafe {
-		C.php2v_register_thread()
-	}
+
 
 	query_string := if ctx.req.url.contains('?') { ctx.req.url.all_after('?') } else { '' }
 	request_uri := if ctx.req.url.contains('?') { ctx.req.url.all_before('?') } else { ctx.req.url }
