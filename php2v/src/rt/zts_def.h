@@ -65,11 +65,7 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 	if (EG(vm_stack) == NULL) {
 		zend_vm_stack_init();
 	}
-	static __thread int req_inited = 0;
-	if (!req_inited) {
-		php_request_startup();
-		req_inited = 1;
-	}
+	php_request_startup();
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
 	zend_try {
@@ -79,6 +75,9 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 	} zend_catch {
 		// 被 zend_bailout 捕获，安全处理 exit/wp_die 等
 	} zend_end_try();
+#ifdef ZTS
+	php_request_shutdown(NULL);
+#endif
 }
 
 static inline void php2v_register_sandbox_bridge();
