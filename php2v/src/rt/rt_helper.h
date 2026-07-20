@@ -857,6 +857,8 @@ static inline int php2v_execute_file(const char* filepath) {
     if (tsrm_get_ls_cache() == NULL) return 0;
 #endif
     php2v_register_persistent_constant("ABSPATH", "/Users/guweigang/wwwroot/wordpress/");
+    php2v_register_persistent_constant("WPINC", "wp-includes");
+    php2v_register_persistent_constant("WP_CONTENT_DIR", "/Users/guweigang/wwwroot/wordpress/wp-content");
     php2v_register_persistent_constant("WP_USE_THEMES", "1");
     php2v_register_persistent_constant("MYSQLI_REPORT_OFF", "0");
     php2v_register_persistent_constant("MYSQLI_REPORT_ERROR", "1");
