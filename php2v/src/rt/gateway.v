@@ -169,8 +169,5 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 		res_body = '<html><head><title>WordPress Embedded (V-PHP)</title></head><body><h1>WordPress Embedded Gateway Online</h1><p>Status: WordPress boot chain executed successfully with ZTS multi-threading.</p></body></html>'
 	}
 	C.php2v_set_current_ctx(0)
-	unsafe {
-		C.php2v_shutdown_request()
-	}
 	return ctx.html(res_body)
 }

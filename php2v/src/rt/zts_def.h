@@ -77,6 +77,13 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 	} zend_end_try();
 }
 
+static inline void php2v_shutdown_request() {
+#ifdef ZTS
+	ZEND_TSRMLS_CACHE_UPDATE();
+	php_request_shutdown(NULL);
+#endif
+}
+
 static inline void php2v_register_sandbox_bridge();
 
 typedef struct {
