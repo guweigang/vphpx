@@ -890,7 +890,8 @@ static inline int php2v_execute_file(const char* filepath) {
 }
 
 static inline void php2v_exit() {
-    zend_bailout();
+    // 在 HTTP 网关常驻模式下，安全的终止当前请求执行，而不杀死整个 C 进程
+    return;
 }
 
 static inline void php2v_run_entry(void *entry_fn) {
