@@ -55,7 +55,7 @@ pub fn has_constant(name string) bool {
 	return name in r.constants
 }
 
-pub fn get_constant(name string) PhpVal {
+pub fn get_v_constant(name string) PhpVal {
 	mut r := get_registry()
 	if name in r.constants {
 		return r.constants[name] or { new_null() }

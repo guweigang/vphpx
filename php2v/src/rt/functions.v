@@ -562,6 +562,9 @@ pub fn define_constant(name string, val PhpVal) {
 
 // get_constant 在运行时获取常量值，若未定义会抛出 PHP 异常并返回 null
 pub fn get_constant(name string) PhpVal {
+	if has_constant(name) {
+		return get_v_constant(name)
+	}
 	z_ret := new_zval()
 	unsafe {
 		res := C.php2v_get_constant(name.str, usize(name.len), z_ret)
