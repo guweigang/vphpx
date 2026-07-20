@@ -899,13 +899,27 @@ void php2v_register_sandbox_bridge() {
 void php2v_register_mysqli_classes() {
     // Native mysqli extension is loaded, no mock needed.
 }
+static inline void php2v_safe_register_constant(const char* name, const char* val) {
+    if (EG(zend_constants) && !zend_hash_str_find(EG(zend_constants), name, strlen(name))) {
+        php2v_register_persistent_constant(name, val);
+    }
+}
+
 static inline int php2v_execute_file(const char* filepath) {
     php2v_update_tsrm_cache();
 #ifdef ZTS
     if (tsrm_get_ls_cache() == NULL) return 0;
 #endif
-    php2v_register_persistent_constant("ABSPATH", "/Users/guweigang/wwwroot/wordpress/");
-    php2v_register_persistent_constant("WPINC", "wp-includes");
+    php2v_safe_register_constant("ABSPATH", "/Users/guweigang/wwwroot/wordpress/");
+    php2v_safe_register_constant("WPINC", "wp-includes");
+    php2v_safe_register_constant("WP_CONTENT_DIR", "/Users/guweigang/wwwroot/wordpress/wp-content");
+    php2v_safe_register_constant("WP_USE_THEMES", "1");
+    php2v_safe_register_constant("DB_NAME", "wordpress");
+    php2v_safe_register_constant("DB_USER", "root");
+    php2v_safe_register_constant("DB_PASSWORD", "Abcd.1234");
+    php2v_safe_register_constant("DB_HOST", "localhost");
+    php2v_safe_register_constant("DB_CHARSET", "utf8mb4");
+    php2v_safe_register_constant("DB_COLLATE", "");
     
 
     FILE *fp = fopen(filepath, "r");
