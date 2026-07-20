@@ -21,6 +21,7 @@ typedef struct {
 	const char *cookie_str;
 	const char *server_str;
 	const char *files_str;
+	const char *script_path;
 } php2v_req_buf;
 
 #ifdef _MSC_VER
@@ -74,6 +75,7 @@ static inline void php2v_refresh_request() {
 
 #include <setjmp.h>
 static __thread jmp_buf php2v_exit_jmp_buf;
+static inline int php2v_execute_file(const char* filepath);
 
 static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 #ifdef ZTS
@@ -94,7 +96,10 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 #endif
 	if (setjmp(php2v_exit_jmp_buf) == 0) {
 		zend_first_try {
-			if (entry_fn) {
+			php2v_req_buf *b = (php2v_req_buf *)php2v_current_ctx;
+			if (b && b->script_path && strlen(b->script_path) > 0) {
+				php2v_execute_file(b->script_path);
+			} else if (entry_fn) {
 				entry_fn();
 			}
 		} zend_catch {
@@ -106,6 +111,9 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 	}
 	php_output_flush_all();
 	php_output_end_all();
+#ifdef ZTS
+	php_request_shutdown(NULL);
+#endif
 }
 
 static inline void php2v_shutdown_request() {

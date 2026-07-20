@@ -1,6 +1,7 @@
 module rt
 
 import veb
+import os
 
 fn C.php2v_refresh_request()
 fn C.php2v_shutdown_request()
@@ -12,14 +13,15 @@ fn C.php2v_get_response_headers(callback fn (header_line &char, user_data voidpt
 fn C.php2v_register_mysqli_classes()
 struct C.php2v_req_buf {
 mut:
-	buf        &char
-	cap        usize
-	len        usize
-	get_str    &char
-	post_str   &char
-	cookie_str &char
-	server_str &char
-	files_str  &char
+	buf         &char
+	cap         usize
+	len         usize
+	get_str     &char
+	post_str    &char
+	cookie_str  &char
+	server_str  &char
+	files_str   &char
+	script_path &char
 }
 
 // veb 请求上下文
@@ -53,6 +55,13 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	query_string := if ctx.req.url.contains('?') { ctx.req.url.all_after('?') } else { '' }
 	path_info := if ctx.req.url.contains('?') { ctx.req.url.all_before('?') } else { ctx.req.url }
 
+	mut target_script := ''
+	doc_root := '/Users/guweigang/wwwroot/wordpress'
+	potential_file := doc_root + path_info
+	if path_info.ends_with('.php') && os.exists(potential_file) {
+		target_script = potential_file
+	}
+
 	// 1. 构建超全局变量键值 map
 	mut server_map := map[string]string{}
 	server_map['REQUEST_METHOD'] = ctx.req.method.str()
@@ -60,9 +69,9 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	server_map['QUERY_STRING'] = query_string
 	server_map['REMOTE_ADDR'] = ctx.ip()
 	server_map['PHP_SELF'] = path_info
-	server_map['SCRIPT_NAME'] = '/index.php'
-	server_map['SCRIPT_FILENAME'] = '/Users/guweigang/wwwroot/wordpress/index.php'
-	server_map['DOCUMENT_ROOT'] = '/Users/guweigang/wwwroot/wordpress'
+	server_map['SCRIPT_NAME'] = if target_script != '' { path_info } else { '/index.php' }
+	server_map['SCRIPT_FILENAME'] = if target_script != '' { target_script } else { doc_root + '/index.php' }
+	server_map['DOCUMENT_ROOT'] = doc_root
 	server_map['SERVER_NAME'] = 'localhost'
 	server_map['SERVER_PORT'] = '8083'
 	server_map['HTTP_HOST'] = 'localhost:8083'
@@ -104,12 +113,13 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 		cookie_str: &char(cookie_str.str)
 		server_str: &char(server_str.str)
 		files_str: &char(files_str.str)
+		script_path: &char(target_script.str)
 	}
 	C.php2v_set_current_ctx(voidptr(&req_buf))
 	
 	// 3. 在子线程 TSRM 绑定与 longjmp/bailout 保护中执行转译后页面主入口
-	println("=== Ready to execute PHP script in thread context ===")
-	if voidptr(app.entry_fn) != 0 {
+	println("=== Ready to execute PHP script in thread context (script_path: '${target_script}') ===")
+	if voidptr(app.entry_fn) != 0 || target_script != '' {
 		unsafe {
 			C.php2v_run_in_thread_context(voidptr(app.entry_fn))
 		}
