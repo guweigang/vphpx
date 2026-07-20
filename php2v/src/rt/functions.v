@@ -21,6 +21,9 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 			}
 			return new_bool(false)
 		}
+		'mysqli_report' {
+			return new_bool(true)
+		}
 		'get_class' {
 			if args.len > 0 && args[0].is_object() {
 				obj := args[0]
