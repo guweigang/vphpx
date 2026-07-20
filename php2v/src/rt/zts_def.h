@@ -8,6 +8,8 @@
 #include <crt_externs.h>
 #endif
 
+static inline void php2v_register_custom_functions();
+
 #ifdef ZTS
 __attribute__((visibility("default"))) extern __thread void *TSRMLS_CACHE;
 #endif
@@ -60,7 +62,6 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 	}
 	php_request_startup();
 	ZEND_TSRMLS_CACHE_UPDATE();
-	php2v_register_custom_functions();
 #endif
 	zend_try {
 		if (entry_fn) {
