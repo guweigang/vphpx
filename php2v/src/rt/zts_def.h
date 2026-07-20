@@ -58,17 +58,23 @@ static inline void php2v_refresh_request() {
 #endif
 }
 
-static inline void php2v_register_thread() {
+static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 #ifdef ZTS
+	ts_resource(0);
+	ZEND_TSRMLS_CACHE_UPDATE();
+	if (EG(vm_stack) == NULL) {
+		zend_vm_stack_init();
+	}
+	php_request_startup();
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
-}
-
-static inline void php2v_shutdown_request() {
-#ifdef ZTS
-	ZEND_TSRMLS_CACHE_UPDATE();
-	php_request_shutdown(NULL);
-#endif
+	zend_try {
+		if (entry_fn) {
+			entry_fn();
+		}
+	} zend_catch {
+		// 被 zend_bailout 捕获，安全处理 exit/wp_die 等
+	} zend_end_try();
 }
 
 static inline void php2v_register_sandbox_bridge();

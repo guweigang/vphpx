@@ -6,6 +6,7 @@ fn C.php2v_refresh_request()
 fn C.php2v_shutdown_request()
 fn C.php2v_exit()
 fn C.php2v_run_entry(entry_fn voidptr)
+fn C.php2v_run_in_thread_context(entry_fn voidptr)
 fn C.php2v_get_response_status() int
 fn C.php2v_get_response_headers(callback fn (header_line &char, user_data voidptr), user_data voidptr)
 fn C.php2v_inject_http_globals(get &C.zval, post &C.zval, cookie &C.zval, server &C.zval, files &C.zval)
@@ -137,9 +138,11 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	register_global('_FILES', files_arr)
 	register_global('_REQUEST', request_arr)
 	
-	// 9. 执行转译后页面主入口
+	// 9. 在子线程 TSRM 绑定与 zend_try 保护中执行转译后页面主入口
 	if voidptr(app.entry_fn) != 0 {
-		app.entry_fn()
+		unsafe {
+			C.php2v_run_in_thread_context(voidptr(app.entry_fn))
+		}
 	}
 
 	// 提取由 C 侧 SAPI ub_write 回调直接收集到的裸输出数据 (包括 wp_die, Fatal error 等)
