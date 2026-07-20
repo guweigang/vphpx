@@ -9,6 +9,7 @@ fn C.php2v_run_entry(entry_fn voidptr)
 fn C.php2v_run_in_thread_context(entry_fn voidptr)
 fn C.php2v_get_response_status() int
 fn C.php2v_get_response_headers(callback fn (header_line &char, user_data voidptr), user_data voidptr)
+fn C.php2v_register_mysqli_classes()
 struct C.php2v_req_buf {
 mut:
 	buf        &char
@@ -19,18 +20,6 @@ mut:
 	cookie_str &char
 	server_str &char
 	files_str  &char
-}
-
-// RequestContext 并发安全隔离容器
-pub struct RequestContext {
-pub mut:
-	get_arr     PhpVal
-	post_arr    PhpVal
-	server_arr  PhpVal
-	cookie_arr  PhpVal
-	files_arr   PhpVal
-	request_arr PhpVal
-	output_buf  string
 }
 
 // veb 请求上下文
@@ -125,9 +114,9 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	}
 	println("=== Finished executing PHP script ===")
 
-	// 提取由 C 侧 SAPI ub_write 回调直接收集到的裸输出数据 (包括 wp_die, Fatal error 等)
+	mut output_buf := ''
 	if req_buf.len > 0 && req_buf.buf != 0 {
-		req_ctx.output_buf += unsafe { req_buf.buf.vstring_with_len(int(req_buf.len)) }
+		output_buf += unsafe { req_buf.buf.vstring_with_len(int(req_buf.len)) }
 		unsafe { C.free(req_buf.buf) }
 	}
 	
@@ -147,7 +136,7 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	}, voidptr(&ctx))
 	
 	// 11. 清理 TLS，返回输出缓冲
-	mut res_body := req_ctx.output_buf
+	mut res_body := output_buf
 	if res_body == '' {
 		res_body = '<html><head><title>WordPress Embedded (V-PHP)</title></head><body><h1>WordPress Embedded Gateway Online</h1><p>Status: WordPress boot chain executed successfully with ZTS multi-threading.</p></body></html>'
 	}
