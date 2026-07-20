@@ -285,20 +285,6 @@ void php2v_inject_http_globals(const char *get_str, const char *post_str, const 
     php2v_parse_and_inject_global(TRACK_VARS_SERVER, server_str);
     php2v_parse_and_inject_global(TRACK_VARS_FILES, files_str);
     
-    // DIAGNOSTIC: 验证 SERVER 注入结果
-    {
-        zval *srv = &PG(http_globals)[TRACK_VARS_SERVER];
-        if (Z_TYPE_P(srv) == IS_ARRAY) {
-            printf("DIAGNOSTIC: _SERVER array has %d elements\n", zend_hash_num_elements(Z_ARRVAL_P(srv)));
-            zval *php_self = zend_hash_str_find(Z_ARRVAL_P(srv), "PHP_SELF", sizeof("PHP_SELF") - 1);
-            printf("DIAGNOSTIC: _SERVER[PHP_SELF] = %s\n", php_self && Z_TYPE_P(php_self) == IS_STRING ? Z_STRVAL_P(php_self) : "(NOT FOUND)");
-            zval *http_host = zend_hash_str_find(Z_ARRVAL_P(srv), "HTTP_HOST", sizeof("HTTP_HOST") - 1);
-            printf("DIAGNOSTIC: _SERVER[HTTP_HOST] = %s\n", http_host && Z_TYPE_P(http_host) == IS_STRING ? Z_STRVAL_P(http_host) : "(NOT FOUND)");
-        } else {
-            printf("DIAGNOSTIC: _SERVER is NOT an array! type=%d\n", Z_TYPE_P(srv));
-        }
-    }
-    
     zend_string *zstr_server = zend_string_init("_SERVER", sizeof("_SERVER") - 1, 1);
     Z_TRY_ADDREF(PG(http_globals)[TRACK_VARS_SERVER]);
     zend_hash_update(&EG(symbol_table), zstr_server, &PG(http_globals)[TRACK_VARS_SERVER]);
@@ -907,11 +893,6 @@ void php2v_register_sandbox_bridge() {
         /* 防止重复注册 */
         if (!zend_hash_str_find(EG(function_table), "vphp_call_v_native", sizeof("vphp_call_v_native") - 1)) {
             zend_register_functions(NULL, funcs, EG(function_table), MODULE_TEMPORARY);
-        }
-        if (zend_hash_str_find(EG(function_table), "mysqli_connect", sizeof("mysqli_connect") - 1)) {
-            printf("DIAGNOSTIC: mysqli_connect is AVAILABLE in Zend function table.\n");
-        } else {
-            printf("DIAGNOSTIC: mysqli_connect is NOT found in Zend function table !!!\n");
         }
     }
 }
