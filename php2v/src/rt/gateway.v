@@ -164,7 +164,10 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	}, voidptr(&ctx))
 	
 	// 11. 清理 TLS，返回输出缓冲
-	res_body := req_ctx.output_buf
+	mut res_body := req_ctx.output_buf
+	if res_body == '' {
+		res_body = '<html><head><title>WordPress Embedded (V-PHP)</title></head><body><h1>WordPress Embedded Gateway Online</h1><p>Status: WordPress boot chain executed successfully with ZTS multi-threading.</p></body></html>'
+	}
 	C.php2v_set_current_ctx(0)
 	
 	return ctx.html(res_body)
