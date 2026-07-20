@@ -4,6 +4,7 @@
 #include <php.h>
 #include <sapi/embed/php_embed.h>
 #include <Zend/zend_exceptions.h>
+#include <Zend/zend_gc.h>
 
 #ifdef __APPLE__
 #include <crt_externs.h>
@@ -86,7 +87,6 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 	}
 	php_request_startup();
 	ZEND_TSRMLS_CACHE_UPDATE();
-	gc_disable();
 	php2v_register_sandbox_bridge();
 	php2v_req_buf *b = (php2v_req_buf *)php2v_current_ctx;
 	if (b) {
@@ -192,8 +192,8 @@ __attribute__((constructor)) static void php2v_auto_embed_init() {
 	php_embed_module.ub_write = php2v_ub_write;
 	php_embed_module.register_server_variables = php2v_register_server_variables;
 	
-	char *embed_argv[] = { "wordpress_server", "-d", "opcache.enable=0", "-d", "opcache.enable_cli=0", NULL };
-	php_embed_init(5, embed_argv);
+	char *embed_argv[] = { "wordpress_server", "-d", "opcache.enable=0", "-d", "opcache.enable_cli=0", "-d", "zend.enable_gc=0", NULL };
+	php_embed_init(7, embed_argv);
 #ifdef ZTS
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
@@ -206,6 +206,10 @@ __attribute__((constructor)) static void php2v_auto_embed_init() {
 	zend_string *k2 = zend_string_init("opcache.enable_cli", sizeof("opcache.enable_cli") - 1, 0);
 	zend_alter_ini_entry_chars(k2, "0", sizeof("0") - 1, PHP_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
 	zend_string_release(k2);
+
+	zend_string *k3 = zend_string_init("zend.enable_gc", sizeof("zend.enable_gc") - 1, 0);
+	zend_alter_ini_entry_chars(k3, "0", sizeof("0") - 1, PHP_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
+	zend_string_release(k3);
 
 	php2v_register_sandbox_bridge();
 }
