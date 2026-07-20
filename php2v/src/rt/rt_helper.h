@@ -824,39 +824,20 @@ ZEND_END_ARG_INFO()
 void php2v_register_sandbox_bridge() {
     static const zend_function_entry funcs[] = {
         {"vphp_call_v_native", zif_vphp_call_v_native, arginfo_vphp_call_v_native, 2, 0},
-        {"mysqli_init", zif_php2v_mysqli_init, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_connect", zif_php2v_mysqli_init, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_real_connect", zif_php2v_mysqli_real_connect, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_query", zif_php2v_mysqli_query, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_report", zif_php2v_mysqli_report, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_connect_errno", zif_php2v_mysqli_connect_errno, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_connect_error", zif_php2v_mysqli_connect_error, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_error", zif_php2v_mysqli_error, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_errno", zif_php2v_mysqli_errno, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_select_db", zif_php2v_mysqli_select_db, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_set_charset", zif_php2v_mysqli_set_charset, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_real_escape_string", zif_php2v_mysqli_real_escape_string, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_fetch_assoc", zif_php2v_mysqli_fetch_assoc, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_fetch_row", zif_php2v_mysqli_fetch_row, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_fetch_array", zif_php2v_mysqli_fetch_array, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_fetch_object", zif_php2v_mysqli_fetch_object, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_num_rows", zif_php2v_mysqli_num_rows, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_free_result", zif_php2v_mysqli_free_result, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_close", zif_php2v_mysqli_close, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_get_server_info", zif_php2v_mysqli_get_server_info, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_more_results", zif_php2v_mysqli_more_results, arginfo_mysqli_generic, 0, 0},
-        {"mysqli_next_result", zif_php2v_mysqli_next_result, arginfo_mysqli_generic, 0, 0},
         {"gzinflate", zif_php2v_gzinflate, arginfo_mysqli_generic, 0, 0},
         {NULL, NULL, NULL, 0, 0}
     };
     if (EG(function_table)) {
         zend_register_functions(NULL, funcs, EG(function_table), MODULE_TEMPORARY);
+        if (zend_hash_str_find(EG(function_table), "mysqli_connect", sizeof("mysqli_connect") - 1)) {
+            printf("DIAGNOSTIC: mysqli_connect is AVAILABLE in Zend function table.\n");
+        } else {
+            printf("DIAGNOSTIC: mysqli_connect is NOT found in Zend function table !!!\n");
+        }
     }
 }
 void php2v_register_mysqli_classes() {
-    zend_class_entry ce;
-    INIT_CLASS_ENTRY(ce, "mysqli_result", NULL);
-    zend_register_internal_class(&ce);
+    // Native mysqli extension is loaded, no mock needed.
 }
 static inline int php2v_execute_file(const char* filepath) {
     php2v_update_tsrm_cache();
@@ -907,8 +888,10 @@ static inline int php2v_execute_file(const char* filepath) {
 }
 
 static inline void php2v_exit() {
-    // 在 HTTP 网关常驻模式下，安全的终止当前请求执行，而不杀死整个 C 进程
-    return;
+#ifdef ZTS
+    ZEND_TSRMLS_CACHE_UPDATE();
+#endif
+    zend_bailout();
 }
 
 static inline void php2v_run_entry(void *entry_fn) {

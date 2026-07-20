@@ -61,6 +61,7 @@ pub fn start_gateway(port int, entry_fn fn () PhpVal) {
 // index 处理每一个 HTTP 网关请求
 @[GET; POST; '/:path...']
 pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result {
+	println("=== Gateway request entered: $path ===")
 	query_string := if ctx.req.url.contains('?') { ctx.req.url.all_after('?') } else { '' }
 	request_uri := if ctx.req.url.contains('?') { ctx.req.url.all_before('?') } else { ctx.req.url }
 
@@ -153,11 +154,13 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	_ = call_function('define', [new_string('WP_CONTENT_DIR'), new_string('/Users/guweigang/wwwroot/wordpress/wp-content')])
 	
 	// 9. 在子线程 TSRM 绑定与 zend_try 保护中执行转译后页面主入口
+	println("=== Ready to execute PHP script in thread context ===")
 	if voidptr(app.entry_fn) != 0 {
 		unsafe {
 			C.php2v_run_in_thread_context(voidptr(app.entry_fn))
 		}
 	}
+	println("=== Finished executing PHP script ===")
 
 	// 提取由 C 侧 SAPI ub_write 回调直接收集到的裸输出数据 (包括 wp_die, Fatal error 等)
 	if req_buf.len > 0 && req_buf.buf != 0 {
