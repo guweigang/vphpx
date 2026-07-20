@@ -4,7 +4,8 @@ import os
 
 // call_function 调度 PHP 函数调用
 pub fn call_function(name string, args []PhpVal) PhpVal {
-	match name {
+	fn_name := name.to_lower()
+	match fn_name {
 		'define' {
 			if args.len >= 2 {
 				cname := args[0].to_string()
@@ -20,9 +21,6 @@ pub fn call_function(name string, args []PhpVal) PhpVal {
 				return new_bool(has_constant(cname))
 			}
 			return new_bool(false)
-		}
-		'mysqli_report' {
-			return new_bool(true)
 		}
 		'get_class' {
 			if args.len > 0 && args[0].is_object() {
