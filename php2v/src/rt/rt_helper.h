@@ -848,11 +848,12 @@ static inline void php2v_register_sandbox_bridge() {
         {"gzinflate", zif_php2v_gzinflate, arginfo_mysqli_generic, 0, 0},
         {NULL, NULL, NULL, 0, 0}
     };
-    zend_register_functions(NULL, funcs, NULL, MODULE_PERSISTENT);
+    zend_register_functions(NULL, funcs, NULL, MODULE_TEMPORARY);
 
 }
 static inline int php2v_execute_file(const char* filepath) {
     php2v_update_tsrm_cache();
+    php2v_register_custom_functions();
 #ifdef ZTS
     if (tsrm_get_ls_cache() == NULL) return 0;
 #endif
