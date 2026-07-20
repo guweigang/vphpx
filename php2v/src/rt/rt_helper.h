@@ -285,11 +285,41 @@ void php2v_inject_http_globals(const char *get_str, const char *post_str, const 
     php2v_parse_and_inject_global(TRACK_VARS_SERVER, server_str);
     php2v_parse_and_inject_global(TRACK_VARS_FILES, files_str);
     
-    zend_is_auto_global_str(ZEND_STRL("_GET"));
-    zend_is_auto_global_str(ZEND_STRL("_POST"));
-    zend_is_auto_global_str(ZEND_STRL("_COOKIE"));
-    zend_is_auto_global_str(ZEND_STRL("_SERVER"));
-    zend_is_auto_global_str(ZEND_STRL("_FILES"));
+    zend_string *zstr_server = zend_string_init("_SERVER", sizeof("_SERVER") - 1, 1);
+    Z_TRY_ADDREF(PG(http_globals)[TRACK_VARS_SERVER]);
+    zend_hash_update(&EG(symbol_table), zstr_server, &PG(http_globals)[TRACK_VARS_SERVER]);
+    zend_string_release(zstr_server);
+    
+    zend_string *zstr_get = zend_string_init("_GET", sizeof("_GET") - 1, 1);
+    Z_TRY_ADDREF(PG(http_globals)[TRACK_VARS_GET]);
+    zend_hash_update(&EG(symbol_table), zstr_get, &PG(http_globals)[TRACK_VARS_GET]);
+    zend_string_release(zstr_get);
+    
+    zend_string *zstr_post = zend_string_init("_POST", sizeof("_POST") - 1, 1);
+    Z_TRY_ADDREF(PG(http_globals)[TRACK_VARS_POST]);
+    zend_hash_update(&EG(symbol_table), zstr_post, &PG(http_globals)[TRACK_VARS_POST]);
+    zend_string_release(zstr_post);
+    
+    zend_string *zstr_cookie = zend_string_init("_COOKIE", sizeof("_COOKIE") - 1, 1);
+    Z_TRY_ADDREF(PG(http_globals)[TRACK_VARS_COOKIE]);
+    zend_hash_update(&EG(symbol_table), zstr_cookie, &PG(http_globals)[TRACK_VARS_COOKIE]);
+    zend_string_release(zstr_cookie);
+    
+    zval *request_arr = &PG(http_globals)[TRACK_VARS_REQUEST];
+    if (Z_TYPE_P(request_arr) == IS_ARRAY) {
+        zval_ptr_dtor(request_arr);
+    }
+    array_init(request_arr);
+    zend_hash_copy(Z_ARRVAL_P(request_arr), Z_ARRVAL(PG(http_globals)[TRACK_VARS_GET]), (copy_ctor_func_t)zval_add_ref);
+    zend_hash_copy(Z_ARRVAL_P(request_arr), Z_ARRVAL(PG(http_globals)[TRACK_VARS_POST]), (copy_ctor_func_t)zval_add_ref);
+    zend_hash_copy(Z_ARRVAL_P(request_arr), Z_ARRVAL(PG(http_globals)[TRACK_VARS_COOKIE]), (copy_ctor_func_t)zval_add_ref);
+    
+    zend_string *zstr_request = zend_string_init("_REQUEST", sizeof("_REQUEST") - 1, 1);
+    Z_TRY_ADDREF_P(request_arr);
+    zend_hash_update(&EG(symbol_table), zstr_request, request_arr);
+    zend_string_release(zstr_request);
+    
+    zend_rebuild_symbol_table();
 }
 
 static inline int php2v_instance_of(zval *obj, const char *class_name, size_t name_len) {
