@@ -5,6 +5,22 @@ import os
 // call_function 调度 PHP 函数调用
 pub fn call_function(name string, args []PhpVal) PhpVal {
 	match name {
+		'define' {
+			if args.len >= 2 {
+				cname := args[0].to_string()
+				cval := args[1]
+				register_constant(cname, cval)
+				return new_bool(true)
+			}
+			return new_bool(false)
+		}
+		'defined' {
+			if args.len >= 1 {
+				cname := args[0].to_string()
+				return new_bool(has_constant(cname))
+			}
+			return new_bool(false)
+		}
 		'get_class' {
 			if args.len > 0 && args[0].is_object() {
 				obj := args[0]

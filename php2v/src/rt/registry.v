@@ -16,6 +16,7 @@ mut:
 	class_factories  map[string]fn ([]PhpVal) PhpVal
 	include_registry map[string]fn () PhpVal
 	included_files   map[string]bool
+	constants        map[string]PhpVal
 	// 静态属性表：class_name -> prop_name -> value
 	static_props    map[string]map[string]PhpVal
 	class_metas     map[string]ClassMeta
@@ -33,6 +34,7 @@ fn get_registry() &Registry {
 			class_factories:  map[string]fn ([]PhpVal) PhpVal{}
 			include_registry: map[string]fn () PhpVal{}
 			included_files:   map[string]bool{}
+			constants:        map[string]PhpVal{}
 			static_props:     map[string]map[string]PhpVal{}
 			class_metas:      map[string]ClassMeta{}
 		}
@@ -41,6 +43,24 @@ fn get_registry() &Registry {
 		return r
 	}
 	return &Registry(p)
+}
+
+pub fn register_constant(name string, val PhpVal) {
+	mut r := get_registry()
+	r.constants[name] = val
+}
+
+pub fn has_constant(name string) bool {
+	mut r := get_registry()
+	return name in r.constants
+}
+
+pub fn get_constant(name string) PhpVal {
+	mut r := get_registry()
+	if name in r.constants {
+		return r.constants[name] or { new_null() }
+	}
+	return new_null()
 }
 
 pub fn register_class_metadata(name string, parents []string, methods []string, properties []string) {
