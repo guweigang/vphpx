@@ -134,6 +134,7 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	register_global('_COOKIE', cookie_arr)
 	register_global('_FILES', files_arr)
 	register_global('_REQUEST', request_arr)
+	_ = call_function('define', [new_string('ABSPATH'), new_string('/Users/guweigang/wwwroot/wordpress/')])
 	
 	// 9. 在子线程 TSRM 绑定与 zend_try 保护中执行转译后页面主入口
 	if voidptr(app.entry_fn) != 0 {
