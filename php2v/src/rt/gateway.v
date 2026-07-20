@@ -66,6 +66,11 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	server.array_set(new_string('PHP_SELF'), new_string('/index.php'))
 	server.array_set(new_string('SCRIPT_NAME'), new_string('/index.php'))
 	server.array_set(new_string('SCRIPT_FILENAME'), new_string('/Users/guweigang/wwwroot/wordpress/index.php'))
+	server.array_set(new_string('DOCUMENT_ROOT'), new_string('/Users/guweigang/wwwroot/wordpress'))
+	server.array_set(new_string('SERVER_NAME'), new_string('localhost'))
+	server.array_set(new_string('SERVER_PORT'), new_string('8083'))
+	server.array_set(new_string('HTTP_HOST'), new_string('localhost:8083'))
+	server.array_set(new_string('SERVER_PROTOCOL'), new_string('HTTP/1.1'))
 	
 	// 注入常用 HTTP 头部到 $_SERVER
 	if host := ctx.req.header.get(.host) {

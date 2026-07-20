@@ -881,6 +881,8 @@ static inline int php2v_execute_file(const char* filepath) {
 
     zend_try {
         php_execute_script(&file_handle);
+        php_output_end_all();
+        php_output_flush_all();
     } zend_catch {
         php2v_refresh_request();
     } zend_end_try();

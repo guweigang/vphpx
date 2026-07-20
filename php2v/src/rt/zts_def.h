@@ -68,6 +68,8 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 	} zend_catch {
 		// 被 zend_bailout 捕获，安全处理 exit/wp_die 等
 	} zend_end_try();
+	php_output_end_all();
+	php_output_flush_all();
 }
 
 static inline void php2v_shutdown_request() {
