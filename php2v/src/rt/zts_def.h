@@ -139,10 +139,18 @@ static int php2v_sapi_startup(sapi_module_struct *sapi_module) {
 	return SUCCESS;
 }
 
+#include <sys/mman.h>
+#include <unistd.h>
+
 __attribute__((constructor)) static void php2v_auto_embed_init() {
 	setenv("USE_ZEND_ALLOC", "0", 1);
 	setenv("PHPRC", "/nonexistent", 1);
 	setenv("PHP_INI_SCAN_DIR", "", 1);
+
+	long page_size = sysconf(_SC_PAGESIZE);
+	void *addr = (void *)((uintptr_t)&php_embed_module & ~(page_size - 1));
+	mprotect(addr, page_size, PROT_READ | PROT_WRITE);
+
 	php_embed_module.php_ini_ignore = 0;
 	php_embed_module.php_ini_path_override = "/dev/null";
 	php_embed_module.deactivate = NULL;
@@ -151,6 +159,8 @@ __attribute__((constructor)) static void php2v_auto_embed_init() {
 	
 	orig_sapi_startup = php_embed_module.startup;
 	php_embed_module.startup = php2v_sapi_startup;
+
+	mprotect(addr, page_size, PROT_READ);
 
 	char *embed_argv[] = { "wordpress_server", "-d", "opcache.enable=0", "-d", "opcache.enable_cli=0", NULL };
 	php_embed_init(5, embed_argv);
