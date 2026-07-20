@@ -860,6 +860,12 @@ static inline int php2v_execute_file(const char* filepath) {
     php2v_register_persistent_constant("WPINC", "wp-includes");
     php2v_register_persistent_constant("WP_CONTENT_DIR", "/Users/guweigang/wwwroot/wordpress/wp-content");
     php2v_register_persistent_constant("WP_USE_THEMES", "1");
+    php2v_register_persistent_constant("DB_NAME", "wordpress");
+    php2v_register_persistent_constant("DB_USER", "root");
+    php2v_register_persistent_constant("DB_PASSWORD", "Abcd.1234");
+    php2v_register_persistent_constant("DB_HOST", "localhost");
+    php2v_register_persistent_constant("DB_CHARSET", "utf8mb4");
+    php2v_register_persistent_constant("DB_COLLATE", "");
     php2v_register_persistent_constant("MYSQLI_REPORT_OFF", "0");
     php2v_register_persistent_constant("MYSQLI_REPORT_ERROR", "1");
     php2v_register_persistent_constant("MYSQLI_REPORT_STRICT", "2");
