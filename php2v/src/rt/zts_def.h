@@ -124,14 +124,8 @@ __attribute__((constructor)) static void php2v_auto_embed_init() {
 	php_embed_module.deactivate = NULL;
 	php_embed_module.flush = NULL;
 	php_embed_module.ub_write = php2v_ub_write;
-#ifdef __APPLE__
-	int argc = *_NSGetArgc();
-	char **argv = *_NSGetArgv();
-	php_embed_init(argc, argv);
-#else
-	char *argv[] = { "php2v", NULL };
-	php_embed_init(1, argv);
-#endif
+	char *embed_argv[] = { "wordpress_server", "-d", "opcache.enable=0", "-d", "opcache.enable_cli=0", NULL };
+	php_embed_init(5, embed_argv);
 #ifdef ZTS
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
