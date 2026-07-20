@@ -1,6 +1,7 @@
 #ifndef PHP2V_RT_ZTS_DEF_H
 #define PHP2V_RT_ZTS_DEF_H
 
+#include <php.h>
 #include <sapi/embed/php_embed.h>
 #include <Zend/zend_exceptions.h>
 
@@ -10,6 +11,23 @@
 
 extern void php2v_register_sandbox_bridge();
 extern void php2v_inject_http_globals(zval *get, zval *post, zval *cookie, zval *server, zval *files);
+
+typedef struct {
+	char *buf;
+	size_t cap;
+	size_t len;
+	zval *get;
+	zval *post;
+	zval *cookie;
+	zval *server;
+	zval *files;
+} php2v_req_buf;
+
+#ifdef _MSC_VER
+static __declspec(thread) void* php2v_current_ctx = NULL;
+#else
+static __thread void* php2v_current_ctx = NULL;
+#endif
 
 #ifdef ZTS
 __attribute__((visibility("default"))) extern __thread void *TSRMLS_CACHE;
@@ -86,23 +104,6 @@ static inline void php2v_shutdown_request() {
 	php_request_shutdown(NULL);
 #endif
 }
-
-typedef struct {
-	char *buf;
-	size_t cap;
-	size_t len;
-	zval *get;
-	zval *post;
-	zval *cookie;
-	zval *server;
-	zval *files;
-} php2v_req_buf;
-
-#ifdef _MSC_VER
-static __declspec(thread) void* php2v_current_ctx = NULL;
-#else
-static __thread void* php2v_current_ctx = NULL;
-#endif
 
 static inline size_t php2v_ub_write(const char *str, size_t str_length) {
 #ifdef ZTS
