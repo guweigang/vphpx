@@ -49,13 +49,6 @@ static inline void php2v_refresh_request() {
 	if (EG(exception)) {
 		zend_clear_exception();
 	}
-	// 完整的 PHP 请求生命周期重置：清空 class 表、函数表、全局变量等
-	// 使常驻模式下每次请求都有干净的引擎状态
-	php_request_shutdown(NULL);
-	php_request_startup();
-#ifdef ZTS
-	ZEND_TSRMLS_CACHE_UPDATE();
-#endif
 }
 
 static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
