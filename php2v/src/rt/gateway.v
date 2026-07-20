@@ -47,9 +47,11 @@ pub fn start_gateway(port int, entry_fn fn () PhpVal) {
 // index 处理每一个 HTTP 网关请求
 @[GET; POST; '/:path...']
 pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result {
-	println("=== Gateway request entered: $path ===")
+	println("=== Gateway request entered: ${path} ===")
+	// REQUEST_URI 必须是完整的 path + query string
+	request_uri := ctx.req.url
 	query_string := if ctx.req.url.contains('?') { ctx.req.url.all_after('?') } else { '' }
-	request_uri := if ctx.req.url.contains('?') { ctx.req.url.all_before('?') } else { ctx.req.url }
+	path_info := if ctx.req.url.contains('?') { ctx.req.url.all_before('?') } else { ctx.req.url }
 
 	// 1. 构建超全局变量键值 map
 	mut server_map := map[string]string{}
@@ -57,7 +59,7 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	server_map['REQUEST_URI'] = request_uri
 	server_map['QUERY_STRING'] = query_string
 	server_map['REMOTE_ADDR'] = ctx.ip()
-	server_map['PHP_SELF'] = '/index.php'
+	server_map['PHP_SELF'] = path_info
 	server_map['SCRIPT_NAME'] = '/index.php'
 	server_map['SCRIPT_FILENAME'] = '/Users/guweigang/wwwroot/wordpress/index.php'
 	server_map['DOCUMENT_ROOT'] = '/Users/guweigang/wwwroot/wordpress'
