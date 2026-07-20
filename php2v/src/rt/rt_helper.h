@@ -853,6 +853,11 @@ void php2v_register_sandbox_bridge() {
         zend_register_functions(NULL, funcs, EG(function_table), MODULE_TEMPORARY);
     }
 }
+void php2v_register_mysqli_classes() {
+    zend_class_entry ce;
+    INIT_CLASS_ENTRY(ce, "mysqli_result", NULL);
+    zend_register_internal_class(&ce);
+}
 static inline int php2v_execute_file(const char* filepath) {
     php2v_update_tsrm_cache();
 #ifdef ZTS

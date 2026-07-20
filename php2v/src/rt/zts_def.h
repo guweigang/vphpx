@@ -144,6 +144,8 @@ __attribute__((constructor)) static void php2v_auto_embed_init() {
 #endif
 	extern zend_op_array *compile_file(zend_file_handle *file_handle, int type);
 	zend_compile_file = compile_file;
+	extern void php2v_register_mysqli_classes();
+	php2v_register_mysqli_classes();
 	zend_string *k1 = zend_string_init("opcache.enable", sizeof("opcache.enable") - 1, 0);
 	zend_alter_ini_entry_chars(k1, "0", sizeof("0") - 1, PHP_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
 	zend_string_release(k1);
