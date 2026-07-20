@@ -57,9 +57,10 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 
 	mut target_script := ''
 	doc_root := '/Users/guweigang/wwwroot/wordpress'
-	potential_file := doc_root + path_info
-	if path_info.ends_with('.php') && os.exists(potential_file) {
-		target_script = potential_file
+	if path_info == '/' || path_info == '' {
+		target_script = doc_root + '/index.php'
+	} else if path_info.ends_with('.php') && os.exists(doc_root + path_info) {
+		target_script = doc_root + path_info
 	}
 
 	// 1. 构建超全局变量键值 map
