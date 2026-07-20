@@ -13,9 +13,14 @@ fn C.php2v_inject_http_globals(get &C.zval, post &C.zval, cookie &C.zval, server
 
 struct C.php2v_req_buf {
 mut:
-	buf &char
-	cap usize
-	len usize
+	buf    &char
+	cap    usize
+	len    usize
+	get    &C.zval
+	post   &C.zval
+	cookie &C.zval
+	server &C.zval
+	files  &C.zval
 }
 
 // RequestContext 并发安全隔离容器
@@ -128,11 +133,13 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 		buf: 0
 		cap: 0
 		len: 0
+		get: get_arr.raw
+		post: post_arr.raw
+		cookie: cookie_arr.raw
+		server: server.raw
+		files: files_arr.raw
 	}
 	C.php2v_set_current_ctx(voidptr(&req_buf))
-	// unsafe {
-	// 	C.php2v_inject_http_globals(get_arr.raw, post_arr.raw, cookie_arr.raw, server.raw, files_arr.raw)
-	// }
 	register_global('_SERVER', server)
 	register_global('_GET', get_arr)
 	register_global('_POST', post_arr)

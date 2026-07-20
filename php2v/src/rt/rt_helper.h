@@ -237,7 +237,7 @@ static inline void php2v_register_global(const char *name, size_t name_len, zval
 	zend_rebuild_symbol_table();
 }
 
-static inline void php2v_inject_http_globals(zval *get, zval *post, zval *cookie, zval *server, zval *files) {
+void php2v_inject_http_globals(zval *get, zval *post, zval *cookie, zval *server, zval *files) {
 	php2v_update_tsrm_cache();
 	
 	if (Z_REFCOUNTED(PG(http_globals)[TRACK_VARS_GET])) zval_ptr_dtor(&PG(http_globals)[TRACK_VARS_GET]);

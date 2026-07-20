@@ -9,6 +9,7 @@
 #endif
 
 extern void php2v_register_sandbox_bridge();
+extern void php2v_inject_http_globals(zval *get, zval *post, zval *cookie, zval *server, zval *files);
 
 #ifdef ZTS
 __attribute__((visibility("default"))) extern __thread void *TSRMLS_CACHE;
@@ -63,6 +64,10 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 	php_request_startup();
 	ZEND_TSRMLS_CACHE_UPDATE();
 	php2v_register_sandbox_bridge();
+	php2v_req_buf *b = (php2v_req_buf *)php2v_current_ctx;
+	if (b && b->server) {
+		php2v_inject_http_globals(b->get, b->post, b->cookie, b->server, b->files);
+	}
 #endif
 	zend_try {
 		if (entry_fn) {
@@ -86,6 +91,11 @@ typedef struct {
 	char *buf;
 	size_t cap;
 	size_t len;
+	zval *get;
+	zval *post;
+	zval *cookie;
+	zval *server;
+	zval *files;
 } php2v_req_buf;
 
 #ifdef _MSC_VER
