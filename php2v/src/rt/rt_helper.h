@@ -821,6 +821,11 @@ static void zif_php2v_mysqli_get_server_info(zend_execute_data *execute_data, zv
 ZEND_BEGIN_ARG_INFO_EX(arginfo_mysqli_generic, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
+static int php2v_exit_handler(zend_execute_data *execute_data) {
+    php2v_exit();
+    return ZEND_USER_OPCODE_CONTINUE;
+}
+
 void php2v_register_sandbox_bridge() {
     static const zend_function_entry funcs[] = {
         {"vphp_call_v_native", zif_vphp_call_v_native, arginfo_vphp_call_v_native, 2, 0},
@@ -835,6 +840,8 @@ void php2v_register_sandbox_bridge() {
             printf("DIAGNOSTIC: mysqli_connect is NOT found in Zend function table !!!\n");
         }
     }
+    // 拦截虚拟机层的所有 exit 和 die 动作 ！！！
+    zend_set_user_opcode_handler(ZEND_EXIT, php2v_exit_handler);
 }
 void php2v_register_mysqli_classes() {
     // Native mysqli extension is loaded, no mock needed.
