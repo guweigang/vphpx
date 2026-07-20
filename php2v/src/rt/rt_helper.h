@@ -904,7 +904,10 @@ void php2v_register_sandbox_bridge() {
         {NULL, NULL, NULL, 0, 0}
     };
     if (EG(function_table)) {
-        zend_register_functions(NULL, funcs, EG(function_table), MODULE_TEMPORARY);
+        /* 防止重复注册 */
+        if (!zend_hash_str_find(EG(function_table), "vphp_call_v_native", sizeof("vphp_call_v_native") - 1)) {
+            zend_register_functions(NULL, funcs, EG(function_table), MODULE_TEMPORARY);
+        }
         if (zend_hash_str_find(EG(function_table), "mysqli_connect", sizeof("mysqli_connect") - 1)) {
             printf("DIAGNOSTIC: mysqli_connect is AVAILABLE in Zend function table.\n");
         } else {
