@@ -3,6 +3,7 @@
 
 #include <php.h>
 #include "zts_def.h"
+#include <Zend/zend_language_scanner.h>
 
 static zval php2v_active_exception;
 static int php2v_has_active_exception = 0;
@@ -888,8 +889,8 @@ static inline int php2v_execute_file(const char* filepath) {
     file_handle.filename = filepath;
 #endif
 
-    uint32_t old_compiler_options = CG(compiler_options);
-    CG(compiler_options) |= ZEND_COMPILE_IGNORE_OTHER_FILES;
+    zend_op_array *(*old_compile_file)(zend_file_handle *, int) = zend_compile_file;
+    zend_compile_file = compile_file;
     zend_try {
         php_execute_script(&file_handle);
         php_output_end_all();
@@ -897,7 +898,7 @@ static inline int php2v_execute_file(const char* filepath) {
     } zend_catch {
         php2v_refresh_request();
     } zend_end_try();
-    CG(compiler_options) = old_compiler_options;
+    zend_compile_file = old_compile_file;
 
     zend_destroy_file_handle(&file_handle);
     return 0;
