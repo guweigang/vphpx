@@ -820,7 +820,7 @@ static void zif_php2v_mysqli_get_server_info(zend_execute_data *execute_data, zv
 ZEND_BEGIN_ARG_INFO_EX(arginfo_mysqli_generic, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
-static inline void php2v_register_sandbox_bridge() {
+void php2v_register_sandbox_bridge() {
     static const zend_function_entry funcs[] = {
         {"vphp_call_v_native", zif_vphp_call_v_native, arginfo_vphp_call_v_native, 2, 0},
         {"mysqli_init", zif_php2v_mysqli_init, arginfo_mysqli_generic, 0, 0},

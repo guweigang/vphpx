@@ -8,7 +8,7 @@
 #include <crt_externs.h>
 #endif
 
-static inline void php2v_register_custom_functions();
+extern void php2v_register_sandbox_bridge();
 
 #ifdef ZTS
 __attribute__((visibility("default"))) extern __thread void *TSRMLS_CACHE;
@@ -62,7 +62,7 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 	}
 	php_request_startup();
 	ZEND_TSRMLS_CACHE_UPDATE();
-	php2v_register_custom_functions();
+	php2v_register_sandbox_bridge();
 #endif
 	zend_try {
 		if (entry_fn) {
@@ -81,8 +81,6 @@ static inline void php2v_shutdown_request() {
 	php_request_shutdown(NULL);
 #endif
 }
-
-static inline void php2v_register_sandbox_bridge();
 
 typedef struct {
 	char *buf;

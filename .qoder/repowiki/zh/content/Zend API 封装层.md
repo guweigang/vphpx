@@ -20,6 +20,12 @@
 - [zend/runtime.v](file://vphp/zend/runtime.v)
 </cite>
 
+## 更新摘要
+**变更内容**
+- 增强了超全局变量注入功能，新增环境变量和服务器变量的字符串设置接口
+- 优化了输出缓冲处理机制，提供更高效的输出写入方法
+- 改进了异常管理机制，支持多种异常抛出方式和更完善的异常处理流程
+
 ## 目录
 1. [简介](#简介)
 2. [项目结构](#项目结构)
@@ -33,6 +39,8 @@
 
 ## 简介
 本章节聚焦 zend/ 子目录对 Zend C API 的封装，涵盖类型、值、调用、闭包、数组、对象、类入口、常量、超全局变量、执行上下文、包含与运行时等。该层以 V 语言编写，通过 bridge_api.v 声明并调用 v_bridge.c/.h 提供的桥接函数，向上为 zval/、object/、execute/ 等高层模块提供稳定、安全的 C 互操作接口。
+
+**更新** 本次更新重点增强了超全局变量注入能力、输出缓冲处理和异常管理机制，提供了更完善的运行时环境控制。
 
 ## 项目结构
 zend/ 子目录按职责划分：
@@ -128,10 +136,10 @@ P --> B
   - class_entry.v：ZendClassEntry 包装与静态属性读写、接口绑定。
   - class_handlers.v：ClassHandlersConfig 与 new_class_handlers 用于构造统一处理器集合。
 - 系统能力
-  - superglobals.v：ENV/SERVER/GET/POST/COOKIE/FILES/REQUEST 超全局数组访问与设置。
+  - superglobals.v：ENV/SERVER/GET/POST/COOKIE/FILES/REQUEST 超全局数组访问与设置，**新增环境变量和服务器变量的字符串设置接口**。
   - execute.v：从 zend_execute_data 读取当前活动类、this 对象与参数。
   - include.v：动态包含 PHP 文件。
-  - runtime.v：内存管理、异常抛出/检查/清理、输出、框架/请求生命周期钩子、自动释放池等。
+  - runtime.v：内存管理、异常抛出/检查/清理、输出、框架/请求生命周期钩子、自动释放池等，**增强了异常管理和输出处理能力**。
   - native_api.v：直接声明部分 Zend 原生 API（如 add_property_*、ZVAL_* 宏）。
   - bridge_api.v：集中声明 v_bridge.c/.h 暴露的所有桥接函数，是 zend/ 的核心对外契约。
 
@@ -153,7 +161,7 @@ P --> B
 - [zend/bridge_api.v:1-192](file://vphp/zend/bridge_api.v#L1-L192)
 
 ## 架构总览
-zend/ 作为内部模块，遵循“只向下依赖”的原则：上层（zval/、object/、execute/、scope/）可导入 zend/，而 zend/ 不反向导入上层。其核心路径为：V 代码 → zend/* → bridge_api.v → v_bridge.c/.h → Zend/PHP C API。
+zend/ 作为内部模块，遵循"只向下依赖"的原则：上层（zval/、object/、execute/、scope/）可导入 zend/，而 zend/ 不反向导入上层。其核心路径为：V 代码 → zend/* → bridge_api.v → v_bridge.c/.h → Zend/PHP C API。
 
 ```mermaid
 graph TB
@@ -361,6 +369,24 @@ ZendClassEntry <.. ObjectAPI : "用于返回/绑定对象"
 
 ### 超全局变量（superglobals.v）
 - 提供 ENV/SERVER/GET/POST/COOKIE/FILES/REQUEST 的原始 zval 访问与设置接口，便于上层快速读写请求环境数据。
+- **新增** set_env_superglobal_string 和 set_server_superglobal_string 方法，支持直接设置环境变量和服务器变量的字符串值。
+
+**更新** 新增了环境变量和服务器变量的字符串设置接口，增强了运行时环境管理能力。
+
+```mermaid
+sequenceDiagram
+participant App as "应用程序"
+participant SG as "superglobals.v"
+participant Bridge as "bridge_api.v"
+App->>SG : set_env_superglobal_string(name, value)
+SG->>Bridge : vphp_superglobal_set_env_string(name, value)
+Bridge-->>SG : 完成
+SG-->>App : 返回
+```
+
+图示来源
+- [zend/superglobals.v:57-64](file://vphp/zend/superglobals.v#L57-L64)
+- [zend/bridge_api.v:98-101](file://vphp/zend/bridge_api.v#L98-L101)
 
 章节来源
 - [zend/superglobals.v:1-64](file://vphp/zend/superglobals.v#L1-L64)
@@ -382,10 +408,12 @@ ZendClassEntry <.. ObjectAPI : "用于返回/绑定对象"
 
 ### 运行时与异常（runtime.v）
 - 内存管理：emalloc/efree/v_runtime_free。
-- 异常：抛出（字符串/类名/对象）、检查、获取消息、清理。
-- 输出：向 PHP 输出流写入。
+- 异常：**增强**了异常抛出机制，支持字符串异常、类名异常和对象异常的多种方式抛出，提供更完善的异常检查和清理功能。
+- 输出：向 PHP 输出流写入，**优化了输出缓冲处理**。
 - 生命周期：框架初始化、安装/卸载运行时绑定钩子、请求启动/关闭、自动释放池标记/加入/忘记/排空。
 - 计数器：运行时统计信息查询。
+
+**更新** 异常管理机制得到显著增强，现在支持三种不同的异常抛出方式，并且异常消息获取更加安全可靠。
 
 ```mermaid
 sequenceDiagram
@@ -396,10 +424,11 @@ V->>RT : throw_exception(msg, code)
 RT->>Bridge : vphp_throw(msg, code)
 Bridge-->>RT : 完成
 RT-->>V : 返回
+Note over V,RT : 新增 throw_exception_class 和 throw_exception_object 方法
 ```
 
 图示来源
-- [zend/runtime.v:19-27](file://vphp/zend/runtime.v#L19-L27)
+- [zend/runtime.v:19-36](file://vphp/zend/runtime.v#L19-L36)
 - [zend/bridge_api.v:33-35](file://vphp/zend/bridge_api.v#L33-L35)
 
 章节来源
@@ -417,7 +446,7 @@ RT-->>V : 返回
 - [zend/cincludes.v:1-5](file://vphp/zend/cincludes.v#L1-L5)
 
 ## 依赖关系分析
-- 单向依赖：zend/ 仅依赖 C 头文件与 v_bridge.c/.h，不反向依赖上层模块，符合“内部模块”约束。
+- 单向依赖：zend/ 仅依赖 C 头文件与 v_bridge.c/.h，不反向依赖上层模块，符合"内部模块"约束。
 - 关键耦合点：
   - bridge_api.v 是所有 zend/* 模块的统一出口，集中声明外部函数，降低分散声明带来的维护成本。
   - types.v 定义的 C.* 结构与 bridge_api.v 中的 C.* 函数形成强耦合，任何内核结构变化需同步更新。
@@ -464,6 +493,7 @@ CIN["cincludes.v"] --> BA
 - 字符串处理：优先使用长度已知的字符串写入接口，避免二次拷贝。
 - 异常路径优化：在热点路径中尽量避免频繁抛出异常，必要时缓存或复用异常对象。
 - 自动释放池：合理使用 autorelease_mark/add/forget/drain，减少手动释放开销。
+- **超全局变量操作**：使用新的字符串设置接口时注意字符串长度，避免不必要的内存分配。
 
 [本节为通用指导，无需源码引用]
 
@@ -473,15 +503,20 @@ CIN["cincludes.v"] --> BA
   - 空指针/越界：检查 voidptr 重载是否传入有效指针；注意 index 边界。
   - 异常未捕获：调用 has_exception 与 exception_message_opt 获取异常信息并清理。
   - 资源泄漏：确保 release_zval/release_persistent_zval 成对调用，或使用自动释放池。
+  - **超全局变量设置失败**：检查环境变量名称和值的合法性，确保字符串编码正确。
 - 调试建议
   - 使用 runtime_counters 查看自动释放、拥有者与对象注册表长度，评估内存压力。
   - 在关键路径前后记录 mark 并使用 drain 清理，验证资源回收。
+  - **异常调试**：使用新的异常抛出方法时，确保异常对象的生命周期管理正确。
 
 章节来源
 - [zend/constants.v:1-19](file://vphp/zend/constants.v#L1-L19)
 - [zend/value.v:3-10](file://vphp/zend/value.v#L3-L10)
 - [zend/runtime.v:38-65](file://vphp/zend/runtime.v#L38-L65)
 - [zend/runtime.v:114-139](file://vphp/zend/runtime.v#L114-L139)
+- [zend/superglobals.v:57-64](file://vphp/zend/superglobals.v#L57-L64)
 
 ## 结论
-zend/ 子目录提供了对 Zend C API 的系统性封装，通过 bridge_api.v 集中暴露稳定的桥接函数，向上层屏蔽 C 互操作的复杂性。其分层清晰、职责明确，既保证了安全性与可维护性，也为上层的高层抽象（zval/、object/、execute/）奠定了坚实基础。在实际使用中，应严格遵循所有权与生命周期约定，合理使用自动释放与资源管理工具，以获得最佳性能与稳定性。
+zend/ 子目录提供了对 Zend C API 的系统性封装，通过 bridge_api.v 集中暴露稳定的桥接函数，向上层屏蔽 C 互操作的复杂性。其分层清晰、职责明确，既保证了安全性与可维护性，也为上层的高层抽象（zval/、object/、execute/）奠定了坚实基础。
+
+**更新总结** 本次更新显著增强了超全局变量注入能力、输出缓冲处理和异常管理机制，提供了更完善的运行时环境控制和错误处理能力。在实际使用中，应严格遵循所有权与生命周期约定，合理使用自动释放与资源管理工具，并结合新的超全局变量设置接口和增强的异常处理机制，以获得最佳性能与稳定性。

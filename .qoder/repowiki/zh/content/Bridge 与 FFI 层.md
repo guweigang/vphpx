@@ -12,6 +12,13 @@
 - [values.inc.c](file://vphp/bridge/values.inc.c)
 </cite>
 
+## 更新摘要
+**变更内容**   
+- 增强了多线程支持，引入了ZEND_TLS线程局部存储机制
+- 改进了错误处理机制，增加了详细的调试日志和异常处理
+- 优化了与Zend引擎的交互，增强了运行时绑定钩子
+- 完善了自动释放池和拥有池的线程安全机制
+
 ## 目录
 1. [简介](#简介)
 2. [项目结构](#项目结构)
@@ -26,6 +33,8 @@
 
 ## 简介
 本文件聚焦于 bridge/ 目录与 v_bridge.c/h 的 C 兼容层设计，以及 .inc.c 片段组织方式。该层是 V↔Zend/PHP 双向互操作的关键边界：对外暴露稳定的 C API（由 v_bridge.h 声明），对内通过 compat.h 屏蔽 PHP/Zend 版本差异，并通过多个 .inc.c 按功能域拆分实现，最终在单一编译单元 v_bridge.c 中组合，便于现有构建脚本消费。
+
+**更新** 增强了多线程支持和错误处理机制，改进了与 Zend 引擎的交互
 
 ## 项目结构
 - v_bridge.h：对外 C API 头文件，定义对象包装、值操作、调用桥接、运行时钩子等接口。
@@ -47,9 +56,11 @@ A --> E["bridge/values.inc.c<br/>值/数组/资源/静态属性"]
 A --> F["bridge/object.inc.c<br/>对象注册/侧车/属性拦截"]
 A --> G["bridge/compat.h<br/>Zend API 兼容层"]
 H["v_bridge.h<br/>对外 C API 声明"] --> A
+I["ZEND_TLS<br/>线程局部存储"] --> C
+I --> F
 ```
 
-图表来源
+**图表来源**
 - [v_bridge.c:149-153](file://vphp/v_bridge.c#L149-L153)
 - [v_bridge.h:1-265](file://vphp/v_bridge.h#L1-L265)
 - [compat.h:1-242](file://vphp/bridge/compat.h#L1-L242)
@@ -77,6 +88,8 @@ H["v_bridge.h<br/>对外 C API 声明"] --> A
 - 兼容性
   - compat.h 将 Zend API 直接调用收敛到一处，屏蔽 8.2+ 至未来版本的签名变化。
 
+**更新** 增强了多线程支持，使用 ZEND_TLS 确保线程安全的状态管理
+
 章节来源
 - [v_bridge.h:13-95](file://vphp/v_bridge.h#L13-L95)
 - [object.inc.c:1-103](file://vphp/bridge/object.inc.c#L1-L103)
@@ -86,18 +99,22 @@ H["v_bridge.h<br/>对外 C API 声明"] --> A
 - [compat.h:15-242](file://vphp/bridge/compat.h#L15-L242)
 
 ## 架构总览
-整体采用“单编译单元 + 多片段”的组织方式：v_bridge.c 作为唯一被构建系统消费的编译单元，负责初始化全局状态、注册表、TLS 池、可选符号解析，并在末尾顺序 include 各 .inc.c 片段，从而获得清晰的职责边界与可维护性。
+整体采用"单编译单元 + 多片段"的组织方式：v_bridge.c 作为唯一被构建系统消费的编译单元，负责初始化全局状态、注册表、TLS 池、可选符号解析，并在末尾顺序 include 各 .inc.c 片段，从而获得清晰的职责边界与可维护性。
+
+**更新** 增强了多线程支持，通过 ZEND_TLS 确保线程局部状态的隔离
 
 ```mermaid
 sequenceDiagram
 participant Caller as "V 侧调用者"
 participant Bridge as "v_bridge.c<br/>入口/全局状态"
+participant TLS as "ZEND_TLS<br/>线程局部存储"
 participant Compat as "compat.h<br/>Zend 兼容"
 participant Runtime as "runtime.inc.c<br/>类型/异常/池"
 participant Call as "call.inc.c<br/>调用/闭包"
 participant Values as "values.inc.c<br/>值/资源"
 participant Object as "object.inc.c<br/>对象/注册表"
 Caller->>Bridge : 调用 vphp_* API
+Bridge->>TLS : 访问线程局部状态
 Bridge->>Compat : 使用兼容层访问 Zend
 alt 需要类型校验
 Bridge->>Runtime : 参数/返回校验
@@ -114,7 +131,7 @@ end
 Bridge-->>Caller : 返回结果或异常
 ```
 
-图表来源
+**图表来源**
 - [v_bridge.c:149-153](file://vphp/v_bridge.c#L149-L153)
 - [compat.h:42-242](file://vphp/bridge/compat.h#L42-L242)
 - [runtime.inc.c:288-380](file://vphp/bridge/runtime.inc.c#L288-L380)
@@ -136,6 +153,8 @@ Bridge-->>Caller : 返回结果或异常
 - 复杂度与性能
   - 注册表查找 O(1)，sidecar 按需分配，避免每对象都携带额外开销。
   - 继承处理器克隆缓存，减少重复拷贝成本。
+
+**更新** 增强了对象生命周期的调试日志，提供更详细的析构跟踪信息
 
 ```mermaid
 classDiagram
@@ -163,7 +182,7 @@ class vphp_class_handlers {
 vphp_object_wrapper --> vphp_class_handlers : "绑定类级回调"
 ```
 
-图表来源
+**图表来源**
 - [v_bridge.h:13-35](file://vphp/v_bridge.h#L13-L35)
 - [object.inc.c:713-769](file://vphp/bridge/object.inc.c#L713-L769)
 - [object.inc.c:771-800](file://vphp/bridge/object.inc.c#L771-L800)
@@ -186,6 +205,8 @@ vphp_object_wrapper --> vphp_class_handlers : "绑定类级回调"
 - 包含执行
   - vphp_include_file：解析路径、去重、初始化 file_handle 并执行。
 
+**更新** 增强了调用过程的调试日志，提供更详细的参数和状态跟踪
+
 ```mermaid
 sequenceDiagram
 participant V as "V 侧"
@@ -193,16 +214,18 @@ participant Call as "call.inc.c"
 participant Compat as "compat.h"
 participant Zend as "Zend 引擎"
 V->>Call : vphp_call_callable(callable, params)
+Call->>Call : 详细调试日志记录
 Call->>Compat : vphp_zend_fcall_info_init(...)
 Call->>Call : 复制参数到栈上
 Call->>Compat : vphp_zend_call_function(fci, fcc)
 Compat-->>Zend : 实际调用
 Zend-->>Compat : 返回结果/异常
 Compat-->>Call : 返回
+Call->>Call : 退出调试日志
 Call-->>V : 结果/错误码
 ```
 
-图表来源
+**图表来源**
 - [call.inc.c:159-238](file://vphp/bridge/call.inc.c#L159-L238)
 - [compat.h:100-109](file://vphp/bridge/compat.h#L100-L109)
 
@@ -226,6 +249,8 @@ Call-->>V : 结果/错误码
   - vphp_autorelease_mark/add/forget/drain：基于 mark 的区间释放，异常路径快速清空。
   - vphp_owned_add/remove：记录所有者的 zval，防止重复释放与误删。
 
+**更新** 增强了多线程支持，使用 ZEND_TLS 确保线程安全的状态管理，改进了错误处理和调试日志
+
 ```mermaid
 flowchart TD
 Start(["进入 vphp_validate_internal_call"]) --> CheckFunc{"函数存在?"}
@@ -245,7 +270,7 @@ Done --> |否| LoopArgs
 Done --> |是| ReturnTrue
 ```
 
-图表来源
+**图表来源**
 - [runtime.inc.c:288-340](file://vphp/bridge/runtime.inc.c#L288-L340)
 - [runtime.inc.c:226-286](file://vphp/bridge/runtime.inc.c#L226-L286)
 
@@ -269,6 +294,8 @@ Done --> |是| ReturnTrue
 - 静态属性/常量
   - 读/写静态属性与类常量，内部通过 compat.h 访问 Zend API。
 
+**更新** 增强了内存管理的调试日志，提供更详细的 zval 生命周期跟踪
+
 章节来源
 - [values.inc.c:1-101](file://vphp/bridge/values.inc.c#L1-L101)
 - [values.inc.c:137-209](file://vphp/bridge/values.inc.c#L137-L209)
@@ -282,6 +309,8 @@ Done --> |是| ReturnTrue
 - 工具函数
   - vphp_bridge_debug_log / vphp_bridge_debug_log_zval：统一格式化输出，支持 zval 基本信息打印。
 
+**更新** 增强了调试日志的统一管理和格式化处理
+
 章节来源
 - [debug.inc.c:1-93](file://vphp/bridge/debug.inc.c#L1-L93)
 
@@ -290,6 +319,8 @@ Done --> |是| ReturnTrue
   - 最低 PHP 8.2，针对 8.4+ 的 ZEND_RAW_FENTRY 宏扩展。
 - 内联适配
   - 类型检查、参数/返回错误、用户类型慢路径、闭包创建、异常抛出、资源注册、只读属性修改错误等。
+
+**更新** 增强了版本兼容性处理，支持更多 PHP 版本特性
 
 章节来源
 - [compat.h:11-21](file://vphp/bridge/compat.h#L11-L21)
@@ -304,6 +335,8 @@ Done --> |是| ReturnTrue
 - 潜在循环
   - 无直接循环 include；通过 v_bridge.c 的顺序 include 保证符号可见性与初始化顺序。
 
+**更新** 增强了线程局部存储的使用，确保多线程环境下的安全性
+
 ```mermaid
 graph LR
 vbc["v_bridge.c"] --> vbh["v_bridge.h"]
@@ -313,9 +346,11 @@ vbc --> rt["bridge/runtime.inc.c"]
 vbc --> cl["bridge/call.inc.c"]
 vbc --> vl["bridge/values.inc.c"]
 vbc --> ob["bridge/object.inc.c"]
+tls["ZEND_TLS<br/>线程局部存储"] --> rt
+tls --> ob
 ```
 
-图表来源
+**图表来源**
 - [v_bridge.c:149-153](file://vphp/v_bridge.c#L149-L153)
 - [v_bridge.h:1-265](file://vphp/v_bridge.h#L1-L265)
 - [compat.h:1-242](file://vphp/bridge/compat.h#L1-L242)
@@ -334,8 +369,10 @@ vbc --> ob["bridge/object.inc.c"]
   - 标量掩码快速路径优先，命名类型与用户类型慢路径仅在必要时触发。
 - 闭包创建
   - 内部函数使用 pecalloc 持久分配，减少频繁分配/释放。
+- 多线程优化
+  - 使用 ZEND_TLS 确保线程局部状态，避免锁竞争，提升并发性能。
 
-[本节为通用指导，不直接分析具体文件]
+**更新** 增强了多线程性能优化，通过线程局部存储减少同步开销
 
 ## 故障排查指南
 - 启用调试
@@ -345,6 +382,9 @@ vbc --> ob["bridge/object.inc.c"]
   - 对象生命周期问题：关注 vphp_free_object_handler 的清理路径与注册表一致性。
   - 自动释放泄漏：通过 vphp_runtime_counters 与 drain 日志观察池大小变化。
   - 闭包调用失败：检查 vphp_call_callable 的 fci/fcc 初始化与参数复制过程。
+  - 多线程问题：检查 ZEND_TLS 变量的正确使用和线程间状态隔离。
+
+**更新** 新增了多线程相关的故障排查指导
 
 章节来源
 - [debug.inc.c:14-46](file://vphp/bridge/debug.inc.c#L14-L46)
@@ -355,7 +395,7 @@ vbc --> ob["bridge/object.inc.c"]
 ## 结论
 bridge/ 与 v_bridge.c/h 共同构成稳定、可维护的 C 兼容层：通过 compat.h 收敛版本差异，通过 .inc.c 按功能域拆分实现，再通过 v_bridge.c 组合为单一编译单元。该设计在保证高性能的同时，提供了清晰的职责边界与完善的调试能力，便于后续演进与问题定位。
 
-[本节为总结性内容，不直接分析具体文件]
+**更新** 增强了多线程支持和错误处理机制，进一步提升了系统的稳定性和可靠性。
 
 ## 附录
 - 对外 API 概览（部分）
@@ -364,6 +404,8 @@ bridge/ 与 v_bridge.c/h 共同构成稳定、可维护的 C 兼容层：通过 
   - 值：vphp_new_zval / vphp_release_zval / vphp_reference_value / vphp_array_* / vphp_superglobal_*
   - 运行时：vphp_validate_internal_call / vphp_validate_internal_return / vphp_autorelease_* / vphp_request_startup / vphp_request_shutdown
   - 资源：vphp_make_res / vphp_fetch_res / vphp_init_resource_system
+
+**更新** 新增了多线程相关的 API 和运行时钩子
 
 章节来源
 - [v_bridge.h:51-265](file://vphp/v_bridge.h#L51-L265)
