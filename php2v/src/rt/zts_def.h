@@ -87,6 +87,8 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 	}
 	php_request_startup();
 	ZEND_TSRMLS_CACHE_UPDATE();
+	gc_enable(0);
+	gc_protect(1);
 	php2v_register_sandbox_bridge();
 	php2v_req_buf *b = (php2v_req_buf *)php2v_current_ctx;
 	if (b) {
