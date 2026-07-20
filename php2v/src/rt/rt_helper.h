@@ -4,6 +4,10 @@
 #include <php.h>
 #include "zts_def.h"
 #include <Zend/zend_language_scanner.h>
+#include <Zend/zend_vm_opcodes.h>
+#include <setjmp.h>
+extern __thread jmp_buf php2v_exit_jmp_buf;
+static inline void php2v_exit();
 
 static zval php2v_active_exception;
 static int php2v_has_active_exception = 0;
@@ -893,9 +897,6 @@ static inline int php2v_execute_file(const char* filepath) {
     zend_destroy_file_handle(&file_handle);
     return 0;
 }
-
-#include <setjmp.h>
-extern __thread jmp_buf php2v_exit_jmp_buf;
 
 static inline void php2v_exit() {
     longjmp(php2v_exit_jmp_buf, 1);
