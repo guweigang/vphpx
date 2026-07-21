@@ -55,8 +55,31 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	query_string := if ctx.req.url.contains('?') { ctx.req.url.all_after('?') } else { '' }
 	path_info := if ctx.req.url.contains('?') { ctx.req.url.all_before('?') } else { ctx.req.url }
 
-	mut target_script := ''
 	doc_root := '/Users/guweigang/wwwroot/wordpress'
+	ext := os.file_ext(path_info).to_lower()
+	if ext in ['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.svg', '.woff', '.woff2', '.ttf', '.map'] {
+		static_file := doc_root + path_info
+		if os.exists(static_file) {
+			mime := match ext {
+				'.css' { 'text/css' }
+				'.js' { 'application/javascript' }
+				'.png' { 'image/png' }
+				'.jpg', '.jpeg' { 'image/jpeg' }
+				'.gif' { 'image/gif' }
+				'.svg' { 'image/svg+xml' }
+				'.ico' { 'image/x-icon' }
+				'.woff' { 'font/woff' }
+				'.woff2' { 'font/woff2' }
+				'.ttf' { 'font/ttf' }
+				else { 'application/octet-stream' }
+			}
+			content := os.read_file(static_file) or { '' }
+			ctx.res.header.set(.content_type, mime)
+			return ctx.html(content)
+		}
+	}
+
+	mut target_script := ''
 	if path_info == '/' || path_info == '' {
 		target_script = doc_root + '/index.php'
 	} else if path_info.ends_with('.php') && os.exists(doc_root + path_info) {
@@ -75,11 +98,14 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	server_map['DOCUMENT_ROOT'] = doc_root
 	server_map['SERVER_NAME'] = 'localhost'
 	server_map['SERVER_PORT'] = '8083'
-	server_map['HTTP_HOST'] = 'localhost:8083'
+	server_map['HTTP_HOST'] = '127.0.0.1:8083'
 	server_map['SERVER_PROTOCOL'] = 'HTTP/1.1'
 	
 	if host := ctx.req.header.get(.host) {
 		server_map['HTTP_HOST'] = host
+		if host.contains(':') {
+			server_map['SERVER_PORT'] = host.all_after(':')
+		}
 	}
 	if ua := ctx.req.header.get(.user_agent) {
 		server_map['HTTP_USER_AGENT'] = ua

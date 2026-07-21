@@ -75,10 +75,13 @@ static inline void php2v_refresh_request() {
 }
 
 #include <setjmp.h>
+#include <pthread.h>
 static __thread jmp_buf php2v_exit_jmp_buf;
+static pthread_mutex_t php2v_exec_mutex = PTHREAD_MUTEX_INITIALIZER;
 static inline int php2v_execute_file(const char* filepath);
 
 static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
+	pthread_mutex_lock(&php2v_exec_mutex);
 #ifdef ZTS
 	ts_resource(0);
 	ZEND_TSRMLS_CACHE_UPDATE();
@@ -117,6 +120,7 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 #ifdef ZTS
 	php_request_shutdown(NULL);
 #endif
+	pthread_mutex_unlock(&php2v_exec_mutex);
 }
 
 static inline void php2v_shutdown_request() {

@@ -89,8 +89,8 @@ fn main() {
 
 ${register_code}
 	
-	println("Starting WordPress veb HTTP gateway on http://localhost:8083 ...")
-	rt.start_gateway(8083, run_gateway_entry)
+	println("Starting WordPress veb HTTP gateway on http://localhost:8085 ...")
+	rt.start_gateway(8085, run_gateway_entry)
 }
 '
 }
