@@ -79,6 +79,7 @@ static inline void php2v_refresh_request() {
 static __thread jmp_buf php2v_exit_jmp_buf;
 static pthread_mutex_t php2v_exec_mutex = PTHREAD_MUTEX_INITIALIZER;
 static inline int php2v_execute_file(const char* filepath);
+extern void php_call_shutdown_functions(void);
 
 static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 	pthread_mutex_lock(&php2v_exec_mutex);

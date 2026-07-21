@@ -308,22 +308,6 @@ void php2v_inject_http_globals(const char *get_str, const char *post_str, const 
     zend_string *zstr_cookie = zend_string_init("_COOKIE", sizeof("_COOKIE") - 1, 0);
     zend_hash_update(&EG(symbol_table), zstr_cookie, &z_cookie);
     zend_string_release(zstr_cookie);
-    
-    zval *request_arr = &PG(http_globals)[TRACK_VARS_REQUEST];
-    if (Z_TYPE_P(request_arr) == IS_ARRAY) {
-        zval_ptr_dtor(request_arr);
-    }
-    array_init(request_arr);
-    zend_hash_copy(Z_ARRVAL_P(request_arr), Z_ARRVAL(PG(http_globals)[TRACK_VARS_GET]), (copy_ctor_func_t)zval_add_ref);
-    zend_hash_copy(Z_ARRVAL_P(request_arr), Z_ARRVAL(PG(http_globals)[TRACK_VARS_POST]), (copy_ctor_func_t)zval_add_ref);
-    zend_hash_copy(Z_ARRVAL_P(request_arr), Z_ARRVAL(PG(http_globals)[TRACK_VARS_COOKIE]), (copy_ctor_func_t)zval_add_ref);
-    
-    zval z_request;
-    ZVAL_COPY(&z_request, request_arr);
-    zend_string *zstr_request = zend_string_init("_REQUEST", sizeof("_REQUEST") - 1, 0);
-    zend_hash_update(&EG(symbol_table), zstr_request, &z_request);
-    zend_string_release(zstr_request);
-    
     zend_rebuild_symbol_table();
 }
 
