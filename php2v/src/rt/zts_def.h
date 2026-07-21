@@ -132,6 +132,12 @@ static inline void php2v_shutdown_request() {
 #endif
 }
 
+static inline void php2v_sapi_flush(void *server_context) {
+#ifdef ZTS
+	ZEND_TSRMLS_CACHE_UPDATE();
+#endif
+}
+
 static inline size_t php2v_ub_write(const char *str, size_t str_length) {
 #ifdef ZTS
 	ZEND_TSRMLS_CACHE_UPDATE();
@@ -198,7 +204,7 @@ __attribute__((constructor)) static void php2v_auto_embed_init() {
 	php_embed_module.php_ini_ignore = 1;
 	php_embed_module.php_ini_path_override = "/dev/null";
 	php_embed_module.deactivate = NULL;
-	php_embed_module.flush = NULL;
+	php_embed_module.flush = php2v_sapi_flush;
 	php_embed_module.ub_write = php2v_ub_write;
 	php_embed_module.register_server_variables = php2v_register_server_variables;
 	
