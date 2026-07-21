@@ -5,6 +5,7 @@
 #include <sapi/embed/php_embed.h>
 #include <Zend/zend_exceptions.h>
 #include <Zend/zend_gc.h>
+#include <curl/curl.h>
 
 #ifdef __APPLE__
 #include <crt_externs.h>
@@ -199,6 +200,7 @@ static void php2v_register_server_variables(zval *track_vars_array) {
 }
 
 __attribute__((constructor)) static void php2v_auto_embed_init() {
+	curl_global_init(CURL_GLOBAL_DEFAULT);
 	setenv("PHPRC", "/nonexistent", 1);
 	setenv("PHP_INI_SCAN_DIR", "", 1);
 	php_embed_module.php_ini_ignore = 1;
