@@ -94,8 +94,8 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 	if (b) {
 		php2v_inject_http_globals(b->get_str, b->post_str, b->cookie_str, b->server_str, b->files_str);
 	}
-	/* 开启输出缓冲，让 WordPress 可以先输出内容再设置 headers */
-	php_output_start_default();
+	/* 开启大容量 4MB 输出缓冲，防止长页面（如 100KB+ 首页 HTML）在执行期间中途分段刷盘导致 OG(flags) TSRM 空指针 */
+	php_output_start_user(NULL, 4194304, PHP_OUTPUT_HANDLER_STDFLAGS);
 #endif
 	if (setjmp(php2v_exit_jmp_buf) == 0) {
 		zend_first_try {
@@ -154,6 +154,9 @@ static inline void php2v_append_output(const char *str, size_t str_length) {
 }
 
 static void php2v_register_server_variables(zval *track_vars_array) {
+#ifdef ZTS
+	ZEND_TSRMLS_CACHE_UPDATE();
+#endif
 	/* 当 Zend 引擎的 auto_global 惰性加载机制触发 $_SERVER 初始化时，
 	   此回调被调用。我们从 TLS php2v_current_ctx 中读取序列化的 SERVER 数据，
 	   解析后写入 track_vars_array，防止 embed SAPI 默认产生的空 $_SERVER 覆盖注入内容 */
@@ -193,8 +196,8 @@ __attribute__((constructor)) static void php2v_auto_embed_init() {
 	php_embed_module.ub_write = php2v_ub_write;
 	php_embed_module.register_server_variables = php2v_register_server_variables;
 	
-	char *embed_argv[] = { "wordpress_server", "-d", "opcache.enable=0", "-d", "opcache.enable_cli=0", "-d", "zend.enable_gc=0", NULL };
-	php_embed_init(7, embed_argv);
+	char *embed_argv[] = { "wordpress_server", "-d", "opcache.enable=0", "-d", "opcache.enable_cli=0", "-d", "zend.enable_gc=0", "-d", "output_buffering=4194304", NULL };
+	php_embed_init(9, embed_argv);
 #ifdef ZTS
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
