@@ -210,8 +210,8 @@ __attribute__((constructor)) static void php2v_auto_embed_init() {
 	php_embed_module.ub_write = php2v_ub_write;
 	php_embed_module.register_server_variables = php2v_register_server_variables;
 	
-	char *embed_argv[] = { "wordpress_server", "-d", "opcache.enable=0", "-d", "opcache.enable_cli=0", "-d", "zend.enable_gc=0", "-d", "output_buffering=4194304", NULL };
-	php_embed_init(9, embed_argv);
+	char *embed_argv[] = { "wordpress_server", "-d", "opcache.enable=0", "-d", "opcache.enable_cli=0", "-d", "zend.enable_gc=0", "-d", "pcre.jit=0", "-d", "output_buffering=4194304", NULL };
+	php_embed_init(11, embed_argv);
 #ifdef ZTS
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif

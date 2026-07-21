@@ -104,8 +104,8 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	server_map['SCRIPT_FILENAME'] = if target_script != '' { target_script } else { doc_root + '/index.php' }
 	server_map['DOCUMENT_ROOT'] = doc_root
 	server_map['SERVER_NAME'] = 'localhost'
-	server_map['SERVER_PORT'] = '8086'
-	server_map['HTTP_HOST'] = '127.0.0.1:8086'
+	server_map['SERVER_PORT'] = '8088'
+	server_map['HTTP_HOST'] = '127.0.0.1:8088'
 	server_map['SERVER_PROTOCOL'] = 'HTTP/1.1'
 	
 	if host := ctx.req.header.get(.host) {
