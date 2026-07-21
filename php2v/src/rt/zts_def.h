@@ -24,6 +24,8 @@ typedef struct {
 	const char *server_str;
 	const char *files_str;
 	const char *script_path;
+	int response_code;
+	char *headers_str;
 } php2v_req_buf;
 
 #ifdef _MSC_VER
@@ -119,6 +121,39 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 	}
 	php_output_flush_all();
 	php_output_end_all();
+
+	php2v_req_buf *b = (php2v_req_buf *)php2v_current_ctx;
+	if (b) {
+		b->response_code = SG(sapi_headers).http_response_code;
+		b->headers_str = NULL;
+		
+		zend_llist *headers = &SG(sapi_headers).headers;
+		if (headers && zend_llist_count(headers) > 0) {
+			size_t total_len = 0;
+			for (zend_llist_element *elm = headers->head; elm; elm = elm->next) {
+				sapi_header_struct *h = (sapi_header_struct *)elm->data;
+				if (h && h->header) {
+					total_len += h->header_len + 1; // + '\1'
+				}
+			}
+			if (total_len > 0) {
+				b->headers_str = (char *)malloc(total_len + 1);
+				if (b->headers_str) {
+					char *p = b->headers_str;
+					for (zend_llist_element *elm = headers->head; elm; elm = elm->next) {
+						sapi_header_struct *h = (sapi_header_struct *)elm->data;
+						if (h && h->header) {
+							memcpy(p, h->header, h->header_len);
+							p += h->header_len;
+							*p++ = '\x01';
+						}
+					}
+					*p = '\0';
+				}
+			}
+		}
+	}
+
 #ifdef ZTS
 	php_request_shutdown(NULL);
 #endif

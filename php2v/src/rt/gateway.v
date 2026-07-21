@@ -14,15 +14,17 @@ fn C.php2v_get_response_headers(callback fn (header_line &char, user_data voidpt
 fn C.php2v_register_mysqli_classes()
 struct C.php2v_req_buf {
 mut:
-	buf         &char
-	cap         usize
-	len         usize
-	get_str     &char
-	post_str    &char
-	cookie_str  &char
-	server_str  &char
-	files_str   &char
-	script_path &char
+	buf           &char
+	cap           usize
+	len           usize
+	get_str       &char
+	post_str      &char
+	cookie_str    &char
+	server_str    &char
+	files_str     &char
+	script_path   &char
+	response_code int
+	headers_str   &char
 }
 
 // veb 请求上下文
@@ -148,6 +150,8 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 		server_str: &char(server_str.str)
 		files_str: &char(files_str.str)
 		script_path: &char(target_script.str)
+		response_code: 200
+		headers_str: 0
 	}
 	C.php2v_set_current_ctx(voidptr(&req_buf))
 	
@@ -166,20 +170,22 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 		unsafe { C.free(req_buf.buf) }
 	}
 	
-	// 10. 读取并同步状态码和 HTTP Headers 到 veb
-	status_code := C.php2v_get_response_status()
-	if status_code > 0 {
-		ctx.res.status_code = status_code
+	// 10. 从安全的 TLS 预存储中读取状态码和 HTTP Headers 到 veb
+	if req_buf.response_code > 0 {
+		ctx.res.status_code = req_buf.response_code
 	} else {
 		ctx.res.status_code = 200
 	}
 	
-	C.php2v_get_response_headers(fn (header_line &char, user_data voidptr) {
-		mut c := &ServerContext(user_data)
-		line := unsafe { header_line.vstring() }
-		name, value := line.split_once(':') or { return }
-		c.res.header.set_custom(name.trim_space(), value.trim_space()) or {}
-	}, voidptr(&ctx))
+	if req_buf.headers_str != 0 {
+		headers_raw := unsafe { req_buf.headers_str.vstring() }
+		unsafe { C.free(req_buf.headers_str) }
+		for line in headers_raw.split('\x01') {
+			if line.trim_space() == '' { continue }
+			name, value := line.split_once(':') or { continue }
+			ctx.res.header.set_custom(name.trim_space(), value.trim_space()) or {}
+		}
+	}
 	
 	// 11. 清理 TLS，返回输出缓冲
 	mut res_body := output_buf
