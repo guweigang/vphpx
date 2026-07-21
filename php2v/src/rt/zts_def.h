@@ -117,7 +117,6 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 		// 安全捕获到了静态转译代码里 php2v_exit() 发出的自定义 longjmp ！！！
 		printf("SUCCESSFULLY CAUGHT CUSTOM LONGJMP EXIT IN THREAD CONTEXT !!!\n");
 	}
-	php_call_shutdown_functions();
 	php_output_flush_all();
 	php_output_end_all();
 #ifdef ZTS
