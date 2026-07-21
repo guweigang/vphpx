@@ -122,10 +122,10 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 	php_output_flush_all();
 	php_output_end_all();
 
-	php2v_req_buf *b = (php2v_req_buf *)php2v_current_ctx;
-	if (b) {
-		b->response_code = SG(sapi_headers).http_response_code;
-		b->headers_str = NULL;
+	php2v_req_buf *req_b = (php2v_req_buf *)php2v_current_ctx;
+	if (req_b) {
+		req_b->response_code = SG(sapi_headers).http_response_code;
+		req_b->headers_str = NULL;
 		
 		zend_llist *headers = &SG(sapi_headers).headers;
 		if (headers && zend_llist_count(headers) > 0) {
@@ -137,9 +137,9 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 				}
 			}
 			if (total_len > 0) {
-				b->headers_str = (char *)malloc(total_len + 1);
-				if (b->headers_str) {
-					char *p = b->headers_str;
+				req_b->headers_str = (char *)malloc(total_len + 1);
+				if (req_b->headers_str) {
+					char *p = req_b->headers_str;
 					for (zend_llist_element *elm = headers->head; elm; elm = elm->next) {
 						sapi_header_struct *h = (sapi_header_struct *)elm->data;
 						if (h && h->header) {
@@ -244,8 +244,8 @@ __attribute__((constructor)) static void php2v_auto_embed_init() {
 	php_embed_module.ub_write = php2v_ub_write;
 	php_embed_module.register_server_variables = php2v_register_server_variables;
 	
-	char *embed_argv[] = { "wordpress_server", "-d", "opcache.enable=0", "-d", "opcache.enable_cli=0", "-d", "zend.enable_gc=0", "-d", "pcre.jit=0", "-d", "output_buffering=4194304", NULL };
-	php_embed_init(11, embed_argv);
+	char *embed_argv[] = { "wordpress_server", "-d", "opcache.enable=0", "-d", "opcache.enable_cli=0", "-d", "zend.enable_gc=0", "-d", "pcre.jit=0", "-d", "zend.assertions=-1", "-d", "output_buffering=4194304", NULL };
+	php_embed_init(13, embed_argv);
 #ifdef ZTS
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
