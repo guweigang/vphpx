@@ -424,32 +424,9 @@ static size_t php2v_read_post(char *buf, size_t count_bytes) {
 static zif_handler orig_curl_exec_handler = NULL;
 
 static ZEND_NAMED_FUNCTION(php2v_async_curl_exec_handler) {
-	zval *zid = NULL;
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "z", &zid) == SUCCESS && zid) {
-		zval fn_name, retval, arg_id, arg_opt;
-		ZVAL_STRING(&fn_name, "curl_getinfo");
-		ZVAL_COPY(&arg_id, zid);
-		ZVAL_LONG(&arg_opt, 1048577); // CURLINFO_EFFECTIVE_URL = 1048577
-
-		zval args[2] = { arg_id, arg_opt };
-		if (call_user_function(CG(function_table), NULL, &fn_name, &retval, 2, args) == SUCCESS && Z_TYPE(retval) == IS_STRING) {
-			const char *url = Z_STRVAL(retval);
-			printf("[CURL EXEC INTERCEPTED URL] %s\n", url);
-			if (url && strlen(url) > 0) {
-				const char *raw_res = php2v_async_http_fetch(url, "GET", "");
-				zval_ptr_dtor(&fn_name);
-				zval_ptr_dtor(&arg_id);
-				zval_ptr_dtor(&retval);
-
-				if (raw_res && strlen(raw_res) > 0) {
-					RETURN_STRING(raw_res);
-				}
-				RETURN_FALSE;
-			}
-		}
-		zval_ptr_dtor(&fn_name);
-		zval_ptr_dtor(&arg_id);
-		zval_ptr_dtor(&retval);
+	if (orig_curl_exec_handler) {
+		orig_curl_exec_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+		return;
 	}
 	RETURN_FALSE;
 }
