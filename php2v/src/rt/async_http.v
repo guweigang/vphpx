@@ -157,7 +157,7 @@ pub fn v_async_http_fetch(c_url &char, c_method &char, c_body &char) &char {
 
 	mut hc := get_http_cache()
 	
-	// 1. 优先查缓存 (600 秒有效)
+	// 1. 优先查共享内存缓存 (600 秒有效)
 	hc.mu.@lock()
 	if url in hc.cache {
 		cached := hc.cache[url]
@@ -172,6 +172,19 @@ pub fn v_async_http_fetch(c_url &char, c_method &char, c_body &char) &char {
 	// 2. 触发 V 原生协程后台异步拉取真实网络数据
 	spawn v_async_fetch_worker(url, method, body)
 
-	// 3. 首次无缓存时即刻返回空，主线程零等待
+	// 3. 500ms 协程等待：等待 V 协程完成真实数据拉取，绝不向 PHP 吐假的占位 Frame
+	for _ in 0 .. 50 {
+		time.sleep(10 * time.millisecond)
+		hc.mu.@lock()
+		if url in hc.cache {
+			cached := hc.cache[url]
+			res_str := cached.body
+			hc.mu.unlock()
+			return &char(res_str.str)
+		}
+		hc.mu.unlock()
+	}
+
+	// 4. 若网络极其缓慢超 500ms，返回空字符串（触发 WP 重试机制，绝不写空 Transient 污染数据库）
 	return &char(''.str)
 }
