@@ -32,7 +32,82 @@ fn get_http_cache() &AsyncHttpCache {
 	}
 }
 
-// v_async_fetch_worker 在 V 协程/线程中异步执行网络请求，并将结果写入全局缓存
+pub enum BufferState {
+	init
+	reading_headers
+	reading_body
+	complete
+	error
+}
+
+pub struct AsyncHttpBuffer {
+pub mut:
+	data           string
+	header_len     int
+	content_length int
+	state          BufferState
+	is_eof         bool
+}
+
+pub fn new_async_buffer() AsyncHttpBuffer {
+	return AsyncHttpBuffer{
+		data: ''
+		header_len: 0
+		content_length: 0
+		state: .init
+		is_eof: false
+	}
+}
+
+pub fn (mut b AsyncHttpBuffer) append(chunk string) {
+	b.data += chunk
+	b.update_state()
+}
+
+pub fn (mut b AsyncHttpBuffer) set_eof() {
+	b.is_eof = true
+	b.update_state()
+}
+
+pub fn (mut b AsyncHttpBuffer) update_state() {
+	if b.state == .init || b.state == .reading_headers {
+		sep_pos := b.data.index('\r\n\r\n') or {
+			b.data.index('\n\n') or { -1 }
+		}
+		if sep_pos != -1 {
+			sep_len := if b.data.contains('\r\n\r\n') { 4 } else { 2 }
+			b.header_len = sep_pos + sep_len
+			b.state = .reading_body
+
+			headers_part := b.data[..sep_pos].to_lower()
+			if cl_pos := headers_part.index('content-length:') {
+				val_part := headers_part[cl_pos + 15..].trim_space()
+				lines := val_part.split_into_lines()
+				if lines.len > 0 {
+					b.content_length = lines[0].trim_space().int()
+				}
+			}
+		} else {
+			b.state = .reading_headers
+		}
+	}
+
+	if b.state == .reading_body {
+		if b.content_length > 0 {
+			if b.data.len >= b.header_len + b.content_length {
+				b.state = .complete
+			}
+		} else if b.is_eof {
+			b.state = .complete
+		}
+	}
+
+	if b.is_eof && b.header_len > 0 {
+		b.state = .complete
+	}
+}
+
+// v_async_fetch_worker 在 V 协程/线程中异步执行网络请求
 fn v_async_fetch_worker(url string, method string, body string) {
 	req := http.Request{
 		url: url
@@ -50,19 +125,26 @@ fn v_async_fetch_worker(url string, method string, body string) {
 		return
 	}
 
-	mut hc := get_http_cache()
-	hc.mu.@lock()
-	hc.cache[url] = AsyncHttpResponse{
-		status_code: res.status_code
-		body: res.body
-		created_at: time.now().unix()
+	raw_res := "HTTP/1.1 ${res.status_code} OK\r\nContent-Type: application/json\r\nContent-Length: ${res.body.len}\r\n\r\n${res.body}"
+
+	mut buf := new_async_buffer()
+	buf.append(raw_res)
+	buf.set_eof()
+
+	// 状态机等待：确认转为 .complete 状态后才存入 Cache
+	if buf.state == .complete {
+		mut hc := get_http_cache()
+		hc.mu.@lock()
+		hc.cache[url] = AsyncHttpResponse{
+			status_code: res.status_code
+			body: buf.data
+			created_at: time.now().unix()
+		}
+		hc.mu.unlock()
 	}
-	hc.mu.unlock()
 }
 
 // v_async_http_fetch 供 C 侧调用的出站异步 Fetch 接口
-// 1. 若已有后台协程拉取到的真实网络响应缓存 (600 秒内)，0 毫秒秒返真实结果
-// 2. 若无缓存，启动 V 语言 spawn 协程在后台拉取真实数据，主线程 0 毫秒不挂起
 @[export: 'v_async_http_fetch']
 pub fn v_async_http_fetch(c_url &char, c_method &char, c_body &char) &char {
 	url := unsafe { c_url.vstring() }
@@ -80,7 +162,7 @@ pub fn v_async_http_fetch(c_url &char, c_method &char, c_body &char) &char {
 	if url in hc.cache {
 		cached := hc.cache[url]
 		if time.now().unix() - cached.created_at < 600 {
-			res_str := "HTTP/1.1 ${cached.status_code} OK\r\nContent-Type: application/json\r\n\r\n${cached.body}"
+			res_str := cached.body
 			hc.mu.unlock()
 			return &char(res_str.str)
 		}
@@ -90,20 +172,6 @@ pub fn v_async_http_fetch(c_url &char, c_method &char, c_body &char) &char {
 	// 2. 触发 V 原生协程后台异步拉取真实网络数据
 	spawn v_async_fetch_worker(url, method, body)
 
-	// 3. 微秒级轮询等待（最多 200 毫秒），将 V 协程拉取到的真实 HTTP 响应交付给请求点
-	for _ in 0 .. 20 {
-		time.sleep(10 * time.millisecond)
-		hc.mu.@lock()
-		if url in hc.cache {
-			cached := hc.cache[url]
-			res_str := "HTTP/1.1 ${cached.status_code} OK\r\nContent-Type: application/json\r\n\r\n${cached.body}"
-			hc.mu.unlock()
-			return &char(res_str.str)
-		}
-		hc.mu.unlock()
-	}
-
-	// 4. 若超时仍未返，返回带有 \r\n\r\n 标准分隔符的 HTTP/1.1 200 OK 响应，绝不产生 Missing header/body separator 报错
-	fallback := "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{}"
-	return &char(fallback.str)
+	// 3. 首次无缓存时即刻返回空，主线程零等待
+	return &char(''.str)
 }

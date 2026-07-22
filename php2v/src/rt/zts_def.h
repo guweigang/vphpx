@@ -421,92 +421,6 @@ static size_t php2v_read_post(char *buf, size_t count_bytes) {
 	return to_copy;
 }
 
-typedef enum {
-	PHP2V_BUF_INIT = 0,
-	PHP2V_BUF_READING_HEADERS,
-	PHP2V_BUF_READING_BODY,
-	PHP2V_BUF_COMPLETE,
-	PHP2V_BUF_ERROR
-} php2v_async_state_t;
-
-typedef struct {
-	char *data;
-	size_t len;
-	size_t capacity;
-	size_t header_len;
-	size_t content_length;
-	php2v_async_state_t state;
-	int is_eof;
-} php2v_async_buffer;
-
-static php2v_async_buffer* php2v_async_buffer_create() {
-	php2v_async_buffer *buf = (php2v_async_buffer *)malloc(sizeof(php2v_async_buffer));
-	buf->data = NULL;
-	buf->len = 0;
-	buf->capacity = 0;
-	buf->header_len = 0;
-	buf->content_length = 0;
-	buf->state = PHP2V_BUF_INIT;
-	buf->is_eof = 0;
-	return buf;
-}
-
-static void php2v_async_buffer_free(php2v_async_buffer *buf) {
-	if (buf) {
-		if (buf->data) free(buf->data);
-		free(buf);
-	}
-}
-
-static void php2v_async_buffer_append(php2v_async_buffer *buf, const char *chunk, size_t chunk_len) {
-	if (!buf || !chunk || chunk_len == 0) return;
-	if (buf->len + chunk_len + 1 > buf->capacity) {
-		size_t new_cap = (buf->capacity == 0) ? 4096 : buf->capacity * 2;
-		while (new_cap < buf->len + chunk_len + 1) new_cap *= 2;
-		buf->data = (char *)realloc(buf->data, new_cap);
-		buf->capacity = new_cap;
-	}
-	memcpy(buf->data + buf->len, chunk, chunk_len);
-	buf->len += chunk_len;
-	buf->data[buf->len] = '\0';
-}
-
-static void php2v_async_buffer_update_state(php2v_async_buffer *buf) {
-	if (!buf || !buf->data) return;
-
-	if (buf->state == PHP2V_BUF_INIT || buf->state == PHP2V_BUF_READING_HEADERS) {
-		char *sep = strstr(buf->data, "\r\n\r\n");
-		if (!sep) {
-			sep = strstr(buf->data, "\n\n");
-		}
-		if (sep) {
-			buf->header_len = (sep - buf->data) + (strstr(buf->data, "\r\n\r\n") ? 4 : 2);
-			buf->state = PHP2V_BUF_READING_BODY;
-
-			char *cl = strcasestr(buf->data, "Content-Length:");
-			if (cl && cl < sep) {
-				buf->content_length = (size_t)atol(cl + 15);
-			}
-		} else {
-			buf->state = PHP2V_BUF_READING_HEADERS;
-		}
-	}
-
-	if (buf->state == PHP2V_BUF_READING_BODY) {
-		if (buf->content_length > 0) {
-			if (buf->len >= buf->header_len + buf->content_length) {
-				buf->state = PHP2V_BUF_COMPLETE;
-			}
-		} else if (buf->is_eof) {
-			buf->state = PHP2V_BUF_COMPLETE;
-		}
-	}
-
-	if (buf->is_eof && buf->header_len > 0) {
-		buf->state = PHP2V_BUF_COMPLETE;
-	}
-}
-
 static zif_handler orig_curl_exec_handler = NULL;
 
 static ZEND_NAMED_FUNCTION(php2v_async_curl_exec_handler) {
@@ -527,20 +441,7 @@ static ZEND_NAMED_FUNCTION(php2v_async_curl_exec_handler) {
 				zval_ptr_dtor(&retval);
 
 				if (raw_res && strlen(raw_res) > 0) {
-					/* 引入 C 层独立 Buffer 与状态机检测 */
-					php2v_async_buffer *buf = php2v_async_buffer_create();
-					php2v_async_buffer_append(buf, raw_res, strlen(raw_res));
-					buf->is_eof = 1; /* 标记信号 (CURLMSG_DONE / EOF) */
-					php2v_async_buffer_update_state(buf);
-
-					/* 状态机等待：只在确认收到完整的 \r\n\r\n 且转为 COMPLETE 状态时才传递给 PHP */
-					if (buf->state == PHP2V_BUF_COMPLETE && buf->data) {
-						zval ret_val;
-						ZVAL_STRING(&ret_val, buf->data);
-						php2v_async_buffer_free(buf);
-						RETURN_STR(Z_STR(ret_val));
-					}
-					php2v_async_buffer_free(buf);
+					RETURN_STRING(raw_res);
 				}
 				RETURN_FALSE;
 			}
