@@ -429,11 +429,12 @@ static ZEND_NAMED_FUNCTION(php2v_async_curl_exec_handler) {
 		zval fn_name, retval, arg_id, arg_opt;
 		ZVAL_STRING(&fn_name, "curl_getinfo");
 		ZVAL_COPY(&arg_id, zid);
-		ZVAL_LONG(&arg_opt, 1); // CURLINFO_EFFECTIVE_URL = 1
+		ZVAL_LONG(&arg_opt, 1048577); // CURLINFO_EFFECTIVE_URL = 1048577
 
 		zval args[2] = { arg_id, arg_opt };
 		if (call_user_function(CG(function_table), NULL, &fn_name, &retval, 2, args) == SUCCESS && Z_TYPE(retval) == IS_STRING) {
 			const char *url = Z_STRVAL(retval);
+			printf("[CURL EXEC INTERCEPTED URL] %s\n", url);
 			if (url && strlen(url) > 0) {
 				const char *raw_res = php2v_async_http_fetch(url, "GET", "");
 				zval_ptr_dtor(&fn_name);

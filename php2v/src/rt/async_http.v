@@ -119,6 +119,9 @@ fn v_async_fetch_worker(url string, method string, body string) {
 			else { http.Method.get }
 		}
 		data: body
+		header: http.new_header(
+			key: .content_type, value: 'application/x-www-form-urlencoded'
+		)
 	}
 	
 	res := req.do() or {
@@ -162,9 +165,9 @@ pub fn v_async_http_fetch(c_url &char, c_method &char, c_body &char) &char {
 	if url in hc.cache {
 		cached := hc.cache[url]
 		if time.now().unix() - cached.created_at < 600 {
-			res_str := cached.body
+			c_ptr := unsafe { &char(cached.body.str) }
 			hc.mu.unlock()
-			return &char(res_str.str)
+			return c_ptr
 		}
 	}
 	hc.mu.unlock()
@@ -178,9 +181,9 @@ pub fn v_async_http_fetch(c_url &char, c_method &char, c_body &char) &char {
 		hc.mu.@lock()
 		if url in hc.cache {
 			cached := hc.cache[url]
-			res_str := cached.body
+			c_ptr := unsafe { &char(cached.body.str) }
 			hc.mu.unlock()
-			return &char(res_str.str)
+			return c_ptr
 		}
 		hc.mu.unlock()
 	}
