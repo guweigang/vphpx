@@ -424,6 +424,50 @@ static size_t php2v_read_post(char *buf, size_t count_bytes) {
 static zif_handler orig_curl_exec_handler = NULL;
 
 static ZEND_NAMED_FUNCTION(php2v_async_curl_exec_handler) {
+	zval *zid = NULL;
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "z", &zid) == SUCCESS && zid) {
+		zval fn_info, retval_url, arg_id, arg_opt;
+		ZVAL_STRING(&fn_info, "curl_getinfo");
+		ZVAL_COPY(&arg_id, zid);
+		ZVAL_LONG(&arg_opt, 1048577); // CURLINFO_EFFECTIVE_URL = 1048577
+
+		zval args_info[2] = { arg_id, arg_opt };
+		if (call_user_function(CG(function_table), NULL, &fn_info, &retval_url, 2, args_info) == SUCCESS && Z_TYPE(retval_url) == IS_STRING) {
+			const char *url = Z_STRVAL(retval_url);
+			if (url && strlen(url) > 0 && strncmp(url, "http", 4) == 0 && strstr(url, "/v_async_mock") == NULL) {
+				zval_ptr_dtor(&fn_info);
+				zval_ptr_dtor(&arg_id);
+				zval_ptr_dtor(&retval_url);
+
+				zval fn_opt, arg_id2, arg_opt_name, arg_val;
+				ZVAL_STRING(&fn_opt, "curl_setopt");
+				ZVAL_COPY(&arg_id2, zid);
+				ZVAL_LONG(&arg_opt_name, 10002); // CURLOPT_URL = 10002
+
+				char mock_url[65536];
+				snprintf(mock_url, sizeof(mock_url), "http://127.0.0.1:8086/v_async_mock?url=%s", url);
+				ZVAL_STRING(&arg_val, mock_url);
+
+				zval args_opt[3] = { arg_id2, arg_opt_name, arg_val };
+				call_user_function(CG(function_table), NULL, &fn_opt, &retval_url, 3, args_opt);
+
+				zval_ptr_dtor(&fn_opt);
+				zval_ptr_dtor(&arg_id2);
+				zval_ptr_dtor(&arg_opt_name);
+				zval_ptr_dtor(&arg_val);
+				zval_ptr_dtor(&retval_url);
+
+				if (orig_curl_exec_handler) {
+					orig_curl_exec_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+					return;
+				}
+			}
+		}
+		zval_ptr_dtor(&fn_info);
+		zval_ptr_dtor(&arg_id);
+		zval_ptr_dtor(&retval_url);
+	}
+
 	if (orig_curl_exec_handler) {
 		orig_curl_exec_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 		return;
