@@ -174,6 +174,12 @@ pub fn v_async_http_fetch(c_url &char, c_method &char, c_body &char) &char {
 	spawn v_async_fetch_worker(url, method, body)
 
 	// 3. 首次无缓存时即刻返回合规报文，绝不阻塞主线程
+	lower_url := url.to_lower()
+	if lower_url.contains('feed') || lower_url.contains('.xml') || lower_url.contains('rss') {
+		xml_fallback := "HTTP/1.1 200 OK\r\nContent-Type: text/xml; charset=utf-8\r\nContent-Length: 161\r\n\r\n<?xml version=\"1.0\" encoding=\"UTF-8\"?><rss version=\"2.0\"><channel><title>WordPress Feed</title><link>https://wordpress.org/</link><description>WordPress Feed</description></channel></rss>"
+		return unsafe { &char(xml_fallback.str) }
+	}
+
 	fallback := "HTTP/1.1 200 OK\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: 202\r\n\r\n{\"name\":\"Chrome\",\"version\":\"120.0\",\"current_version\":\"120.0\",\"upgrade\":false,\"insecure\":false,\"offers\":[{\"response\":\"latest\",\"upgrade\":\"latest\",\"current\":\"6.8\",\"locale\":\"zh_CN\"}],\"translations\":[],\"plugins\":{},\"themes\":{},\"no_update\":{}}"
 	return unsafe { &char(fallback.str) }
 }
