@@ -435,16 +435,19 @@ static ZEND_NAMED_FUNCTION(php2v_async_curl_setopt_handler) {
 			const char *url = Z_STRVAL_P(val);
 			size_t url_len = Z_STRLEN_P(val);
 			if (url && url_len > 0 && strncmp(url, "http", 4) == 0 && strstr(url, "/v_async_mock") == NULL) {
-				zend_string *enc_url = php_url_encode(url, url_len);
-				char mock_url[65536];
-				snprintf(mock_url, sizeof(mock_url), "http://127.0.0.1:8086/v_async_mock?url=%s", ZSTR_VAL(enc_url));
-				zend_string_release(enc_url);
+				// 凡是升级包/ZIP压缩文件（包含 .zip, .tar.gz, downloads.wordpress.org 等），不进行 mock 拦截，放行原生 cURL 进行真实文件二进制下载！
+				if (strstr(url, ".zip") == NULL && strstr(url, ".tar.gz") == NULL && strstr(url, "downloads.wordpress.org") == NULL && strstr(url, "download.wordpress.org") == NULL) {
+					zend_string *enc_url = php_url_encode(url, url_len);
+					char mock_url[65536];
+					snprintf(mock_url, sizeof(mock_url), "http://127.0.0.1:8086/v_async_mock?url=%s", ZSTR_VAL(enc_url));
+					zend_string_release(enc_url);
 
-				zval *args = ZEND_CALL_ARG(execute_data, 3);
-				zval new_val;
-				ZVAL_STRING(&new_val, mock_url);
-				zval_ptr_dtor(args);
-				ZVAL_COPY_VALUE(args, &new_val);
+					zval *args = ZEND_CALL_ARG(execute_data, 3);
+					zval new_val;
+					ZVAL_STRING(&new_val, mock_url);
+					zval_ptr_dtor(args);
+					ZVAL_COPY_VALUE(args, &new_val);
+				}
 			}
 		}
 	}
