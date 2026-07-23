@@ -185,8 +185,9 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 				else { 'application/octet-stream' }
 			}
 			content := os.read_file(static_file) or { '' }
+			res := ctx.text(content)
 			ctx.res.header.set(.content_type, mime)
-			return ctx.html(content)
+			return res
 		}
 	}
 
@@ -325,6 +326,7 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	}
 	
 	mut redirect_url := ''
+	mut custom_content_type := ''
 	if req_buf.headers_str != 0 {
 		headers_raw := unsafe { req_buf.headers_str.vstring() }
 		for line in headers_raw.split('\x01') {
@@ -334,7 +336,9 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 			h_key := name.trim_space()
 			h_val := value.trim_space()
 			if h_key == '' { continue }
-			if h_key.to_lower() == 'location' {
+			if h_key.to_lower() == 'content-type' {
+				custom_content_type = h_val
+			} else if h_key.to_lower() == 'location' {
 				redirect_url = h_val
 				ctx.res.header.set(.location, h_val)
 			} else if h_key.to_lower() == 'set-cookie' {
@@ -368,7 +372,13 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	if res_body == '' {
 		res_body = '<html><head><title>WordPress Embedded (V-PHP)</title></head><body><h1>WordPress Embedded Gateway Online</h1><p>Status: WordPress boot chain executed successfully with ZTS multi-threading.</p></body></html>'
 	}
-	return ctx.html(res_body)
+	res := ctx.text(res_body)
+	if custom_content_type != '' {
+		ctx.res.header.set_custom('Content-Type', custom_content_type) or {}
+	} else {
+		ctx.res.header.set(.content_type, 'text/html; charset=UTF-8')
+	}
+	return res
 }
 fn serialize_map(m map[string]string) string {
 	mut parts := []string{}
