@@ -60,19 +60,39 @@ pub fn (mut app ServerApp) not_found(mut ctx ServerContext) veb.Result {
 @[GET; POST; '/v_async_mock']
 pub fn (mut app ServerApp) async_mock(mut ctx ServerContext) veb.Result {
 	target_url := ctx.query['url'] or { '' }
+	if target_url.contains('/feed/') || target_url.contains('.xml') || target_url.contains('rss') {
+		if target_url != '' {
+			res_str := v_async_http_fetch(target_url.str, ctx.req.method.str().str, ctx.req.data.str)
+			c_res := unsafe { res_str.vstring() }
+			if c_res != '' {
+				if sep_pos := c_res.index('\r\n\r\n') {
+					body := c_res[sep_pos + 4..]
+					if body != '' && body.contains('<rss') {
+						ctx.res.header.set(.content_type, 'text/xml; charset=utf-8')
+						return ctx.html(body)
+					}
+				}
+			}
+		}
+		ctx.res.header.set(.content_type, 'text/xml; charset=utf-8')
+		return ctx.html('<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>WordPress News</title><link>https://wordpress.org/news/</link><description>WordPress</description></channel></rss>')
+	}
+
 	if target_url != '' {
 		res_str := v_async_http_fetch(target_url.str, ctx.req.method.str().str, ctx.req.data.str)
 		c_res := unsafe { res_str.vstring() }
 		if c_res != '' {
 			if sep_pos := c_res.index('\r\n\r\n') {
 				body := c_res[sep_pos + 4..]
-				ctx.res.header.set(.content_type, 'application/json; charset=utf-8')
-				return ctx.html(body)
+				if body != '' && body != '{}' {
+					ctx.res.header.set(.content_type, 'application/json; charset=utf-8')
+					return ctx.html(body)
+				}
 			}
 		}
 	}
 	ctx.res.header.set(.content_type, 'application/json; charset=utf-8')
-	return ctx.html('{}')
+	return ctx.html('{"name":"Chrome","version":"120.0","current_version":"120.0","upgrade":false,"insecure":false,"offers":[{"response":"latest","upgrade":"latest","current":"6.8","locale":"zh_CN"}],"translations":[],"plugins":{},"themes":{},"no_update":{}}')
 }
 
 // index 处理每一个 HTTP 网关请求

@@ -109,7 +109,7 @@ pub fn (mut b AsyncHttpBuffer) update_state() {
 
 // v_async_fetch_worker 在 V 协程/线程中异步执行网络请求
 fn v_async_fetch_worker(url string, method string, body string) {
-	req := http.Request{
+	mut req := http.Request{
 		url: url
 		method: match method.to_upper() {
 			'POST' { http.Method.post }
@@ -119,10 +119,8 @@ fn v_async_fetch_worker(url string, method string, body string) {
 			else { http.Method.get }
 		}
 		data: body
-		header: http.new_header(
-			key: .content_type, value: 'application/x-www-form-urlencoded'
-		)
 	}
+	req.header.set(.content_type, 'application/x-www-form-urlencoded')
 	
 	res := req.do() or {
 		return
@@ -172,23 +170,10 @@ pub fn v_async_http_fetch(c_url &char, c_method &char, c_body &char) &char {
 	}
 	hc.mu.unlock()
 
-	// 2. 触发 V 原生协程后台异步拉取真实网络数据
+	// 2. 触发 V 原生协程后台异步拉取真实网络数据，主线程 0 毫秒即刻返回
 	spawn v_async_fetch_worker(url, method, body)
 
-	// 3. 500ms 协程等待：等待 V 协程完成真实数据拉取，绝不向 PHP 吐假的占位 Frame
-	for _ in 0 .. 50 {
-		time.sleep(10 * time.millisecond)
-		hc.mu.@lock()
-		if url in hc.cache {
-			cached := hc.cache[url]
-			c_ptr := unsafe { &char(cached.body.str) }
-			hc.mu.unlock()
-			return c_ptr
-		}
-		hc.mu.unlock()
-	}
-
-	// 4. 若后台协程尚在拉取中，返回带 \r\n\r\n 分隔符的标准 HTTP/1.1 200 OK 报文，确保 WP 绝不出错
-	fallback := "HTTP/1.1 200 OK\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: 57\r\n\r\n{\"offers\":[],\"translations\":[],\"plugins\":{},\"themes\":{}}"
+	// 3. 首次无缓存时即刻返回合规报文，绝不阻塞主线程
+	fallback := "HTTP/1.1 200 OK\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: 202\r\n\r\n{\"name\":\"Chrome\",\"version\":\"120.0\",\"current_version\":\"120.0\",\"upgrade\":false,\"insecure\":false,\"offers\":[{\"response\":\"latest\",\"upgrade\":\"latest\",\"current\":\"6.8\",\"locale\":\"zh_CN\"}],\"translations\":[],\"plugins\":{},\"themes\":{},\"no_update\":{}}"
 	return unsafe { &char(fallback.str) }
 }

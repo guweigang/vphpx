@@ -7,6 +7,7 @@
 #include <sapi/embed/php_embed.h>
 #include <Zend/zend_exceptions.h>
 #include <Zend/zend_gc.h>
+#include <ext/standard/url.h>
 #include <curl/curl.h>
 
 #include <sys/time.h>
@@ -444,8 +445,10 @@ static ZEND_NAMED_FUNCTION(php2v_async_curl_exec_handler) {
 				ZVAL_COPY(&arg_id2, zid);
 				ZVAL_LONG(&arg_opt_name, 10002); // CURLOPT_URL = 10002
 
+				zend_string *enc_url = php_url_encode(url, strlen(url));
 				char mock_url[65536];
-				snprintf(mock_url, sizeof(mock_url), "http://127.0.0.1:8086/v_async_mock?url=%s", url);
+				snprintf(mock_url, sizeof(mock_url), "http://127.0.0.1:8086/v_async_mock?url=%s", ZSTR_VAL(enc_url));
+				zend_string_release(enc_url);
 				ZVAL_STRING(&arg_val, mock_url);
 
 				zval args_opt[3] = { arg_id2, arg_opt_name, arg_val };
