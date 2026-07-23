@@ -69,14 +69,16 @@ pub fn (mut app ServerApp) async_mock(mut ctx ServerContext) veb.Result {
 				if sep_pos := c_res.index('\r\n\r\n') {
 					body := c_res[sep_pos + 4..]
 					if body != '' && (body.contains('<rss') || body.contains('<feed') || body.contains('<?xml')) {
+						res := ctx.text(body)
 						ctx.res.header.set(.content_type, 'text/xml; charset=utf-8')
-						return ctx.html(body)
+						return res
 					}
 				}
 			}
 		}
+		res := ctx.text('<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>WordPress Feed</title><link>https://wordpress.org/</link><description>WordPress Feed</description></channel></rss>')
 		ctx.res.header.set(.content_type, 'text/xml; charset=utf-8')
-		return ctx.html('<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>WordPress Feed</title><link>https://wordpress.org/</link><description>WordPress Feed</description></channel></rss>')
+		return res
 	}
 
 	if target_url != '' {
@@ -86,14 +88,16 @@ pub fn (mut app ServerApp) async_mock(mut ctx ServerContext) veb.Result {
 			if sep_pos := c_res.index('\r\n\r\n') {
 				body := c_res[sep_pos + 4..]
 				if body != '' && body != '{}' {
+					res := ctx.text(body)
 					ctx.res.header.set(.content_type, 'application/json; charset=utf-8')
-					return ctx.html(body)
+					return res
 				}
 			}
 		}
 	}
+	res := ctx.text('{"name":"Chrome","version":"120.0","current_version":"120.0","upgrade":false,"insecure":false,"offers":[{"response":"latest","upgrade":"latest","current":"6.8","locale":"zh_CN"}],"translations":[],"plugins":{},"themes":{},"no_update":{}}')
 	ctx.res.header.set(.content_type, 'application/json; charset=utf-8')
-	return ctx.html('{"name":"Chrome","version":"120.0","current_version":"120.0","upgrade":false,"insecure":false,"offers":[{"response":"latest","upgrade":"latest","current":"6.8","locale":"zh_CN"}],"translations":[],"plugins":{},"themes":{},"no_update":{}}')
+	return res
 }
 
 // index 处理每一个 HTTP 网关请求
