@@ -137,40 +137,32 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	mut doc_root := ''
 	mut script_name := ''
 
-	// 根据 gateway.yaml 配置进行路由规则派发
+	// 先推导项目根目录 doc_root
 	for rule in app.gateway_config.routes {
-		if match_pattern(rule.match_pattern, path_info) {
-			if rule.mode == 'v_native' {
-				// 跑纯 V 语言转译的 Native 引擎分支 (零解释器开销，超高并发)
-				if rule.handler == 'v_api_posts_handler' || path_info.starts_with('/api/v1/posts') {
-					ctx.res.header.set(.content_type, 'application/json; charset=utf-8')
-					return ctx.html('{"status":"success","engine":"v_native","qps":"10000+","message":"High performance pure V native response without PHP interpreter overhead","data":[]}')
-				}
-			} else if rule.mode == 'static' && rule.root != '' {
-				static_file := os.join_path(rule.root, path_info.all_after_last('/'))
-				if os.exists(static_file) {
-					content := os.read_file(static_file) or { '' }
-					return ctx.html(content)
-				}
-			} else if rule.mode == 'embed_php' && rule.entry != '' {
-				target_script = rule.entry
-				doc_root = os.dir(rule.entry)
-				script_name = if path_info.ends_with('.php') { path_info } else { '/index.php' }
-				break
-			}
+		if rule.mode == 'embed_php' && rule.entry != '' {
+			entry_dir := os.dir(rule.entry)
+			doc_root = if entry_dir.ends_with('/wp-admin') { os.dir(entry_dir) } else { entry_dir }
+			break
 		}
 	}
 
-	if doc_root == '' || target_script == '' {
-		eprintln('[GATEWAY ERROR] Invalid route configuration: "entry" or "root" is missing in YAML config for request [${path_info}].')
-		ctx.res.status_code = 500
-		return ctx.html('<h1>500 Internal Server Error</h1><p>Gateway Configuration Error: Missing "entry" or "root" in YAML configuration for request path <code>' + path_info + '</code>.</p>')
-	}
-
+	// 1. 静态物理文件最高优先级优先匹配直传
 	ext := os.file_ext(path_info).to_lower()
-	if ext in ['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.svg', '.woff', '.woff2', '.ttf', '.map'] {
-		static_file := doc_root + path_info
-		if os.exists(static_file) {
+	if ext in ['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.svg', '.webp', '.avif', '.pdf', '.woff', '.woff2', '.ttf', '.eot', '.map'] {
+		mut static_file := ''
+		for rule in app.gateway_config.routes {
+			if rule.mode == 'static' && match_pattern(rule.match_pattern, path_info) {
+				prefix := if rule.match_pattern.ends_with('/*') { rule.match_pattern.all_before_last('/*') } else { '' }
+				subpath := if prefix != '' && path_info.starts_with(prefix) { path_info.all_after(prefix).trim_left('/') } else { path_info }
+				root_dir := if rule.root != '' { rule.root } else { doc_root }
+				static_file = os.join_path(root_dir, subpath)
+				break
+			}
+		}
+		if static_file == '' && doc_root != '' {
+			static_file = doc_root + path_info
+		}
+		if static_file != '' && os.exists(static_file) {
 			mime := match ext {
 				'.css' { 'text/css' }
 				'.js' { 'application/javascript' }
@@ -178,6 +170,9 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 				'.jpg', '.jpeg' { 'image/jpeg' }
 				'.gif' { 'image/gif' }
 				'.svg' { 'image/svg+xml' }
+				'.webp' { 'image/webp' }
+				'.avif' { 'image/avif' }
+				'.pdf' { 'application/pdf' }
 				'.ico' { 'image/x-icon' }
 				'.woff' { 'font/woff' }
 				'.woff2' { 'font/woff2' }
@@ -189,6 +184,35 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 			ctx.res.header.set(.content_type, mime)
 			return res
 		}
+	}
+
+	// 2. 根据 gateway.yaml 配置进行动态路由规则派发
+	for rule in app.gateway_config.routes {
+		if match_pattern(rule.match_pattern, path_info) {
+			if rule.mode == 'v_native' {
+				// 跑纯 V 语言转译的 Native 引擎分支 (零解释器开销，超高并发)
+				if rule.handler == 'v_api_posts_handler' || path_info.starts_with('/api/v1/posts') {
+					ctx.res.header.set(.content_type, 'application/json; charset=utf-8')
+					return ctx.html('{"status":"success","engine":"v_native","qps":"10000+","message":"High performance pure V native response without PHP interpreter overhead","data":[]}')
+				}
+			} else if rule.mode == 'embed_php' && rule.entry != '' {
+				full_script := doc_root + path_info
+				if path_info.ends_with('.php') && os.exists(full_script) {
+					target_script = full_script
+					script_name = path_info
+				} else {
+					target_script = rule.entry
+					script_name = if path_info.ends_with('.php') { path_info } else { '/index.php' }
+				}
+				break
+			}
+		}
+	}
+
+	if doc_root == '' || target_script == '' {
+		eprintln('[GATEWAY ERROR] Invalid route configuration: "entry" or "root" is missing in YAML config for request [${path_info}].')
+		ctx.res.status_code = 500
+		return ctx.html('<h1>500 Internal Server Error</h1><p>Gateway Configuration Error: Missing "entry" or "root" in YAML configuration for request path <code>' + path_info + '</code>.</p>')
 	}
 
 	if target_script == '' {
