@@ -159,13 +159,20 @@ pub fn v_async_http_fetch(c_url &char, c_method &char, c_body &char) &char {
 	mut hc := get_http_cache()
 	
 	// 1. 优先查共享内存缓存 (600 秒有效)
+	lower_url := url.to_lower()
+	is_feed := lower_url.contains('feed') || lower_url.contains('.xml') || lower_url.contains('rss')
+
 	hc.mu.@lock()
 	if url in hc.cache {
 		cached := hc.cache[url]
 		if time.now().unix() - cached.created_at < 600 {
-			c_ptr := unsafe { &char(cached.body.str) }
-			hc.mu.unlock()
-			return c_ptr
+			if is_feed && cached.body.contains('application/json') {
+				// 忽略过期的坏 JSON 内存缓存
+			} else {
+				c_ptr := unsafe { &char(cached.body.str) }
+				hc.mu.unlock()
+				return c_ptr
+			}
 		}
 	}
 	hc.mu.unlock()
@@ -174,8 +181,7 @@ pub fn v_async_http_fetch(c_url &char, c_method &char, c_body &char) &char {
 	spawn v_async_fetch_worker(url, method, body)
 
 	// 3. 首次无缓存时即刻返回合规报文，绝不阻塞主线程
-	lower_url := url.to_lower()
-	if lower_url.contains('feed') || lower_url.contains('.xml') || lower_url.contains('rss') {
+	if is_feed {
 		xml_fallback := "HTTP/1.1 200 OK\r\nContent-Type: text/xml; charset=utf-8\r\nContent-Length: 161\r\n\r\n<?xml version=\"1.0\" encoding=\"UTF-8\"?><rss version=\"2.0\"><channel><title>WordPress Feed</title><link>https://wordpress.org/</link><description>WordPress Feed</description></channel></rss>"
 		return unsafe { &char(xml_fallback.str) }
 	}
