@@ -125,6 +125,42 @@ fn match_pattern(pattern string, path string) bool {
 	return pattern == path
 }
 
+fn get_mime_type(ext string) string {
+	mime_map := {
+		'.css': 'text/css'
+		'.js': 'application/javascript'
+		'.mjs': 'application/javascript'
+		'.json': 'application/json'
+		'.xml': 'application/xml'
+		'.png': 'image/png'
+		'.jpg': 'image/jpeg'
+		'.jpeg': 'image/jpeg'
+		'.gif': 'image/gif'
+		'.svg': 'image/svg+xml'
+		'.webp': 'image/webp'
+		'.avif': 'image/avif'
+		'.ico': 'image/x-icon'
+		'.bmp': 'image/bmp'
+		'.pdf': 'application/pdf'
+		'.woff': 'font/woff'
+		'.woff2': 'font/woff2'
+		'.ttf': 'font/ttf'
+		'.otf': 'font/otf'
+		'.eot': 'application/vnd.ms-fontobject'
+		'.mp3': 'audio/mpeg'
+		'.mp4': 'video/mp4'
+		'.ogg': 'audio/ogg'
+		'.webm': 'video/webm'
+		'.wav': 'audio/wav'
+		'.txt': 'text/plain'
+		'.csv': 'text/csv'
+		'.zip': 'application/zip'
+		'.wasm': 'application/wasm'
+		'.map': 'application/json'
+	}
+	return mime_map[ext] or { 'application/octet-stream' }
+}
+
 // index 处理每一个 HTTP 网关请求
 @[GET; POST; HEAD; '/:path...']
 pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result {
@@ -148,7 +184,7 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 
 	// 1. 静态物理文件最高优先级优先匹配直传
 	ext := os.file_ext(path_info).to_lower()
-	if ext in ['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.svg', '.webp', '.avif', '.pdf', '.woff', '.woff2', '.ttf', '.eot', '.map'] {
+	if ext != '' && ext != '.php' {
 		mut static_file := ''
 		for rule in app.gateway_config.routes {
 			if rule.mode == 'static' && match_pattern(rule.match_pattern, path_info) {
@@ -163,22 +199,7 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 			static_file = doc_root + path_info
 		}
 		if static_file != '' && os.exists(static_file) {
-			mime := match ext {
-				'.css' { 'text/css' }
-				'.js' { 'application/javascript' }
-				'.png' { 'image/png' }
-				'.jpg', '.jpeg' { 'image/jpeg' }
-				'.gif' { 'image/gif' }
-				'.svg' { 'image/svg+xml' }
-				'.webp' { 'image/webp' }
-				'.avif' { 'image/avif' }
-				'.pdf' { 'application/pdf' }
-				'.ico' { 'image/x-icon' }
-				'.woff' { 'font/woff' }
-				'.woff2' { 'font/woff2' }
-				'.ttf' { 'font/ttf' }
-				else { 'application/octet-stream' }
-			}
+			mime := get_mime_type(ext)
 			content := os.read_file(static_file) or { '' }
 			res := ctx.text(content)
 			ctx.res.header.set(.content_type, mime)
