@@ -38,7 +38,8 @@ pub struct ServerContext {
 // veb 服务应用
 pub struct ServerApp {
 pub mut:
-	entry_fn fn () PhpVal = unsafe { nil }
+	entry_fn       fn () PhpVal = unsafe { nil }
+	gateway_config GatewayConfig
 }
 
 // start_gateway 启动 veb HTTP 常驻服务网关
@@ -46,10 +47,14 @@ pub fn start_gateway(port int, entry_fn fn () PhpVal) {
 	unsafe {
 		C.php2v_register_mysqli_classes()
 	}
+	cfg := load_gateway_config('gateway.yaml')
+	listen_port := if cfg.port > 0 { cfg.port } else { port }
 	mut app := &ServerApp{
-		entry_fn: entry_fn
+		entry_fn:       entry_fn
+		gateway_config: cfg
 	}
-	veb.run[ServerApp, ServerContext](mut app, port)
+	eprintln('[GATEWAY ENGINE] Starting ServerApp on port ${listen_port}...')
+	veb.run[ServerApp, ServerContext](mut app, listen_port)
 }
 
 // not_found 处理所有未匹配或包含特殊斜杠的 veb 伪静态请求
@@ -296,6 +301,12 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	
 	// 11. 清理 TLS，如果产生了 Location 重定向，以 HTTP 200 结合 JS 重定向送出，保障全部 Set-Cookie 被浏览器 100% 落盘保存
 	C.php2v_set_current_ctx(0)
+
+	// 自动识别插件/主题更新请求，完成时自动重置内存注册表以实现无感热刷新
+	if target_script.contains('update') || request_uri.contains('update') || request_uri.contains('upgrade') {
+		reset_included_files()
+	}
+
 	if redirect_url != '' {
 		ctx.res.status_code = 200
 		js_body := '<html><head><script>window.location.href="${redirect_url}";</script></head><body>Redirecting to <a href="${redirect_url}">${redirect_url}</a>...</body></html>'

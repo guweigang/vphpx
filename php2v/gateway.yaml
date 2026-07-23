@@ -1,0 +1,41 @@
+# gateway.yaml - php2v / vphp 网关通用配置文件
+version: "1.0"
+
+server:
+  host: "0.0.0.0"
+  port: 8086
+
+async_http:
+  enable: true
+  cache_ttl: 600
+  loopback_mock: "/v_async_mock"
+  bypass_patterns:
+    - "*.zip"
+    - "*.tar.gz"
+    - "downloads.wordpress.org"
+    - "download.wordpress.org"
+
+routes:
+  # 1. 静态资源放行路由
+  - match: "/wp-content/uploads/*"
+    mode: "static"
+    root: "/Users/guweigang/wwwroot/wordpress/wp-content/uploads"
+
+  # 2. 纯 V 原生转译前台高并发路由示例 (Pure V Native Mode)
+  - match: "/api/v1/posts/*"
+    mode: "v_native"
+    handler: "v_api_posts_handler"
+
+  # 3. 后台与管理面板 (Embedded PHP Mode)
+  - match: "/wp-admin/*"
+    mode: "embed_php"
+    entry: "/Users/guweigang/wwwroot/wordpress/wp-admin/index.php"
+
+  - match: "/wp-login.php"
+    mode: "embed_php"
+    entry: "/Users/guweigang/wwwroot/wordpress/wp-login.php"
+
+  # 4. 通用默认路由 (Embed PHP Mode)
+  - match: "/*"
+    mode: "embed_php"
+    entry: "/Users/guweigang/wwwroot/wordpress/index.php"

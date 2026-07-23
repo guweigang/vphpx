@@ -304,3 +304,9 @@ pub fn mark_included(path string) {
 	r.included_files[normalized] = true
 }
 
+pub fn reset_included_files() {
+	mut r := get_registry()
+	r.included_files.clear()
+	eprintln('[REGISTRY HOT-RESET] Cleared included_files map for seamless plugin hot reloading.')
+}
+
