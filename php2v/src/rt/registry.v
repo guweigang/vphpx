@@ -197,12 +197,13 @@ pub fn call_callable(cb PhpVal, args []PhpVal) PhpVal {
 // init_static_prop 初始化一个静态属性（在模块初始化时调用）
 pub fn init_static_prop(class_name string, prop_name string, default_val PhpVal) {
 	mut r := get_registry()
-	if class_name !in r.static_props {
-		r.static_props[class_name] = map[string]PhpVal{}
-	}
-	// 只在未初始化时设置默认值（避免重复初始化覆盖已有值）
-	if prop_name !in r.static_props[class_name] {
-		r.static_props[class_name][prop_name] = default_val
+	unsafe {
+		if class_name !in r.static_props {
+			r.static_props[class_name] = map[string]PhpVal{}
+		}
+		if prop_name !in r.static_props[class_name] {
+			r.static_props[class_name][prop_name] = default_val
+		}
 	}
 }
 
@@ -211,8 +212,10 @@ pub fn init_static_prop(class_name string, prop_name string, default_val PhpVal)
 // 对于 self:: / ClassName::，runtime_class 等于 class_name
 pub fn get_static_prop(class_name string, prop_name string) PhpVal {
 	mut r := get_registry()
-	if class_name in r.static_props {
-		return r.static_props[class_name][prop_name] or { new_null() }
+	unsafe {
+		if class_name in r.static_props {
+			return r.static_props[class_name][prop_name] or { new_null() }
+		}
 	}
 	return new_null()
 }
@@ -220,10 +223,12 @@ pub fn get_static_prop(class_name string, prop_name string) PhpVal {
 // set_static_prop 写入静态属性
 pub fn set_static_prop(class_name string, prop_name string, val PhpVal) {
 	mut r := get_registry()
-	if class_name !in r.static_props {
-		r.static_props[class_name] = map[string]PhpVal{}
+	unsafe {
+		if class_name !in r.static_props {
+			r.static_props[class_name] = map[string]PhpVal{}
+		}
+		r.static_props[class_name][prop_name] = val
 	}
-	r.static_props[class_name][prop_name] = val
 }
 
 // ---------------- 沙箱互操作回调处理 ----------------
