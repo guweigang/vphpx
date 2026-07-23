@@ -5,16 +5,18 @@ import os
 pub struct RouteRule {
 pub mut:
 	match_pattern string
-	mode          string // static | v_native | embed_php
+	mode          string // static | v_native | embed_php | deny
 	root          string
 	entry         string
 	handler       string
+	autoindex     bool
 }
 
 pub struct GatewayConfig {
 pub mut:
 	host            string = '0.0.0.0'
 	port            int    = 8086
+	autoindex       bool
 	bypass_patterns []string
 	routes          []RouteRule
 }
@@ -46,6 +48,16 @@ pub fn load_gateway_config(config_path string) GatewayConfig {
 			val := trimmed.all_after('port:').trim_space().trim('"\'')
 			if val != '' {
 				cfg.port = val.int()
+			}
+			continue
+		}
+
+		if trimmed.starts_with('autoindex:') {
+			val := trimmed.all_after('autoindex:').trim_space().to_lower().trim('"\'')
+			if in_routes {
+				current_rule.autoindex = val == 'true' || val == 'on' || val == '1'
+			} else {
+				cfg.autoindex = val == 'true' || val == 'on' || val == '1'
 			}
 			continue
 		}

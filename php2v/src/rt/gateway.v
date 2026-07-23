@@ -146,6 +146,31 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 		}
 	}
 
+	// 校验直接访问文件夹/目录（如 /wp-content/uploads/）的 403 目录防列出拦截
+	check_physical_path := doc_root + path_info
+	if os.is_dir(check_physical_path) {
+		mut is_autoindex_enabled := app.gateway_config.autoindex
+		for rule in app.gateway_config.routes {
+			if match_pattern(rule.match_pattern, path_info) {
+				if rule.mode == 'deny' || rule.mode == 'forbidden' {
+					ctx.res.status_code = 403
+					return ctx.html('<h1>403 Forbidden</h1><p>Access to this directory or resource is forbidden.</p>')
+				}
+				if rule.autoindex {
+					is_autoindex_enabled = true
+				}
+			}
+		}
+		if !is_autoindex_enabled {
+			index_file := os.join_path(check_physical_path, 'index.php')
+			index_html := os.join_path(check_physical_path, 'index.html')
+			if !os.exists(index_file) && !os.exists(index_html) {
+				ctx.res.status_code = 403
+				return ctx.html('<h1>403 Forbidden</h1><p>Directory browsing is disabled on this server for security reasons.</p>')
+			}
+		}
+	}
+
 	// 1. 静态物理文件最高优先级优先匹配直传
 	ext := os.file_ext(path_info).to_lower()
 	if ext != '' && ext != '.php' {
