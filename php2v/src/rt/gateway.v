@@ -125,42 +125,6 @@ fn match_pattern(pattern string, path string) bool {
 	return pattern == path
 }
 
-fn get_mime_type(ext string) string {
-	mime_map := {
-		'.css': 'text/css'
-		'.js': 'application/javascript'
-		'.mjs': 'application/javascript'
-		'.json': 'application/json'
-		'.xml': 'application/xml'
-		'.png': 'image/png'
-		'.jpg': 'image/jpeg'
-		'.jpeg': 'image/jpeg'
-		'.gif': 'image/gif'
-		'.svg': 'image/svg+xml'
-		'.webp': 'image/webp'
-		'.avif': 'image/avif'
-		'.ico': 'image/x-icon'
-		'.bmp': 'image/bmp'
-		'.pdf': 'application/pdf'
-		'.woff': 'font/woff'
-		'.woff2': 'font/woff2'
-		'.ttf': 'font/ttf'
-		'.otf': 'font/otf'
-		'.eot': 'application/vnd.ms-fontobject'
-		'.mp3': 'audio/mpeg'
-		'.mp4': 'video/mp4'
-		'.ogg': 'audio/ogg'
-		'.webm': 'video/webm'
-		'.wav': 'audio/wav'
-		'.txt': 'text/plain'
-		'.csv': 'text/csv'
-		'.zip': 'application/zip'
-		'.wasm': 'application/wasm'
-		'.map': 'application/json'
-	}
-	return mime_map[ext] or { 'application/octet-stream' }
-}
-
 // index 处理每一个 HTTP 网关请求
 @[GET; POST; HEAD; '/:path...']
 pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result {
@@ -199,7 +163,7 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 			static_file = doc_root + path_info
 		}
 		if static_file != '' && os.exists(static_file) {
-			mime := get_mime_type(ext)
+			mime := veb.mime_types[ext] or { 'application/octet-stream' }
 			content := os.read_file(static_file) or { '' }
 			res := ctx.text(content)
 			ctx.res.header.set(.content_type, mime)
