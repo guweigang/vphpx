@@ -423,59 +423,42 @@ static size_t php2v_read_post(char *buf, size_t count_bytes) {
 }
 
 static zif_handler orig_curl_exec_handler = NULL;
+static zif_handler orig_curl_setopt_handler = NULL;
 
-static ZEND_NAMED_FUNCTION(php2v_async_curl_exec_handler) {
+static ZEND_NAMED_FUNCTION(php2v_async_curl_setopt_handler) {
 	zval *zid = NULL;
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "z", &zid) == SUCCESS && zid) {
-		zval fn_info, retval_url, arg_id, arg_opt;
-		ZVAL_STRING(&fn_info, "curl_getinfo");
-		ZVAL_COPY(&arg_id, zid);
-		ZVAL_LONG(&arg_opt, 1048577); // CURLINFO_EFFECTIVE_URL = 1048577
+	zend_long opt = 0;
+	zval *val = NULL;
 
-		zval args_info[2] = { arg_id, arg_opt };
-		if (call_user_function(CG(function_table), NULL, &fn_info, &retval_url, 2, args_info) == SUCCESS && Z_TYPE(retval_url) == IS_STRING) {
-			const char *url = Z_STRVAL(retval_url);
-			if (url && strlen(url) > 0 && strncmp(url, "http", 4) == 0 && strstr(url, "/v_async_mock") == NULL) {
-				zval_ptr_dtor(&fn_info);
-				zval_ptr_dtor(&arg_id);
-				zval_ptr_dtor(&retval_url);
-
-				zval fn_opt, arg_id2, arg_opt_name, arg_val;
-				ZVAL_STRING(&fn_opt, "curl_setopt");
-				ZVAL_COPY(&arg_id2, zid);
-				ZVAL_LONG(&arg_opt_name, 10002); // CURLOPT_URL = 10002
-
-				zend_string *enc_url = php_url_encode(url, strlen(url));
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "zlz", &zid, &opt, &val) == SUCCESS && val && Z_TYPE_P(val) == IS_STRING) {
+		if (opt == 10002) { // CURLOPT_URL = 10002
+			const char *url = Z_STRVAL_P(val);
+			size_t url_len = Z_STRLEN_P(val);
+			if (url && url_len > 0 && strncmp(url, "http", 4) == 0 && strstr(url, "/v_async_mock") == NULL) {
+				zend_string *enc_url = php_url_encode(url, url_len);
 				char mock_url[65536];
 				snprintf(mock_url, sizeof(mock_url), "http://127.0.0.1:8086/v_async_mock?url=%s", ZSTR_VAL(enc_url));
 				zend_string_release(enc_url);
-				ZVAL_STRING(&arg_val, mock_url);
 
-				zval args_opt[3] = { arg_id2, arg_opt_name, arg_val };
-				call_user_function(CG(function_table), NULL, &fn_opt, &retval_url, 3, args_opt);
-
-				zval_ptr_dtor(&fn_opt);
-				zval_ptr_dtor(&arg_id2);
-				zval_ptr_dtor(&arg_opt_name);
-				zval_ptr_dtor(&arg_val);
-				zval_ptr_dtor(&retval_url);
-
-				if (orig_curl_exec_handler) {
-					orig_curl_exec_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU);
-					return;
-				}
+				zval *args = ZEND_CALL_ARG(execute_data, 3);
+				zval new_val;
+				ZVAL_STRING(&new_val, mock_url);
+				zval_ptr_dtor(args);
+				ZVAL_COPY_VALUE(args, &new_val);
 			}
 		}
-		zval_ptr_dtor(&fn_info);
-		zval_ptr_dtor(&arg_id);
-		zval_ptr_dtor(&retval_url);
 	}
 
+	if (orig_curl_setopt_handler) {
+		orig_curl_setopt_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+	}
+}
+
+static ZEND_NAMED_FUNCTION(php2v_async_curl_exec_handler) {
 	if (orig_curl_exec_handler) {
 		orig_curl_exec_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 		return;
 	}
-	RETURN_FALSE;
 }
 
 __attribute__((constructor)) static void php2v_auto_embed_init() {
@@ -513,11 +496,17 @@ __attribute__((constructor)) static void php2v_auto_embed_init() {
 	extern zend_op_array *compile_file(zend_file_handle *file_handle, int type);
 	zend_compile_file = compile_file;
 
-	/* 用 V 语言 spawn 协程接管 curl_exec 异步代理 */
+	/* 用 V 语言 spawn 协程接管 curl_exec 与 curl_setopt 异步代理 */
 	zend_function *curl_fn = zend_hash_str_find_ptr(CG(function_table), "curl_exec", sizeof("curl_exec") - 1);
 	if (curl_fn) {
 		orig_curl_exec_handler = curl_fn->internal_function.handler;
 		curl_fn->internal_function.handler = php2v_async_curl_exec_handler;
+	}
+
+	zend_function *setopt_fn = zend_hash_str_find_ptr(CG(function_table), "curl_setopt", sizeof("curl_setopt") - 1);
+	if (setopt_fn) {
+		orig_curl_setopt_handler = setopt_fn->internal_function.handler;
+		setopt_fn->internal_function.handler = php2v_async_curl_setopt_handler;
 	}
 
 	/* 运行时再次确认关键 ini 设置 */
