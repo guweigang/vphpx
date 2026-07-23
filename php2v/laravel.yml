@@ -1,0 +1,28 @@
+# laravel.yml - Laravel 专属通用 Gateway 网关配置文件
+version: "1.0"
+
+server:
+  host: "0.0.0.0"
+  port: 8086
+
+async_http:
+  enable: true
+
+routes:
+  # 1. 静态资源路由直传 (storage, build, favicon 等)
+  - match: "/storage/*"
+    mode: "static"
+    root: "/Users/guweigang/wwwroot/laravel-app/public/storage"
+
+  - match: "/build/*"
+    mode: "static"
+    root: "/Users/guweigang/wwwroot/laravel-app/public/build"
+
+  - match: "/favicon.ico"
+    mode: "static"
+    root: "/Users/guweigang/wwwroot/laravel-app/public"
+
+  # 2. 全局动态路由：所有请求统一驱动 Laravel public/index.php
+  - match: "/*"
+    mode: "embed_php"
+    entry: "/Users/guweigang/wwwroot/laravel-app/public/index.php"

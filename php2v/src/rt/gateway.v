@@ -47,13 +47,22 @@ pub fn start_gateway(port int, entry_fn fn () PhpVal) {
 	unsafe {
 		C.php2v_register_mysqli_classes()
 	}
-	cfg := load_gateway_config('gateway.yaml')
+	mut config_file := 'gateway.yaml'
+	if os.args.len > 1 {
+		arg_path := os.args[1]
+		if os.exists(arg_path) {
+			config_file = arg_path
+		} else {
+			eprintln('[GATEWAY CONFIG] Config file "${arg_path}" not found, falling back to default "${config_file}"')
+		}
+	}
+	cfg := load_gateway_config(config_file)
 	listen_port := if cfg.port > 0 { cfg.port } else { port }
 	mut app := &ServerApp{
 		entry_fn:       entry_fn
 		gateway_config: cfg
 	}
-	eprintln('[GATEWAY ENGINE] Starting ServerApp on port ${listen_port}...')
+	eprintln('[GATEWAY ENGINE] Starting ServerApp with config [${config_file}] on port ${listen_port}...')
 	veb.run[ServerApp, ServerContext](mut app, listen_port)
 }
 
@@ -124,6 +133,10 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	query_string := if ctx.req.url.contains('?') { ctx.req.url.all_after('?') } else { '' }
 	path_info := if ctx.req.url.contains('?') { ctx.req.url.all_before('?') } else { ctx.req.url }
 
+	mut target_script := ''
+	mut doc_root := ''
+	mut script_name := ''
+
 	// 根据 gateway.yaml 配置进行路由规则派发
 	for rule in app.gateway_config.routes {
 		if match_pattern(rule.match_pattern, path_info) {
@@ -139,11 +152,19 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 					content := os.read_file(static_file) or { '' }
 					return ctx.html(content)
 				}
+			} else if rule.mode == 'embed_php' && rule.entry != '' {
+				target_script = rule.entry
+				doc_root = os.dir(rule.entry)
+				script_name = if path_info.ends_with('.php') { path_info } else { '/index.php' }
+				break
 			}
 		}
 	}
 
-	doc_root := '/Users/guweigang/wwwroot/wordpress'
+	if doc_root == '' {
+		doc_root = '/Users/guweigang/wwwroot/wordpress'
+	}
+
 	ext := os.file_ext(path_info).to_lower()
 	if ext in ['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.svg', '.woff', '.woff2', '.ttf', '.map'] {
 		static_file := doc_root + path_info
@@ -167,25 +188,23 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 		}
 	}
 
-	mut target_script := ''
-	mut script_name := ''
-
-	full_path := doc_root + path_info
-	if os.is_dir(full_path) {
-		dir_index := if full_path.ends_with('/') { full_path + 'index.php' } else { full_path + '/index.php' }
-		if os.exists(dir_index) {
-			target_script = dir_index
-			script_name = if path_info.ends_with('/') { path_info + 'index.php' } else { path_info + '/index.php' }
-		}
-	}
-
 	if target_script == '' {
-		if path_info.ends_with('.php') && os.exists(full_path) {
-			target_script = full_path
-			script_name = path_info
-		} else {
-			target_script = doc_root + '/index.php'
-			script_name = '/index.php'
+		full_path := doc_root + path_info
+		if os.is_dir(full_path) {
+			dir_index := if full_path.ends_with('/') { full_path + 'index.php' } else { full_path + '/index.php' }
+			if os.exists(dir_index) {
+				target_script = dir_index
+				script_name = if path_info.ends_with('/') { path_info + 'index.php' } else { path_info + '/index.php' }
+			}
+		}
+		if target_script == '' {
+			if path_info.ends_with('.php') && os.exists(full_path) {
+				target_script = full_path
+				script_name = path_info
+			} else {
+				target_script = doc_root + '/index.php'
+				script_name = '/index.php'
+			}
 		}
 	}
 
