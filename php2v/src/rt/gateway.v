@@ -161,8 +161,10 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 		}
 	}
 
-	if doc_root == '' {
-		doc_root = '/Users/guweigang/wwwroot/wordpress'
+	if doc_root == '' || target_script == '' {
+		eprintln('[GATEWAY ERROR] Invalid route configuration: "entry" or "root" is missing in YAML config for request [${path_info}].')
+		ctx.res.status_code = 500
+		return ctx.html('<h1>500 Internal Server Error</h1><p>Gateway Configuration Error: Missing "entry" or "root" in YAML configuration for request path <code>' + path_info + '</code>.</p>')
 	}
 
 	ext := os.file_ext(path_info).to_lower()

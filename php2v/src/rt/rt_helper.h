@@ -899,8 +899,6 @@ static inline int php2v_execute_file(const char* filepath) {
 #ifdef ZTS
     if (tsrm_get_ls_cache() == NULL) return 0;
 #endif
-    php2v_safe_register_constant("ABSPATH", "/Users/guweigang/wwwroot/wordpress/");
-    php2v_safe_register_constant("WP_CONTENT_DIR", "/Users/guweigang/wwwroot/wordpress/wp-content");
     
 
     FILE *fp = fopen(filepath, "r");
