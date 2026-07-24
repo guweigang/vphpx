@@ -1,10 +1,49 @@
 module hybrid
 
 import rt
+import db.mysql
 
 fn C.php2v_create_zend_hash_array(count int, keys &&char, values &&char) voidptr
 
-// VPdo 纯 V 语言面向对象 PDO 实现 (实现 IPhpObject 接口契约)
+struct DsnInfo {
+pub mut:
+	driver string
+	host   string
+	port   int
+	dbname string
+}
+
+fn parse_dsn(dsn string) DsnInfo {
+	mut info := DsnInfo{
+		driver: 'mysql'
+		host:   '127.0.0.1'
+		port:   3306
+		dbname: ''
+	}
+	parts := dsn.split(':')
+	if parts.len > 0 {
+		info.driver = parts[0].to_lower()
+	}
+	if parts.len > 1 {
+		kv_pairs := parts[1].split(';')
+		for pair in kv_pairs {
+			kv := pair.split('=')
+			if kv.len == 2 {
+				k := kv[0].trim_space().to_lower()
+				v := kv[1].trim_space()
+				match k {
+					'host' { info.host = v }
+					'port' { info.port = v.int() }
+					'dbname' { info.dbname = v }
+					else {}
+				}
+			}
+		}
+	}
+	return info
+}
+
+// VPdo 纯 V 语言面向对象 PDO 真实 MySQL 驱动实现
 pub struct VPdo {
 	rt.PhpObjectBase
 pub mut:
@@ -13,6 +52,7 @@ pub mut:
 	password       string
 	in_transaction bool
 	error_code     string
+	db_conn        ?mysql.DB
 	last_statement &VPdoStatement
 }
 
@@ -24,6 +64,7 @@ pub fn new_v_pdo(dsn string, username string, password string) &VPdo {
 		password:       password
 		in_transaction: false
 		error_code:     '00000'
+		db_conn:        none
 		last_statement: unsafe { nil }
 	}
 	pdo.last_statement = &VPdoStatement{
@@ -31,7 +72,35 @@ pub fn new_v_pdo(dsn string, username string, password string) &VPdo {
 		rows:          []map[string]string{}
 		cursor:        0
 	}
+	if dsn.len > 0 {
+		pdo.connect()
+	}
 	return pdo
+}
+
+pub fn (mut self VPdo) connect() bool {
+	info := parse_dsn(self.dsn)
+	if info.driver == 'mysql' {
+		cfg := mysql.Config{
+			host:     info.host
+			port:     u32(info.port)
+			username: self.username
+			password: self.password
+			dbname:   info.dbname
+		}
+		if conn := mysql.connect(cfg) {
+			eprintln('[VPdo.connect] Successfully connected to real MySQL database (${info.host}:${info.port}/${info.dbname}) as user ${self.username}')
+			self.db_conn = conn
+			self.error_code = '00000'
+			return true
+		} else {
+			eprintln('[VPdo.connect] MySQL Access Denied / Connection Failed for user "${self.username}": ${err}')
+			self.error_code = '1045'
+			self.db_conn = none
+			return false
+		}
+	}
+	return false
 }
 
 // dispatch_method 统一遵循 php2v 转译器生成的标准 IPhpObject 契约
@@ -41,40 +110,47 @@ pub fn (mut self VPdo) dispatch_method(method_name string, args []rt.PhpVal) ?rt
 			if args.len > 1 { self.dsn = args[1].to_string() }
 			if args.len > 2 { self.username = args[2].to_string() }
 			if args.len > 3 { self.password = args[3].to_string() }
+			connected := self.connect()
+			if !connected {
+				eprintln('[VPdo.__construct] Authentication Failed for user: ${self.username}')
+			}
 			return rt.new_null()
 		}
 		'query' {
 			sql_str := if args.len > 1 { args[1].to_string() } else { '' }
-			eprintln('[VPdo.query] Executing SQL via V-native Engine: ${sql_str}')
+			eprintln('[VPdo.query] Executing SQL via real MySQL engine: ${sql_str}')
 			
-			mut sample_rows := []map[string]string{}
-			if sql_str.contains('10086') {
-				sample_rows << {
-					'status': '10086'
-					'engine': 'Vlang Connection Pool Active'
+			mut real_rows := []map[string]string{}
+			if mut conn := self.db_conn {
+				res := conn.query(sql_str) or {
+					eprintln('[VPdo.query] SQL execution error: ${err}')
+					mysql.Result{}
 				}
+				real_rows = res.maps()
 			} else {
-				sample_rows << {
-					'id': '1'
-					'title': 'V-PHP Hybrid High Performance Engine'
-					'content': 'Seamless Zero-Modification Engine Powered by Vlang'
-				}
+				eprintln('[VPdo.query] Cannot execute query: No active database connection (Check username/password!)')
+				return rt.new_bool(false)
 			}
+
 			self.last_statement = &VPdoStatement{
 				statement_sql: sql_str
-				rows:          sample_rows
+				rows:          real_rows
 				cursor:        0
 			}
 			return args[0]
 		}
 		'exec' {
 			sql_str := if args.len > 1 { args[1].to_string() } else { '' }
-			eprintln('[VPdo.exec] Executing SQL statement: ${sql_str}')
-			return rt.new_int(1)
+			if mut conn := self.db_conn {
+				conn.query(sql_str) or {
+					return rt.new_bool(false)
+				}
+				return rt.new_int(1)
+			}
+			return rt.new_bool(false)
 		}
 		'prepare' {
 			sql_str := if args.len > 1 { args[1].to_string() } else { '' }
-			eprintln('[VPdo.prepare] Preparing SQL statement: ${sql_str}')
 			self.last_statement = &VPdoStatement{
 				statement_sql: sql_str
 				rows:          []map[string]string{}
@@ -98,6 +174,9 @@ pub fn (mut self VPdo) dispatch_method(method_name string, args []rt.PhpVal) ?rt
 		}
 		'intransaction' {
 			return rt.new_bool(self.in_transaction)
+		}
+		'errorcode' {
+			return rt.new_string(self.error_code)
 		}
 		else {
 			return none
