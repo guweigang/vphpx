@@ -166,10 +166,35 @@ pub fn (mut self VPdo) dispatch_method(method_name string, args []rt.PhpVal) ?rt
 		}
 		'begintransaction' {
 			self.in_transaction = true
+			if mut conn := self.db_conn {
+				eprintln('[VPdo.beginTransaction] Sending START TRANSACTION to MySQL')
+				conn.query('START TRANSACTION') or {
+					eprintln('[VPdo.beginTransaction] Failed: ${err}')
+					return rt.new_bool(false)
+				}
+			}
 			return rt.new_bool(true)
 		}
-		'commit', 'rollback' {
+		'commit' {
 			self.in_transaction = false
+			if mut conn := self.db_conn {
+				eprintln('[VPdo.commit] Sending COMMIT to MySQL')
+				conn.query('COMMIT') or {
+					eprintln('[VPdo.commit] Failed: ${err}')
+					return rt.new_bool(false)
+				}
+			}
+			return rt.new_bool(true)
+		}
+		'rollback' {
+			self.in_transaction = false
+			if mut conn := self.db_conn {
+				eprintln('[VPdo.rollBack] Sending ROLLBACK to MySQL')
+				conn.query('ROLLBACK') or {
+					eprintln('[VPdo.rollBack] Failed: ${err}')
+					return rt.new_bool(false)
+				}
+			}
 			return rt.new_bool(true)
 		}
 		'intransaction' {

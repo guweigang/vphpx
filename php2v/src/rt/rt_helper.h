@@ -516,7 +516,7 @@ static inline void php2v_set_v_callback(php2v_v_callback_t cb) {
 }
 
 static inline void* php2v_create_zend_hash_array(int count, const char **keys, const char **values) {
-    zval *zv = (zval*)pemalloc(sizeof(zval), 1);
+    zval *zv = (zval*)emalloc(sizeof(zval));
     array_init(zv);
     for (int i = 0; i < count; i++) {
         add_assoc_string(zv, keys[i], values[i]);
