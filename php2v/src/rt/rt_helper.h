@@ -515,14 +515,6 @@ static inline void php2v_set_v_callback(php2v_v_callback_t cb) {
     g_php2v_v_callback = cb;
 }
 
-static inline void* php2v_create_zend_array_sample() {
-    zval *zv = (zval*)pemalloc(sizeof(zval), 1);
-    array_init(zv);
-    add_assoc_long(zv, "status", 10086);
-    add_assoc_string(zv, "engine", "Vlang Connection Pool Active");
-    return zv;
-}
-
 static inline void* php2v_create_zend_hash_array(int count, const char **keys, const char **values) {
     zval *zv = (zval*)pemalloc(sizeof(zval), 1);
     array_init(zv);
@@ -531,6 +523,8 @@ static inline void* php2v_create_zend_hash_array(int count, const char **keys, c
     }
     return zv;
 }
+
+
 
 static inline void* php2v_get_last_mysql_conn();
 
