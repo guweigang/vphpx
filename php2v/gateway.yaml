@@ -1,0 +1,54 @@
+# gateway.yaml - php2v / vphp 网关通用配置文件
+version: "1.0"
+
+server:
+  host: "0.0.0.0"
+  port: 8086
+  autoindex: false             # 禁止目录列表索引 (Default: false, 访问目录报 403)
+
+# 极简一键平铺开启 V 语言能力接管 (0 修改 PHP 源码)
+override_pdo: true
+override_redis: true
+
+async_http:
+  enable: true
+  cache_ttl: 600
+  loopback_mock: "/v_async_mock"
+  bypass_patterns:
+    - "*.zip"
+    - "*.tar.gz"
+    - "downloads.wordpress.org"
+    - "download.wordpress.org"
+
+routes:
+  # 1. 显式屏蔽敏感目录及其所有子目录与子文件访问 (Mode: deny -> 403 Forbidden)
+  - match: "/wp-content/uploads/woocommerce_uploads*"
+    mode: "deny"
+
+  - match: "/wp-content/uploads/"
+    mode: "deny"
+
+  # 2. 静态资源直传放行路由 (仅匹配具体文件，禁止目录索引)
+  - match: "/wp-content/uploads/*"
+    mode: "static"
+    root: "/Users/guweigang/wwwroot/wordpress/wp-content/uploads"
+    autoindex: false
+
+  # 3. 纯 V 原生转译前台高并发路由示例 (Pure V Native Mode)
+  - match: "/api/v1/posts/*"
+    mode: "v_native"
+    handler: "v_api_posts_handler"
+
+  # 4. 后台与管理面板 (Embedded PHP Mode)
+  - match: "/wp-admin/*"
+    mode: "embed_php"
+    entry: "/Users/guweigang/wwwroot/wordpress/wp-admin/index.php"
+
+  - match: "/wp-login.php"
+    mode: "embed_php"
+    entry: "/Users/guweigang/wwwroot/wordpress/wp-login.php"
+
+  # 5. 通用默认路由 (Embed PHP Mode)
+  - match: "/*"
+    mode: "embed_php"
+    entry: "/Users/guweigang/wwwroot/wordpress/index.php"

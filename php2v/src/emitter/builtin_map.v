@@ -18,6 +18,9 @@ pub fn get_builtin_return_tag(name string) ?TypeTag {
 		'is_string', 'is_bool', 'is_object', 'is_numeric', 'isset', 'boolval', 'array_key_exists' {
 			return .t_bool
 		}
+		'array_keys', 'array_merge' {
+			return .t_array
+		}
 		else {
 			return none
 		}
@@ -70,7 +73,7 @@ pub fn (mut t Transpiler) try_builtin_mapping_native(name string, args []string,
 			return ''
 		}
 		'is_null' {
-			return '${a0}.is_null()'
+			return '${a0}.raw == voidptr(0) || (${a0}.raw.u1.type_info & 0xff) == 1'
 		}
 		'is_array' {
 			return '${a0}.is_array()'
@@ -94,7 +97,7 @@ pub fn (mut t Transpiler) try_builtin_mapping_native(name string, args []string,
 			return '${a0}.is_long() || ${a0}.is_double()'
 		}
 		'isset' {
-			return '!${a0}.is_null()'
+			return '${a0}.raw != voidptr(0) && (${a0}.raw.u1.type_info & 0xff) != 1'
 		}
 		'intval' {
 			return '${a0}.to_i64()'
@@ -149,10 +152,29 @@ pub fn (mut t Transpiler) try_builtin_mapping(name string, args []string, arg_no
 // compile_builtin_arg 为接受字符串参数的内置函数智能编译参数表达式。
 // 当参数类型已知为 .t_string 时，直接返回原生 V 字符串（避免多余 of 拆箱/装箱）；
 // 否则返回 PhpVal 表达式并追加 .to_string() 做运行时转换。
-pub fn (mut t Transpiler) compile_builtin_arg(node ast.AstNode) string {
+pub fn (mut t Transpiler) compile_builtin_arg(node &ast.AstNode) string {
 	typ := t.get_expr_type(node)
 	if typ.tag == .t_string {
-		return t.visit_expr_native(node)
+		if node.node_type == ast.node_expr_variable {
+			var_name := t.var_aliases[node.name] or { node.name }
+			v_var := t.get_v_var_name(node.name)
+			
+			mut is_native := false
+			if t.current_func_name == '' {
+				decl_type := t.inferred_types[v_var] or { t.inferred_types[var_name] or { VarType{ tag: .t_unknown } } }
+				is_native = decl_type.is_scalar()
+			} else {
+				is_native = t.native_params[node.name] || t.native_vars[v_var]
+			}
+			
+			if is_native {
+				return t.visit_expr_native(node)
+			}
+		} else {
+			return t.visit_expr_native(node)
+		}
+		raw := t.visit_expr(node)
+		return '(${raw}).str()'
 	}
 	return '${t.compile_arg_simple(node)}.to_string()'
 }

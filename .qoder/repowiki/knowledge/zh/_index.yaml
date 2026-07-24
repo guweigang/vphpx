@@ -1,0 +1,15 @@
+# 知识卡导出索引文件
+schema_version: 1
+locale: zh-CN
+branch: improvement/vphp-module-optimization
+nodes_managed: true
+exported_at: "2026-07-21T02:34:56Z"
+modules:
+    "":
+        dir_name: V 到 Zend_PHP 的绑定与导出编译器
+        title: V 到 Zend/PHP 的绑定与导出编译器
+        scope: []
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []

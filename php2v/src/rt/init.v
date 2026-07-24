@@ -11,6 +11,8 @@ fn C.php_embed_shutdown()
 fn C.php2v_update_tsrm_cache()
 @[c_extern]
 fn C.php2v_refresh_request()
+@[c_extern]
+fn C.php2v_register_thread()
 
 // init 初始化 PHP embed 引擎运行上下文
 fn init() {

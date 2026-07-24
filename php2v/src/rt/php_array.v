@@ -30,6 +30,7 @@ pub mut:
 	int_index  map[i64]int    // 整数键 → 桶索引（O(1) 查找）
 	str_index  map[string]int // 字符串键 → 桶索引（O(1) 查找）
 	n_next_idx i64            // 下一个自动递增索引（$arr[] = val）
+	cursor     int            // 内部游标（模拟 PHP 内部数组指针）
 }
 
 // new 创建空的 PhpArray
@@ -39,6 +40,7 @@ pub fn PhpArray.new() PhpArray {
 		int_index:  map[i64]int{}
 		str_index:  map[string]int{}
 		n_next_idx: 0
+		cursor:     0
 	}
 }
 
@@ -388,3 +390,182 @@ pub fn extract_from_zval(z &C.zval) &PhpArray {
 		return &PhpArray(*p)
 	}
 }
+
+// unshift 往数组头部插入元素，并重新分配所有数字键索引（从 0 开始）
+pub fn (mut pa PhpArray) unshift(val PhpVal) {
+	mut new_pa := PhpArray.new()
+	new_pa.push(val)
+	for b in pa.buckets {
+		if b.key_kind == .deleted {
+			continue
+		}
+		if b.key_kind == .int_key {
+			new_pa.push(b.val)
+		} else if b.key_kind == .str_key {
+			new_pa.set_str(b.skey, b.val)
+		}
+	}
+	pa.buckets = new_pa.buckets
+	pa.int_index = new_pa.int_index.clone()
+	pa.str_index = new_pa.str_index.clone()
+	pa.n_next_idx = new_pa.n_next_idx
+}
+
+// pop 弹出并删除数组末尾的元素
+pub fn (mut pa PhpArray) pop() PhpVal {
+	for i := pa.buckets.len - 1; i >= 0; i-- {
+		b := pa.buckets[i]
+		if b.key_kind == .deleted {
+			continue
+		}
+		val := b.val.dup()
+		if b.key_kind == .int_key {
+			pa.int_index.delete(b.ikey)
+		} else if b.key_kind == .str_key {
+			pa.str_index.delete(b.skey)
+		}
+		pa.buckets[i].key_kind = .deleted
+		return val
+	}
+	return new_null()
+}
+
+// shift 弹出并删除数组开头的元素，重新分配所有数字键索引（从 0 开始）
+pub fn (mut pa PhpArray) shift() PhpVal {
+	mut first_val := new_null()
+	mut found_first := false
+	mut first_idx := -1
+	for i := 0; i < pa.buckets.len; i++ {
+		if pa.buckets[i].key_kind != .deleted {
+			first_val = pa.buckets[i].val.dup()
+			first_idx = i
+			found_first = true
+			break
+		}
+	}
+	if !found_first {
+		return new_null()
+	}
+
+	mut new_pa := PhpArray.new()
+	for i := 0; i < pa.buckets.len; i++ {
+		if i == first_idx || pa.buckets[i].key_kind == .deleted {
+			continue
+		}
+		b := pa.buckets[i]
+		if b.key_kind == .int_key {
+			new_pa.push(b.val)
+		} else if b.key_kind == .str_key {
+			new_pa.set_str(b.skey, b.val)
+		}
+	}
+	pa.buckets = new_pa.buckets
+	pa.int_index = new_pa.int_index.clone()
+	pa.str_index = new_pa.str_index.clone()
+	pa.n_next_idx = new_pa.n_next_idx
+	return first_val
+}
+
+// merge 合并两个 PhpArray，返回新的 PhpArray
+pub fn (pa &PhpArray) merge(other &PhpArray) PhpArray {
+	mut new_pa := PhpArray.new()
+	for b in pa.buckets {
+		if b.key_kind == .deleted {
+			continue
+		}
+		if b.key_kind == .int_key {
+			new_pa.push(b.val)
+		} else if b.key_kind == .str_key {
+			new_pa.set_str(b.skey, b.val)
+		}
+	}
+	for b in other.buckets {
+		if b.key_kind == .deleted {
+			continue
+		}
+		if b.key_kind == .int_key {
+			new_pa.push(b.val)
+		} else if b.key_kind == .str_key {
+			new_pa.set_str(b.skey, b.val)
+		}
+	}
+	return new_pa
+}
+
+// reset 将内部指针指向第一个元素并返回其值
+pub fn (mut pa PhpArray) reset() PhpVal {
+	pa.cursor = 0
+	for pa.cursor < pa.buckets.len {
+		if pa.buckets[pa.cursor].key_kind != .deleted {
+			return pa.buckets[pa.cursor].val.dup()
+		}
+		pa.cursor++
+	}
+	return new_bool(false)
+}
+
+// current 返回内部指针当前指向的元素的值
+pub fn (pa &PhpArray) current() PhpVal {
+	if pa.cursor >= 0 && pa.cursor < pa.buckets.len {
+		b := pa.buckets[pa.cursor]
+		if b.key_kind != .deleted {
+			return b.val.dup()
+		}
+	}
+	return new_bool(false)
+}
+
+// key 返回内部指针当前指向的元素的键
+pub fn (pa &PhpArray) key() PhpVal {
+	if pa.cursor >= 0 && pa.cursor < pa.buckets.len {
+		b := pa.buckets[pa.cursor]
+		if b.key_kind == .int_key {
+			return new_int(b.ikey)
+		} else if b.key_kind == .str_key {
+			return new_string(b.skey)
+		}
+	}
+	return new_null()
+}
+
+// next 将内部指针向后移动一位并返回移动后的元素值
+pub fn (mut pa PhpArray) next() PhpVal {
+	pa.cursor++
+	for pa.cursor < pa.buckets.len {
+		if pa.buckets[pa.cursor].key_kind != .deleted {
+			return pa.buckets[pa.cursor].val.dup()
+		}
+		pa.cursor++
+	}
+	return new_bool(false)
+}
+
+// prev 将内部指针向前移动一位并返回移动后的元素值
+pub fn (mut pa PhpArray) prev() PhpVal {
+	if pa.cursor > 0 {
+		pa.cursor--
+		for pa.cursor >= 0 {
+			if pa.buckets[pa.cursor].key_kind != .deleted {
+				return pa.buckets[pa.cursor].val.dup()
+			}
+			pa.cursor--
+		}
+	}
+	pa.cursor = -1
+	return new_bool(false)
+}
+
+// end 将内部指针指向最后一个元素并返回其值
+pub fn (mut pa PhpArray) end() PhpVal {
+	pa.cursor = pa.buckets.len - 1
+	for pa.cursor >= 0 {
+		if pa.buckets[pa.cursor].key_kind != .deleted {
+			return pa.buckets[pa.cursor].val.dup()
+		}
+		pa.cursor--
+	}
+	pa.cursor = -1
+	return new_bool(false)
+}
+
+

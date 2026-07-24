@@ -196,19 +196,28 @@ fn (mut t Transpiler) analyze_stmt_phase1(node ast.AstNode, mut ctx AnalyzeCtx) 
 		ast.node_stmt_function {
 			old_infer := ctx.infer_types
 			ctx.infer_types = false
+			old_func := t.current_func_name
+			t.current_func_name = node.name
 			t.analyze_stmts_phase1(node.stmts, mut ctx)
+			t.current_func_name = old_func
 			ctx.infer_types = old_infer
 		}
 		ast.node_stmt_class {
 			old_infer := ctx.infer_types
 			ctx.infer_types = false
+			old_class := t.current_class
+			t.current_class = node.name
 			t.analyze_stmts_phase1(node.stmts, mut ctx)
+			t.current_class = old_class
 			ctx.infer_types = old_infer
 		}
 		ast.node_stmt_class_method {
 			old_infer := ctx.infer_types
 			ctx.infer_types = false
+			old_func := t.current_func_name
+			t.current_func_name = node.name
 			t.analyze_stmts_phase1(node.stmts, mut ctx)
+			t.current_func_name = old_func
 			ctx.infer_types = old_infer
 		}
 		else {}
@@ -507,6 +516,57 @@ fn (mut t Transpiler) scan_mutations_expr(node ast.AstNode) {
 				}
 			}
 		}
+		ast.node_expr_funccall {
+			if func_info := t.custom_function_infos[node.name] {
+				for i, arg in node.args {
+					if i < func_info.param_by_ref.len && func_info.param_by_ref[i] {
+						if arg_val := arg.expr {
+							if arg_val.node_type == ast.node_expr_variable {
+								t.mutated_vars[arg_val.name] = true
+								t.mutated_vars['var_' + arg_val.name] = true
+							}
+						}
+					}
+				}
+			}
+			for arg in node.args {
+				if arg_expr := arg.expr { t.scan_mutations_expr(*arg_expr) }
+			}
+		}
+		ast.node_expr_method_call {
+			mut obj_class := ''
+			if obj_var := node.var {
+				if obj_var.node_type == ast.node_expr_variable {
+					if obj_var.name == 'this' {
+						obj_class = t.current_class
+					} else {
+						lookup_key := if t.current_func_name != '' { '${t.current_func_name}::${obj_var.name}' } else { obj_var.name }
+						if typ := t.inferred_types[lookup_key] {
+							if typ.tag == .t_object {
+								obj_class = typ.class_name
+							}
+						}
+					}
+				}
+			}
+			if obj_class != '' {
+				if m := t.find_method(obj_class, node.name) {
+					for i, arg in node.args {
+						if i < m.param_by_ref.len && m.param_by_ref[i] {
+							if arg_val := arg.expr {
+								if arg_val.node_type == ast.node_expr_variable {
+									t.mutated_vars[arg_val.name] = true
+									t.mutated_vars['var_' + arg_val.name] = true
+								}
+							}
+						}
+					}
+				}
+			}
+			for arg in node.args {
+				if arg_expr := arg.expr { t.scan_mutations_expr(*arg_expr) }
+			}
+		}
 		else {
 			if expr := node.expr { t.scan_mutations_expr(*expr) }
 			if left := node.left { t.scan_mutations_expr(*left) }
@@ -688,6 +748,19 @@ pub fn (mut t Transpiler) infer_class_types(stmts []ast.AstNode) {
 							hint_tag := php_type_to_tag(param.incl_type)
 							if hint_tag != .t_unknown {
 								param_type = VarType{ tag: hint_tag }
+							} else {
+								param_type = VarType{ tag: .t_object, class_name: t.resolve_class_name(param.incl_type) }
+							}
+						}
+						// 1.5) 参数默认字面量类型优先于使用分析
+						if param_type.tag == .t_unknown {
+							if default_node := param.default_val {
+								if voidptr(default_node) != 0 {
+									default_tag := php_literal_node_to_tag(*default_node)
+									if default_tag != .t_unknown {
+										param_type = VarType{ tag: default_tag }
+									}
+								}
 							}
 						}
 						// 2) 回退：分析参数使用
@@ -908,47 +981,67 @@ fn (t &Transpiler) expr_references_var(node ast.AstNode, var_name string) bool {
 }
 
 // infer_method_return_type 分析方法的返回值类型
-// 策略：如果所有 return 语句都返回 $this->prop（原生类型），则返回值也是该类型
+// 策略：优先信任确切已知的返回分支类型，如果所有确切已知的返回分支类型完全一致，则以此作为最终返回值类型
 fn (mut t Transpiler) infer_method_return_type(stmts []ast.AstNode, prop_types map[string]VarType) VarType {
-	mut return_tags := []TypeTag{}
+	mut return_tags := []VarType{}
 	t.scan_return_types(stmts, prop_types, mut return_tags)
 	if return_tags.len == 0 {
 		// 没有 return 语句或只有 return; → void 函数
 		return VarType{ tag: .t_void }
 	}
-	first := return_tags[0]
+
+	// 过滤掉所有 .t_unknown 标识的分支，优先采用确切已知的返回分支类型
+	mut known_tags := []VarType{}
+	for typ in return_tags {
+		if typ.tag != .t_unknown {
+			known_tags << typ
+		}
+	}
+
+	if known_tags.len == 0 {
+		return VarType{ tag: .t_unknown }
+	}
+
+	first := known_tags[0]
 	mut all_same := true
-	for tag in return_tags {
-		if tag != first {
+	for typ in known_tags {
+		// 检查 VarType 各字段是否一致
+		if typ.tag != first.tag || typ.class_name != first.class_name || typ.is_native_list != first.is_native_list || typ.is_native_map != first.is_native_map || typ.element_type_tag != first.element_type_tag {
 			all_same = false
 			break
 		}
 	}
-	if all_same && first in [.t_int, .t_float, .t_bool, .t_string] {
-		return VarType{ tag: first }
+
+	if all_same {
+		return first
 	}
 	return VarType{ tag: .t_unknown }
 }
 
-fn (mut t Transpiler) scan_return_types(stmts []ast.AstNode, prop_types map[string]VarType, mut return_tags []TypeTag) {
+fn (mut t Transpiler) scan_return_types(stmts []ast.AstNode, prop_types map[string]VarType, mut return_tags []VarType) {
 	for stmt in stmts {
 		match stmt.node_type {
 			ast.node_stmt_return {
 				if expr := stmt.expr {
-					// 检查 return $this->prop
-					if expr.node_type == ast.node_expr_property_fetch {
-						obj := expr.var or { continue }
-						if obj.node_type == ast.node_expr_variable && obj.name == 'this' {
-							if typ := prop_types[expr.name] {
-								return_tags << typ.tag
+					expr_type := t.get_expr_type(*expr)
+					if expr_type.tag != .t_unknown {
+						return_tags << expr_type
+					} else {
+						// 检查 return $this->prop
+						if expr.node_type == ast.node_expr_property_fetch {
+							obj := expr.var or { continue }
+							if obj.node_type == ast.node_expr_variable && obj.name == 'this' {
+								if typ := prop_types[expr.name] {
+									return_tags << typ
+								} else {
+									return_tags << VarType{ tag: .t_unknown }
+								}
 							} else {
-								return_tags << .t_unknown
+								return_tags << VarType{ tag: .t_unknown }
 							}
 						} else {
-							return_tags << .t_unknown
+							return_tags << VarType{ tag: .t_unknown }
 						}
-					} else {
-						return_tags << .t_unknown
 					}
 				}
 			}
@@ -959,6 +1052,17 @@ fn (mut t Transpiler) scan_return_types(stmts []ast.AstNode, prop_types map[stri
 				}
 				if el := stmt.@else {
 					t.scan_return_types(el.stmts, prop_types, mut return_tags)
+				}
+				// switch cases
+				for case_node in stmt.cases {
+					t.scan_return_types(case_node.stmts, prop_types, mut return_tags)
+				}
+				// try/catch/finally
+				for catch_node in stmt.catches {
+					t.scan_return_types(catch_node.stmts, prop_types, mut return_tags)
+				}
+				if fin := stmt.finally {
+					t.scan_return_types(fin.stmts, prop_types, mut return_tags)
 				}
 			}
 		}
@@ -995,6 +1099,9 @@ pub fn (mut t Transpiler) infer_single_class_types(node ast.AstNode, class_name 
 				if hint_tag != .t_unknown {
 					var_assign_types[param_name] << hint_tag
 					continue
+				} else {
+					var_assign_types[param_name] << .t_object
+					continue
 				}
 			}
 			// 2) 回退：调用点实参类型
@@ -1013,8 +1120,14 @@ pub fn (mut t Transpiler) infer_single_class_types(node ast.AstNode, class_name 
 	mut prop_tags := map[string][]TypeTag{}
 	for method_stmt in node.stmts {
 		if method_stmt.node_type == ast.node_stmt_class_method {
+			old_class := t.current_class
+			old_func := t.current_func_name
+			t.current_class = class_name
+			t.current_func_name = method_stmt.name
 			// 每个方法都用公共的 var_assign_types（包含平级参数类型）
 			t.scan_prop_assignments(method_stmt.stmts, mut prop_tags, mut var_assign_types)
+			t.current_class = old_class
+			t.current_func_name = old_func
 		}
 	}
 
@@ -1038,9 +1151,13 @@ pub fn (mut t Transpiler) infer_single_class_types(node ast.AstNode, class_name 
 
 	// --- Pass 2: 用 prop_types 推断方法参数类型 ---
 	mut param_types := map[string]map[string]VarType{}
+	old_class_p2 := t.current_class
+	old_func_p2 := t.current_func_name
+	t.current_class = class_name
 	for method_stmt in node.stmts {
 		if method_stmt.node_type == ast.node_stmt_class_method {
 			method_name := method_stmt.name
+			t.current_func_name = method_name
 			mut method_params := map[string]VarType{}
 			// 查找方法调用点的实参类型
 			call_key := '${class_name.to_lower()}::${method_name}'
@@ -1057,6 +1174,19 @@ pub fn (mut t Transpiler) infer_single_class_types(node ast.AstNode, class_name 
 					hint_tag := php_type_to_tag(param.incl_type)
 					if hint_tag != .t_unknown {
 						param_type = VarType{ tag: hint_tag }
+					} else {
+						param_type = VarType{ tag: .t_object, class_name: t.resolve_class_name(param.incl_type) }
+					}
+				}
+				// 0.5) 参数默认字面量类型优先于使用分析
+				if param_type.tag == .t_unknown {
+					if default_node := param.default_val {
+						if voidptr(default_node) != 0 {
+							default_tag := php_literal_node_to_tag(*default_node)
+							if default_tag != .t_unknown {
+								param_type = VarType{ tag: default_tag }
+							}
+						}
 					}
 				}
 				// 1) 回退：分析参数使用
@@ -1084,12 +1214,18 @@ pub fn (mut t Transpiler) infer_single_class_types(node ast.AstNode, class_name 
 			}
 		}
 	}
+	t.current_class = old_class_p2
+	t.current_func_name = old_func_p2
 
 	// --- Pass 3: 用 prop_types 推断返回值类型 ---
 	mut return_types := map[string]VarType{}
+	old_class_p3 := t.current_class
+	old_func_p3 := t.current_func_name
+	t.current_class = class_name
 	for method_stmt in node.stmts {
 		if method_stmt.node_type == ast.node_stmt_class_method {
 			method_name := method_stmt.name
+			t.current_func_name = method_name
 			// PHP 返回类型提示优先
 			mut ret_type := VarType{ tag: .t_unknown }
 			if method_stmt.return_type != '' {
@@ -1109,6 +1245,8 @@ pub fn (mut t Transpiler) infer_single_class_types(node ast.AstNode, class_name 
 			}
 		}
 	}
+	t.current_class = old_class_p3
+	t.current_func_name = old_func_p3
 
 	// 存储到对应的 ClassInfo
 	for i, cls in t.classes {
@@ -1188,8 +1326,15 @@ fn (mut t Transpiler) infer_func_types_from_stmts(stmts []ast.AstNode) {
 	for stmt in stmts {
 		if stmt.node_type == ast.node_stmt_function {
 			t.infer_single_func_types(stmt)
-		} else if stmt.node_type == ast.node_stmt_namespace {
+		}
+		if stmt.stmts.len > 0 {
 			t.infer_func_types_from_stmts(stmt.stmts)
+		}
+		for elseif in stmt.elseifs {
+			t.infer_func_types_from_stmts(elseif.stmts)
+		}
+		if el := stmt.@else {
+			t.infer_func_types_from_stmts(el.stmts)
 		}
 	}
 }
@@ -1202,9 +1347,14 @@ fn php_type_to_tag(php_type string) TypeTag {
 		'int', 'integer' { return .t_int }
 		'float', 'double' { return .t_float }
 		'bool', 'boolean' { return .t_bool }
+		'null' { return .t_null }
+		'void', 'never' { return .t_void }
+		// PHP 内置类型提示：不是类名，当作 PhpVal（t_array 用来标识）
+		'array', 'callable', 'iterable', 'mixed', 'object' { return .t_array }
 		else { return .t_unknown }
 	}
 }
+
 
 // infer_single_func_types 推断单个函数的参数类型、返回值类型和局部变量类型
 fn (mut t Transpiler) infer_single_func_types(node ast.AstNode) {
@@ -1223,6 +1373,20 @@ fn (mut t Transpiler) infer_single_func_types(node ast.AstNode) {
 			hint_tag := php_type_to_tag(param.incl_type)
 			if hint_tag != .t_unknown {
 				resolved_tag = hint_tag
+			} else {
+				resolved_tag = .t_object
+				param_types[param_name] = VarType{ tag: .t_object, class_name: t.resolve_class_name(param.incl_type) }
+			}
+		}
+
+		// 1.5) 参数默认字面量类型优先于使用分析
+		if resolved_tag == .t_unknown {
+			if default_node := param.default_val {
+				default_tag := php_literal_node_to_tag(*default_node)
+				if default_tag != .t_unknown {
+					resolved_tag = default_tag
+					param_types[param_name] = VarType{ tag: default_tag }
+				}
 			}
 		}
 
@@ -1241,8 +1405,14 @@ fn (mut t Transpiler) infer_single_func_types(node ast.AstNode) {
 		if resolved_tag != .t_unknown {
 			param_types[param_name] = VarType{ tag: resolved_tag }
 			var_assign_types[param_name] << resolved_tag
+		} else {
+			param_types[param_name] = VarType{ tag: .t_unknown }
 		}
 	}
+
+	// 设置当前上下文，以便表达式推导能够查询到函数形参和局部变量
+	old_func := t.current_func_name
+	t.current_func_name = func_name
 
 	// 用参数类型作为种子，对函数体跑类型推导，推断局部变量类型
 	t.infer_expr_types_for_func(node.stmts, mut var_assign_types)
@@ -1261,8 +1431,14 @@ fn (mut t Transpiler) infer_single_func_types(node ast.AstNode) {
 		}
 		if all_same && first in [.t_int, .t_float, .t_bool, .t_string] {
 			local_var_types[vname] = VarType{ tag: first }
+		} else if first == .t_array {
+			lookup_key := '${func_name}::${vname}'
+			if t.inferred_types[lookup_key].tag == .t_array {
+				local_var_types[vname] = t.inferred_types[lookup_key]
+			}
 		}
 	}
+	t.func_var_types[func_name] = local_var_types.clone()
 
 	// 推断返回值类型：PHP 返回类型提示优先
 	mut ret_type := VarType{ tag: .t_unknown }
@@ -1278,9 +1454,10 @@ fn (mut t Transpiler) infer_single_func_types(node ast.AstNode) {
 	if ret_type.tag == .t_unknown {
 		ret_type = t.infer_func_return_type(node.stmts, mut var_assign_types)
 	}
-	if ret_type.tag != .t_unknown && ret_type.tag != .t_void {
+	if ret_type.tag != .t_unknown {
 		t.func_return_types[func_name] = ret_type
 	}
+	t.current_func_name = old_func
 	if param_types.len > 0 {
 		t.func_param_types[func_name] = param_types.clone()
 	}
@@ -1348,42 +1525,72 @@ fn (mut t Transpiler) infer_expr_types_for_func_stmt(node ast.AstNode, mut var_a
 }
 
 // infer_func_return_type 推断函数的返回值类型
+// 策略：优先信任确切已知的返回分支类型，如果所有确切已知的返回分支类型完全一致，则以此作为最终返回值类型
 fn (mut t Transpiler) infer_func_return_type(stmts []ast.AstNode, mut var_assign_types map[string][]TypeTag) VarType {
-	mut return_tags := []TypeTag{}
+	mut return_tags := []VarType{}
 	t.scan_func_return_tags(stmts, mut var_assign_types, mut return_tags)
 	if return_tags.len == 0 {
 		return VarType{ tag: .t_void }
 	}
-	first := return_tags[0]
+
+	// 过滤掉所有 .t_unknown 标识的分支，优先采用确切已知的返回分支类型
+	mut known_tags := []VarType{}
+	for typ in return_tags {
+		if typ.tag != .t_unknown {
+			known_tags << typ
+		}
+	}
+
+	if known_tags.len == 0 {
+		return VarType{ tag: .t_unknown }
+	}
+
+	first := known_tags[0]
 	mut all_same := true
-	for tag in return_tags {
-		if tag != first {
+	for typ in known_tags {
+		// 检查 VarType 各字段是否一致
+		if typ.tag != first.tag || typ.class_name != first.class_name || typ.is_native_list != first.is_native_list || typ.is_native_map != first.is_native_map || typ.element_type_tag != first.element_type_tag {
 			all_same = false
 			break
 		}
 	}
-	if all_same && first in [.t_int, .t_float, .t_bool, .t_string] {
-		return VarType{ tag: first }
+
+	if all_same {
+		return first
 	}
 	return VarType{ tag: .t_unknown }
 }
 
-fn (mut t Transpiler) scan_func_return_tags(stmts []ast.AstNode, mut var_assign_types map[string][]TypeTag, mut return_tags []TypeTag) {
+fn (mut t Transpiler) scan_func_return_tags(stmts []ast.AstNode, mut var_assign_types map[string][]TypeTag, mut return_tags []VarType) {
 	for stmt in stmts {
 		match stmt.node_type {
 			ast.node_stmt_return {
 				if expr := stmt.expr {
-					tag := t.infer_expr_types(*expr, mut var_assign_types)
-					return_tags << tag
+					expr_type := t.get_expr_type(*expr)
+					return_tags << expr_type
 				}
 			}
 			else {
-				t.scan_func_return_tags(stmt.stmts, mut var_assign_types, mut return_tags)
+				// 递归扫描所有可能包含 return 的子节点
+				if stmt.stmts.len > 0 {
+					t.scan_func_return_tags(stmt.stmts, mut var_assign_types, mut return_tags)
+				}
 				for elseif in stmt.elseifs {
 					t.scan_func_return_tags(elseif.stmts, mut var_assign_types, mut return_tags)
 				}
 				if el := stmt.@else {
 					t.scan_func_return_tags(el.stmts, mut var_assign_types, mut return_tags)
+				}
+				// switch cases
+				for case_node in stmt.cases {
+					t.scan_func_return_tags(case_node.stmts, mut var_assign_types, mut return_tags)
+				}
+				// try/catch/finally
+				for catch_node in stmt.catches {
+					t.scan_func_return_tags(catch_node.stmts, mut var_assign_types, mut return_tags)
+				}
+				if fin := stmt.finally {
+					t.scan_func_return_tags(fin.stmts, mut var_assign_types, mut return_tags)
 				}
 			}
 		}
@@ -1404,6 +1611,11 @@ pub fn (mut t Transpiler) analyze_arrays(stmts []ast.AstNode) {
 	t.scan_array_usages_stmts(stmts, mut states)
 	
 	for name, s in states {
+		if existing_typ := t.inferred_types[name] {
+			if existing_typ.is_object() {
+				continue
+			}
+		}
 		if name in ['_GET', '_POST', '_SERVER', '_COOKIE', '_SESSION', '_FILES', '_ENV', '_REQUEST', 'GLOBALS'] {
 			t.inferred_types[name] = VarType{
 				tag: .t_array
@@ -1500,7 +1712,10 @@ fn (mut t Transpiler) scan_array_usages_stmt(node ast.AstNode, mut states map[st
 			t.scan_array_usages_stmts(node.stmts, mut states)
 		}
 		ast.node_stmt_class_method, ast.node_stmt_function {
+			old_func := t.current_func_name
+			t.current_func_name = node.name
 			t.scan_array_usages_stmts(node.stmts, mut states)
+			t.current_func_name = old_func
 		}
 		ast.node_stmt_echo {
 			for expr in node.exprs { t.scan_array_usages_expr(expr, mut states, false, none) }
@@ -1544,6 +1759,16 @@ fn (mut t Transpiler) scan_array_usages_stmt(node ast.AstNode, mut states map[st
 	}
 }
 
+fn (t Transpiler) get_array_infer_key(name string) string {
+	if t.current_func_name != '' {
+		if name in ['_GET', '_POST', '_SERVER', '_COOKIE', '_SESSION', '_FILES', '_ENV', '_REQUEST', 'GLOBALS'] {
+			return name
+		}
+		return '${t.current_func_name}::${name}'
+	}
+	return name
+}
+
 fn (mut t Transpiler) scan_array_usages_stmts(stmts []ast.AstNode, mut states map[string]ArrayInferState) {
 	for stmt in stmts {
 		t.scan_array_usages_stmt(stmt, mut states)
@@ -1556,7 +1781,8 @@ fn (mut t Transpiler) scan_array_usages_expr(node ast.AstNode, mut states map[st
 			lhs := node.var or { return }
 			rhs := node.expr or { return }
 			if lhs.node_type == ast.node_expr_variable && rhs.node_type == ast.node_expr_array {
-				mut s := states[lhs.name] or { ArrayInferState{ can_be_list: true, can_be_map: true, has_array_ops: false } }
+				lhs_key := t.get_array_infer_key(lhs.name)
+				mut s := states[lhs_key] or { ArrayInferState{ can_be_list: true, can_be_map: true, has_array_ops: false } }
 				s.has_array_ops = true
 				for item in rhs.items {
 					if key := item.key {
@@ -1575,16 +1801,17 @@ fn (mut t Transpiler) scan_array_usages_expr(node ast.AstNode, mut states map[st
 						s.element_tags << t.get_expr_type(*val).tag
 					}
 				}
-				states[lhs.name] = s
+				states[lhs_key] = s
 				t.scan_array_usages_expr(*rhs, mut states, false, none)
 			} else {
 				if lhs.node_type == ast.node_expr_variable {
 					rhs_typ := t.get_expr_type(*rhs)
 					if !rhs_typ.is_native_list && !rhs_typ.is_native_map {
-						mut s := states[lhs.name] or { ArrayInferState{ can_be_list: true, can_be_map: true, has_array_ops: false } }
+						lhs_key := t.get_array_infer_key(lhs.name)
+						mut s := states[lhs_key] or { ArrayInferState{ can_be_list: true, can_be_map: true, has_array_ops: false } }
 						s.can_be_list = false
 						s.can_be_map = false
-						states[lhs.name] = s
+						states[lhs_key] = s
 					}
 				}
 				t.scan_array_usages_expr(*lhs, mut states, true, *rhs)
@@ -1594,7 +1821,8 @@ fn (mut t Transpiler) scan_array_usages_expr(node ast.AstNode, mut states map[st
 		ast.node_expr_array_dim_fetch {
 			base := node.var or { return }
 			if base.node_type == ast.node_expr_variable {
-				mut s := states[base.name] or { ArrayInferState{ can_be_list: true, can_be_map: true, has_array_ops: false } }
+				base_key := t.get_array_infer_key(base.name)
+				mut s := states[base_key] or { ArrayInferState{ can_be_list: true, can_be_map: true, has_array_ops: false } }
 				s.has_array_ops = true
 				if dim := node.dim {
 					dim_type := t.get_expr_type(*dim)
@@ -1608,6 +1836,7 @@ fn (mut t Transpiler) scan_array_usages_expr(node ast.AstNode, mut states map[st
 					}
 					t.scan_array_usages_expr(*dim, mut states, false, none)
 				} else {
+					s.can_be_list = false
 					s.can_be_map = false
 				}
 				if is_assign_lhs {
@@ -1615,7 +1844,7 @@ fn (mut t Transpiler) scan_array_usages_expr(node ast.AstNode, mut states map[st
 						s.element_tags << t.get_expr_type(rhs).tag
 					}
 				}
-				states[base.name] = s
+				states[base_key] = s
 			} else {
 				t.scan_array_usages_expr(*base, mut states, is_assign_lhs, rhs_node)
 				if dim := node.dim { t.scan_array_usages_expr(*dim, mut states, false, none) }
@@ -1633,5 +1862,23 @@ fn (mut t Transpiler) scan_array_usages_expr(node ast.AstNode, mut states map[st
 				if val := item.expr { t.scan_array_usages_expr(*val, mut states, false, none) }
 			}
 		}
+	}
+}
+
+fn php_literal_node_to_tag(node ast.AstNode) TypeTag {
+	match node.node_type {
+		'Scalar_Int' { return .t_int }
+		'Scalar_Float' { return .t_float }
+		'Scalar_String' { return .t_string }
+		'Scalar_Encapsed', 'Scalar_InterpolatedString' { return .t_string }
+		'Expr_ConstFetch' {
+			match node.name.to_lower() {
+				'true', 'false' { return .t_bool }
+				'null' { return .t_null }
+				else { return .t_unknown }
+			}
+		}
+		'Expr_Array' { return .t_array }
+		else { return .t_unknown }
 	}
 }

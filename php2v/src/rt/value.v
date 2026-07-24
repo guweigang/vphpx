@@ -6,7 +6,12 @@ import strings
 
 #include "rt_helper.h"
 
+fn C.php2v_set_last_mysql_conn(conn voidptr)
+fn C.php2v_get_last_mysql_conn() voidptr
+fn C.php2v_execute_file(filepath &char) int
+
 fn C.php2v_call_zend_function(name &char, name_len usize, retval &C.zval, param_count u32, params &&C.zval) int
+fn C.php2v_call_zend_callable(callable &C.zval, retval &C.zval, param_count u32, params voidptr) int
 fn C.php2v_eval_string(str &char, len usize, retval &C.zval) int
 fn C.php2v_register_constant(name &char, len usize, val &C.zval) int
 fn C.php2v_get_constant(name &char, len usize, val &C.zval) int
@@ -94,7 +99,7 @@ pub fn new_null() PhpVal {
 pub fn new_string(s string) PhpVal {
 	z := new_zval()
 	unsafe {
-		str_ptr := C.zend_string_init(s.str, usize(s.len), false)
+		str_ptr := C.zend_string_init(s.str, usize(s.len), true)
 		mut p := &voidptr(&z.value)
 		*p = str_ptr
 		z.u1.type_info = 6 // IS_STRING
@@ -247,15 +252,20 @@ pub fn (v PhpVal) dup() PhpVal {
 	return PhpVal{ raw: z }
 }
 
+// clone 是 dup 的别名，用于统一 .clone() 调用语法（V 原生数组/映射也用 .clone()）
+pub fn (v PhpVal) clone() PhpVal {
+	return v.dup()
+}
 
 
-pub type PhpKey = string | int | PhpVal
-pub type PhpArg = string | int | bool | f64 | PhpVal
+pub type PhpKey = string | int | i64 | PhpVal
+pub type PhpArg = string | int | i64 | bool | f64 | PhpVal
 
 pub fn (k PhpKey) to_php_val() PhpVal {
 	match k {
 		PhpVal { return k }
 		int { return new_int(k) }
+		i64 { return new_int(k) }
 		string { return new_string(k) }
 	}
 }
@@ -264,6 +274,7 @@ pub fn (a PhpArg) to_php_val() PhpVal {
 	match a {
 		PhpVal { return a }
 		int { return new_int(a) }
+		i64 { return new_int(a) }
 		string { return new_string(a) }
 		bool { return new_bool(a) }
 		f64 { return new_float(a) }
@@ -307,6 +318,106 @@ pub fn create_array_from_list(vals []PhpVal) PhpVal {
 	return create_array(items)
 }
 
+pub fn create_array_from_list_string(vals []string) PhpVal {
+	mut items := []ArrayItem{}
+	for val in vals {
+		items << ArrayItem{
+			key: none
+			val: new_string(val)
+		}
+	}
+	return create_array(items)
+}
+
+pub fn create_array_from_list_int(vals []i64) PhpVal {
+	mut items := []ArrayItem{}
+	for val in vals {
+		items << ArrayItem{
+			key: none
+			val: new_int(val)
+		}
+	}
+	return create_array(items)
+}
+
+pub fn create_array_from_list_float(vals []f64) PhpVal {
+	mut items := []ArrayItem{}
+	for val in vals {
+		items << ArrayItem{
+			key: none
+			val: new_float(val)
+		}
+	}
+	return create_array(items)
+}
+
+pub fn create_array_from_list_bool(vals []bool) PhpVal {
+	mut items := []ArrayItem{}
+	for val in vals {
+		items << ArrayItem{
+			key: none
+			val: new_bool(val)
+		}
+	}
+	return create_array(items)
+}
+
+// create_array_from_native_map 将 V 原生 map[string]PhpVal 转为 PHP 数组 PhpVal
+pub fn create_array_from_native_map(m map[string]PhpVal) PhpVal {
+	mut items := []ArrayItem{}
+	for key, val in m {
+		items << ArrayItem{
+			key: PhpKey(key)
+			val: val
+		}
+	}
+	return create_array(items)
+}
+
+pub fn create_array_from_native_map_string(m map[string]string) PhpVal {
+	mut items := []ArrayItem{}
+	for key, val in m {
+		items << ArrayItem{
+			key: PhpKey(key)
+			val: new_string(val)
+		}
+	}
+	return create_array(items)
+}
+
+pub fn create_array_from_native_map_int(m map[string]i64) PhpVal {
+	mut items := []ArrayItem{}
+	for key, val in m {
+		items << ArrayItem{
+			key: PhpKey(key)
+			val: new_int(val)
+		}
+	}
+	return create_array(items)
+}
+
+pub fn create_array_from_native_map_float(m map[string]f64) PhpVal {
+	mut items := []ArrayItem{}
+	for key, val in m {
+		items << ArrayItem{
+			key: PhpKey(key)
+			val: new_float(val)
+		}
+	}
+	return create_array(items)
+}
+
+pub fn create_array_from_native_map_bool(m map[string]bool) PhpVal {
+	mut items := []ArrayItem{}
+	for key, val in m {
+		items << ArrayItem{
+			key: PhpKey(key)
+			val: new_bool(val)
+		}
+	}
+	return create_array(items)
+}
+
 // func_array_keys 纯 V 语言版的 array_keys 键获取实现（避免跨越 FFI 边界）
 pub fn func_array_keys(v PhpVal) PhpVal {
 	if !v.is_array() { return new_array() }
@@ -334,6 +445,19 @@ pub fn (v PhpVal) array_push(val PhpArg) {
 	if !v.is_array() { return }
 	mut pa := unsafe { extract_from_zval(v.raw) }
 	pa.push(val.to_php_val())
+}
+
+// array_push_mut 向数组末尾追加一个空数组，并返回该新数组的可变引用（用于嵌套空维追加如 $arr[][] = $val）
+pub fn (mut v PhpVal) array_push_mut() PhpVal {
+	if !v.is_array() {
+		mut pa_self := PhpArray.new()
+		pa_self.store_in_zval(v.raw)
+		v.raw.u1.type_info = 7
+	}
+	mut pa := unsafe { extract_from_zval(v.raw) }
+	empty_arr := new_array()
+	pa.push(empty_arr)
+	return empty_arr
 }
 
 // array_get 从数组中获取指定键对应的元素（纯 V 实现）
@@ -364,6 +488,15 @@ pub fn (mut v PhpVal) array_get_mut(key PhpKey) PhpVal {
 		sub_val.raw.u1.type_info = 7
 	}
 	return sub_val
+}
+
+// array_get_mut_nested 递归获取多维数组的最后一层，并在必要时自动就地初始化，支持链式写操作
+pub fn (v PhpVal) array_get_mut_nested(keys []PhpVal) PhpVal {
+	mut current := v
+	for key in keys {
+		current = current.array_get_mut(key)
+	}
+	return current
 }
 
 // array_isset 检查数组中指定键是否存在且值非 null（纯 V 实现）
@@ -440,21 +573,47 @@ mut:
 	dispatch_method(method_name string, args []PhpVal) ?PhpVal
 	dispatch_get_prop(prop_name string) ?PhpVal
 	dispatch_set_prop(prop_name string, val PhpVal) bool
+	has_method(method_name string) bool
+	has_property(prop_name string) bool
 }
 
 // PhpObjectBase 结构体可作为 PHP 类的通用嵌入基类，提供默认实现以隐式实现 IPhpObject
-pub struct PhpObjectBase {}
+pub struct PhpObjectBase {
+pub mut:
+	dynamic_props map[string]PhpVal
+}
 
 pub fn (mut this PhpObjectBase) dispatch_method(method_name string, args []PhpVal) ?PhpVal {
 	return none
 }
 
 pub fn (this &PhpObjectBase) dispatch_get_prop(prop_name string) ?PhpVal {
+	if prop_name in this.dynamic_props {
+		return this.dynamic_props[prop_name] or { new_null() }
+	}
 	return none
 }
 
 pub fn (mut this PhpObjectBase) dispatch_set_prop(prop_name string, val PhpVal) bool {
+	if this.dynamic_props.len == 0 {
+		unsafe {
+			mut self := &PhpObjectBase(&this)
+			self.dynamic_props = map[string]PhpVal{}
+		}
+	}
+	unsafe {
+		mut self := &PhpObjectBase(&this)
+		self.dynamic_props[prop_name] = val
+	}
+	return true
+}
+
+pub fn (mut this PhpObjectBase) has_method(method_name string) bool {
 	return false
+}
+
+pub fn (mut this PhpObjectBase) has_property(prop_name string) bool {
+	return prop_name in this.dynamic_props
 }
 
 pub const magic_php_object = u64(0x56504850585F4F42)
@@ -483,6 +642,23 @@ pub fn new_object(class_name string, parents []string, obj IPhpObject) PhpVal {
 		z.u1.type_info = 8 // IS_OBJECT
 	}
 	return PhpVal{ raw: z }
+}
+
+// call_zend_callable 底层利用 Zend 引擎动态调用任何可调用对象 (zval)
+pub fn call_zend_callable(cb PhpVal, args []PhpVal) PhpVal {
+	z := new_zval()
+	mut raw_args := []&C.zval{}
+	for a in args {
+		raw_args << a.raw
+	}
+	unsafe {
+		res := C.php2v_call_zend_callable(cb.raw, z, u32(args.len), raw_args.data)
+		if res == 0 {
+			return PhpVal{ raw: z }
+		}
+		free(z)
+	}
+	return new_null()
 }
 
 // call_method 公共运行时分发器，基于 IPhpObject 接口实现多态派发
@@ -537,6 +713,36 @@ pub fn (v PhpVal) get_object() &PhpObject {
 		}
 		return &PhpObject(nil)
 	}
+}
+
+pub fn cast_object_ptr[T](v PhpVal) &T {
+	mut obj_info := v.get_object()
+	if voidptr(obj_info) == 0 {
+		return unsafe { &T(nil) }
+	}
+	if obj_info.obj is &T {
+		return obj_info.obj as &T
+	}
+	return unsafe { &T(nil) }
+}
+
+// array_to_object PHP (object) cast: 将 PhpVal 数组转为 stdClass 对象
+pub fn array_to_object(val PhpVal) PhpVal {
+	if val.is_object() {
+		return val
+	}
+	mut base := PhpObjectBase{}
+	if val.is_array() {
+		mut iter := val.iterator()
+		for {
+			item := iter.next() or { break }
+			key_str := item.key.str()
+			base.dispatch_set_prop(key_str, item.val)
+		}
+	} else if !val.is_null() {
+		base.dispatch_set_prop('0', val)
+	}
+	return new_object('stdClass', []string{}, base)
 }
 
 // Closure support: store V native fn as PhpVal
@@ -698,6 +904,10 @@ fn C.php2v_get_superglobal(name &char, len usize, retval &C.zval) int
 fn C.php2v_register_global(name &char, len usize, val &C.zval)
 fn C.php2v_instance_of(obj &C.zval, class_name &char, len usize) int
 fn C.php2v_call_method(obj &C.zval, name &char, len usize, retval &C.zval, param_count u32, params voidptr) int
+fn C.php2v_get_current_ctx() voidptr
+fn C.php2v_set_current_ctx(ctx voidptr)
+fn C.php2v_zstr_val(zstr voidptr) &char
+fn C.php2v_zstr_len(zstr voidptr) usize
 
 pub fn has_exception() bool {
 	return C.php2v_has_exception() != 0
@@ -818,4 +1028,68 @@ pub fn bitwise_not(a PhpVal) PhpVal {
 	return PhpVal{ raw: z }
 }
 
+pub fn create_array_from_list_with_base(base []PhpVal, extra []PhpVal) PhpVal {
+	mut arr := new_array()
+	for v in base {
+		arr.array_push(v)
+	}
+	for v in extra {
+		arr.array_push(v)
+	}
+	return arr
+}
 
+pub fn func_get_arg_helper(extra []PhpVal, idx PhpVal) PhpVal {
+	i := idx.to_i64()
+	if i >= 0 && i < extra.len {
+		return extra[i].clone()
+	}
+	return new_null()
+}
+
+pub fn func_get_arg_helper_with_base(base []PhpVal, extra []PhpVal, idx PhpVal) PhpVal {
+	i := idx.to_i64()
+	if i >= 0 && i < base.len {
+		return base[i].clone()
+	}
+	offset := i - base.len
+	if offset >= 0 && offset < extra.len {
+		return extra[offset].clone()
+	}
+	return new_null()
+}
+
+pub fn is_null(v PhpVal) bool {
+	return v.is_null()
+}
+
+pub fn ternary(cond bool, if_val PhpVal, else_val PhpVal) PhpVal {
+	if cond {
+		return if_val
+	} else {
+		return else_val
+	}
+}
+
+pub fn coalesce(left PhpVal, right PhpVal) PhpVal {
+	if left.raw != 0 && (left.raw.u1.type_info & 0xff) != 1 {
+		return left
+	}
+	return right
+}
+
+pub fn ternary_string(cond bool, if_val string, else_val string) string {
+	if cond {
+		return if_val
+	} else {
+		return else_val
+	}
+}
+
+pub fn ternary_int(cond bool, if_val i64, else_val i64) i64 {
+	if cond {
+		return if_val
+	} else {
+		return else_val
+	}
+}

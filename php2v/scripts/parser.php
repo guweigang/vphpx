@@ -47,6 +47,12 @@ function cleanNode($node) {
             if ($node->getType() === 'Expr_FuncCall' && $subName === 'name' && !is_string($val) && !($val instanceof \PhpParser\Node\Name)) {
                 $outName = 'expr';
             }
+            if ($node->getType() === 'Expr_New' && $subName === 'class' && !is_string($val) && !($val instanceof \PhpParser\Node\Name)) {
+                $outName = 'class_expr';
+            }
+            if ($node->getType() === 'Expr_MethodCall' && $subName === 'name' && !is_string($val) && !($val instanceof \PhpParser\Node\Identifier)) {
+                $outName = 'name_expr';
+            }
             if (is_array($val)) {
                 $res[$outName] = array_map('cleanNode', $val);
             } elseif ($val instanceof \PhpParser\Node) {
@@ -81,4 +87,4 @@ try {
 
 $cleaned = array_map('cleanNode', $stmts);
 
-echo json_encode($cleaned, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n";
+echo json_encode($cleaned, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE) . "\n";

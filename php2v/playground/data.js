@@ -1330,7 +1330,7 @@ window.PLAYGROUND_DATA = [
     "title": "11 Oop",
     "filename": "11_oop.php",
     "php": "<?php\nclass User {\n    public $name;\n    public function __construct($name) {\n        $this->name = $name;\n    }\n    public function getName() {\n        return $this->name;\n    }\n}\n\n$user = new User(\"Alice\");\necho $user->getName();\necho \"\\n\";\n\n$user->name = \"Bob\";\necho $user->getName();\necho \"\\n\";\n",
-    "v": "import rt\n\nstruct Class_User {\n\trt.PhpObjectBase\npub mut:\n\tname string\n}\n\nfn (mut this Class_User) construct(name string) {\n\tthis.name = name\n}\n\nfn (mut this Class_User) getname() string {\n\treturn this.name\n}\n\nfn create_user(name string) &Class_User {\n\tmut obj := &Class_User{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\tname:          ''\n\t}\n\tobj.construct(name)\n\treturn obj\n}\n\nfn (mut this Class_User) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' {\n\t\t\tthis.construct(if args.len > 0 { args[0] } else { rt.new_null() }.to_string())\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'getName' {\n\t\t\treturn rt.new_string(this.getname())\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_User) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'name' { return rt.new_string(this.name) }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_User) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'name' {\n\t\t\tthis.name = val.to_string()\n\t\t\treturn true\n\t\t}\n\t\telse {\n\t\t\treturn false\n\t\t}\n\t}\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_user := create_user('Alice')\n\tprint(var_user.getname())\n\tprint('\\n')\n\tvar_user.name = 'Bob'\n\tprint(var_user.getname())\n\tprint('\\n')\n}\n",
+    "v": "import rt\n\nstruct Class_User {\n\trt.PhpObjectBase\npub mut:\n\tname string\n}\n\nfn (mut this Class_User) construct(name string) {\n\tthis.name = name\n}\n\nfn (mut this Class_User) getname() string {\n\treturn this.name\n}\n\nfn create_user(name string) &Class_User {\n\tmut obj := &Class_User{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\tname:          ''\n\t}\n\tobj.construct(name)\n\treturn obj\n}\n\nfn (mut this Class_User) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' {\n\t\t\tthis.construct((if args.len > 0 { args[0] } else { rt.new_null() }).str())\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'getName' {\n\t\t\treturn rt.new_string(this.getname())\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_User) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'name' { return rt.new_string(this.name) }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_User) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'name' {\n\t\t\tthis.name = val.str()\n\t\t\treturn true\n\t\t}\n\t\telse {\n\t\t\treturn false\n\t\t}\n\t}\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_user := create_user('Alice')\n\tprint(var_user.getname())\n\tprint('\\n')\n\tvar_user.name = 'Bob'\n\tprint(var_user.getname())\n\tprint('\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Class",
@@ -2262,7 +2262,7 @@ window.PLAYGROUND_DATA = [
     "title": "16 Oop Inheritance",
     "filename": "16_oop_inheritance.php",
     "php": "<?php\nclass Animal {\n    public $name;\n    public function __construct($name) {\n        $this->name = $name;\n    }\n    public function greet() {\n        echo \"Hi, I am \" . $this->name . \"\\n\";\n    }\n}\n\nclass Dog extends Animal {\n    public $breed;\n    public function __construct($name, $breed) {\n        parent::__construct($name);\n        $this->breed = $breed;\n    }\n    public function greet() {\n        parent::greet();\n        echo \"I am a \" . $this->breed . \"\\n\";\n    }\n}\n\n$dog = new Dog(\"Rex\", \"Labrador\");\n$dog->greet();\necho $dog->name . \"\\n\";\necho $dog->breed . \"\\n\";\n",
-    "v": "import rt\n\nstruct Class_Animal {\n\trt.PhpObjectBase\npub mut:\n\tname rt.PhpVal\n}\n\nfn (mut this Class_Animal) construct(var_name rt.PhpVal) {\n\tthis.name = var_name.dup()\n}\n\nfn (mut this Class_Animal) greet() {\n\tprint('Hi, I am ' + (this.name).str() + '\\n')\n}\n\nstruct Class_Dog {\n\tClass_Animal\npub mut:\n\tbreed string\n}\n\nfn (mut this Class_Dog) construct(name string, breed string) {\n\tthis.Class_Animal.construct(rt.new_string(name))\n\tthis.breed = breed\n}\n\nfn (mut this Class_Dog) greet() {\n\tthis.Class_Animal.greet()\n\tprint('I am a ' + this.breed + '\\n')\n}\n\nfn create_animal(arg_0 rt.PhpVal) &Class_Animal {\n\tmut obj := &Class_Animal{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\tname:          rt.new_null()\n\t}\n\tobj.construct(arg_0)\n\treturn obj\n}\n\nfn create_dog(name string, breed string) &Class_Dog {\n\tmut obj := &Class_Dog{\n\t\tClass_Animal: Class_Animal{\n\t\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\t\tname:          rt.new_null()\n\t\t}\n\t\tbreed:        ''\n\t}\n\tobj.construct(name, breed)\n\treturn obj\n}\n\nfn (mut this Class_Animal) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' {\n\t\t\tthis.construct(if args.len > 0 { args[0] } else { rt.new_null() })\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'greet' {\n\t\t\tthis.greet()\n\t\t\treturn rt.new_null()\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_Animal) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'name' { return this.name }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_Animal) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'name' {\n\t\t\tthis.name = val\n\t\t\treturn true\n\t\t}\n\t\telse {\n\t\t\treturn false\n\t\t}\n\t}\n}\n\nfn (mut this Class_Dog) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' {\n\t\t\tthis.construct(if args.len > 0 { args[0] } else { rt.new_null() }.to_string(), if args.len > 1 {\n\t\t\t\targs[1]\n\t\t\t} else {\n\t\t\t\trt.new_null()\n\t\t\t}.to_string())\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'greet' {\n\t\t\tthis.greet()\n\t\t\treturn rt.new_null()\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_Dog) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'name' { return this.Class_Animal.name }\n\t\t'breed' { return rt.new_string(this.breed) }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_Dog) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'name' {\n\t\t\tthis.Class_Animal.name = val\n\t\t\treturn true\n\t\t}\n\t\t'breed' {\n\t\t\tthis.breed = val.to_string()\n\t\t\treturn true\n\t\t}\n\t\telse {\n\t\t\treturn false\n\t\t}\n\t}\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_dog := create_dog('Rex', 'Labrador')\n\tvar_dog.greet()\n\tprint((var_dog.name).str() + '\\n')\n\tprint(var_dog.breed + '\\n')\n}\n",
+    "v": "import rt\n\nstruct Class_Animal {\n\trt.PhpObjectBase\npub mut:\n\tname rt.PhpVal = rt.new_null()\n}\n\nfn (mut this Class_Animal) construct(var_name rt.PhpVal) {\n\tthis.name = var_name.dup()\n}\n\nfn (mut this Class_Animal) greet() {\n\tprint('Hi, I am ' + (this.name).str() + '\\n')\n}\n\nstruct Class_Dog {\n\tClass_Animal\npub mut:\n\tbreed string\n}\n\nfn (mut this Class_Dog) construct(name string, breed string) {\n\tthis.Class_Animal.construct(rt.new_string(name))\n\tthis.breed = breed\n}\n\nfn (mut this Class_Dog) greet() {\n\tthis.Class_Animal.greet()\n\tprint('I am a ' + this.breed + '\\n')\n}\n\nfn create_animal(arg_0 rt.PhpVal) &Class_Animal {\n\tmut obj := &Class_Animal{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\tname:          rt.new_null()\n\t}\n\tobj.construct(arg_0)\n\treturn obj\n}\n\nfn create_dog(name string, breed string) &Class_Dog {\n\tmut obj := &Class_Dog{\n\t\tClass_Animal: Class_Animal{\n\t\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\t\tname:          rt.new_null()\n\t\t}\n\t\tbreed:        ''\n\t}\n\tobj.construct(name, breed)\n\treturn obj\n}\n\nfn (mut this Class_Animal) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' {\n\t\t\tthis.construct(if args.len > 0 { args[0] } else { rt.new_null() })\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'greet' {\n\t\t\tthis.greet()\n\t\t\treturn rt.new_null()\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_Animal) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'name' { return this.name }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_Animal) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'name' {\n\t\t\tthis.name = val\n\t\t\treturn true\n\t\t}\n\t\telse {\n\t\t\treturn false\n\t\t}\n\t}\n}\n\nfn (mut this Class_Dog) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' {\n\t\t\tthis.construct((if args.len > 0 { args[0] } else { rt.new_null() }).str(), (if args.len > 1 {\n\t\t\t\targs[1]\n\t\t\t} else {\n\t\t\t\trt.new_null()\n\t\t\t}).str())\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'greet' {\n\t\t\tthis.greet()\n\t\t\treturn rt.new_null()\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_Dog) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'name' { return this.Class_Animal.name }\n\t\t'breed' { return rt.new_string(this.breed) }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_Dog) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'name' {\n\t\t\tthis.Class_Animal.name = val\n\t\t\treturn true\n\t\t}\n\t\t'breed' {\n\t\t\tthis.breed = val.str()\n\t\t\treturn true\n\t\t}\n\t\telse {\n\t\t\treturn false\n\t\t}\n\t}\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_dog := create_dog('Rex', 'Labrador')\n\tvar_dog.greet()\n\tprint((var_dog.name).str() + '\\n')\n\tprint(var_dog.breed + '\\n')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Class",
@@ -3519,7 +3519,7 @@ window.PLAYGROUND_DATA = [
     "title": "19 Exceptions",
     "filename": "19_exceptions.php",
     "php": "<?php\n\nclass MyException extends Exception {}\n\nfunction test_exception($throw_val) {\n    try {\n        if ($throw_val == 1) {\n            throw new Exception(\"base exception\");\n        } else if ($throw_val == 2) {\n            throw new MyException(\"my exception\");\n        }\n        echo \"no exception\\n\";\n    } catch (MyException $e) {\n        echo \"caught MyException: \" . $e->getMessage() . \"\\n\";\n    } catch (Exception $e) {\n        echo \"caught Exception: \" . $e->getMessage() . \"\\n\";\n    } finally {\n        echo \"finally block\\n\";\n    }\n}\n\ntest_exception(0);\ntest_exception(1);\ntest_exception(2);\n",
-    "v": "import rt\n\nstruct Class_MyException {\n\trt.PhpObjectBase\npub mut:\n\tmessage string\n\tcode    i64\n\tfile    string\n\tline    i64\n}\n\nfn (mut this Class_MyException) construct(var_message rt.PhpVal) {\n\tthis.message = var_message.to_string()\n}\n\nfn (mut this Class_MyException) getmessage() string {\n\treturn this.message\n}\n\nfn func_test_exception(throw_val i64) rt.PhpVal {\n\tif throw_val == 1 {\n\t\trt.throw_exception(rt.new_object('Exception', []string{},\n\t\t\tcreate_exception(rt.new_string('base exception'))))\n\t\tif rt.has_exception() {\n\t\t\tunsafe {\n\t\t\t\tgoto catch_label_1\n\t\t\t}\n\t\t}\n\t} else {\n\t\tif throw_val == 2 {\n\t\t\trt.throw_exception(rt.new_object('MyException', ['Exception'],\n\t\t\t\tcreate_myexception(rt.new_string('my exception'))))\n\t\t\tif rt.has_exception() {\n\t\t\t\tunsafe {\n\t\t\t\t\tgoto catch_label_1\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\tif rt.has_exception() {\n\t\t\tunsafe {\n\t\t\t\tgoto catch_label_1\n\t\t\t}\n\t\t}\n\t}\n\tif rt.has_exception() {\n\t\tunsafe {\n\t\t\tgoto catch_label_1\n\t\t}\n\t}\n\tprint('no exception\\n')\n\tif rt.has_exception() {\n\t\tunsafe {\n\t\t\tgoto catch_label_1\n\t\t}\n\t}\n\tunsafe {\n\t\tgoto finally_label_1\n\t}\n\tcatch_label_1:\n\tmut var_e_1 := rt.get_and_clear_exception()\n\tif rt.instance_of(var_e_1, 'MyException') {\n\t\tmut var_e := var_e_1.dup()\n\t\tprint('caught MyException: ' + (call_method(var_e, 'getMessage', []rt.PhpVal{})).str() +\n\t\t\t'\\n')\n\t\tunsafe {\n\t\t\tgoto finally_label_1\n\t\t}\n\t} else if rt.instance_of(var_e_1, 'Exception') {\n\t\tmut var_e := var_e_1.dup()\n\t\tprint('caught Exception: ' + (call_method(var_e, 'getMessage', []rt.PhpVal{})).str() + '\\n')\n\t\tunsafe {\n\t\t\tgoto finally_label_1\n\t\t}\n\t} else {\n\t\trt.throw_exception(var_e_1)\n\t\tunsafe {\n\t\t\tgoto finally_label_1\n\t\t}\n\t}\n\n\tfinally_label_1:\n\tprint('finally block\\n')\n\tif rt.has_exception() { return rt.new_null() }\n\n\tend_label_1:\n\treturn rt.new_null()\n}\n\nstruct Class_Exception {\n\trt.PhpObjectBase\npub mut:\n\tmessage string\n\tcode    i64\n\tfile    string\n\tline    i64\n}\n\nfn (mut this Class_Exception) construct(var_message rt.PhpVal) {\n\tthis.message = var_message.to_string()\n}\n\nfn (mut this Class_Exception) getmessage() string {\n\treturn this.message\n}\n\nfn create_myexception(arg_0 rt.PhpVal) &Class_MyException {\n\tmut obj := &Class_MyException{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\tmessage:       ''\n\t\tcode:          i64(0)\n\t\tfile:          ''\n\t\tline:          i64(0)\n\t}\n\tobj.construct(arg_0)\n\treturn obj\n}\n\nfn create_exception(arg_0 rt.PhpVal) &Class_Exception {\n\tmut obj := &Class_Exception{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\tmessage:       ''\n\t\tcode:          i64(0)\n\t\tfile:          ''\n\t\tline:          i64(0)\n\t}\n\tobj.construct(arg_0)\n\treturn obj\n}\n\nfn (mut this Class_MyException) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' {\n\t\t\tthis.construct(if args.len > 0 { args[0] } else { rt.new_null() })\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'getMessage' {\n\t\t\treturn rt.new_string(this.getmessage())\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_MyException) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'message' { return rt.new_string(this.message) }\n\t\t'code' { return rt.new_int(this.code) }\n\t\t'file' { return rt.new_string(this.file) }\n\t\t'line' { return rt.new_int(this.line) }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_MyException) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'message' {\n\t\t\tthis.message = val.to_string()\n\t\t\treturn true\n\t\t}\n\t\t'code' {\n\t\t\tthis.code = val.to_i64()\n\t\t\treturn true\n\t\t}\n\t\t'file' {\n\t\t\tthis.file = val.to_string()\n\t\t\treturn true\n\t\t}\n\t\t'line' {\n\t\t\tthis.line = val.to_i64()\n\t\t\treturn true\n\t\t}\n\t\telse {\n\t\t\treturn false\n\t\t}\n\t}\n}\n\nfn (mut this Class_Exception) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' {\n\t\t\tthis.construct(if args.len > 0 { args[0] } else { rt.new_null() })\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'getMessage' {\n\t\t\treturn rt.new_string(this.getmessage())\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_Exception) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'message' { return rt.new_string(this.message) }\n\t\t'code' { return rt.new_int(this.code) }\n\t\t'file' { return rt.new_string(this.file) }\n\t\t'line' { return rt.new_int(this.line) }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_Exception) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'message' {\n\t\t\tthis.message = val.to_string()\n\t\t\treturn true\n\t\t}\n\t\t'code' {\n\t\t\tthis.code = val.to_i64()\n\t\t\treturn true\n\t\t}\n\t\t'file' {\n\t\t\tthis.file = val.to_string()\n\t\t\treturn true\n\t\t}\n\t\t'line' {\n\t\t\tthis.line = val.to_i64()\n\t\t\treturn true\n\t\t}\n\t\telse {\n\t\t\treturn false\n\t\t}\n\t}\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tfunc_test_exception(0)\n\tfunc_test_exception(1)\n\tfunc_test_exception(2)\n}\n",
+    "v": "import rt\n\nstruct Class_MyException {\n\trt.PhpObjectBase\npub mut:\n\tmessage string\n\tcode    i64\n\tfile    string\n\tline    i64\n}\n\nfn (mut this Class_MyException) construct(var_message rt.PhpVal) {\n\tthis.message = var_message.to_string()\n}\n\nfn (mut this Class_MyException) getmessage() string {\n\treturn this.message\n}\n\nfn func_test_exception(throw_val i64) rt.PhpVal {\n\tif throw_val == 1 {\n\t\trt.throw_exception(rt.new_object('Exception', []string{},\n\t\t\tcreate_exception(rt.new_string('base exception'))))\n\t\tif rt.has_exception() {\n\t\t\tunsafe {\n\t\t\t\tgoto catch_label_1\n\t\t\t}\n\t\t}\n\t} else {\n\t\tif throw_val == 2 {\n\t\t\trt.throw_exception(rt.new_object('MyException', ['Exception'],\n\t\t\t\tcreate_myexception(rt.new_string('my exception'))))\n\t\t\tif rt.has_exception() {\n\t\t\t\tunsafe {\n\t\t\t\t\tgoto catch_label_1\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\tif rt.has_exception() {\n\t\t\tunsafe {\n\t\t\t\tgoto catch_label_1\n\t\t\t}\n\t\t}\n\t}\n\tif rt.has_exception() {\n\t\tunsafe {\n\t\t\tgoto catch_label_1\n\t\t}\n\t}\n\tprint('no exception\\n')\n\tif rt.has_exception() {\n\t\tunsafe {\n\t\t\tgoto catch_label_1\n\t\t}\n\t}\n\tunsafe {\n\t\tgoto finally_label_1\n\t}\n\tcatch_label_1:\n\tmut var_e_1 := rt.get_and_clear_exception()\n\tif rt.instance_of(var_e_1, 'MyException') {\n\t\tmut var_e := var_e_1.dup()\n\t\tprint('caught MyException: ' + (call_method(var_e, 'getMessage', []rt.PhpVal{})).str() +\n\t\t\t'\\n')\n\t\tunsafe {\n\t\t\tgoto finally_label_1\n\t\t}\n\t} else if rt.instance_of(var_e_1, 'Exception') {\n\t\tmut var_e := var_e_1.dup()\n\t\tprint('caught Exception: ' + (call_method(var_e, 'getMessage', []rt.PhpVal{})).str() + '\\n')\n\t\tunsafe {\n\t\t\tgoto finally_label_1\n\t\t}\n\t} else {\n\t\trt.throw_exception(var_e_1)\n\t\tunsafe {\n\t\t\tgoto finally_label_1\n\t\t}\n\t}\n\n\tfinally_label_1:\n\tprint('finally block\\n')\n\tif rt.has_exception() { return rt.new_null() }\n\n\tend_label_1:\n\treturn rt.new_null()\n}\n\nstruct Class_Exception {\n\trt.PhpObjectBase\npub mut:\n\tmessage string\n\tcode    i64\n\tfile    string\n\tline    i64\n}\n\nfn (mut this Class_Exception) construct(var_message rt.PhpVal) {\n\tthis.message = var_message.to_string()\n}\n\nfn (mut this Class_Exception) getmessage() string {\n\treturn this.message\n}\n\nfn create_myexception(arg_0 rt.PhpVal) &Class_MyException {\n\tmut obj := &Class_MyException{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\tmessage:       ''\n\t\tcode:          i64(0)\n\t\tfile:          ''\n\t\tline:          i64(0)\n\t}\n\tobj.construct(arg_0)\n\treturn obj\n}\n\nfn create_exception(arg_0 rt.PhpVal) &Class_Exception {\n\tmut obj := &Class_Exception{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t\tmessage:       ''\n\t\tcode:          i64(0)\n\t\tfile:          ''\n\t\tline:          i64(0)\n\t}\n\tobj.construct(arg_0)\n\treturn obj\n}\n\nfn (mut this Class_MyException) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' {\n\t\t\tthis.construct(if args.len > 0 { args[0] } else { rt.new_null() })\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'getMessage' {\n\t\t\treturn rt.new_string(this.getmessage())\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_MyException) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'message' { return rt.new_string(this.message) }\n\t\t'code' { return rt.new_int(this.code) }\n\t\t'file' { return rt.new_string(this.file) }\n\t\t'line' { return rt.new_int(this.line) }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_MyException) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'message' {\n\t\t\tthis.message = val.str()\n\t\t\treturn true\n\t\t}\n\t\t'code' {\n\t\t\tthis.code = val.to_i64()\n\t\t\treturn true\n\t\t}\n\t\t'file' {\n\t\t\tthis.file = val.str()\n\t\t\treturn true\n\t\t}\n\t\t'line' {\n\t\t\tthis.line = val.to_i64()\n\t\t\treturn true\n\t\t}\n\t\telse {\n\t\t\treturn false\n\t\t}\n\t}\n}\n\nfn (mut this Class_Exception) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' {\n\t\t\tthis.construct(if args.len > 0 { args[0] } else { rt.new_null() })\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'getMessage' {\n\t\t\treturn rt.new_string(this.getmessage())\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_Exception) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'message' { return rt.new_string(this.message) }\n\t\t'code' { return rt.new_int(this.code) }\n\t\t'file' { return rt.new_string(this.file) }\n\t\t'line' { return rt.new_int(this.line) }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_Exception) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'message' {\n\t\t\tthis.message = val.str()\n\t\t\treturn true\n\t\t}\n\t\t'code' {\n\t\t\tthis.code = val.to_i64()\n\t\t\treturn true\n\t\t}\n\t\t'file' {\n\t\t\tthis.file = val.str()\n\t\t\treturn true\n\t\t}\n\t\t'line' {\n\t\t\tthis.line = val.to_i64()\n\t\t\treturn true\n\t\t}\n\t\telse {\n\t\t\treturn false\n\t\t}\n\t}\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tfunc_test_exception(0)\n\tfunc_test_exception(1)\n\tfunc_test_exception(2)\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Class",
@@ -4077,7 +4077,7 @@ window.PLAYGROUND_DATA = [
     "title": "21 Namespaces",
     "filename": "21_namespaces.php",
     "php": "<?php\nnamespace App\\Utils;\n\nclass Helper {\n    public function log($msg) {\n        echo \"[Log] \" . $msg . \"\\n\";\n    }\n    public static function info($msg) {\n        echo \"[Info] \" . $msg . \"\\n\";\n    }\n}\n\nnamespace App\\Core;\n\nuse App\\Utils\\Helper;\nuse App\\Utils\\Helper as AliasHelper;\n\nclass Application {\n    public function run() {\n        $helper = new Helper();\n        $helper->log(\"App run\");\n\n        self::init();\n\n        AliasHelper::info(\"Done\");\n    }\n\n    public static function init() {\n        echo \"Init core\\n\";\n    }\n}\n\n$app = new Application();\n$app->run();\n",
-    "v": "import rt\n\nstruct Class_App_Utils_Helper {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_App_Utils_Helper) log(msg string) {\n\tprint('[Log] ' + msg + '\\n')\n}\n\nfn (mut this Class_App_Utils_Helper) info(msg string) {\n\tprint('[Info] ' + msg + '\\n')\n}\n\nstruct Class_App_Core_Application {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_App_Core_Application) run() {\n\tmut var_helper := create_app_utils_helper()\n\tvar_helper.log('App run')\n\tfn () rt.PhpVal {\n\t\tmut temp := Class_App_Core_Application{}\n\t\ttemp.init()\n\t\treturn rt.new_null()\n\t}()\n\tfn (arg_0 string) rt.PhpVal {\n\t\tmut temp := Class_App_Utils_Helper{}\n\t\ttemp.info(arg_0)\n\t\treturn rt.new_null()\n\t}('Done')\n}\n\nfn (mut this Class_App_Core_Application) init() {\n\tprint('Init core\\n')\n}\n\nfn create_app_utils_helper() &Class_App_Utils_Helper {\n\tmut obj := &Class_App_Utils_Helper{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn obj\n}\n\nfn create_app_core_application() &Class_App_Core_Application {\n\tmut obj := &Class_App_Core_Application{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn obj\n}\n\nfn (mut this Class_App_Utils_Helper) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'log' {\n\t\t\tthis.log(if args.len > 0 { args[0] } else { rt.new_null() }.to_string())\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'info' {\n\t\t\tthis.info(if args.len > 0 { args[0] } else { rt.new_null() }.to_string())\n\t\t\treturn rt.new_null()\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_App_Utils_Helper) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\treturn none\n}\n\nfn (mut this Class_App_Utils_Helper) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\treturn false\n}\n\nfn (mut this Class_App_Core_Application) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'run' {\n\t\t\tthis.run()\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'init' {\n\t\t\tthis.init()\n\t\t\treturn rt.new_null()\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_App_Core_Application) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\treturn none\n}\n\nfn (mut this Class_App_Core_Application) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\treturn false\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_app := create_app_core_application()\n\tvar_app.run()\n}\n",
+    "v": "import rt\n\nstruct Class_App_Utils_Helper {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_App_Utils_Helper) log(msg string) {\n\tprint('[Log] ' + msg + '\\n')\n}\n\nfn (mut this Class_App_Utils_Helper) info(msg string) {\n\tprint('[Info] ' + msg + '\\n')\n}\n\nstruct Class_App_Core_Application {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_App_Core_Application) run() {\n\tmut var_helper := create_app_utils_helper()\n\tvar_helper.log('App run')\n\tfn () rt.PhpVal {\n\t\tmut temp := Class_App_Core_Application{}\n\t\ttemp.init()\n\t\treturn rt.new_null()\n\t}()\n\tfn (arg_0 string) rt.PhpVal {\n\t\tmut temp := Class_App_Utils_Helper{}\n\t\ttemp.info(arg_0)\n\t\treturn rt.new_null()\n\t}('Done')\n}\n\nfn (mut this Class_App_Core_Application) init() {\n\tprint('Init core\\n')\n}\n\nfn create_app_utils_helper() &Class_App_Utils_Helper {\n\tmut obj := &Class_App_Utils_Helper{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn obj\n}\n\nfn create_app_core_application() &Class_App_Core_Application {\n\tmut obj := &Class_App_Core_Application{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn obj\n}\n\nfn (mut this Class_App_Utils_Helper) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'log' {\n\t\t\tthis.log((if args.len > 0 { args[0] } else { rt.new_null() }).str())\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'info' {\n\t\t\tthis.info((if args.len > 0 { args[0] } else { rt.new_null() }).str())\n\t\t\treturn rt.new_null()\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_App_Utils_Helper) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\treturn none\n}\n\nfn (mut this Class_App_Utils_Helper) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\treturn false\n}\n\nfn (mut this Class_App_Core_Application) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'run' {\n\t\t\tthis.run()\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'init' {\n\t\t\tthis.init()\n\t\t\treturn rt.new_null()\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_App_Core_Application) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\treturn none\n}\n\nfn (mut this Class_App_Core_Application) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\treturn false\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_app := create_app_core_application()\n\tvar_app.run()\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Namespace",
@@ -6171,7 +6171,7 @@ window.PLAYGROUND_DATA = [
     "title": "30 Oop Interfaces",
     "filename": "30_oop_interfaces.php",
     "php": "<?php\n\ninterface Logger {\n    public function log($msg);\n}\n\nclass FileLogger implements Logger {\n    public function log($msg) {\n        echo \"LOG: \" . $msg . \"\\n\";\n    }\n}\n\n$fl = new FileLogger();\nif ($fl instanceof Logger) {\n    echo \"fl is Logger\\n\";\n} else {\n    echo \"fl is not Logger\\n\";\n}\n\n$fl->log(\"hello\");\n",
-    "v": "import rt\n\ninterface Logger {\n\tlog(rt.PhpVal) rt.PhpVal\n}\n\nstruct Class_FileLogger {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_FileLogger) log(msg string) {\n\tprint('LOG: ' + msg + '\\n')\n}\n\nfn create_filelogger() &Class_FileLogger {\n\tmut obj := &Class_FileLogger{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn obj\n}\n\nfn (mut this Class_FileLogger) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'log' {\n\t\t\tthis.log(if args.len > 0 { args[0] } else { rt.new_null() }.to_string())\n\t\t\treturn rt.new_null()\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_FileLogger) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\treturn none\n}\n\nfn (mut this Class_FileLogger) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\treturn false\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_msg := rt.new_null()\n\tmut var_fl := create_filelogger()\n\tif true {\n\t\tprint('fl is Logger\\n')\n\t} else {\n\t\tprint('fl is not Logger\\n')\n\t}\n\tvar_fl.log('hello')\n}\n",
+    "v": "import rt\n\ninterface Logger {\n\tlog(rt.PhpVal) rt.PhpVal\n}\n\nstruct Class_FileLogger {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_FileLogger) log(msg string) {\n\tprint('LOG: ' + msg + '\\n')\n}\n\nfn create_filelogger() &Class_FileLogger {\n\tmut obj := &Class_FileLogger{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn obj\n}\n\nfn (mut this Class_FileLogger) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'log' {\n\t\t\tthis.log((if args.len > 0 { args[0] } else { rt.new_null() }).str())\n\t\t\treturn rt.new_null()\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_FileLogger) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\treturn none\n}\n\nfn (mut this Class_FileLogger) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\treturn false\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_msg := rt.new_null()\n\tmut var_fl := create_filelogger()\n\tif true {\n\t\tprint('fl is Logger\\n')\n\t} else {\n\t\tprint('fl is not Logger\\n')\n\t}\n\tvar_fl.log('hello')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Interface",
@@ -6380,7 +6380,7 @@ window.PLAYGROUND_DATA = [
     "title": "31 Oop Traits",
     "filename": "31_oop_traits.php",
     "php": "<?php\n\ntrait MyTrait {\n    public function sayHello($name) {\n        echo \"Hello, \" . $name . \"\\n\";\n    }\n}\n\nclass User {\n    use MyTrait;\n}\n\n$u = new User();\n$u->sayHello(\"Alice\");\n",
-    "v": "import rt\n\nstruct Class_User {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_User) sayhello(name string) {\n\tprint('Hello, ' + name + '\\n')\n}\n\nfn create_user() &Class_User {\n\tmut obj := &Class_User{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn obj\n}\n\nfn (mut this Class_User) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'sayHello' {\n\t\t\tthis.sayhello(if args.len > 0 { args[0] } else { rt.new_null() }.to_string())\n\t\t\treturn rt.new_null()\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_User) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\treturn none\n}\n\nfn (mut this Class_User) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\treturn false\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_u := create_user()\n\tvar_u.sayhello('Alice')\n}\n",
+    "v": "import rt\n\nstruct Class_User {\n\trt.PhpObjectBase\n}\n\nfn (mut this Class_User) sayhello(name string) {\n\tprint('Hello, ' + name + '\\n')\n}\n\nfn create_user() &Class_User {\n\tmut obj := &Class_User{\n\t\tPhpObjectBase: rt.PhpObjectBase{}\n\t}\n\treturn obj\n}\n\nfn (mut this Class_User) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'sayHello' {\n\t\t\tthis.sayhello((if args.len > 0 { args[0] } else { rt.new_null() }).str())\n\t\t\treturn rt.new_null()\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_User) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\treturn none\n}\n\nfn (mut this Class_User) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\treturn false\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tmut var_u := create_user()\n\tvar_u.sayhello('Alice')\n}\n",
     "ast": [
       {
         "nodeType": "Stmt_Trait",
@@ -7111,6 +7111,2454 @@ window.PLAYGROUND_DATA = [
                 "value": "\n"
               }
             ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "34_wp_error",
+    "title": "34 Wp Error",
+    "filename": "34_wp_error.php",
+    "php": "<?php\n/**\n * WordPress Error API.\n *\n * @package WordPress\n */\n\nif (!function_exists('do_action')) {\n\tfunction do_action($tag, ...$args) {}\n}\n\n/**\n * WordPress Error class.\n *\n * Container for checking for WordPress errors and error messages. Return\n * WP_Error and use is_wp_error() to check if this class is returned. Many\n * core WordPress functions pass this class in the event of an error and\n * if not handled properly will result in code errors.\n *\n * @since 2.1.0\n */\n#[AllowDynamicProperties]\nclass WP_Error {\n\t/**\n\t * Stores the list of errors.\n\t *\n\t * @since 2.1.0\n\t * @var array\n\t */\n\tpublic $errors = array();\n\n\t/**\n\t * Stores the most recently added data for each error code.\n\t *\n\t * @since 2.1.0\n\t * @var array\n\t */\n\tpublic $error_data = array();\n\n\t/**\n\t * Stores previously added data added for error codes, oldest-to-newest by code.\n\t *\n\t * @since 5.6.0\n\t * @var array[]\n\t */\n\tprotected $additional_data = array();\n\n\t/**\n\t * Initializes the error.\n\t *\n\t * If `$code` is empty, the other parameters will be ignored.\n\t * When `$code` is not empty, `$message` will be used even if\n\t * it is empty. The `$data` parameter will be used only if it\n\t * is not empty.\n\t *\n\t * Though the class is constructed with a single error code and\n\t * message, multiple codes can be added using the `add()` method.\n\t *\n\t * @since 2.1.0\n\t *\n\t * @param string|int $code    Error code.\n\t * @param string     $message Error message.\n\t * @param mixed      $data    Optional. Error data. Default empty string.\n\t */\n\tpublic function __construct( $code = '', $message = '', $data = '' ) {\n\t\tif ( empty( $code ) ) {\n\t\t\treturn;\n\t\t}\n\n\t\t$this->add( $code, $message, $data );\n\t}\n\n\t/**\n\t * Retrieves all error codes.\n\t *\n\t * @since 2.1.0\n\t *\n\t * @return array List of error codes, if available.\n\t */\n\tpublic function get_error_codes() {\n\t\tif ( ! $this->has_errors() ) {\n\t\t\treturn array();\n\t\t}\n\n\t\treturn array_keys( $this->errors );\n\t}\n\n\t/**\n\t * Retrieves the first error code available.\n\t *\n\t * @since 2.1.0\n\t *\n\t * @return string|int Empty string, if no error codes.\n\t */\n\tpublic function get_error_code() {\n\t\t$codes = $this->get_error_codes();\n\n\t\tif ( empty( $codes ) ) {\n\t\t\treturn '';\n\t\t}\n\n\t\treturn $codes[0];\n\t}\n\n\t/**\n\t * Retrieves all error messages, or the error messages for the given error code.\n\t *\n\t * @since 2.1.0\n\t *\n\t * @param string|int $code Optional. Error code to retrieve the messages for.\n\t *                         Default empty string.\n\t * @return string[] Error strings on success, or empty array if there are none.\n\t */\n\tpublic function get_error_messages( $code = '' ) {\n\t\t// Return all messages if no code specified.\n\t\tif ( empty( $code ) ) {\n\t\t\t$all_messages = array();\n\t\t\tforeach ( (array) $this->errors as $code => $messages ) {\n\t\t\t\t$all_messages = array_merge( $all_messages, $messages );\n\t\t\t}\n\n\t\t\treturn $all_messages;\n\t\t}\n\n\t\tif ( isset( $this->errors[ $code ] ) ) {\n\t\t\treturn $this->errors[ $code ];\n\t\t} else {\n\t\t\treturn array();\n\t\t}\n\t}\n\n\t/**\n\t * Gets a single error message.\n\t *\n\t * This will get the first message available for the code. If no code is\n\t * given then the first code available will be used.\n\t *\n\t * @since 2.1.0\n\t *\n\t * @param string|int $code Optional. Error code to retrieve the message for.\n\t *                         Default empty string.\n\t * @return string The error message.\n\t */\n\tpublic function get_error_message( $code = '' ) {\n\t\tif ( empty( $code ) ) {\n\t\t\t$code = $this->get_error_code();\n\t\t}\n\t\t$messages = $this->get_error_messages( $code );\n\t\tif ( empty( $messages ) ) {\n\t\t\treturn '';\n\t\t}\n\t\treturn $messages[0];\n\t}\n\n\t/**\n\t * Retrieves the most recently added error data for an error code.\n\t *\n\t * @since 2.1.0\n\t *\n\t * @param string|int $code Optional. Error code. Default empty string.\n\t * @return mixed Error data, if it exists.\n\t */\n\tpublic function get_error_data( $code = '' ) {\n\t\tif ( empty( $code ) ) {\n\t\t\t$code = $this->get_error_code();\n\t\t}\n\n\t\tif ( isset( $this->error_data[ $code ] ) ) {\n\t\t\treturn $this->error_data[ $code ];\n\t\t}\n\t}\n\n\t/**\n\t * Verifies if the instance contains errors.\n\t *\n\t * @since 5.1.0\n\t *\n\t * @return bool If the instance contains errors.\n\t */\n\tpublic function has_errors() {\n\t\tif ( ! empty( $this->errors ) ) {\n\t\t\treturn true;\n\t\t}\n\t\treturn false;\n\t}\n\n\t/**\n\t * Adds an error or appends an additional message to an existing error.\n\t *\n\t * @since 2.1.0\n\t *\n\t * @param string|int $code    Error code.\n\t * @param string     $message Error message.\n\t * @param mixed      $data    Optional. Error data. Default empty string.\n\t */\n\tpublic function add( $code, $message, $data = '' ) {\n\t\t$this->errors[ $code ][] = $message;\n\n\t\tif ( ! empty( $data ) ) {\n\t\t\t$this->add_data( $data, $code );\n\t\t}\n\n\t\t/**\n\t\t * Fires when an error is added to a WP_Error object.\n\t\t *\n\t\t * @since 5.6.0\n\t\t *\n\t\t * @param string|int $code     Error code.\n\t\t * @param string     $message  Error message.\n\t\t * @param mixed      $data     Error data. Might be empty.\n\t\t * @param WP_Error   $wp_error The WP_Error object.\n\t\t */\n\t\tdo_action( 'wp_error_added', $code, $message, $data, $this );\n\t}\n\n\t/**\n\t * Adds data to an error with the given code.\n\t *\n\t * @since 2.1.0\n\t * @since 5.6.0 Errors can now contain more than one item of error data. {@see WP_Error::$additional_data}.\n\t *\n\t * @param mixed      $data Error data.\n\t * @param string|int $code Error code.\n\t */\n\tpublic function add_data( $data, $code = '' ) {\n\t\tif ( empty( $code ) ) {\n\t\t\t$code = $this->get_error_code();\n\t\t}\n\n\t\tif ( isset( $this->error_data[ $code ] ) ) {\n\t\t\t$this->additional_data[ $code ][] = $this->error_data[ $code ];\n\t\t}\n\n\t\t$this->error_data[ $code ] = $data;\n\t}\n\n\t/**\n\t * Retrieves all error data for an error code in the order in which the data was added.\n\t *\n\t * @since 5.6.0\n\t *\n\t * @param string|int $code Error code.\n\t * @return mixed[] Array of error data, if it exists.\n\t */\n\tpublic function get_all_error_data( $code = '' ) {\n\t\tif ( empty( $code ) ) {\n\t\t\t$code = $this->get_error_code();\n\t\t}\n\n\t\t$data = array();\n\n\t\tif ( isset( $this->additional_data[ $code ] ) ) {\n\t\t\t$data = $this->additional_data[ $code ];\n\t\t}\n\n\t\tif ( isset( $this->error_data[ $code ] ) ) {\n\t\t\t$data[] = $this->error_data[ $code ];\n\t\t}\n\n\t\treturn $data;\n\t}\n\n\t/**\n\t * Removes the specified error.\n\t *\n\t * This function removes all error messages associated with the specified\n\t * error code, along with any error data for that code.\n\t *\n\t * @since 4.1.0\n\t *\n\t * @param string|int $code Error code.\n\t */\n\tpublic function remove( $code ) {\n\t\tunset( $this->errors[ $code ] );\n\t\tunset( $this->error_data[ $code ] );\n\t\tunset( $this->additional_data[ $code ] );\n\t}\n\n\t/**\n\t * Merges the errors in the given error object into this one.\n\t *\n\t * @since 5.6.0\n\t *\n\t * @param WP_Error $error Error object to merge.\n\t */\n\tpublic function merge_from( WP_Error $error ) {\n\t\tstatic::copy_errors( $error, $this );\n\t}\n\n\t/**\n\t * Exports the errors in this object into the given one.\n\t *\n\t * @since 5.6.0\n\t *\n\t * @param WP_Error $error Error object to export into.\n\t */\n\tpublic function export_to( WP_Error $error ) {\n\t\tstatic::copy_errors( $this, $error );\n\t}\n\n\t/**\n\t * Copies errors from one WP_Error instance to another.\n\t *\n\t * @since 5.6.0\n\t *\n\t * @param WP_Error $from The WP_Error to copy from.\n\t * @param WP_Error $to   The WP_Error to copy to.\n\t */\n\tprotected static function copy_errors( WP_Error $from, WP_Error $to ) {\n\t\tforeach ( $from->get_error_codes() as $code ) {\n\t\t\tforeach ( $from->get_error_messages( $code ) as $error_message ) {\n\t\t\t\t$to->add( $code, $error_message );\n\t\t\t}\n\n\t\t\tforeach ( $from->get_all_error_data( $code ) as $data ) {\n\t\t\t\t$to->add_data( $data, $code );\n\t\t\t}\n\t\t}\n\t}\n}\n\n$err = new WP_Error('code1', 'Message 1', 'data1');\n$err->add('code2', 'Message 2');\necho $err->get_error_code() . \"\\n\";\necho $err->get_error_message('code1') . \"\\n\";\necho $err->get_error_message('code2') . \"\\n\";\n\n$err2 = new WP_Error();\n$err2->merge_from($err);\necho $err2->get_error_message('code2') . \"\\n\";\n",
+    "v": "import rt\n\nfn func_do_action(var_tag rt.PhpVal, var_args rt.PhpVal) rt.PhpVal {\n\treturn rt.new_null()\n}\n\nstruct Class_WP_Error {\n\trt.PhpObjectBase\npub mut:\n\terrors          rt.PhpVal = rt.new_array()\n\terror_data      rt.PhpVal = rt.new_array()\n\tadditional_data rt.PhpVal = rt.new_array()\n}\n\nfn (mut this Class_WP_Error) construct(code string, message string, data string) {\n\tmut code_mutated := code\n\tmut data_mutated := data\n\tif code_mutated == '' {\n\t\treturn\n\t}\n\tthis.add(code_mutated, message, rt.new_string(data_mutated))\n}\n\nfn (mut this Class_WP_Error) get_error_codes() rt.PhpVal {\n\tif rt.is_true(rt.new_bool(!(rt.is_true(this.has_errors())))) {\n\t\treturn rt.new_array()\n\t}\n\treturn rt.func_array_keys(this.errors)\n}\n\nfn (mut this Class_WP_Error) get_error_code() rt.PhpVal {\n\tmut var_codes := this.get_error_codes()\n\tif !rt.is_true(var_codes) {\n\t\treturn rt.new_string('')\n\t}\n\treturn var_codes.array_get(0)\n}\n\nfn (mut this Class_WP_Error) get_error_messages(var_code rt.PhpVal) rt.PhpVal {\n\tmut var_code_mutated := var_code\n\tif !rt.is_true(var_code_mutated) {\n\t\tmut var_all_messages := rt.new_array()\n\t\t{\n\t\t\tmut iter_1 := rt.cast_array(this.errors).iterator()\n\t\t\tfor {\n\t\t\t\titem_1 := iter_1.next() or { break }\n\t\t\t\tmut var_messages := item_1.val\n\t\t\t\tmut var_code_shadow := item_1.key\n\t\t\t\tvar_all_messages = rt.call_function('array_merge', [\n\t\t\t\t\tvar_all_messages.dup(), var_messages.dup()])\n\t\t\t}\n\t\t}\n\t\treturn var_all_messages.dup()\n\t}\n\tif rt.is_true(rt.new_bool(this.errors.array_isset(var_code_mutated))) {\n\t\treturn this.errors.array_get(var_code_mutated)\n\t} else {\n\t\treturn rt.new_array()\n\t}\n\treturn rt.new_null()\n}\n\nfn (mut this Class_WP_Error) get_error_message(code string) rt.PhpVal {\n\tmut code_mutated := code\n\tif code_mutated == '' {\n\t\tcode_mutated = (this.get_error_code()).str()\n\t}\n\tmut var_messages := this.get_error_messages(rt.new_string(code_mutated))\n\tif !rt.is_true(var_messages) {\n\t\treturn rt.new_string('')\n\t}\n\treturn var_messages.array_get(0)\n}\n\nfn (mut this Class_WP_Error) get_error_data(var_code rt.PhpVal) rt.PhpVal {\n\tmut var_code_mutated := var_code\n\tif !rt.is_true(var_code_mutated) {\n\t\tvar_code_mutated = this.get_error_code()\n\t}\n\tif rt.is_true(rt.new_bool(this.error_data.array_isset(var_code_mutated))) {\n\t\treturn this.error_data.array_get(var_code_mutated)\n\t}\n\treturn rt.new_null()\n}\n\nfn (mut this Class_WP_Error) has_errors() rt.PhpVal {\n\tif !(!rt.is_true(this.errors)) {\n\t\treturn rt.new_bool(true)\n\t}\n\treturn rt.new_bool(false)\n}\n\nfn (mut this Class_WP_Error) add(code string, message string, var_data rt.PhpVal) {\n\tmut code_mutated := code\n\tmut var_data_mutated := var_data\n\tthis.errors.array_get_mut(code_mutated).array_push(message)\n\tif !(!rt.is_true(var_data_mutated)) {\n\t\tthis.add_data(var_data_mutated.dup(), rt.new_string(code_mutated))\n\t}\n\tfunc_do_action(rt.new_string('wp_error_added'), rt.create_array_from_list([\n\t\trt.new_string(code_mutated).dup(), rt.new_string(message),\n\t\tvar_data_mutated.dup(), rt.new_object('WP_Error', []string{}, &this)]))\n}\n\nfn (mut this Class_WP_Error) add_data(var_data rt.PhpVal, var_code rt.PhpVal) {\n\tmut var_data_mutated := var_data\n\tmut var_code_mutated := var_code\n\tif !rt.is_true(var_code_mutated) {\n\t\tvar_code_mutated = this.get_error_code()\n\t}\n\tif rt.is_true(rt.new_bool(this.error_data.array_isset(var_code_mutated))) {\n\t\tthis.additional_data.array_get_mut(var_code_mutated).array_push(this.error_data.array_get(var_code_mutated))\n\t}\n\tthis.error_data.array_set(var_code_mutated, var_data_mutated.dup())\n}\n\nfn (mut this Class_WP_Error) get_all_error_data(var_code rt.PhpVal) rt.PhpVal {\n\tmut var_code_mutated := var_code\n\tif !rt.is_true(var_code_mutated) {\n\t\tvar_code_mutated = this.get_error_code()\n\t}\n\tmut var_data := rt.new_array()\n\tif rt.is_true(rt.new_bool(this.additional_data.array_isset(var_code_mutated))) {\n\t\tvar_data = this.additional_data.array_get(var_code_mutated)\n\t}\n\tif rt.is_true(rt.new_bool(this.error_data.array_isset(var_code_mutated))) {\n\t\tvar_data.array_push(this.error_data.array_get(var_code_mutated))\n\t}\n\treturn var_data.dup()\n}\n\nfn (mut this Class_WP_Error) remove(var_code rt.PhpVal) {\n\tmut var_code_mutated := var_code\n\tthis.errors.array_unset(var_code_mutated)\n\tthis.error_data.array_unset(var_code_mutated)\n\tthis.additional_data.array_unset(var_code_mutated)\n}\n\nfn (mut this Class_WP_Error) merge_from(var_error rt.PhpVal) {\n\tfn (arg_0 rt.PhpVal, arg_1 rt.PhpVal) rt.PhpVal {\n\t\tmut temp := Class_WP_Error{}\n\t\ttemp.copy_errors(arg_0, arg_1)\n\t\treturn rt.new_null()\n\t}(var_error.dup(), rt.new_object('WP_Error', []string{}, this))\n}\n\nfn (mut this Class_WP_Error) export_to(var_error rt.PhpVal) {\n\tfn (arg_0 rt.PhpVal, arg_1 rt.PhpVal) rt.PhpVal {\n\t\tmut temp := Class_WP_Error{}\n\t\ttemp.copy_errors(arg_0, arg_1)\n\t\treturn rt.new_null()\n\t}(rt.new_object('WP_Error', []string{}, this), var_error.dup())\n}\n\nfn (mut this Class_WP_Error) copy_errors(var_from rt.PhpVal, var_to rt.PhpVal) {\n\t{\n\t\tmut iter_1 := call_method(var_from, 'get_error_codes', []rt.PhpVal{}).iterator()\n\t\tfor {\n\t\t\titem_1 := iter_1.next() or { break }\n\t\t\tmut var_code := item_1.val\n\t\t\t{\n\t\t\t\tmut iter_2 := call_method(var_from, 'get_error_messages', [\n\t\t\t\t\tvar_code.dup()]).iterator()\n\t\t\t\tfor {\n\t\t\t\t\titem_2 := iter_2.next() or { break }\n\t\t\t\t\tmut var_error_message := item_2.val\n\t\t\t\t\tcall_method(var_to, 'add', [var_code.dup(),\n\t\t\t\t\t\tvar_error_message.dup()])\n\t\t\t\t}\n\t\t\t}\n\t\t\t{\n\t\t\t\tmut iter_2 := call_method(var_from, 'get_all_error_data', [\n\t\t\t\t\tvar_code.dup()]).iterator()\n\t\t\t\tfor {\n\t\t\t\t\titem_2 := iter_2.next() or { break }\n\t\t\t\t\tmut var_data := item_2.val\n\t\t\t\t\tcall_method(var_to, 'add_data', [var_data.dup(),\n\t\t\t\t\t\tvar_code.dup()])\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}\n\nfn create_wp_error(code string, message string, data string) &Class_WP_Error {\n\tmut obj := &Class_WP_Error{\n\t\tPhpObjectBase:   rt.PhpObjectBase{}\n\t\terrors:          rt.new_array()\n\t\terror_data:      rt.new_array()\n\t\tadditional_data: rt.new_array()\n\t}\n\tobj.construct(code, message, data)\n\treturn obj\n}\n\nfn (mut this Class_WP_Error) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {\n\tmatch method_name {\n\t\t'__construct' {\n\t\t\tthis.construct((if args.len > 0 { args[0] } else { rt.new_null() }).str(), (if args.len > 1 {\n\t\t\t\targs[1]\n\t\t\t} else {\n\t\t\t\trt.new_null()\n\t\t\t}).str(), (if args.len > 2 { args[2] } else { rt.new_null() }).str())\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'get_error_codes' {\n\t\t\treturn this.get_error_codes()\n\t\t}\n\t\t'get_error_code' {\n\t\t\treturn this.get_error_code()\n\t\t}\n\t\t'get_error_messages' {\n\t\t\treturn this.get_error_messages(if args.len > 0 { args[0] } else { rt.new_null() })\n\t\t}\n\t\t'get_error_message' {\n\t\t\treturn this.get_error_message((if args.len > 0 { args[0] } else { rt.new_null() }).str())\n\t\t}\n\t\t'get_error_data' {\n\t\t\treturn this.get_error_data(if args.len > 0 { args[0] } else { rt.new_null() })\n\t\t}\n\t\t'has_errors' {\n\t\t\treturn this.has_errors()\n\t\t}\n\t\t'add' {\n\t\t\tthis.add((if args.len > 0 { args[0] } else { rt.new_null() }).str(), (if args.len > 1 {\n\t\t\t\targs[1]\n\t\t\t} else {\n\t\t\t\trt.new_null()\n\t\t\t}).str(), if args.len > 2 { args[2] } else { rt.new_null() })\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'add_data' {\n\t\t\tthis.add_data(if args.len > 0 { args[0] } else { rt.new_null() }, if args.len > 1 {\n\t\t\t\targs[1]\n\t\t\t} else {\n\t\t\t\trt.new_null()\n\t\t\t})\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'get_all_error_data' {\n\t\t\treturn this.get_all_error_data(if args.len > 0 { args[0] } else { rt.new_null() })\n\t\t}\n\t\t'remove' {\n\t\t\tthis.remove(if args.len > 0 { args[0] } else { rt.new_null() })\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'merge_from' {\n\t\t\tthis.merge_from(if args.len > 0 { args[0] } else { rt.new_null() })\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'export_to' {\n\t\t\tthis.export_to(if args.len > 0 { args[0] } else { rt.new_null() })\n\t\t\treturn rt.new_null()\n\t\t}\n\t\t'copy_errors' {\n\t\t\tthis.copy_errors(if args.len > 0 { args[0] } else { rt.new_null() }, if args.len > 1 {\n\t\t\t\targs[1]\n\t\t\t} else {\n\t\t\t\trt.new_null()\n\t\t\t})\n\t\t\treturn rt.new_null()\n\t\t}\n\t\telse {\n\t\t\treturn none\n\t\t}\n\t}\n}\n\nfn (this &Class_WP_Error) dispatch_get_prop(prop_name string) ?rt.PhpVal {\n\tmatch prop_name {\n\t\t'errors' { return this.errors }\n\t\t'error_data' { return this.error_data }\n\t\t'additional_data' { return this.additional_data }\n\t\telse { return none }\n\t}\n}\n\nfn (mut this Class_WP_Error) dispatch_set_prop(prop_name string, val rt.PhpVal) bool {\n\tmatch prop_name {\n\t\t'errors' {\n\t\t\tthis.errors = val\n\t\t\treturn true\n\t\t}\n\t\t'error_data' {\n\t\t\tthis.error_data = val\n\t\t\treturn true\n\t\t}\n\t\t'additional_data' {\n\t\t\tthis.additional_data = val\n\t\t\treturn true\n\t\t}\n\t\telse {\n\t\t\treturn false\n\t\t}\n\t}\n}\n\nfn call_method(obj rt.PhpVal, method_name string, args []rt.PhpVal) rt.PhpVal {\n\treturn rt.call_method(obj, method_name, args)\n}\n\nfn get_property(obj rt.PhpVal, prop_name string) rt.PhpVal {\n\treturn rt.get_property(obj, prop_name)\n}\n\nfn set_property(obj rt.PhpVal, prop_name string, val rt.PhpVal) {\n\trt.set_property(obj, prop_name, val)\n}\n\nfn main() {\n\tdefer {\n\t\trt.shutdown()\n\t}\n\n\tif rt.is_true(rt.new_bool(!(rt.is_true(rt.call_function('function_exists', [\n\t\trt.new_string('do_action'),\n\t])))))\n\t{\n\t}\n\tmut var_err := create_wp_error('code1', 'Message 1', 'data1')\n\tvar_err.add('code2', 'Message 2', rt.new_null())\n\tprint((var_err.get_error_code()).str() + '\\n')\n\tprint((var_err.get_error_message('code1')).str() + '\\n')\n\tprint((var_err.get_error_message('code2')).str() + '\\n')\n\tmut var_err2 := create_wp_error('', '', '')\n\tvar_err2.merge_from(rt.new_object('WP_Error', []string{}, var_err))\n\tprint((var_err2.get_error_message('code2')).str() + '\\n')\n}\n",
+    "ast": [
+      {
+        "nodeType": "Stmt_If",
+        "line": 8,
+        "cond": {
+          "nodeType": "Expr_BooleanNot",
+          "line": 8,
+          "expr": {
+            "nodeType": "Expr_FuncCall",
+            "line": 8,
+            "name": "function_exists",
+            "args": [
+              {
+                "nodeType": "Arg",
+                "line": 8,
+                "name": null,
+                "expr": {
+                  "nodeType": "Scalar_String",
+                  "line": 8,
+                  "value": "do_action"
+                },
+                "byRef": "false",
+                "unpack": "false"
+              }
+            ]
+          }
+        },
+        "stmts": [
+          {
+            "nodeType": "Stmt_Function",
+            "line": 9,
+            "attrGroups": [],
+            "byRef": "false",
+            "name": "do_action",
+            "params": [
+              {
+                "nodeType": "Param",
+                "line": 9,
+                "attrGroups": [],
+                "flags": "0",
+                "type": null,
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 9,
+                  "name": "tag"
+                },
+                "default": null,
+                "hooks": []
+              },
+              {
+                "nodeType": "Param",
+                "line": 9,
+                "attrGroups": [],
+                "flags": "0",
+                "type": null,
+                "byRef": "false",
+                "variadic": "true",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 9,
+                  "name": "args"
+                },
+                "default": null,
+                "hooks": []
+              }
+            ],
+            "returnType": null,
+            "stmts": []
+          }
+        ],
+        "elseifs": [],
+        "else": null
+      },
+      {
+        "nodeType": "Stmt_Class",
+        "line": 22,
+        "attrGroups": [
+          {
+            "nodeType": "AttributeGroup",
+            "line": 22,
+            "attrs": [
+              {
+                "nodeType": "Attribute",
+                "line": 22,
+                "name": "AllowDynamicProperties",
+                "args": []
+              }
+            ]
+          }
+        ],
+        "flags": "0",
+        "name": "WP_Error",
+        "extends": null,
+        "implements": [],
+        "stmts": [
+          {
+            "nodeType": "Stmt_Property",
+            "line": 30,
+            "attrGroups": [],
+            "flags": "1",
+            "type": null,
+            "props": [
+              {
+                "nodeType": "PropertyItem",
+                "line": 30,
+                "name": "errors",
+                "default": {
+                  "nodeType": "Expr_Array",
+                  "line": 30,
+                  "items": []
+                }
+              }
+            ],
+            "hooks": []
+          },
+          {
+            "nodeType": "Stmt_Property",
+            "line": 38,
+            "attrGroups": [],
+            "flags": "1",
+            "type": null,
+            "props": [
+              {
+                "nodeType": "PropertyItem",
+                "line": 38,
+                "name": "error_data",
+                "default": {
+                  "nodeType": "Expr_Array",
+                  "line": 38,
+                  "items": []
+                }
+              }
+            ],
+            "hooks": []
+          },
+          {
+            "nodeType": "Stmt_Property",
+            "line": 46,
+            "attrGroups": [],
+            "flags": "2",
+            "type": null,
+            "props": [
+              {
+                "nodeType": "PropertyItem",
+                "line": 46,
+                "name": "additional_data",
+                "default": {
+                  "nodeType": "Expr_Array",
+                  "line": 46,
+                  "items": []
+                }
+              }
+            ],
+            "hooks": []
+          },
+          {
+            "nodeType": "Stmt_ClassMethod",
+            "line": 65,
+            "attrGroups": [],
+            "flags": "1",
+            "byRef": "false",
+            "name": "__construct",
+            "params": [
+              {
+                "nodeType": "Param",
+                "line": 65,
+                "attrGroups": [],
+                "flags": "0",
+                "type": null,
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 65,
+                  "name": "code"
+                },
+                "default": {
+                  "nodeType": "Scalar_String",
+                  "line": 65,
+                  "value": ""
+                },
+                "hooks": []
+              },
+              {
+                "nodeType": "Param",
+                "line": 65,
+                "attrGroups": [],
+                "flags": "0",
+                "type": null,
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 65,
+                  "name": "message"
+                },
+                "default": {
+                  "nodeType": "Scalar_String",
+                  "line": 65,
+                  "value": ""
+                },
+                "hooks": []
+              },
+              {
+                "nodeType": "Param",
+                "line": 65,
+                "attrGroups": [],
+                "flags": "0",
+                "type": null,
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 65,
+                  "name": "data"
+                },
+                "default": {
+                  "nodeType": "Scalar_String",
+                  "line": 65,
+                  "value": ""
+                },
+                "hooks": []
+              }
+            ],
+            "returnType": null,
+            "stmts": [
+              {
+                "nodeType": "Stmt_If",
+                "line": 66,
+                "cond": {
+                  "nodeType": "Expr_Empty",
+                  "line": 66,
+                  "expr": {
+                    "nodeType": "Expr_Variable",
+                    "line": 66,
+                    "name": "code"
+                  }
+                },
+                "stmts": [
+                  {
+                    "nodeType": "Stmt_Return",
+                    "line": 67,
+                    "expr": null
+                  }
+                ],
+                "elseifs": [],
+                "else": null
+              },
+              {
+                "nodeType": "Stmt_Expression",
+                "line": 70,
+                "expr": {
+                  "nodeType": "Expr_MethodCall",
+                  "line": 70,
+                  "var": {
+                    "nodeType": "Expr_Variable",
+                    "line": 70,
+                    "name": "this"
+                  },
+                  "name": "add",
+                  "args": [
+                    {
+                      "nodeType": "Arg",
+                      "line": 70,
+                      "name": null,
+                      "expr": {
+                        "nodeType": "Expr_Variable",
+                        "line": 70,
+                        "name": "code"
+                      },
+                      "byRef": "false",
+                      "unpack": "false"
+                    },
+                    {
+                      "nodeType": "Arg",
+                      "line": 70,
+                      "name": null,
+                      "expr": {
+                        "nodeType": "Expr_Variable",
+                        "line": 70,
+                        "name": "message"
+                      },
+                      "byRef": "false",
+                      "unpack": "false"
+                    },
+                    {
+                      "nodeType": "Arg",
+                      "line": 70,
+                      "name": null,
+                      "expr": {
+                        "nodeType": "Expr_Variable",
+                        "line": 70,
+                        "name": "data"
+                      },
+                      "byRef": "false",
+                      "unpack": "false"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_ClassMethod",
+            "line": 80,
+            "attrGroups": [],
+            "flags": "1",
+            "byRef": "false",
+            "name": "get_error_codes",
+            "params": [],
+            "returnType": null,
+            "stmts": [
+              {
+                "nodeType": "Stmt_If",
+                "line": 81,
+                "cond": {
+                  "nodeType": "Expr_BooleanNot",
+                  "line": 81,
+                  "expr": {
+                    "nodeType": "Expr_MethodCall",
+                    "line": 81,
+                    "var": {
+                      "nodeType": "Expr_Variable",
+                      "line": 81,
+                      "name": "this"
+                    },
+                    "name": "has_errors",
+                    "args": []
+                  }
+                },
+                "stmts": [
+                  {
+                    "nodeType": "Stmt_Return",
+                    "line": 82,
+                    "expr": {
+                      "nodeType": "Expr_Array",
+                      "line": 82,
+                      "items": []
+                    }
+                  }
+                ],
+                "elseifs": [],
+                "else": null
+              },
+              {
+                "nodeType": "Stmt_Return",
+                "line": 85,
+                "expr": {
+                  "nodeType": "Expr_FuncCall",
+                  "line": 85,
+                  "name": "array_keys",
+                  "args": [
+                    {
+                      "nodeType": "Arg",
+                      "line": 85,
+                      "name": null,
+                      "expr": {
+                        "nodeType": "Expr_PropertyFetch",
+                        "line": 85,
+                        "var": {
+                          "nodeType": "Expr_Variable",
+                          "line": 85,
+                          "name": "this"
+                        },
+                        "name": "errors"
+                      },
+                      "byRef": "false",
+                      "unpack": "false"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_ClassMethod",
+            "line": 95,
+            "attrGroups": [],
+            "flags": "1",
+            "byRef": "false",
+            "name": "get_error_code",
+            "params": [],
+            "returnType": null,
+            "stmts": [
+              {
+                "nodeType": "Stmt_Expression",
+                "line": 96,
+                "expr": {
+                  "nodeType": "Expr_Assign",
+                  "line": 96,
+                  "var": {
+                    "nodeType": "Expr_Variable",
+                    "line": 96,
+                    "name": "codes"
+                  },
+                  "expr": {
+                    "nodeType": "Expr_MethodCall",
+                    "line": 96,
+                    "var": {
+                      "nodeType": "Expr_Variable",
+                      "line": 96,
+                      "name": "this"
+                    },
+                    "name": "get_error_codes",
+                    "args": []
+                  }
+                }
+              },
+              {
+                "nodeType": "Stmt_If",
+                "line": 98,
+                "cond": {
+                  "nodeType": "Expr_Empty",
+                  "line": 98,
+                  "expr": {
+                    "nodeType": "Expr_Variable",
+                    "line": 98,
+                    "name": "codes"
+                  }
+                },
+                "stmts": [
+                  {
+                    "nodeType": "Stmt_Return",
+                    "line": 99,
+                    "expr": {
+                      "nodeType": "Scalar_String",
+                      "line": 99,
+                      "value": ""
+                    }
+                  }
+                ],
+                "elseifs": [],
+                "else": null
+              },
+              {
+                "nodeType": "Stmt_Return",
+                "line": 102,
+                "expr": {
+                  "nodeType": "Expr_ArrayDimFetch",
+                  "line": 102,
+                  "var": {
+                    "nodeType": "Expr_Variable",
+                    "line": 102,
+                    "name": "codes"
+                  },
+                  "dim": {
+                    "nodeType": "Scalar_Int",
+                    "line": 102,
+                    "value": "0"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_ClassMethod",
+            "line": 114,
+            "attrGroups": [],
+            "flags": "1",
+            "byRef": "false",
+            "name": "get_error_messages",
+            "params": [
+              {
+                "nodeType": "Param",
+                "line": 114,
+                "attrGroups": [],
+                "flags": "0",
+                "type": null,
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 114,
+                  "name": "code"
+                },
+                "default": {
+                  "nodeType": "Scalar_String",
+                  "line": 114,
+                  "value": ""
+                },
+                "hooks": []
+              }
+            ],
+            "returnType": null,
+            "stmts": [
+              {
+                "nodeType": "Stmt_If",
+                "line": 116,
+                "cond": {
+                  "nodeType": "Expr_Empty",
+                  "line": 116,
+                  "expr": {
+                    "nodeType": "Expr_Variable",
+                    "line": 116,
+                    "name": "code"
+                  }
+                },
+                "stmts": [
+                  {
+                    "nodeType": "Stmt_Expression",
+                    "line": 117,
+                    "expr": {
+                      "nodeType": "Expr_Assign",
+                      "line": 117,
+                      "var": {
+                        "nodeType": "Expr_Variable",
+                        "line": 117,
+                        "name": "all_messages"
+                      },
+                      "expr": {
+                        "nodeType": "Expr_Array",
+                        "line": 117,
+                        "items": []
+                      }
+                    }
+                  },
+                  {
+                    "nodeType": "Stmt_Foreach",
+                    "line": 118,
+                    "expr": {
+                      "nodeType": "Expr_Cast_Array",
+                      "line": 118,
+                      "expr": {
+                        "nodeType": "Expr_PropertyFetch",
+                        "line": 118,
+                        "var": {
+                          "nodeType": "Expr_Variable",
+                          "line": 118,
+                          "name": "this"
+                        },
+                        "name": "errors"
+                      }
+                    },
+                    "keyVar": {
+                      "nodeType": "Expr_Variable",
+                      "line": 118,
+                      "name": "code"
+                    },
+                    "byRef": "false",
+                    "valueVar": {
+                      "nodeType": "Expr_Variable",
+                      "line": 118,
+                      "name": "messages"
+                    },
+                    "stmts": [
+                      {
+                        "nodeType": "Stmt_Expression",
+                        "line": 119,
+                        "expr": {
+                          "nodeType": "Expr_Assign",
+                          "line": 119,
+                          "var": {
+                            "nodeType": "Expr_Variable",
+                            "line": 119,
+                            "name": "all_messages"
+                          },
+                          "expr": {
+                            "nodeType": "Expr_FuncCall",
+                            "line": 119,
+                            "name": "array_merge",
+                            "args": [
+                              {
+                                "nodeType": "Arg",
+                                "line": 119,
+                                "name": null,
+                                "expr": {
+                                  "nodeType": "Expr_Variable",
+                                  "line": 119,
+                                  "name": "all_messages"
+                                },
+                                "byRef": "false",
+                                "unpack": "false"
+                              },
+                              {
+                                "nodeType": "Arg",
+                                "line": 119,
+                                "name": null,
+                                "expr": {
+                                  "nodeType": "Expr_Variable",
+                                  "line": 119,
+                                  "name": "messages"
+                                },
+                                "byRef": "false",
+                                "unpack": "false"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "nodeType": "Stmt_Return",
+                    "line": 122,
+                    "expr": {
+                      "nodeType": "Expr_Variable",
+                      "line": 122,
+                      "name": "all_messages"
+                    }
+                  }
+                ],
+                "elseifs": [],
+                "else": null
+              },
+              {
+                "nodeType": "Stmt_If",
+                "line": 125,
+                "cond": {
+                  "nodeType": "Expr_Isset",
+                  "line": 125,
+                  "vars": [
+                    {
+                      "nodeType": "Expr_ArrayDimFetch",
+                      "line": 125,
+                      "var": {
+                        "nodeType": "Expr_PropertyFetch",
+                        "line": 125,
+                        "var": {
+                          "nodeType": "Expr_Variable",
+                          "line": 125,
+                          "name": "this"
+                        },
+                        "name": "errors"
+                      },
+                      "dim": {
+                        "nodeType": "Expr_Variable",
+                        "line": 125,
+                        "name": "code"
+                      }
+                    }
+                  ]
+                },
+                "stmts": [
+                  {
+                    "nodeType": "Stmt_Return",
+                    "line": 126,
+                    "expr": {
+                      "nodeType": "Expr_ArrayDimFetch",
+                      "line": 126,
+                      "var": {
+                        "nodeType": "Expr_PropertyFetch",
+                        "line": 126,
+                        "var": {
+                          "nodeType": "Expr_Variable",
+                          "line": 126,
+                          "name": "this"
+                        },
+                        "name": "errors"
+                      },
+                      "dim": {
+                        "nodeType": "Expr_Variable",
+                        "line": 126,
+                        "name": "code"
+                      }
+                    }
+                  }
+                ],
+                "elseifs": [],
+                "else": {
+                  "nodeType": "Stmt_Else",
+                  "line": 127,
+                  "stmts": [
+                    {
+                      "nodeType": "Stmt_Return",
+                      "line": 128,
+                      "expr": {
+                        "nodeType": "Expr_Array",
+                        "line": 128,
+                        "items": []
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_ClassMethod",
+            "line": 144,
+            "attrGroups": [],
+            "flags": "1",
+            "byRef": "false",
+            "name": "get_error_message",
+            "params": [
+              {
+                "nodeType": "Param",
+                "line": 144,
+                "attrGroups": [],
+                "flags": "0",
+                "type": null,
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 144,
+                  "name": "code"
+                },
+                "default": {
+                  "nodeType": "Scalar_String",
+                  "line": 144,
+                  "value": ""
+                },
+                "hooks": []
+              }
+            ],
+            "returnType": null,
+            "stmts": [
+              {
+                "nodeType": "Stmt_If",
+                "line": 145,
+                "cond": {
+                  "nodeType": "Expr_Empty",
+                  "line": 145,
+                  "expr": {
+                    "nodeType": "Expr_Variable",
+                    "line": 145,
+                    "name": "code"
+                  }
+                },
+                "stmts": [
+                  {
+                    "nodeType": "Stmt_Expression",
+                    "line": 146,
+                    "expr": {
+                      "nodeType": "Expr_Assign",
+                      "line": 146,
+                      "var": {
+                        "nodeType": "Expr_Variable",
+                        "line": 146,
+                        "name": "code"
+                      },
+                      "expr": {
+                        "nodeType": "Expr_MethodCall",
+                        "line": 146,
+                        "var": {
+                          "nodeType": "Expr_Variable",
+                          "line": 146,
+                          "name": "this"
+                        },
+                        "name": "get_error_code",
+                        "args": []
+                      }
+                    }
+                  }
+                ],
+                "elseifs": [],
+                "else": null
+              },
+              {
+                "nodeType": "Stmt_Expression",
+                "line": 148,
+                "expr": {
+                  "nodeType": "Expr_Assign",
+                  "line": 148,
+                  "var": {
+                    "nodeType": "Expr_Variable",
+                    "line": 148,
+                    "name": "messages"
+                  },
+                  "expr": {
+                    "nodeType": "Expr_MethodCall",
+                    "line": 148,
+                    "var": {
+                      "nodeType": "Expr_Variable",
+                      "line": 148,
+                      "name": "this"
+                    },
+                    "name": "get_error_messages",
+                    "args": [
+                      {
+                        "nodeType": "Arg",
+                        "line": 148,
+                        "name": null,
+                        "expr": {
+                          "nodeType": "Expr_Variable",
+                          "line": 148,
+                          "name": "code"
+                        },
+                        "byRef": "false",
+                        "unpack": "false"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "nodeType": "Stmt_If",
+                "line": 149,
+                "cond": {
+                  "nodeType": "Expr_Empty",
+                  "line": 149,
+                  "expr": {
+                    "nodeType": "Expr_Variable",
+                    "line": 149,
+                    "name": "messages"
+                  }
+                },
+                "stmts": [
+                  {
+                    "nodeType": "Stmt_Return",
+                    "line": 150,
+                    "expr": {
+                      "nodeType": "Scalar_String",
+                      "line": 150,
+                      "value": ""
+                    }
+                  }
+                ],
+                "elseifs": [],
+                "else": null
+              },
+              {
+                "nodeType": "Stmt_Return",
+                "line": 152,
+                "expr": {
+                  "nodeType": "Expr_ArrayDimFetch",
+                  "line": 152,
+                  "var": {
+                    "nodeType": "Expr_Variable",
+                    "line": 152,
+                    "name": "messages"
+                  },
+                  "dim": {
+                    "nodeType": "Scalar_Int",
+                    "line": 152,
+                    "value": "0"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_ClassMethod",
+            "line": 163,
+            "attrGroups": [],
+            "flags": "1",
+            "byRef": "false",
+            "name": "get_error_data",
+            "params": [
+              {
+                "nodeType": "Param",
+                "line": 163,
+                "attrGroups": [],
+                "flags": "0",
+                "type": null,
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 163,
+                  "name": "code"
+                },
+                "default": {
+                  "nodeType": "Scalar_String",
+                  "line": 163,
+                  "value": ""
+                },
+                "hooks": []
+              }
+            ],
+            "returnType": null,
+            "stmts": [
+              {
+                "nodeType": "Stmt_If",
+                "line": 164,
+                "cond": {
+                  "nodeType": "Expr_Empty",
+                  "line": 164,
+                  "expr": {
+                    "nodeType": "Expr_Variable",
+                    "line": 164,
+                    "name": "code"
+                  }
+                },
+                "stmts": [
+                  {
+                    "nodeType": "Stmt_Expression",
+                    "line": 165,
+                    "expr": {
+                      "nodeType": "Expr_Assign",
+                      "line": 165,
+                      "var": {
+                        "nodeType": "Expr_Variable",
+                        "line": 165,
+                        "name": "code"
+                      },
+                      "expr": {
+                        "nodeType": "Expr_MethodCall",
+                        "line": 165,
+                        "var": {
+                          "nodeType": "Expr_Variable",
+                          "line": 165,
+                          "name": "this"
+                        },
+                        "name": "get_error_code",
+                        "args": []
+                      }
+                    }
+                  }
+                ],
+                "elseifs": [],
+                "else": null
+              },
+              {
+                "nodeType": "Stmt_If",
+                "line": 168,
+                "cond": {
+                  "nodeType": "Expr_Isset",
+                  "line": 168,
+                  "vars": [
+                    {
+                      "nodeType": "Expr_ArrayDimFetch",
+                      "line": 168,
+                      "var": {
+                        "nodeType": "Expr_PropertyFetch",
+                        "line": 168,
+                        "var": {
+                          "nodeType": "Expr_Variable",
+                          "line": 168,
+                          "name": "this"
+                        },
+                        "name": "error_data"
+                      },
+                      "dim": {
+                        "nodeType": "Expr_Variable",
+                        "line": 168,
+                        "name": "code"
+                      }
+                    }
+                  ]
+                },
+                "stmts": [
+                  {
+                    "nodeType": "Stmt_Return",
+                    "line": 169,
+                    "expr": {
+                      "nodeType": "Expr_ArrayDimFetch",
+                      "line": 169,
+                      "var": {
+                        "nodeType": "Expr_PropertyFetch",
+                        "line": 169,
+                        "var": {
+                          "nodeType": "Expr_Variable",
+                          "line": 169,
+                          "name": "this"
+                        },
+                        "name": "error_data"
+                      },
+                      "dim": {
+                        "nodeType": "Expr_Variable",
+                        "line": 169,
+                        "name": "code"
+                      }
+                    }
+                  }
+                ],
+                "elseifs": [],
+                "else": null
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_ClassMethod",
+            "line": 180,
+            "attrGroups": [],
+            "flags": "1",
+            "byRef": "false",
+            "name": "has_errors",
+            "params": [],
+            "returnType": null,
+            "stmts": [
+              {
+                "nodeType": "Stmt_If",
+                "line": 181,
+                "cond": {
+                  "nodeType": "Expr_BooleanNot",
+                  "line": 181,
+                  "expr": {
+                    "nodeType": "Expr_Empty",
+                    "line": 181,
+                    "expr": {
+                      "nodeType": "Expr_PropertyFetch",
+                      "line": 181,
+                      "var": {
+                        "nodeType": "Expr_Variable",
+                        "line": 181,
+                        "name": "this"
+                      },
+                      "name": "errors"
+                    }
+                  }
+                },
+                "stmts": [
+                  {
+                    "nodeType": "Stmt_Return",
+                    "line": 182,
+                    "expr": {
+                      "nodeType": "Expr_ConstFetch",
+                      "line": 182,
+                      "name": "true"
+                    }
+                  }
+                ],
+                "elseifs": [],
+                "else": null
+              },
+              {
+                "nodeType": "Stmt_Return",
+                "line": 184,
+                "expr": {
+                  "nodeType": "Expr_ConstFetch",
+                  "line": 184,
+                  "name": "false"
+                }
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_ClassMethod",
+            "line": 196,
+            "attrGroups": [],
+            "flags": "1",
+            "byRef": "false",
+            "name": "add",
+            "params": [
+              {
+                "nodeType": "Param",
+                "line": 196,
+                "attrGroups": [],
+                "flags": "0",
+                "type": null,
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 196,
+                  "name": "code"
+                },
+                "default": null,
+                "hooks": []
+              },
+              {
+                "nodeType": "Param",
+                "line": 196,
+                "attrGroups": [],
+                "flags": "0",
+                "type": null,
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 196,
+                  "name": "message"
+                },
+                "default": null,
+                "hooks": []
+              },
+              {
+                "nodeType": "Param",
+                "line": 196,
+                "attrGroups": [],
+                "flags": "0",
+                "type": null,
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 196,
+                  "name": "data"
+                },
+                "default": {
+                  "nodeType": "Scalar_String",
+                  "line": 196,
+                  "value": ""
+                },
+                "hooks": []
+              }
+            ],
+            "returnType": null,
+            "stmts": [
+              {
+                "nodeType": "Stmt_Expression",
+                "line": 197,
+                "expr": {
+                  "nodeType": "Expr_Assign",
+                  "line": 197,
+                  "var": {
+                    "nodeType": "Expr_ArrayDimFetch",
+                    "line": 197,
+                    "var": {
+                      "nodeType": "Expr_ArrayDimFetch",
+                      "line": 197,
+                      "var": {
+                        "nodeType": "Expr_PropertyFetch",
+                        "line": 197,
+                        "var": {
+                          "nodeType": "Expr_Variable",
+                          "line": 197,
+                          "name": "this"
+                        },
+                        "name": "errors"
+                      },
+                      "dim": {
+                        "nodeType": "Expr_Variable",
+                        "line": 197,
+                        "name": "code"
+                      }
+                    },
+                    "dim": null
+                  },
+                  "expr": {
+                    "nodeType": "Expr_Variable",
+                    "line": 197,
+                    "name": "message"
+                  }
+                }
+              },
+              {
+                "nodeType": "Stmt_If",
+                "line": 199,
+                "cond": {
+                  "nodeType": "Expr_BooleanNot",
+                  "line": 199,
+                  "expr": {
+                    "nodeType": "Expr_Empty",
+                    "line": 199,
+                    "expr": {
+                      "nodeType": "Expr_Variable",
+                      "line": 199,
+                      "name": "data"
+                    }
+                  }
+                },
+                "stmts": [
+                  {
+                    "nodeType": "Stmt_Expression",
+                    "line": 200,
+                    "expr": {
+                      "nodeType": "Expr_MethodCall",
+                      "line": 200,
+                      "var": {
+                        "nodeType": "Expr_Variable",
+                        "line": 200,
+                        "name": "this"
+                      },
+                      "name": "add_data",
+                      "args": [
+                        {
+                          "nodeType": "Arg",
+                          "line": 200,
+                          "name": null,
+                          "expr": {
+                            "nodeType": "Expr_Variable",
+                            "line": 200,
+                            "name": "data"
+                          },
+                          "byRef": "false",
+                          "unpack": "false"
+                        },
+                        {
+                          "nodeType": "Arg",
+                          "line": 200,
+                          "name": null,
+                          "expr": {
+                            "nodeType": "Expr_Variable",
+                            "line": 200,
+                            "name": "code"
+                          },
+                          "byRef": "false",
+                          "unpack": "false"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "elseifs": [],
+                "else": null
+              },
+              {
+                "nodeType": "Stmt_Expression",
+                "line": 213,
+                "expr": {
+                  "nodeType": "Expr_FuncCall",
+                  "line": 213,
+                  "name": "do_action",
+                  "args": [
+                    {
+                      "nodeType": "Arg",
+                      "line": 213,
+                      "name": null,
+                      "expr": {
+                        "nodeType": "Scalar_String",
+                        "line": 213,
+                        "value": "wp_error_added"
+                      },
+                      "byRef": "false",
+                      "unpack": "false"
+                    },
+                    {
+                      "nodeType": "Arg",
+                      "line": 213,
+                      "name": null,
+                      "expr": {
+                        "nodeType": "Expr_Variable",
+                        "line": 213,
+                        "name": "code"
+                      },
+                      "byRef": "false",
+                      "unpack": "false"
+                    },
+                    {
+                      "nodeType": "Arg",
+                      "line": 213,
+                      "name": null,
+                      "expr": {
+                        "nodeType": "Expr_Variable",
+                        "line": 213,
+                        "name": "message"
+                      },
+                      "byRef": "false",
+                      "unpack": "false"
+                    },
+                    {
+                      "nodeType": "Arg",
+                      "line": 213,
+                      "name": null,
+                      "expr": {
+                        "nodeType": "Expr_Variable",
+                        "line": 213,
+                        "name": "data"
+                      },
+                      "byRef": "false",
+                      "unpack": "false"
+                    },
+                    {
+                      "nodeType": "Arg",
+                      "line": 213,
+                      "name": null,
+                      "expr": {
+                        "nodeType": "Expr_Variable",
+                        "line": 213,
+                        "name": "this"
+                      },
+                      "byRef": "false",
+                      "unpack": "false"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_ClassMethod",
+            "line": 225,
+            "attrGroups": [],
+            "flags": "1",
+            "byRef": "false",
+            "name": "add_data",
+            "params": [
+              {
+                "nodeType": "Param",
+                "line": 225,
+                "attrGroups": [],
+                "flags": "0",
+                "type": null,
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 225,
+                  "name": "data"
+                },
+                "default": null,
+                "hooks": []
+              },
+              {
+                "nodeType": "Param",
+                "line": 225,
+                "attrGroups": [],
+                "flags": "0",
+                "type": null,
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 225,
+                  "name": "code"
+                },
+                "default": {
+                  "nodeType": "Scalar_String",
+                  "line": 225,
+                  "value": ""
+                },
+                "hooks": []
+              }
+            ],
+            "returnType": null,
+            "stmts": [
+              {
+                "nodeType": "Stmt_If",
+                "line": 226,
+                "cond": {
+                  "nodeType": "Expr_Empty",
+                  "line": 226,
+                  "expr": {
+                    "nodeType": "Expr_Variable",
+                    "line": 226,
+                    "name": "code"
+                  }
+                },
+                "stmts": [
+                  {
+                    "nodeType": "Stmt_Expression",
+                    "line": 227,
+                    "expr": {
+                      "nodeType": "Expr_Assign",
+                      "line": 227,
+                      "var": {
+                        "nodeType": "Expr_Variable",
+                        "line": 227,
+                        "name": "code"
+                      },
+                      "expr": {
+                        "nodeType": "Expr_MethodCall",
+                        "line": 227,
+                        "var": {
+                          "nodeType": "Expr_Variable",
+                          "line": 227,
+                          "name": "this"
+                        },
+                        "name": "get_error_code",
+                        "args": []
+                      }
+                    }
+                  }
+                ],
+                "elseifs": [],
+                "else": null
+              },
+              {
+                "nodeType": "Stmt_If",
+                "line": 230,
+                "cond": {
+                  "nodeType": "Expr_Isset",
+                  "line": 230,
+                  "vars": [
+                    {
+                      "nodeType": "Expr_ArrayDimFetch",
+                      "line": 230,
+                      "var": {
+                        "nodeType": "Expr_PropertyFetch",
+                        "line": 230,
+                        "var": {
+                          "nodeType": "Expr_Variable",
+                          "line": 230,
+                          "name": "this"
+                        },
+                        "name": "error_data"
+                      },
+                      "dim": {
+                        "nodeType": "Expr_Variable",
+                        "line": 230,
+                        "name": "code"
+                      }
+                    }
+                  ]
+                },
+                "stmts": [
+                  {
+                    "nodeType": "Stmt_Expression",
+                    "line": 231,
+                    "expr": {
+                      "nodeType": "Expr_Assign",
+                      "line": 231,
+                      "var": {
+                        "nodeType": "Expr_ArrayDimFetch",
+                        "line": 231,
+                        "var": {
+                          "nodeType": "Expr_ArrayDimFetch",
+                          "line": 231,
+                          "var": {
+                            "nodeType": "Expr_PropertyFetch",
+                            "line": 231,
+                            "var": {
+                              "nodeType": "Expr_Variable",
+                              "line": 231,
+                              "name": "this"
+                            },
+                            "name": "additional_data"
+                          },
+                          "dim": {
+                            "nodeType": "Expr_Variable",
+                            "line": 231,
+                            "name": "code"
+                          }
+                        },
+                        "dim": null
+                      },
+                      "expr": {
+                        "nodeType": "Expr_ArrayDimFetch",
+                        "line": 231,
+                        "var": {
+                          "nodeType": "Expr_PropertyFetch",
+                          "line": 231,
+                          "var": {
+                            "nodeType": "Expr_Variable",
+                            "line": 231,
+                            "name": "this"
+                          },
+                          "name": "error_data"
+                        },
+                        "dim": {
+                          "nodeType": "Expr_Variable",
+                          "line": 231,
+                          "name": "code"
+                        }
+                      }
+                    }
+                  }
+                ],
+                "elseifs": [],
+                "else": null
+              },
+              {
+                "nodeType": "Stmt_Expression",
+                "line": 234,
+                "expr": {
+                  "nodeType": "Expr_Assign",
+                  "line": 234,
+                  "var": {
+                    "nodeType": "Expr_ArrayDimFetch",
+                    "line": 234,
+                    "var": {
+                      "nodeType": "Expr_PropertyFetch",
+                      "line": 234,
+                      "var": {
+                        "nodeType": "Expr_Variable",
+                        "line": 234,
+                        "name": "this"
+                      },
+                      "name": "error_data"
+                    },
+                    "dim": {
+                      "nodeType": "Expr_Variable",
+                      "line": 234,
+                      "name": "code"
+                    }
+                  },
+                  "expr": {
+                    "nodeType": "Expr_Variable",
+                    "line": 234,
+                    "name": "data"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_ClassMethod",
+            "line": 245,
+            "attrGroups": [],
+            "flags": "1",
+            "byRef": "false",
+            "name": "get_all_error_data",
+            "params": [
+              {
+                "nodeType": "Param",
+                "line": 245,
+                "attrGroups": [],
+                "flags": "0",
+                "type": null,
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 245,
+                  "name": "code"
+                },
+                "default": {
+                  "nodeType": "Scalar_String",
+                  "line": 245,
+                  "value": ""
+                },
+                "hooks": []
+              }
+            ],
+            "returnType": null,
+            "stmts": [
+              {
+                "nodeType": "Stmt_If",
+                "line": 246,
+                "cond": {
+                  "nodeType": "Expr_Empty",
+                  "line": 246,
+                  "expr": {
+                    "nodeType": "Expr_Variable",
+                    "line": 246,
+                    "name": "code"
+                  }
+                },
+                "stmts": [
+                  {
+                    "nodeType": "Stmt_Expression",
+                    "line": 247,
+                    "expr": {
+                      "nodeType": "Expr_Assign",
+                      "line": 247,
+                      "var": {
+                        "nodeType": "Expr_Variable",
+                        "line": 247,
+                        "name": "code"
+                      },
+                      "expr": {
+                        "nodeType": "Expr_MethodCall",
+                        "line": 247,
+                        "var": {
+                          "nodeType": "Expr_Variable",
+                          "line": 247,
+                          "name": "this"
+                        },
+                        "name": "get_error_code",
+                        "args": []
+                      }
+                    }
+                  }
+                ],
+                "elseifs": [],
+                "else": null
+              },
+              {
+                "nodeType": "Stmt_Expression",
+                "line": 250,
+                "expr": {
+                  "nodeType": "Expr_Assign",
+                  "line": 250,
+                  "var": {
+                    "nodeType": "Expr_Variable",
+                    "line": 250,
+                    "name": "data"
+                  },
+                  "expr": {
+                    "nodeType": "Expr_Array",
+                    "line": 250,
+                    "items": []
+                  }
+                }
+              },
+              {
+                "nodeType": "Stmt_If",
+                "line": 252,
+                "cond": {
+                  "nodeType": "Expr_Isset",
+                  "line": 252,
+                  "vars": [
+                    {
+                      "nodeType": "Expr_ArrayDimFetch",
+                      "line": 252,
+                      "var": {
+                        "nodeType": "Expr_PropertyFetch",
+                        "line": 252,
+                        "var": {
+                          "nodeType": "Expr_Variable",
+                          "line": 252,
+                          "name": "this"
+                        },
+                        "name": "additional_data"
+                      },
+                      "dim": {
+                        "nodeType": "Expr_Variable",
+                        "line": 252,
+                        "name": "code"
+                      }
+                    }
+                  ]
+                },
+                "stmts": [
+                  {
+                    "nodeType": "Stmt_Expression",
+                    "line": 253,
+                    "expr": {
+                      "nodeType": "Expr_Assign",
+                      "line": 253,
+                      "var": {
+                        "nodeType": "Expr_Variable",
+                        "line": 253,
+                        "name": "data"
+                      },
+                      "expr": {
+                        "nodeType": "Expr_ArrayDimFetch",
+                        "line": 253,
+                        "var": {
+                          "nodeType": "Expr_PropertyFetch",
+                          "line": 253,
+                          "var": {
+                            "nodeType": "Expr_Variable",
+                            "line": 253,
+                            "name": "this"
+                          },
+                          "name": "additional_data"
+                        },
+                        "dim": {
+                          "nodeType": "Expr_Variable",
+                          "line": 253,
+                          "name": "code"
+                        }
+                      }
+                    }
+                  }
+                ],
+                "elseifs": [],
+                "else": null
+              },
+              {
+                "nodeType": "Stmt_If",
+                "line": 256,
+                "cond": {
+                  "nodeType": "Expr_Isset",
+                  "line": 256,
+                  "vars": [
+                    {
+                      "nodeType": "Expr_ArrayDimFetch",
+                      "line": 256,
+                      "var": {
+                        "nodeType": "Expr_PropertyFetch",
+                        "line": 256,
+                        "var": {
+                          "nodeType": "Expr_Variable",
+                          "line": 256,
+                          "name": "this"
+                        },
+                        "name": "error_data"
+                      },
+                      "dim": {
+                        "nodeType": "Expr_Variable",
+                        "line": 256,
+                        "name": "code"
+                      }
+                    }
+                  ]
+                },
+                "stmts": [
+                  {
+                    "nodeType": "Stmt_Expression",
+                    "line": 257,
+                    "expr": {
+                      "nodeType": "Expr_Assign",
+                      "line": 257,
+                      "var": {
+                        "nodeType": "Expr_ArrayDimFetch",
+                        "line": 257,
+                        "var": {
+                          "nodeType": "Expr_Variable",
+                          "line": 257,
+                          "name": "data"
+                        },
+                        "dim": null
+                      },
+                      "expr": {
+                        "nodeType": "Expr_ArrayDimFetch",
+                        "line": 257,
+                        "var": {
+                          "nodeType": "Expr_PropertyFetch",
+                          "line": 257,
+                          "var": {
+                            "nodeType": "Expr_Variable",
+                            "line": 257,
+                            "name": "this"
+                          },
+                          "name": "error_data"
+                        },
+                        "dim": {
+                          "nodeType": "Expr_Variable",
+                          "line": 257,
+                          "name": "code"
+                        }
+                      }
+                    }
+                  }
+                ],
+                "elseifs": [],
+                "else": null
+              },
+              {
+                "nodeType": "Stmt_Return",
+                "line": 260,
+                "expr": {
+                  "nodeType": "Expr_Variable",
+                  "line": 260,
+                  "name": "data"
+                }
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_ClassMethod",
+            "line": 273,
+            "attrGroups": [],
+            "flags": "1",
+            "byRef": "false",
+            "name": "remove",
+            "params": [
+              {
+                "nodeType": "Param",
+                "line": 273,
+                "attrGroups": [],
+                "flags": "0",
+                "type": null,
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 273,
+                  "name": "code"
+                },
+                "default": null,
+                "hooks": []
+              }
+            ],
+            "returnType": null,
+            "stmts": [
+              {
+                "nodeType": "Stmt_Unset",
+                "line": 274,
+                "vars": [
+                  {
+                    "nodeType": "Expr_ArrayDimFetch",
+                    "line": 274,
+                    "var": {
+                      "nodeType": "Expr_PropertyFetch",
+                      "line": 274,
+                      "var": {
+                        "nodeType": "Expr_Variable",
+                        "line": 274,
+                        "name": "this"
+                      },
+                      "name": "errors"
+                    },
+                    "dim": {
+                      "nodeType": "Expr_Variable",
+                      "line": 274,
+                      "name": "code"
+                    }
+                  }
+                ]
+              },
+              {
+                "nodeType": "Stmt_Unset",
+                "line": 275,
+                "vars": [
+                  {
+                    "nodeType": "Expr_ArrayDimFetch",
+                    "line": 275,
+                    "var": {
+                      "nodeType": "Expr_PropertyFetch",
+                      "line": 275,
+                      "var": {
+                        "nodeType": "Expr_Variable",
+                        "line": 275,
+                        "name": "this"
+                      },
+                      "name": "error_data"
+                    },
+                    "dim": {
+                      "nodeType": "Expr_Variable",
+                      "line": 275,
+                      "name": "code"
+                    }
+                  }
+                ]
+              },
+              {
+                "nodeType": "Stmt_Unset",
+                "line": 276,
+                "vars": [
+                  {
+                    "nodeType": "Expr_ArrayDimFetch",
+                    "line": 276,
+                    "var": {
+                      "nodeType": "Expr_PropertyFetch",
+                      "line": 276,
+                      "var": {
+                        "nodeType": "Expr_Variable",
+                        "line": 276,
+                        "name": "this"
+                      },
+                      "name": "additional_data"
+                    },
+                    "dim": {
+                      "nodeType": "Expr_Variable",
+                      "line": 276,
+                      "name": "code"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_ClassMethod",
+            "line": 286,
+            "attrGroups": [],
+            "flags": "1",
+            "byRef": "false",
+            "name": "merge_from",
+            "params": [
+              {
+                "nodeType": "Param",
+                "line": 286,
+                "attrGroups": [],
+                "flags": "0",
+                "type": "WP_Error",
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 286,
+                  "name": "error"
+                },
+                "default": null,
+                "hooks": []
+              }
+            ],
+            "returnType": null,
+            "stmts": [
+              {
+                "nodeType": "Stmt_Expression",
+                "line": 287,
+                "expr": {
+                  "nodeType": "Expr_StaticCall",
+                  "line": 287,
+                  "class": "static",
+                  "name": "copy_errors",
+                  "args": [
+                    {
+                      "nodeType": "Arg",
+                      "line": 287,
+                      "name": null,
+                      "expr": {
+                        "nodeType": "Expr_Variable",
+                        "line": 287,
+                        "name": "error"
+                      },
+                      "byRef": "false",
+                      "unpack": "false"
+                    },
+                    {
+                      "nodeType": "Arg",
+                      "line": 287,
+                      "name": null,
+                      "expr": {
+                        "nodeType": "Expr_Variable",
+                        "line": 287,
+                        "name": "this"
+                      },
+                      "byRef": "false",
+                      "unpack": "false"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_ClassMethod",
+            "line": 297,
+            "attrGroups": [],
+            "flags": "1",
+            "byRef": "false",
+            "name": "export_to",
+            "params": [
+              {
+                "nodeType": "Param",
+                "line": 297,
+                "attrGroups": [],
+                "flags": "0",
+                "type": "WP_Error",
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 297,
+                  "name": "error"
+                },
+                "default": null,
+                "hooks": []
+              }
+            ],
+            "returnType": null,
+            "stmts": [
+              {
+                "nodeType": "Stmt_Expression",
+                "line": 298,
+                "expr": {
+                  "nodeType": "Expr_StaticCall",
+                  "line": 298,
+                  "class": "static",
+                  "name": "copy_errors",
+                  "args": [
+                    {
+                      "nodeType": "Arg",
+                      "line": 298,
+                      "name": null,
+                      "expr": {
+                        "nodeType": "Expr_Variable",
+                        "line": 298,
+                        "name": "this"
+                      },
+                      "byRef": "false",
+                      "unpack": "false"
+                    },
+                    {
+                      "nodeType": "Arg",
+                      "line": 298,
+                      "name": null,
+                      "expr": {
+                        "nodeType": "Expr_Variable",
+                        "line": 298,
+                        "name": "error"
+                      },
+                      "byRef": "false",
+                      "unpack": "false"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "nodeType": "Stmt_ClassMethod",
+            "line": 309,
+            "attrGroups": [],
+            "flags": "10",
+            "byRef": "false",
+            "name": "copy_errors",
+            "params": [
+              {
+                "nodeType": "Param",
+                "line": 309,
+                "attrGroups": [],
+                "flags": "0",
+                "type": "WP_Error",
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 309,
+                  "name": "from"
+                },
+                "default": null,
+                "hooks": []
+              },
+              {
+                "nodeType": "Param",
+                "line": 309,
+                "attrGroups": [],
+                "flags": "0",
+                "type": "WP_Error",
+                "byRef": "false",
+                "variadic": "false",
+                "var": {
+                  "nodeType": "Expr_Variable",
+                  "line": 309,
+                  "name": "to"
+                },
+                "default": null,
+                "hooks": []
+              }
+            ],
+            "returnType": null,
+            "stmts": [
+              {
+                "nodeType": "Stmt_Foreach",
+                "line": 310,
+                "expr": {
+                  "nodeType": "Expr_MethodCall",
+                  "line": 310,
+                  "var": {
+                    "nodeType": "Expr_Variable",
+                    "line": 310,
+                    "name": "from"
+                  },
+                  "name": "get_error_codes",
+                  "args": []
+                },
+                "keyVar": null,
+                "byRef": "false",
+                "valueVar": {
+                  "nodeType": "Expr_Variable",
+                  "line": 310,
+                  "name": "code"
+                },
+                "stmts": [
+                  {
+                    "nodeType": "Stmt_Foreach",
+                    "line": 311,
+                    "expr": {
+                      "nodeType": "Expr_MethodCall",
+                      "line": 311,
+                      "var": {
+                        "nodeType": "Expr_Variable",
+                        "line": 311,
+                        "name": "from"
+                      },
+                      "name": "get_error_messages",
+                      "args": [
+                        {
+                          "nodeType": "Arg",
+                          "line": 311,
+                          "name": null,
+                          "expr": {
+                            "nodeType": "Expr_Variable",
+                            "line": 311,
+                            "name": "code"
+                          },
+                          "byRef": "false",
+                          "unpack": "false"
+                        }
+                      ]
+                    },
+                    "keyVar": null,
+                    "byRef": "false",
+                    "valueVar": {
+                      "nodeType": "Expr_Variable",
+                      "line": 311,
+                      "name": "error_message"
+                    },
+                    "stmts": [
+                      {
+                        "nodeType": "Stmt_Expression",
+                        "line": 312,
+                        "expr": {
+                          "nodeType": "Expr_MethodCall",
+                          "line": 312,
+                          "var": {
+                            "nodeType": "Expr_Variable",
+                            "line": 312,
+                            "name": "to"
+                          },
+                          "name": "add",
+                          "args": [
+                            {
+                              "nodeType": "Arg",
+                              "line": 312,
+                              "name": null,
+                              "expr": {
+                                "nodeType": "Expr_Variable",
+                                "line": 312,
+                                "name": "code"
+                              },
+                              "byRef": "false",
+                              "unpack": "false"
+                            },
+                            {
+                              "nodeType": "Arg",
+                              "line": 312,
+                              "name": null,
+                              "expr": {
+                                "nodeType": "Expr_Variable",
+                                "line": 312,
+                                "name": "error_message"
+                              },
+                              "byRef": "false",
+                              "unpack": "false"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "nodeType": "Stmt_Foreach",
+                    "line": 315,
+                    "expr": {
+                      "nodeType": "Expr_MethodCall",
+                      "line": 315,
+                      "var": {
+                        "nodeType": "Expr_Variable",
+                        "line": 315,
+                        "name": "from"
+                      },
+                      "name": "get_all_error_data",
+                      "args": [
+                        {
+                          "nodeType": "Arg",
+                          "line": 315,
+                          "name": null,
+                          "expr": {
+                            "nodeType": "Expr_Variable",
+                            "line": 315,
+                            "name": "code"
+                          },
+                          "byRef": "false",
+                          "unpack": "false"
+                        }
+                      ]
+                    },
+                    "keyVar": null,
+                    "byRef": "false",
+                    "valueVar": {
+                      "nodeType": "Expr_Variable",
+                      "line": 315,
+                      "name": "data"
+                    },
+                    "stmts": [
+                      {
+                        "nodeType": "Stmt_Expression",
+                        "line": 316,
+                        "expr": {
+                          "nodeType": "Expr_MethodCall",
+                          "line": 316,
+                          "var": {
+                            "nodeType": "Expr_Variable",
+                            "line": 316,
+                            "name": "to"
+                          },
+                          "name": "add_data",
+                          "args": [
+                            {
+                              "nodeType": "Arg",
+                              "line": 316,
+                              "name": null,
+                              "expr": {
+                                "nodeType": "Expr_Variable",
+                                "line": 316,
+                                "name": "data"
+                              },
+                              "byRef": "false",
+                              "unpack": "false"
+                            },
+                            {
+                              "nodeType": "Arg",
+                              "line": 316,
+                              "name": null,
+                              "expr": {
+                                "nodeType": "Expr_Variable",
+                                "line": 316,
+                                "name": "code"
+                              },
+                              "byRef": "false",
+                              "unpack": "false"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 322,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 322,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 322,
+            "name": "err"
+          },
+          "expr": {
+            "nodeType": "Expr_New",
+            "line": 322,
+            "class": "WP_Error",
+            "args": [
+              {
+                "nodeType": "Arg",
+                "line": 322,
+                "name": null,
+                "expr": {
+                  "nodeType": "Scalar_String",
+                  "line": 322,
+                  "value": "code1"
+                },
+                "byRef": "false",
+                "unpack": "false"
+              },
+              {
+                "nodeType": "Arg",
+                "line": 322,
+                "name": null,
+                "expr": {
+                  "nodeType": "Scalar_String",
+                  "line": 322,
+                  "value": "Message 1"
+                },
+                "byRef": "false",
+                "unpack": "false"
+              },
+              {
+                "nodeType": "Arg",
+                "line": 322,
+                "name": null,
+                "expr": {
+                  "nodeType": "Scalar_String",
+                  "line": 322,
+                  "value": "data1"
+                },
+                "byRef": "false",
+                "unpack": "false"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 323,
+        "expr": {
+          "nodeType": "Expr_MethodCall",
+          "line": 323,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 323,
+            "name": "err"
+          },
+          "name": "add",
+          "args": [
+            {
+              "nodeType": "Arg",
+              "line": 323,
+              "name": null,
+              "expr": {
+                "nodeType": "Scalar_String",
+                "line": 323,
+                "value": "code2"
+              },
+              "byRef": "false",
+              "unpack": "false"
+            },
+            {
+              "nodeType": "Arg",
+              "line": 323,
+              "name": null,
+              "expr": {
+                "nodeType": "Scalar_String",
+                "line": 323,
+                "value": "Message 2"
+              },
+              "byRef": "false",
+              "unpack": "false"
+            }
+          ]
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 324,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 324,
+            "left": {
+              "nodeType": "Expr_MethodCall",
+              "line": 324,
+              "var": {
+                "nodeType": "Expr_Variable",
+                "line": 324,
+                "name": "err"
+              },
+              "name": "get_error_code",
+              "args": []
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 324,
+              "value": "\n"
+            }
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 325,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 325,
+            "left": {
+              "nodeType": "Expr_MethodCall",
+              "line": 325,
+              "var": {
+                "nodeType": "Expr_Variable",
+                "line": 325,
+                "name": "err"
+              },
+              "name": "get_error_message",
+              "args": [
+                {
+                  "nodeType": "Arg",
+                  "line": 325,
+                  "name": null,
+                  "expr": {
+                    "nodeType": "Scalar_String",
+                    "line": 325,
+                    "value": "code1"
+                  },
+                  "byRef": "false",
+                  "unpack": "false"
+                }
+              ]
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 325,
+              "value": "\n"
+            }
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 326,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 326,
+            "left": {
+              "nodeType": "Expr_MethodCall",
+              "line": 326,
+              "var": {
+                "nodeType": "Expr_Variable",
+                "line": 326,
+                "name": "err"
+              },
+              "name": "get_error_message",
+              "args": [
+                {
+                  "nodeType": "Arg",
+                  "line": 326,
+                  "name": null,
+                  "expr": {
+                    "nodeType": "Scalar_String",
+                    "line": 326,
+                    "value": "code2"
+                  },
+                  "byRef": "false",
+                  "unpack": "false"
+                }
+              ]
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 326,
+              "value": "\n"
+            }
+          }
+        ]
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 328,
+        "expr": {
+          "nodeType": "Expr_Assign",
+          "line": 328,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 328,
+            "name": "err2"
+          },
+          "expr": {
+            "nodeType": "Expr_New",
+            "line": 328,
+            "class": "WP_Error",
+            "args": []
+          }
+        }
+      },
+      {
+        "nodeType": "Stmt_Expression",
+        "line": 329,
+        "expr": {
+          "nodeType": "Expr_MethodCall",
+          "line": 329,
+          "var": {
+            "nodeType": "Expr_Variable",
+            "line": 329,
+            "name": "err2"
+          },
+          "name": "merge_from",
+          "args": [
+            {
+              "nodeType": "Arg",
+              "line": 329,
+              "name": null,
+              "expr": {
+                "nodeType": "Expr_Variable",
+                "line": 329,
+                "name": "err"
+              },
+              "byRef": "false",
+              "unpack": "false"
+            }
+          ]
+        }
+      },
+      {
+        "nodeType": "Stmt_Echo",
+        "line": 330,
+        "exprs": [
+          {
+            "nodeType": "Expr_BinaryOp_Concat",
+            "line": 330,
+            "left": {
+              "nodeType": "Expr_MethodCall",
+              "line": 330,
+              "var": {
+                "nodeType": "Expr_Variable",
+                "line": 330,
+                "name": "err2"
+              },
+              "name": "get_error_message",
+              "args": [
+                {
+                  "nodeType": "Arg",
+                  "line": 330,
+                  "name": null,
+                  "expr": {
+                    "nodeType": "Scalar_String",
+                    "line": 330,
+                    "value": "code2"
+                  },
+                  "byRef": "false",
+                  "unpack": "false"
+                }
+              ]
+            },
+            "right": {
+              "nodeType": "Scalar_String",
+              "line": 330,
+              "value": "\n"
+            }
           }
         ]
       }
