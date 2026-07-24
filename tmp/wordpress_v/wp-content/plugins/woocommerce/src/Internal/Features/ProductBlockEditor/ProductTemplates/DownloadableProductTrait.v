@@ -1,4 +1,0 @@
-import rt
-
-pub fn init_wp_content_plugins_woocommerce_src_internal_features_productblockeditor_producttemplates_downloadableproducttrait_php() {
-}

@@ -1,8 +1,0 @@
-import rt
-
-pub fn init_wp_content_themes_twentytwentyfour_patterns_hidden_posts_heading_php() {
-	// unsupported statement: Stmt_Nop
-	// unsupported statement: Stmt_InlineHTML
-	rt.call_function('esc_html_e', [rt.new_string('Posts'), rt.new_string('twentytwentyfour')])
-	// unsupported statement: Stmt_InlineHTML
-}
