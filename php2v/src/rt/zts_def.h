@@ -19,6 +19,7 @@ static inline double microtime_sec() {
 }
 
 extern void php2v_register_sandbox_bridge();
+static inline void php2v_register_hybrid_classes(int override_pdo, int override_redis);
 
 static inline const char* php2v_async_http_fetch(const char *url, const char *method, const char *body) {
 	extern char* v_async_http_fetch(char* c_url, char* c_method, char* c_body);
@@ -40,6 +41,8 @@ typedef struct {
 	char *headers_str;
 	const char *raw_post_data;
 	size_t raw_post_data_read;
+	int override_pdo;
+	int override_redis;
 } php2v_req_buf;
 
 static inline php2v_req_buf* php2v_create_req_buf() {
@@ -257,11 +260,14 @@ static inline void php2v_run_in_thread_context(void (*entry_fn)(void)) {
 	/* 注册沙箱桥接函数 */
 	php2v_register_sandbox_bridge();
 
-	/* 填充 php://input 对应的 raw_post_data */
+	/* 填充 php://input 对应的 raw_post_data 并注册混合能力类 */
 	php2v_req_buf *req_b_input = (php2v_req_buf *)php2v_current_ctx;
-	if (req_b_input && req_b_input->raw_post_data && strlen(req_b_input->raw_post_data) > 0) {
-		SG(request_info).content_length = strlen(req_b_input->raw_post_data);
-		req_b_input->raw_post_data_read = 0;
+	if (req_b_input) {
+		php2v_register_hybrid_classes(req_b_input->override_pdo, req_b_input->override_redis);
+		if (req_b_input->raw_post_data && strlen(req_b_input->raw_post_data) > 0) {
+			SG(request_info).content_length = strlen(req_b_input->raw_post_data);
+			req_b_input->raw_post_data_read = 0;
+		}
 	}
 
 	/* FrankenPHP 风格：不手动注入超全局变量！
@@ -496,6 +502,8 @@ __attribute__((constructor)) static void php2v_auto_embed_init() {
 #ifdef ZTS
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
+	/* 注册 VPHP 0 修改原生 Hybrid 扩展类 (PDO / Redis) */
+	php2v_register_hybrid_classes(1, 1);
 	extern zend_op_array *compile_file(zend_file_handle *file_handle, int type);
 	zend_compile_file = compile_file;
 

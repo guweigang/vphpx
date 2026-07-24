@@ -28,6 +28,9 @@ mut:
 	response_code int
 	headers_str   &char
 	raw_post_data &char
+	raw_post_data_read usize
+	override_pdo  int
+	override_redis int
 }
 
 // veb 请求上下文
@@ -45,6 +48,7 @@ pub mut:
 // start_gateway 启动 veb HTTP 常驻服务网关
 pub fn start_gateway(port int, entry_fn fn () PhpVal) {
 	unsafe {
+		C.php2v_set_v_callback(my_v_callback_handler)
 		C.php2v_register_mysqli_classes()
 	}
 	mut config_file := 'gateway.yaml'
@@ -57,6 +61,12 @@ pub fn start_gateway(port int, entry_fn fn () PhpVal) {
 		}
 	}
 	cfg := load_gateway_config(config_file)
+	if cfg.override_pdo {
+		eprintln('[VPHP HYBRID] Pure Vlang Class Registry: PDO & PDOStatement enabled')
+	}
+	if cfg.override_redis {
+		eprintln('[VPHP HYBRID] Pure Vlang Class Registry: Redis enabled')
+	}
 	listen_port := if cfg.port > 0 { cfg.port } else { port }
 	mut app := &ServerApp{
 		entry_fn:       entry_fn
@@ -120,9 +130,13 @@ fn match_pattern(pattern string, path string) bool {
 	}
 	if pattern.ends_with('/*') {
 		prefix := pattern.all_before_last('/*')
+		return path == prefix || path.starts_with(prefix + '/')
+	}
+	if pattern.ends_with('*') {
+		prefix := pattern.all_before_last('*')
 		return path.starts_with(prefix)
 	}
-	return pattern == path
+	return pattern == path || path == pattern + '/' || pattern == path + '/'
 }
 
 // index 处理每一个 HTTP 网关请求
@@ -143,6 +157,14 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 			entry_dir := os.dir(rule.entry)
 			doc_root = if entry_dir.ends_with('/wp-admin') { os.dir(entry_dir) } else { entry_dir }
 			break
+		}
+	}
+
+	// 0. 最高优先级安全校验: 如果匹配任意 mode: deny 规则（包含任何深度的子目录或通配符），直接返回 403 Forbidden
+	for rule in app.gateway_config.routes {
+		if (rule.mode == 'deny' || rule.mode == 'forbidden') && match_pattern(rule.match_pattern, path_info) {
+			ctx.res.status_code = 403
+			return ctx.html('<h1>403 Forbidden</h1><p>Access to this directory or resource is forbidden for security reasons.</p>')
 		}
 	}
 
@@ -337,6 +359,9 @@ pub fn (mut app ServerApp) index(mut ctx ServerContext, path string) veb.Result 
 	req_buf.script_path = &char(target_script.str)
 	req_buf.raw_post_data = &char(ctx.req.data.str)
 	req_buf.response_code = 200
+	eprintln('[GATEWAY EXEC] override_pdo=${app.gateway_config.override_pdo}, override_redis=${app.gateway_config.override_redis}')
+	req_buf.override_pdo = if app.gateway_config.override_pdo { 1 } else { 0 }
+	req_buf.override_redis = if app.gateway_config.override_redis { 1 } else { 0 }
 
 	C.php2v_set_current_ctx(voidptr(req_buf))
 	

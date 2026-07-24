@@ -2,9 +2,31 @@ module rt
 
 import os
 
+pub type HybridDispatcherFn = fn (string, []PhpVal) PhpVal
+
+fn get_set_hybrid_dispatcher(f ?HybridDispatcherFn, is_set bool) ?HybridDispatcherFn {
+	unsafe {
+		mut static dispatcher := ?HybridDispatcherFn(none)
+		if is_set {
+			dispatcher = f
+		}
+		return dispatcher
+	}
+}
+
+pub fn register_hybrid_dispatcher(f HybridDispatcherFn) {
+	get_set_hybrid_dispatcher(f, true)
+}
+
 // call_function 调度 PHP 函数调用
 pub fn call_function(name string, args []PhpVal) PhpVal {
 	fn_name := name.to_lower()
+	if fn_name.contains('::') {
+		if dispatcher := get_set_hybrid_dispatcher(none, false) {
+			return dispatcher(name, args)
+		}
+		return new_null()
+	}
 	match fn_name {
 		'define' {
 			if args.len >= 2 {

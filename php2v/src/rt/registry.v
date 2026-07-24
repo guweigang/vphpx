@@ -21,10 +21,27 @@ mut:
 	static_props    map[string]map[string]PhpVal
 	class_metas     map[string]ClassMeta
 	mysql_pool      voidptr
+	shared_cache    map[string]PhpVal
 }
 
 fn C.php2v_get_registry() voidptr
 fn C.php2v_set_registry(p voidptr)
+fn C.php2v_register_zend_class(name &char, name_len usize, method_names &&char, method_count int)
+fn C.php2v_set_v_callback(cb voidptr)
+fn C.php2v_create_zend_array_sample() voidptr
+
+// register_zend_class 纯 V 语言向 Zend EG(class_table) 注册带方法表的类
+// 每个方法统一指向 C 层的 zif_vphp_method_proxy 通用代理 → 回调 V 侧 call_function
+pub fn register_zend_class(name string, methods []string) {
+	mut c_methods := []&char{}
+	for m in methods {
+		c_methods << &char(m.str)
+	}
+	unsafe {
+		C.php2v_set_v_callback(my_v_callback_handler)
+		C.php2v_register_zend_class(&char(name.str), usize(name.len), c_methods.data, methods.len)
+	}
+}
 
 fn get_registry() &Registry {
 	mut p := C.php2v_get_registry()
@@ -37,6 +54,7 @@ fn get_registry() &Registry {
 			constants:        map[string]PhpVal{}
 			static_props:     map[string]map[string]PhpVal{}
 			class_metas:      map[string]ClassMeta{}
+			shared_cache:     map[string]PhpVal{}
 		}
 		C.php2v_set_registry(voidptr(r))
 		C.php2v_set_v_callback(voidptr(my_v_callback_handler))
@@ -247,11 +265,12 @@ fn my_v_callback_handler(name &char, name_len int, z_args_array voidptr) voidptr
 			mut z_elements := []voidptr{len: count, init: unsafe { nil }}
 			num := C.php2v_extract_array_elements(z_args_array, z_elements.data)
 			for i in 0 .. num {
-				v_args << PhpVal{ raw: &C.zval(z_elements[i]) }
+				v_args << PhpVal{ raw: z_elements[i] }
 			}
 		}
 	}
 	
+	eprintln('[DEBUG CALLBACK] func=${func_name_str}, args_count=${v_args.len}')
 	mut r := get_registry()
 	mut ret_val := new_null()
 	if func_name_str in r.func_registry {
@@ -313,5 +332,33 @@ pub fn reset_included_files() {
 	mut r := get_registry()
 	r.included_files.clear()
 	eprintln('[REGISTRY HOT-RESET] Cleared included_files map for seamless plugin hot reloading.')
+}
+
+pub fn v_shared_cache_get(key string) PhpVal {
+	mut r := get_registry()
+	if key in r.shared_cache {
+		return r.shared_cache[key] or { new_bool(false) }
+	}
+	return new_bool(false)
+}
+
+pub fn v_shared_cache_set(key string, val PhpVal) PhpVal {
+	mut r := get_registry()
+	r.shared_cache[key] = val.dup()
+	return new_bool(true)
+}
+
+pub fn v_shared_cache_del(key string) PhpVal {
+	mut r := get_registry()
+	if key in r.shared_cache {
+		r.shared_cache.delete(key)
+		return new_bool(true)
+	}
+	return new_bool(false)
+}
+
+pub fn v_shared_cache_exists(key string) PhpVal {
+	mut r := get_registry()
+	return new_bool(key in r.shared_cache)
 }
 

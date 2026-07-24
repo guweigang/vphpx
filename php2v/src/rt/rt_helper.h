@@ -128,6 +128,139 @@ static inline int php2v_eval_string(const char *str, size_t len, zval *retval) {
 	return 0;
 }
 
+typedef void* (*php2v_v_callback_t)(const char* name, int name_len, void* z_args_array);
+static php2v_v_callback_t g_php2v_v_callback = NULL;
+
+// zif_vphp_method_proxy 通用方法代理 — 所有被代理的类方法共用此 C 函数
+// 从 execute_data 中提取 ClassName::method_name，把 $this + 参数打包回调 V 侧
+static void zif_vphp_method_proxy(zend_execute_data *execute_data, zval *return_value) {
+	if (!g_php2v_v_callback) {
+		ZVAL_NULL(return_value);
+		return;
+	}
+
+	const char *class_name = "";
+	const char *method_name = "";
+
+	if (execute_data->func && execute_data->func->common.scope) {
+		class_name = ZSTR_VAL(execute_data->func->common.scope->name);
+	}
+	if (execute_data->func && execute_data->func->common.function_name) {
+		method_name = ZSTR_VAL(execute_data->func->common.function_name);
+	}
+
+	/* 构建回调键: "ClassName::method_name" */
+	char callback_key[512];
+	snprintf(callback_key, sizeof(callback_key), "%s::%s", class_name, method_name);
+	fprintf(stderr, "[DEBUG METHOD PROXY] Key: %s\n", callback_key);
+	fflush(stderr);
+
+	/* 收集参数到数组: [$this, arg1, arg2, ...] */
+	zval args_array;
+	array_init(&args_array);
+
+	zval *this_obj = getThis();
+	if (this_obj) {
+		Z_TRY_ADDREF_P(this_obj);
+		add_next_index_zval(&args_array, this_obj);
+	} else {
+		zval z_null;
+		ZVAL_NULL(&z_null);
+		add_next_index_zval(&args_array, &z_null);
+	}
+
+	uint32_t num_args = ZEND_CALL_NUM_ARGS(execute_data);
+	for (uint32_t i = 0; i < num_args; i++) {
+		zval *arg = ZEND_CALL_ARG(execute_data, i + 1);
+		ZVAL_DEREF(arg);
+		Z_TRY_ADDREF_P(arg);
+		add_next_index_zval(&args_array, arg);
+	}
+
+	void *ret = g_php2v_v_callback(callback_key, (int)strlen(callback_key), &args_array);
+	if (ret) {
+		ZVAL_COPY_VALUE(return_value, (zval*)ret);
+	} else {
+		ZVAL_NULL(return_value);
+	}
+	zval_ptr_dtor(&args_array);
+}
+
+// php2v_register_zend_class 供 V 语言直接向 Zend 的 EG(class_table) 注册带方法表的原生类
+// method_names: C 字符串指针数组, method_count: 方法数量
+// 每个方法统一指向 zif_vphp_method_proxy 通用代理
+ZEND_BEGIN_ARG_INFO_EX(arginfo_vphp_generic, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
+static inline void php2v_register_zend_class(const char *name, size_t name_len,
+	const char **method_names, int method_count) {
+	php2v_update_tsrm_cache();
+#ifdef ZTS
+	if (tsrm_get_ls_cache() == NULL) return;
+#endif
+	if (EG(class_table) == NULL) return;
+
+	/* 若类名已存在于 EG(class_table)，则先从 EG(class_table) 中删除旧类以实现强制覆写 */
+	zend_string *lc_name = zend_string_alloc(name_len, 0);
+	zend_str_tolower_copy(ZSTR_VAL(lc_name), name, name_len);
+	if (zend_hash_exists(EG(class_table), lc_name)) {
+		zend_hash_del(EG(class_table), lc_name);
+	}
+	zend_string_efree(lc_name);
+
+	/* 动态构建方法表 (+1 for sentinel) */
+	zend_function_entry *methods = calloc(method_count + 1, sizeof(zend_function_entry));
+	for (int i = 0; i < method_count; i++) {
+		methods[i].fname = method_names[i];
+		methods[i].handler = zif_vphp_method_proxy;
+		methods[i].arg_info = arginfo_vphp_generic;
+		methods[i].num_args = 0;
+		methods[i].flags = ZEND_ACC_PUBLIC;
+	}
+	methods[method_count].fname = NULL;
+	methods[method_count].handler = NULL;
+
+	zend_class_entry ce;
+	INIT_CLASS_ENTRY_EX(ce, name, name_len, methods);
+
+	static zend_module_entry dummy_module = {0};
+	dummy_module.type = MODULE_PERSISTENT;
+	zend_module_entry *old_module = EG(current_module);
+	if (!EG(current_module)) {
+		EG(current_module) = &dummy_module;
+	}
+	zend_register_internal_class(&ce);
+	EG(current_module) = old_module;
+	/* methods 内存不 free，Zend 引擎持有引用 */
+}
+
+static inline void php2v_register_hybrid_classes(int override_pdo, int override_redis) {
+	if (override_pdo) {
+		static const char *pdo_methods[] = {
+			"__construct", "query", "exec", "prepare", "fetch", "fetchAll",
+			"setAttribute", "getAttribute", "lastInsertId",
+			"errorCode", "errorInfo",
+			"beginTransaction", "commit", "rollBack", "inTransaction", "quote"
+		};
+		static const char *pdo_stmt_methods[] = {
+			"execute", "fetch", "fetchAll", "fetchColumn",
+			"rowCount", "closeCursor", "bindParam", "bindValue"
+		};
+		php2v_register_zend_class("PDO", sizeof("PDO") - 1, pdo_methods, sizeof(pdo_methods) / sizeof(char*));
+		php2v_register_zend_class("PDOStatement", sizeof("PDOStatement") - 1, pdo_stmt_methods, sizeof(pdo_stmt_methods) / sizeof(char*));
+	}
+	if (override_redis) {
+		static const char *redis_methods[] = {
+			"__construct", "connect", "pconnect", "close", "auth", "select", "ping",
+			"get", "set", "setex", "del", "delete", "exists",
+			"expire", "ttl", "incr", "decr",
+			"hGet", "hSet", "hGetAll",
+			"keys", "mget", "mset"
+		};
+		php2v_register_zend_class("Redis", sizeof("Redis") - 1, redis_methods, sizeof(redis_methods) / sizeof(char*));
+	}
+}
+
 static inline void php2v_register_persistent_constant(const char *name, const char *val) {
     php2v_update_tsrm_cache();
 #ifdef ZTS
@@ -378,11 +511,16 @@ static inline size_t php2v_zstr_len(void* zstr) {
 }
 
 // ---------------- 沙箱互操作桥接接口 ----------------
-typedef void* (*php2v_v_callback_t)(const char* name, int name_len, void* z_args_array);
-static php2v_v_callback_t g_php2v_v_callback = NULL;
-
 static inline void php2v_set_v_callback(php2v_v_callback_t cb) {
     g_php2v_v_callback = cb;
+}
+
+static inline void* php2v_create_zend_array_sample() {
+    zval *zv = (zval*)pemalloc(sizeof(zval), 1);
+    array_init(zv);
+    add_assoc_long(zv, "status", 10086);
+    add_assoc_string(zv, "engine", "Vlang Connection Pool Active");
+    return zv;
 }
 
 static inline void* php2v_get_last_mysql_conn();
