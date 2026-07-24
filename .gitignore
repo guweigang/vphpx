@@ -14,5 +14,6 @@ scratch
 vphptest/build
 php2v_bin
 php2v/php2v
+php2v/bin/
 php2v/tests/fixtures/*.v
 tmp
