@@ -2,8 +2,9 @@ module hybrid
 
 import rt
 
-// VRedis 纯 V 语言面向对象 Redis 实现
+// VRedis 纯 V 语言面向对象 Redis 实现 (实现 IPhpObject 接口契约)
 pub struct VRedis {
+	rt.PhpObjectBase
 pub mut:
 	host      string
 	port      int
@@ -19,36 +20,43 @@ pub fn new_v_redis() &VRedis {
 	}
 }
 
-// connect 连接 Redis
-pub fn (mut self VRedis) connect(host string, port int) bool {
-	self.host = host
-	self.port = port
-	self.connected = true
-	eprintln('[VRedis.connect] Connected to V-native Redis cache engine (${host}:${port})')
-	return true
-}
-
-// get 获取缓存值
-pub fn (mut self VRedis) get(key string) rt.PhpVal {
-	val := rt.v_shared_cache_get(key)
-	eprintln('[VRedis.get] Intercepted key "${key}" -> val: ${val}')
-	return val
-}
-
-// set 设置缓存值
-pub fn (mut self VRedis) set(key string, val rt.PhpVal) bool {
-	rt.v_shared_cache_set(key, val)
-	eprintln('[VRedis.set] Intercepted key "${key}"')
-	return true
-}
-
-// del 删除缓存值
-pub fn (mut self VRedis) del(key string) bool {
-	rt.v_shared_cache_del(key)
-	return true
-}
-
-// exists 检查 Key 是否存在
-pub fn (mut self VRedis) exists(key string) bool {
-	return rt.v_shared_cache_exists(key).to_bool()
+// dispatch_method 统一遵循 php2v 转译器生成的标准 IPhpObject 契约
+pub fn (mut self VRedis) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	match method_name.to_lower() {
+		'__construct' {
+			return rt.new_null()
+		}
+		'connect', 'pconnect' {
+			self.host = if args.len > 1 { args[1].to_string() } else { '127.0.0.1' }
+			self.port = if args.len > 2 { int(args[2].to_i64()) } else { 6379 }
+			self.connected = true
+			eprintln('[VRedis.connect] Connected to V-native Redis cache engine (${self.host}:${self.port})')
+			return rt.new_bool(true)
+		}
+		'get' {
+			key := if args.len > 1 { args[1].to_string() } else { '' }
+			val := rt.v_shared_cache_get(key)
+			eprintln('[VRedis.get] Intercepted key "${key}" -> val: ${val}')
+			return val
+		}
+		'set', 'setex' {
+			key := if args.len > 1 { args[1].to_string() } else { '' }
+			val := if args.len > 2 { args[2] } else { rt.new_null() }
+			rt.v_shared_cache_set(key, val)
+			eprintln('[VRedis.set] Intercepted key "${key}"')
+			return rt.new_bool(true)
+		}
+		'del', 'delete' {
+			key := if args.len > 1 { args[1].to_string() } else { '' }
+			rt.v_shared_cache_del(key)
+			return rt.new_bool(true)
+		}
+		'exists' {
+			key := if args.len > 1 { args[1].to_string() } else { '' }
+			return rt.new_bool(rt.v_shared_cache_exists(key).to_bool())
+		}
+		else {
+			return none
+		}
+	}
 }

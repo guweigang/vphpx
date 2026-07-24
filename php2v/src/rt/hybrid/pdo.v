@@ -2,8 +2,9 @@ module hybrid
 
 import rt
 
-// VPdo 纯 V 语言面向对象 PDO 实现
+// VPdo 纯 V 语言面向对象 PDO 实现 (实现 IPhpObject 接口契约)
 pub struct VPdo {
+	rt.PhpObjectBase
 pub mut:
 	dsn            string
 	username       string
@@ -23,61 +24,67 @@ pub fn new_v_pdo(dsn string, username string, password string) &VPdo {
 	}
 }
 
-// query 执行查询并返回结果
-pub fn (mut self VPdo) query(sql_str string) rt.PhpVal {
-	eprintln('[VPdo.query] Executing SQL via V-native DB Pool: ${sql_str}')
-	return rt.PhpVal{ raw: &C.zval(C.php2v_create_zend_array_sample()) }
-}
-
-// exec 执行增删改受影响行数
-pub fn (mut self VPdo) exec(sql_str string) rt.PhpVal {
-	eprintln('[VPdo.exec] Executing SQL statement: ${sql_str}')
-	return rt.new_int(1)
-}
-
-// prepare 准备预处理语句
-pub fn (mut self VPdo) prepare(sql_str string) &VPdoStatement {
-	eprintln('[VPdo.prepare] Preparing SQL statement: ${sql_str}')
-	return &VPdoStatement{
-		statement_sql: sql_str
+// dispatch_method 统一遵循 php2v 转译器生成的标准 IPhpObject 契约
+pub fn (mut self VPdo) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	match method_name.to_lower() {
+		'__construct' {
+			if args.len > 1 { self.dsn = args[1].to_string() }
+			if args.len > 2 { self.username = args[2].to_string() }
+			if args.len > 3 { self.password = args[3].to_string() }
+			return rt.new_null()
+		}
+		'query' {
+			sql_str := if args.len > 1 { args[1].to_string() } else { '' }
+			eprintln('[VPdo.query] Executing SQL via V-native DB Pool: ${sql_str}')
+			return args[0]
+		}
+		'exec' {
+			sql_str := if args.len > 1 { args[1].to_string() } else { '' }
+			eprintln('[VPdo.exec] Executing SQL statement: ${sql_str}')
+			return rt.new_int(1)
+		}
+		'prepare' {
+			sql_str := if args.len > 1 { args[1].to_string() } else { '' }
+			eprintln('[VPdo.prepare] Preparing SQL statement: ${sql_str}')
+			return rt.new_null()
+		}
+		'fetch', 'fetchall' {
+			return rt.PhpVal{ raw: &C.zval(C.php2v_create_zend_array_sample()) }
+		}
+		'begintransaction' {
+			self.in_transaction = true
+			return rt.new_bool(true)
+		}
+		'commit', 'rollback' {
+			self.in_transaction = false
+			return rt.new_bool(true)
+		}
+		'intransaction' {
+			return rt.new_bool(self.in_transaction)
+		}
+		else {
+			return none
+		}
 	}
-}
-
-// beginTransaction 开启事务
-pub fn (mut self VPdo) begin_transaction() bool {
-	self.in_transaction = true
-	return true
-}
-
-// commit 提交事务
-pub fn (mut self VPdo) commit() bool {
-	self.in_transaction = false
-	return true
-}
-
-// rollBack 回滚事务
-pub fn (mut self VPdo) roll_back() bool {
-	self.in_transaction = false
-	return true
-}
-
-// inTransaction 获取事务状态
-pub fn (mut self VPdo) in_transaction_status() bool {
-	return self.in_transaction
 }
 
 // VPdoStatement 纯 V 语言面向对象 PDOStatement 实现
 pub struct VPdoStatement {
+	rt.PhpObjectBase
 pub mut:
 	statement_sql string
 }
 
-// fetch 获取单行结果
-pub fn (mut self VPdoStatement) fetch() rt.PhpVal {
-	return rt.PhpVal{ raw: &C.zval(C.php2v_create_zend_array_sample()) }
-}
-
-// fetchAll 获取全部结果
-pub fn (mut self VPdoStatement) fetch_all() rt.PhpVal {
-	return rt.new_array()
+pub fn (mut self VPdoStatement) dispatch_method(method_name string, args []rt.PhpVal) ?rt.PhpVal {
+	match method_name.to_lower() {
+		'fetch' {
+			return rt.PhpVal{ raw: &C.zval(C.php2v_create_zend_array_sample()) }
+		}
+		'fetchall' {
+			return rt.new_array()
+		}
+		else {
+			return none
+		}
+	}
 }
