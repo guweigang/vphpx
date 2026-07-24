@@ -523,6 +523,15 @@ static inline void* php2v_create_zend_array_sample() {
     return zv;
 }
 
+static inline void* php2v_create_zend_hash_array(int count, const char **keys, const char **values) {
+    zval *zv = (zval*)pemalloc(sizeof(zval), 1);
+    array_init(zv);
+    for (int i = 0; i < count; i++) {
+        add_assoc_string(zv, keys[i], values[i]);
+    }
+    return zv;
+}
+
 static inline void* php2v_get_last_mysql_conn();
 
 static void zif_vphp_call_v_native(zend_execute_data *execute_data, zval *return_value) {
