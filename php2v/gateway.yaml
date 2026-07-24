@@ -6,6 +6,10 @@ server:
   port: 8086
   autoindex: false             # 禁止目录列表索引 (Default: false, 访问目录报 403)
 
+# 极简一键平铺开启 V 语言能力接管 (0 修改 PHP 源码)
+override_pdo: true
+override_redis: true
+
 async_http:
   enable: true
   cache_ttl: 600
@@ -17,7 +21,10 @@ async_http:
     - "download.wordpress.org"
 
 routes:
-  # 1. 显式禁止访问保护目录示例 (Mode: Deny -> 403 Forbidden)
+  # 1. 显式屏蔽敏感目录及其所有子目录与子文件访问 (Mode: deny -> 403 Forbidden)
+  - match: "/wp-content/uploads/woocommerce_uploads*"
+    mode: "deny"
+
   - match: "/wp-content/uploads/"
     mode: "deny"
 

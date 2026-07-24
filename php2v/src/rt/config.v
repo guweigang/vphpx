@@ -17,6 +17,8 @@ pub mut:
 	host            string = '0.0.0.0'
 	port            int    = 8086
 	autoindex       bool
+	override_pdo    bool
+	override_redis  bool
 	bypass_patterns []string
 	routes          []RouteRule
 }
@@ -49,6 +51,18 @@ pub fn load_gateway_config(config_path string) GatewayConfig {
 			if val != '' {
 				cfg.port = val.int()
 			}
+			continue
+		}
+
+		if trimmed.starts_with('override_pdo:') {
+			val := trimmed.all_after('override_pdo:').trim_space().to_lower().trim('"\'')
+			cfg.override_pdo = val == 'true' || val == 'on' || val == '1'
+			continue
+		}
+
+		if trimmed.starts_with('override_redis:') {
+			val := trimmed.all_after('override_redis:').trim_space().to_lower().trim('"\'')
+			cfg.override_redis = val == 'true' || val == 'on' || val == '1'
 			continue
 		}
 
