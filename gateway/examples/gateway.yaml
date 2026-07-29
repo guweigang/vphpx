@@ -1,0 +1,15 @@
+server:
+  host: 0.0.0.0
+  port: 8088
+  workers: 1
+  php_lanes: 1
+
+routes:
+  - match: /assets/*
+    mode: static
+    root: public
+
+  - match: /*
+    mode: embed_php
+    root: public
+    entry: public/index.php

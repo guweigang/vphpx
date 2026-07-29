@@ -1,0 +1,27 @@
+# WordPress classic-mode gateway example.
+# Update this path if the WordPress document root lives elsewhere.
+server:
+  host: 0.0.0.0
+  port: 8086
+  workers: 4
+  php_lanes: 4
+
+routes:
+  - match: /wp-content/uploads/woocommerce_uploads*
+    mode: deny
+
+  - match: /wp-content/uploads/*
+    mode: static
+    root: /Users/guweigang/wwwroot/wordpress
+    autoindex: false
+
+  - match: /*
+    mode: try_static
+    root: /Users/guweigang/wwwroot/wordpress
+    autoindex: false
+
+  - match: /*
+    mode: embed_php
+    root: /Users/guweigang/wwwroot/wordpress
+    entry: /Users/guweigang/wwwroot/wordpress/index.php
+    autoindex: false

@@ -1,0 +1,34 @@
+# Laravel classic-mode gateway example.
+# Update this path if the Laravel application lives elsewhere.
+server:
+  host: 0.0.0.0
+  port: 8087
+  workers: 4
+  php_lanes: 4
+
+routes:
+  - match: /storage/*
+    mode: static
+    root: /Users/guweigang/wwwroot/laravel-app/public
+    autoindex: false
+
+  - match: /build/*
+    mode: static
+    root: /Users/guweigang/wwwroot/laravel-app/public
+    autoindex: false
+
+  - match: /favicon.ico
+    mode: static
+    root: /Users/guweigang/wwwroot/laravel-app/public
+    autoindex: false
+
+  - match: /*
+    mode: try_static
+    root: /Users/guweigang/wwwroot/laravel-app/public
+    autoindex: false
+
+  - match: /*
+    mode: embed_php
+    root: /Users/guweigang/wwwroot/laravel-app/public
+    entry: /Users/guweigang/wwwroot/laravel-app/public/index.php
+    autoindex: false
