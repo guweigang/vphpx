@@ -277,6 +277,14 @@ void vphp_array_add_assoc_zval(zval *z, const char *key, zval *val) {
   add_assoc_zval(z, key, val);
 }
 
+void vphp_array_add_index_zval(zval *z, long index, zval *val) {
+  if (z == NULL || val == NULL) {
+    return;
+  }
+  Z_TRY_ADDREF_P(val);
+  add_index_zval(z, index, val);
+}
+
 static zval *vphp_ensure_superglobal_array(const char *name, size_t len,
                                            uint32_t track_vars_index) {
   zval *global = NULL;

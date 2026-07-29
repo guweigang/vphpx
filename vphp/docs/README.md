@@ -11,6 +11,7 @@
 
 ## Runtime / Interop
 
+- [semantic_runtime.md](semantic_runtime.md)
 - [value_layers.md](value_layers.md)
 - [zend_wrapper_layers.md](zend_wrapper_layers.md)
 - [runtime_boundary_debt.md](runtime_boundary_debt.md)

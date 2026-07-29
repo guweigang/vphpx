@@ -44,6 +44,13 @@ pub fn array_add_assoc_zval(handle Handle, key string, val Handle) {
 	zend.array_add_assoc_zval_ptr(handle.raw_ptr(), key, val.raw_ptr())
 }
 
+pub fn array_add_index_zval(handle Handle, index i64, val Handle) {
+	if !handle.is_valid() || !val.is_valid() {
+		return
+	}
+	zend.array_add_index_zval_ptr(handle.raw_ptr(), index, val.raw_ptr())
+}
+
 pub fn array_push_string(handle Handle, s string) {
 	if !handle.is_valid() {
 		return

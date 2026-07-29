@@ -18,24 +18,28 @@ pub fn DynValue.from_zval(z ZVal) !DynValue {
 		return DynValue.of_string(z.to_string())
 	}
 	if z.is_array() {
-		mut out := map[string]DynValue{}
+		mut out := DynArray.new_boxed()
 		mut err_msg := ''
 		z.foreach_with_ctx[voidptr]( // SAFETY: mutable reference to local variable out
 		 unsafe { &mut out }, fn [mut err_msg] (key ZVal, v ZVal, mut ctx voidptr) {
 			if err_msg != '' {
 				return
 			}
-			m := unsafe { &MapDynValue(ctx) }
+			m := unsafe { &&DynArray(ctx) }
 			decoded := DynValue.from_zval(v) or {
 				err_msg = err.msg()
 				return
 			}
-			(*m)[key.to_string()] = decoded
+			if key.is_long() {
+				unsafe { (**m).set_int(key.to_i64(), decoded) }
+			} else {
+				unsafe { (**m).set_str(key.to_string(), decoded) }
+			}
 		})
 		if err_msg != '' {
 			return error(err_msg)
 		}
-		return DynValue.of_map(out)
+		return dyn_value_adopt_array(out)
 	}
 	if z.is_callable() {
 		callable := PhpCallable.from_zval(z) or { return error('zval is not callable') }
@@ -101,6 +105,20 @@ pub fn (v DynValue) to_zval(mut out ZVal) ! {
 		}
 		.string_ {
 			out.set_string(v.str)
+		}
+		.array_ {
+			out.array_init()
+			if v.array != unsafe { nil } {
+				mut iter := v.array.iter()
+				for {
+					item := iter.next() or { break }
+					if item.key.type == .int_ {
+						out.add_index_dyn_value(item.key.int_value(), item.val)!
+					} else {
+						out.add_assoc_dyn_value(item.key.to_string(), item.val)!
+					}
+				}
+			}
 		}
 		.list_ {
 			out.array_init()

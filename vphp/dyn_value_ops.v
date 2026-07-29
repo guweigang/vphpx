@@ -17,6 +17,13 @@ pub fn (v DynValue) clone() DynValue {
 		.string_ {
 			DynValue.of_string(v.string_value())
 		}
+		.array_ {
+			if v.array == unsafe { nil } {
+				DynValue.of_array(DynArray.new_boxed())
+			} else {
+				DynValue.of_array(v.array)
+			}
+		}
 		.list_ {
 			mut out := []DynValue{cap: v.list.len}
 			for item in v.list {
@@ -115,6 +122,13 @@ fn (v DynValue) retained_callable_ref() RetainedCallable {
 
 pub fn (mut v DynValue) release() {
 	match v.type {
+		.array_ {
+			if v.array != unsafe { nil } {
+				mut arr := v.array
+				arr.release()
+			}
+			v.array = unsafe { nil }
+		}
 		.list_ {
 			for i in 0 .. v.list.len {
 				v.list[i].release()
@@ -148,6 +162,11 @@ pub fn (mut v DynValue) release() {
 
 fn (v DynValue) release_runtime_refs() {
 	match v.type {
+		.array_ {
+			if v.array != unsafe { nil } {
+				v.array.release_runtime_refs()
+			}
+		}
 		.list_ {
 			for item in v.list {
 				item.release_runtime_refs()
@@ -190,14 +209,165 @@ pub fn (v DynValue) string_value() string {
 	return v.str
 }
 
+pub fn (v DynValue) to_dyn_array() &DynArray {
+	return match v.type {
+		.array_ {
+			if v.array == unsafe { nil } {
+				DynArray.new_boxed()
+			} else {
+				v.array.clone_boxed()
+			}
+		}
+		.list_ {
+			DynArray.from_list(v.list)
+		}
+		.map_ {
+			DynArray.from_map(v.map)
+		}
+		else {
+			DynArray.new_boxed()
+		}
+	}
+}
+
 pub fn (v DynValue) is_runtime_ref() bool {
 	return v.type in [.object_ref, .callable_ref, .resource_ref]
+}
+
+pub fn (v DynValue) is_object_ref() bool {
+	return v.type == .object_ref
+}
+
+pub fn (v DynValue) is_request_runtime_ref() bool {
+	return v.is_runtime_ref() && v.runtime_lifecycle == .request
+}
+
+pub fn (v DynValue) is_persistent_runtime_ref() bool {
+	return v.is_runtime_ref() && v.runtime_lifecycle == .persistent
+}
+
+pub fn (v DynValue) is_zend_backed() bool {
+	return v.has_runtime_refs()
+}
+
+pub fn (v DynValue) has_request_refs() bool {
+	return match v.type {
+		.object_ref, .callable_ref, .resource_ref {
+			v.runtime_lifecycle == .request
+		}
+		.array_ {
+			if v.array == unsafe { nil } {
+				return false
+			}
+			v.array.has_request_refs()
+		}
+		.list_ {
+			for item in v.list {
+				if item.has_request_refs() {
+					return true
+				}
+			}
+			false
+		}
+		.map_ {
+			for _, item in v.map {
+				if item.has_request_refs() {
+					return true
+				}
+			}
+			false
+		}
+		else {
+			false
+		}
+	}
+}
+
+pub fn (v DynValue) can_escape_request() bool {
+	return v.is_persistent_safe()
+}
+
+pub fn (v DynValue) to_request_escapable() !DynValue {
+	return match v.type {
+		.null_, .bool_, .int_, .float_, .string_ {
+			v.clone()
+		}
+		.array_ {
+			mut out := DynArray.new_boxed()
+			if v.array != unsafe { nil } {
+				mut iter := v.array.iter()
+				for {
+					item := iter.next() or { break }
+					escapable := item.val.to_request_escapable()!
+					if item.key.type == .int_ {
+						out.set_int(item.key.int_value(), escapable)
+					} else {
+						out.set_str(item.key.to_string(), escapable)
+					}
+				}
+			}
+			dyn_value_adopt_array(out)
+		}
+		.list_ {
+			mut out := []DynValue{cap: v.list.len}
+			for item in v.list {
+				out << item.to_request_escapable()!
+			}
+			DynValue.of_list(out)
+		}
+		.map_ {
+			mut out := map[string]DynValue{}
+			for key, item in v.map {
+				out[key] = item.to_request_escapable()!
+			}
+			DynValue.of_map(out)
+		}
+		.object_ref {
+			if v.runtime_lifecycle == .persistent {
+				ref := v.retained_object_ref()
+				if !ref.is_valid() {
+					return error('object_ref is no longer valid')
+				}
+				DynValue.retained_object(ref.clone())
+			} else {
+				ref := v.request_ref() or { return error('object_ref is no longer valid') }
+				retained := RetainedObject.from_zval(ref.to_zval()) or {
+					return error('object_ref cannot be retained')
+				}
+				DynValue.retained_object(retained)
+			}
+		}
+		.callable_ref {
+			if v.runtime_lifecycle == .persistent {
+				ref := v.retained_callable_ref()
+				if !ref.is_valid() {
+					return error('callable_ref is no longer valid')
+				}
+				DynValue.retained_callable(ref.clone())
+			} else {
+				ref := v.request_ref() or { return error('callable_ref is no longer valid') }
+				retained := RetainedCallable.from_zval(ref.to_zval()) or {
+					return error('callable_ref cannot be retained')
+				}
+				DynValue.retained_callable(retained)
+			}
+		}
+		.resource_ref {
+			error('resource_ref cannot escape request')
+		}
+	}
 }
 
 pub fn (v DynValue) has_runtime_refs() bool {
 	return match v.type {
 		.object_ref, .callable_ref, .resource_ref {
 			true
+		}
+		.array_ {
+			if v.array == unsafe { nil } {
+				return false
+			}
+			v.array.has_runtime_refs()
 		}
 		.list_ {
 			for item in v.list {
@@ -222,6 +392,10 @@ pub fn (v DynValue) has_runtime_refs() bool {
 }
 
 pub fn (v DynValue) is_detached() bool {
+	return !v.has_runtime_refs()
+}
+
+pub fn (v DynValue) is_fully_detached() bool {
 	return !v.has_runtime_refs()
 }
 
@@ -286,6 +460,22 @@ pub fn (v DynValue) as_persistent_object() ?PhpObject {
 	}
 	ref := v.request_ref() or { return none }
 	return PhpObject.from_persistent_owned_zbox(PersistentOwnedZBox.of_object(ref.to_zval()))
+}
+
+pub fn (v DynValue) retain_object_ref() ?DynValue {
+	if v.type != .object_ref {
+		return none
+	}
+	if v.runtime_lifecycle == .persistent {
+		ref := v.retained_object_ref()
+		if !ref.is_valid() {
+			return none
+		}
+		return DynValue.retained_object(ref.clone())
+	}
+	ref := v.request_ref() or { return none }
+	retained := RetainedObject.from_zval(ref.to_zval()) or { return none }
+	return DynValue.retained_object(retained)
 }
 
 pub fn (v DynValue) as_persistent_closure() ?PhpClosure {
@@ -416,10 +606,7 @@ pub fn (v DynValue) to_persistent_owned_zbox() !PersistentOwnedZBox {
 			error('resource_ref cannot be made persistent')
 		}
 		else {
-			if !v.can_new_zval() {
-				return error('DynValue contains runtime refs that cannot be made persistent as data')
-			}
-			PersistentOwnedZBox.from_dyn(v.clone())
+			PersistentOwnedZBox.from_dyn(v.to_request_escapable()!)
 		}
 	}
 }

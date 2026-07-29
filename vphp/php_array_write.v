@@ -9,6 +9,10 @@ pub fn (a PhpArray) assoc_zval(key string, value ZVal) {
 	a.to_zval().add_assoc_zval(key, value)
 }
 
+pub fn (a PhpArray) index_zval(index i64, value ZVal) {
+	a.to_zval().add_index_zval(index, value)
+}
+
 pub fn (a PhpArray) set(key string, value PhpArgInput) {
 	a.assoc(key, value)
 }

@@ -29,6 +29,10 @@ pub fn (v ZVal) add_assoc_zval(key string, val ZVal) {
 	zval.array_add_assoc_zval(v.handle(), key, val.handle())
 }
 
+pub fn (v ZVal) add_index_zval(index i64, val ZVal) {
+	zval.array_add_index_zval(v.handle(), index, val.handle())
+}
+
 fn (v ZVal) add_assoc_dyn_value(key string, val DynValue) ! {
 	mut temp := RequestOwnedZBox.new_null()
 	defer {
@@ -37,6 +41,16 @@ fn (v ZVal) add_assoc_dyn_value(key string, val DynValue) ! {
 	mut sub := temp.to_zval()
 	val.to_zval(mut sub)!
 	v.add_assoc_zval(key, sub)
+}
+
+fn (v ZVal) add_index_dyn_value(index i64, val DynValue) ! {
+	mut temp := RequestOwnedZBox.new_null()
+	defer {
+		temp.release()
+	}
+	mut sub := temp.to_zval()
+	val.to_zval(mut sub)!
+	v.add_index_zval(index, sub)
 }
 
 pub fn (v ZVal) push_string(s string) {

@@ -62,6 +62,17 @@ pub fn array_add_assoc_zval_ptr(v voidptr, key string, val voidptr) {
 	 unsafe { &C.zval(val) })
 }
 
+pub fn array_add_index_zval(v &C.zval, index i64, val &C.zval) {
+	// SAFETY: C interop with valid arguments
+	unsafe { C.vphp_array_add_index_zval(v, index, val) }
+}
+
+pub fn array_add_index_zval_ptr(v voidptr, index i64, val voidptr) {
+	array_add_index_zval( // SAFETY: v is a valid zval pointer from Zend runtime
+	 unsafe { &C.zval(v) }, index, // SAFETY: val is a valid zval pointer from Zend runtime
+	 unsafe { &C.zval(val) })
+}
+
 pub fn array_push_string(v &C.zval, s string) {
 	// SAFETY: C interop with valid arguments
 	unsafe { C.vphp_array_push_stringl(v, &char(s.str), s.len) }

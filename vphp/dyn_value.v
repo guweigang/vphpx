@@ -1,13 +1,12 @@
 module vphp
 
-type MapDynValue = map[string]DynValue
-
 pub enum DynValueType {
 	null_
 	bool_
 	int_
 	float_
 	string_
+	array_
 	list_
 	map_
 	object_ref
@@ -44,6 +43,7 @@ pub mut:
 	type              DynValueType
 	data              DynValueData
 	str               string
+	array             &DynArray = unsafe { nil }
 	list              []DynValue
 	map               map[string]DynValue
 	runtime_lifecycle DynRuntimeLifecycle
@@ -90,6 +90,34 @@ pub fn DynValue.of_string(v string) DynValue {
 	}
 }
 
+pub fn DynValue.of_array(v &DynArray) DynValue {
+	return DynValue{
+		type:  .array_
+		array: v.clone_boxed()
+	}
+}
+
+pub fn DynValue.empty_array() DynValue {
+	return dyn_value_adopt_array(DynArray.new_boxed())
+}
+
+pub fn DynValue.array_from_list(v []DynValue) DynValue {
+	return dyn_value_adopt_array(DynArray.from_list(v))
+}
+
+pub fn DynValue.array_from_map(v map[string]DynValue) DynValue {
+	return dyn_value_adopt_array(DynArray.from_map(v))
+}
+
+fn dyn_value_adopt_array(v &DynArray) DynValue {
+	return DynValue{
+		type:  .array_
+		array: v
+	}
+}
+
+// of_list keeps the legacy V-list representation. Prefer array_from_list for
+// PHP array semantics.
 pub fn DynValue.of_list(v []DynValue) DynValue {
 	mut out := []DynValue{cap: v.len}
 	for item in v {
@@ -101,6 +129,8 @@ pub fn DynValue.of_list(v []DynValue) DynValue {
 	}
 }
 
+// of_map keeps the legacy V-map representation. Prefer array_from_map for PHP
+// array semantics.
 pub fn DynValue.of_map(v map[string]DynValue) DynValue {
 	mut out := map[string]DynValue{}
 	for key, item in v {
