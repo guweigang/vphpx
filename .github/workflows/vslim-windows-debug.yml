@@ -90,7 +90,7 @@ jobs:
         run: |
           & cl
           & nmake /?
-          & v.exe -cc clang-cl -path ".;..;@vlib" run build.v -emit-only
+          & v.exe -cc msvc -path ".;..;@vlib" run build.v -emit-only
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           .\scripts\build_windows_dll.ps1
 

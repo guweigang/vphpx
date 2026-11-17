@@ -19,14 +19,6 @@ fn php_class_internal_status(name string) int {
 	return os.exec(['php', '-r', script, '--', name]).exit_code
 }
 
-fn is_php_trait_class(el repr.PhpRepr) bool {
-	return el is repr.PhpClassRepr && el.is_trait
-}
-
-fn is_php_exported_class(el repr.PhpRepr) bool {
-	return el is repr.PhpClassRepr && !el.is_trait
-}
-
 fn has_property_named(props []repr.PhpClassPropRepr, name string) bool {
 	return props.any(it.name == name)
 }
@@ -53,9 +45,8 @@ pub fn link_class_shadows(mut elements []repr.PhpRepr, table &ast.Table) {
 pub fn link_class_embeds(mut elements []repr.PhpRepr) ! {
 	mut class_map := map[string]string{}
 	for el in elements {
-		if is_php_exported_class(el) {
-			cls := el as repr.PhpClassRepr
-			class_map[cls.name] = cls.php_name
+		if el is repr.PhpClassRepr && !el.is_trait {
+			class_map[el.name] = el.php_name
 		}
 	}
 
@@ -94,10 +85,9 @@ pub fn link_class_embeds(mut elements []repr.PhpRepr) ! {
 pub fn link_class_parents(mut elements []repr.PhpRepr) ! {
 	mut class_map := map[string]string{}
 	for el in elements {
-		if is_php_exported_class(el) {
-			cls := el as repr.PhpClassRepr
-			class_map[cls.name] = cls.php_name
-			class_map[cls.php_name] = cls.php_name
+		if el is repr.PhpClassRepr && !el.is_trait {
+			class_map[el.name] = el.php_name
+			class_map[el.php_name] = el.php_name
 		}
 	}
 
@@ -156,46 +146,43 @@ pub fn link_class_parents(mut elements []repr.PhpRepr) ! {
 }
 
 pub fn validate_object_copy_policies(elements []repr.PhpRepr) ! {
-	for repr_ in elements {
-		if repr_ !is repr.PhpClassRepr {
-			continue
+	for element in elements {
+		if element is repr.PhpClassRepr {
+			validate_object_copy_policy(element)!
 		}
-		element := repr_ as repr.PhpClassRepr
-		if !element.cloneable && !element.serializable {
-			continue
-		}
-		if element.is_trait || element.parent != '' {
-			return error('class ${element.php_name} must be a root VPHP class to opt into cloning or serialization with PhpObjectCopy')
-		}
-		if element.cloneable && !element.has_clone_into {
-			return error('cloneable class ${element.php_name} must define clone_into(mut target ${element.name})')
-		}
-		if element.serializable {
-			for name in ['__serialize', '__unserialize'] {
-				if !element.methods.any(it.name.to_lower() == name && it.visibility == 'public'
-					&& !it.is_static && !it.is_abstract) {
-					return error('serializable class ${element.php_name} must export a public ${name} method')
-				}
+	}
+}
+
+fn validate_object_copy_policy(element repr.PhpClassRepr) ! {
+	if !element.cloneable && !element.serializable {
+		return
+	}
+	if element.is_trait || element.parent != '' {
+		return error('class ${element.php_name} must be a root VPHP class to opt into cloning or serialization with PhpObjectCopy')
+	}
+	if element.cloneable && !element.has_clone_into {
+		return error('cloneable class ${element.php_name} must define clone_into(mut target ${element.name})')
+	}
+	if element.serializable {
+		for name in ['__serialize', '__unserialize'] {
+			if !element.methods.any(it.name.to_lower() == name && it.visibility == 'public'
+				&& !it.is_static && !it.is_abstract) {
+				return error('serializable class ${element.php_name} must export a public ${name} method')
 			}
 		}
 	}
 }
 
 pub fn validate_inherited_object_classes(elements []repr.PhpRepr) ! {
-	for el in elements {
-		if el !is repr.PhpClassRepr {
-			continue
-		}
-		cls := el as repr.PhpClassRepr
-		if cls.is_trait || !cls.uses_inherited_object {
-			continue
-		}
-		for prop in cls.properties {
-			if prop.is_property_only || prop.is_static
-				|| is_inherited_object_safe_property_type(prop.v_type) {
-				continue
+	for cls in elements {
+		if cls is repr.PhpClassRepr && !cls.is_trait && cls.uses_inherited_object {
+			for prop in cls.properties {
+				if prop.is_property_only || prop.is_static
+					|| is_inherited_object_safe_property_type(prop.v_type) {
+					continue
+				}
+				return error('class `${cls.name}` extends a PHP internal object layout via `${cls.parent}` and cannot embed `${prop.v_type}` field `${prop.v_field_name}` in its V struct; keep complex state in PHP properties and access it through property helpers instead')
 			}
-			return error('class `${cls.name}` extends a PHP internal object layout via `${cls.parent}` and cannot embed `${prop.v_type}` field `${prop.v_field_name}` in its V struct; keep complex state in PHP properties and access it through property helpers instead')
 		}
 	}
 }
@@ -203,9 +190,8 @@ pub fn validate_inherited_object_classes(elements []repr.PhpRepr) ! {
 pub fn link_class_traits(mut elements []repr.PhpRepr) ! {
 	mut trait_map := map[string]repr.PhpClassRepr{}
 	for el in elements {
-		if is_php_trait_class(el) {
-			trait_repr := el as repr.PhpClassRepr
-			trait_map[trait_repr.name] = trait_repr
+		if el is repr.PhpClassRepr && el.is_trait {
+			trait_map[el.name] = el
 		}
 	}
 
