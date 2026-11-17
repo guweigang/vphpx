@@ -54,7 +54,7 @@ jobs:
             needs_build: true
             emit_only: false
           - name: windows amd64 bundle
-            runs_on: windows-latest
+            runs_on: windows-2022
             platform: windows-amd64
             package_type: binary
             extension_file: php_vslim.dll
@@ -88,6 +88,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: amd64
+          toolset: '14.44'
 
       - name: Setup V on Windows
         if: matrix.needs_build && runner.os == 'Windows'
