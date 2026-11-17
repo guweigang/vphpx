@@ -16,7 +16,38 @@ If you are new to the compiler, read these in order:
 4. [docs/builder.md](docs/builder.md)
 5. [docs/emission_pipeline.md](docs/emission_pipeline.md)
 
+## Standalone Extension CLI
+
+Put this checkout's `bin` directory on `PATH` to use `vphp` from an
+extension project. The launcher uses the `v` on `PATH` on every run.
+The project declares its name and version in `vphp.ExtensionConfig` and
+marks exports with the usual VPHP attributes.
+
+```sh
+vphp check /path/to/extension
+vphp build /path/to/extension
+vphp stub /path/to/extension --output /path/to/extension/extension.stub.php
+```
+
+The project directory defaults to the current directory. The entry V files
+live at its root, with local V modules in subdirectories. The tool stages
+sources and writes the shared library or stub to `build/` by default.
+`check` compiles and links in that staging directory without publishing an
+artifact. Generated bridge files stay in staging.
+
+The builder targets macOS and Linux with a local C compiler and PHP
+development headers. Set `VPHP_PHP_CONFIG` to select the PHP SDK,
+`VPHP_PHP` to select the matching PHP executable for stub generation,
+`VPHP_CC` to select the C compiler, or `VPHP_V_GC` to choose a V GC mode.
+`stub` reflects the built extension and syntax-checks the PHP output before
+publishing it.
+
 ## Implementation Layout
+
+Builds use the V executable selected by the caller. The binding generator reads
+declarations through the installed V compiler's flat AST API. After upgrading V,
+run `make -C vphptest test` to check code generation, extension loading, and PHP
+interop with that installation.
 
 ```text
 vphp/compiler/
@@ -26,7 +57,8 @@ vphp/compiler/
   v_glue.v              # V bridge emission
   php_types/            # shared PHP-facing type/spec mapping
   repr/                 # compiler representations
-  parser/               # AST -> repr
+  syntax/               # V flat AST -> binding syntax
+  parser/               # binding syntax -> repr
   linker/               # post-parse linking
   builder/              # repr -> export fragments
 ```
@@ -194,6 +226,26 @@ fn maybe(obj ?vphp.PhpObject, value ?vphp.PhpValue) string {
 	return '${obj == none}:${value == none}'
 }
 ```
+
+Use `vphp.PhpReference` in an exported function or method to declare a PHP
+reference parameter. Call `deref()` to read the value and `set()` or
+`set_value()` to update the caller's variable. The default PHP type is
+`mixed`, and `php_arg_type` can specify a narrower type.
+
+```v
+@[php_function]
+@[php_arg_type: 'cursor=int']
+fn advance(cursor vphp.PhpReference) {
+	cursor.set(vphp.ZVal.new_int(cursor.deref().to_i64() + 1))
+}
+```
+
+`?vphp.PhpReference` makes the parameter optional with a default of `null`.
+Omitting a trailing positional argument gives V `none`. When a named call
+skips that parameter and supplies a later one, PHP can fill the slot with a
+temporary reference to the default. Writes to that reference affect only the
+call. A supplied variable holding `null` can still receive a new value.
+Reference variadics accept positional arguments.
 
 ### 4. Lifecycle / Raw Value Escape Hatches
 
@@ -468,7 +520,7 @@ signatures. Prefer these over parameter-name heuristics.
 - `@[php_arg_type: 'a=array,b=Traversable']`
   supports multiple `name=type` entries in one attribute.
 - `@[php_arg_default: 'default_status=200,default_reason_phrase=""']`
-  records PHP reflection default values for optional parameters.
+  sets PHP arginfo defaults and infers that those parameters are optional.
 - `@[php_arg_optional: 'default_status,default_reason_phrase']`
   marks trailing PHP-optional parameters explicitly.
 - `@[php_param_attr(query: 'FromQuery("q"), MustBeString')]`
@@ -476,19 +528,51 @@ signatures. Prefer these over parameter-name heuristics.
 
 Notes:
 
-- `php_arg_optional` only changes PHP required-arg counts / arginfo shape.
-  For ordinary parameters with a supported default literal, the generated glue
-  also applies the default when PHP omits the argument.
-- `php_arg_default` records PHP arginfo / reflection defaults and, for supported
-  ordinary parameter forms, provides the value used by glue when omitted.
+- `php_arg_optional` can also be used on its own or alongside a default.
+  `php_arg_optional(name: false)` suppresses default-based optionality.
+  PHP's required argument count includes all parameters through the last
+  required parameter.
+- `php_arg_default` supplies the value used by Reflection and by positional and
+  named calls that omit an optional argument. PHP evaluates the arginfo
+  expression, including constants and arrays. A supplied value takes precedence,
+  including `null` for parameters that accept it.
 - `php_arg_type` is most useful for interface/object/array/iterable contracts
   that V cannot express directly in PHP arginfo.
+- When a V sum type contains exported classes or enums and supported scalar
+  or array variants, generated function and method signatures keep the PHP
+  names of the exported variants. An exported enum case matches only its own
+  enum, even when multiple variants share the same backing value. Use
+  `php_arg_type` and `php_return_type` for explicit PHP unions such as
+  `App\\Reader|App\\Writer|int`.
+- The same attributes accept PHP intersections such as `Iterator&Countable`
+  and DNF types such as `(Iterator&Countable)|ArrayObject|null`. Use a V
+  wrapper such as `vphp.PhpValue` for the underlying value. PHP checks the
+  declared type at the call boundary and exposes it through Reflection.
 - `php_param_attr` supports function and method parameters. Its attribute
   arguments support positional scalar literals, and named scalar literals are
   preserved for PHP attributes and `PhpAttributeItem.name`.
 - Be conservative with scalar narrowing (`string`, `int`, `bool`) on exported
   interfaces. If compatibility matters, prefer runtime validation over
   over-constrained arginfo.
+
+## Exported Object Copy Policy
+
+PHP rejects cloning and serialization of classes backed by a VPHP object
+payload unless the root exported class opts in with
+`@[vphp.PhpObjectCopy(cloneable: true, serializable: true)]`.
+Each option also works independently.
+
+- `cloneable: true` requires a V method
+  `fn (source &T) clone_into(mut target T)`. The bridge passes a fresh V
+  instance to the method. Copy the object's state and clone or retain owned
+  fields according to their lifetime rules. The bridge binds that instance
+  before Zend copies PHP properties and runs any PHP `__clone()` hook.
+- `serializable: true` requires public instance methods exported as
+  `__serialize(): array` and `__unserialize(array $data): void`. The restore
+  method is responsible for validating the data and restoring V state.
+  Include any PHP-only properties that should survive the round trip.
+
+Classes extending native PHP classes use the native parent's handlers.
 
 ## Guiding Idea
 

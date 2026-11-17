@@ -139,12 +139,12 @@ fn (c PhpClosure) request_owned(args ...PhpArgInput) RequestOwnedZBox {
 }
 
 pub fn (c PhpClosure) invoke(args ...PhpArgInput) PhpValue {
-	mut result := c.request_owned(args)
+	mut result := c.request_owned(...args)
 	return result.take_value()
 }
 
 pub fn (c PhpClosure) call[T](args ...PhpArgInput) !T {
-	mut result := c.request_owned(args)
+	mut result := c.request_owned(...args)
 	defer {
 		result.release()
 	}
@@ -152,7 +152,7 @@ pub fn (c PhpClosure) call[T](args ...PhpArgInput) !T {
 }
 
 pub fn (c PhpClosure) with_result[T, R](run fn (T) R, args ...PhpArgInput) !R {
-	mut result := c.request_owned(args)
+	mut result := c.request_owned(...args)
 	defer {
 		result.release()
 	}
@@ -165,7 +165,8 @@ pub fn (c PhpClosure) with_result_zval[T](run fn (ZVal) T, args ...ZVal) T {
 	defer {
 		result.release()
 	}
-	return run(result.to_zval())
+	z := result.to_zval()
+	return run(z)
 }
 
 pub fn (c PhpClosure) kind_name() string {
@@ -199,7 +200,8 @@ pub fn (c PhpClosure) with_fn_result_zval[T](run fn (ZVal) T, args ...ZVal) T {
 	defer {
 		result.release()
 	}
-	return run(result.to_zval())
+	z := result.to_zval()
+	return run(z)
 }
 
 pub fn (mut c PhpClosure) release() {

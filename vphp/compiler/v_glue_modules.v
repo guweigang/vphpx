@@ -164,9 +164,16 @@ pub fn (c Compiler) class_php_map() map[string]string {
 	mut m := map[string]string{}
 	for el in c.elements {
 		if el is repr.PhpClassRepr {
+			if el.is_trait {
+				continue
+			}
 			m[el.name] = el.php_name
 			m[el.php_name] = el.php_name
 			m[el.c_name()] = el.php_name
+			m['${el.module_name}.${el.name}'] = el.php_name
+		} else if el is repr.PhpEnumRepr {
+			m[el.name] = el.php_name
+			m['${el.module_name}.${el.name}'] = el.php_name
 		}
 	}
 	return m

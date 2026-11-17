@@ -15,16 +15,12 @@ fn PhpArgRead.new(arg repr.PhpArgRepr, index int) PhpArgRead {
 	}
 }
 
-fn (read PhpArgRead) name_literal() string {
-	return v_single_quote(read.arg.name)
-}
-
 fn (read PhpArgRead) arg_expr() string {
-	return 'php_args.at_named_or_index(${read.index}, ${read.name_literal()})'
+	return 'php_args.at(${read.index})'
 }
 
 fn (read PhpArgRead) has_arg_expr() string {
-	return 'php_args.has_named_or_index(${read.index}, ${read.name_literal()})'
+	return 'php_args.has(${read.index})'
 }
 
 fn (read PhpArgRead) direct_expr() ?string {
@@ -45,18 +41,17 @@ fn (read PhpArgRead) v_expr() string {
 	return php_arg_v_read_expr(read.arg_expr(), read.arg.v_type)
 }
 
-fn (read PhpArgRead) with_default(expr string) string {
-	if read.arg.is_variadic {
-		return expr
-	}
-	default_value := PhpArgDefaultValue.from_arg(read.arg) or { return expr }
-	default_expr := default_value.arg_expr() or { return expr }
-	return 'if ${read.has_arg_expr()} { ${expr} } else { ${default_expr} }'
-}
-
 fn (read PhpArgRead) semantic_lines(var_name string, returns_voidptr bool) ?[]string {
 	if read.arg.is_variadic {
-		return none
+		if !php_types.is_reference_parameter(read.arg.v_type, true) {
+			return none
+		}
+		return [
+			'    ${var_name} := php_args.variadic_references(${read.index}) or {',
+			"        vphp.PhpException.raise_class('TypeError', err.msg(), 0)",
+			'        ${arg_return_stmt(returns_voidptr)}',
+			'    }',
+		]
 	}
 	v_type := read.arg.v_type
 	if v_type.starts_with('?') {
@@ -133,23 +128,8 @@ fn php_arg_v_read_expr(arg_expr string, v_type string) string {
 	return '${arg_expr}.as_v[${v_type}]()'
 }
 
-fn php_context_arg_expr(v_type string, index int) string {
+fn php_context_arg_direct_expr(v_type string, index int) ?string {
 	return match v_type {
-		'string' {
-			'ctx.arg[string](${index})'
-		}
-		'int' {
-			'ctx.arg[int](${index})'
-		}
-		'i64' {
-			'ctx.arg[i64](${index})'
-		}
-		'bool' {
-			'ctx.arg[bool](${index})'
-		}
-		'f64' {
-			'ctx.arg[f64](${index})'
-		}
 		'ZVal', 'vphp.ZVal' {
 			'ctx.arg_val(${index})'
 		}
@@ -160,7 +140,7 @@ fn php_context_arg_expr(v_type string, index int) string {
 			'ctx.arg_value(${index})'
 		}
 		else {
-			'ctx.arg[${v_type}](${index})'
+			none
 		}
 	}
 }

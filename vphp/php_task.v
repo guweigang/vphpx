@@ -89,7 +89,7 @@ pub fn (task PhpTask) spawn(args []ZVal) !PhpTaskHandle {
 	creator := ITask.get_creator(task.name) or { return error('Task ${task.name} not registered') }
 
 	task_inst := creator(args)
-	t := spawn task_inst.run()
+	t := spawn run_php_task(task_inst)
 
 	// SAFETY: C interop block with valid pointer arguments
 	unsafe {
@@ -99,6 +99,10 @@ pub fn (task PhpTask) spawn(args []ZVal) !PhpTaskHandle {
 			ptr: res
 		}
 	}
+}
+
+fn run_php_task(task ITask) TaskResult {
+	return task.run()
 }
 
 pub fn PhpTaskHandle.null() PhpTaskHandle {

@@ -19,6 +19,7 @@ module zend
 // ===== 1. 执行上下文 & 参数 =====
 pub fn C.vphp_get_num_args(ex &C.zend_execute_data) u32
 pub fn C.vphp_get_arg_ptr(ex &C.zend_execute_data, index u32) &C.zval
+pub fn C.vphp_read_arg_default(ex &C.zend_execute_data, index u32, result &C.zval) bool
 pub fn C.vphp_has_exception() bool
 pub fn C.vphp_exception_message(buffer &char, buffer_len int) int
 pub fn C.vphp_clear_exception()
@@ -170,6 +171,7 @@ pub fn C.vphp_bind_class_interface(class_name &char, class_name_len int, iface_n
 pub fn C.vphp_register_auto_interface_binding(class_name &char, class_name_len int, iface_name &char, iface_name_len int)
 pub fn C.vphp_create_closure_FULL_AUTO_V2(z &C.zval, thunk voidptr, bridge voidptr)
 pub fn C.vphp_create_closure_with_arity(z &C.zval, thunk voidptr, bridge voidptr, num_args int, required_args int)
+pub fn C.vphp_create_closure_with_arginfo(z &C.zval, thunk voidptr, bridge voidptr, num_args int, required_args int, arginfo voidptr)
 pub fn C.vphp_create_variadic_closure(z &C.zval, thunk voidptr, bridge voidptr)
 
 // ===== 9. 资源系统 =====

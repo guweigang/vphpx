@@ -1,12 +1,13 @@
 module vphp
 
-import vphp.zend as _
+import vphp.zend
 
 pub struct PhpArgMeta {
 pub:
-	index      int
-	name       string
-	attributes []PhpAttribute
+	index           int
+	name            string
+	attributes      []PhpAttribute
+	use_php_default bool
 }
 
 pub struct PhpArg {
@@ -51,6 +52,9 @@ pub fn PhpArg.from_meta_zval(meta PhpArgMeta, z ZVal) PhpArg {
 }
 
 pub fn (meta PhpArgMeta) with_attribute_target(target PhpAttributeTarget) PhpArgMeta {
+	if meta.attributes.len == 0 {
+		return meta
+	}
 	mut attrs := []PhpAttribute{cap: meta.attributes.len}
 	for attr in meta.attributes {
 		if attr.target == .unknown {
@@ -60,8 +64,7 @@ pub fn (meta PhpArgMeta) with_attribute_target(target PhpAttributeTarget) PhpArg
 		}
 	}
 	return PhpArgMeta{
-		index:      meta.index
-		name:       meta.name
+		...meta
 		attributes: attrs
 	}
 }
@@ -240,16 +243,18 @@ pub fn (arg PhpArg) to_v_ptr[T]() !voidptr {
 	}
 	ce := cached_class_entry(v_name)
 	if ce == unsafe { nil } // SAFETY: nil literal in unsafe context
-	  {
+
+	{
 		return error('no class entry found for ${v_name}')
 	}
 	zend_obj := ZendObject.from_zval(val)
-	if !C.vphp_object_is_instance_of(zend_obj.raw_ptr(), ce) {
+	if !zend.object_is_instance_of(zend_obj.raw_ptr(), ce) {
 		return error('type mismatch: object is not an instance of ${v_name}')
 	}
 	ptr := zend_obj.bound_v_ptr()
 	if ptr == unsafe { nil } // SAFETY: nil literal in unsafe context
-	  {
+
+	{
 		return error('object not bound to V pointer')
 	}
 	return ptr
@@ -321,4 +326,18 @@ pub fn (args PhpArgs) as_variadic_v[T](start_index int) []T {
 		res << args.items[i].as_v[T]()
 	}
 	return res
+}
+
+pub fn (args PhpArgs) variadic_references(start_index int) ![]PhpReference {
+	if start_index < 0 || start_index >= args.items.len {
+		return []PhpReference{}
+	}
+	mut references := []PhpReference{cap: args.items.len - start_index}
+	for i := start_index; i < args.items.len; i++ {
+		reference := args.items[i].reference() or {
+			return error('argument ${i + 1} must be passed by reference')
+		}
+		references << reference
+	}
+	return references
 }

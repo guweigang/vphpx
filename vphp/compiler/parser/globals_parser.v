@@ -1,6 +1,6 @@
 module parser
 
-import v.ast
+import compiler.syntax as ast
 import compiler.repr
 
 pub fn parse_globals_decl(stmt ast.Stmt, table &ast.Table) ?repr.PhpGlobalsRepr {

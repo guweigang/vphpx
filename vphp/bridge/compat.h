@@ -79,11 +79,12 @@ vphp_zend_verify_never_error(const zend_function *func) {
 }
 
 static inline bool vphp_zend_check_user_type_slow(zend_type *type, zval *value,
+                                                  zend_reference *ref,
                                                   bool is_return_type) {
 #if PHP_VERSION_ID >= 80500
-  return zend_check_user_type_slow(type, value, NULL, is_return_type) != 0;
+  return zend_check_user_type_slow(type, value, ref, is_return_type) != 0;
 #else
-  return zend_check_user_type_slow(type, value, NULL, NULL, is_return_type) != 0;
+  return zend_check_user_type_slow(type, value, ref, NULL, is_return_type) != 0;
 #endif
 }
 

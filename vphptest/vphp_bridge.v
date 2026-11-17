@@ -197,11 +197,11 @@ pub fn vphp_wrap_daily_report_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'title', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'summary', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'title' },
+        vphp.PhpArgMeta{ index: 1, name: 'summary' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'title').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'summary').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.construct(arg_0, arg_1)
     return voidptr(res)
 }
@@ -310,9 +310,9 @@ pub fn vphp_wrap_author_create(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := Author.create(arg_0)
     return voidptr(res)
 }
@@ -422,10 +422,10 @@ pub fn vphp_wrap_post_set_author(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'author', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'author' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'author').to_v_ptr[Author]() or {
-        vphp.throw_exception('argument 0 must be object bound to Author, got ' + php_args.at_named_or_index(0, 'author').zval().type_name(), 0)
+    arg_0_ptr := php_args.at(0).to_v_ptr[Author]() or {
+        vphp.throw_exception('argument 0 must be object bound to Author, got ' + php_args.at(0).zval().type_name(), 0)
         return
     }
     arg_0 := unsafe { &Author(arg_0_ptr) }
@@ -577,11 +577,11 @@ pub fn vphp_wrap_article_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'title', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'id', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'title' },
+        vphp.PhpArgMeta{ index: 1, name: 'id' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'title').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'id').as_v[int]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[int]()
     Article.sync_statics_from_php(ctx)
     res := recv.construct(arg_0, arg_1)
     Article.sync_statics_to_php(ctx)
@@ -602,9 +602,9 @@ pub fn vphp_wrap_article_create(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'title', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'title' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'title').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     Article.sync_statics_from_php(ctx)
     res := Article.create(arg_0)
     Article.sync_statics_to_php(ctx)
@@ -636,9 +636,9 @@ pub fn vphp_wrap_article_dump_properties(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'data', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'data' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'data').zval()
+    arg_0 := php_args.at(0).zval()
     Article.sync_statics_from_php(ctx)
     recv.dump_properties(arg_0)
     Article.sync_statics_to_php(ctx)
@@ -649,9 +649,9 @@ pub fn vphp_wrap_article_process_with_callback(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callback' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'callback').callable() or {
+    arg_0 := php_args.at(0).callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
         return
     }
@@ -665,9 +665,9 @@ pub fn vphp_wrap_article_restore_author(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'authorVal', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'authorVal' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'authorVal').zval()
+    arg_0 := php_args.at(0).zval()
     Article.sync_statics_from_php(ctx)
     res := Article.restore_author(arg_0)
     Article.sync_statics_to_php(ctx)
@@ -770,16 +770,15 @@ pub fn vphp_wrap_story_create(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'author', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'chapters', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'author' },
+        vphp.PhpArgMeta{ index: 1, name: 'chapters' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'author').to_v_ptr[Author]() or {
-        vphp.throw_exception('argument 0 must be object bound to Author, got ' + php_args.at_named_or_index(0, 'author').zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0_ptr := php_args.at(0).to_v_ptr[Author]() or {
+        vphp.throw_exception('argument 0 must be object bound to Author, got ' + php_args.at(0).zval().type_name(), 0)
+        return unsafe { nil }
     }
     arg_0 := unsafe { &Author(arg_0_ptr) }
-    arg_1 := php_args.at_named_or_index(1, 'chapters').as_v[int]()
+    arg_1 := php_args.at(1).as_v[int]()
     res := Story.create(arg_0, arg_1)
     return voidptr(res)
 }
@@ -889,9 +888,9 @@ pub fn vphp_wrap_alias_base_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'label', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'label' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'label').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.construct(arg_0)
     return voidptr(res)
 }
@@ -993,11 +992,11 @@ pub fn vphp_wrap_alias_worker_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'label', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'title', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'label' },
+        vphp.PhpArgMeta{ index: 1, name: 'title' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'label').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'title').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.construct(arg_0, arg_1)
     return voidptr(res)
 }
@@ -1305,9 +1304,9 @@ pub fn vphp_wrap_callable_processor_construct(ptr voidptr, ctx vphp.Context) voi
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'prefix', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'prefix' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'prefix').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     recv.construct(arg_0)
     return ptr
 }
@@ -1317,9 +1316,9 @@ pub fn vphp_wrap_callable_processor_process(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callback' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'callback').callable() or {
+    arg_0 := php_args.at(0).callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
         return
     }
@@ -1332,14 +1331,14 @@ pub fn vphp_wrap_callable_processor_transform(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'input', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callback' },
+        vphp.PhpArgMeta{ index: 1, name: 'input' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'callback').callable() or {
+    arg_0 := php_args.at(0).callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
         return
     }
-    arg_1 := php_args.at_named_or_index(1, 'input').as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.transform(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -1348,33 +1347,48 @@ pub fn vphp_wrap_callable_processor_apply(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'data', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callback' },
+        vphp.PhpArgMeta{ index: 1, name: 'data' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'callback').callable() or {
+    arg_0 := php_args.at(0).callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
         return
     }
-    arg_1 := php_args.at_named_or_index(1, 'data').as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := CallableProcessor.apply(arg_0, arg_1)
     ctx.return().v[string](res)
 }
+__global C.struct_closure_arginfo_callableprocessor_struct_closure voidptr
+
 pub type VPhpStructClosureCallableProcessorStructClosure = fn (StructClosureArgs) string
 
 fn vphp_struct_closure_bridge_callableprocessor_struct_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
         ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpStructClosureCallableProcessorStructClosure(v_ptr))
-        args := StructClosureArgs{
-            name: ctx.arg[string](0)
-            count: ctx.arg[int](1)
+        arg_count := ctx.num_args()
+        if arg_count < 2 {
+            vphp.PhpException.raise_class('ArgumentCountError', 'closure requires at least 2 arguments', 0)
+            return
         }
-        ctx.invoke_struct_closure[VPhpStructClosureCallableProcessorStructClosure, StructClosureArgs, string](cb, args)
+        field_0 := ctx.arg_val(0).to_v[string]() or {
+            vphp.PhpException.raise_class('TypeError', 'argument 1 (name): ${err.msg()}', 0)
+            return
+        }
+        field_1 := ctx.arg_val(1).to_v[int]() or {
+            vphp.PhpException.raise_class('TypeError', 'argument 2 (count): ${err.msg()}', 0)
+            return
+        }
+        args := StructClosureArgs{
+            name: field_0
+            count: field_1
+        }
+        ctx.forward_struct_closure[StructClosureArgs, string](cb, args)
     }
 }
 
 fn vphp_wrap_struct_closure_callableprocessor_struct_closure(ctx vphp.Context, cb VPhpStructClosureCallableProcessorStructClosure) {
-    ctx.create_saved_closure[VPhpStructClosureCallableProcessorStructClosure](cb, voidptr(vphp_struct_closure_bridge_callableprocessor_struct_closure), 2)
+    ctx.create_saved_closure_with_arginfo[VPhpStructClosureCallableProcessorStructClosure](cb, voidptr(vphp_struct_closure_bridge_callableprocessor_struct_closure), 2, 2, C.struct_closure_arginfo_callableprocessor_struct_closure)
 }
 
 @[export: 'vphp_wrap_callable_processor_struct_closure']
@@ -1384,6 +1398,152 @@ pub fn vphp_wrap_callable_processor_struct_closure(ctx vphp.Context)  {
     res := CallableProcessor.struct_closure()
     // Returned value is a struct-param closure: wrap using generated bridge
     vphp_wrap_struct_closure_callableprocessor_struct_closure(ctx, res)
+}
+@[export: 'vphp_wrap_callable_processor_computed_params']
+pub fn vphp_wrap_callable_processor_computed_params(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &CallableProcessor(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'sequence' },
+        vphp.PhpArgMeta{ index: 1, name: 'label' },
+        vphp.PhpArgMeta{ index: 2, name: 'enabled' },
+    ])
+    arg_0_params_sequence := if php_args.has(0) {
+        php_args.at(0).as_v[int]()
+    } else {
+        defaults := VPhpComputedParamsDemo{
+            label: none
+        }
+        if vphp.has_exception() {
+            return
+        }
+        defaults.sequence
+    }
+    arg_0_params_label := if php_args.has(1) {
+        php_args.at(1).as_v_opt[string]()
+    } else {
+        defaults := VPhpComputedParamsDemo{
+            sequence: int(0)
+        }
+        if vphp.has_exception() {
+            return
+        }
+        defaults.label
+    }
+    arg_0_params_enabled := if php_args.has(2) { php_args.at(2).as_v[bool]() } else { true }
+    arg_0_params := VPhpComputedParamsDemo{
+        sequence: arg_0_params_sequence
+        label: arg_0_params_label
+        enabled: arg_0_params_enabled
+    }
+    res := recv.computed_params(arg_0_params)
+    ctx.return().v[string](res)
+}
+@[export: 'vphp_wrap_callable_processor_literal_params']
+pub fn vphp_wrap_callable_processor_literal_params(ctx vphp.Context)  {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
+        vphp.PhpArgMeta{ index: 1, name: 'raw' },
+        vphp.PhpArgMeta{ index: 2, name: 'octal' },
+        vphp.PhpArgMeta{ index: 3, name: 'binary' },
+        vphp.PhpArgMeta{ index: 4, name: 'floating' },
+        vphp.PhpArgMeta{ index: 5, name: 'single' },
+        vphp.PhpArgMeta{ index: 6, name: 'option' },
+        vphp.PhpArgMeta{ index: 7, name: 'nullable' },
+        vphp.PhpArgMeta{ index: 8, name: 'items' },
+        vphp.PhpArgMeta{ index: 9, name: 'empty' },
+        vphp.PhpArgMeta{ index: 10, name: 'lookup' },
+        vphp.PhpArgMeta{ index: 11, name: 'tail' },
+    ])
+    arg_0_params_message := if php_args.has(0) { php_args.at(0).as_v[string]() } else { 'a\n\t\x00\xe2\x98\xba\$\'\\"' }
+    arg_0_params_raw := if php_args.has(1) { php_args.at(1).as_v[string]() } else { '\\n\${literal}' }
+    arg_0_params_octal := if php_args.has(2) { php_args.at(2).as_v[int]() } else { -15 }
+    arg_0_params_binary := if php_args.has(3) { php_args.at(3).as_v[i64]() } else { i64(161) }
+    arg_0_params_floating := if php_args.has(4) { php_args.at(4).as_v[f64]() } else { 2.0 }
+    arg_0_params_single := if php_args.has(5) { php_args.at(5).as_v[f32]() } else { f32(0.1) }
+    arg_0_params_option := if php_args.has(6) { php_args.at(6).as_v_opt[string]() } else { ?string('present') }
+    arg_0_params_nullable := if php_args.has(7) { php_args.at(7).as_v_opt[int]() } else { none }
+    arg_0_params_items := if php_args.has(8) { php_args.at(8).as_v[[]int]() } else { [1, 16] }
+    arg_0_params_empty := if php_args.has(9) { php_args.at(9).as_v[[]string]() } else { []string{} }
+    arg_0_params_lookup := if php_args.has(10) { php_args.at(10).as_v[map[string]int]() } else { {'count': 16} }
+    arg_0_params_tail := if php_args.has(11) { php_args.at(11).as_v[bool]() } else { true }
+    arg_0_params := VPhpLiteralParamsDemo{
+        message: arg_0_params_message
+        raw: arg_0_params_raw
+        octal: arg_0_params_octal
+        binary: arg_0_params_binary
+        floating: arg_0_params_floating
+        single: arg_0_params_single
+        option: arg_0_params_option
+        nullable: arg_0_params_nullable
+        items: arg_0_params_items
+        empty: arg_0_params_empty
+        lookup: arg_0_params_lookup
+        tail: arg_0_params_tail
+    }
+    res := CallableProcessor.literal_params(arg_0_params)
+    ctx.return().v[string](res)
+}
+@[export: 'vphp_wrap_callable_processor_overridden_params']
+pub fn vphp_wrap_callable_processor_overridden_params(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &CallableProcessor(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'option', use_php_default: true },
+        vphp.PhpArgMeta{ index: 1, name: 'spacer' },
+        vphp.PhpArgMeta{ index: 2, name: 'count', use_php_default: true },
+        vphp.PhpArgMeta{ index: 3, name: 'nullable', use_php_default: true },
+        vphp.PhpArgMeta{ index: 4, name: 'items', use_php_default: true },
+        vphp.PhpArgMeta{ index: 5, name: 'tail' },
+    ]) or {
+        return
+    }
+    arg_0 := ctx
+    arg_1_params_option := php_args.at(0).as_v_opt[string]()
+    arg_1_params_spacer := if php_args.has(1) { php_args.at(1).as_v[string]() } else { 'native spacer' }
+    arg_1_params_count := php_args.at(2).as_v[int]()
+    arg_1_params_nullable := php_args.at(3).as_v_opt[string]()
+    arg_1_params_items := php_args.at(4).array() or {
+        vphp.throw_exception('argument 4 must be array', 0)
+        return
+    }
+    arg_1_params_tail := if php_args.has(5) { php_args.at(5).as_v[bool]() } else { true }
+    arg_1_params := VPhpOverriddenParamsDemo{
+        option: arg_1_params_option
+        spacer: arg_1_params_spacer
+        count: arg_1_params_count
+        nullable: arg_1_params_nullable
+        items: arg_1_params_items
+        tail: arg_1_params_tail
+    }
+    res := recv.overridden_params(arg_0, arg_1_params)
+    ctx.return().v[string](res)
+}
+@[export: 'vphp_wrap_callable_processor_direct_defaults']
+pub fn vphp_wrap_callable_processor_direct_defaults(ctx vphp.Context)  {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'prefix' },
+        vphp.PhpArgMeta{ index: 1, name: 'count', use_php_default: true },
+        vphp.PhpArgMeta{ index: 2, name: 'values', use_php_default: true },
+        vphp.PhpArgMeta{ index: 3, name: 'label', use_php_default: true },
+        vphp.PhpArgMeta{ index: 4, name: 'enabled', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := ctx
+    arg_1 := php_args.at(0).as_v[string]()
+    arg_2 := php_args.at(1).as_v[int]()
+    arg_3 := php_args.at(2).array()
+    arg_4 := php_args.at(3).as_v_opt[string]()
+    arg_5 := php_args.at(4).as_v[bool]()
+    res := CallableProcessor.direct_defaults(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5)
+    ctx.return().v[string](res)
 }
 @[export: 'callable_processor_handlers']
 pub fn callable_processor_handlers() voidptr {
@@ -1479,9 +1639,9 @@ pub fn vphp_wrap_finder_find(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'keyword', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'keyword' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'keyword').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     ctx.return().from_option[string](fn [arg_0, recv] () ?string {
         return recv.find(arg_0)
     })
@@ -1492,9 +1652,9 @@ pub fn vphp_wrap_finder_index_of(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'keyword', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'keyword' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'keyword').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     ctx.return().from_option[int](fn [arg_0, recv] () ?int {
         return recv.index_of(arg_0)
     })
@@ -1505,9 +1665,9 @@ pub fn vphp_wrap_finder_has_match(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'keyword', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'keyword' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'keyword').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     ctx.return().from_option[bool](fn [arg_0, recv] () ?bool {
         return recv.has_match(arg_0)
     })
@@ -1517,9 +1677,9 @@ pub fn vphp_wrap_finder_try_parse_int(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 's', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 's' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 's').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     ctx.return().from_option[int](fn [arg_0] () ?int {
         return Finder.try_parse_int(arg_0)
     })
@@ -1627,9 +1787,9 @@ pub fn vphp_wrap_readonly_record_construct(ptr voidptr, ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'title', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'title' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'title').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.construct(arg_0)
     return voidptr(res)
 }
@@ -1844,9 +2004,9 @@ pub fn vphp_wrap_vphp_module_probe_box_test_sumtype(ptr voidptr, ctx vphp.Contex
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'val', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'val' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'val').as_v[VphpModuleProbeSum]()
+    arg_0 := php_args.at(0).as_v[VphpModuleProbeSum]()
     res := recv.test_sumtype(arg_0)
     ctx.return().v[VphpModuleProbeSum](res)
 }
@@ -1856,9 +2016,9 @@ pub fn vphp_wrap_vphp_module_probe_box_test_enum_echo(ptr voidptr, ctx vphp.Cont
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'kind', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'kind' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'kind').as_v[VphpModuleProbeKind]()
+    arg_0 := php_args.at(0).as_v[VphpModuleProbeKind]()
     res := recv.test_enum_echo(arg_0)
     ctx.return().v[VphpModuleProbeKind](res)
 }
@@ -1868,9 +2028,9 @@ pub fn vphp_wrap_vphp_module_probe_box_test_sumtype_echo(ptr voidptr, ctx vphp.C
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'val', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'val' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'val').as_v[VphpModuleProbeSumType]()
+    arg_0 := php_args.at(0).as_v[VphpModuleProbeSumType]()
     res := recv.test_sumtype_echo(arg_0)
     ctx.return().v[VphpModuleProbeSumType](res)
 }
@@ -1880,10 +2040,10 @@ pub fn vphp_wrap_vphp_module_probe_box_test_variadic(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'sep', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'args', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'sep' },
+        vphp.PhpArgMeta{ index: 1, name: 'args' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'sep').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.as_variadic_v[string](1)
     res := recv.test_variadic(arg_0, ...arg_1)
     ctx.return().v[string](res)
@@ -1894,10 +2054,10 @@ pub fn vphp_wrap_vphp_module_probe_box_test_struct_param(ptr voidptr, ctx vphp.C
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'box', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'box' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'box').to_v_ptr[VphpModuleProbeReadOnlyBox]() or {
-        vphp.throw_exception('argument 0 must be object bound to VphpModuleProbeReadOnlyBox, got ' + php_args.at_named_or_index(0, 'box').zval().type_name(), 0)
+    arg_0_ptr := php_args.at(0).to_v_ptr[VphpModuleProbeReadOnlyBox]() or {
+        vphp.throw_exception('argument 0 must be object bound to VphpModuleProbeReadOnlyBox, got ' + php_args.at(0).zval().type_name(), 0)
         return
     }
     arg_0 := unsafe { &VphpModuleProbeReadOnlyBox(arg_0_ptr) }
@@ -2144,31 +2304,31 @@ pub fn vphp_wrap_vphp_module_probe_wrapper_box_change_props(ptr voidptr, ctx vph
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'newVal', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'newObj', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'newStr', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'newNum', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'newB', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 5, name: 'newArr', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'newVal' },
+        vphp.PhpArgMeta{ index: 1, name: 'newObj' },
+        vphp.PhpArgMeta{ index: 2, name: 'newStr' },
+        vphp.PhpArgMeta{ index: 3, name: 'newNum' },
+        vphp.PhpArgMeta{ index: 4, name: 'newB' },
+        vphp.PhpArgMeta{ index: 5, name: 'newArr' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'newVal').value
-    arg_1 := php_args.at_named_or_index(1, 'newObj').object() or {
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).object() or {
         vphp.throw_exception('argument 1 must be object', 0)
         return
     }
-    arg_2 := php_args.at_named_or_index(2, 'newStr').string_value() or {
+    arg_2 := php_args.at(2).string_value() or {
         vphp.throw_exception('argument 2 must be string', 0)
         return
     }
-    arg_3 := php_args.at_named_or_index(3, 'newNum').int_value() or {
+    arg_3 := php_args.at(3).int_value() or {
         vphp.throw_exception('argument 3 must be int', 0)
         return
     }
-    arg_4 := php_args.at_named_or_index(4, 'newB').bool_value() or {
+    arg_4 := php_args.at(4).bool_value() or {
         vphp.throw_exception('argument 4 must be bool', 0)
         return
     }
-    arg_5 := php_args.at_named_or_index(5, 'newArr').array() or {
+    arg_5 := php_args.at(5).array() or {
         vphp.throw_exception('argument 5 must be array', 0)
         return
     }
@@ -2290,9 +2450,9 @@ pub fn vphp_wrap_trait_post_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'title', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'title' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'title').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.construct(arg_0)
     return voidptr(res)
 }
@@ -2426,9 +2586,9 @@ pub fn vphp_wrap_validator_construct(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'strict', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'strict' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'strict').as_v[bool]()
+    arg_0 := php_args.at(0).as_v[bool]()
     recv.construct(arg_0)
     return ptr
 }
@@ -2438,9 +2598,9 @@ pub fn vphp_wrap_validator_check(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'input' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'input').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     ctx.return().from_result[bool](fn [arg_0, recv] () !bool {
         return recv.check(arg_0)!
     })
@@ -2451,9 +2611,9 @@ pub fn vphp_wrap_validator_sanitize(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'input' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'input').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     ctx.return().from_result[string](fn [arg_0, recv] () !string {
         return recv.sanitize(arg_0)!
     })
@@ -2464,9 +2624,9 @@ pub fn vphp_wrap_validator_assert_valid(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'input' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'input').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     ctx.return().from_result_void(fn [arg_0, recv] () ! {
         recv.assert_valid(arg_0)!
     })
@@ -2476,9 +2636,9 @@ pub fn vphp_wrap_validator_parse_int(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 's', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 's' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 's').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     ctx.return().from_result[int](fn [arg_0] () !int {
         return Validator.parse_int(arg_0)!
     })
@@ -2581,9 +2741,9 @@ pub fn vphp_wrap_dispatchable_sample_construct(ptr voidptr, ctx vphp.Context) vo
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.construct(arg_0)
     return voidptr(res)
 }
@@ -2595,7 +2755,7 @@ pub fn vphp_wrap_dispatchable_sample_tagged(ptr voidptr, ctx vphp.Context)  {
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'name', attributes: [vphp.PhpAttribute.named('FromQuery').for_parameter().string('name'), vphp.PhpAttribute.named('MustBeString').for_parameter()] },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.tagged(arg_0)
     ctx.return().v[string](res)
 }
@@ -2801,9 +2961,9 @@ pub fn vphp_wrap_stringable_box_construct(ptr voidptr, ctx vphp.Context) voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.construct(arg_0)
     return voidptr(res)
 }
@@ -2863,11 +3023,11 @@ fn vphp_wrap_v_add(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'a', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'b', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'a' },
+        vphp.PhpArgMeta{ index: 1, name: 'b' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'a').as_v[i64]()
-    arg_1 := php_args.at_named_or_index(1, 'b').as_v[i64]()
+    arg_0 := php_args.at(0).as_v[i64]()
+    arg_1 := php_args.at(1).as_v[i64]()
     res := v_add(arg_0, arg_1)
     ctx.return().v[i64](res)
 }
@@ -2877,9 +3037,9 @@ fn vphp_wrap_v_greet(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := v_greet(arg_0)
     ctx.return().v[string](res)
 }
@@ -2897,9 +3057,9 @@ fn vphp_wrap_v_float_id(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'x', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'x' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'x').as_v[f64]()
+    arg_0 := php_args.at(0).as_v[f64]()
     res := v_float_id(arg_0)
     ctx.return().v[f64](res)
 }
@@ -2909,11 +3069,11 @@ fn vphp_wrap_v_pure_map_test(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'k', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'v', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'k' },
+        vphp.PhpArgMeta{ index: 1, name: 'v' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'k').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'v').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := v_pure_map_test(arg_0, arg_1)
     ctx.return().v[map[string]string](res)
 }
@@ -2963,11 +3123,11 @@ fn vphp_wrap_v_bind_class_interface(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'className', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'ifaceName', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'className' },
+        vphp.PhpArgMeta{ index: 1, name: 'ifaceName' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'className').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'ifaceName').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := v_bind_class_interface(arg_0, arg_1)
     ctx.return().v[bool](res)
 }
@@ -3057,9 +3217,9 @@ fn vphp_wrap_v_typed_php_interop(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'obj', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'obj' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'obj').zval()
+    arg_0 := php_args.at(0).zval()
     res := v_typed_php_interop(arg_0)
     ctx.return().v[string](res)
 }
@@ -3085,9 +3245,9 @@ fn vphp_wrap_v_persistent_fallback_counter_probe(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'raw').zval()
+    arg_0 := php_args.at(0).zval()
     res := v_persistent_fallback_counter_probe(arg_0)
     ctx.return().v[string](res)
 }
@@ -3097,9 +3257,9 @@ fn vphp_wrap_v_request_scope_counter_probe(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'rounds', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'rounds' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'rounds').as_v[int]()
+    arg_0 := php_args.at(0).as_v[int]()
     res := v_request_scope_counter_probe(arg_0)
     ctx.return().v[string](res)
 }
@@ -3109,9 +3269,9 @@ fn vphp_wrap_v_php_value_zbox_lifecycle_probe(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'raw').zval()
+    arg_0 := php_args.at(0).zval()
     res := v_php_value_zbox_lifecycle_probe(arg_0)
     ctx.return().v[string](res)
 }
@@ -3145,9 +3305,9 @@ fn vphp_wrap_v_php_closure_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callback' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'callback').zval()
+    arg_0 := php_args.at(0).zval()
     res := v_php_closure_api(arg_0)
     ctx.return().v[string](res)
 }
@@ -3157,9 +3317,9 @@ fn vphp_wrap_v_php_closure_persistent_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callback' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'callback').zval()
+    arg_0 := php_args.at(0).zval()
     res := v_php_closure_persistent_api(arg_0)
     ctx.return().v[string](res)
 }
@@ -3177,9 +3337,9 @@ fn vphp_wrap_v_php_object_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'raw').zval()
+    arg_0 := php_args.at(0).zval()
     res := v_php_object_api(arg_0)
     ctx.return().v[string](res)
 }
@@ -3189,9 +3349,9 @@ fn vphp_wrap_v_php_array_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'raw').zval()
+    arg_0 := php_args.at(0).zval()
     res := v_php_array_api(arg_0)
     ctx.return().v[string](res)
 }
@@ -3201,9 +3361,9 @@ fn vphp_wrap_v_php_callable_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callback' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'callback').zval()
+    arg_0 := php_args.at(0).zval()
     res := v_php_callable_api(arg_0)
     ctx.return().v[string](res)
 }
@@ -3213,9 +3373,9 @@ fn vphp_wrap_v_php_value_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'raw').zval()
+    arg_0 := php_args.at(0).zval()
     res := v_php_value_api(arg_0)
     ctx.return().v[string](res)
 }
@@ -3225,9 +3385,9 @@ fn vphp_wrap_v_php_scalar_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'raw').zval()
+    arg_0 := php_args.at(0).zval()
     res := v_php_scalar_api(arg_0)
     ctx.return().v[string](res)
 }
@@ -3253,15 +3413,15 @@ fn vphp_wrap_v_php_params_struct_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'status', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'reasonPhrase', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'secure', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'ratio', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'status' },
+        vphp.PhpArgMeta{ index: 1, name: 'reasonPhrase' },
+        vphp.PhpArgMeta{ index: 2, name: 'secure' },
+        vphp.PhpArgMeta{ index: 3, name: 'ratio' },
     ])
-    arg_0_params_status := if php_args.has_named_or_index(0, 'status') { php_args.at_named_or_index(0, 'status').as_v[int]() } else { 200 }
-    arg_0_params_reason_phrase := if php_args.has_named_or_index(1, 'reasonPhrase') { php_args.at_named_or_index(1, 'reasonPhrase').as_v[string]() } else { '' }
-    arg_0_params_secure := if php_args.has_named_or_index(2, 'secure') { php_args.at_named_or_index(2, 'secure').as_v[bool]() } else { false }
-    arg_0_params_ratio := if php_args.has_named_or_index(3, 'ratio') { php_args.at_named_or_index(3, 'ratio').as_v[f64]() } else { 1.5 }
+    arg_0_params_status := if php_args.has(0) { php_args.at(0).as_v[int]() } else { 200 }
+    arg_0_params_reason_phrase := if php_args.has(1) { php_args.at(1).as_v[string]() } else { '' }
+    arg_0_params_secure := if php_args.has(2) { php_args.at(2).as_v[bool]() } else { false }
+    arg_0_params_ratio := if php_args.has(3) { php_args.at(3).as_v[f64]() } else { 1.5 }
     arg_0_params := VPhpParamsStructDemo{
         status: arg_0_params_status
         reason_phrase: arg_0_params_reason_phrase
@@ -3272,16 +3432,61 @@ fn vphp_wrap_v_php_params_struct_api(ctx vphp.Context) {
     ctx.return().v[string](res)
 }
 
+@[export: 'vphp_wrap_v_php_computed_params']
+fn vphp_wrap_v_php_computed_params(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'prefix' },
+        vphp.PhpArgMeta{ index: 1, name: 'sequence' },
+        vphp.PhpArgMeta{ index: 2, name: 'label' },
+        vphp.PhpArgMeta{ index: 3, name: 'enabled' },
+    ])
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1_params_sequence := if php_args.has(1) {
+        php_args.at(1).as_v[int]()
+    } else {
+        defaults := VPhpComputedParamsDemo{
+            label: none
+        }
+        if vphp.has_exception() {
+            return
+        }
+        defaults.sequence
+    }
+    arg_1_params_label := if php_args.has(2) {
+        php_args.at(2).as_v_opt[string]()
+    } else {
+        defaults := VPhpComputedParamsDemo{
+            sequence: int(0)
+        }
+        if vphp.has_exception() {
+            return
+        }
+        defaults.label
+    }
+    arg_1_params_enabled := if php_args.has(3) { php_args.at(3).as_v[bool]() } else { true }
+    arg_1_params := VPhpComputedParamsDemo{
+        sequence: arg_1_params_sequence
+        label: arg_1_params_label
+        enabled: arg_1_params_enabled
+    }
+    res := v_php_computed_params(arg_0, arg_1_params)
+    ctx.return().v[string](res)
+}
+
 @[export: 'vphp_wrap_v_php_arg_binding_optional_scalar_api']
 fn vphp_wrap_v_php_arg_binding_optional_scalar_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'count', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'label', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := if php_args.has_named_or_index(0, 'count') { php_args.at_named_or_index(0, 'count').as_v[int]() } else { 7 }
-    arg_1 := if php_args.has_named_or_index(1, 'label') { php_args.at_named_or_index(1, 'label').as_v[string]() } else { 'fallback' }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'count', use_php_default: true },
+        vphp.PhpArgMeta{ index: 1, name: 'label', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[int]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := v_php_arg_binding_optional_scalar_api(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -3291,11 +3496,11 @@ fn vphp_wrap_v_php_direct_arg_camel_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'firstName', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'firstName' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultValue' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'firstName').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'defaultValue').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := v_php_direct_arg_camel_api(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -3304,12 +3509,14 @@ fn vphp_wrap_v_php_direct_arg_camel_api(ctx vphp.Context) {
 fn vphp_wrap_v_php_call_style_arg_attrs_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'valueAlias', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'optionalCount', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'valueAlias').as_v[string]()
-    arg_1 := if php_args.has_named_or_index(1, 'optionalCount') { php_args.at_named_or_index(1, 'optionalCount').as_v[int]() } else { 7 }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'valueAlias' },
+        vphp.PhpArgMeta{ index: 1, name: 'optionalCount', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[int]()
     res := v_php_call_style_arg_attrs_api(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -3319,28 +3526,28 @@ fn vphp_wrap_v_php_semantic_params_struct_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'label', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'flag', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'items', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'label' },
+        vphp.PhpArgMeta{ index: 1, name: 'flag' },
+        vphp.PhpArgMeta{ index: 2, name: 'items' },
     ])
-    arg_0_params_label := if php_args.has_named_or_index(0, 'label') {
-        php_args.at_named_or_index(0, 'label').string_value() or {
+    arg_0_params_label := if php_args.has(0) {
+        php_args.at(0).string_value() or {
             vphp.throw_exception('argument 0 must be string', 0)
             return
         }
     } else {
         vphp.PhpString.empty()
     }
-    arg_0_params_flag := if php_args.has_named_or_index(1, 'flag') {
-        php_args.at_named_or_index(1, 'flag').bool_value() or {
+    arg_0_params_flag := if php_args.has(1) {
+        php_args.at(1).bool_value() or {
             vphp.throw_exception('argument 1 must be bool', 0)
             return
         }
     } else {
         vphp.PhpBool.false_value()
     }
-    arg_0_params_items := if php_args.has_named_or_index(2, 'items') {
-        php_args.at_named_or_index(2, 'items').array() or {
+    arg_0_params_items := if php_args.has(2) {
+        php_args.at(2).array() or {
             vphp.throw_exception('argument 2 must be array', 0)
             return
         }
@@ -3370,9 +3577,9 @@ fn vphp_wrap_v_php_resource_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'raw').zval()
+    arg_0 := php_args.at(0).zval()
     res := v_php_resource_api(arg_0)
     ctx.return().v[string](res)
 }
@@ -3382,31 +3589,31 @@ fn vphp_wrap_v_php_wrapper_param_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'value', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'obj', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'arr', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'callable', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'nullValue', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 5, name: 'maybeObj', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'value' },
+        vphp.PhpArgMeta{ index: 1, name: 'obj' },
+        vphp.PhpArgMeta{ index: 2, name: 'arr' },
+        vphp.PhpArgMeta{ index: 3, name: 'callable' },
+        vphp.PhpArgMeta{ index: 4, name: 'nullValue' },
+        vphp.PhpArgMeta{ index: 5, name: 'maybeObj' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'value').value
-    arg_1 := php_args.at_named_or_index(1, 'obj').object() or {
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).object() or {
         vphp.throw_exception('argument 1 must be object', 0)
         return
     }
-    arg_2 := php_args.at_named_or_index(2, 'arr').array() or {
+    arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
         return
     }
-    arg_3 := php_args.at_named_or_index(3, 'callable').callable() or {
+    arg_3 := php_args.at(3).callable() or {
         vphp.throw_exception('argument 3 must be callable', 0)
         return
     }
-    arg_4 := php_args.at_named_or_index(4, 'nullValue').null_value() or {
+    arg_4 := php_args.at(4).null_value() or {
         vphp.throw_exception('argument 4 must be null', 0)
         return
     }
-    arg_5 := php_args.at_named_or_index(5, 'maybeObj').object()
+    arg_5 := php_args.at(5).object()
     res := v_php_wrapper_param_api(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5)
     ctx.return().v[string](res)
 }
@@ -3416,9 +3623,9 @@ fn vphp_wrap_v_php_optional_value_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'value' },
     ])
-    arg_0 := if php_args.has_named_or_index(0, 'value') { ?vphp.PhpValue(php_args.at_named_or_index(0, 'value').value) } else { none }
+    arg_0 := if php_args.has(0) { ?vphp.PhpValue(php_args.at(0).value) } else { none }
     res := v_php_optional_value_api(arg_0)
     ctx.return().v[string](res)
 }
@@ -3428,9 +3635,9 @@ fn vphp_wrap_v_php_optional_object_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'obj', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'obj' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'obj').object()
+    arg_0 := php_args.at(0).object()
     res := v_php_optional_object_api(arg_0)
     ctx.return().v[string](res)
 }
@@ -3440,9 +3647,9 @@ fn vphp_wrap_v_php_return_value_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'value').value
+    arg_0 := php_args.at(0).value
     res := v_php_return_value_api(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -3452,9 +3659,9 @@ fn vphp_wrap_v_php_return_array_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'arr', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'arr' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'arr').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return
     }
@@ -3467,9 +3674,9 @@ fn vphp_wrap_v_php_return_object_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'obj', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'obj' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'obj').object() or {
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return
     }
@@ -3482,9 +3689,9 @@ fn vphp_wrap_v_php_return_callable_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callable', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callable' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'callable').callable() or {
+    arg_0 := php_args.at(0).callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
         return
     }
@@ -3497,9 +3704,9 @@ fn vphp_wrap_v_php_return_string_wrapper_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'value').string_value() or {
+    arg_0 := php_args.at(0).string_value() or {
         vphp.throw_exception('argument 0 must be string', 0)
         return
     }
@@ -3512,9 +3719,9 @@ fn vphp_wrap_v_php_return_persistent_array_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'arr', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'arr' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'arr').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return
     }
@@ -3527,13 +3734,13 @@ fn vphp_wrap_v_dyn_value_runtime_refs(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'rawObj', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'callback', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'rawRes', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'rawObj' },
+        vphp.PhpArgMeta{ index: 1, name: 'callback' },
+        vphp.PhpArgMeta{ index: 2, name: 'rawRes' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'rawObj').zval()
-    arg_1 := php_args.at_named_or_index(1, 'callback').zval()
-    arg_2 := php_args.at_named_or_index(2, 'rawRes').zval()
+    arg_0 := php_args.at(0).zval()
+    arg_1 := php_args.at(1).zval()
+    arg_2 := php_args.at(2).zval()
     res := v_dyn_value_runtime_refs(arg_0, arg_1, arg_2)
     ctx.return().v[string](res)
 }
@@ -3543,9 +3750,9 @@ fn vphp_wrap_v_php_reference_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'raw').zval()
+    arg_0 := php_args.at(0).zval()
     res := v_php_reference_api(arg_0)
     ctx.return().v[string](res)
 }
@@ -3555,9 +3762,9 @@ fn vphp_wrap_v_php_iterable_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'raw').zval()
+    arg_0 := php_args.at(0).zval()
     res := v_php_iterable_api(arg_0)
     ctx.return().v[string](res)
 }
@@ -3575,9 +3782,9 @@ fn vphp_wrap_v_php_throwable_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'raw').zval()
+    arg_0 := php_args.at(0).zval()
     res := v_php_throwable_api(arg_0)
     ctx.return().v[string](res)
 }
@@ -3587,9 +3794,9 @@ fn vphp_wrap_v_php_enum_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'raw').zval()
+    arg_0 := php_args.at(0).zval()
     res := v_php_enum_api(arg_0)
     ctx.return().v[string](res)
 }
@@ -3695,9 +3902,9 @@ fn vphp_wrap_v_call_php_closure_helper(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'raw', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'raw' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'raw').zval()
+    arg_0 := php_args.at(0).zval()
     res := v_call_php_closure_helper(arg_0)
     ctx.return().v[string](res)
 }
@@ -3716,7 +3923,7 @@ fn vphp_variadic_closure_bridge_v_get_v_closure(v_ptr voidptr, ex &C.zend_execut
     unsafe {
         ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVClosure(v_ptr))
-        ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVClosure, vphp.ZVal](cb)
+        ctx.forward_variadic_closure[vphp.ZVal, vphp.ZVal](cb)
     }
 }
 
@@ -3738,7 +3945,7 @@ fn vphp_variadic_closure_bridge_v_get_v_closure_auto(v_ptr voidptr, ex &C.zend_e
     unsafe {
         ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVClosureAuto(v_ptr))
-        ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVClosureAuto, vphp.ZVal](cb)
+        ctx.forward_variadic_closure[vphp.ZVal, vphp.ZVal](cb)
     }
 }
 
@@ -3767,9 +3974,9 @@ fn vphp_wrap_v_iterable_object_demo(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'input' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'input').zval()
+    arg_0 := php_args.at(0).zval()
     res := v_iterable_object_demo(arg_0)
     ctx.return().v[string](res)
 }
@@ -3795,9 +4002,9 @@ fn vphp_wrap_v_invoke_callable(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callback' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'callback').callable() or {
+    arg_0 := php_args.at(0).callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
         return
     }
@@ -3810,14 +4017,14 @@ fn vphp_wrap_v_invoke_with_arg(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'callback', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'callback' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'callback').callable() or {
+    arg_0 := php_args.at(0).callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
         return
     }
-    arg_1 := php_args.at_named_or_index(1, 'value').as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := v_invoke_with_arg(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -3828,7 +4035,7 @@ fn vphp_variadic_closure_bridge_v_get_closure_0(v_ptr voidptr, ex &C.zend_execut
     unsafe {
         ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure0(v_ptr))
-        ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure0, vphp.ZVal](cb)
+        ctx.forward_variadic_closure[vphp.ZVal, vphp.ZVal](cb)
     }
 }
 
@@ -3850,7 +4057,7 @@ fn vphp_variadic_closure_bridge_v_get_closure_1(v_ptr voidptr, ex &C.zend_execut
     unsafe {
         ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure1(v_ptr))
-        ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure1, vphp.ZVal](cb)
+        ctx.forward_variadic_closure[vphp.ZVal, vphp.ZVal](cb)
     }
 }
 
@@ -3872,7 +4079,7 @@ fn vphp_variadic_closure_bridge_v_get_closure_2(v_ptr voidptr, ex &C.zend_execut
     unsafe {
         ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure2(v_ptr))
-        ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure2, vphp.ZVal](cb)
+        ctx.forward_variadic_closure[vphp.ZVal, vphp.ZVal](cb)
     }
 }
 
@@ -3894,7 +4101,7 @@ fn vphp_variadic_closure_bridge_v_get_closure_3(v_ptr voidptr, ex &C.zend_execut
     unsafe {
         ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure3(v_ptr))
-        ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure3, vphp.ZVal](cb)
+        ctx.forward_variadic_closure[vphp.ZVal, vphp.ZVal](cb)
     }
 }
 
@@ -3916,7 +4123,7 @@ fn vphp_variadic_closure_bridge_v_get_closure_4(v_ptr voidptr, ex &C.zend_execut
     unsafe {
         ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure4(v_ptr))
-        ctx.invoke_variadic_closure[VPhpVariadicClosureVGetClosure4, vphp.ZVal](cb)
+        ctx.forward_variadic_closure[vphp.ZVal, vphp.ZVal](cb)
     }
 }
 
@@ -3938,7 +4145,7 @@ fn vphp_variadic_closure_bridge_v_get_closure_3_void(v_ptr voidptr, ex &C.zend_e
     unsafe {
         ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure3Void(v_ptr))
-        ctx.invoke_variadic_closure_void[VPhpVariadicClosureVGetClosure3Void](cb)
+        ctx.forward_variadic_closure_void[vphp.ZVal](cb)
     }
 }
 
@@ -3960,7 +4167,7 @@ fn vphp_variadic_closure_bridge_v_get_closure_4_void(v_ptr voidptr, ex &C.zend_e
     unsafe {
         ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetClosure4Void(v_ptr))
-        ctx.invoke_variadic_closure_void[VPhpVariadicClosureVGetClosure4Void](cb)
+        ctx.forward_variadic_closure_void[vphp.ZVal](cb)
     }
 }
 
@@ -3976,22 +4183,37 @@ fn vphp_wrap_v_get_closure_4_void(ctx vphp.Context) {
     vphp_wrap_variadic_closure_v_get_closure_4_void(ctx, res)
 }
 
+__global C.struct_closure_arginfo_v_get_struct_param_closure voidptr
+
 pub type VPhpStructClosureVGetStructParamClosure = fn (StructClosureArgs) string
 
 fn vphp_struct_closure_bridge_v_get_struct_param_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
         ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpStructClosureVGetStructParamClosure(v_ptr))
-        args := StructClosureArgs{
-            name: ctx.arg[string](0)
-            count: ctx.arg[int](1)
+        arg_count := ctx.num_args()
+        if arg_count < 2 {
+            vphp.PhpException.raise_class('ArgumentCountError', 'closure requires at least 2 arguments', 0)
+            return
         }
-        ctx.invoke_struct_closure[VPhpStructClosureVGetStructParamClosure, StructClosureArgs, string](cb, args)
+        field_0 := ctx.arg_val(0).to_v[string]() or {
+            vphp.PhpException.raise_class('TypeError', 'argument 1 (name): ${err.msg()}', 0)
+            return
+        }
+        field_1 := ctx.arg_val(1).to_v[int]() or {
+            vphp.PhpException.raise_class('TypeError', 'argument 2 (count): ${err.msg()}', 0)
+            return
+        }
+        args := StructClosureArgs{
+            name: field_0
+            count: field_1
+        }
+        ctx.forward_struct_closure[StructClosureArgs, string](cb, args)
     }
 }
 
 fn vphp_wrap_struct_closure_v_get_struct_param_closure(ctx vphp.Context, cb VPhpStructClosureVGetStructParamClosure) {
-    ctx.create_saved_closure[VPhpStructClosureVGetStructParamClosure](cb, voidptr(vphp_struct_closure_bridge_v_get_struct_param_closure), 2)
+    ctx.create_saved_closure_with_arginfo[VPhpStructClosureVGetStructParamClosure](cb, voidptr(vphp_struct_closure_bridge_v_get_struct_param_closure), 2, 2, C.struct_closure_arginfo_v_get_struct_param_closure)
 }
 
 @[export: 'vphp_wrap_v_get_struct_param_closure']
@@ -4002,13 +4224,424 @@ fn vphp_wrap_v_get_struct_param_closure(ctx vphp.Context) {
     vphp_wrap_struct_closure_v_get_struct_param_closure(ctx, res)
 }
 
+__global C.struct_closure_arginfo_v_get_struct_default_closure voidptr
+
+pub type VPhpStructClosureVGetStructDefaultClosure = fn (StructClosureDefaults) string
+
+fn vphp_struct_closure_bridge_v_get_struct_default_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    unsafe {
+        ctx := vphp.Context.from_ptr(ex, ret)
+        cb := *(&VPhpStructClosureVGetStructDefaultClosure(v_ptr))
+        arg_count := ctx.num_args()
+        if arg_count < 1 {
+            vphp.PhpException.raise_class('ArgumentCountError', 'closure requires at least 1 argument', 0)
+            return
+        }
+        field_0 := ctx.arg_val(0).to_v[string]() or {
+            vphp.PhpException.raise_class('TypeError', 'argument 1 (name): ${err.msg()}', 0)
+            return
+        }
+        field_1 := if arg_count > 1 {
+            provided_1 := ctx.arg_val(1).to_v[int]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 2 (count): ${err.msg()}', 0)
+                return
+            }
+            provided_1
+        } else {
+            7
+        }
+        field_2 := if arg_count > 2 {
+            provided_2 := ctx.arg_val(2).to_v[bool]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 3 (flag): ${err.msg()}', 0)
+                return
+            }
+            provided_2
+        } else {
+            true
+        }
+        field_3 := if arg_count > 3 {
+            mut provided_3 := ?string(none)
+            if !ctx.arg_val(3).is_null() {
+                provided_3 = ctx.arg_val(3).to_v[string]() or {
+                    vphp.PhpException.raise_class('TypeError', 'argument 4 (label): ${err.msg()}', 0)
+                    return
+                }
+            }
+            provided_3
+        } else {
+            none
+        }
+        field_4 := if arg_count > 4 && !ctx.arg_val(4).is_undef() {
+            provided_4 := ctx.arg_val(4).to_v[int]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 5 (computed): ${err.msg()}', 0)
+                return
+            }
+            provided_4
+        } else {
+            defaults := StructClosureDefaults{
+            }
+            if arg_count > 4 && vphp.has_exception() {
+                return
+            }
+            defaults.computed
+        }
+        if arg_count <= 4 && vphp.has_exception() {
+            return
+        }
+        args := StructClosureDefaults{
+            name: field_0
+            count: field_1
+            flag: field_2
+            label: field_3
+            computed: field_4
+        }
+        ctx.forward_struct_closure[StructClosureDefaults, string](cb, args)
+    }
+}
+
+fn vphp_wrap_struct_closure_v_get_struct_default_closure(ctx vphp.Context, cb VPhpStructClosureVGetStructDefaultClosure) {
+    ctx.create_saved_closure_with_arginfo[VPhpStructClosureVGetStructDefaultClosure](cb, voidptr(vphp_struct_closure_bridge_v_get_struct_default_closure), 5, 1, C.struct_closure_arginfo_v_get_struct_default_closure)
+}
+
+@[export: 'vphp_wrap_v_get_struct_default_closure']
+fn vphp_wrap_v_get_struct_default_closure(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := v_get_struct_default_closure()
+    vphp_wrap_struct_closure_v_get_struct_default_closure(ctx, res)
+}
+
+__global C.struct_closure_arginfo_v_get_struct_default_closure_void voidptr
+
+pub type VPhpStructClosureVGetStructDefaultClosureVoid = fn (StructClosureDefaults)
+
+fn vphp_struct_closure_bridge_v_get_struct_default_closure_void(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    unsafe {
+        ctx := vphp.Context.from_ptr(ex, ret)
+        cb := *(&VPhpStructClosureVGetStructDefaultClosureVoid(v_ptr))
+        arg_count := ctx.num_args()
+        if arg_count < 1 {
+            vphp.PhpException.raise_class('ArgumentCountError', 'closure requires at least 1 argument', 0)
+            return
+        }
+        field_0 := ctx.arg_val(0).to_v[string]() or {
+            vphp.PhpException.raise_class('TypeError', 'argument 1 (name): ${err.msg()}', 0)
+            return
+        }
+        field_1 := if arg_count > 1 {
+            provided_1 := ctx.arg_val(1).to_v[int]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 2 (count): ${err.msg()}', 0)
+                return
+            }
+            provided_1
+        } else {
+            7
+        }
+        field_2 := if arg_count > 2 {
+            provided_2 := ctx.arg_val(2).to_v[bool]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 3 (flag): ${err.msg()}', 0)
+                return
+            }
+            provided_2
+        } else {
+            true
+        }
+        field_3 := if arg_count > 3 {
+            mut provided_3 := ?string(none)
+            if !ctx.arg_val(3).is_null() {
+                provided_3 = ctx.arg_val(3).to_v[string]() or {
+                    vphp.PhpException.raise_class('TypeError', 'argument 4 (label): ${err.msg()}', 0)
+                    return
+                }
+            }
+            provided_3
+        } else {
+            none
+        }
+        field_4 := if arg_count > 4 && !ctx.arg_val(4).is_undef() {
+            provided_4 := ctx.arg_val(4).to_v[int]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 5 (computed): ${err.msg()}', 0)
+                return
+            }
+            provided_4
+        } else {
+            defaults := StructClosureDefaults{
+            }
+            if arg_count > 4 && vphp.has_exception() {
+                return
+            }
+            defaults.computed
+        }
+        if arg_count <= 4 && vphp.has_exception() {
+            return
+        }
+        args := StructClosureDefaults{
+            name: field_0
+            count: field_1
+            flag: field_2
+            label: field_3
+            computed: field_4
+        }
+        ctx.forward_struct_closure_void[StructClosureDefaults](cb, args)
+    }
+}
+
+fn vphp_wrap_struct_closure_v_get_struct_default_closure_void(ctx vphp.Context, cb VPhpStructClosureVGetStructDefaultClosureVoid) {
+    ctx.create_saved_closure_with_arginfo[VPhpStructClosureVGetStructDefaultClosureVoid](cb, voidptr(vphp_struct_closure_bridge_v_get_struct_default_closure_void), 5, 1, C.struct_closure_arginfo_v_get_struct_default_closure_void)
+}
+
+@[export: 'vphp_wrap_v_get_struct_default_closure_void']
+fn vphp_wrap_v_get_struct_default_closure_void(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := v_get_struct_default_closure_void()
+    vphp_wrap_struct_closure_v_get_struct_default_closure_void(ctx, res)
+}
+
+__global C.struct_closure_arginfo_v_get_struct_computed_defaults_closure voidptr
+
+pub type VPhpStructClosureVGetStructComputedDefaultsClosure = fn (StructClosureComputedDefaults) string
+
+fn vphp_struct_closure_bridge_v_get_struct_computed_defaults_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    unsafe {
+        ctx := vphp.Context.from_ptr(ex, ret)
+        cb := *(&VPhpStructClosureVGetStructComputedDefaultsClosure(v_ptr))
+        arg_count := ctx.num_args()
+        if arg_count < 1 {
+            vphp.PhpException.raise_class('ArgumentCountError', 'closure requires at least 1 argument', 0)
+            return
+        }
+        field_0 := ctx.arg_val(0).to_v[string]() or {
+            vphp.PhpException.raise_class('TypeError', 'argument 1 (name): ${err.msg()}', 0)
+            return
+        }
+        field_1 := if arg_count > 1 && !ctx.arg_val(1).is_undef() {
+            provided_1 := ctx.arg_val(1).to_v[int]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 2 (first): ${err.msg()}', 0)
+                return
+            }
+            provided_1
+        } else {
+            defaults := StructClosureComputedDefaults{
+                second: none
+            }
+            if arg_count > 1 && vphp.has_exception() {
+                return
+            }
+            defaults.first
+        }
+        field_2 := if arg_count > 2 && !ctx.arg_val(2).is_undef() {
+            mut provided_2 := ?int(none)
+            if !ctx.arg_val(2).is_null() {
+                provided_2 = ctx.arg_val(2).to_v[int]() or {
+                    vphp.PhpException.raise_class('TypeError', 'argument 3 (second): ${err.msg()}', 0)
+                    return
+                }
+            }
+            provided_2
+        } else {
+            defaults := StructClosureComputedDefaults{
+                first: int(0)
+            }
+            if arg_count > 2 && vphp.has_exception() {
+                return
+            }
+            defaults.second
+        }
+        field_3 := if arg_count > 3 {
+            provided_3 := ctx.arg_val(3).to_v[bool]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 4 (flag): ${err.msg()}', 0)
+                return
+            }
+            provided_3
+        } else {
+            true
+        }
+        if arg_count <= 2 && vphp.has_exception() {
+            return
+        }
+        args := StructClosureComputedDefaults{
+            name: field_0
+            first: field_1
+            second: field_2
+            flag: field_3
+        }
+        ctx.forward_struct_closure[StructClosureComputedDefaults, string](cb, args)
+    }
+}
+
+fn vphp_wrap_struct_closure_v_get_struct_computed_defaults_closure(ctx vphp.Context, cb VPhpStructClosureVGetStructComputedDefaultsClosure) {
+    ctx.create_saved_closure_with_arginfo[VPhpStructClosureVGetStructComputedDefaultsClosure](cb, voidptr(vphp_struct_closure_bridge_v_get_struct_computed_defaults_closure), 4, 1, C.struct_closure_arginfo_v_get_struct_computed_defaults_closure)
+}
+
+@[export: 'vphp_wrap_v_get_struct_computed_defaults_closure']
+fn vphp_wrap_v_get_struct_computed_defaults_closure(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := v_get_struct_computed_defaults_closure()
+    vphp_wrap_struct_closure_v_get_struct_computed_defaults_closure(ctx, res)
+}
+
+__global C.struct_closure_arginfo_v_get_struct_native_defaults_closure voidptr
+
+pub type VPhpStructClosureVGetStructNativeDefaultsClosure = fn (StructClosureNativeDefaults) string
+
+fn vphp_struct_closure_bridge_v_get_struct_native_defaults_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    unsafe {
+        ctx := vphp.Context.from_ptr(ex, ret)
+        cb := *(&VPhpStructClosureVGetStructNativeDefaultsClosure(v_ptr))
+        arg_count := ctx.num_args()
+        field_0 := if arg_count > 0 && !ctx.arg_val(0).is_undef() {
+            provided_0 := ctx.arg_val(0).to_v[NativeClosurePayload]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 1 (payload): ${err.msg()}', 0)
+                return
+            }
+            provided_0
+        } else {
+            defaults := StructClosureNativeDefaults{
+            }
+            if arg_count > 0 && vphp.has_exception() {
+                return
+            }
+            defaults.payload
+        }
+        field_1 := if arg_count > 1 {
+            provided_1 := ctx.arg_val(1).to_v[string]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 2 (label): ${err.msg()}', 0)
+                return
+            }
+            provided_1
+        } else {
+            'trailing'
+        }
+        if arg_count <= 0 && vphp.has_exception() {
+            return
+        }
+        args := StructClosureNativeDefaults{
+            payload: field_0
+            label: field_1
+        }
+        ctx.forward_struct_closure[StructClosureNativeDefaults, string](cb, args)
+    }
+}
+
+fn vphp_wrap_struct_closure_v_get_struct_native_defaults_closure(ctx vphp.Context, cb VPhpStructClosureVGetStructNativeDefaultsClosure) {
+    ctx.create_saved_closure_with_arginfo[VPhpStructClosureVGetStructNativeDefaultsClosure](cb, voidptr(vphp_struct_closure_bridge_v_get_struct_native_defaults_closure), 2, 0, C.struct_closure_arginfo_v_get_struct_native_defaults_closure)
+}
+
+@[export: 'vphp_wrap_v_get_struct_native_defaults_closure']
+fn vphp_wrap_v_get_struct_native_defaults_closure(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := v_get_struct_native_defaults_closure()
+    vphp_wrap_struct_closure_v_get_struct_native_defaults_closure(ctx, res)
+}
+
+__global C.struct_closure_arginfo_v_get_struct_failing_defaults_closure voidptr
+
+pub type VPhpStructClosureVGetStructFailingDefaultsClosure = fn (StructClosureFailingDefaults) string
+
+fn vphp_struct_closure_bridge_v_get_struct_failing_defaults_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    unsafe {
+        ctx := vphp.Context.from_ptr(ex, ret)
+        cb := *(&VPhpStructClosureVGetStructFailingDefaultsClosure(v_ptr))
+        arg_count := ctx.num_args()
+        field_0 := if arg_count > 0 && !ctx.arg_val(0).is_undef() {
+            provided_0 := ctx.arg_val(0).to_v[int]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 1 (first): ${err.msg()}', 0)
+                return
+            }
+            provided_0
+        } else {
+            defaults := StructClosureFailingDefaults{
+                second: int(0)
+            }
+            if arg_count > 0 && vphp.has_exception() {
+                return
+            }
+            defaults.first
+        }
+        field_1 := if arg_count > 1 && !ctx.arg_val(1).is_undef() {
+            provided_1 := ctx.arg_val(1).to_v[int]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 2 (second): ${err.msg()}', 0)
+                return
+            }
+            provided_1
+        } else {
+            defaults := StructClosureFailingDefaults{
+                first: int(0)
+            }
+            if arg_count > 1 && vphp.has_exception() {
+                return
+            }
+            defaults.second
+        }
+        field_2 := if arg_count > 2 {
+            provided_2 := ctx.arg_val(2).to_v[bool]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 3 (tail): ${err.msg()}', 0)
+                return
+            }
+            provided_2
+        } else {
+            true
+        }
+        if arg_count <= 1 && vphp.has_exception() {
+            return
+        }
+        args := StructClosureFailingDefaults{
+            first: field_0
+            second: field_1
+            tail: field_2
+        }
+        ctx.forward_struct_closure[StructClosureFailingDefaults, string](cb, args)
+    }
+}
+
+fn vphp_wrap_struct_closure_v_get_struct_failing_defaults_closure(ctx vphp.Context, cb VPhpStructClosureVGetStructFailingDefaultsClosure) {
+    ctx.create_saved_closure_with_arginfo[VPhpStructClosureVGetStructFailingDefaultsClosure](cb, voidptr(vphp_struct_closure_bridge_v_get_struct_failing_defaults_closure), 3, 0, C.struct_closure_arginfo_v_get_struct_failing_defaults_closure)
+}
+
+@[export: 'vphp_wrap_v_get_struct_failing_defaults_closure']
+fn vphp_wrap_v_get_struct_failing_defaults_closure(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := v_get_struct_failing_defaults_closure()
+    vphp_wrap_struct_closure_v_get_struct_failing_defaults_closure(ctx, res)
+}
+
+@[export: 'vphp_wrap_v_invoke_legacy_struct_closure']
+fn vphp_wrap_v_invoke_legacy_struct_closure(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    arg_0 := ctx
+    v_invoke_legacy_struct_closure(arg_0)
+}
+
+@[export: 'vphp_wrap_v_invoke_legacy_struct_closure_void']
+fn vphp_wrap_v_invoke_legacy_struct_closure_void(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    arg_0 := ctx
+    v_invoke_legacy_struct_closure_void(arg_0)
+}
+
 pub type VPhpVariadicClosureVGetVariadicValueClosure = fn (...vphp.PhpValue) string
 
 fn vphp_variadic_closure_bridge_v_get_variadic_value_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
     unsafe {
         ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicValueClosure(v_ptr))
-        ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicValueClosure, string](cb)
+        ctx.forward_variadic_closure[vphp.PhpValue, string](cb)
     }
 }
 
@@ -4030,7 +4663,7 @@ fn vphp_variadic_closure_bridge_v_get_variadic_zval_closure(v_ptr voidptr, ex &C
     unsafe {
         ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicZvalClosure(v_ptr))
-        ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicZvalClosure, vphp.ZVal](cb)
+        ctx.forward_variadic_closure[vphp.ZVal, vphp.ZVal](cb)
     }
 }
 
@@ -4052,7 +4685,7 @@ fn vphp_variadic_closure_bridge_v_get_variadic_zval_void(v_ptr voidptr, ex &C.ze
     unsafe {
         ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicZvalVoid(v_ptr))
-        ctx.invoke_variadic_closure_void[VPhpVariadicClosureVGetVariadicZvalVoid](cb)
+        ctx.forward_variadic_closure_void[vphp.ZVal](cb)
     }
 }
 
@@ -4074,7 +4707,7 @@ fn vphp_variadic_closure_bridge_v_get_variadic_scalar_string(v_ptr voidptr, ex &
     unsafe {
         ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicScalarString(v_ptr))
-        ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicScalarString, string](cb)
+        ctx.forward_variadic_closure[vphp.VScalarValue, string](cb)
     }
 }
 
@@ -4096,7 +4729,7 @@ fn vphp_variadic_closure_bridge_v_get_variadic_scalar_i64(v_ptr voidptr, ex &C.z
     unsafe {
         ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicScalarI64(v_ptr))
-        ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicScalarI64, i64](cb)
+        ctx.forward_variadic_closure[vphp.VScalarValue, i64](cb)
     }
 }
 
@@ -4118,7 +4751,7 @@ fn vphp_variadic_closure_bridge_v_get_variadic_scalar_value(v_ptr voidptr, ex &C
     unsafe {
         ctx := vphp.Context.from_ptr(ex, ret)
         cb := *(&VPhpVariadicClosureVGetVariadicScalarValue(v_ptr))
-        ctx.invoke_variadic_closure[VPhpVariadicClosureVGetVariadicScalarValue, vphp.VScalarValue](cb)
+        ctx.forward_variadic_closure[vphp.VScalarValue, vphp.VScalarValue](cb)
     }
 }
 
@@ -4134,6 +4767,316 @@ fn vphp_wrap_v_get_variadic_scalar_value(ctx vphp.Context) {
     vphp_wrap_variadic_closure_v_get_variadic_scalar_value(ctx, res)
 }
 
+@[export: 'vphp_wrap_v_invoke_legacy_variadic_scalar']
+fn vphp_wrap_v_invoke_legacy_variadic_scalar(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    arg_0 := ctx
+    v_invoke_legacy_variadic_scalar(arg_0)
+}
+
+@[export: 'vphp_wrap_v_invoke_legacy_variadic_scalar_alias']
+fn vphp_wrap_v_invoke_legacy_variadic_scalar_alias(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    arg_0 := ctx
+    v_invoke_legacy_variadic_scalar_alias(arg_0)
+}
+
+@[export: 'vphp_wrap_v_invoke_legacy_variadic_void']
+fn vphp_wrap_v_invoke_legacy_variadic_void(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    arg_0 := ctx
+    v_invoke_legacy_variadic_void(arg_0)
+}
+
+@[export: 'vphp_wrap_v_invoke_legacy_variadic_void_alias']
+fn vphp_wrap_v_invoke_legacy_variadic_void_alias(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    arg_0 := ctx
+    v_invoke_legacy_variadic_void_alias(arg_0)
+}
+
+@[export: 'vphp_wrap_v_php_literal_params']
+fn vphp_wrap_v_php_literal_params(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
+        vphp.PhpArgMeta{ index: 1, name: 'raw' },
+        vphp.PhpArgMeta{ index: 2, name: 'octal' },
+        vphp.PhpArgMeta{ index: 3, name: 'binary' },
+        vphp.PhpArgMeta{ index: 4, name: 'floating' },
+        vphp.PhpArgMeta{ index: 5, name: 'single' },
+        vphp.PhpArgMeta{ index: 6, name: 'option' },
+        vphp.PhpArgMeta{ index: 7, name: 'nullable' },
+        vphp.PhpArgMeta{ index: 8, name: 'items' },
+        vphp.PhpArgMeta{ index: 9, name: 'empty' },
+        vphp.PhpArgMeta{ index: 10, name: 'lookup' },
+        vphp.PhpArgMeta{ index: 11, name: 'tail' },
+    ])
+    arg_0_params_message := if php_args.has(0) { php_args.at(0).as_v[string]() } else { 'a\n\t\x00\xe2\x98\xba\$\'\\"' }
+    arg_0_params_raw := if php_args.has(1) { php_args.at(1).as_v[string]() } else { '\\n\${literal}' }
+    arg_0_params_octal := if php_args.has(2) { php_args.at(2).as_v[int]() } else { -15 }
+    arg_0_params_binary := if php_args.has(3) { php_args.at(3).as_v[i64]() } else { i64(161) }
+    arg_0_params_floating := if php_args.has(4) { php_args.at(4).as_v[f64]() } else { 2.0 }
+    arg_0_params_single := if php_args.has(5) { php_args.at(5).as_v[f32]() } else { f32(0.1) }
+    arg_0_params_option := if php_args.has(6) { php_args.at(6).as_v_opt[string]() } else { ?string('present') }
+    arg_0_params_nullable := if php_args.has(7) { php_args.at(7).as_v_opt[int]() } else { none }
+    arg_0_params_items := if php_args.has(8) { php_args.at(8).as_v[[]int]() } else { [1, 16] }
+    arg_0_params_empty := if php_args.has(9) { php_args.at(9).as_v[[]string]() } else { []string{} }
+    arg_0_params_lookup := if php_args.has(10) { php_args.at(10).as_v[map[string]int]() } else { {'count': 16} }
+    arg_0_params_tail := if php_args.has(11) { php_args.at(11).as_v[bool]() } else { true }
+    arg_0_params := VPhpLiteralParamsDemo{
+        message: arg_0_params_message
+        raw: arg_0_params_raw
+        octal: arg_0_params_octal
+        binary: arg_0_params_binary
+        floating: arg_0_params_floating
+        single: arg_0_params_single
+        option: arg_0_params_option
+        nullable: arg_0_params_nullable
+        items: arg_0_params_items
+        empty: arg_0_params_empty
+        lookup: arg_0_params_lookup
+        tail: arg_0_params_tail
+    }
+    res := v_php_literal_params(arg_0_params)
+    ctx.return().v[string](res)
+}
+
+__global C.struct_closure_arginfo_v_get_struct_literal_defaults_closure voidptr
+
+pub type VPhpStructClosureVGetStructLiteralDefaultsClosure = fn (VPhpLiteralParamsDemo) string
+
+fn vphp_struct_closure_bridge_v_get_struct_literal_defaults_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    unsafe {
+        ctx := vphp.Context.from_ptr(ex, ret)
+        cb := *(&VPhpStructClosureVGetStructLiteralDefaultsClosure(v_ptr))
+        arg_count := ctx.num_args()
+        field_0 := if arg_count > 0 {
+            provided_0 := ctx.arg_val(0).to_v[string]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 1 (message): ${err.msg()}', 0)
+                return
+            }
+            provided_0
+        } else {
+            'a\n\t\x00\xe2\x98\xba\$\'\\"'
+        }
+        field_1 := if arg_count > 1 {
+            provided_1 := ctx.arg_val(1).to_v[string]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 2 (raw): ${err.msg()}', 0)
+                return
+            }
+            provided_1
+        } else {
+            '\\n\${literal}'
+        }
+        field_2 := if arg_count > 2 {
+            provided_2 := ctx.arg_val(2).to_v[int]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 3 (octal): ${err.msg()}', 0)
+                return
+            }
+            provided_2
+        } else {
+            -15
+        }
+        field_3 := if arg_count > 3 {
+            provided_3 := ctx.arg_val(3).to_v[i64]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 4 (binary): ${err.msg()}', 0)
+                return
+            }
+            provided_3
+        } else {
+            i64(161)
+        }
+        field_4 := if arg_count > 4 {
+            provided_4 := ctx.arg_val(4).to_v[f64]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 5 (floating): ${err.msg()}', 0)
+                return
+            }
+            provided_4
+        } else {
+            2.0
+        }
+        field_5 := if arg_count > 5 {
+            provided_5 := ctx.arg_val(5).to_v[f32]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 6 (single): ${err.msg()}', 0)
+                return
+            }
+            provided_5
+        } else {
+            f32(0.1)
+        }
+        field_6 := if arg_count > 6 {
+            mut provided_6 := ?string(none)
+            if !ctx.arg_val(6).is_null() {
+                provided_6 = ctx.arg_val(6).to_v[string]() or {
+                    vphp.PhpException.raise_class('TypeError', 'argument 7 (option): ${err.msg()}', 0)
+                    return
+                }
+            }
+            provided_6
+        } else {
+            ?string('present')
+        }
+        field_7 := if arg_count > 7 {
+            mut provided_7 := ?int(none)
+            if !ctx.arg_val(7).is_null() {
+                provided_7 = ctx.arg_val(7).to_v[int]() or {
+                    vphp.PhpException.raise_class('TypeError', 'argument 8 (nullable): ${err.msg()}', 0)
+                    return
+                }
+            }
+            provided_7
+        } else {
+            none
+        }
+        field_8 := if arg_count > 8 {
+            provided_8 := ctx.arg_val(8).to_v[[]int]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 9 (items): ${err.msg()}', 0)
+                return
+            }
+            provided_8
+        } else {
+            [1, 16]
+        }
+        field_9 := if arg_count > 9 {
+            provided_9 := ctx.arg_val(9).to_v[[]string]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 10 (empty): ${err.msg()}', 0)
+                return
+            }
+            provided_9
+        } else {
+            []string{}
+        }
+        field_10 := if arg_count > 10 {
+            provided_10 := ctx.arg_val(10).to_v[map[string]int]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 11 (lookup): ${err.msg()}', 0)
+                return
+            }
+            provided_10
+        } else {
+            {'count': 16}
+        }
+        field_11 := if arg_count > 11 {
+            provided_11 := ctx.arg_val(11).to_v[bool]() or {
+                vphp.PhpException.raise_class('TypeError', 'argument 12 (tail): ${err.msg()}', 0)
+                return
+            }
+            provided_11
+        } else {
+            true
+        }
+        args := VPhpLiteralParamsDemo{
+            message: field_0
+            raw: field_1
+            octal: field_2
+            binary: field_3
+            floating: field_4
+            single: field_5
+            option: field_6
+            nullable: field_7
+            items: field_8
+            empty: field_9
+            lookup: field_10
+            tail: field_11
+        }
+        ctx.forward_struct_closure[VPhpLiteralParamsDemo, string](cb, args)
+    }
+}
+
+fn vphp_wrap_struct_closure_v_get_struct_literal_defaults_closure(ctx vphp.Context, cb VPhpStructClosureVGetStructLiteralDefaultsClosure) {
+    ctx.create_saved_closure_with_arginfo[VPhpStructClosureVGetStructLiteralDefaultsClosure](cb, voidptr(vphp_struct_closure_bridge_v_get_struct_literal_defaults_closure), 12, 0, C.struct_closure_arginfo_v_get_struct_literal_defaults_closure)
+}
+
+@[export: 'vphp_wrap_v_get_struct_literal_defaults_closure']
+fn vphp_wrap_v_get_struct_literal_defaults_closure(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := v_get_struct_literal_defaults_closure()
+    vphp_wrap_struct_closure_v_get_struct_literal_defaults_closure(ctx, res)
+}
+
+@[export: 'vphp_wrap_v_php_overridden_params']
+fn vphp_wrap_v_php_overridden_params(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'prefix' },
+        vphp.PhpArgMeta{ index: 1, name: 'option', use_php_default: true },
+        vphp.PhpArgMeta{ index: 2, name: 'spacer' },
+        vphp.PhpArgMeta{ index: 3, name: 'count', use_php_default: true },
+        vphp.PhpArgMeta{ index: 4, name: 'nullable', use_php_default: true },
+        vphp.PhpArgMeta{ index: 5, name: 'items', use_php_default: true },
+        vphp.PhpArgMeta{ index: 6, name: 'tail' },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1_params_option := php_args.at(1).as_v_opt[string]()
+    arg_1_params_spacer := if php_args.has(2) { php_args.at(2).as_v[string]() } else { 'native spacer' }
+    arg_1_params_count := php_args.at(3).as_v[int]()
+    arg_1_params_nullable := php_args.at(4).as_v_opt[string]()
+    arg_1_params_items := php_args.at(5).array() or {
+        vphp.throw_exception('argument 5 must be array', 0)
+        return
+    }
+    arg_1_params_tail := if php_args.has(6) { php_args.at(6).as_v[bool]() } else { true }
+    arg_1_params := VPhpOverriddenParamsDemo{
+        option: arg_1_params_option
+        spacer: arg_1_params_spacer
+        count: arg_1_params_count
+        nullable: arg_1_params_nullable
+        items: arg_1_params_items
+        tail: arg_1_params_tail
+    }
+    res := v_php_overridden_params(arg_0, arg_1_params)
+    ctx.return().v[string](res)
+}
+
+@[export: 'vphp_wrap_v_php_direct_defaults']
+fn vphp_wrap_v_php_direct_defaults(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'prefix' },
+        vphp.PhpArgMeta{ index: 1, name: 'count', use_php_default: true },
+        vphp.PhpArgMeta{ index: 2, name: 'values', use_php_default: true },
+        vphp.PhpArgMeta{ index: 3, name: 'label', use_php_default: true },
+        vphp.PhpArgMeta{ index: 4, name: 'enabled', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[int]()
+    arg_2 := php_args.at(2).array()
+    arg_3 := php_args.at(3).as_v_opt[string]()
+    arg_4 := php_args.at(4).as_v[bool]()
+    res := v_php_direct_defaults(arg_0, arg_1, arg_2, arg_3, arg_4)
+    ctx.return().v[string](res)
+}
+
+@[export: 'vphp_wrap_v_php_legacy_optional_tail']
+fn vphp_wrap_v_php_legacy_optional_tail(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'before', use_php_default: true },
+        vphp.PhpArgMeta{ index: 1, name: 'blocked' },
+        vphp.PhpArgMeta{ index: 2, name: 'tail' },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[int]()
+    arg_1 := php_args.at(1).as_v[int]()
+    arg_2 := php_args.at(2).as_v[int]()
+    res := v_php_legacy_optional_tail(arg_0, arg_1, arg_2)
+    ctx.return().v[string](res)
+}
+
 @[export: 'vphp_wrap_v_lifecycle_hook_state']
 fn vphp_wrap_v_lifecycle_hook_state(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
@@ -4147,11 +5090,11 @@ fn vphp_wrap_v_find_after(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'haystack', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'needle', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'haystack' },
+        vphp.PhpArgMeta{ index: 1, name: 'needle' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'haystack').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'needle').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     ctx.return().from_option[string](fn [arg_0, arg_1] () ?string {
         return v_find_after(arg_0, arg_1)
     })
@@ -4162,11 +5105,11 @@ fn vphp_wrap_v_try_divide(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'a', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'b', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'a' },
+        vphp.PhpArgMeta{ index: 1, name: 'b' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'a').as_v[int]()
-    arg_1 := php_args.at_named_or_index(1, 'b').as_v[int]()
+    arg_0 := php_args.at(0).as_v[int]()
+    arg_1 := php_args.at(1).as_v[int]()
     ctx.return().from_option[int](fn [arg_0, arg_1] () ?int {
         return v_try_divide(arg_0, arg_1)
     })
@@ -4177,13 +5120,13 @@ fn vphp_wrap_v_record_match(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'haystack', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'needle', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'path' },
+        vphp.PhpArgMeta{ index: 1, name: 'haystack' },
+        vphp.PhpArgMeta{ index: 2, name: 'needle' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'haystack').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'needle').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).as_v[string]()
     ctx.return().from_option_void(fn [arg_0, arg_1, arg_2] () ? {
         v_record_match(arg_0, arg_1, arg_2)
     })
@@ -4202,7 +5145,7 @@ fn vphp_wrap_v_compiler_probe_variadic(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'args', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'args' },
     ])
     arg_0 := php_args.as_variadic_v[int](0)
     res := v_compiler_probe_variadic(...arg_0)
@@ -4214,11 +5157,11 @@ fn vphp_wrap_v_compiler_probe_options(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'prefix', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'count', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'prefix' },
+        vphp.PhpArgMeta{ index: 1, name: 'count' },
     ])
-    arg_0_params_prefix := if php_args.has_named_or_index(0, 'prefix') { php_args.at_named_or_index(0, 'prefix').as_v[string]() } else { 'default' }
-    arg_0_params_count := if php_args.has_named_or_index(1, 'count') { php_args.at_named_or_index(1, 'count').as_v[int]() } else { 3 }
+    arg_0_params_prefix := if php_args.has(0) { php_args.at(0).as_v[string]() } else { 'default' }
+    arg_0_params_count := if php_args.has(1) { php_args.at(1).as_v[int]() } else { 3 }
     arg_0_params := VphpModuleProbeOptions{
         prefix: arg_0_params_prefix
         count: arg_0_params_count
@@ -4256,11 +5199,11 @@ fn vphp_wrap_v_safe_divide(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'a', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'b', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'a' },
+        vphp.PhpArgMeta{ index: 1, name: 'b' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'a').as_v[int]()
-    arg_1 := php_args.at_named_or_index(1, 'b').as_v[int]()
+    arg_0 := php_args.at(0).as_v[int]()
+    arg_1 := php_args.at(1).as_v[int]()
     ctx.return().from_result[int](fn [arg_0, arg_1] () !int {
         return v_safe_divide(arg_0, arg_1)!
     })
@@ -4271,9 +5214,9 @@ fn vphp_wrap_v_capitalize(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'input' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'input').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     ctx.return().from_result[string](fn [arg_0] () !string {
         return v_capitalize(arg_0)!
     })
@@ -4284,11 +5227,11 @@ fn vphp_wrap_v_record_success(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'label', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'path' },
+        vphp.PhpArgMeta{ index: 1, name: 'label' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'label').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     ctx.return().from_result_void(fn [arg_0, arg_1] () ! {
         v_record_success(arg_0, arg_1)!
     })
@@ -4302,8 +5245,8 @@ fn vphp_wrap_v_php_param_attr_api(ctx vphp.Context) {
         vphp.PhpArgMeta{ index: 0, name: 'query', attributes: [vphp.PhpAttribute.named('FromQuery').for_parameter().string('q'), vphp.PhpAttribute.named('MustBeString').for_parameter()] },
         vphp.PhpArgMeta{ index: 1, name: 'page', attributes: [vphp.PhpAttribute.named('FromQuery').for_parameter().string('page'), vphp.PhpAttribute.named('MustBeInt').for_parameter()] },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'query').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'page').as_v[int]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[int]()
     res := v_php_param_attr_api(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -4358,8 +5301,7 @@ fn vphp_get_class_entry_by_v_name(v_name string) voidptr {
         'ArticleStatus' { C.articlestatus_ce }
         'VPhpTask' { C.vphp__task_ce }
         'StringableBox' { C.stringablebox_ce }
-        else { // SAFETY: nil literal in unsafe context
-	unsafe { nil } }
+        else { unsafe { nil } }
     }
 }
 

@@ -213,7 +213,7 @@ that receives a `ZVal` result is responsible for exactly one `release()`.
 
 V objects exported to PHP (V-backed objects) are automatically registered as GC roots when they enter the PHP-owned object registry.
 - **V-to-PHP**: If you return a V pointer to PHP with `.owned_request` or `.owned_persistent` ownership, the bridge keeps it alive in the V heap.
-- **Low Mental Effort**: You do not need to manually manage roots for objects passed to PHP; the bridge handles `GC_add_roots` and `GC_remove_roots` under the hood via a global root registry.
+- The bridge retains pointers in a V global map with a reference count per pointer. It removes entries when the corresponding PHP bindings release their ownership.
 
 6. Debug/logging must not create ownership side effects.
 

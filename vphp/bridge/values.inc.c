@@ -16,13 +16,16 @@ zval *vphp_reference_value(zval *z) {
 }
 
 void vphp_reference_set_zval(zval *z, zval *value) {
-  zval *target = NULL;
   if (z == NULL || value == NULL || Z_TYPE_P(z) != IS_REFERENCE) {
     return;
   }
-  target = Z_REFVAL_P(z);
-  zval_ptr_dtor(target);
-  ZVAL_COPY(target, value);
+  ZVAL_DEREF(value);
+  if (value == Z_REFVAL_P(z)) {
+    return;
+  }
+  zval copy;
+  ZVAL_COPY(&copy, value);
+  ZEND_TRY_ASSIGN_REF_VALUE(z, &copy);
 }
 
 const char *vphp_get_string_ptr(zval *z, int *len) {

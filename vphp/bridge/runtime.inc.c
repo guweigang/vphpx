@@ -164,7 +164,7 @@ static bool vphp_value_matches_named_type(zend_execute_data *execute_data,
 }
 
 static bool vphp_value_matches_mask(uint32_t mask, zval *value, bool strict,
-                                    bool is_return_type) {
+                                    bool is_return_type, bool can_coerce) {
   zval *check = value;
   uint32_t scalar_mask = 0;
 
@@ -215,7 +215,7 @@ static bool vphp_value_matches_mask(uint32_t mask, zval *value, bool strict,
     scalar_mask |= MAY_BE_BOOL;
   }
   scalar_mask |= mask & (MAY_BE_LONG | MAY_BE_DOUBLE | MAY_BE_STRING);
-  if (scalar_mask != 0 &&
+  if (can_coerce && scalar_mask != 0 &&
       vphp_zend_verify_scalar_type_hint(scalar_mask, check, strict)) {
     return true;
   }
@@ -238,6 +238,9 @@ static bool vphp_value_matches_type(zend_execute_data *execute_data,
   if (check == NULL) {
     return false;
   }
+  zend_reference *typed_ref =
+      Z_ISREF_P(check) && ZEND_REF_HAS_TYPE_SOURCES(Z_REF_P(check))
+          ? Z_REF_P(check) : NULL;
   ZVAL_DEREF(check);
 
   if (Z_TYPE_P(check) == IS_NULL) {
@@ -249,7 +252,7 @@ static bool vphp_value_matches_type(zend_execute_data *execute_data,
 
     if (ZEND_TYPE_IS_INTERSECTION(type)) {
       ZEND_TYPE_LIST_FOREACH(ZEND_TYPE_LIST(type), subtype) {
-        if (!vphp_value_matches_type(execute_data, *subtype, check,
+        if (!vphp_value_matches_type(execute_data, *subtype, value,
                                      is_return_type)) {
           return false;
         }
@@ -259,13 +262,13 @@ static bool vphp_value_matches_type(zend_execute_data *execute_data,
     }
 
     ZEND_TYPE_LIST_FOREACH(ZEND_TYPE_LIST(type), subtype) {
-      if (vphp_value_matches_type(execute_data, *subtype, check,
+      if (vphp_value_matches_type(execute_data, *subtype, value,
                                   is_return_type)) {
         return true;
       }
     }
     ZEND_TYPE_LIST_FOREACH_END();
-    return false;
+    // Zend stores the scalar members of a union in the outer mask.
   }
 
   if (ZEND_TYPE_IS_ITERABLE_FALLBACK(type) && vphp_zend_is_iterable(check)) {
@@ -276,13 +279,28 @@ static bool vphp_value_matches_type(zend_execute_data *execute_data,
       return true;
     }
   }
-  if (vphp_value_matches_mask(mask, check, strict, is_return_type)) {
+  if (vphp_value_matches_mask(mask, check, strict, is_return_type, typed_ref == NULL)) {
     return true;
   }
-  if (vphp_zend_check_user_type_slow(&type, check, is_return_type)) {
+  if (vphp_zend_check_user_type_slow(&type, check, typed_ref, is_return_type)) {
     return true;
   }
   return false;
+}
+
+zend_type vphp_arginfo_class_type(const char *name) {
+  zend_string *class_name = zend_string_init_interned(name, strlen(name), 1);
+  zend_alloc_ce_cache(class_name);
+  return (zend_type) ZEND_TYPE_INIT_CLASS(class_name, 0, 0);
+}
+
+zend_type vphp_arginfo_type_list(const zend_type *members, uint32_t count,
+                                 uint32_t flags) {
+  // Zend owns the persistent list once it registers the arginfo.
+  zend_type_list *list = pemalloc(ZEND_TYPE_LIST_SIZE(count), 1);
+  list->num_types = count;
+  memcpy(list->types, members, count * sizeof(zend_type));
+  return (zend_type) ZEND_TYPE_INIT_PTR_MASK(list, _ZEND_TYPE_LIST_BIT | flags);
 }
 
 bool vphp_validate_internal_call(zend_execute_data *execute_data) {
@@ -302,10 +320,21 @@ bool vphp_validate_internal_call(zend_execute_data *execute_data) {
   max_args = func->common.num_args;
   variadic = (func->common.fn_flags & ZEND_ACC_VARIADIC) != 0;
 
+  if (variadic && (ZEND_CALL_INFO(execute_data) & ZEND_CALL_HAS_EXTRA_NAMED_PARAMS) &&
+      ARG_MUST_BE_SENT_BY_REF(func, max_args + 1)) {
+    zend_unexpected_extra_named_error();
+    return false;
+  }
+
   if (arg_count < min_args || (!variadic && arg_count > max_args)) {
     vphp_zend_wrong_parameters_count_error(min_args,
                                            variadic ? (uint32_t)-1 : max_args);
     return false;
+  }
+
+  // Convert named gaps identified by our metadata back to omitted V fields.
+  if (func->type == ZEND_INTERNAL_FUNCTION) {
+    vphp_mark_omitted_computed_defaults(execute_data);
   }
 
   for (i = 0; i < arg_count; i++) {
@@ -316,19 +345,17 @@ bool vphp_validate_internal_call(zend_execute_data *execute_data) {
       break;
     }
 
-    if (variadic && i >= max_args - 1) {
-      arg_info = &func->common.arg_info[max_args - 1];
-    } else if (i < max_args) {
-      arg_info = &func->common.arg_info[i];
-    } else {
+    if (i >= max_args && !variadic) {
       break;
     }
+    // Zend keeps the variadic entry immediately after the fixed parameters.
+    arg_info = &func->common.arg_info[i < max_args ? i : max_args];
 
     if (!ZEND_TYPE_IS_SET(arg_info->type)) {
       continue;
     }
     arg = ZEND_CALL_ARG(execute_data, i + 1);
-    if (vphp_value_matches_type(execute_data, arg_info->type, arg, false)) {
+    if (Z_ISUNDEF_P(arg) || vphp_value_matches_type(execute_data, arg_info->type, arg, false)) {
       continue;
     }
 
@@ -361,6 +388,8 @@ bool vphp_validate_internal_return(zend_execute_data *execute_data,
   }
   if (ZEND_TYPE_CONTAINS_CODE(ret_info->type, IS_VOID)) {
     if (check != NULL && Z_TYPE_P(check) == IS_UNDEF) {
+      // Keep UNDEF for validation, then return a value Zend can invoke indirectly.
+      ZVAL_NULL(return_value);
       return true;
     }
     vphp_zend_verify_return_error(func, return_value);
@@ -392,6 +421,42 @@ uint32_t vphp_get_num_args(zend_execute_data *ex) {
 
 zval *vphp_get_arg_ptr(zend_execute_data *ex, uint32_t index) {
   return ZEND_CALL_ARG(ex, index);
+}
+
+bool vphp_read_arg_default(zend_execute_data *ex, uint32_t index,
+                           zval *result) {
+  const zend_function *func = ex->func;
+  zval value;
+  ZVAL_UNDEF(&value);
+
+  // Use the same arginfo and constant-expression evaluation as named gaps.
+  if (func->type != ZEND_INTERNAL_FUNCTION ||
+      (func->common.fn_flags & ZEND_ACC_USER_ARG_INFO) ||
+      index >= func->common.num_args || !func->internal_function.arg_info ||
+      zend_get_default_from_internal_arg_info(
+          &value, &func->internal_function.arg_info[index]) == FAILURE) {
+    if (!EG(exception)) {
+      zend_argument_error(zend_ce_argument_count_error, index + 1,
+                          "must be passed explicitly, because the default value is not known");
+    }
+    zval_ptr_dtor(&value);
+    return false;
+  }
+  if (Z_TYPE(value) == IS_CONSTANT_AST &&
+      zval_update_constant_ex(&value, func->common.scope) == FAILURE) {
+    zval_ptr_dtor(&value);
+    return false;
+  }
+  const zend_arg_info *arg_info = &func->common.arg_info[index];
+  if (ZEND_TYPE_IS_SET(arg_info->type) &&
+      !vphp_value_matches_type(ex, arg_info->type, &value, false)) {
+    vphp_zend_verify_arg_error(func, arg_info, index + 1, &value);
+    zval_ptr_dtor(&value);
+    return false;
+  }
+  zval_ptr_dtor(result);
+  ZVAL_COPY_VALUE(result, &value);
+  return true;
 }
 
 void vphp_throw(char *msg, int code) {

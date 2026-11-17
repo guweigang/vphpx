@@ -1,6 +1,6 @@
 module parser
 
-import v.ast
+import compiler.syntax as ast
 import compiler.repr
 
 pub fn parse_function_decl(stmt ast.Stmt, table &ast.Table, module_name string, params_structs map[string]repr.PhpParamsStruct) ?&repr.PhpFuncRepr {

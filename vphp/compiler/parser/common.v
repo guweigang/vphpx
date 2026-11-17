@@ -1,6 +1,6 @@
 module parser
 
-import v.ast
+import compiler.syntax as ast
 
 fn strip_module(mut_typ_name string) string {
 	return mut_typ_name.replace('main.', '')

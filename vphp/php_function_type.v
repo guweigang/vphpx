@@ -50,12 +50,12 @@ fn (f PhpFunction) request_owned(args ...PhpArgInput) RequestOwnedZBox {
 }
 
 pub fn (f PhpFunction) invoke(args ...PhpArgInput) PhpValue {
-	mut result := f.request_owned(args)
+	mut result := f.request_owned(...args)
 	return result.take_value()
 }
 
 pub fn (f PhpFunction) call[T](args ...PhpArgInput) !T {
-	mut result := f.request_owned(args)
+	mut result := f.request_owned(...args)
 	defer {
 		result.release()
 	}
@@ -63,7 +63,7 @@ pub fn (f PhpFunction) call[T](args ...PhpArgInput) !T {
 }
 
 pub fn (f PhpFunction) with_result[T, R](run fn (T) R, args ...PhpArgInput) !R {
-	mut result := f.request_owned(args)
+	mut result := f.request_owned(...args)
 	defer {
 		result.release()
 	}
@@ -76,7 +76,8 @@ pub fn (f PhpFunction) with_result_zval[T](run fn (ZVal) T, args ...ZVal) T {
 	defer {
 		result.release()
 	}
-	return run(result.to_zval())
+	z := result.to_zval()
+	return run(z)
 }
 
 pub fn (f PhpFunction) result_string(args ...PhpArgInput) string {

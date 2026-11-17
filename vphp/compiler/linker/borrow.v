@@ -1,6 +1,6 @@
 module linker
 
-import v.ast
+import compiler.syntax as ast
 import compiler.parser as cparser
 import compiler.repr
 

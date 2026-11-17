@@ -18,28 +18,13 @@ pub fn DynValue.from_zval(z ZVal) !DynValue {
 		return DynValue.of_string(z.to_string())
 	}
 	if z.is_array() {
-		mut out := DynArray.new_boxed()
-		mut err_msg := ''
-		z.foreach_with_ctx[voidptr]( // SAFETY: mutable reference to local variable out
-		 unsafe { &mut out }, fn [mut err_msg] (key ZVal, v ZVal, mut ctx voidptr) {
-			if err_msg != '' {
-				return
-			}
-			m := unsafe { &&DynArray(ctx) }
-			decoded := DynValue.from_zval(v) or {
-				err_msg = err.msg()
-				return
-			}
-			if key.is_long() {
-				unsafe { (**m).set_int(key.to_i64(), decoded) }
-			} else {
-				unsafe { (**m).set_str(key.to_string(), decoded) }
-			}
-		})
-		if err_msg != '' {
-			return error(err_msg)
+		state := z.foreach_with_ctx(DynArrayDecode{
+			array: DynArray.new_boxed()
+		}, decode_dyn_array_item)
+		if state.err_msg != '' {
+			return error(state.err_msg)
 		}
-		return dyn_value_adopt_array(out)
+		return dyn_value_adopt_array(state.array)
 	}
 	if z.is_callable() {
 		callable := PhpCallable.from_zval(z) or { return error('zval is not callable') }
@@ -199,4 +184,25 @@ pub fn (v DynValue) new_zval() !ZVal {
 
 pub fn (v DynValue) to_value() !PhpValue {
 	return PhpValue.adopt_zval(v.new_zval()!)
+}
+
+struct DynArrayDecode {
+mut:
+	array   &DynArray
+	err_msg string
+}
+
+fn decode_dyn_array_item(key ZVal, val ZVal, mut state DynArrayDecode) {
+	if state.err_msg != '' {
+		return
+	}
+	decoded := DynValue.from_zval(val) or {
+		state.err_msg = err.msg()
+		return
+	}
+	if key.is_long() {
+		state.array.set_int(key.to_i64(), decoded)
+	} else {
+		state.array.set_str(key.to_string(), decoded)
+	}
 }

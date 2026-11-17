@@ -13,6 +13,11 @@ pub enum VphpModuleProbeKind {
 	beta  = 11
 }
 
+@[php_enum: 'VPHP\\Compiler\\OtherProbeKind']
+pub enum VphpOtherProbeKind {
+	other = 11
+}
+
 @[params]
 pub struct VphpModuleProbeOptions {
 pub:
@@ -24,7 +29,7 @@ pub:
 const compiler_probe_constant = 'module-constant-ok'
 
 pub type VphpModuleProbeSum = int | string
-pub type VphpModuleProbeSumType = int | VphpModuleProbeReadOnlyBox | VphpModuleProbeKind
+pub type VphpModuleProbeSumType = VphpModuleProbeKind | int | VphpModuleProbeReadOnlyBox | VphpOtherProbeKind
 
 @[php_class: 'VPHP\\Compiler\\ModuleProbeReadOnlyBox']
 pub struct VphpModuleProbeReadOnlyBox {
@@ -74,14 +79,97 @@ pub fn (b &VphpModuleProbeBox) label() string {
 	return '${b.name}:${b.count}'
 }
 
+@[php_method: 'compoundIdentity']
+@[php_arg_type(value: '(Iterator&Countable)|ArrayObject|int|null')]
+@[php_return_type: '(Iterator&Countable)|ArrayObject|int|null']
+pub fn (b &VphpModuleProbeBox) compound_identity(value vphp.PhpValue) vphp.PhpValue {
+	return value
+}
+
+@[php_method: 'stepReference']
+pub fn (b &VphpModuleProbeBox) step_reference(ctx vphp.Context, cursor vphp.PhpReference) bool {
+	cursor.set(vphp.ZVal.new_int(cursor.deref().to_i64() + i64(b.count)))
+	return ctx.num_args() == 1 && !vphp.has_exception()
+}
+
 @[php_method: 'staticLabel']
 pub fn VphpModuleProbeBox.static_label() string {
 	return 'box-static-label'
 }
 
+@[php_class: 'VPHP\\Compiler\\CopyableBox']
+@[vphp.PhpObjectCopy(cloneable: true, serializable: true)]
+pub struct VphpCopyableBox {
+pub mut:
+	count int
+mut:
+	hidden int @[php_ignore]
+}
+
+pub fn (b &VphpCopyableBox) clone_into(mut target VphpCopyableBox) {
+	target.count = b.count
+	target.hidden = b.hidden
+}
+
+@[php_method]
+pub fn (mut b VphpCopyableBox) bump(delta int) {
+	b.count += delta
+	b.hidden += delta * 2
+}
+
+@[php_method]
+pub fn (b &VphpCopyableBox) state() string {
+	return '${b.count}:${b.hidden}'
+}
+
+@[php_method: '__serialize']
+pub fn (b &VphpCopyableBox) serialize_state() map[string]int {
+	return {
+		'count':  b.count
+		'hidden': b.hidden
+	}
+}
+
+@[php_method: '__unserialize']
+pub fn (mut b VphpCopyableBox) unserialize_state(data vphp.PhpArray) {
+	count := data.get('count') or { vphp.ZVal.new_null() }
+	hidden := data.get('hidden') or { vphp.ZVal.new_null() }
+	if !count.is_long() || !hidden.is_long() {
+		vphp.throw_exception('Invalid CopyableBox state', 0)
+		return
+	}
+	b.count = count.to_int()
+	b.hidden = hidden.to_int()
+}
+
 @[php_function]
 pub fn v_compiler_probe() string {
 	return 'module-probe-ok'
+}
+
+@[php_function]
+pub fn v_compiler_probe_named_sum(value ?VphpModuleProbeSumType) ?VphpModuleProbeSumType {
+	return value
+}
+
+@[php_function]
+@[php_arg_type: 'value=VPHP\\Compiler\\ModuleProbeKind|VPHP\\Compiler\\OtherProbeKind']
+@[php_return_type: 'VPHP\\Compiler\\ModuleProbeKind|VPHP\\Compiler\\OtherProbeKind']
+pub fn v_compiler_probe_explicit_union(value vphp.PhpValue) vphp.PhpValue {
+	return value
+}
+
+@[php_function]
+@[php_arg_type(value: 'Iterator&Countable')]
+@[php_return_type: 'Iterator&Countable']
+pub fn v_compiler_probe_intersection(value vphp.PhpValue) vphp.PhpValue {
+	return value
+}
+
+@[php_function]
+@[php_return_type: '(Iterator&Countable)|ArrayObject']
+pub fn v_compiler_probe_wrong_dnf_return() vphp.PhpValue {
+	return vphp.PhpValue.from_zval(vphp.ZVal.new_int(10))
 }
 
 @[php_function]

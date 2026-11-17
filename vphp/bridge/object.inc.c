@@ -16,7 +16,8 @@ static void vphp_init_sidecar_registry(void) {
 }
 
 static int vphp_object_uses_inline_wrapper(zend_object *obj) {
-  return obj != NULL && obj->handlers == &vphp_obj_handlers;
+  return obj != NULL && obj->handlers->free_obj == vphp_free_object_handler &&
+         obj->handlers->offset == offsetof(vphp_object_wrapper, std);
 }
 
 static void vphp_init_inherited_handler_registry(void) {
@@ -198,7 +199,7 @@ void vphp_return_obj(zval *return_value, void *v_ptr, zend_class_entry *ce) {
 void vphp_return_bound_object(zval *return_value, void *v_ptr,
                               zend_class_entry *ce, vphp_class_handlers *h,
                               int owns_v_ptr) {
-  extern void vphp__ensure_vptr_root(void *ptr);
+  extern void vphp_ensure_vptr_root(void *ptr);
   char debug_buf[256];
   int debug_on = vphp_bridge_debug_enabled();
   if (debug_on) {
@@ -210,7 +211,7 @@ void vphp_return_bound_object(zval *return_value, void *v_ptr,
     vphp_bridge_debug_log("vphp-bridge-debug",debug_buf);
   }
   if (owns_v_ptr == VPHP_OWNS_VPTR && v_ptr != NULL) {
-    vphp__ensure_vptr_root(v_ptr);
+    vphp_ensure_vptr_root(v_ptr);
   }
   vphp_return_obj(return_value, v_ptr, ce);
   if (Z_TYPE_P(return_value) == IS_OBJECT && h != NULL) {
@@ -714,10 +715,43 @@ void vphp_init_handlers() {
   memcpy(&vphp_obj_handlers, zend_get_std_object_handlers(),
          sizeof(zend_object_handlers));
   vphp_obj_handlers.offset = offsetof(vphp_object_wrapper, std);
+  vphp_obj_handlers.clone_obj = NULL;
   vphp_obj_handlers.free_obj = vphp_free_object_handler;
   vphp_obj_handlers.read_property = vphp_read_property;
   vphp_obj_handlers.get_properties = vphp_get_properties;
   vphp_obj_handlers.write_property = vphp_write_property;
+}
+
+void vphp_init_cloneable_object_handlers(zend_object_handlers *handlers,
+                                         zend_object_clone_obj_t clone_obj) {
+  if (vphp_obj_handlers.read_property == NULL) {
+    vphp_init_handlers();
+  }
+  *handlers = vphp_obj_handlers;
+  handlers->clone_obj = clone_obj;
+}
+
+zend_object *vphp_clone_bound_object(zend_object *source,
+                                      vphp_class_handlers *handlers,
+                                      void (*clone_into)(void *, void *)) {
+  void *source_ptr = vphp_obj_from_obj(source)->v_ptr;
+  zend_object *target = source->ce->create_object(source->ce);
+  if (source_ptr == NULL) {
+    zend_throw_error(NULL, "Cannot clone uninitialized VPHP object of class %s",
+                     ZSTR_VAL(source->ce->name));
+    return target;
+  }
+  vphp_object_wrapper *binding = vphp_ensure_owned_instance_binding(target, handlers);
+  if (binding->v_ptr == NULL) {
+    zend_throw_error(NULL, "Cannot initialize VPHP clone of class %s",
+                     ZSTR_VAL(source->ce->name));
+    return target;
+  }
+  clone_into(source_ptr, binding->v_ptr);
+  if (!EG(exception)) {
+    zend_objects_clone_members(target, source);
+  }
+  return target;
 }
 
 zend_object *vphp_create_object_handler(zend_class_entry *ce) {

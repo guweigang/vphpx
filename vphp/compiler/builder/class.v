@@ -1,6 +1,6 @@
 module builder
 
-import v.ast
+import compiler.syntax as ast
 import compiler.php_types
 
 pub enum ClassType {
@@ -58,6 +58,7 @@ pub:
 	args []ClassAttributeArg
 }
 
+@[heap]
 pub struct ClassBuilder {
 pub mut:
 	type                  ClassType = .class_
@@ -65,6 +66,7 @@ pub mut:
 	c_name                string
 	parent                string
 	create_object         bool = true
+	clone_handler_prefix  string
 	uses_inherited_object bool
 	class_flags           []string
 	interfaces            []string
@@ -246,6 +248,9 @@ fn (b &ClassBuilder) render_registration_function() string {
 		}
 		else {
 			res << '    {   zend_class_entry ce;'
+			for method in b.methods {
+				res << method.compound_arginfo_setup(b.table).map('        ' + it)
+			}
 			res << '        INIT_CLASS_ENTRY(ce, "${b.php_name}", ${lower_name}_methods);'
 
 			match b.type {
@@ -273,7 +278,10 @@ fn (b &ClassBuilder) render_registration_function() string {
 	if b.class_flags.len > 0 {
 		res << '        ${ce_ptr}->ce_flags |= ${b.class_flags.join(' | ')};'
 	}
-	if b.create_object {
+	if b.clone_handler_prefix != '' {
+		res << '        vphp_init_cloneable_object_handlers(&${lower_name}_object_handlers, ${lower_name}_clone_object);'
+		res << '        ${ce_ptr}->create_object = ${lower_name}_create_object;'
+	} else if b.create_object {
 		res << '        ${ce_ptr}->create_object = vphp_create_object_handler;'
 	} else if b.type == .class_ && b.uses_inherited_object {
 		res << '        ${ce_ptr}->create_object = vphp_create_inherited_object_handler;'
@@ -336,7 +344,23 @@ fn (b &ClassBuilder) render_registration_function() string {
 }
 
 pub fn (b &ClassBuilder) render_impl_prelude() string {
-	return '${b.render_ce_declaration()}\n${b.render_arginfo_defs()}'
+	mut parts := [b.render_ce_declaration(), b.render_arginfo_defs()]
+	if b.clone_handler_prefix != '' {
+		lower_name := b.c_name.to_lower()
+		prefix := b.clone_handler_prefix
+		parts << 'extern vphp_class_handlers *${prefix}_handlers(void);'
+		parts << 'extern void ${prefix}_clone_into_raw(void *, void *);'
+		parts << 'static zend_object_handlers ${lower_name}_object_handlers;'
+		parts << 'static zend_object *${lower_name}_create_object(zend_class_entry *ce) {
+    zend_object *obj = vphp_create_object_handler(ce);
+    obj->handlers = &${lower_name}_object_handlers;
+    return obj;
+}'
+		parts << 'static zend_object *${lower_name}_clone_object(zend_object *obj) {
+    return vphp_clone_bound_object(obj, ${prefix}_handlers(), ${prefix}_clone_into_raw);
+}'
+	}
+	return parts.join('\n')
 }
 
 pub fn (b &ClassBuilder) render_impl_postlude() string {
@@ -345,10 +369,14 @@ pub fn (b &ClassBuilder) render_impl_postlude() string {
 
 fn arg_type_info(v_type string, table &ast.Table) ArgTypeInfo {
 	decl := parse_php_type_decl(v_type)
+	if union_info := union_type_info(decl) {
+		return union_info
+	}
 	clean := decl.clean
 	allow_null := decl.allow_null
 	if table != unsafe { nil } // SAFETY: nil literal in unsafe context
-	  {
+
+	{
 		if sym := table.find_sym(clean) {
 			if sym.kind == .sum_type {
 				mut masks := []string{}
@@ -438,22 +466,16 @@ fn method_has_literal_class_arg(m ClassMethod) bool {
 fn method_arginfo_header(m ClassMethod, table &ast.Table) string {
 	resolved_return_type := m.return_spec.resolved_type()
 	type_info := arg_type_info(resolved_return_type, table)
-	return render_method_arginfo_header(m.c_func, m.php_name, method_required_args(m),
+	return render_method_arginfo_header(m.c_func, m.php_name, required_arg_count(m.args),
 		resolved_return_type, m.return_spec.arginfo_obj_type(), type_info,
-		method_has_literal_class_arg(m))
+		method_has_literal_class_arg(m), m.compound_arginfo_setup(table).len > 0)
 }
 
-fn method_required_args(m ClassMethod) int {
-	mut required := m.args.len
-	for required > 0 {
-		last := m.args[required - 1]
-		if last.is_optional || last.is_variadic {
-			required--
-			continue
-		}
-		break
+fn (m ClassMethod) compound_arginfo_setup(table &ast.Table) []string {
+	if m.uses_context {
+		return []
 	}
-	return required
+	return compound_arginfo_setup(m.c_func, m.return_spec.resolved_type(), m.args, table)
 }
 
 fn c_string_escape(s string) string {
@@ -522,10 +544,7 @@ pub fn (b &ClassBuilder) render_arginfo_defs() string {
 		}
 		res << method_arginfo_header(m, b.table)
 		for arg in m.args {
-			raw_type := if arg.php_type != '' { arg.php_type } else { arg.type_ }
-			validate_php_arg_type_or_panic(raw_type, arg.name, m.php_name)
-			res << render_arginfo_arg_line(arg.name, raw_type, arg.php_default, arg.is_variadic,
-				b.table)
+			res << arg.render_arginfo_line(m.php_name, b.table)
 		}
 		res << 'ZEND_END_ARG_INFO()'
 	}
@@ -573,7 +592,9 @@ fn (b &ClassBuilder) render_typed_class_constant(ce_ptr string, con ClassConstan
 	}
 
 	zval_init := match con.type_ {
-		'string' { 'ZVAL_STR(&val, zend_string_init("${con.value}", sizeof("${con.value}")-1, 1));' }
+		'string' {
+			'ZVAL_STR(&val, zend_string_init("${con.value}", sizeof("${con.value}")-1, 1));'
+		}
 		'double' { 'ZVAL_DOUBLE(&val, ${con.value});' }
 		'long', 'int' { 'ZVAL_LONG(&val, ${con.value});' }
 		'bool' { 'ZVAL_BOOL(&val, ${con.value});' }
@@ -581,10 +602,18 @@ fn (b &ClassBuilder) render_typed_class_constant(ce_ptr string, con ClassConstan
 	}
 
 	legacy_fn := match con.type_ {
-		'string' { 'zend_declare_class_constant_string(${ce_ptr}, "${con.name}", sizeof("${con.name}")-1, "${con.value}");' }
-		'double' { 'zend_declare_class_constant_double(${ce_ptr}, "${con.name}", sizeof("${con.name}")-1, ${con.value});' }
-		'long', 'int' { 'zend_declare_class_constant_long(${ce_ptr}, "${con.name}", sizeof("${con.name}")-1, ${con.value});' }
-		'bool' { 'zend_declare_class_constant_bool(${ce_ptr}, "${con.name}", sizeof("${con.name}")-1, ${con.value});' }
+		'string' {
+			'zend_declare_class_constant_string(${ce_ptr}, "${con.name}", sizeof("${con.name}")-1, "${con.value}");'
+		}
+		'double' {
+			'zend_declare_class_constant_double(${ce_ptr}, "${con.name}", sizeof("${con.name}")-1, ${con.value});'
+		}
+		'long', 'int' {
+			'zend_declare_class_constant_long(${ce_ptr}, "${con.name}", sizeof("${con.name}")-1, ${con.value});'
+		}
+		'bool' {
+			'zend_declare_class_constant_bool(${ce_ptr}, "${con.name}", sizeof("${con.name}")-1, ${con.value});'
+		}
 		else { '' }
 	}
 

@@ -13,6 +13,9 @@ pub mut:
 	is_abstract             bool
 	has_free_method         bool
 	has_cleanup_method      bool
+	cloneable               bool
+	serializable            bool
+	has_clone_into          bool
 	embeds_v                []string
 	implements_v            []string
 	implements_attr         []string
@@ -78,14 +81,15 @@ pub mut:
 
 pub struct PhpArgRepr {
 pub mut:
-	name        string
-	v_type      string
-	php_type    string
-	is_optional bool
-	is_variadic bool
-	php_default string
-	source      PhpArgSource
-	attributes  []PhpAttributeRepr
+	name            string
+	v_type          string
+	php_type        string
+	is_optional     bool
+	is_variadic     bool
+	php_default     string
+	use_php_default bool
+	source          PhpArgSource
+	attributes      []PhpAttributeRepr
 }
 
 pub enum PhpArgSourceKind {
@@ -95,12 +99,13 @@ pub enum PhpArgSourceKind {
 
 pub struct PhpArgSource {
 pub mut:
-	kind             PhpArgSourceKind = .direct
-	direct_name      string
-	params_arg_name  string
-	params_type      string
-	params_field     string
-	params_v_default string
+	kind                    PhpArgSourceKind = .direct
+	direct_name             string
+	params_arg_name         string
+	params_type             string
+	params_field            string
+	params_v_default        string
+	params_computed_default bool
 }
 
 pub struct PhpParamsStruct {
@@ -120,10 +125,16 @@ pub fn (r PhpParamsStruct) type_ref() string {
 
 pub struct PhpParamsField {
 pub mut:
-	name        string
-	v_type      string
-	v_default   string
-	php_default string
+	name             string
+	v_type           string
+	v_default        string
+	php_default      string
+	has_default      bool
+	computed_default bool
+}
+
+pub fn (field PhpParamsField) has_computed_default() bool {
+	return field.computed_default
 }
 
 pub struct PhpAttributeRepr {

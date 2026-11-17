@@ -53,6 +53,15 @@ void vphp_create_closure_FULL_AUTO_V2(zval *zv, void *v_thunk,
                                       void *bridge_ptr);
 void vphp_create_closure_with_arity(zval *zv, void *v_thunk, void *bridge_ptr,
                                     int num_args, int required_args);
+void vphp_create_closure_with_arginfo(zval *zv, void *v_thunk, void *bridge_ptr,
+                                     int num_args, int required_args,
+                                     const zend_internal_arg_info *arginfo);
+typedef bool (*vphp_computed_default_matcher)(const zend_internal_function *func,
+                                              zend_long callable, zend_long field);
+void vphp_register_closure_default_class(const char *name,
+                                         vphp_computed_default_matcher matches);
+bool vphp_matches_computed_default_handler(const zend_internal_function *func,
+                                           zif_handler handler);
 void vphp_create_variadic_closure(zval *zv, void *v_thunk, void *bridge_ptr);
 vphp_object_wrapper *vphp_obj_from_obj(zend_object *obj);
 void vphp_register_object(void *v_ptr, zend_object *obj);
@@ -70,6 +79,11 @@ void *vphp_allocate_contiguous_object(zend_class_entry *ce, size_t v_size);
 
 // 对象与类管理
 zend_object *vphp_create_object_handler(zend_class_entry *ce);
+void vphp_init_cloneable_object_handlers(zend_object_handlers *handlers,
+                                         zend_object_clone_obj_t clone_obj);
+zend_object *vphp_clone_bound_object(zend_object *source,
+                                      vphp_class_handlers *handlers,
+                                      void (*clone_into)(void *, void *));
 zend_object *vphp_create_inherited_object_handler(zend_class_entry *ce);
 void vphp_init_resource_system(int module_number);
 HashTable *vphp_get_properties(zend_object *object);
@@ -86,6 +100,9 @@ vphp_object_wrapper *vphp_ensure_owned_instance_binding(zend_object *obj,
 vphp_object_wrapper *vphp_ensure_borrowed_instance_binding(
     zend_object *obj, vphp_class_handlers *h);
 void vphp_init_owned_instance(zend_object *obj, vphp_class_handlers *h);
+zend_type vphp_arginfo_class_type(const char *name);
+zend_type vphp_arginfo_type_list(const zend_type *members, uint32_t count,
+                                 uint32_t flags);
 bool vphp_validate_internal_call(zend_execute_data *execute_data);
 bool vphp_validate_internal_return(zend_execute_data *execute_data,
                                    zval *return_value);
@@ -96,6 +113,7 @@ void vphp_call_optional_void_symbol(const char *symbol_name);
 
 // 参数、值与返回 (由 V 侧代码引用)
 uint32_t vphp_get_num_args(zend_execute_data *ex);
+bool vphp_read_arg_default(zend_execute_data *ex, uint32_t index, zval *result);
 zval *vphp_get_arg_ptr(zend_execute_data *ex, uint32_t index);
 zval *vphp_new_zval(void);
 zval *vphp_new_persistent_zval(void);

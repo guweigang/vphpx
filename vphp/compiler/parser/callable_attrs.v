@@ -1,6 +1,6 @@
 module parser
 
-import v.ast
+import compiler.syntax as ast
 import compiler.repr
 
 struct ParsedCallableAttrs {
@@ -126,6 +126,30 @@ fn parse_callable_attrs(attrs []ast.Attr, callable_attr_name string, default_nam
 			parsed.php_return_type = normalize_attr_value(attr.arg)
 			continue
 		}
+		if attr.name == 'vphp.PhpBoolParam' {
+			// The flat V AST stores named schema fields as separate attribute entries.
+			v_name := ast.find_attr(attrs, 'vphp.PhpBoolParam_v_name') or { attr }
+			if v_name.arg == '' {
+				continue
+			}
+			if php_name := ast.find_attr(attrs, 'vphp.PhpBoolParam_php_name') {
+				if php_name.arg != '' {
+					parsed.php_arg_names[v_name.arg] = php_name.arg
+				}
+			}
+			optional := ast.find_attr(attrs, 'vphp.PhpBoolParam_optional') or { ast.Attr{} }
+			if optional.arg == 'true' {
+				default_value := ast.find_attr(attrs, 'vphp.PhpBoolParam_default_value') or {
+					ast.Attr{}
+				}
+				parsed.php_arg_optional[v_name.arg] = true
+				parsed.php_arg_defaults[v_name.arg] = (default_value.arg == 'true').str()
+			} else {
+				parsed.php_arg_optional.delete(v_name.arg)
+				parsed.php_arg_defaults.delete(v_name.arg)
+			}
+			continue
+		}
 		if is_call_style_attr_arg(attr, 'php_arg_type') {
 			parsed.php_arg_types[attr.call_arg_name] = normalize_attr_value(attr.arg)
 			continue
@@ -160,6 +184,8 @@ fn parse_callable_attrs(attrs []ast.Attr, callable_attr_name string, default_nam
 			value := normalize_attr_value(attr.arg).to_lower()
 			if value != 'false' && value != '0' {
 				parsed.php_arg_optional[attr.call_arg_name] = true
+			} else if attr.call_arg_name !in parsed.php_arg_optional {
+				parsed.php_arg_optional[attr.call_arg_name] = false
 			}
 			continue
 		}
@@ -225,18 +251,20 @@ fn build_php_args(params []ast.Param, table &ast.Table, start_idx int, is_fn_var
 			if params_struct := params_structs[v_type] {
 				for field in params_struct.fields {
 					args << repr.PhpArgRepr{
-						name:        names[field.name] or { snake_to_camel(field.name) }
-						v_type:      field.v_type
-						php_type:    overrides[field.name] or { '' }
-						is_optional: true
-						php_default: defaults[field.name] or { field.php_default }
-						attributes:  param_attrs[field.name]
-						source:      repr.PhpArgSource{
-							kind:             .params_field
-							params_arg_name:  param.name
-							params_type:      params_struct.type_ref()
-							params_field:     field.name
-							params_v_default: field.v_default
+						name:            names[field.name] or { snake_to_camel(field.name) }
+						v_type:          field.v_type
+						php_type:        overrides[field.name] or { '' }
+						is_optional:     true
+						php_default:     defaults[field.name] or { field.php_default }
+						use_php_default: defaults[field.name] != ''
+						attributes:      param_attrs[field.name]
+						source:          repr.PhpArgSource{
+							kind:                    .params_field
+							params_arg_name:         param.name
+							params_type:             params_struct.type_ref()
+							params_field:            field.name
+							params_v_default:        field.v_default
+							params_computed_default: field.has_computed_default()
 						}
 					}
 				}
@@ -244,17 +272,22 @@ fn build_php_args(params []ast.Param, table &ast.Table, start_idx int, is_fn_var
 			}
 		}
 		inferred_optional := v_type.starts_with('?')
+		has_php_default := defaults[param.name] != ''
+		declared_optional := optional[param.name] or { has_php_default }
+		is_optional := inferred_optional || declared_optional
+		is_variadic := is_fn_variadic && i == params.len - 1
 		args << repr.PhpArgRepr{
-			name:        names[param.name] or { snake_to_camel(param.name) }
-			v_type:      v_type
-			php_type:    overrides[param.name] or { '' }
-			is_optional: param.name in optional || inferred_optional
-			is_variadic: is_fn_variadic && i == params.len - 1
-			php_default: defaults[param.name] or {
+			name:            names[param.name] or { snake_to_camel(param.name) }
+			v_type:          v_type
+			php_type:        overrides[param.name] or { '' }
+			is_optional:     is_optional
+			is_variadic:     is_variadic
+			use_php_default: is_optional && !is_variadic && has_php_default
+			php_default:     defaults[param.name] or {
 				if inferred_optional { 'null' } else { '' }
 			}
-			attributes:  param_attrs[param.name]
-			source:      repr.PhpArgSource{
+			attributes:      param_attrs[param.name]
+			source:          repr.PhpArgSource{
 				kind:        .direct
 				direct_name: param.name
 			}

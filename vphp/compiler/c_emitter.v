@@ -1,6 +1,6 @@
 module compiler
 
-import v.ast
+import compiler.syntax as ast
 import compiler.builder
 import compiler.repr
 

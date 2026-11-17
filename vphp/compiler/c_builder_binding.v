@@ -1,18 +1,19 @@
 module compiler
 
 import compiler.builder
+import compiler.php_types
 import compiler.repr
 
 fn (g CGenerator) build_func_return_spec(f &repr.PhpFuncRepr) builder.ReturnSpec {
 	return_type := f.return_spec.effective_v_type()
-	return builder.new_return_spec(return_type, effective_export_php_return_type(return_type,
+	return builder.new_return_spec(return_type, g.signature_return_type(return_type,
 		f.return_spec.php_type, f.has_export), g.php_name_for_type(return_type))
 }
 
 fn (g CGenerator) build_method_return_spec(php_name string, m &repr.PhpMethodRepr) builder.ReturnSpec {
 	raw_return_type := m.return_spec.effective_v_type()
 	return_type := if php_name == '__construct' { '' } else { raw_return_type }
-	return builder.new_return_spec(return_type, effective_export_php_return_type(return_type,
+	return builder.new_return_spec(return_type, g.signature_return_type(return_type,
 		m.return_spec.php_type, m.has_export), g.php_name_for_type(return_type))
 }
 
@@ -25,7 +26,7 @@ fn (g CGenerator) build_func(f &repr.PhpFuncRepr) builder.FuncBuilder {
 		args << builder.ClassMethodArg{
 			name:        arg.name
 			type_:       arg.v_type
-			php_type:    arg.php_type
+			php_type:    g.signature_arg_type(arg)
 			is_optional: arg.is_optional
 			is_variadic: arg.is_variadic
 			php_default: arg.php_default
@@ -82,17 +83,16 @@ fn visibility_to_property_flags(prop repr.PhpClassPropRepr) string {
 	return flags
 }
 
-fn method_args_to_builder(args []repr.PhpArgRepr) []builder.ClassMethodArg {
+fn (g CGenerator) method_args_to_builder(args []repr.PhpArgRepr) []builder.ClassMethodArg {
 	mut out := []builder.ClassMethodArg{}
 	for arg in args {
 		if is_context_v_type(arg.v_type) {
 			continue
 		}
-		php_type := if arg.php_type != '' { arg.php_type } else { '' }
 		out << builder.ClassMethodArg{
 			name:        arg.name
 			type_:       arg.v_type
-			php_type:    php_type
+			php_type:    g.signature_arg_type(arg)
 			is_optional: arg.is_optional
 			is_variadic: arg.is_variadic
 			php_default: arg.php_default
@@ -107,6 +107,11 @@ fn is_context_v_type(v_type string) bool {
 }
 
 fn method_uses_context_arg(m &repr.PhpMethodRepr) bool {
+	// Defaults and references need typed arginfo even with a hidden Context.
+	if !m.has_export && (m.return_spec.php_type.contains('&') || m.args.any(it.use_php_default
+		|| it.php_type.contains('&') || php_types.is_reference_parameter(it.v_type, it.is_variadic))) {
+		return false
+	}
 	for arg in m.args {
 		if is_context_v_type(arg.v_type) {
 			return true
@@ -115,7 +120,7 @@ fn method_uses_context_arg(m &repr.PhpMethodRepr) bool {
 	return false
 }
 
-fn interface_method_args_to_builder(_iface &repr.PhpInterfaceRepr, args []repr.PhpArgRepr) []builder.ClassMethodArg {
+fn (g CGenerator) interface_method_args_to_builder(args []repr.PhpArgRepr) []builder.ClassMethodArg {
 	mut out := []builder.ClassMethodArg{}
 	for i, arg in args {
 		// V interface AST can carry an implicit first arg `x` (self-like placeholder).
@@ -126,7 +131,7 @@ fn interface_method_args_to_builder(_iface &repr.PhpInterfaceRepr, args []repr.P
 		out << builder.ClassMethodArg{
 			name:        arg.name
 			type_:       arg.v_type
-			php_type:    arg.php_type
+			php_type:    g.signature_arg_type(arg)
 			is_optional: arg.is_optional
 			is_variadic: arg.is_variadic
 			php_default: arg.php_default
@@ -171,8 +176,8 @@ fn (g CGenerator) build_interface_type(r &repr.PhpInterfaceRepr) &builder.ClassB
 		spec := g.build_method_return_spec(php_name, m)
 		class_builder.add_abstract_method_spec(php_name, c_func, spec,
 
-			visibility_to_method_flags(m.visibility) + ' | ZEND_ACC_ABSTRACT', interface_method_args_to_builder(r,
-			m.args))
+			visibility_to_method_flags(m.visibility) + ' | ZEND_ACC_ABSTRACT',
+			g.interface_method_args_to_builder(m.args))
 	}
 	return class_builder
 }
@@ -198,6 +203,11 @@ fn (g CGenerator) build_class_type(r &repr.PhpClassRepr, has_init bool) &builder
 	class_builder.set_uses_inherited_object(needs_inherited_wrapper)
 	if class_uses_inherited_receiver(r) {
 		class_builder.set_create_object(false)
+	} else if !r.serializable {
+		class_builder.add_class_flag('ZEND_ACC_NOT_SERIALIZABLE')
+	}
+	if r.cloneable {
+		class_builder.clone_handler_prefix = to_snake_case(r.name)
 	}
 	if r.is_abstract {
 		class_builder.add_class_flag('ZEND_ACC_EXPLICIT_ABSTRACT_CLASS')
@@ -245,10 +255,10 @@ fn (g CGenerator) build_class_type(r &repr.PhpClassRepr, has_init bool) &builder
 		uses_context_arg := method_uses_context_arg(m)
 		if m.is_abstract {
 			class_builder.add_abstract_method_spec_with_context(php_name, c_func, spec, flags +
-				' | ZEND_ACC_ABSTRACT', method_args_to_builder(m.args), uses_context_arg)
+				' | ZEND_ACC_ABSTRACT', g.method_args_to_builder(m.args), uses_context_arg)
 		} else {
 			class_builder.add_method_spec_with_context(php_name, c_func, spec, flags,
-				method_args_to_builder(m.args), uses_context_arg)
+				g.method_args_to_builder(m.args), uses_context_arg)
 		}
 	}
 	for attr in r.attributes {

@@ -1,8 +1,7 @@
 module linker
 
 import os
-import rand
-import v.ast
+import compiler.syntax as ast
 import compiler.repr
 
 fn strip_module_name(name string) string {
@@ -12,32 +11,12 @@ fn strip_module_name(name string) string {
 	return name
 }
 
-fn shell_single_quote(value string) string {
-	return "'" + value.replace("'", "'\\''") + "'"
-}
-
-fn shell_double_quote(value string) string {
-	return '"' + value.replace('"', '\\"') + '"'
-}
-
-fn shell_quote_arg(value string) string {
-	if os.user_os() == 'windows' {
-		return shell_double_quote(value)
-	}
-	return shell_single_quote(value)
-}
-
 fn php_class_internal_status(name string) int {
 	if name.trim_space() == '' {
 		return -1
 	}
-	tmp_script := os.join_path(os.temp_dir(), 'vphp_internal_class_${rand.u64()}.php')
-	script := "<?php\n\$name = \$argv[1] ?? '';\nif (!class_exists(\$name, false)) { exit(1); }\n\$r = new ReflectionClass(\$name);\nexit(\$r->isInternal() ? 0 : 2);\n"
-	os.write_file(tmp_script, script) or { return -1 }
-	cmd := 'php ${shell_quote_arg(tmp_script)} ${shell_quote_arg(name)}'
-	res := os.execute(cmd)
-	os.rm(tmp_script) or {}
-	return res.exit_code
+	script := r"$name = $argv[1] ?? ''; if (!class_exists($name, false)) { exit(1); } exit((new ReflectionClass($name))->isInternal() ? 0 : 2);"
+	return os.exec(['php', '-r', script, '--', name]).exit_code
 }
 
 fn is_php_trait_class(el repr.PhpRepr) bool {
@@ -176,6 +155,32 @@ pub fn link_class_parents(mut elements []repr.PhpRepr) ! {
 	}
 }
 
+pub fn validate_object_copy_policies(elements []repr.PhpRepr) ! {
+	for repr_ in elements {
+		if repr_ !is repr.PhpClassRepr {
+			continue
+		}
+		element := repr_ as repr.PhpClassRepr
+		if !element.cloneable && !element.serializable {
+			continue
+		}
+		if element.is_trait || element.parent != '' {
+			return error('class ${element.php_name} must be a root VPHP class to opt into cloning or serialization with PhpObjectCopy')
+		}
+		if element.cloneable && !element.has_clone_into {
+			return error('cloneable class ${element.php_name} must define clone_into(mut target ${element.name})')
+		}
+		if element.serializable {
+			for name in ['__serialize', '__unserialize'] {
+				if !element.methods.any(it.name.to_lower() == name && it.visibility == 'public'
+					&& !it.is_static && !it.is_abstract) {
+					return error('serializable class ${element.php_name} must export a public ${name} method')
+				}
+			}
+		}
+	}
+}
+
 pub fn validate_inherited_object_classes(elements []repr.PhpRepr) ! {
 	for el in elements {
 		if el !is repr.PhpClassRepr {
@@ -246,12 +251,7 @@ fn link_class_shadow_statics(mut cls repr.PhpClassRepr, elements []repr.PhpRepr,
 	for el in elements {
 		if el is repr.PhpConstRepr && el.name == cls.shadow_static_name {
 			cls.shadow_static_type = el.v_type
-			mut typ := table.find_type(cls.shadow_static_type)
-			if typ == 0 {
-				typ = table.find_type('main.' + cls.shadow_static_type)
-			}
-			if typ != 0 {
-				sym := table.sym(typ)
+			if sym := table.find_sym(cls.shadow_static_type) {
 				sym_info := sym.info
 				if sym_info is ast.Struct {
 					for field in sym_info.fields {

@@ -21,118 +21,47 @@ pub fn generic_free_raw[T](ptr voidptr) {
 	// SAFETY: C interop block with valid pointer arguments
 	unsafe {
 		mut obj := &T(ptr)
+		// Only these field types own a PHP handle. Other fields may expose
+		// release() without transferring ownership to the generated wrapper.
 		$for field in T.fields {
-			$if field.typ is PersistentOwnedZBox {
+			$if field.typ is PersistentOwnedZBox ||
+				field.typ is PhpValue ||
+				field.typ is PhpArray ||
+				field.typ is PhpObject ||
+				field.typ is PhpCallable ||
+				field.typ is PhpClosure ||
+				field.typ is PhpIterable ||
+				field.typ is PhpIterator ||
+				field.typ is PhpResource ||
+				field.typ is PhpReference ||
+				field.typ is PhpNull ||
+				field.typ is PhpBool ||
+				field.typ is PhpInt ||
+				field.typ is PhpDouble ||
+				field.typ is PhpString ||
+				field.typ is PhpScalar ||
+				field.typ is PhpThrowable ||
+				field.typ is PhpEnumCase ||
+				field.typ is RetainedObject ||
+				field.typ is RetainedCallable {
 				obj.$(field.name).release()
-			} $else $if field.typ is PhpValue {
-				obj.$(field.name).release()
-			} $else $if field.typ is PhpArray {
-				obj.$(field.name).release()
-			} $else $if field.typ is PhpObject {
-				obj.$(field.name).release()
-			} $else $if field.typ is PhpCallable {
-				obj.$(field.name).release()
-			} $else $if field.typ is PhpClosure {
-				obj.$(field.name).release()
-			} $else $if field.typ is PhpIterable {
-				obj.$(field.name).release()
-			} $else $if field.typ is PhpIterator {
-				obj.$(field.name).release()
-			} $else $if field.typ is PhpResource {
-				obj.$(field.name).release()
-			} $else $if field.typ is PhpReference {
-				obj.$(field.name).release()
-			} $else $if field.typ is PhpNull {
-				obj.$(field.name).release()
-			} $else $if field.typ is PhpBool {
-				obj.$(field.name).release()
-			} $else $if field.typ is PhpInt {
-				obj.$(field.name).release()
-			} $else $if field.typ is PhpDouble {
-				obj.$(field.name).release()
-			} $else $if field.typ is PhpString {
-				obj.$(field.name).release()
-			} $else $if field.typ is PhpScalar {
-				obj.$(field.name).release()
-			} $else $if field.typ is PhpThrowable {
-				obj.$(field.name).release()
-			} $else $if field.typ is PhpEnumCase {
-				obj.$(field.name).release()
-			} $else $if field.typ is RetainedObject {
-				obj.$(field.name).release()
-			} $else $if field.typ is RetainedCallable {
-				obj.$(field.name).release()
-			} $else $if field.typ is []PersistentOwnedZBox {
+			} $else $if field.typ is []PersistentOwnedZBox ||
+				field.typ is []PhpValue ||
+				field.typ is []PhpObject ||
+				field.typ is []RetainedObject ||
+				field.typ is []RetainedCallable {
 				for mut box in obj.$(field.name) {
 					box.release()
 				}
 				$if nongc ? {
 					obj.$(field.name).free()
 				}
-			} $else $if field.typ is []PhpValue {
-				for mut box in obj.$(field.name) {
-					box.release()
-				}
-				$if nongc ? {
-					obj.$(field.name).free()
-				}
-			} $else $if field.typ is []PhpObject {
-				for mut box in obj.$(field.name) {
-					box.release()
-				}
-				$if nongc ? {
-					obj.$(field.name).free()
-				}
-			} $else $if field.typ is map[string]PersistentOwnedZBox {
-				for _, mut box in obj.$(field.name) {
-					box.release()
-				}
-				$if nongc ? {
-					obj.$(field.name).free()
-				}
-			} $else $if field.typ is map[string]PhpValue {
-				for _, mut box in obj.$(field.name) {
-					box.release()
-				}
-				$if nongc ? {
-					obj.$(field.name).free()
-				}
-			} $else $if field.typ is []RetainedObject {
-				for mut box in obj.$(field.name) {
-					box.release()
-				}
-				$if nongc ? {
-					obj.$(field.name).free()
-				}
-			} $else $if field.typ is map[string]RetainedObject {
-				for _, mut box in obj.$(field.name) {
-					box.release()
-				}
-				$if nongc ? {
-					obj.$(field.name).free()
-				}
-			} $else $if field.typ is map[string]PhpObject {
-				for _, mut box in obj.$(field.name) {
-					box.release()
-				}
-				$if nongc ? {
-					obj.$(field.name).free()
-				}
-			} $else $if field.typ is []RetainedCallable {
-				for mut box in obj.$(field.name) {
-					box.release()
-				}
-				$if nongc ? {
-					obj.$(field.name).free()
-				}
-			} $else $if field.typ is map[string]RetainedCallable {
-				for _, mut box in obj.$(field.name) {
-					box.release()
-				}
-				$if nongc ? {
-					obj.$(field.name).free()
-				}
-			} $else $if field.typ is map[string]PhpCallable {
+			} $else $if field.typ is map[string]PersistentOwnedZBox ||
+				field.typ is map[string]PhpValue ||
+				field.typ is map[string]RetainedObject ||
+				field.typ is map[string]PhpObject ||
+				field.typ is map[string]RetainedCallable ||
+				field.typ is map[string]PhpCallable {
 				for _, mut box in obj.$(field.name) {
 					box.release()
 				}

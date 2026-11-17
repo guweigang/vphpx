@@ -559,7 +559,8 @@ pub fn (v DynValue) with_runtime_zval[T](run fn (ZVal) T) ?T {
 	}
 	if v.runtime_lifecycle == .request {
 		ref := v.request_ref() or { return none }
-		return run(ref.to_zval())
+		z := ref.to_zval()
+		return run(z)
 	}
 	match v.type {
 		.object_ref {

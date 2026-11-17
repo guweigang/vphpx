@@ -1,11 +1,9 @@
 // vphp/compiler/entry.v
 module compiler
 
-import v.ast
-import v.pref
+import compiler.syntax as ast
 import compiler.linker
 import compiler.parser as cparser
-import v.parser
 import compiler.repr
 
 pub struct Compiler {
@@ -21,7 +19,6 @@ pub mut:
 	params_structs  map[string]repr.PhpParamsStruct
 mut:
 	table        &ast.Table
-	pref_set     &pref.Preferences
 	decl_modules map[string]string
 }
 
@@ -30,7 +27,6 @@ pub fn new(target_files []string) Compiler {
 		target_files: target_files
 		ext_name:     ''
 		table:        ast.new_table()
-		pref_set:     pref.new_preferences()
 	}
 }
 
@@ -38,10 +34,7 @@ pub fn (mut c Compiler) compile() !string {
 	mut all_stmts := []ast.Stmt{}
 
 	for file in c.target_files {
-		file_ast := parser.parse_file(file, mut c.table, .parse_comments, c.pref_set)
-		if file_ast.errors.len > 0 {
-			return error('AST 解析失败: ${file_ast.errors[0].message} in ${file}')
-		}
+		file_ast := ast.parse_file(file, mut c.table)!
 		if c.ext_name == '' {
 			if name, version, description, ini_entries := cparser.parse_extension_meta(file_ast,
 				c.table)
@@ -52,7 +45,7 @@ pub fn (mut c Compiler) compile() !string {
 				c.ini_entries = ini_entries.clone()
 			}
 		}
-		c.remember_decl_modules(file_ast.stmts, file_ast.mod.name)
+		c.remember_decl_modules(file_ast.stmts, file_ast.module_name)
 		all_stmts << file_ast.stmts
 	}
 
@@ -79,6 +72,7 @@ pub fn (mut c Compiler) compile() !string {
 	linker.link_class_traits(mut c.elements)!
 	linker.link_class_embeds(mut c.elements)!
 	linker.link_class_parents(mut c.elements)!
+	linker.validate_object_copy_policies(c.elements)!
 	linker.validate_inherited_object_classes(c.elements)!
 	linker.link_interface_parents(mut c.elements)!
 	linker.link_class_interfaces(mut c.elements)!

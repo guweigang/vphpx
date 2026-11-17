@@ -5,9 +5,9 @@ import vphp.zend
 
 // 框架核心入口
 @[export: 'vphp_framework_init']
-pub fn vphp_framework_init(module_number int) {
+pub fn vphp_framework_init(module_number i32) {
 	// 自动初始化资源系统
-	init_framework(module_number)
+	init_framework(int(module_number))
 }
 
 pub fn init_framework(module_number int) {

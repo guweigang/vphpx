@@ -1,5 +1,11 @@
 module zend
 
+fn C.vphp_object_is_instance_of(obj voidptr, ce voidptr) bool
+
+pub fn object_is_instance_of(obj voidptr, ce voidptr) bool {
+	return C.vphp_object_is_instance_of(obj, ce)
+}
+
 pub fn allocate_contiguous_object(ce voidptr, v_size usize) voidptr {
 	return C.vphp_allocate_contiguous_object(ce, v_size)
 }

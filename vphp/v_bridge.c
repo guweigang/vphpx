@@ -62,7 +62,7 @@ static bool vphp_value_matches_type(zend_execute_data *execute_data,
                                     zend_type type, zval *value,
                                     bool is_return_type);
 static bool vphp_value_matches_mask(uint32_t mask, zval *value, bool strict,
-                                    bool is_return_type);
+                                    bool is_return_type, bool can_coerce);
 static bool vphp_value_matches_named_type(zend_execute_data *execute_data,
                                           zend_type type, zval *value,
                                           bool is_return_type);
@@ -145,6 +145,8 @@ ZEND_TLS vphp_pending_auto_iface_binding_t *vphp_pending_auto_iface_bindings =
 ZEND_TLS uint32_t vphp_pending_auto_iface_bindings_len = 0;
 ZEND_TLS uint32_t vphp_pending_auto_iface_bindings_cap = 0;
 ZEND_TLS int vphp_runtime_autoloading = 0;
+
+static void vphp_mark_omitted_computed_defaults(zend_execute_data *execute_data);
 
 #include "bridge/debug.inc.c"
 #include "bridge/runtime.inc.c"

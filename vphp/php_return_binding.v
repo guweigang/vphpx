@@ -1,11 +1,8 @@
 module vphp
 
 import vphp.object
-import vphp.zend as _
+import vphp.zend
 import vphp.zval as zvalmod
-
-fn C.vphp_zend_enum_get_case(ce voidptr, name &char, len int) voidptr
-fn C.vphp_zval_set_object_copy(z voidptr, zo voidptr)
 
 // --- From php_return_type.v ---
 pub struct PhpReturn {
@@ -130,34 +127,22 @@ pub fn (ret PhpReturn) borrowed_object(v_ptr voidptr, ce ZendClassEntry, handler
 
 // --- From php_return_compound.v ---
 pub fn (ret PhpReturn) list[T](list []T) {
-	out := ret.to_zval()
-	out.array_init()
-	for item in list {
-		$if T is string {
-			out.push_string(item)
-		} $else $if T is f64 {
-			out.push_double(item)
-		} $else $if T is int || T is i64 {
-			out.push_long(i64(item))
-		} $else {
+	$if T is string || T is f64 || T is int || T is i64 {
+		ret.v(list)
+	} $else {
+		out := ret.to_zval()
+		out.array_init()
+		for item in list {
 			out.push_struct(item)
 		}
 	}
 }
 
 pub fn (ret PhpReturn) map_value[T](m map[string]T) {
-	out := ret.to_zval()
-	out.array_init()
-	for k, v in m {
-		$if T is string {
-			out.add_assoc_string(k, v)
-		} $else $if T is int || T is i64 {
-			out.add_assoc_long(k, i64(v))
-		} $else $if T is f64 {
-			out.add_assoc_double(k, v)
-		} $else $if T is bool {
-			out.add_assoc_bool(k, v)
-		}
+	$if T is string || T is int || T is i64 || T is f64 || T is bool {
+		ret.v(m)
+	} $else {
+		ret.to_zval().array_init()
 	}
 }
 
@@ -297,73 +282,13 @@ pub fn (ret PhpReturn) v[T](val T) {
 		return
 	} $else $if T is $sumtype {
 		$for variant in T.variants {
-			$if variant.typ is bool {
-				if val is bool {
-					ret.zval(ZVal.new_bool(val))
-					return
-				}
-			}
-			$if variant.typ is int {
-				if val is int {
-					ret.zval(ZVal.new_int(val))
-					return
-				}
-			}
-			$if variant.typ is i64 {
-				if val is i64 {
-					ret.zval(ZVal.new_int(val))
-					return
-				}
-			}
-			$if variant.typ is f64 {
-				if val is f64 {
-					ret.zval(ZVal.new_float(val))
-					return
-				}
-			}
-			$if variant.typ is string {
-				if val is string {
-					ret.zval(ZVal.new_string(val))
-					return
-				}
-			}
-			$if variant.typ is []string {
-				if val is []string {
-					mut z := ZVal.new_array()
-					z.from_v[[]string](val) or {}
-					ret.zval(z)
-					return
-				}
-			}
-			$if variant.typ is []int {
-				if val is []int {
-					mut z := ZVal.new_array()
-					z.from_v[[]int](val) or {}
-					ret.zval(z)
-					return
-				}
-			}
-			$if variant.typ is []i64 {
-				if val is []i64 {
-					mut z := ZVal.new_array()
-					z.from_v[[]i64](val) or {}
-					ret.zval(z)
-					return
-				}
-			}
-			$if variant.typ is []f64 {
-				if val is []f64 {
-					mut z := ZVal.new_array()
-					z.from_v[[]f64](val) or {}
-					ret.zval(z)
-					return
-				}
-			}
-			$if variant.typ is []bool {
-				if val is []bool {
-					mut z := ZVal.new_array()
-					z.from_v[[]bool](val) or {}
-					ret.zval(z)
+			$if variant.typ is bool || variant.typ is int || variant.typ is i64 ||
+				variant.typ is f64 || variant.typ is string || variant.typ is []string ||
+				variant.typ is []int || variant.typ is []i64 || variant.typ is []f64 ||
+				variant.typ is []bool {
+				if val is variant {
+					payload := val
+					ret.v(payload)
 					return
 				}
 			}
@@ -386,52 +311,17 @@ pub fn (ret PhpReturn) v[T](val T) {
 				}
 			}
 			$if variant.typ is $struct {
-				match val {
-					variant.typ {
-						mut v_name := typeof(variant.typ).name
-						if v_name.contains('.') {
-							v_name = v_name.all_after_last('.')
-						}
-						ce := cached_class_entry(v_name)
-						if ce != unsafe { nil } // SAFETY: nil literal in unsafe context
-						  {
-							mut layout := SumTypeLayout{}
-							// SAFETY: C interop block with valid pointer arguments
-							unsafe {
-								C.memcpy(&layout, &val, sizeof(SumTypeLayout))
-							}
-							ret.object(layout.ptr, ZendClassEntry.from_ptr(ce))
-							return
-						}
-					}
-					else {}
+				if val is variant {
+					payload := val
+					ret.sumtype_object(payload)
+					return
 				}
 			}
 			$if variant.typ is $enum {
-				match val {
-					variant.typ {
-						$for enum_case in variant.typ.values {
-							if val == T(enum_case.value) {
-								mut v_name := typeof(variant.typ).name
-								if v_name.contains('.') {
-									v_name = v_name.all_after_last('.')
-								}
-								ce := cached_class_entry(v_name)
-								if ce != unsafe { nil } // SAFETY: nil literal in unsafe context
-								  {
-									case_zo := C.vphp_zend_enum_get_case(ce,
-										&char(enum_case.name.str), enum_case.name.len)
-									if case_zo != unsafe { nil } // SAFETY: nil literal in unsafe context
-									  {
-										mut out := ret.to_zval()
-										C.vphp_zval_set_object_copy(out.raw_ptr(), case_zo)
-										return
-									}
-								}
-							}
-						}
-					}
-					else {}
+				if val is variant {
+					payload := val
+					ret.v(payload)
+					return
 				}
 			}
 		}
@@ -447,4 +337,19 @@ pub fn (ret PhpReturn) v[T](val T) {
 			ret.null()
 		}
 	}
+}
+
+fn (ret PhpReturn) sumtype_object[T](payload T) {
+	$for method in T.methods {
+		$if method.name == 'php_class_name' {
+			binding := PhpObjectBinding.new[T]()
+			if binding.is_valid() {
+				ptr := unsafe { memdup(&payload, int(sizeof(T))) }
+				zend.return_owned_object_ptr(ret.raw_ptr(), ptr, binding.class_entry.raw_ptr(),
+					binding.handlers.raw_ptr())
+				return
+			}
+		}
+	}
+	ret.null()
 }

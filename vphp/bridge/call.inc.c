@@ -293,6 +293,7 @@ static void ZEND_FASTCALL vphp_closure_handler(zend_execute_data *execute_data,
   void *bridge_ptr = zf->reserved[1];
 
   if (bridge_ptr) {
+    vphp_mark_omitted_computed_defaults(execute_data);
     void (*bridge)(void *, zend_execute_data *, zval *) =
         (void (*)(void *, zend_execute_data *, zval *))bridge_ptr;
     bridge(v_thunk, execute_data, return_value);
@@ -318,6 +319,13 @@ void vphp_create_closure_FULL_AUTO_V2(zval *zv, void *v_thunk,
 
 void vphp_create_closure_with_arity(zval *zv, void *v_thunk, void *bridge_ptr,
                                     int num_args, int required_args) {
+  vphp_create_closure_with_arginfo(zv, v_thunk, bridge_ptr, num_args,
+                                  required_args, NULL);
+}
+
+void vphp_create_closure_with_arginfo(zval *zv, void *v_thunk, void *bridge_ptr,
+                                     int num_args, int required_args,
+                                     const zend_internal_arg_info *arginfo) {
   zend_internal_function *zf =
       (zend_internal_function *)pecalloc(1, sizeof(zend_internal_function), 1);
   zf->type = ZEND_INTERNAL_FUNCTION;
@@ -326,11 +334,133 @@ void vphp_create_closure_with_arity(zval *zv, void *v_thunk, void *bridge_ptr,
   zf->function_name = zend_string_init("VPHPClosure", 11, 1);
   zf->num_args = num_args;
   zf->required_num_args = required_args;
-  zf->arg_info = NULL;
+  zf->arg_info = arginfo ? (zend_internal_arg_info *)arginfo + 1 : NULL;
   zf->reserved[0] = v_thunk;
   zf->reserved[1] = bridge_ptr;
 
   vphp_zend_create_closure(zv, (zend_function *)zf);
+}
+
+ZEND_BEGIN_ARG_INFO_EX(vphp_closure_default_constructor_args, 0, 0, 2)
+ZEND_ARG_TYPE_INFO(0, closure, IS_LONG, 0)
+ZEND_ARG_TYPE_INFO(0, field, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(vphp_closure_default_is_dynamic_args, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+
+typedef struct {
+  vphp_computed_default_matcher matches;
+  zend_long closure;
+  zend_long field;
+  bool initialized;
+  zend_object std;
+} vphp_closure_default;
+
+static zend_object_handlers vphp_closure_default_handlers;
+
+static vphp_closure_default *vphp_closure_default_from_object(zend_object *obj) {
+  return (vphp_closure_default *)((char *)obj - XtOffsetOf(vphp_closure_default, std));
+}
+
+static zend_object *vphp_create_closure_default(zend_class_entry *ce) {
+  vphp_closure_default *marker = zend_object_alloc(sizeof(*marker), ce);
+  zend_object_std_init(&marker->std, ce);
+  marker->std.handlers = &vphp_closure_default_handlers;
+  return &marker->std;
+}
+
+static PHP_METHOD(VphpClosureDefault, __construct) {
+  zend_long closure, field;
+  ZEND_PARSE_PARAMETERS_START(2, 2)
+    Z_PARAM_LONG(closure)
+    Z_PARAM_LONG(field)
+  ZEND_PARSE_PARAMETERS_END();
+
+  vphp_closure_default *marker = vphp_closure_default_from_object(Z_OBJ_P(ZEND_THIS));
+  if (marker->initialized) {
+    return;
+  }
+  marker->initialized = true;
+  marker->closure = closure;
+  marker->field = field;
+  marker->matches = NULL;
+  zend_execute_data *caller = execute_data->prev_execute_data;
+  zend_class_entry *scope = caller && caller->func ? caller->func->common.scope : NULL;
+  // Zend creates an internal call frame when filling a missing internal argument.
+  // Reflection and userland defaults only create inert descriptors.
+  const uint32_t ast_call = ZEND_CALL_TOP | ZEND_CALL_DYNAMIC;
+  if (caller && caller->func && caller->func->type == ZEND_INTERNAL_FUNCTION &&
+      caller->opline == NULL && (ZEND_CALL_INFO(execute_data) & ast_call) == ast_call &&
+      !(scope && zend_string_equals_literal_ci(scope->name, "ReflectionParameter"))) {
+    marker->matches = (vphp_computed_default_matcher)execute_data->func->internal_function.reserved[0];
+  }
+}
+
+static PHP_METHOD(VphpClosureDefault, isDynamic) {
+  ZEND_PARSE_PARAMETERS_NONE();
+  RETURN_TRUE;
+}
+
+static const zend_function_entry vphp_closure_default_methods[] = {
+    PHP_ME(VphpClosureDefault, __construct, vphp_closure_default_constructor_args,
+           ZEND_ACC_PUBLIC)
+    PHP_ME(VphpClosureDefault, isDynamic, vphp_closure_default_is_dynamic_args,
+           ZEND_ACC_PUBLIC)
+    PHP_FE_END
+};
+
+void vphp_register_closure_default_class(const char *name,
+                                         vphp_computed_default_matcher matches) {
+  zend_class_entry definition;
+  INIT_CLASS_ENTRY_EX(definition, name, strlen(name), vphp_closure_default_methods);
+  zend_class_entry *ce = zend_register_internal_class(&definition);
+  ce->ce_flags |= ZEND_ACC_FINAL;
+  ce->create_object = vphp_create_closure_default;
+  memcpy(&vphp_closure_default_handlers, zend_get_std_object_handlers(),
+         sizeof(vphp_closure_default_handlers));
+  vphp_closure_default_handlers.offset = XtOffsetOf(vphp_closure_default, std);
+  vphp_closure_default_handlers.clone_obj = NULL;
+  ce->constructor->internal_function.reserved[0] = (void *)matches;
+}
+
+bool vphp_matches_computed_default_handler(const zend_internal_function *func,
+                                           zif_handler handler) {
+  if (func->handler == handler) {
+    return true;
+  }
+  if (!(func->fn_flags & ZEND_ACC_FAKE_CLOSURE) || !func->function_name) {
+    return false;
+  }
+  // First-class callables preserve the registered arginfo and wrap the handler.
+  HashTable *table = func->scope ? &func->scope->function_table : EG(function_table);
+  zend_string *name = zend_string_tolower(func->function_name);
+  const zend_function *registered = zend_hash_find_ptr(table, name);
+  zend_string_release(name);
+  return registered && registered->type == ZEND_INTERNAL_FUNCTION
+      && registered->internal_function.handler == handler
+      && registered->internal_function.arg_info == func->arg_info;
+}
+
+static void vphp_mark_omitted_computed_defaults(zend_execute_data *execute_data) {
+  const zend_internal_function *func = &execute_data->func->internal_function;
+  // Closure::__invoke can forward already-filled slots in a fresh Zend frame.
+  if (!func->arg_info) {
+    return;
+  }
+  uint32_t count = MIN(ZEND_CALL_NUM_ARGS(execute_data), func->num_args);
+  for (uint32_t i = 0; i < count; ++i) {
+    zval *arg = ZEND_CALL_ARG(execute_data, i + 1);
+    if (Z_TYPE_P(arg) != IS_OBJECT || Z_OBJ_HT_P(arg) != &vphp_closure_default_handlers) {
+      continue;
+    }
+    vphp_closure_default *marker = vphp_closure_default_from_object(Z_OBJ_P(arg));
+    if (marker->matches && marker->field == i &&
+        marker->matches(func, marker->closure, marker->field)) {
+      zval_ptr_dtor(arg);
+      ZVAL_UNDEF(arg);
+    }
+  }
 }
 
 static const zend_internal_arg_info vphp_variadic_closure_arginfo[] = {

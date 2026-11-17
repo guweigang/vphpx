@@ -1,6 +1,6 @@
 module parser
 
-import v.ast
+import compiler.syntax as ast
 import compiler.repr
 
 pub fn parse_constant_decl(stmt ast.Stmt, table &ast.Table) ?&repr.PhpConstRepr {

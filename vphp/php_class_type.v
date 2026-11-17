@@ -164,12 +164,12 @@ fn (c PhpClass) static_method_request_owned(method string, args ...PhpArgInput) 
 }
 
 pub fn (c PhpClass) call_static(method string, args ...PhpArgInput) PhpValue {
-	mut result := c.static_method_request_owned(method, args)
+	mut result := c.static_method_request_owned(method, ...args)
 	return result.take_value()
 }
 
 pub fn (c PhpClass) static_method[T](method string, args ...PhpArgInput) !T {
-	mut result := c.static_method_request_owned(method, args)
+	mut result := c.static_method_request_owned(method, ...args)
 	defer {
 		result.release()
 	}
@@ -177,7 +177,7 @@ pub fn (c PhpClass) static_method[T](method string, args ...PhpArgInput) !T {
 }
 
 pub fn (c PhpClass) with_static_method_result[T, R](method string, run fn (T) R, args ...PhpArgInput) !R {
-	mut result := c.static_method_request_owned(method, args)
+	mut result := c.static_method_request_owned(method, ...args)
 	defer {
 		result.release()
 	}

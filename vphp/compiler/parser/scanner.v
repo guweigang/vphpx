@@ -1,6 +1,6 @@
 module parser
 
-import v.ast
+import compiler.syntax as ast
 import compiler.repr
 
 // parse_structural_elements 扫描并提取所有结构要素（Interface, Enum, globals Struct, 普通 Struct）

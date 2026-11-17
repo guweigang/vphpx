@@ -20,11 +20,7 @@ fn sanitize_ldflags(ldflags string) string {
 }
 
 fn detect_v_root_include_flags() string {
-	v_exe := os.find_abs_path_of_executable('v') or { '' }
-	if v_exe == '' {
-		return ''
-	}
-	v_root := os.dir(os.real_path(v_exe))
+	v_root := os.dir(os.real_path(@VEXE))
 	if v_root == '' {
 		return ''
 	}
@@ -117,6 +113,7 @@ fn main() {
 
 	// Step 2: V -> C transpilation
 	transpiled_c := os.join_path(project_root, '${ext_name}_generated.c')
+	flags_path := transpiled_c + '.flags'
 	legacy_transpiled_c := os.join_path(project_root, 'vphp_ext_${ext_name}.c')
 	output_so := os.join_path(project_root, 'vphptest.so')
 	gc_mode := detect_v_gc_mode()
@@ -127,10 +124,21 @@ fn main() {
 	os.rm(output_so) or {}
 	os.rm(legacy_transpiled_c) or {}
 
-	v_res :=
-		os.execute('v -nocache -enable-globals -gc ${gc_mode} -path ".:..:@vlib" -shared -o ${transpiled_c} ${project_root}')
+	v_res := os.exec([@VEXE, '-nocache', '-enable-globals', '-gc', gc_mode, '-path',
+		'.:..:@vlib', '-exclude', os.join_path(project_root, 'build.v'), '-shared', '-dump-c-flags',
+		flags_path, '-o',
+		transpiled_c, project_root])
 	if v_res.exit_code != 0 {
 		println('❌ V 编译失败: ${v_res.output}')
+		exit(1)
+	}
+	native_inputs := compiler.native_link_inputs(flags_path) or {
+		eprintln('❌ 无法读取 V 的链接输入: ${err}')
+		exit(1)
+	}
+	objects_path := transpiled_c + '.objects'
+	os.write_file(objects_path, native_inputs.map(os.quoted_path(it)).join('\n') + '\n') or {
+		eprintln('❌ 无法保存 V 的链接输入: ${err}')
 		exit(1)
 	}
 
@@ -163,10 +171,10 @@ fn main() {
 		extra_link_flags = ' ${gc_link_flags}'
 	}
 
-	gcc_cmd := 'gcc -shared -fPIC ${disabled_warnings} -DCOMPILE_DL_${ext_name.to_upper()}=1 ' +
+	gcc_cmd := 'gcc -shared -fPIC ${disabled_warnings} -D_GNU_SOURCE -DCOMPILE_DL_${ext_name.to_upper()}=1 ' +
 		'${v_root_cflags} ${extra_compile_flags}-I${brew_path}/include -L${brew_path}/lib -lcjson ' +
 		'-DcJSON_GetErrorPos=cJSON_GetErrorPtr ' +
-		'${php_inc} ${transpiled_c} php_bridge.c ../vphp/v_bridge.c -o ${output_so} ' +
+		'${php_inc} ${transpiled_c} php_bridge.c ../vphp/v_bridge.c @${os.quoted_path(objects_path)} -o ${output_so} ' +
 		'-I../vphp ' + '${php_ldflags} ${php_libs}${extra_link_flags} ${platform_link_flags}'
 
 	println('执行命令: ${gcc_cmd}')

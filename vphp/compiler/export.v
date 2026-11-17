@@ -53,19 +53,101 @@ fn (c Compiler) collect_type_fragments() builder.ExportFragments {
 	return fragments
 }
 
+fn (c Compiler) struct_closure_metadata() []StructClosureBinding {
+	mut bindings := []StructClosureBinding{}
+	for el in c.elements {
+		if el is repr.PhpFuncRepr {
+			if binding := StructClosureBinding.new(el.name, el.return_spec.effective_v_type(),
+				c.params_structs) {
+				if binding.kind == .params_struct {
+					bindings << binding
+				}
+			}
+		} else if el is repr.PhpClassRepr && !el.is_trait {
+			for method in el.methods {
+				if method.has_export || method.is_abstract {
+					continue
+				}
+				name := if method.v_name != '' { method.v_name } else { method.name }
+				if binding := StructClosureBinding.new('${el.name}_${name}',
+					method.return_spec.effective_v_type(), c.params_structs) {
+					if binding.kind == .params_struct {
+						bindings << binding
+					}
+				}
+			}
+		}
+	}
+	return bindings
+}
+
 // ==========================================
 // 1. 总入口：由外部 build.v 调用
 // ==========================================
 pub fn (mut c Compiler) generate_all() ! {
+	mut closure_defaults := []StructClosureBinding{}
+	for binding in c.struct_closure_metadata() {
+		if binding.computed_default_indices().len > 0 {
+			closure_defaults << binding
+		}
+	}
+	default_class := 'VPHP\\Internal\\${sanitize_struct_closure_token(c.ext_name)}_ClosureDefault'
+	ordinary_defaults := c.bind_ordinary_defaults(default_class, closure_defaults.len)
 	c.generate_h()!
-	c.generate_c()!
+	c.generate_c(default_class, closure_defaults, ordinary_defaults)!
 	c.generate_v_glue()!
+}
+
+struct OrdinaryDefaultBinding {
+	handler string
+	fields  []int
+}
+
+fn (mut c Compiler) bind_ordinary_defaults(default_class string, first_id int) []OrdinaryDefaultBinding {
+	mut bindings := []OrdinaryDefaultBinding{}
+	for mut el in c.elements {
+		if mut el is repr.PhpFuncRepr {
+			if !el.uses_context {
+				handler := 'ZEND_FN(${el.name})'
+				fields := bind_default_markers(mut el.args, default_class, first_id + bindings.len)
+				if fields.len > 0 {
+					bindings << OrdinaryDefaultBinding{handler, fields}
+				}
+			}
+		} else if mut el is repr.PhpClassRepr {
+			if el.is_trait {
+				continue
+			}
+			for mut method in el.methods {
+				if method.has_export || method.is_abstract || method_uses_context_arg(method) {
+					continue
+				}
+				handler := 'ZEND_MN(${el.c_name()}_${php_method_name(method.name)})'
+				fields := bind_default_markers(mut method.args, default_class, first_id + bindings.len)
+				if fields.len > 0 {
+					bindings << OrdinaryDefaultBinding{handler, fields}
+				}
+			}
+		}
+	}
+	return bindings
+}
+
+fn bind_default_markers(mut args []repr.PhpArgRepr, default_class string, id int) []int {
+	mut fields := []int{}
+	for index, mut arg in args {
+		if arg.source.params_computed_default && !arg.use_php_default {
+			arg.php_default = 'new \\${default_class}(${id}, ${index})'
+			fields << index
+		}
+	}
+	return fields
 }
 
 // ==========================================
 // 2. 生成 C 源文件 (php_bridge.c)
 // ==========================================
-fn (mut c Compiler) generate_c() ! {
+fn (mut c Compiler) generate_c(default_class string, closure_defaults []StructClosureBinding, ordinary_defaults []OrdinaryDefaultBinding) ! {
 	mut res := strings.new_builder(2048)
 	res.write_string('/* ⚠️ VPHP Compiler Generated for ${c.ext_name} */\n')
 	res.write_string('#include "php_bridge.h"\n\n')
@@ -81,13 +163,29 @@ fn (mut c Compiler) generate_c() ! {
 	mod_builder.globals = c.globals_repr
 
 	res.write_string(mod_builder.render_declarations())
-
+	mut default_id := 0
+	for binding in c.struct_closure_metadata() {
+		mut computed_defaults := map[int]string{}
+		for i in binding.computed_default_indices() {
+			// Reflection can construct the descriptor without invoking V.
+			computed_defaults[i] = 'new \\${default_class}(${default_id}, ${i})'
+		}
+		if computed_defaults.len > 0 {
+			default_id++
+		}
+		res.write_string(builder.render_closure_arginfo(binding.arginfo_symbol(), binding.fields,
+			binding.required_fields(), computed_defaults, c.table) + '\n')
+	}
 	// 1. 业务逻辑层：写入每个导出单元的实例实现
 	for line in fragments.implementations {
 		res.write_string(line + '\n')
 	}
 	for line in type_fragments.implementations {
 		res.write_string(line + '\n')
+	}
+	if closure_defaults.len > 0 || ordinary_defaults.len > 0 {
+		res.write_string(render_computed_default_dispatch(closure_defaults, ordinary_defaults))
+		mod_builder.add_minit_line('vphp_register_closure_default_class("${c_string_escape(default_class)}", vphp_dispatch_computed_default);')
 	}
 
 	for fn_builder in fragments.function_table {
@@ -123,6 +221,26 @@ fn (mut c Compiler) generate_c() ! {
 	res.write_string(mod_builder.render_get_module())
 
 	os.write_file('php_bridge.c', res.str())!
+}
+
+fn render_computed_default_dispatch(closures []StructClosureBinding, ordinary []OrdinaryDefaultBinding) string {
+	mut lines := ['static bool vphp_dispatch_computed_default(const zend_internal_function *func, zend_long callable, zend_long field) {']
+	lines << '    switch (callable) {'
+	for i, binding in closures {
+		fields := binding.computed_default_indices().map('field == ${it}').join(' || ')
+		lines << '        case ${i}:'
+		lines << '            return (${fields}) && func->arg_info == ${binding.arginfo_symbol()}_storage + 1;'
+	}
+	for i, binding in ordinary {
+		fields := binding.fields.map('field == ${it}').join(' || ')
+		lines << '        case ${closures.len + i}:'
+		lines << '            return (${fields}) && vphp_matches_computed_default_handler(func, ${binding.handler});'
+	}
+	lines << '        default: break;'
+	lines << '    }'
+	lines << '    return false;'
+	lines << '}'
+	return lines.join('\n') + '\n'
 }
 
 // ==========================================
@@ -182,6 +300,9 @@ fn (mut c Compiler) generate_h() ! {
 	res.write_string('extern zend_module_entry ${c.ext_name}_module_entry;\n')
 	res.write_string('#define phpext_${c.ext_name}_ptr &${c.ext_name}_module_entry\n\n')
 	res.write_string('extern void* vphp_get_active_globals();\n\n')
+	for binding in c.struct_closure_metadata() {
+		res.write_string('extern void *${binding.arginfo_symbol()};\n')
+	}
 
 	fragments := c.collect_non_type_fragments()
 	type_fragments := c.collect_type_fragments()

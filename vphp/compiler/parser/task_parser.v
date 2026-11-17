@@ -1,6 +1,6 @@
 module parser
 
-import v.ast
+import compiler.syntax as ast
 import compiler.repr
 
 pub fn parse_task_decl(stmt ast.Stmt, table &ast.Table) ?&repr.PhpTaskRepr {
@@ -17,7 +17,7 @@ pub fn parse_task_decl(stmt ast.Stmt, table &ast.Table) ?&repr.PhpTaskRepr {
 	}
 
 	task.v_name = struct_decl.name.all_after_last('.')
-	if attr := struct_decl.attrs.find_first('php_task') {
+	if attr := ast.find_attr(struct_decl.attrs, 'php_task') {
 		task.task_name = if attr.arg != '' { attr.arg } else { task.v_name }
 	}
 

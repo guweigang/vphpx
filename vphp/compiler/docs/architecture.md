@@ -321,16 +321,15 @@ The caller-facing glue files should consume `PhpArgSetup` instead of
 reimplementing argument indexing or wrapper decoding.
 
 `PhpArgRead` is the shared internal read expression for both ordinary
-parameters and flattened `@[params]` struct fields. It owns the generated
-`php_args.at_named_or_index(...)`, `php_args.has_named_or_index(...)`, default
-fallback, and semantic wrapper decoding expressions so those rules do not drift
-between the two binding paths.
+parameters and flattened `@[params]` struct fields. Generated reads use
+`php_args.at(index)` and `php_args.has(index)` because Zend places named
+arguments into the declared slots before invoking the wrapper. The same layer
+handles default fallback and semantic wrapper decoding for both binding paths.
 
 Implementation files:
 
 - `arg_binding.v`: top-level parameter binding plan
 - `arg_read.v`: read / presence / semantic wrapper expressions
-- `arg_default.v`: optional default literal conversion
 
 `arg_read.v` also contains the positional `Context` argument expression helper
 used by generated struct closure bridges, so closure bridge fields and ordinary

@@ -11,6 +11,11 @@ pub:
 	is_total_arg   bool
 }
 
+pub fn is_reference_parameter(v_type string, variadic bool) bool {
+	element_type := if variadic && v_type.starts_with('[]') { v_type[2..] } else { v_type }
+	return element_type.trim_left('?') in ['PhpReference', 'vphp.PhpReference']
+}
+
 pub fn normalize_v_type_key(v_type string) string {
 	mut clean_type := v_type.trim_space().replace('vphp.ZVal', 'ZVal')
 	if clean_type.starts_with('&') || clean_type.starts_with('!') || clean_type.starts_with('?') {

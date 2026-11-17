@@ -1,6 +1,6 @@
 module parser
 
-import v.ast
+import compiler.syntax as ast
 import compiler.repr
 
 pub fn parse_enum_decl(stmt ast.Stmt, table &ast.Table) ?&repr.PhpEnumRepr {
@@ -17,7 +17,7 @@ pub fn parse_enum_decl(stmt ast.Stmt, table &ast.Table) ?&repr.PhpEnumRepr {
 	}
 
 	enum_repr.name = enum_decl.name.all_after_last('.')
-	if attr := enum_decl.attrs.find_first('php_enum') {
+	if attr := ast.find_attr(enum_decl.attrs, 'php_enum') {
 		enum_repr.php_name = if attr.arg != '' { attr.arg } else { enum_repr.name }
 	} else {
 		enum_repr.php_name = enum_repr.name

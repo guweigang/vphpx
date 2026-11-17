@@ -1,7 +1,7 @@
 module compiler
 
 import strings
-import v.ast
+import compiler.syntax as ast
 import compiler.repr
 
 pub struct VGenerator {
@@ -131,8 +131,7 @@ fn (g VGenerator) build_emission_plan(mut elements []repr.PhpRepr) VGlueEmission
 			c_name := lookup_items[name]
 			lookup_block << '        \'${name}\' { C.${c_name}_ce }'
 		}
-		lookup_block << '        else { // SAFETY: nil literal in unsafe context
-	unsafe { nil } }'
+		lookup_block << '        else { unsafe { nil } }'
 		lookup_block << '    }'
 		lookup_block << '}'
 		plan.glue_blocks << lookup_block.join('\n')

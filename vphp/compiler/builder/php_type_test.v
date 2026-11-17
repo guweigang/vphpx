@@ -1,5 +1,24 @@
 module builder
 
+fn test_compound_php_types_parse_intersections_and_dnf() {
+	intersection := union_type_info(parse_php_type_decl('A&B')) or { panic('expected intersection') }
+	assert intersection.is_intersection
+	assert intersection.intersections == [['A', 'B']]
+
+	dnf := union_type_info(parse_php_type_decl('(A&B)|C|int|null')) or { panic('expected DNF') }
+	assert !dnf.is_intersection
+	assert dnf.intersections == [['A', 'B']]
+	assert dnf.named_members == ['C']
+	assert dnf.mask == 'MAY_BE_LONG'
+	assert dnf.allow_null
+}
+
+fn test_compound_php_types_reject_malformed_or_redundant_terms() {
+	for declaration in ['A&B|C', 'int&A', '?A&B', 'A&a', '(A&B)|a', '(A&B)|object', '(A&B)|(B&A&C)'] {
+		assert union_type_info(parse_php_type_decl(declaration)) == none
+	}
+}
+
 fn test_parse_php_type_decl_simple() {
 	decl := parse_php_type_decl('string')
 	assert decl.clean == 'string'

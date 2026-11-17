@@ -1,6 +1,6 @@
 module parser
 
-import v.ast
+import compiler.syntax as ast
 
 enum InferredObjectReturnOwnership {
 	unknown
@@ -391,14 +391,7 @@ fn infer_borrowed_call_return_type(expr ast.CallExpr, table &ast.Table, borrow_r
 	if !(borrowed_methods[method_key] or { false }) {
 		return none
 	}
-	if !expr.return_type.is_full() {
-		return method_return_types[method_key] or { none }
-	}
-	return_type := normalize_delegated_target_type(table.type_to_str(expr.return_type))
-	if return_type == '' {
-		return method_return_types[method_key] or { none }
-	}
-	return return_type
+	return method_return_types[method_key]
 }
 
 fn apply_if_guard_borrow_root(cond ast.Expr, table &ast.Table, field_types map[string]string, borrowed_methods map[string]bool, method_return_types map[string]string, mut borrow_roots map[string]string) {
@@ -409,11 +402,8 @@ fn apply_if_guard_borrow_root(cond ast.Expr, table &ast.Table, field_types map[s
 	if guard.vars.len == 0 {
 		return
 	}
-	mut root_type := infer_borrow_root_type(guard.expr, table, borrow_roots, field_types,
+	root_type := infer_borrow_root_type(guard.expr, table, borrow_roots, field_types,
 		borrowed_methods, method_return_types)
-	if root_type == '' && guard.expr_type.is_full() {
-		root_type = normalize_delegated_target_type(table.type_to_str(guard.expr_type))
-	}
 	if root_type == '' {
 		return
 	}
@@ -585,12 +575,6 @@ fn delegated_method_ref(expr ast.Expr, receiver_name string, receiver_type strin
 }
 
 fn delegated_call_target_type(expr ast.CallExpr, receiver_name string, receiver_type string, table &ast.Table, field_types map[string]string, borrow_roots map[string]string) string {
-	if expr.left_type.is_full() {
-		return normalize_delegated_target_type(table.type_to_str(expr.left_type))
-	}
-	if expr.receiver_type.is_full() {
-		return normalize_delegated_target_type(table.type_to_str(expr.receiver_type))
-	}
 	return infer_receiver_expr_type(expr.left, receiver_name, receiver_type, field_types,
 		borrow_roots)
 }

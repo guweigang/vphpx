@@ -11,8 +11,7 @@ pub mut:
 }
 
 fn (t AnalyzeTask) run() vphp.TaskResult {
-    println('V: 正在处理 ${t.symbol}, count: ${t.count}')
-    return [1.0, 2.0] // 隐式转换为 TaskResult (Sum Type中的 []f64)
+    return [t.symbol, t.count.str()]
 }
 
 @[php_class: 'VPhp\\Task']

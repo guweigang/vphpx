@@ -15,6 +15,18 @@ fn (g VGenerator) gen_class_glue_for_module(r &repr.PhpClassRepr, module_name st
 
 	// A. 堆分配器
 	out << ClassLifecycleGlue.new(r.name, type_ref, lower_name, r).render_lines()
+	if r.cloneable {
+		out << [
+			"@[export: '${lower_name}_clone_into_raw']",
+			'pub fn ${lower_name}_clone_into_raw(source voidptr, target voidptr) {',
+			'    unsafe {',
+			'        src := &${type_ref}(source)',
+			'        mut dst := &${type_ref}(target)',
+			'        src.clone_into(mut dst)',
+			'    }',
+			'}',
+		]
+	}
 
 	if uses_inherited_receiver {
 		out << InheritedReceiverGlue.new(r.name, type_ref, lower_name, r.properties).render_lines()

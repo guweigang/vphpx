@@ -4,12 +4,73 @@
 #include "../vphp/v_bridge.h"
 
 
-typedef struct { void* str; int len; int is_lit; } v_string;
+typedef struct { void* str; int64_t len; int64_t is_lit; } v_string;
 
+extern void _vinit_caller(void);
+extern void _vcleanup_caller(void);
 extern void vphp_framework_init(int module_number);
 extern void vphp_framework_shutdown(void);
 extern void vphp_framework_request_startup(void);
 extern void vphp_framework_request_shutdown(void);
+ZEND_BEGIN_ARG_INFO_EX(struct_closure_arginfo_callableprocessor_struct_closure_storage, 0, 0, 2)
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, count, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+void *struct_closure_arginfo_callableprocessor_struct_closure = (void *)struct_closure_arginfo_callableprocessor_struct_closure_storage;
+ZEND_BEGIN_ARG_INFO_EX(struct_closure_arginfo_v_get_struct_param_closure_storage, 0, 0, 2)
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, count, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+void *struct_closure_arginfo_v_get_struct_param_closure = (void *)struct_closure_arginfo_v_get_struct_param_closure_storage;
+ZEND_BEGIN_ARG_INFO_EX(struct_closure_arginfo_v_get_struct_default_closure_storage, 0, 0, 1)
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, count, IS_LONG, 0, "7")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, flag, _IS_BOOL, 0, "true")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, label, IS_STRING, 1, "null")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, computed, IS_LONG, 0, "new \\VPHP\\Internal\\vphptest_ClosureDefault(0, 4)")
+ZEND_END_ARG_INFO()
+void *struct_closure_arginfo_v_get_struct_default_closure = (void *)struct_closure_arginfo_v_get_struct_default_closure_storage;
+ZEND_BEGIN_ARG_INFO_EX(struct_closure_arginfo_v_get_struct_default_closure_void_storage, 0, 0, 1)
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, count, IS_LONG, 0, "7")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, flag, _IS_BOOL, 0, "true")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, label, IS_STRING, 1, "null")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, computed, IS_LONG, 0, "new \\VPHP\\Internal\\vphptest_ClosureDefault(1, 4)")
+ZEND_END_ARG_INFO()
+void *struct_closure_arginfo_v_get_struct_default_closure_void = (void *)struct_closure_arginfo_v_get_struct_default_closure_void_storage;
+ZEND_BEGIN_ARG_INFO_EX(struct_closure_arginfo_v_get_struct_computed_defaults_closure_storage, 0, 0, 1)
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, first, IS_LONG, 0, "new \\VPHP\\Internal\\vphptest_ClosureDefault(2, 1)")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, second, IS_LONG, 1, "new \\VPHP\\Internal\\vphptest_ClosureDefault(2, 2)")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, flag, _IS_BOOL, 0, "true")
+ZEND_END_ARG_INFO()
+void *struct_closure_arginfo_v_get_struct_computed_defaults_closure = (void *)struct_closure_arginfo_v_get_struct_computed_defaults_closure_storage;
+ZEND_BEGIN_ARG_INFO_EX(struct_closure_arginfo_v_get_struct_native_defaults_closure_storage, 0, 0, 0)
+{ "payload", ZEND_TYPE_INIT_CLASS_CONST("NativeClosurePayload", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), "new \\VPHP\\Internal\\vphptest_ClosureDefault(3, 0)" },
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, label, IS_STRING, 0, "'trailing'")
+ZEND_END_ARG_INFO()
+void *struct_closure_arginfo_v_get_struct_native_defaults_closure = (void *)struct_closure_arginfo_v_get_struct_native_defaults_closure_storage;
+ZEND_BEGIN_ARG_INFO_EX(struct_closure_arginfo_v_get_struct_failing_defaults_closure_storage, 0, 0, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, first, IS_LONG, 0, "new \\VPHP\\Internal\\vphptest_ClosureDefault(4, 0)")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, second, IS_LONG, 0, "new \\VPHP\\Internal\\vphptest_ClosureDefault(4, 1)")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, tail, _IS_BOOL, 0, "true")
+ZEND_END_ARG_INFO()
+void *struct_closure_arginfo_v_get_struct_failing_defaults_closure = (void *)struct_closure_arginfo_v_get_struct_failing_defaults_closure_storage;
+ZEND_BEGIN_ARG_INFO_EX(struct_closure_arginfo_v_get_struct_literal_defaults_closure_storage, 0, 0, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, message, IS_STRING, 0, "\"a\\n\\t\\x00\\xe2\\x98\\xba\\$'\\\\\\\"\"")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, raw, IS_STRING, 0, "\"\\\\n\\${literal}\"")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, octal, IS_LONG, 0, "-15")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, binary, IS_LONG, 0, "161")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, floating, IS_DOUBLE, 0, "2.0")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, single, IS_DOUBLE, 0, "0.10000000149011612")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, option, IS_STRING, 1, "'present'")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, nullable, IS_LONG, 1, "null")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, items, IS_ARRAY, 0, "[1, 16]")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, empty, IS_ARRAY, 0, "[]")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, lookup, IS_ARRAY, 0, "['count' => 16]")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, tail, _IS_BOOL, 0, "true")
+ZEND_END_ARG_INFO()
+void *struct_closure_arginfo_v_get_struct_literal_defaults_closure = (void *)struct_closure_arginfo_v_get_struct_literal_defaults_closure_storage;
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_add, 0, 2, IS_LONG, 0)
 ZEND_ARG_TYPE_INFO(0, a, IS_LONG, 0)
 ZEND_ARG_TYPE_INFO(0, b, IS_LONG, 0)
@@ -462,6 +523,23 @@ PHP_FUNCTION(v_php_params_struct_api) {
     }
     vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     vphp_wrap_v_php_params_struct_api(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_computed_params, 0, 1, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, prefix, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, sequence, IS_LONG, 0, "new \\VPHP\\Internal\\vphptest_ClosureDefault(6, 1)")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, label, IS_STRING, 1, "new \\VPHP\\Internal\\vphptest_ClosureDefault(6, 2)")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, enabled, _IS_BOOL, 0, "true")
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_computed_params(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_computed_params) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_computed_params(ctx);
     if (!vphp_validate_internal_return(execute_data, return_value)) {
         return;
     }
@@ -1080,6 +1158,87 @@ PHP_FUNCTION(v_get_struct_param_closure) {
         return;
     }
 }
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_struct_default_closure, 0, 0, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_get_struct_default_closure(vphp_context_internal ctx);
+PHP_FUNCTION(v_get_struct_default_closure) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_get_struct_default_closure(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_struct_default_closure_void, 0, 0, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_get_struct_default_closure_void(vphp_context_internal ctx);
+PHP_FUNCTION(v_get_struct_default_closure_void) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_get_struct_default_closure_void(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_struct_computed_defaults_closure, 0, 0, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_get_struct_computed_defaults_closure(vphp_context_internal ctx);
+PHP_FUNCTION(v_get_struct_computed_defaults_closure) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_get_struct_computed_defaults_closure(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_struct_native_defaults_closure, 0, 0, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_get_struct_native_defaults_closure(vphp_context_internal ctx);
+PHP_FUNCTION(v_get_struct_native_defaults_closure) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_get_struct_native_defaults_closure(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_struct_failing_defaults_closure, 0, 0, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_get_struct_failing_defaults_closure(vphp_context_internal ctx);
+PHP_FUNCTION(v_get_struct_failing_defaults_closure) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_get_struct_failing_defaults_closure(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_invoke_legacy_struct_closure, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_invoke_legacy_struct_closure(vphp_context_internal ctx);
+PHP_FUNCTION(v_invoke_legacy_struct_closure) {
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_invoke_legacy_struct_closure(ctx);
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_invoke_legacy_struct_closure_void, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_invoke_legacy_struct_closure_void(vphp_context_internal ctx);
+PHP_FUNCTION(v_invoke_legacy_struct_closure_void) {
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_invoke_legacy_struct_closure_void(ctx);
+}
 ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_variadic_value_closure, 0, 0, 0)
 ZEND_END_ARG_INFO()
 extern void vphp_wrap_v_get_variadic_value_closure(vphp_context_internal ctx);
@@ -1154,6 +1313,130 @@ PHP_FUNCTION(v_get_variadic_scalar_value) {
     }
     vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
     vphp_wrap_v_get_variadic_scalar_value(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_invoke_legacy_variadic_scalar, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_invoke_legacy_variadic_scalar(vphp_context_internal ctx);
+PHP_FUNCTION(v_invoke_legacy_variadic_scalar) {
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_invoke_legacy_variadic_scalar(ctx);
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_invoke_legacy_variadic_scalar_alias, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_invoke_legacy_variadic_scalar_alias(vphp_context_internal ctx);
+PHP_FUNCTION(v_invoke_legacy_variadic_scalar_alias) {
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_invoke_legacy_variadic_scalar_alias(ctx);
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_invoke_legacy_variadic_void, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_invoke_legacy_variadic_void(vphp_context_internal ctx);
+PHP_FUNCTION(v_invoke_legacy_variadic_void) {
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_invoke_legacy_variadic_void(ctx);
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_invoke_legacy_variadic_void_alias, 0, 0, 0)
+ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_invoke_legacy_variadic_void_alias(vphp_context_internal ctx);
+PHP_FUNCTION(v_invoke_legacy_variadic_void_alias) {
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_invoke_legacy_variadic_void_alias(ctx);
+}
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_literal_params, 0, 0, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, message, IS_STRING, 0, "\"a\\n\\t\\x00\\xe2\\x98\\xba\\$'\\\\\\\"\"")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, raw, IS_STRING, 0, "\"\\\\n\\${literal}\"")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, octal, IS_LONG, 0, "-15")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, binary, IS_LONG, 0, "161")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, floating, IS_DOUBLE, 0, "2.0")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, single, IS_DOUBLE, 0, "0.10000000149011612")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, option, IS_STRING, 1, "'present'")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, nullable, IS_LONG, 1, "null")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, items, IS_ARRAY, 0, "[1, 16]")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, empty, IS_ARRAY, 0, "[]")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, lookup, IS_ARRAY, 0, "['count' => 16]")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, tail, _IS_BOOL, 0, "true")
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_literal_params(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_literal_params) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_literal_params(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_INFO_EX(arginfo_v_get_struct_literal_defaults_closure, 0, 0, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_get_struct_literal_defaults_closure(vphp_context_internal ctx);
+PHP_FUNCTION(v_get_struct_literal_defaults_closure) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_get_struct_literal_defaults_closure(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_overridden_params, 0, 1, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, prefix, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, option, IS_STRING, 1, "\"php\\tvalue\"")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, spacer, IS_STRING, 0, "'native spacer'")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, count, IS_LONG, 0, "VPHP_PARAMS_OVERRIDE_COUNT")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, nullable, IS_STRING, 1, "null")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, items, IS_ARRAY, 0, "[1, 2]")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, tail, _IS_BOOL, 0, "true")
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_overridden_params(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_overridden_params) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_overridden_params(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_direct_defaults, 0, 1, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, prefix, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, count, IS_LONG, 0, "VPHP_ORDINARY_ARG_COUNT")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, values, IS_ARRAY, 1, "[1, VPHP_ORDINARY_ARG_COUNT]")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, label, IS_STRING, 1, "\"fallback\"")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, enabled, _IS_BOOL, 0, "true")
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_direct_defaults(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_direct_defaults) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_direct_defaults(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_php_legacy_optional_tail, 0, 2, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, before, IS_LONG, 0, "5")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, blocked, IS_LONG, 0, "9")
+ZEND_ARG_TYPE_INFO(0, tail, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_php_legacy_optional_tail(vphp_context_internal ctx);
+PHP_FUNCTION(v_php_legacy_optional_tail) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_php_legacy_optional_tail(ctx);
     if (!vphp_validate_internal_return(execute_data, return_value)) {
         return;
     }
@@ -2459,6 +2742,40 @@ ZEND_ARG_TYPE_INFO(0, data, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(arginfo_callableprocessor_struct_closure, 0, 0, 0)
 ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_callableprocessor_computed_params, 0, 0, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, sequence, IS_LONG, 0, "new \\VPHP\\Internal\\vphptest_ClosureDefault(5, 0)")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, label, IS_STRING, 1, "new \\VPHP\\Internal\\vphptest_ClosureDefault(5, 1)")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, enabled, _IS_BOOL, 0, "true")
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_callableprocessor_literal_params, 0, 0, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, message, IS_STRING, 0, "\"a\\n\\t\\x00\\xe2\\x98\\xba\\$'\\\\\\\"\"")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, raw, IS_STRING, 0, "\"\\\\n\\${literal}\"")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, octal, IS_LONG, 0, "-15")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, binary, IS_LONG, 0, "161")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, floating, IS_DOUBLE, 0, "2.0")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, single, IS_DOUBLE, 0, "0.10000000149011612")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, option, IS_STRING, 1, "'present'")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, nullable, IS_LONG, 1, "null")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, items, IS_ARRAY, 0, "[1, 16]")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, empty, IS_ARRAY, 0, "[]")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, lookup, IS_ARRAY, 0, "['count' => 16]")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, tail, _IS_BOOL, 0, "true")
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_callableprocessor_overridden_params, 0, 0, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, option, IS_STRING, 1, "\"php\\tvalue\"")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, spacer, IS_STRING, 0, "'native spacer'")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, count, IS_LONG, 0, "VPHP_PARAMS_OVERRIDE_COUNT")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, nullable, IS_STRING, 1, "null")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, items, IS_ARRAY, 0, "[1, 2]")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, tail, _IS_BOOL, 0, "true")
+ZEND_END_ARG_INFO()
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_callableprocessor_direct_defaults, 0, 1, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, prefix, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, count, IS_LONG, 0, "VPHP_ORDINARY_ARG_COUNT")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, values, IS_ARRAY, 1, "[1, VPHP_ORDINARY_ARG_COUNT]")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, label, IS_STRING, 1, "\"fallback\"")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, enabled, _IS_BOOL, 0, "true")
+ZEND_END_ARG_INFO()
 PHP_METHOD(CallableProcessor, __construct) {
     if (!vphp_validate_internal_call(execute_data)) {
         return;
@@ -2554,12 +2871,92 @@ PHP_METHOD(CallableProcessor, structClosure) {
         return;
     }
 }
+PHP_METHOD(CallableProcessor, computedParams) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_callable_processor_computed_params(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* callable_processor_handlers();
+    zend_object *vphp_this_obj = Z_OBJ_P(getThis());
+    vphp_object_addref(vphp_this_obj);
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(vphp_this_obj, callable_processor_handlers());
+    if (!wrapper->v_ptr) {
+        vphp_object_release(vphp_this_obj);
+        RETURN_FALSE;
+    }
+    vphp_wrap_callable_processor_computed_params(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        vphp_object_release(vphp_this_obj);
+        return;
+    }
+    vphp_object_release(vphp_this_obj);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(CallableProcessor, literalParams) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_callable_processor_literal_params(vphp_context_internal ctx);
+    vphp_wrap_callable_processor_literal_params(ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(CallableProcessor, overriddenParams) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_callable_processor_overridden_params(void* v_ptr, vphp_context_internal ctx);
+    extern vphp_class_handlers* callable_processor_handlers();
+    zend_object *vphp_this_obj = Z_OBJ_P(getThis());
+    vphp_object_addref(vphp_this_obj);
+    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(vphp_this_obj, callable_processor_handlers());
+    if (!wrapper->v_ptr) {
+        vphp_object_release(vphp_this_obj);
+        RETURN_FALSE;
+    }
+    vphp_wrap_callable_processor_overridden_params(wrapper->v_ptr, ctx);
+    if (EG(exception)) {
+        vphp_object_release(vphp_this_obj);
+        return;
+    }
+    vphp_object_release(vphp_this_obj);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
+PHP_METHOD(CallableProcessor, directDefaults) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    extern void vphp_wrap_callable_processor_direct_defaults(vphp_context_internal ctx);
+    vphp_wrap_callable_processor_direct_defaults(ctx);
+    if (EG(exception)) {
+        return;
+    }
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
 static const zend_function_entry callableprocessor_methods[] = {
     PHP_ME(CallableProcessor, __construct, arginfo_callableprocessor_construct, ZEND_ACC_PUBLIC)
     PHP_ME(CallableProcessor, process, arginfo_callableprocessor_process, ZEND_ACC_PUBLIC)
     PHP_ME(CallableProcessor, transform, arginfo_callableprocessor_transform, ZEND_ACC_PUBLIC)
     PHP_ME(CallableProcessor, apply, arginfo_callableprocessor_apply, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(CallableProcessor, structClosure, arginfo_callableprocessor_struct_closure, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(CallableProcessor, computedParams, arginfo_callableprocessor_computed_params, ZEND_ACC_PUBLIC)
+    PHP_ME(CallableProcessor, literalParams, arginfo_callableprocessor_literal_params, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(CallableProcessor, overriddenParams, arginfo_callableprocessor_overridden_params, ZEND_ACC_PUBLIC)
+    PHP_ME(CallableProcessor, directDefaults, arginfo_callableprocessor_direct_defaults, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_FE_END
 };
 
@@ -2886,16 +3283,16 @@ zend_class_entry *vphp__compiler__moduleprobebox_ce = NULL;
 ZEND_BEGIN_ARG_INFO_EX(arginfo_vphp__compiler__moduleprobebox___construct, 0, 0, 0)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vphpmoduleprobebox_test_sumtype[] = {
-    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VphpModuleProbeSum", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
-{ "val", ZEND_TYPE_INIT_CLASS_CONST("VphpModuleProbeSum", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_MASK(MAY_BE_LONG|MAY_BE_STRING | _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_MASK(0, val, MAY_BE_LONG|MAY_BE_STRING, NULL)
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vphpmoduleprobebox_test_enum_echo[] = {
     { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VphpModuleProbeKind", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 { "kind", ZEND_TYPE_INIT_CLASS_CONST("VphpModuleProbeKind", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
 ZEND_END_ARG_INFO()
 static const zend_internal_arg_info arginfo_vphpmoduleprobebox_test_sumtype_echo[] = {
-    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_CLASS_CONST("VphpModuleProbeSumType", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
-{ "val", ZEND_TYPE_INIT_CLASS_CONST("VphpModuleProbeSumType", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+    { (const char*)(uintptr_t)(1), ZEND_TYPE_INIT_MASK(MAY_BE_LONG|MAY_BE_OBJECT|MAY_BE_OBJECT | _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },
+ZEND_ARG_TYPE_MASK(0, val, MAY_BE_LONG|MAY_BE_OBJECT|MAY_BE_OBJECT, NULL)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_vphpmoduleprobebox_test_variadic, 0, 1, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, sep, IS_STRING, 0)
@@ -3879,6 +4276,26 @@ static int stringablebox_register_class(void) {
     }
     return SUCCESS;
 }
+static bool vphp_dispatch_computed_default(const zend_internal_function *func, zend_long callable, zend_long field) {
+    switch (callable) {
+        case 0:
+            return (field == 4) && func->arg_info == struct_closure_arginfo_v_get_struct_default_closure_storage + 1;
+        case 1:
+            return (field == 4) && func->arg_info == struct_closure_arginfo_v_get_struct_default_closure_void_storage + 1;
+        case 2:
+            return (field == 1 || field == 2) && func->arg_info == struct_closure_arginfo_v_get_struct_computed_defaults_closure_storage + 1;
+        case 3:
+            return (field == 0) && func->arg_info == struct_closure_arginfo_v_get_struct_native_defaults_closure_storage + 1;
+        case 4:
+            return (field == 0 || field == 1) && func->arg_info == struct_closure_arginfo_v_get_struct_failing_defaults_closure_storage + 1;
+        case 5:
+            return (field == 0 || field == 1) && vphp_matches_computed_default_handler(func, ZEND_MN(CallableProcessor_computedParams));
+        case 6:
+            return (field == 1 || field == 2) && vphp_matches_computed_default_handler(func, ZEND_FN(v_php_computed_params));
+        default: break;
+    }
+    return false;
+}
 ZEND_BEGIN_MODULE_GLOBALS(vphptest)
     zend_long request_count;
     v_string last_user;
@@ -3938,6 +4355,7 @@ static const zend_function_entry vphptest_functions[] = {
     PHP_FE(v_php_scalar_strict_api, arginfo_v_php_scalar_strict_api)
     PHP_FE(v_php_semantic_empty_api, arginfo_v_php_semantic_empty_api)
     PHP_FE(v_php_params_struct_api, arginfo_v_php_params_struct_api)
+    PHP_FE(v_php_computed_params, arginfo_v_php_computed_params)
     PHP_FE(v_php_arg_binding_optional_scalar_api, arginfo_v_php_arg_binding_optional_scalar_api)
     PHP_FE(v_php_direct_arg_camel_api, arginfo_v_php_direct_arg_camel_api)
     PHP_FE(v_php_call_style_arg_attrs_api, arginfo_v_php_call_style_arg_attrs_api)
@@ -3989,12 +4407,28 @@ static const zend_function_entry vphptest_functions[] = {
     PHP_FE(v_get_closure_3_void, arginfo_v_get_closure_3_void)
     PHP_FE(v_get_closure_4_void, arginfo_v_get_closure_4_void)
     PHP_FE(v_get_struct_param_closure, arginfo_v_get_struct_param_closure)
+    PHP_FE(v_get_struct_default_closure, arginfo_v_get_struct_default_closure)
+    PHP_FE(v_get_struct_default_closure_void, arginfo_v_get_struct_default_closure_void)
+    PHP_FE(v_get_struct_computed_defaults_closure, arginfo_v_get_struct_computed_defaults_closure)
+    PHP_FE(v_get_struct_native_defaults_closure, arginfo_v_get_struct_native_defaults_closure)
+    PHP_FE(v_get_struct_failing_defaults_closure, arginfo_v_get_struct_failing_defaults_closure)
+    PHP_FE(v_invoke_legacy_struct_closure, arginfo_v_invoke_legacy_struct_closure)
+    PHP_FE(v_invoke_legacy_struct_closure_void, arginfo_v_invoke_legacy_struct_closure_void)
     PHP_FE(v_get_variadic_value_closure, arginfo_v_get_variadic_value_closure)
     PHP_FE(v_get_variadic_zval_closure, arginfo_v_get_variadic_zval_closure)
     PHP_FE(v_get_variadic_zval_void, arginfo_v_get_variadic_zval_void)
     PHP_FE(v_get_variadic_scalar_string, arginfo_v_get_variadic_scalar_string)
     PHP_FE(v_get_variadic_scalar_i64, arginfo_v_get_variadic_scalar_i64)
     PHP_FE(v_get_variadic_scalar_value, arginfo_v_get_variadic_scalar_value)
+    PHP_FE(v_invoke_legacy_variadic_scalar, arginfo_v_invoke_legacy_variadic_scalar)
+    PHP_FE(v_invoke_legacy_variadic_scalar_alias, arginfo_v_invoke_legacy_variadic_scalar_alias)
+    PHP_FE(v_invoke_legacy_variadic_void, arginfo_v_invoke_legacy_variadic_void)
+    PHP_FE(v_invoke_legacy_variadic_void_alias, arginfo_v_invoke_legacy_variadic_void_alias)
+    PHP_FE(v_php_literal_params, arginfo_v_php_literal_params)
+    PHP_FE(v_get_struct_literal_defaults_closure, arginfo_v_get_struct_literal_defaults_closure)
+    PHP_FE(v_php_overridden_params, arginfo_v_php_overridden_params)
+    PHP_FE(v_php_direct_defaults, arginfo_v_php_direct_defaults)
+    PHP_FE(v_php_legacy_optional_tail, arginfo_v_php_legacy_optional_tail)
     PHP_FE(v_lifecycle_hook_state, arginfo_v_lifecycle_hook_state)
     PHP_FE(v_find_after, arginfo_v_find_after)
     PHP_FE(v_try_divide, arginfo_v_try_divide)
@@ -4015,10 +4449,12 @@ static const zend_function_entry vphptest_functions[] = {
     PHP_FE_END
 };
 PHP_MINIT_FUNCTION(vphptest) {
+    _vinit_caller();
     vphp_framework_init(module_number);
     vphp_call_optional_void_symbol("vphp_ext_auto_startup");
     vphp_call_optional_void_symbol("vphp_ext_startup");
     REGISTER_INI_ENTRIES();
+    vphp_register_closure_default_class("VPHP\\Internal\\vphptest_ClosureDefault", vphp_dispatch_computed_default);
         REGISTER_STRING_CONSTANT("APP_VERSION", "1.0.0", CONST_CS | CONST_PERSISTENT);
         REGISTER_LONG_CONSTANT("MAX_RETRY", 3, CONST_CS | CONST_PERSISTENT);
         REGISTER_DOUBLE_CONSTANT("PI_VALUE", 3.14159, CONST_CS | CONST_PERSISTENT);
@@ -4079,6 +4515,7 @@ PHP_MSHUTDOWN_FUNCTION(vphptest) {
     vphp_call_optional_void_symbol("vphp_ext_shutdown");
     vphp_call_optional_void_symbol("vphp_ext_auto_shutdown");
     vphp_framework_shutdown();
+    _vcleanup_caller();
     return SUCCESS;
 }
 PHP_RINIT_FUNCTION(vphptest) {
@@ -4104,7 +4541,7 @@ PHP_MINFO_FUNCTION(vphptest) {
 
 void* vphp_get_active_globals() {
 #ifdef ZTS
-    return TSRMG(vphptest_globals_id, zend_vphptest_globals *, 0);
+    return ZEND_MODULE_GLOBALS_BULK(vphptest);
 #else
     return &vphptest_globals;
 #endif

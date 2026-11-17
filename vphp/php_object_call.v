@@ -47,7 +47,7 @@ pub fn (o PhpObject) with_attribute(name string, value PhpArgInput) PhpObject {
 }
 
 pub fn (o PhpObject) method[T](method string, args ...PhpArgInput) !T {
-	mut result := o.method_request_owned(method, args)
+	mut result := o.method_request_owned(method, ...args)
 	defer {
 		result.release()
 	}
@@ -55,7 +55,7 @@ pub fn (o PhpObject) method[T](method string, args ...PhpArgInput) !T {
 }
 
 pub fn (o PhpObject) with_method_result[T, R](method string, run fn (T) R, args ...PhpArgInput) !R {
-	mut result := o.method_request_owned(method, args)
+	mut result := o.method_request_owned(method, ...args)
 	defer {
 		result.release()
 	}
@@ -68,7 +68,8 @@ pub fn (o PhpObject) with_method_result_zval[T](method string, run fn (ZVal) T, 
 	defer {
 		result.release()
 	}
-	return run(result.to_zval())
+	z := result.to_zval()
+	return run(z)
 }
 
 pub fn (o PhpObject) method_v[T](method string, args []ZVal) !T {

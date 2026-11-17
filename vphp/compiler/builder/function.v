@@ -1,6 +1,6 @@
 module builder
 
-import v.ast
+import compiler.syntax as ast
 
 pub struct FuncBuilder {
 pub mut:
@@ -38,6 +38,13 @@ pub fn (b &FuncBuilder) render_declaration() string {
 	return 'PHP_FUNCTION(${b.php_name});'
 }
 
+fn (b &FuncBuilder) compound_arginfo_setup() []string {
+	if b.uses_context {
+		return []
+	}
+	return compound_arginfo_setup(b.c_func, b.return_spec.resolved_type(), b.args, b.table)
+}
+
 pub fn (b &FuncBuilder) render_arginfo() string {
 	if b.uses_context {
 		return 'ZEND_BEGIN_ARG_INFO_EX(arginfo_${b.c_func}, 0, 0, 0)\nZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)\nZEND_END_ARG_INFO()'
@@ -46,14 +53,16 @@ pub fn (b &FuncBuilder) render_arginfo() string {
 	resolved_return_type := b.return_spec.resolved_type()
 	validate_php_return_type_or_panic(resolved_return_type, b.php_name)
 	type_info := arg_type_info(resolved_return_type, b.table)
-	required_args := function_required_args(b.args)
-	res << render_standard_arginfo_header(b.c_func, required_args, resolved_return_type,
-		b.return_spec.arginfo_obj_type(), type_info)
+	required_args := required_arg_count(b.args)
+	if b.compound_arginfo_setup().len > 0 {
+		res << render_array_arginfo_header(b.c_func, required_args, resolved_return_type,
+			b.return_spec.arginfo_obj_type(), type_info, true)
+	} else {
+		res << render_standard_arginfo_header(b.c_func, required_args, resolved_return_type,
+			b.return_spec.arginfo_obj_type(), type_info)
+	}
 	for arg in b.args {
-		raw_type := if arg.php_type != '' { arg.php_type } else { arg.type_ }
-		validate_php_arg_type_or_panic(raw_type, arg.name, b.php_name)
-		res << render_arginfo_arg_line(arg.name, raw_type, arg.php_default, arg.is_variadic,
-			b.table)
+		res << arg.render_arginfo_line(b.php_name, b.table)
 	}
 	res << 'ZEND_END_ARG_INFO()'
 	return res.join('\n')
@@ -77,18 +86,6 @@ pub fn (b FuncBuilder) render_parameter_attribute_minit_lines() []string {
 	res << '    }'
 	res << '}'
 	return res
-}
-
-fn function_required_args(args []ClassMethodArg) int {
-	mut required := args.len
-	for required > 0 {
-		if args[required - 1].is_optional || args[required - 1].is_variadic {
-			required--
-			continue
-		}
-		break
-	}
-	return required
 }
 
 pub fn (b FuncBuilder) export_fragments() ExportFragments {

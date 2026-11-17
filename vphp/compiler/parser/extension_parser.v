@@ -1,8 +1,8 @@
 module parser
 
-import v.ast
+import compiler.syntax as ast
 
-pub fn parse_extension_meta(file_ast &ast.File, table &ast.Table) ?(string, string, string, map[string]string) {
+pub fn parse_extension_meta(file_ast ast.File, table &ast.Table) ?(string, string, string, map[string]string) {
 	for stmt in file_ast.stmts {
 		if stmt is ast.ConstDecl {
 			for field in stmt.fields {

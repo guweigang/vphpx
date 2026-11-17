@@ -1,6 +1,6 @@
 module parser
 
-import v.ast
+import compiler.syntax as ast
 import compiler.repr
 
 pub fn parse_interface_decl(stmt ast.Stmt, table &ast.Table) ?&repr.PhpInterfaceRepr {
@@ -17,7 +17,7 @@ pub fn parse_interface_decl(stmt ast.Stmt, table &ast.Table) ?&repr.PhpInterface
 	}
 
 	iface.name = interface_decl.name.all_after_last('.')
-	if attr := interface_decl.attrs.find_first('php_interface') {
+	if attr := ast.find_attr(interface_decl.attrs, 'php_interface') {
 		iface.php_name = if attr.arg != '' { attr.arg } else { iface.name }
 	} else {
 		iface.php_name = iface.name

@@ -1,6 +1,6 @@
 module parser
 
-import v.ast
+import compiler.syntax as ast
 import compiler.repr
 
 pub fn parse_class_decl(stmt ast.Stmt, table &ast.Table, module_name string) ?&repr.PhpClassRepr {
@@ -19,12 +19,12 @@ pub fn parse_class_decl(stmt ast.Stmt, table &ast.Table, module_name string) ?&r
 
 	cls.name = struct_decl.name.all_after_last('.')
 	cls.module_name = module_name
-	if attr := struct_decl.attrs.find_first(if cls.is_trait { 'php_trait' } else { 'php_class' }) {
+	if attr := ast.find_attr(struct_decl.attrs, if cls.is_trait { 'php_trait' } else { 'php_class' }) {
 		cls.php_name = if attr.arg != '' { attr.arg } else { cls.name }
 	} else {
 		cls.php_name = cls.name
 	}
-	if attr := struct_decl.attrs.find_first('php_extends') {
+	if attr := ast.find_attr(struct_decl.attrs, 'php_extends') {
 		cls.parent = normalize_attr_value(attr.arg)
 	}
 	mut php_prop_map := map[string]string{}
@@ -35,6 +35,10 @@ pub fn parse_class_decl(stmt ast.Stmt, table &ast.Table, module_name string) ?&r
 			cls.shadow_static_name = attr.arg
 		} else if attr.name == 'php_abstract' {
 			cls.is_abstract = true
+		} else if attr.name == 'vphp.PhpObjectCopy_cloneable' {
+			cls.cloneable = attr.arg == 'true'
+		} else if attr.name == 'vphp.PhpObjectCopy_serializable' {
+			cls.serializable = attr.arg == 'true'
 		} else if attr.name == 'php_implements' {
 			cls.implements_attr << parse_attr_list(attr.arg)
 		} else if attr.name == 'php_prop' {
@@ -72,13 +76,13 @@ pub fn parse_class_decl(stmt ast.Stmt, table &ast.Table, module_name string) ?&r
 		type_name := table.get_type_name(field.typ)
 		mut is_static := field.attrs.any(it.name == 'php_static')
 		mut php_prop_name := php_prop_map[field.name] or { field.name }
-		if attr := field.attrs.find_first('php_prop') {
+		if attr := ast.find_attr(field.attrs, 'php_prop') {
 			normalized := normalize_attr_value(attr.arg)
 			if normalized != '' {
 				php_prop_name = normalized
 			}
 		}
-		if attr := field.attrs.find_first('php_prop_name') {
+		if attr := ast.find_attr(field.attrs, 'php_prop_name') {
 			normalized := normalize_attr_value(attr.arg)
 			if normalized != '' {
 				php_prop_name = normalized
@@ -125,6 +129,8 @@ pub fn add_class_method(mut cls repr.PhpClassRepr, stmt ast.FnDecl, table &ast.T
 			cls.has_free_method = true
 		} else if stmt.name == 'cleanup' {
 			cls.has_cleanup_method = true
+		} else if stmt.name == 'clone_into' {
+			cls.has_clone_into = true
 		}
 	}
 	attrs := parse_callable_attrs(stmt.attrs, 'php_method', stmt.name)
