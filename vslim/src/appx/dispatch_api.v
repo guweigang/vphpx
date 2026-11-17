@@ -36,13 +36,16 @@ pub fn (app &VSlimApp) dispatch_request_raw(req &httpx.VSlimRequest) &httpx.VSli
 	defer {
 		scope.close()
 	}
-	app.prepare_kernel()
+	app.prepare_kernel() or { return httpx.VSlimResponse.empty().boxed_snapshot() }
 	return app.dispatch_request_facade(req)
 }
 
 fn (app &VSlimApp) dispatch_response_value(req &httpx.VSlimRequest) vphp.PhpValue {
 	mut scope := vphp.PhpScope.request()
-	app.prepare_kernel()
+	app.prepare_kernel() or {
+		scope.close()
+		return vphp.PhpValue.null()
+	}
 	response := app.dispatch_request_facade(req)
 	loggerx.cli_debug_log('dispatch.box before_leave status=${response.status} body_len=${response.body.len}')
 	scope.close()
@@ -58,7 +61,7 @@ pub fn (app &VSlimApp) handle(request vphp.PhpObject) &httpx.VSlimPsr7Response {
 	defer {
 		scope.close()
 	}
-	app.prepare_kernel()
+	app.prepare_kernel() or { return httpx.VSlimPsr7Response.text(500, '') }
 	return app.dispatch_psr15_request_object(request)
 }
 
@@ -71,7 +74,7 @@ pub fn (app &VSlimApp) dispatch_envelope_raw(envelope vphp.PhpValue) &httpx.VSli
 	defer {
 		scope.close()
 	}
-	app.prepare_kernel()
+	app.prepare_kernel() or { return httpx.VSlimResponse.empty().boxed_snapshot() }
 	req := httpx.VSlimRequest.from_value(envelope)
 	return app.dispatch_request_facade(req)
 }
@@ -108,7 +111,7 @@ pub fn (app &VSlimApp) dispatch_envelope(envelope vphp.PhpValue) vphp.PhpValue {
 @[php_method: 'dispatchEnvelopeWorker']
 pub fn (app &VSlimApp) dispatch_envelope_worker(envelope vphp.PhpValue) vphp.PhpValue {
 	// The generated bridge owns the scope and copies the response to PHP before closing it.
-	app.prepare_kernel()
+	app.prepare_kernel() or { return vphp.PhpValue.null() }
 	req := httpx.VSlimRequest.from_value(envelope)
 	return app.dispatch_request_worker_value(req)
 }
@@ -119,7 +122,7 @@ pub fn (app &VSlimApp) dispatch_envelope_map(envelope vphp.PhpValue) map[string]
 	defer {
 		scope.close()
 	}
-	app.prepare_kernel()
+	app.prepare_kernel() or { return map[string]string{} }
 	req := httpx.VSlimRequest.from_value(envelope)
 	prev_app := app.enter_runtime_dispatch()
 	defer {

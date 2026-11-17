@@ -6,6 +6,16 @@ void vphp_init_registry() {
   }
 }
 
+int vphp_object_method_required_params(const zval *value, const char *name,
+                                       size_t name_len) {
+  if (value == NULL || Z_TYPE_P(value) != IS_OBJECT) {
+    return -1;
+  }
+  const zend_function *method = zend_hash_str_find_ptr_lc(
+      &Z_OBJCE_P(value)->function_table, name, name_len);
+  return method ? (int)method->common.required_num_args : -1;
+}
+
 static void vphp_init_sidecar_registry(void) {
   if (vphp_sidecar_registry_initialized) {
     return;
@@ -659,6 +669,625 @@ int vphp_isset_property_compat(zend_object *obj, const char *name, int name_len)
                       obj, member, ZEND_PROPERTY_ISSET, NULL);
   zend_string_release(member);
   return out;
+}
+
+typedef struct {
+  HashTable *objects;
+  HashTable *seen_objects;
+  HashTable *seen_arrays;
+  const HashTable *captured;
+  HashTable *pinned;
+  HashTable *partial_arrays;
+  HashTable *references;
+} vphp_plain_object_graph;
+
+static zend_ulong vphp_plain_object_key(const zval *value) {
+  return (zend_ulong)(uintptr_t)Z_OBJ_P(value);
+}
+
+static bool vphp_plain_object_layout(zend_object *object) {
+  if (object->handlers != zend_get_std_object_handlers() ||
+      (object->properties != NULL && HT_HAS_ITERATORS(object->properties))) {
+    return false;
+  }
+#if PHP_VERSION_ID >= 80400
+  if (zend_object_is_lazy(object)) {
+    return false;
+  }
+#endif
+  zend_class_entry *ce = object->ce;
+  if (ce == zend_standard_class_def) {
+    return true;
+  }
+  if (ce->type != ZEND_USER_CLASS || ce->default_properties_count == 0 ||
+      ce->destructor || ce->__get || ce->__set || ce->__unset || ce->__isset) {
+    return false;
+  }
+#if PHP_VERSION_ID >= 80400
+  zend_property_info *property;
+  ZEND_HASH_FOREACH_PTR(&ce->properties_info, property) {
+    // Virtual hooks have no backing slot in properties_info_table.
+    if (property->hooks) {
+      return false;
+    }
+  } ZEND_HASH_FOREACH_END();
+#endif
+  if (object->properties != NULL) {
+    zval *value;
+    ZEND_HASH_FOREACH_VAL(object->properties, value) {
+      if (Z_TYPE_P(value) != IS_INDIRECT) {
+        return false;
+      }
+    } ZEND_HASH_FOREACH_END();
+  }
+  for (int i = 0; i < ce->default_properties_count; i++) {
+    zend_property_info *info = ce->properties_info_table[i];
+    if (info == NULL || !(info->flags & ZEND_ACC_PUBLIC) ||
+        (info->flags & ZEND_ACC_READONLY)) {
+      return false;
+    }
+#if PHP_VERSION_ID >= 80400
+    if (info->flags & (ZEND_ACC_PROTECTED_SET | ZEND_ACC_PRIVATE_SET)) {
+      return false;
+    }
+#endif
+  }
+  return true;
+}
+
+static bool vphp_plain_graph_enqueue(vphp_plain_object_graph *graph, zval *value) {
+  zend_ulong key = vphp_plain_object_key(value);
+  bool captured = graph->captured && zend_hash_index_exists(graph->captured, key);
+  if (graph->pinned && zend_hash_index_exists(graph->pinned, key)) {
+    return true;
+  }
+  if (!captured && graph->seen_objects &&
+      zend_hash_index_exists(graph->seen_objects, key)) {
+    return true;
+  }
+  if (!captured && !vphp_plain_object_layout(Z_OBJ_P(value))) {
+    return false;
+  }
+  if (graph->pinned) {
+    zval pin;
+    ZVAL_COPY(&pin, value);
+    zend_hash_index_add_new(graph->pinned, key, &pin);
+  }
+  if (!captured) {
+    if (graph->objects == NULL) {
+      graph->objects = zend_new_array(4);
+      graph->seen_objects = zend_new_array(4);
+    }
+    zend_hash_index_add_empty_element(graph->seen_objects, key);
+    zval owned;
+    ZVAL_COPY(&owned, value);
+    zend_hash_next_index_insert(graph->objects, &owned);
+  }
+  return true;
+}
+
+static bool vphp_plain_property_values(vphp_plain_object_graph *graph,
+                                       const HashTable *values, unsigned depth);
+
+static bool vphp_plain_scalar(const zval *value) {
+  switch (Z_TYPE_P(value)) {
+    case IS_NULL:
+    case IS_FALSE:
+    case IS_TRUE:
+    case IS_LONG:
+    case IS_DOUBLE:
+    case IS_STRING:
+      return true;
+    default:
+      return false;
+  }
+}
+
+static bool vphp_plain_property_value(vphp_plain_object_graph *graph,
+                                      zval *value, unsigned depth) {
+  switch (Z_TYPE_P(value)) {
+    case IS_ARRAY:
+      return vphp_plain_property_values(graph, Z_ARRVAL_P(value), depth);
+    case IS_OBJECT:
+      return vphp_plain_graph_enqueue(graph, value);
+    default:
+      return vphp_plain_scalar(value);
+  }
+}
+
+static bool vphp_plain_property_values(vphp_plain_object_graph *graph,
+                                       const HashTable *values, unsigned depth) {
+  if (depth == 0 || HT_HAS_ITERATORS(values)) {
+    return false;
+  }
+  if (graph->seen_arrays == NULL) {
+    graph->seen_arrays = zend_new_array(8);
+  }
+  zend_ulong key = (zend_ulong)(uintptr_t)values;
+  zval *cached = zend_hash_index_find(graph->seen_arrays, key);
+  if (cached != NULL) {
+    return Z_TYPE_P(cached) == IS_TRUE;
+  }
+  bool safe = true;
+  zval *value;
+  ZEND_HASH_FOREACH_VAL(values, value) {
+    if (!vphp_plain_property_value(graph, value, depth - 1)) {
+      // Visit other elements even when this array cannot itself be restored.
+      safe = false;
+    }
+  } ZEND_HASH_FOREACH_END();
+  zval result;
+  ZVAL_BOOL(&result, safe);
+  zend_hash_index_update(graph->seen_arrays, key, &result);
+  return safe;
+}
+
+static void vphp_plain_graph_release(vphp_plain_object_graph *graph) {
+  if (graph->objects != NULL) {
+    zend_array_release(graph->objects);
+    zend_array_release(graph->seen_objects);
+  }
+  if (graph->seen_arrays != NULL) {
+    zend_array_release(graph->seen_arrays);
+  }
+}
+
+static zval *vphp_find_property(const HashTable *properties, zend_string *name,
+                                zend_ulong index) {
+  if (properties == NULL) {
+    return NULL;
+  }
+  return name ? zend_hash_find(properties, name) : zend_hash_index_find(properties, index);
+}
+
+static void vphp_insert_property(HashTable *properties, zend_string *name,
+                                   zend_ulong index, zval *value) {
+  if (name) {
+    zend_hash_add_new(properties, name, value);
+  } else {
+    zend_hash_index_add_new(properties, index, value);
+  }
+}
+
+static bool vphp_capture_plain_value(vphp_plain_object_graph *graph, zval *value,
+                                     unsigned depth, bool save_binding, zval *saved);
+
+static bool vphp_reference_accepts_scalar(zend_reference *reference, const zval *value) {
+  if (!vphp_plain_scalar(value)) {
+    return false;
+  }
+  zend_property_info *property;
+  ZEND_REF_FOREACH_TYPE_SOURCES(reference, property) {
+#if PHP_VERSION_ID >= 80400
+    if (property->hooks) {
+      return false;
+    }
+#endif
+    // Accept only exact types so rollback never coerces or throws.
+    if (!ZEND_TYPE_CONTAINS_CODE(property->type, Z_TYPE_P(value))) {
+      return false;
+    }
+  } ZEND_REF_FOREACH_TYPE_SOURCES_END();
+  return true;
+}
+
+static bool vphp_capture_scalar_reference(vphp_plain_object_graph *graph, zval *value) {
+  zend_reference *reference = Z_REF_P(value);
+  zend_ulong key = (zend_ulong)(uintptr_t)reference;
+  if (!vphp_reference_accepts_scalar(reference, Z_REFVAL_P(value))) {
+    return false;
+  }
+  if (zend_hash_index_exists(graph->captured, key) ||
+      (graph->references && zend_hash_index_exists(graph->references, key))) {
+    return true;
+  }
+  if (graph->references == NULL) {
+    graph->references = zend_new_array(4);
+  }
+  zval item, owned, saved;
+  array_init_size(&item, 2);
+  ZVAL_COPY(&owned, value);
+  ZVAL_COPY(&saved, Z_REFVAL_P(value));
+  zend_hash_next_index_insert(Z_ARRVAL(item), &owned);
+  zend_hash_next_index_insert(Z_ARRVAL(item), &saved);
+  zend_hash_index_add_new(graph->references, key, &item);
+  return true;
+}
+
+static bool vphp_capture_plain_array(vphp_plain_object_graph *graph, zval *value,
+                                     unsigned depth, zval *saved) {
+  if (graph->seen_arrays == NULL) {
+    graph->seen_arrays = zend_new_array(8);
+  }
+  HashTable *source = Z_ARRVAL_P(value);
+  zend_ulong key = (zend_ulong)(uintptr_t)source;
+  zval *cached = zend_hash_index_find(graph->seen_arrays, key);
+  if (cached != NULL) {
+    ZVAL_COPY(saved, cached);
+    return !zend_hash_index_exists(graph->partial_arrays,
+                                  (zend_ulong)(uintptr_t)Z_ARRVAL_P(cached));
+  }
+  HashTable *properties = zend_new_array(zend_hash_num_elements(source));
+  bool complete = true;
+  zend_string *name;
+  zend_ulong index;
+  zval *element;
+  ZEND_HASH_FOREACH_KEY_VAL(source, index, name, element) {
+    zval snapshot;
+    if (!vphp_capture_plain_value(graph, element, depth - 1, false, &snapshot)) {
+      complete = false;
+    }
+    vphp_insert_property(properties, name, index, &snapshot);
+  } ZEND_HASH_FOREACH_END();
+  if (complete) {
+    zend_array_release(properties);
+    ZVAL_COPY(saved, value);
+  } else {
+    properties->nNextFreeElement = source->nNextFreeElement;
+    ZVAL_ARR(saved, properties);
+    zend_hash_index_add_empty_element(graph->partial_arrays,
+                                     (zend_ulong)(uintptr_t)properties);
+  }
+  zval cached_snapshot;
+  ZVAL_COPY(&cached_snapshot, saved);
+  zend_hash_index_add_new(graph->seen_arrays, key, &cached_snapshot);
+  return complete;
+}
+
+static bool vphp_capture_plain_value(vphp_plain_object_graph *graph, zval *value,
+                                     unsigned depth, bool save_binding, zval *saved) {
+  if (Z_TYPE_P(value) == IS_ARRAY && depth != 0) {
+    return vphp_capture_plain_array(graph, value, depth, saved);
+  }
+  if (Z_ISREF_P(value)) {
+    if (vphp_capture_scalar_reference(graph, value) && save_binding) {
+      ZVAL_COPY(saved, value);
+      return true;
+    }
+  }
+  if (Z_TYPE_P(value) != IS_ARRAY && vphp_plain_property_value(graph, value, 64)) {
+    ZVAL_COPY(saved, value);
+    return true;
+  }
+  // The key remains in the snapshot so this property is never treated as new.
+  ZVAL_PTR(saved, NULL);
+  return false;
+}
+
+static void vphp_save_plain_property(vphp_plain_object_graph *graph,
+                                     HashTable *properties, zend_string *name,
+                                     zend_ulong index, zval *value) {
+  zval saved;
+  vphp_capture_plain_value(graph, value, 64, true, &saved);
+  vphp_insert_property(properties, name, index, &saved);
+}
+
+static void vphp_save_plain_properties(vphp_plain_object_graph *graph,
+                                       zend_object *object, zval *snapshot) {
+  array_init(snapshot);
+  HashTable *saved = Z_ARRVAL_P(snapshot);
+  if (object->ce == zend_standard_class_def) {
+    if (object->properties != NULL) {
+      zend_string *name;
+      zend_ulong index;
+      zval *value;
+      ZEND_HASH_FOREACH_KEY_VAL(object->properties, index, name, value) {
+        vphp_save_plain_property(graph, saved, name, index, value);
+      } ZEND_HASH_FOREACH_END();
+    }
+    return;
+  }
+  for (int i = 0; i < object->ce->default_properties_count; i++) {
+    vphp_save_plain_property(graph, saved, NULL, i, OBJ_PROP_NUM(object, i));
+  }
+}
+
+static bool vphp_plain_discard_safe(zval *value, const HashTable *pinned) {
+  if (value == NULL || Z_TYPE_P(value) == IS_UNDEF) {
+    return true;
+  }
+  // A pinned object cannot be destroyed by replacing a property that points to it.
+  vphp_plain_object_graph graph = { .captured = pinned };
+  bool safe = vphp_plain_property_value(&graph, value, 64);
+  for (uint32_t i = 0; safe && graph.objects != NULL &&
+       i < zend_hash_num_elements(graph.objects); i++) {
+    zend_object *object = Z_OBJ_P(zend_hash_index_find(graph.objects, i));
+    if (object->ce == zend_standard_class_def) {
+      safe = object->properties == NULL ||
+          vphp_plain_property_values(&graph, object->properties, 64);
+    } else {
+      for (int j = 0; safe && j < object->ce->default_properties_count; j++) {
+        zval *slot = OBJ_PROP_NUM(object, j);
+        safe = Z_TYPE_P(slot) == IS_UNDEF ||
+            vphp_plain_property_value(&graph, slot, 64);
+      }
+    }
+  }
+  vphp_plain_graph_release(&graph);
+  return safe;
+}
+
+typedef struct {
+  const HashTable *pinned;
+  const HashTable *partial_arrays;
+  HashTable *merged_arrays;
+} vphp_plain_restore;
+
+static bool vphp_can_restore_reference_binding(vphp_plain_restore *restore,
+                                               zval *saved, zval *current) {
+  if (!vphp_reference_accepts_scalar(Z_REF_P(saved), Z_REFVAL_P(saved))) {
+    return false;
+  }
+  if (current != NULL && Z_ISREF_P(current)) {
+    return vphp_plain_scalar(Z_REFVAL_P(current));
+  }
+  return vphp_plain_discard_safe(current, restore->pinned);
+}
+
+static bool vphp_merge_plain_value(vphp_plain_restore *restore, zval *saved,
+                                   zval *current, unsigned depth, zval *result);
+
+static HashTable *vphp_merge_plain_properties(vphp_plain_restore *restore,
+                                             const HashTable *saved,
+                                             const HashTable *current,
+                                             unsigned depth) {
+  HashTable *properties = zend_new_array(zend_hash_num_elements(saved));
+  zend_string *name;
+  zend_ulong index;
+  zval *value;
+  ZEND_HASH_FOREACH_KEY_VAL(saved, index, name, value) {
+    zval merged;
+    zval *existing = vphp_find_property(current, name, index);
+    if (vphp_merge_plain_value(restore, value, existing, depth, &merged)) {
+      vphp_insert_property(properties, name, index, &merged);
+    }
+  } ZEND_HASH_FOREACH_END();
+  if (current != NULL) {
+    ZEND_HASH_FOREACH_KEY_VAL(current, index, name, value) {
+      if (vphp_find_property(saved, name, index) == NULL &&
+          !vphp_plain_discard_safe(value, restore->pinned)) {
+        zval kept;
+        ZVAL_COPY(&kept, value);
+        vphp_insert_property(properties, name, index, &kept);
+      }
+    } ZEND_HASH_FOREACH_END();
+  }
+  if (properties->nNextFreeElement < saved->nNextFreeElement) {
+    properties->nNextFreeElement = saved->nNextFreeElement;
+  }
+  return properties;
+}
+
+static void vphp_merge_plain_arrays(vphp_plain_restore *restore,
+                                    HashTable *saved, zval *current_value,
+                                    unsigned depth, zval *result) {
+  HashTable *current = current_value != NULL ? Z_ARRVAL_P(current_value) : NULL;
+  zend_ulong saved_key = (zend_ulong)(uintptr_t)saved;
+  zend_ulong current_key = (zend_ulong)(uintptr_t)current;
+  zval *matches = zend_hash_index_find(restore->merged_arrays, saved_key);
+  if (matches == NULL) {
+    zval match_table;
+    array_init(&match_table);
+    matches = zend_hash_index_add_new(restore->merged_arrays, saved_key, &match_table);
+  }
+  HashTable *cache = Z_ARRVAL_P(matches);
+  zval *cached = zend_hash_index_find(cache, current_key);
+  if (cached != NULL) {
+    ZVAL_COPY(result, zend_hash_index_find(Z_ARRVAL_P(cached), 0));
+    return;
+  }
+  ZVAL_ARR(result, vphp_merge_plain_properties(restore, saved, current, depth - 1));
+  zval entry, cached_result;
+  array_init_size(&entry, 2);
+  ZVAL_COPY(&cached_result, result);
+  zend_hash_next_index_insert(Z_ARRVAL(entry), &cached_result);
+  if (current_value != NULL) {
+    // Keep identity keys valid even after a previous property's table was replaced.
+    zval source;
+    ZVAL_COPY(&source, current_value);
+    zend_hash_next_index_insert(Z_ARRVAL(entry), &source);
+  }
+  zend_hash_index_add_new(cache, current_key, &entry);
+}
+
+static bool vphp_merge_plain_value(vphp_plain_restore *restore, zval *saved,
+                                   zval *current, unsigned depth, zval *result) {
+  bool discard_safe = false;
+  if (Z_ISREF_P(saved)) {
+    if (vphp_can_restore_reference_binding(restore, saved, current)) {
+      ZVAL_COPY(result, saved);
+      return true;
+    }
+  } else if (Z_TYPE_P(saved) != IS_PTR) {
+    discard_safe = vphp_plain_discard_safe(current, restore->pinned);
+    bool partial = Z_TYPE_P(saved) == IS_ARRAY &&
+        zend_hash_index_exists(restore->partial_arrays, (zend_ulong)(uintptr_t)Z_ARRVAL_P(saved));
+    if (!partial && discard_safe) {
+      ZVAL_COPY(result, saved);
+      return true;
+    }
+    if (Z_TYPE_P(saved) == IS_ARRAY && depth != 0 &&
+        (discard_safe || (current != NULL && Z_TYPE_P(current) == IS_ARRAY &&
+                          !HT_HAS_ITERATORS(Z_ARRVAL_P(current))))) {
+      zval *existing = current != NULL && Z_TYPE_P(current) == IS_ARRAY ? current : NULL;
+      vphp_merge_plain_arrays(restore, Z_ARRVAL_P(saved), existing, depth, result);
+      return true;
+    }
+  }
+  if (current == NULL || Z_TYPE_P(current) == IS_UNDEF) {
+    return false;
+  }
+  ZVAL_COPY(result, current);
+  return true;
+}
+
+static bool vphp_reference_has_property_source(zend_reference *reference,
+                                               const zend_property_info *info) {
+  zend_property_info *source;
+  ZEND_REF_FOREACH_TYPE_SOURCES(reference, source) {
+    if (source == info) {
+      return true;
+    }
+  } ZEND_REF_FOREACH_TYPE_SOURCES_END();
+  return false;
+}
+
+static void vphp_restore_declared_reference(vphp_plain_restore *restore,
+                                            zend_property_info *info,
+                                            zval *slot, zval *saved) {
+  if ((Z_ISREF_P(slot) && Z_REF_P(slot) == Z_REF_P(saved)) ||
+      !vphp_can_restore_reference_binding(restore, saved, slot)) {
+    return;
+  }
+  if (ZEND_TYPE_IS_SET(info->type)) {
+    if (!ZEND_TYPE_CONTAINS_CODE(info->type, Z_TYPE_P(Z_REFVAL_P(saved)))) {
+      return;
+    }
+    if (Z_ISREF_P(slot)) {
+      if (!vphp_reference_has_property_source(Z_REF_P(slot), info)) {
+        return;
+      }
+      ZEND_REF_DEL_TYPE_SOURCE(Z_REF_P(slot), info);
+    }
+    ZEND_REF_ADD_TYPE_SOURCE(Z_REF_P(saved), info);
+  }
+  zval previous;
+  ZVAL_COPY_VALUE(&previous, slot);
+  ZVAL_COPY(slot, saved);
+  Z_PROP_FLAG_P(slot) = 0;
+  zval_ptr_dtor(&previous);
+}
+
+static void vphp_restore_plain_properties(vphp_plain_restore *restore,
+                                          zend_object *object, zval *snapshot) {
+  if (!vphp_plain_object_layout(object)) {
+    return;
+  }
+  HashTable *saved = Z_ARRVAL_P(snapshot);
+  if (object->ce == zend_standard_class_def) {
+    HashTable *current = object->properties;
+    // Copy skipped zvals verbatim, including references, before releasing the old table.
+    object->properties = vphp_merge_plain_properties(restore, saved, current, 64);
+    if (current != NULL) {
+      zend_array_release(current);
+    }
+    return;
+  }
+  for (int i = 0; i < object->ce->default_properties_count; i++) {
+    zval *slot = OBJ_PROP_NUM(object, i);
+    zval *value = zend_hash_index_find(saved, i);
+    if (Z_ISREF_P(value)) {
+      vphp_restore_declared_reference(restore, object->ce->properties_info_table[i],
+                                      slot, value);
+      continue;
+    }
+    zval merged;
+    if (Z_TYPE_P(value) != IS_PTR && !Z_ISREF_P(slot) &&
+        vphp_merge_plain_value(restore, value, slot, 64, &merged)) {
+      zval_ptr_dtor(slot);
+      ZVAL_COPY_VALUE(slot, &merged);
+      Z_PROP_FLAG_P(slot) = 0;
+    }
+  }
+}
+
+void *vphp_new_plain_object_tracker(void) {
+  return zend_new_array(8);
+}
+
+void *vphp_capture_plain_object(void *tracker, zval *root) {
+  HashTable *captured = tracker;
+  if (root == NULL || Z_TYPE_P(root) != IS_OBJECT ||
+      !vphp_plain_object_layout(Z_OBJ_P(root)) ||
+      zend_hash_index_exists(captured, vphp_plain_object_key(root))) {
+    return NULL;
+  }
+  vphp_plain_object_graph graph = {
+      .captured = captured,
+      .pinned = zend_new_array(4),
+      .partial_arrays = zend_new_array(4),
+  };
+  vphp_plain_graph_enqueue(&graph, root);
+  zval items;
+  array_init(&items);
+  // Enqueuing a child can grow the table. The queue's numeric indices stay stable.
+  for (uint32_t i = 0; i < zend_hash_num_elements(graph.objects); i++) {
+    zval *object = zend_hash_index_find(graph.objects, i);
+    zval item, target, state;
+    array_init_size(&item, 2);
+    ZVAL_COPY(&target, object);
+    vphp_save_plain_properties(&graph, Z_OBJ_P(&target), &state);
+    zend_hash_next_index_insert(Z_ARRVAL(item), &target);
+    zend_hash_next_index_insert(Z_ARRVAL(item), &state);
+    zend_hash_next_index_insert(Z_ARRVAL(items), &item);
+    zend_hash_index_add_empty_element(captured, vphp_plain_object_key(&target));
+  }
+  HashTable *group = zend_new_array(4);
+  zval pinned, partial_arrays, references;
+  ZVAL_ARR(&pinned, graph.pinned);
+  zend_hash_next_index_insert(group, &items);
+  zend_hash_next_index_insert(group, &pinned);
+  ZVAL_ARR(&partial_arrays, graph.partial_arrays);
+  zend_hash_next_index_insert(group, &partial_arrays);
+  if (graph.references != NULL) {
+    zend_ulong key;
+    ZEND_HASH_FOREACH_NUM_KEY(graph.references, key) {
+      zend_hash_index_add_empty_element(captured, key);
+    } ZEND_HASH_FOREACH_END();
+    ZVAL_ARR(&references, graph.references);
+  } else {
+    ZVAL_NULL(&references);
+  }
+  zend_hash_next_index_insert(group, &references);
+  vphp_plain_graph_release(&graph);
+  return group;
+}
+
+static void vphp_restore_scalar_references(zval *references) {
+  if (Z_TYPE_P(references) != IS_ARRAY) {
+    return;
+  }
+  zval *item;
+  ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(references), item) {
+    zval *owner = zend_hash_index_find(Z_ARRVAL_P(item), 0);
+    zval *saved = zend_hash_index_find(Z_ARRVAL_P(item), 1);
+    zval *target = Z_REFVAL_P(owner);
+    if (vphp_plain_scalar(target) &&
+        vphp_reference_accepts_scalar(Z_REF_P(owner), saved)) {
+      zval previous;
+      ZVAL_COPY_VALUE(&previous, target);
+      ZVAL_COPY(target, saved);
+      zval_ptr_dtor(&previous);
+    }
+  } ZEND_HASH_FOREACH_END();
+}
+
+void vphp_restore_plain_objects(void *handle) {
+  HashTable *group = handle;
+  HashTable *items = Z_ARRVAL_P(zend_hash_index_find(group, 0));
+  zval *references = zend_hash_index_find(group, 3);
+  vphp_plain_restore restore = {
+      .pinned = Z_ARRVAL_P(zend_hash_index_find(group, 1)),
+      .partial_arrays = Z_ARRVAL_P(zend_hash_index_find(group, 2)),
+      .merged_arrays = zend_new_array(4),
+  };
+  // Restore values before reconnecting typed properties when their types permit it.
+  vphp_restore_scalar_references(references);
+  zval *item;
+  ZEND_HASH_FOREACH_VAL(items, item) {
+    zval *target = zend_hash_index_find(Z_ARRVAL_P(item), 0);
+    zval *state = zend_hash_index_find(Z_ARRVAL_P(item), 1);
+    vphp_restore_plain_properties(&restore, Z_OBJ_P(target), state);
+  } ZEND_HASH_FOREACH_END();
+  // Rebinding can remove a temporary type source that blocked the first pass.
+  vphp_restore_scalar_references(references);
+  zend_array_release(restore.merged_arrays);
+}
+
+void vphp_release_plain_object_state(void *handle) {
+  if (handle != NULL) {
+    zend_array_release((HashTable *)handle);
+  }
 }
 
 void vphp_unset_property_compat(zend_object *obj, const char *name, int name_len) {

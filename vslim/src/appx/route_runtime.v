@@ -73,6 +73,7 @@ fn (mut app VSlimApp) add_websocket_route(name string, pattern string, handler v
 	if !websocketx.is_supported_handler_value(handler) {
 		return
 	}
+	app.track_registration()
 	app.websocket_routes << routex.VSlimRoute.websocket(name, pattern, handler)
 }
 
@@ -80,6 +81,7 @@ fn (mut app VSlimApp) add_route_with_resource_meta(method string, name string, p
 	if !handler.is_valid() || handler.is_null() || handler.is_undef() {
 		return
 	}
+	app.track_registration()
 	app.routes << routex.VSlimRoute.with_resource_meta(method, name, pattern, handler,
 		resource_action, resource_missing_handler)
 }

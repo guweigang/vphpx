@@ -29,6 +29,7 @@ fn standalone_identity(value vphp.PhpValue) vphp.PhpValue {
 }
 EOF
 cat > "$project/extra/extra.v" <<'EOF'
+/* An exported module may have a block comment before its declaration. */
 module extra
 
 pub fn greet(name string) string {

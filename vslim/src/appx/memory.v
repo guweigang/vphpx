@@ -2,8 +2,11 @@ module appx
 
 import loggerx
 import routex
+import supportx
 
 pub fn (mut app VSlimApp) cleanup() {
+	supportx.release_bootstrap_progress(mut app.bootstrap_progress)
+	app.release_bootstrap_inputs()
 	loggerx.cli_debug_log('app.cleanup automatic entry app=${usize(app)}')
 	// Direct bridge-owned fields on VSlimApp are automatically released by
 	// generic_free_raw() later in the destruction pipeline. We only manually
@@ -29,6 +32,7 @@ pub fn (mut app VSlimApp) cleanup() {
 			app.group_after_middle.handlers.free()
 			app.provider_classes.free()
 			app.module_classes.free()
+			app.bootstrap_boot_stages.free()
 		}
 	}
 	loggerx.cli_debug_log('app.cleanup native collections done')

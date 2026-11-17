@@ -58,10 +58,23 @@ pub fn derive_command_name_from_handler_name(raw_name string) !string {
 	return name
 }
 
-pub fn command_metadata_aliases(runtime vphp.PhpValue) []string {
+fn optional_command_definition(runtime vphp.PhpValue) ?CliCommandDefinition {
+	return command_definition(runtime) or { return none }
+}
+
+fn command_metadata_hidden(runtime vphp.PhpValue, definition ?CliCommandDefinition) bool {
+	if def := definition {
+		if def.hidden {
+			return true
+		}
+	}
+	return runtime_bool_method(runtime, 'hidden', false)
+}
+
+fn command_metadata_aliases(runtime vphp.PhpValue, definition ?CliCommandDefinition) []string {
 	mut out := []string{}
 	mut seen := map[string]bool{}
-	if def := command_definition(runtime) {
+	if def := definition {
 		for alias in def.aliases {
 			alias_name := alias.trim_space().clone()
 			if alias_name == '' || alias_name in seen {
@@ -80,13 +93,4 @@ pub fn command_metadata_aliases(runtime vphp.PhpValue) []string {
 		out << alias_name
 	}
 	return out
-}
-
-pub fn command_metadata_hidden(runtime vphp.PhpValue) bool {
-	if def := command_definition(runtime) {
-		if def.hidden {
-			return true
-		}
-	}
-	return runtime_bool_method(runtime, 'hidden', false)
 }

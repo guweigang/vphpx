@@ -14,10 +14,13 @@ struct AppKernelDispatchResult {
 	effective_request_ref &httpx.VSlimRequest = unsafe { nil }
 }
 
-fn (app &VSlimApp) prepare_kernel() {
+fn (app &VSlimApp) prepare_kernel() ! {
 	unsafe {
 		mut writable := &VSlimApp(app)
-		writable.ensure_booted()
+		writable.apply_boot() or {
+			raise_app_error('RuntimeException', err)
+			return err
+		}
 	}
 }
 

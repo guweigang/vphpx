@@ -1,5 +1,7 @@
 module vphp
 
+import vphp.zend
+
 pub fn (o PhpObject) class_name() string {
 	return o.to_zval().class_name()
 }
@@ -42,6 +44,17 @@ pub fn (o PhpObject) is_subclass_of(name string) bool {
 
 pub fn (o PhpObject) method_exists(name string) bool {
 	return o.to_zval().method_exists(name)
+}
+
+// method_required_params reads a declared method's required argument count.
+// The lookup is case-insensitive and includes inherited methods.
+pub fn (o PhpObject) method_required_params(name string) ?int {
+	z := o.to_zval()
+	count := zend.object_method_required_params(z.raw, name)
+	if count < 0 {
+		return none
+	}
+	return count
 }
 
 pub fn (o PhpObject) property_exists(name string) bool {

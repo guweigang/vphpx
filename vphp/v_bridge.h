@@ -204,6 +204,10 @@ void vphp_write_property_compat(zend_object *obj, const char *name, int name_len
 int vphp_has_property_compat(zend_object *obj, const char *name, int name_len);
 int vphp_isset_property_compat(zend_object *obj, const char *name, int name_len);
 void vphp_unset_property_compat(zend_object *obj, const char *name, int name_len);
+void *vphp_new_plain_object_tracker(void);
+void *vphp_capture_plain_object(void *tracker, zval *root);
+void vphp_restore_plain_objects(void *handle);
+void vphp_release_plain_object_state(void *handle);
 
 // 状态获取
 char *VPHP_Z_STRVAL(zval *z);
@@ -234,6 +238,8 @@ void *vphp_get_current_this_object(void);
 void *vphp_get_v_ptr_from_zval(zval *zv);
 
 // 方法调用与 Callable
+int vphp_object_method_required_params(const zval *value, const char *name,
+                                       size_t name_len);
 int vphp_call_method(zval *obj, const char *method, int method_len,
                      zval *retval, int param_count, zval **params_ptrs);
 int vphp_is_callable(zval *callable);

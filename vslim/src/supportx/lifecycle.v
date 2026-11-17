@@ -1,5 +1,6 @@
 module supportx
 
+import registrationx
 import loggerx
 import vphp
 
@@ -18,6 +19,10 @@ pub fn class_instance_value(raw_class_name string, kind string) !vphp.PhpValue {
 	if class_name == '' {
 		return error('${kind} class name must not be empty')
 	}
+	mut scope := registrationx.begin_registration_scope()
+	defer {
+		scope.finish()
+	}
 	mut class_arg := vphp.PhpString.of(class_name)
 	mut autoload_arg := vphp.PhpBool.of(true)
 	defer {
@@ -25,6 +30,9 @@ pub fn class_instance_value(raw_class_name string, kind string) !vphp.PhpValue {
 		autoload_arg.release()
 	}
 	exists := vphp.PhpFunction.named('class_exists').result_bool(class_arg, autoload_arg)
+	if vphp.has_exception() {
+		return error('${kind} class lookup failed')
+	}
 	if !exists {
 		log_class_visibility(kind, class_name)
 		return error('${kind} class "${class_name}" does not exist')
@@ -32,74 +40,53 @@ pub fn class_instance_value(raw_class_name string, kind string) !vphp.PhpValue {
 	mut object := vphp.PhpClass.named(class_name).construct() or {
 		return error('${kind} class "${class_name}" could not be constructed')
 	}
+	if vphp.has_exception() {
+		object.release()
+		return error('${kind} constructor failed')
+	}
 	return object.take_value()
 }
 
-pub fn class_key(value vphp.PhpValue) string {
-	return value.class_name().trim_space()
-}
-
 pub fn bind_to_app(value vphp.PhpValue, app_value vphp.PhpValue) {
-	if !value.is_valid() || !value.is_object() || !app_value.is_valid() || !app_value.is_object() {
-		return
-	}
-	if value.method_exists('setApp') {
-		value.require_object() or { return }.with_method_result[vphp.PhpValue, bool]('setApp', fn (_ vphp.PhpValue) bool {
-			return true
-		}, app_value) or { false }
-	}
-}
-
-pub fn call_lifecycle(value vphp.PhpValue, method_name string, app_value vphp.PhpValue) ! {
-	if !value.is_valid() || !value.is_object() || !value.method_exists(method_name) {
-		return
-	}
 	obj := value.require_object() or { return }
-	if object_method_required_params(obj, method_name) > 0 && app_value.is_valid()
-		&& app_value.is_object() {
-		obj.with_method_result[vphp.PhpValue, bool](method_name, fn (_ vphp.PhpValue) bool {
-			return true
-		}, app_value) or { false }
-		return
-	}
-	obj.with_method_result[vphp.PhpValue, bool](method_name, fn (_ vphp.PhpValue) bool {
-		return true
-	}) or { false }
+	bind_lifecycle_object(obj, app_value) or { return }
 }
 
-pub fn call_first_supported_lifecycle(value vphp.PhpValue, method_names []string, app_value vphp.PhpValue) ! {
-	for method_name in method_names {
-		if !value.method_exists(method_name) {
-			continue
+pub fn bind_lifecycle_object(obj vphp.PhpObject, app_value vphp.PhpValue) ! {
+	if !app_value.is_valid() || !app_value.is_object() {
+		return
+	}
+	if _ := obj.method_required_params('setApp') {
+		mut scope := registrationx.begin_registration_scope()
+		defer {
+			scope.finish()
 		}
-		call_lifecycle(value, method_name, app_value)!
-		return
+		obj.with_method_result[vphp.PhpValue, bool]('setApp', ignore_lifecycle_result, app_value) or { false }
+		if vphp.has_exception() {
+			return error('setApp callback failed')
+		}
 	}
 }
 
-pub fn call_value_method(value vphp.PhpValue, method_name string, app_value vphp.PhpValue) ?vphp.PhpValue {
-	if !value.is_valid() || !value.is_object() || !value.method_exists(method_name) {
-		return none
-	}
-	obj := value.require_object() or { return none }
-	if app_value.is_valid() && app_value.is_object() {
-		return obj.with_method_result[vphp.PhpValue, vphp.PhpValue](method_name, fn (result vphp.PhpValue) vphp.PhpValue {
-			return result.owned()
-		}, app_value) or { return none }
-	}
-	return obj.with_method_result[vphp.PhpValue, vphp.PhpValue](method_name, fn (result vphp.PhpValue) vphp.PhpValue {
-		return result.owned()
-	}) or { return none }
+fn ignore_lifecycle_result(_ vphp.PhpValue) bool {
+	return true
 }
 
-fn object_method_required_params(obj vphp.PhpObject, method_name string) int {
-	mut method_arg := vphp.PhpString.of(method_name)
+pub fn call_lifecycle_if_present(obj vphp.PhpObject, method_name string, app_value vphp.PhpValue) !bool {
+	required := obj.method_required_params(method_name) or { return false }
+	mut scope := registrationx.begin_registration_scope()
 	defer {
-		method_arg.release()
+		scope.finish()
 	}
-	ref := vphp.PhpClass.named('ReflectionMethod').construct(obj, method_arg) or { return 0 }
-	count := ref.method[vphp.PhpInt]('getNumberOfRequiredParameters') or { return 0 }
-	return count.to_int()
+	mut args := []vphp.PhpArgInput{}
+	if required > 0 && app_value.is_valid() && app_value.is_object() {
+		args << app_value
+	}
+	obj.with_method_result[vphp.PhpValue, bool](method_name, ignore_lifecycle_result, ...args) or { false }
+	if vphp.has_exception() {
+		return error('${method_name} callback failed')
+	}
+	return true
 }
 
 fn included_hits(class_name string) []string {

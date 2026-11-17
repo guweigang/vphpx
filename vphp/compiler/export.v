@@ -255,7 +255,7 @@ fn (mut c Compiler) generate_v_glue() ! {
 	}
 	v_code := v_glue.generate(mut c.elements)
 	os.write_file(c.bridge_output_path(), v_code)!
-	v_glue.generate_modules(c.elements, c.target_files)!
+	v_glue.generate_module_bridges(c.elements, c.module_dirs)!
 }
 
 fn (c Compiler) bridge_output_path() string {

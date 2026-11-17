@@ -10,6 +10,7 @@ import jobx
 import loggerx
 import mcpx as mcp
 import routex
+import supportx
 import vphp
 
 @[php_implements: 'Psr\\Http\\Server\\RequestHandlerInterface']
@@ -59,6 +60,14 @@ mut:
 	provider_classes      map[string]bool                    @[php_ignore]
 	modules               []vphp.PhpObject                   @[php_ignore]
 	module_classes        map[string]bool                    @[php_ignore]
+	provider_boot          ComponentBootProgress             @[php_ignore]
+	module_boot            ComponentBootProgress             @[php_ignore]
+	booting                bool                              @[php_ignore]
+	bootstrap_boot_stages  map[string]BootstrapBootStage      @[php_ignore]
+	bootstrap_progress     map[string]&supportx.BootstrapProgress @[php_ignore]
+	bootstrap_input_runs   []&BootstrapInputRun               @[php_ignore]
+	bootstrap_boot_inputs  []vphp.PhpValue                   @[php_ignore]
+	deferred_boot_inputs   []vphp.PhpValue                   @[php_ignore]
 	booted                bool
 	live_ws_sockets       map[string]vphp.PhpObject @[php_ignore]
 }

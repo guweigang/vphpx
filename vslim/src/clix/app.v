@@ -1,7 +1,9 @@
 module clix
 
+import registrationx
 import appx
 import loggerx
+import supportx
 import vphp
 
 fn (mut cli VSlimCliApp) ensure_core_app() &appx.VSlimApp {
@@ -34,7 +36,7 @@ fn (cli &VSlimCliApp) trace_label() string {
 	if unsafe { isnil(cli) } {
 		return 'trace=nil'
 	}
-	trace := cli.current_trace.trim_space()
+	trace := cli.command_context.trace.trim_space()
 	if trace == '' {
 		return 'trace=idle cli=${usize(cli)}'
 	}
@@ -146,6 +148,10 @@ fn (mut cli VSlimCliApp) resolve_command_runtime(handler vphp.PhpValue) !vphp.Ph
 }
 
 fn (mut cli VSlimCliApp) resolve_command_class_runtime(class_name string) !vphp.PhpValue {
+	mut callback_scope := registrationx.begin_registration_scope()
+	defer {
+		callback_scope.finish()
+	}
 	mut class_arg := vphp.PhpString.of(class_name)
 	mut autoload_arg := vphp.PhpBool.of(true)
 	defer {
@@ -234,50 +240,84 @@ fn (mut cli VSlimCliApp) clear_command_metadata(canonical_name string) {
 	cli.command_hidden.delete(canonical_name)
 }
 
-fn (mut cli VSlimCliApp) apply_command_metadata(canonical_name string, handler vphp.PhpValue) ! {
-	canonical := canonical_name.trim_space().clone()
-	cli.clear_command_metadata(canonical)
-	cli.command_canonical[canonical] = canonical.clone()
+struct CliCommandMetadata {
+	hidden  bool
+	aliases []string
+}
+
+fn (mut cli VSlimCliApp) resolve_command_metadata(handler vphp.PhpValue) !CliCommandMetadata {
 	if handler.is_valid() && handler.is_object() && handler.class_name() == 'Closure' {
-		cli.command_hidden[canonical] = false
-		return
+		return CliCommandMetadata{}
 	}
 	mut runtime := cli.resolve_command_runtime(handler)!
 	defer {
 		runtime.release()
 	}
-	cli.command_hidden[canonical] = command_metadata_hidden(runtime)
-	aliases := command_metadata_aliases(runtime)
-	if aliases.len == 0 {
-		return
+	definition := optional_command_definition(runtime)
+	if vphp.has_exception() {
+		return CliCommandMetadata{}
 	}
-	mut registered_aliases := []string{}
+	hidden := command_metadata_hidden(runtime, definition)
+	if vphp.has_exception() {
+		return CliCommandMetadata{}
+	}
+	return CliCommandMetadata{
+		hidden:  hidden
+		aliases: command_metadata_aliases(runtime, definition)
+	}
+}
+
+fn (cli &VSlimCliApp) validate_command_name(name string) ! {
+	existing := cli.command_canonical[name] or { name }
+	if name in cli.command_handlers && existing != name {
+		return error('command name "${name}" is already registered as an alias for "${existing}"')
+	}
+}
+
+fn (mut cli VSlimCliApp) register_command(name string, handler vphp.PhpValue) ! {
+	cli.validate_command_name(name)!
+	metadata := cli.resolve_command_metadata(handler)!
+	if vphp.has_exception() {
+		return error('command metadata callback failed')
+	}
+	// Metadata callbacks can register commands on the same CLI.
+	cli.validate_command_name(name)!
+	mut aliases := []string{}
+	for alias in metadata.aliases {
+		if alias == name {
+			continue
+		}
+		existing := cli.command_canonical[alias] or { '' }
+		if existing != '' && existing != name {
+			return error('CLI alias "${alias}" conflicts with registered command "${existing}"')
+		}
+		if existing == '' && alias in cli.command_handlers {
+			continue
+		}
+		aliases << alias
+	}
+
+	if name !in cli.command_handlers {
+		cli.command_order << name.clone()
+	}
+	cli.replace_command_registration(name)
+	cli.command_handlers[name] = handler.retain()
+	cli.command_canonical[name] = name.clone()
+	cli.command_hidden[name] = metadata.hidden
 	for alias in aliases {
-		alias_name := alias.trim_space().clone()
-		if alias_name == '' || alias_name == canonical {
-			continue
-		}
-		existing_canonical := cli.command_canonical[alias_name] or { '' }
-		if existing_canonical != '' && existing_canonical != canonical {
-			return error('CLI alias "${alias_name}" conflicts with registered command "${existing_canonical}"')
-		}
-		if alias_name in cli.command_handlers {
-			continue
-		}
-		cli.command_handlers[alias_name] = handler.retain()
-		cli.command_canonical[alias_name] = canonical.clone()
-		registered_aliases << alias_name.clone()
+		cli.command_handlers[alias] = handler.retain()
+		cli.command_canonical[alias] = name.clone()
 	}
-	if registered_aliases.len > 0 {
-		cli.command_aliases[canonical] = registered_aliases
+	if aliases.len > 0 {
+		cli.command_aliases[name] = aliases
 	}
 }
 
 fn (mut cli VSlimCliApp) run_registered_cli_command_with_program(name string, args []string, program string) !int {
 	command_name := name.trim_space().clone()
-	cli.current_trace = 'trace=cmd:${command_name} cli=${usize(cli)} core=${usize(cli.core_app_ref)}'
+	cli.command_context.trace = 'trace=cmd:${command_name} cli=${usize(cli)} core=${usize(cli.core_app_ref)}'
 	defer {
-		cli.current_trace = ''
+		cli.command_context.trace = ''
 	}
 	loggerx.cli_debug_log(cli.trace_message('run_registered_cli_command start name="${command_name}" args=${args.len}'))
 	mut handler := cli.lookup_command_handler(command_name)!
@@ -285,14 +325,12 @@ fn (mut cli VSlimCliApp) run_registered_cli_command_with_program(name string, ar
 		handler.release()
 	}
 	cli.reset_command_input()
-	cli.last_command_name = command_name.clone()
+	cli.command_context.name = command_name.clone()
 	mut runtime := cli.resolve_command_runtime(handler)!
 	defer {
 		runtime.release()
 	}
-	input := cli.resolve_command_input(runtime, args) or {
-		return cli_command_input_error(runtime, program, command_name, err.msg())
-	}
+	input := cli.resolve_command_input(runtime, args, program, command_name)!
 	args_copy := clone_string_slice(input.positional_args)
 	cli.set_command_input(command_name, input)
 	mut args_arr := vphp.PhpArray.new()
@@ -383,82 +421,104 @@ pub fn (cli &VSlimCliApp) debug_bridge_path(path string) vphp.PhpValue {
 
 @[php_method]
 pub fn (mut cli VSlimCliApp) command(name string, handler vphp.PhpValue) &VSlimCliApp {
+	cli.apply_command(name, handler) or { return &cli }
+	return &cli
+}
+
+fn raise_cli_argument_error(err IError) {
+	if !vphp.has_exception() {
+		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
+	}
+}
+
+fn (mut cli VSlimCliApp) apply_command(name string, handler vphp.PhpValue) ! {
+	cli.register_command_input(name, handler) or {
+		raise_cli_argument_error(err)
+		return err
+	}
+}
+
+fn (mut cli VSlimCliApp) register_command_input(name string, handler vphp.PhpValue) ! {
 	cli.ensure_registry()
 	loggerx.cli_debug_log('command enter cli=${usize(&cli)} raw_name="${name}" raw_len=${name.len} handler_type=${handler.kind_name()}')
 	command_name := name.trim_space().clone()
 	loggerx.cli_debug_log('command normalized cli=${usize(&cli)} command_name="${command_name}" len=${command_name.len}')
 	if command_name == '' {
 		loggerx.cli_debug_log('command empty raw_name="${name}" raw_len=${name.len}')
-		vphp.PhpException.raise_class('InvalidArgumentException', 'command name must not be empty',
-			0)
-		return &cli
+		return error('command name must not be empty')
 	}
-	mut handler_value := cli_value_subject(handler).cli_command_handler_input() or {
-		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
-		return &cli
-	}
+	mut handler_value := cli_value_subject(handler).cli_command_handler_input()!
 	defer {
 		handler_value.release()
 	}
-	existing_canonical := cli.command_canonical[command_name] or { command_name }
-	if command_name in cli.command_handlers && existing_canonical != command_name {
-		vphp.PhpException.raise_class('InvalidArgumentException',
-			'command name "${command_name}" is already registered as an alias for "${existing_canonical}"',
-			0)
-		return &cli
+	if vphp.has_exception() {
+		return error('command handler resolution failed')
 	}
-	if command_name !in cli.command_handlers {
-		cli.command_order << command_name.clone()
-	}
-	loggerx.cli_debug_log('command register cli=${usize(&cli)} command_name="${command_name}" order_len=${cli.command_order.len} handlers_len=${cli.command_handlers.len}')
-	cli.clear_command_metadata(command_name)
-	cli.command_handlers[command_name] = handler_value.retain()
-	cli.command_canonical[command_name] = command_name.clone()
-	cli.apply_command_metadata(command_name, handler_value) or {
-		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
-		return &cli
-	}
+	cli.register_command(command_name, handler_value)!
 	loggerx.cli_debug_log('command exit cli=${usize(&cli)} command_name="${command_name}" order=${cli.command_order}')
-	return &cli
 }
 
-fn (mut cli VSlimCliApp) command_class(name string, class_name string) &VSlimCliApp {
+fn (mut cli VSlimCliApp) apply_command_class(name string, class_name string) ! {
 	mut handler := vphp.PhpString.of(class_name)
 	mut handler_value := handler.take_value()
 	defer {
 		handler_value.release()
 	}
-	return cli.command(name, handler_value)
+	cli.apply_command(name, handler_value)!
 }
 
 @[php_method: 'commandMany']
 pub fn (mut cli VSlimCliApp) command_many(commands vphp.PhpIterable) &VSlimCliApp {
-	cli.ensure_registry()
-	mut normalized := commands.to_array() or {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'commands must be iterable', 0)
-		return &cli
+	cli.apply_command_many(commands) or { raise_cli_argument_error(err) }
+	return &cli
+}
+
+fn (mut cli VSlimCliApp) apply_command_many(commands vphp.PhpIterable) ! {
+	mut progress := supportx.BootstrapProgress{}
+	cli.apply_bootstrap_command_many(commands, mut progress)!
+}
+
+fn (mut cli VSlimCliApp) apply_bootstrap_command_many(commands vphp.PhpIterable, mut progress supportx.BootstrapProgress) ! {
+	mut normalized := progress.normalize('commands:list', commands) or {
+		return error('commands must be iterable')
 	}
 	defer {
 		normalized.release()
 	}
+	cli.apply_command_array(normalized, mut progress)!
+}
+
+fn (mut cli VSlimCliApp) apply_command_array(normalized vphp.PhpArray, mut progress supportx.BootstrapProgress) ! {
+	if vphp.has_exception() {
+		return error('command list evaluation failed')
+	}
 	for key in normalized.assoc_keys() {
+		step := 'command:name:' + key
+		if progress.done(step) {
+			continue
+		}
 		handler := normalized.value(key) or { continue }
-		cli.command(key, handler)
+		cli.apply_command(key, handler)!
+		progress.complete(step)
 	}
 	if normalized.is_list() {
 		for idx := 0; idx < normalized.count(); idx++ {
+			step := 'command:index:${idx}'
+			if progress.done(step) {
+				continue
+			}
 			handler := normalized.index_value(idx)
 			if !handler.is_valid() || handler.is_null() || handler.is_undef() {
 				continue
 			}
 			name := derive_command_name_from_handler(handler) or {
-				vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
-				return &cli
-			}.clone()
-			cli.command(name, handler)
+				raise_cli_argument_error(err)
+				return err
+			}
+			cli.apply_command(name, handler)!
+			progress.complete(step)
 		}
 	}
-	return &cli
 }
 
 @[php_method: 'commandNames']
@@ -480,39 +540,39 @@ pub fn (cli &VSlimCliApp) has_command(name string) bool {
 
 @[php_method: 'commandName']
 pub fn (cli &VSlimCliApp) command_name() string {
-	return cli.last_command_name
+	return cli.command_context.name
 }
 
 @[php_method: 'rawArgs']
 pub fn (cli &VSlimCliApp) raw_args() []string {
-	return cli.last_raw_args.clone()
+	return cli.command_context.raw_args.clone()
 }
 
 @[php_method: 'inputParsed']
 pub fn (cli &VSlimCliApp) input_parsed() bool {
-	return cli.last_input_parsed
+	return cli.command_context.parsed
 }
 
 @[php_method: 'hasOption']
 pub fn (cli &VSlimCliApp) has_option(name string) bool {
-	return name.trim_space() in cli.last_option_seen
+	return name.trim_space() in cli.command_context.option_seen
 }
 
 @[php_method: 'warnings']
 pub fn (cli &VSlimCliApp) warnings() []string {
-	return cli.last_warnings.clone()
+	return cli.command_context.warnings.clone()
 }
 
 @[php_method]
 pub fn (cli &VSlimCliApp) options() vphp.PhpValue {
-	return vphp.DynValue.array_from_map(cli.last_options.clone()).to_value() or {
+	return vphp.DynValue.array_from_map(cli.command_context.options.clone()).to_value() or {
 		vphp.PhpValue.null()
 	}
 }
 
 @[php_method]
 pub fn (cli &VSlimCliApp) arguments() vphp.PhpValue {
-	return vphp.DynValue.array_from_map(cli.last_arguments.clone()).to_value() or {
+	return vphp.DynValue.array_from_map(cli.command_context.arguments.clone()).to_value() or {
 		vphp.PhpValue.null()
 	}
 }
@@ -522,7 +582,7 @@ pub fn (cli &VSlimCliApp) arguments() vphp.PhpValue {
 pub fn (cli &VSlimCliApp) option(name string, default_value ?vphp.PhpValue) vphp.PhpValue {
 	key := name.trim_space()
 	if key != '' {
-		if value := cli.last_options[key] {
+		if value := cli.command_context.options[key] {
 			return value.to_value() or { vphp.PhpValue.null() }
 		}
 	}
@@ -537,7 +597,7 @@ pub fn (cli &VSlimCliApp) option(name string, default_value ?vphp.PhpValue) vphp
 pub fn (cli &VSlimCliApp) argument(name string, default_value ?vphp.PhpValue) vphp.PhpValue {
 	key := name.trim_space()
 	if key != '' {
-		if value := cli.last_arguments[key] {
+		if value := cli.command_context.arguments[key] {
 			return value.to_value() or { vphp.PhpValue.null() }
 		}
 	}
@@ -549,11 +609,15 @@ pub fn (cli &VSlimCliApp) argument(name string, default_value ?vphp.PhpValue) vp
 
 @[php_method]
 pub fn (mut cli VSlimCliApp) run(name string, args vphp.PhpIterable) int {
+	outer := cli.begin_invocation()
+	defer {
+		cli.end_invocation(outer)
+	}
 	arg_list := cli_args_to_array(args) or {
 		vphp.PhpException.raise_class('InvalidArgumentException', 'command args must be iterable', 0)
 		return 1
 	}
-	cli.last_command_name = name.trim_space().clone()
+	cli.command_context.name = name.trim_space().clone()
 	return cli.run_registered_cli_command(name, arg_list) or {
 		error_class := if name.trim_space() == '' || err.msg().contains('must not be empty') {
 			'InvalidArgumentException'
@@ -566,6 +630,8 @@ pub fn (mut cli VSlimCliApp) run(name string, args vphp.PhpIterable) int {
 }
 
 pub fn (mut cli VSlimCliApp) cleanup() {
+	supportx.release_bootstrap_progress(mut cli.bootstrap_progress)
+	cli.command_context.release()
 	loggerx.cli_debug_log('cli.cleanup auto-release entry cli=${usize(&cli)} handlers=${cli.command_handlers.len}')
 	// command_handlers is a direct bridge-owned field, so generic_free_raw() will
 	// release it after cleanup() returns.
@@ -575,12 +641,6 @@ pub fn (mut cli VSlimCliApp) cleanup() {
 		cli.command_hidden.free()
 		cli.command_canonical.free()
 		cli.project_root.free()
-		cli.last_command_name.free()
-		cli.last_raw_args.free()
-		cli.last_arguments.free()
-		cli.last_options.free()
-		cli.last_option_seen.free()
-		cli.last_warnings.free()
 	}
 	loggerx.cli_debug_reset_overrides()
 	loggerx.cli_debug_log('cli.cleanup native done')

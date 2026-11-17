@@ -29,72 +29,23 @@ pub fn (app &VSlimApp) self_value() vphp.PhpValue {
 	return app.wrap_runtime_value()
 }
 
-fn normalize_service_provider_class(raw_class_name string) !vphp.PhpValue {
-	return supportx.class_instance_value(raw_class_name, 'provider')
-}
-
-fn (mut app VSlimApp) register_service_provider_value(provider vphp.PhpValue) ! {
-	app.ensure_provider_registry()
-	mut app_value := (&app).self_value()
-	class_key := supportx.class_key(provider)
-	if class_key == '' {
-		return error('provider class name must not be empty')
-	}
-	if class_key in app.provider_classes {
-		return
-	}
-	supportx.bind_to_app(provider, app_value)
-	supportx.call_lifecycle(provider, 'register', app_value)!
-	provider_obj := provider.as_object() or {
-		return error('provider "${class_key}" could not be retained')
-	}
-	app.providers << provider_obj.retain()
-	app.provider_classes[class_key] = true
-	if app.booted {
-		supportx.call_lifecycle(provider, 'boot', app_value)!
-	}
-}
-
-fn (mut app VSlimApp) register_service_provider_class(class_name string) ! {
-	mut provider := normalize_service_provider_class(class_name)!
-	defer {
-		provider.release()
-	}
-	app.register_service_provider_value(provider)!
-}
-
-fn (mut app VSlimApp) ensure_booted() {
-	if app.booted {
-		return
-	}
-	app.boot()
-}
-
-fn (mut app VSlimApp) register_service_provider_values(providers vphp.PhpIterable) ! {
-	mut normalized := providers.to_array()!
-	defer {
-		normalized.release()
-	}
-	for item in normalized.value_items() {
-		mut provider := supportx.input_value(item, 'provider')!
-		defer {
-			provider.release()
-		}
-		app.register_service_provider_value(provider)!
+fn raise_app_error(class_name string, err IError) {
+	if !vphp.has_exception() {
+		vphp.PhpException.raise_class(class_name, err.msg(), 0)
 	}
 }
 
 @[php_method]
 pub fn (mut app VSlimApp) register(provider vphp.PhpValue) &VSlimApp {
 	mut provider_value := supportx.input_value(provider, 'provider') or {
-		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
+		raise_app_error('InvalidArgumentException', err)
 		return &app
 	}
 	defer {
 		provider_value.release()
 	}
-	app.register_service_provider_value(provider_value) or {
-		vphp.PhpException.raise_class('RuntimeException', err.msg(), 0)
+	app.register_component(provider_value, .provider) or {
+		raise_app_error('RuntimeException', err)
 		return &app
 	}
 	return &app
@@ -102,52 +53,63 @@ pub fn (mut app VSlimApp) register(provider vphp.PhpValue) &VSlimApp {
 
 @[php_method: 'registerMany']
 pub fn (mut app VSlimApp) register_many(providers vphp.PhpIterable) &VSlimApp {
-	app.register_service_provider_values(providers) or {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'providers must be iterable', 0)
-		return &app
-	}
+	app.register_component_batch(providers, .provider)
 	return &app
 }
 
 @[php_method]
 pub fn (mut app VSlimApp) boot() &VSlimApp {
+	app.apply_boot() or { raise_app_error('RuntimeException', err) }
+	return &app
+}
+
+pub fn (mut app VSlimApp) apply_boot() ! {
+	if vphp.has_exception() {
+		return error('application bootstrap failed')
+	}
 	if app.booted {
-		return &app
+		return
+	}
+	if app.booting {
+		return error('application boot is already in progress')
+	}
+	app.track_bootstrap_boot()
+	app.booting = true
+	state := app.watch_service_state()
+	defer {
+		state.close()
+		app.booting = false
+		app.settle_deferred_bootstrap()
 	}
 	app.ensure_provider_registry()
 	app.ensure_module_registry()
 	mut app_value := (&app).self_value()
-	for provider in app.providers {
-		ok := provider.with_object(fn [app_value] (provider vphp.PhpObject) bool {
-			provider_value := provider.to_value()
-			supportx.bind_to_app(provider_value, app_value)
-			supportx.call_lifecycle(provider_value, 'boot', app_value) or {
-				vphp.PhpException.raise_class('RuntimeException', err.msg(), 0)
-				return false
-			}
-			return true
-		})
-		if !ok {
-			app.booted = false
-			return &app
-		}
+	defer {
+		app_value.release()
 	}
-	for mod_ref in app.modules {
-		ok := mod_ref.with_object(fn [mut app] (mod_obj vphp.PhpObject) bool {
-			module_value := mod_obj.to_value()
-			app.boot_module_value(module_value) or {
-				vphp.PhpException.raise_class('RuntimeException', err.msg(), 0)
-				return false
-			}
-			return true
-		})
-		if !ok {
-			app.booted = false
-			return &app
+	for {
+		// A boot callback can register more components on the same app.
+		if app.provider_boot.index < app.providers.len {
+			provider := app.providers[app.provider_boot.index]
+			boot_registered_component(provider, .provider, app_value, mut app.provider_boot)!
+		} else if app.module_boot.index < app.modules.len {
+			module_ref := app.modules[app.module_boot.index]
+			boot_registered_component(module_ref, .module_, app_value, mut app.module_boot)!
+		} else {
+			break
 		}
 	}
 	app.booted = true
-	return &app
+}
+
+fn boot_registered_component(component vphp.PhpObject, kind AppComponentKind, app_value vphp.PhpValue, mut progress ComponentBootProgress) ! {
+	mut obj := component.owned()
+	defer {
+		obj.release()
+	}
+	boot_component(obj, kind, app_value, mut progress)!
+	progress.index++
+	progress.step = .bind
 }
 
 @[php_method: 'booted']

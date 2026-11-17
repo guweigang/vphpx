@@ -97,6 +97,10 @@ int vphp_new_instance(const char *class_name, int class_name_len, zval *retval,
 int vphp_include_file(const char *filename, int filename_len, zval *retval,
                       int once) {
   zend_file_handle file_handle;
+  ZVAL_UNDEF(retval);
+  if (EG(exception)) {
+    return FAILURE;
+  }
   zend_string *filename_str = zend_string_init(filename, filename_len, 0);
   zend_string *resolved_path = zend_resolve_path(filename_str);
   zend_string_release(filename_str);
@@ -111,9 +115,33 @@ int vphp_include_file(const char *filename, int filename_len, zval *retval,
   if (resolved_path) {
     file_handle.opened_path = resolved_path;
   }
-  ZVAL_UNDEF(retval);
-  return vphp_zend_execute_scripts(once ? ZEND_INCLUDE_ONCE : ZEND_INCLUDE,
-                                   retval, 1, &file_handle);
+  int type = once ? ZEND_INCLUDE_ONCE : ZEND_INCLUDE;
+  if (!EG(current_execute_data)) {
+    zend_result result = vphp_zend_execute_scripts(type, retval, 1, &file_handle);
+    zend_destroy_file_handle(&file_handle);
+    return result;
+  }
+
+  // Let the calling PHP frame catch exceptions from the included file.
+  zend_op_array *script = zend_compile_file(&file_handle, type);
+  if (file_handle.opened_path) {
+    zend_hash_add_empty_element(&EG(included_files), file_handle.opened_path);
+  }
+  zend_destroy_file_handle(&file_handle);
+  if (script) {
+    if (!EG(exception)) {
+      zend_execute(script, retval);
+#ifdef ZEND_HAS_OOM
+      if (ZEND_HAS_OOM()) {
+        zend_handle_delayed_oom();
+      }
+#endif
+    }
+    zend_destroy_static_vars(script);
+    destroy_op_array(script);
+    efree_size(script, sizeof(zend_op_array));
+  }
+  return EG(exception) ? FAILURE : SUCCESS;
 }
 
 int vphp_call_method(zval *obj, const char *method, int method_len,

@@ -1,6 +1,7 @@
 module configx
 
 import os
+import registrationx
 import strings
 import toml
 import vphp
@@ -16,6 +17,7 @@ mut:
 
 @[php_method]
 pub fn (mut c VSlimConfig) construct() &VSlimConfig {
+	c.track_state()
 	c.path = ''
 	c.loaded = false
 	c.root = toml.null
@@ -23,9 +25,7 @@ pub fn (mut c VSlimConfig) construct() &VSlimConfig {
 }
 
 pub fn VSlimConfig.new_default() &VSlimConfig {
-	mut config := &VSlimConfig{}
-	config.construct()
-	return config
+	return &VSlimConfig{}
 }
 
 @[php_method]
@@ -43,6 +43,7 @@ pub fn (mut c VSlimConfig) load(path string) &VSlimConfig {
 			'config env resolve failed: ${err.msg()}', 0)
 		return &c
 	}
+	c.track_state()
 	c.path = path
 	c.loaded = true
 	c.root = root
@@ -70,6 +71,7 @@ pub fn (mut c VSlimConfig) load_dir(path string) &VSlimConfig {
 		}
 		root = merge_config_any(root, resolved)
 	}
+	c.track_state()
 	c.path = path
 	c.loaded = true
 	c.root = root
@@ -88,6 +90,7 @@ pub fn (mut c VSlimConfig) load_text(text string) &VSlimConfig {
 			'config env resolve failed: ${err.msg()}', 0)
 		return &c
 	}
+	c.track_state()
 	c.path = ''
 	c.loaded = true
 	c.root = root
@@ -267,6 +270,7 @@ pub fn (c &VSlimConfig) all_json() string {
 }
 
 pub fn (mut c VSlimConfig) merge_root(root toml.Any) {
+	c.track_state()
 	if !c.loaded {
 		c.root = root
 		c.loaded = true
@@ -280,6 +284,42 @@ pub fn (mut c VSlimConfig) merge_root(root toml.Any) {
 	if c.path == '' {
 		c.path = '<merged>'
 	}
+}
+
+struct ConfigState {
+	path string
+	loaded bool
+	root toml.Any
+}
+
+fn (mut c VSlimConfig) track_state() {
+	mut scope := registrationx.current_registration_scope() or { return }
+	if !scope.needs_snapshot(usize(&c)) {
+		return
+	}
+	receiver := &c
+	// Loads replace the TOML root and merges copy each modified map.
+	saved := ConfigState{
+		path: c.path.clone()
+		loaded: c.loaded
+		root: c.root
+	}
+	mut value := vphp.bind_borrowed_object_value[VSlimConfig](receiver)
+	mut pin := value.retain()
+	value.release()
+	scope.add_change(fn [receiver, saved, mut pin] (commit bool) {
+		if !commit {
+			mut target := receiver
+			target.restore_state(saved)
+		}
+		pin.release()
+	})
+}
+
+fn (mut c VSlimConfig) restore_state(saved ConfigState) {
+	c.path = saved.path
+	c.loaded = saved.loaded
+	c.root = saved.root
 }
 
 pub fn (c &VSlimConfig) value_opt(key string) ?toml.Any {

@@ -4,6 +4,7 @@ import appx
 import loggerx
 import vphp
 
+@[heap]
 struct CliRuntimeInvocation {
 mut:
 	argv0          string
@@ -21,8 +22,8 @@ struct CliCommandListingGroup {
 	commands []string
 }
 
-fn (cli &VSlimCliApp) runtime_invocation(argv []string) CliRuntimeInvocation {
-	mut inv := CliRuntimeInvocation{}
+fn (cli &VSlimCliApp) runtime_invocation(argv []string) &CliRuntimeInvocation {
+	mut inv := &CliRuntimeInvocation{}
 	if argv.len == 0 {
 		return inv
 	}
@@ -282,7 +283,7 @@ fn cli_runtime_write_stderr(message string) {
 	eprintln(text)
 }
 
-fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !CliRuntimeInvocation {
+fn cli_runtime_parse_invocation(argv []string, cli &VSlimCliApp) !&CliRuntimeInvocation {
 	mut inv := cli.runtime_invocation(argv)
 	mut args := clone_string_slice(inv.command_args)
 	inv.command_args = []string{}
@@ -398,6 +399,10 @@ pub fn (mut cli VSlimCliApp) command_help(command_name string) string {
 
 @[php_method: 'runArgv']
 pub fn (mut cli VSlimCliApp) run_argv(argv vphp.PhpIterable) int {
+	outer := cli.begin_invocation()
+	defer {
+		cli.end_invocation(outer)
+	}
 	loggerx.cli_debug_log('run_argv enter cli=${usize(cli)} core=${usize(cli.core_app_ref)}')
 	argv_list := cli_args_to_array(argv) or {
 		vphp.PhpException.raise_class('InvalidArgumentException', 'argv must be iterable', 0)
@@ -408,31 +413,22 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.PhpIterable) int {
 		return 1
 	}
 
-	// ---- Extract invocation into heap-allocated cli fields BEFORE bootstrap ----
-	// On Windows, passing `mut cli` to bootstrap functions corrupts ALL local
-	// string and []string variables on the stack. We persist everything into
-	// cli's heap fields and read them back after the bootstrap call.
-	cli.last_command_name = inv.command_name.clone()
-	cli.last_raw_args = clone_string_slice(inv.command_args)
-	cli.last_show_help = inv.show_help
-	cli.last_show_list = inv.show_list
-	cli.last_show_version = inv.show_version
-	argv0 := inv.argv0.clone()
-	bootstrap_dir := inv.bootstrap_dir.clone()
-	bootstrap_file := inv.bootstrap_file.clone()
-
-	cli.runtime_apply_bootstrap(bootstrap_file, bootstrap_dir) or {
-		cli_runtime_write_stderr(err.msg())
+	// Keep invocation data on the heap across bootstrap callbacks, including on Windows.
+	cli.command_context.name = inv.command_name.clone()
+	cli.command_context.raw_args = clone_string_slice(inv.command_args)
+	cli.runtime_apply_bootstrap(inv.bootstrap_file, inv.bootstrap_dir) or {
+		if !vphp.has_exception() {
+			cli_runtime_write_stderr(err.msg())
+		}
 		return 1
 	}
 
-	// ---- Read back from heap fields after bootstrap ----
-	mut command_name := cli.last_command_name.clone()
-	mut command_args := clone_string_slice(cli.last_raw_args)
-	show_help := cli.last_show_help
-	show_list := cli.last_show_list
-	show_version := cli.last_show_version
-	program := program_name(argv0)
+	command_name := inv.command_name
+	command_args := inv.command_args
+	show_help := inv.show_help
+	show_list := inv.show_list
+	show_version := inv.show_version
+	program := program_name(inv.argv0)
 
 	if show_version {
 		vphp.PhpOutput.line(version_text())
@@ -472,7 +468,7 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.PhpIterable) int {
 		})
 		return 0
 	}
-	cli.last_command_name = command_name.trim_space().clone()
+	cli.command_context.name = command_name.trim_space().clone()
 	code := cli.run_registered_cli_command_with_program(command_name, command_args, program) or {
 		cli_runtime_write_stderr(err.msg())
 		return 1

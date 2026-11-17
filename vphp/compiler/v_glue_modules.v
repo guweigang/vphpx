@@ -3,9 +3,21 @@ module compiler
 import os
 import strings
 import compiler.repr
+import compiler.syntax
 
 pub fn (v_glue VGenerator) generate_modules(elements []repr.PhpRepr, target_files []string) ! {
-	module_dirs := v_glue.module_dirs(target_files)
+	mut module_dirs := map[string]string{}
+	mut table := syntax.new_table()
+	for file in target_files {
+		parsed := syntax.parse_file(file, mut table) or { continue }
+		if parsed.module_name !in module_dirs {
+			module_dirs[parsed.module_name] = os.dir(file)
+		}
+	}
+	v_glue.generate_module_bridges(elements, module_dirs)!
+}
+
+fn (v_glue VGenerator) generate_module_bridges(elements []repr.PhpRepr, module_dirs map[string]string) ! {
 	mut classes_by_module := map[string][]repr.PhpClassRepr{}
 	mut funcs_by_module := map[string][]repr.PhpFuncRepr{}
 	mut enums_by_module := map[string][]repr.PhpEnumRepr{}
@@ -47,10 +59,11 @@ pub fn (v_glue VGenerator) generate_modules(elements []repr.PhpRepr, target_file
 		out.write_string('module ${module_name}\n\n')
 		out.write_string('import vphp\n')
 		out.write_string('import vphp.object\n\n')
-		for imported in v_glue.module_glue_imports(classes, funcs, module_name, module_dirs) {
+		imports := v_glue.module_glue_imports(classes, funcs, module_name, module_dirs)
+		for imported in imports {
 			out.write_string('import ${imported}\n')
 		}
-		if v_glue.module_glue_imports(classes, funcs, module_name, module_dirs).len > 0 {
+		if imports.len > 0 {
 			out.write_string('\n')
 		}
 		out.write_string('#include "php_bridge.h"\n\n')
@@ -64,7 +77,7 @@ pub fn (v_glue VGenerator) generate_modules(elements []repr.PhpRepr, target_file
 			out.write_string(v_glue.gen_class_glue_for_module(class, module_name).join('\n'))
 			out.write_string('\n\n')
 			out.write_string('pub fn (val ${class.name}) php_class_name() string {\n')
-			out.write_string('    return \'${class.php_name.replace("'", "\\'")}\'\n')
+			out.write_string("    return '${class.php_name.replace("'", "\\'")}'\n")
 			out.write_string('}\n\n')
 		}
 		for func in funcs {
@@ -73,32 +86,11 @@ pub fn (v_glue VGenerator) generate_modules(elements []repr.PhpRepr, target_file
 		}
 		for enum_el in enums {
 			out.write_string('pub fn (val ${enum_el.name}) php_class_name() string {\n')
-			out.write_string('    return \'${enum_el.php_name.replace("'", "\\'")}\'\n')
+			out.write_string("    return '${enum_el.php_name.replace("'", "\\'")}'\n")
 			out.write_string('}\n\n')
 		}
 		os.write_file(os.join_path(module_dir, 'vphp_bridge.v'), out.str())!
 	}
-}
-
-fn (v_glue VGenerator) module_dirs(target_files []string) map[string]string {
-	mut dirs := map[string]string{}
-	for file in target_files {
-		source := os.read_file(file) or { continue }
-		for line in source.split_into_lines() {
-			trimmed := line.trim_space()
-			if trimmed == '' || trimmed.starts_with('//') {
-				continue
-			}
-			if trimmed.starts_with('module ') {
-				module_name := trimmed['module '.len..].trim_space()
-				if module_name != '' && module_name !in dirs {
-					dirs[module_name] = os.dir(file)
-				}
-			}
-			break
-		}
-	}
-	return dirs
 }
 
 fn (v_glue VGenerator) module_glue_imports(classes []repr.PhpClassRepr, funcs []repr.PhpFuncRepr, current_module string, module_dirs map[string]string) []string {

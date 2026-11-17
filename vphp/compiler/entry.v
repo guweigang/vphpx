@@ -1,6 +1,7 @@
 // vphp/compiler/entry.v
 module compiler
 
+import os
 import compiler.syntax as ast
 import compiler.linker
 import compiler.parser as cparser
@@ -20,6 +21,7 @@ pub mut:
 mut:
 	table        &ast.Table
 	decl_modules map[string]string
+	module_dirs  map[string]string
 }
 
 pub fn new(target_files []string) Compiler {
@@ -32,9 +34,13 @@ pub fn new(target_files []string) Compiler {
 
 pub fn (mut c Compiler) compile() !string {
 	mut all_stmts := []ast.Stmt{}
+	c.module_dirs.clear()
 
 	for file in c.target_files {
 		file_ast := ast.parse_file(file, mut c.table)!
+		if file_ast.module_name !in c.module_dirs {
+			c.module_dirs[file_ast.module_name] = os.dir(file)
+		}
 		if c.ext_name == '' {
 			if name, version, description, ini_entries := cparser.parse_extension_meta(file_ast,
 				c.table)

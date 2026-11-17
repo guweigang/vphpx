@@ -15,6 +15,10 @@ fn (mut app VSlimApp) register_middleware_kind(handler vphp.PhpValue, kind middl
 	if handler.is_object() {
 		(&app).bind_cached_target_if_supported(handler)
 	}
+	if vphp.has_exception() {
+		return
+	}
+	app.track_registration()
 	entry := handler.retain()
 	if kind == .standard && app.middlewares.len == 0 {
 		loggerx.cli_debug_log('middleware.register kind=${entry.kind_name()} valid=${entry.is_valid()} null=${entry.is_null()} undef=${entry.is_undef()} handler_type=${handler.type_name()} handler_class=${handler.class_name()}')
@@ -36,6 +40,10 @@ fn (mut app VSlimApp) register_group_middleware_kind(prefix string, handler vphp
 	if handler.is_object() {
 		app.bind_cached_target_if_supported(handler)
 	}
+	if vphp.has_exception() {
+		return
+	}
+	app.track_registration()
 	match kind {
 		.standard {
 			app.group_middle.prefixes << clean_prefix

@@ -26,6 +26,10 @@ pub fn C.vphp_clear_exception()
 pub fn C.vphp_get_active_ce(ex &C.zend_execute_data) voidptr
 pub fn C.vphp_get_this_object(ex &C.zend_execute_data) voidptr
 pub fn C.vphp_get_current_this_object() voidptr
+pub fn C.vphp_new_plain_object_tracker() voidptr
+pub fn C.vphp_capture_plain_object(tracker voidptr, root &C.zval) voidptr
+pub fn C.vphp_restore_plain_objects(handle voidptr)
+pub fn C.vphp_release_plain_object_state(handle voidptr)
 pub fn C.vphp_get_active_globals() voidptr
 
 // ===== 2. 框架与异常 =====

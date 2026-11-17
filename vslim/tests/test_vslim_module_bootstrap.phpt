@@ -158,26 +158,29 @@ namespace {
                 });
         }
 
-        public function boot(): void
+        public function boot(?VSlim\App $app = null): void
         {
-            $this->events[] = 'boot';
+            $this->events[] = $app === null ? 'boot' : 'unexpected-app';
         }
     }
 
-    final class LateModule extends VSlim\Support\Module
+    abstract class LateModuleRoutes extends VSlim\Support\Module
     {
         public array $events = [];
 
+        public function Routes(VSlim\App $app): void
+        {
+            $this->events[] = 'routes';
+            $app->get('/late', fn () => 'late');
+        }
+    }
+
+    final class LateModule extends LateModuleRoutes
+    {
         public function register(VSlim\App $app): void
         {
             $this->events[] = 'register';
             $app->container()->set('late.registered', 'yes');
-        }
-
-        public function routes(VSlim\App $app): void
-        {
-            $this->events[] = 'routes';
-            $app->get('/late', fn () => 'late');
         }
 
         public function boot(VSlim\App $app): void

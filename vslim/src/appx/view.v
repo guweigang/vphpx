@@ -7,6 +7,7 @@ import vphp
 @[php_arg_name: 'base_path=basePath']
 @[php_method: 'setViewBasePath']
 pub fn (mut app VSlimApp) set_view_base_path(base_path string) &VSlimApp {
+	app.track_view_settings()
 	app.view_base_path = base_path.trim_space()
 	return app
 }
@@ -18,6 +19,7 @@ pub fn (app &VSlimApp) view_base_path() string {
 
 @[php_method: 'setAssetsPrefix']
 pub fn (mut app VSlimApp) set_assets_prefix(prefix string) &VSlimApp {
+	app.track_view_settings()
 	app.assets_prefix = viewx.normalize_assets_prefix(prefix)
 	return app
 }
@@ -32,6 +34,7 @@ pub fn (app &VSlimApp) assets_prefix() string {
 
 @[php_method: 'setViewCache']
 pub fn (mut app VSlimApp) set_view_cache(enabled bool) &VSlimApp {
+	app.track_view_settings()
 	app.view_cache_enabled = enabled
 	app.view_cache_configured = true
 	return app
@@ -61,6 +64,7 @@ pub fn (mut app VSlimApp) helper(name string, handler vphp.PhpCallable) &VSlimAp
 		vphp.PhpException.raise_class('InvalidArgumentException', 'view helper must be callable', 0)
 		return &app
 	}
+	app.track_view_helper(key)
 	viewx.register_view_helper(mut app.view_helpers, key, handler)
 	return &app
 }

@@ -1,5 +1,6 @@
 module appx
 
+import registrationx
 import configx as cfgx
 import containerx
 import routex
@@ -10,6 +11,7 @@ import vphp
 @[php_arg_name: 'base_path=basePath']
 @[php_method: 'setBasePath']
 pub fn (mut app VSlimApp) set_base_path(base_path string) &VSlimApp {
+	app.track_view_settings()
 	app.base_path = routex.normalize_base_path(base_path)
 	return app
 }
@@ -19,8 +21,17 @@ pub fn (app &VSlimApp) has_container() bool {
 	return app.container_ref != unsafe { nil }
 }
 
+pub fn (app &VSlimApp) watch_service_state() &registrationx.RegistrationStateContext {
+	return registrationx.watch_registration_state(fn [app] (mut scope registrationx.RegistrationScope) {
+		if app.container_ref != unsafe { nil } {
+			app.container_ref.snapshot_services(mut scope)
+		}
+	})
+}
+
 @[php_method: 'setContainer']
 pub fn (mut app VSlimApp) set_container(container &containerx.VSlimContainer) &VSlimApp {
+	app.track_container_replacement()
 	app.container_ref = container
 	app.sync_standard_services_to_container()
 	return app
@@ -29,6 +40,7 @@ pub fn (mut app VSlimApp) set_container(container &containerx.VSlimContainer) &V
 @[php_method]
 pub fn (mut app VSlimApp) container() &containerx.VSlimContainer {
 	if app.container_ref == unsafe { nil } {
+		app.track_container_replacement()
 		app.container_ref = containerx.VSlimContainer.new()
 	}
 	app.sync_standard_services_to_container()
@@ -42,6 +54,7 @@ pub fn (app &VSlimApp) has_config() bool {
 
 @[php_method: 'setConfig']
 pub fn (mut app VSlimApp) set_config(config &cfgx.VSlimConfig) &VSlimApp {
+	app.track_config_binding()
 	app.config_ref = config
 	app.configure_default_auth_settings(app.config_ref)
 	app.sync_standard_services_to_container()
@@ -51,6 +64,7 @@ pub fn (mut app VSlimApp) set_config(config &cfgx.VSlimConfig) &VSlimApp {
 @[php_method]
 pub fn (mut app VSlimApp) config() &cfgx.VSlimConfig {
 	if app.config_ref == unsafe { nil } {
+		app.track_config_binding()
 		app.config_ref = cfgx.VSlimConfig.new_default()
 		app.configure_default_auth_settings(app.config_ref)
 		app.sync_standard_services_to_container()

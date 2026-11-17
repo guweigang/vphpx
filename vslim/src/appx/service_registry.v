@@ -38,6 +38,7 @@ fn (mut app VSlimApp) sync_config_service_to_container() {
 		return
 	}
 	if app.config_ref == unsafe { nil } {
+		app.track_config_binding()
 		app.config_ref = cfgx.VSlimConfig.new_default()
 		app.configure_default_auth_settings(app.config_ref)
 	}
@@ -170,7 +171,11 @@ fn (mut app VSlimApp) sync_controller_services_to_container() {
 }
 
 fn (mut app VSlimApp) configure_default_auth_settings(config &cfgx.VSlimConfig) {
-	app.auth_redirect_path = sessionx.auth_redirect_path_from_config(config, app.auth_redirect_to())
+	redirect := sessionx.auth_redirect_path_from_config(config, app.auth_redirect_to())
+	if app.auth_redirect_path != redirect {
+		app.track_config_binding()
+		app.auth_redirect_path = redirect
+	}
 }
 
 fn (mut app VSlimApp) sync_clock_dependent_services() {
