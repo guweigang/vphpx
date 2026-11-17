@@ -1,5 +1,7 @@
 *.so
 *_generated.c
+*_generated.c.flags
+*_generated.c.objects
 .DS_Store
 vslim/examples/vendor/
 *.dSYM/

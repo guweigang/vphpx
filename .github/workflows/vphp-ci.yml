@@ -2,8 +2,15 @@ name: VPHP CI
 
 on:
   workflow_dispatch:
+    inputs:
+      standalone_only:
+        description: Run only the standalone extension matrix
+        type: boolean
+        default: false
   pull_request:
     paths:
+      - 'bin/vphp'
+      - 'cmd/vphp/**'
       - 'vphp/**'
       - 'vphptest/**'
       - '.github/workflows/vphp-ci.yml'
@@ -11,6 +18,8 @@ on:
     branches:
       - main
     paths:
+      - 'bin/vphp'
+      - 'cmd/vphp/**'
       - 'vphp/**'
       - 'vphptest/**'
       - '.github/workflows/vphp-ci.yml'
@@ -21,6 +30,7 @@ env:
 
 jobs:
   lint:
+    if: ${{ !inputs.standalone_only }}
     name: V format check
     runs-on: ubuntu-latest
     steps:
@@ -43,6 +53,7 @@ jobs:
           v fmt -verify vphp/
 
   vphptest:
+    if: ${{ !inputs.standalone_only }}
     name: vphptest PHP ${{ matrix.php-version }} ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -95,3 +106,58 @@ jobs:
         shell: bash
         run: |
           make -C vphptest test
+
+  standalone-extension:
+    name: Standalone extension (${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macOS arm64
+            runner: macos-15
+            machine: arm64
+          - platform: Linux arm64
+            runner: ubuntu-24.04-arm
+            machine: aarch64
+          - platform: Linux amd64
+            runner: ubuntu-24.04
+            machine: x86_64
+    env:
+      VPHP_V_GC: boehm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - name: Use the runner's V or bootstrap it
+        shell: bash
+        run: |
+          if command -v v >/dev/null; then
+            exit 0
+          fi
+          v_root=$(mktemp -d "$RUNNER_TEMP/vlang.XXXXXX")
+          git clone --depth=1 --branch "$V_REF" https://github.com/vlang/v "$v_root"
+          make -C "$v_root"
+          echo "$v_root" >> "$GITHUB_PATH"
+
+      - name: Check, build, load and lint an external extension
+        shell: bash
+        env:
+          EXPECTED_MACHINE: ${{ matrix.machine }}
+        run: |
+          uname -sm
+          test "$(uname -m)" = "$EXPECTED_MACHINE"
+          v version
+          php -n -v
+          php-config --version
+          if [ "$RUNNER_OS" = Linux ]; then
+            # Some V installations have GC sources but no prebuilt archive.
+            export VFLAGS="${VFLAGS:+$VFLAGS }-d use_bundled_libgc"
+          fi
+          TMPDIR="$RUNNER_TEMP" sh cmd/vphp/tests/smoke.sh
