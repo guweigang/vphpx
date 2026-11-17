@@ -198,8 +198,16 @@ jobs:
           VSLIM_CLI_DEBUG_FILE: ${{ runner.temp }}\vslim-cli-debug.log
         run: |
           $env:TEST_PHP_EXECUTABLE = (Get-Command php).Source
+          $extension = (Resolve-Path ".\${{ matrix.extension_file }}").Path
+          $sdkBin = Join-Path $env:VSLIM_MYSQL_ROOT "bin"
+          $env:PATH = "$(Split-Path -Parent $extension);$sdkBin;$env:PATH"
+          php -n -d "extension=$extension" --ri vslim
+          if ($LASTEXITCODE -ne 0) {
+            & dumpbin /DEPENDENTS $extension
+            exit 1
+          }
           $exitCode = 0
-          php ..\vphptest\run-tests.php -q --show-all -d extension=.\${{ matrix.extension_file }} `
+          php ..\vphptest\run-tests.php -n -q --show-all -d "extension=$extension" `
             tests/test_vslim_database_bundle_smoke.phpt `
             tests/test_vslim_cli_nested_invocation.phpt `
             tests/test_vslim_config_toml.phpt `
