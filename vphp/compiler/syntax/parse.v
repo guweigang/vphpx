@@ -42,9 +42,9 @@ fn decode_file(tree &flat.FlatAst, mut table Table) File {
 			node := tree.node(child)
 			if node.kind == .import_decl {
 				alias := node.typ_text()
-				module := node.value.all_after_last('.')
-				if alias != '' && alias != module {
-					imports[alias] = module
+				module_name_short := node.value.all_after_last('.')
+				if alias != '' && alias != module_name_short {
+					imports[alias] = module_name_short
 				}
 			}
 		}
