@@ -101,9 +101,9 @@ pub fn vphp_wrap_vslim_logger_set_level(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'level', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'level' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'level').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_level(arg_0)
     return voidptr(res)
 }
@@ -121,9 +121,9 @@ pub fn vphp_wrap_vslim_logger_set_channel(ptr voidptr, ctx vphp.Context) voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'channel', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'channel' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'channel').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_channel(arg_0)
     return voidptr(res)
 }
@@ -141,9 +141,9 @@ pub fn vphp_wrap_vslim_logger_set_context(ptr voidptr, ctx vphp.Context) voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'context').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -165,11 +165,11 @@ pub fn vphp_wrap_vslim_logger_with_context(ptr voidptr, ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'value').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.with_context(arg_0, arg_1)
     return voidptr(res)
 }
@@ -187,9 +187,9 @@ pub fn vphp_wrap_vslim_logger_set_local_time(ptr voidptr, ctx vphp.Context) void
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'enabled', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'enabled' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'enabled').as_v[bool]()
+    arg_0 := php_args.at(0).as_v[bool]()
     res := recv.set_local_time(arg_0)
     return voidptr(res)
 }
@@ -199,9 +199,9 @@ pub fn vphp_wrap_vslim_logger_set_short_tag(ptr voidptr, ctx vphp.Context) voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'enabled', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'enabled' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'enabled').as_v[bool]()
+    arg_0 := php_args.at(0).as_v[bool]()
     res := recv.set_short_tag(arg_0)
     return voidptr(res)
 }
@@ -211,9 +211,9 @@ pub fn vphp_wrap_vslim_logger_set_output_file(ptr voidptr, ctx vphp.Context) voi
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'path' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_output_file(arg_0)
     return voidptr(res)
 }
@@ -255,11 +255,11 @@ pub fn vphp_wrap_vslim_logger_log(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'level', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'message', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'level' },
+        vphp.PhpArgMeta{ index: 1, name: 'message' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'level').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'message').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.log(arg_0, arg_1)
     return voidptr(res)
 }
@@ -269,13 +269,13 @@ pub fn vphp_wrap_vslim_logger_log_context(ptr voidptr, ctx vphp.Context) voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'level', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'level' },
+        vphp.PhpArgMeta{ index: 1, name: 'message' },
+        vphp.PhpArgMeta{ index: 2, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'level').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'message').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'context').array() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -289,9 +289,9 @@ pub fn vphp_wrap_vslim_logger_debug(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.debug(arg_0)
     return voidptr(res)
 }
@@ -301,11 +301,11 @@ pub fn vphp_wrap_vslim_logger_debug_context(ptr voidptr, ctx vphp.Context) voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
+        vphp.PhpArgMeta{ index: 1, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'context').array() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -319,9 +319,9 @@ pub fn vphp_wrap_vslim_logger_info(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.info(arg_0)
     return voidptr(res)
 }
@@ -331,11 +331,11 @@ pub fn vphp_wrap_vslim_logger_info_context(ptr voidptr, ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
+        vphp.PhpArgMeta{ index: 1, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'context').array() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -349,9 +349,9 @@ pub fn vphp_wrap_vslim_logger_warn(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.warn(arg_0)
     return voidptr(res)
 }
@@ -361,11 +361,11 @@ pub fn vphp_wrap_vslim_logger_warn_context(ptr voidptr, ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
+        vphp.PhpArgMeta{ index: 1, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'context').array() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -379,9 +379,9 @@ pub fn vphp_wrap_vslim_logger_error(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.error(arg_0)
     return voidptr(res)
 }
@@ -391,11 +391,11 @@ pub fn vphp_wrap_vslim_logger_error_context(ptr voidptr, ctx vphp.Context) voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
+        vphp.PhpArgMeta{ index: 1, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'context').array() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -409,9 +409,9 @@ pub fn vphp_wrap_vslim_logger_warning(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.warning(arg_0)
     return voidptr(res)
 }
@@ -421,11 +421,11 @@ pub fn vphp_wrap_vslim_logger_warning_context(ptr voidptr, ctx vphp.Context) voi
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
+        vphp.PhpArgMeta{ index: 1, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'context').array() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -439,9 +439,9 @@ pub fn vphp_wrap_vslim_logger_notice(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.notice(arg_0)
     return voidptr(res)
 }
@@ -451,11 +451,11 @@ pub fn vphp_wrap_vslim_logger_notice_context(ptr voidptr, ctx vphp.Context) void
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
+        vphp.PhpArgMeta{ index: 1, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'context').array() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -469,9 +469,9 @@ pub fn vphp_wrap_vslim_logger_critical(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.critical(arg_0)
     return voidptr(res)
 }
@@ -481,11 +481,11 @@ pub fn vphp_wrap_vslim_logger_critical_context(ptr voidptr, ctx vphp.Context) vo
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
+        vphp.PhpArgMeta{ index: 1, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'context').array() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -499,9 +499,9 @@ pub fn vphp_wrap_vslim_logger_alert(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.alert(arg_0)
     return voidptr(res)
 }
@@ -511,11 +511,11 @@ pub fn vphp_wrap_vslim_logger_alert_context(ptr voidptr, ctx vphp.Context) voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
+        vphp.PhpArgMeta{ index: 1, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'context').array() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -529,9 +529,9 @@ pub fn vphp_wrap_vslim_logger_emergency(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.emergency(arg_0)
     return voidptr(res)
 }
@@ -541,11 +541,11 @@ pub fn vphp_wrap_vslim_logger_emergency_context(ptr voidptr, ctx vphp.Context) v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
+        vphp.PhpArgMeta{ index: 1, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'context').array() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -654,10 +654,10 @@ pub fn vphp_wrap_vslim_psr_logger_set_logger(ptr voidptr, ctx vphp.Context) void
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'inner', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'inner' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'inner').to_v_ptr[loggerx.VSlimLogger]() or {
-        vphp.throw_exception('argument 0 must be object bound to loggerx.VSlimLogger, got ' + php_args.at_named_or_index(0, 'inner').zval().type_name(), 0)
+    arg_0_ptr := php_args.at(0).to_v_ptr[loggerx.VSlimLogger]() or {
+        vphp.throw_exception('argument 0 must be object bound to loggerx.VSlimLogger, got ' + php_args.at(0).zval().type_name(), 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
     }
@@ -679,9 +679,9 @@ pub fn vphp_wrap_vslim_psr_logger_set_level(ptr voidptr, ctx vphp.Context) voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'level', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'level' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'level').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_level(arg_0)
     return voidptr(res)
 }
@@ -691,9 +691,9 @@ pub fn vphp_wrap_vslim_psr_logger_set_channel(ptr voidptr, ctx vphp.Context) voi
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'channel', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'channel' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'channel').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_channel(arg_0)
     return voidptr(res)
 }
@@ -703,9 +703,9 @@ pub fn vphp_wrap_vslim_psr_logger_set_context(ptr voidptr, ctx vphp.Context) voi
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'context').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -719,11 +719,11 @@ pub fn vphp_wrap_vslim_psr_logger_with_context(ptr voidptr, ctx vphp.Context) vo
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'value').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.with_context(arg_0, arg_1)
     return voidptr(res)
 }
@@ -741,9 +741,9 @@ pub fn vphp_wrap_vslim_psr_logger_set_output_file(ptr voidptr, ctx vphp.Context)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'path' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_output_file(arg_0)
     return voidptr(res)
 }
@@ -769,14 +769,14 @@ pub fn vphp_wrap_vslim_psr_logger_log(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'level', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'level' },
+        vphp.PhpArgMeta{ index: 1, name: 'message' },
+        vphp.PhpArgMeta{ index: 2, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'level').value
-    arg_1 := php_args.at_named_or_index(1, 'message').value
-    arg_2_params_context := if php_args.has_named_or_index(2, 'context') {
-        php_args.at_named_or_index(2, 'context').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).value
+    arg_2_params_context := if php_args.has(2) {
+        php_args.at(2).array() or {
             vphp.throw_exception('argument 2 must be array', 0)
             return
         }
@@ -794,12 +794,12 @@ pub fn vphp_wrap_vslim_psr_logger_emergency(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
+        vphp.PhpArgMeta{ index: 1, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').value
-    arg_1_params_context := if php_args.has_named_or_index(1, 'context') {
-        php_args.at_named_or_index(1, 'context').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1_params_context := if php_args.has(1) {
+        php_args.at(1).array() or {
             vphp.throw_exception('argument 1 must be array', 0)
             return
         }
@@ -817,12 +817,12 @@ pub fn vphp_wrap_vslim_psr_logger_alert(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
+        vphp.PhpArgMeta{ index: 1, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').value
-    arg_1_params_context := if php_args.has_named_or_index(1, 'context') {
-        php_args.at_named_or_index(1, 'context').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1_params_context := if php_args.has(1) {
+        php_args.at(1).array() or {
             vphp.throw_exception('argument 1 must be array', 0)
             return
         }
@@ -840,12 +840,12 @@ pub fn vphp_wrap_vslim_psr_logger_critical(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
+        vphp.PhpArgMeta{ index: 1, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').value
-    arg_1_params_context := if php_args.has_named_or_index(1, 'context') {
-        php_args.at_named_or_index(1, 'context').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1_params_context := if php_args.has(1) {
+        php_args.at(1).array() or {
             vphp.throw_exception('argument 1 must be array', 0)
             return
         }
@@ -863,12 +863,12 @@ pub fn vphp_wrap_vslim_psr_logger_error(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
+        vphp.PhpArgMeta{ index: 1, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').value
-    arg_1_params_context := if php_args.has_named_or_index(1, 'context') {
-        php_args.at_named_or_index(1, 'context').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1_params_context := if php_args.has(1) {
+        php_args.at(1).array() or {
             vphp.throw_exception('argument 1 must be array', 0)
             return
         }
@@ -886,12 +886,12 @@ pub fn vphp_wrap_vslim_psr_logger_warning(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
+        vphp.PhpArgMeta{ index: 1, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').value
-    arg_1_params_context := if php_args.has_named_or_index(1, 'context') {
-        php_args.at_named_or_index(1, 'context').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1_params_context := if php_args.has(1) {
+        php_args.at(1).array() or {
             vphp.throw_exception('argument 1 must be array', 0)
             return
         }
@@ -909,12 +909,12 @@ pub fn vphp_wrap_vslim_psr_logger_notice(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
+        vphp.PhpArgMeta{ index: 1, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').value
-    arg_1_params_context := if php_args.has_named_or_index(1, 'context') {
-        php_args.at_named_or_index(1, 'context').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1_params_context := if php_args.has(1) {
+        php_args.at(1).array() or {
             vphp.throw_exception('argument 1 must be array', 0)
             return
         }
@@ -932,12 +932,12 @@ pub fn vphp_wrap_vslim_psr_logger_info(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
+        vphp.PhpArgMeta{ index: 1, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').value
-    arg_1_params_context := if php_args.has_named_or_index(1, 'context') {
-        php_args.at_named_or_index(1, 'context').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1_params_context := if php_args.has(1) {
+        php_args.at(1).array() or {
             vphp.throw_exception('argument 1 must be array', 0)
             return
         }
@@ -955,12 +955,12 @@ pub fn vphp_wrap_vslim_psr_logger_debug(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'context', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
+        vphp.PhpArgMeta{ index: 1, name: 'context' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').value
-    arg_1_params_context := if php_args.has_named_or_index(1, 'context') {
-        php_args.at_named_or_index(1, 'context').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1_params_context := if php_args.has(1) {
+        php_args.at(1).array() or {
             vphp.throw_exception('argument 1 must be array', 0)
             return
         }

@@ -15,7 +15,7 @@ pub fn VSlimStreamSseEncoder.from_ollama(rows vphp.PhpArray, model string) vphp.
 fn (subject PhpValueSubject) ndjson_rows() vphp.PhpArray {
 	mut rows := vphp.PhpArray.new()
 	stream_value := subject.value
-	stream := stream_value.as_resource() or { return rows }
+	mut stream := stream_value.as_resource() or { return rows }
 	defer {
 		stream.release()
 	}

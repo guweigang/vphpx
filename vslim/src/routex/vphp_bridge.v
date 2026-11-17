@@ -53,9 +53,9 @@ pub fn vphp_wrap_route_group_group(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'prefix', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'prefix' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'prefix').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.group(arg_0)
     return voidptr(res)
 }
@@ -65,9 +65,9 @@ pub fn vphp_wrap_route_group_middleware(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'handler').value
+    arg_0 := php_args.at(0).value
     res := recv.middleware(arg_0)
     return voidptr(res)
 }
@@ -77,9 +77,9 @@ pub fn vphp_wrap_route_group_before(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'handler').value
+    arg_0 := php_args.at(0).value
     res := recv.before(arg_0)
     return voidptr(res)
 }
@@ -89,9 +89,9 @@ pub fn vphp_wrap_route_group_after(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'handler').value
+    arg_0 := php_args.at(0).value
     res := recv.after(arg_0)
     return voidptr(res)
 }
@@ -101,11 +101,11 @@ pub fn vphp_wrap_route_group_get(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'pattern').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.get(arg_0, arg_1)
     return voidptr(res)
 }
@@ -115,11 +115,11 @@ pub fn vphp_wrap_route_group_post(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'pattern').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.post(arg_0, arg_1)
     return voidptr(res)
 }
@@ -129,11 +129,11 @@ pub fn vphp_wrap_route_group_put(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'pattern').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.put(arg_0, arg_1)
     return voidptr(res)
 }
@@ -143,11 +143,11 @@ pub fn vphp_wrap_route_group_head(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'pattern').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.head(arg_0, arg_1)
     return voidptr(res)
 }
@@ -157,11 +157,11 @@ pub fn vphp_wrap_route_group_options(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'pattern').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.options(arg_0, arg_1)
     return voidptr(res)
 }
@@ -171,11 +171,11 @@ pub fn vphp_wrap_route_group_patch(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'pattern').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.patch(arg_0, arg_1)
     return voidptr(res)
 }
@@ -185,11 +185,11 @@ pub fn vphp_wrap_route_group_delete(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'pattern').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.delete(arg_0, arg_1)
     return voidptr(res)
 }
@@ -199,11 +199,11 @@ pub fn vphp_wrap_route_group_any(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'pattern').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.any(arg_0, arg_1)
     return voidptr(res)
 }
@@ -213,11 +213,11 @@ pub fn vphp_wrap_route_group_live(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'pattern').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.live(arg_0, arg_1)
     return voidptr(res)
 }
@@ -227,11 +227,11 @@ pub fn vphp_wrap_route_group_websocket(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'pattern').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.websocket(arg_0, arg_1)
     return voidptr(res)
 }
@@ -241,13 +241,13 @@ pub fn vphp_wrap_route_group_map(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'methods', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'methods' },
+        vphp.PhpArgMeta{ index: 1, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 2, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'methods').value
-    arg_1 := php_args.at_named_or_index(1, 'pattern').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'handler').value
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).value
     res := recv.map(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -257,13 +257,13 @@ pub fn vphp_wrap_route_group_get_named(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 2, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'pattern').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).value
     res := recv.get_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -273,13 +273,13 @@ pub fn vphp_wrap_route_group_post_named(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 2, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'pattern').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).value
     res := recv.post_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -289,13 +289,13 @@ pub fn vphp_wrap_route_group_put_named(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 2, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'pattern').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).value
     res := recv.put_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -305,13 +305,13 @@ pub fn vphp_wrap_route_group_head_named(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 2, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'pattern').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).value
     res := recv.head_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -321,13 +321,13 @@ pub fn vphp_wrap_route_group_options_named(ptr voidptr, ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 2, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'pattern').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).value
     res := recv.options_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -337,13 +337,13 @@ pub fn vphp_wrap_route_group_patch_named(ptr voidptr, ctx vphp.Context) voidptr 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 2, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'pattern').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).value
     res := recv.patch_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -353,13 +353,13 @@ pub fn vphp_wrap_route_group_delete_named(ptr voidptr, ctx vphp.Context) voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 2, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'pattern').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).value
     res := recv.delete_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -369,13 +369,13 @@ pub fn vphp_wrap_route_group_any_named(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 2, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'pattern').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).value
     res := recv.any_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -385,13 +385,13 @@ pub fn vphp_wrap_route_group_websocket_named(ptr voidptr, ctx vphp.Context) void
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 2, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'pattern').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).value
     res := recv.websocket_named(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -401,15 +401,15 @@ pub fn vphp_wrap_route_group_map_named(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'methods', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'pattern', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'methods' },
+        vphp.PhpArgMeta{ index: 1, name: 'name' },
+        vphp.PhpArgMeta{ index: 2, name: 'pattern' },
+        vphp.PhpArgMeta{ index: 3, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'methods').value
-    arg_1 := php_args.at_named_or_index(1, 'name').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'pattern').as_v[string]()
-    arg_3 := php_args.at_named_or_index(3, 'handler').value
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).as_v[string]()
+    arg_3 := php_args.at(3).value
     res := recv.map_named(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
 }
@@ -419,11 +419,11 @@ pub fn vphp_wrap_route_group_resource(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'resourcePath', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'controller', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'resourcePath' },
+        vphp.PhpArgMeta{ index: 1, name: 'controller' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'resourcePath').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'controller').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.resource(arg_0, arg_1)
     return voidptr(res)
 }
@@ -433,11 +433,11 @@ pub fn vphp_wrap_route_group_api_resource(ptr voidptr, ctx vphp.Context) voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'resourcePath', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'controller', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'resourcePath' },
+        vphp.PhpArgMeta{ index: 1, name: 'controller' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'resourcePath').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'controller').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.api_resource(arg_0, arg_1)
     return voidptr(res)
 }
@@ -447,11 +447,11 @@ pub fn vphp_wrap_route_group_singleton(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'resourcePath', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'controller', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'resourcePath' },
+        vphp.PhpArgMeta{ index: 1, name: 'controller' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'resourcePath').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'controller').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.singleton(arg_0, arg_1)
     return voidptr(res)
 }
@@ -461,11 +461,11 @@ pub fn vphp_wrap_route_group_api_singleton(ptr voidptr, ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'resourcePath', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'controller', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'resourcePath' },
+        vphp.PhpArgMeta{ index: 1, name: 'controller' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'resourcePath').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'controller').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.api_singleton(arg_0, arg_1)
     return voidptr(res)
 }
@@ -475,13 +475,13 @@ pub fn vphp_wrap_route_group_resource_opts(ptr voidptr, ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'resourcePath', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'controller', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'options', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'resourcePath' },
+        vphp.PhpArgMeta{ index: 1, name: 'controller' },
+        vphp.PhpArgMeta{ index: 2, name: 'options' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'resourcePath').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'controller').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'options').array() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -495,13 +495,13 @@ pub fn vphp_wrap_route_group_api_resource_opts(ptr voidptr, ctx vphp.Context) vo
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'resourcePath', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'controller', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'options', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'resourcePath' },
+        vphp.PhpArgMeta{ index: 1, name: 'controller' },
+        vphp.PhpArgMeta{ index: 2, name: 'options' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'resourcePath').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'controller').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'options').array() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -515,13 +515,13 @@ pub fn vphp_wrap_route_group_singleton_opts(ptr voidptr, ctx vphp.Context) voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'resourcePath', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'controller', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'options', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'resourcePath' },
+        vphp.PhpArgMeta{ index: 1, name: 'controller' },
+        vphp.PhpArgMeta{ index: 2, name: 'options' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'resourcePath').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'controller').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'options').array() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -535,13 +535,13 @@ pub fn vphp_wrap_route_group_api_singleton_opts(ptr voidptr, ctx vphp.Context) v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'resourcePath', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'controller', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'options', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'resourcePath' },
+        vphp.PhpArgMeta{ index: 1, name: 'controller' },
+        vphp.PhpArgMeta{ index: 2, name: 'options' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'resourcePath').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'controller').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'options').array() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }

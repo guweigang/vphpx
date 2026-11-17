@@ -123,7 +123,7 @@ fn (app &VSlimApp) dispatch_route_handler(handler vphp.PhpValue, payload vphp.Ph
 			return error('Route handler object must implement Psr\\Http\\Server\\RequestHandlerInterface')
 		}
 		if liveviewx.is_live_route_handler_object(handler_obj) {
-			effective_payload := if httpx.is_psr_server_request_payload(payload) {
+			mut effective_payload := if httpx.is_psr_server_request_payload(payload) {
 				httpx.legacy_middleware_payload(payload, route_params)
 			} else {
 				payload.owned()

@@ -60,7 +60,7 @@ fn vslim_request_decode_body_payload(req &httpx.VSlimRequest) vphp.PhpArray {
 	if body == '' {
 		return vphp.PhpArray.new()
 	}
-	decoded := vphp.PhpJson.decode_assoc_value(body)
+	mut decoded := vphp.PhpJson.decode_assoc_value(body)
 	defer {
 		decoded.release()
 	}
@@ -154,7 +154,7 @@ fn (subject PhpValueSubject) ollama_body_payload() vphp.PhpArray {
 	if input.to_string().trim_space() == '' {
 		return vphp.PhpArray.new()
 	}
-	decoded := vphp.PhpJson.decode_assoc_value(input.to_string())
+	mut decoded := vphp.PhpJson.decode_assoc_value(input.to_string())
 	defer {
 		decoded.release()
 	}

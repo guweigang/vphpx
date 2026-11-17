@@ -39,7 +39,7 @@ pub fn (r &VSlimPsr7Request) get_protocol_version() string {
 pub fn (r &VSlimPsr7Request) with_protocol_version(version vphp.PhpValue) &VSlimPsr7Request {
 	return r.clone_with(r.method, r.request_target,
 		normalize_protocol_version(value_subject(version).log_message()),
-		clone_header_values(r.headers), clone_header_names(r.header_names),
+		r.headers, r.header_names,
 		r.body_or_empty(), r.uri_or_default())
 }
 
@@ -67,19 +67,19 @@ pub fn (r &VSlimPsr7Request) get_header_line(name vphp.PhpValue) string {
 @[php_return_type: 'Psr\\Http\\Message\\RequestInterface']
 @[php_method: 'withHeader']
 pub fn (r &VSlimPsr7Request) with_header(name vphp.PhpValue, value vphp.PhpValue) &VSlimPsr7Request {
-	mut headers := clone_header_values(r.headers)
-	mut header_names := clone_header_names(r.header_names)
 	original_name := value_subject(name).log_message().trim_space()
 	key := validate_header_name_or_throw(value_subject(name).log_message()) or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
-			clone_header_values(r.headers), clone_header_names(r.header_names),
+			r.headers, r.header_names,
 			r.body_or_empty(), r.uri_or_default())
 	}
 	values := value_subject(value).header_values() or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
-			clone_header_values(r.headers), clone_header_names(r.header_names),
+			r.headers, r.header_names,
 			r.body_or_empty(), r.uri_or_default())
 	}
+	mut headers := clone_header_values(r.headers)
+	mut header_names := clone_header_names(r.header_names)
 	headers[key] = values
 	header_names[key] = original_name
 	return r.clone_with(r.method, r.request_target, r.protocol_version, headers,
@@ -92,12 +92,12 @@ pub fn (r &VSlimPsr7Request) with_added_header(name vphp.PhpValue, value vphp.Ph
 	original_name := value_subject(name).log_message().trim_space()
 	key := validate_header_name_or_throw(value_subject(name).log_message()) or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
-			clone_header_values(r.headers), clone_header_names(r.header_names),
+			r.headers, r.header_names,
 			r.body_or_empty(), r.uri_or_default())
 	}
 	values := value_subject(value).header_values() or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
-			clone_header_values(r.headers), clone_header_names(r.header_names),
+			r.headers, r.header_names,
 			r.body_or_empty(), r.uri_or_default())
 	}
 	mut headers := clone_header_values(r.headers)
@@ -142,7 +142,7 @@ pub fn (r &VSlimPsr7Request) get_body() &VSlimPsr7Stream {
 @[php_method: 'withBody']
 pub fn (r &VSlimPsr7Request) with_body(body vphp.PhpValue) &VSlimPsr7Request {
 	return r.clone_with(r.method, r.request_target, r.protocol_version,
-		clone_header_values(r.headers), clone_header_names(r.header_names),
+		r.headers, r.header_names,
 		VSlimPsr7Stream.from_value(body), r.uri_or_default())
 }
 
@@ -161,11 +161,11 @@ pub fn (r &VSlimPsr7Request) get_request_target() string {
 pub fn (r &VSlimPsr7Request) with_request_target(request_target vphp.PhpValue) &VSlimPsr7Request {
 	target := validate_request_target_or_throw(value_subject(request_target).log_message()) or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
-			clone_header_values(r.headers), clone_header_names(r.header_names),
+			r.headers, r.header_names,
 			r.body_or_empty(), r.uri_or_default())
 	}
 	return r.clone_with(r.method, target, r.protocol_version,
-		clone_header_values(r.headers), clone_header_names(r.header_names),
+		r.headers, r.header_names,
 		r.body_or_empty(), r.uri_or_default())
 }
 
@@ -179,11 +179,11 @@ pub fn (r &VSlimPsr7Request) get_method() string {
 pub fn (r &VSlimPsr7Request) with_method(method vphp.PhpValue) &VSlimPsr7Request {
 	next_method := validate_method_or_throw(value_subject(method).log_message()) or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
-			clone_header_values(r.headers), clone_header_names(r.header_names),
+			r.headers, r.header_names,
 			r.body_or_empty(), r.uri_or_default())
 	}
 	return r.clone_with(next_method, r.request_target, r.protocol_version,
-		clone_header_values(r.headers), clone_header_names(r.header_names),
+		r.headers, r.header_names,
 		r.body_or_empty(), r.uri_or_default())
 }
 
@@ -202,9 +202,7 @@ pub fn (r &VSlimPsr7Request) get_uri() &VSlimPsr7Uri {
 
 @[php_arg_type: 'uri=Psr\\Http\\Message\\UriInterface']
 @[php_return_type: 'Psr\\Http\\Message\\RequestInterface']
-@[php_arg_name: 'preserve_host=preserveHost']
-@[php_arg_default: 'preserve_host=false']
-@[php_arg_optional: 'preserve_host']
+@[vphp.PhpBoolParam('preserve_host', php_name: 'preserveHost', default_value: false, optional: true)]
 @[php_method: 'withUri']
 pub fn (r &VSlimPsr7Request) with_uri(uri vphp.PhpValue, preserve_host bool) &VSlimPsr7Request {
 	next_uri := VSlimPsr7Uri.from_value(uri)

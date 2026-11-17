@@ -81,7 +81,7 @@ pub fn (c &VSlimVhttpdClient) request_frames(payload vphp.PhpArray, frames ?vphp
 		vphp.PhpException.raise_class('RuntimeException', 'empty_response', 0)
 		return vphp.PhpArray.new()
 	}
-	decoded := vphp.PhpJson.decode_assoc_value(raw_response)
+	mut decoded := vphp.PhpJson.decode_assoc_value(raw_response)
 	defer {
 		decoded.release()
 	}

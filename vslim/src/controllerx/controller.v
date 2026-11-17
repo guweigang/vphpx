@@ -145,7 +145,7 @@ pub fn (mut c VSlimController) render_with_layout(template string, layout string
 
 @[php_method: 'urlFor']
 pub fn (c &VSlimController) url_for(name string, params vphp.PhpValue) string {
-	app := c.app_object() or { return '' }
+	mut app := c.app_object() or { return '' }
 	defer {
 		app.release()
 	}
@@ -160,7 +160,7 @@ pub fn (c &VSlimController) url_for(name string, params vphp.PhpValue) string {
 
 @[php_method: 'urlForQuery']
 pub fn (c &VSlimController) url_for_query(name string, params vphp.PhpValue, query vphp.PhpValue) string {
-	app := c.app_object() or { return '' }
+	mut app := c.app_object() or { return '' }
 	defer {
 		app.release()
 	}

@@ -20,21 +20,12 @@ if (is_file($probe)) {
 ?>
 --FILE--
 <?php
-$autoload = (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/php/package/vendor/autoload.php';
-if (!is_file($autoload)) {
-    $autoload = dirname(__DIR__) . '/vendor/autoload.php';
-}
-if (!is_file($autoload)) {
-    echo "autoload_missing\n";
-    exit;
-}
-require_once $autoload;
+require_once __DIR__ . '/worker_wire_fixture.php';
 
 $fixture = (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/examples/mcp-feishu-app.php';
 $adminSocket = '/tmp/vhttpd_mcp_feishu_admin_' . getmypid() . '.sock';
 @unlink($adminSocket);
 putenv('VHTTPD_INTERNAL_ADMIN_SOCKET=' . $adminSocket);
-$server = new VHttpd\PhpWorker\Server('/tmp/vhttpd_mcp_feishu_dispatch_test.sock', $fixture);
 $responder = static function (string $path): void {
     @unlink($path);
     $server = stream_socket_server('unix://' . $path, $errno, $errstr);
@@ -136,7 +127,9 @@ while (microtime(true) < $deadline) {
     usleep(10_000);
 }
 
-$feishuListChats = $server->dispatchRequest([
+$server = new WorkerWireFixture($fixture);
+
+$feishuListChats = $server->request([
     'id' => 'req-feishu-list-chats',
     'mode' => 'mcp',
     'event' => 'message',
@@ -151,7 +144,7 @@ if ($childPid > 0 && function_exists('pcntl_waitpid')) {
     pcntl_waitpid($childPid, $status);
 }
 
-$feishuSend = $server->dispatchRequest([
+$feishuSend = $server->request([
     'id' => 'req-feishu-send',
     'mode' => 'mcp',
     'event' => 'message',

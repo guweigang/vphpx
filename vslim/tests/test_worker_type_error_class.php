@@ -1,0 +1,27 @@
+<?php
+define('VSLIM_HTTPD_WORKER_NOAUTO', true);
+$autoload = dirname(__DIR__) . '/examples/vendor/autoload.php';
+if (!is_file($autoload)) { echo "autoload_missing\n"; exit; }
+require_once $autoload;
+
+putenv('VHTTPD_APP=' . __DIR__ . '/fixtures/type_error_app_fixture.php');
+$worker = new \VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
+$res = $worker->dispatchRequest([
+    'id' => 'req-type-error',
+    'method' => 'GET',
+    'path' => '/type-error',
+    'query' => [],
+    'headers' => [],
+    'cookies' => [],
+    'attributes' => [],
+    'body' => '',
+    'scheme' => 'http',
+    'host' => 'demo.local',
+    'port' => '80',
+    'protocol_version' => '1.1',
+    'remote_addr' => '127.0.0.1',
+    'server' => [],
+    'uploaded_files' => [],
+]);
+echo $res['status'] . '|' . $res['headers']['x-worker-error-class'] . '|' . $res['headers']['x-worker-exception'] . PHP_EOL;
+?>

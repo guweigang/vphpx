@@ -62,11 +62,11 @@ pub fn vphp_wrap_vslim_psr14_listener_provider_listen(ptr voidptr, ctx vphp.Cont
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'eventClass', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'listener', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'eventClass' },
+        vphp.PhpArgMeta{ index: 1, name: 'listener' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'eventClass').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'listener').callable() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).callable() or {
         vphp.throw_exception('argument 1 must be callable', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -80,9 +80,9 @@ pub fn vphp_wrap_vslim_psr14_listener_provider_listen_any(ptr voidptr, ctx vphp.
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'listener', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'listener' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'listener').callable() or {
+    arg_0 := php_args.at(0).callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -104,9 +104,9 @@ pub fn vphp_wrap_vslim_psr14_listener_provider_get_listeners_for_event(ptr voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'event', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'event' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'event').object() or {
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return
     }
@@ -206,10 +206,10 @@ pub fn vphp_wrap_vslim_psr14_event_dispatcher_set_provider(ptr voidptr, ctx vphp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'provider', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'provider' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'provider').to_v_ptr[eventx.VSlimPsr14ListenerProvider]() or {
-        vphp.throw_exception('argument 0 must be object bound to eventx.VSlimPsr14ListenerProvider, got ' + php_args.at_named_or_index(0, 'provider').zval().type_name(), 0)
+    arg_0_ptr := php_args.at(0).to_v_ptr[eventx.VSlimPsr14ListenerProvider]() or {
+        vphp.throw_exception('argument 0 must be object bound to eventx.VSlimPsr14ListenerProvider, got ' + php_args.at(0).zval().type_name(), 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
     }
@@ -231,11 +231,11 @@ pub fn vphp_wrap_vslim_psr14_event_dispatcher_listen(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'eventClass', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'listener', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'eventClass' },
+        vphp.PhpArgMeta{ index: 1, name: 'listener' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'eventClass').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'listener').callable() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).callable() or {
         vphp.throw_exception('argument 1 must be callable', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -249,9 +249,9 @@ pub fn vphp_wrap_vslim_psr14_event_dispatcher_listen_any(ptr voidptr, ctx vphp.C
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'listener', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'listener' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'listener').callable() or {
+    arg_0 := php_args.at(0).callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -265,9 +265,9 @@ pub fn vphp_wrap_vslim_psr14_event_dispatcher_dispatch(ptr voidptr, ctx vphp.Con
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'event', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'event' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'event').object() or {
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return
     }

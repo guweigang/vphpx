@@ -13,20 +13,20 @@
 
 | 能力 | 已有 API | 文件 |
 |------|---------|------|
-| 标量创建 | `ZVal.new_int()`, `ZVal.new_float()`, `ZVal.new_bool()`, `ZVal.new_string()`, `ZVal.new_null()` | [zval_factory_iter.v](file:///Users/guweigang/Source/vphpx/vphp/zval_factory_iter.v) |
-| 标量读取 | `ZVal.to_int()`, `ZVal.to_f64()`, `ZVal.to_bool()`, `ZVal.to_string()`, `ZVal.get_string()` | [zval_scalar.v](file:///Users/guweigang/Source/vphpx/vphp/zval_scalar.v) |
-| 标量写入 | `ZVal.set_null()`, `ZVal.set_bool()`, `ZVal.set_int()`, `ZVal.set_double()`, `ZVal.set_string()` | [zval_scalar.v](file:///Users/guweigang/Source/vphpx/vphp/zval_scalar.v) |
-| 类型判断 | `ZVal.is_long()`, `ZVal.is_double()`, `ZVal.is_string()`, `ZVal.is_bool()`, `ZVal.is_null()`, `ZVal.is_array()` | [zval_type.v](file:///Users/guweigang/Source/vphpx/vphp/zval_type.v) |
-| 类型转换 | `ZVal.from_v[T]()`, `new_zval_from[T]()`, `ZVal.from[T]()` | [zval_conversion.v](file:///Users/guweigang/Source/vphpx/vphp/zval_conversion.v) |
-| 输出 | `PhpOutput.write()`, `PhpOutput.line()` | [php_output.v](file:///Users/guweigang/Source/vphpx/vphp/php_output.v) |
-| PHP 函数调用 | `php_fn(name).call(args)`, `PhpFunction.named(name).invoke(args)` | [php_function.v](file:///Users/guweigang/Source/vphpx/vphp/php_function.v), [php_function_type.v](file:///Users/guweigang/Source/vphpx/vphp/php_function_type.v) |
-| PHP 常量 | `php_const(name)`, `global_const_exists(name)` | [php_const.v](file:///Users/guweigang/Source/vphpx/vphp/php_const.v) |
-| 数组操作 | `ZVal.array_init()`, `push_string()`, `push_long()`, `add_assoc_*()`, `array_get_index()`, `array_get_key()`, `foreach()` | [zval_array.v](file:///Users/guweigang/Source/vphpx/vphp/zval_array.v) |
-| 方法调用 | `ZVal.method(name, args)`, `call_method_zval()` | [zval_call_interop.v](file:///Users/guweigang/Source/vphpx/vphp/zval_call_interop.v) |
-| 对象创建 | `zend.new_instance_named()` | [zend/call.v](file:///Users/guweigang/Source/vphpx/vphp/zend/call.v) |
-| 字符串化 | `ZVal.stringify()`, `ZVal.to_string()` | [zval_stringify.v](file:///Users/guweigang/Source/vphpx/vphp/zval_stringify.v) |
-| V 侧动态值 | `DynValue` 完整的标量/列表/映射/运行时引用 | [dyn_value.v](file:///Users/guweigang/Source/vphpx/vphp/dyn_value.v) |
-| V 标量聚合 | `VScalarValue` (`bool | f64 | i64 | string`) | [v_scalar_value.v](file:///Users/guweigang/Source/vphpx/vphp/v_scalar_value.v) |
+| 标量创建 | `ZVal.new_int()`, `ZVal.new_float()`, `ZVal.new_bool()`, `ZVal.new_string()`, `ZVal.new_null()` | [zval_factory_iter.v](../../vphp/zval_factory_iter.v) |
+| 标量读取 | `ZVal.to_int()`, `ZVal.to_f64()`, `ZVal.to_bool()`, `ZVal.to_string()`, `ZVal.get_string()` | [zval_scalar.v](../../vphp/zval_scalar.v) |
+| 标量写入 | `ZVal.set_null()`, `ZVal.set_bool()`, `ZVal.set_int()`, `ZVal.set_double()`, `ZVal.set_string()` | [zval_scalar.v](../../vphp/zval_scalar.v) |
+| 类型判断 | `ZVal.is_long()`, `ZVal.is_double()`, `ZVal.is_string()`, `ZVal.is_bool()`, `ZVal.is_null()`, `ZVal.is_array()` | [zval_type.v](../../vphp/zval_type.v) |
+| 类型转换 | `ZVal.from_v[T]()`, `new_zval_from[T]()`, `ZVal.from[T]()` | [zval_conversion.v](../../vphp/zval_conversion.v) |
+| 输出 | `PhpOutput.write()`, `PhpOutput.line()` | [php_output.v](../../vphp/php_output.v) |
+| PHP 函数调用 | `php_fn(name).call(args)`, `PhpFunction.named(name).invoke(args)` | [php_function.v](../../vphp/php_function.v), [php_function_type.v](../../vphp/php_function_type.v) |
+| PHP 常量 | `php_const(name)`, `global_const_exists(name)` | [php_const.v](../../vphp/php_const.v) |
+| 数组操作 | `ZVal.array_init()`, `push_string()`, `push_long()`, `add_assoc_*()`, `array_get_index()`, `array_get_key()`, `foreach()` | [zval_array.v](../../vphp/zval_array.v) |
+| 方法调用 | `ZVal.method(name, args)`, `call_method_zval()` | [zval_call_interop.v](../../vphp/zval_call_interop.v) |
+| 对象创建 | `zend.new_instance_named()` | [zend/call.v](../../vphp/zend/call.v) |
+| 字符串化 | `ZVal.stringify()`, `ZVal.to_string()` | [zval_stringify.v](../../vphp/zval_stringify.v) |
+| V 侧动态值 | `DynValue` 完整的标量/列表/映射/运行时引用 | [dyn_value.v](../../vphp/dyn_value.v) |
+| V 标量聚合 | `VScalarValue` (`bool | f64 | i64 | string`) | [v_scalar_value.v](../../vphp/v_scalar_value.v) |
 
 ---
 

@@ -183,7 +183,7 @@ fn (subject PhpValueSubject) psr7_port() int {
 }
 
 pub fn VSlimPsr7Uri.from_value(value vphp.PhpValue) &VSlimPsr7Uri {
-	if object := value.as_object() {
+	if mut object := value.as_object() {
 		defer {
 			object.release()
 		}

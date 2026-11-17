@@ -241,11 +241,11 @@ pub fn vphp_wrap_vslim_container_set(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'id', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'id' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'id').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'value').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.set(arg_0, arg_1)
     return voidptr(res)
 }
@@ -255,11 +255,11 @@ pub fn vphp_wrap_vslim_container_factory(ptr voidptr, ctx vphp.Context) voidptr 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'id', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'callable', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'id' },
+        vphp.PhpArgMeta{ index: 1, name: 'callable' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'id').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'callable').callable() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).callable() or {
         vphp.throw_exception('argument 1 must be callable', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -273,9 +273,9 @@ pub fn vphp_wrap_vslim_container_has(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'id', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'id' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'id').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.has(arg_0)
     ctx.return().v[bool](res)
 }
@@ -285,9 +285,9 @@ pub fn vphp_wrap_vslim_container_get(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'id', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'id' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'id').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.get(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }

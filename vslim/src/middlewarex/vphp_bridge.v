@@ -52,9 +52,9 @@ pub fn vphp_wrap_vslim_psr15_next_handler_handle(ptr voidptr, ctx vphp.Context) 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'request', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'request' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'request').object() or {
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -147,9 +147,9 @@ pub fn vphp_wrap_vslim_psr15_continue_handler_handle(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'request', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'request' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'request').object() or {
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }

@@ -597,7 +597,7 @@ pub fn (mut migrator VSlimDatabaseMigrator) status() vphp.PhpValue {
 		name := migration_entry_name(file)
 		seen[name] = true
 		batch := applied[name] or { 0 }
-		out << vphp.DynValue.of_map({
+		out << vphp.DynValue.array_from_map({
 			'migration':       vphp.DynValue.of_string(name)
 			'file':            vphp.DynValue.of_string(file)
 			'applied':         vphp.DynValue.of_bool(name in applied)
@@ -609,7 +609,7 @@ pub fn (mut migrator VSlimDatabaseMigrator) status() vphp.PhpValue {
 		if name in seen {
 			continue
 		}
-		out << vphp.DynValue.of_map({
+		out << vphp.DynValue.array_from_map({
 			'migration':       vphp.DynValue.of_string(name)
 			'file':            vphp.DynValue.of_string('')
 			'applied':         vphp.DynValue.of_bool(true)
@@ -617,7 +617,7 @@ pub fn (mut migrator VSlimDatabaseMigrator) status() vphp.PhpValue {
 			'applied_at_unix': vphp.DynValue.of_string(applied_at[name] or { '' })
 		})
 	}
-	return database_result_value_from_dyn(vphp.DynValue.of_list(out))
+	return database_result_value_from_dyn(vphp.DynValue.array_from_list(out))
 }
 
 @[php_arg_default: 'name=""']

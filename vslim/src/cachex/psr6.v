@@ -94,7 +94,7 @@ pub fn (mut pool VSlimPsr6CacheItemPool) get_items(keys vphp.PhpValue) vphp.PhpA
 	if !keys.is_valid() || keys.is_null() || keys.is_undef() {
 		return out
 	}
-	key_array := keys.as_array() or {
+	mut key_array := keys.as_array() or {
 		throw_psr6_invalid_argument('keys must be an array of cache keys')
 		return out
 	}
@@ -462,7 +462,7 @@ fn psr6_key_list_from_array(keys vphp.PhpArray) ![]string {
 	defer {
 		values_value.release()
 	}
-	values := values_value.as_array() or { return error('keys must be an array of cache keys') }
+	mut values := values_value.as_array() or { return error('keys must be an array of cache keys') }
 	defer {
 		values.release()
 	}
@@ -486,7 +486,7 @@ fn psr6_resolve_absolute_expiration_or_throw(expiration vphp.PhpValue) !i64 {
 		return 0
 	}
 	if expiration.is_object() && expiration.is_instance_of('DateTimeInterface') {
-		obj := expiration.as_object() or {
+		mut obj := expiration.as_object() or {
 			return error('expiration must be null or DateTimeInterface')
 		}
 		defer {

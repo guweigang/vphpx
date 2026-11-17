@@ -143,7 +143,7 @@ fn collect_template_values(prefix string, value vphp.PhpValue, mut scalars map[s
 		return
 	}
 	if value.is_array() {
-		arr := value.as_array() or { return }
+		mut arr := value.as_array() or { return }
 		defer {
 			arr.release()
 		}
@@ -200,7 +200,7 @@ fn collect_template_values(prefix string, value vphp.PhpValue, mut scalars map[s
 		defer {
 			props_value.release()
 		}
-		if props := props_value.as_array() {
+		if mut props := props_value.as_array() {
 			defer {
 				props.release()
 			}
@@ -263,7 +263,7 @@ fn is_numeric_path_segment(part string) bool {
 }
 
 fn is_template_list(value vphp.PhpValue) bool {
-	arr := value.as_array() or { return false }
+	mut arr := value.as_array() or { return false }
 	defer {
 		arr.release()
 	}
@@ -273,7 +273,7 @@ fn is_template_list(value vphp.PhpValue) bool {
 fn (subject PhpValueSubject) template_list_items() []string {
 	mut items := []string{}
 	value := subject.value
-	arr := value.as_array() or { return items }
+	mut arr := value.as_array() or { return items }
 	defer {
 		arr.release()
 	}
@@ -284,7 +284,7 @@ fn (subject PhpValueSubject) template_list_items() []string {
 }
 
 fn template_list_has_complex_items(value vphp.PhpValue) bool {
-	arr := value.as_array() or { return false }
+	mut arr := value.as_array() or { return false }
 	defer {
 		arr.release()
 	}

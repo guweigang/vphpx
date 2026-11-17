@@ -5,7 +5,7 @@ vhttpd passes [worker.env] from TOML into php-worker getenv
 if (!extension_loaded("vslim")) print "skip";
 if (getenv("CODEX_SANDBOX_NETWORK_DISABLED") === "1") print "skip";
 $vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd';
-if (!is_file($vhttpdRoot . '/vhttpd')) print "skip";
+if (!is_file(getenv('VHTTPD_BIN') ?: $vhttpdRoot . '/vhttpd')) print "skip";
 $probe = sys_get_temp_dir() . '/vhttpd_unix_probe_' . getmypid() . '.sock';
 @unlink($probe);
 $errno = 0;
@@ -23,10 +23,11 @@ if (is_file($probe)) {
 ?>
 --FILE--
 <?php
+require_once __DIR__ . '/vhttpd_process_fixture.php';
 $root = dirname(__DIR__);
 $vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname($root, 2) . '/vhttpd';
 $src = $vhttpdRoot . '/src';
-$bin = $vhttpdRoot . '/vhttpd';
+$bin = getenv('VHTTPD_BIN') ?: $vhttpdRoot . '/vhttpd';
 
 
 $port = 19890 + random_int(0, 60);
@@ -66,20 +67,23 @@ port = {$port}
 pid_file = "{$pidFile}"
 event_log = "{$eventLog}"
 
+[php]
+worker_entry = "{$vhttpdRoot}/php/package/bin/vphp-worker"
+app_entry = "{$appPath}"
+extensions = ["{$root}/vslim.so"]
+
 [worker]
 autostart = true
 read_timeout_ms = 3000
 socket = "{$socket}"
-cmd = "php -d extension={$root}/vslim.so {$vhttpdRoot}/php/package/bin/vphp-worker --socket {$socket}"
 
 [worker.env]
-VHTTPD_APP = "{$appPath}"
 TEST_FLAG = "from_toml_env"
 TOML;
 file_put_contents($configPath, $toml);
 
-$cmd = sprintf('%s --config %s >> %s 2>&1 &', escapeshellarg($bin), escapeshellarg($configPath), escapeshellarg($stdoutLog));
-exec($cmd);
+$process = launch_vhttpd($bin, $configPath, $stdoutLog);
+
 
 $ready = false;
 $deadline = microtime(true) + 8.0;
@@ -100,15 +104,7 @@ if (!$ready) {
 $body = @file_get_contents('http://127.0.0.1:' . $port . '/env');
 echo trim((string) $body) . "\n";
 
-$pid = is_file($pidFile) ? (int) trim((string) file_get_contents($pidFile)) : 0;
-if ($pid > 0) {
-    exec(sprintf('kill %d >/dev/null 2>&1', $pid));
-    usleep(200000);
-    exec(sprintf('kill -0 %d >/dev/null 2>&1', $pid), $noop, $alive);
-    echo $alive === 0 ? "still_running\n" : "stopped\n";
-} else {
-    echo "stopped\n";
-}
+echo stop_vhttpd($process) ? "stopped\n" : "still_running\n";
 ?>
 --EXPECT--
 ready

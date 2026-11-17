@@ -17,8 +17,8 @@ pub fn (mut f VSlimPsr17ServerRequestFactory) construct() &VSlimPsr17ServerReque
 	return &f
 }
 
+// PSR-17 leaves $uri untyped. Validate it in from_uri_value.
 @[php_return_type: 'Psr\\Http\\Message\\RequestInterface']
-@[php_arg_type(uri: 'Psr\\Http\\Message\\UriInterface|string')]
 @[php_method: 'createRequest']
 pub fn (f &VSlimPsr17RequestFactory) create_request(method string, uri vphp.PhpValue) &VSlimPsr7Request {
 	return VSlimPsr7Request.from_uri_value(validate_method_or_fallback(method, 'GET'), uri)
@@ -30,7 +30,6 @@ struct VSlimPsr17CreateServerRequestParams {
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
-@[php_arg_type(uri: 'Psr\\Http\\Message\\UriInterface|string')]
 @[php_method: 'createServerRequest']
 pub fn (f &VSlimPsr17ServerRequestFactory) create_server_request(method string, uri vphp.PhpValue, params VSlimPsr17CreateServerRequestParams) &VSlimPsr7ServerRequest {
 	return VSlimPsr7ServerRequest.from_uri_value(validate_method_or_fallback(method, 'GET'), uri,

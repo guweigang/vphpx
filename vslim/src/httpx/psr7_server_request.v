@@ -49,8 +49,7 @@ pub fn (r &VSlimPsr7ServerRequest) get_protocol_version() string {
 @[php_method: 'withProtocolVersion']
 pub fn (r &VSlimPsr7ServerRequest) with_protocol_version(version vphp.PhpValue) &VSlimPsr7ServerRequest {
 	return r.clone_with(r.method, r.request_target,
-		normalize_protocol_version(version.to_string()), clone_header_values(r.headers),
-		clone_header_names(r.header_names), r.body_or_empty(),
+		normalize_protocol_version(version.to_string()), r.headers, r.header_names, r.body_or_empty(),
 		r.uri_or_default(), r.server_params_ref, r.cookie_params_ref,
 		r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref, r.attributes_ref)
 }
@@ -79,24 +78,24 @@ pub fn (r &VSlimPsr7ServerRequest) get_header_line(name vphp.PhpValue) string {
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
 @[php_method: 'withHeader']
 pub fn (r &VSlimPsr7ServerRequest) with_header(name vphp.PhpValue, value vphp.PhpValue) &VSlimPsr7ServerRequest {
-	mut headers := clone_header_values(r.headers)
-	mut header_names := clone_header_names(r.header_names)
 	raw_name := name.to_string()
 	original_name := raw_name.trim_space()
 	key := validate_header_name_or_throw(raw_name) or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
-			clone_header_values(r.headers), clone_header_names(r.header_names),
+			r.headers, r.header_names,
 			r.body_or_empty(), r.uri_or_default(), r.server_params_ref,
 			r.cookie_params_ref, r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref,
 			r.attributes_ref)
 	}
 	values := value_subject(value).header_values() or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
-			clone_header_values(r.headers), clone_header_names(r.header_names),
+			r.headers, r.header_names,
 			r.body_or_empty(), r.uri_or_default(), r.server_params_ref,
 			r.cookie_params_ref, r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref,
 			r.attributes_ref)
 	}
+	mut headers := clone_header_values(r.headers)
+	mut header_names := clone_header_names(r.header_names)
 	headers[key] = values
 	header_names[key] = original_name
 	return r.clone_with(r.method, r.request_target, r.protocol_version, headers,
@@ -112,14 +111,14 @@ pub fn (r &VSlimPsr7ServerRequest) with_added_header(name vphp.PhpValue, value v
 	original_name := raw_name.trim_space()
 	key := validate_header_name_or_throw(raw_name) or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
-			clone_header_values(r.headers), clone_header_names(r.header_names),
+			r.headers, r.header_names,
 			r.body_or_empty(), r.uri_or_default(), r.server_params_ref,
 			r.cookie_params_ref, r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref,
 			r.attributes_ref)
 	}
 	values := value_subject(value).header_values() or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
-			clone_header_values(r.headers), clone_header_names(r.header_names),
+			r.headers, r.header_names,
 			r.body_or_empty(), r.uri_or_default(), r.server_params_ref,
 			r.cookie_params_ref, r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref,
 			r.attributes_ref)
@@ -170,7 +169,7 @@ pub fn (r &VSlimPsr7ServerRequest) get_body() &VSlimPsr7Stream {
 @[php_method: 'withBody']
 pub fn (r &VSlimPsr7ServerRequest) with_body(body vphp.PhpValue) &VSlimPsr7ServerRequest {
 	return r.clone_with(r.method, r.request_target, r.protocol_version,
-		clone_header_values(r.headers), clone_header_names(r.header_names),
+		r.headers, r.header_names,
 		VSlimPsr7Stream.from_value(body), r.uri_or_default(), r.server_params_ref,
 		r.cookie_params_ref, r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref,
 		r.attributes_ref)
@@ -205,13 +204,13 @@ pub fn (r &VSlimPsr7ServerRequest) get_request_target() string {
 pub fn (r &VSlimPsr7ServerRequest) with_request_target(request_target vphp.PhpValue) &VSlimPsr7ServerRequest {
 	target := validate_request_target_or_throw(request_target.to_string()) or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
-			clone_header_values(r.headers), clone_header_names(r.header_names),
+			r.headers, r.header_names,
 			r.body_or_empty(), r.uri_or_default(), r.server_params_ref,
 			r.cookie_params_ref, r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref,
 			r.attributes_ref)
 	}
 	return r.clone_with(r.method, target, r.protocol_version,
-		clone_header_values(r.headers), clone_header_names(r.header_names),
+		r.headers, r.header_names,
 		r.body_or_empty(), r.uri_or_default(), r.server_params_ref,
 		r.cookie_params_ref, r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref,
 		r.attributes_ref)
@@ -227,13 +226,13 @@ pub fn (r &VSlimPsr7ServerRequest) get_method() string {
 pub fn (r &VSlimPsr7ServerRequest) with_method(method vphp.PhpValue) &VSlimPsr7ServerRequest {
 	next_method := validate_method_or_throw(method.to_string()) or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
-			clone_header_values(r.headers), clone_header_names(r.header_names),
+			r.headers, r.header_names,
 			r.body_or_empty(), r.uri_or_default(), r.server_params_ref,
 			r.cookie_params_ref, r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref,
 			r.attributes_ref)
 	}
 	return r.clone_with(next_method, r.request_target, r.protocol_version,
-		clone_header_values(r.headers), clone_header_names(r.header_names),
+		r.headers, r.header_names,
 		r.body_or_empty(), r.uri_or_default(), r.server_params_ref,
 		r.cookie_params_ref, r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref,
 		r.attributes_ref)
@@ -254,9 +253,7 @@ pub fn (r &VSlimPsr7ServerRequest) get_uri() &VSlimPsr7Uri {
 
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
 @[php_arg_type: 'uri=Psr\\Http\\Message\\UriInterface']
-@[php_arg_name: 'preserve_host=preserveHost']
-@[php_arg_default: 'preserve_host=false']
-@[php_arg_optional: 'preserve_host']
+@[vphp.PhpBoolParam('preserve_host', php_name: 'preserveHost', default_value: false, optional: true)]
 @[php_method: 'withUri']
 pub fn (r &VSlimPsr7ServerRequest) with_uri(uri vphp.PhpValue, preserve_host bool) &VSlimPsr7ServerRequest {
 	next_uri := VSlimPsr7Uri.from_value(uri)
@@ -288,7 +285,7 @@ pub fn (r &VSlimPsr7ServerRequest) get_cookie_params() vphp.PhpArray {
 @[php_method: 'withCookieParams']
 pub fn (r &VSlimPsr7ServerRequest) with_cookie_params(cookies vphp.PhpArray) &VSlimPsr7ServerRequest {
 	return r.clone_with(r.method, r.request_target, r.protocol_version,
-		clone_header_values(r.headers), clone_header_names(r.header_names),
+		r.headers, r.header_names,
 		r.body_or_empty(), r.uri_or_default(), r.server_params_ref,
 		cookies.retain(), r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref,
 		r.attributes_ref)
@@ -304,7 +301,7 @@ pub fn (r &VSlimPsr7ServerRequest) get_query_params() vphp.PhpArray {
 @[php_method: 'withQueryParams']
 pub fn (r &VSlimPsr7ServerRequest) with_query_params(query vphp.PhpArray) &VSlimPsr7ServerRequest {
 	return r.clone_with(r.method, r.request_target, r.protocol_version,
-		clone_header_values(r.headers), clone_header_names(r.header_names),
+		r.headers, r.header_names,
 		r.body_or_empty(), r.uri_or_default(), r.server_params_ref,
 		r.cookie_params_ref, query.retain(), r.uploaded_files_ref, r.parsed_body_ref,
 		r.attributes_ref)
@@ -321,7 +318,7 @@ pub fn (r &VSlimPsr7ServerRequest) get_uploaded_files() vphp.PhpArray {
 @[php_method: 'withUploadedFiles']
 pub fn (r &VSlimPsr7ServerRequest) with_uploaded_files(uploaded_files vphp.PhpArray) &VSlimPsr7ServerRequest {
 	return r.clone_with(r.method, r.request_target, r.protocol_version,
-		clone_header_values(r.headers), clone_header_names(r.header_names),
+		r.headers, r.header_names,
 		r.body_or_empty(), r.uri_or_default(), r.server_params_ref,
 		r.cookie_params_ref, r.query_params_ref,
 		normalize_uploaded_files_tree_array(uploaded_files), r.parsed_body_ref,
@@ -341,16 +338,16 @@ pub fn (r &VSlimPsr7ServerRequest) with_parsed_body(parsed_body vphp.PhpValue) &
 		vphp.PhpException.raise_class('InvalidArgumentException',
 			'parsed body must be null, an array, or an object', 0)
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
-			clone_header_values(r.headers), clone_header_names(r.header_names),
+			r.headers, r.header_names,
 			r.body_or_empty(), r.uri_or_default(), r.server_params_ref,
 			r.cookie_params_ref, r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref,
 			r.attributes_ref)
 	}
 	return r.clone_with(r.method, r.request_target, r.protocol_version,
-		clone_header_values(r.headers), clone_header_names(r.header_names),
+		r.headers, r.header_names,
 		r.body_or_empty(), r.uri_or_default(), r.server_params_ref,
 		r.cookie_params_ref, r.query_params_ref, r.uploaded_files_ref,
-		parsed_body.retain(), r.attributes_ref)
+		parsed_body, r.attributes_ref)
 }
 
 @[php_method: 'getAttributes']
@@ -379,28 +376,22 @@ pub fn (r &VSlimPsr7ServerRequest) get_attribute(name vphp.PhpValue, default_val
 @[php_method: 'withAttribute']
 pub fn (r &VSlimPsr7ServerRequest) with_attribute(name vphp.PhpValue, value vphp.PhpValue) &VSlimPsr7ServerRequest {
 	key := name.to_string()
-	mut next_attrs := persistent_value_assoc_with_value(r.attributes_ref, key, value)
-	out := r.clone_with_owned_attrs(r.method, r.request_target, r.protocol_version,
-		clone_header_values(r.headers), clone_header_names(r.header_names),
+	return r.clone_with_owned_attrs(r.method, r.request_target, r.protocol_version,
+		r.headers, r.header_names,
 		r.body_or_empty(), r.uri_or_default(), r.server_params_ref,
 		r.cookie_params_ref, r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref,
-		next_attrs)
-	next_attrs.release()
-	return out
+		persistent_value_assoc_with_value(r.attributes_ref, key, value))
 }
 
 @[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
 @[php_method: 'withoutAttribute']
 pub fn (r &VSlimPsr7ServerRequest) without_attribute(name vphp.PhpValue) &VSlimPsr7ServerRequest {
 	key := name.to_string()
-	mut next_attrs := persistent_value_assoc_without_key(r.attributes_ref, key)
-	out := r.clone_with_owned_attrs(r.method, r.request_target, r.protocol_version,
-		clone_header_values(r.headers), clone_header_names(r.header_names),
+	return r.clone_with_owned_attrs(r.method, r.request_target, r.protocol_version,
+		r.headers, r.header_names,
 		r.body_or_empty(), r.uri_or_default(), r.server_params_ref,
 		r.cookie_params_ref, r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref,
-		next_attrs)
-	next_attrs.release()
-	return out
+		persistent_value_assoc_without_key(r.attributes_ref, key))
 }
 
 @[php_method]

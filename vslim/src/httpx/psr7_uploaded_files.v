@@ -41,7 +41,7 @@ fn uploaded_files_tree_is_valid(value vphp.PhpValue) bool {
 	if !value.is_valid() || value.is_null() || value.is_undef() || !value.is_array() {
 		return false
 	}
-	arr := value.as_array() or { return false }
+	mut arr := value.as_array() or { return false }
 	defer {
 		arr.release()
 	}

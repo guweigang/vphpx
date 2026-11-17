@@ -43,7 +43,7 @@ fn (group &RouteGroup) prefixed_pattern(pattern string) string {
 }
 
 fn (group &RouteGroup) call_app(method string, args ...vphp.PhpArgInput) {
-	app := group.app_object() or { return }
+	mut app := group.app_object() or { return }
 	defer {
 		app.release()
 	}
@@ -91,7 +91,7 @@ fn (group &RouteGroup) call_app_resource_opts(method string, resource_path strin
 
 @[php_method]
 pub fn (group &RouteGroup) group(prefix string) &RouteGroup {
-	app := group.app_object() or { return RouteGroup.empty() }
+	mut app := group.app_object() or { return RouteGroup.empty() }
 	defer {
 		app.release()
 	}

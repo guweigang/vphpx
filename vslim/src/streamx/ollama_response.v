@@ -15,7 +15,8 @@ pub fn (c &VSlimStreamOllamaClient) text_response_from_request(request_payload v
 		upstream.release()
 	}
 	if !upstream.bool_at('ok', false) {
-		return upstream_error_response(upstream).take_value()
+		mut failure := upstream_error_response(upstream)
+		return failure.take_value()
 	}
 	rows := value_subject(upstream.value_at('stream')).ndjson_rows()
 	chunks := ollama_text_chunks(rows)
@@ -45,7 +46,8 @@ pub fn (c &VSlimStreamOllamaClient) sse_response_from_request(request_payload vp
 		upstream.release()
 	}
 	if !upstream.bool_at('ok', false) {
-		return upstream_error_response(upstream).take_value()
+		mut failure := upstream_error_response(upstream)
+		return failure.take_value()
 	}
 	rows := value_subject(upstream.value_at('stream')).ndjson_rows()
 	events := encode_ollama_sse_events(rows, payload.string_at('model', c.default_model_value()))

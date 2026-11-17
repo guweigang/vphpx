@@ -185,9 +185,7 @@ pub fn (c &VSlimConfig) get_int(key string, default_value int) int {
 	return value.int()
 }
 
-@[php_arg_name: 'default_value=defaultValue']
-@[php_arg_default: 'default_value=false']
-@[php_arg_optional: 'default_value']
+@[vphp.PhpBoolParam('default_value', php_name: 'defaultValue', default_value: false, optional: true)]
 @[php_method: 'getBool']
 pub fn (c &VSlimConfig) get_bool(key string, default_value bool) bool {
 	value := c.value_opt(key) or { return default_value }

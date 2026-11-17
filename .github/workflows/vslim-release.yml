@@ -19,7 +19,7 @@ on:
       - 'vslim-*'
 
 env:
-  V_VERSION: '0.5.1'
+  V_REF: master
 
 jobs:
   package:
@@ -78,19 +78,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          case "${{ matrix.platform }}" in
-            linux-amd64) v_url="https://github.com/vlang/v/releases/download/${V_VERSION}/v_linux.zip" ;;
-            macos-amd64) v_url="https://github.com/vlang/v/releases/download/${V_VERSION}/v_macos_x86_64.zip" ;;
-            macos-arm64) v_url="https://github.com/vlang/v/releases/download/${V_VERSION}/v_macos_arm64.zip" ;;
-            *) echo "unsupported platform: ${{ matrix.platform }}"; exit 1 ;;
-          esac
-          curl -fsSL "$v_url" -o /tmp/v.zip
-          rm -rf /tmp/v /tmp/vlang
-          unzip -q /tmp/v.zip -d /tmp
-          chmod +x /tmp/v/v
-          mv /tmp/v /tmp/vlang
-          echo "/tmp/vlang" >> "$GITHUB_PATH"
-          /tmp/vlang/v version
+          git clone --depth=1 --branch "$V_REF" https://github.com/vlang/v "$RUNNER_TEMP/vlang"
+          make -C "$RUNNER_TEMP/vlang"
+          echo "$RUNNER_TEMP/vlang" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/vlang/v" version
 
       - name: Setup MSVC on Windows
         if: runner.os == 'Windows'
@@ -102,19 +93,11 @@ jobs:
         if: matrix.needs_build && runner.os == 'Windows'
         shell: pwsh
         run: |
-          $vUrl = "https://github.com/vlang/v/releases/download/$env:V_VERSION/v_windows.zip"
-          $zipPath = Join-Path $env:RUNNER_TEMP "v.zip"
-          $extractRoot = Join-Path $env:RUNNER_TEMP "v-extract"
           $installRoot = Join-Path $env:RUNNER_TEMP "vlang"
-          Invoke-WebRequest -Uri $vUrl -OutFile $zipPath
-          if (Test-Path $extractRoot) {
-            Remove-Item -Recurse -Force $extractRoot
-          }
-          if (Test-Path $installRoot) {
-            Remove-Item -Recurse -Force $installRoot
-          }
-          Expand-Archive -Path $zipPath -DestinationPath $extractRoot -Force
-          Move-Item -Force (Join-Path $extractRoot "v") $installRoot
+          git clone --depth=1 --branch $env:V_REF https://github.com/vlang/v $installRoot
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & (Join-Path $installRoot "makev.bat") -msvc
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Add-Content -Path $env:GITHUB_PATH -Value $installRoot
           & (Join-Path $installRoot "v.exe") version
 

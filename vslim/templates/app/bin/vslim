@@ -3,6 +3,15 @@
 declare(strict_types=1);
 
 $root = dirname(__DIR__);
+
+$argv = $_SERVER['argv'] ?? $argv ?? [];
+if (($argv[1] ?? '') === 'serve') {
+    exit(run_vslim_serve($root, array_slice($argv, 2)));
+}
+if (($argv[1] ?? '') === 'build') {
+    exit(run_vslim_build($root, array_slice($argv, 2)));
+}
+
 $autoload = $root . '/vendor/autoload.php';
 if (!is_file($autoload)) {
     $vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname($root, 3) . '/vhttpd';
@@ -20,4 +29,157 @@ if (!extension_loaded('vslim')) {
 \VSlim\EnvLoader::bootstrap($root);
 
 $cli = (new VSlim\Cli\App())->bootstrapDir($root);
-exit($cli->runArgv($_SERVER['argv'] ?? $argv ?? []));
+exit($cli->runArgv($argv));
+
+function run_vslim_serve(string $root, array $args): int
+{
+    if (in_array('--help', $args, true) || in_array('-h', $args, true)) {
+        echo "Usage: bin/vslim serve [options]\n\n";
+        echo "Options:\n";
+        echo "  --host=HOST           Bind host (default: 127.0.0.1)\n";
+        echo "  --port=PORT           Bind port (default: 8080)\n";
+        echo "  --engine=php          Use the current PHP runtime (default)\n";
+        echo "  --engine=embedded     Use the experimental embedded runtime\n";
+        echo "  --config=PATH         Embedded runtime YAML (default: vslim.yaml)\n";
+        echo "  --workers=COUNT       Embedded runtime HTTP workers\n";
+        echo "  --php-lanes=COUNT     Embedded runtime PHP lanes\n";
+        return 0;
+    }
+
+    $engine = 'php';
+    foreach ($args as $index => $arg) {
+        if (str_starts_with($arg, '--engine=')) {
+            $engine = substr($arg, strlen('--engine='));
+            unset($args[$index]);
+        }
+    }
+    $args = array_values($args);
+    if ($engine === 'embedded') {
+        return run_vslim_embedded_server($root, $args);
+    }
+    if ($engine !== 'php') {
+        fwrite(STDERR, "Unknown VSlim serve engine: {$engine}\n");
+        return 1;
+    }
+    if (!extension_loaded('vslim')) {
+        fwrite(STDERR, "vslim extension is not loaded\n");
+        return 1;
+    }
+
+    $host = '127.0.0.1';
+    $port = '8080';
+    foreach ($args as $index => $arg) {
+        if (str_starts_with($arg, '--host=')) {
+            $host = substr($arg, strlen('--host='));
+            unset($args[$index]);
+        } elseif (str_starts_with($arg, '--port=')) {
+            $port = substr($arg, strlen('--port='));
+            unset($args[$index]);
+        }
+    }
+    if ($args !== []) {
+        fwrite(STDERR, 'Unknown vslim serve option: ' . reset($args) . "\n");
+        return 1;
+    }
+    if ($host === '' || filter_var($port, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]) === false) {
+        fwrite(STDERR, "Invalid VSlim development server address\n");
+        return 1;
+    }
+
+    $command = [PHP_BINARY];
+    $extensionPath = getenv('VSLIM_EXTENSION_PATH') ?: '';
+    if ($extensionPath !== '') {
+        $command[] = '-d';
+        $command[] = 'extension=' . $extensionPath;
+    }
+    $command = array_merge($command, ['-S', $host . ':' . $port, $root . '/public/index.php']);
+    passthru(implode(' ', array_map('escapeshellarg', $command)), $status);
+    return (int) $status;
+}
+
+function run_vslim_build(string $root, array $args): int
+{
+    $builder = $root . '/bin/vslim-build';
+    if (!is_file($builder)) {
+        fwrite(STDERR, "VSlim application builder not found: {$builder}\n");
+        return 1;
+    }
+    $command = array_merge([PHP_BINARY, $builder, '--root=' . $root], $args);
+    passthru(implode(' ', array_map('escapeshellarg', $command)), $status);
+    return (int) $status;
+}
+
+function run_vslim_embedded_server(string $root, array $args): int
+{
+
+    $config = $root . '/vslim.yaml';
+    $serverOptions = [
+        '--host=' => 'VSLIM_SERVER_HOST',
+        '--port=' => 'VSLIM_SERVER_PORT',
+        '--workers=' => 'VSLIM_SERVER_WORKERS',
+        '--php-lanes=' => 'VSLIM_SERVER_PHP_LANES',
+    ];
+    foreach ($args as $index => $arg) {
+        if (str_starts_with($arg, '--config=')) {
+            $config = substr($arg, strlen('--config='));
+            unset($args[$index]);
+            continue;
+        }
+        foreach ($serverOptions as $prefix => $environmentName) {
+            if (str_starts_with($arg, $prefix)) {
+                putenv($environmentName . '=' . substr($arg, strlen($prefix)));
+                unset($args[$index]);
+                continue 2;
+            }
+        }
+        if ($arg !== '' && !str_starts_with($arg, '-')) {
+            $config = $arg;
+            unset($args[$index]);
+            break;
+        }
+    }
+
+    if ($args !== []) {
+        fwrite(STDERR, 'Unknown vslim serve option: ' . reset($args) . "\n");
+        return 1;
+    }
+
+    if (!is_file($config)) {
+        fwrite(STDERR, "VSlim server config not found: {$config}\n");
+        return 1;
+    }
+
+    $extensionPath = getenv('VSLIM_EXTENSION_PATH') ?: '';
+    $loadedExtensionPath = getenv('VSLIM_EXTENSION_PATH') ?: '';
+
+    $configuredBinary = getenv('VSLIM_SERVER_BIN') ?: '';
+    $candidates = array_filter([
+        $configuredBinary,
+        $root . '/bin/vslim-server',
+        $loadedExtensionPath !== '' ? dirname($loadedExtensionPath) . '/server/vslim-server' : '',
+        dirname($root, 2) . '/server/vslim-server',
+    ]);
+    $binary = '';
+    foreach ($candidates as $candidate) {
+        if (is_file($candidate) && is_executable($candidate)) {
+            $binary = $candidate;
+            break;
+        }
+    }
+    if ($binary === '') {
+        fwrite(STDERR, "Experimental vslim-server binary not found; set VSLIM_SERVER_BIN or build vslim/server\n");
+        return 1;
+    }
+
+    if ($extensionPath === '') {
+        $serverExtension = dirname($binary) . '/vslim-server-extension.so';
+        $extensionPath = is_file($serverExtension) ? $serverExtension : $loadedExtensionPath;
+        if ($extensionPath !== '') {
+            putenv('VSLIM_EXTENSION_PATH=' . $extensionPath);
+        }
+    }
+
+    $command = escapeshellarg($binary) . ' ' . escapeshellarg($config);
+    passthru($command, $status);
+    return (int) $status;
+}

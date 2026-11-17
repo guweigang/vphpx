@@ -1,5 +1,9 @@
 # VPHPX - PHP to V Transpiler / AOT Compiler
 
+> **Experimental / Labs / no compatibility guarantee**
+>
+> `php2v` is a research prototype. Its syntax coverage, generated runtime behavior, command-line interface, and output compatibility may change without notice. Do not treat it as a production migration path.
+
 VPHPX (php2v) 是一个将 PHP 源代码转译（Transpile）并预编译（AOT Compile）为高效 V 语言原生可执行程序的革命性编译器。
 
 ## 项目核心设计理念

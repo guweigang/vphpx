@@ -56,11 +56,11 @@ pub fn vphp_wrap_vslim_task_spawn(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'target', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'params', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'target' },
+        vphp.PhpArgMeta{ index: 1, name: 'params' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'target').value
-    arg_1 := php_args.at_named_or_index(1, 'params').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }

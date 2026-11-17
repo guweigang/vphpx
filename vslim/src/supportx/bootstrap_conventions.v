@@ -64,7 +64,7 @@ pub fn preload_bootstrap_spec_class_items(project_root string, raw vphp.PhpValue
 }
 
 pub fn preload_bootstrap_spec_classes(project_root string, raw vphp.PhpValue) {
-	normalized := normalize_app_bootstrap_spec(raw) or { return }
+	mut normalized := normalize_app_bootstrap_spec(raw) or { return }
 	defer {
 		normalized.release()
 	}

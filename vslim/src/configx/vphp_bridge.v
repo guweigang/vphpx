@@ -61,9 +61,9 @@ pub fn vphp_wrap_vslim_config_load(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'path' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.load(arg_0)
     return voidptr(res)
 }
@@ -73,9 +73,9 @@ pub fn vphp_wrap_vslim_config_load_dir(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'path' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.load_dir(arg_0)
     return voidptr(res)
 }
@@ -85,9 +85,9 @@ pub fn vphp_wrap_vslim_config_load_text(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'text', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'text' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'text').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.load_text(arg_0)
     return voidptr(res)
 }
@@ -97,9 +97,9 @@ pub fn vphp_wrap_vslim_config_merge_file(ptr voidptr, ctx vphp.Context) voidptr 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'path' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.merge_file(arg_0)
     return voidptr(res)
 }
@@ -109,9 +109,9 @@ pub fn vphp_wrap_vslim_config_merge_dir(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'path' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.merge_dir(arg_0)
     return voidptr(res)
 }
@@ -121,9 +121,9 @@ pub fn vphp_wrap_vslim_config_merge_text(ptr voidptr, ctx vphp.Context) voidptr 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'text', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'text' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'text').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.merge_text(arg_0)
     return voidptr(res)
 }
@@ -149,9 +149,9 @@ pub fn vphp_wrap_vslim_config_has(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.has(arg_0)
     ctx.return().v[bool](res)
 }
@@ -160,12 +160,14 @@ pub fn vphp_wrap_vslim_config_get_string(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
-    arg_1 := if php_args.has_named_or_index(1, 'defaultValue') { php_args.at_named_or_index(1, 'defaultValue').as_v[string]() } else { '' }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.get_string(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -174,12 +176,14 @@ pub fn vphp_wrap_vslim_config_get_int(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
-    arg_1 := if php_args.has_named_or_index(1, 'defaultValue') { php_args.at_named_or_index(1, 'defaultValue').as_v[int]() } else { 0 }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[int]()
     res := recv.get_int(arg_0, arg_1)
     ctx.return().v[int](res)
 }
@@ -188,12 +192,14 @@ pub fn vphp_wrap_vslim_config_get_bool(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
-    arg_1 := if php_args.has_named_or_index(1, 'defaultValue') { php_args.at_named_or_index(1, 'defaultValue').as_v[bool]() } else { false }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[bool]()
     res := recv.get_bool(arg_0, arg_1)
     ctx.return().v[bool](res)
 }
@@ -202,12 +208,14 @@ pub fn vphp_wrap_vslim_config_get_float(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
-    arg_1 := if php_args.has_named_or_index(1, 'defaultValue') { php_args.at_named_or_index(1, 'defaultValue').as_v[f64]() } else { 0.0 }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[f64]()
     res := recv.get_float(arg_0, arg_1)
     ctx.return().v[f64](res)
 }
@@ -217,9 +225,9 @@ pub fn vphp_wrap_vslim_config_get_string_list(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.get_string_list(arg_0)
     ctx.return().v[[]string](res)
 }
@@ -228,12 +236,14 @@ pub fn vphp_wrap_vslim_config_get_json(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultJson', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
-    arg_1 := if php_args.has_named_or_index(1, 'defaultJson') { php_args.at_named_or_index(1, 'defaultJson').as_v[string]() } else { '' }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultJson', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.get_json(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -242,12 +252,14 @@ pub fn vphp_wrap_vslim_config_get(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'defaultValue').value
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.get(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -256,12 +268,14 @@ pub fn vphp_wrap_vslim_config_get_map(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'defaultValue').value
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.get_map(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -270,12 +284,14 @@ pub fn vphp_wrap_vslim_config_get_list(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'defaultValue').value
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.get_list(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }

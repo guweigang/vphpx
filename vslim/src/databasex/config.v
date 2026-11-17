@@ -1,7 +1,7 @@
 module databasex
 
 import configx as cfgx
-import json
+import json2
 import os
 
 @[php_method]
@@ -169,7 +169,7 @@ pub fn (cfg &VSlimDatabaseConfig) to_json() string {
 	payload['pool_name'] = cfg.pool_name_value()
 	payload['timeout_ms'] = '${cfg.timeout_ms_value()}'
 	payload['upstream_socket'] = cfg.upstream_socket_value()
-	return json.encode(payload)
+	return json2.encode(payload, escape_unicode: true)
 }
 
 fn (mut cfg VSlimDatabaseConfig) ensure() {

@@ -93,9 +93,9 @@ pub fn vphp_wrap_vslim_php_signature_probe_accept_true(ptr voidptr, ctx vphp.Con
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'flag', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'flag' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'flag').bool_value() or {
+    arg_0 := php_args.at(0).bool_value() or {
         vphp.throw_exception('argument 0 must be bool', 0)
         return
     }
@@ -108,9 +108,9 @@ pub fn vphp_wrap_vslim_php_signature_probe_accept_false(ptr voidptr, ctx vphp.Co
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'flag', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'flag' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'flag').bool_value() or {
+    arg_0 := php_args.at(0).bool_value() or {
         vphp.throw_exception('argument 0 must be bool', 0)
         return
     }
@@ -123,9 +123,9 @@ pub fn vphp_wrap_vslim_php_signature_probe_accept_null(ptr voidptr, ctx vphp.Con
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'value').null_value() or {
+    arg_0 := php_args.at(0).null_value() or {
         vphp.throw_exception('argument 0 must be null', 0)
         return
     }
@@ -138,9 +138,9 @@ pub fn vphp_wrap_vslim_php_signature_probe_accept_callable(ptr voidptr, ctx vphp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'cb', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'cb' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'cb').callable() or {
+    arg_0 := php_args.at(0).callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
         return
     }
@@ -152,12 +152,14 @@ pub fn vphp_wrap_vslim_php_signature_probe_optional_tail(ptr voidptr, ctx vphp.C
     mut recv := unsafe { &VSlimPhpSignatureProbe(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'prefix', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'suffix', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'prefix').as_v[string]()
-    arg_1 := if php_args.has_named_or_index(1, 'suffix') { php_args.at_named_or_index(1, 'suffix').as_v[string]() } else { '' }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'prefix' },
+        vphp.PhpArgMeta{ index: 1, name: 'suffix', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.optional_tail(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -182,9 +184,9 @@ pub fn vphp_wrap_vslim_php_signature_probe_accept_psr_request(ptr voidptr, ctx v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'request', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'request' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'request').object() or {
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return
     }
@@ -197,9 +199,9 @@ pub fn vphp_wrap_vslim_php_signature_probe_accept_datetime_interface(ptr voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'expiration', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'expiration' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'expiration').value
+    arg_0 := php_args.at(0).value
     res := recv.accept_datetime_interface(arg_0)
     ctx.return().v[bool](res)
 }
@@ -209,10 +211,10 @@ pub fn vphp_wrap_vslim_php_signature_probe_set_provider(ptr voidptr, ctx vphp.Co
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'provider', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'provider' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'provider').to_v_ptr[eventx.VSlimPsr14ListenerProvider]() or {
-        vphp.throw_exception('argument 0 must be object bound to eventx.VSlimPsr14ListenerProvider, got ' + php_args.at_named_or_index(0, 'provider').zval().type_name(), 0)
+    arg_0_ptr := php_args.at(0).to_v_ptr[eventx.VSlimPsr14ListenerProvider]() or {
+        vphp.throw_exception('argument 0 must be object bound to eventx.VSlimPsr14ListenerProvider, got ' + php_args.at(0).zval().type_name(), 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
     }
@@ -250,9 +252,9 @@ pub fn vphp_wrap_vslim_php_signature_probe_borrowed_provider_from_if_expr(ptr vo
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'useAlias', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'useAlias' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'useAlias').as_v[bool]()
+    arg_0 := php_args.at(0).as_v[bool]()
     res := recv.borrowed_provider_from_if_expr(arg_0)
     return voidptr(res)
 }
@@ -262,9 +264,9 @@ pub fn vphp_wrap_vslim_php_signature_probe_borrowed_provider_from_if_expr_alias(
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'useAlias', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'useAlias' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'useAlias').as_v[bool]()
+    arg_0 := php_args.at(0).as_v[bool]()
     res := recv.borrowed_provider_from_if_expr_alias(arg_0)
     return voidptr(res)
 }
@@ -274,9 +276,9 @@ pub fn vphp_wrap_vslim_php_signature_probe_borrowed_provider_from_match_expr(ptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'useAlias', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'useAlias' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'useAlias').as_v[bool]()
+    arg_0 := php_args.at(0).as_v[bool]()
     res := recv.borrowed_provider_from_match_expr(arg_0)
     return voidptr(res)
 }
@@ -286,9 +288,9 @@ pub fn vphp_wrap_vslim_php_signature_probe_borrowed_provider_from_match_expr_ali
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'useAlias', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'useAlias' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'useAlias').as_v[bool]()
+    arg_0 := php_args.at(0).as_v[bool]()
     res := recv.borrowed_provider_from_match_expr_alias(arg_0)
     return voidptr(res)
 }
@@ -330,9 +332,9 @@ pub fn vphp_wrap_vslim_php_signature_probe_fresh_provider_from_if_expr(ptr voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'useAlias', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'useAlias' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'useAlias').as_v[bool]()
+    arg_0 := php_args.at(0).as_v[bool]()
     res := recv.fresh_provider_from_if_expr(arg_0)
     return voidptr(res)
 }
@@ -342,9 +344,9 @@ pub fn vphp_wrap_vslim_php_signature_probe_fresh_provider_from_if_expr_alias(ptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'useAlias', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'useAlias' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'useAlias').as_v[bool]()
+    arg_0 := php_args.at(0).as_v[bool]()
     res := recv.fresh_provider_from_if_expr_alias(arg_0)
     return voidptr(res)
 }
@@ -354,9 +356,9 @@ pub fn vphp_wrap_vslim_php_signature_probe_fresh_provider_from_match_expr(ptr vo
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'useAlias', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'useAlias' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'useAlias').as_v[bool]()
+    arg_0 := php_args.at(0).as_v[bool]()
     res := recv.fresh_provider_from_match_expr(arg_0)
     return voidptr(res)
 }
@@ -366,9 +368,9 @@ pub fn vphp_wrap_vslim_php_signature_probe_fresh_provider_from_match_expr_alias(
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'useAlias', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'useAlias' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'useAlias').as_v[bool]()
+    arg_0 := php_args.at(0).as_v[bool]()
     res := recv.fresh_provider_from_match_expr_alias(arg_0)
     return voidptr(res)
 }
@@ -472,16 +474,16 @@ pub fn vphp_wrap_vslim_debug_object_probe_probe(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'obj', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'className', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'methodName', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'obj' },
+        vphp.PhpArgMeta{ index: 1, name: 'className' },
+        vphp.PhpArgMeta{ index: 2, name: 'methodName' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'obj').object() or {
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return
     }
-    arg_1 := php_args.at_named_or_index(1, 'className').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'methodName').as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).as_v[string]()
     res := VSlimDebugObjectProbe.probe(arg_0, arg_1, arg_2)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -490,9 +492,9 @@ pub fn vphp_wrap_vslim_debug_object_probe_psr7_lifecycle_counters(ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'rounds', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'rounds' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'rounds').as_v[int]()
+    arg_0 := php_args.at(0).as_v[int]()
     res := VSlimDebugObjectProbe.psr7_lifecycle_counters(arg_0)
     ctx.return().v[string](res)
 }

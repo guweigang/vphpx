@@ -14,12 +14,14 @@ VHTTPD_SOCKET ?= /tmp/vslim_template_worker.sock
 WORKER_APP ?= $(ROOT)/public/worker.php
 WORKER_CMD = $(PHP) -d extension=$(EXT) $(VHTTPD_ROOT)/php/package/bin/vphp-worker
 
-.PHONY: help serve vhttpd smoke-vhttpd cli cli-help health home module
+.PHONY: help serve serve-embedded build-app vhttpd smoke-vhttpd cli cli-help health home module
 
 help:
 	@printf '%s\n' \
 		'Template targets:' \
-		'  make serve     Start the HTTP entry with PHP built-in server' \
+		'  make serve     Start the development server with the current PHP' \
+		'  make serve-embedded Start the experimental embedded runtime' \
+		'  make build-app Build the application image and runtime manifest' \
 		'  make vhttpd    Start the same app through vhttpd + php-worker' \
 		'  make smoke-vhttpd  Boot vhttpd, probe the template app, then stop it' \
 		'  make cli       Run the sample CLI command' \
@@ -29,7 +31,13 @@ help:
 		'  make module    Run the sample module endpoint through the public entry'
 
 serve:
-	$(PHP) -d extension=$(EXT) -S $(HOST):$(PORT) public/index.php
+	VSLIM_EXTENSION_PATH="$(abspath $(EXT))" $(PHP) -d extension=$(EXT) bin/vslim serve --host=$(HOST) --port=$(PORT)
+
+serve-embedded:
+	VSLIM_EXTENSION_PATH="$(abspath $(EXT))" $(PHP) bin/vslim serve --engine=embedded
+
+build-app:
+	$(PHP) bin/vslim build
 
 vhttpd:
 	VHTTPD_APP=$(WORKER_APP) $(VHTTPD_BIN) \

@@ -1,0 +1,14 @@
+<?php
+declare(strict_types=1);
+
+require_once (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/php/package/vendor/autoload.php';
+
+echo class_exists(\VSlim\App\Feishu\BotApp::class) ? "bot_app\n" : "missing_bot_app\n";
+echo interface_exists(\VSlim\App\Feishu\BotHandler::class) ? "bot_handler\n" : "missing_bot_handler\n";
+echo class_exists(\VSlim\App\Feishu\BotAdapter::class) ? "bot_adapter\n" : "missing_bot_adapter\n";
+echo class_exists(\VSlim\App\Feishu\AbstractBotHandler::class) ? "abstract_bot_handler\n" : "missing_abstract_bot_handler\n";
+echo class_exists(\VHttpd\Upstream\WebSocket\Feishu\Command::class) ? "provider_command\n" : "missing_provider_command\n";
+echo class_exists(\VHttpd\Upstream\WebSocket\Feishu\Message::class) ? "provider_message\n" : "missing_provider_message\n";
+echo class_exists(\VHttpd\Upstream\WebSocket\Feishu\Event::class) ? "provider_event\n" : "missing_provider_event\n";
+echo class_exists(\VHttpd\Upstream\WebSocket\Feishu\Content\InteractiveCard::class) ? "provider_content\n" : "missing_provider_content\n";
+?>

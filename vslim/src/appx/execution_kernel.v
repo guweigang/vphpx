@@ -26,7 +26,7 @@ fn (app &VSlimApp) has_not_found_pipeline(path string) bool {
 
 fn (app &VSlimApp) dispatch_terminal(req &httpx.VSlimRequest, terminal_meta middlewarex.MiddlewareTerminalMeta) middlewarex.PipelineDispatchResult {
 	path := req.normalized_path()
-	payload := httpx.vslim_request_build_value(req, map[string]string{})
+	mut payload := httpx.vslim_request_build_value(req, map[string]string{})
 	defer {
 		payload.release()
 	}

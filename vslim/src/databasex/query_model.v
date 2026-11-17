@@ -261,7 +261,7 @@ pub fn (mut model VSlimDatabaseModel) fill(values vphp.PhpValue) &VSlimDatabaseM
 
 @[php_method]
 pub fn (model &VSlimDatabaseModel) attributes() vphp.PhpValue {
-	return database_result_value_from_dyn(vphp.DynValue.of_map(database_dyn_map_from_string_map(model.attributes)))
+	return database_result_value_from_dyn(vphp.DynValue.array_from_map(database_dyn_map_from_string_map(model.attributes)))
 }
 
 @[php_arg_name: 'default_value=defaultValue']
@@ -342,7 +342,7 @@ pub fn (mut model VSlimDatabaseModel) save_query() &VSlimDatabaseQuery {
 		}
 		values.delete(primary_key)
 		mut values_value :=
-			database_result_value_from_dyn(vphp.DynValue.of_map(database_dyn_map_from_string_map(values)))
+			database_result_value_from_dyn(vphp.DynValue.array_from_map(database_dyn_map_from_string_map(values)))
 		defer {
 			values_value.release()
 		}
@@ -355,7 +355,7 @@ pub fn (mut model VSlimDatabaseModel) save_query() &VSlimDatabaseQuery {
 		return query
 	}
 	mut attrs_value :=
-		database_result_value_from_dyn(vphp.DynValue.of_map(database_dyn_map_from_string_map(model.attributes)))
+		database_result_value_from_dyn(vphp.DynValue.array_from_map(database_dyn_map_from_string_map(model.attributes)))
 	defer {
 		attrs_value.release()
 	}

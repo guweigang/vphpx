@@ -47,6 +47,7 @@ pub fn VSlimDebugObjectProbe.psr7_lifecycle_counters(rounds int) string {
 	server_params.release()
 	mut checksum := 0
 	for i in 0 .. total_rounds {
+		mut iteration_scope := vphp.PhpScope.once()
 		mut parsed := vphp.PhpArray.empty()
 		parsed.string('message', 'hello-${i}')
 		parsed.int('round', i)
@@ -55,11 +56,13 @@ pub fn VSlimDebugObjectProbe.psr7_lifecycle_counters(rounds int) string {
 		tags.push_string('beta')
 		parsed.set('tags', tags)
 		tags.release()
-		req = req.with_parsed_body(parsed.to_borrowed().to_value())
+		with_body := req.with_parsed_body(parsed.to_borrowed().to_value())
+		vphp.generic_free_raw[httpx.VSlimPsr7ServerRequest](req)
 
 		mut attr_name := vphp.PhpString.of('studio.payload')
-		req = req.with_attribute(attr_name.to_borrowed().to_value(),
+		req = with_body.with_attribute(attr_name.to_borrowed().to_value(),
 			parsed.to_borrowed().to_value())
+		vphp.generic_free_raw[httpx.VSlimPsr7ServerRequest](with_body)
 		attr_name.release()
 		parsed.release()
 
@@ -67,12 +70,14 @@ pub fn VSlimDebugObjectProbe.psr7_lifecycle_counters(rounds int) string {
 		checksum += attrs.count()
 		attrs.release()
 		mut parsed_copy := req.get_parsed_body()
-		if parsed_array := parsed_copy.as_array() {
+		if mut parsed_array := parsed_copy.as_array() {
 			checksum += parsed_array.count()
 			parsed_array.release()
 		}
 		parsed_copy.release()
+		iteration_scope.close()
 	}
+	vphp.generic_free_raw[httpx.VSlimPsr7ServerRequest](req)
 	scope.close()
 	after := vphp.runtime_counters()
 	return 'rounds=${total_rounds};checksum=${checksum};autorelease_delta=${after.autorelease_len - before.autorelease_len};owned_delta=${after.owned_len - before.owned_len};fallback_delta=${after.persistent_fallback_zval_len - before.persistent_fallback_zval_len}'

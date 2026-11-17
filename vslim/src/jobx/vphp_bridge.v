@@ -60,10 +60,10 @@ pub fn vphp_wrap_vslim_job_dispatcher_set_manager(ptr voidptr, ctx vphp.Context)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'manager', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'manager' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
-        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
+    arg_0_ptr := php_args.at(0).to_v_ptr[databasex.VSlimDatabaseManager]() or {
+        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at(0).zval().type_name(), 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
     }
@@ -85,17 +85,17 @@ pub fn vphp_wrap_vslim_job_dispatcher_dispatch(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'jobClass', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'payload', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'queue', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'delaySeconds', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'maxAttempts', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'jobClass' },
+        vphp.PhpArgMeta{ index: 1, name: 'payload' },
+        vphp.PhpArgMeta{ index: 2, name: 'queue' },
+        vphp.PhpArgMeta{ index: 3, name: 'delaySeconds' },
+        vphp.PhpArgMeta{ index: 4, name: 'maxAttempts' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'jobClass').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'payload').value
-    arg_2 := php_args.at_named_or_index(2, 'queue').as_v[string]()
-    arg_3 := php_args.at_named_or_index(3, 'delaySeconds').as_v[int]()
-    arg_4 := php_args.at_named_or_index(4, 'maxAttempts').as_v[int]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
+    arg_2 := php_args.at(2).as_v[string]()
+    arg_3 := php_args.at(3).as_v[int]()
+    arg_4 := php_args.at(4).as_v[int]()
     res := recv.dispatch(arg_0, arg_1, arg_2, arg_3, arg_4)
     ctx.return().v[i64](res)
 }
@@ -192,10 +192,10 @@ pub fn vphp_wrap_vslim_job_worker_set_manager(ptr voidptr, ctx vphp.Context) voi
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'manager', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'manager' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
-        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
+    arg_0_ptr := php_args.at(0).to_v_ptr[databasex.VSlimDatabaseManager]() or {
+        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at(0).zval().type_name(), 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
     }
@@ -209,9 +209,9 @@ pub fn vphp_wrap_vslim_job_worker_set_worker_id(ptr voidptr, ctx vphp.Context) v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'workerId', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'workerId' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'workerId').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_worker_id(arg_0)
     return voidptr(res)
 }
@@ -229,9 +229,9 @@ pub fn vphp_wrap_vslim_job_worker_set_retry_delay_seconds(ptr voidptr, ctx vphp.
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'seconds', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'seconds' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'seconds').as_v[int]()
+    arg_0 := php_args.at(0).as_v[int]()
     res := recv.set_retry_delay_seconds(arg_0)
     return voidptr(res)
 }
@@ -241,9 +241,9 @@ pub fn vphp_wrap_vslim_job_worker_set_reserve_timeout_seconds(ptr voidptr, ctx v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'seconds', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'seconds' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'seconds').as_v[int]()
+    arg_0 := php_args.at(0).as_v[int]()
     res := recv.set_reserve_timeout_seconds(arg_0)
     return voidptr(res)
 }
@@ -253,9 +253,9 @@ pub fn vphp_wrap_vslim_job_worker_run_once(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'queue', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'queue' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'queue').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.run_once(arg_0)
     ctx.return().v[int](res)
 }
@@ -265,15 +265,15 @@ pub fn vphp_wrap_vslim_job_worker_run(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'queue', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'maxJobs', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'sleepMs', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'stopWhenEmpty', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'queue' },
+        vphp.PhpArgMeta{ index: 1, name: 'maxJobs' },
+        vphp.PhpArgMeta{ index: 2, name: 'sleepMs' },
+        vphp.PhpArgMeta{ index: 3, name: 'stopWhenEmpty' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'queue').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'maxJobs').as_v[int]()
-    arg_2 := php_args.at_named_or_index(2, 'sleepMs').as_v[int]()
-    arg_3 := php_args.at_named_or_index(3, 'stopWhenEmpty').as_v[bool]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[int]()
+    arg_2 := php_args.at(2).as_v[int]()
+    arg_3 := php_args.at(3).as_v[bool]()
     res := recv.run(arg_0, arg_1, arg_2, arg_3)
     ctx.return().v[int](res)
 }

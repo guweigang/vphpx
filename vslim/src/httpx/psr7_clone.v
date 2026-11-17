@@ -64,10 +64,11 @@ pub fn (r &VSlimPsr7Request) clone_with(method string, request_target string, pr
 pub fn (r &VSlimPsr7ServerRequest) clone_with(method string, request_target string, protocol_version string, headers map[string][]string, header_names map[string]string, body &VSlimPsr7Stream, uri &VSlimPsr7Uri, server_params_ref vphp.PhpArray, cookie_params_ref vphp.PhpArray, query_params_ref vphp.PhpArray, uploaded_files_ref vphp.PhpArray, parsed_body_ref vphp.PhpValue, attributes_ref vphp.PhpValue) &VSlimPsr7ServerRequest {
 	return r.clone_with_owned_attrs(method, request_target, protocol_version,
 		headers, header_names, body, uri, server_params_ref, cookie_params_ref, query_params_ref,
-		uploaded_files_ref, parsed_body_ref, attributes_ref)
+		uploaded_files_ref, parsed_body_ref, clone_assoc_payload_value(attributes_ref))
 }
 
-fn (r &VSlimPsr7ServerRequest) clone_with_owned_attrs(method string, request_target string, protocol_version string, headers map[string][]string, header_names map[string]string, body &VSlimPsr7Stream, uri &VSlimPsr7Uri, server_params_ref vphp.PhpArray, cookie_params_ref vphp.PhpArray, query_params_ref vphp.PhpArray, uploaded_files_ref vphp.PhpArray, parsed_body_ref vphp.PhpValue, attributes_ref vphp.PhpValue) &VSlimPsr7ServerRequest {
+// The new request takes ownership of owned_attrs.
+fn (r &VSlimPsr7ServerRequest) clone_with_owned_attrs(method string, request_target string, protocol_version string, headers map[string][]string, header_names map[string]string, body &VSlimPsr7Stream, uri &VSlimPsr7Uri, server_params_ref vphp.PhpArray, cookie_params_ref vphp.PhpArray, query_params_ref vphp.PhpArray, uploaded_files_ref vphp.PhpArray, parsed_body_ref vphp.PhpValue, owned_attrs vphp.PhpValue) &VSlimPsr7ServerRequest {
 	mut out := &VSlimPsr7ServerRequest{}
 	out.method = method.clone()
 	out.request_target = request_target.clone()
@@ -81,7 +82,7 @@ fn (r &VSlimPsr7ServerRequest) clone_with_owned_attrs(method string, request_tar
 	out.query_params_ref = clone_assoc_payload_ref(query_params_ref)
 	out.uploaded_files_ref = clone_assoc_payload_ref(uploaded_files_ref)
 	out.parsed_body_ref = clone_parsed_body_ref(parsed_body_ref)
-	out.attributes_ref = clone_assoc_payload_value(attributes_ref)
+	out.attributes_ref = owned_attrs
 	return out
 }
 

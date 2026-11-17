@@ -1,0 +1,119 @@
+<?php
+declare(strict_types=1);
+
+define('VSLIM_HTTPD_WORKER_NOAUTO', true);
+$autoload = dirname(__DIR__) . '/examples/vendor/autoload.php';
+if (!is_file($autoload)) { echo "autoload_missing\n"; exit; }
+require_once $autoload;
+
+$root = dirname(__DIR__);
+$vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname($root, 2) . '/vhttpd';
+$workerBin = $vhttpdRoot . '/php/package/bin/vphp-worker';
+$extSo = $root . '/vslim.so';
+$app = $root . '/tests/fixtures/worker_helper_stream_app_fixture.php';
+$sock = sys_get_temp_dir() . '/vslim_php_worker_bin_stream_' . getmypid() . '.sock';
+$log = sys_get_temp_dir() . '/vslim_php_worker_bin_stream_' . getmypid() . '.log';
+@unlink($sock);
+@unlink($log);
+
+$cmd = sprintf(
+    'VHTTPD_APP=%s php -d extension=%s %s --socket %s > %s 2>&1 & echo $!',
+    escapeshellarg($app),
+    escapeshellarg($extSo),
+    escapeshellarg($workerBin),
+    escapeshellarg($sock),
+    escapeshellarg($log),
+);
+$out = [];
+exec($cmd, $out, $code);
+$pid = isset($out[0]) ? (int) trim((string) $out[0]) : 0;
+
+$ready = false;
+$deadline = microtime(true) + 5.0;
+while (microtime(true) < $deadline) {
+    if (file_exists($sock)) {
+        $ready = true;
+        break;
+    }
+    usleep(50_000);
+}
+echo $ready ? "worker_ready\n" : "worker_not_ready\n";
+if (!$ready) {
+    if ($pid > 0) {
+        exec(sprintf('kill %d >/dev/null 2>&1', $pid));
+    }
+    exit;
+}
+
+$connect = static function (string $sockPath) {
+    $errno = 0;
+    $errstr = '';
+    $conn = @stream_socket_client('unix://' . $sockPath, $errno, $errstr, 2.0);
+    if (!is_resource($conn)) {
+        throw new RuntimeException("connect_failed: {$errstr} ({$errno})");
+    }
+    stream_set_blocking($conn, true);
+    return $conn;
+};
+
+$readStreamFrames = static function ($conn, array $request): array {
+    \VHttpd\PhpWorker\Client::writeFrame(
+        $conn,
+        (string) json_encode($request, JSON_UNESCAPED_UNICODE),
+    );
+    $frames = [];
+    while (true) {
+        $raw = \VHttpd\PhpWorker\Client::readFrame($conn);
+        if (!is_string($raw) || $raw === '') {
+            break;
+        }
+        $frame = json_decode($raw, true);
+        if (!is_array($frame)) {
+            break;
+        }
+        $frames[] = $frame;
+        if (($frame['event'] ?? '') === 'end') {
+            break;
+        }
+    }
+    return $frames;
+};
+
+$baseReq = [
+    'id' => 'stream',
+    'method' => 'GET',
+    'query' => [],
+    'headers' => [],
+    'cookies' => [],
+    'attributes' => [],
+    'body' => '',
+    'scheme' => 'http',
+    'host' => 'demo.local',
+    'port' => '80',
+    'protocol_version' => '1.1',
+    'remote_addr' => '127.0.0.1',
+    'server' => [],
+    'uploaded_files' => [],
+];
+
+$conn = $connect($sock);
+$textFrames = $readStreamFrames($conn, $baseReq + ['id' => 'text', 'path' => '/helper/text']);
+fclose($conn);
+echo ($textFrames[0]['event'] ?? '') . '|' . ($textFrames[0]['stream_type'] ?? '') . PHP_EOL;
+echo ($textFrames[0]['headers']['x-helper-source'] ?? '') . PHP_EOL;
+echo ($textFrames[1]['data'] ?? '') . ($textFrames[2]['data'] ?? '');
+echo ($textFrames[3]['event'] ?? '') . PHP_EOL;
+
+$conn = $connect($sock);
+$sseFrames = $readStreamFrames($conn, $baseReq + ['id' => 'sse', 'path' => '/helper/sse']);
+fclose($conn);
+echo ($sseFrames[0]['event'] ?? '') . '|' . ($sseFrames[0]['stream_type'] ?? '') . PHP_EOL;
+echo ($sseFrames[0]['headers']['x-helper-source'] ?? '') . PHP_EOL;
+echo ($sseFrames[1]['sse_event'] ?? '') . '|' . ($sseFrames[1]['data'] ?? '') . PHP_EOL;
+echo ($sseFrames[2]['sse_event'] ?? '') . '|' . ($sseFrames[2]['data'] ?? '') . PHP_EOL;
+echo ($sseFrames[3]['event'] ?? '') . PHP_EOL;
+
+if ($pid > 0) {
+    exec(sprintf('kill %d >/dev/null 2>&1', $pid));
+}
+?>

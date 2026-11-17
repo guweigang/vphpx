@@ -54,6 +54,8 @@ function main(array $argv): void
     ensure_dir($stageDir);
 
     $extensionFile = null;
+    $serverFile = null;
+    $serverExtensionFile = null;
     if ($packageType === 'binary') {
         $extensionPath = trim((string) ($options['ext-path'] ?? ($vslimRoot . DIRECTORY_SEPARATOR . 'vslim.so')));
         if ($extensionPath === '') {
@@ -69,6 +71,30 @@ function main(array $argv): void
         ensure_dir($stagedExtensionDir);
         copy_file($extensionPath, $stagedExtensionPath);
         stage_runtime_dependencies($stagedExtensionPath, $extensionPath, $stageDir);
+
+        $serverPath = trim((string) ($options['server-path'] ?? ''));
+        if ($serverPath !== '') {
+            $serverPath = normalize_path($serverPath);
+            if (!is_file($serverPath)) {
+                fail('Experimental server binary not found: ' . $serverPath);
+            }
+            $serverFile = basename($serverPath);
+            $stagedServerDir = $stagedExtensionDir . DIRECTORY_SEPARATOR . 'server';
+            ensure_dir($stagedServerDir);
+            $stagedServerPath = $stagedServerDir . DIRECTORY_SEPARATOR . $serverFile;
+            copy_file($serverPath, $stagedServerPath);
+            @chmod($stagedServerPath, 0755);
+
+            $serverExtensionPath = trim((string) ($options['server-extension-path'] ?? ''));
+            if ($serverExtensionPath !== '') {
+                $serverExtensionPath = normalize_path($serverExtensionPath);
+                if (!is_file($serverExtensionPath)) {
+                    fail('Experimental server extension not found: ' . $serverExtensionPath);
+                }
+                $serverExtensionFile = basename($serverExtensionPath);
+                copy_file($serverExtensionPath, $stagedServerDir . DIRECTORY_SEPARATOR . $serverExtensionFile);
+            }
+        }
     } else {
         stage_source_bundle($repoRoot, $stageDir);
     }
@@ -84,12 +110,14 @@ function main(array $argv): void
             'package_type' => $packageType,
             'archive' => basename($archivePath),
             'extension' => $extensionFile,
+            'server' => $serverFile,
+            'server_extension' => $serverExtensionFile,
             'generated_at_utc' => gmdate(DATE_ATOM),
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL
     );
     file_put_contents(
         $stageDir . DIRECTORY_SEPARATOR . 'README.md',
-        build_release_readme($version, $platform, $packageType, $extensionFile)
+        build_release_readme($version, $platform, $packageType, $extensionFile, $serverFile)
     );
 
     create_zip_archive($stageDir, $archivePath);
@@ -111,6 +139,9 @@ Options:
   --platform=VALUE       Normalized platform label, for example linux-amd64.
   --package-type=VALUE   binary | source
   --ext-path=PATH        Path to compiled extension for binary packages.
+  --server-path=PATH     Explicitly include the experimental vslim-server.
+  --server-extension-path=PATH
+                         Explicit matching ZTS extension loaded by vslim-server.
   --format=VALUE         zip
   --dist-dir=PATH        Output directory for staged files and archives.
 
@@ -206,6 +237,20 @@ function stage_source_bundle(string $repoRoot, string $stageDir): void
         $repoRoot . DIRECTORY_SEPARATOR . 'vphp' . DIRECTORY_SEPARATOR . 'bridge',
         $stageDir . DIRECTORY_SEPARATOR . 'source' . DIRECTORY_SEPARATOR . 'vphp' . DIRECTORY_SEPARATOR . 'bridge'
     );
+
+    $serverSourceRoot = $repoRoot . DIRECTORY_SEPARATOR . 'vslim' . DIRECTORY_SEPARATOR . 'server';
+    foreach (['build.v', 'Makefile', 'README.md', 'v.mod'] as $file) {
+        copy_file(
+            $serverSourceRoot . DIRECTORY_SEPARATOR . $file,
+            $stageDir . DIRECTORY_SEPARATOR . 'source' . DIRECTORY_SEPARATOR . 'vslim' . DIRECTORY_SEPARATOR . 'server' . DIRECTORY_SEPARATOR . $file
+        );
+    }
+    foreach (['cmd', 'src', 'examples', 'tests', 'runtime'] as $directory) {
+        copy_tree(
+            $serverSourceRoot . DIRECTORY_SEPARATOR . $directory,
+            $stageDir . DIRECTORY_SEPARATOR . 'source' . DIRECTORY_SEPARATOR . 'vslim' . DIRECTORY_SEPARATOR . 'server' . DIRECTORY_SEPARATOR . $directory
+        );
+    }
 }
 
 function stage_docs(string $repoRoot, string $stageDir): void
@@ -221,8 +266,14 @@ function stage_docs(string $repoRoot, string $stageDir): void
     }
 }
 
-function build_release_readme(string $version, string $platform, string $packageType, ?string $extensionFile): string
+function build_release_readme(string $version, string $platform, string $packageType, ?string $extensionFile, ?string $serverFile): string
 {
+    $serverBundleLine = $serverFile !== null
+        ? "- `extension/vslim/server/{$serverFile}`: explicitly requested experimental application runtime and its matching ZTS extension.\n"
+        : '';
+    $serverQuickStart = $serverFile !== null
+        ? "4. Test the experimental runtime with:\n   `VSLIM_SERVER_BIN=/absolute/path/vslim/server/{$serverFile} bin/vslim serve --engine=embedded`\n"
+        : "4. Start local development with `bin/vslim serve`.\n";
     $runtimeSection = '';
     if ($packageType === 'binary' && $extensionFile !== null) {
         $runtimeSection = <<<TXT
@@ -254,7 +305,7 @@ TXT;
 ## Bundle contents
 
 - `extension/vslim/{$extensionFile}`: prebuilt VSlim PHP extension for this platform.
-- `extension/vslim/runtime/`: bundled native runtime libraries detected from the extension, when needed.
+{$serverBundleLine}- `extension/vslim/runtime/`: bundled native runtime libraries detected from the extension, when needed.
 - `template/`: starter app template that matches the current PSR-oriented project layout.
 - `docs/`: VSlim framework and template references.
 
@@ -266,8 +317,7 @@ TXT;
    or with `php.ini`:
    `extension=vslim/{$extensionFile}`
 3. Copy `template/` into a new project directory and run `composer install`.
-4. Start the HTTP entry with:
-   `php -d extension=/absolute/path/vslim/{$extensionFile} -S 127.0.0.1:8080 public/index.php`
+{$serverQuickStart}
 
 TXT
         : <<<TXT

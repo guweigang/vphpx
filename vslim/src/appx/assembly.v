@@ -473,7 +473,7 @@ fn (mut app VSlimApp) apply_bootstrap_conventions(path string) ! {
 }
 
 fn (mut app VSlimApp) apply_bootstrap_spec(spec vphp.PhpValue) ! {
-	normalized := supportx.normalize_app_bootstrap_spec(spec)!
+	mut normalized := supportx.normalize_app_bootstrap_spec(spec)!
 	defer {
 		normalized.release()
 	}
@@ -481,7 +481,7 @@ fn (mut app VSlimApp) apply_bootstrap_spec(spec vphp.PhpValue) ! {
 }
 
 fn (mut app VSlimApp) apply_bootstrap_iterable(spec vphp.PhpIterable) ! {
-	normalized := supportx.normalize_app_bootstrap_iterable(spec)!
+	mut normalized := supportx.normalize_app_bootstrap_iterable(spec)!
 	defer {
 		normalized.release()
 	}

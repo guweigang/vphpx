@@ -5,6 +5,7 @@ $root = dirname(__DIR__);
 $vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname($root, 3) . '/vhttpd';
 $autoloadCandidates = [
     $root . '/vendor/autoload.php',
+    dirname($root, 2) . '/vendor/autoload.php',
     $vhttpdRoot . '/php/package/vendor/autoload.php',
 ];
 foreach ($autoloadCandidates as $autoload) {
@@ -73,68 +74,24 @@ function emit_template_response(VSlim\VHttpd\Response $response): void
     echo $response->body;
 }
 
-function normalize_template_worker_response(VSlim\VHttpd\Response $response): array
-{
-    return [
-        'status' => $response->status,
-        'content_type' => $response->contentType,
-        'headers' => $response->headers(),
-        'body' => $response->body,
-    ];
-}
-
-function template_headers_from_envelope_map(array $map): array
-{
-    $headers = [];
-    foreach ($map as $key => $value) {
-        if (!is_string($key) || !str_starts_with($key, 'headers_')) {
-            continue;
-        }
-        $name = substr($key, 8);
-        if ($name === '') {
-            continue;
-        }
-        $headers[strtolower($name)] = (string) $value;
-    }
-    return $headers;
-}
-
-function dispatch_template_envelope(VSlim\App $app, array $envelope): array
-{
-    if (method_exists($app, 'dispatchEnvelopeMap')) {
-        $map = $app->dispatchEnvelopeMap($envelope);
-        $headers = template_headers_from_envelope_map($map);
-        $contentType = (string) ($map['content_type'] ?? 'text/plain; charset=utf-8');
-        if (!isset($headers['content-type'])) {
-            $headers['content-type'] = $contentType;
-        }
-        return [
-            'status' => (int) ($map['status'] ?? '500'),
-            'content_type' => $contentType,
-            'headers' => $headers,
-            'body' => (string) ($map['body'] ?? ''),
-        ];
-    }
-
-    return normalize_template_worker_response($app->dispatchEnvelope($envelope));
-}
+require_once __DIR__ . '/worker.php';
 
 function template_app_handler(): callable
 {
-    return static function (mixed $request, array $envelope = []): array {
+    return static function (mixed $request, array $envelope = []): array|\VHttpd\PhpWorker\StreamResponse {
         static $app = null;
         if (!$app instanceof VSlim\App) {
             $app = build_template_app();
         }
 
         if ($envelope !== []) {
-            return dispatch_template_envelope($app, $envelope);
+            return \VSlim\Worker\Adapter::dispatch($app, $envelope);
         }
 
         if (is_object($request)) {
             if (class_exists(\VSlim\Psr7Adapter::class)) {
                 $vRequest = \VSlim\Psr7Adapter::toVSlimRequest($request);
-                return normalize_template_worker_response(
+                return \VSlim\Worker\Adapter::response(
                     $app->dispatchRequest($vRequest),
                 );
             }
@@ -146,7 +103,7 @@ function template_app_handler(): callable
         }
 
         if (is_array($request)) {
-            return dispatch_template_envelope($app, $request);
+            return \VSlim\Worker\Adapter::dispatch($app, $request);
         }
 
         return [

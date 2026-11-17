@@ -69,7 +69,8 @@ fn (mut app VSlimApp) sync_clock_service_to_container() {
 		old.release()
 		app.clock_ref = supportx.new_psr20_system_clock_ref()
 	}
-	mut clock_value := app.clock_ref.to_request_owned().take_value()
+	mut owned_clock := app.clock_ref.to_request_owned()
+	mut clock_value := owned_clock.take_value()
 	app.container_ref.set(supportx.service_clock, clock_value)
 	app.container_ref.set(supportx.service_psr_clock, clock_value)
 	clock_value.release()

@@ -1,63 +1,22 @@
 <?php
-
 declare(strict_types=1);
 
-use VHttpd\PhpWorker\StreamApp;
-
 return [
-    'stream' => (new StreamApp())
-        ->onOpen(static function (array $frame): array {
-            return [
-                'handled' => true,
-                'stream_type' => 'sse',
-                'content_type' => 'text/event-stream',
-                'headers' => [
-                    'cache-control' => 'no-cache',
-                ],
-                'state' => [
-                    'cursor' => '0',
-                    'limit' => '2',
-                ],
-                'chunks' => [
-                    ['event' => 'tick', 'data' => '0'],
-                ],
-                'done' => false,
-            ];
-        })
-        ->onNext(static function (array $frame): array {
-            $state = is_array($frame['state'] ?? null) ? $frame['state'] : [];
-            $cursor = (int) ($state['cursor'] ?? '0');
-            $limit = (int) ($state['limit'] ?? '2');
-            $cursor++;
-            if ($cursor >= $limit) {
-                return [
-                    'handled' => true,
-                    'state' => [
-                        'cursor' => (string) $cursor,
-                        'limit' => (string) $limit,
-                    ],
-                    'chunks' => [
-                        ['event' => 'done', 'data' => 'complete'],
-                    ],
-                    'done' => true,
-                ];
-            }
-            return [
-                'handled' => true,
-                'state' => [
-                    'cursor' => (string) $cursor,
-                    'limit' => (string) $limit,
-                ],
-                'chunks' => [
-                    ['event' => 'tick', 'data' => (string) $cursor],
-                ],
-                'done' => false,
-            ];
-        })
-        ->onClose(static function (array $frame): array {
-            return [
-                'handled' => true,
-                'done' => true,
-            ];
-        }),
+    'stream' => static function (array $frame): array {
+        $next = ($frame['event'] ?? '') === 'next';
+        if (($frame['event'] ?? '') === 'close') {
+            return ['handled' => true, 'done' => true];
+        }
+
+        $limit = (int) ($frame['state']['limit'] ?? 2);
+        $cursor = $next ? (int) ($frame['state']['cursor'] ?? 0) + 1 : 0;
+        $done = $cursor >= $limit;
+        return [
+            'handled' => true,
+            'done' => $done,
+            'headers' => ['cache-control' => 'no-cache'],
+            'state' => ['cursor' => (string) $cursor, 'limit' => (string) $limit],
+            'chunks' => [$done ? ['event' => 'done', 'data' => 'complete'] : ['event' => 'tick', 'data' => (string) $cursor]],
+        ];
+    },
 ];

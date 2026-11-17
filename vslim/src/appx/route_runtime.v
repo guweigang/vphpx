@@ -9,7 +9,8 @@ pub fn (mut app VSlimApp) handle_websocket(frame vphp.PhpArray, conn vphp.PhpObj
 	route_frame := websocketx.select_route_frame(mut app.websocket_conn_route, app.websocket_routes,
 		frame)
 	if route_frame.should_reject_open() {
-		return vphp.PhpBool.of(false).take_value()
+		mut rejected := vphp.PhpBool.of(false)
+		return rejected.take_value()
 	}
 	if !route_frame.should_dispatch() {
 		return vphp.PhpValue.null()

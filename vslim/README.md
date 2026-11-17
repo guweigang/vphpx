@@ -6,7 +6,16 @@ Documentation entry:
 - capability map: [docs/capabilities.md](docs/capabilities.md)
 - maturity roadmap: [docs/maturity-roadmap.md](docs/maturity-roadmap.md)
 
-`VSlim` 是一个运行在 `vphp` 之上的 PHP 微框架扩展，核心目标是给 PHP 用户提供熟悉的 runtime builder 体验：
+`VSlim` 是一个运行在 `vphp` 之上的 PHP 微框架扩展，核心目标是给 PHP 用户提供熟悉的 runtime builder 体验，并探索把完整 PHP 应用交付成独立可执行文件：
+
+```bash
+bin/vslim serve
+bin/vslim build --target=linux-arm64
+```
+
+`serve` 使用开发者当前的 PHP，继承已有的 `php.ini` 和扩展；`build` 收集应用代码、Composer 依赖、静态资源及 `ext-*` 需求，生成供目标 Runtime 消费的应用镜像。`--runtime=embedded` 已能把镜像和 VSlim ZTS 扩展编进单个 host-linked 可执行文件，但在静态 PHP Runtime 完成前仍不能称为跨机器、依赖无关的最终二进制。
+
+当前 Runtime profile 分开记录实际验证结果和平台目标：`server/runtime/macos-arm64.json` 是已跑通的 host-linked 基线；`server/runtime/linux-arm64.json` 已在本机 OrbStack 验证 PHP 8.5.10 ZTS embed SDK 与匹配的 VSlim 扩展加载，但单文件 HTTP smoke 和扩展外部库收敛仍未完成；`server/runtime/linux-amd64.json` 留给后续 CI。
 
 - `VSlim\App` 负责路由注册、分发、middleware、phase middleware
 - `VSlim\Cli\App` 负责共享 app service graph 上的 command bootstrap / discovery / execution
@@ -21,9 +30,17 @@ Documentation entry:
 - `app()->testing()` 提供轻量测试 harness，支持 service/config override、quick dispatch、cookie jar、session/auth helper 和 response 断言
 - `dispatchEnvelope(...)` / `dispatchRequest(...)` 提供和 worker / `vhttpd` 的集成边界
 
-## VSlim 和 vhttpd 的边界
+## 开发、应用构建与 Runtime 的边界
 
-这条边界最好直接理解成两句话：
+默认的新应用开发入口是 `vslim serve`，它调用当前 PHP 的内置开发服务器。`vslim/server` 保留原生 HTTP + embedded PHP 实验代码，目标是成为 `vslim build` 最终产物里的内部 Runtime，而不是单独经营的通用 gateway。
+
+需要验证这条实验链路时，可以显式运行：
+
+```bash
+bin/vslim serve --engine=embedded
+```
+
+`vhttpd` 仍是可选的独立 transport/runtime 集成，适合已有 vhttpd 部署、worker envelope、独立数据库 upstream 等场景。这条边界可以理解成：
 
 - `vhttpd` 负责“怎么跑”
 - `VSlim` 负责“怎么写”
@@ -50,7 +67,7 @@ Documentation entry:
 
 ## 它和上游 Web Server 的关系
 
-`VSlim` 不是 web server，也不绑死某一个 web server。
+`VSlim` 不绑死某一种开发或部署方式。
 
 更准确地说：
 
@@ -59,7 +76,21 @@ Documentation entry:
 - 上游 web server / runtime
   - 负责 transport：socket / keep-alive / TLS / process model / static files / reverse proxy
 
-当前推荐把接入方式分成 3 类看：
+当前推荐把接入方式分成 4 类看：
+
+- `vslim serve`
+  - 新应用的默认本地入口
+  - 使用当前 PHP 的内置服务器，继承本机 PHP 扩展生态
+
+- `vslim build`
+  - 面向独立二进制交付的构建入口
+  - 默认生成 `.vslim-app` 应用镜像和 `.manifest.json` Runtime 清单
+  - `--runtime=embedded` 可生成仍依赖匹配 `libphp` 的单文件原型
+  - PHP 扩展从 `composer.json` / `composer.lock` 的 `ext-*` 需求中收集，并在 Runtime 构建阶段固定
+
+- `vslim serve --engine=embedded`
+  - 验证 `vslim/server` 的实验性 embedded PHP Runtime
+  - 不属于当前稳定发布承诺
 
 - PHP 内置 server
   - 适合本地开发和最小 demo

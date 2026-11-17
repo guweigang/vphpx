@@ -1,0 +1,37 @@
+<?php
+declare(strict_types=1);
+
+require_once (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/php/package/vendor/autoload.php';
+
+$stream = fopen('php://temp', 'w+');
+$conn = new VHttpd\PhpWorker\WebSocket\Connection($stream, 'ws-1');
+$conn->join('lobby');
+$conn->setMeta('user', 'alice');
+$conn->setPresence('online');
+$conn->broadcast('lobby', '{"text":"hello"}', 'text', 'ws-1');
+$conn->sendTo('ws-2', '{"text":"dm"}');
+$conn->clearMeta('presence');
+$conn->leave('lobby');
+$conn->done();
+
+rewind($stream);
+while (true) {
+    $raw = VHttpd\PhpWorker\Client::readFrame($stream);
+    if (!is_string($raw) || $raw === '') {
+        break;
+    }
+    $frame = json_decode($raw, true);
+    if (!is_array($frame)) {
+        break;
+    }
+    echo ($frame['event'] ?? ''), '|';
+    echo ($frame['room'] ?? $frame['target_id'] ?? $frame['key'] ?? ''), '|';
+    echo ($frame['data'] ?? $frame['value'] ?? ''), '|';
+    echo ($frame['except_id'] ?? ''), PHP_EOL;
+    if (($frame['event'] ?? '') === 'done') {
+        break;
+    }
+}
+
+fclose($stream);
+?>

@@ -52,14 +52,16 @@ pub fn vphp_wrap_vslim_web_socket_app_construct(ptr voidptr, ctx vphp.Context) v
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'onOpen', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'onMessage', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'onClose', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'onOpen').callable()
-    arg_1 := php_args.at_named_or_index(1, 'onMessage').callable()
-    arg_2 := php_args.at_named_or_index(2, 'onClose').callable()
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'onOpen', use_php_default: true },
+        vphp.PhpArgMeta{ index: 1, name: 'onMessage', use_php_default: true },
+        vphp.PhpArgMeta{ index: 2, name: 'onClose', use_php_default: true },
+    ]) or {
+        return unsafe { nil }
+    }
+    arg_0 := php_args.at(0).callable()
+    arg_1 := php_args.at(1).callable()
+    arg_2 := php_args.at(2).callable()
     res := recv.construct(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -69,9 +71,9 @@ pub fn vphp_wrap_vslim_web_socket_app_on_open(ptr voidptr, ctx vphp.Context) voi
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'handler').callable() or {
+    arg_0 := php_args.at(0).callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -85,9 +87,9 @@ pub fn vphp_wrap_vslim_web_socket_app_on_message(ptr voidptr, ctx vphp.Context) 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'handler').callable() or {
+    arg_0 := php_args.at(0).callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -101,9 +103,9 @@ pub fn vphp_wrap_vslim_web_socket_app_on_close(ptr voidptr, ctx vphp.Context) vo
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'handler').callable() or {
+    arg_0 := php_args.at(0).callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -141,9 +143,9 @@ pub fn vphp_wrap_vslim_web_socket_app_remember(ptr voidptr, ctx vphp.Context) vo
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'conn', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'conn' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'conn').object() or {
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -157,9 +159,9 @@ pub fn vphp_wrap_vslim_web_socket_app_forget(ptr voidptr, ctx vphp.Context) void
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'connOrId', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'connOrId' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'connOrId').value
+    arg_0 := php_args.at(0).value
     res := recv.forget(arg_0)
     return voidptr(res)
 }
@@ -169,9 +171,9 @@ pub fn vphp_wrap_vslim_web_socket_app_has_connection(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'connOrId', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'connOrId' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'connOrId').value
+    arg_0 := php_args.at(0).value
     res := recv.has_connection(arg_0)
     ctx.return().v[bool](res)
 }
@@ -181,11 +183,11 @@ pub fn vphp_wrap_vslim_web_socket_app_join(ptr voidptr, ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'room', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'connOrId', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'room' },
+        vphp.PhpArgMeta{ index: 1, name: 'connOrId' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'room').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'connOrId').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.join(arg_0, arg_1)
     return voidptr(res)
 }
@@ -195,11 +197,11 @@ pub fn vphp_wrap_vslim_web_socket_app_leave(ptr voidptr, ctx vphp.Context) voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'room', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'connOrId', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'room' },
+        vphp.PhpArgMeta{ index: 1, name: 'connOrId' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'room').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'connOrId').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.leave(arg_0, arg_1)
     return voidptr(res)
 }
@@ -209,9 +211,9 @@ pub fn vphp_wrap_vslim_web_socket_app_members(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'room', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'room' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'room').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.members(arg_0)
     ctx.return().v[[]string](res)
 }
@@ -229,9 +231,9 @@ pub fn vphp_wrap_vslim_web_socket_app_rooms_for(ptr voidptr, ctx vphp.Context)  
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'connOrId', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'connOrId' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'connOrId').value
+    arg_0 := php_args.at(0).value
     res := recv.rooms_for(arg_0)
     ctx.return().v[[]string](res)
 }
@@ -241,11 +243,11 @@ pub fn vphp_wrap_vslim_web_socket_app_send_to(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'connOrId', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'data', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'connOrId' },
+        vphp.PhpArgMeta{ index: 1, name: 'data' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'connOrId').value
-    arg_1 := php_args.at_named_or_index(1, 'data').as_v[string]()
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.send_to(arg_0, arg_1)
     ctx.return().v[bool](res)
 }
@@ -255,13 +257,13 @@ pub fn vphp_wrap_vslim_web_socket_app_broadcast(ptr voidptr, ctx vphp.Context)  
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'data', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'room', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'exceptId', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'data' },
+        vphp.PhpArgMeta{ index: 1, name: 'room' },
+        vphp.PhpArgMeta{ index: 2, name: 'exceptId' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'data').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'room').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'exceptId').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).as_v[string]()
     res := recv.broadcast(arg_0, arg_1, arg_2)
     ctx.return().v[int](res)
 }
@@ -271,14 +273,14 @@ pub fn vphp_wrap_vslim_web_socket_app_handle(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'frame', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'conn', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'frame' },
+        vphp.PhpArgMeta{ index: 1, name: 'conn' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'frame').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return
     }
-    arg_1 := php_args.at_named_or_index(1, 'conn').object() or {
+    arg_1 := php_args.at(1).object() or {
         vphp.throw_exception('argument 1 must be object', 0)
         return
     }
@@ -291,14 +293,14 @@ pub fn vphp_wrap_vslim_web_socket_app_handle_websocket(ptr voidptr, ctx vphp.Con
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'frame', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'conn', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'frame' },
+        vphp.PhpArgMeta{ index: 1, name: 'conn' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'frame').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return
     }
-    arg_1 := php_args.at_named_or_index(1, 'conn').object() or {
+    arg_1 := php_args.at(1).object() or {
         vphp.throw_exception('argument 1 must be object', 0)
         return
     }

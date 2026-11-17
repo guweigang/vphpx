@@ -4,20 +4,11 @@ VHTTPD worker preserves map envelope headers for request and trace ids
 <?php if (!extension_loaded("vslim")) print "skip"; ?>
 --FILE--
 <?php
-putenv('VHTTPD_APP=' . __DIR__ . '/fixtures/vslim_envelope_map_fixture.php');
-define('VSLIM_HTTPD_WORKER_NOAUTO', true);
-$autoload = (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/php/package/vendor/autoload.php';
-if (!is_file($autoload)) {
-    $autoload = dirname(__DIR__) . '/vendor/autoload.php';
-}
-if (!is_file($autoload)) {
-    $autoload = dirname(__DIR__) . '/examples/vendor/autoload.php';
-}
-if (!is_file($autoload)) { echo "autoload_missing\n"; exit; }
-require_once $autoload;
+declare(strict_types=1);
 
-$worker = new \VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
-$res = $worker->dispatchRequest([
+require_once __DIR__ . '/worker_wire_fixture.php';
+$worker = new WorkerWireFixture(__DIR__ . '/fixtures/vslim_envelope_map_fixture.php');
+$res = $worker->request([
     'id' => 'map-req-1',
     'method' => 'GET',
     'path' => '/hello/codex',
@@ -38,7 +29,7 @@ $res = $worker->dispatchRequest([
     'uploaded_files' => [],
 ]);
 echo $res['id'] . PHP_EOL;
-echo $res['status'] . '|' . $res['content_type'] . '|' . $res['body'] . PHP_EOL;
+echo $res['status'] . '|' . $res['headers']['content-type'] . '|' . $res['body'] . PHP_EOL;
 echo $res['headers']['x-app'] . '|' . $res['headers']['x-route-trace'] . '|' . $res['headers']['x-request-id'] . '|' . $res['headers']['x-trace-id'] . '|' . $res['headers']['x-vhttpd-trace-id'] . PHP_EOL;
 ?>
 --EXPECT--

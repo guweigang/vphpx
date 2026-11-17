@@ -17,7 +17,7 @@ fn response_from_object_props(object vphp.PhpObject) ?VSlimResponse {
 		return none
 	}
 	mut headers := map[string]string{}
-	if headers_array := headers_value.as_array() {
+	if mut headers_array := headers_value.as_array() {
 		for name in headers_array.assoc_keys() {
 			headers[name] = headers_array[name].to_string()
 		}

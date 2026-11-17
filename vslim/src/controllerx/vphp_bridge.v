@@ -52,9 +52,9 @@ pub fn vphp_wrap_vslim_controller_construct(ptr voidptr, ctx vphp.Context) voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'app', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'app' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'app').object() or {
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -68,9 +68,9 @@ pub fn vphp_wrap_vslim_controller_set_app(ptr voidptr, ctx vphp.Context) voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'app', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'app' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'app').object() or {
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -84,10 +84,10 @@ pub fn vphp_wrap_vslim_controller_set_view(ptr voidptr, ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'view', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'view' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'view').to_v_ptr[viewx.VSlimView]() or {
-        vphp.throw_exception('argument 0 must be object bound to viewx.VSlimView, got ' + php_args.at_named_or_index(0, 'view').zval().type_name(), 0)
+    arg_0_ptr := php_args.at(0).to_v_ptr[viewx.VSlimView]() or {
+        vphp.throw_exception('argument 0 must be object bound to viewx.VSlimView, got ' + php_args.at(0).zval().type_name(), 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
     }
@@ -117,11 +117,11 @@ pub fn vphp_wrap_vslim_controller_render(ptr voidptr, ctx vphp.Context) voidptr 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'template', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'data', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'template' },
+        vphp.PhpArgMeta{ index: 1, name: 'data' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'template').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'data').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.render(arg_0, arg_1)
     return voidptr(res)
 }
@@ -131,13 +131,13 @@ pub fn vphp_wrap_vslim_controller_render_with_layout(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'template', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'layout', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'data', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'template' },
+        vphp.PhpArgMeta{ index: 1, name: 'layout' },
+        vphp.PhpArgMeta{ index: 2, name: 'data' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'template').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'layout').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'data').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).value
     res := recv.render_with_layout(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -147,11 +147,11 @@ pub fn vphp_wrap_vslim_controller_url_for(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'params', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'params' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'params').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.url_for(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -161,13 +161,13 @@ pub fn vphp_wrap_vslim_controller_url_for_query(ptr voidptr, ctx vphp.Context)  
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'params', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'query', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'params' },
+        vphp.PhpArgMeta{ index: 2, name: 'query' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'params').value
-    arg_2 := php_args.at_named_or_index(2, 'query').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
+    arg_2 := php_args.at(2).value
     res := recv.url_for_query(arg_0, arg_1, arg_2)
     ctx.return().v[string](res)
 }
@@ -177,11 +177,11 @@ pub fn vphp_wrap_vslim_controller_text(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'body', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'status', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'body' },
+        vphp.PhpArgMeta{ index: 1, name: 'status' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'body').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'status').as_v[int]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[int]()
     res := recv.text(arg_0, arg_1)
     return voidptr(res)
 }
@@ -191,11 +191,11 @@ pub fn vphp_wrap_vslim_controller_json(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'body', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'status', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'body' },
+        vphp.PhpArgMeta{ index: 1, name: 'status' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'body').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'status').as_v[int]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[int]()
     res := recv.json(arg_0, arg_1)
     return voidptr(res)
 }
@@ -205,11 +205,11 @@ pub fn vphp_wrap_vslim_controller_redirect(ptr voidptr, ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'location', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'status', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'location' },
+        vphp.PhpArgMeta{ index: 1, name: 'status' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'location').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'status').as_v[int]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[int]()
     res := recv.redirect(arg_0, arg_1)
     return voidptr(res)
 }
@@ -219,13 +219,13 @@ pub fn vphp_wrap_vslim_controller_redirect_to(ptr voidptr, ctx vphp.Context) voi
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'params', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'status', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'params' },
+        vphp.PhpArgMeta{ index: 2, name: 'status' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'params').value
-    arg_2 := php_args.at_named_or_index(2, 'status').as_v[int]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
+    arg_2 := php_args.at(2).as_v[int]()
     res := recv.redirect_to(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -235,15 +235,15 @@ pub fn vphp_wrap_vslim_controller_redirect_to_query(ptr voidptr, ctx vphp.Contex
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'params', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'query', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'status', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'params' },
+        vphp.PhpArgMeta{ index: 2, name: 'query' },
+        vphp.PhpArgMeta{ index: 3, name: 'status' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'params').value
-    arg_2 := php_args.at_named_or_index(2, 'query').value
-    arg_3 := php_args.at_named_or_index(3, 'status').as_v[int]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
+    arg_2 := php_args.at(2).value
+    arg_3 := php_args.at(3).as_v[int]()
     res := recv.redirect_to_query(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
 }

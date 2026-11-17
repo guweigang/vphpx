@@ -84,17 +84,14 @@ namespace {
         public function getBody(): object { return $this->body; }
     }
 
-    putenv('VHTTPD_APP=' . __DIR__ . '/fixtures/psr7_app_fixture.php');
-    define('VSLIM_HTTPD_WORKER_NOAUTO', true);
-    $autoload = (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/php/package/vendor/autoload.php';
-if (!is_file($autoload)) {
-    $autoload = dirname(__DIR__) . '/vendor/autoload.php';
-}
-if (!is_file($autoload)) { echo "autoload_missing\n"; exit; }
-require_once $autoload;
-
-    $worker = new \VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
-    $res = $worker->dispatchRequest([
+    if (defined('VSLIM_TEST_WORKER_ENTRY')) {
+        $handler = require __DIR__ . '/fixtures/psr7_app_fixture.php';
+        $factory = new \Nyholm\Psr7\Factory\Psr17Factory();
+        return \VSlim\Worker\Adapter::psr($handler, $factory, $factory);
+    }
+    require_once __DIR__ . '/worker_wire_fixture.php';
+    $worker = new WorkerWireFixture(__FILE__, '\VSlim\Worker\Adapter::http');
+    $res = $worker->request([
         'id' => 'req-1',
         'method' => 'GET',
         'path' => '/users/9?trace_id=psr-app',
@@ -113,7 +110,7 @@ require_once $autoload;
     ]);
 
     echo $res['id'] . PHP_EOL;
-    echo $res['status'] . '|' . $res['content_type'] . '|' . $res['headers']['x-app'] . '|' . $res['headers']['content-length'] . PHP_EOL;
+    echo $res['status'] . '|' . $res['headers']['content-type'] . '|' . $res['headers']['x-app'] . '|' . $res['headers']['content-length'] . PHP_EOL;
     echo $res['body'] . PHP_EOL;
 }
 ?>

@@ -159,9 +159,9 @@ pub fn vphp_wrap_vslim_service_provider_set_app(ptr voidptr, ctx vphp.Context) v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'app', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'app' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'app').object() or {
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -282,9 +282,9 @@ pub fn vphp_wrap_vslim_module_set_app(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'app', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'app' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'app').object() or {
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -392,9 +392,9 @@ pub fn vphp_wrap_vslim_env_loader_bootstrap(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'root', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'root' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'root').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := VSlimEnvLoader.bootstrap(arg_0)
     ctx.return().v[map[string]string](res)
 }
@@ -403,9 +403,9 @@ pub fn vphp_wrap_vslim_env_loader_load(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'path' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := VSlimEnvLoader.load(arg_0)
     ctx.return().v[map[string]string](res)
 }

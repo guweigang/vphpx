@@ -25,6 +25,11 @@ echo ($cfg->has('app.name') ? 'has-name' : 'no-name') . PHP_EOL;
 echo $cfg->getString('app.name', 'x') . PHP_EOL;
 echo $cfg->getInt('app.port', 0) . PHP_EOL;
 echo ($cfg->getBool('app.debug', false) ? 'debug-on' : 'debug-off') . PHP_EOL;
+$getBool = new ReflectionMethod($cfg, 'getBool');
+$defaultValue = $getBool->getParameters()[1];
+var_dump($getBool->getNumberOfRequiredParameters(), $defaultValue->getName(), (string) $defaultValue->getType());
+var_dump($defaultValue->isOptional(), $defaultValue->getDefaultValue());
+var_dump($cfg->getBool(defaultValue: true, key: 'missing.key'), $cfg->getBool('missing.key'));
 echo $cfg->getFloat('app.ratio', 0.0) . PHP_EOL;
 echo $cfg->getJson('missing.key', '"fallback"') . PHP_EOL;
 
@@ -70,6 +75,13 @@ has-name
 demo
 19888
 debug-on
+int(1)
+string(12) "defaultValue"
+string(4) "bool"
+bool(true)
+bool(false)
+bool(true)
+bool(false)
 1.5
 "fallback"
 2:db1:db2

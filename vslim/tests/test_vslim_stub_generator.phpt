@@ -77,8 +77,8 @@ var_dump(str_contains($stub, 'public function withUri(\Psr\Http\Message\UriInter
 var_dump(str_contains($stub, 'public function withUri(\Psr\Http\Message\UriInterface $uri, bool $preserveHost = false): \Psr\Http\Message\ServerRequestInterface {}'));
 var_dump(!str_contains($stub, '$default_preserve_host'));
 var_dump(str_contains($stub, 'public function withHeader(mixed $name, mixed $value): \Psr\Http\Message\ResponseInterface {}'));
-var_dump(str_contains($stub, 'public function createRequest(string $method, $uri): \Psr\Http\Message\RequestInterface {}'));
-var_dump(str_contains($stub, 'public function createServerRequest(string $method, $uri, array $serverParams = []): \Psr\Http\Message\ServerRequestInterface {}'));
+var_dump(str_contains($stub, 'public function createRequest(string $method, mixed $uri): \Psr\Http\Message\RequestInterface {}'));
+var_dump(str_contains($stub, 'public function createServerRequest(string $method, mixed $uri, array $serverParams = []): \Psr\Http\Message\ServerRequestInterface {}'));
 var_dump(str_contains($stub, 'public function createResponse(int $status = 200, string $reasonPhrase = \'\'): \Psr\Http\Message\ResponseInterface {}'));
 var_dump(str_contains($stub, 'public function createStream(string $content = \'\'): \Psr\Http\Message\StreamInterface {}'));
 var_dump(str_contains($stub, 'public function createStreamFromFile(string $filename, string $mode = \'r\'): \Psr\Http\Message\StreamInterface {}'));

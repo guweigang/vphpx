@@ -61,9 +61,9 @@ pub fn vphp_wrap_vslim_cli_app_command_help(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'commandName', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'commandName' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'commandName').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.command_help(arg_0)
     ctx.return().v[string](res)
 }
@@ -73,9 +73,9 @@ pub fn vphp_wrap_vslim_cli_app_run_argv(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'argv', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'argv' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'argv').iterable() or {
+    arg_0 := php_args.at(0).iterable() or {
         vphp.throw_exception('argument 0 must be iterable', 0)
         return
     }
@@ -112,9 +112,9 @@ pub fn vphp_wrap_vslim_cli_app_debug_bridge_path(ptr voidptr, ctx vphp.Context) 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'path' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.debug_bridge_path(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -124,11 +124,11 @@ pub fn vphp_wrap_vslim_cli_app_command(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'handler').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.command(arg_0, arg_1)
     return voidptr(res)
 }
@@ -138,9 +138,9 @@ pub fn vphp_wrap_vslim_cli_app_command_many(ptr voidptr, ctx vphp.Context) voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'commands', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'commands' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'commands').iterable() or {
+    arg_0 := php_args.at(0).iterable() or {
         vphp.throw_exception('argument 0 must be iterable', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -162,9 +162,9 @@ pub fn vphp_wrap_vslim_cli_app_has_command(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.has_command(arg_0)
     ctx.return().v[bool](res)
 }
@@ -198,9 +198,9 @@ pub fn vphp_wrap_vslim_cli_app_has_option(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.has_option(arg_0)
     ctx.return().v[bool](res)
 }
@@ -234,11 +234,11 @@ pub fn vphp_wrap_vslim_cli_app_option(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultValue' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := if php_args.has_named_or_index(1, 'defaultValue') { ?vphp.PhpValue(php_args.at_named_or_index(1, 'defaultValue').value) } else { none }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := if php_args.has(1) { ?vphp.PhpValue(php_args.at(1).value) } else { none }
     res := recv.option(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -248,11 +248,11 @@ pub fn vphp_wrap_vslim_cli_app_argument(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultValue' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := if php_args.has_named_or_index(1, 'defaultValue') { ?vphp.PhpValue(php_args.at_named_or_index(1, 'defaultValue').value) } else { none }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := if php_args.has(1) { ?vphp.PhpValue(php_args.at(1).value) } else { none }
     res := recv.argument(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -262,11 +262,11 @@ pub fn vphp_wrap_vslim_cli_app_run(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'args', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'args' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'args').iterable() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).iterable() or {
         vphp.throw_exception('argument 1 must be iterable', 0)
         return
     }
@@ -279,9 +279,9 @@ pub fn vphp_wrap_vslim_cli_app_bootstrap_file(ptr voidptr, ctx vphp.Context) voi
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'path' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.bootstrap_file(arg_0)
     return voidptr(res)
 }
@@ -291,9 +291,9 @@ pub fn vphp_wrap_vslim_cli_app_bootstrap_dir(ptr voidptr, ctx vphp.Context) void
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'path' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.bootstrap_dir(arg_0)
     return voidptr(res)
 }

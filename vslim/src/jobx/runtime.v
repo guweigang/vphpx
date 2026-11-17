@@ -253,7 +253,7 @@ fn (mut worker VSlimJobWorker) fail_or_release(reserved VSlimReservedJob, messag
 }
 
 fn (mut worker VSlimJobWorker) perform(reserved VSlimReservedJob) bool {
-	payload := vphp.PhpJson.decode_assoc_value(reserved.payload_json)
+	mut payload := vphp.PhpJson.decode_assoc_value(reserved.payload_json)
 	if !payload.is_valid() || vphp.PhpJson.last_error_code() != 0 {
 		return worker.fail_or_release(reserved,
 			'job payload is not valid JSON: ${vphp.PhpJson.last_error_message()}')

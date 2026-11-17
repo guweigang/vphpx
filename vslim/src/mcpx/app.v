@@ -206,7 +206,7 @@ pub fn VSlimMcpApp.queue_messages(id vphp.PhpValue, result vphp.PhpValue, messag
 }
 
 @[php_arg_name(session_id: 'sessionId', protocol_version: 'protocolVersion')]
-@[php_arg_default(result: 'null', status: '200', headers: '[]')]
+@[php_arg_default(result: '["queued" => true]', status: '200', headers: '[]')]
 @[php_arg_optional(result: true, status: true, headers: true)]
 @[php_method]
 pub fn VSlimMcpApp.notify(id vphp.PhpValue, method string, params vphp.PhpArray, session_id string, protocol_version string, result ?vphp.PhpValue, status int, headers ?vphp.PhpArray) vphp.PhpArray {
@@ -295,7 +295,7 @@ pub fn VSlimMcpApp.client_capabilities(frame vphp.PhpArray) vphp.PhpArray {
 	if caps_raw.trim_space() == '' {
 		return vphp.PhpArray.new()
 	}
-	caps := vphp.PhpJson.decode_assoc_value(caps_raw)
+	mut caps := vphp.PhpJson.decode_assoc_value(caps_raw)
 	defer {
 		caps.release()
 	}
@@ -345,7 +345,8 @@ pub fn VSlimMcpApp.require_capability(frame vphp.PhpArray, name string, message 
 	if VSlimMcpApp.client_supports(frame, name) {
 		return vphp.PhpValue.null()
 	}
-	return VSlimMcpApp.capability_error(frame, message, status).take_value()
+	mut response := VSlimMcpApp.capability_error(frame, message, status)
+	return response.take_value()
 }
 
 @[php_method: 'handleMcpDispatch']

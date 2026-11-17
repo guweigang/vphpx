@@ -211,17 +211,15 @@ namespace {
         public function withBody(\Psr\Http\Message\StreamInterface $body) { $clone = clone $this; $clone->body = $body; return $clone; }
     }
 
-    putenv('VHTTPD_APP=' . __DIR__ . '/fixtures/psr15_stack_app_fixture.php');
-    define('VSLIM_HTTPD_WORKER_NOAUTO', true);
-    $autoload = (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/php/package/vendor/autoload.php';
-    if (!is_file($autoload)) {
-        $autoload = dirname(__DIR__) . '/vendor/autoload.php';
+    if (defined('VSLIM_TEST_WORKER_ENTRY')) {
+        $handler = require __DIR__ . '/fixtures/psr15_stack_app_fixture.php';
+        $handler = \VSlim\Worker\Adapter::middleware($handler['handler'], $handler['middlewares']);
+        $factory = new \Nyholm\Psr7\Factory\Psr17Factory();
+        return \VSlim\Worker\Adapter::psr($handler, $factory, $factory);
     }
-    if (!is_file($autoload)) { echo "autoload_missing\n"; exit; }
-    require_once $autoload;
-
-    $worker = new \VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
-    $res = $worker->dispatchRequest([
+    require_once __DIR__ . '/worker_wire_fixture.php';
+    $worker = new WorkerWireFixture(__FILE__, '\VSlim\Worker\Adapter::http');
+    $res = $worker->request([
         'id' => 'req-psr15-stack',
         'method' => 'GET',
         'path' => '/stack/run?trace_id=worker-stack',
@@ -240,7 +238,7 @@ namespace {
     ]);
 
     echo $res['id'] . PHP_EOL;
-    echo $res['status'] . '|' . $res['content_type'] . '|' . $res['headers']['x-app'] . PHP_EOL;
+    echo $res['status'] . '|' . $res['headers']['content-type'] . '|' . $res['headers']['x-app'] . PHP_EOL;
     echo $res['body'] . PHP_EOL;
 }
 ?>

@@ -191,7 +191,7 @@ fn database_rows_with_column_names(rows []mysql.Row, column_names []string) []ma
 }
 
 fn database_exec_meta_value(affected_rows u64) vphp.PhpValue {
-	return database_result_value_from_dyn(vphp.DynValue.of_map({
+	return database_result_value_from_dyn(vphp.DynValue.array_from_map({
 		'affected_rows': vphp.DynValue.of_int(i64(affected_rows))
 	}))
 }
@@ -209,7 +209,7 @@ pub fn database_params_value(params []string) vphp.PhpValue {
 	for item in params {
 		values << vphp.DynValue.of_string(item)
 	}
-	return database_result_value_from_dyn(vphp.DynValue.of_list(values))
+	return database_result_value_from_dyn(vphp.DynValue.array_from_list(values))
 }
 
 fn (subject PhpValueSubject) database_param() string {

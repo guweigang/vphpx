@@ -103,11 +103,7 @@ fn detect_mysql_flags() (string, string) {
 }
 
 fn detect_v_root_include_flags() string {
-	v_exe := os.find_abs_path_of_executable('v') or { '' }
-	if v_exe == '' {
-		return ''
-	}
-	v_root := os.dir(os.real_path(v_exe))
+	v_root := os.dir(os.real_path(@VEXE))
 	if v_root == '' {
 		return ''
 	}
@@ -121,6 +117,10 @@ fn detect_v_root_include_flags() string {
 }
 
 fn detect_v_module_path() string {
+	override := (os.getenv_opt('VPHP_V_MODULE_PATH') or { '' }).trim_space()
+	if override != '' {
+		return override
+	}
 	sep := if os.user_os() == 'windows' { ';' } else { ':' }
 	return ['.', '..', '@vlib'].join(sep)
 }
@@ -159,15 +159,12 @@ fn pkg_config_flags(args string) string {
 	return res.output.trim_space()
 }
 
-fn run_v_transpile(project_root string, prod_mode bool, gc_mode string, module_path string, output_path string, source_dir string) ! {
-	v_exe := os.find_abs_path_of_executable('v') or {
-		return error('unable to resolve V executable from PATH')
-	}
+fn run_v_transpile(prod_mode bool, gc_mode string, module_path string, output_path string, source_dir string) ! {
 	use_openssl := should_use_openssl()
 	disable_vschannel := should_disable_vschannel()
 	v_cc := detect_v_c_compiler()
 	prod_arg := if prod_mode { '-prod' } else { '' }
-	mut args := []string{}
+	mut args := [@VEXE]
 	if prod_arg != '' {
 		args << prod_arg
 	}
@@ -190,21 +187,15 @@ fn run_v_transpile(project_root string, prod_mode bool, gc_mode string, module_p
 	args << '-path'
 	args << module_path
 	args << '-shared'
+	args << '-dump-c-flags'
+	args << output_path + '.flags'
 	args << '-o'
 	args << output_path
 	args << source_dir
 
-	mut proc := os.new_process(v_exe)
-	proc.set_work_folder(project_root)
-	proc.set_args(args)
-	proc.set_redirect_stdio()
-	proc.run()
-	proc.wait()
-	stdout := proc.stdout_slurp()
-	stderr := proc.stderr_slurp()
-	output := (stdout + stderr).trim_space()
-	if proc.code != 0 {
-		return error(output)
+	result := os.exec(args)
+	if result.exit_code != 0 {
+		return error(result.output.trim_space())
 	}
 }
 
@@ -475,7 +466,16 @@ fn main() {
 
 	transpiled_c := os.join_path(project_root, '${ext_name}_generated.c')
 	legacy_transpiled_c := os.join_path(project_root, 'vphp_ext_${ext_name}.c')
-	output_so := os.join_path(project_root, '${ext_name}.so')
+	configured_output := (os.getenv_opt('VSLIM_OUTPUT') or { '' }).trim_space()
+	output_so := if configured_output != '' {
+		if os.is_abs_path(configured_output) {
+			os.norm_path(configured_output)
+		} else {
+			os.norm_path(os.join_path(project_root, configured_output))
+		}
+	} else {
+		os.join_path(project_root, '${ext_name}.so')
+	}
 	gc_mode := detect_v_gc_mode()
 	gc_compile_flags := detect_gc_compile_flags(gc_mode)
 	gc_link_flags := detect_gc_link_flags(gc_mode)
@@ -485,7 +485,7 @@ fn main() {
 	os.rm(legacy_transpiled_c) or {}
 
 	v_module_path := detect_v_module_path()
-	run_v_transpile(project_root, prod_mode, gc_mode, v_module_path, transpiled_c, source_dir) or {
+	run_v_transpile(prod_mode, gc_mode, v_module_path, transpiled_c, source_dir) or {
 		println('❌ V 编译失败: ${err.msg()}')
 		exit(1)
 	}
@@ -504,9 +504,14 @@ fn main() {
 	}
 
 	println('🛠️  3. GCC 最终链接...')
-	php_inc := os.execute('php-config --includes').output.trim_space()
-	php_ldflags := sanitize_ldflags(os.execute('php-config --ldflags').output.trim_space())
-	php_libs := os.execute('php-config --libs').output.replace('-lzip', '').trim_space()
+	native_inputs := compiler.native_link_inputs(transpiled_c + '.flags') or {
+		eprintln('❌ 无法读取 V 的链接输入: ${err}')
+		exit(1)
+	}
+	php_config := (os.getenv_opt('VPHP_PHP_CONFIG') or { 'php-config' }).trim_space()
+	php_inc := os.execute('${php_config} --includes').output.trim_space()
+	php_ldflags := sanitize_ldflags(os.execute('${php_config} --ldflags').output.trim_space())
+	php_libs := os.execute('${php_config} --libs').output.replace('-lzip', '').trim_space()
 
 	mut platform_link_flags := '-fvisibility=default'
 	mut extra_link_flags := ''
@@ -522,9 +527,10 @@ fn main() {
 		extra_link_flags += ' ${gc_link_flags}'
 	}
 
-	gcc_cmd := 'gcc -shared -fPIC ${disabled_warnings} -DCOMPILE_DL_${ext_name.to_upper()}=1 ' +
+	extension_cc := (os.getenv_opt('VSLIM_EXTENSION_CC') or { 'gcc' }).trim_space()
+	gcc_cmd := '${extension_cc} -shared -fPIC ${disabled_warnings} -D_GNU_SOURCE -DCOMPILE_DL_${ext_name.to_upper()}=1 ' +
 		'${cjson_cflags} ${openssl_cflags} ${mysql_cflags} ${v_root_cflags} ${extra_compile_flags}-DcJSON_GetErrorPos=cJSON_GetErrorPtr ' +
-		'${php_inc} ${transpiled_c} php_bridge.c ../vphp/v_bridge.c -o ${output_so} ' +
+		'${php_inc} ${transpiled_c} php_bridge.c ../vphp/v_bridge.c ${native_inputs.map(os.quoted_path(it)).join(" ")} -o ${output_so} ' +
 		'-I../vphp ' +
 		dedupe_link_flags('${php_ldflags} ${php_libs} ${cjson_libs} ${mysql_libs}${extra_link_flags} ${platform_link_flags}')
 

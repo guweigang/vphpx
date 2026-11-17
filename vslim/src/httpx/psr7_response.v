@@ -31,7 +31,7 @@ pub fn (r &VSlimPsr7Response) get_protocol_version() string {
 @[php_method: 'withProtocolVersion']
 pub fn (r &VSlimPsr7Response) with_protocol_version(version vphp.PhpValue) &VSlimPsr7Response {
 	return r.clone_with(normalize_protocol_version(value_subject(version).log_message()),
-		clone_header_values(r.headers), clone_header_names(r.header_names),
+		r.headers, r.header_names,
 		r.body_or_empty(), r.status, r.reason_phrase)
 }
 
@@ -64,19 +64,17 @@ pub fn (r &VSlimPsr7Response) get_header_line_name(name string) string {
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method: 'withHeader']
 pub fn (r &VSlimPsr7Response) with_header(name vphp.PhpValue, value vphp.PhpValue) &VSlimPsr7Response {
-	mut headers := clone_header_values(r.headers)
-	mut header_names := clone_header_names(r.header_names)
 	original_name := value_subject(name).log_message().trim_space()
 	key := validate_header_name_or_throw(value_subject(name).log_message()) or {
-		return r.clone_with(r.protocol_version, clone_header_values(r.headers),
-			clone_header_names(r.header_names), r.body_or_empty(), r.status,
+		return r.clone_with(r.protocol_version, r.headers, r.header_names, r.body_or_empty(), r.status,
 			r.reason_phrase)
 	}
 	values := value_subject(value).header_values() or {
-		return r.clone_with(r.protocol_version, clone_header_values(r.headers),
-			clone_header_names(r.header_names), r.body_or_empty(), r.status,
+		return r.clone_with(r.protocol_version, r.headers, r.header_names, r.body_or_empty(), r.status,
 			r.reason_phrase)
 	}
+	mut headers := clone_header_values(r.headers)
+	mut header_names := clone_header_names(r.header_names)
 	headers[key] = values
 	header_names[key] = original_name
 	return r.clone_with(r.protocol_version, headers, header_names,
@@ -88,13 +86,11 @@ pub fn (r &VSlimPsr7Response) with_header(name vphp.PhpValue, value vphp.PhpValu
 pub fn (r &VSlimPsr7Response) with_added_header(name vphp.PhpValue, value vphp.PhpValue) &VSlimPsr7Response {
 	original_name := value_subject(name).log_message().trim_space()
 	key := validate_header_name_or_throw(value_subject(name).log_message()) or {
-		return r.clone_with(r.protocol_version, clone_header_values(r.headers),
-			clone_header_names(r.header_names), r.body_or_empty(), r.status,
+		return r.clone_with(r.protocol_version, r.headers, r.header_names, r.body_or_empty(), r.status,
 			r.reason_phrase)
 	}
 	values := value_subject(value).header_values() or {
-		return r.clone_with(r.protocol_version, clone_header_values(r.headers),
-			clone_header_names(r.header_names), r.body_or_empty(), r.status,
+		return r.clone_with(r.protocol_version, r.headers, r.header_names, r.body_or_empty(), r.status,
 			r.reason_phrase)
 	}
 	mut headers := clone_header_values(r.headers)
@@ -138,8 +134,7 @@ pub fn (r &VSlimPsr7Response) get_body() &VSlimPsr7Stream {
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method: 'withBody']
 pub fn (r &VSlimPsr7Response) with_body(body vphp.PhpValue) &VSlimPsr7Response {
-	return r.clone_with(r.protocol_version, clone_header_values(r.headers),
-		clone_header_names(r.header_names), VSlimPsr7Stream.from_value(body), r.status,
+	return r.clone_with(r.protocol_version, r.headers, r.header_names, VSlimPsr7Stream.from_value(body), r.status,
 		r.reason_phrase)
 }
 
@@ -155,12 +150,10 @@ pub fn (r &VSlimPsr7Response) get_status_code() int {
 @[php_method: 'withStatus']
 pub fn (r &VSlimPsr7Response) with_status(code vphp.PhpValue, default_reason_phrase vphp.PhpValue) &VSlimPsr7Response {
 	status := validate_status_or_throw(int(code.to_i64())) or {
-		return r.clone_with(r.protocol_version, clone_header_values(r.headers),
-			clone_header_names(r.header_names), r.body_or_empty(), r.status,
+		return r.clone_with(r.protocol_version, r.headers, r.header_names, r.body_or_empty(), r.status,
 			r.reason_phrase)
 	}
-	return r.clone_with(r.protocol_version, clone_header_values(r.headers),
-		clone_header_names(r.header_names), r.body_or_empty(), status, normalize_reason_phrase(status,
+	return r.clone_with(r.protocol_version, r.headers, r.header_names, r.body_or_empty(), status, normalize_reason_phrase(status,
 		value_or_empty_string(default_reason_phrase)))
 }
 

@@ -470,7 +470,7 @@ fn cli_value_from_defaults(values []string, value_type CliInputValueType, multip
 		for item in values {
 			out << cli_parse_scalar_value(item, value_type, label, choices)!
 		}
-		return vphp.DynValue.of_list(out)
+		return vphp.DynValue.array_from_list(out)
 	}
 	if values.len == 0 {
 		return vphp.DynValue.null()

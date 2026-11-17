@@ -23,6 +23,11 @@ $app->get('/stream/text', function (mixed $req) {
     })())->setHeader('x-app', 'vslim-stream');
 });
 
+require_once dirname(__DIR__) . '/templates/app/bootstrap/worker.php';
+if (defined('VSLIM_TEST_WORKER_ENTRY')) {
+    return VSlim\Worker\Adapter::app($app);
+}
+
 $raw = $app->dispatchEnvelopeWorker([
     'method' => 'GET',
     'path' => '/stream/text?request_id=req-7',
@@ -34,21 +39,27 @@ echo $raw->streamType . "\n";
 echo $raw->header('x-app') . "\n";
 echo $raw->header('x-request-id') . "\n";
 
-$server = new \VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
-$ref = new ReflectionMethod(\VHttpd\PhpWorker\Server::class, 'normalizeStreamResponseObject');
-$normalized = $ref->invoke($server, $raw);
-
-echo ($normalized instanceof \VHttpd\PhpWorker\StreamResponse ? "normalized\n" : "not_normalized\n");
-echo $normalized->streamType . "\n";
-echo $normalized->headers['x-app'] . '|' . $normalized->headers['x-request-id'] . "\n";
-echo implode('', iterator_to_array($normalized->chunks, false)) . "\n";
+require_once __DIR__ . '/worker_wire_fixture.php';
+$worker = new WorkerWireFixture(__FILE__, '\VSlim\Worker\Adapter::http');
+$frames = iterator_to_array($worker->frames([
+    'method' => 'GET',
+    'path' => '/stream/text?request_id=req-7',
+    'query' => ['request_id' => 'req-7'],
+]), false);
+echo $frames[0]['event'] . "\n";
+echo $frames[0]['stream_type'] . "\n";
+echo $frames[0]['headers']['x-app'] . '|' . $frames[0]['headers']['x-request-id'] . "\n";
+foreach (array_slice($frames, 1, -1) as $frame) {
+    echo base64_decode($frame['data_base64'], true);
+}
+echo "\n";
 ?>
 --EXPECT--
 raw_stream
 text
 vslim-stream
 req-7
-normalized
+start
 text
 vslim-stream|req-7
 hello:world

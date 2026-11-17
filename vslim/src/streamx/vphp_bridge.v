@@ -90,17 +90,17 @@ pub fn vphp_wrap_vslim_stream_response_construct(ptr voidptr, ctx vphp.Context) 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'streamType', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'chunks', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'status', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'contentType', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'headers', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'streamType' },
+        vphp.PhpArgMeta{ index: 1, name: 'chunks' },
+        vphp.PhpArgMeta{ index: 2, name: 'status' },
+        vphp.PhpArgMeta{ index: 3, name: 'contentType' },
+        vphp.PhpArgMeta{ index: 4, name: 'headers' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'streamType').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'chunks').value
-    arg_2 := php_args.at_named_or_index(2, 'status').as_v[int]()
-    arg_3 := php_args.at_named_or_index(3, 'contentType').as_v[string]()
-    arg_4 := php_args.at_named_or_index(4, 'headers').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
+    arg_2 := php_args.at(2).as_v[int]()
+    arg_3 := php_args.at(3).as_v[string]()
+    arg_4 := php_args.at(4).value
     res := recv.construct(arg_0, arg_1, arg_2, arg_3, arg_4)
     return voidptr(res)
 }
@@ -109,9 +109,9 @@ pub fn vphp_wrap_vslim_stream_response_text(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'chunks', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'chunks' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'chunks').value
+    arg_0 := php_args.at(0).value
     res := VSlimStreamResponse.text(arg_0)
     return voidptr(res)
 }
@@ -120,15 +120,15 @@ pub fn vphp_wrap_vslim_stream_response_text_with(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'chunks', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'status', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'contentType', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'headers', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'chunks' },
+        vphp.PhpArgMeta{ index: 1, name: 'status' },
+        vphp.PhpArgMeta{ index: 2, name: 'contentType' },
+        vphp.PhpArgMeta{ index: 3, name: 'headers' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'chunks').value
-    arg_1 := php_args.at_named_or_index(1, 'status').as_v[int]()
-    arg_2 := php_args.at_named_or_index(2, 'contentType').as_v[string]()
-    arg_3 := php_args.at_named_or_index(3, 'headers').value
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).as_v[int]()
+    arg_2 := php_args.at(2).as_v[string]()
+    arg_3 := php_args.at(3).value
     res := VSlimStreamResponse.text_with(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
 }
@@ -137,9 +137,9 @@ pub fn vphp_wrap_vslim_stream_response_sse(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'events', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'events' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'events').value
+    arg_0 := php_args.at(0).value
     res := VSlimStreamResponse.sse(arg_0)
     return voidptr(res)
 }
@@ -148,13 +148,13 @@ pub fn vphp_wrap_vslim_stream_response_sse_with(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'events', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'status', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'headers', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'events' },
+        vphp.PhpArgMeta{ index: 1, name: 'status' },
+        vphp.PhpArgMeta{ index: 2, name: 'headers' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'events').value
-    arg_1 := php_args.at_named_or_index(1, 'status').as_v[int]()
-    arg_2 := php_args.at_named_or_index(2, 'headers').value
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).as_v[int]()
+    arg_2 := php_args.at(2).value
     res := VSlimStreamResponse.sse_with(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -164,9 +164,9 @@ pub fn vphp_wrap_vslim_stream_response_header(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.header(arg_0)
     ctx.return().v[string](res)
 }
@@ -200,9 +200,9 @@ pub fn vphp_wrap_vslim_stream_response_has_header(ptr voidptr, ctx vphp.Context)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.has_header(arg_0)
     ctx.return().v[bool](res)
 }
@@ -212,11 +212,11 @@ pub fn vphp_wrap_vslim_stream_response_set_header(ptr voidptr, ctx vphp.Context)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'value').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.set_header(arg_0, arg_1)
     return voidptr(res)
 }
@@ -226,9 +226,9 @@ pub fn vphp_wrap_vslim_stream_response_set_status(ptr voidptr, ctx vphp.Context)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'status', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'status' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'status').as_v[int]()
+    arg_0 := php_args.at(0).as_v[int]()
     res := recv.set_status(arg_0)
     return voidptr(res)
 }
@@ -238,9 +238,9 @@ pub fn vphp_wrap_vslim_stream_response_set_content_type(ptr voidptr, ctx vphp.Co
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'contentType', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'contentType' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'contentType').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_content_type(arg_0)
     return voidptr(res)
 }
@@ -250,9 +250,9 @@ pub fn vphp_wrap_vslim_stream_response_set_chunks(ptr voidptr, ctx vphp.Context)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'chunks', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'chunks' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'chunks').value
+    arg_0 := php_args.at(0).value
     res := recv.set_chunks(arg_0)
     return voidptr(res)
 }
@@ -348,9 +348,9 @@ pub fn vphp_wrap_vslim_stream_ndjson_decoder_decode(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'stream', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'stream' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'stream').value
+    arg_0 := php_args.at(0).value
     res := VSlimStreamNdjsonDecoder.decode(arg_0)
     ctx.return().v[vphp.PhpArray](res)
 }
@@ -438,14 +438,14 @@ pub fn vphp_wrap_vslim_stream_sse_encoder_from_ollama(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'rows', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'model', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'rows' },
+        vphp.PhpArgMeta{ index: 1, name: 'model' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'rows').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return
     }
-    arg_1 := php_args.at_named_or_index(1, 'model').as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := VSlimStreamSseEncoder.from_ollama(arg_0, arg_1)
     ctx.return().v[vphp.PhpArray](res)
 }
@@ -578,15 +578,15 @@ pub fn vphp_wrap_vslim_stream_ollama_client_construct(ptr voidptr, ctx vphp.Cont
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'chatUrl', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultModel', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'apiKey', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'fixturePath', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'chatUrl' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultModel' },
+        vphp.PhpArgMeta{ index: 2, name: 'apiKey' },
+        vphp.PhpArgMeta{ index: 3, name: 'fixturePath' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'chatUrl').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'defaultModel').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'apiKey').as_v[string]()
-    arg_3 := php_args.at_named_or_index(3, 'fixturePath').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).as_v[string]()
+    arg_3 := php_args.at(3).as_v[string]()
     res := recv.construct(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
 }
@@ -602,10 +602,10 @@ pub fn vphp_wrap_vslim_stream_ollama_client_from_config(ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'config', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'config' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'config').to_v_ptr[configx.VSlimConfig]() or {
-        vphp.throw_exception('argument 0 must be object bound to configx.VSlimConfig, got ' + php_args.at_named_or_index(0, 'config').zval().type_name(), 0)
+    arg_0_ptr := php_args.at(0).to_v_ptr[configx.VSlimConfig]() or {
+        vphp.throw_exception('argument 0 must be object bound to configx.VSlimConfig, got ' + php_args.at(0).zval().type_name(), 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
     }
@@ -618,9 +618,9 @@ pub fn vphp_wrap_vslim_stream_ollama_client_from_app(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'app', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'app' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'app').value
+    arg_0 := php_args.at(0).value
     res := VSlimStreamOllamaClient.from_app(arg_0)
     return voidptr(res)
 }
@@ -629,9 +629,9 @@ pub fn vphp_wrap_vslim_stream_ollama_client_from_options(ctx vphp.Context) voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'options', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'options' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'options').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -677,9 +677,9 @@ pub fn vphp_wrap_vslim_stream_ollama_client_text_response_from_request(ptr voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'requestPayload', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'requestPayload' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'requestPayload').value
+    arg_0 := php_args.at(0).value
     res := recv.text_response_from_request(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -689,9 +689,9 @@ pub fn vphp_wrap_vslim_stream_ollama_client_sse_response_from_request(ptr voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'requestPayload', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'requestPayload' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'requestPayload').value
+    arg_0 := php_args.at(0).value
     res := recv.sse_response_from_request(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -701,9 +701,9 @@ pub fn vphp_wrap_vslim_stream_ollama_client_payload(ptr voidptr, ctx vphp.Contex
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'input', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'input' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'input').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return
     }
@@ -716,9 +716,9 @@ pub fn vphp_wrap_vslim_stream_ollama_client_payload_from_request(ptr voidptr, ct
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'requestPayload', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'requestPayload' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'requestPayload').value
+    arg_0 := php_args.at(0).value
     res := recv.payload_from_request(arg_0)
     ctx.return().v[vphp.PhpArray](res)
 }
@@ -728,9 +728,9 @@ pub fn vphp_wrap_vslim_stream_ollama_client_open_stream(ptr voidptr, ctx vphp.Co
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'payload', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'payload' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'payload').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return
     }
@@ -742,15 +742,17 @@ pub fn vphp_wrap_vslim_stream_ollama_client_upstream_plan(ptr voidptr, ctx vphp.
     mut recv := unsafe { &VSlimStreamOllamaClient(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'payload', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'outputMode', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'payload').array() or {
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'payload' },
+        vphp.PhpArgMeta{ index: 1, name: 'outputMode', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return
     }
-    arg_1 := if php_args.has_named_or_index(1, 'outputMode') { php_args.at_named_or_index(1, 'outputMode').as_v[string]() } else { 'sse' }
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.upstream_plan(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -760,9 +762,9 @@ pub fn vphp_wrap_vslim_stream_ollama_client_upstream_text_plan_from_request(ptr 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'requestPayload', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'requestPayload' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'requestPayload').value
+    arg_0 := php_args.at(0).value
     res := recv.upstream_text_plan_from_request(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -772,9 +774,9 @@ pub fn vphp_wrap_vslim_stream_ollama_client_upstream_sse_plan_from_request(ptr v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'requestPayload', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'requestPayload' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'requestPayload').value
+    arg_0 := php_args.at(0).value
     res := recv.upstream_sse_plan_from_request(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -783,12 +785,14 @@ pub fn vphp_wrap_vslim_stream_ollama_client_upstream_plan_from_request(ptr voidp
     mut recv := unsafe { &VSlimStreamOllamaClient(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'requestPayload', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'outputMode', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'requestPayload').value
-    arg_1 := if php_args.has_named_or_index(1, 'outputMode') { php_args.at_named_or_index(1, 'outputMode').as_v[string]() } else { 'sse' }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'requestPayload' },
+        vphp.PhpArgMeta{ index: 1, name: 'outputMode', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.upstream_plan_from_request(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -876,9 +880,9 @@ pub fn vphp_wrap_vslim_stream_factory_text(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'chunks', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'chunks' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'chunks').value
+    arg_0 := php_args.at(0).value
     res := VSlimStreamFactory.text(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -887,15 +891,15 @@ pub fn vphp_wrap_vslim_stream_factory_text_with(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'chunks', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'status', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'contentType', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'headers', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'chunks' },
+        vphp.PhpArgMeta{ index: 1, name: 'status' },
+        vphp.PhpArgMeta{ index: 2, name: 'contentType' },
+        vphp.PhpArgMeta{ index: 3, name: 'headers' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'chunks').value
-    arg_1 := php_args.at_named_or_index(1, 'status').as_v[int]()
-    arg_2 := php_args.at_named_or_index(2, 'contentType').as_v[string]()
-    arg_3 := php_args.at_named_or_index(3, 'headers').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).as_v[int]()
+    arg_2 := php_args.at(2).as_v[string]()
+    arg_3 := php_args.at(3).array() or {
         vphp.throw_exception('argument 3 must be array', 0)
         return
     }
@@ -907,9 +911,9 @@ pub fn vphp_wrap_vslim_stream_factory_sse(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'events', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'events' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'events').value
+    arg_0 := php_args.at(0).value
     res := VSlimStreamFactory.sse(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -918,13 +922,13 @@ pub fn vphp_wrap_vslim_stream_factory_sse_with(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'events', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'status', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'headers', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'events' },
+        vphp.PhpArgMeta{ index: 1, name: 'status' },
+        vphp.PhpArgMeta{ index: 2, name: 'headers' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'events').value
-    arg_1 := php_args.at_named_or_index(1, 'status').as_v[int]()
-    arg_2 := php_args.at_named_or_index(2, 'headers').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).as_v[int]()
+    arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
         return
     }
@@ -935,21 +939,23 @@ pub fn vphp_wrap_vslim_stream_factory_sse_with(ctx vphp.Context)  {
 pub fn vphp_wrap_vslim_stream_factory_dispatch_sse(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'events', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'status', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'headers', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'batchSize', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'delayMs', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'events').value
-    arg_1 := php_args.at_named_or_index(1, 'status').as_v[int]()
-    arg_2 := php_args.at_named_or_index(2, 'headers').array() or {
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'events' },
+        vphp.PhpArgMeta{ index: 1, name: 'status' },
+        vphp.PhpArgMeta{ index: 2, name: 'headers' },
+        vphp.PhpArgMeta{ index: 3, name: 'batchSize', use_php_default: true },
+        vphp.PhpArgMeta{ index: 4, name: 'delayMs', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).as_v[int]()
+    arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
         return
     }
-    arg_3 := if php_args.has_named_or_index(3, 'batchSize') { php_args.at_named_or_index(3, 'batchSize').as_v[int]() } else { 1 }
-    arg_4 := if php_args.has_named_or_index(4, 'delayMs') { php_args.at_named_or_index(4, 'delayMs').as_v[int]() } else { 0 }
+    arg_3 := php_args.at(3).as_v[int]()
+    arg_4 := php_args.at(4).as_v[int]()
     res := VSlimStreamFactory.dispatch_sse(arg_0, arg_1, arg_2, arg_3, arg_4)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -957,17 +963,19 @@ pub fn vphp_wrap_vslim_stream_factory_dispatch_sse(ctx vphp.Context)  {
 pub fn vphp_wrap_vslim_stream_factory_dispatch_response(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'response', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'batchSize', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'delayMs', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'response').object() or {
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'response' },
+        vphp.PhpArgMeta{ index: 1, name: 'batchSize', use_php_default: true },
+        vphp.PhpArgMeta{ index: 2, name: 'delayMs', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return
     }
-    arg_1 := if php_args.has_named_or_index(1, 'batchSize') { php_args.at_named_or_index(1, 'batchSize').as_v[int]() } else { 1 }
-    arg_2 := if php_args.has_named_or_index(2, 'delayMs') { php_args.at_named_or_index(2, 'delayMs').as_v[int]() } else { 0 }
+    arg_1 := php_args.at(1).as_v[int]()
+    arg_2 := php_args.at(2).as_v[int]()
     res := VSlimStreamFactory.dispatch_response(arg_0, arg_1, arg_2)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -976,9 +984,9 @@ pub fn vphp_wrap_vslim_stream_factory_ollama_text(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'requestPayload', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'requestPayload' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'requestPayload').value
+    arg_0 := php_args.at(0).value
     res := VSlimStreamFactory.ollama_text(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -987,11 +995,11 @@ pub fn vphp_wrap_vslim_stream_factory_ollama_text_with(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'requestPayload', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'options', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'requestPayload' },
+        vphp.PhpArgMeta{ index: 1, name: 'options' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'requestPayload').value
-    arg_1 := php_args.at_named_or_index(1, 'options').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
         return
     }
@@ -1003,9 +1011,9 @@ pub fn vphp_wrap_vslim_stream_factory_ollama_sse(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'requestPayload', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'requestPayload' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'requestPayload').value
+    arg_0 := php_args.at(0).value
     res := VSlimStreamFactory.ollama_sse(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -1014,11 +1022,11 @@ pub fn vphp_wrap_vslim_stream_factory_ollama_sse_with(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'requestPayload', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'options', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'requestPayload' },
+        vphp.PhpArgMeta{ index: 1, name: 'options' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'requestPayload').value
-    arg_1 := php_args.at_named_or_index(1, 'options').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
         return
     }

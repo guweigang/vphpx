@@ -1,4 +1,4 @@
-.PHONY: all build emit-only prod build-prod ext stubs dist dist-source vhttpd serve test psr-matrix framework-matrix demo-self-test demo-verify mvp-check runtime-check clean
+.PHONY: all build emit-only prod build-prod ext stubs dist dist-source server server-extension server-test vhttpd serve serve-embedded app-image test psr-matrix framework-matrix demo-self-test demo-verify mvp-check runtime-check clean
 
 BREW_PATH ?= /opt/homebrew
 VPHP_V_GC ?= auto
@@ -30,8 +30,11 @@ ARTIFACT_VERSION ?= $(shell git -C $(ROOT)/.. describe --tags --always --dirty)
 ARTIFACT_PLATFORM ?= $(shell php -r '$$os = strtolower(PHP_OS_FAMILY); if ($$os === "darwin") $$os = "macos"; $$arch = strtolower(php_uname("m")); if (in_array($$arch, ["amd64", "x64", "x86_64"], true)) $$arch = "amd64"; if (in_array($$arch, ["aarch64", "arm64"], true)) $$arch = "arm64"; echo $$os . "-" . $$arch;')
 PACKAGE_FORMAT ?= zip
 VHTTPD_ROOT ?= $(abspath $(REPO_ROOT)/../vhttpd)
+VPHP_EMBED_PREFIX ?= /usr/local/php-embed
+VSLIM_SERVER_BIN ?= $(ROOT)/server/vslim-server
+VSLIM_SERVER_EXTENSION ?= $(ROOT)/server/vslim-server-extension.so
 SRC_DIR := $(VHTTPD_ROOT)/src
-VHTTPD_BIN := $(VHTTPD_ROOT)/vhttpd
+VHTTPD_BIN ?= $(VHTTPD_ROOT)/vhttpd
 VHTTPD_PORT ?= 19881
 VHTTPD_HOST ?= 127.0.0.1
 VHTTPD_PID_FILE ?= /tmp/vslim_vhttpd.pid
@@ -95,7 +98,7 @@ ext:
 		exit 1; \
 	fi
 	C_INCLUDE_PATH="$(BREW_PATH)/include/cjson" \
-	gcc -shared -fPIC $(DISABLED_WARNINGS) -DCOMPILE_DL_VSLIM=1 \
+	gcc -shared -fPIC $(DISABLED_WARNINGS) -D_GNU_SOURCE -DCOMPILE_DL_VSLIM=1 \
 		$(GC_CFLAGS) $(V_ROOT_CFLAGS) -I$(BREW_PATH)/include -L$(BREW_PATH)/lib -lcjson \
 		-DcJSON_GetErrorPos=cJSON_GetErrorPtr \
 		$(PHP_INC) $(EXT_C) php_bridge.c ../vphp/v_bridge.c -o vslim.so \
@@ -111,21 +114,33 @@ vhttpd:
 		exit 1; \
 	fi
 	@$(MAKE) -C $(VHTTPD_ROOT) build VHTTPD_BIN="$(VHTTPD_BIN)" VPHP_V_GC="$(VPHP_V_GC)"
+server:
+	$(MAKE) -C $(ROOT)/server build VPHP_EMBED_PREFIX="$(VPHP_EMBED_PREFIX)"
 
-serve: build vhttpd
-	$(VHTTPD_BIN) \
-		--host $(VHTTPD_HOST) \
-		--port $(VHTTPD_PORT) \
-		--pid-file $(VHTTPD_PID_FILE) \
-		--event-log $(VHTTPD_EVENT_LOG) \
-		--worker-socket $(VSLIM_WORKER_SOCKET) \
-		--worker-autostart 1 \
-		--worker-cmd '$(VSLIM_WORKER_CMD)'
+server-extension:
+	VPHP_PHP_CONFIG="$(VPHP_EMBED_PREFIX)/bin/php-config" \
+	VSLIM_OUTPUT="$(VSLIM_SERVER_EXTENSION)" \
+	VPHP_V_GC="$(VPHP_V_GC)" \
+	v -path ".:..:@vlib" run build.v
+
+server-test:
+	$(MAKE) -C $(ROOT)/server test VPHP_EMBED_PREFIX="$(VPHP_EMBED_PREFIX)"
+
+serve:
+	VSLIM_EXTENSION_PATH="$(ROOT)/vslim.so" php -d extension=$(ROOT)/vslim.so $(ROOT)/templates/app/bin/vslim serve
+
+serve-embedded: server server-extension
+	VSLIM_SERVER_BIN="$(VSLIM_SERVER_BIN)" \
+	VSLIM_EXTENSION_PATH="$(VSLIM_SERVER_EXTENSION)" \
+	php $(ROOT)/templates/app/bin/vslim serve --engine=embedded
+
+app-image:
+	php $(ROOT)/templates/app/bin/vslim build
 
 # Default test target stays fast on purpose. Heavy httpd/vhttpd/worker
 # integration PHPTs are split out into `make runtime-check`.
 test: build
-	@./run_tests.sh
+	@VHTTPD_ROOT="$(VHTTPD_ROOT)" VHTTPD_BIN="$(VHTTPD_BIN)" ./run_tests.sh
 
 psr-matrix:
 	@./tests/run_psr_matrix.sh
@@ -145,11 +160,12 @@ mvp-check: build
 	@echo "[mvp-check] phpt core set"
 	@TEST_PHP_EXECUTABLE="$$(which php)" php ../vphptest/run-tests.php -q --show-all -d extension=./vslim.so $(MVP_TESTS)
 
-runtime-check: build vhttpd
+runtime-check: build
 	@echo "[runtime-check] phpt runtime regression set"
-	@./run_tests.sh $(RUNTIME_VHTTPD_TESTS) $(RUNTIME_EXTRA_TESTS)
+	@VHTTPD_ROOT="$(VHTTPD_ROOT)" VHTTPD_BIN="$(VHTTPD_BIN)" ./run_tests.sh $(RUNTIME_VHTTPD_TESTS) $(RUNTIME_EXTRA_TESTS)
 
 clean:
-	rm -f vslim.so $(VHTTPD_BIN)
+	rm -f vslim.so
+	rm -f $(VSLIM_SERVER_BIN) $(VSLIM_SERVER_EXTENSION)
 	rm -f *_generated.c
 	rm -rf dist

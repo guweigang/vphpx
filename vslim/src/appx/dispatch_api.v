@@ -107,10 +107,7 @@ pub fn (app &VSlimApp) dispatch_envelope(envelope vphp.PhpValue) vphp.PhpValue {
 
 @[php_method: 'dispatchEnvelopeWorker']
 pub fn (app &VSlimApp) dispatch_envelope_worker(envelope vphp.PhpValue) vphp.PhpValue {
-	mut scope := vphp.PhpScope.request()
-	defer {
-		scope.close()
-	}
+	// The generated bridge owns the scope and copies the response to PHP before closing it.
 	app.prepare_kernel()
 	req := httpx.VSlimRequest.from_value(envelope)
 	return app.dispatch_request_worker_value(req)

@@ -373,7 +373,7 @@ pub fn (cli &VSlimCliApp) debug_bridge_path(path string) vphp.PhpValue {
 	}
 	echoed_joined := vphp.PhpFunction.named('sprintf').result_string(format_arg, echoed_arg,
 		bootstrap_arg)
-	return vphp.DynValue.of_map({
+	return vphp.DynValue.array_from_map({
 		'original':     vphp.DynValue.of_string(path)
 		'strval':       vphp.DynValue.of_string(echoed)
 		'sprintf':      vphp.DynValue.of_string(joined)
@@ -505,12 +505,16 @@ pub fn (cli &VSlimCliApp) warnings() []string {
 
 @[php_method]
 pub fn (cli &VSlimCliApp) options() vphp.PhpValue {
-	return vphp.DynValue.of_map(cli.last_options.clone()).to_value() or { vphp.PhpValue.null() }
+	return vphp.DynValue.array_from_map(cli.last_options.clone()).to_value() or {
+		vphp.PhpValue.null()
+	}
 }
 
 @[php_method]
 pub fn (cli &VSlimCliApp) arguments() vphp.PhpValue {
-	return vphp.DynValue.of_map(cli.last_arguments.clone()).to_value() or { vphp.PhpValue.null() }
+	return vphp.DynValue.array_from_map(cli.last_arguments.clone()).to_value() or {
+		vphp.PhpValue.null()
+	}
 }
 
 @[php_arg_name: 'default_value=defaultValue']

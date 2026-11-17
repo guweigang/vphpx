@@ -65,9 +65,9 @@ pub fn vphp_wrap_vslim_session_store_set_cookie_name(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_cookie_name(arg_0)
     return voidptr(res)
 }
@@ -85,9 +85,9 @@ pub fn vphp_wrap_vslim_session_store_set_secret(ptr voidptr, ctx vphp.Context) v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'secret', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'secret' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'secret').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_secret(arg_0)
     return voidptr(res)
 }
@@ -105,9 +105,9 @@ pub fn vphp_wrap_vslim_session_store_set_ttl_seconds(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'ttlSeconds', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'ttlSeconds' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'ttlSeconds').as_v[int]()
+    arg_0 := php_args.at(0).as_v[int]()
     res := recv.set_ttl_seconds(arg_0)
     return voidptr(res)
 }
@@ -125,9 +125,9 @@ pub fn vphp_wrap_vslim_session_store_set_path(ptr voidptr, ctx vphp.Context) voi
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'path' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_path(arg_0)
     return voidptr(res)
 }
@@ -145,9 +145,9 @@ pub fn vphp_wrap_vslim_session_store_set_domain(ptr voidptr, ctx vphp.Context) v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'domain', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'domain' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'domain').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_domain(arg_0)
     return voidptr(res)
 }
@@ -165,9 +165,9 @@ pub fn vphp_wrap_vslim_session_store_set_secure(ptr voidptr, ctx vphp.Context) v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'secure', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'secure' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'secure').as_v[bool]()
+    arg_0 := php_args.at(0).as_v[bool]()
     res := recv.set_secure(arg_0)
     return voidptr(res)
 }
@@ -185,9 +185,9 @@ pub fn vphp_wrap_vslim_session_store_set_http_only(ptr voidptr, ctx vphp.Context
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'httpOnly', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'httpOnly' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'httpOnly').as_v[bool]()
+    arg_0 := php_args.at(0).as_v[bool]()
     res := recv.set_http_only(arg_0)
     return voidptr(res)
 }
@@ -205,9 +205,9 @@ pub fn vphp_wrap_vslim_session_store_set_same_site(ptr voidptr, ctx vphp.Context
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'sameSite', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'sameSite' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'sameSite').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_same_site(arg_0)
     return voidptr(res)
 }
@@ -225,9 +225,9 @@ pub fn vphp_wrap_vslim_session_store_load(ptr voidptr, ctx vphp.Context) voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'request', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'request' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'request').object() or {
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -248,12 +248,14 @@ pub fn vphp_wrap_vslim_session_store_get(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimSessionStore(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
-    arg_1 := if php_args.has_named_or_index(1, 'defaultValue') { php_args.at_named_or_index(1, 'defaultValue').as_v[string]() } else { '' }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.get(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -262,12 +264,14 @@ pub fn vphp_wrap_vslim_session_store_pull(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimSessionStore(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
-    arg_1 := if php_args.has_named_or_index(1, 'defaultValue') { php_args.at_named_or_index(1, 'defaultValue').as_v[string]() } else { '' }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.pull(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -277,11 +281,11 @@ pub fn vphp_wrap_vslim_session_store_flash(ptr voidptr, ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'value').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.flash(arg_0, arg_1)
     return voidptr(res)
 }
@@ -291,9 +295,9 @@ pub fn vphp_wrap_vslim_session_store_has_flash(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.has_flash(arg_0)
     ctx.return().v[bool](res)
 }
@@ -302,12 +306,14 @@ pub fn vphp_wrap_vslim_session_store_get_flash(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimSessionStore(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
-    arg_1 := if php_args.has_named_or_index(1, 'defaultValue') { php_args.at_named_or_index(1, 'defaultValue').as_v[string]() } else { '' }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.get_flash(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -316,12 +322,14 @@ pub fn vphp_wrap_vslim_session_store_pull_flash(ptr voidptr, ctx vphp.Context)  
     mut recv := unsafe { &VSlimSessionStore(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
-    arg_1 := if php_args.has_named_or_index(1, 'defaultValue') { php_args.at_named_or_index(1, 'defaultValue').as_v[string]() } else { '' }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.pull_flash(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -339,9 +347,9 @@ pub fn vphp_wrap_vslim_session_store_has(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.has(arg_0)
     ctx.return().v[bool](res)
 }
@@ -351,11 +359,11 @@ pub fn vphp_wrap_vslim_session_store_set(ptr voidptr, ctx vphp.Context) voidptr 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'value').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.set(arg_0, arg_1)
     return voidptr(res)
 }
@@ -365,9 +373,9 @@ pub fn vphp_wrap_vslim_session_store_forget(ptr voidptr, ctx vphp.Context) voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.forget(arg_0)
     return voidptr(res)
 }
@@ -385,9 +393,9 @@ pub fn vphp_wrap_vslim_session_store_destroy(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'response', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'response' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'response').object() or {
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return
     }
@@ -400,9 +408,9 @@ pub fn vphp_wrap_vslim_session_store_commit(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'response', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'response' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'response').object() or {
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return
     }
@@ -510,10 +518,10 @@ pub fn vphp_wrap_vslim_auth_session_guard_set_store(ptr voidptr, ctx vphp.Contex
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'store', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'store' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'store').to_v_ptr[sessionx.VSlimSessionStore]() or {
-        vphp.throw_exception('argument 0 must be object bound to sessionx.VSlimSessionStore, got ' + php_args.at_named_or_index(0, 'store').zval().type_name(), 0)
+    arg_0_ptr := php_args.at(0).to_v_ptr[sessionx.VSlimSessionStore]() or {
+        vphp.throw_exception('argument 0 must be object bound to sessionx.VSlimSessionStore, got ' + php_args.at(0).zval().type_name(), 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
     }
@@ -535,9 +543,9 @@ pub fn vphp_wrap_vslim_auth_session_guard_set_user_key(ptr voidptr, ctx vphp.Con
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'userKey', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'userKey' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'userKey').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_user_key(arg_0)
     return voidptr(res)
 }
@@ -587,9 +595,9 @@ pub fn vphp_wrap_vslim_auth_session_guard_login(ptr voidptr, ctx vphp.Context) v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'userId', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'userId' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'userId').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.login(arg_0)
     return voidptr(res)
 }
@@ -694,10 +702,10 @@ pub fn vphp_wrap_vslim_session_start_middleware_set_container(ptr voidptr, ctx v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'container', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'container' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
-        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
+    arg_0_ptr := php_args.at(0).to_v_ptr[containerx.VSlimContainer]() or {
+        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at(0).zval().type_name(), 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
     }
@@ -711,9 +719,9 @@ pub fn vphp_wrap_vslim_session_start_middleware_set_app(ptr voidptr, ctx vphp.Co
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'app', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'app' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'app').value
+    arg_0 := php_args.at(0).value
     res := recv.set_app(arg_0)
     return voidptr(res)
 }
@@ -723,15 +731,15 @@ pub fn vphp_wrap_vslim_session_start_middleware_process(ptr voidptr, ctx vphp.Co
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'request', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'request' },
+        vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'request').object() or {
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
     }
-    arg_1 := php_args.at_named_or_index(1, 'handler').object() or {
+    arg_1 := php_args.at(1).object() or {
         vphp.throw_exception('argument 1 must be object', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -832,10 +840,10 @@ pub fn vphp_wrap_vslim_auth_require_middleware_set_container(ptr voidptr, ctx vp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'container', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'container' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
-        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
+    arg_0_ptr := php_args.at(0).to_v_ptr[containerx.VSlimContainer]() or {
+        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at(0).zval().type_name(), 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
     }
@@ -849,9 +857,9 @@ pub fn vphp_wrap_vslim_auth_require_middleware_set_app(ptr voidptr, ctx vphp.Con
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'app', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'app' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'app').value
+    arg_0 := php_args.at(0).value
     res := recv.set_app(arg_0)
     return voidptr(res)
 }
@@ -861,9 +869,9 @@ pub fn vphp_wrap_vslim_auth_require_middleware_set_redirect_path(ptr voidptr, ct
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'redirectPath', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'redirectPath' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'redirectPath').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_redirect_path(arg_0)
     return voidptr(res)
 }
@@ -881,15 +889,15 @@ pub fn vphp_wrap_vslim_auth_require_middleware_process(ptr voidptr, ctx vphp.Con
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'request', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'request' },
+        vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'request').object() or {
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
     }
-    arg_1 := php_args.at_named_or_index(1, 'handler').object() or {
+    arg_1 := php_args.at(1).object() or {
         vphp.throw_exception('argument 1 must be object', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -990,10 +998,10 @@ pub fn vphp_wrap_vslim_auth_guest_middleware_set_container(ptr voidptr, ctx vphp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'container', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'container' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
-        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
+    arg_0_ptr := php_args.at(0).to_v_ptr[containerx.VSlimContainer]() or {
+        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at(0).zval().type_name(), 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
     }
@@ -1007,9 +1015,9 @@ pub fn vphp_wrap_vslim_auth_guest_middleware_set_app(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'app', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'app' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'app').value
+    arg_0 := php_args.at(0).value
     res := recv.set_app(arg_0)
     return voidptr(res)
 }
@@ -1019,9 +1027,9 @@ pub fn vphp_wrap_vslim_auth_guest_middleware_set_redirect_path(ptr voidptr, ctx 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'redirectPath', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'redirectPath' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'redirectPath').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_redirect_path(arg_0)
     return voidptr(res)
 }
@@ -1039,15 +1047,15 @@ pub fn vphp_wrap_vslim_auth_guest_middleware_process(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'request', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'request' },
+        vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'request').object() or {
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
     }
-    arg_1 := php_args.at_named_or_index(1, 'handler').object() or {
+    arg_1 := php_args.at(1).object() or {
         vphp.throw_exception('argument 1 must be object', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
@@ -1148,10 +1156,10 @@ pub fn vphp_wrap_vslim_auth_require_ability_middleware_set_container(ptr voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'container', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'container' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'container').to_v_ptr[containerx.VSlimContainer]() or {
-        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at_named_or_index(0, 'container').zval().type_name(), 0)
+    arg_0_ptr := php_args.at(0).to_v_ptr[containerx.VSlimContainer]() or {
+        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at(0).zval().type_name(), 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
     }
@@ -1165,9 +1173,9 @@ pub fn vphp_wrap_vslim_auth_require_ability_middleware_set_app(ptr voidptr, ctx 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'app', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'app' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'app').value
+    arg_0 := php_args.at(0).value
     res := recv.set_app(arg_0)
     return voidptr(res)
 }
@@ -1177,9 +1185,9 @@ pub fn vphp_wrap_vslim_auth_require_ability_middleware_set_ability(ptr voidptr, 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'ability', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'ability' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'ability').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_ability(arg_0)
     return voidptr(res)
 }
@@ -1197,9 +1205,9 @@ pub fn vphp_wrap_vslim_auth_require_ability_middleware_set_status(ptr voidptr, c
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'status', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'status' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'status').as_v[int]()
+    arg_0 := php_args.at(0).as_v[int]()
     res := recv.set_status(arg_0)
     return voidptr(res)
 }
@@ -1217,9 +1225,9 @@ pub fn vphp_wrap_vslim_auth_require_ability_middleware_set_message(ptr voidptr, 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'message', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'message' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'message').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_message(arg_0)
     return voidptr(res)
 }
@@ -1237,15 +1245,15 @@ pub fn vphp_wrap_vslim_auth_require_ability_middleware_process(ptr voidptr, ctx 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'request', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'request' },
+        vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'request').object() or {
+    arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }
     }
-    arg_1 := php_args.at_named_or_index(1, 'handler').object() or {
+    arg_1 := php_args.at(1).object() or {
         vphp.throw_exception('argument 1 must be object', 0)
         return // SAFETY: nil literal in unsafe context
 	unsafe { nil }

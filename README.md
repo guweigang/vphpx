@@ -18,14 +18,18 @@ In one sentence:
 
 ## What Is In This Repo
 
-`vphpx` is organized into three layers:
+`vphpx` has one core, one test suite, one flagship extension, and one product demo:
 
 1. `vphp`
    The V <-> Zend/PHP interop layer, export model, ownership model, and glue generation pipeline.
 2. `vphptest`
-   A real extension playground used to verify and regress-test the interop/compiler/runtime behavior.
+   The compatibility and regression suite for `vphp`.
 3. `vslim`
-   A higher-level application/framework layer proving the bridge can support routes, container, CLI, views, and PSR-style HTTP types.
+   The flagship extension built on `vphp`: a native PHP application framework exploring self-contained application binaries.
+4. `knowledge-studio`
+   The end-to-end VSlim demo application.
+
+`php2v` is an experimental lab with no compatibility guarantee. The former standalone `gateway` experiment has been absorbed into `vslim/server` as the research runtime behind future `vslim build` executables; it is only exposed today through the explicit `vslim serve --engine=embedded` path.
 
 This means the repo is not a single library. It is a full path from:
 
@@ -76,6 +80,9 @@ make -C vphptest build
 ```
 
 That flow runs the `vphp` compiler and links the generated extension.
+
+For a standalone project, use [the `vphp` CLI](vphp/compiler/README.md#standalone-extension-cli)
+to check the sources, build a PHP extension, and generate IDE stubs.
 
 ### 3. Load it in PHP
 
@@ -157,13 +164,17 @@ Its purpose is to prove that `vphp` can support more than isolated exported func
 
 Read it if you want to see what the bridge looks like when it grows into application infrastructure.
 
+VSlim preserves the native embedded HTTP code under `vslim/server` as its experimental application-packaging runtime; there is no separate gateway product to install. Normal development uses the current PHP runtime through `bin/vslim serve`.
+
 Key doc:
 
 - [vslim/README.md](vslim/README.md)
 
-## Minimum Build Layout
+## Optional Runtime Layouts
 
-After the repository split, `vphpx` no longer vendors `vhttpd`. The minimum layout for the full VSlim build and runtime integration tests is:
+`vslim build` produces an application image and a manifest of target/runtime requirements. Its experimental `--runtime=embedded` mode can already link that image and the matching VSlim ZTS extension into one host-linked executable; it still depends on the matching shared `libphp`. The explicit `vslim serve --engine=embedded` path uses the same runtime research under `vslim/server`.
+
+The separate `vhttpd` repository is needed only for the optional vhttpd/worker integration tests. Their conventional sibling layout is:
 
 ```text
 <workspace>/
@@ -177,7 +188,7 @@ After the repository split, `vphpx` no longer vendors `vhttpd`. The minimum layo
 make -C vslim runtime-check VHTTPD_ROOT=/path/to/vhttpd
 ```
 
-The core `vphp` and `vphptest` build/test flows do not need `vhttpd`; only VSlim runtime/worker integration paths do.
+The core `vphp`, `vphptest`, VSlim extension, development `vslim serve`, and experimental application runtime do not need `vhttpd`.
 
 ## Who This Is For
 
@@ -242,14 +253,18 @@ So `vphpx` is no longer just a loose experiment. It already has:
 
 ## 仓库里有什么
 
-`vphpx` 现在主要分成三层：
+`vphpx` 现在由一个核心、一个测试工程、一个英雄扩展和一个产品 Demo 组成：
 
 1. `vphp`
    V 和 Zend/PHP 之间的 interop 层、导出模型、ownership 模型和 glue 生成管线。
 2. `vphptest`
-   一个真实扩展试验场，用来验证和回归 interop/compiler/runtime 行为。
+   `vphp` 的兼容性与回归测试工程。
 3. `vslim`
-   更高层的应用/框架层，用来证明这套桥接不仅能导出函数，还能支撑路由、容器、CLI、视图和 PSR 风格 HTTP 类型。
+   基于 `vphp` 构建的英雄扩展：面向独立应用二进制交付的 PHP 原生应用框架。
+4. `knowledge-studio`
+   VSlim 的端到端产品 Demo。
+
+`php2v` 是不提供兼容性保证的实验性 Lab。原独立 `gateway` 实验已经并入 `vslim/server`，作为未来 `vslim build` 应用二进制的研究 Runtime；当前只通过显式的 `vslim serve --engine=embedded` 路径暴露。
 
 也就是说，这不是一个单点库，而是一条完整路径：
 
@@ -381,13 +396,17 @@ php -d extension=./hello_vphp.so -r 'echo hello_from_v("PHP"), PHP_EOL;'
 
 如果你关心“这套桥接长成上层应用能力之后是什么样子”，就看这里。
 
+VSlim 的原生内嵌 HTTP 研究代码保留在 `vslim/server`，作为未来应用二进制内部的 Runtime，不再作为单独的 gateway 产品。开发者默认通过 `bin/vslim serve` 使用当前 PHP。
+
 入口文档：
 
 - [vslim/README.md](vslim/README.md)
 
-## 最小可构建布局
+## 可选 Runtime 布局
 
-拆分仓库之后，`vphpx` 不再内置 `vhttpd`。如果要完整构建 VSlim 并运行 runtime / worker 集成测试，最小目录关系是：
+`vslim build` 负责生成应用镜像与 Runtime 清单；实验性的 `--runtime=embedded` 已能把镜像和匹配的 VSlim ZTS 扩展链接成单个 host-linked 可执行文件，但仍依赖匹配的共享 `libphp`。`vslim serve --engine=embedded` 使用同一套 `vslim/server` 研究 Runtime。
+
+只有可选的 vhttpd/worker 集成测试需要独立 `vhttpd` 仓库，约定的同级目录关系是：
 
 ```text
 <workspace>/
@@ -401,7 +420,7 @@ php -d extension=./hello_vphp.so -r 'echo hello_from_v("PHP"), PHP_EOL;'
 make -C vslim runtime-check VHTTPD_ROOT=/path/to/vhttpd
 ```
 
-只跑 `vphp` / `vphptest` 的核心构建和测试不需要 `vhttpd`；依赖它的是 VSlim runtime / worker 集成链路。
+`vphp`、`vphptest`、VSlim 扩展、开发用 `vslim serve` 和实验 Runtime 都不依赖 `vhttpd`。
 
 ## 适合谁
 

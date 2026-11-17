@@ -65,7 +65,7 @@ fn (h &VSlimTestingHarness) app_object() ?vphp.PhpObject {
 }
 
 fn (h &VSlimTestingHarness) has_app_object() bool {
-	app := h.app_object() or { return false }
+	mut app := h.app_object() or { return false }
 	app.release()
 	return true
 }
@@ -284,7 +284,7 @@ pub fn (mut h VSlimTestingHarness) with_factory(id string, callable vphp.PhpCall
 
 @[php_method: 'withConfig']
 pub fn (mut h VSlimTestingHarness) with_config(path string) &VSlimTestingHarness {
-	app := h.app_object() or {
+	mut app := h.app_object() or {
 		vphp.PhpException.raise_class('RuntimeException', 'testing harness app is not configured', 0)
 		return h
 	}
@@ -302,7 +302,7 @@ pub fn (mut h VSlimTestingHarness) with_config(path string) &VSlimTestingHarness
 
 @[php_method: 'withConfigText']
 pub fn (mut h VSlimTestingHarness) with_config_text(text string) &VSlimTestingHarness {
-	app := h.app_object() or {
+	mut app := h.app_object() or {
 		vphp.PhpException.raise_class('RuntimeException', 'testing harness app is not configured', 0)
 		return h
 	}
@@ -400,7 +400,7 @@ pub fn (h &VSlimTestingHarness) json_request(method string, uri string, payload 
 @[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
 @[php_method]
 pub fn (h &VSlimTestingHarness) handle(request vphp.PhpObject) &httpx.VSlimPsr7Response {
-	app := h.app_object() or {
+	mut app := h.app_object() or {
 		return httpx.VSlimPsr7Response.text(500, 'testing harness app is not configured')
 	}
 	defer {

@@ -27,7 +27,7 @@ fn VSlimPsr7Stream.from_object(object vphp.PhpObject) &VSlimPsr7Stream {
 }
 
 pub fn VSlimPsr7Stream.from_value(value vphp.PhpValue) &VSlimPsr7Stream {
-	if object := value.as_object() {
+	if mut object := value.as_object() {
 		defer {
 			object.release()
 		}

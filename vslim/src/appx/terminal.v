@@ -104,7 +104,7 @@ fn (app &VSlimApp) build_method_not_allowed_response_with_context_psr(ctx middle
 }
 
 fn (app &VSlimApp) run_not_found(req &httpx.VSlimRequest) httpx.VSlimResponse {
-	payload := httpx.vslim_request_build_value(req, map[string]string{})
+	mut payload := httpx.vslim_request_build_value(req, map[string]string{})
 	path := req.normalized_path()
 	ctx := middlewarex.PipelineRequestContext.from_value(path, payload, map[string]string{})
 	res := app.run_not_found_core_with_context(ctx)

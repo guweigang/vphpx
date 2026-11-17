@@ -5,7 +5,7 @@ vhttpd worker supports streaming responses for SSE and text modes
 if (!extension_loaded("vslim")) print "skip";
 if (getenv("CODEX_SANDBOX_NETWORK_DISABLED") === "1") print "skip";
 $vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd';
-if (!is_file($vhttpdRoot . '/vhttpd')) print "skip";
+if (!is_file(getenv('VHTTPD_BIN') ?: $vhttpdRoot . '/vhttpd')) print "skip";
 $probe = sys_get_temp_dir() . '/vhttpd_unix_probe_' . getmypid() . '.sock';
 @unlink($probe);
 $errno = 0;
@@ -23,10 +23,11 @@ if (is_file($probe)) {
 ?>
 --FILE--
 <?php
+require_once __DIR__ . '/vhttpd_process_fixture.php';
 $root = dirname(__DIR__);
 $vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname($root, 2) . '/vhttpd';
 $src = $vhttpdRoot . '/src';
-$bin = $vhttpdRoot . '/vhttpd';
+$bin = getenv('VHTTPD_BIN') ?: $vhttpdRoot . '/vhttpd';
 
 function last_response_headers(): array {
     $headers = function_exists('http_get_last_response_headers')
@@ -48,26 +49,28 @@ $workerPhp = $vhttpdRoot . '/php/package/bin/vphp-worker';
 $extSo = $root . '/vslim.so';
 $streamApp = $root . '/tests/fixtures/streaming_app_fixture.php';
 
-$workerCmd = sprintf(
-    'VHTTPD_APP=%s php -d extension=%s %s --socket %s',
-    escapeshellarg($streamApp),
-    escapeshellarg($extSo),
-    escapeshellarg($workerPhp),
-    escapeshellarg($workerSock),
-);
+$configPath = $tmp . '/vhttpd.toml';
+file_put_contents($configPath, <<<TOML
+[server]
+host = "127.0.0.1"
+port = {$port}
 
-$cmd = sprintf(
-    '%s --host %s --port %d --pid-file %s --event-log %s --worker-socket %s --worker-autostart 1 --worker-read-timeout-ms 2000 --worker-cmd %s >> %s 2>&1 &',
-    escapeshellarg($bin),
-    escapeshellarg('127.0.0.1'),
-    $port,
-    escapeshellarg($pidFile),
-    escapeshellarg($eventLog),
-    escapeshellarg($workerSock),
-    escapeshellarg($workerCmd),
-    escapeshellarg($stdoutLog),
-);
-exec($cmd);
+[files]
+pid_file = "{$pidFile}"
+event_log = "{$eventLog}"
+
+[php]
+worker_entry = "{$workerPhp}"
+app_entry = "{$streamApp}"
+extensions = ["{$extSo}"]
+
+[worker]
+autostart = true
+socket = "{$workerSock}"
+read_timeout_ms = 2000
+TOML);
+
+$process = launch_vhttpd($bin, $configPath, $stdoutLog);
 
 $base = 'http://127.0.0.1:' . $port;
 $ready = false;
@@ -111,20 +114,12 @@ $txtHeaders = last_response_headers();
 $txtStatus = $txtHeaders[0] ?? '';
 $txtHeaderLines = implode("\n", $txtHeaders);
 echo (str_contains($txtStatus, '200') ? "txt_200\n" : "txt_bad\n");
-echo (stripos($txtHeaderLines, 'x-vhttpd-stream-mode: passthrough') !== false ? "txt_passthrough\n" : "txt_no_passthrough\n");
+echo (stripos($txtHeaderLines, 'x-stream-source: php-worker') !== false ? "txt_source\n" : "txt_source_missing\n");
 echo (stripos($txtHeaderLines, 'content-type: text/plain; charset=utf-8') !== false ? "txt_plain\n" : "txt_not_plain\n");
 echo (is_string($txtBody) && !str_contains($txtBody, "event: ") && !str_contains($txtBody, "data: ") ? "txt_not_sse\n" : "txt_looks_sse\n");
 echo (trim((string) $txtBody) === "chunk-a\nchunk-b" ? "txt_ok\n" : "txt_bad_body\n");
 
-$pid = is_file($pidFile) ? (int) trim((string) file_get_contents($pidFile)) : 0;
-if ($pid > 0) {
-    exec(sprintf('kill %d >/dev/null 2>&1', $pid));
-    usleep(200_000);
-    exec(sprintf('kill -0 %d >/dev/null 2>&1', $pid), $noop, $alive);
-    echo $alive === 0 ? "still_running\n" : "stopped\n";
-} else {
-    echo "stopped\n";
-}
+echo stop_vhttpd($process) ? "stopped\n" : "still_running\n";
 ?>
 --EXPECT--
 ready
@@ -132,7 +127,7 @@ sse_200
 sse_event
 sse_rid
 txt_200
-txt_passthrough
+txt_source
 txt_plain
 txt_not_sse
 txt_ok

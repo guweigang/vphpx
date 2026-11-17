@@ -85,7 +85,7 @@ fn resolve_auth_user_from_provider(provider vphp.PhpValue, user_id string) vphp.
 		return vphp.PhpValue.null()
 	}
 	if !provider.is_valid() {
-		return vphp.PhpString.of(normalized_id).take_value()
+		return vphp.PhpValue.string(normalized_id)
 	}
 	mut normalized_id_arg := vphp.PhpString.of(normalized_id)
 	defer {
@@ -102,7 +102,7 @@ fn resolve_auth_user_from_provider(provider vphp.PhpValue, user_id string) vphp.
 			return provider_obj.call_method('resolve', normalized_id_arg)
 		}
 	}
-	return vphp.PhpString.of(normalized_id).take_value()
+	return vphp.PhpValue.string(normalized_id)
 }
 
 fn auth_user(container &containerx.VSlimContainer, request vphp.PhpObject) vphp.PhpValue {

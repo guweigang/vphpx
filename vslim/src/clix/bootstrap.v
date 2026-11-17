@@ -164,7 +164,7 @@ fn cli_bootstrap_has_meta_keys(spec vphp.PhpArray) bool {
 }
 
 fn (mut cli VSlimCliApp) apply_bootstrap_spec(spec vphp.PhpValue) ! {
-	normalized := supportx.normalize_app_bootstrap_spec(spec)!
+	mut normalized := supportx.normalize_app_bootstrap_spec(spec)!
 	defer {
 		normalized.release()
 	}

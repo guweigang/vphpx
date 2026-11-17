@@ -188,6 +188,12 @@ $notifyMsg = json_decode($notify['messages'][0] ?? 'null', true);
 echo $notifyBody['result']['queued'] ? "queued\n" : "not_queued\n";
 echo $notify['session_id'] . "\n";
 echo (($notifyMsg['method'] ?? '') === 'notifications/message') ? "notify_msg\n" : "notify_missing\n";
+$notifyMethod = new ReflectionMethod(VSlim\Mcp\App::class, 'notify');
+echo json_encode($notifyMethod->getParameters()[5]->getDefaultValue()), "\n";
+$namedNotify = VSlim\Mcp\App::notify(6, 'notifications/message', [], 'mcp-test-1', '2025-11-05', status: 202);
+$explicitNotify = VSlim\Mcp\App::notify(6, 'notifications/message', [], 'mcp-test-1', '2025-11-05', result: null);
+echo json_encode(json_decode($namedNotify['body'], true)['result']), "\n";
+echo json_encode(json_decode($explicitNotify['body'], true)['result']), "\n";
 
 $sample = $mcp->handleMcpDispatch([
     'protocol_version' => '2025-11-05',
@@ -298,6 +304,9 @@ Welcome, Alice!
 queued
 mcp-test-1
 notify_msg
+{"queued":true}
+{"queued":true}
+null
 sampling_msg
 {"sampling":{},"roots":{"listChanged":true}}
 sampling_supported
